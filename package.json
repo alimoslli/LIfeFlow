@@ -17,7 +17,7 @@
     "db:migrate:test": "tsx scripts/migrate.ts --test",
     "db:seed-demo": "tsx scripts/seed-demo.ts",
     "db:studio": "drizzle-kit studio",
-    "vercel-build": "tsx scripts/migrate.ts && next build"
+    "vercel-build": "tsx scripts/migrate.ts && tsx scripts/seed-demo.ts --from-env && next build"
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",

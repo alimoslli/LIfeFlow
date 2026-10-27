@@ -113,6 +113,8 @@ See [`.env.example`](.env.example). Summary:
 | `OPENAI_REASONING_EFFORT` | no | `none`/`low`/`medium`/`high` for reasoning models |
 | `OPENAI_BASE_URL` | no | OpenAI-compatible gateway; used by e2e tests |
 | `TEST_DATABASE_URL` / `E2E_DATABASE_URL` | tests | Must be different databases; tests wipe them |
+| `SEED_TEST_ACCOUNT` | no | On Vercel: `keep` creates the demo/test account once and keeps it; `refresh` recreates it with current dates on the next deploy |
+| `DEMO_EMAIL` / `DEMO_PASSWORD` | with `SEED_TEST_ACCOUNT` | Login for the test account (password 10+ chars) |
 | `PLAID_*`, `CANVAS_BASE_URL` | later | Reserved for upcoming integrations |
 
 ---

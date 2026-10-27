@@ -22,12 +22,12 @@ import { createTransaction } from "../src/server/services/finance/transactions";
 import { addManualHolding } from "../src/server/services/finance/wealth";
 import { createMemory } from "../src/server/services/memory";
 import { createNote, createProject } from "../src/server/services/notes";
-import { createAssignment, createCourse } from "../src/server/services/school";
-import { createTask } from "../src/server/services/tasks";
-import { createEmployer, createShift } from "../src/server/services/work";
+import { addMaterial, createAssignment, createCourse, updateAssignment } from "../src/server/services/school";
+import { createTask, updateTask } from "../src/server/services/tasks";
+import { addPaycheck, createEmployer, createShift, recordShiftHours } from "../src/server/services/work";
 import { holdings } from "../src/server/db/schema";
 
-const EMAIL = "demo@budgetflow.local";
+const EMAIL = (process.env.DEMO_EMAIL ?? "demo@budgetflow.local").toLowerCase();
 const PASSWORD = process.env.DEMO_PASSWORD ?? "budgetflow-demo";
 const TZ = "America/New_York";
 
@@ -35,20 +35,40 @@ let seed = 42;
 const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
 const between = (a: number, b: number) => Math.round(a + rand() * (b - a));
 
+/**
+ * Modes:
+ *   (default)     recreate the demo account (local development)
+ *   --from-env    used by the Vercel build. Reads SEED_TEST_ACCOUNT:
+ *                   unset    -> do nothing
+ *                   "keep"   -> create the account only if it doesn't exist (keeps its data across deploys)
+ *                   "refresh"-> delete and recreate it with fresh, current-dated data
+ */
 async function main() {
-  if (process.env.NODE_ENV === "production" && !process.argv.includes("--force")) {
-    throw new Error("Refusing to seed demo data in production (pass --force if you really mean it).");
+  const fromEnv = process.argv.includes("--from-env");
+  const mode = fromEnv ? process.env.SEED_TEST_ACCOUNT : "refresh";
+  if (fromEnv && !mode) return;
+  if (mode !== "keep" && mode !== "refresh") throw new Error(`SEED_TEST_ACCOUNT must be "keep" or "refresh", got "${mode}"`);
+  const prod = process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+  if (prod && !fromEnv && !process.argv.includes("--force")) {
+    throw new Error("Refusing to seed demo data in production (use SEED_TEST_ACCOUNT on Vercel, or pass --force).");
+  }
+  if ((prod || fromEnv) && (!process.env.DEMO_PASSWORD || process.env.DEMO_PASSWORD.length < 10)) {
+    throw new Error("Set DEMO_PASSWORD (10+ characters) to create the test account outside local development.");
   }
   const db = getDb();
   const [existing] = await db.select().from(users).where(eq(users.email, EMAIL));
   if (existing) {
     if (existing.accountKind !== "demo") throw new Error(`${EMAIL} exists and is not a demo account; refusing to touch it.`);
+    if (mode === "keep") {
+      console.log(`Test account ${EMAIL} already exists; keeping its data.`);
+      return;
+    }
     await db.delete(users).where(and(eq(users.id, existing.id), eq(users.accountKind, "demo")));
   }
   const user = await registerUser(db, { name: "Alex Demo", email: EMAIL, password: PASSWORD, timezone: TZ }, { accountKind: "demo" });
   const today = todayIn(TZ);
   await withUser(user.id, (s) => seedAll(s, today));
-  console.log(`Demo account ready: ${EMAIL} / ${PASSWORD}`);
+  console.log(`Test account ready: ${EMAIL}${fromEnv ? "" : ` / ${PASSWORD}`}`);
 }
 
 async function seedAll(s: UserScope, today: string) {
@@ -184,6 +204,57 @@ async function seedAll(s: UserScope, today: string) {
   await createMemory(s, { content: "Prefers studying in the morning.", category: "preference" }, "user");
   await createMemory(s, { content: "Works at the Campus Library, usually Tue/Thu evenings and Saturday mornings.", category: "routine" }, "user");
   await createMemory(s, { content: "Saving for a summer trip to Montréal.", category: "goal" }, "user");
+  await createMemory(s, { content: "Wants to keep food spending under $450 a month.", category: "goal" }, "user");
+  await createMemory(s, { content: "Has a car; drives to campus on Mondays and takes the bus other days.", category: "routine" }, "user");
+  await createMemory(s, { content: "Prefers concise answers with a short list of next steps.", category: "preference" }, "user");
+  await createMemory(s, { content: "Midterm season: extra stressed until mid-November.", category: "temporary", expiresAt: new Date(Date.now() + 21 * 86_400_000) }, "user");
+
+  // ---- more depth: subtasks, completed work, materials, paychecks, worked shifts, notes
+  const essay = await createTask(s, TZ, { title: "Write PSY 101 research summary", priority: "high", dueDate: addDaysStr(today, 6), courseId: psy.id }, "demo");
+  for (const t of ["Pick 3 sources", "Outline", "First draft", "Proofread"]) await createTask(s, TZ, { title: t, parentId: essay.id, courseId: psy.id }, "demo");
+  const cart = await createTask(s, TZ, { title: "Research coffee cart permits", priority: "medium", dueDate: addDaysStr(today, 10), projectId: proj.id }, "demo");
+  await createTask(s, TZ, { title: "Email student union about vendor rules", parentId: cart.id, projectId: proj.id }, "demo");
+  await createTask(s, TZ, { title: "Price used espresso carts", parentId: cart.id, projectId: proj.id }, "demo");
+  await createTask(s, TZ, { title: "Book dentist appointment", priority: "low", dueDate: addDaysStr(today, 14) }, "demo");
+  await createTask(s, TZ, { title: "Return library books", priority: "medium", dueDate: addDaysStr(today, -1) }, "demo");
+  const done = await createTask(s, TZ, { title: "Submit FAFSA verification documents", priority: "urgent" }, "demo");
+  await updateTask(s, TZ, done.id, { status: "done" });
+
+  const past = await createAssignment(s, TZ, { courseId: calc.id, title: "Problem Set 6: Substitution", dueDate: addDaysStr(today, -5), dueTime: "13:00", sourceRef: "demo data" }, "demo");
+  await updateAssignment(s, TZ, past.assignment.id, { status: "done", grade: "92/100" });
+  const quiz = await createAssignment(s, TZ, { courseId: bio.id, title: "Quiz 3: Membranes", kind: "quiz", dueDate: addDaysStr(today, -8), dueTime: "14:00", sourceRef: "demo data" }, "demo");
+  await updateAssignment(s, TZ, quiz.assignment.id, { status: "done", grade: "8.5/10" });
+  await a(bio.id, "Reading: Chapter 7 — Cell signaling", 4, null, "reading");
+  await a(calc.id, "Quiz: Series convergence", 5, "13:00", "quiz");
+
+  for (const [courseId, title, module, url] of [
+    [psy.id, "Syllabus", "Course info", "https://example.edu/psy101/syllabus"],
+    [psy.id, "Week 7 slides — Memory", "Week 7", "https://example.edu/psy101/week7"],
+    [calc.id, "Integration techniques cheat sheet", "Unit 2", "https://example.edu/math152/cheatsheet"],
+    [calc.id, "Office hours: Tue 3–4pm, Science 214", "Course info", null],
+    [bio.id, "Lab manual", "Labs", "https://example.edu/bio210/lab-manual"],
+  ] as const) await addMaterial(s, { courseId, title, module, url: url ?? undefined }, "demo");
+
+  // Past week: shifts with recorded punches, plus matching paychecks
+  for (const [offset, st, en, inT, outT] of [[-6, "16:00", "21:00", "15:58", "21:12"], [-4, "16:00", "21:00", "16:05", "20:55"], [-2, "09:00", "14:00", "08:57", "14:03"]] as const) {
+    const sh = await createShift(s, TZ, { employerId: lib.id, date: addDaysStr(ws, offset), startTime: st, endTime: en, breakMinutes: 30 }, "demo");
+    await recordShiftHours(s, TZ, sh.id, { recordedStartTime: inT, recordedEndTime: outT });
+  }
+  for (let d = weekStart(addDaysStr(today, -120)); d <= today; d = addDaysStr(d, 14)) {
+    const fri = addDaysStr(d, 4);
+    if (fri >= addDaysStr(today, -60) && fri <= today) await addPaycheck(s, { employerId: lib.id, payDate: fri, grossCents: 70_950, netCents: 62_000, hours: 43 }, "demo");
+  }
+
+  await createNote(s, { title: "MATH 152 — integration by parts", courseId: calc.id, tags: ["math152", "exam2"], body: "∫u dv = uv − ∫v du\n\n**LIATE** for choosing u: Logs, Inverse trig, Algebraic, Trig, Exponential.\n\nPractice: ∫x·eˣ dx, ∫ln x dx, ∫x²·sin x dx" }, "demo");
+  await createNote(s, { title: "Monthly money check-in", tags: ["money"], body: "- Food delivery crept up — try meal prep Sundays\n- Cancel gym (not using it)\n- Move $250/month to savings on the 15th\n- Montréal fund: ~$145/month needed" }, "demo");
+  const travel = await createProject(s, { name: "Montréal summer trip", description: "Plan and save for a week in Montréal in June." });
+  await createNote(s, { title: "Montréal ideas", projectId: travel.id, tags: ["travel"], body: "- Old Port, Mont Royal, Jean-Talon market\n- Bus vs. train from NYC\n- Hostel ~ $45/night" }, "demo");
+  await createTask(s, TZ, { title: "Compare bus vs. train prices to Montréal", projectId: travel.id, priority: "low" }, "demo");
+  await createRecurring(s, { name: "Spotify", amountCents: -1199, frequency: "monthly", nextDueDate: nextDom(18), kind: "subscription", categoryId: ids.streaming }, "demo");
+  await createRecurring(s, { name: "City Utilities", amountCents: -8_200, frequency: "monthly", nextDueDate: nextDom(5), kind: "bill", categoryId: ids.utilities }, "demo");
+  const lastMonth = `${addDaysStr(month, -1).slice(0, 7)}-01`;
+  await setBudget(s, { month: lastMonth, categoryId: ids.food, limitCents: 45_000 });
+  await setBudget(s, { month: lastMonth, categoryId: ids.transport, limitCents: 15_000 });
 }
 
 main()
