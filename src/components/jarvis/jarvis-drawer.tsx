@@ -18,7 +18,7 @@ const LABEL: Record<JarvisModule, string> = {
 };
 
 /** Slide-over Jarvis available from every page; scoped to the current module's context. */
-export function JarvisDrawer({ open, onClose, module, availability, initialPrompt }: { open: boolean; onClose: () => void; module: JarvisModule; availability: JarvisAvailability; initialPrompt?: string }) {
+export function JarvisDrawer({ open, onClose, module, availability, initialPrompt, autoSend }: { open: boolean; onClose: () => void; module: JarvisModule; availability: JarvisAvailability; initialPrompt?: string; autoSend?: boolean }) {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [session, setSession] = useState(0);
 
@@ -59,7 +59,7 @@ export function JarvisDrawer({ open, onClose, module, availability, initialPromp
           </div>
         </div>
         <div className="min-h-0 flex-1">
-          <JarvisChat key={session} compact module={module} availability={availability} initialPrompt={initialPrompt} conversationId={conversationId} onConversation={(id) => setConversationId(id)} />
+          <JarvisChat key={session} compact module={module} availability={availability} initialPrompt={initialPrompt} autoSend={session === 0 && autoSend} conversationId={conversationId} onConversation={(id) => setConversationId(id)} />
         </div>
       </div>
     </div>

@@ -1,0 +1,72 @@
+import type { AgendaItem } from "../services/calendar";
+
+/** Plain facts about the user's life right now, gathered once, then interpreted by pure rules. */
+export type LifeSnapshot = {
+  now: Date;
+  tz: string;
+  today: string;
+  firstName: string;
+  studyTime?: "morning" | "afternoon" | "evening" | "night";
+  /** Next 7 days, starting today (events, shifts, deadlines, due tasks). */
+  week: AgendaItem[];
+  overdue: { id: string; title: string; context: string; dueAt: Date; kind: "assignment" | "task"; href: string }[];
+  exams: { id: string; title: string; course: string; dueAt: Date; kind: string; href: string }[];
+  /** Free blocks of 60+ min in the next 7 days between 08:00 and 22:00. */
+  freeMinutesByDay: { date: string; minutes: number; longest: number; morningMinutes: number }[];
+  money: MoneySnapshot | null;
+};
+
+export type MoneySnapshot = {
+  cashCents: number;
+  /** Checking + cash only. Savings accounts are treated as set aside. */
+  spendableCashCents: number;
+  incomeNext30: { date: string; amountCents: number; name: string }[];
+  billsNext30: { name: string; date: string; amountCents: number }[];
+  creditOwedCents: number;
+  nextIncome: { date: string; amountCents: number; name: string } | null;
+  monthToDateSpendCents: number;
+  /** Spend over the same number of days last month. */
+  lastMonthSameSpanSpendCents: number;
+  overBudget: { category: string; spentCents: number; limitCents: number; topMerchant: string | null; topMerchantChangeCents: number | null }[];
+  goals: { name: string; percent: number; monthlyNeededCents: number | null; targetDate: string | null }[];
+  hasDemoData: boolean;
+};
+
+export type InsightTone = "attention" | "heads-up" | "good";
+export type InsightIcon = "clock" | "conflict" | "book" | "money" | "trend" | "calendar" | "goal" | "spark";
+
+export type InsightAction = { label: string; href?: string; prompt?: string };
+
+export type Insight = {
+  id: string;
+  tone: InsightTone;
+  icon: InsightIcon;
+  /** One plain sentence. */
+  text: string;
+  detail?: string;
+  action?: InsightAction;
+  /** Higher = more important. */
+  score: number;
+};
+
+export type SafeToSpend = {
+  /** Can be negative: bills are expected to outrun cash. */
+  amountCents: number;
+  perDayCents: number;
+  days: number;
+  billsCents: number;
+  incomeCents: number;
+  explanation: string;
+};
+
+export type DayGlance = { date: string; label: string; busyMinutes: number; deadlines: number; exam: boolean; isToday: boolean };
+
+export type Briefing = {
+  headline: string;
+  summary: string;
+  next: AgendaItem | null;
+  today: AgendaItem[];
+  insights: Insight[];
+  safeToSpend: SafeToSpend | null;
+  week: DayGlance[];
+};

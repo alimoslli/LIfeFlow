@@ -26,6 +26,7 @@ export function JarvisChat({
   availability,
   compact,
   initialPrompt,
+  autoSend,
   onConversation,
 }: {
   conversationId?: string | null;
@@ -34,6 +35,8 @@ export function JarvisChat({
   availability: JarvisAvailability;
   compact?: boolean;
   initialPrompt?: string;
+  /** Send `initialPrompt` immediately on open (used by one-tap actions). */
+  autoSend?: boolean;
   onConversation?: (id: string, title: string) => void;
 }) {
   const router = useRouter();
@@ -55,6 +58,15 @@ export function JarvisChat({
 
   useEffect(() => {
     inputRef.current?.focus();
+  }, []);
+
+  const autoSent = useRef(false);
+  useEffect(() => {
+    if (autoSend && initialPrompt && availability.available && !autoSent.current) {
+      autoSent.current = true;
+      void send(initialPrompt);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateAssistant = useCallback((fn: (m: Extract<UiMessage, { role: "assistant" }>) => void) => {

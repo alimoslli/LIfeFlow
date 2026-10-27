@@ -102,7 +102,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {d.notes.map((n) => (
-                <Link key={n.id} href={`/notes/${n.id}`} className="group flex flex-col rounded-xl border border-border bg-surface p-4 transition-colors hover:border-border-strong">
+                <Link key={n.id} href={`/notes/${n.id}`} className="group flex flex-col rounded-3xl bg-surface p-4 shadow-soft transition-shadow hover:shadow-lift">
                   <div className="flex items-start gap-2">
                     <h3 className="flex-1 truncate font-medium group-hover:text-accent">{n.title}</h3>
                     {n.pinned && <Pin className="h-3.5 w-3.5 text-muted" />}

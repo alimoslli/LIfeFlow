@@ -56,7 +56,7 @@ export function NoteEditor({
       </div>
       <input type="hidden" name="body" value={body} />
       {preview ? (
-        <div className="min-h-80 rounded-xl border border-border bg-surface p-5">{body.trim() ? <Markdown text={body} /> : <p className="text-sm text-muted">Nothing to preview.</p>}</div>
+        <div className="min-h-80 rounded-3xl bg-surface shadow-soft p-5">{body.trim() ? <Markdown text={body} /> : <p className="text-sm text-muted">Nothing to preview.</p>}</div>
       ) : (
         <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={18} placeholder="Start writing… Markdown supported." className="min-h-80 font-[450] leading-relaxed" aria-label="Note body" />
       )}

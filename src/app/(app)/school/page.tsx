@@ -70,7 +70,7 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
             const next = nextByCourse.get(c.id);
             const due = next ? dueLabel(next.dueAt, next.dueAllDay, d.tz) : null;
             return (
-              <Link key={c.id} href={`/school/courses/${c.id}`} className="group rounded-xl border border-border bg-surface p-4 transition-colors hover:border-border-strong">
+              <Link key={c.id} href={`/school/courses/${c.id}`} className="group rounded-3xl bg-surface p-4 shadow-soft transition-shadow hover:shadow-lift">
                 <div className="flex items-start gap-3">
                   <span className="mt-1 h-8 w-1 shrink-0 rounded-full" style={{ background: c.color ?? "var(--accent)" }} />
                   <div className="min-w-0 flex-1">

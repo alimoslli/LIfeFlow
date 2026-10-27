@@ -3,14 +3,14 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export function Card({ children, className, as: As = "section" }: { children: ReactNode; className?: string; as?: "section" | "div" | "article" }) {
-  return <As className={cn("rounded-xl border border-border bg-surface", className)}>{children}</As>;
+  return <As className={cn("rounded-3xl bg-surface shadow-soft", className)}>{children}</As>;
 }
 
 export function CardHeader({ title, action, subtitle, className }: { title: ReactNode; subtitle?: ReactNode; action?: ReactNode; className?: string }) {
   return (
     <div className={cn("flex items-start justify-between gap-3 px-5 pt-4 pb-2", className)}>
       <div className="min-w-0">
-        <h2 className="text-[13px] font-semibold tracking-wide text-text-2 uppercase">{title}</h2>
+        <h2 className="text-[15px] font-semibold text-text">{title}</h2>
         {subtitle && <p className="mt-0.5 text-xs text-muted">{subtitle}</p>}
       </div>
       {action}
@@ -22,8 +22,8 @@ export function PageHeader({ title, description, actions, eyebrow }: { title: Re
   return (
     <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        {eyebrow && <p className="mb-1 text-xs font-medium tracking-wide text-muted uppercase">{eyebrow}</p>}
-        <h1 className="font-display text-[32px] leading-tight font-medium tracking-tight text-text">{title}</h1>
+        {eyebrow && <p className="mb-1 text-sm text-muted">{eyebrow}</p>}
+        <h1 className="font-display text-[38px] leading-tight font-medium tracking-tight text-text">{title}</h1>
         {description && <p className="mt-1 max-w-2xl text-sm text-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}

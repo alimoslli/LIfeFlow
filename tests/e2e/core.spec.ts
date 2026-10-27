@@ -3,15 +3,15 @@ import { askJarvis, queryAsUser, signUp } from "./helpers";
 
 test("sign up, reach Home, and manage a task end to end", async ({ page }) => {
   await signUp(page);
-  await expect(page.getByText("No open tasks")).toBeVisible();
+  await expect(page.getByText("A clear day.")).toBeVisible();
 
-  await page.getByRole("link", { name: "Tasks" }).first().click();
+  await page.goto("/tasks");
   await page.getByLabel("Task title").fill("Renew parking permit");
   await page.getByRole("button", { name: "Add", exact: true }).click();
   await expect(page.getByText("Renew parking permit")).toBeVisible();
 
   await page.goto("/");
-  await expect(page.getByText("Renew parking permit")).toBeVisible();
+  await expect(page.getByRole("region", { name: "On your list" }).getByText("Renew parking permit")).toBeVisible();
   await page.getByRole("checkbox", { name: /Complete Renew parking permit/ }).click();
   await page.goto("/tasks?view=done");
   await expect(page.getByText("Renew parking permit")).toBeVisible();
