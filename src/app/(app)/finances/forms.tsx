@@ -1,4 +1,5 @@
 "use client";
+import { Plus, Upload } from "lucide-react";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -41,7 +42,14 @@ export function CategoryOptions({ categories }: { categories: (Opt & { parentId:
 
 export function AddTransactionDialog({ action, accounts, categories, today }: { action: Action; accounts: Opt[]; categories: (Opt & { parentId: string | null })[]; today: string }) {
   return (
-    <Dialog trigger="Add transaction" title="Add a transaction" triggerProps={{ variant: "secondary" }}>
+    <Dialog
+      trigger={
+        <>
+          <Plus className="h-4 w-4" /> Add
+        </>
+      }
+      title="Add a transaction"
+    >
       {(close) => (
         <ActionForm action={action} onSuccess={close}>
           <Field label="Description" htmlFor="t-desc">
@@ -96,7 +104,7 @@ export function AddTransactionDialog({ action, accounts, categories, today }: { 
 
 export function ImportCsvDialog({ action, accounts }: { action: Action; accounts: Opt[] }) {
   return (
-    <Dialog trigger="Import CSV" title="Import transactions" description="Columns: date, description, amount (negative = money out). Optional: category, merchant. Re-importing the same file won't create duplicates." triggerProps={{ variant: "secondary" }}>
+    <Dialog trigger={<><Upload className="h-4 w-4 text-muted" /> Import CSV</>} title="Import transactions" description="Columns: date, description, amount (negative = money out). Optional: category, merchant. Re-importing the same file won't create duplicates." triggerProps={{ variant: "ghost", className: "h-9 w-full !justify-start rounded-xl px-3 font-normal text-text" }}>
       {() => (
         <ActionForm action={action} showSuccess>
           <Field label="Into account" htmlFor="i-acct">

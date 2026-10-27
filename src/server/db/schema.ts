@@ -1,5 +1,5 @@
 /**
- * BudgetFlow relational schema.
+ * LifeFlow relational schema.
  *
  * Conventions
  * - Every user-owned table has a `user_id` column and a row-level-security

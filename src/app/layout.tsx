@@ -7,14 +7,19 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const newsreader = Newsreader({ variable: "--font-newsreader", subsets: ["latin"], style: ["normal", "italic"] });
 
 export const metadata: Metadata = {
-  title: { default: "BudgetFlow", template: "%s · BudgetFlow" },
+  title: { default: "LifeFlow", template: "%s · LifeFlow" },
   description: "Your personal life operating system — money, school, work and time, with Jarvis.",
+  applicationName: "LifeFlow",
+  appleWebApp: { capable: true, title: "LifeFlow", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
+  viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f6f2" },
-    { media: "(prefers-color-scheme: dark)", color: "#121211" },
+    { media: "(prefers-color-scheme: light)", color: "#f4f2ec" },
+    { media: "(prefers-color-scheme: dark)", color: "#11110f" },
   ],
 };
 

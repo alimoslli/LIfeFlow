@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* BudgetFlow design tokens. Warm paper neutrals, one deep-green accent. */
+/* LifeFlow design tokens. Warm paper neutrals, one deep-green accent. */
 :root {
   --bg: #f4f2ec;
   --surface: #fffefb;
@@ -116,11 +116,21 @@ html, body {
   color: var(--text);
 }
 body {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
   font-family: var(--font-sans);
   font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
 }
 .tabular { font-variant-numeric: tabular-nums; }
+/* iOS zooms into inputs under 16px; keep form text at 16px on phones. */
+@media (max-width: 639px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+/* Installed app: respect the notch / home indicator. */
+@media (display-mode: standalone) {
+  body { padding-top: env(safe-area-inset-top); }
+}
 :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 ::selection { background: var(--accent-soft); }
 

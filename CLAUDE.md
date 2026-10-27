@@ -15,3 +15,11 @@
 
 ## Verify before finishing
 `npm run typecheck && npm run lint && npm test`, then `npm run build && npm run test:e2e` for UI/flow changes.
+
+## Product rules (from the owner)
+- Phone-first app that must also work perfectly on the web. Four places: Today, Plan, Jarvis, Money. Detail pages hang off Plan/Money.
+- Money: never project income (pay counts only after it's deposited). Today's money section = cash & checking, spent this month, came in this month.
+- Prefer one clear action per item; no dense tables on phones.
+
+## Dev gotcha
+If `next dev` reload-loops ("HMR hash mismatch"), stop it and `rm -rf .next` (usually a leftover production build), then restart.

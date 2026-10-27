@@ -28,6 +28,19 @@ BudgetFlow is a personal life operating system: **finances, wealth, school, work
 
 ---
 
+## Install it on your phone
+
+LifeFlow is built as a phone app (a Progressive Web App) and also works fully in any desktop browser.
+
+- **iPhone (Safari):** open your site → Share button → **Add to Home Screen**.
+- **Android (Chrome):** open your site → ⋮ menu → **Install app** (or "Add to Home screen").
+
+It then opens full-screen from its own icon, like a native app.
+
+## How money is shown
+
+Only real numbers, never projections. Take-home pay isn't known until it lands, so income counts only once it's in an account. The Money tab shows **cash & checking** (savings excluded), **spent this month** and **came in this month**, plus investment value with its all-time return (from holdings that have a cost basis).
+
 ## Quick start (local development)
 
 Prerequisites: **Node.js 22+**, **PostgreSQL 15+**.

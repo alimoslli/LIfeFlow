@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Info, Landmark, LineChart, PiggyBank, Receipt, Repeat, Target } from "lucide-react";
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, Landmark, LineChart, PiggyBank, Receipt, Repeat, Target, TrendingDown, TrendingUp } from "lucide-react";
 import { InsightList } from "../_today/insights";
 import { addDaysStr, formatDateStr, monthStart, todayIn } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
@@ -9,7 +9,7 @@ import { withCurrentUser } from "@/server/auth/current-user";
 import { getBriefing } from "@/server/briefing";
 import { deriveInsights } from "@/server/briefing/rules";
 import { series } from "@/server/db/series";
-import { listAccounts, summarizeBalances } from "@/server/services/finance/accounts";
+import { listAccounts } from "@/server/services/finance/accounts";
 import { spendingByCategory, upcomingRecurring } from "@/server/services/finance/planning";
 
 export const metadata: Metadata = { title: "Money" };
@@ -19,13 +19,13 @@ const whole = (c: number) => formatCents(c).replace(/\.\d\d$/, "");
 export default async function MoneyPage() {
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
-    const { snapshot, briefing } = await getBriefing(s, u);
-    const [accounts, categories, coming] = await series(
+    const { snapshot } = await getBriefing(s, u);
+    const [accounts, categories, bills] = await series(
       () => listAccounts(s),
       () => spendingByCategory(s, monthStart(today), today),
-      () => upcomingRecurring(s, today, addDaysStr(today, 21)),
+      () => upcomingRecurring(s, today, addDaysStr(today, 30)),
     );
-    return { snapshot, briefing, accounts, categories, coming, today };
+    return { snapshot, accounts, categories, bills: bills.filter((b) => b.amountCents < 0), today };
   });
   const m = d.snapshot.money;
 
@@ -45,54 +45,89 @@ export default async function MoneyPage() {
     );
   }
 
-  const sts = d.briefing.safeToSpend!;
-  const balances = summarizeBalances(d.accounts);
+  const month = formatDateStr(d.today, "MMMM");
+  const net = m.incomeThisMonthCents - m.spentThisMonthCents;
   const insights = deriveInsights(d.snapshot, 10).filter((i) => ["money", "trend", "goal"].includes(i.icon)).slice(0, 3);
-  const diff = m.monthToDateSpendCents - m.lastMonthSameSpanSpendCents;
-  const pct = m.lastMonthSameSpanSpendCents ? Math.round((diff / m.lastMonthSameSpanSpendCents) * 100) : null;
   const topCats = d.categories.filter((c) => c.cents > 0).slice(0, 5);
   const maxCat = Math.max(1, ...topCats.map((c) => c.cents));
+  const investmentAccounts = d.accounts.filter((a) => a.type === "investment");
+  const ret = m.investments?.returnPct ?? null;
 
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-10">
       <header className="animate-rise">
-        <h1 className="font-display text-[40px] leading-none font-medium tracking-tight">Money</h1>
+        <p className="text-sm text-muted">{month}</p>
+        <h1 className="mt-1 font-display text-[40px] leading-none font-medium tracking-tight">Money</h1>
         {m.hasDemoData && <p className="mt-2 text-xs text-muted">Sample data</p>}
       </header>
 
-      <section className="animate-rise rounded-3xl bg-accent p-6 text-accent-text shadow-lift" style={{ animationDelay: "60ms" }}>
-        <p className="text-sm opacity-75">{sts.amountCents >= 0 ? "Free to spend this month" : "Short this month"}</p>
-        <p className="mt-1 font-display text-[52px] leading-none font-medium tracking-tight">{whole(Math.abs(sts.amountCents))}</p>
-        <p className="mt-2 text-sm opacity-80">{sts.amountCents >= 0 ? `about ${whole(sts.perDayCents)} a day after bills` : "bills are ahead of your cash"}</p>
-        <p className="mt-4 flex items-start gap-1.5 border-t border-white/15 pt-3 text-xs opacity-70">
-          <Info className="mt-0.5 h-3 w-3 shrink-0" /> {sts.explanation}
-        </p>
+      {/* The three numbers that matter */}
+      <section className="animate-rise overflow-hidden rounded-[28px] bg-accent text-accent-text shadow-lift" style={{ animationDelay: "60ms" }} aria-label="This month">
+        <div className="relative p-6 pb-5">
+          <Waves />
+          <p className="relative text-sm opacity-75">Cash &amp; checking</p>
+          <p className="tabular relative mt-1 font-display text-[54px] leading-none font-medium tracking-tight">{whole(m.liquidCents)}</p>
+          <p className="relative mt-2 text-sm opacity-75">
+            {net >= 0 ? `${whole(net)} more came in than went out this month` : `${whole(-net)} more went out than came in this month`}
+          </p>
+        </div>
+        <div className="grid grid-cols-2 divide-x divide-white/15 border-t border-white/15">
+          <div className="p-5">
+            <p className="flex items-center gap-1.5 text-sm opacity-75">
+              <ArrowUpRight className="h-3.5 w-3.5" /> Spent
+            </p>
+            <p className="tabular mt-1 text-2xl font-medium">{whole(m.spentThisMonthCents)}</p>
+          </div>
+          <div className="p-5">
+            <p className="flex items-center gap-1.5 text-sm opacity-75">
+              <ArrowDownLeft className="h-3.5 w-3.5" /> Came in
+            </p>
+            <p className="tabular mt-1 text-2xl font-medium">{whole(m.incomeThisMonthCents)}</p>
+          </div>
+        </div>
       </section>
 
-      <section className="animate-rise" style={{ animationDelay: "120ms" }}>
-        <p className="text-[17px] leading-relaxed text-text-2">
-          You&apos;ve spent <span className="font-medium text-text">{whole(m.monthToDateSpendCents)}</span> so far in {formatDateStr(d.today, "MMMM")}
-          {pct != null && Math.abs(pct) >= 5 ? (
-            <>
-              {" "}— <span className={cn("font-medium", pct > 0 ? "text-danger" : "text-success")}>{Math.abs(pct)}% {pct > 0 ? "more" : "less"}</span> than this point last month.
-            </>
-          ) : (
-            ", about the same as last month."
-          )}
-        </p>
-      </section>
+      {m.investments && (
+        <section className="animate-rise" style={{ animationDelay: "120ms" }} aria-label="Investments">
+          <Title href="/wealth">Investments</Title>
+          <Link href="/wealth" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="text-sm text-muted">Portfolio</p>
+                <p className="tabular mt-1 font-display text-[34px] leading-none font-medium">{whole(m.investments.valueCents)}</p>
+              </div>
+              {ret != null && (
+                <span className={cn("flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium", ret >= 0 ? "bg-success-soft text-success" : "bg-danger-soft text-danger")}>
+                  {ret >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                  {ret >= 0 ? "+" : ""}
+                  {ret.toFixed(1)}%
+                </span>
+              )}
+            </div>
+            {ret != null && <p className="mt-2 text-xs text-muted">All-time return on holdings with a known cost</p>}
+            <ul className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
+              {investmentAccounts.map((a) => (
+                <li key={a.id} className="flex justify-between text-[15px]">
+                  <span className="text-text-2">{a.name}</span>
+                  <span className="tabular">{whole(a.currentBalanceCents)}</span>
+                </li>
+              ))}
+            </ul>
+          </Link>
+        </section>
+      )}
 
       {insights.length > 0 && (
-        <section>
+        <section aria-label="Worth knowing">
           <h2 className="mb-3 text-[15px] font-semibold">Worth knowing</h2>
           <InsightList insights={insights} />
         </section>
       )}
 
       {topCats.length > 0 && (
-        <section className="animate-rise" style={{ animationDelay: "200ms" }}>
-          <Title href="/finances/transactions">Where it went this month</Title>
-          <ul className="flex flex-col gap-3.5 rounded-3xl bg-surface p-5 shadow-soft">
+        <section className="animate-rise" style={{ animationDelay: "200ms" }} aria-label="Where it went">
+          <Title href="/finances/transactions">Where it went in {month}</Title>
+          <ul className="flex flex-col gap-4 rounded-3xl bg-surface p-5 shadow-soft">
             {topCats.map((c) => (
               <li key={c.name}>
                 <div className="mb-1.5 flex justify-between text-[15px]">
@@ -108,34 +143,29 @@ export default async function MoneyPage() {
         </section>
       )}
 
-      {d.coming.length > 0 && (
-        <section className="animate-rise" style={{ animationDelay: "240ms" }}>
-          <Title href="/finances/bills">Coming up</Title>
-          <ul className="flex flex-col">
-            {d.coming.slice(0, 6).map((c) => (
-              <li key={`${c.id}${c.date}`} className="flex items-center gap-4 py-2.5">
+      {d.bills.length > 0 && (
+        <section className="animate-rise" style={{ animationDelay: "240ms" }} aria-label="Bills">
+          <Title href="/finances/bills">Bills in the next 30 days</Title>
+          <ul className="flex flex-col divide-y divide-border rounded-3xl bg-surface px-5 shadow-soft">
+            {d.bills.slice(0, 6).map((c) => (
+              <li key={`${c.id}${c.date}`} className="flex items-center gap-4 py-3.5">
                 <span className="tabular w-14 shrink-0 text-sm text-muted">{formatDateStr(c.date, "MMM d")}</span>
                 <span className="flex-1 truncate text-[15px]">{c.name}</span>
-                <span className={cn("tabular text-[15px]", c.amountCents > 0 ? "text-success" : "text-text")}>
-                  {c.amountCents > 0 ? "+" : "−"}
-                  {whole(Math.abs(c.amountCents))}
-                </span>
+                <span className="tabular text-[15px]">{whole(-c.amountCents)}</span>
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <section className="animate-rise" style={{ animationDelay: "280ms" }}>
-        <Title href="/wealth">Everything you have</Title>
+      <section className="grid grid-cols-2 gap-3" aria-label="Savings and debt">
         <div className="rounded-3xl bg-surface p-5 shadow-soft">
-          <p className="text-sm text-muted">Net worth</p>
-          <p className="mt-1 font-display text-[32px] leading-none font-medium">{whole(balances.netWorthCents)}</p>
-          <div className="mt-4 grid grid-cols-3 gap-3 border-t border-border pt-4 text-sm">
-            <Mini label="Cash" value={whole(balances.cashCents)} />
-            <Mini label="Investments" value={whole(balances.investmentsCents)} />
-            <Mini label="Owed" value={whole(balances.creditOwedCents + balances.loansOwedCents)} />
-          </div>
+          <p className="text-sm text-muted">Savings</p>
+          <p className="tabular mt-1 text-xl font-medium">{whole(m.savingsCents)}</p>
+        </div>
+        <div className="rounded-3xl bg-surface p-5 shadow-soft">
+          <p className="text-sm text-muted">Owed on cards</p>
+          <p className="tabular mt-1 text-xl font-medium">{whole(m.creditOwedCents)}</p>
         </div>
       </section>
 
@@ -154,6 +184,16 @@ export default async function MoneyPage() {
   );
 }
 
+function Waves() {
+  return (
+    <svg viewBox="0 0 400 160" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.12]" aria-hidden>
+      {Array.from({ length: 7 }, (_, i) => (
+        <path key={i} d={`M0 ${120 - i * 9} C 90 ${60 + i * 6}, 210 ${150 - i * 5}, 400 ${50 + i * 7}`} fill="none" stroke="white" strokeWidth="1.2" />
+      ))}
+    </svg>
+  );
+}
+
 function Title({ children, href }: { children: React.ReactNode; href: string }) {
   return (
     <div className="mb-3 flex items-baseline justify-between">
@@ -161,15 +201,6 @@ function Title({ children, href }: { children: React.ReactNode; href: string }) 
       <Link href={href} className="flex items-center gap-1 text-sm text-muted hover:text-text">
         See all <ArrowRight className="h-3.5 w-3.5" />
       </Link>
-    </div>
-  );
-}
-
-function Mini({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs text-muted">{label}</p>
-      <p className="tabular mt-0.5 font-medium">{value}</p>
     </div>
   );
 }

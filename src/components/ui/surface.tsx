@@ -26,7 +26,7 @@ export function PageHeader({ title, description, actions, eyebrow }: { title: Re
         <h1 className="font-display text-[38px] leading-tight font-medium tracking-tight text-text">{title}</h1>
         {description && <p className="mt-1 max-w-2xl text-sm text-muted">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 [&>*]:shrink-0">{actions}</div>}
     </header>
   );
 }
@@ -58,6 +58,8 @@ export function Badge({ children, tone = "neutral", className }: { children: Rea
 
 /** Labels where data came from, so demo / manual / synced records are never confused. */
 export function SourceBadge({ source }: { source: string }) {
+  // Demo records only exist in demo accounts, which show a banner instead of tagging every row.
+  if (source === "demo") return null;
   const map: Record<string, { label: string; tone: Tone }> = {
     demo: { label: "Sample data", tone: "warning" },
     manual: { label: "Manual", tone: "neutral" },
@@ -94,15 +96,15 @@ export function Stat({ label, value, sub, className }: { label: string; value: R
 
 export function Tabs({ items, current }: { items: { href: string; label: string; key: string }[]; current: string }) {
   return (
-    <nav className="-mx-1 mb-6 flex gap-1 overflow-x-auto border-b border-border px-1" aria-label="Sections">
+    <nav className="-mx-1 mb-6 flex gap-1.5 overflow-x-auto px-1 pb-1" aria-label="Sections">
       {items.map((i) => (
         <Link
           key={i.key}
           href={i.href}
           aria-current={i.key === current ? "page" : undefined}
           className={cn(
-            "-mb-px border-b-2 px-3 py-2 text-sm whitespace-nowrap transition-colors",
-            i.key === current ? "border-accent font-medium text-text" : "border-transparent text-muted hover:text-text",
+            "rounded-full px-4 py-2 text-sm whitespace-nowrap transition-colors",
+            i.key === current ? "bg-text font-medium text-bg" : "bg-surface text-text-2 shadow-soft hover:text-text",
           )}
         >
           {i.label}

@@ -1,7 +1,7 @@
 import { addDaysStr, daysBetween, formatDateStr, formatIn, localDateOf } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
 import { findConflicts, type AgendaItem } from "../services/calendar";
-import type { Briefing, DayGlance, Insight, LifeSnapshot, SafeToSpend } from "./types";
+import type { Briefing, DayGlance, Insight, LifeSnapshot } from "./types";
 
 /** Sentences read better with whole dollars: "$1,842", "$12.50" only under $100. */
 const money = (c: number) => (Math.abs(c) >= 10_000 ? formatCents(Math.round(c / 100) * 100).replace(/\.00$/, "") : formatCents(c).replace(/\.00$/, ""));
@@ -17,53 +17,9 @@ function dayName(date: string, today: string) {
   return formatDateStr(date, "MMM d");
 }
 
-// ---------------------------------------------------------------- money
-
-/**
- * Money that's free over the next 30 days:
- *   checking + cash  +  expected pay  −  card balance  −  tracked bills.
- * Savings are treated as set aside. Only tracked recurring items count as
- * expected income or bills, which the explanation says plainly.
- */
-export function computeSafeToSpend(s: LifeSnapshot): SafeToSpend | null {
-  const m = s.money;
-  if (!m) return null;
-  const days = 30;
-  const billsCents = m.billsNext30.reduce((sum, b) => sum - b.amountCents, 0);
-  const incomeCents = m.incomeNext30.reduce((sum, i) => sum + i.amountCents, 0);
-  const amount = m.spendableCashCents + incomeCents - m.creditOwedCents - billsCents;
-  const parts = [`${money(m.spendableCashCents)} in checking`];
-  if (incomeCents) parts.push(`+ ${money(incomeCents)} expected pay`);
-  if (billsCents) parts.push(`− ${money(billsCents)} in bills`);
-  if (m.creditOwedCents) parts.push(`− ${money(m.creditOwedCents)} card balance`);
-  return {
-    amountCents: amount,
-    perDayCents: Math.floor(Math.max(0, amount) / days),
-    days,
-    billsCents,
-    incomeCents,
-    explanation: `${parts.join(" ")}, over the next 30 days. Savings aren't counted.`,
-  };
-}
-
 // ---------------------------------------------------------------- rules
 
 type Rule = (s: LifeSnapshot) => Insight[];
-
-const tightMonthRule: Rule = (s) => {
-  const sts = computeSafeToSpend(s);
-  if (!sts || sts.amountCents >= 0) return [];
-  return [
-    {
-      id: "tight-month",
-      tone: "attention",
-      icon: "money",
-      text: `Your bills over the next 30 days are ${money(-sts.amountCents)} more than your checking and expected pay.`,
-      action: { label: "Make a plan", prompt: "My upcoming bills are more than my cash and expected pay this month. Help me make a plan." },
-      score: 95,
-    },
-  ];
-};
 
 const overdueRule: Rule = (s) => {
   if (!s.overdue.length) return [];
@@ -158,7 +114,7 @@ const overBudgetRule: Rule = (s) => {
 const spendingPaceRule: Rule = (s) => {
   const m = s.money;
   if (!m || m.lastMonthSameSpanSpendCents < 5_000) return [];
-  const diff = m.monthToDateSpendCents - m.lastMonthSameSpanSpendCents;
+  const diff = m.spentThisMonthCents - m.lastMonthSameSpanSpendCents;
   const pct = Math.round((diff / m.lastMonthSameSpanSpendCents) * 100);
   if (Math.abs(pct) < 15) return [];
   return [
@@ -190,12 +146,6 @@ const billsRule: Rule = (s) => {
   ];
 };
 
-const paydayRule: Rule = (s) => {
-  const inc = s.money?.nextIncome;
-  if (!inc || daysBetween(s.today, inc.date) > 3) return [];
-  return [{ id: "payday", tone: "good", icon: "money", text: `Payday ${dayName(inc.date, s.today)}: about ${money(inc.amountCents)} from ${inc.name.replace(/ paycheck$/i, "")}.`, score: 25 }];
-};
-
 const goalRule: Rule = (s) => {
   const g = s.money?.goals.find((x) => x.percent < 100 && x.monthlyNeededCents);
   if (!g) return [];
@@ -212,7 +162,7 @@ const goalRule: Rule = (s) => {
   ];
 };
 
-export const RULES: Rule[] = [tightMonthRule, overdueRule, conflictRule, examRule, overBudgetRule, spendingPaceRule, busyDayRule, billsRule, paydayRule, goalRule];
+export const RULES: Rule[] = [overdueRule, conflictRule, examRule, overBudgetRule, spendingPaceRule, busyDayRule, billsRule, goalRule];
 
 export function deriveInsights(s: LifeSnapshot, limit = 4): Insight[] {
   return RULES.flatMap((r) => r(s))
@@ -276,7 +226,7 @@ export function buildBriefing(s: LifeSnapshot): Briefing {
     next,
     today,
     insights: deriveInsights(s),
-    safeToSpend: computeSafeToSpend(s),
+    money: s.money ? { liquidCents: s.money.liquidCents, spentCents: s.money.spentThisMonthCents, incomeCents: s.money.incomeThisMonthCents } : null,
     week: weekGlance(s),
   };
 }

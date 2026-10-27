@@ -67,14 +67,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     <>
       <PageHeader
         title="Calendar"
-        description="Classes, shifts, events, deadlines and due tasks in one view."
+        description="Your week at a glance."
         actions={
           <>
-            <div className="flex items-center rounded-lg border border-border bg-surface">
+            <div className="flex items-center rounded-full bg-surface shadow-soft">
               <Link href={`/calendar?date=${addDaysStr(d.from, -7)}`} className="p-2 text-muted hover:text-text" aria-label="Previous week">
                 <ChevronLeft className="h-4 w-4" />
               </Link>
-              <Link href="/calendar" className="border-x border-border px-3 py-1.5 text-sm">
+              <Link href="/calendar" className="px-3 py-2 text-sm">
                 Today
               </Link>
               <Link href={`/calendar?date=${addDaysStr(d.from, 7)}`} className="p-2 text-muted hover:text-text" aria-label="Next week">
@@ -90,10 +90,13 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       </p>
 
       {conflicts.length > 0 && (
-        <div className="mb-4 flex flex-col gap-1 rounded-lg bg-warning-soft px-4 py-2.5 text-sm text-warning">
+        <div className="mb-5 flex flex-col gap-1.5 rounded-2xl bg-warning-soft px-4 py-3 text-sm text-warning">
           {conflicts.slice(0, 4).map((c) => (
-            <p key={c.a.key + c.b.key} className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 shrink-0" /> <strong className="font-medium">{c.a.title}</strong> overlaps <strong className="font-medium">{c.b.title}</strong> on {formatIn(c.b.startsAt, tz, "EEE h:mm a")}
+            <p key={c.a.key + c.b.key} className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                <strong className="font-medium">{c.a.title}</strong> overlaps <strong className="font-medium">{c.b.title}</strong> on {formatIn(c.b.startsAt, tz, "EEEE 'at' h:mm a")}
+              </span>
             </p>
           ))}
         </div>
@@ -162,12 +165,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
       {/* Agenda (mobile, and the place to manage events) */}
       <div className="mt-6 flex flex-col gap-4">
-        <h2 className="font-display text-xl font-medium md:text-lg">This week</h2>
+        <h2 className="font-display text-2xl font-medium">This week</h2>
         {days.map((day) => {
           const items = byDay(day, () => true);
           return (
             <section key={day}>
-              <h3 className={cn("mb-1.5 text-xs font-semibold tracking-wide uppercase", day === d.today ? "text-accent" : "text-muted")}>{formatDateStr(day, "EEEE, MMM d")}</h3>
+              <h3 className={cn("mb-2 text-[15px] font-semibold", day === d.today ? "text-accent" : "text-text")}>
+                {formatDateStr(day, "EEEE")} <span className="font-normal text-muted">{formatDateStr(day, "MMM d")}</span>
+              </h3>
               {items.length === 0 ? (
                 <p className="text-sm text-muted">—</p>
               ) : (

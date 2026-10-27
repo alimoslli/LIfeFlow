@@ -38,7 +38,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
         actions={
           <>
             {project && (
-              <AskJarvisButton prompt={`Help me turn the "${project.name}" project into a concrete plan with tasks.`} className="h-9 rounded-lg border border-border bg-surface px-3.5 text-sm font-medium hover:border-border-strong">
+              <AskJarvisButton prompt={`Help me turn the "${project.name}" project into a concrete plan with tasks.`} className="h-10 rounded-full bg-surface px-5 text-sm font-medium shadow-soft">
                 Plan with Jarvis
               </AskJarvisButton>
             )}

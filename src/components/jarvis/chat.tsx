@@ -210,28 +210,28 @@ export function JarvisChat({
       <div ref={scrollRef} className={cn("min-h-0 flex-1 overflow-y-auto", compact ? "px-4" : "px-4 sm:px-8")} aria-live="polite">
         <div className={cn("mx-auto flex w-full flex-col gap-5 py-6", !compact && "max-w-3xl")}>
           {!availability.available && (
-            <div className="flex gap-3 rounded-xl border border-warning/30 bg-warning-soft p-4 text-sm text-warning">
+            <div className="flex gap-3 rounded-2xl bg-warning-soft p-4 text-sm text-warning">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
                 <p className="font-medium">Jarvis isn&apos;t connected to an AI model yet.</p>
-                <p className="mt-1 opacity-90">{availability.reason} See README → “Configure Jarvis”. Everything else in BudgetFlow works without it.</p>
+                <p className="mt-1 opacity-90">{availability.reason} See README → “Configure Jarvis”. Everything else in LifeFlow works without it.</p>
               </div>
             </div>
           )}
           {empty && (
-            <div className="animate-fade-in pt-6">
-              <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-accent">
+            <div className="animate-rise pt-[8vh]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-text shadow-lift">
                 <Sparkles className="h-5 w-5" />
               </div>
-              <h2 className="mt-3 font-display text-2xl font-medium">How can I help?</h2>
-              <p className="mt-1 text-sm text-muted">I can read and update your tasks, schedule, courses, work and finances — and I&apos;ll show you exactly what I changed.</p>
-              <div className="mt-5 flex flex-col gap-2">
+              <h2 className="mt-5 font-display text-[34px] leading-tight font-medium tracking-tight">How can I help?</h2>
+              <p className="mt-2 text-[15px] text-muted">I can read and update your tasks, schedule, courses, work and finances — and I&apos;ll show you exactly what I changed.</p>
+              <div className="mt-7 flex flex-col gap-2">
                 {STARTERS[module].map((s) => (
                   <button
                     key={s}
                     onClick={() => (s.endsWith("…") ? (setInput(s.replace("…", "")), inputRef.current?.focus()) : send(s))}
                     disabled={!availability.available}
-                    className="rounded-lg border border-border bg-surface px-3.5 py-2.5 text-left text-sm text-text-2 transition-colors hover:border-border-strong hover:text-text disabled:opacity-50"
+                    className="rounded-2xl bg-surface px-4 py-3.5 text-left text-[15px] text-text-2 shadow-soft transition-all hover:text-text hover:shadow-lift active:scale-[0.99] disabled:opacity-50"
                   >
                     {s}
                   </button>
@@ -243,7 +243,7 @@ export function JarvisChat({
           {followUps && (
             <div className="flex flex-wrap gap-2">
               {followUps.map((f) => (
-                <button key={f} onClick={() => send(f)} className="rounded-full border border-border bg-surface px-3 py-1 text-xs text-text-2 hover:border-accent hover:text-accent">
+                <button key={f} onClick={() => send(f)} className="rounded-full bg-surface px-3.5 py-1.5 text-sm text-text-2 shadow-soft hover:text-accent">
                   {f}
                 </button>
               ))}
@@ -252,12 +252,12 @@ export function JarvisChat({
         </div>
       </div>
 
-      <div className={cn("border-t border-border bg-bg/95 pt-3 pb-3 backdrop-blur", compact ? "px-4" : "px-4 sm:px-8")}>
+      <div className={cn("bg-gradient-to-t from-bg via-bg to-bg/0 pt-4 pb-3", compact ? "px-4" : "px-4 sm:px-8")}>
         <div className={cn("mx-auto", !compact && "max-w-3xl")}>
           {pending.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
               {pending.map((p) => (
-                <span key={p.id} className={cn("inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs", p.error ? "border-danger/40 text-danger" : "border-border bg-surface text-text-2")}>
+                <span key={p.id} className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs shadow-soft", p.error ? "bg-danger-soft text-danger" : "bg-surface text-text-2")}>
                   {p.uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : p.mimeType.startsWith("image/") ? <ImageIcon className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
                   <span className="max-w-40 truncate">{p.filename}</span>
                   {p.error && <span>· {p.error}</span>}
@@ -273,13 +273,13 @@ export function JarvisChat({
               e.preventDefault();
               send(input);
             }}
-            className="flex items-end gap-2 rounded-2xl border border-border bg-surface p-2 shadow-soft focus-within:border-accent"
+            className="flex items-end gap-1.5 rounded-[26px] bg-surface p-1.5 pl-2 shadow-lift"
           >
             <input ref={fileRef} type="file" accept={ACCEPT} multiple hidden onChange={(e) => upload(e.target.files)} />
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="rounded-lg p-2 text-muted hover:bg-surface-2 hover:text-text disabled:opacity-40"
+              className="rounded-full p-2.5 text-muted hover:bg-surface-2 hover:text-text disabled:opacity-40"
               aria-label="Attach a file or screenshot"
               title="Attach a screenshot, syllabus or text file"
               disabled={!availability.available}
@@ -309,21 +309,21 @@ export function JarvisChat({
               className="max-h-48 min-h-9 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] placeholder:text-muted focus:outline-none focus-visible:outline-none [field-sizing:content]"
             />
             {busy ? (
-              <button type="button" onClick={() => abortRef.current?.abort()} className="rounded-xl bg-surface-3 p-2.5 text-text" aria-label="Stop">
+              <button type="button" onClick={() => abortRef.current?.abort()} className="rounded-full bg-surface-3 p-3 text-text" aria-label="Stop">
                 <Square className="h-3.5 w-3.5" />
               </button>
             ) : (
               <button
                 type="submit"
                 disabled={!availability.available || (!input.trim() && !pending.some((p) => !p.uploading && !p.error))}
-                className="rounded-xl bg-accent p-2.5 text-accent-text transition-opacity disabled:opacity-30"
+                className="rounded-full bg-accent p-3 text-accent-text transition-opacity disabled:opacity-30"
                 aria-label="Send"
               >
                 <ArrowUp className="h-4 w-4" />
               </button>
             )}
           </form>
-          <p className="mt-1.5 text-center text-[11px] text-muted">Jarvis can make mistakes. It always shows what it changed; deletions need your confirmation.</p>
+          <p className="mt-2 text-center text-[11px] text-muted">Jarvis shows everything it changes. Deletions always ask first.</p>
         </div>
       </div>
     </div>
@@ -333,12 +333,12 @@ export function JarvisChat({
 function UserBubble({ m }: { m: Extract<UiMessage, { role: "user" }> }) {
   return (
     <div className="animate-fade-in flex justify-end">
-      <div className="max-w-[85%] rounded-2xl rounded-br-md bg-surface-3 px-4 py-2.5 text-[14.5px] whitespace-pre-wrap text-text">
+      <div className="max-w-[85%] rounded-[22px] rounded-br-md bg-accent px-4 py-2.5 text-[15px] whitespace-pre-wrap text-accent-text">
         {m.text}
         {m.attachments.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {m.attachments.map((a) => (
-              <span key={a.id} className="inline-flex items-center gap-1 rounded bg-surface px-1.5 py-0.5 text-xs text-text-2">
+              <span key={a.id} className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-xs">
                 {a.mimeType.startsWith("image/") ? <ImageIcon className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
                 {a.filename}
               </span>
@@ -354,14 +354,14 @@ function AssistantBubble({ m, onDecide }: { m: Extract<UiMessage, { role: "assis
   const thinking = m.streaming && !m.text && m.tools.every((t) => t.status !== "running");
   return (
     <div className="animate-fade-in flex gap-3">
-      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
         <Sparkles className="h-3.5 w-3.5" />
       </div>
       <div className="min-w-0 flex-1 space-y-2.5">
         {m.tools.length > 0 && (
-          <ul className="flex flex-col gap-1">
+          <ul className="flex flex-col gap-1.5">
             {m.tools.map((t) => (
-              <li key={t.callId} className="flex items-center gap-2 text-[13px]">
+              <li key={t.callId} className="flex w-fit max-w-full items-center gap-2 rounded-full bg-surface px-3 py-1.5 text-[13px] shadow-soft">
                 {t.status === "running" ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-muted" />
                 ) : t.status === "ok" ? (
@@ -389,14 +389,14 @@ function AssistantBubble({ m, onDecide }: { m: Extract<UiMessage, { role: "assis
         )}
         {m.text && <Markdown text={m.text} />}
         {m.confirmations.map((c) => (
-          <div key={c.actionId} className="rounded-xl border border-border bg-surface p-3.5">
-            <p className="text-sm font-medium">{c.summary}</p>
+          <div key={c.actionId} className="rounded-2xl bg-surface p-4 shadow-soft">
+            <p className="text-[15px] font-medium">{c.summary}</p>
             {c.status === "pending" && !c.resultText ? (
               <div className="mt-3 flex gap-2">
-                <button onClick={() => onDecide(c.actionId, "confirm")} className="rounded-lg bg-danger px-3 py-1.5 text-[13px] font-medium text-white">
+                <button onClick={() => onDecide(c.actionId, "confirm")} className="rounded-full bg-danger px-4 py-2 text-sm font-medium text-white">
                   Confirm
                 </button>
-                <button onClick={() => onDecide(c.actionId, "cancel")} className="rounded-lg border border-border px-3 py-1.5 text-[13px]">
+                <button onClick={() => onDecide(c.actionId, "cancel")} className="rounded-full bg-surface-2 px-4 py-2 text-sm">
                   Cancel
                 </button>
               </div>
@@ -408,7 +408,7 @@ function AssistantBubble({ m, onDecide }: { m: Extract<UiMessage, { role: "assis
           </div>
         ))}
         {m.error && (
-          <div className="flex gap-2 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger" role="alert">
+          <div className="flex gap-2 rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">
             <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
             {m.error}
           </div>

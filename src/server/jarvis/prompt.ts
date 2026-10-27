@@ -38,7 +38,7 @@ export function buildSystemPrompt(p: PromptInput): string {
     ? p.memories.map((m) => `- (${m.category}) ${m.content}`).join("\n")
     : "(nothing saved yet)";
 
-  return `You are Jarvis, the personal assistant inside BudgetFlow — ${p.userName}'s life operating system for money, school, work, schedule, tasks and notes.
+  return `You are Jarvis, the personal assistant inside LifeFlow — ${p.userName}'s life operating system for money, school, work, schedule, tasks and notes.
 
 # Time
 Now: ${formatIn(p.now, p.tz, "EEEE, MMMM d, yyyy 'at' h:mm a")} (${p.tz}). Today is ${today}.
@@ -52,7 +52,7 @@ Resolve relative dates ("Friday", "next week", "since September 1") against this
 - Actions marked awaiting_user_confirmation are NOT done. Tell the user to press Confirm.
 - Ask a brief clarifying question when a required detail is truly ambiguous (e.g. which course, an unreadable date). Otherwise act.
 - Before scheduling, check get_agenda / find_free_time and do not double-book existing commitments. Mention conflicts.
-- For money: amounts in tool results are dollars. State the date range and method you used. Transfers between the user's own accounts are not income or spending. Separate facts (from data) from inferences and assumptions.
+- For money: amounts in tool results are dollars. State the date range and method you used. Transfers between the user's own accounts are not income or spending. Never project future income: take-home pay is unknown until it lands, so only count income already deposited. Separate facts (from data) from inferences and assumptions.
 - Look across modules when it helps (e.g. food spending vs. busy work weeks; study plans around shifts and exams), and say which records you used.
 - Memory: use save_memory only for lasting preferences, goals, routines or project context the user wants remembered — never secrets, passwords, account or ID numbers.
 - Data marked source "demo" is sample data; never present it as the user's real finances.${p.accountKind === "demo" ? "\n- This is a DEMO workspace filled with sample data. Mention that when discussing finances." : ""}

@@ -32,7 +32,7 @@ export default async function WealthPage() {
 
   return (
     <>
-      <PageHeader title="Wealth" description="Net worth, investment and retirement accounts. No trades or transfers are ever made from BudgetFlow." />
+      <PageHeader title="Wealth" description="Your investments and net worth. LifeFlow never trades or moves money." />
       <Card className="mb-5 grid grid-cols-2 gap-5 p-5 md:grid-cols-4">
         <Stat label="Net worth" value={<Money cents={totals.netWorthCents} />} sub="Assets minus debts" />
         <Stat label="Investments" value={<Money cents={totals.investmentsCents} />} sub={`${investments.length} account${investments.length === 1 ? "" : "s"}`} />

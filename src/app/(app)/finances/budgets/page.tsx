@@ -36,11 +36,11 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
     <>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-[28px] font-medium tracking-tight">Budgets</h1>
-        <div className="flex items-center rounded-lg border border-border bg-surface">
+        <div className="flex items-center rounded-full bg-surface shadow-soft">
           <Link href={`/finances/budgets?month=${prev}`} className="p-2 text-muted hover:text-text" aria-label="Previous month">
             <ChevronLeft className="h-4 w-4" />
           </Link>
-          <span className="min-w-32 border-x border-border px-3 py-1.5 text-center text-sm">{formatDateStr(d.month, "MMMM yyyy")}</span>
+          <span className="min-w-32 px-3 py-2 text-center text-sm">{formatDateStr(d.month, "MMMM yyyy")}</span>
           <Link href={`/finances/budgets?month=${next}`} className="p-2 text-muted hover:text-text" aria-label="Next month">
             <ChevronRight className="h-4 w-4" />
           </Link>

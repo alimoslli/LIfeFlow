@@ -28,7 +28,7 @@ export default async function MemorySettings() {
           <Badge tone={status.available ? "success" : "warning"}>{status.available ? "Ready" : "Not configured"}</Badge>
         </div>
         <p className="mt-3 text-xs text-muted">
-          The model is set on the server (OPENAI_MODEL). Your API key is never sent to the browser. Conversations are stored in your BudgetFlow database and sent to OpenAI with store=false.
+          The model is set on the server (OPENAI_MODEL). Your API key is never sent to the browser. Conversations are stored in your LifeFlow database and sent to OpenAI with store=false.
         </p>
       </Card>
       <Card>

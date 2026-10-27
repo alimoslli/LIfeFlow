@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen, GraduationCap, Plug } from "lucide-react";
+import { BookOpen, GraduationCap, Plug, Sparkles } from "lucide-react";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { Badge, Card, CardHeader, EmptyState, PageHeader, Tabs } from "@/components/ui/surface";
 import { dueLabel } from "@/lib/dates";
@@ -43,15 +43,9 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
     <>
       <PageHeader
         title="School"
-        description="Your courses, deadlines and study materials. Paste a syllabus or screenshot into Jarvis to add assignments in bulk."
+        description="Your classes and what's due."
         actions={
           <>
-            <AskJarvisButton
-              prompt="I'm going to paste my assignments. Please add them to the right courses: "
-              className="h-9 rounded-lg border border-border bg-surface px-3.5 text-sm font-medium hover:border-border-strong"
-            >
-              Import with Jarvis
-            </AskJarvisButton>
             {d.courses.length > 0 && <AssignmentDialog action={createAssignmentAction} courses={d.courses} />}
             <CourseDialog action={createCourseAction} trigger="Add course" />
           </>
@@ -96,7 +90,15 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
         </div>
       )}
 
-      <h2 className="mb-3 font-display text-xl font-medium">Assignments</h2>
+      <AskJarvisButton
+        prompt="I'm going to paste my assignments. Please add them to the right courses: "
+        className="mb-10 flex w-full items-center gap-3 rounded-3xl bg-accent-soft px-5 py-4 text-left text-[15px] text-accent transition-transform active:scale-[0.99]"
+      >
+        <Sparkles className="h-4 w-4 shrink-0" />
+        <span className="flex-1">Have a syllabus or a screenshot? Send it to Jarvis and it&apos;ll add everything.</span>
+      </AskJarvisButton>
+
+      <h2 className="mb-3 font-display text-2xl font-medium">Assignments</h2>
       <Tabs current={view} items={VIEWS.map((v) => ({ key: v.key, label: v.label, href: `/school?view=${v.key}` }))} />
       <Card className="mb-10">
         {d.list.length === 0 ? (

@@ -45,11 +45,11 @@ export function NoteEditor({
         <label className="flex items-center gap-1.5 text-xs text-text-2">
           <input type="checkbox" name="pinned" defaultChecked={note.pinned} className="accent-[var(--accent)]" /> Pinned
         </label>
-        <div className="ml-auto flex rounded-lg border border-border p-0.5 text-xs">
-          <button type="button" onClick={() => setPreview(false)} className={`rounded-md px-2.5 py-1 ${!preview ? "bg-surface-2 font-medium" : "text-muted"}`}>
+        <div className="ml-auto flex rounded-full bg-surface-2 p-0.5 text-xs">
+          <button type="button" onClick={() => setPreview(false)} className={`rounded-full px-3 py-1 ${!preview ? "bg-surface-2 font-medium" : "text-muted"}`}>
             Write
           </button>
-          <button type="button" onClick={() => setPreview(true)} className={`rounded-md px-2.5 py-1 ${preview ? "bg-surface-2 font-medium" : "text-muted"}`}>
+          <button type="button" onClick={() => setPreview(true)} className={`rounded-full px-3 py-1 ${preview ? "bg-surface-2 font-medium" : "text-muted"}`}>
             Preview
           </button>
         </div>

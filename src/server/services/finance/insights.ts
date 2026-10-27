@@ -70,12 +70,11 @@ export async function affordability(scope: UserScope, amountCents: number, today
   const balances = summarizeBalances(accounts);
   const upcoming = await upcomingRecurring(scope, today, horizon);
   const upcomingBills = upcoming.filter((u) => u.amountCents < 0).reduce((s, u) => s - u.amountCents, 0);
-  const upcomingIncome = upcoming.filter((u) => u.amountCents > 0).reduce((s, u) => s + u.amountCents, 0);
   const monthSoFar = await spendingSummary(scope, { from: monthStart(today), to: today });
   const dailyRate = Math.round(monthSoFar.netSpendingCents / Math.max(1, daysBetween(monthStart(today), today) + 1));
   const days = Math.max(0, daysBetween(today, horizon));
   const projectedDiscretionary = dailyRate * days;
-  const projectedCashAfter = balances.cashCents + upcomingIncome - upcomingBills - projectedDiscretionary - amountCents;
+  const projectedCashAfter = balances.cashCents - upcomingBills - projectedDiscretionary - amountCents;
   return {
     amountCents,
     horizon: { from: today, to: horizon, days },
@@ -83,14 +82,13 @@ export async function affordability(scope: UserScope, amountCents: number, today
     creditCardOwedCents: balances.creditOwedCents,
     upcomingBills: upcoming.filter((u) => u.amountCents < 0),
     upcomingBillsCents: upcomingBills,
-    expectedIncomeCents: upcomingIncome,
     averageDailySpendingCents: dailyRate,
     projectedDiscretionaryCents: projectedDiscretionary,
     projectedCashAfterPurchaseCents: projectedCashAfter,
     hasAccounts: accounts.length > 0,
     assumptions: [
       "Liquid cash = checking, savings and cash accounts at their last known balance.",
-      "Upcoming bills and income come only from tracked recurring items.",
+      "Upcoming bills come from tracked recurring items. Income is not projected: pay counts only once it reaches your account.",
       `Day-to-day spending is projected at this month's average (${days} days).`,
       "Credit card balances are shown but not subtracted, since they may not be due before the date.",
     ],

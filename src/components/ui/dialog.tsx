@@ -38,10 +38,10 @@ export function Dialog({
         ref={ref}
         onClose={close}
         onClick={(e) => e.target === ref.current && close()}
-        className="m-auto w-[min(560px,calc(100vw-2rem))] rounded-2xl border border-border bg-surface p-0 text-text shadow-2xl backdrop:bg-black/30 backdrop:backdrop-blur-[2px]"
+        className="m-auto w-[min(560px,calc(100vw-2rem))] rounded-[28px] bg-bg p-0 text-text shadow-2xl backdrop:bg-black/30 backdrop:backdrop-blur-[2px] max-sm:mx-0 max-sm:mt-auto max-sm:mb-0 max-sm:max-h-[90dvh] max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none"
       >
         {open && (
-          <div className="animate-fade-in p-5">
+          <div className="animate-rise p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:p-6">
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
                 <h2 className="font-display text-xl font-medium">{title}</h2>

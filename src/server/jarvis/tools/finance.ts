@@ -174,7 +174,7 @@ export const financeTools = [
   }),
   defineTool({
     name: "check_affordability",
-    description: "Facts for 'can I afford $X (by date)?': liquid cash, upcoming bills/income, typical daily spending and a projection. Explain the assumptions in your answer.",
+    description: "Facts for 'can I afford $X (by date)?': cash on hand, upcoming bills, typical daily spending and a projection. Future income is never counted. Explain the assumptions in your answer.",
     schema: z.object({ amount: moneyArg("Purchase amount"), byDate: dateArg("Date the money is needed by").optional() }),
     mutates: false,
     async execute(a, ctx) {

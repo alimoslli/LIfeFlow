@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { localToInstant } from "@/lib/dates";
-import { buildBriefing, computeSafeToSpend, deriveInsights, summarizeDay } from "@/server/briefing/rules";
+import { buildBriefing, deriveInsights, summarizeDay } from "@/server/briefing/rules";
+import { portfolioReturn } from "@/server/services/finance/wealth";
 import type { LifeSnapshot } from "@/server/briefing/types";
 import type { AgendaItem } from "@/server/services/calendar";
 
@@ -39,40 +40,35 @@ function snapshot(over: Partial<LifeSnapshot> = {}): LifeSnapshot {
 }
 
 const money = (over: Partial<NonNullable<LifeSnapshot["money"]>> = {}): NonNullable<LifeSnapshot["money"]> => ({
-  cashCents: 100_000,
+  liquidCents: 60_000,
+  savingsCents: 400_000,
   creditOwedCents: 20_000,
-  nextIncome: { date: "2026-10-30", amountCents: 62_000, name: "Campus Library paycheck" },
-  spendableCashCents: 60_000,
-  incomeNext30: [{ date: "2026-10-30", amountCents: 62_000, name: "Paycheck" }],
+  spentThisMonthCents: 60_000,
+  incomeThisMonthCents: 124_000,
+  lastMonthSameSpanSpendCents: 60_000,
   billsNext30: [
     { name: "Phone", date: "2026-10-28", amountCents: -3_000 },
     { name: "Rent", date: "2026-11-01", amountCents: -95_000 },
   ],
-  monthToDateSpendCents: 60_000,
-  lastMonthSameSpanSpendCents: 60_000,
   overBudget: [],
   goals: [],
+  investments: null,
   hasDemoData: false,
   ...over,
 });
 
 describe("briefing", () => {
-  it("computes what's free to spend over 30 days, ignoring savings", () => {
-    const s = computeSafeToSpend(snapshot({ money: money() }))!;
-    // 600 checking + 620 pay − 30 phone − 950 rent − 200 card
-    expect(s.amountCents).toBe(4_000);
-    expect(s.perDayCents).toBe(133);
-    expect(s.explanation).toBe("$600 in checking + $620 expected pay − $980 in bills − $200 card balance, over the next 30 days. Savings aren't counted.");
+  it("shows only real money: cash & checking, spent and came in (no projected income)", () => {
+    const b = buildBriefing(snapshot({ money: money() }));
+    expect(b.money).toEqual({ liquidCents: 60_000, spentCents: 60_000, incomeCents: 124_000 });
+    expect(buildBriefing(snapshot()).money).toBeNull();
+    expect(deriveInsights(snapshot({ money: money() })).some((i) => /payday|expected/i.test(i.text))).toBe(false);
   });
 
-  it("warns when bills outrun cash", () => {
-    const s = snapshot({ money: money({ spendableCashCents: 10_000 }) });
-    expect(computeSafeToSpend(s)!.amountCents).toBe(-46_000);
-    expect(deriveInsights(s)[0].text).toBe("Your bills over the next 30 days are $460 more than your checking and expected pay.");
-  });
-
-  it("returns no money insight when there are no accounts", () => {
-    expect(computeSafeToSpend(snapshot())).toBeNull();
+  it("computes portfolio return from holdings with a known cost basis", () => {
+    expect(portfolioReturn([{ valueCents: 110_000, costBasisCents: 100_000 }, { valueCents: 5_000, costBasisCents: null }])).toBe(10);
+    expect(portfolioReturn([{ valueCents: 90_000, costBasisCents: 100_000 }])).toBe(-10);
+    expect(portfolioReturn([{ valueCents: 5_000, costBasisCents: null }])).toBeNull();
   });
 
   it("ranks overdue work and conflicts above everything else", () => {
@@ -108,8 +104,8 @@ describe("briefing", () => {
   });
 
   it("notices spending pace changes but ignores small ones", () => {
-    expect(deriveInsights(snapshot({ money: money({ monthToDateSpendCents: 66_000 }) })).find((i) => i.id.startsWith("pace"))).toBeUndefined();
-    expect(deriveInsights(snapshot({ money: money({ monthToDateSpendCents: 90_000 }) })).find((i) => i.id === "pace-up")?.text).toBe(
+    expect(deriveInsights(snapshot({ money: money({ spentThisMonthCents: 66_000 }) })).find((i) => i.id.startsWith("pace"))).toBeUndefined();
+    expect(deriveInsights(snapshot({ money: money({ spentThisMonthCents: 90_000 }) })).find((i) => i.id === "pace-up")?.text).toBe(
       "You're spending 50% more than this time last month.",
     );
   });

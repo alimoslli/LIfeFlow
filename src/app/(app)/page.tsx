@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, Info } from "lucide-react";
+import { ArrowDownLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { TaskCheck } from "@/components/task-check";
 import { formatIn, localDateOf } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
+
+const whole = (c: number) => formatCents(c).replace(/\.\d\d$/, "");
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { getBriefing } from "@/server/briefing";
@@ -75,18 +77,26 @@ export default async function TodayPage() {
         </section>
       )}
 
-      {b.safeToSpend && (
+      {b.money && (
         <section aria-label="Money" className="animate-rise" style={{ animationDelay: "280ms" }}>
           <SectionTitle href="/money">Money</SectionTitle>
-          <Link href="/money" className="group block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift sm:p-6">
-            <p className="text-sm text-muted">{b.safeToSpend.amountCents >= 0 ? "Free to spend this month" : "Short this month by"}</p>
-            <p className={cn("mt-1 font-display text-[40px] leading-none font-medium tracking-tight", b.safeToSpend.amountCents < 0 && "text-danger")}>
-              {formatCents(Math.abs(b.safeToSpend.amountCents)).replace(/\.\d\d$/, "")}
-            </p>
-            {b.safeToSpend.amountCents >= 0 && <p className="mt-2 text-sm text-text-2">about {formatCents(b.safeToSpend.perDayCents).replace(/\.\d\d$/, "")} a day after bills</p>}
-            <p className="mt-3 flex items-start gap-1.5 text-xs text-muted">
-              <Info className="mt-0.5 h-3 w-3 shrink-0" /> {b.safeToSpend.explanation}
-            </p>
+          <Link href="/money" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift sm:p-6">
+            <p className="text-sm text-muted">Cash &amp; checking</p>
+            <p className="tabular mt-1 font-display text-[40px] leading-none font-medium tracking-tight">{whole(b.money.liquidCents)}</p>
+            <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
+              <div>
+                <p className="flex items-center gap-1.5 text-sm text-muted">
+                  <ArrowUpRight className="h-3.5 w-3.5" /> Spent in {formatIn(s.now, s.tz, "MMMM")}
+                </p>
+                <p className="tabular mt-1 text-xl font-medium">{whole(b.money.spentCents)}</p>
+              </div>
+              <div>
+                <p className="flex items-center gap-1.5 text-sm text-muted">
+                  <ArrowDownLeft className="h-3.5 w-3.5" /> Came in
+                </p>
+                <p className="tabular mt-1 text-xl font-medium text-success">{whole(b.money.incomeCents)}</p>
+              </div>
+            </div>
           </Link>
         </section>
       )}

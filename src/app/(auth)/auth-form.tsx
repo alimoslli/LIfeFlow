@@ -1,9 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Field, FormError, Input } from "@/components/ui/field";
+import { Loader2 } from "lucide-react";
+import { FormError } from "@/components/ui/field";
 import { login, signup, type AuthState } from "./actions";
+
+const input =
+  "h-12 w-full rounded-2xl bg-surface px-4 text-[15px] text-text shadow-soft placeholder:text-muted transition-shadow focus:shadow-lift focus:outline-none focus:ring-2 focus:ring-[var(--ring)]";
 
 export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: string }) {
   const [state, action, pending] = useActionState<AuthState, FormData>(mode === "login" ? login : signup, null);
@@ -14,43 +17,45 @@ export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: stri
   }, []);
   return (
     <form action={action} className="flex flex-col gap-4">
-      <div className="mb-2">
-        <h1 className="font-display text-3xl font-medium tracking-tight">{mode === "login" ? "Welcome back" : "Create your BudgetFlow"}</h1>
-        <p className="mt-1 text-sm text-muted">{mode === "login" ? "Sign in to continue." : "It takes a minute. You can connect accounts later."}</p>
+      <div className="mb-3">
+        <h1 className="font-display text-[38px] leading-[1.05] font-medium tracking-tight">{mode === "login" ? "Welcome back." : "Let's get started."}</h1>
+        <p className="mt-2 text-[15px] text-muted">{mode === "login" ? "Sign in to see your day." : "Create your account. You can add everything else later."}</p>
       </div>
       <FormError message={state?.error} />
       {mode === "signup" && (
-        <Field label="Your name" htmlFor="name">
-          <Input id="name" name="name" autoComplete="name" required maxLength={80} />
-        </Field>
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-text-2">Your name</span>
+          <input id="name" name="name" autoComplete="name" required maxLength={80} className={input} />
+        </label>
       )}
-      <Field label="Email" htmlFor="email">
-        <Input id="email" name="email" type="email" autoComplete="email" required defaultValue={state?.email} />
-      </Field>
-      <Field label="Password" htmlFor="password" hint={mode === "signup" ? "At least 10 characters." : undefined}>
-        <Input id="password" name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} required minLength={mode === "signup" ? 10 : 1} />
-      </Field>
+      <label className="flex flex-col gap-1.5">
+        <span className="text-sm font-medium text-text-2">Email</span>
+        <input id="email" name="email" type="email" autoComplete="email" required defaultValue={state?.email} className={input} />
+      </label>
+      <label className="flex flex-col gap-1.5">
+        <span className="text-sm font-medium text-text-2">Password</span>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete={mode === "login" ? "current-password" : "new-password"}
+          required
+          minLength={mode === "signup" ? 10 : 1}
+          className={input}
+        />
+        {mode === "signup" && <span className="text-xs text-muted">At least 10 characters.</span>}
+      </label>
       <input ref={tzRef} type="hidden" name="timezone" defaultValue="UTC" />
       {next && <input type="hidden" name="next" value={next} />}
-      <Button type="submit" loading={pending} className="mt-1 h-10">
+      <button type="submit" disabled={pending} className="mt-2 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-medium text-accent-text shadow-soft transition-transform active:scale-[0.98] disabled:opacity-60">
+        {pending && <Loader2 className="h-4 w-4 animate-spin" />}
         {mode === "login" ? "Sign in" : "Create account"}
-      </Button>
-      <p className="text-center text-sm text-muted">
-        {mode === "login" ? (
-          <>
-            New here?{" "}
-            <Link href="/signup" className="font-medium text-accent hover:underline">
-              Create an account
-            </Link>
-          </>
-        ) : (
-          <>
-            Already have an account?{" "}
-            <Link href="/login" className="font-medium text-accent hover:underline">
-              Sign in
-            </Link>
-          </>
-        )}
+      </button>
+      <p className="mt-2 text-center text-sm text-muted">
+        {mode === "login" ? "New here? " : "Already have an account? "}
+        <Link href={mode === "login" ? "/signup" : "/login"} className="font-medium text-accent">
+          {mode === "login" ? "Create an account" : "Sign in"}
+        </Link>
       </p>
     </form>
   );

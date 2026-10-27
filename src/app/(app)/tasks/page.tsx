@@ -54,30 +54,35 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageHeader title="Tasks" description="Everything you need to do, in one list. Jarvis can add and organize tasks for you." />
-      <Card className="mb-6 p-4">
-        <ActionForm action={createTaskAction} className="gap-3">
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input name="title" placeholder="Add a task…" required maxLength={300} aria-label="Task title" className="flex-1" />
-            <Input name="dueDate" type="date" aria-label="Due date" className="sm:w-40" defaultValue={view === "today" ? today : undefined} />
-            <Select name="priority" aria-label="Priority" defaultValue="medium" className="sm:w-32">
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </Select>
-            <SubmitButton>Add</SubmitButton>
-          </div>
-        </ActionForm>
-      </Card>
+      <PageHeader title="To-dos" />
+      <ActionForm action={createTaskAction} className="mb-6 gap-2">
+        <div className="flex items-center gap-2 rounded-full bg-surface p-1.5 pl-5 shadow-soft focus-within:shadow-lift">
+          <input name="title" placeholder="Add a to-do…" required maxLength={300} aria-label="Task title" className="min-w-0 flex-1 bg-transparent py-1.5 text-[15px] placeholder:text-muted focus:outline-none" />
+          <SubmitButton size="sm" className="h-9 px-4">
+            Add
+          </SubmitButton>
+        </div>
+        <div className="flex gap-2 px-1">
+          <label className="flex flex-1 items-center gap-2 text-xs text-muted sm:flex-none">
+            Due
+            <Input name="dueDate" type="date" aria-label="Due date" className="h-9 rounded-full sm:w-40" defaultValue={view === "today" ? today : undefined} />
+          </label>
+          <Select name="priority" aria-label="Priority" defaultValue="medium" className="h-9 w-32 rounded-full">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </Select>
+        </div>
+      </ActionForm>
 
       <Tabs
         current={view}
         items={[
-          { key: "open", label: "All open", href: "/tasks" },
-          { key: "today", label: "Due today", href: "/tasks?view=today" },
+          { key: "open", label: "Open", href: "/tasks" },
+          { key: "today", label: "Today", href: "/tasks?view=today" },
           { key: "upcoming", label: "Upcoming", href: "/tasks?view=upcoming" },
-          { key: "done", label: "Completed", href: "/tasks?view=done" },
+          { key: "done", label: "Done", href: "/tasks?view=done" },
         ]}
       />
 
@@ -94,8 +99,8 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
             .map((g) => (
               <section key={g.key}>
                 {g.label && (
-                  <h2 className={cn("mb-2 text-xs font-semibold tracking-wide uppercase", g.key === "overdue" ? "text-danger" : "text-muted")}>
-                    {g.label} <span className="font-normal">· {g.items.length}</span>
+                  <h2 className={cn("mb-2 text-[15px] font-semibold", g.key === "overdue" ? "text-danger" : "text-text")}>
+                    {g.label} <span className="font-normal text-muted">{g.items.length}</span>
                   </h2>
                 )}
                 <Card as="div" className="divide-y divide-border">

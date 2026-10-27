@@ -43,3 +43,15 @@ export function allocation(rows: { securityType: string; valueCents: number }[])
   for (const r of rows) map.set(r.securityType, (map.get(r.securityType) ?? 0) + r.valueCents);
   return [...map.entries()].map(([type, cents]) => ({ type, cents, percent: total ? Math.round((cents / total) * 1000) / 10 : 0 })).sort((a, b) => b.cents - a.cents);
 }
+
+/**
+ * All-time return across holdings that have a known cost basis, as a percent
+ * (e.g. 12.4). Null when no holding has a cost basis.
+ */
+export function portfolioReturn(rows: { valueCents: number; costBasisCents: number | null }[]): number | null {
+  const known = rows.filter((r) => r.costBasisCents != null && r.costBasisCents > 0);
+  const cost = known.reduce((s, r) => s + r.costBasisCents!, 0);
+  if (!cost) return null;
+  const value = known.reduce((s, r) => s + r.valueCents, 0);
+  return Math.round(((value - cost) / cost) * 1000) / 10;
+}

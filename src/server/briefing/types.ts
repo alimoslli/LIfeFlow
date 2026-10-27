@@ -16,19 +16,23 @@ export type LifeSnapshot = {
   money: MoneySnapshot | null;
 };
 
+/**
+ * Money facts only, never projections: income counts once it has reached an
+ * account, because take-home pay isn't known until then.
+ */
 export type MoneySnapshot = {
-  cashCents: number;
-  /** Checking + cash only. Savings accounts are treated as set aside. */
-  spendableCashCents: number;
-  incomeNext30: { date: string; amountCents: number; name: string }[];
-  billsNext30: { name: string; date: string; amountCents: number }[];
+  /** Checking + cash accounts (savings excluded). */
+  liquidCents: number;
+  savingsCents: number;
   creditOwedCents: number;
-  nextIncome: { date: string; amountCents: number; name: string } | null;
-  monthToDateSpendCents: number;
+  spentThisMonthCents: number;
+  incomeThisMonthCents: number;
   /** Spend over the same number of days last month. */
   lastMonthSameSpanSpendCents: number;
+  billsNext30: { name: string; date: string; amountCents: number }[];
   overBudget: { category: string; spentCents: number; limitCents: number; topMerchant: string | null; topMerchantChangeCents: number | null }[];
   goals: { name: string; percent: number; monthlyNeededCents: number | null; targetDate: string | null }[];
+  investments: { valueCents: number; returnPct: number | null } | null;
   hasDemoData: boolean;
 };
 
@@ -49,15 +53,7 @@ export type Insight = {
   score: number;
 };
 
-export type SafeToSpend = {
-  /** Can be negative: bills are expected to outrun cash. */
-  amountCents: number;
-  perDayCents: number;
-  days: number;
-  billsCents: number;
-  incomeCents: number;
-  explanation: string;
-};
+export type MoneyGlance = { liquidCents: number; spentCents: number; incomeCents: number };
 
 export type DayGlance = { date: string; label: string; busyMinutes: number; deadlines: number; exam: boolean; isToday: boolean };
 
@@ -67,6 +63,6 @@ export type Briefing = {
   next: AgendaItem | null;
   today: AgendaItem[];
   insights: Insight[];
-  safeToSpend: SafeToSpend | null;
+  money: MoneyGlance | null;
   week: DayGlance[];
 };

@@ -5,6 +5,7 @@ import type { UserScope } from "../db/with-user";
 import { freeSlots, getAgenda } from "../services/calendar";
 import { listAccounts, summarizeBalances } from "../services/finance/accounts";
 import { DEFAULT_CATEGORIES } from "../services/finance/categories";
+import { listHoldings, portfolioReturn } from "../services/finance/wealth";
 import { budgetStatus, listGoals, monthlyContributionNeeded, upcomingRecurring } from "../services/finance/planning";
 import { merchantKey } from "../services/finance/recurring-detect";
 import { queryTransactions } from "../services/finance/transactions";
@@ -62,7 +63,6 @@ async function collectMoney(s: UserScope, today: string): Promise<MoneySnapshot 
   if (!accounts.length) return null;
   const balances = summarizeBalances(accounts);
   const upcoming = await upcomingRecurring(s, today, addDaysStr(today, 35));
-  const nextIncome = upcoming.find((u) => u.amountCents > 0) ?? null;
   const mStart = monthStart(today);
   const span = daysBetween(mStart, today);
   const lastStart = monthStart(addDaysStr(mStart, -1));
@@ -98,18 +98,22 @@ async function collectMoney(s: UserScope, today: string): Promise<MoneySnapshot 
       return { category: b.categoryName, spentCents: b.spentCents, limitCents: b.limitCents, topMerchant: top?.name ?? null, topMerchantChangeCents: top?.change ?? null };
     });
   const in30 = addDaysStr(today, 30);
-  const spendable = accounts.filter((a) => (a.type === "depository" || a.type === "cash") && !/saving/i.test(`${a.subtype ?? ""} ${a.name}`));
+  const isSavings = (a: (typeof accounts)[number]) => /saving/i.test(`${a.subtype ?? ""} ${a.name}`);
+  const liquid = accounts.filter((a) => (a.type === "depository" || a.type === "cash") && !isSavings(a));
+  const thisMonthFlow = summarizeCashflow(thisMonth);
+  const investmentAccounts = accounts.filter((a) => a.type === "investment");
+  const holdings = investmentAccounts.length ? await listHoldings(s) : [];
   return {
-    cashCents: balances.cashCents,
-    spendableCashCents: spendable.reduce((sum, a) => sum + a.currentBalanceCents, 0),
-    incomeNext30: upcoming.filter((u) => u.amountCents > 0 && u.date <= in30).map((u) => ({ date: u.date, amountCents: u.amountCents, name: u.name })),
-    billsNext30: upcoming.filter((u) => u.amountCents < 0 && u.date <= in30).map((u) => ({ name: u.name, date: u.date, amountCents: u.amountCents })),
+    liquidCents: liquid.reduce((sum, a) => sum + a.currentBalanceCents, 0),
+    savingsCents: accounts.filter((a) => a.type === "depository" && isSavings(a)).reduce((sum, a) => sum + a.currentBalanceCents, 0),
     creditOwedCents: balances.creditOwedCents,
-    nextIncome: nextIncome ? { date: nextIncome.date, amountCents: nextIncome.amountCents, name: nextIncome.name } : null,
-    monthToDateSpendCents: summarizeCashflow(thisMonth).netSpendingCents,
+    spentThisMonthCents: thisMonthFlow.netSpendingCents,
+    incomeThisMonthCents: thisMonthFlow.incomeCents,
     lastMonthSameSpanSpendCents: summarizeCashflow(lastMonth).netSpendingCents,
+    billsNext30: upcoming.filter((u) => u.amountCents < 0 && u.date <= in30).map((u) => ({ name: u.name, date: u.date, amountCents: u.amountCents })),
     overBudget,
     goals: goals.map((g) => ({ name: g.name, percent: g.percent, targetDate: g.targetDate, monthlyNeededCents: monthlyContributionNeeded(g.targetCents, g.savedCents, g.targetDate, today) })),
+    investments: investmentAccounts.length ? { valueCents: balances.investmentsCents, returnPct: portfolioReturn(holdings) } : null,
     hasDemoData: accounts.some((a) => a.source === "demo"),
   };
 }

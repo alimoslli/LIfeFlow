@@ -8,4 +8,4 @@ export async function getBriefing(scope: UserScope, user: SessionUser, now = new
   return { snapshot, briefing: buildBriefing(snapshot) };
 }
 
-export type { Briefing, Insight, LifeSnapshot, SafeToSpend } from "./types";
+export type { Briefing, Insight, LifeSnapshot, MoneyGlance } from "./types";

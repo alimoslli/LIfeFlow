@@ -5,6 +5,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { cn } from "@/lib/utils";
 import { NAV, isActive, moduleForPath } from "./nav-items";
 import { JarvisDrawer } from "../jarvis/jarvis-drawer";
+import { BackLink } from "./back-link";
 import type { JarvisAvailability } from "../jarvis/types";
 
 type ShellCtx = { openJarvis: (prompt?: string, opts?: { send?: boolean }) => void };
@@ -80,10 +81,13 @@ export function AppShell({
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          {user.accountKind === "demo" && (
+          {user.accountKind === "demo" && !onJarvisPage && (
             <div className="px-4 pt-3 text-center text-[11px] tracking-wide text-muted md:pt-4">Test account · everything here is sample data</div>
           )}
-          <main className={cn("mx-auto w-full flex-1", onJarvisPage ? "max-w-none" : "max-w-5xl px-5 pt-6 pb-32 sm:px-8 md:pt-10 md:pb-16")}>{children}</main>
+          <main className={cn("mx-auto w-full flex-1", onJarvisPage ? "max-w-none" : "max-w-5xl px-5 pt-6 pb-32 sm:px-8 md:pt-10 md:pb-16")}>
+            {!onJarvisPage && <BackLink />}
+            {children}
+          </main>
         </div>
       </div>
 

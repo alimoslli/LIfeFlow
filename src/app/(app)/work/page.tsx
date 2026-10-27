@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Briefcase, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Briefcase, ChevronLeft, ChevronRight, Sparkles, Trash2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
-import { Badge, Card, CardHeader, EmptyState, Money, PageHeader, SourceBadge, Stat } from "@/components/ui/surface";
+import { Card, CardHeader, EmptyState, Money, PageHeader, Stat } from "@/components/ui/surface";
 import { addDaysStr, formatDateStr, formatIn, isValidDateStr, monthEnd, monthStart, todayIn, weekStart } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
@@ -44,12 +44,12 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
     <>
       <PageHeader
         title="Work"
-        description="Shifts, hours and estimated pay. Scheduled times, recorded punches, estimates and actual paychecks are kept separate."
+        description="Your shifts, hours and pay."
         actions={
           d.employers.length > 0 ? (
             <>
-              <AskJarvisButton prompt="Here's my work schedule, please add these shifts: " className="h-9 rounded-lg border border-border bg-surface px-3.5 text-sm font-medium hover:border-border-strong">
-                Import schedule with Jarvis
+              <AskJarvisButton prompt="Here's my work schedule, please add these shifts: " className="flex h-10 items-center gap-1.5 rounded-full bg-surface px-5 text-sm font-medium shadow-soft">
+                <Sparkles className="h-4 w-4 text-accent" /> Import schedule
               </AskJarvisButton>
               <ShiftDialog action={createShiftAction} employers={d.employers.map((e) => ({ id: e.id, name: e.name }))} today={d.today} />
             </>
@@ -97,29 +97,33 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
                     const paid = shiftPaidMinutes(s);
                     const cancelled = s.status === "cancelled";
                     return (
-                      <li key={s.id} className={cn("group px-5 py-3", cancelled && "opacity-50")}>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <div className="w-24 shrink-0">
-                            <p className="text-sm font-medium">{formatIn(s.startsAt, tz, "EEE, MMM d")}</p>
-                            <p className="text-xs text-muted">{empName.get(s.employerId)}</p>
+                      <li key={s.id} className={cn("group px-5 py-4", cancelled && "opacity-50")}>
+                        <div className="flex items-start gap-4">
+                          <div className="w-11 shrink-0 text-center">
+                            <p className="text-[11px] font-medium text-muted uppercase">{formatIn(s.startsAt, tz, "EEE")}</p>
+                            <p className="font-display text-2xl leading-tight">{formatIn(s.startsAt, tz, "d")}</p>
                           </div>
-                          <div className="min-w-0 flex-1 text-sm">
-                            <p>
-                              Scheduled {formatIn(s.startsAt, tz, "h:mm a")} – {formatIn(s.endsAt, tz, "h:mm a")}
-                              {s.breakMinutes ? <span className="text-muted"> · {s.breakMinutes}m break</span> : null}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[15px]">
+                              {formatIn(s.startsAt, tz, "h:mm")}–{formatIn(s.endsAt, tz, "h:mm a")}
+                            </p>
+                            <p className="truncate text-sm text-muted">
+                              {empName.get(s.employerId)}
+                              {s.breakMinutes ? ` · ${s.breakMinutes} min break` : ""}
                             </p>
                             {s.recordedStart && s.recordedEnd && (
-                              <p className="text-xs text-text-2">
-                                Recorded {formatIn(s.recordedStart, tz, "h:mm a")} – {formatIn(s.recordedEnd, tz, "h:mm a")}
+                              <p className="mt-0.5 text-sm text-text-2">
+                                Clocked {formatIn(s.recordedStart, tz, "h:mm")}–{formatIn(s.recordedEnd, tz, "h:mm a")}
                               </p>
                             )}
                           </div>
-                          <span className="tabular text-sm text-text-2">{(paid.minutes / 60).toFixed(2)}h</span>
-                          {cancelled ? <Badge>Cancelled</Badge> : s.status === "worked" ? <Badge tone="success">Worked</Badge> : <Badge tone="info">Scheduled</Badge>}
-                          {s.source !== "manual" && <SourceBadge source={s.source} />}
+                          <div className="shrink-0 text-right">
+                            <p className="tabular text-[15px]">{(paid.minutes / 60).toFixed(1)} h</p>
+                            <p className={cn("text-xs", cancelled ? "text-muted" : s.status === "worked" ? "text-success" : "text-info")}>{cancelled ? "Cancelled" : s.status === "worked" ? "Worked" : "Scheduled"}</p>
+                          </div>
                         </div>
                         {!cancelled && (
-                          <details className="mt-2">
+                          <details className="mt-2 pl-15">
                             <summary className="cursor-pointer text-xs text-accent">{s.recordedStart ? "Edit recorded hours" : "Record actual hours"}</summary>
                             <div className="mt-2 flex flex-wrap items-center gap-2">
                               <ActionForm action={recordHoursAction.bind(null, s.id)} reset={false} className="flex-row items-center gap-1.5">
@@ -213,7 +217,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
               </Card>
               <Card className="p-5 text-sm text-text-2">
                 <h2 className="mb-1 text-[13px] font-semibold tracking-wide uppercase">UKG Pro</h2>
-                Not connected. UKG API access is normally issued to employers, not personal logins, so BudgetFlow uses manual entry and Jarvis-assisted schedule import for now. <Link href="/settings/integrations" className="text-accent hover:underline">Details</Link>
+                Not connected. UKG API access is normally issued to employers, not personal logins, so LifeFlow uses manual entry and Jarvis-assisted schedule import for now. <Link href="/settings/integrations" className="text-accent hover:underline">Details</Link>
               </Card>
             </div>
           </div>
