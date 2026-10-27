@@ -1,0 +1,167 @@
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
+import { todayIn } from "@/lib/dates";
+import { truncate } from "@/lib/utils";
+import { attachments, conversations, messages, type JarvisModule, type ToolResultRecord } from "../db/schema";
+import { withUser } from "../db/with-user";
+import type { SessionUser } from "../auth/sessions";
+import { listActiveMemories, touchMemories } from "../services/memory";
+import { createConversation, getConversation, loadHistory } from "./conversations";
+import { executeToolCall, serializeResult } from "./executor";
+import { buildSystemPrompt } from "./prompt";
+import type { ModelProvider } from "./providers/types";
+import { toolSpecs } from "./registry";
+import type { ToolContext } from "./tool";
+import { describeToolCall, describeToolResult } from "./labels";
+
+export type JarvisEvent =
+  | { type: "conversation"; id: string; title: string }
+  | { type: "text"; delta: string }
+  | { type: "tool_start"; callId: string; name: string; label: string }
+  | { type: "tool_end"; callId: string; name: string; ok: boolean; summary: string; viewAt?: string }
+  | { type: "confirmation"; actionId: string; callId: string; toolName: string; summary: string }
+  | { type: "done"; messageId: string | null }
+  | { type: "error"; message: string };
+
+export const MAX_STEPS = 8;
+
+export type TurnInput = {
+  user: SessionUser;
+  conversationId?: string | null;
+  text: string;
+  attachmentIds?: string[];
+  module?: JarvisModule | null;
+  provider: ModelProvider;
+  emit: (e: JarvisEvent) => void;
+  now?: Date;
+  signal?: AbortSignal;
+};
+
+export function makeToolContext(user: SessionUser, conversationId: string, now = new Date()): ToolContext {
+  return {
+    userId: user.id,
+    tz: user.timezone,
+    today: todayIn(user.timezone, now),
+    now,
+    conversationId,
+    run: (fn) => withUser(user.id, fn),
+  };
+}
+
+/**
+ * Runs one user turn: persist the message, let the model call tools in a
+ * loop (max MAX_STEPS), persist every tool call and result, and stream
+ * progress events. Every write goes through the user's RLS scope.
+ */
+export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId: string }> {
+  const { user, provider, emit } = input;
+  const now = input.now ?? new Date();
+  const run = <T>(fn: Parameters<typeof withUser<T>>[1]) => withUser(user.id, fn);
+
+  // 1. Conversation + user message
+  const conversation = await run(async (s) => {
+    if (input.conversationId) return getConversation(s, input.conversationId);
+    return createConversation(s, input.module, truncate(input.text.replace(/\s+/g, " ").trim() || "Attachment", 60));
+  });
+  emit({ type: "conversation", id: conversation.id, title: conversation.title });
+
+  const attachmentIds = await run(async (s) => {
+    const ids = input.attachmentIds ?? [];
+    if (!ids.length) return [];
+    // Only the user's own, unlinked (or already-this-conversation) uploads may be attached.
+    const rows = await s.tx
+      .select({ id: attachments.id })
+      .from(attachments)
+      .where(and(eq(attachments.userId, s.userId), inArray(attachments.id, ids), or(isNull(attachments.conversationId), eq(attachments.conversationId, conversation.id))));
+    const valid = rows.map((r) => r.id);
+    if (valid.length) await s.tx.update(attachments).set({ conversationId: conversation.id }).where(inArray(attachments.id, valid));
+    return valid;
+  });
+
+  await run((s) => s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "user", content: input.text, attachmentIds }));
+
+  // 2. Context
+  const [history, memories] = await run(async (s) => [await loadHistory(s, conversation.id), await listActiveMemories(s, now)] as const);
+  const system = buildSystemPrompt({ userName: user.name.split(" ")[0], tz: user.timezone, now, accountKind: user.accountKind, module: input.module ?? conversation.contextModule, memories, preferences: user.preferences });
+  await run((s) => touchMemories(s, memories.map((m) => m.id)));
+  const ctx = makeToolContext(user, conversation.id, now);
+
+  // 3. Model/tool loop
+  const turn = provider.startTurn({ system, history, tools: toolSpecs() });
+  let toolResults: { callId: string; output: string }[] | undefined;
+  let finalMessageId: string | null = null;
+  try {
+    for (let step = 0; step < MAX_STEPS; step++) {
+      if (input.signal?.aborted) throw new Error("Request cancelled.");
+      let text = "";
+      let calls: { callId: string; name: string; arguments: string }[] = [];
+      for await (const ev of turn.step(toolResults)) {
+        if (ev.type === "text_delta") emit({ type: "text", delta: ev.delta });
+        else {
+          text = ev.text;
+          calls = ev.toolCalls;
+        }
+      }
+      if (text.trim()) {
+        const [m] = await run((s) => s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: text }).returning({ id: messages.id }));
+        finalMessageId = m.id;
+      }
+      if (!calls.length) break;
+
+      toolResults = [];
+      for (const call of calls) {
+        emit({ type: "tool_start", callId: call.callId, name: call.name, label: describeToolCall(call.name) });
+        const outcome = await executeToolCall(call.name, call.arguments, ctx, call.callId);
+        let args: Record<string, unknown> = {};
+        try {
+          args = JSON.parse(call.arguments || "{}");
+        } catch {}
+        await run((s) =>
+          s.tx.insert(messages).values({
+            userId: s.userId,
+            conversationId: conversation.id,
+            role: "tool",
+            toolName: call.name,
+            toolCallId: call.callId,
+            toolArgs: args,
+            toolResult: outcome.result,
+            status: outcome.kind === "confirmation" ? "pending_confirmation" : outcome.result.ok ? "complete" : "error",
+          }),
+        );
+        if (outcome.kind === "confirmation") {
+          emit({ type: "confirmation", actionId: outcome.pendingActionId, callId: call.callId, toolName: call.name, summary: outcome.summary });
+        } else {
+          const d = describeToolResult(call.name, outcome.result);
+          emit({ type: "tool_end", callId: call.callId, name: call.name, ok: outcome.result.ok, summary: d.summary, viewAt: d.viewAt });
+        }
+        toolResults.push({ callId: call.callId, output: serializeResult(outcome.result) });
+      }
+      if (step === MAX_STEPS - 1) {
+        const note = "\n\nI stopped after several steps to avoid running too long. Ask me to continue if needed.";
+        emit({ type: "text", delta: note });
+        await run((s) => s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: note.trim() }));
+      }
+    }
+  } catch (e) {
+    console.error("[jarvis] turn failed", e);
+    const message = friendlyProviderError(e);
+    await run((s) => s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: message, status: "error" }));
+    emit({ type: "error", message });
+  } finally {
+    await run((s) => s.tx.update(conversations).set({ lastMessageAt: new Date() }).where(eq(conversations.id, conversation.id)));
+  }
+  emit({ type: "done", messageId: finalMessageId });
+  return { conversationId: conversation.id };
+}
+
+export function friendlyProviderError(e: unknown): string {
+  const status = (e as { status?: number })?.status;
+  if (status === 401) return "Jarvis couldn't authenticate with OpenAI. Check OPENAI_API_KEY on the server.";
+  if (status === 429) return "OpenAI is rate-limiting requests or the account is out of quota. Try again shortly.";
+  if (status === 404) return "The configured OpenAI model wasn't found. Check OPENAI_MODEL.";
+  if (status && status >= 500) return "OpenAI is having trouble right now. Please try again.";
+  const msg = e instanceof Error ? e.message : "";
+  if (/fetch failed|ECONNREFUSED|ENOTFOUND|network|timed out/i.test(msg)) return "Jarvis couldn't reach the AI service (network error). Nothing further was changed.";
+  return `Something went wrong while Jarvis was responding${msg ? `: ${truncate(msg, 160)}` : ""}. Any actions already reported as completed were saved.`;
+}
+
+export type { ToolResultRecord };

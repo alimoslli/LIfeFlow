@@ -1,36 +1,157 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BudgetFlow
 
-## Getting Started
+BudgetFlow is a personal life operating system: **finances, wealth, school, work, calendar, tasks and notes** in one app, with **Jarvis**, an AI assistant that reads and updates your real records through a set of safe, audited tools.
 
-First, run the development server:
+- **Stack:** Next.js 16 (App Router, TypeScript, React 19) · Tailwind CSS 4 · PostgreSQL 15+ with Drizzle ORM · OpenAI Responses API (server-side) · Vitest + Playwright
+- **Status:** first milestone (MVP) complete. See [`PLAN.md`](PLAN.md) for what's done and what's next.
+- **Docs:** [architecture](docs/architecture.md) · [schema](docs/schema.md) · [integrations](docs/integrations.md) · [decision records](docs/adr)
+
+---
+
+## What works today
+
+| Area | What you can do |
+|---|---|
+| **Accounts** | Sign up / sign in (email + password), sessions, password change, sign out other devices, delete account, full data export |
+| **Home** | Today's schedule, priority tasks, deadlines, money snapshot, goals, alerts (overdue work, conflicts, budgets over limit) |
+| **Jarvis** | Streaming chat with persistent conversations, 48 tools across every module, confirmation step for deletions, persistent memory, file/screenshot attachments, opens from any page with module context (⌘/Ctrl + J) |
+| **School** | Courses, per-course pages, assignments/exams with due dates and views (today, this week, upcoming, overdue, completed), materials, linked notes. Jarvis imports assignments from pasted text or screenshots into real records, skips duplicates, and asks when a course is ambiguous |
+| **Tasks** | Tasks with subtasks, priorities, due dates, links to courses and projects |
+| **Calendar** | Week grid and agenda combining events (including weekly recurring classes), work shifts, assignment deadlines and task due dates; conflict detection; free-time finder for Jarvis |
+| **Finances** | Manual accounts, transactions (add, search, filter, recategorize, hide), idempotent CSV import, CSV export, budgets (including subcategories), bills & subscriptions with automatic recurring detection, savings goals, cash-flow chart and category breakdown |
+| **Wealth** | Net worth, investment and retirement accounts, manually entered holdings and allocation |
+| **Work** | Jobs and pay rates, scheduled shifts, recorded punches, estimated earnings with weekly overtime, paychecks (kept separate from estimates) |
+| **Notes** | Markdown notes with full-text search, tags, and links to projects and courses |
+| **Settings** | Profile, time zone, preferences used by Jarvis, memory management, honest integration status, audit log |
+
+**Not built yet (no fake versions exist):** Plaid bank sync, Canvas sync, UKG Pro, Google Calendar, email, voice. Each is planned in `PLAN.md`; every module works with manual entry or Jarvis in the meantime.
+
+---
+
+## Quick start (local development)
+
+Prerequisites: **Node.js 22+**, **PostgreSQL 15+**.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+
+# 1. Create a database and a NON-superuser role (row-level security is skipped for superusers)
+psql -U postgres <<'SQL'
+CREATE ROLE budgetflow LOGIN PASSWORD 'budgetflow_dev' NOSUPERUSER NOBYPASSRLS;
+CREATE DATABASE budgetflow OWNER budgetflow;
+CREATE DATABASE budgetflow_test OWNER budgetflow;
+CREATE DATABASE budgetflow_e2e OWNER budgetflow;
+SQL
+
+# 2. Configure environment (never commit these files)
+cp .env.example .env
+cp .env.example .env.local
+#   then set ENCRYPTION_KEY in both:  openssl rand -base64 32
+
+# 3. Create the tables
+npm run db:migrate
+
+# 4. (Optional) load an isolated demo account with sample data
+npm run db:seed-demo        # sign in as demo@budgetflow.local / budgetflow-demo
+
+# 5. Run it
+npm run dev                 # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Demo data lives only in a separate account flagged as a demo. Every demo record is marked "Sample data" in the UI. Demo data is never added to a real account.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Configure Jarvis (OpenAI)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Jarvis needs an OpenAI API key. Everything else works without it.
 
-## Learn More
+1. Create a key at <https://platform.openai.com/api-keys> (an OpenAI account with billing enabled is required).
+2. Put it in `.env.local` (development) or your host's environment variables (production):
+   ```
+   OPENAI_API_KEY=sk-...
+   OPENAI_MODEL=gpt-5.5
+   ```
+3. Restart the server. **Settings → Jarvis & memory** shows whether Jarvis is connected.
 
-To learn more about Next.js, take a look at the following resources:
+The key is only read on the server. It is never sent to the browser, logged, or stored in the database. `OPENAI_MODEL` can be any Responses-API model that supports function calling; check OpenAI's current model list and pricing before choosing one. The default `gpt-5.5` was picked from the model IDs in the installed SDK (`openai@6.x`); I couldn't test it live from the build environment (see PLAN.md).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server with hot reload |
+| `npm run build` / `npm start` | Production build / serve it |
+| `npm run typecheck` | TypeScript checks |
+| `npm run lint` | ESLint |
+| `npm test` | Unit + integration tests (Vitest, against `TEST_DATABASE_URL`) |
+| `npm run test:e2e` | Browser tests (Playwright) against the production build, an isolated `budgetflow_e2e` database and a local fake OpenAI server. Run `npm run build` first |
+| `npm run check` | typecheck + lint + tests |
+| `npm run db:generate` | Generate a new migration after editing `src/server/db/schema.ts` |
+| `npm run db:migrate` | Apply migrations (and warn if the DB role would bypass row-level security) |
+| `npm run db:seed-demo` | Recreate the demo account |
+| `npm run db:studio` | Browse the database (Drizzle Studio) |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Tests
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Unit** (`tests/unit`): money and date math (including time zones and DST), cash-flow rules (transfers excluded, refunds offset spending), recurring detection, overtime, course matching, recurrence expansion, conflicts, free time, secret detection, encryption, password hashing, CSV parsing, and OpenAI wire-format handling.
+- **Integration** (`tests/integration`, real Postgres): row-level-security isolation, ownership checks, assignment import and deduplication, finance summaries, budgets, CSV idempotency, and the Jarvis tool loop (saving records, the confirmation gate, cross-user attacks, invalid tool calls, memory secret refusal, provider failures).
+- **End-to-end** (`tests/e2e`): sign up → tasks; Jarvis → assignments and tasks appear in School and Tasks; confirmation before deletion; two users can't see each other's data; API auth and cross-site protection; mobile layout.
+
+---
+
+## Environment variables
+
+See [`.env.example`](.env.example). Summary:
+
+| Variable | Required | Notes |
+|---|---|---|
+| `DATABASE_URL` | yes | Postgres connection string. Role must not be superuser or have BYPASSRLS |
+| `ENCRYPTION_KEY` | for integrations | 32 random bytes, base64. Encrypts provider tokens at rest |
+| `OPENAI_API_KEY` | for Jarvis | Server-only |
+| `OPENAI_MODEL` | no | Default `gpt-5.5` |
+| `OPENAI_REASONING_EFFORT` | no | `none`/`low`/`medium`/`high` for reasoning models |
+| `OPENAI_BASE_URL` | no | OpenAI-compatible gateway; used by e2e tests |
+| `TEST_DATABASE_URL` / `E2E_DATABASE_URL` | tests | Must be different databases; tests wipe them |
+| `PLAID_*`, `CANVAS_BASE_URL` | later | Reserved for upcoming integrations |
+
+---
+
+## Deployment
+
+The simplest production setup is **Vercel** (Next.js host) with a **managed Postgres** (Neon or Supabase).
+
+1. **Database:** create a Postgres database. Create a dedicated role without `BYPASSRLS` that owns the tables, for example:
+   ```sql
+   CREATE ROLE budgetflow_app LOGIN PASSWORD '<strong password>' NOSUPERUSER NOBYPASSRLS;
+   GRANT ALL ON SCHEMA public TO budgetflow_app;
+   ```
+   Use that role's connection string as `DATABASE_URL`. If your provider uses a connection pooler (Supabase "transaction" mode, Neon pooled URL), that works: user context is set per transaction.
+2. **Migrate:** from your machine, `DATABASE_URL=<prod url> npm run db:migrate`. It warns if row-level security would be bypassed.
+3. **Host:** import the repository in Vercel, set the environment variables (`DATABASE_URL`, `ENCRYPTION_KEY`, `OPENAI_API_KEY`, `OPENAI_MODEL`), and deploy. Don't run `db:seed-demo` in production.
+4. **Check:** `GET /api/health` should return `{"ok":true,"db":"up"}`.
+
+Any Node.js host that runs `npm run build && npm start` also works (Fly.io, Railway, Render, a VPS).
+
+---
+
+## Project layout
+
+```
+src/
+  app/                 Routes (App Router)
+    (auth)/            login, signup, auth server actions
+    (app)/             signed-in pages: home, jarvis, finances, wealth, school, work, calendar, tasks, notes, settings
+    api/               jarvis chat stream, action confirmation, uploads, export, health
+  components/          UI kit (ui/), shell, Jarvis chat, charts
+  lib/                 client-safe helpers: dates/time zones, money, utils
+  server/
+    db/                schema, client, withUser (RLS scoping), series
+    auth/              password hashing, sessions, current user
+    services/          business logic per module (used by pages AND Jarvis)
+    jarvis/            agent loop, tool registry, tools/, prompt, providers (OpenAI, scripted)
+drizzle/               SQL migrations
+scripts/               migrate, seed-demo
+tests/                 unit, integration, e2e
+docs/                  architecture, schema, integrations, ADRs
+```
