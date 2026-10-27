@@ -13,6 +13,13 @@
 - Server components can't pass functions to client components (e.g. `Dialog` render props) — wrap those in a `"use client"` file.
 - Tailwind v4 drops unused CSS variables; colors used by components must be registered in `@theme` in `globals.css`.
 
+## Jarvis intelligence rules (see docs/jarvis-intelligence.md, ADR 0005/0006)
+- Jarvis does not train models. It improves through user-approved memory, feedback, better tools and *measured* prompt/retrieval changes. Never use user data for training.
+- Memory writes from Jarvis go only through `rememberForUser` / `correctMemoryForUser` (services/memory.ts). They save directly only when `explicitMemoryRequest(ctx.userText)` is true. Everything else is `proposed`, and proposed memories never reach a prompt. Don't trust the model's claim that the user asked.
+- Prompts get memories only via `selectMemories` (jarvis/memory-retrieval.ts). If you change retrieval, add labelled cases to `tests/unit/memory-retrieval.test.ts`; the recall/precision test must stay green.
+- `INSTRUCTIONS` in prompt.ts is static (identical for every user and request, so the provider can cache it). Anything per-user or per-request goes in `buildContext`. Bump `PROMPT_VERSION` on any prompt change.
+- Every turn records a `jarvis_runs` row. A new provider must set `model` and report `usage` in `step_done`. Never store message content or raw error text in metrics, and never hard-code model prices (env `JARVIS_PRICE_*`; unknown ⇒ null).
+
 ## Verify before finishing
 `npm run typecheck && npm run lint && npm test`, then `npm run build && npm run test:e2e` for UI/flow changes.
 
@@ -21,5 +28,7 @@
 - Money: never project income (pay counts only after it's deposited). Today's money section = cash & checking, spent this month, came in this month.
 - Prefer one clear action per item; no dense tables on phones.
 
-## Dev gotcha
-If `next dev` reload-loops ("HMR hash mismatch"), stop it and `rm -rf .next` (usually a leftover production build), then restart.
+## Dev gotchas
+- If `next dev` reload-loops ("HMR hash mismatch"), stop it and `rm -rf .next` (usually a leftover production build), then restart.
+- Stop servers with `pgrep -f "[n]ext-server" | xargs -r kill` in its **own** command. A pattern that also appears in the same command line (e.g. "next start") kills your own shell.
+- e2e: `signUp()` clears the sign-up rate-limit bucket (10/hour per IP) so the suite can keep growing; don't loosen the real limit.

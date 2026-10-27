@@ -38,7 +38,8 @@ Source of truth: [`src/server/db/schema.ts`](../src/server/db/schema.ts). Migrat
 | Jarvis | `conversations` | title, module context, last activity |
 | | `messages` | ordered by `seq`; role user/assistant/tool; tool name, args, result, status |
 | | `attachments` | uploaded files (base64), checksum, type |
-| | `memories` | content, category, source, status, expiry |
+| | `memories` | content, category (incl. `instruction`), source, **status** (`proposed` → `active` / `rejected`; `archived` = forgotten or replaced), **basis** (`stated` / `inferred`), `confirmed_at`, `supersedes_id` (correction history), origin `conversation_id`, expiry, last used |
+| | `jarvis_runs` | one row per Jarvis turn, metadata only: latency, time to first token, steps, tool calls / errors / confirmations, tokens (input, cached, output, reasoning), estimated cost (only when prices are configured), outcome + coarse error kind, model, prompt version, ids of the memories sent |
 | | `pending_actions` | tool calls awaiting user confirmation (expire after 30 min) |
 
 ## Changing the schema

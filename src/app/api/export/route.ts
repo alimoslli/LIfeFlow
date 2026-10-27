@@ -49,6 +49,7 @@ export async function GET(req: Request) {
         memories: schema.memories,
         conversations: schema.conversations,
         messages: schema.messages,
+        jarvisRuns: schema.jarvisRuns,
         integrations: schema.integrations,
       } as const;
       const out: Record<string, unknown> = {

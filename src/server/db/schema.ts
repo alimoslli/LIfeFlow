@@ -70,6 +70,8 @@ export type UserPreferences = {
   weekStartsOn?: 0 | 1;
   currency?: string;
   jarvisTone?: "concise" | "balanced" | "detailed";
+  /** Let Jarvis suggest things to remember (default on). Explicit "remember…" requests always work. */
+  memorySuggestions?: boolean;
 };
 
 export const users = pgTable("users", {
@@ -724,7 +726,15 @@ export const attachments = pgTable(
   (t) => [index("attachments_user_idx").on(t.userId), ownerPolicy()],
 );
 
-export type MemoryCategory = "preference" | "goal" | "routine" | "project" | "fact" | "temporary";
+export type MemoryCategory = "preference" | "goal" | "routine" | "project" | "fact" | "temporary" | "instruction";
+/**
+ * proposed → the user hasn't approved it yet (never shown to the model);
+ * active → approved and in use; archived → forgotten or replaced (restorable);
+ * rejected → the user dismissed the suggestion (kept so it isn't re-suggested).
+ */
+export type MemoryStatus = "proposed" | "active" | "archived" | "rejected";
+/** stated: the user said it. inferred: Jarvis concluded it (the user still has to approve). */
+export type MemoryBasis = "stated" | "inferred";
 
 export const memories = pgTable(
   "memories",
@@ -734,7 +744,14 @@ export const memories = pgTable(
     content: text("content").notNull(),
     category: text("category").$type<MemoryCategory>().notNull(),
     source: text("source").$type<"user" | "jarvis">().notNull(),
-    status: text("status").$type<"active" | "archived">().notNull().default("active"),
+    status: text("status").$type<MemoryStatus>().notNull().default("active"),
+    basis: text("basis").$type<MemoryBasis>().notNull().default("stated"),
+    /** When the user approved it (or added it themselves). Null while proposed. */
+    confirmedAt: tstz("confirmed_at"),
+    /** For corrections: the memory this one replaces once approved. */
+    supersedesId: uuid("supersedes_id").references((): AnyPgColumn => memories.id, { onDelete: "set null" }),
+    /** Conversation where Jarvis suggested or saved it. */
+    conversationId: uuid("conversation_id").references(() => conversations.id, { onDelete: "set null" }),
     /** Temporary circumstances expire and stop being shown to Jarvis. */
     expiresAt: tstz("expires_at"),
     lastUsedAt: tstz("last_used_at"),
@@ -742,6 +759,48 @@ export const memories = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [index("memories_user_idx").on(t.userId, t.status), ownerPolicy()],
+);
+
+export type JarvisRunOutcome = "ok" | "error" | "cancelled" | "step_limit";
+
+/**
+ * One row per Jarvis turn: what it cost and how it went. Metadata only (no
+ * message content), so it can be analysed without reading conversations.
+ */
+export const jarvisRuns = pgTable(
+  "jarvis_runs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    /** The turn's final assistant message, when there was one. */
+    messageId: uuid("message_id").references(() => messages.id, { onDelete: "set null" }),
+    provider: text("provider").notNull(),
+    model: text("model"),
+    promptVersion: text("prompt_version").notNull(),
+    outcome: text("outcome").$type<JarvisRunOutcome>().notNull(),
+    /** Coarse failure class (e.g. "rate_limited", "network"), never raw error text. */
+    errorKind: text("error_kind"),
+    latencyMs: integer("latency_ms").notNull(),
+    firstTokenMs: integer("first_token_ms"),
+    steps: integer("steps").notNull(),
+    toolCalls: integer("tool_calls").notNull().default(0),
+    toolErrors: integer("tool_errors").notNull().default(0),
+    confirmations: integer("confirmations").notNull().default(0),
+    toolNames: text("tool_names").array().notNull().default(sql`'{}'::text[]`),
+    inputTokens: integer("input_tokens"),
+    cachedInputTokens: integer("cached_input_tokens"),
+    outputTokens: integer("output_tokens"),
+    reasoningTokens: integer("reasoning_tokens"),
+    /** Estimated cost in millionths of a dollar. Null unless model prices are configured. */
+    costMicros: bigint("cost_micros", { mode: "number" }),
+    /** Memories that were put in front of the model for this turn. */
+    memoryIds: uuid("memory_ids").array().notNull().default(sql`'{}'::uuid[]`),
+    createdAt: createdAt(),
+  },
+  (t) => [index("jarvis_runs_user_created_idx").on(t.userId, t.createdAt), index("jarvis_runs_conversation_idx").on(t.conversationId), ownerPolicy()],
 );
 
 /** Tool calls that change or delete data in bulk wait here for the user's explicit approval. */

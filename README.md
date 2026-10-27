@@ -14,7 +14,7 @@ BudgetFlow is a personal life operating system: **finances, wealth, school, work
 |---|---|
 | **Accounts** | Sign up / sign in (email + password), sessions, password change, sign out other devices, delete account, full data export |
 | **Home** | Today's schedule, priority tasks, deadlines, money snapshot, goals, alerts (overdue work, conflicts, budgets over limit) |
-| **Jarvis** | Streaming chat with persistent conversations, 48 tools across every module, confirmation step for deletions, persistent memory, file/screenshot attachments, opens from any page with module context (⌘/Ctrl + J) |
+| **Jarvis** | Streaming chat with persistent conversations, 49 tools across every module, confirmation step for deletions, file/screenshot attachments, opens from any page with module context (⌘/Ctrl + J). **Memory you control:** Jarvis suggests what to remember and you tap Keep. It saves directly only when you say "remember…". Corrections keep history, and only memories relevant to a request are sent. **Measured:** every request records speed, tokens, tool success and (if prices are set) cost. See [docs/jarvis-intelligence.md](docs/jarvis-intelligence.md) |
 | **School** | Courses, per-course pages, assignments/exams with due dates and views (today, this week, upcoming, overdue, completed), materials, linked notes. Jarvis imports assignments from pasted text or screenshots into real records, skips duplicates, and asks when a course is ambiguous |
 | **Tasks** | Tasks with subtasks, priorities, due dates, links to courses and projects |
 | **Calendar** | Week grid and agenda combining events (including weekly recurring classes), work shifts, assignment deadlines and task due dates; conflict detection; free-time finder for Jarvis |
@@ -108,8 +108,9 @@ The key is only read on the server. It is never sent to the browser, logged, or 
 ### Tests
 
 - **Unit** (`tests/unit`): money and date math (including time zones and DST), cash-flow rules (transfers excluded, refunds offset spending), recurring detection, overtime, course matching, recurrence expansion, conflicts, free time, secret detection, encryption, password hashing, CSV parsing, and OpenAI wire-format handling.
-- **Integration** (`tests/integration`, real Postgres): row-level-security isolation, ownership checks, assignment import and deduplication, finance summaries, budgets, CSV idempotency, and the Jarvis tool loop (saving records, the confirmation gate, cross-user attacks, invalid tool calls, memory secret refusal, provider failures).
-- **End-to-end** (`tests/e2e`): sign up → tasks; Jarvis → assignments and tasks appear in School and Tasks; confirmation before deletion; two users can't see each other's data; API auth and cross-site protection; mobile layout.
+- **Integration** (`tests/integration`, real Postgres): row-level-security isolation, ownership checks, assignment import and deduplication, finance summaries, budgets, CSV idempotency, and the Jarvis tool loop (saving records, the confirmation gate, cross-user attacks, invalid tool calls, memory secret refusal, provider failures). Memory: suggest/approve/dismiss, explicit requests, corrections with history, the suggestions-off setting, note-injection and cross-user attempts. Run metrics: tokens, cost, failures, per-user isolation.
+- **Retrieval baseline** (`tests/unit/memory-retrieval.test.ts`): labelled requests with the memories that must and must not be sent. Recall and precision must stay at 100% on this set.
+- **End-to-end** (`tests/e2e`): sign up → tasks; Jarvis → assignments and tasks appear in School and Tasks; confirmation before deletion; two users can't see each other's data; API auth and cross-site protection; mobile layout. Memory: suggestion → Keep → used, survives reload, appears in Settings; explicit save; Not now; suggestions toggle.
 
 ---
 
@@ -125,6 +126,7 @@ See [`.env.example`](.env.example). Summary:
 | `OPENAI_MODEL` | no | Default `gpt-5.5` |
 | `OPENAI_REASONING_EFFORT` | no | `none`/`low`/`medium`/`high` for reasoning models |
 | `OPENAI_BASE_URL` | no | OpenAI-compatible gateway; used by e2e tests |
+| `JARVIS_PRICE_INPUT_PER_MTOK` / `JARVIS_PRICE_CACHED_INPUT_PER_MTOK` / `JARVIS_PRICE_OUTPUT_PER_MTOK` | no | Model prices (USD per 1M tokens) from your provider's pricing page, used only for cost estimates in Jarvis metrics. Blank ⇒ cost shown as "not configured" |
 | `TEST_DATABASE_URL` / `E2E_DATABASE_URL` | tests | Must be different databases; tests wipe them |
 | `SEED_TEST_ACCOUNT` | no | On Vercel: `keep` creates the demo/test account once and keeps it; `refresh` recreates it with current dates on the next deploy |
 | `DEMO_EMAIL` / `DEMO_PASSWORD` | with `SEED_TEST_ACCOUNT` | Login for the test account (password 10+ chars) |

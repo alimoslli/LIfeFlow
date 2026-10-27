@@ -43,11 +43,14 @@ Next.js server ──► auth (session cookie → user) ──► withUser(userI
 
 1. `POST /api/jarvis/chat` → authenticate, rate-limit, validate.
 2. `runJarvisTurn` creates or loads the conversation, links any attachments (only the user's own), and saves the user message.
-3. Builds context: history from the DB (tool calls and results included), active memories, user preferences, the current time and a 14-day calendar in the user's time zone, and the module the user is in.
+3. Builds context: history from the DB (tool calls and results included), the **approved memories relevant to this request** (`memory-retrieval.ts`; standing instructions always), user preferences, the current time and a 14-day calendar in the user's time zone, and the module the user is in. The system prompt is static instructions first, then this dynamic context (so the provider can cache the prefix); it's versioned by `PROMPT_VERSION`.
 4. Calls the model with all tool schemas (streaming). For each tool call: validate → execute (or create a pending confirmation) → save the call and result → send a progress event to the UI → return the result to the model. Up to 8 steps per turn.
 5. Saves the final text. Errors are saved and shown; a failure is never reported as success.
+6. Records a `jarvis_runs` row (latency, tokens, tool outcomes, cost estimate, prompt version, memories used). Metrics failures never break the turn.
 
-Events streamed to the browser: `conversation`, `text`, `tool_start`, `tool_end`, `confirmation`, `error`, `done`. The same event stream can drive a voice interface later.
+Events streamed to the browser: `conversation`, `text`, `tool_start`, `tool_end`, `confirmation`, `memory_proposal`, `error`, `done` (with `runId`).
+
+See [jarvis-intelligence.md](jarvis-intelligence.md) for how Jarvis improves over time (memory, feedback, evaluation) and the roadmap. The same event stream can drive a voice interface later.
 
 ## Dates and money
 

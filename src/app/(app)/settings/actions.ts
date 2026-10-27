@@ -7,9 +7,10 @@ import { endSession, requireUser } from "@/server/auth/current-user";
 import { SESSION_COOKIE } from "@/server/auth/sessions";
 import { getDb } from "@/server/db/client";
 import { sessions } from "@/server/db/schema";
-import { AuthError, changePassword, deleteAccount, updateProfile } from "@/server/services/accounts";
+import { AuthError, changePassword, deleteAccount, updatePreferences, updateProfile } from "@/server/services/accounts";
 import { ServiceError } from "@/server/services/errors";
-import { createMemory, deleteMemory, updateMemory } from "@/server/services/memory";
+import { decideMemorySuggestion } from "@/server/jarvis/memory-decisions";
+import { createMemory, deleteMemory, editMemory, MEMORY_CATEGORIES, setMemoryStatus } from "@/server/services/memory";
 import { createHash } from "node:crypto";
 
 const asService = async (fn: () => Promise<void>) => {
@@ -61,28 +62,44 @@ export async function deleteAccountAction(_p: ActionState, fd: FormData): Promis
   redirect("/signup");
 }
 
+const memoryCategory = (v: string | undefined) => (MEMORY_CATEGORIES as readonly string[]).includes(v ?? "") ? (v as (typeof MEMORY_CATEGORIES)[number]) : undefined;
+
 export async function addMemoryAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
   return mutate("memory.create", async (s) => {
-    await createMemory(s, { content: f.content ?? "", category: (f.category as "preference") ?? "preference", expiresAt: f.expiresAt ? new Date(f.expiresAt) : null }, "user");
+    const r = await createMemory(s, { content: f.content ?? "", category: memoryCategory(f.category) ?? "preference", expiresAt: f.expiresAt ? new Date(f.expiresAt) : null }, "user");
+    return r.duplicate ? "Jarvis already remembers that." : "Saved";
   });
 }
 
 export async function updateMemoryAction(id: string, _p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
   return mutate("memory.update", async (s) => {
-    await updateMemory(s, id, { content: f.content, expiresAt: f.expiresAt ? new Date(f.expiresAt) : null });
+    await editMemory(s, id, { content: f.content, category: memoryCategory(f.category), expiresAt: f.expiresAt ? new Date(f.expiresAt) : null });
+    return "Saved";
   });
 }
 
 export async function archiveMemoryAction(id: string, status: "active" | "archived"): Promise<ActionState> {
   return mutate("memory.status", async (s) => {
-    await updateMemory(s, id, { status });
+    await setMemoryStatus(s, id, status);
+  });
+}
+
+export async function decideMemoryAction(id: string, decision: "keep" | "dismiss"): Promise<ActionState> {
+  return mutate(`memory.suggestion.${decision}`, async (s) => {
+    await decideMemorySuggestion(s, id, decision);
   });
 }
 
 export async function deleteMemoryAction(id: string): Promise<ActionState> {
   return mutate("memory.delete", async (s) => {
     await deleteMemory(s, id);
+  });
+}
+
+export async function setMemorySuggestionsAction(enabled: boolean): Promise<ActionState> {
+  return mutate("memory.suggestions_setting", async (_s, u) => {
+    await updatePreferences(getDb(), u.id, { memorySuggestions: enabled });
   });
 }

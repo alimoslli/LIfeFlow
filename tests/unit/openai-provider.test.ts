@@ -8,7 +8,7 @@ function sse(events: Record<string, unknown>[]) {
   return new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } });
 }
 
-const completed = (output: unknown[]) => ({ type: "response.completed", sequence_number: 9, response: { id: "resp_1", object: "response", status: "completed", output } });
+const completed = (output: unknown[], usage?: unknown) => ({ type: "response.completed", sequence_number: 9, response: { id: "resp_1", object: "response", status: "completed", output, usage } });
 
 describe("OpenAI Responses provider", () => {
   it("maps history to Responses input items", () => {
@@ -45,7 +45,13 @@ describe("OpenAI Responses provider", () => {
       }
       return sse([
         { type: "response.output_text.delta", delta: "You have 2 tasks.", sequence_number: 1, item_id: "m2", output_index: 0, content_index: 0, logprobs: [] },
-        completed([{ type: "message", id: "m2", role: "assistant", status: "completed", content: [{ type: "output_text", text: "You have 2 tasks.", annotations: [] }] }]),
+        completed([{ type: "message", id: "m2", role: "assistant", status: "completed", content: [{ type: "output_text", text: "You have 2 tasks.", annotations: [] }] }], {
+          input_tokens: 900,
+          input_tokens_details: { cached_tokens: 768 },
+          output_tokens: 40,
+          output_tokens_details: { reasoning_tokens: 12 },
+          total_tokens: 940,
+        }),
       ]);
     }) as unknown as typeof fetch;
 
@@ -59,7 +65,7 @@ describe("OpenAI Responses provider", () => {
 
     const step2: StepEvent[] = [];
     for await (const e of turn.step([{ callId: "call_1", output: '{"ok":true,"data":{"count":2}}' }])) step2.push(e);
-    expect(step2.at(-1)).toMatchObject({ type: "step_done", text: "You have 2 tasks.", toolCalls: [] });
+    expect(step2.at(-1)).toMatchObject({ type: "step_done", text: "You have 2 tasks.", toolCalls: [], usage: { inputTokens: 900, cachedInputTokens: 768, outputTokens: 40, reasoningTokens: 12 } });
 
     const [r1, r2] = requests;
     expect(r1).toMatchObject({ model: "gpt-5.5", instructions: "SYS", store: false, stream: true, include: ["reasoning.encrypted_content"], reasoning: { effort: "low" } });

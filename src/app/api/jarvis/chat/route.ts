@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getSessionUser } from "@/server/auth/current-user";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { runJarvisTurn, type JarvisEvent } from "@/server/jarvis/agent";
-import { getProvider } from "@/server/jarvis/providers";
+import { getProvider, modelPrices } from "@/server/jarvis/providers";
 import { ProviderUnavailableError } from "@/server/jarvis/providers/types";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
           }
         };
         try {
-          await runJarvisTurn({ user, provider, emit, conversationId: parsed.data.conversationId, text: parsed.data.message, module: parsed.data.module, attachmentIds: parsed.data.attachmentIds, signal: req.signal });
+          await runJarvisTurn({ user, provider, emit, conversationId: parsed.data.conversationId, text: parsed.data.message, module: parsed.data.module, attachmentIds: parsed.data.attachmentIds, signal: req.signal, prices: modelPrices() });
         } catch (e) {
           console.error("[jarvis] route", e);
           emit({ type: "error", message: e instanceof Error && /not found/i.test(e.message) ? e.message : "Jarvis hit an unexpected error." });

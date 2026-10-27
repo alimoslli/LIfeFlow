@@ -1,6 +1,17 @@
 # BudgetFlow — Plan & Status
 
-Last updated: 2026-10-26. Status keys: ✅ done and tested · 🟡 partial · ⬜ not started · 🔑 blocked on credentials/access
+Last updated: 2026-10-27. Status keys: ✅ done and tested · 🟡 partial · ⬜ not started · 🔑 blocked on credentials/access
+
+## Current focus — Jarvis intelligence (details: [docs/jarvis-intelligence.md](docs/jarvis-intelligence.md))
+
+| Phase | Scope | Status | Verification |
+|---|---|---|---|
+| 1 | Memory you control (suggest → approve, explicit requests checked server-side, basis, corrections with history, archive-forget, instructions, suggestions toggle), relevance retrieval, static-first versioned prompt, per-turn metrics (`jarvis_runs`), Settings memory review + personal stats, chat Keep/Not now cards | ✅ | 119 unit/integration tests (incl. labelled retrieval set, injection and cross-user cases), 12 e2e incl. 2 memory flows; phone screenshots light/dark. **Not yet run against the real OpenAI API** (network blocked here, no key) |
+| 2 | Feedback & learning (👍/👎, error categories, corrections → proposed rules, learned-preferences review) | ⬜ | |
+| 3 | Evaluation suite + safe prompt experiments, anonymized consented aggregates | ⬜ | |
+| 4 | More actions (recategorize, edit everything, plan day/week, bulk with confirmation) | ⬜ | |
+| 5 | Context & continuity (life snapshot, summaries, resume chats, web search, PDFs) | ⬜ | |
+| 6 | Privacy & ops (retention settings, consent, **production DB role without BYPASSRLS**) | ⬜🔑 | needs a one-time Neon + Vercel step by the owner |
 
 ## Milestone 1 — Foundation & MVP ✅
 
@@ -11,7 +22,7 @@ Last updated: 2026-10-26. Status keys: ✅ done and tested · 🟡 partial · �
 | 3 | Home dashboard (modular widgets) | ✅ | e2e |
 | 4 | Jarvis chat UI (streaming, history, attachments, confirmations, follow-ups, module context) | ✅ | e2e with fake OpenAI server |
 | 5 | Server-side OpenAI integration (Responses API, tool calling, store=false) | 🟡 | Request/stream format tested against SDK types and a simulated stream. **Not yet run against the real OpenAI API**: the build environment's network policy blocks api.openai.com and no key was provided |
-| 6 | Persistent conversations and memory (with secret filter, expiry, user editing) | ✅ | integration tests |
+| 6 | Persistent conversations and memory (with secret filter, expiry, user editing; approval flow added in Jarvis intelligence phase 1) | ✅ | integration tests |
 | 7 | Tasks | ✅ | integration + e2e |
 | 8 | Calendar (recurrence, unified agenda, conflicts, free time) | ✅ | unit tests + screenshots |
 | 9 | School (courses, assignments, views, materials, Jarvis ingestion with dedupe) | ✅ | integration + e2e |

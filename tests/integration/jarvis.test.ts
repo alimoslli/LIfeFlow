@@ -140,26 +140,46 @@ describe("Jarvis tool loop", () => {
     expect(mems.map((m) => m.content)).toEqual(["Prefers studying in the morning."]);
   });
 
-  it("puts saved memories into the system prompt of new conversations", async () => {
-    const { session } = await jarvisUser();
-    await turn(session, "remember", callThenSummarize([{ name: "save_memory", args: { content: "Works at the campus library.", category: "fact" } }]));
-    let seenSystem = "";
+  it("puts only relevant approved memories into the prompt, after a cacheable static prefix", async () => {
+    const { session, run } = await jarvisUser();
+    await turn(session, "remember", callThenSummarize([{ name: "save_memory", args: { content: "Works at the campus library on Thursday evenings.", category: "routine" } }]));
+    await turn(session, "fyi", callThenSummarize([{ name: "save_memory", args: { content: "Is learning Spanish.", category: "goal" } }])); // only a suggestion
+    const seen: string[] = [];
     const spy: ModelProvider = {
       name: "spy",
+      model: "spy",
       startTurn(input) {
-        seenSystem = input.system;
+        seen.push(input.system);
         return new ScriptedProvider(() => ({ text: "ok" })).startTurn(input);
       },
     };
+    const relevant = await runJarvisTurn({ user: session, text: "When do I work this week?", provider: spy, emit: () => {}, now: NOW });
     await runJarvisTurn({ user: session, text: "hi", provider: spy, emit: () => {}, now: NOW });
-    expect(seenSystem).toContain("Works at the campus library.");
-    expect(seenSystem).toContain("Today is 2026-10-26");
+    expect(seen[0]).toContain("Works at the campus library on Thursday evenings.");
+    expect(seen[0]).toContain("Today is 2026-10-26");
+    expect(seen[1]).not.toContain("campus library");
+    expect(seen[1]).toContain("1 other saved memory wasn't relevant");
+    for (const sys of seen) expect(sys).not.toContain("Spanish"); // unapproved suggestions never reach the model
+
+    // The instructions before "# Right now" are identical for every user and time.
+    const other = await jarvisUser();
+    await runJarvisTurn({ user: other.session, text: "hi", provider: spy, emit: () => {}, now: new Date("2027-01-01T00:00:00Z") });
+    const prefix = (x: string) => x.slice(0, x.indexOf("# Right now"));
+    expect(prefix(seen[2])).toBe(prefix(seen[0]));
+    expect(prefix(seen[0]).length).toBeGreaterThan(2000);
+
+    // The run records which memories were used.
+    const { jarvisRuns } = await import("@/server/db/schema");
+    const { eq } = await import("drizzle-orm");
+    const [row] = await run((s) => s.tx.select().from(jarvisRuns).where(eq(jarvisRuns.id, relevant.runId!)));
+    expect(row.memoryIds).toHaveLength(1);
   });
 
   it("reports provider failures honestly and persists them", async () => {
     const { session, run } = await jarvisUser();
     const failing: ModelProvider = {
       name: "failing",
+      model: "failing",
       startTurn: () => ({
         async *step() {
           throw Object.assign(new Error("Unauthorized"), { status: 401 });

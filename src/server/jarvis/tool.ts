@@ -8,6 +8,13 @@ export type ToolContext = {
   today: string;
   now: Date;
   conversationId: string;
+  /**
+   * The user's own message for this turn. Used to check explicit requests
+   * (e.g. "remember…") server-side instead of trusting the model's claim.
+   */
+  userText: string;
+  /** The user's "let Jarvis suggest memories" setting. */
+  memorySuggestions: boolean;
   /** Runs `fn` inside an RLS-scoped transaction for this user. */
   run: <T>(fn: (scope: UserScope) => Promise<T>) => Promise<T>;
 };

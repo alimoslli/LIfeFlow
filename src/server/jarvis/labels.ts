@@ -43,7 +43,8 @@ const LABELS: Record<string, string> = {
   get_note: "Reading note",
   save_note: "Saving note",
   delete_note: "Preparing to delete note",
-  save_memory: "Saving to memory",
+  save_memory: "Remembering",
+  update_memory: "Updating memory",
   list_memories: "Reading memory",
   forget_memory: "Forgetting",
   integration_status: "Checking integrations",
@@ -75,7 +76,24 @@ export function describeToolResult(name: string, r: ToolResultRecord): { summary
     case "add_shifts":
       return { summary: `Added ${plural(n("created"), "shift")}`, viewAt };
     case "save_memory":
-      return { summary: d.alreadyKnown ? "Already remembered" : "Saved to memory", viewAt: "/settings/memory" };
+    case "update_memory": {
+      const summaries: Record<string, string> = {
+        saved: "Saved to memory",
+        updated: "Memory updated",
+        proposed: "Suggested — waiting for your OK",
+        already_known: "Already remembered",
+        already_suggested: "Already waiting for your OK",
+        previously_dismissed: "Not suggested again (you dismissed it)",
+        suggestions_off: "Not saved — suggestions are off",
+        too_many_pending: "Not saved — too many suggestions waiting",
+        unchanged: "Nothing to change",
+        approved_by_user: "Saved to memory (you approved)",
+        dismissed_by_user: "Suggestion dismissed",
+      };
+      return { summary: summaries[String(d.status)] ?? "Done", viewAt: "/settings/memory" };
+    }
+    case "forget_memory":
+      return { summary: "Archived — restore it in Settings", viewAt: "/settings/memory" };
     case "save_note":
       return { summary: `Note ${d.action ?? "saved"}`, viewAt };
     case "draft_email":
@@ -83,4 +101,12 @@ export function describeToolResult(name: string, r: ToolResultRecord): { summary
     default:
       return { summary: "Done", viewAt };
   }
+}
+
+/** A memory suggestion (Keep / Not now card) produced by this tool result, whether or not it's been decided since. */
+export function memoryProposalOf(name: string, r: ToolResultRecord): { memoryId: string; content: string; replaces?: string } | null {
+  if ((name !== "save_memory" && name !== "update_memory") || !r.ok) return null;
+  const d = r.data as { status?: string; memory?: { id: string; content: string } | null; replaces?: { content: string } } | undefined;
+  if (!d?.memory || !["proposed", "approved_by_user", "dismissed_by_user"].includes(d.status ?? "")) return null;
+  return { memoryId: d.memory.id, content: d.memory.content, ...(d.replaces && { replaces: d.replaces.content }) };
 }

@@ -1,4 +1,4 @@
-import type { ChatItem, ModelProvider, ModelTurn, ToolCall } from "./types";
+import type { ChatItem, ModelProvider, ModelTurn, TokenUsage, ToolCall } from "./types";
 
 /**
  * Deterministic provider for automated tests, injected directly into
@@ -10,7 +10,7 @@ import type { ChatItem, ModelProvider, ModelTurn, ToolCall } from "./types";
  * built only from the tool results. Anything else gets a canned reply.
  * Tests can also install a custom responder.
  */
-export type ScriptStep = { text?: string; toolCalls?: { name: string; args: unknown }[] };
+export type ScriptStep = { text?: string; toolCalls?: { name: string; args: unknown }[]; usage?: TokenUsage };
 export type Responder = (ctx: { history: ChatItem[]; step: number; results: { callId: string; output: string }[] }) => ScriptStep;
 
 let customResponder: Responder | null = null;
@@ -41,6 +41,7 @@ let counter = 0;
 
 export class ScriptedProvider implements ModelProvider {
   readonly name = "scripted";
+  readonly model = "scripted";
   constructor(private responder?: Responder) {}
 
   startTurn({ history }: { history: ChatItem[] }): ModelTurn {
@@ -53,7 +54,7 @@ export class ScriptedProvider implements ModelProvider {
         if (out.text) {
           for (const chunk of out.text.match(/[\s\S]{1,40}/g) ?? []) yield { type: "text_delta", delta: chunk };
         }
-        yield { type: "step_done", text: out.text ?? "", toolCalls };
+        yield { type: "step_done", text: out.text ?? "", toolCalls, usage: out.usage };
       },
     };
   }

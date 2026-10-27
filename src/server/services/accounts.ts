@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { hashPassword, verifyPassword } from "../auth/password";
 import type { Database } from "../db/client";
-import { users } from "../db/schema";
+import { users, type UserPreferences } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { seedDefaultCategories } from "./finance/categories";
 import { audit } from "./audit";
@@ -78,6 +78,15 @@ export async function updateProfile(db: Database, userId: string, input: z.input
   await db
     .update(users)
     .set({ name: d.name, timezone: d.timezone, preferences: { ...current.preferences, studyTime: d.studyTime, weekStartsOn: d.weekStartsOn, jarvisTone: d.jarvisTone } })
+    .where(eq(users.id, userId));
+}
+
+/** Merges individual preference switches (e.g. memory suggestions) into the user's preferences. */
+export async function updatePreferences(db: Database, userId: string, patch: Pick<UserPreferences, "memorySuggestions">) {
+  const [current] = await db.select().from(users).where(eq(users.id, userId));
+  await db
+    .update(users)
+    .set({ preferences: { ...current.preferences, ...patch } })
     .where(eq(users.id, userId));
 }
 

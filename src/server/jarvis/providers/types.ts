@@ -9,7 +9,10 @@ export type ChatItem =
 
 export type ToolCall = { callId: string; name: string; arguments: string };
 
-export type StepEvent = { type: "text_delta"; delta: string } | { type: "step_done"; text: string; toolCalls: ToolCall[] };
+/** Token counts for one model call, as reported by the provider. */
+export type TokenUsage = { inputTokens: number; cachedInputTokens: number; outputTokens: number; reasoningTokens: number };
+
+export type StepEvent = { type: "text_delta"; delta: string } | { type: "step_done"; text: string; toolCalls: ToolCall[]; usage?: TokenUsage };
 
 /** One user turn: the agent calls step() until no tool calls remain. */
 export interface ModelTurn {
@@ -18,6 +21,8 @@ export interface ModelTurn {
 
 export interface ModelProvider {
   readonly name: string;
+  /** The model id requests go to (recorded with every run). */
+  readonly model: string;
   startTurn(input: { system: string; history: ChatItem[]; tools: ToolSpec[] }): ModelTurn;
 }
 

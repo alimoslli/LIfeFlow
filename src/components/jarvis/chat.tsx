@@ -2,11 +2,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, ArrowUp, Check, CircleAlert, FileText, ImageIcon, Loader2, Paperclip, Sparkles, Square, X } from "lucide-react";
+import { AlertTriangle, ArrowUp, Brain, Check, CircleAlert, FileText, ImageIcon, Loader2, Paperclip, Sparkles, Square, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Markdown } from "./markdown";
 import { FOLLOW_UPS, STARTERS } from "./suggestions";
-import type { JarvisAvailability, JarvisModule, UiAttachment, UiMessage } from "./types";
+import type { JarvisAvailability, JarvisModule, UiAttachment, UiMemorySuggestion, UiMessage } from "./types";
 
 type ServerEvent =
   | { type: "conversation"; id: string; title: string }
@@ -14,6 +14,7 @@ type ServerEvent =
   | { type: "tool_start"; callId: string; name: string; label: string }
   | { type: "tool_end"; callId: string; name: string; ok: boolean; summary: string; viewAt?: string }
   | { type: "confirmation"; actionId: string; callId: string; toolName: string; summary: string }
+  | { type: "memory_proposal"; callId: string; memoryId: string; content: string; replaces?: string }
   | { type: "done"; messageId: string | null }
   | { type: "error"; message: string };
 
@@ -77,6 +78,7 @@ export function JarvisChat({
       const copy = { ...(next[i] as Extract<UiMessage, { role: "assistant" }>) };
       copy.tools = [...copy.tools];
       copy.confirmations = [...copy.confirmations];
+      copy.memories = [...copy.memories];
       fn(copy);
       next[i] = copy;
       return next;
@@ -92,7 +94,7 @@ export function JarvisChat({
     setBusy(true);
     setLastTool(null);
     const userMsg: UiMessage = { id: `u-${Date.now()}`, role: "user", text: message, attachments: ready };
-    setMessages((m) => [...m, userMsg, { id: `a-${Date.now()}`, role: "assistant", text: "", tools: [], confirmations: [], streaming: true }]);
+    setMessages((m) => [...m, userMsg, { id: `a-${Date.now()}`, role: "assistant", text: "", tools: [], confirmations: [], memories: [], streaming: true }]);
     const controller = new AbortController();
     abortRef.current = controller;
     let mutated = false;
@@ -148,6 +150,9 @@ export function JarvisChat({
                 a.confirmations.push({ actionId: ev.actionId, summary: ev.summary, status: "pending" });
               });
               break;
+            case "memory_proposal":
+              updateAssistant((a) => void a.memories.push({ memoryId: ev.memoryId, content: ev.content, replaces: ev.replaces, status: "proposed" }));
+              break;
             case "error":
               updateAssistant((a) => void (a.error = ev.message));
               break;
@@ -181,6 +186,17 @@ export function JarvisChat({
       ),
     );
     if (data.status === "executed") router.refresh();
+  }
+
+  async function decideMemory(memoryId: string, decision: "keep" | "dismiss") {
+    const patch = (fn: (m: UiMemorySuggestion) => UiMemorySuggestion) =>
+      setMessages((prev) => prev.map((m) => (m.role === "assistant" && m.memories.some((x) => x.memoryId === memoryId) ? { ...m, memories: m.memories.map((x) => (x.memoryId === memoryId ? fn(x) : x)) } : m)));
+    patch((x) => ({ ...x, status: decision === "keep" ? "saved" : "dismissed", error: undefined })); // optimistic
+    const res = await fetch(`/api/jarvis/memories/${memoryId}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ decision }) }).catch(() => null);
+    if (!res?.ok) {
+      const data = (await res?.json().catch(() => ({}))) as { error?: string } | undefined;
+      patch((x) => ({ ...x, status: "proposed", error: data?.error ?? "Couldn't save your choice. Try again." }));
+    }
   }
 
   async function upload(files: FileList | null) {
@@ -239,7 +255,7 @@ export function JarvisChat({
               </div>
             </div>
           )}
-          {messages.map((m) => (m.role === "user" ? <UserBubble key={m.id} m={m} /> : <AssistantBubble key={m.id} m={m} onDecide={decide} />))}
+          {messages.map((m) => (m.role === "user" ? <UserBubble key={m.id} m={m} /> : <AssistantBubble key={m.id} m={m} onDecide={decide} onMemory={decideMemory} />))}
           {followUps && (
             <div className="flex flex-wrap gap-2">
               {followUps.map((f) => (
@@ -350,7 +366,15 @@ function UserBubble({ m }: { m: Extract<UiMessage, { role: "user" }> }) {
   );
 }
 
-function AssistantBubble({ m, onDecide }: { m: Extract<UiMessage, { role: "assistant" }>; onDecide: (id: string, d: "confirm" | "cancel") => void }) {
+function AssistantBubble({
+  m,
+  onDecide,
+  onMemory,
+}: {
+  m: Extract<UiMessage, { role: "assistant" }>;
+  onDecide: (id: string, d: "confirm" | "cancel") => void;
+  onMemory: (memoryId: string, d: "keep" | "dismiss") => void;
+}) {
   const thinking = m.streaming && !m.text && m.tools.every((t) => t.status !== "running");
   return (
     <div className="animate-fade-in flex gap-3">
@@ -407,6 +431,9 @@ function AssistantBubble({ m, onDecide }: { m: Extract<UiMessage, { role: "assis
             )}
           </div>
         ))}
+        {m.memories.map((s) => (
+          <MemoryCard key={s.memoryId} s={s} onDecide={onMemory} />
+        ))}
         {m.error && (
           <div className="flex gap-2 rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">
             <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
@@ -414,6 +441,39 @@ function AssistantBubble({ m, onDecide }: { m: Extract<UiMessage, { role: "assis
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function MemoryCard({ s, onDecide }: { s: UiMemorySuggestion; onDecide: (memoryId: string, d: "keep" | "dismiss") => void }) {
+  return (
+    <div className="rounded-2xl bg-surface p-4 shadow-soft" aria-label="Memory suggestion">
+      <p className="flex items-center gap-1.5 text-[13px] font-medium text-accent">
+        <Brain className="h-3.5 w-3.5" /> {s.replaces ? "Update what I remember?" : "Remember this for next time?"}
+      </p>
+      {s.replaces && <p className="mt-2 text-sm text-muted line-through">{s.replaces}</p>}
+      <p className="mt-1 text-[15px]">{s.content}</p>
+      {s.status === "proposed" ? (
+        <>
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => onDecide(s.memoryId, "keep")} className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-text">
+              Keep
+            </button>
+            <button onClick={() => onDecide(s.memoryId, "dismiss")} className="rounded-full bg-surface-2 px-4 py-2 text-sm">
+              Not now
+            </button>
+          </div>
+          {s.error && <p className="mt-2 text-[13px] text-danger">{s.error}</p>}
+        </>
+      ) : (
+        <p className={cn("mt-2 text-[13px]", s.status === "saved" ? "text-success" : "text-muted")}>
+          {s.status === "saved" ? "✓ Saved to memory" : s.status === "dismissed" ? "Not saved" : "Removed from memory"}
+          {" · "}
+          <Link href="/settings/memory" className="underline-offset-2 hover:underline">
+            Manage memory
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

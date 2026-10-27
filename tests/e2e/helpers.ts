@@ -5,6 +5,8 @@ export const pool = new Pool({ connectionString: process.env.E2E_DATABASE_URL ??
 
 export async function signUp(page: Page, name = "Jordan Lee") {
   const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@example.com`;
+  // Every test signs up from the same IP; reset only the sign-up limiter so the suite can grow past its 10/hour cap.
+  await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
   await page.goto("/signup");
   await page.getByLabel("Your name").fill(name);
   await page.getByLabel("Email").fill(email);

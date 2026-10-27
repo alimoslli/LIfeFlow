@@ -20,7 +20,7 @@ import { nextOccurrence } from "../src/server/services/finance/recurring-detect"
 import { createGoal, createRecurring, setBudget } from "../src/server/services/finance/planning";
 import { createTransaction } from "../src/server/services/finance/transactions";
 import { addManualHolding } from "../src/server/services/finance/wealth";
-import { createMemory } from "../src/server/services/memory";
+import { createMemory, rememberForUser } from "../src/server/services/memory";
 import { createNote, createProject } from "../src/server/services/notes";
 import { addMaterial, createAssignment, createCourse, updateAssignment } from "../src/server/services/school";
 import { createTask, updateTask } from "../src/server/services/tasks";
@@ -206,8 +206,11 @@ async function seedAll(s: UserScope, today: string) {
   await createMemory(s, { content: "Saving for a summer trip to Montréal.", category: "goal" }, "user");
   await createMemory(s, { content: "Wants to keep food spending under $450 a month.", category: "goal" }, "user");
   await createMemory(s, { content: "Has a car; drives to campus on Mondays and takes the bus other days.", category: "routine" }, "user");
-  await createMemory(s, { content: "Prefers concise answers with a short list of next steps.", category: "preference" }, "user");
+  await createMemory(s, { content: "Prefers concise answers with a short list of next steps.", category: "instruction" }, "user");
+  await createMemory(s, { content: "Show money in whole dollars unless cents matter.", category: "instruction" }, "user");
   await createMemory(s, { content: "Midterm season: extra stressed until mid-November.", category: "temporary", expiresAt: new Date(Date.now() + 21 * 86_400_000) }, "user");
+  // A suggestion waiting for approval, so the Keep / Not now flow is visible in the test account.
+  await rememberForUser(s, { content: "Often orders takeout on Thursdays after closing shifts.", category: "routine", basis: "inferred" }, { userText: "", conversationId: null, suggestionsEnabled: true, now: new Date() });
 
   // ---- more depth: subtasks, completed work, materials, paychecks, worked shifts, notes
   const essay = await createTask(s, TZ, { title: "Write PSY 101 research summary", priority: "high", dueDate: addDaysStr(today, 6), courseId: psy.id }, "demo");

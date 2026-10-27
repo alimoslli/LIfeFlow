@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import type { ResponseInputItem, ResponseOutputItem, Tool } from "openai/resources/responses/responses";
-import type { ChatItem, ModelProvider, ModelTurn, StepEvent, ToolCall } from "./types";
+import type { ChatItem, ModelProvider, ModelTurn, StepEvent, TokenUsage, ToolCall } from "./types";
 import { ProviderUnavailableError } from "./types";
 import type { ToolSpec } from "../registry";
 
@@ -37,6 +37,19 @@ export function toResponsesInput(history: ChatItem[]): ResponseInputItem[] {
   });
 }
 
+type ResponsesUsage = { input_tokens?: number; output_tokens?: number; input_tokens_details?: { cached_tokens?: number } | null; output_tokens_details?: { reasoning_tokens?: number } | null } | null | undefined;
+
+/** Normalizes Responses API usage; undefined when the server didn't report it. */
+export function toUsage(u: ResponsesUsage): TokenUsage | undefined {
+  if (!u || typeof u.input_tokens !== "number") return undefined;
+  return {
+    inputTokens: u.input_tokens,
+    cachedInputTokens: u.input_tokens_details?.cached_tokens ?? 0,
+    outputTokens: u.output_tokens ?? 0,
+    reasoningTokens: u.output_tokens_details?.reasoning_tokens ?? 0,
+  };
+}
+
 /**
  * OpenAI Responses API provider. Uses store:false so conversation content is
  * not retained server-side by OpenAI's response storage; our database is the
@@ -44,10 +57,12 @@ export function toResponsesInput(history: ChatItem[]): ResponseInputItem[] {
  */
 export class OpenAIProvider implements ModelProvider {
   readonly name = "openai";
+  readonly model: string;
   private client: OpenAI;
 
   constructor(private config: OpenAIConfig) {
     if (!config.apiKey) throw new ProviderUnavailableError("OPENAI_API_KEY is not configured.");
+    this.model = config.model;
     this.client = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL, maxRetries: 2, timeout: 120_000, fetch: config.fetch });
   }
 
@@ -73,12 +88,14 @@ export class OpenAIProvider implements ModelProvider {
         });
         let text = "";
         let output: ResponseOutputItem[] | null = null;
+        let usage: TokenUsage | undefined;
         for await (const event of stream) {
           if (event.type === "response.output_text.delta") {
             text += event.delta;
             yield { type: "text_delta", delta: event.delta } satisfies StepEvent;
           } else if (event.type === "response.completed" || event.type === "response.incomplete") {
             output = event.response.output;
+            usage = toUsage(event.response.usage);
           } else if (event.type === "response.failed") {
             throw new Error(event.response.error?.message ?? "The model request failed.");
           } else if (event.type === "error") {
@@ -93,7 +110,7 @@ export class OpenAIProvider implements ModelProvider {
           if (item.type === "reasoning" && !item.encrypted_content) continue;
           input.push(item as ResponseInputItem);
         }
-        yield { type: "step_done", text, toolCalls };
+        yield { type: "step_done", text, toolCalls, usage };
       },
     };
   }
