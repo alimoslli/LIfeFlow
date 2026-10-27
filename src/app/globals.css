@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-/* LifeFlow design tokens. Warm paper neutrals, one deep-green accent. */
+/* LifeFlow design tokens. Warm paper neutrals, one deep-green accent.
+   Theme: follows the device unless the user picks one (html[data-theme]). */
 :root {
   --bg: #f4f2ec;
   --surface: #fffefb;
@@ -10,14 +11,17 @@
   --border-strong: #cfcabd;
   --text: #1b1a17;
   --text-2: #4a4740;
-  --muted: #77736a;
+  --muted: #69655c;
   --accent: #2f5d50;
   --accent-hover: #264d42;
   --accent-soft: #e4eee9;
   --accent-text: #ffffff;
+  /* Deep-green feature cards ("Up next", Money). Stay deep green in both themes. */
+  --hero: #2f5d50;
+  --hero-text: #ffffff;
   --danger: #b42318;
   --danger-soft: #fdecea;
-  --warning: #a15c07;
+  --warning: #9a5806;
   --warning-soft: #fdf1dc;
   --success: #12704a;
   --success-soft: #e3f3ea;
@@ -33,35 +37,71 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #11110f;
-    --surface: #1b1a17;
-    --surface-2: #222220;
-    --surface-3: #2b2a27;
-    --border: #2e2d29;
-    --border-strong: #403e38;
-    --text: #edebe5;
-    --text-2: #c9c5bb;
-    --muted: #9b978d;
-    --accent: #7fb8a4;
-    --accent-hover: #93c6b4;
-    --accent-soft: #1f2e29;
-    --accent-text: #0f1a16;
-    --danger: #f2877b;
-    --danger-soft: #3a1d1a;
-    --warning: #e8b062;
-    --warning-soft: #33271a;
-    --success: #6fcf9f;
-    --success-soft: #19302a;
-    --info: #8db4ee;
-    --info-soft: #1b2638;
-    --ring: #7fb8a466;
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
-    --shadow-lift: 0 18px 40px -12px rgb(0 0 0 / 0.6);
+  :root:not([data-theme="light"]) {
+    --bg: #0e0e0d;
+    --surface: #1a1a18;
+    --surface-2: #242421;
+    --surface-3: #31302c;
+    --border: #33322e;
+    --border-strong: #4a4842;
+    --text: #f3f1ec;
+    --text-2: #d3cfc6;
+    --muted: #a8a49a;
+    --accent: #8ccbb4;
+    --accent-hover: #a2d8c4;
+    --accent-soft: #1d322b;
+    --accent-text: #0c1b16;
+    --hero: #21493d;
+    --hero-text: #f3f8f5;
+    --danger: #ff9a8e;
+    --danger-soft: #3d1c19;
+    --warning: #f0bb6c;
+    --warning-soft: #362817;
+    --success: #7fdcab;
+    --success-soft: #16322a;
+    --info: #9ec2f5;
+    --info-soft: #1a2739;
+    --ring: #8ccbb466;
+    /* Shadows don't read on dark backgrounds; a hairline ring separates surfaces instead. */
+    --shadow: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-lift: 0 0 0 1px rgb(255 255 255 / 0.1), 0 18px 40px -12px rgb(0 0 0 / 0.7);
     --series-income: #3987e5;
     --series-spend: #d95926;
     color-scheme: dark;
   }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e0e0d;
+  --surface: #1a1a18;
+  --surface-2: #242421;
+  --surface-3: #31302c;
+  --border: #33322e;
+  --border-strong: #4a4842;
+  --text: #f3f1ec;
+  --text-2: #d3cfc6;
+  --muted: #a8a49a;
+  --accent: #8ccbb4;
+  --accent-hover: #a2d8c4;
+  --accent-soft: #1d322b;
+  --accent-text: #0c1b16;
+  --hero: #21493d;
+  --hero-text: #f3f8f5;
+  --danger: #ff9a8e;
+  --danger-soft: #3d1c19;
+  --warning: #f0bb6c;
+  --warning-soft: #362817;
+  --success: #7fdcab;
+  --success-soft: #16322a;
+  --info: #9ec2f5;
+  --info-soft: #1a2739;
+  --ring: #8ccbb466;
+  /* Shadows don't read on dark backgrounds; a hairline ring separates surfaces instead. */
+  --shadow: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-lift: 0 0 0 1px rgb(255 255 255 / 0.1), 0 18px 40px -12px rgb(0 0 0 / 0.7);
+  --series-income: #3987e5;
+  --series-spend: #d95926;
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -78,6 +118,8 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
   --color-accent-text: var(--accent-text);
+  --color-hero: var(--hero);
+  --color-hero-text: var(--hero-text);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-warning: var(--warning);

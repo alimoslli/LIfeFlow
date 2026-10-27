@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { cookies } from "next/headers";
+import { THEME_COOKIE, parseTheme } from "@/lib/theme";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import "./globals.css";
 
@@ -15,17 +17,27 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
 };
 
-export const viewport: Viewport = {
-  viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f2ec" },
-    { media: "(prefers-color-scheme: dark)", color: "#11110f" },
-  ],
-};
+const THEME_COLORS = { light: "#f4f2ec", dark: "#0e0e0d" };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+/** Browser chrome color follows the chosen theme (or the device setting). */
+export async function generateViewport(): Promise<Viewport> {
+  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
+  return {
+    viewportFit: "cover",
+    themeColor:
+      theme === "system"
+        ? [
+            { media: "(prefers-color-scheme: light)", color: THEME_COLORS.light },
+            { media: "(prefers-color-scheme: dark)", color: THEME_COLORS.dark },
+          ]
+        : THEME_COLORS[theme],
+  };
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}>
+    <html lang="en" data-theme={theme === "system" ? undefined : theme} className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}>
       <body className="min-h-full">{children}</body>
     </html>
   );

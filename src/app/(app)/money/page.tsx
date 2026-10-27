@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowDownLeft, ArrowRight, ArrowUpRight, Landmark, LineChart, PiggyBank, Receipt, Repeat, Target, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, Landmark, TrendingDown, TrendingUp } from "lucide-react";
 import { InsightList } from "../_today/insights";
 import { addDaysStr, formatDateStr, monthStart, todayIn } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
@@ -62,7 +62,7 @@ export default async function MoneyPage() {
       </header>
 
       {/* The three numbers that matter */}
-      <section className="animate-rise overflow-hidden rounded-[28px] bg-accent text-accent-text shadow-lift" style={{ animationDelay: "60ms" }} aria-label="This month">
+      <section className="animate-rise overflow-hidden rounded-[28px] bg-hero text-hero-text shadow-lift" style={{ animationDelay: "60ms" }} aria-label="This month">
         <div className="relative p-6 pb-5">
           <Waves />
           <p className="relative text-sm opacity-75">Cash &amp; checking</p>
@@ -169,17 +169,6 @@ export default async function MoneyPage() {
         </div>
       </section>
 
-      <section className="border-t border-border pt-6">
-        <h2 className="mb-3 text-sm text-muted">Details</h2>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          <Place href="/finances/transactions" icon={<Receipt />} label="Transactions" />
-          <Place href="/finances/budgets" icon={<Target />} label="Budgets" />
-          <Place href="/finances/bills" icon={<Repeat />} label="Bills" />
-          <Place href="/finances/goals" icon={<PiggyBank />} label="Goals" />
-          <Place href="/finances/accounts" icon={<Landmark />} label="Accounts" />
-          <Place href="/wealth" icon={<LineChart />} label="Investments" />
-        </div>
-      </section>
     </div>
   );
 }
@@ -202,14 +191,5 @@ function Title({ children, href }: { children: React.ReactNode; href: string }) 
         See all <ArrowRight className="h-3.5 w-3.5" />
       </Link>
     </div>
-  );
-}
-
-function Place({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
-  return (
-    <Link href={href} className="flex items-center gap-2.5 rounded-2xl bg-surface p-3.5 text-sm font-medium shadow-soft transition-shadow hover:shadow-lift [&_svg]:h-[18px] [&_svg]:w-[18px] [&_svg]:text-accent">
-      {icon}
-      {label}
-    </Link>
   );
 }

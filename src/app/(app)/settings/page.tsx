@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { ThemePicker } from "@/components/theme-picker";
+import { THEME_COOKIE, parseTheme } from "@/lib/theme";
 import { eq } from "drizzle-orm";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -15,8 +18,16 @@ export default async function ProfileSettings() {
   const session = await requireUser();
   const [u] = await getDb().select({ name: users.name, email: users.email, timezone: users.timezone, preferences: users.preferences }).from(users).where(eq(users.id, session.id));
   const zones = Intl.supportedValuesOf("timeZone");
+  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
   return (
+    <div className="flex flex-col gap-5">
     <Card className="p-6">
+      <h2 className="mb-1 text-[15px] font-semibold">Appearance</h2>
+      <p className="mb-4 text-sm text-muted">Automatic follows your phone or computer setting.</p>
+      <ThemePicker initial={theme} />
+    </Card>
+    <Card className="p-6">
+      <h2 className="mb-4 text-[15px] font-semibold">Profile</h2>
       <ActionForm action={updateProfileAction} reset={false} showSuccess>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Name" htmlFor="p-name">
@@ -60,5 +71,6 @@ export default async function ProfileSettings() {
         <SubmitButton className="self-start">Save profile</SubmitButton>
       </ActionForm>
     </Card>
+    </div>
   );
 }

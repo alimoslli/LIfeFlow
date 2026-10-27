@@ -5,7 +5,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { cn } from "@/lib/utils";
 import { NAV, isActive, moduleForPath } from "./nav-items";
 import { JarvisDrawer } from "../jarvis/jarvis-drawer";
-import { BackLink } from "./back-link";
+import { SectionNav } from "./section-nav";
 import type { JarvisAvailability } from "../jarvis/types";
 
 type ShellCtx = { openJarvis: (prompt?: string, opts?: { send?: boolean }) => void };
@@ -85,7 +85,7 @@ export function AppShell({
             <div className="px-4 pt-3 text-center text-[11px] tracking-wide text-muted md:pt-4">Test account · everything here is sample data</div>
           )}
           <main className={cn("mx-auto w-full flex-1", onJarvisPage ? "max-w-none" : "max-w-5xl px-5 pt-6 pb-32 sm:px-8 md:pt-10 md:pb-16")}>
-            {!onJarvisPage && <BackLink />}
+            {!onJarvisPage && <SectionNav />}
             {children}
           </main>
         </div>
@@ -129,7 +129,7 @@ export function AppShell({
 export function Mark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={cn("h-8 w-8", className)} aria-hidden>
-      <rect width="32" height="32" rx="10" className="fill-accent" />
+      <rect width="32" height="32" rx="10" className="fill-hero" />
       <path d="M8 19.5c2.6-4.6 5.2-6.9 8-6.9s4.6 2.2 8-2.6" stroke="white" strokeWidth="2.4" fill="none" strokeLinecap="round" />
       <path d="M8 24c2.6-3 5.2-4.5 8-4.5s4.6 1.4 8-1.7" stroke="white" strokeWidth="2.4" fill="none" strokeLinecap="round" opacity=".5" />
     </svg>

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Plus } from "lucide-react";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -12,7 +13,14 @@ export function EventDialog({ action, defaultDate, courses }: { action: (p: Acti
   const [allDay, setAllDay] = useState(false);
   const [repeat, setRepeat] = useState("none");
   return (
-    <Dialog trigger="New event" title="New event">
+    <Dialog
+      trigger={
+        <>
+          <Plus className="h-4 w-4" /> Event
+        </>
+      }
+      title="New event"
+    >
       {(close) => (
         <ActionForm action={action} onSuccess={close}>
           <Field label="Title" htmlFor="e-title">

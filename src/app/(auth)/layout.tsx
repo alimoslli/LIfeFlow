@@ -16,7 +16,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </div>
 
       {/* Product preview on larger screens */}
-      <aside className="relative hidden overflow-hidden bg-accent lg:block" aria-hidden>
+      <aside className="relative hidden overflow-hidden bg-hero lg:block" aria-hidden>
         <svg viewBox="0 0 600 800" preserveAspectRatio="none" className="absolute inset-0 h-full w-full opacity-[0.10]">
           {Array.from({ length: 14 }, (_, i) => (
             <path key={i} d={`M-20 ${520 - i * 22} C 160 ${300 + i * 14}, 360 ${700 - i * 18}, 640 ${260 + i * 16}`} fill="none" stroke="white" strokeWidth="1.4" />

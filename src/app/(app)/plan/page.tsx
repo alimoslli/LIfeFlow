@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen, Briefcase, CalendarDays, CheckSquare, NotebookPen, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { addDaysStr, daysBetween, formatDateStr, formatIn, isValidDateStr, localDateOf, todayIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -130,28 +130,6 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         </section>
       )}
 
-      <section className="border-t border-border pt-6">
-        <h2 className="mb-3 text-sm text-muted">Details</h2>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-          <Place href="/school" icon={<BookOpen />} label="Classes" sub={`${d.courses.length}`} />
-          <Place href="/work" icon={<Briefcase />} label="Work" sub={d.jobs[0]?.name ?? "Add job"} />
-          <Place href="/tasks" icon={<CheckSquare />} label="To-dos" sub={`${d.openTasks} open`} />
-          <Place href="/calendar" icon={<CalendarDays />} label="Calendar" sub="Week view" />
-          <Place href="/notes" icon={<NotebookPen />} label="Notes" sub="& projects" />
-        </div>
-      </section>
     </div>
-  );
-}
-
-function Place({ href, icon, label, sub }: { href: string; icon: React.ReactNode; label: string; sub: string }) {
-  return (
-    <Link href={href} className="flex flex-col gap-2 rounded-2xl bg-surface p-3.5 shadow-soft transition-shadow hover:shadow-lift [&_svg]:h-[18px] [&_svg]:w-[18px] [&_svg]:text-accent">
-      {icon}
-      <span>
-        <span className="block text-sm font-medium">{label}</span>
-        <span className="block truncate text-xs text-muted">{sub}</span>
-      </span>
-    </Link>
   );
 }

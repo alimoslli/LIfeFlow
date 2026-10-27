@@ -39,7 +39,7 @@ export default async function TodayPage() {
 
       {b.next && (
         <section className="animate-rise" style={{ animationDelay: "60ms" }} aria-label="Up next">
-          <div className="relative overflow-hidden rounded-3xl bg-accent p-5 text-accent-text shadow-lift sm:p-6">
+          <div className="relative overflow-hidden rounded-3xl bg-hero p-5 text-hero-text shadow-lift sm:p-6">
             <p className="text-xs font-medium tracking-wide uppercase opacity-70">{minutesUntil! <= 0 ? "Happening now" : `Up next · in ${humanMinutes(minutesUntil!)}`}</p>
             <p className="mt-1.5 font-display text-[28px] leading-tight font-medium">{b.next.title}</p>
             <p className="mt-1 text-sm opacity-80">

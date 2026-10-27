@@ -220,7 +220,7 @@ export function JarvisChat({
           )}
           {empty && (
             <div className="animate-rise pt-[8vh]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-text shadow-lift">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-hero text-hero-text shadow-lift">
                 <Sparkles className="h-5 w-5" />
               </div>
               <h2 className="mt-5 font-display text-[34px] leading-tight font-medium tracking-tight">How can I help?</h2>
@@ -333,7 +333,7 @@ export function JarvisChat({
 function UserBubble({ m }: { m: Extract<UiMessage, { role: "user" }> }) {
   return (
     <div className="animate-fade-in flex justify-end">
-      <div className="max-w-[85%] rounded-[22px] rounded-br-md bg-accent px-4 py-2.5 text-[15px] whitespace-pre-wrap text-accent-text">
+      <div className="max-w-[85%] rounded-[22px] rounded-br-md bg-hero px-4 py-2.5 text-[15px] whitespace-pre-wrap text-hero-text">
         {m.text}
         {m.attachments.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">

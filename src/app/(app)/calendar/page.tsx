@@ -2,206 +2,174 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
-import { Card, PageHeader } from "@/components/ui/surface";
-import { addDaysStr, formatDateStr, formatIn, isValidDateStr, localDateOf, todayIn, weekStart } from "@/lib/dates";
+import { addDaysStr, daysBetween, formatDateStr, formatIn, isValidDateStr, localDateOf, monthEnd, monthStart, todayIn, weekStart } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
+import { series } from "@/server/db/series";
 import { findConflicts, getAgenda, type AgendaItem } from "@/server/services/calendar";
 import { listCourses } from "@/server/services/school";
-import { series } from "@/server/db/series";
 import { createEventAction, deleteEventAction } from "./actions";
 import { EventDialog } from "./event-dialog";
 
 export const metadata: Metadata = { title: "Calendar" };
 
-const HOUR_PX = 44;
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-/** Assigns side-by-side lanes within each cluster of mutually overlapping timed items. */
-function layout(items: AgendaItem[]) {
-  const sorted = [...items].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
-  const out: { item: AgendaItem; lane: number; lanes: number }[] = [];
-  let cluster: { item: AgendaItem; lane: number }[] = [];
-  let lanes: number[] = [];
-  let clusterEnd = 0;
-  const flush = () => {
-    for (const c of cluster) out.push({ ...c, lanes: Math.max(1, lanes.length) });
-    cluster = [];
-    lanes = [];
-  };
-  for (const i of sorted) {
-    if (cluster.length && i.startsAt.getTime() >= clusterEnd) flush();
-    let lane = lanes.findIndex((end) => end <= i.startsAt.getTime());
-    if (lane < 0) lane = lanes.length;
-    lanes[lane] = i.endsAt!.getTime();
-    clusterEnd = Math.max(cluster.length ? clusterEnd : 0, i.endsAt!.getTime());
-    cluster.push({ item: i, lane });
-  }
-  flush();
-  return out;
-}
-
-export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
+export default async function CalendarPage({ searchParams }: { searchParams: Promise<{ month?: string; date?: string }> }) {
   const sp = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
-    const anchor = sp.date && isValidDateStr(sp.date) ? sp.date : today;
-    const from = weekStart(anchor);
-    const to = addDaysStr(from, 6);
-    const [items, courses] = await series(() => getAgenda(s, u.timezone, from, to), () => listCourses(s));
-    return { items, courses, from, to, today, anchor, tz: u.timezone };
+    const month = sp.month && /^\d{4}-\d{2}$/.test(sp.month) && isValidDateStr(`${sp.month}-01`) ? `${sp.month}-01` : monthStart(sp.date && isValidDateStr(sp.date) ? sp.date : today);
+    const selected = sp.date && isValidDateStr(sp.date) ? sp.date : month === monthStart(today) ? today : month;
+    const gridStart = weekStart(month);
+    const gridEnd = addDaysStr(weekStart(monthEnd(month)), 6);
+    const [items, courses] = await series(() => getAgenda(s, u.timezone, gridStart, gridEnd), () => listCourses(s));
+    return { items, courses, today, month, selected, gridStart, gridEnd, tz: u.timezone };
   });
   const { tz } = d;
-  const days = Array.from({ length: 7 }, (_, i) => addDaysStr(d.from, i));
-  const conflicts = findConflicts(d.items);
-  const timed = d.items.filter((i) => i.blocksTime && i.endsAt && !i.allDay);
-  const minutesOf = (x: Date) => {
-    const [h, m] = formatIn(x, tz, "H:m").split(":").map(Number);
-    return h * 60 + m;
-  };
-  const startHour = Math.min(7, ...timed.map((i) => Math.floor(minutesOf(i.startsAt) / 60)));
-  const endHour = Math.max(22, ...timed.map((i) => Math.ceil(minutesOf(i.endsAt!) / 60)));
-  const hours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
-  const byDay = (day: string, f: (i: AgendaItem) => boolean) => d.items.filter((i) => localDateOf(i.startsAt, tz) === day && f(i));
+  const byDay = new Map<string, AgendaItem[]>();
+  for (const i of d.items) {
+    const day = localDateOf(i.startsAt, tz);
+    byDay.set(day, [...(byDay.get(day) ?? []), i]);
+  }
+  const days = Array.from({ length: daysBetween(d.gridStart, d.gridEnd) + 1 }, (_, n) => addDaysStr(d.gridStart, n));
+  const prev = monthStart(addDaysStr(d.month, -1)).slice(0, 7);
+  const next = monthStart(addDaysStr(monthEnd(d.month), 1)).slice(0, 7);
+  const href = (month: string, date?: string) => `/calendar?month=${month}${date ? `&date=${date}` : ""}`;
+  const dayItems = byDay.get(d.selected) ?? [];
+  const conflicts = findConflicts(dayItems);
+  const conflictKeys = new Set(conflicts.flatMap((c) => [c.a.key, c.b.key]));
 
   return (
-    <>
-      <PageHeader
-        title="Calendar"
-        description="Your week at a glance."
-        actions={
-          <>
-            <div className="flex items-center rounded-full bg-surface shadow-soft">
-              <Link href={`/calendar?date=${addDaysStr(d.from, -7)}`} className="p-2 text-muted hover:text-text" aria-label="Previous week">
-                <ChevronLeft className="h-4 w-4" />
-              </Link>
-              <Link href="/calendar" className="px-3 py-2 text-sm">
-                Today
-              </Link>
-              <Link href={`/calendar?date=${addDaysStr(d.from, 7)}`} className="p-2 text-muted hover:text-text" aria-label="Next week">
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <EventDialog action={createEventAction} defaultDate={d.anchor} courses={d.courses} />
-          </>
-        }
-      />
-      <p className="-mt-3 mb-4 text-sm font-medium text-text-2">
-        {formatDateStr(d.from, "MMM d")} – {formatDateStr(d.to, d.from.slice(5, 7) === d.to.slice(5, 7) ? "d, yyyy" : "MMM d, yyyy")}
-      </p>
+    <div className="flex flex-col gap-6">
+      <header className="flex items-center justify-between gap-3">
+        <h1 className="font-display text-[34px] leading-none font-medium tracking-tight sm:text-[40px]">
+          {formatDateStr(d.month, "MMMM")} <span className="text-muted">{formatDateStr(d.month, "yyyy")}</span>
+        </h1>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center rounded-full bg-surface shadow-soft">
+            <Link href={href(prev)} scroll={false} className="p-2.5 text-text-2 hover:text-text" aria-label="Previous month">
+              <ChevronLeft className="h-4 w-4" />
+            </Link>
+            <Link href="/calendar" scroll={false} aria-label="Jump to today" className="px-1.5 text-sm font-medium">
+              Today
+            </Link>
+            <Link href={href(next)} scroll={false} className="p-2.5 text-text-2 hover:text-text" aria-label="Next month">
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </header>
 
-      {conflicts.length > 0 && (
-        <div className="mb-5 flex flex-col gap-1.5 rounded-2xl bg-warning-soft px-4 py-3 text-sm text-warning">
-          {conflicts.slice(0, 4).map((c) => (
-            <p key={c.a.key + c.b.key} className="flex items-start gap-2">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>
-                <strong className="font-medium">{c.a.title}</strong> overlaps <strong className="font-medium">{c.b.title}</strong> on {formatIn(c.b.startsAt, tz, "EEEE 'at' h:mm a")}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+        {/* Month */}
+        <section aria-label="Month" className="rounded-3xl bg-surface p-2 shadow-soft sm:p-3">
+          <div className="grid grid-cols-7 pb-1">
+            {WEEKDAYS.map((w) => (
+              <span key={w} className="py-2 text-center text-xs font-medium text-muted">
+                <span className="sm:hidden">{w[0]}</span>
+                <span className="hidden sm:inline">{w}</span>
               </span>
-            </p>
-          ))}
-        </div>
-      )}
-
-      {/* Week grid (desktop) */}
-      <Card className="hidden overflow-hidden md:block">
-        <div className="grid grid-cols-[52px_repeat(7,1fr)] border-b border-border">
-          <div />
-          {days.map((day) => (
-            <div key={day} className={cn("border-l border-border px-2 py-2 text-center", day === d.today && "bg-accent-soft/60")}>
-              <p className="text-[11px] font-medium tracking-wide text-muted uppercase">{formatDateStr(day, "EEE")}</p>
-              <p className={cn("text-lg leading-tight font-medium", day === d.today && "text-accent")}>{formatDateStr(day, "d")}</p>
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-[52px_repeat(7,1fr)] border-b border-border">
-          <div className="py-1.5 pr-1.5 text-right text-[10px] text-muted">all-day</div>
-          {days.map((day) => (
-            <div key={day} className="flex min-h-8 flex-col gap-0.5 border-l border-border p-1">
-              {byDay(day, (i) => i.allDay || !i.blocksTime).map((i) => (
-                <Link key={i.key} href={i.href} className="truncate rounded px-1.5 py-0.5 text-[11px] leading-4" style={{ background: `color-mix(in srgb, ${i.color ?? "var(--accent)"} 14%, transparent)`, color: i.color ?? "var(--accent)" }} title={i.title}>
-                  {!i.allDay && <span className="tabular mr-1 opacity-70">{formatIn(i.startsAt, tz, "h:mma").toLowerCase()}</span>}
-                  {i.origin === "assignment" ? "Due: " : i.origin === "task" ? "☐ " : ""}
-                  {i.title}
-                </Link>
-              ))}
-            </div>
-          ))}
-        </div>
-        <div className="relative grid max-h-[620px] grid-cols-[52px_repeat(7,1fr)] overflow-y-auto">
-          <div>
-            {hours.map((h) => (
-              <div key={h} style={{ height: HOUR_PX }} className="pr-1.5 text-right text-[10px] text-muted">
-                <span className="relative -top-1.5">{h === 0 ? "" : `${((h + 11) % 12) + 1}${h < 12 ? "am" : "pm"}`}</span>
-              </div>
             ))}
           </div>
-          {days.map((day) => (
-            <div key={day} className="relative border-l border-border" style={{ height: hours.length * HOUR_PX }}>
-              {hours.map((h) => (
-                <div key={h} className="border-t border-border/60" style={{ height: HOUR_PX }} />
-              ))}
-              {layout(byDay(day, (i) => i.blocksTime && !i.allDay && !!i.endsAt)).map(({ item: i, lane, lanes }) => {
-                const top = ((minutesOf(i.startsAt) - startHour * 60) / 60) * HOUR_PX;
-                const endMin = localDateOf(i.endsAt!, tz) === day ? minutesOf(i.endsAt!) : endHour * 60;
-                const height = Math.max(18, ((endMin - minutesOf(i.startsAt)) / 60) * HOUR_PX - 2);
-                const color = i.color ?? "var(--accent)";
-                return (
-                  <Link
-                    key={i.key}
-                    href={i.href}
-                    className="absolute overflow-hidden rounded-md border-l-[3px] px-1.5 py-1 text-[11px] leading-tight transition-[filter] hover:brightness-95"
-                    style={{ top, height, left: `calc(${(lane / lanes) * 100}% + 2px)`, width: `calc(${100 / lanes}% - 4px)`, borderColor: color, background: `color-mix(in srgb, ${color} 13%, var(--surface))` }}
-                    title={`${i.title} · ${formatIn(i.startsAt, tz, "h:mm a")}–${formatIn(i.endsAt!, tz, "h:mm a")}`}
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+            {days.map((day) => {
+              const items = byDay.get(day) ?? [];
+              const inMonth = day.slice(0, 7) === d.month.slice(0, 7);
+              const isToday = day === d.today;
+              const isSelected = day === d.selected;
+              return (
+                <Link
+                  key={day}
+                  href={href(d.month.slice(0, 7), day)}
+                  scroll={false}
+                  aria-label={`${formatDateStr(day, "EEEE, MMMM d")}: ${items.length} item${items.length === 1 ? "" : "s"}`}
+                  aria-current={isSelected ? "date" : undefined}
+                  className={cn(
+                    "flex min-h-14 flex-col items-center gap-1 rounded-2xl py-1.5 transition-colors sm:min-h-24 sm:items-stretch sm:px-1.5",
+                    isSelected ? "bg-surface-2" : "hover:bg-surface-2/60",
+                    !inMonth && "opacity-40",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-full text-sm tabular sm:h-7 sm:w-7",
+                      isSelected ? "bg-hero font-semibold text-hero-text" : isToday ? "font-semibold text-accent ring-2 ring-accent" : "text-text",
+                    )}
                   >
-                    <p className="truncate font-medium text-text">{i.title}</p>
-                    <p className="truncate text-muted">{formatIn(i.startsAt, tz, "h:mm")}–{formatIn(i.endsAt!, tz, "h:mm a")}</p>
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </Card>
+                    {Number(day.slice(8))}
+                  </span>
+                  {/* Phones: colored dots */}
+                  <span className="flex h-1.5 gap-0.5 sm:hidden">
+                    {items.slice(0, 3).map((i) => (
+                      <span key={i.key} className="h-1.5 w-1.5 rounded-full" style={{ background: i.color ?? "var(--accent)" }} />
+                    ))}
+                  </span>
+                  {/* Larger screens: the first few titles */}
+                  <span className="hidden flex-col gap-0.5 sm:flex">
+                    {items.slice(0, 3).map((i) => (
+                      <span key={i.key} className="flex items-center gap-1 truncate rounded-md px-1 text-[11px] leading-5" style={{ background: `color-mix(in srgb, ${i.color ?? "var(--accent)"} 14%, transparent)` }}>
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: i.color ?? "var(--accent)" }} />
+                        <span className="truncate text-text">{i.title}</span>
+                      </span>
+                    ))}
+                    {items.length > 3 && <span className="px-1 text-[11px] text-muted">+{items.length - 3} more</span>}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
 
-      {/* Agenda (mobile, and the place to manage events) */}
-      <div className="mt-6 flex flex-col gap-4">
-        <h2 className="font-display text-2xl font-medium">This week</h2>
-        {days.map((day) => {
-          const items = byDay(day, () => true);
-          return (
-            <section key={day}>
-              <h3 className={cn("mb-2 text-[15px] font-semibold", day === d.today ? "text-accent" : "text-text")}>
-                {formatDateStr(day, "EEEE")} <span className="font-normal text-muted">{formatDateStr(day, "MMM d")}</span>
-              </h3>
-              {items.length === 0 ? (
-                <p className="text-sm text-muted">—</p>
-              ) : (
-                <Card as="div" className="divide-y divide-border">
-                  {items.map((i) => (
-                    <div key={i.key} className="group flex items-center gap-3 px-4 py-2.5">
-                      <span className="tabular w-20 shrink-0 text-xs text-muted">{i.allDay ? "All day" : formatIn(i.startsAt, tz, "h:mm a")}</span>
-                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: i.color ?? "var(--accent)" }} />
-                      <Link href={i.href} className="min-w-0 flex-1">
-                        <p className="truncate text-sm">
-                          {i.origin === "assignment" ? "Due: " : ""}
-                          {i.title}
-                        </p>
-                        {i.subtitle && <p className="truncate text-xs text-muted">{i.subtitle}</p>}
-                      </Link>
-                      <span className="text-[11px] text-muted capitalize">{i.origin === "event" ? i.kind : i.origin}</span>
-                      {i.origin === "event" && (
-                        <ActionButton action={deleteEventAction.bind(null, i.id)} confirm={`Delete "${i.title}"${i.key.includes(":") ? " (all occurrences if it repeats)" : ""}?`} title="Delete event" className="text-muted opacity-0 group-hover:opacity-100 hover:text-danger focus:opacity-100">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </ActionButton>
-                      )}
-                    </div>
-                  ))}
-                </Card>
-              )}
-            </section>
-          );
-        })}
+        {/* Selected day */}
+        <section aria-label="Selected day" className="flex flex-col gap-3">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-sm text-muted">{d.selected === d.today ? "Today" : formatDateStr(d.selected, "EEEE")}</p>
+              <h2 className="font-display text-2xl font-medium">{formatDateStr(d.selected, "MMMM d")}</h2>
+            </div>
+            <EventDialog action={createEventAction} defaultDate={d.selected} courses={d.courses} />
+          </div>
+
+          {conflicts.length > 0 && (
+            <p className="flex items-start gap-2 rounded-2xl bg-warning-soft px-4 py-3 text-sm text-warning">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                <strong className="font-medium">{conflicts[0].a.title}</strong> overlaps <strong className="font-medium">{conflicts[0].b.title}</strong>.
+              </span>
+            </p>
+          )}
+
+          {dayItems.length === 0 ? (
+            <p className="rounded-3xl bg-surface px-5 py-8 text-center text-[15px] text-muted shadow-soft">Nothing planned.</p>
+          ) : (
+            <ul className="flex flex-col gap-1.5">
+              {dayItems.map((i) => (
+                <li key={i.key} className="group flex items-center gap-4 rounded-2xl bg-surface px-4 py-3 shadow-soft">
+                  <span className="h-10 w-1 shrink-0 rounded-full" style={{ background: i.color ?? "var(--accent)" }} />
+                  <Link href={i.href} className="min-w-0 flex-1">
+                    <p className="truncate text-[15px]">
+                      {i.origin === "assignment" && <span className="text-muted">Due · </span>}
+                      {i.origin === "task" && <span className="text-muted">To do · </span>}
+                      {i.title}
+                    </p>
+                    <p className="truncate text-sm text-muted">
+                      {i.allDay ? "All day" : i.endsAt ? `${formatIn(i.startsAt, tz, "h:mm")}–${formatIn(i.endsAt, tz, "h:mm a")}` : formatIn(i.startsAt, tz, "h:mm a")}
+                      {i.subtitle ? ` · ${i.subtitle}` : ""}
+                    </p>
+                  </Link>
+                  {conflictKeys.has(i.key) && <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning">Overlaps</span>}
+                  {i.origin === "event" && (
+                    <ActionButton action={deleteEventAction.bind(null, i.id)} confirm={`Delete "${i.title}"? Repeating events are deleted for every week.`} title="Delete event" className="rounded-full p-1.5 text-muted hover:text-danger">
+                      <Trash2 className="h-4 w-4" />
+                    </ActionButton>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
-    </>
+    </div>
   );
 }
