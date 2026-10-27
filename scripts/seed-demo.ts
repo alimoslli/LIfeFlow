@@ -27,8 +27,8 @@ import { createTask, updateTask } from "../src/server/services/tasks";
 import { addPaycheck, createEmployer, createShift, recordShiftHours } from "../src/server/services/work";
 import { holdings } from "../src/server/db/schema";
 
-const EMAIL = (process.env.DEMO_EMAIL ?? "demo@budgetflow.local").toLowerCase();
-const PASSWORD = process.env.DEMO_PASSWORD ?? "budgetflow-demo";
+const EMAIL = (process.env.DEMO_EMAIL ?? "demo@budgetflow.local").trim().toLowerCase();
+const PASSWORD = process.env.DEMO_PASSWORD?.trim() || "budgetflow-demo";
 const TZ = "America/New_York";
 
 let seed = 42;
@@ -45,14 +45,14 @@ const between = (a: number, b: number) => Math.round(a + rand() * (b - a));
  */
 async function main() {
   const fromEnv = process.argv.includes("--from-env");
-  const mode = fromEnv ? process.env.SEED_TEST_ACCOUNT : "refresh";
+  const mode = fromEnv ? process.env.SEED_TEST_ACCOUNT?.trim().toLowerCase() || undefined : "refresh";
   if (fromEnv && !mode) return;
   if (mode !== "keep" && mode !== "refresh") throw new Error(`SEED_TEST_ACCOUNT must be "keep" or "refresh", got "${mode}"`);
   const prod = process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
   if (prod && !fromEnv && !process.argv.includes("--force")) {
     throw new Error("Refusing to seed demo data in production (use SEED_TEST_ACCOUNT on Vercel, or pass --force).");
   }
-  if ((prod || fromEnv) && (!process.env.DEMO_PASSWORD || process.env.DEMO_PASSWORD.length < 10)) {
+  if ((prod || fromEnv) && (!process.env.DEMO_PASSWORD || process.env.DEMO_PASSWORD.trim().length < 10)) {
     throw new Error("Set DEMO_PASSWORD (10+ characters) to create the test account outside local development.");
   }
   const db = getDb();
