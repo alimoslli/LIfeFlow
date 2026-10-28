@@ -4,6 +4,7 @@ import { financeTools } from "./tools/finance";
 import { googleTools } from "./tools/google";
 import { healthTools } from "./tools/health";
 import { memoryTools, noteTools, systemTools } from "./tools/knowledge";
+import { moneyCoachTools } from "./tools/money-coach";
 import { overviewTools } from "./tools/overview";
 import { schoolTools } from "./tools/school";
 import { taskTools } from "./tools/tasks";
@@ -16,6 +17,7 @@ export const ALL_TOOLS: ToolDefinition[] = [
   ...schoolTools,
   ...calendarTools,
   ...financeTools,
+  ...moneyCoachTools,
   ...workTools,
   ...noteTools,
   ...memoryTools,

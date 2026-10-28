@@ -1,18 +1,34 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowDownLeft, ArrowRight, ArrowUpRight, Landmark, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowDownLeft,
+  ArrowRight,
+  ArrowUpRight,
+  CreditCard,
+  Landmark,
+  ListOrdered,
+  Sparkles,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
+import { LineChart } from "@/components/charts/line-chart";
 import { CountUp } from "@/components/motion/count-up";
 import { Pressable } from "@/components/motion/pressable";
-import { InsightList } from "../_today/insights";
-import { addDaysStr, formatDateStr, formatIn, monthStart, todayIn } from "@/lib/dates";
+import { Progress } from "@/components/ui/surface";
+import { addDaysStr, formatDateStr, formatIn, todayIn } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
-import { getBriefing } from "@/server/briefing";
-import { deriveInsights } from "@/server/briefing/rules";
 import { series } from "@/server/db/series";
-import { listAccounts } from "@/server/services/finance/accounts";
+import { financialHealth } from "@/server/services/finance/coach";
+import { budgetWarnings, cashForecast, safeToSpend } from "@/server/services/finance/forecast";
+import { goalsWithPlans } from "@/server/services/finance/goals";
+import { recordNetWorth } from "@/server/services/finance/investing";
+import { moneyOverview } from "@/server/services/finance/overview";
 import { spendingByCategory, upcomingRecurring } from "@/server/services/finance/planning";
+import { AskJarvisButton, CelebrateGoal } from "./money-client";
 
 export const metadata: Metadata = { title: "Money" };
 
@@ -21,91 +37,206 @@ const whole = (c: number) => formatCents(c).replace(/\.\d\d$/, "");
 export default async function MoneyPage() {
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
-    const { snapshot } = await getBriefing(s, u);
-    const [accounts, categories, bills] = await series(
-      () => listAccounts(s),
-      () => spendingByCategory(s, monthStart(today), today),
+    const o = await moneyOverview(s, today);
+    if (!o.hasAccounts) return { empty: true as const };
+    await recordNetWorth(s, today);
+    const [safe, forecast, warnings, goals, categories, bills, health] = await series(
+      () => safeToSpend(s, today),
+      () => cashForecast(s, today, 30),
+      () => budgetWarnings(s, today),
+      () => goalsWithPlans(s, today),
+      () => spendingByCategory(s, o.month.period.from, o.month.period.to),
       () => upcomingRecurring(s, today, addDaysStr(today, 30)),
+      () => financialHealth(s, today),
     );
-    return { snapshot, accounts, categories, bills: bills.filter((b) => b.amountCents < 0), today, tz: u.timezone };
+    return {
+      empty: false as const,
+      o,
+      safe,
+      forecast,
+      warnings,
+      goals,
+      categories,
+      bills: bills.filter((b) => b.amountCents < 0),
+      health,
+      today,
+      tz: u.timezone,
+    };
   });
-  const m = d.snapshot.money;
 
-  if (!m) {
+  if (d.empty) {
     return (
       <div className="mx-auto max-w-[640px]">
         <h1 className="font-display text-[40px] leading-none font-medium tracking-tight">Money</h1>
         <div className="mt-8 rounded-3xl bg-surface p-8 text-center shadow-soft">
           <Landmark className="mx-auto h-7 w-7 text-accent" />
-          <p className="mt-3 text-[17px]">Add an account to see where you stand.</p>
-          <p className="mt-1 text-sm text-muted">Enter balances yourself or import a bank CSV. Automatic bank sync is coming.</p>
-          <Link href="/finances/accounts" className="mt-5 inline-block rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-text">
-            Add an account
-          </Link>
+          <p className="mt-3 text-[17px]">Connect a bank or add an account to see where you stand.</p>
+          <p className="mt-1 text-sm text-muted">Then you&apos;ll see what&apos;s safe to spend, a cash forecast, smart budgets and your goals.</p>
+          <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <Link href="/finances/accounts" className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-text">
+              Add or connect an account
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
-  const month = formatDateStr(d.today, "MMMM");
-  const net = m.incomeThisMonthCents - m.spentThisMonthCents;
-  const insights = deriveInsights(d.snapshot, 10)
-    .filter((i) => ["money", "trend", "goal"].includes(i.icon))
-    .slice(0, 3);
+  const { o, safe, forecast, warnings, goals, health } = d;
+  const m = o.month;
+  const net = m.incomeCents - m.netSpendingCents;
+  const alerts = [
+    ...forecast.warnings.map((w) => ({ tone: "danger" as const, text: w, fix: null as string | null, href: "/money/coach" })),
+    ...warnings
+      .filter((w) => w.status !== "on_track")
+      .map((w) => ({
+        tone: w.status === "over" ? ("danger" as const) : ("warning" as const),
+        text:
+          w.status === "over"
+            ? `${w.categoryName} is over budget: ${whole(w.spentCents)} of ${whole(w.limitCents)}.`
+            : `${w.categoryName} is on pace for ${whole(w.projectedCents)}, over its ${whole(w.limitCents)} budget.`,
+        fix: w.fix,
+        href: "/finances/budgets",
+      })),
+  ].slice(0, 4);
   const topCats = d.categories.filter((c) => c.cents > 0).slice(0, 5);
   const maxCat = Math.max(1, ...topCats.map((c) => c.cents));
-  const investmentAccounts = d.accounts.filter((a) => a.type === "investment");
-  const ret = m.investments?.returnPct ?? null;
+  const ret = o.investments?.returnPct ?? null;
+  const activeGoals = goals.filter((g) => g.status !== "archived").slice(0, 3);
+  const celebrate = goals.find((g) => g.milestoneToCelebrate);
+  const asOf = o.balances.asOf ? formatIn(o.balances.asOf, d.tz, "MMM d, h:mm a") : null;
 
   return (
-    <div className="mx-auto flex max-w-[640px] flex-col gap-10 lg:max-w-none lg:flex-row lg:items-start lg:gap-8">
-      {/* Phones: one column in the original order (max-lg:order). Wide screens: a main and a side column. */}
-      <div className="contents lg:flex lg:min-w-0 lg:flex-[1.4] lg:flex-col lg:gap-10">
-        <header className="animate-rise max-lg:order-[-2]">
-          <p className="text-sm text-muted">{month}</p>
+    <div className="mx-auto flex max-w-[640px] flex-col gap-9 lg:max-w-none lg:flex-row lg:items-start lg:gap-8">
+      {celebrate && <CelebrateGoal goalId={celebrate.id} name={celebrate.name} percent={celebrate.milestoneToCelebrate!} />}
+      <div className="contents lg:flex lg:min-w-0 lg:flex-[1.4] lg:flex-col lg:gap-9">
+        <header className="animate-rise max-lg:order-[-3]">
+          <p className="text-sm text-muted">{formatDateStr(d.today, "EEEE, MMMM d")}</p>
           <h1 className="mt-1 font-display text-[40px] leading-none font-medium tracking-tight">Money</h1>
           <p className="mt-2 text-xs text-muted">
-            Totals cover {m.periodLabel}
-            {m.asOf ? ` · balances as of ${formatIn(m.asOf, d.tz, "MMM d, h:mm a")}` : ""}
-            {m.hasDemoData ? " · Sample data" : ""}
+            Balances as of {asOf ?? "unknown"}
+            {o.balances.hasDemoData ? " · Sample data" : ""}
           </p>
         </header>
-        {/* The three numbers that matter */}
-        <section className="animate-rise max-lg:order-[-2]" style={{ animationDelay: "60ms" }} aria-label="This month">
+
+        {/* Safe to spend: the number that matters day to day */}
+        <section className="animate-rise max-lg:order-[-3]" style={{ animationDelay: "60ms" }} aria-label="Safe to spend">
           <div data-tilt className="lf-sheen relative overflow-hidden rounded-[28px] bg-hero text-hero-text shadow-lift">
             <div className="relative p-6 pb-5">
               <Waves />
-              <p className="relative text-sm opacity-75">Cash &amp; checking</p>
+              <p className="relative flex items-center gap-1.5 text-sm opacity-80">
+                <Wallet className="h-3.5 w-3.5" /> Safe to spend today
+              </p>
               <p className="tabular relative mt-1 font-display text-[54px] leading-none font-medium tracking-tight">
-                <CountUp cents={m.liquidCents} />
+                <CountUp cents={safe.todayCents} />
               </p>
-              <p className="relative mt-2 text-sm opacity-75">
-                {net >= 0 ? `${whole(net)} more came in than went out this month` : `${whole(-net)} more went out than came in this month`}
+              <p className="relative mt-2 text-sm opacity-80">
+                {safe.short
+                  ? `Bills before ${safe.untilReason === "next_pay" ? "payday" : "month end"} take more than your cash. Spend only on essentials.`
+                  : `${whole(safe.thisWeekCents)} for the rest of this week · ${whole(safe.perDayCents)} a day for the next ${safe.days} days${safe.untilReason === "next_pay" ? `, payday ${formatDateStr(safe.nextPay!.date, "MMM d")}` : ""}`}
               </p>
             </div>
-            <div className="grid grid-cols-2 divide-x divide-white/15 border-t border-white/15">
-              <div className="p-5">
-                <p className="flex items-center gap-1.5 text-sm opacity-75">
-                  <ArrowUpRight className="h-3.5 w-3.5" /> Spent
-                </p>
-                <p className="tabular mt-1 text-2xl font-medium">
-                  <CountUp cents={m.spentThisMonthCents} />
-                </p>
-              </div>
-              <div className="p-5">
-                <p className="flex items-center gap-1.5 text-sm opacity-75">
-                  <ArrowDownLeft className="h-3.5 w-3.5" /> Came in
-                </p>
-                <p className="tabular mt-1 text-2xl font-medium">
-                  <CountUp cents={m.incomeThisMonthCents} />
-                </p>
-              </div>
+            <details className="group relative border-t border-white/15 px-6 py-3 text-sm">
+              <summary className="cursor-pointer list-none opacity-80 [&::-webkit-details-marker]:hidden">How this is worked out</summary>
+              <dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 opacity-90">
+                <dt>Cash &amp; checking</dt>
+                <dd className="tabular text-right">{whole(safe.cashCents)}</dd>
+                <dt>Bills due by {formatDateStr(safe.billsUntil, "MMM d")}</dt>
+                <dd className="tabular text-right">−{whole(safe.billsDueCents)}</dd>
+                <dt>Goal savings planned</dt>
+                <dd className="tabular text-right">−{whole(safe.goalSetAsideCents)}</dd>
+                <dt>Spent today</dt>
+                <dd className="tabular text-right">−{whole(safe.spentTodayCents)}</dd>
+              </dl>
+              <p className="mt-2 text-xs opacity-75">{safe.method} Expected pay is never counted.</p>
+            </details>
+            <div className="grid grid-cols-3 divide-x divide-white/15 border-t border-white/15">
+              <Stat label="Cash & checking" cents={o.balances.cashCents} />
+              <Stat
+                label={
+                  <>
+                    <ArrowUpRight className="h-3 w-3" /> Spent
+                  </>
+                }
+                cents={m.netSpendingCents}
+              />
+              <Stat
+                label={
+                  <>
+                    <ArrowDownLeft className="h-3 w-3" /> Came in
+                  </>
+                }
+                cents={m.incomeCents}
+              />
             </div>
+            <p className="relative border-t border-white/15 px-6 py-2.5 text-xs opacity-75">
+              Spent and came in cover {m.period.label} · {net >= 0 ? `${whole(net)} more came in than went out` : `${whole(-net)} more went out than came in`}
+            </p>
           </div>
         </section>
+
+        {alerts.length > 0 && (
+          <section className="animate-rise max-lg:order-[-2]" style={{ animationDelay: "140ms" }} aria-label="Heads up">
+            <h2 className="mb-3 text-[15px] font-semibold">Heads up</h2>
+            <ul className="flex flex-col gap-2.5">
+              {alerts.map((a, i) => (
+                <li key={i} data-tilt className="flex gap-3.5 rounded-3xl bg-surface p-4 shadow-soft">
+                  <span
+                    className={cn(
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                      a.tone === "danger" ? "bg-danger-soft text-danger" : "bg-warning-soft text-warning",
+                    )}
+                  >
+                    <AlertTriangle className="h-[18px] w-[18px]" strokeWidth={1.8} />
+                  </span>
+                  <div className="min-w-0 flex-1 pt-1">
+                    <p className="text-[15px] leading-snug">{a.text}</p>
+                    {a.fix && <p className="mt-1 text-sm text-text-2">{a.fix}</p>}
+                    <Link href={a.href} className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent">
+                      Review <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section className="animate-rise" style={{ animationDelay: "180ms" }} aria-label="Cash forecast">
+          <Title href="/money/coach">Next 30 days in checking</Title>
+          <div data-tilt className="rounded-3xl bg-surface p-5 shadow-soft">
+            <p className="text-sm text-text-2">
+              Lowest point {whole(forecast.lowestWithoutPay.cents)} on {formatDateStr(forecast.lowestWithoutPay.date, "MMM d")} if no pay arrives
+              {forecast.expectedPay.length ? `, ${whole(forecast.lowestWithPay.cents)} with expected pay` : ""}.
+            </p>
+            <div className="mt-4">
+              <LineChart
+                label="Projected checking balance for the next 30 days"
+                series={[
+                  { name: "Without pay", points: forecast.points.map((p) => ({ date: p.date, cents: p.withoutPayCents })), className: "stroke-accent" },
+                  ...(forecast.expectedPay.length
+                    ? [
+                        {
+                          name: "With expected pay",
+                          dashed: true,
+                          points: forecast.points.map((p) => ({ date: p.date, cents: p.withPayCents })),
+                          className: "stroke-muted",
+                        },
+                      ]
+                    : []),
+                ]}
+              />
+            </div>
+            <p className="mt-3 text-xs text-muted">
+              Includes {forecast.bills.length} tracked bill{forecast.bills.length === 1 ? "" : "s"} and about {whole(forecast.typicalDailySpendCents)} a day of
+              usual spending.
+            </p>
+          </div>
+        </section>
+
         {topCats.length > 0 && (
-          <section className="animate-rise" style={{ animationDelay: "200ms" }} aria-label="Where it went">
-            <Title href="/finances/transactions">Where it went, {m.periodLabel}</Title>
+          <section className="animate-rise" style={{ animationDelay: "220ms" }} aria-label="Where it went">
+            <Title href="/finances/transactions">Where it went, {m.period.label}</Title>
             <ul data-tilt className="flex flex-col gap-4 rounded-3xl bg-surface p-5 shadow-soft">
               {topCats.map((c) => (
                 <li key={c.name}>
@@ -121,8 +252,9 @@ export default async function MoneyPage() {
             </ul>
           </section>
         )}
+
         {d.bills.length > 0 && (
-          <section className="animate-rise" style={{ animationDelay: "240ms" }} aria-label="Bills">
+          <section className="animate-rise" style={{ animationDelay: "260ms" }} aria-label="Bills">
             <Title href="/finances/bills">Bills in the next 30 days</Title>
             <ul data-tilt className="flex flex-col divide-y divide-border rounded-3xl bg-surface px-5 shadow-soft">
               {d.bills.slice(0, 6).map((c) => (
@@ -136,9 +268,71 @@ export default async function MoneyPage() {
           </section>
         )}
       </div>
-      <div className="contents lg:flex lg:min-w-0 lg:flex-1 lg:flex-col lg:gap-10 lg:pt-[72px]">
-        {m.investments && (
-          <section className="animate-rise max-lg:order-[-1]" style={{ animationDelay: "120ms" }} aria-label="Investments">
+
+      <div className="contents lg:flex lg:min-w-0 lg:flex-1 lg:flex-col lg:gap-9 lg:pt-[72px]">
+        <section className="animate-rise max-lg:order-[-1]" style={{ animationDelay: "120ms" }} aria-label="Goals">
+          <Title href="/finances/goals">Goals and dreams</Title>
+          {activeGoals.length ? (
+            <ul className="flex flex-col gap-2.5">
+              {activeGoals.map((g) => (
+                <li key={g.id}>
+                  <Pressable>
+                    <Link href="/finances/goals" data-tilt className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="truncate text-[15px] font-medium">{g.name}</span>
+                        <span className="tabular shrink-0 text-sm text-text-2">
+                          {whole(g.savedCents)} of {whole(g.targetCents)}
+                        </span>
+                      </div>
+                      <Progress value={g.percent} className="mt-3" label={`${g.name} progress`} />
+                      <p className="mt-2 text-xs text-muted">
+                        {g.status === "achieved" || g.remainingCents === 0
+                          ? "Reached. Well done!"
+                          : g.projectedDate
+                            ? `${whole(g.monthlyPaceCents)}/month finishes about ${formatDateStr(g.projectedDate, "MMM yyyy")}${g.targetDate ? (g.onTrack ? ", on time" : `, after your ${formatDateStr(g.targetDate, "MMM yyyy")} target`) : ""}`
+                            : g.monthlyNeededCents
+                              ? `Needs ${whole(g.monthlyNeededCents)}/month to reach it by ${formatDateStr(g.targetDate!, "MMM yyyy")}`
+                              : "Set a monthly amount to see when you'll get there"}
+                      </p>
+                    </Link>
+                  </Pressable>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="rounded-3xl bg-surface p-5 shadow-soft">
+              <p className="text-[15px]">What are you saving for? An emergency fund, a trip, a car, an apartment?</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link href="/finances/goals" className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-text">
+                  Add a goal
+                </Link>
+                <AskJarvisButton prompt="Help me figure out my money goals. Ask me one question at a time.">Plan goals with Jarvis</AskJarvisButton>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {health.score != null && (
+          <section className="animate-rise max-lg:order-[-1]" aria-label="Financial health">
+            <Title href="/money/coach">Financial health</Title>
+            <Pressable>
+              <Link
+                href="/money/coach"
+                data-tilt
+                className="flex items-center gap-5 rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift"
+              >
+                <ScoreRing score={health.score} />
+                <div className="min-w-0">
+                  <p className="text-[15px] font-medium">{health.band}</p>
+                  {health.nextSteps[0] && <p className="mt-1 text-sm text-text-2">Next: {health.nextSteps[0]}</p>}
+                </div>
+              </Link>
+            </Pressable>
+          </section>
+        )}
+
+        {o.investments && (
+          <section className="animate-rise" aria-label="Investments">
             <Title href="/wealth">Investments</Title>
             <Pressable>
               <Link data-tilt href="/wealth" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift">
@@ -146,7 +340,7 @@ export default async function MoneyPage() {
                   <div>
                     <p className="text-sm text-muted">Portfolio</p>
                     <p className="tabular mt-1 font-display text-[34px] leading-none font-medium">
-                      <CountUp cents={m.investments.valueCents} />
+                      <CountUp cents={o.investments.valueCents} />
                     </p>
                   </div>
                   {ret != null && (
@@ -163,40 +357,72 @@ export default async function MoneyPage() {
                   )}
                 </div>
                 <p className="mt-2 text-xs text-muted">
-                  Sum of your investment account balances
-                  {m.investments.asOf ? `, updated ${formatIn(m.investments.asOf, d.tz, "MMM d, h:mm a")}` : ""}
+                  Investment account balances{o.investments.asOf ? `, updated ${formatIn(o.investments.asOf, d.tz, "MMM d, h:mm a")}` : ""}
                   {ret != null ? ". Return is all-time, on holdings with a known cost." : "."}
                 </p>
-                <ul className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
-                  {investmentAccounts.map((a) => (
-                    <li key={a.id} className="flex justify-between text-[15px]">
-                      <span className="text-text-2">{a.name}</span>
-                      <span className="tabular">{whole(a.currentBalanceCents)}</span>
-                    </li>
-                  ))}
-                </ul>
               </Link>
             </Pressable>
           </section>
         )}
-        {insights.length > 0 && (
-          <section className="max-lg:order-[-1]" aria-label="Worth knowing">
-            <h2 className="mb-3 text-[15px] font-semibold">Worth knowing</h2>
-            <InsightList insights={insights} />
-          </section>
-        )}
-        <section className="grid grid-cols-2 gap-3" aria-label="Savings and debt">
-          <div data-tilt className="rounded-3xl bg-surface p-5 shadow-soft">
-            <p className="text-sm text-muted">Savings</p>
-            <p className="tabular mt-1 text-xl font-medium">{whole(m.savingsCents)}</p>
-          </div>
-          <div data-tilt className="rounded-3xl bg-surface p-5 shadow-soft">
-            <p className="text-sm text-muted">Owed on cards</p>
-            <p className="tabular mt-1 text-xl font-medium">{whole(m.creditOwedCents)}</p>
+
+        <section className="grid grid-cols-2 gap-3" aria-label="Savings, debt and net worth">
+          <MiniStat label="Savings" cents={o.balances.savingsCents} />
+          <MiniStat label="Owed on cards" cents={o.balances.creditOwedCents} icon={<CreditCard className="h-3.5 w-3.5" />} />
+          <MiniStat label="Net worth" cents={o.balances.netWorthCents} icon={<ListOrdered className="h-3.5 w-3.5" />} />
+          <div className="flex flex-col justify-center rounded-3xl bg-surface p-4 shadow-soft">
+            <AskJarvisButton prompt="Give me my daily money check-in.">
+              <Sparkles className="h-3.5 w-3.5" /> Daily check-in
+            </AskJarvisButton>
           </div>
         </section>
       </div>
     </div>
+  );
+}
+
+function Stat({ label, cents }: { label: React.ReactNode; cents: number }) {
+  return (
+    <div className="p-4">
+      <p className="flex items-center gap-1 text-xs opacity-75">{label}</p>
+      <p className="tabular mt-1 text-lg font-medium">
+        <CountUp cents={cents} />
+      </p>
+    </div>
+  );
+}
+
+function MiniStat({ label, cents, icon }: { label: string; cents: number; icon?: React.ReactNode }) {
+  return (
+    <div data-tilt className="rounded-3xl bg-surface p-4 shadow-soft">
+      <p className="flex items-center gap-1.5 text-sm text-muted">
+        {icon}
+        {label}
+      </p>
+      <p className="tabular mt-1 text-xl font-medium">{whole(cents)}</p>
+    </div>
+  );
+}
+
+function ScoreRing({ score }: { score: number }) {
+  const r = 26;
+  const c = 2 * Math.PI * r;
+  return (
+    <span className="relative flex h-16 w-16 shrink-0 items-center justify-center" aria-label={`Score ${score} out of 100`}>
+      <svg viewBox="0 0 64 64" className="absolute inset-0 -rotate-90">
+        <circle cx="32" cy="32" r={r} fill="none" strokeWidth="6" className="stroke-surface-3" />
+        <circle
+          cx="32"
+          cy="32"
+          r={r}
+          fill="none"
+          strokeWidth="6"
+          strokeLinecap="round"
+          className="stroke-accent"
+          strokeDasharray={`${(score / 100) * c} ${c}`}
+        />
+      </svg>
+      <span className="tabular text-lg font-semibold">{score}</span>
+    </span>
   );
 }
 
@@ -221,9 +447,9 @@ function Waves() {
 
 function Title({ children, href }: { children: React.ReactNode; href: string }) {
   return (
-    <div className="mb-3 flex items-baseline justify-between">
+    <div className="mb-3 flex items-baseline justify-between gap-3">
       <h2 className="text-[15px] font-semibold">{children}</h2>
-      <Link href={href} className="flex items-center gap-1 text-sm text-muted hover:text-text">
+      <Link href={href} className="flex shrink-0 items-center gap-1 text-sm text-muted hover:text-text">
         See all <ArrowRight className="h-3.5 w-3.5" />
       </Link>
     </div>

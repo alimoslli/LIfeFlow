@@ -13,7 +13,9 @@ export async function addHoldingAction(_p: ActionState, fd: FormData): Promise<A
       quantity: formNum(f.quantity) ?? 0,
       valueCents: formCents(f.value) ?? 0,
       costBasisCents: formCents(f.costBasis),
+      expenseRatioBps: f.expenseRatio != null && Number.isFinite(Number(f.expenseRatio)) ? Math.round(Number(f.expenseRatio) * 100) : null,
     });
+    return "Holding added.";
   });
 }
 

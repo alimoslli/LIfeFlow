@@ -9,7 +9,7 @@ import { formatIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { listAccounts, summarizeBalances } from "@/server/services/finance/accounts";
 import { providerCatalog } from "@/server/services/integrations";
-import { archiveAccountAction, createAccountAction, updateBalanceAction } from "../actions";
+import { archiveAccountAction, createAccountAction, updateAccountDetailsAction } from "../actions";
 
 export const metadata: Metadata = { title: "Accounts" };
 
@@ -71,33 +71,65 @@ export default async function AccountsPage() {
                       <Money cents={a.currentBalanceCents} className="font-semibold" />
                       {(a.type === "credit" || a.type === "loan") && <p className="text-[11px] text-muted">owed</p>}
                     </div>
-                    {(a.source === "manual" || a.source === "demo") && (
-                      <details className="w-full sm:w-auto">
-                        <summary className="cursor-pointer text-xs text-accent">Update</summary>
-                        <div className="mt-2 flex items-center gap-2">
-                          <ActionForm action={updateBalanceAction.bind(null, a.id)} reset={false} className="flex-row gap-1.5">
-                            <Input
-                              name="balance"
-                              inputMode="decimal"
-                              defaultValue={(a.currentBalanceCents / 100).toFixed(2)}
-                              className="h-8 w-28 text-[13px]"
-                              aria-label="New balance"
-                            />
-                            <SubmitButton size="sm" variant="secondary">
-                              Save
-                            </SubmitButton>
-                          </ActionForm>
-                          <ActionButton
-                            action={archiveAccountAction.bind(null, a.id)}
-                            confirm={`Archive ${a.name}? Its transactions are kept.`}
-                            title="Archive account"
-                            className="p-1 text-muted hover:text-text"
-                          >
-                            <Archive className="h-4 w-4" />
-                          </ActionButton>
+                    <details className="w-full">
+                      <summary className="cursor-pointer text-xs text-accent">Edit details</summary>
+                      <ActionForm action={updateAccountDetailsAction.bind(null, a.id)} reset={false} showSuccess className="mt-3 gap-3">
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                          {(a.source === "manual" || a.source === "demo") && (
+                            <Field label={a.type === "credit" || a.type === "loan" ? "Amount owed ($)" : "Balance ($)"} htmlFor={`bal-${a.id}`}>
+                              <Input id={`bal-${a.id}`} name="balance" inputMode="decimal" defaultValue={(a.currentBalanceCents / 100).toFixed(2)} required />
+                            </Field>
+                          )}
+                          {(a.type === "credit" || a.type === "loan") && (
+                            <>
+                              {a.type === "credit" && (
+                                <Field label="Credit limit ($)" htmlFor={`lim-${a.id}`}>
+                                  <Input
+                                    id={`lim-${a.id}`}
+                                    name="limit"
+                                    inputMode="decimal"
+                                    defaultValue={a.creditLimitCents != null ? (a.creditLimitCents / 100).toFixed(0) : ""}
+                                  />
+                                </Field>
+                              )}
+                              <Field label="Interest rate (APR %)" htmlFor={`apr-${a.id}`}>
+                                <Input
+                                  id={`apr-${a.id}`}
+                                  name="apr"
+                                  inputMode="decimal"
+                                  defaultValue={a.aprBps != null ? String(a.aprBps / 100) : ""}
+                                  placeholder="24.99"
+                                />
+                              </Field>
+                              <Field label="Minimum payment ($)" htmlFor={`min-${a.id}`}>
+                                <Input
+                                  id={`min-${a.id}`}
+                                  name="minPayment"
+                                  inputMode="decimal"
+                                  defaultValue={a.minPaymentCents != null ? (a.minPaymentCents / 100).toFixed(2) : ""}
+                                />
+                              </Field>
+                              <Field label="Next due date" htmlFor={`due-${a.id}`}>
+                                <Input id={`due-${a.id}`} name="dueDate" type="date" defaultValue={a.nextPaymentDueDate ?? ""} />
+                              </Field>
+                            </>
+                          )}
                         </div>
-                      </details>
-                    )}
+                        <SubmitButton size="sm" className="self-end">
+                          Save
+                        </SubmitButton>
+                      </ActionForm>
+                      <div className="mt-2">
+                        <ActionButton
+                          action={archiveAccountAction.bind(null, a.id)}
+                          confirm={`Archive ${a.name}? Its transactions are kept.`}
+                          title={`Archive ${a.name}`}
+                          className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-muted hover:text-text"
+                        >
+                          <Archive className="h-3.5 w-3.5" /> Archive
+                        </ActionButton>
+                      </div>
+                    </details>
                   </li>
                 ))}
               </ul>
@@ -107,7 +139,7 @@ export default async function AccountsPage() {
         <div className="flex flex-col gap-5">
           <Card className="p-5">
             <h2 className="mb-3 text-[13px] font-semibold tracking-wide text-text-2 uppercase">Add an account manually</h2>
-            <ActionForm action={createAccountAction}>
+            <ActionForm action={createAccountAction} showSuccess>
               <Field label="Name" htmlFor="a-name">
                 <Input id="a-name" name="name" required placeholder="Everyday Checking" />
               </Field>

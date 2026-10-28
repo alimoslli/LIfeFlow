@@ -1,8 +1,11 @@
 "use server";
+import { applyBudgetPlan } from "@/server/services/finance/smart-budgets";
+import { contributeToGoal, deleteGoal } from "@/server/services/finance/goals";
+import { todayIn } from "@/lib/dates";
 import { applyRuleToPast, deleteCategoryRule } from "@/server/services/finance/categorize";
 import { formBool, formCents, formObject, mutate, type ActionState } from "@/server/actions";
 import { ServiceError } from "@/server/services/errors";
-import { archiveAccount, createManualAccount, updateAccountBalance } from "@/server/services/finance/accounts";
+import { archiveAccount, createManualAccount, updateAccountBalance, updateAccountDetails } from "@/server/services/finance/accounts";
 import { createGoal, createRecurring, deleteBudget, setBudget, setRecurringStatus, updateGoal } from "@/server/services/finance/planning";
 import { createTransaction, deleteTransaction, importTransactionsCsv, updateTransaction } from "@/server/services/finance/transactions";
 
@@ -31,6 +34,22 @@ export async function updateBalanceAction(id: string, _p: ActionState, fd: FormD
   const f = formObject(fd);
   return mutate("account.balance", async (s) => {
     await updateAccountBalance(s, id, need(formCents(f.balance), "balance"));
+  });
+}
+
+export async function updateAccountDetailsAction(id: string, _p: ActionState, fd: FormData): Promise<ActionState> {
+  const f = formObject(fd);
+  const apr = f.apr != null ? Number(f.apr.replace(/%/g, "")) : null;
+  return mutate("account.update_details", async (s) => {
+    if (apr != null && !Number.isFinite(apr)) throw new ServiceError("Interest rate must be a number, like 24.99.");
+    const a = await updateAccountDetails(s, id, {
+      ...(f.balance != null && { currentBalanceCents: need(formCents(f.balance), "balance") }),
+      creditLimitCents: formCents(f.limit) ?? null,
+      aprBps: apr != null ? Math.round(apr * 100) : null,
+      minPaymentCents: formCents(f.minPayment) ?? null,
+      nextPaymentDueDate: f.dueDate ?? null,
+    });
+    return `Saved ${a.name}.`;
   });
 }
 
@@ -113,6 +132,23 @@ export async function setBudgetAction(_p: ActionState, fd: FormData): Promise<Ac
   const f = formObject(fd);
   return mutate("budget.set", async (s) => {
     await setBudget(s, { month: f.month ?? "", categoryId: f.categoryId ?? "", limitCents: need(formCents(f.limit), "limit") });
+    return "Budget saved.";
+  });
+}
+
+/** Saves the lines of a suggested plan. Fields: month, and line:<categoryId> = dollars (blank or 0 skips). */
+export async function applyBudgetPlanAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  const month = String(fd.get("month") ?? "");
+  const lines: { categoryId: string; limitCents: number }[] = [];
+  for (const [k, v] of fd.entries()) {
+    if (!k.startsWith("line:") || typeof v !== "string") continue;
+    const cents = formCents(v.trim() || undefined);
+    if (cents && cents > 0) lines.push({ categoryId: k.slice(5), limitCents: cents });
+  }
+  return mutate("budget.apply_plan", async (s) => {
+    if (!lines.length) throw new ServiceError("Enter at least one amount.");
+    const r = await applyBudgetPlan(s, { month, lines });
+    return `Saved ${r.saved} budget${r.saved === 1 ? "" : "s"}.`;
   });
 }
 
@@ -147,23 +183,57 @@ export async function setRecurringStatusAction(id: string, status: "active" | "p
   });
 }
 
+const PURPOSES = ["emergency", "travel", "car", "home", "debt", "investing", "education", "big_purchase", "other"] as const;
+const purposeOf = (v: string | undefined) => PURPOSES.find((p) => p === v) ?? "other";
+
 export async function createGoalAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
   return mutate("goal.create", async (s) => {
-    await createGoal(s, {
+    const g = await createGoal(s, {
       name: f.name ?? "",
       targetCents: need(formCents(f.target), "target"),
       savedCents: formCents(f.saved) ?? 0,
       targetDate: f.targetDate,
       accountId: f.accountId,
+      monthlyPlanCents: formCents(f.monthly) ?? null,
+      purpose: purposeOf(f.purpose),
     });
+    return `Goal "${g.name}" created.`;
   });
 }
 
 export async function updateGoalAction(id: string, _p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
   return mutate("goal.update", async (s) => {
-    await updateGoal(s, id, { savedCents: need(formCents(f.saved), "amount") });
+    const g = await updateGoal(s, id, {
+      name: f.name,
+      ...(f.target != null && { targetCents: need(formCents(f.target), "target") }),
+      targetDate: f.targetDate ?? null,
+      monthlyPlanCents: formCents(f.monthly) ?? null,
+      ...(f.purpose && { purpose: purposeOf(f.purpose) }),
+    });
+    return `Saved "${g.name}".`;
+  });
+}
+
+export async function contributeGoalAction(id: string, _p: ActionState, fd: FormData): Promise<ActionState> {
+  const f = formObject(fd);
+  return mutate("goal.contribution", async (s, u) => {
+    const amount = need(formCents(f.amount), "amount");
+    const r = await contributeToGoal(s, {
+      goalId: id,
+      amountCents: f.withdraw ? -Math.abs(amount) : Math.abs(amount),
+      date: todayIn(u.timezone),
+      note: f.note,
+    });
+    return r.achieved ? "Recorded. You reached your goal!" : `Recorded. ${Math.round((r.savedCents / r.targetCents) * 100)}% of the way there.`;
+  });
+}
+
+export async function deleteGoalAction(id: string): Promise<ActionState> {
+  return mutate("goal.delete", async (s) => {
+    const g = await deleteGoal(s, id);
+    return `Deleted "${g.name}".`;
   });
 }
 

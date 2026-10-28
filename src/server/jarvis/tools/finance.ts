@@ -5,17 +5,7 @@ import { listAccounts, summarizeBalances } from "../../services/finance/accounts
 import { moneyOverview } from "../../services/finance/overview";
 import { listCategories, resolveCategory } from "../../services/finance/categories";
 import { affordability, compareSpending, spendingSummary } from "../../services/finance/insights";
-import {
-  budgetStatus,
-  createGoal,
-  listGoals,
-  listRecurring,
-  monthlyContributionNeeded,
-  setBudget,
-  suggestRecurring,
-  updateGoal,
-  upcomingRecurring,
-} from "../../services/finance/planning";
+import { budgetStatus, listRecurring, setBudget, suggestRecurring, upcomingRecurring } from "../../services/finance/planning";
 import { TRANSACTION_KINDS, createTransaction, queryTransactions } from "../../services/finance/transactions";
 import { holdings } from "../../db/schema";
 import { eq } from "drizzle-orm";
@@ -278,44 +268,6 @@ export const financeTools = [
     mutates: false,
     async execute(a, ctx) {
       return centsToDollarsDeep(await ctx.run((s) => affordability(s, toCents(a.amount), ctx.today, a.byDate)));
-    },
-  }),
-  defineTool({
-    name: "financial_goals",
-    description: "List savings/debt goals with progress, or create one / update saved amount.",
-    schema: z.object({
-      create: z
-        .object({ name: z.string().min(1).max(120), target: moneyArg("Target"), targetDate: dateArg().optional(), saved: moneyArg("Already saved").optional() })
-        .optional(),
-      update: z
-        .object({ id: idArg("Goal"), saved: moneyArg("New saved total").optional(), status: z.enum(["active", "achieved", "archived"]).optional() })
-        .optional(),
-    }),
-    mutates: true,
-    async execute(a, ctx) {
-      return ctx.run(async (s) => {
-        if (a.create)
-          await createGoal(s, {
-            name: a.create.name,
-            targetCents: toCents(a.create.target),
-            targetDate: a.create.targetDate,
-            savedCents: a.create.saved ? toCents(a.create.saved) : 0,
-          });
-        if (a.update) await updateGoal(s, a.update.id, { ...(a.update.saved != null && { savedCents: toCents(a.update.saved) }), status: a.update.status });
-        const goals = await listGoals(s);
-        return centsToDollarsDeep({
-          goals: goals.map((g) => ({
-            id: g.id,
-            name: g.name,
-            targetCents: g.targetCents,
-            savedCents: g.savedCents,
-            percent: g.percent,
-            targetDate: g.targetDate,
-            monthlyNeededCents: monthlyContributionNeeded(g.targetCents, g.savedCents, g.targetDate, ctx.today),
-          })),
-          viewAt: "/finances/goals",
-        });
-      });
     },
   }),
   defineTool({

@@ -12,6 +12,8 @@ import { series } from "@/server/db/series";
 import { listAccounts, summarizeBalances } from "@/server/services/finance/accounts";
 import { listGoals } from "@/server/services/finance/planning";
 import { allocation, listHoldings } from "@/server/services/finance/wealth";
+import { GENERAL_INFO, investmentReport, LESSONS } from "@/server/services/finance/investing";
+import { GrowthCalculator } from "./growth-calculator";
 import { addHoldingAction, deleteHoldingAction } from "./actions";
 
 export const metadata: Metadata = { title: "Wealth" };
@@ -28,12 +30,13 @@ const TYPE: Record<string, string> = {
 
 export default async function WealthPage() {
   const d = await withCurrentUser(async (s, u) => {
-    const [accounts, holdings, goals] = await series(
+    const [accounts, holdings, goals, report] = await series(
       () => listAccounts(s),
       () => listHoldings(s),
       () => listGoals(s),
+      () => investmentReport(s),
     );
-    return { accounts, holdings, goals: goals.filter((g) => g.kind === "investment"), tz: u.timezone };
+    return { accounts, holdings, goals: goals.filter((g) => g.kind === "investment"), report, tz: u.timezone, level: u.preferences?.moneyLevel ?? "new" };
   });
   const totals = summarizeBalances(d.accounts);
   const investments = d.accounts.filter((a) => a.type === "investment");
@@ -163,6 +166,27 @@ export default async function WealthPage() {
           </Card>
         </div>
         <div className="flex flex-col gap-5">
+          {(d.report.notes.length > 0 || d.report.yearlyFeesCents != null) && (
+            <Card className="p-5">
+              <h2 className="mb-2 text-[15px] font-semibold">What stands out</h2>
+              <ul className="flex flex-col gap-2 text-sm text-text-2">
+                {d.report.yearlyFeesCents != null && (
+                  <li>
+                    Fund fees cost about <Money cents={d.report.yearlyFeesCents} /> a year
+                    {d.report.averageFeePercent != null ? ` (average ${d.report.averageFeePercent.toFixed(2)}%)` : ""}.
+                  </li>
+                )}
+                {d.report.topHoldingSharePercent != null && <li>Your largest holding is {d.report.topHoldingSharePercent}% of what you hold.</li>}
+                {d.report.notes.map((n) => (
+                  <li key={n}>{n}</li>
+                ))}
+              </ul>
+            </Card>
+          )}
+          <Card className="p-5">
+            <h2 className="mb-3 text-[15px] font-semibold">What if I invest every month?</h2>
+            <GrowthCalculator startCents={totals.investmentsCents} />
+          </Card>
           {alloc.length > 0 && (
             <Card>
               <CardHeader title="Allocation" subtitle="By holding type" />
@@ -174,7 +198,7 @@ export default async function WealthPage() {
           {investments.length > 0 && (
             <Card className="p-5">
               <h2 className="mb-3 text-[13px] font-semibold tracking-wide text-text-2 uppercase">Add a holding</h2>
-              <ActionForm action={addHoldingAction}>
+              <ActionForm action={addHoldingAction} showSuccess>
                 <Field label="Account" htmlFor="h-acct">
                   <Select id="h-acct" name="accountId" required>
                     {investments.map((a) => (
@@ -211,6 +235,9 @@ export default async function WealthPage() {
                   <Field label="Cost basis ($)" htmlFor="h-c">
                     <Input id="h-c" name="costBasis" inputMode="decimal" />
                   </Field>
+                  <Field label="Fund fee (expense ratio %)" htmlFor="h-er" hint="Optional, e.g. 0.03">
+                    <Input id="h-er" name="expenseRatio" inputMode="decimal" />
+                  </Field>
                 </div>
                 <SubmitButton className="self-end">Add holding</SubmitButton>
               </ActionForm>
@@ -223,6 +250,20 @@ export default async function WealthPage() {
           </Card>
         </div>
       </div>
+      <Card className="mt-5 p-5">
+        <h2 className="mb-3 text-[15px] font-semibold">Investing basics</h2>
+        <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {LESSONS.filter((l) => ["compounding", "index_funds", "risk", "roth_ira", "fees", "emergency_first"].includes(l.id)).map((l) => (
+            <li key={l.id}>
+              <details className="rounded-2xl bg-surface-2/70 p-4 text-sm" open={d.level === "new" && l.id === "compounding"}>
+                <summary className="cursor-pointer font-medium">{l.title}</summary>
+                <p className="mt-2 text-text-2">{l.body}</p>
+              </details>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-xs text-muted">{GENERAL_INFO} LifeFlow never trades or moves money.</p>
+      </Card>
     </>
   );
 }

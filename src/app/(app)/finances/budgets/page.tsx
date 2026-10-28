@@ -12,26 +12,48 @@ import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { listCategories } from "@/server/services/finance/categories";
 import { cashflowFor } from "@/server/services/finance/overview";
+import { budgetWarnings } from "@/server/services/finance/forecast";
 import { budgetStatus, spendingByCategory } from "@/server/services/finance/planning";
-import { deleteBudgetAction, setBudgetAction } from "../actions";
+import { BUDGET_METHODS, suggestBudgets } from "@/server/services/finance/smart-budgets";
+import { ServiceError } from "@/server/services/errors";
+import { formatCents } from "@/lib/money";
+import { applyBudgetPlanAction, deleteBudgetAction, setBudgetAction } from "../actions";
 import { CategoryOptions } from "../forms";
 
 export const metadata: Metadata = { title: "Budgets" };
 
-export default async function BudgetsPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
+const PLAN_NAMES = [
+  ["history", "From my history"],
+  ["50_30_20", "50/30/20"],
+  ["zero_based", "Zero-based"],
+] as const;
+
+export default async function BudgetsPage({ searchParams }: { searchParams: Promise<{ month?: string; plan?: string }> }) {
   const sp = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
     const month = monthStart(sp.month && isValidDateStr(`${sp.month}-01`) ? `${sp.month}-01` : today);
     const end = month === monthStart(today) ? today : monthEnd(month);
     const period = resolvePeriod("custom", today, { from: month, to: end });
-    const [budgets, categories, spending, flow] = await series(
+    const method = BUDGET_METHODS.find((m) => m === sp.plan);
+    const [budgets, categories, spending, flow, pace] = await series(
       () => budgetStatus(s, month),
       () => listCategories(s),
       () => spendingByCategory(s, month, monthEnd(month)),
       () => cashflowFor(s, period),
+      () => (month === monthStart(today) ? budgetWarnings(s, today) : Promise.resolve([])),
     );
-    return { budgets, categories: categories.filter((c) => c.kind === "expense"), spending, month, today, flow };
+    let plan: Awaited<ReturnType<typeof suggestBudgets>> | null = null;
+    let planError: string | null = null;
+    if (method) {
+      try {
+        plan = await suggestBudgets(s, today, method);
+      } catch (e) {
+        if (!(e instanceof ServiceError)) throw e;
+        planError = e.message;
+      }
+    }
+    return { budgets, categories: categories.filter((c) => c.kind === "expense"), spending, month, today, flow, pace, plan, planError, method };
   });
   const prev = monthStart(addDaysStr(d.month, -1)).slice(0, 7);
   const next = monthStart(addDaysStr(monthEnd(d.month), 1)).slice(0, 7);
@@ -111,6 +133,16 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
                     </span>
                   </div>
                   <Progress value={b.percent} tone={b.percent >= 100 ? "danger" : b.percent >= 85 ? "warning" : "accent"} label={`${b.categoryName} budget`} />
+                  {(() => {
+                    const p = d.pace.find((x) => x.id === b.id);
+                    if (!p || p.status === "on_track") return null;
+                    return (
+                      <p className={cn("mt-1.5 text-xs", p.status === "over" ? "text-danger" : "text-warning")}>
+                        {p.status === "heading_over" ? `On pace for ${formatCents(p.projectedCents).replace(/\.\d\d$/, "")}. ` : ""}
+                        {p.fix}
+                      </p>
+                    );
+                  })()}
                   <div className="mt-1.5 flex justify-between text-xs">
                     <span className={cn(b.remainingCents < 0 ? "text-danger" : "text-muted")}>
                       {b.remainingCents < 0 ? (
@@ -127,7 +159,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
                     <ActionButton
                       action={deleteBudgetAction.bind(null, b.id)}
                       title="Remove budget"
-                      className="text-muted opacity-0 group-hover:opacity-100 hover:text-danger focus:opacity-100"
+                      className="text-muted lg:opacity-0 lg:group-hover:opacity-100 hover:text-danger focus:opacity-100"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </ActionButton>
@@ -138,9 +170,63 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
           )}
         </Card>
         <div className="flex flex-col gap-5">
+          {isCurrent && (
+            <Card className="p-5">
+              <h2 className="text-[15px] font-semibold">Build my budget</h2>
+              <p className="mt-1 text-sm text-text-2">Suggested from your last three months of real spending. Review the amounts, then save.</p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {PLAN_NAMES.map(([k, label]) => (
+                  <Link
+                    key={k}
+                    href={`/finances/budgets?plan=${k}`}
+                    scroll={false}
+                    className={cn(
+                      "rounded-full px-3 py-1.5 text-sm",
+                      d.method === k ? "bg-accent text-accent-text" : "bg-surface-2 text-text-2 hover:text-text",
+                    )}
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+              {d.planError && <p className="mt-3 text-sm text-warning">{d.planError}</p>}
+              {d.plan && (
+                <ActionForm action={applyBudgetPlanAction} reset={false} showSuccess className="mt-4">
+                  <input type="hidden" name="month" value={d.month} />
+                  <ul className="flex flex-col gap-2">
+                    {d.plan.lines.map((l) => (
+                      <li key={l.categoryId} className="flex items-center gap-3 text-sm">
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate">{l.category}</span>
+                          <span className="text-xs text-muted">
+                            {l.group} · averaged {formatCents(l.averageCents).replace(/\.\d\d$/, "")}
+                          </span>
+                        </span>
+                        <Input
+                          name={`line:${l.categoryId}`}
+                          defaultValue={(l.suggestedCents / 100).toFixed(0)}
+                          inputMode="decimal"
+                          aria-label={`${l.category} monthly budget`}
+                          className="h-9 w-24 text-right"
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="rounded-2xl bg-surface-2/70 p-3 text-xs text-text-2">
+                    {d.plan.notes.map((n) => (
+                      <p key={n} className="mt-0.5">
+                        {n}
+                      </p>
+                    ))}
+                  </div>
+                  <SubmitButton className="self-end">Save these budgets</SubmitButton>
+                </ActionForm>
+              )}
+            </Card>
+          )}
           <Card className="p-5">
             <h2 className="mb-3 text-[13px] font-semibold tracking-wide text-text-2 uppercase">Set a budget</h2>
-            <ActionForm action={setBudgetAction}>
+            <ActionForm action={setBudgetAction} showSuccess>
               <input type="hidden" name="month" value={d.month} />
               <Field label="Category" htmlFor="b-cat">
                 <Select id="b-cat" name="categoryId" required>

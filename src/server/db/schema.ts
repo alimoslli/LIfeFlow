@@ -83,6 +83,8 @@ export type UserPreferences = {
   assistantStyle?: "balanced" | "warm" | "direct" | "coach" | "playful" | "professional";
   /** Free-text personality notes, at most 300 characters. Changes tone only, never the rules. */
   assistantNotes?: string;
+  /** How much the user already knows about money; lessons and explanations adapt to it. */
+  moneyLevel?: "new" | "some" | "confident";
   assistantVoice?: "alloy" | "ash" | "ballad" | "cedar" | "coral" | "echo" | "marin" | "sage" | "shimmer" | "verse";
 };
 

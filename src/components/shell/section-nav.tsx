@@ -3,10 +3,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import {
+  BarChart3,
   BookOpen,
   Briefcase,
   CalendarDays,
   CheckSquare,
+  HeartPulse,
   Landmark,
   LayoutList,
   LineChart,
@@ -40,6 +42,8 @@ export const SECTIONS: Record<"plan" | "money", Item[]> = {
     { href: "/finances/goals", label: "Goals", icon: PiggyBank },
     { href: "/finances/accounts", label: "Accounts", icon: Landmark },
     { href: "/wealth", label: "Investments", icon: LineChart },
+    { href: "/money/coach", label: "Coach", icon: HeartPulse },
+    { href: "/money/report", label: "Reports", icon: BarChart3 },
   ],
 };
 

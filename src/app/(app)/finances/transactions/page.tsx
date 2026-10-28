@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, MoreHorizontal, Receipt, Search, SlidersHorizontal, Trash2 } from "lucide-react";
+import { Download, MoreHorizontal, Receipt, Search, SlidersHorizontal, Trash2, Wand2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { Button, SubmitButton } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
@@ -81,6 +81,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
               <a href="/api/export?format=transactions.csv" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-surface-2">
                 <Download className="h-4 w-4 text-muted" /> Export CSV
               </a>
+              <Link href="/finances/rules" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-surface-2">
+                <Wand2 className="h-4 w-4 text-muted" /> Category rules
+              </Link>
             </div>
           </details>
           {d.accounts.length > 0 && <AddTransactionDialog action={createTransactionAction} accounts={d.accounts} categories={d.categories} today={d.today} />}
@@ -252,19 +255,21 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                               </label>
                               {t.source !== "manual" && <SourceBadge source={t.source} />}
                               <span className="flex-1" />
-                              {["manual", "import", "jarvis"].includes(t.source) && (
-                                <ActionButton
-                                  action={deleteTransactionAction.bind(null, t.id)}
-                                  confirm="Delete this transaction?"
-                                  title="Delete transaction"
-                                  className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-danger hover:bg-danger-soft"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" /> Delete
-                                </ActionButton>
-                              )}
                               <SubmitButton size="sm">Save</SubmitButton>
                             </div>
                           </ActionForm>
+                          <div className="mt-2">
+                            {["manual", "import", "jarvis"].includes(t.source) && (
+                              <ActionButton
+                                action={deleteTransactionAction.bind(null, t.id)}
+                                confirm="Delete this transaction?"
+                                title="Delete transaction"
+                                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-danger hover:bg-danger-soft"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" /> Delete
+                              </ActionButton>
+                            )}
+                          </div>
                         </div>
                       )}
                     </li>

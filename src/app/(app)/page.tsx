@@ -91,10 +91,24 @@ export default async function TodayPage() {
             <SectionTitle href="/money">Money</SectionTitle>
             <Pressable>
               <Link data-tilt href="/money" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift sm:p-6">
-                <p className="text-sm text-muted">Cash &amp; checking</p>
-                <p className="tabular mt-1 font-display text-[40px] leading-none font-medium tracking-tight">
-                  <CountUp cents={b.money.liquidCents} />
-                </p>
+                {b.money.safeTodayCents != null ? (
+                  <>
+                    <p className="text-sm text-muted">Safe to spend today</p>
+                    <p className="tabular mt-1 font-display text-[40px] leading-none font-medium tracking-tight">
+                      <CountUp cents={b.money.safeTodayCents} />
+                    </p>
+                    <p className="mt-1 text-sm text-text-2">
+                      Cash &amp; checking <CountUp cents={b.money.liquidCents} />
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted">Cash &amp; checking</p>
+                    <p className="tabular mt-1 font-display text-[40px] leading-none font-medium tracking-tight">
+                      <CountUp cents={b.money.liquidCents} />
+                    </p>
+                  </>
+                )}
                 <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
                   <div>
                     <p className="flex items-center gap-1.5 text-sm text-muted">

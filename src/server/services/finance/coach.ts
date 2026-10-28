@@ -86,12 +86,22 @@ export async function subscriptionReport(scope: UserScope, today: string) {
     () => suggestRecurring(scope, today),
     () => queryTransactions(scope, { from: addDaysStr(today, -200), to: today, kinds: ["expense"], limit: 20_000 }),
   );
+  const words = (x: string) =>
+    new Set(
+      x
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((w) => w.length > 3),
+    );
+  const trackedItems = tracked
+    .filter((r) => r.amountCents < 0 && (r.kind === "subscription" || r.kind === "bill"))
+    .map((r) => ({ name: r.name, kind: r.kind, frequency: r.frequency, amountCents: -r.amountCents, tracked: true, merchantKey: r.merchantKey }));
+  // A detected pattern that shares a word with something already tracked is the same thing (e.g. "Parkview Apartments" vs "Rent, Parkview Apartments").
+  const overlapsTracked = (name: string) => trackedItems.some((t) => [...words(name)].some((w) => words(t.name).has(w)));
   const items = [
-    ...tracked
-      .filter((r) => r.amountCents < 0 && (r.kind === "subscription" || r.kind === "bill"))
-      .map((r) => ({ name: r.name, kind: r.kind, frequency: r.frequency, amountCents: -r.amountCents, tracked: true, merchantKey: r.merchantKey })),
+    ...trackedItems,
     ...detected
-      .filter((d) => d.averageAmountCents < 0)
+      .filter((d) => d.averageAmountCents < 0 && !overlapsTracked(d.name))
       .map((d) => ({
         name: d.name,
         kind: "detected" as const,
@@ -110,7 +120,8 @@ export async function subscriptionReport(scope: UserScope, today: string) {
     return latest > earliest + 50 ? [{ name: i.name, fromCents: earliest, toCents: latest }] : [];
   });
   const streaming = items.filter((i) => /netflix|hulu|disney|max|spotify|apple music|youtube|paramount|peacock/i.test(i.name));
-  const subs = items.filter((i) => i.kind !== "bill");
+  // Only tracked subscriptions count toward the subscription total; bills like rent never do.
+  const subs = items.filter((i) => i.kind === "subscription");
   return {
     items: items.sort((a, b) => b.yearlyCents - a.yearlyCents),
     subscriptionsYearlyCents: subs.reduce((s, i) => s + i.yearlyCents, 0),
@@ -279,7 +290,10 @@ export async function financialHealth(scope: UserScope, today: string) {
       label: "Saving part of income",
       score: pts,
       max: 25,
-      detail: `You kept ${Math.round(rate * 100)}% of income over the last ${hist.months} month${hist.months === 1 ? "" : "s"}.`,
+      detail:
+        rate >= 0
+          ? `You kept ${Math.round(rate * 100)}% of income over the last ${hist.months} month${hist.months === 1 ? "" : "s"}.`
+          : `You spent ${Math.round(-rate * 100)}% more than came in over the last ${hist.months} month${hist.months === 1 ? "" : "s"}.`,
       step: rate >= 0.2 ? null : "Aim to keep 20% of each paycheck. Start with 5% and raise it as bills allow.",
     });
   }

@@ -41,6 +41,36 @@ export async function updateAccountBalance(scope: UserScope, id: string, current
   return row;
 }
 
+export const accountDetailsSchema = z.object({
+  currentBalanceCents: z.number().int().optional(),
+  creditLimitCents: z.number().int().min(0).nullish(),
+  aprBps: z.number().int().min(0).max(10_000).nullish(),
+  minPaymentCents: z.number().int().min(0).nullish(),
+  nextPaymentDueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullish(),
+  name: z.string().trim().min(1).max(120).optional(),
+});
+
+/** Edits an account. Synced accounts keep their bank balance; their debt details can still be filled in. */
+export async function updateAccountDetails(scope: UserScope, id: string, input: z.input<typeof accountDetailsSchema>) {
+  const d = accountDetailsSchema.parse(input);
+  const [acct] = await scope.tx
+    .select()
+    .from(financialAccounts)
+    .where(and(eq(financialAccounts.id, id), eq(financialAccounts.userId, scope.userId)));
+  if (!acct) throw notFound("Account");
+  const synced = acct.source !== "manual" && acct.source !== "demo";
+  const { currentBalanceCents, ...rest } = d;
+  const [row] = await scope.tx
+    .update(financialAccounts)
+    .set({ ...rest, ...(!synced && currentBalanceCents != null && { currentBalanceCents, balanceUpdatedAt: new Date() }) })
+    .where(eq(financialAccounts.id, id))
+    .returning();
+  return row;
+}
+
 export async function archiveAccount(scope: UserScope, id: string) {
   const [row] = await scope.tx
     .update(financialAccounts)

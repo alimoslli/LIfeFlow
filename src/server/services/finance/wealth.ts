@@ -12,6 +12,7 @@ export const holdingInputSchema = z.object({
   quantity: z.number().min(0),
   valueCents: z.number().int().min(0),
   costBasisCents: z.number().int().min(0).nullish(),
+  expenseRatioBps: z.number().int().min(0).max(1000).nullish(),
 });
 
 export async function addManualHolding(scope: UserScope, input: z.input<typeof holdingInputSchema>) {

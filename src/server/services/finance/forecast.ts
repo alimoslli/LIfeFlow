@@ -1,5 +1,5 @@
 import { series } from "@/server/db/series";
-import { addDaysStr, daysBetween, monthEnd, monthStart, weekStart } from "@/lib/dates";
+import { addDaysStr, daysBetween, formatDateStr, monthEnd, monthStart, weekStart } from "@/lib/dates";
 import type { UserScope } from "../../db/with-user";
 import { summarizeCashflow } from "./cashflow";
 import { listAccounts } from "./accounts";
@@ -61,7 +61,8 @@ export function safeToSpendCalc(i: {
   spentThisWeekCents: number;
   weekEnd: string;
 }) {
-  const days = Math.max(1, daysBetween(i.today, i.horizon));
+  // At least a week, so a payday tomorrow doesn't turn all cash into "spend it now".
+  const days = Math.max(7, daysBetween(i.today, i.horizon));
   const available = i.cashCents - i.billsDueCents - i.goalSetAsideCents - i.bufferCents;
   const perDay = Math.floor(Math.max(0, available) / days);
   const weekDaysLeft = Math.max(1, Math.min(daysBetween(i.today, i.weekEnd) + 1, days));
@@ -111,6 +112,7 @@ export function budgetPace(i: {
   return { status, projectedCents: projected, remainingCents: remaining, daysLeft: left, fix };
 }
 
+const nice = (d: string) => formatDateStr(d, "EEE, MMM d");
 const dollars = (c: number) => `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: c % 100 ? 2 : 0, minimumFractionDigits: 0 })}`;
 
 // ------------------------------------------------------------ data
@@ -158,11 +160,11 @@ export async function cashForecast(scope: UserScope, today: string, days = 30) {
   const p = projectCash({ startCents: balances.cashCents, today, days, bills, income: pay, dailySpendCents: typical.dailyCents });
   const warnings: string[] = [];
   if (p.overdraftDateWithoutPay && p.overdraftDateWithPay)
-    warnings.push(`At your usual pace, checking could go below $0 around ${p.overdraftDateWithPay}, even with expected pay.`);
+    warnings.push(`At your usual pace, checking could go below $0 around ${nice(p.overdraftDateWithPay)}, even with expected pay.`);
   else if (p.overdraftDateWithoutPay)
-    warnings.push(`Checking could go below $0 around ${p.overdraftDateWithoutPay} if your next paycheck is late or smaller than usual.`);
+    warnings.push(`Checking could go below $0 around ${nice(p.overdraftDateWithoutPay)} if your next paycheck is late or smaller than usual.`);
   const lowBill = bills.find((b) => p.points.find((x) => x.date === b.date)!.withPayCents < 0);
-  if (lowBill) warnings.push(`${lowBill.name} (${dollars(-lowBill.amountCents)}) on ${lowBill.date} may not be covered.`);
+  if (lowBill) warnings.push(`${lowBill.name} (${dollars(-lowBill.amountCents)}) on ${nice(lowBill.date)} may not be covered.`);
   return {
     hasAccounts: accounts.length > 0,
     startCents: balances.cashCents,
@@ -189,14 +191,16 @@ export async function safeToSpend(scope: UserScope, today: string) {
   const nextPay = pay[0]?.date ?? null;
   const horizon = nextPay ?? addDaysStr(monthEnd(today), 1);
   const wkEnd = addDaysStr(weekStart(today), 6);
+  // Pay can be late or smaller than usual, so bills in the next two weeks are covered from cash on hand even if payday comes first.
+  const billsUntil = addDaysStr(horizon, -1) > addDaysStr(today, 14) ? addDaysStr(horizon, -1) : addDaysStr(today, 14);
   const [bills, goals, todays, week] = await series(
-    () => upcomingRecurring(scope, today, addDaysStr(horizon, -1)),
+    () => upcomingRecurring(scope, today, billsUntil),
     () => listGoals(scope),
     () => queryTransactions(scope, { from: today, to: today, limit: 500 }),
     () => queryTransactions(scope, { from: weekStart(today), to: today, limit: 2000 }),
   );
   const billsDue = bills.filter((b) => b.amountCents < 0).reduce((s, b) => s - b.amountCents, 0);
-  const days = Math.max(1, daysBetween(today, horizon));
+  const days = Math.max(7, daysBetween(today, horizon));
   const goalSetAside = goals
     .filter((g) => g.status === "active" && g.monthlyPlanCents)
     .reduce((s, g) => s + Math.round(((g.monthlyPlanCents ?? 0) * days) / 30), 0);
@@ -223,7 +227,8 @@ export async function safeToSpend(scope: UserScope, today: string) {
     bills: bills.filter((b) => b.amountCents < 0),
     goalSetAsideCents: goalSetAside,
     spentTodayCents: summarizeCashflow(todays).netSpendingCents,
-    method: `Cash and checking, minus bills due before ${nextPay ? "your next paycheck" : "month end"}, minus your planned goal savings for that time, spread over ${calc.days} day${calc.days === 1 ? "" : "s"}.`,
+    billsUntil,
+    method: `Cash and checking, minus bills due by ${formatDateStr(billsUntil, "MMM d")}, minus your planned goal savings, spread over ${calc.days} days.`,
   };
 }
 

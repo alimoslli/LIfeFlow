@@ -38,6 +38,11 @@ export type MoneySnapshot = {
   overBudget: { category: string; spentCents: number; limitCents: number; topMerchant: string | null; topMerchantChangeCents: number | null }[];
   goals: { name: string; percent: number; monthlyNeededCents: number | null; targetDate: string | null }[];
   investments: { valueCents: number; returnPct: number | null; asOf: Date | null } | null;
+  /** Budgets not over yet but on pace to be, with a specific fix. */
+  headingOver?: { category: string; projectedCents: number; limitCents: number; fix: string | null }[];
+  safeToSpend?: { todayCents: number; short: boolean } | null;
+  /** First projected day checking goes below $0 in the next 14 days (with expected pay, or without it). */
+  overdraft?: { date: string; evenWithPay: boolean } | null;
   hasDemoData: boolean;
 };
 
@@ -58,7 +63,14 @@ export type Insight = {
   score: number;
 };
 
-export type MoneyGlance = { liquidCents: number; spentCents: number; incomeCents: number; periodLabel: string; asOf: Date | null };
+export type MoneyGlance = {
+  liquidCents: number;
+  spentCents: number;
+  incomeCents: number;
+  periodLabel: string;
+  asOf: Date | null;
+  safeTodayCents: number | null;
+};
 
 export type DayGlance = { date: string; label: string; busyMinutes: number; deadlines: number; exam: boolean; isToday: boolean };
 

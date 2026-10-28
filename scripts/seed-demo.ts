@@ -225,7 +225,7 @@ async function seedAll(s: UserScope, today: string) {
   };
   await createRecurring(
     s,
-    { name: "Rent — Parkview Apartments", amountCents: -95_000, frequency: "monthly", nextDueDate: nextDom(1), kind: "bill", categoryId: ids.rent },
+    { name: "Rent, Parkview Apartments", amountCents: -95_000, frequency: "monthly", nextDueDate: nextDom(1), kind: "bill", categoryId: ids.rent },
     "demo",
   );
   await createRecurring(
@@ -344,7 +344,7 @@ async function seedAll(s: UserScope, today: string) {
   await createNote(
     s,
     {
-      title: "Coffee cart — brain dump",
+      title: "Coffee cart: brain dump",
       projectId: proj.id,
       tags: ["business", "ideas"],
       body: "- Morning rush 7:30–9:30 near Science quad\n- Need: cart, permit, supplier\n- Cost guess: $3–5k to start\n- Ask student union about vendor rules\n- Could I run it Mon/Wed before PSY?",
@@ -354,10 +354,10 @@ async function seedAll(s: UserScope, today: string) {
   await createNote(
     s,
     {
-      title: "PSY 101 — memory & learning",
+      title: "PSY 101: memory & learning",
       courseId: psy.id,
       tags: ["psy101"],
-      body: "## Encoding\nShallow vs deep processing. **Spacing effect**: distributed practice beats cramming.\n\n## Retrieval\nTesting effect — practice quizzes improve recall.",
+      body: "## Encoding\nShallow vs deep processing. **Spacing effect**: distributed practice beats cramming.\n\n## Retrieval\nTesting effect: practice quizzes improve recall.",
     },
     "demo",
   );
@@ -411,12 +411,12 @@ async function seedAll(s: UserScope, today: string) {
     "demo",
   );
   await updateAssignment(s, TZ, quiz.assignment.id, { status: "done", grade: "8.5/10" });
-  await a(bio.id, "Reading: Chapter 7 — Cell signaling", 4, null, "reading");
+  await a(bio.id, "Reading: Chapter 7: Cell signaling", 4, null, "reading");
   await a(calc.id, "Quiz: Series convergence", 5, "13:00", "quiz");
 
   for (const [courseId, title, module, url] of [
     [psy.id, "Syllabus", "Course info", "https://example.edu/psy101/syllabus"],
-    [psy.id, "Week 7 slides — Memory", "Week 7", "https://example.edu/psy101/week7"],
+    [psy.id, "Week 7 slides: Memory", "Week 7", "https://example.edu/psy101/week7"],
     [calc.id, "Integration techniques cheat sheet", "Unit 2", "https://example.edu/math152/cheatsheet"],
     [calc.id, "Office hours: Tue 3–4pm, Science 214", "Course info", null],
     [bio.id, "Lab manual", "Labs", "https://example.edu/bio210/lab-manual"],
@@ -441,7 +441,7 @@ async function seedAll(s: UserScope, today: string) {
   await createNote(
     s,
     {
-      title: "MATH 152 — integration by parts",
+      title: "MATH 152: integration by parts",
       courseId: calc.id,
       tags: ["math152", "exam2"],
       body: "∫u dv = uv − ∫v du\n\n**LIATE** for choosing u: Logs, Inverse trig, Algebraic, Trig, Exponential.\n\nPractice: ∫x·eˣ dx, ∫ln x dx, ∫x²·sin x dx",
@@ -453,7 +453,7 @@ async function seedAll(s: UserScope, today: string) {
     {
       title: "Monthly money check-in",
       tags: ["money"],
-      body: "- Food delivery crept up — try meal prep Sundays\n- Cancel gym (not using it)\n- Move $250/month to savings on the 15th\n- Montréal fund: ~$145/month needed",
+      body: "- Food delivery crept up, so try meal prep Sundays\n- Cancel gym (not using it)\n- Move $250/month to savings on the 15th\n- Montréal fund: ~$145/month needed",
     },
     "demo",
   );

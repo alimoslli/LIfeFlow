@@ -127,6 +127,39 @@ const overBudgetRule: Rule = (s) => {
   ];
 };
 
+const headingOverRule: Rule = (s) => {
+  const h = s.money?.headingOver?.[0];
+  if (!h) return [];
+  return [
+    {
+      id: `pace-${h.category}`,
+      tone: "heads-up",
+      icon: "money",
+      text: `${h.category} is on pace for ${money(h.projectedCents)}, over its ${money(h.limitCents)} budget.`,
+      detail: h.fix ?? undefined,
+      action: { label: "See budgets", href: "/finances/budgets" },
+      score: 65,
+    },
+  ];
+};
+
+const overdraftRule: Rule = (s) => {
+  const o = s.money?.overdraft;
+  if (!o) return [];
+  return [
+    {
+      id: "overdraft",
+      tone: "attention",
+      icon: "money",
+      text: o.evenWithPay
+        ? `Checking could go below $0 around ${dayName(o.date, s.today)} at your usual pace.`
+        : `Checking could go below $0 around ${dayName(o.date, s.today)} if your next paycheck is late.`,
+      action: { label: "Plan around it", prompt: "My checking might go below zero soon. Show me the forecast and help me avoid an overdraft." },
+      score: 80,
+    },
+  ];
+};
+
 const spendingPaceRule: Rule = (s) => {
   const m = s.money;
   if (!m || m.lastMonthSameSpanSpendCents < 5_000) return [];
@@ -181,7 +214,18 @@ const goalRule: Rule = (s) => {
   ];
 };
 
-export const RULES: Rule[] = [overdueRule, conflictRule, examRule, overBudgetRule, spendingPaceRule, busyDayRule, billsRule, goalRule];
+export const RULES: Rule[] = [
+  overdueRule,
+  conflictRule,
+  examRule,
+  overdraftRule,
+  overBudgetRule,
+  headingOverRule,
+  spendingPaceRule,
+  busyDayRule,
+  billsRule,
+  goalRule,
+];
 
 export function deriveInsights(s: LifeSnapshot, limit = 4): Insight[] {
   return RULES.flatMap((r) => r(s))
@@ -252,6 +296,7 @@ export function buildBriefing(s: LifeSnapshot): Briefing {
           incomeCents: s.money.incomeThisMonthCents,
           periodLabel: s.money.periodLabel,
           asOf: s.money.asOf,
+          safeTodayCents: s.money.safeToSpend?.todayCents ?? null,
         }
       : null,
     week: weekGlance(s),
