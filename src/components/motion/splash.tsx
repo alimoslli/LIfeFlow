@@ -34,7 +34,11 @@ export function Splash() {
     };
     const wait = Math.max(0, MIN_VISIBLE_MS - performance.now());
     const tl = gsap.timeline({ delay: wait / 1000, onComplete: finish });
-    tl.to(el.querySelector(".lf-splash-inner"), { scale: 1.06, opacity: 0, duration: 0.35, ease: "power2.in" }).to(el, { opacity: 0, duration: 0.4, ease: MOTION.ease }, "-=0.15");
+    tl.to(el.querySelector(".lf-splash-inner"), { scale: 1.06, opacity: 0, duration: 0.35, ease: "power2.in" }).to(
+      el,
+      { opacity: 0, duration: 0.4, ease: MOTION.ease },
+      "-=0.15",
+    );
     const safety = window.setTimeout(finish, 3000);
     return () => {
       tl.kill();
@@ -48,8 +52,25 @@ export function Splash() {
       <div className="lf-splash-inner flex flex-col items-center gap-5">
         <svg viewBox="0 0 32 32" className="h-16 w-16">
           <rect width="32" height="32" rx="10" fill="rgba(255,255,255,0.1)" />
-          <path className="lf-draw" pathLength={1} d="M8 19.5c2.6-4.6 5.2-6.9 8-6.9s4.6 2.2 8-2.6" stroke="white" strokeWidth="2.4" fill="none" strokeLinecap="round" />
-          <path className="lf-draw lf-draw-2" pathLength={1} d="M8 24c2.6-3 5.2-4.5 8-4.5s4.6 1.4 8-1.7" stroke="white" strokeWidth="2.4" fill="none" strokeLinecap="round" opacity=".5" />
+          <path
+            className="lf-draw"
+            pathLength={1}
+            d="M8 19.5c2.6-4.6 5.2-6.9 8-6.9s4.6 2.2 8-2.6"
+            stroke="white"
+            strokeWidth="2.4"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <path
+            className="lf-draw lf-draw-2"
+            pathLength={1}
+            d="M8 24c2.6-3 5.2-4.5 8-4.5s4.6 1.4 8-1.7"
+            stroke="white"
+            strokeWidth="2.4"
+            fill="none"
+            strokeLinecap="round"
+            opacity=".5"
+          />
         </svg>
         <p className="font-display text-[34px] font-medium tracking-tight">
           {"LifeFlow".split("").map((c, i) => (

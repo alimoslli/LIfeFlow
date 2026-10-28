@@ -15,7 +15,10 @@ export const metadata: Metadata = { title: "Goals" };
 
 export default async function GoalsPage() {
   const d = await withCurrentUser(async (s, u) => {
-    const [goals, accounts] = await series(() => listGoals(s), () => listAccounts(s, { types: ["depository", "investment", "cash"] }));
+    const [goals, accounts] = await series(
+      () => listGoals(s),
+      () => listAccounts(s, { types: ["depository", "investment", "cash"] }),
+    );
     return { goals, accounts, today: todayIn(u.timezone) };
   });
   return (
@@ -48,18 +51,35 @@ export default async function GoalsPage() {
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
                   <span className="text-text-2">
                     <Money cents={g.savedCents} /> of <Money cents={g.targetCents} />
-                    {monthly ? <span className="text-muted"> · about <Money cents={monthly} />/month to stay on track</span> : null}
+                    {monthly ? (
+                      <span className="text-muted">
+                        {" "}
+                        · about <Money cents={monthly} />
+                        /month to stay on track
+                      </span>
+                    ) : null}
                   </span>
                   <div className="flex items-center gap-2">
                     {!g.accountId && (
                       <ActionForm action={updateGoalAction.bind(null, g.id)} reset={false} className="flex-row gap-1.5">
-                        <Input name="saved" inputMode="decimal" defaultValue={(g.savedCents / 100).toFixed(2)} className="h-8 w-28 text-[13px]" aria-label="Saved so far" />
+                        <Input
+                          name="saved"
+                          inputMode="decimal"
+                          defaultValue={(g.savedCents / 100).toFixed(2)}
+                          className="h-8 w-28 text-[13px]"
+                          aria-label="Saved so far"
+                        />
                         <SubmitButton size="sm" variant="secondary">
                           Update
                         </SubmitButton>
                       </ActionForm>
                     )}
-                    <ActionButton action={archiveGoalAction.bind(null, g.id)} confirm={`Archive "${g.name}"?`} title="Archive goal" className="p-1 text-muted hover:text-text">
+                    <ActionButton
+                      action={archiveGoalAction.bind(null, g.id)}
+                      confirm={`Archive "${g.name}"?`}
+                      title="Archive goal"
+                      className="p-1 text-muted hover:text-text"
+                    >
                       <Archive className="h-4 w-4" />
                     </ActionButton>
                   </div>

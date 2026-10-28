@@ -21,7 +21,11 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
     const month = monthStart(sp.month && isValidDateStr(`${sp.month}-01`) ? `${sp.month}-01` : today);
-    const [budgets, categories, spending] = await series(() => budgetStatus(s, month), () => listCategories(s), () => spendingByCategory(s, month, monthEnd(month)));
+    const [budgets, categories, spending] = await series(
+      () => budgetStatus(s, month),
+      () => listCategories(s),
+      () => spendingByCategory(s, month, monthEnd(month)),
+    );
     return { budgets, categories: categories.filter((c) => c.kind === "expense"), spending, month, today };
   });
   const prev = monthStart(addDaysStr(d.month, -1)).slice(0, 7);
@@ -50,7 +54,13 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
         <Card>
           <CardHeader
             title={`${formatDateStr(d.month, "MMMM")} budgets`}
-            subtitle={d.budgets.length ? <>Spent <Money cents={totalSpent} /> of <Money cents={totalLimit} /></> : undefined}
+            subtitle={
+              d.budgets.length ? (
+                <>
+                  Spent <Money cents={totalSpent} /> of <Money cents={totalLimit} />
+                </>
+              ) : undefined
+            }
           />
           {d.budgets.length === 0 ? (
             <EmptyState icon={<PieChart />} title="No budgets this month">
@@ -66,15 +76,31 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
                       {b.categoryName}
                     </span>
                     <span className="tabular text-sm">
-                      <Money cents={b.spentCents} /> <span className="text-muted">/ <Money cents={b.limitCents} /></span>
+                      <Money cents={b.spentCents} />{" "}
+                      <span className="text-muted">
+                        / <Money cents={b.limitCents} />
+                      </span>
                     </span>
                   </div>
                   <Progress value={b.percent} tone={b.percent >= 100 ? "danger" : b.percent >= 85 ? "warning" : "accent"} label={`${b.categoryName} budget`} />
                   <div className="mt-1.5 flex justify-between text-xs">
                     <span className={cn(b.remainingCents < 0 ? "text-danger" : "text-muted")}>
-                      {b.remainingCents < 0 ? <>Over by <Money cents={-b.remainingCents} /></> : <><Money cents={b.remainingCents} /> remaining</>} · {b.percent}%
+                      {b.remainingCents < 0 ? (
+                        <>
+                          Over by <Money cents={-b.remainingCents} />
+                        </>
+                      ) : (
+                        <>
+                          <Money cents={b.remainingCents} /> remaining
+                        </>
+                      )}{" "}
+                      · {b.percent}%
                     </span>
-                    <ActionButton action={deleteBudgetAction.bind(null, b.id)} title="Remove budget" className="text-muted opacity-0 group-hover:opacity-100 hover:text-danger focus:opacity-100">
+                    <ActionButton
+                      action={deleteBudgetAction.bind(null, b.id)}
+                      title="Remove budget"
+                      className="text-muted opacity-0 group-hover:opacity-100 hover:text-danger focus:opacity-100"
+                    >
                       <Trash2 className="h-3.5 w-3.5" />
                     </ActionButton>
                   </div>

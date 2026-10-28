@@ -19,10 +19,18 @@ function respond(body) {
   const input = body.input ?? [];
   const last = input[input.length - 1];
   const id = `resp_${n}`;
-  const message = (text) => ({ type: "message", id: `msg_${n}`, role: "assistant", status: "completed", content: [{ type: "output_text", text, annotations: [] }] });
+  const message = (text) => ({
+    type: "message",
+    id: `msg_${n}`,
+    role: "assistant",
+    status: "completed",
+    content: [{ type: "output_text", text, annotations: [] }],
+  });
   const done = (output) => ({ type: "response.completed", response: { id, object: "response", status: "completed", output } });
   const textEvents = (text) => [
-    ...text.match(/[\s\S]{1,24}/g).map((delta) => ({ type: "response.output_text.delta", delta, item_id: `msg_${n}`, output_index: 0, content_index: 0, logprobs: [] })),
+    ...text
+      .match(/[\s\S]{1,24}/g)
+      .map((delta) => ({ type: "response.output_text.delta", delta, item_id: `msg_${n}`, output_index: 0, content_index: 0, logprobs: [] })),
     done([message(text)]),
   ];
   if (last?.type === "function_call_output") {
@@ -33,10 +41,27 @@ function respond(body) {
     });
     return textEvents(lines.join("\n\n"));
   }
-  const text = (last?.content ?? []).filter((c) => c.type === "input_text").map((c) => c.text).join("\n");
-  const calls = text.split("\n").map((l) => l.match(/^\/tool\s+([a-z_]+)\s*(.*)$/)).filter(Boolean);
+  const text = (last?.content ?? [])
+    .filter((c) => c.type === "input_text")
+    .map((c) => c.text)
+    .join("\n");
+  const calls = text
+    .split("\n")
+    .map((l) => l.match(/^\/tool\s+([a-z_]+)\s*(.*)$/))
+    .filter(Boolean);
   if (calls.length) {
-    return [done(calls.map((m, i) => ({ type: "function_call", id: `fc_${n}_${i}`, call_id: `call_${n}_${i}`, name: m[1], arguments: m[2] || "{}", status: "completed" })))];
+    return [
+      done(
+        calls.map((m, i) => ({
+          type: "function_call",
+          id: `fc_${n}_${i}`,
+          call_id: `call_${n}_${i}`,
+          name: m[1],
+          arguments: m[2] || "{}",
+          status: "completed",
+        })),
+      ),
+    ];
   }
   return textEvents(`Hello from the test model. You said: ${text.slice(0, 120)}`);
 }

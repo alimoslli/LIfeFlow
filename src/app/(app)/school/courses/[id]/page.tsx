@@ -75,7 +75,10 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <AskJarvisButton prompt={`Build a study plan for ${label} around my schedule.`} className="h-8 rounded-full bg-surface px-3.5 text-[13px] font-medium shadow-soft">
+          <AskJarvisButton
+            prompt={`Build a study plan for ${label} around my schedule.`}
+            className="h-8 rounded-full bg-surface px-3.5 text-[13px] font-medium shadow-soft"
+          >
             Study plan with Jarvis
           </AskJarvisButton>
           <AssignmentDialog action={createAssignmentAction} courses={[c]} defaultCourseId={c.id} />
@@ -130,7 +133,14 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
             </div>
           </Card>
           <Card>
-            <CardHeader title="Notes" action={<Link href={`/notes?course=${c.id}`} className="text-xs font-medium text-accent hover:underline">New note</Link>} />
+            <CardHeader
+              title="Notes"
+              action={
+                <Link href={`/notes?course=${c.id}`} className="text-xs font-medium text-accent hover:underline">
+                  New note
+                </Link>
+              }
+            />
             {d.notes.length === 0 ? (
               <p className="px-5 pb-4 text-sm text-muted">No notes linked to this course.</p>
             ) : (
@@ -149,7 +159,11 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
           </Card>
           <div className="flex items-center justify-between px-1 text-xs text-muted">
             <SourceBadge source={c.source} />
-            <ActionButton action={deleteCourseAction.bind(null, c.id)} confirm={`Delete ${c.name} and all its assignments?`} className="flex items-center gap-1 rounded px-2 py-1 text-danger hover:bg-danger-soft">
+            <ActionButton
+              action={deleteCourseAction.bind(null, c.id)}
+              confirm={`Delete ${c.name} and all its assignments?`}
+              className="flex items-center gap-1 rounded px-2 py-1 text-danger hover:bg-danger-soft"
+            >
               <Trash2 className="h-3.5 w-3.5" /> Delete course
             </ActionButton>
           </div>

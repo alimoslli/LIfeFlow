@@ -61,6 +61,9 @@ export async function resolveCategory(scope: UserScope, name: string) {
 }
 
 export async function getCategoryByName({ tx, userId }: UserScope, name: string) {
-  const [row] = await tx.select().from(categories).where(and(eq(categories.userId, userId), eq(categories.name, name)));
+  const [row] = await tx
+    .select()
+    .from(categories)
+    .where(and(eq(categories.userId, userId), eq(categories.name, name)));
   return row ?? null;
 }

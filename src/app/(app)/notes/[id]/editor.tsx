@@ -23,7 +23,13 @@ export function NoteEditor({
   const [preview, setPreview] = useState(false);
   return (
     <ActionForm action={action} reset={false} showSuccess className="gap-4">
-      <input name="title" defaultValue={note.title} required aria-label="Title" className="w-full bg-transparent font-display text-[32px] leading-tight font-medium tracking-tight focus:outline-none" />
+      <input
+        name="title"
+        defaultValue={note.title}
+        required
+        aria-label="Title"
+        className="w-full bg-transparent font-display text-[32px] leading-tight font-medium tracking-tight focus:outline-none"
+      />
       <div className="flex flex-wrap items-center gap-2">
         <Select name="projectId" defaultValue={note.projectId ?? ""} className="h-8 w-auto text-[13px]" aria-label="Project">
           <option value="">No project</option>
@@ -56,9 +62,18 @@ export function NoteEditor({
       </div>
       <input type="hidden" name="body" value={body} />
       {preview ? (
-        <div className="min-h-80 rounded-3xl bg-surface shadow-soft p-5">{body.trim() ? <Markdown text={body} /> : <p className="text-sm text-muted">Nothing to preview.</p>}</div>
+        <div className="min-h-80 rounded-3xl bg-surface shadow-soft p-5">
+          {body.trim() ? <Markdown text={body} /> : <p className="text-sm text-muted">Nothing to preview.</p>}
+        </div>
       ) : (
-        <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={18} placeholder="Start writing… Markdown supported." className="min-h-80 font-[450] leading-relaxed" aria-label="Note body" />
+        <Textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={18}
+          placeholder="Start writing… Markdown supported."
+          className="min-h-80 font-[450] leading-relaxed"
+          aria-label="Note body"
+        />
       )}
       <SubmitButton className="self-start">Save note</SubmitButton>
     </ActionForm>

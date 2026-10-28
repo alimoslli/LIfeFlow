@@ -19,7 +19,21 @@ const LABEL: Record<JarvisModule, string> = {
 };
 
 /** Slide-over Jarvis available from every page; scoped to the current module's context. */
-export function JarvisDrawer({ open, onClose, module, availability, initialPrompt, autoSend }: { open: boolean; onClose: () => void; module: JarvisModule; availability: JarvisAvailability; initialPrompt?: string; autoSend?: boolean }) {
+export function JarvisDrawer({
+  open,
+  onClose,
+  module,
+  availability,
+  initialPrompt,
+  autoSend,
+}: {
+  open: boolean;
+  onClose: () => void;
+  module: JarvisModule;
+  availability: JarvisAvailability;
+  initialPrompt?: string;
+  autoSend?: boolean;
+}) {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [session, setSession] = useState(0);
 
@@ -76,7 +90,13 @@ export function JarvisDrawer({ open, onClose, module, availability, initialPromp
             >
               <Plus className="h-4 w-4" />
             </button>
-            <Link href={conversationId ? `/jarvis/${conversationId}` : "/jarvis"} onClick={onClose} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-text" title="Open full screen" aria-label="Open full screen">
+            <Link
+              href={conversationId ? `/jarvis/${conversationId}` : "/jarvis"}
+              onClick={onClose}
+              className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-text"
+              title="Open full screen"
+              aria-label="Open full screen"
+            >
               <Maximize2 className="h-4 w-4" />
             </Link>
             <button onClick={onClose} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-text" aria-label="Close Jarvis">
@@ -85,7 +105,16 @@ export function JarvisDrawer({ open, onClose, module, availability, initialPromp
           </div>
         </div>
         <div className="min-h-0 flex-1">
-          <JarvisChat key={session} compact module={module} availability={availability} initialPrompt={initialPrompt} autoSend={session === 0 && autoSend} conversationId={conversationId} onConversation={(id) => setConversationId(id)} />
+          <JarvisChat
+            key={session}
+            compact
+            module={module}
+            availability={availability}
+            initialPrompt={initialPrompt}
+            autoSend={session === 0 && autoSend}
+            conversationId={conversationId}
+            onConversation={(id) => setConversationId(id)}
+          />
         </div>
       </div>
     </div>

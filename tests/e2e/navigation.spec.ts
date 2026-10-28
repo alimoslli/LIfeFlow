@@ -5,7 +5,14 @@ test("every section is one tap from Plan and Money", async ({ page }) => {
   await signUp(page, "Nav Tester");
   await page.goto("/plan");
   const plan = page.getByRole("navigation", { name: "Plan sections" });
-  for (const [label, url] of [["Calendar", /\/calendar/], ["To-dos", /\/tasks/], ["Classes", /\/school/], ["Work", /\/work/], ["Notes", /\/notes/], ["Agenda", /\/plan$/]] as const) {
+  for (const [label, url] of [
+    ["Calendar", /\/calendar/],
+    ["To-dos", /\/tasks/],
+    ["Classes", /\/school/],
+    ["Work", /\/work/],
+    ["Notes", /\/notes/],
+    ["Agenda", /\/plan$/],
+  ] as const) {
     await plan.getByRole("link", { name: label }).click();
     await expect(page).toHaveURL(url);
     await expect(page.getByRole("navigation", { name: "Plan sections" }).getByRole("link", { name: label })).toHaveAttribute("aria-current", "page");

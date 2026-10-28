@@ -84,7 +84,13 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
     const rows = await s.tx
       .select({ id: attachments.id })
       .from(attachments)
-      .where(and(eq(attachments.userId, s.userId), inArray(attachments.id, ids), or(isNull(attachments.conversationId), eq(attachments.conversationId, conversation.id))));
+      .where(
+        and(
+          eq(attachments.userId, s.userId),
+          inArray(attachments.id, ids),
+          or(isNull(attachments.conversationId), eq(attachments.conversationId, conversation.id)),
+        ),
+      );
     const valid = rows.map((r) => r.id);
     if (valid.length) await s.tx.update(attachments).set({ conversationId: conversation.id }).where(inArray(attachments.id, valid));
     return valid;
@@ -98,8 +104,22 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   // Only memories relevant to this request (and earlier messages in this chat) reach the model.
   const earlier = history.flatMap((h) => (h.type === "user" ? [h.text] : [])).slice(0, -1);
   const memories = selectMemories(approved, { text: input.text, recent: earlier, module: openedFrom });
-  const system = buildSystemPrompt({ userName: user.name.split(" ")[0], tz: user.timezone, now, accountKind: user.accountKind, module: openedFrom, memories, otherMemoryCount: approved.length - memories.length, preferences: user.preferences });
-  await run((s) => touchMemories(s, memories.map((m) => m.id)));
+  const system = buildSystemPrompt({
+    userName: user.name.split(" ")[0],
+    tz: user.timezone,
+    now,
+    accountKind: user.accountKind,
+    module: openedFrom,
+    memories,
+    otherMemoryCount: approved.length - memories.length,
+    preferences: user.preferences,
+  });
+  await run((s) =>
+    touchMemories(
+      s,
+      memories.map((m) => m.id),
+    ),
+  );
   const ctx = makeToolContext(user, conversation.id, now, input.text);
 
   // 3. Model/tool loop
@@ -124,7 +144,9 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
         }
       }
       if (text.trim()) {
-        const [m] = await run((s) => s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: text }).returning({ id: messages.id }));
+        const [m] = await run((s) =>
+          s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: text }).returning({ id: messages.id }),
+        );
         finalMessageId = m.id;
       }
       if (!calls.length) break;
@@ -214,7 +236,8 @@ export function friendlyProviderError(e: unknown): string {
   if (status === 404) return "The configured OpenAI model wasn't found. Check OPENAI_MODEL.";
   if (status && status >= 500) return "OpenAI is having trouble right now. Please try again.";
   const msg = e instanceof Error ? e.message : "";
-  if (/fetch failed|ECONNREFUSED|ENOTFOUND|network|timed out/i.test(msg)) return "Jarvis couldn't reach the AI service (network error). Nothing further was changed.";
+  if (/fetch failed|ECONNREFUSED|ENOTFOUND|network|timed out/i.test(msg))
+    return "Jarvis couldn't reach the AI service (network error). Nothing further was changed.";
   return `Something went wrong while Jarvis was responding${msg ? `: ${truncate(msg, 160)}` : ""}. Any actions already reported as completed were saved.`;
 }
 

@@ -46,7 +46,17 @@ export async function POST(req: Request) {
           }
         };
         try {
-          await runJarvisTurn({ user, provider, emit, conversationId: parsed.data.conversationId, text: parsed.data.message, module: parsed.data.module, attachmentIds: parsed.data.attachmentIds, signal: req.signal, prices: modelPrices() });
+          await runJarvisTurn({
+            user,
+            provider,
+            emit,
+            conversationId: parsed.data.conversationId,
+            text: parsed.data.message,
+            module: parsed.data.module,
+            attachmentIds: parsed.data.attachmentIds,
+            signal: req.signal,
+            prices: modelPrices(),
+          });
         } catch (e) {
           console.error("[jarvis] route", e);
           emit({ type: "error", message: e instanceof Error && /not found/i.test(e.message) ? e.message : "Jarvis hit an unexpected error." });

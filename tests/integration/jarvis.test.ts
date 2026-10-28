@@ -25,7 +25,14 @@ async function jarvisUser() {
 async function turn(session: SessionUser, text: string, responder: Responder, conversationId?: string) {
   const events: JarvisEvent[] = [];
   const res = await runJarvisTurn({ user: session, text, conversationId, provider: new ScriptedProvider(responder), emit: (e) => events.push(e), now: NOW });
-  return { ...res, events, text: events.filter((e) => e.type === "text").map((e) => (e as { delta: string }).delta).join("") };
+  return {
+    ...res,
+    events,
+    text: events
+      .filter((e) => e.type === "text")
+      .map((e) => (e as { delta: string }).delta)
+      .join(""),
+  };
 }
 
 /** A responder that calls the given tools on step 0, then echoes results. */
@@ -77,7 +84,13 @@ describe("Jarvis tool loop", () => {
 
   it("creates a task that can be retrieved in a later conversation", async () => {
     const { session, run } = await jarvisUser();
-    await turn(session, "remind me to email my advisor tomorrow", callThenSummarize([{ name: "create_tasks", args: { tasks: [{ title: "Email advisor", dueDate: "2026-10-27", priority: "high", subtasks: ["Draft questions"] }] } }]));
+    await turn(
+      session,
+      "remind me to email my advisor tomorrow",
+      callThenSummarize([
+        { name: "create_tasks", args: { tasks: [{ title: "Email advisor", dueDate: "2026-10-27", priority: "high", subtasks: ["Draft questions"] }] } },
+      ]),
+    );
     const r2 = await turn(session, "what's on my list?", callThenSummarize([{ name: "list_tasks", args: {} }]));
     expect(r2.text).toContain("Email advisor");
     expect(r2.text).toContain("Draft questions");
@@ -105,10 +118,14 @@ describe("Jarvis tool loop", () => {
     const alice = await jarvisUser();
     const mallory = await jarvisUser();
     const task = await alice.run((s) => createTask(s, TZ, { title: "Alice's secret" }));
-    const r = await turn(mallory.session, "x", callThenSummarize([
-      { name: "get_task", args: { id: task.id } },
-      { name: "update_task", args: { id: task.id, title: "pwned" } },
-    ]));
+    const r = await turn(
+      mallory.session,
+      "x",
+      callThenSummarize([
+        { name: "get_task", args: { id: task.id } },
+        { name: "update_task", args: { id: task.id, title: "pwned" } },
+      ]),
+    );
     const ends = r.events.filter((e) => e.type === "tool_end") as Extract<JarvisEvent, { type: "tool_end" }>[];
     expect(ends.map((e) => [e.ok, e.summary])).toEqual([
       [false, "Task not found"],
@@ -129,10 +146,14 @@ describe("Jarvis tool loop", () => {
 
   it("refuses to store secrets in memory but saves real preferences", async () => {
     const { session, run } = await jarvisUser();
-    const r = await turn(session, "remember", callThenSummarize([
-      { name: "save_memory", args: { content: "Prefers studying in the morning.", category: "preference" } },
-      { name: "save_memory", args: { content: "Bank password: hunter2hunter2", category: "fact" } },
-    ]));
+    const r = await turn(
+      session,
+      "remember",
+      callThenSummarize([
+        { name: "save_memory", args: { content: "Prefers studying in the morning.", category: "preference" } },
+        { name: "save_memory", args: { content: "Bank password: hunter2hunter2", category: "fact" } },
+      ]),
+    );
     const ends = r.events.filter((e) => e.type === "tool_end") as Extract<JarvisEvent, { type: "tool_end" }>[];
     expect(ends[0].ok).toBe(true);
     expect(ends[1].ok).toBe(false);
@@ -142,7 +163,11 @@ describe("Jarvis tool loop", () => {
 
   it("puts only relevant approved memories into the prompt, after a cacheable static prefix", async () => {
     const { session, run } = await jarvisUser();
-    await turn(session, "remember", callThenSummarize([{ name: "save_memory", args: { content: "Works at the campus library on Thursday evenings.", category: "routine" } }]));
+    await turn(
+      session,
+      "remember",
+      callThenSummarize([{ name: "save_memory", args: { content: "Works at the campus library on Thursday evenings.", category: "routine" } }]),
+    );
     await turn(session, "fyi", callThenSummarize([{ name: "save_memory", args: { content: "Is learning Spanish.", category: "goal" } }])); // only a suggestion
     const seen: string[] = [];
     const spy: ModelProvider = {

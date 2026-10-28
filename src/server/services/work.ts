@@ -83,7 +83,7 @@ export function estimateEarnings(shifts: ShiftLike[], rates: EmployerRates, tz: 
   } else {
     assumptions.push(rates.payType === "salary" ? "Salaried: hours do not change pay." : "No hourly rate set.");
   }
-  const basis = bases.size === 0 ? "none" : bases.size === 2 ? "mixed" : (([...bases][0]) as "recorded" | "scheduled");
+  const basis = bases.size === 0 ? "none" : bases.size === 2 ? "mixed" : ([...bases][0] as "recorded" | "scheduled");
   if (basis !== "recorded" && basis !== "none") assumptions.push("Some hours come from the schedule, not recorded punches.");
   const h = (m: number) => Math.round((m / 60) * 100) / 100;
   return {
@@ -109,7 +109,10 @@ export const employerInputSchema = z.object({
   annualSalaryCents: z.number().int().min(0).nullish(),
   overtimeThresholdHours: z.number().min(0).max(168).default(40),
   overtimeMultiplier: z.number().min(1).max(5).default(1.5),
-  color: z.string().regex(/^#[0-9a-f]{6}$/i).nullish(),
+  color: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i)
+    .nullish(),
 });
 
 export async function createEmployer(scope: UserScope, input: z.input<typeof employerInputSchema>, source: DataSource = "manual") {
@@ -187,7 +190,16 @@ export async function createShift(scope: UserScope, tz: string, input: z.input<t
   if (endsAt.getTime() - startsAt.getTime() > 24 * 3600_000) throw new ServiceError("Shifts cannot exceed 24 hours.");
   const [row] = await scope.tx
     .insert(workShifts)
-    .values({ userId: scope.userId, employerId: d.employerId, startsAt, endsAt, breakMinutes: d.breakMinutes, breakPaid: d.breakPaid, notes: d.notes ?? null, source })
+    .values({
+      userId: scope.userId,
+      employerId: d.employerId,
+      startsAt,
+      endsAt,
+      breakMinutes: d.breakMinutes,
+      breakPaid: d.breakPaid,
+      notes: d.notes ?? null,
+      source,
+    })
     .returning();
   return row;
 }
@@ -200,7 +212,10 @@ export const punchSchema = z.object({
 /** Records actual punches for a shift (kept separate from the scheduled times). */
 export async function recordShiftHours(scope: UserScope, tz: string, id: string, input: z.input<typeof punchSchema>) {
   const d = punchSchema.parse(input);
-  const [shift] = await scope.tx.select().from(workShifts).where(and(eq(workShifts.id, id), eq(workShifts.userId, scope.userId)));
+  const [shift] = await scope.tx
+    .select()
+    .from(workShifts)
+    .where(and(eq(workShifts.id, id), eq(workShifts.userId, scope.userId)));
   if (!shift) throw notFound("Shift");
   const date = localDateOf(shift.startsAt, tz);
   const { startsAt, endsAt } = shiftInstants(date, d.recordedStartTime, d.recordedEndTime, tz);
@@ -249,10 +264,17 @@ export async function listShifts(scope: UserScope, tz: string, from: string, to:
 
 /** Per-employer estimate for a date range. */
 export async function workSummary(scope: UserScope, tz: string, from: string, to: string) {
-  const [emps, shifts] = await series(() => listEmployers(scope), () => listShifts(scope, tz, from, to));
+  const [emps, shifts] = await series(
+    () => listEmployers(scope),
+    () => listShifts(scope, tz, from, to),
+  );
   return emps.map((e) => ({
     employer: { id: e.id, name: e.name, payType: e.payType, hourlyRateCents: e.hourlyRateCents },
-    estimate: estimateEarnings(shifts.filter((s) => s.employerId === e.id), ratesOf(e), tz),
+    estimate: estimateEarnings(
+      shifts.filter((s) => s.employerId === e.id),
+      ratesOf(e),
+      tz,
+    ),
   }));
 }
 

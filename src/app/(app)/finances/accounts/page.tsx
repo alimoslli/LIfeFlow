@@ -13,13 +13,22 @@ import { archiveAccountAction, createAccountAction, updateBalanceAction } from "
 
 export const metadata: Metadata = { title: "Accounts" };
 
-const TYPE_LABEL: Record<string, string> = { depository: "Cash accounts", credit: "Credit cards", loan: "Loans", investment: "Investments", cash: "Cash", other: "Other" };
+const TYPE_LABEL: Record<string, string> = {
+  depository: "Cash accounts",
+  credit: "Credit cards",
+  loan: "Loans",
+  investment: "Investments",
+  cash: "Cash",
+  other: "Other",
+};
 
 export default async function AccountsPage() {
   const d = await withCurrentUser(async (s, u) => ({ accounts: await listAccounts(s), tz: u.timezone }));
   const plaid = providerCatalog().find((p) => p.provider === "plaid")!;
   const totals = summarizeBalances(d.accounts);
-  const groups = Object.keys(TYPE_LABEL).map((t) => ({ type: t, items: d.accounts.filter((a) => a.type === t) })).filter((g) => g.items.length);
+  const groups = Object.keys(TYPE_LABEL)
+    .map((t) => ({ type: t, items: d.accounts.filter((a) => a.type === t) }))
+    .filter((g) => g.items.length);
 
   return (
     <>
@@ -67,12 +76,23 @@ export default async function AccountsPage() {
                         <summary className="cursor-pointer text-xs text-accent">Update</summary>
                         <div className="mt-2 flex items-center gap-2">
                           <ActionForm action={updateBalanceAction.bind(null, a.id)} reset={false} className="flex-row gap-1.5">
-                            <Input name="balance" inputMode="decimal" defaultValue={(a.currentBalanceCents / 100).toFixed(2)} className="h-8 w-28 text-[13px]" aria-label="New balance" />
+                            <Input
+                              name="balance"
+                              inputMode="decimal"
+                              defaultValue={(a.currentBalanceCents / 100).toFixed(2)}
+                              className="h-8 w-28 text-[13px]"
+                              aria-label="New balance"
+                            />
                             <SubmitButton size="sm" variant="secondary">
                               Save
                             </SubmitButton>
                           </ActionForm>
-                          <ActionButton action={archiveAccountAction.bind(null, a.id)} confirm={`Archive ${a.name}? Its transactions are kept.`} title="Archive account" className="p-1 text-muted hover:text-text">
+                          <ActionButton
+                            action={archiveAccountAction.bind(null, a.id)}
+                            confirm={`Archive ${a.name}? Its transactions are kept.`}
+                            title="Archive account"
+                            className="p-1 text-muted hover:text-text"
+                          >
                             <Archive className="h-4 w-4" />
                           </ActionButton>
                         </div>
@@ -124,7 +144,8 @@ export default async function AccountsPage() {
               <Badge>{plaid.configured ? "Configured · not built yet" : "Awaiting setup"}</Badge>
             </div>
             <p className="text-sm text-text-2">
-              Automatic sync uses Plaid. It&apos;s the next integration milestone and needs Plaid API keys on the server. Investment holdings require Plaid&apos;s separate Investments product.
+              Automatic sync uses Plaid. It&apos;s the next integration milestone and needs Plaid API keys on the server. Investment holdings require
+              Plaid&apos;s separate Investments product.
             </p>
             <Link href="/settings/integrations" className="mt-3 inline-block text-sm font-medium text-accent hover:underline">
               Integration status →

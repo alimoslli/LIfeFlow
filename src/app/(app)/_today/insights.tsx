@@ -35,7 +35,10 @@ export function InsightList({ insights }: { insights: Insight[] }) {
                       {action.label} <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   ) : (
-                    <button onClick={() => openJarvis(action.prompt, { send: true })} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-accent transition-all hover:gap-2.5">
+                    <button
+                      onClick={() => openJarvis(action.prompt, { send: true })}
+                      className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-accent transition-all hover:gap-2.5"
+                    >
                       <Sparkles className="h-3.5 w-3.5" /> {action.label}
                     </button>
                   ))}
@@ -63,7 +66,12 @@ export function AskBar({ name }: { name: string }) {
       className="flex items-center gap-3 rounded-full bg-surface py-1.5 pr-1.5 pl-5 shadow-soft focus-within:shadow-lift transition-shadow"
     >
       <Sparkles className="h-4 w-4 shrink-0 text-accent" />
-      <input name="q" placeholder={`What's on your mind, ${name}?`} aria-label="Ask Jarvis" className="min-w-0 flex-1 bg-transparent py-2 text-[15px] placeholder:text-muted focus:outline-none" />
+      <input
+        name="q"
+        placeholder={`What's on your mind, ${name}?`}
+        aria-label="Ask Jarvis"
+        className="min-w-0 flex-1 bg-transparent py-2 text-[15px] placeholder:text-muted focus:outline-none"
+      />
       <button className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-text">Ask</button>
     </form>
   );

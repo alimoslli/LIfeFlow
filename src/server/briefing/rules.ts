@@ -30,9 +30,14 @@ const overdueRule: Rule = (s) => {
       id: "overdue",
       tone: "attention",
       icon: "clock",
-      text: others ? `${first.title} and ${plural(others, "other item")} are past due.` : `${first.title} was due ${dayName(localDateOf(first.dueAt, s.tz), s.today)}.`,
+      text: others
+        ? `${first.title} and ${plural(others, "other item")} are past due.`
+        : `${first.title} was due ${dayName(localDateOf(first.dueAt, s.tz), s.today)}.`,
       detail: first.kind === "assignment" && !others ? first.context : undefined,
-      action: { label: "Make a catch-up plan", prompt: `I'm behind on ${s.overdue.map((o) => o.title).join(", ")}. Help me catch up this week without dropping anything else.` },
+      action: {
+        label: "Make a catch-up plan",
+        prompt: `I'm behind on ${s.overdue.map((o) => o.title).join(", ")}. Help me catch up this week without dropping anything else.`,
+      },
       score: 100,
     },
   ];
@@ -63,7 +68,9 @@ const examRule: Rule = (s) => {
     .slice(0, 2)
     .sort((a, b) => a.date.localeCompare(b.date))
     .map((d) => formatDateStr(d.date, "EEEE"));
-  const windows = best.length ? `${best.join(" and ")} ${morning ? (best.length > 1 ? "mornings are" : "morning is") : best.length > 1 ? "have" : "has"} ${morning ? "open" : "the most open time"} for studying.` : undefined;
+  const windows = best.length
+    ? `${best.join(" and ")} ${morning ? (best.length > 1 ? "mornings are" : "morning is") : best.length > 1 ? "have" : "has"} ${morning ? "open" : "the most open time"} for studying.`
+    : undefined;
   return [
     {
       id: `exam-${exam.id}`,
@@ -71,7 +78,10 @@ const examRule: Rule = (s) => {
       icon: "book",
       text: `${exam.course} ${exam.kind} ${daysAway === 0 ? "is today" : `is ${dayName(date, s.today)}`}${exam.kind === "exam" ? "" : ` — ${exam.title}`}.`,
       detail: daysAway > 0 ? windows : undefined,
-      action: { label: "Plan study time", prompt: `Plan study sessions${pref} for my ${exam.course} ${exam.kind} (${exam.title}) around my classes and shifts, and add them to my calendar.` },
+      action: {
+        label: "Plan study time",
+        prompt: `Plan study sessions${pref} for my ${exam.course} ${exam.kind} (${exam.title}) around my classes and shifts, and add them to my calendar.`,
+      },
       score: 80 - daysAway * 3,
     },
   ];
@@ -97,7 +107,10 @@ const overBudgetRule: Rule = (s) => {
   const o = s.money?.overBudget[0];
   if (!o) return [];
   const over = o.spentCents - o.limitCents;
-  const why = o.topMerchant && o.topMerchantChangeCents && o.topMerchantChangeCents > 0 ? `${o.topMerchant} is up ${money(o.topMerchantChangeCents)} from last month.` : undefined;
+  const why =
+    o.topMerchant && o.topMerchantChangeCents && o.topMerchantChangeCents > 0
+      ? `${o.topMerchant} is up ${money(o.topMerchantChangeCents)} from last month.`
+      : undefined;
   return [
     {
       id: `budget-${o.category}`,
@@ -105,7 +118,10 @@ const overBudgetRule: Rule = (s) => {
       icon: "money",
       text: `${o.category} is ${money(over)} over budget this month.`,
       detail: why,
-      action: { label: "Find easy savings", prompt: `My ${o.category} spending is over budget. Look at what's driving it and suggest a few changes that won't make my life harder.` },
+      action: {
+        label: "Find easy savings",
+        prompt: `My ${o.category} spending is over budget. Look at what's driving it and suggest a few changes that won't make my life harder.`,
+      },
       score: 70,
     },
   ];
@@ -140,7 +156,10 @@ const billsRule: Rule = (s) => {
       id: "bills-soon",
       tone: "heads-up",
       icon: "money",
-      text: soon.length === 1 ? `${soon[0].name} (${money(-soon[0].amountCents)}) is due ${dayName(soon[0].date, s.today)}.` : `${plural(soon.length, "bill")} totaling ${money(total)} are due in the next 3 days.`,
+      text:
+        soon.length === 1
+          ? `${soon[0].name} (${money(-soon[0].amountCents)}) is due ${dayName(soon[0].date, s.today)}.`
+          : `${plural(soon.length, "bill")} totaling ${money(total)} are due in the next 3 days.`,
       score: 50,
     },
   ];

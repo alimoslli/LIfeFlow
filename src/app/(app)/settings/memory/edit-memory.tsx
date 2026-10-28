@@ -7,9 +7,24 @@ import { Field, Input, Select } from "@/components/ui/field";
 import type { ActionState } from "@/server/actions";
 import { CATEGORY_OPTIONS } from "./categories";
 
-export function EditMemory({ action, content, category, expires }: { action: (p: ActionState, fd: FormData) => Promise<ActionState>; content: string; category: string; expires?: string }) {
+export function EditMemory({
+  action,
+  content,
+  category,
+  expires,
+}: {
+  action: (p: ActionState, fd: FormData) => Promise<ActionState>;
+  content: string;
+  category: string;
+  expires?: string;
+}) {
   return (
-    <Dialog trigger={<Pencil className="h-4 w-4" />} title="Edit memory" description="Your wording becomes what Jarvis uses." triggerProps={{ variant: "ghost", size: "icon", "aria-label": "Edit memory", title: "Edit memory" }}>
+    <Dialog
+      trigger={<Pencil className="h-4 w-4" />}
+      title="Edit memory"
+      description="Your wording becomes what Jarvis uses."
+      triggerProps={{ variant: "ghost", size: "icon", "aria-label": "Edit memory", title: "Edit memory" }}
+    >
       {(close) => (
         <ActionForm action={action} onSuccess={close} reset={false}>
           <Field label="Memory" htmlFor="em-c">

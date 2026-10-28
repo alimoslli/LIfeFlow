@@ -15,11 +15,26 @@ export const courseInputSchema = z.object({
   code: z.string().trim().max(40).nullish(),
   term: z.string().trim().max(60).nullish(),
   instructorName: z.string().trim().max(120).nullish(),
-  instructorEmail: z.string().trim().email().max(254).nullish().or(z.literal("").transform(() => null)),
+  instructorEmail: z
+    .string()
+    .trim()
+    .email()
+    .max(254)
+    .nullish()
+    .or(z.literal("").transform(() => null)),
   location: z.string().trim().max(200).nullish(),
   meetingInfo: z.string().trim().max(200).nullish(),
-  url: z.string().trim().url().max(2000).nullish().or(z.literal("").transform(() => null)),
-  color: z.string().regex(/^#[0-9a-f]{6}$/i).nullish(),
+  url: z
+    .string()
+    .trim()
+    .url()
+    .max(2000)
+    .nullish()
+    .or(z.literal("").transform(() => null)),
+  color: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i)
+    .nullish(),
 });
 
 const COURSE_COLORS = ["#2563eb", "#7c3aed", "#059669", "#d97706", "#db2777", "#0891b2", "#dc2626", "#4f46e5"];
@@ -57,11 +72,18 @@ export async function deleteCourse(scope: UserScope, id: string) {
 export async function listCourses(scope: UserScope, opts: { includeArchived?: boolean } = {}) {
   const conds = [eq(courses.userId, scope.userId)];
   if (!opts.includeArchived) conds.push(isNull(courses.archivedAt));
-  return scope.tx.select().from(courses).where(and(...conds)).orderBy(asc(courses.name));
+  return scope.tx
+    .select()
+    .from(courses)
+    .where(and(...conds))
+    .orderBy(asc(courses.name));
 }
 
 export async function getCourse(scope: UserScope, id: string) {
-  const [row] = await scope.tx.select().from(courses).where(and(eq(courses.id, id), eq(courses.userId, scope.userId)));
+  const [row] = await scope.tx
+    .select()
+    .from(courses)
+    .where(and(eq(courses.id, id), eq(courses.userId, scope.userId)));
   if (!row) throw notFound("Course");
   return row;
 }
@@ -123,7 +145,12 @@ export const assignmentInputSchema = z.object({
   dueDate: z.string().regex(DATE_RE).nullish(),
   dueTime: z.string().regex(TIME_RE).nullish(),
   pointsPossible: z.number().min(0).max(100_000).nullish(),
-  url: z.string().url().max(2000).nullish().or(z.literal("").transform(() => null)),
+  url: z
+    .string()
+    .url()
+    .max(2000)
+    .nullish()
+    .or(z.literal("").transform(() => null)),
   sourceRef: z.string().max(300).nullish(),
 });
 export type AssignmentInput = z.input<typeof assignmentInputSchema>;
@@ -132,16 +159,9 @@ export function assignmentDedupeKey(courseId: string, title: string, localDueDat
   return `${courseId}|${normalizeText(title)}|${localDueDate ?? "nodate"}`;
 }
 
-type CreateResult =
-  | { status: "created"; assignment: typeof assignments.$inferSelect }
-  | { status: "duplicate"; assignment: typeof assignments.$inferSelect };
+type CreateResult = { status: "created"; assignment: typeof assignments.$inferSelect } | { status: "duplicate"; assignment: typeof assignments.$inferSelect };
 
-export async function createAssignment(
-  scope: UserScope,
-  tz: string,
-  input: AssignmentInput,
-  source: DataSource = "manual",
-): Promise<CreateResult> {
+export async function createAssignment(scope: UserScope, tz: string, input: AssignmentInput, source: DataSource = "manual"): Promise<CreateResult> {
   const data = assignmentInputSchema.parse(input);
   await assertOwned(scope, courses, data.courseId, "Course");
   if (data.dueTime && !data.dueDate) throw new ServiceError("A due time needs a due date.");
@@ -220,11 +240,7 @@ export async function deleteAssignment(scope: UserScope, id: string) {
 
 export type AssignmentView = "today" | "week" | "upcoming" | "overdue" | "completed" | "all";
 
-export async function listAssignments(
-  scope: UserScope,
-  tz: string,
-  opts: { view?: AssignmentView; courseId?: string; limit?: number; now?: Date } = {},
-) {
+export async function listAssignments(scope: UserScope, tz: string, opts: { view?: AssignmentView; courseId?: string; limit?: number; now?: Date } = {}) {
   const now = opts.now ?? new Date();
   const today = todayIn(tz, now);
   const startToday = startOfLocalDay(today, tz);
@@ -338,7 +354,10 @@ export const materialInputSchema = z.object({
 export async function addMaterial(scope: UserScope, input: z.input<typeof materialInputSchema>, source: DataSource = "manual") {
   const data = materialInputSchema.parse(input);
   await assertOwned(scope, courses, data.courseId, "Course");
-  const [row] = await scope.tx.insert(courseMaterials).values({ ...data, userId: scope.userId, source }).returning();
+  const [row] = await scope.tx
+    .insert(courseMaterials)
+    .values({ ...data, userId: scope.userId, source })
+    .returning();
   return row;
 }
 

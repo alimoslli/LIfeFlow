@@ -39,7 +39,11 @@ test("an explicit request saves directly; dismissed suggestions are not used", a
   await askJarvis(page, save("Enjoys jazz."));
   await page.getByLabel("Memory suggestion").getByRole("button", { name: "Not now" }).click();
   await expect(page.getByLabel("Memory suggestion")).toContainText("Not saved");
-  await expect.poll(async () => (await queryAsUser<{ content: string; status: string }>(email, "select content, status from memories order by created_at")).map((r) => r.status)).toEqual(["active", "rejected"]);
+  await expect
+    .poll(async () =>
+      (await queryAsUser<{ content: string; status: string }>(email, "select content, status from memories order by created_at")).map((r) => r.status),
+    )
+    .toEqual(["active", "rejected"]);
 
   // Turning suggestions off is a visible, working control.
   await page.goto("/settings/memory");

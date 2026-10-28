@@ -25,7 +25,13 @@ const asService = async (fn: () => Promise<void>) => {
 export async function updateProfileAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
   return mutate("profile.update", async (_s, u) => {
-    await updateProfile(getDb(), u.id, { name: f.name ?? "", timezone: f.timezone ?? "UTC", studyTime: f.studyTime as "morning", weekStartsOn: f.weekStartsOn as unknown as 0, jarvisTone: f.jarvisTone as "balanced" });
+    await updateProfile(getDb(), u.id, {
+      name: f.name ?? "",
+      timezone: f.timezone ?? "UTC",
+      studyTime: f.studyTime as "morning",
+      weekStartsOn: f.weekStartsOn as unknown as 0,
+      jarvisTone: f.jarvisTone as "balanced",
+    });
     return "Saved";
   });
 }
@@ -37,7 +43,9 @@ export async function changePasswordAction(_p: ActionState, fd: FormData): Promi
     await asService(() => changePassword(getDb(), u.id, current, next));
     // Sign out every other session.
     const token = (await cookies()).get(SESSION_COOKIE)?.value ?? "";
-    await getDb().delete(sessions).where(and(eq(sessions.userId, u.id), ne(sessions.id, createHash("sha256").update(token).digest("hex"))));
+    await getDb()
+      .delete(sessions)
+      .where(and(eq(sessions.userId, u.id), ne(sessions.id, createHash("sha256").update(token).digest("hex"))));
     return "Password changed. Other devices were signed out.";
   });
 }
@@ -45,14 +53,16 @@ export async function changePasswordAction(_p: ActionState, fd: FormData): Promi
 export async function signOutOthersAction(): Promise<ActionState> {
   return mutate("auth.sessions_revoked", async (_s, u) => {
     const token = (await cookies()).get(SESSION_COOKIE)?.value ?? "";
-    await getDb().delete(sessions).where(and(eq(sessions.userId, u.id), ne(sessions.id, createHash("sha256").update(token).digest("hex"))));
+    await getDb()
+      .delete(sessions)
+      .where(and(eq(sessions.userId, u.id), ne(sessions.id, createHash("sha256").update(token).digest("hex"))));
     return "Signed out of all other sessions.";
   });
 }
 
 export async function deleteAccountAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser();
-  if (String(fd.get("confirm") ?? "") !== "DELETE") return { ok: false, error: 'Type DELETE to confirm.', at: Date.now() };
+  if (String(fd.get("confirm") ?? "") !== "DELETE") return { ok: false, error: "Type DELETE to confirm.", at: Date.now() };
   try {
     await deleteAccount(getDb(), user.id, String(fd.get("password") ?? ""));
   } catch (e) {
@@ -62,12 +72,17 @@ export async function deleteAccountAction(_p: ActionState, fd: FormData): Promis
   redirect("/signup");
 }
 
-const memoryCategory = (v: string | undefined) => (MEMORY_CATEGORIES as readonly string[]).includes(v ?? "") ? (v as (typeof MEMORY_CATEGORIES)[number]) : undefined;
+const memoryCategory = (v: string | undefined) =>
+  (MEMORY_CATEGORIES as readonly string[]).includes(v ?? "") ? (v as (typeof MEMORY_CATEGORIES)[number]) : undefined;
 
 export async function addMemoryAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
   return mutate("memory.create", async (s) => {
-    const r = await createMemory(s, { content: f.content ?? "", category: memoryCategory(f.category) ?? "preference", expiresAt: f.expiresAt ? new Date(f.expiresAt) : null }, "user");
+    const r = await createMemory(
+      s,
+      { content: f.content ?? "", category: memoryCategory(f.category) ?? "preference", expiresAt: f.expiresAt ? new Date(f.expiresAt) : null },
+      "user",
+    );
     return r.duplicate ? "Jarvis already remembers that." : "Saved";
   });
 }

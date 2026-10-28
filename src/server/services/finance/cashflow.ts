@@ -136,7 +136,5 @@ export function monthlyCashflow<T extends CashflowTxn & { date: string }>(txns: 
     if (!months.has(m)) months.set(m, []);
     months.get(m)!.push(t);
   }
-  return [...months.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([month, list]) => ({ month, ...summarizeCashflow(list) }));
+  return [...months.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([month, list]) => ({ month, ...summarizeCashflow(list) }));
 }

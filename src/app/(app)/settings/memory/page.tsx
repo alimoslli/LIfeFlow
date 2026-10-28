@@ -44,7 +44,10 @@ export default async function MemorySettings() {
     <div className="flex flex-col gap-5">
       {pending.length > 0 && (
         <Card>
-          <CardHeader title={`Waiting for your OK (${pending.length})`} subtitle="Jarvis suggested remembering these. Nothing here is used until you keep it." />
+          <CardHeader
+            title={`Waiting for your OK (${pending.length})`}
+            subtitle="Jarvis suggested remembering these. Nothing here is used until you keep it."
+          />
           <ul className="divide-y divide-border">
             {pending.map((m) => (
               <li key={m.id} className="flex items-start gap-3 px-5 py-3">
@@ -53,13 +56,23 @@ export default async function MemorySettings() {
                   <p className="text-[15px]">{m.content}</p>
                   <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
                     <Badge tone={m.basis === "inferred" ? "info" : "neutral"}>{m.basis === "inferred" ? "Jarvis noticed" : "You mentioned it"}</Badge>
-                    <span>{CATEGORY_LABEL[m.category]} · suggested {fmt(m.createdAt, "MMM d")}</span>
+                    <span>
+                      {CATEGORY_LABEL[m.category]} · suggested {fmt(m.createdAt, "MMM d")}
+                    </span>
                   </p>
                 </div>
-                <ActionButton action={decideMemoryAction.bind(null, m.id, "keep")} title="Keep" className="flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-sm font-medium text-accent-text">
+                <ActionButton
+                  action={decideMemoryAction.bind(null, m.id, "keep")}
+                  title="Keep"
+                  className="flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-sm font-medium text-accent-text"
+                >
                   <Check className="h-3.5 w-3.5" /> Keep
                 </ActionButton>
-                <ActionButton action={decideMemoryAction.bind(null, m.id, "dismiss")} title="Dismiss" className="rounded-full bg-surface-2 p-2 text-muted hover:text-text">
+                <ActionButton
+                  action={decideMemoryAction.bind(null, m.id, "dismiss")}
+                  title="Dismiss"
+                  className="rounded-full bg-surface-2 p-2 text-muted hover:text-text"
+                >
                   <X className="h-3.5 w-3.5" />
                 </ActionButton>
               </li>
@@ -102,16 +115,32 @@ export default async function MemorySettings() {
                     <div className="min-w-0 flex-1">
                       <p className="text-[15px]">{m.content}</p>
                       <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
-                        <Badge tone={m.basis === "inferred" ? "info" : "neutral"}>{m.basis === "inferred" ? "Jarvis noticed · you approved" : m.source === "user" ? "Added by you" : "You told Jarvis"}</Badge>
+                        <Badge tone={m.basis === "inferred" ? "info" : "neutral"}>
+                          {m.basis === "inferred" ? "Jarvis noticed · you approved" : m.source === "user" ? "Added by you" : "You told Jarvis"}
+                        </Badge>
                         <span>{m.lastUsedAt ? `Last used ${fmt(m.lastUsedAt, "MMM d")}` : "Not used yet"}</span>
                         {m.expiresAt && <span>· until {fmt(m.expiresAt, "MMM d")}</span>}
                       </p>
                     </div>
-                    <EditMemory action={updateMemoryAction.bind(null, m.id)} content={m.content} category={m.category} expires={m.expiresAt ? fmt(m.expiresAt, "yyyy-MM-dd") : undefined} />
-                    <ActionButton action={archiveMemoryAction.bind(null, m.id, "archived")} title="Archive (Jarvis stops using it)" className="rounded-full p-2 text-muted hover:text-text">
+                    <EditMemory
+                      action={updateMemoryAction.bind(null, m.id)}
+                      content={m.content}
+                      category={m.category}
+                      expires={m.expiresAt ? fmt(m.expiresAt, "yyyy-MM-dd") : undefined}
+                    />
+                    <ActionButton
+                      action={archiveMemoryAction.bind(null, m.id, "archived")}
+                      title="Archive (Jarvis stops using it)"
+                      className="rounded-full p-2 text-muted hover:text-text"
+                    >
                       <Archive className="h-4 w-4" />
                     </ActionButton>
-                    <ActionButton action={deleteMemoryAction.bind(null, m.id)} confirm="Delete this memory permanently?" title="Delete memory" className="rounded-full p-2 text-muted hover:text-danger">
+                    <ActionButton
+                      action={deleteMemoryAction.bind(null, m.id)}
+                      confirm="Delete this memory permanently?"
+                      title="Delete memory"
+                      className="rounded-full p-2 text-muted hover:text-danger"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </ActionButton>
                   </li>
@@ -160,15 +189,30 @@ export default async function MemorySettings() {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm">{m.content}</p>
                       <p className="mt-1 text-xs text-muted">
-                        {m.status === "rejected" ? "You dismissed this suggestion" : expired ? `Expired ${fmt(m.expiresAt!, "MMM d")}` : newer ? `Replaced by “${newer.content}”` : "Archived"}
+                        {m.status === "rejected"
+                          ? "You dismissed this suggestion"
+                          : expired
+                            ? `Expired ${fmt(m.expiresAt!, "MMM d")}`
+                            : newer
+                              ? `Replaced by “${newer.content}”`
+                              : "Archived"}
                       </p>
                     </div>
                     {m.status === "archived" && (
-                      <ActionButton action={archiveMemoryAction.bind(null, m.id, "active")} title="Restore" className="rounded-full p-2 text-muted hover:text-text">
+                      <ActionButton
+                        action={archiveMemoryAction.bind(null, m.id, "active")}
+                        title="Restore"
+                        className="rounded-full p-2 text-muted hover:text-text"
+                      >
                         <RotateCcw className="h-4 w-4" />
                       </ActionButton>
                     )}
-                    <ActionButton action={deleteMemoryAction.bind(null, m.id)} confirm="Delete permanently?" title="Delete permanently" className="rounded-full p-2 text-muted hover:text-danger">
+                    <ActionButton
+                      action={deleteMemoryAction.bind(null, m.id)}
+                      confirm="Delete permanently?"
+                      title="Delete permanently"
+                      className="rounded-full p-2 text-muted hover:text-danger"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </ActionButton>
                   </li>
@@ -189,8 +233,16 @@ export default async function MemorySettings() {
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Your Jarvis use in the last 30 days">
           <Stat label="Requests (30 days)" value={String(st.runs)} />
-          <Stat label="Typical reply" value={seconds(st.medianLatencyMs)} hint={st.medianFirstTokenMs != null ? `first words ${seconds(st.medianFirstTokenMs)}` : undefined} />
-          <Stat label="Actions that worked" value={toolRate == null ? "—" : `${toolRate}%`} hint={st.toolCalls ? `${st.toolCalls - st.toolErrors} of ${st.toolCalls}` : undefined} />
+          <Stat
+            label="Typical reply"
+            value={seconds(st.medianLatencyMs)}
+            hint={st.medianFirstTokenMs != null ? `first words ${seconds(st.medianFirstTokenMs)}` : undefined}
+          />
+          <Stat
+            label="Actions that worked"
+            value={toolRate == null ? "—" : `${toolRate}%`}
+            hint={st.toolCalls ? `${st.toolCalls - st.toolErrors} of ${st.toolCalls}` : undefined}
+          />
           <Stat
             label="AI usage"
             value={st.inputTokens + st.outputTokens ? `${compact(st.inputTokens + st.outputTokens)} tokens` : "—"}
@@ -198,7 +250,8 @@ export default async function MemorySettings() {
           />
         </div>
         <p className="mt-3 text-xs text-muted">
-          These numbers are yours alone; they never include what you said. Conversations are stored in your LifeFlow database and sent to the AI provider only to answer you, with provider-side storage turned off.
+          These numbers are yours alone; they never include what you said. Conversations are stored in your LifeFlow database and sent to the AI provider only
+          to answer you, with provider-side storage turned off.
         </p>
       </Card>
 

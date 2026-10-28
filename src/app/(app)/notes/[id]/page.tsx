@@ -21,14 +21,20 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
   const d = await withCurrentUser(async (s, u) => {
     const note = await getNote(s, id).catch(() => null);
     if (!note) return null;
-    const [projects, courses] = await series(() => listProjects(s), () => listCourses(s));
+    const [projects, courses] = await series(
+      () => listProjects(s),
+      () => listCourses(s),
+    );
     return { note, projects, courses, tz: u.timezone };
   });
   if (!d) notFound();
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-4 flex items-center justify-between">
-        <Link href={d.note.projectId ? `/notes?project=${d.note.projectId}` : "/notes"} className="inline-flex items-center gap-1 text-sm text-muted hover:text-text">
+        <Link
+          href={d.note.projectId ? `/notes?project=${d.note.projectId}` : "/notes"}
+          className="inline-flex items-center gap-1 text-sm text-muted hover:text-text"
+        >
           <ArrowLeft className="h-3.5 w-3.5" /> Notes
         </Link>
         <div className="flex items-center gap-3 text-xs text-muted">
@@ -37,12 +43,22 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
           <AskJarvisButton prompt={`Turn my note "${d.note.title}" into an action plan with tasks.`} className="font-medium text-accent hover:underline">
             Make a plan
           </AskJarvisButton>
-          <ActionButton action={deleteNoteAction.bind(null, d.note.id)} confirm="Delete this note?" title="Delete note" className="text-muted hover:text-danger">
+          <ActionButton
+            action={deleteNoteAction.bind(null, d.note.id)}
+            confirm="Delete this note?"
+            title="Delete note"
+            className="text-muted hover:text-danger"
+          >
             <Trash2 className="h-4 w-4" />
           </ActionButton>
         </div>
       </div>
-      <NoteEditor action={saveNoteAction.bind(null, d.note.id)} note={d.note} projects={d.projects.map((p) => ({ id: p.id, name: p.name }))} courses={d.courses.map((c) => ({ id: c.id, name: c.code ? `${c.code} — ${c.name}` : c.name }))} />
+      <NoteEditor
+        action={saveNoteAction.bind(null, d.note.id)}
+        note={d.note}
+        projects={d.projects.map((p) => ({ id: p.id, name: p.name }))}
+        courses={d.courses.map((c) => ({ id: c.id, name: c.code ? `${c.code} — ${c.name}` : c.name }))}
+      />
     </div>
   );
 }

@@ -25,8 +25,14 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const data = await withCurrentUser(async (s, user) => {
     const status = view === "done" ? "done" : "open";
     const tasks = await listTasks(s, { status, topLevelOnly: true, limit: 300 });
-    const counts = await subtaskCounts(s, tasks.map((t) => t.id));
-    const [courses, projects] = await series(() => listCourses(s), () => listProjects(s));
+    const counts = await subtaskCounts(
+      s,
+      tasks.map((t) => t.id),
+    );
+    const [courses, projects] = await series(
+      () => listCourses(s),
+      () => listProjects(s),
+    );
     const expanded = open ? await getTask(s, open).catch(() => null) : null;
     return { tasks, counts, courses, projects, expanded, tz: user.timezone };
   });
@@ -57,7 +63,14 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
       <PageHeader title="To-dos" />
       <ActionForm action={createTaskAction} className="mb-6 gap-2">
         <div className="flex items-center gap-2 rounded-full bg-surface p-1.5 pl-5 shadow-soft focus-within:shadow-lift">
-          <input name="title" placeholder="Add a to-do…" required maxLength={300} aria-label="Task title" className="min-w-0 flex-1 bg-transparent py-1.5 text-[15px] placeholder:text-muted focus:outline-none" />
+          <input
+            name="title"
+            placeholder="Add a to-do…"
+            required
+            maxLength={300}
+            aria-label="Task title"
+            className="min-w-0 flex-1 bg-transparent py-1.5 text-[15px] placeholder:text-muted focus:outline-none"
+          />
           <SubmitButton size="sm" className="h-9 px-4">
             Add
           </SubmitButton>
@@ -111,16 +124,28 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                     return (
                       <div key={t.id}>
                         <div className="flex items-center gap-3 px-4 py-3">
-                          <TaskCheck done={t.status === "done"} action={toggleTaskAction.bind(null, t.id)} label={`Mark "${t.title}" ${t.status === "done" ? "not done" : "done"}`} />
+                          <TaskCheck
+                            done={t.status === "done"}
+                            action={toggleTaskAction.bind(null, t.id)}
+                            label={`Mark "${t.title}" ${t.status === "done" ? "not done" : "done"}`}
+                          />
                           <a href={isOpen ? `/tasks?view=${view}` : `/tasks?view=${view}&open=${t.id}`} className="flex min-w-0 flex-1 items-center gap-2">
                             <span className={cn("truncate text-sm", t.status === "done" && "text-muted line-through")}>{t.title}</span>
-                            {c && <span className="shrink-0 text-xs text-muted">{c.done}/{c.total}</span>}
+                            {c && (
+                              <span className="shrink-0 text-xs text-muted">
+                                {c.done}/{c.total}
+                              </span>
+                            )}
                           </a>
                           <div className="flex shrink-0 items-center gap-2">
                             {t.courseId && courseName.get(t.courseId) && <Badge tone="info">{courseName.get(t.courseId)}</Badge>}
                             {t.projectId && projectName.get(t.projectId) && <Badge>{projectName.get(t.projectId)}</Badge>}
                             {t.priority !== "medium" && t.priority !== "low" && <Badge tone={PRIORITY_TONE[t.priority]}>{t.priority}</Badge>}
-                            {due.text && <span className={cn("hidden text-xs sm:inline", due.overdue && t.status !== "done" ? "text-danger" : "text-muted")}>{due.text}</span>}
+                            {due.text && (
+                              <span className={cn("hidden text-xs sm:inline", due.overdue && t.status !== "done" ? "text-danger" : "text-muted")}>
+                                {due.text}
+                              </span>
+                            )}
                             <ChevronRight className={cn("h-4 w-4 text-muted transition-transform", isOpen && "rotate-90")} />
                           </div>
                         </div>
@@ -200,7 +225,12 @@ function TaskDetail({
           <SubmitButton size="sm">Save changes</SubmitButton>
           <SourceBadge source={task.source} />
           <span className="ml-auto">
-            <ActionButton action={deleteTaskAction.bind(null, task.id)} confirm={`Delete "${task.title}"?`} title="Delete task" className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-danger hover:bg-danger-soft">
+            <ActionButton
+              action={deleteTaskAction.bind(null, task.id)}
+              confirm={`Delete "${task.title}"?`}
+              title="Delete task"
+              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-danger hover:bg-danger-soft"
+            >
               <Trash2 className="h-3.5 w-3.5" /> Delete
             </ActionButton>
           </span>

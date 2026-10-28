@@ -18,7 +18,14 @@ export async function createEmployerAction(_p: ActionState, fd: FormData): Promi
 export async function createShiftAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
   return mutate("shift.create", async (s, u) => {
-    await createShift(s, u.timezone, { employerId: f.employerId ?? "", date: f.date ?? "", startTime: f.startTime ?? "", endTime: f.endTime ?? "", breakMinutes: formNum(f.breakMinutes) ?? 0, notes: f.notes });
+    await createShift(s, u.timezone, {
+      employerId: f.employerId ?? "",
+      date: f.date ?? "",
+      startTime: f.startTime ?? "",
+      endTime: f.endTime ?? "",
+      breakMinutes: formNum(f.breakMinutes) ?? 0,
+      notes: f.notes,
+    });
   });
 }
 
@@ -44,6 +51,14 @@ export async function deleteShiftAction(id: string): Promise<ActionState> {
 export async function addPaycheckAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
   return mutate("paycheck.create", async (s) => {
-    await addPaycheck(s, { employerId: f.employerId ?? "", payDate: f.payDate ?? "", netCents: formCents(f.net) ?? -1, grossCents: formCents(f.gross) ?? null, hours: formNum(f.hours) ?? null, periodStart: f.periodStart, periodEnd: f.periodEnd });
+    await addPaycheck(s, {
+      employerId: f.employerId ?? "",
+      payDate: f.payDate ?? "",
+      netCents: formCents(f.net) ?? -1,
+      grossCents: formCents(f.gross) ?? null,
+      hours: formNum(f.hours) ?? null,
+      periodStart: f.periodStart,
+      periodEnd: f.periodEnd,
+    });
   });
 }

@@ -16,7 +16,10 @@ export const transactionInputSchema = z.object({
   date: z.string().regex(DATE_RE).refine(isValidDateStr, "Invalid date"),
   description: z.string().trim().min(1).max(300),
   merchantName: z.string().trim().max(200).nullish(),
-  amountCents: z.number().int().refine((n) => n !== 0, "Amount cannot be zero"),
+  amountCents: z
+    .number()
+    .int()
+    .refine((n) => n !== 0, "Amount cannot be zero"),
   kind: z.enum(TRANSACTION_KINDS).optional(),
   categoryId: z.string().uuid().nullish(),
   pending: z.boolean().default(false),
@@ -31,12 +34,20 @@ export function inferKind(amountCents: number, categoryKind: "expense" | "income
   return amountCents < 0 ? "expense" : "income";
 }
 
-export async function createTransaction(scope: UserScope, input: z.input<typeof transactionInputSchema>, source: DataSource = "manual", providerTransactionId?: string) {
+export async function createTransaction(
+  scope: UserScope,
+  input: z.input<typeof transactionInputSchema>,
+  source: DataSource = "manual",
+  providerTransactionId?: string,
+) {
   const d = transactionInputSchema.parse(input);
   await assertOwned(scope, financialAccounts, d.accountId, "Account");
   let catKind: "expense" | "income" | "transfer" | null = null;
   if (d.categoryId) {
-    const [c] = await scope.tx.select().from(categories).where(and(eq(categories.id, d.categoryId), eq(categories.userId, scope.userId)));
+    const [c] = await scope.tx
+      .select()
+      .from(categories)
+      .where(and(eq(categories.id, d.categoryId), eq(categories.userId, scope.userId)));
     if (!c) throw notFound("Category");
     catKind = c.kind;
   }
@@ -138,7 +149,13 @@ export async function queryTransactions(scope: UserScope, q: TransactionQuery = 
     .where(and(...conds))
     .orderBy(desc(transactions.date), desc(transactions.createdAt))
     .limit(Math.min(q.limit ?? 500, 5000));
-  return rows.map((r) => ({ ...r.t, accountName: r.accountName, accountSource: r.accountSource, categoryName: r.categoryName, categoryColor: r.categoryColor }));
+  return rows.map((r) => ({
+    ...r.t,
+    accountName: r.accountName,
+    accountSource: r.accountSource,
+    categoryName: r.categoryName,
+    categoryColor: r.categoryColor,
+  }));
 }
 
 // ---------------------------------------------------------------- CSV import / export
@@ -155,15 +172,13 @@ export function parseCsv(text: string): string[][] {
       if (c === '"' && text[i + 1] === '"') {
         field += '"';
         i++;
-      }
-      else if (c === '"') quoted = false;
+      } else if (c === '"') quoted = false;
       else field += c;
     } else if (c === '"') quoted = true;
     else if (c === ",") {
       row.push(field);
       field = "";
-    }
-    else if (c === "\n" || c === "\r") {
+    } else if (c === "\n" || c === "\r") {
       if (c === "\r" && text[i + 1] === "\n") i++;
       row.push(field);
       if (row.some((f) => f.trim() !== "")) rows.push(row);

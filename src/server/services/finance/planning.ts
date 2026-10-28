@@ -37,7 +37,15 @@ export async function deleteBudget(scope: UserScope, id: string) {
 /** Budget vs. actual for a month. Budgets on a parent category include its subcategories. */
 export async function budgetStatus(scope: UserScope, month: string) {
   const m = monthStart(month);
-  const [rows, cats, txns] = await series(() => scope.tx.select().from(budgets).where(and(eq(budgets.userId, scope.userId), eq(budgets.month, m))), () => listCategories(scope), () => queryTransactions(scope, { from: m, to: monthEnd(m), kinds: ["expense", "refund", "reimbursement"] }));
+  const [rows, cats, txns] = await series(
+    () =>
+      scope.tx
+        .select()
+        .from(budgets)
+        .where(and(eq(budgets.userId, scope.userId), eq(budgets.month, m))),
+    () => listCategories(scope),
+    () => queryTransactions(scope, { from: m, to: monthEnd(m), kinds: ["expense", "refund", "reimbursement"] }),
+  );
   const spentById = spendingByCategoryId(txns);
   const descendants = (id: string): Set<string> => {
     const set = new Set([id]);
@@ -74,7 +82,10 @@ export async function budgetStatus(scope: UserScope, month: string) {
 }
 
 export async function spendingByCategory(scope: UserScope, from: string, to: string) {
-  const [cats, txns] = await series(() => listCategories(scope), () => queryTransactions(scope, { from, to, kinds: ["expense", "refund", "reimbursement"] }));
+  const [cats, txns] = await series(
+    () => listCategories(scope),
+    () => queryTransactions(scope, { from, to, kinds: ["expense", "refund", "reimbursement"] }),
+  );
   return rollupToParents(spendingByCategoryId(txns), cats);
 }
 
@@ -93,11 +104,18 @@ export const goalInputSchema = z.object({
 export async function createGoal(scope: UserScope, input: z.input<typeof goalInputSchema>) {
   const d = goalInputSchema.parse(input);
   await assertOwned(scope, financialAccounts, d.accountId, "Account");
-  const [row] = await scope.tx.insert(financialGoals).values({ ...d, userId: scope.userId }).returning();
+  const [row] = await scope.tx
+    .insert(financialGoals)
+    .values({ ...d, userId: scope.userId })
+    .returning();
   return row;
 }
 
-export async function updateGoal(scope: UserScope, id: string, patch: Partial<z.input<typeof goalInputSchema>> & { status?: "active" | "achieved" | "archived" }) {
+export async function updateGoal(
+  scope: UserScope,
+  id: string,
+  patch: Partial<z.input<typeof goalInputSchema>> & { status?: "active" | "achieved" | "archived" },
+) {
   const { status, ...rest } = patch;
   const d = goalInputSchema.partial().parse(rest);
   const [row] = await scope.tx
@@ -134,7 +152,10 @@ export function monthlyContributionNeeded(targetCents: number, savedCents: numbe
 
 export const recurringInputSchema = z.object({
   name: z.string().trim().min(1).max(120),
-  amountCents: z.number().int().refine((n) => n !== 0),
+  amountCents: z
+    .number()
+    .int()
+    .refine((n) => n !== 0),
   frequency: z.enum(["weekly", "biweekly", "monthly", "quarterly", "yearly"]),
   nextDueDate: z.string().regex(DATE_RE).nullish(),
   kind: z.enum(["bill", "subscription", "income", "other"]),
@@ -185,7 +206,10 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
 
 /** Detection over the last 13 months, minus series the user already tracks. */
 export async function suggestRecurring(scope: UserScope, today: string) {
-  const [txns, existing] = await series(() => queryTransactions(scope, { from: addDaysStr(today, -400), to: today, limit: 5000 }), () => listRecurring(scope, { includeInactive: true }));
+  const [txns, existing] = await series(
+    () => queryTransactions(scope, { from: addDaysStr(today, -400), to: today, limit: 5000 }),
+    () => listRecurring(scope, { includeInactive: true }),
+  );
   const known = new Set(existing.map((e) => e.merchantKey));
   return detectRecurring(txns).filter((c) => !known.has(c.merchantKey));
 }

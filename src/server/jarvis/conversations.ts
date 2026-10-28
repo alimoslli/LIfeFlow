@@ -5,12 +5,18 @@ import { notFound } from "../services/errors";
 import type { ChatItem } from "./providers/types";
 
 export async function createConversation(scope: UserScope, module?: JarvisModule | null, title = "New conversation") {
-  const [row] = await scope.tx.insert(conversations).values({ userId: scope.userId, contextModule: module ?? null, title }).returning();
+  const [row] = await scope.tx
+    .insert(conversations)
+    .values({ userId: scope.userId, contextModule: module ?? null, title })
+    .returning();
   return row;
 }
 
 export async function getConversation(scope: UserScope, id: string) {
-  const [row] = await scope.tx.select().from(conversations).where(and(eq(conversations.id, id), eq(conversations.userId, scope.userId)));
+  const [row] = await scope.tx
+    .select()
+    .from(conversations)
+    .where(and(eq(conversations.id, id), eq(conversations.userId, scope.userId)));
   if (!row) throw notFound("Conversation");
   return row;
 }
@@ -25,7 +31,10 @@ export async function listConversations(scope: UserScope, limit = 50) {
 }
 
 export async function renameConversation(scope: UserScope, id: string, title: string) {
-  await scope.tx.update(conversations).set({ title: title.slice(0, 120) }).where(and(eq(conversations.id, id), eq(conversations.userId, scope.userId)));
+  await scope.tx
+    .update(conversations)
+    .set({ title: title.slice(0, 120) })
+    .where(and(eq(conversations.id, id), eq(conversations.userId, scope.userId)));
 }
 
 export async function deleteConversation(scope: UserScope, id: string) {

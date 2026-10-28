@@ -26,7 +26,10 @@ const PERIODS: { freq: Frequency; days: number; tolerance: number }[] = [
 /** Strips trailing ids/numbers so "NETFLIX.COM 8843" and "Netflix.com 1234" group together. */
 export function merchantKey(t: Pick<DetectTxn, "merchantName" | "description">): string {
   const base = normalizeText(t.merchantName || t.description);
-  return base.replace(/\b\d{3,}\b/g, "").replace(/\s+/g, " ").trim();
+  return base
+    .replace(/\b\d{3,}\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 const median = (xs: number[]) => {

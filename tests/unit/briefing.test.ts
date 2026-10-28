@@ -66,7 +66,12 @@ describe("briefing", () => {
   });
 
   it("computes portfolio return from holdings with a known cost basis", () => {
-    expect(portfolioReturn([{ valueCents: 110_000, costBasisCents: 100_000 }, { valueCents: 5_000, costBasisCents: null }])).toBe(10);
+    expect(
+      portfolioReturn([
+        { valueCents: 110_000, costBasisCents: 100_000 },
+        { valueCents: 5_000, costBasisCents: null },
+      ]),
+    ).toBe(10);
     expect(portfolioReturn([{ valueCents: 90_000, costBasisCents: 100_000 }])).toBe(-10);
     expect(portfolioReturn([{ valueCents: 5_000, costBasisCents: null }])).toBeNull();
   });
@@ -75,7 +80,9 @@ describe("briefing", () => {
     const s = snapshot({
       overdue: [{ id: "a", title: "Lab report", context: "BIO 210", dueAt: localToInstant("2026-10-26", "17:00", TZ), kind: "assignment", href: "/" }],
       week: [item("MATH 152", "2026-10-29", "13:00", "14:15"), item("Library shift", "2026-10-29", "12:30", "15:00", { origin: "shift", kind: "work" })],
-      money: money({ overBudget: [{ category: "Food & Dining", spentCents: 82_853, limitCents: 45_000, topMerchant: "DoorDash", topMerchantChangeCents: 12_000 }] }),
+      money: money({
+        overBudget: [{ category: "Food & Dining", spentCents: 82_853, limitCents: 45_000, topMerchant: "DoorDash", topMerchantChangeCents: 12_000 }],
+      }),
     });
     const ins = deriveInsights(s);
     expect(ins.slice(0, 3).map((i) => i.id)).toEqual(["overdue", expect.stringMatching(/^conflict/), "budget-Food & Dining"]);

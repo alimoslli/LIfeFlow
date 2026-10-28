@@ -1,9 +1,7 @@
 import { randomBytes, scrypt as scryptCb, timingSafeEqual, type ScryptOptions } from "node:crypto";
 
 const scrypt = (pw: string, salt: Buffer, len: number, opts: ScryptOptions) =>
-  new Promise<Buffer>((resolve, reject) =>
-    scryptCb(pw, salt, len, opts, (err, key) => (err ? reject(err) : resolve(key))),
-  );
+  new Promise<Buffer>((resolve, reject) => scryptCb(pw, salt, len, opts, (err, key) => (err ? reject(err) : resolve(key))));
 
 // OWASP-recommended scrypt parameters (N=2^17, r=8, p=1).
 const PARAMS = { N: 131072, r: 8, p: 1, maxmem: 256 * 1024 * 1024 };

@@ -32,10 +32,19 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
   });
   const { tz } = d;
   const est = (list: typeof d.shifts) =>
-    d.employers.map((e) => estimateEarnings(list.filter((x) => x.employerId === e.id), ratesOf(e), tz)).reduce(
-      (a, b) => ({ hours: a.hours + b.paidHours, cents: a.cents + (b.estimatedGrossCents ?? 0), shifts: a.shifts + b.shiftCount }),
-      { hours: 0, cents: 0, shifts: 0 },
-    );
+    d.employers
+      .map((e) =>
+        estimateEarnings(
+          list.filter((x) => x.employerId === e.id),
+          ratesOf(e),
+          tz,
+        ),
+      )
+      .reduce((a, b) => ({ hours: a.hours + b.paidHours, cents: a.cents + (b.estimatedGrossCents ?? 0), shifts: a.shifts + b.shiftCount }), {
+        hours: 0,
+        cents: 0,
+        shifts: 0,
+      });
   const week = est(d.shifts);
   const month = est(d.monthShifts);
   const empName = new Map(d.employers.map((e) => [e.id, e.name]));
@@ -48,7 +57,10 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
         actions={
           d.employers.length > 0 ? (
             <>
-              <AskJarvisButton prompt="Here's my work schedule, please add these shifts: " className="flex h-10 items-center gap-1.5 rounded-full bg-surface px-5 text-sm font-medium shadow-soft">
+              <AskJarvisButton
+                prompt="Here's my work schedule, please add these shifts: "
+                className="flex h-10 items-center gap-1.5 rounded-full bg-surface px-5 text-sm font-medium shadow-soft"
+              >
                 <Sparkles className="h-4 w-4 text-accent" /> Import schedule
               </AskJarvisButton>
               <ShiftDialog action={createShiftAction} employers={d.employers.map((e) => ({ id: e.id, name: e.name }))} today={d.today} />
@@ -119,7 +131,9 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
                           </div>
                           <div className="shrink-0 text-right">
                             <p className="tabular text-[15px]">{(paid.minutes / 60).toFixed(1)} h</p>
-                            <p className={cn("text-xs", cancelled ? "text-muted" : s.status === "worked" ? "text-success" : "text-info")}>{cancelled ? "Cancelled" : s.status === "worked" ? "Worked" : "Scheduled"}</p>
+                            <p className={cn("text-xs", cancelled ? "text-muted" : s.status === "worked" ? "text-success" : "text-info")}>
+                              {cancelled ? "Cancelled" : s.status === "worked" ? "Worked" : "Scheduled"}
+                            </p>
                           </div>
                         </div>
                         {!cancelled && (
@@ -127,17 +141,40 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
                             <summary className="cursor-pointer text-xs text-accent">{s.recordedStart ? "Edit recorded hours" : "Record actual hours"}</summary>
                             <div className="mt-2 flex flex-wrap items-center gap-2">
                               <ActionForm action={recordHoursAction.bind(null, s.id)} reset={false} className="flex-row items-center gap-1.5">
-                                <Input name="clockIn" type="time" required defaultValue={formatIn(s.recordedStart ?? s.startsAt, tz, "HH:mm")} className="h-8 w-28 text-[13px]" aria-label="Clock in" />
+                                <Input
+                                  name="clockIn"
+                                  type="time"
+                                  required
+                                  defaultValue={formatIn(s.recordedStart ?? s.startsAt, tz, "HH:mm")}
+                                  className="h-8 w-28 text-[13px]"
+                                  aria-label="Clock in"
+                                />
                                 <span className="text-xs text-muted">to</span>
-                                <Input name="clockOut" type="time" required defaultValue={formatIn(s.recordedEnd ?? s.endsAt, tz, "HH:mm")} className="h-8 w-28 text-[13px]" aria-label="Clock out" />
+                                <Input
+                                  name="clockOut"
+                                  type="time"
+                                  required
+                                  defaultValue={formatIn(s.recordedEnd ?? s.endsAt, tz, "HH:mm")}
+                                  className="h-8 w-28 text-[13px]"
+                                  aria-label="Clock out"
+                                />
                                 <SubmitButton size="sm" variant="secondary">
                                   Save
                                 </SubmitButton>
                               </ActionForm>
-                              <ActionButton action={cancelShiftAction.bind(null, s.id)} confirm="Mark this shift cancelled?" className="text-xs text-muted hover:text-text">
+                              <ActionButton
+                                action={cancelShiftAction.bind(null, s.id)}
+                                confirm="Mark this shift cancelled?"
+                                className="text-xs text-muted hover:text-text"
+                              >
                                 Cancel shift
                               </ActionButton>
-                              <ActionButton action={deleteShiftAction.bind(null, s.id)} confirm="Delete this shift?" title="Delete shift" className="ml-auto text-muted hover:text-danger">
+                              <ActionButton
+                                action={deleteShiftAction.bind(null, s.id)}
+                                confirm="Delete this shift?"
+                                title="Delete shift"
+                                className="ml-auto text-muted hover:text-danger"
+                              >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </ActionButton>
                             </div>
@@ -159,7 +196,16 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
                         {e.name}
                         {e.position && <span className="text-muted"> · {e.position}</span>}
                       </span>
-                      <span className="tabular text-text-2">{e.payType === "hourly" && e.hourlyRateCents != null ? <><Money cents={e.hourlyRateCents} />/hr</> : e.payType}</span>
+                      <span className="tabular text-text-2">
+                        {e.payType === "hourly" && e.hourlyRateCents != null ? (
+                          <>
+                            <Money cents={e.hourlyRateCents} />
+                            /hr
+                          </>
+                        ) : (
+                          e.payType
+                        )}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -217,7 +263,11 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
               </Card>
               <Card className="p-5 text-sm text-text-2">
                 <h2 className="mb-1 text-[13px] font-semibold tracking-wide uppercase">UKG Pro</h2>
-                Not connected. UKG API access is normally issued to employers, not personal logins, so LifeFlow uses manual entry and Jarvis-assisted schedule import for now. <Link href="/settings/integrations" className="text-accent hover:underline">Details</Link>
+                Not connected. UKG API access is normally issued to employers, not personal logins, so LifeFlow uses manual entry and Jarvis-assisted schedule
+                import for now.{" "}
+                <Link href="/settings/integrations" className="text-accent hover:underline">
+                  Details
+                </Link>
               </Card>
             </div>
           </div>

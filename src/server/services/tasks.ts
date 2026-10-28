@@ -53,7 +53,10 @@ export async function createTask(scope: UserScope, tz: string, input: TaskInput,
 }
 
 export async function getTask(scope: UserScope, id: string) {
-  const [row] = await scope.tx.select().from(tasks).where(and(eq(tasks.id, id), eq(tasks.userId, scope.userId)));
+  const [row] = await scope.tx
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.id, id), eq(tasks.userId, scope.userId)));
   if (!row) throw notFound("Task");
   const subtasks = await scope.tx
     .select()
@@ -87,8 +90,7 @@ export async function updateTask(scope: UserScope, tz: string, id: string, patch
   return row;
 }
 
-export const setTaskStatus = (scope: UserScope, id: string, status: (typeof WORK_STATUSES)[number]) =>
-  updateTask(scope, "UTC", id, { status });
+export const setTaskStatus = (scope: UserScope, id: string, status: (typeof WORK_STATUSES)[number]) => updateTask(scope, "UTC", id, { status });
 
 export async function deleteTask(scope: UserScope, id: string) {
   const [row] = await scope.tx
@@ -127,11 +129,7 @@ export async function listTasks(scope: UserScope, filter: TaskFilter = {}) {
     .select()
     .from(tasks)
     .where(and(...conds))
-    .orderBy(
-      status === "done" ? desc(tasks.completedAt) : sql`${tasks.dueAt} asc nulls last`,
-      priorityRank,
-      asc(tasks.createdAt),
-    )
+    .orderBy(status === "done" ? desc(tasks.completedAt) : sql`${tasks.dueAt} asc nulls last`, priorityRank, asc(tasks.createdAt))
     .limit(filter.limit ?? 200);
 }
 

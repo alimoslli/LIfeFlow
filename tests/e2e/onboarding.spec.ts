@@ -43,7 +43,9 @@ test("a new user sets up classes, a job and checking, then gets a skippable tour
   await expect(page.getByText("$1,250").first()).toBeVisible();
 
   // The tour doesn't come back, and setup isn't shown again.
-  await expect.poll(async () => (await queryAsUser<{ p: { tour?: string } }>(email, "select preferences as p from users where email = $1", [email]))[0]?.p.tour).toBe("done");
+  await expect
+    .poll(async () => (await queryAsUser<{ p: { tour?: string } }>(email, "select preferences as p from users where email = $1", [email]))[0]?.p.tour)
+    .toBe("done");
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);

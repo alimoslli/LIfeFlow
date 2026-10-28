@@ -9,7 +9,15 @@ import type { ActionState } from "@/server/actions";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function EventDialog({ action, defaultDate, courses }: { action: (p: ActionState, fd: FormData) => Promise<ActionState>; defaultDate: string; courses: { id: string; name: string; code: string | null }[] }) {
+export function EventDialog({
+  action,
+  defaultDate,
+  courses,
+}: {
+  action: (p: ActionState, fd: FormData) => Promise<ActionState>;
+  defaultDate: string;
+  courses: { id: string; name: string; code: string | null }[];
+}) {
   const [allDay, setAllDay] = useState(false);
   const [repeat, setRepeat] = useState("none");
   return (
@@ -82,7 +90,10 @@ export function EventDialog({ action, defaultDate, courses }: { action: (p: Acti
             <fieldset className="flex flex-wrap gap-1.5">
               <legend className="mb-1.5 text-[13px] font-medium text-text-2">On</legend>
               {DAYS.map((d, i) => (
-                <label key={d} className="flex cursor-pointer items-center gap-1 rounded-md border border-border px-2 py-1 text-xs has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent">
+                <label
+                  key={d}
+                  className="flex cursor-pointer items-center gap-1 rounded-md border border-border px-2 py-1 text-xs has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent"
+                >
                   <input type="checkbox" name="byDay" value={i} className="sr-only" /> {d}
                 </label>
               ))}

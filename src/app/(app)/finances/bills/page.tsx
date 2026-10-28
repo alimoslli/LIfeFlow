@@ -17,7 +17,11 @@ const PER_MONTH: Record<string, number> = { weekly: 52 / 12, biweekly: 26 / 12, 
 export default async function BillsPage() {
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
-    const [items, upcoming, detected] = await series(() => listRecurring(s, { includeInactive: true }), () => upcomingRecurring(s, today, addDaysStr(today, 30)), () => suggestRecurring(s, today));
+    const [items, upcoming, detected] = await series(
+      () => listRecurring(s, { includeInactive: true }),
+      () => upcomingRecurring(s, today, addDaysStr(today, 30)),
+      () => suggestRecurring(s, today),
+    );
     return { items, upcoming, detected, today };
   });
   const active = d.items.filter((i) => i.status === "active");
@@ -32,7 +36,13 @@ export default async function BillsPage() {
           <Card>
             <CardHeader
               title="Recurring"
-              subtitle={active.length ? <>About <Money cents={Math.round(monthlyOut)} /> out and <Money cents={Math.round(monthlyIn)} /> in per month</> : undefined}
+              subtitle={
+                active.length ? (
+                  <>
+                    About <Money cents={Math.round(monthlyOut)} /> out and <Money cents={Math.round(monthlyIn)} /> in per month
+                  </>
+                ) : undefined
+              }
             />
             {d.items.length === 0 ? (
               <EmptyState icon={<Repeat />} title="Nothing tracked yet">
@@ -62,7 +72,11 @@ export default async function BillsPage() {
                       </ActionButton>
                     )}
                     {r.status !== "cancelled" && (
-                      <ActionButton action={setRecurringStatusAction.bind(null, r.id, "cancelled")} title="Mark cancelled" className="text-muted hover:text-danger">
+                      <ActionButton
+                        action={setRecurringStatusAction.bind(null, r.id, "cancelled")}
+                        title="Mark cancelled"
+                        className="text-muted hover:text-danger"
+                      >
                         <X className="h-3.5 w-3.5" />
                       </ActionButton>
                     )}

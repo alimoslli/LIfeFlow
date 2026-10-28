@@ -16,11 +16,23 @@ import { addHoldingAction, deleteHoldingAction } from "./actions";
 
 export const metadata: Metadata = { title: "Wealth" };
 
-const TYPE: Record<string, string> = { equity: "Stocks", etf: "ETFs", mutual_fund: "Mutual funds", crypto: "Crypto", bond: "Bonds", cash: "Cash", other: "Other" };
+const TYPE: Record<string, string> = {
+  equity: "Stocks",
+  etf: "ETFs",
+  mutual_fund: "Mutual funds",
+  crypto: "Crypto",
+  bond: "Bonds",
+  cash: "Cash",
+  other: "Other",
+};
 
 export default async function WealthPage() {
   const d = await withCurrentUser(async (s, u) => {
-    const [accounts, holdings, goals] = await series(() => listAccounts(s), () => listHoldings(s), () => listGoals(s));
+    const [accounts, holdings, goals] = await series(
+      () => listAccounts(s),
+      () => listHoldings(s),
+      () => listGoals(s),
+    );
     return { accounts, holdings, goals: goals.filter((g) => g.kind === "investment"), tz: u.timezone };
   });
   const totals = summarizeBalances(d.accounts);
@@ -35,7 +47,11 @@ export default async function WealthPage() {
       <PageHeader title="Wealth" description="Your investments and net worth. LifeFlow never trades or moves money." />
       <Card className="mb-5 grid grid-cols-2 gap-5 p-5 md:grid-cols-4">
         <Stat label="Net worth" value={<Money cents={totals.netWorthCents} />} sub="Assets minus debts" />
-        <Stat label="Investments" value={<Money cents={totals.investmentsCents} />} sub={`${investments.length} account${investments.length === 1 ? "" : "s"}`} />
+        <Stat
+          label="Investments"
+          value={<Money cents={totals.investmentsCents} />}
+          sub={`${investments.length} account${investments.length === 1 ? "" : "s"}`}
+        />
         <Stat label="Retirement" value={<Money cents={retirementCents} />} sub="IRA / 401(k) subtypes" />
         <Stat label="Debts" value={<Money cents={totals.creditOwedCents + totals.loansOwedCents} />} sub="Cards and loans" />
       </Card>
@@ -43,10 +59,18 @@ export default async function WealthPage() {
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.6fr_1fr]">
         <div className="flex flex-col gap-5">
           <Card>
-            <CardHeader title="Investment accounts" action={<Link href="/finances/accounts" className="text-xs font-medium text-accent hover:underline">Manage accounts</Link>} />
+            <CardHeader
+              title="Investment accounts"
+              action={
+                <Link href="/finances/accounts" className="text-xs font-medium text-accent hover:underline">
+                  Manage accounts
+                </Link>
+              }
+            />
             {investments.length === 0 ? (
               <EmptyState icon={<LineChart />} title="No investment accounts">
-                Add brokerage, Roth IRA or crypto accounts on the Accounts page (type “Investment”). Synced balances and holdings will need Plaid Investments access.
+                Add brokerage, Roth IRA or crypto accounts on the Accounts page (type “Investment”). Synced balances and holdings will need Plaid Investments
+                access.
               </EmptyState>
             ) : (
               <ul className="divide-y divide-border">
@@ -55,7 +79,8 @@ export default async function WealthPage() {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium">{a.name}</p>
                       <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
-                        {[a.institutionName, a.subtype].filter(Boolean).join(" · ")} · as of {formatIn(a.balanceUpdatedAt, d.tz, "MMM d")} <SourceBadge source={a.source} />
+                        {[a.institutionName, a.subtype].filter(Boolean).join(" · ")} · as of {formatIn(a.balanceUpdatedAt, d.tz, "MMM d")}{" "}
+                        <SourceBadge source={a.source} />
                       </p>
                     </div>
                     <Money cents={a.currentBalanceCents} className="font-semibold" />
@@ -65,9 +90,20 @@ export default async function WealthPage() {
             )}
           </Card>
           <Card>
-            <CardHeader title="Holdings" subtitle={d.holdings.length ? <>Total <Money cents={holdingsTotal} /> · entered manually unless marked synced</> : undefined} />
+            <CardHeader
+              title="Holdings"
+              subtitle={
+                d.holdings.length ? (
+                  <>
+                    Total <Money cents={holdingsTotal} /> · entered manually unless marked synced
+                  </>
+                ) : undefined
+              }
+            />
             {d.holdings.length === 0 ? (
-              <p className="px-5 pb-5 text-sm text-muted">No holdings recorded. Add positions manually below; balances above don&apos;t imply holdings data is available.</p>
+              <p className="px-5 pb-5 text-sm text-muted">
+                No holdings recorded. Add positions manually below; balances above don&apos;t imply holdings data is available.
+              </p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[520px] text-sm">
@@ -93,10 +129,21 @@ export default async function WealthPage() {
                         <td className="px-3 py-2 text-right">
                           <Money cents={h.valueCents} />
                         </td>
-                        <td className="px-3 py-2 text-right">{h.costBasisCents != null ? <Money cents={h.valueCents - h.costBasisCents} signed className={h.valueCents < h.costBasisCents ? "text-danger" : undefined} /> : <span className="text-muted">—</span>}</td>
+                        <td className="px-3 py-2 text-right">
+                          {h.costBasisCents != null ? (
+                            <Money cents={h.valueCents - h.costBasisCents} signed className={h.valueCents < h.costBasisCents ? "text-danger" : undefined} />
+                          ) : (
+                            <span className="text-muted">—</span>
+                          )}
+                        </td>
                         <td className="px-3 py-2">
                           {h.source === "manual" && (
-                            <ActionButton action={deleteHoldingAction.bind(null, h.id)} confirm="Remove this holding?" title="Remove holding" className="text-muted hover:text-danger">
+                            <ActionButton
+                              action={deleteHoldingAction.bind(null, h.id)}
+                              confirm="Remove this holding?"
+                              title="Remove holding"
+                              className="text-muted hover:text-danger"
+                            >
                               <Trash2 className="h-3.5 w-3.5" />
                             </ActionButton>
                           )}
@@ -165,7 +212,8 @@ export default async function WealthPage() {
           )}
           <Card className="p-5 text-sm text-text-2">
             <h2 className="mb-2 text-[13px] font-semibold tracking-wide uppercase">About synced investments</h2>
-            Your previous app showed Robinhood crypto, brokerage and Roth IRA balances via Plaid. That connection has not been rebuilt yet; when it is, balances and any holdings Plaid&apos;s Investments product returns will appear here marked “Synced · Plaid”.
+            Your previous app showed Robinhood crypto, brokerage and Roth IRA balances via Plaid. That connection has not been rebuilt yet; when it is, balances
+            and any holdings Plaid&apos;s Investments product returns will appear here marked “Synced · Plaid”.
           </Card>
         </div>
       </div>

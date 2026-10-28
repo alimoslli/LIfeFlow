@@ -8,7 +8,11 @@ function sse(events: Record<string, unknown>[]) {
   return new Response(body, { status: 200, headers: { "content-type": "text/event-stream" } });
 }
 
-const completed = (output: unknown[], usage?: unknown) => ({ type: "response.completed", sequence_number: 9, response: { id: "resp_1", object: "response", status: "completed", output, usage } });
+const completed = (output: unknown[], usage?: unknown) => ({
+  type: "response.completed",
+  sequence_number: 9,
+  response: { id: "resp_1", object: "response", status: "completed", output, usage },
+});
 
 describe("OpenAI Responses provider", () => {
   it("maps history to Responses input items", () => {
@@ -19,7 +23,13 @@ describe("OpenAI Responses provider", () => {
       { type: "tool_result", callId: "c1", output: '{"ok":true}' },
     ]);
     expect(input).toEqual([
-      { role: "user", content: [{ type: "input_text", text: "hi" }, { type: "input_image", detail: "auto", image_url: "data:image/png;base64,AAAA" }] },
+      {
+        role: "user",
+        content: [
+          { type: "input_text", text: "hi" },
+          { type: "input_image", detail: "auto", image_url: "data:image/png;base64,AAAA" },
+        ],
+      },
       { role: "assistant", content: "hello" },
       { type: "function_call", call_id: "c1", name: "list_tasks", arguments: "{}" },
       { type: "function_call_output", call_id: "c1", output: '{"ok":true}' },
@@ -45,30 +55,66 @@ describe("OpenAI Responses provider", () => {
       }
       return sse([
         { type: "response.output_text.delta", delta: "You have 2 tasks.", sequence_number: 1, item_id: "m2", output_index: 0, content_index: 0, logprobs: [] },
-        completed([{ type: "message", id: "m2", role: "assistant", status: "completed", content: [{ type: "output_text", text: "You have 2 tasks.", annotations: [] }] }], {
-          input_tokens: 900,
-          input_tokens_details: { cached_tokens: 768 },
-          output_tokens: 40,
-          output_tokens_details: { reasoning_tokens: 12 },
-          total_tokens: 940,
-        }),
+        completed(
+          [
+            {
+              type: "message",
+              id: "m2",
+              role: "assistant",
+              status: "completed",
+              content: [{ type: "output_text", text: "You have 2 tasks.", annotations: [] }],
+            },
+          ],
+          {
+            input_tokens: 900,
+            input_tokens_details: { cached_tokens: 768 },
+            output_tokens: 40,
+            output_tokens_details: { reasoning_tokens: 12 },
+            total_tokens: 940,
+          },
+        ),
       ]);
     }) as unknown as typeof fetch;
 
     const provider = new OpenAIProvider({ apiKey: "sk-test", model: "gpt-5.5", reasoningEffort: "low", fetch: fakeFetch });
-    const turn = provider.startTurn({ system: "SYS", history: [{ type: "user", text: "tasks?" }], tools: [{ name: "list_tasks", description: "d", parameters: { type: "object", properties: {} } }] });
+    const turn = provider.startTurn({
+      system: "SYS",
+      history: [{ type: "user", text: "tasks?" }],
+      tools: [{ name: "list_tasks", description: "d", parameters: { type: "object", properties: {} } }],
+    });
 
     const step1: StepEvent[] = [];
     for await (const e of turn.step()) step1.push(e);
-    expect(step1.filter((e) => e.type === "text_delta").map((e) => (e as { delta: string }).delta).join("")).toBe("Let me check.");
-    expect(step1.at(-1)).toEqual({ type: "step_done", text: "Let me check.", toolCalls: [{ callId: "call_1", name: "list_tasks", arguments: '{"status":"open"}' }] });
+    expect(
+      step1
+        .filter((e) => e.type === "text_delta")
+        .map((e) => (e as { delta: string }).delta)
+        .join(""),
+    ).toBe("Let me check.");
+    expect(step1.at(-1)).toEqual({
+      type: "step_done",
+      text: "Let me check.",
+      toolCalls: [{ callId: "call_1", name: "list_tasks", arguments: '{"status":"open"}' }],
+    });
 
     const step2: StepEvent[] = [];
     for await (const e of turn.step([{ callId: "call_1", output: '{"ok":true,"data":{"count":2}}' }])) step2.push(e);
-    expect(step2.at(-1)).toMatchObject({ type: "step_done", text: "You have 2 tasks.", toolCalls: [], usage: { inputTokens: 900, cachedInputTokens: 768, outputTokens: 40, reasoningTokens: 12 } });
+    expect(step2.at(-1)).toMatchObject({
+      type: "step_done",
+      text: "You have 2 tasks.",
+      toolCalls: [],
+      usage: { inputTokens: 900, cachedInputTokens: 768, outputTokens: 40, reasoningTokens: 12 },
+    });
 
     const [r1, r2] = requests;
-    expect(r1).toMatchObject({ model: "gpt-5.5", instructions: "SYS", store: false, stream: true, include: ["reasoning.encrypted_content"], reasoning: { effort: "low" } });
+    expect(r1).toMatchObject({
+      model: "gpt-5.5",
+      instructions: "SYS",
+      store: false,
+      stream: true,
+      include: ["reasoning.encrypted_content"],
+      reasoning: { effort: "low" },
+    });
     expect((r1.tools as { name: string; type: string }[])[0]).toMatchObject({ type: "function", name: "list_tasks" });
     // Second request carries: original user msg, the 3 output items, then our function_call_output.
     const input2 = r2.input as { type?: string; role?: string }[];
@@ -76,7 +122,11 @@ describe("OpenAI Responses provider", () => {
   });
 
   it("raises API errors so the agent can report them", async () => {
-    const fakeFetch = (async () => new Response(JSON.stringify({ error: { message: "bad key" } }), { status: 401, headers: { "content-type": "application/json" } })) as unknown as typeof fetch;
+    const fakeFetch = (async () =>
+      new Response(JSON.stringify({ error: { message: "bad key" } }), {
+        status: 401,
+        headers: { "content-type": "application/json" },
+      })) as unknown as typeof fetch;
     const provider = new OpenAIProvider({ apiKey: "sk-bad", model: "gpt-5.5", fetch: fakeFetch });
     const turn = provider.startTurn({ system: "", history: [{ type: "user", text: "hi" }], tools: [] });
     await expect(async () => {

@@ -15,14 +15,17 @@ import { AskBar, InsightList } from "./_today/insights";
 const PR = { urgent: 0, high: 1, medium: 2, low: 3 } as const;
 
 export default async function TodayPage() {
-  const { briefing: b, snapshot: s, tasks, firstName } = await withCurrentUser(async (scope, user) => {
+  const {
+    briefing: b,
+    snapshot: s,
+    tasks,
+    firstName,
+  } = await withCurrentUser(async (scope, user) => {
     const { briefing, snapshot } = await getBriefing(scope, user);
     const tasks = await listTasks(scope, { status: "open", topLevelOnly: true, limit: 50 });
     return { briefing, snapshot, tasks, firstName: user.name.split(" ")[0] };
   });
-  const focus = [...tasks]
-    .sort((a, b) => (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity) || PR[a.priority] - PR[b.priority])
-    .slice(0, 3);
+  const focus = [...tasks].sort((a, b) => (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity) || PR[a.priority] - PR[b.priority]).slice(0, 3);
   const minutesUntil = b.next ? Math.round((b.next.startsAt.getTime() - s.now.getTime()) / 60_000) : null;
 
   return (
@@ -39,7 +42,9 @@ export default async function TodayPage() {
       {b.next && (
         <section className="animate-rise" style={{ animationDelay: "60ms" }} aria-label="Up next">
           <div className="lf-drift relative overflow-hidden rounded-3xl bg-hero p-5 text-hero-text shadow-lift sm:p-6">
-            <p className="text-xs font-medium tracking-wide uppercase opacity-70">{minutesUntil! <= 0 ? "Happening now" : `Up next · in ${humanMinutes(minutesUntil!)}`}</p>
+            <p className="text-xs font-medium tracking-wide uppercase opacity-70">
+              {minutesUntil! <= 0 ? "Happening now" : `Up next · in ${humanMinutes(minutesUntil!)}`}
+            </p>
             <p className="mt-1.5 font-display text-[28px] leading-tight font-medium">{b.next.title}</p>
             <p className="mt-1 text-sm opacity-80">
               {formatIn(b.next.startsAt, s.tz, "h:mm")}–{formatIn(b.next.endsAt!, s.tz, "h:mm a")}
@@ -69,7 +74,11 @@ export default async function TodayPage() {
               <li key={t.id} className="flex items-center gap-3.5 py-2.5">
                 <TaskCheck done={false} action={toggleTaskAction.bind(null, t.id)} label={`Complete ${t.title}`} />
                 <span className="flex-1 text-[15px]">{t.title}</span>
-                {t.dueAt && <span className={cn("text-sm", t.dueAt < s.now ? "text-danger" : "text-muted")}>{formatIn(t.dueAt, s.tz, localDateOf(t.dueAt, s.tz) === s.today ? "'today'" : "EEE")}</span>}
+                {t.dueAt && (
+                  <span className={cn("text-sm", t.dueAt < s.now ? "text-danger" : "text-muted")}>
+                    {formatIn(t.dueAt, s.tz, localDateOf(t.dueAt, s.tz) === s.today ? "'today'" : "EEE")}
+                  </span>
+                )}
               </li>
             ))}
           </ul>
@@ -80,24 +89,30 @@ export default async function TodayPage() {
         <section aria-label="Money" className="animate-rise" style={{ animationDelay: "280ms" }}>
           <SectionTitle href="/money">Money</SectionTitle>
           <Pressable>
-          <Link href="/money" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift sm:p-6">
-            <p className="text-sm text-muted">Cash &amp; checking</p>
-            <p className="tabular mt-1 font-display text-[40px] leading-none font-medium tracking-tight"><CountUp cents={b.money.liquidCents} /></p>
-            <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
-              <div>
-                <p className="flex items-center gap-1.5 text-sm text-muted">
-                  <ArrowUpRight className="h-3.5 w-3.5" /> Spent in {formatIn(s.now, s.tz, "MMMM")}
-                </p>
-                <p className="tabular mt-1 text-xl font-medium"><CountUp cents={b.money.spentCents} /></p>
+            <Link href="/money" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift sm:p-6">
+              <p className="text-sm text-muted">Cash &amp; checking</p>
+              <p className="tabular mt-1 font-display text-[40px] leading-none font-medium tracking-tight">
+                <CountUp cents={b.money.liquidCents} />
+              </p>
+              <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
+                <div>
+                  <p className="flex items-center gap-1.5 text-sm text-muted">
+                    <ArrowUpRight className="h-3.5 w-3.5" /> Spent in {formatIn(s.now, s.tz, "MMMM")}
+                  </p>
+                  <p className="tabular mt-1 text-xl font-medium">
+                    <CountUp cents={b.money.spentCents} />
+                  </p>
+                </div>
+                <div>
+                  <p className="flex items-center gap-1.5 text-sm text-muted">
+                    <ArrowDownLeft className="h-3.5 w-3.5" /> Came in
+                  </p>
+                  <p className="tabular mt-1 text-xl font-medium text-success">
+                    <CountUp cents={b.money.incomeCents} />
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="flex items-center gap-1.5 text-sm text-muted">
-                  <ArrowDownLeft className="h-3.5 w-3.5" /> Came in
-                </p>
-                <p className="tabular mt-1 text-xl font-medium text-success"><CountUp cents={b.money.incomeCents} /></p>
-              </div>
-            </div>
-          </Link>
+            </Link>
           </Pressable>
         </section>
       )}
@@ -133,7 +148,10 @@ function Timeline({ items, tz, now }: { items: AgendaItem[]; tz: string; now: Da
           <li key={i.key} className={cn("flex gap-4 py-2.5", past && "opacity-45")}>
             <span className="tabular w-16 shrink-0 pt-0.5 text-right text-sm text-muted">{i.allDay ? "—" : formatIn(i.startsAt, tz, "h:mm a")}</span>
             <span className="relative flex w-3 shrink-0 justify-center pt-2">
-              <span className={cn("h-2.5 w-2.5 rounded-full", deadline && "border-2 bg-transparent")} style={deadline ? { borderColor: i.color ?? "var(--accent)" } : { background: i.color ?? "var(--accent)" }} />
+              <span
+                className={cn("h-2.5 w-2.5 rounded-full", deadline && "border-2 bg-transparent")}
+                style={deadline ? { borderColor: i.color ?? "var(--accent)" } : { background: i.color ?? "var(--accent)" }}
+              />
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[15px] leading-snug">
@@ -160,7 +178,11 @@ function WeekStrip({ days }: { days: { date: string; label: string; busyMinutes:
   return (
     <div className="grid grid-cols-7 gap-1.5 rounded-3xl bg-surface p-3 shadow-soft sm:gap-2 sm:p-4">
       {days.map((d) => (
-        <Link key={d.date} href={`/plan?date=${d.date}`} className={cn("flex flex-col items-center gap-2 rounded-2xl py-2 transition-colors hover:bg-surface-2", d.isToday && "bg-surface-2")}>
+        <Link
+          key={d.date}
+          href={`/plan?date=${d.date}`}
+          className={cn("flex flex-col items-center gap-2 rounded-2xl py-2 transition-colors hover:bg-surface-2", d.isToday && "bg-surface-2")}
+        >
           <span className={cn("text-xs", d.isToday ? "font-semibold text-accent" : "text-muted")}>{d.label}</span>
           <span className="flex h-14 w-2 items-end overflow-hidden rounded-full bg-surface-3" title={`${Math.round(d.busyMinutes / 60)}h booked`}>
             <span className="w-full rounded-full bg-accent/70" style={{ height: `${Math.max(d.busyMinutes ? 8 : 0, (d.busyMinutes / max) * 100)}%` }} />

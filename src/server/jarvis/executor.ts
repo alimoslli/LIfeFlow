@@ -10,8 +10,7 @@ export const MAX_TOOL_RESULT_CHARS = 24_000;
 const CONFIRM_TTL_MS = 30 * 60_000;
 
 export type ExecOutcome =
-  | { kind: "result"; result: ToolResultRecord }
-  | { kind: "confirmation"; result: ToolResultRecord; pendingActionId: string; summary: string };
+  { kind: "result"; result: ToolResultRecord } | { kind: "confirmation"; result: ToolResultRecord; pendingActionId: string; summary: string };
 
 function errorMessage(e: unknown): string {
   if (e instanceof ZodError) return `Invalid arguments: ${e.issues.map((i) => `${i.path.join(".") || "(root)"} ${i.message}`).join("; ")}`;
@@ -50,14 +49,25 @@ export async function executeToolCall(name: string, rawArgs: string, ctx: ToolCo
       const [row] = await ctx.run(({ tx, userId }) =>
         tx
           .insert(pendingActions)
-          .values({ userId, conversationId: ctx.conversationId, toolName: name, toolCallId: callId, args: parsed.data as Record<string, unknown>, summary, expiresAt: new Date(Date.now() + CONFIRM_TTL_MS) })
+          .values({
+            userId,
+            conversationId: ctx.conversationId,
+            toolName: name,
+            toolCallId: callId,
+            args: parsed.data as Record<string, unknown>,
+            summary,
+            expiresAt: new Date(Date.now() + CONFIRM_TTL_MS),
+          })
           .returning(),
       );
       return {
         kind: "confirmation",
         pendingActionId: row.id,
         summary,
-        result: { ok: false, data: { status: "awaiting_user_confirmation", summary, note: "Not done yet. The user must press Confirm in the chat. Do not say it is done." } },
+        result: {
+          ok: false,
+          data: { status: "awaiting_user_confirmation", summary, note: "Not done yet. The user must press Confirm in the chat. Do not say it is done." },
+        },
       };
     } catch (e) {
       return { kind: "result", result: { ok: false, error: errorMessage(e) } };
@@ -82,7 +92,12 @@ async function runTool(name: string, args: unknown, ctx: ToolContext): Promise<T
 
 /** Executes or cancels a pending action after the user's explicit decision. */
 export async function resolvePendingAction(id: string, decision: "confirm" | "cancel", ctx: ToolContext) {
-  const [action] = await ctx.run(({ tx, userId }) => tx.select().from(pendingActions).where(and(eq(pendingActions.id, id), eq(pendingActions.userId, userId))));
+  const [action] = await ctx.run(({ tx, userId }) =>
+    tx
+      .select()
+      .from(pendingActions)
+      .where(and(eq(pendingActions.id, id), eq(pendingActions.userId, userId))),
+  );
   if (!action) throw new ServiceError("Action not found", "not_found");
   if (action.status !== "pending") throw new ServiceError(`This action was already ${action.status}.`, "conflict");
   const expired = action.expiresAt < new Date();

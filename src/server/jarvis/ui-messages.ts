@@ -7,11 +7,18 @@ type Msg = typeof messages.$inferSelect;
 type Action = typeof pendingActions.$inferSelect;
 type Att = Pick<typeof attachments.$inferSelect, "id" | "filename" | "mimeType">;
 
-const SUGGESTION_STATUS: Record<MemoryStatus, UiMemorySuggestion["status"]> = { proposed: "proposed", active: "saved", archived: "saved", rejected: "dismissed" };
+const SUGGESTION_STATUS: Record<MemoryStatus, UiMemorySuggestion["status"]> = {
+  proposed: "proposed",
+  active: "saved",
+  archived: "saved",
+  rejected: "dismissed",
+};
 
 /** Ids of memories suggested in these rows (to look up their current status). */
 export function suggestedMemoryIds(rows: Msg[]): string[] {
-  return rows.flatMap((m) => (m.role === "tool" && m.toolName ? [memoryProposalOf(m.toolName, m.toolResult ?? { ok: false })?.memoryId] : [])).filter((id): id is string => !!id);
+  return rows
+    .flatMap((m) => (m.role === "tool" && m.toolName ? [memoryProposalOf(m.toolName, m.toolResult ?? { ok: false })?.memoryId] : []))
+    .filter((id): id is string => !!id);
 }
 
 /** Groups stored rows into chat bubbles: each user message, then one assistant bubble for its turn. */
@@ -46,7 +53,14 @@ export function toUiMessages(rows: Msg[], actions: Action[], atts: Att[], memory
         });
       } else {
         const d = describeToolResult(m.toolName, m.toolResult ?? { ok: false });
-        const tool: UiTool = { callId: m.toolCallId ?? m.id, name: m.toolName, label: describeToolCall(m.toolName), status: m.toolResult?.ok ? "ok" : "error", summary: d.summary, viewAt: d.viewAt };
+        const tool: UiTool = {
+          callId: m.toolCallId ?? m.id,
+          name: m.toolName,
+          label: describeToolCall(m.toolName),
+          status: m.toolResult?.ok ? "ok" : "error",
+          summary: d.summary,
+          viewAt: d.viewAt,
+        };
         a.tools.push(tool);
         const p = memoryProposalOf(m.toolName, m.toolResult ?? { ok: false });
         if (p) {

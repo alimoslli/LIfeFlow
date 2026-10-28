@@ -140,15 +140,28 @@
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(2px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 @keyframes rise {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-html, body {
+html,
+body {
   background: var(--bg);
   color: var(--text);
 }
@@ -159,63 +172,215 @@ body {
   font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
 }
-.tabular { font-variant-numeric: tabular-nums; }
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
 /* iOS zooms into inputs under 16px; keep form text at 16px on phones. */
 @media (max-width: 639px) {
-  input, select, textarea { font-size: 16px !important; }
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 /* Installed app: respect the notch / home indicator. */
 @media (display-mode: standalone) {
-  body { padding-top: env(safe-area-inset-top); }
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
 }
-:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-::selection { background: var(--accent-soft); }
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+::selection {
+  background: var(--accent-soft);
+}
 
 /* Prose for notes and Jarvis replies */
-.prose-bf { line-height: 1.6; }
-.prose-bf p { margin: 0.5em 0; }
-.prose-bf ul { list-style: disc; padding-left: 1.25em; margin: 0.4em 0; }
-.prose-bf ol { list-style: decimal; padding-left: 1.25em; margin: 0.4em 0; }
-.prose-bf li { margin: 0.15em 0; }
-.prose-bf strong { font-weight: 600; }
-.prose-bf code { font-family: var(--font-mono); font-size: 0.88em; background: var(--surface-2); padding: 0.1em 0.3em; border-radius: 4px; }
-.prose-bf h1, .prose-bf h2, .prose-bf h3 { font-weight: 600; margin: 0.8em 0 0.3em; }
-.prose-bf table { border-collapse: collapse; margin: 0.5em 0; font-size: 0.92em; }
-.prose-bf th, .prose-bf td { border: 1px solid var(--border); padding: 0.3em 0.6em; text-align: left; }
-.prose-bf th { background: var(--surface-2); font-weight: 600; }
-.prose-bf a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.prose-bf {
+  line-height: 1.6;
+}
+.prose-bf p {
+  margin: 0.5em 0;
+}
+.prose-bf ul {
+  list-style: disc;
+  padding-left: 1.25em;
+  margin: 0.4em 0;
+}
+.prose-bf ol {
+  list-style: decimal;
+  padding-left: 1.25em;
+  margin: 0.4em 0;
+}
+.prose-bf li {
+  margin: 0.15em 0;
+}
+.prose-bf strong {
+  font-weight: 600;
+}
+.prose-bf code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--surface-2);
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+}
+.prose-bf h1,
+.prose-bf h2,
+.prose-bf h3 {
+  font-weight: 600;
+  margin: 0.8em 0 0.3em;
+}
+.prose-bf table {
+  border-collapse: collapse;
+  margin: 0.5em 0;
+  font-size: 0.92em;
+}
+.prose-bf th,
+.prose-bf td {
+  border: 1px solid var(--border);
+  padding: 0.3em 0.6em;
+  text-align: left;
+}
+.prose-bf th {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+.prose-bf a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 /* Opening splash (see components/motion/splash.tsx). Hidden unless <html> has .lf-splash. */
-.lf-splash-layer { display: none; }
-html.lf-splash { overflow: hidden; }
+.lf-splash-layer {
+  display: none;
+}
+html.lf-splash {
+  overflow: hidden;
+}
 html.lf-splash .lf-splash-layer {
-  display: flex; position: fixed; inset: 0; z-index: 100; align-items: center; justify-content: center;
-  background: var(--hero); color: var(--hero-text);
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  background: var(--hero);
+  color: var(--hero-text);
   animation: lf-splash-failsafe 0.01s linear 3.5s forwards;
 }
 /* Page entrances wait underneath until the splash lifts. */
-html.lf-splash .animate-rise { animation-play-state: paused; }
-.lf-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lf-draw 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards; }
-.lf-draw-2 { animation-delay: 0.25s; }
-.lf-letter { display: inline-block; opacity: 0; transform: translateY(8px); animation: lf-letter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) calc(0.35s + var(--i) * 35ms) forwards; }
-@keyframes lf-draw { to { stroke-dashoffset: 0; } }
-@keyframes lf-letter { to { opacity: 1; transform: none; } }
-@keyframes lf-splash-failsafe { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+html.lf-splash .animate-rise {
+  animation-play-state: paused;
+}
+.lf-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: lf-draw 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards;
+}
+.lf-draw-2 {
+  animation-delay: 0.25s;
+}
+.lf-letter {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: lf-letter 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) calc(0.35s + var(--i) * 35ms) forwards;
+}
+@keyframes lf-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes lf-letter {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes lf-splash-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
 
 /* Small CSS-only motion (starts at first paint; no JavaScript needed). */
-.lf-grow { transform-origin: left center; animation: lf-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s both; }
-@keyframes lf-grow { from { transform: scaleX(0); } }
-.lf-drift { background-image: radial-gradient(120% 140% at 0% 0%, rgba(255,255,255,0.12), transparent 55%); background-size: 200% 200%; animation: lf-drift 14s ease-in-out infinite alternate; }
-@keyframes lf-drift { from { background-position: 0% 0%; } to { background-position: 100% 60%; } }
-.lf-shimmer { background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 50%, var(--surface-2) 100%); background-size: 200% 100%; animation: lf-shimmer 1.4s ease-in-out infinite; }
-@keyframes lf-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
-.lf-pop { animation: lf-pop 0.32s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
-@keyframes lf-pop { from { transform: scale(0.4); opacity: 0; } }
-.lf-wave > span { animation: lf-wave 1.1s ease-in-out infinite; }
-.lf-wave > span:nth-child(2) { animation-delay: 0.15s; }
-.lf-wave > span:nth-child(3) { animation-delay: 0.3s; }
-@keyframes lf-wave { 0%, 60%, 100% { transform: translateY(0); opacity: 0.45; } 30% { transform: translateY(-4px); opacity: 1; } }
+.lf-grow {
+  transform-origin: left center;
+  animation: lf-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s both;
+}
+@keyframes lf-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+.lf-drift {
+  background-image: radial-gradient(120% 140% at 0% 0%, rgba(255, 255, 255, 0.12), transparent 55%);
+  background-size: 200% 200%;
+  animation: lf-drift 14s ease-in-out infinite alternate;
+}
+@keyframes lf-drift {
+  from {
+    background-position: 0% 0%;
+  }
+  to {
+    background-position: 100% 60%;
+  }
+}
+.lf-shimmer {
+  background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 50%, var(--surface-2) 100%);
+  background-size: 200% 100%;
+  animation: lf-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes lf-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+.lf-pop {
+  animation: lf-pop 0.32s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+@keyframes lf-pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+.lf-wave > span {
+  animation: lf-wave 1.1s ease-in-out infinite;
+}
+.lf-wave > span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.lf-wave > span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes lf-wave {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
 }

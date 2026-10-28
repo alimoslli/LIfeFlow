@@ -75,16 +75,72 @@ async function seedAll(s: UserScope, today: string) {
   const cat = async (n: string) => (await getCategoryByName(s, n))!.id;
 
   // ---- accounts
-  const checking = await createManualAccount(s, { name: "Everyday Checking", type: "depository", subtype: "checking", institutionName: "Demo Bank", mask: "4821", currentBalanceCents: 184_233 }, "demo");
-  const savings = await createManualAccount(s, { name: "High-Yield Savings", type: "depository", subtype: "savings", institutionName: "Demo Bank", mask: "9012", currentBalanceCents: 412_000 }, "demo");
-  const card = await createManualAccount(s, { name: "Student Rewards Card", type: "credit", institutionName: "Demo Card Co", mask: "3377", currentBalanceCents: 38_416, creditLimitCents: 150_000 }, "demo");
-  const roth = await createManualAccount(s, { name: "Roth IRA", type: "investment", subtype: "Roth IRA", institutionName: "Demo Brokerage", currentBalanceCents: 623_510 }, "demo");
-  const brokerage = await createManualAccount(s, { name: "Individual Brokerage", type: "investment", subtype: "brokerage", institutionName: "Demo Brokerage", currentBalanceCents: 248_890 }, "demo");
-  await createManualAccount(s, { name: "Crypto", type: "investment", subtype: "crypto", institutionName: "Demo Brokerage", currentBalanceCents: 91_275 }, "demo");
-  await addManualHolding(s, { accountId: roth.id, name: "Vanguard Total Stock Market ETF", symbol: "VTI", securityType: "etf", quantity: 18.5, valueCents: 523_510, costBasisCents: 440_000 });
-  await addManualHolding(s, { accountId: roth.id, name: "Vanguard Total Bond Market ETF", symbol: "BND", securityType: "etf", quantity: 13.7, valueCents: 100_000, costBasisCents: 102_300 });
-  await addManualHolding(s, { accountId: brokerage.id, name: "Apple Inc.", symbol: "AAPL", securityType: "equity", quantity: 6, valueCents: 148_890, costBasisCents: 120_500 });
-  await addManualHolding(s, { accountId: brokerage.id, name: "S&P 500 Index Fund", symbol: "FXAIX", securityType: "mutual_fund", quantity: 4.9, valueCents: 100_000, costBasisCents: 91_000 });
+  const checking = await createManualAccount(
+    s,
+    { name: "Everyday Checking", type: "depository", subtype: "checking", institutionName: "Demo Bank", mask: "4821", currentBalanceCents: 184_233 },
+    "demo",
+  );
+  const savings = await createManualAccount(
+    s,
+    { name: "High-Yield Savings", type: "depository", subtype: "savings", institutionName: "Demo Bank", mask: "9012", currentBalanceCents: 412_000 },
+    "demo",
+  );
+  const card = await createManualAccount(
+    s,
+    { name: "Student Rewards Card", type: "credit", institutionName: "Demo Card Co", mask: "3377", currentBalanceCents: 38_416, creditLimitCents: 150_000 },
+    "demo",
+  );
+  const roth = await createManualAccount(
+    s,
+    { name: "Roth IRA", type: "investment", subtype: "Roth IRA", institutionName: "Demo Brokerage", currentBalanceCents: 623_510 },
+    "demo",
+  );
+  const brokerage = await createManualAccount(
+    s,
+    { name: "Individual Brokerage", type: "investment", subtype: "brokerage", institutionName: "Demo Brokerage", currentBalanceCents: 248_890 },
+    "demo",
+  );
+  await createManualAccount(
+    s,
+    { name: "Crypto", type: "investment", subtype: "crypto", institutionName: "Demo Brokerage", currentBalanceCents: 91_275 },
+    "demo",
+  );
+  await addManualHolding(s, {
+    accountId: roth.id,
+    name: "Vanguard Total Stock Market ETF",
+    symbol: "VTI",
+    securityType: "etf",
+    quantity: 18.5,
+    valueCents: 523_510,
+    costBasisCents: 440_000,
+  });
+  await addManualHolding(s, {
+    accountId: roth.id,
+    name: "Vanguard Total Bond Market ETF",
+    symbol: "BND",
+    securityType: "etf",
+    quantity: 13.7,
+    valueCents: 100_000,
+    costBasisCents: 102_300,
+  });
+  await addManualHolding(s, {
+    accountId: brokerage.id,
+    name: "Apple Inc.",
+    symbol: "AAPL",
+    securityType: "equity",
+    quantity: 6,
+    valueCents: 148_890,
+    costBasisCents: 120_500,
+  });
+  await addManualHolding(s, {
+    accountId: brokerage.id,
+    name: "S&P 500 Index Fund",
+    symbol: "FXAIX",
+    securityType: "mutual_fund",
+    quantity: 4.9,
+    valueCents: 100_000,
+    costBasisCents: 91_000,
+  });
   await s.tx.update(holdings).set({ source: "demo" }).where(eq(holdings.userId, s.userId));
 
   // ---- transactions: ~4 months
@@ -109,8 +165,14 @@ async function seedAll(s: UserScope, today: string) {
     entertainment: await cat("Entertainment"),
   };
   const start = addDaysStr(today, -120);
-  const tx = (accountId: string, date: string, description: string, amountCents: number, categoryId: string, extra: { kind?: "refund" | "transfer" | "income" | "expense"; merchantName?: string } = {}) =>
-    createTransaction(s, { accountId, date, description, amountCents, categoryId, ...extra }, "demo");
+  const tx = (
+    accountId: string,
+    date: string,
+    description: string,
+    amountCents: number,
+    categoryId: string,
+    extra: { kind?: "refund" | "transfer" | "income" | "expense"; merchantName?: string } = {},
+  ) => createTransaction(s, { accountId, date, description, amountCents, categoryId, ...extra }, "demo");
 
   for (let d = start; d <= today; d = addDaysStr(d, 1)) {
     const dow = new Date(`${d}T12:00:00Z`).getUTCDay();
@@ -118,7 +180,10 @@ async function seedAll(s: UserScope, today: string) {
     const late = d >= addDaysStr(today, -21); // spending creeps up recently
     if (dow === 6 || dow === 3) await tx(card.id, d, "TRADER JOE'S #552", -between(3800, 7600), ids.groceries, { merchantName: "Trader Joe's" });
     if (rand() < (late ? 0.55 : 0.32)) await tx(card.id, d, "STARBUCKS STORE 1123", -between(450, 780), ids.coffee, { merchantName: "Starbucks" });
-    if (rand() < (late ? 0.35 : 0.18)) await tx(card.id, d, rand() < 0.5 ? "CHIPOTLE 2210" : "SWEETGREEN", -between(1100, 1900), ids.restaurants, { merchantName: rand() < 0.5 ? "Chipotle" : "Sweetgreen" });
+    if (rand() < (late ? 0.35 : 0.18))
+      await tx(card.id, d, rand() < 0.5 ? "CHIPOTLE 2210" : "SWEETGREEN", -between(1100, 1900), ids.restaurants, {
+        merchantName: rand() < 0.5 ? "Chipotle" : "Sweetgreen",
+      });
     if (rand() < (late ? 0.22 : 0.08)) await tx(card.id, d, "DOORDASH*ORDER", -between(2200, 4200), ids.delivery, { merchantName: "DoorDash" });
     if (rand() < 0.07) await tx(card.id, d, "UBER *TRIP", -between(900, 2400), ids.rideshare, { merchantName: "Uber" });
     if (dow === 1 && rand() < 0.5) await tx(card.id, d, "SHELL OIL 5741", -between(3000, 4800), ids.gas, { merchantName: "Shell" });
@@ -139,7 +204,8 @@ async function seedAll(s: UserScope, today: string) {
   // Biweekly paychecks on Fridays
   for (let d = weekStart(start); d <= today; d = addDaysStr(d, 14)) {
     const fri = addDaysStr(d, 4);
-    if (fri >= start && fri <= today) await tx(checking.id, fri, "CAMPUS LIBRARY PAYROLL", between(58_000, 66_000), ids.paycheck, { merchantName: "Campus Library", kind: "income" });
+    if (fri >= start && fri <= today)
+      await tx(checking.id, fri, "CAMPUS LIBRARY PAYROLL", between(58_000, 66_000), ids.paycheck, { merchantName: "Campus Library", kind: "income" });
   }
   await tx(card.id, addDaysStr(today, -40), "TARGET", -6_499, await cat("Household"), { merchantName: "Target" });
   await tx(card.id, addDaysStr(today, -37), "TARGET RETURN", 2_999, await cat("Household"), { merchantName: "Target", kind: "refund" });
@@ -157,17 +223,67 @@ async function seedAll(s: UserScope, today: string) {
     const d = `${today.slice(0, 7)}-${String(dom).padStart(2, "0")}`;
     return d >= today ? d : nextOccurrence(d, "monthly");
   };
-  await createRecurring(s, { name: "Rent — Parkview Apartments", amountCents: -95_000, frequency: "monthly", nextDueDate: nextDom(1), kind: "bill", categoryId: ids.rent }, "demo");
-  await createRecurring(s, { name: "Netflix", amountCents: -1549, frequency: "monthly", nextDueDate: nextDom(12), kind: "subscription", categoryId: ids.streaming }, "demo");
-  await createRecurring(s, { name: "Mint Mobile", amountCents: -3000, frequency: "monthly", nextDueDate: nextDom(21), kind: "bill", categoryId: ids.phone }, "demo");
-  await createRecurring(s, { name: "Campus Library paycheck", amountCents: 62_000, frequency: "biweekly", nextDueDate: addDaysStr(weekStart(today), 4 + (addDaysStr(weekStart(today), 4) < today ? 7 : 0)), kind: "income", categoryId: ids.paycheck }, "demo");
+  await createRecurring(
+    s,
+    { name: "Rent — Parkview Apartments", amountCents: -95_000, frequency: "monthly", nextDueDate: nextDom(1), kind: "bill", categoryId: ids.rent },
+    "demo",
+  );
+  await createRecurring(
+    s,
+    { name: "Netflix", amountCents: -1549, frequency: "monthly", nextDueDate: nextDom(12), kind: "subscription", categoryId: ids.streaming },
+    "demo",
+  );
+  await createRecurring(
+    s,
+    { name: "Mint Mobile", amountCents: -3000, frequency: "monthly", nextDueDate: nextDom(21), kind: "bill", categoryId: ids.phone },
+    "demo",
+  );
+  await createRecurring(
+    s,
+    {
+      name: "Campus Library paycheck",
+      amountCents: 62_000,
+      frequency: "biweekly",
+      nextDueDate: addDaysStr(weekStart(today), 4 + (addDaysStr(weekStart(today), 4) < today ? 7 : 0)),
+      kind: "income",
+      categoryId: ids.paycheck,
+    },
+    "demo",
+  );
   await createGoal(s, { name: "Emergency fund", targetCents: 600_000, targetDate: addDaysStr(today, 240), accountId: savings.id });
   await createGoal(s, { name: "Summer trip to Montréal", targetCents: 120_000, savedCents: 35_000, targetDate: addDaysStr(today, 200) });
 
   // ---- school
-  const psy = await createCourse(s, { name: "Introduction to Psychology", code: "PSY 101", term: "Fall 2026", instructorName: "Dr. Lena Ortiz", instructorEmail: "lortiz@university.example", meetingInfo: "Mon/Wed 10:00–11:15", location: "Hall B 204" }, "demo");
-  const calc = await createCourse(s, { name: "Calculus II", code: "MATH 152", term: "Fall 2026", instructorName: "Prof. Sam Chen", meetingInfo: "Tue/Thu 13:00–14:15", location: "Science 110" }, "demo");
-  const bio = await createCourse(s, { name: "Cell Biology", code: "BIO 210", term: "Fall 2026", instructorName: "Dr. Priya Nair", meetingInfo: "Mon/Wed/Fri 14:00–14:50", location: "Life Sciences 3" }, "demo");
+  const psy = await createCourse(
+    s,
+    {
+      name: "Introduction to Psychology",
+      code: "PSY 101",
+      term: "Fall 2026",
+      instructorName: "Dr. Lena Ortiz",
+      instructorEmail: "lortiz@university.example",
+      meetingInfo: "Mon/Wed 10:00–11:15",
+      location: "Hall B 204",
+    },
+    "demo",
+  );
+  const calc = await createCourse(
+    s,
+    { name: "Calculus II", code: "MATH 152", term: "Fall 2026", instructorName: "Prof. Sam Chen", meetingInfo: "Tue/Thu 13:00–14:15", location: "Science 110" },
+    "demo",
+  );
+  const bio = await createCourse(
+    s,
+    {
+      name: "Cell Biology",
+      code: "BIO 210",
+      term: "Fall 2026",
+      instructorName: "Dr. Priya Nair",
+      meetingInfo: "Mon/Wed/Fri 14:00–14:50",
+      location: "Life Sciences 3",
+    },
+    "demo",
+  );
   const a = (courseId: string, title: string, days: number, time: string | null, kind: "assignment" | "exam" | "quiz" | "project" | "reading" = "assignment") =>
     createAssignment(s, TZ, { courseId, title, dueDate: addDaysStr(today, days), dueTime: time, kind, sourceRef: "demo data" }, "demo");
   await a(psy.id, "Chapter 6 reading response", 1, "23:59");
@@ -179,16 +295,42 @@ async function seedAll(s: UserScope, today: string) {
   await a(bio.id, "Lab report: Osmosis", -1, "17:00");
   await a(bio.id, "Group project proposal", 6, null, "project");
   const classEvent = (title: string, courseId: string, days: number[], startTime: string, endTime: string, location: string) =>
-    createEvent(s, TZ, { title, courseId, kind: "class", date: addDaysStr(weekStart(today), -14), startTime, endTime, location, recurrence: { freq: "weekly", byDay: days, until: addDaysStr(today, 60) } }, "demo");
+    createEvent(
+      s,
+      TZ,
+      {
+        title,
+        courseId,
+        kind: "class",
+        date: addDaysStr(weekStart(today), -14),
+        startTime,
+        endTime,
+        location,
+        recurrence: { freq: "weekly", byDay: days, until: addDaysStr(today, 60) },
+      },
+      "demo",
+    );
   await classEvent("PSY 101", psy.id, [1, 3], "10:00", "11:15", "Hall B 204");
   await classEvent("MATH 152", calc.id, [2, 4], "13:00", "14:15", "Science 110");
   await classEvent("BIO 210", bio.id, [1, 3, 5], "14:00", "14:50", "Life Sciences 3");
-  await createEvent(s, TZ, { title: "Advisor meeting", kind: "appointment", date: addDaysStr(today, 2), startTime: "15:30", endTime: "16:00", location: "Student Center 2F" }, "demo");
+  await createEvent(
+    s,
+    TZ,
+    { title: "Advisor meeting", kind: "appointment", date: addDaysStr(today, 2), startTime: "15:30", endTime: "16:00", location: "Student Center 2F" },
+    "demo",
+  );
 
   // ---- work
   const lib = await createEmployer(s, { name: "Campus Library", position: "Circulation assistant", payType: "hourly", hourlyRateCents: 1650 }, "demo");
   const ws = weekStart(today);
-  for (const [offset, st, en] of [[1, "16:00", "21:00"], [3, "16:00", "21:00"], [5, "09:00", "14:00"], [8, "16:00", "21:00"], [10, "16:00", "21:00"], [12, "09:00", "14:00"]] as const) {
+  for (const [offset, st, en] of [
+    [1, "16:00", "21:00"],
+    [3, "16:00", "21:00"],
+    [5, "09:00", "14:00"],
+    [8, "16:00", "21:00"],
+    [10, "16:00", "21:00"],
+    [12, "09:00", "14:00"],
+  ] as const) {
     // Thursday 13:00 shift deliberately overlaps MATH 152 to demo conflict detection
     await createShift(s, TZ, { employerId: lib.id, date: addDaysStr(ws, offset), startTime: st, endTime: en, breakMinutes: 30 }, "demo");
   }
@@ -199,8 +341,26 @@ async function seedAll(s: UserScope, today: string) {
   await createTask(s, TZ, { title: "Renew parking permit", priority: "medium", dueDate: addDaysStr(today, 4) }, "demo");
   await createTask(s, TZ, { title: "Cancel unused gym membership", priority: "low" }, "demo");
   const proj = await createProject(s, { name: "Campus coffee cart idea", description: "Side business: a mobile coffee cart for early classes." });
-  await createNote(s, { title: "Coffee cart — brain dump", projectId: proj.id, tags: ["business", "ideas"], body: "- Morning rush 7:30–9:30 near Science quad\n- Need: cart, permit, supplier\n- Cost guess: $3–5k to start\n- Ask student union about vendor rules\n- Could I run it Mon/Wed before PSY?" }, "demo");
-  await createNote(s, { title: "PSY 101 — memory & learning", courseId: psy.id, tags: ["psy101"], body: "## Encoding\nShallow vs deep processing. **Spacing effect**: distributed practice beats cramming.\n\n## Retrieval\nTesting effect — practice quizzes improve recall." }, "demo");
+  await createNote(
+    s,
+    {
+      title: "Coffee cart — brain dump",
+      projectId: proj.id,
+      tags: ["business", "ideas"],
+      body: "- Morning rush 7:30–9:30 near Science quad\n- Need: cart, permit, supplier\n- Cost guess: $3–5k to start\n- Ask student union about vendor rules\n- Could I run it Mon/Wed before PSY?",
+    },
+    "demo",
+  );
+  await createNote(
+    s,
+    {
+      title: "PSY 101 — memory & learning",
+      courseId: psy.id,
+      tags: ["psy101"],
+      body: "## Encoding\nShallow vs deep processing. **Spacing effect**: distributed practice beats cramming.\n\n## Retrieval\nTesting effect — practice quizzes improve recall.",
+    },
+    "demo",
+  );
   await createMemory(s, { content: "Prefers studying in the morning.", category: "preference" }, "user");
   await createMemory(s, { content: "Works at the Campus Library, usually Tue/Thu evenings and Saturday mornings.", category: "routine" }, "user");
   await createMemory(s, { content: "Saving for a summer trip to Montréal.", category: "goal" }, "user");
@@ -208,14 +368,28 @@ async function seedAll(s: UserScope, today: string) {
   await createMemory(s, { content: "Has a car; drives to campus on Mondays and takes the bus other days.", category: "routine" }, "user");
   await createMemory(s, { content: "Prefers concise answers with a short list of next steps.", category: "instruction" }, "user");
   await createMemory(s, { content: "Show money in whole dollars unless cents matter.", category: "instruction" }, "user");
-  await createMemory(s, { content: "Midterm season: extra stressed until mid-November.", category: "temporary", expiresAt: new Date(Date.now() + 21 * 86_400_000) }, "user");
+  await createMemory(
+    s,
+    { content: "Midterm season: extra stressed until mid-November.", category: "temporary", expiresAt: new Date(Date.now() + 21 * 86_400_000) },
+    "user",
+  );
   // A suggestion waiting for approval, so the Keep / Not now flow is visible in the test account.
-  await rememberForUser(s, { content: "Often orders takeout on Thursdays after closing shifts.", category: "routine", basis: "inferred" }, { userText: "", conversationId: null, suggestionsEnabled: true, now: new Date() });
+  await rememberForUser(
+    s,
+    { content: "Often orders takeout on Thursdays after closing shifts.", category: "routine", basis: "inferred" },
+    { userText: "", conversationId: null, suggestionsEnabled: true, now: new Date() },
+  );
 
   // ---- more depth: subtasks, completed work, materials, paychecks, worked shifts, notes
   const essay = await createTask(s, TZ, { title: "Write PSY 101 research summary", priority: "high", dueDate: addDaysStr(today, 6), courseId: psy.id }, "demo");
-  for (const t of ["Pick 3 sources", "Outline", "First draft", "Proofread"]) await createTask(s, TZ, { title: t, parentId: essay.id, courseId: psy.id }, "demo");
-  const cart = await createTask(s, TZ, { title: "Research coffee cart permits", priority: "medium", dueDate: addDaysStr(today, 10), projectId: proj.id }, "demo");
+  for (const t of ["Pick 3 sources", "Outline", "First draft", "Proofread"])
+    await createTask(s, TZ, { title: t, parentId: essay.id, courseId: psy.id }, "demo");
+  const cart = await createTask(
+    s,
+    TZ,
+    { title: "Research coffee cart permits", priority: "medium", dueDate: addDaysStr(today, 10), projectId: proj.id },
+    "demo",
+  );
   await createTask(s, TZ, { title: "Email student union about vendor rules", parentId: cart.id, projectId: proj.id }, "demo");
   await createTask(s, TZ, { title: "Price used espresso carts", parentId: cart.id, projectId: proj.id }, "demo");
   await createTask(s, TZ, { title: "Book dentist appointment", priority: "low", dueDate: addDaysStr(today, 14) }, "demo");
@@ -223,9 +397,19 @@ async function seedAll(s: UserScope, today: string) {
   const done = await createTask(s, TZ, { title: "Submit FAFSA verification documents", priority: "urgent" }, "demo");
   await updateTask(s, TZ, done.id, { status: "done" });
 
-  const past = await createAssignment(s, TZ, { courseId: calc.id, title: "Problem Set 6: Substitution", dueDate: addDaysStr(today, -5), dueTime: "13:00", sourceRef: "demo data" }, "demo");
+  const past = await createAssignment(
+    s,
+    TZ,
+    { courseId: calc.id, title: "Problem Set 6: Substitution", dueDate: addDaysStr(today, -5), dueTime: "13:00", sourceRef: "demo data" },
+    "demo",
+  );
   await updateAssignment(s, TZ, past.assignment.id, { status: "done", grade: "92/100" });
-  const quiz = await createAssignment(s, TZ, { courseId: bio.id, title: "Quiz 3: Membranes", kind: "quiz", dueDate: addDaysStr(today, -8), dueTime: "14:00", sourceRef: "demo data" }, "demo");
+  const quiz = await createAssignment(
+    s,
+    TZ,
+    { courseId: bio.id, title: "Quiz 3: Membranes", kind: "quiz", dueDate: addDaysStr(today, -8), dueTime: "14:00", sourceRef: "demo data" },
+    "demo",
+  );
   await updateAssignment(s, TZ, quiz.assignment.id, { status: "done", grade: "8.5/10" });
   await a(bio.id, "Reading: Chapter 7 — Cell signaling", 4, null, "reading");
   await a(calc.id, "Quiz: Series convergence", 5, "13:00", "quiz");
@@ -236,25 +420,65 @@ async function seedAll(s: UserScope, today: string) {
     [calc.id, "Integration techniques cheat sheet", "Unit 2", "https://example.edu/math152/cheatsheet"],
     [calc.id, "Office hours: Tue 3–4pm, Science 214", "Course info", null],
     [bio.id, "Lab manual", "Labs", "https://example.edu/bio210/lab-manual"],
-  ] as const) await addMaterial(s, { courseId, title, module, url: url ?? undefined }, "demo");
+  ] as const)
+    await addMaterial(s, { courseId, title, module, url: url ?? undefined }, "demo");
 
   // Past week: shifts with recorded punches, plus matching paychecks
-  for (const [offset, st, en, inT, outT] of [[-6, "16:00", "21:00", "15:58", "21:12"], [-4, "16:00", "21:00", "16:05", "20:55"], [-2, "09:00", "14:00", "08:57", "14:03"]] as const) {
+  for (const [offset, st, en, inT, outT] of [
+    [-6, "16:00", "21:00", "15:58", "21:12"],
+    [-4, "16:00", "21:00", "16:05", "20:55"],
+    [-2, "09:00", "14:00", "08:57", "14:03"],
+  ] as const) {
     const sh = await createShift(s, TZ, { employerId: lib.id, date: addDaysStr(ws, offset), startTime: st, endTime: en, breakMinutes: 30 }, "demo");
     await recordShiftHours(s, TZ, sh.id, { recordedStartTime: inT, recordedEndTime: outT });
   }
   for (let d = weekStart(addDaysStr(today, -120)); d <= today; d = addDaysStr(d, 14)) {
     const fri = addDaysStr(d, 4);
-    if (fri >= addDaysStr(today, -60) && fri <= today) await addPaycheck(s, { employerId: lib.id, payDate: fri, grossCents: 70_950, netCents: 62_000, hours: 43 }, "demo");
+    if (fri >= addDaysStr(today, -60) && fri <= today)
+      await addPaycheck(s, { employerId: lib.id, payDate: fri, grossCents: 70_950, netCents: 62_000, hours: 43 }, "demo");
   }
 
-  await createNote(s, { title: "MATH 152 — integration by parts", courseId: calc.id, tags: ["math152", "exam2"], body: "∫u dv = uv − ∫v du\n\n**LIATE** for choosing u: Logs, Inverse trig, Algebraic, Trig, Exponential.\n\nPractice: ∫x·eˣ dx, ∫ln x dx, ∫x²·sin x dx" }, "demo");
-  await createNote(s, { title: "Monthly money check-in", tags: ["money"], body: "- Food delivery crept up — try meal prep Sundays\n- Cancel gym (not using it)\n- Move $250/month to savings on the 15th\n- Montréal fund: ~$145/month needed" }, "demo");
+  await createNote(
+    s,
+    {
+      title: "MATH 152 — integration by parts",
+      courseId: calc.id,
+      tags: ["math152", "exam2"],
+      body: "∫u dv = uv − ∫v du\n\n**LIATE** for choosing u: Logs, Inverse trig, Algebraic, Trig, Exponential.\n\nPractice: ∫x·eˣ dx, ∫ln x dx, ∫x²·sin x dx",
+    },
+    "demo",
+  );
+  await createNote(
+    s,
+    {
+      title: "Monthly money check-in",
+      tags: ["money"],
+      body: "- Food delivery crept up — try meal prep Sundays\n- Cancel gym (not using it)\n- Move $250/month to savings on the 15th\n- Montréal fund: ~$145/month needed",
+    },
+    "demo",
+  );
   const travel = await createProject(s, { name: "Montréal summer trip", description: "Plan and save for a week in Montréal in June." });
-  await createNote(s, { title: "Montréal ideas", projectId: travel.id, tags: ["travel"], body: "- Old Port, Mont Royal, Jean-Talon market\n- Bus vs. train from NYC\n- Hostel ~ $45/night" }, "demo");
+  await createNote(
+    s,
+    {
+      title: "Montréal ideas",
+      projectId: travel.id,
+      tags: ["travel"],
+      body: "- Old Port, Mont Royal, Jean-Talon market\n- Bus vs. train from NYC\n- Hostel ~ $45/night",
+    },
+    "demo",
+  );
   await createTask(s, TZ, { title: "Compare bus vs. train prices to Montréal", projectId: travel.id, priority: "low" }, "demo");
-  await createRecurring(s, { name: "Spotify", amountCents: -1199, frequency: "monthly", nextDueDate: nextDom(18), kind: "subscription", categoryId: ids.streaming }, "demo");
-  await createRecurring(s, { name: "City Utilities", amountCents: -8_200, frequency: "monthly", nextDueDate: nextDom(5), kind: "bill", categoryId: ids.utilities }, "demo");
+  await createRecurring(
+    s,
+    { name: "Spotify", amountCents: -1199, frequency: "monthly", nextDueDate: nextDom(18), kind: "subscription", categoryId: ids.streaming },
+    "demo",
+  );
+  await createRecurring(
+    s,
+    { name: "City Utilities", amountCents: -8_200, frequency: "monthly", nextDueDate: nextDom(5), kind: "bill", categoryId: ids.utilities },
+    "demo",
+  );
   const lastMonth = `${addDaysStr(month, -1).slice(0, 7)}-01`;
   await setBudget(s, { month: lastMonth, categoryId: ids.food, limitCents: 45_000 });
   await setBudget(s, { month: lastMonth, categoryId: ids.transport, limitCents: 15_000 });

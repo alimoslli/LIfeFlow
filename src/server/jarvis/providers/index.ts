@@ -13,7 +13,11 @@ export function jarvisStatus(): JarvisStatus {
 
 export function modelPrices(): ModelPrices {
   const e = env();
-  return { inputPerMTok: e.JARVIS_PRICE_INPUT_PER_MTOK, cachedInputPerMTok: e.JARVIS_PRICE_CACHED_INPUT_PER_MTOK, outputPerMTok: e.JARVIS_PRICE_OUTPUT_PER_MTOK };
+  return {
+    inputPerMTok: e.JARVIS_PRICE_INPUT_PER_MTOK,
+    cachedInputPerMTok: e.JARVIS_PRICE_CACHED_INPUT_PER_MTOK,
+    outputPerMTok: e.JARVIS_PRICE_OUTPUT_PER_MTOK,
+  };
 }
 
 export function getProvider(): ModelProvider {

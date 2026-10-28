@@ -41,7 +41,10 @@ export async function compareSpending(scope: UserScope, from: string, to: string
   const len = daysBetween(from, to) + 1;
   const prevTo = addDaysStr(from, -1);
   const prevFrom = addDaysStr(prevTo, -(len - 1));
-  const [cur, prev] = await series(() => spendingSummary(scope, { from, to }), () => spendingSummary(scope, { from: prevFrom, to: prevTo }));
+  const [cur, prev] = await series(
+    () => spendingSummary(scope, { from, to }),
+    () => spendingSummary(scope, { from: prevFrom, to: prevTo }),
+  );
   const prevByName = new Map(prev.topCategories.map((c) => [c.name, c.cents]));
   const names = new Set([...cur.topCategories.map((c) => c.name), ...prev.topCategories.map((c) => c.name)]);
   const changes = [...names]

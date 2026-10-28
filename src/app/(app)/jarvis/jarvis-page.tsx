@@ -19,7 +19,10 @@ export function JarvisPage({ conversations, activeId, messages, tz }: { conversa
     // Phones: full height minus the bottom tab bar. Desktop: full height.
     <div className="flex h-[calc(100dvh-4.25rem-env(safe-area-inset-bottom))] md:h-dvh">
       <aside className="hidden w-72 shrink-0 flex-col py-6 pr-2 pl-1 lg:flex">
-        <Link href="/jarvis" className="mx-2 mb-4 flex items-center justify-center gap-2 rounded-full bg-surface px-4 py-2.5 text-sm font-medium shadow-soft transition-shadow hover:shadow-lift">
+        <Link
+          href="/jarvis"
+          className="mx-2 mb-4 flex items-center justify-center gap-2 rounded-full bg-surface px-4 py-2.5 text-sm font-medium shadow-soft transition-shadow hover:shadow-lift"
+        >
           <Plus className="h-4 w-4" /> New chat
         </Link>
         <nav className="flex-1 overflow-y-auto px-2" aria-label="Conversations">
@@ -30,7 +33,12 @@ export function JarvisPage({ conversations, activeId, messages, tz }: { conversa
                 <span className="block truncate text-sm">{c.title}</span>
                 <span className="block text-xs text-muted">{c.when}</span>
               </Link>
-              <ActionButton action={deleteConversationAction.bind(null, c.id)} confirm="Delete this conversation?" title="Delete conversation" className="mr-2 hidden rounded-full px-2 text-muted group-hover:block hover:text-danger">
+              <ActionButton
+                action={deleteConversationAction.bind(null, c.id)}
+                confirm="Delete this conversation?"
+                title="Delete conversation"
+                className="mr-2 hidden rounded-full px-2 text-muted group-hover:block hover:text-danger"
+              >
                 ×
               </ActionButton>
             </div>
@@ -46,7 +54,13 @@ export function JarvisPage({ conversations, activeId, messages, tz }: { conversa
           </Link>
         </header>
         <div className="min-h-0 flex-1">
-          <JarvisChat key={activeId ?? "new"} conversationId={activeId} initialMessages={messages} module="home" availability={{ available: status.available, reason: status.reason, model: status.model }} />
+          <JarvisChat
+            key={activeId ?? "new"}
+            conversationId={activeId}
+            initialMessages={messages}
+            module="home"
+            availability={{ available: status.available, reason: status.reason, model: status.model }}
+          />
         </div>
       </div>
     </div>

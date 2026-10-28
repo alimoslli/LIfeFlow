@@ -49,7 +49,9 @@ export default async function MoneyPage() {
 
   const month = formatDateStr(d.today, "MMMM");
   const net = m.incomeThisMonthCents - m.spentThisMonthCents;
-  const insights = deriveInsights(d.snapshot, 10).filter((i) => ["money", "trend", "goal"].includes(i.icon)).slice(0, 3);
+  const insights = deriveInsights(d.snapshot, 10)
+    .filter((i) => ["money", "trend", "goal"].includes(i.icon))
+    .slice(0, 3);
   const topCats = d.categories.filter((c) => c.cents > 0).slice(0, 5);
   const maxCat = Math.max(1, ...topCats.map((c) => c.cents));
   const investmentAccounts = d.accounts.filter((a) => a.type === "investment");
@@ -64,11 +66,17 @@ export default async function MoneyPage() {
       </header>
 
       {/* The three numbers that matter */}
-      <section className="animate-rise overflow-hidden rounded-[28px] bg-hero text-hero-text shadow-lift" style={{ animationDelay: "60ms" }} aria-label="This month">
+      <section
+        className="animate-rise overflow-hidden rounded-[28px] bg-hero text-hero-text shadow-lift"
+        style={{ animationDelay: "60ms" }}
+        aria-label="This month"
+      >
         <div className="relative p-6 pb-5">
           <Waves />
           <p className="relative text-sm opacity-75">Cash &amp; checking</p>
-          <p className="tabular relative mt-1 font-display text-[54px] leading-none font-medium tracking-tight"><CountUp cents={m.liquidCents} /></p>
+          <p className="tabular relative mt-1 font-display text-[54px] leading-none font-medium tracking-tight">
+            <CountUp cents={m.liquidCents} />
+          </p>
           <p className="relative mt-2 text-sm opacity-75">
             {net >= 0 ? `${whole(net)} more came in than went out this month` : `${whole(-net)} more went out than came in this month`}
           </p>
@@ -78,13 +86,17 @@ export default async function MoneyPage() {
             <p className="flex items-center gap-1.5 text-sm opacity-75">
               <ArrowUpRight className="h-3.5 w-3.5" /> Spent
             </p>
-            <p className="tabular mt-1 text-2xl font-medium"><CountUp cents={m.spentThisMonthCents} /></p>
+            <p className="tabular mt-1 text-2xl font-medium">
+              <CountUp cents={m.spentThisMonthCents} />
+            </p>
           </div>
           <div className="p-5">
             <p className="flex items-center gap-1.5 text-sm opacity-75">
               <ArrowDownLeft className="h-3.5 w-3.5" /> Came in
             </p>
-            <p className="tabular mt-1 text-2xl font-medium"><CountUp cents={m.incomeThisMonthCents} /></p>
+            <p className="tabular mt-1 text-2xl font-medium">
+              <CountUp cents={m.incomeThisMonthCents} />
+            </p>
           </div>
         </div>
       </section>
@@ -93,30 +105,37 @@ export default async function MoneyPage() {
         <section className="animate-rise" style={{ animationDelay: "120ms" }} aria-label="Investments">
           <Title href="/wealth">Investments</Title>
           <Pressable>
-          <Link href="/wealth" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <p className="text-sm text-muted">Portfolio</p>
-                <p className="tabular mt-1 font-display text-[34px] leading-none font-medium"><CountUp cents={m.investments.valueCents} /></p>
+            <Link href="/wealth" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-sm text-muted">Portfolio</p>
+                  <p className="tabular mt-1 font-display text-[34px] leading-none font-medium">
+                    <CountUp cents={m.investments.valueCents} />
+                  </p>
+                </div>
+                {ret != null && (
+                  <span
+                    className={cn(
+                      "flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium",
+                      ret >= 0 ? "bg-success-soft text-success" : "bg-danger-soft text-danger",
+                    )}
+                  >
+                    {ret >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                    {ret >= 0 ? "+" : ""}
+                    {ret.toFixed(1)}%
+                  </span>
+                )}
               </div>
-              {ret != null && (
-                <span className={cn("flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium", ret >= 0 ? "bg-success-soft text-success" : "bg-danger-soft text-danger")}>
-                  {ret >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                  {ret >= 0 ? "+" : ""}
-                  {ret.toFixed(1)}%
-                </span>
-              )}
-            </div>
-            {ret != null && <p className="mt-2 text-xs text-muted">All-time return on holdings with a known cost</p>}
-            <ul className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
-              {investmentAccounts.map((a) => (
-                <li key={a.id} className="flex justify-between text-[15px]">
-                  <span className="text-text-2">{a.name}</span>
-                  <span className="tabular">{whole(a.currentBalanceCents)}</span>
-                </li>
-              ))}
-            </ul>
-          </Link>
+              {ret != null && <p className="mt-2 text-xs text-muted">All-time return on holdings with a known cost</p>}
+              <ul className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
+                {investmentAccounts.map((a) => (
+                  <li key={a.id} className="flex justify-between text-[15px]">
+                    <span className="text-text-2">{a.name}</span>
+                    <span className="tabular">{whole(a.currentBalanceCents)}</span>
+                  </li>
+                ))}
+              </ul>
+            </Link>
           </Pressable>
         </section>
       )}
@@ -172,7 +191,6 @@ export default async function MoneyPage() {
           <p className="tabular mt-1 text-xl font-medium">{whole(m.creditOwedCents)}</p>
         </div>
       </section>
-
     </div>
   );
 }
@@ -181,7 +199,16 @@ function Waves() {
   return (
     <svg viewBox="0 0 400 160" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.12]" aria-hidden>
       {Array.from({ length: 7 }, (_, i) => (
-        <path key={i} className="lf-draw" pathLength={1} style={{ animationDelay: `${120 + i * 70}ms`, animationDuration: "1.4s" }} d={`M0 ${120 - i * 9} C 90 ${60 + i * 6}, 210 ${150 - i * 5}, 400 ${50 + i * 7}`} fill="none" stroke="white" strokeWidth="1.2" />
+        <path
+          key={i}
+          className="lf-draw"
+          pathLength={1}
+          style={{ animationDelay: `${120 + i * 70}ms`, animationDuration: "1.4s" }}
+          d={`M0 ${120 - i * 9} C 90 ${60 + i * 6}, 210 ${150 - i * 5}, 400 ${50 + i * 7}`}
+          fill="none"
+          stroke="white"
+          strokeWidth="1.2"
+        />
       ))}
     </svg>
   );

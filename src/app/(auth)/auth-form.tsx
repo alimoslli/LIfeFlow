@@ -19,7 +19,9 @@ export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: stri
     <form action={action} className="flex flex-col gap-4">
       <div className="mb-3">
         <h1 className="font-display text-[38px] leading-[1.05] font-medium tracking-tight">{mode === "login" ? "Welcome back." : "Let's get started."}</h1>
-        <p className="mt-2 text-[15px] text-muted">{mode === "login" ? "Sign in to see your day." : "Create your account. You can add everything else later."}</p>
+        <p className="mt-2 text-[15px] text-muted">
+          {mode === "login" ? "Sign in to see your day." : "Create your account. You can add everything else later."}
+        </p>
       </div>
       <FormError message={state?.error} />
       {mode === "signup" && (
@@ -47,7 +49,11 @@ export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: stri
       </label>
       <input ref={tzRef} type="hidden" name="timezone" defaultValue="UTC" />
       {next && <input type="hidden" name="next" value={next} />}
-      <button type="submit" disabled={pending} className="mt-2 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-medium text-accent-text shadow-soft transition-transform active:scale-[0.98] disabled:opacity-60">
+      <button
+        type="submit"
+        disabled={pending}
+        className="mt-2 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-medium text-accent-text shadow-soft transition-transform active:scale-[0.98] disabled:opacity-60"
+      >
         {pending && <Loader2 className="h-4 w-4 animate-spin" />}
         {mode === "login" ? "Sign in" : "Create account"}
       </button>

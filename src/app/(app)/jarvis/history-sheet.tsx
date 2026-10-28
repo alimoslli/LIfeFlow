@@ -9,7 +9,11 @@ export function HistorySheet({ items, activeId }: { items: { id: string; title: 
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button onClick={() => setOpen(true)} aria-label="Past conversations" className="flex h-10 w-10 items-center justify-center rounded-full bg-surface shadow-soft">
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="Past conversations"
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-surface shadow-soft"
+      >
         <History className="h-4 w-4" />
       </button>
       {open && (
@@ -27,7 +31,11 @@ export function HistorySheet({ items, activeId }: { items: { id: string; title: 
             <ul className="flex flex-col gap-1">
               {items.map((c) => (
                 <li key={c.id}>
-                  <Link href={`/jarvis/${c.id}`} onClick={() => setOpen(false)} className={cn("block rounded-2xl px-3 py-3", c.id === activeId ? "bg-surface shadow-soft" : "active:bg-surface-2")}>
+                  <Link
+                    href={`/jarvis/${c.id}`}
+                    onClick={() => setOpen(false)}
+                    className={cn("block rounded-2xl px-3 py-3", c.id === activeId ? "bg-surface shadow-soft" : "active:bg-surface-2")}
+                  >
                     <span className="block truncate text-[15px]">{c.title}</span>
                     <span className="block text-xs text-muted">{c.when}</span>
                   </Link>

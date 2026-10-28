@@ -19,15 +19,31 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <aside className="relative hidden overflow-hidden bg-hero lg:block" aria-hidden>
         <svg viewBox="0 0 600 800" preserveAspectRatio="none" className="absolute inset-0 h-full w-full opacity-[0.10]">
           {Array.from({ length: 14 }, (_, i) => (
-            <path key={i} d={`M-20 ${520 - i * 22} C 160 ${300 + i * 14}, 360 ${700 - i * 18}, 640 ${260 + i * 16}`} fill="none" stroke="white" strokeWidth="1.4" />
+            <path
+              key={i}
+              d={`M-20 ${520 - i * 22} C 160 ${300 + i * 14}, 360 ${700 - i * 18}, 640 ${260 + i * 16}`}
+              fill="none"
+              stroke="white"
+              strokeWidth="1.4"
+            />
           ))}
         </svg>
         <div className="relative flex h-full flex-col justify-center px-14 xl:px-20">
           <p className="max-w-md font-display text-[44px] leading-[1.06] font-medium tracking-tight text-white">Your whole life, made simple.</p>
           <p className="mt-4 max-w-sm text-[15px] text-white/75">Every morning, LifeFlow tells you what matters — and Jarvis helps you handle it.</p>
           <div className="mt-10 flex max-w-md flex-col gap-3">
-            <Preview icon={<Split className="h-[18px] w-[18px]" />} tone="bg-danger-soft text-danger" text="Your library shift overlaps Calculus on Thursday." action="Help me sort it out" />
-            <Preview icon={<BookOpen className="h-[18px] w-[18px]" />} tone="bg-warning-soft text-warning" text="Psychology midterm is next Wednesday." action="Plan study time" />
+            <Preview
+              icon={<Split className="h-[18px] w-[18px]" />}
+              tone="bg-danger-soft text-danger"
+              text="Your library shift overlaps Calculus on Thursday."
+              action="Help me sort it out"
+            />
+            <Preview
+              icon={<BookOpen className="h-[18px] w-[18px]" />}
+              tone="bg-warning-soft text-warning"
+              text="Psychology midterm is next Wednesday."
+              action="Plan study time"
+            />
             <Preview icon={<Wallet className="h-[18px] w-[18px]" />} tone="bg-success-soft text-success" text="You've spent 12% less than last month." />
           </div>
         </div>

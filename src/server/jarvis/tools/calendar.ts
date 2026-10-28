@@ -93,14 +93,33 @@ export const calendarTools = [
         for (const e of events) {
           const before = await getAgenda(s, ctx.tz, e.date, e.date, { include: ["event", "shift"] });
           const row = await createEvent(s, ctx.tz, { ...e, allDay: e.allDay ?? !e.startTime }, "jarvis");
-          const item: AgendaItem = { key: "new", origin: "event", id: row.id, title: row.title, startsAt: row.startsAt, endsAt: row.endsAt, allDay: row.allDay, kind: row.kind, color: null, subtitle: null, href: "", blocksTime: !row.allDay };
+          const item: AgendaItem = {
+            key: "new",
+            origin: "event",
+            id: row.id,
+            title: row.title,
+            startsAt: row.startsAt,
+            endsAt: row.endsAt,
+            allDay: row.allDay,
+            kind: row.kind,
+            color: null,
+            subtitle: null,
+            href: "",
+            blocksTime: !row.allDay,
+          };
           for (const c of findConflicts([...before, item])) {
             if (c.a.id === row.id || c.b.id === row.id) {
               const other = c.a.id === row.id ? c.b : c.a;
               conflicts.push({ event: row.title, conflictsWith: other.title, at: formatIn(other.startsAt, ctx.tz, "yyyy-MM-dd HH:mm") });
             }
           }
-          created.push({ id: row.id, title: row.title, start: formatIn(row.startsAt, ctx.tz, "yyyy-MM-dd HH:mm"), end: formatIn(row.endsAt, ctx.tz, "yyyy-MM-dd HH:mm"), recurring: !!row.recurrence });
+          created.push({
+            id: row.id,
+            title: row.title,
+            start: formatIn(row.startsAt, ctx.tz, "yyyy-MM-dd HH:mm"),
+            end: formatIn(row.endsAt, ctx.tz, "yyyy-MM-dd HH:mm"),
+            recurring: !!row.recurrence,
+          });
         }
         return { created, conflicts, viewAt: `/calendar?date=${events[0].date}` };
       });

@@ -15,7 +15,15 @@ async function setup() {
     const checking = await createManualAccount(s, { name: "Checking", type: "depository", currentBalanceCents: 150000 });
     const savings = await createManualAccount(s, { name: "Savings", type: "depository", currentBalanceCents: 500000 });
     const cat = async (n: string) => (await getCategoryByName(s, n))!.id;
-    return { checking: checking.id, savings: savings.id, groceries: await cat("Groceries"), restaurants: await cat("Restaurants"), food: await cat("Food & Dining"), paycheck: await cat("Paycheck"), savingsTransfer: await cat("Savings Transfer") };
+    return {
+      checking: checking.id,
+      savings: savings.id,
+      groceries: await cat("Groceries"),
+      restaurants: await cat("Restaurants"),
+      food: await cat("Food & Dining"),
+      paycheck: await cat("Paycheck"),
+      savingsTransfer: await cat("Savings Transfer"),
+    };
   });
   return { ...u, ids };
 }
@@ -26,10 +34,28 @@ describe("finance", () => {
     await run(async (s) => {
       await createTransaction(s, { accountId: ids.checking, date: "2026-09-02", description: "Trader Joe's", amountCents: -6420, categoryId: ids.groceries });
       await createTransaction(s, { accountId: ids.checking, date: "2026-09-15", description: "Chipotle", amountCents: -1385, categoryId: ids.restaurants });
-      await createTransaction(s, { accountId: ids.checking, date: "2026-09-16", description: "Chipotle refund", amountCents: 1385, categoryId: ids.restaurants });
+      await createTransaction(s, {
+        accountId: ids.checking,
+        date: "2026-09-16",
+        description: "Chipotle refund",
+        amountCents: 1385,
+        categoryId: ids.restaurants,
+      });
       await createTransaction(s, { accountId: ids.checking, date: "2026-08-30", description: "Old groceries", amountCents: -5000, categoryId: ids.groceries });
-      await createTransaction(s, { accountId: ids.checking, date: "2026-09-20", description: "To savings", amountCents: -20000, categoryId: ids.savingsTransfer });
-      await createTransaction(s, { accountId: ids.savings, date: "2026-09-20", description: "From checking", amountCents: 20000, categoryId: ids.savingsTransfer });
+      await createTransaction(s, {
+        accountId: ids.checking,
+        date: "2026-09-20",
+        description: "To savings",
+        amountCents: -20000,
+        categoryId: ids.savingsTransfer,
+      });
+      await createTransaction(s, {
+        accountId: ids.savings,
+        date: "2026-09-20",
+        description: "From checking",
+        amountCents: 20000,
+        categoryId: ids.savingsTransfer,
+      });
       await createTransaction(s, { accountId: ids.checking, date: "2026-09-30", description: "Payroll", amountCents: 120000, categoryId: ids.paycheck });
     });
     const food = await run((s) => spendingSummary(s, { from: "2026-09-01", to: "2026-10-26", categoryName: "food & dining" }));

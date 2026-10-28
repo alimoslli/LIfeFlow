@@ -15,7 +15,17 @@ import {
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
 
 function presentAssignment(
-  a: { id: string; title: string; kind: string; status: string; dueAt: Date | null; dueAllDay: boolean; source: string; url: string | null; course: { id: string; name: string; code: string | null } },
+  a: {
+    id: string;
+    title: string;
+    kind: string;
+    status: string;
+    dueAt: Date | null;
+    dueAllDay: boolean;
+    source: string;
+    url: string | null;
+    course: { id: string; name: string; code: string | null };
+  },
   ctx: ToolContext,
 ) {
   return {
@@ -40,7 +50,16 @@ export const schoolTools = [
     async execute(_a, ctx) {
       const rows = await ctx.run((s) => listCourses(s));
       return {
-        courses: rows.map((c) => ({ id: c.id, name: c.name, code: c.code, term: c.term, instructor: c.instructorName, meetingInfo: c.meetingInfo, location: c.location, source: c.source })),
+        courses: rows.map((c) => ({
+          id: c.id,
+          name: c.name,
+          code: c.code,
+          term: c.term,
+          instructor: c.instructorName,
+          meetingInfo: c.meetingInfo,
+          location: c.location,
+          source: c.source,
+        })),
       };
     },
   }),
@@ -101,11 +120,16 @@ export const schoolTools = [
         )
         .min(1)
         .max(100),
-      createMissingCourses: z.boolean().optional().describe("Create a course when no existing course resembles courseName. Only if the user asked to add these courses."),
+      createMissingCourses: z
+        .boolean()
+        .optional()
+        .describe("Create a course when no existing course resembles courseName. Only if the user asked to add these courses."),
     }),
     mutates: true,
     async execute(a, ctx) {
-      const outcome = await ctx.run((s) => importAssignments(s, ctx.tz, a.items, { source: "jarvis", createMissingCourses: a.createMissingCourses, now: ctx.now }));
+      const outcome = await ctx.run((s) =>
+        importAssignments(s, ctx.tz, a.items, { source: "jarvis", createMissingCourses: a.createMissingCourses, now: ctx.now }),
+      );
       // Verify: read back what was saved so the reply reflects the database, not intent.
       const verified = await ctx.run(async (s) => {
         const ok: string[] = [];
@@ -118,7 +142,12 @@ export const schoolTools = [
       return {
         savedCount: outcome.created.length,
         verifiedInDatabase: verified.length,
-        created: outcome.created.map((c) => ({ id: c.id, title: c.title, course: c.course, due: c.dueAt ? `${localDateOf(c.dueAt, ctx.tz)} ${localTimeOf(c.dueAt, ctx.tz)}` : null })),
+        created: outcome.created.map((c) => ({
+          id: c.id,
+          title: c.title,
+          course: c.course,
+          due: c.dueAt ? `${localDateOf(c.dueAt, ctx.tz)} ${localTimeOf(c.dueAt, ctx.tz)}` : null,
+        })),
         skippedDuplicates: outcome.duplicates,
         needsCourse: outcome.needsCourse,
         errors: outcome.errors,

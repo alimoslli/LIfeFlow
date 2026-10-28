@@ -41,7 +41,9 @@ export function allocation(rows: { securityType: string; valueCents: number }[])
   const total = rows.reduce((s, r) => s + r.valueCents, 0);
   const map = new Map<string, number>();
   for (const r of rows) map.set(r.securityType, (map.get(r.securityType) ?? 0) + r.valueCents);
-  return [...map.entries()].map(([type, cents]) => ({ type, cents, percent: total ? Math.round((cents / total) * 1000) / 10 : 0 })).sort((a, b) => b.cents - a.cents);
+  return [...map.entries()]
+    .map(([type, cents]) => ({ type, cents, percent: total ? Math.round((cents / total) * 1000) / 10 : 0 }))
+    .sort((a, b) => b.cents - a.cents);
 }
 
 /**

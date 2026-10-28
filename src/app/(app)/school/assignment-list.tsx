@@ -42,7 +42,14 @@ export function AssignmentList({ items, tz, showCourse = true }: { items: A[]; t
                 )}
               </p>
             </div>
-            <span className={cn("shrink-0 text-right text-xs", !done && due.overdue ? "font-medium text-danger" : !done && due.soon ? "text-warning" : "text-muted")}>{due.text || "No date"}</span>
+            <span
+              className={cn(
+                "shrink-0 text-right text-xs",
+                !done && due.overdue ? "font-medium text-danger" : !done && due.soon ? "text-warning" : "text-muted",
+              )}
+            >
+              {due.text || "No date"}
+            </span>
           </li>
         );
       })}

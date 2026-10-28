@@ -10,6 +10,15 @@ export type UiAttachment = { id: string; filename: string; mimeType: string };
 
 export type UiMessage =
   | { id: string; role: "user"; text: string; attachments: UiAttachment[] }
-  | { id: string; role: "assistant"; text: string; tools: UiTool[]; confirmations: UiConfirmation[]; memories: UiMemorySuggestion[]; error?: string; streaming?: boolean };
+  | {
+      id: string;
+      role: "assistant";
+      text: string;
+      tools: UiTool[];
+      confirmations: UiConfirmation[];
+      memories: UiMemorySuggestion[];
+      error?: string;
+      streaming?: boolean;
+    };
 
 export type { JarvisModule };

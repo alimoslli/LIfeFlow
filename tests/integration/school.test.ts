@@ -24,7 +24,12 @@ describe("assignment ingestion", () => {
 
     // Re-importing the same list (title casing/spacing differs) creates nothing new.
     const again = await u.run((s) =>
-      importAssignments(s, TZ, items.map((i) => ({ ...i, title: `  ${i.title.toUpperCase()} ` })), { now }),
+      importAssignments(
+        s,
+        TZ,
+        items.map((i) => ({ ...i, title: `  ${i.title.toUpperCase()} ` })),
+        { now },
+      ),
     );
     expect(again.created).toHaveLength(0);
     expect(again.duplicates).toHaveLength(3);

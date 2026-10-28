@@ -60,7 +60,11 @@ export function Tour({ onDone }: { onDone: () => void }) {
       } else {
         gsap.to(spot.current, { ...box, duration: 0.55, ease: "power3.inOut" });
         gsap.to(card.current, { x: cardX, y: cardY, width: cardW, duration: 0.55, ease: "power3.inOut" });
-        gsap.fromTo(card.current.querySelectorAll("[data-anim]"), { opacity: 0, y: 6 }, { opacity: 1, y: 0, duration: 0.35, delay: 0.2, stagger: 0.04, ease: MOTION.ease });
+        gsap.fromTo(
+          card.current.querySelectorAll("[data-anim]"),
+          { opacity: 0, y: 6 },
+          { opacity: 1, y: 0, duration: 0.35, delay: 0.2, stagger: 0.04, ease: MOTION.ease },
+        );
       }
     },
     [i],
@@ -105,7 +109,10 @@ export function Tour({ onDone }: { onDone: () => void }) {
   return (
     <div className="fixed inset-0 z-[90]" role="dialog" aria-modal="true" aria-labelledby="tour-title">
       {/* The spotlight: a rounded hole in a dim layer (the shadow is the dim). */}
-      <div ref={spot} className="pointer-events-none absolute top-0 left-0 rounded-2xl opacity-0 shadow-[0_0_0_9999px_rgba(10,12,11,0.55)] ring-2 ring-white/70" />
+      <div
+        ref={spot}
+        className="pointer-events-none absolute top-0 left-0 rounded-2xl opacity-0 shadow-[0_0_0_9999px_rgba(10,12,11,0.55)] ring-2 ring-white/70"
+      />
       <div className="absolute inset-0" onClick={(e) => e.stopPropagation()} />
       <div ref={card} className="absolute top-0 left-0 rounded-3xl bg-surface p-5 opacity-0 shadow-2xl">
         <p data-anim className="text-xs font-medium text-muted">
@@ -121,7 +128,11 @@ export function Tour({ onDone }: { onDone: () => void }) {
           <button onClick={onDone} className="text-sm text-muted hover:text-text">
             Skip tour
           </button>
-          <button ref={nextBtn} onClick={() => (last ? onDone() : setI(i + 1))} className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-text">
+          <button
+            ref={nextBtn}
+            onClick={() => (last ? onDone() : setI(i + 1))}
+            className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-text"
+          >
             {last ? "Start using LifeFlow" : "Next"}
           </button>
         </div>

@@ -28,7 +28,14 @@ export async function POST(req: Request) {
     const [row] = await withUser(user.id, (s) =>
       s.tx
         .insert(attachments)
-        .values({ userId: s.userId, filename, mimeType: mime, sizeBytes: buf.length, sha256: createHash("sha256").update(buf).digest("hex"), dataBase64: buf.toString("base64") })
+        .values({
+          userId: s.userId,
+          filename,
+          mimeType: mime,
+          sizeBytes: buf.length,
+          sha256: createHash("sha256").update(buf).digest("hex"),
+          dataBase64: buf.toString("base64"),
+        })
         .returning({ id: attachments.id, filename: attachments.filename, mimeType: attachments.mimeType }),
     );
     return NextResponse.json(row);

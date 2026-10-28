@@ -90,7 +90,30 @@ export function explicitMemoryRequest(userText: string): boolean {
   return REQUEST.some((re) => re.test(text));
 }
 
-const STOP = new Set(["a", "an", "the", "and", "or", "to", "of", "in", "on", "at", "for", "is", "are", "be", "i", "my", "me", "user", "user's", "they", "their", "s"]);
+const STOP = new Set([
+  "a",
+  "an",
+  "the",
+  "and",
+  "or",
+  "to",
+  "of",
+  "in",
+  "on",
+  "at",
+  "for",
+  "is",
+  "are",
+  "be",
+  "i",
+  "my",
+  "me",
+  "user",
+  "user's",
+  "they",
+  "their",
+  "s",
+]);
 
 function contentTokens(text: string): Set<string> {
   return new Set(
@@ -140,7 +163,10 @@ export async function listAllMemories(scope: UserScope) {
 }
 
 export async function getMemory(scope: UserScope, id: string) {
-  const [row] = await scope.tx.select().from(memories).where(and(eq(memories.id, id), eq(memories.userId, scope.userId)));
+  const [row] = await scope.tx
+    .select()
+    .from(memories)
+    .where(and(eq(memories.id, id), eq(memories.userId, scope.userId)));
   if (!row) throw notFound("Memory");
   return row;
 }
@@ -157,7 +183,10 @@ export async function memoryStatuses(scope: UserScope, ids: string[]): Promise<M
 
 export async function touchMemories(scope: UserScope, ids: string[]) {
   if (!ids.length) return;
-  await scope.tx.update(memories).set({ lastUsedAt: new Date() }).where(and(eq(memories.userId, scope.userId), inArray(memories.id, ids)));
+  await scope.tx
+    .update(memories)
+    .set({ lastUsedAt: new Date() })
+    .where(and(eq(memories.userId, scope.userId), inArray(memories.id, ids)));
 }
 
 // ---------------------------------------------------------------------------
@@ -208,7 +237,10 @@ export async function setMemoryStatus(scope: UserScope, id: string, status: "act
 }
 
 export async function deleteMemory(scope: UserScope, id: string) {
-  const [row] = await scope.tx.delete(memories).where(and(eq(memories.id, id), eq(memories.userId, scope.userId))).returning({ id: memories.id, content: memories.content });
+  const [row] = await scope.tx
+    .delete(memories)
+    .where(and(eq(memories.id, id), eq(memories.userId, scope.userId)))
+    .returning({ id: memories.id, content: memories.content });
   if (!row) throw notFound("Memory");
   return row;
 }
@@ -216,8 +248,16 @@ export async function deleteMemory(scope: UserScope, id: string) {
 /** The user approves a suggestion. Approving a correction archives what it replaces. */
 export async function approveMemory(scope: UserScope, id: string, now = new Date()) {
   const current = await getMemory(scope, id);
-  if (current.status !== "proposed") throw new ServiceError(`This suggestion was already ${current.status === "active" ? "saved" : current.status === "rejected" ? "dismissed" : current.status}.`, "conflict");
-  const [row] = await scope.tx.update(memories).set({ status: "active", confirmedAt: now }).where(and(eq(memories.id, id), eq(memories.userId, scope.userId))).returning();
+  if (current.status !== "proposed")
+    throw new ServiceError(
+      `This suggestion was already ${current.status === "active" ? "saved" : current.status === "rejected" ? "dismissed" : current.status}.`,
+      "conflict",
+    );
+  const [row] = await scope.tx
+    .update(memories)
+    .set({ status: "active", confirmedAt: now })
+    .where(and(eq(memories.id, id), eq(memories.userId, scope.userId)))
+    .returning();
   let replaced: { id: string; content: string } | null = null;
   if (current.supersedesId) {
     const [old] = await scope.tx
@@ -233,8 +273,13 @@ export async function approveMemory(scope: UserScope, id: string, now = new Date
 /** The user dismisses a suggestion. It's kept as `rejected` so it isn't suggested again. */
 export async function dismissMemory(scope: UserScope, id: string) {
   const current = await getMemory(scope, id);
-  if (current.status !== "proposed") throw new ServiceError(`This suggestion was already ${current.status === "active" ? "saved" : current.status}.`, "conflict");
-  const [row] = await scope.tx.update(memories).set({ status: "rejected" }).where(and(eq(memories.id, id), eq(memories.userId, scope.userId))).returning();
+  if (current.status !== "proposed")
+    throw new ServiceError(`This suggestion was already ${current.status === "active" ? "saved" : current.status}.`, "conflict");
+  const [row] = await scope.tx
+    .update(memories)
+    .set({ status: "rejected" })
+    .where(and(eq(memories.id, id), eq(memories.userId, scope.userId)))
+    .returning();
   return row;
 }
 
@@ -288,7 +333,17 @@ export async function rememberForUser(
     }
     const [row] = await scope.tx
       .insert(memories)
-      .values({ userId: scope.userId, content: d.content, category: d.category, source: "jarvis", basis: "stated", status: "active", confirmedAt: ctx.now, conversationId: ctx.conversationId, expiresAt })
+      .values({
+        userId: scope.userId,
+        content: d.content,
+        category: d.category,
+        source: "jarvis",
+        basis: "stated",
+        status: "active",
+        confirmedAt: ctx.now,
+        conversationId: ctx.conversationId,
+        expiresAt,
+      })
       .returning();
     return { status: "saved", memory: row };
   }
@@ -297,12 +352,25 @@ export async function rememberForUser(
   if (others.filter((m) => m.status === "proposed").length >= MAX_PENDING_SUGGESTIONS) return { status: "too_many_pending", memory: null };
   const [row] = await scope.tx
     .insert(memories)
-    .values({ userId: scope.userId, content: d.content, category: d.category, source: "jarvis", basis: input.basis, status: "proposed", conversationId: ctx.conversationId, expiresAt })
+    .values({
+      userId: scope.userId,
+      content: d.content,
+      category: d.category,
+      source: "jarvis",
+      basis: input.basis,
+      status: "proposed",
+      conversationId: ctx.conversationId,
+      expiresAt,
+    })
     .returning();
   return { status: "proposed", memory: row };
 }
 
-export type CorrectionResult = { status: "updated" | "proposed" | "unchanged" | "suggestions_off"; memory: typeof memories.$inferSelect | null; replaces: { id: string; content: string } };
+export type CorrectionResult = {
+  status: "updated" | "proposed" | "unchanged" | "suggestions_off";
+  memory: typeof memories.$inferSelect | null;
+  replaces: { id: string; content: string };
+};
 
 /**
  * Jarvis corrects an existing memory. The old version is kept (archived)
@@ -316,7 +384,11 @@ export async function correctMemoryForUser(
 ): Promise<CorrectionResult> {
   const old = await getMemory(scope, id);
   if (old.status !== "active") throw new ServiceError("Only memories currently in use can be corrected.", "conflict");
-  const d = memoryInputSchema.parse({ content: patch.content, category: patch.category ?? old.category, expiresAt: patch.expiresAt === undefined ? old.expiresAt : patch.expiresAt });
+  const d = memoryInputSchema.parse({
+    content: patch.content,
+    category: patch.category ?? old.category,
+    expiresAt: patch.expiresAt === undefined ? old.expiresAt : patch.expiresAt,
+  });
   assertNotSensitive(d.content);
   const replaces = { id: old.id, content: old.content };
   if (d.content === old.content && d.category === old.category) return { status: "unchanged", memory: old, replaces };
@@ -324,15 +396,39 @@ export async function correctMemoryForUser(
   if (explicitMemoryRequest(ctx.userText)) {
     const [row] = await scope.tx
       .insert(memories)
-      .values({ userId: scope.userId, content: d.content, category: d.category, source: "jarvis", basis: "stated", status: "active", confirmedAt: ctx.now, supersedesId: old.id, conversationId: ctx.conversationId, expiresAt: d.expiresAt ?? null })
+      .values({
+        userId: scope.userId,
+        content: d.content,
+        category: d.category,
+        source: "jarvis",
+        basis: "stated",
+        status: "active",
+        confirmedAt: ctx.now,
+        supersedesId: old.id,
+        conversationId: ctx.conversationId,
+        expiresAt: d.expiresAt ?? null,
+      })
       .returning();
-    await scope.tx.update(memories).set({ status: "archived" }).where(and(eq(memories.id, old.id), eq(memories.userId, scope.userId)));
+    await scope.tx
+      .update(memories)
+      .set({ status: "archived" })
+      .where(and(eq(memories.id, old.id), eq(memories.userId, scope.userId)));
     return { status: "updated", memory: row, replaces };
   }
   if (!ctx.suggestionsEnabled) return { status: "suggestions_off", memory: null, replaces };
   const [row] = await scope.tx
     .insert(memories)
-    .values({ userId: scope.userId, content: d.content, category: d.category, source: "jarvis", basis: "stated", status: "proposed", supersedesId: old.id, conversationId: ctx.conversationId, expiresAt: d.expiresAt ?? null })
+    .values({
+      userId: scope.userId,
+      content: d.content,
+      category: d.category,
+      source: "jarvis",
+      basis: "stated",
+      status: "proposed",
+      supersedesId: old.id,
+      conversationId: ctx.conversationId,
+      expiresAt: d.expiresAt ?? null,
+    })
     .returning();
   return { status: "proposed", memory: row, replaces };
 }

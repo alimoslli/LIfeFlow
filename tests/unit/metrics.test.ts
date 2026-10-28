@@ -2,11 +2,18 @@ import { describe, expect, it } from "vitest";
 import { addUsage, errorKindOf, estimateCostMicros } from "@/server/jarvis/metrics";
 import { toUsage } from "@/server/jarvis/providers/openai";
 
-const u = (inputTokens: number, cachedInputTokens: number, outputTokens: number, reasoningTokens = 0) => ({ inputTokens, cachedInputTokens, outputTokens, reasoningTokens });
+const u = (inputTokens: number, cachedInputTokens: number, outputTokens: number, reasoningTokens = 0) => ({
+  inputTokens,
+  cachedInputTokens,
+  outputTokens,
+  reasoningTokens,
+});
 
 describe("token usage", () => {
   it("normalizes Responses API usage and tolerates missing fields", () => {
-    expect(toUsage({ input_tokens: 1200, output_tokens: 300, input_tokens_details: { cached_tokens: 1000 }, output_tokens_details: { reasoning_tokens: 120 } })).toEqual(u(1200, 1000, 300, 120));
+    expect(
+      toUsage({ input_tokens: 1200, output_tokens: 300, input_tokens_details: { cached_tokens: 1000 }, output_tokens_details: { reasoning_tokens: 120 } }),
+    ).toEqual(u(1200, 1000, 300, 120));
     expect(toUsage({ input_tokens: 10, output_tokens: 2 })).toEqual(u(10, 0, 2));
     expect(toUsage(undefined)).toBeUndefined();
     expect(toUsage(null)).toBeUndefined();

@@ -47,12 +47,26 @@ export async function collectSnapshot(s: UserScope, user: SessionUser, now = new
     studyTime: user.preferences?.studyTime,
     week,
     overdue: [
-      ...overdueA.map((a) => ({ id: a.id, title: a.title, context: a.course.code ?? a.course.name, dueAt: a.dueAt!, kind: "assignment" as const, href: `/school/courses/${a.course.id}` })),
+      ...overdueA.map((a) => ({
+        id: a.id,
+        title: a.title,
+        context: a.course.code ?? a.course.name,
+        dueAt: a.dueAt!,
+        kind: "assignment" as const,
+        href: `/school/courses/${a.course.id}`,
+      })),
       ...overdueTasks.map((t) => ({ id: t.id, title: t.title, context: "Task", dueAt: t.dueAt!, kind: "task" as const, href: "/tasks" })),
     ].sort((a, b) => b.dueAt.getTime() - a.dueAt.getTime()),
     exams: upcomingA
       .filter((a) => (a.kind === "exam" || a.kind === "quiz") && a.dueAt && a.dueAt.toISOString().slice(0, 10) <= horizon)
-      .map((a) => ({ id: a.id, title: a.title, course: a.course.code ?? a.course.name, dueAt: a.dueAt!, kind: a.kind, href: `/school/courses/${a.course.id}` })),
+      .map((a) => ({
+        id: a.id,
+        title: a.title,
+        course: a.course.code ?? a.course.name,
+        dueAt: a.dueAt!,
+        kind: a.kind,
+        href: `/school/courses/${a.course.id}`,
+      })),
     freeMinutesByDay,
     money: await collectMoney(s, today),
   };
@@ -95,7 +109,13 @@ async function collectMoney(s: UserScope, today: string): Promise<MoneySnapshot 
         const change = v.cents - (before.get(k)?.cents ?? 0);
         if (!top || change > top.change) top = { name: v.name, change };
       }
-      return { category: b.categoryName, spentCents: b.spentCents, limitCents: b.limitCents, topMerchant: top?.name ?? null, topMerchantChangeCents: top?.change ?? null };
+      return {
+        category: b.categoryName,
+        spentCents: b.spentCents,
+        limitCents: b.limitCents,
+        topMerchant: top?.name ?? null,
+        topMerchantChangeCents: top?.change ?? null,
+      };
     });
   const in30 = addDaysStr(today, 30);
   const isSavings = (a: (typeof accounts)[number]) => /saving/i.test(`${a.subtype ?? ""} ${a.name}`);
@@ -112,7 +132,12 @@ async function collectMoney(s: UserScope, today: string): Promise<MoneySnapshot 
     lastMonthSameSpanSpendCents: summarizeCashflow(lastMonth).netSpendingCents,
     billsNext30: upcoming.filter((u) => u.amountCents < 0 && u.date <= in30).map((u) => ({ name: u.name, date: u.date, amountCents: u.amountCents })),
     overBudget,
-    goals: goals.map((g) => ({ name: g.name, percent: g.percent, targetDate: g.targetDate, monthlyNeededCents: monthlyContributionNeeded(g.targetCents, g.savedCents, g.targetDate, today) })),
+    goals: goals.map((g) => ({
+      name: g.name,
+      percent: g.percent,
+      targetDate: g.targetDate,
+      monthlyNeededCents: monthlyContributionNeeded(g.targetCents, g.savedCents, g.targetDate, today),
+    })),
     investments: investmentAccounts.length ? { valueCents: balances.investmentsCents, returnPct: portfolioReturn(holdings) } : null,
     hasDemoData: accounts.some((a) => a.source === "demo"),
   };

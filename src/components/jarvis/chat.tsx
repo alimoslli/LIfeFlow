@@ -174,14 +174,27 @@ export function JarvisChat({
 
   async function decide(actionId: string, decision: "confirm" | "cancel") {
     setMessages((prev) =>
-      prev.map((m) => (m.role === "assistant" ? { ...m, confirmations: m.confirmations.map((c) => (c.actionId === actionId ? { ...c, status: "pending", resultText: "Working…" } : c)) } : m)),
+      prev.map((m) =>
+        m.role === "assistant"
+          ? { ...m, confirmations: m.confirmations.map((c) => (c.actionId === actionId ? { ...c, status: "pending", resultText: "Working…" } : c)) }
+          : m,
+      ),
     );
-    const res = await fetch(`/api/jarvis/actions/${actionId}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ decision }) });
+    const res = await fetch(`/api/jarvis/actions/${actionId}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ decision }),
+    });
     const data = (await res.json().catch(() => ({}))) as { status?: "executed" | "cancelled" | "failed" | "expired"; message?: string; error?: string };
     setMessages((prev) =>
       prev.map((m) =>
         m.role === "assistant"
-          ? { ...m, confirmations: m.confirmations.map((c) => (c.actionId === actionId ? { ...c, status: data.status ?? "failed", resultText: data.message ?? data.error } : c)) }
+          ? {
+              ...m,
+              confirmations: m.confirmations.map((c) =>
+                c.actionId === actionId ? { ...c, status: data.status ?? "failed", resultText: data.message ?? data.error } : c,
+              ),
+            }
           : m,
       ),
     );
@@ -190,9 +203,19 @@ export function JarvisChat({
 
   async function decideMemory(memoryId: string, decision: "keep" | "dismiss") {
     const patch = (fn: (m: UiMemorySuggestion) => UiMemorySuggestion) =>
-      setMessages((prev) => prev.map((m) => (m.role === "assistant" && m.memories.some((x) => x.memoryId === memoryId) ? { ...m, memories: m.memories.map((x) => (x.memoryId === memoryId ? fn(x) : x)) } : m)));
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.role === "assistant" && m.memories.some((x) => x.memoryId === memoryId)
+            ? { ...m, memories: m.memories.map((x) => (x.memoryId === memoryId ? fn(x) : x)) }
+            : m,
+        ),
+      );
     patch((x) => ({ ...x, status: decision === "keep" ? "saved" : "dismissed", error: undefined })); // optimistic
-    const res = await fetch(`/api/jarvis/memories/${memoryId}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ decision }) }).catch(() => null);
+    const res = await fetch(`/api/jarvis/memories/${memoryId}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ decision }),
+    }).catch(() => null);
     if (!res?.ok) {
       const data = (await res?.json().catch(() => ({}))) as { error?: string } | undefined;
       patch((x) => ({ ...x, status: "proposed", error: data?.error ?? "Couldn't save your choice. Try again." }));
@@ -240,7 +263,9 @@ export function JarvisChat({
                 <Sparkles className="h-5 w-5" />
               </div>
               <h2 className="mt-5 font-display text-[34px] leading-tight font-medium tracking-tight">How can I help?</h2>
-              <p className="mt-2 text-[15px] text-muted">I can read and update your tasks, schedule, courses, work and finances — and I&apos;ll show you exactly what I changed.</p>
+              <p className="mt-2 text-[15px] text-muted">
+                I can read and update your tasks, schedule, courses, work and finances — and I&apos;ll show you exactly what I changed.
+              </p>
               <div className="mt-7 flex flex-col gap-2">
                 {STARTERS[module].map((s) => (
                   <button
@@ -255,7 +280,9 @@ export function JarvisChat({
               </div>
             </div>
           )}
-          {messages.map((m) => (m.role === "user" ? <UserBubble key={m.id} m={m} /> : <AssistantBubble key={m.id} m={m} onDecide={decide} onMemory={decideMemory} />))}
+          {messages.map((m) =>
+            m.role === "user" ? <UserBubble key={m.id} m={m} /> : <AssistantBubble key={m.id} m={m} onDecide={decide} onMemory={decideMemory} />,
+          )}
           {followUps && (
             <div className="flex flex-wrap gap-2">
               {followUps.map((f) => (
@@ -273,8 +300,20 @@ export function JarvisChat({
           {pending.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
               {pending.map((p) => (
-                <span key={p.id} className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs shadow-soft", p.error ? "bg-danger-soft text-danger" : "bg-surface text-text-2")}>
-                  {p.uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : p.mimeType.startsWith("image/") ? <ImageIcon className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                <span
+                  key={p.id}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs shadow-soft",
+                    p.error ? "bg-danger-soft text-danger" : "bg-surface text-text-2",
+                  )}
+                >
+                  {p.uploading ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : p.mimeType.startsWith("image/") ? (
+                    <ImageIcon className="h-3 w-3" />
+                  ) : (
+                    <FileText className="h-3 w-3" />
+                  )}
                   <span className="max-w-40 truncate">{p.filename}</span>
                   {p.error && <span>· {p.error}</span>}
                   <button onClick={() => setPending((x) => x.filter((y) => y.id !== p.id))} aria-label={`Remove ${p.filename}`}>
@@ -394,7 +433,9 @@ function AssistantBubble({
                   <CircleAlert className="h-3.5 w-3.5 text-danger" />
                 )}
                 <span className="text-text-2">{t.label}</span>
-                {t.summary && t.summary !== "Done" && <span className={cn("truncate", t.status === "error" ? "text-danger" : "text-muted")}>— {t.summary}</span>}
+                {t.summary && t.summary !== "Done" && (
+                  <span className={cn("truncate", t.status === "error" ? "text-danger" : "text-muted")}>— {t.summary}</span>
+                )}
                 {t.viewAt && t.status === "ok" && (
                   <Link href={t.viewAt} className="shrink-0 text-accent hover:underline">
                     View
@@ -426,7 +467,13 @@ function AssistantBubble({
               </div>
             ) : (
               <p className={cn("mt-1.5 text-[13px]", c.status === "executed" ? "text-success" : c.status === "pending" ? "text-muted" : "text-text-2")}>
-                {c.status === "executed" ? "✓ Done" : c.status === "cancelled" ? "Cancelled — nothing changed" : c.status === "expired" ? "Expired — nothing changed" : c.resultText}
+                {c.status === "executed"
+                  ? "✓ Done"
+                  : c.status === "cancelled"
+                    ? "Cancelled — nothing changed"
+                    : c.status === "expired"
+                      ? "Expired — nothing changed"
+                      : c.resultText}
               </p>
             )}
           </div>

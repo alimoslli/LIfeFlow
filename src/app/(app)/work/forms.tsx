@@ -5,7 +5,15 @@ import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
 import type { ActionState } from "@/server/actions";
 
-export function ShiftDialog({ action, employers, today }: { action: (p: ActionState, fd: FormData) => Promise<ActionState>; employers: { id: string; name: string }[]; today: string }) {
+export function ShiftDialog({
+  action,
+  employers,
+  today,
+}: {
+  action: (p: ActionState, fd: FormData) => Promise<ActionState>;
+  employers: { id: string; name: string }[];
+  today: string;
+}) {
   return (
     <Dialog trigger="Add shift" title="Add a shift">
       {(close) => (

@@ -121,7 +121,13 @@ export async function setRecurringStatusAction(id: string, status: "active" | "p
 export async function createGoalAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
   return mutate("goal.create", async (s) => {
-    await createGoal(s, { name: f.name ?? "", targetCents: need(formCents(f.target), "target"), savedCents: formCents(f.saved) ?? 0, targetDate: f.targetDate, accountId: f.accountId });
+    await createGoal(s, {
+      name: f.name ?? "",
+      targetCents: need(formCents(f.target), "target"),
+      savedCents: formCents(f.saved) ?? 0,
+      targetDate: f.targetDate,
+      accountId: f.accountId,
+    });
   });
 }
 

@@ -19,11 +19,17 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
-    const month = sp.month && /^\d{4}-\d{2}$/.test(sp.month) && isValidDateStr(`${sp.month}-01`) ? `${sp.month}-01` : monthStart(sp.date && isValidDateStr(sp.date) ? sp.date : today);
+    const month =
+      sp.month && /^\d{4}-\d{2}$/.test(sp.month) && isValidDateStr(`${sp.month}-01`)
+        ? `${sp.month}-01`
+        : monthStart(sp.date && isValidDateStr(sp.date) ? sp.date : today);
     const selected = sp.date && isValidDateStr(sp.date) ? sp.date : month === monthStart(today) ? today : month;
     const gridStart = weekStart(month);
     const gridEnd = addDaysStr(weekStart(monthEnd(month)), 6);
-    const [items, courses] = await series(() => getAgenda(s, u.timezone, gridStart, gridEnd), () => listCourses(s));
+    const [items, courses] = await series(
+      () => getAgenda(s, u.timezone, gridStart, gridEnd),
+      () => listCourses(s),
+    );
     return { items, courses, today, month, selected, gridStart, gridEnd, tz: u.timezone };
   });
   const { tz } = d;
@@ -108,7 +114,11 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                   {/* Larger screens: the first few titles */}
                   <span className="hidden flex-col gap-0.5 sm:flex">
                     {items.slice(0, 3).map((i) => (
-                      <span key={i.key} className="flex items-center gap-1 truncate rounded-md px-1 text-[11px] leading-5" style={{ background: `color-mix(in srgb, ${i.color ?? "var(--accent)"} 14%, transparent)` }}>
+                      <span
+                        key={i.key}
+                        className="flex items-center gap-1 truncate rounded-md px-1 text-[11px] leading-5"
+                        style={{ background: `color-mix(in srgb, ${i.color ?? "var(--accent)"} 14%, transparent)` }}
+                      >
                         <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: i.color ?? "var(--accent)" }} />
                         <span className="truncate text-text">{i.title}</span>
                       </span>
@@ -154,13 +164,22 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                       {i.title}
                     </p>
                     <p className="truncate text-sm text-muted">
-                      {i.allDay ? "All day" : i.endsAt ? `${formatIn(i.startsAt, tz, "h:mm")}–${formatIn(i.endsAt, tz, "h:mm a")}` : formatIn(i.startsAt, tz, "h:mm a")}
+                      {i.allDay
+                        ? "All day"
+                        : i.endsAt
+                          ? `${formatIn(i.startsAt, tz, "h:mm")}–${formatIn(i.endsAt, tz, "h:mm a")}`
+                          : formatIn(i.startsAt, tz, "h:mm a")}
                       {i.subtitle ? ` · ${i.subtitle}` : ""}
                     </p>
                   </Link>
                   {conflictKeys.has(i.key) && <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning">Overlaps</span>}
                   {i.origin === "event" && (
-                    <ActionButton action={deleteEventAction.bind(null, i.id)} confirm={`Delete "${i.title}"? Repeating events are deleted for every week.`} title="Delete event" className="rounded-full p-1.5 text-muted hover:text-danger">
+                    <ActionButton
+                      action={deleteEventAction.bind(null, i.id)}
+                      confirm={`Delete "${i.title}"? Repeating events are deleted for every week.`}
+                      title="Delete event"
+                      className="rounded-full p-1.5 text-muted hover:text-danger"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </ActionButton>
                   )}

@@ -17,7 +17,10 @@ export async function createNote(scope: UserScope, input: z.input<typeof noteInp
   const d = noteInputSchema.parse(input);
   await assertOwned(scope, projects, d.projectId, "Project");
   await assertOwned(scope, courses, d.courseId, "Course");
-  const [row] = await scope.tx.insert(notes).values({ ...d, userId: scope.userId, source }).returning();
+  const [row] = await scope.tx
+    .insert(notes)
+    .values({ ...d, userId: scope.userId, source })
+    .returning();
   return row;
 }
 
@@ -25,19 +28,29 @@ export async function updateNote(scope: UserScope, id: string, patch: Partial<z.
   const d = noteInputSchema.partial().parse(patch);
   await assertOwned(scope, projects, d.projectId, "Project");
   await assertOwned(scope, courses, d.courseId, "Course");
-  const [row] = await scope.tx.update(notes).set(d).where(and(eq(notes.id, id), eq(notes.userId, scope.userId))).returning();
+  const [row] = await scope.tx
+    .update(notes)
+    .set(d)
+    .where(and(eq(notes.id, id), eq(notes.userId, scope.userId)))
+    .returning();
   if (!row) throw notFound("Note");
   return row;
 }
 
 export async function deleteNote(scope: UserScope, id: string) {
-  const [row] = await scope.tx.delete(notes).where(and(eq(notes.id, id), eq(notes.userId, scope.userId))).returning({ id: notes.id, title: notes.title });
+  const [row] = await scope.tx
+    .delete(notes)
+    .where(and(eq(notes.id, id), eq(notes.userId, scope.userId)))
+    .returning({ id: notes.id, title: notes.title });
   if (!row) throw notFound("Note");
   return row;
 }
 
 export async function getNote(scope: UserScope, id: string) {
-  const [row] = await scope.tx.select().from(notes).where(and(eq(notes.id, id), eq(notes.userId, scope.userId)));
+  const [row] = await scope.tx
+    .select()
+    .from(notes)
+    .where(and(eq(notes.id, id), eq(notes.userId, scope.userId)));
   if (!row) throw notFound("Note");
   return row;
 }
@@ -87,13 +100,20 @@ export const projectInputSchema = z.object({
 
 export async function createProject(scope: UserScope, input: z.input<typeof projectInputSchema>) {
   const d = projectInputSchema.parse(input);
-  const [row] = await scope.tx.insert(projects).values({ ...d, userId: scope.userId }).returning();
+  const [row] = await scope.tx
+    .insert(projects)
+    .values({ ...d, userId: scope.userId })
+    .returning();
   return row;
 }
 
 export async function updateProject(scope: UserScope, id: string, patch: Partial<z.input<typeof projectInputSchema>>) {
   const d = projectInputSchema.partial().parse(patch);
-  const [row] = await scope.tx.update(projects).set(d).where(and(eq(projects.id, id), eq(projects.userId, scope.userId))).returning();
+  const [row] = await scope.tx
+    .update(projects)
+    .set(d)
+    .where(and(eq(projects.id, id), eq(projects.userId, scope.userId)))
+    .returning();
   if (!row) throw notFound("Project");
   return row;
 }
@@ -103,7 +123,10 @@ export async function listProjects(scope: UserScope) {
 }
 
 export async function getProject(scope: UserScope, id: string) {
-  const [row] = await scope.tx.select().from(projects).where(and(eq(projects.id, id), eq(projects.userId, scope.userId)));
+  const [row] = await scope.tx
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, id), eq(projects.userId, scope.userId)));
   if (!row) throw notFound("Project");
   return row;
 }

@@ -17,7 +17,9 @@ const safeNext = (n: FormDataEntryValue | null) => {
 };
 
 export async function login(_prev: AuthState, fd: FormData): Promise<AuthState> {
-  const email = String(fd.get("email") ?? "").trim().toLowerCase();
+  const email = String(fd.get("email") ?? "")
+    .trim()
+    .toLowerCase();
   const password = String(fd.get("password") ?? "");
   const db = getDb();
   const ip = await clientIp();

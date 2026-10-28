@@ -25,7 +25,9 @@ export async function GET(req: Request) {
         ["date", "description", "merchant", "amount", "kind", "category", "account", "pending", "source"],
         rows.map((r) => [r.date, r.description, r.merchantName, (r.amountCents / 100).toFixed(2), r.kind, r.categoryName, r.accountName, r.pending, r.source]),
       );
-      return new Response(csv, { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="budgetflow-transactions-${stamp}.csv"` } });
+      return new Response(csv, {
+        headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="budgetflow-transactions-${stamp}.csv"` },
+      });
     }
     const data = await withUser(user.id, async (s) => {
       const tables = {
@@ -64,7 +66,9 @@ export async function GET(req: Request) {
       await audit(s, "user", "data.export.json");
       return out;
     });
-    return new Response(JSON.stringify(data, null, 2), { headers: { "content-type": "application/json", "content-disposition": `attachment; filename="budgetflow-export-${stamp}.json"` } });
+    return new Response(JSON.stringify(data, null, 2), {
+      headers: { "content-type": "application/json", "content-disposition": `attachment; filename="budgetflow-export-${stamp}.json"` },
+    });
   } catch (e) {
     return errorResponse(e);
   }

@@ -43,7 +43,10 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
   });
   const items = d.items.filter((i) => matches(i, filter));
   const conflictKeys = new Set(findConflicts(d.items).flatMap((c) => [c.a.key, c.b.key]));
-  const days = Array.from({ length: 7 }, (_, n) => addDaysStr(d.from, n)).map((date) => ({ date, items: items.filter((i) => localDateOf(i.startsAt, d.tz) === date) }));
+  const days = Array.from({ length: 7 }, (_, n) => addDaysStr(d.from, n)).map((date) => ({
+    date,
+    items: items.filter((i) => localDateOf(i.startsAt, d.tz) === date),
+  }));
 
   return (
     <div className="mx-auto flex max-w-[680px] flex-col gap-8">
@@ -52,14 +55,24 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           <h1 className="font-display text-[40px] leading-none font-medium tracking-tight">Plan</h1>
           <p className="mt-2 text-[15px] text-text-2">Classes, work, deadlines and to-dos, in one place.</p>
         </div>
-        <AskJarvisButton prompt="Add " className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-soft">
+        <AskJarvisButton
+          prompt="Add "
+          className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-soft"
+        >
           <Plus className="h-4 w-4" /> Add
         </AskJarvisButton>
       </header>
 
       <nav className="-mx-1 flex gap-1.5 overflow-x-auto px-1" aria-label="Filter">
         {FILTERS.map((f) => (
-          <Link key={f.key} href={f.key === "all" ? "/plan" : `/plan?f=${f.key}`} className={cn("rounded-full px-4 py-2 text-sm whitespace-nowrap transition-colors", filter === f.key ? "bg-text text-bg" : "bg-surface text-text-2 shadow-soft hover:text-text")}>
+          <Link
+            key={f.key}
+            href={f.key === "all" ? "/plan" : `/plan?f=${f.key}`}
+            className={cn(
+              "rounded-full px-4 py-2 text-sm whitespace-nowrap transition-colors",
+              filter === f.key ? "bg-text text-bg" : "bg-surface text-text-2 shadow-soft hover:text-text",
+            )}
+          >
             {f.label}
           </Link>
         ))}
@@ -72,7 +85,9 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           return (
             <section key={date} id={date} className="scroll-mt-6">
               <h2 className="mb-2 flex items-baseline gap-2">
-                <span className={cn("text-[15px] font-semibold", diff === 0 && "text-accent")}>{diff === 0 ? "Today" : diff === 1 ? "Tomorrow" : formatDateStr(date, "EEEE")}</span>
+                <span className={cn("text-[15px] font-semibold", diff === 0 && "text-accent")}>
+                  {diff === 0 ? "Today" : diff === 1 ? "Tomorrow" : formatDateStr(date, "EEEE")}
+                </span>
                 <span className="text-sm text-muted">{formatDateStr(date, "MMM d")}</span>
               </h2>
               {items.length === 0 ? (
@@ -90,7 +105,11 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                             {i.title}
                           </p>
                           <p className="truncate text-sm text-muted">
-                            {i.allDay ? "Any time" : i.endsAt ? `${formatIn(i.startsAt, d.tz, "h:mm")}–${formatIn(i.endsAt, d.tz, "h:mm a")}` : formatIn(i.startsAt, d.tz, "h:mm a")}
+                            {i.allDay
+                              ? "Any time"
+                              : i.endsAt
+                                ? `${formatIn(i.startsAt, d.tz, "h:mm")}–${formatIn(i.endsAt, d.tz, "h:mm a")}`
+                                : formatIn(i.startsAt, d.tz, "h:mm a")}
                             {i.subtitle ? ` · ${i.subtitle}` : ""}
                           </p>
                         </div>
@@ -108,13 +127,19 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
 
       <div className="flex justify-between text-sm">
         {d.from > d.today ? (
-          <Link href={`/plan?${new URLSearchParams({ ...(filter !== "all" && { f: filter }), ...(addDaysStr(d.from, -7) > d.today && { date: addDaysStr(d.from, -7) }) })}`} className="rounded-full bg-surface px-4 py-2 shadow-soft">
+          <Link
+            href={`/plan?${new URLSearchParams({ ...(filter !== "all" && { f: filter }), ...(addDaysStr(d.from, -7) > d.today && { date: addDaysStr(d.from, -7) }) })}`}
+            className="rounded-full bg-surface px-4 py-2 shadow-soft"
+          >
             ← Earlier
           </Link>
         ) : (
           <span />
         )}
-        <Link href={`/plan?${new URLSearchParams({ ...(filter !== "all" && { f: filter }), date: addDaysStr(d.from, 7) })}`} className="rounded-full bg-surface px-4 py-2 shadow-soft">
+        <Link
+          href={`/plan?${new URLSearchParams({ ...(filter !== "all" && { f: filter }), date: addDaysStr(d.from, 7) })}`}
+          className="rounded-full bg-surface px-4 py-2 shadow-soft"
+        >
           Next week →
         </Link>
       </div>
@@ -124,12 +149,13 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           <h2 className="mb-2 text-[15px] font-semibold">Whenever you can</h2>
           <ul className="flex flex-col gap-1.5">
             {d.undated.map((t) => (
-              <li key={t.id} className="rounded-2xl bg-surface px-4 py-3 text-[15px] shadow-soft">{t.title}</li>
+              <li key={t.id} className="rounded-2xl bg-surface px-4 py-3 text-[15px] shadow-soft">
+                {t.title}
+              </li>
             ))}
           </ul>
         </section>
       )}
-
     </div>
   );
 }

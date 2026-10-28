@@ -45,7 +45,14 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
   const [aboutMe, setAboutMe] = useState("");
 
   const steps = useMemo<StepId[]>(
-    () => ["hello", "week", ...(stage !== "working" ? (["classes"] as const) : []), ...(stage !== "student" && stage ? (["job"] as const) : []), "money", "yours"],
+    () => [
+      "hello",
+      "week",
+      ...(stage !== "working" ? (["classes"] as const) : []),
+      ...(stage !== "student" && stage ? (["job"] as const) : []),
+      "money",
+      "yours",
+    ],
     [stage],
   );
   const step = steps[Math.min(index, steps.length - 1)];
@@ -56,7 +63,14 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
     () => {
       if (!panel.current || prefersReducedMotion() || (index === 0 && !isHydrated())) return;
       gsap.fromTo(panel.current, { x: 28 * dir.current, opacity: 0 }, { x: 0, opacity: 1, duration: MOTION.enter, ease: MOTION.ease });
-      gsap.from(panel.current.querySelectorAll("[data-anim]"), { y: 10, opacity: 0, duration: MOTION.enter, ease: MOTION.ease, stagger: MOTION.stagger, delay: 0.05 });
+      gsap.from(panel.current.querySelectorAll("[data-anim]"), {
+        y: 10,
+        opacity: 0,
+        duration: MOTION.enter,
+        ease: MOTION.ease,
+        stagger: MOTION.stagger,
+        delay: 0.05,
+      });
     },
     { dependencies: [index], scope: panel },
   );
@@ -81,7 +95,10 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
       const r = await completeOnboardingAction({
         lifeStage: stage ?? undefined,
         courses: stage === "working" ? [] : [...courses, ...(courseDraft.trim() ? [courseDraft.trim()] : [])],
-        job: stage !== "student" && job.name.trim() ? { name: job.name.trim(), hourlyRate: rate !== undefined && !Number.isNaN(rate) ? rate : undefined } : undefined,
+        job:
+          stage !== "student" && job.name.trim()
+            ? { name: job.name.trim(), hourlyRate: rate !== undefined && !Number.isNaN(rate) ? rate : undefined }
+            : undefined,
         checking: bal !== undefined ? { name: "Checking", balance: bal } : undefined,
         studyTime: studyTime ?? undefined,
         jarvisTone: tone,
@@ -110,7 +127,13 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
         )}
         <div className="flex items-center gap-1.5" aria-label={`Step ${index + 1} of ${steps.length}`}>
           {steps.map((s, i) => (
-            <span key={s} className={cn("h-1.5 rounded-full transition-all duration-300", i === index ? "w-6 bg-accent" : i < index ? "w-1.5 bg-accent/60" : "w-1.5 bg-surface-3")} />
+            <span
+              key={s}
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-300",
+                i === index ? "w-6 bg-accent" : i < index ? "w-1.5 bg-accent/60" : "w-1.5 bg-surface-3",
+              )}
+            />
           ))}
         </div>
         <button onClick={skipAll} disabled={pending} className="text-sm text-muted hover:text-text">
@@ -179,7 +202,14 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
                 addCourse();
               }}
             >
-              <Input value={courseDraft} onChange={(e) => setCourseDraft(e.target.value)} placeholder="e.g. Biology II" aria-label="Class name" maxLength={200} className="flex-1" />
+              <Input
+                value={courseDraft}
+                onChange={(e) => setCourseDraft(e.target.value)}
+                placeholder="e.g. Biology II"
+                aria-label="Class name"
+                maxLength={200}
+                className="flex-1"
+              />
               <Button type="submit" variant="secondary" aria-label="Add class" disabled={!courseDraft.trim()}>
                 <Plus className="h-4 w-4" />
               </Button>
@@ -188,7 +218,11 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
               {courses.map((c) => (
                 <li key={c} className="flex items-center gap-1.5 rounded-full bg-surface py-1.5 pr-2 pl-3.5 text-sm shadow-soft">
                   {c}
-                  <button onClick={() => setCourses((x) => x.filter((y) => y !== c))} aria-label={`Remove ${c}`} className="rounded-full p-0.5 text-muted hover:text-text">
+                  <button
+                    onClick={() => setCourses((x) => x.filter((y) => y !== c))}
+                    aria-label={`Remove ${c}`}
+                    className="rounded-full p-0.5 text-muted hover:text-text"
+                  >
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </li>
@@ -202,10 +236,22 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
             <Title sub="Used to estimate earnings from your shifts. Pay only counts as income once it's in your bank.">Where do you work?</Title>
             <div data-anim className="mt-6 flex flex-col gap-4">
               <Field label="Workplace" htmlFor="ob-job">
-                <Input id="ob-job" value={job.name} onChange={(e) => setJob((j) => ({ ...j, name: e.target.value }))} placeholder="Campus Library" maxLength={200} />
+                <Input
+                  id="ob-job"
+                  value={job.name}
+                  onChange={(e) => setJob((j) => ({ ...j, name: e.target.value }))}
+                  placeholder="Campus Library"
+                  maxLength={200}
+                />
               </Field>
               <Field label="Hourly pay (optional)" htmlFor="ob-rate">
-                <Input id="ob-rate" value={job.rate} onChange={(e) => setJob((j) => ({ ...j, rate: e.target.value }))} inputMode="decimal" placeholder="16.50" />
+                <Input
+                  id="ob-rate"
+                  value={job.rate}
+                  onChange={(e) => setJob((j) => ({ ...j, rate: e.target.value }))}
+                  inputMode="decimal"
+                  placeholder="16.50"
+                />
               </Field>
             </div>
           </>
@@ -213,7 +259,9 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
 
         {step === "money" && (
           <>
-            <Title sub="Type what your bank app shows right now. Automatic bank sync is coming; you can update this anytime.">What&apos;s in your checking?</Title>
+            <Title sub="Type what your bank app shows right now. Automatic bank sync is coming; you can update this anytime.">
+              What&apos;s in your checking?
+            </Title>
             <div data-anim className="mt-6">
               <Field label="Checking balance" htmlFor="ob-bal">
                 <Input id="ob-bal" value={balance} onChange={(e) => setBalance(e.target.value)} inputMode="decimal" placeholder="1,250.00" />
@@ -239,7 +287,14 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
               </Group>
               <div data-anim>
                 <Field label="Anything Jarvis should know about you? (optional)" htmlFor="ob-about">
-                  <Textarea id="ob-about" value={aboutMe} onChange={(e) => setAboutMe(e.target.value)} rows={2} maxLength={500} placeholder="I'm saving for a car and I hate early mornings." />
+                  <Textarea
+                    id="ob-about"
+                    value={aboutMe}
+                    onChange={(e) => setAboutMe(e.target.value)}
+                    rows={2}
+                    maxLength={500}
+                    placeholder="I'm saving for a car and I hate early mornings."
+                  />
                 </Field>
               </div>
             </div>
@@ -292,7 +347,15 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function Chips<T extends string>({ options, value, onChange }: { options: readonly (readonly [T, string])[]; value: T | null; onChange: (v: T | null) => void }) {
+function Chips<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: readonly (readonly [T, string])[];
+  value: T | null;
+  onChange: (v: T | null) => void;
+}) {
   return (
     <div className="flex flex-wrap gap-2" role="radiogroup">
       {options.map(([v, label]) => (
@@ -301,7 +364,10 @@ function Chips<T extends string>({ options, value, onChange }: { options: readon
           role="radio"
           aria-checked={value === v}
           onClick={() => onChange(value === v ? null : v)}
-          className={cn("rounded-full px-4 py-2 text-sm transition-all", value === v ? "bg-hero text-hero-text shadow-soft" : "bg-surface text-text-2 shadow-soft hover:text-text")}
+          className={cn(
+            "rounded-full px-4 py-2 text-sm transition-all",
+            value === v ? "bg-hero text-hero-text shadow-soft" : "bg-surface text-text-2 shadow-soft hover:text-text",
+          )}
         >
           {label}
         </button>

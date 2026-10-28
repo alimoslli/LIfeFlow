@@ -57,7 +57,12 @@ export function AppShell({
   }, []);
 
   const onJarvisPage = pathname.startsWith("/jarvis");
-  const initials = user.name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  const initials = user.name
+    .split(/\s+/)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
   const settingsActive = pathname.startsWith("/settings");
 
   return (
@@ -79,7 +84,10 @@ export function AppShell({
                   href={item.href}
                   data-tour={item.label.toLowerCase()}
                   aria-current={active ? "page" : undefined}
-                  className={cn("group relative flex w-16 flex-col items-center gap-1 rounded-2xl py-2.5 text-[11px] font-medium transition-colors", active ? "text-text" : "text-muted hover:text-text")}
+                  className={cn(
+                    "group relative flex w-16 flex-col items-center gap-1 rounded-2xl py-2.5 text-[11px] font-medium transition-colors",
+                    active ? "text-text" : "text-muted hover:text-text",
+                  )}
                 >
                   <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
                   {item.label}
@@ -91,7 +99,10 @@ export function AppShell({
             href="/settings"
             title={`${user.name} · Settings`}
             aria-label="Settings"
-            className={cn("mt-auto flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold transition-shadow", settingsActive ? "bg-accent text-accent-text" : "bg-surface-3 text-text-2 hover:shadow-soft")}
+            className={cn(
+              "mt-auto flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold transition-shadow",
+              settingsActive ? "bg-accent text-accent-text" : "bg-surface-3 text-text-2 hover:shadow-soft",
+            )}
           >
             {initials}
           </Link>
@@ -109,7 +120,10 @@ export function AppShell({
       </div>
 
       {/* Mobile tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-bg/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden" aria-label="Main">
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-bg/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+        aria-label="Main"
+      >
         <div ref={bar} className="relative mx-auto flex max-w-md items-stretch justify-around px-2">
           <span data-indicator className="pointer-events-none absolute top-[5px] left-0 h-8 w-14 rounded-full bg-accent-soft opacity-0" />
           {NAV.map((item) => {
@@ -128,8 +142,19 @@ export function AppShell({
               </Link>
             );
           })}
-          <Link href="/settings" aria-label="Settings" className={cn("flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10.5px] font-medium", settingsActive ? "text-accent" : "text-muted")}>
-            <span className={cn("flex h-[22px] w-[22px] items-center justify-center rounded-full text-[9px] font-semibold", settingsActive ? "bg-accent text-accent-text" : "bg-surface-3 text-text-2")}>{initials}</span>
+          <Link
+            href="/settings"
+            aria-label="Settings"
+            className={cn("flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10.5px] font-medium", settingsActive ? "text-accent" : "text-muted")}
+          >
+            <span
+              className={cn(
+                "flex h-[22px] w-[22px] items-center justify-center rounded-full text-[9px] font-semibold",
+                settingsActive ? "bg-accent text-accent-text" : "bg-surface-3 text-text-2",
+              )}
+            >
+              {initials}
+            </span>
             You
           </Link>
         </div>
@@ -167,7 +192,10 @@ function useSlidingIndicator(ref: React.RefObject<HTMLElement | null>, pathname:
       gsap.to(ind, { opacity: 0, duration: 0.15 });
       return;
     }
-    const target = axis === "x" ? { x: active.offsetLeft + active.offsetWidth / 2 - ind.offsetWidth / 2, opacity: 1 } : { y: active.offsetTop, height: active.offsetHeight, opacity: 1 };
+    const target =
+      axis === "x"
+        ? { x: active.offsetLeft + active.offsetWidth / 2 - ind.offsetWidth / 2, opacity: 1 }
+        : { y: active.offsetTop, height: active.offsetHeight, opacity: 1 };
     if (!placed.current || prefersReducedMotion()) {
       gsap.set(ind, target);
       placed.current = true;

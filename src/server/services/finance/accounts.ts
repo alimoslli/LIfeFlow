@@ -11,7 +11,12 @@ export const accountInputSchema = z.object({
   type: z.enum(ACCOUNT_TYPES),
   subtype: z.string().trim().max(60).nullish(),
   institutionName: z.string().trim().max(120).nullish(),
-  mask: z.string().trim().regex(/^\d{2,4}$/).nullish().or(z.literal("").transform(() => null)),
+  mask: z
+    .string()
+    .trim()
+    .regex(/^\d{2,4}$/)
+    .nullish()
+    .or(z.literal("").transform(() => null)),
   currentBalanceCents: z.number().int(),
   creditLimitCents: z.number().int().min(0).nullish(),
   includeInNetWorth: z.boolean().default(true),
@@ -70,8 +75,18 @@ export type BalanceSummary = {
   oldestBalanceUpdate: Date | null;
 };
 
-export function summarizeBalances(accts: { type: AccountType; currentBalanceCents: number; includeInNetWorth: boolean; source: string; balanceUpdatedAt: Date }[]): BalanceSummary {
-  const s: BalanceSummary = { cashCents: 0, creditOwedCents: 0, loansOwedCents: 0, investmentsCents: 0, netWorthCents: 0, bySource: {}, oldestBalanceUpdate: null };
+export function summarizeBalances(
+  accts: { type: AccountType; currentBalanceCents: number; includeInNetWorth: boolean; source: string; balanceUpdatedAt: Date }[],
+): BalanceSummary {
+  const s: BalanceSummary = {
+    cashCents: 0,
+    creditOwedCents: 0,
+    loansOwedCents: 0,
+    investmentsCents: 0,
+    netWorthCents: 0,
+    bySource: {},
+    oldestBalanceUpdate: null,
+  };
   for (const a of accts) {
     if (a.type === "depository" || a.type === "cash") s.cashCents += a.currentBalanceCents;
     if (a.type === "credit") s.creditOwedCents += a.currentBalanceCents;

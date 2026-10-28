@@ -1,17 +1,6 @@
 import { and, asc, eq, gt, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { z } from "zod";
-import {
-  DATE_RE,
-  TIME_RE,
-  addDaysStr,
-  daysBetween,
-  dayOfWeek,
-  localDateOf,
-  localTimeOf,
-  localToInstant,
-  startOfLocalDay,
-  weekStart,
-} from "@/lib/dates";
+import { DATE_RE, TIME_RE, addDaysStr, daysBetween, dayOfWeek, localDateOf, localTimeOf, localToInstant, startOfLocalDay, weekStart } from "@/lib/dates";
 import { calendarEvents, courses, type EventKind, type Recurrence, type DataSource } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound, ServiceError } from "./errors";
@@ -112,7 +101,10 @@ export async function deleteEvent(scope: UserScope, id: string) {
 }
 
 export async function getEvent(scope: UserScope, id: string) {
-  const [row] = await scope.tx.select().from(calendarEvents).where(and(eq(calendarEvents.id, id), eq(calendarEvents.userId, scope.userId)));
+  const [row] = await scope.tx
+    .select()
+    .from(calendarEvents)
+    .where(and(eq(calendarEvents.id, id), eq(calendarEvents.userId, scope.userId)));
   if (!row) throw notFound("Event");
   return row;
 }
@@ -182,9 +174,7 @@ export async function listEventsInRange(scope: UserScope, tz: string, from: stri
       ),
     )
     .orderBy(asc(calendarEvents.startsAt));
-  return rows.flatMap(({ event, courseColor, courseName }) =>
-    expandOccurrences(event, from, to, tz).map((o) => ({ ...event, ...o, courseColor, courseName })),
-  );
+  return rows.flatMap(({ event, courseColor, courseName }) => expandOccurrences(event, from, to, tz).map((o) => ({ ...event, ...o, courseColor, courseName })));
 }
 
 const KIND_COLORS: Record<string, string> = {
@@ -318,4 +308,3 @@ export function freeSlots(items: AgendaItem[], date: string, tz: string, dayStar
   if (end - cursor >= minMinutes * 60_000) slots.push({ startsAt: new Date(cursor), endsAt: new Date(end), minutes: (end - cursor) / 60_000 });
   return slots;
 }
-

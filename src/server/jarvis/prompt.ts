@@ -88,7 +88,9 @@ export function buildContext(p: PromptInput): string {
   const instructions = p.memories.filter((m) => m.category === "instruction");
   const facts = p.memories.filter((m) => m.category !== "instruction");
   const line = (m: PromptMemory) => `- [${m.id}] (${m.category}; ${BASIS_LABEL[m.basis]}) ${m.content}`;
-  const more = p.otherMemoryCount ? `\n(${p.otherMemoryCount} other saved ${p.otherMemoryCount === 1 ? "memory wasn't" : "memories weren't"} relevant to this request; call list_memories if you need them.)` : "";
+  const more = p.otherMemoryCount
+    ? `\n(${p.otherMemoryCount} other saved ${p.otherMemoryCount === 1 ? "memory wasn't" : "memories weren't"} relevant to this request; call list_memories if you need them.)`
+    : "";
 
   return `# Right now
 User: ${p.userName}. Now: ${formatIn(p.now, p.tz, "EEEE, MMMM d, yyyy 'at' h:mm a")} (${p.tz}). Today is ${today}.

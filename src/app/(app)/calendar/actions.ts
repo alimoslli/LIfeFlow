@@ -17,7 +17,12 @@ export async function createEventAction(_p: ActionState, fd: FormData): Promise<
       location: f.location,
       description: f.description,
       courseId: f.courseId,
-      recurrence: f.repeat === "weekly" ? { freq: "weekly", byDay: days.length ? days : undefined, until: f.until } : f.repeat === "daily" ? { freq: "daily", until: f.until } : null,
+      recurrence:
+        f.repeat === "weekly"
+          ? { freq: "weekly", byDay: days.length ? days : undefined, until: f.until }
+          : f.repeat === "daily"
+            ? { freq: "daily", until: f.until }
+            : null,
     });
   });
 }

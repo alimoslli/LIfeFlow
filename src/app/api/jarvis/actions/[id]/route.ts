@@ -34,12 +34,19 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     }
     const { action, status, result } = outcome;
     const message =
-      status === "executed" ? `Confirmed and done: ${action.summary.replace(/\?$/, "")}.` : status === "cancelled" ? "Cancelled — nothing was changed." : (result.error ?? "Failed.");
+      status === "executed"
+        ? `Confirmed and done: ${action.summary.replace(/\?$/, "")}.`
+        : status === "cancelled"
+          ? "Cancelled — nothing was changed."
+          : (result.error ?? "Failed.");
     await withUser(user.id, async (s) => {
       // Keep the transcript truthful for the model's next turn.
       await s.tx
         .update(messages)
-        .set({ toolResult: { ...result, data: { status, confirmedByUser: parsed.data.decision === "confirm", result: result.data } }, status: result.ok ? "complete" : "error" })
+        .set({
+          toolResult: { ...result, data: { status, confirmedByUser: parsed.data.decision === "confirm", result: result.data } },
+          status: result.ok ? "complete" : "error",
+        })
         .where(and(eq(messages.conversationId, action.conversationId), eq(messages.toolCallId, action.toolCallId), eq(messages.userId, s.userId)));
       await s.tx.insert(messages).values({ userId: s.userId, conversationId: action.conversationId, role: "assistant", content: message });
       await audit(s, "user", `jarvis.action.${status}`, { type: "pending_action", id }, { tool: action.toolName });

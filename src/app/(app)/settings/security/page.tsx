@@ -15,7 +15,11 @@ export const metadata: Metadata = { title: "Security" };
 export default async function SecuritySettings() {
   const d = await withCurrentUser(async (s, u) => {
     const events = await s.tx.select().from(auditEvents).where(eq(auditEvents.userId, s.userId)).orderBy(desc(auditEvents.createdAt)).limit(30);
-    const active = await getDb().select({ createdAt: sessions.createdAt, lastSeenAt: sessions.lastSeenAt, userAgent: sessions.userAgent }).from(sessions).where(eq(sessions.userId, u.id)).orderBy(desc(sessions.lastSeenAt));
+    const active = await getDb()
+      .select({ createdAt: sessions.createdAt, lastSeenAt: sessions.lastSeenAt, userAgent: sessions.userAgent })
+      .from(sessions)
+      .where(eq(sessions.userId, u.id))
+      .orderBy(desc(sessions.lastSeenAt));
     return { events, active, tz: u.timezone };
   });
   return (
@@ -33,7 +37,16 @@ export default async function SecuritySettings() {
         </ActionForm>
       </Card>
       <Card>
-        <CardHeader title={`Active sessions · ${d.active.length}`} action={d.active.length > 1 ? <ActionButton action={signOutOthersAction} className="text-xs font-medium text-accent hover:underline">Sign out others</ActionButton> : undefined} />
+        <CardHeader
+          title={`Active sessions · ${d.active.length}`}
+          action={
+            d.active.length > 1 ? (
+              <ActionButton action={signOutOthersAction} className="text-xs font-medium text-accent hover:underline">
+                Sign out others
+              </ActionButton>
+            ) : undefined
+          }
+        />
         <ul className="px-5 pb-4 text-sm">
           {d.active.map((s, i) => (
             <li key={i} className="flex justify-between gap-3 py-1.5">

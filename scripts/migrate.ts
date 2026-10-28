@@ -12,13 +12,9 @@ export async function runMigrations(url: string) {
   const pool = new Pool({ connectionString: url, max: 1 });
   try {
     await migrate(drizzle(pool), { migrationsFolder: "./drizzle" });
-    const { rows } = await pool.query(
-      "select rolsuper, rolbypassrls from pg_roles where rolname = current_user",
-    );
+    const { rows } = await pool.query("select rolsuper, rolbypassrls from pg_roles where rolname = current_user");
     if (rows[0]?.rolsuper || rows[0]?.rolbypassrls) {
-      console.warn(
-        "WARNING: the database role is a superuser or has BYPASSRLS. Row-level security will NOT be enforced. Use a dedicated non-superuser role.",
-      );
+      console.warn("WARNING: the database role is a superuser or has BYPASSRLS. Row-level security will NOT be enforced. Use a dedicated non-superuser role.");
     }
   } finally {
     await pool.end();

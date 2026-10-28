@@ -2,7 +2,17 @@
 import { redirect } from "next/navigation";
 import { formNum, formObject, mutate, type ActionState } from "@/server/actions";
 import { ServiceError } from "@/server/services/errors";
-import { addMaterial, createAssignment, createCourse, deleteAssignment, deleteCourse, deleteMaterial, getAssignment, updateAssignment, updateCourse } from "@/server/services/school";
+import {
+  addMaterial,
+  createAssignment,
+  createCourse,
+  deleteAssignment,
+  deleteCourse,
+  deleteMaterial,
+  getAssignment,
+  updateAssignment,
+  updateCourse,
+} from "@/server/services/school";
 
 const courseFields = (f: Record<string, string | undefined>) => ({
   name: f.name ?? "",

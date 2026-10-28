@@ -28,9 +28,7 @@ describe("user data isolation", () => {
   it("RLS rejects inserting rows for another user", async () => {
     const alice = await makeUser();
     const bob = await makeUser();
-    const err = await bob
-      .run(({ tx }) => tx.insert(tasks).values({ userId: alice.user.id, title: "spoofed" }))
-      .catch((e: Error) => e);
+    const err = await bob.run(({ tx }) => tx.insert(tasks).values({ userId: alice.user.id, title: "spoofed" })).catch((e: Error) => e);
     expect(String((err as Error & { cause?: Error }).cause?.message)).toMatch(/row-level security/);
   });
 

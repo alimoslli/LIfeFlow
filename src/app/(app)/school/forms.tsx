@@ -6,13 +6,27 @@ import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import type { ActionState } from "@/server/actions";
 
 type Action = (p: ActionState, fd: FormData) => Promise<ActionState>;
-type Course = { id: string; name: string; code: string | null; term?: string | null; instructorName?: string | null; instructorEmail?: string | null; location?: string | null; meetingInfo?: string | null; url?: string | null };
+type Course = {
+  id: string;
+  name: string;
+  code: string | null;
+  term?: string | null;
+  instructorName?: string | null;
+  instructorEmail?: string | null;
+  location?: string | null;
+  meetingInfo?: string | null;
+  url?: string | null;
+};
 
 const KINDS = ["assignment", "exam", "quiz", "project", "reading", "lab", "discussion", "other"];
 
 export function CourseDialog({ action, course, trigger }: { action: Action; course?: Course; trigger: string }) {
   return (
-    <Dialog trigger={trigger} title={course ? "Edit course" : "Add a course"} triggerProps={{ variant: course ? "secondary" : "primary", size: course ? "sm" : "md" }}>
+    <Dialog
+      trigger={trigger}
+      title={course ? "Edit course" : "Add a course"}
+      triggerProps={{ variant: course ? "secondary" : "primary", size: course ? "sm" : "md" }}
+    >
       {(close) => (
         <ActionForm action={action} onSuccess={close}>
           <div className="grid grid-cols-[1fr_120px] gap-3">
@@ -52,7 +66,12 @@ export function CourseDialog({ action, course, trigger }: { action: Action; cour
 
 export function AssignmentDialog({ action, courses, defaultCourseId }: { action: Action; courses: Course[]; defaultCourseId?: string }) {
   return (
-    <Dialog trigger="Add assignment" title="Add an assignment" description="Or paste details into Jarvis to add many at once." triggerProps={{ variant: "secondary" }}>
+    <Dialog
+      trigger="Add assignment"
+      title="Add an assignment"
+      description="Or paste details into Jarvis to add many at once."
+      triggerProps={{ variant: "secondary" }}
+    >
       {(close) => (
         <ActionForm action={action} onSuccess={close}>
           <Field label="Course" htmlFor="a-course">

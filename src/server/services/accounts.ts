@@ -25,11 +25,7 @@ export function isValidTimeZone(tz: string) {
   }
 }
 
-export async function registerUser(
-  db: Database,
-  input: z.input<typeof signupSchema>,
-  opts: { accountKind?: "standard" | "demo" } = {},
-) {
+export async function registerUser(db: Database, input: z.input<typeof signupSchema>, opts: { accountKind?: "standard" | "demo" } = {}) {
   const data = signupSchema.parse(input);
   const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, data.email));
   if (existing.length) throw new AuthError("An account with that email already exists.");
@@ -68,7 +64,10 @@ export const profileSchema = z.object({
   name: z.string().trim().min(1).max(80),
   timezone: z.string().max(64).refine(isValidTimeZone, "Unknown time zone"),
   studyTime: z.enum(["morning", "afternoon", "evening", "night"]).optional(),
-  weekStartsOn: z.coerce.number().pipe(z.union([z.literal(0), z.literal(1)])).optional(),
+  weekStartsOn: z.coerce
+    .number()
+    .pipe(z.union([z.literal(0), z.literal(1)]))
+    .optional(),
   jarvisTone: z.enum(["concise", "balanced", "detailed"]).optional(),
 });
 
@@ -77,7 +76,11 @@ export async function updateProfile(db: Database, userId: string, input: z.input
   const [current] = await db.select().from(users).where(eq(users.id, userId));
   await db
     .update(users)
-    .set({ name: d.name, timezone: d.timezone, preferences: { ...current.preferences, studyTime: d.studyTime, weekStartsOn: d.weekStartsOn, jarvisTone: d.jarvisTone } })
+    .set({
+      name: d.name,
+      timezone: d.timezone,
+      preferences: { ...current.preferences, studyTime: d.studyTime, weekStartsOn: d.weekStartsOn, jarvisTone: d.jarvisTone },
+    })
     .where(eq(users.id, userId));
 }
 
@@ -95,7 +98,10 @@ export async function changePassword(db: Database, userId: string, current: stri
   if (!user || !(await verifyPassword(current, user.passwordHash))) throw new AuthError("Your current password is incorrect.");
   const parsed = signupSchema.shape.password.safeParse(next);
   if (!parsed.success) throw new AuthError(parsed.error.issues[0].message);
-  await db.update(users).set({ passwordHash: await hashPassword(next) }).where(eq(users.id, userId));
+  await db
+    .update(users)
+    .set({ passwordHash: await hashPassword(next) })
+    .where(eq(users.id, userId));
 }
 
 /** Permanently deletes the user and (via ON DELETE CASCADE) every row they own. */

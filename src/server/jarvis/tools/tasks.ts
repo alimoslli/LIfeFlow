@@ -6,7 +6,21 @@ import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
 
 const priority = z.enum(["low", "medium", "high", "urgent"]);
 
-export function presentTask(t: { id: string; title: string; status: string; priority: string; dueAt: Date | null; dueAllDay: boolean; notes?: string | null; parentId?: string | null; courseId?: string | null; projectId?: string | null }, ctx: ToolContext) {
+export function presentTask(
+  t: {
+    id: string;
+    title: string;
+    status: string;
+    priority: string;
+    dueAt: Date | null;
+    dueAllDay: boolean;
+    notes?: string | null;
+    parentId?: string | null;
+    courseId?: string | null;
+    projectId?: string | null;
+  },
+  ctx: ToolContext,
+) {
   return {
     id: t.id,
     title: t.title,
@@ -63,7 +77,8 @@ export const taskTools = [
         for (const t of a.tasks) {
           const task = await createTask(s, ctx.tz, t, "jarvis");
           const subs = [];
-          for (const title of t.subtasks ?? []) subs.push(await createTask(s, ctx.tz, { title, parentId: task.id, courseId: t.courseId, projectId: t.projectId }, "jarvis"));
+          for (const title of t.subtasks ?? [])
+            subs.push(await createTask(s, ctx.tz, { title, parentId: task.id, courseId: t.courseId, projectId: t.projectId }, "jarvis"));
           out.push({ ...presentTask(task, ctx), subtasks: subs.map((x) => ({ id: x.id, title: x.title })) });
         }
         return out;

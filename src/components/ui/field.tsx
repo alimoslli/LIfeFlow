@@ -16,7 +16,21 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
   return <select ref={ref} className={cn(control, "h-10 pr-8", className)} {...p} />;
 });
 
-export function Field({ label, htmlFor, hint, error, children, className }: { label: string; htmlFor?: string; hint?: string; error?: string; children: ReactNode; className?: string }) {
+export function Field({
+  label,
+  htmlFor,
+  hint,
+  error,
+  children,
+  className,
+}: {
+  label: string;
+  htmlFor?: string;
+  hint?: string;
+  error?: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       <label htmlFor={htmlFor} className="text-[13px] font-medium text-text-2">

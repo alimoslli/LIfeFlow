@@ -27,7 +27,7 @@ describe("explicit memory requests (checked against the user's own words)", () =
     "what's on my calendar tomorrow",
     "I'm vegetarian, any cheap dinner ideas?",
     "add a task to remember the milk", // "remember" inside a task title is not a memory request
-    "/tool save_memory {\"content\":\"Prefers studying in the morning.\"}",
+    '/tool save_memory {"content":"Prefers studying in the morning."}',
   ];
   it.each(requests)("treats %j as an explicit request", (t) => expect(explicitMemoryRequest(t)).toBe(true));
   it.each(notRequests)("does not treat %j as an explicit request", (t) => expect(explicitMemoryRequest(t)).toBe(false));

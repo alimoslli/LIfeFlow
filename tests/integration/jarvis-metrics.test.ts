@@ -32,7 +32,13 @@ describe("Jarvis run metrics", () => {
     const { session, run } = await setup();
     const responder: Responder = ({ step }) =>
       step === 0
-        ? { usage, toolCalls: [{ name: "create_tasks", args: { tasks: [{ title: "Buy stamps" }] } }, { name: "get_task", args: { id: "00000000-0000-4000-8000-000000000000" } }] }
+        ? {
+            usage,
+            toolCalls: [
+              { name: "create_tasks", args: { tasks: [{ title: "Buy stamps" }] } },
+              { name: "get_task", args: { id: "00000000-0000-4000-8000-000000000000" } },
+            ],
+          }
         : { usage, text: "Added it." };
     const r = await turn(session, "add buy stamps", new ScriptedProvider(responder), { inputPerMTok: 2, outputPerMTok: 8 });
     expect(r.events.at(-1)).toMatchObject({ type: "done", runId: r.runId });
@@ -63,10 +69,18 @@ describe("Jarvis run metrics", () => {
 
   it("counts confirmations separately from tool errors and leaves unknown cost null", async () => {
     const { session, run } = await setup();
-    const created = await turn(session, "x", new ScriptedProvider(({ step }) => (step === 0 ? { toolCalls: [{ name: "create_tasks", args: { tasks: [{ title: "Old" }] } }] } : { text: "ok" })));
+    const created = await turn(
+      session,
+      "x",
+      new ScriptedProvider(({ step }) => (step === 0 ? { toolCalls: [{ name: "create_tasks", args: { tasks: [{ title: "Old" }] } }] } : { text: "ok" })),
+    );
     void created;
     const [task] = await run((s) => s.tx.query.tasks.findMany());
-    const r = await turn(session, "delete it", new ScriptedProvider(({ step }) => (step === 0 ? { toolCalls: [{ name: "delete_task", args: { id: task.id } }] } : { text: "Press Confirm." })));
+    const r = await turn(
+      session,
+      "delete it",
+      new ScriptedProvider(({ step }) => (step === 0 ? { toolCalls: [{ name: "delete_task", args: { id: task.id } }] } : { text: "Press Confirm." })),
+    );
     const [row] = await run((s) => s.tx.select().from(jarvisRuns).where(eq(jarvisRuns.id, r.runId!)));
     expect(row).toMatchObject({ confirmations: 1, toolErrors: 0, costMicros: null, inputTokens: null });
   });

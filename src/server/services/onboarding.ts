@@ -50,7 +50,12 @@ export async function completeOnboarding(scope: UserScope, input: OnboardingInpu
     await createEmployer(scope, { name: d.job.name, payType: "hourly", hourlyRateCents: d.job.hourlyRate == null ? null : Math.round(d.job.hourlyRate * 100) });
   }
   if (d.checking) {
-    await createManualAccount(scope, { name: d.checking.name, type: "depository", subtype: "checking", currentBalanceCents: Math.round(d.checking.balance * 100) });
+    await createManualAccount(scope, {
+      name: d.checking.name,
+      type: "depository",
+      subtype: "checking",
+      currentBalanceCents: Math.round(d.checking.balance * 100),
+    });
   }
   if (d.aboutMe && d.aboutMe.length >= 3) {
     await createMemory(scope, { content: d.aboutMe, category: "fact" }, "user");
@@ -60,7 +65,10 @@ export async function completeOnboarding(scope: UserScope, input: OnboardingInpu
 }
 
 /** Marks setup finished (also used by "Skip setup") and queues the guided tour. */
-export async function finishOnboarding(scope: UserScope, prefs: Partial<Pick<typeof users.$inferSelect.preferences, "lifeStage" | "studyTime" | "jarvisTone">> = {}) {
+export async function finishOnboarding(
+  scope: UserScope,
+  prefs: Partial<Pick<typeof users.$inferSelect.preferences, "lifeStage" | "studyTime" | "jarvisTone">> = {},
+) {
   const [u] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
   const defined = Object.fromEntries(Object.entries(prefs).filter(([, v]) => v !== undefined));
   await scope.tx
@@ -71,5 +79,8 @@ export async function finishOnboarding(scope: UserScope, prefs: Partial<Pick<typ
 
 export async function setTourState(scope: UserScope, tour: "pending" | "done") {
   const [u] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
-  await scope.tx.update(users).set({ preferences: { ...u.preferences, tour } }).where(eq(users.id, scope.userId));
+  await scope.tx
+    .update(users)
+    .set({ preferences: { ...u.preferences, tour } })
+    .where(eq(users.id, scope.userId));
 }

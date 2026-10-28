@@ -53,7 +53,11 @@ const tones: Record<Tone, string> = {
 };
 
 export function Badge({ children, tone = "neutral", className }: { children: ReactNode; tone?: Tone; className?: string }) {
-  return <span className={cn("inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] leading-4 font-medium whitespace-nowrap", tones[tone], className)}>{children}</span>;
+  return (
+    <span className={cn("inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] leading-4 font-medium whitespace-nowrap", tones[tone], className)}>
+      {children}
+    </span>
+  );
 }
 
 /** Labels where data came from, so demo / manual / synced records are never confused. */
@@ -74,11 +78,28 @@ export function SourceBadge({ source }: { source: string }) {
   return <Badge tone={m.tone}>{m.label}</Badge>;
 }
 
-export function Progress({ value, tone = "accent", className, label }: { value: number; tone?: "accent" | "danger" | "warning"; className?: string; label?: string }) {
+export function Progress({
+  value,
+  tone = "accent",
+  className,
+  label,
+}: {
+  value: number;
+  tone?: "accent" | "danger" | "warning";
+  className?: string;
+  label?: string;
+}) {
   const pct = Math.max(0, Math.min(100, value));
   const color = tone === "danger" ? "bg-danger" : tone === "warning" ? "bg-warning" : "bg-accent";
   return (
-    <div className={cn("h-1.5 w-full overflow-hidden rounded-full bg-surface-3", className)} role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label={label}>
+    <div
+      className={cn("h-1.5 w-full overflow-hidden rounded-full bg-surface-3", className)}
+      role="progressbar"
+      aria-valuenow={Math.round(pct)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={label}
+    >
       <div className={cn("h-full rounded-full transition-[width] duration-500", color)} style={{ width: `${pct}%` }} />
     </div>
   );
@@ -115,6 +136,13 @@ export function Tabs({ items, current }: { items: { href: string; label: string;
 }
 
 export function Money({ cents, signed, className, compact }: { cents: number; signed?: boolean; className?: string; compact?: boolean }) {
-  const fmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", signDisplay: signed ? "exceptZero" : "auto", notation: compact ? "compact" : "standard", minimumFractionDigits: compact ? 0 : 2, maximumFractionDigits: compact ? 1 : 2 });
+  const fmt = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    signDisplay: signed ? "exceptZero" : "auto",
+    notation: compact ? "compact" : "standard",
+    minimumFractionDigits: compact ? 0 : 2,
+    maximumFractionDigits: compact ? 1 : 2,
+  });
   return <span className={cn("tabular", signed && cents > 0 && "text-success", className)}>{fmt.format(cents / 100)}</span>;
 }

@@ -49,7 +49,9 @@ export function CashflowChart({ data }: { data: CashflowPoint[] }) {
                 <td className="py-1.5">{d.label}</td>
                 <td className="py-1.5 text-right">{formatCents(d.incomeCents)}</td>
                 <td className="py-1.5 text-right">{formatCents(d.spendingCents)}</td>
-                <td className={cn("py-1.5 text-right", d.incomeCents - d.spendingCents < 0 && "text-danger")}>{formatCents(d.incomeCents - d.spendingCents, { signed: true })}</td>
+                <td className={cn("py-1.5 text-right", d.incomeCents - d.spendingCents < 0 && "text-danger")}>
+                  {formatCents(d.incomeCents - d.spendingCents, { signed: true })}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -66,7 +68,11 @@ export function CashflowChart({ data }: { data: CashflowPoint[] }) {
           <div className="relative flex-1">
             <div className="absolute inset-x-0 top-0" style={{ height: H }}>
               {ticks.map((t) => (
-                <div key={t} className={cn("absolute inset-x-0 border-t", t === 0 ? "border-border-strong" : "border-border/60")} style={{ top: H - (t / top) * H }} />
+                <div
+                  key={t}
+                  className={cn("absolute inset-x-0 border-t", t === 0 ? "border-border-strong" : "border-border/60")}
+                  style={{ top: H - (t / top) * H }}
+                />
               ))}
             </div>
             <div className="relative flex items-end justify-around gap-1" style={{ height: H }} onMouseLeave={() => setHover(null)}>
@@ -81,8 +87,14 @@ export function CashflowChart({ data }: { data: CashflowPoint[] }) {
                   aria-label={`${d.label}: income ${formatCents(d.incomeCents)}, spending ${formatCents(d.spendingCents)}`}
                 >
                   <span className={cn("absolute inset-0 rounded-md transition-colors", hover === i && "bg-surface-2")} />
-                  <span className="relative w-[min(18px,30%)] rounded-t-[4px] bg-series-income" style={{ height: `${(Math.max(0, d.incomeCents) / top) * 100}%` }} />
-                  <span className="relative w-[min(18px,30%)] rounded-t-[4px] bg-series-spend" style={{ height: `${(Math.max(0, d.spendingCents) / top) * 100}%` }} />
+                  <span
+                    className="relative w-[min(18px,30%)] rounded-t-[4px] bg-series-income"
+                    style={{ height: `${(Math.max(0, d.incomeCents) / top) * 100}%` }}
+                  />
+                  <span
+                    className="relative w-[min(18px,30%)] rounded-t-[4px] bg-series-spend"
+                    style={{ height: `${(Math.max(0, d.spendingCents) / top) * 100}%` }}
+                  />
                 </button>
               ))}
             </div>
@@ -102,7 +114,10 @@ export function CashflowChart({ data }: { data: CashflowPoint[] }) {
                 <Row swatch="bg-series-income" label="Income" value={money(data[hover].incomeCents)} />
                 <Row swatch="bg-series-spend" label="Spending" value={money(data[hover].spendingCents)} />
                 <p className="mt-1 border-t border-border pt-1 text-text-2">
-                  Net <strong className="tabular font-semibold text-text">{formatCents(data[hover].incomeCents - data[hover].spendingCents, { signed: true })}</strong>
+                  Net{" "}
+                  <strong className="tabular font-semibold text-text">
+                    {formatCents(data[hover].incomeCents - data[hover].spendingCents, { signed: true })}
+                  </strong>
                 </p>
               </div>
             )}

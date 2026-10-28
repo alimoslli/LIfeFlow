@@ -24,7 +24,11 @@ export function toResponsesInput(history: ChatItem[]): ResponseInputItem[] {
           role: "user",
           content: [
             { type: "input_text", text: item.text || "(no text)" },
-            ...(item.images ?? []).map((img) => ({ type: "input_image" as const, detail: "auto" as const, image_url: `data:${img.mimeType};base64,${img.base64}` })),
+            ...(item.images ?? []).map((img) => ({
+              type: "input_image" as const,
+              detail: "auto" as const,
+              image_url: `data:${img.mimeType};base64,${img.base64}`,
+            })),
           ],
         };
       case "assistant":
@@ -37,7 +41,15 @@ export function toResponsesInput(history: ChatItem[]): ResponseInputItem[] {
   });
 }
 
-type ResponsesUsage = { input_tokens?: number; output_tokens?: number; input_tokens_details?: { cached_tokens?: number } | null; output_tokens_details?: { reasoning_tokens?: number } | null } | null | undefined;
+type ResponsesUsage =
+  | {
+      input_tokens?: number;
+      output_tokens?: number;
+      input_tokens_details?: { cached_tokens?: number } | null;
+      output_tokens_details?: { reasoning_tokens?: number } | null;
+    }
+  | null
+  | undefined;
 
 /** Normalizes Responses API usage; undefined when the server didn't report it. */
 export function toUsage(u: ResponsesUsage): TokenUsage | undefined {

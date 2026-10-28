@@ -40,7 +40,17 @@ export function CategoryOptions({ categories }: { categories: (Opt & { parentId:
   );
 }
 
-export function AddTransactionDialog({ action, accounts, categories, today }: { action: Action; accounts: Opt[]; categories: (Opt & { parentId: string | null })[]; today: string }) {
+export function AddTransactionDialog({
+  action,
+  accounts,
+  categories,
+  today,
+}: {
+  action: Action;
+  accounts: Opt[];
+  categories: (Opt & { parentId: string | null })[];
+  today: string;
+}) {
   return (
     <Dialog
       trigger={
@@ -104,7 +114,16 @@ export function AddTransactionDialog({ action, accounts, categories, today }: { 
 
 export function ImportCsvDialog({ action, accounts }: { action: Action; accounts: Opt[] }) {
   return (
-    <Dialog trigger={<><Upload className="h-4 w-4 text-muted" /> Import CSV</>} title="Import transactions" description="Columns: date, description, amount (negative = money out). Optional: category, merchant. Re-importing the same file won't create duplicates." triggerProps={{ variant: "ghost", className: "h-9 w-full !justify-start rounded-xl px-3 font-normal text-text" }}>
+    <Dialog
+      trigger={
+        <>
+          <Upload className="h-4 w-4 text-muted" /> Import CSV
+        </>
+      }
+      title="Import transactions"
+      description="Columns: date, description, amount (negative = money out). Optional: category, merchant. Re-importing the same file won't create duplicates."
+      triggerProps={{ variant: "ghost", className: "h-9 w-full !justify-start rounded-xl px-3 font-normal text-text" }}
+    >
       {() => (
         <ActionForm action={action} showSuccess>
           <Field label="Into account" htmlFor="i-acct">

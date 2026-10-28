@@ -135,13 +135,7 @@ export const auditEvents = pgTable(
 // ---------------------------------------------------------------------------
 // integrations & sync
 
-export type IntegrationProvider =
-  | "plaid"
-  | "canvas"
-  | "ukg"
-  | "google_calendar"
-  | "gmail"
-  | "outlook";
+export type IntegrationProvider = "plaid" | "canvas" | "ukg" | "google_calendar" | "gmail" | "outlook";
 export type IntegrationStatus = "connected" | "error" | "pending" | "disconnected";
 
 export const integrations = pgTable(
@@ -156,17 +150,17 @@ export const integrations = pgTable(
     externalId: text("external_id"),
     /** AES-256-GCM ciphertext (see server/crypto.ts). Never returned to the client. */
     encryptedCredentials: text("encrypted_credentials"),
-    scopes: text("scopes").array().notNull().default(sql`'{}'::text[]`),
+    scopes: text("scopes")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     lastSyncedAt: tstz("last_synced_at"),
     lastError: text("last_error"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [
-    uniqueIndex("integrations_user_provider_ext_uq").on(t.userId, t.provider, t.externalId),
-    ownerPolicy(),
-  ],
+  (t) => [uniqueIndex("integrations_user_provider_ext_uq").on(t.userId, t.provider, t.externalId), ownerPolicy()],
 );
 
 export const syncJobs = pgTable(
@@ -252,14 +246,7 @@ export const categories = pgTable(
  * investment        contributions/withdrawals: reported separately
  * adjustment        balance corrections: excluded
  */
-export type TransactionKind =
-  | "income"
-  | "expense"
-  | "transfer"
-  | "refund"
-  | "reimbursement"
-  | "investment"
-  | "adjustment";
+export type TransactionKind = "income" | "expense" | "transfer" | "refund" | "reimbursement" | "investment" | "adjustment";
 
 export const transactions = pgTable(
   "transactions",
@@ -429,15 +416,7 @@ export const courses = pgTable(
   ],
 );
 
-export type AssignmentKind =
-  | "assignment"
-  | "exam"
-  | "quiz"
-  | "project"
-  | "reading"
-  | "lab"
-  | "discussion"
-  | "other";
+export type AssignmentKind = "assignment" | "exam" | "quiz" | "project" | "reading" | "lab" | "discussion" | "other";
 export type WorkStatus = "todo" | "in_progress" | "done";
 
 export const assignments = pgTable(
@@ -494,15 +473,7 @@ export const courseMaterials = pgTable(
   (t) => [index("materials_course_idx").on(t.courseId), ownerPolicy()],
 );
 
-export type EventKind =
-  | "personal"
-  | "class"
-  | "exam"
-  | "work"
-  | "study"
-  | "appointment"
-  | "reminder"
-  | "other";
+export type EventKind = "personal" | "class" | "exam" | "work" | "study" | "appointment" | "reminder" | "other";
 export type Recurrence = {
   freq: "daily" | "weekly";
   /** 0 = Sunday ... 6 = Saturday (weekly only). */
@@ -555,11 +526,7 @@ export const tasks = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [
-    index("tasks_user_status_idx").on(t.userId, t.status),
-    index("tasks_parent_idx").on(t.parentId),
-    ownerPolicy(),
-  ],
+  (t) => [index("tasks_user_status_idx").on(t.userId, t.status), index("tasks_parent_idx").on(t.parentId), ownerPolicy()],
 );
 
 export const notes = pgTable(
@@ -569,23 +536,21 @@ export const notes = pgTable(
     userId: userRef(),
     title: text("title").notNull(),
     body: text("body").notNull().default(""),
-    tags: text("tags").array().notNull().default(sql`'{}'::text[]`),
+    tags: text("tags")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
     courseId: uuid("course_id").references(() => courses.id, { onDelete: "set null" }),
     pinned: boolean("pinned").notNull().default(false),
     source: text("source").$type<DataSource>().notNull().default("manual"),
     searchVector: tsvector("search_vector").generatedAlwaysAs(
-      (): SQL =>
-        sql`setweight(to_tsvector('english', coalesce(title, '')), 'A') || setweight(to_tsvector('english', coalesce(body, '')), 'B')`,
+      (): SQL => sql`setweight(to_tsvector('english', coalesce(title, '')), 'A') || setweight(to_tsvector('english', coalesce(body, '')), 'B')`,
     ),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [
-    index("notes_user_idx").on(t.userId, t.updatedAt),
-    index("notes_search_idx").using("gin", t.searchVector),
-    ownerPolicy(),
-  ],
+  (t) => [index("notes_user_idx").on(t.userId, t.updatedAt), index("notes_search_idx").using("gin", t.searchVector), ownerPolicy()],
 );
 
 // ---------------------------------------------------------------------------
@@ -665,16 +630,7 @@ export const paychecks = pgTable(
 // ---------------------------------------------------------------------------
 // Jarvis
 
-export type JarvisModule =
-  | "home"
-  | "finances"
-  | "wealth"
-  | "school"
-  | "work"
-  | "calendar"
-  | "tasks"
-  | "notes"
-  | "settings";
+export type JarvisModule = "home" | "finances" | "wealth" | "school" | "work" | "calendar" | "tasks" | "notes" | "settings";
 
 export const conversations = pgTable(
   "conversations",
@@ -709,7 +665,10 @@ export const messages = pgTable(
     toolArgs: jsonb("tool_args").$type<Record<string, unknown>>(),
     toolResult: jsonb("tool_result").$type<ToolResultRecord>(),
     status: text("status").$type<"complete" | "error" | "pending_confirmation">().notNull().default("complete"),
-    attachmentIds: uuid("attachment_ids").array().notNull().default(sql`'{}'::uuid[]`),
+    attachmentIds: uuid("attachment_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'::uuid[]`),
     createdAt: createdAt(),
   },
   (t) => [index("messages_conversation_idx").on(t.conversationId, t.seq), ownerPolicy()],
@@ -795,7 +754,10 @@ export const jarvisRuns = pgTable(
     toolCalls: integer("tool_calls").notNull().default(0),
     toolErrors: integer("tool_errors").notNull().default(0),
     confirmations: integer("confirmations").notNull().default(0),
-    toolNames: text("tool_names").array().notNull().default(sql`'{}'::text[]`),
+    toolNames: text("tool_names")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     inputTokens: integer("input_tokens"),
     cachedInputTokens: integer("cached_input_tokens"),
     outputTokens: integer("output_tokens"),
@@ -803,7 +765,10 @@ export const jarvisRuns = pgTable(
     /** Estimated cost in millionths of a dollar. Null unless model prices are configured. */
     costMicros: bigint("cost_micros", { mode: "number" }),
     /** Memories that were put in front of the model for this turn. */
-    memoryIds: uuid("memory_ids").array().notNull().default(sql`'{}'::uuid[]`),
+    memoryIds: uuid("memory_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'::uuid[]`),
     createdAt: createdAt(),
   },
   (t) => [index("jarvis_runs_user_created_idx").on(t.userId, t.createdAt), index("jarvis_runs_conversation_idx").on(t.conversationId), ownerPolicy()],
@@ -822,10 +787,7 @@ export const pendingActions = pgTable(
     toolCallId: text("tool_call_id").notNull(),
     args: jsonb("args").$type<Record<string, unknown>>().notNull(),
     summary: text("summary").notNull(),
-    status: text("status")
-      .$type<"pending" | "executed" | "cancelled" | "failed" | "expired">()
-      .notNull()
-      .default("pending"),
+    status: text("status").$type<"pending" | "executed" | "cancelled" | "failed" | "expired">().notNull().default("pending"),
     result: jsonb("result").$type<ToolResultRecord>(),
     expiresAt: tstz("expires_at").notNull(),
     resolvedAt: tstz("resolved_at"),

@@ -3,7 +3,14 @@ import { selectMemories, stem, type RetrievableMemory } from "@/server/jarvis/me
 import type { MemoryCategory } from "@/server/db/schema";
 
 const at = new Date("2026-10-01T00:00:00Z");
-const mem = (id: string, category: MemoryCategory, content: string): RetrievableMemory => ({ id, category, content, basis: "stated", updatedAt: at, lastUsedAt: null });
+const mem = (id: string, category: MemoryCategory, content: string): RetrievableMemory => ({
+  id,
+  category,
+  content,
+  basis: "stated",
+  updatedAt: at,
+  lastUsedAt: null,
+});
 
 const M = [
   mem("study", "preference", "Prefers studying in the morning."),

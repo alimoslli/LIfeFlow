@@ -32,7 +32,14 @@ export function Dialog({
       d.showModal();
       // Phones: a sheet that settles up from the bottom. Larger screens: a gentle scale-in.
       if (!prefersReducedMotion())
-        gsap.fromTo(d, isPhone() ? { y: 56, opacity: 0 } : { y: 8, scale: 0.97, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: isPhone() ? 0.5 : 0.32, ease: MOTION.settle, clearProps: "transform,opacity" });
+        gsap.fromTo(d, isPhone() ? { y: 56, opacity: 0 } : { y: 8, scale: 0.97, opacity: 0 }, {
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          duration: isPhone() ? 0.5 : 0.32,
+          ease: MOTION.settle,
+          clearProps: "transform,opacity",
+        });
     }
     if (!open && d.open) d.close();
   }, [open, d]);

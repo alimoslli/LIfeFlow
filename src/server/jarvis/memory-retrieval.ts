@@ -37,7 +37,17 @@ const STOP = new Set(
   ),
 );
 
-const DAY_ALIASES: Record<string, string> = { monday: "mon", tuesday: "tue", tues: "tue", wednesday: "wed", thursday: "thu", thurs: "thu", friday: "fri", saturday: "sat", sunday: "sun" };
+const DAY_ALIASES: Record<string, string> = {
+  monday: "mon",
+  tuesday: "tue",
+  tues: "tue",
+  wednesday: "wed",
+  thursday: "thu",
+  thurs: "thu",
+  friday: "fri",
+  saturday: "sat",
+  sunday: "sun",
+};
 
 /** Crude English stemmer; good enough to match "studying"/"studied"/"study", "shifts"/"shift", "saving"/"save". */
 export function stem(word: string): string {
@@ -74,8 +84,14 @@ export function tokens(text: string): string[] {
 
 /** Topics a request or memory is about. Words are matched after stemming. */
 const INTENTS: Record<string, string[]> = {
-  schedule: "plan schedule week day today tomorrow tonight morning afternoon evening night weekend free time when calendar busy routine mon tue wed thu fri sat sun early late hour".split(" "),
-  money: "money spend spent budget afford save saving buy cost price pay bill rent dollar income paycheck invest cash expensive cheap debt loan credit card subscription trip".split(" "),
+  schedule:
+    "plan schedule week day today tomorrow tonight morning afternoon evening night weekend free time when calendar busy routine mon tue wed thu fri sat sun early late hour".split(
+      " ",
+    ),
+  money:
+    "money spend spent budget afford save saving buy cost price pay bill rent dollar income paycheck invest cash expensive cheap debt loan credit card subscription trip".split(
+      " ",
+    ),
   school: "class course exam quiz homework assignment study professor grade midterm final essay paper lecture lab semester campus".split(" "),
   work: "work job shift boss manager hour overtime paycheck coworker library employer".split(" "),
   food: "food eat dinner lunch breakfast meal recipe cook restaurant grocery diet calory vegetarian vegan allergy allergic takeout snack coffee".split(" "),

@@ -3,7 +3,17 @@ import { redirect } from "next/navigation";
 import { formBool, formObject, mutate, type ActionState } from "@/server/actions";
 import { createNote, createProject, deleteNote, updateNote, updateProject } from "@/server/services/notes";
 
-const tags = (s?: string) => (s ? [...new Set(s.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean))].slice(0, 20) : []);
+const tags = (s?: string) =>
+  s
+    ? [
+        ...new Set(
+          s
+            .split(",")
+            .map((t) => t.trim().toLowerCase())
+            .filter(Boolean),
+        ),
+      ].slice(0, 20)
+    : [];
 
 export async function createNoteAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
@@ -20,7 +30,14 @@ export async function saveNoteAction(id: string, _p: ActionState, fd: FormData):
   return mutate(
     "note.update",
     async (s) => {
-      await updateNote(s, id, { title: f.title ?? "Untitled", body: String(fd.get("body") ?? ""), tags: tags(f.tags), projectId: f.projectId ?? null, courseId: f.courseId ?? null, pinned: formBool(f.pinned) });
+      await updateNote(s, id, {
+        title: f.title ?? "Untitled",
+        body: String(fd.get("body") ?? ""),
+        tags: tags(f.tags),
+        projectId: f.projectId ?? null,
+        courseId: f.courseId ?? null,
+        pinned: formBool(f.pinned),
+      });
       return "Saved";
     },
     { revalidate: ["/notes"] },

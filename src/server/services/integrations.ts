@@ -82,7 +82,7 @@ export async function integrationStatus(scope: UserScope) {
     return {
       ...p,
       connections,
-      status: connections.length ? connections.some((c) => c.status === "error") ? "error" : "connected" : "not_connected",
+      status: connections.length ? (connections.some((c) => c.status === "error") ? "error" : "connected") : "not_connected",
       recentJobs: jobs.filter((j) => connections.some((c) => c.id === j.integrationId)).slice(0, 3),
     };
   });

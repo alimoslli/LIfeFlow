@@ -44,7 +44,19 @@ export function ActionForm({
 }
 
 /** One-click mutation button (e.g. complete, delete) as a tiny form. */
-export function ActionButton({ action, children, className, title, confirm }: { action: Action; children: ReactNode; className?: string; title?: string; confirm?: string }) {
+export function ActionButton({
+  action,
+  children,
+  className,
+  title,
+  confirm,
+}: {
+  action: Action;
+  children: ReactNode;
+  className?: string;
+  title?: string;
+  confirm?: string;
+}) {
   const [state, formAction, pending] = useActionState(action, null);
   return (
     <form
@@ -57,7 +69,11 @@ export function ActionButton({ action, children, className, title, confirm }: { 
       <button type="submit" title={title} aria-label={title} disabled={pending} className={cn("disabled:opacity-50", className)}>
         {children}
       </button>
-      {state && !state.ok && <span className="sr-only" role="alert">{state.error}</span>}
+      {state && !state.ok && (
+        <span className="sr-only" role="alert">
+          {state.error}
+        </span>
+      )}
     </form>
   );
 }
