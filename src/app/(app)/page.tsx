@@ -29,98 +29,97 @@ export default async function TodayPage() {
   const minutesUntil = b.next ? Math.round((b.next.startsAt.getTime() - s.now.getTime()) / 60_000) : null;
 
   return (
-    <div className="mx-auto flex max-w-[640px] flex-col gap-10">
-      <header className="animate-rise" data-tour="today-page">
-        <p className="text-sm text-muted">{formatIn(s.now, s.tz, "EEEE, MMMM d")}</p>
-        <h1 className="mt-2 font-display text-[40px] leading-[1.05] font-medium tracking-tight sm:text-[46px]">{b.headline}</h1>
-        <p className="mt-3 text-[17px] leading-relaxed text-text-2">{b.summary}</p>
-        <div className="mt-6">
-          <AskBar name={firstName} />
-        </div>
-      </header>
-
-      {b.next && (
-        <section className="animate-rise" style={{ animationDelay: "60ms" }} aria-label="Up next">
-          <div className="lf-drift relative overflow-hidden rounded-3xl bg-hero p-5 text-hero-text shadow-lift sm:p-6">
-            <p className="text-xs font-medium tracking-wide uppercase opacity-70">
-              {minutesUntil! <= 0 ? "Happening now" : `Up next · in ${humanMinutes(minutesUntil!)}`}
-            </p>
-            <p className="mt-1.5 font-display text-[28px] leading-tight font-medium">{b.next.title}</p>
-            <p className="mt-1 text-sm opacity-80">
-              {formatIn(b.next.startsAt, s.tz, "h:mm")}–{formatIn(b.next.endsAt!, s.tz, "h:mm a")}
-              {b.next.subtitle ? ` · ${b.next.subtitle}` : ""}
-            </p>
+    <div className="mx-auto flex max-w-[640px] flex-col gap-10 lg:max-w-none lg:flex-row lg:items-start lg:gap-8">
+      {/* Phones: one column in the original order (max-lg:order). Wide screens: a main and a side column. */}
+      <div className="contents lg:flex lg:min-w-0 lg:flex-[1.5] lg:flex-col lg:gap-10">
+        <header className="animate-rise max-lg:order-[-2]" data-tour="today-page">
+          <p className="text-sm text-muted">{formatIn(s.now, s.tz, "EEEE, MMMM d")}</p>
+          <h1 className="mt-2 font-display text-[40px] leading-[1.05] font-medium tracking-tight sm:text-[46px]">{b.headline}</h1>
+          <p className="mt-3 text-[17px] leading-relaxed text-text-2">{b.summary}</p>
+          <div className="mt-6">
+            <AskBar name={firstName} />
           </div>
+        </header>
+        {b.insights.length > 0 && (
+          <section aria-label="Jarvis noticed">
+            <SectionTitle>Jarvis noticed</SectionTitle>
+            <InsightList insights={b.insights} />
+          </section>
+        )}
+        <section aria-label="Today" className="animate-rise" style={{ animationDelay: "200ms" }}>
+          <SectionTitle href="/plan">Today</SectionTitle>
+          {b.today.length === 0 ? <p className="text-[15px] text-muted">A clear day.</p> : <Timeline items={b.today} tz={s.tz} now={s.now} />}
         </section>
-      )}
-
-      {b.insights.length > 0 && (
-        <section aria-label="Jarvis noticed">
-          <SectionTitle>Jarvis noticed</SectionTitle>
-          <InsightList insights={b.insights} />
-        </section>
-      )}
-
-      <section aria-label="Today" className="animate-rise" style={{ animationDelay: "200ms" }}>
-        <SectionTitle href="/plan">Today</SectionTitle>
-        {b.today.length === 0 ? <p className="text-[15px] text-muted">A clear day.</p> : <Timeline items={b.today} tz={s.tz} now={s.now} />}
-      </section>
-
-      {focus.length > 0 && (
-        <section aria-label="On your list" className="animate-rise" style={{ animationDelay: "240ms" }}>
-          <SectionTitle href="/tasks">On your list</SectionTitle>
-          <ul className="flex flex-col">
-            {focus.map((t) => (
-              <li key={t.id} className="flex items-center gap-3.5 py-2.5">
-                <TaskCheck done={false} action={toggleTaskAction.bind(null, t.id)} label={`Complete ${t.title}`} />
-                <span className="flex-1 text-[15px]">{t.title}</span>
-                {t.dueAt && (
-                  <span className={cn("text-sm", t.dueAt < s.now ? "text-danger" : "text-muted")}>
-                    {formatIn(t.dueAt, s.tz, localDateOf(t.dueAt, s.tz) === s.today ? "'today'" : "EEE")}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {b.money && (
-        <section aria-label="Money" className="animate-rise" style={{ animationDelay: "280ms" }}>
-          <SectionTitle href="/money">Money</SectionTitle>
-          <Pressable>
-            <Link href="/money" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift sm:p-6">
-              <p className="text-sm text-muted">Cash &amp; checking</p>
-              <p className="tabular mt-1 font-display text-[40px] leading-none font-medium tracking-tight">
-                <CountUp cents={b.money.liquidCents} />
+        {focus.length > 0 && (
+          <section aria-label="On your list" className="animate-rise" style={{ animationDelay: "240ms" }}>
+            <SectionTitle href="/tasks">On your list</SectionTitle>
+            <ul className="flex flex-col">
+              {focus.map((t) => (
+                <li key={t.id} className="flex items-center gap-3.5 py-2.5">
+                  <TaskCheck done={false} action={toggleTaskAction.bind(null, t.id)} label={`Complete ${t.title}`} />
+                  <span className="flex-1 text-[15px]">{t.title}</span>
+                  {t.dueAt && (
+                    <span className={cn("text-sm", t.dueAt < s.now ? "text-danger" : "text-muted")}>
+                      {formatIn(t.dueAt, s.tz, localDateOf(t.dueAt, s.tz) === s.today ? "'today'" : "EEE")}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </div>
+      <div className="contents lg:flex lg:min-w-0 lg:flex-1 lg:flex-col lg:gap-10">
+        {b.next && (
+          <section className="animate-rise max-lg:order-[-1]" style={{ animationDelay: "60ms" }} aria-label="Up next">
+            <div data-tilt className="lf-sheen relative overflow-hidden rounded-3xl bg-hero p-5 text-hero-text shadow-lift sm:p-6">
+              <p className="text-xs font-medium tracking-wide uppercase opacity-70">
+                {minutesUntil! <= 0 ? "Happening now" : `Up next · in ${humanMinutes(minutesUntil!)}`}
               </p>
-              <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
-                <div>
-                  <p className="flex items-center gap-1.5 text-sm text-muted">
-                    <ArrowUpRight className="h-3.5 w-3.5" /> Spent in {formatIn(s.now, s.tz, "MMMM")}
-                  </p>
-                  <p className="tabular mt-1 text-xl font-medium">
-                    <CountUp cents={b.money.spentCents} />
-                  </p>
+              <p className="mt-1.5 font-display text-[28px] leading-tight font-medium">{b.next.title}</p>
+              <p className="mt-1 text-sm opacity-80">
+                {formatIn(b.next.startsAt, s.tz, "h:mm")}–{formatIn(b.next.endsAt!, s.tz, "h:mm a")}
+                {b.next.subtitle ? ` · ${b.next.subtitle}` : ""}
+              </p>
+            </div>
+          </section>
+        )}
+        {b.money && (
+          <section aria-label="Money" className="animate-rise" style={{ animationDelay: "280ms" }}>
+            <SectionTitle href="/money">Money</SectionTitle>
+            <Pressable>
+              <Link data-tilt href="/money" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift sm:p-6">
+                <p className="text-sm text-muted">Cash &amp; checking</p>
+                <p className="tabular mt-1 font-display text-[40px] leading-none font-medium tracking-tight">
+                  <CountUp cents={b.money.liquidCents} />
+                </p>
+                <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
+                  <div>
+                    <p className="flex items-center gap-1.5 text-sm text-muted">
+                      <ArrowUpRight className="h-3.5 w-3.5" /> Spent in {formatIn(s.now, s.tz, "MMMM")}
+                    </p>
+                    <p className="tabular mt-1 text-xl font-medium">
+                      <CountUp cents={b.money.spentCents} />
+                    </p>
+                  </div>
+                  <div>
+                    <p className="flex items-center gap-1.5 text-sm text-muted">
+                      <ArrowDownLeft className="h-3.5 w-3.5" /> Came in
+                    </p>
+                    <p className="tabular mt-1 text-xl font-medium text-success">
+                      <CountUp cents={b.money.incomeCents} />
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="flex items-center gap-1.5 text-sm text-muted">
-                    <ArrowDownLeft className="h-3.5 w-3.5" /> Came in
-                  </p>
-                  <p className="tabular mt-1 text-xl font-medium text-success">
-                    <CountUp cents={b.money.incomeCents} />
-                  </p>
-                </div>
-              </div>
-            </Link>
-          </Pressable>
+              </Link>
+            </Pressable>
+          </section>
+        )}
+        <section aria-label="This week" className="animate-rise" style={{ animationDelay: "320ms" }}>
+          <SectionTitle href="/plan">This week</SectionTitle>
+          <WeekStrip days={b.week} />
         </section>
-      )}
-
-      <section aria-label="This week" className="animate-rise" style={{ animationDelay: "320ms" }}>
-        <SectionTitle href="/plan">This week</SectionTitle>
-        <WeekStrip days={b.week} />
-      </section>
+      </div>
     </div>
   );
 }
@@ -176,7 +175,7 @@ function Timeline({ items, tz, now }: { items: AgendaItem[]; tz: string; now: Da
 function WeekStrip({ days }: { days: { date: string; label: string; busyMinutes: number; deadlines: number; exam: boolean; isToday: boolean }[] }) {
   const max = Math.max(8 * 60, ...days.map((d) => d.busyMinutes));
   return (
-    <div className="grid grid-cols-7 gap-1.5 rounded-3xl bg-surface p-3 shadow-soft sm:gap-2 sm:p-4">
+    <div data-tilt className="grid grid-cols-7 gap-1.5 rounded-3xl bg-surface p-3 shadow-soft sm:gap-2 sm:p-4">
       {days.map((d) => (
         <Link
           key={d.date}

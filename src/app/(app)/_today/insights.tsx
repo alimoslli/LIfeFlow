@@ -21,8 +21,8 @@ export function InsightList({ insights }: { insights: Insight[] }) {
         const Icon = ICONS[i.icon];
         const action = i.action;
         return (
-          <li key={i.id} className="animate-rise rounded-3xl bg-surface p-4 shadow-soft sm:p-5" style={{ animationDelay: `${120 + n * 70}ms` }}>
-            <div className="flex gap-3.5">
+          <li key={i.id} className="animate-rise" style={{ animationDelay: `${120 + n * 70}ms` }}>
+            <div data-tilt className="flex gap-3.5 rounded-3xl bg-surface p-4 shadow-soft sm:p-5">
               <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full", TONE[i.tone])}>
                 <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
               </span>

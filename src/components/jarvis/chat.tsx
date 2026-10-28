@@ -295,7 +295,7 @@ export function JarvisChat({
         </div>
       </div>
 
-      <div className={cn("bg-gradient-to-t from-bg via-bg to-bg/0 pt-4 pb-3", compact ? "px-4" : "px-4 sm:px-8")}>
+      <div className={cn("bg-gradient-to-t from-bg via-bg to-bg/0 pt-4 pb-3 md:bg-none", compact ? "px-4" : "px-4 sm:px-8")}>
         <div className={cn("mx-auto", !compact && "max-w-3xl")}>
           {pending.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">

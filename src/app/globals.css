@@ -254,6 +254,114 @@ body {
   text-underline-offset: 2px;
 }
 
+/* Glass: frosted, glossy surfaces over a soft scene in LifeFlow's own colors
+   (deep green, warm sand, cream). Scoped to the app shell (.lf-glass), phone and
+   desktop. The scene is a fixed layer (.lf-scene) so it works on iOS too. */
+.lf-glass {
+  isolation: isolate;
+  --surface: rgb(255 254 250 / 0.62);
+  --surface-2: rgb(255 255 255 / 0.5);
+  --surface-3: rgb(255 255 255 / 0.78);
+  --border: rgb(60 48 28 / 0.1);
+  --glass-edge: rgb(255 255 255 / 0.85);
+  --glass-gloss: linear-gradient(160deg, rgb(255 255 255 / 0.55) 0%, rgb(255 255 255 / 0.08) 38%, rgb(255 255 255 / 0) 60%, rgb(255 255 255 / 0.18) 100%);
+  --shadow:
+    inset 0 1px 0 var(--glass-edge), inset 0 -1px 0 rgb(255 255 255 / 0.25), 0 0 0 1px rgb(255 255 255 / 0.55), 0 2px 6px -2px rgb(60 45 20 / 0.1),
+    0 16px 36px -14px rgb(60 45 20 / 0.28);
+  --shadow-lift:
+    inset 0 1px 0 var(--glass-edge), 0 0 0 1px rgb(255 255 255 / 0.65), 0 4px 10px -4px rgb(60 45 20 / 0.14), 0 30px 60px -20px rgb(60 45 20 / 0.38);
+  --scene:
+    radial-gradient(38% 42% at 92% 4%, rgb(47 93 80 / 0.5), transparent 70%), radial-gradient(45% 40% at 100% 100%, rgb(110 170 148 / 0.5), transparent 70%),
+    radial-gradient(55% 45% at 0% 100%, rgb(196 150 98 / 0.55), transparent 70%), radial-gradient(60% 50% at 30% 20%, rgb(255 250 240 / 0.95), transparent 75%),
+    linear-gradient(165deg, #efe6d7, #ddcfba);
+}
+.lf-scene {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--scene);
+}
+.lf-glass .bg-surface {
+  background-image: var(--glass-gloss);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+}
+/* Floating bars stay readable over anything scrolling beneath them. */
+.lf-glass .lf-bar {
+  --surface: rgb(255 254 250 / 0.84);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8);
+  backdrop-filter: blur(30px) saturate(1.8);
+}
+:root[data-theme="dark"] .lf-glass .lf-bar {
+  --surface: rgb(28 31 27 / 0.86);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lf-glass .lf-bar {
+    --surface: rgb(28 31 27 / 0.86);
+  }
+}
+/* Deep-green feature cards: glossy, with a slow light sweep. */
+.lf-glass .bg-hero {
+  background-image: linear-gradient(160deg, rgb(255 255 255 / 0.18), rgb(255 255 255 / 0) 45%), linear-gradient(155deg, #3a7262, #23493e);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    0 2px 6px -2px rgb(20 50 40 / 0.3),
+    0 22px 44px -16px rgb(20 60 48 / 0.55);
+}
+.lf-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.22) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: lf-sheen 7s ease-in-out 1.2s infinite;
+}
+@keyframes lf-sheen {
+  0% {
+    transform: translateX(-120%);
+  }
+  22%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+/* 3D: cards tilt toward the pointer (motion/tilt.tsx sets the transform). */
+.lf-glass [data-tilt] {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lf-glass {
+    --surface: rgb(32 35 31 / 0.55);
+    --surface-2: rgb(255 255 255 / 0.06);
+    --surface-3: rgb(255 255 255 / 0.13);
+    --border: rgb(255 255 255 / 0.08);
+    --glass-edge: rgb(255 255 255 / 0.14);
+    --glass-gloss: linear-gradient(160deg, rgb(255 255 255 / 0.08) 0%, rgb(255 255 255 / 0) 40%, rgb(255 255 255 / 0.03) 100%);
+    --shadow: inset 0 1px 0 var(--glass-edge), 0 0 0 1px rgb(255 255 255 / 0.07), 0 18px 40px -16px rgb(0 0 0 / 0.7);
+    --shadow-lift: inset 0 1px 0 var(--glass-edge), 0 0 0 1px rgb(255 255 255 / 0.11), 0 30px 60px -18px rgb(0 0 0 / 0.8);
+    --scene:
+      radial-gradient(38% 42% at 92% 4%, rgb(47 93 80 / 0.65), transparent 70%), radial-gradient(45% 40% at 100% 100%, rgb(33 73 61 / 0.75), transparent 70%),
+      radial-gradient(55% 45% at 0% 100%, rgb(120 86 48 / 0.4), transparent 70%), linear-gradient(165deg, #141712, #0b0c0b);
+  }
+}
+:root[data-theme="dark"] .lf-glass {
+  --surface: rgb(32 35 31 / 0.55);
+  --surface-2: rgb(255 255 255 / 0.06);
+  --surface-3: rgb(255 255 255 / 0.13);
+  --border: rgb(255 255 255 / 0.08);
+  --glass-edge: rgb(255 255 255 / 0.14);
+  --glass-gloss: linear-gradient(160deg, rgb(255 255 255 / 0.08) 0%, rgb(255 255 255 / 0) 40%, rgb(255 255 255 / 0.03) 100%);
+  --shadow: inset 0 1px 0 var(--glass-edge), 0 0 0 1px rgb(255 255 255 / 0.07), 0 18px 40px -16px rgb(0 0 0 / 0.7);
+  --shadow-lift: inset 0 1px 0 var(--glass-edge), 0 0 0 1px rgb(255 255 255 / 0.11), 0 30px 60px -18px rgb(0 0 0 / 0.8);
+  --scene:
+    radial-gradient(38% 42% at 92% 4%, rgb(47 93 80 / 0.65), transparent 70%), radial-gradient(45% 40% at 100% 100%, rgb(33 73 61 / 0.75), transparent 70%),
+    radial-gradient(55% 45% at 0% 100%, rgb(120 86 48 / 0.4), transparent 70%), linear-gradient(165deg, #141712, #0b0c0b);
+}
+
 /* Opening splash (see components/motion/splash.tsx). Hidden unless <html> has .lf-splash. */
 .lf-splash-layer {
   display: none;

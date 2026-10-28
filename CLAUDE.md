@@ -26,6 +26,11 @@
 - Animate transform/opacity only, always honour `prefersReducedMotion()`, and never make content depend on an animation finishing.
 - New accounts get `/welcome` (onboarding) and then the tour. Tests use `signUp()`, which skips both. The splash is off under automation unless `?splash=1`.
 
+## Glass design (see ADR 0008)
+- Cards use `bg-surface`/`shadow-soft` as before; inside the app shell (`.lf-glass`) these become frosted glass automatically. Don't hard-code white/black card backgrounds.
+- 3D tilt: add `data-tilt` to a card (not to an element with `animate-rise`; wrap instead). Green feature cards: `bg-hero` (+ `lf-sheen` for the light sweep, needs `relative overflow-hidden`).
+- Wide dashboards: `contents lg:flex` column wrappers, keeping phone order with `max-lg:order-*`.
+
 ## Formatting & plugins
 - Prettier is pinned (`prettier@3.9.10`, `.prettierrc.json`, printWidth 160). `npm run format` formats; `npm run check` fails on unformatted code. Markdown, SQL, `drizzle/` and generated files are ignored (`.prettierignore`).
 - The project enables the `everything-claude-code` plugin (`.claude/settings.json`). Its hooks run Prettier and `tsc` after edits; that's expected. Decision records still go in `docs/adr/` (the owner chose to keep them over the plugin's "no new .md files" hook).

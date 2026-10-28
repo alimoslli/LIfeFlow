@@ -73,7 +73,10 @@ export function JarvisDrawer({
   return (
     <div className={`fixed inset-0 z-50 flex justify-end ${open ? "" : "pointer-events-none"}`} role="dialog" aria-modal="true" aria-label="Jarvis">
       <div ref={backdrop} className="absolute inset-0 bg-black/20" onClick={onClose} />
-      <div ref={panel} className="relative flex h-full w-full max-w-[460px] flex-col border-l border-border bg-bg shadow-2xl">
+      <div
+        ref={panel}
+        className="relative flex h-full w-full max-w-[460px] flex-col border-l border-border bg-bg shadow-2xl md:bg-surface md:backdrop-blur-2xl"
+      >
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
           <Sparkles className="h-4 w-4 text-accent" />
           <span className="font-medium">Jarvis</span>

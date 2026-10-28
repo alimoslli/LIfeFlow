@@ -3,11 +3,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { setTourAction } from "@/app/(onboarding)/welcome/actions";
+import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV, isActive, moduleForPath } from "./nav-items";
 import { JarvisDrawer } from "../jarvis/jarvis-drawer";
 import { SectionNav } from "./section-nav";
 import { gsap, MOTION, prefersReducedMotion } from "../motion/gsap";
+import { TiltLayer } from "../motion/tilt";
 import { Tour } from "../motion/tour";
 import type { JarvisAvailability } from "../jarvis/types";
 
@@ -67,14 +69,69 @@ export function AppShell({
 
   return (
     <Ctx.Provider value={{ openJarvis }}>
-      <div className="flex min-h-dvh">
-        {/* Desktop rail */}
-        <aside className="sticky top-0 hidden h-dvh w-[88px] shrink-0 flex-col items-center py-6 md:flex">
-          <Link href="/" aria-label="LifeFlow home" className="mb-8">
-            <Mark />
-          </Link>
-          <nav ref={rail} className="relative flex flex-col gap-1.5" aria-label="Main">
-            <span data-indicator className="pointer-events-none absolute top-0 left-0 w-16 rounded-2xl bg-surface opacity-0 shadow-soft" />
+      <div className="lf-glass">
+        <TiltLayer />
+        <div className="lf-scene" aria-hidden />
+        <div className="flex min-h-dvh">
+          {/* Desktop rail */}
+          <aside className="sticky top-0 hidden h-dvh w-[88px] shrink-0 flex-col items-center py-6 md:flex">
+            <Link href="/" aria-label="LifeFlow home" className="mb-8">
+              <Mark />
+            </Link>
+            <nav ref={rail} className="relative flex flex-col gap-1 rounded-[28px] bg-surface p-1.5 shadow-soft" aria-label="Main">
+              <span data-indicator className="pointer-events-none absolute top-0 left-1.5 w-16 rounded-[22px] bg-surface-3 opacity-0" />
+              {NAV.map((item) => {
+                const active = isActive(pathname, item);
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    data-tour={item.label.toLowerCase()}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "group relative flex w-16 flex-col items-center gap-1 rounded-2xl py-2.5 text-[11px] font-medium transition-colors",
+                      active ? "text-text" : "text-muted hover:text-text",
+                    )}
+                  >
+                    <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </aside>
+
+          <div className="flex min-w-0 flex-1 flex-col">
+            {user.accountKind === "demo" && !onJarvisPage && (
+              <div className="px-4 pt-3 text-center text-[11px] tracking-wide text-muted md:hidden">Test account · everything here is sample data</div>
+            )}
+            <main
+              className={cn("mx-auto w-full flex-1", onJarvisPage ? "max-w-none" : "max-w-5xl px-5 pt-6 pb-32 sm:px-8 md:max-w-6xl md:px-6 md:pt-5 md:pb-6")}
+            >
+              {!onJarvisPage && (
+                <TopBar firstName={user.name.split(" ")[0]} initials={initials} demo={user.accountKind === "demo"} settingsActive={settingsActive} />
+              )}
+              {onJarvisPage ? (
+                children
+              ) : (
+                // Desktop: the page sits in one large frosted panel. Phones: no panel.
+                <div className="md:rounded-[32px] md:bg-surface md:p-8 md:shadow-soft lg:p-10">
+                  <SectionNav />
+                  {children}
+                </div>
+              )}
+            </main>
+          </div>
+        </div>
+
+        {/* Mobile tab bar */}
+        <nav
+          className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] lf-bar z-40 rounded-[28px] bg-surface shadow-lift md:hidden"
+          aria-label="Main"
+        >
+          <div ref={bar} className="relative mx-auto flex max-w-md items-stretch justify-around px-2">
+            <span data-indicator className="pointer-events-none absolute top-[5px] left-0 h-8 w-14 rounded-full bg-accent-soft opacity-0" />
             {NAV.map((item) => {
               const active = isActive(pathname, item);
               const Icon = item.icon;
@@ -84,96 +141,81 @@ export function AppShell({
                   href={item.href}
                   data-tour={item.label.toLowerCase()}
                   aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "group relative flex w-16 flex-col items-center gap-1 rounded-2xl py-2.5 text-[11px] font-medium transition-colors",
-                    active ? "text-text" : "text-muted hover:text-text",
-                  )}
+                  className={cn("relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10.5px] font-medium", active ? "text-accent" : "text-muted")}
                 >
-                  <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
+                  <Icon data-icon className="h-[22px] w-[22px]" strokeWidth={active ? 2 : 1.6} />
                   {item.label}
                 </Link>
               );
             })}
-          </nav>
-          <Link
-            href="/settings"
-            title={`${user.name} · Settings`}
-            aria-label="Settings"
-            className={cn(
-              "mt-auto flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold transition-shadow",
-              settingsActive ? "bg-accent text-accent-text" : "bg-surface-3 text-text-2 hover:shadow-soft",
-            )}
-          >
-            {initials}
-          </Link>
-        </aside>
-
-        <div className="flex min-w-0 flex-1 flex-col">
-          {user.accountKind === "demo" && !onJarvisPage && (
-            <div className="px-4 pt-3 text-center text-[11px] tracking-wide text-muted md:pt-4">Test account · everything here is sample data</div>
-          )}
-          <main className={cn("mx-auto w-full flex-1", onJarvisPage ? "max-w-none" : "max-w-5xl px-5 pt-6 pb-32 sm:px-8 md:pt-10 md:pb-16")}>
-            {!onJarvisPage && <SectionNav />}
-            {children}
-          </main>
-        </div>
-      </div>
-
-      {/* Mobile tab bar */}
-      <nav
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-bg/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
-        aria-label="Main"
-      >
-        <div ref={bar} className="relative mx-auto flex max-w-md items-stretch justify-around px-2">
-          <span data-indicator className="pointer-events-none absolute top-[5px] left-0 h-8 w-14 rounded-full bg-accent-soft opacity-0" />
-          {NAV.map((item) => {
-            const active = isActive(pathname, item);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                data-tour={item.label.toLowerCase()}
-                aria-current={active ? "page" : undefined}
-                className={cn("relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10.5px] font-medium", active ? "text-accent" : "text-muted")}
-              >
-                <Icon data-icon className="h-[22px] w-[22px]" strokeWidth={active ? 2 : 1.6} />
-                {item.label}
-              </Link>
-            );
-          })}
-          <Link
-            href="/settings"
-            aria-label="Settings"
-            className={cn("flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10.5px] font-medium", settingsActive ? "text-accent" : "text-muted")}
-          >
-            <span
-              className={cn(
-                "flex h-[22px] w-[22px] items-center justify-center rounded-full text-[9px] font-semibold",
-                settingsActive ? "bg-accent text-accent-text" : "bg-surface-3 text-text-2",
-              )}
+            <Link
+              href="/settings"
+              aria-label="Settings"
+              className={cn("flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10.5px] font-medium", settingsActive ? "text-accent" : "text-muted")}
             >
-              {initials}
-            </span>
-            You
-          </Link>
-        </div>
-      </nav>
+              <span
+                className={cn(
+                  "flex h-[22px] w-[22px] items-center justify-center rounded-full text-[9px] font-semibold",
+                  settingsActive ? "bg-accent text-accent-text" : "bg-surface-3 text-text-2",
+                )}
+              >
+                {initials}
+              </span>
+              You
+            </Link>
+          </div>
+        </nav>
 
-      {tourOpen && pathname === "/" && <Tour onDone={endTour} />}
+        {tourOpen && pathname === "/" && <Tour onDone={endTour} />}
 
-      {!onJarvisPage && (
-        <JarvisDrawer
-          key={drawer.key}
-          open={drawer.open}
-          onClose={() => setDrawer((d) => ({ ...d, open: false }))}
-          module={moduleForPath(pathname)}
-          availability={jarvis}
-          initialPrompt={drawer.prompt}
-          autoSend={drawer.send}
-        />
-      )}
+        {!onJarvisPage && (
+          <JarvisDrawer
+            key={drawer.key}
+            open={drawer.open}
+            onClose={() => setDrawer((d) => ({ ...d, open: false }))}
+            module={moduleForPath(pathname)}
+            availability={jarvis}
+            initialPrompt={drawer.prompt}
+            autoSend={drawer.send}
+          />
+        )}
+      </div>
     </Ctx.Provider>
+  );
+}
+
+/** Desktop only: a floating glass bar with a greeting, a Jarvis search field and the account. */
+function TopBar({ firstName, initials, demo, settingsActive }: { firstName: string; initials: string; demo: boolean; settingsActive: boolean }) {
+  const { openJarvis } = useShell();
+  return (
+    <div className="mb-4 hidden items-center gap-4 rounded-full bg-surface p-1.5 shadow-soft md:flex">
+      <Link
+        href="/settings"
+        aria-label="Settings"
+        title="Settings"
+        className="flex shrink-0 items-center gap-2.5 rounded-full py-0.5 pr-3 pl-0.5 hover:bg-surface-2"
+      >
+        <span
+          className={cn(
+            "flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold",
+            settingsActive ? "bg-accent text-accent-text" : "bg-surface-3 text-text-2",
+          )}
+        >
+          {initials}
+        </span>
+        <span className="text-sm font-medium">Welcome, {firstName}</span>
+      </Link>
+      <button
+        type="button"
+        onClick={() => openJarvis()}
+        className="mx-auto flex h-10 w-full max-w-md items-center gap-2.5 rounded-full bg-surface-2 px-4 text-sm text-muted transition-colors hover:text-text"
+      >
+        <Sparkles className="h-4 w-4 text-accent" />
+        Ask Jarvis anything…
+        <kbd className="ml-auto rounded-md bg-surface-3 px-1.5 py-0.5 font-sans text-[11px] text-muted">⌘J</kbd>
+      </button>
+      {demo ? <span className="shrink-0 rounded-full bg-warning-soft px-3 py-1.5 text-xs text-warning">Sample data</span> : <span className="w-9 shrink-0" />}
+    </div>
   );
 }
 
