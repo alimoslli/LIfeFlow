@@ -139,6 +139,8 @@ export const users = pgTable("users", {
   totpEnabledAt: tstz("totp_enabled_at"),
   /** Last accepted 30-second time step, so a code can't be used twice. */
   totpLastStep: integer("totp_last_step"),
+  /** Random part of the personal forwarding address (u-<token>@<INBOX_DOMAIN>). */
+  inboxToken: text("inbox_token").unique(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -1086,6 +1088,98 @@ export const savingsOpportunities = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index("savings_user_idx").on(t.userId), ownerPolicy()],
+);
+
+// ---------------------------------------------------------------------------
+// Trips
+
+export const trips = pgTable(
+  "trips",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    name: text("name").notNull(),
+    destination: text("destination"),
+    startDate: date("start_date", { mode: "string" }).notNull(),
+    endDate: date("end_date", { mode: "string" }).notNull(),
+    budgetCents: integer("budget_cents"),
+    goalId: uuid("goal_id").references(() => financialGoals.id, { onDelete: "set null" }),
+    notes: text("notes"),
+    source: text("source").$type<DataSource | "inbox">().notNull().default("manual"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("trips_user_idx").on(t.userId), ownerPolicy()],
+);
+
+export const tripItems = pgTable(
+  "trip_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    tripId: uuid("trip_id")
+      .notNull()
+      .references(() => trips.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<"flight" | "train" | "hotel" | "car" | "activity" | "other">().notNull(),
+    title: text("title").notNull(),
+    startsAt: tstz("starts_at").notNull(),
+    endsAt: tstz("ends_at"),
+    location: text("location"),
+    confirmation: text("confirmation"),
+    costCents: integer("cost_cents"),
+    /** The calendar entry made for it, so it shows in Plan and Today. */
+    eventId: uuid("event_id"),
+    source: text("source").$type<DataSource | "inbox">().notNull().default("manual"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("trip_items_trip_idx").on(t.tripId), ownerPolicy()],
+);
+
+// ---------------------------------------------------------------------------
+// Smart inbox: forwarded emails, uploads and shares, read and filed by Jarvis
+
+export const inboxSenders = pgTable(
+  "inbox_senders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    email: text("email").notNull(),
+    verifiedAt: tstz("verified_at"),
+    /** SHA-256 of the 6-digit code sent to the address. */
+    codeHash: text("code_hash"),
+    codeExpiresAt: tstz("code_expires_at"),
+    attempts: integer("attempts").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("inbox_senders_user_email_uq").on(t.userId, t.email), ownerPolicy()],
+);
+
+export type InboxFiled = {
+  kind: "transaction" | "recurring" | "task" | "assignment" | "trip" | "trip_item" | "paycheck";
+  id: string;
+  label: string;
+  href?: string;
+};
+
+export const inboxItems = pgTable(
+  "inbox_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    channel: text("channel").$type<"email" | "upload" | "share">().notNull(),
+    fromAddress: text("from_address"),
+    subject: text("subject"),
+    receivedAt: tstz("received_at").notNull().defaultNow(),
+    status: text("status").$type<"processing" | "filed" | "needs_review" | "ignored" | "failed" | "undone">().notNull().default("processing"),
+    type: text("type"),
+    summary: text("summary"),
+    /** Why it wasn't filed (e.g. not from a verified address). */
+    reason: text("reason"),
+    filed: jsonb("filed").$type<InboxFiled[]>().notNull().default([]),
+    extracted: jsonb("extracted").$type<Record<string, unknown> | null>(),
+    attachmentIds: jsonb("attachment_ids").$type<string[]>().notNull().default([]),
+    createdAt: createdAt(),
+  },
+  (t) => [index("inbox_items_user_idx").on(t.userId, t.receivedAt), ownerPolicy()],
 );
 
 // ---------------------------------------------------------------------------

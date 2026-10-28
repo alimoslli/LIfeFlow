@@ -351,6 +351,10 @@ export async function addPaycheck(scope: UserScope, input: z.input<typeof payche
   return row;
 }
 
+export async function deletePaycheck(scope: UserScope, id: string) {
+  await scope.tx.delete(paychecks).where(and(eq(paychecks.id, id), eq(paychecks.userId, scope.userId)));
+}
+
 export async function listPaychecks(scope: UserScope, limit = 20) {
   return scope.tx.select().from(paychecks).where(eq(paychecks.userId, scope.userId)).orderBy(desc(paychecks.payDate)).limit(limit);
 }

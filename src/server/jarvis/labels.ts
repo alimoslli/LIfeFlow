@@ -84,6 +84,11 @@ const LABELS: Record<string, string> = {
   draft_email: "Drafting email",
   read_attachment: "Reading attachment",
   web_search: "Searching the web",
+  list_trips: "Checking trips",
+  get_trip: "Reading the trip",
+  create_trip: "Creating the trip",
+  add_trip_items: "Adding to the trip",
+  delete_trip_item: "Preparing to remove from the trip",
 };
 
 export const describeToolCall = (name: string) => LABELS[name] ?? name.replace(/_/g, " ");

@@ -18,6 +18,7 @@ const PUBLIC = [
   "/api/integrations/plaid/webhook",
   "/api/cron/sync",
   "/api/cron/notify",
+  "/api/inbox/email",
   "/offline",
   "/sw.js",
 ];

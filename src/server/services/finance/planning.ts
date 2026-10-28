@@ -187,6 +187,10 @@ export async function setRecurringStatus(scope: UserScope, id: string, status: "
   return row;
 }
 
+export async function deleteRecurring(scope: UserScope, id: string) {
+  await scope.tx.delete(recurringItems).where(and(eq(recurringItems.id, id), eq(recurringItems.userId, scope.userId)));
+}
+
 export async function listRecurring(scope: UserScope, opts: { includeInactive?: boolean } = {}) {
   const rows = await scope.tx.select().from(recurringItems).where(eq(recurringItems.userId, scope.userId)).orderBy(asc(recurringItems.nextDueDate));
   return opts.includeInactive ? rows : rows.filter((r) => r.status === "active");

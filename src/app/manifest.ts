@@ -31,6 +31,13 @@ export default function manifest(): MetadataRoute.Manifest {
         icons: [{ src: "/icons/shortcut-spending.png", sizes: "96x96", type: "image/png" }],
       },
     ],
+    // Share photos, PDFs and text from other apps into the Smart inbox (Android/Chrome; iOS doesn't support this).
+    share_target: {
+      action: "/share-target",
+      method: "POST",
+      enctype: "multipart/form-data",
+      params: { title: "title", text: "text", url: "url", files: [{ name: "files", accept: ["image/*", "application/pdf"] }] },
+    },
     // Shown in the richer install dialog on Android and desktop Chrome.
     screenshots: [
       { src: "/screenshots/today-phone.png", sizes: "780x1688", type: "image/png", form_factor: "narrow", label: "Today: your plan, money and what's next" },

@@ -10,6 +10,8 @@ import {
   CalendarDays,
   CreditCard,
   Flame,
+  Inbox,
+  Plane,
   CheckSquare,
   HeartPulse,
   Landmark,
@@ -37,6 +39,8 @@ export const SECTIONS: Record<"plan" | "money", Item[]> = {
     { href: "/work", label: "Work", icon: Briefcase },
     { href: "/notes", label: "Notes", icon: NotebookPen },
     { href: "/habits", label: "Habits", icon: Flame },
+    { href: "/trips", label: "Trips", icon: Plane },
+    { href: "/inbox", label: "Inbox", icon: Inbox },
   ],
   money: [
     { href: "/money", label: "Overview", icon: Wallet, exact: true },

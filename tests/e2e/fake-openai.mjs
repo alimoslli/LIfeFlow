@@ -110,6 +110,38 @@ function webSearchResponse(body) {
   };
 }
 
+// Smart inbox: reads the subject/filename and returns a fixed, realistic extraction.
+function inboxExtract(body) {
+  const text = JSON.stringify(body.input).toLowerCase();
+  const today = new Date().toISOString().slice(0, 10);
+  const none = { bill: null, receipt: null, school: null, travel: null, pay: null };
+  const out = text.includes("receipt")
+    ? { ...none, type: "receipt", summary: "Receipt from Target for $23.45.", receipt: { merchant: "Target", total_usd: 23.45, date: today } }
+    : text.includes("bill")
+      ? {
+          ...none,
+          type: "bill",
+          summary: "Comcast internet bill, $64.99 due soon.",
+          bill: { payee: "Comcast", amount_usd: 64.99, due_date: today, repeats: "monthly" },
+        }
+      : { ...none, type: "other", summary: "A note with nothing to file." };
+  const id = `resp_${n++}`;
+  return {
+    id,
+    object: "response",
+    status: "completed",
+    output: [
+      {
+        type: "message",
+        id: `msg_${id}`,
+        role: "assistant",
+        status: "completed",
+        content: [{ type: "output_text", text: JSON.stringify(out), annotations: [] }],
+      },
+    ],
+  };
+}
+
 // Structured searches the app makes (savings finder, cancel help), keyed by schema name.
 const fixtures = {
   // Two sourced cheaper plans, plus one whose price page wasn't cited (the app must drop it).
@@ -156,6 +188,10 @@ http
         return res.end(JSON.stringify({ value: "ek_e2e_test", expires_at: Math.floor(Date.now() / 1000) + 120, session: JSON.parse(raw).session }));
       }
       const body = JSON.parse(raw);
+      if (!body.stream && body.text?.format?.name === "inbox_extract") {
+        res.writeHead(200, { "content-type": "application/json" });
+        return res.end(JSON.stringify(inboxExtract(body)));
+      }
       if (!body.stream && (body.tools ?? []).some((t) => t.type === "web_search")) {
         res.writeHead(200, { "content-type": "application/json" });
         return res.end(JSON.stringify(webSearchResponse(body)));
