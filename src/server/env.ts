@@ -16,6 +16,8 @@ const schema = z.object({
   ENCRYPTION_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().default("gpt-5.5"),
+  /** Live voice model (OpenAI Realtime). */
+  OPENAI_REALTIME_MODEL: z.string().default("gpt-realtime"),
   OPENAI_REASONING_EFFORT: z
     .enum(["none", "minimal", "low", "medium", "high"])
     .optional()

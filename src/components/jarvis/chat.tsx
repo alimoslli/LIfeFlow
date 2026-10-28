@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, ArrowUp, Brain, Check, CircleAlert, FileText, ImageIcon, Loader2, Paperclip, Sparkles, Square, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useShell } from "../shell/app-shell";
 import { Markdown } from "./markdown";
+import { VoiceButton } from "./voice-call";
 import { FOLLOW_UPS, STARTERS } from "./suggestions";
 import type { JarvisAvailability, JarvisModule, UiAttachment, UiMemorySuggestion, UiMessage } from "./types";
 
@@ -41,6 +43,7 @@ export function JarvisChat({
   onConversation?: (id: string, title: string) => void;
 }) {
   const router = useRouter();
+  const { assistantName } = useShell();
   const [conversationId, setConversationId] = useState(initialId ?? null);
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
   const [input, setInput] = useState(initialPrompt ?? "");
@@ -363,6 +366,7 @@ export function JarvisChat({
               aria-label="Message Jarvis"
               className="max-h-48 min-h-9 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] placeholder:text-muted focus:outline-none focus-visible:outline-none [field-sizing:content]"
             />
+            {!busy && <VoiceButton module={module} assistantName={assistantName} disabled={!availability.available} />}
             {busy ? (
               <button type="button" onClick={() => abortRef.current?.abort()} className="rounded-full bg-surface-3 p-3 text-text" aria-label="Stop">
                 <Square className="h-3.5 w-3.5" />

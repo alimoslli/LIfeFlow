@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { VoiceButton } from "@/components/jarvis/voice-call";
 import { ArrowRight, BookOpen, CalendarClock, Clock, Flag, Sparkles, Split, TrendingUp, Wallet } from "lucide-react";
 import { useShell } from "@/components/shell/app-shell";
 import { cn } from "@/lib/utils";
@@ -53,7 +54,7 @@ export function InsightList({ insights }: { insights: Insight[] }) {
 
 /** The "ask anything" bar at the bottom of Today. */
 export function AskBar({ name }: { name: string }) {
-  const { openJarvis } = useShell();
+  const { openJarvis, assistantName } = useShell();
   return (
     <form
       onSubmit={(e) => {
@@ -69,9 +70,10 @@ export function AskBar({ name }: { name: string }) {
       <input
         name="q"
         placeholder={`What's on your mind, ${name}?`}
-        aria-label="Ask Jarvis"
+        aria-label={`Ask ${assistantName}`}
         className="min-w-0 flex-1 bg-transparent py-2 text-[15px] placeholder:text-muted focus:outline-none"
       />
+      <VoiceButton module="home" assistantName={assistantName} />
       <button className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-text">Ask</button>
     </form>
   );

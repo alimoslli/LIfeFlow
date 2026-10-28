@@ -76,6 +76,10 @@ http
         res.writeHead(401, { "content-type": "application/json" });
         return res.end(JSON.stringify({ error: { message: "bad key" } }));
       }
+      if (req.url?.includes("/realtime/client_secrets")) {
+        res.writeHead(200, { "content-type": "application/json" });
+        return res.end(JSON.stringify({ value: "ek_e2e_test", expires_at: Math.floor(Date.now() / 1000) + 120, session: JSON.parse(raw).session }));
+      }
       sse(res, respond(JSON.parse(raw)));
     });
   })
