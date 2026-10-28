@@ -172,7 +172,7 @@ export const auditEvents = pgTable(
 // ---------------------------------------------------------------------------
 // integrations & sync
 
-export type IntegrationProvider = "plaid" | "canvas" | "ukg" | "google_calendar" | "gmail" | "outlook";
+export type IntegrationProvider = "plaid" | "canvas" | "ukg" | "google" | "google_calendar" | "gmail" | "outlook" | "apple_health";
 export type IntegrationStatus = "connected" | "error" | "pending" | "disconnected";
 
 export const integrations = pgTable(
@@ -221,7 +221,7 @@ export const syncJobs = pgTable(
 // ---------------------------------------------------------------------------
 // finance
 
-export type DataSource = "manual" | "jarvis" | "import" | "demo" | "plaid" | "canvas" | "ukg";
+export type DataSource = "manual" | "jarvis" | "import" | "demo" | "plaid" | "canvas" | "ukg" | "google" | "apple_health";
 
 export type AccountType = "depository" | "credit" | "loan" | "investment" | "cash" | "other";
 

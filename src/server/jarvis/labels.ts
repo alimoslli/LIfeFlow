@@ -43,6 +43,11 @@ const LABELS: Record<string, string> = {
   get_note: "Reading note",
   save_note: "Saving note",
   delete_note: "Preparing to delete note",
+  search_email: "Searching your email",
+  read_email: "Reading email",
+  send_email: "Preparing to send email",
+  sync_google_calendar: "Syncing Google Calendar",
+  add_google_calendar_event: "Preparing to add to Google Calendar",
   save_memory: "Remembering",
   update_memory: "Updating memory",
   list_memories: "Reading memory",
@@ -97,7 +102,17 @@ export function describeToolResult(name: string, r: ToolResultRecord): { summary
     case "save_note":
       return { summary: `Note ${d.action ?? "saved"}`, viewAt };
     case "draft_email":
-      return { summary: "Draft prepared (not sent)" };
+      return d.savedToGmail ? { summary: "Draft saved in Gmail (not sent)", viewAt } : { summary: "Draft prepared (not sent)" };
+    case "search_email":
+      return { summary: `Found ${plural(Number(d.count ?? 0), "email")}` };
+    case "send_email":
+      return { summary: d.sent ? "Sent (confirmed by Gmail)" : "Not sent" };
+    case "sync_google_calendar": {
+      const s = (d.synced ?? {}) as { total?: number };
+      return { summary: `Synced ${plural(Number(s.total ?? 0), "event")}`, viewAt };
+    }
+    case "add_google_calendar_event":
+      return { summary: "Added to Google Calendar", viewAt };
     default:
       return { summary: "Done", viewAt };
   }

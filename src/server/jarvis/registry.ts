@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { calendarTools } from "./tools/calendar";
 import { financeTools } from "./tools/finance";
+import { googleTools } from "./tools/google";
 import { memoryTools, noteTools, systemTools } from "./tools/knowledge";
 import { overviewTools } from "./tools/overview";
 import { schoolTools } from "./tools/school";
@@ -17,6 +18,7 @@ export const ALL_TOOLS: ToolDefinition[] = [
   ...workTools,
   ...noteTools,
   ...memoryTools,
+  ...googleTools,
   ...systemTools,
 ] as ToolDefinition[];
 
