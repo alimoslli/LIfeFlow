@@ -67,7 +67,7 @@ describe("assignment ingestion", () => {
     const res = await u.run((s) =>
       importAssignments(s, TZ, [{ title: "Paper", courseName: "History", dueDate: "2025-11-01" }], { now: new Date("2026-10-26T12:00:00Z") }),
     );
-    expect(res.warnings[0]).toMatch(/check the year/);
+    expect(res.warnings[0]).toMatch(/check the year/i);
   });
 
   it("sorts assignments into today / week / overdue / completed views", async () => {
