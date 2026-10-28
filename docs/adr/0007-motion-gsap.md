@@ -13,7 +13,7 @@
     - money count-ups (`CountUp`);
     - the sliding tab indicator;
     - sheet and drawer open/close;
-    - page cross-fades (`(app)/template.tsx`);
+    - page transitions (`PageMotion` + `NavDirection`: deeper pages from the right, back from the left, tabs cross-fade);
     - onboarding step transitions;
     - the tour spotlight.
 - `motion/intro.ts` coordinates first paint. Effects skip the hydration pass (content is already on screen) and can wait for the splash to finish, so count-ups play once it lifts.

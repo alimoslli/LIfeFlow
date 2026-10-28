@@ -30,20 +30,25 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
   if (!d) notFound();
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        {/* Phones use the app bar's Back. */}
         <Link
           href={d.note.projectId ? `/notes?project=${d.note.projectId}` : "/notes"}
-          className="inline-flex items-center gap-1 text-sm text-muted hover:text-text"
+          className="hidden items-center gap-1 text-sm text-muted hover:text-text md:inline-flex"
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Notes
         </Link>
-        <div className="flex items-center gap-3 text-xs text-muted">
+        <div className="flex flex-1 items-center justify-end gap-3 text-xs text-muted max-md:justify-between">
           <SourceBadge source={d.note.source} />
           <span>Edited {formatIn(d.note.updatedAt, d.tz, "MMM d, h:mm a")}</span>
           <AskJarvisButton prompt={`Turn my note "${d.note.title}" into an action plan with tasks.`} className="font-medium text-accent hover:underline">
             Make a plan
           </AskJarvisButton>
-          <ActionButton action={deleteNoteAction.bind(null, d.note.id)} title="Delete note" className="text-muted hover:text-danger">
+          <ActionButton
+            action={deleteNoteAction.bind(null, d.note.id)}
+            title="Delete note"
+            className="tap flex items-center justify-center text-muted hover:text-danger"
+          >
             <Trash2 className="h-4 w-4" />
           </ActionButton>
         </div>

@@ -654,9 +654,10 @@ html[data-typing="true"] .lf-fab {
   .lf-touch-icon {
     min-width: 44px;
   }
-  input:not([type="checkbox"], [type="radio"], [type="range"], [type="hidden"], [type="file"]),
+  /* 16px minimum stops iOS zooming on focus; large display inputs (titles) keep their size. */
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="hidden"], [type="file"], .font-display),
   select,
-  textarea {
+  textarea:not(.font-display) {
     font-size: max(16px, 1em);
   }
   input:not([type="checkbox"], [type="radio"], [type="range"], [type="hidden"], [type="file"]),

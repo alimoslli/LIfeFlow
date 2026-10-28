@@ -74,7 +74,11 @@ export function MobileAppBar({ initials, demo, onSearch }: { initials: string; d
         {info.back ? (
           <button
             type="button"
-            onClick={() => (window.history.length > 1 ? router.back() : router.push(info.back!))}
+            onClick={() => {
+              document.documentElement.dataset.nav = "back";
+              if (window.history.length > 1) router.back();
+              else router.push(info.back!);
+            }}
             className="tap -ml-1 flex items-center gap-0.5 rounded-full pr-2 text-accent"
             aria-label="Back"
           >
@@ -93,7 +97,11 @@ export function MobileAppBar({ initials, demo, onSearch }: { initials: string; d
         {info.title}
       </p>
       <div className="ml-auto flex items-center">
-        {demo && !demoHidden && (
+        {/* With a title showing, the label shrinks to a dot so it never covers the title. */}
+        {demo && !demoHidden && (scrolled || info.back) && (
+          <span role="img" aria-label="Sample data" title="Sample data" className="mr-1 h-2.5 w-2.5 rounded-full bg-warning" />
+        )}
+        {demo && !demoHidden && !scrolled && !info.back && (
           <span className="mr-1 flex items-center rounded-full bg-warning-soft pl-2.5 text-[11px] text-warning">
             Sample data
             <button

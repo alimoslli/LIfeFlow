@@ -14,6 +14,8 @@ import { CommandPalette } from "./command-palette";
 import { QuickAdd } from "./quick-add";
 import { PwaClient } from "../pwa/pwa-client";
 import { PasskeyOffer } from "../auth/passkey-offer";
+import { NavDirection } from "../motion/nav-direction";
+import { PageMotion } from "../motion/page-motion";
 import { gsap, MOTION, prefersReducedMotion } from "../motion/gsap";
 import { TiltLayer } from "../motion/tilt";
 import { Tour } from "../motion/tour";
@@ -125,12 +127,12 @@ export function AppShell({
                 <TopBar firstName={user.name.split(" ")[0]} initials={initials} demo={user.accountKind === "demo"} settingsActive={settingsActive} />
               )}
               {onJarvisPage ? (
-                children
+                <PageMotion>{children}</PageMotion>
               ) : (
                 // Desktop: the page sits in one large frosted panel. Phones: no panel.
                 <div className="md:rounded-[32px] md:bg-surface md:p-8 md:shadow-soft lg:p-10">
                   <SectionNav />
-                  {children}
+                  <PageMotion>{children}</PageMotion>
                 </div>
               )}
             </main>
@@ -197,6 +199,7 @@ export function AppShell({
       <PullToRefresh />
       <PwaClient />
       <PasskeyOffer />
+      <NavDirection />
       {!onJarvisPage && (
         <Suspense fallback={null}>
           <QuickAdd />

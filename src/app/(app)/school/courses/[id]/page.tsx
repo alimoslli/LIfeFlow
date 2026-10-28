@@ -40,7 +40,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
 
   return (
     <>
-      <Link href="/school" className="mb-4 inline-flex items-center gap-1 text-sm text-muted hover:text-text">
+      <Link href="/school" className="mb-4 hidden items-center gap-1 text-sm text-muted hover:text-text md:inline-flex">
         <ArrowLeft className="h-3.5 w-3.5" /> School
       </Link>
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
