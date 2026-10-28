@@ -1060,6 +1060,35 @@ export const jarvisMessages = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Savings finder: cheaper plans and better rates found with a live web search
+
+export const savingsOpportunities = pgTable(
+  "savings_opportunities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    /** The bill or subscription it would replace (null for a card/loan rate). */
+    recurringId: uuid("recurring_id").references(() => recurringItems.id, { onDelete: "cascade" }),
+    accountId: uuid("account_id").references(() => financialAccounts.id, { onDelete: "cascade" }),
+    billName: text("bill_name").notNull(),
+    category: text("category").$type<"phone" | "internet" | "insurance" | "streaming" | "credit_card" | "loan" | "other">().notNull(),
+    currentMonthlyCents: integer("current_monthly_cents").notNull(),
+    provider: text("provider").notNull(),
+    plan: text("plan").notNull(),
+    offerMonthlyCents: integer("offer_monthly_cents").notNull(),
+    yearlySavingsCents: integer("yearly_savings_cents").notNull(),
+    details: text("details"),
+    sourceUrl: text("source_url").notNull(),
+    sourceTitle: text("source_title").notNull(),
+    status: text("status").$type<"found" | "acted" | "dismissed">().notNull().default("found"),
+    searchedAt: tstz("searched_at").notNull(),
+    actedAt: tstz("acted_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("savings_user_idx").on(t.userId), ownerPolicy()],
+);
+
+// ---------------------------------------------------------------------------
 // Habits: small repeatable steps with streaks
 
 export const habits = pgTable(

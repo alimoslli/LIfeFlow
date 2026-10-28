@@ -28,6 +28,8 @@ import { budgetWarnings, cashForecast, safeToSpend } from "@/server/services/fin
 import { goalsWithPlans } from "@/server/services/finance/goals";
 import { recordNetWorth } from "@/server/services/finance/investing";
 import { moneyOverview } from "@/server/services/finance/overview";
+import { listSavings } from "@/server/services/finance/savings-finder";
+import { subscriptionsOverview } from "@/server/services/finance/subscriptions";
 import { spendingByCategory, upcomingRecurring } from "@/server/services/finance/planning";
 import { AskJarvisButton, CelebrateGoal } from "./money-client";
 import { PlaidLinkButton } from "@/components/finance/plaid-link";
@@ -45,7 +47,7 @@ export default async function MoneyPage() {
     const o = await moneyOverview(s, today);
     if (!o.hasAccounts) return { empty: true as const, plaidReady: !!plaidConfig() };
     await recordNetWorth(s, today);
-    const [safe, forecast, warnings, goals, categories, bills, health] = await series(
+    const [safe, forecast, warnings, goals, categories, bills, health, savings, subs] = await series(
       () => safeToSpend(s, today),
       () => cashForecast(s, today, 30),
       () => budgetWarnings(s, today),
@@ -53,6 +55,8 @@ export default async function MoneyPage() {
       () => spendingByCategory(s, o.month.period.from, o.month.period.to),
       () => upcomingRecurring(s, today, addDaysStr(today, 30)),
       () => financialHealth(s, today),
+      () => listSavings(s),
+      () => subscriptionsOverview(s, today),
     );
     return {
       empty: false as const,
@@ -64,6 +68,8 @@ export default async function MoneyPage() {
       categories,
       bills: bills.filter((b) => b.amountCents < 0),
       health,
+      savings: { foundYearlyCents: savings.foundYearlyCents, actedYearlyCents: savings.actedYearlyCents },
+      subs: { monthlyCents: subs.monthlyCents, flags: subs.flags.length },
       today,
       tz: u.timezone,
     };
@@ -260,6 +266,19 @@ export default async function MoneyPage() {
             </ul>
           </section>
         )}
+
+        <section className="animate-rise grid grid-cols-2 gap-3" style={{ animationDelay: "240ms" }} aria-label="Subscriptions and savings">
+          <Link href="/finances/subscriptions" className="rounded-3xl bg-surface p-4 shadow-soft">
+            <p className="text-sm text-muted">Subscriptions</p>
+            <p className="tabular text-xl font-medium">{whole(d.subs.monthlyCents)}/mo</p>
+            <p className="text-xs text-muted">{d.subs.flags ? `${d.subs.flags} worth a look` : "Nothing flagged"}</p>
+          </Link>
+          <Link href="/finances/savings" className="rounded-3xl bg-surface p-4 shadow-soft" data-testid="savings-card">
+            <p className="text-sm text-muted">Savings found</p>
+            <p className="tabular text-xl font-medium">{whole(d.savings.foundYearlyCents)}/yr</p>
+            <p className="text-xs text-success">{whole(d.savings.actedYearlyCents)}/yr acted on</p>
+          </Link>
+        </section>
 
         {d.bills.length > 0 && (
           <section className="animate-rise" style={{ animationDelay: "260ms" }} aria-label="Bills">

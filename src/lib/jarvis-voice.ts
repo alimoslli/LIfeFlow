@@ -152,6 +152,12 @@ const KINDS: Record<string, (f: F) => Parts> = {
     ask: "Want to track it with your subscriptions?",
     mood: "info",
   }),
+  savings_found: (f) => ({
+    headline: `Cheaper option for ${s(f, "bill")}`,
+    fact: `Switching to ${s(f, "provider")} ${s(f, "plan")} saves about ${usd(n(f, "yearlyCents"))}/year (source: ${s(f, "source")}).`,
+    ask: "Want the details and a script to ask your provider to match it?",
+    mood: "info",
+  }),
   consent: () => ({
     headline: "Can I learn from your answers?",
     fact: "I'd like to notice which of my messages help and which you skip, so I speak up at better times and less about what you don't need.",

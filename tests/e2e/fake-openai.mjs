@@ -111,7 +111,34 @@ function webSearchResponse(body) {
 }
 
 // Structured searches the app makes (savings finder, cancel help), keyed by schema name.
-const fixtures = {};
+const fixtures = {
+  // Two sourced cheaper plans, plus one whose price page wasn't cited (the app must drop it).
+  savings_options: () => ({
+    text: JSON.stringify({
+      options: [
+        {
+          provider: "Example Mobile",
+          plan: "Unlimited Basic",
+          monthly_price_usd: 30,
+          source_url: "https://mobile.example.com/plans",
+          details: "Price with autopay; taxes extra.",
+        },
+        {
+          provider: "Sample Wireless",
+          plan: "15GB",
+          monthly_price_usd: 20,
+          source_url: "https://wireless.example.net/15gb",
+          details: "12-month promo, then $25.",
+        },
+        { provider: "Unsourced Co", plan: "Cheap", monthly_price_usd: 5, source_url: "https://not-cited.example.org", details: "" },
+      ],
+    }),
+    sources: [
+      { url: "https://mobile.example.com/plans", title: "Plans | Example Mobile" },
+      { url: "https://wireless.example.net/15gb", title: "15GB plan | Sample Wireless" },
+    ],
+  }),
+};
 globalThis.__lfWebFixtures = fixtures;
 
 http

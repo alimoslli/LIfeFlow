@@ -14,6 +14,8 @@ import { listAssignments } from "../school";
 import { listShifts } from "../work";
 import { getAgenda, freeSlots } from "../calendar";
 import { subscriptionsOverview } from "../finance/subscriptions";
+import { billsToReview, findSavings, listSavings } from "../finance/savings-finder";
+import { webSearchClient } from "../../integrations/web-search";
 import { eveningWrap, goalForecast, habitCoach, monthlyReview, morningBrief, weeklyReview } from "./reviews";
 
 /** Something worth saying, with the facts behind it. Wording happens later (lib/jarvis-voice). */
@@ -387,6 +389,28 @@ const subscriptionWatch: Detector = async ({ scope, today }) => {
   return out;
 };
 
+/** Early each month: checks the biggest comparable bill for a cheaper, sourced option. Uses a live web search. */
+const savingsCheck: Detector = async ({ scope, today }) => {
+  if (Number(today.slice(8, 10)) > 7 || !webSearchClient()) return [];
+  const [{ bills }, { rows }] = [await billsToReview(scope), await listSavings(scope)];
+  const recent = new Set(rows.filter((r) => r.searchedAt.getTime() > Date.now() - 30 * 86_400_000).map((r) => r.recurringId));
+  const bill = bills.filter((b) => !recent.has(b.id)).sort((a, b) => b.monthlyCents - a.monthlyCents)[0];
+  if (!bill) return [];
+  const found = await findSavings(scope, { recurringId: bill.id }).catch(() => null);
+  const best = found?.saved.sort((a, b) => b.yearlySavingsCents - a.yearlySavingsCents)[0];
+  if (!best) return [];
+  return [
+    {
+      kind: "savings_found",
+      topic: "money",
+      dedupeKey: `savings_found:${bill.id}:${today.slice(0, 7)}`,
+      facts: { bill: bill.name, provider: best.provider, plan: best.plan, yearlyCents: best.yearlySavingsCents, source: best.sourceTitle },
+      action: { type: "open", label: "See it and the source", href: "/finances/savings" },
+      priority: 65,
+    },
+  ];
+};
+
 export const DETECTORS = {
   spendingPace,
   goalMilestones,
@@ -405,12 +429,13 @@ export const DETECTORS = {
   goalForecast,
   habitCoach,
   subscriptionWatch,
+  savingsCheck,
 };
 export type DetectorName = keyof typeof DETECTORS;
 
 /** Which detectors run when. Events run right after the change that triggered them. */
 export const RUNS: Record<string, DetectorName[]> = {
-  morning: ["morningBrief", "monthlyReview", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
+  morning: ["morningBrief", "monthlyReview", "savingsCheck", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
   midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks", "subscriptionWatch"],
   // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
   evening: ["eveningWrap", "weeklyReview", "goalForecast", "habitCoach", "taskStreak", "goalMilestones", "deadlineConflicts"],
