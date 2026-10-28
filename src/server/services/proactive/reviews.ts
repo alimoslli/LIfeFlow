@@ -26,7 +26,10 @@ export async function weekendPattern({ scope, today }: DetectContext) {
   const txns = await queryTransactions(scope, { from, to: addDaysStr(weekStart(today), -1), kinds: ["expense"], limit: 10000 });
   let weekend = 0;
   let weekday = 0;
-  for (const t of txns) dayOfWeek(t.date) % 6 === 0 ? (weekend += spendOf(t)) : (weekday += spendOf(t));
+  for (const t of txns) {
+    if (dayOfWeek(t.date) % 6 === 0) weekend += spendOf(t);
+    else weekday += spendOf(t);
+  }
   const perWeekend = Math.round(weekend / 16);
   const perWeekday = Math.round(weekday / 40);
   if (perWeekday <= 0 || perWeekend < perWeekday * 1.5 || perWeekend - perWeekday < 1000) return null;
