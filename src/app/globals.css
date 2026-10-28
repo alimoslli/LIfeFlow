@@ -563,3 +563,14 @@ html.lf-splash .animate-rise {
     transform: scale(1.04);
   }
 }
+
+/* Toasts slide up gently. */
+.lf-toast {
+  animation: lf-toast-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes lf-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}

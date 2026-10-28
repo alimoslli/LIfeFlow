@@ -1,6 +1,7 @@
 "use server";
+import { trashAction } from "../trash-actions";
 import { formBool, formObject, mutate, type ActionState } from "@/server/actions";
-import { createEvent, deleteEvent } from "@/server/services/calendar";
+import { createEvent } from "@/server/services/calendar";
 
 export async function createEventAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
@@ -28,7 +29,5 @@ export async function createEventAction(_p: ActionState, fd: FormData): Promise<
 }
 
 export async function deleteEventAction(id: string): Promise<ActionState> {
-  return mutate("event.delete", async (s) => {
-    await deleteEvent(s, id);
-  });
+  return trashAction("event", id);
 }

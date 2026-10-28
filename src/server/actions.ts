@@ -8,7 +8,9 @@ import type { UserScope } from "./db/with-user";
 import { audit } from "./services/audit";
 import { ServiceError } from "./services/errors";
 
-export type ActionState = { ok: boolean; error?: string; message?: string; at: number } | null;
+/** `undo` is a trash id: the toast's Undo button restores it. */
+export type ActionState = { ok: boolean; error?: string; message?: string; undo?: string; at: number } | null;
+export type MutationResult = string | void | { message: string; undo?: string };
 
 /** FormData → plain object; blank strings become undefined. */
 export function formObject(fd: FormData): Record<string, string | undefined> {
@@ -41,7 +43,7 @@ function messageOf(e: unknown) {
  */
 export async function mutate(
   name: string,
-  fn: (scope: UserScope, user: SessionUser) => Promise<string | void>,
+  fn: (scope: UserScope, user: SessionUser) => Promise<MutationResult>,
   opts: { revalidate?: string[] } = {},
 ): Promise<ActionState> {
   try {
@@ -51,6 +53,7 @@ export async function mutate(
       return m;
     });
     for (const p of opts.revalidate ?? ["/"]) revalidatePath(p, "layout");
+    if (message && typeof message === "object") return { ok: true, message: message.message, undo: message.undo, at: Date.now() };
     return { ok: true, message: message || undefined, at: Date.now() };
   } catch (e) {
     unstable_rethrow(e);

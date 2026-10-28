@@ -159,11 +159,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
           </Card>
           <div className="flex items-center justify-between px-1 text-xs text-muted">
             <SourceBadge source={c.source} />
-            <ActionButton
-              action={deleteCourseAction.bind(null, c.id)}
-              confirm={`Delete ${c.name} and all its assignments?`}
-              className="flex items-center gap-1 rounded px-2 py-1 text-danger hover:bg-danger-soft"
-            >
+            <ActionButton action={deleteCourseAction.bind(null, c.id)} className="flex items-center gap-1 rounded px-2 py-1 text-danger hover:bg-danger-soft">
               <Trash2 className="h-3.5 w-3.5" /> Delete course
             </ActionButton>
           </div>

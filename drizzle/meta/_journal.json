@@ -57,6 +57,13 @@
       "when": 1793176402874,
       "tag": "0007_connection_registry",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793177045253,
+      "tag": "0008_trash",
+      "breakpoints": true
     }
   ]
 }

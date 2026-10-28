@@ -174,12 +174,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                   </Link>
                   {conflictKeys.has(i.key) && <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning">Overlaps</span>}
                   {i.origin === "event" && (
-                    <ActionButton
-                      action={deleteEventAction.bind(null, i.id)}
-                      confirm={`Delete "${i.title}"? Repeating events are deleted for every week.`}
-                      title="Delete event"
-                      className="rounded-full p-1.5 text-muted hover:text-danger"
-                    >
+                    <ActionButton action={deleteEventAction.bind(null, i.id)} title="Delete event" className="rounded-full p-1.5 text-muted hover:text-danger">
                       <Trash2 className="h-4 w-4" />
                     </ActionButton>
                   )}

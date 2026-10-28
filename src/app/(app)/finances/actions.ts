@@ -1,14 +1,15 @@
 "use server";
+import { trashAction } from "../trash-actions";
 import { PlaidError, removeItem } from "@/server/integrations/plaid";
 import { applyBudgetPlan } from "@/server/services/finance/smart-budgets";
-import { contributeToGoal, deleteGoal } from "@/server/services/finance/goals";
+import { contributeToGoal } from "@/server/services/finance/goals";
 import { todayIn } from "@/lib/dates";
 import { applyRuleToPast, deleteCategoryRule } from "@/server/services/finance/categorize";
 import { formBool, formCents, formObject, mutate, type ActionState } from "@/server/actions";
 import { ServiceError } from "@/server/services/errors";
 import { archiveAccount, createManualAccount, updateAccountBalance, updateAccountDetails } from "@/server/services/finance/accounts";
-import { createGoal, createRecurring, deleteBudget, setBudget, setRecurringStatus, updateGoal } from "@/server/services/finance/planning";
-import { createTransaction, deleteTransaction, importTransactionsCsv, updateTransaction } from "@/server/services/finance/transactions";
+import { createGoal, createRecurring, setBudget, setRecurringStatus, updateGoal } from "@/server/services/finance/planning";
+import { createTransaction, importTransactionsCsv, updateTransaction } from "@/server/services/finance/transactions";
 
 const need = (v: number | undefined, what: string) => {
   if (v == null || Number.isNaN(v)) throw new ServiceError(`Enter a valid ${what}.`);
@@ -113,9 +114,7 @@ export async function deleteRuleAction(ruleId: string): Promise<ActionState> {
 }
 
 export async function deleteTransactionAction(id: string): Promise<ActionState> {
-  return mutate("transaction.delete", async (s) => {
-    await deleteTransaction(s, id);
-  });
+  return trashAction("transaction", id);
 }
 
 export async function importCsvAction(_p: ActionState, fd: FormData): Promise<ActionState> {
@@ -154,9 +153,7 @@ export async function applyBudgetPlanAction(_p: ActionState, fd: FormData): Prom
 }
 
 export async function deleteBudgetAction(id: string): Promise<ActionState> {
-  return mutate("budget.delete", async (s) => {
-    await deleteBudget(s, id);
-  });
+  return trashAction("budget", id);
 }
 
 export async function createRecurringAction(_p: ActionState, fd: FormData): Promise<ActionState> {
@@ -232,10 +229,7 @@ export async function contributeGoalAction(id: string, _p: ActionState, fd: Form
 }
 
 export async function deleteGoalAction(id: string): Promise<ActionState> {
-  return mutate("goal.delete", async (s) => {
-    const g = await deleteGoal(s, id);
-    return `Deleted "${g.name}".`;
-  });
+  return trashAction("goal", id);
 }
 
 export async function archiveGoalAction(id: string): Promise<ActionState> {

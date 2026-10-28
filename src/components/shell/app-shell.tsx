@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Toaster } from "@/components/ui/toaster";
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { setTourAction } from "@/app/(onboarding)/welcome/actions";
 import { Sparkles } from "lucide-react";
@@ -184,6 +185,7 @@ export function AppShell({
           />
         )}
       </div>
+      <Toaster />
     </Ctx.Provider>
   );
 }

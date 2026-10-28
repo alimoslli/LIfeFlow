@@ -1,7 +1,8 @@
 "use server";
+import { trashAction } from "../trash-actions";
 import { redirect } from "next/navigation";
 import { formBool, formObject, mutate, type ActionState } from "@/server/actions";
-import { createNote, createProject, deleteNote, updateNote, updateProject } from "@/server/services/notes";
+import { createNote, createProject, updateNote, updateProject } from "@/server/services/notes";
 
 const tags = (s?: string) =>
   s
@@ -45,10 +46,8 @@ export async function saveNoteAction(id: string, _p: ActionState, fd: FormData):
 }
 
 export async function deleteNoteAction(id: string): Promise<ActionState> {
-  const r = await mutate("note.delete", async (s) => {
-    await deleteNote(s, id);
-  });
-  if (r?.ok) redirect("/notes");
+  const r = await trashAction("note", id);
+  if (r?.ok) redirect(`/notes?undo=${r.undo}`);
   return r;
 }
 

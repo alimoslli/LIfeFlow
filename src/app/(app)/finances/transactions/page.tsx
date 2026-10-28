@@ -262,7 +262,6 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                             {["manual", "import", "jarvis"].includes(t.source) && (
                               <ActionButton
                                 action={deleteTransactionAction.bind(null, t.id)}
-                                confirm="Delete this transaction?"
                                 title="Delete transaction"
                                 className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-danger hover:bg-danger-soft"
                               >

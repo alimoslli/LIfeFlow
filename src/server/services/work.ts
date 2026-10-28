@@ -1,7 +1,7 @@
 import { series } from "@/server/db/series";
-import { and, asc, desc, eq, gte, isNull, lt, ne } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, isNull, lt, ne } from "drizzle-orm";
 import { z } from "zod";
-import { DATE_RE, TIME_RE, addDaysStr, localDateOf, localToInstant, startOfLocalDay, weekStart } from "@/lib/dates";
+import { DATE_RE, TIME_RE, addDaysStr, localDateOf, localTimeOf, localToInstant, startOfLocalDay, weekStart } from "@/lib/dates";
 import { employers, paychecks, workShifts, type DataSource } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound, ServiceError } from "./errors";
@@ -202,6 +202,50 @@ export async function createShift(scope: UserScope, tz: string, input: z.input<t
     })
     .returning();
   return row;
+}
+
+/** Shifts that overlap [startsAt, endsAt), not counting `exceptId` or cancelled ones. */
+async function overlapping(scope: UserScope, startsAt: Date, endsAt: Date, exceptId?: string) {
+  const rows = await scope.tx
+    .select({ id: workShifts.id, startsAt: workShifts.startsAt, endsAt: workShifts.endsAt, status: workShifts.status })
+    .from(workShifts)
+    .where(and(eq(workShifts.userId, scope.userId), lt(workShifts.startsAt, endsAt), gt(workShifts.endsAt, startsAt)));
+  return rows.filter((r) => r.id !== exceptId && r.status !== "cancelled");
+}
+
+export const shiftPatchSchema = shiftInputSchema.partial().extend({ breakMinutes: z.number().int().min(0).max(600).optional() });
+
+/** Edits a shift's job, date, times, break or notes. Returns any shifts it now overlaps. */
+export async function updateShift(scope: UserScope, tz: string, id: string, input: z.input<typeof shiftPatchSchema>) {
+  const d = shiftPatchSchema.parse(input);
+  const [shift] = await scope.tx
+    .select()
+    .from(workShifts)
+    .where(and(eq(workShifts.id, id), eq(workShifts.userId, scope.userId)));
+  if (!shift) throw notFound("Shift");
+  if (d.employerId) await assertOwned(scope, employers, d.employerId, "Employer");
+  const date = d.date ?? localDateOf(shift.startsAt, tz);
+  const start = d.startTime ?? localTimeOf(shift.startsAt, tz);
+  const end = d.endTime ?? localTimeOf(shift.endsAt, tz);
+  const { startsAt, endsAt } = shiftInstants(date, start, end, tz);
+  if (endsAt.getTime() - startsAt.getTime() > 24 * 3600_000) throw new ServiceError("Shifts cannot exceed 24 hours.");
+  const [row] = await scope.tx
+    .update(workShifts)
+    .set({
+      startsAt,
+      endsAt,
+      ...(d.employerId && { employerId: d.employerId }),
+      ...(d.breakMinutes != null && { breakMinutes: d.breakMinutes }),
+      ...(d.notes !== undefined && { notes: d.notes ?? null }),
+    })
+    .where(eq(workShifts.id, id))
+    .returning();
+  return { shift: row, overlaps: (await overlapping(scope, startsAt, endsAt, id)).length };
+}
+
+/** How many other shifts a new one overlaps (shown as a warning, never blocked). */
+export async function shiftOverlaps(scope: UserScope, shift: { id: string; startsAt: Date; endsAt: Date }) {
+  return (await overlapping(scope, shift.startsAt, shift.endsAt, shift.id)).length;
 }
 
 export const punchSchema = z.object({

@@ -863,6 +863,26 @@ export type HealthMetric =
   "steps" | "active_energy_kcal" | "exercise_minutes" | "sleep_hours" | "resting_heart_rate" | "weight_kg" | "distance_km" | "mindful_minutes";
 
 /** One value per metric per local day. Upserted, so re-sending a day replaces it. */
+// ---------------------------------------------------------------------------
+// Trash: deleted items, kept 30 days so every delete can be undone
+
+export type TrashKind = "task" | "note" | "event" | "assignment" | "shift" | "transaction" | "goal" | "budget" | "course" | "project";
+
+export const trash = pgTable(
+  "trash",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    kind: text("kind").$type<TrashKind>().notNull(),
+    /** What the user sees in the trash list, e.g. the task title. */
+    label: text("label").notNull(),
+    /** The deleted rows (and their children), keyed by table, exactly as they were. */
+    payload: jsonb("payload").$type<Record<string, Record<string, unknown>[]>>().notNull(),
+    deletedAt: tstz("deleted_at").notNull().defaultNow(),
+  },
+  (t) => [index("trash_user_deleted_idx").on(t.userId, t.deletedAt), ownerPolicy()],
+);
+
 export const healthSamples = pgTable(
   "health_samples",
   {

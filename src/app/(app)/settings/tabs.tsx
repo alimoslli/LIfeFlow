@@ -8,6 +8,7 @@ const ITEMS = [
   { key: "/settings/integrations", label: "Integrations" },
   { key: "/settings/data", label: "Privacy & data" },
   { key: "/settings/security", label: "Security" },
+  { key: "/settings/trash", label: "Trash" },
 ];
 
 export function SettingsTabs() {

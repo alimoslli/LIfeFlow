@@ -224,18 +224,15 @@ function TaskDetail({
         <div className="flex items-center gap-2">
           <SubmitButton size="sm">Save changes</SubmitButton>
           <SourceBadge source={task.source} />
-          <span className="ml-auto">
-            <ActionButton
-              action={deleteTaskAction.bind(null, task.id)}
-              confirm={`Delete "${task.title}"?`}
-              title="Delete task"
-              className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-danger hover:bg-danger-soft"
-            >
-              <Trash2 className="h-3.5 w-3.5" /> Delete
-            </ActionButton>
-          </span>
         </div>
       </ActionForm>
+      <ActionButton
+        action={deleteTaskAction.bind(null, task.id)}
+        title="Delete task"
+        className="flex items-center gap-1 self-start rounded-md px-2 py-1 text-xs text-danger hover:bg-danger-soft sm:col-start-1"
+      >
+        <Trash2 className="h-3.5 w-3.5" /> Delete
+      </ActionButton>
       <div>
         <h3 className="mb-2 text-xs font-semibold tracking-wide text-muted uppercase">Subtasks</h3>
         <ul className="mb-2 flex flex-col gap-1.5">

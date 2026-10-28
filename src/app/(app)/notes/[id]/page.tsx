@@ -43,12 +43,7 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
           <AskJarvisButton prompt={`Turn my note "${d.note.title}" into an action plan with tasks.`} className="font-medium text-accent hover:underline">
             Make a plan
           </AskJarvisButton>
-          <ActionButton
-            action={deleteNoteAction.bind(null, d.note.id)}
-            confirm="Delete this note?"
-            title="Delete note"
-            className="text-muted hover:text-danger"
-          >
+          <ActionButton action={deleteNoteAction.bind(null, d.note.id)} title="Delete note" className="text-muted hover:text-danger">
             <Trash2 className="h-4 w-4" />
           </ActionButton>
         </div>

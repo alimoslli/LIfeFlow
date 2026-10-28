@@ -186,7 +186,6 @@ export default async function GoalsPage() {
                       </ActionButton>
                       <ActionButton
                         action={deleteGoalAction.bind(null, g.id)}
-                        confirm={`Delete "${g.name}" and its history?`}
                         title={`Delete ${g.name}`}
                         className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-danger hover:bg-danger-soft"
                       >

@@ -1,4 +1,5 @@
 "use client";
+import { addDaysStr } from "@/lib/dates";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -29,17 +30,17 @@ export function ShiftDialog({
           </Field>
           <div className="grid grid-cols-3 gap-3">
             <Field label="Date" htmlFor="s-date">
-              <Input id="s-date" name="date" type="date" required defaultValue={today} />
+              <Input id="s-date" name="date" type="date" required min={addDaysStr(today, -366)} />
             </Field>
             <Field label="Start" htmlFor="s-start">
-              <Input id="s-start" name="startTime" type="time" required defaultValue="09:00" />
+              <Input id="s-start" name="startTime" type="time" required />
             </Field>
             <Field label="End" htmlFor="s-end">
-              <Input id="s-end" name="endTime" type="time" required defaultValue="17:00" />
+              <Input id="s-end" name="endTime" type="time" required />
             </Field>
           </div>
           <Field label="Unpaid break (minutes)" htmlFor="s-br">
-            <Input id="s-br" name="breakMinutes" type="number" min={0} max={600} defaultValue={30} />
+            <Input id="s-br" name="breakMinutes" type="number" min={0} max={600} placeholder="0" />
           </Field>
           <SubmitButton className="self-end">Add shift</SubmitButton>
         </ActionForm>

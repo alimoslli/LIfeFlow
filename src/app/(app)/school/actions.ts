@@ -1,18 +1,9 @@
 "use server";
+import { trashAction } from "../trash-actions";
 import { redirect } from "next/navigation";
 import { formNum, formObject, mutate, type ActionState } from "@/server/actions";
 import { ServiceError } from "@/server/services/errors";
-import {
-  addMaterial,
-  createAssignment,
-  createCourse,
-  deleteAssignment,
-  deleteCourse,
-  deleteMaterial,
-  getAssignment,
-  updateAssignment,
-  updateCourse,
-} from "@/server/services/school";
+import { addMaterial, createAssignment, createCourse, deleteMaterial, getAssignment, updateAssignment, updateCourse } from "@/server/services/school";
 
 const courseFields = (f: Record<string, string | undefined>) => ({
   name: f.name ?? "",
@@ -41,10 +32,8 @@ export async function updateCourseAction(id: string, _p: ActionState, fd: FormDa
 }
 
 export async function deleteCourseAction(id: string): Promise<ActionState> {
-  const r = await mutate("course.delete", async (s) => {
-    await deleteCourse(s, id);
-  });
-  if (r?.ok) redirect("/school");
+  const r = await trashAction("course", id);
+  if (r?.ok) redirect(`/school?undo=${r.undo}`);
   return r;
 }
 
@@ -88,9 +77,7 @@ export async function updateAssignmentAction(id: string, _p: ActionState, fd: Fo
 }
 
 export async function deleteAssignmentAction(id: string): Promise<ActionState> {
-  return mutate("assignment.delete", async (s) => {
-    await deleteAssignment(s, id);
-  });
+  return trashAction("assignment", id);
 }
 
 export async function addMaterialAction(courseId: string, _p: ActionState, fd: FormData): Promise<ActionState> {

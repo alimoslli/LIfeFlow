@@ -169,12 +169,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
                               >
                                 Cancel shift
                               </ActionButton>
-                              <ActionButton
-                                action={deleteShiftAction.bind(null, s.id)}
-                                confirm="Delete this shift?"
-                                title="Delete shift"
-                                className="ml-auto text-muted hover:text-danger"
-                              >
+                              <ActionButton action={deleteShiftAction.bind(null, s.id)} title="Delete shift" className="ml-auto text-muted hover:text-danger">
                                 <Trash2 className="h-3.5 w-3.5" />
                               </ActionButton>
                             </div>

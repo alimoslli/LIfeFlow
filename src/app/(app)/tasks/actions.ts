@@ -1,6 +1,7 @@
 "use server";
+import { trashAction } from "../trash-actions";
 import { formObject, mutate, type ActionState } from "@/server/actions";
-import { createTask, deleteTask, getTask, updateTask } from "@/server/services/tasks";
+import { createTask, getTask, updateTask } from "@/server/services/tasks";
 
 export async function createTaskAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
@@ -41,7 +42,5 @@ export async function toggleTaskAction(id: string): Promise<ActionState> {
 }
 
 export async function deleteTaskAction(id: string): Promise<ActionState> {
-  return mutate("task.delete", async (s) => {
-    await deleteTask(s, id);
-  });
+  return trashAction("task", id);
 }
