@@ -18,5 +18,6 @@ export function toCard(m: JarvisMessage, tz: string): CardMessage {
     undoable: m.status === "done" && !!m.result?.undo && !m.result.undone,
     when: formatIn(m.createdAt, tz, "EEE h:mm a"),
     urgent: m.urgent,
+    sections: Array.isArray(m.facts.sections) ? (m.facts.sections as { heading: string; lines: string[] }[]) : undefined,
   };
 }

@@ -1053,6 +1053,40 @@ export const jarvisMessages = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Habits: small repeatable steps with streaks
+
+export const habits = pgTable(
+  "habits",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    title: text("title").notNull(),
+    kind: text("kind").$type<"save" | "no_spend" | "study" | "custom">().notNull().default("custom"),
+    cadence: text("cadence").$type<"daily" | "weekly" | "weekends" | "payday">().notNull().default("daily"),
+    /** e.g. 1000 for "save $10"; minutes for study. */
+    target: integer("target"),
+    active: boolean("active").notNull().default(true),
+    createdAt: createdAt(),
+  },
+  (t) => [index("habits_user_idx").on(t.userId), ownerPolicy()],
+);
+
+export const habitChecks = pgTable(
+  "habit_checks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    habitId: uuid("habit_id")
+      .notNull()
+      .references(() => habits.id, { onDelete: "cascade" }),
+    day: date("day").notNull(),
+    done: boolean("done").notNull().default(true),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("habit_checks_day_uq").on(t.habitId, t.day), ownerPolicy()],
+);
+
+// ---------------------------------------------------------------------------
 // Trash: deleted items, kept 30 days so every delete can be undone
 
 export type TrashKind = "task" | "note" | "event" | "assignment" | "shift" | "transaction" | "goal" | "budget" | "course" | "project";

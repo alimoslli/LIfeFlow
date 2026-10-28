@@ -101,7 +101,7 @@ describe("proactive Jarvis", () => {
   it("offers to move overdue to-dos, respects muted topics and kinds, and stops what keeps getting ignored", async () => {
     const { user: u, run } = await makeUser();
     await run((s) => createTask(s, TZ, { title: "Return library books", dueDate: addDaysStr(today, -2) }));
-    const first = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening" }));
+    const first = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "midday" }));
     const overdue = first.find((m) => m.kind === "overdue_tasks")!;
     expect(overdue.body).toContain('"Return library books" is past due');
     await run((s) => respondToMessage(s, user(u.id), overdue.id, "do", today));
@@ -144,10 +144,11 @@ describe("proactive Jarvis", () => {
       pushed.push(key);
       return true;
     };
-    // 3 urgent bills; a limit of 2 a day.
+    // 3 urgent bills plus the morning brief; a limit of 2 a day sends the 2 most urgent.
     expect(await run((s) => pushImportant(s, TZ, { jarvis: { pushLimit: 2, quietStart: "00:00", quietEnd: "00:00" } }, push))).toBe(2);
-    expect(await run((s) => pushImportant(s, TZ, { jarvis: { pushLimit: 5, quietStart: "00:00", quietEnd: "00:00" } }, push))).toBe(1);
-    expect(new Set(pushed).size).toBe(3);
+    expect(pushed.every((k) => k.startsWith("jarvis:bill_short"))).toBe(true);
+    expect(await run((s) => pushImportant(s, TZ, { jarvis: { pushLimit: 5, quietStart: "00:00", quietEnd: "00:00" } }, push))).toBe(2);
+    expect(new Set(pushed).size).toBe(4);
     expect(inQuietHours("23:30", "22:00", "07:00")).toBe(true);
     expect(inQuietHours("12:00", "22:00", "07:00")).toBe(false);
 
@@ -170,5 +171,43 @@ describe("proactive Jarvis", () => {
     expect(again.find((m) => m.kind === "consent")).toBeUndefined();
     expect((await run((s) => s.tx.select().from(jarvisMessages).where(eq(jarvisMessages.kind, "consent"))))[0].status).toBe("done");
     expect(monthStart(today)).toBe(`${today.slice(0, 7)}-01`);
+  });
+});
+
+describe("reviews and coaching", () => {
+  it("builds the morning brief, the evening wrap-up and the Sunday weekly review from real data", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      await checking(s, 80_000);
+      await createTask(s, TZ, { title: "Email advisor", dueDate: today, priority: "high" });
+      const done = await createTask(s, TZ, { title: "Laundry", dueDate: today });
+      await s.tx.update(tasks).set({ status: "done", completedAt: new Date() }).where(eq(tasks.id, done.id));
+    });
+    const morning = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "morning" }));
+    const brief = morning.find((m) => m.kind === "morning_brief")!;
+    expect(brief.body).toMatch(/safe to spend today/);
+    expect(JSON.stringify(brief.facts.sections)).toContain("Email advisor");
+
+    const evening = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening" }));
+    const wrap = evening.find((m) => m.kind === "evening_wrap")!;
+    expect(wrap.body).toContain("You finished 1 to-do today. 1 to-do didn't happen.");
+    expect(wrap.action).toMatchObject({ type: "move_tasks" });
+
+    // A Sunday evening: the weekly review.
+    const daysToSunday = (7 - new Date(`${today}T12:00:00Z`).getUTCDay()) % 7;
+    const sunday = new Date(`${addDaysStr(today, daysToSunday)}T23:30:00Z`);
+    const week = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now: sunday }));
+    const review = week.find((m) => m.kind === "weekly_review")!;
+    expect(review.body).toMatch(/to-do.* done, \d+ slipped, \$\d+ spent/);
+    expect((review.facts.sections as { heading: string }[]).map((x) => x.heading)).toEqual(expect.arrayContaining(["Wins", "What slipped", "Spending"]));
+  });
+
+  it("counts habit streaks by day and by week", async () => {
+    const { streakOf } = await import("@/server/services/habits");
+    const d = (n: number) => addDaysStr(today, -n);
+    expect(streakOf("daily", [d(0), d(1), d(2), d(4)], today)).toMatchObject({ current: 3, best: 3 });
+    // Today not done yet doesn't break yesterday's streak.
+    expect(streakOf("daily", [d(1), d(2)], today).current).toBe(2);
+    expect(streakOf("weekly", [d(0), d(7), d(14)], today).current).toBe(3);
   });
 });

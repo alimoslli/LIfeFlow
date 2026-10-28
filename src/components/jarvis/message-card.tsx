@@ -22,6 +22,8 @@ export type CardMessage = {
   undoable: boolean;
   when: string;
   urgent: boolean;
+  /** Reviews: the full breakdown. */
+  sections?: { heading: string; lines: string[] }[];
 };
 
 export function JarvisAvatar({ style, name, className }: { style: "spark" | "orb" | "initial"; name: string; className?: string }) {
@@ -75,6 +77,23 @@ export function JarvisMessageCard({ m, name, avatar, compact }: { m: CardMessage
           </p>
           <h3 className="mt-0.5 text-[15px] font-semibold">{m.title}</h3>
           <p className="mt-1 text-[15px] leading-relaxed text-text-2">{m.body}</p>
+          {m.sections && m.sections.length > 0 && (
+            <details className="group mt-2 rounded-2xl bg-surface-2 px-3" open={!compact}>
+              <summary className="cursor-pointer text-sm font-medium text-accent">Full review</summary>
+              <div className="flex flex-col gap-3 pb-3">
+                {m.sections.map((sec) => (
+                  <div key={sec.heading}>
+                    <p className="text-xs font-semibold tracking-wide text-muted uppercase">{sec.heading}</p>
+                    <ul className="mt-1 flex flex-col gap-0.5 text-sm">
+                      {sec.lines.map((l, i) => (
+                        <li key={i}>{l}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
           {m.resultText && (
             <p className="mt-2 flex items-start gap-1.5 text-sm text-success">
               <Check className="mt-0.5 h-4 w-4 shrink-0" /> {m.resultText}

@@ -90,6 +90,50 @@ const KINDS: Record<string, (f: F) => Parts> = {
     ask: "Was that expected?",
     mood: "warn",
   }),
+  morning_brief: (f) => ({
+    headline: "Your morning brief",
+    fact: `${n(f, "count") ? `${plural(n(f, "count"), "thing")} on today's list` : "A clear day"}${f.money ? `, ${s(f, "money")}` : ""}.`,
+    ask: f.oneThing ? `The one thing: ${s(f, "oneThing")}.` : undefined,
+    mood: "info",
+  }),
+  evening_wrap: (f) => ({
+    headline: "Today's wrap-up",
+    fact: `You finished ${plural(n(f, "done"), "to-do")} today.${n(f, "left") ? ` ${plural(n(f, "left"), "to-do")} didn't happen.` : ""}`,
+    ask: n(f, "left") ? "Move the rest to tomorrow?" : undefined,
+    mood: n(f, "left") ? "info" : "win",
+  }),
+  weekly_review: (f) => ({
+    headline: "Your week in review",
+    fact: `${plural(n(f, "done"), "to-do")} done, ${n(f, "slipped")} slipped, ${usd(n(f, "spentCents"))} spent${n(f, "budgetCents") ? ` of about ${usd(n(f, "budgetCents"))} budgeted` : ""}.`,
+    ask: f.change ? `One change for next week: ${s(f, "change")}` : undefined,
+    mood: "info",
+  }),
+  monthly_review: (f) => ({
+    headline: `${s(f, "month")} in review`,
+    fact:
+      f.rate === null || f.rate === undefined
+        ? `You spent ${usd(n(f, "spentCents"))} in ${s(f, "month")}.`
+        : `You kept ${n(f, "rate")}% of what came in during ${s(f, "month")}.`,
+    ask: "Want the full breakdown?",
+    mood: Number(f.rate) > 0 ? "win" : "info",
+  }),
+  goal_forecast: (f) => ({
+    headline: `${s(f, "goal")} forecast`,
+    fact: f.paceDate ? `At this pace you reach ${s(f, "goal")} in ${s(f, "paceDate")}.` : `${s(f, "goal")} has no regular savings yet.`,
+    ask: `Adding ${usd(n(f, "extraCents"))} a week makes it ${s(f, "fasterDate")}.${f.weeklyStepCents ? ` To hit your date: ${usd(n(f, "weeklyStepCents"))} a week.` : ""}`,
+    mood: "info",
+  }),
+  habit_streak: (f) => ({
+    headline: `${s(f, "habit")}: ${n(f, "days")} in a row`,
+    fact: `${n(f, "days")} in a row on "${s(f, "habit")}".${f.best ? " Best streak yet." : ""}`,
+    mood: "win",
+  }),
+  habit_struggle: (f) => ({
+    headline: `${s(f, "habit")} is slipping`,
+    fact: `"${s(f, "habit")}" slipped ${n(f, "missed")} times lately. That's a sign the step is too big, not that you failed.`,
+    ask: f.smaller ? `Try ${s(f, "smaller")} for two weeks?` : "Want to make it smaller for a while?",
+    mood: "info",
+  }),
   consent: () => ({
     headline: "Can I learn from your answers?",
     fact: "I'd like to notice which of my messages help and which you skip, so I speak up at better times and less about what you don't need.",

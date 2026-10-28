@@ -13,6 +13,7 @@ import { merchantKey } from "../finance/recurring-detect";
 import { listAssignments } from "../school";
 import { listShifts } from "../work";
 import { getAgenda, freeSlots } from "../calendar";
+import { eveningWrap, goalForecast, habitCoach, monthlyReview, morningBrief, weeklyReview } from "./reviews";
 
 /** Something worth saying, with the facts behind it. Wording happens later (lib/jarvis-voice). */
 export type Candidate = {
@@ -359,14 +360,21 @@ export const DETECTORS = {
   savedMore,
   overdueTasks,
   unusualSpend,
+  morningBrief,
+  eveningWrap,
+  weeklyReview,
+  monthlyReview,
+  goalForecast,
+  habitCoach,
 };
 export type DetectorName = keyof typeof DETECTORS;
 
 /** Which detectors run when. Events run right after the change that triggered them. */
 export const RUNS: Record<string, DetectorName[]> = {
-  morning: ["billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
-  midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue"],
-  evening: ["overdueTasks", "taskStreak", "goalMilestones", "deadlineConflicts"],
+  morning: ["morningBrief", "monthlyReview", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
+  midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks"],
+  // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
+  evening: ["eveningWrap", "weeklyReview", "goalForecast", "habitCoach", "taskStreak", "goalMilestones", "deadlineConflicts"],
   transaction: ["spendingPace", "unusualSpend", "billsDue", "goalMilestones"],
   shift: ["deadlineConflicts"],
   goal: ["goalMilestones"],
