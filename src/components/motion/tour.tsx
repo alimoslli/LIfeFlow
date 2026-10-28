@@ -1,14 +1,18 @@
 "use client";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { gsap, MOTION, prefersReducedMotion } from "./gsap";
 import { isSplashActive, onSplashEnd } from "./intro";
 
 type Step = { target: string; title: string; body: string };
 
-const STEPS: Step[] = [
-  { target: "today-page", title: "This is Today", body: "Your day at a glance: what's next, what Jarvis noticed, your list and your money." },
+const steps = (name: string): Step[] => [
+  { target: "today-page", title: "This is Today", body: "Your day at a glance: what's next, what your assistant noticed, your list and your money." },
   { target: "plan", title: "Plan", body: "Your calendar, to-dos, classes, work shifts and notes. Everything with a date lives here." },
-  { target: "jarvis", title: "Jarvis", body: "Ask anything or tell it what to do. It shows exactly what it changed and asks before deleting." },
+  {
+    target: "jarvis",
+    title: name,
+    body: "Your assistant. Talk or type: ask anything or tell it what to do. It shows exactly what it changed and asks before deleting.",
+  },
   { target: "money", title: "Money", body: "Real numbers only: cash & checking, what you spent and what came in this month." },
 ];
 
@@ -27,7 +31,8 @@ function findTarget(name: string): HTMLElement | null {
  * Guided tour: a soft spotlight glides between the four places of the app
  * with a short caption for each. Skippable at any time (button or Esc).
  */
-export function Tour({ onDone }: { onDone: () => void }) {
+export function Tour({ onDone, assistantName = "Jarvis" }: { onDone: () => void; assistantName?: string }) {
+  const STEPS = useMemo(() => steps(assistantName), [assistantName]);
   const [i, setI] = useState(0);
   const [ready, setReady] = useState(!isSplashActive());
   const spot = useRef<HTMLDivElement>(null);
@@ -67,7 +72,7 @@ export function Tour({ onDone }: { onDone: () => void }) {
         );
       }
     },
-    [i],
+    [i, STEPS],
   );
 
   useLayoutEffect(() => {

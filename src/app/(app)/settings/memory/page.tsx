@@ -11,11 +11,21 @@ import { series } from "@/server/db/series";
 import { jarvisStats } from "@/server/jarvis/metrics";
 import { jarvisStatus } from "@/server/jarvis/providers";
 import { listAllMemories } from "@/server/services/memory";
-import { addMemoryAction, archiveMemoryAction, decideMemoryAction, deleteMemoryAction, setMemorySuggestionsAction, updateMemoryAction } from "../actions";
+import {
+  updateAssistantAction,
+  addMemoryAction,
+  archiveMemoryAction,
+  decideMemoryAction,
+  deleteMemoryAction,
+  setMemorySuggestionsAction,
+  updateMemoryAction,
+} from "../actions";
 import { CATEGORY_LABEL, CATEGORY_OPTIONS } from "./categories";
 import { EditMemory } from "./edit-memory";
+import { AssistantCard } from "./assistant-card";
+import { assistantProfile } from "@/lib/assistant";
 
-export const metadata: Metadata = { title: "Jarvis & memory" };
+export const metadata: Metadata = { title: "Assistant" };
 
 const seconds = (ms: number | null) => (ms == null ? "None yet" : `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`);
 const compact = (n: number) => new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n);
@@ -26,7 +36,7 @@ export default async function MemorySettings() {
       () => listAllMemories(s),
       () => jarvisStats(s, 30),
     );
-    return { all, stats, tz: u.timezone, suggestionsOn: u.preferences?.memorySuggestions !== false };
+    return { all, stats, tz: u.timezone, suggestionsOn: u.preferences?.memorySuggestions !== false, assistant: assistantProfile(u.preferences) };
   });
   const status = jarvisStatus();
   const now = new Date();
@@ -42,6 +52,7 @@ export default async function MemorySettings() {
 
   return (
     <div className="flex flex-col gap-5">
+      <AssistantCard profile={d.assistant} action={updateAssistantAction} />
       {pending.length > 0 && (
         <Card>
           <CardHeader

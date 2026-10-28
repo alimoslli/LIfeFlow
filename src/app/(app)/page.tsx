@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowDownLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { CountUp } from "@/components/motion/count-up";
+import { assistantProfile } from "@/lib/assistant";
 import { Pressable } from "@/components/motion/pressable";
 import { TaskCheck } from "@/components/task-check";
 import { formatIn, localDateOf } from "@/lib/dates";
@@ -20,10 +21,11 @@ export default async function TodayPage() {
     snapshot: s,
     tasks,
     firstName,
+    assistantName,
   } = await withCurrentUser(async (scope, user) => {
     const { briefing, snapshot } = await getBriefing(scope, user);
     const tasks = await listTasks(scope, { status: "open", topLevelOnly: true, limit: 50 });
-    return { briefing, snapshot, tasks, firstName: user.name.split(" ")[0] };
+    return { briefing, snapshot, tasks, firstName: user.name.split(" ")[0], assistantName: assistantProfile(user.preferences).name };
   });
   const focus = [...tasks].sort((a, b) => (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity) || PR[a.priority] - PR[b.priority]).slice(0, 3);
   const minutesUntil = b.next ? Math.round((b.next.startsAt.getTime() - s.now.getTime()) / 60_000) : null;
@@ -41,8 +43,8 @@ export default async function TodayPage() {
           </div>
         </header>
         {b.insights.length > 0 && (
-          <section aria-label="Jarvis noticed">
-            <SectionTitle>Jarvis noticed</SectionTitle>
+          <section aria-label={`${assistantName} noticed`}>
+            <SectionTitle>{assistantName} noticed</SectionTitle>
             <InsightList insights={b.insights} />
           </section>
         )}

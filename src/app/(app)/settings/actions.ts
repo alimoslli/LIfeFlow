@@ -7,7 +7,7 @@ import { endSession, requireUser } from "@/server/auth/current-user";
 import { SESSION_COOKIE } from "@/server/auth/sessions";
 import { getDb } from "@/server/db/client";
 import { sessions } from "@/server/db/schema";
-import { AuthError, changePassword, deleteAccount, updatePreferences, updateProfile } from "@/server/services/accounts";
+import { AuthError, changePassword, deleteAccount, updateAssistant, updatePreferences, updateProfile } from "@/server/services/accounts";
 import { ServiceError } from "@/server/services/errors";
 import { decideMemorySuggestion } from "@/server/jarvis/memory-decisions";
 import { createMemory, deleteMemory, editMemory, MEMORY_CATEGORIES, setMemoryStatus } from "@/server/services/memory";
@@ -110,6 +110,19 @@ export async function decideMemoryAction(id: string, decision: "keep" | "dismiss
 export async function deleteMemoryAction(id: string): Promise<ActionState> {
   return mutate("memory.delete", async (s) => {
     await deleteMemory(s, id);
+  });
+}
+
+export async function updateAssistantAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  const f = formObject(fd);
+  return mutate("assistant.updated", async (_s, u) => {
+    await updateAssistant(getDb(), u.id, {
+      name: f.name ?? "",
+      style: (f.style ?? "balanced") as "balanced",
+      notes: f.notes,
+      voice: (f.voice ?? "marin") as "marin",
+    });
+    return "Saved";
   });
 }
 

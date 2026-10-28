@@ -78,6 +78,12 @@ export type UserPreferences = {
   onboarding?: "pending" | "done";
   /** Guided tour of the app, offered after onboarding or replayed from Settings. */
   tour?: "pending" | "done";
+  /** The user's assistant: its name, personality and live voice (see src/lib/assistant.ts). */
+  assistantName?: string;
+  assistantStyle?: "balanced" | "warm" | "direct" | "coach" | "playful" | "professional";
+  /** Free-text personality notes, at most 300 characters. Changes tone only, never the rules. */
+  assistantNotes?: string;
+  assistantVoice?: "alloy" | "ash" | "ballad" | "cedar" | "coral" | "echo" | "marin" | "sage" | "shimmer" | "verse";
 };
 
 export const users = pgTable("users", {

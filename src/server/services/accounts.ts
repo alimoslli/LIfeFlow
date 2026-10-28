@@ -94,6 +94,30 @@ export async function updatePreferences(db: Database, userId: string, patch: Pic
     .where(eq(users.id, userId));
 }
 
+export const assistantSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Give your assistant a name")
+    .max(24, "Keep the name to 24 characters")
+    .regex(/^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u, "Use letters, numbers, spaces, apostrophes, dots or hyphens"),
+  style: z.enum(["balanced", "warm", "direct", "coach", "playful", "professional"]),
+  notes: z.string().trim().max(300, "Keep personality notes to 300 characters").optional(),
+  voice: z.enum(["alloy", "ash", "ballad", "cedar", "coral", "echo", "marin", "sage", "shimmer", "verse"]),
+});
+
+/** Saves the assistant's name, personality and voice. */
+export async function updateAssistant(db: Database, userId: string, input: z.input<typeof assistantSchema>) {
+  const d = assistantSchema.parse(input);
+  const [current] = await db.select().from(users).where(eq(users.id, userId));
+  await db
+    .update(users)
+    .set({
+      preferences: { ...current.preferences, assistantName: d.name, assistantStyle: d.style, assistantNotes: d.notes || undefined, assistantVoice: d.voice },
+    })
+    .where(eq(users.id, userId));
+}
+
 export async function changePassword(db: Database, userId: string, current: string, next: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   if (!user || !(await verifyPassword(current, user.passwordHash))) throw new AuthError("Your current password is incorrect.");

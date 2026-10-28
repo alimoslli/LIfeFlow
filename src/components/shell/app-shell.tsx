@@ -13,8 +13,8 @@ import { TiltLayer } from "../motion/tilt";
 import { Tour } from "../motion/tour";
 import type { JarvisAvailability } from "../jarvis/types";
 
-type ShellCtx = { openJarvis: (prompt?: string, opts?: { send?: boolean }) => void };
-const Ctx = createContext<ShellCtx>({ openJarvis: () => {} });
+type ShellCtx = { openJarvis: (prompt?: string, opts?: { send?: boolean }) => void; assistantName: string };
+const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: "Jarvis" });
 export const useShell = () => useContext(Ctx);
 
 type Drawer = { open: boolean; prompt?: string; send?: boolean; key: number };
@@ -23,8 +23,11 @@ export function AppShell({
   user,
   jarvis,
   tour = false,
+  assistantName = "Jarvis",
   children,
 }: {
+  /** The name the user gave their assistant. */
+  assistantName?: string;
   user: { name: string; email: string; accountKind: "standard" | "demo" };
   jarvis: JarvisAvailability;
   /** Show the guided tour (once, after onboarding or when replayed). */
@@ -68,7 +71,7 @@ export function AppShell({
   const settingsActive = pathname.startsWith("/settings");
 
   return (
-    <Ctx.Provider value={{ openJarvis }}>
+    <Ctx.Provider value={{ openJarvis, assistantName }}>
       <div className="lf-glass">
         <TiltLayer />
         <div className="lf-scene" aria-hidden />
@@ -95,7 +98,7 @@ export function AppShell({
                     )}
                   >
                     <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
-                    {item.label}
+                    {item.href === "/jarvis" ? assistantName : item.label}
                   </Link>
                 );
               })}
@@ -144,7 +147,7 @@ export function AppShell({
                   className={cn("relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10.5px] font-medium", active ? "text-accent" : "text-muted")}
                 >
                   <Icon data-icon className="h-[22px] w-[22px]" strokeWidth={active ? 2 : 1.6} />
-                  {item.label}
+                  {item.href === "/jarvis" ? assistantName : item.label}
                 </Link>
               );
             })}
@@ -166,7 +169,7 @@ export function AppShell({
           </div>
         </nav>
 
-        {tourOpen && pathname === "/" && <Tour onDone={endTour} />}
+        {tourOpen && pathname === "/" && <Tour onDone={endTour} assistantName={assistantName} />}
 
         {!onJarvisPage && (
           <JarvisDrawer
@@ -177,6 +180,7 @@ export function AppShell({
             availability={jarvis}
             initialPrompt={drawer.prompt}
             autoSend={drawer.send}
+            assistantName={assistantName}
           />
         )}
       </div>
@@ -186,7 +190,7 @@ export function AppShell({
 
 /** Desktop only: a floating glass bar with a greeting, a Jarvis search field and the account. */
 function TopBar({ firstName, initials, demo, settingsActive }: { firstName: string; initials: string; demo: boolean; settingsActive: boolean }) {
-  const { openJarvis } = useShell();
+  const { openJarvis, assistantName } = useShell();
   return (
     <div className="mb-4 hidden items-center gap-4 rounded-full bg-surface p-1.5 shadow-soft md:flex">
       <Link
@@ -211,7 +215,7 @@ function TopBar({ firstName, initials, demo, settingsActive }: { firstName: stri
         className="mx-auto flex h-10 w-full max-w-md items-center gap-2.5 rounded-full bg-surface-2 px-4 text-sm text-muted transition-colors hover:text-text"
       >
         <Sparkles className="h-4 w-4 text-accent" />
-        Ask Jarvis anything…
+        Ask {assistantName} anything…
         <kbd className="ml-auto rounded-md bg-surface-3 px-1.5 py-0.5 font-sans text-[11px] text-muted">⌘J</kbd>
       </button>
       {demo ? <span className="shrink-0 rounded-full bg-warning-soft px-3 py-1.5 text-xs text-warning">Sample data</span> : <span className="w-9 shrink-0" />}
