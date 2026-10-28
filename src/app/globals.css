@@ -551,5 +551,15 @@ html.lf-splash .animate-rise {
 }
 
 /* Voice call: the orb breathes while the assistant thinks. */
-.lf-orb-think { animation: lf-orb-think 1.6s ease-in-out infinite; }
-@keyframes lf-orb-think { 0%, 100% { transform: scale(0.94); } 50% { transform: scale(1.04); } }
+.lf-orb-think {
+  animation: lf-orb-think 1.6s ease-in-out infinite;
+}
+@keyframes lf-orb-think {
+  0%,
+  100% {
+    transform: scale(0.94);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
