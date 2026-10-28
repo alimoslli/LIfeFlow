@@ -1,7 +1,8 @@
 import { forwardRef, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-const control =
+/** Shared look for text controls (exported for custom inputs like NewPasswordField). */
+export const control =
   "w-full rounded-xl border border-border/80 bg-surface px-3.5 text-sm text-text placeholder:text-muted transition-colors hover:border-border-strong focus:border-accent focus:outline-none focus:ring-2 focus:ring-[var(--ring)] disabled:opacity-60";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input({ className, ...p }, ref) {

@@ -2,13 +2,17 @@ import type { Metadata } from "next";
 import { desc, eq } from "drizzle-orm";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
-import { Field, Input } from "@/components/ui/field";
+import { NewPasswordField } from "@/components/password-field";
+import { control, Field, Input } from "@/components/ui/field";
+import { cn } from "@/lib/utils";
 import { Badge, Card, CardHeader } from "@/components/ui/surface";
 import { formatIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { auditEvents, sessions } from "@/server/db/schema";
+import { twoFactorStatus } from "@/server/auth/two-factor";
 import { changePasswordAction, signOutOthersAction } from "../actions";
+import { TwoFactorCard } from "./two-factor-card";
 
 export const metadata: Metadata = { title: "Security" };
 
@@ -20,18 +24,35 @@ export default async function SecuritySettings() {
       .from(sessions)
       .where(eq(sessions.userId, u.id))
       .orderBy(desc(sessions.lastSeenAt));
-    return { events, active, tz: u.timezone };
+    const tf = await twoFactorStatus(getDb(), u.id);
+    return { events, active, tz: u.timezone, user: { name: u.name, email: u.email }, tf };
   });
   return (
     <div className="flex flex-col gap-5">
+      <TwoFactorCard
+        status={{
+          enabled: d.tf.enabled,
+          enabledOn: d.tf.enabledAt ? formatIn(d.tf.enabledAt, d.tz, "MMM d, yyyy") : null,
+          recoveryCodesLeft: d.tf.recoveryCodesLeft,
+          available: d.tf.available,
+        }}
+      />
       <Card className="p-5">
         <h2 className="mb-3 font-medium">Change password</h2>
         <ActionForm action={changePasswordAction} showSuccess className="max-w-sm">
           <Field label="Current password" htmlFor="pw-c">
             <Input id="pw-c" name="current" type="password" required autoComplete="current-password" />
           </Field>
-          <Field label="New password" htmlFor="pw-n" hint="At least 10 characters.">
-            <Input id="pw-n" name="next" type="password" required minLength={10} autoComplete="new-password" />
+          <Field label="New password" htmlFor="pw-n">
+            <NewPasswordField
+              id="pw-n"
+              name="next"
+              required
+              minLength={10}
+              maxLength={200}
+              className={cn(control, "h-10")}
+              context={[d.user.name, d.user.email]}
+            />
           </Field>
           <SubmitButton className="self-start">Change password</SubmitButton>
         </ActionForm>

@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { checkPassword } from "@/lib/password-strength";
 import { hashPassword, verifyPassword } from "../auth/password";
 import type { Database } from "../db/client";
 import { users, type UserPreferences } from "../db/schema";
@@ -98,6 +99,8 @@ export async function changePassword(db: Database, userId: string, current: stri
   if (!user || !(await verifyPassword(current, user.passwordHash))) throw new AuthError("Your current password is incorrect.");
   const parsed = signupSchema.shape.password.safeParse(next);
   if (!parsed.success) throw new AuthError(parsed.error.issues[0].message);
+  const strength = checkPassword(next, [user.name, user.email]);
+  if (!strength.ok) throw new AuthError(`Choose a stronger password. ${strength.message}`);
   await db
     .update(users)
     .set({ passwordHash: await hashPassword(next) })

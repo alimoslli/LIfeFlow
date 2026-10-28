@@ -89,6 +89,11 @@ export const users = pgTable("users", {
   /** 'demo' accounts hold sample data only and are labelled throughout the UI. */
   accountKind: text("account_kind").$type<"standard" | "demo">().notNull().default("standard"),
   preferences: jsonb("preferences").$type<UserPreferences>().notNull().default({}),
+  /** Authenticator-app (TOTP) secret, AES-GCM encrypted. Set while setting up; active once totpEnabledAt is set. */
+  totpSecret: text("totp_secret"),
+  totpEnabledAt: tstz("totp_enabled_at"),
+  /** Last accepted 30-second time step, so a code can't be used twice. */
+  totpLastStep: integer("totp_last_step"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -105,6 +110,32 @@ export const sessions = pgTable(
     userAgent: text("user_agent"),
   },
   (t) => [index("sessions_user_idx").on(t.userId)],
+);
+
+/** One-time backup codes for two-step sign-in. Only SHA-256 hashes are stored. Used before a session exists, so no RLS (like sessions). */
+export const recoveryCodes = pgTable(
+  "recovery_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    codeHash: text("code_hash").notNull(),
+    usedAt: tstz("used_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("recovery_codes_user_idx").on(t.userId)],
+);
+
+/** Password accepted, waiting for the second step. The raw token lives in a short-lived cookie; only its hash is stored. */
+export const loginChallenges = pgTable(
+  "login_challenges",
+  {
+    id: text("id").primaryKey(),
+    userId: userRef(),
+    expiresAt: tstz("expires_at").notNull(),
+    attempts: integer("attempts").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [index("login_challenges_user_idx").on(t.userId)],
 );
 
 export const rateLimitBuckets = pgTable(

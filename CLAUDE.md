@@ -35,6 +35,9 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Animate transform/opacity only, always honour `prefersReducedMotion()`, and never make content depend on an animation finishing.
 - New accounts get `/welcome` (onboarding) and then the tour. Tests use `signUp()`, which skips both. The splash is off under automation unless `?splash=1`.
 
+## Sign-in security (see ADR 0009)
+- New passwords go through `checkPassword` (server-enforced; `NewPasswordField` in forms). Sign-in with 2FA on goes through `login_challenges` + `/login/verify`; never start a session before `completeLoginChallenge` succeeds. Rate-limit keys use `clientIp()` (`ipFromHeaders`), never the first X-Forwarded-For entry.
+
 ## Glass design (see ADR 0008)
 - Cards use `bg-surface`/`shadow-soft` as before; inside the app shell (`.lf-glass`) these become frosted glass automatically. Don't hard-code white/black card backgrounds.
 - 3D tilt: add `data-tilt` to a card (not to an element with `animate-rise`; wrap instead). Green feature cards: `bg-hero` (+ `lf-sheen` for the light sweep, needs `relative overflow-hidden`).

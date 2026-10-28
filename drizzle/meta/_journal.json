@@ -29,6 +29,13 @@
       "when": 1793135682382,
       "tag": "0003_memory_v2",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793170578099,
+      "tag": "0004_two_factor",
+      "breakpoints": true
     }
   ]
 }

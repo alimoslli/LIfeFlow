@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
+import { NewPasswordField } from "@/components/password-field";
 import { FormError } from "@/components/ui/field";
 import { login, signup, type AuthState } from "./actions";
 
@@ -36,16 +37,11 @@ export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: stri
       </label>
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-text-2">Password</span>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete={mode === "login" ? "current-password" : "new-password"}
-          required
-          minLength={mode === "signup" ? 10 : 1}
-          className={input}
-        />
-        {mode === "signup" && <span className="text-xs text-muted">At least 10 characters.</span>}
+        {mode === "signup" ? (
+          <NewPasswordField id="password" name="password" required minLength={10} maxLength={200} className={input} />
+        ) : (
+          <input id="password" name="password" type="password" autoComplete="current-password" required className={input} />
+        )}
       </label>
       <input ref={tzRef} type="hidden" name="timezone" defaultValue="UTC" />
       {next && <input type="hidden" name="next" value={next} />}

@@ -47,6 +47,25 @@ export async function endSession() {
 
 /** Client IP for rate limiting (best effort; trusts the platform proxy header). */
 export async function clientIp() {
-  const h = await headers();
-  return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
+  return ipFromHeaders(await headers());
+}
+
+/**
+ * The caller's IP for rate limiting. The first X-Forwarded-For entry is
+ * whatever the client sent, so it can't be trusted on its own. Prefer the
+ * header the host sets itself (Vercel), then X-Real-IP, then the entry the
+ * nearest proxy appended (the last one).
+ */
+export function ipFromHeaders(h: { get(name: string): string | null }): string {
+  const vercel = h.get("x-vercel-forwarded-for")?.split(",")[0]?.trim();
+  if (vercel) return vercel;
+  const real = h.get("x-real-ip")?.trim();
+  if (real) return real;
+  const chain =
+    h
+      .get("x-forwarded-for")
+      ?.split(",")
+      .map((x) => x.trim())
+      .filter(Boolean) ?? [];
+  return chain.at(-1) || "unknown";
 }
