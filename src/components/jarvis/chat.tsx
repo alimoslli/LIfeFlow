@@ -337,7 +337,7 @@ export function JarvisChat({
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="rounded-full p-2.5 text-muted hover:bg-surface-2 hover:text-text disabled:opacity-40"
+              className="tap flex items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-text disabled:opacity-40"
               aria-label="Attach a file or screenshot"
               title="Attach a screenshot, syllabus or text file"
               disabled={!availability.available}
@@ -375,7 +375,7 @@ export function JarvisChat({
               <button
                 type="submit"
                 disabled={!availability.available || (!input.trim() && !pending.some((p) => !p.uploading && !p.error))}
-                className="rounded-full bg-accent p-3 text-accent-text transition-opacity disabled:opacity-30"
+                className="tap flex items-center justify-center rounded-full bg-accent text-accent-text transition-opacity disabled:opacity-30"
                 aria-label="Send"
               >
                 <ArrowUp className="h-4 w-4" />

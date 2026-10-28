@@ -149,7 +149,7 @@ function SectionTitle({ children, href }: { children: React.ReactNode; href?: st
     <div className="mb-3 flex items-baseline justify-between">
       <h2 className="text-[15px] font-semibold text-text">{children}</h2>
       {href && (
-        <Link href={href} className="flex items-center gap-1 text-sm text-muted hover:text-text">
+        <Link href={href} className="-my-3 flex min-h-11 items-center gap-1 text-sm text-muted hover:text-text">
           See all <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       )}
@@ -195,7 +195,7 @@ function Timeline({ items, tz, now }: { items: AgendaItem[]; tz: string; now: Da
 function WeekStrip({ days }: { days: { date: string; label: string; busyMinutes: number; deadlines: number; exam: boolean; isToday: boolean }[] }) {
   const max = Math.max(8 * 60, ...days.map((d) => d.busyMinutes));
   return (
-    <div data-tilt className="grid grid-cols-7 gap-1.5 rounded-3xl bg-surface p-3 shadow-soft sm:gap-2 sm:p-4">
+    <div data-tilt className="grid grid-cols-7 gap-0.5 rounded-3xl bg-surface p-2 shadow-soft sm:gap-2 sm:p-4">
       {days.map((d) => (
         <Link
           key={d.date}

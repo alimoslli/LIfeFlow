@@ -67,7 +67,7 @@ export function AppleHealthCard({ keys, lastReceived, url }: { keys: Key[]; last
           {keys.map((k) => (
             <li key={k.id} className="flex items-center justify-between gap-3 py-2">
               <span className="min-w-0">
-                <span className="block truncate">{k.name}</span>
+                <span className="line-clamp-2 break-words">{k.name}</span>
                 <span className="text-xs text-muted">
                   Created {k.created} · {k.lastUsed ? `last used ${k.lastUsed}` : "never used"}
                 </span>
@@ -101,7 +101,13 @@ export function AppleHealthCard({ keys, lastReceived, url }: { keys: Key[]; last
             Add <strong>Get Contents of URL</strong> with this URL:
             <span className="mt-1 flex items-center gap-2">
               <code className="break-all rounded-lg bg-surface px-2 py-1 text-xs">{url}</code>
-              <button type="button" onClick={() => copy(url)} title="Copy URL" aria-label="Copy URL" className="text-accent">
+              <button
+                type="button"
+                onClick={() => copy(url)}
+                title="Copy URL"
+                aria-label="Copy URL"
+                className="tap flex shrink-0 items-center justify-center text-accent"
+              >
                 <Copy className="h-3.5 w-3.5" />
               </button>
             </span>

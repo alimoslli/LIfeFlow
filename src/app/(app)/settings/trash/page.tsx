@@ -37,7 +37,7 @@ export default async function TrashPage() {
             {d.items.map((t) => (
               <li key={t.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{t.label}</p>
+                  <p className="line-clamp-2 break-words text-sm font-medium">{t.label}</p>
                   <p className="text-xs text-muted">
                     {KIND[t.kind] ?? t.kind} · deleted {formatIn(t.deletedAt, d.tz, "MMM d, h:mm a")}
                   </p>

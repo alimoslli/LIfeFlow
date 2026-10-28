@@ -36,7 +36,7 @@ export function VoiceButton({
         disabled={disabled}
         aria-label={`Talk to ${assistantName}`}
         title={`Talk to ${assistantName}`}
-        className={cn("rounded-full p-2.5 text-muted hover:bg-surface-2 hover:text-text disabled:opacity-40", className)}
+        className={cn("tap flex items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-text disabled:opacity-40", className)}
       >
         <AudioLines className="h-4 w-4" />
       </button>

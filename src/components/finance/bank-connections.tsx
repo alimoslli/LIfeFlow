@@ -31,7 +31,7 @@ export function BankConnections({
                     <Landmark className="h-4 w-4 text-accent" />
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium">{c.name}</span>
+                    <span className="line-clamp-2 break-words text-sm font-medium">{c.name}</span>
                     <span className="block text-xs text-muted">{c.lastSynced ? `Synced ${c.lastSynced}` : "Not synced yet"}</span>
                   </span>
                 </span>

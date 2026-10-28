@@ -25,6 +25,8 @@ export async function generateViewport(): Promise<Viewport> {
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
   return {
     viewportFit: "cover",
+    // The on-screen keyboard resizes the layout, so fixed bars and the composer stay above it.
+    interactiveWidget: "resizes-content",
     themeColor:
       theme === "system"
         ? [

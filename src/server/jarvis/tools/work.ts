@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { formatIn } from "@/lib/dates";
-import { createEmployer, createShift, listEmployers, listShifts, recordShiftHours, workSummary } from "../../services/work";
+import { and, eq } from "drizzle-orm";
+import { workShifts } from "../../db/schema";
+import { moveToTrash } from "../../services/trash";
+import { createEmployer, createShift, listEmployers, listShifts, recordShiftHours, setShiftStatus, updateShift, workSummary } from "../../services/work";
 import { centsToDollarsDeep } from "./finance";
 import { dateArg, defineTool, idArg, moneyArg, timeArg, toCents } from "../tool";
 
@@ -106,6 +109,53 @@ export const workTools = [
     async execute(a, ctx) {
       const r = await ctx.run((s) => recordShiftHours(s, ctx.tz, a.shiftId, { recordedStartTime: a.clockIn, recordedEndTime: a.clockOut }));
       return { updated: { id: r.id, status: r.status } };
+    },
+  }),
+  defineTool({
+    name: "update_shift",
+    description: "Change a shift's date, start or end time, job, break or notes ('move my Friday shift to 2pm'). Reports any overlaps with other shifts.",
+    schema: z.object({
+      shiftId: idArg("Shift"),
+      date: dateArg().optional(),
+      startTime: timeArg().optional(),
+      endTime: timeArg().optional(),
+      employerId: idArg("Job").optional(),
+      breakMinutes: z.number().int().min(0).max(600).optional(),
+      notes: z.string().max(2000).nullable().optional(),
+      status: z.enum(["scheduled", "worked", "cancelled"]).optional(),
+    }),
+    mutates: true,
+    async execute(a, ctx) {
+      return ctx.run(async (s) => {
+        const { shiftId, status, ...patch } = a;
+        const r = Object.keys(patch).length ? await updateShift(s, ctx.tz, shiftId, patch) : null;
+        const row = status ? await setShiftStatus(s, shiftId, status) : r!.shift;
+        return {
+          updated: { id: row.id, starts: formatIn(row.startsAt, ctx.tz, "EEE MMM d h:mm a"), ends: formatIn(row.endsAt, ctx.tz, "h:mm a"), status: row.status },
+          overlapsWithOtherShifts: r?.overlaps ?? 0,
+          viewAt: "/work",
+        };
+      });
+    },
+  }),
+  defineTool({
+    name: "delete_shift",
+    description: "Delete a shift (it goes to the trash and can be restored for 30 days). Requires the user's confirmation.",
+    schema: z.object({ shiftId: idArg("Shift") }),
+    mutates: true,
+    async confirm({ shiftId }, ctx) {
+      const [sh] = await ctx.run((s) =>
+        s.tx
+          .select()
+          .from(workShifts)
+          .where(and(eq(workShifts.id, shiftId), eq(workShifts.userId, s.userId))),
+      );
+      if (!sh) throw new Error("Shift not found.");
+      return `Delete the shift on ${formatIn(sh.startsAt, ctx.tz, "EEE, MMM d, h:mm a")}?`;
+    },
+    async execute({ shiftId }, ctx) {
+      const t = await ctx.run((s) => moveToTrash(s, "shift", shiftId));
+      return { deleted: t.label, restorableFromTrash: true, viewAt: "/work" };
     },
   }),
   defineTool({

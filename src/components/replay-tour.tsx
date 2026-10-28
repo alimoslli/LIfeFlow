@@ -19,7 +19,7 @@ export function ReplayTour() {
           router.refresh();
         })
       }
-      className="inline-flex items-center gap-2 rounded-full bg-surface-2 px-4 py-2 text-sm text-text-2 hover:text-text disabled:opacity-50"
+      className="lf-touch inline-flex items-center gap-2 rounded-full bg-surface-2 px-4 py-2 text-sm text-text-2 hover:text-text disabled:opacity-50"
     >
       <Compass className="h-4 w-4" /> Replay the tour
     </button>

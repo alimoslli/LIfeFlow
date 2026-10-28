@@ -6,12 +6,13 @@ import { applyRuleToPast } from "../../services/finance/categorize";
 import { debtReport, emergencyFundPlan, financialHealth, planPaycheck, roundUps, subscriptionReport } from "../../services/finance/coach";
 import { dailyCheckin, monthlyReport, weeklyCheckin } from "../../services/finance/checkins";
 import { budgetWarnings, cashForecast, safeToSpend } from "../../services/finance/forecast";
-import { contributeToGoal, deleteGoal, goalTradeoff, goalsWithPlans } from "../../services/finance/goals";
+import { contributeToGoal, goalTradeoff, goalsWithPlans } from "../../services/finance/goals";
 import { GENERAL_INFO, investmentReport, LESSONS, projectInvesting } from "../../services/finance/investing";
 import { createGoal, updateGoal } from "../../services/finance/planning";
 import { applyBudgetPlan, BUDGET_METHODS, suggestBudgets } from "../../services/finance/smart-budgets";
-import { deleteTransaction, TRANSACTION_KINDS, updateTransaction } from "../../services/finance/transactions";
+import { TRANSACTION_KINDS, updateTransaction } from "../../services/finance/transactions";
 import { notFound } from "../../services/errors";
+import { moveToTrash } from "../../services/trash";
 import { listPlaidConnections, PlaidError, syncConnection } from "../../integrations/plaid";
 import { centsToDollarsDeep } from "./finance";
 import { dateArg, defineTool, idArg, moneyArg, toCents } from "../tool";
@@ -180,7 +181,7 @@ export const moneyCoachTools = [
       return `Delete "${t.description}" (${usd(t.amountCents / 100)}) from ${t.date}?`;
     },
     async execute({ id }, ctx) {
-      await ctx.run((s) => deleteTransaction(s, id));
+      await ctx.run((s) => moveToTrash(s, "transaction", id));
       return { deleted: id, viewAt: "/finances/transactions" };
     },
   }),
@@ -270,8 +271,8 @@ export const moneyCoachTools = [
       return `Delete the goal "${g.name}" and its history?`;
     },
     async execute({ id }, ctx) {
-      const g = await ctx.run((s) => deleteGoal(s, id));
-      return { deleted: g.name, viewAt: "/finances/goals" };
+      const g = await ctx.run((s) => moveToTrash(s, "goal", id));
+      return { deleted: g.label, restorableFromTrash: true, viewAt: "/finances/goals" };
     },
   }),
   defineTool({

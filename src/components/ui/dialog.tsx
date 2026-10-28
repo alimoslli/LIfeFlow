@@ -64,8 +64,9 @@ export function Dialog({
       </Button>
       <dialog
         ref={setDialog}
-        onClose={() => setOpen(false)}
+        onClose={(e) => e.target === e.currentTarget && setOpen(false)}
         onCancel={(e) => {
+          if (e.target !== e.currentTarget) return;
           e.preventDefault(); // Esc: animate out instead of vanishing
           close();
         }}

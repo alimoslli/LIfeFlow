@@ -139,8 +139,10 @@ export default async function MoneyPage() {
                   : `${whole(safe.thisWeekCents)} for the rest of this week · ${whole(safe.perDayCents)} a day for the next ${safe.days} days${safe.untilReason === "next_pay" ? `, payday ${formatDateStr(safe.nextPay!.date, "MMM d")}` : ""}`}
               </p>
             </div>
-            <details className="group relative border-t border-white/15 px-6 py-3 text-sm">
-              <summary className="cursor-pointer list-none opacity-80 [&::-webkit-details-marker]:hidden">How this is worked out</summary>
+            <details className="group relative border-t border-white/15 px-6 py-0.5 text-sm">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center opacity-80 [&::-webkit-details-marker]:hidden">
+                How this is worked out
+              </summary>
               <dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 opacity-90">
                 <dt>Cash &amp; checking</dt>
                 <dd className="tabular text-right">{whole(safe.cashCents)}</dd>
@@ -195,7 +197,7 @@ export default async function MoneyPage() {
                   <div className="min-w-0 flex-1 pt-1">
                     <p className="text-[15px] leading-snug">{a.text}</p>
                     {a.fix && <p className="mt-1 text-sm text-text-2">{a.fix}</p>}
-                    <Link href={a.href} className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-accent">
+                    <Link href={a.href} className="-mb-2 inline-flex min-h-11 items-center gap-1 text-sm font-medium text-accent">
                       Review <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   </div>
@@ -263,7 +265,7 @@ export default async function MoneyPage() {
               {d.bills.slice(0, 6).map((c) => (
                 <li key={`${c.id}${c.date}`} className="flex items-center gap-4 py-3.5">
                   <span className="tabular w-14 shrink-0 text-sm text-muted">{formatDateStr(c.date, "MMM d")}</span>
-                  <span className="flex-1 truncate text-[15px]">{c.name}</span>
+                  <span className="flex-1 line-clamp-2 break-words text-[15px]">{c.name}</span>
                   <span className="tabular text-[15px]">{whole(-c.amountCents)}</span>
                 </li>
               ))}
@@ -282,7 +284,7 @@ export default async function MoneyPage() {
                   <Pressable>
                     <Link href="/finances/goals" data-tilt className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift">
                       <div className="flex items-baseline justify-between gap-3">
-                        <span className="truncate text-[15px] font-medium">{g.name}</span>
+                        <span className="line-clamp-2 break-words text-[15px] font-medium">{g.name}</span>
                         <span className="tabular shrink-0 text-sm text-text-2">
                           {whole(g.savedCents)} of {whole(g.targetCents)}
                         </span>
@@ -452,7 +454,7 @@ function Title({ children, href }: { children: React.ReactNode; href: string }) 
   return (
     <div className="mb-3 flex items-baseline justify-between gap-3">
       <h2 className="text-[15px] font-semibold">{children}</h2>
-      <Link href={href} className="flex shrink-0 items-center gap-1 text-sm text-muted hover:text-text">
+      <Link href={href} className="-my-3 flex min-h-11 shrink-0 items-center gap-1 text-sm text-muted hover:text-text">
         See all <ArrowRight className="h-3.5 w-3.5" />
       </Link>
     </div>

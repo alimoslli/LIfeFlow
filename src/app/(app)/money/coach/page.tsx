@@ -38,7 +38,7 @@ export default async function CoachPage({ searchParams }: { searchParams: Promis
   return (
     <div className="mx-auto flex max-w-[680px] flex-col gap-8">
       <header>
-        <Link href="/money" className="inline-flex items-center gap-1 text-sm text-muted hover:text-text">
+        <Link href="/money" className="hidden items-center gap-1 text-sm text-muted hover:text-text md:inline-flex">
           <ArrowLeft className="h-3.5 w-3.5" /> Money
         </Link>
         <h1 className="mt-2 font-display text-[34px] leading-tight font-medium tracking-tight">Your money coach</h1>
@@ -160,7 +160,7 @@ export default async function CoachPage({ searchParams }: { searchParams: Promis
               {d.debts.debts.map((x) => (
                 <li key={x.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
                   <span className="min-w-0">
-                    <span className="block truncate font-medium">{x.name}</span>
+                    <span className="line-clamp-2 break-words font-medium">{x.name}</span>
                     <span className="text-xs text-muted">
                       {[
                         x.aprPercent != null ? `${x.aprPercent}% APR` : "APR not set",
@@ -220,7 +220,7 @@ export default async function CoachPage({ searchParams }: { searchParams: Promis
             <ul className="mt-3 flex flex-col divide-y divide-border text-sm">
               {d.subs.items.slice(0, 8).map((i) => (
                 <li key={i.name + i.frequency} className="flex justify-between gap-3 py-2">
-                  <span className="truncate">
+                  <span className="line-clamp-2 break-words">
                     {i.name}{" "}
                     <span className="text-xs text-muted">
                       · {i.frequency}

@@ -12,7 +12,7 @@ export function AskJarvisButton({ prompt, children }: { prompt: string; children
     <button
       type="button"
       onClick={() => openJarvis(prompt, { send: true })}
-      className="inline-flex items-center justify-center gap-1.5 rounded-full bg-surface-2 px-4 py-2 text-sm font-medium text-text hover:bg-surface-3"
+      className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm font-medium text-text hover:bg-surface-3"
     >
       {children}
     </button>
@@ -54,7 +54,7 @@ export function CelebrateGoal({ goalId, name, percent }: { goalId: string; name:
             </p>
             <p className="mt-0.5 text-sm text-text-2">{MESSAGES[percent]}</p>
           </div>
-          <button type="button" onClick={close} aria-label="Close" className="text-muted hover:text-text">
+          <button type="button" onClick={close} aria-label="Close" className="tap -m-3 flex items-center justify-center text-muted hover:text-text">
             <X className="h-4 w-4" />
           </button>
         </div>

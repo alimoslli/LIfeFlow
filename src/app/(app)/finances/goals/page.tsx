@@ -72,7 +72,7 @@ export default async function GoalsPage() {
                       <P.icon className="h-5 w-5" />
                     </span>
                     <div className="min-w-0">
-                      <h2 className="truncate font-medium">{g.name}</h2>
+                      <h2 className="line-clamp-2 break-words font-medium">{g.name}</h2>
                       <p className="text-xs text-muted">
                         {g.targetDate ? `Target ${formatDateStr(g.targetDate, "MMMM yyyy")}` : "No target date"}
                         {g.accountId ? " · tracks a linked account" : ""}

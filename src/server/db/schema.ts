@@ -637,6 +637,8 @@ export const calendarEvents = pgTable(
 
 export type Priority = "low" | "medium" | "high" | "urgent";
 
+export type TaskRepeat = "daily" | "weekdays" | "weekly" | "biweekly" | "monthly";
+
 export const tasks = pgTable(
   "tasks",
   {
@@ -652,11 +654,23 @@ export const tasks = pgTable(
     projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
     courseId: uuid("course_id").references(() => courses.id, { onDelete: "set null" }),
     completedAt: tstz("completed_at"),
+    /** Repeating to-dos: completing one creates the next occurrence. */
+    repeat: text("repeat").$type<TaskRepeat>(),
+    /** When to send a reminder notification, and when it was sent. */
+    remindAt: tstz("remind_at"),
+    remindedAt: tstz("reminded_at"),
     source: text("source").$type<DataSource>().notNull().default("manual"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index("tasks_user_status_idx").on(t.userId, t.status), index("tasks_parent_idx").on(t.parentId), ownerPolicy()],
+  (t) => [
+    index("tasks_user_status_idx").on(t.userId, t.status),
+    index("tasks_parent_idx").on(t.parentId),
+    index("tasks_remind_idx")
+      .on(t.remindAt)
+      .where(sql`reminded_at is null`),
+    ownerPolicy(),
+  ],
 );
 
 export const notes = pgTable(

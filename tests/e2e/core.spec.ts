@@ -2,19 +2,23 @@ import { expect, test } from "@playwright/test";
 import { askJarvis, queryAsUser, signUp } from "./helpers";
 
 test("sign up, reach Home, and manage a task end to end", async ({ page }) => {
-  await signUp(page);
+  const email = await signUp(page);
   await expect(page.getByText("A clear day.")).toBeVisible();
 
   await page.goto("/tasks");
-  await page.getByLabel("Task title").fill("Renew parking permit");
+  await page.getByLabel("To-do title").fill("Renew parking permit");
   await page.getByRole("button", { name: "Add", exact: true }).click();
-  await expect(page.getByText("Renew parking permit")).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: 'Added "Renew parking permit"' })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Renew parking permit/ })).toBeVisible();
 
   await page.goto("/");
   await expect(page.getByRole("region", { name: "On your list" }).getByText("Renew parking permit")).toBeVisible();
   await page.getByRole("checkbox", { name: /Complete Renew parking permit/ }).click();
+  await expect
+    .poll(async () => (await queryAsUser<{ status: string }>(email, "select status from tasks where title = 'Renew parking permit'"))[0]?.status)
+    .toBe("done");
   await page.goto("/tasks?view=done");
-  await expect(page.getByText("Renew parking permit")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Renew parking permit/ })).toBeVisible();
 });
 
 test("Jarvis saves assignments and tasks that then appear in School and Tasks", async ({ page }) => {
@@ -56,9 +60,9 @@ test("Jarvis saves assignments and tasks that then appear in School and Tasks", 
 test("destructive Jarvis actions wait for explicit confirmation", async ({ page }) => {
   const email = await signUp(page, "Casey Diaz");
   await page.goto("/tasks");
-  await page.getByLabel("Task title").fill("Old reminder");
+  await page.getByLabel("To-do title").fill("Old reminder");
   await page.getByRole("button", { name: "Add", exact: true }).click();
-  await expect(page.getByText("Old reminder")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Old reminder/ })).toBeVisible();
   const rows = await queryAsUser<{ id: string }>(email, "select id from tasks where title = 'Old reminder'");
 
   await page.goto("/jarvis");
@@ -75,9 +79,9 @@ test("users cannot see each other's data", async ({ browser }) => {
   const a = await browser.newPage();
   await signUp(a, "Avery One");
   await a.goto("/tasks");
-  await a.getByLabel("Task title").fill("Avery's private task");
+  await a.getByLabel("To-do title").fill("Avery's private task");
   await a.getByRole("button", { name: "Add", exact: true }).click();
-  await expect(a.getByText("Avery's private task")).toBeVisible();
+  await expect(a.getByRole("link", { name: /Avery's private task/ })).toBeVisible();
   await a.goto("/jarvis");
   await askJarvis(a, "hello there");
   await expect(a).toHaveURL(/\/jarvis\/[0-9a-f-]{36}$/);

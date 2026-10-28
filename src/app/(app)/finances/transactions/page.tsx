@@ -71,17 +71,17 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         <div className="flex items-center gap-2">
           <details className="relative">
             <summary
-              className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full bg-surface shadow-soft [&::-webkit-details-marker]:hidden"
+              className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-full bg-surface shadow-soft [&::-webkit-details-marker]:hidden"
               aria-label="More options"
             >
               <MoreHorizontal className="h-4 w-4" />
             </summary>
             <div className="absolute right-0 z-30 mt-2 flex w-52 flex-col gap-1 rounded-2xl bg-surface p-2 shadow-lift">
               {d.accounts.length > 0 && <ImportCsvDialog action={importCsvAction} accounts={d.accounts} />}
-              <a href="/api/export?format=transactions.csv" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-surface-2">
+              <a href="/api/export?format=transactions.csv" className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm hover:bg-surface-2">
                 <Download className="h-4 w-4 text-muted" /> Export CSV
               </a>
-              <Link href="/finances/rules" className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-surface-2">
+              <Link href="/finances/rules" className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm hover:bg-surface-2">
                 <Wand2 className="h-4 w-4 text-muted" /> Category rules
               </Link>
             </div>
@@ -97,7 +97,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             href={qs({ period: k === "month" ? undefined : k, from: undefined, to: undefined, show: undefined })}
             aria-current={d.period.key === k ? "page" : undefined}
             className={cn(
-              "shrink-0 rounded-full px-3.5 py-1.5 text-sm",
+              "flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm",
               d.period.key === k ? "bg-accent text-accent-text" : "bg-surface text-text-2 shadow-soft hover:text-text",
             )}
           >
@@ -203,8 +203,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                           {(t.merchantName ?? t.description).trim().charAt(0).toUpperCase()}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[15px]">{t.merchantName ?? t.description}</span>
-                          <span className="block truncate text-xs text-muted">
+                          <span className="line-clamp-2 break-words text-[15px]">{t.merchantName ?? t.description}</span>
+                          <span className="line-clamp-2 break-words text-xs text-muted">
                             {t.categoryName ?? "Uncategorized"}
                             {t.kind !== "expense" && t.kind !== "income" && KIND_LABELS[t.kind] ? ` · ${KIND_LABELS[t.kind]}` : ""}
                             {t.pending ? " · Pending" : ""}

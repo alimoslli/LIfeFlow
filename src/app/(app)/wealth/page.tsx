@@ -65,7 +65,7 @@ export default async function WealthPage() {
             <CardHeader
               title="Investment accounts"
               action={
-                <Link href="/finances/accounts" className="text-xs font-medium text-accent hover:underline">
+                <Link href="/finances/accounts" className="-my-3 flex min-h-11 items-center text-xs font-medium text-accent hover:underline">
                   Manage accounts
                 </Link>
               }

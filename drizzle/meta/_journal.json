@@ -64,6 +64,13 @@
       "when": 1793177045253,
       "tag": "0008_trash",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793209942891,
+      "tag": "0009_task_repeat_reminders",
+      "breakpoints": true
     }
   ]
 }

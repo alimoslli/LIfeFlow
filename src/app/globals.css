@@ -574,3 +574,128 @@ html.lf-splash .animate-rise {
     transform: translateY(10px) scale(0.98);
   }
 }
+
+/* ------------------------------------------------------------------ phone app feel */
+:root {
+  /* Room for the floating tab bar (≈62px) plus its gap and the home-indicator safe area. */
+  --tabbar-space: calc(max(0.75rem, env(safe-area-inset-bottom)) + 62px + 28px);
+  --kb: 0px;
+}
+html {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  scroll-padding-bottom: var(--tabbar-space);
+}
+button,
+a,
+summary,
+input,
+select,
+textarea,
+label {
+  touch-action: manipulation;
+}
+@media (pointer: coarse) {
+  html {
+    scrollbar-width: none;
+  }
+  html::-webkit-scrollbar {
+    display: none;
+  }
+}
+@media (max-width: 767px) {
+  .lf-main-pad {
+    padding-bottom: calc(var(--tabbar-space) + 16px);
+  }
+  .lf-sectionnav {
+    top: calc(env(safe-area-inset-top) + 48px);
+  }
+}
+/* Edge-to-edge horizontal scrollers keep their first/last chip fully visible. */
+.lf-hscroll {
+  scroll-padding-inline: 1.25rem;
+  scroll-snap-type: x proximity;
+}
+.lf-hscroll > * {
+  scroll-snap-align: start;
+}
+/* The phone app bar: clear at the top, frosted once content scrolls under it. */
+.lf-appbar-scrolled {
+  background: color-mix(in oklab, var(--bg) 78%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: 0 1px 0 color-mix(in oklab, var(--text) 8%, transparent);
+}
+/* While typing on a phone the tab bar and floating button step aside for the keyboard. */
+html[data-typing="true"] .lf-tabbar,
+html[data-typing="true"] .lf-fab {
+  transform: translateY(160%);
+  opacity: 0;
+  pointer-events: none;
+}
+.lf-tabbar,
+.lf-fab {
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.2s;
+}
+/* Minimum 44×44 touch target (Apple HIG / WCAG 2.5.5) without changing how the control looks. */
+.tap {
+  position: relative;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Touch screens: 44px targets for the shared controls, and 16px text in fields so iOS doesn't zoom in on focus. */
+@media (pointer: coarse) {
+  .lf-touch {
+    min-height: 44px;
+  }
+  .lf-touch-icon {
+    min-width: 44px;
+  }
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="hidden"], [type="file"]),
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="hidden"], [type="file"]),
+  select {
+    min-height: 44px;
+  }
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 22px;
+    height: 22px;
+  }
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]) {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  /* Disclosure rows ("Edit goal", "View as table"...) become full-height tap rows. */
+  summary:not([class*="min-h"], [class*="list-none"], [class*="h-1"], [class*="h-9"]) {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    list-style: none;
+  }
+  summary:not([class*="min-h"], [class*="list-none"], [class*="h-1"], [class*="h-9"])::-webkit-details-marker {
+    display: none;
+  }
+  summary:not([class*="min-h"], [class*="list-none"], [class*="h-1"], [class*="h-9"])::before {
+    content: "";
+    width: 0.42em;
+    height: 0.42em;
+    flex-shrink: 0;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 0.2s;
+  }
+  details[open] > summary:not([class*="min-h"], [class*="list-none"], [class*="h-1"], [class*="h-9"])::before {
+    transform: rotate(45deg);
+  }
+}

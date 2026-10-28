@@ -1,4 +1,5 @@
 "use server";
+import { formatDateStr } from "@/lib/dates";
 import { trashAction } from "../trash-actions";
 import { redirect } from "next/navigation";
 import { formNum, formObject, mutate, type ActionState } from "@/server/actions";
@@ -51,6 +52,7 @@ export async function createAssignmentAction(_p: ActionState, fd: FormData): Pro
       pointsPossible: formNum(f.pointsPossible),
     });
     if (r.status === "duplicate") throw new ServiceError("That assignment already exists for this course and date.", "conflict");
+    return f.dueDate ? `Assignment saved, due ${formatDateStr(f.dueDate, "EEE, MMM d")}.` : "Assignment saved with no due date. Tap it any time to add one.";
   });
 }
 
@@ -58,6 +60,7 @@ export async function toggleAssignmentAction(id: string): Promise<ActionState> {
   return mutate("assignment.toggle", async (s, u) => {
     const a = await getAssignment(s, id);
     await updateAssignment(s, u.timezone, id, { status: a.status === "done" ? "todo" : "done" });
+    return a.status === "done" ? `"${a.title}" is open again.` : `Done: ${a.title}.`;
   });
 }
 
@@ -73,6 +76,7 @@ export async function updateAssignmentAction(id: string, _p: ActionState, fd: Fo
       url: f.url ?? null,
       grade: f.grade ?? null,
     });
+    return "Assignment saved.";
   });
 }
 

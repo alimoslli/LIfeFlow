@@ -9,7 +9,7 @@ export function BarList({ items, total }: { items: { name: string; cents: number
       {items.map((i) => (
         <li key={i.name} title={`${i.name}: ${formatCents(i.cents)}`}>
           <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
-            <span className="truncate text-text">{i.name}</span>
+            <span className="line-clamp-2 break-words text-text">{i.name}</span>
             <span className="tabular shrink-0 text-text-2">
               {formatCents(i.cents)} <span className="text-xs text-muted">· {sum ? Math.round((Math.max(0, i.cents) / sum) * 100) : 0}%</span>
             </span>

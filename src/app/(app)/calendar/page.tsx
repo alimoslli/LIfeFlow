@@ -54,13 +54,23 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
         </h1>
         <div className="flex items-center gap-2">
           <div className="flex items-center rounded-full bg-surface shadow-soft">
-            <Link href={href(prev)} scroll={false} className="p-2.5 text-text-2 hover:text-text" aria-label="Previous month">
+            <Link
+              href={href(prev)}
+              scroll={false}
+              className="tap flex items-center justify-center rounded-full text-muted hover:text-text"
+              aria-label="Previous month"
+            >
               <ChevronLeft className="h-4 w-4" />
             </Link>
-            <Link href="/calendar" scroll={false} aria-label="Jump to today" className="px-1.5 text-sm font-medium">
+            <Link href="/calendar" scroll={false} aria-label="Jump to today" className="flex min-h-11 items-center px-2 text-sm font-medium">
               Today
             </Link>
-            <Link href={href(next)} scroll={false} className="p-2.5 text-text-2 hover:text-text" aria-label="Next month">
+            <Link
+              href={href(next)}
+              scroll={false}
+              className="tap flex items-center justify-center rounded-full text-muted hover:text-text"
+              aria-label="Next month"
+            >
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -157,8 +167,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
               {dayItems.map((i) => (
                 <li key={i.key} className="group flex items-center gap-4 rounded-2xl bg-surface px-4 py-3 shadow-soft">
                   <span className="h-10 w-1 shrink-0 rounded-full" style={{ background: i.color ?? "var(--accent)" }} />
-                  <Link href={i.href} className="min-w-0 flex-1">
-                    <p className="truncate text-[15px]">
+                  <Link href={i.href} className="flex min-h-12 min-w-0 flex-1 flex-col justify-center">
+                    <p className="line-clamp-2 text-[15px]">
                       {i.origin === "assignment" && <span className="text-muted">Due · </span>}
                       {i.origin === "task" && <span className="text-muted">To do · </span>}
                       {i.title}
@@ -174,7 +184,11 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                   </Link>
                   {conflictKeys.has(i.key) && <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning">Overlaps</span>}
                   {i.origin === "event" && (
-                    <ActionButton action={deleteEventAction.bind(null, i.id)} title="Delete event" className="rounded-full p-1.5 text-muted hover:text-danger">
+                    <ActionButton
+                      action={deleteEventAction.bind(null, i.id)}
+                      title="Delete event"
+                      className="tap flex items-center justify-center rounded-full text-muted hover:text-danger"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </ActionButton>
                   )}

@@ -1,10 +1,10 @@
 import { z } from "zod";
+import { moveToTrash } from "../../services/trash";
 import { localDateOf, localTimeOf } from "@/lib/dates";
 import {
   ASSIGNMENT_KINDS,
   addMaterial,
   createCourse,
-  deleteAssignment,
   getAssignment,
   importAssignments,
   listAssignments,
@@ -188,7 +188,8 @@ export const schoolTools = [
       return `Delete "${a.title}" from ${a.course.name}?`;
     },
     async execute({ id }, ctx) {
-      return { deleted: await ctx.run((s) => deleteAssignment(s, id)) };
+      const t = await ctx.run((s) => moveToTrash(s, "assignment", id));
+      return { deleted: t.label, restorableFromTrash: true };
     },
   }),
   defineTool({

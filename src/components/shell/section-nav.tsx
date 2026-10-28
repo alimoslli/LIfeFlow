@@ -64,9 +64,9 @@ export function SectionNav() {
   return (
     <nav
       aria-label={section === "plan" ? "Plan sections" : "Money sections"}
-      className="sticky top-0 z-20 -mx-5 mb-6 px-5 py-2.5 backdrop-blur-xl sm:-mx-8 sm:px-8"
+      className="lf-sectionnav sticky z-20 -mx-5 mb-6 py-2.5 backdrop-blur-xl sm:-mx-8 md:top-0"
     >
-      <div className="mx-auto flex max-w-5xl gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="lf-hscroll mx-auto flex max-w-5xl gap-1.5 overflow-x-auto px-5 [scrollbar-width:none] sm:px-8 [&::-webkit-scrollbar]:hidden">
         {SECTIONS[section].map((item) => {
           const on = isOn(pathname, item);
           const Icon = item.icon;
@@ -77,7 +77,7 @@ export function SectionNav() {
               href={item.href}
               aria-current={on ? "page" : undefined}
               className={cn(
-                "flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm whitespace-nowrap transition-colors",
+                "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm whitespace-nowrap transition-colors",
                 on ? "bg-text font-medium text-bg" : "bg-surface text-text-2 shadow-soft hover:text-text",
               )}
             >

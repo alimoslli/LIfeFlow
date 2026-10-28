@@ -32,13 +32,16 @@ export function InsightList({ insights }: { insights: Insight[] }) {
                 {i.detail && <p className="mt-1 text-sm text-muted">{i.detail}</p>}
                 {action &&
                   (action.href ? (
-                    <Link href={action.href} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:gap-2.5 transition-all">
+                    <Link
+                      href={action.href}
+                      className="mt-1 -mb-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent transition-all hover:gap-2.5"
+                    >
                       {action.label} <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   ) : (
                     <button
                       onClick={() => openJarvis(action.prompt, { send: true })}
-                      className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-accent transition-all hover:gap-2.5"
+                      className="mt-1 -mb-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent transition-all hover:gap-2.5"
                     >
                       <Sparkles className="h-3.5 w-3.5" /> {action.label}
                     </button>
@@ -74,7 +77,7 @@ export function AskBar({ name }: { name: string }) {
         className="min-w-0 flex-1 bg-transparent py-2 text-[15px] placeholder:text-muted focus:outline-none"
       />
       <VoiceButton module="home" assistantName={assistantName} />
-      <button className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-text">Ask</button>
+      <button className="min-h-11 rounded-full bg-accent px-5 text-sm font-medium text-accent-text">Ask</button>
     </form>
   );
 }

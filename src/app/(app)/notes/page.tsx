@@ -64,7 +64,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
           <Link
             href="/notes"
             className={cn(
-              "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm",
+              "flex min-h-11 items-center gap-2 rounded-lg px-2.5 text-sm",
               !projectId && !courseId ? "bg-surface font-medium shadow-soft" : "text-text-2 hover:bg-surface-2",
             )}
           >
@@ -78,12 +78,12 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
                 key={p.id}
                 href={`/notes?project=${p.id}`}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm",
+                  "flex min-h-11 items-center gap-2 rounded-lg px-2.5 text-sm",
                   p.id === projectId ? "bg-surface font-medium shadow-soft" : "text-text-2 hover:bg-surface-2",
                 )}
               >
                 <FolderKanban className="h-4 w-4 text-muted" />
-                <span className="flex-1 truncate">{p.name}</span>
+                <span className="flex-1 line-clamp-2 break-words">{p.name}</span>
                 {p.status !== "active" && <span className="text-[10px] text-muted">{p.status}</span>}
               </Link>
             ))}
@@ -129,7 +129,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
                   className="group flex flex-col rounded-3xl bg-surface p-4 shadow-soft transition-shadow hover:shadow-lift"
                 >
                   <div className="flex items-start gap-2">
-                    <h3 className="flex-1 truncate font-medium group-hover:text-accent">{n.title}</h3>
+                    <h3 className="flex-1 line-clamp-2 break-words font-medium group-hover:text-accent">{n.title}</h3>
                     {n.pinned && <Pin className="h-3.5 w-3.5 text-muted" />}
                   </div>
                   <p className="mt-1 line-clamp-3 min-h-[3.75em] text-sm text-text-2">

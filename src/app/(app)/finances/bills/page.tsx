@@ -53,7 +53,7 @@ export default async function BillsPage() {
                 {d.items.map((r) => (
                   <li key={r.id} className="flex items-center gap-3 px-5 py-3">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{r.name}</p>
+                      <p className="line-clamp-2 break-words text-sm font-medium">{r.name}</p>
                       <p className="text-xs text-muted">
                         {r.frequency} · {r.kind}
                         {r.nextDueDate ? ` · next ${formatDateStr(r.nextDueDate, "MMM d")}` : ""}
@@ -63,7 +63,11 @@ export default async function BillsPage() {
                     {r.source !== "manual" && <SourceBadge source={r.source} />}
                     <Money cents={r.amountCents} signed className={r.amountCents < 0 ? "text-text" : undefined} />
                     {r.status === "active" ? (
-                      <ActionButton action={setRecurringStatusAction.bind(null, r.id, "paused")} title="Pause" className="text-muted hover:text-text">
+                      <ActionButton
+                        action={setRecurringStatusAction.bind(null, r.id, "paused")}
+                        title="Pause"
+                        className="tap -m-2 flex items-center justify-center text-muted hover:text-text"
+                      >
                         <Pause className="h-3.5 w-3.5" />
                       </ActionButton>
                     ) : (
@@ -75,7 +79,7 @@ export default async function BillsPage() {
                       <ActionButton
                         action={setRecurringStatusAction.bind(null, r.id, "cancelled")}
                         title="Mark cancelled"
-                        className="text-muted hover:text-danger"
+                        className="tap -m-2 flex items-center justify-center text-muted hover:text-danger"
                       >
                         <X className="h-3.5 w-3.5" />
                       </ActionButton>
@@ -92,7 +96,7 @@ export default async function BillsPage() {
                 {d.detected.slice(0, 8).map((c) => (
                   <li key={c.merchantKey} className="flex items-center gap-3 px-5 py-3">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm">{c.name}</p>
+                      <p className="line-clamp-2 break-words text-sm">{c.name}</p>
                       <p className="text-xs text-muted">
                         {c.frequency} · {c.occurrences} times · last {formatDateStr(c.lastDate, "MMM d")} · {Math.round(c.confidence * 100)}% confident
                       </p>
@@ -122,7 +126,7 @@ export default async function BillsPage() {
               {d.upcoming.length === 0 && <li className="text-sm text-muted">Nothing scheduled.</li>}
               {d.upcoming.map((u) => (
                 <li key={`${u.id}${u.date}`} className="flex justify-between py-1.5 text-sm">
-                  <span className="truncate">
+                  <span className="line-clamp-2 break-words">
                     <span className="tabular mr-2 text-xs text-muted">{formatDateStr(u.date, "MMM d")}</span>
                     {u.name}
                   </span>

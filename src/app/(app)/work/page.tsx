@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Briefcase, ChevronLeft, ChevronRight, Sparkles, Trash2 } from "lucide-react";
-import { ActionButton, ActionForm } from "@/components/action-form";
+import { Briefcase, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { ActionForm } from "@/components/action-form";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Card, CardHeader, EmptyState, Money, PageHeader, Stat } from "@/components/ui/surface";
-import { addDaysStr, formatDateStr, formatIn, isValidDateStr, monthEnd, monthStart, todayIn, weekStart } from "@/lib/dates";
-import { cn } from "@/lib/utils";
+import { addDaysStr, currentInstant, formatDateStr, isValidDateStr, monthEnd, monthStart, todayIn, weekStart } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { estimateEarnings, listEmployers, listPaychecks, listShifts, ratesOf, shiftPaidMinutes } from "@/server/services/work";
 import { ShiftDialog } from "./forms";
-import { addPaycheckAction, cancelShiftAction, createEmployerAction, createShiftAction, deleteShiftAction, recordHoursAction } from "./actions";
+import { ShiftList } from "./shift-list";
+import { addPaycheckAction, createEmployerAction, createShiftAction } from "./actions";
 
 export const metadata: Metadata = { title: "Work" };
 
@@ -28,7 +28,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
       () => listShifts(s, tz, monthStart(today), monthEnd(today)),
       () => listPaychecks(s, 8),
     );
-    return { employers, shifts, monthShifts, paychecks, wk, today, tz };
+    return { employers, shifts, monthShifts, paychecks, wk, today, tz, now: currentInstant().getTime() };
   });
   const { tz } = d;
   const est = (list: typeof d.shifts) =>
@@ -89,97 +89,47 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
                 subtitle={`${formatDateStr(d.wk, "MMM d")} – ${formatDateStr(addDaysStr(d.wk, 6), "MMM d")}`}
                 action={
                   <div className="flex items-center gap-1">
-                    <Link href={`/work?week=${addDaysStr(d.wk, -7)}`} className="rounded p-1 text-muted hover:text-text" aria-label="Previous week">
+                    <Link
+                      href={`/work?week=${addDaysStr(d.wk, -7)}`}
+                      className="tap flex items-center justify-center rounded-full text-muted hover:text-text"
+                      aria-label="Previous week"
+                    >
                       <ChevronLeft className="h-4 w-4" />
                     </Link>
-                    <Link href="/work" className="text-xs text-muted hover:text-text">
+                    <Link href="/work" className="flex min-h-11 items-center px-1 text-xs text-muted hover:text-text">
                       This week
                     </Link>
-                    <Link href={`/work?week=${addDaysStr(d.wk, 7)}`} className="rounded p-1 text-muted hover:text-text" aria-label="Next week">
+                    <Link
+                      href={`/work?week=${addDaysStr(d.wk, 7)}`}
+                      className="tap flex items-center justify-center rounded-full text-muted hover:text-text"
+                      aria-label="Next week"
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Link>
                   </div>
                 }
               />
-              {d.shifts.length === 0 ? (
-                <p className="px-5 pb-5 text-sm text-muted">No shifts this week.</p>
-              ) : (
-                <ul className="divide-y divide-border">
-                  {d.shifts.map((s) => {
-                    const paid = shiftPaidMinutes(s);
-                    const cancelled = s.status === "cancelled";
-                    return (
-                      <li key={s.id} className={cn("group px-5 py-4", cancelled && "opacity-50")}>
-                        <div className="flex items-start gap-4">
-                          <div className="w-11 shrink-0 text-center">
-                            <p className="text-[11px] font-medium text-muted uppercase">{formatIn(s.startsAt, tz, "EEE")}</p>
-                            <p className="font-display text-2xl leading-tight">{formatIn(s.startsAt, tz, "d")}</p>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[15px]">
-                              {formatIn(s.startsAt, tz, "h:mm")}–{formatIn(s.endsAt, tz, "h:mm a")}
-                            </p>
-                            <p className="truncate text-sm text-muted">
-                              {empName.get(s.employerId)}
-                              {s.breakMinutes ? ` · ${s.breakMinutes} min break` : ""}
-                            </p>
-                            {s.recordedStart && s.recordedEnd && (
-                              <p className="mt-0.5 text-sm text-text-2">
-                                Clocked {formatIn(s.recordedStart, tz, "h:mm")}–{formatIn(s.recordedEnd, tz, "h:mm a")}
-                              </p>
-                            )}
-                          </div>
-                          <div className="shrink-0 text-right">
-                            <p className="tabular text-[15px]">{(paid.minutes / 60).toFixed(1)} h</p>
-                            <p className={cn("text-xs", cancelled ? "text-muted" : s.status === "worked" ? "text-success" : "text-info")}>
-                              {cancelled ? "Cancelled" : s.status === "worked" ? "Worked" : "Scheduled"}
-                            </p>
-                          </div>
-                        </div>
-                        {!cancelled && (
-                          <details className="mt-2 pl-15">
-                            <summary className="cursor-pointer text-xs text-accent">{s.recordedStart ? "Edit recorded hours" : "Record actual hours"}</summary>
-                            <div className="mt-2 flex flex-wrap items-center gap-2">
-                              <ActionForm action={recordHoursAction.bind(null, s.id)} reset={false} className="flex-row items-center gap-1.5">
-                                <Input
-                                  name="clockIn"
-                                  type="time"
-                                  required
-                                  defaultValue={formatIn(s.recordedStart ?? s.startsAt, tz, "HH:mm")}
-                                  className="h-8 w-28 text-[13px]"
-                                  aria-label="Clock in"
-                                />
-                                <span className="text-xs text-muted">to</span>
-                                <Input
-                                  name="clockOut"
-                                  type="time"
-                                  required
-                                  defaultValue={formatIn(s.recordedEnd ?? s.endsAt, tz, "HH:mm")}
-                                  className="h-8 w-28 text-[13px]"
-                                  aria-label="Clock out"
-                                />
-                                <SubmitButton size="sm" variant="secondary">
-                                  Save
-                                </SubmitButton>
-                              </ActionForm>
-                              <ActionButton
-                                action={cancelShiftAction.bind(null, s.id)}
-                                confirm="Mark this shift cancelled?"
-                                className="text-xs text-muted hover:text-text"
-                              >
-                                Cancel shift
-                              </ActionButton>
-                              <ActionButton action={deleteShiftAction.bind(null, s.id)} title="Delete shift" className="ml-auto text-muted hover:text-danger">
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </ActionButton>
-                            </div>
-                          </details>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+              {d.shifts.length === 0 && <p className="px-5 pb-5 text-sm text-muted">No shifts this week.</p>}
+              {
+                <ShiftList
+                  shifts={d.shifts.map((x) => ({
+                    id: x.id,
+                    employerId: x.employerId,
+                    startsAt: x.startsAt,
+                    endsAt: x.endsAt,
+                    recordedStart: x.recordedStart,
+                    recordedEnd: x.recordedEnd,
+                    breakMinutes: x.breakMinutes,
+                    notes: x.notes,
+                    status: x.status,
+                    paidHours: shiftPaidMinutes(x).minutes / 60,
+                  }))}
+                  employers={d.employers.map((e) => ({ id: e.id, name: e.name }))}
+                  tz={tz}
+                  today={d.today}
+                  now={d.now}
+                />
+              }
             </Card>
             <div className="flex flex-col gap-5">
               <Card>

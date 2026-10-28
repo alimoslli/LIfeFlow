@@ -7,7 +7,7 @@ import { AskJarvisButton } from "@/components/shell/app-shell";
 import { SubmitButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { Card, CardHeader, EmptyState, SourceBadge } from "@/components/ui/surface";
-import { formatIn } from "@/lib/dates";
+import { formatIn, todayIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { searchNotes } from "@/server/services/notes";
@@ -90,12 +90,16 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
         <div className="flex flex-col gap-5">
           <Card>
             <CardHeader title="Upcoming & open" subtitle={`${d.upcoming.length} item${d.upcoming.length === 1 ? "" : "s"}`} />
-            {d.upcoming.length ? <AssignmentList items={d.upcoming} tz={d.tz} showCourse={false} /> : <EmptyState title="Nothing open for this course" />}
+            {d.upcoming.length ? (
+              <AssignmentList items={d.upcoming} tz={d.tz} today={todayIn(d.tz)} showCourse={false} />
+            ) : (
+              <EmptyState title="Nothing open for this course" />
+            )}
           </Card>
           {d.done.length > 0 && (
             <Card>
               <CardHeader title="Completed" />
-              <AssignmentList items={d.done} tz={d.tz} showCourse={false} />
+              <AssignmentList items={d.done} tz={d.tz} today={todayIn(d.tz)} showCourse={false} />
             </Card>
           )}
         </div>
@@ -107,11 +111,11 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
                 <li key={m.id} className="group flex items-center gap-2 py-1.5 text-sm">
                   <Link2 className="h-3.5 w-3.5 shrink-0 text-muted" />
                   {m.url ? (
-                    <a href={m.url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 truncate hover:text-accent">
+                    <a href={m.url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 line-clamp-2 break-words hover:text-accent">
                       {m.title}
                     </a>
                   ) : (
-                    <span className="min-w-0 flex-1 truncate">{m.title}</span>
+                    <span className="min-w-0 flex-1 line-clamp-2 break-words">{m.title}</span>
                   )}
                   {m.module && <span className="text-xs text-muted">{m.module}</span>}
                   <ActionButton action={deleteMaterialAction.bind(null, m.id)} title="Remove" className="hidden text-muted group-hover:block hover:text-danger">
@@ -149,7 +153,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
                   <li key={n.id}>
                     <Link href={`/notes/${n.id}`} className="flex items-center gap-2 py-1.5 text-sm hover:text-accent">
                       <FileText className="h-3.5 w-3.5 text-muted" />
-                      <span className="flex-1 truncate">{n.title}</span>
+                      <span className="flex-1 line-clamp-2 break-words">{n.title}</span>
                       <span className="text-xs text-muted">{formatIn(n.updatedAt, d.tz, "MMM d")}</span>
                     </Link>
                   </li>

@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import { moveToTrash } from "../../services/trash";
 import { formatIn, localDateOf } from "@/lib/dates";
 import { truncate } from "@/lib/utils";
 import { attachments } from "../../db/schema";
@@ -13,7 +14,7 @@ import {
   setMemoryStatus,
   type RememberStatus,
 } from "../../services/memory";
-import { createNote, deleteNote, getNote, searchNotes, updateNote } from "../../services/notes";
+import { createNote, getNote, searchNotes, updateNote } from "../../services/notes";
 import { defineTool, idArg, type ToolContext } from "../tool";
 
 export const noteTools = [
@@ -71,7 +72,8 @@ export const noteTools = [
       return `Delete note "${n.title}"?`;
     },
     async execute({ id }, ctx) {
-      return { deleted: await ctx.run((s) => deleteNote(s, id)) };
+      const t = await ctx.run((s) => moveToTrash(s, "note", id));
+      return { deleted: t.label, restorableFromTrash: true };
     },
   }),
 ];

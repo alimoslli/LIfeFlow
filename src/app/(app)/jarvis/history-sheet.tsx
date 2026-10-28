@@ -12,7 +12,7 @@ export function HistorySheet({ items, activeId }: { items: { id: string; title: 
       <button
         onClick={() => setOpen(true)}
         aria-label="Past conversations"
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-surface shadow-soft"
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-surface shadow-soft"
       >
         <History className="h-4 w-4" />
       </button>
@@ -36,7 +36,7 @@ export function HistorySheet({ items, activeId }: { items: { id: string; title: 
                     onClick={() => setOpen(false)}
                     className={cn("block rounded-2xl px-3 py-3", c.id === activeId ? "bg-surface shadow-soft" : "active:bg-surface-2")}
                   >
-                    <span className="block truncate text-[15px]">{c.title}</span>
+                    <span className="line-clamp-2 break-words text-[15px]">{c.title}</span>
                     <span className="block text-xs text-muted">{c.when}</span>
                   </Link>
                 </li>

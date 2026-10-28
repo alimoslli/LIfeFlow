@@ -30,7 +30,7 @@ export function JarvisPage({ conversations, activeId, messages, tz }: { conversa
           {items.map((c) => (
             <div key={c.id} className={cn("group flex items-center rounded-2xl", c.id === activeId ? "bg-surface shadow-soft" : "hover:bg-surface-2")}>
               <Link href={`/jarvis/${c.id}`} className="min-w-0 flex-1 px-3.5 py-2.5">
-                <span className="block truncate text-sm">{c.title}</span>
+                <span className="line-clamp-2 break-words text-sm">{c.title}</span>
                 <span className="block text-xs text-muted">{c.when}</span>
               </Link>
               <ActionButton
@@ -49,7 +49,7 @@ export function JarvisPage({ conversations, activeId, messages, tz }: { conversa
         <header className="flex items-center gap-2 px-4 pt-4 lg:hidden">
           <HistorySheet items={items} activeId={activeId} />
           <p className="min-w-0 flex-1 truncate text-center text-sm font-medium">{active?.title ?? "Jarvis"}</p>
-          <Link href="/jarvis" aria-label="New chat" className="flex h-10 w-10 items-center justify-center rounded-full bg-surface shadow-soft">
+          <Link href="/jarvis" aria-label="New chat" className="flex h-11 w-11 items-center justify-center rounded-full bg-surface shadow-soft">
             <Plus className="h-4 w-4" />
           </Link>
         </header>

@@ -19,8 +19,10 @@ export default defineConfig({
   reporter: [["list"]],
   use: { baseURL: `http://localhost:${PORT}`, trace: "retain-on-failure" },
   projects: [
-    { name: "desktop", use: { ...devices["Desktop Chrome"] }, testIgnore: /mobile\.spec\.ts/ },
+    { name: "desktop", use: { ...devices["Desktop Chrome"] }, testIgnore: /(mobile|phone)\.spec\.ts/ },
     { name: "mobile", use: { ...devices["Pixel 7"] }, testMatch: /mobile\.spec\.ts/ },
+    // iPhone size, touch and user agent. Only Chromium is installed in this environment, so WebKit itself isn't exercised here.
+    { name: "iphone", use: { ...devices["iPhone 13"], browserName: "chromium" }, testMatch: /phone\.spec\.ts/ },
   ],
   webServer: [
     { command: "node tests/e2e/fake-openai.mjs", url: "http://127.0.0.1:4010", reuseExistingServer: false },

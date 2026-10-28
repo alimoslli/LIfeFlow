@@ -109,3 +109,6 @@ export function dueLabel(dueAt: Date | null, allDay: boolean, tz: string, now: D
   else day = formatIn(dueAt, tz, diff > 300 || diff < -300 ? "MMM d, yyyy" : "MMM d");
   return { text: `${day}${time}`, overdue, soon: !overdue && diff <= 2 };
 }
+
+/** The current instant. Server components call this instead of Date.now() during render. */
+export const currentInstant = (): Date => new Date();

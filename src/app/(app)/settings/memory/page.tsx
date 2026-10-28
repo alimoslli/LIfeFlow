@@ -82,7 +82,7 @@ export default async function MemorySettings() {
                 <ActionButton
                   action={decideMemoryAction.bind(null, m.id, "dismiss")}
                   title="Dismiss"
-                  className="rounded-full bg-surface-2 p-2 text-muted hover:text-text"
+                  className="tap flex items-center justify-center rounded-full bg-surface-2 text-muted hover:text-text"
                 >
                   <X className="h-3.5 w-3.5" />
                 </ActionButton>
@@ -105,9 +105,11 @@ export default async function MemorySettings() {
           <ActionButton
             action={setMemorySuggestionsAction.bind(null, !d.suggestionsOn)}
             title={d.suggestionsOn ? "Turn memory suggestions off" : "Turn memory suggestions on"}
-            className={cn("relative h-7 w-12 shrink-0 rounded-full transition-colors", d.suggestionsOn ? "bg-accent" : "bg-surface-3")}
+            className="tap flex shrink-0 items-center justify-center"
           >
-            <span className={cn("absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-[left]", d.suggestionsOn ? "left-6" : "left-1")} />
+            <span className={cn("relative h-7 w-12 rounded-full transition-colors", d.suggestionsOn ? "bg-accent" : "bg-surface-3")}>
+              <span className={cn("absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-[left]", d.suggestionsOn ? "left-6" : "left-1")} />
+            </span>
             <span className="sr-only">{d.suggestionsOn ? "On" : "Off"}</span>
           </ActionButton>
         </div>
@@ -142,7 +144,7 @@ export default async function MemorySettings() {
                     <ActionButton
                       action={archiveMemoryAction.bind(null, m.id, "archived")}
                       title="Archive (Jarvis stops using it)"
-                      className="rounded-full p-2 text-muted hover:text-text"
+                      className="tap flex items-center justify-center rounded-full text-muted hover:text-text"
                     >
                       <Archive className="h-4 w-4" />
                     </ActionButton>
@@ -150,7 +152,7 @@ export default async function MemorySettings() {
                       action={deleteMemoryAction.bind(null, m.id)}
                       confirm="Delete this memory permanently?"
                       title="Delete memory"
-                      className="rounded-full p-2 text-muted hover:text-danger"
+                      className="tap flex items-center justify-center rounded-full text-muted hover:text-danger"
                     >
                       <Trash2 className="h-4 w-4" />
                     </ActionButton>
@@ -213,7 +215,7 @@ export default async function MemorySettings() {
                       <ActionButton
                         action={archiveMemoryAction.bind(null, m.id, "active")}
                         title="Restore"
-                        className="rounded-full p-2 text-muted hover:text-text"
+                        className="tap flex items-center justify-center rounded-full text-muted hover:text-text"
                       >
                         <RotateCcw className="h-4 w-4" />
                       </ActionButton>
@@ -222,7 +224,7 @@ export default async function MemorySettings() {
                       action={deleteMemoryAction.bind(null, m.id)}
                       confirm="Delete permanently?"
                       title="Delete permanently"
-                      className="rounded-full p-2 text-muted hover:text-danger"
+                      className="tap flex items-center justify-center rounded-full text-muted hover:text-danger"
                     >
                       <Trash2 className="h-4 w-4" />
                     </ActionButton>

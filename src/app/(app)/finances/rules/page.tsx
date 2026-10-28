@@ -13,7 +13,7 @@ export default async function RulesPage() {
   const rules = await withCurrentUser((s) => listCategoryRules(s));
   return (
     <div className="mx-auto max-w-[680px]">
-      <Link href="/finances/transactions" className="inline-flex items-center gap-1 text-sm text-muted hover:text-text">
+      <Link href="/finances/transactions" className="hidden items-center gap-1 text-sm text-muted hover:text-text md:inline-flex">
         <ArrowLeft className="h-3.5 w-3.5" /> Transactions
       </Link>
       <h1 className="mt-2 font-display text-[28px] font-medium tracking-tight">Category rules</h1>
@@ -31,7 +31,7 @@ export default async function RulesPage() {
             {rules.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{r.label}</p>
+                  <p className="line-clamp-2 break-words text-sm font-medium">{r.label}</p>
                   <p className="text-xs text-muted">
                     → {r.categoryName}
                     {r.hits ? ` · used ${r.hits} time${r.hits === 1 ? "" : "s"}` : ""}

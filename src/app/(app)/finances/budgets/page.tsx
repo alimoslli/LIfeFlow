@@ -68,11 +68,19 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-[28px] font-medium tracking-tight">Budgets</h1>
         <div className="flex items-center rounded-full bg-surface shadow-soft">
-          <Link href={`/finances/budgets?month=${prev}`} className="p-2 text-muted hover:text-text" aria-label="Previous month">
+          <Link
+            href={`/finances/budgets?month=${prev}`}
+            className="tap flex items-center justify-center rounded-full text-muted hover:text-text"
+            aria-label="Previous month"
+          >
             <ChevronLeft className="h-4 w-4" />
           </Link>
           <span className="min-w-32 px-3 py-2 text-center text-sm">{formatDateStr(d.month, "MMMM yyyy")}</span>
-          <Link href={`/finances/budgets?month=${next}`} className="p-2 text-muted hover:text-text" aria-label="Next month">
+          <Link
+            href={`/finances/budgets?month=${next}`}
+            className="tap flex items-center justify-center rounded-full text-muted hover:text-text"
+            aria-label="Next month"
+          >
             <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
@@ -159,7 +167,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
                     <ActionButton
                       action={deleteBudgetAction.bind(null, b.id)}
                       title="Remove budget"
-                      className="text-muted lg:opacity-0 lg:group-hover:opacity-100 hover:text-danger focus:opacity-100"
+                      className="tap -m-2 flex items-center justify-center text-muted lg:opacity-0 lg:group-hover:opacity-100 hover:text-danger focus:opacity-100"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </ActionButton>
@@ -181,7 +189,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
                     href={`/finances/budgets?plan=${k}`}
                     scroll={false}
                     className={cn(
-                      "rounded-full px-3 py-1.5 text-sm",
+                      "flex min-h-11 items-center rounded-full px-4 text-sm",
                       d.method === k ? "bg-accent text-accent-text" : "bg-surface-2 text-text-2 hover:text-text",
                     )}
                   >
@@ -197,7 +205,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
                     {d.plan.lines.map((l) => (
                       <li key={l.categoryId} className="flex items-center gap-3 text-sm">
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate">{l.category}</span>
+                          <span className="line-clamp-2 break-words">{l.category}</span>
                           <span className="text-xs text-muted">
                             {l.group} · averaged {formatCents(l.averageCents).replace(/\.\d\d$/, "")}
                           </span>

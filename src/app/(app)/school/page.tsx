@@ -3,7 +3,7 @@ import Link from "next/link";
 import { BookOpen, GraduationCap, Plug, Sparkles } from "lucide-react";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { Badge, Card, CardHeader, EmptyState, PageHeader, Tabs } from "@/components/ui/surface";
-import { dueLabel } from "@/lib/dates";
+import { dueLabel, todayIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { integrationStatus } from "@/server/services/integrations";
@@ -69,14 +69,14 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
                   <span className="mt-1 h-8 w-1 shrink-0 rounded-full" style={{ background: c.color ?? "var(--accent)" }} />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-muted">{c.code ?? "Course"}</p>
-                    <p className="truncate font-medium group-hover:text-accent">{c.name}</p>
+                    <p className="line-clamp-2 break-words font-medium group-hover:text-accent">{c.name}</p>
                     <p className="mt-0.5 truncate text-xs text-muted">{[c.instructorName, c.meetingInfo].filter(Boolean).join(" · ") || " "}</p>
                   </div>
                   {openCount.get(c.id) ? <Badge>{openCount.get(c.id)} open</Badge> : null}
                 </div>
                 <div className="mt-3 border-t border-border pt-3 text-xs">
                   {next ? (
-                    <p className="truncate">
+                    <p className="line-clamp-2 break-words">
                       <span className="text-muted">Next: </span>
                       {next.title} <span className={due?.overdue ? "text-danger" : "text-muted"}>· {due?.text}</span>
                     </p>
@@ -106,7 +106,7 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
             {view === "completed" ? "Completed assignments will collect here." : "Assignments you or Jarvis add will show up here."}
           </EmptyState>
         ) : (
-          <AssignmentList items={d.list} tz={d.tz} />
+          <AssignmentList items={d.list} tz={d.tz} today={todayIn(d.tz)} />
         )}
       </Card>
 
@@ -119,7 +119,7 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
             Canvas sync isn&apos;t available in this version yet. It needs your school&apos;s Canvas URL and an access token your school permits. Until then,
             add work manually or paste it into your assistant. Nothing here is synced or simulated.
           </p>
-          <Link href="/settings/integrations" className="shrink-0 text-sm font-medium text-accent hover:underline">
+          <Link href="/settings/integrations" className="flex min-h-11 shrink-0 items-center text-sm font-medium text-accent hover:underline">
             Integration details
           </Link>
         </div>

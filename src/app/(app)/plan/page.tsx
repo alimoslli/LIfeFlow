@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
+import { QuickAddButton } from "@/components/shell/quick-add";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { addDaysStr, daysBetween, formatDateStr, formatIn, isValidDateStr, localDateOf, todayIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -55,21 +56,26 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           <h1 className="font-display text-[40px] leading-none font-medium tracking-tight">Plan</h1>
           <p className="mt-2 text-[15px] text-text-2">Classes, work, deadlines and to-dos, in one place.</p>
         </div>
-        <AskJarvisButton
-          prompt="Add "
-          className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-soft"
-        >
-          <Plus className="h-4 w-4" /> Add
-        </AskJarvisButton>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <AskJarvisButton prompt="Add " className="tap flex items-center justify-center rounded-full bg-surface text-accent shadow-soft">
+            <Sparkles className="h-4 w-4" aria-label="Add with Jarvis" />
+          </AskJarvisButton>
+          <QuickAddButton className="flex min-h-11 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium text-accent-text shadow-soft">
+            <Plus className="h-4 w-4" /> Add
+          </QuickAddButton>
+        </div>
       </header>
 
-      <nav className="-mx-1 flex gap-1.5 overflow-x-auto px-1" aria-label="Filter">
+      <nav
+        className="lf-hscroll -mx-5 flex gap-1.5 overflow-x-auto px-5 [scrollbar-width:none] sm:-mx-8 sm:px-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
+        aria-label="Filter"
+      >
         {FILTERS.map((f) => (
           <Link
             key={f.key}
             href={f.key === "all" ? "/plan" : `/plan?f=${f.key}`}
             className={cn(
-              "rounded-full px-4 py-2 text-sm whitespace-nowrap transition-colors",
+              "flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm whitespace-nowrap transition-colors",
               filter === f.key ? "bg-text text-bg" : "bg-surface text-text-2 shadow-soft hover:text-text",
             )}
           >
@@ -99,7 +105,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                       <Link href={i.href} className="flex items-center gap-4 rounded-2xl bg-surface px-4 py-3 shadow-soft transition-shadow hover:shadow-lift">
                         <span className="h-9 w-1 shrink-0 rounded-full" style={{ background: i.color ?? "var(--accent)" }} />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[15px]">
+                          <p className="line-clamp-2 break-words text-[15px]">
                             {i.origin === "assignment" && <span className="text-muted">Due · </span>}
                             {i.origin === "task" && <span className="text-muted">To do · </span>}
                             {i.title}
@@ -129,7 +135,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         {d.from > d.today ? (
           <Link
             href={`/plan?${new URLSearchParams({ ...(filter !== "all" && { f: filter }), ...(addDaysStr(d.from, -7) > d.today && { date: addDaysStr(d.from, -7) }) })}`}
-            className="rounded-full bg-surface px-4 py-2 shadow-soft"
+            className="flex min-h-11 items-center rounded-full bg-surface px-4 shadow-soft"
           >
             ← Earlier
           </Link>
@@ -138,7 +144,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         )}
         <Link
           href={`/plan?${new URLSearchParams({ ...(filter !== "all" && { f: filter }), date: addDaysStr(d.from, 7) })}`}
-          className="rounded-full bg-surface px-4 py-2 shadow-soft"
+          className="flex min-h-11 items-center rounded-full bg-surface px-4 shadow-soft"
         >
           Next week →
         </Link>

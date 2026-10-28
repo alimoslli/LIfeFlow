@@ -2,7 +2,6 @@
 import { useRef } from "react";
 import { formatCents } from "@/lib/money";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "./gsap";
-import { isHydrated, isSplashActive, onSplashEnd } from "./intro";
 
 const fmt = (cents: number, format: "whole" | "cents") => {
   const s = formatCents(cents);
@@ -10,9 +9,10 @@ const fmt = (cents: number, format: "whole" | "cents") => {
 };
 
 /**
- * Money that counts up to its value. The server renders the final value
- * (no hydration mismatch, correct without JavaScript); the count plays on
- * client navigation, after the opening splash, and when the value changes.
+ * Money that animates only when its value changes while you're looking at
+ * it (after a sync or an edit). On arrival it always shows the real number
+ * immediately: counting up from $0 made totals look like they jumped
+ * between different values.
  */
 export function CountUp({ cents, format = "whole", className }: { cents: number; format?: "whole" | "cents"; className?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -24,10 +24,8 @@ export function CountUp({ cents, format = "whole", className }: { cents: number;
       if (!el) return;
       const from = shown.current;
       shown.current = cents;
-      const firstMount = from == null;
-      if (prefersReducedMotion() || (firstMount && !isHydrated() && !isSplashActive())) return;
-      if (!firstMount && from === cents) return;
-      const state = { v: firstMount ? 0 : from! };
+      if (from == null || from === cents || prefersReducedMotion()) return;
+      const state = { v: from };
       const play = () =>
         gsap.to(state, {
           v: cents,
@@ -37,7 +35,6 @@ export function CountUp({ cents, format = "whole", className }: { cents: number;
           onComplete: () => void (el.textContent = fmt(cents, format)),
         });
       el.textContent = fmt(state.v, format);
-      if (firstMount && isSplashActive()) return onSplashEnd(() => play());
       play();
     },
     { dependencies: [cents, format] },

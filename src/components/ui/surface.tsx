@@ -117,14 +117,17 @@ export function Stat({ label, value, sub, className }: { label: string; value: R
 
 export function Tabs({ items, current }: { items: { href: string; label: string; key: string }[]; current: string }) {
   return (
-    <nav className="-mx-1 mb-6 flex gap-1.5 overflow-x-auto px-1 pb-1" aria-label="Sections">
+    <nav
+      className="lf-hscroll -mx-5 mb-6 flex gap-1.5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:-mx-8 sm:px-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
+      aria-label="Sections"
+    >
       {items.map((i) => (
         <Link
           key={i.key}
           href={i.href}
           aria-current={i.key === current ? "page" : undefined}
           className={cn(
-            "rounded-full px-4 py-2 text-sm whitespace-nowrap transition-colors",
+            "flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm whitespace-nowrap transition-colors",
             i.key === current ? "bg-text font-medium text-bg" : "bg-surface text-text-2 shadow-soft hover:text-text",
           )}
         >

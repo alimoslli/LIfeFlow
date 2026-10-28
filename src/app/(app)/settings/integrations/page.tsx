@@ -115,7 +115,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
             <p className="mt-2 text-sm text-text-2">{i.description}</p>
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
               <span>Server setup: {i.configured ? <span className="text-success">credentials present</span> : <>needs {i.requires.join(", ")}</>}</span>
-              <a href={i.docsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-accent hover:underline">
+              <a href={i.docsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1 text-accent hover:underline">
                 Official docs <ExternalLink className="h-3 w-3" />
               </a>
             </div>

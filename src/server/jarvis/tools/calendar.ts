@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { moveToTrash } from "../../services/trash";
 import { addDaysStr, daysBetween, formatIn, localDateOf } from "@/lib/dates";
-import { EVENT_KINDS, createEvent, deleteEvent, findConflicts, freeSlots, getAgenda, getEvent, updateEvent, type AgendaItem } from "../../services/calendar";
+import { EVENT_KINDS, createEvent, findConflicts, freeSlots, getAgenda, getEvent, updateEvent, type AgendaItem } from "../../services/calendar";
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
 
 export function presentAgendaItem(i: AgendaItem, ctx: ToolContext) {
@@ -145,7 +146,8 @@ export const calendarTools = [
       return `Delete event "${e.title}" on ${formatIn(e.startsAt, ctx.tz, "EEE MMM d, h:mm a")}${e.recurrence ? " (all occurrences)" : ""}?`;
     },
     async execute({ id }, ctx) {
-      return { deleted: await ctx.run((s) => deleteEvent(s, id)) };
+      const t = await ctx.run((s) => moveToTrash(s, "event", id));
+      return { deleted: t.label, restorableFromTrash: true };
     },
   }),
 ];

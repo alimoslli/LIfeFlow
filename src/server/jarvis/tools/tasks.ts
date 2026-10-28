@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { moveToTrash } from "../../services/trash";
 import { localDateOf, localTimeOf, startOfLocalDay, addDaysStr } from "@/lib/dates";
-import { createTask, deleteTask, getTask, listTasks, updateTask } from "../../services/tasks";
+import { createTask, getTask, listTasks, updateTask } from "../../services/tasks";
 import { createProject, listProjects } from "../../services/notes";
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
 
@@ -124,7 +125,8 @@ export const taskTools = [
       return `Delete task "${t.title}"${t.subtasks.length ? ` and its ${t.subtasks.length} subtasks` : ""}?`;
     },
     async execute({ id }, ctx) {
-      return { deleted: await ctx.run((s) => deleteTask(s, id)) };
+      const t = await ctx.run((s) => moveToTrash(s, "task", id));
+      return { deleted: t.label, restorableFromTrash: true };
     },
   }),
   defineTool({

@@ -29,17 +29,25 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
   return (
     <div className="mx-auto flex max-w-[680px] flex-col gap-6">
       <header>
-        <Link href="/money" className="inline-flex items-center gap-1 text-sm text-muted hover:text-text">
+        <Link href="/money" className="hidden items-center gap-1 text-sm text-muted hover:text-text md:inline-flex">
           <ArrowLeft className="h-3.5 w-3.5" /> Money
         </Link>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">{formatDateStr(d.month, "MMMM yyyy")}</h1>
           <div className="flex items-center rounded-full bg-surface shadow-soft">
-            <Link href={`/money/report?month=${prev}`} className="p-2.5 text-muted hover:text-text" aria-label="Previous month">
+            <Link
+              href={`/money/report?month=${prev}`}
+              className="tap flex items-center justify-center rounded-full text-muted hover:text-text"
+              aria-label="Previous month"
+            >
               <ChevronLeft className="h-4 w-4" />
             </Link>
             {canNext ? (
-              <Link href={`/money/report?month=${next.slice(0, 7)}`} className="p-2.5 text-muted hover:text-text" aria-label="Next month">
+              <Link
+                href={`/money/report?month=${next.slice(0, 7)}`}
+                className="tap flex items-center justify-center rounded-full text-muted hover:text-text"
+                aria-label="Next month"
+              >
                 <ChevronRight className="h-4 w-4" />
               </Link>
             ) : (
@@ -150,7 +158,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
               </li>
             ))}
           </ul>
-          <Link href="/money/coach" className="mt-3 inline-block text-sm font-medium text-accent">
+          <Link href="/money/coach" className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-accent">
             Open your coach
           </Link>
         </Card>

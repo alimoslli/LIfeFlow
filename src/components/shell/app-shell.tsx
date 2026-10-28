@@ -2,13 +2,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Toaster } from "@/components/ui/toaster";
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { setTourAction } from "@/app/(onboarding)/welcome/actions";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV, isActive, moduleForPath } from "./nav-items";
 import { JarvisDrawer } from "../jarvis/jarvis-drawer";
 import { SectionNav } from "./section-nav";
+import { KeyboardWatcher, MobileAppBar, PullToRefresh } from "./mobile-chrome";
+import { CommandPalette } from "./command-palette";
+import { QuickAdd } from "./quick-add";
 import { gsap, MOTION, prefersReducedMotion } from "../motion/gsap";
 import { TiltLayer } from "../motion/tilt";
 import { Tour } from "../motion/tour";
@@ -46,6 +49,7 @@ export function AppShell({
   useSlidingIndicator(rail, pathname, "y");
   useSlidingIndicator(bar, pathname, "x");
   const [drawer, setDrawer] = useState<Drawer>({ open: false, key: 0 });
+  const [palette, setPalette] = useState(false);
   const openJarvis = useCallback(
     (prompt?: string, opts?: { send?: boolean }) => setDrawer((d) => ({ open: true, prompt, send: opts?.send, key: prompt ? d.key + 1 : d.key })),
     [],
@@ -53,6 +57,10 @@ export function AppShell({
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPalette((p) => !p);
+      }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
         e.preventDefault();
         setDrawer((d) => ({ ...d, open: !d.open, prompt: undefined, send: false }));
@@ -107,12 +115,10 @@ export function AppShell({
           </aside>
 
           <div className="flex min-w-0 flex-1 flex-col">
-            {user.accountKind === "demo" && !onJarvisPage && (
-              <div className="px-4 pt-3 text-center text-[11px] tracking-wide text-muted md:hidden">Test account · everything here is sample data</div>
-            )}
             <main
-              className={cn("mx-auto w-full flex-1", onJarvisPage ? "max-w-none" : "max-w-5xl px-5 pt-6 pb-32 sm:px-8 md:max-w-6xl md:px-6 md:pt-5 md:pb-6")}
+              className={cn("mx-auto w-full flex-1", onJarvisPage ? "max-w-none" : "lf-main-pad max-w-5xl px-5 sm:px-8 md:max-w-6xl md:px-6 md:pt-5 md:pb-6")}
             >
+              {!onJarvisPage && <MobileAppBar initials={initials} demo={user.accountKind === "demo"} onSearch={() => setPalette(true)} />}
               {!onJarvisPage && (
                 <TopBar firstName={user.name.split(" ")[0]} initials={initials} demo={user.accountKind === "demo"} settingsActive={settingsActive} />
               )}
@@ -131,7 +137,7 @@ export function AppShell({
 
         {/* Mobile tab bar */}
         <nav
-          className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] lf-bar z-40 rounded-[28px] bg-surface shadow-lift md:hidden"
+          className="lf-tabbar fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] lf-bar z-40 rounded-[28px] bg-surface shadow-lift md:hidden"
           aria-label="Main"
         >
           <div ref={bar} className="relative mx-auto flex max-w-md items-stretch justify-around px-2">
@@ -186,6 +192,14 @@ export function AppShell({
         )}
       </div>
       <Toaster />
+      <PullToRefresh />
+      {!onJarvisPage && (
+        <Suspense fallback={null}>
+          <QuickAdd />
+        </Suspense>
+      )}
+      <KeyboardWatcher />
+      <CommandPalette open={palette} onClose={() => setPalette(false)} onAsk={(q) => openJarvis(q, { send: !!q })} />
     </Ctx.Provider>
   );
 }
@@ -269,7 +283,7 @@ export function Mark({ className }: { className?: string }) {
 export function AskJarvisButton({ prompt, send, children, className }: { prompt?: string; send?: boolean; children: ReactNode; className?: string }) {
   const { openJarvis } = useShell();
   return (
-    <button type="button" onClick={() => openJarvis(prompt, { send })} className={className}>
+    <button type="button" onClick={() => openJarvis(prompt, { send })} className={cn("lf-touch", className)}>
       {children}
     </button>
   );

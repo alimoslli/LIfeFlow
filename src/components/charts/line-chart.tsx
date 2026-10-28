@@ -61,7 +61,7 @@ export function LineChart({ series, height = 150, label }: { series: Series[]; h
         )}
       </figcaption>
       <details className="mt-1 text-xs">
-        <summary className="cursor-pointer text-accent">View as table</summary>
+        <summary className="flex min-h-11 cursor-pointer items-center text-accent">View as table</summary>
         <div className="mt-2 max-h-56 overflow-y-auto">
           <table className="w-full">
             <thead>
