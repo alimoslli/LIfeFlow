@@ -95,7 +95,13 @@ export default async function WealthPage() {
               subtitle={
                 d.holdings.length ? (
                   <>
-                    Total <Money cents={holdingsTotal} /> · entered manually unless marked synced
+                    Holdings total <Money cents={holdingsTotal} />
+                    {holdingsTotal !== totals.investmentsCents && (
+                      <>
+                        {" "}
+                        · account balances total <Money cents={totals.investmentsCents} />, the difference is cash or positions not listed here
+                      </>
+                    )}
                   </>
                 ) : undefined
               }

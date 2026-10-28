@@ -6,6 +6,7 @@ import { Button, SubmitButton } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
 import { Card, EmptyState, Money, SourceBadge } from "@/components/ui/surface";
 import { daysBetween, formatDateStr, isValidDateStr, todayIn } from "@/lib/dates";
+import { PERIOD_KEYS, PERIOD_NAMES, resolvePeriod } from "@/lib/periods";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
@@ -18,7 +19,7 @@ import { AddTransactionDialog, CategoryOptions, ImportCsvDialog, KIND_LABELS } f
 
 export const metadata: Metadata = { title: "Transactions" };
 
-type SP = { q?: string; from?: string; to?: string; category?: string; kind?: string; account?: string; edit?: string; show?: string };
+type SP = { q?: string; period?: string; from?: string; to?: string; category?: string; kind?: string; account?: string; edit?: string; show?: string };
 
 const PAGE = 50;
 
@@ -30,10 +31,16 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       () => listCategories(s),
     );
     const kind = TRANSACTION_KINDS.find((k) => k === sp.kind);
+    const today = todayIn(u.timezone);
+    // Every total names its range. Default: this month, the same range Money and Today use.
+    const period = resolvePeriod(sp.period, today, {
+      from: sp.from && isValidDateStr(sp.from) ? sp.from : sp.to ? "2000-01-01" : undefined,
+      to: sp.to && isValidDateStr(sp.to) ? sp.to : sp.from ? today : undefined,
+    });
     const rows = await queryTransactions(s, {
       search: sp.q?.slice(0, 100),
-      from: sp.from && isValidDateStr(sp.from) ? sp.from : undefined,
-      to: sp.to && isValidDateStr(sp.to) ? sp.to : undefined,
+      from: period.from,
+      to: period.to,
       categoryIds:
         sp.category && categories.some((c) => c.id === sp.category)
           ? categories.filter((c) => c.id === sp.category || c.parentId === sp.category).map((c) => c.id)
@@ -41,12 +48,12 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       kinds: kind ? [kind] : undefined,
       accountId: accounts.some((a) => a.id === sp.account) ? sp.account : undefined,
       includeExcluded: true,
-      limit: 500,
+      limit: 5000,
     });
-    return { accounts, categories, rows, today: todayIn(u.timezone) };
+    return { accounts, categories, rows, today, period };
   });
   const summary = summarizeCashflow(d.rows);
-  const filtered = Boolean(sp.q || sp.from || sp.to || sp.category || sp.kind || sp.account);
+  const filtered = Boolean(sp.q || sp.category || sp.kind || sp.account);
   const qs = (extra: Record<string, string | undefined>) => {
     const p = new URLSearchParams(Object.entries({ ...sp, ...extra }).filter(([, v]) => v) as [string, string][]);
     return `/finances/transactions?${p}`;
@@ -80,7 +87,23 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         </div>
       </div>
 
+      <nav aria-label="Time range" className="-mx-1 mb-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
+        {PERIOD_KEYS.map((k) => (
+          <Link
+            key={k}
+            href={qs({ period: k === "month" ? undefined : k, from: undefined, to: undefined, show: undefined })}
+            aria-current={d.period.key === k ? "page" : undefined}
+            className={cn(
+              "shrink-0 rounded-full px-3.5 py-1.5 text-sm",
+              d.period.key === k ? "bg-accent text-accent-text" : "bg-surface text-text-2 shadow-soft hover:text-text",
+            )}
+          >
+            {PERIOD_NAMES[k]}
+          </Link>
+        ))}
+      </nav>
       <form className="mb-5 flex flex-col gap-2" action="/finances/transactions">
+        {d.period.key !== "month" && d.period.key !== "custom" && <input type="hidden" name="period" value={d.period.key} />}
         <div className="flex items-center gap-2 rounded-full bg-surface p-1.5 pl-4 shadow-soft focus-within:shadow-lift">
           <Search className="h-4 w-4 shrink-0 text-muted" />
           <input
@@ -139,7 +162,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             <Money cents={summary.incomeCents} className="mt-0.5 block text-lg font-medium text-success" />
           </div>
           <p className="col-span-2 px-1 text-xs text-muted">
-            {d.rows.length} transactions · transfers between your accounts aren&apos;t counted
+            {d.period.label} · {d.rows.length} transactions · transfers between your accounts aren&apos;t counted
             {summary.excludedCount ? ` · ${summary.excludedCount} hidden` : ""}
           </p>
         </div>
@@ -180,7 +203,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                           <span className="block truncate text-[15px]">{t.merchantName ?? t.description}</span>
                           <span className="block truncate text-xs text-muted">
                             {t.categoryName ?? "Uncategorized"}
-                            {t.kind !== "expense" && t.kind !== "income" ? ` · ${KIND_LABELS[t.kind]}` : ""}
+                            {t.kind !== "expense" && t.kind !== "income" && KIND_LABELS[t.kind] ? ` · ${KIND_LABELS[t.kind]}` : ""}
                             {t.pending ? " · Pending" : ""}
                             {t.excluded ? " · Hidden" : ""}
                           </span>

@@ -245,7 +245,15 @@ export function buildBriefing(s: LifeSnapshot): Briefing {
     next,
     today,
     insights: deriveInsights(s),
-    money: s.money ? { liquidCents: s.money.liquidCents, spentCents: s.money.spentThisMonthCents, incomeCents: s.money.incomeThisMonthCents } : null,
+    money: s.money
+      ? {
+          liquidCents: s.money.liquidCents,
+          spentCents: s.money.spentThisMonthCents,
+          incomeCents: s.money.incomeThisMonthCents,
+          periodLabel: s.money.periodLabel,
+          asOf: s.money.asOf,
+        }
+      : null,
     week: weekGlance(s),
   };
 }

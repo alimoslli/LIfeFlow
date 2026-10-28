@@ -25,6 +25,11 @@ export type MoneySnapshot = {
   liquidCents: number;
   savingsCents: number;
   creditOwedCents: number;
+  netWorthCents: number;
+  /** When the oldest account balance was last updated (synced or entered). */
+  asOf: Date | null;
+  /** The range the month totals cover, e.g. "Oct 1 to 28, 2026". */
+  periodLabel: string;
   spentThisMonthCents: number;
   incomeThisMonthCents: number;
   /** Spend over the same number of days last month. */
@@ -32,7 +37,7 @@ export type MoneySnapshot = {
   billsNext30: { name: string; date: string; amountCents: number }[];
   overBudget: { category: string; spentCents: number; limitCents: number; topMerchant: string | null; topMerchantChangeCents: number | null }[];
   goals: { name: string; percent: number; monthlyNeededCents: number | null; targetDate: string | null }[];
-  investments: { valueCents: number; returnPct: number | null } | null;
+  investments: { valueCents: number; returnPct: number | null; asOf: Date | null } | null;
   hasDemoData: boolean;
 };
 
@@ -53,7 +58,7 @@ export type Insight = {
   score: number;
 };
 
-export type MoneyGlance = { liquidCents: number; spentCents: number; incomeCents: number };
+export type MoneyGlance = { liquidCents: number; spentCents: number; incomeCents: number; periodLabel: string; asOf: Date | null };
 
 export type DayGlance = { date: string; label: string; busyMinutes: number; deadlines: number; exam: boolean; isToday: boolean };
 

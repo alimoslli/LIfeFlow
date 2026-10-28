@@ -6,10 +6,12 @@ import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Card, CardHeader, EmptyState, Money, Progress } from "@/components/ui/surface";
 import { addDaysStr, formatDateStr, isValidDateStr, monthEnd, monthStart, todayIn } from "@/lib/dates";
+import { resolvePeriod } from "@/lib/periods";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { listCategories } from "@/server/services/finance/categories";
+import { cashflowFor } from "@/server/services/finance/overview";
 import { budgetStatus, spendingByCategory } from "@/server/services/finance/planning";
 import { deleteBudgetAction, setBudgetAction } from "../actions";
 import { CategoryOptions } from "../forms";
@@ -21,12 +23,15 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
     const month = monthStart(sp.month && isValidDateStr(`${sp.month}-01`) ? `${sp.month}-01` : today);
-    const [budgets, categories, spending] = await series(
+    const end = month === monthStart(today) ? today : monthEnd(month);
+    const period = resolvePeriod("custom", today, { from: month, to: end });
+    const [budgets, categories, spending, flow] = await series(
       () => budgetStatus(s, month),
       () => listCategories(s),
       () => spendingByCategory(s, month, monthEnd(month)),
+      () => cashflowFor(s, period),
     );
-    return { budgets, categories: categories.filter((c) => c.kind === "expense"), spending, month, today };
+    return { budgets, categories: categories.filter((c) => c.kind === "expense"), spending, month, today, flow };
   });
   const prev = monthStart(addDaysStr(d.month, -1)).slice(0, 7);
   const next = monthStart(addDaysStr(monthEnd(d.month), 1)).slice(0, 7);
@@ -57,11 +62,34 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
             subtitle={
               d.budgets.length ? (
                 <>
-                  Spent <Money cents={totalSpent} /> of <Money cents={totalLimit} />
+                  {d.flow.period.label}: <Money cents={totalSpent} /> spent of <Money cents={totalLimit} /> budgeted
                 </>
               ) : undefined
             }
           />
+          {d.budgets.length > 0 && (
+            <dl className="mx-5 mb-3 grid grid-cols-3 gap-2 rounded-2xl bg-surface-2/70 p-3 text-xs">
+              <div>
+                <dt className="text-muted">In budgets</dt>
+                <dd className="tabular mt-0.5 text-sm font-medium">
+                  <Money cents={totalSpent} />
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted">No budget</dt>
+                <dd className="tabular mt-0.5 text-sm font-medium">
+                  <Money cents={d.flow.netSpendingCents - totalSpent} />
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted">All spending</dt>
+                <dd className="tabular mt-0.5 text-sm font-medium">
+                  <Money cents={d.flow.netSpendingCents} />
+                </dd>
+              </div>
+              <p className="col-span-3 text-muted">In budgets plus no budget equals all spending, the same total Money shows for this range.</p>
+            </dl>
+          )}
           {d.budgets.length === 0 ? (
             <EmptyState icon={<PieChart />} title="No budgets this month">
               Set a monthly limit for a category. Budgets on a group (like Food &amp; Dining) include its subcategories.

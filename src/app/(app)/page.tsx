@@ -113,6 +113,10 @@ export default async function TodayPage() {
                     </p>
                   </div>
                 </div>
+                <p className="mt-3 text-xs text-muted">
+                  {b.money.periodLabel}
+                  {b.money.asOf ? ` · balances as of ${formatIn(b.money.asOf, s.tz, "MMM d, h:mm a")}` : ""}
+                </p>
               </Link>
             </Pressable>
           </section>

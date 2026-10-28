@@ -3,10 +3,9 @@ import type { SessionUser } from "../auth/sessions";
 import { series } from "../db/series";
 import type { UserScope } from "../db/with-user";
 import { freeSlots, getAgenda } from "../services/calendar";
-import { listAccounts, summarizeBalances } from "../services/finance/accounts";
 import { DEFAULT_CATEGORIES } from "../services/finance/categories";
-import { listHoldings, portfolioReturn } from "../services/finance/wealth";
-import { budgetStatus, listGoals, monthlyContributionNeeded, upcomingRecurring } from "../services/finance/planning";
+import { moneyOverview } from "../services/finance/overview";
+import { listGoals, monthlyContributionNeeded, upcomingRecurring } from "../services/finance/planning";
 import { merchantKey } from "../services/finance/recurring-detect";
 import { queryTransactions } from "../services/finance/transactions";
 import { summarizeCashflow } from "../services/finance/cashflow";
@@ -73,18 +72,16 @@ export async function collectSnapshot(s: UserScope, user: SessionUser, now = new
 }
 
 async function collectMoney(s: UserScope, today: string): Promise<MoneySnapshot | null> {
-  const accounts = await listAccounts(s);
-  if (!accounts.length) return null;
-  const balances = summarizeBalances(accounts);
+  const o = await moneyOverview(s, today);
+  if (!o.hasAccounts) return null;
   const upcoming = await upcomingRecurring(s, today, addDaysStr(today, 35));
   const mStart = monthStart(today);
   const span = daysBetween(mStart, today);
   const lastStart = monthStart(addDaysStr(mStart, -1));
   const lastSameDay = addDaysStr(lastStart, span);
-  const [thisMonth, lastMonth, budgets, goals] = await series(
+  const [thisMonth, lastMonth, goals] = await series(
     () => queryTransactions(s, { from: mStart, to: today, limit: 5000 }),
     () => queryTransactions(s, { from: lastStart, to: lastSameDay, limit: 5000 }),
-    () => budgetStatus(s, today),
     () => listGoals(s),
   );
   const byMerchant = (rows: typeof thisMonth, catName: string) => {
@@ -99,7 +96,7 @@ async function collectMoney(s: UserScope, today: string): Promise<MoneySnapshot 
     }
     return m;
   };
-  const overBudget = budgets
+  const overBudget = o.budgets.items
     .filter((b) => b.remainingCents < 0)
     .map((b) => {
       const now = byMerchant(thisMonth, b.categoryName);
@@ -118,17 +115,15 @@ async function collectMoney(s: UserScope, today: string): Promise<MoneySnapshot 
       };
     });
   const in30 = addDaysStr(today, 30);
-  const isSavings = (a: (typeof accounts)[number]) => /saving/i.test(`${a.subtype ?? ""} ${a.name}`);
-  const liquid = accounts.filter((a) => (a.type === "depository" || a.type === "cash") && !isSavings(a));
-  const thisMonthFlow = summarizeCashflow(thisMonth);
-  const investmentAccounts = accounts.filter((a) => a.type === "investment");
-  const holdings = investmentAccounts.length ? await listHoldings(s) : [];
   return {
-    liquidCents: liquid.reduce((sum, a) => sum + a.currentBalanceCents, 0),
-    savingsCents: accounts.filter((a) => a.type === "depository" && isSavings(a)).reduce((sum, a) => sum + a.currentBalanceCents, 0),
-    creditOwedCents: balances.creditOwedCents,
-    spentThisMonthCents: thisMonthFlow.netSpendingCents,
-    incomeThisMonthCents: thisMonthFlow.incomeCents,
+    liquidCents: o.balances.cashCents,
+    savingsCents: o.balances.savingsCents,
+    creditOwedCents: o.balances.creditOwedCents,
+    netWorthCents: o.balances.netWorthCents,
+    asOf: o.balances.asOf,
+    periodLabel: o.month.period.label,
+    spentThisMonthCents: o.month.netSpendingCents,
+    incomeThisMonthCents: o.month.incomeCents,
     lastMonthSameSpanSpendCents: summarizeCashflow(lastMonth).netSpendingCents,
     billsNext30: upcoming.filter((u) => u.amountCents < 0 && u.date <= in30).map((u) => ({ name: u.name, date: u.date, amountCents: u.amountCents })),
     overBudget,
@@ -138,8 +133,8 @@ async function collectMoney(s: UserScope, today: string): Promise<MoneySnapshot 
       targetDate: g.targetDate,
       monthlyNeededCents: monthlyContributionNeeded(g.targetCents, g.savedCents, g.targetDate, today),
     })),
-    investments: investmentAccounts.length ? { valueCents: balances.investmentsCents, returnPct: portfolioReturn(holdings) } : null,
-    hasDemoData: accounts.some((a) => a.source === "demo"),
+    investments: o.investments ? { valueCents: o.investments.valueCents, returnPct: o.investments.returnPct, asOf: o.investments.asOf } : null,
+    hasDemoData: o.balances.hasDemoData,
   };
 }
 

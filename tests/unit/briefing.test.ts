@@ -43,6 +43,9 @@ const money = (over: Partial<NonNullable<LifeSnapshot["money"]>> = {}): NonNulla
   liquidCents: 60_000,
   savingsCents: 400_000,
   creditOwedCents: 20_000,
+  netWorthCents: 440_000,
+  asOf: null,
+  periodLabel: "Oct 1 to 14, 2026",
   spentThisMonthCents: 60_000,
   incomeThisMonthCents: 124_000,
   lastMonthSameSpanSpendCents: 60_000,
@@ -60,7 +63,7 @@ const money = (over: Partial<NonNullable<LifeSnapshot["money"]>> = {}): NonNulla
 describe("briefing", () => {
   it("shows only real money: cash & checking, spent and came in (no projected income)", () => {
     const b = buildBriefing(snapshot({ money: money() }));
-    expect(b.money).toEqual({ liquidCents: 60_000, spentCents: 60_000, incomeCents: 124_000 });
+    expect(b.money).toEqual({ liquidCents: 60_000, spentCents: 60_000, incomeCents: 124_000, periodLabel: "Oct 1 to 14, 2026", asOf: null });
     expect(buildBriefing(snapshot()).money).toBeNull();
     expect(deriveInsights(snapshot({ money: money() })).some((i) => /payday|expected/i.test(i.text))).toBe(false);
   });

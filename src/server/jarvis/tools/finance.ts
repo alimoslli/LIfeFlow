@@ -2,6 +2,7 @@ import { series } from "@/server/db/series";
 import { z } from "zod";
 import { monthStart } from "@/lib/dates";
 import { listAccounts, summarizeBalances } from "../../services/finance/accounts";
+import { moneyOverview } from "../../services/finance/overview";
 import { listCategories, resolveCategory } from "../../services/finance/categories";
 import { affordability, compareSpending, spendingSummary } from "../../services/finance/insights";
 import {
@@ -39,6 +40,39 @@ export function centsToDollarsDeep(v: unknown): unknown {
 const range = { from: dateArg("Start date (inclusive)"), to: dateArg("End date (inclusive)") };
 
 export const financeTools = [
+  defineTool({
+    name: "money_overview",
+    description:
+      "The user's headline money numbers, from the same source every page uses: cash & checking, savings, card and loan balances, investments, net worth, this month's spending and income (with the exact date range), and budget totals. " +
+      "Use this first for any 'where do I stand' question, and quote the range and 'as of' time. Never estimate a number this returns.",
+    schema: z.object({}),
+    mutates: false,
+    async execute(_a, ctx) {
+      const o = await ctx.run((s) => moneyOverview(s, ctx.today));
+      if (!o.hasAccounts) return { hasAccounts: false, note: "No accounts yet. The user can add one on Money, Accounts, or connect a bank." };
+      const { investmentAccounts: _i, ...balances } = o.balances;
+      return centsToDollarsDeep({
+        balances,
+        thisMonth: {
+          range: o.month.period.label,
+          from: o.month.period.from,
+          to: o.month.period.to,
+          spentCents: o.month.netSpendingCents,
+          incomeCents: o.month.incomeCents,
+          netCents: o.month.netCashflowCents,
+          pendingCount: o.month.pendingCount,
+        },
+        budgets: {
+          limitCents: o.budgets.limitCents,
+          spentInBudgetsCents: o.budgets.budgetedSpentCents,
+          spentWithoutBudgetCents: o.budgets.unbudgetedSpentCents,
+          count: o.budgets.count,
+        },
+        investments: o.investments,
+        viewAt: "/money",
+      });
+    },
+  }),
   defineTool({
     name: "list_accounts",
     description:

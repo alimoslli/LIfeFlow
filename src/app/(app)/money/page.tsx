@@ -4,7 +4,7 @@ import { ArrowDownLeft, ArrowRight, ArrowUpRight, Landmark, TrendingDown, Trendi
 import { CountUp } from "@/components/motion/count-up";
 import { Pressable } from "@/components/motion/pressable";
 import { InsightList } from "../_today/insights";
-import { addDaysStr, formatDateStr, monthStart, todayIn } from "@/lib/dates";
+import { addDaysStr, formatDateStr, formatIn, monthStart, todayIn } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
@@ -27,7 +27,7 @@ export default async function MoneyPage() {
       () => spendingByCategory(s, monthStart(today), today),
       () => upcomingRecurring(s, today, addDaysStr(today, 30)),
     );
-    return { snapshot, accounts, categories, bills: bills.filter((b) => b.amountCents < 0), today };
+    return { snapshot, accounts, categories, bills: bills.filter((b) => b.amountCents < 0), today, tz: u.timezone };
   });
   const m = d.snapshot.money;
 
@@ -64,7 +64,11 @@ export default async function MoneyPage() {
         <header className="animate-rise max-lg:order-[-2]">
           <p className="text-sm text-muted">{month}</p>
           <h1 className="mt-1 font-display text-[40px] leading-none font-medium tracking-tight">Money</h1>
-          {m.hasDemoData && <p className="mt-2 text-xs text-muted">Sample data</p>}
+          <p className="mt-2 text-xs text-muted">
+            Totals cover {m.periodLabel}
+            {m.asOf ? ` · balances as of ${formatIn(m.asOf, d.tz, "MMM d, h:mm a")}` : ""}
+            {m.hasDemoData ? " · Sample data" : ""}
+          </p>
         </header>
         {/* The three numbers that matter */}
         <section className="animate-rise max-lg:order-[-2]" style={{ animationDelay: "60ms" }} aria-label="This month">
@@ -101,7 +105,7 @@ export default async function MoneyPage() {
         </section>
         {topCats.length > 0 && (
           <section className="animate-rise" style={{ animationDelay: "200ms" }} aria-label="Where it went">
-            <Title href="/finances/transactions">Where it went in {month}</Title>
+            <Title href="/finances/transactions">Where it went, {m.periodLabel}</Title>
             <ul data-tilt className="flex flex-col gap-4 rounded-3xl bg-surface p-5 shadow-soft">
               {topCats.map((c) => (
                 <li key={c.name}>
@@ -158,7 +162,11 @@ export default async function MoneyPage() {
                     </span>
                   )}
                 </div>
-                {ret != null && <p className="mt-2 text-xs text-muted">All-time return on holdings with a known cost</p>}
+                <p className="mt-2 text-xs text-muted">
+                  Sum of your investment account balances
+                  {m.investments.asOf ? `, updated ${formatIn(m.investments.asOf, d.tz, "MMM d, h:mm a")}` : ""}
+                  {ret != null ? ". Return is all-time, on holdings with a known cost." : "."}
+                </p>
                 <ul className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
                   {investmentAccounts.map((a) => (
                     <li key={a.id} className="flex justify-between text-[15px]">
