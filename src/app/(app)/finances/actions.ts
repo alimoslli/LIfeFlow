@@ -1,4 +1,5 @@
 "use server";
+import { PlaidError, removeItem } from "@/server/integrations/plaid";
 import { applyBudgetPlan } from "@/server/services/finance/smart-budgets";
 import { contributeToGoal, deleteGoal } from "@/server/services/finance/goals";
 import { todayIn } from "@/lib/dates";
@@ -240,5 +241,17 @@ export async function deleteGoalAction(id: string): Promise<ActionState> {
 export async function archiveGoalAction(id: string): Promise<ActionState> {
   return mutate("goal.archive", async (s) => {
     await updateGoal(s, id, { status: "archived" });
+  });
+}
+
+export async function disconnectBankAction(integrationId: string): Promise<ActionState> {
+  return mutate("integration.plaid.disconnected", async (s) => {
+    try {
+      const r = await removeItem(s, integrationId);
+      return `${r.name} disconnected. ${r.accountsRemoved} synced account${r.accountsRemoved === 1 ? "" : "s"} removed.`;
+    } catch (e) {
+      if (e instanceof PlaidError) throw new ServiceError(e.message);
+      throw e;
+    }
   });
 }

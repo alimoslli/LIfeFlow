@@ -43,6 +43,7 @@ const LABELS: Record<string, string> = {
   save_note: "Saving note",
   delete_note: "Preparing to delete note",
   money_overview: "Checking your money",
+  sync_bank_accounts: "Syncing your banks",
   safe_to_spend: "Working out safe to spend",
   cash_forecast: "Forecasting your cash",
   budget_check: "Checking your budgets",

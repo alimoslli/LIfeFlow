@@ -29,6 +29,8 @@ import { recordNetWorth } from "@/server/services/finance/investing";
 import { moneyOverview } from "@/server/services/finance/overview";
 import { spendingByCategory, upcomingRecurring } from "@/server/services/finance/planning";
 import { AskJarvisButton, CelebrateGoal } from "./money-client";
+import { PlaidLinkButton } from "@/components/finance/plaid-link";
+import { plaidConfig } from "@/server/integrations/plaid";
 
 export const metadata: Metadata = { title: "Money" };
 
@@ -38,7 +40,7 @@ export default async function MoneyPage() {
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
     const o = await moneyOverview(s, today);
-    if (!o.hasAccounts) return { empty: true as const };
+    if (!o.hasAccounts) return { empty: true as const, plaidReady: !!plaidConfig() };
     await recordNetWorth(s, today);
     const [safe, forecast, warnings, goals, categories, bills, health] = await series(
       () => safeToSpend(s, today),
@@ -72,9 +74,10 @@ export default async function MoneyPage() {
           <Landmark className="mx-auto h-7 w-7 text-accent" />
           <p className="mt-3 text-[17px]">Connect a bank or add an account to see where you stand.</p>
           <p className="mt-1 text-sm text-muted">Then you&apos;ll see what&apos;s safe to spend, a cash forecast, smart budgets and your goals.</p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <Link href="/finances/accounts" className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-text">
-              Add or connect an account
+          <div className="mx-auto mt-5 flex max-w-sm flex-col items-center gap-3 text-left">
+            <PlaidLinkButton configured={d.plaidReady} />
+            <Link href="/finances/accounts" className="text-sm font-medium text-accent">
+              Or add an account yourself
             </Link>
           </div>
         </div>

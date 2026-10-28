@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * session cookie exists; every page, action and API route still validates
  * the session on the server.
  */
-const PUBLIC = ["/login", "/signup", "/privacy", "/terms", "/api/health", "/api/apple-health/ingest"];
+const PUBLIC = ["/login", "/signup", "/privacy", "/terms", "/api/health", "/api/apple-health/ingest", "/api/integrations/plaid/webhook", "/api/cron/sync"];
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;

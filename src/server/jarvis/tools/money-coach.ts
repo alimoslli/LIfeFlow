@@ -12,6 +12,7 @@ import { createGoal, updateGoal } from "../../services/finance/planning";
 import { applyBudgetPlan, BUDGET_METHODS, suggestBudgets } from "../../services/finance/smart-budgets";
 import { deleteTransaction, TRANSACTION_KINDS, updateTransaction } from "../../services/finance/transactions";
 import { notFound } from "../../services/errors";
+import { listPlaidConnections, PlaidError, syncConnection } from "../../integrations/plaid";
 import { centsToDollarsDeep } from "./finance";
 import { dateArg, defineTool, idArg, moneyArg, toCents } from "../tool";
 
@@ -25,6 +26,31 @@ const usd = (dollars: number) => `$${dollars.toLocaleString("en-US", { maximumFr
 const PURPOSES = ["emergency", "travel", "car", "home", "debt", "investing", "education", "big_purchase", "other"] as const;
 
 export const moneyCoachTools = [
+  defineTool({
+    name: "sync_bank_accounts",
+    description:
+      "Refresh the user's connected banks now (balances, transactions, holdings, card details) and report what changed. Only works for banks connected through Plaid; if none are connected, point them to Money, Accounts, Connect a bank.",
+    schema: z.object({}),
+    mutates: true,
+    async execute(_a, ctx) {
+      const items = await ctx.run((s) => listPlaidConnections(s));
+      if (!items.length) return { connected: false, note: "No banks connected. The user can connect one on Money, Accounts." };
+      const results = [];
+      for (const i of items) {
+        try {
+          results.push({ bank: i.displayName, ok: true, ...(await syncConnection(ctx.userId, i.id, ctx.tz)) });
+        } catch (e) {
+          results.push({
+            bank: i.displayName,
+            ok: false,
+            error: e instanceof PlaidError ? e.message : "Sync failed",
+            needsReconnect: e instanceof PlaidError && e.reauth,
+          });
+        }
+      }
+      return { results, viewAt: "/finances/accounts" };
+    },
+  }),
   defineTool({
     name: "safe_to_spend",
     description:

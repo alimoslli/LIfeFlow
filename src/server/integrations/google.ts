@@ -3,7 +3,7 @@ import { and, eq, gte, lte, notInArray } from "drizzle-orm";
 import { addDaysStr, localDateOf, localToInstant, startOfLocalDay } from "@/lib/dates";
 import { truncate } from "@/lib/utils";
 import { decryptSecret, encryptSecret } from "../crypto";
-import { calendarEvents, integrations } from "../db/schema";
+import { calendarEvents, connectionRegistry, integrations } from "../db/schema";
 import { withUser, type UserScope } from "../db/with-user";
 
 /**
@@ -132,7 +132,16 @@ export async function saveGoogleConnection(scope: UserScope, creds: Creds, email
   };
   const existing = await getGoogleConnection(scope);
   if (existing) await scope.tx.update(integrations).set(values).where(eq(integrations.id, existing.id));
-  else await scope.tx.insert(integrations).values({ userId: scope.userId, provider: "google", ...values });
+  else {
+    const [row] = await scope.tx
+      .insert(integrations)
+      .values({ userId: scope.userId, provider: "google", ...values })
+      .returning({ id: integrations.id });
+    await scope.tx
+      .insert(connectionRegistry)
+      .values({ userId: scope.userId, provider: "google", integrationId: row.id, externalId: "primary" })
+      .onConflictDoNothing();
+  }
 }
 
 export async function getGoogleConnection(scope: UserScope) {

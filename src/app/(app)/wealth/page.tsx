@@ -244,9 +244,12 @@ export default async function WealthPage() {
             </Card>
           )}
           <Card className="p-5 text-sm text-text-2">
-            <h2 className="mb-2 text-[13px] font-semibold tracking-wide uppercase">About synced investments</h2>
-            Your previous app showed Robinhood crypto, brokerage and Roth IRA balances via Plaid. That connection has not been rebuilt yet; when it is, balances
-            and any holdings Plaid&apos;s Investments product returns will appear here marked “Synced · Plaid”.
+            <h2 className="mb-2 text-[13px] font-semibold tracking-wide uppercase">Synced investments</h2>
+            Connect your brokerage, Roth IRA or crypto account on the{" "}
+            <Link href="/finances/accounts" className="text-accent">
+              Accounts
+            </Link>{" "}
+            page. Balances and holdings then sync daily and are marked &quot;Synced&quot;. Some brokerages share balances only.
           </Card>
         </div>
       </div>

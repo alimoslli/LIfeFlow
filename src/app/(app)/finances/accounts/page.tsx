@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Archive, Landmark } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -8,8 +7,9 @@ import { Badge, Card, CardHeader, EmptyState, Money, SourceBadge } from "@/compo
 import { formatIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { listAccounts, summarizeBalances } from "@/server/services/finance/accounts";
-import { providerCatalog } from "@/server/services/integrations";
-import { archiveAccountAction, createAccountAction, updateAccountDetailsAction } from "../actions";
+import { BankConnections } from "@/components/finance/bank-connections";
+import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
+import { archiveAccountAction, createAccountAction, disconnectBankAction, updateAccountDetailsAction } from "../actions";
 
 export const metadata: Metadata = { title: "Accounts" };
 
@@ -23,8 +23,7 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 export default async function AccountsPage() {
-  const d = await withCurrentUser(async (s, u) => ({ accounts: await listAccounts(s), tz: u.timezone }));
-  const plaid = providerCatalog().find((p) => p.provider === "plaid")!;
+  const d = await withCurrentUser(async (s, u) => ({ accounts: await listAccounts(s), banks: await listPlaidConnections(s), tz: u.timezone }));
   const totals = summarizeBalances(d.accounts);
   const groups = Object.keys(TYPE_LABEL)
     .map((t) => ({ type: t, items: d.accounts.filter((a) => a.type === t) }))
@@ -45,7 +44,7 @@ export default async function AccountsPage() {
           {groups.length === 0 && (
             <Card>
               <EmptyState icon={<Landmark />} title="No accounts yet">
-                Add your checking, savings, credit cards and investment accounts. Balances are entered by you until a bank connection is set up.
+                Connect your bank to import accounts automatically, or add checking, savings, cards and investments yourself.
               </EmptyState>
             </Card>
           )}
@@ -138,6 +137,23 @@ export default async function AccountsPage() {
         </div>
         <div className="flex flex-col gap-5">
           <Card className="p-5">
+            <h2 className="mb-1 text-[15px] font-semibold">Bank connections</h2>
+            <p className="mb-4 text-sm text-text-2">
+              Balances, transactions, investments and card details sync automatically every day, and whenever your bank has something new.
+            </p>
+            <BankConnections
+              configured={!!plaidConfig()}
+              disconnect={disconnectBankAction}
+              connections={d.banks.map((b) => ({
+                id: b.id,
+                name: b.displayName ?? "Bank",
+                status: b.status,
+                lastSynced: b.lastSyncedAt ? formatIn(b.lastSyncedAt, d.tz, "MMM d, h:mm a") : null,
+                error: b.lastError,
+              }))}
+            />
+          </Card>
+          <Card className="p-5">
             <h2 className="mb-3 text-[13px] font-semibold tracking-wide text-text-2 uppercase">Add an account manually</h2>
             <ActionForm action={createAccountAction} showSuccess>
               <Field label="Name" htmlFor="a-name">
@@ -169,19 +185,6 @@ export default async function AccountsPage() {
               </Field>
               <SubmitButton className="self-end">Add account</SubmitButton>
             </ActionForm>
-          </Card>
-          <Card className="p-5">
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-[13px] font-semibold tracking-wide text-text-2 uppercase">Bank connection</h2>
-              <Badge>{plaid.configured ? "Configured · not built yet" : "Awaiting setup"}</Badge>
-            </div>
-            <p className="text-sm text-text-2">
-              Automatic sync uses Plaid. It&apos;s the next integration milestone and needs Plaid API keys on the server. Investment holdings require
-              Plaid&apos;s separate Investments product.
-            </p>
-            <Link href="/settings/integrations" className="mt-3 inline-block text-sm font-medium text-accent hover:underline">
-              Integration status →
-            </Link>
           </Card>
         </div>
       </div>

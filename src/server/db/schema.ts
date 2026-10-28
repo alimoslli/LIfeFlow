@@ -202,6 +202,28 @@ export const integrations = pgTable(
   (t) => [uniqueIndex("integrations_user_provider_ext_uq").on(t.userId, t.provider, t.externalId), ownerPolicy()],
 );
 
+/**
+ * Which user owns which connection, for work that starts without a signed-in
+ * user (provider webhooks and the nightly sync). Holds no secrets and no
+ * personal data, so it has no RLS (like sessions); every read is followed by
+ * withUser(userId) for the actual work.
+ */
+export const connectionRegistry = pgTable(
+  "connection_registry",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    provider: text("provider").$type<IntegrationProvider>().notNull(),
+    integrationId: uuid("integration_id")
+      .notNull()
+      .references(() => integrations.id, { onDelete: "cascade" }),
+    /** Provider-side id (e.g. Plaid item_id), used to route webhooks. */
+    externalId: text("external_id"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("conn_registry_integration_uq").on(t.integrationId), index("conn_registry_external_idx").on(t.provider, t.externalId)],
+);
+
 export const syncJobs = pgTable(
   "sync_jobs",
   {

@@ -23,11 +23,12 @@ export function providerCatalog(env: NodeJS.ProcessEnv = process.env): ProviderI
       provider: "plaid",
       name: "Plaid (banks & investments)",
       module: "Finances · Wealth",
-      description: "Bank accounts, transactions, balances. Investment holdings need the separate Investments product.",
+      description:
+        "Read-only bank, card, loan and investment data: balances, transactions, holdings, interest rates. LifeFlow never sees bank passwords and can't move money.",
       requires: ["PLAID_CLIENT_ID", "PLAID_SECRET", "PLAID_ENV"],
       configured: has("PLAID_CLIENT_ID", "PLAID_SECRET"),
       docsUrl: "https://plaid.com/docs/",
-      availability: "planned",
+      availability: has("PLAID_CLIENT_ID", "PLAID_SECRET") ? "available" : "awaiting_credentials",
     },
     {
       provider: "canvas",

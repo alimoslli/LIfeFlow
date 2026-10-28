@@ -81,6 +81,31 @@ const NEEDS = new Set([
 ]);
 export const needOrWant = (categoryName: string | null | undefined): "need" | "want" => (categoryName && NEEDS.has(categoryName) ? "need" : "want");
 
+/** The user's own rule for this merchant, if any (counts a hit). */
+export async function ruleFor(scope: UserScope, t: { merchantName?: string | null; description: string }) {
+  const key = merchantKey({ merchantName: t.merchantName ?? null, description: t.description });
+  if (!key) return null;
+  const [rule] = await scope.tx
+    .select()
+    .from(categoryRules)
+    .where(and(eq(categoryRules.userId, scope.userId), eq(categoryRules.merchantKey, key)));
+  if (!rule) return null;
+  await scope.tx
+    .update(categoryRules)
+    .set({ hits: rule.hits + 1 })
+    .where(eq(categoryRules.id, rule.id));
+  return { categoryId: rule.categoryId, kind: rule.kind ?? undefined, via: "rule" as const };
+}
+
+/** Category id by default name for this user. */
+export async function categoryIdByName(scope: UserScope, name: string) {
+  const [cat] = await scope.tx
+    .select()
+    .from(categories)
+    .where(and(eq(categories.userId, scope.userId), eq(categories.name, name)));
+  return cat ?? null;
+}
+
 /** Picks a category (and kind) for a new transaction that arrived without one. */
 export async function autoCategorize(scope: UserScope, t: { merchantName?: string | null; description: string; amountCents: number }) {
   const key = merchantKey({ merchantName: t.merchantName ?? null, description: t.description });

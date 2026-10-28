@@ -9,6 +9,9 @@ import { healthSummary, listHealthTokens } from "@/server/services/health";
 import { integrationStatus } from "@/server/services/integrations";
 import { AppleHealthCard } from "./apple-health-card";
 import { GoogleCard } from "./google-card";
+import { BankConnections } from "@/components/finance/bank-connections";
+import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
+import { disconnectBankAction } from "../../finances/actions";
 
 export const metadata: Metadata = { title: "Integrations" };
 
@@ -25,12 +28,13 @@ const GOOGLE_RESULT: Record<string, { tone: "success" | "danger" | "warning"; te
 export default async function IntegrationsSettings({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
   const { google: result } = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
-    const [list, keys, health] = await series(
+    const [list, keys, health, banks] = await series(
       () => integrationStatus(s),
       () => listHealthTokens(s),
       () => healthSummary(s, u.timezone, 1),
+      () => listPlaidConnections(s),
     );
-    return { list, keys, lastHealth: health.lastReceivedAt, tz: u.timezone };
+    return { list, keys, lastHealth: health.lastReceivedAt, tz: u.timezone, banks };
   });
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost";
@@ -56,6 +60,26 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
           }
         />
       )}
+      <Card className="p-5">
+        <div className="mb-1 flex items-center justify-between gap-3">
+          <h2 className="font-medium">Banks, cards and investments (Plaid)</h2>
+          <Badge tone={d.banks.some((b) => b.status === "error") ? "danger" : d.banks.length ? "success" : "neutral"}>
+            {d.banks.length ? `${d.banks.length} connected` : "Not connected"}
+          </Badge>
+        </div>
+        <p className="mb-4 text-sm text-text-2">Read-only. LifeFlow never sees your bank password and can&apos;t move money.</p>
+        <BankConnections
+          configured={!!plaidConfig()}
+          disconnect={disconnectBankAction}
+          connections={d.banks.map((b) => ({
+            id: b.id,
+            name: b.displayName ?? "Bank",
+            status: b.status,
+            lastSynced: b.lastSyncedAt ? formatIn(b.lastSyncedAt, d.tz, "MMM d, h:mm a") : null,
+            error: b.lastError,
+          }))}
+        />
+      </Card>
       <AppleHealthCard
         keys={d.keys.map((k) => ({
           id: k.id,
@@ -71,7 +95,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
         and every module works with manual entry meanwhile.
       </p>
       {d.list
-        .filter((i) => i.provider !== "google")
+        .filter((i) => i.provider !== "google" && i.provider !== "plaid")
         .map((i) => (
           <Card key={i.provider} className="p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
