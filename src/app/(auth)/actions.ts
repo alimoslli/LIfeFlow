@@ -6,7 +6,7 @@ import { getDb } from "@/server/db/client";
 import { withUser } from "@/server/db/with-user";
 import { purgeOldRateLimits, rateLimit } from "@/server/rate-limit";
 import { purgeExpiredSessions } from "@/server/auth/sessions";
-import { AuthError, authenticate, registerUser } from "@/server/services/accounts";
+import { AuthError, authenticate, registerUser, updatePreferences } from "@/server/services/accounts";
 import { audit } from "@/server/services/audit";
 
 export type AuthState = { error?: string; email?: string } | null;
@@ -45,13 +45,15 @@ export async function signup(_prev: AuthState, fd: FormData): Promise<AuthState>
       password: String(fd.get("password") ?? ""),
       timezone: String(fd.get("timezone") ?? "UTC"),
     });
+    // New accounts start with first-run setup (existing accounts never see it).
+    await updatePreferences(db, user.id, { onboarding: "pending" });
     await startSession(user.id);
   } catch (e) {
     if (e instanceof ZodError) return { error: e.issues[0]?.message ?? "Please check the form.", email };
     if (e instanceof AuthError) return { error: e.message, email };
     throw e;
   }
-  redirect("/");
+  redirect("/welcome");
 }
 
 export async function logout() {

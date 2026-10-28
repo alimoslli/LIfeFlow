@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Maximize2, Plus, Sparkles, X } from "lucide-react";
+import { gsap, MOTION, prefersReducedMotion, useGSAP } from "../motion/gsap";
 import { JarvisChat } from "./chat";
 import type { JarvisAvailability, JarvisModule } from "./types";
 
@@ -29,11 +30,36 @@ export function JarvisDrawer({ open, onClose, module, availability, initialPromp
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open) return null;
+  // Stay mounted while the close animation plays.
+  const [mounted, setMounted] = useState(open);
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setMounted(true);
+  }
+  const panel = useRef<HTMLDivElement>(null);
+  const backdrop = useRef<HTMLDivElement>(null);
+  useGSAP(
+    () => {
+      if (!mounted || !panel.current || !backdrop.current) return;
+      const reduce = prefersReducedMotion();
+      if (open) {
+        if (reduce) return;
+        gsap.fromTo(panel.current, { xPercent: 100 }, { xPercent: 0, duration: 0.5, ease: MOTION.settle });
+        gsap.fromTo(backdrop.current, { opacity: 0 }, { opacity: 1, duration: 0.3 });
+      } else {
+        gsap.to(panel.current, { xPercent: 100, duration: reduce ? 0 : 0.26, ease: "power2.in" });
+        gsap.to(backdrop.current, { opacity: 0, duration: reduce ? 0 : 0.26, onComplete: () => setMounted(false) });
+      }
+    },
+    { dependencies: [open, mounted] },
+  );
+
+  if (!mounted) return null;
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label="Jarvis">
-      <div className="absolute inset-0 bg-black/20" onClick={onClose} />
-      <div className="animate-slide-in relative flex h-full w-full max-w-[460px] flex-col border-l border-border bg-bg shadow-2xl">
+    <div className={`fixed inset-0 z-50 flex justify-end ${open ? "" : "pointer-events-none"}`} role="dialog" aria-modal="true" aria-label="Jarvis">
+      <div ref={backdrop} className="absolute inset-0 bg-black/20" onClick={onClose} />
+      <div ref={panel} className="relative flex h-full w-full max-w-[460px] flex-col border-l border-border bg-bg shadow-2xl">
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
           <Sparkles className="h-4 w-4 text-accent" />
           <span className="font-medium">Jarvis</span>

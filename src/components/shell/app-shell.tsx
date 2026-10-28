@@ -1,11 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { setTourAction } from "@/app/(onboarding)/welcome/actions";
 import { cn } from "@/lib/utils";
 import { NAV, isActive, moduleForPath } from "./nav-items";
 import { JarvisDrawer } from "../jarvis/jarvis-drawer";
 import { SectionNav } from "./section-nav";
+import { gsap, MOTION, prefersReducedMotion } from "../motion/gsap";
+import { Tour } from "../motion/tour";
 import type { JarvisAvailability } from "../jarvis/types";
 
 type ShellCtx = { openJarvis: (prompt?: string, opts?: { send?: boolean }) => void };
@@ -17,13 +20,25 @@ type Drawer = { open: boolean; prompt?: string; send?: boolean; key: number };
 export function AppShell({
   user,
   jarvis,
+  tour = false,
   children,
 }: {
   user: { name: string; email: string; accountKind: "standard" | "demo" };
   jarvis: JarvisAvailability;
+  /** Show the guided tour (once, after onboarding or when replayed). */
+  tour?: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const [tourOpen, setTourOpen] = useState(tour);
+  const endTour = useCallback(() => {
+    setTourOpen(false);
+    void setTourAction("done");
+  }, []);
+  const rail = useRef<HTMLElement>(null);
+  const bar = useRef<HTMLDivElement>(null);
+  useSlidingIndicator(rail, pathname, "y");
+  useSlidingIndicator(bar, pathname, "x");
   const [drawer, setDrawer] = useState<Drawer>({ open: false, key: 0 });
   const openJarvis = useCallback(
     (prompt?: string, opts?: { send?: boolean }) => setDrawer((d) => ({ open: true, prompt, send: opts?.send, key: prompt ? d.key + 1 : d.key })),
@@ -53,7 +68,8 @@ export function AppShell({
           <Link href="/" aria-label="LifeFlow home" className="mb-8">
             <Mark />
           </Link>
-          <nav className="flex flex-col gap-1.5" aria-label="Main">
+          <nav ref={rail} className="relative flex flex-col gap-1.5" aria-label="Main">
+            <span data-indicator className="pointer-events-none absolute top-0 left-0 w-16 rounded-2xl bg-surface opacity-0 shadow-soft" />
             {NAV.map((item) => {
               const active = isActive(pathname, item);
               const Icon = item.icon;
@@ -61,8 +77,9 @@ export function AppShell({
                 <Link
                   key={item.href}
                   href={item.href}
+                  data-tour={item.label.toLowerCase()}
                   aria-current={active ? "page" : undefined}
-                  className={cn("group flex w-16 flex-col items-center gap-1 rounded-2xl py-2.5 text-[11px] font-medium transition-colors", active ? "bg-surface text-text shadow-soft" : "text-muted hover:text-text")}
+                  className={cn("group relative flex w-16 flex-col items-center gap-1 rounded-2xl py-2.5 text-[11px] font-medium transition-colors", active ? "text-text" : "text-muted hover:text-text")}
                 >
                   <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
                   {item.label}
@@ -93,13 +110,20 @@ export function AppShell({
 
       {/* Mobile tab bar */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-bg/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden" aria-label="Main">
-        <div className="mx-auto flex max-w-md items-stretch justify-around px-2">
+        <div ref={bar} className="relative mx-auto flex max-w-md items-stretch justify-around px-2">
+          <span data-indicator className="pointer-events-none absolute top-[5px] left-0 h-8 w-14 rounded-full bg-accent-soft opacity-0" />
           {NAV.map((item) => {
             const active = isActive(pathname, item);
             const Icon = item.icon;
             return (
-              <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn("flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10.5px] font-medium", active ? "text-accent" : "text-muted")}>
-                <Icon className="h-[22px] w-[22px]" strokeWidth={active ? 2 : 1.6} />
+              <Link
+                key={item.href}
+                href={item.href}
+                data-tour={item.label.toLowerCase()}
+                aria-current={active ? "page" : undefined}
+                className={cn("relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10.5px] font-medium", active ? "text-accent" : "text-muted")}
+              >
+                <Icon data-icon className="h-[22px] w-[22px]" strokeWidth={active ? 2 : 1.6} />
                 {item.label}
               </Link>
             );
@@ -110,6 +134,8 @@ export function AppShell({
           </Link>
         </div>
       </nav>
+
+      {tourOpen && pathname === "/" && <Tour onDone={endTour} />}
 
       {!onJarvisPage && (
         <JarvisDrawer
@@ -124,6 +150,33 @@ export function AppShell({
       )}
     </Ctx.Provider>
   );
+}
+
+/**
+ * Glides the active-tab highlight between tabs instead of jumping.
+ * The highlight is a single absolutely positioned element per nav.
+ */
+function useSlidingIndicator(ref: React.RefObject<HTMLElement | null>, pathname: string, axis: "x" | "y") {
+  const placed = useRef(false);
+  useLayoutEffect(() => {
+    const nav = ref.current;
+    const ind = nav?.querySelector<HTMLElement>("[data-indicator]");
+    if (!nav || !ind) return;
+    const active = nav.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!active) {
+      gsap.to(ind, { opacity: 0, duration: 0.15 });
+      return;
+    }
+    const target = axis === "x" ? { x: active.offsetLeft + active.offsetWidth / 2 - ind.offsetWidth / 2, opacity: 1 } : { y: active.offsetTop, height: active.offsetHeight, opacity: 1 };
+    if (!placed.current || prefersReducedMotion()) {
+      gsap.set(ind, target);
+      placed.current = true;
+      return;
+    }
+    gsap.to(ind, { ...target, duration: 0.42, ease: MOTION.ease, overwrite: true });
+    const icon = active.querySelector("[data-icon]");
+    if (icon) gsap.fromTo(icon, { scale: 0.86 }, { scale: 1, duration: 0.4, ease: "back.out(2.2)" });
+  }, [pathname, ref, axis]);
 }
 
 export function Mark({ className }: { className?: string }) {

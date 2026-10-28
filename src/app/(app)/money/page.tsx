@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowDownLeft, ArrowRight, ArrowUpRight, Landmark, TrendingDown, TrendingUp } from "lucide-react";
+import { CountUp } from "@/components/motion/count-up";
+import { Pressable } from "@/components/motion/pressable";
 import { InsightList } from "../_today/insights";
 import { addDaysStr, formatDateStr, monthStart, todayIn } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
@@ -66,7 +68,7 @@ export default async function MoneyPage() {
         <div className="relative p-6 pb-5">
           <Waves />
           <p className="relative text-sm opacity-75">Cash &amp; checking</p>
-          <p className="tabular relative mt-1 font-display text-[54px] leading-none font-medium tracking-tight">{whole(m.liquidCents)}</p>
+          <p className="tabular relative mt-1 font-display text-[54px] leading-none font-medium tracking-tight"><CountUp cents={m.liquidCents} /></p>
           <p className="relative mt-2 text-sm opacity-75">
             {net >= 0 ? `${whole(net)} more came in than went out this month` : `${whole(-net)} more went out than came in this month`}
           </p>
@@ -76,13 +78,13 @@ export default async function MoneyPage() {
             <p className="flex items-center gap-1.5 text-sm opacity-75">
               <ArrowUpRight className="h-3.5 w-3.5" /> Spent
             </p>
-            <p className="tabular mt-1 text-2xl font-medium">{whole(m.spentThisMonthCents)}</p>
+            <p className="tabular mt-1 text-2xl font-medium"><CountUp cents={m.spentThisMonthCents} /></p>
           </div>
           <div className="p-5">
             <p className="flex items-center gap-1.5 text-sm opacity-75">
               <ArrowDownLeft className="h-3.5 w-3.5" /> Came in
             </p>
-            <p className="tabular mt-1 text-2xl font-medium">{whole(m.incomeThisMonthCents)}</p>
+            <p className="tabular mt-1 text-2xl font-medium"><CountUp cents={m.incomeThisMonthCents} /></p>
           </div>
         </div>
       </section>
@@ -90,11 +92,12 @@ export default async function MoneyPage() {
       {m.investments && (
         <section className="animate-rise" style={{ animationDelay: "120ms" }} aria-label="Investments">
           <Title href="/wealth">Investments</Title>
+          <Pressable>
           <Link href="/wealth" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift">
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="text-sm text-muted">Portfolio</p>
-                <p className="tabular mt-1 font-display text-[34px] leading-none font-medium">{whole(m.investments.valueCents)}</p>
+                <p className="tabular mt-1 font-display text-[34px] leading-none font-medium"><CountUp cents={m.investments.valueCents} /></p>
               </div>
               {ret != null && (
                 <span className={cn("flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium", ret >= 0 ? "bg-success-soft text-success" : "bg-danger-soft text-danger")}>
@@ -114,6 +117,7 @@ export default async function MoneyPage() {
               ))}
             </ul>
           </Link>
+          </Pressable>
         </section>
       )}
 
@@ -135,7 +139,7 @@ export default async function MoneyPage() {
                   <span className="tabular text-text-2">{whole(c.cents)}</span>
                 </div>
                 <div className="h-1.5 rounded-full bg-surface-2">
-                  <div className="h-1.5 rounded-full bg-accent" style={{ width: `${(c.cents / maxCat) * 100}%` }} />
+                  <div className="lf-grow h-1.5 rounded-full bg-accent" style={{ width: `${(c.cents / maxCat) * 100}%` }} />
                 </div>
               </li>
             ))}
@@ -177,7 +181,7 @@ function Waves() {
   return (
     <svg viewBox="0 0 400 160" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.12]" aria-hidden>
       {Array.from({ length: 7 }, (_, i) => (
-        <path key={i} d={`M0 ${120 - i * 9} C 90 ${60 + i * 6}, 210 ${150 - i * 5}, 400 ${50 + i * 7}`} fill="none" stroke="white" strokeWidth="1.2" />
+        <path key={i} className="lf-draw" pathLength={1} style={{ animationDelay: `${120 + i * 70}ms`, animationDuration: "1.4s" }} d={`M0 ${120 - i * 9} C 90 ${60 + i * 6}, 210 ${150 - i * 5}, 400 ${50 + i * 7}`} fill="none" stroke="white" strokeWidth="1.2" />
       ))}
     </svg>
   );

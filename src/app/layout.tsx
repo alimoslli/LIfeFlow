@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { THEME_COOKIE, parseTheme } from "@/lib/theme";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
+import { Splash, SPLASH_SCRIPT } from "@/components/motion/splash";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -37,8 +38,12 @@ export async function generateViewport(): Promise<Viewport> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
   return (
-    <html lang="en" data-theme={theme === "system" ? undefined : theme} className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}>
-      <body className="min-h-full">{children}</body>
+    <html lang="en" suppressHydrationWarning data-theme={theme === "system" ? undefined : theme} className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}>
+      <body className="min-h-full">
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_SCRIPT }} />
+        <Splash />
+        {children}
+      </body>
     </html>
   );
 }

@@ -1,6 +1,9 @@
 # BudgetFlow — Plan & Status
 
-Last updated: 2026-10-27. Status keys: ✅ done and tested · 🟡 partial · ⬜ not started · 🔑 blocked on credentials/access
+Last updated: 2026-10-28. Status keys: ✅ done and tested · 🟡 partial · ⬜ not started · 🔑 blocked on credentials/access
+
+## Premium feel — splash, onboarding, tour, motion ✅ (2026-10-28, ADR 0007)
+GSAP-based motion system (`src/components/motion`), opening splash, `/welcome` first-run setup (one transaction through existing services), guided tour (replay in Settings), count-ups, sliding tab indicator, animated sheets/drawer, page cross-fades, shimmer skeletons. Verified: 124 unit/integration tests, 15 e2e tests (desktop + phone), and phone recordings in light and dark. Base44 feature review still pending: `budgetflow.studio` is not reachable from the build workspace.
 
 ## Current focus — Jarvis intelligence (details: [docs/jarvis-intelligence.md](docs/jarvis-intelligence.md))
 

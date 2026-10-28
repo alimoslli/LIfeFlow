@@ -2,7 +2,17 @@ import { expect, test } from "@playwright/test";
 import { signUp } from "./helpers";
 
 test("core pages fit a phone screen without horizontal scrolling", async ({ page }) => {
-  await signUp(page, "Phone User");
+  await signUp(page, "Phone User", { onboarding: "stay" });
+  for (const step of ["Let's set it up", "Continue"]) {
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow, `/welcome overflows by ${overflow}px`).toBeLessThanOrEqual(1);
+    if (step === "Continue") break;
+    await page.getByRole("button", { name: step }).click();
+    await page.getByRole("radio", { name: /Both/ }).click();
+  }
+  await page.getByRole("button", { name: "Skip setup" }).click();
+  await page.waitForURL((u) => u.pathname === "/");
+  await page.getByRole("button", { name: "Skip tour" }).click();
   for (const path of ["/", "/plan", "/money", "/tasks", "/school", "/calendar", "/finances", "/work", "/notes", "/jarvis", "/settings"]) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");

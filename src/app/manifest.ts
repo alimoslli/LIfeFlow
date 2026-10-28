@@ -10,7 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#f4f2ec",
+    // Matches the opening splash so the native launch screen hands off seamlessly.
+    background_color: "#2f5d50",
     theme_color: "#f4f2ec",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

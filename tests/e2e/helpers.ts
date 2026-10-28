@@ -3,7 +3,7 @@ import { Pool } from "pg";
 
 export const pool = new Pool({ connectionString: process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" });
 
-export async function signUp(page: Page, name = "Jordan Lee") {
+export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding?: "skip" | "stay" } = {}) {
   const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@example.com`;
   // Every test signs up from the same IP; reset only the sign-up limiter so the suite can grow past its 10/hour cap.
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
@@ -12,6 +12,13 @@ export async function signUp(page: Page, name = "Jordan Lee") {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("correct horse battery");
   await page.getByRole("button", { name: "Create account" }).click();
+  await page.waitForURL("**/welcome");
+  if (opts.onboarding === "stay") return email;
+  // New accounts start in first-run setup and then get a tour; most tests skip both.
+  await page.getByRole("button", { name: "Skip setup" }).click();
+  await page.waitForURL((u) => u.pathname === "/");
+  await page.getByRole("button", { name: "Skip tour" }).click();
+  await expect(page.getByRole("dialog", { name: "This is Today" })).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(name.split(" ")[0]);
   return email;
 }

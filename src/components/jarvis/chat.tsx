@@ -389,7 +389,7 @@ function AssistantBubble({
                 {t.status === "running" ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-muted" />
                 ) : t.status === "ok" ? (
-                  <Check className="h-3.5 w-3.5 text-success" />
+                  <Check className="lf-pop h-3.5 w-3.5 text-success" />
                 ) : (
                   <CircleAlert className="h-3.5 w-3.5 text-danger" />
                 )}
@@ -405,10 +405,10 @@ function AssistantBubble({
           </ul>
         )}
         {thinking && (
-          <div className="flex items-center gap-1.5 py-1 text-muted" aria-label="Jarvis is thinking">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current [animation-delay:150ms]" />
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current [animation-delay:300ms]" />
+          <div className="lf-wave flex items-center gap-1.5 py-1 text-muted" aria-label="Jarvis is thinking">
+            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            <span className="h-1.5 w-1.5 rounded-full bg-current" />
+            <span className="h-1.5 w-1.5 rounded-full bg-current" />
           </div>
         )}
         {m.text && <Markdown text={m.text} />}

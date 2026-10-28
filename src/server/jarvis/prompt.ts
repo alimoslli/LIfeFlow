@@ -2,7 +2,7 @@ import { addDaysStr, formatDateStr, formatIn } from "@/lib/dates";
 import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from "../db/schema";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-10-27.2";
+export const PROMPT_VERSION = "2026-10-28.1";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
@@ -78,7 +78,9 @@ export function buildContext(p: PromptInput): string {
     const d = addDaysStr(today, i);
     return `${formatDateStr(d, "EEE")} ${d}`;
   }).join(", ");
+  const LIFE: Record<string, string> = { student: "Is a student.", working: "Works a job.", both: "Is a student who also works a job." };
   const prefs = [
+    p.preferences?.lifeStage && LIFE[p.preferences.lifeStage],
     p.preferences?.studyTime && `Prefers studying in the ${p.preferences.studyTime}.`,
     p.preferences?.jarvisTone === "concise" && "Wants short, to-the-point answers.",
     p.preferences?.jarvisTone === "detailed" && "Appreciates thorough, detailed answers.",

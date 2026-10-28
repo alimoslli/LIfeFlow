@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import { ReplayTour } from "@/components/replay-tour";
 import { ThemePicker } from "@/components/theme-picker";
 import { THEME_COOKIE, parseTheme } from "@/lib/theme";
 import { eq } from "drizzle-orm";
@@ -25,6 +26,9 @@ export default async function ProfileSettings() {
       <h2 className="mb-1 text-[15px] font-semibold">Appearance</h2>
       <p className="mb-4 text-sm text-muted">Automatic follows your phone or computer setting.</p>
       <ThemePicker initial={theme} />
+      <div className="mt-4">
+        <ReplayTour />
+      </div>
     </Card>
     <Card className="p-6">
       <h2 className="mb-4 text-[15px] font-semibold">Profile</h2>

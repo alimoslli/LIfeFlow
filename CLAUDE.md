@@ -20,6 +20,12 @@
 - `INSTRUCTIONS` in prompt.ts is static (identical for every user and request, so the provider can cache it). Anything per-user or per-request goes in `buildContext`. Bump `PROMPT_VERSION` on any prompt change.
 - Every turn records a `jarvis_runs` row. A new provider must set `model` and report `usage` in `step_done`. Never store message content or raw error text in metrics, and never hard-code model prices (env `JARVIS_PRICE_*`; unknown ⇒ null).
 
+## Motion (see ADR 0007)
+- Use `src/components/motion/*`: tokens and GSAP from `gsap.ts`, `CountUp` for money, `Pressable` for press feedback. Import GSAP only from there.
+- First-paint entrances stay CSS (`animate-rise`, `lf-*` classes) so server-rendered content never flashes. GSAP effects must skip the hydration pass (`isHydrated()`) or wait for the splash (`onSplashEnd`).
+- Animate transform/opacity only, always honour `prefersReducedMotion()`, and never make content depend on an animation finishing.
+- New accounts get `/welcome` (onboarding) and then the tour. Tests use `signUp()`, which skips both. The splash is off under automation unless `?splash=1`.
+
 ## Verify before finishing
 `npm run typecheck && npm run lint && npm test`, then `npm run build && npm run test:e2e` for UI/flow changes.
 

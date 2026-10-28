@@ -82,7 +82,7 @@ export async function updateProfile(db: Database, userId: string, input: z.input
 }
 
 /** Merges individual preference switches (e.g. memory suggestions) into the user's preferences. */
-export async function updatePreferences(db: Database, userId: string, patch: Pick<UserPreferences, "memorySuggestions">) {
+export async function updatePreferences(db: Database, userId: string, patch: Pick<UserPreferences, "memorySuggestions" | "onboarding" | "tour">) {
   const [current] = await db.select().from(users).where(eq(users.id, userId));
   await db
     .update(users)

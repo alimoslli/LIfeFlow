@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { ArrowDownLeft, ArrowRight, ArrowUpRight } from "lucide-react";
+import { CountUp } from "@/components/motion/count-up";
+import { Pressable } from "@/components/motion/pressable";
 import { TaskCheck } from "@/components/task-check";
 import { formatIn, localDateOf } from "@/lib/dates";
-import { formatCents } from "@/lib/money";
-
-const whole = (c: number) => formatCents(c).replace(/\.\d\d$/, "");
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { getBriefing } from "@/server/briefing";
@@ -28,7 +27,7 @@ export default async function TodayPage() {
 
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-10">
-      <header className="animate-rise">
+      <header className="animate-rise" data-tour="today-page">
         <p className="text-sm text-muted">{formatIn(s.now, s.tz, "EEEE, MMMM d")}</p>
         <h1 className="mt-2 font-display text-[40px] leading-[1.05] font-medium tracking-tight sm:text-[46px]">{b.headline}</h1>
         <p className="mt-3 text-[17px] leading-relaxed text-text-2">{b.summary}</p>
@@ -39,7 +38,7 @@ export default async function TodayPage() {
 
       {b.next && (
         <section className="animate-rise" style={{ animationDelay: "60ms" }} aria-label="Up next">
-          <div className="relative overflow-hidden rounded-3xl bg-hero p-5 text-hero-text shadow-lift sm:p-6">
+          <div className="lf-drift relative overflow-hidden rounded-3xl bg-hero p-5 text-hero-text shadow-lift sm:p-6">
             <p className="text-xs font-medium tracking-wide uppercase opacity-70">{minutesUntil! <= 0 ? "Happening now" : `Up next · in ${humanMinutes(minutesUntil!)}`}</p>
             <p className="mt-1.5 font-display text-[28px] leading-tight font-medium">{b.next.title}</p>
             <p className="mt-1 text-sm opacity-80">
@@ -80,24 +79,26 @@ export default async function TodayPage() {
       {b.money && (
         <section aria-label="Money" className="animate-rise" style={{ animationDelay: "280ms" }}>
           <SectionTitle href="/money">Money</SectionTitle>
+          <Pressable>
           <Link href="/money" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift sm:p-6">
             <p className="text-sm text-muted">Cash &amp; checking</p>
-            <p className="tabular mt-1 font-display text-[40px] leading-none font-medium tracking-tight">{whole(b.money.liquidCents)}</p>
+            <p className="tabular mt-1 font-display text-[40px] leading-none font-medium tracking-tight"><CountUp cents={b.money.liquidCents} /></p>
             <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
               <div>
                 <p className="flex items-center gap-1.5 text-sm text-muted">
                   <ArrowUpRight className="h-3.5 w-3.5" /> Spent in {formatIn(s.now, s.tz, "MMMM")}
                 </p>
-                <p className="tabular mt-1 text-xl font-medium">{whole(b.money.spentCents)}</p>
+                <p className="tabular mt-1 text-xl font-medium"><CountUp cents={b.money.spentCents} /></p>
               </div>
               <div>
                 <p className="flex items-center gap-1.5 text-sm text-muted">
                   <ArrowDownLeft className="h-3.5 w-3.5" /> Came in
                 </p>
-                <p className="tabular mt-1 text-xl font-medium text-success">{whole(b.money.incomeCents)}</p>
+                <p className="tabular mt-1 text-xl font-medium text-success"><CountUp cents={b.money.incomeCents} /></p>
               </div>
             </div>
           </Link>
+          </Pressable>
         </section>
       )}
 
