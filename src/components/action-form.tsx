@@ -3,6 +3,7 @@ import { useActionState, useCallback, useEffect, useRef, type ReactNode } from "
 import type { ActionState } from "@/server/actions";
 import { FormError } from "./ui/field";
 import { toast } from "./ui/toaster";
+import { isNetworkError, isOffline } from "@/lib/offline-queue";
 import { cn } from "@/lib/utils";
 
 type Action = (prev: ActionState, fd: FormData) => Promise<ActionState>;
@@ -19,7 +20,14 @@ function useReportedAction(action: Action, report: (r: ActionState) => void) {
   });
   return useCallback(
     async (prev: ActionState, fd: FormData) => {
-      const r = await action(prev, fd);
+      let r: ActionState;
+      try {
+        r = await action(prev, fd);
+      } catch (e) {
+        // A dropped connection shows as a normal error, not a crash screen.
+        if (!isNetworkError(e)) throw e;
+        r = { ok: false, error: "Couldn't reach LifeFlow. Check your connection and try again.", at: Date.now() };
+      }
       reportRef.current(r);
       return r;
     },
@@ -35,6 +43,7 @@ export function ActionForm({
   onSuccess,
   reset = true,
   showSuccess = false,
+  offline,
 }: {
   action: Action;
   children: ReactNode;
@@ -42,6 +51,8 @@ export function ActionForm({
   onSuccess?: () => void;
   reset?: boolean;
   showSuccess?: boolean;
+  /** Saves the form on this device when there's no connection (synced later). Returns the message to show. */
+  offline?: (fd: FormData) => Promise<string>;
 }) {
   const ref = useRef<HTMLFormElement>(null);
   const reported = useReportedAction(action, (r) => {
@@ -53,7 +64,22 @@ export function ActionForm({
   });
   const [state, formAction] = useActionState(reported, null);
   return (
-    <form ref={ref} action={formAction} className={cn("flex flex-col gap-3", className)}>
+    <form
+      ref={ref}
+      action={formAction}
+      onSubmit={(e) => {
+        if (!offline || !isOffline()) return;
+        e.preventDefault();
+        offline(new FormData(e.currentTarget))
+          .then((msg) => {
+            toast(msg);
+            if (reset) ref.current?.reset();
+            onSuccess?.();
+          })
+          .catch((err: Error) => toast(err.message, { tone: "danger" }));
+      }}
+      className={cn("flex flex-col gap-3", className)}
+    >
       {state && !state.ok && <FormError message={state.error} />}
       {showSuccess && state?.ok && state.message && <p className="rounded-lg bg-success-soft px-3 py-2 text-sm text-success">{state.message}</p>}
       {children}

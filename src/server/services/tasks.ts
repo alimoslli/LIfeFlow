@@ -77,7 +77,7 @@ export function reminderKeyOf(t: { dueAt: Date | null; dueAllDay: boolean; remin
   return (Object.entries(REMINDERS).find(([, v]) => v === mins)?.[0] as ReminderKey) ?? "none";
 }
 
-export async function createTask(scope: UserScope, tz: string, input: TaskInput, source: DataSource = "manual") {
+export async function createTask(scope: UserScope, tz: string, input: TaskInput, source: DataSource = "manual", opts: { id?: string } = {}) {
   const data = taskInputSchema.parse(input);
   await assertOwned(scope, tasks, data.parentId, "Parent task");
   await assertOwned(scope, projects, data.projectId, "Project");
@@ -86,6 +86,7 @@ export async function createTask(scope: UserScope, tz: string, input: TaskInput,
   const [row] = await scope.tx
     .insert(tasks)
     .values({
+      ...(opts.id && { id: opts.id }),
       userId: scope.userId,
       title: data.title,
       notes: data.notes ?? null,

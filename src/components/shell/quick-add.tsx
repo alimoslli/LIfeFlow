@@ -12,10 +12,65 @@ import { Field, Input, Select } from "@/components/ui/field";
 import { DateField, PriorityField, TimeField } from "@/components/ui/pickers";
 import { Sheet } from "@/components/ui/sheet";
 import { haptic } from "@/lib/haptics";
+import { parseMoneyToCents } from "@/lib/money";
+import { enqueue } from "@/lib/offline-queue";
 import { cn } from "@/lib/utils";
 
 type Kind = "todo" | "shift" | "spending";
 type Ctx = { today: string; employers: { id: string; name: string }[]; accounts: { id: string; name: string; type: string }[] };
+
+const CTX_KEY = "lf-quick-add";
+const SAVED = "Saved on this phone. It will sync when you're back online.";
+const str = (fd: FormData, k: string) => {
+  const v = fd.get(k);
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+};
+const localToday = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+// Offline versions of the three forms: saved on the device, synced by PwaClient when back online.
+const offlineTodo = async (fd: FormData) => {
+  const title = str(fd, "title");
+  if (!title) throw new Error("Add what you need to do.");
+  const priority = str(fd, "priority");
+  await enqueue({
+    kind: "task.create",
+    id: crypto.randomUUID(),
+    data: {
+      title: title.slice(0, 300),
+      dueDate: str(fd, "dueDate"),
+      dueTime: str(fd, "dueTime"),
+      priority: priority === "low" || priority === "high" || priority === "urgent" ? priority : "medium",
+    },
+  });
+  return SAVED;
+};
+const offlineShift = async (fd: FormData) => {
+  const [employerId, date, startTime, endTime] = ["employerId", "date", "startTime", "endTime"].map((k) => str(fd, k));
+  if (!employerId || !date || !startTime || !endTime) throw new Error("Pick the job, date, start and end time.");
+  const breakMinutes = Number(str(fd, "breakMinutes") ?? 0);
+  await enqueue({
+    kind: "shift.create",
+    id: crypto.randomUUID(),
+    data: { employerId, date, startTime, endTime, breakMinutes: Number.isFinite(breakMinutes) ? breakMinutes : 0 },
+  });
+  return SAVED;
+};
+const offlineSpending = async (fd: FormData) => {
+  const cents = parseMoneyToCents(str(fd, "amount") ?? "");
+  const description = str(fd, "description");
+  const accountId = str(fd, "accountId");
+  if (!cents || cents <= 0) throw new Error("Enter an amount like 12.50.");
+  if (!description || !accountId) throw new Error("Add what it was and which account paid.");
+  await enqueue({
+    kind: "transaction.create",
+    id: crypto.randomUUID(),
+    data: { accountId, amountCents: cents, description: description.slice(0, 300), date: str(fd, "date") ?? localToday() },
+  });
+  return SAVED;
+};
 
 const SHOW_ON = /^\/($|plan|tasks$|work|calendar|school$|notes$|money$|finances\/transactions)/;
 const defaultKind = (p: string): Kind => (p.startsWith("/work") ? "shift" : p.startsWith("/money") || p.startsWith("/finances") ? "spending" : "todo");
@@ -40,7 +95,19 @@ export function QuickAdd() {
       setOpen(true);
       if (!ctx) {
         const r = await fetch("/api/quick-add").catch(() => null);
-        if (r?.ok) setCtx((await r.json()) as Ctx);
+        if (r?.ok) {
+          const fresh = (await r.json()) as Ctx;
+          setCtx(fresh);
+          try {
+            localStorage.setItem(CTX_KEY, JSON.stringify(fresh));
+          } catch {}
+        } else {
+          // Offline: use the jobs and accounts from last time (cleared when signing out).
+          try {
+            const saved = JSON.parse(localStorage.getItem(CTX_KEY) ?? "null") as Ctx | null;
+            if (saved) setCtx({ ...saved, today: localToday() });
+          } catch {}
+        }
       }
     },
     [ctx],
@@ -104,7 +171,7 @@ export function QuickAdd() {
         </div>
 
         {kind === "todo" && (
-          <ActionForm key={`t${formKey}`} action={createTaskAction} onSuccess={done} className="gap-4">
+          <ActionForm key={`t${formKey}`} action={createTaskAction} offline={offlineTodo} onSuccess={done} className="gap-4">
             <Field label="What do you need to do?" htmlFor="qa-title">
               <CountedInput
                 id="qa-title"
@@ -127,7 +194,7 @@ export function QuickAdd() {
           (ctx && ctx.employers.length === 0 ? (
             <p className="py-4 text-sm text-text-2">Add your job on the Work page first, then shifts can be added here.</p>
           ) : (
-            <ActionForm key={`s${formKey}`} action={createShiftAction} onSuccess={done} className="gap-4">
+            <ActionForm key={`s${formKey}`} action={createShiftAction} offline={offlineShift} onSuccess={done} className="gap-4">
               <Field label="Job" htmlFor="qa-emp">
                 <Select id="qa-emp" name="employerId" required className="h-12 text-[16px]">
                   {(ctx?.employers ?? []).map((e) => (
@@ -151,7 +218,7 @@ export function QuickAdd() {
           (ctx && ctx.accounts.length === 0 ? (
             <p className="py-4 text-sm text-text-2">Connect a bank or add an account on Money, Accounts first.</p>
           ) : (
-            <ActionForm key={`m${formKey}`} action={createTransactionAction} onSuccess={done} className="gap-4">
+            <ActionForm key={`m${formKey}`} action={createTransactionAction} offline={offlineSpending} onSuccess={done} className="gap-4">
               <input type="hidden" name="direction" value="out" />
               <Field label="Amount ($)" htmlFor="qa-amt">
                 <Input id="qa-amt" name="amount" inputMode="decimal" required autoFocus placeholder="12.50" className="h-14 text-[22px]" />

@@ -11,6 +11,7 @@ import { AuthError, changePassword, deleteAccount, updateAssistant, updatePrefer
 import { ServiceError } from "@/server/services/errors";
 import { decideMemorySuggestion } from "@/server/jarvis/memory-decisions";
 import { createMemory, deleteMemory, editMemory, MEMORY_CATEGORIES, setMemoryStatus } from "@/server/services/memory";
+import { notificationPrefsSchema, removeSubscriptionById } from "@/server/services/push";
 import { createHash } from "node:crypto";
 
 const asService = async (fn: () => Promise<void>) => {
@@ -130,4 +131,34 @@ export async function setMemorySuggestionsAction(enabled: boolean): Promise<Acti
   return mutate("memory.suggestions_setting", async (_s, u) => {
     await updatePreferences(getDb(), u.id, { memorySuggestions: enabled });
   });
+}
+
+export async function saveNotificationPrefsAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  const on = (k: string) => fd.get(k) === "on";
+  return mutate(
+    "notifications.preferences",
+    async (_s, u) => {
+      const notifications = notificationPrefsSchema.parse({
+        reminders: on("reminders"),
+        bills: on("bills"),
+        morningBrief: on("morningBrief"),
+        briefTime: String(fd.get("briefTime") || "08:00"),
+        budgetAlerts: on("budgetAlerts"),
+      });
+      await updatePreferences(getDb(), u.id, { notifications });
+      return "Notification settings saved.";
+    },
+    { revalidate: ["/settings/notifications"] },
+  );
+}
+
+export async function removeDeviceAction(id: string): Promise<ActionState> {
+  return mutate(
+    "notifications.device_removed",
+    async (s) => {
+      await removeSubscriptionById(s, id);
+      return "Device removed. It won't get notifications.";
+    },
+    { revalidate: ["/settings/notifications"] },
+  );
 }

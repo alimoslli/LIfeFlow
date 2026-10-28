@@ -85,6 +85,8 @@ export type UserPreferences = {
   assistantNotes?: string;
   /** How much the user already knows about money; lessons and explanations adapt to it. */
   moneyLevel?: "new" | "some" | "confident";
+  /** Which push notifications the user wants, and when the morning brief arrives (local HH:mm). */
+  notifications?: { reminders?: boolean; bills?: boolean; morningBrief?: boolean; briefTime?: string; budgetAlerts?: boolean };
   assistantVoice?: "alloy" | "ash" | "ballad" | "cedar" | "coral" | "echo" | "marin" | "sage" | "shimmer" | "verse";
 };
 
@@ -877,6 +879,38 @@ export type HealthMetric =
   "steps" | "active_energy_kcal" | "exercise_minutes" | "sleep_hours" | "resting_heart_rate" | "weight_kg" | "distance_km" | "mindful_minutes";
 
 /** One value per metric per local day. Upserted, so re-sending a day replaces it. */
+// ---------------------------------------------------------------------------
+// Push notifications
+
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    endpoint: text("endpoint").notNull(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    deviceLabel: text("device_label"),
+    createdAt: createdAt(),
+    lastSuccessAt: tstz("last_success_at"),
+  },
+  (t) => [uniqueIndex("push_subs_endpoint_uq").on(t.endpoint), index("push_subs_user_idx").on(t.userId), ownerPolicy()],
+);
+
+/** One row per notification sent, so a reminder or alert is never sent twice. */
+export const notificationLog = pgTable(
+  "notification_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    /** e.g. "task:<id>:<remindAt>", "brief:2026-10-28", "bill:<id>:2026-11-01". */
+    key: text("key").notNull(),
+    title: text("title").notNull(),
+    sentAt: tstz("sent_at").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("notification_log_user_key_uq").on(t.userId, t.key), ownerPolicy()],
+);
+
 // ---------------------------------------------------------------------------
 // Trash: deleted items, kept 30 days so every delete can be undone
 

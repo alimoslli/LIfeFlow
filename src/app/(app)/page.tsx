@@ -58,7 +58,7 @@ export default async function TodayPage() {
             <ul className="flex flex-col">
               {focus.map((t) => (
                 <li key={t.id} className="flex items-center gap-3.5 py-2.5">
-                  <TaskCheck done={false} action={toggleTaskAction.bind(null, t.id)} label={`Complete ${t.title}`} />
+                  <TaskCheck done={false} action={toggleTaskAction.bind(null, t.id)} taskId={t.id} label={`Complete ${t.title}`} />
                   <span className="flex-1 text-[15px]">{t.title}</span>
                   {t.dueAt && (
                     <span className={cn("text-sm", t.dueAt < s.now ? "text-danger" : "text-muted")}>

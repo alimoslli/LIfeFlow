@@ -55,6 +55,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           <TaskCheck
             done={task.status === "done"}
             action={toggleTaskAction.bind(null, task.id)}
+            taskId={task.id}
             label={`Mark "${task.title}" ${task.status === "done" ? "not done" : "done"}`}
           />
         </div>

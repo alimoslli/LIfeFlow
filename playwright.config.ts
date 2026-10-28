@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
+import webpush from "web-push";
 
 /**
  * End-to-end tests run the production build (`next start`) against an
@@ -8,6 +9,8 @@ import { defineConfig, devices } from "@playwright/test";
  */
 const E2E_DB = process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e";
 const PORT = 3100;
+// A throwaway key pair so the notification settings can be exercised (no real push service is reachable here).
+const vapid = webpush.generateVAPIDKeys();
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -37,6 +40,9 @@ export default defineConfig({
         OPENAI_API_KEY: "sk-e2e-test",
         OPENAI_MODEL: "gpt-5.5",
         OPENAI_BASE_URL: "http://127.0.0.1:4010/v1",
+        VAPID_PUBLIC_KEY: vapid.publicKey,
+        VAPID_PRIVATE_KEY: vapid.privateKey,
+        VAPID_SUBJECT: "mailto:e2e@example.com",
       },
     },
   ],

@@ -122,6 +122,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                       <SwipeRow
                         key={t.id}
                         done={t.status === "done"}
+                        taskId={t.id}
                         onComplete={toggleTaskAction.bind(null, t.id)}
                         onDelete={deleteTaskAction.bind(null, t.id)}
                       >
@@ -129,6 +130,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                           <TaskCheck
                             done={t.status === "done"}
                             action={toggleTaskAction.bind(null, t.id)}
+                            taskId={t.id}
                             label={`Mark "${t.title}" ${t.status === "done" ? "not done" : "done"}`}
                           />
                           <Link href={`/tasks/${t.id}`} className="flex min-h-12 min-w-0 flex-1 items-center gap-2 py-1.5">

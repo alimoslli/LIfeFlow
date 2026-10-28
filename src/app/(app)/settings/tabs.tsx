@@ -5,6 +5,7 @@ import { Tabs } from "@/components/ui/surface";
 const ITEMS = [
   { key: "/settings", label: "Profile" },
   { key: "/settings/memory", label: "Assistant" },
+  { key: "/settings/notifications", label: "Notifications" },
   { key: "/settings/integrations", label: "Integrations" },
   { key: "/settings/data", label: "Privacy & data" },
   { key: "/settings/security", label: "Security" },

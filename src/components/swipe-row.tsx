@@ -3,8 +3,10 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type ReactNode } from "react";
 import { Check, Trash2, Undo2 } from "lucide-react";
 import { haptic } from "@/lib/haptics";
+import { isOffline, offlineTaskDone, queueTaskStatus } from "@/lib/offline-queue";
 import { cn } from "@/lib/utils";
 import type { ActionState } from "@/server/actions";
+import { OFFLINE_SAVED } from "./task-check";
 import { toast } from "./ui/toaster";
 import { gsap, MOTION, prefersReducedMotion } from "./motion/gsap";
 
@@ -21,7 +23,10 @@ export function SwipeRow({
   onDelete,
   done = false,
   className,
+  taskId,
 }: {
+  /** A to-do's id: completing it offline saves on this device and syncs later. */
+  taskId?: string;
   children: ReactNode;
   onComplete?: () => Promise<ActionState>;
   onDelete?: () => Promise<ActionState>;
@@ -47,6 +52,14 @@ export function SwipeRow({
 
   const run = async (kind: "complete" | "delete") => {
     haptic(kind === "complete" ? "success" : "warning");
+    if (isOffline()) {
+      settle(0);
+      if (kind === "complete" && taskId) {
+        await queueTaskStatus(taskId, !(offlineTaskDone(taskId) ?? done));
+        toast(OFFLINE_SAVED);
+      } else toast(kind === "delete" ? "You're offline. Deleting needs a connection." : "You're offline. Try again when you're connected.", { tone: "danger" });
+      return;
+    }
     if (kind === "delete" && onDelete) {
       const w = wrap.current;
       if (w && !prefersReducedMotion()) await gsap.to(w, { height: 0, opacity: 0, duration: 0.25, ease: "power2.in" });

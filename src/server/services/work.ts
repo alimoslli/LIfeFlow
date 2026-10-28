@@ -183,7 +183,13 @@ export function shiftInstants(date: string, startTime: string, endTime: string, 
   return { startsAt, endsAt: localToInstant(endDate, endTime, tz) };
 }
 
-export async function createShift(scope: UserScope, tz: string, input: z.input<typeof shiftInputSchema>, source: DataSource = "manual") {
+export async function createShift(
+  scope: UserScope,
+  tz: string,
+  input: z.input<typeof shiftInputSchema>,
+  source: DataSource = "manual",
+  opts: { id?: string } = {},
+) {
   const d = shiftInputSchema.parse(input);
   await assertOwned(scope, employers, d.employerId, "Employer");
   const { startsAt, endsAt } = shiftInstants(d.date, d.startTime, d.endTime, tz);
@@ -191,6 +197,7 @@ export async function createShift(scope: UserScope, tz: string, input: z.input<t
   const [row] = await scope.tx
     .insert(workShifts)
     .values({
+      ...(opts.id && { id: opts.id }),
       userId: scope.userId,
       employerId: d.employerId,
       startsAt,
