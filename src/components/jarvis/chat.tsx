@@ -8,13 +8,13 @@ import { useShell } from "../shell/app-shell";
 import { Markdown } from "./markdown";
 import { VoiceButton } from "./voice-call";
 import { FOLLOW_UPS, STARTERS } from "./suggestions";
-import type { JarvisAvailability, JarvisModule, UiAttachment, UiMemorySuggestion, UiMessage } from "./types";
+import type { JarvisAvailability, JarvisModule, UiAttachment, UiMemorySuggestion, UiMessage, UiTool } from "./types";
 
 type ServerEvent =
   | { type: "conversation"; id: string; title: string }
   | { type: "text"; delta: string }
   | { type: "tool_start"; callId: string; name: string; label: string }
-  | { type: "tool_end"; callId: string; name: string; ok: boolean; summary: string; viewAt?: string }
+  | { type: "tool_end"; callId: string; name: string; ok: boolean; summary: string; viewAt?: string; sources?: { title: string; url: string }[] }
   | { type: "confirmation"; actionId: string; callId: string; toolName: string; summary: string }
   | { type: "memory_proposal"; callId: string; memoryId: string; content: string; replaces?: string }
   | { type: "done"; messageId: string | null }
@@ -144,7 +144,7 @@ export function JarvisChat({
               if (ev.ok) mutated = true;
               updateAssistant((a) => {
                 const t = a.tools.findIndex((x) => x.callId === ev.callId);
-                if (t >= 0) a.tools[t] = { ...a.tools[t], status: ev.ok ? "ok" : "error", summary: ev.summary, viewAt: ev.viewAt };
+                if (t >= 0) a.tools[t] = { ...a.tools[t], status: ev.ok ? "ok" : "error", summary: ev.summary, viewAt: ev.viewAt, sources: ev.sources };
               });
               break;
             case "confirmation":
@@ -457,6 +457,7 @@ function AssistantBubble({
           </div>
         )}
         {m.text && <Markdown text={m.text} />}
+        <SourceList tools={m.tools} />
         {m.confirmations.map((c) => (
           <div key={c.actionId} className="rounded-2xl bg-surface p-4 shadow-soft">
             <p className="text-[15px] font-medium">{c.summary}</p>
@@ -525,6 +526,36 @@ function MemoryCard({ s, onDecide }: { s: UiMemorySuggestion; onDecide: (memoryI
           </Link>
         </p>
       )}
+    </div>
+  );
+}
+
+/** Every page a web search read for this answer, as small links under it. */
+function SourceList({ tools }: { tools: UiTool[] }) {
+  const seen = new Set<string>();
+  const sources = tools.flatMap((t) => t.sources ?? []).filter((s) => !seen.has(s.url) && !!seen.add(s.url));
+  if (!sources.length) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5" aria-label="Sources">
+      <span className="text-xs text-muted">Sources</span>
+      {sources.slice(0, 8).map((s) => {
+        let host = s.url;
+        try {
+          host = new URL(s.url).hostname.replace(/^www\./, "");
+        } catch {}
+        return (
+          <a
+            key={s.url}
+            href={s.url}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            title={s.title}
+            className="inline-flex min-h-8 max-w-[14rem] items-center truncate rounded-full bg-surface-2 px-3 text-xs text-text-2 hover:text-text"
+          >
+            {host}
+          </a>
+        );
+      })}
     </div>
   );
 }

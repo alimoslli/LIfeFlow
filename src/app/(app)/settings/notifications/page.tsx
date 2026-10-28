@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Smartphone, Trash2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -10,12 +11,6 @@ import { removeDeviceAction, saveNotificationPrefsAction } from "../actions";
 import { ThisDevice } from "./this-device";
 
 export const metadata: Metadata = { title: "Notifications" };
-
-const KINDS = [
-  { key: "reminders", label: "To-do reminders", hint: "At the reminder time you pick on a to-do." },
-  { key: "bills", label: "Bills due tomorrow", hint: "Sent in the morning the day before." },
-  { key: "budgetAlerts", label: "Budget alerts", hint: "When a category is heading over budget, with a fix. At most once a week per category." },
-] as const;
 
 export default async function NotificationSettings() {
   const { prefs, devices, tz } = await withCurrentUser(async (s, u) => ({
@@ -35,30 +30,22 @@ export default async function NotificationSettings() {
         <h2 className="mb-1 text-[15px] font-semibold">What to send</h2>
         <p className="mb-4 text-sm text-muted">Applies to every device where notifications are on.</p>
         <ActionForm action={saveNotificationPrefsAction} reset={false} className="gap-0">
-          {KINDS.map((k) => (
-            <label key={k.key} className="flex min-h-14 cursor-pointer items-center gap-3 border-b border-border py-2">
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15px]">{k.label}</span>
-                <span className="block text-xs text-muted">{k.hint}</span>
-              </span>
-              <input type="checkbox" name={k.key} defaultChecked={prefs[k.key]} className="lf-switch" />
-            </label>
-          ))}
-          <label className="flex min-h-14 cursor-pointer items-center gap-3 py-2">
+          <label className="flex min-h-14 cursor-pointer items-center gap-3 border-b border-border py-2">
             <span className="min-w-0 flex-1">
-              <span className="block text-[15px]">Morning brief</span>
-              <span className="block text-xs text-muted">Safe to spend and your plan, once a day.</span>
+              <span className="block text-[15px]">To-do reminders</span>
+              <span className="block text-xs text-muted">At the reminder time you pick on a to-do.</span>
             </span>
-            <input
-              type="time"
-              name="briefTime"
-              defaultValue={prefs.briefTime}
-              aria-label="Morning brief time"
-              className="h-11 rounded-xl border border-border bg-surface px-3 text-[16px]"
-            />
-            <input type="checkbox" name="morningBrief" defaultChecked={prefs.morningBrief} className="lf-switch" />
+            <input type="checkbox" name="reminders" defaultChecked={prefs.reminders} className="lf-switch" />
           </label>
-          <SubmitButton className="mt-4 self-start">Save</SubmitButton>
+          <p className="py-3 text-sm text-text-2">
+            Jarvis also notifies you about urgent or important things only, like a bill your balance can&apos;t cover. Set how many a day, quiet hours and
+            topics in{" "}
+            <Link href="/settings/memory#personality" className="font-medium text-accent">
+              Personality
+            </Link>
+            .
+          </p>
+          <SubmitButton className="mt-2 self-start">Save</SubmitButton>
         </ActionForm>
       </Card>
 

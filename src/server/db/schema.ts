@@ -80,17 +80,50 @@ export type UserPreferences = {
   tour?: "pending" | "done";
   /** The user's assistant: its name, personality and live voice (see src/lib/assistant.ts). */
   assistantName?: string;
-  assistantStyle?: "balanced" | "warm" | "direct" | "coach" | "playful" | "professional";
+  /** coach | friend | direct (older values are mapped in lib/assistant). */
+  assistantStyle?: "coach" | "friend" | "direct" | "balanced" | "warm" | "playful" | "professional";
   /** Free-text personality notes, at most 300 characters. Changes tone only, never the rules. */
   assistantNotes?: string;
   /** How much the user already knows about money; lessons and explanations adapt to it. */
   moneyLevel?: "new" | "some" | "confident";
+  /** How proactive Jarvis behaves (see services/proactive). */
+  jarvis?: JarvisSettings;
   /** Ask for Face ID / Touch ID (a passkey) before showing Money after this many idle minutes. */
   moneyLock?: { enabled: boolean; idleMinutes: number };
   /** Which push notifications the user wants, and when the morning brief arrives (local HH:mm). */
   notifications?: { reminders?: boolean; bills?: boolean; morningBrief?: boolean; briefTime?: string; budgetAlerts?: boolean };
   assistantVoice?: "alloy" | "ash" | "ballad" | "cedar" | "coral" | "echo" | "marin" | "sage" | "shimmer" | "verse";
 };
+
+export const JARVIS_TOPICS = ["money", "school", "work", "health", "trips", "habits"] as const;
+export type JarvisTopic = (typeof JARVIS_TOPICS)[number];
+export type JarvisSettings = {
+  frequency?: "low" | "normal" | "high";
+  /** Local "HH:mm"; no pushes between start and end. */
+  quietStart?: string;
+  quietEnd?: string;
+  /** false = muted. */
+  topics?: Partial<Record<JarvisTopic, boolean>>;
+  /** What Jarvis may do without asking. Money and contacting people always ask. */
+  autonomy?: { tasks?: boolean; calendar?: boolean };
+  avatar?: "spark" | "orb" | "initial";
+  /** Consent to adapt from how the user responds (undefined = not asked yet). */
+  learning?: boolean;
+  /** Message kinds the user said never to suggest again. */
+  mutedKinds?: string[];
+  /** Max push notifications per day from Jarvis. */
+  pushLimit?: number;
+};
+
+export type ProactiveAction =
+  | { type: "shift_budget"; label: string; fromCategoryId: string; toCategoryId: string; cents: number; month: string }
+  | { type: "block_time"; label: string; date: string; start: string; end: string; title: string }
+  | { type: "create_task"; label: string; title: string; dueDate?: string }
+  | { type: "move_tasks"; label: string; taskIds: string[]; to: string }
+  | { type: "contribute_goal"; label: string; goalId: string; cents: number }
+  | { type: "open"; label: string; href: string }
+  | { type: "ask"; label: string; prompt: string }
+  | { type: "consent"; label: string };
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -985,6 +1018,38 @@ export const notificationLog = pgTable(
     sentAt: tstz("sent_at").notNull().defaultNow(),
   },
   (t) => [uniqueIndex("notification_log_user_key_uq").on(t.userId, t.key), ownerPolicy()],
+);
+
+// ---------------------------------------------------------------------------
+// Proactive Jarvis: everything he says on his own, and how the user responded
+
+export const jarvisMessages = pgTable(
+  "jarvis_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    kind: text("kind").notNull(),
+    topic: text("topic").$type<JarvisTopic | "general">().notNull(),
+    /** Same situation, same key: never said twice. */
+    dedupeKey: text("dedupe_key").notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    /** The numbers behind the message, so it can be explained and re-rendered. */
+    facts: jsonb("facts").$type<Record<string, unknown>>().notNull().default({}),
+    action: jsonb("action").$type<ProactiveAction | null>(),
+    priority: integer("priority").notNull().default(50),
+    urgent: boolean("urgent").notNull().default(false),
+    status: text("status").$type<"new" | "done" | "snoozed" | "dismissed" | "muted">().notNull().default("new"),
+    rating: integer("rating"),
+    snoozedUntil: tstz("snoozed_until"),
+    actedAt: tstz("acted_at"),
+    /** What "Do it" changed, and how to undo it. */
+    result: jsonb("result").$type<{ text: string; undo?: Record<string, unknown>; undone?: boolean } | null>(),
+    slot: text("slot"),
+    pushedAt: tstz("pushed_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("jarvis_messages_key_uq").on(t.userId, t.dedupeKey), index("jarvis_messages_user_created_idx").on(t.userId, t.createdAt), ownerPolicy()],
 );
 
 // ---------------------------------------------------------------------------

@@ -92,11 +92,9 @@ test("install prompt with iPhone steps, and notification settings", async ({ pag
   // Settings: in Safari on iPhone (not installed) it explains how to get notifications; preferences save.
   await page.goto("/settings/notifications");
   await expect(page.getByTestId("push-state")).toBeVisible();
-  await page.getByLabel("Morning brief time").fill("07:30");
-  await page.getByRole("checkbox", { name: /Budget alerts/ }).uncheck();
+  await page.getByRole("checkbox", { name: /To-do reminders/ }).uncheck();
   await page.getByRole("button", { name: "Save" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Notification settings saved." })).toBeVisible();
   await page.reload();
-  await expect(page.getByLabel("Morning brief time")).toHaveValue("07:30");
-  await expect(page.getByRole("checkbox", { name: /Budget alerts/ })).not.toBeChecked();
+  await expect(page.getByRole("checkbox", { name: /To-do reminders/ })).not.toBeChecked();
 });

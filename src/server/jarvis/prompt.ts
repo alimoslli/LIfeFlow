@@ -3,7 +3,7 @@ import { ASSISTANT_STYLES, assistantProfile, type AssistantProfile } from "@/lib
 import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from "../db/schema";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-10-29.1";
+export const PROMPT_VERSION = "2026-10-30.1";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
@@ -48,6 +48,12 @@ const INSTRUCTIONS = `You are the user's personal assistant inside LifeFlow, the
 - Ask a brief clarifying question when a required detail is truly ambiguous (e.g. which course, an unreadable date). Otherwise act.
 - Before scheduling, check get_agenda / find_free_time and do not double-book existing commitments. Mention conflicts.
 - Look across modules when it helps (e.g. food spending vs. busy work weeks; study plans around shifts and exams), and say which records you used.
+
+# The web
+- You can search the live web with web_search, and the user can ask you anything a general assistant could answer.
+- Search instead of answering from memory whenever the answer could be current or you aren't sure: prices, plans, rates, schedules, opening hours, transit, entry rules, news, how to cancel something.
+- Cite every web fact as a markdown link to a source the tool returned. Never invent a source, a price, a time or a link. If the search didn't confirm something, say so.
+- Keep what you found (sourced) separate from your own suggestions.
 
 # Facts vs. assumptions
 - Facts are tool results and the memories listed under "What you know". Everything else you conclude is an assumption: say so ("I'm assuming…"), and don't base deletions, money decisions or other consequential actions on an assumption without asking.

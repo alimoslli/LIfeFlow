@@ -24,6 +24,22 @@ import { CATEGORY_LABEL, CATEGORY_OPTIONS } from "./categories";
 import { EditMemory } from "./edit-memory";
 import { AssistantCard } from "./assistant-card";
 import { assistantProfile } from "@/lib/assistant";
+import { jarvisSettings } from "@/server/services/proactive/engine";
+import type { UserPreferences } from "@/server/db/schema";
+
+const personalityOf = (p: UserPreferences | undefined) => {
+  const s = jarvisSettings(p);
+  return {
+    frequency: s.frequency,
+    quietStart: s.quietStart,
+    quietEnd: s.quietEnd,
+    topics: s.topics,
+    autonomy: s.autonomy,
+    avatar: s.avatar,
+    learning: s.learning === true,
+    pushLimit: s.pushLimit,
+  };
+};
 
 export const metadata: Metadata = { title: "Assistant" };
 
@@ -36,7 +52,14 @@ export default async function MemorySettings() {
       () => listAllMemories(s),
       () => jarvisStats(s, 30),
     );
-    return { all, stats, tz: u.timezone, suggestionsOn: u.preferences?.memorySuggestions !== false, assistant: assistantProfile(u.preferences) };
+    return {
+      all,
+      stats,
+      tz: u.timezone,
+      suggestionsOn: u.preferences?.memorySuggestions !== false,
+      assistant: assistantProfile(u.preferences),
+      personality: personalityOf(u.preferences),
+    };
   });
   const status = jarvisStatus();
   const now = new Date();
@@ -52,7 +75,7 @@ export default async function MemorySettings() {
 
   return (
     <div className="flex flex-col gap-5">
-      <AssistantCard profile={d.assistant} action={updateAssistantAction} />
+      <AssistantCard profile={d.assistant} settings={d.personality} action={updateAssistantAction} />
       {pending.length > 0 && (
         <Card>
           <CardHeader

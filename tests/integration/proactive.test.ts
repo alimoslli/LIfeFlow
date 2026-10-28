@@ -1,0 +1,174 @@
+import { afterAll, describe, expect, it } from "vitest";
+import { eq } from "drizzle-orm";
+import { addDaysStr, monthStart, todayIn, weekStart } from "@/lib/dates";
+import { closeDb } from "@/server/db/client";
+import { calendarEvents, jarvisMessages, tasks, type UserPreferences } from "@/server/db/schema";
+import type { UserScope } from "@/server/db/with-user";
+import { createManualAccount } from "@/server/services/finance/accounts";
+import { getCategoryByName } from "@/server/services/finance/categories";
+import { createGoal, createRecurring, setBudget, budgetStatus } from "@/server/services/finance/planning";
+import { contributeToGoal } from "@/server/services/finance/goals";
+import { createTransaction } from "@/server/services/finance/transactions";
+import { createCourse, createAssignment } from "@/server/services/school";
+import { createTask } from "@/server/services/tasks";
+import { createEmployer, createShift } from "@/server/services/work";
+import { inQuietHours, learnedStats, pushImportant, runProactive } from "@/server/services/proactive/engine";
+import { respondToMessage } from "@/server/services/proactive/respond";
+import { composeMessage } from "@/lib/jarvis-voice";
+import { makeUser, TZ } from "../helpers";
+
+afterAll(closeDb);
+
+const today = todayIn(TZ);
+const user = (id: string, preferences: UserPreferences = {}) => ({ id, timezone: TZ, preferences });
+const msgs = (run: <T>(fn: (s: UserScope) => Promise<T>) => Promise<T>) => run((s) => s.tx.select().from(jarvisMessages));
+
+async function checking(s: UserScope, cents = 50_000) {
+  return createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: cents });
+}
+
+describe("proactive Jarvis", () => {
+  it("notices food running high this week and moves budget room on 'Do it', with Undo", async () => {
+    const { user: u, run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s);
+      const food = (await getCategoryByName(s, "Groceries"))!;
+      const fun = (await getCategoryByName(s, "Entertainment"))!;
+      // Usual: $40 a week on groceries for 8 weeks. This week: $95.
+      for (let w = 1; w <= 8; w++)
+        await createTransaction(s, {
+          accountId: acct.id,
+          date: addDaysStr(weekStart(today), -7 * w),
+          description: "Kroger",
+          merchantName: "Kroger",
+          amountCents: -4000,
+          categoryId: food.id,
+        });
+      await createTransaction(s, {
+        accountId: acct.id,
+        date: weekStart(today),
+        description: "Kroger",
+        merchantName: "Kroger",
+        amountCents: -9500,
+        categoryId: food.id,
+      });
+      await setBudget(s, { month: today, categoryId: food.id, limitCents: 30_000 });
+      await setBudget(s, { month: today, categoryId: fun.id, limitCents: 20_000 });
+    });
+    const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "transaction" }));
+    const m = out.find((x) => x.kind === "spending_pace")!;
+    expect(m.body).toContain("$95 on groceries this week, $55 more than usual");
+    expect(m.action).toMatchObject({ type: "shift_budget", cents: 5500 });
+
+    const r = await run((s) => respondToMessage(s, user(u.id), m.id, "do", today));
+    expect(r.text).toMatch(/Moved \$55 from Entertainment .* to Groceries/);
+    const after = await run((s) => budgetStatus(s, today));
+    expect(after.find((b) => b.categoryName === "Groceries")!.limitCents).toBe(35_500);
+    await run((s) => respondToMessage(s, user(u.id), m.id, "undo", today));
+    expect((await run((s) => budgetStatus(s, today))).find((b) => b.categoryName === "Groceries")!.limitCents).toBe(30_000);
+
+    // Same situation again: never said twice.
+    expect((await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "transaction" }))).filter((x) => x.kind === "spending_pace")).toHaveLength(0);
+  });
+
+  it("warns when a bill isn't covered, celebrates goal milestones, and blocks study time before a shift", async () => {
+    const { user: u, run } = await makeUser();
+    await run(async (s) => {
+      await checking(s, 50_000);
+      await createRecurring(s, { name: "Rent", amountCents: -62_000, frequency: "monthly", nextDueDate: addDaysStr(today, 3), kind: "bill" });
+      const g = await createGoal(s, { name: "Paris", targetCents: 200_000 });
+      await contributeToGoal(s, { goalId: g.id, amountCents: 100_000, date: today });
+      const course = await createCourse(s, { name: "English 101", code: "ENG 101" });
+      await createAssignment(s, TZ, { courseId: course.id, title: "Essay draft", dueDate: addDaysStr(today, 3), dueTime: "23:59" });
+      const job = await createEmployer(s, { name: "Campus Cafe", hourlyRateCents: 1500 });
+      await createShift(s, TZ, { employerId: job.id, date: addDaysStr(today, 2), startTime: "18:00", endTime: "23:00" });
+    });
+    const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "morning" }));
+    const kinds = out.map((m) => m.kind);
+    expect(kinds).toEqual(expect.arrayContaining(["bill_short", "goal_milestone", "deadline_conflict"]));
+    const bill = out.find((m) => m.kind === "bill_short")!;
+    expect(bill.body).toContain("Rent ($620) is due in 3 days and your checking is $120 short");
+    expect(bill.urgent).toBe(true);
+    expect(out.find((m) => m.kind === "goal_milestone")!.body).toContain("50% of the way to Paris");
+
+    const block = out.find((m) => m.kind === "deadline_conflict")!;
+    expect(block.body).toMatch(/Essay draft is due .* and you work .* night/);
+    await run((s) => respondToMessage(s, user(u.id), block.id, "do", today));
+    const events = await run((s) => s.tx.select().from(calendarEvents));
+    expect(events.map((e) => e.title)).toContain("Work on Essay draft");
+  });
+
+  it("offers to move overdue to-dos, respects muted topics and kinds, and stops what keeps getting ignored", async () => {
+    const { user: u, run } = await makeUser();
+    await run((s) => createTask(s, TZ, { title: "Return library books", dueDate: addDaysStr(today, -2) }));
+    const first = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening" }));
+    const overdue = first.find((m) => m.kind === "overdue_tasks")!;
+    expect(overdue.body).toContain('"Return library books" is past due');
+    await run((s) => respondToMessage(s, user(u.id), overdue.id, "do", today));
+    const [t] = await run((s) => s.tx.select().from(tasks));
+    expect(t.dueAt!.getTime()).toBeGreaterThan(Date.now());
+
+    // "Don't suggest this again" is remembered in settings.
+    const prefs: UserPreferences = {};
+    const me = user(u.id, prefs);
+    await run(async (s) => {
+      await s.tx.insert(jarvisMessages).values({ userId: u.id, kind: "log_reminder", topic: "money", dedupeKey: "x1", title: "t", body: "b" });
+    });
+    const [x1] = (await msgs(run)).filter((m) => m.dedupeKey === "x1");
+    await run((s) => respondToMessage(s, me, x1.id, "mute", today));
+    expect(me.preferences.jarvis?.mutedKinds).toEqual(["log_reminder"]);
+
+    // Three ignored in a row (with learning on): suppressed.
+    const old = new Date(Date.now() - 3 * 86_400_000);
+    await run(async (s) => {
+      for (let i = 0; i < 3; i++)
+        await s.tx
+          .insert(jarvisMessages)
+          .values({ userId: u.id, kind: "unusual_spend", topic: "money", dedupeKey: `ign${i}`, title: "t", body: "b", createdAt: old });
+    });
+    const stats = await run((s) => learnedStats(s));
+    expect(stats.kinds.find((k) => k.kind === "unusual_spend")!.suppressed).toBe(true);
+  });
+
+  it("caps how often he speaks, keeps quiet hours, never pushes the same thing twice, and changes tone", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      await checking(s, 1_000);
+      for (let i = 1; i <= 3; i++)
+        await createRecurring(s, { name: `Bill ${i}`, amountCents: -50_000, frequency: "monthly", nextDueDate: addDaysStr(today, 1), kind: "bill" });
+      for (let i = 0; i < 6; i++) await createTask(s, TZ, { title: `Late ${i}`, dueDate: addDaysStr(today, -1 - i) });
+    });
+    await run((s) => runProactive({ scope: s, tz: TZ, prefs: { jarvis: { frequency: "low" } }, trigger: "morning" }));
+    const pushed: string[] = [];
+    const push = async (key: string) => {
+      pushed.push(key);
+      return true;
+    };
+    // 3 urgent bills; a limit of 2 a day.
+    expect(await run((s) => pushImportant(s, TZ, { jarvis: { pushLimit: 2, quietStart: "00:00", quietEnd: "00:00" } }, push))).toBe(2);
+    expect(await run((s) => pushImportant(s, TZ, { jarvis: { pushLimit: 5, quietStart: "00:00", quietEnd: "00:00" } }, push))).toBe(1);
+    expect(new Set(pushed).size).toBe(3);
+    expect(inQuietHours("23:30", "22:00", "07:00")).toBe(true);
+    expect(inQuietHours("12:00", "22:00", "07:00")).toBe(false);
+
+    const facts = { category: "Food", spentCents: 8600, overCents: 3000, fromCategory: "Fun", moveCents: 3000 };
+    expect(composeMessage("spending_pace", facts, "direct").body).toBe(
+      "You spent $86 on food this week, $30 more than usual. Want me to move $30 from Fun to Food?",
+    );
+    expect(composeMessage("spending_pace", facts, "friend", { seed: 0 }).body.startsWith("Heads up:")).toBe(true);
+    expect(composeMessage("spending_pace", facts, "coach", { seed: 0, brief: true }).body.startsWith("You spent")).toBe(true);
+  });
+
+  it("only learns from responses after the user agrees", async () => {
+    const { user: u, run } = await makeUser();
+    const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "morning" }));
+    const consent = out.find((m) => m.kind === "consent")!;
+    const me = user(u.id);
+    await run((s) => respondToMessage(s, me, consent.id, "do", today));
+    expect(me.preferences.jarvis?.learning).toBe(true);
+    const again = await run((s) => runProactive({ scope: s, tz: TZ, prefs: me.preferences, trigger: "morning" }));
+    expect(again.find((m) => m.kind === "consent")).toBeUndefined();
+    expect((await run((s) => s.tx.select().from(jarvisMessages).where(eq(jarvisMessages.kind, "consent"))))[0].status).toBe("done");
+    expect(monthStart(today)).toBe(`${today.slice(0, 7)}-01`);
+  });
+});

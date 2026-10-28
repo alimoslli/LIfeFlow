@@ -60,6 +60,7 @@ export function toUiMessages(rows: Msg[], actions: Action[], atts: Att[], memory
           status: m.toolResult?.ok ? "ok" : "error",
           summary: d.summary,
           viewAt: d.viewAt,
+          sources: d.sources,
         };
         a.tools.push(tool);
         const p = memoryProposalOf(m.toolName, m.toolResult ?? { ok: false });

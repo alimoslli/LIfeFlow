@@ -66,6 +66,54 @@ function respond(body) {
   return textEvents(`Hello from the test model. You said: ${text.slice(0, 120)}`);
 }
 
+// ---- Web search (non-streaming requests that use the hosted web_search tool).
+// Fixture data on example.com domains so nothing here can be mistaken for real prices.
+const WEB = {
+  default: {
+    text: "Per Example Transit, the airport train runs every 10 minutes, takes 35 minutes and costs $11.45.",
+    sources: [{ url: "https://transit.example.com/fares", title: "Fares | Example Transit" }],
+  },
+};
+
+function webSearchResponse(body) {
+  const id = `resp_${n++}`;
+  const fmt = body.text?.format;
+  const query = typeof body.input === "string" ? body.input : JSON.stringify(body.input);
+  let text = WEB.default.text;
+  let sources = WEB.default.sources;
+  if (fmt?.type === "json_schema" && fixtures[fmt.name]) ({ text, sources } = fixtures[fmt.name](query));
+  return {
+    id,
+    object: "response",
+    status: "completed",
+    output: [
+      {
+        type: "web_search_call",
+        id: `ws_${id}`,
+        status: "completed",
+        action: { type: "search", query, sources: sources.map((s) => ({ type: "url", url: s.url })) },
+      },
+      {
+        type: "message",
+        id: `msg_${id}`,
+        role: "assistant",
+        status: "completed",
+        content: [
+          {
+            type: "output_text",
+            text,
+            annotations: sources.map((s) => ({ type: "url_citation", url: s.url, title: s.title, start_index: 0, end_index: Math.min(10, text.length) })),
+          },
+        ],
+      },
+    ],
+  };
+}
+
+// Structured searches the app makes (savings finder, cancel help), keyed by schema name.
+const fixtures = {};
+globalThis.__lfWebFixtures = fixtures;
+
 http
   .createServer((req, res) => {
     if (req.method === "GET") return res.end("ok");
@@ -80,7 +128,12 @@ http
         res.writeHead(200, { "content-type": "application/json" });
         return res.end(JSON.stringify({ value: "ek_e2e_test", expires_at: Math.floor(Date.now() / 1000) + 120, session: JSON.parse(raw).session }));
       }
-      sse(res, respond(JSON.parse(raw)));
+      const body = JSON.parse(raw);
+      if (!body.stream && (body.tools ?? []).some((t) => t.type === "web_search")) {
+        res.writeHead(200, { "content-type": "application/json" });
+        return res.end(JSON.stringify(webSearchResponse(body)));
+      }
+      sse(res, respond(body));
     });
   })
   .listen(port, "127.0.0.1", () => console.log(`fake openai on ${port}`));

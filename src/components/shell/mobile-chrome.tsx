@@ -31,6 +31,7 @@ const ROUTES: { test: RegExp; title: string; back?: string }[] = [
   { test: /^\/finances\/rules/, title: "Category rules", back: "/finances/transactions" },
   { test: /^\/wealth/, title: "Investments" },
   { test: /^\/settings/, title: "Settings" },
+  { test: /^\/jarvis\/says/, title: "Jarvis says", back: "/" },
 ];
 
 export function routeInfo(pathname: string): { title: string; back?: string } {

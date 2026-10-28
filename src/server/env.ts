@@ -16,6 +16,11 @@ const schema = z.object({
   ENCRYPTION_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().default("gpt-5.5"),
+  /** Model for live web searches (Jarvis web_search, savings finder). Defaults to OPENAI_MODEL. */
+  OPENAI_SEARCH_MODEL: z
+    .string()
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
   /** Live voice model (OpenAI Realtime). */
   OPENAI_REALTIME_MODEL: z.string().default("gpt-realtime"),
   OPENAI_REASONING_EFFORT: z

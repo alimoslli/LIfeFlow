@@ -11,7 +11,7 @@ import { AuthError, changePassword, deleteAccount, updateAssistant, updatePrefer
 import { ServiceError } from "@/server/services/errors";
 import { decideMemorySuggestion } from "@/server/jarvis/memory-decisions";
 import { createMemory, deleteMemory, editMemory, MEMORY_CATEGORIES, setMemoryStatus } from "@/server/services/memory";
-import { notificationPrefsSchema, removeSubscriptionById } from "@/server/services/push";
+import { notificationPrefs, notificationPrefsSchema, removeSubscriptionById } from "@/server/services/push";
 import { createHash } from "node:crypto";
 
 const asService = async (fn: () => Promise<void>) => {
@@ -116,14 +116,31 @@ export async function deleteMemoryAction(id: string): Promise<ActionState> {
 
 export async function updateAssistantAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
+  const on = (k: string) => fd.get(k) === "on";
   return mutate("assistant.updated", async (_s, u) => {
-    await updateAssistant(getDb(), u.id, {
-      name: f.name ?? "",
-      style: (f.style ?? "balanced") as "balanced",
-      notes: f.notes,
-      voice: (f.voice ?? "marin") as "marin",
-    });
-    return "Saved";
+    await updateAssistant(
+      getDb(),
+      u.id,
+      { name: f.name ?? "", style: (f.style ?? "friend") as "friend", notes: f.notes, voice: (f.voice ?? "marin") as "marin" },
+      {
+        frequency: (f.frequency ?? "normal") as "normal",
+        quietStart: f.quietStart || "22:00",
+        quietEnd: f.quietEnd || "07:00",
+        topics: {
+          money: on("topic_money"),
+          school: on("topic_school"),
+          work: on("topic_work"),
+          health: on("topic_health"),
+          trips: on("topic_trips"),
+          habits: on("topic_habits"),
+        },
+        autonomy: { tasks: on("auto_tasks"), calendar: on("auto_calendar") },
+        avatar: (f.avatar ?? "spark") as "spark",
+        learning: on("learning"),
+        pushLimit: Number(f.pushLimit ?? 3),
+      },
+    );
+    return "Saved. That's how I'll sound from now on.";
   });
 }
 
@@ -138,13 +155,7 @@ export async function saveNotificationPrefsAction(_p: ActionState, fd: FormData)
   return mutate(
     "notifications.preferences",
     async (_s, u) => {
-      const notifications = notificationPrefsSchema.parse({
-        reminders: on("reminders"),
-        bills: on("bills"),
-        morningBrief: on("morningBrief"),
-        briefTime: String(fd.get("briefTime") || "08:00"),
-        budgetAlerts: on("budgetAlerts"),
-      });
+      const notifications = notificationPrefsSchema.parse({ ...notificationPrefs(u.preferences), reminders: on("reminders") });
       await updatePreferences(getDb(), u.id, { notifications });
       return "Notification settings saved.";
     },

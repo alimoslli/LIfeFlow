@@ -6,8 +6,9 @@ import { assistantSchema } from "@/server/services/accounts";
 const base = { userName: "Ali", tz: "America/Chicago", now: new Date("2026-10-28T15:00:00Z"), accountKind: "standard" as const, memories: [] };
 
 describe("assistant profile", () => {
-  it("defaults to Jarvis, balanced, marin", () => {
-    expect(assistantProfile(undefined)).toEqual({ name: "Jarvis", style: "balanced", notes: null, voice: "marin" });
+  it("defaults to Jarvis, friend, marin, and maps older styles", () => {
+    expect(assistantProfile(undefined)).toEqual({ name: "Jarvis", style: "friend", notes: null, voice: "marin" });
+    expect(assistantProfile({ assistantStyle: "professional" }).style).toBe("direct");
   });
 
   it("puts the chosen name and personality in the per-user part of the prompt only", () => {
@@ -27,7 +28,7 @@ describe("assistant profile", () => {
   });
 
   it("validates names and notes", () => {
-    const ok = { name: "Nova", style: "warm", voice: "coral" } as const;
+    const ok = { name: "Nova", style: "coach", voice: "coral" } as const;
     expect(assistantSchema.safeParse(ok).success).toBe(true);
     expect(assistantSchema.safeParse({ ...ok, name: "" }).success).toBe(false);
     expect(assistantSchema.safeParse({ ...ok, name: "x".repeat(25) }).success).toBe(false);

@@ -1,4 +1,5 @@
 import "server-only";
+import { proactiveAfterMutation } from "./services/proactive/events";
 import { revalidatePath } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
 import { ZodError } from "zod";
@@ -47,11 +48,14 @@ export async function mutate(
   opts: { revalidate?: string[] } = {},
 ): Promise<ActionState> {
   try {
+    const done: { user?: SessionUser } = {};
     const message = await withCurrentUser(async (scope, user) => {
       const m = await fn(scope, user);
       await audit(scope, "user", name);
+      done.user = user;
       return m;
     });
+    if (done.user) proactiveAfterMutation(name, done.user);
     for (const p of opts.revalidate ?? ["/"]) revalidatePath(p, "layout");
     if (message && typeof message === "object") return { ok: true, message: message.message, undo: message.undo, at: Date.now() };
     return { ok: true, message: message || undefined, at: Date.now() };

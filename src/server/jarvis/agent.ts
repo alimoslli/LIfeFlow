@@ -19,7 +19,7 @@ export type JarvisEvent =
   | { type: "conversation"; id: string; title: string }
   | { type: "text"; delta: string }
   | { type: "tool_start"; callId: string; name: string; label: string }
-  | { type: "tool_end"; callId: string; name: string; ok: boolean; summary: string; viewAt?: string }
+  | { type: "tool_end"; callId: string; name: string; ok: boolean; summary: string; viewAt?: string; sources?: { title: string; url: string }[] }
   | { type: "confirmation"; actionId: string; callId: string; toolName: string; summary: string }
   | { type: "memory_proposal"; callId: string; memoryId: string; content: string; replaces?: string }
   | { type: "done"; messageId: string | null; runId?: string | null }
@@ -182,7 +182,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
           emit({ type: "confirmation", actionId: outcome.pendingActionId, callId: call.callId, toolName: call.name, summary: outcome.summary });
         } else {
           const d = describeToolResult(call.name, outcome.result);
-          emit({ type: "tool_end", callId: call.callId, name: call.name, ok: outcome.result.ok, summary: d.summary, viewAt: d.viewAt });
+          emit({ type: "tool_end", callId: call.callId, name: call.name, ok: outcome.result.ok, summary: d.summary, viewAt: d.viewAt, sources: d.sources });
           const proposal = memoryProposalOf(call.name, outcome.result);
           if (proposal) emit({ type: "memory_proposal", callId: call.callId, ...proposal });
         }

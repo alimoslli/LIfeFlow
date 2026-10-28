@@ -83,18 +83,24 @@ const LABELS: Record<string, string> = {
   integration_status: "Checking integrations",
   draft_email: "Drafting email",
   read_attachment: "Reading attachment",
+  web_search: "Searching the web",
 };
 
 export const describeToolCall = (name: string) => LABELS[name] ?? name.replace(/_/g, " ");
 
 /** Short factual summary of a tool result for the chat UI. */
-export function describeToolResult(name: string, r: ToolResultRecord): { summary: string; viewAt?: string } {
+export function describeToolResult(name: string, r: ToolResultRecord): { summary: string; viewAt?: string; sources?: { title: string; url: string }[] } {
   if (!r.ok) return { summary: r.error ?? "Failed" };
   const d = (r.data ?? {}) as Record<string, unknown>;
   const viewAt = typeof d.viewAt === "string" ? d.viewAt : undefined;
   const n = (k: string) => (Array.isArray(d[k]) ? (d[k] as unknown[]).length : 0);
   const plural = (c: number, w: string) => `${c} ${w}${c === 1 ? "" : "s"}`;
   switch (name) {
+    case "web_search": {
+      if (typeof d.unavailable === "string") return { summary: d.unavailable };
+      const sources = Array.isArray(d.sources) ? (d.sources as { title: string; url: string }[]) : [];
+      return { summary: sources.length ? `Read ${plural(sources.length, "source")}` : "No sources found", sources };
+    }
     case "create_tasks":
       return { summary: `Created ${plural(n("created"), "task")}`, viewAt };
     case "import_assignments": {

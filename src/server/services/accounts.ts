@@ -89,7 +89,7 @@ export async function updateProfile(db: Database, userId: string, input: z.input
 export async function updatePreferences(
   db: Database,
   userId: string,
-  patch: Pick<UserPreferences, "memorySuggestions" | "onboarding" | "tour" | "notifications" | "moneyLock">,
+  patch: Pick<UserPreferences, "memorySuggestions" | "onboarding" | "tour" | "notifications" | "moneyLock" | "jarvis">,
 ) {
   const [current] = await db.select().from(users).where(eq(users.id, userId));
   await db
@@ -105,19 +105,40 @@ export const assistantSchema = z.object({
     .min(1, "Give your assistant a name")
     .max(24, "Keep the name to 24 characters")
     .regex(/^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u, "Use letters, numbers, spaces, apostrophes, dots or hyphens"),
-  style: z.enum(["balanced", "warm", "direct", "coach", "playful", "professional"]),
+  style: z.enum(["coach", "friend", "direct"]),
   notes: z.string().trim().max(300, "Keep personality notes to 300 characters").optional(),
   voice: z.enum(["alloy", "ash", "ballad", "cedar", "coral", "echo", "marin", "sage", "shimmer", "verse"]),
 });
 
 /** Saves the assistant's name, personality and voice. */
-export async function updateAssistant(db: Database, userId: string, input: z.input<typeof assistantSchema>) {
+const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Pick a time like 22:00");
+export const jarvisSettingsSchema = z.object({
+  frequency: z.enum(["low", "normal", "high"]),
+  quietStart: hhmm,
+  quietEnd: hhmm,
+  topics: z.object({ money: z.boolean(), school: z.boolean(), work: z.boolean(), health: z.boolean(), trips: z.boolean(), habits: z.boolean() }),
+  autonomy: z.object({ tasks: z.boolean(), calendar: z.boolean() }),
+  avatar: z.enum(["spark", "orb", "initial"]),
+  learning: z.boolean(),
+  pushLimit: z.number().int().min(0).max(5),
+});
+
+/** Name, tone, voice and how proactive the assistant is. */
+export async function updateAssistant(db: Database, userId: string, input: z.input<typeof assistantSchema>, jarvis?: z.input<typeof jarvisSettingsSchema>) {
   const d = assistantSchema.parse(input);
+  const j = jarvis ? jarvisSettingsSchema.parse(jarvis) : undefined;
   const [current] = await db.select().from(users).where(eq(users.id, userId));
   await db
     .update(users)
     .set({
-      preferences: { ...current.preferences, assistantName: d.name, assistantStyle: d.style, assistantNotes: d.notes || undefined, assistantVoice: d.voice },
+      preferences: {
+        ...current.preferences,
+        assistantName: d.name,
+        assistantStyle: d.style,
+        assistantNotes: d.notes || undefined,
+        assistantVoice: d.voice,
+        ...(j && { jarvis: { ...current.preferences.jarvis, ...j } }),
+      },
     })
     .where(eq(users.id, userId));
 }

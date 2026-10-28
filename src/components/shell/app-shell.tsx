@@ -74,7 +74,8 @@ export function AppShell({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const onJarvisPage = pathname.startsWith("/jarvis");
+  // The chat is full-screen; "Jarvis says" (/jarvis/says) is a normal page.
+  const onJarvisPage = pathname.startsWith("/jarvis") && !pathname.startsWith("/jarvis/says");
   const initials = user.name
     .split(/\s+/)
     .map((p) => p[0])

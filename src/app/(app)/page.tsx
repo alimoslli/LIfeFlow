@@ -8,6 +8,10 @@ import { formatIn, localDateOf } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { requireUser, withCurrentUser } from "@/server/auth/current-user";
 import { moneyLocked } from "@/server/auth/money-lock";
+import { withUser } from "@/server/db/with-user";
+import { JarvisMessageCard } from "@/components/jarvis/message-card";
+import { jarvisSettings, runDueSlot, topMessage } from "@/server/services/proactive/engine";
+import { toCard } from "@/server/services/proactive/present";
 import { getBriefing } from "@/server/briefing";
 import type { AgendaItem } from "@/server/services/calendar";
 import { listTasks } from "@/server/services/tasks";
@@ -18,17 +22,34 @@ const PR = { urgent: 0, high: 1, medium: 2, low: 3 } as const;
 
 export default async function TodayPage() {
   // With the Face ID lock on, money figures stay hidden here too until Money is unlocked.
-  const locked = await moneyLocked(await requireUser());
+  const me = await requireUser();
+  const locked = await moneyLocked(me);
+  // Jarvis takes his scheduled look (morning, midday, evening) the first time Today opens in each. Its own transaction, so a failure can't break Today.
+  if (me.accountKind !== "demo")
+    await withUser(me.id, (scope) => runDueSlot(scope, me.timezone, me.preferences)).catch((e) =>
+      console.error("proactive slot failed", e instanceof Error ? e.name : e),
+    );
   const {
     briefing: b,
     snapshot: s,
     tasks,
     firstName,
     assistantName,
+    jarvisCard,
+    avatar,
   } = await withCurrentUser(async (scope, user) => {
+    const top = await topMessage(scope);
     const { briefing, snapshot } = await getBriefing(scope, user);
     const tasks = await listTasks(scope, { status: "open", topLevelOnly: true, limit: 50 });
-    return { briefing, snapshot, tasks, firstName: user.name.split(" ")[0], assistantName: assistantProfile(user.preferences).name };
+    return {
+      briefing,
+      snapshot,
+      tasks,
+      firstName: user.name.split(" ")[0],
+      assistantName: assistantProfile(user.preferences).name,
+      jarvisCard: top && !(locked && top.topic === "money") ? toCard(top, user.timezone) : null,
+      avatar: jarvisSettings(user.preferences).avatar,
+    };
   });
   const focus = [...tasks].sort((a, b) => (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity) || PR[a.priority] - PR[b.priority]).slice(0, 3);
   const insights = locked ? b.insights.filter((i) => i.icon !== "money" && i.icon !== "trend" && i.icon !== "goal") : b.insights;
@@ -46,6 +67,11 @@ export default async function TodayPage() {
             <AskBar name={firstName} />
           </div>
         </header>
+        {jarvisCard && (
+          <section aria-label={`${assistantName} says`} className="animate-rise max-lg:order-[-1]">
+            <JarvisMessageCard m={jarvisCard} name={assistantName} avatar={avatar} compact />
+          </section>
+        )}
         {insights.length > 0 && (
           <section aria-label={`${assistantName} noticed`}>
             <SectionTitle>{assistantName} noticed</SectionTitle>

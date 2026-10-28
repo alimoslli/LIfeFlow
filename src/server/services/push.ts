@@ -1,13 +1,11 @@
 import { and, eq, gt, isNull, lte, ne } from "drizzle-orm";
 import { z } from "zod";
-import { addDaysStr, formatDateStr, localTimeOf, todayIn, weekStart } from "@/lib/dates";
+import { localTimeOf } from "@/lib/dates";
 import { notificationLog, pushSubscriptions, tasks, type UserPreferences } from "../db/schema";
 import type { UserScope } from "../db/with-user";
-import { budgetWarnings, safeToSpend } from "./finance/forecast";
-import { upcomingRecurring } from "./finance/planning";
 
 /**
- * Web Push: reminders, bills, the morning brief and budget alerts.
+ * Web Push: the to-do reminders the user set, plus Jarvis's important messages (services/proactive).
  * Every notification has a key in notification_log, so it is sent at most
  * once even if the scheduler runs often or twice.
  */
@@ -101,14 +99,10 @@ export async function sendOnce(scope: UserScope, key: string, msg: PushMessage, 
   return delivered;
 }
 
-const usd = (c: number) => `$${Math.round(c / 100).toLocaleString("en-US")}`;
-
-/** Works out what's due for one user right now and sends it. Safe to run every few minutes. */
+/** Sends the to-do reminders the user set. Safe to run every few minutes. */
 export async function runNotifications(scope: UserScope, tz: string, prefs: UserPreferences | undefined, send: Sender, now = new Date()) {
   const p = notificationPrefs(prefs);
   if (!(await listSubscriptions(scope)).length) return { sent: 0 };
-  const today = todayIn(tz, now);
-  const localTime = localTimeOf(now, tz);
   let sent = 0;
 
   if (p.reminders) {
@@ -139,38 +133,6 @@ export async function runNotifications(scope: UserScope, tz: string, prefs: User
     }
   }
 
-  if (p.morningBrief && localTime >= p.briefTime && localTime < "12:00") {
-    const safe = await safeToSpend(scope, today);
-    const body = safe.hasAccounts ? `Safe to spend today: ${usd(safe.todayCents)}. Tap for your plan.` : "Here's your plan for today.";
-    if (await sendOnce(scope, `brief:${today}`, { title: `Good morning`, body, url: "/", tag: "brief" }, send)) sent++;
-  }
-
-  // Bills due today or tomorrow: if a scheduler run was missed yesterday, the alert still arrives on the day.
-  if (p.bills && localTime >= "08:00") {
-    const tomorrow = addDaysStr(today, 1);
-    const bills = (await upcomingRecurring(scope, today, tomorrow)).filter((b) => b.amountCents < 0);
-    for (const b of bills) {
-      const title = `${b.name} is due ${b.date === today ? "today" : "tomorrow"}`;
-      const body = `${usd(-b.amountCents)} on ${formatDateStr(b.date, "EEE, MMM d")}`;
-      if (await sendOnce(scope, `bill:${b.id}:${b.date}`, { title, body, url: "/finances/bills", tag: `bill-${b.id}` }, send)) sent++;
-    }
-  }
-
-  if (p.budgetAlerts && localTime >= "08:00") {
-    const week = weekStart(today);
-    for (const w of await budgetWarnings(scope, today)) {
-      if (w.status === "on_track") continue;
-      const title = w.status === "over" ? `${w.categoryName} is over budget` : `${w.categoryName} is heading over budget`;
-      if (
-        await sendOnce(
-          scope,
-          `budget:${w.categoryId}:${week}`,
-          { title, body: w.fix ?? "Tap to see your budgets.", url: "/finances/budgets", tag: `budget-${w.categoryId}` },
-          send,
-        )
-      )
-        sent++;
-    }
-  }
+  // Bills, budgets and the morning brief now come from Jarvis (services/proactive), with his daily limit.
   return { sent };
 }
