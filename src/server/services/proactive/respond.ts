@@ -7,11 +7,13 @@ import { updatePreferences } from "../accounts";
 import { createEvent, deleteEvent } from "../calendar";
 import { ServiceError } from "../errors";
 import { contributeToGoal, deleteContribution } from "../finance/goals";
+import { createMemory, deleteMemory } from "../memory";
 import { budgetStatus, setBudget } from "../finance/planning";
 import { createTask, deleteTask, updateTask } from "../tasks";
 import { getMessage, jarvisSettings, tomorrowMorning } from "./engine";
+import { questionByKey } from "./questions";
 
-export type Response = "do" | "snooze" | "dismiss" | "mute" | "up" | "down" | "undo";
+export type Response = "do" | "snooze" | "dismiss" | "mute" | "up" | "down" | "undo" | "answer";
 type User = { id: string; timezone: string; preferences?: UserPreferences };
 
 const usd = (c: number) => `$${(c / 100).toFixed(c % 100 ? 2 : 0)}`;
@@ -75,6 +77,8 @@ export async function performAction(
       return { text: "Asked Jarvis.", href: `/jarvis?ask=${encodeURIComponent(a.prompt)}` };
     case "consent":
       return { text: "Thanks. I'll learn from how you respond, and you can turn it off in Settings." };
+    case "answer":
+      throw new ServiceError("Pick one of the answers.");
   }
 }
 
@@ -84,6 +88,7 @@ async function undoAction(scope: UserScope, undo: Record<string, unknown>) {
   if (typeof undo.eventId === "string") await deleteEvent(scope, undo.eventId);
   if (typeof undo.taskId === "string") await deleteTask(scope, undo.taskId);
   if (typeof undo.contributionId === "string") await deleteContribution(scope, undo.contributionId);
+  if (typeof undo.memoryId === "string") await deleteMemory(scope, undo.memoryId).catch(() => undefined);
   if (Array.isArray(undo.tasks))
     for (const t of undo.tasks as { id: string; dueAt: string | null; dueAllDay: boolean }[])
       await scope.tx
@@ -93,7 +98,7 @@ async function undoAction(scope: UserScope, undo: Record<string, unknown>) {
 }
 
 /** A button on a Jarvis message. Every response is kept; it's how Jarvis learns what helps. */
-export async function respondToMessage(scope: UserScope, user: User, id: string, response: Response, today: string) {
+export async function respondToMessage(scope: UserScope, user: User, id: string, response: Response, today: string, value?: string) {
   const m = await getMessage(scope, id);
   if (!m) throw new ServiceError("That message is gone.", "not_found");
   const set = (patch: Partial<typeof jarvisMessages.$inferInsert>) => scope.tx.update(jarvisMessages).set(patch).where(eq(jarvisMessages.id, id));
@@ -114,6 +119,16 @@ export async function respondToMessage(scope: UserScope, user: User, id: string,
       await undoAction(scope, m.result.undo);
       await set({ status: "dismissed", result: { ...m.result, undone: true, text: `Undone: ${m.result.text}` } });
       return { text: "Undone." };
+    }
+    case "answer": {
+      const q = m.action?.type === "answer" ? questionByKey(m.action.key) : undefined;
+      if (!q || !value || !q.choices.includes(value)) throw new ServiceError("Pick one of the answers.");
+      if (m.status === "done") return { text: m.result?.text ?? "Already answered." };
+      const content = q.memory(value);
+      const { memory, duplicate } = await createMemory(scope, { content, category: q.category }, "user");
+      const text = `Saved to what I know about you: "${content}"`;
+      await set({ status: "done", actedAt: new Date(), result: { text, undo: duplicate ? undefined : { memoryId: memory.id } } });
+      return { text };
     }
     case "snooze":
       await set({ status: "snoozed", snoozedUntil: tomorrowMorning(user.timezone) });

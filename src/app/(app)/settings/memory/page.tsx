@@ -24,7 +24,8 @@ import { CATEGORY_LABEL, CATEGORY_OPTIONS } from "./categories";
 import { EditMemory } from "./edit-memory";
 import { AssistantCard } from "./assistant-card";
 import { assistantProfile } from "@/lib/assistant";
-import { jarvisSettings } from "@/server/services/proactive/engine";
+import { jarvisSettings, learnedStats } from "@/server/services/proactive/engine";
+import { LearnedCard } from "./learned-card";
 import type { UserPreferences } from "@/server/db/schema";
 
 const personalityOf = (p: UserPreferences | undefined) => {
@@ -48,11 +49,15 @@ const compact = (n: number) => new Intl.NumberFormat("en-US", { notation: "compa
 
 export default async function MemorySettings() {
   const d = await withCurrentUser(async (s, u) => {
-    const [all, stats] = await series(
+    const js = jarvisSettings(u.preferences);
+    const [all, stats, learned] = await series(
       () => listAllMemories(s),
       () => jarvisStats(s, 30),
+      () => learnedStats(s, new Date(), js.learningResetAt),
     );
     return {
+      learned,
+      muted: js.mutedKinds,
       all,
       stats,
       tz: u.timezone,
@@ -76,6 +81,7 @@ export default async function MemorySettings() {
   return (
     <div className="flex flex-col gap-5">
       <AssistantCard profile={d.assistant} settings={d.personality} action={updateAssistantAction} />
+      <LearnedCard name={d.assistant.name} learning={d.personality.learning} muted={d.muted} stats={d.learned} />
       {pending.length > 0 && (
         <Card>
           <CardHeader
@@ -117,7 +123,7 @@ export default async function MemorySettings() {
 
       <Card>
         <CardHeader
-          title="What Jarvis remembers"
+          title={`What ${d.assistant.name} knows about you`}
           subtitle="Only the memories relevant to a request are sent with it. Edit, archive or delete anything. Passwords and account numbers are refused automatically."
         />
         <div className="mx-5 mb-2 flex items-center justify-between gap-3 rounded-2xl bg-surface-2 px-4 py-3">

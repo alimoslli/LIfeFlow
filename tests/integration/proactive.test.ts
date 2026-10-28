@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { addDaysStr, monthStart, todayIn, weekStart } from "@/lib/dates";
 import { closeDb } from "@/server/db/client";
-import { calendarEvents, jarvisMessages, tasks, type UserPreferences } from "@/server/db/schema";
+import { calendarEvents, jarvisMessages, memories, tasks, type UserPreferences } from "@/server/db/schema";
 import type { UserScope } from "@/server/db/with-user";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
@@ -171,6 +171,29 @@ describe("proactive Jarvis", () => {
     expect(again.find((m) => m.kind === "consent")).toBeUndefined();
     expect((await run((s) => s.tx.select().from(jarvisMessages).where(eq(jarvisMessages.kind, "consent"))))[0].status).toBe("done");
     expect(monthStart(today)).toBe(`${today.slice(0, 7)}-01`);
+  });
+
+  it("asks one get-to-know question, saves the answer as a memory, and resets what it learned", async () => {
+    const { user: u, run } = await makeUser();
+    const me = user(u.id, { jarvis: { learning: true } });
+    const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: me.preferences, trigger: "evening" }));
+    const q = out.find((m) => m.kind === "question")!;
+    expect(q.title).toBe("What's your biggest money goal this year?");
+    expect(q.action).toMatchObject({ type: "answer", choices: expect.arrayContaining(["Pay off debt"]) });
+    await expect(run((s) => respondToMessage(s, me, q.id, "answer", today, "Buy a boat"))).rejects.toThrow(/Pick one/);
+    const r = await run((s) => respondToMessage(s, me, q.id, "answer", today, "Pay off debt"));
+    expect(r.text).toContain("My biggest money goal this year: pay off debt.");
+    const mems = await run((s) => s.tx.select().from(memories));
+    expect(mems).toMatchObject([{ content: "My biggest money goal this year: pay off debt.", category: "goal", source: "user", status: "active" }]);
+    // Not asked again within 3 days; undo removes the memory.
+    const later = await run((s) => runProactive({ scope: s, tz: TZ, prefs: me.preferences, trigger: "evening", now: new Date(Date.now() + 3600_000) }));
+    expect(later.find((m) => m.kind === "question")).toBeUndefined();
+    await run((s) => respondToMessage(s, me, q.id, "undo", today));
+    expect(await run((s) => s.tx.select().from(memories))).toHaveLength(0);
+    // Reset: older responses no longer count.
+    await run((s) => respondToMessage(s, me, out.find((m) => m.kind !== "question")?.id ?? q.id, "down", today));
+    expect((await run((s) => learnedStats(s))).kinds.length).toBeGreaterThan(0);
+    expect((await run((s) => learnedStats(s, new Date(), new Date(Date.now() + 1000)))).kinds).toHaveLength(0);
   });
 });
 

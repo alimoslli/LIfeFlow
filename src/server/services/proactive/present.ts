@@ -12,7 +12,15 @@ export function toCard(m: JarvisMessage, tz: string): CardMessage {
     body: m.body,
     status: m.status === "snoozed" && m.snoozedUntil && m.snoozedUntil <= new Date() ? "new" : m.status,
     rating: m.rating,
-    action: a ? { type: a.type, label: a.label, href: a.type === "open" ? a.href : undefined, prompt: a.type === "ask" ? a.prompt : undefined } : null,
+    action: a
+      ? {
+          type: a.type,
+          label: a.label,
+          href: a.type === "open" ? a.href : undefined,
+          prompt: a.type === "ask" ? a.prompt : undefined,
+          choices: a.type === "answer" ? a.choices : undefined,
+        }
+      : null,
     money: isMoneyAction(a),
     resultText: m.result?.text ?? null,
     undoable: m.status === "done" && !!m.result?.undo && !m.result.undone,

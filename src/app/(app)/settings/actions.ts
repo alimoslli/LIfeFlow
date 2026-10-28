@@ -12,6 +12,7 @@ import { ServiceError } from "@/server/services/errors";
 import { decideMemorySuggestion } from "@/server/jarvis/memory-decisions";
 import { createMemory, deleteMemory, editMemory, MEMORY_CATEGORIES, setMemoryStatus } from "@/server/services/memory";
 import { notificationPrefs, notificationPrefsSchema, removeSubscriptionById } from "@/server/services/push";
+import { setJarvis } from "@/server/services/proactive/respond";
 import { createHash } from "node:crypto";
 
 const asService = async (fn: () => Promise<void>) => {
@@ -172,4 +173,26 @@ export async function removeDeviceAction(id: string): Promise<ActionState> {
     },
     { revalidate: ["/settings/notifications"] },
   );
+}
+
+/** What Jarvis knows: learning on/off, bring back a muted kind, forget what was learned. */
+export async function setJarvisLearningAction(on: boolean): Promise<ActionState> {
+  return mutate("jarvis.learning", async (_s, u) => {
+    await setJarvis(u, { learning: on });
+    return on ? "Jarvis will learn from your responses." : "Learning is off. Jarvis treats every message the same.";
+  });
+}
+
+export async function unmuteKindAction(kind: string): Promise<ActionState> {
+  return mutate("jarvis.unmute", async (_s, u) => {
+    await setJarvis(u, { mutedKinds: (u.preferences?.jarvis?.mutedKinds ?? []).filter((k) => k !== kind) });
+    return "Brought back.";
+  });
+}
+
+export async function resetLearningAction(): Promise<ActionState> {
+  return mutate("jarvis.learning_reset", async (_s, u) => {
+    await setJarvis(u, { learningResetAt: new Date().toISOString(), mutedKinds: [] });
+    return "Jarvis forgot what he learned from your responses.";
+  });
 }

@@ -5,6 +5,7 @@ import { assistantProfile } from "@/lib/assistant";
 import { jarvisMessages, notificationLog, type JarvisSettings, type UserPreferences } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { DETECTORS, RUNS, type Candidate } from "./detectors";
+import { nextQuestion } from "./questions";
 import { performAction } from "./respond";
 
 export type Slot = "morning" | "midday" | "evening";
@@ -26,6 +27,7 @@ export function jarvisSettings(prefs: UserPreferences | undefined) {
     learning: j.learning,
     mutedKinds: j.mutedKinds ?? [],
     pushLimit: j.pushLimit ?? 3,
+    learningResetAt: j.learningResetAt ? new Date(j.learningResetAt) : null,
     tone: toneOf(prefs),
   };
 }
@@ -50,11 +52,12 @@ export function inQuietHours(localTime: string, start: string, end: string) {
  * What the user's responses say about each kind of message (last 60 days).
  * Ignored = never touched after 2 days. Only used when the user agreed to learning.
  */
-export async function learnedStats(scope: UserScope, now = new Date()) {
+export async function learnedStats(scope: UserScope, now = new Date(), resetAt: Date | null = null) {
+  const since = new Date(Math.max(now.getTime() - 60 * 86_400_000, resetAt?.getTime() ?? 0));
   const rows = await scope.tx
     .select({ kind: jarvisMessages.kind, status: jarvisMessages.status, rating: jarvisMessages.rating, createdAt: jarvisMessages.createdAt })
     .from(jarvisMessages)
-    .where(and(eq(jarvisMessages.userId, scope.userId), gte(jarvisMessages.createdAt, new Date(now.getTime() - 60 * 86_400_000))))
+    .where(and(eq(jarvisMessages.userId, scope.userId), gte(jarvisMessages.createdAt, since)))
     .orderBy(desc(jarvisMessages.createdAt));
   const stale = now.getTime() - 2 * 86_400_000;
   const byKind = new Map<string, { shown: number; acted: number; negative: number; recent: ("acted" | "negative" | "open")[] }>();
@@ -103,7 +106,12 @@ export async function runProactive({ scope, tz, prefs, trigger, now = new Date()
   if (settings.learning === undefined && trigger === "morning")
     candidates.push({ kind: "consent", topic: "general", dedupeKey: "consent", facts: {}, action: { type: "consent", label: "Yes, learn" }, priority: 40 });
 
-  const learned = settings.learning ? await learnedStats(scope, now) : { kinds: [], brief: false };
+  if (settings.learning && trigger === "evening") {
+    const q = await nextQuestion(scope, now);
+    if (q) candidates.push(q);
+  }
+
+  const learned = settings.learning ? await learnedStats(scope, now, settings.learningResetAt) : { kinds: [], brief: false };
   const stat = new Map(learned.kinds.map((k) => [k.kind, k]));
   candidates = candidates
     .filter((c) => c.topic === "general" || settings.topics[c.topic] !== false)

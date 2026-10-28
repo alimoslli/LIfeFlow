@@ -158,6 +158,12 @@ const KINDS: Record<string, (f: F) => Parts> = {
     ask: "Want the details and a script to ask your provider to match it?",
     mood: "info",
   }),
+  question: (f) => ({
+    headline: s(f, "question"),
+    fact: "A quick one so I can help you better.",
+    ask: "Your answer goes into What Jarvis knows in Settings, where you can edit or delete it.",
+    mood: "info",
+  }),
   consent: () => ({
     headline: "Can I learn from your answers?",
     fact: "I'd like to notice which of my messages help and which you skip, so I speak up at better times and less about what you don't need.",
@@ -180,6 +186,34 @@ export function composeMessage(kind: string, facts: F, tone: JarvisTone, opts: {
   const parts = tone === "direct" ? [p.fact, p.ask] : [opener, p.fact, p.ask];
   return { title: p.headline, body: parts.filter(Boolean).join(" ") };
 }
+
+/** Plain names for each kind, for Settings (What Jarvis knows). */
+export const KIND_LABELS: Record<string, string> = {
+  spending_pace: "Spending pace in a budget",
+  goal_milestone: "Goal milestones",
+  deadline_conflict: "Deadlines that clash with shifts",
+  bill_short: "Bills you might be short for",
+  bill_due: "Bills coming due",
+  payday_split: "Payday plans",
+  task_streak: "To-do streaks",
+  log_reminder: "Reminders to log spending",
+  saved_more: "Saving more than usual",
+  overdue_tasks: "Overdue to-dos",
+  unusual_spend: "Unusual charges",
+  morning_brief: "Morning brief",
+  evening_wrap: "Evening wrap-up",
+  weekly_review: "Sunday weekly review",
+  monthly_review: "Monthly review",
+  goal_forecast: "Goal forecasts",
+  habit_streak: "Habit streaks",
+  habit_struggle: "Habits that slipped",
+  subscription_price_up: "Subscription price increases",
+  trial_ending: "Free trials ending",
+  new_subscription: "New subscriptions",
+  savings_found: "Cheaper bills found",
+  question: "Get-to-know questions",
+  consent: "Asking to learn",
+};
 
 export const TONES: Record<JarvisTone, { label: string; hint: string }> = {
   coach: { label: "Coach", hint: "Motivating, holds you to your goals" },

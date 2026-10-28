@@ -15,7 +15,7 @@ export type CardMessage = {
   body: string;
   status: "new" | "done" | "snoozed" | "dismissed" | "muted";
   rating: number | null;
-  action: { type: string; label: string; href?: string; prompt?: string } | null;
+  action: { type: string; label: string; href?: string; prompt?: string; choices?: string[] } | null;
   /** The action changes money: the button says exactly what will happen. */
   money: boolean;
   resultText: string | null;
@@ -52,10 +52,10 @@ export function JarvisMessageCard({ m, name, avatar, compact }: { m: CardMessage
   const [pending, start] = useTransition();
   const [menu, setMenu] = useState(false);
   const [rating, setRating] = useState(m.rating);
-  const act = (r: "do" | "snooze" | "dismiss" | "mute" | "up" | "down" | "undo") =>
+  const act = (r: "do" | "snooze" | "dismiss" | "mute" | "up" | "down" | "undo" | "answer", value?: string) =>
     start(async () => {
-      if (r === "do") haptic("success");
-      const res = await respondAction(m.id, r);
+      if (r === "do" || r === "answer") haptic("success");
+      const res = await respondAction(m.id, r, value);
       if (!res?.ok) return void toast(res?.error ?? "Couldn't do that.", { tone: "danger" });
       if (r === "up" || r === "down") setRating(r === "up" ? 1 : -1);
       if (r === "do" && m.action?.type === "open" && m.action.href) return router.push(m.action.href);
@@ -99,18 +99,35 @@ export function JarvisMessageCard({ m, name, avatar, compact }: { m: CardMessage
               <Check className="mt-0.5 h-4 w-4 shrink-0" /> {m.resultText}
             </p>
           )}
+          {open && m.action?.choices && (
+            <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Answers">
+              {m.action.choices.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  disabled={pending}
+                  onClick={() => act("answer", c)}
+                  className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium hover:bg-surface-3 disabled:opacity-60"
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          )}
           {open && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                disabled={pending}
-                onClick={() => act("do")}
-                className="flex min-h-11 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium text-accent-text disabled:opacity-60"
-              >
-                {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {m.action ? m.action.label : "Got it"}
-                {m.money && <span className="sr-only">(changes money; this confirms it)</span>}
-              </button>
+              {!m.action?.choices && (
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => act("do")}
+                  className="flex min-h-11 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium text-accent-text disabled:opacity-60"
+                >
+                  {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  {m.action ? m.action.label : "Got it"}
+                  {m.money && <span className="sr-only">(changes money; this confirms it)</span>}
+                </button>
+              )}
               <button
                 type="button"
                 disabled={pending}

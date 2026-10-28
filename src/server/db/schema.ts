@@ -113,6 +113,8 @@ export type JarvisSettings = {
   mutedKinds?: string[];
   /** Max push notifications per day from Jarvis. */
   pushLimit?: number;
+  /** ISO time; learning ignores responses before this ("Reset what I learned"). */
+  learningResetAt?: string;
 };
 
 export type ProactiveAction =
@@ -123,7 +125,8 @@ export type ProactiveAction =
   | { type: "contribute_goal"; label: string; goalId: string; cents: number }
   | { type: "open"; label: string; href: string }
   | { type: "ask"; label: string; prompt: string }
-  | { type: "consent"; label: string };
+  | { type: "consent"; label: string }
+  | { type: "answer"; label: string; key: string; choices: string[] };
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
