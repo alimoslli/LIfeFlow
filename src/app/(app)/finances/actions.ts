@@ -1,4 +1,5 @@
 "use server";
+import { applyRuleToPast, deleteCategoryRule } from "@/server/services/finance/categorize";
 import { formBool, formCents, formObject, mutate, type ActionState } from "@/server/actions";
 import { ServiceError } from "@/server/services/errors";
 import { archiveAccount, createManualAccount, updateAccountBalance } from "@/server/services/finance/accounts";
@@ -59,7 +60,35 @@ export async function createTransactionAction(_p: ActionState, fd: FormData): Pr
 export async function updateTransactionAction(id: string, _p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
   return mutate("transaction.update", async (s) => {
-    await updateTransaction(s, id, { kind: f.kind as "expense", categoryId: f.categoryId ?? null, notes: f.notes ?? null, excluded: formBool(f.excluded) });
+    const row = await updateTransaction(
+      s,
+      id,
+      { kind: f.kind as "expense", categoryId: f.categoryId ?? null, notes: f.notes ?? null, excluded: formBool(f.excluded) },
+      { learn: true },
+    );
+    if (row.learnedRule) {
+      const n = row.learnedRule.othersToUpdate;
+      if (f.applyToPast && n) {
+        const changed = await applyRuleToPast(s, row.learnedRule.id);
+        return `Saved. ${row.learnedRule.merchant} will be categorized this way from now on, and ${changed} past transaction${changed === 1 ? " was" : "s were"} updated.`;
+      }
+      return `Saved. ${row.learnedRule.merchant} will be categorized this way from now on.${n ? ` ${n} older transaction${n === 1 ? "" : "s"} from it still use${n === 1 ? "s" : ""} another category.` : ""}`;
+    }
+    return "Saved.";
+  });
+}
+
+export async function applyRuleAction(ruleId: string): Promise<ActionState> {
+  return mutate("category_rule.apply", async (s) => {
+    const n = await applyRuleToPast(s, ruleId);
+    return `Updated ${n} transaction${n === 1 ? "" : "s"}.`;
+  });
+}
+
+export async function deleteRuleAction(ruleId: string): Promise<ActionState> {
+  return mutate("category_rule.delete", async (s) => {
+    await deleteCategoryRule(s, ruleId);
+    return "Rule removed. Future transactions from this merchant won't follow it.";
   });
 }
 

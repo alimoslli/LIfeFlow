@@ -71,6 +71,7 @@ export async function budgetStatus(scope: UserScope, month: string) {
         id: b.id,
         categoryId: b.categoryId,
         categoryName: cat?.name ?? "Unknown",
+        childIds: [...ids],
         color: cat?.color ?? null,
         limitCents: b.limitCents,
         spentCents: spent,
@@ -98,6 +99,8 @@ export const goalInputSchema = z.object({
   targetDate: z.string().regex(DATE_RE).nullish(),
   accountId: z.string().uuid().nullish(),
   kind: z.enum(["savings", "debt", "investment"]).default("savings"),
+  purpose: z.enum(["emergency", "travel", "car", "home", "debt", "investing", "education", "big_purchase", "other"]).default("other"),
+  monthlyPlanCents: z.number().int().min(0).max(100_000_000).nullish(),
   notes: z.string().max(2000).nullish(),
 });
 

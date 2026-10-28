@@ -8,6 +8,7 @@ import { categories, financialAccounts, transactions, type DataSource, type Tran
 import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound, ServiceError } from "../errors";
 import { listCategories, resolveCategory } from "./categories";
+import { autoCategorize, learnCategoryRule } from "./categorize";
 
 export const TRANSACTION_KINDS = ["income", "expense", "transfer", "refund", "reimbursement", "investment", "adjustment"] as const;
 
@@ -43,6 +44,14 @@ export async function createTransaction(
   const d = transactionInputSchema.parse(input);
   await assertOwned(scope, financialAccounts, d.accountId, "Account");
   let catKind: "expense" | "income" | "transfer" | null = null;
+  if (!d.categoryId && !d.kind) {
+    // Learned rules first, then well-known merchants; otherwise left uncategorized.
+    const auto = await autoCategorize(scope, { merchantName: d.merchantName, description: d.description, amountCents: d.amountCents });
+    if (auto) {
+      d.categoryId = auto.categoryId;
+      d.kind = auto.kind;
+    }
+  }
   if (d.categoryId) {
     const [c] = await scope.tx
       .select()
@@ -80,16 +89,31 @@ export const transactionPatchSchema = z.object({
   merchantName: z.string().max(200).nullish(),
 });
 
-export async function updateTransaction(scope: UserScope, id: string, patch: z.input<typeof transactionPatchSchema>) {
+/**
+ * Updates a transaction. With `learn`, a changed category becomes a rule for
+ * that merchant (future transactions follow it), and the result says how many
+ * past transactions from the merchant could be updated too.
+ */
+export async function updateTransaction(scope: UserScope, id: string, patch: z.input<typeof transactionPatchSchema>, opts: { learn?: boolean } = {}) {
   const d = transactionPatchSchema.parse(patch);
   await assertOwned(scope, categories, d.categoryId, "Category");
+  const [before] = opts.learn
+    ? await scope.tx
+        .select()
+        .from(transactions)
+        .where(and(eq(transactions.id, id), eq(transactions.userId, scope.userId)))
+    : [];
   const [row] = await scope.tx
     .update(transactions)
     .set(d)
     .where(and(eq(transactions.id, id), eq(transactions.userId, scope.userId)))
     .returning();
   if (!row) throw notFound("Transaction");
-  return row;
+  if (opts.learn && before && d.categoryId && d.categoryId !== before.categoryId) {
+    const learned = await learnCategoryRule(scope, row, d.categoryId, d.kind);
+    return Object.assign(row, { learnedRule: learned && { id: learned.rule.id, merchant: learned.rule.label, othersToUpdate: learned.othersToUpdate } });
+  }
+  return Object.assign(row, { learnedRule: null as null | { id: string; merchant: string; othersToUpdate: number } });
 }
 
 export async function deleteTransaction(scope: UserScope, id: string) {

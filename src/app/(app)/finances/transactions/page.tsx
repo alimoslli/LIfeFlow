@@ -219,7 +219,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                       </Link>
                       {sp.edit === t.id && (
                         <div className="animate-fade-in bg-surface-2/60 px-4 py-4 sm:px-5">
-                          <ActionForm action={updateTransactionAction.bind(null, t.id)} reset={false} className="gap-3">
+                          <ActionForm action={updateTransactionAction.bind(null, t.id)} reset={false} showSuccess className="gap-3">
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                               <label className="flex flex-col gap-1 text-xs text-text-2">
                                 Type
@@ -238,6 +238,10 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                                 </Select>
                               </label>
                             </div>
+                            <label className="flex items-center gap-1.5 text-sm text-text-2">
+                              <input type="checkbox" name="applyToPast" className="accent-[var(--accent)]" /> If I change the category, also update past
+                              transactions from {t.merchantName ?? t.description}
+                            </label>
                             <label className="flex flex-col gap-1 text-xs text-text-2">
                               Note
                               <Input name="notes" defaultValue={t.notes ?? ""} />

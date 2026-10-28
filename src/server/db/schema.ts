@@ -245,6 +245,10 @@ export const financialAccounts = pgTable(
     source: text("source").$type<DataSource>().notNull().default("manual"),
     providerAccountId: text("provider_account_id"),
     includeInNetWorth: boolean("include_in_net_worth").notNull().default(true),
+    /** Debts: yearly interest rate in basis points (24.99% = 2499), minimum payment and next due date. */
+    aprBps: integer("apr_bps"),
+    minPaymentCents: cents("min_payment_cents"),
+    nextPaymentDueDate: date("next_payment_due_date", { mode: "string" }),
     balanceUpdatedAt: tstz("balance_updated_at").notNull().defaultNow(),
     archivedAt: tstz("archived_at"),
     createdAt: createdAt(),
@@ -363,6 +367,8 @@ export const recurringItems = pgTable(
   (t) => [index("recurring_user_idx").on(t.userId), ownerPolicy()],
 );
 
+export type GoalPurpose = "emergency" | "travel" | "car" | "home" | "debt" | "investing" | "education" | "big_purchase" | "other";
+
 export const financialGoals = pgTable(
   "financial_goals",
   {
@@ -375,11 +381,72 @@ export const financialGoals = pgTable(
     accountId: uuid("account_id").references(() => financialAccounts.id, { onDelete: "set null" }),
     kind: text("kind").$type<"savings" | "debt" | "investment">().notNull().default("savings"),
     status: text("status").$type<"active" | "achieved" | "archived">().notNull().default("active"),
+    /** What the goal is for (emergency fund, travel, car...), used for icons and advice. */
+    purpose: text("purpose").$type<GoalPurpose>().notNull().default("other"),
+    /** The monthly amount the user plans to put toward it. */
+    monthlyPlanCents: cents("monthly_plan_cents"),
+    /** Highest milestone (25/50/75/100) already celebrated, so each is celebrated once. */
+    celebratedPercent: integer("celebrated_percent").notNull().default(0),
     notes: text("notes"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [index("goals_user_idx").on(t.userId), ownerPolicy()],
+);
+
+/** Money the user set aside toward a goal. LifeFlow records it; it never moves money. */
+export const goalContributions = pgTable(
+  "goal_contributions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    goalId: uuid("goal_id")
+      .notNull()
+      .references(() => financialGoals.id, { onDelete: "cascade" }),
+    amountCents: cents("amount_cents").notNull(),
+    date: date("date", { mode: "string" }).notNull(),
+    note: text("note"),
+    source: text("source").$type<DataSource>().notNull().default("manual"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("goal_contrib_goal_idx").on(t.goalId, t.date), ownerPolicy()],
+);
+
+/** Learned from the user's corrections: transactions from this merchant go to this category. */
+export const categoryRules = pgTable(
+  "category_rules",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    merchantKey: text("merchant_key").notNull(),
+    /** Display name of the merchant, for the rules list. */
+    label: text("label").notNull(),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => categories.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<TransactionKind>(),
+    hits: integer("hits").notNull().default(0),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("category_rules_user_merchant_uq").on(t.userId, t.merchantKey), ownerPolicy()],
+);
+
+/** One row per day the user's balances were seen, for the net worth trend. */
+export const netWorthSnapshots = pgTable(
+  "net_worth_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    day: date("day", { mode: "string" }).notNull(),
+    netWorthCents: cents("net_worth_cents").notNull(),
+    cashCents: cents("cash_cents").notNull(),
+    savingsCents: cents("savings_cents").notNull(),
+    investmentsCents: cents("investments_cents").notNull(),
+    debtCents: cents("debt_cents").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("net_worth_user_day_uq").on(t.userId, t.day), ownerPolicy()],
 );
 
 export const holdings = pgTable(
@@ -396,6 +463,8 @@ export const holdings = pgTable(
     quantity: numeric("quantity", { precision: 24, scale: 8 }).notNull(),
     valueCents: cents("value_cents").notNull(),
     costBasisCents: cents("cost_basis_cents"),
+    /** Fund expense ratio in basis points (0.03% = 3), when known. */
+    expenseRatioBps: integer("expense_ratio_bps"),
     source: text("source").$type<DataSource>().notNull().default("manual"),
     providerSecurityId: text("provider_security_id"),
     asOf: tstz("as_of").notNull().defaultNow(),
