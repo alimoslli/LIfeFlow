@@ -99,6 +99,13 @@
       "when": 1793230079087,
       "tag": "0013_habits",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793230560775,
+      "tag": "0014_subscriptions",
+      "breakpoints": true
     }
   ]
 }

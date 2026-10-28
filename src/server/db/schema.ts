@@ -496,6 +496,13 @@ export const recurringItems = pgTable(
     accountId: uuid("account_id").references(() => financialAccounts.id, { onDelete: "set null" }),
     status: text("status").$type<"active" | "paused" | "cancelled">().notNull().default("active"),
     source: text("source").$type<DataSource | "detected">().notNull().default("manual"),
+    /** What the user told Jarvis: still using it or not. */
+    usage: text("usage").$type<"using" | "not_using">(),
+    /** A free trial that turns paid on this date. */
+    trialEndsOn: date("trial_ends_on", { mode: "string" }),
+    keptAt: tstz("kept_at"),
+    /** Official cancellation steps found by a live web search (answer + cited sources). */
+    cancelHelp: jsonb("cancel_help").$type<{ answer: string; sources: { title: string; url: string }[]; at: string } | null>(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

@@ -134,6 +134,24 @@ const KINDS: Record<string, (f: F) => Parts> = {
     ask: f.smaller ? `Try ${s(f, "smaller")} for two weeks?` : "Want to make it smaller for a while?",
     mood: "info",
   }),
+  subscription_price_up: (f) => ({
+    headline: `${s(f, "name")} went up`,
+    fact: `${s(f, "name")} went from ${usd(n(f, "fromCents"))} to ${usd(n(f, "toCents"))}, ${usd(n(f, "yearlyExtraCents"))} more a year.`,
+    ask: "Keep it, or want cancel steps?",
+    mood: "warn",
+  }),
+  trial_ending: (f) => ({
+    headline: `${s(f, "name")} trial ends ${n(f, "daysLeft") === 0 ? "today" : `in ${plural(n(f, "daysLeft"), "day")}`}`,
+    fact: `Your ${s(f, "name")} free trial turns into ${usd(n(f, "thenCents"))} ${n(f, "daysLeft") === 0 ? "today" : `in ${plural(n(f, "daysLeft"), "day")}`}.`,
+    ask: "Keep it or cancel before then?",
+    mood: "warn",
+  }),
+  new_subscription: (f) => ({
+    headline: `New recurring charge: ${s(f, "name")}`,
+    fact: `${s(f, "name")} charged you about ${usd(n(f, "amountCents"))} ${n(f, "count")} times, on a regular schedule.`,
+    ask: "Want to track it with your subscriptions?",
+    mood: "info",
+  }),
   consent: () => ({
     headline: "Can I learn from your answers?",
     fact: "I'd like to notice which of my messages help and which you skip, so I speak up at better times and less about what you don't need.",

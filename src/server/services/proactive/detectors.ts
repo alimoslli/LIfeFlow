@@ -13,6 +13,7 @@ import { merchantKey } from "../finance/recurring-detect";
 import { listAssignments } from "../school";
 import { listShifts } from "../work";
 import { getAgenda, freeSlots } from "../calendar";
+import { subscriptionsOverview } from "../finance/subscriptions";
 import { eveningWrap, goalForecast, habitCoach, monthlyReview, morningBrief, weeklyReview } from "./reviews";
 
 /** Something worth saying, with the facts behind it. Wording happens later (lib/jarvis-voice). */
@@ -349,6 +350,43 @@ const unusualSpend: Detector = async ({ scope, today }) => {
   return out.slice(0, 1);
 };
 
+/** Subscriptions: price increases, trials about to turn paid, and new recurring charges. */
+const subscriptionWatch: Detector = async ({ scope, today }) => {
+  const o = await subscriptionsOverview(scope, today);
+  const out: Candidate[] = [];
+  for (const f of o.flags) {
+    if (f.kind === "price_up")
+      out.push({
+        kind: "subscription_price_up",
+        topic: "money",
+        dedupeKey: `sub_price:${f.id}:${f.toCents}`,
+        facts: { name: f.name, fromCents: f.fromCents, toCents: f.toCents, yearlyExtraCents: f.yearlyExtraCents },
+        action: { type: "open", label: "Review it", href: "/finances/subscriptions" },
+        priority: 70,
+      });
+    if (f.kind === "trial")
+      out.push({
+        kind: "trial_ending",
+        topic: "money",
+        dedupeKey: `trial:${f.id}:${today.slice(0, 7)}`,
+        facts: { name: f.name, daysLeft: f.daysLeft, thenCents: f.thenCents },
+        action: { type: "open", label: "Keep or cancel", href: "/finances/subscriptions" },
+        priority: f.daysLeft <= 2 ? 90 : 70,
+        urgent: f.daysLeft <= 2,
+      });
+  }
+  for (const c of o.found.slice(0, 1))
+    out.push({
+      kind: "new_subscription",
+      topic: "money",
+      dedupeKey: `sub_found:${c.merchantKey}`,
+      facts: { name: c.name, amountCents: -c.averageAmountCents, count: c.occurrences },
+      action: { type: "open", label: "Take a look", href: "/finances/subscriptions" },
+      priority: 50,
+    });
+  return out;
+};
+
 export const DETECTORS = {
   spendingPace,
   goalMilestones,
@@ -366,13 +404,14 @@ export const DETECTORS = {
   monthlyReview,
   goalForecast,
   habitCoach,
+  subscriptionWatch,
 };
 export type DetectorName = keyof typeof DETECTORS;
 
 /** Which detectors run when. Events run right after the change that triggered them. */
 export const RUNS: Record<string, DetectorName[]> = {
   morning: ["morningBrief", "monthlyReview", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
-  midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks"],
+  midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks", "subscriptionWatch"],
   // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
   evening: ["eveningWrap", "weeklyReview", "goalForecast", "habitCoach", "taskStreak", "goalMilestones", "deadlineConflicts"],
   transaction: ["spendingPace", "unusualSpend", "billsDue", "goalMilestones"],
