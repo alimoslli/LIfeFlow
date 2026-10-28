@@ -1,0 +1,12 @@
+# Generated or vendored: never reformat
+.next/
+node_modules/
+drizzle/
+public/
+test-results/
+playwright-report/
+package-lock.json
+next-env.d.ts
+# Prose and data files keep their hand-written layout
+*.md
+*.sql

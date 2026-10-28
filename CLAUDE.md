@@ -26,8 +26,13 @@
 - Animate transform/opacity only, always honour `prefersReducedMotion()`, and never make content depend on an animation finishing.
 - New accounts get `/welcome` (onboarding) and then the tour. Tests use `signUp()`, which skips both. The splash is off under automation unless `?splash=1`.
 
+## Formatting & plugins
+- Prettier is pinned (`prettier@3.9.10`, `.prettierrc.json`, printWidth 160). `npm run format` formats; `npm run check` fails on unformatted code. Markdown, SQL, `drizzle/` and generated files are ignored (`.prettierignore`).
+- The project enables the `everything-claude-code` plugin (`.claude/settings.json`). Its hooks run Prettier and `tsc` after edits; that's expected. Decision records still go in `docs/adr/` (the owner chose to keep them over the plugin's "no new .md files" hook).
+- The reformat commit is listed in `.git-blame-ignore-revs` (use `git blame --ignore-revs-file .git-blame-ignore-revs`).
+
 ## Verify before finishing
-`npm run typecheck && npm run lint && npm test`, then `npm run build && npm run test:e2e` for UI/flow changes.
+`npm run check` (typecheck, lint, format check, unit + integration tests), then `npm run build && npm run test:e2e` for UI/flow changes. If tests report "No test files found" with a `charCodeAt` startup error, Postgres isn't running (`service postgresql start`).
 
 ## Product rules (from the owner)
 - Phone-first app that must also work perfectly on the web. Four places: Today, Plan, Jarvis, Money. Detail pages hang off Plan/Money.
