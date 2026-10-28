@@ -763,6 +763,43 @@ export const memories = pgTable(
   (t) => [index("memories_user_idx").on(t.userId, t.status), ownerPolicy()],
 );
 
+// ---------------------------------------------------------------------------
+// Health (Apple Health via the iOS Shortcut)
+
+export type HealthMetric =
+  "steps" | "active_energy_kcal" | "exercise_minutes" | "sleep_hours" | "resting_heart_rate" | "weight_kg" | "distance_km" | "mindful_minutes";
+
+/** One value per metric per local day. Upserted, so re-sending a day replaces it. */
+export const healthSamples = pgTable(
+  "health_samples",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    metric: text("metric").$type<HealthMetric>().notNull(),
+    day: date("day").notNull(),
+    value: numeric("value", { mode: "number" }).notNull(),
+    source: text("source").$type<DataSource>().notNull().default("apple_health"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex("health_samples_user_metric_day_uq").on(t.userId, t.metric, t.day), ownerPolicy()],
+);
+
+/** Personal keys the iOS Shortcut uses to send Health data. Only SHA-256 hashes are stored. Looked up before a user context exists, so no RLS (like sessions). */
+export const healthTokens = pgTable(
+  "health_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    name: text("name").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    lastUsedAt: tstz("last_used_at"),
+    revokedAt: tstz("revoked_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("health_tokens_hash_uq").on(t.tokenHash), index("health_tokens_user_idx").on(t.userId)],
+);
+
 export type JarvisRunOutcome = "ok" | "error" | "cancelled" | "step_limit";
 
 /**

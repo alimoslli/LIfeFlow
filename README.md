@@ -15,7 +15,7 @@ BudgetFlow is a personal life operating system: **finances, wealth, school, work
 | **First run** | Opening splash (once per session), a quick skippable setup (classes, job, checking balance, study time, Jarvis style, theme) saved through the normal services, and a 4-step guided tour you can replay from Settings. Calm GSAP motion throughout, and none with "reduce motion" |
 | **Accounts** | Sign up / sign in (email + password, strength-checked with a live meter), optional **two-step sign-in** with an authenticator app + one-time backup codes, sessions, password change, sign out other devices, delete account, full data export |
 | **Home** | Today's schedule, priority tasks, deadlines, money snapshot, goals, alerts (overdue work, conflicts, budgets over limit) |
-| **Jarvis** | Streaming chat with persistent conversations, 49 tools across every module, confirmation step for deletions, file/screenshot attachments, opens from any page with module context (⌘/Ctrl + J). **Memory you control:** Jarvis suggests what to remember and you tap Keep. It saves directly only when you say "remember…". Corrections keep history, and only memories relevant to a request are sent. **Measured:** every request records speed, tokens, tool success and (if prices are set) cost. See [docs/jarvis-intelligence.md](docs/jarvis-intelligence.md) |
+| **Jarvis** | Streaming chat with persistent conversations, 55 tools across every module, **live voice calls** with a voice you choose, and a name and personality you choose, confirmation step for deletions, file/screenshot attachments, opens from any page with module context (⌘/Ctrl + J). **Memory you control:** Jarvis suggests what to remember and you tap Keep. It saves directly only when you say "remember…". Corrections keep history, and only memories relevant to a request are sent. **Measured:** every request records speed, tokens, tool success and (if prices are set) cost. See [docs/jarvis-intelligence.md](docs/jarvis-intelligence.md) |
 | **School** | Courses, per-course pages, assignments/exams with due dates and views (today, this week, upcoming, overdue, completed), materials, linked notes. Jarvis imports assignments from pasted text or screenshots into real records, skips duplicates, and asks when a course is ambiguous |
 | **Tasks** | Tasks with subtasks, priorities, due dates, links to courses and projects |
 | **Calendar** | Week grid and agenda combining events (including weekly recurring classes), work shifts, assignment deadlines and task due dates; conflict detection; free-time finder for Jarvis |
@@ -23,9 +23,11 @@ BudgetFlow is a personal life operating system: **finances, wealth, school, work
 | **Wealth** | Net worth, investment and retirement accounts, manually entered holdings and allocation |
 | **Work** | Jobs and pay rates, scheduled shifts, recorded punches, estimated earnings with weekly overtime, paychecks (kept separate from estimates) |
 | **Notes** | Markdown notes with full-text search, tags, and links to projects and courses |
+| **Connections** | **Gmail** (search, read, drafts, send only after you confirm), **Google Calendar** (sync, add after confirm), **Apple Health** (daily totals from your own iPhone Shortcut). See [docs/integrations.md](docs/integrations.md) |
+| **Legal** | Public Privacy Policy (`/privacy`) and Terms of Use (`/terms`) |
 | **Settings** | Profile, time zone, preferences used by Jarvis, memory management, honest integration status, audit log |
 
-**Not built yet (no fake versions exist):** Plaid bank sync, Canvas sync, UKG Pro, Google Calendar, email, voice. Each is planned in `PLAN.md`; every module works with manual entry or Jarvis in the meantime.
+**Not built yet (no fake versions exist):** Plaid bank sync, Canvas sync, UKG Pro, Outlook. Each is planned in `PLAN.md`; every module works with manual entry or Jarvis in the meantime.
 
 ---
 
@@ -131,6 +133,10 @@ See [`.env.example`](.env.example). Summary:
 | `TEST_DATABASE_URL` / `E2E_DATABASE_URL` | tests | Must be different databases; tests wipe them |
 | `SEED_TEST_ACCOUNT` | no | On Vercel: `keep` creates the demo/test account once and keeps it; `refresh` recreates it with current dates on the next deploy |
 | `DEMO_EMAIL` / `DEMO_PASSWORD` | with `SEED_TEST_ACCOUNT` | Login for the test account (password 10+ chars) |
+| `OPENAI_REALTIME_MODEL` | no | Voice model, default `gpt-realtime`. Voice uses `OPENAI_API_KEY` |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | for Gmail + Calendar | From Google Cloud Console, see docs/integrations.md |
+| `APP_URL` | for Google | Your site, e.g. `https://lifeflow.example.com`, used for the OAuth redirect |
+| `LEGAL_OPERATOR_NAME` / `LEGAL_CONTACT_EMAIL` / `LEGAL_STATE` | recommended | Shown in the Privacy Policy and Terms |
 | `PLAID_*`, `CANVAS_BASE_URL` | later | Reserved for upcoming integrations |
 
 ---

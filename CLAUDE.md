@@ -38,6 +38,11 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 ## Sign-in security (see ADR 0009)
 - New passwords go through `checkPassword` (server-enforced; `NewPasswordField` in forms). Sign-in with 2FA on goes through `login_challenges` + `/login/verify`; never start a session before `completeLoginChallenge` succeeds. Rate-limit keys use `clientIp()` (`ipFromHeaders`), never the first X-Forwarded-For entry.
 
+## Integrations (see ADR 0010)
+- Google calls go through `src/server/integrations/google.ts` (injectable `fetch` for tests). Sending email and adding Google events are `confirm` tools; report success only with the provider's id. Email content is wrapped as untrusted.
+- Apple Health arrives only via `/api/apple-health/ingest` (personal key, hash-stored, public route in proxy.ts) into `ingestHealth`. Don't diagnose in prompts or tools.
+- Voice tool calls go through `/api/jarvis/voice/tool` → `executeToolCall`, the same gate as chat. The real OpenAI key never reaches the browser; only the ephemeral client secret does.
+
 ## Glass design (see ADR 0008)
 - Cards use `bg-surface`/`shadow-soft` as before; inside the app shell (`.lf-glass`) these become frosted glass automatically. Don't hard-code white/black card backgrounds.
 - 3D tilt: add `data-tilt` to a card (not to an element with `animate-rise`; wrap instead). Green feature cards: `bg-hero` (+ `lf-sheen` for the light sweep, needs `relative overflow-hidden`).

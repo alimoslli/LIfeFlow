@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { ExternalLink } from "lucide-react";
 import { Badge, Card } from "@/components/ui/surface";
 import { formatIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
+import { series } from "@/server/db/series";
+import { healthSummary, listHealthTokens } from "@/server/services/health";
 import { integrationStatus } from "@/server/services/integrations";
+import { AppleHealthCard } from "./apple-health-card";
 import { GoogleCard } from "./google-card";
 
 export const metadata: Metadata = { title: "Integrations" };
@@ -20,7 +24,18 @@ const GOOGLE_RESULT: Record<string, { tone: "success" | "danger" | "warning"; te
 
 export default async function IntegrationsSettings({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
   const { google: result } = await searchParams;
-  const d = await withCurrentUser(async (s, u) => ({ list: await integrationStatus(s), tz: u.timezone }));
+  const d = await withCurrentUser(async (s, u) => {
+    const [list, keys, health] = await series(
+      () => integrationStatus(s),
+      () => listHealthTokens(s),
+      () => healthSummary(s, u.timezone, 1),
+    );
+    return { list, keys, lastHealth: health.lastReceivedAt, tz: u.timezone };
+  });
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost";
+  const proto = h.get("x-forwarded-proto") ?? (/^(localhost|127\.)/.test(host) ? "http" : "https");
+  const origin = process.env.APP_URL?.trim().replace(/\/$/, "") || `${proto}://${host}`;
   const banner = result ? GOOGLE_RESULT[result] : undefined;
   const google = d.list.find((i) => i.provider === "google");
   return (
@@ -41,6 +56,16 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
           }
         />
       )}
+      <AppleHealthCard
+        keys={d.keys.map((k) => ({
+          id: k.id,
+          name: k.name,
+          created: formatIn(k.createdAt, d.tz, "MMM d"),
+          lastUsed: k.lastUsedAt ? formatIn(k.lastUsedAt, d.tz, "MMM d, h:mm a") : null,
+        }))}
+        url={`${origin}/api/apple-health/ingest`}
+        lastReceived={d.lastHealth ? formatIn(d.lastHealth, d.tz, "MMM d, h:mm a") : null}
+      />
       <p className="mb-1 text-sm text-text-2">
         Statuses here are exact: nothing is shown as connected unless a live connection exists. Integrations that aren&apos;t built yet are labelled “Planned”,
         and every module works with manual entry meanwhile.

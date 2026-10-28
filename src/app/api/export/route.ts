@@ -53,6 +53,7 @@ export async function GET(req: Request) {
         messages: schema.messages,
         jarvisRuns: schema.jarvisRuns,
         integrations: schema.integrations,
+        health: schema.healthSamples,
       } as const;
       const out: Record<string, unknown> = {
         exportedAt: new Date().toISOString(),

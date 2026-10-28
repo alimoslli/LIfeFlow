@@ -48,6 +48,7 @@ const LABELS: Record<string, string> = {
   send_email: "Preparing to send email",
   sync_google_calendar: "Syncing Google Calendar",
   add_google_calendar_event: "Preparing to add to Google Calendar",
+  get_health_summary: "Checking your health data",
   save_memory: "Remembering",
   update_memory: "Updating memory",
   list_memories: "Reading memory",

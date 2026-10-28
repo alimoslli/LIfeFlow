@@ -24,9 +24,16 @@ All integrations will follow one pattern:
 - **Realistic options:** (1) if your UKG mobile app or web portal can export or sync your schedule to a calendar (ICS), import that feed; (2) screenshot or paste the schedule into Jarvis, which already calls `add_shifts`; (3) a direct API connection only with employer-issued credentials.
 - Scheduled shifts, recorded punches, estimated wages, and actual paychecks/deposits are stored separately and must stay that way.
 
-## Google Calendar / ICS (Calendar)
-- Google Cloud project → OAuth client (web) → `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`; scope `calendar.readonly` first. Public ICS feeds can be imported without OAuth.
+## Google: Gmail + Google Calendar (built, ADR 0010)
+Setup (once, in Google Cloud Console):
+1. Create a project. Enable **Gmail API** and **Google Calendar API**.
+2. OAuth consent screen: External, app name LifeFlow, your support email, Privacy Policy `https://<site>/privacy`, Terms `https://<site>/terms`. Add scopes `gmail.readonly`, `gmail.compose`, `calendar.events`. Leave it in **Testing** and add yourself as a test user.
+3. Credentials → OAuth client ID → Web application. Authorized redirect URI: `https://<site>/api/integrations/google/callback`.
+4. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `APP_URL=https://<site>` and `ENCRYPTION_KEY` on the server.
+- Gmail scopes are "restricted". Testing mode is fine for you (refresh tokens for test users expire after 7 days, so you may need to reconnect weekly). A public launch needs Google verification and a security assessment.
+- Jarvis searches and reads email (as untrusted content), saves drafts to Gmail, and **sends only after you press Confirm**, reporting Gmail's message id. Calendar: synced mirror of the past 7 / next 60 days; adding events needs Confirm.
+- Outlook is not built.
 
-## Email (Gmail / Outlook)
-- Gmail read scopes are "restricted". For personal use, the OAuth app can stay in Testing mode with you as a test user. A public launch needs Google verification and a security assessment.
-- Jarvis may search, summarize, extract deadlines, and draft. **Sending** requires your confirmation and is reported only after the provider confirms it. Today the `draft_email` tool only prepares text and says plainly that nothing was sent.
+## Apple Health (built, ADR 0010)
+- No API key and no Apple account needed: Settings → Integrations → Apple Health → create a key, then follow the in-app Shortcut steps. The Shortcut POSTs daily totals to `/api/apple-health/ingest` with `Authorization: Bearer <key>`.
+- A native iOS app (HealthKit) would need the Apple Developer Program ($99/year) and App Review.

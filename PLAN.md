@@ -2,6 +2,9 @@
 
 Last updated: 2026-10-28. Status keys: ✅ done and tested · 🟡 partial · ⬜ not started · 🔑 blocked on credentials/access
 
+## Voice, Google, Apple Health, legal pages, custom assistant ✅ (2026-10-28, ADR 0010)
+Privacy Policy and Terms (public, operator details from `LEGAL_*`), customizable assistant (name, personality, notes, voice), live voice calls (OpenAI Realtime over WebRTC, same tools and Confirm gate), Google OAuth with Gmail search/read/draft/send-with-confirm and Calendar sync/add-with-confirm, Apple Health via the user's iOS Shortcut (personal keys, daily totals, `get_health_summary`). Verified: 173 unit/integration tests and 20 e2e tests, against fake Google/OpenAI. **Not yet verified live:** needs deployment with real Google and OpenAI credentials.
+
 ## Premium feel — splash, onboarding, tour, motion ✅ (2026-10-28, ADR 0007)
 GSAP-based motion system (`src/components/motion`), opening splash, `/welcome` first-run setup (one transaction through existing services), guided tour (replay in Settings), count-ups, sliding tab indicator, animated sheets/drawer, page cross-fades, shimmer skeletons. Verified: 124 unit/integration tests, 15 e2e tests (desktop + phone), and phone recordings in light and dark. Base44 feature review still pending: `budgetflow.studio` is not reachable from the build workspace.
 
@@ -61,17 +64,17 @@ Needs: your school's Canvas URL and either a personal access token (if your scho
 - Sync courses, assignments (due dates, points, URLs), and planner items into `courses`/`assignments` with `source='canvas'` and provider IDs (dedupe against manual entries).
 - Connection card at the bottom of School (placeholder already there).
 
-## Milestone 4 — Calendar providers ⬜🔑
-Google Calendar (OAuth) read sync first, then two-way. ICS subscription import as a no-OAuth fallback.
+## Milestone 4 — Calendar providers 🟡
+Google Calendar ✅ (sync + add with confirm). Outlook and ICS subscription import as a no-OAuth fallback.
 
 ## Milestone 5 — UKG Pro ⬜🔑
 API access is normally issued to the employer, not to individual employees. Plan: ICS/schedule export import if your employer's UKG enables it; otherwise keep Jarvis screenshot import plus manual entry. Build a direct integration only if employer-issued credentials become available.
 
-## Milestone 6 — Email ⬜🔑
-Gmail/Outlook OAuth: search, summarize, find deadlines, turn messages into tasks, draft replies. Sending only after explicit confirmation and provider-confirmed success. Gmail restricted scopes need Google verification for anything beyond personal testing use.
+## Milestone 6 — Email 🟡
+Gmail ✅ (ADR 0010). Outlook still to do. Gmail/Outlook OAuth: search, summarize, find deadlines, turn messages into tasks, draft replies. Sending only after explicit confirmation and provider-confirmed success. Gmail restricted scopes need Google verification for anything beyond personal testing use.
 
 ## Milestone 7 — Polish & scale
 Notifications/reminders (web push, email digest), background jobs for syncs, report exports (PDF), forecasting improvements, portfolio history, recurring event exceptions, accessibility audit, observability (error tracking), backups.
 
-## Milestone 8 — Voice
+## Milestone 8 — Voice ✅ (ADR 0010)
 The provider interface (`src/server/jarvis/providers`) and the event stream are transport-agnostic. Add speech-to-text input and text-to-speech output (or OpenAI's realtime API) on top of the same tools and agent loop.
