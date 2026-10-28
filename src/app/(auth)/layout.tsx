@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BookOpen, Split, Wallet } from "lucide-react";
 import { Mark } from "@/components/shell/app-shell";
 
@@ -12,7 +13,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="flex flex-1 items-center">
           <div className="animate-rise mx-auto w-full max-w-sm py-10">{children}</div>
         </div>
-        <p className="text-center text-xs text-muted">Your data stays private to your account.</p>
+        <p className="text-center text-xs text-muted">
+          Your data stays private to your account. ·{" "}
+          <Link href="/privacy" className="hover:text-text">
+            Privacy
+          </Link>{" "}
+          ·{" "}
+          <Link href="/terms" className="hover:text-text">
+            Terms
+          </Link>
+        </p>
       </div>
 
       {/* Product preview on larger screens */}
@@ -30,7 +40,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </svg>
         <div className="relative flex h-full flex-col justify-center px-14 xl:px-20">
           <p className="max-w-md font-display text-[44px] leading-[1.06] font-medium tracking-tight text-white">Your whole life, made simple.</p>
-          <p className="mt-4 max-w-sm text-[15px] text-white/75">Every morning, LifeFlow tells you what matters — and Jarvis helps you handle it.</p>
+          <p className="mt-4 max-w-sm text-[15px] text-white/75">Every morning, LifeFlow tells you what matters, and your assistant helps you handle it.</p>
           <div className="mt-10 flex max-w-md flex-col gap-3">
             <Preview
               icon={<Split className="h-[18px] w-[18px]" />}

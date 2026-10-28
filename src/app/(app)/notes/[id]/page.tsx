@@ -57,7 +57,7 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
         action={saveNoteAction.bind(null, d.note.id)}
         note={d.note}
         projects={d.projects.map((p) => ({ id: p.id, name: p.name }))}
-        courses={d.courses.map((c) => ({ id: c.id, name: c.code ? `${c.code} — ${c.name}` : c.name }))}
+        courses={d.courses.map((c) => ({ id: c.id, name: c.code ? `${c.code} · ${c.name}` : c.name }))}
       />
     </div>
   );

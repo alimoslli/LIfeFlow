@@ -76,7 +76,7 @@ const examRule: Rule = (s) => {
       id: `exam-${exam.id}`,
       tone: daysAway <= 3 ? "attention" : "heads-up",
       icon: "book",
-      text: `${exam.course} ${exam.kind} ${daysAway === 0 ? "is today" : `is ${dayName(date, s.today)}`}${exam.kind === "exam" ? "" : ` — ${exam.title}`}.`,
+      text: `${exam.course} ${exam.kind} ${daysAway === 0 ? "is today" : `is ${dayName(date, s.today)}`}${exam.kind === "exam" ? "" : `: ${exam.title}`}.`,
       detail: daysAway > 0 ? windows : undefined,
       action: {
         label: "Plan study time",
@@ -96,7 +96,7 @@ const busyDayRule: Rule = (s) => {
       id: "busy-tomorrow",
       tone: "heads-up",
       icon: "calendar",
-      text: `Tomorrow is packed — ${Math.round(minutes / 60)} hours already booked.`,
+      text: `Tomorrow is packed: ${Math.round(minutes / 60)} hours already booked.`,
       action: { label: "Prep tonight", prompt: "Tomorrow is busy. What should I get done tonight so it goes smoothly?" },
       score: 55,
     },

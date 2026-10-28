@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * session cookie exists; every page, action and API route still validates
  * the session on the server.
  */
-const PUBLIC = ["/login", "/signup", "/api/health"];
+const PUBLIC = ["/login", "/signup", "/privacy", "/terms", "/api/health"];
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;

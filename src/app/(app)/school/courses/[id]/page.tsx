@@ -36,7 +36,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
   });
   if (!d) notFound();
   const c = d.course;
-  const label = c.code ? `${c.code} — ${c.name}` : c.name;
+  const label = c.code ? `${c.code} · ${c.name}` : c.name;
 
   return (
     <>

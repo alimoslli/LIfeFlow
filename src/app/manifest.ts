@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "LifeFlow",
     short_name: "LifeFlow",
-    description: "Your money, school, work and time — with Jarvis.",
+    description: "Your money, school, work and time, with a personal AI assistant.",
     start_url: "/",
     scope: "/",
     display: "standalone",

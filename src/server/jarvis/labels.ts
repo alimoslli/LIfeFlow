@@ -80,12 +80,12 @@ export function describeToolResult(name: string, r: ToolResultRecord): { summary
       const summaries: Record<string, string> = {
         saved: "Saved to memory",
         updated: "Memory updated",
-        proposed: "Suggested — waiting for your OK",
+        proposed: "Suggested, waiting for your OK",
         already_known: "Already remembered",
         already_suggested: "Already waiting for your OK",
         previously_dismissed: "Not suggested again (you dismissed it)",
-        suggestions_off: "Not saved — suggestions are off",
-        too_many_pending: "Not saved — too many suggestions waiting",
+        suggestions_off: "Not saved: suggestions are off",
+        too_many_pending: "Not saved: too many suggestions waiting",
         unchanged: "Nothing to change",
         approved_by_user: "Saved to memory (you approved)",
         dismissed_by_user: "Suggestion dismissed",
@@ -93,7 +93,7 @@ export function describeToolResult(name: string, r: ToolResultRecord): { summary
       return { summary: summaries[String(d.status)] ?? "Done", viewAt: "/settings/memory" };
     }
     case "forget_memory":
-      return { summary: "Archived — restore it in Settings", viewAt: "/settings/memory" };
+      return { summary: "Archived. Restore it in Settings", viewAt: "/settings/memory" };
     case "save_note":
       return { summary: `Note ${d.action ?? "saved"}`, viewAt };
     case "draft_email":

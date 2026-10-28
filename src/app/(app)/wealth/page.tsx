@@ -133,7 +133,7 @@ export default async function WealthPage() {
                           {h.costBasisCents != null ? (
                             <Money cents={h.valueCents - h.costBasisCents} signed className={h.valueCents < h.costBasisCents ? "text-danger" : undefined} />
                           ) : (
-                            <span className="text-muted">—</span>
+                            <span className="text-muted">n/a</span>
                           )}
                         </td>
                         <td className="px-3 py-2">

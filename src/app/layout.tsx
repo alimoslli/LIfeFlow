@@ -11,7 +11,7 @@ const newsreader = Newsreader({ variable: "--font-newsreader", subsets: ["latin"
 
 export const metadata: Metadata = {
   title: { default: "LifeFlow", template: "%s · LifeFlow" },
-  description: "Your personal life operating system — money, school, work and time, with Jarvis.",
+  description: "Your personal life operating system: money, school, work, health and time, with a personal AI assistant.",
   applicationName: "LifeFlow",
   appleWebApp: { capable: true, title: "LifeFlow", statusBarStyle: "default" },
   icons: { apple: "/icons/apple-touch-icon.png" },

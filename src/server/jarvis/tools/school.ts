@@ -31,7 +31,7 @@ function presentAssignment(
   return {
     id: a.id,
     title: a.title,
-    course: a.course.code ? `${a.course.code} — ${a.course.name}` : a.course.name,
+    course: a.course.code ? `${a.course.code} · ${a.course.name}` : a.course.name,
     courseId: a.course.id,
     kind: a.kind,
     status: a.status,

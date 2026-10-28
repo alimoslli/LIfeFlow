@@ -202,7 +202,7 @@ function TaskDetail({
               <option value="">None</option>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.code ? `${c.code} — ${c.name}` : c.name}
+                  {c.code ? `${c.code} · ${c.name}` : c.name}
                 </option>
               ))}
             </Select>

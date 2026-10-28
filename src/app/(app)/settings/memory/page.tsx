@@ -17,7 +17,7 @@ import { EditMemory } from "./edit-memory";
 
 export const metadata: Metadata = { title: "Jarvis & memory" };
 
-const seconds = (ms: number | null) => (ms == null ? "—" : `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`);
+const seconds = (ms: number | null) => (ms == null ? "None yet" : `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`);
 const compact = (n: number) => new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n);
 
 export default async function MemorySettings() {
@@ -240,12 +240,12 @@ export default async function MemorySettings() {
           />
           <Stat
             label="Actions that worked"
-            value={toolRate == null ? "—" : `${toolRate}%`}
+            value={toolRate == null ? "None yet" : `${toolRate}%`}
             hint={st.toolCalls ? `${st.toolCalls - st.toolErrors} of ${st.toolCalls}` : undefined}
           />
           <Stat
             label="AI usage"
-            value={st.inputTokens + st.outputTokens ? `${compact(st.inputTokens + st.outputTokens)} tokens` : "—"}
+            value={st.inputTokens + st.outputTokens ? `${compact(st.inputTokens + st.outputTokens)} tokens` : "None yet"}
             hint={st.costMicros != null ? `≈ $${(st.costMicros / 1e6).toFixed(2)} estimated` : st.runs ? "cost not configured" : undefined}
           />
         </div>

@@ -44,6 +44,19 @@ export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: stri
         )}
       </label>
       <input ref={tzRef} type="hidden" name="timezone" defaultValue="UTC" />
+      {mode === "signup" && (
+        <p className="text-xs text-muted">
+          By creating an account, you agree to the{" "}
+          <Link href="/terms" className="underline underline-offset-2 hover:text-text">
+            Terms of Use
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="underline underline-offset-2 hover:text-text">
+            Privacy Policy
+          </Link>
+          .
+        </p>
+      )}
       {next && <input type="hidden" name="next" value={next} />}
       <button
         type="submit"

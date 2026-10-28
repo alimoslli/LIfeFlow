@@ -78,7 +78,7 @@ export function AssignmentDialog({ action, courses, defaultCourseId }: { action:
             <Select id="a-course" name="courseId" required defaultValue={defaultCourseId}>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.code ? `${c.code} — ${c.name}` : c.name}
+                  {c.code ? `${c.code} · ${c.name}` : c.name}
                 </option>
               ))}
             </Select>

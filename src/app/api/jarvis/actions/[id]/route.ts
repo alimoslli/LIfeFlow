@@ -37,7 +37,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
       status === "executed"
         ? `Confirmed and done: ${action.summary.replace(/\?$/, "")}.`
         : status === "cancelled"
-          ? "Cancelled — nothing was changed."
+          ? "Cancelled. Nothing was changed."
           : (result.error ?? "Failed.");
     await withUser(user.id, async (s) => {
       // Keep the transcript truthful for the model's next turn.

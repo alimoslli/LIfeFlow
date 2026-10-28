@@ -145,7 +145,7 @@ function Timeline({ items, tz, now }: { items: AgendaItem[]; tz: string; now: Da
         const deadline = !i.blocksTime;
         return (
           <li key={i.key} className={cn("flex gap-4 py-2.5", past && "opacity-45")}>
-            <span className="tabular w-16 shrink-0 pt-0.5 text-right text-sm text-muted">{i.allDay ? "—" : formatIn(i.startsAt, tz, "h:mm a")}</span>
+            <span className="tabular w-16 shrink-0 pt-0.5 text-right text-sm text-muted">{i.allDay ? "All day" : formatIn(i.startsAt, tz, "h:mm a")}</span>
             <span className="relative flex w-3 shrink-0 justify-center pt-2">
               <span
                 className={cn("h-2.5 w-2.5 rounded-full", deadline && "border-2 bg-transparent")}

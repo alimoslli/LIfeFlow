@@ -29,7 +29,7 @@ export default async function GoalsPage() {
           {d.goals.length === 0 && (
             <Card>
               <EmptyState icon={<PiggyBank />} title="No goals yet">
-                An emergency fund, a trip, a laptop — set a target and track it. Link a savings account to track its balance automatically.
+                An emergency fund, a trip, a laptop. Set a target and track it. Link a savings account to track its balance automatically.
               </EmptyState>
             </Card>
           )}

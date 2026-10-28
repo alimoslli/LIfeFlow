@@ -327,7 +327,7 @@ export async function importAssignments(
       continue;
     }
     if (item.dueDate && item.dueDate < addDaysStr(today, -30)) {
-      out.warnings.push(`"${item.title}" is due ${item.dueDate}, more than 30 days ago — check the year.`);
+      out.warnings.push(`"${item.title}" is due ${item.dueDate}, more than 30 days ago. Check the year.`);
     }
     try {
       const res = await createAssignment(scope, tz, { ...item, courseId: course.id }, opts.source ?? "manual");

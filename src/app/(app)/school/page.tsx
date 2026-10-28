@@ -102,7 +102,7 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
       <Tabs current={view} items={VIEWS.map((v) => ({ key: v.key, label: v.label, href: `/school?view=${v.key}` }))} />
       <Card className="mb-10">
         {d.list.length === 0 ? (
-          <EmptyState icon={<BookOpen />} title={view === "overdue" ? "Nothing overdue — nice." : "Nothing here"}>
+          <EmptyState icon={<BookOpen />} title={view === "overdue" ? "Nothing overdue. Nice." : "Nothing here"}>
             {view === "completed" ? "Completed assignments will collect here." : "Assignments you or Jarvis add will show up here."}
           </EmptyState>
         ) : (
@@ -117,7 +117,7 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
           <Plug className="hidden h-5 w-5 shrink-0 text-muted sm:block" />
           <p className="flex-1">
             Canvas sync isn&apos;t available in this version yet. It needs your school&apos;s Canvas URL and an access token your school permits. Until then,
-            add work manually or paste it into Jarvis — nothing here is synced or simulated.
+            add work manually or paste it into your assistant. Nothing here is synced or simulated.
           </p>
           <Link href="/settings/integrations" className="shrink-0 text-sm font-medium text-accent hover:underline">
             Integration details

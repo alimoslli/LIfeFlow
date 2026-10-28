@@ -66,3 +66,13 @@ test("two-step sign-in: turn on, then a code is required to sign in", async ({ p
   await page.getByRole("button", { name: "Verify" }).click();
   await page.waitForURL((u) => u.pathname === "/");
 });
+
+test("Privacy Policy and Terms are public and linked from sign-up", async ({ page }) => {
+  await page.goto("/signup");
+  await page.getByRole("link", { name: "Privacy Policy" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Privacy Policy" })).toBeVisible();
+  await expect(page.getByText(/Limited Use requirements/)).toBeVisible();
+  await page.getByRole("navigation").getByRole("link", { name: "Terms" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Terms of Use" })).toBeVisible();
+  expect(await page.locator("article").innerText()).not.toMatch(/[—–]/);
+});

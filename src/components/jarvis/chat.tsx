@@ -264,7 +264,7 @@ export function JarvisChat({
               </div>
               <h2 className="mt-5 font-display text-[34px] leading-tight font-medium tracking-tight">How can I help?</h2>
               <p className="mt-2 text-[15px] text-muted">
-                I can read and update your tasks, schedule, courses, work and finances — and I&apos;ll show you exactly what I changed.
+                I can read and update your tasks, schedule, courses, work and finances, and I&apos;ll show you exactly what I changed.
               </p>
               <div className="mt-7 flex flex-col gap-2">
                 {STARTERS[module].map((s) => (
@@ -434,7 +434,7 @@ function AssistantBubble({
                 )}
                 <span className="text-text-2">{t.label}</span>
                 {t.summary && t.summary !== "Done" && (
-                  <span className={cn("truncate", t.status === "error" ? "text-danger" : "text-muted")}>— {t.summary}</span>
+                  <span className={cn("truncate", t.status === "error" ? "text-danger" : "text-muted")}>· {t.summary}</span>
                 )}
                 {t.viewAt && t.status === "ok" && (
                   <Link href={t.viewAt} className="shrink-0 text-accent hover:underline">
@@ -470,9 +470,9 @@ function AssistantBubble({
                 {c.status === "executed"
                   ? "✓ Done"
                   : c.status === "cancelled"
-                    ? "Cancelled — nothing changed"
+                    ? "Cancelled. Nothing changed"
                     : c.status === "expired"
-                      ? "Expired — nothing changed"
+                      ? "Expired. Nothing changed"
                       : c.resultText}
               </p>
             )}
