@@ -65,7 +65,9 @@ test("offline: cached pages still open, changes save on the phone and sync when 
   await page.goto("/tasks");
   await expect(page.getByRole("status").filter({ hasText: "Synced 2 changes" })).toBeVisible();
   await expect
-    .poll(async () => (await queryAsUser<{ title: string; status: string }>(email, "select title, status from tasks order by title")).map((t) => `${t.title}:${t.status}`))
+    .poll(async () =>
+      (await queryAsUser<{ title: string; status: string }>(email, "select title, status from tasks order by title")).map((t) => `${t.title}:${t.status}`),
+    )
     .toEqual(["Buy milk:todo", "Read chapter 4:done"]);
   await expect(page.getByRole("link", { name: /Buy milk/ })).toBeVisible();
 });
