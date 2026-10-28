@@ -6,6 +6,7 @@ import { messages } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { makeToolContext } from "@/server/jarvis/agent";
+import { moneyLocked } from "@/server/auth/money-lock";
 import { resolvePendingAction } from "@/server/jarvis/executor";
 import { ServiceError } from "@/server/services/errors";
 import { audit } from "@/server/services/audit";
@@ -24,12 +25,12 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     if (!parsed.success) throw new HttpError(400, "Invalid request");
     await enforceRateLimit(`actions:${user.id}`, 30, 60);
 
-    const toolCtx = makeToolContext(user, "00000000-0000-0000-0000-000000000000");
+    const toolCtx = makeToolContext(user, "00000000-0000-0000-0000-000000000000", new Date(), "", await moneyLocked(user));
     let outcome;
     try {
       outcome = await resolvePendingAction(id, parsed.data.decision, toolCtx);
     } catch (e) {
-      if (e instanceof ServiceError) throw new HttpError(e.code === "not_found" ? 404 : 409, e.message);
+      if (e instanceof ServiceError) throw new HttpError(e.code === "not_found" ? 404 : e.code === "forbidden" ? 423 : 409, e.message);
       throw e;
     }
     const { action, status, result } = outcome;

@@ -39,9 +39,11 @@ export type TurnInput = {
   signal?: AbortSignal;
   /** Model prices for cost estimates; omitted ⇒ cost recorded as unknown. */
   prices?: ModelPrices;
+  /** Money is behind the Face ID lock right now (see auth/money-lock). */
+  moneyLocked?: boolean;
 };
 
-export function makeToolContext(user: SessionUser, conversationId: string, now = new Date(), userText = ""): ToolContext {
+export function makeToolContext(user: SessionUser, conversationId: string, now = new Date(), userText = "", moneyLocked = false): ToolContext {
   return {
     userId: user.id,
     tz: user.timezone,
@@ -50,6 +52,7 @@ export function makeToolContext(user: SessionUser, conversationId: string, now =
     conversationId,
     userText,
     memorySuggestions: user.preferences?.memorySuggestions !== false,
+    moneyLocked,
     run: (fn) => withUser(user.id, fn),
   };
 }
@@ -120,7 +123,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       memories.map((m) => m.id),
     ),
   );
-  const ctx = makeToolContext(user, conversation.id, now, input.text);
+  const ctx = makeToolContext(user, conversation.id, now, input.text, input.moneyLocked);
 
   // 3. Model/tool loop
   const turn = provider.startTurn({ system, history, tools: toolSpecs() });

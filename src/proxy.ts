@@ -8,6 +8,9 @@ import { NextResponse, type NextRequest } from "next/server";
 const PUBLIC = [
   "/login",
   "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/api/auth",
   "/privacy",
   "/terms",
   "/api/health",

@@ -1,3 +1,4 @@
+import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Download, MoreHorizontal, Receipt, Search, SlidersHorizontal, Trash2, Wand2 } from "lucide-react";
@@ -24,6 +25,8 @@ type SP = { q?: string; period?: string; from?: string; to?: string; category?: 
 const PAGE = 50;
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const locked = await moneyGate();
+  if (locked) return locked;
   const sp = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
     const [accounts, categories] = await series(

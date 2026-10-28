@@ -1,3 +1,4 @@
+import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -37,6 +38,8 @@ export const metadata: Metadata = { title: "Money" };
 const whole = (c: number) => formatCents(c).replace(/\.\d\d$/, "");
 
 export default async function MoneyPage() {
+  const locked = await moneyGate();
+  if (locked) return locked;
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
     const o = await moneyOverview(s, today);

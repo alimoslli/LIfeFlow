@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition, type ReactNode } from "react";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { PartyPopper, X } from "lucide-react";
 import { Confetti } from "@/components/motion/celebrate";
 import { useShell } from "@/components/shell/app-shell";
@@ -36,13 +36,22 @@ export function CelebrateGoal({ goalId, name, percent }: { goalId: string; name:
       await celebrateMilestoneAction(goalId, percent);
     });
   };
+  // A celebration, not a blocker: it steps aside on its own after a few seconds.
+  const closeRef = useRef(close);
+  useEffect(() => {
+    closeRef.current = close;
+  });
+  useEffect(() => {
+    const t = setTimeout(() => closeRef.current(), 8000);
+    return () => clearTimeout(t);
+  }, []);
   if (!open) return null;
   return (
     <>
       <Confetti />
       <div
         role="status"
-        className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+88px)] z-[71] mx-auto max-w-sm animate-rise rounded-3xl bg-surface p-5 shadow-lift lg:bottom-8"
+        className="fixed inset-x-4 bottom-[calc(var(--tabbar-space)+12px)] z-[71] mx-auto max-w-sm animate-rise rounded-3xl bg-surface p-5 shadow-lift md:bottom-8"
       >
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">

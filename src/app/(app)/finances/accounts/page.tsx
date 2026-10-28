@@ -1,3 +1,4 @@
+import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import { Archive, Landmark } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
@@ -23,6 +24,8 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 export default async function AccountsPage() {
+  const locked = await moneyGate();
+  if (locked) return locked;
   const d = await withCurrentUser(async (s, u) => ({ accounts: await listAccounts(s), banks: await listPlaidConnections(s), tz: u.timezone }));
   const totals = summarizeBalances(d.accounts);
   const groups = Object.keys(TYPE_LABEL)

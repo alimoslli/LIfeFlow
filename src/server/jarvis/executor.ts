@@ -1,3 +1,5 @@
+import { financeTools } from "./tools/finance";
+import { moneyCoachTools } from "./tools/money-coach";
 import { and, eq } from "drizzle-orm";
 import { ZodError } from "zod";
 import { pendingActions, type ToolResultRecord } from "../db/schema";
@@ -31,9 +33,16 @@ export function serializeResult(r: ToolResultRecord): string {
  * RLS-enforced transaction built from the server-side session, regardless of
  * what ids the model supplies.
  */
+const MONEY_TOOLS = new Set([...financeTools, ...moneyCoachTools].map((t) => t.name));
+
 export async function executeToolCall(name: string, rawArgs: string, ctx: ToolContext, callId: string): Promise<ExecOutcome> {
   const tool = getTool(name);
   if (!tool) return { kind: "result", result: { ok: false, error: `Unknown tool "${name}"` } };
+  if (ctx.moneyLocked && MONEY_TOOLS.has(name))
+    return {
+      kind: "result",
+      result: { ok: false, error: "Money is locked with Face ID on this device. Tell the user to open the Money tab and unlock it, then ask again." },
+    };
   let args: unknown;
   try {
     args = rawArgs ? JSON.parse(rawArgs) : {};
@@ -109,6 +118,8 @@ export async function resolvePendingAction(id: string, decision: "confirm" | "ca
   } else if (decision === "cancel") {
     status = "cancelled";
     result = { ok: false, error: "The user cancelled this action; nothing was changed." };
+  } else if (ctx.moneyLocked && MONEY_TOOLS.has(action.toolName)) {
+    throw new ServiceError("Money is locked. Unlock it in the Money tab with Face ID, then confirm again.", "forbidden");
   } else {
     result = await runTool(action.toolName, action.args, { ...ctx, conversationId: action.conversationId });
     status = result.ok ? "executed" : "failed";

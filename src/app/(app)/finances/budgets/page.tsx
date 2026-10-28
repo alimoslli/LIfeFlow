@@ -1,3 +1,4 @@
+import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, PieChart, Trash2 } from "lucide-react";
@@ -29,6 +30,8 @@ const PLAN_NAMES = [
 ] as const;
 
 export default async function BudgetsPage({ searchParams }: { searchParams: Promise<{ month?: string; plan?: string }> }) {
+  const locked = await moneyGate();
+  if (locked) return locked;
   const sp = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);

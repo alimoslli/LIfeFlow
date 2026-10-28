@@ -1,3 +1,4 @@
+import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import { Pause, Play, Repeat, X } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
@@ -15,6 +16,8 @@ export const metadata: Metadata = { title: "Bills & subscriptions" };
 const PER_MONTH: Record<string, number> = { weekly: 52 / 12, biweekly: 26 / 12, monthly: 1, quarterly: 1 / 3, yearly: 1 / 12 };
 
 export default async function BillsPage() {
+  const locked = await moneyGate();
+  if (locked) return locked;
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
     const [items, upcoming, detected] = await series(

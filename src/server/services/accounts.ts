@@ -89,7 +89,7 @@ export async function updateProfile(db: Database, userId: string, input: z.input
 export async function updatePreferences(
   db: Database,
   userId: string,
-  patch: Pick<UserPreferences, "memorySuggestions" | "onboarding" | "tour" | "notifications">,
+  patch: Pick<UserPreferences, "memorySuggestions" | "onboarding" | "tour" | "notifications" | "moneyLock">,
 ) {
   const [current] = await db.select().from(users).where(eq(users.id, userId));
   await db
@@ -122,9 +122,19 @@ export async function updateAssistant(db: Database, userId: string, input: z.inp
     .where(eq(users.id, userId));
 }
 
+/** Accounts made with Sign in with Apple have no password until they set one. */
+export const hasPassword = (passwordHash: string) => passwordHash.startsWith("scrypt$");
+
+export async function accountHasPassword(db: Database, userId: string) {
+  const [u] = await db.select({ h: users.passwordHash }).from(users).where(eq(users.id, userId));
+  return !!u && hasPassword(u.h);
+}
+
 export async function changePassword(db: Database, userId: string, current: string, next: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
-  if (!user || !(await verifyPassword(current, user.passwordHash))) throw new AuthError("Your current password is incorrect.");
+  if (!user) throw new AuthError("Account not found.");
+  // Setting a first password (Apple-only account) needs no current one; changing one does.
+  if (hasPassword(user.passwordHash) && !(await verifyPassword(current, user.passwordHash))) throw new AuthError("Your current password is incorrect.");
   const parsed = signupSchema.shape.password.safeParse(next);
   if (!parsed.success) throw new AuthError(parsed.error.issues[0].message);
   const strength = checkPassword(next, [user.name, user.email]);
@@ -138,6 +148,7 @@ export async function changePassword(db: Database, userId: string, current: stri
 /** Permanently deletes the user and (via ON DELETE CASCADE) every row they own. */
 export async function deleteAccount(db: Database, userId: string, password: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
-  if (!user || !(await verifyPassword(password, user.passwordHash))) throw new AuthError("Password is incorrect.");
+  if (!user) throw new AuthError("Account not found.");
+  if (hasPassword(user.passwordHash) && !(await verifyPassword(password, user.passwordHash))) throw new AuthError("Password is incorrect.");
   await db.delete(users).where(eq(users.id, userId));
 }

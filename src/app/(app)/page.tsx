@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { ArrowDownLeft, ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, Lock } from "lucide-react";
 import { CountUp } from "@/components/motion/count-up";
 import { assistantProfile } from "@/lib/assistant";
 import { Pressable } from "@/components/motion/pressable";
 import { TaskCheck } from "@/components/task-check";
 import { formatIn, localDateOf } from "@/lib/dates";
 import { cn } from "@/lib/utils";
-import { withCurrentUser } from "@/server/auth/current-user";
+import { requireUser, withCurrentUser } from "@/server/auth/current-user";
+import { moneyLocked } from "@/server/auth/money-lock";
 import { getBriefing } from "@/server/briefing";
 import type { AgendaItem } from "@/server/services/calendar";
 import { listTasks } from "@/server/services/tasks";
@@ -16,6 +17,8 @@ import { AskBar, InsightList } from "./_today/insights";
 const PR = { urgent: 0, high: 1, medium: 2, low: 3 } as const;
 
 export default async function TodayPage() {
+  // With the Face ID lock on, money figures stay hidden here too until Money is unlocked.
+  const locked = await moneyLocked(await requireUser());
   const {
     briefing: b,
     snapshot: s,
@@ -28,6 +31,7 @@ export default async function TodayPage() {
     return { briefing, snapshot, tasks, firstName: user.name.split(" ")[0], assistantName: assistantProfile(user.preferences).name };
   });
   const focus = [...tasks].sort((a, b) => (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity) || PR[a.priority] - PR[b.priority]).slice(0, 3);
+  const insights = locked ? b.insights.filter((i) => i.icon !== "money" && i.icon !== "trend" && i.icon !== "goal") : b.insights;
   const minutesUntil = b.next ? Math.round((b.next.startsAt.getTime() - s.now.getTime()) / 60_000) : null;
 
   return (
@@ -42,10 +46,10 @@ export default async function TodayPage() {
             <AskBar name={firstName} />
           </div>
         </header>
-        {b.insights.length > 0 && (
+        {insights.length > 0 && (
           <section aria-label={`${assistantName} noticed`}>
             <SectionTitle>{assistantName} noticed</SectionTitle>
-            <InsightList insights={b.insights} />
+            <InsightList insights={insights} />
           </section>
         )}
         <section aria-label="Today" className="animate-rise" style={{ animationDelay: "200ms" }}>
@@ -86,7 +90,17 @@ export default async function TodayPage() {
             </div>
           </section>
         )}
-        {b.money && (
+        {b.money && locked && (
+          <section aria-label="Money" className="animate-rise" style={{ animationDelay: "280ms" }}>
+            <SectionTitle href="/money">Money</SectionTitle>
+            <Link href="/money" className="flex min-h-16 items-center gap-3 rounded-3xl bg-surface p-5 shadow-soft">
+              <Lock className="h-5 w-5 text-accent" />
+              <span className="flex-1 text-[15px]">Money is locked. Tap to unlock.</span>
+              <ArrowRight className="h-4 w-4 text-muted" />
+            </Link>
+          </section>
+        )}
+        {b.money && !locked && (
           <section aria-label="Money" className="animate-rise" style={{ animationDelay: "280ms" }}>
             <SectionTitle href="/money">Money</SectionTitle>
             <Pressable>

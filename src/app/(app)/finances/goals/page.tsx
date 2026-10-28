@@ -1,3 +1,4 @@
+import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import { Car, GraduationCap, Home, LineChart, Plane, PiggyBank, ShieldCheck, ShoppingBag, Sparkles, Trash2, Wallet } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
@@ -33,6 +34,8 @@ const PURPOSE: Record<GoalPurpose, { label: string; icon: typeof PiggyBank }> = 
 };
 
 export default async function GoalsPage() {
+  const locked = await moneyGate();
+  if (locked) return locked;
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
     const [goals, accounts] = await series(

@@ -1,3 +1,4 @@
+import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LineChart, Trash2 } from "lucide-react";
@@ -29,6 +30,8 @@ const TYPE: Record<string, string> = {
 };
 
 export default async function WealthPage() {
+  const locked = await moneyGate();
+  if (locked) return locked;
   const d = await withCurrentUser(async (s, u) => {
     const [accounts, holdings, goals, report] = await series(
       () => listAccounts(s),

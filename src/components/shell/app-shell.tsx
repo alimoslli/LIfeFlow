@@ -13,6 +13,7 @@ import { KeyboardWatcher, MobileAppBar, PullToRefresh } from "./mobile-chrome";
 import { CommandPalette } from "./command-palette";
 import { QuickAdd } from "./quick-add";
 import { PwaClient } from "../pwa/pwa-client";
+import { PasskeyOffer } from "../auth/passkey-offer";
 import { gsap, MOTION, prefersReducedMotion } from "../motion/gsap";
 import { TiltLayer } from "../motion/tilt";
 import { Tour } from "../motion/tour";
@@ -195,6 +196,7 @@ export function AppShell({
       <Toaster />
       <PullToRefresh />
       <PwaClient />
+      <PasskeyOffer />
       {!onJarvisPage && (
         <Suspense fallback={null}>
           <QuickAdd />

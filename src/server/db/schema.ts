@@ -85,6 +85,8 @@ export type UserPreferences = {
   assistantNotes?: string;
   /** How much the user already knows about money; lessons and explanations adapt to it. */
   moneyLevel?: "new" | "some" | "confident";
+  /** Ask for Face ID / Touch ID (a passkey) before showing Money after this many idle minutes. */
+  moneyLock?: { enabled: boolean; idleMinutes: number };
   /** Which push notifications the user wants, and when the morning brief arrives (local HH:mm). */
   notifications?: { reminders?: boolean; bills?: boolean; morningBrief?: boolean; briefTime?: string; budgetAlerts?: boolean };
   assistantVoice?: "alloy" | "ash" | "ballad" | "cedar" | "coral" | "echo" | "marin" | "sage" | "shimmer" | "verse";
@@ -118,6 +120,8 @@ export const sessions = pgTable(
     createdAt: createdAt(),
     lastSeenAt: tstz("last_seen_at").notNull().defaultNow(),
     userAgent: text("user_agent"),
+    /** Last Face ID / Touch ID unlock of Money in this session (sliding while Money is in use). */
+    moneyUnlockedAt: tstz("money_unlocked_at"),
   },
   (t) => [index("sessions_user_idx").on(t.userId)],
 );
@@ -133,6 +137,78 @@ export const recoveryCodes = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index("recovery_codes_user_idx").on(t.userId)],
+);
+
+/**
+ * Passkeys (WebAuthn): only the public key is stored; the private key never
+ * leaves the person's device (Face ID / Touch ID / Android screen lock).
+ * Looked up before a session exists, so no RLS (like sessions).
+ */
+export const passkeys = pgTable(
+  "passkeys",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    /** base64url credential id from the authenticator. */
+    credentialId: text("credential_id").notNull(),
+    /** base64url COSE public key. */
+    publicKey: text("public_key").notNull(),
+    counter: bigint("counter", { mode: "number" }).notNull().default(0),
+    transports: jsonb("transports").$type<string[]>().notNull().default([]),
+    deviceType: text("device_type"),
+    backedUp: boolean("backed_up").notNull().default(false),
+    name: text("name").notNull(),
+    createdAt: createdAt(),
+    lastUsedAt: tstz("last_used_at"),
+  },
+  (t) => [uniqueIndex("passkeys_credential_uq").on(t.credentialId), index("passkeys_user_idx").on(t.userId)],
+);
+
+/**
+ * Single-use server challenges for passkeys and Sign in with Apple. The cookie
+ * holds a random token; only its hash is stored. Deleted when used.
+ */
+export const authChallenges = pgTable(
+  "auth_challenges",
+  {
+    id: text("id").primaryKey(),
+    purpose: text("purpose").$type<"passkey-register" | "passkey-login" | "passkey-unlock" | "apple">().notNull(),
+    challenge: text("challenge").notNull(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: tstz("expires_at").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("auth_challenges_expires_idx").on(t.expiresAt)],
+);
+
+/** Sign in with Apple (and later other providers): the provider's stable user id, linked to one account. */
+export const oauthIdentities = pgTable(
+  "oauth_identities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    provider: text("provider").$type<"apple">().notNull(),
+    subject: text("subject").notNull(),
+    email: text("email"),
+    /** Apple "Hide My Email" relay address. */
+    isPrivateEmail: boolean("is_private_email").notNull().default(false),
+    createdAt: createdAt(),
+    lastUsedAt: tstz("last_used_at"),
+  },
+  (t) => [uniqueIndex("oauth_identities_provider_subject_uq").on(t.provider, t.subject), index("oauth_identities_user_idx").on(t.userId)],
+);
+
+/** "Forgot password" links. Only the SHA-256 of the emailed token is stored; one use, one hour. */
+export const passwordResets = pgTable(
+  "password_resets",
+  {
+    id: text("id").primaryKey(),
+    userId: userRef(),
+    expiresAt: tstz("expires_at").notNull(),
+    usedAt: tstz("used_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("password_resets_user_idx").on(t.userId)],
 );
 
 /** Password accepted, waiting for the second step. The raw token lives in a short-lived cookie; only its hash is stored. */

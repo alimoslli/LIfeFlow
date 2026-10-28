@@ -6,16 +6,23 @@ Never paste these values into code, chat, or GitHub. They go only in Vercel.
 ## 1. Vercel environment variables
 Vercel → project → Settings → Environment Variables, then Deployments → ⋯ → Redeploy.
 
-| Variable | What to put |
-|---|---|
-| `ENCRYPTION_KEY` | Run `openssl rand -base64 32` in Terminal, paste the result. Needed for Google and two-step sign-in |
-| `OPENAI_API_KEY` | Your OpenAI key (chat and voice) |
-| `APP_URL` | Your site, e.g. `https://yoursite.vercel.app` (no trailing slash) |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | From step 2 |
-| `LEGAL_OPERATOR_NAME` / `LEGAL_CONTACT_EMAIL` / `LEGAL_STATE` | Your name, contact email, US state (shown on /privacy and /terms) |
-| `OPENAI_REALTIME_MODEL` | Optional, default `gpt-realtime` |
+| Variable | What to put | Turns on |
+|---|---|---|
+| `APP_URL` | Your site, e.g. `https://yoursite.vercel.app` (no trailing slash) | Required for Google, Apple, passkeys, reset links |
+| `ENCRYPTION_KEY` | Run `openssl rand -base64 32` in Terminal, paste the result | Google, Plaid, two-step sign-in |
+| `OPENAI_API_KEY` | Your OpenAI key | Chat and voice |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | From step 2 | Gmail + Google Calendar |
+| `PLAID_CLIENT_ID` / `PLAID_SECRET` / `PLAID_ENV` | dashboard.plaid.com → Developers → Keys. Start with `sandbox` | Bank sync |
+| `CRON_SECRET` | `openssl rand -hex 32` | Nightly bank sync and notifications |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Run `npx web-push generate-vapid-keys` once | Push notifications |
+| `VAPID_SUBJECT` | `mailto:you@example.com` | Push notifications |
+| `APPLE_CLIENT_ID` / `APPLE_TEAM_ID` / `APPLE_KEY_ID` / `APPLE_PRIVATE_KEY` | From step 3 | Sign in with Apple |
+| `RESEND_API_KEY` / `EMAIL_FROM` | From step 4 | "Forgot password" emails |
+| `WEBAUTHN_RP_ID` | Optional. Only if passkeys should work on a parent domain | Passkeys |
+| `LEGAL_OPERATOR_NAME` / `LEGAL_CONTACT_EMAIL` / `LEGAL_STATE` | Your name, contact email, US state | /privacy and /terms |
+| `OPENAI_REALTIME_MODEL` | Optional, default `gpt-realtime` | Voice |
 
-Database migrations run automatically on deploy.
+Database migrations run automatically on deploy. Anything left blank stays off and the app says so (no fake buttons).
 
 ## 2. Google Cloud (console.cloud.google.com)
 1. New project → APIs & Services → Library → enable **Gmail API** and **Google Calendar API**.
@@ -26,14 +33,44 @@ Database migrations run automatically on deploy.
 
 Testing mode may ask you to reconnect about weekly. Other users' Gmail needs Google verification.
 
-## 3. Apple Health (iPhone)
+## 3. Sign in with Apple (developer.apple.com, needs the $99/year Apple Developer Program)
+1. Certificates, Identifiers & Profiles → Identifiers → **App IDs** → new → enable **Sign in with Apple**.
+2. Identifiers → **Services IDs** → new, e.g. `app.lifeflow.web` (this is `APPLE_CLIENT_ID`) → enable Sign in with Apple → Configure:
+   - Primary App ID: the one from step 1
+   - Domains: `yoursite.vercel.app` (no https)
+   - Return URLs: `https://yoursite.vercel.app/api/auth/apple/callback`
+3. Keys → new → enable **Sign in with Apple** → download the `.p8` (only once). The Key ID is `APPLE_KEY_ID`.
+4. Your Team ID (top right of the developer site) is `APPLE_TEAM_ID`.
+5. In Vercel, paste the whole `.p8` file contents (including the BEGIN/END lines) as `APPLE_PRIVATE_KEY`. Redeploy.
+6. The "Sign in with Apple" button then appears on the sign-in and sign-up pages, and Settings → Security can link it.
+
+## 4. Password reset email (resend.com, free tier is enough)
+1. Add and verify your domain (Resend shows the DNS records). Without your own domain, use Resend's test sender, which can only email you.
+2. API Keys → create → `RESEND_API_KEY`. Set `EMAIL_FROM` to e.g. `LifeFlow <no-reply@yourdomain.com>`.
+
+## 5. Notifications on time (optional, free)
+Vercel Hobby runs scheduled jobs once a day. For reminders at the minute you pick:
+1. cron-job.org → create a job every 10 minutes: `GET https://yoursite/api/cron/notify`
+2. Add a request header `Authorization: Bearer <your CRON_SECRET>`.
+(Vercel Pro can run `/api/cron/notify` every few minutes instead.)
+
+## 6. Apple Health (iPhone)
 Settings → Integrations → Apple Health → Create a key (shown once) → follow "How to set up the Shortcut" → add a daily Automation.
 
-## 4. Check it works
+## 7. On your iPhone
+1. Open the site in Safari → Share → **Add to Home Screen** → open LifeFlow from the icon.
+2. Settings → Notifications → **Turn on notifications** → Send a test.
+3. Settings → Security → **Add a passkey** (Face ID). Optionally turn on **Lock Money with Face ID**.
+
+## 8. Check it works
 - Chat with the assistant, then tap the mic for a voice call.
 - Google card shows "Connected"; ask "what's in my inbox?"
+- Money → Connect a bank (Plaid sandbox: `user_good` / `pass_good`).
+- Sign out, then sign in with Face ID, and with Apple.
+- Forgot password → the email arrives → the link sets a new password.
 - Apple Health card shows "Receiving data" after the Shortcut runs.
 
 ## Later
 - Lawyer review of /privacy and /terms before other users join.
+- Plaid Production access before connecting real banks for other people.
 - Update git remote to `alimoslli/LIfeFlow` (GitHub redirect works meanwhile).

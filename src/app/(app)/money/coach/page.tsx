@@ -1,3 +1,4 @@
+import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, BookOpen, CreditCard, HeartPulse, PiggyBank, Repeat, Wallet } from "lucide-react";
@@ -18,6 +19,8 @@ export const metadata: Metadata = { title: "Money coach" };
 const whole = (c: number) => formatCents(c).replace(/\.\d\d$/, "");
 
 export default async function CoachPage({ searchParams }: { searchParams: Promise<{ pay?: string; next?: string }> }) {
+  const locked = await moneyGate();
+  if (locked) return locked;
   const sp = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);

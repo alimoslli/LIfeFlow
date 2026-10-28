@@ -4,11 +4,16 @@ import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { Card } from "@/components/ui/surface";
+import { requireUser } from "@/server/auth/current-user";
+import { getDb } from "@/server/db/client";
+import { accountHasPassword } from "@/server/services/accounts";
 import { deleteAccountAction } from "../actions";
 
 export const metadata: Metadata = { title: "Privacy & data" };
 
-export default function DataSettings() {
+export default async function DataSettings() {
+  const user = await requireUser();
+  const withPassword = await accountHasPassword(getDb(), user.id);
   return (
     <div className="flex flex-col gap-5">
       <Card className="p-5">
@@ -53,9 +58,11 @@ export default function DataSettings() {
         <h2 className="font-medium text-danger">Delete account</h2>
         <p className="mt-1 text-sm text-text-2">Permanently deletes your account and all data. This cannot be undone. Export first if you want a copy.</p>
         <ActionForm action={deleteAccountAction} className="mt-4 max-w-sm">
-          <Field label="Password" htmlFor="del-pw">
-            <Input id="del-pw" name="password" type="password" required autoComplete="current-password" />
-          </Field>
+          {withPassword && (
+            <Field label="Password" htmlFor="del-pw">
+              <Input id="del-pw" name="password" type="password" required autoComplete="current-password" />
+            </Field>
+          )}
           <Field label='Type "DELETE" to confirm' htmlFor="del-c">
             <Input id="del-c" name="confirm" required />
           </Field>

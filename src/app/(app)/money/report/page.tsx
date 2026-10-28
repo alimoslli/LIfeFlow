@@ -1,3 +1,4 @@
+import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
@@ -15,6 +16,8 @@ const whole = (c: number) => formatCents(c).replace(/\.\d\d$/, "");
 const signed = (c: number) => (c > 0 ? `+${whole(c)}` : c < 0 ? `−${whole(-c)}` : "$0");
 
 export default async function ReportPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
+  const locked = await moneyGate();
+  if (locked) return locked;
   const sp = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);

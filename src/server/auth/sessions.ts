@@ -60,3 +60,20 @@ export async function deleteUserSessions(db: Database, userId: string) {
 export async function purgeExpiredSessions(db: Database) {
   await db.delete(sessions).where(lt(sessions.expiresAt, new Date()));
 }
+
+/** When this session last unlocked Money with a passkey (Face ID / Touch ID), or null. */
+export async function moneyUnlockedAt(db: Database, token: string) {
+  if (!token || token.length > 100) return null;
+  const [row] = await db
+    .select({ at: sessions.moneyUnlockedAt })
+    .from(sessions)
+    .where(eq(sessions.id, hashToken(token)));
+  return row?.at ?? null;
+}
+
+export async function setMoneyUnlockedAt(db: Database, token: string, at: Date | null) {
+  await db
+    .update(sessions)
+    .set({ moneyUnlockedAt: at })
+    .where(eq(sessions.id, hashToken(token)));
+}

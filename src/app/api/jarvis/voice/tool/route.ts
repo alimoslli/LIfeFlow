@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSessionUser } from "@/server/auth/current-user";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { relayVoiceTool } from "@/server/jarvis/voice";
+import { moneyLocked } from "@/server/auth/money-lock";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
     if (!parsed.success) throw new HttpError(400, "Invalid request");
     await enforceRateLimit(`voice-tool:${user.id}`, 60, 60);
     try {
-      return NextResponse.json(await relayVoiceTool(user, parsed.data));
+      return NextResponse.json(await relayVoiceTool(user, parsed.data, { moneyLocked: await moneyLocked(user) }));
     } catch (e) {
       if (e instanceof Error && /not found/i.test(e.message)) throw new HttpError(404, "Conversation not found");
       throw e;

@@ -106,9 +106,10 @@ export type VoiceToolResult = {
 export async function relayVoiceTool(
   user: SessionUser,
   input: { conversationId: string; callId: string; name: string; arguments: string; userText?: string },
+  opts: { moneyLocked?: boolean } = {},
 ): Promise<VoiceToolResult> {
   await ownedConversation(user, input.conversationId);
-  const ctx = makeToolContext(user, input.conversationId, new Date(), input.userText ?? "");
+  const ctx = makeToolContext(user, input.conversationId, new Date(), input.userText ?? "", opts.moneyLocked);
   const outcome = await executeToolCall(input.name, input.arguments, ctx, input.callId);
   let args: Record<string, unknown> = {};
   try {

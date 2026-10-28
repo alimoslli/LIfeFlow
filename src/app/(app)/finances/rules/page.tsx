@@ -1,3 +1,4 @@
+import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Wand2 } from "lucide-react";
@@ -10,6 +11,8 @@ import { applyRuleAction, deleteRuleAction } from "../actions";
 export const metadata: Metadata = { title: "Category rules" };
 
 export default async function RulesPage() {
+  const locked = await moneyGate();
+  if (locked) return locked;
   const rules = await withCurrentUser((s) => listCategoryRules(s));
   return (
     <div className="mx-auto max-w-[680px]">

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
+import { SignInOptions } from "@/components/auth/sign-in-options";
 import { NewPasswordField } from "@/components/password-field";
 import { FormError } from "@/components/ui/field";
 import { login, signup, type AuthState } from "./actions";
@@ -9,7 +10,20 @@ import { login, signup, type AuthState } from "./actions";
 const input =
   "h-12 w-full rounded-2xl bg-surface px-4 text-[15px] text-text shadow-soft placeholder:text-muted transition-shadow focus:shadow-lift focus:outline-none focus:ring-2 focus:ring-[var(--ring)]";
 
-export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: string }) {
+export function AuthForm({
+  mode,
+  next,
+  apple = false,
+  notice,
+  email,
+}: {
+  mode: "login" | "signup";
+  next?: string;
+  apple?: boolean;
+  /** A message above the form (e.g. "Password changed. Sign in."). */
+  notice?: { text: string; tone: "info" | "danger" };
+  email?: string;
+}) {
   const [state, action, pending] = useActionState<AuthState, FormData>(mode === "login" ? login : signup, null);
   // The browser's time zone, written straight to the hidden input after hydration.
   const tzRef = useRef<HTMLInputElement>(null);
@@ -24,7 +38,18 @@ export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: stri
           {mode === "login" ? "Sign in to see your day." : "Create your account. You can add everything else later."}
         </p>
       </div>
+      {notice && !state?.error && (
+        <p
+          role={notice.tone === "danger" ? "alert" : "status"}
+          className={
+            notice.tone === "danger" ? "rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger" : "rounded-2xl bg-accent-soft px-4 py-3 text-sm text-text"
+          }
+        >
+          {notice.text}
+        </p>
+      )}
       <FormError message={state?.error} />
+      <SignInOptions mode={mode} apple={apple} next={next} />
       {mode === "signup" && (
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-text-2">Your name</span>
@@ -33,7 +58,16 @@ export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: stri
       )}
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-text-2">Email</span>
-        <input id="email" name="email" type="email" autoComplete="email" required defaultValue={state?.email} className={input} />
+        <input
+          id="email"
+          name="email"
+          type="email"
+          // "webauthn" lets the browser offer saved passkeys right in this field.
+          autoComplete={mode === "login" ? "username webauthn" : "email"}
+          required
+          defaultValue={state?.email ?? email}
+          className={input}
+        />
       </label>
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-text-2">Password</span>
@@ -43,6 +77,11 @@ export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: stri
           <input id="password" name="password" type="password" autoComplete="current-password" required className={input} />
         )}
       </label>
+      {mode === "login" && (
+        <Link href="/forgot-password" className="-mt-1 self-end py-2 text-sm font-medium text-accent">
+          Forgot password?
+        </Link>
+      )}
       <input ref={tzRef} type="hidden" name="timezone" defaultValue="UTC" />
       {mode === "signup" && (
         <p className="text-xs text-muted">

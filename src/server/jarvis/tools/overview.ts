@@ -46,16 +46,18 @@ export const overviewTools = [
           assignmentsNext7Days: week
             .filter((x) => x.dueAt && x.dueAt.toISOString().slice(0, 10) <= soon)
             .map((x) => ({ id: x.id, title: x.title, course: x.course.name, kind: x.kind, dueAt: x.dueAt })),
-          money: accounts.length
-            ? {
-                balances: summarizeBalances(accounts),
-                monthToDate: { incomeCents: month.incomeCents, netSpendingCents: month.netSpendingCents, topCategories: month.topCategories.slice(0, 4) },
-                budgetsOver80Percent: budgets
-                  .filter((b) => b.percent >= 80)
-                  .map((b) => ({ category: b.categoryName, percent: b.percent, remainingCents: b.remainingCents })),
-                dataSources: month.dataSources,
-              }
-            : { note: "No financial accounts yet." },
+          money: ctx.moneyLocked
+            ? { locked: "Money is locked with Face ID on this device. The user can unlock it in the Money tab." }
+            : accounts.length
+              ? {
+                  balances: summarizeBalances(accounts),
+                  monthToDate: { incomeCents: month.incomeCents, netSpendingCents: month.netSpendingCents, topCategories: month.topCategories.slice(0, 4) },
+                  budgetsOver80Percent: budgets
+                    .filter((b) => b.percent >= 80)
+                    .map((b) => ({ category: b.categoryName, percent: b.percent, remainingCents: b.remainingCents })),
+                  dataSources: month.dataSources,
+                }
+              : { note: "No financial accounts yet." },
         });
       });
     },

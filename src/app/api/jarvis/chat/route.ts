@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { getSessionUser } from "@/server/auth/current-user";
+import { moneyLocked } from "@/server/auth/money-lock";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { runJarvisTurn, type JarvisEvent } from "@/server/jarvis/agent";
 import { getProvider, modelPrices } from "@/server/jarvis/providers";
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
     if (!parsed.data.message.trim() && !parsed.data.attachmentIds.length) throw new HttpError(400, "Message is empty");
     await enforceRateLimit(`jarvis:min:${user.id}`, 20, 60);
     await enforceRateLimit(`jarvis:day:${user.id}`, 400, 86_400);
+    const locked = await moneyLocked(user);
 
     let provider;
     try {
@@ -56,6 +58,7 @@ export async function POST(req: Request) {
             attachmentIds: parsed.data.attachmentIds,
             signal: req.signal,
             prices: modelPrices(),
+            moneyLocked: locked,
           });
         } catch (e) {
           console.error("[jarvis] route", e);

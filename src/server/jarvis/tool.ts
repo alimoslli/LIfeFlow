@@ -15,6 +15,8 @@ export type ToolContext = {
   userText: string;
   /** The user's "let Jarvis suggest memories" setting. */
   memorySuggestions: boolean;
+  /** Money is behind the Face ID lock and not unlocked in this session: money tools refuse. */
+  moneyLocked?: boolean;
   /** Runs `fn` inside an RLS-scoped transaction for this user. */
   run: <T>(fn: (scope: UserScope) => Promise<T>) => Promise<T>;
 };

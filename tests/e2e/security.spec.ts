@@ -9,7 +9,7 @@ async function signIn(page: Page, email: string) {
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("correct horse battery");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
 }
 
 test("weak passwords are refused at sign-up, with a live meter", async ({ page }) => {
@@ -37,6 +37,7 @@ test("two-step sign-in: turn on, then a code is required to sign in", async ({ p
 
   // Sign out, then the password alone is not enough.
   await page.getByRole("button", { name: "Sign out" }).click();
+  await page.waitForURL("**/login");
   await signIn(page, email);
   await page.waitForURL("**/login/verify");
   await page.goto("/");
@@ -55,6 +56,7 @@ test("two-step sign-in: turn on, then a code is required to sign in", async ({ p
   // Next time, a fresh authenticator code works; the used backup code doesn't.
   await page.goto("/settings");
   await page.getByRole("button", { name: "Sign out" }).click();
+  await page.waitForURL("**/login");
   await signIn(page, email);
   await page.waitForURL("**/login/verify");
   await page.getByRole("button", { name: /Use a backup code/ }).click();
