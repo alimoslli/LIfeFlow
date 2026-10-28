@@ -2,6 +2,15 @@
 
 @AGENTS.md
 
+## How we build (plugins: agent-skills + everything-claude-code, see .claude/settings.json)
+Every feature follows the agent-skills lifecycle, with the rules in this file taking priority where a skill disagrees:
+1. **spec-driven-development**: write down what "done" means (behaviour, edge cases, what's out of scope) before coding.
+2. **planning-and-task-breakdown**: split it into small steps that each end in a working, tested state.
+3. **incremental-implementation** + **test-driven-development**: build one step at a time; tests first or alongside, using the existing unit/integration/e2e layers.
+4. **code-review-and-quality**: a review pass against the code-reviewer and security-auditor checklists before calling it done.
+Specialists when they apply: **security-and-hardening** (auth, money, integrations, Jarvis tools), **frontend-ui-engineering** (screens; phone first), **debugging-and-error-recovery** (bugs), **performance-optimization** (where it matters), **documentation-and-adrs** (decisions go in `docs/adr/`).
+If the plugins aren't loaded in a session, read the skills from github.com/addyosmani/agent-skills and github.com/alimoslli/everything-claude-code (read-only) and follow them directly.
+
 ## Ground rules
 - Business logic lives in `src/server/services/*` and is shared by pages, server actions and Jarvis tools. Don't put queries in components or tools.
 - Anything user-scoped runs inside `withUser(userId, …)` (pages: `withCurrentUser`; actions: `mutate`). Inside a transaction, never `Promise.all` queries; use `series()` from `src/server/db/series.ts`.
