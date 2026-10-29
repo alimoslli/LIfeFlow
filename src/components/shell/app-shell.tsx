@@ -19,6 +19,7 @@ import { PageMotion } from "../motion/page-motion";
 import { gsap, MOTION, prefersReducedMotion } from "../motion/gsap";
 import { TiltLayer } from "../motion/tilt";
 import { Tour } from "../motion/tour";
+import { NAME_KEY } from "../motion/splash";
 import type { JarvisAvailability } from "../jarvis/types";
 
 type ShellCtx = { openJarvis: (prompt?: string, opts?: { send?: boolean }) => void; assistantName: string };
@@ -58,6 +59,13 @@ export function AppShell({
     (prompt?: string, opts?: { send?: boolean }) => setDrawer((d) => ({ open: true, prompt, send: opts?.send, key: prompt ? d.key + 1 : d.key })),
     [],
   );
+
+  // Remembered on this device so the opening screen can greet by name.
+  useEffect(() => {
+    try {
+      localStorage.setItem(NAME_KEY, user.name.split(" ")[0]);
+    } catch {}
+  }, [user.name]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

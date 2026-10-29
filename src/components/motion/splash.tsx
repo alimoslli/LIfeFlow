@@ -4,20 +4,22 @@ import { gsap, MOTION } from "./gsap";
 import { markHydrated, setSplashActive } from "./intro";
 
 const SESSION_KEY = "lf_splash_shown";
+/** The signed-in user's first name, remembered on this device for the greeting. */
+export const NAME_KEY = "lf_first_name";
 
 /**
  * Runs before first paint (inline in <body>): shows the splash once per
  * session, never with reduced motion, and not under automation (tests)
  * unless forced with ?splash=1. Uses a class on <html> so there's no flash.
  */
-export const SPLASH_SCRIPT = `try{var q=location.search,s=sessionStorage;if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&(/[?&]splash=1/.test(q)||(!s.getItem("${SESSION_KEY}")&&!navigator.webdriver&&!/[?&]nosplash/.test(q)))){document.documentElement.classList.add("lf-splash");s.setItem("${SESSION_KEY}","1")}}catch(e){}`;
+export const SPLASH_SCRIPT = `try{var q=location.search,s=sessionStorage;if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&(/[?&]splash=1/.test(q)||(!s.getItem("${SESSION_KEY}")&&!navigator.webdriver&&!/[?&]nosplash/.test(q)))){var r=document.documentElement,h=new Date().getHours(),n="";try{n=(localStorage.getItem("${NAME_KEY}")||"").slice(0,24)}catch(e){}r.style.setProperty("--lf-greet",JSON.stringify(h<5?"Up late":h<12?"Good morning":h<17?"Good afternoon":"Good evening"));r.style.setProperty("--lf-name",JSON.stringify(n||"Welcome back"));r.classList.add("lf-splash");s.setItem("${SESSION_KEY}","1")}}catch(e){}`;
 
-const MIN_VISIBLE_MS = 950;
+const MIN_VISIBLE_MS = 1500;
 
 /**
- * Opening screen: the LifeFlow mark draws in and the name rises letter by
- * letter (CSS, so it starts at first paint), then GSAP lifts it away once the
- * app is ready. A CSS failsafe hides it after 3.5s even if JavaScript never runs.
+ * Opening screen: the LifeFlow mark draws in, then "Good morning" and the
+ * user's first name rise into focus (CSS, set before first paint from the
+ * device clock, so no flicker), then GSAP lifts it away once the app is ready. A CSS failsafe hides it after 3.5s even if JavaScript never runs.
  */
 export function Splash() {
   const layer = useRef<HTMLDivElement>(null);
@@ -72,13 +74,11 @@ export function Splash() {
             opacity=".5"
           />
         </svg>
-        <p className="font-display text-[34px] font-medium tracking-tight">
-          {"LifeFlow".split("").map((c, i) => (
-            <span key={i} className="lf-letter" style={{ ["--i" as string]: i }}>
-              {c}
-            </span>
-          ))}
-        </p>
+        <div className="flex flex-col items-center text-center">
+          <p className="lf-greet lf-greet-1 text-[15px] tracking-[0.18em] uppercase opacity-80" />
+          <p className="lf-greet lf-greet-2 mt-2 font-display text-[40px] leading-none font-medium tracking-tight" />
+          <span className="lf-greet-line mt-5 h-px w-16 bg-white/50" />
+        </div>
       </div>
     </div>
   );

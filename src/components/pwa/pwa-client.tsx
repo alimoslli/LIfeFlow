@@ -192,5 +192,6 @@ export async function clearOfflineData() {
     navigator.serviceWorker?.controller?.postMessage({ type: "clear-user-data" });
     indexedDB.deleteDatabase("lifeflow-offline");
     localStorage.removeItem("lf-quick-add");
+    localStorage.removeItem("lf_first_name");
   } catch {}
 }
