@@ -60,6 +60,7 @@ async function main() {
   if (existing) {
     if (existing.accountKind !== "demo") throw new Error(`${EMAIL} exists and is not a demo account; refusing to touch it.`);
     if (mode === "keep") {
+      await withUser(existing.id, cleanupQa);
       console.log(`Test account ${EMAIL} already exists; keeping its data.`);
       return;
     }
@@ -69,6 +70,26 @@ async function main() {
   const today = todayIn(TZ);
   await withUser(user.id, (s) => seedAll(s, today));
   console.log(`Test account ready: ${EMAIL}${fromEnv ? "" : ` / ${PASSWORD}`}`);
+}
+
+/**
+ * One-off: records added while testing the deployed test account on Oct 28, 2026
+ * (the Wed Oct 28 9 to 5 Campus Library shift and the QA assignments in MATH 152).
+ * Only touches non-seeded rows created before Oct 29, so it's safe on every deploy.
+ */
+async function cleanupQa(s: UserScope) {
+  const cutoff = new Date("2026-10-29T04:00:00Z");
+  const shifts = await s.tx.execute(sql`
+    delete from work_shifts ws using employers e
+    where ws.employer_id = e.id and ws.user_id = ${s.userId} and e.name = 'Campus Library' and ws.source <> 'demo'
+      and ws.created_at < ${cutoff} and ws.starts_at = '2026-10-28 09:00 America/New_York'::timestamptz
+      and ws.ends_at = '2026-10-28 17:00 America/New_York'::timestamptz
+    returning ws.id`);
+  const work = await s.tx.execute(sql`
+    delete from assignments a using courses c
+    where a.course_id = c.id and a.user_id = ${s.userId} and c.code = 'MATH 152' and a.source <> 'demo' and a.created_at < ${cutoff}
+    returning a.id`);
+  if (shifts.rows.length || work.rows.length) console.log(`QA cleanup: removed ${shifts.rows.length} shift(s), ${work.rows.length} assignment(s).`);
 }
 
 async function seedAll(s: UserScope, today: string) {
