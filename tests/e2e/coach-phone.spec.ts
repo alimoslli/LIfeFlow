@@ -72,8 +72,12 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     await page.getByText("Straight to the point", { exact: true }).click();
     await expect(preview).toContainText("You spent $86 on food this week, $30 more than usual. Want me to move $30 from Fun to Food?");
     await page.getByRole("button", { name: "Save personality" }).click();
+    await expect(page.getByText("Saved. That's how I'll sound from now on.")).toBeVisible();
     await expect
-      .poll(async () => (await queryAsUser<{ p: { assistantStyle?: string } }>(email, "select preferences as p from users"))[0].p.assistantStyle)
+      .poll(
+        async () =>
+          (await queryAsUser<{ p: { assistantStyle?: string } }>(email, "select preferences as p from users where email = $1", [email]))[0].p.assistantStyle,
+      )
       .toBe("direct");
   });
 
@@ -101,7 +105,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
       mimeType: "application/pdf",
       buffer: Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"),
     });
-    await expect(page.getByText("Receipt from Target for $23.45.")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Receipt from Target for $23.45.", { exact: true })).toBeVisible({ timeout: 30_000 });
     await page.getByRole("button", { name: "Undo" }).first().click();
     await expect(page.getByText("Undone").first()).toBeVisible();
 
@@ -118,7 +122,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     });
     expect(res.ok()).toBe(true);
     await page.reload();
-    await expect(page.getByText("Comcast internet bill, $64.99 due soon.")).toBeVisible();
+    await expect(page.getByText("Comcast internet bill, $64.99 due soon.", { exact: true })).toBeVisible();
   });
 
   await test.step("Habits and trips", async () => {

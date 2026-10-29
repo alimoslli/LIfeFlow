@@ -85,7 +85,8 @@ test("install prompt with iPhone steps, and notification settings", async ({ pag
   await expect(steps).toContainText("Add to Home Screen");
   await expect(steps).toContainText("iOS 16.4");
   await steps.getByRole("button", { name: /close/i }).click();
-  await page.getByRole("button", { name: "Not now" }).click();
+  // Jarvis cards on Today have their own "Not now"; this is the install banner's.
+  await page.getByRole("button", { name: "Not now" }).and(page.locator(":not([data-testid=jarvis-message] *)")).click();
   await page.reload();
   await expect(page.getByText("Add LifeFlow to your home screen")).toHaveCount(0);
 

@@ -40,7 +40,7 @@ test("a new user sets up classes, a job and checking, then gets a skippable tour
   expect((await queryAsUser<{ name: string }>(email, "select name from courses order by name")).map((r) => r.name)).toEqual(["Biology II", "Statistics"]);
   expect(await queryAsUser(email, "select name, hourly_rate_cents from employers")).toEqual([{ name: "Campus Library", hourly_rate_cents: "1650" }]);
   expect(await queryAsUser(email, "select current_balance_cents from financial_accounts")).toEqual([{ current_balance_cents: "125000" }]);
-  await expect(page.getByText("$1,250").first()).toBeVisible();
+  await expect(page.getByText("$1,250").filter({ visible: true }).first()).toBeVisible();
 
   // The tour doesn't come back, and setup isn't shown again.
   await expect
