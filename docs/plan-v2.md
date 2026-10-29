@@ -19,6 +19,24 @@ This comparison is based only on its App Store page: #1 in Productivity, rated 4
 - **"Approve what's sent":** a clear approval card. Ours already exist as confirm tools; make them look this clear.
 - **A home screen widget** with now and next, due soon and available now (Phase 8, native).
 
+### Muse features to add (reusing what we have)
+| Muse | Ours | Builds on | Phase |
+|---|---|---|---|
+| Goals it keeps working on | **Goal coach:** "Get a 3.5 this semester" or "Save $800 by May." Jarvis makes a plan (to-dos and study blocks) and checks in weekly | Goals, tasks, calendar, proactive reviews | 3 |
+| Feed of updates and ideas | **Jarvis → Updates:** what he did, what needs a decision, ideas | Proactive engine and Inbox (merge) | 1 |
+| "Found X in your email, did Y" | **Gmail scan to Updates:** syllabus changes, tuition and bills, shift emails, filed with Undo | Inbox filing and Gmail tools | 3 |
+| Comes back only when it needs you | **Decision cards with a push notification:** approve, change or skip | Confirm tools and push | 3 |
+| Side chats by topic | **A chat per class or goal:** "Chat about BIO 201" keeps that context | Conversations and History | 4 |
+| Remembers things you said once | Already done (approved memory) | Memory | — |
+| Works in WhatsApp | SMS first, then WhatsApp | Same agent | 7, 9 |
+| Feed widget | Today widget | Native app | 8 |
+
+### Muse features we skip
+- A cloud browser that fills out websites for you: heavy, fragile and risky.
+- Shopping and checkout: we never move money.
+- Facebook and Instagram feed: off-mission.
+- A separate system that reviews actions before they reach the internet: our confirm gates already cover this.
+
 ---
 
 ## 1. What LifeFlow is
