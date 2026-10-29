@@ -45,3 +45,12 @@ export async function queryAsUser<T = Record<string, unknown>>(email: string, te
     client.release();
   }
 }
+
+/** Opens the quick-add sheet (Jarvis → Capture, Add buttons). Retries until the page has hydrated. */
+export async function openQuickAdd(page: Page) {
+  const sheet = page.getByRole("dialog", { name: "Quick add" });
+  await expect(async () => {
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent("lf:quick-add", { detail: "todo" })));
+    await expect(sheet).toBeVisible({ timeout: 1000 });
+  }).toPass({ timeout: 15_000 });
+}

@@ -41,7 +41,8 @@ export default async function TodayPage() {
       snapshot,
       tasks,
       assistantName: assistantProfile(user.preferences).name,
-      jarvisCard: top && !(locked && top.topic === "money") ? toCard(top, user.timezone) : null,
+      // Questions to the user (consent, get-to-know) live in Jarvis → Noticed; the plan's next step is something to do.
+      jarvisCard: top && top.kind !== "consent" && top.kind !== "question" && !(locked && top.topic === "money") ? toCard(top, user.timezone) : null,
     };
   });
   const focus = [...tasks].sort((a, b) => (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity) || PR[a.priority] - PR[b.priority]).slice(0, 3);

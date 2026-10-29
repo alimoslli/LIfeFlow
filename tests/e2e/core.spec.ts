@@ -3,7 +3,7 @@ import { askJarvis, queryAsUser, signUp } from "./helpers";
 
 test("sign up, reach Home, and manage a task end to end", async ({ page }) => {
   const email = await signUp(page);
-  await expect(page.getByText("A clear day.")).toBeVisible();
+  await expect(page.getByText("Nothing due today.")).toBeVisible();
 
   await page.goto("/tasks");
   await page.getByLabel("To-do title").fill("Renew parking permit");
@@ -11,9 +11,11 @@ test("sign up, reach Home, and manage a task end to end", async ({ page }) => {
   await expect(page.getByRole("status").filter({ hasText: 'Added "Renew parking permit"' })).toBeVisible();
   await expect(page.getByRole("link", { name: /Renew parking permit/ })).toBeVisible();
 
+  // Today's plan points at it; it's checked off in To-dos (its one home).
   await page.goto("/");
-  await expect(page.getByRole("region", { name: "On your list" }).getByText("Renew parking permit")).toBeVisible();
-  await page.getByRole("checkbox", { name: /Complete Renew parking permit/ }).click();
+  await expect(page.getByRole("region", { name: /plan for today/ })).toContainText("Start with Renew parking permit");
+  await page.goto("/tasks");
+  await page.getByRole("checkbox", { name: 'Mark "Renew parking permit" done' }).click();
   await expect
     .poll(async () => (await queryAsUser<{ status: string }>(email, "select status from tasks where title = 'Renew parking permit'"))[0]?.status)
     .toBe("done");

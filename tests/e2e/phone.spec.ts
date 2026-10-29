@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { queryAsUser, signUp } from "./helpers";
+import { queryAsUser, signUp, openQuickAdd } from "./helpers";
 
 /** A real touch swipe (Chrome DevTools touch events → pointer events with pointerType "touch"). */
 async function swipe(page: Page, selector: ReturnType<Page["locator"]>, dx: number) {
@@ -17,12 +17,12 @@ test("to-dos on a phone: quick add, swipe to complete, swipe to delete with Undo
   const email = await signUp(page, "Ivy Phone");
   await page.goto("/tasks");
   // Quick add from the floating + (the top field is desktop only).
-  await page.evaluate(() => window.dispatchEvent(new CustomEvent("lf:quick-add", { detail: "todo" })));
+  await openQuickAdd(page);
   const sheet = page.getByRole("dialog", { name: "Quick add" });
   await sheet.getByLabel("What do you need to do?").fill("Buy lab goggles");
   await sheet.getByRole("button", { name: "Add to-do" }).click();
   await expect(page.getByRole("status").filter({ hasText: 'Added "Buy lab goggles"' })).toBeVisible();
-  await page.evaluate(() => window.dispatchEvent(new CustomEvent("lf:quick-add", { detail: "todo" })));
+  await openQuickAdd(page);
   await sheet.getByLabel("What do you need to do?").fill("Call the bank");
   await sheet.getByRole("button", { name: "Add to-do" }).click();
   await expect(page.getByRole("link", { name: /Call the bank/ })).toBeVisible();
@@ -65,7 +65,7 @@ test("phone shell: tab bar never covers content, tap targets are 44px, search fi
   await signUp(page, "Tara Touch");
   await page.goto("/tasks");
   for (let i = 0; i < 3; i++) {
-    await page.evaluate(() => window.dispatchEvent(new CustomEvent("lf:quick-add", { detail: "todo" })));
+    await openQuickAdd(page);
     await page
       .getByRole("dialog", { name: "Quick add" })
       .getByLabel("What do you need to do?")
@@ -106,7 +106,7 @@ test("shifts: blank form can't create a shift, edit and delete work, past shifts
   await page.getByRole("button", { name: "Save job" }).click();
   await expect(page.getByRole("button", { name: "Add shift" })).toBeVisible();
   // An untouched quick-add submit must not create a 9 to 5 shift.
-  await page.evaluate(() => window.dispatchEvent(new CustomEvent("lf:quick-add", { detail: "todo" })));
+  await openQuickAdd(page);
   const sheet = page.getByRole("dialog", { name: "Quick add" });
   await sheet.getByRole("tab", { name: "Shift" }).click();
   await sheet.getByRole("button", { name: "Add shift" }).click();
