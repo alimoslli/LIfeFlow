@@ -74,6 +74,8 @@ async function call<T>(path: string, body: Record<string, unknown>, f: Fetch = f
   const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) {
     const code = typeof json.error_code === "string" ? json.error_code : null;
+    // Plaid's own error details (never the request body, which holds the secret), so setup problems show in the server logs.
+    console.error("[plaid]", path, res.status, json.error_type, code, json.error_message, json.request_id);
     const msg = typeof json.display_message === "string" && json.display_message ? json.display_message : "Your bank connection needs attention.";
     throw new PlaidError(code && REAUTH.has(code) ? "Your bank needs you to sign in again. Use Reconnect." : msg, code, !!code && REAUTH.has(code));
   }

@@ -23,6 +23,7 @@ const GOOGLE_RESULT: Record<string, { tone: "success" | "danger" | "warning"; te
   missing_scopes: { tone: "warning", text: "Some permissions were unchecked. Connect again and keep all boxes checked." },
   failed: { tone: "danger", text: "Couldn't connect Google. Please try again." },
   not_configured: { tone: "warning", text: "Google isn't available yet." },
+  use_main_site: { tone: "warning", text: "You're on the main site now. Tap Connect Google again." },
 };
 
 export default async function IntegrationsSettings({ searchParams }: { searchParams: Promise<{ google?: string }> }) {

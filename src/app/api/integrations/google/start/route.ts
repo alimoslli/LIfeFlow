@@ -12,6 +12,8 @@ export async function GET(req: NextRequest) {
     if (!user) throw new HttpError(401, "Not signed in");
     const cfg = googleConfig();
     if (!cfg) return NextResponse.redirect(new URL("/settings/integrations?google=not_configured", req.url));
+    // Google returns to APP_URL; starting on another host (e.g. a preview URL) would lose the session and state cookie there.
+    if (cfg.appUrl && req.nextUrl.origin !== cfg.appUrl) return NextResponse.redirect(`${cfg.appUrl}/settings/integrations?google=use_main_site`);
     await enforceRateLimit(`google-oauth:${user.id}`, 10, 600);
     const { state, verifier, challenge } = newOAuthState();
     const redirectUri = redirectUriFor(req.nextUrl.origin, cfg.appUrl);
