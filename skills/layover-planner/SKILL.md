@@ -4,7 +4,7 @@ title: Layover planner
 description: Works out usable time on a layover, transfers and a head-back-by time.
 triggers: ["layover", "connecting flight", "stopover", "between flights"]
 modules: ["home"]
-tools: ["web_search", "get_trip"]
+tools: ["web_search", "get_agenda"]
 ---
 ## Steps
 1. Get arrival and departure times.

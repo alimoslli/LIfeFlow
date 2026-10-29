@@ -104,6 +104,94 @@
   color-scheme: dark;
 }
 
+/* Accent colors (Settings → Profile & appearance). Green is the default in :root above. */
+:root[data-accent="blue"] {
+  --accent: #2f5fa8;
+  --accent-hover: #264f8d;
+  --accent-soft: #e3ebf7;
+  --accent-text: #ffffff;
+  --hero: #2f5fa8;
+}
+:root[data-accent="purple"] {
+  --accent: #6a4fa3;
+  --accent-hover: #5a4290;
+  --accent-soft: #ece6f6;
+  --accent-text: #ffffff;
+  --hero: #6a4fa3;
+}
+:root[data-accent="pink"] {
+  --accent: #b0406f;
+  --accent-hover: #963660;
+  --accent-soft: #f6e3eb;
+  --accent-text: #ffffff;
+  --hero: #b0406f;
+}
+:root[data-accent="orange"] {
+  --accent: #b4581f;
+  --accent-hover: #9a4a19;
+  --accent-soft: #f8e8dc;
+  --accent-text: #ffffff;
+  --hero: #b4581f;
+}
+:root[data-theme="dark"][data-accent="blue"] {
+  --accent: #8fb4ee;
+  --accent-hover: #a7c4f2;
+  --accent-soft: #1b2840;
+  --accent-text: #0b1424;
+  --hero: #233f6b;
+}
+:root[data-theme="dark"][data-accent="purple"] {
+  --accent: #bba6ec;
+  --accent-hover: #cbbaf1;
+  --accent-soft: #2a2140;
+  --accent-text: #160f26;
+  --hero: #45347a;
+}
+:root[data-theme="dark"][data-accent="pink"] {
+  --accent: #f0a3c2;
+  --accent-hover: #f4b7cf;
+  --accent-soft: #3c1f2c;
+  --accent-text: #2a0f1b;
+  --hero: #7a2c4d;
+}
+:root[data-theme="dark"][data-accent="orange"] {
+  --accent: #f2b07f;
+  --accent-hover: #f5c199;
+  --accent-soft: #3d2716;
+  --accent-text: #2a1607;
+  --hero: #7a3f17;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"])[data-accent="blue"] {
+    --accent: #8fb4ee;
+    --accent-hover: #a7c4f2;
+    --accent-soft: #1b2840;
+    --accent-text: #0b1424;
+    --hero: #233f6b;
+  }
+  :root:not([data-theme="light"])[data-accent="purple"] {
+    --accent: #bba6ec;
+    --accent-hover: #cbbaf1;
+    --accent-soft: #2a2140;
+    --accent-text: #160f26;
+    --hero: #45347a;
+  }
+  :root:not([data-theme="light"])[data-accent="pink"] {
+    --accent: #f0a3c2;
+    --accent-hover: #f4b7cf;
+    --accent-soft: #3c1f2c;
+    --accent-text: #2a0f1b;
+    --hero: #7a2c4d;
+  }
+  :root:not([data-theme="light"])[data-accent="orange"] {
+    --accent: #f2b07f;
+    --accent-hover: #f5c199;
+    --accent-soft: #3d2716;
+    --accent-text: #2a1607;
+    --hero: #7a3f17;
+  }
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);

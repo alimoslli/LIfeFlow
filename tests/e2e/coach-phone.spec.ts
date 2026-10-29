@@ -135,8 +135,22 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
   });
 
   await test.step("Nothing overflows sideways on a phone", async () => {
-    for (const path of ["/", "/jarvis/says", "/finances/subscriptions", "/inbox", "/jarvis/memory", "/settings", "/settings/jarvis"]) {
+    for (const path of [
+      "/",
+      "/money",
+      "/plan",
+      "/goals",
+      "/jarvis/says",
+      "/jarvis/profile",
+      "/finances/subscriptions",
+      "/inbox",
+      "/jarvis/memory",
+      "/settings",
+      "/settings/jarvis",
+      "/settings/integrations",
+    ]) {
       await page.goto(path);
+      await shot(page, `page${path.replaceAll("/", "-")}`);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(overflow, path).toBeLessThanOrEqual(1);
     }

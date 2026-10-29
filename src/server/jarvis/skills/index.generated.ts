@@ -480,7 +480,7 @@ export const SKILLS: SkillFile[] = [
     ],
     "tools": [
       "web_search",
-      "get_trip"
+      "get_agenda"
     ],
     "body": "## Steps\n1. Get arrival and departure times.\n2. Subtract security, transfer and buffer (international: 3h before departure).\n3. If there's real time, suggest one route with transfer times and costs from sources.\n4. Give a clear 'head back by' time.\n\n## Quality rules\n- Be conservative with time; cite transport info.\n\n## Example\nUser: 8 hour layover in Amsterdam\nJarvis: Usable: about 3.5 hours. Train to Centraal 17 min (€6.20, source). Head back by 1:30 PM.",
     "evals": [
@@ -792,7 +792,7 @@ export const SKILLS: SkillFile[] = [
       "home"
     ],
     "tools": [
-      "get_trip",
+      "get_agenda",
       "web_search",
       "create_tasks"
     ],

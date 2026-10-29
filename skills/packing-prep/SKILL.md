@@ -4,7 +4,7 @@ title: Packing and prep
 description: Packing lists, documents, visa and entry checks, and weather.
 triggers: ["pack", "packing list", "visa", "passport", "what to bring", "entry requirements", "weather for my trip", "documents do i need"]
 modules: ["home"]
-tools: ["get_trip", "web_search", "create_tasks"]
+tools: ["get_agenda", "web_search", "create_tasks"]
 ---
 ## Steps
 1. Get trip dates and destination.

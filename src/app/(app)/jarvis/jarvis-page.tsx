@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PenLine, Plus, Settings } from "lucide-react";
+import { PenLine, Plus, Settings, Sparkles } from "lucide-react";
 import { SectionNav } from "@/components/shell/section-nav";
 import { QuickAddButton } from "@/components/shell/quick-add";
 import { ActionButton } from "@/components/action-form";
@@ -58,6 +58,11 @@ export function JarvisPage({ conversations, activeId, messages, tz }: { conversa
           </Link>
           <Link href="/settings" aria-label="Settings" className="flex h-11 w-11 items-center justify-center rounded-full text-text-2">
             <Settings className="h-5 w-5" />
+          </Link>
+          <Link href="/jarvis/profile" aria-label="Jarvis profile" className="flex h-11 w-11 items-center justify-center">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-text">
+              <Sparkles className="h-4 w-4" />
+            </span>
           </Link>
         </header>
         <SectionNav inline>

@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import {
   BookOpen,
-  Brain,
   Briefcase,
   CalendarDays,
   CheckSquare,
@@ -15,6 +14,7 @@ import {
   Receipt,
   Sparkles,
   Target,
+  UserRound,
   Wallet,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -35,9 +35,9 @@ export const SECTIONS: Record<Section, Item[]> = {
     { href: "/work", label: "Work", icon: Briefcase },
   ],
   jarvis: [
-    { href: "/jarvis", label: "Chat", icon: MessageCircle, except: ["/jarvis/says", "/jarvis/memory"] },
+    { href: "/jarvis", label: "Chat", icon: MessageCircle, except: ["/jarvis/says", "/jarvis/memory", "/jarvis/profile"] },
     { href: "/jarvis/says", label: "Updates", icon: Sparkles, also: ["/inbox"] },
-    { href: "/jarvis/memory", label: "Memory", icon: Brain },
+    { href: "/jarvis/profile", label: "Profile", icon: UserRound, also: ["/jarvis/memory"] },
   ],
   money: [
     {

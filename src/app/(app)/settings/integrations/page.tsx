@@ -47,6 +47,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
     <div className="flex flex-col gap-3">
       <SettingsHeader title="Connected accounts" />
       {banner && <p className={`rounded-2xl px-4 py-3 text-sm ${TONE[banner.tone]}`}>{banner.text}</p>}
+      <Group title="Email & Calendar" />
       {google && (
         <GoogleCard
           configured={google.configured}
@@ -62,6 +63,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
           }
         />
       )}
+      <Group title="Money" />
       <Card className="p-5">
         <div className="mb-1 flex items-center justify-between gap-3">
           <h2 className="font-medium">Banks & cards</h2>
@@ -82,6 +84,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
           }))}
         />
       </Card>
+      <Group title="Health" />
       <AppleHealthCard
         keys={d.keys.map((k) => ({
           id: k.id,
@@ -94,4 +97,8 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
       />
     </div>
   );
+}
+
+function Group({ title }: { title: string }) {
+  return <h2 className="mt-3 px-1 text-[13px] font-medium tracking-wide text-muted uppercase">{title}</h2>;
 }

@@ -85,8 +85,8 @@ export function AppShell({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // The chat is full-screen; Updates (/jarvis/says) and Memory (/jarvis/memory) are normal pages.
-  const onJarvisPage = pathname.startsWith("/jarvis") && !pathname.startsWith("/jarvis/says") && !pathname.startsWith("/jarvis/memory");
+  // The chat is full-screen; Updates, Profile and Memory are normal pages.
+  const onJarvisPage = pathname.startsWith("/jarvis") && !["/jarvis/says", "/jarvis/memory", "/jarvis/profile"].some((p) => pathname.startsWith(p));
   const initials = user.name
     .split(/\s+/)
     .map((p) => p[0])

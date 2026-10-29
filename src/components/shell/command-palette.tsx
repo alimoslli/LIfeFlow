@@ -7,7 +7,6 @@ import {
   CalendarDays,
   CheckSquare,
   Flag,
-  HeartPulse,
   Landmark,
   NotebookPen,
   Plus,

@@ -9,9 +9,9 @@ const SHOTS = process.env.SHOTS;
 const TABS: [string, string, string[]][] = [
   ["Today", "/", []],
   ["Plan", "/plan", ["/calendar", "/tasks", "/goals", "/habits", "/work"]],
-  ["Jarvis", "/jarvis", ["/jarvis/says", "/inbox", "/jarvis/memory"]],
-  ["Money", "/money", ["/finances/accounts", "/wealth", "/finances/budgets", "/finances/transactions", "/finances/subscriptions", "/finances/bills", "/goals"]],
-  ["School", "/school", ["/habits", "/notes"]],
+  ["Jarvis", "/jarvis", ["/jarvis/says", "/jarvis/profile"]],
+  ["Money", "/money", ["/finances/accounts", "/wealth", "/finances/budgets", "/finances/transactions", "/finances/subscriptions", "/finances/bills"]],
+  ["School", "/school", ["/notes"]],
 ];
 
 test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }) => {
