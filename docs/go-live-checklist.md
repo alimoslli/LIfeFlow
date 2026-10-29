@@ -21,6 +21,9 @@ Vercel → project → Settings → Environment Variables, then Deployments → 
 | `WEBAUTHN_RP_ID` | Optional. Only if passkeys should work on a parent domain | Passkeys |
 | `LEGAL_OPERATOR_NAME` / `LEGAL_CONTACT_EMAIL` / `LEGAL_STATE` | Your name, contact email, US state | /privacy and /terms |
 | `OPENAI_REALTIME_MODEL` | Optional, default `gpt-realtime` | Voice |
+| `OPENAI_SEARCH_MODEL` | Optional. A model that supports web search (default: `OPENAI_MODEL`) | Savings finder, cancel help, Jarvis web search |
+| `INBOX_DOMAIN` | The domain your inbound mail provider receives for, e.g. `in.yourdomain.com` (step 9) | Forwarding addresses for the Inbox |
+| `INBOX_WEBHOOK_SECRET` | `openssl rand -hex 24` | Protects the inbound email webhook |
 
 Database migrations run automatically on deploy. Anything left blank stays off and the app says so (no fake buttons).
 
@@ -62,12 +65,24 @@ Settings → Integrations → Apple Health → Create a key (shown once) → fol
 2. Settings → Notifications → **Turn on notifications** → Send a test.
 3. Settings → Security → **Add a passkey** (Face ID). Optionally turn on **Lock Money with Face ID**.
 
-## 8. Check it works
+## 9. Smart inbox email forwarding (postmarkapp.com, free tier is enough to start)
+1. Pick a subdomain just for this, e.g. `in.yourdomain.com`. In your DNS, add an **MX** record for it pointing to `inbound.postmarkapp.com` (priority 10).
+2. Postmark → Servers → your server → **Inbound** stream → Settings:
+   - Inbound domain: `in.yourdomain.com`
+   - Webhook URL: `https://yoursite/api/inbox/email?key=<your INBOX_WEBHOOK_SECRET>`
+3. In Vercel set `INBOX_DOMAIN=in.yourdomain.com` and `INBOX_WEBHOOK_SECRET`, redeploy.
+4. In LifeFlow: Plan → Inbox shows your address. Add the email you'll forward from (Apple sign-in emails are trusted automatically; others get a 6-digit code, which needs step 4's Resend setup).
+5. Forward a bill to the address. It shows up in the Inbox as Filed, with Undo. Mail from any other sender, or mail that fails SPF/DKIM, shows as Ignored with the reason.
+
+## 10. Check it works
 - Chat with the assistant, then tap the mic for a voice call.
 - Google card shows "Connected"; ask "what's in my inbox?"
 - Money → Connect a bank (Plaid sandbox: `user_good` / `pass_good`).
 - Sign out, then sign in with Face ID, and with Apple.
 - Forgot password → the email arrives → the link sets a new password.
+- Money → Save money → Find cheaper on a phone or internet bill: options appear only with a source link.
+- Plan → Inbox: forward a bill and add a photo of a receipt; both are filed and Undo works.
+- Today shows a Jarvis card; Settings → Assistant changes his tone and the preview follows.
 - Apple Health card shows "Receiving data" after the Shortcut runs.
 
 ## Later

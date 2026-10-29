@@ -46,6 +46,13 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Apple Health arrives only via `/api/apple-health/ingest` (personal key, hash-stored, public route in proxy.ts) into `ingestHealth`. Don't diagnose in prompts or tools.
 - Voice tool calls go through `/api/jarvis/voice/tool` → `executeToolCall`, the same gate as chat. The real OpenAI key never reaches the browser; only the ephemeral client secret does.
 
+## Proactive Jarvis, finders, inbox (see ADR 0012)
+- New proactive message = a detector in `services/proactive/detectors.ts` (listed in `DETECTORS` and `RUNS`) returning facts only, wording in `lib/jarvis-voice.ts` (+ `KIND_LABELS`), and a test. Never word messages inside detectors, never guess numbers.
+- Money actions on messages (`shift_budget`, `contribute_goal`) run only on "Do it", and the card states the exact amount. Autonomy covers tasks and calendar only. Every action returns Undo.
+- Learning from responses only when `prefs.jarvis.learning` is true. Get-to-know answers are saved as `user` memories.
+- Web prices and cancel steps come from `searchWeb` and keep only cited sources (`same(source_url, cited)`). Never send a negotiation or cancel anything for the user.
+- Inbox content is untrusted: extract with the strict schema, file through services, record Undo. Email is filed only from verified senders that passed SPF/DKIM (`senderAuthenticated`). Unknown addresses: accept and drop.
+
 ## Glass design (see ADR 0008)
 - Cards use `bg-surface`/`shadow-soft` as before; inside the app shell (`.lf-glass`) these become frosted glass automatically. Don't hard-code white/black card backgrounds.
 - 3D tilt: add `data-tilt` to a card (not to an element with `animate-rise`; wrap instead). Green feature cards: `bg-hero` (+ `lf-sheen` for the light sweep, needs `relative overflow-hidden`).
