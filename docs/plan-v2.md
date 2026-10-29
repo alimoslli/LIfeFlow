@@ -4,38 +4,67 @@ Drafted 2026-10-29 from the owner's decisions. Nothing in this plan is built yet
 
 ## 0. Versus Muse from Meta
 
-This comparison is based only on its App Store page: #1 in Productivity, rated 4.9 from 390K ratings.
+This section is based on the App Store page, Meta's announcements, and the owner's screenshots and screen recording of the app (Ideas, agent profile, Import memory, Connectors, Appearance).
 
-**What Muse is:** a general personal agent that "takes things off your plate." It finds a form in your email and fills it out, shops and checks out after you approve, and has a Feed widget for the home screen.
+**What Muse is:** a general personal agent. You give it a goal, it keeps working after you close the app, and it comes back only when it needs a decision or your approval. Connected to your accounts, it can do much of what LifeFlow does, but everything lives inside a chat. You can't see your life laid out anywhere.
 
-**We don't compete as a general agent.** Meta will win that. We win as **the student specialist**, with things a general agent doesn't have:
-- a real structure for school: classes, every due date, grades, the syllabus, Canvas;
-- real money from your bank: available now, spent, came in, bills;
-- planning around your actual schedule of classes and shifts;
-- academic integrity rules, so schools can recommend us.
+**Our position:** "Talk to Jarvis like Muse. See your whole student life like nothing else."
+- **Jarvis can do everything the app can,** and everything he does shows up right away on Today and in the tabs.
+- **We are the student specialist:** classes, every due date, grades, the syllabus, Canvas, real bank money, planning around classes and shifts, and academic integrity.
 
-**Ideas we borrow:**
-- **Jarvis messages that report what he did:** "Found X in your email, so I did Y," with Undo.
-- **"Approve what's sent":** a clear approval card. Ours already exist as confirm tools; make them look this clear.
-- **A home screen widget** with now and next, due soon and available now (Phase 8, native).
-
-### Muse features to add (reusing what we have)
-| Muse | Ours | Builds on | Phase |
+### What we take from Muse (made for students)
+| Muse | LifeFlow version | Builds on | Phase |
 |---|---|---|---|
-| Goals it keeps working on | **Goal coach:** "Get a 3.5 this semester" or "Save $800 by May." Jarvis makes a plan (to-dos and study blocks) and checks in weekly | Goals, tasks, calendar, proactive reviews | 3 |
-| Feed of updates and ideas | **Jarvis → Updates:** what he did, what needs a decision, ideas | Proactive engine and Inbox (merge) | 1 |
-| "Found X in your email, did Y" | **Gmail scan to Updates:** syllabus changes, tuition and bills, shift emails, filed with Undo | Inbox filing and Gmail tools | 3 |
-| Comes back only when it needs you | **Decision cards with a push notification:** approve, change or skip | Confirm tools and push | 3 |
-| Side chats by topic | **A chat per class or goal:** "Chat about BIO 201" keeps that context | Conversations and History | 4 |
-| Remembers things you said once | Already done (approved memory) | Memory | — |
-| Works in WhatsApp | SMS first, then WhatsApp | Same agent | 7, 9 |
-| Feed widget | Today widget | Native app | 8 |
+| Agent profile (avatar, status, Soul and Memory cards) | **Jarvis profile:** opens from his avatar anywhere. Live status ("Needs approval" · "Working on 2 things" · "All caught up"), **Personality** and **Memory** cards, and rows for Connections · Permissions · History | Assistant settings, memory page | 1 |
+| Ideas catalog by category | **Ideas:** our skills written as offers (icon, a promise as the title, one sentence saying what he does and when he asks first). One tap starts it. Categories: School, Money, Work, Health, Life. **Personal ideas from your data** sit on top ("3 exams Nov 18–22, want a study plan?") | Skills (36), proactive detectors | 4 |
+| Goals it keeps working on | **Goal coach:** "Get a 3.5" or "Save $800 by May." Jarvis plans the to-dos and study blocks, then checks in weekly | Goals, tasks, calendar, reviews | 4 |
+| Feed | **Updates:** what he did, what needs a decision (approval cards with Approve, Change, Skip), and Undo | Proactive engine, Inbox, confirm tools, push | 1, 4 |
+| "Found X in your email, did Y" | **Gmail to Updates:** syllabus changes, tuition and bills, shift emails, filed with Undo | Inbox filing, Gmail tools | 4 |
+| "Work overnight, report at breakfast" | **Morning report:** one card with what's done, what needs you and what's due today | Daily review | 3 |
+| Import memory from another AI | **Copy a prompt, paste the answer:** facts become **proposed** memories that you approve one by one | Memory proposals | 4 |
+| Connectors by category | **Connections:** grouped School / Money / Email & Calendar / Health, with only working ones listed | Integrations page | 1 |
+| Appearance | **Live preview, accent color (whole app), Jarvis avatar choice, System/Light/Dark** | Themes | 1 |
+| Side chats | **A chat per class or goal** | Conversations | 5 |
+| WhatsApp | SMS first, then WhatsApp | Same agent | 8, 10 |
+| Feed widget | Today widget | Native app | 9 |
+
+### The Ideas list for launch (every idea must actually work)
+- **School:**
+  - "Send me your syllabus. I'll set up your whole semester."
+  - "Share your project or paper. I'll break it into steps with dates."
+  - "Exam coming? I'll build a study plan around your free time."
+  - "Give me your notes. I'll turn them into a 10-minute audio review."
+  - "Need an extension? I'll draft an email to your professor for you to send."
+  - "Tell me your aid and scholarship deadlines. I'll make sure you never miss one."
+  - "Quiz me on this chapter."
+  - "What do I need on the final?"
+- **Money:**
+  - "Set a savings goal. I'll tell you what to cut if you drift."
+  - "I'll find subscriptions you forgot about and show you how to cancel."
+  - "I'll check which of your subscriptions have a student price."
+  - "Tell me the textbook. I'll find the cheapest copy or rental, with links."
+  - "Snap a bill or document. I'll file it and remind you before it's due."
+  - "Where did my money go this month?"
+- **Work:**
+  - "Screenshot your schedule. I'll add every shift."
+  - "I'll check your paycheck matches your hours."
+  - "Your shift clashes with a class or exam? I'll flag it."
+- **Health:**
+  - "Connect Apple Health. I'll give you a baseline."
+  - "Name a habit to build or break. I'll nudge you at the right moment."
+  - "Snap your meal. I'll log it." (later)
+- **Life:**
+  - "Give me the job before bed. I'll report at breakfast."
+  - "I'll turn your inbox and calendar into today's plan."
+  - "Losing touch with someone? I'll find a free time."
+  - "Paste what your other AI knows about you. I'll pick up where it left off."
+
+New skills these need: audio review, professor email draft, student discounts, textbook finder, paycheck check, shift clash, memory import.
 
 ### Muse features we skip
-- A cloud browser that fills out websites for you: heavy, fragile and risky.
-- Shopping and checkout: we never move money.
-- Facebook and Instagram feed: off-mission.
-- A separate system that reviews actions before they reach the internet: our confirm gates already cover this.
+- Buying, checkout, Marketplace haggling, booking travel or appointments, and cancelling for you: we never move money and never act without asking.
+- A cloud browser that fills out websites: heavy, fragile and risky.
+- Instagram look-backs, trivia, pets, moving, electricity and insurance shopping, price-drop refunds, unclaimed money: off-mission or too heavy for now.
 
 ---
 
@@ -67,6 +96,18 @@ This comparison is based only on its App Store page: #1 in Productivity, rated 4
    - Jarvis asks before anything important and only reports what actually happened.
    - Money is read-only.
 5. **Academic integrity is always on** (section 5).
+6. **Jarvis does it perfectly or doesn't offer it.**
+   - Every idea and skill has an eval set: realistic prompts plus the exact records it must create. These run against real services and must pass before an idea is shown.
+   - Every action is checked against what was saved, with no claims. If something fails, he says what failed and what to do.
+   - Before he acts: he asks one short question when something is unclear, rather than guessing.
+   - After he acts: a confirmation card with the real result and Undo.
+7. **Easy to discover, never overwhelming.** Users won't guess what Jarvis can do, so we teach it gradually:
+   - **Onboarding:** after the school/job questions, show **3 ideas** that fit their answers, and try one together.
+   - **Today:** at most **one "Try this"** suggestion a day, picked from what they haven't used and what fits their week. It can be dismissed, and it stops once they've used Jarvis for a while.
+   - **In the moment:** a short hint where it matters. After adding an exam: "Want a study plan for this?" When a syllabus is uploaded: "I can add every due date."
+   - **Empty states teach:** an empty screen shows the one sentence to say to Jarvis ("Send me your syllabus").
+   - **The Ideas page** is the full catalog, always one tap away, for people who want to explore.
+   - **Never:** walls of text, more than one suggestion at a time, badges everywhere, or repeated nagging.
 
 ## 3. App structure
 
@@ -75,7 +116,7 @@ This comparison is based only on its App Store page: #1 in Productivity, rated 4
 |---|---|---|
 | **Today** | none | The main screen (section 4) |
 | **Plan** | Calendar · To-dos · Goals · Health (+ **Work** if they have a job) | **Calendar:** Week/Month; trips are just events. **Goals:** all goals together (savings, GPA, fitness); money goals track progress from accounts. **Work:** shifts, hours, pay |
-| **Jarvis** | Chat · Updates · Memory | **Updates** merges Noticed and Inbox (things he noticed and things he filed) |
+| **Jarvis** | Chat · Updates · Ideas | **Updates** merges Noticed and Inbox (what he did, what needs you). **Ideas** is the catalog. Memory and Personality move into the **Jarvis profile** (tap his avatar) |
 | **Money** | Overview · Activity · Accounts | **Overview:** available now, spent and came in, bills and subscriptions, budget. **Activity:** transactions and rules. **Accounts:** includes investments. Insights come from Jarvis |
 | **School** (only if they're in school) | Classes · Due · Notes | **Classes:** schedule, grades, "what I need on the final." **Due:** assignments and exams by date. **Notes:** notes and projects, tied to a class |
 
@@ -105,6 +146,7 @@ Two questions: "Are you in school?" and "Do you have a job?"
 | Investments page | Accounts |
 | Second Brain | School → Notes |
 | Noticed and Inbox pills | Jarvis → Updates |
+| Memory pill | Jarvis profile |
 
 Remove the code too: services, tools, skills, tests and migrations for removed features. Keep users' data where it moves into another feature.
 
@@ -179,14 +221,15 @@ Every item opens a bottom sheet or goes to Jarvis. Nothing needs another page.
 | Phase | What | Done means |
 |---|---|---|
 | 0 | **Fix Plaid and Gmail live** (HANDOFF E1/E2) | A real sandbox bank and the owner's Gmail work in production |
-| 1 | **Simplify:** the cuts and merges in section 3, the new pills, removing dead code | Fewer pages, all tests green, nothing more than 2 taps away |
-| 2 | **Onboarding school/job + adaptive tabs**, with Settings toggles | Each of the 4 combinations shows the right tabs and pills (e2e) |
-| 3 | **Today redesign** (section 4) | 5-second test on a phone at 393 px; every item has an action |
-| 4 | **School tab:** Classes (grades, final calculator), Due, Notes and projects, syllabus PDF import (HANDOFF E3) | A syllabus PDF fills a class's due dates |
-| 5 | **Health page**, Apple Health plus habits | Data appears after the Shortcut runs; habits can be checked off on Today |
-| 6 | **Integrity rules + test suite + Integrity page** | The suite passes, and Jarvis refuses in a helpful way |
-| 7 | **SMS Jarvis** | Texting adds a task that shows on Today; confirmations work |
-| 8 | **iPhone app (Capacitor) + paid plan** (in-app purchase and Stripe) | On TestFlight for friends; paid features unlock |
-| 9 | **Canvas, WhatsApp, calls, ready for schools** (privacy pages, accessibility WCAG 2.1 AA, Canvas LTI) | Per item |
+| 1 | **Simplify:** the cuts and merges in section 3, the new pills, removing dead code, Jarvis profile, grouped Connections, Appearance (accent and avatar) | Fewer pages, all tests green, nothing more than 2 taps away |
+| 2 | **Onboarding school/job + adaptive tabs**, with Settings toggles and 3 starter ideas | Each of the 4 combinations shows the right tabs, pills and ideas (e2e) |
+| 3 | **Today redesign** (section 4), with the morning report, one "Try this" a day, and Jarvis status | 5-second test on a phone at 393 px; every item has an action |
+| 4 | **Jarvis can do everything:** close every gap between buttons and Jarvis tools, the Ideas page (personal ideas on top), the new skills, goal coach, memory import, Gmail to Updates, approval cards, and hints at the right moment | Every idea passes its eval against real services, and every tool returns real saved data |
+| 5 | **School tab:** Classes (grades, final calculator), Due, Notes and projects, syllabus PDF import (HANDOFF E3), a chat per class | A syllabus PDF fills a class's due dates |
+| 6 | **Health page**, Apple Health plus habits | Data appears after the Shortcut runs; habits can be checked off on Today |
+| 7 | **Integrity rules + test suite + Integrity page** | The suite passes, and Jarvis refuses in a helpful way |
+| 8 | **SMS Jarvis** | Texting adds a task that shows on Today; confirmations work |
+| 9 | **iPhone app (Capacitor) + Today widget + paid plan** (in-app purchase and Stripe) | On TestFlight for friends; paid features unlock |
+| 10 | **Canvas, WhatsApp, calls, ready for schools** (privacy pages, accessibility WCAG 2.1 AA, Canvas LTI) | Per item |
 
 Each phase: plan, build, `npm run check`, `npm run build && npm run test:e2e`, phone screenshots to the owner, push.
