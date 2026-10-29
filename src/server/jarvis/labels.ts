@@ -89,6 +89,18 @@ const LABELS: Record<string, string> = {
   create_trip: "Creating the trip",
   add_trip_items: "Adding to the trip",
   delete_trip_item: "Preparing to remove from the trip",
+  update_course: "Updating course",
+  delete_course: "Preparing to delete course",
+  update_project: "Updating project",
+  delete_project: "Preparing to delete project",
+  update_job: "Updating job",
+  remove_job: "Preparing to remove job",
+  list_habits: "Checking habits",
+  create_habit: "Starting a habit",
+  check_habit: "Checking off habit",
+  add_bill: "Tracking bill",
+  update_bill: "Updating bill",
+  delete_bill: "Preparing to stop tracking bill",
 };
 
 export const describeToolCall = (name: string) => LABELS[name] ?? name.replace(/_/g, " ");

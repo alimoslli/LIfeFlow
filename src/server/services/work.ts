@@ -147,6 +147,17 @@ export async function updateEmployer(scope: UserScope, id: string, patch: Partia
   return row;
 }
 
+/** Jobs are archived, not deleted, so past shifts and pay keep their employer. */
+export async function archiveEmployer(scope: UserScope, id: string, archived = true) {
+  const [row] = await scope.tx
+    .update(employers)
+    .set({ archivedAt: archived ? new Date() : null })
+    .where(and(eq(employers.id, id), eq(employers.userId, scope.userId)))
+    .returning();
+  if (!row) throw notFound("Employer");
+  return row;
+}
+
 export async function listEmployers(scope: UserScope) {
   return scope.tx
     .select()

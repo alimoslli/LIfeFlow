@@ -4,6 +4,7 @@ import { financeTools } from "./tools/finance";
 import { googleTools } from "./tools/google";
 import { healthTools } from "./tools/health";
 import { memoryTools, noteTools, systemTools } from "./tools/knowledge";
+import { manageTools } from "./tools/manage";
 import { moneyCoachTools } from "./tools/money-coach";
 import { overviewTools } from "./tools/overview";
 import { schoolTools } from "./tools/school";
@@ -28,6 +29,7 @@ export const ALL_TOOLS: ToolDefinition[] = [
   ...systemTools,
   ...webTools,
   ...tripTools,
+  ...manageTools,
 ] as ToolDefinition[];
 
 const byName = new Map(ALL_TOOLS.map((t) => [t.name, t]));

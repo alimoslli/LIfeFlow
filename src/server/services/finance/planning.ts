@@ -177,6 +177,28 @@ export async function createRecurring(scope: UserScope, input: z.input<typeof re
   return row;
 }
 
+export async function updateRecurring(scope: UserScope, id: string, patch: Partial<z.input<typeof recurringInputSchema>>) {
+  const d = recurringInputSchema.partial().parse(patch);
+  await assertOwned(scope, categories, d.categoryId, "Category");
+  await assertOwned(scope, financialAccounts, d.accountId, "Account");
+  const [row] = await scope.tx
+    .update(recurringItems)
+    .set(d)
+    .where(and(eq(recurringItems.id, id), eq(recurringItems.userId, scope.userId)))
+    .returning();
+  if (!row) throw notFound("Recurring item");
+  return row;
+}
+
+export async function getRecurring(scope: UserScope, id: string) {
+  const [row] = await scope.tx
+    .select()
+    .from(recurringItems)
+    .where(and(eq(recurringItems.id, id), eq(recurringItems.userId, scope.userId)));
+  if (!row) throw notFound("Recurring item");
+  return row;
+}
+
 export async function setRecurringStatus(scope: UserScope, id: string, status: "active" | "paused" | "cancelled") {
   const [row] = await scope.tx
     .update(recurringItems)

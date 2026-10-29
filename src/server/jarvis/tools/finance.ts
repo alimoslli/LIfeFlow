@@ -5,7 +5,17 @@ import { listAccounts, summarizeBalances } from "../../services/finance/accounts
 import { moneyOverview } from "../../services/finance/overview";
 import { listCategories, resolveCategory } from "../../services/finance/categories";
 import { affordability, compareSpending, spendingSummary } from "../../services/finance/insights";
-import { budgetStatus, listRecurring, setBudget, suggestRecurring, upcomingRecurring } from "../../services/finance/planning";
+import {
+  budgetStatus,
+  createRecurring,
+  deleteRecurring,
+  getRecurring,
+  listRecurring,
+  setBudget,
+  suggestRecurring,
+  upcomingRecurring,
+  updateRecurring,
+} from "../../services/finance/planning";
 import { TRANSACTION_KINDS, createTransaction, queryTransactions } from "../../services/finance/transactions";
 import { holdings } from "../../db/schema";
 import { eq } from "drizzle-orm";
@@ -29,7 +39,78 @@ export function centsToDollarsDeep(v: unknown): unknown {
 
 const range = { from: dateArg("Start date (inclusive)"), to: dateArg("End date (inclusive)") };
 
+const FREQ = z.enum(["weekly", "biweekly", "monthly", "quarterly", "yearly"]);
+const presentRecurring = (r: { id: string; name: string; amountCents: number; frequency: string; nextDueDate: string | null; kind: string }) =>
+  centsToDollarsDeep({ id: r.id, name: r.name, amountCents: r.amountCents, frequency: r.frequency, nextDueDate: r.nextDueDate, kind: r.kind });
+
 export const financeTools = [
+  defineTool({
+    name: "add_bill",
+    description:
+      "Track a recurring bill, subscription or income (rent, phone, Netflix, paycheck). amount is positive; income: true for money coming in. Check recurring_payments first to avoid duplicates.",
+    schema: z.object({
+      name: z.string().min(1).max(120),
+      amount: moneyArg("Amount each time"),
+      frequency: FREQ,
+      nextDueDate: dateArg("Next due date").optional(),
+      kind: z.enum(["bill", "subscription", "income", "other"]).optional(),
+      category: z.string().max(80).optional(),
+    }),
+    mutates: true,
+    async execute(a, ctx) {
+      return ctx.run(async (s) => {
+        const cat = a.category ? await resolveCategory(s, a.category) : null;
+        const income = a.kind === "income";
+        const r = await createRecurring(s, {
+          name: a.name,
+          amountCents: (income ? 1 : -1) * Math.abs(toCents(a.amount)),
+          frequency: a.frequency,
+          nextDueDate: a.nextDueDate ?? null,
+          kind: a.kind ?? "bill",
+          categoryId: cat?.category.id ?? null,
+        });
+        return { created: presentRecurring(r), viewAt: "/finances/bills" };
+      });
+    },
+  }),
+  defineTool({
+    name: "update_bill",
+    description:
+      "Change a tracked bill/subscription/income: name, amount, how often, next due date. Only pass fields that change. Ids from recurring_payments.",
+    schema: z.object({
+      id: idArg("Bill"),
+      name: z.string().min(1).max(120).optional(),
+      amount: moneyArg("Amount each time").optional(),
+      frequency: FREQ.optional(),
+      nextDueDate: dateArg("Next due date").optional(),
+    }),
+    mutates: true,
+    async execute({ id, amount, ...patch }, ctx) {
+      return ctx.run(async (s) => {
+        const before = await getRecurring(s, id);
+        const sign = before.amountCents < 0 ? -1 : 1;
+        const r = await updateRecurring(s, id, { ...patch, ...(amount !== undefined && { amountCents: sign * Math.abs(toCents(amount)) }) });
+        return { updated: presentRecurring(r), viewAt: "/finances/bills" };
+      });
+    },
+  }),
+  defineTool({
+    name: "delete_bill",
+    description: "Stop tracking a recurring bill, subscription or income. Past transactions stay. Requires the user's confirmation.",
+    schema: z.object({ id: idArg("Bill") }),
+    mutates: true,
+    async confirm({ id }, ctx) {
+      const r = await ctx.run((s) => getRecurring(s, id));
+      return `Stop tracking ${r.name} ($${(Math.abs(r.amountCents) / 100).toFixed(2)} ${r.frequency})? Past transactions stay.`;
+    },
+    async execute({ id }, ctx) {
+      return ctx.run(async (s) => {
+        const r = await getRecurring(s, id);
+        await deleteRecurring(s, id);
+        return { stoppedTracking: r.name };
+      });
+    },
+  }),
   defineTool({
     name: "money_overview",
     description:
