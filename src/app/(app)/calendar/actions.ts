@@ -1,7 +1,8 @@
 "use server";
 import { trashAction } from "../trash-actions";
 import { formBool, formObject, mutate, type ActionState } from "@/server/actions";
-import { createEvent } from "@/server/services/calendar";
+import { formatDateStr } from "@/lib/dates";
+import { createEvent, moveAgendaItem } from "@/server/services/calendar";
 
 export async function createEventAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
@@ -30,4 +31,13 @@ export async function createEventAction(_p: ActionState, fd: FormData): Promise<
 
 export async function deleteEventAction(id: string): Promise<ActionState> {
   return trashAction("event", id);
+}
+
+/** Drag and drop on the calendar: move an item to another day. */
+export async function moveItemAction(origin: "event" | "task" | "assignment", id: string, date: string): Promise<ActionState> {
+  if (!["event", "task", "assignment"].includes(origin)) return { ok: false, error: "That can't be moved.", at: Date.now() };
+  return mutate("calendar.move", async (s, u) => {
+    await moveAgendaItem(s, u.timezone, origin, id, date);
+    return `Moved to ${formatDateStr(date, "EEE, MMM d")}.`;
+  });
 }

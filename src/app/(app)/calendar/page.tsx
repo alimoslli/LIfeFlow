@@ -9,6 +9,7 @@ import { series } from "@/server/db/series";
 import { findConflicts, getAgenda, type AgendaItem } from "@/server/services/calendar";
 import { listCourses } from "@/server/services/school";
 import { createEventAction, deleteEventAction } from "./actions";
+import { DragItem, DropDay } from "./drag";
 import { EventDialog } from "./event-dialog";
 
 export const metadata: Metadata = { title: "Calendar" };
@@ -95,10 +96,10 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
               const isToday = day === d.today;
               const isSelected = day === d.selected;
               return (
-                <Link
+                <DropDay
                   key={day}
+                  date={day}
                   href={href(d.month.slice(0, 7), day)}
-                  scroll={false}
                   aria-label={`${formatDateStr(day, "EEEE, MMMM d")}: ${items.length} item${items.length === 1 ? "" : "s"}`}
                   aria-current={isSelected ? "date" : undefined}
                   className={cn(
@@ -135,7 +136,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                     ))}
                     {items.length > 3 && <span className="px-1 text-[11px] text-muted">+{items.length - 3} more</span>}
                   </span>
-                </Link>
+                </DropDay>
               );
             })}
           </div>
@@ -165,7 +166,13 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           ) : (
             <ul className="flex flex-col gap-1.5">
               {dayItems.map((i) => (
-                <li key={i.key} className="group flex items-center gap-4 rounded-2xl bg-surface px-4 py-3 shadow-soft">
+                <DragItem
+                  key={i.key}
+                  origin={i.origin}
+                  id={i.id}
+                  movable={i.origin !== "shift"}
+                  className="group flex items-center gap-4 rounded-2xl bg-surface px-4 py-3 shadow-soft"
+                >
                   <span className="h-10 w-1 shrink-0 rounded-full" style={{ background: i.color ?? "var(--accent)" }} />
                   <Link href={i.href} className="flex min-h-12 min-w-0 flex-1 flex-col justify-center">
                     <p className="line-clamp-2 text-[15px]">
@@ -192,7 +199,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                       <Trash2 className="h-4 w-4" />
                     </ActionButton>
                   )}
-                </li>
+                </DragItem>
               ))}
             </ul>
           )}

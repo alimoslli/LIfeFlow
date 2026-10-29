@@ -4,8 +4,8 @@ import { DATE_RE, TIME_RE, addDaysStr, daysBetween, dayOfWeek, localDateOf, loca
 import { calendarEvents, courses, type EventKind, type Recurrence, type DataSource } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound, ServiceError } from "./errors";
-import { listAssignments } from "./school";
-import { listTasks } from "./tasks";
+import { getAssignment, listAssignments, updateAssignment } from "./school";
+import { getTask, listTasks, updateTask } from "./tasks";
 import { listShifts } from "./work";
 
 export const EVENT_KINDS = ["personal", "class", "exam", "work", "study", "appointment", "reminder", "other"] as const;
@@ -88,6 +88,33 @@ export async function updateEvent(scope: UserScope, tz: string, id: string, inpu
     .where(and(eq(calendarEvents.id, id), eq(calendarEvents.userId, scope.userId)))
     .returning();
   if (!row) throw notFound("Event");
+  return row;
+}
+
+/** Calendar drag and drop: moves an event, to-do or assignment to another day, keeping its time. Shifts and repeating events stay put. */
+export async function moveAgendaItem(scope: UserScope, tz: string, origin: "event" | "task" | "assignment", id: string, date: string) {
+  if (!DATE_RE.test(date)) throw new ServiceError("Pick a day.");
+  const time = (at: Date | null, allDay: boolean) => (at && !allDay ? localTimeOf(at, tz) : null);
+  if (origin === "task") {
+    const t = await getTask(scope, id);
+    return updateTask(scope, tz, id, { dueDate: date, dueTime: time(t.dueAt, t.dueAllDay) });
+  }
+  if (origin === "assignment") {
+    const a = await getAssignment(scope, id);
+    return updateAssignment(scope, tz, id, { dueDate: date, dueTime: time(a.dueAt, a.dueAllDay) });
+  }
+  const [ev] = await scope.tx
+    .select()
+    .from(calendarEvents)
+    .where(and(eq(calendarEvents.id, id), eq(calendarEvents.userId, scope.userId)));
+  if (!ev) throw notFound("Event");
+  if (ev.recurrence) throw new ServiceError("Repeating events can't be dragged. Open the event to change it.");
+  // Same local time on the new day (DST-safe); multi-day events keep their length.
+  const from = localDateOf(ev.startsAt, tz);
+  const shift = startOfLocalDay(date, tz).getTime() - startOfLocalDay(from, tz).getTime();
+  const startsAt = ev.allDay ? new Date(ev.startsAt.getTime() + shift) : localToInstant(date, localTimeOf(ev.startsAt, tz), tz);
+  const endsAt = new Date(ev.endsAt.getTime() + (startsAt.getTime() - ev.startsAt.getTime()));
+  const [row] = await scope.tx.update(calendarEvents).set({ startsAt, endsAt }).where(eq(calendarEvents.id, id)).returning();
   return row;
 }
 
