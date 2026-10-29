@@ -25,6 +25,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 ## Jarvis intelligence rules (see docs/jarvis-intelligence.md, ADR 0005/0006)
 - Jarvis does not train models. It improves through user-approved memory, feedback, better tools and *measured* prompt/retrieval changes. Never use user data for training.
 - Memory writes from Jarvis go only through `rememberForUser` / `correctMemoryForUser` (services/memory.ts). They save directly only when `explicitMemoryRequest(ctx.userText)` is true. Everything else is `proposed`, and proposed memories never reach a prompt. Don't trust the model's claim that the user asked.
+- `memories.content` is encrypted at rest (`sealedText`, ADR 0014): never filter or sort memories by content in SQL.
 - Prompts get memories only via `selectMemories` (jarvis/memory-retrieval.ts). If you change retrieval, add labelled cases to `tests/unit/memory-retrieval.test.ts`; the recall/precision test must stay green.
 - `INSTRUCTIONS` in prompt.ts is static (identical for every user and request, so the provider can cache it). Anything per-user or per-request goes in `buildContext`. Bump `PROMPT_VERSION` on any prompt change.
 - Every turn records a `jarvis_runs` row. A new provider must set `model` and report `usage` in `step_done`. Never store message content or raw error text in metrics, and never hard-code model prices (env `JARVIS_PRICE_*`; unknown ⇒ null).

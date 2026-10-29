@@ -25,3 +25,22 @@ export function decryptSecret(payload: string, rawKey?: string): string {
   decipher.setAuthTag(Buffer.from(tag, "base64"));
   return Buffer.concat([decipher.update(Buffer.from(ct, "base64")), decipher.final()]).toString("utf8");
 }
+
+/**
+ * Encryption at rest for personal text (Jarvis memories). Encrypts when ENCRYPTION_KEY is set;
+ * reads both encrypted and older plaintext values, so existing rows keep working until re-saved.
+ */
+export function sealText(plaintext: string): string {
+  return process.env.ENCRYPTION_KEY ? encryptSecret(plaintext) : plaintext;
+}
+
+export function openText(stored: string): string {
+  if (!/^v1\.[^.]+\.[^.]+\.[^.]+$/.test(stored) || !process.env.ENCRYPTION_KEY) return stored;
+  try {
+    return decryptSecret(stored);
+  } catch {
+    return stored;
+  }
+}
+
+export const isSealed = (stored: string) => /^v1\.[^.]+\.[^.]+\.[^.]+$/.test(stored);

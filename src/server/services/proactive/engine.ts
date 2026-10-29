@@ -13,7 +13,7 @@ export type JarvisMessage = typeof jarvisMessages.$inferSelect;
 
 const DAILY_CAP = { low: 2, normal: 4, high: 7 } as const;
 /** Kinds that summarize the day/week; they don't count toward the daily cap. */
-const REVIEW_KINDS = new Set(["morning_brief", "evening_wrap", "weekly_review", "monthly_review"]);
+const REVIEW_KINDS = new Set(["morning_brief", "evening_wrap", "weekly_review", "monthly_review", "weekly_learned"]);
 
 export function jarvisSettings(prefs: UserPreferences | undefined) {
   const j: JarvisSettings = prefs?.jarvis ?? {};

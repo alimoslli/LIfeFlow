@@ -159,6 +159,15 @@ const KINDS: Record<string, (f: F) => Parts> = {
     ask: "Want the details and a script to ask your provider to match it?",
     mood: "info",
   }),
+  weekly_learned: (f) => ({
+    headline: "What I learned this week",
+    fact:
+      n(f, "count") > 0
+        ? `I learned ${plural(n(f, "count"), "new thing")} about you this week${n(f, "up") + n(f, "down") ? `, and you rated ${n(f, "up")} answer${n(f, "up") === 1 ? "" : "s"} helpful` : ""}.`
+        : `You rated ${n(f, "up")} answer${n(f, "up") === 1 ? "" : "s"} helpful and ${n(f, "down")} not helpful this week.`,
+    ask: "Anything wrong or out of date? You can fix it in one tap.",
+    mood: "info",
+  }),
   question: (f) => ({
     headline: s(f, "question"),
     fact: "A quick one so I can help you better.",
@@ -213,6 +222,7 @@ export const KIND_LABELS: Record<string, string> = {
   new_subscription: "New subscriptions",
   savings_found: "Cheaper bills found",
   question: "Get-to-know questions",
+  weekly_learned: "What I learned this week",
   consent: "Asking to learn",
 };
 

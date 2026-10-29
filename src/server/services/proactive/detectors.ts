@@ -17,7 +17,7 @@ import { getAgenda, freeSlots } from "../calendar";
 import { subscriptionsOverview } from "../finance/subscriptions";
 import { billsToReview, findSavings, listSavings } from "../finance/savings-finder";
 import { webSearchClient } from "../../integrations/web-search";
-import { eveningWrap, goalForecast, habitCoach, monthlyReview, morningBrief, weeklyReview } from "./reviews";
+import { eveningWrap, goalForecast, habitCoach, monthlyReview, morningBrief, weeklyLearned, weeklyReview } from "./reviews";
 
 /** Something worth saying, with the facts behind it. Wording happens later (lib/jarvis-voice). */
 export type Candidate = {
@@ -426,6 +426,7 @@ export const DETECTORS = {
   morningBrief,
   eveningWrap,
   weeklyReview,
+  weeklyLearned,
   monthlyReview,
   goalForecast,
   habitCoach,
@@ -439,7 +440,7 @@ export const RUNS: Record<string, DetectorName[]> = {
   morning: ["morningBrief", "monthlyReview", "savingsCheck", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
   midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks", "subscriptionWatch"],
   // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
-  evening: ["eveningWrap", "weeklyReview", "goalForecast", "habitCoach", "taskStreak", "goalMilestones", "deadlineConflicts"],
+  evening: ["eveningWrap", "weeklyReview", "weeklyLearned", "goalForecast", "habitCoach", "taskStreak", "goalMilestones", "deadlineConflicts"],
   transaction: ["spendingPace", "unusualSpend", "billsDue", "goalMilestones"],
   shift: ["deadlineConflicts"],
   goal: ["goalMilestones"],

@@ -12,6 +12,7 @@
  *   are never confused.
  */
 import { sql, type SQL } from "drizzle-orm";
+import { openText, sealText } from "../crypto";
 import {
   bigint,
   bigserial,
@@ -968,12 +969,20 @@ export type MemoryStatus = "proposed" | "active" | "archived" | "rejected";
 /** stated: the user said it. inferred: Jarvis concluded it (the user still has to approve). */
 export type MemoryBasis = "stated" | "inferred";
 
+/** A text column stored encrypted (see crypto.ts sealText/openText). */
+const sealedText = customType<{ data: string; driverData: string }>({
+  dataType: () => "text",
+  toDriver: (v) => sealText(v),
+  fromDriver: (v) => openText(v),
+});
+
 export const memories = pgTable(
   "memories",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: userRef(),
-    content: text("content").notNull(),
+    /** Encrypted at rest (AES-256-GCM); services see plain text. */
+    content: sealedText("content").notNull(),
     category: text("category").$type<MemoryCategory>().notNull(),
     source: text("source").$type<"user" | "jarvis">().notNull(),
     status: text("status").$type<MemoryStatus>().notNull().default("active"),

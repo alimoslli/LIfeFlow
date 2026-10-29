@@ -2,7 +2,7 @@ import { usd } from "@/lib/jarvis-voice";
 import { and, eq, gte, isNotNull, lte, ne } from "drizzle-orm";
 import { addDaysStr, dayOfWeek, daysBetween, formatDateStr, localDateOf, monthStart, weekStart } from "@/lib/dates";
 import { goalProjection } from "@/lib/goal-math";
-import { assignments, tasks } from "../../db/schema";
+import { assignments, jarvisRuns, memories, tasks } from "../../db/schema";
 import { series } from "../../db/series";
 import { subscriptionReport } from "../finance/coach";
 import { goalsWithPlans } from "../finance/goals";
@@ -320,4 +320,43 @@ export const habitCoach: Detector = async ({ scope, today }) => {
     }
   }
   return out;
+};
+
+/** Sunday evening: what Jarvis learned this week (new memories, how answers were rated), with a link to review it. */
+export const weeklyLearned: Detector = async ({ scope, today, now }) => {
+  if (dayOfWeek(today) !== 0) return [];
+  const since = new Date(now.getTime() - 7 * 86_400_000);
+  const [mems, runs] = await series(
+    () =>
+      scope.tx
+        .select({ content: memories.content })
+        .from(memories)
+        .where(and(eq(memories.userId, scope.userId), eq(memories.status, "active"), gte(memories.createdAt, since))),
+    () =>
+      scope.tx
+        .select({ rating: jarvisRuns.rating })
+        .from(jarvisRuns)
+        .where(and(eq(jarvisRuns.userId, scope.userId), gte(jarvisRuns.createdAt, since), isNotNull(jarvisRuns.rating))),
+  );
+  if (!mems.length && !runs.length) return [];
+  const up = runs.filter((r) => r.rating === 1).length;
+  const down = runs.length - up;
+  return [
+    {
+      kind: "weekly_learned",
+      topic: "general",
+      dedupeKey: `weekly_learned:${today}`,
+      facts: {
+        count: mems.length,
+        up,
+        down,
+        sections: [
+          ...(mems.length ? [{ heading: "New things I know about you", lines: mems.slice(0, 5).map((m) => m.content) }] : []),
+          ...(runs.length ? [{ heading: "Your ratings", lines: [`${up} helpful, ${down} not helpful`] }] : []),
+        ],
+      },
+      action: { type: "open", label: "Review what I know", href: "/settings/memory" },
+      priority: 45,
+    },
+  ];
 };

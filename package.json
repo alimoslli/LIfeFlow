@@ -19,7 +19,7 @@
     "db:migrate:test": "tsx scripts/migrate.ts --test",
     "db:seed-demo": "tsx scripts/seed-demo.ts",
     "db:studio": "drizzle-kit studio",
-    "vercel-build": "tsx scripts/migrate.ts && tsx scripts/seed-demo.ts --from-env && tsx scripts/build-skills.ts && next build",
+    "vercel-build": "tsx scripts/migrate.ts && tsx scripts/encrypt-memories.ts && tsx scripts/seed-demo.ts --from-env && tsx scripts/build-skills.ts && next build",
     "skills": "tsx scripts/build-skills.ts"
   },
   "dependencies": {
