@@ -121,10 +121,10 @@ export async function runProactive({ scope, tz, prefs, trigger, now = new Date()
   if (!candidates.length) return [];
 
   const sentToday = await scope.tx
-    .select({ kind: jarvisMessages.kind })
+    .select({ kind: jarvisMessages.kind, urgent: jarvisMessages.urgent })
     .from(jarvisMessages)
     .where(and(eq(jarvisMessages.userId, scope.userId), gte(jarvisMessages.createdAt, new Date(now.getTime() - 24 * 3600_000))));
-  let room = DAILY_CAP[settings.frequency] - sentToday.filter((m) => !REVIEW_KINDS.has(m.kind)).length;
+  let room = DAILY_CAP[settings.frequency] - sentToday.filter((m) => !REVIEW_KINDS.has(m.kind) && !m.urgent).length;
   const saved: JarvisMessage[] = [];
   for (const c of candidates) {
     const counts = !REVIEW_KINDS.has(c.kind) && !c.urgent;

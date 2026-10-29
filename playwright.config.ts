@@ -43,6 +43,8 @@ export default defineConfig({
         VAPID_PUBLIC_KEY: vapid.publicKey,
         VAPID_PRIVATE_KEY: vapid.privateKey,
         VAPID_SUBJECT: "mailto:e2e@example.com",
+        INBOX_DOMAIN: "in.example.com",
+        INBOX_WEBHOOK_SECRET: "e2e-inbox-secret",
       },
     },
   ],

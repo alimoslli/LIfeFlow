@@ -174,7 +174,7 @@ const KINDS: Record<string, (f: F) => Parts> = {
 
 const OPENERS: Record<JarvisTone, Record<Mood, string[]>> = {
   coach: { win: ["Great work!", "That's how it's done.", "Huge."], warn: ["Let's get ahead of this.", "Quick course-correct:"], info: ["Here's your move:"] },
-  friend: { win: ["Nice!", "Love this.", "Look at you!"], warn: ["Heads up:", "Just so you know,"], info: ["Hey,", "Quick one:"] },
+  friend: { win: ["Nice!", "Love this.", "Look at you!"], warn: ["Heads up:", "Just so you know:"], info: ["Hey!", "Quick one:"] },
   direct: { win: [], warn: [], info: [] },
 };
 

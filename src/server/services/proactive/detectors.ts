@@ -169,7 +169,8 @@ const billsDue: Detector = async ({ scope, today }) => {
     const dueIn = relativeDayLabel(b.date, today).toLowerCase().replace(/^on /, "");
     const when = daysBetween(today, b.date) <= 1 ? dueIn : `in ${daysBetween(today, b.date)} days`;
     if (running < 0) {
-      const short = -running;
+      // Only this bill's part of the gap (an earlier bill may already have used the cash).
+      const short = Math.min(-running, -b.amountCents);
       const options = [cash.savingsCents >= short ? `move ${usd(short)} from savings` : null, `hold spending to essentials until it clears`].filter(Boolean);
       return {
         kind: "bill_short",

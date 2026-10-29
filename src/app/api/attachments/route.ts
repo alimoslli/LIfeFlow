@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     if (file.size > MAX_IMAGE_BYTES) throw new HttpError(413, "Files must be 5 MB or smaller");
     const buf = Buffer.from(await file.arrayBuffer());
     const mime = sniffMime(buf, file.name);
-    if (!mime) throw new HttpError(415, "Unsupported file type. Use PNG, JPEG, WebP, GIF, or plain text/CSV/Markdown/JSON.");
+    if (!mime || mime === "application/pdf") throw new HttpError(415, "Unsupported file type. Use PNG, JPEG, WebP, GIF, or plain text/CSV/Markdown/JSON.");
     if (!mime.startsWith("image/") && buf.length > MAX_TEXT_BYTES) throw new HttpError(413, "Text files must be 1 MB or smaller");
     const filename = file.name.replace(/[^\w.\- ()]/g, "_").slice(0, 120) || "upload";
     const [row] = await withUser(user.id, (s) =>
