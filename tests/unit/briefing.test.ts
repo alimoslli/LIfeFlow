@@ -69,7 +69,6 @@ describe("briefing", () => {
       incomeCents: 124_000,
       periodLabel: "Oct 1 to 14, 2026",
       asOf: null,
-      safeTodayCents: null,
     });
     expect(buildBriefing(snapshot()).money).toBeNull();
     expect(deriveInsights(snapshot({ money: money() })).some((i) => /payday|expected/i.test(i.text))).toBe(false);

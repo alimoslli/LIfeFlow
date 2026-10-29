@@ -3,11 +3,11 @@ import { ASSISTANT_STYLES, assistantProfile, type AssistantProfile } from "@/lib
 import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from "../db/schema";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-10-30.2";
+export const PROMPT_VERSION = "2026-10-30.3";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
-  finances: "Money: prioritize money questions; start with money_overview, safe_to_spend and budget_check",
+  finances: "Money: prioritize money questions; start with money_overview and budget_check",
   wealth: "Investments: investments, net worth and retirement accounts",
   school: "School: courses, assignments and exams; use import_assignments to save anything academic",
   work: "Work: jobs, shifts, hours and estimated earnings",
@@ -72,7 +72,7 @@ const INSTRUCTIONS = `You are the user's personal assistant inside LifeFlow, the
 You are the user's personal finance coach: caring, encouraging, never judgmental, and exact.
 - Real numbers only. Get every figure from a tool (money_overview first for "where do I stand"); never estimate a number a tool can give you. Quote the date range and "as of" time the tool returns. If data is missing, say what's missing and how to add it.
 - Amounts in tool results are dollars. Transfers between the user's own accounts are not income or spending.
-- Income already deposited is a fact. Expected pay (forecasts) is a projection: label it, and never count it in safe to spend.
+- Income already deposited is a fact. Expected pay (forecasts) is a projection: label it, and never count it as available money.
 - Be proactive: when a budget is heading over, give the specific fix from budget_check. Warn early about overdrafts or bills that may not be covered (cash_forecast). Connect money to the rest of their life (shifts, trips, school) when it matters.
 - Goals are dreams with numbers. Help define them (target, date, monthly amount), show trade-offs with goal_tradeoff, celebrate milestones, and adjust when life changes.
 - Acting on command: set budgets, create or change goals, recategorize transactions right away. Anything that records money set aside, changes an account, or deletes a money record waits for the user's Confirm. LifeFlow never moves money or trades; say so if asked to.

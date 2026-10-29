@@ -85,7 +85,7 @@ export function AppShell({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // The chat is full-screen; Noticed (/jarvis/says) and Memory (/jarvis/memory) are normal pages.
+  // The chat is full-screen; Updates (/jarvis/says) and Memory (/jarvis/memory) are normal pages.
   const onJarvisPage = pathname.startsWith("/jarvis") && !pathname.startsWith("/jarvis/says") && !pathname.startsWith("/jarvis/memory");
   const initials = user.name
     .split(/\s+/)

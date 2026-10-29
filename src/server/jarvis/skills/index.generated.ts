@@ -839,7 +839,7 @@ export const SKILLS: SkillFile[] = [
       "plan_paycheck",
       "recurring_payments",
       "list_goals",
-      "safe_to_spend"
+      "money_overview"
     ],
     "body": "## Steps\n1. Use the actual deposited amount (ask if unknown; never project pay).\n2. Run plan_paycheck.\n3. Show bills first, then savings and goals, then what's free to spend.\n4. Offer reminders for the bills.\n\n## Quality rules\n- Pay counts only after it's deposited.\n\n## Example\nUser: I got paid $640, plan it\nJarvis: Bills $310 (rent share, phone), Paris goal $100, savings $60, free to spend $170.",
     "evals": [
@@ -881,10 +881,10 @@ export const SKILLS: SkillFile[] = [
     ],
     "tools": [
       "check_affordability",
-      "safe_to_spend",
+      "money_overview",
       "recurring_payments"
     ],
-    "body": "## Steps\n1. Run check_affordability with the amount and date.\n2. Explain the result with the bills and cash it used.\n3. Give a clear yes, wait until X, or no, with the reason.\n\n## Quality rules\n- Never count future income.\n\n## Example\nUser: Can I afford $120 concert tickets?\nJarvis: Yes, but tight: after rent on the 1st you'd have $64 safe to spend until payday.",
+    "body": "## Steps\n1. Run check_affordability with the amount and date.\n2. Explain the result with the bills and cash it used.\n3. Give a clear yes, wait until X, or no, with the reason.\n\n## Quality rules\n- Never count future income.\n\n## Example\nUser: Can I afford $120 concert tickets?\nJarvis: Yes, but tight: after rent on the 1st you'd have $64 left until payday.",
     "evals": [
       {
         "prompt": "Can I afford a $120 concert ticket?",

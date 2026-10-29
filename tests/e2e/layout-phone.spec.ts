@@ -10,22 +10,7 @@ const TABS: [string, string, string[]][] = [
   ["Today", "/", []],
   ["Plan", "/plan", ["/calendar", "/tasks", "/work", "/trips"]],
   ["Jarvis", "/jarvis", ["/jarvis/says", "/inbox", "/jarvis/memory"]],
-  [
-    "Money",
-    "/money",
-    [
-      "/finances/accounts",
-      "/wealth",
-      "/finances/budgets",
-      "/finances/transactions",
-      "/finances/subscriptions",
-      "/finances/bills",
-      "/finances/savings",
-      "/finances/goals",
-      "/money/coach",
-      "/money/report",
-    ],
-  ],
+  ["Money", "/money", ["/finances/accounts", "/wealth", "/finances/budgets", "/finances/transactions", "/finances/subscriptions", "/finances/bills", "/goals"]],
   ["School", "/school", ["/habits", "/notes"]],
 ];
 

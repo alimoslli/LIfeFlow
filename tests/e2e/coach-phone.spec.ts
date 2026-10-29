@@ -101,18 +101,6 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     await shot(page, "5-subscriptions");
   });
 
-  await test.step("Save money: sourced cheaper plans and a script", async () => {
-    await page.goto("/finances/savings");
-    const verizon = page.getByRole("heading", { name: "Verizon" }).locator("xpath=ancestor::*[.//button][1]");
-    await verizon.getByRole("button", { name: "Find cheaper" }).click();
-    await expect(page.getByRole("link", { name: "Source: Plans | Example Mobile" })).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText("Unsourced Co")).toHaveCount(0);
-    await page.getByRole("link", { name: "Source: Plans | Example Mobile" }).scrollIntoViewIfNeeded();
-    await shot(page, "6-save-money");
-    await page.getByRole("button", { name: "Negotiation script" }).first().click();
-    await expect(page.getByRole("dialog")).toContainText("I'm a Verizon customer and I'm paying $85.00 a month");
-  });
-
   await test.step("Inbox: an upload and a forwarded bill are filed; Undo works", async () => {
     await page.goto("/inbox");
     await page.getByLabel("Photo or PDF to file").setInputFiles({
@@ -155,7 +143,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
   });
 
   await test.step("Nothing overflows sideways on a phone", async () => {
-    for (const path of ["/", "/jarvis/says", "/finances/subscriptions", "/finances/savings", "/inbox", "/jarvis/memory", "/settings", "/settings/jarvis"]) {
+    for (const path of ["/", "/jarvis/says", "/finances/subscriptions", "/inbox", "/jarvis/memory", "/settings", "/settings/jarvis"]) {
       await page.goto(path);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(overflow, path).toBeLessThanOrEqual(1);

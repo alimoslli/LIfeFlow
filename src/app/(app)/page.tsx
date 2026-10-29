@@ -57,7 +57,7 @@ export default async function TodayPage() {
       tasks,
       assistantName: assistantProfile(user.preferences).name,
       setup,
-      // Questions to the user (consent, get-to-know) live in Jarvis → Noticed; the plan's next step is something to do.
+      // Questions to the user (consent, get-to-know) live in Jarvis → Updates; the plan's next step is something to do.
       jarvisCard: top && top.kind !== "consent" && top.kind !== "question" && !(locked && top.topic === "money") ? toCard(top, user.timezone) : null,
     };
   });

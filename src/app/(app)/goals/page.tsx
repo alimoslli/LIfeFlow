@@ -12,8 +12,8 @@ import { series } from "@/server/db/series";
 import type { GoalPurpose } from "@/server/db/schema";
 import { listAccounts } from "@/server/services/finance/accounts";
 import { goalsWithPlans } from "@/server/services/finance/goals";
-import { AskJarvisButton } from "../../money/money-client";
-import { archiveGoalAction, contributeGoalAction, createGoalAction, deleteGoalAction, updateGoalAction } from "../actions";
+import { AskJarvisButton, CelebrateGoal } from "../money/money-client";
+import { archiveGoalAction, contributeGoalAction, createGoalAction, deleteGoalAction, updateGoalAction } from "../finances/actions";
 import { GoalTradeoff } from "./tradeoff";
 
 export const metadata: Metadata = { title: "Goals" };
@@ -47,10 +47,12 @@ export default async function GoalsPage() {
   const active = d.goals.filter((g) => g.status === "active");
   const done = d.goals.filter((g) => g.status === "achieved");
 
+  const celebrate = d.goals.find((g) => g.milestoneToCelebrate);
   return (
     <>
+      {celebrate && <CelebrateGoal goalId={celebrate.id} name={celebrate.name} percent={celebrate.milestoneToCelebrate!} />}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-[28px] font-medium tracking-tight">Goals and dreams</h1>
+        <h1 className="font-display text-[28px] font-medium tracking-tight">Goals</h1>
         <AskJarvisButton prompt="Help me set a money goal. Ask me one question at a time about what I'm dreaming of, then create it.">
           <Sparkles className="h-3.5 w-3.5" /> Plan a goal with Jarvis
         </AskJarvisButton>

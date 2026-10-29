@@ -8,7 +8,8 @@ import { subscriptionReport } from "../finance/coach";
 import { goalsWithPlans } from "../finance/goals";
 import { netWorthTrend } from "../finance/investing";
 import { budgetStatus, spendingByCategory } from "../finance/planning";
-import { safeToSpend } from "../finance/forecast";
+import { listAccounts } from "../finance/accounts";
+import { balancesOf } from "../finance/overview";
 import { queryTransactions } from "../finance/transactions";
 import { listHabits } from "../habits";
 import { listAssignments } from "../school";
@@ -75,7 +76,7 @@ export const morningBrief: Detector = async (ctx) => {
         ),
     () => listAssignments(scope, tz, { view: "upcoming", now, limit: 10 }),
     () => listShifts(scope, tz, today, today),
-    () => safeToSpend(scope, today),
+    () => listAccounts(scope),
   );
   const assignmentsSoon = dueSoon.filter((a) => a.dueAt && localDateOf(a.dueAt, tz) <= addDaysStr(today, 1));
   const due = [
@@ -85,7 +86,7 @@ export const morningBrief: Detector = async (ctx) => {
   ];
   const urgent = dueTasks.find((t) => t.priority === "urgent" || t.priority === "high");
   const oneThing = assignmentsSoon[0] ? `Finish ${assignmentsSoon[0].title}` : urgent ? urgent.title : (dueTasks[0]?.title ?? (due.length ? due[0] : null));
-  const moneyLine = money.hasAccounts ? `${usd(money.todayCents)} safe to spend today` : null;
+  const moneyLine = money.length ? `${usd(balancesOf(money).cashCents)} available now` : null;
   if (!due.length && !moneyLine) return [];
   return [
     {
@@ -98,7 +99,7 @@ export const morningBrief: Detector = async (ctx) => {
         oneThing,
         sections: [
           { heading: "Due", lines: due.length ? due.slice(0, 6) : ["Nothing due today."] },
-          ...(moneyLine ? [{ heading: "Money", lines: [moneyLine, `${usd(money.cashCents)} in checking`] }] : []),
+          ...(moneyLine ? [{ heading: "Money", lines: [moneyLine] }] : []),
           ...(oneThing ? [{ heading: "The one thing", lines: [oneThing] }] : []),
         ],
       },
@@ -255,7 +256,7 @@ export const monthlyReview: Detector = async ({ scope, today }) => {
       topic: "money",
       dedupeKey: `monthly_review:${last}`,
       facts: { month: formatDateStr(last, "MMMM"), rate, spentCents: spent, incomeCents: income, sections },
-      action: { type: "open", label: "See the month", href: "/money/report" },
+      action: { type: "open", label: "See the month", href: "/money" },
       priority: 85,
     },
   ];

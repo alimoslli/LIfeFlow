@@ -42,12 +42,11 @@ const PAGES: { title: string; href: string; icon: LucideIcon; words: string }[] 
   { title: "Calendar", href: "/calendar", icon: CalendarDays, words: "events" },
   { title: "Classes", href: "/school", icon: BookOpen, words: "school courses assignments" },
   { title: "Notes", href: "/notes", icon: NotebookPen, words: "" },
-  { title: "Money", href: "/money", icon: Wallet, words: "safe to spend" },
+  { title: "Money", href: "/money", icon: Wallet, words: "available spent income balance" },
   { title: "Transactions", href: "/finances/transactions", icon: Receipt, words: "spending" },
   { title: "Budgets", href: "/finances/budgets", icon: Wallet, words: "" },
-  { title: "Goals", href: "/finances/goals", icon: Flag, words: "savings dreams" },
+  { title: "Goals", href: "/goals", icon: Flag, words: "savings dreams" },
   { title: "Accounts and banks", href: "/finances/accounts", icon: Landmark, words: "plaid connect bank" },
-  { title: "Money coach", href: "/money/coach", icon: HeartPulse, words: "health score debt subscriptions" },
   { title: "Settings", href: "/settings", icon: Settings, words: "profile security passkey" },
 ];
 

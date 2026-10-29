@@ -3,9 +3,9 @@ import { and, eq } from "drizzle-orm";
 import { financialAccounts, financialGoals, transactions } from "../../db/schema";
 import { resolveCategory } from "../../services/finance/categories";
 import { applyRuleToPast } from "../../services/finance/categorize";
-import { debtReport, emergencyFundPlan, financialHealth, planPaycheck, roundUps, subscriptionReport } from "../../services/finance/coach";
-import { dailyCheckin, monthlyReport, weeklyCheckin } from "../../services/finance/checkins";
-import { budgetWarnings, cashForecast, safeToSpend } from "../../services/finance/forecast";
+import { debtReport, emergencyFundPlan, planPaycheck, roundUps, subscriptionReport } from "../../services/finance/coach";
+import { monthlyReport } from "../../services/finance/monthly-report";
+import { budgetWarnings, cashForecast } from "../../services/finance/forecast";
 import { contributeToGoal, goalTradeoff, goalsWithPlans } from "../../services/finance/goals";
 import { GENERAL_INFO, investmentReport, LESSONS, projectInvesting } from "../../services/finance/investing";
 import { createGoal, updateGoal } from "../../services/finance/planning";
@@ -50,16 +50,6 @@ export const moneyCoachTools = [
         }
       }
       return { results, viewAt: "/finances/accounts" };
-    },
-  }),
-  defineTool({
-    name: "safe_to_spend",
-    description:
-      "How much the user can safely spend today and this week: cash and checking minus bills due before the next paycheck and planned goal savings, spread over the days until then. Includes the method, so explain it briefly.",
-    schema: z.object({}),
-    mutates: false,
-    async execute(_a, ctx) {
-      return centsToDollarsDeep({ ...(await ctx.run((s) => safeToSpend(s, ctx.today))), viewAt: "/money" });
     },
   }),
   defineTool({
@@ -192,7 +182,7 @@ export const moneyCoachTools = [
     mutates: false,
     async execute(_a, ctx) {
       const g = await ctx.run((s) => goalsWithPlans(s, ctx.today));
-      return centsToDollarsDeep({ goals: g.map(({ recentContributions: _r, userId: _u, ...x }) => x), viewAt: "/finances/goals" });
+      return centsToDollarsDeep({ goals: g.map(({ recentContributions: _r, userId: _u, ...x }) => x), viewAt: "/goals" });
     },
   }),
   defineTool({
@@ -223,7 +213,7 @@ export const moneyCoachTools = [
       );
       return centsToDollarsDeep({
         created: { id: g.id, name: g.name, targetCents: g.targetCents, targetDate: g.targetDate, monthlyPlanCents: g.monthlyPlanCents },
-        viewAt: "/finances/goals",
+        viewAt: "/goals",
       });
     },
   }),
@@ -251,7 +241,7 @@ export const moneyCoachTools = [
       );
       return centsToDollarsDeep({
         updated: { id: g.id, name: g.name, targetCents: g.targetCents, targetDate: g.targetDate, monthlyPlanCents: g.monthlyPlanCents, status: g.status },
-        viewAt: "/finances/goals",
+        viewAt: "/goals",
       });
     },
   }),
@@ -272,7 +262,7 @@ export const moneyCoachTools = [
     },
     async execute({ id }, ctx) {
       const g = await ctx.run((s) => moveToTrash(s, "goal", id));
-      return { deleted: g.label, restorableFromTrash: true, viewAt: "/finances/goals" };
+      return { deleted: g.label, restorableFromTrash: true, viewAt: "/goals" };
     },
   }),
   defineTool({
@@ -301,7 +291,7 @@ export const moneyCoachTools = [
         targetCents: r.targetCents,
         achieved: r.achieved,
         note: "Recorded in LifeFlow. No money was moved between accounts.",
-        viewAt: "/finances/goals",
+        viewAt: "/goals",
       });
     },
   }),
@@ -422,16 +412,6 @@ export const moneyCoachTools = [
     },
   }),
   defineTool({
-    name: "financial_health",
-    description:
-      "A 0 to 100 health score from the user's own data (saving rate, emergency fund, overdraft risk, card utilization, debt load, budgets) with the top steps to improve. Not a credit score.",
-    schema: z.object({}),
-    mutates: false,
-    async execute(_a, ctx) {
-      return centsToDollarsDeep({ ...(await ctx.run((s) => financialHealth(s, ctx.today))), viewAt: "/money" });
-    },
-  }),
-  defineTool({
     name: "investment_overview",
     description: `Holdings, allocation, return, concentration, fund fees and plain-language notes. ${GENERAL_INFO} Never recommend buying or selling a specific security.`,
     schema: z.object({}),
@@ -458,27 +438,19 @@ export const moneyCoachTools = [
     },
   }),
   defineTool({
-    name: "money_checkin",
+    name: "monthly_money_report",
     description:
-      "A money check-in: 'daily' (spent and safe to spend), 'weekly' (week vs last week, budget pace, bills ahead) or 'monthly' (full report with savings rate, net worth change, goals and health score).",
+      "A month's money report: income, spending, amount saved and savings rate, top categories vs the month before, budgets, goals and net worth change. Defaults to last month.",
     schema: z.object({
-      kind: z.enum(["daily", "weekly", "monthly"]),
       month: z
         .string()
         .regex(/^\d{4}-\d{2}$/)
         .optional()
-        .describe("YYYY-MM for a monthly report"),
+        .describe("YYYY-MM"),
     }),
     mutates: false,
     async execute(a, ctx) {
-      const r: object = await ctx.run((s): Promise<object> =>
-        a.kind === "daily"
-          ? dailyCheckin(s, ctx.today)
-          : a.kind === "weekly"
-            ? weeklyCheckin(s, ctx.today)
-            : monthlyReport(s, ctx.today, a.month ? `${a.month}-01` : undefined),
-      );
-      return centsToDollarsDeep({ ...r, viewAt: a.kind === "monthly" ? "/money/report" : "/money" });
+      return centsToDollarsDeep({ ...(await ctx.run((s) => monthlyReport(s, ctx.today, a.month ? `${a.month}-01` : undefined))), viewAt: "/money" });
     },
   }),
   defineTool({

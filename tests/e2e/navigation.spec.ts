@@ -9,8 +9,9 @@ test("five tabs, and every section is one tap from its tab", async ({ page }) =>
       "Plan sections",
       [
         ["To-dos", /\/tasks/],
+        ["Goals", /\/goals/],
+        ["Health", /\/habits/],
         ["Work", /\/work/],
-        ["Trips", /\/trips/],
         ["Calendar", /\/plan$/],
       ],
     ],
@@ -18,18 +19,24 @@ test("five tabs, and every section is one tap from its tab", async ({ page }) =>
       "/money",
       "Money sections",
       [
-        ["Transactions", /\/finances\/transactions/],
+        ["Activity", /\/finances\/transactions/],
         ["Accounts", /\/finances\/accounts/],
-        ["Insights", /\/money\/coach/],
         ["Overview", /\/money$/],
+      ],
+    ],
+    [
+      "/jarvis/says",
+      "Jarvis sections",
+      [
+        ["Memory", /\/jarvis\/memory/],
+        ["Updates", /\/jarvis\/says/],
       ],
     ],
     [
       "/school",
       "School sections",
       [
-        ["Habits & health", /\/habits/],
-        ["Second Brain", /\/notes/],
+        ["Notes", /\/notes/],
         ["Classes", /\/school/],
       ],
     ],

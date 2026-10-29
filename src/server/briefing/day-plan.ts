@@ -74,7 +74,7 @@ export function buildDayPlan(
   const m = s.money;
   if (m && !opts.moneyHidden) {
     const over = m.overBudget.reduce((n, o) => n + (o.spentCents - o.limitCents), 0);
-    const safe = m.safeToSpend && !m.safeToSpend.short ? `${usd(m.safeToSpend.todayCents)} is safe to spend today` : null;
+    const safe = m.liquidCents > 0 ? `${usd(m.liquidCents)} is available now` : null;
     summary.push(
       over > 0
         ? `You're ${usd(over)} over budget in ${m.overBudget.length === 1 ? m.overBudget[0].category : `${m.overBudget.length} categories`} this month${safe ? `; ${safe}` : ""}.`

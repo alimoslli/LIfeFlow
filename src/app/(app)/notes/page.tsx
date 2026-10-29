@@ -35,7 +35,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader
-        title={project ? project.name : "Second Brain"}
+        title={project ? project.name : "Notes"}
         eyebrow={project ? "Project" : undefined}
         description={project ? (project.description ?? undefined) : "Notes, ideas and decisions."}
         actions={

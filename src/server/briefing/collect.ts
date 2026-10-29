@@ -5,7 +5,7 @@ import type { UserScope } from "../db/with-user";
 import { freeSlots, getAgenda } from "../services/calendar";
 import { DEFAULT_CATEGORIES } from "../services/finance/categories";
 import { moneyOverview } from "../services/finance/overview";
-import { budgetWarnings, cashForecast, safeToSpend } from "../services/finance/forecast";
+import { budgetWarnings, cashForecast } from "../services/finance/forecast";
 import { listGoals, monthlyContributionNeeded, upcomingRecurring } from "../services/finance/planning";
 import { merchantKey } from "../services/finance/recurring-detect";
 import { queryTransactions } from "../services/finance/transactions";
@@ -80,12 +80,11 @@ async function collectMoney(s: UserScope, today: string): Promise<MoneySnapshot 
   const span = daysBetween(mStart, today);
   const lastStart = monthStart(addDaysStr(mStart, -1));
   const lastSameDay = addDaysStr(lastStart, span);
-  const [thisMonth, lastMonth, goals, pace, safe, forecast] = await series(
+  const [thisMonth, lastMonth, goals, pace, forecast] = await series(
     () => queryTransactions(s, { from: mStart, to: today, limit: 5000 }),
     () => queryTransactions(s, { from: lastStart, to: lastSameDay, limit: 5000 }),
     () => listGoals(s),
     () => budgetWarnings(s, today),
-    () => safeToSpend(s, today),
     () => cashForecast(s, today, 14),
   );
   const byMerchant = (rows: typeof thisMonth, catName: string) => {
@@ -142,7 +141,6 @@ async function collectMoney(s: UserScope, today: string): Promise<MoneySnapshot 
     headingOver: pace
       .filter((p) => p.status === "heading_over")
       .map((p) => ({ category: p.categoryName, projectedCents: p.projectedCents, limitCents: p.limitCents, fix: p.fix })),
-    safeToSpend: { todayCents: safe.todayCents, short: safe.short },
     overdraft: forecast.overdraftDateWithPay
       ? { date: forecast.overdraftDateWithPay, evenWithPay: true }
       : forecast.overdraftDateWithoutPay

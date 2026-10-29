@@ -3,8 +3,8 @@ import { closeDb } from "@/server/db/client";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
 import { applyRuleToPast, listCategoryRules } from "@/server/services/finance/categorize";
-import { debtReport, financialHealth, planPaycheck } from "@/server/services/finance/coach";
-import { cashForecast, safeToSpend } from "@/server/services/finance/forecast";
+import { debtReport, planPaycheck } from "@/server/services/finance/coach";
+import { cashForecast } from "@/server/services/finance/forecast";
 import { contributeToGoal, goalsWithPlans } from "@/server/services/finance/goals";
 import { createGoal, createRecurring } from "@/server/services/finance/planning";
 import { applyBudgetPlan, suggestBudgets } from "@/server/services/finance/smart-budgets";
@@ -71,7 +71,7 @@ describe("smart budgets", () => {
   });
 });
 
-describe("safe to spend, forecast, goals and health", () => {
+describe("forecast, goals, paycheck and debt", () => {
   it("connects bills, goals and expected pay", async () => {
     const u = await userWithHistory();
     await u.run(async (s) => {
@@ -80,12 +80,6 @@ describe("safe to spend, forecast, goals and health", () => {
       const g = await createGoal(s, { name: "Japan trip", targetCents: 300_000, monthlyPlanCents: 30_000, purpose: "travel" });
       await contributeToGoal(s, { goalId: g.id, amountCents: 75_000, date: TODAY });
     });
-    const safe = await u.run((s) => safeToSpend(s, TODAY));
-    expect(safe).toMatchObject({ until: "2026-11-06", untilReason: "next_pay", billsDueCents: 120_000, cashCents: 120_000 });
-    expect(safe.goalSetAsideCents).toBe(Math.round((30_000 * 9) / 30));
-    expect(safe.todayCents).toBe(0); // rent leaves nothing free before payday
-    expect(safe.short).toBe(true);
-
     const f = await u.run((s) => cashForecast(s, TODAY, 14));
     expect(f.expectedPay[0]).toMatchObject({ date: "2026-11-06", amountCents: 150_000 });
     expect(f.overdraftDateWithoutPay).not.toBeNull();
@@ -100,11 +94,6 @@ describe("safe to spend, forecast, goals and health", () => {
 
     const debts = await u.run((s) => debtReport(s, TODAY));
     expect(debts).toMatchObject({ totalOwedCents: 90_000, overallUtilizationPercent: 45 });
-
-    const health = await u.run((s) => financialHealth(s, TODAY));
-    expect(health.score).not.toBeNull();
-    expect(health.factors.map((x) => x.key)).toEqual(expect.arrayContaining(["savings_rate", "cash_cushion", "credit_utilization"]));
-    expect(health.nextSteps.length).toBeGreaterThan(0);
   });
 
   it("refuses contributions that would make a goal negative", async () => {

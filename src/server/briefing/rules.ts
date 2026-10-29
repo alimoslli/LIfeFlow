@@ -296,7 +296,6 @@ export function buildBriefing(s: LifeSnapshot): Briefing {
           incomeCents: s.money.incomeThisMonthCents,
           periodLabel: s.money.periodLabel,
           asOf: s.money.asOf,
-          safeTodayCents: s.money.safeToSpend?.todayCents ?? null,
         }
       : null,
     week: weekGlance(s),
