@@ -2,7 +2,22 @@
 
 Drafted 2026-10-29 from the owner's decisions. Nothing in this plan is built yet. Build one phase at a time, and only after the owner says go.
 
-**Still pending from the owner:** the MetaMuse link, for an honest comparison before Phase 3.
+## 0. Versus Muse from Meta
+
+This comparison is based only on its App Store page: #1 in Productivity, rated 4.9 from 390K ratings.
+
+**What Muse is:** a general personal agent that "takes things off your plate." It finds a form in your email and fills it out, shops and checks out after you approve, and has a Feed widget for the home screen.
+
+**We don't compete as a general agent.** Meta will win that. We win as **the student specialist**, with things a general agent doesn't have:
+- a real structure for school: classes, every due date, grades, the syllabus, Canvas;
+- real money from your bank: available now, spent, came in, bills;
+- planning around your actual schedule of classes and shifts;
+- academic integrity rules, so schools can recommend us.
+
+**Ideas we borrow:**
+- **Jarvis messages that report what he did:** "Found X in your email, so I did Y," with Undo.
+- **"Approve what's sent":** a clear approval card. Ours already exist as confirm tools; make them look this clear.
+- **A home screen widget** with now and next, due soon and available now (Phase 8, native).
 
 ---
 
