@@ -73,36 +73,32 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   };
   const run = <T>(fn: Parameters<typeof withUser<T>>[1]) => withUser(user.id, fn);
 
-  // 1. Conversation + user message
-  const conversation = await run(async (s) => {
-    if (input.conversationId) return getConversation(s, input.conversationId);
-    return createConversation(s, input.module, truncate(input.text.replace(/\s+/g, " ").trim() || "Attachment", 60));
+  // 1–2. Conversation, user message and context in one transaction (fewer round trips before the first word).
+  const { conversation, history, approved } = await run(async (s) => {
+    const conversation = input.conversationId
+      ? await getConversation(s, input.conversationId)
+      : await createConversation(s, input.module, truncate(input.text.replace(/\s+/g, " ").trim() || "Attachment", 60));
+    const ids = input.attachmentIds ?? [];
+    let attachmentIds: string[] = [];
+    if (ids.length) {
+      // Only the user's own, unlinked (or already-this-conversation) uploads may be attached.
+      const rows = await s.tx
+        .select({ id: attachments.id })
+        .from(attachments)
+        .where(
+          and(
+            eq(attachments.userId, s.userId),
+            inArray(attachments.id, ids),
+            or(isNull(attachments.conversationId), eq(attachments.conversationId, conversation.id)),
+          ),
+        );
+      attachmentIds = rows.map((r) => r.id);
+      if (attachmentIds.length) await s.tx.update(attachments).set({ conversationId: conversation.id }).where(inArray(attachments.id, attachmentIds));
+    }
+    await s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "user", content: input.text, attachmentIds });
+    return { conversation, history: await loadHistory(s, conversation.id), approved: await listActiveMemories(s, now) };
   });
   emit({ type: "conversation", id: conversation.id, title: conversation.title });
-
-  const attachmentIds = await run(async (s) => {
-    const ids = input.attachmentIds ?? [];
-    if (!ids.length) return [];
-    // Only the user's own, unlinked (or already-this-conversation) uploads may be attached.
-    const rows = await s.tx
-      .select({ id: attachments.id })
-      .from(attachments)
-      .where(
-        and(
-          eq(attachments.userId, s.userId),
-          inArray(attachments.id, ids),
-          or(isNull(attachments.conversationId), eq(attachments.conversationId, conversation.id)),
-        ),
-      );
-    const valid = rows.map((r) => r.id);
-    if (valid.length) await s.tx.update(attachments).set({ conversationId: conversation.id }).where(inArray(attachments.id, valid));
-    return valid;
-  });
-
-  await run((s) => s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "user", content: input.text, attachmentIds }));
-
-  // 2. Context
-  const [history, approved] = await run(async (s) => [await loadHistory(s, conversation.id), await listActiveMemories(s, now)] as const);
   const openedFrom = input.module ?? conversation.contextModule;
   // Only memories relevant to this request (and earlier messages in this chat) reach the model.
   const earlier = history.flatMap((h) => (h.type === "user" ? [h.text] : [])).slice(0, -1);
@@ -117,12 +113,13 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
     otherMemoryCount: approved.length - memories.length,
     preferences: user.preferences,
   });
-  await run((s) =>
+  // Bookkeeping only; it doesn't delay the model call.
+  const touched = run((s) =>
     touchMemories(
       s,
       memories.map((m) => m.id),
     ),
-  );
+  ).catch(() => undefined);
   const ctx = makeToolContext(user, conversation.id, now, input.text, input.moneyLocked);
 
   // 3. Model/tool loop
@@ -204,6 +201,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
     await run((s) => s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: message, status: "error" }));
     emit({ type: "error", message });
   } finally {
+    await touched;
     await run((s) => s.tx.update(conversations).set({ lastMessageAt: new Date() }).where(eq(conversations.id, conversation.id)));
   }
   let runId: string | null = null;

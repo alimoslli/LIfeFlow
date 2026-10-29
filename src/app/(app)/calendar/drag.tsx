@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, useTransition, type ReactNode } from "react";
+import { CalendarArrowUp } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { moveItemAction } from "./actions";
@@ -34,6 +35,7 @@ export function DragItem({
       title={movable ? "Drag to another day" : undefined}
     >
       {children}
+      {movable && <MoveTo origin={origin as Movable} id={id} />}
     </li>
   );
 }
@@ -75,5 +77,33 @@ export function DropDay({
     >
       {children}
     </Link>
+  );
+}
+
+/** Tap to pick another day: the way to move things on phones, where dragging isn't available. */
+function MoveTo({ origin, id }: { origin: Movable; id: string }) {
+  const router = useRouter();
+  const input = useRef<HTMLInputElement>(null);
+  const [pending, start] = useTransition();
+  return (
+    <label className="tap relative flex shrink-0 items-center justify-center rounded-full text-muted hover:text-text" title="Move to another day">
+      <CalendarArrowUp className={cn("h-4 w-4", pending && "animate-pulse")} />
+      <span className="sr-only">Move to another day</span>
+      <input
+        ref={input}
+        type="date"
+        className="absolute inset-0 opacity-0"
+        onChange={(e) => {
+          const date = e.target.value;
+          if (!date) return;
+          start(async () => {
+            const r = await moveItemAction(origin, id, date);
+            if (!r?.ok) return void toast(r?.error ?? "Couldn't move it.", { tone: "danger" });
+            toast(r.message ?? "Moved.");
+            router.refresh();
+          });
+        }}
+      />
+    </label>
   );
 }

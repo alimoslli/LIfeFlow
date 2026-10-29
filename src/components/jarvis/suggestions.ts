@@ -22,4 +22,26 @@ export const FOLLOW_UPS: Record<string, string[]> = {
   get_daily_briefing: ["Plan my day hour by hour", "What can I push to tomorrow?"],
   check_affordability: ["Which bills are coming up?", "How would this affect my savings goal?"],
   work_earnings: ["Compare with my actual deposits", "How many hours until I hit my goal?"],
+  web_search: ["Compare the top options", "What's the catch?"],
+  money_overview: ["What's safe to spend this week?", "Where can I save this month?"],
+  safe_to_spend: ["Which bills are coming up?", "Plan my next paycheck"],
+  budget_status: ["Move money between budgets", "Which category is running high?"],
+  query_transactions: ["Group these by category", "Any charges I should cancel?"],
+  find_subscriptions: ["Which ones should I cancel?", "Find a cheaper plan for my phone bill"],
+  plan_paycheck: ["Set reminders for these bills", "Put the rest toward my goal"],
+  list_tasks: ["What should I do first?", "Move what I can't finish to tomorrow"],
+  create_events: ["Any conflicts this week?", "Add a reminder before it"],
+  find_free_time: ["Block the first slot for studying", "Find time for the gym too"],
+  list_assignments: ["Build a study plan for these", "What's due first?"],
+  add_shifts: ["Estimate my pay for these shifts", "Do these clash with classes?"],
+  create_trip: ["Plan the trip day by day", "What should I pack?"],
+  get_trip: ["Any clashes with work or class?", "How am I doing on the trip budget?"],
+  list_habits: ["Which habit is slipping?", "Start a new habit"],
+  list_goals: ["Am I on track for my goals?", "How much should I save each week?"],
+  save_memory: ["What else do you know about me?"],
 };
+
+/** When no tool ran: two of the page's starters, skipping the question that was just asked. */
+export function defaultFollowUps(module: JarvisModule, lastQuestion: string | undefined) {
+  return STARTERS[module].filter((s) => !s.endsWith("…") && s !== lastQuestion).slice(0, 2);
+}

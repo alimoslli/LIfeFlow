@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useShell } from "../shell/app-shell";
 import { Markdown } from "./markdown";
 import { VoiceButton } from "./voice-call";
-import { FOLLOW_UPS, STARTERS } from "./suggestions";
+import { defaultFollowUps, FOLLOW_UPS, STARTERS } from "./suggestions";
 import type { JarvisAvailability, JarvisModule, UiAttachment, UiMemorySuggestion, UiMessage, UiTool } from "./types";
 
 type ServerEvent =
@@ -60,8 +60,9 @@ export function JarvisChat({
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: messages.length > 2 ? "smooth" : "auto" });
   }, [messages]);
 
+  // Desktop only: on phones focusing opens the keyboard (and hides the tab bar) before the user asks.
   useEffect(() => {
-    inputRef.current?.focus();
+    if (!window.matchMedia("(pointer: coarse)").matches) inputRef.current?.focus();
   }, []);
 
   const autoSent = useRef(false);
@@ -245,7 +246,9 @@ export function JarvisChat({
   }
 
   const empty = messages.length === 0;
-  const followUps = !busy && lastTool ? FOLLOW_UPS[lastTool] : undefined;
+  const lastQuestion = [...messages].reverse().find((m) => m.role === "user");
+  const followUps =
+    busy || empty || messages.at(-1)?.role !== "assistant" ? undefined : ((lastTool && FOLLOW_UPS[lastTool]) ?? defaultFollowUps(module, lastQuestion?.text));
 
   return (
     <div className="flex h-full min-h-0 flex-col">

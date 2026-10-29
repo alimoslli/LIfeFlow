@@ -39,10 +39,12 @@ export const getTool = (name: string) => byName.get(name);
 
 export type ToolSpec = { name: string; description: string; parameters: Record<string, unknown> };
 
-/** Provider-neutral JSON-schema specs for every tool. */
+let specs: ToolSpec[] | null = null;
+
+/** Provider-neutral JSON-schema specs for every tool. Built once: the tools never change at runtime. */
 export function toolSpecs(): ToolSpec[] {
-  return ALL_TOOLS.map((t) => {
+  return (specs ??= ALL_TOOLS.map((t) => {
     const { $schema: _ignored, ...parameters } = z.toJSONSchema(t.schema, { io: "input", unrepresentable: "any" }) as Record<string, unknown>;
     return { name: t.name, description: t.description, parameters };
-  });
+  }));
 }
