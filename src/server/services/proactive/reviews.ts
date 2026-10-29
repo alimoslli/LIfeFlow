@@ -355,7 +355,7 @@ export const weeklyLearned: Detector = async ({ scope, today, now }) => {
           ...(runs.length ? [{ heading: "Your ratings", lines: [`${up} helpful, ${down} not helpful`] }] : []),
         ],
       },
-      action: { type: "open", label: "Review what I know", href: "/settings/memory" },
+      action: { type: "open", label: "Review what I know", href: "/jarvis/memory" },
       priority: 45,
     },
   ];

@@ -28,9 +28,9 @@ export default async function JarvisSaysPage() {
       <header className="flex items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">{d.name} says</h1>
-          <p className="mt-1 text-sm text-text-2">Everything {d.name} noticed and suggested, and what you did with it.</p>
+          <p className="mt-1 text-sm text-text-2">Everything {d.name} noticed, newest first.</p>
         </div>
-        <Link href="/settings/memory#personality" className="tap flex items-center justify-center text-muted" aria-label="Personality settings">
+        <Link href="/settings/jarvis" className="tap flex items-center justify-center text-muted" aria-label="Personality settings">
           <Settings2 className="h-5 w-5" />
         </Link>
       </header>

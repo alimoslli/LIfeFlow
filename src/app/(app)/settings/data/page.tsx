@@ -8,6 +8,7 @@ import { requireUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { accountHasPassword } from "@/server/services/accounts";
 import { deleteAccountAction } from "../actions";
+import { SettingsHeader } from "../settings-header";
 
 export const metadata: Metadata = { title: "Privacy & data" };
 
@@ -16,15 +17,13 @@ export default async function DataSettings() {
   const withPassword = await accountHasPassword(getDb(), user.id);
   return (
     <div className="flex flex-col gap-5">
+      <SettingsHeader title="Privacy & data" />
       <Card className="p-5">
         <h2 className="font-medium">Export your data</h2>
-        <p className="mt-1 text-sm text-text-2">
-          Download everything LifeFlow stores about you as JSON: finances, school, work, calendar, tasks, notes, assistant conversations and memories.
-          Integration credentials are never included.
-        </p>
+        <p className="mt-1 text-sm text-text-2">A copy of everything LifeFlow keeps about you.</p>
         <div className="mt-4 flex flex-wrap gap-2">
           <a href="/api/export" className="inline-flex h-10 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-accent-text">
-            <Download className="h-4 w-4" /> Full export (JSON)
+            <Download className="h-4 w-4" /> Download my data
           </a>
           <a
             href="/api/export?format=transactions.csv"
@@ -35,28 +34,22 @@ export default async function DataSettings() {
         </div>
       </Card>
       <Card className="p-5">
-        <h2 className="font-medium">How your data is handled</h2>
+        <h2 className="font-medium">Your privacy</h2>
         <p className="mt-1 text-sm text-text-2">
-          Read the full{" "}
+          Your data is private to you, encrypted where it matters, and never used to train AI. Read the{" "}
           <a href="/privacy" className="text-accent underline underline-offset-2">
             Privacy Policy
           </a>{" "}
           and{" "}
           <a href="/terms" className="text-accent underline underline-offset-2">
-            Terms of Use
+            Terms
           </a>
           .
         </p>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-text-2">
-          <li>Your records are isolated by database row-level security; no other account can read them.</li>
-          <li>Jarvis sends only the context needed for a request to OpenAI, with response storage disabled.</li>
-          <li>Integration tokens are encrypted at rest and never shown to the browser or the AI.</li>
-          <li>Sensitive actions are recorded in an audit log you can review under Security.</li>
-        </ul>
       </Card>
       <Card className="border-danger/30 p-5">
         <h2 className="font-medium text-danger">Delete account</h2>
-        <p className="mt-1 text-sm text-text-2">Permanently deletes your account and all data. This cannot be undone. Export first if you want a copy.</p>
+        <p className="mt-1 text-sm text-text-2">Deletes your account and everything in it. This can&apos;t be undone.</p>
         <ActionForm action={deleteAccountAction} className="mt-4 max-w-sm">
           {withPassword && (
             <Field label="Password" htmlFor="del-pw">

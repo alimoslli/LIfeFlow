@@ -36,6 +36,7 @@ test("two-step sign-in: turn on, then a code is required to sign in", async ({ p
   await expect(page.getByText(/On since/)).toBeVisible();
 
   // Sign out, then the password alone is not enough.
+  await page.goto("/settings");
   await page.getByRole("button", { name: "Sign out" }).click();
   await page.waitForURL("**/login");
   await signIn(page, email);

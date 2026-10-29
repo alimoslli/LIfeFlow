@@ -202,6 +202,17 @@ export async function topMessage(scope: UserScope, now = new Date()) {
   return rows.find((r) => r.status === "new" || (r.snoozedUntil && r.snoozedUntil <= now)) ?? null;
 }
 
+/** New messages from the last 3 days (the dot on the Jarvis tab). */
+export async function unreadCount(scope: UserScope, now = new Date()) {
+  const [r] = await scope.tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(jarvisMessages)
+    .where(
+      and(eq(jarvisMessages.userId, scope.userId), eq(jarvisMessages.status, "new"), gte(jarvisMessages.createdAt, new Date(now.getTime() - 3 * 86_400_000))),
+    );
+  return r?.n ?? 0;
+}
+
 export async function listMessages(scope: UserScope, limit = 100) {
   return scope.tx.select().from(jarvisMessages).where(eq(jarvisMessages.userId, scope.userId)).orderBy(desc(jarvisMessages.createdAt)).limit(limit);
 }

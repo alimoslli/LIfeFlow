@@ -5,11 +5,11 @@ import { SubmitButton } from "@/components/ui/button";
 import { NewPasswordField } from "@/components/password-field";
 import { control, Field, Input } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
-import { Badge, Card, CardHeader } from "@/components/ui/surface";
+import { Card, CardHeader } from "@/components/ui/surface";
 import { formatIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
-import { auditEvents, sessions } from "@/server/db/schema";
+import { sessions } from "@/server/db/schema";
 import { twoFactorStatus } from "@/server/auth/two-factor";
 import { appleConfig, appleIdentityFor } from "@/server/auth/apple";
 import { MONEY_LOCK_IDLE_CHOICES, moneyLockSettings } from "@/server/auth/money-lock";
@@ -19,13 +19,13 @@ import { changePasswordAction, signOutOthersAction } from "../actions";
 import { setMoneyLockAction, unlinkAppleAction } from "./passkey-actions";
 import { PasskeysCard } from "./passkeys-card";
 import { TwoFactorCard } from "./two-factor-card";
+import { SettingsHeader } from "../settings-header";
 
 export const metadata: Metadata = { title: "Security" };
 
 export default async function SecuritySettings({ searchParams }: { searchParams: Promise<{ apple?: string }> }) {
   const { apple: appleResult } = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
-    const events = await s.tx.select().from(auditEvents).where(eq(auditEvents.userId, s.userId)).orderBy(desc(auditEvents.createdAt)).limit(30);
     const active = await getDb()
       .select({ createdAt: sessions.createdAt, lastSeenAt: sessions.lastSeenAt, userAgent: sessions.userAgent })
       .from(sessions)
@@ -36,7 +36,6 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
     const apple = await appleIdentityFor(getDb(), u.id);
     const withPassword = await accountHasPassword(getDb(), u.id);
     return {
-      events,
       active,
       tz: u.timezone,
       user: { name: u.name, email: u.email },
@@ -51,6 +50,7 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
   const day = (x: Date) => formatIn(x, d.tz, "MMM d, yyyy");
   return (
     <div className="flex flex-col gap-5">
+      <SettingsHeader title="Face ID & passwords" />
       {appleResult === "linked" && (
         <p role="status" className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
           Sign in with Apple is linked. You can use it next time you sign in.
@@ -68,10 +68,7 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
       />
       <Card className="p-5">
         <h2 className="font-medium">Lock Money with Face ID</h2>
-        <p className="mt-0.5 text-sm text-text-2">
-          Money and investments ask for Face ID or Touch ID after a few minutes without use, so someone holding your unlocked phone can&apos;t see your
-          balances. Jarvis can&apos;t read your money while it&apos;s locked either.
-        </p>
+        <p className="mt-0.5 text-sm text-text-2">Ask for Face ID before showing your balances.</p>
         <ActionForm action={setMoneyLockAction} reset={false} className="mt-3 gap-0">
           <label className="flex min-h-14 cursor-pointer items-center gap-3 border-b border-border py-2">
             <span className="flex-1 text-[15px]">Require Face ID / Touch ID for Money</span>
@@ -160,7 +157,7 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
       </Card>
       <Card>
         <CardHeader
-          title={`Active sessions · ${d.active.length}`}
+          title={`Signed-in devices · ${d.active.length}`}
           action={
             d.active.length > 1 ? (
               <ActionButton action={signOutOthersAction} className="text-xs font-medium text-accent hover:underline">
@@ -174,18 +171,6 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
             <li key={i} className="flex justify-between gap-3 py-1.5">
               <span className="truncate text-text-2">{s.userAgent?.replace(/\(.*?\)/g, "").slice(0, 60) || "Unknown device"}</span>
               <span className="shrink-0 text-xs text-muted">active {formatIn(s.lastSeenAt, d.tz, "MMM d")}</span>
-            </li>
-          ))}
-        </ul>
-      </Card>
-      <Card>
-        <CardHeader title="Recent activity" subtitle="Audit log of sign-ins, exports and changes (including those made by Jarvis)" />
-        <ul className="px-5 pb-4 text-sm">
-          {d.events.map((e) => (
-            <li key={e.id} className="flex items-center gap-3 border-b border-border/60 py-1.5 last:border-0">
-              <Badge tone={e.actor === "jarvis" ? "accent" : "neutral"}>{e.actor}</Badge>
-              <span className="flex-1 truncate font-mono text-xs">{e.action}</span>
-              <span className="shrink-0 text-xs text-muted">{formatIn(e.createdAt, d.tz, "MMM d, h:mm a")}</span>
             </li>
           ))}
         </ul>

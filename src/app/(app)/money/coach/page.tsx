@@ -1,7 +1,7 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, BookOpen, CreditCard, HeartPulse, PiggyBank, Repeat, Wallet } from "lucide-react";
+import { BookOpen, CreditCard, HeartPulse, PiggyBank, Repeat, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { Progress } from "@/components/ui/surface";
@@ -41,11 +41,13 @@ export default async function CoachPage({ searchParams }: { searchParams: Promis
   return (
     <div className="mx-auto flex max-w-[680px] flex-col gap-8">
       <header>
-        <Link href="/money" className="hidden items-center gap-1 text-sm text-muted hover:text-text md:inline-flex">
-          <ArrowLeft className="h-3.5 w-3.5" /> Money
-        </Link>
-        <h1 className="mt-2 font-display text-[34px] leading-tight font-medium tracking-tight">Your money coach</h1>
-        <p className="mt-1 text-sm text-text-2">Everything here is worked out from your own accounts and transactions.</p>
+        <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Insights</h1>
+        <p className="mt-1 text-sm text-text-2">
+          Health, debt and savings, from your own numbers.{" "}
+          <Link href="/money/report" className="font-medium text-accent">
+            Monthly report
+          </Link>
+        </p>
       </header>
 
       <Section icon={<HeartPulse />} title="Financial health">

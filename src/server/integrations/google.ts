@@ -91,7 +91,7 @@ function emailFromIdToken(idToken: string | undefined): string | null {
 
 export async function exchangeCode(code: string, verifier: string, redirectUri: string, f: Fetch = fetch, env = process.env) {
   const cfg = googleConfig(env);
-  if (!cfg) throw new GoogleError("Google isn't configured on the server.");
+  if (!cfg) throw new GoogleError("Google isn't available yet.");
   const res = await f(TOKEN_URL, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
@@ -158,7 +158,7 @@ async function accessToken(scope: UserScope, f: Fetch, force = false): Promise<s
   const creds = JSON.parse(decryptSecret(conn.encryptedCredentials)) as Creds;
   if (!force && creds.expiresAt - Date.now() > 60_000) return creds.accessToken;
   const cfg = googleConfig();
-  if (!cfg) throw new GoogleError("Google isn't configured on the server.");
+  if (!cfg) throw new GoogleError("Google isn't available yet.");
   const res = await f(TOKEN_URL, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },

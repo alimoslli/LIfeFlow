@@ -1,4 +1,4 @@
-import { CalendarRange, Sparkles, Sun, UserRound, Wallet } from "lucide-react";
+import { CalendarRange, GraduationCap, Sparkles, Sun, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { JarvisModule } from "@/server/db/schema";
 
@@ -8,7 +8,7 @@ export const NAV = [
   { href: "/plan", label: "Plan", icon: CalendarRange, module: "calendar", match: ["/plan", "/calendar", "/tasks", "/work", "/trips"] },
   { href: "/jarvis", label: "Jarvis", icon: Sparkles, module: "home", match: ["/jarvis", "/inbox"] },
   { href: "/money", label: "Money", icon: Wallet, module: "finances", match: ["/money", "/finances", "/wealth"] },
-  { href: "/habits", label: "Personal", icon: UserRound, module: "home", match: ["/habits", "/school", "/notes"] },
+  { href: "/school", label: "School", icon: GraduationCap, module: "school", match: ["/school", "/habits", "/notes"] },
 ] as const satisfies readonly { href: string; label: string; icon: LucideIcon; module: JarvisModule; match: readonly string[] }[];
 
 const MODULE_BY_PREFIX: [string, JarvisModule][] = [

@@ -128,8 +128,7 @@ export function PlaidLinkButton({
   className?: string;
 }) {
   const { busy, status, start } = useLink(reconnect);
-  if (!configured)
-    return <p className="text-sm text-warning">Bank connections aren&apos;t switched on yet: the server needs PLAID_CLIENT_ID and PLAID_SECRET.</p>;
+  if (!configured) return <p className="text-sm text-warning">Bank connections aren&apos;t available yet. You can add accounts by hand meanwhile.</p>;
   return (
     <div className="flex flex-col gap-2">
       {!reconnect && (

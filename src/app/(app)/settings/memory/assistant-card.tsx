@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ActionForm } from "@/components/action-form";
 import { JarvisAvatar } from "@/components/jarvis/message-card";
 import { SubmitButton } from "@/components/ui/button";
-import { Field, Input, Textarea } from "@/components/ui/field";
+import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Card } from "@/components/ui/surface";
 import { ASSISTANT_STYLES, ASSISTANT_VOICES, type AssistantProfile, type AssistantStyle } from "@/lib/assistant";
 import { composeMessage, PREVIEW_SAMPLES } from "@/lib/jarvis-voice";
@@ -21,6 +21,7 @@ export type PersonalitySettings = {
   avatar: "spark" | "orb" | "initial";
   learning: boolean;
   pushLimit: number;
+  answerLength: "concise" | "balanced" | "detailed";
 };
 
 const TOPIC_LABELS = { money: "Money", school: "School", work: "Work", health: "Health", trips: "Trips", habits: "Habits" } as const;
@@ -56,7 +57,6 @@ export function AssistantCard({
       <h2 id="personality" className="scroll-mt-24 font-medium">
         Personality
       </h2>
-      <p className="mt-1 text-sm text-text-2">How your assistant sounds and when it speaks up. Money and contacting people always need your OK.</p>
 
       {/* Live preview */}
       <div className="mt-4 flex flex-col gap-2 rounded-3xl bg-surface-2 p-3" aria-live="polite" data-testid="personality-preview">
@@ -93,6 +93,14 @@ export function AssistantCard({
             ))}
           </div>
         </fieldset>
+
+        <Field label="Answer length" htmlFor="as-len">
+          <Select id="as-len" name="answerLength" defaultValue={settings.answerLength} className="max-w-xs">
+            <option value="concise">Short</option>
+            <option value="balanced">Balanced</option>
+            <option value="detailed">Detailed</option>
+          </Select>
+        </Field>
 
         <fieldset>
           <legend className="mb-2 text-sm font-medium text-text-2">Avatar</legend>

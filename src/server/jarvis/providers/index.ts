@@ -7,7 +7,7 @@ export type JarvisStatus = { available: boolean; provider: string; model: string
 
 export function jarvisStatus(): JarvisStatus {
   const e = env();
-  if (!e.OPENAI_API_KEY) return { available: false, provider: "openai", model: e.OPENAI_MODEL, reason: "OPENAI_API_KEY is not set on the server." };
+  if (!e.OPENAI_API_KEY) return { available: false, provider: "openai", model: e.OPENAI_MODEL, reason: "Jarvis isn't available right now." };
   return { available: true, provider: "openai", model: e.OPENAI_MODEL };
 }
 

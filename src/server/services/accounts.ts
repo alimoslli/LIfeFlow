@@ -80,7 +80,7 @@ export async function updateProfile(db: Database, userId: string, input: z.input
     .set({
       name: d.name,
       timezone: d.timezone,
-      preferences: { ...current.preferences, studyTime: d.studyTime, weekStartsOn: d.weekStartsOn, jarvisTone: d.jarvisTone },
+      preferences: { ...current.preferences, studyTime: d.studyTime, weekStartsOn: d.weekStartsOn, jarvisTone: d.jarvisTone ?? current.preferences.jarvisTone },
     })
     .where(eq(users.id, userId));
 }
@@ -124,7 +124,13 @@ export const jarvisSettingsSchema = z.object({
 });
 
 /** Name, tone, voice and how proactive the assistant is. */
-export async function updateAssistant(db: Database, userId: string, input: z.input<typeof assistantSchema>, jarvis?: z.input<typeof jarvisSettingsSchema>) {
+export async function updateAssistant(
+  db: Database,
+  userId: string,
+  input: z.input<typeof assistantSchema>,
+  jarvis?: z.input<typeof jarvisSettingsSchema>,
+  answerLength?: "concise" | "balanced" | "detailed",
+) {
   const d = assistantSchema.parse(input);
   const j = jarvis ? jarvisSettingsSchema.parse(jarvis) : undefined;
   const [current] = await db.select().from(users).where(eq(users.id, userId));
@@ -137,6 +143,7 @@ export async function updateAssistant(db: Database, userId: string, input: z.inp
         assistantStyle: d.style,
         assistantNotes: d.notes || undefined,
         assistantVoice: d.voice,
+        ...(answerLength && ["concise", "balanced", "detailed"].includes(answerLength) && { jarvisTone: answerLength }),
         ...(j && { jarvis: { ...current.preferences.jarvis, ...j } }),
       },
     })

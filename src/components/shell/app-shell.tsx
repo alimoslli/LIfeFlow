@@ -33,8 +33,11 @@ export function AppShell({
   jarvis,
   tour = false,
   assistantName = "Jarvis",
+  unread = 0,
   children,
 }: {
+  /** New Jarvis messages: a dot on the Jarvis tab. */
+  unread?: number;
   /** The name the user gave their assistant. */
   assistantName?: string;
   user: { name: string; email: string; accountKind: "standard" | "demo" };
@@ -82,8 +85,8 @@ export function AppShell({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // The chat is full-screen; "Jarvis says" (/jarvis/says) is a normal page.
-  const onJarvisPage = pathname.startsWith("/jarvis") && !pathname.startsWith("/jarvis/says");
+  // The chat is full-screen; Noticed (/jarvis/says) and Memory (/jarvis/memory) are normal pages.
+  const onJarvisPage = pathname.startsWith("/jarvis") && !pathname.startsWith("/jarvis/says") && !pathname.startsWith("/jarvis/memory");
   const initials = user.name
     .split(/\s+/)
     .map((p) => p[0])
@@ -169,7 +172,12 @@ export function AppShell({
                     active ? "text-accent" : "text-muted",
                   )}
                 >
-                  <Icon data-icon className="h-[22px] w-[22px]" strokeWidth={active ? 2 : 1.6} />
+                  <span className="relative flex">
+                    <Icon data-icon className="h-[22px] w-[22px]" strokeWidth={active ? 2 : 1.6} />
+                    {item.href === "/jarvis" && unread > 0 && (
+                      <span className="absolute -top-0.5 -right-1 h-2.5 w-2.5 rounded-full bg-danger ring-2 ring-surface" aria-label={`${unread} new`} />
+                    )}
+                  </span>
                   <span className="max-w-full truncate px-0.5">{item.href === "/jarvis" ? assistantName : item.label}</span>
                 </Link>
               );

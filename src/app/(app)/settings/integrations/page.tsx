@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { ExternalLink } from "lucide-react";
 import { Badge, Card } from "@/components/ui/surface";
 import { formatIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
@@ -12,8 +11,9 @@ import { GoogleCard } from "./google-card";
 import { BankConnections } from "@/components/finance/bank-connections";
 import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
 import { disconnectBankAction } from "../../finances/actions";
+import { SettingsHeader } from "../settings-header";
 
-export const metadata: Metadata = { title: "Integrations" };
+export const metadata: Metadata = { title: "Connected accounts" };
 
 const TONE = { success: "bg-success-soft text-success", danger: "bg-danger-soft text-danger", warning: "bg-warning-soft text-warning" } as const;
 
@@ -22,7 +22,7 @@ const GOOGLE_RESULT: Record<string, { tone: "success" | "danger" | "warning"; te
   denied: { tone: "warning", text: "You didn't give Google access, so nothing was connected." },
   missing_scopes: { tone: "warning", text: "Some permissions were unchecked. Connect again and keep all boxes checked." },
   failed: { tone: "danger", text: "Couldn't connect Google. Please try again." },
-  not_configured: { tone: "warning", text: "Google isn't set up on the server yet (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)." },
+  not_configured: { tone: "warning", text: "Google isn't available yet." },
 };
 
 export default async function IntegrationsSettings({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
@@ -44,6 +44,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
   const google = d.list.find((i) => i.provider === "google");
   return (
     <div className="flex flex-col gap-3">
+      <SettingsHeader title="Connected accounts" />
       {banner && <p className={`rounded-2xl px-4 py-3 text-sm ${TONE[banner.tone]}`}>{banner.text}</p>}
       {google && (
         <GoogleCard
@@ -62,12 +63,12 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
       )}
       <Card className="p-5">
         <div className="mb-1 flex items-center justify-between gap-3">
-          <h2 className="font-medium">Banks, cards and investments (Plaid)</h2>
+          <h2 className="font-medium">Banks & cards</h2>
           <Badge tone={d.banks.some((b) => b.status === "error") ? "danger" : d.banks.length ? "success" : "neutral"}>
             {d.banks.length ? `${d.banks.length} connected` : "Not connected"}
           </Badge>
         </div>
-        <p className="mb-4 text-sm text-text-2">Read-only. LifeFlow never sees your bank password and can&apos;t move money.</p>
+        <p className="mb-4 text-sm text-text-2">Read-only. LifeFlow can&apos;t move money.</p>
         <BankConnections
           configured={!!plaidConfig()}
           disconnect={disconnectBankAction}
@@ -90,43 +91,6 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
         url={`${origin}/api/apple-health/ingest`}
         lastReceived={d.lastHealth ? formatIn(d.lastHealth, d.tz, "MMM d, h:mm a") : null}
       />
-      <p className="mb-1 text-sm text-text-2">
-        Statuses here are exact: nothing is shown as connected unless a live connection exists. Integrations that aren&apos;t built yet are labelled “Planned”,
-        and every module works with manual entry meanwhile.
-      </p>
-      {d.list
-        .filter((i) => i.provider !== "google" && i.provider !== "plaid")
-        .map((i) => (
-          <Card key={i.provider} className="p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className="font-medium">{i.name}</h2>
-                <p className="text-xs text-muted">{i.module}</p>
-              </div>
-              <div className="flex gap-1.5">
-                <Badge tone={i.status === "connected" ? "success" : i.status === "error" ? "danger" : "neutral"}>
-                  {i.status === "connected" ? "Connected" : i.status === "error" ? "Error" : "Not connected"}
-                </Badge>
-                <Badge tone="info">
-                  {i.availability === "planned" ? "Planned" : i.availability === "awaiting_credentials" ? "Awaiting credentials" : "Available"}
-                </Badge>
-              </div>
-            </div>
-            <p className="mt-2 text-sm text-text-2">{i.description}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
-              <span>Server setup: {i.configured ? <span className="text-success">credentials present</span> : <>needs {i.requires.join(", ")}</>}</span>
-              <a href={i.docsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1 text-accent hover:underline">
-                Official docs <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-            {i.connections.map((c) => (
-              <p key={c.id} className="mt-2 text-xs text-muted">
-                {c.displayName ?? "Connection"} · last sync {c.lastSyncedAt ? formatIn(c.lastSyncedAt, d.tz, "MMM d, h:mm a") : "never"}
-                {c.lastError && <span className="text-danger"> · {c.lastError}</span>}
-              </p>
-            ))}
-          </Card>
-        ))}
     </div>
   );
 }

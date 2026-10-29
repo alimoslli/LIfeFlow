@@ -6,6 +6,7 @@ import { formatIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { listTrash, TRASH_DAYS } from "@/server/services/trash";
 import { deleteForeverAction, restoreAction } from "../../trash-actions";
+import { SettingsHeader } from "../settings-header";
 
 export const metadata: Metadata = { title: "Trash" };
 
@@ -26,12 +27,11 @@ export default async function TrashPage() {
   const d = await withCurrentUser(async (s, u) => ({ items: await listTrash(s), tz: u.timezone }));
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-text-2">
-        Deleted items stay here for {TRASH_DAYS} days, then they&apos;re removed for good. Restoring puts everything back as it was.
-      </p>
+      <SettingsHeader title="Recently deleted" />
+      <p className="text-sm text-text-2">Items are removed for good after {TRASH_DAYS} days.</p>
       <Card>
         {d.items.length === 0 ? (
-          <EmptyState icon={<Trash2 />} title="Trash is empty" />
+          <EmptyState icon={<Trash2 />} title="Nothing here" />
         ) : (
           <ul className="divide-y divide-border">
             {d.items.map((t) => (

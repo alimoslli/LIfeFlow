@@ -20,10 +20,7 @@ export default async function RulesPage() {
         <ArrowLeft className="h-3.5 w-3.5" /> Transactions
       </Link>
       <h1 className="mt-2 font-display text-[28px] font-medium tracking-tight">Category rules</h1>
-      <p className="mt-1 mb-5 text-sm text-text-2">
-        When you change a transaction&apos;s category, LifeFlow remembers it for that merchant. New transactions follow your rules first, then well-known
-        merchants. Anything else stays uncategorized rather than guessed.
-      </p>
+      <p className="mt-1 mb-5 text-sm text-text-2">New transactions from these merchants get these categories.</p>
       <Card>
         {rules.length === 0 ? (
           <EmptyState icon={<Wand2 />} title="No rules yet">

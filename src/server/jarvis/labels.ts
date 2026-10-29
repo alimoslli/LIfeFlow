@@ -146,10 +146,10 @@ export function describeToolResult(name: string, r: ToolResultRecord): { summary
         approved_by_user: "Saved to memory (you approved)",
         dismissed_by_user: "Suggestion dismissed",
       };
-      return { summary: summaries[String(d.status)] ?? "Done", viewAt: "/settings/memory" };
+      return { summary: summaries[String(d.status)] ?? "Done", viewAt: "/jarvis/memory" };
     }
     case "forget_memory":
-      return { summary: "Archived. Restore it in Settings", viewAt: "/settings/memory" };
+      return { summary: "Archived. You can restore it in What Jarvis knows", viewAt: "/jarvis/memory" };
     case "save_note":
       return { summary: `Note ${d.action ?? "saved"}`, viewAt };
     case "draft_email":

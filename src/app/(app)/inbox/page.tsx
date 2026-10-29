@@ -39,19 +39,14 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header>
         <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Inbox</h1>
-        <p className="mt-1 text-sm text-text-2">
-          Forward bills, receipts, school emails, bookings and pay stubs. Jarvis reads each one and files it: bills get reminders, receipts become spending,
-          assignments go into the right class, flights and hotels into a trip, pay stubs into Work. Everything can be undone.
-        </p>
+        <p className="mt-1 text-sm text-text-2">Forward or upload bills, receipts, school emails and bookings. Jarvis files them.</p>
       </header>
       {shared === "1" && <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">Got it. Jarvis filed what you shared; see it below.</p>}
       {shared === "0" && (
         <p className="rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">That share couldn&apos;t be read. Try adding it here instead.</p>
       )}
       {!d.canRead && (
-        <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2">
-          Reading documents isn&apos;t set up on this server yet (OPENAI_API_KEY). Items will wait here.
-        </p>
+        <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2">Jarvis can&apos;t read documents yet. Items wait here until he can.</p>
       )}
 
       <Card className="flex flex-col gap-4 p-5">
@@ -68,9 +63,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
               <CopyAddress address={d.address} />
             </div>
           ) : (
-            <p className="mt-1 text-sm text-text-2">
-              Email forwarding isn&apos;t set up on this server yet (INBOX_DOMAIN). Uploads and the share sheet work now.
-            </p>
+            <p className="mt-1 text-sm text-text-2">Email forwarding is coming soon. Photo and PDF uploads work now.</p>
           )}
         </div>
         <div>

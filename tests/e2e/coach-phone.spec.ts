@@ -67,7 +67,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
   await test.step("Learning consent, What Jarvis knows, Bring back", async () => {
     await card(page, "Can I learn from your answers?").getByRole("button", { name: "Yes, learn" }).click();
     await expect(card(page, "Can I learn from your answers?")).toContainText("I'll learn from how you respond");
-    await page.goto("/settings/memory");
+    await page.goto("/jarvis/memory");
     await expect(page.getByText("Learn from my responses")).toBeVisible();
     await expect(page.getByText("Subscription price increases")).toBeVisible();
     await page.getByText("Learn from my responses").scrollIntoViewIfNeeded();
@@ -77,6 +77,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
   });
 
   await test.step("Personality: live preview follows the tone", async () => {
+    await page.goto("/settings/jarvis");
     const preview = page.getByTestId("personality-preview");
     await page.getByText("Straight to the point", { exact: true }).click();
     await expect(preview).toContainText("You spent $86 on food this week, $30 more than usual. Want me to move $30 from Fun to Food?");
@@ -154,7 +155,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
   });
 
   await test.step("Nothing overflows sideways on a phone", async () => {
-    for (const path of ["/", "/jarvis/says", "/finances/subscriptions", "/finances/savings", "/inbox", "/settings/memory"]) {
+    for (const path of ["/", "/jarvis/says", "/finances/subscriptions", "/finances/savings", "/inbox", "/jarvis/memory", "/settings", "/settings/jarvis"]) {
       await page.goto(path);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(overflow, path).toBeLessThanOrEqual(1);

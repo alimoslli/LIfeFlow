@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Lock } from "lucide-react";
+import { ArrowRight, Link2, Lock } from "lucide-react";
 import { CountUp } from "@/components/motion/count-up";
 import { assistantProfile } from "@/lib/assistant";
 import { Pressable } from "@/components/motion/pressable";
@@ -11,6 +11,10 @@ import { withUser } from "@/server/db/with-user";
 import { runDueSlot, topMessage } from "@/server/services/proactive/engine";
 import { toCard } from "@/server/services/proactive/present";
 import { getBriefing } from "@/server/briefing";
+import { series } from "@/server/db/series";
+import { googleConfig } from "@/server/integrations/google";
+import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
+import { integrationStatus } from "@/server/services/integrations";
 import type { AgendaItem } from "@/server/services/calendar";
 import { listTasks } from "@/server/services/tasks";
 import { QuickChips } from "./_today/day-plan";
@@ -34,15 +38,25 @@ export default async function TodayPage() {
     tasks,
     assistantName,
     jarvisCard,
+    setup,
   } = await withCurrentUser(async (scope, user) => {
     const top = await topMessage(scope);
     const { briefing, snapshot } = await getBriefing(scope, user);
+    const [integrationList, banks] = await series(
+      () => integrationStatus(scope),
+      () => listPlaidConnections(scope),
+    );
+    const setup = [
+      googleConfig() && !integrationList.find((i) => i.provider === "google")?.connections.length ? "Google Calendar & Gmail" : null,
+      plaidConfig() && !banks.length ? "your bank" : null,
+    ].filter((x): x is string => !!x);
     const tasks = await listTasks(scope, { status: "open", topLevelOnly: true, limit: 50 });
     return {
       briefing,
       snapshot,
       tasks,
       assistantName: assistantProfile(user.preferences).name,
+      setup,
       // Questions to the user (consent, get-to-know) live in Jarvis → Noticed; the plan's next step is something to do.
       jarvisCard: top && top.kind !== "consent" && top.kind !== "question" && !(locked && top.topic === "money") ? toCard(top, user.timezone) : null,
     };
@@ -64,6 +78,20 @@ export default async function TodayPage() {
 
       <DayPlanCard plan={plan} name={assistantName} date={formatIn(s.now, s.tz, "EEEE, MMMM d")} />
 
+      {setup.length > 0 && (
+        <Link href="/settings/integrations" className="animate-rise flex min-h-16 items-center gap-3 rounded-3xl bg-surface px-5 py-3 shadow-soft">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+            <Link2 className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-medium">Finish setting up</span>
+            <span className="block text-sm text-muted">
+              Connect {setup.join(" and ")} so {assistantName} sees everything.
+            </span>
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0 text-muted" />
+        </Link>
+      )}
       {schedule.length > 0 && (
         <section aria-label="Schedule" className="animate-rise">
           <SectionTitle href="/plan">Schedule</SectionTitle>

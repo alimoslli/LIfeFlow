@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     assertSameOrigin(req);
     const user = await getSessionUser();
     if (!user) throw new HttpError(401, "Not signed in");
-    if (!pushConfig()) throw new HttpError(503, "Notifications aren't set up on the server yet.");
+    if (!pushConfig()) throw new HttpError(503, "Notifications aren't available yet.");
     await enforceRateLimit(`push-sub:${user.id}`, 20, 3600);
     const parsed = subscriptionSchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) throw new HttpError(400, "Invalid subscription");

@@ -27,7 +27,7 @@ export const passwordResetAvailable = () => !!emailConfig();
 /** Creates and emails a reset link if the account exists. Returns the provider id when sent (for logs/tests), or null. */
 export async function requestPasswordReset(db: Database, email: string, appUrl: string, fetchImpl: typeof fetch = fetch) {
   const cfg = emailConfig();
-  if (!cfg) throw new ResetError("Password reset emails aren't set up on this server yet.");
+  if (!cfg) throw new ResetError("Password reset by email isn't available yet.");
   const [u] = await db.select({ id: users.id, name: users.name, kind: users.accountKind }).from(users).where(eq(users.email, email.trim().toLowerCase()));
   if (!u || u.kind === "demo") return null;
   const token = randomBytes(32).toString("base64url");

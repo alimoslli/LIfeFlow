@@ -140,6 +140,7 @@ export async function updateAssistantAction(_p: ActionState, fd: FormData): Prom
         learning: on("learning"),
         pushLimit: Number(f.pushLimit ?? 3),
       },
+      f.answerLength as "balanced" | undefined,
     );
     return "Saved. That's how I'll sound from now on.";
   });

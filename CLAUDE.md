@@ -72,7 +72,8 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 `npm run check` (typecheck, lint, format check, unit + integration tests), then `npm run build && npm run test:e2e` for UI/flow changes. If tests report "No test files found" with a `charCodeAt` startup error, Postgres isn't running (`service postgresql start`).
 
 ## Product rules (from the owner)
-- Phone-first app that must also work perfectly on the web. Four places: Today, Plan, Jarvis, Money. Detail pages hang off Plan/Money.
+- Phone-first app that must also work perfectly on the web. Five tabs: Today, Plan, Jarvis, Money, School; Settings is the gear (an iOS-style list at /settings). Every page belongs to one pill in `section-nav.tsx`; nothing is more than 2 taps away (`tests/e2e/layout-phone.spec.ts`).
+- User-facing text never names server settings, models, tokens or internal logs. Say "isn't available yet" instead. Diagnostics live behind `?debug=1`.
 - Money: never project income (pay counts only after it's deposited). Today's money section = cash & checking, spent this month, came in this month.
 - Prefer one clear action per item; no dense tables on phones.
 

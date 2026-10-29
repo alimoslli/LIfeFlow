@@ -1,19 +1,7 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  AlertTriangle,
-  ArrowDownLeft,
-  ArrowRight,
-  ArrowUpRight,
-  CreditCard,
-  Landmark,
-  ListOrdered,
-  Sparkles,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-} from "lucide-react";
+import { AlertTriangle, ArrowDownLeft, ArrowRight, ArrowUpRight, Landmark, Wallet } from "lucide-react";
 import { LineChart } from "@/components/charts/line-chart";
 import { CountUp } from "@/components/motion/count-up";
 import { Pressable } from "@/components/motion/pressable";
@@ -23,13 +11,10 @@ import { formatCents } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
-import { financialHealth } from "@/server/services/finance/coach";
 import { budgetWarnings, cashForecast, safeToSpend } from "@/server/services/finance/forecast";
 import { goalsWithPlans } from "@/server/services/finance/goals";
 import { recordNetWorth } from "@/server/services/finance/investing";
 import { moneyOverview } from "@/server/services/finance/overview";
-import { listSavings } from "@/server/services/finance/savings-finder";
-import { subscriptionsOverview } from "@/server/services/finance/subscriptions";
 import { spendingByCategory, upcomingRecurring } from "@/server/services/finance/planning";
 import { AskJarvisButton, CelebrateGoal } from "./money-client";
 import { PlaidLinkButton } from "@/components/finance/plaid-link";
@@ -47,16 +32,13 @@ export default async function MoneyPage() {
     const o = await moneyOverview(s, today);
     if (!o.hasAccounts) return { empty: true as const, plaidReady: !!plaidConfig() };
     await recordNetWorth(s, today);
-    const [safe, forecast, warnings, goals, categories, bills, health, savings, subs] = await series(
+    const [safe, forecast, warnings, goals, categories, bills] = await series(
       () => safeToSpend(s, today),
       () => cashForecast(s, today, 30),
       () => budgetWarnings(s, today),
       () => goalsWithPlans(s, today),
       () => spendingByCategory(s, o.month.period.from, o.month.period.to),
       () => upcomingRecurring(s, today, addDaysStr(today, 30)),
-      () => financialHealth(s, today),
-      () => listSavings(s),
-      () => subscriptionsOverview(s, today),
     );
     return {
       empty: false as const,
@@ -67,9 +49,6 @@ export default async function MoneyPage() {
       goals,
       categories,
       bills: bills.filter((b) => b.amountCents < 0),
-      health,
-      savings: { foundYearlyCents: savings.foundYearlyCents, actedYearlyCents: savings.actedYearlyCents },
-      subs: { monthlyCents: subs.monthlyCents, flags: subs.flags.length },
       today,
       tz: u.timezone,
     };
@@ -94,7 +73,7 @@ export default async function MoneyPage() {
     );
   }
 
-  const { o, safe, forecast, warnings, goals, health } = d;
+  const { o, safe, forecast, warnings, goals } = d;
   const m = o.month;
   const net = m.incomeCents - m.netSpendingCents;
   const alerts = [
@@ -113,7 +92,6 @@ export default async function MoneyPage() {
   ].slice(0, 4);
   const topCats = d.categories.filter((c) => c.cents > 0).slice(0, 5);
   const maxCat = Math.max(1, ...topCats.map((c) => c.cents));
-  const ret = o.investments?.returnPct ?? null;
   const activeGoals = goals.filter((g) => g.status !== "archived").slice(0, 3);
   const celebrate = goals.find((g) => g.milestoneToCelebrate);
   const asOf = o.balances.asOf ? formatIn(o.balances.asOf, d.tz, "MMM d, h:mm a") : null;
@@ -135,6 +113,9 @@ export default async function MoneyPage() {
             </Link>
             <Link href="/wealth" className="inline-flex min-h-11 items-center font-medium text-accent">
               Investments
+            </Link>
+            <Link href="/finances/savings" className="inline-flex min-h-11 items-center font-medium text-accent">
+              Save money
             </Link>
           </p>
         </header>
@@ -275,19 +256,6 @@ export default async function MoneyPage() {
           </section>
         )}
 
-        <section className="animate-rise grid grid-cols-2 gap-3" style={{ animationDelay: "240ms" }} aria-label="Subscriptions and savings">
-          <Link href="/finances/subscriptions" className="rounded-3xl bg-surface p-4 shadow-soft">
-            <p className="text-sm text-muted">Subscriptions</p>
-            <p className="tabular text-xl font-medium">{whole(d.subs.monthlyCents)}/mo</p>
-            <p className="text-xs text-muted">{d.subs.flags ? `${d.subs.flags} worth a look` : "Nothing flagged"}</p>
-          </Link>
-          <Link href="/finances/savings" className="rounded-3xl bg-surface p-4 shadow-soft" data-testid="savings-card">
-            <p className="text-sm text-muted">Savings found</p>
-            <p className="tabular text-xl font-medium">{whole(d.savings.foundYearlyCents)}/yr</p>
-            <p className="text-xs text-success">{whole(d.savings.actedYearlyCents)}/yr acted on</p>
-          </Link>
-        </section>
-
         {d.bills.length > 0 && (
           <section className="animate-rise" style={{ animationDelay: "260ms" }} aria-label="Bills">
             <Title href="/finances/bills">Bills in the next 30 days</Title>
@@ -346,70 +314,6 @@ export default async function MoneyPage() {
             </div>
           )}
         </section>
-
-        {health.score != null && (
-          <section className="animate-rise max-lg:order-[-1]" aria-label="Financial health">
-            <Title href="/money/coach">Financial health</Title>
-            <Pressable>
-              <Link
-                href="/money/coach"
-                data-tilt
-                className="flex items-center gap-5 rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift"
-              >
-                <ScoreRing score={health.score} />
-                <div className="min-w-0">
-                  <p className="text-[15px] font-medium">{health.band}</p>
-                  {health.nextSteps[0] && <p className="mt-1 text-sm text-text-2">Next: {health.nextSteps[0]}</p>}
-                </div>
-              </Link>
-            </Pressable>
-          </section>
-        )}
-
-        {o.investments && (
-          <section className="animate-rise" aria-label="Investments">
-            <Title href="/wealth">Investments</Title>
-            <Pressable>
-              <Link data-tilt href="/wealth" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift">
-                <div className="flex items-end justify-between gap-4">
-                  <div>
-                    <p className="text-sm text-muted">Portfolio</p>
-                    <p className="tabular mt-1 font-display text-[34px] leading-none font-medium">
-                      <CountUp cents={o.investments.valueCents} />
-                    </p>
-                  </div>
-                  {ret != null && (
-                    <span
-                      className={cn(
-                        "flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium",
-                        ret >= 0 ? "bg-success-soft text-success" : "bg-danger-soft text-danger",
-                      )}
-                    >
-                      {ret >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                      {ret >= 0 ? "+" : ""}
-                      {ret.toFixed(1)}%
-                    </span>
-                  )}
-                </div>
-                <p className="mt-2 text-xs text-muted">
-                  Investment account balances{o.investments.asOf ? `, updated ${formatIn(o.investments.asOf, d.tz, "MMM d, h:mm a")}` : ""}
-                  {ret != null ? ". Return is all-time, on holdings with a known cost." : "."}
-                </p>
-              </Link>
-            </Pressable>
-          </section>
-        )}
-
-        <section className="grid grid-cols-2 gap-3" aria-label="Savings, debt and net worth">
-          <MiniStat label="Savings" cents={o.balances.savingsCents} />
-          <MiniStat label="Owed on cards" cents={o.balances.creditOwedCents} icon={<CreditCard className="h-3.5 w-3.5" />} />
-          <MiniStat label="Net worth" cents={o.balances.netWorthCents} icon={<ListOrdered className="h-3.5 w-3.5" />} />
-          <div className="flex flex-col justify-center rounded-3xl bg-surface p-4 shadow-soft">
-            <AskJarvisButton prompt="Give me my daily money check-in.">
-              <Sparkles className="h-3.5 w-3.5" /> Daily check-in
-            </AskJarvisButton>
-          </div>
-        </section>
       </div>
     </div>
   );
@@ -423,41 +327,6 @@ function Stat({ label, cents }: { label: React.ReactNode; cents: number }) {
         <CountUp cents={cents} />
       </p>
     </div>
-  );
-}
-
-function MiniStat({ label, cents, icon }: { label: string; cents: number; icon?: React.ReactNode }) {
-  return (
-    <div data-tilt className="rounded-3xl bg-surface p-4 shadow-soft">
-      <p className="flex items-center gap-1.5 text-sm text-muted">
-        {icon}
-        {label}
-      </p>
-      <p className="tabular mt-1 text-xl font-medium">{whole(cents)}</p>
-    </div>
-  );
-}
-
-function ScoreRing({ score }: { score: number }) {
-  const r = 26;
-  const c = 2 * Math.PI * r;
-  return (
-    <span className="relative flex h-16 w-16 shrink-0 items-center justify-center" aria-label={`Score ${score} out of 100`}>
-      <svg viewBox="0 0 64 64" className="absolute inset-0 -rotate-90">
-        <circle cx="32" cy="32" r={r} fill="none" strokeWidth="6" className="stroke-surface-3" />
-        <circle
-          cx="32"
-          cy="32"
-          r={r}
-          fill="none"
-          strokeWidth="6"
-          strokeLinecap="round"
-          className="stroke-accent"
-          strokeDasharray={`${(score / 100) * c} ${c}`}
-        />
-      </svg>
-      <span className="tabular text-lg font-semibold">{score}</span>
-    </span>
   );
 }
 

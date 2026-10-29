@@ -85,7 +85,7 @@ export function ThisDevice({ available }: { available: boolean }) {
     try {
       const keyRes = await fetch("/api/push/subscribe");
       const { publicKey } = (await keyRes.json()) as { publicKey: string | null };
-      if (!publicKey) throw new Error("Notifications aren't set up on the server yet.");
+      if (!publicKey) throw new Error("Notifications aren't available yet.");
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         setState(permission === "denied" ? "denied" : "off");
@@ -149,8 +149,7 @@ export function ThisDevice({ available }: { available: boolean }) {
   if (!available)
     return (
       <p className="text-sm text-text-2" data-testid="push-state">
-        Notifications aren&apos;t set up on the server yet. The owner adds the VAPID keys in Vercel (see the go-live checklist), then they can be turned on
-        here.
+        Notifications aren&apos;t available yet. Check back soon.
       </p>
     );
 

@@ -60,7 +60,7 @@ const REAUTH = new Set(["ITEM_LOGIN_REQUIRED", "PENDING_EXPIRATION", "ACCESS_NOT
 
 async function call<T>(path: string, body: Record<string, unknown>, f: Fetch = fetch): Promise<T> {
   const cfg = plaidConfig();
-  if (!cfg) throw new PlaidError("Bank connections aren't set up on the server yet (PLAID_CLIENT_ID and PLAID_SECRET).", "NOT_CONFIGURED");
+  if (!cfg) throw new PlaidError("Bank connections aren't available yet.", "NOT_CONFIGURED");
   let res: Response;
   try {
     res = await f(`${cfg.baseUrl}${path}`, {

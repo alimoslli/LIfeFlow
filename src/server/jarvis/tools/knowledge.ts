@@ -117,7 +117,7 @@ export const memoryTools = [
         status: r.status,
         note: REMEMBER_NOTES[r.status],
         memory: r.memory && { id: r.memory.id, content: r.memory.content, category: r.memory.category },
-        manageAt: "/settings/memory",
+        manageAt: "/jarvis/memory",
       };
     },
   }),
@@ -143,7 +143,7 @@ export const memoryTools = [
             : r.status === "suggestions_off"
               ? "Not changed: memory suggestions are off. Ask the user to say 'update your memory…' or edit it in Settings."
               : "Nothing to change.";
-      return { status: r.status, note, memory: r.memory && { id: r.memory.id, content: r.memory.content }, replaces: r.replaces, manageAt: "/settings/memory" };
+      return { status: r.status, note, memory: r.memory && { id: r.memory.id, content: r.memory.content }, replaces: r.replaces, manageAt: "/jarvis/memory" };
     },
   }),
   defineTool({
@@ -172,7 +172,7 @@ export const memoryTools = [
     mutates: true,
     async execute({ id }, ctx) {
       const m = await ctx.run((s) => setMemoryStatus(s, id, "archived"));
-      return { forgotten: { id: m.id, content: m.content }, restorableAt: "/settings/memory" };
+      return { forgotten: { id: m.id, content: m.content }, restorableAt: "/jarvis/memory" };
     },
   }),
 ];

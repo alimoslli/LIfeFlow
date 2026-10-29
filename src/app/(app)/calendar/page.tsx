@@ -10,6 +10,7 @@ import { findConflicts, getAgenda, type AgendaItem } from "@/server/services/cal
 import { listCourses } from "@/server/services/school";
 import { createEventAction, deleteEventAction } from "./actions";
 import { DragItem, DropDay } from "./drag";
+import { CalendarViewToggle } from "./view-toggle";
 import { EventDialog } from "./event-dialog";
 
 export const metadata: Metadata = { title: "Calendar" };
@@ -49,6 +50,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="flex flex-col gap-6">
+      <CalendarViewToggle active="month" />
       <header className="flex items-center justify-between gap-3">
         <h1 className="font-display text-[34px] leading-none font-medium tracking-tight sm:text-[40px]">
           {formatDateStr(d.month, "MMMM")} <span className="text-muted">{formatDateStr(d.month, "yyyy")}</span>

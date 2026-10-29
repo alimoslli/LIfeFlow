@@ -79,7 +79,7 @@ export async function addSender(scope: UserScope, db: Database, rawEmail: string
     return { verified: true };
   }
   const cfg = emailConfig();
-  if (!cfg) throw new ServiceError("Verification emails aren't set up on this server yet (RESEND_API_KEY), so new addresses can't be verified.");
+  if (!cfg) throw new ServiceError("Verification emails aren't available yet, so new addresses can't be added.");
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   await scope.tx
     .insert(inboxSenders)

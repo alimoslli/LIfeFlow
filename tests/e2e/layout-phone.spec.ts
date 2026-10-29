@@ -9,7 +9,7 @@ const SHOTS = process.env.SHOTS;
 const TABS: [string, string, string[]][] = [
   ["Today", "/", []],
   ["Plan", "/plan", ["/calendar", "/tasks", "/work", "/trips"]],
-  ["Jarvis", "/jarvis", ["/jarvis/says", "/inbox"]],
+  ["Jarvis", "/jarvis", ["/jarvis/says", "/inbox", "/jarvis/memory"]],
   [
     "Money",
     "/money",
@@ -26,7 +26,7 @@ const TABS: [string, string, string[]][] = [
       "/money/report",
     ],
   ],
-  ["Personal", "/habits", ["/school", "/notes"]],
+  ["School", "/school", ["/habits", "/notes"]],
 ];
 
 test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }) => {
@@ -40,9 +40,9 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
   // Tab bar: exactly five tabs, short labels, nothing truncated; no Settings tab.
   await page.goto("/");
   const tabs = page.getByRole("navigation", { name: "Main" }).last().getByRole("link");
-  expect(await tabs.allInnerTexts()).toEqual(["Today", "Plan", "Jarvis", "Money", "Personal"]);
+  expect(await tabs.allInnerTexts()).toEqual(["Today", "Plan", "Jarvis", "Money", "School"]);
   for (const t of await tabs.all()) {
-    const cut = await t.evaluate((el) => [...el.querySelectorAll("span")].some((s) => s.scrollWidth > s.clientWidth + 1));
+    const cut = await t.evaluate((el) => [...el.querySelectorAll("span.truncate")].some((s) => s.scrollWidth > s.clientWidth + 1));
     if (cut) problems.push(`tab label clipped: ${await t.innerText()}`);
   }
 
@@ -66,9 +66,18 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
   await page.waitForURL("**/settings");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   const settingsLinks = await page.locator("a[href]").evaluateAll((as) => as.map((a) => new URL((a as HTMLAnchorElement).href).pathname));
-  for (const m of ["/settings/memory", "/settings/integrations", "/settings/notifications", "/settings/security", "/settings/data", "/settings/trash"])
+  for (const m of [
+    "/settings/profile",
+    "/settings/jarvis",
+    "/jarvis/memory",
+    "/settings/integrations",
+    "/settings/notifications",
+    "/settings/security",
+    "/settings/data",
+    "/settings/trash",
+  ])
     if (!settingsLinks.includes(m)) problems.push(`${m} not reachable from the gear in one tap`);
-  pages.push("/settings/memory", "/settings/integrations");
+  pages.push("/settings", "/settings/jarvis", "/jarvis/memory", "/settings/integrations");
 
   // Each pill href belongs to one group only (no duplicated features in the sub-tabs).
   const pillOwners = new Map<string, string>();

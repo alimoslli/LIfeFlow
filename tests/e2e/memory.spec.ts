@@ -22,8 +22,9 @@ test("Jarvis suggests a memory; it's used only after the user taps Keep", async 
   await expect(page.getByLabel("Memory suggestion")).toContainText("✓ Saved to memory");
 
   // Settings shows it, and run metrics were recorded for this user.
-  await page.goto("/settings/memory");
+  await page.goto("/jarvis/memory");
   await expect(page.getByText("Prefers evening study sessions.")).toBeVisible();
+  await page.goto("/jarvis/memory?debug=1");
   await expect(page.getByText("Requests (30 days)")).toBeVisible();
   const runs = await queryAsUser<{ n: number }>(email, "select count(*)::int as n from jarvis_runs");
   expect(runs[0].n).toBeGreaterThanOrEqual(1);
@@ -46,7 +47,7 @@ test("an explicit request saves directly; dismissed suggestions are not used", a
     .toEqual(["active", "rejected"]);
 
   // Turning suggestions off is a visible, working control.
-  await page.goto("/settings/memory");
+  await page.goto("/jarvis/memory");
   await page.getByRole("button", { name: "Turn memory suggestions off" }).click();
   await expect(page.getByRole("button", { name: "Turn memory suggestions on" })).toBeVisible();
 });

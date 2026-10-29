@@ -45,9 +45,7 @@ export function TwoFactorCard({ status }: { status: Status }) {
       <div className="mt-4 flex flex-col gap-3">
         {error && <FormError message={error} />}
 
-        {!status.available && !status.enabled && (
-          <p className="text-sm text-warning">Not available yet: the server needs ENCRYPTION_KEY set to store the authenticator secret safely.</p>
-        )}
+        {!status.available && !status.enabled && <p className="text-sm text-warning">Two-step sign-in isn&apos;t available yet.</p>}
 
         {mode === "idle" && !status.enabled && status.available && (
           <Button className="self-start" loading={pending} onClick={() => run(startTwoFactorSetup, (r) => (setSetup(r), setMode("setup")))}>

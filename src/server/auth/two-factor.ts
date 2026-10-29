@@ -67,7 +67,7 @@ export async function twoFactorStatus(db: Database, userId: string) {
 
 /** Step 1 of turning it on: a new secret (not active yet) and the otpauth:// URI for the QR code. */
 export async function beginTotpSetup(db: Database, userId: string) {
-  if (!twoFactorAvailable()) throw new TwoFactorError("Two-step sign-in needs ENCRYPTION_KEY to be set on the server.");
+  if (!twoFactorAvailable()) throw new TwoFactorError("Two-step sign-in isn't available yet.");
   const u = await getUser(db, userId);
   if (u.totpEnabledAt) throw new TwoFactorError("Two-step sign-in is already on.");
   const secret = new Secret({ size: 20 }).base32;

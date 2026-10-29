@@ -19,17 +19,18 @@ test("five tabs, and every section is one tap from its tab", async ({ page }) =>
       "Money sections",
       [
         ["Transactions", /\/finances\/transactions/],
-        ["Accounts & wallet", /\/finances\/accounts/],
+        ["Accounts", /\/finances\/accounts/],
+        ["Insights", /\/money\/coach/],
         ["Overview", /\/money$/],
       ],
     ],
     [
-      "/habits",
-      "Personal sections",
+      "/school",
+      "School sections",
       [
-        ["School", /\/school/],
+        ["Habits & health", /\/habits/],
         ["Second Brain", /\/notes/],
-        ["Health & habits", /\/habits/],
+        ["Classes", /\/school/],
       ],
     ],
   ] as const;
@@ -58,7 +59,7 @@ test("calendar moves between months and opens a day", async ({ page }) => {
 
 test("appearance can be set to light or dark and is remembered", async ({ page }) => {
   await signUp(page, "Theme Tester");
-  await page.goto("/settings");
+  await page.goto("/settings/profile");
   await page.getByRole("radio", { name: "Dark" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.reload();

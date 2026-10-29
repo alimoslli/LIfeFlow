@@ -12,6 +12,7 @@ import {
   Flame,
   Inbox,
   Landmark,
+  LineChart,
   MessageCircle,
   PieChart,
   PiggyBank,
@@ -26,6 +27,8 @@ import { cn } from "@/lib/utils";
 type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean; /** Other pages that belong to this pill. */ also?: string[]; except?: string[] };
 export type Section = "plan" | "money" | "jarvis" | "personal";
 
+const SECTION_NAMES: Record<Section, string> = { plan: "Plan", jarvis: "Jarvis", money: "Money", personal: "School" };
+
 /** Second level: each tab's pages as pills. Every page belongs to exactly one pill. */
 export const SECTIONS: Record<Section, Item[]> = {
   plan: [
@@ -35,21 +38,23 @@ export const SECTIONS: Record<Section, Item[]> = {
     { href: "/trips", label: "Trips", icon: Plane },
   ],
   jarvis: [
-    { href: "/jarvis", label: "Chat", icon: MessageCircle, except: ["/jarvis/says"] },
+    { href: "/jarvis", label: "Chat", icon: MessageCircle, except: ["/jarvis/says", "/jarvis/memory"] },
     { href: "/jarvis/says", label: "Noticed", icon: Sparkles },
     { href: "/inbox", label: "Inbox", icon: Inbox },
+    { href: "/jarvis/memory", label: "Memory", icon: Brain },
   ],
   money: [
-    { href: "/money", label: "Overview", icon: Wallet, exact: true, also: ["/money/coach", "/money/report"] },
-    { href: "/finances/accounts", label: "Accounts & wallet", icon: Landmark, also: ["/wealth"] },
-    { href: "/finances/budgets", label: "Budget", icon: PieChart },
+    { href: "/money", label: "Overview", icon: Wallet, exact: true },
     { href: "/finances/transactions", label: "Transactions", icon: Receipt, also: ["/finances/rules"] },
-    { href: "/finances/subscriptions", label: "Subscriptions", icon: CreditCard, also: ["/finances/bills", "/finances/savings"] },
+    { href: "/finances/budgets", label: "Budget", icon: PieChart },
+    { href: "/finances/subscriptions", label: "Bills & subs", icon: CreditCard, also: ["/finances/bills", "/finances/savings"] },
     { href: "/finances/goals", label: "Goals & dreams", icon: PiggyBank },
+    { href: "/finances/accounts", label: "Accounts", icon: Landmark, also: ["/wealth"] },
+    { href: "/money/coach", label: "Insights", icon: LineChart, also: ["/money/report"] },
   ],
   personal: [
-    { href: "/habits", label: "Health & habits", icon: Flame },
-    { href: "/school", label: "School", icon: BookOpen },
+    { href: "/school", label: "Classes", icon: BookOpen },
+    { href: "/habits", label: "Habits & health", icon: Flame },
     { href: "/notes", label: "Second Brain", icon: Brain },
   ],
 };
@@ -74,7 +79,7 @@ export function SectionNav({ inline = false, children }: { inline?: boolean; chi
   if (!section) return null;
   return (
     <nav
-      aria-label={`${section[0].toUpperCase()}${section.slice(1)} sections`}
+      aria-label={`${SECTION_NAMES[section]} sections`}
       className={inline ? "py-2" : "lf-sectionnav sticky z-20 -mx-5 mb-6 py-2.5 backdrop-blur-xl sm:-mx-8 md:top-0"}
     >
       <div

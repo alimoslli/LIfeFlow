@@ -35,9 +35,7 @@ export default async function TripsPage() {
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header>
         <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Trips</h1>
-        <p className="mt-1 text-sm text-text-2">
-          Bookings land on your calendar, clashes with shifts and deadlines are flagged, and costs count against the trip budget.
-        </p>
+        <p className="mt-1 text-sm text-text-2">Plans, bookings and budget in one place.</p>
       </header>
       {upcoming.length > 0 && (
         <ul className="flex flex-col gap-2">

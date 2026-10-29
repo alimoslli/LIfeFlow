@@ -1,3 +1,4 @@
+import { BILLS_SUBS, SegmentedNav } from "@/components/ui/segmented-nav";
 import type { Metadata } from "next";
 import { ExternalLink, Search } from "lucide-react";
 import { moneyGate } from "@/app/(app)/money-gate";
@@ -41,8 +42,9 @@ export default async function SavingsPage() {
   return (
     <div className="mx-auto flex max-w-[720px] flex-col gap-6">
       <header>
-        <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Save money</h1>
-        <p className="mt-1 text-sm text-text-2">Jarvis checks today&apos;s prices for your bills and rates. Every price comes with the page it came from.</p>
+        <SegmentedNav label="Bills and subscriptions" items={BILLS_SUBS} active="save" />
+        <h1 className="mt-4 font-display text-[34px] leading-tight font-medium tracking-tight">Save money</h1>
+        <p className="mt-1 text-sm text-text-2">Cheaper plans for your bills, with sources.</p>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <Card as="div" className="p-4">
             <p className="text-sm text-muted">Savings found</p>
@@ -60,11 +62,7 @@ export default async function SavingsPage() {
           </Card>
         </div>
       </header>
-      {!searchOn && (
-        <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2">
-          Live price checks aren&apos;t set up on this server yet (OPENAI_API_KEY). Nothing here is guessed.
-        </p>
-      )}
+      {!searchOn && <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2">Live price checks aren&apos;t available yet.</p>}
       {targets.length === 0 && (
         <Card className="p-5 text-[15px] text-text-2">
           Add your phone, internet, insurance or streaming bills on Bills or Subscriptions, or a card&apos;s APR on Accounts, and Jarvis can look for cheaper
