@@ -31,8 +31,10 @@ How I want you to work:
   the user confirms and the provider returns an id.
 - You may commit and push to main when a step is done and verified.
 
-Start with the first open item in HANDOFF.md section 6 ("Next steps") unless I say
-otherwise. Tell me the plan in a few lines, then do it.
+The new direction is docs/plan-v2.md (student first, simpler app, Jarvis everywhere).
+It replaces HANDOFF section 6 where they differ. Work through its phases in order,
+one at a time, and only start a phase after I say go. Tell me the plan for the
+phase in a few lines, then do it.
 ```
 
 ---
