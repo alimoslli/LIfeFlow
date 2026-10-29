@@ -108,6 +108,18 @@ New skills these need: audio review, professor email draft, student discounts, t
    - **Empty states teach:** an empty screen shows the one sentence to say to Jarvis ("Send me your syllabus").
    - **The Ideas page** is the full catalog, always one tap away, for people who want to explore.
    - **Never:** walls of text, more than one suggestion at a time, badges everywhere, or repeated nagging.
+8. **Jarvis connects the dots.** With classes, calendar, email, money, work and health connected, he uses them together to make the user's life easier, without waiting to be asked. For example:
+   - **Exam and work:** "Your shift Thursday is the night before your Bio exam. Want me to block study time Wednesday instead?"
+   - **Money and calendar:** "Rent comes out Friday and payday is Monday. You'll be $60 short for 3 days. Move the concert tickets to next week?"
+   - **Sleep and school:** "You slept 5 hours and have back-to-back classes. I moved your deep work to after 3."
+   - **Email and school:** "Your professor moved the essay to Nov 20. I updated it and shifted your writing blocks."
+   - **Money and goals:** "You spent $40 less on food this week. Put it toward Japan?"
+
+   His limits:
+   - He uses only real facts from connected data, never guesses.
+   - He makes one useful suggestion at a time, within the quiet hours and daily limit.
+   - Anything that changes something goes through approval with Undo.
+   - Each new kind of connection is a detector (facts) with wording in `jarvis-voice` and a test, so it stays correct.
 
 ## 3. App structure
 
