@@ -6,7 +6,7 @@ import { useShell } from "@/components/shell/app-shell";
 import { cn } from "@/lib/utils";
 
 /** Re-reads today's data (the day plan is built on the server). */
-export function RefreshPlan() {
+export function RefreshPlan({ className }: { className?: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   return (
@@ -14,7 +14,7 @@ export function RefreshPlan() {
       type="button"
       onClick={() => start(() => router.refresh())}
       aria-label="Refresh the plan"
-      className="tap -my-2 flex items-center justify-center rounded-full text-muted hover:text-text"
+      className={cn("tap flex items-center justify-center rounded-full", className ?? "-my-2 text-muted hover:text-text")}
     >
       <RotateCw className={cn("h-4 w-4", pending && "animate-spin")} />
     </button>

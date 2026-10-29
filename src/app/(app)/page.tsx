@@ -13,7 +13,9 @@ import { toCard } from "@/server/services/proactive/present";
 import { getBriefing } from "@/server/briefing";
 import type { AgendaItem } from "@/server/services/calendar";
 import { listTasks } from "@/server/services/tasks";
-import { QuickChips, RefreshPlan } from "./_today/day-plan";
+import { QuickChips } from "./_today/day-plan";
+import { DayPlanCard } from "./_today/day-plan-card";
+import { buildDayPlan } from "@/server/briefing/day-plan";
 
 const PR = { urgent: 0, high: 1, medium: 2, low: 3 } as const;
 
@@ -45,21 +47,11 @@ export default async function TodayPage() {
       jarvisCard: top && top.kind !== "consent" && top.kind !== "question" && !(locked && top.topic === "money") ? toCard(top, user.timezone) : null,
     };
   });
-  const focus = [...tasks].sort((a, b) => (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity) || PR[a.priority] - PR[b.priority]).slice(0, 3);
+  const focus = [...tasks].sort((a, b) => (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity) || PR[a.priority] - PR[b.priority]).slice(0, 8);
   const insights = locked ? b.insights.filter((i) => i.icon !== "money" && i.icon !== "trend" && i.icon !== "goal") : b.insights;
-  const minutesUntil = b.next ? Math.round((b.next.startsAt.getTime() - s.now.getTime()) / 60_000) : null;
 
-  const due = b.today.filter((i) => !((i.endsAt ?? i.startsAt) < s.now) || !i.blocksTime);
-  const top = insights[0];
-  const plan = {
-    today: b.next
-      ? `${minutesUntil! <= 0 ? "Now" : `In ${humanMinutes(minutesUntil!)}`}: ${b.next.title}. ${due.length} thing${due.length === 1 ? "" : "s"} on today's list.`
-      : due.length
-        ? `${due.length} thing${due.length === 1 ? "" : "s"} on today's list, nothing else scheduled.`
-        : null,
-    money: locked ? "Money is locked." : !b.money ? null : b.money.safeTodayCents != null ? "safe" : "cash",
-  };
-
+  const schedule = b.today.filter((i) => i.blocksTime && (i.endsAt ?? i.startsAt) >= s.now);
+  const plan = buildDayPlan(s, { ...b, insights }, { moneyHidden: locked, jarvisNext: jarvisCard, open: focus });
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-8">
       <header className="animate-rise" data-tour="today-page">
@@ -70,66 +62,22 @@ export default async function TodayPage() {
         </div>
       </header>
 
-      <section aria-label={`${assistantName}'s plan for today`} className="animate-rise rounded-3xl bg-surface p-5 shadow-soft">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-[15px] font-semibold">{assistantName}&apos;s plan for today</h2>
-          <RefreshPlan />
-        </div>
-        <dl className="flex flex-col gap-3 text-[15px]">
-          <PlanRow label="Today">
-            {plan.today ?? (
-              <>
-                Nothing scheduled.{" "}
-                <Link href="/plan" className="font-medium text-accent">
-                  Add a class, shift or to-do
-                </Link>
-              </>
-            )}
-          </PlanRow>
-          <PlanRow label="Money">
-            {plan.money === null ? (
-              <Link href="/finances/accounts" className="font-medium text-accent">
-                Add an account to see what&apos;s safe to spend
-              </Link>
-            ) : locked ? (
-              <Link href="/money" className="inline-flex items-center gap-1.5 font-medium text-accent">
-                <Lock className="h-3.5 w-3.5" /> Unlock Money
-              </Link>
-            ) : plan.money === "safe" ? (
-              <>
-                <b className="tabular">{usd(b.money!.safeTodayCents!)}</b> safe to spend today.
-              </>
-            ) : (
-              <>
-                <b className="tabular">{usd(b.money!.liquidCents)}</b> in cash and checking.
-              </>
-            )}
-          </PlanRow>
-          <PlanRow label="Next step">
-            {jarvisCard ? (
-              <Link href="/jarvis/says" className="font-medium text-accent">
-                {jarvisCard.title}
-              </Link>
-            ) : top?.action?.href ? (
-              <Link href={top.action.href} className="font-medium text-accent">
-                {top.text}
-              </Link>
-            ) : focus[0] ? (
-              <Link href={`/tasks/${focus[0].id}`} className="font-medium text-accent">
-                Start with {focus[0].title}
-              </Link>
-            ) : (
-              <>You&apos;re clear. Tap Plan my day above for ideas.</>
-            )}
-          </PlanRow>
-        </dl>
-      </section>
+      <DayPlanCard plan={plan} name={assistantName} date={formatIn(s.now, s.tz, "EEEE, MMMM d")} />
 
-      <section aria-label="Due today" className="animate-rise">
-        <SectionTitle href="/plan">Due today</SectionTitle>
-        {due.length === 0 ? <p className="text-[15px] text-muted">Nothing due today.</p> : <Timeline items={due} tz={s.tz} now={s.now} />}
-      </section>
+      {schedule.length > 0 && (
+        <section aria-label="Schedule" className="animate-rise">
+          <SectionTitle href="/plan">Schedule</SectionTitle>
+          <Timeline items={schedule} tz={s.tz} now={s.now} />
+        </section>
+      )}
 
+      {b.money && locked && (
+        <Link href="/money" className="flex min-h-14 items-center gap-3 rounded-3xl bg-surface px-5 shadow-soft">
+          <Lock className="h-5 w-5 text-accent" />
+          <span className="flex-1 text-[15px]">Money is locked. Tap to unlock.</span>
+          <ArrowRight className="h-4 w-4 text-muted" />
+        </Link>
+      )}
       {b.money && !locked && (
         <section aria-label="Money" className="animate-rise">
           <SectionTitle href="/money">Money</SectionTitle>
@@ -142,17 +90,6 @@ export default async function TodayPage() {
           </Pressable>
         </section>
       )}
-    </div>
-  );
-}
-
-const usd = (c: number) => `$${(c / 100).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-
-function PlanRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex gap-3">
-      <dt className="w-20 shrink-0 text-sm text-muted">{label}</dt>
-      <dd className="min-w-0 flex-1 leading-snug">{children}</dd>
     </div>
   );
 }
@@ -214,11 +151,4 @@ function Timeline({ items, tz, now }: { items: AgendaItem[]; tz: string; now: Da
       })}
     </ol>
   );
-}
-
-function humanMinutes(m: number) {
-  if (m < 60) return `${m} min`;
-  const h = Math.floor(m / 60);
-  const r = m % 60;
-  return r ? `${h} h ${r} min` : `${h} h`;
 }
