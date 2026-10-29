@@ -96,7 +96,7 @@ export type UserPreferences = {
   assistantVoice?: "alloy" | "ash" | "ballad" | "cedar" | "coral" | "echo" | "marin" | "sage" | "shimmer" | "verse";
 };
 
-export const JARVIS_TOPICS = ["money", "school", "work", "health", "trips", "habits"] as const;
+export const JARVIS_TOPICS = ["money", "school", "work", "health", "habits"] as const;
 export type JarvisTopic = (typeof JARVIS_TOPICS)[number];
 export type JarvisSettings = {
   frequency?: "low" | "normal" | "high";
@@ -1103,50 +1103,6 @@ export const savingsOpportunities = pgTable(
 );
 
 // ---------------------------------------------------------------------------
-// Trips
-
-export const trips = pgTable(
-  "trips",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    userId: userRef(),
-    name: text("name").notNull(),
-    destination: text("destination"),
-    startDate: date("start_date", { mode: "string" }).notNull(),
-    endDate: date("end_date", { mode: "string" }).notNull(),
-    budgetCents: integer("budget_cents"),
-    goalId: uuid("goal_id").references(() => financialGoals.id, { onDelete: "set null" }),
-    notes: text("notes"),
-    source: text("source").$type<DataSource | "inbox">().notNull().default("manual"),
-    createdAt: createdAt(),
-  },
-  (t) => [index("trips_user_idx").on(t.userId), ownerPolicy()],
-);
-
-export const tripItems = pgTable(
-  "trip_items",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    userId: userRef(),
-    tripId: uuid("trip_id")
-      .notNull()
-      .references(() => trips.id, { onDelete: "cascade" }),
-    kind: text("kind").$type<"flight" | "train" | "hotel" | "car" | "activity" | "other">().notNull(),
-    title: text("title").notNull(),
-    startsAt: tstz("starts_at").notNull(),
-    endsAt: tstz("ends_at"),
-    location: text("location"),
-    confirmation: text("confirmation"),
-    costCents: integer("cost_cents"),
-    /** The calendar entry made for it, so it shows in Plan and Today. */
-    eventId: uuid("event_id"),
-    source: text("source").$type<DataSource | "inbox">().notNull().default("manual"),
-    createdAt: createdAt(),
-  },
-  (t) => [index("trip_items_trip_idx").on(t.tripId), ownerPolicy()],
-);
-
-// ---------------------------------------------------------------------------
 // Smart inbox: forwarded emails, uploads and shares, read and filed by Jarvis
 
 export const inboxSenders = pgTable(
@@ -1166,7 +1122,7 @@ export const inboxSenders = pgTable(
 );
 
 export type InboxFiled = {
-  kind: "transaction" | "recurring" | "task" | "assignment" | "trip" | "trip_item" | "paycheck";
+  kind: "transaction" | "recurring" | "task" | "assignment" | "event" | "paycheck";
   id: string;
   label: string;
   href?: string;

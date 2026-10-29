@@ -129,17 +129,9 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     await shot(page, "7-inbox");
   });
 
-  await test.step("Habits and trips", async () => {
+  await test.step("Habits", async () => {
     await page.goto("/habits");
     await expect(page.getByText("No-spend weekend").first()).toBeVisible();
-    await page.goto("/trips");
-    await page.getByLabel("Name", { exact: true }).fill("Paris");
-    await page.getByLabel("Where", { exact: true }).fill("Paris, France");
-    await page.getByLabel("From", { exact: true }).fill("2027-05-20");
-    await page.getByLabel("To", { exact: true }).fill("2027-05-27");
-    await page.getByRole("button", { name: "Add trip" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Paris" })).toBeVisible();
-    await expect(page.getByText("Thu, May 20 to Thu, May 27, 2027 · Paris, France")).toBeVisible();
   });
 
   await test.step("Nothing overflows sideways on a phone", async () => {

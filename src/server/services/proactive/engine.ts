@@ -21,7 +21,7 @@ export function jarvisSettings(prefs: UserPreferences | undefined) {
     frequency: j.frequency ?? "normal",
     quietStart: j.quietStart ?? "22:00",
     quietEnd: j.quietEnd ?? "07:00",
-    topics: { money: true, school: true, work: true, health: true, trips: true, habits: true, ...j.topics },
+    topics: { money: true, school: true, work: true, health: true, habits: true, ...j.topics },
     autonomy: { tasks: false, calendar: false, ...j.autonomy },
     avatar: j.avatar ?? "spark",
     learning: j.learning,

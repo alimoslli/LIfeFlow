@@ -70,7 +70,11 @@ describe("Jarvis day plan", () => {
       ["Attendance and Engagement", "2 days late"],
       ["Jeans replies", "due 5:00 PM"],
     ]);
-    expect(p.summary).toEqual(["Your calendar is clear today.", "2 items are overdue and 1 more is due today.", "You're $655 over budget in Food this month; $610 is available now."]);
+    expect(p.summary).toEqual([
+      "Your calendar is clear today.",
+      "2 items are overdue and 1 more is due today.",
+      "You're $655 over budget in Food this month; $610 is available now.",
+    ]);
     expect(p.next).toMatchObject({ text: "Start with Components of GDP, the oldest late item.", href: "/school/a1" });
   });
 

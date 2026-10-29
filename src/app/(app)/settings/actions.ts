@@ -132,7 +132,6 @@ export async function updateAssistantAction(_p: ActionState, fd: FormData): Prom
           school: on("topic_school"),
           work: on("topic_work"),
           health: on("topic_health"),
-          trips: on("topic_trips"),
           habits: on("topic_habits"),
         },
         autonomy: { tasks: on("auto_tasks"), calendar: on("auto_calendar") },

@@ -12,7 +12,6 @@ import {
   Landmark,
   MessageCircle,
   NotebookPen,
-  Plane,
   Receipt,
   Sparkles,
   Target,
@@ -34,7 +33,6 @@ export const SECTIONS: Record<Section, Item[]> = {
     { href: "/goals", label: "Goals", icon: Target },
     { href: "/habits", label: "Health", icon: HeartPulse },
     { href: "/work", label: "Work", icon: Briefcase },
-    { href: "/trips", label: "Trips", icon: Plane },
   ],
   jarvis: [
     { href: "/jarvis", label: "Chat", icon: MessageCircle, except: ["/jarvis/says", "/jarvis/memory"] },

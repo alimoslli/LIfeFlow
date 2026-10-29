@@ -14,8 +14,6 @@ const ROUTES: { test: RegExp; title: string; back?: string }[] = [
   { test: /^\/tasks\/[^/]+$/, title: "To-do", back: "/tasks" },
   { test: /^\/tasks/, title: "To-dos" },
   { test: /^\/work/, title: "Work" },
-  { test: /^\/trips\/[^/]+$/, title: "Trip", back: "/trips" },
-  { test: /^\/trips/, title: "Trips" },
   { test: /^\/jarvis\/says/, title: "Updates" },
   { test: /^\/jarvis\/memory/, title: "Memory" },
   { test: /^\/inbox/, title: "Updates" },

@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { addDaysStr, todayIn } from "@/lib/dates";
 import { closeDb, getDb } from "@/server/db/client";
-import { assignments, paychecks, recurringItems, tasks, transactions, tripItems, trips } from "@/server/db/schema";
+import { assignments, calendarEvents, paychecks, recurringItems, tasks, transactions } from "@/server/db/schema";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { createCourse } from "@/server/services/school";
 import { createEmployer } from "@/server/services/work";
@@ -65,7 +65,7 @@ describe("smart inbox", () => {
         ],
       },
     });
-    expect(flight.filed.map((f) => f.kind)).toEqual(["trip", "trip_item", "trip_item"]);
+    expect(flight.filed.map((f) => f.kind)).toEqual(["event", "event"]);
 
     const pay = await file({ type: "pay_stub", pay: { employer: "Campus Library", pay_date: today, net_usd: 412.5, gross_usd: 480, hours: 32 } });
     expect(pay.filed[0].label).toContain("Paycheck from Campus Library: $412.50");
@@ -76,13 +76,12 @@ describe("smart inbox", () => {
         tasks: (await s.tx.select().from(tasks)).length,
         txns: (await s.tx.select().from(transactions)).length,
         assignments: (await s.tx.select().from(assignments)).length,
-        trips: (await s.tx.select().from(trips)).length,
-        tripItems: (await s.tx.select().from(tripItems)).length,
+        events: (await s.tx.select().from(calendarEvents)).length,
         paychecks: (await s.tx.select().from(paychecks)).length,
       }));
-    expect(await counts()).toEqual({ recurring: 1, tasks: 1, txns: 1, assignments: 1, trips: 1, tripItems: 2, paychecks: 1 });
+    expect(await counts()).toEqual({ recurring: 1, tasks: 1, txns: 1, assignments: 1, events: 2, paychecks: 1 });
     for (const item of [bill, receipt, exam, flight, pay]) await run((s) => undoInboxItem(s, item.id));
-    expect(await counts()).toEqual({ recurring: 0, tasks: 0, txns: 0, assignments: 0, trips: 0, tripItems: 0, paychecks: 0 });
+    expect(await counts()).toEqual({ recurring: 0, tasks: 0, txns: 0, assignments: 0, events: 0, paychecks: 0 });
 
     // A class it can't find is left for the user, not guessed.
     const unknown = await file({ type: "assignment", school: { course: "BIO 999", title: "Lab", due_date: today, due_time: null } });

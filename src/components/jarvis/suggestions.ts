@@ -34,8 +34,6 @@ export const FOLLOW_UPS: Record<string, string[]> = {
   find_free_time: ["Block the first slot for studying", "Find time for the gym too"],
   list_assignments: ["Build a study plan for these", "What's due first?"],
   add_shifts: ["Estimate my pay for these shifts", "Do these clash with classes?"],
-  create_trip: ["Plan the trip day by day", "What should I pack?"],
-  get_trip: ["Any clashes with work or class?", "How am I doing on the trip budget?"],
   list_habits: ["Which habit is slipping?", "Start a new habit"],
   list_goals: ["Am I on track for my goals?", "How much should I save each week?"],
   save_memory: ["What else do you know about me?"],

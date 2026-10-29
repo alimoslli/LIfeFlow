@@ -12,8 +12,8 @@ import { listAccounts } from "../finance/accounts";
 import { createRecurring, deleteRecurring } from "../finance/planning";
 import { createTransaction, deleteTransaction, queryTransactions } from "../finance/transactions";
 import { createAssignment, deleteAssignment, resolveCourse } from "../school";
+import { createEvent, deleteEvent } from "../calendar";
 import { createTask, deleteTask } from "../tasks";
-import { addTripItem, createTrip, deleteTrip, deleteTripItem, findTrip } from "../trips";
 import { addPaycheck, deletePaycheck, listEmployers } from "../work";
 import { extractDocument, type ExtractInput, type Extraction } from "./extract";
 
@@ -232,47 +232,21 @@ export async function fileExtraction(scope: UserScope, tz: string, ex: Extractio
     case "train": {
       const items = (ex.travel?.items ?? []).filter((i) => DATE_RE.test(i.start.slice(0, 10)));
       if (!items.length) return { filed, review: "Couldn't read the booking dates." };
-      const from = items.map((i) => i.start.slice(0, 10)).sort()[0];
-      const to = items
-        .map((i) => (i.end ?? i.start).slice(0, 10))
-        .sort()
-        .at(-1)!;
-      let trip = await findTrip(scope, from, to, ex.travel?.destination);
-      if (!trip) {
-        trip = await createTrip(
-          scope,
-          {
-            name: ex.travel?.destination ? `Trip to ${ex.travel.destination}` : "New trip",
-            destination: ex.travel?.destination ?? null,
-            startDate: from,
-            endDate: to,
-          },
-          "inbox",
-        );
-        filed.push({ kind: "trip", id: trip.id, label: `New trip: ${trip.name} (${fmtDay(from)} to ${fmtDay(to)})`, href: `/trips/${trip.id}` });
-      }
       for (const i of items) {
-        const row = await addTripItem(
-          scope,
-          tz,
-          {
-            tripId: trip.id,
-            kind: i.kind,
-            title: i.title.slice(0, 200),
-            start: i.start.slice(0, 16),
-            end: i.end?.slice(0, 16) ?? null,
-            location: i.location,
-            confirmation: i.confirmation,
-            costCents: cents(i.cost_usd),
-          },
-          "inbox",
-        );
-        filed.push({
-          kind: "trip_item",
-          id: row.id,
-          label: `${i.kind[0].toUpperCase()}${i.kind.slice(1)}: ${i.title}${i.confirmation ? ` (${i.confirmation})` : ""}`,
-          href: `/trips/${trip.id}`,
+        const [date, time] = [i.start.slice(0, 10), i.start.slice(11, 16) || null];
+        const [endDate, endTime] = i.end ? [i.end.slice(0, 10), i.end.slice(11, 16) || null] : [null, null];
+        const label = `${i.kind[0].toUpperCase()}${i.kind.slice(1)}: ${i.title}`.slice(0, 300);
+        const ev = await createEvent(scope, tz, {
+          title: label,
+          date,
+          startTime: time,
+          endTime: endDate === date ? endTime : null,
+          endDate: endDate && endDate !== date ? endDate : null,
+          allDay: !time,
+          location: i.location ?? null,
+          description: i.confirmation ? `Confirmation ${i.confirmation}` : null,
         });
+        filed.push({ kind: "event", id: ev.id, label: `${label}${i.confirmation ? ` (${i.confirmation})` : ""}, ${fmtDay(date)}`, href: `/plan?date=${date}` });
       }
       return { filed };
     }
@@ -303,8 +277,7 @@ async function undoFiled(scope: UserScope, f: InboxFiled) {
   if (f.kind === "recurring") await deleteRecurring(scope, f.id).catch(() => undefined);
   if (f.kind === "task") await deleteTask(scope, f.id).catch(() => undefined);
   if (f.kind === "assignment") await deleteAssignment(scope, f.id).catch(() => undefined);
-  if (f.kind === "trip_item") await deleteTripItem(scope, f.id);
-  if (f.kind === "trip") await deleteTrip(scope, f.id);
+  if (f.kind === "event") await deleteEvent(scope, f.id);
   if (f.kind === "paycheck") await deletePaycheck(scope, f.id).catch(() => undefined);
 }
 

@@ -1375,53 +1375,6 @@ export const SKILLS: SkillFile[] = [
     ]
   },
   {
-    "name": "trip-planner",
-    "title": "Trip planner",
-    "description": "Plans whole itineraries day by day.",
-    "triggers": [
-      "trip",
-      "itinerary",
-      "vacation",
-      "travel",
-      "going to",
-      "visit"
-    ],
-    "modules": [
-      "home"
-    ],
-    "tools": [
-      "list_trips",
-      "create_trip",
-      "add_trip_items",
-      "get_trip",
-      "web_search",
-      "find_free_time"
-    ],
-    "body": "## Steps\n1. Check existing trips (list_trips) or create one when asked.\n2. Plan day by day with real places; look up hours and prices with web_search and cite them.\n3. Flag clashes with shifts, classes and deadlines (get_trip).\n4. Add bookings or plans only when asked.\n\n## Quality rules\n- Never make up prices, hours or links.\n\n## Example\nUser: Plan 3 days in Chicago\nJarvis: Day 1: Art Institute (open 11-5, $35, source). Day 2: architecture boat tour... Note: your Friday shift overlaps day 2.",
-    "evals": [
-      {
-        "prompt": "Plan my trip to Chicago",
-        "expect": "routes to trip-planner"
-      },
-      {
-        "prompt": "Make an itinerary for 3 days in Paris",
-        "expect": "routes to trip-planner"
-      },
-      {
-        "prompt": "Help me plan a vacation",
-        "expect": "routes to trip-planner"
-      },
-      {
-        "prompt": "What should I do when I visit Boston?",
-        "expect": "routes to trip-planner"
-      },
-      {
-        "prompt": "Plan a weekend trip",
-        "expect": "routes to trip-planner"
-      }
-    ]
-  },
-  {
     "name": "tutor",
     "title": "Tutor",
     "description": "Explains concepts step by step and checks understanding instead of handing over answers.",

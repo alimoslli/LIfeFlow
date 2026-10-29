@@ -16,7 +16,7 @@ export type PersonalitySettings = {
   frequency: "low" | "normal" | "high";
   quietStart: string;
   quietEnd: string;
-  topics: Record<"money" | "school" | "work" | "health" | "trips" | "habits", boolean>;
+  topics: Record<"money" | "school" | "work" | "health" | "habits", boolean>;
   autonomy: { tasks: boolean; calendar: boolean };
   avatar: "spark" | "orb" | "initial";
   learning: boolean;
@@ -24,7 +24,7 @@ export type PersonalitySettings = {
   answerLength: "concise" | "balanced" | "detailed";
 };
 
-const TOPIC_LABELS = { money: "Money", school: "School", work: "Work", health: "Health", trips: "Trips", habits: "Habits" } as const;
+const TOPIC_LABELS = { money: "Money", school: "School", work: "Work", health: "Health", habits: "Habits" } as const;
 const FREQ = { low: "Low: only what matters most", normal: "Normal: a few times a day", high: "High: everything useful" } as const;
 
 function Switch({ name, label, hint, defaultChecked }: { name: string; label: string; hint?: string; defaultChecked: boolean }) {

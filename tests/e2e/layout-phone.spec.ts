@@ -8,7 +8,7 @@ const SHOTS = process.env.SHOTS;
 // Each tab's landing page and every page that must be one more tap from it.
 const TABS: [string, string, string[]][] = [
   ["Today", "/", []],
-  ["Plan", "/plan", ["/calendar", "/tasks", "/work", "/trips"]],
+  ["Plan", "/plan", ["/calendar", "/tasks", "/goals", "/habits", "/work"]],
   ["Jarvis", "/jarvis", ["/jarvis/says", "/inbox", "/jarvis/memory"]],
   ["Money", "/money", ["/finances/accounts", "/wealth", "/finances/budgets", "/finances/transactions", "/finances/subscriptions", "/finances/bills", "/goals"]],
   ["School", "/school", ["/habits", "/notes"]],
