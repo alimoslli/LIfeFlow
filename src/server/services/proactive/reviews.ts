@@ -1,3 +1,4 @@
+import { usd } from "@/lib/jarvis-voice";
 import { and, eq, gte, isNotNull, lte, ne } from "drizzle-orm";
 import { addDaysStr, dayOfWeek, daysBetween, formatDateStr, localDateOf, monthStart, weekStart } from "@/lib/dates";
 import { goalProjection } from "@/lib/goal-math";
@@ -14,7 +15,6 @@ import { listAssignments } from "../school";
 import { listShifts } from "../work";
 import type { Candidate, DetectContext, Detector } from "./detectors";
 
-const usd = (c: number) => `$${Math.round(Math.abs(c) / 100).toLocaleString("en-US")}`;
 type Section = { heading: string; lines: string[] };
 const spendOf = (t: { amountCents: number }) => Math.max(0, -t.amountCents);
 

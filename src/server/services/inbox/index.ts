@@ -1,6 +1,8 @@
 import { createHash, randomBytes, randomInt } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
-import { addDaysStr, DATE_RE, TIME_RE } from "@/lib/dates";
+import { addDaysStr, DATE_RE, formatDateStr, TIME_RE } from "@/lib/dates";
+
+const fmtDay = (d: string) => formatDateStr(d, "EEE, MMM d");
 import type { Database } from "../../db/client";
 import { attachments, inboxItems, inboxSenders, oauthIdentities, users, type InboxFiled } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
@@ -143,7 +145,12 @@ export async function fileExtraction(scope: UserScope, tz: string, ex: Extractio
           { name: b.payee.slice(0, 120), amountCents: -amount, frequency: b.repeats, nextDueDate: due, kind: "bill" },
           "detected",
         );
-        filed.push({ kind: "recurring", id: r.id, label: `Bill: ${b.payee} $${(amount / 100).toFixed(2)} ${b.repeats}, next ${due}`, href: "/finances/bills" });
+        filed.push({
+          kind: "recurring",
+          id: r.id,
+          label: `Bill: ${b.payee} $${(amount / 100).toFixed(2)} ${b.repeats}, next ${fmtDay(due)}`,
+          href: "/finances/bills",
+        });
       }
       const t = await createTask(
         scope,
@@ -151,7 +158,7 @@ export async function fileExtraction(scope: UserScope, tz: string, ex: Extractio
         { title: `Pay ${b.payee} ($${(amount / 100).toFixed(2)})`, dueDate: due, dueTime: "09:00", reminder: "1d" },
         "manual",
       );
-      filed.push({ kind: "task", id: t.id, label: `Reminder: pay ${b.payee} by ${due}`, href: `/tasks/${t.id}` });
+      filed.push({ kind: "task", id: t.id, label: `Reminder: pay ${b.payee} by ${fmtDay(due)}`, href: `/tasks/${t.id}` });
       return { filed, review: b.due_date ? undefined : "No due date was printed; I set it for a week out. Check it." };
     }
     case "receipt": {
@@ -168,7 +175,10 @@ export async function fileExtraction(scope: UserScope, tz: string, ex: Extractio
         limit: 5,
       });
       if (dupes.length)
-        return { filed, review: `This matches a transaction you already have (${dupes[0].description} on ${dupes[0].date}), so I didn't add it again.` };
+        return {
+          filed,
+          review: `This matches a transaction you already have (${dupes[0].description} on ${fmtDay(dupes[0].date)}), so I didn't add it again.`,
+        };
       const account = (await listAccounts(scope)).find((a) => a.type === "credit") ?? (await listAccounts(scope)).find((a) => a.type === "depository");
       if (!account) return { filed, review: "Add an account on Money first, then I can record receipts." };
       const t = await createTransaction(
@@ -179,7 +189,7 @@ export async function fileExtraction(scope: UserScope, tz: string, ex: Extractio
       filed.push({
         kind: "transaction",
         id: t.id,
-        label: `Spending: ${r.merchant} $${(amount / 100).toFixed(2)} on ${day} (${account.name})`,
+        label: `Spending: ${r.merchant} $${(amount / 100).toFixed(2)} on ${fmtDay(day)} (${account.name})`,
         href: "/finances/transactions",
       });
       return { filed };
@@ -212,7 +222,7 @@ export async function fileExtraction(scope: UserScope, tz: string, ex: Extractio
       filed.push({
         kind: "assignment",
         id: r.assignment.id,
-        label: `${ex.type === "exam" ? "Exam" : "Assignment"}: ${s.title} in ${course.name}${s.due_date ? `, due ${s.due_date}` : ""}`,
+        label: `${ex.type === "exam" ? "Exam" : "Assignment"}: ${s.title} in ${course.name}${s.due_date ? `, due ${fmtDay(s.due_date)}` : ""}`,
         href: `/school/courses/${course.id}`,
       });
       return { filed };
@@ -239,7 +249,7 @@ export async function fileExtraction(scope: UserScope, tz: string, ex: Extractio
           },
           "inbox",
         );
-        filed.push({ kind: "trip", id: trip.id, label: `New trip: ${trip.name} (${from} to ${to})`, href: `/trips/${trip.id}` });
+        filed.push({ kind: "trip", id: trip.id, label: `New trip: ${trip.name} (${fmtDay(from)} to ${fmtDay(to)})`, href: `/trips/${trip.id}` });
       }
       for (const i of items) {
         const row = await addTripItem(
@@ -280,7 +290,7 @@ export async function fileExtraction(scope: UserScope, tz: string, ex: Extractio
         { employerId: job.id, payDate: p.pay_date, netCents: net, grossCents: cents(p.gross_usd), hours: p.hours ?? null },
         "manual",
       );
-      filed.push({ kind: "paycheck", id: pc.id, label: `Paycheck from ${job.name}: $${(net / 100).toFixed(2)} net on ${p.pay_date}`, href: "/work" });
+      filed.push({ kind: "paycheck", id: pc.id, label: `Paycheck from ${job.name}: $${(net / 100).toFixed(2)} net on ${fmtDay(p.pay_date)}`, href: "/work" });
       return { filed };
     }
     default:

@@ -16,6 +16,10 @@ const seed = (email: string) =>
     stdio: "pipe",
   }).toString();
 
+/** Set SHOTS=<dir> to save phone screenshots of each screen. */
+const shot = async (page: Page, name: string) => {
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/${name}.png` });
+};
 const card = (page: Page, text: string | RegExp) => page.getByTestId("jarvis-message").filter({ hasText: text });
 
 test("Jarvis coaches from real data on a phone, learns from the buttons, and files the inbox", async ({ page }) => {
@@ -26,6 +30,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
   await test.step("Today leads with the most important message", async () => {
     await page.goto("/");
     await expect(page.getByTestId("jarvis-message").first()).toContainText("may not be covered");
+    await shot(page, "1-today");
   });
 
   await test.step("Jarvis says: Do it moves budget room, Undo puts it back", async () => {
@@ -34,6 +39,8 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     await expect(pace).toContainText("You spent $110 on groceries this week, $70 more than usual");
     await pace.getByRole("button", { name: /Move \$70/ }).click();
     await expect(pace).toContainText("Moved $70 from Entertainment");
+    await pace.scrollIntoViewIfNeeded();
+    await shot(page, "2-jarvis-says-done");
     await pace.getByRole("button", { name: "Undo" }).click();
     await expect(pace).toContainText("Undone");
   });
@@ -63,6 +70,8 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     await page.goto("/settings/memory");
     await expect(page.getByText("Learn from my responses")).toBeVisible();
     await expect(page.getByText("Subscription price increases")).toBeVisible();
+    await page.getByText("Learn from my responses").scrollIntoViewIfNeeded();
+    await shot(page, "3-what-jarvis-learned");
     await page.getByRole("button", { name: "Bring back" }).click();
     await expect(page.getByText("You said don't suggest again")).toHaveCount(0);
   });
@@ -71,6 +80,8 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     const preview = page.getByTestId("personality-preview");
     await page.getByText("Straight to the point", { exact: true }).click();
     await expect(preview).toContainText("You spent $86 on food this week, $30 more than usual. Want me to move $30 from Fun to Food?");
+    await preview.scrollIntoViewIfNeeded();
+    await shot(page, "4-personality-preview");
     await page.getByRole("button", { name: "Save personality" }).click();
     await expect(page.getByText("Saved. That's how I'll sound from now on.")).toBeVisible();
     await expect
@@ -86,6 +97,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     await expect(page.getByText(/Netflix\s*went up from \$15\.49 to \$17\.99/)).toBeVisible();
     await expect(page.getByText(/Paramount\+\s*'s free trial ends in 3 days/)).toBeVisible();
     await expect(page.getByText(/3 video streaming subscriptions \(Netflix, Paramount\+, Hulu\)/)).toBeVisible();
+    await shot(page, "5-subscriptions");
   });
 
   await test.step("Save money: sourced cheaper plans and a script", async () => {
@@ -94,6 +106,8 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     await verizon.getByRole("button", { name: "Find cheaper" }).click();
     await expect(page.getByRole("link", { name: "Source: Plans | Example Mobile" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Unsourced Co")).toHaveCount(0);
+    await page.getByRole("link", { name: "Source: Plans | Example Mobile" }).scrollIntoViewIfNeeded();
+    await shot(page, "6-save-money");
     await page.getByRole("button", { name: "Negotiation script" }).first().click();
     await expect(page.getByRole("dialog")).toContainText("I'm a Verizon customer and I'm paying $85.00 a month");
   });
@@ -123,6 +137,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     expect(res.ok()).toBe(true);
     await page.reload();
     await expect(page.getByText("Comcast internet bill, $64.99 due soon.", { exact: true })).toBeVisible();
+    await shot(page, "7-inbox");
   });
 
   await test.step("Habits and trips", async () => {

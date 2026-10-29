@@ -8,7 +8,8 @@ export type JarvisTone = "coach" | "friend" | "direct";
 export type Mood = "win" | "warn" | "info";
 export type Parts = { headline: string; fact: string; ask?: string; mood: Mood };
 
-const usd = (cents: number) => {
+/** Money as Jarvis says it: cents under $100 when there are any, whole dollars above. */
+export const usd = (cents: number) => {
   const d = Math.abs(cents) / 100;
   return `$${d >= 100 ? Math.round(d).toLocaleString("en-US") : d.toFixed(d % 1 ? 2 : 0)}`;
 };

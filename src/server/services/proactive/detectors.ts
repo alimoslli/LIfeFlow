@@ -1,3 +1,4 @@
+import { usd } from "@/lib/jarvis-voice";
 import { and, eq, gte, isNotNull, lt, ne } from "drizzle-orm";
 import { addDaysStr, daysBetween, formatDateStr, localDateOf, localTimeOf, monthStart, relativeDayLabel, weekStart } from "@/lib/dates";
 import { tasks, type JarvisTopic, type ProactiveAction } from "../../db/schema";
@@ -32,7 +33,6 @@ export type Candidate = {
 export type DetectContext = { scope: UserScope; tz: string; today: string; now: Date };
 export type Detector = (c: DetectContext) => Promise<Candidate[]>;
 
-const usd = (c: number) => `$${Math.round(Math.abs(c) / 100).toLocaleString("en-US")}`;
 const spendOf = (t: { amountCents: number }) => Math.max(0, -t.amountCents);
 
 /** A category's spending this week vs. the same days of the previous 8 weeks. */
