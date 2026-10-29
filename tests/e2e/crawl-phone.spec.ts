@@ -38,7 +38,7 @@ test("every screen on a new account: no undefined/null/NaN, no sideways scroll, 
   await signUp(page, "Cora Crawl");
   // One to-do so its detail page is covered too.
   await page.goto("/tasks");
-  await page.getByRole("button", { name: "Quick add" }).click();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("lf:quick-add", { detail: "todo" })));
   await page.getByRole("dialog", { name: "Quick add" }).getByLabel("What do you need to do?").fill("Check every screen");
   await page.getByRole("dialog", { name: "Quick add" }).getByRole("button", { name: "Add to-do" }).click();
   const detail = await page.getByRole("link", { name: /Check every screen/ }).getAttribute("href");

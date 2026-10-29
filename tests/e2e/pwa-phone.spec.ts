@@ -34,7 +34,7 @@ test("offline: cached pages still open, changes save on the phone and sync when 
   await waitForServiceWorker(page);
 
   // Add a to-do online, then open the pages that are kept for offline reading.
-  await page.getByRole("button", { name: "Quick add" }).click();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("lf:quick-add", { detail: "todo" })));
   await page.getByRole("dialog", { name: "Quick add" }).getByLabel("What do you need to do?").fill("Read chapter 4");
   await page.getByRole("dialog", { name: "Quick add" }).getByRole("button", { name: "Add to-do" }).click();
   await expect(page.getByRole("link", { name: /Read chapter 4/ })).toBeVisible();
@@ -49,7 +49,7 @@ test("offline: cached pages still open, changes save on the phone and sync when 
   await page.getByRole("checkbox", { name: /Read chapter 4/ }).click();
   await expect(page.getByRole("checkbox", { name: /Read chapter 4/ })).toBeChecked();
   await expect(page.getByRole("status").filter({ hasText: "Saved on this phone" }).first()).toBeVisible();
-  await page.getByRole("button", { name: "Quick add" }).click();
+  await page.evaluate(() => window.dispatchEvent(new CustomEvent("lf:quick-add", { detail: "todo" })));
   await page.getByRole("dialog", { name: "Quick add" }).getByLabel("What do you need to do?").fill("Buy milk");
   await page.getByRole("dialog", { name: "Quick add" }).getByRole("button", { name: "Add to-do" }).click();
   await expect(page.getByRole("status").filter({ hasText: "2 waiting" })).toBeVisible();

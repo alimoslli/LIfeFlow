@@ -1,13 +1,14 @@
-import { CalendarRange, Sparkles, Sun, Wallet } from "lucide-react";
+import { CalendarRange, Sparkles, Sun, UserRound, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { JarvisModule } from "@/server/db/schema";
 
-/** The whole app is four places. Detail pages live under them. */
+/** Five tabs. Every other page lives under one of them (see section-nav.tsx). Settings is the gear in the top bar. */
 export const NAV = [
   { href: "/", label: "Today", icon: Sun, module: "home", match: ["/"] },
-  { href: "/plan", label: "Plan", icon: CalendarRange, module: "calendar", match: ["/plan", "/school", "/work", "/calendar", "/tasks", "/notes"] },
-  { href: "/jarvis", label: "Jarvis", icon: Sparkles, module: "home", match: ["/jarvis"] },
+  { href: "/plan", label: "Plan", icon: CalendarRange, module: "calendar", match: ["/plan", "/calendar", "/tasks", "/work", "/trips"] },
+  { href: "/jarvis", label: "Jarvis", icon: Sparkles, module: "home", match: ["/jarvis", "/inbox"] },
   { href: "/money", label: "Money", icon: Wallet, module: "finances", match: ["/money", "/finances", "/wealth"] },
+  { href: "/habits", label: "Personal", icon: UserRound, module: "home", match: ["/habits", "/school", "/notes"] },
 ] as const satisfies readonly { href: string; label: string; icon: LucideIcon; module: JarvisModule; match: readonly string[] }[];
 
 const MODULE_BY_PREFIX: [string, JarvisModule][] = [

@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { Toaster } from "@/components/ui/toaster";
 import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { setTourAction } from "@/app/(onboarding)/welcome/actions";
-import { Sparkles } from "lucide-react";
+import { Settings, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV, isActive, moduleForPath } from "./nav-items";
 import { JarvisDrawer } from "../jarvis/jarvis-drawer";
@@ -121,9 +121,9 @@ export function AppShell({
 
           <div className="flex min-w-0 flex-1 flex-col">
             <main
-              className={cn("mx-auto w-full flex-1", onJarvisPage ? "max-w-none" : "lf-main-pad max-w-5xl px-5 sm:px-8 md:max-w-6xl md:px-6 md:pt-5 md:pb-6")}
+              className={cn("mx-auto w-full flex-1", onJarvisPage ? "max-w-none" : "lf-main-pad max-w-5xl px-5 sm:px-8 md:max-w-6xl md:px-6 md:pt-5 md:pb-28")}
             >
-              {!onJarvisPage && <MobileAppBar initials={initials} demo={user.accountKind === "demo"} onSearch={() => setPalette(true)} />}
+              {!onJarvisPage && <MobileAppBar demo={user.accountKind === "demo"} onSearch={() => setPalette(true)} />}
               {!onJarvisPage && (
                 <TopBar firstName={user.name.split(" ")[0]} initials={initials} demo={user.accountKind === "demo"} settingsActive={settingsActive} />
               )}
@@ -156,28 +156,16 @@ export function AppShell({
                   href={item.href}
                   data-tour={item.label.toLowerCase()}
                   aria-current={active ? "page" : undefined}
-                  className={cn("relative flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10.5px] font-medium", active ? "text-accent" : "text-muted")}
+                  className={cn(
+                    "relative flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium",
+                    active ? "text-accent" : "text-muted",
+                  )}
                 >
                   <Icon data-icon className="h-[22px] w-[22px]" strokeWidth={active ? 2 : 1.6} />
-                  {item.href === "/jarvis" ? assistantName : item.label}
+                  <span className="max-w-full truncate px-0.5">{item.href === "/jarvis" ? assistantName : item.label}</span>
                 </Link>
               );
             })}
-            <Link
-              href="/settings"
-              aria-label="Settings"
-              className={cn("flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10.5px] font-medium", settingsActive ? "text-accent" : "text-muted")}
-            >
-              <span
-                className={cn(
-                  "flex h-[22px] w-[22px] items-center justify-center rounded-full text-[9px] font-semibold",
-                  settingsActive ? "bg-accent text-accent-text" : "bg-surface-3 text-text-2",
-                )}
-              >
-                {initials}
-              </span>
-              You
-            </Link>
           </div>
         </nav>
 
@@ -201,10 +189,18 @@ export function AppShell({
       <PwaClient />
       <PasskeyOffer />
       <NavDirection />
+      <Suspense fallback={null}>
+        <QuickAdd />
+      </Suspense>
       {!onJarvisPage && (
-        <Suspense fallback={null}>
-          <QuickAdd />
-        </Suspense>
+        <button
+          type="button"
+          onClick={() => openJarvis()}
+          aria-label={`Ask ${assistantName}`}
+          className="lf-fab fixed right-4 bottom-[calc(var(--tabbar-space)-4px)] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-text shadow-lift active:scale-95 md:right-8 md:bottom-8"
+        >
+          <Sparkles className="h-6 w-6" />
+        </button>
       )}
       <KeyboardWatcher />
       <CommandPalette open={palette} onClose={() => setPalette(false)} onAsk={(q) => openJarvis(q, { send: !!q })} />
@@ -217,22 +213,10 @@ function TopBar({ firstName, initials, demo, settingsActive }: { firstName: stri
   const { openJarvis, assistantName } = useShell();
   return (
     <div className="mb-4 hidden items-center gap-4 rounded-full bg-surface p-1.5 shadow-soft md:flex">
-      <Link
-        href="/settings"
-        aria-label="Settings"
-        title="Settings"
-        className="flex shrink-0 items-center gap-2.5 rounded-full py-0.5 pr-3 pl-0.5 hover:bg-surface-2"
-      >
-        <span
-          className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold",
-            settingsActive ? "bg-accent text-accent-text" : "bg-surface-3 text-text-2",
-          )}
-        >
-          {initials}
-        </span>
+      <span className="flex shrink-0 items-center gap-2.5 py-0.5 pr-3 pl-0.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-3 text-xs font-semibold text-text-2">{initials}</span>
         <span className="text-sm font-medium">Welcome, {firstName}</span>
-      </Link>
+      </span>
       <button
         type="button"
         onClick={() => openJarvis()}
@@ -242,7 +226,16 @@ function TopBar({ firstName, initials, demo, settingsActive }: { firstName: stri
         Ask {assistantName} anything…
         <kbd className="ml-auto rounded-md bg-surface-3 px-1.5 py-0.5 font-sans text-[11px] text-muted">⌘J</kbd>
       </button>
-      {demo ? <span className="shrink-0 rounded-full bg-warning-soft px-3 py-1.5 text-xs text-warning">Sample data</span> : <span className="w-9 shrink-0" />}
+      {demo && <span className="shrink-0 rounded-full bg-warning-soft px-3 py-1.5 text-xs text-warning">Sample data</span>}
+      <Link
+        href="/settings"
+        aria-label="Settings"
+        title="Settings"
+        aria-current={settingsActive ? "page" : undefined}
+        className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-surface-2", settingsActive ? "text-accent" : "text-text-2")}
+      >
+        <Settings className="h-5 w-5" />
+      </Link>
     </div>
   );
 }

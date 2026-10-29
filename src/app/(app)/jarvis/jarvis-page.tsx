@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { Bell, Plus } from "lucide-react";
+import { PenLine, Plus, Settings } from "lucide-react";
+import { SectionNav } from "@/components/shell/section-nav";
+import { QuickAddButton } from "@/components/shell/quick-add";
 import { ActionButton } from "@/components/action-form";
 import { JarvisChat } from "@/components/jarvis/chat";
 import type { UiMessage } from "@/components/jarvis/types";
@@ -25,9 +27,6 @@ export function JarvisPage({ conversations, activeId, messages, tz }: { conversa
         >
           <Plus className="h-4 w-4" /> New chat
         </Link>
-        <Link href="/jarvis/says" className="mx-2 mb-4 flex items-center gap-2 rounded-full px-4 py-2 text-sm text-text-2 hover:bg-surface-2">
-          <Bell className="h-4 w-4" /> What Jarvis noticed
-        </Link>
         <nav className="flex-1 overflow-y-auto px-2" aria-label="Conversations">
           {items.length === 0 && <p className="px-3 py-2 text-sm text-muted">Your conversations will appear here.</p>}
           {items.map((c) => (
@@ -49,16 +48,23 @@ export function JarvisPage({ conversations, activeId, messages, tz }: { conversa
         </nav>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-2 px-4 pt-4 lg:hidden">
-          <HistorySheet items={items} activeId={activeId} />
-          <p className="min-w-0 flex-1 truncate text-center text-sm font-medium">{active?.title ?? "Jarvis"}</p>
-          <Link href="/jarvis/says" aria-label="What Jarvis noticed" className="flex h-11 w-11 items-center justify-center rounded-full bg-surface shadow-soft">
-            <Bell className="h-4 w-4" />
-          </Link>
-          <Link href="/jarvis" aria-label="New chat" className="flex h-11 w-11 items-center justify-center rounded-full bg-surface shadow-soft">
+        <header className="flex items-center gap-2 px-4 pt-[max(1rem,env(safe-area-inset-top))]">
+          <span className="lg:hidden">
+            <HistorySheet items={items} activeId={activeId} />
+          </span>
+          <p className="min-w-0 flex-1 truncate text-center text-sm font-medium lg:text-left">{active?.title ?? "Jarvis"}</p>
+          <Link href="/jarvis" aria-label="New chat" className="flex h-11 w-11 items-center justify-center rounded-full bg-surface shadow-soft lg:hidden">
             <Plus className="h-4 w-4" />
           </Link>
+          <Link href="/settings" aria-label="Settings" className="flex h-11 w-11 items-center justify-center rounded-full text-text-2">
+            <Settings className="h-5 w-5" />
+          </Link>
         </header>
+        <SectionNav inline>
+          <QuickAddButton className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium whitespace-nowrap text-accent-text">
+            <PenLine className="h-4 w-4" /> Capture
+          </QuickAddButton>
+        </SectionNav>
         <div className="min-h-0 flex-1">
           <JarvisChat
             key={activeId ?? "new"}

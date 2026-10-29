@@ -125,9 +125,17 @@ export default async function MoneyPage() {
         <header className="animate-rise max-lg:order-[-3]">
           <p className="text-sm text-muted">{formatDateStr(d.today, "EEEE, MMMM d")}</p>
           <h1 className="mt-1 font-display text-[40px] leading-none font-medium tracking-tight">Money</h1>
-          <p className="mt-2 text-xs text-muted">
-            Balances as of {asOf ?? "unknown"}
-            {o.balances.hasDemoData ? " · Sample data" : ""}
+          <p className="mt-2 flex flex-wrap items-center gap-x-3 text-xs text-muted">
+            <span>
+              Balances as of {asOf ?? "unknown"}
+              {o.balances.hasDemoData ? " · Sample data" : ""}
+            </span>
+            <Link href="/money/report" className="inline-flex min-h-11 items-center font-medium text-accent">
+              Reports
+            </Link>
+            <Link href="/wealth" className="inline-flex min-h-11 items-center font-medium text-accent">
+              Investments
+            </Link>
           </p>
         </header>
 

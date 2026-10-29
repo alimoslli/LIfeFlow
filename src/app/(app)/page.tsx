@@ -1,22 +1,19 @@
 import Link from "next/link";
-import { ArrowDownLeft, ArrowRight, ArrowUpRight, Lock } from "lucide-react";
+import { ArrowRight, Lock } from "lucide-react";
 import { CountUp } from "@/components/motion/count-up";
 import { assistantProfile } from "@/lib/assistant";
 import { Pressable } from "@/components/motion/pressable";
-import { TaskCheck } from "@/components/task-check";
-import { formatIn, localDateOf } from "@/lib/dates";
+import { formatIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { requireUser, withCurrentUser } from "@/server/auth/current-user";
 import { moneyLocked } from "@/server/auth/money-lock";
 import { withUser } from "@/server/db/with-user";
-import { JarvisMessageCard } from "@/components/jarvis/message-card";
-import { jarvisSettings, runDueSlot, topMessage } from "@/server/services/proactive/engine";
+import { runDueSlot, topMessage } from "@/server/services/proactive/engine";
 import { toCard } from "@/server/services/proactive/present";
 import { getBriefing } from "@/server/briefing";
 import type { AgendaItem } from "@/server/services/calendar";
 import { listTasks } from "@/server/services/tasks";
-import { toggleTaskAction } from "./tasks/actions";
-import { AskBar, InsightList } from "./_today/insights";
+import { QuickChips, RefreshPlan } from "./_today/day-plan";
 
 const PR = { urgent: 0, high: 1, medium: 2, low: 3 } as const;
 
@@ -33,10 +30,8 @@ export default async function TodayPage() {
     briefing: b,
     snapshot: s,
     tasks,
-    firstName,
     assistantName,
     jarvisCard,
-    avatar,
   } = await withCurrentUser(async (scope, user) => {
     const top = await topMessage(scope);
     const { briefing, snapshot } = await getBriefing(scope, user);
@@ -45,141 +40,129 @@ export default async function TodayPage() {
       briefing,
       snapshot,
       tasks,
-      firstName: user.name.split(" ")[0],
       assistantName: assistantProfile(user.preferences).name,
       jarvisCard: top && !(locked && top.topic === "money") ? toCard(top, user.timezone) : null,
-      avatar: jarvisSettings(user.preferences).avatar,
     };
   });
   const focus = [...tasks].sort((a, b) => (a.dueAt?.getTime() ?? Infinity) - (b.dueAt?.getTime() ?? Infinity) || PR[a.priority] - PR[b.priority]).slice(0, 3);
   const insights = locked ? b.insights.filter((i) => i.icon !== "money" && i.icon !== "trend" && i.icon !== "goal") : b.insights;
   const minutesUntil = b.next ? Math.round((b.next.startsAt.getTime() - s.now.getTime()) / 60_000) : null;
 
+  const due = b.today.filter((i) => !((i.endsAt ?? i.startsAt) < s.now) || !i.blocksTime);
+  const top = insights[0];
+  const plan = {
+    today: b.next
+      ? `${minutesUntil! <= 0 ? "Now" : `In ${humanMinutes(minutesUntil!)}`}: ${b.next.title}. ${due.length} thing${due.length === 1 ? "" : "s"} on today's list.`
+      : due.length
+        ? `${due.length} thing${due.length === 1 ? "" : "s"} on today's list, nothing else scheduled.`
+        : null,
+    money: locked ? "Money is locked." : !b.money ? null : b.money.safeTodayCents != null ? "safe" : "cash",
+  };
+
   return (
-    <div className="mx-auto flex max-w-[640px] flex-col gap-10 lg:max-w-none lg:flex-row lg:items-start lg:gap-8">
-      {/* Phones: one column in the original order (max-lg:order). Wide screens: a main and a side column. */}
-      <div className="contents lg:flex lg:min-w-0 lg:flex-[1.5] lg:flex-col lg:gap-10">
-        <header className="animate-rise max-lg:order-[-2]" data-tour="today-page">
-          <p className="text-sm text-muted">{formatIn(s.now, s.tz, "EEEE, MMMM d")}</p>
-          <h1 className="mt-2 font-display text-[40px] leading-[1.05] font-medium tracking-tight sm:text-[46px]">{b.headline}</h1>
-          <p className="mt-3 text-[17px] leading-relaxed text-text-2">{b.summary}</p>
-          <div className="mt-6">
-            <AskBar name={firstName} />
-          </div>
-        </header>
-        {jarvisCard && (
-          <section aria-label={`${assistantName} says`} className="animate-rise max-lg:order-[-1]">
-            <JarvisMessageCard m={jarvisCard} name={assistantName} avatar={avatar} compact />
-          </section>
-        )}
-        {insights.length > 0 && (
-          <section aria-label={`${assistantName} noticed`}>
-            <SectionTitle>{assistantName} noticed</SectionTitle>
-            <InsightList insights={insights} />
-          </section>
-        )}
-        <section aria-label="Today" className="animate-rise" style={{ animationDelay: "200ms" }}>
-          <SectionTitle href="/plan">Today</SectionTitle>
-          {b.today.length === 0 ? <p className="text-[15px] text-muted">A clear day.</p> : <Timeline items={b.today} tz={s.tz} now={s.now} />}
-        </section>
-        {focus.length > 0 && (
-          <section aria-label="On your list" className="animate-rise" style={{ animationDelay: "240ms" }}>
-            <SectionTitle href="/tasks">On your list</SectionTitle>
-            <ul className="flex flex-col">
-              {focus.map((t) => (
-                <li key={t.id} className="flex items-center gap-3.5 py-2.5">
-                  <TaskCheck done={false} action={toggleTaskAction.bind(null, t.id)} taskId={t.id} label={`Complete ${t.title}`} />
-                  <span className="flex-1 text-[15px]">{t.title}</span>
-                  {t.dueAt && (
-                    <span className={cn("text-sm", t.dueAt < s.now ? "text-danger" : "text-muted")}>
-                      {formatIn(t.dueAt, s.tz, localDateOf(t.dueAt, s.tz) === s.today ? "'today'" : "EEE")}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-      </div>
-      <div className="contents lg:flex lg:min-w-0 lg:flex-1 lg:flex-col lg:gap-10">
-        {b.next && (
-          <section className="animate-rise max-lg:order-[-1]" style={{ animationDelay: "60ms" }} aria-label="Up next">
-            <div data-tilt className="lf-sheen relative overflow-hidden rounded-3xl bg-hero p-5 text-hero-text shadow-lift sm:p-6">
-              <p className="text-xs font-medium tracking-wide uppercase opacity-70">
-                {minutesUntil! <= 0 ? "Happening now" : `Up next · in ${humanMinutes(minutesUntil!)}`}
-              </p>
-              <p className="mt-1.5 font-display text-[28px] leading-tight font-medium">{b.next.title}</p>
-              <p className="mt-1 text-sm opacity-80">
-                {formatIn(b.next.startsAt, s.tz, "h:mm")}–{formatIn(b.next.endsAt!, s.tz, "h:mm a")}
-                {b.next.subtitle ? ` · ${b.next.subtitle}` : ""}
-              </p>
-            </div>
-          </section>
-        )}
-        {b.money && locked && (
-          <section aria-label="Money" className="animate-rise" style={{ animationDelay: "280ms" }}>
-            <SectionTitle href="/money">Money</SectionTitle>
-            <Link href="/money" className="flex min-h-16 items-center gap-3 rounded-3xl bg-surface p-5 shadow-soft">
-              <Lock className="h-5 w-5 text-accent" />
-              <span className="flex-1 text-[15px]">Money is locked. Tap to unlock.</span>
-              <ArrowRight className="h-4 w-4 text-muted" />
-            </Link>
-          </section>
-        )}
-        {b.money && !locked && (
-          <section aria-label="Money" className="animate-rise" style={{ animationDelay: "280ms" }}>
-            <SectionTitle href="/money">Money</SectionTitle>
-            <Pressable>
-              <Link data-tilt href="/money" className="block rounded-3xl bg-surface p-5 shadow-soft transition-shadow hover:shadow-lift sm:p-6">
-                {b.money.safeTodayCents != null ? (
-                  <>
-                    <p className="text-sm text-muted">Safe to spend today</p>
-                    <p className="tabular mt-1 font-display text-[40px] leading-none font-medium tracking-tight">
-                      <CountUp cents={b.money.safeTodayCents} />
-                    </p>
-                    <p className="mt-1 text-sm text-text-2">
-                      Cash &amp; checking <CountUp cents={b.money.liquidCents} />
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm text-muted">Cash &amp; checking</p>
-                    <p className="tabular mt-1 font-display text-[40px] leading-none font-medium tracking-tight">
-                      <CountUp cents={b.money.liquidCents} />
-                    </p>
-                  </>
-                )}
-                <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
-                  <div>
-                    <p className="flex items-center gap-1.5 text-sm text-muted">
-                      <ArrowUpRight className="h-3.5 w-3.5" /> Spent in {formatIn(s.now, s.tz, "MMMM")}
-                    </p>
-                    <p className="tabular mt-1 text-xl font-medium">
-                      <CountUp cents={b.money.spentCents} />
-                    </p>
-                  </div>
-                  <div>
-                    <p className="flex items-center gap-1.5 text-sm text-muted">
-                      <ArrowDownLeft className="h-3.5 w-3.5" /> Came in
-                    </p>
-                    <p className="tabular mt-1 text-xl font-medium text-success">
-                      <CountUp cents={b.money.incomeCents} />
-                    </p>
-                  </div>
-                </div>
-                <p className="mt-3 text-xs text-muted">
-                  {b.money.periodLabel}
-                  {b.money.asOf ? ` · balances as of ${formatIn(b.money.asOf, s.tz, "MMM d, h:mm a")}` : ""}
-                </p>
+    <div className="mx-auto flex max-w-[640px] flex-col gap-8">
+      <header className="animate-rise" data-tour="today-page">
+        <p className="text-sm text-muted">{formatIn(s.now, s.tz, "EEEE, MMMM d")}</p>
+        <h1 className="mt-2 font-display text-[36px] leading-[1.05] font-medium tracking-tight sm:text-[44px]">{b.headline}</h1>
+        <div className="mt-5">
+          <QuickChips />
+        </div>
+      </header>
+
+      <section aria-label={`${assistantName}'s plan for today`} className="animate-rise rounded-3xl bg-surface p-5 shadow-soft">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[15px] font-semibold">{assistantName}&apos;s plan for today</h2>
+          <RefreshPlan />
+        </div>
+        <dl className="flex flex-col gap-3 text-[15px]">
+          <PlanRow label="Today">
+            {plan.today ?? (
+              <>
+                Nothing scheduled.{" "}
+                <Link href="/plan" className="font-medium text-accent">
+                  Add a class, shift or to-do
+                </Link>
+              </>
+            )}
+          </PlanRow>
+          <PlanRow label="Money">
+            {plan.money === null ? (
+              <Link href="/finances/accounts" className="font-medium text-accent">
+                Add an account to see what&apos;s safe to spend
               </Link>
-            </Pressable>
-          </section>
-        )}
-        <section aria-label="This week" className="animate-rise" style={{ animationDelay: "320ms" }}>
-          <SectionTitle href="/plan">This week</SectionTitle>
-          <WeekStrip days={b.week} />
+            ) : locked ? (
+              <Link href="/money" className="inline-flex items-center gap-1.5 font-medium text-accent">
+                <Lock className="h-3.5 w-3.5" /> Unlock Money
+              </Link>
+            ) : plan.money === "safe" ? (
+              <>
+                <b className="tabular">{usd(b.money!.safeTodayCents!)}</b> safe to spend today.
+              </>
+            ) : (
+              <>
+                <b className="tabular">{usd(b.money!.liquidCents)}</b> in cash and checking.
+              </>
+            )}
+          </PlanRow>
+          <PlanRow label="Next step">
+            {jarvisCard ? (
+              <Link href="/jarvis/says" className="font-medium text-accent">
+                {jarvisCard.title}
+              </Link>
+            ) : top?.action?.href ? (
+              <Link href={top.action.href} className="font-medium text-accent">
+                {top.text}
+              </Link>
+            ) : focus[0] ? (
+              <Link href={`/tasks/${focus[0].id}`} className="font-medium text-accent">
+                Start with {focus[0].title}
+              </Link>
+            ) : (
+              <>You&apos;re clear. Tap Plan my day above for ideas.</>
+            )}
+          </PlanRow>
+        </dl>
+      </section>
+
+      <section aria-label="Due today" className="animate-rise">
+        <SectionTitle href="/plan">Due today</SectionTitle>
+        {due.length === 0 ? <p className="text-[15px] text-muted">Nothing due today.</p> : <Timeline items={due} tz={s.tz} now={s.now} />}
+      </section>
+
+      {b.money && !locked && (
+        <section aria-label="Money" className="animate-rise">
+          <SectionTitle href="/money">Money</SectionTitle>
+          <Pressable>
+            <Link href="/money" className="grid grid-cols-3 gap-3 rounded-3xl bg-surface p-5 shadow-soft">
+              <Stat label="Cash & checking" cents={b.money.liquidCents} />
+              <Stat label={`Spent in ${formatIn(s.now, s.tz, "MMM")}`} cents={b.money.spentCents} />
+              <Stat label="Came in" cents={b.money.incomeCents} tone="text-success" />
+            </Link>
+          </Pressable>
         </section>
-      </div>
+      )}
+    </div>
+  );
+}
+
+const usd = (c: number) => `$${(c / 100).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+function PlanRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex gap-3">
+      <dt className="w-20 shrink-0 text-sm text-muted">{label}</dt>
+      <dd className="min-w-0 flex-1 leading-snug">{children}</dd>
+    </div>
+  );
+}
+
+function Stat({ label, cents, tone }: { label: string; cents: number; tone?: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="truncate text-xs text-muted">{label}</p>
+      <p className={cn("tabular mt-1 truncate text-lg font-medium", tone)}>
+        <CountUp cents={cents} />
+      </p>
     </div>
   );
 }
@@ -229,33 +212,6 @@ function Timeline({ items, tz, now }: { items: AgendaItem[]; tz: string; now: Da
         );
       })}
     </ol>
-  );
-}
-
-function WeekStrip({ days }: { days: { date: string; label: string; busyMinutes: number; deadlines: number; exam: boolean; isToday: boolean }[] }) {
-  const max = Math.max(8 * 60, ...days.map((d) => d.busyMinutes));
-  return (
-    <div data-tilt className="grid grid-cols-7 gap-0.5 rounded-3xl bg-surface p-2 shadow-soft sm:gap-2 sm:p-4">
-      {days.map((d) => (
-        <Link
-          key={d.date}
-          href={`/plan?date=${d.date}`}
-          className={cn("flex flex-col items-center gap-2 rounded-2xl py-2 transition-colors hover:bg-surface-2", d.isToday && "bg-surface-2")}
-        >
-          <span className={cn("text-xs", d.isToday ? "font-semibold text-accent" : "text-muted")}>{d.label}</span>
-          <span className="flex h-14 w-2 items-end overflow-hidden rounded-full bg-surface-3" title={`${Math.round(d.busyMinutes / 60)}h booked`}>
-            <span className="w-full rounded-full bg-accent/70" style={{ height: `${Math.max(d.busyMinutes ? 8 : 0, (d.busyMinutes / max) * 100)}%` }} />
-          </span>
-          <span className="flex h-4 items-center gap-0.5">
-            {d.exam ? (
-              <span className="rounded bg-danger-soft px-1 text-[9px] font-semibold text-danger">EXAM</span>
-            ) : (
-              Array.from({ length: Math.min(3, d.deadlines) }, (_, k) => <span key={k} className="h-1.5 w-1.5 rounded-full bg-warning" />)
-            )}
-          </span>
-        </Link>
-      ))}
-    </div>
   );
 }
 

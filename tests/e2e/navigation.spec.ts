@@ -1,28 +1,46 @@
 import { expect, test } from "@playwright/test";
 import { signUp } from "./helpers";
 
-test("every section is one tap from Plan and Money", async ({ page }) => {
+test("five tabs, and every section is one tap from its tab", async ({ page }) => {
   await signUp(page, "Nav Tester");
-  await page.goto("/plan");
-  const plan = page.getByRole("navigation", { name: "Plan sections" });
-  for (const [label, url] of [
-    ["Calendar", /\/calendar/],
-    ["To-dos", /\/tasks/],
-    ["Classes", /\/school/],
-    ["Work", /\/work/],
-    ["Notes", /\/notes/],
-    ["Agenda", /\/plan$/],
-  ] as const) {
-    await plan.getByRole("link", { name: label }).click();
-    await expect(page).toHaveURL(url);
-    await expect(page.getByRole("navigation", { name: "Plan sections" }).getByRole("link", { name: label })).toHaveAttribute("aria-current", "page");
+  const groups = [
+    [
+      "/plan",
+      "Plan sections",
+      [
+        ["To-dos", /\/tasks/],
+        ["Work", /\/work/],
+        ["Trips", /\/trips/],
+        ["Calendar", /\/plan$/],
+      ],
+    ],
+    [
+      "/money",
+      "Money sections",
+      [
+        ["Transactions", /\/finances\/transactions/],
+        ["Accounts & wallet", /\/finances\/accounts/],
+        ["Overview", /\/money$/],
+      ],
+    ],
+    [
+      "/habits",
+      "Personal sections",
+      [
+        ["School", /\/school/],
+        ["Second Brain", /\/notes/],
+        ["Health & habits", /\/habits/],
+      ],
+    ],
+  ] as const;
+  for (const [start, nav, items] of groups) {
+    await page.goto(start);
+    for (const [label, url] of items) {
+      await page.getByRole("navigation", { name: nav }).getByRole("link", { name: label }).click();
+      await expect(page).toHaveURL(url);
+      await expect(page.getByRole("navigation", { name: nav }).getByRole("link", { name: label })).toHaveAttribute("aria-current", "page");
+    }
   }
-  await page.goto("/money");
-  const money = page.getByRole("navigation", { name: "Money sections" });
-  await money.getByRole("link", { name: "Transactions" }).click();
-  await expect(page).toHaveURL(/\/finances\/transactions/);
-  await page.getByRole("navigation", { name: "Money sections" }).getByRole("link", { name: "Investments" }).click();
-  await expect(page).toHaveURL(/\/wealth/);
 });
 
 test("calendar moves between months and opens a day", async ({ page }) => {

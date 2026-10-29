@@ -3,67 +3,68 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import {
-  BarChart3,
   BookOpen,
-  BadgePercent,
+  Brain,
   Briefcase,
   CalendarDays,
+  CheckSquare,
   CreditCard,
   Flame,
   Inbox,
-  Plane,
-  CheckSquare,
-  HeartPulse,
   Landmark,
-  LayoutList,
-  LineChart,
-  NotebookPen,
+  MessageCircle,
   PieChart,
   PiggyBank,
+  Plane,
   Receipt,
-  Repeat,
+  Sparkles,
   Wallet,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean };
+type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean; /** Other pages that belong to this pill. */ also?: string[]; except?: string[] };
+export type Section = "plan" | "money" | "jarvis" | "personal";
 
-/** Second-level navigation: everything inside Plan or Money is one tap away. */
-export const SECTIONS: Record<"plan" | "money", Item[]> = {
+/** Second level: each tab's pages as pills. Every page belongs to exactly one pill. */
+export const SECTIONS: Record<Section, Item[]> = {
   plan: [
-    { href: "/plan", label: "Agenda", icon: LayoutList, exact: true },
-    { href: "/calendar", label: "Calendar", icon: CalendarDays },
+    { href: "/plan", label: "Calendar", icon: CalendarDays, exact: true, also: ["/calendar"] },
     { href: "/tasks", label: "To-dos", icon: CheckSquare },
-    { href: "/school", label: "Classes", icon: BookOpen },
     { href: "/work", label: "Work", icon: Briefcase },
-    { href: "/notes", label: "Notes", icon: NotebookPen },
-    { href: "/habits", label: "Habits", icon: Flame },
     { href: "/trips", label: "Trips", icon: Plane },
+  ],
+  jarvis: [
+    { href: "/jarvis", label: "Chat", icon: MessageCircle, except: ["/jarvis/says"] },
+    { href: "/jarvis/says", label: "Noticed", icon: Sparkles },
     { href: "/inbox", label: "Inbox", icon: Inbox },
   ],
   money: [
-    { href: "/money", label: "Overview", icon: Wallet, exact: true },
-    { href: "/finances/transactions", label: "Transactions", icon: Receipt },
-    { href: "/finances/budgets", label: "Budgets", icon: PieChart },
-    { href: "/finances/bills", label: "Bills", icon: Repeat },
-    { href: "/finances/subscriptions", label: "Subscriptions", icon: CreditCard },
-    { href: "/finances/savings", label: "Save money", icon: BadgePercent },
-    { href: "/finances/goals", label: "Goals", icon: PiggyBank },
-    { href: "/finances/accounts", label: "Accounts", icon: Landmark },
-    { href: "/wealth", label: "Investments", icon: LineChart },
-    { href: "/money/coach", label: "Coach", icon: HeartPulse },
-    { href: "/money/report", label: "Reports", icon: BarChart3 },
+    { href: "/money", label: "Overview", icon: Wallet, exact: true, also: ["/money/coach", "/money/report"] },
+    { href: "/finances/accounts", label: "Accounts & wallet", icon: Landmark, also: ["/wealth"] },
+    { href: "/finances/budgets", label: "Budget", icon: PieChart },
+    { href: "/finances/transactions", label: "Transactions", icon: Receipt, also: ["/finances/rules"] },
+    { href: "/finances/subscriptions", label: "Subscriptions", icon: CreditCard, also: ["/finances/bills", "/finances/savings"] },
+    { href: "/finances/goals", label: "Goals & dreams", icon: PiggyBank },
+  ],
+  personal: [
+    { href: "/habits", label: "Health & habits", icon: Flame },
+    { href: "/school", label: "School", icon: BookOpen },
+    { href: "/notes", label: "Second Brain", icon: Brain },
   ],
 };
 
-const isOn = (pathname: string, i: Item) => (i.exact ? pathname === i.href : pathname === i.href || pathname.startsWith(`${i.href}/`));
+const under = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);
+const isOn = (pathname: string, i: Item) =>
+  !(i.except ?? []).some((h) => under(pathname, h)) &&
+  ((i.exact ? pathname === i.href : under(pathname, i.href)) || (i.also ?? []).some((h) => under(pathname, h)));
 
 export function sectionFor(pathname: string) {
   return (Object.keys(SECTIONS) as (keyof typeof SECTIONS)[]).find((k) => SECTIONS[k].some((i) => isOn(pathname, i))) ?? null;
 }
 
-export function SectionNav() {
+/** `inline`: inside a full-screen page (Jarvis chat) instead of the sticky bar. */
+export function SectionNav({ inline = false, children }: { inline?: boolean; children?: React.ReactNode }) {
   const pathname = usePathname();
   const section = sectionFor(pathname);
   const activeRef = useRef<HTMLAnchorElement>(null);
@@ -73,10 +74,15 @@ export function SectionNav() {
   if (!section) return null;
   return (
     <nav
-      aria-label={section === "plan" ? "Plan sections" : "Money sections"}
-      className="lf-sectionnav sticky z-20 -mx-5 mb-6 py-2.5 backdrop-blur-xl sm:-mx-8 md:top-0"
+      aria-label={`${section[0].toUpperCase()}${section.slice(1)} sections`}
+      className={inline ? "py-2" : "lf-sectionnav sticky z-20 -mx-5 mb-6 py-2.5 backdrop-blur-xl sm:-mx-8 md:top-0"}
     >
-      <div className="lf-hscroll mx-auto flex max-w-5xl gap-1.5 overflow-x-auto px-5 [scrollbar-width:none] sm:px-8 [&::-webkit-scrollbar]:hidden">
+      <div
+        className={cn(
+          "lf-hscroll mx-auto flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          inline ? "px-4" : "max-w-5xl px-5 sm:px-8",
+        )}
+      >
         {SECTIONS[section].map((item) => {
           const on = isOn(pathname, item);
           const Icon = item.icon;
@@ -96,6 +102,7 @@ export function SectionNav() {
             </Link>
           );
         })}
+        {children}
       </div>
     </nav>
   );

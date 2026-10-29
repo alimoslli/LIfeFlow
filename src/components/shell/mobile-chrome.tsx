@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, Loader2, Search, X } from "lucide-react";
+import { ChevronLeft, Loader2, Search, Settings, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptics";
 
@@ -13,29 +13,30 @@ const ROUTES: { test: RegExp; title: string; back?: string }[] = [
   { test: /^\/calendar/, title: "Calendar" },
   { test: /^\/tasks\/[^/]+$/, title: "To-do", back: "/tasks" },
   { test: /^\/tasks/, title: "To-dos" },
-  { test: /^\/school\/courses\/[^/]+$/, title: "Class", back: "/school" },
-  { test: /^\/school/, title: "Classes" },
   { test: /^\/work/, title: "Work" },
-  { test: /^\/habits/, title: "Habits" },
-  { test: /^\/inbox/, title: "Inbox" },
-  { test: /^\/notes\/[^/]+$/, title: "Note", back: "/notes" },
-  { test: /^\/notes/, title: "Notes" },
   { test: /^\/trips\/[^/]+$/, title: "Trip", back: "/trips" },
   { test: /^\/trips/, title: "Trips" },
+  { test: /^\/jarvis\/says/, title: "Noticed" },
+  { test: /^\/inbox/, title: "Inbox" },
+  { test: /^\/habits/, title: "Health & habits" },
+  { test: /^\/school\/courses\/[^/]+$/, title: "Class", back: "/school" },
+  { test: /^\/school/, title: "School" },
+  { test: /^\/notes\/[^/]+$/, title: "Note", back: "/notes" },
+  { test: /^\/notes/, title: "Second Brain" },
   { test: /^\/money\/coach/, title: "Coach", back: "/money" },
   { test: /^\/money\/report/, title: "Reports", back: "/money" },
   { test: /^\/money/, title: "Money" },
   { test: /^\/finances\/transactions/, title: "Transactions" },
-  { test: /^\/finances\/budgets/, title: "Budgets" },
-  { test: /^\/finances\/bills/, title: "Bills" },
+  { test: /^\/finances\/budgets/, title: "Budget" },
+  { test: /^\/finances\/bills/, title: "Bills", back: "/finances/subscriptions" },
   { test: /^\/finances\/subscriptions/, title: "Subscriptions" },
-  { test: /^\/finances\/savings/, title: "Save money" },
-  { test: /^\/finances\/goals/, title: "Goals" },
-  { test: /^\/finances\/accounts/, title: "Accounts" },
+  { test: /^\/finances\/savings/, title: "Save money", back: "/finances/subscriptions" },
+  { test: /^\/finances\/goals/, title: "Goals & dreams" },
+  { test: /^\/finances\/accounts/, title: "Accounts & wallet" },
   { test: /^\/finances\/rules/, title: "Category rules", back: "/finances/transactions" },
-  { test: /^\/wealth/, title: "Investments" },
-  { test: /^\/settings/, title: "Settings" },
-  { test: /^\/jarvis\/says/, title: "Jarvis says", back: "/" },
+  { test: /^\/wealth/, title: "Investments", back: "/finances/accounts" },
+  { test: /^\/settings$/, title: "Settings", back: "/" },
+  { test: /^\/settings/, title: "Settings", back: "/settings" },
 ];
 
 export function routeInfo(pathname: string): { title: string; back?: string } {
@@ -45,9 +46,9 @@ export function routeInfo(pathname: string): { title: string; back?: string } {
 /**
  * Phones only: a sticky glass app bar. The page's own large title scrolls
  * away and the compact title fades in, like iOS. Detail views get a back
- * button; the avatar opens Settings.
+ * button; the gear opens Settings.
  */
-export function MobileAppBar({ initials, demo, onSearch }: { initials: string; demo: boolean; onSearch: () => void }) {
+export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const info = routeInfo(pathname);
@@ -127,8 +128,13 @@ export function MobileAppBar({ initials, demo, onSearch }: { initials: string; d
         <button type="button" onClick={onSearch} aria-label="Search and ask" className="tap flex items-center justify-center rounded-full text-text-2">
           <Search className="h-5 w-5" />
         </button>
-        <Link href="/settings" aria-label="Settings and profile" className="tap flex items-center justify-center rounded-full">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-3 text-[11px] font-semibold text-text-2">{initials}</span>
+        <Link
+          href="/settings"
+          aria-label="Settings"
+          aria-current={pathname.startsWith("/settings") ? "page" : undefined}
+          className={cn("tap flex items-center justify-center rounded-full", pathname.startsWith("/settings") ? "text-accent" : "text-text-2")}
+        >
+          <Settings className="h-5 w-5" />
         </Link>
       </div>
     </header>

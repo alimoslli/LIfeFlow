@@ -54,9 +54,12 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       <header className="flex items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-[40px] leading-none font-medium tracking-tight">Plan</h1>
-          <p className="mt-2 text-[15px] text-text-2">Classes, work, deadlines and to-dos, in one place.</p>
+          <p className="mt-2 text-[15px] text-text-2">Your next 7 days.</p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
+          <Link href="/calendar" className="flex min-h-11 items-center rounded-full bg-surface px-4 text-sm font-medium shadow-soft">
+            Month
+          </Link>
           <AskJarvisButton prompt="Add " className="tap flex items-center justify-center rounded-full bg-surface text-accent shadow-soft">
             <Sparkles className="h-4 w-4" aria-label="Add with Jarvis" />
           </AskJarvisButton>

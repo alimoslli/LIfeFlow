@@ -605,7 +605,8 @@ label {
 }
 @media (max-width: 767px) {
   .lf-main-pad {
-    padding-bottom: calc(var(--tabbar-space) + 16px);
+    /* Room for the tab bar and the floating Jarvis button, so neither covers content. */
+    padding-bottom: calc(var(--tabbar-space) + 80px);
   }
   .lf-sectionnav {
     top: calc(env(safe-area-inset-top) + 48px);

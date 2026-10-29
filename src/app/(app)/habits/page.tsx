@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { Check, Flame, Pause, Play, Trash2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
@@ -22,9 +23,14 @@ export default async function HabitsPage() {
   const paused = habits.filter((h) => !h.active);
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
-      <header>
-        <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Habits</h1>
-        <p className="mt-1 text-sm text-text-2">Small steps you repeat. Jarvis tracks the streak and makes a habit smaller when it keeps slipping.</p>
+      <header className="flex items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Health &amp; habits</h1>
+          <p className="mt-1 text-sm text-text-2">Small steps, tracked as streaks.</p>
+        </div>
+        <Link href="/settings/integrations" className="flex min-h-11 shrink-0 items-center rounded-full bg-surface px-4 text-sm font-medium shadow-soft">
+          Apple Health
+        </Link>
       </header>
 
       {active.length > 0 && (

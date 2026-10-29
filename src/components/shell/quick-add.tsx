@@ -1,7 +1,6 @@
 "use client";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Plus } from "lucide-react";
 import { createTransactionAction } from "@/app/(app)/finances/actions";
 import { createTaskAction } from "@/app/(app)/tasks/actions";
 import { createShiftAction } from "@/app/(app)/work/actions";
@@ -72,15 +71,11 @@ const offlineSpending = async (fd: FormData) => {
   return SAVED;
 };
 
-const SHOW_ON = /^\/($|plan|tasks$|work|calendar|school$|notes$|money$|finances\/transactions)/;
-const defaultKind = (p: string): Kind => (p.startsWith("/work") ? "shift" : p.startsWith("/money") || p.startsWith("/finances") ? "spending" : "todo");
-
 /**
- * The floating "+" on phones: add a to-do, a shift or spending from one
- * thumb-reachable place. Also opened by ?add=todo|shift|spending (home-screen shortcuts).
+ * Quick capture: add a to-do, a shift or spending in one sheet. Opened from
+ * Jarvis ("Capture"), any QuickAddButton, or ?add=todo|shift|spending (home-screen shortcuts).
  */
 export function QuickAdd() {
-  const pathname = usePathname();
   const params = useSearchParams();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -138,16 +133,6 @@ export function QuickAdd() {
 
   return (
     <>
-      {SHOW_ON.test(pathname) && (
-        <button
-          type="button"
-          onClick={() => void openWith(defaultKind(pathname))}
-          aria-label="Quick add"
-          className="lf-fab fixed right-4 bottom-[calc(var(--tabbar-space)-4px)] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-text shadow-lift active:scale-95 md:hidden"
-        >
-          <Plus className="h-6 w-6" strokeWidth={2.4} />
-        </button>
-      )}
       <Sheet open={open} onClose={() => setOpen(false)} title="Quick add">
         <div role="tablist" aria-label="What to add" className="mb-4 grid grid-cols-3 gap-1 rounded-2xl bg-surface-2 p-1">
           {(

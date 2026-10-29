@@ -35,11 +35,9 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader
-        title={project ? project.name : "Notes"}
+        title={project ? project.name : "Second Brain"}
         eyebrow={project ? "Project" : undefined}
-        description={
-          project ? (project.description ?? undefined) : "Your knowledge base. Link notes to projects and courses; Jarvis can search and organize them."
-        }
+        description={project ? (project.description ?? undefined) : "Notes, ideas and decisions."}
         actions={
           <>
             {project && (
@@ -49,6 +47,11 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
               >
                 Plan with Jarvis
               </AskJarvisButton>
+            )}
+            {!project && (
+              <Link href="/settings/memory" className="flex h-10 items-center rounded-full bg-surface px-4 text-sm font-medium shadow-soft">
+                What Jarvis remembers
+              </Link>
             )}
             <ActionForm action={createNoteAction} className="flex-row">
               <input type="hidden" name="title" value="Untitled note" />
