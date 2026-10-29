@@ -85,6 +85,16 @@ Settings → Integrations → Apple Health → Create a key (shown once) → fol
 - Today shows a Jarvis card; Settings → Assistant changes his tone and the preview follows.
 - Apple Health card shows "Receiving data" after the Shortcut runs.
 
+## 11. Database role (done for production on 2026-10-29)
+The app must not connect as Neon's `neondb_owner`: it has BYPASSRLS, so row-level security is skipped. Production uses `budgetflow_app` instead. For a new Neon project, run as `neondb_owner` in the SQL Editor:
+1. `CREATE ROLE budgetflow_app LOGIN PASSWORD '<long random>';` (created with SQL, so it gets no BYPASSRLS).
+2. `GRANT budgetflow_app TO neondb_owner WITH INHERIT TRUE, SET TRUE;` (Postgres 16+ needs this before ownership can be handed over).
+3. `GRANT CONNECT, CREATE ON DATABASE neondb TO budgetflow_app;` (CREATE because the migrator runs `CREATE SCHEMA IF NOT EXISTS "drizzle"` on every deploy), `GRANT USAGE, CREATE ON SCHEMA public TO budgetflow_app;`, `ALTER SCHEMA drizzle OWNER TO budgetflow_app;`
+4. `ALTER TABLE … OWNER TO budgetflow_app` for every table and sequence in `public` and `drizzle`.
+5. Set Vercel `DATABASE_URL` (Production) to the pooled connection string with `budgetflow_app` and its password, and redeploy. The deploy log must not show "Row-level security will NOT be enforced".
+
+Preview branches made by the Neon integration still connect as `neondb_owner`; that's fine for test data.
+
 ## Later
 - Lawyer review of /privacy and /terms before other users join.
 - Plaid Production access before connecting real banks for other people.

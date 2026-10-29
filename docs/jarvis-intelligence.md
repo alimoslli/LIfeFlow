@@ -75,7 +75,7 @@ Not yet verified against the real OpenAI API: this workspace can't reach it. The
 
 ### Phase 6: Privacy and operations
 - Conversation retention (30/90/365 days/forever). The feedback-sharing consent toggle. A training-data statement: LifeFlow does not train models on user data; provider data use follows the provider's API terms, which should be checked when the provider changes.
-- **Production DB role without BYPASSRLS** (needs a one-time step in Neon and Vercel). Export includes feedback and metrics.
+- **Production DB role without BYPASSRLS**: done 2026-10-29. Production connects as `budgetflow_app` (no BYPASSRLS, owns the app's tables), so FORCE RLS is enforced; see go-live checklist section 11. Export includes feedback and metrics.
 
 ## 4. Decisions
 - ADR 0005: memory approval, basis and retrieval.
