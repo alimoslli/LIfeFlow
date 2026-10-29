@@ -245,3 +245,35 @@ Every item opens a bottom sheet or goes to Jarvis. Nothing needs another page.
 | 10 | **Canvas, WhatsApp, calls, ready for schools** (privacy pages, accessibility WCAG 2.1 AA, Canvas LTI) | Per item |
 
 Each phase: plan, build, `npm run check`, `npm run build && npm run test:e2e`, phone screenshots to the owner, push.
+
+---
+
+## 9. How each phase is built (the skills and plugins)
+
+The project enables two plugins in `.claude/settings.json`: **agent-skills** (addyosmani/agent-skills) and **everything-claude-code** (alimoslli/everything-claude-code). If a session doesn't load them, read the skill files from those repos and follow them directly. CLAUDE.md rules win where they disagree.
+
+**Every phase follows these steps:**
+1. **spec-driven-development:** write what "done" means, the edge cases and what's out of scope, and show the owner.
+2. **planning-and-task-breakdown** (planner agent): small steps that each end in a working, tested state.
+3. **incremental-implementation** + **test-driven-development** / **tdd-workflow:** tests first or alongside.
+4. **verification-loop:** `npm run check`, then `npm run build && npm run test:e2e`, plus phone screenshots.
+5. **code-review-and-quality** (code-reviewer agent) and **/simplify:** remove anything extra.
+6. **doubt-driven-development:** before saying "done," try to prove it wrong. Run the real flow, not just the tests.
+7. **git-workflow-and-versioning:** small commits, push to main, check the deploy status.
+
+**Extra skills by phase:**
+| Phase | Extra skills and agents |
+|---|---|
+| 0 Plaid and Gmail | **debugging-and-error-recovery**, **security-and-hardening** |
+| 1 Simplify | **code-simplification**, **deprecation-and-migration** (move data before deleting features), the **refactor-cleaner** agent (dead code), **frontend-ui-engineering** |
+| 2 Onboarding | **frontend-ui-engineering**, **browser-testing-with-devtools**, the **e2e-runner** agent |
+| 3 Today | **frontend-ui-engineering**, **performance-optimization** (Today must load fast), **browser-testing-with-devtools** |
+| 4 Jarvis can do everything | **eval-harness** (evals for every idea), **context-engineering** (prompts and skills), **api-and-interface-design** (tool shapes), **security-and-hardening** (confirm gates), **constraint-driven-development** |
+| 5 School | **frontend-ui-engineering**, **security-and-hardening** (PDF uploads are untrusted), **eval-harness** (syllabus extraction accuracy) |
+| 6 Health | **frontend-ui-engineering** |
+| 7 Integrity | **eval-harness** (the integrity suite), **context-engineering**, **documentation-and-adrs** (the Integrity ADR and public page) |
+| 8 SMS | **security-and-hardening** (verify Twilio signatures, phone verification), the **security-reviewer** agent, **/security-review** |
+| 9 iPhone app and paid plan | **shipping-and-launch**, **ci-cd-and-automation**, **security-and-hardening** (purchase receipts) |
+| 10 Canvas, WhatsApp, schools | **observability-and-instrumentation**, **shipping-and-launch**, **documentation-and-adrs** |
+
+Every decision gets an ADR in `docs/adr/` (**documentation-and-adrs**), and docs are updated at the end of each phase (doc-updater agent).
