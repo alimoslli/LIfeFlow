@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Plan my exam prep",
+    "expect": "routes to exam-prep"
+  },
+  {
+    "prompt": "My midterm is in 10 days, help",
+    "expect": "routes to exam-prep"
+  },
+  {
+    "prompt": "Make an exam countdown for my final",
+    "expect": "routes to exam-prep"
+  },
+  {
+    "prompt": "What should I study each day before the test?",
+    "expect": "routes to exam-prep"
+  },
+  {
+    "prompt": "Prep me for my chemistry final",
+    "expect": "routes to exam-prep"
+  }
+]

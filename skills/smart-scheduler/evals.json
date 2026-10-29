@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Find time for three 1-hour study sessions",
+    "expect": "routes to smart-scheduler"
+  },
+  {
+    "prompt": "When can I fit in a workout this week?",
+    "expect": "routes to smart-scheduler"
+  },
+  {
+    "prompt": "Reschedule my study block to tomorrow",
+    "expect": "routes to smart-scheduler"
+  },
+  {
+    "prompt": "I have a conflict on Friday, fix it",
+    "expect": "routes to smart-scheduler"
+  },
+  {
+    "prompt": "Book a study block before my exam",
+    "expect": "routes to smart-scheduler"
+  }
+]

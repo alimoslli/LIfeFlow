@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Plan cheap meals for this week",
+    "expect": "routes to meal-planner"
+  },
+  {
+    "prompt": "Make me a grocery list",
+    "expect": "routes to meal-planner"
+  },
+  {
+    "prompt": "What should I cook tonight?",
+    "expect": "routes to meal-planner"
+  },
+  {
+    "prompt": "Meal plan on a $40 budget",
+    "expect": "routes to meal-planner"
+  },
+  {
+    "prompt": "Healthy cheap recipes for students",
+    "expect": "routes to meal-planner"
+  }
+]

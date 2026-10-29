@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Look up the best student credit cards",
+    "expect": "routes to web-research"
+  },
+  {
+    "prompt": "Research cheap phone plans",
+    "expect": "routes to web-research"
+  },
+  {
+    "prompt": "What's the latest news on student loans?",
+    "expect": "routes to web-research"
+  },
+  {
+    "prompt": "Search the web for scholarship deadlines",
+    "expect": "routes to web-research"
+  },
+  {
+    "prompt": "Find out the price of a MacBook Air",
+    "expect": "routes to web-research"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "How's my budget this month?",
+    "expect": "routes to budget-coach"
+  },
+  {
+    "prompt": "Why am I spending more than usual?",
+    "expect": "routes to budget-coach"
+  },
+  {
+    "prompt": "Where does my money go?",
+    "expect": "routes to budget-coach"
+  },
+  {
+    "prompt": "Help me cut back on spending",
+    "expect": "routes to budget-coach"
+  },
+  {
+    "prompt": "Am I overspending on food?",
+    "expect": "routes to budget-coach"
+  }
+]

@@ -28,6 +28,9 @@ export type UiMessage =
       memories: UiMemorySuggestion[];
       error?: string;
       streaming?: boolean;
+      /** The jarvis_runs row for this answer, for 👍 / 👎. */
+      runId?: string | null;
+      rating?: 1 | -1 | null;
     };
 
 export type { JarvisModule };

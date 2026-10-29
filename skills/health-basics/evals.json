@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "How did I sleep this week?",
+    "expect": "routes to health-basics"
+  },
+  {
+    "prompt": "Plan workouts around my schedule",
+    "expect": "routes to health-basics"
+  },
+  {
+    "prompt": "How many steps did I get?",
+    "expect": "routes to health-basics"
+  },
+  {
+    "prompt": "Help me get more exercise",
+    "expect": "routes to health-basics"
+  },
+  {
+    "prompt": "Find time for the gym",
+    "expect": "routes to health-basics"
+  }
+]

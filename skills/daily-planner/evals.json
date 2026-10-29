@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Plan my day",
+    "expect": "routes to daily-planner"
+  },
+  {
+    "prompt": "What should I do today?",
+    "expect": "routes to daily-planner"
+  },
+  {
+    "prompt": "Can you time-block my day?",
+    "expect": "routes to daily-planner"
+  },
+  {
+    "prompt": "Make me a schedule for today",
+    "expect": "routes to daily-planner"
+  },
+  {
+    "prompt": "Give me my morning brief",
+    "expect": "routes to daily-planner"
+  }
+]

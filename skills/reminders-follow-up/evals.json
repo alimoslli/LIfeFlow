@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Remind me to call the dentist tomorrow",
+    "expect": "routes to reminders-follow-up"
+  },
+  {
+    "prompt": "Don't let me forget to pay rent",
+    "expect": "routes to reminders-follow-up"
+  },
+  {
+    "prompt": "Set a reminder for Friday at 3",
+    "expect": "routes to reminders-follow-up"
+  },
+  {
+    "prompt": "Follow up with me about the scholarship next week",
+    "expect": "routes to reminders-follow-up"
+  },
+  {
+    "prompt": "Ping me before my shift",
+    "expect": "routes to reminders-follow-up"
+  }
+]

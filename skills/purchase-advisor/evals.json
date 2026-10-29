@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Can I afford a $120 concert ticket?",
+    "expect": "routes to purchase-advisor"
+  },
+  {
+    "prompt": "Should I buy these shoes for $90?",
+    "expect": "routes to purchase-advisor"
+  },
+  {
+    "prompt": "Is it ok to spend $50 this weekend?",
+    "expect": "routes to purchase-advisor"
+  },
+  {
+    "prompt": "Can I afford a new laptop?",
+    "expect": "routes to purchase-advisor"
+  },
+  {
+    "prompt": "Is this worth buying right now?",
+    "expect": "routes to purchase-advisor"
+  }
+]

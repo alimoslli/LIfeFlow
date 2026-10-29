@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "How many hours do I work this week?",
+    "expect": "routes to shift-manager"
+  },
+  {
+    "prompt": "Add my shifts for next week",
+    "expect": "routes to shift-manager"
+  },
+  {
+    "prompt": "Estimate my pay this month",
+    "expect": "routes to shift-manager"
+  },
+  {
+    "prompt": "Am I working too much?",
+    "expect": "routes to shift-manager"
+  },
+  {
+    "prompt": "Move my Saturday shift to Sunday",
+    "expect": "routes to shift-manager"
+  }
+]

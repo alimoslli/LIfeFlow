@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Prep me for my meeting",
+    "expect": "routes to meeting-prep"
+  },
+  {
+    "prompt": "Make an agenda for office hours",
+    "expect": "routes to meeting-prep"
+  },
+  {
+    "prompt": "Talking points for my 1:1",
+    "expect": "routes to meeting-prep"
+  },
+  {
+    "prompt": "Help me prepare for the group meeting",
+    "expect": "routes to meeting-prep"
+  },
+  {
+    "prompt": "What should I ask at office hours?",
+    "expect": "routes to meeting-prep"
+  }
+]

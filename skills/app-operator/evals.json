@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Add buy milk to my to-dos",
+    "expect": "routes to app-operator"
+  },
+  {
+    "prompt": "Delete my 3pm event",
+    "expect": "routes to app-operator"
+  },
+  {
+    "prompt": "Rename my Calc course to Calculus II",
+    "expect": "routes to app-operator"
+  },
+  {
+    "prompt": "Update my phone bill to $70",
+    "expect": "routes to app-operator"
+  },
+  {
+    "prompt": "Remove the gym habit",
+    "expect": "routes to app-operator"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Here's my syllabus, add all the due dates",
+    "expect": "routes to syllabus-parser"
+  },
+  {
+    "prompt": "Parse this course outline",
+    "expect": "routes to syllabus-parser"
+  },
+  {
+    "prompt": "Add the schedule of assignments from this PDF",
+    "expect": "routes to syllabus-parser"
+  },
+  {
+    "prompt": "Can you read my syllabus?",
+    "expect": "routes to syllabus-parser"
+  },
+  {
+    "prompt": "Put every deadline from this syllabus in my calendar",
+    "expect": "routes to syllabus-parser"
+  }
+]

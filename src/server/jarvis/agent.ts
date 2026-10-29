@@ -9,6 +9,7 @@ import { createConversation, getConversation, loadHistory } from "./conversation
 import { executeToolCall, serializeResult } from "./executor";
 import { selectMemories } from "./memory-retrieval";
 import { addUsage, errorKindOf, estimateCostMicros, recordRun, type ModelPrices } from "./metrics";
+import { routeSkills } from "./skills";
 import { buildSystemPrompt, PROMPT_VERSION } from "./prompt";
 import type { ModelProvider, TokenUsage } from "./providers/types";
 import { toolSpecs } from "./registry";
@@ -103,7 +104,9 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   // Only memories relevant to this request (and earlier messages in this chat) reach the model.
   const earlier = history.flatMap((h) => (h.type === "user" ? [h.text] : [])).slice(0, -1);
   const memories = selectMemories(approved, { text: input.text, recent: earlier, module: openedFrom });
+  const skills = routeSkills(input.text, openedFrom);
   const system = buildSystemPrompt({
+    skills,
     userName: user.name.split(" ")[0],
     tz: user.timezone,
     now,
@@ -220,6 +223,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
         ...tally,
         costMicros: estimateCostMicros(tally.usage, input.prices ?? {}),
         memoryIds: memories.map((x) => x.id),
+        skills: skills.map((k) => k.name),
       }),
     );
   } catch (e) {

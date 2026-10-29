@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Help me study for my exam",
+    "expect": "routes to study-coach"
+  },
+  {
+    "prompt": "Make me a study plan for chemistry",
+    "expect": "routes to study-coach"
+  },
+  {
+    "prompt": "Quiz me on my biology notes",
+    "expect": "routes to study-coach"
+  },
+  {
+    "prompt": "Make flashcards from my notes",
+    "expect": "routes to study-coach"
+  },
+  {
+    "prompt": "How should I study for Friday?",
+    "expect": "routes to study-coach"
+  }
+]

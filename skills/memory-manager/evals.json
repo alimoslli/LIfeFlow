@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "What do you know about me?",
+    "expect": "routes to memory-manager"
+  },
+  {
+    "prompt": "What do you remember?",
+    "expect": "routes to memory-manager"
+  },
+  {
+    "prompt": "Forget that I work at the library",
+    "expect": "routes to memory-manager"
+  },
+  {
+    "prompt": "Update my memory: I moved to Austin",
+    "expect": "routes to memory-manager"
+  },
+  {
+    "prompt": "Remember that I prefer short answers",
+    "expect": "routes to memory-manager"
+  }
+]

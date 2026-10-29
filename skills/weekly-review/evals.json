@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Review my week",
+    "expect": "routes to weekly-review"
+  },
+  {
+    "prompt": "How did my week go?",
+    "expect": "routes to weekly-review"
+  },
+  {
+    "prompt": "Give me a weekly recap",
+    "expect": "routes to weekly-review"
+  },
+  {
+    "prompt": "What slipped last week?",
+    "expect": "routes to weekly-review"
+  },
+  {
+    "prompt": "Do my weekly review",
+    "expect": "routes to weekly-review"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Get to know me better",
+    "expect": "routes to get-to-know-you"
+  },
+  {
+    "prompt": "Ask me some questions so you can help me",
+    "expect": "routes to get-to-know-you"
+  },
+  {
+    "prompt": "Learn about me",
+    "expect": "routes to get-to-know-you"
+  },
+  {
+    "prompt": "What should you know about me?",
+    "expect": "routes to get-to-know-you"
+  },
+  {
+    "prompt": "Ask me questions about my routine",
+    "expect": "routes to get-to-know-you"
+  }
+]

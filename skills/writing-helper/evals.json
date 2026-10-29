@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Help me outline my essay",
+    "expect": "routes to writing-helper"
+  },
+  {
+    "prompt": "Give me feedback on my paper draft",
+    "expect": "routes to writing-helper"
+  },
+  {
+    "prompt": "Is my thesis strong enough?",
+    "expect": "routes to writing-helper"
+  },
+  {
+    "prompt": "Check my citations",
+    "expect": "routes to writing-helper"
+  },
+  {
+    "prompt": "Proofread this paragraph",
+    "expect": "routes to writing-helper"
+  }
+]

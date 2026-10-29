@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Summarize this article",
+    "expect": "routes to summarizer"
+  },
+  {
+    "prompt": "Give me the key points of this PDF",
+    "expect": "routes to summarizer"
+  },
+  {
+    "prompt": "TL;DR this email",
+    "expect": "routes to summarizer"
+  },
+  {
+    "prompt": "Sum up my notes from class",
+    "expect": "routes to summarizer"
+  },
+  {
+    "prompt": "Summarize this document",
+    "expect": "routes to summarizer"
+  }
+]

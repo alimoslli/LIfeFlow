@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Is it true that we only use 10% of our brain?",
+    "expect": "routes to fact-checker"
+  },
+  {
+    "prompt": "Fact check this claim",
+    "expect": "routes to fact-checker"
+  },
+  {
+    "prompt": "Can you verify this statistic?",
+    "expect": "routes to fact-checker"
+  },
+  {
+    "prompt": "Is this news real?",
+    "expect": "routes to fact-checker"
+  },
+  {
+    "prompt": "True or false: Einstein failed math",
+    "expect": "routes to fact-checker"
+  }
+]

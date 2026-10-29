@@ -8,7 +8,8 @@ import { formatIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
-import { jarvisStats } from "@/server/jarvis/metrics";
+import { jarvisStats, skillStats } from "@/server/jarvis/metrics";
+import { SKILLS } from "@/server/jarvis/skills";
 import { jarvisStatus } from "@/server/jarvis/providers";
 import { listAllMemories } from "@/server/services/memory";
 import {
@@ -55,7 +56,9 @@ export default async function MemorySettings() {
       () => jarvisStats(s, 30),
       () => learnedStats(s, new Date(), js.learningResetAt),
     );
+    const skills = await skillStats(s);
     return {
+      skills,
       learned,
       muted: js.mutedKinds,
       all,
@@ -295,6 +298,29 @@ export default async function MemorySettings() {
           These numbers are yours alone; they never include what you said. Conversations are stored in your LifeFlow database and sent to the AI provider only
           to answer you, with provider-side storage turned off.
         </p>
+      </Card>
+
+      <Card className="p-5">
+        <details>
+          <summary className="cursor-pointer list-none font-medium [&::-webkit-details-marker]:hidden">
+            Skills ({SKILLS.length}) <span className="text-sm font-normal text-muted">· how each one is doing</span>
+          </summary>
+          <p className="mt-2 text-sm text-muted">
+            Jarvis picks the right skill for each request. Rate answers with 👍 👎 in the chat; skills rated down often are flagged.
+          </p>
+          <ul className="mt-3 divide-y divide-border">
+            {d.skills.length === 0 && <li className="py-2 text-sm text-muted">No requests yet.</li>}
+            {d.skills.map((k) => (
+              <li key={k.skill} className="flex items-center justify-between gap-3 py-2 text-sm">
+                <span className="min-w-0 truncate">{SKILLS.find((x) => x.name === k.skill)?.title ?? k.skill}</span>
+                <span className="flex shrink-0 items-center gap-2 text-xs text-muted">
+                  {k.runs} use{k.runs === 1 ? "" : "s"} · {k.successRate == null ? "-" : `${Math.round(k.successRate * 100)}% ok`} · 👍 {k.up} 👎 {k.down}
+                  {k.flagged && <Badge tone="warning">Needs work</Badge>}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </details>
       </Card>
 
       <Card className="p-5">

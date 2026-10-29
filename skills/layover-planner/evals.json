@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "I have an 8 hour layover in Amsterdam",
+    "expect": "routes to layover-planner"
+  },
+  {
+    "prompt": "Can I leave the airport on my layover?",
+    "expect": "routes to layover-planner"
+  },
+  {
+    "prompt": "What can I do on a stopover in Tokyo?",
+    "expect": "routes to layover-planner"
+  },
+  {
+    "prompt": "How much time do I have between flights?",
+    "expect": "routes to layover-planner"
+  },
+  {
+    "prompt": "Layover plan for Istanbul",
+    "expect": "routes to layover-planner"
+  }
+]

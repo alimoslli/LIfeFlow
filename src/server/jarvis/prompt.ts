@@ -3,7 +3,7 @@ import { ASSISTANT_STYLES, assistantProfile, type AssistantProfile } from "@/lib
 import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from "../db/schema";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-10-30.1";
+export const PROMPT_VERSION = "2026-10-30.2";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
@@ -31,6 +31,8 @@ export type PromptInput = {
   otherMemoryCount?: number;
   preferences?: UserPreferences;
   assistant?: AssistantProfile;
+  /** Skills picked for this request (skills/<name>/SKILL.md); their steps guide the answer. */
+  skills?: { title: string; body: string }[];
 };
 
 /**
@@ -132,7 +134,11 @@ ${prefs.length ? prefs.map((x) => `- ${x}`).join("\n") : "(defaults)"}
 ${instructions.length ? instructions.map(line).join("\n") : "(none)"}
 
 # What you know about ${p.userName} (approved memories relevant to this request)
-${facts.length ? facts.map(line).join("\n") : "(nothing relevant saved)"}${more}`;
+${facts.length ? facts.map(line).join("\n") : "(nothing relevant saved)"}${more}${
+    p.skills?.length
+      ? `\n\n# Skills for this request (follow their steps and rules; the rules above still win)\n${p.skills.map((k) => `## ${k.title}\n${k.body}`).join("\n\n")}`
+      : ""
+  }`;
 }
 
 export function buildSystemPrompt(p: PromptInput): string {

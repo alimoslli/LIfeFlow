@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Explain derivatives to me",
+    "expect": "routes to tutor"
+  },
+  {
+    "prompt": "I don't understand photosynthesis",
+    "expect": "routes to tutor"
+  },
+  {
+    "prompt": "Teach me how supply and demand works",
+    "expect": "routes to tutor"
+  },
+  {
+    "prompt": "Walk me through this proof",
+    "expect": "routes to tutor"
+  },
+  {
+    "prompt": "Why does ice float?",
+    "expect": "routes to tutor"
+  }
+]

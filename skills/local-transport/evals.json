@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "How do I get from the airport to downtown by train?",
+    "expect": "routes to local-transport"
+  },
+  {
+    "prompt": "Which metro line goes to the Louvre?",
+    "expect": "routes to local-transport"
+  },
+  {
+    "prompt": "Bus to campus from the station?",
+    "expect": "routes to local-transport"
+  },
+  {
+    "prompt": "How much is a subway ticket in New York?",
+    "expect": "routes to local-transport"
+  },
+  {
+    "prompt": "Public transport from Rome to the airport",
+    "expect": "routes to local-transport"
+  }
+]

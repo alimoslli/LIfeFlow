@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Renew my driver's license",
+    "expect": "routes to life-admin"
+  },
+  {
+    "prompt": "Help me with this paperwork",
+    "expect": "routes to life-admin"
+  },
+  {
+    "prompt": "Book a doctor's appointment reminder",
+    "expect": "routes to life-admin"
+  },
+  {
+    "prompt": "When is the FAFSA deadline?",
+    "expect": "routes to life-admin"
+  },
+  {
+    "prompt": "I need to renew my passport",
+    "expect": "routes to life-admin"
+  }
+]

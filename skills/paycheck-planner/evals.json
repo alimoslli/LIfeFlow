@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "I got paid, plan my paycheck",
+    "expect": "routes to paycheck-planner"
+  },
+  {
+    "prompt": "Split my $640 paycheck",
+    "expect": "routes to paycheck-planner"
+  },
+  {
+    "prompt": "How should I use my pay this week?",
+    "expect": "routes to paycheck-planner"
+  },
+  {
+    "prompt": "Payday plan please",
+    "expect": "routes to paycheck-planner"
+  },
+  {
+    "prompt": "Plan my pay",
+    "expect": "routes to paycheck-planner"
+  }
+]

@@ -46,6 +46,10 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Apple Health arrives only via `/api/apple-health/ingest` (personal key, hash-stored, public route in proxy.ts) into `ingestHealth`. Don't diagnose in prompts or tools.
 - Voice tool calls go through `/api/jarvis/voice/tool` → `executeToolCall`, the same gate as chat. The real OpenAI key never reaches the browser; only the ephemeral client secret does.
 
+## Jarvis skills (see ADR 0013)
+- A skill is `skills/<name>/SKILL.md` (front matter + Steps/Quality rules/Example) and `evals.json` (5+ prompts that must route to it). Run `npm run skills` after adding or editing one; tests fail if the generated index is stale, a tool name is wrong, or an eval doesn't route.
+- Skill text goes into `buildContext`, never `INSTRUCTIONS`. Bump `PROMPT_VERSION` when skill routing or format changes.
+
 ## Proactive Jarvis, finders, inbox (see ADR 0012)
 - New proactive message = a detector in `services/proactive/detectors.ts` (listed in `DETECTORS` and `RUNS`) returning facts only, wording in `lib/jarvis-voice.ts` (+ `KIND_LABELS`), and a test. Never word messages inside detectors, never guess numbers.
 - Money actions on messages (`shift_budget`, `contribute_goal`) run only on "Do it", and the card states the exact amount. Autonomy covers tasks and calendar only. Every action returns Undo.

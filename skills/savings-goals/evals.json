@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Am I on track for my goals?",
+    "expect": "routes to savings-goals"
+  },
+  {
+    "prompt": "Help me save for a trip",
+    "expect": "routes to savings-goals"
+  },
+  {
+    "prompt": "Start an emergency fund",
+    "expect": "routes to savings-goals"
+  },
+  {
+    "prompt": "How much should I save each week?",
+    "expect": "routes to savings-goals"
+  },
+  {
+    "prompt": "Create a savings goal for a laptop",
+    "expect": "routes to savings-goals"
+  }
+]

@@ -2,7 +2,23 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AlertTriangle, ArrowUp, Brain, Check, CircleAlert, FileText, ImageIcon, Loader2, Paperclip, Sparkles, Square, X } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowUp,
+  Brain,
+  Check,
+  CircleAlert,
+  FileText,
+  ImageIcon,
+  Loader2,
+  Paperclip,
+  Sparkles,
+  Square,
+  ThumbsDown,
+  ThumbsUp,
+  X,
+} from "lucide-react";
+import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
 import { useShell } from "../shell/app-shell";
 import { Markdown } from "./markdown";
@@ -17,7 +33,7 @@ type ServerEvent =
   | { type: "tool_end"; callId: string; name: string; ok: boolean; summary: string; viewAt?: string; sources?: { title: string; url: string }[] }
   | { type: "confirmation"; actionId: string; callId: string; toolName: string; summary: string }
   | { type: "memory_proposal"; callId: string; memoryId: string; content: string; replaces?: string }
-  | { type: "done"; messageId: string | null }
+  | { type: "done"; messageId: string | null; runId?: string | null }
   | { type: "error"; message: string };
 
 const ACCEPT = "image/png,image/jpeg,image/webp,image/gif,text/plain,text/csv,text/markdown,application/json,.md,.csv,.txt";
@@ -161,6 +177,7 @@ export function JarvisChat({
               updateAssistant((a) => void (a.error = ev.message));
               break;
             case "done":
+              updateAssistant((a) => void (a.runId = ev.runId ?? null));
               break;
           }
         }
@@ -461,6 +478,7 @@ function AssistantBubble({
         )}
         {m.text && <Markdown text={m.text} />}
         <SourceList tools={m.tools} />
+        {!m.streaming && m.runId && m.text && <RateAnswer runId={m.runId} initial={m.rating ?? null} />}
         {m.confirmations.map((c) => (
           <div key={c.actionId} className="rounded-2xl bg-surface p-4 shadow-soft">
             <p className="text-[15px] font-medium">{c.summary}</p>
@@ -559,6 +577,38 @@ function SourceList({ tools }: { tools: UiTool[] }) {
           </a>
         );
       })}
+    </div>
+  );
+}
+
+/** 👍 / 👎 on an answer. Logged on the run (and its skills) so weak answers can be found and fixed. */
+function RateAnswer({ runId, initial }: { runId: string; initial: 1 | -1 | null }) {
+  const [rating, setRating] = useState(initial);
+  const rate = (r: 1 | -1) => {
+    const next = rating === r ? null : r;
+    setRating(next);
+    void rateRunAction(runId, next);
+  };
+  return (
+    <div className="flex items-center gap-1 text-muted">
+      <button
+        type="button"
+        aria-label="Good answer"
+        aria-pressed={rating === 1}
+        onClick={() => rate(1)}
+        className={cn("tap flex items-center justify-center rounded-full", rating === 1 && "text-accent")}
+      >
+        <ThumbsUp className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        aria-label="Bad answer"
+        aria-pressed={rating === -1}
+        onClick={() => rate(-1)}
+        className={cn("tap flex items-center justify-center rounded-full", rating === -1 && "text-danger")}
+      >
+        <ThumbsDown className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }

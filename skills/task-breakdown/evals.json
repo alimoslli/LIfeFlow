@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Break down my research paper",
+    "expect": "routes to task-breakdown"
+  },
+  {
+    "prompt": "Split this project into subtasks",
+    "expect": "routes to task-breakdown"
+  },
+  {
+    "prompt": "This task is too big, where do I start?",
+    "expect": "routes to task-breakdown"
+  },
+  {
+    "prompt": "Give me steps for moving apartments",
+    "expect": "routes to task-breakdown"
+  },
+  {
+    "prompt": "Break it down into smaller pieces",
+    "expect": "routes to task-breakdown"
+  }
+]

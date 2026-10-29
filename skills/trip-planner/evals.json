@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Plan my trip to Chicago",
+    "expect": "routes to trip-planner"
+  },
+  {
+    "prompt": "Make an itinerary for 3 days in Paris",
+    "expect": "routes to trip-planner"
+  },
+  {
+    "prompt": "Help me plan a vacation",
+    "expect": "routes to trip-planner"
+  },
+  {
+    "prompt": "What should I do when I visit Boston?",
+    "expect": "routes to trip-planner"
+  },
+  {
+    "prompt": "Plan a weekend trip",
+    "expect": "routes to trip-planner"
+  }
+]

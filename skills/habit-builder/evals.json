@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "How are my habits going?",
+    "expect": "routes to habit-builder"
+  },
+  {
+    "prompt": "Start a new habit for me",
+    "expect": "routes to habit-builder"
+  },
+  {
+    "prompt": "I keep breaking my streak",
+    "expect": "routes to habit-builder"
+  },
+  {
+    "prompt": "Help me build a reading routine",
+    "expect": "routes to habit-builder"
+  },
+  {
+    "prompt": "Check off my habit for today",
+    "expect": "routes to habit-builder"
+  }
+]

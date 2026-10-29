@@ -1307,6 +1307,13 @@ export const jarvisRuns = pgTable(
     reasoningTokens: integer("reasoning_tokens"),
     /** Estimated cost in millionths of a dollar. Null unless model prices are configured. */
     costMicros: bigint("cost_micros", { mode: "number" }),
+    /** Skills picked for this turn (skills/<name>/SKILL.md). */
+    skills: text("skills")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    /** The user's 👍 (1) or 👎 (-1) on the answer. */
+    rating: integer("rating"),
     /** Memories that were put in front of the model for this turn. */
     memoryIds: uuid("memory_ids")
       .array()

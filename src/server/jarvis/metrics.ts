@@ -61,6 +61,8 @@ export type RunRecord = {
   usage: TokenUsage | null;
   costMicros: number | null;
   memoryIds: string[];
+  /** Skills routed for this turn. */
+  skills?: string[];
 };
 
 export async function recordRun(scope: UserScope, r: RunRecord) {
@@ -88,6 +90,7 @@ export async function recordRun(scope: UserScope, r: RunRecord) {
       reasoningTokens: r.usage?.reasoningTokens ?? null,
       costMicros: r.costMicros,
       memoryIds: r.memoryIds,
+      skills: r.skills ?? [],
     })
     .returning({ id: jarvisRuns.id });
   return row.id;
@@ -144,4 +147,36 @@ export async function jarvisStats(scope: UserScope, days = 30, now = new Date())
     costMicros: num(r.costMicros),
     pricedRuns: r.pricedRuns,
   };
+}
+
+/** 👍 / 👎 on one of Jarvis's answers (the user's own runs only). Feeds the per-skill stats. */
+export async function rateRun(scope: UserScope, runId: string, rating: 1 | -1 | null) {
+  const [row] = await scope.tx
+    .update(jarvisRuns)
+    .set({ rating })
+    .where(and(eq(jarvisRuns.id, runId), eq(jarvisRuns.userId, scope.userId)))
+    .returning({ id: jarvisRuns.id });
+  return !!row;
+}
+
+/** Per-skill usage, success and ratings, for the debug screen. A skill is flagged when answers using it are rated down often. */
+export async function skillStats(scope: UserScope, days = 90, now = new Date()) {
+  const rows = await scope.tx
+    .select({ skills: jarvisRuns.skills, outcome: jarvisRuns.outcome, rating: jarvisRuns.rating, toolErrors: jarvisRuns.toolErrors })
+    .from(jarvisRuns)
+    .where(and(eq(jarvisRuns.userId, scope.userId), gte(jarvisRuns.createdAt, new Date(now.getTime() - days * 86_400_000))));
+  const by = new Map<string, { runs: number; ok: number; up: number; down: number; toolErrors: number }>();
+  for (const r of rows)
+    for (const k of r.skills.length ? r.skills : ["(no skill)"]) {
+      const x = by.get(k) ?? { runs: 0, ok: 0, up: 0, down: 0, toolErrors: 0 };
+      x.runs++;
+      if (r.outcome === "ok") x.ok++;
+      if (r.rating === 1) x.up++;
+      if (r.rating === -1) x.down++;
+      x.toolErrors += r.toolErrors;
+      by.set(k, x);
+    }
+  return [...by.entries()]
+    .map(([skill, x]) => ({ skill, ...x, successRate: x.runs ? x.ok / x.runs : null, flagged: x.down >= 2 && x.down > x.up }))
+    .sort((a, b) => b.runs - a.runs);
 }

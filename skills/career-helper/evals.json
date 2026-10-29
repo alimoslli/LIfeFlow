@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Review my resume",
+    "expect": "routes to career-helper"
+  },
+  {
+    "prompt": "Prep me for my interview",
+    "expect": "routes to career-helper"
+  },
+  {
+    "prompt": "Track my internship applications",
+    "expect": "routes to career-helper"
+  },
+  {
+    "prompt": "Help with a cover letter",
+    "expect": "routes to career-helper"
+  },
+  {
+    "prompt": "What questions will they ask in a job interview?",
+    "expect": "routes to career-helper"
+  }
+]

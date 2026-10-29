@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "What should I pack for my trip?",
+    "expect": "routes to packing-prep"
+  },
+  {
+    "prompt": "Make me a packing list",
+    "expect": "routes to packing-prep"
+  },
+  {
+    "prompt": "Do I need a visa for Japan?",
+    "expect": "routes to packing-prep"
+  },
+  {
+    "prompt": "What documents do I need to travel?",
+    "expect": "routes to packing-prep"
+  },
+  {
+    "prompt": "What's the weather for my trip?",
+    "expect": "routes to packing-prep"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "What subscriptions do I have?",
+    "expect": "routes to subscription-hunter"
+  },
+  {
+    "prompt": "Which subscriptions should I cancel?",
+    "expect": "routes to subscription-hunter"
+  },
+  {
+    "prompt": "Find my recurring charges",
+    "expect": "routes to subscription-hunter"
+  },
+  {
+    "prompt": "How do I cancel Netflix?",
+    "expect": "routes to subscription-hunter"
+  },
+  {
+    "prompt": "Is my free trial about to charge me?",
+    "expect": "routes to subscription-hunter"
+  }
+]

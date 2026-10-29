@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "I'm so stressed",
+    "expect": "routes to wellbeing-check-in"
+  },
+  {
+    "prompt": "I feel overwhelmed with everything",
+    "expect": "routes to wellbeing-check-in"
+  },
+  {
+    "prompt": "I'm having a rough day",
+    "expect": "routes to wellbeing-check-in"
+  },
+  {
+    "prompt": "I think I'm burning out",
+    "expect": "routes to wellbeing-check-in"
+  },
+  {
+    "prompt": "I'm exhausted and can't focus",
+    "expect": "routes to wellbeing-check-in"
+  }
+]

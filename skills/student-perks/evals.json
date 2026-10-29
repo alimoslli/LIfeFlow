@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "What student discounts can I get?",
+    "expect": "routes to student-perks"
+  },
+  {
+    "prompt": "Find scholarships for me",
+    "expect": "routes to student-perks"
+  },
+  {
+    "prompt": "When is the financial aid deadline?",
+    "expect": "routes to student-perks"
+  },
+  {
+    "prompt": "What campus resources are there?",
+    "expect": "routes to student-perks"
+  },
+  {
+    "prompt": "Best student deals on laptops",
+    "expect": "routes to student-perks"
+  }
+]

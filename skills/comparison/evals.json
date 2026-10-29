@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Compare iPad vs MacBook for school",
+    "expect": "routes to comparison"
+  },
+  {
+    "prompt": "Which is better, Spotify or Apple Music?",
+    "expect": "routes to comparison"
+  },
+  {
+    "prompt": "Pros and cons of renting vs living in a dorm",
+    "expect": "routes to comparison"
+  },
+  {
+    "prompt": "Compare these two phone plans",
+    "expect": "routes to comparison"
+  },
+  {
+    "prompt": "Netflix versus Hulu",
+    "expect": "routes to comparison"
+  }
+]

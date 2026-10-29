@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "Email my professor asking for an extension",
+    "expect": "routes to message-drafter"
+  },
+  {
+    "prompt": "Draft a text to my manager about swapping shifts",
+    "expect": "routes to message-drafter"
+  },
+  {
+    "prompt": "Write an email to my landlord",
+    "expect": "routes to message-drafter"
+  },
+  {
+    "prompt": "Reply to this email for me",
+    "expect": "routes to message-drafter"
+  },
+  {
+    "prompt": "Message my study group",
+    "expect": "routes to message-drafter"
+  }
+]
