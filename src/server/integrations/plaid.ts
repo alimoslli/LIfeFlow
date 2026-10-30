@@ -95,7 +95,7 @@ export async function createLinkToken(userId: string, opts: { accessToken?: stri
       language: "en",
       ...(opts.accessToken
         ? { access_token: opts.accessToken } // update mode: re-authenticate an existing connection
-        : { products: ["transactions"], optional_products: ["investments", "liabilities"], transactions: { days_requested: 730 } }),
+        : { products: ["transactions"], transactions: { days_requested: 730 } }),
       ...(cfg?.webhookUrl && { webhook: cfg.webhookUrl }),
       ...(cfg?.redirectUri && { redirect_uri: cfg.redirectUri }),
     },
