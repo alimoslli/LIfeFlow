@@ -438,6 +438,7 @@ export const SKILLS: SkillFile[] = [
     ],
     "tools": [
       "get_health_summary",
+      "log_health",
       "find_free_time",
       "create_events"
     ],

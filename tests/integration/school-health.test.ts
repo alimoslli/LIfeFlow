@@ -2,6 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { closeDb } from "@/server/db/client";
 import { courseGradeReport, createAssignment, createCourse, updateAssignment, updateCourse } from "@/server/services/school";
 import { createEmployer, updateEmployer } from "@/server/services/work";
+import { healthSummary, logHealth } from "@/server/services/health";
 import { makeUser } from "../helpers";
 
 afterAll(closeDb);
@@ -32,5 +33,17 @@ describe("class grade", () => {
     const job = await run((s) => createEmployer(s, { name: "Lab", payType: "salary", annualSalaryCents: 3_000_000, overtimeThresholdHours: 45 }));
     const after = await run((s) => updateEmployer(s, job.id, { position: "Tech" }));
     expect(after).toMatchObject({ payType: "salary", overtimeThresholdHours: "45.00", position: "Tech" });
+  });
+});
+
+describe("health log", () => {
+  it("saves a day's value by hand, replaces it on a second entry, and refuses nonsense", async () => {
+    const { run } = await makeUser();
+    await run((s) => logHealth(s, TZ, { metric: "sleep_hours", value: 6.54, date: "2026-10-01" }, new Date("2026-10-02T12:00:00Z")));
+    await run((s) => logHealth(s, TZ, { metric: "sleep_hours", value: 7.25, date: "2026-10-01" }, new Date("2026-10-02T12:00:00Z")));
+    const sum = await run((s) => healthSummary(s, TZ, 7, new Date("2026-10-02T12:00:00Z")));
+    expect(sum.metrics).toMatchObject([{ metric: "sleep_hours", average: 7.3, series: [{ day: "2026-10-01", value: 7.3 }] }]);
+    await expect(run((s) => logHealth(s, TZ, { metric: "sleep_hours", value: 30 }))).rejects.toThrow(/looks wrong/);
+    await expect(run((s) => logHealth(s, TZ, { metric: "steps", value: 10, date: "2099-01-01" }))).rejects.toThrow(/past year/);
   });
 });

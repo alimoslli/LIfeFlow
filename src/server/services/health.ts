@@ -170,3 +170,21 @@ export async function healthSummary({ tx, userId }: UserScope, tz: string, days 
   });
   return { from, to: today, lastReceivedAt: last?.at ?? null, metrics };
 }
+
+/** What people log by hand or tell Jarvis ("I slept 7 hours"). The same daily values Apple Health sends; a new value replaces that day's. */
+export const MANUAL_METRICS = ["sleep_hours", "steps", "exercise_minutes", "mindful_minutes", "weight_kg"] as const satisfies readonly HealthMetric[];
+
+export async function logHealth({ tx, userId }: UserScope, tz: string, input: { metric: HealthMetric; value: number; date?: string }, now = new Date()) {
+  const info = HEALTH_METRICS[input.metric];
+  if (!info) throw new ServiceError("Unknown measurement.");
+  const today = todayIn(tz, now);
+  const day = input.date ?? today;
+  if (day > today || day < addDaysStr(today, -400)) throw new ServiceError("Pick a day in the past year.");
+  const value = Number(input.value.toFixed(info.decimals));
+  if (!(value >= 0) || value > info.max) throw new ServiceError(`${info.label} looks wrong (${input.value}).`);
+  await tx
+    .insert(healthSamples)
+    .values({ userId, metric: input.metric, day, value, source: "manual" })
+    .onConflictDoUpdate({ target: [healthSamples.userId, healthSamples.metric, healthSamples.day], set: { value, source: "manual", updatedAt: new Date() } });
+  return { metric: input.metric, label: info.label, unit: info.unit, day, value };
+}

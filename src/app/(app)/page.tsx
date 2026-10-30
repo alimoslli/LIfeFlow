@@ -22,6 +22,9 @@ import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
 import { integrationStatus } from "@/server/services/integrations";
 import type { AgendaItem } from "@/server/services/calendar";
 import { listTasks } from "@/server/services/tasks";
+import { listHabits } from "@/server/services/habits";
+import { ActionButton } from "@/components/action-form";
+import { checkHabitAction } from "./habits/actions";
 import { AskBar, TryThis } from "./_today/day-plan";
 import { DayPlanCard } from "./_today/day-plan-card";
 import { buildDayPlan } from "@/server/briefing/day-plan";
@@ -46,15 +49,17 @@ export default async function TodayPage() {
     setup,
     status,
     tip,
+    habits,
   } = await withCurrentUser(async (scope, user) => {
     const top = await topMessage(scope);
     const { briefing, snapshot } = await getBriefing(scope, user);
-    const [integrationList, banks, unread, proposed, runs] = await series(
+    const [integrationList, banks, unread, proposed, runs, habits] = await series(
       () => integrationStatus(scope),
       () => listPlaidConnections(scope),
       () => unreadCount(scope),
       () => listProposedMemories(scope),
       () => runCount(scope),
+      () => listHabits(scope, snapshot.today),
     );
     const setup = [
       googleConfig() && !integrationList.find((i) => i.provider === "google")?.connections.length ? "Google Calendar & Gmail" : null,
@@ -67,6 +72,7 @@ export default async function TodayPage() {
       tasks,
       assistantName: assistantProfile(user.preferences).name,
       setup,
+      habits: habits.filter((h) => h.active && h.checkable && !h.doneThisPeriod).slice(0, 4),
       status: proposed.length
         ? { text: `${proposed.length} memor${proposed.length === 1 ? "y needs" : "ies need"} your OK`, href: "/jarvis/memory" }
         : unread
@@ -119,6 +125,25 @@ export default async function TodayPage() {
       {next && <NowNext item={next} tz={s.tz} now={s.now} />}
 
       <DayPlanCard plan={plan} name={assistantName} date={formatIn(s.now, s.tz, "EEEE, MMMM d")} />
+
+      {habits.length > 0 && (
+        <section aria-label="Habits" className="animate-rise">
+          <SectionTitle href="/habits">Habits</SectionTitle>
+          <ul className="flex flex-wrap gap-2">
+            {habits.map((h) => (
+              <li key={h.id}>
+                <ActionButton
+                  action={checkHabitAction.bind(null, h.id, true)}
+                  title={`Done: ${h.title}`}
+                  className="flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm font-medium shadow-soft"
+                >
+                  <span className="h-4 w-4 rounded-full border-2 border-border-strong" /> {h.title}
+                </ActionButton>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <WeekStrip days={b.week} />
 

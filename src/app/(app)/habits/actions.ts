@@ -2,6 +2,7 @@
 import { todayIn } from "@/lib/dates";
 import { formObject, mutate, type ActionState } from "@/server/actions";
 import { checkHabit, createHabit, deleteHabit, updateHabit } from "@/server/services/habits";
+import { logHealth, MANUAL_METRICS } from "@/server/services/health";
 
 const REVALIDATE = { revalidate: ["/habits", "/"] };
 
@@ -61,6 +62,21 @@ export async function deleteHabitAction(id: string): Promise<ActionState> {
     async (s) => {
       await deleteHabit(s, id);
       return "Habit deleted.";
+    },
+    REVALIDATE,
+  );
+}
+
+export async function logHealthAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  const f = formObject(fd);
+  const metric = MANUAL_METRICS.find((m) => m === f.metric);
+  const value = Number(f.value);
+  if (!metric || !Number.isFinite(value)) return { ok: false, error: "Pick what to log and enter a number.", at: Date.now() };
+  return mutate(
+    "health.log",
+    async (s, u) => {
+      const r = await logHealth(s, u.timezone, { metric, value, date: f.date });
+      return `Logged ${r.label.toLowerCase()}: ${r.value} ${r.unit}`;
     },
     REVALIDATE,
   );

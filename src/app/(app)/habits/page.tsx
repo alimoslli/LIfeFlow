@@ -5,33 +5,44 @@ import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Card } from "@/components/ui/surface";
+import { healthSummary } from "@/server/services/health";
+import { HealthWeek, LogHealth } from "./health-week";
 import { todayIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { HABIT_IDEAS, listHabits } from "@/server/services/habits";
-import { archiveHabitAction, checkHabitAction, createHabitAction, deleteHabitAction, shrinkHabitAction } from "./actions";
+import { archiveHabitAction, checkHabitAction, createHabitAction, deleteHabitAction, logHealthAction, shrinkHabitAction } from "./actions";
 
-export const metadata: Metadata = { title: "Habits" };
+export const metadata: Metadata = { title: "Health" };
 
 const CADENCE = { daily: "every day", weekly: "every week", weekends: "every weekend", payday: "every payday" } as const;
 const PERIOD = { daily: "today", weekly: "this week", weekends: "this weekend", payday: "this pay period" } as const;
 const usd = (c: number) => `$${(c / 100).toFixed(c % 100 ? 2 : 0)}`;
 
 export default async function HabitsPage() {
-  const habits = await withCurrentUser((s, u) => listHabits(s, todayIn(u.timezone)));
+  const { habits, health, today } = await withCurrentUser(async (s, u) => ({
+    habits: await listHabits(s, todayIn(u.timezone)),
+    health: await healthSummary(s, u.timezone, 7),
+    today: todayIn(u.timezone),
+  }));
   const active = habits.filter((h) => h.active);
   const paused = habits.filter((h) => !h.active);
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Health &amp; habits</h1>
-          <p className="mt-1 text-sm text-text-2">Small steps, tracked as streaks.</p>
+          <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Health</h1>
+          <p className="mt-1 text-sm text-text-2">Your week, and the habits you&apos;re building.</p>
         </div>
         <Link href="/settings/integrations" className="flex min-h-11 shrink-0 items-center rounded-full bg-surface px-4 text-sm font-medium shadow-soft">
           Apple Health
         </Link>
       </header>
+
+      <HealthWeek metrics={health.metrics} today={today} />
+      <LogHealth action={logHealthAction} today={today} />
+
+      <h2 className="-mb-2 text-[22px] font-medium tracking-tight">Habits</h2>
 
       {active.length > 0 && (
         <ul className="flex flex-col gap-3">
