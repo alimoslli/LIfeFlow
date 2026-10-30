@@ -11,6 +11,7 @@ const LABELS: Record<string, string> = {
   create_project: "Creating project",
   list_courses: "Checking courses",
   grade_check: "Working out your grade",
+  sync_canvas: "Syncing Canvas",
   create_course: "Creating course",
   list_assignments: "Checking assignments",
   import_assignments: "Saving assignments",

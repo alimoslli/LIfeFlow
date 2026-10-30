@@ -12,6 +12,8 @@ import { BankConnections } from "@/components/finance/bank-connections";
 import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
 import { disconnectBankAction } from "../../finances/actions";
 import { SettingsHeader } from "../settings-header";
+import { canvasConnection } from "@/server/integrations/canvas";
+import { CanvasCard } from "./canvas-card";
 
 export const metadata: Metadata = { title: "Connected accounts" };
 
@@ -29,13 +31,14 @@ const GOOGLE_RESULT: Record<string, { tone: "success" | "danger" | "warning"; te
 export default async function IntegrationsSettings({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
   const { google: result } = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
-    const [list, keys, health, banks] = await series(
+    const [list, keys, health, banks, canvas] = await series(
       () => integrationStatus(s),
       () => listHealthTokens(s),
       () => healthSummary(s, u.timezone, 1),
       () => listPlaidConnections(s),
+      () => canvasConnection(s),
     );
-    return { list, keys, lastHealth: health.lastReceivedAt, tz: u.timezone, banks };
+    return { list, keys, lastHealth: health.lastReceivedAt, tz: u.timezone, banks, canvas };
   });
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost";
@@ -47,6 +50,19 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
     <div className="flex flex-col gap-3">
       <SettingsHeader title="Connected accounts" />
       {banner && <p className={`rounded-2xl px-4 py-3 text-sm ${TONE[banner.tone]}`}>{banner.text}</p>}
+      <Group title="School" />
+      <CanvasCard
+        connection={
+          d.canvas
+            ? {
+                host: d.canvas.host,
+                status: d.canvas.status,
+                lastSynced: d.canvas.lastSyncedAt ? formatIn(d.canvas.lastSyncedAt, d.tz, "MMM d, h:mm a") : null,
+                error: d.canvas.lastError,
+              }
+            : null
+        }
+      />
       <Group title="Email & Calendar" />
       {google && (
         <GoogleCard

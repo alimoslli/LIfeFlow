@@ -9,16 +9,18 @@ import { series } from "@/server/db/series";
 import { listAssignments, listCourses } from "@/server/services/school";
 import { createAssignmentAction, createCourseAction } from "./actions";
 import { AssignmentDialog, CourseDialog } from "./forms";
+import { canvasConnection } from "@/server/integrations/canvas";
 
 export const metadata: Metadata = { title: "School" };
 
 export default async function SchoolPage() {
   const d = await withCurrentUser(async (s, u) => {
-    const [courses, all] = await series(
+    const [courses, all, canvas] = await series(
       () => listCourses(s),
       () => listAssignments(s, u.timezone, { view: "upcoming", limit: 300 }),
+      () => canvasConnection(s),
     );
-    return { courses, all, tz: u.timezone };
+    return { courses, all, canvas, tz: u.timezone };
   });
   const nextByCourse = new Map<string, (typeof d.all)[number]>();
   for (const a of d.all) if (!nextByCourse.has(a.course.id)) nextByCourse.set(a.course.id, a);
@@ -83,6 +85,11 @@ export default async function SchoolPage() {
         <Sparkles className="h-4 w-4 shrink-0" />
         <span className="flex-1">Have a syllabus or a screenshot? Send it to Jarvis and it&apos;ll add everything.</span>
       </AskJarvisButton>
+      {!d.canvas && (
+        <Link href="/settings/integrations" className="mb-6 flex min-h-11 items-center text-sm font-medium text-accent">
+          Use Canvas? Connect it and your classes and due dates fill in by themselves.
+        </Link>
+      )}
     </>
   );
 }

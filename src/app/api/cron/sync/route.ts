@@ -7,6 +7,7 @@ import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
 import { syncGoogleCalendar } from "@/server/integrations/google";
 import { syncConnection } from "@/server/integrations/plaid";
+import { markCanvasError, syncCanvas } from "@/server/integrations/canvas";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -31,6 +32,11 @@ export async function GET(req: Request) {
       try {
         if (r.provider === "plaid") await syncConnection(r.userId, r.integrationId, r.tz);
         else if (r.provider === "google") await withUser(r.userId, (s) => syncGoogleCalendar(s, r.tz));
+        else if (r.provider === "canvas")
+          await withUser(r.userId, (s) => syncCanvas(s)).catch(async (e) => {
+            await withUser(r.userId, (s) => markCanvasError(s, e));
+            throw e;
+          });
         ok++;
       } catch {
         failed++; // the error is recorded on the connection for the user to see

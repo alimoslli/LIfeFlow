@@ -15,6 +15,7 @@ import {
   updateAssignment,
 } from "../../services/school";
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
+import { syncCanvas } from "../../integrations/canvas";
 
 function presentAssignment(
   a: {
@@ -44,6 +45,17 @@ function presentAssignment(
 }
 
 export const schoolTools = [
+  defineTool({
+    name: "sync_canvas",
+    description:
+      "Pull the latest classes and assignments from the user's connected Canvas. If Canvas isn't connected, say they can connect it in Connected accounts.",
+    schema: z.object({}),
+    mutates: true,
+    async execute(_a, ctx) {
+      const r = await ctx.run((s) => syncCanvas(s));
+      return { ...r, viewAt: "/school/due" };
+    },
+  }),
   defineTool({
     name: "grade_check",
     description:

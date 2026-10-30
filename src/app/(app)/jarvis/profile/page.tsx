@@ -79,7 +79,7 @@ export default async function JarvisProfilePage() {
       </ul>
       <p className="px-2 text-center text-xs text-muted">
         {name} never trains AI models on your data, asks before anything important, and{" "}
-        <Link href="/integrity" className="text-accent">
+        <Link href="/integrity" className="text-accent underline">
           never does graded work for you
         </Link>
         .
