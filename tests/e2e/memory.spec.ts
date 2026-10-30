@@ -51,3 +51,18 @@ test("an explicit request saves directly; dismissed suggestions are not used", a
   await page.getByRole("button", { name: "Turn memory suggestions off" }).click();
   await expect(page.getByRole("button", { name: "Turn memory suggestions on" })).toBeVisible();
 });
+
+test("Ideas open Jarvis ready to send, and memory import waits for approval", async ({ page }) => {
+  const email = await signUp(page, "Idea Tester");
+  await page.goto("/jarvis/ideas");
+  await expect(page.getByRole("region", { name: "For you" })).toContainText("No savings goal yet");
+  await page.getByRole("button", { name: /Quiz me before a test/ }).click();
+  await expect(page.getByRole("dialog").getByLabel("Message Jarvis")).toHaveValue("Quiz me on my next exam's topics, one question at a time.");
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("link", { name: /Bring what your other AI knows/ }).click();
+  await page.getByLabel("Paste the answer here").fill("- I work at Target on weekends.\n- I prefer studying at night.\n- My password is hunter2");
+  await page.getByRole("button", { name: "Add as suggestions" }).click();
+  await expect(page.getByText("2 suggestions added below")).toBeVisible();
+  expect(await queryAsUser<{ status: string }>(email, "select status from memories")).toEqual([{ status: "proposed" }, { status: "proposed" }]);
+});

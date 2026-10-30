@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { getProject, updateProject } from "../../services/notes";
-import { createHabit, checkHabit, listHabits, updateHabit } from "../../services/habits";
+import { createHabit, checkHabit, deleteHabit, listHabits, updateHabit } from "../../services/habits";
 import { getCourse, updateCourse } from "../../services/school";
 import { moveToTrash } from "../../services/trash";
 import { archiveEmployer, listEmployers, updateEmployer } from "../../services/work";
@@ -146,6 +146,20 @@ export const manageTools = [
       const target = a.target === undefined ? null : a.kind === "save" ? toCents(a.target) : Math.round(a.target);
       const h = await ctx.run((s) => createHabit(s, { title: a.title, kind: a.kind, cadence: a.cadence, target }));
       return { created: { id: h.id, title: h.title, cadence: h.cadence }, viewAt: "/habits" };
+    },
+  }),
+  defineTool({
+    name: "delete_habit",
+    description: "Delete a habit and its check-ins for good. Requires the user's confirmation. To stop tracking but keep history, use check_habit with pause.",
+    schema: z.object({ id: idArg("Habit") }),
+    mutates: true,
+    async confirm({ id }, ctx) {
+      const h = (await ctx.run((s) => listHabits(s, ctx.today))).find((x) => x.id === id);
+      return `Delete the habit "${h?.title ?? "this habit"}" and its history?`;
+    },
+    async execute({ id }, ctx) {
+      const h = await ctx.run((s) => deleteHabit(s, id));
+      return { deleted: h.title, viewAt: "/habits" };
     },
   }),
   defineTool({

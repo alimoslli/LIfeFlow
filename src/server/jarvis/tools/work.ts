@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { workShifts } from "../../db/schema";
 import { moveToTrash } from "../../services/trash";
 import {
+  addPaycheck,
   createEmployer,
   createShift,
   fillRegularShifts,
@@ -73,6 +74,28 @@ export const workTools = [
         shiftsAdded: r.shiftsAdded,
         viewAt: "/work",
       };
+    },
+  }),
+  defineTool({
+    name: "add_paycheck",
+    description: "Record a paycheck the user received (actual pay deposited). Net pay is required; gross, hours and pay period are optional.",
+    schema: z.object({
+      jobId: idArg("Job id from list_jobs"),
+      payDate: dateArg(),
+      net: moneyArg("Net pay (take-home)"),
+      gross: moneyArg("Gross pay").optional(),
+      hours: z.number().min(0).max(1000).optional(),
+    }),
+    mutates: true,
+    async execute(a, ctx) {
+      const p = await ctx.run((s) =>
+        addPaycheck(
+          s,
+          { employerId: a.jobId, payDate: a.payDate, netCents: toCents(a.net), grossCents: a.gross != null ? toCents(a.gross) : null, hours: a.hours ?? null },
+          "jarvis",
+        ),
+      );
+      return centsToDollarsDeep({ saved: { id: p.id, payDate: p.payDate, netCents: p.netCents }, viewAt: "/work" });
     },
   }),
   defineTool({

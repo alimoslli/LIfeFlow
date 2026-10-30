@@ -94,7 +94,8 @@ export function AppShell({
   }, []);
 
   // The chat is full-screen; Updates, Profile and Memory are normal pages.
-  const onJarvisPage = pathname.startsWith("/jarvis") && !["/jarvis/says", "/jarvis/memory", "/jarvis/profile"].some((p) => pathname.startsWith(p));
+  const onJarvisPage =
+    pathname.startsWith("/jarvis") && !["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"].some((p) => pathname.startsWith(p));
   const initials = user.name
     .split(/\s+/)
     .map((p) => p[0])

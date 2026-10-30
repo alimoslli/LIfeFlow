@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { Archive, Brain, Check, RotateCcw, Trash2, X } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
@@ -31,8 +32,10 @@ export const metadata: Metadata = { title: "What Jarvis knows" };
 const seconds = (ms: number | null) => (ms == null ? "None yet" : `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`);
 const compact = (n: number) => new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n);
 
-export default async function JarvisMemory({ searchParams }: { searchParams: Promise<{ debug?: string }> }) {
-  const debug = (await searchParams).debug === "1";
+export default async function JarvisMemory({ searchParams }: { searchParams: Promise<{ debug?: string; imported?: string }> }) {
+  const sp = await searchParams;
+  const debug = sp.debug === "1";
+  const imported = Number(sp.imported) || 0;
   const d = await withCurrentUser(async (s, u) => {
     const js = jarvisSettings(u.preferences);
     const [all, stats, learned] = await series(
@@ -68,6 +71,14 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
   return (
     <div className="flex flex-col gap-5">
       <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">What {d.assistant.name} knows</h1>
+      {imported > 0 && (
+        <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
+          {imported} suggestion{imported === 1 ? "" : "s"} added below. Keep the ones that are right.
+        </p>
+      )}
+      <Link href="/jarvis/memory/import" className="-mt-2 flex min-h-11 items-center text-sm font-medium text-accent">
+        Import from another AI
+      </Link>
       <LearnedCard name={d.assistant.name} learning={d.learning} muted={d.muted} stats={d.learned} />
       {pending.length > 0 && (
         <Card>

@@ -9,6 +9,7 @@ import {
   CheckSquare,
   HeartPulse,
   Landmark,
+  Lightbulb,
   MessageCircle,
   NotebookPen,
   Receipt,
@@ -36,8 +37,9 @@ export const SECTIONS: Record<Section, Item[]> = {
     { href: "/work", label: "Work", icon: Briefcase },
   ],
   jarvis: [
-    { href: "/jarvis", label: "Chat", icon: MessageCircle, except: ["/jarvis/says", "/jarvis/memory", "/jarvis/profile"] },
+    { href: "/jarvis", label: "Chat", icon: MessageCircle, except: ["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"] },
     { href: "/jarvis/says", label: "Updates", icon: Sparkles, also: ["/inbox"] },
+    { href: "/jarvis/ideas", label: "Ideas", icon: Lightbulb },
     { href: "/jarvis/profile", label: "Profile", icon: UserRound, also: ["/jarvis/memory"] },
   ],
   money: [
