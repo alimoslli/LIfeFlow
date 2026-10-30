@@ -13,8 +13,10 @@ import { recordNetWorth } from "../services/finance/investing";
  *
  * - The user signs in to their bank inside Plaid Link; LifeFlow never sees
  *   bank credentials. We store only Plaid's access token, AES-GCM encrypted.
- * - Products: transactions (required), investments and liabilities (optional,
- *   used when the institution supports them). Nothing here can move money.
+ * - Products: transactions only. Investments and liabilities are deliberately
+ *   not requested during the basic bank-link flow because Plaid rejects the
+ *   entire Link token when an account has not been approved for either add-on.
+ *   Nothing here can move money.
  * - REST via fetch with an injectable `f`, so tests run against a fake Plaid.
  */
 
@@ -100,7 +102,7 @@ export async function createLinkToken(userId: string, opts: { accessToken?: stri
       language: "en",
       ...(opts.accessToken
         ? { access_token: opts.accessToken } // update mode: re-authenticate an existing connection
-        : { products: ["transactions"], optional_products: ["investments", "liabilities"], transactions: { days_requested: 730 } }),
+        : { products: ["transactions"], transactions: { days_requested: 730 } }),
       ...(cfg?.webhookUrl && { webhook: cfg.webhookUrl }),
       ...(cfg?.redirectUri && { redirect_uri: cfg.redirectUri }),
     },

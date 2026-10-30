@@ -136,14 +136,13 @@ async function connected(fake = fakePlaid()) {
 }
 
 describe("Plaid", () => {
-  it("creates a Link token for transactions with optional investments and liabilities", async () => {
+  it("creates a Link token for transactions without requiring optional Plaid products", async () => {
     const { f, calls } = fakePlaid();
     expect(await createLinkToken("user-1", {}, f)).toMatchObject({ linkToken: "link-sandbox-123" });
     expect(calls[0].body).toMatchObject({
       client_id: "cid",
       secret: "sec",
       products: ["transactions"],
-      optional_products: ["investments", "liabilities"],
       user: { client_user_id: "user-1" },
       webhook: "https://lifeflow.test/api/integrations/plaid/webhook",
     });
