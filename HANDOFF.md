@@ -167,6 +167,7 @@ npm run dev
 | O7 | Approve a production DB role without BYPASSRLS | E6 |
 | O8 | Approve the Capacitor native app | Step 7 |
 | O9 | Plaid Production access before real banks for other people | Plaid dashboard |
+| O10 | Twilio number for Text Jarvis | `docs/go-live-checklist.md` section 9b |
 
 ---
 

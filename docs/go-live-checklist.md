@@ -74,6 +74,12 @@ Settings → Integrations → Apple Health → Create a key (shown once) → fol
 4. In LifeFlow: Plan → Inbox shows your address. Add the email you'll forward from (Apple sign-in emails are trusted automatically; others get a 6-digit code, which needs step 4's Resend setup).
 5. Forward a bill to the address. It shows up in the Inbox as Filed, with Undo. Mail from any other sender, or mail that fails SPF/DKIM, shows as Ignored with the reason.
 
+## 9b. Text Jarvis by SMS (twilio.com)
+1. Create a Twilio account and buy a phone number that can send SMS (US numbers need A2P 10DLC registration for business texting; Twilio walks you through it).
+2. In Vercel add `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (Console home) and `TWILIO_PHONE_NUMBER` (like +14045550134). `APP_URL` must be set.
+3. In Twilio, open the number → Messaging → "A message comes in" → Webhook, HTTP POST: `https://<your-site>/api/sms/inbound`.
+4. Redeploy. In LifeFlow: Settings → Text Jarvis → add your number → enter the code.
+
 ## 10. Check it works
 - Chat with the assistant, then tap the mic for a voice call.
 - Google card shows "Connected"; ask "what's in my inbox?"

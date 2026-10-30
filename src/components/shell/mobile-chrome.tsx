@@ -40,6 +40,7 @@ const ROUTES: { test: RegExp; title: string; back?: string }[] = [
   { test: /^\/settings\/jarvis/, title: "Jarvis", back: "/settings" },
   { test: /^\/settings\/notifications/, title: "Notifications", back: "/settings" },
   { test: /^\/settings\/security/, title: "Face ID & passwords", back: "/settings" },
+  { test: /^\/settings\/text/, title: "Text Jarvis", back: "/settings" },
   { test: /^\/settings\/integrations/, title: "Connected accounts", back: "/settings" },
   { test: /^\/settings\/data/, title: "Privacy & data", back: "/settings" },
   { test: /^\/settings\/trash/, title: "Recently deleted", back: "/settings" },

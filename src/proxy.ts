@@ -13,6 +13,7 @@ const PUBLIC = [
   "/api/auth",
   "/privacy",
   "/integrity",
+  "/api/sms/inbound",
   "/terms",
   "/api/health",
   "/api/apple-health/ingest",

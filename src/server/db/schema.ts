@@ -91,6 +91,16 @@ export type UserPreferences = {
   jarvis?: JarvisSettings;
   /** Ask for Face ID / Touch ID (a passkey) before showing Money after this many idle minutes. */
   moneyLock?: { enabled: boolean; idleMinutes: number };
+  /** Texting Jarvis (SMS): a pending verification, whether money details may be sent by text, and the SMS conversation. */
+  sms?: {
+    pendingPhone?: string;
+    codeHash?: string;
+    codeExpiresAt?: string;
+    attempts?: number;
+    money?: boolean;
+    conversationId?: string;
+    pendingActionId?: string;
+  };
   /** Which push notifications the user wants, and when the morning brief arrives (local HH:mm). */
   notifications?: { reminders?: boolean; bills?: boolean; morningBrief?: boolean; briefTime?: string; budgetAlerts?: boolean };
   assistantVoice?: "alloy" | "ash" | "ballad" | "cedar" | "coral" | "echo" | "marin" | "sage" | "shimmer" | "verse";
@@ -145,6 +155,8 @@ export const users = pgTable("users", {
   totpLastStep: integer("totp_last_step"),
   /** Random part of the personal forwarding address (u-<token>@<INBOX_DOMAIN>). */
   inboxToken: text("inbox_token").unique(),
+  /** Verified phone (E.164) the user texts Jarvis from. Unique: one account per number. */
+  smsPhone: text("sms_phone").unique(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
