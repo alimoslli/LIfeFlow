@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Link2, Lock } from "lucide-react";
+import { ArrowRight, Link2, Lock, MapPin } from "lucide-react";
 import { CountUp } from "@/components/motion/count-up";
 import { assistantProfile } from "@/lib/assistant";
 import { Pressable } from "@/components/motion/pressable";
@@ -8,7 +8,12 @@ import { cn } from "@/lib/utils";
 import { requireUser, withCurrentUser } from "@/server/auth/current-user";
 import { moneyLocked } from "@/server/auth/money-lock";
 import { withUser } from "@/server/db/with-user";
-import { runDueSlot, topMessage } from "@/server/services/proactive/engine";
+import { runDueSlot, topMessage, unreadCount } from "@/server/services/proactive/engine";
+import { listProposedMemories } from "@/server/services/memory";
+import { runCount } from "@/server/jarvis/metrics";
+import { tryThisIdea } from "@/lib/life";
+import { daysBetween } from "@/lib/dates";
+import type { DayGlance } from "@/server/briefing/types";
 import { toCard } from "@/server/services/proactive/present";
 import { getBriefing } from "@/server/briefing";
 import { series } from "@/server/db/series";
@@ -17,7 +22,7 @@ import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
 import { integrationStatus } from "@/server/services/integrations";
 import type { AgendaItem } from "@/server/services/calendar";
 import { listTasks } from "@/server/services/tasks";
-import { QuickChips } from "./_today/day-plan";
+import { AskBar, TryThis } from "./_today/day-plan";
 import { DayPlanCard } from "./_today/day-plan-card";
 import { buildDayPlan } from "@/server/briefing/day-plan";
 
@@ -39,12 +44,17 @@ export default async function TodayPage() {
     assistantName,
     jarvisCard,
     setup,
+    status,
+    tip,
   } = await withCurrentUser(async (scope, user) => {
     const top = await topMessage(scope);
     const { briefing, snapshot } = await getBriefing(scope, user);
-    const [integrationList, banks] = await series(
+    const [integrationList, banks, unread, proposed, runs] = await series(
       () => integrationStatus(scope),
       () => listPlaidConnections(scope),
+      () => unreadCount(scope),
+      () => listProposedMemories(scope),
+      () => runCount(scope),
     );
     const setup = [
       googleConfig() && !integrationList.find((i) => i.provider === "google")?.connections.length ? "Google Calendar & Gmail" : null,
@@ -57,6 +67,13 @@ export default async function TodayPage() {
       tasks,
       assistantName: assistantProfile(user.preferences).name,
       setup,
+      status: proposed.length
+        ? { text: `${proposed.length} memor${proposed.length === 1 ? "y needs" : "ies need"} your OK`, href: "/jarvis/memory" }
+        : unread
+          ? { text: `${unread} new update${unread === 1 ? "" : "s"}`, href: "/jarvis/says" }
+          : { text: "All caught up", href: "/jarvis/profile" },
+      // A daily idea until the user has asked Jarvis 15 things.
+      tip: runs < 15 ? tryThisIdea(user.preferences?.lifeStage, daysBetween("2026-01-01", snapshot.today)) : null,
       // Questions to the user (consent, get-to-know) live in Jarvis → Updates; the plan's next step is something to do.
       jarvisCard: top && top.kind !== "consent" && top.kind !== "question" && !(locked && top.topic === "money") ? toCard(top, user.timezone) : null,
     };
@@ -66,17 +83,53 @@ export default async function TodayPage() {
 
   const schedule = b.today.filter((i) => i.blocksTime && (i.endsAt ?? i.startsAt) >= s.now);
   const plan = buildDayPlan(s, { ...b, insights }, { moneyHidden: locked, jarvisNext: jarvisCard, open: focus });
+  const next = b.next && (b.next.endsAt ?? b.next.startsAt) > s.now ? b.next : null;
   return (
-    <div className="mx-auto flex max-w-[640px] flex-col gap-8">
+    <div className="mx-auto flex max-w-[640px] flex-col gap-7">
       <header className="animate-rise" data-tour="today-page">
         <p className="text-sm text-muted">{formatIn(s.now, s.tz, "EEEE, MMMM d")}</p>
         <h1 className="mt-2 font-display text-[36px] leading-[1.05] font-medium tracking-tight sm:text-[44px]">{b.headline}</h1>
-        <div className="mt-5">
-          <QuickChips />
-        </div>
+        <Link href={status.href} className="mt-2 inline-flex min-h-11 items-center gap-2 text-sm text-text-2">
+          <span className={cn("h-2 w-2 rounded-full", status.text === "All caught up" ? "bg-success" : "bg-accent")} />
+          {assistantName} · {status.text}
+        </Link>
       </header>
 
+      <AskBar name={assistantName} />
+
+      {b.money && locked && (
+        <Link href="/money" className="flex min-h-14 items-center gap-3 rounded-3xl bg-surface px-5 shadow-soft">
+          <Lock className="h-5 w-5 text-accent" />
+          <span className="flex-1 text-[15px]">Money is locked. Tap to unlock.</span>
+          <ArrowRight className="h-4 w-4 text-muted" />
+        </Link>
+      )}
+      {b.money && !locked && (
+        <section aria-label="Money" className="animate-rise">
+          <Pressable>
+            <Link href="/money" className="grid grid-cols-3 gap-3 rounded-3xl bg-surface p-5 shadow-soft">
+              <Stat label="Available now" cents={b.money.liquidCents} />
+              <Stat label={`Spent in ${formatIn(s.now, s.tz, "MMM")}`} cents={b.money.spentCents} />
+              <Stat label="Came in" cents={b.money.incomeCents} tone="text-success" />
+            </Link>
+          </Pressable>
+        </section>
+      )}
+
+      {next && <NowNext item={next} tz={s.tz} now={s.now} />}
+
       <DayPlanCard plan={plan} name={assistantName} date={formatIn(s.now, s.tz, "EEEE, MMMM d")} />
+
+      <WeekStrip days={b.week} />
+
+      {schedule.length > 0 && (
+        <section aria-label="Schedule" className="animate-rise">
+          <SectionTitle href="/plan">Schedule</SectionTitle>
+          <Timeline items={schedule} tz={s.tz} now={s.now} />
+        </section>
+      )}
+
+      {tip && <TryThis title={tip.title} prompt={tip.prompt} day={s.today} />}
 
       {setup.length > 0 && (
         <Link href="/settings/integrations" className="animate-rise flex min-h-16 items-center gap-3 rounded-3xl bg-surface px-5 py-3 shadow-soft">
@@ -92,33 +145,62 @@ export default async function TodayPage() {
           <ArrowRight className="h-4 w-4 shrink-0 text-muted" />
         </Link>
       )}
-      {schedule.length > 0 && (
-        <section aria-label="Schedule" className="animate-rise">
-          <SectionTitle href="/plan">Schedule</SectionTitle>
-          <Timeline items={schedule} tz={s.tz} now={s.now} />
-        </section>
-      )}
-
-      {b.money && locked && (
-        <Link href="/money" className="flex min-h-14 items-center gap-3 rounded-3xl bg-surface px-5 shadow-soft">
-          <Lock className="h-5 w-5 text-accent" />
-          <span className="flex-1 text-[15px]">Money is locked. Tap to unlock.</span>
-          <ArrowRight className="h-4 w-4 text-muted" />
-        </Link>
-      )}
-      {b.money && !locked && (
-        <section aria-label="Money" className="animate-rise">
-          <SectionTitle href="/money">Money</SectionTitle>
-          <Pressable>
-            <Link href="/money" className="grid grid-cols-3 gap-3 rounded-3xl bg-surface p-5 shadow-soft">
-              <Stat label="Cash & checking" cents={b.money.liquidCents} />
-              <Stat label={`Spent in ${formatIn(s.now, s.tz, "MMM")}`} cents={b.money.spentCents} />
-              <Stat label="Came in" cents={b.money.incomeCents} tone="text-success" />
-            </Link>
-          </Pressable>
-        </section>
-      )}
     </div>
+  );
+}
+
+/** The class, shift or event happening now, or the next one today. */
+function NowNext({ item, tz, now }: { item: AgendaItem; tz: string; now: Date }) {
+  const live = item.startsAt <= now;
+  const mins = Math.round((item.startsAt.getTime() - now.getTime()) / 60_000);
+  const when = live
+    ? `Now${item.endsAt && !item.allDay ? `, until ${formatIn(item.endsAt, tz, "h:mm a")}` : ""}`
+    : mins < 60
+      ? `In ${mins} min, ${formatIn(item.startsAt, tz, "h:mm a")}`
+      : `Next at ${formatIn(item.startsAt, tz, "h:mm a")}`;
+  return (
+    <section aria-label={live ? "Now" : "Next"} className="animate-rise rounded-3xl bg-surface p-5 shadow-soft">
+      <p className={cn("text-xs font-medium tracking-wide uppercase", live ? "text-accent" : "text-muted")}>{when}</p>
+      <p className="mt-1 text-[17px] leading-snug font-medium">{item.title}</p>
+      {item.subtitle && (
+        <p className="mt-1 flex items-center gap-1 text-sm text-muted">
+          <MapPin className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{item.subtitle}</span>
+        </p>
+      )}
+    </section>
+  );
+}
+
+/** The next 7 days at a glance: how busy, deadlines and exams. Tap a day to open it. */
+function WeekStrip({ days }: { days: DayGlance[] }) {
+  return (
+    <section aria-label="This week" className="animate-rise">
+      <SectionTitle href="/plan">This week</SectionTitle>
+      <ol className="grid grid-cols-7 gap-1.5">
+        {days.map((d) => (
+          <li key={d.date}>
+            <Link
+              href={`/plan?date=${d.date}`}
+              aria-label={`${d.label}: ${d.deadlines} deadline${d.deadlines === 1 ? "" : "s"}${d.exam ? ", exam" : ""}`}
+              className={cn(
+                "flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-2xl py-2 text-xs",
+                d.isToday ? "bg-hero text-hero-text" : "bg-surface shadow-soft",
+              )}
+            >
+              <span className="font-medium">{d.isToday ? "Today" : d.label}</span>
+              <span className="flex h-2 items-center gap-0.5">
+                {d.exam && <span className="h-2 w-2 rounded-full bg-danger" />}
+                {Array.from({ length: Math.min(d.deadlines, 3) }, (_, i) => (
+                  <span key={i} className={cn("h-1.5 w-1.5 rounded-full", d.isToday ? "bg-hero-text" : "bg-accent")} />
+                ))}
+                {!d.exam && !d.deadlines && d.busyMinutes > 0 && <span className="h-1 w-3 rounded-full bg-muted/40" />}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
