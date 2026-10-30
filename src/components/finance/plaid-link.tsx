@@ -56,24 +56,20 @@ function useLink(reconnect?: string) {
         onSuccess: async (publicToken, metadata) => {
           setStatus({ ok: true, text: "Connecting and importing your accounts…" });
           try {
-            if (reconnect) {
-              const r = await post<{ synced: { added: number } }>("/api/integrations/plaid/sync", { id: reconnect });
-              setStatus({ ok: true, text: `Reconnected and synced${r.synced.added ? `: ${r.synced.added} new transactions` : ""}.` });
-            } else {
-              const r = await post<{ name: string; synced: { accounts: number; added: number } | null; note: string | null }>(
-                "/api/integrations/plaid/exchange",
-                {
-                  publicToken,
-                  institutionName: metadata.institution?.name ?? null,
-                },
-              );
-              setStatus({
-                ok: true,
-                text: r.synced
-                  ? `${r.name} connected: ${r.synced.accounts} account${r.synced.accounts === 1 ? "" : "s"} and ${r.synced.added} transaction${r.synced.added === 1 ? "" : "s"} imported.`
-                  : `${r.name} connected. ${r.note ?? ""}`,
-              });
-            }
+            const r = await post<{ name: string; synced: { accounts: number; added: number } | null; note: string | null }>(
+              "/api/integrations/plaid/exchange",
+              {
+                publicToken,
+                institutionName: metadata.institution?.name ?? null,
+              },
+            );
+            const connectedLabel = reconnect ? "Reconnected" : `${r.name} connected`;
+            setStatus({
+              ok: true,
+              text: r.synced
+                ? `${connectedLabel}: ${r.synced.accounts} account${r.synced.accounts === 1 ? "" : "s"} and ${r.synced.added} transaction${r.synced.added === 1 ? "" : "s"} imported.`
+                : `${connectedLabel}. ${r.note ?? ""}`,
+            });
             try {
               sessionStorage.removeItem(TOKEN_KEY);
             } catch {}

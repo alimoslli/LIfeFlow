@@ -20,6 +20,12 @@ const n = (f: F, k: string) => Number(f[k] ?? 0);
 
 /** One entry per message kind. Facts come from the detectors in services/proactive. */
 const KINDS: Record<string, (f: F) => Parts> = {
+  email_brief: (f) => ({
+    headline: `${n(f, "count")} important email${n(f, "count") === 1 ? "" : "s"} this morning`,
+    fact: s(f, "emails"),
+    ask: "Want me to open one or tell you what needs a reply?",
+    mood: "info",
+  }),
   spending_pace: (f) => ({
     headline: `${s(f, "category")} is running high`,
     fact: `You spent ${usd(n(f, "spentCents"))} on ${s(f, "category").toLowerCase()} this week, ${usd(n(f, "overCents"))} more than usual.`,
@@ -199,6 +205,7 @@ export function composeMessage(kind: string, facts: F, tone: JarvisTone, opts: {
 
 /** Plain names for each kind, for Settings (What Jarvis knows). */
 export const KIND_LABELS: Record<string, string> = {
+  email_brief: "Morning email brief",
   spending_pace: "Spending pace in a budget",
   goal_milestone: "Goal milestones",
   deadline_conflict: "Deadlines that clash with shifts",

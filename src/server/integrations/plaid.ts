@@ -74,7 +74,14 @@ async function call<T>(path: string, body: Record<string, unknown>, f: Fetch = f
   const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) {
     const code = typeof json.error_code === "string" ? json.error_code : null;
-    const msg = typeof json.display_message === "string" && json.display_message ? json.display_message : "Your bank connection needs attention.";
+    const displayMessage = typeof json.display_message === "string" ? json.display_message : "";
+    const msg =
+      displayMessage ||
+      (code === "INVALID_API_KEYS" || code === "INVALID_CLIENT_ID"
+        ? "Plaid credentials don't match the selected environment. Check PLAID_CLIENT_ID, PLAID_SECRET, and PLAID_ENV."
+        : code
+          ? `Plaid rejected this request (${code}).`
+          : "Plaid rejected this request without an error code.");
     throw new PlaidError(code && REAUTH.has(code) ? "Your bank needs you to sign in again. Use Reconnect." : msg, code, !!code && REAUTH.has(code));
   }
   return json as T;

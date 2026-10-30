@@ -3,7 +3,7 @@ import { and, eq, gte, lte, notInArray } from "drizzle-orm";
 import { addDaysStr, localDateOf, localToInstant, startOfLocalDay } from "@/lib/dates";
 import { truncate } from "@/lib/utils";
 import { decryptSecret, encryptSecret } from "../crypto";
-import { calendarEvents, connectionRegistry, integrations } from "../db/schema";
+import { calendarEvents, connectionRegistry, gmailMessages, integrations } from "../db/schema";
 import { withUser, type UserScope } from "../db/with-user";
 
 /**
@@ -246,6 +246,7 @@ const summary = (m: GmailMessage) => ({
   subject: header(m, "Subject"),
   date: m.internalDate ? new Date(Number(m.internalDate)).toISOString() : header(m, "Date"),
   unread: m.labelIds?.includes("UNREAD") ?? false,
+  labels: m.labelIds ?? [],
   snippet: m.snippet ?? "",
 });
 
@@ -264,6 +265,60 @@ export async function searchEmail(scope: UserScope, query: string, max = 10, f: 
     out.push(summary(m));
   }
   return out;
+}
+
+/**
+ * Keeps a local, body-free index of the latest Gmail messages.  This gives
+ * the user's assistant timely context without retaining the private message
+ * body; it can still fetch a full email from Gmail only when needed.
+ */
+export async function syncGoogleEmail(scope: UserScope, f: Fetch = fetch) {
+  const list = await api<{ messages?: { id: string }[] }>(
+    scope,
+    `${GMAIL}/messages?${new URLSearchParams({ q: "-in:spam -in:trash -label:sent", maxResults: "100" })}`,
+    {},
+    f,
+  );
+  let synced = 0;
+  for (const { id } of list.messages ?? []) {
+    const m = await api<GmailMessage>(
+      scope,
+      `${GMAIL}/messages/${id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
+      {},
+      f,
+    );
+    const receivedAt = new Date(Number(m.internalDate ?? ""));
+    if (Number.isNaN(receivedAt.getTime())) continue;
+    await scope.tx
+      .insert(gmailMessages)
+      .values({
+        userId: scope.userId,
+        gmailMessageId: m.id,
+        threadId: m.threadId,
+        fromAddress: truncate(header(m, "From"), 500),
+        subject: truncate(header(m, "Subject"), 500),
+        snippet: truncate(m.snippet ?? "", 1000),
+        receivedAt,
+        unread: m.labelIds?.includes("UNREAD") ?? false,
+        labels: m.labelIds ?? [],
+        syncedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [gmailMessages.userId, gmailMessages.gmailMessageId],
+        set: {
+          threadId: m.threadId,
+          fromAddress: truncate(header(m, "From"), 500),
+          subject: truncate(header(m, "Subject"), 500),
+          snippet: truncate(m.snippet ?? "", 1000),
+          receivedAt,
+          unread: m.labelIds?.includes("UNREAD") ?? false,
+          labels: m.labelIds ?? [],
+          syncedAt: new Date(),
+        },
+      });
+    synced++;
+  }
+  return { synced };
 }
 
 export async function readEmail(scope: UserScope, id: string, f: Fetch = fetch) {

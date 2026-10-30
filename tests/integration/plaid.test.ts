@@ -149,6 +149,16 @@ describe("Plaid", () => {
     });
   });
 
+  it("explains when Plaid credentials do not match the selected environment", async () => {
+    const invalidKeys = (async () =>
+      new Response(JSON.stringify({ error_code: "INVALID_API_KEYS", display_message: null }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      })) as typeof fetch;
+
+    await expect(createLinkToken("user-1", {}, invalidKeys)).rejects.toThrow(/credentials don't match the selected environment/i);
+  });
+
   it("stores only an encrypted access token and registers the item for webhooks", async () => {
     const { user, run, item } = await connected();
     const [row] = await run((s) => s.tx.select().from(integrations).where(eq(integrations.id, item.id)));

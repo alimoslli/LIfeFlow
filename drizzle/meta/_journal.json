@@ -127,6 +127,13 @@
       "when": 1793249761873,
       "tag": "0017_jarvis_skills",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793436000000,
+      "tag": "0018_gmail_sync",
+      "breakpoints": true
     }
   ]
 }

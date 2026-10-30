@@ -1,7 +1,7 @@
 import { usd } from "@/lib/jarvis-voice";
-import { and, eq, gte, isNotNull, lt, ne } from "drizzle-orm";
-import { addDaysStr, daysBetween, formatDateStr, localDateOf, localTimeOf, monthStart, relativeDayLabel, weekStart } from "@/lib/dates";
-import { tasks, type JarvisTopic, type ProactiveAction } from "../../db/schema";
+import { and, desc, eq, gte, isNotNull, lt, ne } from "drizzle-orm";
+import { addDaysStr, daysBetween, formatDateStr, localDateOf, localTimeOf, monthStart, relativeDayLabel, startOfLocalDay, weekStart } from "@/lib/dates";
+import { gmailMessages, tasks, type JarvisTopic, type ProactiveAction } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { listAccounts } from "../finance/accounts";
 import { balancesOf } from "../finance/overview";
@@ -34,6 +34,30 @@ export type DetectContext = { scope: UserScope; tz: string; today: string; now: 
 export type Detector = (c: DetectContext) => Promise<Candidate[]>;
 
 const spendOf = (t: { amountCents: number }) => Math.max(0, -t.amountCents);
+
+/** Unread, non-promotional inbox mail received since this local day began. */
+const emailBrief: Detector = async ({ scope, tz, today }) => {
+  const since = startOfLocalDay(today, tz);
+  const rows = await scope.tx
+    .select({ from: gmailMessages.fromAddress, subject: gmailMessages.subject, labels: gmailMessages.labels })
+    .from(gmailMessages)
+    .where(and(eq(gmailMessages.userId, scope.userId), eq(gmailMessages.unread, true), gte(gmailMessages.receivedAt, since)))
+    .orderBy(desc(gmailMessages.receivedAt))
+    .limit(20);
+  const important = rows.filter((m) => !m.labels.includes("CATEGORY_PROMOTIONS") && !m.labels.includes("CATEGORY_SOCIAL")).slice(0, 4);
+  if (!important.length) return [];
+  const emails = important.map((m) => `${m.from}: ${m.subject}`).join(" · ");
+  return [
+    {
+      kind: "email_brief",
+      topic: "general",
+      dedupeKey: `email_brief:${today}`,
+      facts: { count: important.length, emails },
+      action: { type: "open", label: "Open Gmail", href: "https://mail.google.com" },
+      priority: 72,
+    },
+  ];
+};
 
 /** A category's spending this week vs. the same days of the previous 8 weeks. */
 const spendingPace: Detector = async ({ scope, today }) => {
@@ -413,6 +437,7 @@ const savingsCheck: Detector = async ({ scope, today }) => {
 };
 
 export const DETECTORS = {
+  emailBrief,
   spendingPace,
   goalMilestones,
   deadlineConflicts,
@@ -437,7 +462,7 @@ export type DetectorName = keyof typeof DETECTORS;
 
 /** Which detectors run when. Events run right after the change that triggered them. */
 export const RUNS: Record<string, DetectorName[]> = {
-  morning: ["morningBrief", "monthlyReview", "savingsCheck", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
+  morning: ["emailBrief", "morningBrief", "monthlyReview", "savingsCheck", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
   midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks", "subscriptionWatch"],
   // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
   evening: ["eveningWrap", "weeklyReview", "weeklyLearned", "goalForecast", "habitCoach", "taskStreak", "goalMilestones", "deadlineConflicts"],

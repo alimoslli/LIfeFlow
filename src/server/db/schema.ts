@@ -320,6 +320,35 @@ export const integrations = pgTable(
 );
 
 /**
+ * Gmail metadata cached for the assistant's current context.  Message bodies
+ * stay in Gmail and are fetched only when the user or assistant needs one.
+ */
+export const gmailMessages = pgTable(
+  "gmail_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    gmailMessageId: text("gmail_message_id").notNull(),
+    threadId: text("thread_id").notNull(),
+    fromAddress: text("from_address").notNull(),
+    subject: text("subject").notNull(),
+    snippet: text("snippet").notNull(),
+    receivedAt: tstz("received_at").notNull(),
+    unread: boolean("unread").notNull().default(false),
+    labels: text("labels")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    syncedAt: tstz("synced_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("gmail_messages_user_message_uq").on(t.userId, t.gmailMessageId),
+    index("gmail_messages_user_received_idx").on(t.userId, t.receivedAt),
+    ownerPolicy(),
+  ],
+);
+
+/**
  * Which user owns which connection, for work that starts without a signed-in
  * user (provider webhooks and the nightly sync). Holds no secrets and no
  * personal data, so it has no RLS (like sessions); every read is followed by
