@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLifeAreas } from "./life-areas";
 
 type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean; /** Other pages that belong to this pill. */ also?: string[]; except?: string[] };
 export type Section = "plan" | "money" | "jarvis" | "personal";
@@ -68,6 +69,7 @@ export function sectionFor(pathname: string) {
 /** `inline`: inside a full-screen page (Jarvis chat) instead of the sticky bar. */
 export function SectionNav({ inline = false, children }: { inline?: boolean; children?: React.ReactNode }) {
   const pathname = usePathname();
+  const areas = useLifeAreas();
   const section = sectionFor(pathname);
   const activeRef = useRef<HTMLAnchorElement>(null);
   useEffect(() => {
@@ -85,25 +87,27 @@ export function SectionNav({ inline = false, children }: { inline?: boolean; chi
           inline ? "px-4" : "max-w-5xl px-5 sm:px-8",
         )}
       >
-        {SECTIONS[section].map((item) => {
-          const on = isOn(pathname, item);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              ref={on ? activeRef : undefined}
-              href={item.href}
-              aria-current={on ? "page" : undefined}
-              className={cn(
-                "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm whitespace-nowrap transition-colors",
-                on ? "bg-text font-medium text-bg" : "bg-surface text-text-2 shadow-soft hover:text-text",
-              )}
-            >
-              <Icon className="h-4 w-4" strokeWidth={1.8} />
-              {item.label}
-            </Link>
-          );
-        })}
+        {SECTIONS[section]
+          .filter((item) => item.href !== "/work" || areas.work)
+          .map((item) => {
+            const on = isOn(pathname, item);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                ref={on ? activeRef : undefined}
+                href={item.href}
+                aria-current={on ? "page" : undefined}
+                className={cn(
+                  "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm whitespace-nowrap transition-colors",
+                  on ? "bg-text font-medium text-bg" : "bg-surface text-text-2 shadow-soft hover:text-text",
+                )}
+              >
+                <Icon className="h-4 w-4" strokeWidth={1.8} />
+                {item.label}
+              </Link>
+            );
+          })}
         {children}
       </div>
     </nav>

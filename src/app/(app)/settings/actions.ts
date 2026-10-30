@@ -33,6 +33,7 @@ export async function updateProfileAction(_p: ActionState, fd: FormData): Promis
       studyTime: f.studyTime as "morning",
       weekStartsOn: f.weekStartsOn as unknown as 0,
       jarvisTone: f.jarvisTone as "balanced",
+      lifeStage: f.lifeStage as "both",
     });
     return "Saved";
   });

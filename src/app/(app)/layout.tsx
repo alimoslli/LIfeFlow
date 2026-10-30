@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/shell/app-shell";
 import { assistantProfile } from "@/lib/assistant";
+import { lifeAreas } from "@/lib/life";
 import { requireUser } from "@/server/auth/current-user";
 import { jarvisStatus } from "@/server/jarvis/providers";
 import { withUser } from "@/server/db/with-user";
@@ -18,6 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       tour={user.preferences?.tour === "pending"}
       assistantName={assistantProfile(user.preferences).name}
       unread={unread}
+      areas={lifeAreas(user.preferences?.lifeStage)}
     >
       {children}
     </AppShell>

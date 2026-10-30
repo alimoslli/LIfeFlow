@@ -234,7 +234,7 @@ Every item opens a bottom sheet or goes to Jarvis. Nothing needs another page.
 |---|---|---|
 | 0 🟡 | **Fix Plaid and Gmail live** (code ready, waiting on the owner's keys) (HANDOFF E1/E2) | A real sandbox bank and the owner's Gmail work in production |
 | 1 ✅ | **Simplify:** the cuts and merges in section 3, the new pills, removing dead code, Jarvis profile, grouped Connections, Appearance (accent and avatar) | Fewer pages, all tests green, nothing more than 2 taps away |
-| 2 | **Onboarding school/job + adaptive tabs**, with Settings toggles and 3 starter ideas | Each of the 4 combinations shows the right tabs, pills and ideas (e2e) |
+| 2 ✅ | **Onboarding school/job + adaptive tabs**, with Settings toggles and 3 starter ideas | Each of the 4 combinations shows the right tabs, pills and ideas (e2e) |
 | 3 | **Today redesign** (section 4), with the morning report, one "Try this" a day, and Jarvis status | 5-second test on a phone at 393 px; every item has an action |
 | 4 | **Jarvis can do everything:** close every gap between buttons and Jarvis tools, the Ideas page (personal ideas on top), the new skills, goal coach, memory import, Gmail to Updates, approval cards, and hints at the right moment | Every idea passes its eval against real services, and every tool returns real saved data |
 | 5 | **School tab:** Classes (grades, final calculator), Due, Notes and projects, syllabus PDF import (HANDOFF E3), a chat per class | A syllabus PDF fills a class's due dates |

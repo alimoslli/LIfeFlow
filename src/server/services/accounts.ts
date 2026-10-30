@@ -70,6 +70,7 @@ export const profileSchema = z.object({
     .pipe(z.union([z.literal(0), z.literal(1)]))
     .optional(),
   jarvisTone: z.enum(["concise", "balanced", "detailed"]).optional(),
+  lifeStage: z.enum(["student", "working", "both", "life"]).optional(),
 });
 
 export async function updateProfile(db: Database, userId: string, input: z.input<typeof profileSchema>) {
@@ -80,7 +81,13 @@ export async function updateProfile(db: Database, userId: string, input: z.input
     .set({
       name: d.name,
       timezone: d.timezone,
-      preferences: { ...current.preferences, studyTime: d.studyTime, weekStartsOn: d.weekStartsOn, jarvisTone: d.jarvisTone ?? current.preferences.jarvisTone },
+      preferences: {
+        ...current.preferences,
+        studyTime: d.studyTime,
+        weekStartsOn: d.weekStartsOn,
+        jarvisTone: d.jarvisTone ?? current.preferences.jarvisTone,
+        lifeStage: d.lifeStage ?? current.preferences.lifeStage,
+      },
     })
     .where(eq(users.id, userId));
 }

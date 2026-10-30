@@ -12,7 +12,7 @@ import { createEmployer } from "./work";
  * through the regular services, so a failed step leaves nothing half-done.
  */
 export const onboardingSchema = z.object({
-  lifeStage: z.enum(["student", "working", "both"]).optional(),
+  lifeStage: z.enum(["student", "working", "both", "life"]).optional(),
   courses: z.array(z.string().trim().min(1).max(200)).max(12).default([]),
   job: z
     .object({

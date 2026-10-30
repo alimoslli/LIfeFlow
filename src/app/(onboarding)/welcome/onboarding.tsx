@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition, type ReactNode } from "react";
-import { ArrowLeft, BookOpen, Briefcase, Layers, Plus, X } from "lucide-react";
+import { ArrowLeft, BookOpen, Briefcase, Layers, Plus, Sun, X } from "lucide-react";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
 import { isHydrated } from "@/components/motion/intro";
 import { Mark } from "@/components/shell/app-shell";
@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Field, FormError, Input, Textarea } from "@/components/ui/field";
 import type { Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { lifeAreas, starterIdeas, type LifeStage } from "@/lib/life";
 import { completeOnboardingAction, skipOnboardingAction } from "./actions";
 
-type Stage = "student" | "working" | "both";
+type Stage = LifeStage;
 type StepId = "hello" | "week" | "classes" | "job" | "money" | "yours";
 
 const STUDY = [
@@ -43,13 +44,15 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
   const [studyTime, setStudyTime] = useState<(typeof STUDY)[number][0] | null>(null);
   const [tone, setTone] = useState<(typeof TONE)[number][0]>("balanced");
   const [aboutMe, setAboutMe] = useState("");
+  const [idea, setIdea] = useState<string | null>(null);
+  const areas = lifeAreas(stage ?? undefined);
 
   const steps = useMemo<StepId[]>(
     () => [
       "hello",
       "week",
-      ...(stage !== "working" ? (["classes"] as const) : []),
-      ...(stage !== "student" && stage ? (["job"] as const) : []),
+      ...(stage && lifeAreas(stage).school ? (["classes"] as const) : []),
+      ...(stage && lifeAreas(stage).work ? (["job"] as const) : []),
       "money",
       "yours",
     ],
@@ -94,17 +97,14 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
       if (bal !== undefined && Number.isNaN(bal)) return setError("Enter your balance as a number, like 1250.50.");
       const r = await completeOnboardingAction({
         lifeStage: stage ?? undefined,
-        courses: stage === "working" ? [] : [...courses, ...(courseDraft.trim() ? [courseDraft.trim()] : [])],
-        job:
-          stage !== "student" && job.name.trim()
-            ? { name: job.name.trim(), hourlyRate: rate !== undefined && !Number.isNaN(rate) ? rate : undefined }
-            : undefined,
+        courses: !areas.school ? [] : [...courses, ...(courseDraft.trim() ? [courseDraft.trim()] : [])],
+        job: areas.work && job.name.trim() ? { name: job.name.trim(), hourlyRate: rate !== undefined && !Number.isNaN(rate) ? rate : undefined } : undefined,
         checking: bal !== undefined ? { name: "Checking", balance: bal } : undefined,
         studyTime: studyTime ?? undefined,
         jarvisTone: tone,
         aboutMe: aboutMe.trim() || undefined,
       });
-      if (r?.ok) router.replace("/");
+      if (r?.ok) router.replace(idea ? `/jarvis?ask=${encodeURIComponent(idea)}` : "/");
       else setError(r?.error ?? "Couldn't save. Try again.");
     });
 
@@ -168,6 +168,7 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
                   ["student", "Classes", "I'm a student", BookOpen],
                   ["working", "Work", "I have a job", Briefcase],
                   ["both", "Both", "Classes and a job", Layers],
+                  ["life", "Neither", "Just my day and my money", Sun],
                 ] as const
               ).map(([value, label, hint, Icon]) => (
                 <button
@@ -274,7 +275,7 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
           <>
             <Title>Make it yours</Title>
             <div className="mt-6 flex flex-col gap-6">
-              {stage !== "working" && (
+              {areas.school && (
                 <Group label="Best time to study">
                   <Chips options={STUDY} value={studyTime} onChange={setStudyTime} />
                 </Group>
@@ -284,6 +285,25 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
               </Group>
               <Group label="Appearance">
                 <ThemePicker initial={theme} />
+              </Group>
+              <Group label="Try one with Jarvis first (optional)">
+                <div className="flex flex-col gap-2" role="radiogroup" aria-label="Try one with Jarvis first">
+                  {starterIdeas(stage ?? undefined).map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      role="radio"
+                      aria-checked={idea === p}
+                      onClick={() => setIdea(idea === p ? null : p)}
+                      className={cn(
+                        "min-h-11 rounded-2xl px-4 py-3 text-left text-[15px] transition-all",
+                        idea === p ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft",
+                      )}
+                    >
+                      &ldquo;{p}&rdquo;
+                    </button>
+                  ))}
+                </div>
               </Group>
               <div data-anim>
                 <Field label="Anything Jarvis should know about you? (optional)" htmlFor="ob-about">

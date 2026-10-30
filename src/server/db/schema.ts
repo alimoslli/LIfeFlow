@@ -74,7 +74,7 @@ export type UserPreferences = {
   /** Let Jarvis suggest things to remember (default on). Explicit "remember…" requests always work. */
   memorySuggestions?: boolean;
   /** What fills the user's week (from onboarding); helps Jarvis and the briefing. */
-  lifeStage?: "student" | "working" | "both";
+  lifeStage?: "student" | "working" | "both" | "life";
   /** First-run setup: "pending" only for accounts created since onboarding launched. */
   onboarding?: "pending" | "done";
   /** Guided tour of the app, offered after onboarding or replayed from Settings. */
