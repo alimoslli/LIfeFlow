@@ -157,6 +157,9 @@ export const users = pgTable("users", {
   inboxToken: text("inbox_token").unique(),
   /** Verified phone (E.164) the user texts Jarvis from. Unique: one account per number. */
   smsPhone: text("sms_phone").unique(),
+  /** "pro" while a paid subscription is active (Stripe webhook keeps it in sync). */
+  plan: text("plan").$type<"free" | "pro">().notNull().default("free"),
+  stripeCustomerId: text("stripe_customer_id").unique(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

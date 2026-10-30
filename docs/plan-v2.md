@@ -241,7 +241,7 @@ Every item opens a bottom sheet or goes to Jarvis. Nothing needs another page.
 | 6 ✅ | **Health page**, Apple Health plus habits | Data appears after the Shortcut runs; habits can be checked off on Today |
 | 7 ✅ | **Integrity rules + test suite + Integrity page** | The suite passes, and Jarvis refuses in a helpful way |
 | 8 ✅ | **SMS Jarvis** (ready; turns on with a Twilio number) | Texting adds a task that shows on Today; confirmations work |
-| 9 | **iPhone app (Capacitor) + Today widget + paid plan** (in-app purchase and Stripe) | On TestFlight for friends; paid features unlock |
+| 9 🟡 | **iPhone app (Capacitor) + Today widget + paid plan** (plan and Capacitor ready; App Store build, widget and in-app purchase need a Mac and Apple account) (in-app purchase and Stripe) | On TestFlight for friends; paid features unlock |
 | 10 | **Canvas, WhatsApp, calls, ready for schools** (privacy pages, accessibility WCAG 2.1 AA, Canvas LTI) | Per item |
 
 Each phase: plan, build, `npm run check`, `npm run build && npm run test:e2e`, phone screenshots to the owner, push.

@@ -7,6 +7,7 @@ import { setSms, smsDecision, userForPhone } from "../services/sms";
 import { runJarvisTurn } from "./agent";
 import { decidePendingAction } from "./decide";
 import type { ModelProvider } from "./providers/types";
+import { isPro } from "../billing";
 
 /**
  * One incoming text from a verified number: a YES/NO answers the pending action;
@@ -31,10 +32,24 @@ export async function answerText(
       accountKind: users.accountKind,
       preferences: users.preferences,
       phone: users.smsPhone,
+      plan: users.plan,
     })
     .from(users)
     .where(eq(users.id, userId));
-  const user: SessionUser = { id: u.id, email: u.email, name: u.name, timezone: u.timezone, accountKind: u.accountKind, preferences: u.preferences };
+  const user: SessionUser = {
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    timezone: u.timezone,
+    accountKind: u.accountKind,
+    preferences: u.preferences,
+    plan: u.plan,
+  };
+  if (!isPro(user)) {
+    const note = "Texting LifeFlow is part of Pro. Upgrade in the app under Settings, Plan.";
+    await deps.send(u.phone!, note);
+    return note;
+  }
   const sms = u.preferences.sms ?? {};
   const moneyLocked = sms.money !== true;
   let reply: string;

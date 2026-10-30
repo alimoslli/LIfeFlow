@@ -5,6 +5,9 @@ import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/
 import { runJarvisTurn, type JarvisEvent } from "@/server/jarvis/agent";
 import { getProvider, modelPrices } from "@/server/jarvis/providers";
 import { ProviderUnavailableError } from "@/server/jarvis/providers/types";
+import { FREE_JARVIS_PER_DAY, isPro } from "@/server/billing";
+import { getDb } from "@/server/db/client";
+import { rateLimit } from "@/server/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -27,6 +30,8 @@ export async function POST(req: Request) {
     if (!parsed.data.message.trim() && !parsed.data.attachmentIds.length) throw new HttpError(400, "Message is empty");
     await enforceRateLimit(`jarvis:min:${user.id}`, 20, 60);
     await enforceRateLimit(`jarvis:day:${user.id}`, 400, 86_400);
+    if (!isPro(user) && !(await rateLimit(getDb(), `jarvis:free:${user.id}`, FREE_JARVIS_PER_DAY, 86_400)).allowed)
+      throw new HttpError(402, `You've used today's ${FREE_JARVIS_PER_DAY} free messages. LifeFlow Pro has no daily limit (Settings → Plan).`);
     const locked = await moneyLocked(user);
 
     let provider;

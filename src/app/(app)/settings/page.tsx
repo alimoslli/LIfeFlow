@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bell, Brain, ChevronRight, Link2, Lock, MessageSquare, Palette, Shield, Sparkles, Trash2 } from "lucide-react";
+import { Bell, Brain, ChevronRight, Link2, Lock, MessageSquare, Palette, Shield, Sparkles, Star, Trash2 } from "lucide-react";
+import { billingConfig } from "@/server/billing";
 import { smsConfig } from "@/server/integrations/twilio";
 import type { LucideIcon } from "lucide-react";
 import { SignOutButton } from "@/components/pwa/sign-out-button";
@@ -39,6 +40,7 @@ export default async function SettingsHome() {
     ],
     [
       { href: "/settings/jarvis", icon: Sparkles, tint: "bg-accent", label: d.assistant, detail: "Personality" },
+      ...(billingConfig() ? [{ href: "/settings/plan", icon: Star, tint: "bg-[#f5a524]", label: "Plan" }] : []),
       ...(smsConfig() ? [{ href: "/settings/text", icon: MessageSquare, tint: "bg-[#34c759]", label: `Text ${d.assistant}` }] : []),
       { href: "/jarvis/memory", icon: Brain, tint: "bg-[#8b5cf6]", label: `What ${d.assistant} knows` },
     ],
