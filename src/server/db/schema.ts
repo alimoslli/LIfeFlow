@@ -656,6 +656,8 @@ export const courses = pgTable(
     location: text("location"),
     /** Free-form meeting info shown on the course page, e.g. "Mon/Wed 10:00-11:15". */
     meetingInfo: text("meeting_info"),
+    /** Percent weight per assignment kind from the syllabus, e.g. { exam: 40, assignment: 30 }. */
+    gradeWeights: jsonb("grade_weights").$type<Record<string, number>>(),
     color: text("color"),
     url: text("url"),
     source: text("source").$type<DataSource>().notNull().default("manual"),

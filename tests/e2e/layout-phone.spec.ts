@@ -11,7 +11,7 @@ const TABS: [string, string, string[]][] = [
   ["Plan", "/plan", ["/calendar", "/tasks", "/goals", "/habits", "/work"]],
   ["Jarvis", "/jarvis", ["/jarvis/says", "/jarvis/ideas", "/jarvis/profile"]],
   ["Money", "/money", ["/finances/accounts", "/wealth", "/finances/budgets", "/finances/transactions", "/finances/subscriptions", "/finances/bills"]],
-  ["School", "/school", ["/notes"]],
+  ["School", "/school", ["/school/due", "/notes"]],
 ];
 
 test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }) => {

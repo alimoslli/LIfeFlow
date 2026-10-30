@@ -9,6 +9,7 @@ import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound, ServiceError } from "../errors";
 import { listCategories, resolveCategory } from "./categories";
 import { autoCategorize, learnCategoryRule } from "./categorize";
+import { parsePatch } from "../patch";
 
 export const TRANSACTION_KINDS = ["income", "expense", "transfer", "refund", "reimbursement", "investment", "adjustment"] as const;
 
@@ -95,7 +96,7 @@ export const transactionPatchSchema = z.object({
  * past transactions from the merchant could be updated too.
  */
 export async function updateTransaction(scope: UserScope, id: string, patch: z.input<typeof transactionPatchSchema>, opts: { learn?: boolean } = {}) {
-  const d = transactionPatchSchema.parse(patch);
+  const d = parsePatch(transactionPatchSchema, patch);
   await assertOwned(scope, categories, d.categoryId, "Category");
   const [before] = opts.learn
     ? await scope.tx

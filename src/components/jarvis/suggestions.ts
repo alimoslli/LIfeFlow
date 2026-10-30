@@ -14,6 +14,7 @@ export const STARTERS: Record<JarvisModule, string[]> = {
 
 /** Follow-ups keyed by the last tool Jarvis used. */
 export const FOLLOW_UPS: Record<string, string[]> = {
+  grade_check: ["Plan study time for the final", "Quiz me on the material"],
   import_assignments: ["Plan study time for these", "Show everything due this week"],
   create_tasks: ["What should I do first?", "Schedule time for these tasks"],
   spending_summary: ["Compare with last month", "How can I cut this without much hassle?"],

@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import {
   BookOpen,
   Briefcase,
+  CalendarCheck,
   CalendarDays,
   CheckSquare,
   HeartPulse,
@@ -54,7 +55,8 @@ export const SECTIONS: Record<Section, Item[]> = {
     { href: "/finances/accounts", label: "Accounts", icon: Landmark, also: ["/wealth"] },
   ],
   personal: [
-    { href: "/school", label: "Classes", icon: BookOpen },
+    { href: "/school", label: "Classes", icon: BookOpen, exact: true, also: ["/school/courses"] },
+    { href: "/school/due", label: "Due", icon: CalendarCheck },
     { href: "/notes", label: "Notes", icon: NotebookPen },
   ],
 };

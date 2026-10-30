@@ -5,6 +5,7 @@ import { habitChecks, habits } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { ServiceError } from "./errors";
 import { notFound } from "./errors";
+import { parsePatch } from "./patch";
 
 /**
  * Small habits (save $10 each payday, a no-spend weekend, study 25 minutes a
@@ -35,7 +36,7 @@ export async function createHabit(scope: UserScope, input: z.input<typeof habitI
 }
 
 export async function updateHabit(scope: UserScope, id: string, patch: Partial<z.input<typeof habitInputSchema>> & { active?: boolean }) {
-  const d = habitInputSchema.partial().parse(patch);
+  const d = parsePatch(habitInputSchema.partial(), patch);
   const [row] = await scope.tx
     .update(habits)
     .set({ ...d, ...(patch.active !== undefined && { active: patch.active }) })

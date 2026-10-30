@@ -1,10 +1,12 @@
 import { and, asc, desc, eq, gte, isNull, lt, ne, sql } from "drizzle-orm";
 import { z } from "zod";
+import { courseGrade } from "@/lib/grades";
 import { DATE_RE, TIME_RE, addDaysStr, localDateOf, localToInstant, startOfLocalDay, todayIn, weekStart } from "@/lib/dates";
 import { normalizeText } from "@/lib/utils";
 import { assignments, courseMaterials, courses, type DataSource } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound, ServiceError } from "./errors";
+import { parsePatch } from "./patch";
 
 export const ASSIGNMENT_KINDS = ["assignment", "exam", "quiz", "project", "reading", "lab", "discussion", "other"] as const;
 
@@ -24,6 +26,7 @@ export const courseInputSchema = z.object({
     .or(z.literal("").transform(() => null)),
   location: z.string().trim().max(200).nullish(),
   meetingInfo: z.string().trim().max(200).nullish(),
+  gradeWeights: z.record(z.string(), z.number().min(0).max(100)).nullish(),
   url: z
     .string()
     .trim()
@@ -50,7 +53,7 @@ export async function createCourse(scope: UserScope, input: z.input<typeof cours
 }
 
 export async function updateCourse(scope: UserScope, id: string, patch: Partial<z.input<typeof courseInputSchema>>) {
-  const data = courseInputSchema.partial().parse(patch);
+  const data = parsePatch(courseInputSchema.partial(), patch);
   const [row] = await scope.tx
     .update(courses)
     .set(data)
@@ -198,7 +201,7 @@ export const assignmentPatchSchema = assignmentInputSchema
   .extend({ status: z.enum(["todo", "in_progress", "done"]).optional(), grade: z.string().max(40).nullish() });
 
 export async function updateAssignment(scope: UserScope, tz: string, id: string, patch: z.input<typeof assignmentPatchSchema>) {
-  const data = assignmentPatchSchema.parse(patch);
+  const data = parsePatch(assignmentPatchSchema, patch);
   const [current] = await scope.tx
     .select()
     .from(assignments)
@@ -371,4 +374,15 @@ export async function listMaterials(scope: UserScope, courseId: string) {
 
 export async function deleteMaterial(scope: UserScope, id: string) {
   await scope.tx.delete(courseMaterials).where(and(eq(courseMaterials.id, id), eq(courseMaterials.userId, scope.userId)));
+}
+
+/** The class's current grade from graded work (and its weights, if set). Null when nothing is graded yet. */
+export async function courseGradeReport(scope: UserScope, tz: string, courseId: string) {
+  const course = await getCourse(scope, courseId);
+  const all = await listAssignments(scope, tz, { courseId, view: "all" });
+  const grade = courseGrade(
+    all.map((a) => ({ kind: a.kind, grade: a.grade, pointsPossible: a.pointsPossible == null ? null : Number(a.pointsPossible) })),
+    course.gradeWeights,
+  );
+  return { course: { id: course.id, name: course.name }, weights: course.gradeWeights ?? null, grade };
 }

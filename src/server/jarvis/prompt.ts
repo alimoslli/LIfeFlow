@@ -3,7 +3,7 @@ import { ASSISTANT_STYLES, assistantProfile, type AssistantProfile } from "@/lib
 import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from "../db/schema";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-10-30.4";
+export const PROMPT_VERSION = "2026-10-30.5";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",

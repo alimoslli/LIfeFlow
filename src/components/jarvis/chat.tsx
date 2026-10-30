@@ -36,7 +36,7 @@ type ServerEvent =
   | { type: "done"; messageId: string | null; runId?: string | null }
   | { type: "error"; message: string };
 
-const ACCEPT = "image/png,image/jpeg,image/webp,image/gif,text/plain,text/csv,text/markdown,application/json,.md,.csv,.txt";
+const ACCEPT = "application/pdf,.pdf,image/png,image/jpeg,image/webp,image/gif,text/plain,text/csv,text/markdown,application/json,.md,.csv,.txt";
 
 export function JarvisChat({
   conversationId: initialId,

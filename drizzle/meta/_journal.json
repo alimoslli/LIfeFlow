@@ -141,6 +141,13 @@
       "when": 1793320471872,
       "tag": "0019_work_schedule",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793323271571,
+      "tag": "0020_grade_weights",
+      "breakpoints": true
     }
   ]
 }

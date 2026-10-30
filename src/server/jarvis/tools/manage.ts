@@ -10,7 +10,7 @@ import { dateArg, defineTool, idArg, moneyArg, toCents, toDollars } from "../too
 export const manageTools = [
   defineTool({
     name: "update_course",
-    description: "Change a course's name, code, term, instructor, meeting times or location. Only pass fields that change.",
+    description: "Change a course's name, code, term, instructor, meeting times, location or grade weights. Only pass fields that change.",
     schema: z.object({
       id: idArg("Course"),
       name: z.string().min(1).max(200).optional(),
@@ -20,6 +20,10 @@ export const manageTools = [
       instructorEmail: z.string().email().optional(),
       meetingInfo: z.string().max(200).optional(),
       location: z.string().max(200).optional(),
+      gradeWeights: z
+        .record(z.string(), z.number().min(0).max(100))
+        .optional()
+        .describe("Percent per assignment kind from the syllabus: exam, quiz, assignment, project, lab, discussion"),
     }),
     mutates: true,
     async execute({ id, ...patch }, ctx) {

@@ -10,6 +10,7 @@ const LABELS: Record<string, string> = {
   list_projects: "Checking projects",
   create_project: "Creating project",
   list_courses: "Checking courses",
+  grade_check: "Working out your grade",
   create_course: "Creating course",
   list_assignments: "Checking assignments",
   import_assignments: "Saving assignments",

@@ -9,6 +9,7 @@ import { listCategories } from "./categories";
 import { rollupToParents, spendingByCategoryId } from "./cashflow";
 import { detectRecurring, merchantKey, nextOccurrence } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
+import { parsePatch } from "../patch";
 
 // ---------------------------------------------------------------- budgets
 
@@ -120,7 +121,7 @@ export async function updateGoal(
   patch: Partial<z.input<typeof goalInputSchema>> & { status?: "active" | "achieved" | "archived" },
 ) {
   const { status, ...rest } = patch;
-  const d = goalInputSchema.partial().parse(rest);
+  const d = parsePatch(goalInputSchema.partial(), rest);
   const [row] = await scope.tx
     .update(financialGoals)
     .set({ ...d, ...(status && { status }) })
@@ -178,7 +179,7 @@ export async function createRecurring(scope: UserScope, input: z.input<typeof re
 }
 
 export async function updateRecurring(scope: UserScope, id: string, patch: Partial<z.input<typeof recurringInputSchema>>) {
-  const d = recurringInputSchema.partial().parse(patch);
+  const d = parsePatch(recurringInputSchema.partial(), patch);
   await assertOwned(scope, categories, d.categoryId, "Category");
   await assertOwned(scope, financialAccounts, d.accountId, "Account");
   const [row] = await scope.tx

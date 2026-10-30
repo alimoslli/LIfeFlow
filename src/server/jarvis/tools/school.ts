@@ -1,7 +1,9 @@
 import { z } from "zod";
+import { neededOnFinal } from "@/lib/grades";
 import { moveToTrash } from "../../services/trash";
 import { localDateOf, localTimeOf } from "@/lib/dates";
 import {
+  courseGradeReport,
   ASSIGNMENT_KINDS,
   addMaterial,
   createCourse,
@@ -42,6 +44,22 @@ function presentAssignment(
 }
 
 export const schoolTools = [
+  defineTool({
+    name: "grade_check",
+    description:
+      "A class's current grade from the user's graded work (using the syllabus weights if set), and optionally the score needed on the final to reach a target. Never guess grades that aren't recorded.",
+    schema: z.object({
+      courseId: idArg("Course"),
+      finalWeightPercent: z.number().min(1).max(100).optional().describe("How much the final counts, from the syllabus"),
+      targetPercent: z.number().min(1).max(100).optional().describe("The final grade the user wants, e.g. 90 for an A-"),
+    }),
+    mutates: false,
+    async execute(a, ctx) {
+      const r = await ctx.run((s) => courseGradeReport(s, ctx.tz, a.courseId));
+      const needed = r.grade && a.finalWeightPercent && a.targetPercent ? neededOnFinal(r.grade.percent, a.finalWeightPercent, a.targetPercent) : null;
+      return { ...r, neededOnFinalPercent: needed, viewAt: `/school/courses/${a.courseId}` };
+    },
+  }),
   defineTool({
     name: "list_courses",
     description: "List the user's current courses (ids, codes, instructors, meeting info).",

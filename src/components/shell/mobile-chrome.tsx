@@ -22,6 +22,7 @@ const ROUTES: { test: RegExp; title: string; back?: string }[] = [
   { test: /^\/inbox/, title: "Updates" },
   { test: /^\/habits/, title: "Health" },
   { test: /^\/school\/courses\/[^/]+$/, title: "Class", back: "/school" },
+  { test: /^\/school\/due/, title: "Due" },
   { test: /^\/school/, title: "Classes" },
   { test: /^\/notes\/[^/]+$/, title: "Note", back: "/notes" },
   { test: /^\/notes/, title: "Notes" },

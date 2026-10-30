@@ -5,6 +5,7 @@ import { DATE_RE, TIME_RE, addDaysStr, dayOfWeek, localDateOf, localTimeOf, loca
 import { employers, paychecks, workShifts, type DataSource, type WorkSchedule } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound, ServiceError } from "./errors";
+import { parsePatch } from "./patch";
 
 // ---------------------------------------------------------------- pure calculations
 
@@ -141,7 +142,7 @@ export async function createEmployer(scope: UserScope, input: z.input<typeof emp
 }
 
 export async function updateEmployer(scope: UserScope, id: string, patch: Partial<z.input<typeof employerInputSchema>>) {
-  const d = employerInputSchema.partial().parse(patch);
+  const d = parsePatch(employerInputSchema.partial(), patch);
   const { overtimeThresholdHours, overtimeMultiplier, ...rest } = d;
   if (d.schedule !== undefined) {
     // New hours replace the future days filled from the old ones; worked, edited or added shifts stay.
@@ -259,7 +260,7 @@ export const shiftPatchSchema = shiftInputSchema.partial().extend({ breakMinutes
 
 /** Edits a shift's job, date, times, break or notes. Returns any shifts it now overlaps. */
 export async function updateShift(scope: UserScope, tz: string, id: string, input: z.input<typeof shiftPatchSchema>) {
-  const d = shiftPatchSchema.parse(input);
+  const d = parsePatch(shiftPatchSchema, input);
   const [shift] = await scope.tx
     .select()
     .from(workShifts)

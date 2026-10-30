@@ -237,7 +237,7 @@ Every item opens a bottom sheet or goes to Jarvis. Nothing needs another page.
 | 2 ✅ | **Onboarding school/job + adaptive tabs**, with Settings toggles and 3 starter ideas | Each of the 4 combinations shows the right tabs, pills and ideas (e2e) |
 | 3 ✅ | **Today redesign** (section 4), with the morning report, one "Try this" a day, and Jarvis status | 5-second test on a phone at 393 px; every item has an action |
 | 4 ✅ | **Jarvis can do everything:** close every gap between buttons and Jarvis tools, the Ideas page (personal ideas on top), the new skills, goal coach, memory import, Gmail to Updates, approval cards, and hints at the right moment | Every idea passes its eval against real services, and every tool returns real saved data |
-| 5 | **School tab:** Classes (grades, final calculator), Due, Notes and projects, syllabus PDF import (HANDOFF E3), a chat per class | A syllabus PDF fills a class's due dates |
+| 5 ✅ | **School tab:** Classes (grades, final calculator), Due, Notes and projects, syllabus PDF import (HANDOFF E3), a chat per class | A syllabus PDF fills a class's due dates |
 | 6 | **Health page**, Apple Health plus habits | Data appears after the Shortcut runs; habits can be checked off on Today |
 | 7 | **Integrity rules + test suite + Integrity page** | The suite passes, and Jarvis refuses in a helpful way |
 | 8 | **SMS Jarvis** | Texting adds a task that shows on Today; confirmations work |
