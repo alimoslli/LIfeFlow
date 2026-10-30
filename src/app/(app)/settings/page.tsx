@@ -91,6 +91,9 @@ export default async function SettingsHome() {
           <Link href="/terms" className="hover:text-text">
             Terms
           </Link>
+          <Link href="/integrity" className="hover:text-text">
+            Academic integrity
+          </Link>
         </p>
       </div>
     </div>

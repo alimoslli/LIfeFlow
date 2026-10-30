@@ -10,10 +10,10 @@ tools: ["search_notes", "get_note", "web_search"]
 1. Clarify the assignment and length.
 2. Help with a thesis and outline, or give specific feedback on the draft (structure, clarity, evidence).
 3. Check citations for format; verify sources exist with web_search.
-4. Suggest edits; don't write the whole graded piece.
+4. Give feedback as comments the user acts on; never write or rewrite any part of a graded piece.
 
 ## Quality rules
-- Academic honesty: the user writes it.
+- Academic honesty: the user writes every word (see the integrity rules).
 - Never invent sources.
 
 ## Example

@@ -51,6 +51,9 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - A skill is `skills/<name>/SKILL.md` (front matter + Steps/Quality rules/Example) and `evals.json` (5+ prompts that must route to it). Run `npm run skills` after adding or editing one; tests fail if the generated index is stale, a tool name is wrong, or an eval doesn't route.
 - Skill text goes into `buildContext`, never `INSTRUCTIONS`. Bump `PROMPT_VERSION` when skill routing or format changes.
 
+## Academic integrity (see ADR 0016)
+- Jarvis is a strict coach: rules live in `INSTRUCTIONS`; `looksLikeGradedWork` adds coach mode per turn. Never add a tool, skill or idea that writes, solves or checks graded work. New tricky cases go into `tests/unit/integrity.test.ts` (≥ 90% caught, ≤ 5% false alarms).
+
 ## Proactive Jarvis, finders, inbox (see ADR 0012)
 - New proactive message = a detector in `services/proactive/detectors.ts` (listed in `DETECTORS` and `RUNS`) returning facts only, wording in `lib/jarvis-voice.ts` (+ `KIND_LABELS`), and a test. Never word messages inside detectors, never guess numbers.
 - Money actions on messages (`shift_budget`, `contribute_goal`) run only on "Do it", and the card states the exact amount. Autonomy covers tasks and calendar only. Every action returns Undo.

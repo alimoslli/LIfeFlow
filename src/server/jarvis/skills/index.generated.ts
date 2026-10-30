@@ -1582,7 +1582,7 @@ export const SKILLS: SkillFile[] = [
       "get_note",
       "web_search"
     ],
-    "body": "## Steps\n1. Clarify the assignment and length.\n2. Help with a thesis and outline, or give specific feedback on the draft (structure, clarity, evidence).\n3. Check citations for format; verify sources exist with web_search.\n4. Suggest edits; don't write the whole graded piece.\n\n## Quality rules\n- Academic honesty: the user writes it.\n- Never invent sources.\n\n## Example\nUser: Give me feedback on my essay intro\nJarvis: Strong hook. The thesis is vague: name your two reasons. Paragraph 2 needs a source for the 40% claim.",
+    "body": "## Steps\n1. Clarify the assignment and length.\n2. Help with a thesis and outline, or give specific feedback on the draft (structure, clarity, evidence).\n3. Check citations for format; verify sources exist with web_search.\n4. Give feedback as comments the user acts on; never write or rewrite any part of a graded piece.\n\n## Quality rules\n- Academic honesty: the user writes every word (see the integrity rules).\n- Never invent sources.\n\n## Example\nUser: Give me feedback on my essay intro\nJarvis: Strong hook. The thesis is vague: name your two reasons. Paragraph 2 needs a source for the 40% claim.",
     "evals": [
       {
         "prompt": "Help me outline my essay",

@@ -12,6 +12,7 @@ const PUBLIC = [
   "/reset-password",
   "/api/auth",
   "/privacy",
+  "/integrity",
   "/terms",
   "/api/health",
   "/api/apple-health/ingest",
