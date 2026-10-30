@@ -362,7 +362,10 @@ export const syncJobs = pgTable(
 // ---------------------------------------------------------------------------
 // finance
 
-export type DataSource = "manual" | "jarvis" | "import" | "demo" | "plaid" | "canvas" | "ukg" | "google" | "apple_health";
+export type DataSource = "manual" | "jarvis" | "import" | "demo" | "plaid" | "canvas" | "ukg" | "google" | "apple_health" | "schedule";
+
+/** Regular hours for a job (e.g. full-time Mon–Fri 08:00–17:00). Days are 0 = Sunday … 6 = Saturday. */
+export type WorkSchedule = { days: number[]; start: string; end: string; breakMinutes?: number };
 
 export type AccountType = "depository" | "credit" | "loan" | "investment" | "cash" | "other";
 
@@ -837,6 +840,10 @@ export const employers = pgTable(
     overtimeThresholdHours: numeric("overtime_threshold_hours", { precision: 5, scale: 2 }).notNull().default("40"),
     overtimeMultiplier: numeric("overtime_multiplier", { precision: 4, scale: 2 }).notNull().default("1.5"),
     color: text("color"),
+    /** Regular hours; shifts are filled in a few weeks ahead from these. */
+    schedule: jsonb("schedule").$type<WorkSchedule>(),
+    /** Last day already filled from `schedule`, so a deleted day isn't put back. */
+    scheduleFilledThrough: date("schedule_filled_through", { mode: "string" }),
     source: text("source").$type<DataSource>().notNull().default("manual"),
     archivedAt: tstz("archived_at"),
     createdAt: createdAt(),

@@ -1,8 +1,8 @@
 import { series } from "@/server/db/series";
 import { and, asc, desc, eq, gt, gte, isNull, lt, ne } from "drizzle-orm";
 import { z } from "zod";
-import { DATE_RE, TIME_RE, addDaysStr, localDateOf, localTimeOf, localToInstant, startOfLocalDay, weekStart } from "@/lib/dates";
-import { employers, paychecks, workShifts, type DataSource } from "../db/schema";
+import { DATE_RE, TIME_RE, addDaysStr, dayOfWeek, localDateOf, localTimeOf, localToInstant, startOfLocalDay, weekStart } from "@/lib/dates";
+import { employers, paychecks, workShifts, type DataSource, type WorkSchedule } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound, ServiceError } from "./errors";
 
@@ -101,6 +101,13 @@ export function estimateEarnings(shifts: ShiftLike[], rates: EmployerRates, tz: 
 
 // ---------------------------------------------------------------- employers
 
+export const workScheduleSchema = z.object({
+  days: z.array(z.number().int().min(0).max(6)).min(1).max(7),
+  start: z.string().regex(TIME_RE),
+  end: z.string().regex(TIME_RE),
+  breakMinutes: z.number().int().min(0).max(240).optional(),
+});
+
 export const employerInputSchema = z.object({
   name: z.string().trim().min(1).max(200),
   position: z.string().trim().max(120).nullish(),
@@ -113,6 +120,8 @@ export const employerInputSchema = z.object({
     .string()
     .regex(/^#[0-9a-f]{6}$/i)
     .nullish(),
+  /** Regular hours (full-time or a fixed part-time schedule). Null = shifts change week to week. */
+  schedule: workScheduleSchema.nullish(),
 });
 
 export async function createEmployer(scope: UserScope, input: z.input<typeof employerInputSchema>, source: DataSource = "manual") {
@@ -134,10 +143,25 @@ export async function createEmployer(scope: UserScope, input: z.input<typeof emp
 export async function updateEmployer(scope: UserScope, id: string, patch: Partial<z.input<typeof employerInputSchema>>) {
   const d = employerInputSchema.partial().parse(patch);
   const { overtimeThresholdHours, overtimeMultiplier, ...rest } = d;
+  if (d.schedule !== undefined) {
+    // New hours replace the future days filled from the old ones; worked, edited or added shifts stay.
+    await scope.tx
+      .delete(workShifts)
+      .where(
+        and(
+          eq(workShifts.userId, scope.userId),
+          eq(workShifts.employerId, id),
+          eq(workShifts.source, "schedule"),
+          eq(workShifts.status, "scheduled"),
+          gt(workShifts.startsAt, new Date()),
+        ),
+      );
+  }
   const [row] = await scope.tx
     .update(employers)
     .set({
       ...rest,
+      ...(d.schedule !== undefined && { scheduleFilledThrough: null }),
       ...(overtimeThresholdHours !== undefined && { overtimeThresholdHours: String(overtimeThresholdHours) }),
       ...(overtimeMultiplier !== undefined && { overtimeMultiplier: String(overtimeMultiplier) }),
     })
@@ -368,4 +392,38 @@ export async function deletePaycheck(scope: UserScope, id: string) {
 
 export async function listPaychecks(scope: UserScope, limit = 20) {
   return scope.tx.select().from(paychecks).where(eq(paychecks.userId, scope.userId)).orderBy(desc(paychecks.payDate)).limit(limit);
+}
+
+// ---------------------------------------------------------------- regular hours
+
+const SCHEDULE_WEEKS_AHEAD = 3;
+
+/**
+ * Fills in shifts from each job's regular hours, a few weeks ahead. Each day is
+ * filled once (`scheduleFilledThrough`), so a day the user deletes or cancels
+ * (a holiday, a day off) isn't put back. Returns how many shifts were added.
+ */
+export async function fillRegularShifts(scope: UserScope, tz: string, today: string) {
+  const jobs = (await listEmployers(scope)).filter((e) => e.schedule && !e.archivedAt);
+  const until = addDaysStr(today, SCHEDULE_WEEKS_AHEAD * 7 - 1);
+  let added = 0;
+  for (const job of jobs) {
+    const sched = job.schedule as WorkSchedule;
+    const from = job.scheduleFilledThrough && job.scheduleFilledThrough >= today ? addDaysStr(job.scheduleFilledThrough, 1) : today;
+    if (from > until) continue;
+    for (let d = from; d <= until; d = addDaysStr(d, 1)) {
+      if (!sched.days.includes(dayOfWeek(d))) continue;
+      const { startsAt } = shiftInstants(d, sched.start, sched.end, tz);
+      if (startsAt.getTime() <= Date.now()) continue;
+      await createShift(
+        scope,
+        tz,
+        { employerId: job.id, date: d, startTime: sched.start, endTime: sched.end, breakMinutes: sched.breakMinutes ?? 0 },
+        "schedule",
+      );
+      added++;
+    }
+    await scope.tx.update(employers).set({ scheduleFilledThrough: until }).where(eq(employers.id, job.id));
+  }
+  return added;
 }

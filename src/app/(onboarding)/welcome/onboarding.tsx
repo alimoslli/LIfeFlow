@@ -11,6 +11,8 @@ import { Field, FormError, Input, Textarea } from "@/components/ui/field";
 import type { Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { lifeAreas, starterIdeas, type LifeStage } from "@/lib/life";
+import { WorkHours } from "@/components/work-hours";
+import type { WorkSchedule } from "@/server/db/schema";
 import { completeOnboardingAction, skipOnboardingAction } from "./actions";
 
 type Stage = LifeStage;
@@ -45,6 +47,7 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
   const [tone, setTone] = useState<(typeof TONE)[number][0]>("balanced");
   const [aboutMe, setAboutMe] = useState("");
   const [idea, setIdea] = useState<string | null>(null);
+  const [hours, setHours] = useState<WorkSchedule | null>(null);
   const areas = lifeAreas(stage ?? undefined);
 
   const steps = useMemo<StepId[]>(
@@ -98,7 +101,10 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
       const r = await completeOnboardingAction({
         lifeStage: stage ?? undefined,
         courses: !areas.school ? [] : [...courses, ...(courseDraft.trim() ? [courseDraft.trim()] : [])],
-        job: areas.work && job.name.trim() ? { name: job.name.trim(), hourlyRate: rate !== undefined && !Number.isNaN(rate) ? rate : undefined } : undefined,
+        job:
+          areas.work && job.name.trim()
+            ? { name: job.name.trim(), hourlyRate: rate !== undefined && !Number.isNaN(rate) ? rate : undefined, schedule: hours ?? undefined }
+            : undefined,
         checking: bal !== undefined ? { name: "Checking", balance: bal } : undefined,
         studyTime: studyTime ?? undefined,
         jarvisTone: tone,
@@ -245,6 +251,7 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
                   maxLength={200}
                 />
               </Field>
+              <WorkHours value={hours} onChange={setHours} />
               <Field label="Hourly pay (optional)" htmlFor="ob-rate">
                 <Input
                   id="ob-rate"

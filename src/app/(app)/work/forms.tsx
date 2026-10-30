@@ -1,4 +1,7 @@
 "use client";
+import { useState } from "react";
+import { WorkHours } from "@/components/work-hours";
+import type { WorkSchedule } from "@/server/db/schema";
 import { addDaysStr } from "@/lib/dates";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -46,5 +49,30 @@ export function ShiftDialog({
         </ActionForm>
       )}
     </Dialog>
+  );
+}
+
+/** Regular hours as a form field (`schedule`, JSON). */
+export function WorkHoursField({ initial = null }: { initial?: WorkSchedule | null }) {
+  const [hours, setHours] = useState<WorkSchedule | null>(initial);
+  return <WorkHours value={hours} onChange={setHours} name="schedule" />;
+}
+
+/** "Regular hours" for a job, saved on its own: changing them replaces the future days filled from the old hours. */
+export function JobHoursForm({
+  action,
+  employerId,
+  initial,
+}: {
+  action: (p: ActionState, fd: FormData) => Promise<ActionState>;
+  employerId: string;
+  initial: WorkSchedule | null;
+}) {
+  return (
+    <ActionForm action={action} reset={false} showSuccess className="mt-2">
+      <input type="hidden" name="employerId" value={employerId} />
+      <WorkHoursField initial={initial} />
+      <SubmitButton className="self-end">Save hours</SubmitButton>
+    </ActionForm>
   );
 }

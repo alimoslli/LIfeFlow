@@ -73,11 +73,15 @@ test("reduced motion: never a splash, even when requested", async ({ page }) => 
 });
 
 test("the app follows what fills your week: tabs and pills adapt, and a starter idea opens Jarvis", async ({ page }) => {
-  await signUp(page, "Sam Ortiz", { onboarding: "stay" });
+  const email = await signUp(page, "Sam Ortiz", { onboarding: "stay" });
   await page.getByRole("button", { name: "Let's set it up" }).click();
   await page.getByRole("radio", { name: /^Work/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByLabel("Workplace")).toBeVisible(); // no classes step
+  await page.getByLabel("Workplace").fill("Target");
+  await page.getByRole("radio", { name: /Same hours every week/ }).click();
+  await expect(page.getByRole("button", { name: "Saturday" })).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByLabel("Starts")).toHaveValue("08:00");
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByText("Best time to study")).toHaveCount(0);
@@ -85,6 +89,9 @@ test("the app follows what fills your week: tabs and pills adapt, and a starter 
   await page.getByRole("button", { name: "Finish" }).click();
   await page.waitForURL((u) => u.pathname === "/jarvis");
   await expect(page.getByLabel("Message Jarvis")).toHaveValue("Add my shifts from this screenshot of my schedule.");
+  // Full-time hours were saved and the next weeks of shifts filled in.
+  expect((await queryAsUser<{ s: { days: number[] } }>(email, "select schedule as s from employers"))[0].s.days).toEqual([1, 2, 3, 4, 5]);
+  expect(Number((await queryAsUser<{ n: string }>(email, "select count(*) as n from work_shifts"))[0].n)).toBeGreaterThanOrEqual(14);
   await page.keyboard.press("Escape");
 
   const tab = (name: string) => page.getByRole("navigation", { name: "Main" }).getByRole("link", { name, exact: true }).filter({ visible: true });

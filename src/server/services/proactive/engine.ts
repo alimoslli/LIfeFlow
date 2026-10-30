@@ -7,6 +7,7 @@ import type { UserScope } from "../../db/with-user";
 import { DETECTORS, RUNS, type Candidate } from "./detectors";
 import { nextQuestion } from "./questions";
 import { performAction } from "./respond";
+import { fillRegularShifts } from "../work";
 
 export type Slot = "morning" | "midday" | "evening";
 export type JarvisMessage = typeof jarvisMessages.$inferSelect;
@@ -182,6 +183,8 @@ export async function runDueSlot(scope: UserScope, tz: string, prefs: UserPrefer
     .onConflictDoNothing()
     .returning({ id: notificationLog.id });
   if (!first) return [];
+  // Keep regular work hours filled in ahead, so detectors and Today see them.
+  await fillRegularShifts(scope, tz, todayIn(tz, now));
   return runProactive({ scope, tz, prefs, trigger: slot, now });
 }
 

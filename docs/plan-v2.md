@@ -127,7 +127,7 @@ New skills these need: audio review, professor email draft, student discounts, t
 | Tab | Pills | Notes |
 |---|---|---|
 | **Today** | none | The main screen (section 4) |
-| **Plan** | Calendar · To-dos · Goals · Health (+ **Work** if they have a job) | **Calendar:** Week/Month; trips are just events. **Goals:** all goals together (savings, GPA, fitness); money goals track progress from accounts. **Work:** shifts, hours, pay |
+| **Plan** | Calendar · To-dos · Goals · Health (+ **Work** if they have a job) | **Calendar:** Week/Month; trips are just events. **Goals:** all goals together (savings, GPA, fitness); money goals track progress from accounts. **Work:** shifts, hours, pay. Jobs with regular hours (full-time like Mon–Fri 8 to 5) fill their shifts 3 weeks ahead automatically; a deleted day off stays off |
 | **Jarvis** | Chat · Updates · Ideas | **Updates** merges Noticed and Inbox (what he did, what needs you). **Ideas** is the catalog. Memory and Personality move into the **Jarvis profile** (tap his avatar) |
 | **Money** | Overview · Activity · Accounts | **Overview:** available now, spent and came in, bills and subscriptions, budget. **Activity:** transactions and rules. **Accounts:** includes investments. Insights come from Jarvis |
 | **School** (only if they're in school) | Classes · Due · Notes | **Classes:** schedule, grades, "what I need on the final." **Due:** assignments and exams by date. **Notes:** notes and projects, tied to a class |

@@ -3,8 +3,8 @@ import { mutate, type ActionState } from "@/server/actions";
 import { completeOnboarding, finishOnboarding, setTourState, type OnboardingInput } from "@/server/services/onboarding";
 
 export async function completeOnboardingAction(input: OnboardingInput): Promise<ActionState> {
-  return mutate("onboarding.completed", async (s) => {
-    await completeOnboarding(s, input);
+  return mutate("onboarding.completed", async (s, u) => {
+    await completeOnboarding(s, input, u.timezone);
   });
 }
 

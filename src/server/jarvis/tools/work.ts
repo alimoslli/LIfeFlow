@@ -3,9 +3,24 @@ import { formatIn } from "@/lib/dates";
 import { and, eq } from "drizzle-orm";
 import { workShifts } from "../../db/schema";
 import { moveToTrash } from "../../services/trash";
-import { createEmployer, createShift, listEmployers, listShifts, recordShiftHours, setShiftStatus, updateShift, workSummary } from "../../services/work";
+import {
+  createEmployer,
+  createShift,
+  fillRegularShifts,
+  listEmployers,
+  listShifts,
+  recordShiftHours,
+  setShiftStatus,
+  updateEmployer,
+  updateShift,
+  workSummary,
+  workScheduleSchema,
+} from "../../services/work";
+import { scheduleLabel } from "@/lib/work-schedule";
 import { centsToDollarsDeep } from "./finance";
 import { dateArg, defineTool, idArg, moneyArg, timeArg, toCents } from "../tool";
+
+const REGULAR_HOURS = workScheduleSchema.describe("Days 0=Sunday..6=Saturday, start and end as HH:MM (24h), optional unpaid breakMinutes");
 
 export const workTools = [
   defineTool({
@@ -23,24 +38,55 @@ export const workTools = [
           payType: e.payType,
           hourlyRateCents: e.hourlyRateCents,
           overtimeAfterHours: Number(e.overtimeThresholdHours),
+          regularHours: e.schedule ? scheduleLabel(e.schedule) : null,
         })),
       });
     },
   }),
   defineTool({
     name: "add_job",
-    description: "Add an employer/job.",
-    schema: z.object({ name: z.string().min(1).max(200), position: z.string().max(120).optional(), hourlyRate: moneyArg("Hourly rate").optional() }),
+    description: "Add an employer/job. For a fixed schedule (e.g. full-time Mon-Fri 8 to 5) pass regularHours; shifts then fill in 3 weeks ahead.",
+    schema: z.object({
+      name: z.string().min(1).max(200),
+      position: z.string().max(120).optional(),
+      hourlyRate: moneyArg("Hourly rate").optional(),
+      regularHours: REGULAR_HOURS.optional(),
+    }),
     mutates: true,
     async execute(a, ctx) {
-      const e = await ctx.run((s) =>
-        createEmployer(
+      const r = await ctx.run(async (s) => {
+        const e = await createEmployer(
           s,
-          { name: a.name, position: a.position, payType: "hourly", hourlyRateCents: a.hourlyRate != null ? toCents(a.hourlyRate) : null },
+          {
+            name: a.name,
+            position: a.position,
+            payType: "hourly",
+            hourlyRateCents: a.hourlyRate != null ? toCents(a.hourlyRate) : null,
+            schedule: a.regularHours ?? null,
+          },
           "jarvis",
-        ),
-      );
-      return { created: { id: e.id, name: e.name }, viewAt: "/work" };
+        );
+        return { e, shiftsAdded: await fillRegularShifts(s, ctx.tz, ctx.today) };
+      });
+      return {
+        created: { id: r.e.id, name: r.e.name, regularHours: r.e.schedule ? scheduleLabel(r.e.schedule) : null },
+        shiftsAdded: r.shiftsAdded,
+        viewAt: "/work",
+      };
+    },
+  }),
+  defineTool({
+    name: "set_regular_hours",
+    description:
+      "Set or clear a job's regular hours (same days and times every week). Replaces the upcoming days filled from the old hours; worked or hand-added shifts stay. Pass null to switch back to shifts that change week to week.",
+    schema: z.object({ jobId: idArg("Job id from list_jobs"), regularHours: REGULAR_HOURS.nullable() }),
+    mutates: true,
+    async execute(a, ctx) {
+      const r = await ctx.run(async (s) => {
+        const e = await updateEmployer(s, a.jobId, { schedule: a.regularHours });
+        return { e, shiftsAdded: await fillRegularShifts(s, ctx.tz, ctx.today) };
+      });
+      return { job: r.e.name, regularHours: r.e.schedule ? scheduleLabel(r.e.schedule) : null, shiftsAdded: r.shiftsAdded, viewAt: "/work" };
     },
   }),
   defineTool({
