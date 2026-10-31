@@ -228,14 +228,22 @@ type PlaidTxn = {
 };
 
 /** Plaid's categories → LifeFlow's default category names and transaction kinds. */
-export function mapPfc(pfc: PlaidTxn["personal_finance_category"], amountCents: number): { category: string | null; kind: TransactionKind } {
+/** Money coming in that's really income: payroll and peer payments, which banks often report as transfers. */
+const INCOMING_HINT = /\b(payroll|direct dep|dir dep|deposit|salary|zelle|venmo|cash ?app|paypal|wages|stipend)\b/i;
+
+export function mapPfc(pfc: PlaidTxn["personal_finance_category"], amountCents: number, text = ""): { category: string | null; kind: TransactionKind } {
   const p = pfc?.primary ?? "";
   const d = pfc?.detailed ?? "";
   const out = amountCents < 0;
   if (p === "INCOME")
     return { category: d.includes("WAGES") ? "Paycheck" : d.includes("INTEREST") ? "Interest Income" : "Side Income", kind: out ? "expense" : "income" };
-  if (p === "TRANSFER_IN" || p === "TRANSFER_OUT")
-    return { category: d.includes("SAVINGS") ? "Savings Transfer" : d.includes("INVESTMENT") ? "Investment Transfer" : null, kind: "transfer" };
+  if (p === "TRANSFER_IN" || p === "TRANSFER_OUT") {
+    if (d.includes("SAVINGS")) return { category: "Savings Transfer", kind: "transfer" };
+    if (d.includes("INVESTMENT")) return { category: "Investment Transfer", kind: "transfer" };
+    // A deposit from payroll or a friend is income; moving your own money between accounts is not.
+    if (p === "TRANSFER_IN" && !out && INCOMING_HINT.test(text)) return { category: d.includes("PAYROLL") ? "Paycheck" : "Side Income", kind: "income" };
+    return { category: null, kind: "transfer" };
+  }
   if (p === "LOAN_PAYMENTS") return { category: d.includes("CREDIT_CARD") ? "Credit Card Payment" : null, kind: "transfer" };
   const map: Record<string, (det: string) => string> = {
     BANK_FEES: () => "Fees & Interest",
@@ -343,7 +351,7 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
       const description = t.name.slice(0, 300);
       const merchantName = t.merchant_name?.slice(0, 200) ?? null;
       const rule = await ruleFor(scope, { merchantName, description });
-      const pfc = mapPfc(t.personal_finance_category, amountCents);
+      const pfc = mapPfc(t.personal_finance_category, amountCents, `${merchantName ?? ""} ${description}`);
       const categoryName = pfc.category ?? keywordCategory({ merchantName, description });
       const cat = rule ? null : categoryName ? await categoryIdByName(scope, categoryName) : null;
       const values = {

@@ -15,6 +15,7 @@ const recurrenceSchema = z.object({
   byDay: z.array(z.number().int().min(0).max(6)).max(7).optional(),
   until: z.string().regex(DATE_RE).optional(),
   interval: z.number().int().min(1).max(12).optional(),
+  skip: z.array(z.string().regex(DATE_RE)).max(1000).optional(),
 });
 
 export const eventInputSchema = z
@@ -92,6 +93,29 @@ export async function updateEvent(scope: UserScope, tz: string, id: string, inpu
 }
 
 /** Calendar drag and drop: moves an event, to-do or assignment to another day, keeping its time. Shifts and repeating events stay put. */
+/** Removes one occurrence of a repeating event, keeping the rest of the series. */
+export async function skipOccurrence(scope: UserScope, id: string, date: string) {
+  const [ev] = await scope.tx
+    .select()
+    .from(calendarEvents)
+    .where(and(eq(calendarEvents.id, id), eq(calendarEvents.userId, scope.userId)));
+  if (!ev) throw notFound("Event");
+  if (!ev.recurrence) throw new ServiceError("This event doesn't repeat. Delete it instead.");
+  if (!DATE_RE.test(date)) throw new ServiceError("Pick a valid day.");
+  const skip = [...new Set([...(ev.recurrence.skip ?? []), date])];
+  await scope.tx
+    .update(calendarEvents)
+    .set({ recurrence: { ...ev.recurrence, skip } })
+    .where(eq(calendarEvents.id, id));
+  return { skipped: date };
+}
+
+/** Changes one occurrence: that day is skipped in the series and the change becomes its own event. */
+export async function editOccurrence(scope: UserScope, tz: string, id: string, date: string, input: EventInput) {
+  await skipOccurrence(scope, id, date);
+  return createEvent(scope, tz, { ...input, recurrence: null });
+}
+
 export async function moveAgendaItem(scope: UserScope, tz: string, origin: "event" | "task" | "assignment", id: string, date: string) {
   if (!DATE_RE.test(date)) throw new ServiceError("Pick a day.");
   const time = (at: Date | null, allDay: boolean) => (at && !allDay ? localTimeOf(at, tz) : null);
@@ -163,6 +187,7 @@ export function expandOccurrences(e: EventLike, from: string, to: string, tz: st
     }
     const startsAt = e.allDay ? startOfLocalDay(d, tz) : localToInstant(d, baseTime, tz);
     const endsAt = new Date(startsAt.getTime() + duration);
+    if (r.skip?.includes(d)) continue;
     if (startsAt < rangeEnd && endsAt > rangeStart) out.push({ startsAt, endsAt });
   }
   return out;
@@ -184,6 +209,8 @@ export type AgendaItem = {
   href: string;
   /** Point-in-time items (deadlines) don't block time and are never "conflicts". */
   blocksTime: boolean;
+  /** A day of a repeating event (its date can be removed on its own). */
+  repeats?: boolean;
 };
 
 export async function listEventsInRange(scope: UserScope, tz: string, from: string, to: string) {
@@ -239,6 +266,7 @@ export async function getAgenda(
         subtitle: [e.courseName, e.location].filter(Boolean).join(" · ") || null,
         href: `/calendar?date=${localDateOf(e.startsAt, tz)}`,
         blocksTime: !e.allDay,
+        repeats: !!e.recurrence,
       });
     }
   }

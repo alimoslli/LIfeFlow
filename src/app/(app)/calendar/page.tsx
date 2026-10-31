@@ -8,7 +8,7 @@ import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { findConflicts, getAgenda, type AgendaItem } from "@/server/services/calendar";
 import { listCourses } from "@/server/services/school";
-import { createEventAction, deleteEventAction } from "./actions";
+import { createEventAction, deleteEventAction, skipOccurrenceAction } from "./actions";
 import { DragItem, DropDay } from "./drag";
 import { CalendarViewToggle } from "./view-toggle";
 import { EventDialog } from "./event-dialog";
@@ -192,6 +192,15 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                     </p>
                   </Link>
                   {conflictKeys.has(i.key) && <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning">Overlaps</span>}
+                  {i.origin === "event" && i.repeats && (
+                    <ActionButton
+                      action={skipOccurrenceAction.bind(null, i.id, localDateOf(i.startsAt, d.tz))}
+                      title="Remove just this day"
+                      className="tap flex items-center justify-center rounded-full px-2 text-xs text-muted hover:text-danger"
+                    >
+                      This day
+                    </ActionButton>
+                  )}
                   {i.origin === "event" && (
                     <ActionButton
                       action={deleteEventAction.bind(null, i.id)}

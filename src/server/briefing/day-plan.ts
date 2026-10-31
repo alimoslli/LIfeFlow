@@ -58,18 +58,21 @@ export function buildDayPlan(
     });
   }
   const priorities = all.slice(0, 3);
+  const open = all;
 
   // Summary: schedule, work, money. One sentence each, only what's true.
   const timed = b.today.filter((i) => i.blocksTime && (i.endsAt ?? i.startsAt) > now);
   const summary = [
     timed.length
       ? `${plural(timed.length, "thing")} on your calendar today${b.next ? `, next is ${b.next.title} at ${formatIn(b.next.startsAt, tz, "h:mm a")}` : ""}.`
-      : "Your calendar is clear today.",
+      : open.length
+        ? `No timed plans today, so it's a good day to get ahead on ${plural(open.length, "open thing")}.`
+        : "No timed plans today.",
     late.length
       ? `${plural(late.length, "item")} ${late.length === 1 ? "is" : "are"} overdue${dueToday.length ? ` and ${dueToday.length} more ${dueToday.length === 1 ? "is" : "are"} due today` : ""}.`
       : dueToday.length
         ? `${plural(dueToday.length, "thing")} due today, nothing overdue.`
-        : "Nothing is due today and nothing is overdue.",
+        : "Nothing is due today or overdue, but that doesn't mean the week is empty. Check what's coming up.",
   ];
   const m = s.money;
   if (m && !opts.moneyHidden) {

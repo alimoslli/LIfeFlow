@@ -71,7 +71,7 @@ describe("Jarvis day plan", () => {
       ["Jeans replies", "due 5:00 PM"],
     ]);
     expect(p.summary).toEqual([
-      "Your calendar is clear today.",
+      "No timed plans today, so it's a good day to get ahead on 3 open things.",
       "2 items are overdue and 1 more is due today.",
       "You're $655 over budget in Food this month; $610 is available now.",
     ]);

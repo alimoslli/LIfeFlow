@@ -786,6 +786,8 @@ export type Recurrence = {
   /** Inclusive local end date YYYY-MM-DD. */
   until?: string;
   interval?: number;
+  /** Single occurrences removed from the series (local dates); changed ones are separate events. */
+  skip?: string[];
 };
 
 export const calendarEvents = pgTable(

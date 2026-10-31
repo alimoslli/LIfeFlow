@@ -3,7 +3,7 @@ import { askJarvis, queryAsUser, signUp } from "./helpers";
 
 test("sign up, reach Home, and manage a task end to end", async ({ page }) => {
   const email = await signUp(page);
-  await expect(page.getByRole("region", { name: /plan for today/ })).toContainText("Nothing is due today and nothing is overdue.");
+  await expect(page.getByRole("region", { name: /plan for today/ })).toContainText("Nothing is due today or overdue");
 
   await page.goto("/tasks");
   await page.getByLabel("To-do title").fill("Renew parking permit");
