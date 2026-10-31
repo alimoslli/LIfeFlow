@@ -21,6 +21,7 @@ import { TiltLayer } from "../motion/tilt";
 import { Tour } from "../motion/tour";
 import { NAME_KEY } from "../motion/splash";
 import type { JarvisAvailability } from "../jarvis/types";
+import { BrandMark } from "@/components/brand/brand-mark";
 
 type ShellCtx = { openJarvis: (prompt?: string, opts?: { send?: boolean }) => void; assistantName: string };
 const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: "Jarvis" });
@@ -101,7 +102,7 @@ export function AppShell({
           {/* Desktop rail */}
           <aside className="sticky top-0 hidden h-dvh w-[88px] shrink-0 flex-col items-center py-6 md:flex">
             <Link href="/" aria-label="LifeFlow home" className="mb-8">
-              <Mark />
+              <Mark className="h-10 w-10" />
             </Link>
             <nav ref={rail} className="relative flex flex-col gap-1 rounded-[28px] bg-surface p-1.5 shadow-soft" aria-label="Main">
               <span data-indicator className="pointer-events-none absolute top-0 left-1.5 w-16 rounded-[22px] bg-surface-3 opacity-0" />
@@ -278,14 +279,9 @@ function useSlidingIndicator(ref: React.RefObject<HTMLElement | null>, pathname:
   }, [pathname, ref, axis]);
 }
 
+/** @deprecated Use BrandMark for new surfaces. Kept as the compatibility mark for existing LifeFlow pages. */
 export function Mark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 32 32" className={cn("h-8 w-8", className)} aria-hidden>
-      <rect width="32" height="32" rx="10" className="fill-hero" />
-      <path d="M8 19.5c2.6-4.6 5.2-6.9 8-6.9s4.6 2.2 8-2.6" stroke="white" strokeWidth="2.4" fill="none" strokeLinecap="round" />
-      <path d="M8 24c2.6-3 5.2-4.5 8-4.5s4.6 1.4 8-1.7" stroke="white" strokeWidth="2.4" fill="none" strokeLinecap="round" opacity=".5" />
-    </svg>
-  );
+  return <BrandMark className={cn("h-8 w-8", className)} alt="" />;
 }
 
 /** Opens the Jarvis drawer. With `send`, the prompt is sent immediately. */

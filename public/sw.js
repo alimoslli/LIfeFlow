@@ -1,5 +1,5 @@
 /* LifeFlow service worker: app-shell caching, offline reading, push notifications. */
-const VERSION = "lf-v1";
+const VERSION = "lf-v2";
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const STATIC = `${VERSION}-static`;
@@ -11,7 +11,7 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(SHELL)
-      .then((c) => c.addAll([OFFLINE_URL, "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"]))
+      .then((c) => c.addAll([OFFLINE_URL, "/manifest.webmanifest", "/brand/lifeflow-mark-192.png", "/brand/lifeflow-mark-512.png"]))
       .then(() => self.skipWaiting()),
   );
 });
@@ -37,7 +37,7 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   // Build assets never change once published: cache first.
-  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/")) {
+  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || url.pathname.startsWith("/brand/")) {
     event.respondWith(
       caches.open(STATIC).then(async (c) => {
         const hit = await c.match(req);
@@ -83,8 +83,8 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(msg.title, {
       body: msg.body,
       tag: msg.tag,
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      icon: "/brand/lifeflow-mark-192.png",
+      badge: "/brand/lifeflow-mark-192.png",
       data: { url: msg.url },
     }),
   );

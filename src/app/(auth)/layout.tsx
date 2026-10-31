@@ -1,15 +1,12 @@
 import Link from "next/link";
 import { BookOpen, Split, Wallet } from "lucide-react";
-import { Mark } from "@/components/shell/app-shell";
+import { BrandLockup, BrandMark } from "@/components/brand/brand-mark";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
       <div className="flex flex-col px-6 pt-10 pb-8 sm:px-10">
-        <div className="flex items-center gap-2.5">
-          <Mark className="h-9 w-9" />
-          <span className="font-display text-[22px] font-medium tracking-tight">LifeFlow</span>
-        </div>
+        <BrandLockup markClassName="h-10 w-10" priority />
         <div className="flex flex-1 items-center">
           <div className="animate-rise mx-auto w-full max-w-sm py-10">{children}</div>
         </div>
@@ -27,6 +24,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       {/* Product preview on larger screens */}
       <aside className="relative hidden overflow-hidden bg-hero lg:block" aria-hidden>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_21%,rgb(197_231_209_/_0.28),transparent_30%),radial-gradient(circle_at_14%_90%,rgb(244_218_169_/_0.18),transparent_40%)]" />
         <svg viewBox="0 0 600 800" preserveAspectRatio="none" className="absolute inset-0 h-full w-full opacity-[0.10]">
           {Array.from({ length: 14 }, (_, i) => (
             <path
@@ -39,7 +37,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           ))}
         </svg>
         <div className="relative flex h-full flex-col justify-center px-14 xl:px-20">
-          <p className="max-w-md font-display text-[44px] leading-[1.06] font-medium tracking-tight text-white">Your whole life, made simple.</p>
+          <div className="mb-9 flex h-20 w-20 items-center justify-center rounded-[28px] bg-white/14 p-2.5 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.35),0_18px_44px_-20px_rgb(0_0_0_/_0.6)] ring-1 ring-white/20">
+            <BrandMark className="h-full w-full" alt="" priority />
+          </div>
+          <p className="max-w-md font-display text-[44px] leading-[1.06] font-medium tracking-tight text-white">Your whole life, in flow.</p>
           <p className="mt-4 max-w-sm text-[15px] text-white/75">Every morning, LifeFlow tells you what matters, and your assistant helps you handle it.</p>
           <div className="mt-10 flex max-w-md flex-col gap-3">
             <Preview

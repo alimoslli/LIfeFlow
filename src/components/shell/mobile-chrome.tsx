@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, Loader2, Search, Settings, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptics";
+import { BrandMark } from "@/components/brand/brand-mark";
 
 /** Compact titles and back targets for the phone app bar. Detail views get a back button. */
 const ROUTES: { test: RegExp; title: string; back?: string }[] = [
@@ -91,7 +92,11 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
             <ChevronLeft className="h-6 w-6" strokeWidth={2.2} />
             <span className="text-[15px]">Back</span>
           </button>
-        ) : null}
+        ) : (
+          <Link href="/" aria-label="LifeFlow home" className="-ml-0.5 rounded-[10px] p-1">
+            <BrandMark className="h-7 w-7" alt="" />
+          </Link>
+        )}
       </div>
       <p
         className={cn(

@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, useTransition, type ReactNode } from "react"
 import { ArrowLeft, BookOpen, Briefcase, Layers, Plus, X } from "lucide-react";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
 import { isHydrated } from "@/components/motion/intro";
-import { Mark } from "@/components/shell/app-shell";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { ThemePicker } from "@/components/theme-picker";
 import { Button } from "@/components/ui/button";
 import { Field, FormError, Input, Textarea } from "@/components/ui/field";
@@ -145,7 +145,7 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
         {step === "hello" && (
           <>
             <div data-anim>
-              <Mark className="h-12 w-12" />
+              <BrandMark className="h-14 w-14" priority />
             </div>
             <h1 data-anim className="mt-8 font-display text-[44px] leading-[1.05] font-medium tracking-tight">
               Hi {firstName}.

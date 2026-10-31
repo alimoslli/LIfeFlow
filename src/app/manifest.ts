@@ -12,13 +12,13 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     orientation: "portrait",
     // theme_color tints the system bars; background_color is the launch screen behind the first paint (the app's page color).
-    theme_color: "#2f5d50",
-    background_color: "#f4f2ec",
+    theme_color: "#285b45",
+    background_color: "#f9f7f0",
     categories: ["productivity", "finance", "education"],
     icons: [
-      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/icons/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/brand/lifeflow-mark-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/brand/lifeflow-mark-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/brand/lifeflow-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     // Long-press the home-screen icon (Android; iOS ignores shortcuts).
     shortcuts: [

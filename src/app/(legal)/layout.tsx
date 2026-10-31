@@ -1,14 +1,13 @@
 import Link from "next/link";
-import { Mark } from "@/components/shell/app-shell";
+import { BrandLockup } from "@/components/brand/brand-mark";
 
 /** Public, readable layout for the Privacy Policy and Terms of Use. */
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto max-w-3xl px-6 pt-10 pb-20 sm:px-10">
       <header className="mb-10 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Mark className="h-8 w-8" />
-          <span className="font-display text-[20px] font-medium tracking-tight">LifeFlow</span>
+        <Link href="/">
+          <BrandLockup markClassName="h-9 w-9" />
         </Link>
         <nav className="flex gap-4 text-sm text-muted">
           <Link href="/privacy" className="hover:text-text">
