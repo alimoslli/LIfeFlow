@@ -31,6 +31,7 @@ export const FOLLOW_UPS: Record<string, string[]> = {
   find_subscriptions: ["Which ones should I cancel?", "Find a cheaper plan for my phone bill"],
   plan_paycheck: ["Set reminders for these bills", "Put the rest toward my goal"],
   list_tasks: ["What should I do first?", "Move what I can't finish to tomorrow"],
+  life_load: ["Move study time off my heaviest day", "Block time to get ahead on my lightest day"],
   create_events: ["Any conflicts this week?", "Add a reminder before it"],
   find_free_time: ["Block the first slot for studying", "Find time for the gym too"],
   list_assignments: ["Build a study plan for these", "What's due first?"],

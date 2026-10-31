@@ -4,7 +4,7 @@ title: Weekly review
 description: Recaps the week: wins, what slipped, money vs budget, and one change for next week.
 triggers: ["weekly review", "week review", "review my week", "how did my week go", "recap my week", "last week", "weekly recap"]
 modules: ["home"]
-tools: ["get_agenda", "list_tasks", "spending_summary", "budget_status", "list_goals"]
+tools: ["life_load", "get_agenda", "list_tasks", "spending_summary", "budget_status", "list_goals"]
 ---
 ## Steps
 1. Get last 7 days of tasks (done and slipped), spending_summary for the week and budget_status.
@@ -12,6 +12,7 @@ tools: ["get_agenda", "list_tasks", "spending_summary", "budget_status", "list_g
 3. Name what slipped and why it likely slipped (overbooked day, no time block).
 4. Show spending vs budget for the top 2 categories.
 5. Suggest one specific change for next week and offer to schedule it.
+6. Look ahead with life_load: name the heaviest day and one thing to start on a lighter day before it.
 
 ## Quality rules
 - Real numbers only.

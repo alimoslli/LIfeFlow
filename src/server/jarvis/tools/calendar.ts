@@ -3,6 +3,7 @@ import { moveToTrash } from "../../services/trash";
 import { addDaysStr, daysBetween, formatIn, localDateOf } from "@/lib/dates";
 import { EVENT_KINDS, createEvent, findConflicts, freeSlots, getAgenda, getEvent, updateEvent, type AgendaItem } from "../../services/calendar";
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
+import { lifeLoad } from "../../services/life-load";
 
 export function presentAgendaItem(i: AgendaItem, ctx: ToolContext) {
   const fmt = (d: Date) => formatIn(d, ctx.tz, "yyyy-MM-dd HH:mm");
@@ -42,6 +43,28 @@ const eventArgs = z.object({
 });
 
 export const calendarTools = [
+  defineTool({
+    name: "life_load",
+    description:
+      "How full each of the next 7 days is: classes, events and shifts, plus the work upcoming deadlines need (spread over the days before them), to-dos, and bills due (when Money isn't locked). Use it for \"how's my week\", planning study time, or spotting a day that's too much. Suggest moving work to the lighter days it names.",
+    schema: z.object({}),
+    mutates: false,
+    async execute(_a, ctx) {
+      const w = await ctx.run((s) => lifeLoad(s, ctx.tz, ctx.today, { includeMoney: !ctx.moneyLocked }));
+      return {
+        summary: w.summary,
+        days: w.days.map((d) => ({
+          date: d.date,
+          label: d.label,
+          level: d.level,
+          hours: d.hours,
+          why: d.reasons,
+          bills: d.money.map((m) => ({ name: m.name, dollars: m.amountCents / 100, moreThanChecking: m.short })),
+        })),
+        viewAt: "/plan",
+      };
+    },
+  }),
   defineTool({
     name: "get_agenda",
     description:

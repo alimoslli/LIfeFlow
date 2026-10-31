@@ -19,6 +19,7 @@ const LABELS: Record<string, string> = {
   delete_assignment: "Preparing to delete assignment",
   course_materials: "Course materials",
   get_agenda: "Checking your schedule",
+  life_load: "Looking at your week",
   find_free_time: "Finding free time",
   create_events: "Adding to calendar",
   update_event: "Updating event",

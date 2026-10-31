@@ -217,6 +217,7 @@ export const SKILLS: SkillFile[] = [
     ],
     "tools": [
       "get_daily_briefing",
+      "life_load",
       "get_agenda",
       "list_tasks",
       "find_free_time",
@@ -1076,13 +1077,14 @@ export const SKILLS: SkillFile[] = [
       "calendar"
     ],
     "tools": [
+      "life_load",
       "find_free_time",
       "get_agenda",
       "create_events",
       "update_event",
       "update_task"
     ],
-    "body": "## Steps\n1. Get the agenda for the range the user means.\n2. Use find_free_time with the needed length.\n3. Propose specific slots (day + time).\n4. Create or move items only after the user picks or clearly asked you to do it.\n5. Confirm exactly what changed and where to see it.\n\n## Quality rules\n- Never double-book over a class or shift.\n- Respect the user's study-time preference if known.\n\n## Example\nUser: Find time for three 1-hour study sessions this week\nJarvis: Free: Tue 2-3, Wed 10-11, Thu 4-5. Book all three?",
+    "body": "## Steps\n1. Get the agenda for the range the user means; for \"this week\" also check life_load and prefer its lighter days.\n2. Use find_free_time with the needed length.\n3. Propose specific slots (day + time).\n4. Create or move items only after the user picks or clearly asked you to do it.\n5. Confirm exactly what changed and where to see it.\n\n## Quality rules\n- Never double-book over a class or shift.\n- Respect the user's study-time preference if known.\n\n## Example\nUser: Find time for three 1-hour study sessions this week\nJarvis: Free: Tue 2-3, Wed 10-11, Thu 4-5. Book all three?",
     "evals": [
       {
         "prompt": "Find time for three 1-hour study sessions",
@@ -1481,13 +1483,14 @@ export const SKILLS: SkillFile[] = [
       "home"
     ],
     "tools": [
+      "life_load",
       "get_agenda",
       "list_tasks",
       "spending_summary",
       "budget_status",
       "list_goals"
     ],
-    "body": "## Steps\n1. Get last 7 days of tasks (done and slipped), spending_summary for the week and budget_status.\n2. Name 1-3 wins with numbers.\n3. Name what slipped and why it likely slipped (overbooked day, no time block).\n4. Show spending vs budget for the top 2 categories.\n5. Suggest one specific change for next week and offer to schedule it.\n\n## Quality rules\n- Real numbers only.\n- One change, not a list of ten.\n\n## Example\nUser: Review my week\nJarvis: Wins: 9 of 12 to-dos done, $40 under on groceries. Slipped: the essay outline (Thursday was booked solid). Next week: block 2 hours Tuesday for the essay?",
+    "body": "## Steps\n1. Get last 7 days of tasks (done and slipped), spending_summary for the week and budget_status.\n2. Name 1-3 wins with numbers.\n3. Name what slipped and why it likely slipped (overbooked day, no time block).\n4. Show spending vs budget for the top 2 categories.\n5. Suggest one specific change for next week and offer to schedule it.\n6. Look ahead with life_load: name the heaviest day and one thing to start on a lighter day before it.\n\n## Quality rules\n- Real numbers only.\n- One change, not a list of ten.\n\n## Example\nUser: Review my week\nJarvis: Wins: 9 of 12 to-dos done, $40 under on groceries. Slipped: the essay outline (Thursday was booked solid). Next week: block 2 hours Tuesday for the essay?",
     "evals": [
       {
         "prompt": "Review my week",

@@ -4,7 +4,7 @@ title: Daily planner
 description: Builds today's plan: what's fixed, what's due, and an order to do things in.
 triggers: ["plan my day", "my day", "today's plan", "time block", "time-block", "schedule my day", "what should i do today", "morning brief", "schedule for today"]
 modules: ["home", "calendar", "tasks"]
-tools: ["get_daily_briefing", "get_agenda", "list_tasks", "find_free_time", "create_events"]
+tools: ["get_daily_briefing", "life_load", "get_agenda", "list_tasks", "find_free_time", "create_events"]
 ---
 ## Steps
 1. Call get_daily_briefing (or get_agenda for today) and list_tasks for what's due or overdue.

@@ -12,6 +12,9 @@ import { findConflicts, getAgenda, type AgendaItem } from "@/server/services/cal
 import { listEmployers } from "@/server/services/work";
 import { listCourses } from "@/server/services/school";
 import { listTasks } from "@/server/services/tasks";
+import { lifeLoad } from "@/server/services/life-load";
+import { moneyLocked } from "@/server/auth/money-lock";
+import { LifeLoad } from "./life-load";
 
 export const metadata: Metadata = { title: "Plan" };
 
@@ -34,14 +37,16 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
   const filter = FILTERS.find((x) => x.key === sp.f)?.key ?? "all";
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
+    const locked = await moneyLocked(u);
     const from = sp.date && isValidDateStr(sp.date) && sp.date > today ? sp.date : today;
-    const [items, courses, jobs, tasks] = await series(
+    const [items, courses, jobs, tasks, week] = await series(
       () => getAgenda(s, u.timezone, from, addDaysStr(from, 6)),
       () => listCourses(s),
       () => listEmployers(s),
       () => listTasks(s, { status: "open", topLevelOnly: true, limit: 200 }),
+      () => lifeLoad(s, u.timezone, today, { includeMoney: !locked }),
     );
-    return { items, courses, jobs, openTasks: tasks.length, undated: tasks.filter((t) => !t.dueAt).slice(0, 5), today, from, tz: u.timezone };
+    return { week, items, courses, jobs, openTasks: tasks.length, undated: tasks.filter((t) => !t.dueAt).slice(0, 5), today, from, tz: u.timezone };
   });
   const items = d.items.filter((i) => matches(i, filter));
   const conflictKeys = new Set(findConflicts(d.items).flatMap((c) => [c.a.key, c.b.key]));
@@ -68,6 +73,8 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           </QuickAddButton>
         </div>
       </header>
+
+      {d.from === d.today && <LifeLoad week={d.week} />}
 
       <nav
         className="lf-hscroll -mx-5 flex gap-1.5 overflow-x-auto px-5 [scrollbar-width:none] sm:-mx-8 sm:px-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
