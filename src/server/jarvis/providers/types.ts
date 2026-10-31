@@ -2,7 +2,7 @@ import type { ToolSpec } from "../registry";
 
 /** Provider-neutral conversation items (what we persist and replay). */
 export type ChatItem =
-  | { type: "user"; text: string; images?: { mimeType: string; base64: string }[] }
+  | { type: "user"; text: string; images?: { mimeType: string; base64: string }[]; files?: { filename: string; mimeType: string; base64: string }[] }
   | { type: "assistant"; text: string }
   | { type: "tool_call"; callId: string; name: string; arguments: string }
   | { type: "tool_result"; callId: string; output: string };

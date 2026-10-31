@@ -88,6 +88,6 @@ export async function searchEverything(scope: UserScope, q: string, perKind = 5)
     .from(financialGoals)
     .where(and(eq(financialGoals.userId, u), ilike(financialGoals.name, like)))
     .limit(perKind);
-  out.push(...goals.map((r) => ({ kind: "goal" as const, id: r.id, title: r.name, subtitle: "Goal", href: "/finances/goals" })));
+  out.push(...goals.map((r) => ({ kind: "goal" as const, id: r.id, title: r.name, subtitle: "Goal", href: "/goals" })));
   return out;
 }

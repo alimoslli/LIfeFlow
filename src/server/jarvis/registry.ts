@@ -9,7 +9,6 @@ import { moneyCoachTools } from "./tools/money-coach";
 import { overviewTools } from "./tools/overview";
 import { schoolTools } from "./tools/school";
 import { taskTools } from "./tools/tasks";
-import { tripTools } from "./tools/trips";
 import { webTools } from "./tools/web";
 import { workTools } from "./tools/work";
 import type { ToolDefinition } from "./tool";
@@ -28,7 +27,6 @@ export const ALL_TOOLS: ToolDefinition[] = [
   ...healthTools,
   ...systemTools,
   ...webTools,
-  ...tripTools,
   ...manageTools,
 ] as ToolDefinition[];
 

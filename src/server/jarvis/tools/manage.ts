@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { getProject, updateProject } from "../../services/notes";
-import { createHabit, checkHabit, listHabits, updateHabit } from "../../services/habits";
+import { createHabit, checkHabit, deleteHabit, listHabits, updateHabit } from "../../services/habits";
 import { getCourse, updateCourse } from "../../services/school";
 import { moveToTrash } from "../../services/trash";
 import { archiveEmployer, listEmployers, updateEmployer } from "../../services/work";
@@ -10,7 +10,7 @@ import { dateArg, defineTool, idArg, moneyArg, toCents, toDollars } from "../too
 export const manageTools = [
   defineTool({
     name: "update_course",
-    description: "Change a course's name, code, term, instructor, meeting times or location. Only pass fields that change.",
+    description: "Change a course's name, code, term, instructor, meeting times, location or grade weights. Only pass fields that change.",
     schema: z.object({
       id: idArg("Course"),
       name: z.string().min(1).max(200).optional(),
@@ -20,6 +20,10 @@ export const manageTools = [
       instructorEmail: z.string().email().optional(),
       meetingInfo: z.string().max(200).optional(),
       location: z.string().max(200).optional(),
+      gradeWeights: z
+        .record(z.string(), z.number().min(0).max(100))
+        .optional()
+        .describe("Percent per assignment kind from the syllabus: exam, quiz, assignment, project, lab, discussion"),
     }),
     mutates: true,
     async execute({ id, ...patch }, ctx) {
@@ -146,6 +150,20 @@ export const manageTools = [
       const target = a.target === undefined ? null : a.kind === "save" ? toCents(a.target) : Math.round(a.target);
       const h = await ctx.run((s) => createHabit(s, { title: a.title, kind: a.kind, cadence: a.cadence, target }));
       return { created: { id: h.id, title: h.title, cadence: h.cadence }, viewAt: "/habits" };
+    },
+  }),
+  defineTool({
+    name: "delete_habit",
+    description: "Delete a habit and its check-ins for good. Requires the user's confirmation. To stop tracking but keep history, use check_habit with pause.",
+    schema: z.object({ id: idArg("Habit") }),
+    mutates: true,
+    async confirm({ id }, ctx) {
+      const h = (await ctx.run((s) => listHabits(s, ctx.today))).find((x) => x.id === id);
+      return `Delete the habit "${h?.title ?? "this habit"}" and its history?`;
+    },
+    async execute({ id }, ctx) {
+      const h = await ctx.run((s) => deleteHabit(s, id));
+      return { deleted: h.title, viewAt: "/habits" };
     },
   }),
   defineTool({

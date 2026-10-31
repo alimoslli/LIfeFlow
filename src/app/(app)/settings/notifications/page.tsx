@@ -9,6 +9,7 @@ import { withCurrentUser } from "@/server/auth/current-user";
 import { listSubscriptions, notificationPrefs, pushConfig } from "@/server/services/push";
 import { removeDeviceAction, saveNotificationPrefsAction } from "../actions";
 import { ThisDevice } from "./this-device";
+import { SettingsHeader } from "../settings-header";
 
 export const metadata: Metadata = { title: "Notifications" };
 
@@ -21,6 +22,7 @@ export default async function NotificationSettings() {
   const available = !!pushConfig();
   return (
     <div className="flex flex-col gap-5">
+      <SettingsHeader title="Notifications" />
       <Card className="p-6">
         <h2 className="mb-1 text-[15px] font-semibold">This device</h2>
         <ThisDevice available={available} />
@@ -28,7 +30,6 @@ export default async function NotificationSettings() {
 
       <Card className="p-6">
         <h2 className="mb-1 text-[15px] font-semibold">What to send</h2>
-        <p className="mb-4 text-sm text-muted">Applies to every device where notifications are on.</p>
         <ActionForm action={saveNotificationPrefsAction} reset={false} className="gap-0">
           <label className="flex min-h-14 cursor-pointer items-center gap-3 border-b border-border py-2">
             <span className="min-w-0 flex-1">
@@ -38,12 +39,10 @@ export default async function NotificationSettings() {
             <input type="checkbox" name="reminders" defaultChecked={prefs.reminders} className="lf-switch" />
           </label>
           <p className="py-3 text-sm text-text-2">
-            Jarvis also notifies you about urgent or important things only, like a bill your balance can&apos;t cover. Set how many a day, quiet hours and
-            topics in{" "}
-            <Link href="/settings/memory#personality" className="font-medium text-accent">
-              Personality
+            Jarvis only notifies you about urgent things.{" "}
+            <Link href="/settings/jarvis" className="font-medium text-accent">
+              Change how often
             </Link>
-            .
           </p>
           <SubmitButton className="mt-2 self-start">Save</SubmitButton>
         </ActionForm>
@@ -52,7 +51,7 @@ export default async function NotificationSettings() {
       <Card className="p-6">
         <h2 className="mb-1 text-[15px] font-semibold">Devices</h2>
         {devices.length === 0 ? (
-          <p className="text-sm text-muted">No devices yet. Turn notifications on above on each phone or computer you use.</p>
+          <p className="text-sm text-muted">No devices yet.</p>
         ) : (
           <ul className="divide-y divide-border">
             {devices.map((d) => (

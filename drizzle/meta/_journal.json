@@ -131,8 +131,43 @@
     {
       "idx": 18,
       "version": "7",
-      "when": 1793436000000,
-      "tag": "0018_gmail_sync",
+      "when": 1793311888425,
+      "tag": "0018_trips_to_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793320471872,
+      "tag": "0019_work_schedule",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793323271571,
+      "tag": "0020_grade_weights",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793325746327,
+      "tag": "0021_sms_phone",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793326580727,
+      "tag": "0022_billing",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793430525934,
+      "tag": "0023_gmail_sync",
       "breakpoints": true
     }
   ]

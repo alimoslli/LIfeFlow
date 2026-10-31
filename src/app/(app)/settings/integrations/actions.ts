@@ -2,6 +2,10 @@
 import { mutate, type ActionState } from "@/server/actions";
 import { disconnectGoogle, GoogleError, syncGoogleCalendar } from "@/server/integrations/google";
 import { ServiceError } from "@/server/services/errors";
+import { connectCanvas, disconnectCanvas, markCanvasError, syncCanvas } from "@/server/integrations/canvas";
+import { isPro } from "@/server/billing";
+import { requireUser } from "@/server/auth/current-user";
+import { withUser } from "@/server/db/with-user";
 import { createHealthToken, revokeHealthToken } from "@/server/services/health";
 
 export type HealthKeyState = (ActionState & { token?: string }) | null;
@@ -43,5 +47,34 @@ export async function revokeHealthKeyAction(id: string): Promise<ActionState> {
   return mutate("integration.apple_health.key_revoked", async (s) => {
     await revokeHealthToken(s, id);
     return "Key revoked. Shortcuts using it will stop working.";
+  });
+}
+
+export async function connectCanvasAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  const r = await mutate("integration.canvas.connected", async (s, u) => {
+    if (!isPro(u)) throw new ServiceError("Canvas sync is part of LifeFlow Pro. Upgrade in Settings → Plan.");
+    const me = await connectCanvas(s, String(fd.get("url") ?? ""), String(fd.get("token") ?? ""));
+    return `Connected to ${me.host}${me.name ? ` as ${me.name}` : ""}.`;
+  });
+  if (r?.ok) await syncCanvasAction();
+  return r;
+}
+
+export async function syncCanvasAction(): Promise<ActionState> {
+  const r = await mutate("integration.canvas.synced", async (s) => {
+    const x = await syncCanvas(s);
+    return `Synced ${x.courses} class${x.courses === 1 ? "" : "es"} and ${x.assignments} assignment${x.assignments === 1 ? "" : "s"} from Canvas.`;
+  });
+  if (r && !r.ok) {
+    const u = await requireUser();
+    await withUser(u.id, (s) => markCanvasError(s, new ServiceError(r.error ?? "Canvas sync failed."))).catch(() => undefined);
+  }
+  return r;
+}
+
+export async function disconnectCanvasAction(): Promise<ActionState> {
+  return mutate("integration.canvas.disconnected", async (s) => {
+    await disconnectCanvas(s);
+    return "Canvas disconnected. Classes and assignments it added stay.";
   });
 }

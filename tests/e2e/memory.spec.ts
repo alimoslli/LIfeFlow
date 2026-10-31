@@ -22,8 +22,9 @@ test("Jarvis suggests a memory; it's used only after the user taps Keep", async 
   await expect(page.getByLabel("Memory suggestion")).toContainText("✓ Saved to memory");
 
   // Settings shows it, and run metrics were recorded for this user.
-  await page.goto("/settings/memory");
+  await page.goto("/jarvis/memory");
   await expect(page.getByText("Prefers evening study sessions.")).toBeVisible();
+  await page.goto("/jarvis/memory?debug=1");
   await expect(page.getByText("Requests (30 days)")).toBeVisible();
   const runs = await queryAsUser<{ n: number }>(email, "select count(*)::int as n from jarvis_runs");
   expect(runs[0].n).toBeGreaterThanOrEqual(1);
@@ -46,7 +47,22 @@ test("an explicit request saves directly; dismissed suggestions are not used", a
     .toEqual(["active", "rejected"]);
 
   // Turning suggestions off is a visible, working control.
-  await page.goto("/settings/memory");
+  await page.goto("/jarvis/memory");
   await page.getByRole("button", { name: "Turn memory suggestions off" }).click();
   await expect(page.getByRole("button", { name: "Turn memory suggestions on" })).toBeVisible();
+});
+
+test("Ideas open Jarvis ready to send, and memory import waits for approval", async ({ page }) => {
+  const email = await signUp(page, "Idea Tester");
+  await page.goto("/jarvis/ideas");
+  await expect(page.getByRole("region", { name: "For you" })).toContainText("No savings goal yet");
+  await page.getByRole("button", { name: /Quiz me before a test/ }).click();
+  await expect(page.getByRole("dialog").getByLabel("Message Jarvis")).toHaveValue("Quiz me on my next exam's topics, one question at a time.");
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("link", { name: /Bring what your other AI knows/ }).click();
+  await page.getByLabel("Paste the answer here").fill("- I work at Target on weekends.\n- I prefer studying at night.\n- My password is hunter2");
+  await page.getByRole("button", { name: "Add as suggestions" }).click();
+  await expect(page.getByText("2 suggestions added below")).toBeVisible();
+  expect(await queryAsUser<{ status: string }>(email, "select status from memories")).toEqual([{ status: "proposed" }, { status: "proposed" }]);
 });

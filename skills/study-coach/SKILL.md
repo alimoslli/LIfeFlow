@@ -4,7 +4,7 @@ title: Study coach
 description: Builds study plans with spaced repetition and practice questions from the user's material.
 triggers: ["study plan", "help me study", "spaced repetition", "practice quiz", "quiz me", "flashcards", "study for"]
 modules: ["school"]
-tools: ["list_assignments", "course_materials", "search_notes", "find_free_time", "create_events"]
+tools: ["list_assignments", "course_materials", "search_notes", "find_free_time", "create_events", "grade_check"]
 ---
 ## Steps
 1. Find what's due or coming (list_assignments) and the material (course_materials, search_notes).

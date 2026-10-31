@@ -1,7 +1,7 @@
 import { series } from "@/server/db/series";
 import { z } from "zod";
 import { monthStart } from "@/lib/dates";
-import { listAccounts, summarizeBalances } from "../../services/finance/accounts";
+import { ACCOUNT_TYPES, createManualAccount, listAccounts, summarizeBalances } from "../../services/finance/accounts";
 import { moneyOverview } from "../../services/finance/overview";
 import { listCategories, resolveCategory } from "../../services/finance/categories";
 import { affordability, compareSpending, spendingSummary } from "../../services/finance/insights";
@@ -234,6 +234,24 @@ export const financeTools = [
           source: t.source,
         })),
       });
+    },
+  }),
+  defineTool({
+    name: "add_account",
+    description:
+      "Add an account the user tracks by hand (checking, savings, cash, a card, a loan, investments). Balance in dollars as the user sees it; cards and loans are owed amounts as positive numbers.",
+    schema: z.object({
+      name: z.string().min(1).max(120),
+      type: z.enum(ACCOUNT_TYPES),
+      subtype: z.string().max(60).optional().describe("e.g. checking, savings"),
+      balance: moneyArg("Current balance"),
+    }),
+    mutates: true,
+    async execute(a, ctx) {
+      const acc = await ctx.run((s) =>
+        createManualAccount(s, { name: a.name, type: a.type, subtype: a.subtype ?? null, currentBalanceCents: toCents(a.balance) }),
+      );
+      return { created: { id: acc.id, name: acc.name, type: acc.type, balance: toDollars(acc.currentBalanceCents) }, viewAt: "/finances/accounts" };
     },
   }),
   defineTool({

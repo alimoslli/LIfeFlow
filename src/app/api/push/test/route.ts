@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     if (!user) throw new HttpError(401, "Not signed in");
     await enforceRateLimit(`push-test:${user.id}`, 5, 600);
     const send = await webPushSender();
-    if (!send) throw new HttpError(503, "Notifications aren't set up on the server yet.");
+    if (!send) throw new HttpError(503, "Notifications aren't available yet.");
     const delivered = await withUser(user.id, (s) =>
       sendOnce(
         s,

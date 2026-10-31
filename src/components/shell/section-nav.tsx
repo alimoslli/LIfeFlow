@@ -4,53 +4,60 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import {
   BookOpen,
-  Brain,
   Briefcase,
+  CalendarCheck,
   CalendarDays,
   CheckSquare,
-  CreditCard,
-  Flame,
-  Inbox,
+  HeartPulse,
   Landmark,
+  Lightbulb,
   MessageCircle,
-  PieChart,
-  PiggyBank,
-  Plane,
+  NotebookPen,
   Receipt,
   Sparkles,
+  Target,
+  UserRound,
   Wallet,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLifeAreas } from "./life-areas";
 
 type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean; /** Other pages that belong to this pill. */ also?: string[]; except?: string[] };
 export type Section = "plan" | "money" | "jarvis" | "personal";
+
+const SECTION_NAMES: Record<Section, string> = { plan: "Plan", jarvis: "Jarvis", money: "Money", personal: "School" };
 
 /** Second level: each tab's pages as pills. Every page belongs to exactly one pill. */
 export const SECTIONS: Record<Section, Item[]> = {
   plan: [
     { href: "/plan", label: "Calendar", icon: CalendarDays, exact: true, also: ["/calendar"] },
     { href: "/tasks", label: "To-dos", icon: CheckSquare },
+    { href: "/goals", label: "Goals", icon: Target },
+    { href: "/habits", label: "Health", icon: HeartPulse },
     { href: "/work", label: "Work", icon: Briefcase },
-    { href: "/trips", label: "Trips", icon: Plane },
   ],
   jarvis: [
-    { href: "/jarvis", label: "Chat", icon: MessageCircle, except: ["/jarvis/says"] },
-    { href: "/jarvis/says", label: "Noticed", icon: Sparkles },
-    { href: "/inbox", label: "Inbox", icon: Inbox },
+    { href: "/jarvis", label: "Chat", icon: MessageCircle, except: ["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"] },
+    { href: "/jarvis/says", label: "Updates", icon: Sparkles, also: ["/inbox"] },
+    { href: "/jarvis/ideas", label: "Ideas", icon: Lightbulb },
+    { href: "/jarvis/profile", label: "Profile", icon: UserRound, also: ["/jarvis/memory"] },
   ],
   money: [
-    { href: "/money", label: "Overview", icon: Wallet, exact: true, also: ["/money/coach", "/money/report"] },
-    { href: "/finances/accounts", label: "Accounts & wallet", icon: Landmark, also: ["/wealth"] },
-    { href: "/finances/budgets", label: "Budget", icon: PieChart },
-    { href: "/finances/transactions", label: "Transactions", icon: Receipt, also: ["/finances/rules"] },
-    { href: "/finances/subscriptions", label: "Subscriptions", icon: CreditCard, also: ["/finances/bills", "/finances/savings"] },
-    { href: "/finances/goals", label: "Goals & dreams", icon: PiggyBank },
+    {
+      href: "/money",
+      label: "Overview",
+      icon: Wallet,
+      exact: true,
+      also: ["/finances/budgets", "/finances/subscriptions", "/finances/bills"],
+    },
+    { href: "/finances/transactions", label: "Activity", icon: Receipt, also: ["/finances/rules"] },
+    { href: "/finances/accounts", label: "Accounts", icon: Landmark, also: ["/wealth"] },
   ],
   personal: [
-    { href: "/habits", label: "Health & habits", icon: Flame },
-    { href: "/school", label: "School", icon: BookOpen },
-    { href: "/notes", label: "Second Brain", icon: Brain },
+    { href: "/school", label: "Classes", icon: BookOpen, exact: true, also: ["/school/courses"] },
+    { href: "/school/due", label: "Due", icon: CalendarCheck },
+    { href: "/notes", label: "Notes", icon: NotebookPen },
   ],
 };
 
@@ -66,6 +73,7 @@ export function sectionFor(pathname: string) {
 /** `inline`: inside a full-screen page (Jarvis chat) instead of the sticky bar. */
 export function SectionNav({ inline = false, children }: { inline?: boolean; children?: React.ReactNode }) {
   const pathname = usePathname();
+  const areas = useLifeAreas();
   const section = sectionFor(pathname);
   const activeRef = useRef<HTMLAnchorElement>(null);
   useEffect(() => {
@@ -74,7 +82,7 @@ export function SectionNav({ inline = false, children }: { inline?: boolean; chi
   if (!section) return null;
   return (
     <nav
-      aria-label={`${section[0].toUpperCase()}${section.slice(1)} sections`}
+      aria-label={`${SECTION_NAMES[section]} sections`}
       className={inline ? "py-2" : "lf-sectionnav sticky z-20 -mx-5 mb-6 py-2.5 backdrop-blur-xl sm:-mx-8 md:top-0"}
     >
       <div
@@ -83,25 +91,27 @@ export function SectionNav({ inline = false, children }: { inline?: boolean; chi
           inline ? "px-4" : "max-w-5xl px-5 sm:px-8",
         )}
       >
-        {SECTIONS[section].map((item) => {
-          const on = isOn(pathname, item);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              ref={on ? activeRef : undefined}
-              href={item.href}
-              aria-current={on ? "page" : undefined}
-              className={cn(
-                "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm whitespace-nowrap transition-colors",
-                on ? "bg-text font-medium text-bg" : "bg-surface text-text-2 shadow-soft hover:text-text",
-              )}
-            >
-              <Icon className="h-4 w-4" strokeWidth={1.8} />
-              {item.label}
-            </Link>
-          );
-        })}
+        {SECTIONS[section]
+          .filter((item) => item.href !== "/work" || areas.work)
+          .map((item) => {
+            const on = isOn(pathname, item);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                ref={on ? activeRef : undefined}
+                href={item.href}
+                aria-current={on ? "page" : undefined}
+                className={cn(
+                  "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm whitespace-nowrap transition-colors",
+                  on ? "bg-text font-medium text-bg" : "bg-surface text-text-2 shadow-soft hover:text-text",
+                )}
+              >
+                <Icon className="h-4 w-4" strokeWidth={1.8} />
+                {item.label}
+              </Link>
+            );
+          })}
         {children}
       </div>
     </nav>

@@ -62,7 +62,7 @@ const REAUTH = new Set(["ITEM_LOGIN_REQUIRED", "PENDING_EXPIRATION", "ACCESS_NOT
 
 async function call<T>(path: string, body: Record<string, unknown>, f: Fetch = fetch): Promise<T> {
   const cfg = plaidConfig();
-  if (!cfg) throw new PlaidError("Bank connections aren't set up on the server yet (PLAID_CLIENT_ID and PLAID_SECRET).", "NOT_CONFIGURED");
+  if (!cfg) throw new PlaidError("Bank connections aren't available yet.", "NOT_CONFIGURED");
   let res: Response;
   try {
     res = await f(`${cfg.baseUrl}${path}`, {
@@ -76,6 +76,8 @@ async function call<T>(path: string, body: Record<string, unknown>, f: Fetch = f
   const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
   if (!res.ok) {
     const code = typeof json.error_code === "string" ? json.error_code : null;
+    // Plaid's own error details (never the request body, which holds the secret), so setup problems show in the server logs.
+    console.error("[plaid]", path, res.status, json.error_type, code, json.error_message, json.request_id);
     const displayMessage = typeof json.display_message === "string" ? json.display_message : "";
     const msg =
       displayMessage ||

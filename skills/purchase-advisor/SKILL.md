@@ -4,7 +4,7 @@ title: Purchase advisor
 description: Answers 'can I afford this?' against the budget and upcoming bills.
 triggers: ["can i afford", "afford", "should i buy", "is it ok to spend", "worth buying"]
 modules: ["finances"]
-tools: ["check_affordability", "safe_to_spend", "recurring_payments"]
+tools: ["check_affordability", "money_overview", "recurring_payments"]
 ---
 ## Steps
 1. Run check_affordability with the amount and date.
@@ -16,4 +16,4 @@ tools: ["check_affordability", "safe_to_spend", "recurring_payments"]
 
 ## Example
 User: Can I afford $120 concert tickets?
-Jarvis: Yes, but tight: after rent on the 1st you'd have $64 safe to spend until payday.
+Jarvis: Yes, but tight: after rent on the 1st you'd have $64 left until payday.

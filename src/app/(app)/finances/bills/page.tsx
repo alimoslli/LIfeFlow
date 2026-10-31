@@ -1,3 +1,4 @@
+import { BILLS_SUBS, SegmentedNav } from "@/components/ui/segmented-nav";
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import { Pause, Play, Repeat, X } from "lucide-react";
@@ -33,7 +34,8 @@ export default async function BillsPage() {
 
   return (
     <>
-      <h1 className="mb-5 font-display text-[28px] font-medium tracking-tight">Bills &amp; subscriptions</h1>
+      <SegmentedNav label="Bills and subscriptions" items={BILLS_SUBS} active="bills" />
+      <h1 className="mt-4 mb-5 font-display text-[28px] font-medium tracking-tight">Bills</h1>
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.6fr_1fr]">
         <div className="flex flex-col gap-5">
           <Card>

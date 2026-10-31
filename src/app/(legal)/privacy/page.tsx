@@ -121,6 +121,14 @@ export default function PrivacyPolicy() {
         needed for security or legal reasons, or it is aggregated and anonymized for internal operations.
       </p>
 
+      <h3>Canvas and school records</h3>
+      <p>
+        If you connect Canvas, LifeFlow reads your active classes and assignments (names, due dates, points and links) with an access token you create. The
+        token is stored encrypted and you can disconnect at any time. LifeFlow never submits work, posts or changes anything in Canvas, and uses this data only
+        to show it to you and help you plan. It is not shared with your school or anyone else. Our assistant never does graded work for you; see{" "}
+        <Link href="/integrity">Academic integrity</Link>.
+      </p>
+
       <h2>5. Who we share information with</h2>
       <p>We share information only with service providers that help us run LifeFlow, under contracts that limit their use of it, and only as needed:</p>
       <table>

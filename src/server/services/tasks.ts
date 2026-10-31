@@ -4,6 +4,7 @@ import { DATE_RE, TIME_RE, addDaysStr, dayOfWeek, localDateOf, localTimeOf, loca
 import { courses, projects, tasks, type DataSource } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound } from "./errors";
+import { parsePatch } from "./patch";
 
 export const PRIORITIES = ["low", "medium", "high", "urgent"] as const;
 export const WORK_STATUSES = ["todo", "in_progress", "done"] as const;
@@ -118,7 +119,7 @@ export async function getTask(scope: UserScope, id: string) {
 }
 
 export async function updateTask(scope: UserScope, tz: string, id: string, patch: z.input<typeof taskPatchSchema>) {
-  const data = taskPatchSchema.parse(patch);
+  const data = parsePatch(taskPatchSchema, patch);
   await assertOwned(scope, projects, data.projectId, "Project");
   await assertOwned(scope, courses, data.courseId, "Course");
   const [before] = await scope.tx

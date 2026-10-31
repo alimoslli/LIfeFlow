@@ -1,19 +1,44 @@
 "use server";
 import { trashAction } from "../trash-actions";
 import { formCents, formNum, formObject, mutate, type ActionState } from "@/server/actions";
-import { addPaycheck, createEmployer, createShift, recordShiftHours, setShiftStatus, shiftOverlaps, updateShift } from "@/server/services/work";
+import {
+  addPaycheck,
+  createEmployer,
+  createShift,
+  fillRegularShifts,
+  recordShiftHours,
+  setShiftStatus,
+  shiftOverlaps,
+  updateEmployer,
+  updateShift,
+  workScheduleSchema,
+} from "@/server/services/work";
+import { todayIn } from "@/lib/dates";
 import { ServiceError } from "@/server/services/errors";
 
 export async function createEmployerAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
-  return mutate("employer.create", async (s) => {
+  return mutate("employer.create", async (s, u) => {
     await createEmployer(s, {
       name: f.name ?? "",
       position: f.position,
       payType: (f.payType as "hourly") ?? "hourly",
       hourlyRateCents: formCents(f.hourlyRate) ?? null,
       overtimeThresholdHours: formNum(f.overtimeThreshold) ?? 40,
+      schedule: parseSchedule(f.schedule),
     });
+    await fillRegularShifts(s, u.timezone, todayIn(u.timezone));
+  });
+}
+
+const parseSchedule = (v: string | undefined) => (v ? workScheduleSchema.parse(JSON.parse(v)) : null);
+
+export async function setJobHoursAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  const f = formObject(fd);
+  return mutate("employer.hours", async (s, u) => {
+    await updateEmployer(s, f.employerId ?? "", { schedule: parseSchedule(f.schedule) });
+    await fillRegularShifts(s, u.timezone, todayIn(u.timezone));
+    return "Saved";
   });
 }
 

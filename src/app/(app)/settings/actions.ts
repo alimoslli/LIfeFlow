@@ -33,6 +33,7 @@ export async function updateProfileAction(_p: ActionState, fd: FormData): Promis
       studyTime: f.studyTime as "morning",
       weekStartsOn: f.weekStartsOn as unknown as 0,
       jarvisTone: f.jarvisTone as "balanced",
+      lifeStage: f.lifeStage as "both",
     });
     return "Saved";
   });
@@ -132,7 +133,6 @@ export async function updateAssistantAction(_p: ActionState, fd: FormData): Prom
           school: on("topic_school"),
           work: on("topic_work"),
           health: on("topic_health"),
-          trips: on("topic_trips"),
           habits: on("topic_habits"),
         },
         autonomy: { tasks: on("auto_tasks"), calendar: on("auto_calendar") },
@@ -140,6 +140,7 @@ export async function updateAssistantAction(_p: ActionState, fd: FormData): Prom
         learning: on("learning"),
         pushLimit: Number(f.pushLimit ?? 3),
       },
+      f.answerLength as "balanced" | undefined,
     );
     return "Saved. That's how I'll sound from now on.";
   });

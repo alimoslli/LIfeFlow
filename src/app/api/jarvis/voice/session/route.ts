@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getSessionUser } from "@/server/auth/current-user";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { startVoiceSession } from "@/server/jarvis/voice";
+import { requirePro } from "@/server/billing";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ export async function POST(req: Request) {
     assertSameOrigin(req);
     const user = await getSessionUser();
     if (!user) throw new HttpError(401, "Not signed in");
+    requirePro(user, "voice");
     const parsed = body.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) throw new HttpError(400, "Invalid request");
     await enforceRateLimit(`voice:min:${user.id}`, 4, 60);

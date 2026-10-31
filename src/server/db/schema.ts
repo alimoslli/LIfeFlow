@@ -74,7 +74,7 @@ export type UserPreferences = {
   /** Let Jarvis suggest things to remember (default on). Explicit "remember…" requests always work. */
   memorySuggestions?: boolean;
   /** What fills the user's week (from onboarding); helps Jarvis and the briefing. */
-  lifeStage?: "student" | "working" | "both";
+  lifeStage?: "student" | "working" | "both" | "life";
   /** First-run setup: "pending" only for accounts created since onboarding launched. */
   onboarding?: "pending" | "done";
   /** Guided tour of the app, offered after onboarding or replayed from Settings. */
@@ -91,12 +91,22 @@ export type UserPreferences = {
   jarvis?: JarvisSettings;
   /** Ask for Face ID / Touch ID (a passkey) before showing Money after this many idle minutes. */
   moneyLock?: { enabled: boolean; idleMinutes: number };
+  /** Texting Jarvis (SMS): a pending verification, whether money details may be sent by text, and the SMS conversation. */
+  sms?: {
+    pendingPhone?: string;
+    codeHash?: string;
+    codeExpiresAt?: string;
+    attempts?: number;
+    money?: boolean;
+    conversationId?: string;
+    pendingActionId?: string;
+  };
   /** Which push notifications the user wants, and when the morning brief arrives (local HH:mm). */
   notifications?: { reminders?: boolean; bills?: boolean; morningBrief?: boolean; briefTime?: string; budgetAlerts?: boolean };
   assistantVoice?: "alloy" | "ash" | "ballad" | "cedar" | "coral" | "echo" | "marin" | "sage" | "shimmer" | "verse";
 };
 
-export const JARVIS_TOPICS = ["money", "school", "work", "health", "trips", "habits"] as const;
+export const JARVIS_TOPICS = ["money", "school", "work", "health", "habits"] as const;
 export type JarvisTopic = (typeof JARVIS_TOPICS)[number];
 export type JarvisSettings = {
   frequency?: "low" | "normal" | "high";
@@ -145,6 +155,11 @@ export const users = pgTable("users", {
   totpLastStep: integer("totp_last_step"),
   /** Random part of the personal forwarding address (u-<token>@<INBOX_DOMAIN>). */
   inboxToken: text("inbox_token").unique(),
+  /** Verified phone (E.164) the user texts Jarvis from. Unique: one account per number. */
+  smsPhone: text("sms_phone").unique(),
+  /** "pro" while a paid subscription is active (Stripe webhook keeps it in sync). */
+  plan: text("plan").$type<"free" | "pro">().notNull().default("free"),
+  stripeCustomerId: text("stripe_customer_id").unique(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -391,7 +406,10 @@ export const syncJobs = pgTable(
 // ---------------------------------------------------------------------------
 // finance
 
-export type DataSource = "manual" | "jarvis" | "import" | "demo" | "plaid" | "canvas" | "ukg" | "google" | "apple_health";
+export type DataSource = "manual" | "jarvis" | "import" | "demo" | "plaid" | "canvas" | "ukg" | "google" | "apple_health" | "schedule";
+
+/** Regular hours for a job (e.g. full-time Mon–Fri 08:00–17:00). Days are 0 = Sunday … 6 = Saturday. */
+export type WorkSchedule = { days: number[]; start: string; end: string; breakMinutes?: number };
 
 export type AccountType = "depository" | "credit" | "loan" | "investment" | "cash" | "other";
 
@@ -682,6 +700,8 @@ export const courses = pgTable(
     location: text("location"),
     /** Free-form meeting info shown on the course page, e.g. "Mon/Wed 10:00-11:15". */
     meetingInfo: text("meeting_info"),
+    /** Percent weight per assignment kind from the syllabus, e.g. { exam: 40, assignment: 30 }. */
+    gradeWeights: jsonb("grade_weights").$type<Record<string, number>>(),
     color: text("color"),
     url: text("url"),
     source: text("source").$type<DataSource>().notNull().default("manual"),
@@ -866,6 +886,10 @@ export const employers = pgTable(
     overtimeThresholdHours: numeric("overtime_threshold_hours", { precision: 5, scale: 2 }).notNull().default("40"),
     overtimeMultiplier: numeric("overtime_multiplier", { precision: 4, scale: 2 }).notNull().default("1.5"),
     color: text("color"),
+    /** Regular hours; shifts are filled in a few weeks ahead from these. */
+    schedule: jsonb("schedule").$type<WorkSchedule>(),
+    /** Last day already filled from `schedule`, so a deleted day isn't put back. */
+    scheduleFilledThrough: date("schedule_filled_through", { mode: "string" }),
     source: text("source").$type<DataSource>().notNull().default("manual"),
     archivedAt: tstz("archived_at"),
     createdAt: createdAt(),
@@ -1132,50 +1156,6 @@ export const savingsOpportunities = pgTable(
 );
 
 // ---------------------------------------------------------------------------
-// Trips
-
-export const trips = pgTable(
-  "trips",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    userId: userRef(),
-    name: text("name").notNull(),
-    destination: text("destination"),
-    startDate: date("start_date", { mode: "string" }).notNull(),
-    endDate: date("end_date", { mode: "string" }).notNull(),
-    budgetCents: integer("budget_cents"),
-    goalId: uuid("goal_id").references(() => financialGoals.id, { onDelete: "set null" }),
-    notes: text("notes"),
-    source: text("source").$type<DataSource | "inbox">().notNull().default("manual"),
-    createdAt: createdAt(),
-  },
-  (t) => [index("trips_user_idx").on(t.userId), ownerPolicy()],
-);
-
-export const tripItems = pgTable(
-  "trip_items",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    userId: userRef(),
-    tripId: uuid("trip_id")
-      .notNull()
-      .references(() => trips.id, { onDelete: "cascade" }),
-    kind: text("kind").$type<"flight" | "train" | "hotel" | "car" | "activity" | "other">().notNull(),
-    title: text("title").notNull(),
-    startsAt: tstz("starts_at").notNull(),
-    endsAt: tstz("ends_at"),
-    location: text("location"),
-    confirmation: text("confirmation"),
-    costCents: integer("cost_cents"),
-    /** The calendar entry made for it, so it shows in Plan and Today. */
-    eventId: uuid("event_id"),
-    source: text("source").$type<DataSource | "inbox">().notNull().default("manual"),
-    createdAt: createdAt(),
-  },
-  (t) => [index("trip_items_trip_idx").on(t.tripId), ownerPolicy()],
-);
-
-// ---------------------------------------------------------------------------
 // Smart inbox: forwarded emails, uploads and shares, read and filed by Jarvis
 
 export const inboxSenders = pgTable(
@@ -1195,7 +1175,7 @@ export const inboxSenders = pgTable(
 );
 
 export type InboxFiled = {
-  kind: "transaction" | "recurring" | "task" | "assignment" | "trip" | "trip_item" | "paycheck";
+  kind: "transaction" | "recurring" | "task" | "assignment" | "event" | "paycheck";
   id: string;
   label: string;
   href?: string;

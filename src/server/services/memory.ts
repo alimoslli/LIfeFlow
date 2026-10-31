@@ -432,3 +432,45 @@ export async function correctMemoryForUser(
     .returning();
   return { status: "proposed", memory: row, replaces };
 }
+
+/** The prompt the user runs in their other AI assistant; its answer is pasted into importMemories. */
+export const IMPORT_PROMPT =
+  "List the lasting facts you know about me that would help a personal assistant: my school and classes, work, routines, goals, preferences and important people. One short fact per line. Leave out passwords, account numbers, health details and anything you're unsure about.";
+
+/**
+ * Turns text pasted from another AI into suggestions, one per line or sentence.
+ * Nothing is used until the user approves it; sensitive lines and things already
+ * known are skipped. Returns what was suggested and what was skipped.
+ */
+export async function importMemories(scope: UserScope, text: string) {
+  const lines = text
+    .split(/\r?\n|(?<=[.!?])\s+(?=[A-Z])/)
+    .map((l) => l.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim())
+    .filter((l) => l.length >= 3 && l.length <= 500)
+    .slice(0, 60);
+  const existing = await scope.tx
+    .select()
+    .from(memories)
+    .where(and(eq(memories.userId, scope.userId), inArray(memories.status, ["active", "proposed"])));
+  const kept: string[] = [];
+  let skipped = 0;
+  for (const content of lines) {
+    if (sensitiveContentReason(content) || [...existing.map((m) => m.content), ...kept].some((c) => similarContent(c, content))) {
+      skipped++;
+      continue;
+    }
+    kept.push(content);
+  }
+  if (kept.length)
+    await scope.tx.insert(memories).values(
+      kept.map((content) => ({
+        userId: scope.userId,
+        content,
+        category: "fact" as const,
+        source: "user" as const,
+        basis: "stated" as const,
+        status: "proposed" as const,
+      })),
+    );
+  return { suggested: kept.length, skipped };
+}

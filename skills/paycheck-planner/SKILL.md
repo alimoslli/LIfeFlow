@@ -4,7 +4,7 @@ title: Paycheck planner
 description: Splits each paycheck across bills, budgets and goals.
 triggers: ["paycheck", "payday", "got paid", "split my pay", "plan my pay", "my pay"]
 modules: ["finances"]
-tools: ["plan_paycheck", "recurring_payments", "list_goals", "safe_to_spend"]
+tools: ["plan_paycheck", "recurring_payments", "list_goals", "money_overview"]
 ---
 ## Steps
 1. Use the actual deposited amount (ask if unknown; never project pay).

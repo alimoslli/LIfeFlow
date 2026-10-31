@@ -4,6 +4,7 @@ import { AlertCircle, CheckCircle2, CircleSlash, FileText, Mail, Undo2 } from "l
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
+import { SegmentedNav, UPDATES } from "@/components/ui/segmented-nav";
 import { Card } from "@/components/ui/surface";
 import { formatIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -14,7 +15,7 @@ import { extractionClient } from "@/server/services/inbox/extract";
 import { addSenderAction, removeSenderAction, undoInboxAction, verifySenderAction } from "./actions";
 import { CopyAddress, InboxUpload } from "./upload";
 
-export const metadata: Metadata = { title: "Inbox" };
+export const metadata: Metadata = { title: "Filed" };
 
 const STATUS = {
   filed: { icon: CheckCircle2, tone: "text-success", label: "Filed" },
@@ -38,20 +39,16 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header>
-        <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Inbox</h1>
-        <p className="mt-1 text-sm text-text-2">
-          Forward bills, receipts, school emails, bookings and pay stubs. Jarvis reads each one and files it: bills get reminders, receipts become spending,
-          assignments go into the right class, flights and hotels into a trip, pay stubs into Work. Everything can be undone.
-        </p>
+        <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Updates</h1>
+        <p className="mt-1 text-sm text-text-2">Send bills, receipts and school emails. Jarvis files them.</p>
       </header>
+      <SegmentedNav label="Updates" items={UPDATES} active="filed" />
       {shared === "1" && <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">Got it. Jarvis filed what you shared; see it below.</p>}
       {shared === "0" && (
         <p className="rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">That share couldn&apos;t be read. Try adding it here instead.</p>
       )}
       {!d.canRead && (
-        <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2">
-          Reading documents isn&apos;t set up on this server yet (OPENAI_API_KEY). Items will wait here.
-        </p>
+        <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2">Jarvis can&apos;t read documents yet. Items wait here until he can.</p>
       )}
 
       <Card className="flex flex-col gap-4 p-5">
@@ -68,9 +65,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
               <CopyAddress address={d.address} />
             </div>
           ) : (
-            <p className="mt-1 text-sm text-text-2">
-              Email forwarding isn&apos;t set up on this server yet (INBOX_DOMAIN). Uploads and the share sheet work now.
-            </p>
+            <p className="mt-1 text-sm text-text-2">Email forwarding is coming soon. Photo and PDF uploads work now.</p>
           )}
         </div>
         <div>

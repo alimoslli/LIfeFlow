@@ -24,7 +24,10 @@ export async function GET(req: NextRequest) {
     saved = JSON.parse(Buffer.from(req.cookies.get(OAUTH_COOKIE)?.value ?? "", "base64url").toString("utf8"));
   } catch {}
   const code = p.get("code");
-  if (!code || !saved.state || saved.state !== p.get("state") || saved.uid !== user.id || !saved.verifier) return back("failed");
+  if (!code || !saved.state || saved.state !== p.get("state") || saved.uid !== user.id || !saved.verifier) {
+    console.error("[google] callback state check failed", { hasCode: !!code, hasCookie: !!saved.state });
+    return back("failed");
+  }
   try {
     const { creds, email } = await exchangeCode(code, saved.verifier, redirectUriFor(req.nextUrl.origin, cfg.appUrl));
     await withUser(user.id, async (s) => {

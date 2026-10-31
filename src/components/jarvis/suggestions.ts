@@ -14,6 +14,7 @@ export const STARTERS: Record<JarvisModule, string[]> = {
 
 /** Follow-ups keyed by the last tool Jarvis used. */
 export const FOLLOW_UPS: Record<string, string[]> = {
+  grade_check: ["Plan study time for the final", "Quiz me on the material"],
   import_assignments: ["Plan study time for these", "Show everything due this week"],
   create_tasks: ["What should I do first?", "Schedule time for these tasks"],
   spending_summary: ["Compare with last month", "How can I cut this without much hassle?"],
@@ -23,8 +24,8 @@ export const FOLLOW_UPS: Record<string, string[]> = {
   check_affordability: ["Which bills are coming up?", "How would this affect my savings goal?"],
   work_earnings: ["Compare with my actual deposits", "How many hours until I hit my goal?"],
   web_search: ["Compare the top options", "What's the catch?"],
-  money_overview: ["What's safe to spend this week?", "Where can I save this month?"],
-  safe_to_spend: ["Which bills are coming up?", "Plan my next paycheck"],
+  money_overview: ["Which bills are coming up?", "Where did my money go this month?"],
+  monthly_money_report: ["Where can I save next month?", "Plan my next paycheck"],
   budget_status: ["Move money between budgets", "Which category is running high?"],
   query_transactions: ["Group these by category", "Any charges I should cancel?"],
   find_subscriptions: ["Which ones should I cancel?", "Find a cheaper plan for my phone bill"],
@@ -34,8 +35,11 @@ export const FOLLOW_UPS: Record<string, string[]> = {
   find_free_time: ["Block the first slot for studying", "Find time for the gym too"],
   list_assignments: ["Build a study plan for these", "What's due first?"],
   add_shifts: ["Estimate my pay for these shifts", "Do these clash with classes?"],
-  create_trip: ["Plan the trip day by day", "What should I pack?"],
-  get_trip: ["Any clashes with work or class?", "How am I doing on the trip budget?"],
+  set_regular_hours: ["Do my hours clash with any classes?", "Estimate my pay for this month"],
+  add_job: ["Set my regular hours", "Add this week's shifts"],
+  add_paycheck: ["Does it match my hours?", "Where should this paycheck go?"],
+  add_account: ["What do I have available now?", "Set a savings goal"],
+  delete_habit: ["Start a different habit", "Show my habits"],
   list_habits: ["Which habit is slipping?", "Start a new habit"],
   list_goals: ["Am I on track for my goals?", "How much should I save each week?"],
   save_memory: ["What else do you know about me?"],

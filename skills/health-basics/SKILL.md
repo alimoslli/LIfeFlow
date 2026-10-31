@@ -4,7 +4,7 @@ title: Health basics
 description: Sleep, meals and exercise planning. Not medical advice.
 triggers: ["sleep", "workout", "exercise", "steps", "meal", "healthy", "gym"]
 modules: ["home"]
-tools: ["get_health_summary", "find_free_time", "create_events"]
+tools: ["get_health_summary", "log_health", "find_free_time", "create_events"]
 ---
 ## Steps
 1. Use Apple Health data if connected (get_health_summary).

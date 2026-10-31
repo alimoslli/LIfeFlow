@@ -4,8 +4,7 @@ import type { UserScope } from "../../db/with-user";
 import { listAccounts } from "./accounts";
 import { listCategories } from "./categories";
 import { needOrWant } from "./categorize";
-import { rollupToParents, spendingByCategoryId, summarizeCashflow } from "./cashflow";
-import { cashForecast } from "./forecast";
+import { rollupToParents, spendingByCategoryId } from "./cashflow";
 import { goalsWithPlans } from "./goals";
 import { balancesOf } from "./overview";
 import { budgetStatus, listRecurring, suggestRecurring, upcomingRecurring } from "./planning";
@@ -264,111 +263,4 @@ export async function roundUps(scope: UserScope, today: string) {
   const txns = await queryTransactions(scope, { from, to: monthEnd(from), kinds: ["expense"], limit: 20_000 });
   const cents = txns.reduce((s, t) => s + ((100 - (Math.abs(t.amountCents) % 100)) % 100), 0);
   return { month: from.slice(0, 7), purchases: txns.length, roundUpCents: cents, yearlyCents: cents * 12 };
-}
-
-// ------------------------------------------------------------ financial health score
-
-type Factor = { key: string; label: string; score: number; max: number; detail: string; step: string | null };
-
-export async function financialHealth(scope: UserScope, today: string) {
-  const [accounts, hist, forecast, budgets] = await series(
-    () => listAccounts(scope),
-    () => lastThreeMonths(scope, today),
-    () => cashForecast(scope, today, 30),
-    () => budgetStatus(scope, addDaysStr(monthStart(today), -1)),
-  );
-  const ef = await emergencyFundPlan(scope, today);
-  const debts = await debtReport(scope, today);
-  const b = balancesOf(accounts);
-  const flow = summarizeCashflow(hist.txns);
-  const factors: Factor[] = [];
-  if (hist.hasData && flow.incomeCents > 0) {
-    const rate = (flow.incomeCents - flow.netSpendingCents) / flow.incomeCents;
-    const pts = Math.round(Math.max(0, Math.min(1, rate / 0.2)) * 25);
-    factors.push({
-      key: "savings_rate",
-      label: "Saving part of income",
-      score: pts,
-      max: 25,
-      detail:
-        rate >= 0
-          ? `You kept ${Math.round(rate * 100)}% of income over the last ${hist.months} month${hist.months === 1 ? "" : "s"}.`
-          : `You spent ${Math.round(-rate * 100)}% more than came in over the last ${hist.months} month${hist.months === 1 ? "" : "s"}.`,
-      step: rate >= 0.2 ? null : "Aim to keep 20% of each paycheck. Start with 5% and raise it as bills allow.",
-    });
-  }
-  if (ef.essentialMonthlyCents > 0) {
-    const months = ef.monthsCovered ?? 0;
-    factors.push({
-      key: "emergency_fund",
-      label: "Emergency fund",
-      score: Math.round(Math.min(1, months / 3) * 25),
-      max: 25,
-      detail: `Savings cover ${months} month${months === 1 ? "" : "s"} of essentials.`,
-      step:
-        months >= 3 ? null : `Build toward ${usd(ef.targetCents)} (3 months of essentials). ${usd(ef.monthlyToReachIn12Cents)} a month gets there in a year.`,
-    });
-  }
-  factors.push({
-    key: "cash_cushion",
-    label: "No overdraft ahead",
-    score: forecast.overdraftDateWithPay ? 0 : forecast.overdraftDateWithoutPay ? 8 : 15,
-    max: 15,
-    detail: forecast.overdraftDateWithPay
-      ? "Checking is projected to go below $0 in the next 30 days."
-      : forecast.overdraftDateWithoutPay
-        ? "Checking stays positive only if your next paycheck arrives on time."
-        : "Checking stays positive for the next 30 days at your usual pace.",
-    step: forecast.overdraftDateWithoutPay ? "Keep a buffer of one week of spending in checking." : null,
-  });
-  if (debts.overallUtilizationPercent != null) {
-    const u = debts.overallUtilizationPercent;
-    factors.push({
-      key: "credit_utilization",
-      label: "Card balances vs limits",
-      score: u <= 10 ? 15 : u <= 30 ? 11 : u <= 50 ? 6 : 2,
-      max: 15,
-      detail: `${u}% of your card limits is in use.`,
-      step: u <= 30 ? null : "Pay cards down below 30% of their limits, ideally before the statement date.",
-    });
-  }
-  if (b.creditOwedCents + b.loansOwedCents > 0 && flow.incomeCents > 0) {
-    const monthlyIncome = flow.incomeCents / hist.months;
-    const ratio = (b.creditOwedCents + b.loansOwedCents) / (monthlyIncome * 12);
-    factors.push({
-      key: "debt_load",
-      label: "Debt compared with income",
-      score: ratio < 0.2 ? 10 : ratio < 0.5 ? 6 : ratio < 1 ? 3 : 0,
-      max: 10,
-      detail: `Debts are ${Math.round(ratio * 100)}% of a year's income.`,
-      step: ratio < 0.2 ? null : `Put extra toward the highest-rate debt first${debts.avalancheOrder[0] ? ` (${debts.avalancheOrder[0]})` : ""}.`,
-    });
-  }
-  if (budgets.length) {
-    const within = budgets.filter((x) => x.remainingCents >= 0).length / budgets.length;
-    factors.push({
-      key: "budgets",
-      label: "Staying within budgets",
-      score: Math.round(within * 10),
-      max: 10,
-      detail: `Last month you stayed within ${Math.round(within * 100)}% of your budgets.`,
-      step: within >= 0.8 ? null : "Pick the budget you went over most and set a weekly check-in for it.",
-    });
-  }
-  const max = factors.reduce((s, f) => s + f.max, 0);
-  const score = max ? Math.round((factors.reduce((s, f) => s + f.score, 0) / max) * 100) : null;
-  return {
-    score,
-    band: score == null ? null : score >= 80 ? "Strong" : score >= 60 ? "Good" : score >= 40 ? "Building" : "Needs attention",
-    factors,
-    nextSteps: factors
-      .filter((f) => f.step)
-      .sort((a, c) => c.max - c.score - (a.max - a.score))
-      .map((f) => f.step!)
-      .slice(0, 3),
-    note:
-      max < 50
-        ? "Only some factors could be scored with the data you have. Add accounts, card limits and a few months of transactions for a full score."
-        : "A simple score from your own data, to show what to work on next. It isn't a credit score.",
-  };
 }

@@ -32,7 +32,7 @@ export function ForgotForm({ available, contact }: { available: boolean; contact
       </div>
       {!available && (
         <p role="status" className="rounded-2xl bg-accent-soft px-4 py-3 text-sm text-text">
-          Password reset emails aren&apos;t set up on this server yet. If you added a passkey or Sign in with Apple, use that on the sign-in page.
+          Password reset by email isn&apos;t available yet. If you added a passkey or Sign in with Apple, use that on the sign-in page.
           {contact ? ` Otherwise, email ${contact} for help.` : ""}
         </p>
       )}

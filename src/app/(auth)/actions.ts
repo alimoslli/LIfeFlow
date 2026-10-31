@@ -120,7 +120,7 @@ export async function forgotPassword(_prev: ForgotState, fd: FormData): Promise<
     .trim()
     .toLowerCase()
     .slice(0, 254);
-  if (!passwordResetAvailable()) return { error: "Password reset emails aren't set up on this server yet.", email };
+  if (!passwordResetAvailable()) return { error: "Password reset by email isn't available yet.", email };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { error: "Enter the email you signed up with.", email };
   const db = getDb();
   const ip = await clientIp();

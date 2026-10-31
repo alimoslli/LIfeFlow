@@ -41,7 +41,7 @@ export default function manifest(): MetadataRoute.Manifest {
     // Shown in the richer install dialog on Android and desktop Chrome.
     screenshots: [
       { src: "/screenshots/today-phone.png", sizes: "780x1688", type: "image/png", form_factor: "narrow", label: "Today: your plan, money and what's next" },
-      { src: "/screenshots/money-phone.png", sizes: "780x1688", type: "image/png", form_factor: "narrow", label: "Money: safe to spend, budgets and goals" },
+      { src: "/screenshots/money-phone.png", sizes: "780x1688", type: "image/png", form_factor: "narrow", label: "Money: available now, spending and bills" },
       { src: "/screenshots/today-wide.png", sizes: "1440x900", type: "image/png", form_factor: "wide", label: "LifeFlow on a computer" },
     ],
   };

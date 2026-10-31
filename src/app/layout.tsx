@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
-import { THEME_COOKIE, parseTheme } from "@/lib/theme";
+import { ACCENT_COOKIE, THEME_COOKIE, parseAccent, parseTheme } from "@/lib/theme";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import { Splash, SPLASH_SCRIPT } from "@/components/motion/splash";
 import "./globals.css";
@@ -58,12 +58,15 @@ export async function generateViewport(): Promise<Viewport> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
+  const jar = await cookies();
+  const theme = parseTheme(jar.get(THEME_COOKIE)?.value);
+  const accent = parseAccent(jar.get(ACCENT_COOKIE)?.value);
   return (
     <html
       lang="en"
       suppressHydrationWarning
       data-theme={theme === "system" ? undefined : theme}
+      data-accent={accent === "green" ? undefined : accent}
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
       <body className="min-h-full">

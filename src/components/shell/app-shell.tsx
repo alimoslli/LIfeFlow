@@ -7,6 +7,10 @@ import { setTourAction } from "@/app/(onboarding)/welcome/actions";
 import { Settings, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAV, isActive, moduleForPath } from "./nav-items";
+import { LifeAreasContext } from "./life-areas";
+import type { LifeAreas } from "@/lib/life";
+
+const ALL_AREAS: LifeAreas = { school: true, work: true };
 import { JarvisDrawer } from "../jarvis/jarvis-drawer";
 import { SectionNav } from "./section-nav";
 import { KeyboardWatcher, MobileAppBar, PullToRefresh } from "./mobile-chrome";
@@ -34,8 +38,14 @@ export function AppShell({
   jarvis,
   tour = false,
   assistantName = "Jarvis",
+  unread = 0,
+  areas = ALL_AREAS,
   children,
 }: {
+  /** Which parts of the app the user sees (from "What fills your week"). */
+  areas?: LifeAreas;
+  /** New Jarvis messages: a dot on the Jarvis tab. */
+  unread?: number;
   /** The name the user gave their assistant. */
   assistantName?: string;
   user: { name: string; email: string; accountKind: "standard" | "demo" };
@@ -45,6 +55,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const tabs = NAV.filter((t) => t.module !== "school" || areas.school);
   const [tourOpen, setTourOpen] = useState(tour);
   const endTour = useCallback(() => {
     setTourOpen(false);
@@ -58,7 +69,7 @@ export function AppShell({
   const [palette, setPalette] = useState(false);
   const openJarvis = useCallback(
     (prompt?: string, opts?: { send?: boolean }) => setDrawer((d) => ({ open: true, prompt, send: opts?.send, key: prompt ? d.key + 1 : d.key })),
-    [],
+    [setDrawer],
   );
 
   // Remembered on this device so the opening screen can greet by name.
@@ -83,8 +94,9 @@ export function AppShell({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // The chat is full-screen; "Jarvis says" (/jarvis/says) is a normal page.
-  const onJarvisPage = pathname.startsWith("/jarvis") && !pathname.startsWith("/jarvis/says");
+  // The chat is full-screen; Updates, Profile and Memory are normal pages.
+  const onJarvisPage =
+    pathname.startsWith("/jarvis") && !["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"].some((p) => pathname.startsWith(p));
   const initials = user.name
     .split(/\s+/)
     .map((p) => p[0])
@@ -95,18 +107,72 @@ export function AppShell({
 
   return (
     <Ctx.Provider value={{ openJarvis, assistantName }}>
-      <div className="lf-glass">
-        <TiltLayer />
-        <div className="lf-scene" aria-hidden />
-        <div className="flex min-h-dvh">
-          {/* Desktop rail */}
-          <aside className="sticky top-0 hidden h-dvh w-[88px] shrink-0 flex-col items-center py-6 md:flex">
-            <Link href="/" aria-label="LifeFlow home" className="mb-8">
-              <Mark className="h-10 w-10" />
-            </Link>
-            <nav ref={rail} className="relative flex flex-col gap-1 rounded-[28px] bg-surface p-1.5 shadow-soft" aria-label="Main">
-              <span data-indicator className="pointer-events-none absolute top-0 left-1.5 w-16 rounded-[22px] bg-surface-3 opacity-0" />
-              {NAV.map((item) => {
+      <LifeAreasContext.Provider value={areas}>
+        <div className="lf-glass">
+          <TiltLayer />
+          <div className="lf-scene" aria-hidden />
+          <div className="flex min-h-dvh">
+            {/* Desktop rail */}
+            <aside className="sticky top-0 hidden h-dvh w-[88px] shrink-0 flex-col items-center py-6 md:flex">
+              <Link href="/" aria-label="LifeFlow home" className="mb-8">
+                <Mark className="h-10 w-10" />
+              </Link>
+              <nav ref={rail} className="relative flex flex-col gap-1 rounded-[28px] bg-surface p-1.5 shadow-soft" aria-label="Main">
+                <span data-indicator className="pointer-events-none absolute top-0 left-1.5 w-16 rounded-[22px] bg-surface-3 opacity-0" />
+                {tabs.map((item) => {
+                  const active = isActive(pathname, item);
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      data-tour={item.label.toLowerCase()}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "group relative flex w-16 flex-col items-center gap-1 rounded-2xl py-2.5 text-[11px] font-medium transition-colors",
+                        active ? "text-text" : "text-muted hover:text-text",
+                      )}
+                    >
+                      <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
+                      {item.href === "/jarvis" ? assistantName : item.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </aside>
+
+            <div className="flex min-w-0 flex-1 flex-col">
+              <main
+                className={cn(
+                  "mx-auto w-full flex-1",
+                  onJarvisPage ? "max-w-none" : "lf-main-pad max-w-5xl px-5 sm:px-8 md:max-w-6xl md:px-6 md:pt-5 md:pb-28",
+                )}
+              >
+                {!onJarvisPage && <MobileAppBar demo={user.accountKind === "demo"} onSearch={() => setPalette(true)} />}
+                {!onJarvisPage && (
+                  <TopBar firstName={user.name.split(" ")[0]} initials={initials} demo={user.accountKind === "demo"} settingsActive={settingsActive} />
+                )}
+                {onJarvisPage ? (
+                  <PageMotion>{children}</PageMotion>
+                ) : (
+                  // Desktop: the page sits in one large frosted panel. Phones: no panel.
+                  <div className="md:rounded-[32px] md:bg-surface md:p-8 md:shadow-soft lg:p-10">
+                    <SectionNav />
+                    <PageMotion>{children}</PageMotion>
+                  </div>
+                )}
+              </main>
+            </div>
+          </div>
+
+          {/* Mobile tab bar */}
+          <nav
+            className="lf-tabbar fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] lf-bar z-40 rounded-[28px] bg-surface shadow-lift md:hidden"
+            aria-label="Main"
+          >
+            <div ref={bar} className="relative mx-auto flex max-w-md items-stretch justify-around px-2">
+              <span data-indicator className="pointer-events-none absolute top-[5px] left-0 h-8 w-14 rounded-full bg-accent-soft opacity-0" />
+              {tabs.map((item) => {
                 const active = isActive(pathname, item);
                 const Icon = item.icon;
                 return (
@@ -116,103 +182,59 @@ export function AppShell({
                     data-tour={item.label.toLowerCase()}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "group relative flex w-16 flex-col items-center gap-1 rounded-2xl py-2.5 text-[11px] font-medium transition-colors",
-                      active ? "text-text" : "text-muted hover:text-text",
+                      "relative flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium",
+                      active ? "text-accent" : "text-muted",
                     )}
                   >
-                    <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
-                    {item.href === "/jarvis" ? assistantName : item.label}
+                    <span className="relative flex">
+                      <Icon data-icon className="h-[22px] w-[22px]" strokeWidth={active ? 2 : 1.6} />
+                      {item.href === "/jarvis" && unread > 0 && (
+                        <span className="absolute -top-0.5 -right-1 h-2.5 w-2.5 rounded-full bg-danger ring-2 ring-surface" aria-label={`${unread} new`} />
+                      )}
+                    </span>
+                    <span className="max-w-full truncate px-0.5">{item.href === "/jarvis" ? assistantName : item.label}</span>
                   </Link>
                 );
               })}
-            </nav>
-          </aside>
+            </div>
+          </nav>
 
-          <div className="flex min-w-0 flex-1 flex-col">
-            <main
-              className={cn("mx-auto w-full flex-1", onJarvisPage ? "max-w-none" : "lf-main-pad max-w-5xl px-5 sm:px-8 md:max-w-6xl md:px-6 md:pt-5 md:pb-28")}
-            >
-              {!onJarvisPage && <MobileAppBar demo={user.accountKind === "demo"} onSearch={() => setPalette(true)} />}
-              {!onJarvisPage && (
-                <TopBar firstName={user.name.split(" ")[0]} initials={initials} demo={user.accountKind === "demo"} settingsActive={settingsActive} />
-              )}
-              {onJarvisPage ? (
-                <PageMotion>{children}</PageMotion>
-              ) : (
-                // Desktop: the page sits in one large frosted panel. Phones: no panel.
-                <div className="md:rounded-[32px] md:bg-surface md:p-8 md:shadow-soft lg:p-10">
-                  <SectionNav />
-                  <PageMotion>{children}</PageMotion>
-                </div>
-              )}
-            </main>
-          </div>
+          {tourOpen && pathname === "/" && <Tour onDone={endTour} assistantName={assistantName} />}
+
+          {!onJarvisPage && (
+            <JarvisDrawer
+              key={drawer.key}
+              open={drawer.open}
+              onClose={() => setDrawer((d) => ({ ...d, open: false }))}
+              module={moduleForPath(pathname)}
+              availability={jarvis}
+              initialPrompt={drawer.prompt}
+              autoSend={drawer.send}
+              assistantName={assistantName}
+            />
+          )}
         </div>
-
-        {/* Mobile tab bar */}
-        <nav
-          className="lf-tabbar fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] lf-bar z-40 rounded-[28px] bg-surface shadow-lift md:hidden"
-          aria-label="Main"
-        >
-          <div ref={bar} className="relative mx-auto flex max-w-md items-stretch justify-around px-2">
-            <span data-indicator className="pointer-events-none absolute top-[5px] left-0 h-8 w-14 rounded-full bg-accent-soft opacity-0" />
-            {NAV.map((item) => {
-              const active = isActive(pathname, item);
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  data-tour={item.label.toLowerCase()}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "relative flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium",
-                    active ? "text-accent" : "text-muted",
-                  )}
-                >
-                  <Icon data-icon className="h-[22px] w-[22px]" strokeWidth={active ? 2 : 1.6} />
-                  <span className="max-w-full truncate px-0.5">{item.href === "/jarvis" ? assistantName : item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-
-        {tourOpen && pathname === "/" && <Tour onDone={endTour} assistantName={assistantName} />}
-
+        <Toaster />
+        <PullToRefresh />
+        <PwaClient />
+        <PasskeyOffer />
+        <NavDirection />
+        <Suspense fallback={null}>
+          <QuickAdd />
+        </Suspense>
         {!onJarvisPage && (
-          <JarvisDrawer
-            key={drawer.key}
-            open={drawer.open}
-            onClose={() => setDrawer((d) => ({ ...d, open: false }))}
-            module={moduleForPath(pathname)}
-            availability={jarvis}
-            initialPrompt={drawer.prompt}
-            autoSend={drawer.send}
-            assistantName={assistantName}
-          />
+          <button
+            type="button"
+            onClick={() => openJarvis()}
+            aria-label={`Ask ${assistantName}`}
+            className="lf-fab fixed right-4 bottom-[calc(var(--tabbar-space)-4px)] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-text shadow-lift active:scale-95 md:right-8 md:bottom-8"
+          >
+            <Sparkles className="h-6 w-6" />
+          </button>
         )}
-      </div>
-      <Toaster />
-      <PullToRefresh />
-      <PwaClient />
-      <PasskeyOffer />
-      <NavDirection />
-      <Suspense fallback={null}>
-        <QuickAdd />
-      </Suspense>
-      {!onJarvisPage && (
-        <button
-          type="button"
-          onClick={() => openJarvis()}
-          aria-label={`Ask ${assistantName}`}
-          className="lf-fab fixed right-4 bottom-[calc(var(--tabbar-space)-4px)] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-text shadow-lift active:scale-95 md:right-8 md:bottom-8"
-        >
-          <Sparkles className="h-6 w-6" />
-        </button>
-      )}
-      <KeyboardWatcher />
-      <CommandPalette open={palette} onClose={() => setPalette(false)} onAsk={(q) => openJarvis(q, { send: !!q })} />
+        <KeyboardWatcher />
+        <CommandPalette open={palette} onClose={() => setPalette(false)} onAsk={(q) => openJarvis(q, { send: !!q })} />
+      </LifeAreasContext.Provider>
     </Ctx.Provider>
   );
 }

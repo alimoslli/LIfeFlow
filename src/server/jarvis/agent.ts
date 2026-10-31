@@ -15,6 +15,7 @@ import type { ModelProvider, TokenUsage } from "./providers/types";
 import { toolSpecs } from "./registry";
 import type { ToolContext } from "./tool";
 import { describeToolCall, describeToolResult, memoryProposalOf } from "./labels";
+import { looksLikeGradedWork } from "@/lib/integrity";
 
 export type JarvisEvent =
   | { type: "conversation"; id: string; title: string }
@@ -107,6 +108,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   const skills = routeSkills(input.text, openedFrom);
   const system = buildSystemPrompt({
     skills,
+    coachMode: looksLikeGradedWork(input.text),
     userName: user.name.split(" ")[0],
     tz: user.timezone,
     now,

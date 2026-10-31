@@ -269,7 +269,7 @@ describe("forgot password", () => {
 
   it("says so honestly when email isn't configured", async () => {
     delete process.env.RESEND_API_KEY;
-    await expect(requestPasswordReset(getDb(), "a@b.com", "https://app.example")).rejects.toThrow(/aren't set up/);
+    await expect(requestPasswordReset(getDb(), "a@b.com", "https://app.example")).rejects.toThrow(/isn't available yet/);
   });
 });
 

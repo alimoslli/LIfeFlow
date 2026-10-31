@@ -7,6 +7,7 @@ import type { UserScope } from "../../db/with-user";
 import { DETECTORS, RUNS, type Candidate } from "./detectors";
 import { nextQuestion } from "./questions";
 import { performAction } from "./respond";
+import { fillRegularShifts } from "../work";
 
 export type Slot = "morning" | "midday" | "evening";
 export type JarvisMessage = typeof jarvisMessages.$inferSelect;
@@ -14,6 +15,8 @@ export type JarvisMessage = typeof jarvisMessages.$inferSelect;
 const DAILY_CAP = { low: 2, normal: 4, high: 7 } as const;
 /** Kinds that summarize the day/week; they don't count toward the daily cap. */
 const REVIEW_KINDS = new Set(["morning_brief", "evening_wrap", "weekly_review", "monthly_review", "weekly_learned"]);
+/** Outside the cap too: reviews, and the one-time consent question. */
+const uncapped = (kind: string) => REVIEW_KINDS.has(kind) || kind === "consent";
 
 export function jarvisSettings(prefs: UserPreferences | undefined) {
   const j: JarvisSettings = prefs?.jarvis ?? {};
@@ -21,7 +24,7 @@ export function jarvisSettings(prefs: UserPreferences | undefined) {
     frequency: j.frequency ?? "normal",
     quietStart: j.quietStart ?? "22:00",
     quietEnd: j.quietEnd ?? "07:00",
-    topics: { money: true, school: true, work: true, health: true, trips: true, habits: true, ...j.topics },
+    topics: { money: true, school: true, work: true, health: true, habits: true, ...j.topics },
     autonomy: { tasks: false, calendar: false, ...j.autonomy },
     avatar: j.avatar ?? "spark",
     learning: j.learning,
@@ -124,10 +127,10 @@ export async function runProactive({ scope, tz, prefs, trigger, now = new Date()
     .select({ kind: jarvisMessages.kind, urgent: jarvisMessages.urgent })
     .from(jarvisMessages)
     .where(and(eq(jarvisMessages.userId, scope.userId), gte(jarvisMessages.createdAt, new Date(now.getTime() - 24 * 3600_000))));
-  let room = DAILY_CAP[settings.frequency] - sentToday.filter((m) => !REVIEW_KINDS.has(m.kind) && !m.urgent).length;
+  let room = DAILY_CAP[settings.frequency] - sentToday.filter((m) => !uncapped(m.kind) && !m.urgent).length;
   const saved: JarvisMessage[] = [];
   for (const c of candidates) {
-    const counts = !REVIEW_KINDS.has(c.kind) && !c.urgent;
+    const counts = !uncapped(c.kind) && !c.urgent;
     if (counts && room <= 0) continue;
     // Allowed without asking (never money): do it now and say so, with Undo.
     const auto =
@@ -180,6 +183,8 @@ export async function runDueSlot(scope: UserScope, tz: string, prefs: UserPrefer
     .onConflictDoNothing()
     .returning({ id: notificationLog.id });
   if (!first) return [];
+  // Keep regular work hours filled in ahead, so detectors and Today see them.
+  await fillRegularShifts(scope, tz, todayIn(tz, now));
   return runProactive({ scope, tz, prefs, trigger: slot, now });
 }
 
@@ -200,6 +205,17 @@ export async function topMessage(scope: UserScope, now = new Date()) {
     .orderBy(desc(jarvisMessages.priority), desc(jarvisMessages.createdAt))
     .limit(20);
   return rows.find((r) => r.status === "new" || (r.snoozedUntil && r.snoozedUntil <= now)) ?? null;
+}
+
+/** New messages from the last 3 days (the dot on the Jarvis tab). */
+export async function unreadCount(scope: UserScope, now = new Date()) {
+  const [r] = await scope.tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(jarvisMessages)
+    .where(
+      and(eq(jarvisMessages.userId, scope.userId), eq(jarvisMessages.status, "new"), gte(jarvisMessages.createdAt, new Date(now.getTime() - 3 * 86_400_000))),
+    );
+  return r?.n ?? 0;
 }
 
 export async function listMessages(scope: UserScope, limit = 100) {

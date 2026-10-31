@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Settings2 } from "lucide-react";
+import { SegmentedNav, UPDATES } from "@/components/ui/segmented-nav";
 import { JarvisMessageCard } from "@/components/jarvis/message-card";
 import { assistantProfile } from "@/lib/assistant";
 import { formatIn } from "@/lib/dates";
@@ -9,7 +10,7 @@ import { moneyLocked } from "@/server/auth/money-lock";
 import { jarvisSettings, listMessages } from "@/server/services/proactive/engine";
 import { toCard } from "@/server/services/proactive/present";
 
-export const metadata: Metadata = { title: "Jarvis says" };
+export const metadata: Metadata = { title: "Updates" };
 
 /** Everything Jarvis said on his own, newest first, with what was done about it. */
 export default async function JarvisSaysPage() {
@@ -27,13 +28,14 @@ export default async function JarvisSaysPage() {
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">{d.name} says</h1>
-          <p className="mt-1 text-sm text-text-2">Everything {d.name} noticed and suggested, and what you did with it.</p>
+          <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Updates</h1>
+          <p className="mt-1 text-sm text-text-2">What {d.name} noticed and did, newest first.</p>
         </div>
-        <Link href="/settings/memory#personality" className="tap flex items-center justify-center text-muted" aria-label="Personality settings">
+        <Link href="/settings/jarvis" className="tap flex items-center justify-center text-muted" aria-label="Personality settings">
           <Settings2 className="h-5 w-5" />
         </Link>
       </header>
+      <SegmentedNav label="Updates" items={UPDATES} active="jarvis" />
       {d.locked && <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2">Money messages are hidden while Money is locked.</p>}
       {d.rows.length === 0 ? (
         <p className="rounded-3xl bg-surface p-6 text-[15px] text-text-2 shadow-soft">

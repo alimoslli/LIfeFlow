@@ -68,7 +68,7 @@ export async function searchWeb(
   opts: { instructions?: string; json?: { name: string; schema: Record<string, unknown> }; search?: SearchClient | null; country?: string } = {},
 ): Promise<WebAnswer> {
   const search = opts.search === undefined ? webSearchClient() : opts.search;
-  if (!search) throw new WebSearchError("Live web search isn't set up on this server yet (OPENAI_API_KEY is missing).");
+  if (!search) throw new WebSearchError("Live web search isn't available right now.");
   const today = new Date().toISOString().slice(0, 10);
   let res;
   try {

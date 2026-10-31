@@ -32,7 +32,7 @@ export function JarvisAvatar({ style, name, className }: { style: "spark" | "orb
       aria-hidden
       className={cn(
         "flex shrink-0 items-center justify-center rounded-full text-accent-text",
-        style === "orb" ? "bg-[radial-gradient(circle_at_30%_30%,#8fd3b6,#2f5d50_70%)]" : "bg-accent",
+        style === "orb" ? "bg-[radial-gradient(circle_at_30%_30%,color-mix(in_srgb,var(--accent)_45%,white),var(--hero)_70%)]" : "bg-accent",
         className ?? "h-9 w-9",
       )}
     >

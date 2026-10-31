@@ -23,10 +23,7 @@ export function LearnedCard({
   const kinds = stats.kinds.filter((k) => k.shown > 0).sort((a, b) => b.shown - a.shown);
   return (
     <Card>
-      <CardHeader
-        title={`What ${name} learned from you`}
-        subtitle="From your Do it, Not now, snoozes and ratings. Only used with your OK, never for training models."
-      />
+      <CardHeader title={`What ${name} learned from you`} subtitle="From your Do it, Not now and ratings." />
       <div className="mx-5 mb-3 flex items-center justify-between gap-3 rounded-2xl bg-surface-2 px-4 py-3">
         <div>
           <p className="text-sm font-medium">Learn from my responses</p>

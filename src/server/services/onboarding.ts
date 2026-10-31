@@ -1,24 +1,27 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { todayIn } from "@/lib/dates";
 import { users } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { createManualAccount } from "./finance/accounts";
 import { createMemory } from "./memory";
 import { createCourse } from "./school";
-import { createEmployer } from "./work";
+import { createEmployer, fillRegularShifts, workScheduleSchema } from "./work";
 
 /**
  * First-run setup. Everything the user entered is saved in one transaction
  * through the regular services, so a failed step leaves nothing half-done.
  */
 export const onboardingSchema = z.object({
-  lifeStage: z.enum(["student", "working", "both"]).optional(),
+  lifeStage: z.enum(["student", "working", "both", "life"]).optional(),
   courses: z.array(z.string().trim().min(1).max(200)).max(12).default([]),
   job: z
     .object({
       name: z.string().trim().min(1).max(200),
       /** Dollars per hour; optional. */
       hourlyRate: z.number().min(0).max(10_000).optional(),
+      /** Regular hours, e.g. full-time Mon–Fri 08:00–17:00. Left out when shifts change week to week. */
+      schedule: workScheduleSchema.optional(),
     })
     .optional(),
   checking: z
@@ -36,7 +39,7 @@ export const onboardingSchema = z.object({
 
 export type OnboardingInput = z.input<typeof onboardingSchema>;
 
-export async function completeOnboarding(scope: UserScope, input: OnboardingInput) {
+export async function completeOnboarding(scope: UserScope, input: OnboardingInput, tz = "UTC") {
   const d = onboardingSchema.parse(input);
   const seen = new Set<string>();
   let courses = 0;
@@ -47,7 +50,13 @@ export async function completeOnboarding(scope: UserScope, input: OnboardingInpu
     courses++;
   }
   if (d.job) {
-    await createEmployer(scope, { name: d.job.name, payType: "hourly", hourlyRateCents: d.job.hourlyRate == null ? null : Math.round(d.job.hourlyRate * 100) });
+    await createEmployer(scope, {
+      name: d.job.name,
+      payType: "hourly",
+      hourlyRateCents: d.job.hourlyRate == null ? null : Math.round(d.job.hourlyRate * 100),
+      schedule: d.job.schedule ?? null,
+    });
+    if (d.job.schedule) await fillRegularShifts(scope, tz, todayIn(tz));
   }
   if (d.checking) {
     await createManualAccount(scope, {

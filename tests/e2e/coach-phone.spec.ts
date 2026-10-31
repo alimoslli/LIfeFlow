@@ -67,7 +67,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
   await test.step("Learning consent, What Jarvis knows, Bring back", async () => {
     await card(page, "Can I learn from your answers?").getByRole("button", { name: "Yes, learn" }).click();
     await expect(card(page, "Can I learn from your answers?")).toContainText("I'll learn from how you respond");
-    await page.goto("/settings/memory");
+    await page.goto("/jarvis/memory");
     await expect(page.getByText("Learn from my responses")).toBeVisible();
     await expect(page.getByText("Subscription price increases")).toBeVisible();
     await page.getByText("Learn from my responses").scrollIntoViewIfNeeded();
@@ -77,6 +77,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
   });
 
   await test.step("Personality: live preview follows the tone", async () => {
+    await page.goto("/settings/jarvis");
     const preview = page.getByTestId("personality-preview");
     await page.getByText("Straight to the point", { exact: true }).click();
     await expect(preview).toContainText("You spent $86 on food this week, $30 more than usual. Want me to move $30 from Fun to Food?");
@@ -98,18 +99,6 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     await expect(page.getByText(/Paramount\+\s*'s free trial ends in 3 days/)).toBeVisible();
     await expect(page.getByText(/3 video streaming subscriptions \(Netflix, Paramount\+, Hulu\)/)).toBeVisible();
     await shot(page, "5-subscriptions");
-  });
-
-  await test.step("Save money: sourced cheaper plans and a script", async () => {
-    await page.goto("/finances/savings");
-    const verizon = page.getByRole("heading", { name: "Verizon" }).locator("xpath=ancestor::*[.//button][1]");
-    await verizon.getByRole("button", { name: "Find cheaper" }).click();
-    await expect(page.getByRole("link", { name: "Source: Plans | Example Mobile" })).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText("Unsourced Co")).toHaveCount(0);
-    await page.getByRole("link", { name: "Source: Plans | Example Mobile" }).scrollIntoViewIfNeeded();
-    await shot(page, "6-save-money");
-    await page.getByRole("button", { name: "Negotiation script" }).first().click();
-    await expect(page.getByRole("dialog")).toContainText("I'm a Verizon customer and I'm paying $85.00 a month");
   });
 
   await test.step("Inbox: an upload and a forwarded bill are filed; Undo works", async () => {
@@ -140,22 +129,28 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     await shot(page, "7-inbox");
   });
 
-  await test.step("Habits and trips", async () => {
+  await test.step("Habits", async () => {
     await page.goto("/habits");
     await expect(page.getByText("No-spend weekend").first()).toBeVisible();
-    await page.goto("/trips");
-    await page.getByLabel("Name", { exact: true }).fill("Paris");
-    await page.getByLabel("Where", { exact: true }).fill("Paris, France");
-    await page.getByLabel("From", { exact: true }).fill("2027-05-20");
-    await page.getByLabel("To", { exact: true }).fill("2027-05-27");
-    await page.getByRole("button", { name: "Add trip" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Paris" })).toBeVisible();
-    await expect(page.getByText("Thu, May 20 to Thu, May 27, 2027 · Paris, France")).toBeVisible();
   });
 
   await test.step("Nothing overflows sideways on a phone", async () => {
-    for (const path of ["/", "/jarvis/says", "/finances/subscriptions", "/finances/savings", "/inbox", "/settings/memory"]) {
+    for (const path of [
+      "/",
+      "/money",
+      "/plan",
+      "/goals",
+      "/jarvis/says",
+      "/jarvis/profile",
+      "/finances/subscriptions",
+      "/inbox",
+      "/jarvis/memory",
+      "/settings",
+      "/settings/jarvis",
+      "/settings/integrations",
+    ]) {
       await page.goto(path);
+      await shot(page, `page${path.replaceAll("/", "-")}`);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       expect(overflow, path).toBeLessThanOrEqual(1);
     }

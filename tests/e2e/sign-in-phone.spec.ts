@@ -92,7 +92,7 @@ test("forgot password and Sign in with Apple say plainly when they aren't set up
   await expect(page.getByRole("link", { name: "Sign in with Apple" })).toHaveCount(0);
   await page.getByRole("link", { name: "Forgot password?" }).click();
   await expect(page.getByRole("heading", { name: "Forgot your password?" })).toBeVisible();
-  await expect(page.getByText("Password reset emails aren't set up on this server yet")).toBeVisible();
+  await expect(page.getByText("Password reset by email isn't available yet")).toBeVisible();
   await expect(page.getByRole("button", { name: "Send reset link" })).toBeDisabled();
   await page.goto("/login?error=apple-unavailable");
   await expect(page.getByRole("alert").filter({ hasText: "Sign in with Apple isn't set up" })).toBeVisible();

@@ -36,7 +36,7 @@ type ServerEvent =
   | { type: "done"; messageId: string | null; runId?: string | null }
   | { type: "error"; message: string };
 
-const ACCEPT = "image/png,image/jpeg,image/webp,image/gif,text/plain,text/csv,text/markdown,application/json,.md,.csv,.txt";
+const ACCEPT = "application/pdf,.pdf,image/png,image/jpeg,image/webp,image/gif,text/plain,text/csv,text/markdown,application/json,.md,.csv,.txt";
 
 export function JarvisChat({
   conversationId: initialId,
@@ -275,8 +275,8 @@ export function JarvisChat({
             <div className="flex gap-3 rounded-2xl bg-warning-soft p-4 text-sm text-warning">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
-                <p className="font-medium">Jarvis isn&apos;t connected to an AI model yet.</p>
-                <p className="mt-1 opacity-90">{availability.reason} See README → “Configure Jarvis”. Everything else in LifeFlow works without it.</p>
+                <p className="font-medium">Jarvis isn&apos;t available right now.</p>
+                <p className="mt-1 opacity-90">Everything else in LifeFlow works as usual.</p>
               </div>
             </div>
           )}
@@ -381,7 +381,7 @@ export function JarvisChat({
                 }
               }}
               rows={1}
-              placeholder={availability.available ? "Ask Jarvis anything, or paste assignment details…" : "Jarvis is not configured"}
+              placeholder={availability.available ? "Ask Jarvis anything, or paste assignment details…" : "Jarvis isn't available right now"}
               disabled={!availability.available}
               aria-label="Message Jarvis"
               className="max-h-48 min-h-9 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] placeholder:text-muted focus:outline-none focus-visible:outline-none [field-sizing:content]"
@@ -542,7 +542,7 @@ function MemoryCard({ s, onDecide }: { s: UiMemorySuggestion; onDecide: (memoryI
         <p className={cn("mt-2 text-[13px]", s.status === "saved" ? "text-success" : "text-muted")}>
           {s.status === "saved" ? "✓ Saved to memory" : s.status === "dismissed" ? "Not saved" : "Removed from memory"}
           {" · "}
-          <Link href="/settings/memory" className="underline-offset-2 hover:underline">
+          <Link href="/jarvis/memory" className="underline-offset-2 hover:underline">
             Manage memory
           </Link>
         </p>

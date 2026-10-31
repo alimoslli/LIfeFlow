@@ -180,3 +180,12 @@ export async function skillStats(scope: UserScope, days = 90, now = new Date()) 
     .map(([skill, x]) => ({ skill, ...x, successRate: x.runs ? x.ok / x.runs : null, flagged: x.down >= 2 && x.down > x.up }))
     .sort((a, b) => b.runs - a.runs);
 }
+
+/** How many times the user has asked Jarvis something (all time). Used to stop "Try this" tips once they're a regular. */
+export async function runCount(scope: UserScope) {
+  const [r] = await scope.tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(jarvisRuns)
+    .where(eq(jarvisRuns.userId, scope.userId));
+  return r?.n ?? 0;
+}

@@ -36,6 +36,17 @@ describe("OpenAI Responses provider", () => {
     ]);
   });
 
+  it("sends an attached PDF as a file the model reads", () => {
+    const [msg] = toResponsesInput([{ type: "user", text: "syllabus", files: [{ filename: "bio.pdf", mimeType: "application/pdf", base64: "JVBERi0=" }] }]);
+    expect(msg).toEqual({
+      role: "user",
+      content: [
+        { type: "input_text", text: "syllabus" },
+        { type: "input_file", filename: "bio.pdf", file_data: "data:application/pdf;base64,JVBERi0=" },
+      ],
+    });
+  });
+
   it("streams text, surfaces function calls, and replays outputs + results on the next step", async () => {
     const requests: Record<string, unknown>[] = [];
     let call = 0;

@@ -11,8 +11,9 @@ import { formatIn, todayIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { searchNotes } from "@/server/services/notes";
-import { getCourse, listAssignments, listMaterials } from "@/server/services/school";
-import { addMaterialAction, createAssignmentAction, deleteCourseAction, deleteMaterialAction, updateCourseAction } from "../../actions";
+import { courseGradeReport, getCourse, listAssignments, listMaterials } from "@/server/services/school";
+import { GradeCard } from "../../grade-card";
+import { addMaterialAction, createAssignmentAction, deleteCourseAction, deleteMaterialAction, setGradeWeightsAction, updateCourseAction } from "../../actions";
 import { AssignmentList } from "../../assignment-list";
 import { AssignmentDialog, CourseDialog } from "../../forms";
 
@@ -24,6 +25,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
   const d = await withCurrentUser(async (s, u) => {
     const course = await getCourse(s, id).catch(() => null);
     if (!course) return null;
+    const report = await courseGradeReport(s, u.timezone, id);
     const [upcoming, overdue, done, materials, notes] = await series(
       () => listAssignments(s, u.timezone, { courseId: id, view: "upcoming" }),
       () => listAssignments(s, u.timezone, { courseId: id, view: "overdue" }),
@@ -32,7 +34,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
       () => searchNotes(s, { courseId: id, limit: 10 }),
     );
     const undated = (await listAssignments(s, u.timezone, { courseId: id, view: "all" })).filter((a) => !a.dueAt && a.status !== "done");
-    return { course, upcoming: [...overdue, ...upcoming, ...undated], done, materials, notes, tz: u.timezone };
+    return { course, grade: report.grade, upcoming: [...overdue, ...upcoming, ...undated], done, materials, notes, tz: u.timezone };
   });
   if (!d) notFound();
   const c = d.course;
@@ -77,9 +79,12 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
         <div className="flex flex-wrap gap-2">
           <AskJarvisButton
             prompt={`Build a study plan for ${label} around my schedule.`}
-            className="h-8 rounded-full bg-surface px-3.5 text-[13px] font-medium shadow-soft"
+            className="flex min-h-11 items-center rounded-full bg-surface px-4 text-[13px] font-medium shadow-soft"
           >
             Study plan with Jarvis
+          </AskJarvisButton>
+          <AskJarvisButton prompt={`About ${label}: `} className="flex min-h-11 items-center rounded-full bg-surface px-4 text-[13px] font-medium shadow-soft">
+            Ask about this class
           </AskJarvisButton>
           <AssignmentDialog action={createAssignmentAction} courses={[c]} defaultCourseId={c.id} />
           <CourseDialog action={updateCourseAction.bind(null, c.id)} course={c} trigger="Edit" />
@@ -103,7 +108,8 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
             </Card>
           )}
         </div>
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-5 max-lg:order-first">
+          <GradeCard grade={d.grade} weights={c.gradeWeights ?? null} action={setGradeWeightsAction.bind(null, c.id)} />
           <Card>
             <CardHeader title="Materials & links" />
             <ul className="px-5">

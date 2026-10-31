@@ -29,6 +29,11 @@ export function toResponsesInput(history: ChatItem[]): ResponseInputItem[] {
               detail: "auto" as const,
               image_url: `data:${img.mimeType};base64,${img.base64}`,
             })),
+            ...(item.files ?? []).map((f) => ({
+              type: "input_file" as const,
+              filename: f.filename,
+              file_data: `data:${f.mimeType};base64,${f.base64}`,
+            })),
           ],
         };
       case "assistant":

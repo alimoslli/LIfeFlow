@@ -3,7 +3,7 @@ import { askJarvis, queryAsUser, signUp } from "./helpers";
 
 test("sign up, reach Home, and manage a task end to end", async ({ page }) => {
   const email = await signUp(page);
-  await expect(page.getByText("Nothing due today.")).toBeVisible();
+  await expect(page.getByRole("region", { name: /plan for today/ })).toContainText("Nothing is due today and nothing is overdue.");
 
   await page.goto("/tasks");
   await page.getByLabel("To-do title").fill("Renew parking permit");
@@ -47,7 +47,7 @@ test("Jarvis saves assignments and tasks that then appear in School and Tasks", 
   await expect(page.getByText("Created 1 task")).toBeVisible();
 
   // The saved records are real and visible in their modules.
-  await page.goto("/school");
+  await page.goto("/school/due");
   await expect(page.getByTestId("assignment-row").filter({ hasText: "Chapter 4 quiz" })).toBeVisible();
   await expect(page.getByText("Essay")).toHaveCount(0);
   await page.goto("/tasks");

@@ -1,38 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen, GraduationCap, Plug, Sparkles } from "lucide-react";
+import { GraduationCap, Sparkles } from "lucide-react";
 import { AskJarvisButton } from "@/components/shell/app-shell";
-import { Badge, Card, CardHeader, EmptyState, PageHeader, Tabs } from "@/components/ui/surface";
-import { dueLabel, todayIn } from "@/lib/dates";
+import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/surface";
+import { dueLabel } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
-import { integrationStatus } from "@/server/services/integrations";
-import { listAssignments, listCourses, type AssignmentView } from "@/server/services/school";
+import { listAssignments, listCourses } from "@/server/services/school";
 import { createAssignmentAction, createCourseAction } from "./actions";
-import { AssignmentList } from "./assignment-list";
 import { AssignmentDialog, CourseDialog } from "./forms";
+import { canvasConnection } from "@/server/integrations/canvas";
 
 export const metadata: Metadata = { title: "School" };
 
-const VIEWS: { key: AssignmentView; label: string }[] = [
-  { key: "today", label: "Due today" },
-  { key: "week", label: "This week" },
-  { key: "upcoming", label: "Upcoming" },
-  { key: "overdue", label: "Overdue" },
-  { key: "completed", label: "Completed" },
-];
-
-export default async function SchoolPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
-  const sp = await searchParams;
-  const view = (VIEWS.find((v) => v.key === sp.view)?.key ?? "upcoming") as AssignmentView;
+export default async function SchoolPage() {
   const d = await withCurrentUser(async (s, u) => {
-    const [courses, list, all, integrations] = await series(
+    const [courses, all, canvas] = await series(
       () => listCourses(s),
-      () => listAssignments(s, u.timezone, { view }),
       () => listAssignments(s, u.timezone, { view: "upcoming", limit: 300 }),
-      () => integrationStatus(s),
+      () => canvasConnection(s),
     );
-    return { courses, list, all, canvas: integrations.find((i) => i.provider === "canvas")!, tz: u.timezone };
+    return { courses, all, canvas, tz: u.timezone };
   });
   const nextByCourse = new Map<string, (typeof d.all)[number]>();
   for (const a of d.all) if (!nextByCourse.has(a.course.id)) nextByCourse.set(a.course.id, a);
@@ -42,8 +30,8 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <PageHeader
-        title="School"
-        description="Your classes and what's due."
+        title="Classes"
+        description="Your classes and what's next in each."
         actions={
           <>
             {d.courses.length > 0 && <AssignmentDialog action={createAssignmentAction} courses={d.courses} />}
@@ -91,40 +79,17 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
       )}
 
       <AskJarvisButton
-        prompt="I'm going to paste my assignments. Please add them to the right courses: "
-        className="mb-10 flex w-full items-center gap-3 rounded-3xl bg-accent-soft px-5 py-4 text-left text-[15px] text-accent transition-transform active:scale-[0.99]"
+        prompt="Here's my syllabus. Add every due date and exam to the right class."
+        className="mb-4 flex w-full items-center gap-3 rounded-3xl bg-accent-soft px-5 py-4 text-left text-[15px] text-accent transition-transform active:scale-[0.99]"
       >
         <Sparkles className="h-4 w-4 shrink-0" />
         <span className="flex-1">Have a syllabus or a screenshot? Send it to Jarvis and it&apos;ll add everything.</span>
       </AskJarvisButton>
-
-      <h2 className="mb-3 font-display text-2xl font-medium">Assignments</h2>
-      <Tabs current={view} items={VIEWS.map((v) => ({ key: v.key, label: v.label, href: `/school?view=${v.key}` }))} />
-      <Card className="mb-10">
-        {d.list.length === 0 ? (
-          <EmptyState icon={<BookOpen />} title={view === "overdue" ? "Nothing overdue. Nice." : "Nothing here"}>
-            {view === "completed" ? "Completed assignments will collect here." : "Assignments you or Jarvis add will show up here."}
-          </EmptyState>
-        ) : (
-          <AssignmentList items={d.list} tz={d.tz} today={todayIn(d.tz)} />
-        )}
-      </Card>
-
-      {/* Integrations live below the primary academic content. */}
-      <Card>
-        <CardHeader title="Canvas connection" action={<Badge tone="neutral">Not connected</Badge>} />
-        <div className="flex flex-col gap-3 px-5 pb-5 text-sm text-text-2 sm:flex-row sm:items-center">
-          <Plug className="hidden h-5 w-5 shrink-0 text-muted sm:block" />
-          <p className="flex-1">
-            Canvas sync isn&apos;t available in this version yet. It needs your school&apos;s Canvas URL and an access token your school permits. Until then,
-            add work manually or paste it into your assistant. Nothing here is synced or simulated.
-          </p>
-          <Link href="/settings/integrations" className="flex min-h-11 shrink-0 items-center text-sm font-medium text-accent hover:underline">
-            Integration details
-          </Link>
-        </div>
-        {d.canvas.connections.length > 0 && <p className="px-5 pb-4 text-xs text-muted">{d.canvas.connections.length} connection record(s) on file.</p>}
-      </Card>
+      {!d.canvas && (
+        <Link href="/settings/integrations" className="mb-6 flex min-h-11 items-center text-sm font-medium text-accent">
+          Use Canvas? Connect it and your classes and due dates fill in by themselves.
+        </Link>
+      )}
     </>
   );
 }

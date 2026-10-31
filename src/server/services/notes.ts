@@ -3,6 +3,7 @@ import { z } from "zod";
 import { courses, notes, projects, type DataSource } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound } from "./errors";
+import { parsePatch } from "./patch";
 
 export const noteInputSchema = z.object({
   title: z.string().trim().min(1).max(300),
@@ -25,7 +26,7 @@ export async function createNote(scope: UserScope, input: z.input<typeof noteInp
 }
 
 export async function updateNote(scope: UserScope, id: string, patch: Partial<z.input<typeof noteInputSchema>>) {
-  const d = noteInputSchema.partial().parse(patch);
+  const d = parsePatch(noteInputSchema.partial(), patch);
   await assertOwned(scope, projects, d.projectId, "Project");
   await assertOwned(scope, courses, d.courseId, "Course");
   const [row] = await scope.tx
@@ -108,7 +109,7 @@ export async function createProject(scope: UserScope, input: z.input<typeof proj
 }
 
 export async function updateProject(scope: UserScope, id: string, patch: Partial<z.input<typeof projectInputSchema>>) {
-  const d = projectInputSchema.partial().parse(patch);
+  const d = parsePatch(projectInputSchema.partial(), patch);
   const [row] = await scope.tx
     .update(projects)
     .set(d)

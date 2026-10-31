@@ -50,7 +50,7 @@ export default async function WealthPage() {
 
   return (
     <>
-      <PageHeader title="Wealth" description="Your investments and net worth. LifeFlow never trades or moves money." />
+      <PageHeader title="Investments" description="Investments and net worth." />
       <Card className="mb-5 grid grid-cols-2 gap-5 p-5 md:grid-cols-4">
         <Stat label="Net worth" value={<Money cents={totals.netWorthCents} />} sub="Assets minus debts" />
         <Stat

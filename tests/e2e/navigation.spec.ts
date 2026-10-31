@@ -9,8 +9,9 @@ test("five tabs, and every section is one tap from its tab", async ({ page }) =>
       "Plan sections",
       [
         ["To-dos", /\/tasks/],
+        ["Goals", /\/goals/],
+        ["Health", /\/habits/],
         ["Work", /\/work/],
-        ["Trips", /\/trips/],
         ["Calendar", /\/plan$/],
       ],
     ],
@@ -18,18 +19,25 @@ test("five tabs, and every section is one tap from its tab", async ({ page }) =>
       "/money",
       "Money sections",
       [
-        ["Transactions", /\/finances\/transactions/],
-        ["Accounts & wallet", /\/finances\/accounts/],
+        ["Activity", /\/finances\/transactions/],
+        ["Accounts", /\/finances\/accounts/],
         ["Overview", /\/money$/],
       ],
     ],
     [
-      "/habits",
-      "Personal sections",
+      "/jarvis/says",
+      "Jarvis sections",
       [
-        ["School", /\/school/],
-        ["Second Brain", /\/notes/],
-        ["Health & habits", /\/habits/],
+        ["Profile", /\/jarvis\/profile/],
+        ["Updates", /\/jarvis\/says/],
+      ],
+    ],
+    [
+      "/school",
+      "School sections",
+      [
+        ["Notes", /\/notes/],
+        ["Classes", /\/school/],
       ],
     ],
   ] as const;
@@ -58,7 +66,7 @@ test("calendar moves between months and opens a day", async ({ page }) => {
 
 test("appearance can be set to light or dark and is remembered", async ({ page }) => {
   await signUp(page, "Theme Tester");
-  await page.goto("/settings");
+  await page.goto("/settings/profile");
   await page.getByRole("radio", { name: "Dark" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.reload();

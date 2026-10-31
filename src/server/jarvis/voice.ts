@@ -56,7 +56,7 @@ export async function buildVoiceSession(user: SessionUser, module: JarvisModule 
 /** Creates the conversation that holds this call's transcript, and a short-lived OpenAI client secret. */
 export async function startVoiceSession(user: SessionUser, module: JarvisModule | null, client?: OpenAI) {
   const e = env();
-  if (!e.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not set on the server.");
+  if (!e.OPENAI_API_KEY) throw new Error("Voice isn't available right now.");
   const openai = client ?? new OpenAI({ apiKey: e.OPENAI_API_KEY, baseURL: e.OPENAI_BASE_URL, maxRetries: 1, timeout: 20_000 });
   const session = await buildVoiceSession(user, module);
   const secret = await openai.realtime.clientSecrets.create({

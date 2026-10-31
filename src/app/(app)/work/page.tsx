@@ -10,9 +10,10 @@ import { addDaysStr, currentInstant, formatDateStr, isValidDateStr, monthEnd, mo
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { estimateEarnings, listEmployers, listPaychecks, listShifts, ratesOf, shiftPaidMinutes } from "@/server/services/work";
-import { ShiftDialog } from "./forms";
+import { JobHoursForm, ShiftDialog, WorkHoursField } from "./forms";
 import { ShiftList } from "./shift-list";
-import { addPaycheckAction, createEmployerAction, createShiftAction } from "./actions";
+import { addPaycheckAction, createEmployerAction, createShiftAction, setJobHoursAction } from "./actions";
+import { scheduleLabel } from "@/lib/work-schedule";
 
 export const metadata: Metadata = { title: "Work" };
 
@@ -136,7 +137,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
                 <CardHeader title="Jobs" />
                 <ul className="px-5 pb-3">
                   {d.employers.map((e) => (
-                    <li key={e.id} className="flex justify-between py-1.5 text-sm">
+                    <li key={e.id} className="flex flex-wrap justify-between gap-x-3 py-1.5 text-sm">
                       <span>
                         {e.name}
                         {e.position && <span className="text-muted"> · {e.position}</span>}
@@ -151,6 +152,12 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
                           e.payType
                         )}
                       </span>
+                      <details className="w-full">
+                        <summary className="flex min-h-11 cursor-pointer items-center text-xs text-text-2">
+                          {e.schedule ? `Regular hours: ${scheduleLabel(e.schedule)}` : "Shifts change week to week"} · Edit hours
+                        </summary>
+                        <JobHoursForm action={setJobHoursAction} employerId={e.id} initial={e.schedule} />
+                      </details>
                     </li>
                   ))}
                 </ul>
@@ -242,6 +249,7 @@ function EmployerForm() {
           <Input id="e-rate" name="hourlyRate" inputMode="decimal" placeholder="16.50" />
         </Field>
       </div>
+      <WorkHoursField />
       <SubmitButton className="self-end">Save job</SubmitButton>
     </ActionForm>
   );

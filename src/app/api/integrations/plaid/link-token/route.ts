@@ -4,6 +4,7 @@ import { getSessionUser } from "@/server/auth/current-user";
 import { withUser } from "@/server/db/with-user";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { createLinkToken, PlaidError, plaidConfig, reconnectLinkToken } from "@/server/integrations/plaid";
+import { requirePro } from "@/server/billing";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,8 @@ export async function POST(req: Request) {
     assertSameOrigin(req);
     const user = await getSessionUser();
     if (!user) throw new HttpError(401, "Not signed in");
-    if (!plaidConfig()) throw new HttpError(503, "Bank connections aren't set up on the server yet.");
+    requirePro(user, "bank");
+    if (!plaidConfig()) throw new HttpError(503, "Bank connections aren't available yet.");
     const parsed = body.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) throw new HttpError(400, "Invalid request");
     await enforceRateLimit(`plaid-link:${user.id}`, 20, 600);

@@ -28,13 +28,10 @@ export function GoogleCard({
           {connection ? (connection.status === "error" ? "Needs attention" : "Connected") : "Not connected"}
         </Badge>
       </div>
-      <p className="mt-3 text-sm text-text-2">
-        Your assistant can search and read your email, draft replies in Gmail, send email after you confirm, and keep your Google Calendar in your plan. You can
-        disconnect at any time.
-      </p>
+      <p className="mt-3 text-sm text-text-2">Jarvis can read and draft email (sending always asks you first) and keeps your Google Calendar in your plan.</p>
 
       {!configured ? (
-        <p className="mt-3 text-sm text-warning">Not available yet: the server needs GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.</p>
+        <p className="mt-3 text-sm text-warning">Google isn&apos;t available yet. Check back soon.</p>
       ) : connection ? (
         <div className="mt-4 flex flex-col gap-3">
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSessionUser } from "@/server/auth/current-user";
 import { authUrl, googleConfig, newOAuthState, OAUTH_COOKIE, redirectUriFor } from "@/server/integrations/google";
 import { enforceRateLimit, errorResponse, HttpError } from "@/server/http";
+import { isPro } from "@/server/billing";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +11,11 @@ export async function GET(req: NextRequest) {
   try {
     const user = await getSessionUser();
     if (!user) throw new HttpError(401, "Not signed in");
+    if (!isPro(user)) return NextResponse.redirect(new URL("/settings/plan?need=google", req.url));
     const cfg = googleConfig();
     if (!cfg) return NextResponse.redirect(new URL("/settings/integrations?google=not_configured", req.url));
+    // Google returns to APP_URL; starting on another host (e.g. a preview URL) would lose the session and state cookie there.
+    if (cfg.appUrl && req.nextUrl.origin !== cfg.appUrl) return NextResponse.redirect(`${cfg.appUrl}/settings/integrations?google=use_main_site`);
     await enforceRateLimit(`google-oauth:${user.id}`, 10, 600);
     const { state, verifier, challenge } = newOAuthState();
     const redirectUri = redirectUriFor(req.nextUrl.origin, cfg.appUrl);

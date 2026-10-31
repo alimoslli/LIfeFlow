@@ -130,7 +130,7 @@ const goalMilestones: Detector = async ({ scope, today }) => {
         topic: "money" as const,
         dedupeKey: `goal_milestone:${g.id}:${g.milestoneToCelebrate}`,
         facts: { goal: g.name, goalId: g.id, percent: g.milestoneToCelebrate, weeksAhead, extraCents: Math.max(0, extra) },
-        action: { type: "open" as const, label: "See goal", href: "/finances/goals" },
+        action: { type: "open" as const, label: "See goal", href: "/goals" },
         priority: 60,
       };
     });
@@ -430,7 +430,7 @@ const savingsCheck: Detector = async ({ scope, today }) => {
       topic: "money",
       dedupeKey: `savings_found:${bill.id}:${today.slice(0, 7)}`,
       facts: { bill: bill.name, provider: best.provider, plan: best.plan, yearlyCents: best.yearlySavingsCents, source: best.sourceTitle },
-      action: { type: "open", label: "See it and the source", href: "/finances/savings" },
+      action: { type: "open", label: "See it and the source", href: "/finances/subscriptions" },
       priority: 65,
     },
   ];

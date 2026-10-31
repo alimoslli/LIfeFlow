@@ -1,17 +1,17 @@
 import { series } from "@/server/db/series";
-import { addDaysStr, daysBetween, formatDateStr, monthEnd, monthStart, weekStart } from "@/lib/dates";
+import { addDaysStr, daysBetween, formatDateStr, monthEnd, monthStart } from "@/lib/dates";
 import type { UserScope } from "../../db/with-user";
 import { summarizeCashflow } from "./cashflow";
 import { listAccounts } from "./accounts";
 import { balancesOf } from "./overview";
-import { budgetStatus, listGoals, listRecurring, upcomingRecurring } from "./planning";
+import { budgetStatus, listRecurring, upcomingRecurring } from "./planning";
 import { detectRecurring, merchantKey } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 
 /**
  * Forward-looking money math. Every result carries the inputs it used, so the
  * app and Jarvis can show the working instead of a bare verdict. Expected pay
- * is shown separately and never mixed into "safe to spend".
+ * is shown separately and never mixed into what is available now.
  */
 
 // ------------------------------------------------------------ pure helpers
@@ -41,38 +41,6 @@ export function projectCash(input: { startCents: number; today: string; days: nu
     lowestWithPay: { date: low("withPayCents").date, cents: low("withPayCents").withPayCents },
     overdraftDateWithoutPay: firstBelow("withoutPayCents"),
     overdraftDateWithPay: firstBelow("withPayCents"),
-  };
-}
-
-/**
- * Safe to spend = cash on hand, minus bills due before the next paycheck,
- * minus what the user plans to set aside for goals in that time, spread over
- * the days until then.
- */
-export function safeToSpendCalc(i: {
-  cashCents: number;
-  today: string;
-  /** Next expected pay date, or null: then the window runs to month end. */
-  horizon: string;
-  billsDueCents: number;
-  goalSetAsideCents: number;
-  bufferCents: number;
-  spentTodayCents: number;
-  spentThisWeekCents: number;
-  weekEnd: string;
-}) {
-  // At least a week, so a payday tomorrow doesn't turn all cash into "spend it now".
-  const days = Math.max(7, daysBetween(i.today, i.horizon));
-  const available = i.cashCents - i.billsDueCents - i.goalSetAsideCents - i.bufferCents;
-  const perDay = Math.floor(Math.max(0, available) / days);
-  const weekDaysLeft = Math.max(1, Math.min(daysBetween(i.today, i.weekEnd) + 1, days));
-  return {
-    availableCents: available,
-    perDayCents: perDay,
-    todayCents: Math.max(0, perDay - i.spentTodayCents),
-    thisWeekCents: Math.max(0, perDay * weekDaysLeft - i.spentTodayCents),
-    days,
-    short: available < 0,
   };
 }
 
@@ -179,56 +147,8 @@ export async function cashForecast(scope: UserScope, today: string, days = 30) {
       "Starts from checking and cash balances (savings and cards excluded).",
       `Day-to-day spending uses your average over the last ${typical.basedOnDays} days, not counting tracked bills.`,
       "Bills come from your tracked bills and subscriptions, on their next due dates.",
-      pay.length ? "Expected pay is shown as a separate line and is never assumed for safe to spend." : "No regular paycheck was found, so no pay is assumed.",
+      pay.length ? "Expected pay is shown as a separate line and is never counted as available." : "No regular paycheck was found, so no pay is assumed.",
     ],
-  };
-}
-
-export async function safeToSpend(scope: UserScope, today: string) {
-  const accounts = await listAccounts(scope);
-  const balances = balancesOf(accounts);
-  const pay = await expectedPay(scope, today, addDaysStr(today, 45));
-  const nextPay = pay[0]?.date ?? null;
-  const horizon = nextPay ?? addDaysStr(monthEnd(today), 1);
-  const wkEnd = addDaysStr(weekStart(today), 6);
-  // Pay can be late or smaller than usual, so bills in the next two weeks are covered from cash on hand even if payday comes first.
-  const billsUntil = addDaysStr(horizon, -1) > addDaysStr(today, 14) ? addDaysStr(horizon, -1) : addDaysStr(today, 14);
-  const [bills, goals, todays, week] = await series(
-    () => upcomingRecurring(scope, today, billsUntil),
-    () => listGoals(scope),
-    () => queryTransactions(scope, { from: today, to: today, limit: 500 }),
-    () => queryTransactions(scope, { from: weekStart(today), to: today, limit: 2000 }),
-  );
-  const billsDue = bills.filter((b) => b.amountCents < 0).reduce((s, b) => s - b.amountCents, 0);
-  const days = Math.max(7, daysBetween(today, horizon));
-  const goalSetAside = goals
-    .filter((g) => g.status === "active" && g.monthlyPlanCents)
-    .reduce((s, g) => s + Math.round(((g.monthlyPlanCents ?? 0) * days) / 30), 0);
-  const calc = safeToSpendCalc({
-    cashCents: balances.cashCents,
-    today,
-    horizon,
-    billsDueCents: billsDue,
-    goalSetAsideCents: goalSetAside,
-    bufferCents: 0,
-    spentTodayCents: summarizeCashflow(todays).netSpendingCents,
-    spentThisWeekCents: summarizeCashflow(week).netSpendingCents,
-    weekEnd: wkEnd,
-  });
-  return {
-    hasAccounts: accounts.length > 0,
-    ...calc,
-    cashCents: balances.cashCents,
-    asOf: balances.asOf,
-    until: horizon,
-    untilReason: nextPay ? ("next_pay" as const) : ("month_end" as const),
-    nextPay: pay[0] ?? null,
-    billsDueCents: billsDue,
-    bills: bills.filter((b) => b.amountCents < 0),
-    goalSetAsideCents: goalSetAside,
-    spentTodayCents: summarizeCashflow(todays).netSpendingCents,
-    billsUntil,
-    method: `Cash and checking, minus bills due by ${formatDateStr(billsUntil, "MMM d")}, minus your planned goal savings, spread over ${calc.days} days.`,
   };
 }
 

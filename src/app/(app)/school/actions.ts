@@ -96,3 +96,18 @@ export async function deleteMaterialAction(id: string): Promise<ActionState> {
     await deleteMaterial(s, id);
   });
 }
+
+export async function setGradeWeightsAction(id: string, _p: ActionState, fd: FormData): Promise<ActionState> {
+  const f = formObject(fd);
+  const weights = Object.fromEntries(
+    Object.entries(f)
+      .filter(([k, v]) => k.startsWith("w_") && v)
+      .map(([k, v]) => [k.slice(2), Number(v)]),
+  );
+  if (Object.values(weights).some((v) => !Number.isFinite(v) || v < 0 || v > 100))
+    return { ok: false, error: "Use whole percents between 0 and 100.", at: Date.now() };
+  return mutate("course.weights", async (s) => {
+    await updateCourse(s, id, { gradeWeights: Object.keys(weights).length ? weights : null });
+    return "Saved";
+  });
+}

@@ -39,6 +39,6 @@ describe("weekly what-I-learned summary", () => {
     const m = out.find((x) => x.kind === "weekly_learned")!;
     expect(m.body).toContain("I learned 1 new thing about you this week");
     expect(JSON.stringify(m.facts.sections)).toContain("Saving for Paris in May.");
-    expect(m.action).toMatchObject({ type: "open", href: "/settings/memory" });
+    expect(m.action).toMatchObject({ type: "open", href: "/jarvis/memory" });
   });
 });

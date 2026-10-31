@@ -16,6 +16,7 @@ export type SessionUser = {
   timezone: string;
   accountKind: "standard" | "demo";
   preferences?: UserPreferences;
+  plan?: "free" | "pro";
 };
 
 /** Creates a session and returns the raw token for the cookie. Only its hash is stored. */
@@ -34,7 +35,15 @@ export async function validateSession(db: Database, token: string): Promise<Sess
     .select({
       expiresAt: sessions.expiresAt,
       lastSeenAt: sessions.lastSeenAt,
-      user: { id: users.id, email: users.email, name: users.name, timezone: users.timezone, accountKind: users.accountKind, preferences: users.preferences },
+      user: {
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        timezone: users.timezone,
+        accountKind: users.accountKind,
+        preferences: users.preferences,
+        plan: users.plan,
+      },
     })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))

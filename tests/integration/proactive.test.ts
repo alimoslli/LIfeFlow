@@ -208,7 +208,7 @@ describe("reviews and coaching", () => {
     });
     const morning = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "morning" }));
     const brief = morning.find((m) => m.kind === "morning_brief")!;
-    expect(brief.body).toMatch(/safe to spend today/);
+    expect(brief.body).toMatch(/available now/);
     expect(JSON.stringify(brief.facts.sections)).toContain("Email advisor");
 
     const evening = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening" }));

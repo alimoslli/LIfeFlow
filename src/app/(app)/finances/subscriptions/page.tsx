@@ -1,3 +1,4 @@
+import { BILLS_SUBS, SegmentedNav } from "@/components/ui/segmented-nav";
 import type { Metadata } from "next";
 import { AlertTriangle, Copy, Hourglass, TrendingUp, ZapOff } from "lucide-react";
 import { moneyGate } from "@/app/(app)/money-gate";
@@ -24,7 +25,8 @@ export default async function SubscriptionsPage() {
   return (
     <div className="mx-auto flex max-w-[720px] flex-col gap-6">
       <header>
-        <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Subscriptions</h1>
+        <SegmentedNav label="Bills and subscriptions" items={BILLS_SUBS} active="subs" />
+        <h1 className="mt-4 font-display text-[34px] leading-tight font-medium tracking-tight">Subscriptions</h1>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <Card as="div" className="p-4">
             <p className="text-sm text-muted">Per month</p>

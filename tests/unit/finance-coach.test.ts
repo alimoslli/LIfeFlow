@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { keywordCategory, needOrWant } from "@/server/services/finance/categorize";
 import { simulatePayoff } from "@/server/services/finance/coach";
-import { budgetPace, projectCash, safeToSpendCalc } from "@/server/services/finance/forecast";
+import { budgetPace, projectCash } from "@/server/services/finance/forecast";
 import { goalProjection, goalTradeoff } from "@/server/services/finance/goals";
 import { projectInvesting } from "@/server/services/finance/investing";
 
@@ -20,38 +20,6 @@ describe("cash forecast", () => {
     expect(p.overdraftDateWithoutPay).toBe("2026-10-31");
     expect(p.overdraftDateWithPay).toBeNull();
     expect(p.lowestWithPay).toEqual({ date: "2026-10-30", cents: 1_000 });
-  });
-});
-
-describe("safe to spend", () => {
-  it("subtracts bills and goal plans, spreads the rest, then removes what was spent today", () => {
-    const s = safeToSpendCalc({
-      cashCents: 100_000,
-      today: "2026-10-28",
-      horizon: "2026-11-07",
-      billsDueCents: 30_000,
-      goalSetAsideCents: 10_000,
-      bufferCents: 0,
-      spentTodayCents: 1_500,
-      spentThisWeekCents: 9_000,
-      weekEnd: "2026-11-01",
-    });
-    expect(s).toMatchObject({ availableCents: 60_000, days: 10, perDayCents: 6_000, todayCents: 4_500, short: false });
-    expect(s.thisWeekCents).toBe(6_000 * 5 - 1_500);
-  });
-  it("never goes below zero and flags a shortfall", () => {
-    const s = safeToSpendCalc({
-      cashCents: 10_000,
-      today: "2026-10-28",
-      horizon: "2026-10-31",
-      billsDueCents: 20_000,
-      goalSetAsideCents: 0,
-      bufferCents: 0,
-      spentTodayCents: 0,
-      spentThisWeekCents: 0,
-      weekEnd: "2026-11-01",
-    });
-    expect(s).toMatchObject({ todayCents: 0, thisWeekCents: 0, short: true });
   });
 });
 
