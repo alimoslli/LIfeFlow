@@ -9,19 +9,13 @@ type BrandMarkProps = {
 };
 
 /**
- * The one visual mark used throughout LifeFlow. Keeping this in one component
- * means the app shell, onboarding, and public pages never drift into separate
- * versions of the logo.
+ * The one visual mark used throughout LifeFlow: the transparent 3D icon, with no
+ * background tile. Keeping it in one component stops the logo drifting between pages.
  */
 export function BrandMark({ className, alt = "LifeFlow", priority = false }: BrandMarkProps) {
   return (
-    <span
-      className={cn(
-        "relative inline-flex aspect-square shrink-0 overflow-hidden rounded-[30%] bg-[#fbf8f0] shadow-[0_7px_18px_-9px_rgb(41_68_57_/_0.42)] ring-1 ring-[#e5ddca]/80",
-        className,
-      )}
-    >
-      <Image src="/brand/lifeflow-logo.png" alt={alt} fill priority={priority} sizes="(max-width: 768px) 72px, 96px" className="object-cover" />
+    <span className={cn("relative inline-flex aspect-square shrink-0", className)}>
+      <Image src="/brand/lifeflow-mark-transparent.png" alt={alt} fill priority={priority} sizes="(max-width: 768px) 72px, 96px" className="object-contain" />
     </span>
   );
 }
