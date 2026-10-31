@@ -34,7 +34,7 @@ export function providerCatalog(env: NodeJS.ProcessEnv = process.env): ProviderI
       provider: "canvas",
       name: "Canvas LMS",
       module: "School",
-      description: "Courses, assignments and due dates via your school's Canvas API (requires a token your school permits).",
+      description: "Assignments, due dates and class events from your Canvas Calendar Feed link, or the Canvas API with a token where your school allows it.",
       requires: ["CANVAS_BASE_URL", "per-user access token"],
       configured: has("CANVAS_BASE_URL"),
       docsUrl: "https://canvas.instructure.com/doc/api/",

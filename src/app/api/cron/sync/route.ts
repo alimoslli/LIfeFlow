@@ -39,7 +39,7 @@ export async function GET(req: Request) {
             await syncGoogleEmail(s);
           });
         else if (r.provider === "canvas")
-          await withUser(r.userId, (s) => syncCanvas(s)).catch(async (e) => {
+          await withUser(r.userId, (s) => syncCanvas(s, fetch, r.tz)).catch(async (e) => {
             await withUser(r.userId, (s) => markCanvasError(s, e));
             throw e;
           });

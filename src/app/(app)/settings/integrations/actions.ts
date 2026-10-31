@@ -2,7 +2,7 @@
 import { mutate, type ActionState } from "@/server/actions";
 import { disconnectGoogle, GoogleError, syncGoogleCalendar } from "@/server/integrations/google";
 import { ServiceError } from "@/server/services/errors";
-import { connectCanvas, disconnectCanvas, markCanvasError, syncCanvas } from "@/server/integrations/canvas";
+import { connectCanvas, connectCanvasFeed, disconnectCanvas, markCanvasError, syncCanvas } from "@/server/integrations/canvas";
 import { isPro } from "@/server/billing";
 import { requireUser } from "@/server/auth/current-user";
 import { withUser } from "@/server/db/with-user";
@@ -62,10 +62,22 @@ export async function connectCanvasAction(_p: ActionState, fd: FormData): Promis
   return r;
 }
 
+export async function connectCanvasFeedAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  const r = await mutate("integration.canvas.connected", async (s, u) => {
+    if (!isPro(u)) throw new ServiceError("Canvas sync is part of LifeFlow Pro. Upgrade in Settings → Plan.");
+    const me = await connectCanvasFeed(s, String(fd.get("feed") ?? ""));
+    return `Connected to ${me.host}.`;
+  });
+  if (r?.ok) return (await syncCanvasAction()) ?? r;
+  return r;
+}
+
+const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : w.endsWith("s") ? "es" : "s"}`;
+
 export async function syncCanvasAction(): Promise<ActionState> {
-  const r = await mutate("integration.canvas.synced", async (s) => {
-    const x = await syncCanvas(s);
-    return `Synced ${x.courses} class${x.courses === 1 ? "" : "es"} and ${x.assignments} assignment${x.assignments === 1 ? "" : "s"} from Canvas.`;
+  const r = await mutate("integration.canvas.synced", async (s, u) => {
+    const x = await syncCanvas(s, fetch, u.timezone);
+    return `Synced ${plural(x.courses, "class")} and ${plural(x.assignments, "assignment")}${x.events ? `, plus ${plural(x.events, "class event")}` : ""} from Canvas.`;
   });
   if (r && !r.ok) {
     const u = await requireUser();

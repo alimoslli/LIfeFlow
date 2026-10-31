@@ -8,6 +8,7 @@ Date: 2026-10-30. Status: accepted.
 - **Idempotent:** courses by `(source, provider_course_id)`, assignments by `dedupe_key = canvas:<id>`, so a moved due date updates the existing row; the student's own status and grade are untouched.
 - Pagination follows Canvas `Link` headers only on the school's own host (max 10 pages); links off that host aren't kept.
 - Synced on connect, nightly with the other connections (cron/sync), from Settings ("Sync now") and by Jarvis (`sync_canvas`). Pro feature once billing is on.
+- **Calendar Feed (added 2026-10-31, the default way in):** many schools block personal tokens, but every student can copy their Canvas Calendar Feed link (Calendar → Calendar Feed). We accept only `https://<host>/feeds/calendars/user_<id>.ics` (webcal:// is upgraded; no IPs, ports, localhost or `.local`), fetch it with redirects refused and a 5 MB cap, and store it encrypted, since anyone with the link can read the calendar. Assignments (`event-assignment-<id>`) use the same `canvas:<id>` dedupe key as the token sync, so both ways agree. Course events (`event-calendar-event-<id>`) in the next 120 days become class events. Work due before today isn't added because the feed can't say whether it was handed in, but an existing row still gets its date updated. The feed has no modules, inbox or grades; that needs the token or a school-wide app.
 - Later: an institution-wide Canvas app (LTI 1.3 / developer key OAuth) when a school signs up, so students don't need personal tokens.
 
 ## Accessibility

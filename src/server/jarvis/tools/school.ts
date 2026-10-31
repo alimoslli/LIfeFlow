@@ -52,7 +52,7 @@ export const schoolTools = [
     schema: z.object({}),
     mutates: true,
     async execute(_a, ctx) {
-      const r = await ctx.run((s) => syncCanvas(s));
+      const r = await ctx.run((s) => syncCanvas(s, fetch, ctx.tz));
       return { ...r, viewAt: "/school/due" };
     },
   }),

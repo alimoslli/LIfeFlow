@@ -59,6 +59,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
                 status: d.canvas.status,
                 lastSynced: d.canvas.lastSyncedAt ? formatIn(d.canvas.lastSyncedAt, d.tz, "MMM d, h:mm a") : null,
                 error: d.canvas.lastError,
+                via: d.canvas.via,
               }
             : null
         }
