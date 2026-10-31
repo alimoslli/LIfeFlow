@@ -2,15 +2,18 @@
 import { Calendar, Mail, RefreshCw } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { Badge, Card } from "@/components/ui/surface";
-import { disconnectGoogleAction, syncGoogleAction } from "./actions";
+import { disconnectGoogleAction, setGmailFilingAction, syncGoogleAction } from "./actions";
 
 /** Connect / sync / disconnect Google (Gmail + Calendar). */
 export function GoogleCard({
   configured,
   connection,
+  filing = false,
 }: {
   configured: boolean;
   connection: { email: string; status: string; lastSynced: string | null; error: string | null } | null;
+  /** Jarvis files new school, bill and work emails each morning. */
+  filing?: boolean;
 }) {
   return (
     <Card className="p-5">
@@ -41,6 +44,16 @@ export function GoogleCard({
             </span>
           </p>
           {connection.error && <p className="text-sm text-danger">{connection.error}</p>}
+          <ActionButton
+            action={setGmailFilingAction.bind(null, !filing)}
+            className="flex min-h-11 items-center justify-between gap-3 rounded-2xl bg-surface-2 px-4 py-2 text-left text-sm"
+          >
+            <span>
+              <span className="block font-medium">File school, bill and work emails</span>
+              <span className="text-xs text-muted">Each morning Jarvis checks new mail for due dates, bills and shifts and files them, with Undo.</span>
+            </span>
+            <span className={filing ? "font-medium text-accent" : "text-muted"}>{filing ? "On" : "Off"}</span>
+          </ActionButton>
           <div className="flex flex-wrap gap-2">
             {connection.status === "error" ? (
               <a

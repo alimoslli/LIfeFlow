@@ -6,6 +6,8 @@ import { connectCanvas, disconnectCanvas, markCanvasError, syncCanvas } from "@/
 import { isPro } from "@/server/billing";
 import { requireUser } from "@/server/auth/current-user";
 import { withUser } from "@/server/db/with-user";
+import { getDb } from "@/server/db/client";
+import { updatePreferences } from "@/server/services/accounts";
 import { createHealthToken, revokeHealthToken } from "@/server/services/health";
 
 export type HealthKeyState = (ActionState & { token?: string }) | null;
@@ -76,5 +78,12 @@ export async function disconnectCanvasAction(): Promise<ActionState> {
   return mutate("integration.canvas.disconnected", async (s) => {
     await disconnectCanvas(s);
     return "Canvas disconnected. Classes and assignments it added stay.";
+  });
+}
+
+export async function setGmailFilingAction(on: boolean): Promise<ActionState> {
+  return mutate("integration.gmail_filing", async (_s, u) => {
+    await updatePreferences(getDb(), u.id, { gmailFiling: on });
+    return on ? "Jarvis will file new school, bill and work emails each morning." : "Jarvis won't read your inbox on his own.";
   });
 }

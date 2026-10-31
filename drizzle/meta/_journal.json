@@ -169,6 +169,13 @@
       "when": 1793430525934,
       "tag": "0023_gmail_sync",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793473769185,
+      "tag": "0024_inbox_external_id",
+      "breakpoints": true
     }
   ]
 }

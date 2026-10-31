@@ -38,7 +38,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
       () => listPlaidConnections(s),
       () => canvasConnection(s),
     );
-    return { list, keys, lastHealth: health.lastReceivedAt, tz: u.timezone, banks, canvas };
+    return { list, keys, lastHealth: health.lastReceivedAt, tz: u.timezone, banks, canvas, gmailFiling: u.preferences?.gmailFiling === true };
   });
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost";
@@ -66,6 +66,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
       <Group title="Email & Calendar" />
       {google && (
         <GoogleCard
+          filing={d.gmailFiling}
           configured={google.configured}
           connection={
             google.connections[0]

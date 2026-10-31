@@ -96,7 +96,7 @@ export async function updateProfile(db: Database, userId: string, input: z.input
 export async function updatePreferences(
   db: Database,
   userId: string,
-  patch: Pick<UserPreferences, "memorySuggestions" | "onboarding" | "tour" | "notifications" | "moneyLock" | "jarvis">,
+  patch: Pick<UserPreferences, "memorySuggestions" | "onboarding" | "tour" | "notifications" | "moneyLock" | "jarvis" | "gmailFiling">,
 ) {
   const [current] = await db.select().from(users).where(eq(users.id, userId));
   await db

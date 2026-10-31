@@ -102,7 +102,7 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
             <span className="text-[15px]">Back</span>
           </button>
         ) : (
-          <Link href="/" aria-label="LifeFlow home" className="-ml-0.5 rounded-[10px] p-1">
+          <Link href="/" aria-label="LifeFlow home" className="-ml-0.5 flex min-h-11 min-w-11 items-center justify-center rounded-[10px]">
             <BrandMark className="h-7 w-7" alt="" />
           </Link>
         )}

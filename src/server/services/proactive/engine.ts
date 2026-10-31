@@ -8,6 +8,7 @@ import { DETECTORS, RUNS, type Candidate } from "./detectors";
 import { nextQuestion } from "./questions";
 import { performAction } from "./respond";
 import { fillRegularShifts } from "../work";
+import { fileFromGmail } from "../inbox/gmail";
 
 export type Slot = "morning" | "midday" | "evening";
 export type JarvisMessage = typeof jarvisMessages.$inferSelect;
@@ -185,6 +186,9 @@ export async function runDueSlot(scope: UserScope, tz: string, prefs: UserPrefer
   if (!first) return [];
   // Keep regular work hours filled in ahead, so detectors and Today see them.
   await fillRegularShifts(scope, tz, todayIn(tz, now));
+  // Mornings, if the user turned it on: file new school, bill and work emails from Gmail. Never blocks the rest.
+  if (slot === "morning" && prefs?.gmailFiling)
+    await fileFromGmail(scope, tz, todayIn(tz, now)).catch((e) => console.error("[gmail filing]", e instanceof Error ? e.name : e));
   return runProactive({ scope, tz, prefs, trigger: slot, now });
 }
 

@@ -73,6 +73,8 @@ export type UserPreferences = {
   jarvisTone?: "concise" | "balanced" | "detailed";
   /** Let Jarvis suggest things to remember (default on). Explicit "remember…" requests always work. */
   memorySuggestions?: boolean;
+  /** Let Jarvis read new school, bill and work emails in Gmail each morning and file them (off unless turned on). */
+  gmailFiling?: boolean;
   /** What fills the user's week (from onboarding); helps Jarvis and the briefing. */
   lifeStage?: "student" | "working" | "both" | "life";
   /** First-run setup: "pending" only for accounts created since onboarding launched. */
@@ -1186,6 +1188,8 @@ export const inboxItems = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: userRef(),
+    /** Provider id (e.g. Gmail message id) so the same email is filed once. */
+    externalId: text("external_id"),
     channel: text("channel").$type<"email" | "upload" | "share">().notNull(),
     fromAddress: text("from_address"),
     subject: text("subject"),
@@ -1200,7 +1204,13 @@ export const inboxItems = pgTable(
     attachmentIds: jsonb("attachment_ids").$type<string[]>().notNull().default([]),
     createdAt: createdAt(),
   },
-  (t) => [index("inbox_items_user_idx").on(t.userId, t.receivedAt), ownerPolicy()],
+  (t) => [
+    index("inbox_items_user_idx").on(t.userId, t.receivedAt),
+    uniqueIndex("inbox_items_external_uq")
+      .on(t.userId, t.externalId)
+      .where(sql`external_id is not null`),
+    ownerPolicy(),
+  ],
 );
 
 // ---------------------------------------------------------------------------
