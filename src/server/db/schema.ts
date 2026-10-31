@@ -228,7 +228,7 @@ export const authChallenges = pgTable(
   "auth_challenges",
   {
     id: text("id").primaryKey(),
-    purpose: text("purpose").$type<"passkey-register" | "passkey-login" | "passkey-unlock" | "apple">().notNull(),
+    purpose: text("purpose").$type<"passkey-register" | "passkey-login" | "passkey-unlock" | "apple" | "google" | "oauth-link">().notNull(),
     challenge: text("challenge").notNull(),
     userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
     expiresAt: tstz("expires_at").notNull(),
@@ -237,13 +237,13 @@ export const authChallenges = pgTable(
   (t) => [index("auth_challenges_expires_idx").on(t.expiresAt)],
 );
 
-/** Sign in with Apple (and later other providers): the provider's stable user id, linked to one account. */
+/** Sign in with Apple or Google: the provider's stable user id, linked to one account. */
 export const oauthIdentities = pgTable(
   "oauth_identities",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: userRef(),
-    provider: text("provider").$type<"apple">().notNull(),
+    provider: text("provider").$type<"apple" | "google">().notNull(),
     subject: text("subject").notNull(),
     email: text("email"),
     /** Apple "Hide My Email" relay address. */

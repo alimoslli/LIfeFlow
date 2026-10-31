@@ -14,12 +14,14 @@ export function AuthForm({
   mode,
   next,
   apple = false,
+  google = false,
   notice,
   email,
 }: {
   mode: "login" | "signup";
   next?: string;
   apple?: boolean;
+  google?: boolean;
   /** A message above the form (e.g. "Password changed. Sign in."). */
   notice?: { text: string; tone: "info" | "danger" };
   email?: string;
@@ -49,7 +51,7 @@ export function AuthForm({
         </p>
       )}
       <FormError message={state?.error} />
-      <SignInOptions mode={mode} apple={apple} next={next} />
+      <SignInOptions mode={mode} apple={apple} google={google} next={next} />
       {mode === "signup" && (
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-text-2">Your name</span>

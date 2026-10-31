@@ -38,7 +38,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 
 ## Sign-in security (see ADR 0009, 0011)
 - New passwords go through `checkPassword` (server-enforced; `NewPasswordField` in forms). Sign-in with 2FA on goes through `login_challenges` + `/login/verify`; never start a session before `completeLoginChallenge` succeeds. Rate-limit keys use `clientIp()` (`ipFromHeaders`), never the first X-Forwarded-For entry.
-- Passkeys and Apple use single-use `auth_challenges` (`saveChallenge`/`takeChallenge`); never verify a WebAuthn response or Apple token without one. Apple never links to an existing account on email alone (`consumePendingAppleLink` after a real sign-in). Accounts may have no password (`hasPassword`).
+- Passkeys, Apple and Google use single-use `auth_challenges` (`saveChallenge`/`takeChallenge`); never verify a WebAuthn response or an Apple/Google token without one. Account rules for both providers live in `server/auth/oauth.ts`: never link to an existing account on email alone (`consumePendingAppleLink`, which handles both, after a real sign-in), and unlinking needs a password or the other provider. Accounts may have no password (`hasPassword`).
 - Every Money page starts with `const locked = await moneyGate(); if (locked) return locked;` (not a layout). New money tools go in `finance.ts`/`money-coach.ts` so the Jarvis money lock covers them.
 - Reset and email links use `APP_URL`, never the Host header. Report an email as sent only with the provider's id.
 

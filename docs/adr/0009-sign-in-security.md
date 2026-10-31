@@ -15,3 +15,8 @@
 - **Client IP** (`ipFromHeaders`): prefer the host-set `x-vercel-forwarded-for`, then `x-real-ip`, then the last (proxy-appended) X-Forwarded-For entry.
 
 **Testing.** Unit: strength rules, IP parsing. Integration: setup and confirmation, encryption at rest, replay, drift window, single-use backup codes, challenge lockout and expiry, cross-account attempts, disable and regenerate. e2e: weak password refused, then the full 2FA flow (enable → sign out → wrong code → backup code → reused backup code refused → fresh TOTP).
+
+## Sign in with Google (added 2026-10-31)
+- OpenID Connect with the same Google OAuth client as Gmail (`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`) and `APP_URL`; the button shows only when all three are set. Scope is `openid email profile` only; Gmail and Calendar stay a separate opt-in.
+- `/api/auth/google/start` saves a single-use state (nonce + PKCE verifier) in `auth_challenges` with a SameSite=Lax cookie; the callback checks the cookie matches the state, takes the challenge once, swaps the code with the verifier, and verifies the id_token against Google's keys (issuer, audience, expiry, nonce).
+- Apple and Google share `server/auth/oauth.ts`: a known provider id signs in (2FA still applies), an email matching an existing account needs one real sign-in before linking, and new accounts start with no password. Unlinking needs a password or the other provider.

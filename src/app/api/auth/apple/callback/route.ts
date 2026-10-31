@@ -2,7 +2,6 @@ import { timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import {
-  APPLE_LINK_COOKIE,
   APPLE_STATE_COOKIE,
   appleConfig,
   AppleSignInError,
@@ -13,12 +12,10 @@ import {
   verifyAppleIdToken,
 } from "@/server/auth/apple";
 import { takeChallenge } from "@/server/auth/challenges";
-import { clientIp, startSession } from "@/server/auth/current-user";
-import { CHALLENGE_COOKIE, createLoginChallenge } from "@/server/auth/two-factor";
+import { clientIp } from "@/server/auth/current-user";
+import { finishOAuth } from "@/server/auth/oauth-finish";
 import { getDb } from "@/server/db/client";
-import { withUser } from "@/server/db/with-user";
 import { rateLimit } from "@/server/rate-limit";
-import { audit } from "@/server/services/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -53,33 +50,7 @@ export async function POST(req: Request) {
     const claims = await verifyAppleIdToken(idToken, cfg, state.nonce);
     const outcome = await completeAppleSignIn(db, claims, { mode: state.mode, tz: state.tz, userId: ch.userId }, nameFromApple(field("user")));
 
-    switch (outcome.kind) {
-      case "linked":
-        return go("/settings/security?apple=linked");
-      case "link-required":
-        jar.set(APPLE_LINK_COOKIE, outcome.pendingToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          path: "/",
-          expires: outcome.expiresAt,
-        });
-        return go(`/login?link=apple&email=${encodeURIComponent(outcome.email)}`);
-      case "created":
-        await startSession(outcome.userId);
-        return go("/welcome");
-      case "signed-in": {
-        if (outcome.totpEnabled) {
-          // Two-step sign-in still applies: the session starts only after the code.
-          const { token, expiresAt } = await createLoginChallenge(db, outcome.userId);
-          jar.set(CHALLENGE_COOKIE, token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", expires: expiresAt });
-          return go(state.next === "/" ? "/login/verify" : `/login/verify?next=${encodeURIComponent(state.next)}`);
-        }
-        await startSession(outcome.userId);
-        await withUser(outcome.userId, (s) => audit(s, "user", "auth.login", undefined, { ip, method: "apple" }));
-        return go(state.next);
-      }
-    }
+    return finishOAuth(outcome, { provider: "apple", next: state.next, origin, ip });
   } catch (e) {
     if (e instanceof AppleSignInError) {
       console.warn("apple sign-in refused:", e.message);

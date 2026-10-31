@@ -12,19 +12,21 @@ import { getDb } from "@/server/db/client";
 import { sessions } from "@/server/db/schema";
 import { twoFactorStatus } from "@/server/auth/two-factor";
 import { appleConfig, appleIdentityFor } from "@/server/auth/apple";
+import { googleIdentityFor, googleSignInConfig } from "@/server/auth/google-signin";
 import { MONEY_LOCK_IDLE_CHOICES, moneyLockSettings } from "@/server/auth/money-lock";
 import { listPasskeys } from "@/server/auth/passkeys";
 import { accountHasPassword } from "@/server/services/accounts";
 import { changePasswordAction, signOutOthersAction } from "../actions";
-import { setMoneyLockAction, unlinkAppleAction } from "./passkey-actions";
+import { setMoneyLockAction, unlinkAppleAction, unlinkGoogleAction } from "./passkey-actions";
+import type { ActionState } from "@/server/actions";
 import { PasskeysCard } from "./passkeys-card";
 import { TwoFactorCard } from "./two-factor-card";
 import { SettingsHeader } from "../settings-header";
 
 export const metadata: Metadata = { title: "Security" };
 
-export default async function SecuritySettings({ searchParams }: { searchParams: Promise<{ apple?: string }> }) {
-  const { apple: appleResult } = await searchParams;
+export default async function SecuritySettings({ searchParams }: { searchParams: Promise<{ apple?: string; google?: string }> }) {
+  const { apple: appleResult, google: googleResult } = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
     const active = await getDb()
       .select({ createdAt: sessions.createdAt, lastSeenAt: sessions.lastSeenAt, userAgent: sessions.userAgent })
@@ -34,6 +36,7 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
     const tf = await twoFactorStatus(getDb(), u.id);
     const passkeys = await listPasskeys(getDb(), u.id);
     const apple = await appleIdentityFor(getDb(), u.id);
+    const google = await googleIdentityFor(getDb(), u.id);
     const withPassword = await accountHasPassword(getDb(), u.id);
     return {
       active,
@@ -42,6 +45,7 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
       tf,
       passkeys,
       apple,
+      google,
       withPassword,
       lock: moneyLockSettings(u.preferences),
       demo: u.accountKind === "demo",
@@ -51,9 +55,9 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
   return (
     <div className="flex flex-col gap-5">
       <SettingsHeader title="Face ID & passwords" />
-      {appleResult === "linked" && (
+      {(appleResult === "linked" || googleResult === "linked") && (
         <p role="status" className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
-          Sign in with Apple is linked. You can use it next time you sign in.
+          Sign in with {appleResult === "linked" ? "Apple" : "Google"} is linked. You can use it next time you sign in.
         </p>
       )}
       <PasskeysCard
@@ -91,38 +95,24 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
         </ActionForm>
       </Card>
       {(appleConfig() || d.apple) && (
-        <Card className="p-5">
-          <h2 className="font-medium">Sign in with Apple</h2>
-          {d.apple ? (
-            <>
-              <p className="mt-0.5 text-sm text-text-2">
-                Linked {day(d.apple.createdAt)}
-                {d.apple.isPrivateEmail ? " with Hide My Email (Apple forwards LifeFlow's emails to you)" : d.apple.email ? ` (${d.apple.email})` : ""}.
-              </p>
-              {d.withPassword ? (
-                <ActionButton
-                  action={unlinkAppleAction}
-                  confirm="Unlink Sign in with Apple? You'll sign in with your email and password."
-                  className="mt-3 text-sm font-medium text-danger"
-                >
-                  Unlink Apple
-                </ActionButton>
-              ) : (
-                <p className="mt-2 text-xs text-muted">Set a password below before unlinking, so you can still sign in.</p>
-              )}
-            </>
-          ) : (
-            <>
-              <p className="mt-0.5 text-sm text-text-2">Use your Apple ID to sign in to this account.</p>
-              <a
-                href="/api/auth/apple/start?mode=link"
-                className="mt-3 inline-flex min-h-11 items-center rounded-full bg-black px-5 text-sm font-medium text-white dark:bg-white dark:text-black"
-              >
-                Link Apple ID
-              </a>
-            </>
-          )}
-        </Card>
+        <LinkedSignIn
+          provider="apple"
+          identity={d.apple}
+          withPassword={d.withPassword || !!d.google}
+          day={day}
+          unlink={unlinkAppleAction}
+          buttonClass="bg-black text-white dark:bg-white dark:text-black"
+        />
+      )}
+      {(googleSignInConfig() || d.google) && (
+        <LinkedSignIn
+          provider="google"
+          identity={d.google}
+          withPassword={d.withPassword || !!d.apple}
+          day={day}
+          unlink={unlinkGoogleAction}
+          buttonClass="border border-[#747775] bg-white text-[#1f1f1f]"
+        />
       )}
       <TwoFactorCard
         status={{
@@ -176,5 +166,58 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
         </ul>
       </Card>
     </div>
+  );
+}
+
+/** Sign in with Apple or Google: link it, or unlink it when there's another way to sign in. */
+function LinkedSignIn({
+  provider,
+  identity,
+  withPassword,
+  day,
+  unlink,
+  buttonClass,
+}: {
+  provider: "apple" | "google";
+  identity: { email: string | null; isPrivateEmail: boolean; createdAt: Date } | null;
+  withPassword: boolean;
+  day: (x: Date) => string;
+  unlink: () => Promise<ActionState>;
+  buttonClass: string;
+}) {
+  const label = provider === "apple" ? "Apple" : "Google";
+  return (
+    <Card className="p-5">
+      <h2 className="font-medium">Sign in with {label}</h2>
+      {identity ? (
+        <>
+          <p className="mt-0.5 text-sm text-text-2">
+            Linked {day(identity.createdAt)}
+            {identity.isPrivateEmail ? " with Hide My Email (Apple forwards LifeFlow's emails to you)" : identity.email ? ` (${identity.email})` : ""}.
+          </p>
+          {withPassword ? (
+            <ActionButton
+              action={unlink}
+              confirm={`Unlink Sign in with ${label}? You'll sign in another way.`}
+              className="mt-3 text-sm font-medium text-danger"
+            >
+              Unlink {label}
+            </ActionButton>
+          ) : (
+            <p className="mt-2 text-xs text-muted">Set a password below before unlinking, so you can still sign in.</p>
+          )}
+        </>
+      ) : (
+        <>
+          <p className="mt-0.5 text-sm text-text-2">Use your {provider === "apple" ? "Apple ID" : "Google account"} to sign in to this account.</p>
+          <a
+            href={`/api/auth/${provider}/start?mode=link`}
+            className={`mt-3 inline-flex min-h-11 items-center rounded-full px-5 text-sm font-medium ${buttonClass}`}
+          >
+            Link {provider === "apple" ? "Apple ID" : "Google account"}
+          </a>
+        </>
+      )}
+    </Card>
   );
 }

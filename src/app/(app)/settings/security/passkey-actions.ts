@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { mutate, type ActionState } from "@/server/actions";
 import { AppleSignInError, unlinkApple } from "@/server/auth/apple";
+import { GoogleSignInError, unlinkGoogle } from "@/server/auth/google-signin";
 import { moneyLocked } from "@/server/auth/money-lock";
 import { listPasskeys, PasskeyError, removePasskey, renamePasskey } from "@/server/auth/passkeys";
 import { SESSION_COOKIE, setMoneyUnlockedAt } from "@/server/auth/sessions";
@@ -15,7 +16,7 @@ const asService = async <T>(fn: () => Promise<T>) => {
   try {
     return await fn();
   } catch (e) {
-    if (e instanceof PasskeyError || e instanceof AppleSignInError) throw new ServiceError(e.message);
+    if (e instanceof PasskeyError || e instanceof AppleSignInError || e instanceof GoogleSignInError) throw new ServiceError(e.message);
     throw e;
   }
 };
@@ -78,6 +79,17 @@ export async function unlinkAppleAction(): Promise<ActionState> {
     async (_s, u) => {
       await asService(() => unlinkApple(getDb(), u.id));
       return "Sign in with Apple was unlinked.";
+    },
+    REVALIDATE,
+  );
+}
+
+export async function unlinkGoogleAction(): Promise<ActionState> {
+  return mutate(
+    "auth.google_unlinked",
+    async (_s, u) => {
+      await asService(() => unlinkGoogle(getDb(), u.id));
+      return "Sign in with Google was unlinked.";
     },
     REVALIDATE,
   );
