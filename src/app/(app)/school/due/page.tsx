@@ -11,6 +11,22 @@ import { AssignmentDialog } from "../forms";
 
 export const metadata: Metadata = { title: "Due" };
 
+/** Groups assignments by class, in the order their first item comes up (so the soonest class is first). */
+function byClass<T extends { course: { id: string; name: string; code: string | null; color: string | null } }>(items: T[]) {
+  const groups = new Map<string, { key: string; name: string; color: string; items: T[] }>();
+  for (const a of items) {
+    const g = groups.get(a.course.id) ?? {
+      key: a.course.id,
+      name: a.course.code ? `${a.course.code} · ${a.course.name}` : a.course.name,
+      color: a.course.color ?? "var(--accent)",
+      items: [],
+    };
+    g.items.push(a);
+    groups.set(a.course.id, g);
+  }
+  return [...groups.values()];
+}
+
 const VIEWS: { key: AssignmentView; label: string }[] = [
   { key: "today", label: "Due today" },
   { key: "week", label: "This week" },
@@ -47,7 +63,18 @@ export default async function DuePage({ searchParams }: { searchParams: Promise<
                 : "Add a class first, then send Jarvis its syllabus."}
           </EmptyState>
         ) : (
-          <AssignmentList items={d.list} tz={d.tz} today={todayIn(d.tz)} />
+          <div className="flex flex-col">
+            {byClass(d.list).map((g) => (
+              <section key={g.key} aria-label={g.name} className="border-b border-border last:border-0">
+                <header className="flex items-center gap-2.5 px-4 pt-4 pb-1 sm:px-5">
+                  <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: g.color }} />
+                  <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold">{g.name}</h2>
+                  <span className="text-xs text-muted">{g.items.length}</span>
+                </header>
+                <AssignmentList items={g.items} tz={d.tz} today={todayIn(d.tz)} showCourse={false} />
+              </section>
+            ))}
+          </div>
         )}
       </Card>
     </>
