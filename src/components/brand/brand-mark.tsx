@@ -15,7 +15,14 @@ type BrandMarkProps = {
 export function BrandMark({ className, alt = "LifeFlow", priority = false }: BrandMarkProps) {
   return (
     <span className={cn("relative inline-flex aspect-square shrink-0", className)}>
-      <Image src="/brand/lifeflow-mark-transparent.png" alt={alt} fill priority={priority} sizes="(max-width: 768px) 72px, 96px" className="object-contain" />
+      <Image
+        src="/brand/lifeflow-mark-transparent-512.png"
+        alt={alt}
+        fill
+        priority={priority}
+        sizes="(max-width: 768px) 72px, 96px"
+        className="object-contain"
+      />
     </span>
   );
 }

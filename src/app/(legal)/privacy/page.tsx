@@ -51,6 +51,17 @@ export default function PrivacyPolicy() {
         </li>
       </ul>
 
+      <h3>Text messages</h3>
+      <p>
+        If you choose to text your assistant, we store your mobile number and the messages you exchange, like any other conversation. We use your number only to
+        send you a sign-up code and the assistant&apos;s replies to your texts. We never sell your number or use it for marketing.{" "}
+        <strong>
+          No mobile information will be shared with third parties or affiliates for marketing or promotional purposes. Text messaging opt-in data and consent
+          are not shared with any third parties.
+        </strong>{" "}
+        Reply STOP to opt out at any time, or remove your number in Settings.
+      </p>
+
       <h3>Information from services you connect</h3>
       <p>Connections are optional and you can disconnect them at any time.</p>
       <ul>
@@ -153,7 +164,23 @@ export default function PrivacyPolicy() {
           </tr>
           <tr>
             <td>Google</td>
-            <td>Gmail and Google Calendar, only if you connect them</td>
+            <td>Sign in with Google, and Gmail and Google Calendar, only if you use or connect them</td>
+          </tr>
+          <tr>
+            <td>Apple</td>
+            <td>Sign in with Apple, only if you use it</td>
+          </tr>
+          <tr>
+            <td>Plaid</td>
+            <td>Connecting your bank accounts, only if you connect one</td>
+          </tr>
+          <tr>
+            <td>Twilio</td>
+            <td>Sending and receiving text messages, only if you add your number</td>
+          </tr>
+          <tr>
+            <td>Resend</td>
+            <td>Sending account emails, such as password resets</td>
           </tr>
         </tbody>
       </table>

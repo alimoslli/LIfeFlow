@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -73,6 +74,18 @@ export default async function TextJarvisPage() {
               <SubmitButton className="min-h-11">Verify</SubmitButton>
             </ActionForm>
           )}
+          <p className="text-xs leading-relaxed text-muted">
+            By tapping Send code, you agree to get texts from LifeFlow: a sign-up code, and {name}&apos;s replies to the messages you send. Message frequency
+            varies. Msg &amp; data rates may apply. Reply HELP for help or STOP to opt out at any time. See our{" "}
+            <Link href="/terms" className="underline">
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="underline">
+              Privacy Policy
+            </Link>
+            .
+          </p>
         </Card>
       )}
     </div>

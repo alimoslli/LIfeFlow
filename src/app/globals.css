@@ -482,10 +482,6 @@ html.lf-splash .animate-rise {
   animation-play-state: paused;
 }
 .lf-splash-brand {
-  border-radius: 30%;
-  box-shadow:
-    0 24px 54px -22px rgb(4 25 17 / 0.68),
-    0 0 0 1px rgb(255 255 255 / 0.2);
   opacity: 0;
   transform: translateY(10px) scale(0.88);
   animation: lf-brand-arrive 0.72s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s forwards;

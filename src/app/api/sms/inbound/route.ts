@@ -3,6 +3,8 @@ import { getDb } from "@/server/db/client";
 import { enforceRateLimit, HttpError } from "@/server/http";
 import { sendSms, smsConfig, validTwilioRequest } from "@/server/integrations/twilio";
 import { answerText } from "@/server/jarvis/sms";
+import { legalDetails } from "@/lib/legal";
+import { smsHelpText, smsKeyword, unlinkPhone, userForPhone } from "@/server/services/sms";
 import { getProvider } from "@/server/jarvis/providers";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +27,24 @@ export async function POST(req: Request) {
   } catch (e) {
     if (e instanceof HttpError) return EMPTY;
     throw e;
+  }
+  // Carrier keywords come first and never reach the assistant.
+  const keyword = smsKeyword(body);
+  if (keyword === "stop") {
+    // Twilio blocks further texts and sends its own confirmation; we forget the number too.
+    after(async () => {
+      const userId = await userForPhone(getDb(), from);
+      if (userId) await unlinkPhone(getDb(), userId);
+    });
+    return EMPTY;
+  }
+  if (keyword) {
+    const text =
+      keyword === "help"
+        ? smsHelpText(legalDetails().email)
+        : "LifeFlow: texts are back on. To text your assistant, add this number in the app under Settings, Text Jarvis.";
+    after(() => sendSms(cfg, from, text).catch((e) => console.error("[sms] keyword reply failed", e instanceof Error ? e.name : e)));
+    return EMPTY;
   }
   after(() =>
     answerText(getDb(), from, body, { provider: getProvider, send: (to, text) => sendSms(cfg, to, text) }).catch((e) =>

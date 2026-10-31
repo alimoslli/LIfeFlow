@@ -85,13 +85,35 @@ export async function userForPhone(db: Database, raw: string) {
   return u?.id ?? null;
 }
 
-/** "yes", "Yes!", "y", "confirm" → confirm; "no", "cancel" → cancel. Anything else is a normal message. */
+/**
+ * "yes", "Yes!", "y", "confirm" → confirm; "no", "don't" → cancel. Anything else is a normal message.
+ * Never "cancel" or "stop": carriers treat those as unsubscribing from every text (see smsKeyword).
+ */
 export function smsDecision(text: string): "confirm" | "cancel" | null {
   const t = text
     .trim()
     .toLowerCase()
     .replace(/[.!]+$/, "");
   if (["yes", "y", "confirm", "ok", "do it"].includes(t)) return "confirm";
-  if (["no", "n", "cancel", "don't", "dont"].includes(t)) return "cancel";
+  if (["no", "n", "don't", "dont", "nope"].includes(t)) return "cancel";
   return null;
+}
+
+/** The standard carrier keywords (CTIA): Twilio blocks texts after STOP and re-allows them after START. */
+const STOP_WORDS = ["stop", "stopall", "unsubscribe", "cancel", "end", "quit", "revoke", "optout", "opt out"];
+export function smsKeyword(text: string): "stop" | "start" | "help" | null {
+  const t = text
+    .trim()
+    .toLowerCase()
+    .replace(/[.!]+$/, "");
+  if (STOP_WORDS.includes(t)) return "stop";
+  if (t === "start" || t === "unstop") return "start";
+  if (t === "help" || t === "info") return "help";
+  return null;
+}
+
+export function smsHelpText(contactEmail: string | null) {
+  return `LifeFlow: text your assistant about your plans, school, work and money. Manage texts in the app under Settings, Text Jarvis.${
+    contactEmail ? ` Help: ${contactEmail}.` : ""
+  } Msg & data rates may apply. Reply STOP to opt out.`;
 }

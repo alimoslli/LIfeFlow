@@ -54,7 +54,14 @@ export function Splash() {
   return (
     <div ref={layer} className="lf-splash-layer" aria-hidden>
       <div className="lf-splash-inner flex flex-col items-center gap-5">
-        <Image src="/brand/lifeflow-logo.png" alt="" width={132} height={132} priority className="lf-splash-brand h-[108px] w-[108px]" />
+        <Image
+          src="/brand/lifeflow-mark-transparent-512.png"
+          alt=""
+          width={132}
+          height={132}
+          priority
+          className="lf-splash-brand h-[112px] w-[112px] drop-shadow-[0_10px_28px_rgba(0,0,0,0.28)]"
+        />
         <div className="flex flex-col items-center text-center">
           <p className="lf-greet lf-greet-1 text-[15px] tracking-[0.18em] uppercase opacity-80" />
           <p className="lf-greet lf-greet-2 mt-2 font-display text-[40px] leading-none font-medium tracking-tight" />

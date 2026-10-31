@@ -65,6 +65,13 @@ export default function TermsOfUse() {
         disconnect them at any time.
       </p>
 
+      <h3>Text messages</h3>
+      <p>
+        If you add your mobile number in Settings, LifeFlow texts you a sign-up code and your assistant&apos;s replies to the messages you send. Message
+        frequency varies with how often you text. Message and data rates may apply. Reply HELP for help or STOP to opt out at any time; you can also remove your
+        number in Settings. Carriers are not liable for delayed or undelivered messages. Your number and consent are never shared for marketing.
+      </p>
+
       <h2>7. Your content</h2>
       <p>
         You own the information you put into LifeFlow and the information you connect. You give us permission to store, process and display it only as needed to

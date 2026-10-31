@@ -3,7 +3,7 @@ import { closeDb, getDb } from "@/server/db/client";
 import { normalizePhone, toSmsText, twilioSignature, validTwilioRequest, type SmsConfig } from "@/server/integrations/twilio";
 import { answerText } from "@/server/jarvis/sms";
 import { ScriptedProvider } from "@/server/jarvis/providers/scripted";
-import { smsDecision, smsStatus, startPhoneLink, unlinkPhone, userForPhone, verifyPhoneLink } from "@/server/services/sms";
+import { smsDecision, smsHelpText, smsKeyword, smsStatus, startPhoneLink, unlinkPhone, userForPhone, verifyPhoneLink } from "@/server/services/sms";
 import { createTask, listTasks } from "@/server/services/tasks";
 import { makeUser } from "../helpers";
 
@@ -33,7 +33,9 @@ describe("SMS helpers", () => {
     expect(normalizePhone("555")).toBeNull();
     expect(toSmsText("**Done.** See [your plan](https://lifeflow.test/plan).")).toBe("Done. See your plan (https://lifeflow.test/plan).");
     expect(toSmsText("x".repeat(2000)).length).toBeLessThanOrEqual(1500);
-    expect([smsDecision("Yes!"), smsDecision("no"), smsDecision("yes please add milk")]).toEqual(["confirm", "cancel", null]);
+    expect([smsDecision("Yes!"), smsDecision("no"), smsDecision("yes please add milk"), smsDecision("cancel")]).toEqual(["confirm", "cancel", null, null]);
+    expect(["STOP", "Cancel", "unsubscribe.", "start", "HELP", "help me plan"].map(smsKeyword)).toEqual(["stop", "stop", "stop", "start", "help", null]);
+    expect(smsHelpText("hi@lifeflow.app")).toMatch(/^LifeFlow: .*Help: hi@lifeflow.app\. Msg & data rates may apply\. Reply STOP to opt out\.$/);
   });
 });
 
