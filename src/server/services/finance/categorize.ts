@@ -13,8 +13,16 @@ import { inferKind } from "./transactions";
  *   3. nothing (left uncategorized rather than guessed).
  */
 
-/** Lowercase keyword (matched on word boundaries in merchant + description) → default category name. */
+/** Money coming in: only these ever apply to a deposit, so a paycheck from Target is never "Household". */
+const INCOME_KEYWORDS: [RegExp, string][] = [
+  [/\b(payroll|direct dep(osit)?|dir dep|salary|paycheck|wages|adp|gusto|paychex|trinet|workday pay)\b/, "Paycheck"],
+  [/\b(dasher|doordash|uber|lyft|instacart|shipt|grubhub|etsy|ebay|fiverr|upwork|rover|tutor)\b/, "Side Income"],
+  [/\b(interest paid|interest earned|int earned|dividend)\b/, "Interest Income"],
+];
+
+/** Lowercase keyword (matched on word boundaries in merchant + description) → default category name. Order matters: specific first. */
 const KEYWORDS: [RegExp, string][] = [
+  [/\b(overdraft|nsf|insufficient funds|late fee|interest charge|service fee|maintenance fee|atm fee|foreign transaction)\b/, "Fees & Interest"],
   [/\b(uber ?eats|doordash|grubhub|postmates|seamless|instacart)\b/, "Food Delivery"],
   [/\b(starbucks|dunkin|peet'?s|tim hortons|dutch bros|coffee|cafe)\b/, "Coffee"],
   [/\b(trader joe'?s|whole foods|safeway|kroger|aldi|publix|wegmans|costco|sam'?s club|h ?e ?b|food lion|giant eagle|sprouts|grocery|market)\b/, "Groceries"],
@@ -23,37 +31,48 @@ const KEYWORDS: [RegExp, string][] = [
     "Restaurants",
   ],
   [/\b(uber|lyft)\b/, "Rideshare"],
-  [/\b(shell|chevron|exxon|mobil|bp|sunoco|valero|marathon|speedway|wawa|gas station|fuel)\b/, "Gas"],
+  [/\b(verizon|t[- ]?mobile|at ?& ?t|mint mobile|visible|cricket|xfinity mobile|boost mobile|metro by)\b/, "Phone"],
+  [/\b(shell|chevron|exxon|mobil|bp|sunoco|valero|marathon|speedway|wawa|quiktrip|racetrac|gas station|fuel)\b/, "Gas"],
   [/\b(mta|bart|metro|transit|septa|cta|marta|amtrak|caltrain|clipper|ventra)\b/, "Public Transit"],
   [/\b(parking|parkmobile|spothero)\b/, "Parking"],
   [/\b(netflix|hulu|disney ?\+?|disney plus|hbo max|hbo|spotify|apple music|youtube premium|paramount|peacock|crunchyroll)\b/, "Streaming"],
+  [/\b(amazon prime|prime video|apple\.com\/bill|apple com bill|itunes|google \*|patreon|audible|siriusxm)\b/, "Bills & Subscriptions"],
   [/\b(steam|playstation|xbox|nintendo|epic games)\b/, "Games"],
   [/\b(ticketmaster|stubhub|eventbrite|amc|regal|cinema)\b/, "Events"],
   [/\b(cvs|walgreens|rite aid|pharmacy)\b/, "Pharmacy"],
   [/\b(planet fitness|equinox|la fitness|gym|peloton|crunch fitness|ymca)\b/, "Fitness"],
-  [/\b(verizon|t ?mobile|at ?& ?t|mint mobile|visible|cricket)\b/, "Phone"],
   [/\b(comcast|xfinity|spectrum|cox|optimum|fios|internet)\b/, "Internet"],
-  [/\b(geico|progressive|state farm|allstate|lemonade|insurance)\b/, "Insurance"],
-  [/\b(adobe|microsoft|google storage|icloud|dropbox|notion|chatgpt|openai|github)\b/, "Software"],
-  [/\b(amazon|target|walmart|ikea|home depot|lowe'?s|bed bath)\b/, "Household"],
+  [/\b(geico|progressive|state farm|allstate|lemonade|insurance|dental|vision plan)\b/, "Insurance"],
+  [/\b(adobe|microsoft|google storage|icloud|dropbox|notion|chatgpt|openai|github|canva|grammarly)\b/, "Software"],
   [/\b(best buy|apple store|newegg)\b/, "Electronics"],
+  [/\b(amazon|amzn|target|walmart|ikea|home depot|lowe'?s|bed bath|dollar general|dollar tree)\b/, "Household"],
   [/\b(h ?& ?m|zara|uniqlo|nike|adidas|old navy|gap|nordstrom|shein)\b/, "Clothing"],
-  [/\b(rent|apartments?|property management|landlord)\b/, "Rent"],
-  [/\b(electric|con ?ed|pg ?& ?e|duke energy|water bill|utility)\b/, "Utilities"],
-  [/\b(airbnb|hotel|marriott|hilton|hyatt|expedia|booking\.com|delta|united|american airlines|southwest|jetblue|spirit)\b/, "Travel"],
+  [/\b(rent|apartments?|apts|property management|landlord)\b/, "Rent"],
+  [
+    /\b(electric|power|energy|con ?ed|pg ?& ?e|duke energy|water|sewer|gas company|utility|utilities|dominion|xcel|entergy|national grid|pseg|edison|fpl)\b/,
+    "Utilities",
+  ],
+  [
+    /\b(airbnb|hotel|marriott|hilton|hyatt|expedia|booking\.com|delta air|united airlines|american airlines|southwest|jetblue|spirit airlines|frontier airlines)\b/,
+    "Travel",
+  ],
   [/\b(tuition|bursar|registrar)\b/, "Tuition"],
   [/\b(chegg|textbook|bookstore|pearson|mcgraw)\b/, "Books & Supplies"],
-  [/\b(overdraft|late fee|interest charge|service fee|atm fee|foreign transaction)\b/, "Fees & Interest"],
-  [/\b(payroll|direct dep(osit)?|salary|paycheck)\b/, "Paycheck"],
-  [/\b(interest paid|interest earned)\b/, "Interest Income"],
-  [/\b(autopay|card payment|payment thank you|payment received|credit card payment)\b/, "Credit Card Payment"],
+  [
+    /\b(credit crd|credit card payment|card payment|payment thank you|payment received|capital one|discover|amex|american express|citi card|chase card|epay)\b/,
+    "Credit Card Payment",
+  ],
   [/\b(transfer to savings|savings transfer)\b/, "Savings Transfer"],
   [/\b(venmo|zelle|cash app|paypal)\b/, ""], // person-to-person: too ambiguous to guess
 ];
 
-export function keywordCategory(t: { merchantName?: string | null; description: string }): string | null {
+/**
+ * A default category from the statement line. Deposits only match income patterns
+ * (a refund or a transfer in is left for Plaid or the user to decide).
+ */
+export function keywordCategory(t: { merchantName?: string | null; description: string }, amountCents = -1): string | null {
   const text = ` ${(t.merchantName ?? "").toLowerCase()} ${t.description.toLowerCase()} `;
-  for (const [re, name] of KEYWORDS) if (re.test(text)) return name || null;
+  for (const [re, name] of amountCents > 0 ? INCOME_KEYWORDS : KEYWORDS) if (re.test(text)) return name || null;
   return null;
 }
 
@@ -122,7 +141,7 @@ export async function autoCategorize(scope: UserScope, t: { merchantName?: strin
       return { categoryId: rule.categoryId, kind: rule.kind ?? undefined, via: "rule" as const };
     }
   }
-  const name = keywordCategory(t);
+  const name = keywordCategory(t, t.amountCents);
   if (!name) return null;
   const [cat] = await scope.tx
     .select()

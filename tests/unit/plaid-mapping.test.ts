@@ -17,3 +17,14 @@ describe("Plaid money mapping", () => {
     expect(mapPfc(pfc("GENERAL_MERCHANDISE", "GENERAL_MERCHANDISE_CLOTHING"), 3_000)).toEqual({ category: "Clothing", kind: "refund" });
   });
 });
+
+describe("Plaid category vs. statement keywords", () => {
+  it("keeps Plaid's specific category, but a named merchant beats a vague one", async () => {
+    const { pickCategory } = await import("@/server/integrations/plaid");
+    expect(pickCategory({ category: "Restaurants", kind: "expense" }, "Coffee")).toBe("Restaurants");
+    expect(pickCategory({ category: "Other", kind: "expense" }, "Software")).toBe("Software");
+    expect(pickCategory({ category: "Household", kind: "expense" }, "Bills & Subscriptions")).toBe("Bills & Subscriptions");
+    expect(pickCategory({ category: null, kind: "transfer" }, "Credit Card Payment")).toBe("Credit Card Payment");
+    expect(pickCategory({ category: "Side Income", kind: "income" }, "Paycheck")).toBe("Side Income");
+  });
+});

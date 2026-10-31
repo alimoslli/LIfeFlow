@@ -272,6 +272,16 @@ export function mapPfc(pfc: PlaidTxn["personal_finance_category"], amountCents: 
   return { category: fn ? fn(d) : null, kind: out ? "expense" : "refund" };
 }
 
+/** Plaid's vague buckets; a specific merchant match (ChatGPT → Software, Prime → Subscriptions) is better. */
+const GENERIC = new Set(["Other", "Household", "Events", "Transportation", "Personal Care"]);
+
+/** Plaid's category, unless it's vague and the statement line names something specific of the same direction (spending vs income). */
+export function pickCategory(pfc: { category: string | null; kind: TransactionKind }, keyword: string | null) {
+  if (!pfc.category) return keyword;
+  if (keyword && pfc.kind === "expense" && GENERIC.has(pfc.category)) return keyword;
+  return pfc.category;
+}
+
 // ------------------------------------------------------------ sync
 
 export type SyncResult = { accounts: number; added: number; modified: number; removed: number; holdings: number; liabilities: number };
@@ -352,7 +362,7 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
       const merchantName = t.merchant_name?.slice(0, 200) ?? null;
       const rule = await ruleFor(scope, { merchantName, description });
       const pfc = mapPfc(t.personal_finance_category, amountCents, `${merchantName ?? ""} ${description}`);
-      const categoryName = pfc.category ?? keywordCategory({ merchantName, description });
+      const categoryName = pickCategory(pfc, keywordCategory({ merchantName, description }, amountCents));
       const cat = rule ? null : categoryName ? await categoryIdByName(scope, categoryName) : null;
       const values = {
         accountId,
