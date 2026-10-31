@@ -7,7 +7,7 @@ import { searchWeb } from "../../integrations/web-search";
 import { ServiceError } from "../errors";
 import { createTask } from "../tasks";
 import { createRecurring, listRecurring, suggestRecurring } from "./planning";
-import { merchantKey } from "./recurring-detect";
+import { merchantKey, merchantKeys } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 
 /**
@@ -46,7 +46,9 @@ export async function subscriptionsOverview(scope: UserScope, today: string) {
     .filter((i) => i.kind === "subscription" && i.status !== "cancelled")
     .map((s) => {
       const key = merchantKey({ merchantName: s.name, description: s.name });
-      const charges = txns.filter((t) => !t.pending && [key, s.merchantKey].includes(merchantKey(t))).sort((a, b) => b.date.localeCompare(a.date));
+      const charges = txns
+        .filter((t) => !t.pending && merchantKeys(t).some((k) => k === key || k === s.merchantKey))
+        .sort((a, b) => b.date.localeCompare(a.date));
       const latest = charges[0] ? -charges[0].amountCents : null;
       const previous = charges.find((c, i) => i > 0 && -c.amountCents !== latest);
       const priceUp = latest !== null && previous && latest > -previous.amountCents + 50 ? { fromCents: -previous.amountCents, toCents: latest } : null;

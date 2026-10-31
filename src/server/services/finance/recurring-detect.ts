@@ -66,6 +66,19 @@ export function merchantKey(t: Pick<DetectTxn, "merchantName" | "description">):
   return words.slice(0, 4).join(" ");
 }
 
+/** The key format used before Oct 31, 2026, still stored in older category rules and tracked bills. */
+export function legacyMerchantKey(t: Pick<DetectTxn, "merchantName" | "description">): string {
+  return normalizeText(t.merchantName || t.description)
+    .replace(/\b\d{3,}\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Every key a stored rule or bill might use for this transaction (current first). */
+export function merchantKeys(t: Pick<DetectTxn, "merchantName" | "description">): string[] {
+  return [...new Set([merchantKey(t), legacyMerchantKey(t)].filter(Boolean))];
+}
+
 /** Services people subscribe to; two matching charges a month apart are enough to call these a subscription. */
 const KNOWN_SUBSCRIPTION =
   /netflix|spotify|hulu|disney|max\b|hbo|paramount|peacock|youtube|apple|icloud|prime|audible|kindle|crunchyroll|chatgpt|openai|claude|anthropic|midjourney|notion|canva|adobe|microsoft|office|dropbox|google one|duolingo|headspace|calm|planet fitness|la fitness|gym|fitness|peloton|xbox|playstation|nintendo|twitch|patreon|onlyfans|discord|dashpass|doordash|uber one|grubhub|instacart|walmart\+|chegg|quizlet|grammarly|course hero|linkedin|tinder|bumble|hinge|vpn|1password|siriusxm|pandora|tidal|starz|showtime|amc\+|espn|fubo|sling|nyt|new york times|wsj|substack|medium/i;

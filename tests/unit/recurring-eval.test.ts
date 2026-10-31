@@ -42,3 +42,12 @@ describe("recurring-charge detection on a real-looking bank feed", () => {
     expect(s.wrongAmount).toEqual([]);
   });
 });
+
+describe("merchant keys stay compatible", () => {
+  it("still matches rules and bills saved with the old key format", async () => {
+    const { merchantKeys, legacyMerchantKey } = await import("@/server/services/finance/recurring-detect");
+    const t = { merchantName: null, description: "NETFLIX.COM 866-579-7172 CA" };
+    expect(merchantKeys(t)).toEqual(["netflix", legacyMerchantKey(t)]);
+    expect(legacyMerchantKey(t)).toBe("netflix com ca");
+  });
+});

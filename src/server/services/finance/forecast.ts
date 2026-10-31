@@ -5,7 +5,7 @@ import { summarizeCashflow } from "./cashflow";
 import { listAccounts } from "./accounts";
 import { balancesOf } from "./overview";
 import { budgetStatus, listRecurring, upcomingRecurring } from "./planning";
-import { detectRecurring, merchantKey } from "./recurring-detect";
+import { detectRecurring, merchantKey, merchantKeys } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 
 /**
@@ -92,8 +92,10 @@ async function typicalDailySpend(scope: UserScope, today: string) {
     () => queryTransactions(scope, { from, to: addDaysStr(today, -1), limit: 20_000 }),
     () => listRecurring(scope),
   );
-  const billKeys = new Set(recurring.filter((r) => r.amountCents < 0).map((r) => r.merchantKey));
-  const dayToDay = txns.filter((t) => !billKeys.has(merchantKey(t)));
+  const billKeys = new Set(
+    recurring.filter((r) => r.amountCents < 0).flatMap((r) => [r.merchantKey, merchantKey({ merchantName: r.name, description: r.name })]),
+  );
+  const dayToDay = txns.filter((t) => !merchantKeys(t).some((k) => billKeys.has(k)));
   const spent = summarizeCashflow(dayToDay).netSpendingCents;
   const days = Math.max(1, Math.min(56, txns.length ? daysBetween(txns[txns.length - 1].date, today) : 1));
   return { dailyCents: Math.max(0, Math.round(spent / days)), basedOnDays: days };

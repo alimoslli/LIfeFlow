@@ -1,9 +1,9 @@
-import { and, eq, isNull, ne } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne } from "drizzle-orm";
 import { categories, categoryRules, transactions, type TransactionKind } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { notFound } from "../errors";
 import { listCategories } from "./categories";
-import { merchantKey } from "./recurring-detect";
+import { merchantKey, merchantKeys } from "./recurring-detect";
 import { inferKind } from "./transactions";
 
 /**
@@ -83,12 +83,12 @@ export const needOrWant = (categoryName: string | null | undefined): "need" | "w
 
 /** The user's own rule for this merchant, if any (counts a hit). */
 export async function ruleFor(scope: UserScope, t: { merchantName?: string | null; description: string }) {
-  const key = merchantKey({ merchantName: t.merchantName ?? null, description: t.description });
-  if (!key) return null;
+  const keys = merchantKeys({ merchantName: t.merchantName ?? null, description: t.description });
+  if (!keys.length) return null;
   const [rule] = await scope.tx
     .select()
     .from(categoryRules)
-    .where(and(eq(categoryRules.userId, scope.userId), eq(categoryRules.merchantKey, key)));
+    .where(and(eq(categoryRules.userId, scope.userId), inArray(categoryRules.merchantKey, keys)));
   if (!rule) return null;
   await scope.tx
     .update(categoryRules)
@@ -108,12 +108,12 @@ export async function categoryIdByName(scope: UserScope, name: string) {
 
 /** Picks a category (and kind) for a new transaction that arrived without one. */
 export async function autoCategorize(scope: UserScope, t: { merchantName?: string | null; description: string; amountCents: number }) {
-  const key = merchantKey({ merchantName: t.merchantName ?? null, description: t.description });
-  if (key) {
+  const keys = merchantKeys({ merchantName: t.merchantName ?? null, description: t.description });
+  if (keys.length) {
     const [rule] = await scope.tx
       .select()
       .from(categoryRules)
-      .where(and(eq(categoryRules.userId, scope.userId), eq(categoryRules.merchantKey, key)));
+      .where(and(eq(categoryRules.userId, scope.userId), inArray(categoryRules.merchantKey, keys)));
     if (rule) {
       await scope.tx
         .update(categoryRules)
@@ -146,6 +146,9 @@ export async function learnCategoryRule(
   const key = merchantKey(txn);
   if (!key) return null;
   const label = (txn.merchantName || txn.description).slice(0, 120);
+  // An older rule for the same merchant (previous key format) is replaced by this correction.
+  const stale = merchantKeys(txn).filter((k) => k !== key);
+  if (stale.length) await scope.tx.delete(categoryRules).where(and(eq(categoryRules.userId, scope.userId), inArray(categoryRules.merchantKey, stale)));
   const [rule] = await scope.tx
     .insert(categoryRules)
     .values({ userId: scope.userId, merchantKey: key, label, categoryId, kind: kind ?? null })
@@ -160,7 +163,7 @@ async function matchingTransactions(scope: UserScope, key: string, categoryId: s
     .select({ id: transactions.id, merchantName: transactions.merchantName, description: transactions.description, categoryId: transactions.categoryId })
     .from(transactions)
     .where(eq(transactions.userId, scope.userId));
-  return rows.filter((r) => r.categoryId !== categoryId && merchantKey(r) === key);
+  return rows.filter((r) => r.categoryId !== categoryId && merchantKeys(r).includes(key));
 }
 
 /** Applies a rule to existing transactions from that merchant. Returns how many changed. */

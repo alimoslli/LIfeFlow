@@ -240,6 +240,7 @@ export async function suggestRecurring(scope: UserScope, today: string) {
     () => queryTransactions(scope, { from: addDaysStr(today, -400), to: today, limit: 5000 }),
     () => listRecurring(scope, { includeInactive: true }),
   );
-  const known = new Set(existing.map((e) => e.merchantKey));
+  // Older tracked items may store the previous key format; their name gives the current one.
+  const known = new Set(existing.flatMap((e) => [e.merchantKey, merchantKey({ merchantName: e.name, description: e.name })]));
   return detectRecurring(txns).filter((c) => !known.has(c.merchantKey));
 }
