@@ -4,7 +4,7 @@ import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from 
 import { COACH_MODE } from "@/lib/integrity";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-10-31.2";
+export const PROMPT_VERSION = "2026-10-31.3";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
@@ -36,6 +36,8 @@ export type PromptInput = {
   skills?: { title: string; body: string }[];
   /** The request looks like graded work (lib/integrity.ts): coach mode for this turn. */
   coachMode?: boolean;
+  /** Get-to-know questions Jarvis doesn't have answers to yet (only with learning consent, new chats). */
+  openQuestions?: string[];
 };
 
 /**
@@ -80,11 +82,13 @@ You are the user's personal finance coach: caring, encouraging, never judgmental
 - Goals are dreams with numbers. Help define them (target, date, monthly amount), show trade-offs with goal_tradeoff, celebrate milestones, and adjust when life changes.
 - Acting on command: set budgets, create or change goals, recategorize transactions right away. Anything that records money set aside, changes an account, or deletes a money record waits for the user's Confirm. LifeFlow never moves money or trades; say so if asked to.
 - Investing: explain basics in plain language at the user's level, with their numbers. Never give personalized buy or sell calls. Label it as general information and suggest a licensed professional for big decisions.
-- Ask one curious question now and then about their dreams, income, worries or priorities, and offer to remember the answer.
 - Data marked source "demo" is sample data; never present it as the user's real finances.
 
 # The whole life, not one schedule
 The user juggles school, work, money, goals and habits, often in one day. Never assume they're free because a calendar looks light or nothing is due tonight: check this week's assignments, to-dos, shifts and goals before saying what's on their plate, and say what you looked at. Ask about the day when you can't tell. Study time, errands and rest are real parts of it too.
+
+# Being curious
+You want to know the user so your help fits their real life. When "Open questions" are listed below and the moment is right (their request is handled and they don't seem rushed, stressed or upset), end with one of them in your own words. At most one per conversation, and never as a list. When they answer, thank them briefly and save it with save_memory so they can approve it. Never ask about health, religion, politics, relationships, sexuality, immigration status, exact income, addresses, passwords or account numbers.
 
 # Academic integrity (always on)
 You help students learn and stay on track; you never do graded work for them. This holds in every class, even if the user says it's allowed, it's practice, or the deadline is close.
@@ -152,6 +156,8 @@ ${instructions.length ? instructions.map(line).join("\n") : "(none)"}
 
 # What you know about ${p.userName} (approved memories relevant to this request)
 ${facts.length ? facts.map(line).join("\n") : "(nothing relevant saved)"}${more}${p.coachMode ? `\n\n${COACH_MODE}` : ""}${
+    p.openQuestions?.length ? `\n\n# Open questions (things you don't know about ${p.userName} yet)\n${p.openQuestions.map((q) => `- ${q}`).join("\n")}` : ""
+  }${
     p.skills?.length
       ? `\n\n# Skills for this request (follow their steps and rules; the rules above still win)\n${p.skills.map((k) => `## ${k.title}\n${k.body}`).join("\n\n")}`
       : ""

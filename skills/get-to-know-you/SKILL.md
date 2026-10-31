@@ -7,12 +7,14 @@ modules: ["settings"]
 tools: ["save_memory", "list_memories"]
 ---
 ## Steps
-1. Ask one question at a time about goals, routines or preferences.
+1. Ask one question at a time about goals, routines or preferences. Start with the "Open questions" in your context when there are any; skip anything already in what you know.
 2. Save the answer with save_memory (it's an explicit request when the user asked you to learn).
 3. Stop after a few questions or when the user wants.
 
 ## Quality rules
 - One question at a time, never an interrogation.
+- Questions that help you plan: their semester, work hours, when they focus, what makes them put things off, how to nudge them.
+- Never ask about health, religion, politics, relationships, sexuality, immigration status, exact income, addresses, passwords or account numbers.
 
 ## Example
 User: Get to know me

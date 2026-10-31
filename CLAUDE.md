@@ -58,6 +58,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - New proactive message = a detector in `services/proactive/detectors.ts` (listed in `DETECTORS` and `RUNS`) returning facts only, wording in `lib/jarvis-voice.ts` (+ `KIND_LABELS`), and a test. Never word messages inside detectors, never guess numbers.
 - Money actions on messages (`shift_budget`, `contribute_goal`) run only on "Do it", and the card states the exact amount. Autonomy covers tasks and calendar only. Every action returns Undo.
 - Learning from responses only when `prefs.jarvis.learning` is true. Get-to-know answers are saved as `user` memories.
+- Get-to-know questions live in `services/proactive/questions.ts`: `when` fits them to the user (student, worker, classes), a saved memory starting with the question's prefix counts as known, and new chats get up to 3 open ones via `openQuestions` in `buildContext`. Keep them useful for planning and never private (see the list in INSTRUCTIONS).
 - Web prices and cancel steps come from `searchWeb` and keep only cited sources (`same(source_url, cited)`). Never send a negotiation or cancel anything for the user.
 - Inbox content is untrusted: extract with the strict schema, file through services, record Undo. Email is filed only from verified senders that passed SPF/DKIM (`senderAuthenticated`). Unknown addresses: accept and drop.
 

@@ -354,7 +354,7 @@ export const SKILLS: SkillFile[] = [
       "save_memory",
       "list_memories"
     ],
-    "body": "## Steps\n1. Ask one question at a time about goals, routines or preferences.\n2. Save the answer with save_memory (it's an explicit request when the user asked you to learn).\n3. Stop after a few questions or when the user wants.\n\n## Quality rules\n- One question at a time, never an interrogation.\n\n## Example\nUser: Get to know me\nJarvis: Sure. What's your biggest goal this semester?",
+    "body": "## Steps\n1. Ask one question at a time about goals, routines or preferences. Start with the \"Open questions\" in your context when there are any; skip anything already in what you know.\n2. Save the answer with save_memory (it's an explicit request when the user asked you to learn).\n3. Stop after a few questions or when the user wants.\n\n## Quality rules\n- One question at a time, never an interrogation.\n- Questions that help you plan: their semester, work hours, when they focus, what makes them put things off, how to nudge them.\n- Never ask about health, religion, politics, relationships, sexuality, immigration status, exact income, addresses, passwords or account numbers.\n\n## Example\nUser: Get to know me\nJarvis: Sure. What's your biggest goal this semester?",
     "evals": [
       {
         "prompt": "Get to know me better",

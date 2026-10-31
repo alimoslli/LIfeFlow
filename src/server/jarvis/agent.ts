@@ -16,6 +16,7 @@ import { toolSpecs } from "./registry";
 import type { ToolContext } from "./tool";
 import { describeToolCall, describeToolResult, memoryProposalOf } from "./labels";
 import { looksLikeGradedWork } from "@/lib/integrity";
+import { openQuestions } from "../services/proactive/questions";
 
 export type JarvisEvent =
   | { type: "conversation"; id: string; title: string }
@@ -76,7 +77,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   const run = <T>(fn: Parameters<typeof withUser<T>>[1]) => withUser(user.id, fn);
 
   // 1–2. Conversation, user message and context in one transaction (fewer round trips before the first word).
-  const { conversation, history, approved } = await run(async (s) => {
+  const { conversation, history, approved, curious } = await run(async (s) => {
     const conversation = input.conversationId
       ? await getConversation(s, input.conversationId)
       : await createConversation(s, input.module, truncate(input.text.replace(/\s+/g, " ").trim() || "Attachment", 60));
@@ -98,7 +99,14 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       if (attachmentIds.length) await s.tx.update(attachments).set({ conversationId: conversation.id }).where(inArray(attachments.id, attachmentIds));
     }
     await s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "user", content: input.text, attachmentIds });
-    return { conversation, history: await loadHistory(s, conversation.id), approved: await listActiveMemories(s, now) };
+    const history = await loadHistory(s, conversation.id);
+    const approved = await listActiveMemories(s, now);
+    // A fresh chat with learning on: the questions Jarvis could still ask (it picks at most one, when it fits).
+    const curious = user.preferences?.jarvis?.learning && history.length <= 1 ? (await openQuestions(s, user.preferences, approved)).questions : [];
+    // Rotate daily so an unanswered question doesn't come up in every new chat.
+    const day = Math.floor(now.getTime() / 86_400_000);
+    const pick = [0, 1, 2].filter((i) => i < curious.length).map((i) => curious[(day + i) % curious.length].ask);
+    return { conversation, history, approved, curious: pick };
   });
   emit({ type: "conversation", id: conversation.id, title: conversation.title });
   const openedFrom = input.module ?? conversation.contextModule;
@@ -117,6 +125,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
     memories,
     otherMemoryCount: approved.length - memories.length,
     preferences: user.preferences,
+    openQuestions: curious,
   });
   // Bookkeeping only; it doesn't delay the model call.
   const touched = run((s) =>

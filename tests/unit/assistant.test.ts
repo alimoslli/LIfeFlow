@@ -27,6 +27,15 @@ describe("assistant profile", () => {
     expect(prefix(custom)).not.toMatch(/Nova|Jarvis/);
   });
 
+  it("lists open get-to-know questions only in the per-user part, and only when given", () => {
+    const plain = buildSystemPrompt(base);
+    const curious = buildSystemPrompt({ ...base, openQuestions: ["What usually makes you put things off?"] });
+    expect(plain).not.toContain("# Open questions");
+    expect(curious).toContain("# Open questions (things you don't know about Ali yet)\n- What usually makes you put things off?");
+    // The rule itself is static, so it's in both.
+    expect(plain.split("# Who you are")[0]).toBe(curious.split("# Who you are")[0]);
+  });
+
   it("validates names and notes", () => {
     const ok = { name: "Nova", style: "coach", voice: "coral" } as const;
     expect(assistantSchema.safeParse(ok).success).toBe(true);

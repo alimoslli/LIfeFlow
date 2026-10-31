@@ -14,6 +14,8 @@ import { createTask } from "@/server/services/tasks";
 import { createEmployer, createShift } from "@/server/services/work";
 import { inQuietHours, learnedStats, pushImportant, runProactive } from "@/server/services/proactive/engine";
 import { respondToMessage } from "@/server/services/proactive/respond";
+import { openQuestions } from "@/server/services/proactive/questions";
+import { createMemory, listActiveMemories as listActive } from "@/server/services/memory";
 import { composeMessage } from "@/lib/jarvis-voice";
 import { makeUser, TZ } from "../helpers";
 
@@ -178,14 +180,14 @@ describe("proactive Jarvis", () => {
     const me = user(u.id, { jarvis: { learning: true } });
     const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: me.preferences, trigger: "evening" }));
     const q = out.find((m) => m.kind === "question")!;
-    expect(q.title).toBe("What's your biggest money goal this year?");
-    expect(q.action).toMatchObject({ type: "answer", choices: expect.arrayContaining(["Pay off debt"]) });
+    expect(q.title).toBe("What usually makes you put things off?");
+    expect(q.action).toMatchObject({ type: "answer", choices: expect.arrayContaining(["My phone"]) });
     await expect(run((s) => respondToMessage(s, me, q.id, "answer", today, "Buy a boat"))).rejects.toThrow(/Pick one/);
-    const r = await run((s) => respondToMessage(s, me, q.id, "answer", today, "Pay off debt"));
-    expect(r.text).toContain("My biggest money goal this year: pay off debt.");
+    const r = await run((s) => respondToMessage(s, me, q.id, "answer", today, "My phone"));
+    expect(r.text).toContain("What usually makes me put things off: my phone.");
     const mems = await run((s) => s.tx.select().from(memories));
-    expect(mems).toMatchObject([{ content: "My biggest money goal this year: pay off debt.", category: "goal", source: "user", status: "active" }]);
-    // Not asked again within 3 days; undo removes the memory.
+    expect(mems).toMatchObject([{ content: "What usually makes me put things off: my phone.", category: "preference", source: "user", status: "active" }]);
+    // Not asked again within 2 days; undo removes the memory.
     const later = await run((s) => runProactive({ scope: s, tz: TZ, prefs: me.preferences, trigger: "evening", now: new Date(Date.now() + 3600_000) }));
     expect(later.find((m) => m.kind === "question")).toBeUndefined();
     await run((s) => respondToMessage(s, me, q.id, "undo", today));
@@ -194,6 +196,36 @@ describe("proactive Jarvis", () => {
     await run((s) => respondToMessage(s, me, out.find((m) => m.kind !== "question")?.id ?? q.id, "down", today));
     expect((await run((s) => learnedStats(s))).kinds.length).toBeGreaterThan(0);
     expect((await run((s) => learnedStats(s, new Date(), new Date(Date.now() + 1000)))).kinds).toHaveLength(0);
+  });
+});
+
+describe("curious Jarvis", () => {
+  it("asks what fits the user's life and skips what it already knows", async () => {
+    const { run } = await makeUser();
+    const keys = () => run(async (s) => (await openQuestions(s, undefined, await listActive(s))).questions.map((q) => q.key));
+    // No school or job on record: nothing class- or job-specific.
+    expect(await keys()).not.toContain("heaviest_class");
+    expect(await keys()).not.toContain("work_hours");
+
+    await run(async (s) => {
+      await createCourse(s, { name: "Intro to Psychology", code: "PSY 101" });
+      await createCourse(s, { name: "Biology" });
+      await createMemory(s, { content: "I focus best: evening.", category: "routine" }, "user");
+    });
+    const student = await run(async (s) => (await openQuestions(s, undefined, await listActive(s))).questions);
+    expect(student[0].key).toBe("semester_win");
+    expect(student.find((q) => q.key === "heaviest_class")?.choices.sort()).toEqual(["Biology", "PSY 101"]);
+    expect(student.map((q) => q.key)).toContain("has_job");
+    expect(student.map((q) => q.key)).not.toContain("focus_time"); // already saved
+    expect(student.map((q) => q.key)).not.toContain("payday");
+
+    await run((s) => createEmployer(s, { name: "Target", hourlyRateCents: 1600 }));
+    const both = await run(async (s) => (await openQuestions(s, undefined, await listActive(s))).questions.map((q) => q.key));
+    expect(both).toEqual(expect.arrayContaining(["work_hours", "payday"]));
+    expect(both).not.toContain("has_job");
+    // Money questions can be left out.
+    const noMoney = await run(async (s) => (await openQuestions(s, undefined, [], { money: false })).questions);
+    expect(noMoney.some((q) => q.topic === "money")).toBe(false);
   });
 });
 

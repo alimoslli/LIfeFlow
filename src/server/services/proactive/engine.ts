@@ -8,6 +8,7 @@ import { DETECTORS, RUNS, type Candidate } from "./detectors";
 import { nextQuestion } from "./questions";
 import { performAction } from "./respond";
 import { fillRegularShifts } from "../work";
+import { listActiveMemories } from "../memory";
 import { fileFromGmail } from "../inbox/gmail";
 
 export type Slot = "morning" | "midday" | "evening";
@@ -111,7 +112,7 @@ export async function runProactive({ scope, tz, prefs, trigger, now = new Date()
     candidates.push({ kind: "consent", topic: "general", dedupeKey: "consent", facts: {}, action: { type: "consent", label: "Yes, learn" }, priority: 40 });
 
   if (settings.learning && trigger === "evening") {
-    const q = await nextQuestion(scope, now);
+    const q = await nextQuestion(scope, now, prefs, await listActiveMemories(scope, now));
     if (q) candidates.push(q);
   }
 

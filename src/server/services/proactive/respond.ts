@@ -122,7 +122,8 @@ export async function respondToMessage(scope: UserScope, user: User, id: string,
     }
     case "answer": {
       const q = m.action?.type === "answer" ? questionByKey(m.action.key) : undefined;
-      if (!q || !value || !q.choices.includes(value)) throw new ServiceError("Pick one of the answers.");
+      const choices = m.action?.type === "answer" ? m.action.choices : [];
+      if (!q || !value || !choices.includes(value)) throw new ServiceError("Pick one of the answers.");
       if (m.status === "done") return { text: m.result?.text ?? "Already answered." };
       const content = q.memory(value);
       const { memory, duplicate } = await createMemory(scope, { content, category: q.category }, "user");
