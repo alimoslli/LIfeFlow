@@ -17,6 +17,8 @@ import {
   updateRecurring,
 } from "../../services/finance/planning";
 import { TRANSACTION_KINDS, createTransaction, queryTransactions } from "../../services/finance/transactions";
+import { scanTransactions } from "../../services/finance/findings";
+import { addDaysStr } from "@/lib/dates";
 import { holdings } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import { dateArg, defineTool, idArg, moneyArg, toCents, toDollars } from "../tool";
@@ -320,6 +322,39 @@ export const financeTools = [
         return centsToDollarsDeep({
           saved: { category: cat.category.name, month: b.month.slice(0, 7), limitCents: b.limitCents },
           viewAt: "/finances/budgets",
+        });
+      });
+    },
+  }),
+  defineTool({
+    name: "money_findings",
+    description:
+      "Scans their real bank feed for things they'd want to know: possible double charges, bank fees (overdraft, ATM, late), recurring charges and subscriptions found but not tracked, and charges that went up. Use it on your own whenever money comes up, and say what you found.",
+    schema: z.object({}),
+    mutates: false,
+    async execute(_a, ctx) {
+      return ctx.run(async (s) => {
+        const [txns, recurring] = await series(
+          () => queryTransactions(s, { from: addDaysStr(ctx.today, -400), to: ctx.today, limit: 20_000 }),
+          () => suggestRecurring(s, ctx.today),
+        );
+        const scan = scanTransactions(txns, ctx.today);
+        return centsToDollarsDeep({
+          period: `last 30 days to ${ctx.today}`,
+          possibleDoubleCharges: scan.doubleCharges,
+          bankFees: scan.fees,
+          bankFeesTotalCents: scan.feesTotalCents,
+          recurringNotTracked: recurring
+            .filter((r) => r.latestAmountCents < 0)
+            .map((r) => ({
+              name: r.name,
+              kind: r.kind,
+              frequency: r.frequency,
+              latestAmountCents: r.latestAmountCents,
+              nextExpectedDate: r.nextExpectedDate,
+              ...(r.variableAmount ? { amountVaries: true } : {}),
+            })),
+          viewAt: "/finances/transactions",
         });
       });
     },

@@ -75,6 +75,7 @@ export const SKILLS: SkillFile[] = [
       "finances"
     ],
     "tools": [
+      "money_findings",
       "money_overview",
       "spending_summary",
       "compare_spending",
@@ -82,7 +83,7 @@ export const SKILLS: SkillFile[] = [
       "set_budget",
       "query_transactions"
     ],
-    "body": "## Steps\n1. Start from money_overview or budget_status; quote the date range.\n2. Find the 1-2 categories driving the change (compare_spending).\n3. Suggest one or two specific fixes with dollar amounts.\n4. Change budgets only when asked (set_budget).\n\n## Quality rules\n- Never estimate numbers the tools return.\n- Never project income.\n\n## Example\nUser: Why am I spending more this month?\nJarvis: Food is $86 over last month (Oct 1-29), mostly delivery (6 orders). Cutting 2 orders saves about $40.",
+    "body": "## Steps\n1. Start from money_overview or budget_status; quote the date range. Run money_findings too and mention anything it caught (a double charge, bank fees, a recurring charge they aren't tracking).\n2. Find the 1-2 categories driving the change (compare_spending).\n3. Suggest one or two specific fixes with dollar amounts.\n4. Change budgets only when asked (set_budget).\n\n## Quality rules\n- Never estimate numbers the tools return.\n- Never project income.\n\n## Example\nUser: Why am I spending more this month?\nJarvis: Food is $86 over last month (Oct 1-29), mostly delivery (6 orders). Cutting 2 orders saves about $40.",
     "evals": [
       {
         "prompt": "How's my budget this month?",
@@ -1215,6 +1216,7 @@ export const SKILLS: SkillFile[] = [
       "finances"
     ],
     "tools": [
+      "money_findings",
       "find_subscriptions",
       "recurring_payments",
       "web_search"

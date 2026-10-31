@@ -84,6 +84,11 @@ for (let d = "2026-05-06"; d <= END; d = addDaysStr(d, between(10, 20)))
     categoryName: null,
   });
 out("2026-07-14", 34999, "BEST BUY 00012 ATLANTA GA", "Best Buy", "Shopping");
+// A real double charge and two bank fees in the last month (what the findings scan should catch).
+out("2026-10-22", 4218, "TARGET T-1294 ATLANTA GA", "Target", "Shopping");
+out("2026-10-23", 4218, "TARGET T-1294 ATLANTA GA", "Target", "Shopping");
+out("2026-10-24", 3500, "OVERDRAFT FEE FOR A TRANSACTION", null, "Fees & Interest");
+out("2026-10-27", 300, "NON-NETWORK ATM FEE", null, "Fees & Interest");
 
 export const TODAY = END;
 

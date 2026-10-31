@@ -159,6 +159,18 @@ const KINDS: Record<string, (f: F) => Parts> = {
     ask: "Want to track it with your subscriptions?",
     mood: "info",
   }),
+  double_charge: (f) => ({
+    headline: `Possible double charge: ${s(f, "merchant")}`,
+    fact: `${s(f, "merchant")} charged you ${usd(n(f, "amountCents"))} twice, on ${s(f, "first")} and ${s(f, "second")}.`,
+    ask: "If you only bought it once, the merchant or your bank can refund one. Want me to add a to-do to check?",
+    mood: "warn",
+  }),
+  bank_fees: (f) => ({
+    headline: `${usd(n(f, "totalCents"))} in bank fees this month`,
+    fact: `Your bank charged ${plural(n(f, "count"), "fee")} in the last 30 days, including ${s(f, "example")}.`,
+    ask: "Banks often refund a first overdraft fee if you call and ask. Want a short script?",
+    mood: "warn",
+  }),
   savings_found: (f) => ({
     headline: `Cheaper option for ${s(f, "bill")}`,
     fact: `Switching to ${s(f, "provider")} ${s(f, "plan")} saves about ${usd(n(f, "yearlyCents"))}/year (source: ${s(f, "source")}).`,
@@ -227,6 +239,8 @@ export const KIND_LABELS: Record<string, string> = {
   subscription_price_up: "Subscription price increases",
   trial_ending: "Free trials ending",
   new_subscription: "New subscriptions",
+  double_charge: "Possible double charges",
+  bank_fees: "Bank fees",
   savings_found: "Cheaper bills found",
   question: "Get-to-know questions",
   weekly_learned: "What I learned this week",

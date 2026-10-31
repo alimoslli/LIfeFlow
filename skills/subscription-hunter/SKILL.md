@@ -4,7 +4,7 @@ title: Subscription hunter
 description: Finds recurring charges and suggests what to cancel.
 triggers: ["subscription", "subscriptions", "recurring charge", "cancel netflix", "what am i paying for", "free trial"]
 modules: ["finances"]
-tools: ["find_subscriptions", "recurring_payments", "web_search"]
+tools: ["money_findings", "find_subscriptions", "recurring_payments", "web_search"]
 ---
 ## Steps
 1. Run find_subscriptions. It reads their real transactions: items with tracked=false were found in the bank feed, not entered by them.

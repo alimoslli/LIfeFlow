@@ -33,6 +33,7 @@ const LABELS: Record<string, string> = {
   budget_status: "Checking budgets",
   set_budget: "Saving budget",
   recurring_payments: "Reviewing bills & subscriptions",
+  money_findings: "Scanning your transactions",
   check_affordability: "Checking affordability",
   investment_holdings: "Reading investments",
   list_jobs: "Checking jobs",

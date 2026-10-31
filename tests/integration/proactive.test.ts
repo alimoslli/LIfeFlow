@@ -199,6 +199,25 @@ describe("proactive Jarvis", () => {
   });
 });
 
+describe("money findings", () => {
+  it("tells you about a possible double charge and this month's bank fees", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s);
+      const tx = (date: string, cents: number, description: string, merchantName: string | null = null) =>
+        createTransaction(s, { accountId: acct.id, date, description, merchantName, amountCents: -cents });
+      await tx(addDaysStr(today, -3), 4218, "TARGET T-1294 ATLANTA GA", "Target");
+      await tx(addDaysStr(today, -2), 4218, "TARGET T-1294 ATLANTA GA", "Target");
+      await tx(addDaysStr(today, -1), 3500, "OVERDRAFT FEE FOR A TRANSACTION");
+    });
+    const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "midday" }));
+    const kinds = out.map((m) => m.kind);
+    expect(kinds).toEqual(expect.arrayContaining(["double_charge", "bank_fees"]));
+    expect(out.find((m) => m.kind === "double_charge")!.body).toMatch(/Target charged you \$42\.18 twice/);
+    expect(out.find((m) => m.kind === "bank_fees")!.title).toBe("$35 in bank fees this month");
+  });
+});
+
 describe("curious Jarvis", () => {
   it("asks what fits the user's life and skips what it already knows", async () => {
     const { run } = await makeUser();

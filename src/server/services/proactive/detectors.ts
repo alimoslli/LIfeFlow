@@ -15,6 +15,7 @@ import { listAssignments } from "../school";
 import { listShifts } from "../work";
 import { getAgenda, freeSlots } from "../calendar";
 import { subscriptionsOverview } from "../finance/subscriptions";
+import { scanTransactions } from "../finance/findings";
 import { billsToReview, findSavings, listSavings } from "../finance/savings-finder";
 import { webSearchClient } from "../../integrations/web-search";
 import { eveningWrap, goalForecast, habitCoach, monthlyReview, morningBrief, weeklyLearned, weeklyReview } from "./reviews";
@@ -377,6 +378,32 @@ const unusualSpend: Detector = async ({ scope, today }) => {
   return out.slice(0, 1);
 };
 
+/** Things people miss in their own bank feed: a possible double charge, and bank fees this month. */
+const moneyFinds: Detector = async ({ scope, today }) => {
+  const txns = await queryTransactions(scope, { from: addDaysStr(today, -120), to: today, limit: 5000 });
+  const r = scanTransactions(txns, today);
+  const out: Candidate[] = [];
+  for (const d of r.doubleCharges.slice(0, 1))
+    out.push({
+      kind: "double_charge",
+      topic: "money",
+      dedupeKey: `double_charge:${d.merchant}:${d.amountCents}:${d.dates[1]}`,
+      facts: { merchant: d.merchant, amountCents: d.amountCents, first: formatDateStr(d.dates[0], "MMM d"), second: formatDateStr(d.dates[1], "MMM d") },
+      action: { type: "open", label: "See the charges", href: `/finances/transactions?q=${encodeURIComponent(d.merchant)}` },
+      priority: 70,
+    });
+  if (r.fees.length)
+    out.push({
+      kind: "bank_fees",
+      topic: "money",
+      dedupeKey: `bank_fees:${today.slice(0, 7)}:${r.fees.length}`,
+      facts: { totalCents: r.feesTotalCents, count: r.fees.length, example: r.fees[0].description },
+      action: { type: "ask", label: "Help me get it back", prompt: "Write me a short script to ask my bank to refund these fees." },
+      priority: 60,
+    });
+  return out;
+};
+
 /** Subscriptions: price increases, trials about to turn paid, and new recurring charges. */
 const subscriptionWatch: Detector = async ({ scope, today }) => {
   const o = await subscriptionsOverview(scope, today);
@@ -457,16 +484,17 @@ export const DETECTORS = {
   habitCoach,
   subscriptionWatch,
   savingsCheck,
+  moneyFinds,
 };
 export type DetectorName = keyof typeof DETECTORS;
 
 /** Which detectors run when. Events run right after the change that triggered them. */
 export const RUNS: Record<string, DetectorName[]> = {
   morning: ["emailBrief", "morningBrief", "monthlyReview", "savingsCheck", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
-  midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks", "subscriptionWatch"],
+  midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks", "subscriptionWatch", "moneyFinds"],
   // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
   evening: ["eveningWrap", "weeklyReview", "weeklyLearned", "goalForecast", "habitCoach", "taskStreak", "goalMilestones", "deadlineConflicts"],
-  transaction: ["spendingPace", "unusualSpend", "billsDue", "goalMilestones"],
+  transaction: ["spendingPace", "unusualSpend", "billsDue", "goalMilestones", "moneyFinds"],
   shift: ["deadlineConflicts"],
   goal: ["goalMilestones"],
   task: ["taskStreak"],
