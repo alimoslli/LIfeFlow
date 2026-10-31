@@ -106,13 +106,13 @@ export default async function BillsPage() {
                         {c.frequency} · {c.occurrences} times · last {formatDateStr(c.lastDate, "MMM d")} · {Math.round(c.confidence * 100)}% confident
                       </p>
                     </div>
-                    <Money cents={c.averageAmountCents} signed className="text-text" />
+                    <Money cents={c.latestAmountCents} signed className="text-text" />
                     <ActionForm action={createRecurringAction} className="contents">
                       <input type="hidden" name="name" value={c.name} />
-                      <input type="hidden" name="amount" value={(Math.abs(c.averageAmountCents) / 100).toFixed(2)} />
+                      <input type="hidden" name="amount" value={(Math.abs(c.latestAmountCents) / 100).toFixed(2)} />
                       <input type="hidden" name="frequency" value={c.frequency} />
                       <input type="hidden" name="nextDueDate" value={c.nextExpectedDate} />
-                      <input type="hidden" name="kind" value={c.averageAmountCents > 0 ? "income" : "subscription"} />
+                      <input type="hidden" name="kind" value={c.kind} />
                       <input type="hidden" name="detected" value="1" />
                       <SubmitButton size="sm" variant="secondary">
                         Track

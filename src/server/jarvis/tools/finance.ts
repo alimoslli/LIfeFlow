@@ -348,12 +348,16 @@ export const financeTools = [
             kind: r.kind,
           })),
           upcoming30Days: upcoming,
+          // Found in their transactions but not tracked yet: say these out loud and offer to track them.
           detectedNotTracked: detected.map((d) => ({
             name: d.name,
+            kind: d.kind,
             frequency: d.frequency,
-            averageAmountCents: d.averageAmountCents,
+            latestAmountCents: d.latestAmountCents,
+            ...(d.variableAmount ? { amountVaries: true, averageAmountCents: d.averageAmountCents } : {}),
             lastDate: d.lastDate,
-            confidence: d.confidence,
+            nextExpectedDate: d.nextExpectedDate,
+            charges: d.occurrences,
           })),
         });
       });

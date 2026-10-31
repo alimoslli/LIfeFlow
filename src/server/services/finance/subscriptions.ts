@@ -45,7 +45,8 @@ export async function subscriptionsOverview(scope: UserScope, today: string) {
   const subs = items
     .filter((i) => i.kind === "subscription" && i.status !== "cancelled")
     .map((s) => {
-      const charges = txns.filter((t) => merchantKey(t) === s.merchantKey).sort((a, b) => b.date.localeCompare(a.date));
+      const key = merchantKey({ merchantName: s.name, description: s.name });
+      const charges = txns.filter((t) => !t.pending && [key, s.merchantKey].includes(merchantKey(t))).sort((a, b) => b.date.localeCompare(a.date));
       const latest = charges[0] ? -charges[0].amountCents : null;
       const previous = charges.find((c, i) => i > 0 && -c.amountCents !== latest);
       const priceUp = latest !== null && previous && latest > -previous.amountCents + 50 ? { fromCents: -previous.amountCents, toCents: latest } : null;
@@ -93,8 +94,9 @@ export async function subscriptionsOverview(scope: UserScope, today: string) {
     })),
     ...active.filter((s) => s.usage === "not_using").map((s) => ({ kind: "unused" as const, id: s.id, name: s.name, yearlyCents: s.yearlyCents })),
   ];
-  // Recurring charges found in transactions that aren't tracked yet (small, regular, monthly-ish: likely subscriptions).
-  const found = detected.filter((c) => c.averageAmountCents < 0 && -c.averageAmountCents <= 30_000 && c.confidence >= 0.6 && c.occurrences >= 2);
+  // Subscriptions found in transactions that aren't tracked yet.
+  const trackedKeys = new Set(subs.map((x) => merchantKey({ merchantName: x.name, description: x.name })));
+  const found = detected.filter((c) => c.kind === "subscription" && c.latestAmountCents < 0 && c.confidence >= 0.6 && !trackedKeys.has(c.merchantKey));
   return {
     subscriptions: subs,
     monthlyCents: active.reduce((n, s) => n + s.monthlyCents, 0),
@@ -143,7 +145,7 @@ export async function trackFound(scope: UserScope, today: string, key: string) {
   if (!c) throw new ServiceError("That charge is already tracked or no longer looks recurring.");
   return createRecurring(
     scope,
-    { name: c.name, amountCents: c.averageAmountCents, frequency: c.frequency, nextDueDate: c.nextExpectedDate, kind: "subscription" },
+    { name: c.name, amountCents: c.latestAmountCents, frequency: c.frequency, nextDueDate: c.nextExpectedDate, kind: c.kind },
     "detected",
   );
 }

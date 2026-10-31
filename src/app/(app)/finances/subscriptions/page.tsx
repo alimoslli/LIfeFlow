@@ -167,8 +167,7 @@ export default async function SubscriptionsPage() {
               <div className="min-w-0 flex-1">
                 <p className="text-[15px] font-medium break-words">{c.name}</p>
                 <p className="text-xs text-muted">
-                  About {usd(c.averageAmountCents)} every {FREQ[c.frequency]} · {c.occurrences} charges · next around{" "}
-                  {formatDateStr(c.nextExpectedDate, "MMM d")}
+                  {usd(c.latestAmountCents)} every {FREQ[c.frequency]} · {c.occurrences} charges · next around {formatDateStr(c.nextExpectedDate, "MMM d")}
                 </p>
               </div>
               <ActionButton action={trackFoundAction.bind(null, c.merchantKey)} className="rounded-full bg-accent px-4 text-sm font-medium text-accent-text">

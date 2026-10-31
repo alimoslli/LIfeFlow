@@ -1,3 +1,4 @@
+import { merchantKey } from "./recurring-detect";
 import { series } from "@/server/db/series";
 import { addDaysStr, daysBetween, monthEnd, monthStart } from "@/lib/dates";
 import type { UserScope } from "../../db/with-user";
@@ -94,32 +95,45 @@ export async function subscriptionReport(scope: UserScope, today: string) {
     );
   const trackedItems = tracked
     .filter((r) => r.amountCents < 0 && (r.kind === "subscription" || r.kind === "bill"))
-    .map((r) => ({ name: r.name, kind: r.kind, frequency: r.frequency, amountCents: -r.amountCents, tracked: true, merchantKey: r.merchantKey }));
-  // A detected pattern that shares a word with something already tracked is the same thing (e.g. "Parkview Apartments" vs "Rent, Parkview Apartments").
-  const overlapsTracked = (name: string) => trackedItems.some((t) => [...words(name)].some((w) => words(t.name).has(w)));
+    .map((r) => ({
+      name: r.name,
+      kind: r.kind,
+      frequency: r.frequency,
+      amountCents: -r.amountCents,
+      nextDate: r.nextDueDate,
+      tracked: true,
+      merchantKey: merchantKey({ merchantName: r.name, description: r.name }) || r.merchantKey,
+    }));
+  // A detected pattern that shares a merchant key or a word with something tracked is the same thing (e.g. "Parkview Apartments" vs "Rent, Parkview Apartments").
+  const overlapsTracked = (d: { name: string; merchantKey: string }) =>
+    trackedItems.some((t) => t.merchantKey === d.merchantKey || [...words(d.name)].some((w) => words(t.name).has(w)));
   const items = [
     ...trackedItems,
     ...detected
-      .filter((d) => d.averageAmountCents < 0 && !overlapsTracked(d.name))
+      .filter((d) => d.kind !== "income" && d.latestAmountCents < 0 && !overlapsTracked(d))
       .map((d) => ({
         name: d.name,
-        kind: "detected" as const,
+        kind: d.kind,
         frequency: d.frequency,
-        amountCents: -d.averageAmountCents,
+        // The most recent charge is what the next one will be (prices change; averages hide that).
+        amountCents: -d.latestAmountCents,
+        nextDate: d.nextExpectedDate,
         tracked: false,
         merchantKey: d.merchantKey,
+        ...(d.variableAmount ? { amountVaries: true } : {}),
       })),
   ].map((i) => ({ ...i, yearlyCents: i.amountCents * yearlyFactor[i.frequency] }));
-  // Price increases: the latest charge is higher than the earliest in the window.
+  // Price increases: the latest charge from that merchant is higher than the first one in the window.
   const priceChanges = items.flatMap((i) => {
-    const charges = recent.filter((t) => i.merchantKey && (t.merchantName ?? t.description).toLowerCase().includes(i.name.toLowerCase().split(" ")[0]));
+    if (i.kind !== "subscription") return [];
+    const charges = recent.filter((t) => !t.pending && merchantKey(t) === i.merchantKey);
     if (charges.length < 2) return [];
     const latest = -charges[0].amountCents;
     const earliest = -charges[charges.length - 1].amountCents;
     return latest > earliest + 50 ? [{ name: i.name, fromCents: earliest, toCents: latest }] : [];
   });
   const streaming = items.filter((i) => /netflix|hulu|disney|max|spotify|apple music|youtube|paramount|peacock/i.test(i.name));
-  // Only tracked subscriptions count toward the subscription total; bills like rent never do.
+  // Subscriptions (tracked or found in transactions) count toward the total; bills like rent never do.
   const subs = items.filter((i) => i.kind === "subscription");
   return {
     items: items.sort((a, b) => b.yearlyCents - a.yearlyCents),

@@ -407,7 +407,7 @@ const subscriptionWatch: Detector = async ({ scope, today }) => {
       kind: "new_subscription",
       topic: "money",
       dedupeKey: `sub_found:${c.merchantKey}`,
-      facts: { name: c.name, amountCents: -c.averageAmountCents, count: c.occurrences },
+      facts: { name: c.name, amountCents: -c.latestAmountCents, count: c.occurrences },
       action: { type: "open", label: "Take a look", href: "/finances/subscriptions" },
       priority: 50,
     });
