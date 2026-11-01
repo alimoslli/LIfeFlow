@@ -21,12 +21,14 @@ test("a new user gets a short introduction, names their assistant, then a skippa
 
   // Today, with the tour running.
   await page.waitForURL((u) => u.pathname === "/");
-  const tour = page.getByRole("dialog", { name: "This is Today" });
+  const tour = page.getByRole("dialog", { name: "Welcome to LifeFlow" });
   await expect(tour).toBeVisible();
   await page.getByRole("button", { name: "Next" }).click();
-  await expect(page.getByRole("dialog", { name: "Plan" })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Start each day here" })).toBeVisible();
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.getByRole("dialog", { name: "Your calendar and to-dos" })).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog", { name: "Plan" })).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "Your calendar and to-dos" })).toHaveCount(0);
 
   // Saved: what fills their week and their assistant, and nothing else was created.
   const [prefs] = await queryAsUser<{ p: { lifeStage?: string; assistantName?: string; assistantStyle?: string } }>(

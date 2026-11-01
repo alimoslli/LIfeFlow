@@ -14,6 +14,7 @@ import { disconnectBankAction } from "../../finances/actions";
 import { SettingsHeader } from "../settings-header";
 import { canvasConnection } from "@/server/integrations/canvas";
 import { CanvasCard } from "./canvas-card";
+import { ManualSourceCard } from "./manual-source-card";
 
 export const metadata: Metadata = { title: "Connected accounts" };
 
@@ -64,6 +65,11 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
             : null
         }
       />
+      <ManualSourceCard
+        title="Another school platform?"
+        body="Not on Canvas? Send your assistant screenshots of your assignments, or upload your syllabus. You can also just tell it your classes. It adds them to School."
+        tip="Try: send a screenshot of your assignment list, then say “add these”."
+      />
       <Group title="Email & Calendar" />
       {google && (
         <GoogleCard
@@ -102,6 +108,17 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
           }))}
         />
       </Card>
+      <ManualSourceCard
+        title="Bank not on Plaid?"
+        body="Send your assistant a screenshot or a PDF of a statement. It adds the account and the transactions it can read, so Money still shows what you spent and what came in."
+        tip="Plaid is faster when your bank supports it. Use screenshots for everything else."
+      />
+      <Group title="Work" />
+      <ManualSourceCard
+        title="Work schedule"
+        body="Send a picture of your schedule to your assistant, and it adds your shifts to Plan. Change one there any time."
+        tip="Try: send a photo of next week's schedule, then say “add my shifts”."
+      />
       <Group title="Health" />
       <AppleHealthCard
         keys={d.keys.map((k) => ({

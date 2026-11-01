@@ -144,6 +144,7 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
         </button>
         <Link
           href="/settings"
+          data-tour="settings"
           aria-label="Settings"
           aria-current={pathname.startsWith("/settings") ? "page" : undefined}
           className={cn("tap flex items-center justify-center rounded-full", pathname.startsWith("/settings") ? "text-accent" : "text-text-2")}

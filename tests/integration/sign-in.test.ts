@@ -58,9 +58,10 @@ describe("single-use challenges", () => {
     expect(await takeChallenge(db, "passkey-login", a.token)).toBeNull();
     const b = await saveChallenge(db, "passkey-login", "old", null, -1000);
     expect(await takeChallenge(db, "passkey-login", b.token)).toBeNull();
-    // Only a hash of the token is stored.
-    const rows = await db.select().from(authChallenges).where(eq(authChallenges.challenge, "old"));
-    expect(rows[0].id).not.toBe(b.token);
+    // Only a hash of the token is stored: a live challenge's row never holds the token itself.
+    const c = await saveChallenge(db, "passkey-login", "hashcheck", null);
+    const rows = await db.select().from(authChallenges).where(eq(authChallenges.challenge, "hashcheck"));
+    expect(rows[0].id).not.toBe(c.token);
   });
 });
 

@@ -231,6 +231,7 @@ export function AppShell({
           <button
             type="button"
             onClick={() => openJarvis()}
+            data-tour="ask"
             aria-label={`Ask ${assistantName}`}
             className="lf-fab fixed right-4 bottom-[calc(var(--tabbar-space)-4px)] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-text shadow-lift active:scale-95 md:right-8 md:bottom-8"
           >
@@ -265,6 +266,7 @@ function TopBar({ firstName, initials, demo, settingsActive }: { firstName: stri
       {demo && <span className="shrink-0 rounded-full bg-warning-soft px-3 py-1.5 text-xs text-warning">Sample data</span>}
       <Link
         href="/settings"
+        data-tour="settings"
         aria-label="Settings"
         title="Settings"
         aria-current={settingsActive ? "page" : undefined}

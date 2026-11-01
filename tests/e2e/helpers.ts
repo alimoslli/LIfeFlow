@@ -21,7 +21,7 @@ export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   await page.getByRole("button", { name: "Skip tour" }).click();
-  await expect(page.getByRole("dialog", { name: "This is Today" })).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "Welcome to LifeFlow" })).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(name.split(" ")[0]);
   return email;
 }

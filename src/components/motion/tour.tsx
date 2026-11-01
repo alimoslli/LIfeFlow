@@ -1,22 +1,73 @@
 "use client";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { BrandMark } from "@/components/brand/brand-mark";
+import { cn } from "@/lib/utils";
 import { gsap, MOTION, prefersReducedMotion } from "./gsap";
 import { isSplashActive, onSplashEnd } from "./intro";
 
-type Step = { target: string; title: string; body: string };
+/** A step with no target is a centred card (the welcome and the finish). */
+type Step = { target: string | null; eyebrow: string; title: string; body: string };
 
 const steps = (name: string): Step[] => [
-  { target: "today-page", title: "This is Today", body: "Your day at a glance: what's next, what your assistant noticed, your list and your money." },
-  { target: "plan", title: "Plan", body: "Your calendar, to-dos, classes, work shifts and notes. Everything with a date lives here." },
+  {
+    target: null,
+    eyebrow: "Welcome",
+    title: "Welcome to LifeFlow",
+    body: "A short tour of the whole app: where everything lives, and how to get the most from your week. It takes about a minute.",
+  },
+  {
+    target: "today-page",
+    eyebrow: "Today",
+    title: "Start each day here",
+    body: "What's next, what needs your attention, your list and your money in one screen. Open it each morning and the day is already planned.",
+  },
+  {
+    target: "plan",
+    eyebrow: "Plan",
+    title: "Your calendar and to-dos",
+    body: "Classes, shifts, events, tasks, goals and habits all live here. Tap any block to change it. Send a photo of your work schedule and your assistant adds the shifts.",
+  },
   {
     target: "jarvis",
+    eyebrow: "Your assistant",
     title: name,
-    body: "Your assistant. Talk or type: ask anything or tell it what to do. It shows exactly what it changed and asks before deleting.",
+    body: "Ask in plain words, like “When can I study on Wednesday?”, or tell it what to do. It shows exactly what it changed, and it asks before it deletes or sends anything.",
   },
-  { target: "money", title: "Money", body: "Real numbers only: cash & checking, what you spent and what came in this month." },
+  {
+    target: "money",
+    eyebrow: "Money",
+    title: "Real numbers only",
+    body: "Connect a bank to see what you spent, your bills and what's coming in. Not on Plaid? Send a statement screenshot instead. Pay counts only once it has landed.",
+  },
+  {
+    target: "school",
+    eyebrow: "School",
+    title: "Courses and assignments",
+    body: "Bring in assignments from Canvas, or send a screenshot or syllabus from any other platform. See what's due, and get study time built around your free hours. Jarvis never does graded work.",
+  },
+  {
+    target: "ask",
+    eyebrow: "Anywhere",
+    title: "Ask from any screen",
+    body: "This button opens your assistant wherever you are, for when you're stuck: what's next, can I afford this, or what should I do first.",
+  },
+  {
+    target: "settings",
+    eyebrow: "Make it yours",
+    title: "Settings",
+    body: "Name your assistant and choose its tone, pick the theme and accent, set quiet hours, and see what's connected. You can replay this tour from here.",
+  },
+  {
+    target: null,
+    eyebrow: "All set",
+    title: "Your week is ready",
+    body: "Start with Today, then add your classes, shifts and bills when you're ready. Everything you add shows up across the app.",
+  },
 ];
 
 const PAD = 8;
+const CARD_W = 360;
 
 /** The visible element for a tour target (desktop rail and phone tab bar both carry the tag). */
 function findTarget(name: string): HTMLElement | null {
@@ -28,31 +79,58 @@ function findTarget(name: string): HTMLElement | null {
 }
 
 /**
- * Guided tour: a soft spotlight glides between the four places of the app
- * with a short caption for each. Skippable at any time (button or Esc).
+ * Guided tour of the whole app. A soft spotlight moves between the places people use,
+ * with a short caption for each. Steps whose screen isn't visible (School when it's off)
+ * are skipped. Skip, Esc and the close are always available; arrow keys move between steps.
  */
 export function Tour({ onDone, assistantName = "Jarvis" }: { onDone: () => void; assistantName?: string }) {
-  const STEPS = useMemo(() => steps(assistantName), [assistantName]);
-  const [i, setI] = useState(0);
   const [ready, setReady] = useState(!isSplashActive());
+  useEffect(() => (ready ? undefined : onSplashEnd(() => setReady(true))), [ready]);
+
+  // Steps are chosen once the main screens have rendered, so each target can be measured.
+  // Waits for Today, Plan and Money (at most 3 seconds), then keeps only the steps whose screen is here.
+  const [laid, setLaid] = useState(false);
+  useEffect(() => {
+    if (!ready) return;
+    const began = performance.now();
+    let frame = 0;
+    const check = () => {
+      const settled = ["today-page", "plan", "money"].every((t) => findTarget(t));
+      if (settled || performance.now() - began > 3000) setLaid(true);
+      else frame = requestAnimationFrame(check);
+    };
+    frame = requestAnimationFrame(check);
+    return () => cancelAnimationFrame(frame);
+  }, [ready]);
+  const list = useMemo(() => (ready && laid ? steps(assistantName).filter((s) => !s.target || findTarget(s.target)) : []), [ready, laid, assistantName]);
+  const [i, setI] = useState(0);
   const spot = useRef<HTMLDivElement>(null);
   const card = useRef<HTMLDivElement>(null);
   const nextBtn = useRef<HTMLButtonElement>(null);
   const placed = useRef(false);
 
-  useEffect(() => (ready ? undefined : onSplashEnd(() => setReady(true))), [ready]);
-
   const place = useCallback(
     (animate: boolean) => {
-      const el = findTarget(STEPS[i].target);
-      if (!el || !spot.current || !card.current) return;
-      const r = el.getBoundingClientRect();
-      const box = { x: r.left - PAD, y: r.top - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 };
-      const below = r.top + r.height / 2 < window.innerHeight / 2;
-      const cardW = Math.min(340, window.innerWidth - 32);
-      const cardX = Math.min(Math.max(16, r.left + r.width / 2 - cardW / 2), window.innerWidth - cardW - 16);
+      const step = list[i];
+      if (!step || !spot.current || !card.current) return;
+      const el = step.target ? findTarget(step.target) : null;
       const cardH = card.current.offsetHeight;
-      const cardY = below ? Math.min(box.y + box.height + 14, window.innerHeight - cardH - 16) : Math.max(16, box.y - cardH - 14);
+      const cardW = Math.min(CARD_W, window.innerWidth - 32);
+      let box: { x: number; y: number; width: number; height: number };
+      let cardX: number;
+      let cardY: number;
+      if (el) {
+        const r = el.getBoundingClientRect();
+        box = { x: r.left - PAD, y: r.top - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 };
+        const below = r.top + r.height / 2 < window.innerHeight / 2;
+        cardX = Math.min(Math.max(16, r.left + r.width / 2 - cardW / 2), window.innerWidth - cardW - 16);
+        cardY = below ? Math.min(box.y + box.height + 14, window.innerHeight - cardH - 16) : Math.max(16, box.y - cardH - 14);
+      } else {
+        // Centred step: a zero-size spotlight in the middle still dims the whole screen.
+        box = { x: window.innerWidth / 2, y: window.innerHeight / 2, width: 0, height: 0 };
+        cardX = (window.innerWidth - cardW) / 2;
+        cardY = Math.max(16, (window.innerHeight - cardH) / 2);
+      }
       const reduce = prefersReducedMotion();
       if (!animate || reduce || !placed.current) {
         gsap.set(spot.current, box);
@@ -72,12 +150,16 @@ export function Tour({ onDone, assistantName = "Jarvis" }: { onDone: () => void;
         );
       }
     },
-    [i, STEPS],
+    [i, list],
   );
 
   useLayoutEffect(() => {
     if (ready) place(true);
   }, [ready, place]);
+
+  const last = i === list.length - 1;
+  const next = useCallback(() => (last ? onDone() : setI((n) => n + 1)), [last, onDone]);
+  const back = useCallback(() => setI((n) => Math.max(0, n - 1)), []);
 
   useEffect(() => {
     if (!ready) return;
@@ -85,6 +167,8 @@ export function Tour({ onDone, assistantName = "Jarvis" }: { onDone: () => void;
     const onResize = () => place(false);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onDone();
+      if (e.key === "ArrowRight") next();
+      if (e.key === "ArrowLeft") back();
       if (e.key === "Tab") {
         // Keep focus inside the caption.
         const f = card.current?.querySelectorAll<HTMLElement>("button");
@@ -106,40 +190,73 @@ export function Tour({ onDone, assistantName = "Jarvis" }: { onDone: () => void;
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKey);
     };
-  }, [ready, place, onDone]);
+  }, [ready, place, onDone, next, back]);
 
-  if (!ready) return null;
-  const step = STEPS[i];
-  const last = i === STEPS.length - 1;
+  const step = list[i];
+  if (!ready || !step) return null;
+  const welcome = !step.target && i === 0;
   return (
     <div className="fixed inset-0 z-[90]" role="dialog" aria-modal="true" aria-labelledby="tour-title">
       {/* The spotlight: a rounded hole in a dim layer (the shadow is the dim). */}
       <div
         ref={spot}
-        className="pointer-events-none absolute top-0 left-0 rounded-2xl opacity-0 shadow-[0_0_0_9999px_rgba(10,12,11,0.55)] ring-2 ring-white/70"
+        className="pointer-events-none absolute top-0 left-0 rounded-2xl opacity-0 shadow-[0_0_0_9999px_rgba(14,14,13,0.6)] ring-2 ring-white/60"
       />
       <div className="absolute inset-0" onClick={(e) => e.stopPropagation()} />
-      <div ref={card} className="absolute top-0 left-0 rounded-3xl bg-surface p-5 opacity-0 shadow-2xl">
-        <p data-anim className="text-xs font-medium text-muted">
-          {i + 1} of {STEPS.length}
-        </p>
-        <h2 data-anim id="tour-title" className="mt-1 font-display text-[22px] font-medium">
+      <div ref={card} className="absolute top-0 left-0 rounded-[28px] bg-surface p-6 opacity-0 shadow-lift ring-1 ring-border/70">
+        {welcome && (
+          <span data-anim className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-soft">
+            <BrandMark className="h-9 w-9" alt="" />
+          </span>
+        )}
+        <div data-anim className="flex items-center justify-between gap-3">
+          <p className="text-[11px] font-semibold tracking-[0.12em] text-accent uppercase">{step.eyebrow}</p>
+          <p className="text-xs text-muted">
+            {i + 1} of {list.length}
+          </p>
+        </div>
+        <h2 data-anim id="tour-title" className="mt-2 font-display text-[26px] leading-tight font-medium tracking-[-0.02em]">
           {step.title}
         </h2>
-        <p data-anim className="mt-1.5 text-[15px] leading-relaxed text-text-2">
+        <p data-anim className="mt-2.5 text-[15px] leading-relaxed text-text-2">
           {step.body}
         </p>
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <button onClick={onDone} className="text-sm text-muted hover:text-text">
-            Skip tour
+
+        <div data-anim className="mt-5 flex justify-center gap-1.5" aria-hidden>
+          {list.map((_, n) => (
+            <span
+              key={n}
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-300",
+                n === i ? "w-6 bg-accent" : n < i ? "w-1.5 bg-accent/50" : "w-1.5 bg-border-strong",
+              )}
+            />
+          ))}
+        </div>
+
+        <div className="mt-5 flex items-center justify-between gap-3">
+          <button onClick={onDone} className="min-h-11 rounded-full px-3 text-sm text-muted hover:text-text">
+            {last ? "Close" : "Skip tour"}
           </button>
-          <button
-            ref={nextBtn}
-            onClick={() => (last ? onDone() : setI(i + 1))}
-            className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-text"
-          >
-            {last ? "Start using LifeFlow" : "Next"}
-          </button>
+          <div className="flex items-center gap-2">
+            {i > 0 && (
+              <button
+                onClick={back}
+                aria-label="Previous step"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-text-2 hover:text-text"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            )}
+            <button
+              ref={nextBtn}
+              onClick={next}
+              className="flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-accent-text shadow-soft hover:bg-accent-hover"
+            >
+              {last ? "Start using LifeFlow" : "Next"}
+              {!last && <ArrowRight className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
       </div>
     </div>
