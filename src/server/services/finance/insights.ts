@@ -1,11 +1,11 @@
 import { series } from "@/server/db/series";
-import { addDaysStr, daysBetween, monthStart } from "@/lib/dates";
+import { addDaysStr, daysBetween } from "@/lib/dates";
 import type { UserScope } from "../../db/with-user";
 import { listAccounts, summarizeBalances } from "./accounts";
 import { listCategories } from "./categories";
 import { rollupToParents, spendingByCategoryId, summarizeCashflow } from "./cashflow";
-import { upcomingRecurring } from "./planning";
-import { merchantKey } from "./recurring-detect";
+import { billsAndPace } from "./forecast";
+import { merchantDisplayName, merchantKey } from "./recurring-detect";
 import { queryTransactions, type TransactionQuery } from "./transactions";
 
 /** Everything Jarvis needs to answer "how much did I spend/earn on X between A and B". */
@@ -18,7 +18,7 @@ export async function spendingSummary(scope: UserScope, q: TransactionQuery & { 
   for (const t of txns) {
     if (t.kind !== "expense" || t.excluded) continue;
     const k = merchantKey(t);
-    const m = merchants.get(k) ?? { name: t.merchantName || t.description, cents: 0, count: 0 };
+    const m = merchants.get(k) ?? { name: merchantDisplayName(t), cents: 0, count: 0 };
     m.cents += -t.amountCents;
     m.count++;
     merchants.set(k, m);
@@ -71,10 +71,9 @@ export async function affordability(scope: UserScope, amountCents: number, today
   const horizon = byDate ?? addDaysStr(today, 14);
   const accounts = await listAccounts(scope);
   const balances = summarizeBalances(accounts);
-  const upcoming = await upcomingRecurring(scope, today, horizon);
-  const upcomingBills = upcoming.filter((u) => u.amountCents < 0).reduce((s, u) => s - u.amountCents, 0);
-  const monthSoFar = await spendingSummary(scope, { from: monthStart(today), to: today });
-  const dailyRate = Math.round(monthSoFar.netSpendingCents / Math.max(1, daysBetween(monthStart(today), today) + 1));
+  const { bills, typical } = await billsAndPace(scope, today, today, horizon);
+  const upcomingBills = bills.reduce((s, u) => s - u.amountCents, 0);
+  const dailyRate = typical.dailyCents;
   const days = Math.max(0, daysBetween(today, horizon));
   const projectedDiscretionary = dailyRate * days;
   const projectedCashAfter = balances.cashCents - upcomingBills - projectedDiscretionary - amountCents;
@@ -83,7 +82,8 @@ export async function affordability(scope: UserScope, amountCents: number, today
     horizon: { from: today, to: horizon, days },
     liquidCashCents: balances.cashCents,
     creditCardOwedCents: balances.creditOwedCents,
-    upcomingBills: upcoming.filter((u) => u.amountCents < 0),
+    // Named `bills`, not `upcomingBills`: the dollars conversion turns upcomingBillsCents into upcomingBills and would overwrite the list.
+    bills: bills.map((b) => ({ ...b, amountCents: -b.amountCents })),
     upcomingBillsCents: upcomingBills,
     averageDailySpendingCents: dailyRate,
     projectedDiscretionaryCents: projectedDiscretionary,
@@ -91,8 +91,8 @@ export async function affordability(scope: UserScope, amountCents: number, today
     hasAccounts: accounts.length > 0,
     assumptions: [
       "Liquid cash = checking, savings and cash accounts at their last known balance.",
-      "Upcoming bills come from tracked recurring items. Income is not projected: pay counts only once it reaches your account.",
-      `Day-to-day spending is projected at this month's average (${days} days).`,
+      "Upcoming bills are tracked bills plus ones found in your bank history (found: true). Income is not projected: pay counts only once it reaches your account.",
+      `Day-to-day spending is projected at your average over the last ${typical.basedOnDays} days, not counting bills, for ${days} days.`,
       "Credit card balances are shown but not subtracted, since they may not be due before the date.",
     ],
   };

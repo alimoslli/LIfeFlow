@@ -6,6 +6,7 @@ import { detectRecurring, nextOccurrence } from "@/server/services/finance/recur
 import { inferKind, parseCsv, toCsv } from "@/server/services/finance/transactions";
 import { estimateEarnings, shiftInstants, shiftPaidMinutes } from "@/server/services/work";
 import { matchCourses } from "@/server/services/school";
+import { monthlyContributionNeeded } from "@/server/services/finance/planning";
 import { sensitiveContentReason } from "@/server/services/memory";
 import { encryptSecret, decryptSecret } from "@/server/crypto";
 import { hashPassword, verifyPassword } from "@/server/auth/password";
@@ -210,6 +211,26 @@ describe("calendar", () => {
   it("finds free slots", () => {
     const slots = freeSlots([item("Class", "10:00", "11:00"), item("Shift", "13:00", "21:00")], "2026-10-27", TZ, "08:00", "22:00", 60);
     expect(slots.map((s) => s.minutes)).toEqual([120, 120, 60]);
+  });
+
+  it("never offers time that has already passed today", () => {
+    // 11:07 AM in New York: the 8-10 slot is gone and the next one starts at 11:15, not 11:00.
+    const now = localToInstant("2026-10-27", "11:07", TZ);
+    const slots = freeSlots([item("Class", "10:00", "11:00"), item("Shift", "13:00", "21:00")], "2026-10-27", TZ, "08:00", "22:00", 60, now);
+    expect(slots.map((s) => [s.startsAt.getTime(), s.minutes])).toEqual([
+      [localToInstant("2026-10-27", "11:15", TZ).getTime(), 105],
+      [localToInstant("2026-10-27", "21:00", TZ).getTime(), 60],
+    ]);
+  });
+});
+
+describe("goal math", () => {
+  it("uses the real time left, not calendar-month steps", () => {
+    // Nov 2 to Dec 31 is about 2 months: $650 left is about $335 a month, not $650.
+    expect(monthlyContributionNeeded(100_000, 35_000, "2026-12-31", "2026-11-02")).toBe(33_536);
+    // Less than a month left still asks for the whole remainder, never more.
+    expect(monthlyContributionNeeded(100_000, 35_000, "2026-11-20", "2026-11-02")).toBe(65_000);
+    expect(monthlyContributionNeeded(100_000, 35_000, null, "2026-11-02")).toBeNull();
   });
 });
 

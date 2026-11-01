@@ -1,3 +1,4 @@
+import { addDaysStr } from "@/lib/dates";
 import { describe, expect, it } from "vitest";
 import { computeLifeLoad, levelFor } from "@/lib/life-load";
 
@@ -67,6 +68,19 @@ describe("life load", () => {
     const w = computeLifeLoad({ today: TODAY, committed: [{ date: TODAY, minutes: 8 * 60, label: "Work" }], tasks: [], deadlines: [] });
     expect(w.summary).toBe("Today is your heaviest day (8h). It gets lighter after today.");
     expect(w.days.map((d) => d.short)).toEqual(["Today", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
+  });
+
+  it("names a second heavy day instead of promising the week gets lighter", () => {
+    const w = computeLifeLoad({
+      today: TODAY,
+      committed: [
+        { date: TODAY, minutes: 8 * 60, label: "Work" },
+        { date: addDaysStr(TODAY, 2), minutes: 7 * 60, label: "Work" },
+      ],
+      tasks: [],
+      deadlines: [],
+    });
+    expect(w.summary).toBe("Today is your heaviest day (8h). Wednesday is heavy too (7h).");
   });
 
   it("names levels plainly", () => {

@@ -18,5 +18,9 @@
   {
     "prompt": "Am I overspending on food?",
     "expect": "routes to budget-coach"
+  },
+  {
+    "prompt": "Where did my money go last month?",
+    "expect": "routes to budget-coach"
   }
 ]

@@ -135,6 +135,7 @@ export function computeLifeLoad(i: LoadInput): WeekLoad {
   const lightest = before.length ? before.reduce((a, b) => (b.hours < a.hours ? b : a)) : null;
   const lighterBefore = lightest && heaviest.hours - lightest.hours >= 3 ? lightest : null;
   const totalHours = round1(days.reduce((s, d) => s + d.hours, 0));
+  const nextHeavy = days.find((d) => d.date > heaviest.date && (d.level === "heavy" || d.level === "overloaded"));
 
   const summary =
     heaviest.hours < 4
@@ -143,7 +144,9 @@ export function computeLifeLoad(i: LoadInput): WeekLoad {
         (lighterBefore
           ? ` ${lighterBefore.label} is lighter (${fmtH(lighterBefore.hours)}), so start early then.`
           : heaviest.label === "Today"
-            ? " It gets lighter after today."
+            ? nextHeavy
+              ? ` ${nextHeavy.label} is heavy too (${fmtH(nextHeavy.hours)}).`
+              : " It gets lighter after today."
             : "");
 
   return { days, totalHours, heaviest, lighterBefore, summary };

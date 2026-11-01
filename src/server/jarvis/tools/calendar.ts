@@ -94,7 +94,7 @@ export const calendarTools = [
       const items = await ctx.run((s) => getAgenda(s, ctx.tz, a.from, a.to, { include: ["event", "shift"], now: ctx.now }));
       const days = [];
       for (let d = a.from; d <= a.to; d = addDaysStr(d, 1)) {
-        const slots = freeSlots(items, d, ctx.tz, a.dayStart ?? "08:00", a.dayEnd ?? "22:00", a.minMinutes ?? 45);
+        const slots = freeSlots(items, d, ctx.tz, a.dayStart ?? "08:00", a.dayEnd ?? "22:00", a.minMinutes ?? 45, ctx.now);
         days.push({
           date: d,
           weekday: formatIn(new Date(`${d}T12:00:00Z`), "UTC", "EEEE"),

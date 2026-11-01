@@ -294,8 +294,8 @@ describe("reviews and coaching", () => {
     expect(wrap.body).toContain("You finished 1 to-do today. 1 to-do didn't happen.");
     expect(wrap.action).toMatchObject({ type: "move_tasks" });
 
-    // A Sunday evening: the weekly review.
-    const daysToSunday = (7 - new Date(`${today}T12:00:00Z`).getUTCDay()) % 7;
+    // A Sunday evening: the weekly review. On a Sunday, use next Sunday (tonight already had its evening message).
+    const daysToSunday = (7 - new Date(`${today}T12:00:00Z`).getUTCDay()) % 7 || 7;
     const sunday = new Date(`${addDaysStr(today, daysToSunday)}T23:30:00Z`);
     const week = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now: sunday }));
     const review = week.find((m) => m.kind === "weekly_review")!;

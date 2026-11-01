@@ -18,5 +18,9 @@
   {
     "prompt": "How should I study for Friday?",
     "expect": "routes to study-coach"
+  },
+  {
+    "prompt": "What's due this week?",
+    "expect": "routes to study-coach"
   }
 ]

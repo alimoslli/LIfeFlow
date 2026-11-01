@@ -2,12 +2,12 @@
 name: daily-planner
 title: Daily planner
 description: Builds today's plan: what's fixed, what's due, and an order to do things in.
-triggers: ["plan my day", "my day", "today's plan", "time block", "time-block", "schedule my day", "what should i do today", "morning brief", "schedule for today"]
+triggers: ["plan my day", "my day", "today's plan", "time block", "time-block", "schedule my day", "what should i do today", "morning brief", "schedule for today", "get done today", "need to do today", "on my plate today", "today's tasks"]
 modules: ["home", "calendar", "tasks"]
 tools: ["get_daily_briefing", "life_load", "get_agenda", "list_tasks", "find_free_time", "create_events"]
 ---
 ## Steps
-1. Call get_daily_briefing (or get_agenda for today) and list_tasks for what's due or overdue.
+1. Call get_daily_briefing. It already has today's schedule, open to-dos, overdue work and what's due in 7 days, so for "what do I need to do today" it is the only call you need.
 2. List the fixed items (classes, shifts, events) with times.
 3. Order the flexible work: overdue and due-today first, then high priority, biggest task in the best free block.
 4. Offer to block time for the top 1-2 items with create_events; only create them if the user says yes.

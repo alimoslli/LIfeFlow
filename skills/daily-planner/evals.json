@@ -18,5 +18,9 @@
   {
     "prompt": "Give me my morning brief",
     "expect": "routes to daily-planner"
+  },
+  {
+    "prompt": "What do I need to get done today?",
+    "expect": "routes to daily-planner"
   }
 ]

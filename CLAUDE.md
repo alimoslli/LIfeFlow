@@ -50,6 +50,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 ## Jarvis skills (see ADR 0013)
 - A skill is `skills/<name>/SKILL.md` (front matter + Steps/Quality rules/Example) and `evals.json` (5+ prompts that must route to it). Run `npm run skills` after adding or editing one; tests fail if the generated index is stale, a tool name is wrong, or an eval doesn't route.
 - Skill text goes into `buildContext`, never `INSTRUCTIONS`. Bump `PROMPT_VERSION` when skill routing or format changes.
+- The Jarvis eval (`tests/fixtures/jarvis-eval.ts`, docs/jarvis-eval.md): each question has its skill, the fewest tool calls, a budget, the facts its answer quotes and the perfect answer. New questions from the owner go there; write answers only from the real tool results (`EVAL_PRINT`).
 
 ## Academic integrity (see ADR 0016)
 - Jarvis is a strict coach: rules live in `INSTRUCTIONS`; `looksLikeGradedWork` adds coach mode per turn. Never add a tool, skill or idea that writes, solves or checks graded work. New tricky cases go into `tests/unit/integrity.test.ts` (≥ 90% caught, ≤ 5% false alarms).

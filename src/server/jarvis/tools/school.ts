@@ -17,7 +17,7 @@ import {
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
 import { syncCanvas } from "../../integrations/canvas";
 
-function presentAssignment(
+export function presentAssignment(
   a: {
     id: string;
     title: string;

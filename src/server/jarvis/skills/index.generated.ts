@@ -69,7 +69,10 @@ export const SKILLS: SkillFile[] = [
       "spent",
       "where does my money go",
       "cut back",
-      "save money"
+      "save money",
+      "where did my money go",
+      "my money go",
+      "where my money went"
     ],
     "modules": [
       "finances"
@@ -83,7 +86,7 @@ export const SKILLS: SkillFile[] = [
       "set_budget",
       "query_transactions"
     ],
-    "body": "## Steps\n1. Start from money_overview or budget_status; quote the date range. Run money_findings too and mention anything it caught (a double charge, bank fees, a recurring charge they aren't tracking).\n2. Find the 1-2 categories driving the change (compare_spending).\n3. Suggest one or two specific fixes with dollar amounts.\n4. Change budgets only when asked (set_budget).\n\n## Quality rules\n- Never estimate numbers the tools return.\n- Never project income.\n\n## Example\nUser: Why am I spending more this month?\nJarvis: Food is $86 over last month (Oct 1-29), mostly delivery (6 orders). Cutting 2 orders saves about $40.",
+    "body": "## Steps\n1. For \"where did my money go\" in a period, spending_summary for that range answers it in one call. Otherwise start from money_overview or budget_status. Quote the date range. Run money_findings too and mention anything it caught (a double charge, bank fees, a recurring charge they aren't tracking).\n2. Find the 1-2 categories driving the change (compare_spending).\n3. Suggest one or two specific fixes with dollar amounts.\n4. Change budgets only when asked (set_budget).\n\n## Quality rules\n- Never estimate numbers the tools return.\n- Never project income.\n\n## Example\nUser: Why am I spending more this month?\nJarvis: Food is $86 over last month (Oct 1-29), mostly delivery (6 orders). Cutting 2 orders saves about $40.",
     "evals": [
       {
         "prompt": "How's my budget this month?",
@@ -103,6 +106,10 @@ export const SKILLS: SkillFile[] = [
       },
       {
         "prompt": "Am I overspending on food?",
+        "expect": "routes to budget-coach"
+      },
+      {
+        "prompt": "Where did my money go last month?",
         "expect": "routes to budget-coach"
       }
     ]
@@ -209,7 +216,11 @@ export const SKILLS: SkillFile[] = [
       "schedule my day",
       "what should i do today",
       "morning brief",
-      "schedule for today"
+      "schedule for today",
+      "get done today",
+      "need to do today",
+      "on my plate today",
+      "today's tasks"
     ],
     "modules": [
       "home",
@@ -224,7 +235,7 @@ export const SKILLS: SkillFile[] = [
       "find_free_time",
       "create_events"
     ],
-    "body": "## Steps\n1. Call get_daily_briefing (or get_agenda for today) and list_tasks for what's due or overdue.\n2. List the fixed items (classes, shifts, events) with times.\n3. Order the flexible work: overdue and due-today first, then high priority, biggest task in the best free block.\n4. Offer to block time for the top 1-2 items with create_events; only create them if the user says yes.\n5. If two things clash, say so and suggest one fix.\n\n## Quality rules\n- Use only real items from the tools; never invent tasks or times.\n- Max 6 lines unless asked for detail.\n- End with one clear next step.\n\n## Example\nUser: Plan my day\nJarvis: 9:00 Biology (class). 12-2 free: start the lab report (due tomorrow). 5-10 shift at the library. Want me to block 12-2 for the lab report?",
+    "body": "## Steps\n1. Call get_daily_briefing. It already has today's schedule, open to-dos, overdue work and what's due in 7 days, so for \"what do I need to do today\" it is the only call you need.\n2. List the fixed items (classes, shifts, events) with times.\n3. Order the flexible work: overdue and due-today first, then high priority, biggest task in the best free block.\n4. Offer to block time for the top 1-2 items with create_events; only create them if the user says yes.\n5. If two things clash, say so and suggest one fix.\n\n## Quality rules\n- Use only real items from the tools; never invent tasks or times.\n- Max 6 lines unless asked for detail.\n- End with one clear next step.\n\n## Example\nUser: Plan my day\nJarvis: 9:00 Biology (class). 12-2 free: start the lab report (due tomorrow). 5-10 shift at the library. Want me to block 12-2 for the lab report?",
     "evals": [
       {
         "prompt": "Plan my day",
@@ -244,6 +255,10 @@ export const SKILLS: SkillFile[] = [
       },
       {
         "prompt": "Give me my morning brief",
+        "expect": "routes to daily-planner"
+      },
+      {
+        "prompt": "What do I need to get done today?",
         "expect": "routes to daily-planner"
       }
     ]
@@ -921,7 +936,11 @@ export const SKILLS: SkillFile[] = [
       "don't let me forget",
       "follow up",
       "nudge me",
-      "ping me"
+      "ping me",
+      "add a to-do",
+      "to-do",
+      "todo",
+      "add a task"
     ],
     "modules": [
       "tasks"
@@ -951,6 +970,10 @@ export const SKILLS: SkillFile[] = [
       },
       {
         "prompt": "Ping me before my shift",
+        "expect": "routes to reminders-follow-up"
+      },
+      {
+        "prompt": "Add a to-do to email my advisor by Friday",
         "expect": "routes to reminders-follow-up"
       }
     ]
@@ -1072,7 +1095,12 @@ export const SKILLS: SkillFile[] = [
       "reschedule",
       "move my",
       "conflict",
-      "clash"
+      "clash",
+      "hardest day",
+      "busiest day",
+      "heaviest day",
+      "toughest day",
+      "going to be the hardest"
     ],
     "modules": [
       "calendar"
@@ -1085,7 +1113,7 @@ export const SKILLS: SkillFile[] = [
       "update_event",
       "update_task"
     ],
-    "body": "## Steps\n1. Get the agenda for the range the user means; for \"this week\" also check life_load and prefer its lighter days.\n2. Use find_free_time with the needed length.\n3. Propose specific slots (day + time).\n4. Create or move items only after the user picks or clearly asked you to do it.\n5. Confirm exactly what changed and where to see it.\n\n## Quality rules\n- Never double-book over a class or shift.\n- Respect the user's study-time preference if known.\n\n## Example\nUser: Find time for three 1-hour study sessions this week\nJarvis: Free: Tue 2-3, Wed 10-11, Thu 4-5. Book all three?",
+    "body": "## Steps\n1. For \"which day is hardest\" or \"how's my week\", life_load alone answers it. To book time, get the agenda for the range the user means; for \"this week\" also check life_load and prefer its lighter days.\n2. Use find_free_time with the needed length.\n3. Propose specific slots (day + time).\n4. Create or move items only after the user picks or clearly asked you to do it.\n5. Confirm exactly what changed and where to see it.\n\n## Quality rules\n- Never double-book over a class or shift.\n- Respect the user's study-time preference if known.\n\n## Example\nUser: Find time for three 1-hour study sessions this week\nJarvis: Free: Tue 2-3, Wed 10-11, Thu 4-5. Book all three?",
     "evals": [
       {
         "prompt": "Find time for three 1-hour study sessions",
@@ -1105,6 +1133,10 @@ export const SKILLS: SkillFile[] = [
       },
       {
         "prompt": "Book a study block before my exam",
+        "expect": "routes to smart-scheduler"
+      },
+      {
+        "prompt": "Which day this week is going to be the hardest?",
         "expect": "routes to smart-scheduler"
       }
     ]
@@ -1163,7 +1195,12 @@ export const SKILLS: SkillFile[] = [
       "practice quiz",
       "quiz me",
       "flashcards",
-      "study for"
+      "study for",
+      "what's due",
+      "due this week",
+      "due today",
+      "due tomorrow",
+      "assignments due"
     ],
     "modules": [
       "school"
@@ -1176,7 +1213,7 @@ export const SKILLS: SkillFile[] = [
       "create_events",
       "grade_check"
     ],
-    "body": "## Steps\n1. Find what's due or coming (list_assignments) and the material (course_materials, search_notes).\n2. Plan short sessions spread over days (1, 3, 7 day review).\n3. Offer to book the sessions in free time.\n4. For quizzes: one question at a time, wait for the answer, explain mistakes.\n\n## Quality rules\n- Use the user's notes and materials first; say when you go beyond them.\n- Don't just give answers to graded work.\n\n## Example\nUser: Help me study for my chem exam on Friday\nJarvis: Mon: stoichiometry (45m), Wed: review + 10 practice problems, Thu: mixed quiz. Book these?",
+    "body": "## Steps\n1. Find what's due or coming (list_assignments; for \"what's due this week\" that one call with view week is the answer). Pull the material (course_materials, search_notes) only when planning study.\n2. Plan short sessions spread over days (1, 3, 7 day review).\n3. Offer to book the sessions in free time.\n4. For quizzes: one question at a time, wait for the answer, explain mistakes.\n\n## Quality rules\n- Use the user's notes and materials first; say when you go beyond them.\n- Don't just give answers to graded work.\n\n## Example\nUser: Help me study for my chem exam on Friday\nJarvis: Mon: stoichiometry (45m), Wed: review + 10 practice problems, Thu: mixed quiz. Book these?",
     "evals": [
       {
         "prompt": "Help me study for my exam",
@@ -1196,6 +1233,10 @@ export const SKILLS: SkillFile[] = [
       },
       {
         "prompt": "How should I study for Friday?",
+        "expect": "routes to study-coach"
+      },
+      {
+        "prompt": "What's due this week?",
         "expect": "routes to study-coach"
       }
     ]

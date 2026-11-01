@@ -346,8 +346,10 @@ export function findConflicts(items: AgendaItem[]) {
 }
 
 /** Free gaps (minutes >= minMinutes) on a local day between dayStart and dayEnd (HH:mm). */
-export function freeSlots(items: AgendaItem[], date: string, tz: string, dayStart = "08:00", dayEnd = "22:00", minMinutes = 30) {
-  const start = localToInstant(date, dayStart, tz).getTime();
+/** Open blocks on a day between busy items. With `notBefore` (now), nothing earlier is offered; it starts on the next quarter hour. */
+export function freeSlots(items: AgendaItem[], date: string, tz: string, dayStart = "08:00", dayEnd = "22:00", minMinutes = 30, notBefore?: Date) {
+  const quarter = 15 * 60_000;
+  const start = Math.max(localToInstant(date, dayStart, tz).getTime(), notBefore ? Math.ceil(notBefore.getTime() / quarter) * quarter : 0);
   const end = localToInstant(date, dayEnd, tz).getTime();
   const busy = items
     .filter((i) => i.blocksTime && i.endsAt)

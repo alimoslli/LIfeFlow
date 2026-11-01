@@ -18,5 +18,9 @@
   {
     "prompt": "Ping me before my shift",
     "expect": "routes to reminders-follow-up"
+  },
+  {
+    "prompt": "Add a to-do to email my advisor by Friday",
+    "expect": "routes to reminders-follow-up"
   }
 ]

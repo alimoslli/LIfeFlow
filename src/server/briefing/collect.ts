@@ -29,8 +29,8 @@ export async function collectSnapshot(s: UserScope, user: SessionUser, now = new
   const blocking = week.filter((i) => i.blocksTime);
   const freeMinutesByDay = Array.from({ length: 7 }, (_, i) => {
     const date = addDaysStr(today, i);
-    const slots = freeSlots(blocking, date, tz, "08:00", "22:00", 60).filter((x) => x.endsAt > now);
-    const morning = freeSlots(blocking, date, tz, "08:00", "12:00", 45).filter((x) => x.endsAt > now);
+    const slots = freeSlots(blocking, date, tz, "08:00", "22:00", 60, now);
+    const morning = freeSlots(blocking, date, tz, "08:00", "12:00", 45, now);
     return {
       date,
       minutes: slots.reduce((a, x) => a + x.minutes, 0),

@@ -1,6 +1,6 @@
 import { series } from "@/server/db/series";
 import { z } from "zod";
-import { addDaysStr, monthStart } from "@/lib/dates";
+import { addDaysStr, localDateOf, monthStart } from "@/lib/dates";
 import { findConflicts, getAgenda } from "../../services/calendar";
 import { listAccounts, summarizeBalances } from "../../services/finance/accounts";
 import { spendingSummary } from "../../services/finance/insights";
@@ -9,6 +9,7 @@ import { listAssignments } from "../../services/school";
 import { listTasks } from "../../services/tasks";
 import { presentAgendaItem } from "./calendar";
 import { centsToDollarsDeep } from "./finance";
+import { presentAssignment } from "./school";
 import { presentTask } from "./tasks";
 import { defineTool } from "../tool";
 
@@ -42,10 +43,9 @@ export const overviewTools = [
           schedule: agenda.map((i) => presentAgendaItem(i, ctx)),
           conflicts: findConflicts(agenda).map((c) => `${c.a.title} overlaps ${c.b.title}`),
           openTasks: tasks.map((t) => presentTask(t, ctx)),
-          overdueAssignments: overdue.map((x) => ({ id: x.id, title: x.title, course: x.course.name })),
-          assignmentsNext7Days: week
-            .filter((x) => x.dueAt && x.dueAt.toISOString().slice(0, 10) <= soon)
-            .map((x) => ({ id: x.id, title: x.title, course: x.course.name, kind: x.kind, dueAt: x.dueAt })),
+          overdueAssignments: overdue.map((x) => presentAssignment(x, ctx)),
+          // Local due dates and times ("2026-11-04 23:59"), never UTC, so a late-night deadline isn't read as the next day.
+          assignmentsNext7Days: week.filter((x) => x.dueAt && localDateOf(x.dueAt, ctx.tz) <= soon).map((x) => presentAssignment(x, ctx)),
           money: ctx.moneyLocked
             ? { locked: "Money is locked with Face ID on this device. The user can unlock it in the Money tab." }
             : accounts.length

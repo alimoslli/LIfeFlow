@@ -18,5 +18,9 @@
   {
     "prompt": "Book a study block before my exam",
     "expect": "routes to smart-scheduler"
+  },
+  {
+    "prompt": "Which day this week is going to be the hardest?",
+    "expect": "routes to smart-scheduler"
   }
 ]

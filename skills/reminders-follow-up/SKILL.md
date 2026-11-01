@@ -2,7 +2,7 @@
 name: reminders-follow-up
 title: Reminder and follow-up
 description: Sets reminders and nudges about things left open.
-triggers: ["remind me", "reminder", "don't let me forget", "follow up", "nudge me", "ping me"]
+triggers: ["remind me", "reminder", "don't let me forget", "follow up", "nudge me", "ping me", "add a to-do", "to-do", "todo", "add a task"]
 modules: ["tasks"]
 tools: ["create_tasks", "update_task", "list_tasks"]
 ---

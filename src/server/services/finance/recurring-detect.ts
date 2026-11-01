@@ -66,6 +66,14 @@ export function merchantKey(t: Pick<DetectTxn, "merchantName" | "description">):
   return words.slice(0, 4).join(" ");
 }
 
+/** A readable merchant name: Plaid's when it has one, else the cleaned description ("PAYPAL *HULU 402-935-7733" → "Hulu"). */
+export function merchantDisplayName(t: Pick<DetectTxn, "merchantName" | "description">): string {
+  const name = t.merchantName?.trim();
+  if (name) return name;
+  const key = merchantKey(t);
+  return key ? key.replace(/(^|\s)\S/g, (c) => c.toUpperCase()) : t.description;
+}
+
 /** The key format used before Oct 31, 2026, still stored in older category rules and tracked bills. */
 export function legacyMerchantKey(t: Pick<DetectTxn, "merchantName" | "description">): string {
   return normalizeText(t.merchantName || t.description)
@@ -124,7 +132,7 @@ export function detectRecurring(txns: DetectTxn[]): RecurringCandidate[] {
     if (list.length < 2) continue;
     const sorted = [...list].sort((a, b) => a.date.localeCompare(b.date));
     const last = sorted[sorted.length - 1];
-    const name = last.merchantName || last.description;
+    const name = merchantDisplayName(last);
     const category = last.categoryName ?? sorted.find((t) => t.categoryName)?.categoryName;
     const gaps = sorted.slice(1).map((t, i) => daysBetween(sorted[i].date, t.date));
     const period = PERIODS.find((p) => Math.abs(median(gaps) - p.days) <= p.tolerance);

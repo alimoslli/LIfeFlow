@@ -132,15 +132,21 @@ export async function subscriptionReport(scope: UserScope, today: string) {
     const earliest = -charges[charges.length - 1].amountCents;
     return latest > earliest + 50 ? [{ name: i.name, fromCents: earliest, toCents: latest }] : [];
   });
-  const streaming = items.filter((i) => /netflix|hulu|disney|max|spotify|apple music|youtube|paramount|peacock/i.test(i.name));
+  // Two services doing the same job. Video and music are different jobs (Netflix + Spotify is not a duplicate).
+  const overlaps = [
+    { group: "Video streaming", re: /netflix|hulu|disney|\bmax\b|hbo|paramount|peacock|youtube tv|apple tv|prime video|crunchyroll|starz|fubo|sling/i },
+    { group: "Music", re: /spotify|apple music|youtube music|pandora|tidal|amazon music|siriusxm/i },
+  ].flatMap(({ group, re }) => {
+    const same = items.filter((i) => i.kind === "subscription" && re.test(i.name));
+    return same.length >= 2 ? [{ group, names: same.map((s) => s.name), yearlyCents: same.reduce((s, i) => s + i.yearlyCents, 0) }] : [];
+  });
   // Subscriptions (tracked or found in transactions) count toward the total; bills like rent never do.
   const subs = items.filter((i) => i.kind === "subscription");
   return {
     items: items.sort((a, b) => b.yearlyCents - a.yearlyCents),
     subscriptionsYearlyCents: subs.reduce((s, i) => s + i.yearlyCents, 0),
     priceChanges,
-    overlaps:
-      streaming.length >= 3 ? [{ group: "Streaming", names: streaming.map((s) => s.name), yearlyCents: streaming.reduce((s, i) => s + i.yearlyCents, 0) }] : [],
+    overlaps,
     studentPlans: subs
       .filter((i) => /spotify|apple music|youtube|amazon|prime|hulu|adobe|notion|github|microsoft|chegg/i.test(i.name))
       .map((i) => ({ name: i.name, note: `${i.name} has offered a student plan. Check the current student price on their official site before switching.` })),

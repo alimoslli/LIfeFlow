@@ -2,12 +2,12 @@
 name: smart-scheduler
 title: Smart scheduler
 description: Finds free time, books study blocks and moves things when there's a conflict.
-triggers: ["free time", "find time", "when can i", "book a study", "study block", "schedule time", "reschedule", "move my", "conflict", "clash"]
+triggers: ["free time", "find time", "when can i", "book a study", "study block", "schedule time", "reschedule", "move my", "conflict", "clash", "hardest day", "busiest day", "heaviest day", "toughest day", "going to be the hardest"]
 modules: ["calendar"]
 tools: ["life_load", "find_free_time", "get_agenda", "create_events", "update_event", "update_task"]
 ---
 ## Steps
-1. Get the agenda for the range the user means; for "this week" also check life_load and prefer its lighter days.
+1. For "which day is hardest" or "how's my week", life_load alone answers it. To book time, get the agenda for the range the user means; for "this week" also check life_load and prefer its lighter days.
 2. Use find_free_time with the needed length.
 3. Propose specific slots (day + time).
 4. Create or move items only after the user picks or clearly asked you to do it.

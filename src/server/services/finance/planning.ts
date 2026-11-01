@@ -1,7 +1,7 @@
 import { series } from "@/server/db/series";
 import { and, asc, eq, ne } from "drizzle-orm";
 import { z } from "zod";
-import { DATE_RE, addDaysStr, monthEnd, monthStart } from "@/lib/dates";
+import { DATE_RE, addDaysStr, daysBetween, monthEnd, monthStart } from "@/lib/dates";
 import { budgets, categories, financialAccounts, financialGoals, recurringItems } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound } from "../errors";
@@ -148,7 +148,8 @@ export async function listGoals(scope: UserScope) {
 /** Monthly amount needed to reach a goal by its target date. */
 export function monthlyContributionNeeded(targetCents: number, savedCents: number, targetDate: string | null, today: string) {
   if (!targetDate) return null;
-  const months = Math.max(1, (Number(targetDate.slice(0, 4)) - Number(today.slice(0, 4))) * 12 + Number(targetDate.slice(5, 7)) - Number(today.slice(5, 7)));
+  // Real time left (Nov 2 to Dec 31 is about 2 months, not the 1 that calendar months give), never under a month.
+  const months = Math.max(1, daysBetween(today, targetDate) / 30.44);
   return Math.max(0, Math.ceil((targetCents - savedCents) / months));
 }
 
