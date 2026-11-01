@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bell, Brain, ChevronRight, Link2, Lock, MessageSquare, Palette, Shield, Sparkles, Star, Trash2 } from "lucide-react";
+import { Bell, Brain, ChevronRight, Link2, Lock, MessageCircleHeart, MessageSquare, Palette, Shield, Sparkles, Star, Trash2 } from "lucide-react";
 import { billingConfig } from "@/server/billing";
 import { smsConfig } from "@/server/integrations/twilio";
 import type { LucideIcon } from "lucide-react";
@@ -57,6 +57,7 @@ export default async function SettingsHome() {
       { href: "/settings/data", icon: Shield, tint: "bg-[#10b981]", label: "Privacy & data" },
       { href: "/settings/trash", icon: Trash2, tint: "bg-[#9ca3af]", label: "Recently deleted" },
     ],
+    [{ href: "/settings/feedback", icon: MessageCircleHeart, tint: "bg-[#ec4899]", label: "Send feedback" }],
   ];
   return (
     <div className="flex flex-col gap-6">

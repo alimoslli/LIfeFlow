@@ -14,11 +14,15 @@ export function emailConfig(env: Record<string, string | undefined> = process.en
 
 export class EmailError extends Error {}
 
-export async function sendEmail(cfg: EmailConfig, msg: { to: string; subject: string; text: string; html: string }, fetchImpl: typeof fetch = fetch) {
+export async function sendEmail(
+  cfg: EmailConfig,
+  msg: { to: string; subject: string; text: string; html: string; replyTo?: string },
+  fetchImpl: typeof fetch = fetch,
+) {
   const res = await fetchImpl("https://api.resend.com/emails", {
     method: "POST",
     headers: { authorization: `Bearer ${cfg.apiKey}`, "content-type": "application/json" },
-    body: JSON.stringify({ from: cfg.from, to: [msg.to], subject: msg.subject, text: msg.text, html: msg.html }),
+    body: JSON.stringify({ from: cfg.from, to: [msg.to], subject: msg.subject, text: msg.text, html: msg.html, ...(msg.replyTo && { reply_to: msg.replyTo }) }),
   });
   const json = (await res.json().catch(() => ({}))) as { id?: string };
   if (!res.ok || !json.id) throw new EmailError(`Email provider refused the message (HTTP ${res.status}).`);

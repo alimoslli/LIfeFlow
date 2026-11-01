@@ -123,3 +123,14 @@ test("Jarvis asks before anything goes to the AI, and works once allowed", async
   await expect(page.getByLabel("Message Jarvis")).toBeEnabled();
   await expect(page.getByRole("button", { name: "Plan my day" })).toBeVisible();
 });
+
+test("testers can send feedback from Settings", async ({ page }) => {
+  const email = await signUp(page, "Beta Tester");
+  await page.goto("/settings");
+  await page.getByRole("link", { name: "Send feedback" }).click();
+  await page.getByText("An idea").click();
+  await page.getByLabel("Your message").fill("Let me pick the color of each class.");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText("Thanks! We read every message.")).toBeVisible();
+  expect(await queryAsUser(email, "select kind, message from feedback")).toEqual([{ kind: "idea", message: "Let me pick the color of each class." }]);
+});

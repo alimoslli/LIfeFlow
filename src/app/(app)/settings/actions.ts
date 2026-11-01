@@ -1,4 +1,6 @@
 "use server";
+import { rateLimit } from "@/server/rate-limit";
+import { sendFeedback } from "@/server/services/feedback";
 import { and, eq, ne } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -203,5 +205,13 @@ export async function setAiConsentAction(on: boolean): Promise<ActionState> {
   return mutate("ai.consent", async (_s, u) => {
     await updatePreferences(getDb(), u.id, { aiConsentAt: on ? new Date().toISOString() : null });
     return on ? "Jarvis can use AI now." : "Jarvis's AI is off. Nothing is sent to OpenAI.";
+  });
+}
+
+export async function sendFeedbackAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  return mutate("feedback.sent", async (s, u) => {
+    if (!(await rateLimit(getDb(), `feedback:${u.id}`, 10, 3600)).allowed) throw new ServiceError("That's a lot of feedback at once. Try again in a bit.");
+    await sendFeedback(s, { name: u.name, email: u.email }, { kind: String(fd.get("kind") ?? "other") as "other", message: String(fd.get("message") ?? "") });
+    return "Thanks! We read every message.";
   });
 }

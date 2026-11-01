@@ -308,6 +308,20 @@ export const errorReports = pgTable("error_reports", {
   lastSeenAt: tstz("last_seen_at").notNull().defaultNow(),
 });
 
+/** Beta feedback from Settings → Send feedback; also emailed to the owner (services/feedback.ts). */
+export const feedback = pgTable(
+  "feedback",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    kind: text("kind").$type<"bug" | "idea" | "other">().notNull(),
+    message: text("message").notNull(),
+    emailedAt: tstz("emailed_at"),
+    createdAt: createdAt(),
+  },
+  () => [ownerPolicy()],
+);
+
 export const auditEvents = pgTable(
   "audit_events",
   {
