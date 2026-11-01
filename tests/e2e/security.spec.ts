@@ -41,7 +41,7 @@ test("two-step sign-in: turn on, then a code is required to sign in", async ({ p
   await page.waitForURL("**/login");
   await signIn(page, email);
   await page.waitForURL("**/login/verify");
-  await page.goto("/");
+  await page.goto("/settings");
   await expect(page).toHaveURL(/\/login/); // no session yet
 
   // Wrong code, then a backup code.

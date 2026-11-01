@@ -1,6 +1,6 @@
 import { ErrorReporter } from "@/components/error-reporter";
 import type { Metadata, Viewport } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { ACCENT_COOKIE, THEME_COOKIE, parseAccent, parseTheme } from "@/lib/theme";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import { Splash, SPLASH_SCRIPT } from "@/components/motion/splash";
@@ -63,6 +63,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const jar = await cookies();
   const theme = parseTheme(jar.get(THEME_COOKIE)?.value);
   const accent = parseAccent(jar.get(ACCENT_COOKIE)?.value);
+  // The landing page for signed-out visitors has no app to load, so it skips the splash.
+  const landing = (await headers()).get("x-lf-landing") === "1";
   return (
     <html
       lang="en"
@@ -72,8 +74,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        <script dangerouslySetInnerHTML={{ __html: SPLASH_SCRIPT }} />
-        <Splash />
+        {!landing && <script dangerouslySetInnerHTML={{ __html: SPLASH_SCRIPT }} />}
+        {!landing && <Splash />}
         <ErrorReporter />
         {children}
       </body>

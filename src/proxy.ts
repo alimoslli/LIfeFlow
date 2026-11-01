@@ -7,6 +7,7 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 const PUBLIC = [
   "/login",
+  "/landing",
   "/signup",
   "/forgot-password",
   "/reset-password",
@@ -32,6 +33,14 @@ export function proxy(req: NextRequest) {
   if (PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
   if (!req.cookies.has("bf_session")) {
     if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+    if (pathname === "/") {
+      // Signed-out visitors see the landing page at the same address. The header lets the root layout skip the app splash.
+      const headers = new Headers(req.headers);
+      headers.set("x-lf-landing", "1");
+      const url = req.nextUrl.clone();
+      url.pathname = "/landing";
+      return NextResponse.rewrite(url, { request: { headers } });
+    }
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.search = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname)}`;
