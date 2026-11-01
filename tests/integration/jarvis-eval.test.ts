@@ -4,7 +4,9 @@ import { closeDb } from "@/server/db/client";
 import { makeToolContext } from "@/server/jarvis/agent";
 import { createConversation } from "@/server/jarvis/conversations";
 import { executeToolCall } from "@/server/jarvis/executor";
+import { toolSpecs, toolSpecsFor } from "@/server/jarvis/registry";
 import { routeSkills, SKILLS } from "@/server/jarvis/skills";
+import { selectToolGroups } from "@/server/jarvis/tool-select";
 import type { SessionUser } from "@/server/auth/sessions";
 import { createEvent } from "@/server/services/calendar";
 import { createManualAccount } from "@/server/services/finance/accounts";
@@ -84,6 +86,15 @@ describe("Jarvis eval: right skill, fewest tool calls, real facts", () => {
     it(`${c.id}: ${c.question}`, async () => {
       const routed = routeSkills(c.question).map((s) => s.name);
       expect(routed[0], "routes to the expected skill first").toBe(c.skill);
+
+      // Jarvis is sent only the tool groups this question needs: they must still cover the whole plan, at a fraction of the size.
+      const sent = toolSpecsFor(selectToolGroups({ text: c.question, skills: routeSkills(c.question), history: [{ type: "user", text: c.question }] }));
+      for (const step of c.plan)
+        expect(
+          sent.map((t) => t.name),
+          `${step.tool} is sent`,
+        ).toContain(step.tool);
+      expect(JSON.stringify(sent).length).toBeLessThan(JSON.stringify(toolSpecs()).length * 0.5);
 
       const skill = SKILLS.find((s) => s.name === c.skill)!;
       for (const step of c.plan) expect(skill.tools, `${c.skill} allows ${step.tool}`).toContain(step.tool);

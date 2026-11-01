@@ -12,6 +12,7 @@ import { taskTools } from "./tools/tasks";
 import { webTools } from "./tools/web";
 import { workTools } from "./tools/work";
 import type { ToolDefinition } from "./tool";
+import { GROUP_TOOLS, loadToolsTool, TOOL_GROUPS, type ToolGroup } from "./tool-groups";
 
 export const ALL_TOOLS: ToolDefinition[] = [
   ...overviewTools,
@@ -28,6 +29,7 @@ export const ALL_TOOLS: ToolDefinition[] = [
   ...systemTools,
   ...webTools,
   ...manageTools,
+  loadToolsTool,
 ] as ToolDefinition[];
 
 const byName = new Map(ALL_TOOLS.map((t) => [t.name, t]));
@@ -45,4 +47,20 @@ export function toolSpecs(): ToolSpec[] {
     const { $schema: _ignored, ...parameters } = z.toJSONSchema(t.schema, { io: "input", unrepresentable: "any" }) as Record<string, unknown>;
     return { name: t.name, description: t.description, parameters };
   }));
+}
+
+const bySet = new Map<string, ToolSpec[]>();
+
+/** The specs for these groups (core always included), in a fixed order so the same groups give the same prompt start. */
+export function toolSpecsFor(groups: Iterable<ToolGroup>): ToolSpec[] {
+  const want = new Set<ToolGroup>(["core", ...groups]);
+  const ordered = TOOL_GROUPS.filter((g) => want.has(g));
+  const key = ordered.join(",");
+  let out = bySet.get(key);
+  if (!out) {
+    const spec = new Map(toolSpecs().map((t) => [t.name, t]));
+    out = ordered.flatMap((g) => GROUP_TOOLS[g].map((n) => spec.get(n)!));
+    bySet.set(key, out);
+  }
+  return out;
 }

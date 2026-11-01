@@ -16,14 +16,19 @@ export type StepEvent = { type: "text_delta"; delta: string } | { type: "step_do
 
 /** One user turn: the agent calls step() until no tool calls remain. */
 export interface ModelTurn {
-  step(toolResults?: { callId: string; output: string }[]): AsyncGenerator<StepEvent>;
+  /** `tools` replaces the tool list from this step on (after load_tools added a group). */
+  step(toolResults?: { callId: string; output: string }[], tools?: ToolSpec[]): AsyncGenerator<StepEvent>;
 }
+
+/** How hard a reasoning model thinks on this turn (chosen per turn, see effort.ts). */
+export type TurnEffort = "low" | "medium" | "high";
 
 export interface ModelProvider {
   readonly name: string;
   /** The model id requests go to (recorded with every run). */
   readonly model: string;
-  startTurn(input: { system: string; history: ChatItem[]; tools: ToolSpec[] }): ModelTurn;
+  /** `cacheKey` keeps one user's requests on the same provider cache; `effort` is the per-turn thinking level. */
+  startTurn(input: { system: string; history: ChatItem[]; tools: ToolSpec[]; cacheKey?: string; effort?: TurnEffort }): ModelTurn;
 }
 
 export class ProviderUnavailableError extends Error {}

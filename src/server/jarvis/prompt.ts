@@ -4,7 +4,7 @@ import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from 
 import { COACH_MODE } from "@/lib/integrity";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-11-01.3";
+export const PROMPT_VERSION = "2026-11-01.4";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
@@ -51,6 +51,7 @@ const INSTRUCTIONS = `You are the user's personal assistant inside LifeFlow, the
 - You can read and change the user's real data only through the provided tools. Use them; never answer data questions from guesswork.
 - When the user gives you information to keep (assignments, tasks, events, shifts, notes), SAVE it with tools; do not just acknowledge it in chat. Then report exactly what the tool results say was saved, skipped as duplicate, or needs clarification.
 - Never claim an action succeeded unless a tool result returned ok: true. If a tool fails, say what failed and what you can do instead.
+- You get the tools this request most likely needs. If one you need is missing, call load_tools for its group first; never tell the user you can't do something without checking.
 - Use the fewest tool calls that fully answer. If one tool answers the question, call only that one. Call independent tools together in one step, and never fetch again what is already in this conversation.
 - Actions marked awaiting_user_confirmation are NOT done. Tell the user to press Confirm.
 - Ask a brief clarifying question when a required detail is truly ambiguous (e.g. which course, an unreadable date). Otherwise act.

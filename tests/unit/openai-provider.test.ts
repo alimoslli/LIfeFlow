@@ -132,6 +132,58 @@ describe("OpenAI Responses provider", () => {
     expect(input2.map((i) => i.type ?? i.role)).toEqual(["user", "reasoning", "message", "function_call", "function_call_output"]);
   });
 
+  it("sends the cache key and 24h retention, thinks at the turn's level, and swaps tools after load_tools", async () => {
+    const requests: Record<string, unknown>[] = [];
+    const fakeFetch = (async (_url: string, init: RequestInit) => {
+      requests.push(JSON.parse(String(init.body)));
+      return sse([
+        completed([{ type: "message", id: "m", role: "assistant", status: "completed", content: [{ type: "output_text", text: "ok", annotations: [] }] }]),
+      ]);
+    }) as unknown as typeof fetch;
+    const tool = (name: string) => ({ name, description: "d", parameters: { type: "object", properties: {} } });
+    const provider = new OpenAIProvider({ apiKey: "sk-test", model: "gpt-5.5", reasoningEffort: "auto", cacheRetention: "24h", fetch: fakeFetch });
+    const turn = provider.startTurn({
+      system: "S",
+      history: [{ type: "user", text: "hi" }],
+      tools: [tool("list_tasks")],
+      cacheKey: "lf-abc",
+      effort: "medium",
+    });
+    for await (const _ of turn.step()) void _;
+    for await (const _ of turn.step([], [tool("list_tasks"), tool("log_health")])) void _;
+    expect(requests[0]).toMatchObject({ prompt_cache_key: "lf-abc", prompt_cache_retention: "24h", reasoning: { effort: "medium" } });
+    expect((requests[1].tools as { name: string }[]).map((t) => t.name)).toEqual(["list_tasks", "log_health"]);
+
+    // A fixed level in settings wins over the turn's level.
+    const fixed = new OpenAIProvider({ apiKey: "sk-test", model: "gpt-5.5", reasoningEffort: "low", fetch: fakeFetch });
+    for await (const _ of fixed.startTurn({ system: "S", history: [{ type: "user", text: "hi" }], tools: [], effort: "high" }).step()) void _;
+    expect(requests[2]).toMatchObject({ reasoning: { effort: "low" } });
+    expect(requests[2]).not.toHaveProperty("prompt_cache_retention");
+  });
+
+  it("drops 24h retention once if the model refuses it, and keeps answering", async () => {
+    const requests: Record<string, unknown>[] = [];
+    const fakeFetch = (async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      requests.push(body);
+      if (body.prompt_cache_retention)
+        return new Response(JSON.stringify({ error: { message: "Unsupported parameter: 'prompt_cache_retention' is not supported with this model." } }), {
+          status: 400,
+          headers: { "content-type": "application/json" },
+        });
+      return sse([
+        { type: "response.output_text.delta", delta: "ok", sequence_number: 1, item_id: "m", output_index: 0, content_index: 0, logprobs: [] },
+        completed([{ type: "message", id: "m", role: "assistant", status: "completed", content: [{ type: "output_text", text: "ok", annotations: [] }] }]),
+      ]);
+    }) as unknown as typeof fetch;
+    const provider = new OpenAIProvider({ apiKey: "sk-test", model: "gpt-old-test", cacheRetention: "24h", fetch: fakeFetch });
+    const events: StepEvent[] = [];
+    for await (const e of provider.startTurn({ system: "S", history: [{ type: "user", text: "hi" }], tools: [] }).step()) events.push(e);
+    expect(events.at(-1)).toMatchObject({ type: "step_done", text: "ok" });
+    for await (const _ of provider.startTurn({ system: "S", history: [{ type: "user", text: "hi" }], tools: [] }).step()) void _;
+    expect(requests.map((r) => "prompt_cache_retention" in r)).toEqual([true, false, false]); // asked once, then left out
+  });
+
   it("raises API errors so the agent can report them", async () => {
     const fakeFetch = (async () =>
       new Response(JSON.stringify({ error: { message: "bad key" } }), {

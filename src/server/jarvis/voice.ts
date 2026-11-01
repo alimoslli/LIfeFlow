@@ -67,7 +67,9 @@ export async function buildVoiceSession(user: SessionUser, module: JarvisModule 
     }) +
     VOICE_RULES +
     (history.length ? `\n\n# This conversation so far (they switched from typing to talking; continue naturally, don't recap)\n${history.join("\n")}` : "");
-  const tools = toolSpecs().map((t) => ({ type: "function" as const, name: t.name, description: t.description, parameters: t.parameters }));
+  const tools = toolSpecs()
+    .filter((t) => t.name !== "load_tools")
+    .map((t) => ({ type: "function" as const, name: t.name, description: t.description, parameters: t.parameters }));
   return { instructions, tools, voice: profile.voice, name: profile.name, memoryIds: memories.map((m) => m.id) };
 }
 

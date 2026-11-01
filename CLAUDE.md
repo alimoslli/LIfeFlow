@@ -17,7 +17,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - New user-owned table ⇒ `userId` column + `ownerPolicy()` in the schema, then `npm run db:generate`. FORCE RLS is applied by the migration pattern in `drizzle/0001_force_rls.sql`; add an equivalent statement for new tables.
 - Linking to another record ⇒ `assertOwned(...)` first (FK checks bypass RLS).
 - Money = integer cents; transaction sign + `kind` rules in `services/finance/cashflow.ts`. Dates = `src/lib/dates.ts` with the user's time zone.
-- New Jarvis capability ⇒ a tool in `src/server/jarvis/tools/`, registered in `registry.ts`, with a label in `labels.ts`. Destructive ⇒ `confirm`. Return real saved data (ids, viewAt), never claims.
+- New Jarvis capability ⇒ a tool in `src/server/jarvis/tools/`, registered in `registry.ts`, listed in one group in `tool-groups.ts` (ADR 0021: only the groups a request needs are sent), with a label in `labels.ts`. Destructive ⇒ `confirm`. Return real saved data (ids, viewAt), never claims.
 - Never fabricate integration data. Demo data only via `scripts/seed-demo.ts` (demo account, `source='demo'`).
 - Server components can't pass functions to client components (e.g. `Dialog` render props) — wrap those in a `"use client"` file.
 - Tailwind v4 drops unused CSS variables; colors used by components must be registered in `@theme` in `globals.css`.
@@ -28,6 +28,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - `memories.content` is encrypted at rest (`sealedText`, ADR 0014): never filter or sort memories by content in SQL.
 - Prompts get memories only via `selectMemories` (jarvis/memory-retrieval.ts). If you change retrieval, add labelled cases to `tests/unit/memory-retrieval.test.ts`; the recall/precision test must stay green.
 - `INSTRUCTIONS` in prompt.ts is static (identical for every user and request, so the provider can cache it). Anything per-user or per-request goes in `buildContext`. Bump `PROMPT_VERSION` on any prompt change.
+- Cost and speed (ADR 0021): tools go in fixed groups chosen per request (`tool-select.ts`, plus `load_tools` as the escape hatch), each request carries a hashed per-user `prompt_cache_key` with 24h retention, and the thinking level is picked per turn (`effort.ts`, env `OPENAI_REASONING_EFFORT=auto`). Keep tool order and the level stable within a turn so the cache hits.
 - Every turn records a `jarvis_runs` row. A new provider must set `model` and report `usage` in `step_done`. Never store message content or raw error text in metrics, and never hard-code model prices (env `JARVIS_PRICE_*`; unknown ⇒ null).
 
 ## Motion (see ADR 0007)

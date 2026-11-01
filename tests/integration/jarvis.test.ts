@@ -42,6 +42,50 @@ const callThenSummarize =
     step === 0 ? { toolCalls: calls } : { text: results.map((r) => r.output).join("\n") };
 
 describe("Jarvis tool loop", () => {
+  it("sends only the tools a request needs, with a private cache key and a fitting thinking level; load_tools adds more mid-answer", async () => {
+    const { session } = await jarvisUser();
+    const sent: string[][] = [];
+    const starts: { cacheKey?: string; effort?: string }[] = [];
+    const spy: ModelProvider = {
+      name: "spy",
+      model: "spy",
+      startTurn(input) {
+        starts.push({ cacheKey: input.cacheKey, effort: input.effort });
+        let tools = input.tools.map((t) => t.name);
+        const inner = new ScriptedProvider(({ step }) =>
+          step === 0 ? { toolCalls: [{ name: "load_tools", args: { groups: ["health"] } }] } : { text: "Done." },
+        ).startTurn(input);
+        return {
+          async *step(results, next) {
+            if (next) tools = next.map((t) => t.name);
+            sent.push(tools);
+            yield* inner.step(results);
+          },
+        };
+      },
+    };
+    const first = await runJarvisTurn({ user: session, text: "how much did I spend on food?", provider: spy, emit: () => {}, now: NOW });
+    expect(sent[0]).toEqual(expect.arrayContaining(["spending_summary", "create_tasks", "load_tools"]));
+    expect(sent[0]).not.toContain("log_health");
+    expect(sent[0]).not.toContain("add_shifts");
+    expect(sent[1]).toContain("log_health");
+    expect(starts[0].cacheKey).toMatch(/^lf-[0-9a-f]{24}$/);
+    expect(starts[0].cacheKey).not.toContain(session.id);
+    expect(starts[0].effort).toBe("low");
+
+    // The next message in the same chat keeps what it loaded; advice thinks harder.
+    await runJarvisTurn({
+      user: session,
+      text: "should I cut back on takeout?",
+      conversationId: first.conversationId,
+      provider: spy,
+      emit: () => {},
+      now: NOW,
+    });
+    expect(sent[2]).toContain("log_health");
+    expect(starts[1].effort).toBe("medium");
+  });
+
   it("every tool has a valid JSON schema", () => {
     const specs = toolSpecs();
     expect(specs.length).toBeGreaterThan(40);

@@ -1,17 +1,27 @@
 import OpenAI from "openai";
-import type { ResponseInputItem, ResponseOutputItem, Tool } from "openai/resources/responses/responses";
-import type { ChatItem, ModelProvider, ModelTurn, StepEvent, TokenUsage, ToolCall } from "./types";
+import type { ResponseCreateParamsStreaming, ResponseInputItem, ResponseOutputItem, Tool } from "openai/resources/responses/responses";
+import type { ChatItem, ModelProvider, ModelTurn, StepEvent, TokenUsage, ToolCall, TurnEffort } from "./types";
 import { ProviderUnavailableError } from "./types";
 import type { ToolSpec } from "../registry";
 
 export type OpenAIConfig = {
   apiKey: string;
   model: string;
-  reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high";
+  /** A fixed level, or "auto" (the default): each turn picks low, medium or high (effort.ts). */
+  reasoningEffort?: "auto" | "none" | "minimal" | "low" | "medium" | "high";
+  /** How long OpenAI keeps the cached prompt start. "24h" where the model supports it. */
+  cacheRetention?: "in_memory" | "24h";
   baseURL?: string;
   /** Injected in tests to simulate the API. */
   fetch?: typeof fetch;
 };
+
+/** Models that refused prompt_cache_retention: asked once, then left out. */
+const noRetention = new Set<string>();
+const refusedRetention = (e: unknown) => e instanceof OpenAI.APIError && e.status === 400 && /prompt_cache_retention/.test(e.message);
+
+const toToolDefs = (tools: ToolSpec[]): Tool[] =>
+  tools.map((t) => ({ type: "function", name: t.name, description: t.description, parameters: t.parameters, strict: false }));
 
 /** Reasoning-capable model families need encrypted reasoning items replayed when store=false. */
 const isReasoningModel = (model: string) => /^(gpt-5|o\d)/.test(model) && !/chat-latest/.test(model);
@@ -83,16 +93,31 @@ export class OpenAIProvider implements ModelProvider {
     this.client = new OpenAI({ apiKey: config.apiKey, baseURL: config.baseURL, maxRetries: 2, timeout: 120_000, fetch: config.fetch });
   }
 
-  startTurn({ system, history, tools }: { system: string; history: ChatItem[]; tools: ToolSpec[] }): ModelTurn {
+  startTurn({
+    system,
+    history,
+    tools,
+    cacheKey,
+    effort,
+  }: {
+    system: string;
+    history: ChatItem[];
+    tools: ToolSpec[];
+    cacheKey?: string;
+    effort?: TurnEffort;
+  }): ModelTurn {
     const input: ResponseInputItem[] = toResponsesInput(history);
-    const toolDefs: Tool[] = tools.map((t) => ({ type: "function", name: t.name, description: t.description, parameters: t.parameters, strict: false }));
+    let toolDefs = toToolDefs(tools);
     const { client, config } = this;
     const reasoning = isReasoningModel(config.model);
+    const fixed = config.reasoningEffort && config.reasoningEffort !== "auto" ? config.reasoningEffort : undefined;
+    const reasoningEffort = fixed ?? effort;
 
     return {
-      async *step(toolResults) {
+      async *step(toolResults, nextTools) {
         for (const r of toolResults ?? []) input.push({ type: "function_call_output", call_id: r.callId, output: r.output });
-        const stream = await client.responses.create({
+        if (nextTools) toolDefs = toToolDefs(nextTools);
+        const body: ResponseCreateParamsStreaming = {
           model: config.model,
           instructions: system,
           input,
@@ -100,9 +125,19 @@ export class OpenAIProvider implements ModelProvider {
           parallel_tool_calls: true,
           store: false,
           stream: true,
+          ...(cacheKey && { prompt_cache_key: cacheKey }),
           ...(reasoning && { include: ["reasoning.encrypted_content"] }),
-          ...(reasoning && config.reasoningEffort && { reasoning: { effort: config.reasoningEffort } }),
-        });
+          ...(reasoning && reasoningEffort && { reasoning: { effort: reasoningEffort } }),
+        };
+        const retention = config.cacheRetention && !noRetention.has(config.model) ? config.cacheRetention : undefined;
+        let stream;
+        try {
+          stream = await client.responses.create(retention ? { ...body, prompt_cache_retention: retention } : body);
+        } catch (e) {
+          if (!retention || !refusedRetention(e)) throw e;
+          noRetention.add(config.model);
+          stream = await client.responses.create(body);
+        }
         let text = "";
         let output: ResponseOutputItem[] | null = null;
         let usage: TokenUsage | undefined;

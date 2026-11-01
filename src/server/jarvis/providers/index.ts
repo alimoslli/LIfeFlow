@@ -23,5 +23,11 @@ export function modelPrices(): ModelPrices {
 export function getProvider(): ModelProvider {
   const e = env();
   if (!e.OPENAI_API_KEY) throw new ProviderUnavailableError("Jarvis isn't configured yet: add OPENAI_API_KEY to the server environment.");
-  return new OpenAIProvider({ apiKey: e.OPENAI_API_KEY, model: e.OPENAI_MODEL, reasoningEffort: e.OPENAI_REASONING_EFFORT, baseURL: e.OPENAI_BASE_URL });
+  return new OpenAIProvider({
+    apiKey: e.OPENAI_API_KEY,
+    model: e.OPENAI_MODEL,
+    reasoningEffort: e.OPENAI_REASONING_EFFORT ?? "auto",
+    cacheRetention: e.OPENAI_PROMPT_CACHE_RETENTION ?? "24h",
+    baseURL: e.OPENAI_BASE_URL,
+  });
 }

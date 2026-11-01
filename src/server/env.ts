@@ -23,8 +23,14 @@ const schema = z.object({
     .or(z.literal("").transform(() => undefined)),
   /** Live voice model (OpenAI Realtime). */
   OPENAI_REALTIME_MODEL: z.string().default("gpt-realtime"),
+  /** "auto" (default): each turn thinks low, medium or high depending on the request. Or one fixed level. */
   OPENAI_REASONING_EFFORT: z
-    .enum(["none", "minimal", "low", "medium", "high"])
+    .enum(["auto", "none", "minimal", "low", "medium", "high"])
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
+  /** How long OpenAI keeps the cached start of Jarvis's prompt. Default "24h" (falls back to in-memory if the model refuses). */
+  OPENAI_PROMPT_CACHE_RETENTION: z
+    .enum(["in_memory", "24h"])
     .optional()
     .or(z.literal("").transform(() => undefined)),
   /** Optional: OpenAI-compatible endpoint (proxy/gateway, or the e2e fake server). */

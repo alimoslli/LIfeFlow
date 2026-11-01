@@ -93,6 +93,7 @@ const LABELS: Record<string, string> = {
   draft_email: "Drafting email",
   read_attachment: "Reading attachment",
   web_search: "Searching the web",
+  load_tools: "Getting ready",
   update_course: "Updating course",
   delete_course: "Preparing to delete course",
   update_project: "Updating project",

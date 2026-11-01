@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { todayIn } from "@/lib/dates";
 import { truncate } from "@/lib/utils";
@@ -12,7 +13,10 @@ import { addUsage, errorKindOf, estimateCostMicros, recordRun, type ModelPrices 
 import { routeSkills } from "./skills";
 import { buildSystemPrompt, PROMPT_VERSION } from "./prompt";
 import type { ModelProvider, TokenUsage } from "./providers/types";
-import { toolSpecs } from "./registry";
+import { toolSpecsFor, type ToolSpec } from "./registry";
+import { chooseEffort } from "./effort";
+import { TOOL_GROUPS, type ToolGroup } from "./tool-groups";
+import { selectToolGroups } from "./tool-select";
 import type { ToolContext } from "./tool";
 import { describeToolCall, describeToolResult, memoryProposalOf } from "./labels";
 import { looksLikeGradedWork } from "@/lib/integrity";
@@ -114,9 +118,10 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   const earlier = history.flatMap((h) => (h.type === "user" ? [h.text] : [])).slice(0, -1);
   const memories = selectMemories(approved, { text: input.text, recent: earlier, module: openedFrom });
   const skills = routeSkills(input.text, openedFrom);
+  const coachMode = looksLikeGradedWork(input.text);
   const system = buildSystemPrompt({
     skills,
-    coachMode: looksLikeGradedWork(input.text),
+    coachMode,
     userName: user.name.split(" ")[0],
     tz: user.timezone,
     now,
@@ -136,8 +141,14 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   ).catch(() => undefined);
   const ctx = makeToolContext(user, conversation.id, now, input.text, input.moneyLocked);
 
-  // 3. Model/tool loop
-  const turn = provider.startTurn({ system, history, tools: toolSpecs() });
+  // 3. Model/tool loop. Only the tool groups this request needs (load_tools adds more), a per-user cache key,
+  // and a thinking level that fits the request.
+  const last = history[history.length - 1];
+  const hasFiles = last?.type === "user" && !!(last.images?.length || last.files?.length);
+  const groups = new Set<ToolGroup>(selectToolGroups({ text: input.text, module: openedFrom, skills, history }));
+  const effort = chooseEffort({ text: input.text, skills, hasFiles, coachMode });
+  const turn = provider.startTurn({ system, history, tools: toolSpecsFor(groups), cacheKey: promptCacheKey(user.id), effort });
+  let nextTools: ToolSpec[] | undefined;
   let toolResults: { callId: string; output: string }[] | undefined;
   let finalMessageId: string | null = null;
   const tally = { steps: 0, toolCalls: 0, toolErrors: 0, confirmations: 0, toolNames: [] as string[], usage: null as TokenUsage | null };
@@ -149,7 +160,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       let text = "";
       let calls: { callId: string; name: string; arguments: string }[] = [];
       tally.steps++;
-      for await (const ev of turn.step(toolResults)) {
+      for await (const ev of turn.step(toolResults, nextTools)) {
         if (ev.type === "text_delta") emit({ type: "text", delta: ev.delta });
         else {
           text = ev.text;
@@ -166,6 +177,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       if (!calls.length) break;
 
       toolResults = [];
+      nextTools = undefined;
       for (const call of calls) {
         emit({ type: "tool_start", callId: call.callId, name: call.name, label: describeToolCall(call.name) });
         const outcome = await executeToolCall(call.name, call.arguments, ctx, call.callId);
@@ -198,6 +210,13 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
           if (proposal) emit({ type: "memory_proposal", callId: call.callId, ...proposal });
         }
         toolResults.push({ callId: call.callId, output: serializeResult(outcome.result) });
+        if (call.name === "load_tools" && outcome.kind === "result" && outcome.result.ok) {
+          const loaded = ((outcome.result.data as { loaded?: string[] } | undefined)?.loaded ?? []).filter((g): g is ToolGroup =>
+            (TOOL_GROUPS as readonly string[]).includes(g),
+          );
+          for (const g of loaded) groups.add(g);
+          nextTools = toolSpecsFor(groups);
+        }
       }
       if (step === MAX_STEPS - 1) {
         outcome = "step_limit";
@@ -258,3 +277,6 @@ export function friendlyProviderError(e: unknown): string {
 }
 
 export type { ToolResultRecord };
+
+/** A stable, non-identifying key per user, so one person's requests reuse the same cached prompt start at OpenAI. */
+export const promptCacheKey = (userId: string) => `lf-${createHash("sha256").update(`jarvis:${userId}`).digest("hex").slice(0, 24)}`;
