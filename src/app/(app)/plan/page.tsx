@@ -4,17 +4,18 @@ import { Plus, Sparkles } from "lucide-react";
 import { QuickAddButton } from "@/components/shell/quick-add";
 import { CalendarViewToggle } from "../calendar/view-toggle";
 import { AskJarvisButton } from "@/components/shell/app-shell";
-import { addDaysStr, daysBetween, formatDateStr, formatIn, isValidDateStr, localDateOf, todayIn } from "@/lib/dates";
+import { addDaysStr, daysBetween, formatDateStr, formatIn, isValidDateStr, localDateOf, localTimeOf, todayIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
-import { findConflicts, getAgenda, type AgendaItem } from "@/server/services/calendar";
-import { listEmployers } from "@/server/services/work";
-import { listCourses } from "@/server/services/school";
+import { findConflicts, getAgenda, getEvent, type AgendaItem } from "@/server/services/calendar";
+import { listEmployers, listShifts } from "@/server/services/work";
+import { getAssignment, listCourses } from "@/server/services/school";
 import { listTasks } from "@/server/services/tasks";
 import { lifeLoad } from "@/server/services/life-load";
 import { moneyLocked } from "@/server/auth/money-lock";
 import { LifeLoad } from "./life-load";
+import { EditableBlock, type Block } from "./block-editor";
 
 export const metadata: Metadata = { title: "Plan" };
 
@@ -46,7 +47,57 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       () => listTasks(s, { status: "open", topLevelOnly: true, limit: 200 }),
       () => lifeLoad(s, u.timezone, today, { includeMoney: !locked }),
     );
-    return { week, items, courses, jobs, openTasks: tasks.length, undated: tasks.filter((t) => !t.dueAt).slice(0, 5), today, from, tz: u.timezone };
+    // What each block's editor needs (every block on the calendar can be edited in place).
+    const tz = u.timezone;
+    const shifts = new Map((await listShifts(s, tz, from, addDaysStr(from, 6))).map((x) => [x.id, x]));
+    const blocks: Record<string, Block> = {};
+    for (const i of items) {
+      if (i.origin === "task") blocks[i.key] = { origin: "task", id: i.id };
+      else if (i.origin === "event") {
+        const e = await getEvent(s, i.id).catch(() => null);
+        if (!e) continue;
+        blocks[i.key] = {
+          origin: "event",
+          id: e.id,
+          title: e.title,
+          date: localDateOf(i.startsAt, tz),
+          startTime: i.allDay ? null : localTimeOf(i.startsAt, tz),
+          endTime: i.allDay || !i.endsAt ? null : localTimeOf(i.endsAt, tz),
+          allDay: i.allDay,
+          kind: e.kind,
+          location: e.location,
+          description: e.description,
+          repeats: !!e.recurrence,
+        };
+      } else if (i.origin === "shift") {
+        const sh = shifts.get(i.id);
+        if (!sh) continue;
+        blocks[i.key] = {
+          origin: "shift",
+          id: sh.id,
+          employerId: sh.employerId,
+          date: localDateOf(sh.startsAt, tz),
+          startTime: localTimeOf(sh.startsAt, tz),
+          endTime: localTimeOf(sh.endsAt, tz),
+          breakMinutes: sh.breakMinutes,
+          notes: sh.notes,
+        };
+      } else if (i.origin === "assignment") {
+        const a = await getAssignment(s, i.id).catch(() => null);
+        if (!a) continue;
+        blocks[i.key] = {
+          origin: "assignment",
+          id: a.id,
+          title: a.title,
+          kind: a.kind,
+          dueDate: a.dueAt ? localDateOf(a.dueAt, tz) : null,
+          dueTime: a.dueAt && !a.dueAllDay ? localTimeOf(a.dueAt, tz) : null,
+          description: a.description,
+          done: a.status === "done",
+        };
+      }
+    }
+    return { week, items, blocks, courses, jobs, openTasks: tasks.length, undated: tasks.filter((t) => !t.dueAt).slice(0, 5), today, from, tz };
   });
   const items = d.items.filter((i) => matches(i, filter));
   const conflictKeys = new Set(findConflicts(d.items).flatMap((c) => [c.a.key, c.b.key]));
@@ -112,7 +163,10 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                 <ul className="divide-y divide-border/70 overflow-hidden rounded-3xl bg-surface shadow-soft">
                   {items.map((i) => (
                     <li key={i.key}>
-                      <Link href={i.href} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2/60 active:bg-surface-2">
+                      <EditableBlock
+                        block={d.blocks[i.key] ?? null}
+                        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2/60 active:bg-surface-2"
+                      >
                         <span className="tabular w-[60px] shrink-0 text-[13px] leading-tight text-muted">
                           {i.allDay ? "Any time" : formatIn(i.startsAt, d.tz, "h:mm a")}
                         </span>
@@ -131,7 +185,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                         </div>
                         {conflictKeys.has(i.key) && <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning">Overlaps</span>}
                         {i.kind === "exam" && <span className="rounded-full bg-danger-soft px-2 py-0.5 text-xs text-danger">Exam</span>}
-                      </Link>
+                      </EditableBlock>
                     </li>
                   ))}
                 </ul>

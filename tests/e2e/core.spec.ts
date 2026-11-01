@@ -135,3 +135,28 @@ test("testers can send feedback from Settings", async ({ page }) => {
   await expect(page.getByText("Thanks! We read every message.")).toBeVisible();
   expect(await queryAsUser(email, "select kind, message from feedback")).toEqual([{ kind: "idea", message: "Let me pick the color of each class." }]);
 });
+
+test("every calendar block opens its editor: change an event right from Plan", async ({ page }) => {
+  await signUp(page, "Cal Editor");
+  await page.goto("/calendar");
+  await page.getByRole("button", { name: "Event" }).click();
+  await page.getByLabel("Title").fill("Dentist");
+  await page.getByLabel("Start").fill("15:00");
+  await page.getByLabel("End").fill("16:00");
+  await page.getByRole("button", { name: "Add event" }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+
+  await page.goto("/plan");
+  await page.getByRole("button", { name: /Dentist/ }).click();
+  const sheet = page.getByRole("dialog", { name: "Event" });
+  await sheet.getByLabel("Title").fill("Dentist checkup");
+  await sheet.getByLabel("Place").fill("Main St clinic");
+  await sheet.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByRole("button", { name: /Dentist checkup/ })).toBeVisible();
+  await expect(page.getByText("Main St clinic")).toBeVisible();
+
+  await page.getByRole("button", { name: /Dentist checkup/ }).click();
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("dialog", { name: "Event" }).getByRole("button", { name: "Delete" }).click();
+  await expect(page.getByRole("button", { name: /Dentist checkup/ })).toHaveCount(0);
+});

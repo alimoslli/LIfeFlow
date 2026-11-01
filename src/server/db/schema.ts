@@ -322,6 +322,25 @@ export const feedback = pgTable(
   () => [ownerPolicy()],
 );
 
+/** Goals that aren't about money ("Run a 5K", "Read 12 books"). Money goals are financialGoals. */
+export const personalGoals = pgTable(
+  "personal_goals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    title: text("title").notNull(),
+    /** Optional measure: 12 (books). Without it, the goal is simply done or not. */
+    target: integer("target"),
+    progress: integer("progress").notNull().default(0),
+    unit: text("unit"),
+    targetDate: date("target_date", { mode: "string" }),
+    doneAt: tstz("done_at"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  () => [ownerPolicy()],
+);
+
 export const auditEvents = pgTable(
   "audit_events",
   {

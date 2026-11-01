@@ -7,6 +7,7 @@ import { memoryTools, noteTools, systemTools } from "./tools/knowledge";
 import { manageTools } from "./tools/manage";
 import { moneyCoachTools } from "./tools/money-coach";
 import { overviewTools } from "./tools/overview";
+import { personalGoalTools } from "./tools/personal-goals";
 import { schoolTools } from "./tools/school";
 import { taskTools } from "./tools/tasks";
 import { webTools } from "./tools/web";
@@ -29,6 +30,7 @@ export const ALL_TOOLS: ToolDefinition[] = [
   ...systemTools,
   ...webTools,
   ...manageTools,
+  ...personalGoalTools,
   loadToolsTool,
 ] as ToolDefinition[];
 

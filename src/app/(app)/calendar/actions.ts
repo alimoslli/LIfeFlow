@@ -1,8 +1,8 @@
 "use server";
 import { trashAction } from "../trash-actions";
 import { formBool, formObject, mutate, type ActionState } from "@/server/actions";
-import { formatDateStr } from "@/lib/dates";
-import { createEvent, editOccurrence, moveAgendaItem, skipOccurrence } from "@/server/services/calendar";
+import { formatDateStr, localDateOf } from "@/lib/dates";
+import { createEvent, editOccurrence, getEvent, moveAgendaItem, skipOccurrence, updateEvent } from "@/server/services/calendar";
 
 export async function createEventAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
@@ -27,6 +27,36 @@ export async function createEventAction(_p: ActionState, fd: FormData): Promise<
             : null,
     });
   });
+}
+
+/**
+ * Edits an event. A repeating event changes on every day it repeats: its pattern and first day stay,
+ * the title, times, place and notes change. (One day only: editOccurrenceAction.)
+ */
+export async function updateEventAction(id: string, _p: ActionState, fd: FormData): Promise<ActionState> {
+  const f = formObject(fd);
+  const allDay = formBool(f.allDay);
+  return mutate(
+    "event.update",
+    async (s, u) => {
+      const ev = await getEvent(s, id);
+      const firstDay = localDateOf(ev.startsAt, u.timezone);
+      await updateEvent(s, u.timezone, id, {
+        title: f.title ?? "",
+        date: ev.recurrence ? firstDay : (f.date ?? firstDay),
+        startTime: allDay ? null : f.startTime,
+        endTime: allDay ? null : f.endTime,
+        allDay,
+        kind: (f.kind as "personal") ?? ev.kind,
+        location: f.location,
+        description: f.description,
+        courseId: ev.courseId,
+        recurrence: ev.recurrence,
+      });
+      return ev.recurrence ? "Saved for every day it repeats." : "Event saved.";
+    },
+    { revalidate: ["/calendar", "/plan", "/"] },
+  );
 }
 
 export async function deleteEventAction(id: string): Promise<ActionState> {

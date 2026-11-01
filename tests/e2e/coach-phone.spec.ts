@@ -129,9 +129,11 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     await shot(page, "7-inbox");
   });
 
-  await test.step("Habits", async () => {
+  await test.step("Habits live with Goals; Health is health only", async () => {
+    await page.goto("/goals");
+    await expect(page.getByRole("region", { name: "Habits" }).getByText("No-spend weekend").first()).toBeVisible();
     await page.goto("/habits");
-    await expect(page.getByText("No-spend weekend").first()).toBeVisible();
+    await expect(page.getByText("No-spend weekend")).toHaveCount(0);
   });
 
   await test.step("Nothing overflows sideways on a phone", async () => {

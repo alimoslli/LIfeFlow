@@ -1,4 +1,3 @@
-import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import { Car, GraduationCap, Home, LineChart, Plane, PiggyBank, ShieldCheck, ShoppingBag, Sparkles, Trash2, Wallet } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
@@ -7,7 +6,13 @@ import { Field, Input, Select } from "@/components/ui/field";
 import { Card, EmptyState, Progress } from "@/components/ui/surface";
 import { formatDateStr, todayIn } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
-import { withCurrentUser } from "@/server/auth/current-user";
+import { requireUser, withCurrentUser } from "@/server/auth/current-user";
+import { moneyLocked } from "@/server/auth/money-lock";
+import { listPersonalGoals } from "@/server/services/personal-goals";
+import { HabitsSection } from "../habits/habits-section";
+import { NewPersonalGoal, PersonalGoals } from "./personal-goals";
+import Link from "next/link";
+import { Lock } from "lucide-react";
 import { series } from "@/server/db/series";
 import type { GoalPurpose } from "@/server/db/schema";
 import { listAccounts } from "@/server/services/finance/accounts";
@@ -34,15 +39,17 @@ const PURPOSE: Record<GoalPurpose, { label: string; icon: typeof PiggyBank }> = 
 };
 
 export default async function GoalsPage() {
-  const locked = await moneyGate();
-  if (locked) return locked;
+  // Personal goals and habits are always here; only money goals wait for the Money lock.
+  const locked = await moneyLocked(await requireUser());
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
+    const personal = await listPersonalGoals(s);
+    if (locked) return { personal, goals: [], accounts: [], today };
     const [goals, accounts] = await series(
       () => goalsWithPlans(s, today),
       () => listAccounts(s, { types: ["depository", "investment", "cash"] }),
     );
-    return { goals, accounts, today };
+    return { personal, goals, accounts, today };
   });
   const active = d.goals.filter((g) => g.status === "active");
   const done = d.goals.filter((g) => g.status === "achieved");
@@ -53,13 +60,21 @@ export default async function GoalsPage() {
       {celebrate && <CelebrateGoal goalId={celebrate.id} name={celebrate.name} percent={celebrate.milestoneToCelebrate!} />}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-[28px] font-medium tracking-tight">Goals</h1>
-        <AskJarvisButton prompt="Help me set a money goal. Ask me one question at a time about what I'm dreaming of, then create it.">
+        <AskJarvisButton prompt="Help me set a goal. Ask me one question at a time about what I want to reach, then create it.">
           <Sparkles className="h-3.5 w-3.5" /> Plan a goal with Jarvis
         </AskJarvisButton>
       </div>
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.6fr_1fr]">
         <div className="flex flex-col gap-4">
-          {d.goals.length === 0 && (
+          <PersonalGoals goals={d.personal} />
+          <h2 className="mt-3 text-[22px] font-medium tracking-tight">Money goals</h2>
+          {locked && (
+            <Link href="/money" className="flex min-h-14 items-center gap-3 rounded-3xl bg-surface px-5 shadow-soft">
+              <Lock className="h-5 w-5 text-accent" />
+              <span className="flex-1 text-[15px]">Money is locked. Unlock it to see money goals.</span>
+            </Link>
+          )}
+          {!locked && d.goals.length === 0 && (
             <Card>
               <EmptyState icon={<PiggyBank />} title="What are you saving for?">
                 An emergency fund, a trip, a car, an apartment, paying off a card. Give it a target and a date, and LifeFlow shows the monthly amount and when
@@ -202,51 +217,59 @@ export default async function GoalsPage() {
               </Card>
             );
           })}
+          <div className="mt-3">
+            <HabitsSection />
+          </div>
         </div>
-        <Card className="h-fit p-5">
-          <h2 className="mb-3 text-[13px] font-semibold tracking-wide text-text-2 uppercase">New goal</h2>
-          <ActionForm action={createGoalAction} showSuccess>
-            <Field label="What's it for?" htmlFor="g-p">
-              <Select id="g-p" name="purpose" defaultValue="emergency">
-                {Object.entries(PURPOSE).map(([k, v]) => (
-                  <option key={k} value={k}>
-                    {v.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Name" htmlFor="g-name">
-              <Input id="g-name" name="name" required maxLength={120} placeholder="Japan trip" />
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Target ($)" htmlFor="g-t">
-                <Input id="g-t" name="target" inputMode="decimal" required placeholder="3000" />
-              </Field>
-              <Field label="Saved so far ($)" htmlFor="g-s">
-                <Input id="g-s" name="saved" inputMode="decimal" placeholder="0" />
-              </Field>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Target date" htmlFor="g-d">
-                <Input id="g-d" name="targetDate" type="date" />
-              </Field>
-              <Field label="Monthly plan ($)" htmlFor="g-m">
-                <Input id="g-m" name="monthly" inputMode="decimal" placeholder="150" />
-              </Field>
-            </div>
-            <Field label="Track an account balance (optional)" htmlFor="g-a">
-              <Select id="g-a" name="accountId" defaultValue="">
-                <option value="">Don&apos;t link</option>
-                {d.accounts.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <SubmitButton className="self-end">Create goal</SubmitButton>
-          </ActionForm>
-        </Card>
+        <div className="flex flex-col gap-4">
+          <NewPersonalGoal />
+          {!locked && (
+            <Card className="h-fit p-5">
+              <h2 className="mb-3 text-[13px] font-semibold tracking-wide text-text-2 uppercase">New money goal</h2>
+              <ActionForm action={createGoalAction} showSuccess>
+                <Field label="What's it for?" htmlFor="g-p">
+                  <Select id="g-p" name="purpose" defaultValue="emergency">
+                    {Object.entries(PURPOSE).map(([k, v]) => (
+                      <option key={k} value={k}>
+                        {v.label}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Name" htmlFor="g-name">
+                  <Input id="g-name" name="name" required maxLength={120} placeholder="Japan trip" />
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Target ($)" htmlFor="g-t">
+                    <Input id="g-t" name="target" inputMode="decimal" required placeholder="3000" />
+                  </Field>
+                  <Field label="Saved so far ($)" htmlFor="g-s">
+                    <Input id="g-s" name="saved" inputMode="decimal" placeholder="0" />
+                  </Field>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Target date" htmlFor="g-d">
+                    <Input id="g-d" name="targetDate" type="date" />
+                  </Field>
+                  <Field label="Monthly plan ($)" htmlFor="g-m">
+                    <Input id="g-m" name="monthly" inputMode="decimal" placeholder="150" />
+                  </Field>
+                </div>
+                <Field label="Track an account balance (optional)" htmlFor="g-a">
+                  <Select id="g-a" name="accountId" defaultValue="">
+                    <option value="">Don&apos;t link</option>
+                    {d.accounts.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <SubmitButton className="self-end">Create goal</SubmitButton>
+              </ActionForm>
+            </Card>
+          )}
+        </div>
       </div>
     </>
   );

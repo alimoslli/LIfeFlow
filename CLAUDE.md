@@ -84,6 +84,8 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - User-facing text never names server settings, models, tokens or internal logs. Say "isn't available yet" instead. Diagnostics live behind `?debug=1`.
 - Money: never count income before it's deposited. Expected pay is shown (never counted) only for a salaried job whose paychecks land for the same amount; hourly pay is never predicted (`expectedPay` in forecast.ts). Today's money = one line: Available now (checking + cash) and the next bill this week. Money shows spent / came in this month with last month beside it, and the next 30 days as one bar (bills, usual spending, left).
 - Prefer one clear action per item; no dense tables on phones.
+- Goals are personal (`personal_goals`: done or a number like 12 books) and money (`financial_goals`); only money goals sit behind the Money lock. Habits live on Goals (`habits/habits-section.tsx`); Health (/habits) is health data only.
+- Every calendar block is editable where it's shown: on Plan, events (one day or every time), shifts and assignments open an editor sheet (`plan/block-editor.tsx`); to-dos open their page.
 
 ## Error alerts
 - Server errors reach `onRequestError` (src/instrumentation.ts); browser errors reach `/api/errors` via `ErrorReporter` (root layout) and the `(app)/error.tsx` boundary. Both go to `recordError` (services/error-reports.ts): grouped by fingerprint in `error_reports`, scrubbed of emails/ids/tokens/long numbers, and emailed to `ALERT_EMAIL` (or `LEGAL_CONTACT_EMAIL`) on the 1st, 10th, 100th and 1,000th time, at most 20 emails a day. Never put user content in error messages.

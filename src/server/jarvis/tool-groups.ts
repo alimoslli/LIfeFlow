@@ -123,7 +123,16 @@ export const GROUP_TOOLS: Record<ToolGroup, string[]> = {
   notes: ["search_notes", "get_note", "save_note", "delete_note"],
   email: ["search_email", "read_email", "draft_email", "send_email", "sync_google_calendar", "add_google_calendar_event"],
   health: ["get_health_summary", "log_health"],
-  habits: ["list_habits", "create_habit", "delete_habit", "check_habit"],
+  habits: [
+    "list_habits",
+    "create_habit",
+    "delete_habit",
+    "check_habit",
+    "list_personal_goals",
+    "create_personal_goal",
+    "update_personal_goal",
+    "delete_personal_goal",
+  ],
   projects: ["list_projects", "create_project", "update_project", "delete_project"],
   memory: ["list_memories", "forget_memory"],
 };
@@ -138,7 +147,7 @@ const GROUP_INFO: Record<LoadableGroup, string> = {
   notes: "the user's notes",
   email: "Gmail and Google Calendar",
   health: "sleep, steps, workouts",
-  habits: "habits and streaks",
+  habits: "habits, streaks and goals that aren't about money (fitness, reading, school)",
   projects: "projects that group to-dos",
   memory: "list or forget what you remember about the user",
 };
