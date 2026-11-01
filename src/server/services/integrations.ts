@@ -78,3 +78,12 @@ export async function integrationStatus(scope: UserScope) {
     };
   });
 }
+
+/** What isn't connected yet, in plain words, for Jarvis to suggest after onboarding (bank, Canvas, calendar). */
+export async function missingConnections(scope: UserScope) {
+  const rows = await scope.tx.select({ provider: integrations.provider }).from(integrations).where(eq(integrations.userId, scope.userId));
+  const have = new Set(rows.map((r) => r.provider));
+  return [!have.has("plaid") && "your bank", !have.has("canvas") && "Canvas", !have.has("google") && !have.has("google_calendar") && "Google Calendar"].filter(
+    (x): x is string => !!x,
+  );
+}

@@ -1,36 +1,36 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition, type ReactNode } from "react";
-import { ArrowLeft, BookOpen, Briefcase, Layers, Plus, Sun, X } from "lucide-react";
+import { ArrowLeft, BookOpen, Briefcase, CalendarDays, GraduationCap, Layers, Sun, Wallet } from "lucide-react";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
 import { isHydrated } from "@/components/motion/intro";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { ThemePicker } from "@/components/theme-picker";
 import { Button } from "@/components/ui/button";
-import { Field, FormError, Input, Textarea } from "@/components/ui/field";
+import { FormError, Input } from "@/components/ui/field";
+import { ASSISTANT_STYLES, type AssistantStyle } from "@/lib/assistant";
 import type { Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { lifeAreas, starterIdeas, type LifeStage } from "@/lib/life";
-import { WorkHours } from "@/components/work-hours";
-import type { WorkSchedule } from "@/server/db/schema";
+import type { LifeStage } from "@/lib/life";
 import { completeOnboardingAction, skipOnboardingAction } from "./actions";
 
-type Stage = LifeStage;
-type StepId = "hello" | "week" | "classes" | "job" | "money" | "yours";
+type StepId = "hello" | "what" | "week" | "yours";
+const STEPS: StepId[] = ["hello", "what", "week", "yours"];
 
-const STUDY = [
-  ["morning", "Mornings"],
-  ["afternoon", "Afternoons"],
-  ["evening", "Evenings"],
-  ["night", "Late nights"],
-] as const;
-const TONE = [
-  ["concise", "Short & sweet"],
-  ["balanced", "Balanced"],
-  ["detailed", "Detailed"],
-] as const;
+const NAMES = ["Jarvis", "Nova", "Sage", "Atlas", "Max"];
+const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u;
+/** How each personality answers "What's due this week?" (shown live as they pick). */
+const SAMPLE: Record<AssistantStyle, string> = {
+  friend: "You've got 2 things due this week. The BIO lab is the big one, so let's start it Tuesday. You've got this.",
+  coach: "2 due this week. BIO lab first: block 90 minutes Tuesday and knock it out. Small wins add up.",
+  direct: "2 due: BIO lab (Thu), PSY quiz (Fri). Start the lab Tuesday.",
+};
 
-/** First-run setup: a few quick, skippable steps so day one isn't empty. Saved once, at the end. */
+/**
+ * First run: a short introduction, not a setup form. Nothing to connect or type in
+ * except a name for their assistant; connecting the bank, Canvas and calendar comes
+ * after the tour, when Jarvis points to it.
+ */
 export function Onboarding({ firstName, theme }: { firstName: string; theme: Theme }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -38,31 +38,13 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
   const [index, setIndex] = useState(0);
   const dir = useRef(1);
 
-  const [stage, setStage] = useState<Stage | null>(null);
-  const [courses, setCourses] = useState<string[]>([]);
-  const [courseDraft, setCourseDraft] = useState("");
-  const [job, setJob] = useState({ name: "", rate: "" });
-  const [balance, setBalance] = useState("");
-  const [studyTime, setStudyTime] = useState<(typeof STUDY)[number][0] | null>(null);
-  const [tone, setTone] = useState<(typeof TONE)[number][0]>("balanced");
-  const [aboutMe, setAboutMe] = useState("");
-  const [idea, setIdea] = useState<string | null>(null);
-  const [hours, setHours] = useState<WorkSchedule | null>(null);
-  const areas = lifeAreas(stage ?? undefined);
-
-  const steps = useMemo<StepId[]>(
-    () => [
-      "hello",
-      "week",
-      ...(stage && lifeAreas(stage).school ? (["classes"] as const) : []),
-      ...(stage && lifeAreas(stage).work ? (["job"] as const) : []),
-      "money",
-      "yours",
-    ],
-    [stage],
-  );
-  const step = steps[Math.min(index, steps.length - 1)];
-  const last = index >= steps.length - 1;
+  const [stage, setStage] = useState<LifeStage | null>(null);
+  const [name, setName] = useState("Jarvis");
+  const [style, setStyle] = useState<AssistantStyle>("friend");
+  const step = STEPS[index];
+  const last = index === STEPS.length - 1;
+  const cleanName = useMemo(() => name.trim().replace(/\s+/g, " "), [name]);
+  const nameOk = cleanName.length > 0 && cleanName.length <= 24 && NAME_RE.test(cleanName);
 
   const panel = useRef<HTMLDivElement>(null);
   useGSAP(
@@ -84,33 +66,14 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
   const go = (delta: number) => {
     dir.current = delta;
     setError(null);
-    setIndex((i) => Math.max(0, Math.min(steps.length - 1, i + delta)));
-  };
-
-  const addCourse = () => {
-    const name = courseDraft.trim();
-    if (name && courses.length < 12 && !courses.some((c) => c.toLowerCase() === name.toLowerCase())) setCourses((c) => [...c, name]);
-    setCourseDraft("");
+    setIndex((i) => Math.max(0, Math.min(STEPS.length - 1, i + delta)));
   };
 
   const finish = () =>
     start(async () => {
-      const rate = job.rate.trim() ? Number(job.rate) : undefined;
-      const bal = balance.trim() ? Number(balance.replace(/[$,\s]/g, "")) : undefined;
-      if (bal !== undefined && Number.isNaN(bal)) return setError("Enter your balance as a number, like 1250.50.");
-      const r = await completeOnboardingAction({
-        lifeStage: stage ?? undefined,
-        courses: !areas.school ? [] : [...courses, ...(courseDraft.trim() ? [courseDraft.trim()] : [])],
-        job:
-          areas.work && job.name.trim()
-            ? { name: job.name.trim(), hourlyRate: rate !== undefined && !Number.isNaN(rate) ? rate : undefined, schedule: hours ?? undefined }
-            : undefined,
-        checking: bal !== undefined ? { name: "Checking", balance: bal } : undefined,
-        studyTime: studyTime ?? undefined,
-        jarvisTone: tone,
-        aboutMe: aboutMe.trim() || undefined,
-      });
-      if (r?.ok) router.replace(idea ? `/jarvis?ask=${encodeURIComponent(idea)}` : "/");
+      if (!nameOk) return setError("Use letters, numbers, spaces or simple punctuation for the name (up to 24 characters).");
+      const r = await completeOnboardingAction({ lifeStage: stage ?? undefined, assistant: { name: cleanName, style } });
+      if (r?.ok) router.replace("/");
       else setError(r?.error ?? "Couldn't save. Try again.");
     });
 
@@ -131,8 +94,8 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
         ) : (
           <span />
         )}
-        <div className="flex items-center gap-1.5" aria-label={`Step ${index + 1} of ${steps.length}`}>
-          {steps.map((s, i) => (
+        <div className="flex items-center gap-1.5" aria-label={`Step ${index + 1} of ${STEPS.length}`}>
+          {STEPS.map((s, i) => (
             <span
               key={s}
               className={cn(
@@ -150,24 +113,48 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
       <div ref={panel} className="flex flex-1 flex-col pt-10">
         {step === "hello" && (
           <>
-            <div data-anim>
-              <BrandMark className="h-14 w-14" priority />
+            <div data-anim className="relative h-16 w-16">
+              <span className="lf-orb-glow absolute -inset-1/3 rounded-full" aria-hidden />
+              <BrandMark className="lf-float relative h-full w-full" priority />
             </div>
             <h1 data-anim className="mt-8 font-display text-[44px] leading-[1.05] font-medium tracking-tight">
               Hi {firstName}.
             </h1>
             <p data-anim className="mt-4 text-[17px] leading-relaxed text-text-2">
-              LifeFlow keeps your classes, work, money and plans in one calm place, and Jarvis helps with all of it.
+              LifeFlow is your classes, work, money and plans in one calm place, with a personal assistant who helps with all of it.
             </p>
-            <p data-anim className="mt-3 text-[15px] text-muted">
-              A few quick questions so your first day isn&apos;t empty. Everything can be changed later.
-            </p>
+          </>
+        )}
+
+        {step === "what" && (
+          <>
+            <Title>Here&apos;s what LifeFlow does</Title>
+            <ul className="mt-7 flex flex-col gap-5">
+              {(
+                [
+                  [null, "Your own assistant", "Ask anything. It plans your days, watches your money and keeps you ahead in school."],
+                  [CalendarDays, "Plan", "Classes, shifts and to-dos in one week, with your heaviest days spotted early."],
+                  [Wallet, "Money", "What's in your account, where it goes, and every subscription you pay for."],
+                  [GraduationCap, "School", "Every due date in one list, and study time that fits around work."],
+                ] as const
+              ).map(([Icon, title, text]) => (
+                <li key={title} data-anim className="flex gap-4">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent">
+                    {Icon ? <Icon className="h-5 w-5" /> : <BrandMark className="h-7 w-7" alt="" />}
+                  </span>
+                  <span>
+                    <span className="block text-[16px] font-semibold">{title}</span>
+                    <span className="mt-0.5 block text-[15px] leading-snug text-text-2">{text}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </>
         )}
 
         {step === "week" && (
           <>
-            <Title>What fills your week?</Title>
+            <Title sub="So LifeFlow shows what matters to you. You can change it anytime.">What fills your week?</Title>
             <div data-anim className="mt-6 flex flex-col gap-2.5" role="radiogroup" aria-label="What fills your week">
               {(
                 [
@@ -198,132 +185,65 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
           </>
         )}
 
-        {step === "classes" && (
-          <>
-            <Title sub="Just the names for now. Jarvis can add assignments from your syllabus later.">Your classes</Title>
-            <form
-              data-anim
-              className="mt-6 flex gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                addCourse();
-              }}
-            >
-              <Input
-                value={courseDraft}
-                onChange={(e) => setCourseDraft(e.target.value)}
-                placeholder="e.g. Biology II"
-                aria-label="Class name"
-                maxLength={200}
-                className="flex-1"
-              />
-              <Button type="submit" variant="secondary" aria-label="Add class" disabled={!courseDraft.trim()}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </form>
-            <ul data-anim className="mt-4 flex flex-wrap gap-2" aria-label="Classes added">
-              {courses.map((c) => (
-                <li key={c} className="flex items-center gap-1.5 rounded-full bg-surface py-1.5 pr-2 pl-3.5 text-sm shadow-soft">
-                  {c}
-                  <button
-                    onClick={() => setCourses((x) => x.filter((y) => y !== c))}
-                    aria-label={`Remove ${c}`}
-                    className="rounded-full p-0.5 text-muted hover:text-text"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-
-        {step === "job" && (
-          <>
-            <Title sub="Used to estimate earnings from your shifts. Pay only counts as income once it's in your bank.">Where do you work?</Title>
-            <div data-anim className="mt-6 flex flex-col gap-4">
-              <Field label="Workplace" htmlFor="ob-job">
-                <Input
-                  id="ob-job"
-                  value={job.name}
-                  onChange={(e) => setJob((j) => ({ ...j, name: e.target.value }))}
-                  placeholder="Campus Library"
-                  maxLength={200}
-                />
-              </Field>
-              <WorkHours value={hours} onChange={setHours} />
-              <Field label="Hourly pay (optional)" htmlFor="ob-rate">
-                <Input
-                  id="ob-rate"
-                  value={job.rate}
-                  onChange={(e) => setJob((j) => ({ ...j, rate: e.target.value }))}
-                  inputMode="decimal"
-                  placeholder="16.50"
-                />
-              </Field>
-            </div>
-          </>
-        )}
-
-        {step === "money" && (
-          <>
-            <Title sub="Type what your bank app shows right now. Automatic bank sync is coming; you can update this anytime.">
-              What&apos;s in your checking?
-            </Title>
-            <div data-anim className="mt-6">
-              <Field label="Checking balance" htmlFor="ob-bal">
-                <Input id="ob-bal" value={balance} onChange={(e) => setBalance(e.target.value)} inputMode="decimal" placeholder="1,250.00" />
-              </Field>
-            </div>
-          </>
-        )}
-
         {step === "yours" && (
           <>
             <Title>Make it yours</Title>
             <div className="mt-6 flex flex-col gap-6">
-              {areas.school && (
-                <Group label="Best time to study">
-                  <Chips options={STUDY} value={studyTime} onChange={setStudyTime} />
-                </Group>
-              )}
-              <Group label="How Jarvis should answer">
-                <Chips options={TONE} value={tone} onChange={(v) => setTone(v ?? "balanced")} />
-              </Group>
-              <Group label="Appearance">
-                <ThemePicker initial={theme} />
-              </Group>
-              <Group label="Try one with Jarvis first (optional)">
-                <div className="flex flex-col gap-2" role="radiogroup" aria-label="Try one with Jarvis first">
-                  {starterIdeas(stage ?? undefined).map((p) => (
+              <Group label="Name your assistant">
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  maxLength={24}
+                  aria-label="Assistant name"
+                  autoCapitalize="words"
+                  autoComplete="off"
+                  className="text-[16px]"
+                />
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {NAMES.map((n) => (
                     <button
-                      key={p}
+                      key={n}
                       type="button"
-                      role="radio"
-                      aria-checked={idea === p}
-                      onClick={() => setIdea(idea === p ? null : p)}
+                      onClick={() => setName(n)}
                       className={cn(
-                        "min-h-11 rounded-2xl px-4 py-3 text-left text-[15px] transition-all",
-                        idea === p ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft",
+                        "min-h-9 rounded-full px-3.5 text-sm transition-all",
+                        cleanName === n ? "bg-hero text-hero-text shadow-soft" : "bg-surface text-text-2 shadow-soft hover:text-text",
                       )}
                     >
-                      &ldquo;{p}&rdquo;
+                      {n}
                     </button>
                   ))}
                 </div>
               </Group>
-              <div data-anim>
-                <Field label="Anything Jarvis should know about you? (optional)" htmlFor="ob-about">
-                  <Textarea
-                    id="ob-about"
-                    value={aboutMe}
-                    onChange={(e) => setAboutMe(e.target.value)}
-                    rows={2}
-                    maxLength={500}
-                    placeholder="I'm saving for a car and I hate early mornings."
-                  />
-                </Field>
-              </div>
+              <Group label="Personality">
+                <div className="flex flex-col gap-2" role="radiogroup" aria-label="Personality">
+                  {(Object.keys(ASSISTANT_STYLES) as AssistantStyle[]).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      role="radio"
+                      aria-checked={style === k}
+                      onClick={() => setStyle(k)}
+                      className={cn(
+                        "flex min-h-12 items-center justify-between rounded-2xl px-4 py-3 text-left transition-all",
+                        style === k ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft",
+                      )}
+                    >
+                      <span className="text-[15px] font-medium">{ASSISTANT_STYLES[k].label}</span>
+                      <span className={cn("text-sm", style === k ? "opacity-80" : "text-muted")}>{ASSISTANT_STYLES[k].hint}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-3 flex gap-2.5 rounded-2xl bg-surface-2 p-3.5" aria-live="polite">
+                  <BrandMark className="h-6 w-6" alt="" />
+                  <p className="text-[14px] leading-relaxed text-text-2">
+                    <span className="font-semibold text-text">{nameOk ? cleanName : "Your assistant"}:</span> {SAMPLE[style]}
+                  </p>
+                </div>
+              </Group>
+              <Group label="Appearance">
+                <ThemePicker initial={theme} />
+              </Group>
             </div>
           </>
         )}
@@ -332,18 +252,13 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
       <div className="flex flex-col gap-3 pt-8">
         {error && <FormError message={error} />}
         {last ? (
-          <Button onClick={finish} loading={pending} className="h-12 text-[15px]">
-            Finish
+          <Button onClick={finish} loading={pending} disabled={!nameOk} className="h-12 text-[15px]">
+            Meet {nameOk ? cleanName : "your assistant"}
           </Button>
         ) : (
           <Button onClick={() => go(1)} disabled={step === "week" && !stage} className="h-12 text-[15px]">
-            {step === "hello" ? "Let's set it up" : "Continue"}
+            {step === "hello" ? "Show me" : "Continue"}
           </Button>
-        )}
-        {(step === "classes" || step === "job" || step === "money") && (
-          <button onClick={() => go(1)} className="text-sm text-muted hover:text-text">
-            Skip this step
-          </button>
         )}
       </div>
     </div>
@@ -370,35 +285,6 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
     <div data-anim>
       <p className="mb-2 text-sm font-medium text-text-2">{label}</p>
       {children}
-    </div>
-  );
-}
-
-function Chips<T extends string>({
-  options,
-  value,
-  onChange,
-}: {
-  options: readonly (readonly [T, string])[];
-  value: T | null;
-  onChange: (v: T | null) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2" role="radiogroup">
-      {options.map(([v, label]) => (
-        <button
-          key={v}
-          role="radio"
-          aria-checked={value === v}
-          onClick={() => onChange(value === v ? null : v)}
-          className={cn(
-            "rounded-full px-4 py-2 text-sm transition-all",
-            value === v ? "bg-hero text-hero-text shadow-soft" : "bg-surface text-text-2 shadow-soft hover:text-text",
-          )}
-        >
-          {label}
-        </button>
-      ))}
     </div>
   );
 }

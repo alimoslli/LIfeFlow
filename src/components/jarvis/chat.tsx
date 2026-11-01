@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
+  ChevronRight,
+  Plug,
   CalendarDays,
   GraduationCap,
   Repeat,
@@ -52,6 +54,7 @@ export function JarvisChat({
   initialPrompt,
   autoSend,
   onConversation,
+  connect,
 }: {
   conversationId?: string | null;
   initialMessages?: UiMessage[];
@@ -62,6 +65,8 @@ export function JarvisChat({
   /** Send `initialPrompt` immediately on open (used by one-tap actions). */
   autoSend?: boolean;
   onConversation?: (id: string, title: string) => void;
+  /** Not connected yet; shown as one "connect me to do more" card on the empty screen. */
+  connect?: string[];
 }) {
   const router = useRouter();
   const { assistantName, firstName, aiConsent } = useShell();
@@ -322,6 +327,18 @@ export function JarvisChat({
                     </button>
                   ))}
                 </div>
+              )}
+              {aiConsent && connect && connect.length > 0 && (
+                <Link
+                  href="/settings/integrations"
+                  className="mt-3 flex w-full items-center gap-3 rounded-[20px] bg-surface-2/70 px-4 py-3 text-left transition-colors hover:bg-surface-2"
+                >
+                  <Plug className="h-[18px] w-[18px] shrink-0 text-accent" />
+                  <span className="min-w-0 flex-1 text-[14px] leading-snug text-text-2">
+                    <span className="font-medium text-text">Connect me to do more.</span> Add {listOf(connect)} so I can plan around your real life.
+                  </span>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
+                </Link>
               )}
             </div>
           )}
@@ -639,3 +656,5 @@ function starterCards(module: JarvisModule) {
     ];
   return STARTERS[module].slice(0, 4).map((prompt, i) => ({ icon: ICONS[i % ICONS.length], title: prompt, prompt }));
 }
+
+const listOf = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);

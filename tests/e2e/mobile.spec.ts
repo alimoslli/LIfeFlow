@@ -3,13 +3,19 @@ import { signUp } from "./helpers";
 
 test("core pages fit a phone screen without horizontal scrolling", async ({ page }) => {
   await signUp(page, "Phone User", { onboarding: "stay" });
-  for (const step of ["Let's set it up", "Continue"]) {
+  // Every onboarding step fits: hello, what LifeFlow does, your week, make it yours.
+  const fits = async (label: string) => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-    expect(overflow, `/welcome overflows by ${overflow}px`).toBeLessThanOrEqual(1);
-    if (step === "Continue") break;
-    await page.getByRole("button", { name: step }).click();
-    await page.getByRole("radio", { name: /Both/ }).click();
-  }
+    expect(overflow, `/welcome (${label}) overflows by ${overflow}px`).toBeLessThanOrEqual(1);
+  };
+  await fits("hello");
+  await page.getByRole("button", { name: "Show me" }).click();
+  await fits("what");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("radio", { name: /Both/ }).click();
+  await fits("week");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await fits("yours");
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   await page.getByRole("button", { name: "Skip tour" }).click();

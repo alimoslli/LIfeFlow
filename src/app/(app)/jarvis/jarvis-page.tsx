@@ -21,6 +21,7 @@ export function JarvisPage({
   messages,
   tz,
   ask,
+  connect,
 }: {
   conversations: Conv[];
   activeId: string | null;
@@ -28,6 +29,8 @@ export function JarvisPage({
   tz: string;
   /** A first message to put in the box (from onboarding ideas); the user still taps Send. */
   ask?: string;
+  /** Not connected yet (bank, Canvas, calendar): Jarvis suggests them on his home screen. */
+  connect?: string[];
 }) {
   const status = jarvisStatus();
   const items = conversations.map((c) => ({ id: c.id, title: c.title, when: formatIn(c.lastMessageAt, tz, "MMM d") }));
@@ -98,6 +101,7 @@ export function JarvisPage({
             conversationId={activeId}
             initialMessages={messages}
             initialPrompt={ask}
+            connect={connect}
             module="home"
             availability={{ available: status.available, reason: status.reason, model: status.model }}
           />

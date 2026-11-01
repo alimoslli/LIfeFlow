@@ -3,6 +3,7 @@ import { z } from "zod";
 import { todayIn } from "@/lib/dates";
 import { users } from "../db/schema";
 import type { UserScope } from "../db/with-user";
+import { assistantSchema } from "./accounts";
 import { createManualAccount } from "./finance/accounts";
 import { createMemory } from "./memory";
 import { createCourse } from "./school";
@@ -35,6 +36,8 @@ export const onboardingSchema = z.object({
   jarvisTone: z.enum(["concise", "balanced", "detailed"]).optional(),
   /** Something the user wants Jarvis to know; saved as a confirmed memory. */
   aboutMe: z.string().trim().max(500).optional(),
+  /** Their assistant's name and personality, chosen in "Make it yours". */
+  assistant: z.object({ name: assistantSchema.shape.name, style: z.enum(["coach", "friend", "direct"]) }).optional(),
 });
 
 export type OnboardingInput = z.input<typeof onboardingSchema>;
@@ -69,14 +72,20 @@ export async function completeOnboarding(scope: UserScope, input: OnboardingInpu
   if (d.aboutMe && d.aboutMe.length >= 3) {
     await createMemory(scope, { content: d.aboutMe, category: "fact" }, "user");
   }
-  await finishOnboarding(scope, { lifeStage: d.lifeStage, studyTime: d.studyTime, jarvisTone: d.jarvisTone });
+  await finishOnboarding(scope, {
+    lifeStage: d.lifeStage,
+    studyTime: d.studyTime,
+    jarvisTone: d.jarvisTone,
+    assistantName: d.assistant?.name,
+    assistantStyle: d.assistant?.style,
+  });
   return { courses, job: !!d.job, checking: !!d.checking, memory: !!d.aboutMe && d.aboutMe.length >= 3 };
 }
 
 /** Marks setup finished (also used by "Skip setup") and queues the guided tour. */
 export async function finishOnboarding(
   scope: UserScope,
-  prefs: Partial<Pick<typeof users.$inferSelect.preferences, "lifeStage" | "studyTime" | "jarvisTone">> = {},
+  prefs: Partial<Pick<typeof users.$inferSelect.preferences, "lifeStage" | "studyTime" | "jarvisTone" | "assistantName" | "assistantStyle">> = {},
 ) {
   const [u] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
   const defined = Object.fromEntries(Object.entries(prefs).filter(([, v]) => v !== undefined));
