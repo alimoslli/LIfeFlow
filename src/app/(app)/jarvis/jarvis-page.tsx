@@ -22,6 +22,7 @@ export function JarvisPage({
   tz,
   ask,
   connect,
+  voice,
 }: {
   conversations: Conv[];
   activeId: string | null;
@@ -31,6 +32,8 @@ export function JarvisPage({
   ask?: string;
   /** Not connected yet (bank, Canvas, calendar): Jarvis suggests them on his home screen. */
   connect?: string[];
+  /** Start talking right away (the mic on Today). */
+  voice?: boolean;
 }) {
   const status = jarvisStatus();
   const items = conversations.map((c) => ({ id: c.id, title: c.title, when: formatIn(c.lastMessageAt, tz, "MMM d") }));
@@ -102,6 +105,7 @@ export function JarvisPage({
             initialMessages={messages}
             initialPrompt={ask}
             connect={connect}
+            startVoice={voice}
             module="home"
             availability={{ available: status.available, reason: status.reason, model: status.model }}
           />

@@ -49,6 +49,24 @@ describe("live voice", () => {
     expect(await run((s) => listMessages(s, r.conversationId))).toEqual([]);
   });
 
+  it("continues the chat it was started from, knowing what was typed, and refuses someone else's chat", async () => {
+    const { session } = await voiceUser();
+    const { client, calls } = fakeOpenAI();
+    process.env.OPENAI_API_KEY ||= "sk-test";
+    const first = await startVoiceSession(session, "home", client);
+    await saveVoiceTranscript(session, first.conversationId, "user", "I have a shift at Target on Friday");
+    await saveVoiceTranscript(session, first.conversationId, "assistant", "Got it, Friday at Target.");
+    const again = await startVoiceSession(session, "home", client, first.conversationId);
+    expect(again.conversationId).toBe(first.conversationId);
+    const instructions = (calls[1] as { session: { instructions: string } }).session.instructions;
+    expect(instructions).toContain("# This conversation so far");
+    expect(instructions).toContain("User: I have a shift at Target on Friday");
+    expect(instructions).toContain("You: Got it, Friday at Target.");
+
+    const other = await voiceUser();
+    await expect(startVoiceSession(other.session, "home", client, first.conversationId)).rejects.toThrow(/not found/);
+  });
+
   it("relays tool calls through the normal executor and saves transcript + call record", async () => {
     const { session, run } = await voiceUser();
     const { client } = fakeOpenAI();

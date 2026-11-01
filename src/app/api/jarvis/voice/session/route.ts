@@ -8,7 +8,11 @@ import { requirePro } from "@/server/billing";
 
 export const dynamic = "force-dynamic";
 
-const body = z.object({ module: z.enum(["home", "finances", "wealth", "school", "work", "calendar", "tasks", "notes", "settings"]).nullish() });
+const body = z.object({
+  module: z.enum(["home", "finances", "wealth", "school", "work", "calendar", "tasks", "notes", "settings"]).nullish(),
+  /** The chat the call was started from: its transcript continues there. */
+  conversationId: z.string().uuid().nullish(),
+});
 
 /** Starts a live voice call: returns a short-lived OpenAI client secret (never the API key). */
 export async function POST(req: Request) {
@@ -23,7 +27,9 @@ export async function POST(req: Request) {
     await enforceRateLimit(`voice:min:${user.id}`, 4, 60);
     await enforceRateLimit(`voice:day:${user.id}`, 40, 86_400);
     try {
-      return NextResponse.json(await startVoiceSession(user, parsed.data.module ?? null), { headers: { "cache-control": "no-store" } });
+      return NextResponse.json(await startVoiceSession(user, parsed.data.module ?? null, undefined, parsed.data.conversationId), {
+        headers: { "cache-control": "no-store" },
+      });
     } catch (e) {
       console.error("[voice] session", e);
       const status = (e as { status?: number }).status;

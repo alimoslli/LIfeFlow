@@ -1,62 +1,83 @@
 "use client";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { AudioLines, Check, CircleAlert, Loader2, Mic, MicOff, PhoneOff, X } from "lucide-react";
+import { AudioLines, Mic, MicOff } from "lucide-react";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { cn } from "@/lib/utils";
 import { gsap, prefersReducedMotion } from "../motion/gsap";
+import { statusWord } from "./status";
 import type { JarvisModule } from "./types";
 
 type Phase = "connecting" | "listening" | "thinking" | "speaking" | "ended" | "error";
-type Line = { id: string; role: "user" | "assistant"; text: string };
-type ToolChip = { callId: string; label: string; ok?: boolean; summary?: string; viewAt?: string };
-type Confirm = { actionId: string; summary: string; status: "pending" | "done" | "cancelled" | "failed" };
 
 const REALTIME_URL = "https://api.openai.com/v1/realtime/calls";
 
-/** Mic button that starts a live voice conversation with the assistant. */
+/** Mic button in the composer: starts talking with the assistant right in this chat. */
 export function VoiceButton({
-  module,
   assistantName,
   disabled,
   className,
+  onStart,
 }: {
-  module: JarvisModule;
   assistantName: string;
   disabled?: boolean;
   className?: string;
+  onStart: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        disabled={disabled}
-        aria-label={`Talk to ${assistantName}`}
-        title={`Talk to ${assistantName}`}
-        className={cn("tap flex items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-text disabled:opacity-40", className)}
-      >
-        <AudioLines className="h-4 w-4" />
-      </button>
-      {open && createPortal(<VoiceCall module={module} assistantName={assistantName} onClose={() => setOpen(false)} />, document.body)}
-    </>
+    <button
+      type="button"
+      onClick={onStart}
+      disabled={disabled}
+      aria-label={`Talk to ${assistantName}`}
+      title={`Talk to ${assistantName}`}
+      className={cn(
+        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40",
+        className,
+      )}
+    >
+      <AudioLines className="h-[18px] w-[18px]" />
+    </button>
   );
 }
 
-function VoiceCall({ module, assistantName, onClose }: { module: JarvisModule; assistantName: string; onClose: () => void }) {
+export type LiveVoiceEvents = {
+  /** A finished spoken line, already saved to the conversation. */
+  onLine: (role: "user" | "assistant", text: string) => void;
+  /** The conversation the call is saved in (the current chat, or a new one). */
+  onConversation: (id: string) => void;
+  /** A tool started (its name) or the assistant went back to listening (null). */
+  onTool: (name: string | null) => void;
+  /** Something needs the user's Confirm; shown as a card in the chat. */
+  onConfirmation: (actionId: string, summary: string) => void;
+  /** The call ended; `error` says why if it failed. */
+  onEnd: (error: string | null) => void;
+};
+
+/**
+ * Talking with the assistant inside the chat (OpenAI Realtime over WebRTC). Takes the
+ * composer's place as one slim bar: the logo pulses with the voices, a word says what's
+ * happening, plus mute and End. What you both say appears in the chat as messages and
+ * is saved to the same conversation, so typing afterwards picks up where you left off.
+ */
+export function LiveVoice({
+  module,
+  assistantName,
+  conversationId: startConversation,
+  ...events
+}: { module: JarvisModule; assistantName: string; conversationId: string | null } & LiveVoiceEvents) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("connecting");
-  const [error, setError] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
-  const [lines, setLines] = useState<Line[]>([]);
-  const [tools, setTools] = useState<ToolChip[]>([]);
-  const [confirms, setConfirms] = useState<Confirm[]>([]);
-  const [conversationId, setConversationId] = useState<string | null>(null);
   const [seconds, setSeconds] = useState(0);
+  const [tool, setTool] = useState<string | null>(null);
+  const cb = useRef(events);
+  // The latest callbacks, for event handlers that outlive a render.
+  useEffect(() => {
+    cb.current = { ...events, onTool: (n) => (setTool(n), events.onTool(n)) };
+  });
 
-  const orb = useRef<HTMLDivElement>(null);
+  const orb = useRef<HTMLSpanElement>(null);
   const live = useRef({
     pc: null as RTCPeerConnection | null,
     dc: null as RTCDataChannel | null,
@@ -106,6 +127,7 @@ function VoiceCall({ module, assistantName, onClose }: { module: JarvisModule; a
       }
       if (l.mutated) router.refresh();
       setPhase(reason ? "error" : "ended");
+      cb.current.onEnd(reason ?? null);
     },
     [router],
   );
@@ -116,28 +138,26 @@ function VoiceCall({ module, assistantName, onClose }: { module: JarvisModule; a
     const send = (event: unknown) => l.dc?.readyState === "open" && l.dc.send(JSON.stringify(event));
     const saveLine = (role: "user" | "assistant", text: string) => {
       if (!text.trim() || !l.conversationId) return;
-      setLines((x) => [...x.slice(-5), { id: `${role}-${Date.now()}`, role, text }]);
+      cb.current.onLine(role, text);
       void post("/api/jarvis/voice/event", { kind: "transcript", conversationId: l.conversationId, role, text });
     };
 
     async function runTool(callId: string, name: string, args: string) {
       l.stats.toolCalls++;
-      setTools((x) => [...x.slice(-3), { callId, label: name.replace(/_/g, " ") }]);
+      cb.current.onTool(name);
       try {
         const res = await post("/api/jarvis/voice/tool", { conversationId: l.conversationId, callId, name, arguments: args, userText: l.lastUserText });
         const r = await res.json();
         if (!res.ok) throw new Error(r.error ?? "Tool failed");
         if (r.ok) l.mutated = true;
         else if (!r.confirmation) l.stats.toolErrors++;
-        setTools((x) => x.map((t) => (t.callId === callId ? { ...t, label: r.label, ok: r.ok || !!r.confirmation, summary: r.summary, viewAt: r.viewAt } : t)));
         if (r.confirmation) {
           l.stats.confirmations++;
-          setConfirms((x) => [...x, { actionId: r.confirmation.actionId, summary: r.confirmation.summary, status: "pending" }]);
+          cb.current.onConfirmation(r.confirmation.actionId, r.confirmation.summary);
         }
         return { callId, output: r.output as string };
       } catch (e) {
         l.stats.toolErrors++;
-        setTools((x) => x.map((t) => (t.callId === callId ? { ...t, ok: false, summary: "Failed" } : t)));
         return { callId, output: JSON.stringify({ ok: false, error: (e as Error).message }) };
       }
     }
@@ -195,12 +215,12 @@ function VoiceCall({ module, assistantName, onClose }: { module: JarvisModule; a
         if (cancelled) return mic.getTracks().forEach((t) => t.stop());
         l.mic = mic;
 
-        const res = await post("/api/jarvis/voice/session", { module });
+        const res = await post("/api/jarvis/voice/session", { module, conversationId: startConversation });
         const s = await res.json();
         if (!res.ok) throw new Error(s.error ?? "Couldn't start the call.");
         if (cancelled) return;
         l.conversationId = s.conversationId;
-        setConversationId(s.conversationId);
+        cb.current.onConversation(s.conversationId);
 
         const pc = new RTCPeerConnection();
         l.pc = pc;
@@ -243,7 +263,6 @@ function VoiceCall({ module, assistantName, onClose }: { module: JarvisModule; a
         await pc.setRemoteDescription({ type: "answer", sdp: await answer.text() });
       } catch (e) {
         if (cancelled) return;
-        setError((e as Error).message || "Couldn't start the call.");
         hangUp((e as Error).message || "start failed");
       }
     })();
@@ -273,6 +292,7 @@ function VoiceCall({ module, assistantName, onClose }: { module: JarvisModule; a
       cancelled = true;
       hangUp();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [module, hangUp]);
 
   useEffect(() => {
@@ -280,151 +300,57 @@ function VoiceCall({ module, assistantName, onClose }: { module: JarvisModule; a
   }, [muted]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && (hangUp(), onClose());
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && hangUp();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [hangUp, onClose]);
+  }, [hangUp]);
 
-  async function decide(actionId: string, decision: "confirm" | "cancel") {
-    const res = await post(`/api/jarvis/actions/${actionId}`, { decision });
-    const data = (await res.json().catch(() => ({}))) as { status?: string };
-    if (data.status === "executed") live.current.mutated = true;
-    setConfirms((x) =>
-      x.map((c) =>
-        c.actionId === actionId ? { ...c, status: data.status === "executed" ? "done" : data.status === "cancelled" ? "cancelled" : "failed" } : c,
-      ),
-    );
-  }
-
-  const status: Record<Phase, string> = {
-    connecting: "Connecting…",
-    listening: muted ? "Muted" : "Listening",
-    thinking: "Thinking…",
-    speaking: `${assistantName} is talking`,
-    ended: "Call ended",
-    error: "Couldn't connect",
-  };
-  const done = phase === "ended" || phase === "error";
+  const label =
+    phase === "connecting"
+      ? "Connecting…"
+      : phase === "thinking"
+        ? `${tool ? statusWord(tool) : "Thinking"}…`
+        : phase === "speaking"
+          ? `${assistantName} is talking`
+          : muted
+            ? "Muted"
+            : "Listening…";
 
   return (
-    <div className="lf-glass fixed inset-0 z-[80] flex flex-col" role="dialog" aria-modal="true" aria-label={`Voice call with ${assistantName}`}>
-      <div className="lf-scene" aria-hidden />
-      <div className="absolute inset-0 bg-bg/40 backdrop-blur-2xl" aria-hidden />
-      <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-        <div className="flex items-center justify-between">
-          <span className="tabular text-sm text-muted">
-            {phase === "connecting" ? "" : `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`}
-          </span>
-          <button onClick={() => (hangUp(), onClose())} className="rounded-full p-2 text-muted hover:text-text" aria-label="Close">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="flex flex-1 flex-col items-center justify-center gap-8">
-          <div className="relative flex h-44 w-44 items-center justify-center">
-            <div
-              ref={orb}
-              className={cn(
-                "h-36 w-36 rounded-full bg-hero shadow-lift",
-                phase === "connecting" && "animate-pulse",
-                phase === "thinking" && "lf-orb-think",
-                done && "opacity-40",
-              )}
-              style={{
-                backgroundImage: "radial-gradient(circle at 32% 28%, rgb(255 255 255 / 0.45), transparent 45%), linear-gradient(155deg, #4f8f7b, #1f4338)",
-              }}
-            />
-          </div>
-          <div className="text-center">
-            <p className="font-display text-[28px] font-medium">{assistantName}</p>
-            <p className="mt-1 text-sm text-muted" aria-live="polite">
-              {status[phase]}
-            </p>
-          </div>
-          {error && <p className="max-w-xs text-center text-sm text-danger">{error}</p>}
-        </div>
-
-        <div className="flex max-h-[38dvh] flex-col gap-2 overflow-y-auto pb-4" aria-live="polite">
-          {lines.map((l) => (
-            <p
-              key={l.id}
-              className={cn("text-[15px]", l.role === "user" ? "self-end rounded-2xl rounded-br-md bg-hero px-3.5 py-2 text-hero-text" : "text-text")}
-            >
-              {l.text}
-            </p>
-          ))}
-          {tools.map((t) => (
-            <span key={t.callId} className="flex w-fit items-center gap-2 rounded-full bg-surface px-3 py-1.5 text-[13px] shadow-soft">
-              {t.ok == null ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : t.ok ? (
-                <Check className="h-3.5 w-3.5 text-success" />
-              ) : (
-                <CircleAlert className="h-3.5 w-3.5 text-danger" />
-              )}
-              <span className="text-text-2">{t.label}</span>
-              {t.summary && <span className="text-muted">· {t.summary}</span>}
-              {t.viewAt && t.ok && (
-                <Link href={t.viewAt} onClick={() => (hangUp(), onClose())} className="text-accent">
-                  View
-                </Link>
-              )}
-            </span>
-          ))}
-          {confirms.map((c) => (
-            <div key={c.actionId} className="rounded-2xl bg-surface p-4 shadow-soft">
-              <p className="text-[15px] font-medium">{c.summary}</p>
-              {c.status === "pending" ? (
-                <div className="mt-3 flex gap-2">
-                  <button onClick={() => decide(c.actionId, "confirm")} className="rounded-full bg-danger px-4 py-2 text-sm font-medium text-white">
-                    Confirm
-                  </button>
-                  <button onClick={() => decide(c.actionId, "cancel")} className="rounded-full bg-surface-2 px-4 py-2 text-sm">
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <p className="mt-1 text-[13px] text-muted">
-                  {c.status === "done" ? "✓ Done" : c.status === "cancelled" ? "Cancelled. Nothing changed" : "Couldn't complete it"}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-center gap-6">
-          {done ? (
-            <>
-              {conversationId && (
-                <Link href={`/jarvis/${conversationId}`} onClick={onClose} className="rounded-full bg-surface px-5 py-3 text-sm font-medium shadow-soft">
-                  View transcript
-                </Link>
-              )}
-              <button onClick={onClose} className="rounded-full bg-accent px-6 py-3 text-sm font-medium text-accent-text">
-                Done
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => setMuted((m) => !m)}
-                aria-pressed={muted}
-                aria-label={muted ? "Unmute" : "Mute"}
-                className={cn("flex h-14 w-14 items-center justify-center rounded-full shadow-soft", muted ? "bg-text text-bg" : "bg-surface text-text")}
-              >
-                {muted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-              </button>
-              <button
-                onClick={() => hangUp()}
-                aria-label="End call"
-                className="flex h-16 w-16 items-center justify-center rounded-full bg-danger text-white shadow-lift"
-              >
-                <PhoneOff className="h-6 w-6" />
-              </button>
-            </>
-          )}
-        </div>
+    <div
+      className="flex items-center gap-3 rounded-[28px] bg-surface p-2 pl-3 shadow-lift ring-1 ring-accent/30"
+      role="group"
+      aria-label={`Talking with ${assistantName}`}
+    >
+      <span ref={orb} className={cn("relative h-9 w-9 shrink-0", phase === "connecting" && "animate-pulse")}>
+        <span className="lf-orb-glow absolute -inset-1/2 rounded-full" aria-hidden />
+        <BrandMark className="relative h-9 w-9" alt="" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[15px] font-medium" aria-live="polite">
+          {label}
+        </p>
+        <p className="tabular text-xs text-muted">
+          {phase === "connecting" ? "Voice" : `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`}
+        </p>
       </div>
+      <button
+        type="button"
+        onClick={() => setMuted((m) => !m)}
+        aria-pressed={muted}
+        aria-label={muted ? "Unmute" : "Mute"}
+        className={cn("flex h-10 w-10 items-center justify-center rounded-full transition-colors", muted ? "bg-text text-bg" : "bg-surface-2 text-text")}
+      >
+        {muted ? <MicOff className="h-[18px] w-[18px]" /> : <Mic className="h-[18px] w-[18px]" />}
+      </button>
+      <button
+        type="button"
+        onClick={() => hangUp()}
+        className="flex h-10 items-center rounded-full bg-danger px-4 text-sm font-medium text-white"
+        aria-label="End"
+      >
+        End
+      </button>
     </div>
   );
 }

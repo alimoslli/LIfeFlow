@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import OpenAI from "openai";
 import { assistantProfile } from "@/lib/assistant";
 import type { SessionUser } from "../auth/sessions";
@@ -32,7 +32,23 @@ This is a live voice conversation. Keep replies short and natural, like talking 
 
 export const VOICE_SESSION_SECONDS = 15 * 60;
 
-export async function buildVoiceSession(user: SessionUser, module: JarvisModule | null, now = new Date()) {
+/** The last few typed or spoken lines of the chat, so a call picks up where the conversation was. */
+async function recentLines(user: SessionUser, conversationId: string, limit = 12) {
+  const rows = await withUser(user.id, (s) =>
+    s.tx
+      .select({ role: messages.role, content: messages.content })
+      .from(messages)
+      .where(and(eq(messages.conversationId, conversationId), eq(messages.userId, s.userId), inArray(messages.role, ["user", "assistant"])))
+      .orderBy(desc(messages.createdAt))
+      .limit(limit),
+  );
+  return rows
+    .reverse()
+    .filter((r) => r.content?.trim())
+    .map((r) => `${r.role === "user" ? "User" : "You"}: ${r.content.replace(/\s+/g, " ").slice(0, 400)}`);
+}
+
+export async function buildVoiceSession(user: SessionUser, module: JarvisModule | null, now = new Date(), history: string[] = []) {
   const approved = await withUser(user.id, (s) => listActiveMemories(s, now));
   // No spoken request yet: standing instructions only; the model can call list_memories for more.
   const memories = selectMemories(approved, { text: "", module });
@@ -48,17 +64,24 @@ export async function buildVoiceSession(user: SessionUser, module: JarvisModule 
       otherMemoryCount: approved.length - memories.length,
       preferences: user.preferences,
       assistant: profile,
-    }) + VOICE_RULES;
+    }) +
+    VOICE_RULES +
+    (history.length ? `\n\n# This conversation so far (they switched from typing to talking; continue naturally, don't recap)\n${history.join("\n")}` : "");
   const tools = toolSpecs().map((t) => ({ type: "function" as const, name: t.name, description: t.description, parameters: t.parameters }));
   return { instructions, tools, voice: profile.voice, name: profile.name, memoryIds: memories.map((m) => m.id) };
 }
 
-/** Creates the conversation that holds this call's transcript, and a short-lived OpenAI client secret. */
-export async function startVoiceSession(user: SessionUser, module: JarvisModule | null, client?: OpenAI) {
+/**
+ * A short-lived OpenAI client secret for a call. The call continues the chat it was started
+ * from (its transcript lands in the same thread, and the model gets the recent messages);
+ * from an empty chat it starts a new conversation.
+ */
+export async function startVoiceSession(user: SessionUser, module: JarvisModule | null, client?: OpenAI, conversationId?: string | null) {
   const e = env();
   if (!e.OPENAI_API_KEY) throw new Error("Voice isn't available right now.");
   const openai = client ?? new OpenAI({ apiKey: e.OPENAI_API_KEY, baseURL: e.OPENAI_BASE_URL, maxRetries: 1, timeout: 20_000 });
-  const session = await buildVoiceSession(user, module);
+  if (conversationId) await ownedConversation(user, conversationId);
+  const session = await buildVoiceSession(user, module, new Date(), conversationId ? await recentLines(user, conversationId) : []);
   const secret = await openai.realtime.clientSecrets.create({
     expires_after: { anchor: "created_at", seconds: 120 },
     session: {
@@ -72,7 +95,7 @@ export async function startVoiceSession(user: SessionUser, module: JarvisModule 
       },
     },
   });
-  const conversation = await withUser(user.id, (s) => createConversation(s, module, `Voice chat with ${session.name}`));
+  const conversation = conversationId ? { id: conversationId } : await withUser(user.id, (s) => createConversation(s, module, `Talking with ${session.name}`));
   return {
     clientSecret: secret.value,
     expiresAt: secret.expires_at,

@@ -29,7 +29,7 @@ import { JarvisStatus, statusWord } from "./status";
 import { useShell } from "../shell/app-shell";
 import { AiConsentCard } from "./ai-consent-card";
 import { Markdown } from "./markdown";
-import { VoiceButton } from "./voice-call";
+import { LiveVoice, VoiceButton } from "./voice-call";
 import { defaultFollowUps, FOLLOW_UPS, STARTERS } from "./suggestions";
 import type { JarvisAvailability, JarvisModule, UiAttachment, UiMemorySuggestion, UiMessage, UiTool } from "./types";
 
@@ -55,6 +55,7 @@ export function JarvisChat({
   autoSend,
   onConversation,
   connect,
+  startVoice,
 }: {
   conversationId?: string | null;
   initialMessages?: UiMessage[];
@@ -67,6 +68,8 @@ export function JarvisChat({
   onConversation?: (id: string, title: string) => void;
   /** Not connected yet; shown as one "connect me to do more" card on the empty screen. */
   connect?: string[];
+  /** Open with the voice bar already on. */
+  startVoice?: boolean;
 }) {
   const router = useRouter();
   const { assistantName, firstName, aiConsent } = useShell();
@@ -77,6 +80,7 @@ export function JarvisChat({
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<(UiAttachment & { uploading?: boolean; error?: string })[]>([]);
   const [lastTool, setLastTool] = useState<string | null>(null);
+  const [talking, setTalking] = useState(!!startVoice && canSend);
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -390,73 +394,107 @@ export function JarvisChat({
               ))}
             </div>
           )}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              send(input);
-            }}
-            className="lf-composer flex items-end gap-1 rounded-[28px] bg-surface p-2 shadow-lift ring-1 ring-border/70 transition-shadow focus-within:ring-2 focus-within:ring-accent/35"
-          >
-            <input ref={fileRef} type="file" accept={ACCEPT} multiple hidden onChange={(e) => upload(e.target.files)} />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40"
-              aria-label="Attach a file or screenshot"
-              title="Attach a screenshot, syllabus or text file"
-              disabled={!canSend}
-            >
-              <Paperclip className="h-[18px] w-[18px]" />
-            </button>
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                  e.preventDefault();
-                  send(input);
-                }
+          {talking ? (
+            <LiveVoice
+              module={module}
+              assistantName={assistantName}
+              conversationId={conversationId}
+              onConversation={(id) => {
+                if (conversationId) return;
+                setConversationId(id);
+                onConversation?.(id, `Talking with ${assistantName}`);
+                if (!compact) window.history.replaceState(null, "", `/jarvis/${id}`);
               }}
-              onPaste={(e) => {
-                if (e.clipboardData.files.length) {
-                  e.preventDefault();
-                  upload(e.clipboardData.files);
-                }
-              }}
-              rows={1}
-              placeholder={
-                !availability.available
-                  ? `${assistantName} isn't available right now`
-                  : aiConsent
-                    ? `Message ${assistantName}…`
-                    : `Allow ${assistantName} to start`
+              onLine={(role, text) =>
+                setMessages((m) => [
+                  ...m,
+                  role === "user"
+                    ? { id: `v-${Date.now()}`, role: "user", text, attachments: [] }
+                    : { id: `v-${Date.now()}`, role: "assistant", text, tools: [], confirmations: [], memories: [] },
+                ])
               }
-              disabled={!canSend}
-              aria-label="Message Jarvis"
-              className="max-h-48 min-h-10 flex-1 resize-none bg-transparent px-1.5 py-2 text-[16px] leading-6 placeholder:text-muted [field-sizing:content]"
+              onTool={() => undefined}
+              onConfirmation={(actionId, summary) =>
+                setMessages((m) => [
+                  ...m,
+                  { id: `c-${actionId}`, role: "assistant", text: "", tools: [], confirmations: [{ actionId, summary, status: "pending" }], memories: [] },
+                ])
+              }
+              onEnd={(error) => {
+                setTalking(false);
+                if (error)
+                  setMessages((m) => [...m, { id: `e-${Date.now()}`, role: "assistant", text: "", tools: [], confirmations: [], memories: [], error }]);
+              }}
             />
-            {!busy && <VoiceButton module={module} assistantName={assistantName} disabled={!canSend} />}
-            {busy ? (
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                send(input);
+              }}
+              className="lf-composer flex items-end gap-1 rounded-[28px] bg-surface p-2 shadow-lift ring-1 ring-border/70 transition-shadow focus-within:ring-2 focus-within:ring-accent/35"
+            >
+              <input ref={fileRef} type="file" accept={ACCEPT} multiple hidden onChange={(e) => upload(e.target.files)} />
               <button
                 type="button"
-                onClick={() => abortRef.current?.abort()}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-text text-bg"
-                aria-label="Stop"
+                onClick={() => fileRef.current?.click()}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40"
+                aria-label="Attach a file or screenshot"
+                title="Attach a screenshot, syllabus or text file"
+                disabled={!canSend}
               >
-                <Square className="h-3.5 w-3.5" />
+                <Paperclip className="h-[18px] w-[18px]" />
               </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={!canSend || (!input.trim() && !pending.some((p) => !p.uploading && !p.error))}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft transition-all active:scale-95 disabled:bg-surface-3 disabled:text-muted disabled:shadow-none"
-                aria-label="Send"
-              >
-                <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.4} />
-              </button>
-            )}
-          </form>
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                    e.preventDefault();
+                    send(input);
+                  }
+                }}
+                onPaste={(e) => {
+                  if (e.clipboardData.files.length) {
+                    e.preventDefault();
+                    upload(e.clipboardData.files);
+                  }
+                }}
+                rows={1}
+                placeholder={
+                  !availability.available
+                    ? `${assistantName} isn't available right now`
+                    : aiConsent
+                      ? `Message ${assistantName}…`
+                      : `Allow ${assistantName} to start`
+                }
+                disabled={!canSend}
+                aria-label="Message Jarvis"
+                className="max-h-48 min-h-10 flex-1 resize-none bg-transparent px-1.5 py-2 text-[16px] leading-6 placeholder:text-muted [field-sizing:content]"
+              />
+              {!busy && <VoiceButton assistantName={assistantName} disabled={!canSend} onStart={() => setTalking(true)} />}
+              {busy ? (
+                <button
+                  type="button"
+                  onClick={() => abortRef.current?.abort()}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-text text-bg"
+                  aria-label="Stop"
+                >
+                  <Square className="h-3.5 w-3.5" />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!canSend || (!input.trim() && !pending.some((p) => !p.uploading && !p.error))}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft transition-all active:scale-95 disabled:bg-surface-3 disabled:text-muted disabled:shadow-none"
+                  aria-label="Send"
+                >
+                  <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.4} />
+                </button>
+              )}
+            </form>
+          )}
           <p className="lf-chat-note mt-2 text-center text-[11px] text-muted/80">
             {assistantName} tells you everything it changes. Deletions always ask first.
           </p>

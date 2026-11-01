@@ -1,21 +1,35 @@
 import { expect, test } from "@playwright/test";
-import { queryAsUser, signUp } from "./helpers";
+import { askJarvis, queryAsUser, signUp } from "./helpers";
 
 test.use({ permissions: ["microphone"], launchOptions: { args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] } });
 
-test("voice call starts a session and fails gracefully when the voice service is unreachable", async ({ page }) => {
+test("talking happens inside the chat: no call screen, same conversation, and a clear message when it can't connect", async ({ page }) => {
   const email = await signUp(page, "Voice Vee");
   await page.goto("/jarvis");
+  await askJarvis(page, "hello there");
+  await expect(page).toHaveURL(/\/jarvis\/[0-9a-f-]{36}$/);
+  const chatUrl = page.url();
+
   await page.getByRole("button", { name: "Talk to Jarvis" }).click();
-  const call = page.getByRole("dialog", { name: "Voice call with Jarvis" });
-  await expect(call).toBeVisible();
-  // The test environment can't reach OpenAI's voice servers, so the call ends with a clear message.
-  await expect(call.getByText("Couldn't connect")).toBeVisible({ timeout: 20_000 });
-  await expect(call.getByRole("link", { name: "View transcript" })).toBeVisible();
-  // A conversation was opened and the failed call was recorded (no content).
+  // The composer turns into the voice bar; there's no separate call screen.
+  await expect(page.getByRole("group", { name: "Talking with Jarvis" })).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  // The test environment can't reach OpenAI's voice servers: the bar closes and the chat says why.
+  await expect(page.getByRole("alert")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("group", { name: "Talking with Jarvis" })).toHaveCount(0);
+  await expect(page.getByLabel("Message Jarvis")).toBeVisible();
+  // Still the same chat, and the call was recorded in that conversation (no content).
+  expect(page.url()).toBe(chatUrl);
+  const conversationId = chatUrl.split("/").pop();
   await expect
-    .poll(async () => (await queryAsUser<{ outcome: string }>(email, "select outcome from jarvis_runs where provider = 'openai-realtime'"))[0]?.outcome)
-    .toBe("error");
-  await call.getByRole("button", { name: "Done" }).click();
-  await expect(call).toHaveCount(0);
+    .poll(
+      async () =>
+        (
+          await queryAsUser<{ outcome: string; conversation_id: string }>(
+            email,
+            "select outcome, conversation_id from jarvis_runs where provider = 'openai-realtime'",
+          )
+        )[0],
+    )
+    .toMatchObject({ outcome: "error", conversation_id: conversationId });
 });
