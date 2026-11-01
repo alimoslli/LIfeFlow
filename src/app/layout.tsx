@@ -13,7 +13,8 @@ const newsreader = Newsreader({ variable: "--font-newsreader", subsets: ["latin"
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || "https://lifeflowweb.com"),
   title: { default: "LifeFlow", template: "%s · LifeFlow" },
-  description: "Your whole life, made simple. LifeFlow brings your money, school, work, health, and time into one calm place.",
+  description:
+    "LifeFlow is a personal planner and AI assistant that brings your calendar, tasks, schedules, money, goals, habits and health into one calm place.",
   applicationName: "LifeFlow",
   appleWebApp: { capable: true, title: "LifeFlow", statusBarStyle: "default" },
   icons: {
@@ -27,13 +28,13 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "LifeFlow",
     title: "LifeFlow — Your whole life, made simple.",
-    description: "A calm place for your money, school, work, health, and time.",
+    description: "A personal planner and AI assistant that brings your whole week into one calm place.",
     images: [{ url: "/brand/lifeflow-social.png", width: 1200, height: 630, alt: "LifeFlow" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "LifeFlow — Your whole life, made simple.",
-    description: "A calm place for your money, school, work, health, and time.",
+    description: "A personal planner and AI assistant that brings your whole week into one calm place.",
     images: ["/brand/lifeflow-social.png"],
   },
   formatDetection: { telephone: false },

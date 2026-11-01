@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: "LifeFlow",
     short_name: "LifeFlow",
-    description: "Your money, school, work and time, with a personal AI assistant.",
+    description: "A personal planner and AI assistant that brings your whole week into one calm place.",
     start_url: "/",
     scope: "/",
     display: "standalone",
