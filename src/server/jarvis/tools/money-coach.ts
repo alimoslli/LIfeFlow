@@ -2,7 +2,7 @@ import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { financialAccounts, financialGoals, transactions } from "../../db/schema";
 import { resolveCategory } from "../../services/finance/categories";
-import { applyRuleToPast } from "../../services/finance/categorize";
+import { applyRuleToPast, transactionsToReview } from "../../services/finance/categorize";
 import { debtReport, emergencyFundPlan, planPaycheck, roundUps, subscriptionReport } from "../../services/finance/coach";
 import { monthlyReport } from "../../services/finance/monthly-report";
 import { budgetWarnings, cashForecast } from "../../services/finance/forecast";
@@ -109,6 +109,47 @@ export const moneyCoachTools = [
         }
         const r = await applyBudgetPlan(s, { month: a.month ?? ctx.today, lines });
         return { saved: r.saved, viewAt: "/finances/budgets" };
+      });
+    },
+  }),
+  defineTool({
+    name: "transactions_to_review",
+    description:
+      "Transactions you're not sure about: no category, money in filed as spending, or money out filed as income, each with your best guess. Show them as a short numbered list and ask the user to confirm or correct in their own words.",
+    schema: z.object({}),
+    mutates: false,
+    async execute(_a, ctx) {
+      const r = await ctx.run((s) => transactionsToReview(s, ctx.today, 12));
+      return centsToDollarsDeep({ ...r, viewAt: "/finances/transactions" });
+    },
+  }),
+  defineTool({
+    name: "categorize_transactions",
+    description:
+      'Set categories for several transactions at once, from the user\'s reply to your list ("1 groceries, 3 rent, the rest are right" → one entry per transaction, using your best guess for the ones they accepted). Learns each merchant so future charges follow, and fixes earlier ones from the same merchant.',
+    schema: z.object({
+      items: z
+        .array(z.object({ id: idArg("Transaction"), category: z.string().min(1).max(80), kind: z.enum(TRANSACTION_KINDS).optional() }))
+        .min(1)
+        .max(25),
+    }),
+    mutates: true,
+    async execute(a, ctx) {
+      return ctx.run(async (s) => {
+        const done: { description: string; category: string }[] = [];
+        const failed: { id: string; reason: string }[] = [];
+        let pastUpdated = 0;
+        for (const it of a.items) {
+          const c = await resolveCategory(s, it.category);
+          if (!c) {
+            failed.push({ id: it.id, reason: `No category named "${it.category}". Use list_categories.` });
+            continue;
+          }
+          const row = await updateTransaction(s, it.id, { categoryId: c.category.id, kind: it.kind }, { learn: true });
+          if (row.learnedRule) pastUpdated += await applyRuleToPast(s, row.learnedRule.id);
+          done.push({ description: row.merchantName || row.description, category: c.category.name });
+        }
+        return { updated: done, failed, earlierFromSameMerchantsUpdated: pastUpdated, viewAt: "/finances/transactions" };
       });
     },
   }),

@@ -73,6 +73,7 @@ export async function answerText(
         provider: deps.provider(),
         moneyLocked,
         emit: (e) => {
+          if (e.type === "tool_start") text = ""; // one reply, not "let me check…" first
           if (e.type === "text") text += e.delta;
           if (e.type === "conversation") conversationId = e.id;
           if (e.type === "confirmation") {

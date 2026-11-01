@@ -43,6 +43,8 @@ export function toUiMessages(rows: Msg[], actions: Action[], atts: Att[], memory
       else a.text = a.text ? `${a.text}\n\n${m.content}` : m.content;
     } else if (m.role === "tool" && m.toolName) {
       const a = ensure(m.id);
+      // Text before a tool call was narration; the bubble keeps only the final answer.
+      a.text = "";
       const action = actions.find((x) => x.toolCallId === m.toolCallId);
       if (action) {
         a.confirmations.push({

@@ -39,12 +39,14 @@ test("Jarvis saves assignments and tasks that then appear in School and Tasks", 
     page,
     `/tool import_assignments {"items":[{"title":"Chapter 4 quiz","courseName":"psy101","kind":"quiz","dueDate":"${due}","dueTime":"23:59"},{"title":"Essay","courseName":"Underwater Basket Weaving","dueDate":"${due}"}]}`,
   );
-  await expect(page.getByText("Saved 1 assignment · 1 need a course")).toBeVisible();
+  // One final reply per turn; no tool chatter in the chat.
+  await expect(page.getByText(/^Done:/)).toHaveCount(1);
+  await expect(page.getByText("Saved 1 assignment · 1 need a course")).toHaveCount(0);
   await expect(page).toHaveURL(/\/jarvis\/[0-9a-f-]{36}$/);
   const conversationUrl = page.url();
 
   await askJarvis(page, `/tool create_tasks {"tasks":[{"title":"Study for PSY quiz","priority":"high","dueDate":"${due}","subtasks":["Re-read chapter 4"]}]}`);
-  await expect(page.getByText("Created 1 task")).toBeVisible();
+  await expect(page.getByText(/Study for PSY quiz/).first()).toBeVisible();
 
   // The saved records are real and visible in their modules.
   await page.goto("/school/due");
@@ -55,8 +57,8 @@ test("Jarvis saves assignments and tasks that then appear in School and Tasks", 
 
   // The conversation persists across reloads.
   await page.goto(conversationUrl);
-  await expect(page.getByText("Saved 1 assignment · 1 need a course")).toBeVisible();
-  await expect(page.getByText("Created 1 task")).toBeVisible();
+  await expect(page.getByText(/^Done:/).first()).toBeVisible();
+  await expect(page.getByText("Chapter 4 quiz", { exact: false }).first()).toBeVisible();
 });
 
 test("destructive Jarvis actions wait for explicit confirmation", async ({ page }) => {

@@ -34,7 +34,7 @@ test("an explicit request saves directly; dismissed suggestions are not used", a
   const email = await signUp(page, "Sam Cole");
   await page.goto("/jarvis");
   await askJarvis(page, `remember this please\n${save("Likes short answers.")}`);
-  await expect(page.getByText("Saved to memory", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText(/^Done:/).first()).toBeVisible();
   await expect(page.getByLabel("Memory suggestion")).toHaveCount(0);
 
   await askJarvis(page, save("Enjoys jazz."));

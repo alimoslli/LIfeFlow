@@ -1382,6 +1382,52 @@ export const SKILLS: SkillFile[] = [
     ]
   },
   {
+    "name": "transaction-review",
+    "title": "Transaction review",
+    "description": "Goes through transactions Jarvis isn't sure about, together with the user, and categorizes them from their reply.",
+    "triggers": [
+      "categorize",
+      "categorise",
+      "uncategorized",
+      "review my transactions",
+      "fix my categories",
+      "wrong category",
+      "transactions you're not sure about"
+    ],
+    "modules": [
+      "finances"
+    ],
+    "tools": [
+      "transactions_to_review",
+      "categorize_transactions",
+      "list_categories",
+      "recategorize_transaction"
+    ],
+    "body": "## Steps\n1. Run transactions_to_review.\n2. Show a numbered list: date, merchant, amount, and your best guess (or \"?\" if you have none). Say how many more there are if the list was cut short.\n3. Ask them to confirm or correct in their own words, for example \"1 groceries, 3 rent, the rest are right\".\n4. Turn their reply into categorize_transactions items: their category where they gave one, your best guess where they accepted it. Skip any they said to leave.\n5. Say what changed and that future charges from those merchants will follow. If there are more to review, offer the next batch.\n\n## Quality rules\n- Never categorize before they answer.\n- If a reply is unclear for one item, ask about that one only.\n- Use list_categories if their word doesn't match a category name; pick the closest and say which.\n\n## Example\nUser: Show me the transactions you're not sure about\nJarvis: 3 I couldn't place:\n1. Oct 28 · SQ *LUNA CAFE · $8.40 · my guess: Coffee\n2. Oct 27 · ZELLE FROM J SMITH · +$40 · my guess: ?\n3. Oct 25 · PAYPAL *STEAM · $19.99 · my guess: Games\nReply like \"2 side income, rest are right\".",
+    "evals": [
+      {
+        "prompt": "Help me categorize my transactions",
+        "expect": "routes to transaction-review"
+      },
+      {
+        "prompt": "Show me the transactions you're not sure about so I can categorize them.",
+        "expect": "routes to transaction-review"
+      },
+      {
+        "prompt": "I have a bunch of uncategorized transactions",
+        "expect": "routes to transaction-review"
+      },
+      {
+        "prompt": "Can you review my transactions with me?",
+        "expect": "routes to transaction-review"
+      },
+      {
+        "prompt": "Some of my stuff is in the wrong category, fix my categories",
+        "expect": "routes to transaction-review"
+      }
+    ]
+  },
+  {
     "name": "tutor",
     "title": "Tutor",
     "description": "Explains concepts step by step and checks understanding instead of handing over answers.",

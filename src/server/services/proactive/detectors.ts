@@ -16,6 +16,7 @@ import { listShifts } from "../work";
 import { getAgenda, freeSlots } from "../calendar";
 import { subscriptionsOverview } from "../finance/subscriptions";
 import { scanTransactions } from "../finance/findings";
+import { transactionsToReview } from "../finance/categorize";
 import { billsToReview, findSavings, listSavings } from "../finance/savings-finder";
 import { webSearchClient } from "../../integrations/web-search";
 import { eveningWrap, goalForecast, habitCoach, monthlyReview, morningBrief, weeklyLearned, weeklyReview } from "./reviews";
@@ -404,6 +405,22 @@ const moneyFinds: Detector = async ({ scope, today }) => {
   return out;
 };
 
+/** Jarvis asks instead of guessing: transactions he couldn't place, gone through together in chat. */
+const reviewTransactions: Detector = async ({ scope, today }) => {
+  const r = await transactionsToReview(scope, today, 1);
+  if (r.total < 3) return [];
+  return [
+    {
+      kind: "review_transactions",
+      topic: "money",
+      dedupeKey: `review_tx:${weekStart(today)}`,
+      facts: { count: r.total, example: r.items[0].description },
+      action: { type: "ask", label: "Categorize with Jarvis", prompt: "Show me the transactions you're not sure about so I can categorize them." },
+      priority: 45,
+    },
+  ];
+};
+
 /** Subscriptions: price increases, trials about to turn paid, and new recurring charges. */
 const subscriptionWatch: Detector = async ({ scope, today }) => {
   const o = await subscriptionsOverview(scope, today);
@@ -485,13 +502,14 @@ export const DETECTORS = {
   subscriptionWatch,
   savingsCheck,
   moneyFinds,
+  reviewTransactions,
 };
 export type DetectorName = keyof typeof DETECTORS;
 
 /** Which detectors run when. Events run right after the change that triggered them. */
 export const RUNS: Record<string, DetectorName[]> = {
   morning: ["emailBrief", "morningBrief", "monthlyReview", "savingsCheck", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
-  midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks", "subscriptionWatch", "moneyFinds"],
+  midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks", "subscriptionWatch", "moneyFinds", "reviewTransactions"],
   // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
   evening: ["eveningWrap", "weeklyReview", "weeklyLearned", "goalForecast", "habitCoach", "taskStreak", "goalMilestones", "deadlineConflicts"],
   transaction: ["spendingPace", "unusualSpend", "billsDue", "goalMilestones", "moneyFinds"],

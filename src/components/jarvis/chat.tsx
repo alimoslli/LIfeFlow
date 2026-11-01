@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   ArrowUp,
   Brain,
-  Check,
   CircleAlert,
   FileText,
   ImageIcon,
@@ -20,6 +19,7 @@ import {
 } from "lucide-react";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
+import { JarvisStatus, statusWord } from "./status";
 import { useShell } from "../shell/app-shell";
 import { Markdown } from "./markdown";
 import { VoiceButton } from "./voice-call";
@@ -155,7 +155,11 @@ export function JarvisChat({
               break;
             case "tool_start":
               setLastTool(ev.name);
-              updateAssistant((a) => void a.tools.push({ callId: ev.callId, name: ev.name, label: ev.label, status: "running" }));
+              // Anything said before a tool is narration ("Let me check…"); only the final answer stays.
+              updateAssistant((a) => {
+                a.text = "";
+                a.tools.push({ callId: ev.callId, name: ev.name, label: ev.label, status: "running" });
+              });
               break;
             case "tool_end":
               if (ev.ok) mutated = true;
@@ -402,7 +406,7 @@ export function JarvisChat({
               </button>
             )}
           </form>
-          <p className="mt-2 text-center text-[11px] text-muted">Jarvis shows everything it changes. Deletions always ask first.</p>
+          <p className="mt-2 text-center text-[11px] text-muted">Jarvis tells you everything it changes. Deletions always ask first.</p>
         </div>
       </div>
     </div>
@@ -438,44 +442,15 @@ function AssistantBubble({
   onDecide: (id: string, d: "confirm" | "cancel") => void;
   onMemory: (memoryId: string, d: "keep" | "dismiss") => void;
 }) {
-  const thinking = m.streaming && !m.text && m.tools.every((t) => t.status !== "running");
+  const working = m.streaming && !m.text;
+  const runningTool = [...m.tools].reverse().find((t) => t.status === "running")?.name;
   return (
     <div className="animate-fade-in flex gap-3">
       <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
         <Sparkles className="h-3.5 w-3.5" />
       </div>
       <div className="min-w-0 flex-1 space-y-2.5">
-        {m.tools.length > 0 && (
-          <ul className="flex flex-col gap-1.5">
-            {m.tools.map((t) => (
-              <li key={t.callId} className="flex w-fit max-w-full items-center gap-2 rounded-full bg-surface px-3 py-1.5 text-[13px] shadow-soft">
-                {t.status === "running" ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-muted" />
-                ) : t.status === "ok" ? (
-                  <Check className="lf-pop h-3.5 w-3.5 text-success" />
-                ) : (
-                  <CircleAlert className="h-3.5 w-3.5 text-danger" />
-                )}
-                <span className="text-text-2">{t.label}</span>
-                {t.summary && t.summary !== "Done" && (
-                  <span className={cn("truncate", t.status === "error" ? "text-danger" : "text-muted")}>· {t.summary}</span>
-                )}
-                {t.viewAt && t.status === "ok" && (
-                  <Link href={t.viewAt} className="shrink-0 text-accent hover:underline">
-                    View
-                  </Link>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-        {thinking && (
-          <div className="lf-wave flex items-center gap-1.5 py-1 text-muted" aria-label="Jarvis is thinking">
-            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-          </div>
-        )}
+        {working && <JarvisStatus word={statusWord(runningTool)} />}
         {m.text && <Markdown text={m.text} />}
         <SourceList tools={m.tools} />
         {!m.streaming && m.runId && m.text && <RateAnswer runId={m.runId} initial={m.rating ?? null} />}

@@ -1,4 +1,5 @@
-import { and, eq, inArray, isNull, ne } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lte, ne } from "drizzle-orm";
+import { addDaysStr } from "@/lib/dates";
 import { categories, categoryRules, transactions, type TransactionKind } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { notFound } from "../errors";
@@ -232,4 +233,48 @@ export async function categorizeUncategorized(scope: UserScope) {
     n++;
   }
   return n;
+}
+
+/**
+ * Transactions Jarvis isn't sure about, for him to ask the user (two-way, not guessed):
+ * no category, a deposit sitting in a spending category, or spending in an income one.
+ * Each comes with his best guess so the user can just say "yes" or correct it.
+ */
+export async function transactionsToReview(scope: UserScope, today: string, limit = 10) {
+  const rows = await scope.tx
+    .select({ t: transactions, categoryName: categories.name, categoryKind: categories.kind })
+    .from(transactions)
+    .leftJoin(categories, eq(categories.id, transactions.categoryId))
+    .where(
+      and(
+        eq(transactions.userId, scope.userId),
+        eq(transactions.pending, false),
+        ne(transactions.kind, "transfer"),
+        gte(transactions.date, addDaysStr(today, -60)),
+        lte(transactions.date, today),
+      ),
+    )
+    .orderBy(desc(transactions.date));
+  const items = rows.flatMap(({ t, categoryName, categoryKind }) => {
+    const reason = !t.categoryId
+      ? "no category"
+      : t.amountCents > 0 && categoryKind === "expense" && t.kind !== "refund"
+        ? "money in, filed as spending"
+        : t.amountCents < 0 && categoryKind === "income"
+          ? "money out, filed as income"
+          : null;
+    if (!reason) return [];
+    return [
+      {
+        id: t.id,
+        date: t.date,
+        description: t.merchantName || t.description,
+        amountCents: t.amountCents,
+        currentCategory: categoryName ?? null,
+        bestGuess: keywordCategory(t, t.amountCents),
+        reason,
+      },
+    ];
+  });
+  return { total: items.length, items: items.slice(0, limit) };
 }

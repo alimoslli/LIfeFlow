@@ -159,6 +159,12 @@ const KINDS: Record<string, (f: F) => Parts> = {
     ask: "Want to track it with your subscriptions?",
     mood: "info",
   }),
+  review_transactions: (f) => ({
+    headline: `${plural(n(f, "count"), "transaction")} need${n(f, "count") === 1 ? "s" : ""} a category`,
+    fact: `I'm not sure where ${n(f, "count") === 1 ? "one recent transaction goes" : `${n(f, "count")} recent transactions go`}, like ${s(f, "example")}. I'll show you my best guesses.`,
+    ask: "Want to go through them together? It takes a minute.",
+    mood: "info",
+  }),
   double_charge: (f) => ({
     headline: `Possible double charge: ${s(f, "merchant")}`,
     fact: `${s(f, "merchant")} charged you ${usd(n(f, "amountCents"))} twice, on ${s(f, "first")} and ${s(f, "second")}.`,
@@ -240,6 +246,7 @@ export const KIND_LABELS: Record<string, string> = {
   trial_ending: "Free trials ending",
   new_subscription: "New subscriptions",
   double_charge: "Possible double charges",
+  review_transactions: "Transactions to categorize",
   bank_fees: "Bank fees",
   savings_found: "Cheaper bills found",
   question: "Get-to-know questions",

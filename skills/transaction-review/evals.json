@@ -1,0 +1,7 @@
+[
+  { "prompt": "Help me categorize my transactions", "expect": "routes to transaction-review" },
+  { "prompt": "Show me the transactions you're not sure about so I can categorize them.", "expect": "routes to transaction-review" },
+  { "prompt": "I have a bunch of uncategorized transactions", "expect": "routes to transaction-review" },
+  { "prompt": "Can you review my transactions with me?", "expect": "routes to transaction-review" },
+  { "prompt": "Some of my stuff is in the wrong category, fix my categories", "expect": "routes to transaction-review" }
+]
