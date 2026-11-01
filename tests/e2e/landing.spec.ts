@@ -4,8 +4,9 @@ import { expect, test } from "@playwright/test";
 test("a signed-out visitor sees the landing page and can get started", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("heading", { level: 1 }).first()).toHaveText("Your whole life,");
+  await expect(page.getByRole("heading", { level: 1 }).first()).toHaveText("Your whole life, in flow.");
   await expect(page.locator("[data-app-loading]")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "See how it works" })).toHaveAttribute("href", "#how-it-works");
   await expect(page.getByRole("link", { name: "Get started" }).first()).toHaveAttribute("href", "/signup");
   await expect(page.getByRole("navigation", { name: "Account" }).getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
 

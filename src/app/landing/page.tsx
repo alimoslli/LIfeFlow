@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { BrandLockup } from "@/components/brand/brand-mark";
 import { CinematicHero } from "@/components/ui/cinematic-landing-hero";
 
@@ -54,7 +54,41 @@ export default function LandingPage() {
       </header>
 
       <main>
-        <CinematicHero />
+        {/* What LifeFlow is, in plain words, before anything moves. */}
+        <section className="mx-auto max-w-6xl px-5 pt-10 pb-14 sm:px-8 sm:pt-16 lg:pt-20">
+          <div className="max-w-4xl">
+            <p className="animate-rise text-sm font-medium text-accent">A personal planner and AI assistant</p>
+            <h1 className="animate-rise mt-4 font-display text-[48px] leading-[1.0] font-medium tracking-[-0.04em] text-balance sm:text-[80px] lg:text-[92px]">
+              Your whole life, in flow.
+            </h1>
+            <p className="animate-rise mt-6 max-w-2xl text-[18px] leading-relaxed text-text-2 sm:text-[20px]" style={{ animationDelay: "80ms" }}>
+              LifeFlow is one app for your classes, shifts, money, goals and health. Your personal assistant knows your week and plans around all of it.
+            </p>
+            <div className="animate-rise mt-9 flex flex-col items-start gap-4 sm:flex-row sm:items-center" style={{ animationDelay: "160ms" }}>
+              <Link href="/signup" className={button}>
+                Get started
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+              <a
+                href="#how-it-works"
+                className="inline-flex min-h-12 items-center gap-2 rounded-full px-0 text-[15px] font-medium text-text-2 transition-colors hover:text-text"
+              >
+                See how it works
+                <ChevronDown className="h-4 w-4 motion-safe:animate-bounce" aria-hidden />
+              </a>
+            </div>
+            <p className="animate-rise mt-4 text-sm text-muted" style={{ animationDelay: "220ms" }}>
+              Already have an account?{" "}
+              <Link href="/login" className="text-text-2 underline underline-offset-4 hover:text-text">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </section>
+
+        <div id="how-it-works" className="scroll-mt-0 border-t border-border">
+          <CinematicHero />
+        </div>
 
         {/* Jarvis */}
         <section className="border-t border-border">

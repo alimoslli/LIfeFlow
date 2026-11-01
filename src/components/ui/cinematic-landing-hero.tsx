@@ -204,12 +204,14 @@ export interface CinematicHeroProps extends React.HTMLAttributes<HTMLDivElement>
   metricLabel?: string;
   ctaHeading?: string;
   ctaDescription?: string;
+  /** How far the sequence scrolls before it ends, in pixels. */
+  scrollLength?: number;
 }
 
 export function CinematicHero({
   brandName = "LifeFlow",
-  tagline1 = "Your whole life,",
-  tagline2 = "in flow.",
+  tagline1 = "One app for",
+  tagline2 = "your whole week.",
   cardHeading = "Your week, in one place.",
   cardDescription = (
     <>
@@ -221,6 +223,7 @@ export function CinematicHero({
   metricLabel = "Days planned ahead",
   ctaHeading = "Start your week in order.",
   ctaDescription = "Create your account and your personal assistant will walk you through the rest.",
+  scrollLength = 4200,
   className,
   ...props
 }: CinematicHeroProps) {
@@ -278,6 +281,7 @@ export function CinematicHero({
         gsap.set([".hero-text-wrapper", ".cta-wrapper"], { autoAlpha: 0 });
         gsap.set([".mockup-scroll-wrapper", ".floating-badge", ".card-left-text", ".card-right-text", ".phone-widget"], { autoAlpha: 1 });
         gsap.set(".progress-ring", { strokeDashoffset: 60 });
+        gsap.set(".scroll-hint", { autoAlpha: 0 });
         const counter = containerRef.current?.querySelector(".counter-val");
         if (counter) counter.textContent = String(metricValue);
         return;
@@ -298,9 +302,9 @@ export function CinematicHero({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
-          end: "+=7000",
+          end: `+=${scrollLength}`,
           pin: true,
-          scrub: 1,
+          scrub: 0.6,
           anticipatePin: 1,
         },
       });
@@ -331,6 +335,7 @@ export function CinematicHero({
         )
         .fromTo(".card-left-text", { x: -50, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: 1.5 }, "-=1.5")
         .fromTo(".card-right-text", { x: 50, autoAlpha: 0, scale: 0.8 }, { x: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: 1.5 }, "<")
+        .to(".scroll-hint", { autoAlpha: 0, duration: 0.5 })
         .to({}, { duration: 2.5 })
         .set(".hero-text-wrapper", { autoAlpha: 0 })
         .set(".cta-wrapper", { autoAlpha: 1 })
@@ -361,7 +366,7 @@ export function CinematicHero({
     }, containerRef);
 
     return () => ctx.revert();
-  }, [metricValue]);
+  }, [metricValue, scrollLength]);
 
   return (
     <div
@@ -398,6 +403,24 @@ export function CinematicHero({
             <span className="text-lg font-semibold transition-transform group-hover:scale-105">I already have an account</span>
           </Link>
         </div>
+      </div>
+
+      {/* Tells people the sequence continues while they scroll. */}
+      <div className="scroll-hint pointer-events-none absolute inset-x-0 bottom-6 z-30 flex justify-center" aria-hidden="true">
+        <span className="flex items-center gap-2 rounded-full bg-surface/90 px-4 py-2 text-sm font-medium text-text-2 shadow-soft backdrop-blur-md">
+          Keep scrolling
+          <svg
+            className="h-4 w-4 motion-safe:animate-bounce"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </span>
       </div>
 
       {/* FOREGROUND LAYER: The Physical Deep Blue Card */}
