@@ -2,12 +2,13 @@
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { Flip } from "gsap/Flip";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 /**
  * The single place GSAP is configured. Import gsap, plugins and motion
  * tokens from here so every animation shares the same timing and feel.
  */
-if (typeof window !== "undefined") gsap.registerPlugin(useGSAP, Flip);
+if (typeof window !== "undefined") gsap.registerPlugin(useGSAP, Flip, ScrollTrigger);
 
 /** Motion tokens: quick, calm, never in the way. */
 export const MOTION = {
@@ -27,4 +28,4 @@ export function prefersReducedMotion(): boolean {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export { Flip, gsap, useGSAP };
+export { Flip, gsap, ScrollTrigger, useGSAP };
