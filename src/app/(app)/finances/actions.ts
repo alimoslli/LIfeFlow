@@ -1,6 +1,6 @@
 "use server";
 import { trashAction } from "../trash-actions";
-import { PlaidError, removeItem } from "@/server/integrations/plaid";
+import { PlaidError, removeItem, setPlaidAccountIncluded, syncConnection } from "@/server/integrations/plaid";
 import { applyBudgetPlan } from "@/server/services/finance/smart-budgets";
 import { contributeToGoal } from "@/server/services/finance/goals";
 import { todayIn } from "@/lib/dates";
@@ -248,4 +248,22 @@ export async function disconnectBankAction(integrationId: string): Promise<Actio
       throw e;
     }
   });
+}
+
+/** Turns a bank account off in LifeFlow (hidden, its bank transactions removed) or back on (re-imported now). */
+export async function setBankAccountUsedAction(id: string, use: boolean): Promise<ActionState> {
+  const done: { userId?: string; tz?: string; integrationId?: string } = {};
+  const res = await mutate(use ? "account.plaid.included" : "account.plaid.excluded", async (s, user) => {
+    try {
+      const r = await setPlaidAccountIncluded(s, id, use);
+      Object.assign(done, { userId: user.id, tz: user.timezone, integrationId: r.integrationId });
+      return use ? `${r.name} is back in LifeFlow.` : `${r.name} is off. Its bank transactions were removed from LifeFlow.`;
+    } catch (e) {
+      if (e instanceof PlaidError) throw new ServiceError(e.message);
+      throw e;
+    }
+  });
+  // Back on: import its transactions right away (the sync records its own errors on the connection).
+  if (use && res?.ok && done.userId && done.integrationId) await syncConnection(done.userId, done.integrationId, done.tz ?? "UTC").catch(() => undefined);
+  return res;
 }

@@ -1,16 +1,16 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
-import { Archive, Landmark } from "lucide-react";
+import { Archive, EyeOff, Landmark } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Badge, Card, CardHeader, EmptyState, Money, SourceBadge } from "@/components/ui/surface";
 import { formatIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
-import { listAccounts, summarizeBalances } from "@/server/services/finance/accounts";
+import { listAccounts, listTurnedOffAccounts, summarizeBalances } from "@/server/services/finance/accounts";
 import { BankConnections } from "@/components/finance/bank-connections";
 import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
-import { archiveAccountAction, createAccountAction, disconnectBankAction, updateAccountDetailsAction } from "../actions";
+import { archiveAccountAction, createAccountAction, disconnectBankAction, setBankAccountUsedAction, updateAccountDetailsAction } from "../actions";
 
 export const metadata: Metadata = { title: "Accounts" };
 
@@ -26,7 +26,12 @@ const TYPE_LABEL: Record<string, string> = {
 export default async function AccountsPage() {
   const locked = await moneyGate();
   if (locked) return locked;
-  const d = await withCurrentUser(async (s, u) => ({ accounts: await listAccounts(s), banks: await listPlaidConnections(s), tz: u.timezone }));
+  const d = await withCurrentUser(async (s, u) => ({
+    accounts: await listAccounts(s),
+    off: await listTurnedOffAccounts(s),
+    banks: await listPlaidConnections(s),
+    tz: u.timezone,
+  }));
   const totals = summarizeBalances(d.accounts);
   const groups = Object.keys(TYPE_LABEL)
     .map((t) => ({ type: t, items: d.accounts.filter((a) => a.type === t) }))
@@ -122,14 +127,26 @@ export default async function AccountsPage() {
                         </SubmitButton>
                       </ActionForm>
                       <div className="mt-2">
-                        <ActionButton
-                          action={archiveAccountAction.bind(null, a.id)}
-                          confirm={`Archive ${a.name}? Its transactions are kept.`}
-                          title={`Archive ${a.name}`}
-                          className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-muted hover:text-text"
-                        >
-                          <Archive className="h-3.5 w-3.5" /> Archive
-                        </ActionButton>
+                        {a.source === "plaid" ? (
+                          // Bank accounts: off stays off through every sync, and can be turned back on below.
+                          <ActionButton
+                            action={setBankAccountUsedAction.bind(null, a.id, false)}
+                            confirm={`Stop using ${a.name} in LifeFlow? It's hidden and its bank transactions are removed. You can turn it back on any time.`}
+                            title={`Stop using ${a.name}`}
+                            className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-muted hover:text-text"
+                          >
+                            <EyeOff className="h-3.5 w-3.5" /> Don&apos;t use in LifeFlow
+                          </ActionButton>
+                        ) : (
+                          <ActionButton
+                            action={archiveAccountAction.bind(null, a.id)}
+                            confirm={`Archive ${a.name}? Its transactions are kept.`}
+                            title={`Archive ${a.name}`}
+                            className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-muted hover:text-text"
+                          >
+                            <Archive className="h-3.5 w-3.5" /> Archive
+                          </ActionButton>
+                        )}
                       </div>
                     </details>
                   </li>
@@ -137,6 +154,28 @@ export default async function AccountsPage() {
               </ul>
             </Card>
           ))}
+          {d.off.length > 0 && (
+            <Card>
+              <CardHeader title="Not used in LifeFlow" />
+              <ul className="divide-y divide-border">
+                {d.off.map((a) => (
+                  <li key={a.id} className="flex items-center gap-3 px-5 py-3">
+                    <p className="min-w-0 flex-1 text-sm text-text-2">
+                      {a.name}
+                      {a.mask && <span className="ml-1.5 text-xs text-muted">••{a.mask}</span>}
+                    </p>
+                    <ActionButton
+                      action={setBankAccountUsedAction.bind(null, a.id, true)}
+                      title={`Use ${a.name} again`}
+                      className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium"
+                    >
+                      Use again
+                    </ActionButton>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
         </div>
         <div className="flex flex-col gap-5">
           <Card className="p-5">

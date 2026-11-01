@@ -473,6 +473,8 @@ export const financialAccounts = pgTable(
     nextPaymentDueDate: date("next_payment_due_date", { mode: "string" }),
     balanceUpdatedAt: tstz("balance_updated_at").notNull().defaultNow(),
     archivedAt: tstz("archived_at"),
+    /** The user turned this bank account off in LifeFlow: syncs keep it hidden and skip its transactions. */
+    excludedAt: tstz("excluded_at"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

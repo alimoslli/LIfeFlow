@@ -2,9 +2,9 @@ import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, ArrowDownLeft, ArrowRight, ArrowUpRight, Landmark, Wallet } from "lucide-react";
-import { LineChart } from "@/components/charts/line-chart";
+import { CashOutlook } from "@/components/finance/cash-outlook";
 import { CountUp } from "@/components/motion/count-up";
-import { addDaysStr, formatDateStr, formatIn, todayIn } from "@/lib/dates";
+import { addDaysStr, formatDateStr, formatIn, monthStart, todayIn } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
@@ -12,7 +12,8 @@ import { series } from "@/server/db/series";
 import { budgetWarnings, cashForecast } from "@/server/services/finance/forecast";
 import { recordNetWorth } from "@/server/services/finance/investing";
 import { moneyOverview } from "@/server/services/finance/overview";
-import { spendingByCategory, upcomingRecurring } from "@/server/services/finance/planning";
+import { spendingSummary } from "@/server/services/finance/insights";
+import { spendingByCategory } from "@/server/services/finance/planning";
 import { PlaidLinkButton } from "@/components/finance/plaid-link";
 import { plaidConfig } from "@/server/integrations/plaid";
 
@@ -28,11 +29,15 @@ export default async function MoneyPage() {
     const o = await moneyOverview(s, today);
     if (!o.hasAccounts) return { empty: true as const, plaidReady: !!plaidConfig() };
     await recordNetWorth(s, today);
-    const [forecast, warnings, categories, bills] = await series(
+    // Last month, so the first days of a month never read as just $0.
+    const lastTo = addDaysStr(monthStart(today), -1);
+    const lastFrom = monthStart(lastTo);
+    const [forecast, warnings, categories, last, lastCategories] = await series(
       () => cashForecast(s, today, 30),
       () => budgetWarnings(s, today),
       () => spendingByCategory(s, o.month.period.from, o.month.period.to),
-      () => upcomingRecurring(s, today, addDaysStr(today, 30)),
+      () => spendingSummary(s, { from: lastFrom, to: lastTo }),
+      () => spendingByCategory(s, lastFrom, lastTo),
     );
     return {
       empty: false as const,
@@ -40,7 +45,9 @@ export default async function MoneyPage() {
       forecast,
       warnings,
       categories,
-      bills: bills.filter((b) => b.amountCents < 0),
+      last,
+      lastCategories,
+      lastLabel: formatDateStr(lastFrom, "MMMM"),
       today,
       tz: u.timezone,
     };
@@ -82,8 +89,12 @@ export default async function MoneyPage() {
         href: "/finances/budgets",
       })),
   ].slice(0, 4);
-  const topCats = d.categories.filter((c) => c.cents > 0).slice(0, 5);
-  const maxCat = Math.max(1, ...topCats.map((c) => c.cents));
+  // Early in a month there's little to show yet: show last month instead.
+  const early = Number(d.today.slice(8)) <= 7 || !d.categories.some((c) => c.cents > 0);
+  const shown = (early ? d.lastCategories : d.categories).filter((c) => c.cents > 0).slice(0, 5);
+  const lastByName = new Map(d.lastCategories.map((c) => [c.name, c.cents]));
+  const maxCat = Math.max(1, ...shown.map((c) => c.cents));
+  const lastShort = d.lastLabel.slice(0, 3);
   const asOf = o.balances.asOf ? formatIn(o.balances.asOf, d.tz, "MMM d, h:mm a") : null;
 
   return (
@@ -120,7 +131,18 @@ export default async function MoneyPage() {
               <p className="tabular relative mt-1 font-display text-[54px] leading-none font-medium tracking-tight">
                 <CountUp cents={o.balances.cashCents} />
               </p>
-              <p className="relative mt-2 text-sm opacity-80">In checking and cash. Savings and cards are under Accounts.</p>
+              <p className="relative mt-2 text-sm opacity-80">In checking and cash. Savings are under Accounts.</p>
+              {o.balances.creditOwedCents > 0 && (
+                // Cards: what's owed, and what checking would hold after paying them off.
+                <Link href="/finances/accounts" className="relative mt-3 flex items-center justify-between gap-3 rounded-2xl bg-white/10 px-3.5 py-2.5 text-sm">
+                  <span>
+                    Cards owed <span className="tabular font-medium">{whole(o.balances.creditOwedCents)}</span>
+                  </span>
+                  <span className="opacity-85">
+                    After paying: <span className="tabular font-medium">{whole(o.balances.cashCents - o.balances.creditOwedCents)}</span>
+                  </span>
+                </Link>
+              )}
             </div>
             <div className="grid grid-cols-2 divide-x divide-white/15 border-t border-white/15">
               <Stat
@@ -130,6 +152,7 @@ export default async function MoneyPage() {
                   </>
                 }
                 cents={m.netSpendingCents}
+                sub={`${lastShort} ${whole(d.last.netSpendingCents)}`}
               />
               <Stat
                 label={
@@ -138,6 +161,7 @@ export default async function MoneyPage() {
                   </>
                 }
                 cents={m.incomeCents}
+                sub={`${lastShort} ${whole(d.last.incomeCents)}`}
               />
             </div>
             <p className="relative border-t border-white/15 px-6 py-2.5 text-xs opacity-75">
@@ -173,66 +197,39 @@ export default async function MoneyPage() {
           </section>
         )}
 
-        <section className="animate-rise" style={{ animationDelay: "180ms" }} aria-label="Cash forecast">
-          <Title href="/finances/bills">Next 30 days in checking</Title>
+        <section className="animate-rise" style={{ animationDelay: "180ms" }} aria-label="Next 30 days">
+          <Title href="/finances/bills">Next 30 days</Title>
           <div data-tilt className="rounded-3xl bg-surface p-5 shadow-soft">
-            <p className="text-sm text-text-2">
-              Lowest point {whole(forecast.lowestWithoutPay.cents)} on {formatDateStr(forecast.lowestWithoutPay.date, "MMM d")} if no pay arrives
-              {forecast.expectedPay.length ? `, ${whole(forecast.lowestWithPay.cents)} with expected pay` : ""}.
-            </p>
-            <div className="mt-4">
-              <LineChart
-                label="Projected checking balance for the next 30 days"
-                series={[
-                  { name: "Without pay", points: forecast.points.map((p) => ({ date: p.date, cents: p.withoutPayCents })), className: "stroke-accent" },
-                  ...(forecast.expectedPay.length
-                    ? [
-                        {
-                          name: "With expected pay",
-                          dashed: true,
-                          points: forecast.points.map((p) => ({ date: p.date, cents: p.withPayCents })),
-                          className: "stroke-muted",
-                        },
-                      ]
-                    : []),
-                ]}
-              />
-            </div>
-            <p className="mt-3 text-xs text-muted">
-              Includes {forecast.bills.length} tracked bill{forecast.bills.length === 1 ? "" : "s"} and about {whole(forecast.typicalDailySpendCents)} a day of
-              usual spending.
-            </p>
+            <CashOutlook
+              cashCents={o.balances.cashCents}
+              bills={forecast.bills}
+              dailySpendCents={forecast.typicalDailySpendCents}
+              days={30}
+              expectedPay={forecast.expectedPay}
+            />
           </div>
         </section>
 
-        {topCats.length > 0 && (
+        {shown.length > 0 && (
           <section className="animate-rise" style={{ animationDelay: "220ms" }} aria-label="Where it went">
-            <Title href="/finances/transactions">Where it went, {m.period.label}</Title>
+            <Title href="/finances/transactions">{early ? `Where it went in ${d.lastLabel}` : `Where it went, ${m.period.label}`}</Title>
             <ul data-tilt className="flex flex-col gap-4 rounded-3xl bg-surface p-5 shadow-soft">
-              {topCats.map((c) => (
+              {shown.map((c) => (
                 <li key={c.name}>
-                  <div className="mb-1.5 flex justify-between text-[15px]">
-                    <span>{c.name}</span>
-                    <span className="tabular text-text-2">{whole(c.cents)}</span>
+                  <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[15px]">
+                    <span className="min-w-0 truncate">{c.name}</span>
+                    <span className="tabular shrink-0">
+                      {whole(c.cents)}
+                      {!early && lastByName.has(c.name) && (
+                        <span className="ml-1.5 text-xs text-muted">
+                          {lastShort} {whole(lastByName.get(c.name)!)}
+                        </span>
+                      )}
+                    </span>
                   </div>
-                  <div className="h-1.5 rounded-full bg-surface-2">
-                    <div className="lf-grow h-1.5 rounded-full bg-accent" style={{ width: `${(c.cents / maxCat) * 100}%` }} />
+                  <div className="h-2 rounded-full bg-surface-2">
+                    <div className="lf-grow h-2 rounded-full bg-accent" style={{ width: `${(c.cents / maxCat) * 100}%` }} />
                   </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {d.bills.length > 0 && (
-          <section className="animate-rise" style={{ animationDelay: "260ms" }} aria-label="Bills">
-            <Title href="/finances/bills">Bills in the next 30 days</Title>
-            <ul data-tilt className="flex flex-col divide-y divide-border rounded-3xl bg-surface px-5 shadow-soft">
-              {d.bills.slice(0, 6).map((c) => (
-                <li key={`${c.id}${c.date}`} className="flex items-center gap-4 py-3.5">
-                  <span className="tabular w-14 shrink-0 text-sm text-muted">{formatDateStr(c.date, "MMM d")}</span>
-                  <span className="flex-1 line-clamp-2 break-words text-[15px]">{c.name}</span>
-                  <span className="tabular text-[15px]">{whole(-c.amountCents)}</span>
                 </li>
               ))}
             </ul>
@@ -243,13 +240,14 @@ export default async function MoneyPage() {
   );
 }
 
-function Stat({ label, cents }: { label: React.ReactNode; cents: number }) {
+function Stat({ label, cents, sub }: { label: React.ReactNode; cents: number; sub: string }) {
   return (
     <div className="p-4">
       <p className="flex items-center gap-1 text-xs opacity-75">{label}</p>
       <p className="tabular mt-1 text-lg font-medium">
         <CountUp cents={cents} />
       </p>
+      <p className="tabular mt-0.5 text-xs opacity-70">{sub}</p>
     </div>
   );
 }

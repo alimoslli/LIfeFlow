@@ -9,11 +9,14 @@ import {
   listPlaidConnections,
   mapPfc,
   ownerOfItem,
+  reconnectLinkToken,
   removeItem,
+  setPlaidAccountIncluded,
   syncConnection,
   verifyWebhook,
 } from "@/server/integrations/plaid";
 import { moneyOverview } from "@/server/services/finance/overview";
+import { listAccounts, listTurnedOffAccounts } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
 import { makeUser, TZ } from "../helpers";
 
@@ -41,7 +44,9 @@ const txn = (id: string, amount: number, extra: Record<string, unknown> = {}) =>
 });
 
 /** A small stand-in for Plaid's API. `pages` are successive /transactions/sync responses. */
-function fakePlaid(opts: { pages?: unknown[]; loginRequired?: boolean; noInvestments?: boolean } = {}) {
+function fakePlaid(
+  opts: { pages?: unknown[]; loginRequired?: boolean; noInvestments?: boolean; only?: string[]; failLiabilities?: boolean; noLiveBalance?: boolean } = {},
+) {
   const calls: { path: string; body: Record<string, unknown> }[] = [];
   let page = 0;
   const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json" } });
@@ -55,6 +60,9 @@ function fakePlaid(opts: { pages?: unknown[]; loginRequired?: boolean; noInvestm
         return json({ link_token: "link-sandbox-123", expiration: "2026-10-28T20:00:00Z" });
       case "/item/public_token/exchange":
         return json({ access_token: "access-sandbox-abc", item_id: "item-1" });
+      case "/accounts/balance/get":
+        if (opts.noLiveBalance) return json({ error_code: "PRODUCTS_NOT_SUPPORTED" }, 400);
+      // falls through: same accounts, live balances
       case "/accounts/get":
         return json({
           accounts: [
@@ -85,7 +93,7 @@ function fakePlaid(opts: { pages?: unknown[]; loginRequired?: boolean; noInvestm
               subtype: "ira",
               balances: { available: null, current: 5000, limit: null, iso_currency_code: "USD" },
             },
-          ],
+          ].filter((a) => !opts.only || opts.only.includes(a.account_id)),
         });
       case "/transactions/sync": {
         const pages = opts.pages ?? [
@@ -106,6 +114,7 @@ function fakePlaid(opts: { pages?: unknown[]; loginRequired?: boolean; noInvestm
           securities: [{ security_id: "sec-vti", name: "Vanguard Total Stock Market ETF", ticker_symbol: "VTI", type: "etf" }],
         });
       case "/liabilities/get":
+        if (opts.failLiabilities) return json({ error_code: "INTERNAL_SERVER_ERROR", error_type: "API_ERROR" }, 500);
         return json({
           liabilities: {
             credit: [
@@ -227,6 +236,63 @@ describe("Plaid", () => {
     await expect(syncConnection(user.id, item.id, TZ, bad.f)).rejects.toThrow(/sign in again/);
     const [conn] = await run(listPlaidConnections);
     expect(conn).toMatchObject({ status: "error", lastError: expect.stringMatching(/Reconnect/) });
+  });
+
+  it("lets the user turn a bank account off: hidden, its bank data removed, still off after syncs, back on re-imports", async () => {
+    const { user, run, item, fake } = await connected();
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    const checking = (await run((s) => s.tx.select().from(financialAccounts).where(eq(financialAccounts.userId, user.id)))).find(
+      (a) => a.providerAccountId === "acc-checking",
+    )!;
+    await run((s) => setPlaidAccountIncluded(s, checking.id, false));
+    const visible = async () => (await run((s) => listAccounts(s))).map((a) => a.name).sort();
+    const txCount = async () => (await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)))).length;
+    expect(await visible()).toEqual(["Plaid Credit Card", "Plaid IRA"]);
+    expect(await txCount()).toBe(0);
+    expect((await run(listTurnedOffAccounts)).map((a) => a.name)).toEqual(["Plaid Checking"]);
+
+    // Syncs keep it off and skip its transactions.
+    const stats = await syncConnection(user.id, item.id, TZ, fake.f);
+    expect(stats.accounts).toBe(2);
+    expect(await visible()).toEqual(["Plaid Credit Card", "Plaid IRA"]);
+    expect(await txCount()).toBe(0);
+    expect((await run((s) => moneyOverview(s, "2026-10-28"))).balances.cashCents).toBe(0);
+
+    // Back on: the next sync starts over and brings its transactions back.
+    await run((s) => setPlaidAccountIncluded(s, checking.id, true));
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    expect(await visible()).toEqual(["Plaid Checking", "Plaid Credit Card", "Plaid IRA"]);
+    expect(await txCount()).toBe(2);
+    expect(fake.calls.filter((c) => c.path === "/transactions/sync").at(-1)?.body.cursor).toBeUndefined();
+  });
+
+  it("hides accounts the bank stops sharing (Choose accounts), and asks Plaid to let the user choose", async () => {
+    const { user, run, item, fake } = await connected();
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    const fewer = fakePlaid({ only: ["acc-card"] });
+    await syncConnection(user.id, item.id, TZ, fewer.f);
+    expect((await run((s) => listAccounts(s))).map((a) => a.name)).toEqual(["Plaid Credit Card"]);
+    expect(await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)))).toHaveLength(0);
+    // No investment accounts left: the paid investments product isn't asked for.
+    expect(fewer.calls.some((c) => c.path === "/investments/holdings/get")).toBe(false);
+
+    const link = fakePlaid();
+    await run((s) => reconnectLinkToken(s, item.id, link.f, { accountSelection: true }));
+    expect(link.calls[0].body).toMatchObject({ access_token: "access-sandbox-abc", update: { account_selection_enabled: true } });
+  });
+
+  it("a problem with an optional product never throws away the sync; Sync now asks for live balances", async () => {
+    const { user, run, item } = await connected();
+    const flaky = fakePlaid({ failLiabilities: true });
+    const stats = await syncConnection(user.id, item.id, TZ, flaky.f, { live: true });
+    expect(stats).toMatchObject({ accounts: 3, added: 2, liabilities: 0 });
+    expect(flaky.calls.some((c) => c.path === "/accounts/balance/get")).toBe(true);
+    expect((await run((s) => moneyOverview(s, "2026-10-28"))).balances.creditOwedCents).toBe(41_000);
+
+    // Live balances not available: falls back to Plaid's saved copy.
+    const noLive = fakePlaid({ noLiveBalance: true });
+    expect(await syncConnection(user.id, item.id, TZ, noLive.f, { live: true })).toMatchObject({ accounts: 3 });
+    expect(noLive.calls.map((c) => c.path)).toContain("/accounts/get");
   });
 
   it("disconnecting removes the item at Plaid and its synced data here", async () => {

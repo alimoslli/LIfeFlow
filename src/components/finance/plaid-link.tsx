@@ -42,7 +42,7 @@ async function post<T>(url: string, body: unknown): Promise<T> {
 }
 
 /** Shared Link flow: get a token, open Plaid, then exchange (new) or refresh (reconnect). */
-function useLink(reconnect?: string) {
+function useLink(reconnect?: string, chooseAccounts?: boolean) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
@@ -63,7 +63,7 @@ function useLink(reconnect?: string) {
                 institutionName: metadata.institution?.name ?? null,
               },
             );
-            const connectedLabel = reconnect ? "Reconnected" : `${r.name} connected`;
+            const connectedLabel = chooseAccounts ? "Accounts updated" : reconnect ? "Reconnected" : `${r.name} connected`;
             setStatus({
               ok: true,
               text: r.synced
@@ -87,14 +87,14 @@ function useLink(reconnect?: string) {
       });
       handler.open();
     },
-    [reconnect, router],
+    [reconnect, chooseAccounts, router],
   );
 
   const start = useCallback(async () => {
     setBusy(true);
     setStatus(null);
     try {
-      const { linkToken } = await post<{ linkToken: string }>("/api/integrations/plaid/link-token", reconnect ? { reconnect } : {});
+      const { linkToken } = await post<{ linkToken: string }>("/api/integrations/plaid/link-token", reconnect ? { reconnect, chooseAccounts } : {});
       try {
         sessionStorage.setItem(TOKEN_KEY, linkToken);
       } catch {}
@@ -103,7 +103,7 @@ function useLink(reconnect?: string) {
       setBusy(false);
       setStatus({ ok: false, text: (e as Error).message });
     }
-  }, [reconnect, run]);
+  }, [reconnect, chooseAccounts, run]);
 
   return { busy, status, start, run };
 }
@@ -115,15 +115,18 @@ function useLink(reconnect?: string) {
 export function PlaidLinkButton({
   configured,
   reconnect,
+  chooseAccounts,
   children,
   className,
 }: {
   configured: boolean;
   reconnect?: string;
+  /** With `reconnect`: change which accounts this bank shares (add a card, drop a savings account). */
+  chooseAccounts?: boolean;
   children?: ReactNode;
   className?: string;
 }) {
-  const { busy, status, start } = useLink(reconnect);
+  const { busy, status, start } = useLink(reconnect, chooseAccounts);
   if (!configured) return <p className="text-sm text-warning">Bank connections aren&apos;t available yet. You can add accounts by hand meanwhile.</p>;
   return (
     <div className="flex flex-col gap-2">

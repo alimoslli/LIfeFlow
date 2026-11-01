@@ -3,7 +3,8 @@ import { askJarvis, queryAsUser, signUp } from "./helpers";
 
 test("sign up, reach Home, and manage a task end to end", async ({ page }) => {
   const email = await signUp(page);
-  await expect(page.getByRole("region", { name: /plan for today/ })).toContainText("Nothing is due today or overdue");
+  await expect(page.getByRole("region", { name: "Do today" })).toContainText("Nothing due");
+  await expect(page.getByRole("region", { name: "Up next" })).toBeVisible();
 
   await page.goto("/tasks");
   await page.getByLabel("To-do title").fill("Renew parking permit");
@@ -11,11 +12,11 @@ test("sign up, reach Home, and manage a task end to end", async ({ page }) => {
   await expect(page.getByRole("status").filter({ hasText: 'Added "Renew parking permit"' })).toBeVisible();
   await expect(page.getByRole("link", { name: /Renew parking permit/ })).toBeVisible();
 
-  // Today's plan points at it; it's checked off in To-dos (its one home).
+  // Today lists it under "Do today", and it can be ticked off right there.
   await page.goto("/");
-  await expect(page.getByRole("region", { name: /plan for today/ })).toContainText("Start with Renew parking permit");
-  await page.goto("/tasks");
-  await page.getByRole("checkbox", { name: 'Mark "Renew parking permit" done' }).click();
+  const doToday = page.getByRole("region", { name: "Do today" });
+  await expect(doToday).toContainText("Renew parking permit");
+  await doToday.getByRole("checkbox", { name: 'Mark "Renew parking permit" done' }).click();
   await expect
     .poll(async () => (await queryAsUser<{ status: string }>(email, "select status from tasks where title = 'Renew parking permit'"))[0]?.status)
     .toBe("done");

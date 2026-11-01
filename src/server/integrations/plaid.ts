@@ -1,5 +1,5 @@
 import { createHash, createPublicKey, verify as verifySig, type JsonWebKey } from "node:crypto";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
 import { todayIn } from "@/lib/dates";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { connectionRegistry, financialAccounts, holdings, integrations, syncJobs, transactions, type AccountType, type TransactionKind } from "../db/schema";
@@ -48,16 +48,6 @@ export function plaidConfig(env: Record<string, string | undefined> = process.en
   };
 }
 
-const SKIPPABLE = new Set([
-  "PRODUCTS_NOT_SUPPORTED",
-  "PRODUCT_NOT_ENABLED",
-  "NO_INVESTMENT_ACCOUNTS",
-  "NO_LIABILITY_ACCOUNTS",
-  "ADDITIONAL_CONSENT_REQUIRED",
-  "PRODUCT_NOT_READY",
-  "INVALID_PRODUCT",
-  "NO_ACCOUNTS",
-]);
 const REAUTH = new Set(["ITEM_LOGIN_REQUIRED", "PENDING_EXPIRATION", "ACCESS_NOT_GRANTED", "INVALID_ACCESS_TOKEN"]);
 
 async function call<T>(path: string, body: Record<string, unknown>, f: Fetch = fetch): Promise<T> {
@@ -93,7 +83,7 @@ async function call<T>(path: string, body: Record<string, unknown>, f: Fetch = f
 
 // ------------------------------------------------------------ connect
 
-export async function createLinkToken(userId: string, opts: { accessToken?: string } = {}, f?: Fetch) {
+export async function createLinkToken(userId: string, opts: { accessToken?: string; accountSelection?: boolean } = {}, f?: Fetch) {
   const cfg = plaidConfig();
   const r = await call<{ link_token: string; expiration: string }>(
     "/link/token/create",
@@ -103,7 +93,8 @@ export async function createLinkToken(userId: string, opts: { accessToken?: stri
       country_codes: ["US"],
       language: "en",
       ...(opts.accessToken
-        ? { access_token: opts.accessToken } // update mode: re-authenticate an existing connection
+        ? // Update mode: sign in again, or (accountSelection) change which accounts the bank shares.
+          { access_token: opts.accessToken, ...(opts.accountSelection && { update: { account_selection_enabled: true } }) }
         : { products: ["transactions"], transactions: { days_requested: 730 } }),
       ...(cfg?.webhookUrl && { webhook: cfg.webhookUrl }),
       ...(cfg?.redirectUri && { redirect_uri: cfg.redirectUri }),
@@ -160,10 +151,46 @@ export async function listPlaidConnections(scope: UserScope) {
   return rows.map(({ encryptedCredentials: _c, ...r }) => r);
 }
 
-/** Link token for re-authenticating a connection that needs attention. */
-export async function reconnectLinkToken(scope: UserScope, integrationId: string, f?: Fetch) {
+/** Link token for an existing connection: sign in again, or choose which accounts it shares. */
+export async function reconnectLinkToken(scope: UserScope, integrationId: string, f?: Fetch, opts: { accountSelection?: boolean } = {}) {
   const row = await getItem(scope, integrationId);
-  return createLinkToken(scope.userId, { accessToken: readCreds(row).accessToken }, f);
+  return createLinkToken(scope.userId, { accessToken: readCreds(row).accessToken, accountSelection: opts.accountSelection }, f);
+}
+
+/**
+ * Turns one bank account on or off in LifeFlow. Off: it's hidden everywhere, its synced
+ * transactions and holdings are removed, and later syncs keep it off. On again: the next
+ * sync re-imports it from the start (the connection's cursor is reset).
+ */
+export async function setPlaidAccountIncluded(scope: UserScope, accountId: string, include: boolean) {
+  const [acc] = await scope.tx
+    .select({ id: financialAccounts.id, integrationId: financialAccounts.integrationId, name: financialAccounts.name })
+    .from(financialAccounts)
+    .where(and(eq(financialAccounts.id, accountId), eq(financialAccounts.userId, scope.userId), eq(financialAccounts.source, "plaid")));
+  if (!acc?.integrationId) throw new PlaidError("That bank account wasn't found.", "NOT_FOUND");
+  if (include) {
+    await scope.tx.update(financialAccounts).set({ excludedAt: null, archivedAt: null }).where(eq(financialAccounts.id, acc.id));
+    const item = await getItem(scope, acc.integrationId);
+    const creds = readCreds(item);
+    await scope.tx
+      .update(integrations)
+      .set({ encryptedCredentials: encryptSecret(JSON.stringify({ ...creds, cursor: null } satisfies Creds)) })
+      .where(eq(integrations.id, item.id));
+  } else {
+    const now = new Date();
+    await scope.tx.update(financialAccounts).set({ excludedAt: now, archivedAt: now }).where(eq(financialAccounts.id, acc.id));
+    await removeSyncedData(scope, [acc.id]);
+  }
+  return { id: acc.id, name: acc.name, integrationId: acc.integrationId };
+}
+
+/** Deletes the synced transactions and holdings of these accounts (bank data only; nothing the user typed in). */
+async function removeSyncedData(scope: UserScope, accountIds: string[]) {
+  if (!accountIds.length) return;
+  await scope.tx
+    .delete(transactions)
+    .where(and(eq(transactions.userId, scope.userId), eq(transactions.source, "plaid"), inArray(transactions.accountId, accountIds)));
+  await scope.tx.delete(holdings).where(and(eq(holdings.userId, scope.userId), eq(holdings.source, "plaid"), inArray(holdings.accountId, accountIds)));
 }
 
 async function getItem(scope: UserScope, integrationId: string) {
@@ -287,11 +314,12 @@ export function pickCategory(pfc: { category: string | null; kind: TransactionKi
 export type SyncResult = { accounts: number; added: number; modified: number; removed: number; holdings: number; liabilities: number };
 
 /** Pulls balances, new/changed/removed transactions, holdings and debt details for one connection. */
-export async function syncItem(scope: UserScope, integrationId: string, tz: string, f?: Fetch): Promise<SyncResult> {
+/** `live`: ask the bank for current balances now (a "Sync now" tap), instead of Plaid's last saved copy. */
+export async function syncItem(scope: UserScope, integrationId: string, tz: string, f?: Fetch, opts: { live?: boolean } = {}): Promise<SyncResult> {
   const item = await getItem(scope, integrationId);
   const creds = readCreds(item);
   const started = new Date();
-  const result = await runSync(scope, item.id, creds, f);
+  const result = await runSync(scope, item.id, creds, f, opts);
   await scope.tx
     .update(integrations)
     .set({ status: "connected", lastError: null, lastSyncedAt: new Date(), encryptedCredentials: encryptSecret(JSON.stringify(result.creds)) })
@@ -308,9 +336,9 @@ export async function syncItem(scope: UserScope, integrationId: string, tz: stri
  * separate transaction (the sync's own writes roll back), so the user sees
  * what went wrong and whether they need to reconnect.
  */
-export async function syncConnection(userId: string, integrationId: string, tz: string, f?: Fetch) {
+export async function syncConnection(userId: string, integrationId: string, tz: string, f?: Fetch, opts: { live?: boolean } = {}) {
   try {
-    return await withUser(userId, (s) => syncItem(s, integrationId, tz, f));
+    return await withUser(userId, (s) => syncItem(s, integrationId, tz, f, opts));
   } catch (e) {
     const msg = e instanceof PlaidError ? e.message : "Sync failed. Please try again.";
     await withUser(userId, async (s) => {
@@ -324,13 +352,24 @@ export async function syncConnection(userId: string, integrationId: string, tz: 
   }
 }
 
-async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?: Fetch) {
+async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?: Fetch, opts: { live?: boolean } = {}) {
   const stats: SyncResult = { accounts: 0, added: 0, modified: 0, removed: 0, holdings: 0, liabilities: 0 };
   const token = creds.accessToken;
 
-  // 1. Accounts and balances
-  const acc = await call<{ accounts: PlaidAccount[] }>("/accounts/get", { access_token: token }, f);
+  // 1. Accounts and balances. /accounts/get is Plaid's last saved copy; a "Sync now" asks the bank for live
+  // balances (/accounts/balance/get), falling back to the saved copy if that isn't available.
+  let acc: { accounts: PlaidAccount[] };
+  try {
+    acc = opts.live
+      ? await call<{ accounts: PlaidAccount[] }>("/accounts/balance/get", { access_token: token }, f)
+      : await call<{ accounts: PlaidAccount[] }>("/accounts/get", { access_token: token }, f);
+  } catch (e) {
+    if (!opts.live || !(e instanceof PlaidError) || e.reauth) throw e;
+    acc = await call<{ accounts: PlaidAccount[] }>("/accounts/get", { access_token: token }, f);
+  }
+  // Only accounts the user keeps on get transactions and holdings.
   const idByPlaid = new Map<string, string>();
+  const seen: string[] = [];
   for (const a of acc.accounts) {
     const m = mapAccount(a);
     const [row] = await scope.tx
@@ -339,11 +378,34 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
       .onConflictDoUpdate({
         target: [financialAccounts.userId, financialAccounts.source, financialAccounts.providerAccountId],
         targetWhere: sql`provider_account_id is not null`,
-        set: { ...m, integrationId, balanceUpdatedAt: new Date(), archivedAt: null },
+        // An account the user turned off stays off (archived while excluded).
+        set: { ...m, integrationId, balanceUpdatedAt: new Date(), archivedAt: sql`${financialAccounts.excludedAt}` },
       })
-      .returning({ id: financialAccounts.id });
+      .returning({ id: financialAccounts.id, excludedAt: financialAccounts.excludedAt });
+    seen.push(row.id);
+    if (row.excludedAt) continue;
     idByPlaid.set(a.account_id, row.id);
     stats.accounts++;
+  }
+  // Accounts the bank no longer shares (changed in "Choose accounts"): hidden, and their bank data removed.
+  if (acc.accounts.length) {
+    const gone = await scope.tx
+      .update(financialAccounts)
+      .set({ archivedAt: new Date() })
+      .where(
+        and(
+          eq(financialAccounts.userId, scope.userId),
+          eq(financialAccounts.integrationId, integrationId),
+          eq(financialAccounts.source, "plaid"),
+          isNull(financialAccounts.archivedAt),
+          notInArray(financialAccounts.id, seen),
+        ),
+      )
+      .returning({ id: financialAccounts.id });
+    await removeSyncedData(
+      scope,
+      gone.map((g) => g.id),
+    );
   }
 
   // 2. Transactions (cursor-based: only what changed since last time)
@@ -415,90 +477,99 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
     if (!r.has_more) break;
   }
 
+  // 3 and 4 are optional products. Only asked for when the bank has those accounts (asking can add a paid
+  // product to the connection), and a problem with them never throws away the rest of the sync.
+  const kinds = new Set(acc.accounts.map((a) => TYPE[a.type] ?? "other"));
+  const optional = (e: unknown) => {
+    if (!(e instanceof PlaidError) || e.reauth) throw e;
+  };
+
   // 3. Investments (optional product)
-  try {
-    const inv = await call<{
-      holdings: { account_id: string; security_id: string; quantity: number; institution_value: number; cost_basis: number | null }[];
-      securities: { security_id: string; name: string | null; ticker_symbol: string | null; type: string | null }[];
-    }>("/investments/holdings/get", { access_token: token }, f);
-    const sec = new Map(inv.securities.map((s) => [s.security_id, s]));
-    const accountIds = [...new Set(inv.holdings.map((h) => idByPlaid.get(h.account_id)).filter(Boolean))] as string[];
-    if (accountIds.length)
-      await scope.tx.delete(holdings).where(and(eq(holdings.userId, scope.userId), eq(holdings.source, "plaid"), inArray(holdings.accountId, accountIds)));
-    for (const h of inv.holdings) {
-      const accountId = idByPlaid.get(h.account_id);
-      if (!accountId) continue;
-      const s = sec.get(h.security_id);
-      await scope.tx.insert(holdings).values({
-        userId: scope.userId,
-        accountId,
-        name: (s?.name ?? s?.ticker_symbol ?? "Holding").slice(0, 200),
-        symbol: s?.ticker_symbol?.slice(0, 12) ?? null,
-        securityType: securityType(s?.type),
-        quantity: String(h.quantity),
-        valueCents: Math.round(h.institution_value * 100),
-        costBasisCents: h.cost_basis != null ? Math.round(h.cost_basis * 100) : null,
-        source: "plaid",
-        providerSecurityId: h.security_id,
-        asOf: new Date(),
-      });
-      stats.holdings++;
+  if (kinds.has("investment"))
+    try {
+      const inv = await call<{
+        holdings: { account_id: string; security_id: string; quantity: number; institution_value: number; cost_basis: number | null }[];
+        securities: { security_id: string; name: string | null; ticker_symbol: string | null; type: string | null }[];
+      }>("/investments/holdings/get", { access_token: token }, f);
+      const sec = new Map(inv.securities.map((s) => [s.security_id, s]));
+      const accountIds = [...new Set(inv.holdings.map((h) => idByPlaid.get(h.account_id)).filter(Boolean))] as string[];
+      if (accountIds.length)
+        await scope.tx.delete(holdings).where(and(eq(holdings.userId, scope.userId), eq(holdings.source, "plaid"), inArray(holdings.accountId, accountIds)));
+      for (const h of inv.holdings) {
+        const accountId = idByPlaid.get(h.account_id);
+        if (!accountId) continue;
+        const s = sec.get(h.security_id);
+        await scope.tx.insert(holdings).values({
+          userId: scope.userId,
+          accountId,
+          name: (s?.name ?? s?.ticker_symbol ?? "Holding").slice(0, 200),
+          symbol: s?.ticker_symbol?.slice(0, 12) ?? null,
+          securityType: securityType(s?.type),
+          quantity: String(h.quantity),
+          valueCents: Math.round(h.institution_value * 100),
+          costBasisCents: h.cost_basis != null ? Math.round(h.cost_basis * 100) : null,
+          source: "plaid",
+          providerSecurityId: h.security_id,
+          asOf: new Date(),
+        });
+        stats.holdings++;
+      }
+    } catch (e) {
+      optional(e);
     }
-  } catch (e) {
-    if (!(e instanceof PlaidError && e.code && SKIPPABLE.has(e.code))) throw e;
-  }
 
   // 4. Debt details (optional product)
-  try {
-    const l = await call<{
-      liabilities: {
-        credit:
-          | {
-              account_id: string | null;
-              aprs: { apr_percentage: number; apr_type: string }[];
-              minimum_payment_amount: number | null;
-              next_payment_due_date: string | null;
-            }[]
-          | null;
-        student:
-          | {
-              account_id: string | null;
-              interest_rate_percentage: number | null;
-              minimum_payment_amount: number | null;
-              next_payment_due_date: string | null;
-            }[]
-          | null;
-        mortgage:
-          | {
-              account_id: string | null;
-              interest_rate: { percentage: number | null } | null;
-              next_monthly_payment: number | null;
-              next_payment_due_date: string | null;
-            }[]
-          | null;
+  if (kinds.has("credit") || kinds.has("loan"))
+    try {
+      const l = await call<{
+        liabilities: {
+          credit:
+            | {
+                account_id: string | null;
+                aprs: { apr_percentage: number; apr_type: string }[];
+                minimum_payment_amount: number | null;
+                next_payment_due_date: string | null;
+              }[]
+            | null;
+          student:
+            | {
+                account_id: string | null;
+                interest_rate_percentage: number | null;
+                minimum_payment_amount: number | null;
+                next_payment_due_date: string | null;
+              }[]
+            | null;
+          mortgage:
+            | {
+                account_id: string | null;
+                interest_rate: { percentage: number | null } | null;
+                next_monthly_payment: number | null;
+                next_payment_due_date: string | null;
+              }[]
+            | null;
+        };
+      }>("/liabilities/get", { access_token: token }, f);
+      const set = async (plaidId: string | null, apr: number | null | undefined, min: number | null, due: string | null) => {
+        const id = plaidId && idByPlaid.get(plaidId);
+        if (!id) return;
+        await scope.tx
+          .update(financialAccounts)
+          .set({ aprBps: apr != null ? Math.round(apr * 100) : null, minPaymentCents: cents(min), nextPaymentDueDate: due })
+          .where(eq(financialAccounts.id, id));
+        stats.liabilities++;
       };
-    }>("/liabilities/get", { access_token: token }, f);
-    const set = async (plaidId: string | null, apr: number | null | undefined, min: number | null, due: string | null) => {
-      const id = plaidId && idByPlaid.get(plaidId);
-      if (!id) return;
-      await scope.tx
-        .update(financialAccounts)
-        .set({ aprBps: apr != null ? Math.round(apr * 100) : null, minPaymentCents: cents(min), nextPaymentDueDate: due })
-        .where(eq(financialAccounts.id, id));
-      stats.liabilities++;
-    };
-    for (const c of l.liabilities.credit ?? [])
-      await set(
-        c.account_id,
-        (c.aprs.find((a) => a.apr_type === "purchase_apr") ?? c.aprs[0])?.apr_percentage,
-        c.minimum_payment_amount,
-        c.next_payment_due_date,
-      );
-    for (const s of l.liabilities.student ?? []) await set(s.account_id, s.interest_rate_percentage, s.minimum_payment_amount, s.next_payment_due_date);
-    for (const m of l.liabilities.mortgage ?? []) await set(m.account_id, m.interest_rate?.percentage, m.next_monthly_payment, m.next_payment_due_date);
-  } catch (e) {
-    if (!(e instanceof PlaidError && e.code && SKIPPABLE.has(e.code))) throw e;
-  }
+      for (const c of l.liabilities.credit ?? [])
+        await set(
+          c.account_id,
+          (c.aprs.find((a) => a.apr_type === "purchase_apr") ?? c.aprs[0])?.apr_percentage,
+          c.minimum_payment_amount,
+          c.next_payment_due_date,
+        );
+      for (const s of l.liabilities.student ?? []) await set(s.account_id, s.interest_rate_percentage, s.minimum_payment_amount, s.next_payment_due_date);
+      for (const m of l.liabilities.mortgage ?? []) await set(m.account_id, m.interest_rate?.percentage, m.next_monthly_payment, m.next_payment_due_date);
+    } catch (e) {
+      optional(e);
+    }
 
   return { stats, creds: { accessToken: token, cursor } satisfies Creds };
 }

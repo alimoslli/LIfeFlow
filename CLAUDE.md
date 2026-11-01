@@ -44,6 +44,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Reset and email links use `APP_URL`, never the Host header. Report an email as sent only with the provider's id.
 
 ## Integrations (see ADR 0010)
+- Plaid (`integrations/plaid.ts`): an account the user turns off (`excludedAt`) stays archived through every sync and its transactions/holdings are skipped and removed; turning it on resets the cursor. Accounts the bank stops sharing ("Choose accounts" = Link update mode with account selection) are archived. Investments/liabilities are only requested when the item has those account types and never fail the sync (only re-auth errors do). "Sync now" asks for live balances (`/accounts/balance/get`, falls back to `/accounts/get`).
 - Google calls go through `src/server/integrations/google.ts` (injectable `fetch` for tests). Sending email and adding Google events are `confirm` tools; report success only with the provider's id. Email content is wrapped as untrusted.
 - Apple Health arrives only via `/api/apple-health/ingest` (personal key, hash-stored, public route in proxy.ts) into `ingestHealth`. Don't diagnose in prompts or tools.
 - Voice tool calls go through `/api/jarvis/voice/tool` → `executeToolCall`, the same gate as chat. The real OpenAI key never reaches the browser; only the ephemeral client secret does.
@@ -81,7 +82,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Phone-first app that must also work perfectly on the web. Five tabs: Today, Plan, Jarvis, Money, School; Settings is the gear (an iOS-style list at /settings). Every page belongs to one pill in `section-nav.tsx` (ADR 0015); pills are tested in `tests/e2e/layout-phone.spec.ts`.
 - The product direction is `docs/plan-v2.md` (student first, cut before you add). No "safe to spend" or daily allowance: money is Available now (checking + cash), spent and came in.
 - User-facing text never names server settings, models, tokens or internal logs. Say "isn't available yet" instead. Diagnostics live behind `?debug=1`.
-- Money: never project income (pay counts only after it's deposited). Today's money section = cash & checking, spent this month, came in this month.
+- Money: never count income before it's deposited. Expected pay is shown (never counted) only for a salaried job whose paychecks land for the same amount; hourly pay is never predicted (`expectedPay` in forecast.ts). Today's money = one line: Available now (checking + cash) and the next bill this week. Money shows spent / came in this month with last month beside it, and the next 30 days as one bar (bills, usual spending, left).
 - Prefer one clear action per item; no dense tables on phones.
 
 ## Error alerts

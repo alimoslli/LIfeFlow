@@ -7,6 +7,7 @@ import { balancesOf } from "./overview";
 import { budgetStatus, listRecurring, suggestRecurring, upcomingRecurring } from "./planning";
 import { detectRecurring, merchantKey, merchantKeys, nextOccurrence, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
+import { listEmployers } from "../work";
 
 /**
  * Forward-looking money math. Every result carries the inputs it used, so the
@@ -133,19 +134,24 @@ export async function billsAndPace(scope: UserScope, today: string, from: string
   return { bills: bills.sort((a, b) => a.date.localeCompare(b.date)), typical };
 }
 
-/** Expected pay: tracked income items, or a paycheck pattern detected from deposits. Labelled as expected, never counted as received. */
+/**
+ * Expected pay, only when it's truly predictable: a salaried job, and paychecks that land for the same
+ * amount on a regular schedule (or a pay item the user tracks). Hourly pay is never predicted: hours,
+ * tips, taxes and pay periods change every time. Shown as expected, never counted as available.
+ */
 async function expectedPay(scope: UserScope, today: string, to: string): Promise<DatedAmount[]> {
+  const jobs = await listEmployers(scope);
+  if (!jobs.some((j) => j.payType === "salary")) return [];
   const tracked = (await upcomingRecurring(scope, today, to)).filter((u) => u.amountCents > 0);
   if (tracked.length) return tracked.map((t) => ({ date: t.date, amountCents: t.amountCents, name: t.name }));
   const deposits = await queryTransactions(scope, { from: addDaysStr(today, -120), to: today, kinds: ["income"], limit: 2000 });
   const pattern = detectRecurring(deposits)
-    .filter((c) => c.averageAmountCents > 0 && c.confidence >= 0.6)
-    .sort((a, b) => b.averageAmountCents - a.averageAmountCents)[0];
+    .filter((c) => c.latestAmountCents > 0 && c.confidence >= 0.6 && !c.variableAmount)
+    .sort((a, b) => b.latestAmountCents - a.latestAmountCents)[0];
   if (!pattern) return [];
   const out: DatedAmount[] = [];
-  const step = { weekly: 7, biweekly: 14, monthly: 30, quarterly: 91, yearly: 365 }[pattern.frequency];
-  for (let d = pattern.nextExpectedDate; d <= to; d = addDaysStr(d, step))
-    if (d > today) out.push({ date: d, amountCents: pattern.averageAmountCents, name: pattern.name });
+  for (let d = pattern.nextExpectedDate; d <= to; d = nextOccurrence(d, pattern.frequency))
+    if (d > today) out.push({ date: d, amountCents: pattern.latestAmountCents, name: pattern.name });
   return out;
 }
 
@@ -162,7 +168,11 @@ export async function cashForecast(scope: UserScope, today: string, days = 30) {
   if (p.overdraftDateWithoutPay && p.overdraftDateWithPay)
     warnings.push(`At your usual pace, checking could go below $0 around ${nice(p.overdraftDateWithPay)}, even with expected pay.`);
   else if (p.overdraftDateWithoutPay)
-    warnings.push(`Checking could go below $0 around ${nice(p.overdraftDateWithoutPay)} if your next paycheck is late or smaller than usual.`);
+    warnings.push(
+      pay.length
+        ? `Checking could go below $0 around ${nice(p.overdraftDateWithoutPay)} if your next paycheck is late or smaller than usual.`
+        : `At your usual spending, checking could go below $0 around ${nice(p.overdraftDateWithoutPay)} unless more money comes in.`,
+    );
   const lowBill = bills.find((b) => p.points.find((x) => x.date === b.date)!.withPayCents < 0);
   if (lowBill) warnings.push(`${lowBill.name} (${dollars(-lowBill.amountCents)}) on ${nice(lowBill.date)} may not be covered.`);
   return {
@@ -179,7 +189,9 @@ export async function cashForecast(scope: UserScope, today: string, days = 30) {
       "Starts from checking and cash balances (savings and cards excluded).",
       `Day-to-day spending uses your average over the last ${typical.basedOnDays} days, not counting tracked bills.`,
       "Bills are your tracked bills and subscriptions plus ones found in your bank history, on their next expected dates.",
-      pay.length ? "Expected pay is shown as a separate line and is never counted as available." : "No regular paycheck was found, so no pay is assumed.",
+      pay.length
+        ? "Expected pay (a salaried job with the same paycheck each time) is shown separately and never counted as available."
+        : "No pay is assumed: pay is only predicted for a salaried job with the same paycheck each time, never for hourly work.",
     ],
   };
 }

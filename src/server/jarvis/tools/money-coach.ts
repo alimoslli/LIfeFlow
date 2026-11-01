@@ -39,7 +39,7 @@ export const moneyCoachTools = [
       const results = [];
       for (const i of items) {
         try {
-          results.push({ bank: i.displayName, ok: true, ...(await syncConnection(ctx.userId, i.id, ctx.tz)) });
+          results.push({ bank: i.displayName, ok: true, ...(await syncConnection(ctx.userId, i.id, ctx.tz, undefined, { live: true })) });
         } catch (e) {
           results.push({
             bank: i.displayName,

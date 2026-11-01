@@ -7,7 +7,15 @@ import type { Briefing, Insight, LifeSnapshot } from "./types";
  * it's testable and never contradicts the numbers on screen).
  */
 
-export type PlanPriority = { title: string; context: string | null; tag: string; late: boolean; href: string };
+/** `check` lets Today tick it off in place (a to-do or an assignment). */
+export type PlanPriority = {
+  title: string;
+  context: string | null;
+  tag: string;
+  late: boolean;
+  href: string;
+  check?: { kind: "task" | "assignment"; id: string };
+};
 export type PlanWatch = { text: string; tone: "attention" | "heads-up"; href?: string };
 export type PlanNext = { text: string; href?: string; prompt?: string; label: string };
 export type DayPlan = { summary: string[]; priorities: PlanPriority[]; moreDue: number; watch: PlanWatch[]; next: PlanNext };
@@ -35,7 +43,14 @@ export function buildDayPlan(
   const all: PlanPriority[] = [
     ...late.map((o) => {
       const days = Math.max(1, daysBetween(localDateOf(o.dueAt, tz), today));
-      return { title: o.title, context: useful(o.context), tag: days === 1 ? "1 day late" : `${days} days late`, late: true, href: o.href };
+      return {
+        title: o.title,
+        context: useful(o.context),
+        tag: days === 1 ? "1 day late" : `${days} days late`,
+        late: true,
+        href: o.href,
+        check: { kind: o.kind, id: o.id },
+      };
     }),
     ...dueToday.map((i) => ({
       title: i.title,
@@ -43,6 +58,7 @@ export function buildDayPlan(
       tag: i.allDay ? "due today" : `due ${formatIn(i.startsAt, tz, "h:mm a")}`,
       late: false,
       href: i.href,
+      check: { kind: i.origin === "task" ? ("task" as const) : ("assignment" as const), id: i.id },
     })),
   ];
   const listed = new Set([...late.map((o) => o.href), ...dueToday.map((i) => i.href)]);
@@ -55,6 +71,7 @@ export function buildDayPlan(
       tag: t.dueAt ? `due ${formatIn(t.dueAt, tz, "EEE")}` : "no due date",
       late: false,
       href,
+      check: { kind: "task", id: t.id },
     });
   }
   const priorities = all.slice(0, 3);

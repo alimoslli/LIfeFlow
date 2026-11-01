@@ -9,6 +9,7 @@ import { contributeToGoal, goalsWithPlans } from "@/server/services/finance/goal
 import { createGoal, createRecurring } from "@/server/services/finance/planning";
 import { applyBudgetPlan, suggestBudgets } from "@/server/services/finance/smart-budgets";
 import { createTransaction, queryTransactions, updateTransaction } from "@/server/services/finance/transactions";
+import { createEmployer } from "@/server/services/work";
 import { makeUser } from "../helpers";
 
 afterAll(closeDb);
@@ -80,6 +81,11 @@ describe("forecast, goals, paycheck and debt", () => {
       const g = await createGoal(s, { name: "Japan trip", targetCents: 300_000, monthlyPlanCents: 30_000, purpose: "travel" });
       await contributeToGoal(s, { goalId: g.id, amountCents: 75_000, date: TODAY });
     });
+    // Pay is only predicted for a salaried job: never with no job, never for hourly work.
+    expect((await u.run((s) => cashForecast(s, TODAY, 14))).expectedPay).toEqual([]);
+    await u.run((s) => createEmployer(s, { name: "Campus Coffee", hourlyRateCents: 1500 }));
+    expect((await u.run((s) => cashForecast(s, TODAY, 14))).expectedPay).toEqual([]);
+    await u.run((s) => createEmployer(s, { name: "Acme Labs", payType: "salary", annualSalaryCents: 4_200_000 }));
     const f = await u.run((s) => cashForecast(s, TODAY, 14));
     expect(f.expectedPay[0]).toMatchObject({ date: "2026-11-06", amountCents: 150_000 });
     expect(f.overdraftDateWithoutPay).not.toBeNull();

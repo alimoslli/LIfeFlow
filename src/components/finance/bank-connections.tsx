@@ -39,7 +39,17 @@ export function BankConnections({
               </div>
               {c.error && <p className="text-sm text-danger">{c.error}</p>}
               <div className="flex flex-wrap items-center gap-2">
-                {c.status === "error" ? <PlaidLinkButton configured={configured} reconnect={c.id} /> : <SyncButton id={c.id} />}
+                {c.status === "error" ? (
+                  <PlaidLinkButton configured={configured} reconnect={c.id} />
+                ) : (
+                  <>
+                    <SyncButton id={c.id} />
+                    {/* Change what this bank shares: add a card that's missing, or stop sharing an account. */}
+                    <PlaidLinkButton configured={configured} reconnect={c.id} chooseAccounts className="h-9 bg-surface-2 px-4 text-text">
+                      Choose accounts
+                    </PlaidLinkButton>
+                  </>
+                )}
                 <ActionButton
                   action={disconnect.bind(null, c.id) as unknown as (p: ActionState, fd: FormData) => Promise<ActionState>}
                   confirm={`Disconnect ${c.name}? Its synced accounts, transactions and holdings will be removed from LifeFlow.`}

@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     if (!parsed.success) throw new HttpError(400, "Invalid request");
     await enforceRateLimit(`plaid-sync:${user.id}`, 20, 600);
     try {
-      return NextResponse.json({ ok: true, synced: await syncConnection(user.id, parsed.data.id, user.timezone) });
+      return NextResponse.json({ ok: true, synced: await syncConnection(user.id, parsed.data.id, user.timezone, undefined, { live: true }) });
     } catch (e) {
       if (e instanceof PlaidError) throw new HttpError(502, e.message);
       throw e;

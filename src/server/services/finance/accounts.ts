@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { financialAccounts, type AccountType } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
@@ -79,6 +79,21 @@ export async function archiveAccount(scope: UserScope, id: string) {
     .returning();
   if (!row) throw notFound("Account");
   return row;
+}
+
+/** Bank accounts the user turned off in LifeFlow (they stay off through syncs until turned back on). */
+export async function listTurnedOffAccounts(scope: UserScope) {
+  return scope.tx
+    .select({
+      id: financialAccounts.id,
+      name: financialAccounts.name,
+      mask: financialAccounts.mask,
+      type: financialAccounts.type,
+      institutionName: financialAccounts.institutionName,
+    })
+    .from(financialAccounts)
+    .where(and(eq(financialAccounts.userId, scope.userId), isNotNull(financialAccounts.excludedAt)))
+    .orderBy(asc(financialAccounts.name));
 }
 
 export async function listAccounts(scope: UserScope, opts: { types?: AccountType[] } = {}) {
