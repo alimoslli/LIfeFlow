@@ -81,7 +81,11 @@ export function budgetPace(i: {
 }
 
 const nice = (d: string) => formatDateStr(d, "EEE, MMM d");
-const dollars = (c: number) => `$${(c / 100).toLocaleString("en-US", { maximumFractionDigits: c % 100 ? 2 : 0, minimumFractionDigits: 0 })}`;
+/** $431 or $430.80, never $430.8. */
+const dollars = (c: number) => {
+  const d = c % 100 ? 2 : 0;
+  return `$${(c / 100).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d })}`;
+};
 
 // ------------------------------------------------------------ data
 

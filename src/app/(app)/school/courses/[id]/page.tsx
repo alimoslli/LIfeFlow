@@ -1,3 +1,4 @@
+import { twelveHourRanges } from "@/lib/utils";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -60,7 +61,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
               )}
               {c.meetingInfo && (
                 <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" /> {c.meetingInfo}
+                  <Clock className="h-3.5 w-3.5" /> {twelveHourRanges(c.meetingInfo)}
                 </span>
               )}
               {c.location && (

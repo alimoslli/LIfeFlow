@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, useTransition } from "react";
-import { Mic, RotateCw, Sparkles, X } from "lucide-react";
+import { AudioLines, RotateCw, X } from "lucide-react";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { useShell } from "@/components/shell/app-shell";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +38,7 @@ export function QuickChips() {
           key={label}
           type="button"
           onClick={() => openJarvis(prompt, { send: true })}
-          className="flex min-h-11 shrink-0 items-center rounded-full bg-surface px-4 text-sm font-medium whitespace-nowrap shadow-soft"
+          className="flex min-h-11 shrink-0 items-center rounded-full bg-surface px-4 text-[14px] font-medium whitespace-nowrap text-text-2 shadow-soft ring-1 ring-border/60 transition-colors hover:text-accent active:scale-[0.98]"
         >
           {label}
         </button>
@@ -54,11 +55,13 @@ export function AskBar({ name }: { name: string }) {
       <button
         type="button"
         onClick={() => openJarvis()}
-        className="flex min-h-14 items-center gap-3 rounded-full bg-surface px-5 text-left shadow-soft transition-shadow hover:shadow-lift"
+        className="flex min-h-14 items-center gap-3 rounded-[28px] bg-surface py-2 pr-2 pl-3 text-left shadow-lift ring-1 ring-border/70 transition-shadow hover:shadow-lift active:scale-[0.99]"
       >
-        <Sparkles className="h-5 w-5 shrink-0 text-accent" />
-        <span className="flex-1 text-[15px] text-muted">Ask {name} or tell him something…</span>
-        <Mic className="h-5 w-5 shrink-0 text-muted" />
+        <BrandMark className="h-8 w-8" alt="" />
+        <span className="flex-1 text-[16px] text-muted">Message {name}…</span>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft" aria-hidden>
+          <AudioLines className="h-[18px] w-[18px]" />
+        </span>
       </button>
       <QuickChips />
     </div>

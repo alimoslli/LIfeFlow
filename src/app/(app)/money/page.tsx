@@ -149,21 +149,21 @@ export default async function MoneyPage() {
         {alerts.length > 0 && (
           <section className="animate-rise max-lg:order-[-2]" style={{ animationDelay: "140ms" }} aria-label="Heads up">
             <h2 className="mb-3 text-[15px] font-semibold">Heads up</h2>
-            <ul className="flex flex-col gap-2.5">
+            <ul data-tilt className="divide-y divide-border/70 overflow-hidden rounded-3xl bg-surface shadow-soft">
               {alerts.map((a, i) => (
-                <li key={i} data-tilt className="flex gap-3.5 rounded-3xl bg-surface p-4 shadow-soft">
+                <li key={i} className="flex gap-3 px-4 py-3.5">
                   <span
                     className={cn(
-                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+                      "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
                       a.tone === "danger" ? "bg-danger-soft text-danger" : "bg-warning-soft text-warning",
                     )}
                   >
-                    <AlertTriangle className="h-[18px] w-[18px]" strokeWidth={1.8} />
+                    <AlertTriangle className="h-4 w-4" strokeWidth={1.9} />
                   </span>
-                  <div className="min-w-0 flex-1 pt-1">
-                    <p className="text-[15px] leading-snug">{a.text}</p>
-                    {a.fix && <p className="mt-1 text-sm text-text-2">{a.fix}</p>}
-                    <Link href={a.href} className="-mb-2 inline-flex min-h-11 items-center gap-1 text-sm font-medium text-accent">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[15px] leading-snug font-medium">{a.text}</p>
+                    {a.fix && <p className="mt-0.5 text-[13px] leading-snug text-text-2">{a.fix}</p>}
+                    <Link href={a.href} className="-mb-2 inline-flex min-h-11 items-center gap-1 text-[13px] font-semibold text-accent">
                       Review <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   </div>

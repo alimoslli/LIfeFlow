@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { GraduationCap, Sparkles } from "lucide-react";
+import { ChevronRight, GraduationCap } from "lucide-react";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/surface";
 import { dueLabel } from "@/lib/dates";
+import { twelveHourRanges } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { listAssignments, listCourses } from "@/server/services/school";
@@ -58,7 +60,9 @@ export default async function SchoolPage() {
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-muted">{c.code ?? "Course"}</p>
                     <p className="line-clamp-2 break-words font-medium group-hover:text-accent">{c.name}</p>
-                    <p className="mt-0.5 truncate text-xs text-muted">{[c.instructorName, c.meetingInfo].filter(Boolean).join(" · ") || " "}</p>
+                    <p className="mt-0.5 truncate text-xs text-muted">
+                      {[c.instructorName, c.meetingInfo && twelveHourRanges(c.meetingInfo)].filter(Boolean).join(" · ") || " "}
+                    </p>
                   </div>
                   {openCount.get(c.id) ? <Badge>{openCount.get(c.id)} open</Badge> : null}
                 </div>
@@ -82,12 +86,22 @@ export default async function SchoolPage() {
         prompt="Here's my syllabus. Add every due date and exam to the right class."
         className="mb-4 flex w-full items-center gap-3 rounded-3xl bg-accent-soft px-5 py-4 text-left text-[15px] text-accent transition-transform active:scale-[0.99]"
       >
-        <Sparkles className="h-4 w-4 shrink-0" />
+        <BrandMark className="h-8 w-8" alt="" />
         <span className="flex-1">Have a syllabus or a screenshot? Send it to Jarvis and it&apos;ll add everything.</span>
       </AskJarvisButton>
       {!d.canvas && (
-        <Link href="/settings/integrations" className="mb-6 flex min-h-11 items-center text-sm font-medium text-accent">
-          Use Canvas? Connect it and your classes and due dates fill in by themselves.
+        <Link
+          href="/settings/integrations"
+          className="mb-6 flex items-center gap-3 rounded-3xl bg-surface px-5 py-4 shadow-soft transition-shadow hover:shadow-lift"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent">
+            <GraduationCap className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-semibold">Connect Canvas</span>
+            <span className="block text-[13px] leading-snug text-text-2">Your classes and due dates fill in by themselves.</span>
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
         </Link>
       )}
     </>

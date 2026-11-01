@@ -109,25 +109,25 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               {items.length === 0 ? (
                 <p className="py-2 text-[15px] text-muted">Nothing planned.</p>
               ) : (
-                <ul className="flex flex-col gap-1.5">
+                <ul className="divide-y divide-border/70 overflow-hidden rounded-3xl bg-surface shadow-soft">
                   {items.map((i) => (
                     <li key={i.key}>
-                      <Link href={i.href} className="flex items-center gap-4 rounded-2xl bg-surface px-4 py-3 shadow-soft transition-shadow hover:shadow-lift">
-                        <span className="h-9 w-1 shrink-0 rounded-full" style={{ background: i.color ?? "var(--accent)" }} />
+                      <Link href={i.href} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2/60 active:bg-surface-2">
+                        <span className="tabular w-[60px] shrink-0 text-[13px] leading-tight text-muted">
+                          {i.allDay ? "Any time" : formatIn(i.startsAt, d.tz, "h:mm a")}
+                        </span>
+                        <span className="h-8 w-[3px] shrink-0 rounded-full" style={{ background: i.color ?? "var(--accent)" }} />
                         <div className="min-w-0 flex-1">
-                          <p className="line-clamp-2 break-words text-[15px]">
+                          <p className="line-clamp-2 text-[15px] leading-snug break-words">
                             {i.origin === "assignment" && <span className="text-muted">Due · </span>}
                             {i.origin === "task" && <span className="text-muted">To do · </span>}
                             {i.title}
                           </p>
-                          <p className="truncate text-sm text-muted">
-                            {i.allDay
-                              ? "Any time"
-                              : i.endsAt
-                                ? `${formatIn(i.startsAt, d.tz, "h:mm")}–${formatIn(i.endsAt, d.tz, "h:mm a")}`
-                                : formatIn(i.startsAt, d.tz, "h:mm a")}
-                            {i.subtitle ? ` · ${i.subtitle}` : ""}
-                          </p>
+                          {(i.endsAt && !i.allDay) || i.subtitle ? (
+                            <p className="truncate text-[13px] text-muted">
+                              {[!i.allDay && i.endsAt ? `until ${formatIn(i.endsAt, d.tz, "h:mm a")}` : null, i.subtitle].filter(Boolean).join(" · ")}
+                            </p>
+                          ) : null}
                         </div>
                         {conflictKeys.has(i.key) && <span className="rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning">Overlaps</span>}
                         {i.kind === "exam" && <span className="rounded-full bg-danger-soft px-2 py-0.5 text-xs text-danger">Exam</span>}
@@ -163,9 +163,9 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       {d.undated.length > 0 && filter !== "work" && (
         <section>
           <h2 className="mb-2 text-[15px] font-semibold">Whenever you can</h2>
-          <ul className="flex flex-col gap-1.5">
+          <ul className="divide-y divide-border/70 overflow-hidden rounded-3xl bg-surface shadow-soft">
             {d.undated.map((t) => (
-              <li key={t.id} className="rounded-2xl bg-surface px-4 py-3 text-[15px] shadow-soft">
+              <li key={t.id} className="px-4 py-3 text-[15px]">
                 {t.title}
               </li>
             ))}
