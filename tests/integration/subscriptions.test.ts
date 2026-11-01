@@ -37,8 +37,8 @@ describe("subscription finder", () => {
       expect(rent.kind).toBe("bill");
     });
     const o = await run((s) => subscriptionsOverview(s, today));
-    expect(o.monthlyCents).toBe(1199 + 1549 + 999); // rent never counts
-    expect(o.yearlyCents).toBe((1199 + 1549 + 999) * 12);
+    expect(o.monthlyCents).toBe(1199 + 1549 + 999 + 2500); // the gym pass found in the bank counts too; rent never does
+    expect(o.yearlyCents).toBe((1199 + 1549 + 999 + 2500) * 12);
     expect(o.flags).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ kind: "price_up", name: "Spotify", fromCents: 1099, toCents: 1199, yearlyExtraCents: 1200 }),
