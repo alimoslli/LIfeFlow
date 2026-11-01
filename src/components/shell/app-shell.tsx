@@ -27,8 +27,8 @@ import { NAME_KEY } from "../motion/splash";
 import type { JarvisAvailability } from "../jarvis/types";
 import { BrandMark } from "@/components/brand/brand-mark";
 
-type ShellCtx = { openJarvis: (prompt?: string, opts?: { send?: boolean }) => void; assistantName: string };
-const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: "Jarvis" });
+type ShellCtx = { openJarvis: (prompt?: string, opts?: { send?: boolean }) => void; assistantName: string; firstName: string };
+const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: "Jarvis", firstName: "" });
 export const useShell = () => useContext(Ctx);
 
 type Drawer = { open: boolean; prompt?: string; send?: boolean; key: number };
@@ -106,7 +106,7 @@ export function AppShell({
   const settingsActive = pathname.startsWith("/settings");
 
   return (
-    <Ctx.Provider value={{ openJarvis, assistantName }}>
+    <Ctx.Provider value={{ openJarvis, assistantName, firstName: user.name.split(" ")[0] }}>
       <LifeAreasContext.Provider value={areas}>
         <div className="lf-glass">
           <TiltLayer />

@@ -895,3 +895,29 @@ input[type="checkbox"].lf-switch:focus-visible {
     opacity: 0.85;
   }
 }
+
+/* Jarvis composer: the field sits inside a pill that shows focus itself. */
+.lf-composer textarea:focus-visible {
+  outline: none;
+}
+/* Jarvis home: a soft halo behind the mark, and a slow float. */
+.lf-orb-glow {
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--accent) 22%, transparent), transparent);
+}
+.lf-float {
+  animation: lf-float 6s ease-in-out infinite;
+}
+@keyframes lf-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lf-float {
+    animation: none;
+  }
+}

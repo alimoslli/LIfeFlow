@@ -4,6 +4,10 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
+  CalendarDays,
+  GraduationCap,
+  Repeat,
+  Wallet,
   ArrowUp,
   Brain,
   CircleAlert,
@@ -11,7 +15,6 @@ import {
   ImageIcon,
   Loader2,
   Paperclip,
-  Sparkles,
   Square,
   ThumbsDown,
   ThumbsUp,
@@ -19,6 +22,7 @@ import {
 } from "lucide-react";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { JarvisStatus, statusWord } from "./status";
 import { useShell } from "../shell/app-shell";
 import { Markdown } from "./markdown";
@@ -59,7 +63,7 @@ export function JarvisChat({
   onConversation?: (id: string, title: string) => void;
 }) {
   const router = useRouter();
-  const { assistantName } = useShell();
+  const { assistantName, firstName } = useShell();
   const [conversationId, setConversationId] = useState(initialId ?? null);
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
   const [input, setInput] = useState(initialPrompt ?? "");
@@ -73,7 +77,7 @@ export function JarvisChat({
 
   useEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: messages.length > 2 ? "smooth" : "auto" });
+    if (el && messages.length) el.scrollTo({ top: el.scrollHeight, behavior: messages.length > 2 ? "smooth" : "auto" });
   }, [messages]);
 
   // Desktop only: on phones focusing opens the keyboard (and hides the tab bar) before the user asks.
@@ -285,23 +289,31 @@ export function JarvisChat({
             </div>
           )}
           {empty && (
-            <div className="animate-rise pt-[8vh]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-hero text-hero-text shadow-lift">
-                <Sparkles className="h-5 w-5" />
+            <div className={cn("animate-rise flex flex-col items-center text-center", compact ? "pt-2" : "pt-0")}>
+              <div className={cn("relative", compact ? "h-12 w-12" : "h-14 w-14")}>
+                <span className="lf-orb-glow absolute -inset-1/3 rounded-full" aria-hidden />
+                <BrandMark className="lf-float relative h-full w-full" alt="" priority />
               </div>
-              <h2 className="mt-5 font-display text-[34px] leading-tight font-medium tracking-tight">How can I help?</h2>
-              <p className="mt-2 text-[15px] text-muted">
-                I can read and update your tasks, schedule, courses, work and finances, and I&apos;ll show you exactly what I changed.
+              <p className="mt-3 text-[12px] font-semibold tracking-[0.18em] text-muted uppercase">
+                {greeting()}
+                {firstName ? `, ${firstName}` : ""}
               </p>
-              <div className="mt-7 flex flex-col gap-2">
-                {STARTERS[module].map((s) => (
+              <h2 className={cn("mt-2 font-display leading-[1.08] font-medium tracking-tight", compact ? "text-[26px]" : "text-[31px] sm:text-[40px]")}>
+                What can I take off your plate?
+              </h2>
+              <p className="mt-2 max-w-xs text-[15px] leading-snug text-text-2">I know your classes, shifts and money.</p>
+              <div className="-mx-4 mt-5 flex w-[calc(100%+2rem)] snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:w-full sm:grid-cols-4 sm:overflow-visible sm:px-0">
+                {starterCards(module).map(({ icon: Icon, title, prompt }) => (
                   <button
-                    key={s}
-                    onClick={() => (s.endsWith("…") ? (setInput(s.replace("…", "")), inputRef.current?.focus()) : send(s))}
+                    key={title}
+                    onClick={() => (prompt.endsWith("…") ? (setInput(prompt.replace("…", "")), inputRef.current?.focus()) : send(prompt))}
                     disabled={!availability.available}
-                    className="rounded-2xl bg-surface px-4 py-3.5 text-left text-[15px] text-text-2 shadow-soft transition-all hover:text-text hover:shadow-lift active:scale-[0.99] disabled:opacity-50"
+                    className="flex min-h-[86px] w-[42%] min-w-[150px] shrink-0 snap-start flex-col items-start justify-between gap-2.5 rounded-[22px] bg-surface p-3.5 text-left shadow-soft sm:w-auto sm:min-w-0 ring-1 ring-border/60 transition-all hover:-translate-y-0.5 hover:shadow-lift active:scale-[0.98] disabled:opacity-50"
                   >
-                    {s}
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-accent">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="text-[15px] leading-snug font-medium text-text">{title}</span>
                   </button>
                 ))}
               </div>
@@ -313,7 +325,11 @@ export function JarvisChat({
           {followUps && (
             <div className="flex flex-wrap gap-2">
               {followUps.map((f) => (
-                <button key={f} onClick={() => send(f)} className="rounded-full bg-surface px-3.5 py-1.5 text-sm text-text-2 shadow-soft hover:text-accent">
+                <button
+                  key={f}
+                  onClick={() => send(f)}
+                  className="rounded-full bg-surface px-4 py-2 text-[14px] font-medium text-text-2 shadow-soft ring-1 ring-border/60 transition-colors hover:text-accent active:scale-[0.98]"
+                >
                   {f}
                 </button>
               ))}
@@ -355,18 +371,18 @@ export function JarvisChat({
               e.preventDefault();
               send(input);
             }}
-            className="flex items-end gap-1.5 rounded-[26px] bg-surface p-1.5 pl-2 shadow-lift"
+            className="lf-composer flex items-end gap-1 rounded-[28px] bg-surface p-2 shadow-lift ring-1 ring-border/70 transition-shadow focus-within:ring-2 focus-within:ring-accent/35"
           >
             <input ref={fileRef} type="file" accept={ACCEPT} multiple hidden onChange={(e) => upload(e.target.files)} />
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="tap flex items-center justify-center rounded-full text-muted hover:bg-surface-2 hover:text-text disabled:opacity-40"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40"
               aria-label="Attach a file or screenshot"
               title="Attach a screenshot, syllabus or text file"
               disabled={!availability.available}
             >
-              <Paperclip className="h-4 w-4" />
+              <Paperclip className="h-[18px] w-[18px]" />
             </button>
             <textarea
               ref={inputRef}
@@ -385,28 +401,33 @@ export function JarvisChat({
                 }
               }}
               rows={1}
-              placeholder={availability.available ? "Ask Jarvis anything, or paste assignment details…" : "Jarvis isn't available right now"}
+              placeholder={availability.available ? `Message ${assistantName}…` : `${assistantName} isn't available right now`}
               disabled={!availability.available}
               aria-label="Message Jarvis"
-              className="max-h-48 min-h-9 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] placeholder:text-muted focus:outline-none focus-visible:outline-none [field-sizing:content]"
+              className="max-h-48 min-h-10 flex-1 resize-none bg-transparent px-1.5 py-2 text-[16px] leading-6 placeholder:text-muted [field-sizing:content]"
             />
             {!busy && <VoiceButton module={module} assistantName={assistantName} disabled={!availability.available} />}
             {busy ? (
-              <button type="button" onClick={() => abortRef.current?.abort()} className="rounded-full bg-surface-3 p-3 text-text" aria-label="Stop">
+              <button
+                type="button"
+                onClick={() => abortRef.current?.abort()}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-text text-bg"
+                aria-label="Stop"
+              >
                 <Square className="h-3.5 w-3.5" />
               </button>
             ) : (
               <button
                 type="submit"
                 disabled={!availability.available || (!input.trim() && !pending.some((p) => !p.uploading && !p.error))}
-                className="tap flex items-center justify-center rounded-full bg-accent text-accent-text transition-opacity disabled:opacity-30"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft transition-all active:scale-95 disabled:bg-surface-3 disabled:text-muted disabled:shadow-none"
                 aria-label="Send"
               >
-                <ArrowUp className="h-4 w-4" />
+                <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.4} />
               </button>
             )}
           </form>
-          <p className="mt-2 text-center text-[11px] text-muted">Jarvis tells you everything it changes. Deletions always ask first.</p>
+          <p className="mt-2 text-center text-[11px] text-muted/80">{assistantName} tells you everything it changes. Deletions always ask first.</p>
         </div>
       </div>
     </div>
@@ -416,7 +437,7 @@ export function JarvisChat({
 function UserBubble({ m }: { m: Extract<UiMessage, { role: "user" }> }) {
   return (
     <div className="animate-fade-in flex justify-end">
-      <div className="max-w-[85%] rounded-[22px] rounded-br-md bg-hero px-4 py-2.5 text-[15px] whitespace-pre-wrap text-hero-text">
+      <div className="max-w-[85%] rounded-[24px] rounded-br-[8px] bg-hero px-4 py-3 text-[16px] leading-relaxed whitespace-pre-wrap text-hero-text shadow-soft">
         {m.text}
         {m.attachments.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -446,9 +467,7 @@ function AssistantBubble({
   const runningTool = [...m.tools].reverse().find((t) => t.status === "running")?.name;
   return (
     <div className="animate-fade-in flex gap-3">
-      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-        <Sparkles className="h-3.5 w-3.5" />
-      </div>
+      <BrandMark className="mt-0.5 h-7 w-7" alt="" />
       <div className="min-w-0 flex-1 space-y-2.5">
         {working && <JarvisStatus word={statusWord(runningTool)} />}
         {m.text && <Markdown text={m.text} />}
@@ -586,4 +605,22 @@ function RateAnswer({ runId, initial }: { runId: string; initial: 1 | -1 | null 
       </button>
     </div>
   );
+}
+
+function greeting(now = new Date()) {
+  const h = now.getHours();
+  return h < 5 ? "Up late" : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+}
+
+const ICONS = [CalendarDays, GraduationCap, Wallet, Repeat];
+/** Four starting points; the home screen gets ones that show what Jarvis can do across your life. */
+function starterCards(module: JarvisModule) {
+  if (module === "home")
+    return [
+      { icon: CalendarDays, title: "Plan my day", prompt: "What do I need to get done today? Plan it around my classes and shifts." },
+      { icon: GraduationCap, title: "What's due this week?", prompt: "What's due this week, and what should I start first?" },
+      { icon: Wallet, title: "Where's my money going?", prompt: "Where is my money going this month?" },
+      { icon: Repeat, title: "Find my subscriptions", prompt: "What subscriptions am I paying for?" },
+    ];
+  return STARTERS[module].slice(0, 4).map((prompt, i) => ({ icon: ICONS[i % ICONS.length], title: prompt, prompt }));
 }
