@@ -475,7 +475,7 @@ html.lf-splash .lf-splash-layer {
     radial-gradient(42% 45% at 70% 8%, rgb(156 197 153 / 0.34), transparent 68%), radial-gradient(48% 55% at 5% 100%, rgb(222 193 148 / 0.17), transparent 70%),
     linear-gradient(150deg, #356f57, #1f4938 68%, #183b2f);
   color: var(--hero-text);
-  animation: lf-splash-failsafe 0.01s linear 3.5s forwards;
+  animation: lf-splash-failsafe 0.01s linear 9.5s forwards;
 }
 /* Page entrances wait underneath until the splash lifts. */
 html.lf-splash .animate-rise {

@@ -1,7 +1,7 @@
 /** Shown while a screen loads: shapes that match the real layout, with a soft shimmer. */
 export default function Loading() {
   return (
-    <div className="mx-auto flex max-w-[640px] flex-col gap-10" aria-busy="true" aria-label="Loading">
+    <div className="mx-auto flex max-w-[640px] flex-col gap-10" aria-busy="true" aria-label="Loading" data-app-loading>
       <div>
         <div className="lf-shimmer h-4 w-32 rounded-full" />
         <div className="lf-shimmer mt-3 h-10 w-72 max-w-full rounded-xl" />

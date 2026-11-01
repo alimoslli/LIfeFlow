@@ -53,7 +53,9 @@ test("the opening splash shows once per session and never blocks the page", asyn
   await page.goto("/plan?splash=1");
   const splash = page.locator(".lf-splash-layer");
   await expect(splash).toBeVisible();
-  await expect(splash).toBeHidden({ timeout: 4000 });
+  await expect(splash).toBeHidden({ timeout: 9000 });
+  // It leaves only once the page has really loaded: no loading placeholder behind it.
+  await expect(page.locator("[data-app-loading]")).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   // Automation and reduced motion don't get it without the explicit flag.
   await page.goto("/plan");

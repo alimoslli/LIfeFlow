@@ -129,6 +129,7 @@ export function AppShell({
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch
                       data-tour={item.label.toLowerCase()}
                       aria-current={active ? "page" : undefined}
                       className={cn(
@@ -182,6 +183,7 @@ export function AppShell({
                   <Link
                     key={item.href}
                     href={item.href}
+                    prefetch
                     data-tour={item.label.toLowerCase()}
                     aria-current={active ? "page" : undefined}
                     className={cn(
