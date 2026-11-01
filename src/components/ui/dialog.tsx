@@ -64,6 +64,7 @@ export function Dialog({
       </Button>
       <dialog
         ref={setDialog}
+        aria-label={title}
         onClose={(e) => e.target === e.currentTarget && setOpen(false)}
         onCancel={(e) => {
           if (e.target !== e.currentTarget) return;
