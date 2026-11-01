@@ -218,6 +218,33 @@ describe("money findings", () => {
   });
 });
 
+describe("Sunday week ahead", () => {
+  it("names the heaviest day, why, and a lighter day before it; quiet on light weeks and other days", async () => {
+    const { run } = await makeUser();
+    // A Sunday evening; the week ahead is Mon Nov 9 to Sun Nov 15.
+    const sunday = new Date("2026-11-08T23:00:00Z");
+    const quiet = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now: sunday }));
+    expect(quiet.find((m) => m.kind === "week_ahead")).toBeUndefined();
+
+    await run(async (s) => {
+      const job = await createEmployer(s, { name: "Target", hourlyRateCents: 1600 });
+      await createShift(s, TZ, { employerId: job.id, date: "2026-11-11", startTime: "10:00", endTime: "19:00" });
+      await createTask(s, TZ, { title: "Pay phone bill", dueDate: "2026-11-11", priority: "high" });
+      const course = await createCourse(s, { name: "Biology", code: "BIO 101" });
+      await createAssignment(s, TZ, { courseId: course.id, title: "Quiz 4", kind: "quiz", dueDate: "2026-11-12", dueTime: "09:00" });
+    });
+    const mon = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now: new Date("2026-11-09T23:00:00Z") }));
+    expect(mon.find((m) => m.kind === "week_ahead")).toBeUndefined(); // only on Sundays
+
+    const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now: new Date(sunday.getTime() + 60_000) }));
+    const msg = out.find((m) => m.kind === "week_ahead")!;
+    expect(msg.title).toBe("Wednesday is your big day this week");
+    expect(msg.body).toContain("Wednesday has about 11 hours on it: Work at Target 10:00 AM–7:00 PM and a to-do (Pay phone bill).");
+    expect(msg.body).toContain("Monday is wide open.");
+    expect(msg.action).toMatchObject({ type: "ask", prompt: expect.stringContaining("Help me move what I can to Monday") });
+  });
+});
+
 describe("curious Jarvis", () => {
   it("asks what fits the user's life and skips what it already knows", async () => {
     const { run } = await makeUser();

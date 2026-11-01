@@ -159,6 +159,12 @@ const KINDS: Record<string, (f: F) => Parts> = {
     ask: "Want to track it with your subscriptions?",
     mood: "info",
   }),
+  week_ahead: (f) => ({
+    headline: `${s(f, "day")} is your big day this week`,
+    fact: `${s(f, "day")} has about ${n(f, "hours")} hours on it: ${s(f, "why")}.${f.lighter ? ` ${s(f, "lighter")} ${n(f, "lighterHours") < 1 ? "is wide open" : `is lighter (about ${plural(n(f, "lighterHours"), "hour")})`}.` : ""}`,
+    ask: f.lighter ? `Want me to move what I can to ${s(f, "lighter")}?` : "Want to look at the week together?",
+    mood: "info",
+  }),
   review_transactions: (f) => ({
     headline: `${plural(n(f, "count"), "transaction")} need${n(f, "count") === 1 ? "s" : ""} a category`,
     fact: `I'm not sure where ${n(f, "count") === 1 ? "one recent transaction goes" : `${n(f, "count")} recent transactions go`}, like ${s(f, "example")}. I'll show you my best guesses.`,
@@ -247,6 +253,7 @@ export const KIND_LABELS: Record<string, string> = {
   new_subscription: "New subscriptions",
   double_charge: "Possible double charges",
   review_transactions: "Transactions to categorize",
+  week_ahead: "Sunday week ahead",
   bank_fees: "Bank fees",
   savings_found: "Cheaper bills found",
   question: "Get-to-know questions",

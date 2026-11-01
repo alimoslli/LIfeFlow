@@ -1,6 +1,17 @@
 import { usd } from "@/lib/jarvis-voice";
 import { and, desc, eq, gte, isNotNull, lt, ne } from "drizzle-orm";
-import { addDaysStr, daysBetween, formatDateStr, localDateOf, localTimeOf, monthStart, relativeDayLabel, startOfLocalDay, weekStart } from "@/lib/dates";
+import {
+  addDaysStr,
+  dayOfWeek,
+  daysBetween,
+  formatDateStr,
+  localDateOf,
+  localTimeOf,
+  monthStart,
+  relativeDayLabel,
+  startOfLocalDay,
+  weekStart,
+} from "@/lib/dates";
 import { gmailMessages, tasks, type JarvisTopic, type ProactiveAction } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { listAccounts } from "../finance/accounts";
@@ -17,6 +28,7 @@ import { getAgenda, freeSlots } from "../calendar";
 import { subscriptionsOverview } from "../finance/subscriptions";
 import { scanTransactions } from "../finance/findings";
 import { transactionsToReview } from "../finance/categorize";
+import { lifeLoad } from "../life-load";
 import { billsToReview, findSavings, listSavings } from "../finance/savings-finder";
 import { webSearchClient } from "../../integrations/web-search";
 import { eveningWrap, goalForecast, habitCoach, monthlyReview, morningBrief, weeklyLearned, weeklyReview } from "./reviews";
@@ -405,6 +417,38 @@ const moneyFinds: Detector = async ({ scope, today }) => {
   return out;
 };
 
+/**
+ * Sunday evening, the week ahead (ADR 0020): when a day is full, say which one and why,
+ * and the lighter day before it, with one tap to move work there. Light weeks stay quiet.
+ */
+const weekAhead: Detector = async ({ scope, tz, today }) => {
+  if (dayOfWeek(today) !== 0) return [];
+  const week = await lifeLoad(scope, tz, addDaysStr(today, 1));
+  const heavy = week.heaviest;
+  if (heavy.hours < 7) return [];
+  const day = formatDateStr(heavy.date, "EEEE");
+  const lighter = week.lighterBefore ? formatDateStr(week.lighterBefore.date, "EEEE") : null;
+  const why = heavy.reasons.slice(0, 2).map((r) => r.replace(/ \([^)]*\)$/, "").replace(/^To-do: (.*)$/, "a to-do ($1)"));
+  return [
+    {
+      kind: "week_ahead",
+      topic: "general",
+      dedupeKey: `week_ahead:${today}`,
+      facts: {
+        day,
+        hours: Math.round(heavy.hours),
+        why: why.join(" and "),
+        lighter,
+        lighterHours: week.lighterBefore ? Math.round(week.lighterBefore.hours) : null,
+      },
+      action: lighter
+        ? { type: "ask", label: "Plan it with Jarvis", prompt: `${day} looks like my heaviest day (${why.join(", ")}). Help me move what I can to ${lighter}.` }
+        : { type: "open", label: "See your week", href: "/plan" },
+      priority: 62,
+    },
+  ];
+};
+
 /** Jarvis asks instead of guessing: transactions he couldn't place, gone through together in chat. */
 const reviewTransactions: Detector = async ({ scope, today }) => {
   const r = await transactionsToReview(scope, today, 1);
@@ -503,6 +547,7 @@ export const DETECTORS = {
   savingsCheck,
   moneyFinds,
   reviewTransactions,
+  weekAhead,
 };
 export type DetectorName = keyof typeof DETECTORS;
 
@@ -511,7 +556,7 @@ export const RUNS: Record<string, DetectorName[]> = {
   morning: ["emailBrief", "morningBrief", "monthlyReview", "savingsCheck", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
   midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks", "subscriptionWatch", "moneyFinds", "reviewTransactions"],
   // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
-  evening: ["eveningWrap", "weeklyReview", "weeklyLearned", "goalForecast", "habitCoach", "taskStreak", "goalMilestones", "deadlineConflicts"],
+  evening: ["eveningWrap", "weeklyReview", "weekAhead", "weeklyLearned", "goalForecast", "habitCoach", "taskStreak", "goalMilestones", "deadlineConflicts"],
   transaction: ["spendingPace", "unusualSpend", "billsDue", "goalMilestones", "moneyFinds"],
   shift: ["deadlineConflicts"],
   goal: ["goalMilestones"],
