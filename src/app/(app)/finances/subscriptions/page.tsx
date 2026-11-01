@@ -87,7 +87,13 @@ export default async function SubscriptionsPage() {
 
       <section aria-label="Your subscriptions" className="flex flex-col gap-3">
         {active.length === 0 && d.found.length === 0 && (
-          <Card className="p-5 text-[15px] text-text-2">No subscriptions yet. Connect a bank or add transactions, and recurring charges show up here.</Card>
+          <Card className="p-5 text-[15px] text-text-2">
+            {d.historyDays === 0
+              ? "No subscriptions yet. Connect a bank or add transactions, and recurring charges show up here."
+              : d.historyDays < 60
+                ? `Nothing found yet. A subscription shows up after it charges two or three times, and there are only ${d.historyDays} days of bank history so far. Tap Sync now on your bank in Accounts to pull more.`
+                : "No subscriptions found in your bank history."}
+          </Card>
         )}
         {active.map((s) => (
           <Card as="article" key={s.id} className="p-4" data-testid="subscription">

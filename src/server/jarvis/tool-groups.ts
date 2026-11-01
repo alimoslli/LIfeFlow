@@ -132,6 +132,8 @@ export const GROUP_TOOLS: Record<ToolGroup, string[]> = {
     "create_personal_goal",
     "update_personal_goal",
     "delete_personal_goal",
+    "goals_today",
+    "log_goal_checkin",
   ],
   projects: ["list_projects", "create_project", "update_project", "delete_project"],
   memory: ["list_memories", "forget_memory"],

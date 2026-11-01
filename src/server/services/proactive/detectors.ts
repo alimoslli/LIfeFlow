@@ -1,4 +1,5 @@
 import { usd } from "@/lib/jarvis-voice";
+import { checkedInOn, openGoals } from "../goal-checkins";
 import { and, desc, eq, gte, isNotNull, lt, ne } from "drizzle-orm";
 import {
   addDaysStr,
@@ -421,6 +422,31 @@ const moneyFinds: Detector = async ({ scope, today }) => {
  * Sunday evening, the week ahead (ADR 0020): when a day is full, say which one and why,
  * and the lighter day before it, with one tap to move work there. Light weeks stay quiet.
  */
+/** Evening: "How did you work toward your goals today?" Once a day, only for open goals not checked in yet. */
+const goalCheckin: Detector = async ({ scope, today }) => {
+  const goals = await openGoals(scope);
+  if (!goals.length) return [];
+  const done = await checkedInOn(scope, today);
+  const open = goals.filter((g) => !done.has(g.id));
+  if (!open.length) return [];
+  return [
+    {
+      kind: "goal_checkin",
+      topic: "general",
+      dedupeKey: `goal_checkin:${today}`,
+      facts: {
+        goals: open
+          .slice(0, 3)
+          .map((g) => g.title)
+          .join(", "),
+        more: Math.max(0, open.length - 3),
+      },
+      action: { type: "ask", label: "Tell Jarvis", prompt: "Check in on my goals with me: ask how I worked toward each one today, then save what I tell you." },
+      priority: 55,
+    },
+  ];
+};
+
 const weekAhead: Detector = async ({ scope, tz, today }) => {
   if (dayOfWeek(today) !== 0) return [];
   const week = await lifeLoad(scope, tz, addDaysStr(today, 1));
@@ -525,6 +551,7 @@ const savingsCheck: Detector = async ({ scope, today }) => {
 };
 
 export const DETECTORS = {
+  goalCheckin,
   emailBrief,
   spendingPace,
   goalMilestones,
@@ -556,7 +583,18 @@ export const RUNS: Record<string, DetectorName[]> = {
   morning: ["emailBrief", "morningBrief", "monthlyReview", "savingsCheck", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
   midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks", "subscriptionWatch", "moneyFinds", "reviewTransactions"],
   // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
-  evening: ["eveningWrap", "weeklyReview", "weekAhead", "weeklyLearned", "goalForecast", "habitCoach", "taskStreak", "goalMilestones", "deadlineConflicts"],
+  evening: [
+    "goalCheckin",
+    "eveningWrap",
+    "weeklyReview",
+    "weekAhead",
+    "weeklyLearned",
+    "goalForecast",
+    "habitCoach",
+    "taskStreak",
+    "goalMilestones",
+    "deadlineConflicts",
+  ],
   transaction: ["spendingPace", "unusualSpend", "billsDue", "goalMilestones", "moneyFinds"],
   shift: ["deadlineConflicts"],
   goal: ["goalMilestones"],

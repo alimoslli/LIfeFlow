@@ -159,6 +159,12 @@ const KINDS: Record<string, (f: F) => Parts> = {
     ask: "Want to track it with your subscriptions?",
     mood: "info",
   }),
+  goal_checkin: (f) => ({
+    headline: "How did today go for your goals?",
+    fact: `${s(f, "goals")}${n(f, "more") > 0 ? ` and ${n(f, "more")} more` : ""}. Anything you did counts, big or small.`,
+    ask: "Tell me what you did and I'll save it.",
+    mood: "info",
+  }),
   week_ahead: (f) => ({
     headline: `${s(f, "day")} is your big day this week`,
     fact: `${s(f, "day")} has about ${n(f, "hours")} hours on it: ${s(f, "why")}.${f.lighter ? ` ${s(f, "lighter")} ${n(f, "lighterHours") < 1 ? "is wide open" : `is lighter (about ${plural(n(f, "lighterHours"), "hour")})`}.` : ""}`,
@@ -254,6 +260,7 @@ export const KIND_LABELS: Record<string, string> = {
   double_charge: "Possible double charges",
   review_transactions: "Transactions to categorize",
   week_ahead: "Sunday week ahead",
+  goal_checkin: "Goal check-in",
   bank_fees: "Bank fees",
   savings_found: "Cheaper bills found",
   question: "Get-to-know questions",

@@ -5,13 +5,49 @@ import { Field, Input } from "@/components/ui/field";
 import { Card, Progress } from "@/components/ui/surface";
 import { formatDateStr } from "@/lib/dates";
 import { cn } from "@/lib/utils";
-import type { personalGoals } from "@/server/db/schema";
+import type { goalCheckins, personalGoals } from "@/server/db/schema";
+import { AskJarvisButton } from "@/components/shell/app-shell";
 import { createPersonalGoalAction, deletePersonalGoalAction, setPersonalGoalDoneAction, stepPersonalGoalAction, updatePersonalGoalAction } from "./actions";
 
 type Goal = typeof personalGoals.$inferSelect;
+type Checkins = Map<string, (typeof goalCheckins.$inferSelect)[]>;
+
+const CHECKIN_PROMPT = "Check in on my goals with me: ask how I worked toward each one today, then save what I tell you.";
+const said = (c: typeof goalCheckins.$inferSelect) =>
+  `${c.note}${c.amountCents ? ` (+$${(c.amountCents / 100).toFixed(c.amountCents % 100 ? 2 : 0)})` : ""}${c.progress ? ` (+${c.progress})` : ""}`;
+
+/** Jarvis asks; you answer in your own words. Today's answers show here. */
+export function GoalCheckin({ goals, checkins, today }: { goals: { id: string; title: string }[]; checkins: Checkins; today: string }) {
+  if (!goals.length) return null;
+  const todays = goals.flatMap((g) => (checkins.get(g.id) ?? []).filter((c) => c.date === today).map((c) => ({ goal: g.title, text: said(c) })));
+  return (
+    <Card className="p-5">
+      <p className="text-xs font-medium tracking-wide text-accent uppercase">Today</p>
+      <p className="mt-1 text-[17px] font-medium">How did you work toward your goals today?</p>
+      {todays.length > 0 && (
+        <ul className="mt-3 flex flex-col gap-1.5 text-sm">
+          {todays.map((t, i) => (
+            <li key={i} className="flex gap-2">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+              <span>
+                <span className="font-medium">{t.goal}:</span> {t.text}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <AskJarvisButton
+        prompt={CHECKIN_PROMPT}
+        className="mt-3 inline-flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-medium text-accent-text"
+      >
+        {todays.length ? "Add more" : "Tell Jarvis"}
+      </AskJarvisButton>
+    </Card>
+  );
+}
 
 /** Goals that aren't about money: done or not, or measured ("4 of 12 books") with a quick +1. */
-export function PersonalGoals({ goals }: { goals: Goal[] }) {
+export function PersonalGoals({ goals, checkins }: { goals: Goal[]; checkins: Checkins }) {
   if (!goals.length)
     return (
       <Card className="p-5">
@@ -56,6 +92,11 @@ export function PersonalGoals({ goals }: { goals: Goal[] }) {
                 )}
               </div>
               {measured && <Progress value={Math.min(100, (g.progress / g.target!) * 100)} className="mt-3" />}
+              {checkins.get(g.id)?.[0] && (
+                <p className="mt-2 text-xs text-text-2">
+                  Last: {said(checkins.get(g.id)![0])} · {formatDateStr(checkins.get(g.id)![0].date, "MMM d")}
+                </p>
+              )}
               <details className="mt-2">
                 <summary className="cursor-pointer text-xs text-accent">Edit</summary>
                 <ActionForm action={updatePersonalGoalAction.bind(null, g.id)} reset={false} showSuccess className="mt-3 gap-3">

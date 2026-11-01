@@ -1,0 +1,7 @@
+[
+  { "prompt": "Check in on my goals with me", "expect": "routes to goal-checkin" },
+  { "prompt": "I saved $20 for my car today by not eating out", "expect": "routes to goal-checkin" },
+  { "prompt": "I walked 30 minutes and ate less, log it for my weight goal", "expect": "routes to goal-checkin" },
+  { "prompt": "Here's what I did toward my goal today", "expect": "routes to goal-checkin" },
+  { "prompt": "I read two chapters for my reading goal", "expect": "routes to goal-checkin" }
+]

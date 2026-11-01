@@ -99,12 +99,17 @@ export async function subscriptionsOverview(scope: UserScope, today: string) {
   // Subscriptions found in transactions that aren't tracked yet.
   const trackedKeys = new Set(subs.map((x) => merchantKey({ merchantName: x.name, description: x.name })));
   const found = detected.filter((c) => c.kind === "subscription" && c.latestAmountCents < 0 && c.confidence >= 0.6 && !trackedKeys.has(c.merchantKey));
+  // Totals count what was found in the bank too (it's real money going out), not only what's tracked.
+  const foundYearly = found.reduce((n, c) => n + -c.latestAmountCents * PER_YEAR[c.frequency], 0);
+  // How much bank history there is to look at: a subscription shows up after 2 to 3 charges.
+  const oldest = txns.reduce<string | null>((o, t) => (!t.pending && (!o || t.date < o) ? t.date : o), null);
   return {
     subscriptions: subs,
-    monthlyCents: active.reduce((n, s) => n + s.monthlyCents, 0),
-    yearlyCents: active.reduce((n, s) => n + s.yearlyCents, 0),
+    monthlyCents: active.reduce((n, s) => n + s.monthlyCents, 0) + Math.round(foundYearly / 12),
+    yearlyCents: active.reduce((n, s) => n + s.yearlyCents, 0) + foundYearly,
     flags,
     found,
+    historyDays: oldest ? daysBetween(oldest, today) : 0,
   };
 }
 export type SubscriptionsOverview = Awaited<ReturnType<typeof subscriptionsOverview>>;

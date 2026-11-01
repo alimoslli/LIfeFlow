@@ -341,6 +341,26 @@ export const personalGoals = pgTable(
   () => [ownerPolicy()],
 );
 
+/**
+ * "How did you work toward your goal today?" One line per answer, for a personal or a money goal.
+ * A money check-in with an amount also records a contribution; a measured personal goal can move its progress.
+ */
+export const goalCheckins = pgTable(
+  "goal_checkins",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    goalKind: text("goal_kind").$type<"personal" | "money">().notNull(),
+    goalId: uuid("goal_id").notNull(),
+    date: date("date", { mode: "string" }).notNull(),
+    note: text("note").notNull(),
+    amountCents: integer("amount_cents"),
+    progress: integer("progress"),
+    createdAt: createdAt(),
+  },
+  (t) => [ownerPolicy(), index("goal_checkins_goal_idx").on(t.userId, t.goalId, t.date)],
+);
+
 export const auditEvents = pgTable(
   "audit_events",
   {

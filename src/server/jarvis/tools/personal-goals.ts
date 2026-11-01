@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createPersonalGoal, deletePersonalGoal, listPersonalGoals, updatePersonalGoal } from "../../services/personal-goals";
-import { dateArg, defineTool, idArg } from "../tool";
+import { checkedInOn, logGoalCheckin, openGoals } from "../../services/goal-checkins";
+import { dateArg, defineTool, idArg, moneyArg, toCents } from "../tool";
 
 /** Goals that aren't about money ("Run a 5K", "Read 12 books"). Money goals are list_goals / create_goal. */
 const present = (g: Awaited<ReturnType<typeof listPersonalGoals>>[number]) => ({
@@ -67,6 +68,49 @@ export const personalGoalTools = [
     async execute({ id }, ctx) {
       const g = await ctx.run((s) => deletePersonalGoal(s, id));
       return { deleted: g.title, viewAt: "/goals" };
+    },
+  }),
+  defineTool({
+    name: "goals_today",
+    description:
+      "Every open goal (money or not) with its id, kind and progress, and whether the user already checked in on it today. Use it before asking how they worked toward their goals.",
+    schema: z.object({}),
+    mutates: false,
+    async execute(_a, ctx) {
+      return ctx.run(async (s) => {
+        const [goals, done] = [await openGoals(s, { money: !ctx.moneyLocked }), await checkedInOn(s, ctx.today)];
+        return { goals: goals.map((g) => ({ ...g, checkedInToday: done.has(g.id) })), moneyHidden: !!ctx.moneyLocked, viewAt: "/goals" };
+      });
+    },
+  }),
+  defineTool({
+    name: "log_goal_checkin",
+    description:
+      'Save what the user did today toward one goal, in their words ("walked 30 minutes", "skipped takeout"). Money goals: add `amount` only if they said a number they put toward it. Measured goals: `progress` is how much to add (1 more book). One call per goal.',
+    schema: z.object({
+      goalId: idArg("Goal"),
+      goalKind: z.enum(["personal", "money"]),
+      note: z.string().min(1).max(500).describe("What they did, in their words"),
+      amount: moneyArg("Dollars put toward a money goal, only if the user said it").optional(),
+      progress: z.number().int().min(1).optional(),
+    }),
+    mutates: true,
+    async execute(a, ctx) {
+      if (a.goalKind === "money" && ctx.moneyLocked)
+        throw new Error("Money is locked with Face ID on this device. Tell the user to unlock it in the Money tab, then ask again.");
+      const row = await ctx.run((s) =>
+        logGoalCheckin(s, ctx.today, {
+          goalKind: a.goalKind,
+          goalId: a.goalId,
+          note: a.note,
+          amountCents: a.amount ? toCents(a.amount) : null,
+          progress: a.progress ?? null,
+        }),
+      );
+      return {
+        saved: { goalId: row.goalId, date: row.date, note: row.note, amount: row.amountCents ? row.amountCents / 100 : null, progress: row.progress },
+        viewAt: "/goals",
+      };
     },
   }),
 ];

@@ -211,6 +211,13 @@
       "when": 1793511526383,
       "tag": "0029_personal_goals",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1793511865056,
+      "tag": "0030_goal_checkins",
+      "breakpoints": true
     }
   ]
 }

@@ -9,8 +9,9 @@ import { formatCents } from "@/lib/money";
 import { requireUser, withCurrentUser } from "@/server/auth/current-user";
 import { moneyLocked } from "@/server/auth/money-lock";
 import { listPersonalGoals } from "@/server/services/personal-goals";
+import { recentCheckins } from "@/server/services/goal-checkins";
 import { HabitsSection } from "../habits/habits-section";
-import { NewPersonalGoal, PersonalGoals } from "./personal-goals";
+import { GoalCheckin, NewPersonalGoal, PersonalGoals } from "./personal-goals";
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import { series } from "@/server/db/series";
@@ -44,12 +45,14 @@ export default async function GoalsPage() {
   const d = await withCurrentUser(async (s, u) => {
     const today = todayIn(u.timezone);
     const personal = await listPersonalGoals(s);
-    if (locked) return { personal, goals: [], accounts: [], today };
-    const [goals, accounts] = await series(
-      () => goalsWithPlans(s, today),
-      () => listAccounts(s, { types: ["depository", "investment", "cash"] }),
-    );
-    return { personal, goals, accounts, today };
+    const [goals, accounts] = locked
+      ? [[], []]
+      : await series(
+          () => goalsWithPlans(s, today),
+          () => listAccounts(s, { types: ["depository", "investment", "cash"] }),
+        );
+    const checkins = await recentCheckins(s, [...personal.map((g) => g.id), ...goals.map((g) => g.id)], 1);
+    return { personal, goals, accounts, today, checkins };
   });
   const active = d.goals.filter((g) => g.status === "active");
   const done = d.goals.filter((g) => g.status === "achieved");
@@ -66,7 +69,12 @@ export default async function GoalsPage() {
       </div>
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.6fr_1fr]">
         <div className="flex flex-col gap-4">
-          <PersonalGoals goals={d.personal} />
+          <GoalCheckin
+            goals={[...d.personal.filter((g) => !g.doneAt).map((g) => ({ id: g.id, title: g.title })), ...active.map((g) => ({ id: g.id, title: g.name }))]}
+            checkins={d.checkins}
+            today={d.today}
+          />
+          <PersonalGoals goals={d.personal} checkins={d.checkins} />
           <h2 className="mt-3 text-[22px] font-medium tracking-tight">Money goals</h2>
           {locked && (
             <Link href="/money" className="flex min-h-14 items-center gap-3 rounded-3xl bg-surface px-5 shadow-soft">

@@ -98,6 +98,8 @@ const LABELS: Record<string, string> = {
   create_personal_goal: "Adding a goal",
   update_personal_goal: "Updating a goal",
   delete_personal_goal: "Deleting a goal",
+  goals_today: "Checking your goals",
+  log_goal_checkin: "Saving your progress",
   update_course: "Updating course",
   delete_course: "Preparing to delete course",
   update_project: "Updating project",
