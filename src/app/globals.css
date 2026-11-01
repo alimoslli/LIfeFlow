@@ -922,22 +922,54 @@ input[type="checkbox"].lf-switch:focus-visible {
   }
 }
 
-/* Jarvis on phones: the chat fills what's visible, above the keyboard when it's open (see chat-viewport.tsx). */
+/* Jarvis on phones: the page stays still and only the message bar rides up with the keyboard (see chat-viewport.tsx). */
 @media (max-width: 767px) {
+  html.lf-chat-lock,
+  html.lf-chat-lock body {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
   .lf-chat-viewport {
     position: fixed;
     inset-inline: 0;
-    top: var(--vvt, 0px);
-    height: calc(var(--vvh, 100dvh) - 4.25rem - env(safe-area-inset-bottom));
+    top: 0;
+    bottom: calc(4.25rem + env(safe-area-inset-bottom));
+    transition: bottom 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .lf-chat-viewport[data-keyboard] {
-    height: var(--vvh, 100dvh);
+    bottom: var(--kb, 0px);
   }
   .lf-chat-viewport[data-keyboard] .lf-chat-note {
     display: none;
   }
-  body.lf-chat-lock {
-    overflow: hidden;
-    overscroll-behavior: none;
+  .lf-tabbar {
+    transition:
+      opacity 0.2s ease,
+      transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  body[data-keyboard] .lf-tabbar {
+    opacity: 0;
+    transform: translateY(150%);
+    pointer-events: none;
+  }
+}
+.lf-kb-proxy {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  font-size: 16px; /* under 16px iOS zooms in */
+  caret-color: transparent;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lf-chat-viewport {
+    transition: none;
   }
 }

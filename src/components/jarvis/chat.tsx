@@ -288,7 +288,7 @@ export function JarvisChat({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div ref={scrollRef} className={cn("min-h-0 flex-1 overflow-y-auto", compact ? "px-4" : "px-4 sm:px-8")} aria-live="polite">
+      <div ref={scrollRef} data-chat-scroll className={cn("min-h-0 flex-1 overflow-y-auto", compact ? "px-4" : "px-4 sm:px-8")} aria-live="polite">
         <div className={cn("mx-auto flex w-full flex-col gap-5 py-6", !compact && "max-w-3xl")}>
           {!availability.available && (
             <div className="flex gap-3 rounded-2xl bg-warning-soft p-4 text-sm text-warning">
