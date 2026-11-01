@@ -82,6 +82,10 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Money: never project income (pay counts only after it's deposited). Today's money section = cash & checking, spent this month, came in this month.
 - Prefer one clear action per item; no dense tables on phones.
 
+## Error alerts
+- Server errors reach `onRequestError` (src/instrumentation.ts); browser errors reach `/api/errors` via `ErrorReporter` (root layout) and the `(app)/error.tsx` boundary. Both go to `recordError` (services/error-reports.ts): grouped by fingerprint in `error_reports`, scrubbed of emails/ids/tokens/long numbers, and emailed to `ALERT_EMAIL` (or `LEGAL_CONTACT_EMAIL`) on the 1st, 10th, 100th and 1,000th time, at most 20 emails a day. Never put user content in error messages.
+- After an e2e run, `select * from error_reports` in budgetflow_e2e is a quick bug finder.
+
 ## Dev gotchas
 - If `next dev` reload-loops ("HMR hash mismatch"), stop it and `rm -rf .next` (usually a leftover production build), then restart.
 - Stop servers with `pgrep -f "[n]ext-server" | xargs -r kill` in its **own** command. A pattern that also appears in the same command line (e.g. "next start") kills your own shell.

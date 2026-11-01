@@ -14,6 +14,7 @@ const PUBLIC = [
   "/privacy",
   "/integrity",
   "/api/sms/inbound",
+  "/api/errors",
   "/api/billing/webhook",
   "/terms",
   "/api/health",

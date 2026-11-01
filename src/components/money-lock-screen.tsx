@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { biometricName, PasskeyCancelled, unlockWithPasskey } from "@/components/auth/passkey-client";
 import { haptic } from "@/lib/haptics";
@@ -10,6 +10,8 @@ export function MoneyLockScreen() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Decided in the browser only, so the server's "a passkey" never mismatches Face ID / Touch ID.
+  const name = useSyncExternalStore(noSubscribe, biometricName, () => "a passkey");
   const unlock = async () => {
     setBusy(true);
     setError(null);
@@ -35,7 +37,7 @@ export function MoneyLockScreen() {
         disabled={busy}
         className="mt-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent px-6 text-[15px] font-medium text-accent-text shadow-soft active:scale-[0.98] disabled:opacity-60"
       >
-        {busy && <Loader2 className="h-4 w-4 animate-spin" />} Unlock with {biometricName()}
+        {busy && <Loader2 className="h-4 w-4 animate-spin" />} Unlock with {name}
       </button>
       {error && (
         <p role="alert" className="text-sm text-danger">
@@ -46,3 +48,5 @@ export function MoneyLockScreen() {
     </div>
   );
 }
+
+const noSubscribe = () => () => {};

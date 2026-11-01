@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { ScanFace } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/toaster";
@@ -55,7 +55,8 @@ export function PasskeyOffer() {
     }
   };
 
-  const name = biometricName();
+  // The server can't know the device, so it says "a passkey"; the browser then says Face ID or Touch ID (no hydration mismatch).
+  const name = useSyncExternalStore(noSubscribe, biometricName, () => "a passkey");
   return (
     <Sheet open={open} onClose={later} title={`Use ${name} next time?`}>
       <div className="flex flex-col items-center gap-3 text-center">
@@ -78,3 +79,5 @@ export function PasskeyOffer() {
     </Sheet>
   );
 }
+
+const noSubscribe = () => () => {};

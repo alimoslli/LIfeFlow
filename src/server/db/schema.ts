@@ -292,6 +292,22 @@ export const rateLimitBuckets = pgTable(
   (t) => [primaryKey({ columns: [t.key, t.windowStart] })],
 );
 
+/**
+ * Crashes and failed requests, grouped by kind (fingerprint) with a count, so the owner
+ * hears about new problems (error-reports.ts). Not tied to a user and never holds
+ * personal details: messages are scrubbed of emails, numbers and ids before saving.
+ */
+export const errorReports = pgTable("error_reports", {
+  fingerprint: text("fingerprint").primaryKey(),
+  source: text("source").$type<"server" | "client">().notNull(),
+  route: text("route").notNull(),
+  message: text("message").notNull(),
+  digest: text("digest"),
+  count: integer("count").notNull().default(1),
+  firstSeenAt: tstz("first_seen_at").notNull().defaultNow(),
+  lastSeenAt: tstz("last_seen_at").notNull().defaultNow(),
+});
+
 export const auditEvents = pgTable(
   "audit_events",
   {

@@ -1,3 +1,4 @@
+import { ErrorReporter } from "@/components/error-reporter";
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { ACCENT_COOKIE, THEME_COOKIE, parseAccent, parseTheme } from "@/lib/theme";
@@ -72,6 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-full">
         <script dangerouslySetInnerHTML={{ __html: SPLASH_SCRIPT }} />
         <Splash />
+        <ErrorReporter />
         {children}
       </body>
     </html>
