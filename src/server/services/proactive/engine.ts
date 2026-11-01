@@ -5,6 +5,7 @@ import { assistantProfile } from "@/lib/assistant";
 import { jarvisMessages, notificationLog, type JarvisSettings, type UserPreferences } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { DETECTORS, RUNS, type Candidate } from "./detectors";
+import { aiAllowed } from "@/lib/ai-consent";
 import { nextQuestion } from "./questions";
 import { performAction } from "./respond";
 import { fillRegularShifts } from "../work";
@@ -107,7 +108,10 @@ export async function runProactive({ scope, tz, prefs, trigger, now = new Date()
   const today = todayIn(tz, now);
   const ctx = { scope, tz, today, now };
   let candidates: Candidate[] = [];
-  for (const name of RUNS[trigger] ?? []) candidates.push(...(await DETECTORS[name](ctx)));
+  for (const name of RUNS[trigger] ?? []) {
+    if (name === "savingsCheck" && !aiAllowed(prefs)) continue; // it searches the web with an AI model
+    candidates.push(...(await DETECTORS[name](ctx)));
+  }
   if (settings.learning === undefined && trigger === "morning")
     candidates.push({ kind: "consent", topic: "general", dedupeKey: "consent", facts: {}, action: { type: "consent", label: "Yes, learn" }, priority: 40 });
 

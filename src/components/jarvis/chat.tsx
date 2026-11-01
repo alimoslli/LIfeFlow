@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { JarvisStatus, statusWord } from "./status";
 import { useShell } from "../shell/app-shell";
+import { AiConsentCard } from "./ai-consent-card";
 import { Markdown } from "./markdown";
 import { VoiceButton } from "./voice-call";
 import { defaultFollowUps, FOLLOW_UPS, STARTERS } from "./suggestions";
@@ -63,7 +64,8 @@ export function JarvisChat({
   onConversation?: (id: string, title: string) => void;
 }) {
   const router = useRouter();
-  const { assistantName, firstName } = useShell();
+  const { assistantName, firstName, aiConsent } = useShell();
+  const canSend = availability.available && aiConsent;
   const [conversationId, setConversationId] = useState(initialId ?? null);
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
   const [input, setInput] = useState(initialPrompt ?? "");
@@ -302,27 +304,32 @@ export function JarvisChat({
                 What can I take off your plate?
               </h2>
               <p className="mt-2 max-w-xs text-[15px] leading-snug text-text-2">I know your classes, shifts and money.</p>
-              <div className="-mx-4 mt-5 flex w-[calc(100%+2rem)] snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:w-full sm:grid-cols-4 sm:overflow-visible sm:px-0">
-                {starterCards(module).map(({ icon: Icon, title, prompt }) => (
-                  <button
-                    key={title}
-                    onClick={() => (prompt.endsWith("…") ? (setInput(prompt.replace("…", "")), inputRef.current?.focus()) : send(prompt))}
-                    disabled={!availability.available}
-                    className="flex min-h-[86px] w-[42%] min-w-[150px] shrink-0 snap-start flex-col items-start justify-between gap-2.5 rounded-[22px] bg-surface p-3.5 text-left shadow-soft sm:w-auto sm:min-w-0 ring-1 ring-border/60 transition-all hover:-translate-y-0.5 hover:shadow-lift active:scale-[0.98] disabled:opacity-50"
-                  >
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-accent">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <span className="text-[15px] leading-snug font-medium text-text">{title}</span>
-                  </button>
-                ))}
-              </div>
+              {!aiConsent ? (
+                <AiConsentCard name={assistantName} />
+              ) : (
+                <div className="-mx-4 mt-5 flex w-[calc(100%+2rem)] snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:w-full sm:grid-cols-4 sm:overflow-visible sm:px-0">
+                  {starterCards(module).map(({ icon: Icon, title, prompt }) => (
+                    <button
+                      key={title}
+                      onClick={() => (prompt.endsWith("…") ? (setInput(prompt.replace("…", "")), inputRef.current?.focus()) : send(prompt))}
+                      disabled={!canSend}
+                      className="flex min-h-[86px] w-[42%] min-w-[150px] shrink-0 snap-start flex-col items-start justify-between gap-2.5 rounded-[22px] bg-surface p-3.5 text-left shadow-soft sm:w-auto sm:min-w-0 ring-1 ring-border/60 transition-all hover:-translate-y-0.5 hover:shadow-lift active:scale-[0.98] disabled:opacity-50"
+                    >
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-accent">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="text-[15px] leading-snug font-medium text-text">{title}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
           {messages.map((m) =>
             m.role === "user" ? <UserBubble key={m.id} m={m} /> : <AssistantBubble key={m.id} m={m} onDecide={decide} onMemory={decideMemory} />,
           )}
-          {followUps && (
+          {!aiConsent && !empty && <AiConsentCard name={assistantName} />}
+          {followUps && aiConsent && (
             <div className="flex flex-wrap gap-2">
               {followUps.map((f) => (
                 <button
@@ -380,7 +387,7 @@ export function JarvisChat({
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40"
               aria-label="Attach a file or screenshot"
               title="Attach a screenshot, syllabus or text file"
-              disabled={!availability.available}
+              disabled={!canSend}
             >
               <Paperclip className="h-[18px] w-[18px]" />
             </button>
@@ -401,12 +408,18 @@ export function JarvisChat({
                 }
               }}
               rows={1}
-              placeholder={availability.available ? `Message ${assistantName}…` : `${assistantName} isn't available right now`}
-              disabled={!availability.available}
+              placeholder={
+                !availability.available
+                  ? `${assistantName} isn't available right now`
+                  : aiConsent
+                    ? `Message ${assistantName}…`
+                    : `Allow ${assistantName} to start`
+              }
+              disabled={!canSend}
               aria-label="Message Jarvis"
               className="max-h-48 min-h-10 flex-1 resize-none bg-transparent px-1.5 py-2 text-[16px] leading-6 placeholder:text-muted [field-sizing:content]"
             />
-            {!busy && <VoiceButton module={module} assistantName={assistantName} disabled={!availability.available} />}
+            {!busy && <VoiceButton module={module} assistantName={assistantName} disabled={!canSend} />}
             {busy ? (
               <button
                 type="button"
@@ -419,7 +432,7 @@ export function JarvisChat({
             ) : (
               <button
                 type="submit"
-                disabled={!availability.available || (!input.trim() && !pending.some((p) => !p.uploading && !p.error))}
+                disabled={!canSend || (!input.trim() && !pending.some((p) => !p.uploading && !p.error))}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft transition-all active:scale-95 disabled:bg-surface-3 disabled:text-muted disabled:shadow-none"
                 aria-label="Send"
               >

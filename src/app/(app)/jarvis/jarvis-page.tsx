@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { PenLine, Plus, Settings, Sparkles } from "lucide-react";
+import { PenLine, Plus, Settings, SquarePen } from "lucide-react";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { SectionNav } from "@/components/shell/section-nav";
 import { QuickAddButton } from "@/components/shell/quick-add";
 import { ActionButton } from "@/components/action-form";
@@ -61,25 +62,32 @@ export function JarvisPage({
         </nav>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-2 px-4 pt-[max(1rem,env(safe-area-inset-top))]">
+        {/* One light row: history, the chat's title, new chat, settings, and Jarvis's profile. */}
+        <header className="flex items-center gap-0.5 px-2 pt-[max(0.5rem,env(safe-area-inset-top))] lg:px-4">
           <span className="lg:hidden">
             <HistorySheet items={items} activeId={activeId} />
           </span>
-          <p className="min-w-0 flex-1 truncate text-center text-sm font-medium lg:text-left">{active?.title ?? "Jarvis"}</p>
-          <Link href="/jarvis" aria-label="New chat" className="flex h-11 w-11 items-center justify-center rounded-full bg-surface shadow-soft lg:hidden">
-            <Plus className="h-4 w-4" />
+          <p className="min-w-0 flex-1 truncate px-1 text-center text-[15px] font-semibold lg:text-left">{active?.title ?? "Jarvis"}</p>
+          <Link
+            href="/jarvis"
+            aria-label="New chat"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text lg:hidden"
+          >
+            <SquarePen className="h-5 w-5" />
           </Link>
-          <Link href="/settings" aria-label="Settings" className="flex h-11 w-11 items-center justify-center rounded-full text-text-2">
+          <Link
+            href="/settings"
+            aria-label="Settings"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text"
+          >
             <Settings className="h-5 w-5" />
           </Link>
-          <Link href="/jarvis/profile" aria-label="Jarvis profile" className="flex h-11 w-11 items-center justify-center">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-text">
-              <Sparkles className="h-4 w-4" />
-            </span>
+          <Link href="/jarvis/profile" aria-label="Jarvis profile" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface-2">
+            <BrandMark className="h-8 w-8" alt="" />
           </Link>
         </header>
         <SectionNav inline>
-          <QuickAddButton className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium whitespace-nowrap text-accent-text">
+          <QuickAddButton className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-surface px-4 text-sm font-medium whitespace-nowrap text-text-2 shadow-soft ring-1 ring-border/60">
             <PenLine className="h-4 w-4" /> Capture
           </QuickAddButton>
         </SectionNav>

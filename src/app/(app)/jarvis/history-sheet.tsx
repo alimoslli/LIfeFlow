@@ -12,9 +12,9 @@ export function HistorySheet({ items, activeId }: { items: { id: string; title: 
       <button
         onClick={() => setOpen(true)}
         aria-label="Past conversations"
-        className="flex h-11 w-11 items-center justify-center rounded-full bg-surface shadow-soft"
+        className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text"
       >
-        <History className="h-4 w-4" />
+        <History className="h-5 w-5" />
       </button>
       {open && (
         <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Past conversations">

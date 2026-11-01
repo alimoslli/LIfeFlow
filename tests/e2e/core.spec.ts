@@ -113,3 +113,13 @@ test("APIs reject unauthenticated and cross-site requests", async ({ request, pa
   expect(body.profile.name).toBe("Morgan Cross");
   expect(JSON.stringify(body)).not.toContain("encrypted_credentials");
 });
+
+test("Jarvis asks before anything goes to the AI, and works once allowed", async ({ page }) => {
+  await signUp(page, "Kim Park", { ai: false });
+  await page.goto("/jarvis");
+  await expect(page.getByRole("region", { name: "Allow AI" })).toContainText("Before we start");
+  await expect(page.getByLabel("Message Jarvis")).toBeDisabled();
+  await page.getByRole("button", { name: "Allow" }).click();
+  await expect(page.getByLabel("Message Jarvis")).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Plan my day" })).toBeVisible();
+});

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionUser } from "@/server/auth/current-user";
+import { AI_CONSENT_NEEDED, aiAllowed } from "@/lib/ai-consent";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { startVoiceSession } from "@/server/jarvis/voice";
 import { requirePro } from "@/server/billing";
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
     requirePro(user, "voice");
     const parsed = body.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) throw new HttpError(400, "Invalid request");
+    if (!aiAllowed(user.preferences)) throw new HttpError(403, AI_CONSENT_NEEDED);
     await enforceRateLimit(`voice:min:${user.id}`, 4, 60);
     await enforceRateLimit(`voice:day:${user.id}`, 40, 86_400);
     try {

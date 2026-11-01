@@ -1,4 +1,5 @@
 "use server";
+import { AI_CONSENT_NEEDED, aiAllowed } from "@/lib/ai-consent";
 import { todayIn } from "@/lib/dates";
 import { mutate, type ActionState } from "@/server/actions";
 import { withCurrentUser } from "@/server/auth/current-user";
@@ -53,7 +54,10 @@ export async function cancelHelpAction(
   id: string,
 ): Promise<{ ok: true; answer: string; sources: { title: string; url: string }[] } | { ok: false; error: string }> {
   try {
-    const help = await withCurrentUser((s) => findCancelHelp(s, id));
+    const help = await withCurrentUser((s, u) => {
+      if (!aiAllowed(u.preferences)) throw new WebSearchError(AI_CONSENT_NEEDED);
+      return findCancelHelp(s, id);
+    });
     return { ok: true, answer: help.answer, sources: help.sources };
   } catch (e) {
     return { ok: false, error: e instanceof WebSearchError ? e.message : "Couldn't look that up right now." };

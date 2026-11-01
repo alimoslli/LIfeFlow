@@ -27,8 +27,8 @@ import { NAME_KEY } from "../motion/splash";
 import type { JarvisAvailability } from "../jarvis/types";
 import { BrandMark } from "@/components/brand/brand-mark";
 
-type ShellCtx = { openJarvis: (prompt?: string, opts?: { send?: boolean }) => void; assistantName: string; firstName: string };
-const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: "Jarvis", firstName: "" });
+type ShellCtx = { openJarvis: (prompt?: string, opts?: { send?: boolean }) => void; assistantName: string; firstName: string; aiConsent: boolean };
+const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: "Jarvis", firstName: "", aiConsent: false });
 export const useShell = () => useContext(Ctx);
 
 type Drawer = { open: boolean; prompt?: string; send?: boolean; key: number };
@@ -38,6 +38,7 @@ export function AppShell({
   jarvis,
   tour = false,
   assistantName = "Jarvis",
+  aiConsent = false,
   unread = 0,
   areas = ALL_AREAS,
   children,
@@ -48,6 +49,8 @@ export function AppShell({
   unread?: number;
   /** The name the user gave their assistant. */
   assistantName?: string;
+  /** The user allowed Jarvis to send their data to the AI provider. */
+  aiConsent?: boolean;
   user: { name: string; email: string; accountKind: "standard" | "demo" };
   jarvis: JarvisAvailability;
   /** Show the guided tour (once, after onboarding or when replayed). */
@@ -106,7 +109,7 @@ export function AppShell({
   const settingsActive = pathname.startsWith("/settings");
 
   return (
-    <Ctx.Provider value={{ openJarvis, assistantName, firstName: user.name.split(" ")[0] }}>
+    <Ctx.Provider value={{ openJarvis, assistantName, firstName: user.name.split(" ")[0], aiConsent }}>
       <LifeAreasContext.Provider value={areas}>
         <div className="lf-glass">
           <TiltLayer />

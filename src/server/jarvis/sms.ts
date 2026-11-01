@@ -8,6 +8,7 @@ import { runJarvisTurn } from "./agent";
 import { decidePendingAction } from "./decide";
 import type { ModelProvider } from "./providers/types";
 import { isPro } from "../billing";
+import { aiAllowed } from "@/lib/ai-consent";
 
 /**
  * One incoming text from a verified number: a YES/NO answers the pending action;
@@ -47,6 +48,11 @@ export async function answerText(
   };
   if (!isPro(user)) {
     const note = "Texting LifeFlow is part of Pro. Upgrade in the app under Settings, Plan.";
+    await deps.send(u.phone!, note);
+    return note;
+  }
+  if (!aiAllowed(u.preferences)) {
+    const note = "To text your assistant, open LifeFlow and allow Jarvis to use AI (Settings, Jarvis).";
     await deps.send(u.phone!, note);
     return note;
   }

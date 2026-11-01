@@ -67,6 +67,8 @@ const tsvector = customType<{ data: string }>({ dataType: () => "tsvector" });
 // identity (no RLS: needed before a user context exists, e.g. login)
 
 export type UserPreferences = {
+  /** When the user allowed Jarvis to send their data to the AI provider (OpenAI). Unset or null: no AI features (App Store 5.1.2(i)). */
+  aiConsentAt?: string | null;
   studyTime?: "morning" | "afternoon" | "evening" | "night";
   weekStartsOn?: 0 | 1;
   currency?: string;

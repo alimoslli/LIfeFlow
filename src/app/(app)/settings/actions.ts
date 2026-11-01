@@ -197,3 +197,11 @@ export async function resetLearningAction(): Promise<ActionState> {
     return "Jarvis forgot what he learned from your responses.";
   });
 }
+
+/** Allow (or stop) sending the user's data to the AI provider for Jarvis (App Store 5.1.2(i)). */
+export async function setAiConsentAction(on: boolean): Promise<ActionState> {
+  return mutate("ai.consent", async (_s, u) => {
+    await updatePreferences(getDb(), u.id, { aiConsentAt: on ? new Date().toISOString() : null });
+    return on ? "Jarvis can use AI now." : "Jarvis's AI is off. Nothing is sent to OpenAI.";
+  });
+}

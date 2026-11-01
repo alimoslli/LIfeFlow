@@ -107,7 +107,11 @@ export default function PrivacyPolicy() {
         intelligence models. We only use your information in other ways with your consent.
       </p>
 
-      <h2>3. The AI assistant</h2>
+      <h2 id="ai">3. The AI assistant</h2>
+      <p>
+        Nothing is sent to our AI provider until you allow it. The first time you use the assistant, we ask; you can turn it off anytime in Settings, Jarvis,
+        and the rest of LifeFlow keeps working.
+      </p>
       <p>
         When you use the assistant, the parts of your information needed to answer your request (your message, relevant records, relevant approved memories,
         and, if you ask about them, your email, calendar or health data) are sent to our AI provider, OpenAI, to generate the response. OpenAI processes this
@@ -141,7 +145,10 @@ export default function PrivacyPolicy() {
       </p>
 
       <h2>5. Who we share information with</h2>
-      <p>We share information only with service providers that help us run LifeFlow, under contracts that limit their use of it, and only as needed:</p>
+      <p>
+        We share information only with service providers that help us run LifeFlow, under contracts that limit their use of it, and only as needed. Each of them
+        must protect your information at least as well as this policy does:
+      </p>
       <table>
         <thead>
           <tr>

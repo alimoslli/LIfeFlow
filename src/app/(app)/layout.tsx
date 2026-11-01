@@ -1,3 +1,4 @@
+import { aiAllowed } from "@/lib/ai-consent";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/shell/app-shell";
 import { assistantProfile } from "@/lib/assistant";
@@ -18,6 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       jarvis={{ available: status.available, reason: status.reason, model: status.model, provider: status.provider }}
       tour={user.preferences?.tour === "pending"}
       assistantName={assistantProfile(user.preferences).name}
+      aiConsent={aiAllowed(user.preferences)}
       unread={unread}
       areas={lifeAreas(user.preferences?.lifeStage)}
     >

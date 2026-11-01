@@ -3,7 +3,7 @@ import { Pool } from "pg";
 
 export const pool = new Pool({ connectionString: process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e" });
 
-export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding?: "skip" | "stay" } = {}) {
+export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding?: "skip" | "stay"; ai?: boolean } = {}) {
   const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@example.com`;
   // Every test signs up from the same IP; reset only the sign-up limiter so the suite can grow past its 10/hour cap.
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
@@ -13,6 +13,9 @@ export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding
   await page.getByLabel("Password").fill("correct horse battery");
   await page.getByRole("button", { name: "Create account" }).click();
   await page.waitForURL("**/welcome");
+  // Tests talk to Jarvis; the "Before we start" consent is tested on its own.
+  if (opts.ai !== false)
+    await pool.query(`update users set preferences = preferences || '{"aiConsentAt":"2026-01-01T00:00:00.000Z"}'::jsonb where email = $1`, [email]);
   if (opts.onboarding === "stay") return email;
   // New accounts start in first-run setup and then get a tour; most tests skip both.
   await page.getByRole("button", { name: "Skip setup" }).click();

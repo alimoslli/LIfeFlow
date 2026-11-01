@@ -8,6 +8,7 @@ import { ProviderUnavailableError } from "@/server/jarvis/providers/types";
 import { FREE_JARVIS_PER_DAY, isPro } from "@/server/billing";
 import { getDb } from "@/server/db/client";
 import { rateLimit } from "@/server/rate-limit";
+import { AI_CONSENT_NEEDED, aiAllowed } from "@/lib/ai-consent";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
     const parsed = body.safeParse(await req.json().catch(() => null));
     if (!parsed.success) throw new HttpError(400, "Invalid request");
     if (!parsed.data.message.trim() && !parsed.data.attachmentIds.length) throw new HttpError(400, "Message is empty");
+    if (!aiAllowed(user.preferences)) throw new HttpError(403, AI_CONSENT_NEEDED);
     await enforceRateLimit(`jarvis:min:${user.id}`, 20, 60);
     await enforceRateLimit(`jarvis:day:${user.id}`, 400, 86_400);
     if (!isPro(user) && !(await rateLimit(getDb(), `jarvis:free:${user.id}`, FREE_JARVIS_PER_DAY, 86_400)).allowed)

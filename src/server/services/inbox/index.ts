@@ -1,3 +1,4 @@
+import { aiAllowed } from "@/lib/ai-consent";
 import { createHash, randomBytes, randomInt } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { addDaysStr, DATE_RE, formatDateStr, TIME_RE } from "@/lib/dates";
@@ -299,6 +300,8 @@ export async function processDocument(scope: UserScope, tz: string, today: strin
     .returning();
   let ex: Extraction;
   try {
+    const [owner] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
+    if (!aiAllowed(owner?.preferences)) throw new Error("Saved. Allow Jarvis to use AI (Settings → Jarvis) to have it read and filed automatically.");
     ex = await extract({ ...doc, today });
   } catch (e) {
     const [failed] = await scope.tx
