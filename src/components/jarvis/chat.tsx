@@ -440,7 +440,9 @@ export function JarvisChat({
               </button>
             )}
           </form>
-          <p className="mt-2 text-center text-[11px] text-muted/80">{assistantName} tells you everything it changes. Deletions always ask first.</p>
+          <p className="lf-chat-note mt-2 text-center text-[11px] text-muted/80">
+            {assistantName} tells you everything it changes. Deletions always ask first.
+          </p>
         </div>
       </div>
     </div>

@@ -921,3 +921,23 @@ input[type="checkbox"].lf-switch:focus-visible {
     animation: none;
   }
 }
+
+/* Jarvis on phones: the chat fills what's visible, above the keyboard when it's open (see chat-viewport.tsx). */
+@media (max-width: 767px) {
+  .lf-chat-viewport {
+    position: fixed;
+    inset-inline: 0;
+    top: var(--vvt, 0px);
+    height: calc(var(--vvh, 100dvh) - 4.25rem - env(safe-area-inset-bottom));
+  }
+  .lf-chat-viewport[data-keyboard] {
+    height: var(--vvh, 100dvh);
+  }
+  .lf-chat-viewport[data-keyboard] .lf-chat-note {
+    display: none;
+  }
+  body.lf-chat-lock {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+}

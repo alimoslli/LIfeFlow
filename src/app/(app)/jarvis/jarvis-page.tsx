@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { jarvisStatus } from "@/server/jarvis/providers";
 import { deleteConversationAction } from "./actions";
 import { HistorySheet } from "./history-sheet";
+import { ChatViewport } from "@/components/jarvis/chat-viewport";
 
 type Conv = { id: string; title: string; lastMessageAt: Date };
 
@@ -32,8 +33,8 @@ export function JarvisPage({
   const items = conversations.map((c) => ({ id: c.id, title: c.title, when: formatIn(c.lastMessageAt, tz, "MMM d") }));
   const active = conversations.find((c) => c.id === activeId);
   return (
-    // Phones: full height minus the bottom tab bar. Desktop: full height.
-    <div className="flex h-[calc(100dvh-4.25rem-env(safe-area-inset-bottom))] md:h-dvh">
+    // Phones: pinned to the visible screen, above the tab bar or the keyboard (ChatViewport). Desktop: full height.
+    <ChatViewport className="flex md:h-dvh">
       <aside className="hidden w-72 shrink-0 flex-col py-6 pr-2 pl-1 lg:flex">
         <Link
           href="/jarvis"
@@ -102,6 +103,6 @@ export function JarvisPage({
           />
         </div>
       </div>
-    </div>
+    </ChatViewport>
   );
 }
