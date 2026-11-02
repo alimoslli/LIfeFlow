@@ -162,13 +162,13 @@
      "rec": "g_conn",
      "from": 0,
      "dur": 1.2,
-     "speed": 1.0
+     "speed": 0.75
     },
     {
      "rec": "g_conn",
-     "from": 2.8,
+     "from": 4.0,
      "dur": 4.2,
-     "speed": 0.7
+     "speed": 0.44
     }
    ],
    "head": {

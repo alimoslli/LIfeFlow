@@ -67,7 +67,7 @@ life = {
               pops=[{"card": "habits", "at": 1.5, "dur": 1.5, "y": 1110}]),
         phone(11.4, 16.8, [rec("g_health", 0, 5.4, 0.72)], head("HEALTH", "Sleep, steps, workouts.", "From Apple Health."),
               pops=[{"card": "sleep", "at": 1.3, "dur": 3.9, "y": 1120, "w": 470, "dx": -245}, {"card": "steps", "at": 1.65, "dur": 3.55, "y": 1120, "w": 470, "dx": 245}]),
-        phone(16.8, 22.2, [rec("g_conn", 0, 1.2), rec("g_conn", 2.8, 4.2, 0.7)], head("CONNECTED", "Plug in", "the rest of your life."),
+        phone(16.8, 22.2, [rec("g_conn", 0, 1.2, 0.75), rec("g_conn", 4.0, 4.2, 0.44)], head("CONNECTED", "Plug in", "the rest of your life."),
               pops=[{"card": "banks", "at": 3.3, "dur": 2.0, "y": 1100}]),
         phone(22.2, 26.4, [rec("tour", 0, 4.2, 0.55)], head("TODAY", "Every morning,", "it all comes together."),
               pops=[{"card": "next", "at": 1.3, "dur": 2.3, "y": 1110}], exit=True),
