@@ -162,16 +162,17 @@ def b(lines, top=100, size=96, counter=None):
     return d
 
 
+# Voice lines are sped up 8% (ffmpeg atempo 1.08) so each fits in 15 s.
 # 1. a quiz and a shift on the same day: Today -> calendar -> blocked study time
 p_school = {
     "bpm": 100, "duration": 15.0,
-    "vo": [["vo/P1_1.wav", 0.1], ["vo/P1_2.wav", 2.75], ["vo/P1_3.wav", 6.3], ["vo/P1_4.wav", 11.85]],
+    "vo": [["vo/P1_1.wav", 0.1], ["vo/P1_2.wav", 3.05], ["vo/P1_3.wav", 7.6], ["vo/P1_4.wav", 11.75]],
     "scenes": [
-        {**phone(0.0, 2.6, [rec("tour", 0.0, 2.6, 0.9)], None, pops=[{"card": "next", "at": 0.5, "dur": 2.1, "y": 1110, "shake": 8}]),
+        {**phone(0.0, 3.0, [rec("tour", 0.0, 3.0, 0.9)], None, pops=[{"card": "next", "at": 0.5, "dur": 2.5, "y": 1110, "shake": 8}]),
          "bold": b(["A QUIZ FRIDAY.", "*A SHIFT TONIGHT.*"], size=84), "punch": True},
-        {**phone(2.6, 6.2, [rec("tour", 3.45, 3.6, 0.5)], None, pops=[{"card": "week", "at": 0.7, "dur": 2.9, "y": 1120, "w": 800}]),
+        {**phone(3.0, 7.6, [rec("tour", 3.45, 4.6, 0.5)], None, pops=[{"card": "week", "at": 0.7, "dur": 3.9, "y": 1120, "w": 800}]),
          "bold": b(["IT'S ALL *ON*", "*ONE CALENDAR.*"], size=96), "punch": True},
-        {**phone(6.2, 11.6, [rec("block", 0.0, 5.4, 1.2)], None, pills=[{"kind": "chip", "text": "Blocked Wed 11:15 to 1:15 for your quiz", "at": 0.9, "dur": 3.4, "y": 1690}]),
+        {**phone(7.6, 11.6, [rec("block", 0.0, 4.0, 1.6)], None, pills=[{"kind": "chip", "text": "Blocked Wed 11:15 to 1:15 for your quiz", "at": 0.7, "dur": 3.0, "y": 1690}]),
          "bold": b(["IT SPOTS *THE CLASH*", "AND *BLOCKS THE TIME.*"], size=80), "punch": True},
         outro("DUE"),
     ],
@@ -180,14 +181,14 @@ p_school = {
 # 2. a charge you forgot: bank -> subscriptions -> cancel steps
 p_subs = {
     "bpm": 100, "duration": 15.0,
-    "vo": [["vo/P2_1.wav", 0.1], ["vo/P2_2.wav", 2.7], ["vo/P2_3.wav", 5.75], ["vo/P2_4.wav", 9.8], ["vo/P2_5.wav", 11.85]],
+    "vo": [["vo/P2_1.wav", 0.1], ["vo/P2_2.wav", 2.6], ["vo/P2_3.wav", 5.5], ["vo/P2_4.wav", 9.95], ["vo/P2_5.wav", 11.6]],
     "scenes": [
-        {**phone(0.0, 2.6, [rec("subs", 0.55, 2.6, 0.6)], None), "bold": b(["WHAT IS", "*THIS CHARGE?*"], size=124), "punch": True},
-        {**phone(2.6, 5.6, [rec("m_bank", 0.0, 3.0, 1.0)], None, pills=[{"kind": "plaid", "at": 1.3, "y": 1665}]),
+        {**phone(0.0, 2.5, [rec("subs", 0.55, 2.5, 0.6)], None), "bold": b(["WHAT IS", "*THIS CHARGE?*"], size=124), "punch": True},
+        {**phone(2.5, 5.4, [rec("m_bank", 0.0, 2.9, 1.0)], None, pills=[{"kind": "plaid", "at": 1.2, "y": 1665}]),
          "bold": b(["*LINK* YOUR BANK.", "SECURED BY PLAID."], size=90), "punch": True},
-        {**phone(5.6, 9.6, [rec("subs", 0.55, 4.0, 0.7)], None, pops=[{"card": "peryear", "at": 1.6, "dur": 2.4, "y": 1130, "w": 620}]),
+        {**phone(5.4, 9.9, [rec("subs", 0.55, 4.5, 0.7)], None, pops=[{"card": "peryear", "at": 1.7, "dur": 2.6, "y": 1130, "w": 620}]),
          "bold": b(["IT FINDS *THE ONES*", "YOU FORGOT."], size=92), "count": {"at": 0.3, "dur": 1.4, "to": 329.76, "label": "A YEAR IN FORGOTTEN SUBSCRIPTIONS", "y": 1130}, "punch": True},
-        {**phone(9.6, 11.6, [rec("subs", 2.2, 2.0, 0.8)], None), "bold": b(["AND *HOW TO*", "*CANCEL.*"], size=96), "punch": True},
+        {**phone(9.9, 11.6, [rec("subs", 2.2, 1.7, 0.8)], None), "bold": b(["AND *HOW TO*", "*CANCEL.*"], size=96), "punch": True},
         outro("CANCEL"),
     ],
 }
@@ -195,11 +196,11 @@ p_subs = {
 # 3. how much can I spare: real cash -> savings goal -> investing illustration
 p_save = {
     "bpm": 100, "duration": 15.0,
-    "vo": [["vo/P3_1.wav", 0.1], ["vo/P3_2.wav", 2.8], ["vo/P3_3.wav", 7.0], ["vo/P3_4.wav", 11.85]],
+    "vo": [["vo/P3_1.wav", 0.1], ["vo/P3_2.wav", 2.7], ["vo/P3_3.wav", 7.1], ["vo/P3_4.wav", 11.65]],
     "scenes": [
-        {**phone(0.0, 2.8, [rec("m_over", 0.0, 2.8, 0.9)], None, pops=[{"card": "available", "at": 0.8, "dur": 2.0, "y": 1110, "w": 860}]),
+        {**phone(0.0, 2.6, [rec("m_over", 0.0, 2.6, 0.9)], None, pops=[{"card": "available", "at": 0.8, "dur": 1.8, "y": 1110, "w": 860}]),
          "bold": b(["HOW MUCH CAN I", "*ACTUALLY* SPARE?"], size=96), "punch": True},
-        {**phone(2.8, 7.0, [rec("m_save", 1.4, 4.2, 0.95)], None, pops=[{"card": "whatif", "at": 2.2, "dur": 1.9, "y": 1130, "w": 800}]),
+        {**phone(2.6, 7.0, [rec("m_save", 1.2, 4.4, 0.9)], None, pops=[{"card": "whatif", "at": 2.4, "dur": 1.9, "y": 1130, "w": 800}]),
          "bold": b(["PICK A *GOAL.*", "SEE *YOUR PACE.*"], size=96, counter="1 / 2"), "punch": True},
         {**phone(7.0, 11.6, [rec("m_invest", 1.4, 4.6, 1.0)], None, pops=[{"card": "invest", "at": 2.4, "dur": 2.2, "y": 1130, "w": 760}],
                  pills=[{"kind": "chip", "text": "An illustration, not a promise", "at": 0.9, "dur": 3.5, "y": 1690}]),
@@ -211,11 +212,11 @@ p_save = {
 # 4. the assistant live: a real chat, then the calendar it filled in
 p_chat = {
     "bpm": 100, "duration": 15.0,
-    "vo": [["vo/P4_1.wav", 0.1], ["vo/P4_2.wav", 5.15], ["vo/P4_3.wav", 9.75], ["vo/P4_4.wav", 11.85]],
+    "vo": [["vo/P4_1.wav", 0.1], ["vo/P4_2.wav", 4.5], ["vo/P4_3.wav", 9.1], ["vo/P4_4.wav", 11.7]],
     "scenes": [
-        {**phone(0.0, 5.0, [rec("chat", 0.6, 5.0, 1.9)], None), "bold": b(["*JUST TELL*", "YOUR ASSISTANT."], size=104), "punch": True},
-        {**phone(5.0, 9.6, [rec("chat", 10.1, 4.6, 1.7)], None), "bold": b(["IT CHECKS *YOUR WEEK.*", "FINDS *THE TIME.*"], size=84)},
-        {**phone(9.6, 11.6, [rec("chat_plan", 1.5, 2.0, 2.0)], None), "bold": b(["*DONE.* IT'S ON", "YOUR CALENDAR."], size=84), "punch": True},
+        {**phone(0.0, 4.4, [rec("chat", 0.6, 4.4, 2.1)], None), "bold": b(["*JUST TELL*", "YOUR ASSISTANT."], size=104), "punch": True},
+        {**phone(4.4, 9.0, [rec("chat", 9.9, 4.6, 1.75)], None), "bold": b(["IT CHECKS *YOUR WEEK.*", "FINDS *THE TIME.*"], size=84)},
+        {**phone(9.0, 11.6, [rec("chat_plan", 1.5, 2.6, 1.9)], None), "bold": b(["*DONE.* IT'S ON", "YOUR CALENDAR."], size=84), "punch": True},
         outro("WEEK"),
     ],
 }

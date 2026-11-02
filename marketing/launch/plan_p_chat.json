@@ -8,28 +8,28 @@
   ],
   [
    "vo/P4_2.wav",
-   5.15
+   4.5
   ],
   [
    "vo/P4_3.wav",
-   9.75
+   9.1
   ],
   [
    "vo/P4_4.wav",
-   11.85
+   11.7
   ]
  ],
  "scenes": [
   {
    "kind": "phone",
    "start": 0.0,
-   "end": 5.0,
+   "end": 4.4,
    "src": [
     {
      "rec": "chat",
      "from": 0.6,
-     "dur": 5.0,
-     "speed": 1.9
+     "dur": 4.4,
+     "speed": 2.1
     }
    ],
    "head": null,
@@ -47,14 +47,14 @@
   },
   {
    "kind": "phone",
-   "start": 5.0,
-   "end": 9.6,
+   "start": 4.4,
+   "end": 9.0,
    "src": [
     {
      "rec": "chat",
-     "from": 10.1,
+     "from": 9.9,
      "dur": 4.6,
-     "speed": 1.7
+     "speed": 1.75
     }
    ],
    "head": null,
@@ -71,14 +71,14 @@
   },
   {
    "kind": "phone",
-   "start": 9.6,
+   "start": 9.0,
    "end": 11.6,
    "src": [
     {
      "rec": "chat_plan",
      "from": 1.5,
-     "dur": 2.0,
-     "speed": 2.0
+     "dur": 2.6,
+     "speed": 1.9
     }
    ],
    "head": null,

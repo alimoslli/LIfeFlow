@@ -8,31 +8,31 @@
   ],
   [
    "vo/P2_2.wav",
-   2.7
+   2.6
   ],
   [
    "vo/P2_3.wav",
-   5.75
+   5.5
   ],
   [
    "vo/P2_4.wav",
-   9.8
+   9.95
   ],
   [
    "vo/P2_5.wav",
-   11.85
+   11.6
   ]
  ],
  "scenes": [
   {
    "kind": "phone",
    "start": 0.0,
-   "end": 2.6,
+   "end": 2.5,
    "src": [
     {
      "rec": "subs",
      "from": 0.55,
-     "dur": 2.6,
+     "dur": 2.5,
      "speed": 0.6
     }
    ],
@@ -51,13 +51,13 @@
   },
   {
    "kind": "phone",
-   "start": 2.6,
-   "end": 5.6,
+   "start": 2.5,
+   "end": 5.4,
    "src": [
     {
      "rec": "m_bank",
      "from": 0.0,
-     "dur": 3.0,
+     "dur": 2.9,
      "speed": 1.0
     }
    ],
@@ -66,7 +66,7 @@
    "pills": [
     {
      "kind": "plaid",
-     "at": 1.3,
+     "at": 1.2,
      "y": 1665
     }
    ],
@@ -82,13 +82,13 @@
   },
   {
    "kind": "phone",
-   "start": 5.6,
-   "end": 9.6,
+   "start": 5.4,
+   "end": 9.9,
    "src": [
     {
      "rec": "subs",
      "from": 0.55,
-     "dur": 4.0,
+     "dur": 4.5,
      "speed": 0.7
     }
    ],
@@ -96,8 +96,8 @@
    "pops": [
     {
      "card": "peryear",
-     "at": 1.6,
-     "dur": 2.4,
+     "at": 1.7,
+     "dur": 2.6,
      "y": 1130,
      "w": 620
     }
@@ -122,13 +122,13 @@
   },
   {
    "kind": "phone",
-   "start": 9.6,
+   "start": 9.9,
    "end": 11.6,
    "src": [
     {
      "rec": "subs",
      "from": 2.2,
-     "dur": 2.0,
+     "dur": 1.7,
      "speed": 0.8
     }
    ],
