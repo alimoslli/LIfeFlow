@@ -2,13 +2,13 @@ import { series } from "@/server/db/series";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckSquare, ChevronRight, Repeat } from "lucide-react";
+import { CheckSquare, ChevronRight, Plus, Repeat } from "lucide-react";
 import { ActionForm } from "@/components/action-form";
 import { SwipeRow } from "@/components/swipe-row";
 import { TaskCheck } from "@/components/task-check";
 import { SubmitButton } from "@/components/ui/button";
 import { CountedInput } from "@/components/ui/counted-input";
-import { Badge, Card, EmptyState, PageHeader, Tabs } from "@/components/ui/surface";
+import { Card, EmptyState, PageHeader, Tabs } from "@/components/ui/surface";
 import { daysBetween, dueLabel, localDateOf, todayIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
@@ -20,8 +20,6 @@ import { createTaskAction, deleteTaskAction, toggleTaskAction } from "./actions"
 export const metadata: Metadata = { title: "To-dos" };
 
 type Task = Awaited<ReturnType<typeof listTasks>>[number];
-
-const PRIORITY_TONE = { urgent: "danger", high: "warning", medium: "neutral", low: "neutral" } as const;
 
 export default async function TasksPage({ searchParams }: { searchParams: Promise<{ view?: string; open?: string }> }) {
   const { view = "open", open } = await searchParams;
@@ -148,7 +146,13 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                                 </span>
                               )}
                             </span>
-                            {t.priority !== "medium" && t.priority !== "low" && <Badge tone={PRIORITY_TONE[t.priority]}>{t.priority}</Badge>}
+                            {(t.priority === "urgent" || t.priority === "high") && (
+                              <span
+                                role="img"
+                                aria-label={t.priority === "urgent" ? "Urgent" : "High priority"}
+                                className={cn("h-2 w-2 shrink-0 rounded-full", t.priority === "urgent" ? "bg-danger" : "bg-warning")}
+                              />
+                            )}
                             <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
                           </Link>
                         </div>
@@ -159,6 +163,29 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
               </section>
             ))}
         </div>
+      )}
+
+      {view !== "done" && (
+        <ActionForm action={createTaskAction} className="mt-4 md:hidden">
+          {view === "today" && <input type="hidden" name="dueDate" value={today} />}
+          <div className="flex min-h-14 items-center gap-3 rounded-3xl bg-surface pr-4 pl-2 shadow-soft">
+            <button
+              type="submit"
+              aria-label="Add to-do"
+              className="-ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-accent hover:bg-accent-soft"
+            >
+              <Plus className="h-5 w-5" aria-hidden />
+            </button>
+            <CountedInput
+              name="title"
+              placeholder={view === "today" ? "Add a to-do for today" : "Add a to-do"}
+              required
+              max={300}
+              aria-label="Add a to-do"
+              className="min-w-0 flex-1 bg-transparent py-3 text-[0.9375rem] placeholder:text-accent focus:outline-none"
+            />
+          </div>
+        </ActionForm>
       )}
     </>
   );

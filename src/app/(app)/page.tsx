@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, Link2, Lock, MapPin, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowRight, Link2, Lock, MapPin, Plus, Wallet } from "lucide-react";
 import { CountUp } from "@/components/motion/count-up";
 import { assistantProfile } from "@/lib/assistant";
 import { Pressable } from "@/components/motion/pressable";
@@ -27,6 +27,11 @@ import { AskBar } from "./_today/day-plan";
 import { TaskCheck } from "@/components/task-check";
 import { billsAndPace } from "@/server/services/finance/forecast";
 import { buildDayPlan } from "@/server/briefing/day-plan";
+import { doneToday } from "@/server/services/done-today";
+import { ProgressRing } from "@/components/progress-ring";
+import { ActionForm } from "@/components/action-form";
+import { CountedInput } from "@/components/ui/counted-input";
+import { createTaskAction } from "./tasks/actions";
 
 const PR = { urgent: 0, high: 1, medium: 2, low: 3 } as const;
 
@@ -48,6 +53,7 @@ export default async function TodayPage() {
     status,
     habits,
     nextBill,
+    done,
   } = await withCurrentUser(async (scope, user) => {
     const { briefing, snapshot } = await getBriefing(scope, user);
     const [integrationList, banks, unread, proposed, habits, upcoming] = await series(
@@ -64,6 +70,7 @@ export default async function TodayPage() {
       plaidConfig() && !banks.length ? "your bank" : null,
     ].filter((x): x is string => !!x);
     const tasks = await listTasks(scope, { status: "open", topLevelOnly: true, limit: 50 });
+    const done = await doneToday(scope, snapshot.today, snapshot.tz);
     return {
       briefing,
       snapshot,
@@ -72,6 +79,7 @@ export default async function TodayPage() {
       setup,
       habits: habits.filter((h) => h.active && h.checkable && !h.doneThisPeriod).slice(0, 4),
       nextBill: upcoming[0] ?? null,
+      done,
       status: proposed.length
         ? { text: `${proposed.length} memor${proposed.length === 1 ? "y needs" : "ies need"} your OK`, href: "/jarvis/memory" }
         : unread
@@ -113,7 +121,23 @@ export default async function TodayPage() {
 
       <section aria-label="Do today" className="animate-rise">
         <SectionTitle href="/tasks">Do today</SectionTitle>
-        {plan.priorities.length === 0 ? (
+        {done.length + plan.dueCount > 0 && (
+          // Today's progress: finished today out of finished plus still due (late or due today).
+          <div className="mb-3 flex items-center gap-4 rounded-3xl bg-surface px-4 py-3.5 shadow-soft">
+            <ProgressRing done={done.length} total={done.length + plan.dueCount} />
+            <div className="min-w-0">
+              <p className="text-[1rem] font-semibold">
+                {done.length} of {done.length + plan.dueCount} done
+              </p>
+              <p className="mt-0.5 text-sm text-text-2">
+                {plan.dueCount === 0
+                  ? "Everything due today is done."
+                  : `${plan.dueCount} left today${plan.nextDueAt ? `, next at ${formatIn(plan.nextDueAt, s.tz, "h:mm a")}` : ""}`}
+              </p>
+            </div>
+          </div>
+        )}
+        {plan.priorities.length === 0 && done.length === 0 ? (
           <p className="rounded-3xl bg-surface px-5 py-4 text-[0.9375rem] text-text-2 shadow-soft">Nothing due. A good day to get ahead.</p>
         ) : (
           <ul className="divide-y divide-border/70 rounded-3xl bg-surface px-4 shadow-soft">
@@ -135,8 +159,42 @@ export default async function TodayPage() {
                 </Link>
               </li>
             ))}
+            {/* Finished today stays in view, ticked and crossed out, at the bottom. */}
+            {done.slice(0, 3).map((d) => (
+              <li key={d.kind + d.id} className="flex items-center gap-3 py-2.5">
+                <TaskCheck
+                  done
+                  action={d.kind === "task" ? toggleTaskAction.bind(null, d.id) : toggleAssignmentAction.bind(null, d.id)}
+                  label={`Mark "${d.title}" not done`}
+                />
+                <Link href={d.href} className="flex min-h-11 min-w-0 flex-1 flex-col justify-center">
+                  <span className="truncate text-[0.9375rem] leading-snug text-muted line-through">{d.title}</span>
+                  <span className="mt-0.5 text-xs text-muted">Done</span>
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
+        <ActionForm action={createTaskAction} className="mt-2">
+          <input type="hidden" name="dueDate" value={s.today} />
+          <div className="flex min-h-12 items-center gap-3 rounded-3xl bg-surface pr-4 pl-2 shadow-soft">
+            <button
+              type="submit"
+              aria-label="Add to-do"
+              className="-ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-accent hover:bg-accent-soft"
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+            </button>
+            <CountedInput
+              name="title"
+              placeholder="Add a to-do for today"
+              required
+              max={300}
+              aria-label="Add a to-do for today"
+              className="min-w-0 flex-1 bg-transparent py-2.5 text-[0.9375rem] placeholder:text-accent focus:outline-none"
+            />
+          </div>
+        </ActionForm>
         {plan.moreDue > 0 && (
           <Link href="/tasks" className="mt-1 inline-flex min-h-11 items-center gap-1 px-1 text-sm font-medium text-accent">
             {plan.moreDue} more <ArrowRight className="h-3.5 w-3.5" />

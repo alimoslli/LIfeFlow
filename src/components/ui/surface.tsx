@@ -119,8 +119,9 @@ export function Stat({ label, value, sub, className }: { label: string; value: R
 
 export function Tabs({ items, current }: { items: { href: string; label: string; key: string }[]; current: string }) {
   return (
+    // One segmented control: a soft track with the current view raised in white.
     <nav
-      className="lf-hscroll -mx-5 mb-6 flex gap-1.5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:-mx-8 sm:px-8 md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
+      className="lf-hscroll mb-6 flex gap-1 overflow-x-auto rounded-full bg-surface-2 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       aria-label="Sections"
     >
       {items.map((i) => (
@@ -129,8 +130,8 @@ export function Tabs({ items, current }: { items: { href: string; label: string;
           href={i.href}
           aria-current={i.key === current ? "page" : undefined}
           className={cn(
-            "flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm whitespace-nowrap transition-colors",
-            i.key === current ? "bg-text font-medium text-bg" : "bg-surface text-text-2 shadow-soft hover:text-text",
+            "flex min-h-10 flex-1 shrink-0 items-center justify-center rounded-full px-3.5 text-sm whitespace-nowrap transition-all",
+            i.key === current ? "bg-surface font-medium text-text shadow-soft" : "text-text-2 hover:text-text",
           )}
         >
           {i.label}

@@ -94,4 +94,30 @@ describe("Jarvis day plan", () => {
     expect(p.priorities).toMatchObject([{ title: "Renew parking permit", tag: "no due date" }]);
     expect(p.next).toMatchObject({ text: "Rent may not be covered", href: "/jarvis/says" });
   });
+
+  it("counts what's left today and when the next one is due, for the progress ring", () => {
+    const today = [
+      item({ id: "x", origin: "task", title: "Lab report", blocksTime: false, startsAt: new Date("2026-10-29T20:00:00Z"), href: "/tasks/x" }),
+      item({ id: "y", origin: "assignment", title: "Quiz", blocksTime: false, startsAt: new Date("2026-10-29T18:00:00Z"), href: "/school/y" }),
+      item({ id: "z", origin: "task", title: "All day thing", blocksTime: false, allDay: true, startsAt: new Date("2026-10-29T04:00:00Z"), href: "/tasks/z" }),
+      item({ id: "c", title: "Class", blocksTime: true, startsAt: new Date("2026-10-29T16:00:00Z") }),
+    ];
+    const p = buildDayPlan(snap, { today, next: null, insights: [] });
+    // 2 late + 2 still due later today (the all-day item began before now, the class isn't a to-do).
+    expect(p.dueCount).toBe(4);
+    expect(p.nextDueAt?.toISOString()).toBe("2026-10-29T18:00:00.000Z");
+    const none = buildDayPlan({ ...snap, overdue: [] }, { today: [], next: null, insights: [] });
+    expect(none.dueCount).toBe(0);
+    expect(none.nextDueAt).toBeNull();
+  });
+
+  it("never lists a to-do twice when the agenda links it differently", () => {
+    const today = [
+      item({ id: "t1", origin: "task", title: "Lab report", blocksTime: false, startsAt: new Date("2026-10-29T20:00:00Z"), href: "/tasks?open=t1" }),
+    ];
+    const open = [{ id: "t1", title: "Lab report", priority: "medium", dueAt: new Date("2026-10-29T20:00:00Z") }];
+    const p = buildDayPlan({ ...snap, overdue: [] }, { today, next: null, insights: [] }, { open });
+    expect(p.priorities.map((x) => x.title)).toEqual(["Lab report"]);
+    expect(p.moreDue).toBe(0);
+  });
 });

@@ -18,7 +18,17 @@ export type PlanPriority = {
 };
 export type PlanWatch = { text: string; tone: "attention" | "heads-up"; href?: string };
 export type PlanNext = { text: string; href?: string; prompt?: string; label: string };
-export type DayPlan = { summary: string[]; priorities: PlanPriority[]; moreDue: number; watch: PlanWatch[]; next: PlanNext };
+export type DayPlan = {
+  summary: string[];
+  priorities: PlanPriority[];
+  moreDue: number;
+  watch: PlanWatch[];
+  next: PlanNext;
+  /** Late items plus what's still due today: the "left today" in Today's progress ring. */
+  dueCount: number;
+  /** The next timed due today, for "next at 4:00 PM". */
+  nextDueAt: Date | null;
+};
 
 const usd = (c: number) => `$${Math.round(Math.abs(c) / 100).toLocaleString("en-US")}`;
 /** A label worth showing: a class name, or a high/urgent priority (not "Task" or "medium priority"). */
@@ -61,10 +71,11 @@ export function buildDayPlan(
       check: { kind: i.origin === "task" ? ("task" as const) : ("assignment" as const), id: i.id },
     })),
   ];
-  const listed = new Set([...late.map((o) => o.href), ...dueToday.map((i) => i.href)]);
+  // De-duplicate by id: the agenda and the to-do list link to the same to-do differently.
+  const listed = new Set([...late.map((o) => o.id), ...dueToday.map((i) => i.id)]);
   for (const t of opts.open ?? []) {
     const href = `/tasks/${t.id}`;
-    if (listed.has(href) || (t.dueAt && t.dueAt < now)) continue;
+    if (listed.has(t.id) || (t.dueAt && t.dueAt < now)) continue;
     all.push({
       title: t.title,
       context: t.priority === "high" || t.priority === "urgent" ? `${t.priority} priority` : null,
@@ -121,5 +132,6 @@ export function buildDayPlan(
           label: "Plan with Jarvis",
         };
 
-  return { summary, priorities, moreDue: Math.max(0, all.length - priorities.length), watch, next };
+  const nextDueAt = dueToday.filter((i) => !i.allDay).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0]?.startsAt ?? null;
+  return { summary, priorities, moreDue: Math.max(0, all.length - priorities.length), watch, next, dueCount: late.length + dueToday.length, nextDueAt };
 }
