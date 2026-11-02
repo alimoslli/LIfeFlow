@@ -3,7 +3,18 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { getDb } from "@/server/db/client";
-import { AdminError, clearError, deleteUser, resetLimits, setPlan, setSuspended, signOutEverywhere } from "@/server/services/admin";
+import {
+  AdminError,
+  clearError,
+  createAnnouncement,
+  deleteUser,
+  endAnnouncement,
+  resetLimits,
+  setInboxHandled,
+  setPlan,
+  setSuspended,
+  signOutEverywhere,
+} from "@/server/services/admin";
 
 const enc = encodeURIComponent;
 
@@ -84,6 +95,50 @@ export async function clearErrorAction(fd: FormData) {
     async () => {
       await clearError(getDb(), admin, fp);
       return "Cleared.";
+    },
+  );
+}
+
+export async function inboxHandledAction(fd: FormData) {
+  const admin = await requireAdmin();
+  const id = field(fd, "id");
+  const handled = field(fd, "handled") === "1";
+  const raw = field(fd, "back");
+  const back = /^\/admin\/feedback(\?[\w=&-]*)?$/.test(raw) ? raw : "/admin/feedback";
+  await run(
+    (msg, ok) => `${back}${back.includes("?") ? "&" : "?"}${ok ? "done" : "error"}=${enc(msg)}`,
+    async () => {
+      await setInboxHandled(getDb(), admin, id, handled);
+      return handled ? "Marked handled." : "Moved back to open.";
+    },
+  );
+}
+
+export async function createAnnouncementAction(fd: FormData) {
+  const admin = await requireAdmin();
+  await run(
+    (msg, ok) => `/admin/announcements?${ok ? "done" : "error"}=${enc(msg)}`,
+    async () => {
+      const days = Number(field(fd, "days")) || undefined;
+      await createAnnouncement(getDb(), admin, {
+        message: String(fd.get("message") ?? "").slice(0, 400),
+        tone: field(fd, "tone"),
+        linkUrl: field(fd, "linkUrl"),
+        days,
+      });
+      return "Published. Everyone sees it the next time they open the app.";
+    },
+  );
+}
+
+export async function endAnnouncementAction(fd: FormData) {
+  const admin = await requireAdmin();
+  const id = field(fd, "id");
+  await run(
+    (msg, ok) => `/admin/announcements?${ok ? "done" : "error"}=${enc(msg)}`,
+    async () => {
+      await endAnnouncement(getDb(), admin, id);
+      return "Ended. The banner is gone.";
     },
   );
 }

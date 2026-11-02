@@ -1,11 +1,11 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { feedback } from "../db/schema";
+import { feedback, ownerInbox } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { emailConfig, sendEmail } from "../integrations/email";
 
 /**
- * Beta feedback: always saved, and emailed to the owner (FEEDBACK_EMAIL, else ALERT_EMAIL,
+ * Beta feedback: always saved (theirs, plus the owner's copy for the admin page), and emailed to the owner (FEEDBACK_EMAIL, else ALERT_EMAIL,
  * else LEGAL_CONTACT_EMAIL) with the tester's address as reply-to, so a reply goes straight
  * to them. "Emailed" is only reported when the email provider confirms it.
  */
@@ -23,6 +23,11 @@ export async function sendFeedback(
 ) {
   const d = feedbackSchema.parse(input);
   const [row] = await scope.tx.insert(feedback).values({ userId: scope.userId, kind: d.kind, message: d.message }).returning({ id: feedback.id });
+  // The owner's copy, read on the admin page.
+  const [copy] = await scope.tx
+    .insert(ownerInbox)
+    .values({ senderUserId: scope.userId, senderName: from.name.slice(0, 200), senderEmail: from.email, kind: d.kind, message: d.message })
+    .returning({ id: ownerInbox.id });
   const env = deps.env ?? process.env;
   const to = (env.FEEDBACK_EMAIL || env.ALERT_EMAIL || env.LEGAL_CONTACT_EMAIL)?.trim();
   const cfg = emailConfig(env);
@@ -42,6 +47,7 @@ export async function sendFeedback(
       deps.fetch,
     );
     await scope.tx.update(feedback).set({ emailedAt: new Date() }).where(eq(feedback.id, row.id));
+    await scope.tx.update(ownerInbox).set({ emailedAt: new Date() }).where(eq(ownerInbox.id, copy.id));
     return { id: row.id, emailed: true };
   } catch {
     return { id: row.id, emailed: false }; // it's saved either way

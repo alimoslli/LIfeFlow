@@ -35,9 +35,43 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
 
   // Overview.
   expect((await op.goto("/admin"))?.status()).toBe(200);
-  await expect(op.getByText("LifeFlow admin")).toBeVisible();
-  await expect(op.getByText("Total users")).toBeVisible();
-  await expect(op.getByText("Signups, last 30 days")).toBeVisible();
+  await expect(op.getByRole("heading", { name: "Overview", level: 1 })).toBeVisible();
+  await expect(op.getByText("Needs your attention")).toBeVisible();
+  await expect(op.getByText("Sign-ups, last 30 days")).toBeVisible();
+
+  // Feedback a user sends lands in the owner's inbox, in full, with who sent it.
+  await page.goto("/settings/feedback");
+  await page.getByLabel("Your message").fill("The Plan tab should show my shifts in a different colour.");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText(/Thanks|Sent|got it/i).first()).toBeVisible();
+  await op.goto("/admin/feedback");
+  await expect(op.getByText("The Plan tab should show my shifts in a different colour.")).toBeVisible();
+  await expect(op.getByText(normalEmail.toLowerCase(), { exact: false }).first()).toBeVisible();
+  await op.getByRole("button", { name: "Mark handled" }).first().click();
+  await expect(op.getByText("Marked handled.")).toBeVisible();
+
+  // An announcement shows to everyone in the app, and they can close it.
+  await op.goto("/admin/announcements");
+  await op.getByLabel("Message").fill("Maintenance tonight at 11 PM for about 10 minutes.");
+  await op.getByRole("button", { name: "Show to everyone" }).click();
+  await expect(op.getByText(/^Published/)).toBeVisible();
+  await page.goto("/");
+  await expect(page.getByText("Maintenance tonight at 11 PM for about 10 minutes.")).toBeVisible();
+  await page.getByRole("button", { name: "Close announcement" }).click();
+  await page.reload();
+  await expect(page.getByText("Maintenance tonight at 11 PM for about 10 minutes.")).toHaveCount(0);
+  await op.goto("/admin/announcements");
+  await op.getByRole("button", { name: "End now" }).click();
+  await expect(op.getByText(/^Ended/)).toBeVisible();
+
+  // Growth and the CSV export.
+  expect((await op.goto("/admin/growth"))?.status()).toBe(200);
+  await expect(op.getByText("Top inviters")).toBeVisible();
+  const csv = await op.request.get("/admin/users/export");
+  expect(csv.status()).toBe(200);
+  expect(csv.headers()["content-disposition"]).toContain("lifeflow-users-");
+  expect(await csv.text()).toContain(normalEmail.toLowerCase());
+  expect((await page.request.get("/admin/users/export")).status()).toBe(404);
   await op.goto("/settings");
   await expect(op.getByRole("link", { name: /^Admin/ })).toBeVisible();
 
@@ -102,5 +136,8 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
   expect((await op.goto("/admin/errors"))?.status()).toBe(200);
   expect((await op.goto("/admin/health"))?.status()).toBe(200);
   await expect(op.getByText("Integrations")).toBeVisible();
+  await op.goto("/admin/activity");
+  await expect(op.getByText("Published an announcement", { exact: true })).toBeVisible();
+  await expect(op.getByText("Exported the user list", { exact: true })).toBeVisible();
   await owner.close();
 });

@@ -1,7 +1,7 @@
 import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
 import { microsoftConfig } from "../integrations/microsoft";
 import type { Database } from "../db/client";
-import { adminActions, errorReports, passkeys, rateLimitBuckets, sessions, users } from "../db/schema";
+import { adminActions, announcements, errorReports, ownerInbox, passkeys, rateLimitBuckets, sessions, users } from "../db/schema";
 import { isAdminEmail, type Admin } from "../auth/admin";
 import { billingConfig, inTestingPhase, LIMIT_MONTH_SECONDS, TESTING_LIMITS } from "../billing";
 import { emailConfig } from "../integrations/email";
@@ -427,4 +427,170 @@ export async function resetLimits(db: Database, actor: Admin, userId: string) {
     );
     await log(tx, actor, "reset_limits", { id: u.id, email: u.email });
   });
+}
+
+// ---------------------------------------------------------------------------
+// feedback inbox (copies of Settings → Send feedback, addressed to the owner)
+
+export type InboxItem = typeof ownerInbox.$inferSelect;
+export type InboxFilter = { status?: "open" | "handled" | "all"; kind?: "bug" | "idea" | "other" };
+
+export async function listInbox(db: Database, f: InboxFilter = {}): Promise<InboxItem[]> {
+  return timed(db, (tx) => {
+    const where = [
+      f.status === "handled" ? isNotNull(ownerInbox.handledAt) : f.status === "all" ? undefined : isNull(ownerInbox.handledAt),
+      f.kind ? eq(ownerInbox.kind, f.kind) : undefined,
+    ].filter((x): x is SQL => !!x);
+    return tx
+      .select()
+      .from(ownerInbox)
+      .where(where.length ? and(...where) : undefined)
+      .orderBy(desc(ownerInbox.createdAt))
+      .limit(200);
+  });
+}
+
+export async function inboxCounts(db: Database): Promise<{ open: number; total: number }> {
+  return timed(db, async (tx) => {
+    const [r] = await tx.select({ total: count(), open: sql<number>`count(*) filter (where ${ownerInbox.handledAt} is null)::int` }).from(ownerInbox);
+    return { open: Number(r?.open ?? 0), total: r?.total ?? 0 };
+  });
+}
+
+/** Marks a message handled, or open again. Logged. */
+export async function setInboxHandled(db: Database, actor: Admin, id: string, handled: boolean) {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new AdminError("Unknown feedback.");
+  await limited(db, actor);
+  await db.transaction(async (tx) => {
+    const rows = await tx
+      .update(ownerInbox)
+      .set({ handledAt: handled ? new Date() : null })
+      .where(eq(ownerInbox.id, id))
+      .returning({ id: ownerInbox.id });
+    if (!rows.length) throw new AdminError("That feedback no longer exists.");
+    await log(tx, actor, handled ? "feedback.handled" : "feedback.reopened", null, { feedbackId: id });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// announcements (a banner shown to everyone in the app)
+
+/** Recent announcements, and which one (if any) is showing right now. */
+export async function listAnnouncements(db: Database, now = new Date()) {
+  const items = await timed(db, (tx) => tx.select().from(announcements).orderBy(desc(announcements.createdAt)).limit(50));
+  const live = items.find((a) => a.startsAt <= now && (!a.endsAt || a.endsAt > now)) ?? null;
+  return { items, live };
+}
+
+const ANNOUNCE_DAYS = [1, 3, 7, 14, 30] as const;
+
+/** Shows a banner to everyone from now on. Ends after `days` (or when ended by hand). Replaces any banner showing now. Logged. */
+export async function createAnnouncement(db: Database, actor: Admin, input: { message: string; tone: string; linkUrl?: string; days?: number }) {
+  const message = input.message.trim();
+  if (message.length < 3 || message.length > 240) throw new AdminError("Write a message between 3 and 240 characters.");
+  const tone = input.tone === "warning" ? "warning" : "info";
+  const link = input.linkUrl?.trim() || null;
+  if (link && !(/^\/[^/\\]/.test(link) || /^https:\/\/[^\s]+$/.test(link)))
+    throw new AdminError("The link must start with / (a page in LifeFlow) or https://.");
+  const days = ANNOUNCE_DAYS.includes(input.days as (typeof ANNOUNCE_DAYS)[number]) ? input.days! : null;
+  await limited(db, actor);
+  const now = new Date();
+  await db.transaction(async (tx) => {
+    // One banner at a time: end whatever is showing.
+    await tx
+      .update(announcements)
+      .set({ endsAt: now })
+      .where(or(isNull(announcements.endsAt), sql`${announcements.endsAt} > ${now}`));
+    const [a] = await tx
+      .insert(announcements)
+      .values({ message, tone, linkUrl: link, startsAt: now, endsAt: days ? new Date(now.getTime() + days * 86_400_000) : null, createdByEmail: actor.email })
+      .returning({ id: announcements.id });
+    await log(tx, actor, "announcement.create", null, { announcementId: a.id, tone, days });
+  });
+}
+
+/** Stops a banner now. Logged. */
+export async function endAnnouncement(db: Database, actor: Admin, id: string) {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new AdminError("Unknown announcement.");
+  await limited(db, actor);
+  await db.transaction(async (tx) => {
+    const rows = await tx.update(announcements).set({ endsAt: new Date() }).where(eq(announcements.id, id)).returning({ id: announcements.id });
+    if (!rows.length) throw new AdminError("That announcement no longer exists.");
+    await log(tx, actor, "announcement.end", null, { announcementId: id });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// growth
+
+export type Growth = {
+  active1d: number;
+  active7d: number;
+  active30d: number;
+  invited: number;
+  topInviters: { id: string; name: string; email: string; invited: number }[];
+};
+
+export async function growth(db: Database): Promise<Growth> {
+  return timed(db, async (tx) => {
+    const [a] = rows<Record<string, string>>(
+      await tx.execute(sql`
+        select
+          count(distinct s.user_id) filter (where s.last_seen_at > now() - interval '1 day') as d1,
+          count(distinct s.user_id) filter (where s.last_seen_at > now() - interval '7 days') as d7,
+          count(distinct s.user_id) filter (where s.last_seen_at > now() - interval '30 days') as d30
+        from sessions s join users u on u.id = s.user_id where u.account_kind = 'standard'`),
+    );
+    const [inv] = await tx.select({ n: count() }).from(users).where(isNotNull(users.invitedBy));
+    const top = rows<{ id: string; name: string; email: string; invited: string }>(
+      await tx.execute(sql`
+        select i.id, i.name, i.email, count(f.id) as invited
+        from users f join users i on i.id = f.invited_by
+        group by i.id, i.name, i.email order by count(f.id) desc, i.name limit 10`),
+    );
+    return {
+      active1d: Number(a?.d1 ?? 0),
+      active7d: Number(a?.d7 ?? 0),
+      active30d: Number(a?.d30 ?? 0),
+      invited: inv?.n ?? 0,
+      topInviters: top.map((t) => ({ ...t, invited: Number(t.invited) })),
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// export
+
+/** A CSV cell: quoted, inner quotes doubled, and a leading = + - @ neutralised so a spreadsheet won't run it as a formula. */
+export function csvCell(v: unknown) {
+  let s = v == null ? "" : v instanceof Date ? v.toISOString() : String(v);
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  return `"${s.replace(/"/g, '""')}"`;
+}
+
+/** Every standard account as CSV (accounts only, never their content). */
+export async function usersCsv(db: Database, actor: Admin): Promise<string> {
+  await limited(db, actor);
+  const list = await timed(db, (tx) =>
+    tx
+      .select({
+        name: users.name,
+        email: users.email,
+        plan: users.plan,
+        joined: users.createdAt,
+        suspended: users.suspendedAt,
+        invitedBy: sql<string | null>`(select i.email from users i where i.id = "users"."invited_by")`,
+        lastSeen: sql<Date | null>`(select max(s.last_seen_at) from sessions s where s.user_id = "users"."id")`,
+      })
+      .from(users)
+      .where(eq(users.accountKind, "standard"))
+      .orderBy(desc(users.createdAt))
+      .limit(50_000),
+  );
+  await db.insert(adminActions).values({ actorUserId: actor.id, actorEmail: actor.email, action: "users.export", metadata: { rows: list.length } });
+  const head = ["Name", "Email", "Plan", "Joined", "Last seen", "Suspended", "Invited by"];
+  const lines = list.map((u) =>
+    [u.name, u.email, u.plan, u.joined, u.lastSeen ? new Date(u.lastSeen) : "", u.suspended ?? "", u.invitedBy ?? ""].map(csvCell).join(","),
+  );
+  return [head.map(csvCell).join(","), ...lines].join("\r\n") + "\r\n";
 }

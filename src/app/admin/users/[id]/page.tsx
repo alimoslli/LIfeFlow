@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge, Card, Tabs } from "@/components/ui/surface";
+import { Badge, Card } from "@/components/ui/surface";
+import { Notice } from "../../ui";
 import { SubmitButton } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
 import { Head } from "../../head";
@@ -9,7 +10,7 @@ import { getDb } from "@/server/db/client";
 import { getUser, safe, usageFor } from "@/server/services/admin";
 import { TESTING_LIMITS } from "@/server/billing";
 import { deleteAction, planAction, resetLimitsAction, signOutAction, suspendAction } from "../../actions";
-import { ADMIN_TABS, Failed, adminTz, fmt } from "../../format";
+import { Failed, adminTz, fmt } from "../../format";
 
 const Row = ({ k, v }: { k: string; v: React.ReactNode }) => (
   <div className="flex items-baseline justify-between gap-4 py-2.5">
@@ -36,12 +37,10 @@ export default async function AdminUser({
   const locked = !!u && (u.isAdmin || u.isDemo);
   return (
     <div className="flex flex-col gap-5">
-      <Tabs items={ADMIN_TABS} current="users" />
       <Link href="/admin/users" className="text-sm text-muted hover:text-text">
         ← All users
       </Link>
-      {sp.done && <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">{sp.done.slice(0, 200)}</p>}
-      {sp.error && <p className="rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">{sp.error.slice(0, 300)}</p>}
+      <Notice done={sp.done} error={sp.error} />
       {!u ? (
         <Card className="p-5 text-sm text-danger">{Failed()}</Card>
       ) : (

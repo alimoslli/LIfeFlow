@@ -1,10 +1,10 @@
 import { Check, X } from "lucide-react";
-import { Badge, Card, Stat, Tabs } from "@/components/ui/surface";
+import { Badge, Card, Stat } from "@/components/ui/surface";
+import { AdminTitle } from "../ui";
 import { Head } from "../head";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { getDb } from "@/server/db/client";
 import { health, safe } from "@/server/services/admin";
-import { ADMIN_TABS } from "../format";
 
 const mb = (b: number | null) => (b == null ? "unknown" : `${(b / 1_048_576).toFixed(1)} MB`);
 
@@ -14,7 +14,7 @@ export default async function AdminHealth() {
   const r = await safe("health", () => health(getDb()));
   return (
     <div className="flex flex-col gap-5">
-      <Tabs items={ADMIN_TABS} current="health" />
+      <AdminTitle title="Health" sub="The database, the server, and which services are set up. Keys are never shown." />
       {!r.ok ? (
         <Card className="p-5">
           <Badge tone="danger">Database not answering</Badge>

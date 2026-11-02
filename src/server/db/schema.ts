@@ -347,6 +347,42 @@ export const feedback = pgTable(
   () => [ownerPolicy()],
 );
 
+/**
+ * Feedback addressed to the owner: a copy of each Settings → Send feedback message, read on the admin page
+ * (like the email the owner also gets). Not per-user private data, so no RLS (like error_reports). ADR 0022.
+ */
+export const ownerInbox = pgTable(
+  "owner_inbox",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    senderUserId: uuid("sender_user_id").references(() => users.id, { onDelete: "set null" }),
+    senderName: text("sender_name").notNull(),
+    senderEmail: text("sender_email").notNull(),
+    kind: text("kind").$type<"bug" | "idea" | "other">().notNull(),
+    message: text("message").notNull(),
+    emailedAt: tstz("emailed_at"),
+    handledAt: tstz("handled_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("owner_inbox_created_idx").on(t.createdAt)],
+);
+
+/** A banner the owner shows to everyone in the app (admin page). Not per-user, so no RLS. */
+export const announcements = pgTable(
+  "announcements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    message: text("message").notNull(),
+    tone: text("tone").$type<"info" | "warning">().notNull().default("info"),
+    linkUrl: text("link_url"),
+    startsAt: tstz("starts_at").notNull().defaultNow(),
+    endsAt: tstz("ends_at"),
+    createdByEmail: text("created_by_email").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("announcements_window_idx").on(t.startsAt, t.endsAt)],
+);
+
 /** Goals that aren't about money ("Run a 5K", "Read 12 books"). Money goals are financialGoals. */
 export const personalGoals = pgTable(
   "personal_goals",

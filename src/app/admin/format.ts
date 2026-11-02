@@ -1,13 +1,5 @@
 import { getSessionUser } from "@/server/auth/current-user";
 
-export const ADMIN_TABS = [
-  { href: "/admin", label: "Overview", key: "overview" },
-  { href: "/admin/users", label: "Users", key: "users" },
-  { href: "/admin/errors", label: "Errors", key: "errors" },
-  { href: "/admin/health", label: "Health", key: "health" },
-  { href: "/admin/activity", label: "Activity", key: "activity" },
-];
-
 /** The admin's own time zone, so times read the way they live them. */
 export async function adminTz() {
   return (await getSessionUser())?.timezone || "UTC";

@@ -1,10 +1,11 @@
-import { Badge, Card, EmptyState, Tabs } from "@/components/ui/surface";
+import { Badge, Card, EmptyState } from "@/components/ui/surface";
+import { AdminTitle, Notice } from "../ui";
 import { SubmitButton } from "@/components/ui/button";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { getDb } from "@/server/db/client";
 import { listErrors, safe } from "@/server/services/admin";
 import { clearErrorAction } from "../actions";
-import { ADMIN_TABS, Failed, adminTz, ago, fmt } from "../format";
+import { Failed, adminTz, ago, fmt } from "../format";
 
 /** Grouped, scrubbed error reports (no emails or ids). The owner also gets an email on the 1st, 10th, 100th and 1,000th time. */
 export default async function AdminErrors({ searchParams }: { searchParams: Promise<{ done?: string; error?: string }> }) {
@@ -14,9 +15,8 @@ export default async function AdminErrors({ searchParams }: { searchParams: Prom
   const tz = await adminTz();
   return (
     <div className="flex flex-col gap-5">
-      <Tabs items={ADMIN_TABS} current="errors" />
-      {sp.done && <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">{sp.done.slice(0, 200)}</p>}
-      {sp.error && <p className="rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">{sp.error.slice(0, 300)}</p>}
+      <AdminTitle title="Errors" sub="Grouped and scrubbed of personal details. You're emailed on the 1st, 10th, 100th and 1,000th time." />
+      <Notice done={sp.done} error={sp.error} />
       {!r.ok ? (
         <Card className="p-5 text-sm text-danger">{Failed()}</Card>
       ) : r.data.length === 0 ? (

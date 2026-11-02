@@ -232,6 +232,13 @@
       "when": 1793511985056,
       "tag": "0032_admin_page",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793512045056,
+      "tag": "0033_owner_inbox_announcements",
+      "breakpoints": true
     }
   ]
 }

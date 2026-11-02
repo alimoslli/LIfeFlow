@@ -195,3 +195,65 @@ describe("AI use, limits and invites", () => {
     expect((await overview(db())).invited).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe("feedback inbox, announcements, growth and export", () => {
+  it("copies feedback to the owner's inbox in full, and handling it is logged", async () => {
+    const { admin } = await makeAdmin();
+    const u = await makeUser("Sender Sam");
+    const { sendFeedback } = await import("@/server/services/feedback");
+    await u.run((s) =>
+      sendFeedback(s, { name: "Sender Sam", email: u.user.email }, { kind: "bug", message: "The Money tab froze after I synced." }, { env: {} }),
+    );
+    const { listInbox, setInboxHandled, inboxCounts } = await import("@/server/services/admin");
+    const open = await listInbox(db(), { status: "open" });
+    const mine = open.find((f) => f.senderUserId === u.user.id)!;
+    expect(mine).toMatchObject({
+      kind: "bug",
+      message: "The Money tab froze after I synced.",
+      senderName: "Sender Sam",
+      senderEmail: u.user.email,
+      emailedAt: null,
+    });
+    expect((await inboxCounts(db())).open).toBeGreaterThanOrEqual(1);
+    await setInboxHandled(db(), admin, mine.id, true);
+    expect((await listInbox(db(), { status: "handled" })).some((f) => f.id === mine.id)).toBe(true);
+    const logged = await db().select().from(adminActions).where(eq(adminActions.action, "feedback.handled"));
+    expect(logged.some((l) => (l.metadata as { feedbackId?: string }).feedbackId === mine.id)).toBe(true);
+  });
+
+  it("shows one announcement at a time, checks links, and ends on request", async () => {
+    const { admin } = await makeAdmin();
+    const { createAnnouncement, endAnnouncement, listAnnouncements } = await import("@/server/services/admin");
+    const { activeAnnouncement } = await import("@/server/services/announcements");
+    await expect(createAnnouncement(db(), admin, { message: "Hi", tone: "info" })).rejects.toThrow(/between 3 and 240/);
+    await expect(createAnnouncement(db(), admin, { message: "Bad link here", tone: "info", linkUrl: "javascript:alert(1)" })).rejects.toThrow(
+      /must start with/,
+    );
+    await createAnnouncement(db(), admin, { message: "First news", tone: "info", days: 7 });
+    await createAnnouncement(db(), admin, { message: "Second news", tone: "warning", linkUrl: "/settings/integrations" });
+    const live = await activeAnnouncement(db());
+    expect(live).toMatchObject({ message: "Second news", tone: "warning", linkUrl: "/settings/integrations" });
+    const { live: listed } = await listAnnouncements(db());
+    expect(listed?.id).toBe(live!.id);
+    await endAnnouncement(db(), admin, live!.id);
+    expect(await activeAnnouncement(db())).toBeNull();
+  });
+
+  it("ranks inviters and exports accounts as safe CSV, logged", async () => {
+    const { admin } = await makeAdmin();
+    const { user: inviter } = await makeUser("Top Inviter");
+    const { user: f1 } = await makeUser("=cmd|' /C calc'!A0");
+    await db().update(users).set({ invitedBy: inviter.id }).where(eq(users.id, f1.id));
+    const { growth, usersCsv, csvCell } = await import("@/server/services/admin");
+    const g = await growth(db());
+    expect(g.topInviters.find((t) => t.id === inviter.id)?.invited).toBe(1);
+    expect(csvCell("=SUM(A1)")).toBe(`"'=SUM(A1)"`);
+    expect(csvCell('say "hi"')).toBe('"say ""hi"""');
+    const csv = await usersCsv(db(), admin);
+    expect(csv.split("\r\n")[0]).toBe('"Name","Email","Plan","Joined","Last seen","Suspended","Invited by"');
+    expect(csv).toContain(`"'=cmd|' /C calc'!A0"`);
+    expect(csv).toContain(`"${inviter.email}"`);
+    const logged = await db().select().from(adminActions).where(eq(adminActions.action, "users.export"));
+    expect(logged.length).toBeGreaterThan(0);
+  });
+});

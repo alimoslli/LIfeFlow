@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { Badge, Card, EmptyState, Tabs } from "@/components/ui/surface";
+import { Badge, Card, EmptyState } from "@/components/ui/surface";
+import { Download } from "lucide-react";
+import { AdminTitle, Notice } from "../ui";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { getDb } from "@/server/db/client";
 import { listUsers, safe } from "@/server/services/admin";
-import { ADMIN_TABS, Failed, ago } from "../format";
+import { Failed, ago } from "../format";
 
 type SP = { q?: string; plan?: string; status?: string; page?: string; done?: string };
 
@@ -25,8 +27,18 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
   };
   return (
     <div className="flex flex-col gap-5">
-      <Tabs items={ADMIN_TABS} current="users" />
-      {sp.done && <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">{sp.done.slice(0, 200)}</p>}
+      <AdminTitle
+        title="Users"
+        sub="Accounts only. Their money, messages and tasks stay private."
+        action={
+          // A file download, so a plain link (client navigation can't download).
+          // eslint-disable-next-line @next/next/no-html-link-for-pages
+          <a href="/admin/users/export" className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-surface px-4 text-sm font-medium shadow-soft">
+            <Download className="h-4 w-4" /> Export CSV
+          </a>
+        }
+      />
+      <Notice done={sp.done} />
       <form method="get" className="flex flex-col gap-2 sm:flex-row">
         <Input name="q" defaultValue={sp.q ?? ""} placeholder="Search name or email" aria-label="Search users" className="sm:flex-1" />
         <Select name="plan" defaultValue={plan ?? ""} aria-label="Plan">

@@ -7,12 +7,16 @@ import { requireUser } from "@/server/auth/current-user";
 import { jarvisStatus } from "@/server/jarvis/providers";
 import { withUser } from "@/server/db/with-user";
 import { unreadCount } from "@/server/services/proactive/engine";
+import { activeAnnouncement } from "@/server/services/announcements";
+import { getDb } from "@/server/db/client";
+import { AnnouncementBanner } from "@/components/shell/announcement-banner";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   if (user.preferences?.onboarding === "pending") redirect("/welcome");
   const status = jarvisStatus();
   const unread = await withUser(user.id, (s) => unreadCount(s)).catch(() => 0);
+  const announcement = await activeAnnouncement(getDb());
   return (
     <AppShell
       user={{ name: user.name, email: user.email, accountKind: user.accountKind }}
@@ -23,6 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       unread={unread}
       areas={lifeAreas(user.preferences?.lifeStage)}
     >
+      {announcement && <AnnouncementBanner a={announcement} />}
       {children}
     </AppShell>
   );

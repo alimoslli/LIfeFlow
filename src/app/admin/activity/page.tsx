@@ -1,8 +1,9 @@
-import { Card, EmptyState, Tabs } from "@/components/ui/surface";
+import { Card, EmptyState } from "@/components/ui/surface";
+import { AdminTitle } from "../ui";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { getDb } from "@/server/db/client";
 import { recentActions, safe } from "@/server/services/admin";
-import { ADMIN_TABS, Failed, adminTz, fmt } from "../format";
+import { Failed, adminTz, fmt } from "../format";
 
 const LABEL: Record<string, string> = {
   "user.sign_out_everywhere": "Signed a user out everywhere",
@@ -11,6 +12,12 @@ const LABEL: Record<string, string> = {
   "user.set_plan": "Changed a plan",
   "user.delete": "Deleted a user",
   "error.clear": "Cleared an error",
+  reset_limits: "Reset someone's AI limits",
+  "feedback.handled": "Marked feedback handled",
+  "feedback.reopened": "Reopened feedback",
+  "announcement.create": "Published an announcement",
+  "announcement.end": "Ended an announcement",
+  "users.export": "Exported the user list",
 };
 
 /** Everything done on the admin page: who, what, to whom, when. */
@@ -20,7 +27,7 @@ export default async function AdminActivity() {
   const tz = await adminTz();
   return (
     <div className="flex flex-col gap-5">
-      <Tabs items={ADMIN_TABS} current="activity" />
+      <AdminTitle title="Activity log" sub="Everything done on the admin page: what, to whom and when." />
       {!r.ok ? (
         <Card className="p-5 text-sm text-danger">{Failed()}</Card>
       ) : r.data.length === 0 ? (

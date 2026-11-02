@@ -48,6 +48,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - It shows accounts and operations only. Per-user content stays behind RLS and must never be reachable from admin code. Admin reads go through `services/admin.ts` (5 s timeout, hard limits) and each panel loads inside `safe()` so one failure can't blank the page.
 - Every change (sign out, suspend, plan, delete, clear error) writes `admin_actions` and refuses the admin themself, other admins and the demo account. Deleting needs the typed email and refuses active Pro users.
 - Suspension is enforced in `validateSession`, so a new session-starting path can't skip it.
+- Feedback reaches the admin page only through `owner_inbox` (a copy written by `sendFeedback`); never remove RLS from `feedback`. Announcements (`announcements`, `activeAnnouncement`) are one banner at a time, shown by `AnnouncementBanner` in the app layout; links must be `/…` or `https://…`.
 
 ## Integrations (see ADR 0010)
 - Plaid (`integrations/plaid.ts`): an account the user turns off (`excludedAt`) stays archived through every sync and its transactions/holdings are skipped and removed; turning it on resets the cursor. Accounts the bank stops sharing ("Choose accounts" = Link update mode with account selection) are archived. Investments/liabilities are only requested when the item has those account types and never fail the sync (only re-auth errors do). "Sync now" asks for live balances (`/accounts/balance/get`, falls back to `/accounts/get`).

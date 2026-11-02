@@ -58,3 +58,11 @@ No action can touch the admin's own account.
 - **Invites:** "Joined from invites" on the overview; "Invited by" and "Friends they invited" on each user.
 - **Health:** Microsoft Teams and Outlook, and whether the AI spend cap is active (model prices set).
 - The migration was renumbered to `0032_admin_page` because `0031` was already used by invites.
+
+## Redesign and more tools
+- **Layout:** a sidebar on wide screens and a scrolling menu on phones, with counts for open feedback and errors. The overview leads with stat tiles and a "Needs your attention" list.
+- **Feedback inbox:** each Settings → Send feedback message is saved to the user's own `feedback` row (row-level secured) and copied to `owner_inbox`, a message to the owner like the email they also get. The admin page reads only `owner_inbox` (mark handled/reopen, reply by email). Removing RLS from `feedback` was rejected; the copy keeps every per-user table locked. Messages sent before the copy existed stay in email only.
+- **Announcements:** one banner at a time for everyone in the app (`announcements`, `activeAnnouncement`), with a style, an optional link (`/…` or `https://…` only) and an end date. People can close it on their device; it's hidden on the full-screen chat.
+- **Growth:** active today/week/month, sign-ups, invite share and top inviters.
+- **Export:** `/admin/users/export` downloads accounts as CSV (formula cells neutralised), owner-only and logged.
+- `owner_inbox` and `announcements` aren't per-user data, so they aren't row-level secured (like `error_reports`).
