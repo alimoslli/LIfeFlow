@@ -29,8 +29,8 @@ L.headline(im, {"eyebrow": "CONNECTORS", "l1": "LifeFlow connects to", "l2": "th
 # ---------------------------------------------------------------- logo grid
 LOGOS = [  # file, name, what it adds to LifeFlow (each line matches what the app really does)
     ("r_canvas_c", "Canvas", "Pulls in your classes and due dates"),
-    ("r_g_google-calendar", "Google Calendar", "Syncs your events and adds new ones you approve"),
-    ("r_g_google-gmail", "Gmail", "Reads your email and drafts replies. You approve."),
+    ("r_g_google-calendar", "Google Calendar", "Syncs your calendar. Adds events you approve."),
+    ("r_g_google-gmail", "Gmail", "Reads email and drafts replies. You approve."),
     ("health_icon", "Apple Health", "Brings in your sleep, steps and workouts"),
     ("r_plaid_w", "Plaid", "Securely links your banks and cards. Read-only."),
     ("r_g_openai-icon", "OpenAI", "Powers your assistant's chat and answers"),
