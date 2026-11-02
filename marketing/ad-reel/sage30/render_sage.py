@@ -91,6 +91,18 @@ def card_img(frame, box, radius=48, width=None):
     return c
 
 
+def interp_src(keys, lt):
+    """Recording time for phone-local time lt. keys: [[lt, src_t], ...] piecewise linear, held outside."""
+    if isinstance(keys, (int, float)):
+        return keys + lt
+    if lt <= keys[0][0]:
+        return keys[0][1]
+    for (a, sa), (b, sb) in zip(keys, keys[1:]):
+        if a <= lt <= b:
+            return sa + (sb - sa) * (lt - a) / (b - a)
+    return keys[-1][1]
+
+
 # ---------------------------------------------------------------- captions (word by word)
 def captions(im, t):
     groups = P["caption_groups"]
@@ -234,10 +246,7 @@ def render(preview=None):
                 if not (ph["t0"] <= t < ph["t1"]):
                     continue
                 lt2 = t - ph["t0"]
-                st = ph["src"] + lt2 * ph.get("speed", 1.0)
-                for hold in ph.get("holds", []):  # freeze the recording at a moment while a card is out
-                    if hold[0] <= lt2:
-                        st = min(st, ph["src"] + hold[0] * ph.get("speed", 1.0)) if lt2 < hold[1] else ph["src"] + (lt2 - (hold[1] - hold[0])) * ph.get("speed", 1.0)
+                st = interp_src(ph["src"], lt2)
                 scr = rec_frame(ph["rec"], st)
                 phn = phone_img(scr)
                 k_in = eback(lt2 / 0.55, 1.2)
