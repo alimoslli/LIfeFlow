@@ -106,9 +106,9 @@ def disc(kind, size):
 
 
 # ---------------------------------------------------------------- layout
-TW, TH, GAPX, GAPY = 296, 262, 46, 38
+TW, TH, GAPX, GAPY = 296, 236, 46, 30
 X0 = (W - (3 * TW + 2 * GAPX)) // 2
-Y0 = 438
+Y0 = 428
 
 
 def pos(col, row):
@@ -146,10 +146,10 @@ for (c, r), kind, name, sub in TILES:
     x, y = pos(c, r)
     L.soft_shadow(im, [(x, y), (x + TW, y), (x + TW, y + TH), (x, y + TH)], 62, 24, 20)
     dd.rounded_rectangle((x, y, x + TW, y + TH), radius=44, fill=(255, 255, 255, 244), outline=(236, 241, 237, 255), width=3)
-    dsc = disc(kind, 112)
-    im.alpha_composite(dsc, (int(x + TW / 2 - 56), int(y + 28)))
-    dd.text((x + TW / 2, y + 178), name, font=f_name, fill=INK, anchor="mm")
-    dd.text((x + TW / 2, y + 216), sub, font=f_sub, fill=GRAY, anchor="mm")
+    dsc = disc(kind, 100)
+    im.alpha_composite(dsc, (int(x + TW / 2 - 50), int(y + 22)))
+    dd.text((x + TW / 2, y + 158), name, font=f_name, fill=INK, anchor="mm")
+    dd.text((x + TW / 2, y + 195), sub, font=f_sub, fill=GRAY, anchor="mm")
 
 # hub: LifeFlow logo in a glowing glass ring
 hubr = 118
@@ -165,12 +165,12 @@ im.alpha_composite(lg, (int(hub_c[0] - 85), int(hub_c[1] - 98)))
 dd.text((hub_c[0], hub_c[1] + 76), "LifeFlow", font=L.SERIF(40), fill=INK, anchor="mm")
 
 # ---------------------------------------------------------------- header + footer
-L.headline(im, {"eyebrow": "WORKS WITH THE TOOLS YOU USE", "l1": "Plugs into", "l2": "your whole life.", "top": 70, "size": 108, "out": False}, 5, 9)
+L.headline(im, {"eyebrow": "WORKS WITH THE TOOLS YOU USE", "l1": "Plugs into", "l2": "your whole life.", "top": 62, "size": 104, "out": False}, 5, 9)
 for (src, cx, cy, size, blur) in [(("g/g2.png", 461, 650, 150), 975, 150, 150, 2), (("g/g2.png", 1090, 1995, 175), 92, 380, 130, 3)]:
     b = L.glass_ball(src[0], src[1], src[2], src[3], size, blur)
     im.alpha_composite(b, (int(cx - size / 2), int(cy - size / 2)))
 dd = ImageDraw.Draw(im)
-dd.text((W / 2, 1296), "You choose what to connect.  lifeflowweb.com", font=L.SANS(30, "Medium"), fill=GRAY, anchor="mm")
+dd.text((W / 2, 1270), "You choose what to connect.  lifeflowweb.com", font=L.SANS(30, "Medium"), fill=GRAY, anchor="mm")
 
 im.convert("RGB").save("connectors.jpg", quality=95)
 im.convert("RGB").save("connectors.png")
