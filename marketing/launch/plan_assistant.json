@@ -1,0 +1,201 @@
+{
+ "bpm": 100,
+ "duration": 24.6,
+ "vo": [
+  [
+   "vo/V1.wav",
+   0.3
+  ],
+  [
+   "vo/V2.wav",
+   3.8
+  ],
+  [
+   "vo/V3.wav",
+   9.15
+  ],
+  [
+   "vo/V4.wav",
+   14.1
+  ],
+  [
+   "vo/B7.wav",
+   20.7
+  ]
+ ],
+ "scenes": [
+  {
+   "kind": "gloss",
+   "start": 0.0,
+   "end": 3.6,
+   "clip": "m/orbs.mp4",
+   "speed": 0.8,
+   "push": 0.06,
+   "fade_in": 0.2,
+   "fade_out": 0.3,
+   "haze": [
+    {
+     "cy": 930,
+     "h": 760,
+     "s": 0.88
+    }
+   ],
+   "texts": [
+    {
+     "eyebrow": "YOUR PERSONAL ASSISTANT",
+     "l1": "Meet the assistant",
+     "l2": "that gets it done.",
+     "top": 800,
+     "size": 104,
+     "at": 0.15
+    }
+   ]
+  },
+  {
+   "kind": "phone",
+   "start": 3.6,
+   "end": 9.0,
+   "src": [
+    {
+     "rec": "block",
+     "from": 0,
+     "dur": 5.4,
+     "speed": 1.2
+    }
+   ],
+   "head": {
+    "eyebrow": "IT ACTS FOR YOU",
+    "l1": "Spots the clash.",
+    "l2": "Blocks the time.",
+    "size": 88
+   },
+   "pops": [],
+   "pills": [
+    {
+     "kind": "chip",
+     "text": "Blocked Wed 11:15 to 1:15 for your quiz",
+     "at": 0.8,
+     "dur": 2.6,
+     "y": 1690
+    }
+   ],
+   "enter": true
+  },
+  {
+   "kind": "phone",
+   "start": 9.0,
+   "end": 11.4,
+   "src": [
+    {
+     "rec": "remind",
+     "from": 0,
+     "dur": 2.4,
+     "speed": 1.25
+    }
+   ],
+   "head": {
+    "eyebrow": "ONE TAP",
+    "l1": "Bills,",
+    "l2": "handled.",
+    "size": 88
+   },
+   "pops": [],
+   "pills": [
+    {
+     "kind": "chip",
+     "text": "Added: Pay City Utilities ($82)",
+     "at": 0.7,
+     "dur": 1.7,
+     "y": 1690
+    }
+   ]
+  },
+  {
+   "kind": "phone",
+   "start": 11.4,
+   "end": 13.8,
+   "src": [
+    {
+     "rec": "move",
+     "from": 0,
+     "dur": 2.4,
+     "speed": 1.25
+    }
+   ],
+   "head": {
+    "eyebrow": "ONE TAP",
+    "l1": "Slipped to-dos,",
+    "l2": "moved.",
+    "size": 88
+   },
+   "pops": [],
+   "pills": [
+    {
+     "kind": "chip",
+     "text": "Moved 1 to-do to Wednesday",
+     "at": 0.75,
+     "dur": 1.65,
+     "y": 1690
+    }
+   ]
+  },
+  {
+   "kind": "phone",
+   "start": 13.8,
+   "end": 20.4,
+   "src": [
+    {
+     "rec": "ideas",
+     "from": 0,
+     "dur": 6.6,
+     "speed": 1.2
+    }
+   ],
+   "head": {
+    "eyebrow": "IDEAS",
+    "l1": "Full of ideas.",
+    "l2": "Tap one to start.",
+    "size": 88
+   },
+   "pops": [],
+   "pills": [],
+   "exit": true
+  },
+  {
+   "kind": "gloss",
+   "outro": true,
+   "start": 20.4,
+   "end": 24.6,
+   "clip": "m/molecule.mp4",
+   "speed": 0.8,
+   "push": 0.03,
+   "fade_in": 0.4,
+   "haze": [
+    {
+     "cy": 1580,
+     "h": 820,
+     "s": 0.85
+    }
+   ],
+   "texts": [
+    {
+     "l1": "Your whole life,",
+     "l2": "in one flow.",
+     "top": 1290,
+     "size": 104,
+     "at": 0.9
+    }
+   ],
+   "wordmark": {
+    "at": 0.25,
+    "y": 1555,
+    "sub": "lifeflowweb.com"
+   },
+   "note": {
+    "text": "App shown with sample data.",
+    "at": 1.2,
+    "y": 1846
+   }
+  }
+ ]
+}

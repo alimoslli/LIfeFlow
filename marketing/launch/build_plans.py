@@ -103,7 +103,28 @@ launch = {
     ],
 }
 
-for name, p in (("reel_life", life), ("reel_money", money), ("reel_launch", launch)):
+assistant = {
+    "bpm": 100, "duration": 24.6,
+    "vo": [["vo/V1.wav", 0.3], ["vo/V2.wav", 3.8], ["vo/V3.wav", 9.15], ["vo/V4.wav", 14.1], ["vo/B7.wav", 20.7]],
+    "scenes": [
+        {"kind": "gloss", "start": 0.0, "end": 3.6, "clip": "m/orbs.mp4", "speed": 0.8, "push": 0.06, "fade_in": 0.2, "fade_out": 0.3,
+         "haze": [{"cy": 930, "h": 760, "s": 0.88}],
+         "texts": [{"eyebrow": "YOUR PERSONAL ASSISTANT", "l1": "Meet the assistant", "l2": "that gets it done.", "top": 800, "size": 104, "at": 0.15}]},
+        phone(3.6, 9.0, [rec("block", 0, 5.4, 1.2)], head("IT ACTS FOR YOU", "Spots the clash.", "Blocks the time."),
+              pills=[{"kind": "chip", "text": "Blocked Wed 11:15 to 1:15 for your quiz", "at": 0.8, "dur": 2.6, "y": 1690}], enter=True),
+        phone(9.0, 11.4, [rec("remind", 0, 2.4, 1.25)], head("ONE TAP", "Bills,", "handled."),
+              pills=[{"kind": "chip", "text": "Added: Pay City Utilities ($82)", "at": 0.7, "dur": 1.7, "y": 1690}]),
+        phone(11.4, 13.8, [rec("move", 0, 2.4, 1.25)], head("ONE TAP", "Slipped to-dos,", "moved."),
+              pills=[{"kind": "chip", "text": "Moved 1 to-do to Wednesday", "at": 0.75, "dur": 1.65, "y": 1690}]),
+        phone(13.8, 20.4, [rec("ideas", 0, 6.6, 1.2)], head("IDEAS", "Full of ideas.", "Tap one to start."), exit=True),
+        {"kind": "gloss", "outro": True, "start": 20.4, "end": 24.6, "clip": "m/molecule.mp4", "speed": 0.8, "push": 0.03, "fade_in": 0.4,
+         "haze": [{"cy": 1580, "h": 820, "s": 0.85}],
+         "texts": [{"l1": "Your whole life,", "l2": "in one flow.", "top": 1290, "size": 104, "at": 0.9}],
+         "wordmark": {"at": 0.25, "y": 1555, "sub": "lifeflowweb.com"}, "note": NOTE},
+    ],
+}
+
+for name, p in (("reel_life", life), ("reel_money", money), ("reel_launch", launch), ("assistant", assistant)):
     for a, b in zip(p["scenes"], p["scenes"][1:]):
         assert abs(a["end"] - b["start"]) < 1e-6, (name, a["end"], b["start"])
     assert abs(p["scenes"][-1]["end"] - p["duration"]) < 1e-6
