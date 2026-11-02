@@ -313,7 +313,7 @@ def card(name, width):
     return _cards[key]
 
 
-def pop_card(im, name, lt, dur, cy, width, origin, dx=0):
+def pop_card(im, name, lt, dur, cy, width, origin, dx=0, shake=0.0):
     """lt: seconds since the card started; dur: how long it stays out."""
     if lt < 0 or lt >= dur:
         return
@@ -336,6 +336,10 @@ def pop_card(im, name, lt, dur, cy, width, origin, dx=0):
     ox, oy = origin
     cx = ox + (W / 2 + dx - ox) * lift
     cyy = oy + (cy - oy) * lift
+    if shake and lt < 1.1:  # a short, decaying shake: the card slams in and rattles
+        amp = shake * (1 - lt / 1.1) ** 2
+        cx += amp * math.sin(lt * 70)
+        cyy += amp * math.cos(lt * 53)
     dst = project(c.width, c.height, cx, cyy, ry, rx, 0, sc)
     soft_shadow(im, dst, 45 + 105 * lift, 26 + 34 * lift, 30 + 56 * lift)
     warp_into(im, c, dst, clamp(lt / 0.1) * (1 - 0.7 * ko), fill=(250, 248, 243))
@@ -457,6 +461,74 @@ def headline(im, spec, lt, dur):
         y += int(size * 1.1)
 
 
+def bold_text(im, spec, lt, dur):
+    """Big, blunt text for the hook reel. Words pop in one by one; *word* is highlighted; "counter" adds a "1 / 3" pill."""
+    if not spec or lt < 0 or lt >= dur:
+        return
+    size = spec.get("size", 96)
+    y = spec.get("top", 150)
+    out = eio((lt - (dur - 0.18)) / 0.18) if spec.get("out", True) else 0.0
+    d = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    if spec.get("counter"):
+        cf = SANS(40, "Bold")
+        tw = d.textlength(spec["counter"], font=cf)
+        pw, ph = int(tw + 70), 70
+        pill = Image.new("RGBA", (pw, ph), (0, 0, 0, 0))
+        ImageDraw.Draw(pill).rounded_rectangle((0, 0, pw - 1, ph - 1), radius=35, fill=MOSS + (255,))
+        ImageDraw.Draw(pill).text((pw / 2, ph / 2 + 1), spec["counter"], font=cf, fill=CREAM, anchor="mm")
+        k = eback(lt / 0.3, 1.8)
+        sp = pill.resize((max(1, int(pw * (0.6 + 0.4 * k))), max(1, int(ph * (0.6 + 0.4 * k)))), Image.BICUBIC)
+        im.alpha_composite(with_alpha(sp, clamp(lt / 0.08) * (1 - out)), (int(W / 2 - sp.width / 2), int(y + (ph - sp.height) / 2)))
+        y += 96
+    f = SANS(size, "ExtraBold")
+    n = 0
+    for line in spec["lines"]:
+        words = line.split(" ")
+        clean = [w.strip("*") for w in words]
+        sp_w = d.textlength(" ", font=f)
+        widths = [d.textlength(c, font=f) for c in clean]
+        x = (W - (sum(widths) + sp_w * (len(words) - 1))) / 2
+        for w, c, ww in zip(words, clean, widths):
+            st = spec.get("stagger", 0.09) * n + spec.get("at", 0.0)
+            a = clamp((lt - st) / 0.08) * (1 - out)
+            if a > 0.01:
+                lay = word_img(c, f, MOSS if w.startswith("*") else INK)
+                sc_ = 0.55 + 0.45 * eback((lt - st) / 0.26, 1.9)
+                lw = lay.resize((max(1, int(lay.width * sc_)), max(1, int(lay.height * sc_))), Image.BICUBIC)
+                im.alpha_composite(with_alpha(lw, a), (int(x + ww / 2 - (ww / 2) * sc_), int(y + size * 0.62 - size * 0.62 * sc_)))
+            x += ww + sp_w
+            n += 1
+        y += int(size * 1.08)
+
+
+def count_plate(im, spec, lt, dur):
+    """A big number that counts up on a glass plate (the 'guess the number' reveal)."""
+    t = lt - spec["at"]
+    if t < 0 or lt >= dur:
+        return
+    ko = eio((lt - (dur - 0.2)) / 0.2)
+    v = spec["to"] * eo(t / spec.get("dur", 1.1))
+    plate = Image.new("RGBA", (820, 340), (0, 0, 0, 0))
+    pd = ImageDraw.Draw(plate)
+    pd.rounded_rectangle((0, 0, 819, 339), radius=64, fill=(255, 255, 255, 246), outline=(255, 255, 255, 255), width=4)
+    pd.text((410, 150), f"${v:,.2f}", font=SANS(176, "ExtraBold"), fill=MOSS, anchor="mm")
+    pd.text((410, 275), spec.get("label", ""), font=SANS(38, "SemiBold"), fill=GRAY, anchor="mm")
+    k = eback(t / 0.4, 1.6)
+    pp = plate.resize((max(1, int(plate.width * (0.55 + 0.45 * k))), max(1, int(plate.height * (0.55 + 0.45 * k)))), Image.BICUBIC)
+    y = spec.get("y", 1130)
+    soft_shadow(im, [(W / 2 - pp.width / 2, y - pp.height / 2), (W / 2 + pp.width / 2, y - pp.height / 2), (W / 2 + pp.width / 2, y + pp.height / 2), (W / 2 - pp.width / 2, y + pp.height / 2)], 90, 34, 34)
+    im.alpha_composite(with_alpha(pp, clamp(t / 0.1) * (1 - ko)), (int(W / 2 - pp.width / 2), int(y - pp.height / 2)))
+
+
+def punch(im, lt, dur=0.35, amount=0.07):
+    """A quick zoom-out at the start of a scene, so the cut hits."""
+    if lt >= dur:
+        return im
+    k = 1 + amount * (1 - eo(lt / dur))
+    nw, nh = int(W * k), int(H * k)
+    return im.resize((nw, nh), Image.BICUBIC).crop(((nw - W) // 2, (nh - H) // 2, (nw - W) // 2 + W, (nh - H) // 2 + H))
+
+
 _wordmarks = {}
 
 
@@ -513,6 +585,8 @@ def render_gloss(sc, lt, fr):
             im.alpha_composite(with_alpha(haze(hz["cy"], hz["h"], hz.get("s", 0.8)), a))
     for tx in sc.get("texts", []):
         headline(im, dict(tx, out=False), lt - tx.get("at", 0), 99)
+    if sc.get("bold"):
+        bold_text(im, sc["bold"], lt - sc["bold"].get("at", 0), 99)
     wm = sc.get("wordmark")
     if wm:
         a = eo((lt - wm["at"]) / 0.6)
@@ -570,12 +644,17 @@ def render_phone(sc, si, lt, scr, t):
     glare = clamp(lt / 0.95) if lt < 0.95 else None
     draw_phone(im, scr, PHONE_CX, cy, ry, rx, scale, 1 - kx, glare)
     headline(im, sc.get("head"), lt, dur)
+    bold_text(im, sc.get("bold"), lt, dur)
     origin = (PHONE_CX, cy)
     for pc in sc.get("pops", []):
-        pop_card(im, pc["card"], lt - pc["at"], pc.get("dur", dur - pc["at"]), pc.get("y", 1130), pc.get("w", 820), origin, pc.get("dx", 0))
+        pop_card(im, pc["card"], lt - pc["at"], pc.get("dur", dur - pc["at"]), pc.get("y", 1130), pc.get("w", 820), origin, pc.get("dx", 0), pc.get("shake", 0.0))
+    if sc.get("count"):
+        count_plate(im, sc["count"], lt, dur)
     fg_orb(im, t, 0.8)
     for pl in sc.get("pills", []):
         pop_pill(im, pl["kind"], pl.get("text", ""), lt - pl["at"], pl.get("dur", dur - pl["at"]), pl.get("y", 1660))
+    if sc.get("punch"):
+        im = punch(im, lt)
     if enter and lt < 0.4:
         im = white_mix(im, 1 - eio(lt / 0.4))
     if leave:

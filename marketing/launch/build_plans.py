@@ -124,7 +124,30 @@ assistant = {
     ],
 }
 
-for name, p in (("reel_life", life), ("reel_money", money), ("reel_launch", launch), ("assistant", assistant)):
+hook = {
+    "bpm": 100, "duration": 24.6,
+    "vo": [["vo/K_H1.wav", 0.1], ["vo/K_H2.wav", 2.7], ["vo/K_P1.wav", 5.75], ["vo/K_P2.wav", 9.35], ["vo/K_P2b.wav", 13.1], ["vo/K_P3.wav", 16.55], ["vo/K_C1.wav", 20.0]],
+    "scenes": [
+        # three hooks in the first 2.7 s: a card slams in (see), big words (read), "Too lazy to budget? Same." (hear)
+        {**phone(0.0, 2.7, [rec("next30", 1.8, 2.7, 1.0)], None, pops=[{"card": "headsup", "at": 0.05, "dur": 2.65, "y": 1090, "w": 900, "shake": 26}]),
+         "bold": {"lines": ["TOO LAZY", "*TO BUDGET?*"], "size": 124, "top": 120, "stagger": 0.16, "out": False}, "punch": True},
+        {**phone(2.7, 5.7, [rec("m_over", 0, 3.0, 1.0)], None), "bold": {"counter": "3 THINGS", "lines": ["LIFEFLOW DOES", "IT *FOR YOU*"], "size": 100, "top": 110}, "punch": True},
+        {**phone(5.7, 9.3, [rec("next30", 1.8, 3.6, 1.0)], None, pops=[{"card": "headsup", "at": 0.7, "dur": 2.9, "y": 1100, "w": 860, "shake": 10}]),
+         "bold": {"counter": "1 / 3", "lines": ["IT *WARNS YOU*", "BEFORE RENT", "*BOUNCES*"], "size": 92, "top": 100}, "punch": True},
+        {**phone(9.3, 13.0, [rec("subs", 0.55, 3.7, 0.6)], None, pills=[{"kind": "chip", "text": "Comment your guess", "at": 1.4, "y": 1690}]),
+         "bold": {"counter": "2 / 3", "lines": ["*GUESS:*", "FORGOTTEN SUBS", "COST A YEAR?"], "size": 90, "top": 100}, "punch": True},
+        {**phone(13.0, 16.5, [rec("subs", 1.2, 3.5, 0.5)], None), "count": {"at": 0.15, "dur": 1.3, "to": 329.76, "label": "A YEAR IN FORGOTTEN SUBSCRIPTIONS", "y": 1130},
+         "bold": {"counter": "2 / 3", "lines": ["THIS ONE FOUND", "*FORGOTTEN* MONEY"], "size": 88, "top": 100}, "punch": True},
+        {**phone(16.5, 20.0, [rec("tour", 3.55, 3.5, 0.5)], None, pops=[{"card": "week", "at": 0.8, "dur": 2.7, "y": 1120, "w": 800}]),
+         "bold": {"counter": "3 / 3", "lines": ["IT *PLANS YOUR*", "*WEEK* FOR YOU"], "size": 98, "top": 100}, "punch": True},
+        {"kind": "gloss", "outro": True, "start": 20.0, "end": 24.6, "clip": "m/molecule.mp4", "speed": 0.7, "push": 0.03, "fade_in": 0.3,
+         "haze": [{"cy": 1560, "h": 900, "s": 0.88}],
+         "bold": {"lines": ["*TAP THE LINK*", "IN BIO."], "size": 118, "top": 1170, "at": 0.25, "out": False},
+         "wordmark": {"at": 1.4, "y": 1560, "sub": "lifeflowweb.com"}, "note": dict(NOTE, at=1.6, y=1850)},
+    ],
+}
+
+for name, p in (("reel_life", life), ("reel_money", money), ("reel_launch", launch), ("assistant", assistant), ("reel_hook", hook)):
     for a, b in zip(p["scenes"], p["scenes"][1:]):
         assert abs(a["end"] - b["start"]) < 1e-6, (name, a["end"], b["start"])
     assert abs(p["scenes"][-1]["end"] - p["duration"]) < 1e-6
