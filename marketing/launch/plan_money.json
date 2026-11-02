@@ -1,0 +1,324 @@
+{
+ "bpm": 100,
+ "duration": 38.4,
+ "vo": [
+  [
+   "vo/A1.wav",
+   2.55
+  ],
+  [
+   "vo/A2.wav",
+   6.75
+  ],
+  [
+   "vo/A3.wav",
+   13.35
+  ],
+  [
+   "vo/A4.wav",
+   19.95
+  ],
+  [
+   "vo/A5.wav",
+   22.95
+  ],
+  [
+   "vo/A6.wav",
+   26.55
+  ],
+  [
+   "vo/A7.wav",
+   31.35
+  ],
+  [
+   "vo/A8.wav",
+   34.6
+  ]
+ ],
+ "scenes": [
+  {
+   "kind": "gloss",
+   "start": 0.0,
+   "end": 2.4,
+   "clip": "m/orbs.mp4",
+   "speed": 0.8,
+   "push": 0.06,
+   "fade_out": 0.3,
+   "haze": [
+    {
+     "cy": 930,
+     "h": 760,
+     "s": 0.88
+    }
+   ],
+   "texts": [
+    {
+     "eyebrow": "INTRODUCING LIFEFLOW",
+     "l1": "Your money,",
+     "l2": "finally clear.",
+     "top": 780,
+     "size": 118,
+     "at": 0.2
+    }
+   ]
+  },
+  {
+   "kind": "phone",
+   "start": 2.4,
+   "end": 6.6,
+   "src": [
+    {
+     "rec": "m_over",
+     "from": 0,
+     "dur": 4.2,
+     "speed": 0.7
+    }
+   ],
+   "head": {
+    "eyebrow": "OVERVIEW",
+    "l1": "All your money,",
+    "l2": "in one place.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "available1842",
+     "at": 1.2,
+     "dur": 2.7,
+     "y": 1130
+    }
+   ],
+   "pills": [],
+   "enter": true
+  },
+  {
+   "kind": "phone",
+   "start": 6.6,
+   "end": 13.2,
+   "src": [
+    {
+     "rec": "m_bank",
+     "from": 0,
+     "dur": 6.6,
+     "speed": 0.69
+    }
+   ],
+   "head": {
+    "eyebrow": "CONNECT YOUR BANK",
+    "l1": "Linked in seconds.",
+    "l2": "Secured by Plaid.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "bank",
+     "at": 3.7,
+     "dur": 2.6,
+     "y": 1060
+    }
+   ],
+   "pills": [
+    {
+     "kind": "plaid",
+     "at": 1.9,
+     "y": 1665
+    }
+   ]
+  },
+  {
+   "kind": "phone",
+   "start": 13.2,
+   "end": 19.8,
+   "src": [
+    {
+     "rec": "m_cash",
+     "from": 2.3,
+     "dur": 2.5,
+     "speed": 1.7
+    },
+    {
+     "rec": "m_cashtx",
+     "from": 1.3,
+     "dur": 2.9,
+     "speed": 1.6
+    },
+    {
+     "rec": "m_txlist",
+     "from": 0,
+     "dur": 1.2,
+     "speed": 1.0
+    }
+   ],
+   "head": {
+    "eyebrow": "CASH, TOO",
+    "l1": "Paid in cash?",
+    "l2": "Add it in a tap.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "cashacct",
+     "at": 2.0,
+     "dur": 1.5,
+     "y": 1080
+    },
+    {
+     "card": "lunch",
+     "at": 5.3,
+     "dur": 1.3,
+     "y": 1080
+    }
+   ],
+   "pills": [
+    {
+     "kind": "chip",
+     "text": "Or just tell Sage",
+     "at": 2.6,
+     "y": 1680
+    }
+   ]
+  },
+  {
+   "kind": "phone",
+   "start": 19.8,
+   "end": 22.8,
+   "src": [
+    {
+     "rec": "activity",
+     "from": 1.0,
+     "dur": 3.0,
+     "speed": 1.2
+    }
+   ],
+   "head": {
+    "eyebrow": "ACTIVITY",
+    "l1": "Every transaction,",
+    "l2": "sorted for you.",
+    "size": 88
+   },
+   "pops": [],
+   "pills": []
+  },
+  {
+   "kind": "phone",
+   "start": 22.8,
+   "end": 26.4,
+   "src": [
+    {
+     "rec": "budget",
+     "from": 0.6,
+     "dur": 3.6,
+     "speed": 0.8
+    }
+   ],
+   "head": {
+    "eyebrow": "BUDGETS",
+    "l1": "Set a budget.",
+    "l2": "See where you stand.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "budgets",
+     "at": 1.3,
+     "dur": 2.3,
+     "y": 1130,
+     "w": 780
+    }
+   ],
+   "pills": []
+  },
+  {
+   "kind": "phone",
+   "start": 26.4,
+   "end": 31.2,
+   "src": [
+    {
+     "rec": "next30",
+     "from": 0.6,
+     "dur": 4.8,
+     "speed": 0.9
+    }
+   ],
+   "head": {
+    "eyebrow": "SAGE KEEPS WATCH",
+    "l1": "Heads up,",
+    "l2": "before it happens.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "headsup",
+     "at": 1.7,
+     "dur": 2.7,
+     "y": 1110
+    }
+   ],
+   "pills": []
+  },
+  {
+   "kind": "phone",
+   "start": 31.2,
+   "end": 34.2,
+   "src": [
+    {
+     "rec": "subs",
+     "from": 0.55,
+     "dur": 3.0,
+     "speed": 1.15
+    }
+   ],
+   "head": {
+    "eyebrow": "SUBSCRIPTIONS",
+    "l1": "The ones you forgot,",
+    "l2": "found.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "peryear",
+     "at": 0.9,
+     "dur": 1.6,
+     "y": 1120,
+     "w": 560
+    }
+   ],
+   "pills": [],
+   "exit": true
+  },
+  {
+   "kind": "gloss",
+   "start": 34.2,
+   "end": 38.4,
+   "clip": "m/molecule.mp4",
+   "push": 0.05,
+   "fade_in": 0.4,
+   "haze": [
+    {
+     "cy": 1420,
+     "h": 900,
+     "s": 0.7
+    }
+   ],
+   "texts": [
+    {
+     "l1": "Money,",
+     "l2": "handled.",
+     "top": 1130,
+     "size": 128,
+     "at": 0.25
+    }
+   ],
+   "wordmark": {
+    "at": 1.05,
+    "y": 1470,
+    "sub": "lifeflowweb.com"
+   },
+   "note": {
+    "text": "App shown with sample data.",
+    "at": 1.2,
+    "y": 1838
+   }
+  }
+ ]
+}

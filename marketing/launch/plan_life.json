@@ -1,0 +1,254 @@
+{
+ "bpm": 100,
+ "duration": 31.2,
+ "vo": [
+  [
+   "vo/B1.wav",
+   0.3
+  ],
+  [
+   "vo/B2.wav",
+   3.75
+  ],
+  [
+   "vo/B3.wav",
+   8.55
+  ],
+  [
+   "vo/B4.wav",
+   11.55
+  ],
+  [
+   "vo/B5.wav",
+   16.95
+  ],
+  [
+   "vo/B6.wav",
+   22.35
+  ],
+  [
+   "vo/B7.wav",
+   26.7
+  ]
+ ],
+ "scenes": [
+  {
+   "kind": "gloss",
+   "start": 0.0,
+   "end": 3.6,
+   "clip": "m/ribbon.mp4",
+   "speed": 0.9,
+   "push": 0.06,
+   "fade_out": 0.3,
+   "haze": [
+    {
+     "cy": 470,
+     "h": 640,
+     "s": 0.85
+    }
+   ],
+   "texts": [
+    {
+     "eyebrow": "INTRODUCING LIFEFLOW",
+     "l1": "Big goals.",
+     "l2": "Small habits.",
+     "top": 330,
+     "size": 118,
+     "at": 0.2
+    }
+   ]
+  },
+  {
+   "kind": "phone",
+   "start": 3.6,
+   "end": 8.4,
+   "src": [
+    {
+     "rec": "g_goals",
+     "from": 1.4,
+     "dur": 4.8,
+     "speed": 1.25
+    }
+   ],
+   "head": {
+    "eyebrow": "GOALS",
+    "l1": "Set a goal.",
+    "l2": "Sage plans the steps.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "run5k",
+     "at": 3.3,
+     "dur": 1.5,
+     "y": 1110
+    }
+   ],
+   "pills": [],
+   "enter": true
+  },
+  {
+   "kind": "phone",
+   "start": 8.4,
+   "end": 11.4,
+   "src": [
+    {
+     "rec": "g_habit",
+     "from": 2.5,
+     "dur": 3.0,
+     "speed": 1.7
+    }
+   ],
+   "head": {
+    "eyebrow": "HABITS",
+    "l1": "Habits that",
+    "l2": "actually stick.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "habits",
+     "at": 1.5,
+     "dur": 1.5,
+     "y": 1110
+    }
+   ],
+   "pills": []
+  },
+  {
+   "kind": "phone",
+   "start": 11.4,
+   "end": 16.8,
+   "src": [
+    {
+     "rec": "g_health",
+     "from": 0,
+     "dur": 5.4,
+     "speed": 0.72
+    }
+   ],
+   "head": {
+    "eyebrow": "HEALTH",
+    "l1": "Sleep, steps, workouts.",
+    "l2": "From Apple Health.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "sleep",
+     "at": 1.3,
+     "dur": 3.9,
+     "y": 1120,
+     "w": 470,
+     "dx": -245
+    },
+    {
+     "card": "steps",
+     "at": 1.65,
+     "dur": 3.55,
+     "y": 1120,
+     "w": 470,
+     "dx": 245
+    }
+   ],
+   "pills": []
+  },
+  {
+   "kind": "phone",
+   "start": 16.8,
+   "end": 22.2,
+   "src": [
+    {
+     "rec": "g_conn",
+     "from": 0,
+     "dur": 1.2,
+     "speed": 1.0
+    },
+    {
+     "rec": "g_conn",
+     "from": 2.8,
+     "dur": 4.2,
+     "speed": 0.7
+    }
+   ],
+   "head": {
+    "eyebrow": "CONNECTED",
+    "l1": "Plug in",
+    "l2": "the rest of your life.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "banks",
+     "at": 3.3,
+     "dur": 2.0,
+     "y": 1100
+    }
+   ],
+   "pills": []
+  },
+  {
+   "kind": "phone",
+   "start": 22.2,
+   "end": 26.4,
+   "src": [
+    {
+     "rec": "tour",
+     "from": 0,
+     "dur": 4.2,
+     "speed": 0.55
+    }
+   ],
+   "head": {
+    "eyebrow": "TODAY",
+    "l1": "Every morning,",
+    "l2": "it all comes together.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "next",
+     "at": 1.3,
+     "dur": 2.3,
+     "y": 1110
+    }
+   ],
+   "pills": [],
+   "exit": true
+  },
+  {
+   "kind": "gloss",
+   "start": 26.4,
+   "end": 31.2,
+   "clip": "m/molecule.mp4",
+   "push": 0.05,
+   "fade_in": 0.4,
+   "haze": [
+    {
+     "cy": 1420,
+     "h": 900,
+     "s": 0.7
+    }
+   ],
+   "texts": [
+    {
+     "l1": "Your whole life,",
+     "l2": "in one flow.",
+     "top": 1130,
+     "size": 112,
+     "at": 0.9
+    }
+   ],
+   "wordmark": {
+    "at": 0.25,
+    "y": 1470,
+    "sub": "lifeflowweb.com"
+   },
+   "note": {
+    "text": "App shown with sample data.",
+    "at": 1.2,
+    "y": 1838
+   }
+  }
+ ]
+}

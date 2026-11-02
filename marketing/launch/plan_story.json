@@ -1,0 +1,164 @@
+{
+ "bpm": 100,
+ "duration": 12.0,
+ "vo": [],
+ "scenes": [
+  {
+   "kind": "gloss",
+   "start": 0.0,
+   "end": 2.4,
+   "clip": "m/orbs.mp4",
+   "speed": 0.8,
+   "push": 0.06,
+   "fade_out": 0.3,
+   "haze": [
+    {
+     "cy": 930,
+     "h": 760,
+     "s": 0.88
+    }
+   ],
+   "texts": [
+    {
+     "eyebrow": "INTRODUCING",
+     "l1": "Meet",
+     "l2": "LifeFlow.",
+     "top": 760,
+     "size": 150,
+     "at": 0.15
+    }
+   ]
+  },
+  {
+   "kind": "phone",
+   "start": 2.4,
+   "end": 4.2,
+   "src": [
+    {
+     "rec": "tour",
+     "from": 0.2,
+     "dur": 1.8,
+     "speed": 1.0
+    }
+   ],
+   "head": {
+    "l1": "Your classes.",
+    "size": 104
+   },
+   "pops": [
+    {
+     "card": "next",
+     "at": 0.6,
+     "dur": 1.2,
+     "y": 1110
+    }
+   ],
+   "pills": [],
+   "enter": true
+  },
+  {
+   "kind": "phone",
+   "start": 4.2,
+   "end": 5.4,
+   "src": [
+    {
+     "rec": "tour",
+     "from": 3.2,
+     "dur": 1.2,
+     "speed": 1.0
+    }
+   ],
+   "head": {
+    "l1": "Your shifts.",
+    "size": 104
+   },
+   "pops": [
+    {
+     "card": "week",
+     "at": 0.15,
+     "dur": 1.05,
+     "y": 1120,
+     "w": 760
+    }
+   ],
+   "pills": []
+  },
+  {
+   "kind": "phone",
+   "start": 5.4,
+   "end": 6.6,
+   "src": [
+    {
+     "rec": "tour",
+     "from": 6.2,
+     "dur": 1.2,
+     "speed": 1.0
+    }
+   ],
+   "head": {
+    "l1": "Your money.",
+    "size": 104
+   },
+   "pops": [
+    {
+     "card": "available1842",
+     "at": 0.15,
+     "dur": 1.05,
+     "y": 1120
+    }
+   ],
+   "pills": []
+  },
+  {
+   "kind": "phone",
+   "start": 6.6,
+   "end": 8.4,
+   "src": [
+    {
+     "rec": "tour",
+     "from": 9.0,
+     "dur": 1.8,
+     "speed": 1.0
+    }
+   ],
+   "head": {
+    "l1": "One assistant.",
+    "l2": "Meet Sage.",
+    "size": 104
+   },
+   "pops": [],
+   "pills": [],
+   "exit": true
+  },
+  {
+   "kind": "gloss",
+   "start": 8.4,
+   "end": 12.0,
+   "clip": "m/molecule.mp4",
+   "push": 0.05,
+   "fade_in": 0.4,
+   "haze": [
+    {
+     "cy": 1420,
+     "h": 900,
+     "s": 0.7
+    }
+   ],
+   "texts": [
+    {
+     "eyebrow": "NOW LIVE",
+     "l1": "Your whole life,",
+     "l2": "in one flow.",
+     "top": 1090,
+     "size": 104,
+     "at": 0.25
+    }
+   ],
+   "wordmark": {
+    "at": 0.9,
+    "y": 1490,
+    "sub": "lifeflowweb.com"
+   }
+  }
+ ]
+}
