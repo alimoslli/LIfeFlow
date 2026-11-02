@@ -7,6 +7,10 @@ test("a signed-out visitor sees the landing page and can get started", async ({ 
   await expect(page.getByRole("heading", { level: 1 }).first()).toHaveText("Your whole life, in flow.");
   await expect(page.locator("[data-app-loading]")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "See how it works" })).toHaveAttribute("href", "#how-it-works");
+  // Questions open in place, and the Instagram link points at @lifeflowweb.
+  await page.getByText("Is my data private?").click();
+  await expect(page.getByText(/locked to your account/)).toBeVisible();
+  await expect(page.getByRole("link", { name: /Instagram/ }).first()).toHaveAttribute("href", "https://www.instagram.com/lifeflowweb");
   await expect(page.getByRole("link", { name: "Get started" }).first()).toHaveAttribute("href", "/signup");
   await expect(page.getByRole("navigation", { name: "Account" }).getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
 

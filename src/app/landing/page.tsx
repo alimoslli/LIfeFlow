@@ -40,6 +40,58 @@ const PRINCIPLES = [
   { title: "Only what's real", body: "Nothing shows as done until it is. Money counts only once it has landed." },
 ];
 
+const INSTAGRAM = "https://www.instagram.com/lifeflowweb";
+
+const FAQS: { q: string; a: string }[] = [
+  {
+    q: "What is LifeFlow?",
+    a: "A personal planner and AI assistant in one app. It keeps your classes, shifts, to-dos, money, goals, habits and health together, and your assistant uses all of it to plan your day.",
+  },
+  {
+    q: "Who is it for?",
+    a: "Anyone with a busy week. It's built especially for people juggling school and work, but you only use the parts you need.",
+  },
+  {
+    q: "How much does it cost?",
+    a: "LifeFlow is free while we're testing. When it launches on the App Store there will be a free plan and a paid plan, and we'll tell you before anything changes.",
+  },
+  {
+    q: "Do I have to connect my bank or school?",
+    a: "No. You can add everything yourself, or send your assistant a picture of a syllabus, a list of assignments, a work schedule or a bank statement and it adds it for you. Connecting Canvas, Google Calendar or your bank is optional.",
+  },
+  {
+    q: "My school doesn't use Canvas. Can I still use it?",
+    a: "Yes. Send screenshots of your assignments or upload your syllabus, or just tell your assistant your classes.",
+  },
+  {
+    q: "Is my data private?",
+    a: "Your data is locked to your account, so no other user can see it. It's never sold, and it's never used to train AI without your clear permission. You can delete your account and everything in it from Settings.",
+  },
+  {
+    q: "Can LifeFlow move my money?",
+    a: "No. Bank connections are read-only. LifeFlow shows what you spent and what's coming in, and it can't make payments or transfers.",
+  },
+  {
+    q: "Will the assistant do my homework?",
+    a: "No. It helps you plan, study and understand, but it never writes or solves graded work for you.",
+  },
+  {
+    q: "Is there an iPhone app?",
+    a: "The App Store app is on the way. Today you can open LifeFlow in Safari and add it to your Home Screen, and it works like an app.",
+  },
+];
+
+/** Instagram's glyph (lucide no longer ships brand icons). */
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export default async function LandingPage({ searchParams }: { searchParams: Promise<{ invite?: string }> }) {
   // A friend's invite link (/?invite=<code>): say who sent it and carry the code to sign-up.
   const { invite } = await searchParams;
@@ -51,6 +103,12 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-6 sm:px-8">
         <BrandLockup markClassName="h-8 w-8" priority />
         <nav className="flex items-center gap-1" aria-label="Account">
+          <a
+            href="#faq"
+            className="hidden min-h-11 items-center rounded-full px-4 text-[0.9375rem] text-text-2 transition-colors hover:text-text sm:inline-flex"
+          >
+            FAQ
+          </a>
           <Link href="/login" className="inline-flex min-h-11 items-center rounded-full px-4 text-[0.9375rem] text-text-2 transition-colors hover:text-text">
             Sign in
           </Link>
@@ -177,6 +235,33 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
           </div>
         </section>
 
+        {/* Questions */}
+        <section id="faq" className="scroll-mt-6 border-t border-border">
+          <div className="mx-auto grid max-w-6xl gap-10 px-5 py-20 sm:px-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:py-28">
+            <div>
+              <h2 className="font-display text-[2.5rem] leading-[1.05] font-medium tracking-[-0.03em] text-balance sm:text-[3.5rem]">Questions</h2>
+              <p className="mt-4 max-w-sm text-[1.0625rem] leading-relaxed text-text-2">
+                Something else? Message us on{" "}
+                <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" className="font-medium text-accent underline underline-offset-4">
+                  Instagram @lifeflowweb
+                </a>
+                .
+              </p>
+            </div>
+            <div className="divide-y divide-border border-y border-border">
+              {FAQS.map((f) => (
+                <details key={f.q} className="group">
+                  <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-6 py-4 text-[1.0625rem] font-medium [&::-webkit-details-marker]:hidden">
+                    {f.q}
+                    <ChevronDown className="h-5 w-5 shrink-0 text-muted transition-transform group-open:rotate-180" aria-hidden />
+                  </summary>
+                  <p className="pb-5 text-[1rem] leading-relaxed text-text-2">{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Closing */}
         <section className="border-t border-border">
           <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-5 py-20 sm:px-8 md:flex-row md:items-end md:justify-between lg:py-28">
@@ -203,6 +288,9 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <BrandLockup markClassName="h-6 w-6" />
           <nav className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Footer">
+            <a href="#faq" className="hover:text-text">
+              FAQ
+            </a>
             <Link href="/privacy" className="hover:text-text">
               Privacy
             </Link>
@@ -216,7 +304,19 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               Sign in
             </Link>
           </nav>
-          <p>© 2026 LifeFlow</p>
+          <div className="flex items-center gap-4">
+            <a
+              href={INSTAGRAM}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LifeFlow on Instagram (@lifeflowweb)"
+              className="inline-flex min-h-11 items-center gap-2 hover:text-text"
+            >
+              <InstagramIcon className="h-5 w-5" />
+              @lifeflowweb
+            </a>
+            <p>© 2026 LifeFlow</p>
+          </div>
         </div>
       </footer>
     </div>
