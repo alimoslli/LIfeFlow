@@ -10,7 +10,7 @@ F = S + "fonts/"
 W, H, FPS = 1080, 1920, 30
 TW, TH = 1080, 1440
 INK, GRAY, MOSS = (23, 23, 21), (110, 112, 106), (40, 91, 69)
-FULL = Image.open(D + "out/LifeFlow_grid_full.png").convert("RGB")
+FULL = Image.open(D + "out2/grid_full.png").convert("RGB")
 
 
 def font(n, s, v=None):
@@ -265,25 +265,25 @@ def render(name, row, col, segs, out_dir):
 
 
 if __name__ == "__main__":
-    out = D + "out/"
+    out = D + "out2/"
     R = S + "tut/"
     which = sys.argv[1:] or ["tour", "money", "sage"]
     if "tour" in which:
-        render("reel_post5_tour", 1, 1, [
+        render("post_8_of_9_REEL", 0, 1, [
             (R + "tour.mp4", 0.0, 1.15, 2.8, "TODAY", "What's next, at a glance.", None),
             (R + "tour.mp4", 3.2, 1.15, 2.6, "PLAN", "Classes and shifts,", "one calendar."),
             (R + "tour.mp4", 6.2, 1.15, 2.6, "MONEY", "Know what you", "actually have."),
             (R + "tour.mp4", 9.2, 1.0, 2.5, "SAGE", "Your assistant", "texts you first."),
         ], out)
     if "money" in which:
-        render("reel_post4_money", 1, 2, [
+        render("post_5_of_9_REEL", 1, 1, [
             (R + "activity.mp4", 0.55, 1.3, 3.2, "STEP 1", "Every transaction,", "in one place."),
             (R + "search.mp4", 0.4, 1.2, 3.3, "STEP 2", "Search any spot.", "$12.52 at Starbucks."),
             (R + "where.mp4", 0.3, 1.1, 3.4, "STEP 3", "See where it went.", None),
             (R + "subs.mp4", 0.35, 1.25, 3.4, "STEP 4", "Catch forgotten", "subscriptions."),
         ], out)
     if "sage" in which:
-        render("reel_post1_sage", 2, 2, [
+        render("post_2_of_9_REEL", 2, 1, [
             (R + "block.mp4", 0.0, 1.0, 2.2, "SAGE NOTICED", "Quiz vs. your shift?", "Block it."),
             (R + "block.mp4", 2.4, 1.25, 3.0, "DONE", "Study time,", "on your calendar."),
             (R + "remind.mp4", 0.0, 1.0, 3.0, "BILL DUE", "One tap.", "Reminder set."),
