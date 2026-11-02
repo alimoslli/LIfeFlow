@@ -291,33 +291,34 @@
    "start": 34.2,
    "end": 38.4,
    "clip": "m/molecule.mp4",
-   "push": 0.05,
+   "speed": 0.8,
+   "push": 0.03,
    "fade_in": 0.4,
    "haze": [
     {
-     "cy": 1420,
-     "h": 900,
-     "s": 0.7
+     "cy": 1580,
+     "h": 820,
+     "s": 0.85
     }
    ],
    "texts": [
     {
      "l1": "Money,",
      "l2": "handled.",
-     "top": 1130,
-     "size": 128,
+     "top": 1290,
+     "size": 112,
      "at": 0.25
     }
    ],
    "wordmark": {
     "at": 1.05,
-    "y": 1470,
+    "y": 1555,
     "sub": "lifeflowweb.com"
    },
    "note": {
     "text": "App shown with sample data.",
     "at": 1.2,
-    "y": 1838
+    "y": 1846
    }
   }
  ]

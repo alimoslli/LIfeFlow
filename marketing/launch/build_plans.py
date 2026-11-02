@@ -19,7 +19,7 @@ def head(eyebrow, l1, l2=None, size=88):
     return {"eyebrow": eyebrow, "l1": l1, "l2": l2, "size": size}
 
 
-NOTE = {"text": "App shown with sample data.", "at": 1.2, "y": 1838}
+NOTE = {"text": "App shown with sample data.", "at": 1.2, "y": 1846}
 
 money = {
     "bpm": 100,
@@ -45,10 +45,10 @@ money = {
               pops=[{"card": "headsup", "at": 1.7, "dur": 2.7, "y": 1110}]),
         phone(31.2, 34.2, [rec("subs", 0.55, 3.0, 1.15)], head("SUBSCRIPTIONS", "The ones you forgot,", "found."),
               pops=[{"card": "peryear", "at": 0.9, "dur": 1.6, "y": 1120, "w": 560}], exit=True),
-        {"kind": "gloss", "start": 34.2, "end": 38.4, "clip": "m/molecule.mp4", "push": 0.05, "fade_in": 0.4,
-         "haze": [{"cy": 1420, "h": 900, "s": 0.7}],
-         "texts": [{"l1": "Money,", "l2": "handled.", "top": 1130, "size": 128, "at": 0.25}],
-         "wordmark": {"at": 1.05, "y": 1470, "sub": "lifeflowweb.com"}, "note": NOTE},
+        {"kind": "gloss", "start": 34.2, "end": 38.4, "clip": "m/molecule.mp4", "speed": 0.8, "push": 0.03, "fade_in": 0.4,
+         "haze": [{"cy": 1580, "h": 820, "s": 0.85}],
+         "texts": [{"l1": "Money,", "l2": "handled.", "top": 1290, "size": 112, "at": 0.25}],
+         "wordmark": {"at": 1.05, "y": 1555, "sub": "lifeflowweb.com"}, "note": NOTE},
     ],
 }
 
@@ -71,10 +71,10 @@ life = {
               pops=[{"card": "banks", "at": 3.3, "dur": 2.0, "y": 1100}]),
         phone(22.2, 26.4, [rec("tour", 0, 4.2, 0.55)], head("TODAY", "Every morning,", "it all comes together."),
               pops=[{"card": "next", "at": 1.3, "dur": 2.3, "y": 1110}], exit=True),
-        {"kind": "gloss", "start": 26.4, "end": 31.2, "clip": "m/molecule.mp4", "push": 0.05, "fade_in": 0.4,
-         "haze": [{"cy": 1420, "h": 900, "s": 0.7}],
-         "texts": [{"l1": "Your whole life,", "l2": "in one flow.", "top": 1130, "size": 112, "at": 0.9}],
-         "wordmark": {"at": 0.25, "y": 1470, "sub": "lifeflowweb.com"}, "note": NOTE},
+        {"kind": "gloss", "start": 26.4, "end": 31.2, "clip": "m/molecule.mp4", "speed": 0.75, "push": 0.03, "fade_in": 0.4,
+         "haze": [{"cy": 1580, "h": 820, "s": 0.85}],
+         "texts": [{"l1": "Your whole life,", "l2": "in one flow.", "top": 1290, "size": 104, "at": 0.9}],
+         "wordmark": {"at": 0.25, "y": 1555, "sub": "lifeflowweb.com"}, "note": NOTE},
     ],
 }
 
@@ -90,10 +90,10 @@ story = {
         phone(4.2, 5.4, [rec("tour", 3.2, 1.2)], {"l1": "Your shifts.", "size": 104}, pops=[{"card": "week", "at": 0.15, "dur": 1.05, "y": 1120, "w": 760}]),
         phone(5.4, 6.6, [rec("tour", 6.2, 1.2)], {"l1": "Your money.", "size": 104}, pops=[{"card": "available1842", "at": 0.15, "dur": 1.05, "y": 1120}]),
         phone(6.6, 8.4, [rec("tour", 9.0, 1.8)], {"l1": "One assistant.", "l2": "Meet Sage.", "size": 104}, exit=True),
-        {"kind": "gloss", "start": 8.4, "end": 12.0, "clip": "m/molecule.mp4", "push": 0.05, "fade_in": 0.4,
-         "haze": [{"cy": 1420, "h": 900, "s": 0.7}],
-         "texts": [{"eyebrow": "NOW LIVE", "l1": "Your whole life,", "l2": "in one flow.", "top": 1090, "size": 104, "at": 0.25}],
-         "wordmark": {"at": 0.9, "y": 1490, "sub": "lifeflowweb.com"}},
+        {"kind": "gloss", "start": 8.4, "end": 12.0, "clip": "m/molecule.mp4", "speed": 0.8, "push": 0.03, "fade_in": 0.4,
+         "haze": [{"cy": 1580, "h": 820, "s": 0.85}],
+         "texts": [{"eyebrow": "NOW LIVE", "l1": "Your whole life,", "l2": "in one flow.", "top": 1230, "size": 100, "at": 0.25}],
+         "wordmark": {"at": 0.9, "y": 1560, "sub": "lifeflowweb.com"}},
     ],
 }
 
