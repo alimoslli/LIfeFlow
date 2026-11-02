@@ -11,3 +11,7 @@ next-env.d.ts
 *.md
 *.sql
 src/server/jarvis/skills/index.generated.ts
+
+# generated marketing timelines (build_plans.py)
+marketing/**/plan_*.json
+marketing/ad-reel/jarvis30/timeline.json

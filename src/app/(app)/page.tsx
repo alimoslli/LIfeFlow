@@ -225,6 +225,14 @@ export default async function TodayPage() {
   );
 }
 
+/** "1:00 – 2:15 PM" (or "11:30 AM – 12:45 PM"); just the start when there's no end. */
+function timeSpan(item: AgendaItem, tz: string): string {
+  const start = formatIn(item.startsAt, tz, "h:mm a");
+  if (!item.endsAt || item.allDay) return start;
+  const end = formatIn(item.endsAt, tz, "h:mm a");
+  return start.slice(-2) === end.slice(-2) ? `${start.slice(0, -3)} – ${end}` : `${start} – ${end}`;
+}
+
 /** The big card: the class, shift or event happening now, or the next one today. */
 function UpNext({ item, tz, now }: { item: AgendaItem | null; tz: string; now: Date }) {
   if (!item)
@@ -236,13 +244,14 @@ function UpNext({ item, tz, now }: { item: AgendaItem | null; tz: string; now: D
     );
   const live = item.startsAt <= now;
   const mins = Math.round((item.startsAt.getTime() - now.getTime()) / 60_000);
+  const span = timeSpan(item, tz);
   const when = live
     ? `Now${item.endsAt && !item.allDay ? `, until ${formatIn(item.endsAt, tz, "h:mm a")}` : ""}`
     : mins < 60
-      ? `In ${mins} min · ${formatIn(item.startsAt, tz, "h:mm a")}`
+      ? `In ${mins} min · ${span}`
       : mins < 180
-        ? `In ${Math.round(mins / 60)}h · ${formatIn(item.startsAt, tz, "h:mm a")}`
-        : `Next at ${formatIn(item.startsAt, tz, "h:mm a")}`;
+        ? `In ${Math.round(mins / 60)}h · ${span}`
+        : `Next · ${span}`;
   return (
     <section
       aria-label={live ? "Now" : "Up next"}
