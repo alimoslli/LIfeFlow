@@ -1,4 +1,5 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
+import { inTestingPhase, TESTING_LIMITS } from "../billing";
 import OpenAI from "openai";
 import { assistantProfile } from "@/lib/assistant";
 import type { SessionUser } from "../auth/sessions";
@@ -103,7 +104,8 @@ export async function startVoiceSession(user: SessionUser, module: JarvisModule 
     expiresAt: secret.expires_at,
     model: e.OPENAI_REALTIME_MODEL,
     conversationId: conversation.id,
-    maxSeconds: VOICE_SESSION_SECONDS,
+    // Shorter calls while LifeFlow is in testing (see TESTING_LIMITS).
+    maxSeconds: inTestingPhase() ? TESTING_LIMITS.voiceCallMinutes * 60 : VOICE_SESSION_SECONDS,
   };
 }
 

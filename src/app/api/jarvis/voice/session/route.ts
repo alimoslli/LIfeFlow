@@ -4,7 +4,9 @@ import { getSessionUser } from "@/server/auth/current-user";
 import { AI_CONSENT_NEEDED, aiAllowed } from "@/lib/ai-consent";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { startVoiceSession } from "@/server/jarvis/voice";
-import { requirePro } from "@/server/billing";
+import { inTestingPhase, requirePro, TESTING_LIMITS, testingLimitMessage } from "@/server/billing";
+import { getDb } from "@/server/db/client";
+import { rateLimit } from "@/server/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +28,10 @@ export async function POST(req: Request) {
     if (!aiAllowed(user.preferences)) throw new HttpError(403, AI_CONSENT_NEEDED);
     await enforceRateLimit(`voice:min:${user.id}`, 4, 60);
     await enforceRateLimit(`voice:day:${user.id}`, 40, 86_400);
+    if (inTestingPhase()) {
+      const cap = await rateLimit(getDb(), `voice:testing:${user.id}`, TESTING_LIMITS.voiceCallsPerDay, 86_400);
+      if (!cap.allowed) throw new HttpError(429, testingLimitMessage("voice calls", TESTING_LIMITS.voiceCallsPerDay, cap.retryAfterSeconds));
+    }
     try {
       return NextResponse.json(await startVoiceSession(user, parsed.data.module ?? null, undefined, parsed.data.conversationId), {
         headers: { "cache-control": "no-store" },
@@ -33,10 +39,7 @@ export async function POST(req: Request) {
     } catch (e) {
       console.error("[voice] session", e);
       const status = (e as { status?: number }).status;
-      throw new HttpError(
-        503,
-        status === 401 ? "Voice isn't available: the server's OpenAI key was rejected." : "Couldn't start a voice call right now. Try again in a moment.",
-      );
+      throw new HttpError(503, status === 401 ? "Voice isn't available yet." : "Couldn't start a voice call right now. Try again in a moment.");
     }
   } catch (e) {
     return errorResponse(e);

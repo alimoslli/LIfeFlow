@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Camera, Copy, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
 
@@ -27,6 +27,16 @@ export function InboxUpload() {
       if (input.current) input.current.value = "";
     }
   };
+  // A file picked before the page finished loading (slow phone) never fired onChange: send it now.
+  useEffect(() => {
+    const files = input.current?.files;
+    if (!files?.length) return;
+    const id = setTimeout(() => void send(files), 0);
+    return () => clearTimeout(id);
+    // Runs once, after hydration.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <>
       <input

@@ -21,6 +21,22 @@ export function billingConfig(env: Record<string, string | undefined> = process.
 }
 
 export const FREE_JARVIS_PER_DAY = 15;
+
+/**
+ * While paid plans are off (testing), everyone gets every feature, within these daily limits,
+ * so AI costs stay predictable. Voice is limited by calls and by call length, because a call
+ * streams straight between the phone and the voice service.
+ */
+export const TESTING_LIMITS = { messagesPerDay: 50, voiceCallsPerDay: 4, voiceCallMinutes: 5 } as const;
+
+/** True while paid plans are switched off. */
+export const inTestingPhase = (cfg = billingConfig()) => !cfg;
+
+/** The message shown when a testing limit is reached. */
+export function testingLimitMessage(what: "messages" | "voice calls", limit: number, retryAfterSeconds: number) {
+  const hours = Math.max(1, Math.ceil(retryAfterSeconds / 3600));
+  return `You've used today's ${limit} ${what}. While LifeFlow is in testing, everyone gets ${limit} a day. More open up in about ${hours} hour${hours === 1 ? "" : "s"}.`;
+}
 export const PRO_FEATURES = { bank: "Bank sync", google: "Gmail and Google Calendar", sms: "Texting", voice: "Voice" } as const;
 
 export const isPro = (user: Pick<SessionUser, "plan" | "accountKind">, cfg = billingConfig()) => !cfg || user.plan === "pro" || user.accountKind === "demo";
