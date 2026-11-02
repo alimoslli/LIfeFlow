@@ -17,9 +17,9 @@ export default function PrivacyPolicy() {
       <p>Effective {LEGAL_EFFECTIVE_DATE}</p>
 
       <p>
-        LifeFlow is a personal organizer for your money, school, work, schedule, health and notes, with a built-in AI assistant. LifeFlow is operated by{" "}
-        {l.operator} (&quot;we&quot;, &quot;us&quot;). This policy explains what information we collect, why, who we share it with, how long we keep it, and the
-        choices you have. We wrote it to match how the app actually works.
+        LifeFlow is a personal organizer for your money, school, work, schedule, health and notes, with a built-in AI assistant. LifeFlow is run by {l.operator}
+        . Where this policy says &quot;we&quot; or &quot;us&quot;, it means LifeFlow. This policy explains what information we collect, why, who we share it
+        with, how long we keep it, and the choices you have. We wrote it to match how the app actually works.
       </p>
 
       <h2>The short version</h2>

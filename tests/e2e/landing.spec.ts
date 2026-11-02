@@ -25,3 +25,17 @@ test("the landing page never scrolls sideways", async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+test("legal pages have a close button that goes back to where you were", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("navigation", { name: "Footer" }).getByRole("link", { name: "Privacy" }).click();
+  await expect(page.getByRole("heading", { name: "Privacy Policy" })).toBeVisible();
+  await page.getByRole("button", { name: "Close" }).click();
+  await expect(page.getByRole("heading", { level: 1 }).first()).toHaveText("Your whole life, in flow.");
+
+  await expect(page).toHaveURL(/\/$/);
+
+  // The reworded intro: no "(we, us)" next to the operator's name.
+  await page.goto("/terms");
+  await expect(page.getByText(/agreement between you and LifeFlow, which is run by/)).toBeVisible();
+});

@@ -13,9 +13,9 @@ export default function TermsOfUse() {
       <p>Effective {LEGAL_EFFECTIVE_DATE}</p>
 
       <p>
-        These Terms of Use (&quot;Terms&quot;) are an agreement between you and {l.operator} (&quot;we&quot;, &quot;us&quot;), who operates LifeFlow. By
-        creating an account or using LifeFlow, you agree to these Terms and to our <Link href="/privacy">Privacy Policy</Link>. If you do not agree, do not use
-        LifeFlow.
+        These Terms of Use (&quot;Terms&quot;) are an agreement between you and LifeFlow, which is run by {l.operator}. Where these Terms say &quot;we&quot; or
+        &quot;us&quot;, they mean LifeFlow. By creating an account or using LifeFlow, you agree to these Terms and to our{" "}
+        <Link href="/privacy">Privacy Policy</Link>. If you do not agree, do not use LifeFlow.
       </p>
 
       <h2>1. Who can use LifeFlow</h2>
