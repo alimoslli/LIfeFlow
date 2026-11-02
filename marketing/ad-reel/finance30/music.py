@@ -48,6 +48,15 @@ def env(d, a=0.005, decay=0.2):
     return e
 
 
+def mixp(*sigs):
+    """Sum signals of different lengths (zero-padded)."""
+    n = max(len(x) for x in sigs)
+    out = np.zeros(n)
+    for x in sigs:
+        out[: len(x)] += x
+    return out
+
+
 def kick(hard=1.0):
     t = t_arr(0.45)
     f = 45 + 95 * np.exp(-t / 0.035)
@@ -172,14 +181,14 @@ for c in CUTS:
     k = np.linspace(0, 1, len(n))
     add(n * k ** 2 * 0.18, c - 0.35, pan=-0.2)
 # drop impact
-imp = kick(1.4) * 1.1 + filt(rng.standard_normal(int(0.8 * SR)), "lowpass", 6000) * env(0.8, 0.001, 0.25) * 0.25
+imp = mixp(kick(1.4) * 1.1, filt(rng.standard_normal(int(0.8 * SR)), "lowpass", 6000) * env(0.8, 0.001, 0.25) * 0.25)
 add(imp, DROP)
 sub = note(55, 1.2, "sine") * env(1.2, 0.003, 0.6) * 0.5
 add(sub, DROP)
 
 # ---------------------------------------------------------------- outro (26.0 - 30)
 END = END_T
-add(kick(1.2) + filt(rng.standard_normal(int(1.2 * SR)), "lowpass", 5000) * env(1.2, 0.001, 0.5) * 0.2, END)
+add(mixp(kick(1.2), filt(rng.standard_normal(int(1.2 * SR)), "lowpass", 5000) * env(1.2, 0.001, 0.5) * 0.2), END)
 final = sum(note(midi(m), 4.0, "saw", 0.005) for m in [57, 64, 69, 72]) / 4
 final = filt(final, "lowpass", 1800) * np.minimum(1, t_arr(4.0) / 0.05) * np.exp(-t_arr(4.0) / 2.2) * 0.12
 add(final, END, pan=-0.1)
