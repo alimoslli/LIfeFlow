@@ -61,7 +61,7 @@ fade = np.clip((mol.height * 0.76 - np.arange(mol.height)) / (mol.height * 0.06)
 mk.putalpha(Image.fromarray((np.asarray(mk.getchannel("A")) * fade[:, None]).astype(np.uint8)))
 paste(mk, 2440, -360)
 ball(3460, 1560, 300, blur=2)
-ball(140, 3080, 260, src=("g/g2.png", 1090, 1995, 175), blur=3)
+ball(3480, 3240, 230, src=("g/g2.png", 1090, 1995, 175), blur=3)
 
 # ---------------------------------------------------------------- header
 paste(L.LOGO.resize((190, 190), Image.LANCZOS), 220, 200)
