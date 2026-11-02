@@ -23,20 +23,39 @@ export function billingConfig(env: Record<string, string | undefined> = process.
 export const FREE_JARVIS_PER_DAY = 15;
 
 /**
- * While paid plans are off (testing), everyone gets every feature, within these daily limits,
- * so AI costs stay predictable. Voice is limited by calls and by call length, because a call
- * streams straight between the phone and the voice service.
+ * While paid plans are off (testing), everyone gets every feature within these limits, so one
+ * person costs at most a few dollars a month (target: $2 to $7).
+ * - Messages: a dollar cap on the assistant's own measured cost (jarvis_runs.cost_micros, set when
+ *   model prices are configured), plus day and 30-day counts as a floor when they aren't.
+ * - Voice: calls and call length, because a call streams straight between the phone and the
+ *   voice service and its cost isn't measured: at most 10 calls x 3 minutes = 30 minutes a month.
  */
-export const TESTING_LIMITS = { messagesPerDay: 50, voiceCallsPerDay: 4, voiceCallMinutes: 5 } as const;
+export const TESTING_LIMITS = {
+  messagesPerDay: 30,
+  messagesPerMonth: 300,
+  assistantDollarsPerMonth: 4,
+  voiceCallsPerDay: 2,
+  voiceCallsPerMonth: 10,
+  voiceCallMinutes: 3,
+} as const;
+
+/** "Month" for limits: a rolling-ish 30-day window. */
+export const LIMIT_MONTH_SECONDS = 30 * 86_400;
 
 /** True while paid plans are switched off. */
 export const inTestingPhase = (cfg = billingConfig()) => !cfg;
 
 /** The message shown when a testing limit is reached. */
-export function testingLimitMessage(what: "messages" | "voice calls", limit: number, retryAfterSeconds: number) {
+export function testingLimitMessage(what: "messages" | "voice calls", limit: number, retryAfterSeconds: number, period: "day" | "month" = "day") {
   const hours = Math.max(1, Math.ceil(retryAfterSeconds / 3600));
-  return `You've used today's ${limit} ${what}. While LifeFlow is in testing, everyone gets ${limit} a day. More open up in about ${hours} hour${hours === 1 ? "" : "s"}.`;
+  const when = hours <= 36 ? `about ${hours} hour${hours === 1 ? "" : "s"}` : `about ${Math.ceil(hours / 24)} days`;
+  const span = period === "day" ? "today's" : "this month's";
+  return `You've used ${span} ${limit} ${what}. While LifeFlow is in testing, everyone gets ${limit} a ${period}. More open up in ${when}.`;
 }
+
+/** Shown when the monthly assistant budget is used up. */
+export const TESTING_BUDGET_MESSAGE =
+  "You've reached this month's assistant limit while LifeFlow is in testing. It frees up again over the next few days as older use rolls off. Everything else in the app keeps working.";
 export const PRO_FEATURES = { bank: "Bank sync", google: "Gmail and Google Calendar", sms: "Texting", voice: "Voice" } as const;
 
 export const isPro = (user: Pick<SessionUser, "plan" | "accountKind">, cfg = billingConfig()) => !cfg || user.plan === "pro" || user.accountKind === "demo";

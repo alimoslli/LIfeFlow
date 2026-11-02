@@ -4,7 +4,7 @@ import { getSessionUser } from "@/server/auth/current-user";
 import { AI_CONSENT_NEEDED, aiAllowed } from "@/lib/ai-consent";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { startVoiceSession } from "@/server/jarvis/voice";
-import { inTestingPhase, requirePro, TESTING_LIMITS, testingLimitMessage } from "@/server/billing";
+import { inTestingPhase, LIMIT_MONTH_SECONDS, requirePro, TESTING_LIMITS, testingLimitMessage } from "@/server/billing";
 import { getDb } from "@/server/db/client";
 import { rateLimit } from "@/server/rate-limit";
 
@@ -29,8 +29,10 @@ export async function POST(req: Request) {
     await enforceRateLimit(`voice:min:${user.id}`, 4, 60);
     await enforceRateLimit(`voice:day:${user.id}`, 40, 86_400);
     if (inTestingPhase()) {
-      const cap = await rateLimit(getDb(), `voice:testing:${user.id}`, TESTING_LIMITS.voiceCallsPerDay, 86_400);
-      if (!cap.allowed) throw new HttpError(429, testingLimitMessage("voice calls", TESTING_LIMITS.voiceCallsPerDay, cap.retryAfterSeconds));
+      const day = await rateLimit(getDb(), `voice:testing:${user.id}`, TESTING_LIMITS.voiceCallsPerDay, 86_400);
+      if (!day.allowed) throw new HttpError(429, testingLimitMessage("voice calls", TESTING_LIMITS.voiceCallsPerDay, day.retryAfterSeconds));
+      const month = await rateLimit(getDb(), `voice:testing-month:${user.id}`, TESTING_LIMITS.voiceCallsPerMonth, LIMIT_MONTH_SECONDS);
+      if (!month.allowed) throw new HttpError(429, testingLimitMessage("voice calls", TESTING_LIMITS.voiceCallsPerMonth, month.retryAfterSeconds, "month"));
     }
     try {
       return NextResponse.json(await startVoiceSession(user, parsed.data.module ?? null, undefined, parsed.data.conversationId), {

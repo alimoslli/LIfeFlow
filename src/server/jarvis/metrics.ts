@@ -189,3 +189,12 @@ export async function runCount(scope: UserScope) {
     .where(eq(jarvisRuns.userId, scope.userId));
   return r?.n ?? 0;
 }
+
+/** What this person's assistant turns cost since `since`, in millionths of a dollar (priced turns only). */
+export async function spendSinceMicros(scope: UserScope, since: Date): Promise<number> {
+  const [r] = await scope.tx
+    .select({ n: sql<string>`coalesce(sum(${jarvisRuns.costMicros}), 0)` })
+    .from(jarvisRuns)
+    .where(and(eq(jarvisRuns.userId, scope.userId), gte(jarvisRuns.createdAt, since)));
+  return Number(r?.n ?? 0);
+}

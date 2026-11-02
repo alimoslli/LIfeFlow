@@ -5,7 +5,9 @@ import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/
 import { runJarvisTurn, type JarvisEvent } from "@/server/jarvis/agent";
 import { getProvider, modelPrices } from "@/server/jarvis/providers";
 import { ProviderUnavailableError } from "@/server/jarvis/providers/types";
-import { FREE_JARVIS_PER_DAY, inTestingPhase, isPro, TESTING_LIMITS, testingLimitMessage } from "@/server/billing";
+import { FREE_JARVIS_PER_DAY, inTestingPhase, isPro, LIMIT_MONTH_SECONDS, TESTING_BUDGET_MESSAGE, TESTING_LIMITS, testingLimitMessage } from "@/server/billing";
+import { withUser } from "@/server/db/with-user";
+import { spendSinceMicros } from "@/server/jarvis/metrics";
 import { getDb } from "@/server/db/client";
 import { rateLimit } from "@/server/rate-limit";
 import { AI_CONSENT_NEEDED, aiAllowed } from "@/lib/ai-consent";
@@ -35,8 +37,13 @@ export async function POST(req: Request) {
     if (!isPro(user) && !(await rateLimit(getDb(), `jarvis:free:${user.id}`, FREE_JARVIS_PER_DAY, 86_400)).allowed)
       throw new HttpError(402, `You've used today's ${FREE_JARVIS_PER_DAY} free messages. LifeFlow Pro has no daily limit (Settings → Plan).`);
     if (inTestingPhase()) {
-      const cap = await rateLimit(getDb(), `jarvis:testing:${user.id}`, TESTING_LIMITS.messagesPerDay, 86_400);
-      if (!cap.allowed) throw new HttpError(429, testingLimitMessage("messages", TESTING_LIMITS.messagesPerDay, cap.retryAfterSeconds));
+      const day = await rateLimit(getDb(), `jarvis:testing:${user.id}`, TESTING_LIMITS.messagesPerDay, 86_400);
+      if (!day.allowed) throw new HttpError(429, testingLimitMessage("messages", TESTING_LIMITS.messagesPerDay, day.retryAfterSeconds));
+      const month = await rateLimit(getDb(), `jarvis:testing-month:${user.id}`, TESTING_LIMITS.messagesPerMonth, LIMIT_MONTH_SECONDS);
+      if (!month.allowed) throw new HttpError(429, testingLimitMessage("messages", TESTING_LIMITS.messagesPerMonth, month.retryAfterSeconds, "month"));
+      // The dollar cap uses each turn's measured cost (only when model prices are configured).
+      const spent = await withUser(user.id, (s) => spendSinceMicros(s, new Date(Date.now() - LIMIT_MONTH_SECONDS * 1000)));
+      if (spent >= TESTING_LIMITS.assistantDollarsPerMonth * 1_000_000) throw new HttpError(429, TESTING_BUDGET_MESSAGE);
     }
     const locked = await moneyLocked(user);
 

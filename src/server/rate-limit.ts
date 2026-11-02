@@ -22,5 +22,6 @@ export async function rateLimit(db: Database, key: string, limit: number, window
 }
 
 export async function purgeOldRateLimits(db: Database) {
-  await db.delete(rateLimitBuckets).where(sql`${rateLimitBuckets.windowStart} < now() - interval '1 day'`);
+  // Keep 31 days: some limits count over 30 days (testing-phase monthly limits).
+  await db.delete(rateLimitBuckets).where(sql`${rateLimitBuckets.windowStart} < now() - interval '31 days'`);
 }
