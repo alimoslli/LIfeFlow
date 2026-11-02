@@ -45,6 +45,7 @@ export default defineConfig({
         VAPID_SUBJECT: "mailto:e2e@example.com",
         INBOX_DOMAIN: "in.example.com",
         INBOX_WEBHOOK_SECRET: "e2e-inbox-secret",
+        ADMIN_EMAILS: "admin-owner@example.com",
       },
     },
   ],

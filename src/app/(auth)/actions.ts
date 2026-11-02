@@ -32,6 +32,7 @@ export async function login(_prev: AuthState, fd: FormData): Promise<AuthState> 
   if (!byIp.allowed || !byEmail.allowed) return { error: "Too many sign-in attempts. Please wait a few minutes and try again.", email };
   const user = await authenticate(db, email, password);
   if (!user) return { error: "That email and password don't match.", email };
+  if (user.suspendedAt) return { error: "This account has been suspended. Please contact support.", email };
   if (user.totpEnabledAt) {
     // Password is right; the session only starts after the authenticator code.
     const { token, expiresAt } = await createLoginChallenge(db, user.id);

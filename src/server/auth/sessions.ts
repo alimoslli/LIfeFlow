@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { and, eq, gt, lt } from "drizzle-orm";
+import { and, eq, gt, isNull, lt } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { sessions, users, type UserPreferences } from "../db/schema";
 
@@ -47,7 +47,8 @@ export async function validateSession(db: Database, token: string): Promise<Sess
     })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
-    .where(and(eq(sessions.id, id), gt(sessions.expiresAt, new Date())));
+    // A suspended account (admin page, ADR 0022) has no valid session, even one created before it was suspended.
+    .where(and(eq(sessions.id, id), gt(sessions.expiresAt, new Date()), isNull(users.suspendedAt)));
   if (!row) return null;
   if (Date.now() - row.lastSeenAt.getTime() > REFRESH_AFTER_MS) {
     await db
