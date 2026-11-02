@@ -24,7 +24,7 @@ im.alpha_composite(L.LOGO.resize((lw, lw), Image.LANCZOS), (x0, 262))
 d.text((x0 + lw + 16, 294), "LifeFlow", font=f_w, fill=L.INK, anchor="lm")
 
 # ---------------------------------------------------------------- headline
-L.headline(im, {"eyebrow": "CONNECTORS", "l1": "LifeFlow connects to", "l2": "the tools you use.", "top": 372, "size": 94, "out": False}, 5, 9)
+L.headline(im, {"eyebrow": "CONNECTORS", "l1": "LifeFlow connects to", "l2": "and uses these tools.", "top": 372, "size": 94, "out": False}, 5, 9)
 
 # ---------------------------------------------------------------- logo grid
 LOGOS = [  # file, name, what it adds to LifeFlow (each line matches what the app really does)

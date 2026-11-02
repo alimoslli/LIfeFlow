@@ -22,8 +22,8 @@ LOGOS = [  # file, name, what it does
 im = Image.new("RGBA", (W, H), (255, 255, 255, 255))
 d = ImageDraw.Draw(im)
 
-d.text((W / 2, 128), "Works with the tools", font=L.SANS(78, "SemiBold"), fill=INK, anchor="mm")
-d.text((W / 2, 220), "you already use.", font=L.SANS(78, "SemiBold"), fill=INK, anchor="mm")
+d.text((W / 2, 128), "LifeFlow connects to", font=L.SANS(74, "SemiBold"), fill=INK, anchor="mm")
+d.text((W / 2, 218), "and uses these tools.", font=L.SANS(74, "SemiBold"), fill=INK, anchor="mm")
 
 TW, TH, GX, GY = 306, 296, 33, 34
 X0 = (W - (3 * TW + 2 * GX)) // 2
