@@ -242,11 +242,11 @@ TUT = [
          head=("Every transaction.", "One place.")),
     dict(clip="tut/search.mp4", src=0.45, speed=1.15, keys=[(0, 1.0, 540, 896), (0.4, 1.25, 540, 760), (1.4, 1.25, 540, 760), (1.9, 1.75, 320, 1150), (3.25, 1.8, 320, 1150)],
          head=("Search any spot.", "$12.52 at Starbucks.")),
-    dict(clip="tut/where.mp4", src=0.25, speed=1.0, keys=[(0, 1.0, 540, 896), (1.9, 1.0, 540, 896), (2.5, 1.7, 540, 1290), (3.9, 1.75, 540, 1290)],
+    dict(clip="tut/where.mp4", src=0.25, speed=1.0, keys=[(0, 1.0, 540, 896), (1.9, 1.0, 540, 896), (2.5, 1.2, 540, 1290), (3.9, 1.23, 540, 1300)],
          head=("$827 on food.", "In one month.")),
-    dict(clip="tut/subs.mp4", src=0.70, speed=1.3, keys=[(0, 1.0, 540, 896), (0.45, 1.0, 540, 896), (0.8, 1.75, 760, 860), (1.55, 1.8, 760, 860), (1.9, 1.0, 540, 1169), (3.25, 1.05, 540, 1300)],
+    dict(clip="tut/subs.mp4", src=0.70, speed=1.3, keys=[(0, 1.0, 540, 896), (0.45, 1.0, 540, 896), (0.8, 1.6, 770, 870), (1.55, 1.65, 770, 870), (1.9, 1.0, 540, 1169), (3.25, 1.05, 540, 1300)],
          head=("$330 a year", "on forgotten subscriptions.")),
-    dict(clip="tut/next30.mp4", src=0.30, speed=1.4, keys=[(0, 1.0, 540, 896), (1.0, 1.0, 540, 896), (1.5, 1.55, 540, 880), (2.6, 1.6, 540, 880)],
+    dict(clip="tut/next30.mp4", src=0.30, speed=1.4, keys=[(0, 1.0, 540, 896), (1.0, 1.0, 540, 896), (1.5, 1.2, 540, 900), (2.6, 1.23, 540, 900)],
          head=("Rent at risk?", "It warns you first.")),
     dict(clip="tut/tabs.mp4", src=0.20, speed=1.65, keys=[(0, 1.05, 540, 1000), (2.6, 1.0, 540, 896)],
          head=("Classes. Shifts. To-dos.", "An AI that plans it all.")),
@@ -392,12 +392,12 @@ def render(preview=None):
                     im = Image.blend(im, Image.new("RGBA", (W, H), (255, 255, 255, 255)), clamp(a))
             if DECL_T <= t < 1.62:
                 k = eback((t - DECL_T) / 0.2, 2.4)
-                place(im, DECLINED, (W - DECLINED.width) // 2, 560, alpha=clamp((t - DECL_T) / 0.05), scale=0.6 + 0.4 * k)
+                place(im, DECLINED, (W - DECLINED.width) // 2, 840, alpha=clamp((t - DECL_T) / 0.05), scale=0.6 + 0.4 * k)
             for i, fl in enumerate((2.40, 3.05, 3.70)):
                 if fl + 0.08 <= t < fl + 0.65:
                     k = eback((t - fl - 0.08) / 0.18, 2.0)
                     tg = TAGS[i]
-                    place(im, tg, 560 - tg.width // 2 + (i - 1) * 60, 380 + i * 30, alpha=clamp((t - fl - 0.08) / 0.05), scale=0.6 + 0.4 * k)
+                    place(im, tg, 600 - tg.width // 2 + (i - 1) * 50, 1060 + (i % 2) * 40, alpha=clamp((t - fl - 0.08) / 0.05), scale=0.6 + 0.4 * k)
             caption(im, "Declined?", t, 1.62, 2.40)
             caption(im, "I literally just got paid.", t, 2.45, 4.35)
             caption(im, "Where did it all go?", t, 4.45, 5.62)
@@ -434,9 +434,9 @@ def render(preview=None):
             lt = t - B[6]
             n = int(round((DUR - B[6]) * FPS)) + 2
             if preview:
-                fr = Clip("clips/s8.mp4", 0.6 + lt, 1, W, H).next()
+                fr = Clip("clips/s8.mp4", min(3.9, 0.3 + lt), 1, W, H).next()
             else:
-                fr = reader("clips/s8.mp4", lambda seek: Clip("clips/s8.mp4", 0.6, n, W, H)).next()
+                fr = reader("clips/s8.mp4", lambda seek: Clip("clips/s8.mp4", 0.3, n, W, H)).next()
             fr = grade(fr, warm=0.3)
             if t < END:
                 im = vignette(fr, 0.4).convert("RGBA")
