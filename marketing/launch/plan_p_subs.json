@@ -1,0 +1,187 @@
+{
+ "bpm": 100,
+ "duration": 15.0,
+ "vo": [
+  [
+   "vo/P2_1.wav",
+   0.1
+  ],
+  [
+   "vo/P2_2.wav",
+   2.7
+  ],
+  [
+   "vo/P2_3.wav",
+   5.75
+  ],
+  [
+   "vo/P2_4.wav",
+   9.8
+  ],
+  [
+   "vo/P2_5.wav",
+   11.85
+  ]
+ ],
+ "scenes": [
+  {
+   "kind": "phone",
+   "start": 0.0,
+   "end": 2.6,
+   "src": [
+    {
+     "rec": "subs",
+     "from": 0.55,
+     "dur": 2.6,
+     "speed": 0.6
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "WHAT IS",
+     "*THIS CHARGE?*"
+    ],
+    "size": 124,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 2.6,
+   "end": 5.6,
+   "src": [
+    {
+     "rec": "m_bank",
+     "from": 0.0,
+     "dur": 3.0,
+     "speed": 1.0
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [
+    {
+     "kind": "plaid",
+     "at": 1.3,
+     "y": 1665
+    }
+   ],
+   "bold": {
+    "lines": [
+     "*LINK* YOUR BANK.",
+     "SECURED BY PLAID."
+    ],
+    "size": 90,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 5.6,
+   "end": 9.6,
+   "src": [
+    {
+     "rec": "subs",
+     "from": 0.55,
+     "dur": 4.0,
+     "speed": 0.7
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "peryear",
+     "at": 1.6,
+     "dur": 2.4,
+     "y": 1130,
+     "w": 620
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "IT FINDS *THE ONES*",
+     "YOU FORGOT."
+    ],
+    "size": 92,
+    "top": 100
+   },
+   "count": {
+    "at": 0.3,
+    "dur": 1.4,
+    "to": 329.76,
+    "label": "A YEAR IN FORGOTTEN SUBSCRIPTIONS",
+    "y": 1130
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 9.6,
+   "end": 11.6,
+   "src": [
+    {
+     "rec": "subs",
+     "from": 2.2,
+     "dur": 2.0,
+     "speed": 0.8
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "AND *HOW TO*",
+     "*CANCEL.*"
+    ],
+    "size": 96,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "gloss",
+   "outro": true,
+   "start": 11.6,
+   "end": 15.0,
+   "clip": "m/molecule.mp4",
+   "speed": 0.7,
+   "push": 0.03,
+   "fade_in": 0.3,
+   "haze": [
+    {
+     "cy": 1560,
+     "h": 900,
+     "s": 0.88
+    }
+   ],
+   "bold": {
+    "lines": [
+     "COMMENT *CANCEL*,",
+     "THEN *TAP THE LINK*",
+     "IN BIO."
+    ],
+    "size": 86,
+    "top": 1225,
+    "at": 0.15,
+    "out": false
+   },
+   "wordmark": {
+    "at": 1.2,
+    "y": 1600,
+    "sub": "lifeflowweb.com"
+   },
+   "note": {
+    "text": "App shown with sample data.",
+    "at": 1.3,
+    "y": 1850
+   }
+  }
+ ]
+}

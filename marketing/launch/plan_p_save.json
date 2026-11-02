@@ -1,0 +1,171 @@
+{
+ "bpm": 100,
+ "duration": 15.0,
+ "vo": [
+  [
+   "vo/P3_1.wav",
+   0.1
+  ],
+  [
+   "vo/P3_2.wav",
+   2.8
+  ],
+  [
+   "vo/P3_3.wav",
+   7.0
+  ],
+  [
+   "vo/P3_4.wav",
+   11.85
+  ]
+ ],
+ "scenes": [
+  {
+   "kind": "phone",
+   "start": 0.0,
+   "end": 2.8,
+   "src": [
+    {
+     "rec": "m_over",
+     "from": 0.0,
+     "dur": 2.8,
+     "speed": 0.9
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "available",
+     "at": 0.8,
+     "dur": 2.0,
+     "y": 1110,
+     "w": 860
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "HOW MUCH CAN I",
+     "*ACTUALLY* SPARE?"
+    ],
+    "size": 96,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 2.8,
+   "end": 7.0,
+   "src": [
+    {
+     "rec": "m_save",
+     "from": 1.4,
+     "dur": 4.2,
+     "speed": 0.95
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "whatif",
+     "at": 2.2,
+     "dur": 1.9,
+     "y": 1130,
+     "w": 800
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "PICK A *GOAL.*",
+     "SEE *YOUR PACE.*"
+    ],
+    "size": 96,
+    "top": 100,
+    "counter": "1 / 2"
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 7.0,
+   "end": 11.6,
+   "src": [
+    {
+     "rec": "m_invest",
+     "from": 1.4,
+     "dur": 4.6,
+     "speed": 1.0
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "invest",
+     "at": 2.4,
+     "dur": 2.2,
+     "y": 1130,
+     "w": 760
+    }
+   ],
+   "pills": [
+    {
+     "kind": "chip",
+     "text": "An illustration, not a promise",
+     "at": 0.9,
+     "dur": 3.5,
+     "y": 1690
+    }
+   ],
+   "bold": {
+    "lines": [
+     "SEE WHAT IT",
+     "*COULD* BECOME."
+    ],
+    "size": 96,
+    "top": 100,
+    "counter": "2 / 2"
+   },
+   "punch": true
+  },
+  {
+   "kind": "gloss",
+   "outro": true,
+   "start": 11.6,
+   "end": 15.0,
+   "clip": "m/molecule.mp4",
+   "speed": 0.7,
+   "push": 0.03,
+   "fade_in": 0.3,
+   "haze": [
+    {
+     "cy": 1560,
+     "h": 900,
+     "s": 0.88
+    }
+   ],
+   "bold": {
+    "lines": [
+     "COMMENT *START*,",
+     "THEN *TAP THE LINK*",
+     "IN BIO."
+    ],
+    "size": 86,
+    "top": 1225,
+    "at": 0.15,
+    "out": false
+   },
+   "wordmark": {
+    "at": 1.2,
+    "y": 1600,
+    "sub": "lifeflowweb.com"
+   },
+   "note": {
+    "text": "App shown with sample data.",
+    "at": 1.3,
+    "y": 1850
+   }
+  }
+ ]
+}

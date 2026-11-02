@@ -1,0 +1,136 @@
+{
+ "bpm": 100,
+ "duration": 15.0,
+ "vo": [
+  [
+   "vo/P4_1.wav",
+   0.1
+  ],
+  [
+   "vo/P4_2.wav",
+   5.15
+  ],
+  [
+   "vo/P4_3.wav",
+   9.75
+  ],
+  [
+   "vo/P4_4.wav",
+   11.85
+  ]
+ ],
+ "scenes": [
+  {
+   "kind": "phone",
+   "start": 0.0,
+   "end": 5.0,
+   "src": [
+    {
+     "rec": "chat",
+     "from": 0.6,
+     "dur": 5.0,
+     "speed": 1.9
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "*JUST TELL*",
+     "YOUR ASSISTANT."
+    ],
+    "size": 104,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 5.0,
+   "end": 9.6,
+   "src": [
+    {
+     "rec": "chat",
+     "from": 10.1,
+     "dur": 4.6,
+     "speed": 1.7
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "IT CHECKS *YOUR WEEK.*",
+     "FINDS *THE TIME.*"
+    ],
+    "size": 84,
+    "top": 100
+   }
+  },
+  {
+   "kind": "phone",
+   "start": 9.6,
+   "end": 11.6,
+   "src": [
+    {
+     "rec": "chat_plan",
+     "from": 1.5,
+     "dur": 2.0,
+     "speed": 2.0
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "*DONE.* IT'S ON",
+     "YOUR CALENDAR."
+    ],
+    "size": 84,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "gloss",
+   "outro": true,
+   "start": 11.6,
+   "end": 15.0,
+   "clip": "m/molecule.mp4",
+   "speed": 0.7,
+   "push": 0.03,
+   "fade_in": 0.3,
+   "haze": [
+    {
+     "cy": 1560,
+     "h": 900,
+     "s": 0.88
+    }
+   ],
+   "bold": {
+    "lines": [
+     "COMMENT *WEEK*,",
+     "THEN *TAP THE LINK*",
+     "IN BIO."
+    ],
+    "size": 86,
+    "top": 1225,
+    "at": 0.15,
+    "out": false
+   },
+   "wordmark": {
+    "at": 1.2,
+    "y": 1600,
+    "sub": "lifeflowweb.com"
+   },
+   "note": {
+    "text": "App shown with sample data.",
+    "at": 1.3,
+    "y": 1850
+   }
+  }
+ ]
+}

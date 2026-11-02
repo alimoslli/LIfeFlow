@@ -1,0 +1,161 @@
+{
+ "bpm": 100,
+ "duration": 15.0,
+ "vo": [
+  [
+   "vo/P1_1.wav",
+   0.1
+  ],
+  [
+   "vo/P1_2.wav",
+   2.75
+  ],
+  [
+   "vo/P1_3.wav",
+   6.3
+  ],
+  [
+   "vo/P1_4.wav",
+   11.85
+  ]
+ ],
+ "scenes": [
+  {
+   "kind": "phone",
+   "start": 0.0,
+   "end": 2.6,
+   "src": [
+    {
+     "rec": "tour",
+     "from": 0.0,
+     "dur": 2.6,
+     "speed": 0.9
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "next",
+     "at": 0.5,
+     "dur": 2.1,
+     "y": 1110,
+     "shake": 8
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "A QUIZ FRIDAY.",
+     "*A SHIFT TONIGHT.*"
+    ],
+    "size": 84,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 2.6,
+   "end": 6.2,
+   "src": [
+    {
+     "rec": "tour",
+     "from": 3.45,
+     "dur": 3.6,
+     "speed": 0.5
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "week",
+     "at": 0.7,
+     "dur": 2.9,
+     "y": 1120,
+     "w": 800
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "IT'S ALL *ON*",
+     "*ONE CALENDAR.*"
+    ],
+    "size": 96,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 6.2,
+   "end": 11.6,
+   "src": [
+    {
+     "rec": "block",
+     "from": 0.0,
+     "dur": 5.4,
+     "speed": 1.2
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [
+    {
+     "kind": "chip",
+     "text": "Blocked Wed 11:15 to 1:15 for your quiz",
+     "at": 0.9,
+     "dur": 3.4,
+     "y": 1690
+    }
+   ],
+   "bold": {
+    "lines": [
+     "IT SPOTS *THE CLASH*",
+     "AND *BLOCKS THE TIME.*"
+    ],
+    "size": 80,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "gloss",
+   "outro": true,
+   "start": 11.6,
+   "end": 15.0,
+   "clip": "m/molecule.mp4",
+   "speed": 0.7,
+   "push": 0.03,
+   "fade_in": 0.3,
+   "haze": [
+    {
+     "cy": 1560,
+     "h": 900,
+     "s": 0.88
+    }
+   ],
+   "bold": {
+    "lines": [
+     "COMMENT *DUE*,",
+     "THEN *TAP THE LINK*",
+     "IN BIO."
+    ],
+    "size": 86,
+    "top": 1225,
+    "at": 0.15,
+    "out": false
+   },
+   "wordmark": {
+    "at": 1.2,
+    "y": 1600,
+    "sub": "lifeflowweb.com"
+   },
+   "note": {
+    "text": "App shown with sample data.",
+    "at": 1.3,
+    "y": 1850
+   }
+  }
+ ]
+}
