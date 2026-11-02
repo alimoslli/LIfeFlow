@@ -60,22 +60,22 @@ j_tap = at(jw, "tap")
 j_morning = at(jw, "morning")
 
 phones = [
-    {"rec": "block", "t0": m_quiz - 0.35, "t1": clips[0]["end"] - 0.02, "side": "right",
+    {"rec": "block", "t0": m_quiz - 0.35, "t1": clips[0]["end"] - 0.02, "side": "right", "y": 1110, "scale": 0.7,
      "src": [[0, 0.3], [m_blocked - (m_quiz - 0.35) - 0.4, 0.3], [m_blocked - (m_quiz - 0.35) + 0.2, 1.2], [9, 1.8]]},
-    {"rec": "next30", "t0": a_rent - 0.45, "t1": a_reminded - 0.1, "side": "left", "src": [[0, 0.6], [1.2, 2.2], [9, 2.4]]},
-    {"rec": "remind", "t0": a_reminded - 0.1, "t1": clips[1]["end"] - 0.02, "side": "right", "src": [[0, 0.4], [0.5, 0.75], [1.1, 1.6], [9, 2.8]]},
-    {"rec": "move", "t0": jw[0]["s"] + 0.25, "t1": j_morning - 0.15, "side": "left", "src": [[0, 0.4], [j_tap - jw[0]["s"] - 0.35, 0.65], [j_tap - jw[0]["s"] + 0.3, 1.2], [9, 2.8]]},
-    {"rec": "brief", "t0": j_morning - 0.15, "t1": clips[2]["end"] - 0.02, "side": "right", "src": [[0, 1.0], [9, 1.0]]},
+    {"rec": "next30", "t0": a_rent - 0.45, "t1": a_reminded - 0.1, "side": "left", "y": 1110, "scale": 0.7, "src": [[0, 0.6], [1.2, 2.2], [9, 2.4]]},
+    {"rec": "remind", "t0": a_reminded - 0.1, "t1": clips[1]["end"] - 0.02, "side": "right", "y": 1110, "scale": 0.7, "src": [[0, 0.4], [0.5, 0.75], [1.1, 1.6], [9, 2.8]]},
+    {"rec": "move", "t0": jw[0]["s"] + 0.25, "t1": j_morning - 0.15, "side": "left", "y": 1110, "scale": 0.7, "src": [[0, 0.4], [j_tap - jw[0]["s"] - 0.35, 0.65], [j_tap - jw[0]["s"] + 0.3, 1.2], [9, 2.8]]},
+    {"rec": "brief", "t0": j_morning - 0.15, "t1": clips[2]["end"] - 0.02, "side": "right", "y": 1110, "scale": 0.7, "src": [[0, 1.0], [9, 1.0]]},
 ]
 pops = [
-    {"rec": "block", "src_t": 0.3, "box": BOX["quiz"], "t0": m_quiz + 0.25, "t1": m_blocked - 0.15, "y": 650, "from": [690, 820], "width": 880},
-    {"rec": "block", "src_t": 1.7, "box": BOX["blocked"], "t0": m_blocked + 0.45, "t1": clips[0]["end"] - 0.08, "y": 650, "from": [690, 820], "width": 880},
-    {"rec": "next30", "src_t": 2.4, "box": BOX["heads"], "t0": a_rent + 0.25, "t1": a_reminded - 0.15, "y": 640, "from": [390, 820], "width": 880, "ry": 14},
-    {"rec": "remind", "src_t": 2.8, "box": BOX["remind"], "t0": a_reminded + 0.6, "t1": clips[1]["end"] - 0.08, "y": 640, "from": [690, 820], "width": 880},
-    {"rec": "move", "src_t": 2.8, "box": BOX["moved"], "t0": j_tap + 0.55, "t1": j_morning - 0.25, "y": 640, "from": [390, 820], "width": 880, "ry": 14},
-    {"rec": "brief", "src_t": 1.0, "box": BOX["brief"], "t0": j_morning + 0.35, "t1": clips[2]["end"] - 0.08, "y": 760, "from": [690, 820], "width": 820},
+    {"rec": "block", "src_t": 0.3, "box": BOX["quiz"], "t0": m_quiz + 0.25, "t1": m_blocked - 0.15, "y": 1060, "from": [690, 1110], "width": 880},
+    {"rec": "block", "src_t": 1.7, "box": BOX["blocked"], "t0": m_blocked + 0.45, "t1": clips[0]["end"] - 0.08, "y": 1060, "from": [690, 1110], "width": 880},
+    {"rec": "next30", "src_t": 2.4, "box": BOX["heads"], "t0": a_rent + 0.25, "t1": a_reminded - 0.15, "y": 1060, "from": [390, 1110], "width": 880, "ry": 14},
+    {"rec": "remind", "src_t": 2.8, "box": BOX["remind"], "t0": a_reminded + 0.6, "t1": clips[1]["end"] - 0.08, "y": 1060, "from": [690, 1110], "width": 880},
+    {"rec": "move", "src_t": 2.8, "box": BOX["moved"], "t0": j_tap + 0.55, "t1": j_morning - 0.25, "y": 1060, "from": [390, 1110], "width": 880, "ry": 14},
+    {"rec": "brief", "src_t": 1.0, "box": BOX["brief"], "t0": j_morning + 0.35, "t1": clips[2]["end"] - 0.08, "y": 1060, "from": [690, 1110], "width": 800},
 ]
-chips = [{"t0": m_sage - 0.05, "t1": m_quiz - 0.3, "y": 470}]
+chips = [{"t0": m_sage - 0.05, "t1": m_quiz - 0.3, "y": 860}]
 
 # caption groups: 1-3 words, broken at punctuation and pauses
 groups, cur = [], []
@@ -96,7 +96,7 @@ for i, g in enumerate(groups):
     e = min(e, g[-1]["e"] + 0.5)
     cg.append({"s": round(s, 3), "e": round(e, 3)})
 
-plan = {"duration": 30.0, "end": END, "clips": clips, "phones": phones, "pops": pops, "chips": chips, "caption_groups": cg, "caption_y": 1450}
+plan = {"duration": 30.0, "end": END, "clips": clips, "phones": phones, "pops": pops, "chips": chips, "caption_groups": cg, "caption_y": 1500}
 for w in allw:
     if w["w"].upper() == w["w"] and w["w"].strip(".,!?").lower() == "sage":
         w["w"] = w["w"].replace("SAGE", "Sage")
