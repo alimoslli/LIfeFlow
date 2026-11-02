@@ -89,3 +89,18 @@ python3 music_launch.py plan_reel_money.json music.wav
 python3 launch.py plan_reel_money.json video.mp4
 python3 mix_launch.py plan_reel_money.json video.mp4 music.wav LifeFlow_post_5_REEL_money.mp4
 ```
+
+## Problem-solving videos (15 s each)
+
+Every reel from here on shows LifeFlow solving one real, everyday problem: 3 s of problem, about 9 s of the flow that fixes it, 3 s of call to action. The plans are `p_school`, `p_subs`, `p_save` and `p_chat` in `build_plans.py`. The voice lines (Sienna) are sped up 8% (`atempo 1.08`) and need to be 48 kHz mono for `mix_launch.py`.
+
+| Video | Problem | Flow shown | Comment word |
+|---|---|---|---|
+| `LifeFlow_Problem_school.mp4` | A quiz Friday and a shift tonight | Today, then one calendar, then the clash spotted and time blocked | DUE |
+| `LifeFlow_Problem_subs.mp4` | "What is this charge?" | Bank linked (Plaid), then forgotten subscriptions ($329.76 a year), then cancel steps | CANCEL |
+| `LifeFlow_Problem_save.mp4` | "How much can I actually spare?" | Available now, then a savings goal and pace, then the investing calculator (an illustration) | START |
+| `LifeFlow_Problem_chat.mp4` | Dinner Saturday and a quiz Friday | A real chat: the assistant checks the week, finds the lightest day, adds both to the calendar, then the Plan screen | WEEK |
+
+### How the chat video was recorded
+
+`rec/chat.mp4` and `rec/chat_plan.mp4` are the app's real chat and Plan screens on the demo account. The assistant's actions are real: it called `get_agenda`, `life_load`, `find_free_time` and `create_events`, and the events were saved. There was no OpenAI key in the recording environment, so the assistant's wording came from a small local stand-in (`OPENAI_BASE_URL`) that writes the reply from those real tool results. It is **not** a live AI answer. For a fully live take, record the same prompt with your own key.
