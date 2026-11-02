@@ -1,0 +1,35 @@
+{
+  "reveal": 8.15,
+  "drop": 10.0,
+  "beat": 0.6,
+  "hook": [
+    {"clip": "clips/a.mp4", "start": 0.0, "end": 3.75, "src": 0.0, "speed": 0.8,
+     "notes": [{"n": "brief", "at": 1.0, "y": 150}, {"n": "goal", "at": 2.2, "y": 410}],
+     "captions": [{"text": "Okay...", "start": 0.12, "end": 0.95}, {"text": "I finally found someone", "start": 0.95, "end": 2.45}, {"text": "who texts me first.", "start": 2.45, "end": 3.75, "accent": "first."}]},
+    {"clip": "clips/b.mp4", "start": 3.75, "end": 5.15, "src": 0.6, "speed": 1.0,
+     "notes": [{"n": "quiz", "at": 3.85, "y": 150}],
+     "captions": [{"text": "He remembers my schedule.", "start": 3.8, "end": 5.15}]},
+    {"clip": "clips/d.mp4", "start": 5.15, "end": 6.3, "src": 0.5, "speed": 1.0,
+     "notes": [{"n": "bill", "at": 5.2, "y": 150}],
+     "captions": [{"text": "Checks on my bills.", "start": 5.2, "end": 6.3}]},
+    {"clip": "clips/campus.mp4", "start": 6.3, "end": 8.15, "src": 0.4, "speed": 1.0,
+     "notes": [{"n": "todo", "at": 6.4, "y": 150}],
+     "captions": [{"text": "And tells me before I mess up.", "start": 6.35, "end": 8.15}]},
+    {"clip": "clips/e.mp4", "start": 8.15, "end": 10.0, "src": 0.2, "speed": 0.9}
+  ],
+  "segments": [
+    {"name": "feed", "start": 10.0, "end": 11.8},
+    {"name": "move", "start": 11.8, "end": 15.4},
+    {"name": "remind", "start": 15.4, "end": 18.4},
+    {"name": "block", "start": 18.4, "end": 23.2},
+    {"name": "kitchen", "start": 23.2, "end": 24.4},
+    {"name": "brief", "start": 24.4, "end": 25.6}
+  ],
+  "callback": {"start": 25.6, "end": 26.8, "src": 0.6},
+  "dings": [1.0, 2.2, 3.85, 5.2, 6.4, 23.45],
+  "success": [12.65, 16.25, 19.01],
+  "vo": [
+    ["p1", 0.10], ["p2", 3.80], ["p3", 5.20], ["p4", 6.35], ["p5", 8.40], ["p6", 10.10],
+    ["p7", 11.90], ["p8", 15.45], ["p9", 18.50], ["p10", 23.30], ["p11", 26.05]
+  ]
+}
