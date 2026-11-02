@@ -13,6 +13,8 @@ import { checkPassword } from "@/lib/password-strength";
 import { audit } from "@/server/services/audit";
 import { consumePendingAppleLink } from "@/server/auth/apple";
 import { passwordResetAvailable, requestPasswordReset, ResetError, resetPassword } from "@/server/auth/password-reset";
+import { recordInvite } from "@/server/services/invites";
+import { recordError } from "@/server/services/error-reports";
 
 export type AuthState = { error?: string; email?: string } | null;
 
@@ -98,6 +100,9 @@ export async function signup(_prev: AuthState, fd: FormData): Promise<AuthState>
     });
     // New accounts start with first-run setup (existing accounts never see it).
     await updatePreferences(db, user.id, { onboarding: "pending" });
+    // Signed up from a friend's invite link: credit them. Never blocks sign-up.
+    const invite = String(fd.get("invite") ?? "").slice(0, 32);
+    if (invite) await recordInvite(db, user.id, invite).catch(() => false);
     await startSession(user.id);
   } catch (e) {
     if (e instanceof ZodError) return { error: e.issues[0]?.message ?? "Please check the form.", email };
@@ -130,11 +135,18 @@ export async function forgotPassword(_prev: ForgotState, fd: FormData): Promise<
   if (!byEmail.allowed) return { sent: true, email };
   // Links must point at the real site. The Host header is client-controlled, so production needs APP_URL.
   const appUrl = process.env.APP_URL?.trim() || (process.env.NODE_ENV !== "production" ? `http://${(await headers()).get("host")}` : "");
-  if (!appUrl) return { error: "Password reset isn't fully set up on this server (APP_URL is missing).", email };
+  if (!appUrl) {
+    // Tell the owner (error alerts), never the visitor, which setting is missing.
+    await recordError(db, { source: "server", route: "/forgot-password", message: "Password reset: APP_URL is not set" }).catch(() => {});
+    return { error: "Password reset by email isn't available yet.", email };
+  }
   try {
     await requestPasswordReset(db, email, appUrl);
   } catch (e) {
-    console.error("password reset email failed", e instanceof Error ? e.name : "unknown");
+    // The provider's message never includes the address. The owner is emailed on the 1st, 10th and 100th failure.
+    const why = e instanceof Error ? e.message : "unknown";
+    console.error("password reset email failed", why);
+    await recordError(db, { source: "server", route: "/forgot-password", message: `Password reset email failed: ${why}` }).catch(() => {});
     return { error: "We couldn't send the email just now. Please try again in a few minutes.", email };
   }
   return { sent: true, email };

@@ -29,7 +29,7 @@ export function NoteEditor({
         required
         aria-label="Title"
         maxLength={300}
-        className="w-full bg-transparent font-display text-[28px] leading-tight font-medium tracking-tight focus:outline-none sm:text-[32px]"
+        className="w-full bg-transparent font-display text-[1.75rem] leading-tight font-medium tracking-tight focus:outline-none sm:text-[2rem]"
       />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Field label="Project" htmlFor="note-project">
@@ -57,7 +57,7 @@ export function NoteEditor({
         </Field>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[15px]">
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[0.9375rem]">
           <input type="checkbox" name="pinned" defaultChecked={note.pinned} className="lf-switch" /> Pin to the top
         </label>
         <div role="tablist" aria-label="Write or preview" className="flex rounded-full bg-surface-2 p-1 text-sm">

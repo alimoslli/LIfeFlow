@@ -210,15 +210,15 @@ export function Tour({ onDone, assistantName = "Jarvis" }: { onDone: () => void;
           </span>
         )}
         <div data-anim className="flex items-center justify-between gap-3">
-          <p className="text-[11px] font-semibold tracking-[0.12em] text-accent uppercase">{step.eyebrow}</p>
+          <p className="text-[0.6875rem] font-semibold tracking-[0.12em] text-accent uppercase">{step.eyebrow}</p>
           <p className="text-xs text-muted">
             {i + 1} of {list.length}
           </p>
         </div>
-        <h2 data-anim id="tour-title" className="mt-2 font-display text-[26px] leading-tight font-medium tracking-[-0.02em]">
+        <h2 data-anim id="tour-title" className="mt-2 font-display text-[1.625rem] leading-tight font-medium tracking-[-0.02em]">
           {step.title}
         </h2>
-        <p data-anim className="mt-2.5 text-[15px] leading-relaxed text-text-2">
+        <p data-anim className="mt-2.5 text-[0.9375rem] leading-relaxed text-text-2">
           {step.body}
         </p>
 

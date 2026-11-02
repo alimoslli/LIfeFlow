@@ -87,14 +87,14 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
               >
                 <FolderKanban className="h-4 w-4 text-muted" />
                 <span className="flex-1 line-clamp-2 break-words">{p.name}</span>
-                {p.status !== "active" && <span className="text-[10px] text-muted">{p.status}</span>}
+                {p.status !== "active" && <span className="text-[0.625rem] text-muted">{p.status}</span>}
               </Link>
             ))}
           <details className="mt-1 px-2.5">
             <summary className="cursor-pointer text-xs text-accent">New project</summary>
             <ActionForm action={createProjectAction} className="mt-2 gap-2">
-              <Input name="name" placeholder="Project name" required className="h-8 text-[13px]" aria-label="Project name" />
-              <Input name="description" placeholder="What is it? (optional)" className="h-8 text-[13px]" aria-label="Project description" />
+              <Input name="name" placeholder="Project name" required className="h-8 text-[0.8125rem]" aria-label="Project name" />
+              <Input name="description" placeholder="What is it? (optional)" className="h-8 text-[0.8125rem]" aria-label="Project description" />
               <SubmitButton size="sm" variant="secondary">
                 Create
               </SubmitButton>

@@ -37,11 +37,11 @@ export function GradeCard({
   const need = grade ? neededOnFinal(grade.percent, Number(finalWeight) || 0, target) : null;
   return (
     <section aria-label="Grade" className="rounded-3xl bg-surface p-5 shadow-soft">
-      <h2 className="text-[15px] font-semibold">Grade</h2>
+      <h2 className="text-[0.9375rem] font-semibold">Grade</h2>
       {grade ? (
         <>
           <p className="mt-2 flex items-baseline gap-2">
-            <span className="tabular font-display text-[40px] leading-none font-medium">{grade.percent}%</span>
+            <span className="tabular font-display text-[2.5rem] leading-none font-medium">{grade.percent}%</span>
             <span className="text-lg font-medium text-text-2">{grade.letter}</span>
           </p>
           <p className="mt-1 text-xs text-muted">
@@ -57,12 +57,16 @@ export function GradeCard({
                   inputMode="numeric"
                   value={finalWeight}
                   onChange={(e) => setFinalWeight(e.target.value.replace(/[^\d.]/g, ""))}
-                  className="h-11 rounded-xl bg-surface px-3 text-[15px] text-text"
+                  className="h-11 rounded-xl bg-surface px-3 text-[0.9375rem] text-text"
                 />
               </label>
               <label className="flex flex-col gap-1 text-xs text-text-2">
                 I want at least
-                <select value={target} onChange={(e) => setTarget(Number(e.target.value))} className="h-11 rounded-xl bg-surface px-3 text-[15px] text-text">
+                <select
+                  value={target}
+                  onChange={(e) => setTarget(Number(e.target.value))}
+                  className="h-11 rounded-xl bg-surface px-3 text-[0.9375rem] text-text"
+                >
                   {TARGETS.map(([p, l]) => (
                     <option key={l} value={p}>
                       {l} ({p}%)
@@ -72,7 +76,7 @@ export function GradeCard({
               </label>
             </div>
             {need !== null && (
-              <p className="mt-3 text-[15px]" role="status">
+              <p className="mt-3 text-[0.9375rem]" role="status">
                 {need > 100
                   ? `You'd need ${need}% on the final, so that grade is out of reach. Aim one step lower or ask about extra credit.`
                   : need <= 0
@@ -96,7 +100,7 @@ export function GradeCard({
                   name={`w_${k}`}
                   inputMode="numeric"
                   defaultValue={weights?.[k] ?? ""}
-                  className="h-11 rounded-xl bg-surface-2 px-3 text-[15px] text-text"
+                  className="h-11 rounded-xl bg-surface-2 px-3 text-[0.9375rem] text-text"
                 />
               </label>
             ))}

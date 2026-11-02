@@ -110,7 +110,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
     <div className="mx-auto flex max-w-[680px] flex-col gap-8">
       <header className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-[40px] leading-none font-medium tracking-tight">Calendar</h1>
+          <h1 className="font-display text-[2.5rem] leading-none font-medium tracking-tight">Calendar</h1>
           <div className="mt-3">
             <CalendarViewToggle active="week" />
           </div>
@@ -152,13 +152,13 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           return (
             <section key={date} id={date} className="scroll-mt-6">
               <h2 className="mb-2 flex items-baseline gap-2">
-                <span className={cn("text-[15px] font-semibold", diff === 0 && "text-accent")}>
+                <span className={cn("text-[0.9375rem] font-semibold", diff === 0 && "text-accent")}>
                   {diff === 0 ? "Today" : diff === 1 ? "Tomorrow" : formatDateStr(date, "EEEE")}
                 </span>
                 <span className="text-sm text-muted">{formatDateStr(date, "MMM d")}</span>
               </h2>
               {items.length === 0 ? (
-                <p className="py-2 text-[15px] text-muted">Nothing planned.</p>
+                <p className="py-2 text-[0.9375rem] text-muted">Nothing planned.</p>
               ) : (
                 <ul className="divide-y divide-border/70 overflow-hidden rounded-3xl bg-surface shadow-soft">
                   {items.map((i) => (
@@ -167,18 +167,18 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
                         block={d.blocks[i.key] ?? null}
                         className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-2/60 active:bg-surface-2"
                       >
-                        <span className="tabular w-[60px] shrink-0 text-[13px] leading-tight text-muted">
+                        <span className="tabular w-[60px] shrink-0 text-[0.8125rem] leading-tight text-muted">
                           {i.allDay ? "Any time" : formatIn(i.startsAt, d.tz, "h:mm a")}
                         </span>
                         <span className="h-8 w-[3px] shrink-0 rounded-full" style={{ background: i.color ?? "var(--accent)" }} />
                         <div className="min-w-0 flex-1">
-                          <p className="line-clamp-2 text-[15px] leading-snug break-words">
+                          <p className="line-clamp-2 text-[0.9375rem] leading-snug break-words">
                             {i.origin === "assignment" && <span className="text-muted">Due · </span>}
                             {i.origin === "task" && <span className="text-muted">To do · </span>}
                             {i.title}
                           </p>
                           {(i.endsAt && !i.allDay) || i.subtitle ? (
-                            <p className="truncate text-[13px] text-muted">
+                            <p className="truncate text-[0.8125rem] text-muted">
                               {[!i.allDay && i.endsAt ? `until ${formatIn(i.endsAt, d.tz, "h:mm a")}` : null, i.subtitle].filter(Boolean).join(" · ")}
                             </p>
                           ) : null}
@@ -216,10 +216,10 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
 
       {d.undated.length > 0 && filter !== "work" && (
         <section>
-          <h2 className="mb-2 text-[15px] font-semibold">Whenever you can</h2>
+          <h2 className="mb-2 text-[0.9375rem] font-semibold">Whenever you can</h2>
           <ul className="divide-y divide-border/70 overflow-hidden rounded-3xl bg-surface shadow-soft">
             {d.undated.map((t) => (
-              <li key={t.id} className="px-4 py-3 text-[15px]">
+              <li key={t.id} className="px-4 py-3 text-[0.9375rem]">
                 {t.title}
               </li>
             ))}

@@ -82,7 +82,7 @@ export function JarvisDrawer({
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
           <Sparkles className="h-4 w-4 text-accent" />
           <span className="font-medium">{assistantName}</span>
-          <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-[11px] text-muted">{LABEL[module]} context</span>
+          <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-[0.6875rem] text-muted">{LABEL[module]} context</span>
           <div className="ml-auto flex items-center gap-1">
             <button
               onClick={() => {

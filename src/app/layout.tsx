@@ -1,7 +1,7 @@
 import { ErrorReporter } from "@/components/error-reporter";
 import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
-import { ACCENT_COOKIE, THEME_COOKIE, parseAccent, parseTheme } from "@/lib/theme";
+import { ACCENT_COOKIE, TEXT_COOKIE, THEME_COOKIE, parseAccent, parseTextSize, parseTheme } from "@/lib/theme";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import { Splash, SPLASH_SCRIPT } from "@/components/motion/splash";
 import "./globals.css";
@@ -63,6 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const jar = await cookies();
   const theme = parseTheme(jar.get(THEME_COOKIE)?.value);
   const accent = parseAccent(jar.get(ACCENT_COOKIE)?.value);
+  const textSize = parseTextSize(jar.get(TEXT_COOKIE)?.value);
   // The landing page for signed-out visitors has no app to load, so it skips the splash.
   const landing = (await headers()).get("x-lf-landing") === "1";
   return (
@@ -71,6 +72,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
       data-theme={theme === "system" ? undefined : theme}
       data-accent={accent === "green" ? undefined : accent}
+      data-text={textSize === "default" ? undefined : textSize}
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
     >
       <body className="min-h-full">

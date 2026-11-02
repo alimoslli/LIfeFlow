@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bell, Brain, ChevronRight, Link2, Lock, MessageCircleHeart, MessageSquare, Palette, Shield, Sparkles, Star, Trash2 } from "lucide-react";
+import { Bell, Brain, ChevronRight, Gift, Link2, Lock, MessageCircleHeart, MessageSquare, Palette, Shield, Sparkles, Star, Trash2 } from "lucide-react";
 import { billingConfig } from "@/server/billing";
 import { smsConfig } from "@/server/integrations/twilio";
 import type { LucideIcon } from "lucide-react";
@@ -57,15 +57,18 @@ export default async function SettingsHome() {
       { href: "/settings/data", icon: Shield, tint: "bg-[#10b981]", label: "Privacy & data" },
       { href: "/settings/trash", icon: Trash2, tint: "bg-[#9ca3af]", label: "Recently deleted" },
     ],
-    [{ href: "/settings/feedback", icon: MessageCircleHeart, tint: "bg-[#ec4899]", label: "Send feedback" }],
+    [
+      { href: "/settings/invite", icon: Gift, tint: "bg-[#f97316]", label: "Invite friends" },
+      { href: "/settings/feedback", icon: MessageCircleHeart, tint: "bg-[#ec4899]", label: "Send feedback" },
+    ],
   ];
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="font-display text-[38px] leading-tight font-medium tracking-tight">Settings</h1>
+      <h1 className="font-display text-[2.375rem] leading-tight font-medium tracking-tight">Settings</h1>
       <Link href="/settings/profile" className="flex items-center gap-4 rounded-3xl bg-surface p-4 shadow-soft">
         <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-hero text-lg font-semibold text-hero-text">{initials}</span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[17px] font-semibold">{d.name}</span>
+          <span className="block truncate text-[1.0625rem] font-semibold">{d.name}</span>
           <span className="block truncate text-sm text-muted">{d.email}</span>
         </span>
         <ChevronRight className="h-5 w-5 text-muted" />
@@ -78,7 +81,7 @@ export default async function SettingsHome() {
                 <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] text-white ${r.tint}`}>
                   <r.icon className="h-[18px] w-[18px]" />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[16px]">{r.label}</span>
+                <span className="min-w-0 flex-1 truncate text-[1rem]">{r.label}</span>
                 {r.detail && <span className="shrink-0 text-sm text-muted">{r.detail}</span>}
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
               </Link>

@@ -88,7 +88,7 @@ export function EventDialog({
           </div>
           {repeat === "weekly" && (
             <fieldset className="flex flex-wrap gap-1.5">
-              <legend className="mb-1.5 text-[13px] font-medium text-text-2">On</legend>
+              <legend className="mb-1.5 text-[0.8125rem] font-medium text-text-2">On</legend>
               {DAYS.map((d, i) => (
                 <label
                   key={d}

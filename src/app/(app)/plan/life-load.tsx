@@ -24,7 +24,7 @@ export function LifeLoad({ week }: { week: WeekLoad }) {
   const [picked, setPicked] = useState<DayLoad | null>(null);
   return (
     <section aria-label="Your week ahead" className="rounded-3xl bg-surface p-4 shadow-soft">
-      <h2 className="text-[15px] font-semibold">Your week</h2>
+      <h2 className="text-[0.9375rem] font-semibold">Your week</h2>
       <p className="mt-0.5 text-sm text-text-2">{week.summary}</p>
 
       <div className="mt-4 -mx-1 grid grid-cols-7" role="group" aria-label="How full each day is">
@@ -54,7 +54,7 @@ export function LifeLoad({ week }: { week: WeekLoad }) {
 
       {picked ? (
         <div className="mt-4 rounded-2xl bg-surface-2 p-4" aria-live="polite">
-          <p className="text-[15px] font-medium">
+          <p className="text-[0.9375rem] font-medium">
             {picked.label} · {WORD[picked.level]}
             {picked.hours >= 0.5 && <span className="font-normal text-text-2"> · {roughly(picked.hours)}</span>}
           </p>

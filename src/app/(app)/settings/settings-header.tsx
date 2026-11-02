@@ -8,7 +8,7 @@ export function SettingsHeader({ title, back = "/settings", backLabel = "Setting
       <Link href={back} className="mb-1 hidden min-h-11 items-center gap-0.5 text-sm text-accent md:inline-flex">
         <ChevronLeft className="h-4 w-4" /> {backLabel}
       </Link>
-      <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">{title}</h1>
+      <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">{title}</h1>
     </header>
   );
 }

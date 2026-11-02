@@ -84,7 +84,7 @@ export default async function SchoolPage() {
 
       <AskJarvisButton
         prompt="Here's my syllabus. Add every due date and exam to the right class."
-        className="mb-4 flex w-full items-center gap-3 rounded-3xl bg-accent-soft px-5 py-4 text-left text-[15px] text-accent transition-transform active:scale-[0.99]"
+        className="mb-4 flex w-full items-center gap-3 rounded-3xl bg-accent-soft px-5 py-4 text-left text-[0.9375rem] text-accent transition-transform active:scale-[0.99]"
       >
         <BrandMark className="h-8 w-8" alt="" />
         <span className="flex-1">Have a syllabus or a screenshot? Send it to Jarvis and it&apos;ll add everything.</span>
@@ -98,8 +98,8 @@ export default async function SchoolPage() {
             <GraduationCap className="h-5 w-5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-semibold">Connect Canvas</span>
-            <span className="block text-[13px] leading-snug text-text-2">Your classes and due dates fill in by themselves.</span>
+            <span className="block text-[0.9375rem] font-semibold">Connect Canvas</span>
+            <span className="block text-[0.8125rem] leading-snug text-text-2">Your classes and due dates fill in by themselves.</span>
           </span>
           <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
         </Link>

@@ -93,7 +93,7 @@ export function SignInOptions({ mode, apple, google = false, next }: { mode: "lo
             e.preventDefault();
             window.location.href = startHref("apple");
           }}
-          className="flex h-12 items-center justify-center gap-2 rounded-full bg-black text-[15px] font-medium text-white shadow-soft active:scale-[0.98] dark:bg-white dark:text-black"
+          className="flex h-12 items-center justify-center gap-2 rounded-full bg-black text-[0.9375rem] font-medium text-white shadow-soft active:scale-[0.98] dark:bg-white dark:text-black"
         >
           <AppleLogo /> {verb} with Apple
         </a>
@@ -105,7 +105,7 @@ export function SignInOptions({ mode, apple, google = false, next }: { mode: "lo
             e.preventDefault();
             window.location.href = startHref("google");
           }}
-          className="flex h-12 items-center justify-center gap-2.5 rounded-full border border-[#747775] bg-white text-[15px] font-medium text-[#1f1f1f] shadow-soft active:scale-[0.98]"
+          className="flex h-12 items-center justify-center gap-2.5 rounded-full border border-[#747775] bg-white text-[0.9375rem] font-medium text-[#1f1f1f] shadow-soft active:scale-[0.98]"
         >
           <GoogleLogo /> {verb} with Google
         </a>
@@ -115,7 +115,7 @@ export function SignInOptions({ mode, apple, google = false, next }: { mode: "lo
           type="button"
           onClick={passkey}
           disabled={busy}
-          className="flex h-12 items-center justify-center gap-2 rounded-full bg-surface text-[15px] font-medium shadow-soft active:scale-[0.98] disabled:opacity-60"
+          className="flex h-12 items-center justify-center gap-2 rounded-full bg-surface text-[0.9375rem] font-medium shadow-soft active:scale-[0.98] disabled:opacity-60"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Fingerprint className="h-[18px] w-[18px]" />} Sign in with a passkey
         </button>

@@ -171,7 +171,7 @@ export default async function WealthPage() {
         <div className="flex flex-col gap-5">
           {(d.report.notes.length > 0 || d.report.yearlyFeesCents != null) && (
             <Card className="p-5">
-              <h2 className="mb-2 text-[15px] font-semibold">What stands out</h2>
+              <h2 className="mb-2 text-[0.9375rem] font-semibold">What stands out</h2>
               <ul className="flex flex-col gap-2 text-sm text-text-2">
                 {d.report.yearlyFeesCents != null && (
                   <li>
@@ -187,7 +187,7 @@ export default async function WealthPage() {
             </Card>
           )}
           <Card className="p-5">
-            <h2 className="mb-3 text-[15px] font-semibold">What if I invest every month?</h2>
+            <h2 className="mb-3 text-[0.9375rem] font-semibold">What if I invest every month?</h2>
             <GrowthCalculator startCents={totals.investmentsCents} />
           </Card>
           {alloc.length > 0 && (
@@ -200,7 +200,7 @@ export default async function WealthPage() {
           )}
           {investments.length > 0 && (
             <Card className="p-5">
-              <h2 className="mb-3 text-[13px] font-semibold tracking-wide text-text-2 uppercase">Add a holding</h2>
+              <h2 className="mb-3 text-[0.8125rem] font-semibold tracking-wide text-text-2 uppercase">Add a holding</h2>
               <ActionForm action={addHoldingAction} showSuccess>
                 <Field label="Account" htmlFor="h-acct">
                   <Select id="h-acct" name="accountId" required>
@@ -247,7 +247,7 @@ export default async function WealthPage() {
             </Card>
           )}
           <Card className="p-5 text-sm text-text-2">
-            <h2 className="mb-2 text-[13px] font-semibold tracking-wide uppercase">Synced investments</h2>
+            <h2 className="mb-2 text-[0.8125rem] font-semibold tracking-wide uppercase">Synced investments</h2>
             Connect your brokerage, Roth IRA or crypto account on the{" "}
             <Link href="/finances/accounts" className="text-accent">
               Accounts
@@ -257,7 +257,7 @@ export default async function WealthPage() {
         </div>
       </div>
       <Card className="mt-5 p-5">
-        <h2 className="mb-3 text-[15px] font-semibold">Investing basics</h2>
+        <h2 className="mb-3 text-[0.9375rem] font-semibold">Investing basics</h2>
         <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {LESSONS.filter((l) => ["compounding", "index_funds", "risk", "roth_ira", "fees", "emergency_first"].includes(l.id)).map((l) => (
             <li key={l.id}>

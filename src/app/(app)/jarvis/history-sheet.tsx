@@ -22,7 +22,7 @@ export function HistorySheet({ items, activeId }: { items: { id: string; title: 
           <div className="animate-rise absolute inset-x-0 bottom-0 max-h-[75dvh] overflow-y-auto rounded-t-[28px] bg-bg px-4 pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-lift">
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-surface-3" />
             <div className="mb-2 flex items-center justify-between px-2">
-              <h2 className="text-[17px] font-semibold">Conversations</h2>
+              <h2 className="text-[1.0625rem] font-semibold">Conversations</h2>
               <button onClick={() => setOpen(false)} aria-label="Close" className="rounded-full p-2 text-muted">
                 <X className="h-4 w-4" />
               </button>
@@ -36,7 +36,7 @@ export function HistorySheet({ items, activeId }: { items: { id: string; title: 
                     onClick={() => setOpen(false)}
                     className={cn("block rounded-2xl px-3 py-3", c.id === activeId ? "bg-surface shadow-soft" : "active:bg-surface-2")}
                   >
-                    <span className="line-clamp-2 break-words text-[15px]">{c.title}</span>
+                    <span className="line-clamp-2 break-words text-[0.9375rem]">{c.title}</span>
                     <span className="block text-xs text-muted">{c.when}</span>
                   </Link>
                 </li>

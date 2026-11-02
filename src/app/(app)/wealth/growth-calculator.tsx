@@ -22,7 +22,7 @@ export function GrowthCalculator({ startCents }: { startCents: number }) {
             max={100000}
             value={monthly}
             onChange={(e) => setMonthly(Math.max(0, Number(e.target.value) || 0))}
-            className="h-10 rounded-xl border border-border bg-surface px-3 text-[15px] text-text"
+            className="h-10 rounded-xl border border-border bg-surface px-3 text-[0.9375rem] text-text"
           />
         </label>
         <label className="flex flex-col gap-1 text-xs text-text-2">

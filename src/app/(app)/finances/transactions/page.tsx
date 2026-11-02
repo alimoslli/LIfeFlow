@@ -70,7 +70,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
   return (
     <>
       <div className="mb-5 flex items-center justify-between gap-3">
-        <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Transactions</h1>
+        <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Transactions</h1>
         <div className="flex items-center gap-2">
           <details className="relative">
             <summary
@@ -117,7 +117,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             defaultValue={sp.q}
             placeholder="Search merchant or description"
             aria-label="Search"
-            className="min-w-0 flex-1 bg-transparent py-1.5 text-[15px] placeholder:text-muted focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent py-1.5 text-[0.9375rem] placeholder:text-muted focus:outline-none"
           />
           <Button type="submit" size="sm" className="h-9">
             Search
@@ -206,7 +206,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                           {(t.merchantName ?? t.description).trim().charAt(0).toUpperCase()}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="line-clamp-2 break-words text-[15px]">{t.merchantName ?? t.description}</span>
+                          <span className="line-clamp-2 break-words text-[0.9375rem]">{t.merchantName ?? t.description}</span>
                           <span className="line-clamp-2 break-words text-xs text-muted">
                             {t.categoryName ?? "Uncategorized"}
                             {t.kind !== "expense" && t.kind !== "income" && KIND_LABELS[t.kind] ? ` · ${KIND_LABELS[t.kind]}` : ""}
@@ -218,7 +218,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                           <Money
                             cents={t.amountCents}
                             signed
-                            className={cn("block text-[15px]", t.amountCents < 0 && "text-text", t.kind === "transfer" && "text-muted")}
+                            className={cn("block text-[0.9375rem]", t.amountCents < 0 && "text-text", t.kind === "transfer" && "text-muted")}
                           />
                           <span className="block text-xs text-muted">{t.accountName}</span>
                         </span>

@@ -150,7 +150,7 @@ export function PwaClient() {
       )}
 
       <Sheet open={iosSheet} onClose={() => setIosSheet(false)} title="Add to Home Screen">
-        <ol className="flex flex-col gap-3 text-[15px]">
+        <ol className="flex flex-col gap-3 text-[0.9375rem]">
           <li className="flex items-start gap-3">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-sm font-semibold text-accent">1</span>
             <span>

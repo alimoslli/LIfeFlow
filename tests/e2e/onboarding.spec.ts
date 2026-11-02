@@ -11,6 +11,11 @@ test("a new user gets a short introduction, names their assistant, then a skippa
   await expect(page.getByRole("textbox")).toHaveCount(0);
   await page.getByRole("button", { name: "Continue" }).click();
 
+  // How data gets in: connect, send a picture, or add it yourself. Free while testing.
+  await expect(page.getByRole("heading", { name: "How your week gets in" })).toBeVisible();
+  await expect(page.getByText("LifeFlow is free while we're testing.")).toBeVisible();
+  await page.getByRole("button", { name: "Continue" }).click();
+
   await page.getByRole("radio", { name: /Both/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();
 
@@ -74,6 +79,7 @@ test("reduced motion: never a splash, even when requested", async ({ page }) => 
 test("the app follows what fills your week: tabs and pills adapt", async ({ page }) => {
   await signUp(page, "Sam Ortiz", { onboarding: "stay" });
   await page.getByRole("button", { name: "Show me" }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByRole("radio", { name: /^Work/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();

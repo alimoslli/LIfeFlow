@@ -91,7 +91,7 @@ export default async function TodayPage() {
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header className="animate-rise" data-tour="today-page">
         <p className="text-sm text-muted">{formatIn(s.now, s.tz, "EEEE, MMMM d")}</p>
-        <h1 className="mt-2 font-display text-[36px] leading-[1.05] font-medium tracking-tight sm:text-[44px]">{b.headline}</h1>
+        <h1 className="mt-2 font-display text-[2.25rem] leading-[1.05] font-medium tracking-tight sm:text-[2.75rem]">{b.headline}</h1>
         <Link href={status.href} className="mt-2 inline-flex min-h-11 items-center gap-2 text-sm text-text-2">
           <span className={cn("h-2 w-2 rounded-full", status.text === "All caught up" ? "bg-success" : "bg-accent")} />
           {assistantName} · {status.text}
@@ -106,7 +106,7 @@ export default async function TodayPage() {
         <section aria-label="Heads up" className="animate-rise">
           <Link href={warning.href ?? "/money"} className="flex min-h-14 items-start gap-3 rounded-3xl bg-danger-soft px-4 py-3.5 text-danger">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" strokeWidth={1.9} />
-            <span className="flex-1 text-[15px] leading-snug font-medium">{warning.text}</span>
+            <span className="flex-1 text-[0.9375rem] leading-snug font-medium">{warning.text}</span>
           </Link>
         </section>
       )}
@@ -114,7 +114,7 @@ export default async function TodayPage() {
       <section aria-label="Do today" className="animate-rise">
         <SectionTitle href="/tasks">Do today</SectionTitle>
         {plan.priorities.length === 0 ? (
-          <p className="rounded-3xl bg-surface px-5 py-4 text-[15px] text-text-2 shadow-soft">Nothing due. A good day to get ahead.</p>
+          <p className="rounded-3xl bg-surface px-5 py-4 text-[0.9375rem] text-text-2 shadow-soft">Nothing due. A good day to get ahead.</p>
         ) : (
           <ul className="divide-y divide-border/70 rounded-3xl bg-surface px-4 shadow-soft">
             {plan.priorities.map((p, i) => (
@@ -127,7 +127,7 @@ export default async function TodayPage() {
                   />
                 )}
                 <Link href={p.href} className="flex min-h-11 min-w-0 flex-1 flex-col justify-center">
-                  <span className="truncate text-[15px] leading-snug">{p.title}</span>
+                  <span className="truncate text-[0.9375rem] leading-snug">{p.title}</span>
                   <span className="mt-0.5 flex items-center gap-1.5 text-xs">
                     <span className={cn("font-medium", p.late ? "text-danger" : "text-text-2")}>{p.tag}</span>
                     {p.context && <span className="truncate text-muted">· {p.context}</span>}
@@ -154,7 +154,7 @@ export default async function TodayPage() {
       {b.money && locked && (
         <Link href="/money" className="flex min-h-14 items-center gap-3 rounded-3xl bg-surface px-5 shadow-soft">
           <Lock className="h-5 w-5 text-accent" />
-          <span className="flex-1 text-[15px]">Money is locked. Tap to unlock.</span>
+          <span className="flex-1 text-[0.9375rem]">Money is locked. Tap to unlock.</span>
           <ArrowRight className="h-4 w-4 text-muted" />
         </Link>
       )}
@@ -171,7 +171,7 @@ export default async function TodayPage() {
                   <CountUp cents={b.money.liquidCents} />
                 </span>
               </span>
-              <span className="min-w-0 text-right text-[13px] leading-snug">
+              <span className="min-w-0 text-right text-[0.8125rem] leading-snug">
                 {nextBill ? (
                   <>
                     <span className="block truncate text-text-2">{nextBill.name}</span>
@@ -213,7 +213,7 @@ export default async function TodayPage() {
             <Link2 className="h-5 w-5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[15px] font-medium">Finish setting up</span>
+            <span className="block text-[0.9375rem] font-medium">Finish setting up</span>
             <span className="block text-sm text-muted">
               Connect {setup.join(" and ")} so {assistantName} sees everything.
             </span>
@@ -231,7 +231,7 @@ function UpNext({ item, tz, now }: { item: AgendaItem | null; tz: string; now: D
     return (
       <section aria-label="Up next" className="animate-rise rounded-[28px] bg-hero p-5 text-hero-text shadow-lift">
         <p className="text-xs font-medium tracking-wide uppercase opacity-75">Up next</p>
-        <p className="mt-1 text-[19px] leading-snug font-medium">Nothing else on your schedule today.</p>
+        <p className="mt-1 text-[1.1875rem] leading-snug font-medium">Nothing else on your schedule today.</p>
       </section>
     );
   const live = item.startsAt <= now;
@@ -249,7 +249,7 @@ function UpNext({ item, tz, now }: { item: AgendaItem | null; tz: string; now: D
       className="animate-rise relative overflow-hidden rounded-[28px] bg-hero p-5 text-hero-text shadow-lift lf-sheen"
     >
       <p className="text-xs font-medium tracking-wide uppercase opacity-75">{when}</p>
-      <p className="mt-1 text-[22px] leading-snug font-medium">{item.title}</p>
+      <p className="mt-1 text-[1.375rem] leading-snug font-medium">{item.title}</p>
       {item.subtitle && (
         <p className="mt-1 flex items-center gap-1 text-sm opacity-80">
           <MapPin className="h-3.5 w-3.5 shrink-0" />
@@ -263,7 +263,7 @@ function UpNext({ item, tz, now }: { item: AgendaItem | null; tz: string; now: D
 function SectionTitle({ children, href }: { children: React.ReactNode; href?: string }) {
   return (
     <div className="mb-3 flex items-baseline justify-between">
-      <h2 className="text-[15px] font-semibold text-text">{children}</h2>
+      <h2 className="text-[0.9375rem] font-semibold text-text">{children}</h2>
       {href && (
         <Link href={href} className="-my-3 flex min-h-11 items-center gap-1 text-sm text-muted hover:text-text">
           See all <ArrowRight className="h-3.5 w-3.5" />
@@ -289,7 +289,7 @@ function Timeline({ items, tz, now }: { items: AgendaItem[]; tz: string; now: Da
               />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[15px] leading-snug">
+              <p className="text-[0.9375rem] leading-snug">
                 {deadline && <span className="text-muted">{i.origin === "task" ? "To do · " : "Due · "}</span>}
                 {i.title}
               </p>

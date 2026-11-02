@@ -20,12 +20,12 @@ export default async function IdeasPage() {
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-7">
       <header>
-        <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Ideas</h1>
+        <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Ideas</h1>
         <p className="mt-1 text-sm text-text-2">Things {d.name} can do for you. Tap one to start.</p>
       </header>
       {groups.map((g) => (
         <section key={g.name} aria-label={g.name}>
-          <h2 className="text-[22px] font-medium tracking-tight">{g.name}</h2>
+          <h2 className="text-[1.375rem] font-medium tracking-tight">{g.name}</h2>
           <ul className="divide-y divide-border">
             {g.ideas.map((i) => (
               <li key={i.title}>
@@ -33,11 +33,11 @@ export default async function IdeasPage() {
                   <IdeaButton idea={i} />
                 ) : (
                   <Link href="/jarvis/memory/import" className="flex w-full gap-4 py-4">
-                    <span className="text-[26px] leading-none" aria-hidden>
+                    <span className="text-[1.625rem] leading-none" aria-hidden>
                       {i.emoji}
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[16px] leading-snug font-semibold">{i.title}</span>
+                      <span className="block text-[1rem] leading-snug font-semibold">{i.title}</span>
                       <span className="mt-1 block text-sm text-text-2">{i.detail}</span>
                     </span>
                   </Link>

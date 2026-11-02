@@ -20,7 +20,7 @@ export async function HabitsSection() {
   const paused = habits.filter((h) => !h.active);
   return (
     <section aria-label="Habits" className="flex flex-col gap-6">
-      <h2 className="-mb-2 text-[22px] font-medium tracking-tight">Habits</h2>
+      <h2 className="-mb-2 text-[1.375rem] font-medium tracking-tight">Habits</h2>
 
       {active.length > 0 && (
         <ul className="flex flex-col gap-3">
@@ -39,7 +39,7 @@ export async function HabitsSection() {
                     <Check className="h-5 w-5" strokeWidth={3} />
                   </ActionButton>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[15px] font-medium break-words">{h.title}</p>
+                    <p className="text-[0.9375rem] font-medium break-words">{h.title}</p>
                     <p className="text-xs text-muted">
                       {CADENCE[h.cadence]}
                       {h.target ? ` · ${h.kind === "save" ? usd(h.target) : h.kind === "study" ? `${h.target} min` : h.target}` : ""}
@@ -138,7 +138,7 @@ export async function HabitsSection() {
           <ul className="flex flex-col gap-2">
             {paused.map((h) => (
               <li key={h.id} className="flex min-h-12 items-center gap-3 rounded-2xl bg-surface px-4 shadow-soft">
-                <span className="flex-1 text-[15px] text-text-2">{h.title}</span>
+                <span className="flex-1 text-[0.9375rem] text-text-2">{h.title}</span>
                 <ActionButton
                   action={archiveHabitAction.bind(null, h.id, true)}
                   title={`Resume ${h.title}`}

@@ -15,9 +15,9 @@ export function AiConsentCard({ name }: { name: string }) {
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-accent">
           <ShieldCheck className="h-[18px] w-[18px]" />
         </span>
-        <p className="text-[16px] font-semibold">Before we start</p>
+        <p className="text-[1rem] font-semibold">Before we start</p>
       </div>
-      <p className="mt-3 text-[14px] leading-relaxed text-text-2">
+      <p className="mt-3 text-[0.875rem] leading-relaxed text-text-2">
         To answer, {name} sends your message and the parts of your LifeFlow data it needs (like tasks, classes or transactions) to OpenAI, our AI provider. They
         don&apos;t use it to train their models. You can turn this off anytime in Settings.
       </p>
@@ -31,11 +31,11 @@ export function AiConsentCard({ name }: { name: string }) {
               router.refresh();
             })
           }
-          className="flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 text-[15px] font-medium text-accent-text disabled:opacity-60"
+          className="flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 text-[0.9375rem] font-medium text-accent-text disabled:opacity-60"
         >
           {pending && <Loader2 className="h-4 w-4 animate-spin" />} Allow
         </button>
-        <Link href="/privacy#ai" className="flex min-h-11 items-center px-2 text-[14px] text-muted hover:text-text">
+        <Link href="/privacy#ai" className="flex min-h-11 items-center px-2 text-[0.875rem] text-muted hover:text-text">
           How we protect it
         </Link>
       </div>

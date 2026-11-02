@@ -305,14 +305,16 @@ export function JarvisChat({
                 <span className="lf-orb-glow absolute -inset-1/3 rounded-full" aria-hidden />
                 <BrandMark className="lf-float relative h-full w-full" alt="" priority />
               </div>
-              <p className="mt-3 text-[12px] font-semibold tracking-[0.18em] text-muted uppercase">
+              <p className="mt-3 text-[0.75rem] font-semibold tracking-[0.18em] text-muted uppercase">
                 {greeting()}
                 {firstName ? `, ${firstName}` : ""}
               </p>
-              <h2 className={cn("mt-2 font-display leading-[1.08] font-medium tracking-tight", compact ? "text-[26px]" : "text-[31px] sm:text-[40px]")}>
+              <h2
+                className={cn("mt-2 font-display leading-[1.08] font-medium tracking-tight", compact ? "text-[1.625rem]" : "text-[1.9375rem] sm:text-[2.5rem]")}
+              >
                 What can I take off your plate?
               </h2>
-              <p className="mt-2 max-w-xs text-[15px] leading-snug text-text-2">I know your classes, shifts and money.</p>
+              <p className="mt-2 max-w-xs text-[0.9375rem] leading-snug text-text-2">I know your classes, shifts and money.</p>
               {!aiConsent ? (
                 <AiConsentCard name={assistantName} />
               ) : (
@@ -327,7 +329,7 @@ export function JarvisChat({
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-accent">
                         <Icon className="h-4 w-4" />
                       </span>
-                      <span className="text-[15px] leading-snug font-medium text-text">{title}</span>
+                      <span className="text-[0.9375rem] leading-snug font-medium text-text">{title}</span>
                     </button>
                   ))}
                 </div>
@@ -338,7 +340,7 @@ export function JarvisChat({
                   className="mt-3 flex w-full items-center gap-3 rounded-[20px] bg-surface-2/70 px-4 py-3 text-left transition-colors hover:bg-surface-2"
                 >
                   <Plug className="h-[18px] w-[18px] shrink-0 text-accent" />
-                  <span className="min-w-0 flex-1 text-[14px] leading-snug text-text-2">
+                  <span className="min-w-0 flex-1 text-[0.875rem] leading-snug text-text-2">
                     <span className="font-medium text-text">Connect me to do more.</span> Add {listOf(connect)} so I can plan around your real life.
                   </span>
                   <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
@@ -356,7 +358,7 @@ export function JarvisChat({
                 <button
                   key={f}
                   onClick={() => send(f)}
-                  className="rounded-full bg-surface px-4 py-2 text-[14px] font-medium text-text-2 shadow-soft ring-1 ring-border/60 transition-colors hover:text-accent active:scale-[0.98]"
+                  className="rounded-full bg-surface px-4 py-2 text-[0.875rem] font-medium text-text-2 shadow-soft ring-1 ring-border/60 transition-colors hover:text-accent active:scale-[0.98]"
                 >
                   {f}
                 </button>
@@ -471,7 +473,7 @@ export function JarvisChat({
                 }
                 disabled={!canSend}
                 aria-label="Message Jarvis"
-                className="max-h-48 min-h-10 flex-1 resize-none bg-transparent px-1.5 py-2 text-[16px] leading-6 placeholder:text-muted [field-sizing:content]"
+                className="max-h-48 min-h-10 flex-1 resize-none bg-transparent px-1.5 py-2 text-[1rem] leading-6 placeholder:text-muted [field-sizing:content]"
               />
               {!busy && <VoiceButton assistantName={assistantName} disabled={!canSend} onStart={() => setTalking(true)} />}
               {busy ? (
@@ -495,7 +497,7 @@ export function JarvisChat({
               )}
             </form>
           )}
-          <p className="lf-chat-note mt-2 text-center text-[11px] text-muted/80">
+          <p className="lf-chat-note mt-2 text-center text-[0.6875rem] text-muted/80">
             {assistantName} tells you everything it changes. Deletions always ask first.
           </p>
         </div>
@@ -507,7 +509,7 @@ export function JarvisChat({
 function UserBubble({ m }: { m: Extract<UiMessage, { role: "user" }> }) {
   return (
     <div className="animate-fade-in flex justify-end">
-      <div className="max-w-[85%] rounded-[24px] rounded-br-[8px] bg-hero px-4 py-3 text-[16px] leading-relaxed whitespace-pre-wrap text-hero-text shadow-soft">
+      <div className="max-w-[85%] rounded-[24px] rounded-br-[8px] bg-hero px-4 py-3 text-[1rem] leading-relaxed whitespace-pre-wrap text-hero-text shadow-soft">
         {m.text}
         {m.attachments.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -545,7 +547,7 @@ function AssistantBubble({
         {!m.streaming && m.runId && m.text && <RateAnswer runId={m.runId} initial={m.rating ?? null} />}
         {m.confirmations.map((c) => (
           <div key={c.actionId} className="rounded-2xl bg-surface p-4 shadow-soft">
-            <p className="text-[15px] font-medium">{c.summary}</p>
+            <p className="text-[0.9375rem] font-medium">{c.summary}</p>
             {c.status === "pending" && !c.resultText ? (
               <div className="mt-3 flex gap-2">
                 <button onClick={() => onDecide(c.actionId, "confirm")} className="rounded-full bg-danger px-4 py-2 text-sm font-medium text-white">
@@ -556,7 +558,7 @@ function AssistantBubble({
                 </button>
               </div>
             ) : (
-              <p className={cn("mt-1.5 text-[13px]", c.status === "executed" ? "text-success" : c.status === "pending" ? "text-muted" : "text-text-2")}>
+              <p className={cn("mt-1.5 text-[0.8125rem]", c.status === "executed" ? "text-success" : c.status === "pending" ? "text-muted" : "text-text-2")}>
                 {c.status === "executed"
                   ? "✓ Done"
                   : c.status === "cancelled"
@@ -585,11 +587,11 @@ function AssistantBubble({
 function MemoryCard({ s, onDecide }: { s: UiMemorySuggestion; onDecide: (memoryId: string, d: "keep" | "dismiss") => void }) {
   return (
     <div className="rounded-2xl bg-surface p-4 shadow-soft" aria-label="Memory suggestion">
-      <p className="flex items-center gap-1.5 text-[13px] font-medium text-accent">
+      <p className="flex items-center gap-1.5 text-[0.8125rem] font-medium text-accent">
         <Brain className="h-3.5 w-3.5" /> {s.replaces ? "Update what I remember?" : "Remember this for next time?"}
       </p>
       {s.replaces && <p className="mt-2 text-sm text-muted line-through">{s.replaces}</p>}
-      <p className="mt-1 text-[15px]">{s.content}</p>
+      <p className="mt-1 text-[0.9375rem]">{s.content}</p>
       {s.status === "proposed" ? (
         <>
           <div className="mt-3 flex gap-2">
@@ -600,10 +602,10 @@ function MemoryCard({ s, onDecide }: { s: UiMemorySuggestion; onDecide: (memoryI
               Not now
             </button>
           </div>
-          {s.error && <p className="mt-2 text-[13px] text-danger">{s.error}</p>}
+          {s.error && <p className="mt-2 text-[0.8125rem] text-danger">{s.error}</p>}
         </>
       ) : (
-        <p className={cn("mt-2 text-[13px]", s.status === "saved" ? "text-success" : "text-muted")}>
+        <p className={cn("mt-2 text-[0.8125rem]", s.status === "saved" ? "text-success" : "text-muted")}>
           {s.status === "saved" ? "✓ Saved to memory" : s.status === "dismissed" ? "Not saved" : "Removed from memory"}
           {" · "}
           <Link href="/jarvis/memory" className="underline-offset-2 hover:underline">

@@ -30,8 +30,8 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       {sp.need === "google" && !pro && <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm">Connecting Google is part of Pro.</p>}
       <Card className="p-5">
         <p className="text-xs text-muted">Your plan</p>
-        <p className="font-display text-[34px] leading-tight font-medium">{pro ? "LifeFlow Pro" : "Free"}</p>
-        <ul className="mt-4 flex flex-col gap-2 text-[15px]">
+        <p className="font-display text-[2.125rem] leading-tight font-medium">{pro ? "LifeFlow Pro" : "Free"}</p>
+        <ul className="mt-4 flex flex-col gap-2 text-[0.9375rem]">
           {PRO.map((f) => (
             <li key={f} className="flex items-center gap-2">
               <Check className={pro ? "h-4 w-4 text-success" : "h-4 w-4 text-muted"} /> {f}

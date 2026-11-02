@@ -39,7 +39,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header>
-        <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Updates</h1>
+        <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Updates</h1>
         <p className="mt-1 text-sm text-text-2">Send bills, receipts and school emails. Jarvis files them.</p>
       </header>
       <SegmentedNav label="Updates" items={UPDATES} active="filed" />
@@ -113,7 +113,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                     {st.label} · {i.channel === "email" ? `email from ${i.fromAddress}` : i.channel === "share" ? "shared" : "uploaded"} ·{" "}
                     {formatIn(i.receivedAt, d.tz, "MMM d, h:mm a")}
                   </p>
-                  <p className="text-[15px] font-medium break-words">{i.subject || "(no subject)"}</p>
+                  <p className="text-[0.9375rem] font-medium break-words">{i.subject || "(no subject)"}</p>
                   {i.summary && <p className="text-sm text-text-2">{i.summary}</p>}
                   {i.filed.length > 0 && (
                     <ul className="mt-2 flex flex-col gap-1">

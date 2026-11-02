@@ -19,7 +19,7 @@ export default function FeedbackPage() {
   return (
     <div className="flex flex-col gap-5">
       <SettingsHeader title="Send feedback" />
-      <p className="text-[15px] text-text-2">
+      <p className="text-[0.9375rem] text-text-2">
         What&apos;s broken, confusing or missing? It goes straight to the person building LifeFlow, and they may reply by email.
       </p>
       <Card className="p-5">
@@ -45,7 +45,7 @@ export default function FeedbackPage() {
               maxLength={2000}
               rows={6}
               placeholder="What happened, or what would make LifeFlow better?"
-              className="lf-composer rounded-2xl bg-surface-2 px-4 py-3 text-[16px] leading-relaxed placeholder:text-muted focus:ring-2 focus:ring-accent/30 focus:outline-none"
+              className="lf-composer rounded-2xl bg-surface-2 px-4 py-3 text-[1rem] leading-relaxed placeholder:text-muted focus:ring-2 focus:ring-accent/30 focus:outline-none"
             />
           </label>
           <SubmitButton className="self-start">Send</SubmitButton>

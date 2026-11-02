@@ -9,11 +9,11 @@ export function IdeaButton({ idea }: { idea: Idea }) {
   const { openJarvis } = useShell();
   return (
     <button type="button" onClick={() => openJarvis(idea.prompt)} className="flex w-full gap-4 py-4 text-left">
-      <span className="text-[26px] leading-none" aria-hidden>
+      <span className="text-[1.625rem] leading-none" aria-hidden>
         {idea.emoji}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[16px] leading-snug font-semibold">{idea.title}</span>
+        <span className="block text-[1rem] leading-snug font-semibold">{idea.title}</span>
         <span className="mt-1 block text-sm text-text-2">{idea.detail}</span>
       </span>
     </button>

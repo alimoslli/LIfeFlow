@@ -165,13 +165,13 @@ export function QuickAdd() {
                 max={300}
                 autoFocus
                 placeholder="Email professor about the lab"
-                className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-[16px] focus:border-accent focus:outline-none"
+                className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-[1rem] focus:border-accent focus:outline-none"
               />
             </Field>
             {ctx ? <DateField name="dueDate" label="Due" today={ctx.today} /> : null}
             <TimeField name="dueTime" label="Time" />
             <PriorityField name="priority" />
-            <SubmitButton className="h-12 w-full text-[15px]">Add to-do</SubmitButton>
+            <SubmitButton className="h-12 w-full text-[0.9375rem]">Add to-do</SubmitButton>
           </ActionForm>
         )}
 
@@ -181,7 +181,7 @@ export function QuickAdd() {
           ) : (
             <ActionForm key={`s${formKey}`} action={createShiftAction} offline={offlineShift} onSuccess={done} className="gap-4">
               <Field label="Job" htmlFor="qa-emp">
-                <Select id="qa-emp" name="employerId" required className="h-12 text-[16px]">
+                <Select id="qa-emp" name="employerId" required className="h-12 text-[1rem]">
                   {(ctx?.employers ?? []).map((e) => (
                     <option key={e.id} value={e.id}>
                       {e.name}
@@ -193,9 +193,9 @@ export function QuickAdd() {
               <TimeField name="startTime" label="Starts" required allowNone={false} />
               <TimeField name="endTime" label="Ends" required allowNone={false} />
               <Field label="Unpaid break (minutes)" htmlFor="qa-break">
-                <Input id="qa-break" name="breakMinutes" type="number" inputMode="numeric" min={0} max={600} placeholder="0" className="h-12 text-[16px]" />
+                <Input id="qa-break" name="breakMinutes" type="number" inputMode="numeric" min={0} max={600} placeholder="0" className="h-12 text-[1rem]" />
               </Field>
-              <SubmitButton className="h-12 w-full text-[15px]">Add shift</SubmitButton>
+              <SubmitButton className="h-12 w-full text-[0.9375rem]">Add shift</SubmitButton>
             </ActionForm>
           ))}
 
@@ -206,13 +206,13 @@ export function QuickAdd() {
             <ActionForm key={`m${formKey}`} action={createTransactionAction} offline={offlineSpending} onSuccess={done} className="gap-4">
               <input type="hidden" name="direction" value="out" />
               <Field label="Amount ($)" htmlFor="qa-amt">
-                <Input id="qa-amt" name="amount" inputMode="decimal" required autoFocus placeholder="12.50" className="h-14 text-[22px]" />
+                <Input id="qa-amt" name="amount" inputMode="decimal" required autoFocus placeholder="12.50" className="h-14 text-[1.375rem]" />
               </Field>
               <Field label="What was it?" htmlFor="qa-desc">
-                <Input id="qa-desc" name="description" required maxLength={300} placeholder="Lunch at Chipotle" className="h-12 text-[16px]" />
+                <Input id="qa-desc" name="description" required maxLength={300} placeholder="Lunch at Chipotle" className="h-12 text-[1rem]" />
               </Field>
               <Field label="Paid from" htmlFor="qa-acct">
-                <Select id="qa-acct" name="accountId" required className="h-12 text-[16px]">
+                <Select id="qa-acct" name="accountId" required className="h-12 text-[1rem]">
                   {(ctx?.accounts ?? []).map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.name}
@@ -222,7 +222,7 @@ export function QuickAdd() {
               </Field>
               {ctx ? <DateField name="date" label="Date" today={ctx.today} defaultValue={ctx.today} allowNone={false} required /> : null}
               <p className="-mt-2 text-xs text-muted">The category is filled in from your rules and the merchant name; you can change it later.</p>
-              <SubmitButton className="h-12 w-full text-[15px]">Log spending</SubmitButton>
+              <SubmitButton className="h-12 w-full text-[0.9375rem]">Log spending</SubmitButton>
             </ActionForm>
           ))}
       </Sheet>

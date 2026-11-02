@@ -16,7 +16,7 @@ const variants: Record<Variant, string> = {
 };
 // lf-touch / lf-touch-icon grow to 44px on touch screens (see globals.css).
 const sizes: Record<Size, string> = {
-  sm: "lf-touch h-8 px-3.5 text-[13px] gap-1.5",
+  sm: "lf-touch h-8 px-3.5 text-[0.8125rem] gap-1.5",
   md: "lf-touch h-10 px-5 text-sm gap-2",
   icon: "lf-touch lf-touch-icon h-9 w-9 justify-center",
 };

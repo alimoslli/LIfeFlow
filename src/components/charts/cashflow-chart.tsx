@@ -58,7 +58,7 @@ export function CashflowChart({ data }: { data: CashflowPoint[] }) {
         </table>
       ) : (
         <div className="relative flex gap-2">
-          <div className="tabular relative w-12 shrink-0 text-right text-[10px] text-muted" style={{ height: H }}>
+          <div className="tabular relative w-12 shrink-0 text-right text-[0.625rem] text-muted" style={{ height: H }}>
             {ticks.map((t) => (
               <span key={t} className="absolute right-0 -translate-y-1/2" style={{ top: H - (t / top) * H }}>
                 {formatCents(t, { compact: true })}
@@ -100,7 +100,7 @@ export function CashflowChart({ data }: { data: CashflowPoint[] }) {
             </div>
             <div className="mt-1.5 flex justify-around gap-1">
               {data.map((d) => (
-                <span key={d.month} className="flex-1 text-center text-[11px] text-muted">
+                <span key={d.month} className="flex-1 text-center text-[0.6875rem] text-muted">
                   {d.label}
                 </span>
               ))}

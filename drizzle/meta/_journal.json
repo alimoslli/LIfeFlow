@@ -218,6 +218,13 @@
       "when": 1793511865056,
       "tag": "0030_goal_checkins",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793511925056,
+      "tag": "0031_invites",
+      "breakpoints": true
     }
   ]
 }

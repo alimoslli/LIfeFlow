@@ -97,8 +97,8 @@ export function Splash() {
           className="lf-splash-brand h-[112px] w-[112px] drop-shadow-[0_10px_28px_rgba(0,0,0,0.28)]"
         />
         <div className="flex flex-col items-center text-center">
-          <p className="lf-greet lf-greet-1 text-[15px] tracking-[0.18em] uppercase opacity-80" />
-          <p className="lf-greet lf-greet-2 mt-2 font-display text-[40px] leading-none font-medium tracking-tight" />
+          <p className="lf-greet lf-greet-1 text-[0.9375rem] tracking-[0.18em] uppercase opacity-80" />
+          <p className="lf-greet lf-greet-2 mt-2 font-display text-[2.5rem] leading-none font-medium tracking-tight" />
           <span className="lf-greet-line mt-5 h-px w-16 bg-white/50" />
         </div>
       </div>

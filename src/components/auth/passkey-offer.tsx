@@ -63,16 +63,16 @@ export function PasskeyOffer() {
         <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-accent-soft text-accent">
           <ScanFace className="h-8 w-8" />
         </span>
-        <p className="text-[15px] text-text-2">Sign in with a glance instead of typing your password. It&apos;s faster and can&apos;t be phished.</p>
+        <p className="text-[0.9375rem] text-text-2">Sign in with a glance instead of typing your password. It&apos;s faster and can&apos;t be phished.</p>
         <button
           type="button"
           onClick={yes}
           disabled={busy}
-          className="mt-2 min-h-12 w-full rounded-full bg-accent text-[15px] font-medium text-accent-text disabled:opacity-60"
+          className="mt-2 min-h-12 w-full rounded-full bg-accent text-[0.9375rem] font-medium text-accent-text disabled:opacity-60"
         >
           Use {name}
         </button>
-        <button type="button" onClick={later} className="min-h-11 w-full rounded-full text-[15px] text-text-2">
+        <button type="button" onClick={later} className="min-h-11 w-full rounded-full text-[0.9375rem] text-text-2">
           Not now
         </button>
       </div>

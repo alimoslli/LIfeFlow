@@ -59,7 +59,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
             label={`Mark "${task.title}" ${task.status === "done" ? "not done" : "done"}`}
           />
         </div>
-        <h1 className={cn("font-display text-[28px] leading-tight font-medium break-words", task.status === "done" && "text-muted line-through")}>
+        <h1 className={cn("font-display text-[1.75rem] leading-tight font-medium break-words", task.status === "done" && "text-muted line-through")}>
           {task.title}
         </h1>
       </div>
@@ -72,7 +72,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
         <TimeField name="dueTime" label="Time" defaultValue={task.dueAt && !task.dueAllDay ? localTimeOf(task.dueAt, tz) : ""} />
         <PriorityField name="priority" defaultValue={task.priority} />
         <Field label="Repeats" htmlFor="t-repeat" hint="Needs a due date. Completing it creates the next one.">
-          <Select id="t-repeat" name="repeat" defaultValue={task.repeat ?? ""} className="h-12 text-[16px]">
+          <Select id="t-repeat" name="repeat" defaultValue={task.repeat ?? ""} className="h-12 text-[1rem]">
             {Object.entries(REPEAT_LABEL).map(([k, v]) => (
               <option key={k} value={k}>
                 {v}
@@ -81,7 +81,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           </Select>
         </Field>
         <Field label="Reminder" htmlFor="t-remind" hint="Sent as a notification when they're turned on in Settings.">
-          <Select id="t-remind" name="reminder" defaultValue={reminderKeyOf(task, tz)} className="h-12 text-[16px]">
+          <Select id="t-remind" name="reminder" defaultValue={reminderKeyOf(task, tz)} className="h-12 text-[1rem]">
             {Object.entries(REMINDER_LABEL).map(([k, v]) => (
               <option key={k} value={k}>
                 {v}
@@ -90,7 +90,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           </Select>
         </Field>
         <Field label="Class" htmlFor="t-course">
-          <Select id="t-course" name="courseId" defaultValue={task.courseId ?? ""} className="h-12 text-[16px]">
+          <Select id="t-course" name="courseId" defaultValue={task.courseId ?? ""} className="h-12 text-[1rem]">
             <option value="">None</option>
             {d.courses.map((c) => (
               <option key={c.id} value={c.id}>
@@ -100,7 +100,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           </Select>
         </Field>
         <Field label="Project" htmlFor="t-project">
-          <Select id="t-project" name="projectId" defaultValue={task.projectId ?? ""} className="h-12 text-[16px]">
+          <Select id="t-project" name="projectId" defaultValue={task.projectId ?? ""} className="h-12 text-[1rem]">
             <option value="">None</option>
             {d.projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -112,14 +112,14 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
         <Field label="Notes" htmlFor="t-notes">
           <CountedInput id="t-notes" name="notes" defaultValue={task.notes ?? ""} max={5000} multiline rows={4} />
         </Field>
-        <SubmitButton className="h-12 w-full text-[15px]">Save changes</SubmitButton>
+        <SubmitButton className="h-12 w-full text-[0.9375rem]">Save changes</SubmitButton>
       </ActionForm>
 
       <section aria-label="Subtasks" className="rounded-3xl bg-surface p-5 shadow-soft">
-        <h2 className="mb-2 text-[15px] font-semibold">Subtasks</h2>
+        <h2 className="mb-2 text-[0.9375rem] font-semibold">Subtasks</h2>
         <ul className="mb-3 flex flex-col">
           {task.subtasks.map((st) => (
-            <li key={st.id} className="flex min-h-12 items-center gap-3 text-[15px]">
+            <li key={st.id} className="flex min-h-12 items-center gap-3 text-[0.9375rem]">
               <TaskCheck done={st.status === "done"} action={toggleTaskAction.bind(null, st.id)} label={`Toggle ${st.title}`} />
               <span className={cn("min-w-0 flex-1 break-words", st.status === "done" && "text-muted line-through")}>{st.title}</span>
             </li>
@@ -134,7 +134,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
             required
             max={300}
             aria-label="Subtask title"
-            className="h-12 w-full rounded-full border border-border bg-surface px-4 text-[16px] focus:border-accent focus:outline-none"
+            className="h-12 w-full rounded-full border border-border bg-surface px-4 text-[1rem] focus:border-accent focus:outline-none"
           />
           <SubmitButton variant="secondary" className="h-12 min-w-16 shrink-0 px-5">
             Add

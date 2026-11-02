@@ -35,7 +35,7 @@ export default async function BillsPage() {
   return (
     <>
       <SegmentedNav label="Bills and subscriptions" items={BILLS_SUBS} active="bills" />
-      <h1 className="mt-4 mb-5 font-display text-[28px] font-medium tracking-tight">Bills</h1>
+      <h1 className="mt-4 mb-5 font-display text-[1.75rem] font-medium tracking-tight">Bills</h1>
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.6fr_1fr]">
         <div className="flex flex-col gap-5">
           <Card>
@@ -141,7 +141,7 @@ export default async function BillsPage() {
             </ul>
           </Card>
           <Card className="p-5">
-            <h2 className="mb-3 text-[13px] font-semibold tracking-wide text-text-2 uppercase">Add recurring item</h2>
+            <h2 className="mb-3 text-[0.8125rem] font-semibold tracking-wide text-text-2 uppercase">Add recurring item</h2>
             <ActionForm action={createRecurringAction}>
               <Field label="Name" htmlFor="r-name">
                 <Input id="r-name" name="name" required placeholder="Spotify" />

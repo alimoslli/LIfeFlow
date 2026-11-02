@@ -7,7 +7,7 @@ import { FormError } from "@/components/ui/field";
 import { resetPasswordAction, type ResetState } from "../actions";
 
 const input =
-  "h-12 w-full rounded-2xl bg-surface px-4 text-[15px] text-text shadow-soft placeholder:text-muted transition-shadow focus:shadow-lift focus:outline-none focus:ring-2 focus:ring-[var(--ring)]";
+  "h-12 w-full rounded-2xl bg-surface px-4 text-[0.9375rem] text-text shadow-soft placeholder:text-muted transition-shadow focus:shadow-lift focus:outline-none focus:ring-2 focus:ring-[var(--ring)]";
 
 export function ResetForm() {
   const [state, action, pending] = useActionState<ResetState, FormData>(resetPasswordAction, null);
@@ -24,8 +24,8 @@ export function ResetForm() {
   if (token === "")
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="font-display text-[34px] leading-[1.05] font-medium tracking-tight">This link isn&apos;t complete.</h1>
-        <p className="text-[15px] text-text-2">Open the link from the email again, or ask for a new one.</p>
+        <h1 className="font-display text-[2.125rem] leading-[1.05] font-medium tracking-tight">This link isn&apos;t complete.</h1>
+        <p className="text-[0.9375rem] text-text-2">Open the link from the email again, or ask for a new one.</p>
         <Link href="/forgot-password" className="font-medium text-accent">
           Send a new link
         </Link>
@@ -34,8 +34,8 @@ export function ResetForm() {
   return (
     <form action={action} className="flex flex-col gap-4">
       <div className="mb-3">
-        <h1 className="font-display text-[38px] leading-[1.05] font-medium tracking-tight">Choose a new password.</h1>
-        <p className="mt-2 text-[15px] text-muted">You&apos;ll be signed out everywhere else, then you can sign in with it.</p>
+        <h1 className="font-display text-[2.375rem] leading-[1.05] font-medium tracking-tight">Choose a new password.</h1>
+        <p className="mt-2 text-[0.9375rem] text-muted">You&apos;ll be signed out everywhere else, then you can sign in with it.</p>
       </div>
       <FormError message={state?.error} />
       <input type="hidden" name="token" value={token ?? ""} />
@@ -46,7 +46,7 @@ export function ResetForm() {
       <button
         type="submit"
         disabled={pending || !token}
-        className="mt-2 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-medium text-accent-text shadow-soft active:scale-[0.98] disabled:opacity-60"
+        className="mt-2 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[0.9375rem] font-medium text-accent-text shadow-soft active:scale-[0.98] disabled:opacity-60"
       >
         {pending && <Loader2 className="h-4 w-4 animate-spin" />} Save new password
       </button>

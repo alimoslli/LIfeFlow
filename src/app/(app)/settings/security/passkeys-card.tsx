@@ -52,7 +52,7 @@ export function PasskeysCard({ passkeys, demo }: { passkeys: PasskeyRow[]; demo:
             <li key={p.id} className="flex min-h-14 items-center gap-3 py-2">
               <KeyRound className="h-4 w-4 shrink-0 text-muted" />
               <span className="min-w-0 flex-1">
-                <span className="block text-[15px] break-words">{p.name}</span>
+                <span className="block text-[0.9375rem] break-words">{p.name}</span>
                 <span className="block text-xs text-muted">
                   Added {p.created} · {p.lastUsed ? `last used ${p.lastUsed}` : "not used yet"}
                   {p.synced ? " · synced with your other devices" : ""}
@@ -96,7 +96,7 @@ export function PasskeysCard({ passkeys, demo }: { passkeys: PasskeyRow[]; demo:
             className="gap-4"
           >
             <Field label="Name" htmlFor="pk-name">
-              <Input id="pk-name" name="name" defaultValue={renaming.name} maxLength={60} required className="h-12 text-[16px]" />
+              <Input id="pk-name" name="name" defaultValue={renaming.name} maxLength={60} required className="h-12 text-[1rem]" />
             </Field>
             <SubmitButton className="h-12 w-full">Save</SubmitButton>
           </ActionForm>

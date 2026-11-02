@@ -10,7 +10,7 @@ export function CardHeader({ title, action, subtitle, className }: { title: Reac
   return (
     <div className={cn("flex items-start justify-between gap-3 px-5 pt-4 pb-2", className)}>
       <div className="min-w-0">
-        <h2 className="text-[15px] font-semibold text-text">{title}</h2>
+        <h2 className="text-[0.9375rem] font-semibold text-text">{title}</h2>
         {subtitle && <p className="mt-0.5 text-xs text-muted">{subtitle}</p>}
       </div>
       {action}
@@ -23,7 +23,7 @@ export function PageHeader({ title, description, actions, eyebrow }: { title: Re
     <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         {eyebrow && <p className="mb-1 text-sm text-muted">{eyebrow}</p>}
-        <h1 className="font-display text-[38px] leading-tight font-medium tracking-tight text-text">{title}</h1>
+        <h1 className="font-display text-[2.375rem] leading-tight font-medium tracking-tight text-text">{title}</h1>
         {description && <p className="mt-1 max-w-2xl text-sm text-muted">{description}</p>}
       </div>
       {actions && <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 [&>*]:shrink-0">{actions}</div>}
@@ -54,7 +54,9 @@ const tones: Record<Tone, string> = {
 
 export function Badge({ children, tone = "neutral", className }: { children: ReactNode; tone?: Tone; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] leading-4 font-medium whitespace-nowrap", tones[tone], className)}>
+    <span
+      className={cn("inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.6875rem] leading-4 font-medium whitespace-nowrap", tones[tone], className)}
+    >
       {children}
     </span>
   );

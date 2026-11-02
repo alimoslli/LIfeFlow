@@ -26,17 +26,17 @@ export default async function SubscriptionsPage() {
     <div className="mx-auto flex max-w-[720px] flex-col gap-6">
       <header>
         <SegmentedNav label="Bills and subscriptions" items={BILLS_SUBS} active="subs" />
-        <h1 className="mt-4 font-display text-[34px] leading-tight font-medium tracking-tight">Subscriptions</h1>
+        <h1 className="mt-4 font-display text-[2.125rem] leading-tight font-medium tracking-tight">Subscriptions</h1>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <Card as="div" className="p-4">
             <p className="text-sm text-muted">Per month</p>
-            <p className="tabular font-display text-[28px] font-medium" data-testid="subs-monthly">
+            <p className="tabular font-display text-[1.75rem] font-medium" data-testid="subs-monthly">
               {usd(d.monthlyCents)}
             </p>
           </Card>
           <Card as="div" className="p-4">
             <p className="text-sm text-muted">Per year</p>
-            <p className="tabular font-display text-[28px] font-medium" data-testid="subs-yearly">
+            <p className="tabular font-display text-[1.75rem] font-medium" data-testid="subs-yearly">
               {usd(d.yearlyCents)}
             </p>
           </Card>
@@ -57,7 +57,7 @@ export default async function SubscriptionsPage() {
               ) : (
                 <ZapOff className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
               )}
-              <p className="text-[15px]">
+              <p className="text-[0.9375rem]">
                 {f.kind === "price_up" && (
                   <>
                     <b>{f.name}</b> went up from {usd(f.fromCents)} to {usd(f.toCents)}: {usd(f.yearlyExtraCents)} more a year.
@@ -87,7 +87,7 @@ export default async function SubscriptionsPage() {
 
       <section aria-label="Your subscriptions" className="flex flex-col gap-3">
         {active.length === 0 && d.found.length === 0 && (
-          <Card className="p-5 text-[15px] text-text-2">
+          <Card className="p-5 text-[0.9375rem] text-text-2">
             {d.historyDays === 0
               ? "No subscriptions yet. Connect a bank or add transactions, and recurring charges show up here."
               : d.historyDays < 60
@@ -99,7 +99,7 @@ export default async function SubscriptionsPage() {
           <Card as="article" key={s.id} className="p-4" data-testid="subscription">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="text-[16px] font-semibold break-words">{s.name}</h3>
+                <h3 className="text-[1rem] font-semibold break-words">{s.name}</h3>
                 <p className="text-sm text-text-2">
                   {usd(s.amountCents)} / {FREQ[s.frequency]} · {usd(s.yearlyCents)} a year
                 </p>
@@ -144,7 +144,7 @@ export default async function SubscriptionsPage() {
                       type="date"
                       name="trialEndsOn"
                       defaultValue={s.trialEndsOn ?? ""}
-                      className="h-11 rounded-xl border border-border bg-surface px-3 text-[16px]"
+                      className="h-11 rounded-xl border border-border bg-surface px-3 text-[1rem]"
                     />
                   </label>
                   <SubmitButton variant="secondary" className="min-h-11">
@@ -171,7 +171,7 @@ export default async function SubscriptionsPage() {
             <Card as="div" key={c.merchantKey} className="flex items-center gap-3 p-4">
               <AlertTriangle className="h-5 w-5 shrink-0 text-muted" />
               <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-medium break-words">{c.name}</p>
+                <p className="text-[0.9375rem] font-medium break-words">{c.name}</p>
                 <p className="text-xs text-muted">
                   {usd(c.latestAmountCents)} every {FREQ[c.frequency]} · {c.occurrences} charges · next around {formatDateStr(c.nextExpectedDate, "MMM d")}
                 </p>

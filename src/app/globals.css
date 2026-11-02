@@ -109,6 +109,14 @@
   color-scheme: dark;
 }
 
+/* Text size (Settings → Profile & appearance). Sizes are in rem, so text and spacing grow together. */
+:root[data-text="large"] {
+  font-size: 112.5%;
+}
+:root[data-text="xlarge"] {
+  font-size: 125%;
+}
+
 /* Accent colors (Settings → Profile & appearance). Green is the default in :root above. */
 :root[data-accent="blue"] {
   --accent: #2f5fa8;
@@ -273,7 +281,7 @@ body {
   input,
   select,
   textarea {
-    font-size: 16px !important;
+    font-size: max(16px, 1rem) !important;
   }
 }
 /* Installed app: respect the notch / home indicator. */
@@ -622,25 +630,25 @@ html.lf-splash .animate-rise {
 /* Privacy Policy and Terms of Use */
 .legal h1 {
   font-family: var(--font-display);
-  font-size: 40px;
+  font-size: 2.5rem;
   line-height: 1.1;
   font-weight: 500;
   letter-spacing: -0.01em;
 }
 .legal h2 {
   margin-top: 2.2em;
-  font-size: 19px;
+  font-size: 1.1875rem;
   font-weight: 600;
 }
 .legal h3 {
   margin-top: 1.4em;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
 }
 .legal p,
 .legal li {
   margin-top: 0.7em;
-  font-size: 15.5px;
+  font-size: 0.9688rem;
   line-height: 1.7;
   color: var(--text-2);
 }
@@ -661,7 +669,7 @@ html.lf-splash .animate-rise {
   margin-top: 1em;
   width: 100%;
   border-collapse: collapse;
-  font-size: 14.5px;
+  font-size: 0.9062rem;
 }
 .legal th,
 .legal td {
@@ -704,7 +712,7 @@ html.lf-splash .animate-rise {
 /* ------------------------------------------------------------------ phone app feel */
 :root {
   /* Room for the floating tab bar (≈62px) plus its gap and the home-indicator safe area. */
-  --tabbar-space: calc(max(0.75rem, env(safe-area-inset-bottom)) + 62px + 28px);
+  --tabbar-space: calc(max(0.75rem, env(safe-area-inset-bottom)) + 3.875rem + 1.75rem);
   --kb: 0px;
 }
 html {
@@ -785,7 +793,7 @@ html[data-typing="true"] .lf-fab {
   input:not([type="checkbox"], [type="radio"], [type="range"], [type="hidden"], [type="file"], .font-display),
   select,
   textarea:not(.font-display) {
-    font-size: max(16px, 1em);
+    font-size: max(16px, 1em, 1rem);
   }
   input:not([type="checkbox"], [type="radio"], [type="range"], [type="hidden"], [type="file"]),
   select {

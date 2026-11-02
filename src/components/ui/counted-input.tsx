@@ -16,7 +16,7 @@ export function CountedInput({
       {...(props as React.TextareaHTMLAttributes<HTMLTextAreaElement>)}
       maxLength={max}
       onChange={(e) => setLen(e.target.value.length)}
-      className={cn("w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-[16px] focus:border-accent focus:outline-none", className)}
+      className={cn("w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-[1rem] focus:border-accent focus:outline-none", className)}
     />
   ) : (
     <input {...props} maxLength={max} onChange={(e) => setLen(e.target.value.length)} className={className} />

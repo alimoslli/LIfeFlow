@@ -25,7 +25,7 @@ export function JarvisStatus({ word }: { word: string }) {
         <circle cx="16.5" cy="6.5" r="2.6" fill="currentColor" />
         <circle cx="17.5" cy="17.5" r="2.1" fill="currentColor" />
       </svg>
-      <span key={word} className="animate-fade-in text-[14px]">
+      <span key={word} className="animate-fade-in text-[0.875rem]">
         {word}…
       </span>
     </div>

@@ -122,7 +122,7 @@ export function TwoFactorCard({ status }: { status: Status }) {
               <a
                 href={`data:text/plain;charset=utf-8,${encodeURIComponent(`LifeFlow backup codes\n\n${codesText}\n`)}`}
                 download="lifeflow-backup-codes.txt"
-                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-surface px-3.5 text-[13px] shadow-soft"
+                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-surface px-3.5 text-[0.8125rem] shadow-soft"
               >
                 <Download className="h-3.5 w-3.5" /> Download
               </a>

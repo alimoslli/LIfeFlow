@@ -75,8 +75,8 @@ export function JarvisMessageCard({ m, name, avatar, compact }: { m: CardMessage
           <p className="text-xs text-muted">
             {name} · {m.when}
           </p>
-          <h3 className="mt-0.5 text-[15px] font-semibold">{m.title}</h3>
-          <p className="mt-1 text-[15px] leading-relaxed text-text-2">{m.body}</p>
+          <h3 className="mt-0.5 text-[0.9375rem] font-semibold">{m.title}</h3>
+          <p className="mt-1 text-[0.9375rem] leading-relaxed text-text-2">{m.body}</p>
           {m.sections && m.sections.length > 0 && (
             <details className="group mt-2 rounded-2xl bg-surface-2 px-3" open={!compact}>
               <summary className="cursor-pointer text-sm font-medium text-accent">Full review</summary>

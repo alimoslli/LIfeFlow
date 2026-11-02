@@ -327,7 +327,7 @@ export function LiveVoice({
         <BrandMark className="relative h-9 w-9" alt="" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[15px] font-medium" aria-live="polite">
+        <p className="truncate text-[0.9375rem] font-medium" aria-live="polite">
           {label}
         </p>
         <p className="tabular text-xs text-muted">

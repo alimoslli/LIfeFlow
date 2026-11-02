@@ -99,7 +99,7 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
             aria-label="Back"
           >
             <ChevronLeft className="h-6 w-6" strokeWidth={2.2} />
-            <span className="text-[15px]">Back</span>
+            <span className="text-[0.9375rem]">Back</span>
           </button>
         ) : (
           <Link href="/" aria-label="LifeFlow home" className="-ml-0.5 flex min-h-11 min-w-11 items-center justify-center rounded-[10px]">
@@ -109,7 +109,7 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
       </div>
       <p
         className={cn(
-          "pointer-events-none absolute inset-x-24 bottom-0 flex h-12 items-center justify-center truncate text-[16px] font-semibold transition-opacity duration-200",
+          "pointer-events-none absolute inset-x-24 bottom-0 flex h-12 items-center justify-center truncate text-[1rem] font-semibold transition-opacity duration-200",
           scrolled || info.back ? "opacity-100" : "opacity-0",
         )}
         aria-hidden={!scrolled && !info.back}
@@ -122,7 +122,7 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
           <span role="img" aria-label="Sample data" title="Sample data" className="mr-1 h-2.5 w-2.5 rounded-full bg-warning" />
         )}
         {demo && !demoHidden && !scrolled && !info.back && (
-          <span className="mr-1 flex items-center rounded-full bg-warning-soft pl-2.5 text-[11px] text-warning">
+          <span className="mr-1 flex items-center rounded-full bg-warning-soft pl-2.5 text-[0.6875rem] text-warning">
             Sample data
             <button
               type="button"

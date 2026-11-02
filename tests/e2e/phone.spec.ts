@@ -135,7 +135,9 @@ test("shifts: blank form can't create a shift, edit and delete work, past shifts
 
   // A shift that already ended asks for actual hours instead of staying "Scheduled".
   await queryAsUser(email, "update work_shifts set starts_at = now() - interval '30 hours', ends_at = now() - interval '26 hours'");
-  await page.reload();
+  // Work shows one week at a time; on a Monday, 30 hours ago is last week. Open the week the shift is in.
+  const shiftDay = await page.evaluate(() => new Date(Date.now() - 30 * 3600_000).toLocaleDateString("en-CA"));
+  await page.goto(`/work?week=${shiftDay}`);
   await expect(page.getByText("Needs hours")).toBeVisible();
   await page.getByRole("button", { name: /^Edit shift on/ }).click();
   await page.getByRole("dialog", { name: "Shift" }).getByRole("button", { name: "Yes, as scheduled" }).click();

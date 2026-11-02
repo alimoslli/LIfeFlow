@@ -72,7 +72,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
             required
             max={300}
             aria-label="To-do title"
-            className="min-w-0 flex-1 bg-transparent py-1.5 text-[15px] placeholder:text-muted focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent py-1.5 text-[0.9375rem] placeholder:text-muted focus:outline-none"
           />
           <SubmitButton size="sm" className="h-9 px-4">
             Add
@@ -104,7 +104,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
             .map((g) => (
               <section key={g.key}>
                 {g.label && (
-                  <h2 className={cn("mb-2 text-[15px] font-semibold", g.key === "overdue" ? "text-danger" : "text-text")}>
+                  <h2 className={cn("mb-2 text-[0.9375rem] font-semibold", g.key === "overdue" ? "text-danger" : "text-text")}>
                     {g.label} <span className="font-normal text-muted">{g.items.length}</span>
                   </h2>
                 )}
@@ -135,7 +135,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                           />
                           <Link href={`/tasks/${t.id}`} className="flex min-h-12 min-w-0 flex-1 items-center gap-2 py-1.5">
                             <span className="min-w-0 flex-1">
-                              <span className={cn("line-clamp-2 text-[15px]", t.status === "done" && "text-muted line-through")}>{t.title}</span>
+                              <span className={cn("line-clamp-2 text-[0.9375rem]", t.status === "done" && "text-muted line-through")}>{t.title}</span>
                               {meta.length > 0 && (
                                 <span
                                   className={cn(

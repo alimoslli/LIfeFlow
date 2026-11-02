@@ -29,13 +29,13 @@ export function MoneyLockScreen() {
       <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-accent-soft text-accent">
         <Lock className="h-7 w-7" />
       </span>
-      <h1 className="font-display text-[30px] leading-tight font-medium">Money is locked</h1>
-      <p className="text-[15px] text-text-2">Your balances and investments are hidden until you confirm it&apos;s you.</p>
+      <h1 className="font-display text-[1.875rem] leading-tight font-medium">Money is locked</h1>
+      <p className="text-[0.9375rem] text-text-2">Your balances and investments are hidden until you confirm it&apos;s you.</p>
       <button
         type="button"
         onClick={unlock}
         disabled={busy}
-        className="mt-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent px-6 text-[15px] font-medium text-accent-text shadow-soft active:scale-[0.98] disabled:opacity-60"
+        className="mt-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent px-6 text-[0.9375rem] font-medium text-accent-text shadow-soft active:scale-[0.98] disabled:opacity-60"
       >
         {busy && <Loader2 className="h-4 w-4 animate-spin" />} Unlock with {name}
       </button>

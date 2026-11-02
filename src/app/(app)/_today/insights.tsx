@@ -29,7 +29,7 @@ export function InsightList({ insights }: { insights: Insight[] }) {
                 <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
               </span>
               <div className="min-w-0 flex-1 pt-1.5">
-                <p className="text-[15.5px] leading-snug text-text">{i.text}</p>
+                <p className="text-[0.9688rem] leading-snug text-text">{i.text}</p>
                 {i.detail && <p className="mt-1 text-sm text-muted">{i.detail}</p>}
                 {action &&
                   (action.href ? (
@@ -76,7 +76,7 @@ export function AskBar({ name }: { name: string }) {
         name="q"
         placeholder={`What's on your mind, ${name}?`}
         aria-label={`Ask ${assistantName}`}
-        className="min-w-0 flex-1 bg-transparent py-2 text-[15px] placeholder:text-muted focus:outline-none"
+        className="min-w-0 flex-1 bg-transparent py-2 text-[0.9375rem] placeholder:text-muted focus:outline-none"
       />
       <VoiceButton assistantName={assistantName} onStart={() => router.push("/jarvis?voice=1")} />
       <button className="min-h-11 rounded-full bg-accent px-5 text-sm font-medium text-accent-text">Ask</button>

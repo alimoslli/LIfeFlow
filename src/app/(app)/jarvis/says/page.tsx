@@ -28,7 +28,7 @@ export default async function JarvisSaysPage() {
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header className="flex items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">Updates</h1>
+          <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Updates</h1>
           <p className="mt-1 text-sm text-text-2">What {d.name} noticed and did, newest first.</p>
         </div>
         <Link href="/settings/jarvis" className="tap flex items-center justify-center text-muted" aria-label="Personality settings">
@@ -38,7 +38,7 @@ export default async function JarvisSaysPage() {
       <SegmentedNav label="Updates" items={UPDATES} active="jarvis" />
       {d.locked && <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2">Money messages are hidden while Money is locked.</p>}
       {d.rows.length === 0 ? (
-        <p className="rounded-3xl bg-surface p-6 text-[15px] text-text-2 shadow-soft">
+        <p className="rounded-3xl bg-surface p-6 text-[0.9375rem] text-text-2 shadow-soft">
           Nothing yet. {d.name} looks at your day every morning, midday and evening, and speaks up only when something is worth your attention.
         </p>
       ) : (

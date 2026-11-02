@@ -52,7 +52,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
     <div className="flex flex-col gap-6">
       <CalendarViewToggle active="month" />
       <header className="flex items-center justify-between gap-3">
-        <h1 className="font-display text-[34px] leading-none font-medium tracking-tight sm:text-[40px]">
+        <h1 className="font-display text-[2.125rem] leading-none font-medium tracking-tight sm:text-[2.5rem]">
           {formatDateStr(d.month, "MMMM")} <span className="text-muted">{formatDateStr(d.month, "yyyy")}</span>
         </h1>
         <div className="flex items-center gap-2">
@@ -129,14 +129,14 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                     {items.slice(0, 3).map((i) => (
                       <span
                         key={i.key}
-                        className="flex items-center gap-1 truncate rounded-md px-1 text-[11px] leading-5"
+                        className="flex items-center gap-1 truncate rounded-md px-1 text-[0.6875rem] leading-5"
                         style={{ background: `color-mix(in srgb, ${i.color ?? "var(--accent)"} 14%, transparent)` }}
                       >
                         <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: i.color ?? "var(--accent)" }} />
                         <span className="truncate text-text">{i.title}</span>
                       </span>
                     ))}
-                    {items.length > 3 && <span className="px-1 text-[11px] text-muted">+{items.length - 3} more</span>}
+                    {items.length > 3 && <span className="px-1 text-[0.6875rem] text-muted">+{items.length - 3} more</span>}
                   </span>
                 </DropDay>
               );
@@ -164,7 +164,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           )}
 
           {dayItems.length === 0 ? (
-            <p className="rounded-3xl bg-surface px-5 py-8 text-center text-[15px] text-muted shadow-soft">Nothing planned.</p>
+            <p className="rounded-3xl bg-surface px-5 py-8 text-center text-[0.9375rem] text-muted shadow-soft">Nothing planned.</p>
           ) : (
             <ul className="flex flex-col gap-1.5">
               {dayItems.map((i) => (
@@ -177,7 +177,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                 >
                   <span className="h-10 w-1 shrink-0 rounded-full" style={{ background: i.color ?? "var(--accent)" }} />
                   <Link href={i.href} className="flex min-h-12 min-w-0 flex-1 flex-col justify-center">
-                    <p className="line-clamp-2 text-[15px]">
+                    <p className="line-clamp-2 text-[0.9375rem]">
                       {i.origin === "assignment" && <span className="text-muted">Due · </span>}
                       {i.origin === "task" && <span className="text-muted">To do · </span>}
                       {i.title}

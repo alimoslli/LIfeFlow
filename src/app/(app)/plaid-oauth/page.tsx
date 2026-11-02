@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Connecting your bank" };
 export default function PlaidOAuthPage() {
   return (
     <div className="mx-auto max-w-md py-10 text-center">
-      <h1 className="font-display text-[28px] font-medium">Connecting your bank</h1>
+      <h1 className="font-display text-[1.75rem] font-medium">Connecting your bank</h1>
       <div className="mt-4">
         <PlaidOAuthResume />
       </div>

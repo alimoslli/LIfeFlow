@@ -38,7 +38,7 @@ export function CancelHelp({ id, name, via, saved }: { id: string; name: string;
         Cancel help
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title={`Cancel ${name}`}>
-        <div className="flex flex-col gap-4 text-[15px]">
+        <div className="flex flex-col gap-4 text-[0.9375rem]">
           {via ? (
             <div className="rounded-2xl bg-surface-2 p-4">
               <p className="font-medium">{VIA[via][0]}</p>

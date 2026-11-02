@@ -23,7 +23,7 @@ export function HealthWeek({ metrics, today }: { metrics: Metric[]; today: strin
   if (!metrics.length)
     return (
       <section aria-label="This week" className="rounded-3xl bg-surface p-5 shadow-soft">
-        <p className="text-[15px] font-medium">No health data yet</p>
+        <p className="text-[0.9375rem] font-medium">No health data yet</p>
         <p className="mt-1 text-sm text-text-2">
           Connect Apple Health and your sleep, steps and workouts fill in by themselves. Or log something below, or tell Jarvis &ldquo;I slept 7 hours.&rdquo;
         </p>
@@ -81,7 +81,7 @@ export function LogHealth({ action, today }: { action: (p: ActionState, fd: Form
       <div className="grid grid-cols-2 gap-3">
         <label className="col-span-2 flex flex-col gap-1 text-xs text-text-2">
           What
-          <select name="metric" className="h-11 rounded-xl bg-surface-2 px-3 text-[15px] text-text">
+          <select name="metric" className="h-11 rounded-xl bg-surface-2 px-3 text-[0.9375rem] text-text">
             {MANUAL.map(([v, l]) => (
               <option key={v} value={v}>
                 {l}
@@ -91,11 +91,11 @@ export function LogHealth({ action, today }: { action: (p: ActionState, fd: Form
         </label>
         <label className="flex flex-col gap-1 text-xs text-text-2">
           Amount
-          <input name="value" inputMode="decimal" required className="h-11 rounded-xl bg-surface-2 px-3 text-[15px] text-text" />
+          <input name="value" inputMode="decimal" required className="h-11 rounded-xl bg-surface-2 px-3 text-[0.9375rem] text-text" />
         </label>
         <label className="flex flex-col gap-1 text-xs text-text-2">
           Day
-          <input name="date" type="date" defaultValue={today} max={today} className="h-11 rounded-xl bg-surface-2 px-3 text-[15px] text-text" />
+          <input name="date" type="date" defaultValue={today} max={today} className="h-11 rounded-xl bg-surface-2 px-3 text-[0.9375rem] text-text" />
         </label>
       </div>
       <SubmitButton className="self-end">Save</SubmitButton>

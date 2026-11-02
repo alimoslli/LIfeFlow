@@ -47,7 +47,7 @@ export function LearnedCard({
           {kinds.map((k) => (
             <li key={k.kind} className="flex items-center gap-3 px-5 py-3">
               <div className="min-w-0 flex-1">
-                <p className="text-[15px]">{label(k.kind)}</p>
+                <p className="text-[0.9375rem]">{label(k.kind)}</p>
                 <p className="text-xs text-muted">
                   Shown {k.shown} · acted on {k.acted} · skipped {k.negative}
                 </p>
@@ -69,7 +69,7 @@ export function LearnedCard({
           <ul className="mt-1">
             {muted.map((k) => (
               <li key={k} className="flex min-h-11 items-center justify-between gap-3">
-                <span className="text-[15px]">{label(k)}</span>
+                <span className="text-[0.9375rem]">{label(k)}</span>
                 <ActionButton action={unmuteKindAction.bind(null, k)} className="rounded-full bg-surface-2 px-3 py-1.5 text-sm font-medium">
                   Bring back
                 </ActionButton>

@@ -19,7 +19,7 @@ export default async function RulesPage() {
       <Link href="/finances/transactions" className="hidden items-center gap-1 text-sm text-muted hover:text-text md:inline-flex">
         <ArrowLeft className="h-3.5 w-3.5" /> Transactions
       </Link>
-      <h1 className="mt-2 font-display text-[28px] font-medium tracking-tight">Category rules</h1>
+      <h1 className="mt-2 font-display text-[1.75rem] font-medium tracking-tight">Category rules</h1>
       <p className="mt-1 mb-5 text-sm text-text-2">New transactions from these merchants get these categories.</p>
       <Card>
         {rules.length === 0 ? (

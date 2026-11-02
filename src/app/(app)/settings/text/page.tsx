@@ -32,11 +32,11 @@ export default async function TextJarvisPage() {
         <Card className="flex flex-col gap-4 p-5">
           <div>
             <p className="text-xs text-muted">Your number</p>
-            <p className="text-[17px] font-medium">{s.phone}</p>
+            <p className="text-[1.0625rem] font-medium">{s.phone}</p>
           </div>
           <div>
             <p className="text-xs text-muted">Text {name} at</p>
-            <a href={`sms:${cfg.from}`} className="text-[17px] font-medium text-accent">
+            <a href={`sms:${cfg.from}`} className="text-[1.0625rem] font-medium text-accent">
               {cfg.from}
             </a>
           </div>

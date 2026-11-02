@@ -74,7 +74,7 @@ export function JarvisPage({
           <span className="lg:hidden">
             <HistorySheet items={items} activeId={activeId} />
           </span>
-          <p className="min-w-0 flex-1 truncate px-1 text-center text-[15px] font-semibold lg:text-left">{active?.title ?? "Jarvis"}</p>
+          <p className="min-w-0 flex-1 truncate px-1 text-center text-[0.9375rem] font-semibold lg:text-left">{active?.title ?? "Jarvis"}</p>
           <Link
             href="/jarvis"
             aria-label="New chat"

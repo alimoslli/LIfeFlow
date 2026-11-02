@@ -40,7 +40,7 @@ export default async function AccountsPage() {
   return (
     <>
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <h1 className="font-display text-[28px] font-medium tracking-tight">Accounts</h1>
+        <h1 className="font-display text-[1.75rem] font-medium tracking-tight">Accounts</h1>
         {d.accounts.length > 0 && (
           <p className="text-sm text-text-2">
             Net worth <Money cents={totals.netWorthCents} className="font-semibold text-text" />
@@ -76,7 +76,7 @@ export default async function AccountsPage() {
                     </div>
                     <div className="text-right">
                       <Money cents={a.currentBalanceCents} className="font-semibold" />
-                      {(a.type === "credit" || a.type === "loan") && <p className="text-[11px] text-muted">owed</p>}
+                      {(a.type === "credit" || a.type === "loan") && <p className="text-[0.6875rem] text-muted">owed</p>}
                     </div>
                     <details className="w-full">
                       <summary className="cursor-pointer text-xs text-accent">Edit details</summary>
@@ -179,7 +179,7 @@ export default async function AccountsPage() {
         </div>
         <div className="flex flex-col gap-5">
           <Card className="p-5">
-            <h2 className="mb-1 text-[15px] font-semibold">Bank connections</h2>
+            <h2 className="mb-1 text-[0.9375rem] font-semibold">Bank connections</h2>
             <p className="mb-4 text-sm text-text-2">
               Balances, transactions, investments and card details sync automatically every day, and whenever your bank has something new.
             </p>
@@ -196,7 +196,7 @@ export default async function AccountsPage() {
             />
           </Card>
           <Card className="p-5">
-            <h2 className="mb-3 text-[13px] font-semibold tracking-wide text-text-2 uppercase">Add an account manually</h2>
+            <h2 className="mb-3 text-[0.8125rem] font-semibold tracking-wide text-text-2 uppercase">Add an account manually</h2>
             <ActionForm action={createAccountAction} showSuccess>
               <Field label="Name" htmlFor="a-name">
                 <Input id="a-name" name="name" required placeholder="Everyday Checking" />

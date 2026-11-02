@@ -41,7 +41,7 @@ export function AssignmentList({ items, tz, showCourse = true, today }: { items:
                     aria-label={`Edit ${a.title}`}
                   >
                     <span className="min-w-0 flex-1">
-                      <span className={cn("line-clamp-2 text-[15px] leading-snug", done && "text-muted line-through")}>{a.title}</span>
+                      <span className={cn("line-clamp-2 text-[0.9375rem] leading-snug", done && "text-muted line-through")}>{a.title}</span>
                       <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
                         {showCourse && (
                           <span className="flex items-center gap-1.5">
@@ -82,7 +82,7 @@ export function AssignmentList({ items, tz, showCourse = true, today }: { items:
                 <CountedInput id="a-title" name="title" defaultValue={editing.title} required max={300} multiline rows={2} />
               </Field>
               <Field label="Type" htmlFor="a-kind">
-                <Select id="a-kind" name="kind" defaultValue={editing.kind} className="h-12 text-[16px]">
+                <Select id="a-kind" name="kind" defaultValue={editing.kind} className="h-12 text-[1rem]">
                   {KINDS.map((k) => (
                     <option key={k} value={k}>
                       {k[0].toUpperCase() + k.slice(1)}
@@ -93,12 +93,12 @@ export function AssignmentList({ items, tz, showCourse = true, today }: { items:
               <DateField name="dueDate" label="Due" today={today} defaultValue={editing.dueAt ? localDateOf(editing.dueAt, tz) : ""} />
               <TimeField name="dueTime" label="Time" defaultValue={editing.dueAt && !editing.dueAllDay ? localTimeOf(editing.dueAt, tz) : ""} />
               <Field label="Link (optional)" htmlFor="a-url">
-                <Input id="a-url" name="url" type="url" defaultValue={editing.url ?? ""} placeholder="https://" className="h-12 text-[16px]" />
+                <Input id="a-url" name="url" type="url" defaultValue={editing.url ?? ""} placeholder="https://" className="h-12 text-[1rem]" />
               </Field>
               <Field label="Grade (optional)" htmlFor="a-grade">
-                <Input id="a-grade" name="grade" defaultValue={editing.grade ?? ""} placeholder="92 or A-" className="h-12 text-[16px]" />
+                <Input id="a-grade" name="grade" defaultValue={editing.grade ?? ""} placeholder="92 or A-" className="h-12 text-[1rem]" />
               </Field>
-              <SubmitButton className="h-12 w-full text-[15px]">Save</SubmitButton>
+              <SubmitButton className="h-12 w-full text-[0.9375rem]">Save</SubmitButton>
             </ActionForm>
             <div className="flex items-center justify-between gap-2">
               {editing.url ? (

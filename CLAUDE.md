@@ -85,6 +85,8 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Money: never count income before it's deposited. Expected pay is shown (never counted) only for a salaried job whose paychecks land for the same amount; hourly pay is never predicted (`expectedPay` in forecast.ts). Today's money = one line: Available now (checking + cash) and the next bill this week. Money shows spent / came in this month with last month beside it, and the next 30 days as one bar (bills, usual spending, left).
 - Prefer one clear action per item; no dense tables on phones.
 - Goals are personal (`personal_goals`: done or a number like 12 books) and money (`financial_goals`); only money goals sit behind the Money lock. Habits live on Goals (`habits/habits-section.tsx`); Health (/habits) is health data only.
+- Text size (Settings → Profile & appearance, cookie `lf_text`) scales the root font size. Font sizes are in rem (`text-[0.9375rem]`, not `text-[15px]`) so they follow it; `mobile.spec.ts` checks pages at Extra large.
+- Invites: each user's link is `/?invite=<code>` (`services/invites.ts`); the landing page and sign-up carry the code, and sign-up credits the inviter once. Rewards come later with App Store offer codes.
 - Every calendar block is editable where it's shown: on Plan, events (one day or every time), shifts and assignments open an editor sheet (`plan/block-editor.tsx`); to-dos open their page.
 
 ## Error alerts

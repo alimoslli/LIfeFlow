@@ -206,6 +206,8 @@ export interface CinematicHeroProps extends React.HTMLAttributes<HTMLDivElement>
   ctaDescription?: string;
   /** How far the sequence scrolls before it ends, in pixels. */
   scrollLength?: number;
+  /** Where "Get started" goes (carries a friend's invite code). */
+  signupHref?: string;
 }
 
 export function CinematicHero({
@@ -224,6 +226,7 @@ export function CinematicHero({
   ctaHeading = "Start your week in order.",
   ctaDescription = "Create your account and your personal assistant will walk you through the rest.",
   scrollLength = 4200,
+  signupHref = "/signup",
   className,
   ...props
 }: CinematicHeroProps) {
@@ -391,7 +394,7 @@ export function CinematicHero({
         <p className="text-muted text-lg md:text-xl mb-12 max-w-xl mx-auto font-light leading-relaxed">{ctaDescription}</p>
         <div className="flex flex-col sm:flex-row gap-6">
           <Link
-            href="/signup"
+            href={signupHref}
             className="lf-btn-primary flex items-center justify-center px-10 py-4 rounded-[1.25rem] group focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             <span className="text-lg font-semibold transition-transform group-hover:scale-105">Get started</span>
@@ -469,7 +472,7 @@ export function CinematicHero({
                     <div className="relative w-full h-full pt-12 px-5 pb-8 flex flex-col">
                       <div className="phone-widget flex justify-between items-center mb-8">
                         <div className="flex flex-col">
-                          <span className="text-[10px] lf-mist-soft uppercase tracking-widest font-bold mb-1">Today</span>
+                          <span className="text-[0.625rem] lf-mist-soft uppercase tracking-widest font-bold mb-1">Today</span>
                           <span className="text-xl font-bold tracking-tight text-white drop-shadow-md">Your week</span>
                         </div>
                         <BrandMark className="h-9 w-9" alt="" />
@@ -482,7 +485,7 @@ export function CinematicHero({
                         </svg>
                         <div className="text-center z-10 flex flex-col items-center">
                           <span className="counter-val text-4xl font-extrabold tracking-tighter text-white">0</span>
-                          <span className="text-[8px] lf-mist-soft uppercase tracking-[0.1em] font-bold mt-0.5">{metricLabel}</span>
+                          <span className="text-[0.5rem] lf-mist-soft uppercase tracking-[0.1em] font-bold mt-0.5">{metricLabel}</span>
                         </div>
                       </div>
 
@@ -494,8 +497,8 @@ export function CinematicHero({
                             </svg>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold truncate">Pharmacology quiz review</p>
-                            <p className="text-[11px] lf-mist-soft">2:00 to 3:30 PM · Library</p>
+                            <p className="text-[0.8125rem] font-semibold truncate">Pharmacology quiz review</p>
+                            <p className="text-[0.6875rem] lf-mist-soft">2:00 to 3:30 PM · Library</p>
                           </div>
                         </div>
                         <div className="phone-widget widget-depth rounded-2xl p-3 flex items-center">
@@ -505,8 +508,8 @@ export function CinematicHero({
                             </svg>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold truncate">Shift at the campus café</p>
-                            <p className="text-[11px] lf-mist-soft">4:00 to 8:00 PM</p>
+                            <p className="text-[0.8125rem] font-semibold truncate">Shift at the campus café</p>
+                            <p className="text-[0.6875rem] lf-mist-soft">4:00 to 8:00 PM</p>
                           </div>
                         </div>
                       </div>
@@ -523,7 +526,7 @@ export function CinematicHero({
                   </div>
                   <div>
                     <p className="text-white text-xs lg:text-sm font-bold tracking-tight">Study block added</p>
-                    <p className="lf-mist-soft text-[10px] lg:text-xs font-medium">Wednesday, 1:00 PM</p>
+                    <p className="lf-mist-soft text-[0.625rem] lg:text-xs font-medium">Wednesday, 1:00 PM</p>
                   </div>
                 </div>
 
@@ -533,7 +536,7 @@ export function CinematicHero({
                   </div>
                   <div>
                     <p className="text-white text-xs lg:text-sm font-bold tracking-tight">Goal check-in</p>
-                    <p className="lf-mist-soft text-[10px] lg:text-xs font-medium">Reading: 7 of 12 books</p>
+                    <p className="lf-mist-soft text-[0.625rem] lg:text-xs font-medium">Reading: 7 of 12 books</p>
                   </div>
                 </div>
               </div>

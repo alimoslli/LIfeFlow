@@ -51,7 +51,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
           <span className="mt-1.5 h-12 w-1.5 rounded-full" style={{ background: c.color ?? "var(--accent)" }} />
           <div>
             <p className="text-sm font-medium text-muted">{[c.code, c.term].filter(Boolean).join(" · ") || "Course"}</p>
-            <h1 className="font-display text-[32px] leading-tight font-medium tracking-tight">{c.name}</h1>
+            <h1 className="font-display text-[2rem] leading-tight font-medium tracking-tight">{c.name}</h1>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-text-2">
               {c.instructorName && <span>{c.instructorName}</span>}
               {c.instructorEmail && (
@@ -80,11 +80,14 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
         <div className="flex flex-wrap gap-2">
           <AskJarvisButton
             prompt={`Build a study plan for ${label} around my schedule.`}
-            className="flex min-h-11 items-center rounded-full bg-surface px-4 text-[13px] font-medium shadow-soft"
+            className="flex min-h-11 items-center rounded-full bg-surface px-4 text-[0.8125rem] font-medium shadow-soft"
           >
             Study plan with Jarvis
           </AskJarvisButton>
-          <AskJarvisButton prompt={`About ${label}: `} className="flex min-h-11 items-center rounded-full bg-surface px-4 text-[13px] font-medium shadow-soft">
+          <AskJarvisButton
+            prompt={`About ${label}: `}
+            className="flex min-h-11 items-center rounded-full bg-surface px-4 text-[0.8125rem] font-medium shadow-soft"
+          >
             Ask about this class
           </AskJarvisButton>
           <AssignmentDialog action={createAssignmentAction} courses={[c]} defaultCourseId={c.id} />
@@ -133,9 +136,9 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
             </ul>
             <div className="px-5 pt-2 pb-4">
               <ActionForm action={addMaterialAction.bind(null, c.id)} className="gap-2">
-                <Input name="title" placeholder="Title (e.g. Week 4 slides)" required className="h-8 text-[13px]" aria-label="Material title" />
+                <Input name="title" placeholder="Title (e.g. Week 4 slides)" required className="h-8 text-[0.8125rem]" aria-label="Material title" />
                 <div className="flex gap-2">
-                  <Input name="url" type="url" placeholder="https://" className="h-8 text-[13px]" aria-label="Material link" />
+                  <Input name="url" type="url" placeholder="https://" className="h-8 text-[0.8125rem]" aria-label="Material link" />
                   <SubmitButton size="sm" variant="secondary">
                     Add
                   </SubmitButton>

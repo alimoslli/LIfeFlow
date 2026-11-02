@@ -31,7 +31,7 @@ function Switch({ name, label, hint, defaultChecked }: { name: string; label: st
   return (
     <label className="flex min-h-12 cursor-pointer items-center gap-3 py-1.5">
       <span className="min-w-0 flex-1">
-        <span className="block text-[15px]">{label}</span>
+        <span className="block text-[0.9375rem]">{label}</span>
         {hint && <span className="block text-xs text-muted">{hint}</span>}
       </span>
       <input type="checkbox" name={name} defaultChecked={defaultChecked} className="lf-switch" />
@@ -142,7 +142,7 @@ export function AssistantCard({
             id="as-pl"
             name="pushLimit"
             defaultValue={String(settings.pushLimit)}
-            className="h-11 max-w-[8rem] rounded-xl border border-border bg-surface px-3 text-[16px]"
+            className="h-11 max-w-[8rem] rounded-xl border border-border bg-surface px-3 text-[1rem]"
           >
             {[0, 1, 2, 3, 4, 5].map((n) => (
               <option key={n} value={n}>

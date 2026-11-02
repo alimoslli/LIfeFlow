@@ -13,7 +13,7 @@ function PickerRow({ icon, label, value, onOpen, id }: { icon: React.ReactNode; 
       type="button"
       id={id}
       onClick={onOpen}
-      className="flex min-h-12 w-full items-center gap-3 rounded-2xl border border-border bg-surface px-4 text-left text-[16px] transition-colors hover:bg-surface-2"
+      className="flex min-h-12 w-full items-center gap-3 rounded-2xl border border-border bg-surface px-4 text-left text-[1rem] transition-colors hover:bg-surface-2"
     >
       <span className="text-accent">{icon}</span>
       <span className="flex-1">
@@ -34,7 +34,7 @@ function Option({ selected, onClick, children, hint }: { selected: boolean; onCl
         onClick();
       }}
       className={cn(
-        "flex min-h-12 w-full items-center gap-3 rounded-2xl px-4 text-left text-[16px]",
+        "flex min-h-12 w-full items-center gap-3 rounded-2xl px-4 text-left text-[1rem]",
         selected ? "bg-accent-soft text-accent" : "hover:bg-surface-2",
       )}
       aria-pressed={selected}
@@ -107,7 +107,7 @@ export function DateField({
               type="date"
               value={value}
               onChange={(e) => e.target.value && pick(e.target.value)}
-              className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-[16px] text-text"
+              className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-[1rem] text-text"
             />
           </label>
         </div>
@@ -161,7 +161,7 @@ export function TimeField({
                 haptic("light");
                 pick(t);
               }}
-              className={cn("min-h-12 rounded-2xl border text-[16px]", value === t ? "border-accent bg-accent-soft text-accent" : "border-border bg-surface")}
+              className={cn("min-h-12 rounded-2xl border text-[1rem]", value === t ? "border-accent bg-accent-soft text-accent" : "border-border bg-surface")}
               aria-pressed={value === t}
             >
               {t12(t)}
@@ -181,10 +181,14 @@ export function TimeField({
             type="time"
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-[16px] text-text"
+            className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-[1rem] text-text"
           />
         </label>
-        <button type="button" onClick={() => setOpen(false)} className="mt-3 min-h-12 w-full rounded-full bg-accent text-[15px] font-medium text-accent-text">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="mt-3 min-h-12 w-full rounded-full bg-accent text-[0.9375rem] font-medium text-accent-text"
+        >
           Done
         </button>
       </Sheet>

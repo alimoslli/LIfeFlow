@@ -34,7 +34,7 @@ export function Field({
 }) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <label htmlFor={htmlFor} className="text-[13px] font-medium text-text-2">
+      <label htmlFor={htmlFor} className="text-[0.8125rem] font-medium text-text-2">
         {label}
       </label>
       {children}

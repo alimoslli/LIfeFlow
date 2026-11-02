@@ -24,16 +24,16 @@ export default async function NotificationSettings() {
     <div className="flex flex-col gap-5">
       <SettingsHeader title="Notifications" />
       <Card className="p-6">
-        <h2 className="mb-1 text-[15px] font-semibold">This device</h2>
+        <h2 className="mb-1 text-[0.9375rem] font-semibold">This device</h2>
         <ThisDevice available={available} />
       </Card>
 
       <Card className="p-6">
-        <h2 className="mb-1 text-[15px] font-semibold">What to send</h2>
+        <h2 className="mb-1 text-[0.9375rem] font-semibold">What to send</h2>
         <ActionForm action={saveNotificationPrefsAction} reset={false} className="gap-0">
           <label className="flex min-h-14 cursor-pointer items-center gap-3 border-b border-border py-2">
             <span className="min-w-0 flex-1">
-              <span className="block text-[15px]">To-do reminders</span>
+              <span className="block text-[0.9375rem]">To-do reminders</span>
               <span className="block text-xs text-muted">At the reminder time you pick on a to-do.</span>
             </span>
             <input type="checkbox" name="reminders" defaultChecked={prefs.reminders} className="lf-switch" />
@@ -49,7 +49,7 @@ export default async function NotificationSettings() {
       </Card>
 
       <Card className="p-6">
-        <h2 className="mb-1 text-[15px] font-semibold">Devices</h2>
+        <h2 className="mb-1 text-[0.9375rem] font-semibold">Devices</h2>
         {devices.length === 0 ? (
           <p className="text-sm text-muted">No devices yet.</p>
         ) : (
@@ -58,7 +58,7 @@ export default async function NotificationSettings() {
               <li key={d.id} className="flex min-h-14 items-center gap-3 py-2">
                 <Smartphone className="h-5 w-5 shrink-0 text-muted" />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[15px]">{d.deviceLabel ?? "Browser"}</span>
+                  <span className="block text-[0.9375rem]">{d.deviceLabel ?? "Browser"}</span>
                   <span className="block text-xs text-muted">
                     Added {formatIn(d.createdAt, tz, "MMM d")}
                     {d.lastSuccessAt ? ` · last notification ${formatIn(d.lastSuccessAt, tz, "MMM d, h:mm a")}` : ""}

@@ -29,7 +29,7 @@ export function CashOutlook(p: {
 
   return (
     <div>
-      <p className="text-[15px] leading-snug">
+      <p className="text-[0.9375rem] leading-snug">
         {short ? (
           <>
             Bills and usual spending come to <b className="tabular font-semibold">{whole(billsCents + usualCents)}</b>, which is{" "}
@@ -59,14 +59,14 @@ export function CashOutlook(p: {
         )}
       </div>
 
-      <dl className="mt-3 grid grid-cols-3 gap-2 text-[13px]">
+      <dl className="mt-3 grid grid-cols-3 gap-2 text-[0.8125rem]">
         <Legend dot="bg-danger/85" label="Bills" value={whole(billsCents)} />
         <Legend dot="bg-warning/80" label="Usual spending" value={whole(usualCents)} />
         <Legend dot={short ? "bg-text" : "bg-accent"} label={short ? "You have" : "Left"} value={whole(short ? p.cashCents : leftCents)} />
       </dl>
 
       {pay && (
-        <p className="mt-3 rounded-2xl bg-surface-2 px-3.5 py-2.5 text-[13px] text-text-2">
+        <p className="mt-3 rounded-2xl bg-surface-2 px-3.5 py-2.5 text-[0.8125rem] text-text-2">
           Expected pay: <span className="tabular font-medium text-text">{whole(pay.amountCents)}</span> on {formatDateStr(pay.date, "MMM d")}. Not counted until
           it lands.
         </p>
@@ -76,12 +76,12 @@ export function CashOutlook(p: {
         <ul className="mt-4 divide-y divide-border/70 border-t border-border/70">
           {p.bills.slice(0, 6).map((b) => (
             <li key={`${b.name}${b.date}`} className="flex items-center gap-3 py-3">
-              <span className="tabular w-12 shrink-0 text-[13px] text-muted">{formatDateStr(b.date, "MMM d")}</span>
+              <span className="tabular w-12 shrink-0 text-[0.8125rem] text-muted">{formatDateStr(b.date, "MMM d")}</span>
               <span className="min-w-0 flex-1">
-                <span className="line-clamp-1 break-words text-[15px]">{b.name}</span>
+                <span className="line-clamp-1 break-words text-[0.9375rem]">{b.name}</span>
                 {b.found && <span className="block text-xs text-muted">Found in your bank history</span>}
               </span>
-              <span className="tabular text-[15px]">{whole(-b.amountCents)}</span>
+              <span className="tabular text-[0.9375rem]">{whole(-b.amountCents)}</span>
             </li>
           ))}
         </ul>
@@ -97,7 +97,7 @@ function Legend({ dot, label, value }: { dot: string; label: string; value: stri
       <dt className="flex items-center gap-1.5 text-muted">
         <span className={cn("h-2 w-2 shrink-0 rounded-full", dot)} aria-hidden /> {label}
       </dt>
-      <dd className="tabular mt-0.5 text-[15px] font-medium">{value}</dd>
+      <dd className="tabular mt-0.5 text-[0.9375rem] font-medium">{value}</dd>
     </div>
   );
 }

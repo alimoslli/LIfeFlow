@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition, type ReactNode } from "react";
-import { ArrowLeft, BookOpen, Briefcase, CalendarDays, GraduationCap, Layers, Sun, Wallet } from "lucide-react";
+import { ArrowLeft, BookOpen, Briefcase, CalendarDays, Camera, GraduationCap, Layers, Link2, PencilLine, Sun, Wallet } from "lucide-react";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
 import { isHydrated } from "@/components/motion/intro";
 import { BrandMark } from "@/components/brand/brand-mark";
@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils";
 import type { LifeStage } from "@/lib/life";
 import { completeOnboardingAction, skipOnboardingAction } from "./actions";
 
-type StepId = "hello" | "what" | "week" | "yours";
-const STEPS: StepId[] = ["hello", "what", "week", "yours"];
+type StepId = "hello" | "what" | "add" | "week" | "yours";
+const STEPS: StepId[] = ["hello", "what", "add", "week", "yours"];
 
 const NAMES = ["Jarvis", "Nova", "Sage", "Atlas", "Max"];
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u;
@@ -31,7 +31,10 @@ const SAMPLE: Record<AssistantStyle, string> = {
  * except a name for their assistant; connecting the bank, Canvas and calendar comes
  * after the tour, when Jarvis points to it.
  */
-export function Onboarding({ firstName, theme }: { firstName: string; theme: Theme }) {
+/** What's free. `paid` is false while LifeFlow is free for everyone (testing). */
+export type PlanInfo = { paid: boolean; freeChatsPerDay: number; proFeatures: string[] };
+
+export function Onboarding({ firstName, theme, plan }: { firstName: string; theme: Theme; plan: PlanInfo }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -117,11 +120,11 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
               <span className="lf-orb-glow absolute -inset-1/3 rounded-full" aria-hidden />
               <BrandMark className="lf-float relative h-full w-full" priority />
             </div>
-            <h1 data-anim className="mt-8 font-display text-[44px] leading-[1.05] font-medium tracking-tight">
+            <h1 data-anim className="mt-8 font-display text-[2.75rem] leading-[1.05] font-medium tracking-tight">
               Hi {firstName}.
             </h1>
-            <p data-anim className="mt-4 text-[17px] leading-relaxed text-text-2">
-              LifeFlow is your classes, work, money and plans in one calm place, with a personal assistant who helps with all of it.
+            <p data-anim className="mt-4 text-[1.0625rem] leading-relaxed text-text-2">
+              LifeFlow is your classes, work, money and plans in one place, with a personal assistant who helps with all of it.
             </p>
           </>
         )}
@@ -143,12 +146,42 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
                     {Icon ? <Icon className="h-5 w-5" /> : <BrandMark className="h-7 w-7" alt="" />}
                   </span>
                   <span>
-                    <span className="block text-[16px] font-semibold">{title}</span>
-                    <span className="mt-0.5 block text-[15px] leading-snug text-text-2">{text}</span>
+                    <span className="block text-[1rem] font-semibold">{title}</span>
+                    <span className="mt-0.5 block text-[0.9375rem] leading-snug text-text-2">{text}</span>
                   </span>
                 </li>
               ))}
             </ul>
+          </>
+        )}
+
+        {step === "add" && (
+          <>
+            <Title sub="Three ways, and you can mix them.">How your week gets in</Title>
+            <ul className="mt-7 flex flex-col gap-5">
+              {(
+                [
+                  [Link2, "Connect", "Canvas, Google Calendar and your bank keep themselves up to date."],
+                  [Camera, "Send a picture", "A syllabus, your assignments, a work schedule or a bank statement. Your assistant reads it and adds it."],
+                  [PencilLine, "Add it yourself", "Any class, shift, bill or goal, in a few taps."],
+                ] as const
+              ).map(([Icon, title, text]) => (
+                <li key={title} data-anim className="flex gap-4">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <span>
+                    <span className="block text-[1rem] font-semibold">{title}</span>
+                    <span className="mt-0.5 block text-[0.9375rem] leading-snug text-text-2">{text}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p data-anim className="mt-7 rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem] leading-snug text-text-2">
+              {plan.paid
+                ? `Free plan: everything you add yourself, and ${plan.freeChatsPerDay} chats with your assistant a day. Pro adds ${listOf(plan.proFeatures)}.`
+                : "LifeFlow is free while we're testing. Everything is open to you."}
+            </p>
           </>
         )}
 
@@ -176,7 +209,7 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
                 >
                   <Icon className="h-5 w-5 shrink-0" strokeWidth={1.8} />
                   <span>
-                    <span className="block text-[16px] font-medium">{label}</span>
+                    <span className="block text-[1rem] font-medium">{label}</span>
                     <span className={cn("block text-sm", stage === value ? "opacity-80" : "text-muted")}>{hint}</span>
                   </span>
                 </button>
@@ -197,7 +230,7 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
                   aria-label="Assistant name"
                   autoCapitalize="words"
                   autoComplete="off"
-                  className="text-[16px]"
+                  className="text-[1rem]"
                 />
                 <div className="mt-2 flex flex-wrap gap-2">
                   {NAMES.map((n) => (
@@ -229,14 +262,14 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
                         style === k ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft",
                       )}
                     >
-                      <span className="text-[15px] font-medium">{ASSISTANT_STYLES[k].label}</span>
+                      <span className="text-[0.9375rem] font-medium">{ASSISTANT_STYLES[k].label}</span>
                       <span className={cn("text-sm", style === k ? "opacity-80" : "text-muted")}>{ASSISTANT_STYLES[k].hint}</span>
                     </button>
                   ))}
                 </div>
                 <div className="mt-3 flex gap-2.5 rounded-2xl bg-surface-2 p-3.5" aria-live="polite">
                   <BrandMark className="h-6 w-6" alt="" />
-                  <p className="text-[14px] leading-relaxed text-text-2">
+                  <p className="text-[0.875rem] leading-relaxed text-text-2">
                     <span className="font-semibold text-text">{nameOk ? cleanName : "Your assistant"}:</span> {SAMPLE[style]}
                   </p>
                 </div>
@@ -252,11 +285,11 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
       <div className="flex flex-col gap-3 pt-8">
         {error && <FormError message={error} />}
         {last ? (
-          <Button onClick={finish} loading={pending} disabled={!nameOk} className="h-12 text-[15px]">
+          <Button onClick={finish} loading={pending} disabled={!nameOk} className="h-12 text-[0.9375rem]">
             Meet {nameOk ? cleanName : "your assistant"}
           </Button>
         ) : (
-          <Button onClick={() => go(1)} disabled={step === "week" && !stage} className="h-12 text-[15px]">
+          <Button onClick={() => go(1)} disabled={step === "week" && !stage} className="h-12 text-[0.9375rem]">
             {step === "hello" ? "Show me" : "Continue"}
           </Button>
         )}
@@ -268,11 +301,11 @@ export function Onboarding({ firstName, theme }: { firstName: string; theme: The
 function Title({ children, sub }: { children: ReactNode; sub?: string }) {
   return (
     <>
-      <h1 data-anim className="font-display text-[34px] leading-tight font-medium tracking-tight">
+      <h1 data-anim className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">
         {children}
       </h1>
       {sub && (
-        <p data-anim className="mt-2 text-[15px] text-muted">
+        <p data-anim className="mt-2 text-[0.9375rem] text-muted">
           {sub}
         </p>
       )}
@@ -287,4 +320,10 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
       {children}
     </div>
   );
+}
+
+/** "a, b and c" */
+function listOf(items: string[]) {
+  const lower = items.map((t, i) => (i === 0 ? t.toLowerCase() : t.charAt(0).toLowerCase() + t.slice(1)));
+  return lower.length > 1 ? `${lower.slice(0, -1).join(", ")} and ${lower[lower.length - 1]}` : (lower[0] ?? "");
 }

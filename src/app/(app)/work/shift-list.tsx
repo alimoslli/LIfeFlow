@@ -60,11 +60,11 @@ export function ShiftList({
                   aria-label={`Edit shift on ${formatIn(s.startsAt, tz, "EEEE, MMM d")}`}
                 >
                   <span className="w-11 shrink-0 text-center">
-                    <span className="block text-[11px] font-medium text-muted uppercase">{formatIn(s.startsAt, tz, "EEE")}</span>
+                    <span className="block text-[0.6875rem] font-medium text-muted uppercase">{formatIn(s.startsAt, tz, "EEE")}</span>
                     <span className="block font-display text-2xl leading-tight">{formatIn(s.startsAt, tz, "d")}</span>
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[15px]">
+                    <span className="block text-[0.9375rem]">
                       {formatIn(s.startsAt, tz, "h:mm")} to {formatIn(s.endsAt, tz, "h:mm a")}
                     </span>
                     <span className="block text-sm text-muted">
@@ -83,7 +83,7 @@ export function ShiftList({
                     )}
                   </span>
                   <span className="shrink-0 text-right">
-                    <span className="tabular block text-[15px]">{s.paidHours.toFixed(1)} h</span>
+                    <span className="tabular block text-[0.9375rem]">{s.paidHours.toFixed(1)} h</span>
                     <span
                       className={cn(
                         "block text-xs",
@@ -126,7 +126,7 @@ export function ShiftList({
               </div>
             )}
             <section aria-label="Actual hours">
-              <h3 className="mb-2 text-[15px] font-semibold">Actual hours</h3>
+              <h3 className="mb-2 text-[0.9375rem] font-semibold">Actual hours</h3>
               <ActionForm action={recordHoursAction.bind(null, editing.id)} reset={false} onSuccess={() => setEditing(null)} className="gap-3">
                 <TimeField
                   name="clockIn"
@@ -148,10 +148,10 @@ export function ShiftList({
               </ActionForm>
             </section>
             <section aria-label="Schedule">
-              <h3 className="mb-2 text-[15px] font-semibold">Schedule</h3>
+              <h3 className="mb-2 text-[0.9375rem] font-semibold">Schedule</h3>
               <ActionForm action={updateShiftAction.bind(null, editing.id)} reset={false} onSuccess={() => setEditing(null)} className="gap-3">
                 <Field label="Job" htmlFor="sh-emp">
-                  <Select id="sh-emp" name="employerId" defaultValue={editing.employerId} className="h-12 text-[16px]">
+                  <Select id="sh-emp" name="employerId" defaultValue={editing.employerId} className="h-12 text-[1rem]">
                     {employers.map((e) => (
                       <option key={e.id} value={e.id}>
                         {e.name}
@@ -171,11 +171,11 @@ export function ShiftList({
                     min={0}
                     max={600}
                     defaultValue={editing.breakMinutes || ""}
-                    className="h-12 text-[16px]"
+                    className="h-12 text-[1rem]"
                   />
                 </Field>
                 <Field label="Notes" htmlFor="sh-notes">
-                  <Textarea id="sh-notes" name="notes" defaultValue={editing.notes ?? ""} rows={2} className="text-[16px]" />
+                  <Textarea id="sh-notes" name="notes" defaultValue={editing.notes ?? ""} rows={2} className="text-[1rem]" />
                 </Field>
                 <SubmitButton className="h-12 w-full">Save shift</SubmitButton>
               </ActionForm>

@@ -70,7 +70,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="font-display text-[34px] leading-tight font-medium tracking-tight">What {d.assistant.name} knows</h1>
+      <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">What {d.assistant.name} knows</h1>
       {imported > 0 && (
         <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
           {imported} suggestion{imported === 1 ? "" : "s"} added below. Keep the ones that are right.
@@ -88,7 +88,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
               <li key={m.id} className="flex items-start gap-3 px-5 py-3">
                 <div className="min-w-0 flex-1">
                   {m.supersedesId && <p className="text-xs text-muted line-through">{d.all.find((x) => x.id === m.supersedesId)?.content}</p>}
-                  <p className="text-[15px]">{m.content}</p>
+                  <p className="text-[0.9375rem]">{m.content}</p>
                   <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
                     <Badge tone={m.basis === "inferred" ? "info" : "neutral"}>{m.basis === "inferred" ? "Jarvis noticed" : "You mentioned it"}</Badge>
                     <span>
@@ -147,7 +147,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                 {g.items.map((m) => (
                   <li key={m.id} className="flex items-start gap-2 px-5 py-3">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[15px]">{m.content}</p>
+                      <p className="text-[0.9375rem]">{m.content}</p>
                       <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
                         <Badge tone={m.basis === "inferred" ? "info" : "neutral"}>
                           {m.basis === "inferred" ? "Jarvis noticed · you approved" : m.source === "user" ? "Added by you" : "You told Jarvis"}
@@ -211,7 +211,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
       {history.length > 0 && (
         <Card>
           <details>
-            <summary className="cursor-pointer list-none px-5 py-4 text-[15px] font-semibold [&::-webkit-details-marker]:hidden">
+            <summary className="cursor-pointer list-none px-5 py-4 text-[0.9375rem] font-semibold [&::-webkit-details-marker]:hidden">
               Archived &amp; dismissed ({history.length}) <span className="text-sm font-normal text-muted">· not used by Jarvis</span>
             </summary>
             <ul className="divide-y divide-border border-t border-border">
@@ -326,7 +326,7 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
     <div className="rounded-2xl bg-surface-2 px-3.5 py-3">
       <p className="text-xs text-muted">{label}</p>
       <p className="tabular mt-0.5 text-lg font-medium">{value}</p>
-      {hint && <p className="text-[11px] text-muted">{hint}</p>}
+      {hint && <p className="text-[0.6875rem] text-muted">{hint}</p>}
     </div>
   );
 }

@@ -2,8 +2,8 @@
 import { useState, useTransition } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ACCENTS, type Accent, type Theme } from "@/lib/theme";
-import { setAccentAction, setThemeAction } from "@/app/theme-actions";
+import { ACCENTS, type Accent, type TextSize, type Theme } from "@/lib/theme";
+import { setAccentAction, setTextSizeAction, setThemeAction } from "@/app/theme-actions";
 
 const OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "Light", icon: Sun },
@@ -68,6 +68,46 @@ export function AccentPicker({ initial }: { initial: Accent }) {
           className={cn("h-11 w-11 rounded-full ring-offset-2 ring-offset-bg transition-shadow", accent === a && "ring-2 ring-text")}
           style={{ background: SWATCH[a] }}
         />
+      ))}
+    </div>
+  );
+}
+
+const SIZES: { value: TextSize; label: string; sample: string }[] = [
+  { value: "default", label: "Default", sample: "text-[1rem]" },
+  { value: "large", label: "Large", sample: "text-[1.125rem]" },
+  { value: "xlarge", label: "Extra large", sample: "text-[1.25rem]" },
+];
+
+/** Text size for the whole app on this device. Applies instantly, then saves the choice. */
+export function TextSizePicker({ initial }: { initial: TextSize }) {
+  const [size, setSize] = useState<TextSize>(initial);
+  const [, start] = useTransition();
+  const choose = (t: TextSize) => {
+    setSize(t);
+    if (t === "default") document.documentElement.removeAttribute("data-text");
+    else document.documentElement.setAttribute("data-text", t);
+    start(() => setTextSizeAction(t));
+  };
+  return (
+    <div role="radiogroup" aria-label="Text size" className="grid grid-cols-3 gap-2">
+      {SIZES.map(({ value, label, sample }) => (
+        <button
+          key={value}
+          type="button"
+          role="radio"
+          aria-checked={size === value}
+          onClick={() => choose(value)}
+          className={cn(
+            "flex flex-col items-center gap-1 rounded-2xl px-2 py-3 text-sm transition-all",
+            size === value ? "bg-hero text-hero-text shadow-lift" : "bg-surface-2 text-text-2 hover:text-text",
+          )}
+        >
+          <span className={cn("font-display leading-none font-medium", sample)} aria-hidden>
+            Aa
+          </span>
+          {label}
+        </button>
       ))}
     </div>
   );

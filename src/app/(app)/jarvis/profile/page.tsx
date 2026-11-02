@@ -29,7 +29,7 @@ export default async function JarvisProfilePage() {
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header className="flex flex-col items-center pt-2 text-center">
         <JarvisAvatar style={d.avatar} name={name} className="h-24 w-24 [&_svg]:h-10 [&_svg]:w-10 [&>span]:text-3xl" />
-        <h1 className="mt-3 font-display text-[34px] leading-tight font-medium tracking-tight">{name}</h1>
+        <h1 className="mt-3 font-display text-[2.125rem] leading-tight font-medium tracking-tight">{name}</h1>
         {status.href ? (
           <Link href={status.href} className={`flex min-h-11 items-center text-sm font-medium ${status.tone}`}>
             {status.text}
@@ -69,7 +69,7 @@ export default async function JarvisProfilePage() {
           { href: "/settings/data", label: "Privacy & data", icon: Lock },
         ].map(({ href, label, icon: Icon }) => (
           <li key={href}>
-            <Link href={href} className="flex min-h-14 items-center gap-3 px-4 text-[15px]">
+            <Link href={href} className="flex min-h-14 items-center gap-3 px-4 text-[0.9375rem]">
               <Icon className="h-5 w-5 text-text-2" strokeWidth={1.8} />
               <span className="flex-1">{label}</span>
               <ChevronRight className="h-4 w-4 text-muted" />

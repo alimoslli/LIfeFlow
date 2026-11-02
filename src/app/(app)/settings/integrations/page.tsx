@@ -135,5 +135,5 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
 }
 
 function Group({ title }: { title: string }) {
-  return <h2 className="mt-3 px-1 text-[13px] font-medium tracking-wide text-muted uppercase">{title}</h2>;
+  return <h2 className="mt-3 px-1 text-[0.8125rem] font-medium tracking-wide text-muted uppercase">{title}</h2>;
 }

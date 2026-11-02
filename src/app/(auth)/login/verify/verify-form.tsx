@@ -6,7 +6,7 @@ import { FormError } from "@/components/ui/field";
 import { verifyLogin, type VerifyState } from "../../actions";
 
 const input =
-  "h-14 w-full rounded-2xl bg-surface px-4 text-center text-[22px] tracking-[0.3em] text-text shadow-soft placeholder:text-muted placeholder:tracking-normal focus:shadow-lift focus:outline-none focus:ring-2 focus:ring-[var(--ring)]";
+  "h-14 w-full rounded-2xl bg-surface px-4 text-center text-[1.375rem] tracking-[0.3em] text-text shadow-soft placeholder:text-muted placeholder:tracking-normal focus:shadow-lift focus:outline-none focus:ring-2 focus:ring-[var(--ring)]";
 
 export function VerifyForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState<VerifyState, FormData>(verifyLogin, null);
@@ -17,14 +17,14 @@ export function VerifyForm({ next }: { next?: string }) {
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-accent">
           <ShieldCheck className="h-6 w-6" />
         </span>
-        <h1 className="mt-5 font-display text-[34px] leading-[1.05] font-medium tracking-tight">One more step.</h1>
-        <p className="mt-2 text-[15px] text-muted">
+        <h1 className="mt-5 font-display text-[2.125rem] leading-[1.05] font-medium tracking-tight">One more step.</h1>
+        <p className="mt-2 text-[0.9375rem] text-muted">
           {backup ? "Enter one of the backup codes you saved when you turned this on." : "Open your authenticator app and enter the 6-digit code for LifeFlow."}
         </p>
       </div>
       <FormError message={state?.error} />
       {state?.expired ? (
-        <Link href="/login" className="flex h-12 items-center justify-center rounded-full bg-accent text-[15px] font-medium text-accent-text">
+        <Link href="/login" className="flex h-12 items-center justify-center rounded-full bg-accent text-[0.9375rem] font-medium text-accent-text">
           Sign in again
         </Link>
       ) : (
@@ -62,7 +62,7 @@ export function VerifyForm({ next }: { next?: string }) {
           <button
             type="submit"
             disabled={pending}
-            className="mt-1 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[15px] font-medium text-accent-text shadow-soft transition-transform active:scale-[0.98] disabled:opacity-60"
+            className="mt-1 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[0.9375rem] font-medium text-accent-text shadow-soft transition-transform active:scale-[0.98] disabled:opacity-60"
           >
             {pending && <Loader2 className="h-4 w-4 animate-spin" />}
             Verify

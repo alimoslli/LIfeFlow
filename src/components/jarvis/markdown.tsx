@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 /** Renders model output as Markdown. Raw HTML is not rendered (react-markdown default). */
 export function Markdown({ text }: { text: string }) {
   return (
-    <div className="prose-bf text-[14.5px] text-text">
+    <div className="prose-bf text-[0.9062rem] text-text">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{

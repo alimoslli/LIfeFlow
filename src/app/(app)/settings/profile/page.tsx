@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { AccentPicker, ThemePicker } from "@/components/theme-picker";
-import { ACCENT_COOKIE, THEME_COOKIE, parseAccent, parseTheme } from "@/lib/theme";
+import { AccentPicker, TextSizePicker, ThemePicker } from "@/components/theme-picker";
+import { ACCENT_COOKIE, TEXT_COOKIE, THEME_COOKIE, parseAccent, parseTextSize, parseTheme } from "@/lib/theme";
 import { eq } from "drizzle-orm";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -29,13 +29,15 @@ export default async function ProfileSettings() {
     <div className="flex flex-col gap-5">
       <SettingsHeader title="Profile & appearance" />
       <Card className="p-6">
-        <h2 className="mb-4 text-[15px] font-semibold">Appearance</h2>
+        <h2 className="mb-4 text-[0.9375rem] font-semibold">Appearance</h2>
         <ThemePicker initial={theme} />
         <h3 className="mt-5 mb-3 text-sm font-medium text-text-2">Accent color</h3>
         <AccentPicker initial={accent} />
+        <h3 className="mt-5 mb-3 text-sm font-medium text-text-2">Text size</h3>
+        <TextSizePicker initial={parseTextSize(jar.get(TEXT_COOKIE)?.value)} />
       </Card>
       <Card className="p-6">
-        <h2 className="mb-4 text-[15px] font-semibold">Profile</h2>
+        <h2 className="mb-4 text-[0.9375rem] font-semibold">Profile</h2>
         <ActionForm action={updateProfileAction} reset={false} showSuccess>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Name" htmlFor="p-name">

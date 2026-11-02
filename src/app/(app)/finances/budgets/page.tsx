@@ -69,7 +69,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-[28px] font-medium tracking-tight">Budgets</h1>
+        <h1 className="font-display text-[1.75rem] font-medium tracking-tight">Budgets</h1>
         <div className="flex items-center rounded-full bg-surface shadow-soft">
           <Link
             href={`/finances/budgets?month=${prev}`}
@@ -183,7 +183,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
         <div className="flex flex-col gap-5">
           {isCurrent && (
             <Card className="p-5">
-              <h2 className="text-[15px] font-semibold">Build my budget</h2>
+              <h2 className="text-[0.9375rem] font-semibold">Build my budget</h2>
               <p className="mt-1 text-sm text-text-2">Suggested from your last three months of real spending. Review the amounts, then save.</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {PLAN_NAMES.map(([k, label]) => (
@@ -236,7 +236,7 @@ export default async function BudgetsPage({ searchParams }: { searchParams: Prom
             </Card>
           )}
           <Card className="p-5">
-            <h2 className="mb-3 text-[13px] font-semibold tracking-wide text-text-2 uppercase">Set a budget</h2>
+            <h2 className="mb-3 text-[0.8125rem] font-semibold tracking-wide text-text-2 uppercase">Set a budget</h2>
             <ActionForm action={setBudgetAction} showSuccess>
               <input type="hidden" name="month" value={d.month} />
               <Field label="Category" htmlFor="b-cat">

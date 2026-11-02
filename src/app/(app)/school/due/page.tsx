@@ -68,7 +68,7 @@ export default async function DuePage({ searchParams }: { searchParams: Promise<
               <section key={g.key} aria-label={g.name} className="border-b border-border last:border-0">
                 <header className="flex items-center gap-2.5 px-4 pt-4 pb-1 sm:px-5">
                   <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: g.color }} />
-                  <h2 className="min-w-0 flex-1 truncate text-[15px] font-semibold">{g.name}</h2>
+                  <h2 className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold">{g.name}</h2>
                   <span className="text-xs text-muted">{g.items.length}</span>
                 </header>
                 <AssignmentList items={g.items} tz={d.tz} today={todayIn(d.tz)} showCourse={false} />

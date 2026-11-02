@@ -40,8 +40,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <div className="mb-9 flex h-20 w-20 items-center justify-center rounded-[28px] bg-white/14 p-2.5 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.35),0_18px_44px_-20px_rgb(0_0_0_/_0.6)] ring-1 ring-white/20">
             <BrandMark className="h-full w-full" alt="" priority />
           </div>
-          <p className="max-w-md font-display text-[44px] leading-[1.06] font-medium tracking-tight text-white">Your whole life, in flow.</p>
-          <p className="mt-4 max-w-sm text-[15px] text-white/75">Every morning, LifeFlow tells you what matters, and your assistant helps you handle it.</p>
+          <p className="max-w-md font-display text-[2.75rem] leading-[1.06] font-medium tracking-tight text-white">Your whole life, in flow.</p>
+          <p className="mt-4 max-w-sm text-[0.9375rem] text-white/75">
+            Every morning, LifeFlow tells you what matters, and your assistant helps you handle it.
+          </p>
           <div className="mt-10 flex max-w-md flex-col gap-3">
             <Preview
               icon={<Split className="h-[18px] w-[18px]" />}
@@ -68,7 +70,7 @@ function Preview({ icon, tone, text, action }: { icon: React.ReactNode; tone: st
     <div className="flex gap-3.5 rounded-3xl bg-white/95 p-4 shadow-lift">
       <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tone}`}>{icon}</span>
       <div className="pt-1.5">
-        <p className="text-[15px] leading-snug text-[#1b1a17]">{text}</p>
+        <p className="text-[0.9375rem] leading-snug text-[#1b1a17]">{text}</p>
         {action && <p className="mt-2 text-sm font-medium text-[#2f5d50]">✦ {action}</p>}
       </div>
     </div>

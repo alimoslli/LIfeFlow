@@ -23,7 +23,7 @@ export function GoalCheckin({ goals, checkins, today }: { goals: { id: string; t
   return (
     <Card className="p-5">
       <p className="text-xs font-medium tracking-wide text-accent uppercase">Today</p>
-      <p className="mt-1 text-[17px] font-medium">How did you work toward your goals today?</p>
+      <p className="mt-1 text-[1.0625rem] font-medium">How did you work toward your goals today?</p>
       {todays.length > 0 && (
         <ul className="mt-3 flex flex-col gap-1.5 text-sm">
           {todays.map((t, i) => (
@@ -75,7 +75,7 @@ export function PersonalGoals({ goals, checkins }: { goals: Goal[]; checkins: Ch
                   <Check className="h-5 w-5" />
                 </ActionButton>
                 <div className="min-w-0 flex-1">
-                  <p className={cn("line-clamp-2 break-words text-[15px] font-medium", done && "text-muted line-through")}>{g.title}</p>
+                  <p className={cn("line-clamp-2 break-words text-[0.9375rem] font-medium", done && "text-muted line-through")}>{g.title}</p>
                   <p className="mt-0.5 text-xs text-muted">
                     {measured ? `${g.progress} of ${g.target}${g.unit ? ` ${g.unit}` : ""}` : done ? "Done" : "Not done yet"}
                     {g.targetDate ? ` · by ${formatDateStr(g.targetDate, "MMM d")}` : ""}
@@ -142,7 +142,7 @@ export function PersonalGoals({ goals, checkins }: { goals: Goal[]; checkins: Ch
 export function NewPersonalGoal() {
   return (
     <Card className="h-fit p-5">
-      <h2 className="mb-3 text-[13px] font-semibold tracking-wide text-text-2 uppercase">New goal</h2>
+      <h2 className="mb-3 text-[0.8125rem] font-semibold tracking-wide text-text-2 uppercase">New goal</h2>
       <ActionForm action={createPersonalGoalAction} showSuccess className="gap-3">
         <Field label="Goal" htmlFor="pg-title">
           <Input id="pg-title" name="title" required placeholder="Read 12 books" />

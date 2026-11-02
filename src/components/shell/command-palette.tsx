@@ -156,7 +156,7 @@ export function CommandPalette({ open, onClose, onAsk }: { open: boolean; onClos
           role="combobox"
           aria-expanded="true"
           aria-controls="lf-palette-list"
-          className="h-14 min-w-0 flex-1 bg-transparent text-[16px] placeholder:text-muted focus:outline-none"
+          className="h-14 min-w-0 flex-1 bg-transparent text-[1rem] placeholder:text-muted focus:outline-none"
         />
         <button type="button" onClick={onClose} className="tap rounded-full text-sm text-muted">
           Esc
@@ -173,7 +173,7 @@ export function CommandPalette({ open, onClose, onAsk }: { open: boolean; onClos
             >
               <it.icon className="h-4 w-4 shrink-0 text-accent" />
               <span className="min-w-0 flex-1">
-                <span className="line-clamp-1 text-[15px]">{it.title}</span>
+                <span className="line-clamp-1 text-[0.9375rem]">{it.title}</span>
                 {it.subtitle && <span className="block text-xs text-muted">{it.subtitle}</span>}
               </span>
               <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted" />

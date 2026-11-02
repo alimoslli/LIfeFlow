@@ -62,7 +62,7 @@ export default async function GoalsPage() {
     <>
       {celebrate && <CelebrateGoal goalId={celebrate.id} name={celebrate.name} percent={celebrate.milestoneToCelebrate!} />}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-[28px] font-medium tracking-tight">Goals</h1>
+        <h1 className="font-display text-[1.75rem] font-medium tracking-tight">Goals</h1>
         <AskJarvisButton prompt="Help me set a goal. Ask me one question at a time about what I want to reach, then create it.">
           <Sparkles className="h-3.5 w-3.5" /> Plan a goal with Jarvis
         </AskJarvisButton>
@@ -75,11 +75,11 @@ export default async function GoalsPage() {
             today={d.today}
           />
           <PersonalGoals goals={d.personal} checkins={d.checkins} />
-          <h2 className="mt-3 text-[22px] font-medium tracking-tight">Money goals</h2>
+          <h2 className="mt-3 text-[1.375rem] font-medium tracking-tight">Money goals</h2>
           {locked && (
             <Link href="/money" className="flex min-h-14 items-center gap-3 rounded-3xl bg-surface px-5 shadow-soft">
               <Lock className="h-5 w-5 text-accent" />
-              <span className="flex-1 text-[15px]">Money is locked. Unlock it to see money goals.</span>
+              <span className="flex-1 text-[0.9375rem]">Money is locked. Unlock it to see money goals.</span>
             </Link>
           )}
           {!locked && d.goals.length === 0 && (
@@ -233,7 +233,7 @@ export default async function GoalsPage() {
           <NewPersonalGoal />
           {!locked && (
             <Card className="h-fit p-5">
-              <h2 className="mb-3 text-[13px] font-semibold tracking-wide text-text-2 uppercase">New money goal</h2>
+              <h2 className="mb-3 text-[0.8125rem] font-semibold tracking-wide text-text-2 uppercase">New money goal</h2>
               <ActionForm action={createGoalAction} showSuccess>
                 <Field label="What's it for?" htmlFor="g-p">
                   <Select id="g-p" name="purpose" defaultValue="emergency">

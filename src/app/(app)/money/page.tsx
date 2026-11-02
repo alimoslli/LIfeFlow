@@ -56,10 +56,10 @@ export default async function MoneyPage() {
   if (d.empty) {
     return (
       <div className="mx-auto max-w-[640px]">
-        <h1 className="font-display text-[40px] leading-none font-medium tracking-tight">Money</h1>
+        <h1 className="font-display text-[2.5rem] leading-none font-medium tracking-tight">Money</h1>
         <div className="mt-8 rounded-3xl bg-surface p-8 text-center shadow-soft">
           <Landmark className="mx-auto h-7 w-7 text-accent" />
-          <p className="mt-3 text-[17px]">Connect a bank or add an account to see where you stand.</p>
+          <p className="mt-3 text-[1.0625rem]">Connect a bank or add an account to see where you stand.</p>
           <p className="mt-1 text-sm text-muted">Then you&apos;ll see what you have, what you spent, and your bills.</p>
           <div className="mx-auto mt-5 flex max-w-sm flex-col items-center gap-3 text-left">
             <PlaidLinkButton configured={d.plaidReady} />
@@ -102,7 +102,7 @@ export default async function MoneyPage() {
       <div className="contents">
         <header className="animate-rise max-lg:order-[-3]">
           <p className="text-sm text-muted">{formatDateStr(d.today, "EEEE, MMMM d")}</p>
-          <h1 className="mt-1 font-display text-[40px] leading-none font-medium tracking-tight">Money</h1>
+          <h1 className="mt-1 font-display text-[2.5rem] leading-none font-medium tracking-tight">Money</h1>
           <p className="mt-2 text-xs text-muted">
             Balances as of {asOf ?? "unknown"}
             {o.balances.hasDemoData ? " · Sample data" : ""}
@@ -128,7 +128,7 @@ export default async function MoneyPage() {
               <p className="relative flex items-center gap-1.5 text-sm opacity-80">
                 <Wallet className="h-3.5 w-3.5" /> Available now
               </p>
-              <p className="tabular relative mt-1 font-display text-[54px] leading-none font-medium tracking-tight">
+              <p className="tabular relative mt-1 font-display text-[3.375rem] leading-none font-medium tracking-tight">
                 <CountUp cents={o.balances.cashCents} />
               </p>
               <p className="relative mt-2 text-sm opacity-80">In checking and cash. Savings are under Accounts.</p>
@@ -172,7 +172,7 @@ export default async function MoneyPage() {
 
         {alerts.length > 0 && (
           <section className="animate-rise max-lg:order-[-2]" style={{ animationDelay: "140ms" }} aria-label="Heads up">
-            <h2 className="mb-3 text-[15px] font-semibold">Heads up</h2>
+            <h2 className="mb-3 text-[0.9375rem] font-semibold">Heads up</h2>
             <ul data-tilt className="divide-y divide-border/70 overflow-hidden rounded-3xl bg-surface shadow-soft">
               {alerts.map((a, i) => (
                 <li key={i} className="flex gap-3 px-4 py-3.5">
@@ -185,9 +185,9 @@ export default async function MoneyPage() {
                     <AlertTriangle className="h-4 w-4" strokeWidth={1.9} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[15px] leading-snug font-medium">{a.text}</p>
-                    {a.fix && <p className="mt-0.5 text-[13px] leading-snug text-text-2">{a.fix}</p>}
-                    <Link href={a.href} className="-mb-2 inline-flex min-h-11 items-center gap-1 text-[13px] font-semibold text-accent">
+                    <p className="text-[0.9375rem] leading-snug font-medium">{a.text}</p>
+                    {a.fix && <p className="mt-0.5 text-[0.8125rem] leading-snug text-text-2">{a.fix}</p>}
+                    <Link href={a.href} className="-mb-2 inline-flex min-h-11 items-center gap-1 text-[0.8125rem] font-semibold text-accent">
                       Review <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   </div>
@@ -216,7 +216,7 @@ export default async function MoneyPage() {
             <ul data-tilt className="flex flex-col gap-4 rounded-3xl bg-surface p-5 shadow-soft">
               {shown.map((c) => (
                 <li key={c.name}>
-                  <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[15px]">
+                  <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[0.9375rem]">
                     <span className="min-w-0 truncate">{c.name}</span>
                     <span className="tabular shrink-0">
                       {whole(c.cents)}
@@ -274,7 +274,7 @@ function Waves() {
 function Title({ children, href }: { children: React.ReactNode; href: string }) {
   return (
     <div className="mb-3 flex items-baseline justify-between gap-3">
-      <h2 className="text-[15px] font-semibold">{children}</h2>
+      <h2 className="text-[0.9375rem] font-semibold">{children}</h2>
       <Link href={href} className="-my-3 flex min-h-11 shrink-0 items-center gap-1 text-sm text-muted hover:text-text">
         See all <ArrowRight className="h-3.5 w-3.5" />
       </Link>

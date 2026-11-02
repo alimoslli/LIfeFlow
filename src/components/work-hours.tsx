@@ -30,7 +30,7 @@ export function WorkHours({ value, onChange, name }: { value: WorkSchedule | nul
               !!value === fixed ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft",
             )}
           >
-            <span className="text-[15px] font-medium">{label}</span>
+            <span className="text-[0.9375rem] font-medium">{label}</span>
             <span className={cn("text-xs", !!value === fixed ? "opacity-80" : "text-muted")}>{hint}</span>
           </button>
         ))}
@@ -64,7 +64,7 @@ export function WorkHours({ value, onChange, name }: { value: WorkSchedule | nul
                 type="time"
                 value={value.start}
                 onChange={(e) => e.target.value && set({ start: e.target.value })}
-                className="h-11 rounded-xl bg-surface-2 px-3 text-[15px] text-text"
+                className="h-11 rounded-xl bg-surface-2 px-3 text-[0.9375rem] text-text"
               />
             </label>
             <label className="flex flex-col gap-1 text-sm text-text-2">
@@ -73,7 +73,7 @@ export function WorkHours({ value, onChange, name }: { value: WorkSchedule | nul
                 type="time"
                 value={value.end}
                 onChange={(e) => e.target.value && set({ end: e.target.value })}
-                className="h-11 rounded-xl bg-surface-2 px-3 text-[15px] text-text"
+                className="h-11 rounded-xl bg-surface-2 px-3 text-[0.9375rem] text-text"
               />
             </label>
           </div>
