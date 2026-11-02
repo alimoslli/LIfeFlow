@@ -295,7 +295,7 @@ def rounded(img, r):
 
 
 CARD_CROP = {"cashacct": (0, 118, 1050, 501), "lunch": (0, 0, 1050, 212), "banks": (0, 40, 1050, 603), "applehealth": (0, 0, 1050, 560),
-             "budgets": (0, 0, 1050, 820), "available": (0, 0, 1050, 340), "available_pre": (0, 0, 1050, 340), "invest": (0, 0, 1050, 690)}
+             "budgets": (0, 0, 1050, 820), "available": (0, 0, 1050, 340), "available_pre": (0, 0, 1050, 340), "invest": (0, 0, 1050, 760)}
 _cards = {}
 
 
