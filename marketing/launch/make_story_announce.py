@@ -24,7 +24,7 @@ bb = mol.getchannel("A").point(lambda v: 255 if v > 40 else 0).getbbox()
 mol = mol.crop(bb)
 mw = 640
 mol = mol.resize((mw, int(mol.height * mw / mol.width)), Image.LANCZOS)
-im.alpha_composite(mol, (410, 250))
+im.alpha_composite(mol, (400, 150))
 
 # ---------------------------------------------------------------- empty panel for the owner's text (top-mid-left)
 bx0, by0, bx1, by1 = 56, 280, 410, 470
@@ -48,7 +48,7 @@ chip = L.glass_pill("chip", "Launching today")
 im.alpha_composite(chip, (int(W / 2 - chip.width / 2), 1405))
 
 # small glass accents (kept off the text and the link-sticker zone)
-for (src, cx, cy, size, blur) in [(("g/g2.png", 461, 650, 150), 990, 800, 130, 2), (("g/g2.png", 1090, 1995, 175), 110, 1560, 190, 3)]:
+for (src, cx, cy, size, blur) in [(("g/g2.png", 461, 650, 150), 985, 905, 130, 2), (("g/g2.png", 1090, 1995, 175), 110, 1560, 190, 3)]:
     b = L.glass_ball(src[0], src[1], src[2], src[3], size, blur)
     im.alpha_composite(b, (int(cx - size / 2), int(cy - size / 2)))
 
