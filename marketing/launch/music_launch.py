@@ -146,7 +146,7 @@ ARP = [0, 2, 1, 3, 2, 4, 3, 1]
 scenes = P["scenes"]
 phones = [s for s in scenes if s["kind"] == "phone"]
 groove_from = phones[0]["start"] if phones else 0
-outro = scenes[-1]["start"] if scenes[-1]["kind"] == "gloss" else DUR
+outro = next((s["start"] for s in scenes if s.get("outro")), DUR)
 
 bar = 0
 t0 = 0.0
@@ -204,7 +204,10 @@ for i, s in enumerate(scenes):
         at = s["start"] + pl["at"]
         add(glass_pop(), at + 0.02, 0.8, -0.1)
         add(chime(85), at + 0.06, 0.8, -0.3, 0.6)
-    if s["kind"] == "gloss" and s["start"] > 0:  # outro: swell into an impact, then the final chord
+    if s["kind"] == "gloss" and s["start"] > 0 and not s.get("outro"):  # a glossy shot mid-video: air into it
+        add(whoosh(0.6), s["start"] - 0.3, 0.6)
+        add(chime(88, 2.0), s["start"] + 0.1, 0.6, 0.2, 0.7)
+    if s.get("outro"):  # outro: swell into an impact, then the final chord
         add(swell(1.2), s["start"] - 1.2, 1.0, 0.0, 0.3)
         add(kick(1.25), s["start"])
         add(sub(45, 2.2) * np.exp(-ta(2.2) / 0.9), s["start"], 1.2)

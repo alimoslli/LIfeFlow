@@ -1,71 +1,57 @@
 {
  "bpm": 100,
- "duration": 38.4,
+ "duration": 44.4,
  "vo": [
   [
    "vo/A1.wav",
-   2.55
+   1.35
   ],
   [
    "vo/A2.wav",
-   6.75
+   5.55
   ],
   [
-   "vo/A3.wav",
-   13.35
-  ],
-  [
-   "vo/A4.wav",
-   19.95
+   "vo/N_A3.wav",
+   12.15
   ],
   [
    "vo/A5.wav",
-   22.95
+   18.15
   ],
   [
-   "vo/A6.wav",
-   26.55
+   "vo/N_A6.wav",
+   21.75
   ],
   [
-   "vo/A7.wav",
-   31.35
+   "vo/N_A7.wav",
+   25.95
   ],
   [
-   "vo/A8.wav",
-   34.6
+   "vo/N_A9.wav",
+   30.15
+  ],
+  [
+   "vo/N_A10.wav",
+   33.75
+  ],
+  [
+   "vo/N_A8.wav",
+   38.7
   ]
  ],
  "scenes": [
   {
-   "kind": "gloss",
+   "kind": "still",
    "start": 0.0,
-   "end": 2.4,
-   "clip": "m/orbs.mp4",
-   "speed": 0.8,
-   "push": 0.06,
-   "fade_out": 0.3,
-   "haze": [
-    {
-     "cy": 930,
-     "h": 760,
-     "s": 0.88
-    }
-   ],
-   "texts": [
-    {
-     "eyebrow": "INTRODUCING LIFEFLOW",
-     "l1": "Your money,",
-     "l2": "finally clear.",
-     "top": 780,
-     "size": 118,
-     "at": 0.2
-    }
-   ]
+   "end": 1.2,
+   "image": "grid/cover_r1.png",
+   "push": 0.035,
+   "fade_out": 0.3
   },
   {
    "kind": "phone",
-   "start": 2.4,
-   "end": 6.6,
+   "start": 1.2,
+   "end": 5.4,
    "src": [
     {
      "rec": "m_over",
@@ -82,10 +68,11 @@
    },
    "pops": [
     {
-     "card": "available1842",
+     "card": "available_pre",
      "at": 1.2,
      "dur": 2.7,
-     "y": 1130
+     "y": 1130,
+     "w": 760
     }
    ],
    "pills": [],
@@ -93,8 +80,8 @@
   },
   {
    "kind": "phone",
-   "start": 6.6,
-   "end": 13.2,
+   "start": 5.4,
+   "end": 12.0,
    "src": [
     {
      "rec": "m_bank",
@@ -127,25 +114,25 @@
   },
   {
    "kind": "phone",
-   "start": 13.2,
-   "end": 19.8,
+   "start": 12.0,
+   "end": 18.0,
    "src": [
     {
      "rec": "m_cash",
      "from": 2.3,
-     "dur": 2.5,
-     "speed": 1.7
+     "dur": 2.4,
+     "speed": 1.75
     },
     {
      "rec": "m_cashtx",
      "from": 1.3,
-     "dur": 2.9,
-     "speed": 1.6
+     "dur": 2.5,
+     "speed": 1.85
     },
     {
      "rec": "m_txlist",
      "from": 0,
-     "dur": 1.2,
+     "dur": 1.1,
      "speed": 1.0
     }
    ],
@@ -158,51 +145,30 @@
    "pops": [
     {
      "card": "cashacct",
-     "at": 2.0,
+     "at": 1.9,
      "dur": 1.5,
      "y": 1080
     },
     {
      "card": "lunch",
-     "at": 5.3,
-     "dur": 1.3,
+     "at": 4.9,
+     "dur": 1.1,
      "y": 1080
     }
    ],
    "pills": [
     {
      "kind": "chip",
-     "text": "Or just tell Sage",
-     "at": 2.6,
+     "text": "Or just tell your assistant",
+     "at": 2.4,
      "y": 1680
     }
    ]
   },
   {
    "kind": "phone",
-   "start": 19.8,
-   "end": 22.8,
-   "src": [
-    {
-     "rec": "activity",
-     "from": 1.0,
-     "dur": 3.0,
-     "speed": 1.2
-    }
-   ],
-   "head": {
-    "eyebrow": "ACTIVITY",
-    "l1": "Every transaction,",
-    "l2": "sorted for you.",
-    "size": 88
-   },
-   "pops": [],
-   "pills": []
-  },
-  {
-   "kind": "phone",
-   "start": 22.8,
-   "end": 26.4,
+   "start": 18.0,
+   "end": 21.6,
    "src": [
     {
      "rec": "budget",
@@ -220,8 +186,8 @@
    "pops": [
     {
      "card": "budgets",
-     "at": 1.3,
-     "dur": 2.3,
+     "at": 1.2,
+     "dur": 2.2,
      "y": 1130,
      "w": 780
     }
@@ -230,18 +196,18 @@
   },
   {
    "kind": "phone",
-   "start": 26.4,
-   "end": 31.2,
+   "start": 21.6,
+   "end": 25.8,
    "src": [
     {
      "rec": "next30",
      "from": 0.6,
-     "dur": 4.8,
-     "speed": 0.9
+     "dur": 4.2,
+     "speed": 1.0
     }
    ],
    "head": {
-    "eyebrow": "SAGE KEEPS WATCH",
+    "eyebrow": "EARLY WARNINGS",
     "l1": "Heads up,",
     "l2": "before it happens.",
     "size": 88
@@ -249,8 +215,8 @@
    "pops": [
     {
      "card": "headsup",
-     "at": 1.7,
-     "dur": 2.7,
+     "at": 1.5,
+     "dur": 2.5,
      "y": 1110
     }
    ],
@@ -258,18 +224,18 @@
   },
   {
    "kind": "phone",
-   "start": 31.2,
-   "end": 34.2,
+   "start": 25.8,
+   "end": 30.0,
    "src": [
     {
      "rec": "subs",
      "from": 0.55,
-     "dur": 3.0,
-     "speed": 1.15
+     "dur": 4.2,
+     "speed": 0.85
     }
    ],
    "head": {
-    "eyebrow": "SUBSCRIPTIONS",
+    "eyebrow": "OVERSPENDING",
     "l1": "The ones you forgot,",
     "l2": "found.",
     "size": 88
@@ -277,10 +243,68 @@
    "pops": [
     {
      "card": "peryear",
-     "at": 0.9,
-     "dur": 1.6,
+     "at": 1.4,
+     "dur": 1.9,
      "y": 1120,
      "w": 560
+    }
+   ],
+   "pills": []
+  },
+  {
+   "kind": "phone",
+   "start": 30.0,
+   "end": 33.6,
+   "src": [
+    {
+     "rec": "m_save",
+     "from": 1.6,
+     "dur": 3.6,
+     "speed": 1.0
+    }
+   ],
+   "head": {
+    "eyebrow": "SAVINGS GOALS",
+    "l1": "Saving for something?",
+    "l2": "Get there sooner.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "whatif",
+     "at": 2.0,
+     "dur": 1.6,
+     "y": 1130,
+     "w": 800
+    }
+   ],
+   "pills": []
+  },
+  {
+   "kind": "phone",
+   "start": 33.6,
+   "end": 38.4,
+   "src": [
+    {
+     "rec": "m_invest",
+     "from": 1.4,
+     "dur": 4.8,
+     "speed": 1.0
+    }
+   ],
+   "head": {
+    "eyebrow": "INVESTING",
+    "l1": "Invest a little more.",
+    "l2": "See what it could become.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "invest",
+     "at": 2.3,
+     "dur": 2.0,
+     "y": 1130,
+     "w": 760
     }
    ],
    "pills": [],
@@ -288,37 +312,49 @@
   },
   {
    "kind": "gloss",
-   "start": 34.2,
-   "end": 38.4,
+   "outro": true,
+   "start": 38.4,
+   "end": 44.4,
    "clip": "m/molecule.mp4",
-   "speed": 0.8,
+   "speed": 0.6,
    "push": 0.03,
    "fade_in": 0.4,
    "haze": [
     {
-     "cy": 1580,
-     "h": 820,
-     "s": 0.85
+     "cy": 1560,
+     "h": 900,
+     "s": 0.88
     }
    ],
    "texts": [
     {
-     "l1": "Money,",
-     "l2": "handled.",
-     "top": 1290,
-     "size": 112,
-     "at": 0.25
+     "l1": "Budget smarter.",
+     "top": 1250,
+     "size": 92,
+     "at": 0.3
+    },
+    {
+     "l1": "Save faster.",
+     "top": 1355,
+     "size": 92,
+     "at": 1.8
+    },
+    {
+     "l2": "Invest more.",
+     "top": 1460,
+     "size": 92,
+     "at": 3.0
     }
    ],
    "wordmark": {
-    "at": 1.05,
-    "y": 1555,
+    "at": 4.4,
+    "y": 1580,
     "sub": "lifeflowweb.com"
    },
    "note": {
     "text": "App shown with sample data.",
-    "at": 1.2,
-    "y": 1846
+    "at": 4.6,
+    "y": 1850
    }
   }
  ]

@@ -1,67 +1,107 @@
 {
  "bpm": 100,
- "duration": 31.2,
+ "duration": 32.4,
  "vo": [
   [
-   "vo/B1.wav",
-   0.3
+   "vo/N_B1.wav",
+   1.4
   ],
   [
-   "vo/B2.wav",
-   3.75
+   "vo/N_B2.wav",
+   4.95
+  ],
+  [
+   "vo/N_B3.wav",
+   9.75
   ],
   [
    "vo/B3.wav",
-   8.55
+   14.55
   ],
   [
    "vo/B4.wav",
-   11.55
+   17.55
   ],
   [
-   "vo/B5.wav",
-   16.95
-  ],
-  [
-   "vo/B6.wav",
-   22.35
+   "vo/N_B6.wav",
+   22.95
   ],
   [
    "vo/B7.wav",
-   26.7
+   27.9
   ]
  ],
  "scenes": [
   {
-   "kind": "gloss",
+   "kind": "still",
    "start": 0.0,
-   "end": 3.6,
-   "clip": "m/ribbon.mp4",
-   "speed": 0.9,
-   "push": 0.06,
-   "fade_out": 0.3,
-   "haze": [
-    {
-     "cy": 470,
-     "h": 640,
-     "s": 0.85
-    }
-   ],
-   "texts": [
-    {
-     "eyebrow": "INTRODUCING LIFEFLOW",
-     "l1": "Big goals.",
-     "l2": "Small habits.",
-     "top": 330,
-     "size": 118,
-     "at": 0.2
-    }
-   ]
+   "end": 1.2,
+   "image": "grid/cover_r0.png",
+   "push": 0.035,
+   "fade_out": 0.3
   },
   {
    "kind": "phone",
-   "start": 3.6,
-   "end": 8.4,
+   "start": 1.2,
+   "end": 4.8,
+   "src": [
+    {
+     "rec": "tour",
+     "from": 0,
+     "dur": 3.6,
+     "speed": 0.8
+    }
+   ],
+   "head": {
+    "eyebrow": "YOUR DAY",
+    "l1": "Every morning,",
+    "l2": "your day is planned.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "next",
+     "at": 1.3,
+     "dur": 2.1,
+     "y": 1110
+    }
+   ],
+   "pills": [],
+   "enter": true
+  },
+  {
+   "kind": "phone",
+   "start": 4.8,
+   "end": 9.6,
+   "src": [
+    {
+     "rec": "tour",
+     "from": 3.45,
+     "dur": 4.8,
+     "speed": 0.5
+    }
+   ],
+   "head": {
+    "eyebrow": "ONE CALENDAR",
+    "l1": "Classes, shifts",
+    "l2": "and deadlines.",
+    "size": 88
+   },
+   "pops": [
+    {
+     "card": "week",
+     "at": 1.0,
+     "dur": 2.4,
+     "y": 1120,
+     "w": 780
+    }
+   ],
+   "pills": []
+  },
+  {
+   "kind": "phone",
+   "start": 9.6,
+   "end": 14.4,
    "src": [
     {
      "rec": "g_goals",
@@ -73,7 +113,7 @@
    "head": {
     "eyebrow": "GOALS",
     "l1": "Set a goal.",
-    "l2": "Sage plans the steps.",
+    "l2": "Get a plan.",
     "size": 88
    },
    "pops": [
@@ -84,13 +124,12 @@
      "y": 1110
     }
    ],
-   "pills": [],
-   "enter": true
+   "pills": []
   },
   {
    "kind": "phone",
-   "start": 8.4,
-   "end": 11.4,
+   "start": 14.4,
+   "end": 17.4,
    "src": [
     {
      "rec": "g_habit",
@@ -117,8 +156,8 @@
   },
   {
    "kind": "phone",
-   "start": 11.4,
-   "end": 16.8,
+   "start": 17.4,
+   "end": 22.8,
    "src": [
     {
      "rec": "g_health",
@@ -155,8 +194,8 @@
   },
   {
    "kind": "phone",
-   "start": 16.8,
-   "end": 22.2,
+   "start": 22.8,
+   "end": 27.6,
    "src": [
     {
      "rec": "g_conn",
@@ -167,8 +206,8 @@
     {
      "rec": "g_conn",
      "from": 4.0,
-     "dur": 4.2,
-     "speed": 0.44
+     "dur": 3.6,
+     "speed": 0.5
     }
    ],
    "head": {
@@ -180,37 +219,9 @@
    "pops": [
     {
      "card": "banks",
-     "at": 3.3,
+     "at": 2.6,
      "dur": 2.0,
      "y": 1100
-    }
-   ],
-   "pills": []
-  },
-  {
-   "kind": "phone",
-   "start": 22.2,
-   "end": 26.4,
-   "src": [
-    {
-     "rec": "tour",
-     "from": 0,
-     "dur": 4.2,
-     "speed": 0.55
-    }
-   ],
-   "head": {
-    "eyebrow": "TODAY",
-    "l1": "Every morning,",
-    "l2": "it all comes together.",
-    "size": 88
-   },
-   "pops": [
-    {
-     "card": "next",
-     "at": 1.3,
-     "dur": 2.3,
-     "y": 1110
     }
    ],
    "pills": [],
@@ -218,8 +229,9 @@
   },
   {
    "kind": "gloss",
-   "start": 26.4,
-   "end": 31.2,
+   "outro": true,
+   "start": 27.6,
+   "end": 32.4,
    "clip": "m/molecule.mp4",
    "speed": 0.75,
    "push": 0.03,

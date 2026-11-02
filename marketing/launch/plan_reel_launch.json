@@ -1,15 +1,37 @@
 {
  "bpm": 100,
- "duration": 12.0,
- "vo": [],
+ "duration": 20.4,
+ "vo": [
+  [
+   "vo/N_C1.wav",
+   1.4
+  ],
+  [
+   "vo/N_C3.wav",
+   9.75
+  ],
+  [
+   "vo/B7.wav",
+   15.9
+  ]
+ ],
  "scenes": [
   {
-   "kind": "gloss",
+   "kind": "still",
    "start": 0.0,
-   "end": 2.4,
+   "end": 1.2,
+   "image": "grid/cover_r2.png",
+   "push": 0.035,
+   "fade_out": 0.3
+  },
+  {
+   "kind": "gloss",
+   "start": 1.2,
+   "end": 5.4,
    "clip": "m/orbs.mp4",
    "speed": 0.8,
    "push": 0.06,
+   "fade_in": 0.3,
    "fade_out": 0.3,
    "haze": [
     {
@@ -31,8 +53,8 @@
   },
   {
    "kind": "phone",
-   "start": 2.4,
-   "end": 4.2,
+   "start": 5.4,
+   "end": 7.2,
    "src": [
     {
      "rec": "tour",
@@ -58,12 +80,12 @@
   },
   {
    "kind": "phone",
-   "start": 4.2,
-   "end": 5.4,
+   "start": 7.2,
+   "end": 8.4,
    "src": [
     {
      "rec": "tour",
-     "from": 3.55,
+     "from": 3.45,
      "dur": 1.2,
      "speed": 0.8
     }
@@ -85,14 +107,14 @@
   },
   {
    "kind": "phone",
-   "start": 5.4,
-   "end": 6.6,
+   "start": 8.4,
+   "end": 9.6,
    "src": [
     {
      "rec": "tour",
-     "from": 6.2,
+     "from": 6.25,
      "dur": 1.2,
-     "speed": 1.0
+     "speed": 0.9
     }
    ],
    "head": {
@@ -101,39 +123,77 @@
    },
    "pops": [
     {
-     "card": "available1842",
+     "card": "available_pre",
      "at": 0.15,
      "dur": 1.05,
-     "y": 1120
+     "y": 1120,
+     "w": 760
     }
    ],
    "pills": []
   },
   {
    "kind": "phone",
-   "start": 6.6,
-   "end": 8.4,
+   "start": 9.6,
+   "end": 15.6,
    "src": [
     {
      "rec": "tour",
      "from": 9.2,
-     "dur": 1.8,
-     "speed": 0.45
+     "dur": 2.4,
+     "speed": 0.25
+    },
+    {
+     "rec": "tour",
+     "from": 10.1,
+     "dur": 3.6,
+     "speed": 0.4
     }
    ],
    "head": {
+    "eyebrow": "YOUR PERSONAL ASSISTANT",
     "l1": "One assistant.",
-    "l2": "Meet Sage.",
-    "size": 104
+    "l2": "Your whole life.",
+    "size": 88
    },
-   "pops": [],
+   "pops": [
+    {
+     "card": "budgets",
+     "at": 0.55,
+     "dur": 0.85,
+     "y": 1130,
+     "w": 720
+    },
+    {
+     "card": "whatif",
+     "at": 1.3,
+     "dur": 0.85,
+     "y": 1130,
+     "w": 760
+    },
+    {
+     "card": "invest",
+     "at": 2.1,
+     "dur": 1.1,
+     "y": 1130,
+     "w": 720
+    },
+    {
+     "card": "peryear",
+     "at": 3.4,
+     "dur": 1.8,
+     "y": 1120,
+     "w": 560
+    }
+   ],
    "pills": [],
    "exit": true
   },
   {
    "kind": "gloss",
-   "start": 8.4,
-   "end": 12.0,
+   "outro": true,
+   "start": 15.6,
+   "end": 20.4,
    "clip": "m/molecule.mp4",
    "speed": 0.8,
    "push": 0.03,
@@ -147,7 +207,7 @@
    ],
    "texts": [
     {
-     "eyebrow": "NOW LIVE",
+     "eyebrow": "NOW LIVE ON THE WEB",
      "l1": "Your whole life,",
      "l2": "in one flow.",
      "top": 1230,
@@ -158,7 +218,7 @@
    "wordmark": {
     "at": 0.9,
     "y": 1560,
-    "sub": "lifeflowweb.com"
+    "sub": "lifeflowweb.com  \u00b7  Link in bio"
    }
   }
  ]

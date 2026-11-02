@@ -295,7 +295,7 @@ def rounded(img, r):
 
 
 CARD_CROP = {"cashacct": (0, 118, 1050, 501), "lunch": (0, 0, 1050, 212), "banks": (0, 40, 1050, 603), "applehealth": (0, 0, 1050, 560),
-             "budgets": (0, 0, 1050, 820), "available": (0, 0, 1050, 640), "available1842": (0, 0, 1050, 640)}
+             "budgets": (0, 0, 1050, 820), "available": (0, 0, 1050, 340), "available_pre": (0, 0, 1050, 340), "invest": (0, 0, 1050, 690)}
 _cards = {}
 
 
@@ -532,6 +532,25 @@ def render_gloss(sc, lt, fr):
     return im
 
 
+_stills = {}
+
+
+def render_still(sc, lt):
+    """The Reel opens on its grid post (the cover), then pushes in and dips to white."""
+    if sc["image"] not in _stills:
+        _stills[sc["image"]] = Image.open(sc["image"]).convert("RGBA").resize((W, H), Image.LANCZOS)
+    dur = sc["end"] - sc["start"]
+    im = _stills[sc["image"]]
+    k = 1.0 + sc.get("push", 0.04) * eio(lt / dur)
+    if k > 1.0005:
+        nw, nh = int(W * k), int(H * k)
+        im = im.resize((nw, nh), Image.BICUBIC).crop(((nw - W) // 2, (nh - H) // 2, (nw - W) // 2 + W, (nh - H) // 2 + H))
+    fo = sc.get("fade_out", 0)
+    if fo and lt > dur - fo:
+        im = white_mix(im, eio((lt - (dur - fo)) / fo))
+    return im
+
+
 PHONE_CX, PHONE_CY, PHONE_SCALE = W / 2 + 30, 1150, 0.84
 
 
@@ -583,7 +602,9 @@ def render(plan, out=None, preview=None):
         si = next(i for i, s in enumerate(scenes) if s["start"] <= t < s["end"] or i == len(scenes) - 1)
         sc = scenes[si]
         lt = t - sc["start"]
-        if sc["kind"] == "gloss":
+        if sc["kind"] == "still":
+            im = render_still(sc, lt)
+        elif sc["kind"] == "gloss":
             spd = sc.get("speed", 1.0)
             if preview is not None:
                 fr = Clip(sc["clip"], sc.get("from", 0) + lt * spd, 1, W, H, cover=True).next()
