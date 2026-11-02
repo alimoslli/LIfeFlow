@@ -142,8 +142,8 @@ hook = {
          "bold": {"counter": "3 / 3", "lines": ["IT *PLANS YOUR*", "*WEEK* FOR YOU"], "size": 98, "top": 100}, "punch": True},
         {"kind": "gloss", "outro": True, "start": 20.0, "end": 24.6, "clip": "m/molecule.mp4", "speed": 0.7, "push": 0.03, "fade_in": 0.3,
          "haze": [{"cy": 1560, "h": 900, "s": 0.88}],
-         "bold": {"lines": ["*TAP THE LINK*", "IN BIO."], "size": 118, "top": 1170, "at": 0.25, "out": False},
-         "wordmark": {"at": 1.4, "y": 1560, "sub": "lifeflowweb.com"}, "note": dict(NOTE, at=1.6, y=1850)},
+         "bold": {"lines": ["*TAP THE LINK*", "IN BIO."], "size": 118, "top": 1250, "at": 0.25, "out": False},
+         "wordmark": {"at": 1.4, "y": 1590, "sub": "lifeflowweb.com"}, "note": dict(NOTE, at=1.6, y=1850)},
     ],
 }
 
