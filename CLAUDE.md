@@ -43,6 +43,12 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Every Money page starts with `const locked = await moneyGate(); if (locked) return locked;` (not a layout). New money tools go in `finance.ts`/`money-coach.ts` so the Jarvis money lock covers them.
 - Reset and email links use `APP_URL`, never the Host header. Report an email as sent only with the provider's id.
 
+## Admin page (see ADR 0022)
+- `/admin` is owner-only: `ADMIN_EMAILS` plus two-step sign-in or a passkey, checked by `requireAdmin()` on every admin page **and every admin action** (never a layout alone). Anyone else gets a 404.
+- It shows accounts and operations only. Per-user content stays behind RLS and must never be reachable from admin code. Admin reads go through `services/admin.ts` (5 s timeout, hard limits) and each panel loads inside `safe()` so one failure can't blank the page.
+- Every change (sign out, suspend, plan, delete, clear error) writes `admin_actions` and refuses the admin themself, other admins and the demo account. Deleting needs the typed email and refuses active Pro users.
+- Suspension is enforced in `validateSession`, so a new session-starting path can't skip it.
+
 ## Integrations (see ADR 0010)
 - Plaid (`integrations/plaid.ts`): an account the user turns off (`excludedAt`) stays archived through every sync and its transactions/holdings are skipped and removed; turning it on resets the cursor. Accounts the bank stops sharing ("Choose accounts" = Link update mode with account selection) are archived. Investments/liabilities are only requested when the item has those account types and never fail the sync (only re-auth errors do). "Sync now" asks for live balances (`/accounts/balance/get`, falls back to `/accounts/get`).
 - Microsoft (Teams meetings + Outlook calendar) goes through `src/server/integrations/microsoft.ts` (provider and event source `"outlook"`): read-only `Calendars.Read` via the `common` endpoint so school, work and personal accounts work; Teams join links go in the event description. Teams for Education assignments need school admin consent, so they are not requested (screenshots instead).

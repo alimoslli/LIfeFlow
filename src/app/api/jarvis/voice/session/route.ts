@@ -7,6 +7,7 @@ import { startVoiceSession } from "@/server/jarvis/voice";
 import { inTestingPhase, LIMIT_MONTH_SECONDS, requirePro, TESTING_LIMITS, testingLimitMessage } from "@/server/billing";
 import { getDb } from "@/server/db/client";
 import { rateLimit } from "@/server/rate-limit";
+import { adminFor } from "@/server/auth/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
     if (!aiAllowed(user.preferences)) throw new HttpError(403, AI_CONSENT_NEEDED);
     await enforceRateLimit(`voice:min:${user.id}`, 4, 60);
     await enforceRateLimit(`voice:day:${user.id}`, 40, 86_400);
-    if (inTestingPhase()) {
+    if (inTestingPhase() && !(await adminFor(getDb(), user.id))) {
       const day = await rateLimit(getDb(), `voice:testing:${user.id}`, TESTING_LIMITS.voiceCallsPerDay, 86_400);
       if (!day.allowed) throw new HttpError(429, testingLimitMessage("voice calls", TESTING_LIMITS.voiceCallsPerDay, day.retryAfterSeconds));
       const month = await rateLimit(getDb(), `voice:testing-month:${user.id}`, TESTING_LIMITS.voiceCallsPerMonth, LIMIT_MONTH_SECONDS);

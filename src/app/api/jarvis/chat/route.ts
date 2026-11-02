@@ -7,6 +7,7 @@ import { getProvider, modelPrices } from "@/server/jarvis/providers";
 import { ProviderUnavailableError } from "@/server/jarvis/providers/types";
 import { FREE_JARVIS_PER_DAY, inTestingPhase, isPro, LIMIT_MONTH_SECONDS, TESTING_BUDGET_MESSAGE, TESTING_LIMITS, testingLimitMessage } from "@/server/billing";
 import { withUser } from "@/server/db/with-user";
+import { adminFor } from "@/server/auth/admin";
 import { spendSinceMicros } from "@/server/jarvis/metrics";
 import { getDb } from "@/server/db/client";
 import { rateLimit } from "@/server/rate-limit";
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
     await enforceRateLimit(`jarvis:day:${user.id}`, 400, 86_400);
     if (!isPro(user) && !(await rateLimit(getDb(), `jarvis:free:${user.id}`, FREE_JARVIS_PER_DAY, 86_400)).allowed)
       throw new HttpError(402, `You've used today's ${FREE_JARVIS_PER_DAY} free messages. LifeFlow Pro has no daily limit (Settings → Plan).`);
-    if (inTestingPhase()) {
+    if (inTestingPhase() && !(await adminFor(getDb(), user.id))) {
       const day = await rateLimit(getDb(), `jarvis:testing:${user.id}`, TESTING_LIMITS.messagesPerDay, 86_400);
       if (!day.allowed) throw new HttpError(429, testingLimitMessage("messages", TESTING_LIMITS.messagesPerDay, day.retryAfterSeconds));
       const month = await rateLimit(getDb(), `jarvis:testing-month:${user.id}`, TESTING_LIMITS.messagesPerMonth, LIMIT_MONTH_SECONDS);

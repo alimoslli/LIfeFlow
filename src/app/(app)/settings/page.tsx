@@ -1,12 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bell, Brain, ChevronRight, Gift, Link2, Lock, MessageCircleHeart, MessageSquare, Palette, Shield, Sparkles, Star, Trash2 } from "lucide-react";
+import {
+  Bell,
+  Brain,
+  ChevronRight,
+  Gift,
+  LayoutDashboard,
+  Link2,
+  Lock,
+  MessageCircleHeart,
+  MessageSquare,
+  Palette,
+  Shield,
+  Sparkles,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { billingConfig } from "@/server/billing";
 import { smsConfig } from "@/server/integrations/twilio";
 import type { LucideIcon } from "lucide-react";
 import { SignOutButton } from "@/components/pwa/sign-out-button";
 import { ReplayTour } from "@/components/replay-tour";
 import { assistantProfile } from "@/lib/assistant";
+import { adminFor } from "@/server/auth/admin";
+import { getDb } from "@/server/db/client";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { listPlaidConnections } from "@/server/integrations/plaid";
@@ -24,8 +41,10 @@ export default async function SettingsHome() {
       () => listPlaidConnections(s),
     );
     const google = list.find((i) => i.provider === "google")?.connections.length ?? 0;
-    return { name: u.name, email: u.email, assistant: assistantProfile(u.preferences).name, connected: google + banks.length };
+    return { id: u.id, name: u.name, email: u.email, assistant: assistantProfile(u.preferences).name, connected: google + banks.length };
   });
+  // Only the owner sees this row (ADR 0022); for everyone else it doesn't exist.
+  const isAdmin = !!(await adminFor(getDb(), d.id).catch(() => null));
   const initials = d.name
     .split(/\s+/)
     .map((p) => p[0])
@@ -61,6 +80,7 @@ export default async function SettingsHome() {
       { href: "/settings/invite", icon: Gift, tint: "bg-[#f97316]", label: "Invite friends" },
       { href: "/settings/feedback", icon: MessageCircleHeart, tint: "bg-[#ec4899]", label: "Send feedback" },
     ],
+    ...(isAdmin ? [[{ href: "/admin", icon: LayoutDashboard, tint: "bg-[#111827]", label: "Admin", detail: "Owner only" }]] : []),
   ];
   return (
     <div className="flex flex-col gap-6">

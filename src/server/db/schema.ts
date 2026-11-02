@@ -168,6 +168,8 @@ export const users = pgTable("users", {
   inviteCode: text("invite_code").unique(),
   /** Who invited this person, when they signed up from an invite link. */
   invitedBy: uuid("invited_by").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
+  /** Set by the owner (admin page). A suspended user can't sign in and their sessions stop working; data is kept. */
+  suspendedAt: tstz("suspended_at"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -311,6 +313,25 @@ export const errorReports = pgTable("error_reports", {
   firstSeenAt: tstz("first_seen_at").notNull().defaultNow(),
   lastSeenAt: tstz("last_seen_at").notNull().defaultNow(),
 });
+
+/**
+ * What the owner did on the admin page (ADR 0022). About accounts, not their content, so no RLS (like users and
+ * sessions). Emails are snapshots so the log stays readable after a user is deleted. Never put secrets in metadata.
+ */
+export const adminActions = pgTable(
+  "admin_actions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }),
+    actorEmail: text("actor_email").notNull(),
+    action: text("action").notNull(),
+    targetUserId: uuid("target_user_id"),
+    targetEmail: text("target_email"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: createdAt(),
+  },
+  (t) => [index("admin_actions_created_idx").on(t.createdAt)],
+);
 
 /** Beta feedback from Settings → Send feedback; also emailed to the owner (services/feedback.ts). */
 export const feedback = pgTable(

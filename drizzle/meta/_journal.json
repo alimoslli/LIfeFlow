@@ -225,6 +225,13 @@
       "when": 1793511925056,
       "tag": "0031_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793511985056,
+      "tag": "0032_admin_page",
+      "breakpoints": true
     }
   ]
 }
