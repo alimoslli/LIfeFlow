@@ -1,0 +1,205 @@
+{
+ "bpm": 100,
+ "duration": 24.6,
+ "vo": [
+  [
+   "vo/O1.wav",
+   0.1
+  ],
+  [
+   "vo/O2.wav",
+   4.1
+  ],
+  [
+   "vo/O3.wav",
+   7.5
+  ],
+  [
+   "vo/O4.wav",
+   12.3
+  ],
+  [
+   "vo/O5.wav",
+   16.7
+  ],
+  [
+   "vo/O6.wav",
+   20.7
+  ]
+ ],
+ "scenes": [
+  {
+   "kind": "phone",
+   "start": 0.0,
+   "end": 4.0,
+   "src": [
+    {
+     "rec": "onboard",
+     "from": 0.3,
+     "dur": 4.0,
+     "speed": 2.05
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "*SIGN UP*",
+     "IN A FEW TAPS."
+    ],
+    "size": 112,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 4.0,
+   "end": 7.4,
+   "src": [
+    {
+     "rec": "onboard",
+     "from": 8.85,
+     "dur": 3.4,
+     "speed": 1.28
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "IT ASKS *WHAT*",
+     "FILLS YOUR WEEK."
+    ],
+    "size": 100,
+    "top": 100,
+    "counter": "1 / 3"
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 7.4,
+   "end": 12.2,
+   "src": [
+    {
+     "rec": "onboard",
+     "from": 13.2,
+     "dur": 4.8,
+     "speed": 1.08
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "NAME IT. PICK",
+     "*ITS PERSONALITY.*"
+    ],
+    "size": 92,
+    "top": 100,
+    "counter": "2 / 3"
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 12.2,
+   "end": 16.6,
+   "src": [
+    {
+     "rec": "onboard",
+     "from": 20.3,
+     "dur": 4.4,
+     "speed": 2.05
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "A QUICK *TOUR.*",
+     "THEN YOU'RE IN."
+    ],
+    "size": 100,
+    "top": 100,
+    "counter": "3 / 3"
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 16.6,
+   "end": 20.6,
+   "src": [
+    {
+     "rec": "g_conn",
+     "from": 0.0,
+     "dur": 4.0,
+     "speed": 1.4
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "banks",
+     "at": 2.0,
+     "dur": 2.0,
+     "y": 1100
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "CONNECT",
+     "*EVERYTHING.*"
+    ],
+    "size": 116,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "gloss",
+   "outro": true,
+   "start": 20.6,
+   "end": 24.6,
+   "clip": "m/molecule.mp4",
+   "speed": 0.7,
+   "push": 0.03,
+   "fade_in": 0.3,
+   "haze": [
+    {
+     "cy": 1560,
+     "h": 900,
+     "s": 0.88
+    }
+   ],
+   "bold": {
+    "lines": [
+     "*MAKE IT YOURS.*",
+     "TAP THE LINK",
+     "IN BIO."
+    ],
+    "size": 92,
+    "top": 1225,
+    "at": 0.15,
+    "out": false
+   },
+   "wordmark": {
+    "at": 1.2,
+    "y": 1600,
+    "sub": "lifeflowweb.com"
+   },
+   "note": {
+    "text": "App shown with sample data.",
+    "at": 1.3,
+    "y": 1850
+   }
+  }
+ ]
+}

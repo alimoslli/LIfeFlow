@@ -221,7 +221,26 @@ p_chat = {
     ],
 }
 
-for name, p in (("reel_life", life), ("reel_money", money), ("reel_launch", launch), ("assistant", assistant), ("reel_hook", hook), ("p_school", p_school), ("p_subs", p_subs), ("p_save", p_save), ("p_chat", p_chat)):
+# 5. sign-up, onboarding, the tour, connecting and making it yours (one 24.6 s ad)
+p_onboard = {
+    "bpm": 100, "duration": 24.6,
+    "vo": [["vo/O1.wav", 0.1], ["vo/O2.wav", 4.1], ["vo/O3.wav", 7.5], ["vo/O4.wav", 12.3], ["vo/O5.wav", 16.7], ["vo/O6.wav", 20.7]],
+    "scenes": [
+        {**phone(0.0, 4.0, [rec("onboard", 0.3, 4.0, 2.05)], None), "bold": b(["*SIGN UP*", "IN A FEW TAPS."], size=112), "punch": True},
+        {**phone(4.0, 7.4, [rec("onboard", 8.85, 3.4, 1.28)], None), "bold": b(["IT ASKS *WHAT*", "FILLS YOUR WEEK."], size=100, counter="1 / 3"), "punch": True},
+        {**phone(7.4, 12.2, [rec("onboard", 13.2, 4.8, 1.08)], None), "bold": b(["NAME IT. PICK", "*ITS PERSONALITY.*"], size=92, counter="2 / 3"), "punch": True},
+        {**phone(12.2, 16.6, [rec("onboard", 20.3, 4.4, 2.05)], None), "bold": b(["A QUICK *TOUR.*", "THEN YOU'RE IN."], size=100, counter="3 / 3"), "punch": True},
+        {**phone(16.6, 20.6, [rec("g_conn", 0.0, 4.0, 1.4)], None, pops=[{"card": "banks", "at": 2.0, "dur": 2.0, "y": 1100}]),
+         "bold": b(["CONNECT", "*EVERYTHING.*"], size=116), "punch": True},
+        {"kind": "gloss", "outro": True, "start": 20.6, "end": 24.6, "clip": "m/molecule.mp4", "speed": 0.7, "push": 0.03, "fade_in": 0.3,
+         "haze": [{"cy": 1560, "h": 900, "s": 0.88}],
+         "bold": {"lines": ["*MAKE IT YOURS.*", "TAP THE LINK", "IN BIO."], "size": 92, "top": 1225, "at": 0.15, "out": False},
+         "wordmark": {"at": 1.2, "y": 1600, "sub": "lifeflowweb.com"}, "note": dict(NOTE, at=1.3, y=1850)},
+    ],
+}
+
+
+for name, p in (("reel_life", life), ("reel_money", money), ("reel_launch", launch), ("assistant", assistant), ("reel_hook", hook), ("p_school", p_school), ("p_subs", p_subs), ("p_save", p_save), ("p_chat", p_chat), ("p_onboard", p_onboard)):
     for a, b in zip(p["scenes"], p["scenes"][1:]):
         assert abs(a["end"] - b["start"]) < 1e-6, (name, a["end"], b["start"])
     assert abs(p["scenes"][-1]["end"] - p["duration"]) < 1e-6
