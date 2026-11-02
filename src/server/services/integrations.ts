@@ -60,6 +60,16 @@ export function providerCatalog(env: NodeJS.ProcessEnv = process.env): ProviderI
       docsUrl: "https://developers.google.com/workspace/gmail/api",
       availability: has("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET") ? "available" : "awaiting_credentials",
     },
+    {
+      provider: "outlook",
+      name: "Microsoft Teams and Outlook",
+      module: "Calendar",
+      description: "Read-only: your Outlook calendar and Teams meetings (with their join links) show in your plan. School, work and personal accounts.",
+      requires: ["MICROSOFT_CLIENT_ID", "MICROSOFT_CLIENT_SECRET"],
+      configured: has("MICROSOFT_CLIENT_ID", "MICROSOFT_CLIENT_SECRET"),
+      docsUrl: "https://learn.microsoft.com/graph/api/user-list-calendarview",
+      availability: has("MICROSOFT_CLIENT_ID", "MICROSOFT_CLIENT_SECRET") ? "available" : "awaiting_credentials",
+    },
   ];
 }
 
@@ -83,7 +93,9 @@ export async function integrationStatus(scope: UserScope) {
 export async function missingConnections(scope: UserScope) {
   const rows = await scope.tx.select({ provider: integrations.provider }).from(integrations).where(eq(integrations.userId, scope.userId));
   const have = new Set(rows.map((r) => r.provider));
-  return [!have.has("plaid") && "your bank", !have.has("canvas") && "Canvas", !have.has("google") && !have.has("google_calendar") && "Google Calendar"].filter(
-    (x): x is string => !!x,
-  );
+  return [
+    !have.has("plaid") && "your bank",
+    !have.has("canvas") && "Canvas",
+    !have.has("google") && !have.has("google_calendar") && !have.has("outlook") && "Google Calendar or Microsoft Teams",
+  ].filter((x): x is string => !!x);
 }

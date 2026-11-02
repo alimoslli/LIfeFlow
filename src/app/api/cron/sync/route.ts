@@ -6,6 +6,7 @@ import { connectionRegistry, users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
 import { syncGoogleCalendar, syncGoogleEmail } from "@/server/integrations/google";
+import { syncMicrosoftCalendar } from "@/server/integrations/microsoft";
 import { syncConnection } from "@/server/integrations/plaid";
 import { markCanvasError, syncCanvas } from "@/server/integrations/canvas";
 
@@ -38,6 +39,7 @@ export async function GET(req: Request) {
             await syncGoogleCalendar(s, r.tz);
             await syncGoogleEmail(s);
           });
+        else if (r.provider === "outlook") await withUser(r.userId, (s) => syncMicrosoftCalendar(s, r.tz));
         else if (r.provider === "canvas")
           await withUser(r.userId, (s) => syncCanvas(s, fetch, r.tz)).catch(async (e) => {
             await withUser(r.userId, (s) => markCanvasError(s, e));

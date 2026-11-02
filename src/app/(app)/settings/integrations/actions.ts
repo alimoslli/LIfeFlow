@@ -1,6 +1,7 @@
 "use server";
 import { mutate, type ActionState } from "@/server/actions";
 import { disconnectGoogle, GoogleError, syncGoogleCalendar } from "@/server/integrations/google";
+import { disconnectMicrosoft, MicrosoftError, syncMicrosoftCalendar } from "@/server/integrations/microsoft";
 import { ServiceError } from "@/server/services/errors";
 import { connectCanvas, connectCanvasFeed, disconnectCanvas, markCanvasError, syncCanvas } from "@/server/integrations/canvas";
 import { isPro } from "@/server/billing";
@@ -16,10 +17,24 @@ const asService = async <T>(fn: () => Promise<T>) => {
   try {
     return await fn();
   } catch (e) {
-    if (e instanceof GoogleError) throw new ServiceError(e.message);
+    if (e instanceof GoogleError || e instanceof MicrosoftError) throw new ServiceError(e.message);
     throw e;
   }
 };
+
+export async function syncMicrosoftAction(): Promise<ActionState> {
+  return mutate("integration.microsoft.synced", async (s, u) => {
+    const r = await asService(() => syncMicrosoftCalendar(s, u.timezone));
+    return `Synced ${r.total} event${r.total === 1 ? "" : "s"} from Microsoft.`;
+  });
+}
+
+export async function disconnectMicrosoftAction(): Promise<ActionState> {
+  return mutate("integration.microsoft.disconnected", async (s) => {
+    await asService(() => disconnectMicrosoft(s));
+    return "Microsoft disconnected.";
+  });
+}
 
 export async function syncGoogleAction(): Promise<ActionState> {
   return mutate("integration.google.synced", async (s, u) => {

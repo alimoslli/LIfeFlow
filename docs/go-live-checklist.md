@@ -36,6 +36,18 @@ Database migrations run automatically on deploy. Anything left blank stays off a
 
 Testing mode may ask you to reconnect about weekly. Other users' Gmail needs Google verification.
 
+## 2b. Microsoft Teams and Outlook (entra.microsoft.com)
+1. Sign in at entra.microsoft.com with a Microsoft account (create a free one if needed). App registrations → New registration.
+   - Name: LifeFlow
+   - Supported account types: **Accounts in any organizational directory and personal Microsoft accounts**
+   - Redirect URI: Web, `https://lifeflowweb.com/api/integrations/microsoft/callback`
+2. Overview: copy the **Application (client) ID** → Vercel `MICROSOFT_CLIENT_ID`.
+3. Certificates & secrets → New client secret (24 months) → copy the **Value** right away → Vercel `MICROSOFT_CLIENT_SECRET`. Put a reminder in your calendar to renew it before it expires.
+4. API permissions → Add → Microsoft Graph → Delegated: `openid`, `email`, `profile`, `offline_access`, `User.Read`, `Calendars.Read`. (No admin-only permissions, so most students can connect themselves.)
+5. Branding & properties: name LifeFlow, logo, home page `https://lifeflowweb.com`, privacy `https://lifeflowweb.com/privacy`, terms `https://lifeflowweb.com/terms`.
+6. Optional but recommended: Branding → Publisher verification (needs a Microsoft Partner Network ID). Without it, users see "unverified" on the consent screen, and some schools block unverified apps.
+7. Redeploy. Settings → Connected accounts → Connect Microsoft. If a school blocks it, the user sees a message to ask IT or send a screenshot instead.
+
 ## 3. Sign in with Apple (developer.apple.com, needs the $99/year Apple Developer Program)
 1. Certificates, Identifiers & Profiles → Identifiers → **App IDs** → new → enable **Sign in with Apple**.
 2. Identifiers → **Services IDs** → new, e.g. `app.lifeflow.web` (this is `APPLE_CLIENT_ID`) → enable Sign in with Apple → Configure:

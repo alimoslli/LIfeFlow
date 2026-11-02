@@ -56,7 +56,13 @@ export function testingLimitMessage(what: "messages" | "voice calls", limit: num
 /** Shown when the monthly assistant budget is used up. */
 export const TESTING_BUDGET_MESSAGE =
   "You've reached this month's assistant limit while LifeFlow is in testing. It frees up again over the next few days as older use rolls off. Everything else in the app keeps working.";
-export const PRO_FEATURES = { bank: "Bank sync", google: "Gmail and Google Calendar", sms: "Texting", voice: "Voice" } as const;
+export const PRO_FEATURES = {
+  bank: "Bank sync",
+  google: "Gmail and Google Calendar",
+  microsoft: "Microsoft Teams and Outlook",
+  sms: "Texting",
+  voice: "Voice",
+} as const;
 
 export const isPro = (user: Pick<SessionUser, "plan" | "accountKind">, cfg = billingConfig()) => !cfg || user.plan === "pro" || user.accountKind === "demo";
 

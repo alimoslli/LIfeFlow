@@ -161,7 +161,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
             <ul className="mt-7 flex flex-col gap-5">
               {(
                 [
-                  [Link2, "Connect", "Canvas, Google Calendar and your bank keep themselves up to date."],
+                  [Link2, "Connect", "Canvas, Google Calendar, Microsoft Teams and your bank keep themselves up to date."],
                   [Camera, "Send a picture", "A syllabus, your assignments, a work schedule or a bank statement. Your assistant reads it and adds it."],
                   [PencilLine, "Add it yourself", "Any class, shift, bill or goal, in a few taps."],
                 ] as const

@@ -8,6 +8,8 @@ import { healthSummary, listHealthTokens } from "@/server/services/health";
 import { integrationStatus } from "@/server/services/integrations";
 import { AppleHealthCard } from "./apple-health-card";
 import { GoogleCard } from "./google-card";
+import { MicrosoftCard } from "./microsoft-card";
+import { microsoftConfig } from "@/server/integrations/microsoft";
 import { BankConnections } from "@/components/finance/bank-connections";
 import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
 import { disconnectBankAction } from "../../finances/actions";
@@ -29,8 +31,21 @@ const GOOGLE_RESULT: Record<string, { tone: "success" | "danger" | "warning"; te
   use_main_site: { tone: "warning", text: "You're on the main site now. Tap Connect Google again." },
 };
 
-export default async function IntegrationsSettings({ searchParams }: { searchParams: Promise<{ google?: string }> }) {
-  const { google: result } = await searchParams;
+const MICROSOFT_RESULT: Record<string, { tone: "success" | "danger" | "warning"; text: string }> = {
+  connected: { tone: "success", text: "Microsoft is connected. Your Outlook calendar and Teams meetings are syncing." },
+  denied: { tone: "warning", text: "You didn't give Microsoft access, so nothing was connected." },
+  missing_scopes: { tone: "warning", text: "Calendar access wasn't allowed. Connect again and allow it." },
+  admin_consent: {
+    tone: "warning",
+    text: "Your school or workplace needs to approve LifeFlow before you can connect. Ask your IT team, or send your assistant a screenshot of your schedule instead.",
+  },
+  failed: { tone: "danger", text: "Couldn't connect Microsoft. Please try again." },
+  not_configured: { tone: "warning", text: "Microsoft isn't available yet." },
+  use_main_site: { tone: "warning", text: "You're on the main site now. Tap Connect Microsoft again." },
+};
+
+export default async function IntegrationsSettings({ searchParams }: { searchParams: Promise<{ google?: string; microsoft?: string }> }) {
+  const { google: result, microsoft: msResult } = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
     const [list, keys, health, banks, canvas] = await series(
       () => integrationStatus(s),
@@ -45,8 +60,9 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost";
   const proto = h.get("x-forwarded-proto") ?? (/^(localhost|127\.)/.test(host) ? "http" : "https");
   const origin = process.env.APP_URL?.trim().replace(/\/$/, "") || `${proto}://${host}`;
-  const banner = result ? GOOGLE_RESULT[result] : undefined;
+  const banner = result ? GOOGLE_RESULT[result] : msResult ? MICROSOFT_RESULT[msResult] : undefined;
   const google = d.list.find((i) => i.provider === "google");
+  const microsoft = d.list.find((i) => i.provider === "outlook");
   return (
     <div className="flex flex-col gap-3">
       <SettingsHeader title="Connected accounts" />
@@ -87,6 +103,19 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
           }
         />
       )}
+      <MicrosoftCard
+        configured={!!microsoftConfig()}
+        connection={
+          microsoft?.connections[0]
+            ? {
+                email: microsoft.connections[0].displayName ?? "Microsoft account",
+                status: microsoft.connections[0].status,
+                lastSynced: microsoft.connections[0].lastSyncedAt ? formatIn(microsoft.connections[0].lastSyncedAt, d.tz, "MMM d, h:mm a") : null,
+                error: microsoft.connections[0].lastError,
+              }
+            : null
+        }
+      />
       <Group title="Money" />
       <Card className="p-5">
         <div className="mb-1 flex items-center justify-between gap-3">
