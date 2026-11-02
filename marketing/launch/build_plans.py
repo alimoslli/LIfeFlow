@@ -93,7 +93,7 @@ launch = {
         phone(5.4, 7.2, [rec("tour", 0.2, 1.8)], {"l1": "Your classes.", "size": 104}, pops=[{"card": "next", "at": 0.6, "dur": 1.2, "y": 1110}], enter=True),
         phone(7.2, 8.4, [rec("tour", 3.45, 1.2, 0.8)], {"l1": "Your shifts.", "size": 104}, pops=[{"card": "week", "at": 0.15, "dur": 1.05, "y": 1120, "w": 760}]),
         phone(8.4, 9.6, [rec("tour", 6.25, 1.2, 0.9)], {"l1": "Your money.", "size": 104}, pops=[{"card": "available_pre", "at": 0.15, "dur": 1.05, "y": 1120, "w": 760}]),
-        phone(9.6, 15.6, [rec("tour", 9.2, 2.4, 0.25), rec("tour", 10.1, 3.6, 0.4)], head("YOUR PERSONAL ASSISTANT", "One assistant.", "Your whole life."),
+        phone(9.6, 15.6, [rec("tour", 9.2, 2.4, 0.25), rec("tour", 10.1, 3.6, 0.4)], head("YOUR PERSONAL ASSISTANT", "One assistant.", "For all of it."),
               pops=[{"card": "budgets", "at": 0.55, "dur": 0.85, "y": 1130, "w": 720}, {"card": "whatif", "at": 1.3, "dur": 0.85, "y": 1130, "w": 760},
                     {"card": "invest", "at": 2.1, "dur": 1.1, "y": 1130, "w": 720}, {"card": "peryear", "at": 3.4, "dur": 1.8, "y": 1120, "w": 560}], exit=True),
         {"kind": "gloss", "outro": True, "start": 15.6, "end": 20.4, "clip": "m/molecule.mp4", "speed": 0.8, "push": 0.03, "fade_in": 0.4,

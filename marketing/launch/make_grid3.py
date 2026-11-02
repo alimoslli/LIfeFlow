@@ -161,7 +161,7 @@ def rounded_path(pts, r, steps=20):
     return out
 
 
-LINE = rounded_path([(150, 1330), (3176, 1330), (3176, 2770), (64, 2770), (64, 4250), (2330, 4250)], 150)
+LINE = rounded_path([(150, 1330), (3176, 1330), (3176, 2770), (64, 2770), (64, 4250), (2200, 4250)], 150)
 glow = Image.new("L", (GW, GH), 0)
 ImageDraw.Draw(glow).line(LINE, fill=120, width=22, joint="curve")
 gl = Image.new("RGBA", (GW, GH), SAGE + (0,))
@@ -175,11 +175,11 @@ logo = L.LOGO.resize((150, 150), Image.LANCZOS)
 im.alpha_composite(logo, (104, 118))
 text(276, 193, "LifeFlow", SERIF(92), INK, "lm")
 g1 = Image.open("g/g1.png").convert("RGB")
-g1 = g1.resize((560, int(560 * g1.height / g1.width)), Image.LANCZOS)
+g1 = g1.resize((480, int(480 * g1.height / g1.width)), Image.LANCZOS)
 mol = L.key_white(g1)
 fade = np.clip((g1.height * 0.78 - np.arange(g1.height)) / (g1.height * 0.07), 0, 1)
 mol.putalpha(Image.fromarray((np.asarray(mol.getchannel("A")) * fade[:, None]).astype(np.uint8)))
-canvas_paste(mol, 600, -200)
+canvas_paste(mol, 596, -225)
 text(104, 400, "Your whole", SERIF(150), INK)
 text(104, 568, "life, in", SERIF(150), INK)
 text(104, 736, "one flow.", SERIF_I(150), MOSS)
@@ -189,10 +189,10 @@ ball(150, 1330, 96)
 # (0,1) Reel cover: your day (phone fully inside the post)
 phone("today", 1620, 700, 0.74, ry=-12, rx=6, rz=-2)
 card("next", 1560, 1010, 700, ry=-6, rx=4)
-ball(1080, 300, 170, blur=1)
+ball(1080, 1180, 150, blur=1)
 
 # (0,2) your day
-eyebrow(2270, 190, "YOUR DAY")
+eyebrow(2270, 190, "TODAY")
 text(2264, 262, "Your day,", SERIF(108), INK)
 text(2264, 388, "already planned.", SERIF_I(108), MOSS)
 body(2270, 560, "Classes, shifts and deadlines in one calendar. Open the app and know exactly what's next.", width=820)
@@ -204,7 +204,7 @@ eyebrow(130, 1630, "MONEY")
 text(124, 1702, "See where", SERIF(108), INK)
 text(124, 1828, "every dollar", SERIF(108), INK)
 text(124, 1954, "goes.", SERIF_I(108), MOSS)
-body(130, 2130, "Every account and every purchase, in one clear view.", width=800)
+body(130, 2130, "Every account and every purchase in one clear view.", width=800)
 plaid = L.glass_pill("plaid", "")
 plaid = plaid.resize((int(plaid.width * 1.08), int(plaid.height * 1.08)), Image.LANCZOS)
 canvas_paste(plaid, 540 - plaid.width / 2, 2440)
@@ -216,18 +216,18 @@ ball(2160, 1700, 150, src=("g/g2.png", 1090, 1995, 175), blur=1)
 
 # (1,2) money coach
 eyebrow(2290, 1630, "YOUR MONEY COACH")
-text(2284, 1702, "Budget smarter.", SERIF(100), INK)
-text(2284, 1820, "Save faster.", SERIF(100), INK)
-text(2284, 1938, "Invest more.", SERIF_I(100), MOSS)
-body(2290, 2100, "Your assistant spots overspending and helps you turn it into savings.", width=800)
-card("invest", 2700, 2560, 700, ry=-7, rx=5, crop=(0, 0, 1050, 690))
+text(2284, 1700, "Budget smarter.", SERIF(96), INK)
+text(2284, 1808, "Save faster.", SERIF(96), INK)
+text(2284, 1916, "Invest more.", SERIF_I(96), MOSS)
+body(2290, 2064, "Your assistant spots overspending and helps you turn it into savings.", width=800)
+card("invest", 2700, 2492, 680, ry=-7, rx=5, crop=(0, 0, 1050, 760))
 ball(2930, 2880, 200)
 
 # ================================================================= ROW 3
 # (2,0) your assistant
 eyebrow(200, 3020, "YOUR PERSONAL ASSISTANT")
 text(194, 3092, "One assistant.", SERIF(108), INK)
-text(194, 3218, "Your whole life.", SERIF_I(108), MOSS)
+text(194, 3218, "For all of it.", SERIF_I(108), MOSS)
 y = 3420
 for s in ["Plans your week", "Builds your budget", "Grows your savings", "Helps you invest more", "Breaks overspending habits"]:
     chip = L.glass_pill("chip", s)
@@ -260,7 +260,7 @@ shadow_onto(dst, 100, 40, 56)
 warp_onto(win, dst, fill=(247, 247, 245))
 pill(2700, 4060, "Link in bio")
 text(2700, 4170, "lifeflowweb.com  ·  No download needed", SANS(34, "Medium"), GRAY, "mm")
-ball(2330, 4250, 96)
+ball(2200, 4250, 96)
 text(2700, 4268, "App shown with sample data.", SANS(24, "Regular"), (160, 162, 156), "mm")
 
 # ---------------------------------------------------------------- export
