@@ -40,7 +40,11 @@ for i, (fn, name, sub) in enumerate(LOGOS):
     d = ImageDraw.Draw(im)
     d.rounded_rectangle((x, y, x + TW, y + TH), radius=44, fill=(255, 255, 255, 255), outline=(232, 235, 233, 255), width=3)
     lg = Image.open(f"logos/{fn}.png").convert("RGBA")
-    lg = lg.crop(lg.getchannel("A").point(lambda v: 255 if v > 8 else 0).getbbox() or (0, 0, lg.width, lg.height))
+    flat = Image.new("RGBA", lg.size, (255, 255, 255, 255))
+    flat.alpha_composite(lg)
+    ink = flat.convert("L").point(lambda v: 255 if v < 244 else 0)  # anything that isn't the white background
+    lg = lg.crop(ink.getbbox() or (0, 0, lg.width, lg.height))
+    lg = Image.alpha_composite(Image.new("RGBA", lg.size, (255, 255, 255, 255)), lg)
     box_w, box_h = (210, 112) if lg.width / lg.height > 1.6 else (130, 112)
     s = min(box_w / lg.width, box_h / lg.height)
     lg = lg.resize((max(1, int(lg.width * s)), max(1, int(lg.height * s))), Image.LANCZOS)
