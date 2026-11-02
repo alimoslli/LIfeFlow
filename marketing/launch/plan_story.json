@@ -63,9 +63,9 @@
    "src": [
     {
      "rec": "tour",
-     "from": 3.2,
+     "from": 3.55,
      "dur": 1.2,
-     "speed": 1.0
+     "speed": 0.8
     }
    ],
    "head": {
@@ -116,9 +116,9 @@
    "src": [
     {
      "rec": "tour",
-     "from": 9.0,
+     "from": 9.2,
      "dur": 1.8,
-     "speed": 1.0
+     "speed": 0.45
     }
    ],
    "head": {
