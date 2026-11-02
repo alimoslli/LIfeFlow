@@ -61,7 +61,7 @@ im.alpha_composite(chip, (int(W / 2 - chip.width / 2), grid_bottom + 18))
 f = L.SERIF_I(64)
 d = ImageDraw.Draw(im)
 for i, s in enumerate(["Sign up and start", "connecting your life."]):
-    im.alpha_composite(L.word_img(s, f, L.MOSS), (int(W / 2 - d.textlength(s, font=f) / 2), grid_bottom + 150 + i * 78))
+    im.alpha_composite(L.word_img(s, f, L.MOSS), (int(W / 2 - d.textlength(s, font=f) / 2), grid_bottom + 172 + i * 78))
 
 # glass accents, kept off the text and the link-sticker zone
 for (src, cx, cy, size, blur) in [(("g/g2.png", 461, 650, 150), 975, 380, 170, 2), (("g/g2.png", 1090, 1995, 175), 95, 600, 130, 3)]:
