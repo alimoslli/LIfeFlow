@@ -66,7 +66,7 @@ money = {
               pills=[{"kind": "chip", "text": "Or just tell your assistant", "at": 2.4, "y": 1680}]),
         phone(18.0, 21.6, [rec("budget", 0.6, 3.6, 0.8)], head("BUDGETS", "Set a budget.", "See where you stand."),
               pops=[{"card": "budgets", "at": 1.2, "dur": 2.2, "y": 1130, "w": 780}]),
-        phone(21.6, 25.8, [rec("next30", 0.6, 4.2, 1.0)], head("EARLY WARNINGS", "Heads up,", "before it happens."),
+        phone(21.6, 25.8, [rec("next30", 1.3, 4.2, 1.0)], head("EARLY WARNINGS", "Heads up,", "before it happens."),
               pops=[{"card": "headsup", "at": 1.5, "dur": 2.5, "y": 1110}]),
         phone(25.8, 30.0, [rec("subs", 0.55, 4.2, 0.85)], head("OVERSPENDING", "The ones you forgot,", "found."),
               pops=[{"card": "peryear", "at": 1.4, "dur": 1.9, "y": 1120, "w": 560}]),
