@@ -27,16 +27,36 @@ d.text((x0 + lw + 16, 294), "LifeFlow", font=f_w, fill=L.INK, anchor="lm")
 L.headline(im, {"eyebrow": "CONNECTORS", "l1": "LifeFlow connects to", "l2": "the tools you use.", "top": 372, "size": 94, "out": False}, 5, 9)
 
 # ---------------------------------------------------------------- logo grid
-LOGOS = [
-    ("r_canvas_c", "Canvas"), ("r_g_google-calendar", "Google Calendar"), ("r_g_google-gmail", "Gmail"),
-    ("health_icon", "Apple Health"), ("r_plaid_w", "Plaid"), ("r_g_openai-icon", "OpenAI"),
-    ("r_g_stripe", "Stripe"), ("r_apple_c", "Sign in with Apple"), ("r_g_google-icon", "Sign in with Google"),
+LOGOS = [  # file, name, what it adds to LifeFlow (each line matches what the app really does)
+    ("r_canvas_c", "Canvas", "Pulls in your classes and due dates"),
+    ("r_g_google-calendar", "Google Calendar", "Syncs your events and adds new ones you approve"),
+    ("r_g_google-gmail", "Gmail", "Reads your email and drafts replies. You approve."),
+    ("health_icon", "Apple Health", "Brings in your sleep, steps and workouts"),
+    ("r_plaid_w", "Plaid", "Securely links your banks and cards. Read-only."),
+    ("r_g_openai-icon", "OpenAI", "Powers your assistant's chat and answers"),
+    ("r_g_stripe", "Stripe", "Handles secure payments for your plan"),
+    ("r_apple_c", "Sign in with Apple", "One-tap, private sign-in"),
+    ("r_g_google-icon", "Sign in with Google", "One-tap sign-in with your account"),
 ]
-TW, TH, GX, GY = 300, 184, 30, 22
+TW, TH, GX, GY = 300, 214, 30, 20
 X0 = (W - (3 * TW + 2 * GX)) // 2
-Y0 = 690
-f_name = L.SANS(27, "SemiBold")
-for i, (fn, name) in enumerate(LOGOS):
+Y0 = 676
+f_name, f_desc = L.SANS(27, "SemiBold"), L.SANS(22, "Regular")
+
+
+def wrap(text, font, width):
+    lines, cur = [], ""
+    for w in text.split(" "):
+        t = (cur + " " + w).strip()
+        if d.textlength(t, font=font) <= width:
+            cur = t
+        else:
+            lines.append(cur)
+            cur = w
+    return lines + [cur]
+
+
+for i, (fn, name, desc) in enumerate(LOGOS):
     c, r = i % 3, i // 3
     x, y = X0 + c * (TW + GX), Y0 + r * (TH + GY)
     L.soft_shadow(im, [(x, y), (x + TW, y), (x + TW, y + TH), (x, y + TH)], 56, 22, 16)
@@ -48,11 +68,13 @@ for i, (fn, name) in enumerate(LOGOS):
     ink = flat.convert("L").point(lambda v: 255 if v < 244 else 0)
     lg = lg.crop(ink.getbbox() or (0, 0, lg.width, lg.height))
     lg = Image.alpha_composite(Image.new("RGBA", lg.size, (255, 255, 255, 255)), lg)
-    box_w, box_h = (190, 78) if lg.width / lg.height > 1.6 else (100, 78)
-    s = min(box_w / lg.width, box_h / lg.height)
-    lg = lg.resize((max(1, int(lg.width * s)), max(1, int(lg.height * s))), Image.LANCZOS)
-    im.alpha_composite(lg, (int(x + TW / 2 - lg.width / 2), int(y + 24 + (78 - lg.height) / 2)))
-    d.text((x + TW / 2, y + 140), name, font=f_name, fill=L.INK, anchor="mm")
+    box_w, box_h = (170, 58) if lg.width / lg.height > 1.6 else (84, 58)
+    sc = min(box_w / lg.width, box_h / lg.height)
+    lg = lg.resize((max(1, int(lg.width * sc)), max(1, int(lg.height * sc))), Image.LANCZOS)
+    im.alpha_composite(lg, (int(x + TW / 2 - lg.width / 2), int(y + 20 + (58 - lg.height) / 2)))
+    d.text((x + TW / 2, y + 100), name, font=f_name, fill=L.INK, anchor="mm")
+    for k, line in enumerate(wrap(desc, f_desc, TW - 34)):
+        d.text((x + TW / 2, y + 136 + k * 29), line, font=f_desc, fill=L.GRAY, anchor="mm")
 
 # ---------------------------------------------------------------- coming soon + call to action
 grid_bottom = Y0 + 3 * TH + 2 * GY

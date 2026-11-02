@@ -8,15 +8,15 @@ W, H = 1080, 1350
 INK, GRAY = (20, 22, 20), (112, 116, 110)
 
 LOGOS = [  # file, name, what it does
-    ("r_canvas_c", "Canvas", "Classes and due dates"),
-    ("r_g_google-calendar", "Google Calendar", "Events, always synced"),
-    ("r_g_google-gmail", "Gmail", "Email help, you approve"),
-    ("health_icon", "Apple Health", "Sleep, steps, workouts"),
-    ("r_plaid_w", "Plaid", "Your banks and cards"),
-    ("r_g_openai-icon", "OpenAI", "The AI behind the chat"),
-    ("r_g_stripe", "Stripe", "Secure payments"),
-    ("r_apple_c", "Apple", "Sign in with Apple"),
-    ("r_g_google-icon", "Google", "Sign in with Google"),
+    ("r_canvas_c", "Canvas", "Pulls in your classes and due dates"),
+    ("r_g_google-calendar", "Google Calendar", "Syncs your events and adds new ones you approve"),
+    ("r_g_google-gmail", "Gmail", "Reads your email and drafts replies. You approve."),
+    ("health_icon", "Apple Health", "Brings in your sleep, steps and workouts"),
+    ("r_plaid_w", "Plaid", "Securely links your banks and cards. Read-only."),
+    ("r_g_openai-icon", "OpenAI", "Powers your assistant's chat and answers"),
+    ("r_g_stripe", "Stripe", "Handles secure payments for your plan"),
+    ("r_apple_c", "Sign in with Apple", "One-tap, private sign-in"),
+    ("r_g_google-icon", "Sign in with Google", "One-tap sign-in with your account"),
 ]
 
 im = Image.new("RGBA", (W, H), (255, 255, 255, 255))
@@ -28,7 +28,7 @@ d.text((W / 2, 220), "you already use.", font=L.SANS(78, "SemiBold"), fill=INK, 
 TW, TH, GX, GY = 306, 296, 33, 34
 X0 = (W - (3 * TW + 2 * GX)) // 2
 Y0 = 300
-f_name, f_sub = L.SANS(34, "SemiBold"), L.SANS(25, "Regular")
+f_name, f_sub = L.SANS(31, "SemiBold"), L.SANS(23, "Regular")
 for i, (fn, name, sub) in enumerate(LOGOS):
     c, r = i % 3, i // 3
     x, y = X0 + c * (TW + GX), Y0 + r * (TH + GY)
@@ -49,8 +49,18 @@ for i, (fn, name, sub) in enumerate(LOGOS):
     s = min(box_w / lg.width, box_h / lg.height)
     lg = lg.resize((max(1, int(lg.width * s)), max(1, int(lg.height * s))), Image.LANCZOS)
     im.alpha_composite(lg, (int(x + TW / 2 - lg.width / 2), int(y + 40 + (112 - lg.height) / 2)))
-    d.text((x + TW / 2, y + 200), name, font=f_name, fill=INK, anchor="mm")
-    d.text((x + TW / 2, y + 242), sub, font=f_sub, fill=GRAY, anchor="mm")
+    d.text((x + TW / 2, y + 190), name, font=f_name, fill=INK, anchor="mm")
+    words, lines, cur = sub.split(" "), [], ""
+    for w_ in words:
+        t = (cur + " " + w_).strip()
+        if d.textlength(t, font=f_sub) <= TW - 36:
+            cur = t
+        else:
+            lines.append(cur)
+            cur = w_
+    lines.append(cur)
+    for k, line in enumerate(lines):
+        d.text((x + TW / 2, y + 236 + k * 31), line, font=f_sub, fill=GRAY, anchor="mm")
 
 d.text((W / 2, 1296), "You choose what to connect.", font=L.SANS(30, "Medium"), fill=GRAY, anchor="mm")
 im.convert("RGB").save("connectors_logos.jpg", quality=95)
