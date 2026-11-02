@@ -272,7 +272,7 @@ def render(preview=None):
                 if t > REVEAL + 0.15:
                     place(im, lay, 0, 1180, alpha=clamp((t - REVEAL - 0.15) / 0.06), scale=0.7 + 0.3 * k)
                 if t > REVEAL + 0.75:
-                    sub = text_layer([("(his name is Jarvis)", SERIF_I(64), MINT)], 0)
+                    sub = text_layer([("(his name is Jarvis)", SERIF_I(66), (255, 255, 255))], 0)
                     place(im, sub, 0, 1320, alpha=eo((t - REVEAL - 0.75) / 0.3))
         elif t < T["callback"]["start"]:
             seg = next(s for s in SEG if s["start"] <= t < s["end"])
