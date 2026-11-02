@@ -151,7 +151,7 @@ hook = {
 def outro(word, start=11.6, end=15.0):
     return {"kind": "gloss", "outro": True, "start": start, "end": end, "clip": "m/molecule.mp4", "speed": 0.7, "push": 0.03, "fade_in": 0.3,
             "haze": [{"cy": 1560, "h": 900, "s": 0.88}],
-            "bold": {"lines": [f"COMMENT *{word}*,", "THEN *TAP THE LINK*", "IN BIO."], "size": 86, "top": 1225, "at": 0.15, "out": False},
+            "bold": {"lines": [f"COMMENT *{word}*", "THEN *TAP THE LINK*", "IN BIO."], "size": 86, "top": 1225, "at": 0.15, "out": False},
             "wordmark": {"at": 1.2, "y": 1600, "sub": "lifeflowweb.com"}, "note": dict(NOTE, at=1.3, y=1850)}
 
 

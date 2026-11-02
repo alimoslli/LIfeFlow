@@ -137,7 +137,7 @@
    ],
    "bold": {
     "lines": [
-     "COMMENT *DUE*,",
+     "COMMENT *DUE*",
      "THEN *TAP THE LINK*",
      "IN BIO."
     ],
