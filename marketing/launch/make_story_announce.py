@@ -17,16 +17,17 @@ gd.ellipse((-200, 80, 1000, 1000), fill=L.SAGE + (60,))
 gd.ellipse((200, 1300, 1400, 2300), fill=L.SAGE + (46,))
 im.alpha_composite(glow.filter(ImageFilter.GaussianBlur(160)))
 
-# ---------------------------------------------------------------- hero: the brand molecule, large
+# ---------------------------------------------------------------- hero: the brand molecule, cropped to its own bounds
 g1 = Image.open("g/g1.png").convert("RGB")
-g1 = g1.resize((1240, int(1240 * g1.height / g1.width)), Image.LANCZOS)
 mol = L.key_white(g1)
-fade = np.clip((g1.height * 0.80 - np.arange(g1.height)) / (g1.height * 0.07), 0, 1)
-mol.putalpha(Image.fromarray((np.asarray(mol.getchannel("A")) * fade[:, None]).astype(np.uint8)))
-im.alpha_composite(mol, (-30, -520))
+bb = mol.getchannel("A").point(lambda v: 255 if v > 40 else 0).getbbox()
+mol = mol.crop(bb)
+mw = 640
+mol = mol.resize((mw, int(mol.height * mw / mol.width)), Image.LANCZOS)
+im.alpha_composite(mol, (410, 250))
 
 # ---------------------------------------------------------------- empty panel for the owner's text (top-mid-left)
-bx0, by0, bx1, by1 = 56, 270, 560, 470
+bx0, by0, bx1, by1 = 56, 280, 410, 470
 L.soft_shadow(im, [(bx0, by0), (bx1, by0), (bx1, by1), (bx0, by1)], 70, 26, 18)
 region = im.crop((bx0, by0, bx1, by1)).filter(ImageFilter.GaussianBlur(14))
 panel = Image.new("RGBA", region.size, (255, 255, 255, 150))
@@ -37,17 +38,17 @@ im.paste(region, (bx0, by0), mask)
 ImageDraw.Draw(im).rounded_rectangle((bx0, by0, bx1, by1), radius=44, outline=(255, 255, 255, 235), width=3)
 
 # ---------------------------------------------------------------- the announcement
-L.headline(im, {"eyebrow": "NOW LIVE ON THE WEB", "l1": "LifeFlow is", "l2": "finally here.", "top": 930, "size": 158, "out": False}, 5, 9)
+L.headline(im, {"eyebrow": "NOW LIVE ON THE WEB", "l1": "LifeFlow is", "l2": "finally here.", "top": 800, "size": 140, "out": False}, 5, 9)
 f = L.SERIF_I(60)
 d = ImageDraw.Draw(im)
 for i, s in enumerate(["The personal assistant", "for your whole life."]):
-    im.alpha_composite(L.word_img(s, f, L.MOSS), (int(W / 2 - d.textlength(s, font=f) / 2), 1318 + i * 74))
-d.text((W / 2, 1500), "Classes  ·  Work  ·  Money  ·  Health", font=L.SANS(36, "Medium"), fill=L.GRAY, anchor="mm")
+    im.alpha_composite(L.word_img(s, f, L.MOSS), (int(W / 2 - d.textlength(s, font=f) / 2), 1190 + i * 74))
+d.text((W / 2, 1362), "Classes  ·  Work  ·  Money  ·  Health", font=L.SANS(36, "Medium"), fill=L.GRAY, anchor="mm")
 chip = L.glass_pill("chip", "Launching today")
-im.alpha_composite(chip, (int(W / 2 - chip.width / 2), 1545))
+im.alpha_composite(chip, (int(W / 2 - chip.width / 2), 1405))
 
 # small glass accents (kept off the text and the link-sticker zone)
-for (src, cx, cy, size, blur) in [(("g/g2.png", 461, 650, 150), 960, 1020, 150, 2), (("g/g2.png", 1090, 1995, 175), 90, 1610, 200, 3)]:
+for (src, cx, cy, size, blur) in [(("g/g2.png", 461, 650, 150), 990, 800, 130, 2), (("g/g2.png", 1090, 1995, 175), 110, 1560, 190, 3)]:
     b = L.glass_ball(src[0], src[1], src[2], src[3], size, blur)
     im.alpha_composite(b, (int(cx - size / 2), int(cy - size / 2)))
 
