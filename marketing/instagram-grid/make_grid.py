@@ -86,8 +86,14 @@ d.text((x_whole + ww + sp, 430), "life,", font=f1, fill=INK)
 print("headline size", size, "space", sp, "whole", ww)
 f2 = SERIF_I(200)
 center_text(800, "in one flow.", f2, MOSS)
-center_text(1090, "Classes, work, money and", SANS(48, "Regular"), GRAY)
-center_text(1160, "an AI assistant, together.", SANS(48, "Regular"), GRAY)
+sub_f = SANS(48, "Regular")
+for size in range(52, 30, -1):
+    sub_f = SANS(size, "Regular")
+    if d.textlength("Your Finances, Classes, Work, and more,", font=sub_f) <= 960:
+        break
+center_text(1080, "Your Finances, Classes, Work, and more,", sub_f, GRAY)
+center_text(1080 + int(sub_f.size * 1.45), "Synced to your personal assistant", sub_f, GRAY)
+print("subtitle size", sub_f.size)
 
 # ---------------------------------------------------------------- phone with the real Today screen (center column)
 shot = Image.open(D + "today.png").convert("RGBA")
