@@ -86,7 +86,7 @@ shadow((min(p[0] for p in dst), min(p[1] for p in dst), max(p[0] for p in dst), 
 warp(ph, dst, (24, 26, 25))
 
 # ---------------------------------------------------------------- testing era + coupon ticket (left) and QR (right)
-tx0, ty0, tx1, ty1 = 220, 3420, 2330, 4330
+tx0, ty0, tx1, ty1 = 220, 3420, 1990, 4330
 shadow((tx0, ty0, tx1, ty1), 70, 80, 40, 40)
 d.rounded_rectangle((tx0, ty0, tx1, ty1), radius=70, fill=(40, 91, 69, 255))
 # ticket notches + perforation
@@ -103,13 +103,18 @@ cw = d.textlength(code, font=cf)
 d.rounded_rectangle((tx0 + 400, ty0 + 610, tx0 + 400 + cw + 120, ty0 + 780), radius=40, fill=CREAM)
 d.text((tx0 + 460, ty0 + 695), code, font=cf, fill=MOSS, anchor="lm")
 
-qx0, qy0, qx1, qy1 = 2530, 3380, 3380, 4330
-shadow((qx0, qy0, qx1, qy1), 70, 80, 40, 40)
-d.rounded_rectangle((qx0, qy0, qx1, qy1), radius=70, fill=(255, 255, 255, 255), outline=(225, 232, 227), width=4)
-qr = Image.open("shots/qr.png").convert("RGBA").resize((640, 640), Image.NEAREST)
-paste(qr, (qx0 + qx1) / 2 - 320, qy0 + 80)
-d.text(((qx0 + qx1) / 2, qy0 + 790), "Scan to join", font=SANS(66, "SemiBold"), fill=INK, anchor="mm")
-d.text(((qx0 + qx1) / 2, qy0 + 870), "lifeflowweb.com", font=SANS(50, "Medium"), fill=GRAY, anchor="mm")
+def qr_card(x0, x1, img, title, sub):
+    y0, y1 = 3380, 4330
+    shadow((x0, y0, x1, y1), 64, 80, 40, 40)
+    d.rounded_rectangle((x0, y0, x1, y1), radius=64, fill=(255, 255, 255, 255), outline=(225, 232, 227), width=4)
+    q = Image.open(img).convert("RGBA").resize((500, 500), Image.NEAREST)
+    paste(q, (x0 + x1) / 2 - 250, y0 + 90)
+    d.text(((x0 + x1) / 2, y0 + 700), title, font=SANS(62, "SemiBold"), fill=INK, anchor="mm")
+    d.text(((x0 + x1) / 2, y0 + 790), sub, font=SANS(52, "Medium"), fill=GRAY, anchor="mm")
+
+
+qr_card(2060, 2700, "shots/qr.png", "Scan to join", "lifeflowweb.com")
+qr_card(2760, 3400, "shots/qr_ig.png", "Follow us", "@lifeflowweb")
 
 # ---------------------------------------------------------------- urgency + credit
 d.text((PW / 2, 4475), "Sign-ups may close soon. Only a few tester spots left.", font=SANS(78, "SemiBold"), fill=AMBER, anchor="mm")
