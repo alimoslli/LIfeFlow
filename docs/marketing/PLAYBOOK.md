@@ -145,6 +145,28 @@ The owner does not want to be the public face, so the character is the face of L
 
 **First video, final flow (owner confirmed 2026-11-03), name written as X until chosen:** 0) LifeFlow branding (glass logo, about 2 s, made in our render engine); 1) character X standing in the HQ, waist-up, welcomes everyone, "I'm the developer of LifeFlow, I'm so smart", awkward head scratch (Mark's voice); snap; 2) the owner raw in his room (own voice); snap; 3) the owner at a desk in a cleaner outfit, AI-altered into the HQ (own voice); snap; 4) character X on a sofa or chair in the HQ, a different angle and pose, leaning forward, relaxed: "I was joking", he is Ali's AI character, the office is AI, more videos coming or "for now go download it", link in the bio, and an engagement idea: "I don't have a name yet, comment one" (this also lets video 1 avoid saying any name). About 30 seconds. Filming rule: the owner films in the same pose the character will have (still sets place, pose and angle; the clip supplies movement and camera movement). Clip 1 standing waist-up with the head scratch; clip 3 seated at a desk; clip 4 seated on a chair, leaning forward. Steady phone, eye level. Estimated cost: three character stills at about 2.75 credits each plus Motion Control (price to be quoted before running); owner had 47 credits.
 
+**Video 1 owner clips (uploaded 2026-11-03, Higgsfield media ids):**
+
+| Clip | Media id | Length | What it is |
+|---|---|---|---|
+| c1 | `c50627eb-cb3c-47c8-a871-003fa7ca2c87` | 56 s | Reference for scene 1, standing in the bedroom, full body. Contains a usable performance at about 17 to 28.5 s ("Hey, what's up guys. This is Dev. I'm the developer behind LifeFlow. And yes, I built everything. It was all me. I'm a genius.") with the head scratch at about 27 s. Face is small in frame. |
+| c2 | `26877b3f-e097-40b4-b520-e2309b352351` | 94 s | Reference for scenes 2 and 3 (direction plus the story: personal finance tool for himself, then Gmail, calendar, classes, work shifts, then sharing it). |
+| c3 | `daec9a15-8556-46e5-a7d4-b81bea6bb717` | 14 s | **USE THIS for scene 2** (owner said so). Owner at his laptop in a cream hoodie in his bedroom, looks up: "You said you built what now?" Usable cut about 7.8 to 11.2 s; 0 to 6.7 s is direction. |
+| c4 | `b4d74e37-e00b-4808-9c84-e7be70195224` | 178 s | Script context for scene 3 (facts below). Owner says scene 3 should use the AI voice (to confirm). |
+| c5 | `af6575d1-ea8a-47bc-97a6-5a4556e2e420` | 78 s | Reference for scene 4, seated on a chair at an angle: "Yep, you caught me, I'm Ali's AI character... showcasing the app, new features, updates, the journey... you'll be seeing a lot more of me... for now sign up, connect everything in your life and flow", then LifeFlow branding and link. |
+
+**Facts from the owner for scripts (c4):** full-time student with a part-time job; assignments, work, side projects, transfer applications and email made life complicated; personal finance has mattered to him since growing up; he first built a personal finance tool that connects to his banks to track what he spent and what came in; step by step he learned more and connected his calendar, Canvas, work schedule and more; it became LifeFlow, with an AI assistant connected to all of it that helps organize life, stay on top of tasks, budget and reach goals; he sees it as a long journey of learning and improving every day.
+
+**Video 1 script v1 (about 35 to 40 s, waiting for owner approval):**
+0. LifeFlow glass logo opens, calm music, its light becomes the dusk skyline of the HQ.
+1. Dev, standing by the HQ logo wall (slow push-in): "Hey, what's up guys. This is Dev. I'm the developer behind LifeFlow. And yes, I built everything. It was all me. I'm a genius." Awkward head scratch. Snap.
+2. Raw owner at his laptop (c3, music cuts to silence): "You said you built what now?" Snap.
+3. Owner, polished, at the HQ desk, music back: "Much better. I'm Ali. Full-time student, part-time job. LifeFlow started as a money app I built for myself. Then I plugged in my calendar, my classes, my shifts, my email... and it turned into an assistant for my whole life." Snap.
+4. Dev on the lounge sofa at an angle, relaxed: "Yep, you caught me. I'm Ali's AI character. That office? Also AI. Ali works from his bedroom." (half-second flash back to the bedroom) "I'll be the one showing you the app, the updates, and the whole journey. For now, sign up, connect your life, and flow."
+5. End card: LifeFlow logo, lifeflowweb.com, Link in bio, "AI-animated character".
+
+**Still needed for video 1:** a clean take of scene 3 (seated at a desk, final words), a clean take of scene 4 (seated at an angle, final words), optionally a closer retake of scene 1 (waist-up) for better lip-sync; the location images uploaded to Higgsfield Assets as images; decisions on the name (Dev or not) and on scene 3's voice.
+
 **Series plan.** Video 1 (introduces the character): beat 1 character says he built LifeFlow and is the developer (about 6 s); snap; beat 2 the real owner says "No, I'm Ali, I built it, this is the character I made to speak for me, not pretend to be me" (about 10 s); snap; beat 3 the character continues and says he will explain the app in the next videos (about 10 s). The correction must land within about 6 seconds of the false claim, and the AI-animated label stays on the post. Videos 2 to 4: how and why it was built, a tour of the app one feature at a time, behind the scenes and what is coming.
 
 **Open items before the first character video:** pick sheet A or B; pick the name; pick the ElevenLabs voice (audition 2 or 3 male voices on one test line); the owner writes or approves the reveal line; run the 5-second test.
