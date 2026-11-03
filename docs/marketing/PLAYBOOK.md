@@ -127,6 +127,14 @@ The owner does not want to be the public face, so the character is the face of L
 - No implied office or team that does not exist. Call the setting "his desk". Avoid the open-plan view as a main set.
 - No fake testimonials, user counts or results. Only features in section 2.
 
+**Name shortlist (2026-11-03, owner has not picked):** Dev (recommended, pun on "developer", fits the reveal), Theo (backup), Kai, Milo, Finn, Cole, Ezra, Rio, Jules, Ollie. Not allowed: Ali, Jarvis, Nova, Sage, Atlas, Max, Remy.
+
+**Voice previews (free, male, Higgsfield presets):** Benji, Cody, Evan, Dylan, Miles, Jasper (ids in `list_voices`). Next step: owner picks 2 or 3, Claude generates the same line in each for a fair comparison.
+
+**Test take (5 seconds, owner films):** vertical, eye level, window light, plain background, head and shoulders, glasses on. Line: "Hey, I'm Dev, the face of LifeFlow." with a small nod and a quick wave; one second of silence before and after; two takes. 5 seconds is only the cheap test length, not a limit; real takes are 5 to 10 seconds, one per beat.
+
+**Series plan.** Video 1 (introduces the character): beat 1 character says he built LifeFlow and is the developer (about 6 s); snap; beat 2 the real owner says "No, I'm Ali, I built it, this is the character I made to speak for me, not pretend to be me" (about 10 s); snap; beat 3 the character continues and says he will explain the app in the next videos (about 10 s). The correction must land within about 6 seconds of the false claim, and the AI-animated label stays on the post. Videos 2 to 4: how and why it was built, a tour of the app one feature at a time, behind the scenes and what is coming.
+
 **Open items before the first character video:** pick sheet A or B; pick the name; pick the ElevenLabs voice (audition 2 or 3 male voices on one test line); the owner writes or approves the reveal line; run the 5-second test.
 
 ---
