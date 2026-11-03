@@ -76,6 +76,19 @@ The owner films on their phone and sends the clips into the chat. There are two 
 - 2 or 3 takes of any action shot (like the snap).
 - Say direction out loud in reference clips: "here cut to the lock screen", "this part slow", "zoom on my face".
 
+## 3b. The LifeFlow character (same in every video)
+
+- **Who:** an original 3D animated college guy, about 20 (feature-animation style, not photoreal, not a lookalike of anyone).
+- **Look (never change unless the owner asks):** warm light-brown skin; mature face with a defined jaw (not a babyface); friendly dark brown eyes; thick natural brows; short dark curly hair with a low fade; lean build. Deep forest green hoodie (#1F4D3A, no logo), cream t-shirt hem showing, light-wash straight jeans, white low-top sneakers with a thin green stripe, slim black smartwatch on the left wrist. No bag, no hat.
+- **Character sheet:** Higgsfield, model `gpt_image_2_5` (high quality, 2k, 16:9), turnaround (front, 3/4, side, back) plus 4 expressions on cream (#F4F0E8). Two versions made 2026-11-03:
+  - A: job `4f7ae757-36dd-4046-95ab-89a025d140e2`
+  - B: job `7986c912-569a-4f8b-8350-b39920984dbc`
+  - **Chosen:** _not picked yet_. Every video uses the chosen sheet's job id as the image reference.
+- **Name:** _not picked yet_.
+- **Voice:** one Higgsfield preset voice, the same every time. Shortlist: Dylan `b847bc29-f184-583a-8ad9-d1f1e16d1a60`, Cody `1ffcdbb3-078b-5491-959d-359e3021e917`, Evan `f7a46aa0-183a-5327-b554-e71d8c0071bb`, Miles `e18664a7-ee4f-5273-acf8-533eb24cd366` (all `voice_type: preset`). **Chosen:** _not picked yet_.
+- **Every video brief includes:** the character, location references, the owner's reference clips, the full script, and an action script (shots, camera moves, lighting changes, motion), plus music and clean captions.
+- **Credits:** an image is about 3 credits; video costs more, so Claude checks the price before every generation and asks before going over the agreed budget.
+
 ---
 
 ## 4. Scripts
@@ -125,4 +138,4 @@ Update after every video. Newest at the top.
 - Owner wants short replies and quick recaps, especially during work hours.
 - Don't change the app while doing marketing work unless asked.
 - The owner's clips are direction, not a template: the final video doesn't have to copy their exact movements.
-- Higgsfield (AI video) is available but costs credits: ask before using it.
+- Final videos are made with Higgsfield using the one LifeFlow character (section 3b); the owner provides credits. Check the price first and ask before spending past the agreed budget.
