@@ -183,6 +183,14 @@ The owner does not want to be the public face, so the character is the face of L
 5. End card: LifeFlow logo, Link in bio, AI-animated character.
 Estimated cost from 19.34 credits: about 52 credits of Motion Control at 720p for scenes 1, 3 and 4 plus voice changes, so the owner is recharging.
 
+**Video 1, version 1 delivered (2026-11-03): the "dubbing" method (no re-filming).** The owner refused to re-film and to spend about 160 credits on re-syncing lips. Method used instead:
+- Keep the owner's existing takes as the movement source (Motion Control at 720p): scene 1 Dev `33528755-cc82-428f-b53c-ca7ceaeebde2`, scene 3 polished owner (first 3 s only) `43528733-c05c-44f7-a5ab-4c1a8a1fe294`, scene 4 Dev `7d0f012d-fd93-4b27-9fc4-56fad3009203`.
+- New lines are generated (Dev: `elevenlabs_v4`, Mark preset, stability 0.35) and placed word by word with faster-whisper timings, so each new word lands where his mouth says the same or a similar word. Lines are written to follow the rhythm of what he said on camera.
+- Where the mouth would not match, cut away: scene 3 after "Oh, much better. I'm Ali" goes to app screen recordings (tour, m_over, g_conn, chat) while the voice continues; scene 4's "The office, the voice... all AI" plays over a 2.6 s cutaway of the polished-owner still with an "AI" stamp.
+- Editor: `compose.py` in the Higgsfield sandbox (`/home/user/v1/`), with a snap sound and white flash on each switch, music silent during the raw moment and ducked under speech, burned captions (Geist), loudness about -14 LUFS. Scene 3's voice is a stand-in (preset Leo) until the owner sends his ElevenLabs file (his cloned voice); `python3 compose.py his_file.mp3` swaps it after updating `s3_marks.json` with the new word timings.
+- Higgsfield's own voice clone of the owner was created (`1c73c77c-23e2-4a2a-bf2e-29990d94da88`, from 23 s of his c4 audio) but every speech engine failed with it, so ElevenLabs is the route for his voice.
+- Cost of the whole video: stills 8.25 credits, Motion Control about 20 (scene 1) + about 23 (scene 4) + about 5 (scene 3), voices under 2 credits.
+
 **Series plan.** Video 1 (introduces the character): beat 1 character says he built LifeFlow and is the developer (about 6 s); snap; beat 2 the real owner says "No, I'm Ali, I built it, this is the character I made to speak for me, not pretend to be me" (about 10 s); snap; beat 3 the character continues and says he will explain the app in the next videos (about 10 s). The correction must land within about 6 seconds of the false claim, and the AI-animated label stays on the post. Videos 2 to 4: how and why it was built, a tour of the app one feature at a time, behind the scenes and what is coming.
 
 **Open items before the first character video:** pick sheet A or B; pick the name; pick the ElevenLabs voice (audition 2 or 3 male voices on one test line); the owner writes or approves the reveal line; run the 5-second test.
