@@ -85,7 +85,7 @@ The owner films on their phone and sends the clips into the chat. There are two 
   - B: job `7986c912-569a-4f8b-8350-b39920984dbc`
   - **Chosen:** _not picked yet_. Every video uses the chosen sheet's job id as the image reference.
 - **Name:** _not picked yet_.
-- **Voice:** one Higgsfield preset voice, the same every time. Shortlist: Dylan `b847bc29-f184-583a-8ad9-d1f1e16d1a60`, Cody `1ffcdbb3-078b-5491-959d-359e3021e917`, Evan `f7a46aa0-183a-5327-b554-e71d8c0071bb`, Miles `e18664a7-ee4f-5273-acf8-533eb24cd366` (all `voice_type: preset`). **Chosen:** _not picked yet_.
+- **Voice:** ElevenLabs (owner's choice, for the best quality). One ElevenLabs voice, the same in every video; voice name and id: _not picked yet_. The Higgsfield preset shortlist is no longer used.
 - **Every video brief includes:** the character, location references, the owner's reference clips, the full script, and an action script (shots, camera moves, lighting changes, motion), plus music and clean captions.
 - **Credits:** an image is about 3 credits; video costs more, so Claude checks the price before every generation and asks before going over the agreed budget.
 
