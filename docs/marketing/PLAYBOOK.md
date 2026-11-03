@@ -167,6 +167,12 @@ The owner does not want to be the public face, so the character is the face of L
 
 **Still needed for video 1:** a clean take of scene 3 (seated at a desk, final words), a clean take of scene 4 (seated at an angle, final words), optionally a closer retake of scene 1 (waist-up) for better lip-sync; the location images uploaded to Higgsfield Assets as images; decisions on the name (Dev or not) and on scene 3's voice.
 
+**Video 1 production log (2026-11-03):**
+- Stills (gpt_image_2_5, high, 2k, 9:16, 2.75 credits each): scene 1 Dev at the logo wall `d08541e0-0521-40b0-9fd2-d43397daf3b2`; scene 3 photoreal polished owner at the desk `8cebb6e1-b611-4b1b-9a23-b0ed13f95331`; scene 4 Dev in the green armchair `33cc9f60-1510-40f6-9dd1-fe844f8f733f`. Office reference uploaded as media `52bf6e63-2137-4902-9fcc-5a50e2c52e8d`.
+- Source cuts uploaded (owner's own takes, restarts removed): scene 1 `2757ae70-6b55-4c50-9a6e-8ef7fcefe59a` (11.9 s, from c1 15.70 to 27.58), scene 3 `d9b508d8-8eeb-40cf-90b7-4760080067e0` (17.2 s, from c2), scene 4 `36344155-31ac-4ecb-af10-b36cbdcd82a1` (13.5 s, from c5). Scene 2 is c3 7.9 to 10.9 s, used as is.
+- **Motion Control price (measured): 20 credits for 11.9 s at 720p** (about 1.7 credits per second). Scene 1 result: job `33528755-cc82-428f-b53c-ca7ceaeebde2` (720x1280, keeps the owner's original audio, so the voice still needs changing). The character copies the gestures and the head scratch well.
+- Credits: 47.59 at the start, 19.34 after scene 1. Not enough for scenes 3 and 4 as planned (about 50 credits more); waiting for the owner's decision.
+
 **Series plan.** Video 1 (introduces the character): beat 1 character says he built LifeFlow and is the developer (about 6 s); snap; beat 2 the real owner says "No, I'm Ali, I built it, this is the character I made to speak for me, not pretend to be me" (about 10 s); snap; beat 3 the character continues and says he will explain the app in the next videos (about 10 s). The correction must land within about 6 seconds of the false claim, and the AI-animated label stays on the post. Videos 2 to 4: how and why it was built, a tour of the app one feature at a time, behind the scenes and what is coming.
 
 **Open items before the first character video:** pick sheet A or B; pick the name; pick the ElevenLabs voice (audition 2 or 3 male voices on one test line); the owner writes or approves the reveal line; run the 5-second test.
