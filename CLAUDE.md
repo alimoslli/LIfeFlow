@@ -99,6 +99,9 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Invites: each user's link is `/?invite=<code>` (`services/invites.ts`); the landing page and sign-up carry the code, and sign-up credits the inviter once. Rewards come later with App Store offer codes.
 - Every calendar block is editable where it's shown: on Plan, events (one day or every time), shifts and assignments open an editor sheet (`plan/block-editor.tsx`); to-dos open their page.
 
+## Marketing
+- Social media and ad work (scripts, footage, video edits) follows `docs/marketing/PLAYBOOK.md`. Read it first; update its Video log and Decisions before a chat ends or compacts.
+
 ## Error alerts
 - Server errors reach `onRequestError` (src/instrumentation.ts); browser errors reach `/api/errors` via `ErrorReporter` (root layout) and the `(app)/error.tsx` boundary. Both go to `recordError` (services/error-reports.ts): grouped by fingerprint in `error_reports`, scrubbed of emails/ids/tokens/long numbers, and emailed to `ALERT_EMAIL` (or `LEGAL_CONTACT_EMAIL`) on the 1st, 10th, 100th and 1,000th time, at most 20 emails a day. Never put user content in error messages.
 - After an e2e run, `select * from error_reports` in budgetflow_e2e is a quick bug finder.
