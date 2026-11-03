@@ -15,7 +15,7 @@ import {
   NotebookPen,
   Receipt,
   Sparkles,
-  Target,
+  Trophy,
   UserRound,
   Wallet,
 } from "lucide-react";
@@ -33,7 +33,7 @@ export const SECTIONS: Record<Section, Item[]> = {
   plan: [
     { href: "/plan", label: "Calendar", icon: CalendarDays, exact: true, also: ["/calendar"] },
     { href: "/tasks", label: "To-dos", icon: CheckSquare },
-    { href: "/goals", label: "Goals", icon: Target },
+    { href: "/milestones", label: "Milestones", icon: Trophy, also: ["/goals"] },
     { href: "/habits", label: "Health", icon: HeartPulse },
     { href: "/work", label: "Work", icon: Briefcase },
   ],

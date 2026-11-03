@@ -4,6 +4,7 @@ import { mutate, type ActionState } from "@/server/actions";
 import { deleteConversation } from "@/server/jarvis/conversations";
 import { rateRun } from "@/server/jarvis/metrics";
 import { importMemories } from "@/server/services/memory";
+import { saveLifeImport } from "@/server/services/life-import";
 
 export async function deleteConversationAction(id: string): Promise<ActionState> {
   const r = await mutate(
@@ -34,4 +35,25 @@ export async function importMemoriesAction(_p: ActionState, fd: FormData): Promi
   });
   if (r?.ok && result.suggested) redirect(`/jarvis/memory?imported=${result.suggested}`);
   return r;
+}
+
+/** Saves the lines the user ticked on Import (facts, milestones, goals). */
+export async function saveLifeImportAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  let items: unknown;
+  try {
+    items = JSON.parse(String(fd.get("items") ?? "[]"));
+  } catch {
+    return { ok: false, error: "Couldn't read that. Try again.", at: Date.now() };
+  }
+  let r = { facts: 0, milestones: 0, goals: 0, skipped: 0 };
+  const res = await mutate(
+    "jarvis.memory.import",
+    async (s) => {
+      r = await saveLifeImport(s, items);
+      if (!r.facts && !r.milestones && !r.goals) return "Nothing new to add. Those are already saved or were left out for privacy.";
+    },
+    { revalidate: ["/jarvis", "/milestones", "/goals"] },
+  );
+  if (res?.ok && (r.facts || r.milestones || r.goals)) redirect(`/milestones?imported=${r.facts}.${r.milestones}.${r.goals}`);
+  return res;
 }

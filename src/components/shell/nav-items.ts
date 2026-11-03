@@ -5,7 +5,13 @@ import type { JarvisModule } from "@/server/db/schema";
 /** Five tabs. Every other page lives under one of them (see section-nav.tsx). Settings is the gear in the top bar. */
 export const NAV = [
   { href: "/", label: "Today", icon: Sun, module: "home", match: ["/"] },
-  { href: "/plan", label: "Plan", icon: CalendarRange, module: "calendar", match: ["/plan", "/calendar", "/tasks", "/goals", "/habits", "/work"] },
+  {
+    href: "/plan",
+    label: "Plan",
+    icon: CalendarRange,
+    module: "calendar",
+    match: ["/plan", "/calendar", "/tasks", "/goals", "/milestones", "/habits", "/work"],
+  },
   { href: "/jarvis", label: "Jarvis", icon: Sparkles, module: "home", match: ["/jarvis", "/inbox"] },
   { href: "/money", label: "Money", icon: Wallet, module: "finances", match: ["/money", "/finances", "/wealth"] },
   { href: "/school", label: "School", icon: GraduationCap, module: "school", match: ["/school", "/notes"] },

@@ -268,6 +268,10 @@ export async function fileExtraction(scope: UserScope, tz: string, ex: Extractio
       filed.push({ kind: "paycheck", id: pc.id, label: `Paycheck from ${job.name}: $${(net / 100).toFixed(2)} net on ${fmtDay(p.pay_date)}`, href: "/work" });
       return { filed };
     }
+    case "class_schedule":
+      return { filed, review: "This looks like your class schedule, not a bill. Send the same photo to Jarvis in chat to add your classes." };
+    case "work_schedule":
+      return { filed, review: "This looks like a work schedule, not a bill. Send the same photo to Jarvis in chat to add your shifts." };
     default:
       return { filed, review: "Nothing to file. It's saved here so you can find it." };
   }

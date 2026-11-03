@@ -41,10 +41,123 @@ export async function listCategories({ tx, userId }: UserScope) {
   return tx.select().from(categories).where(eq(categories.userId, userId)).orderBy(asc(categories.name));
 }
 
-/** Resolves a category by case-insensitive name. Returns the category and all of its descendants' ids. */
+/** "Food and dining!" → "food dining"; plurals and "&"/"and" don't matter. */
+export const normCategory = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/&|\band\b/g, " ")
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => (w.length > 3 && w.endsWith("s") && !w.endsWith("ss") ? w.slice(0, -1) : w))
+    .join(" ");
+
+/** Everyday words for the default categories (normalized → default name). Only used when no category has that name. */
+const SYNONYMS: Record<string, string> = {
+  food: "Food & Dining",
+  dining: "Restaurants",
+  "eating out": "Restaurants",
+  "fast food": "Restaurants",
+  takeout: "Food Delivery",
+  delivery: "Food Delivery",
+  grocery: "Groceries",
+  "grocery store": "Groceries",
+  supermarket: "Groceries",
+  cafe: "Coffee",
+  uber: "Rideshare",
+  lyft: "Rideshare",
+  taxi: "Rideshare",
+  "ride share": "Rideshare",
+  transport: "Transportation",
+  car: "Transportation",
+  fuel: "Gas",
+  gasoline: "Gas",
+  bus: "Public Transit",
+  train: "Public Transit",
+  subway: "Public Transit",
+  transit: "Public Transit",
+  housing: "Housing",
+  utility: "Utilities",
+  electric: "Utilities",
+  electricity: "Utilities",
+  wifi: "Internet",
+  "cell phone": "Phone",
+  "phone bill": "Phone",
+  subscription: "Bills & Subscriptions",
+  bill: "Bills & Subscriptions",
+  app: "Software",
+  apps: "Software",
+  clothe: "Clothing",
+  clothes: "Clothing",
+  shoe: "Clothing",
+  tech: "Electronics",
+  home: "Household",
+  "home good": "Household",
+  movie: "Events",
+  concert: "Events",
+  ticket: "Events",
+  gaming: "Games",
+  "video game": "Games",
+  medicine: "Pharmacy",
+  doctor: "Medical",
+  dentist: "Medical",
+  healthcare: "Health",
+  gym: "Fitness",
+  school: "Education",
+  college: "Education",
+  textbook: "Books & Supplies",
+  book: "Books & Supplies",
+  supplies: "Books & Supplies",
+  haircut: "Personal Care",
+  beauty: "Personal Care",
+  makeup: "Personal Care",
+  trip: "Travel",
+  vacation: "Travel",
+  flight: "Travel",
+  hotel: "Travel",
+  gift: "Gifts & Donations",
+  donation: "Gifts & Donations",
+  charity: "Gifts & Donations",
+  fee: "Fees & Interest",
+  interest: "Fees & Interest",
+  misc: "Other",
+  miscellaneous: "Other",
+  salary: "Paycheck",
+  pay: "Paycheck",
+  wage: "Paycheck",
+  "side hustle": "Side Income",
+  freelance: "Side Income",
+  transfer: "Transfers",
+};
+
+const SYNONYM_INDEX = new Map(Object.entries(SYNONYMS).map(([k, v]) => [normCategory(k), v]));
+
+/** The one category a name means: exact, then normalized, then an everyday word, then a single partial match. */
+export function matchCategory<T extends { id: string; name: string; parentId: string | null }>(all: T[], name: string): T | null {
+  const raw = name.trim().toLowerCase();
+  const exact = all.find((c) => c.name.toLowerCase() === raw);
+  if (exact) return exact;
+  const q = normCategory(name);
+  if (!q) return null;
+  const norm = all.find((c) => normCategory(c.name) === q);
+  if (norm) return norm;
+  const syn = SYNONYM_INDEX.get(q);
+  const viaSyn = syn ? all.find((c) => c.name === syn) : undefined;
+  if (viaSyn) return viaSyn;
+  const partial = all.filter((c) => {
+    const n = normCategory(c.name);
+    return ` ${n} `.includes(` ${q} `) || ` ${q} `.includes(` ${n} `);
+  });
+  if (partial.length === 1) return partial[0];
+  // "Food" matches the parent and nothing else specific: prefer the one parent among the matches.
+  const parents = partial.filter((c) => !c.parentId);
+  return parents.length === 1 && partial.every((c) => c === parents[0] || c.parentId === parents[0].id) ? parents[0] : null;
+}
+
+/** Resolves a category by name (forgiving about case, plurals, "&" and everyday words). Returns it and all its descendants' ids. */
 export async function resolveCategory(scope: UserScope, name: string) {
   const all = await listCategories(scope);
-  const target = all.find((c) => c.name.toLowerCase() === name.trim().toLowerCase());
+  const target = matchCategory(all, name);
   if (!target) return null;
   const ids = new Set([target.id]);
   let grew = true;

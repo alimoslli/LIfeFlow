@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { createPersonalGoal, deletePersonalGoal, listPersonalGoals, updatePersonalGoal } from "../../services/personal-goals";
+import { createMilestone, deleteMilestone, lifeTimeline, updateMilestone, whenLabel } from "../../services/milestones";
+import { MILESTONE_CATEGORIES } from "../../db/schema";
 import { checkedInOn, logGoalCheckin, openGoals } from "../../services/goal-checkins";
 import { dateArg, defineTool, idArg, moneyArg, toCents } from "../tool";
 
@@ -13,6 +15,80 @@ const present = (g: Awaited<ReturnType<typeof listPersonalGoals>>[number]) => ({
 });
 
 export const personalGoalTools = [
+  defineTool({
+    name: "list_milestones",
+    description:
+      "The user's life milestones: things they've done (graduated, first job, ran a 5K) plus every goal they've reached, newest first. Use it for questions about their past, what they've achieved, or before adding one to avoid duplicates.",
+    schema: z.object({}),
+    mutates: false,
+    async execute(_a, ctx) {
+      // Money goals stay behind the Money lock, so only non-money reached goals are listed here.
+      const items = await ctx.run((s) => lifeTimeline(s, { includeMoney: false, tz: ctx.tz }));
+      return {
+        milestones: items.map((i) => ({
+          id: i.kind === "milestone" ? i.id : undefined,
+          title: i.title,
+          category: i.category,
+          when: whenLabel(i),
+          note: i.note,
+          reachedGoal: i.kind !== "milestone",
+        })),
+        viewAt: "/milestones",
+      };
+    },
+  }),
+  defineTool({
+    name: "add_milestone",
+    description:
+      "Add something the user has done to their life milestones (graduated, got a job, moved out, ran a 5K, made the dean's list). when: a year (2022), month and year (May 2022) or YYYY-MM-DD; leave it out if they didn't say. Reached goals are added automatically, don't add them again.",
+    schema: z.object({
+      title: z.string().min(2).max(200).describe("Short, in their words: 'Graduated from Lincoln High'"),
+      category: z.enum(MILESTONE_CATEGORIES),
+      when: z.string().max(40).optional(),
+      note: z.string().max(500).optional(),
+    }),
+    mutates: true,
+    async execute(a, ctx) {
+      const m = await ctx.run((s) => createMilestone(s, a, "jarvis"));
+      return {
+        created: { id: m.id, title: m.title, category: m.category, when: whenLabel({ date: m.happenedOn, precision: m.precision }) },
+        viewAt: "/milestones",
+      };
+    },
+  }),
+  defineTool({
+    name: "update_milestone",
+    description: "Change a milestone's title, category, when or note.",
+    schema: z.object({
+      id: idArg("Milestone"),
+      title: z.string().min(2).max(200).optional(),
+      category: z.enum(MILESTONE_CATEGORIES).optional(),
+      when: z.string().max(40).nullable().optional(),
+      note: z.string().max(500).nullable().optional(),
+    }),
+    mutates: true,
+    async execute({ id, ...change }, ctx) {
+      const m = await ctx.run((s) => updateMilestone(s, id, change));
+      return {
+        updated: { id: m.id, title: m.title, category: m.category, when: whenLabel({ date: m.happenedOn, precision: m.precision }) },
+        viewAt: "/milestones",
+      };
+    },
+  }),
+  defineTool({
+    name: "delete_milestone",
+    description: "Delete a milestone for good. Requires the user's confirmation.",
+    schema: z.object({ id: idArg("Milestone") }),
+    mutates: true,
+    async confirm({ id }, ctx) {
+      const m = (await ctx.run((s) => lifeTimeline(s, { includeMoney: false }))).find((x) => x.id === id && x.kind === "milestone");
+      return `Delete the milestone "${m?.title ?? "this milestone"}"?`;
+    },
+    async execute({ id }, ctx) {
+      const m = await ctx.run((s) => deleteMilestone(s, id));
+      return { deleted: m.title, viewAt: "/milestones" };
+    },
+  }),
   defineTool({
     name: "list_personal_goals",
     description: "The user's goals that aren't about money (fitness, reading, school, personal), with progress and whether they're done.",

@@ -4,6 +4,8 @@ import { monthStart } from "@/lib/dates";
 import { ACCOUNT_TYPES, createManualAccount, listAccounts, summarizeBalances } from "../../services/finance/accounts";
 import { moneyOverview } from "../../services/finance/overview";
 import { listCategories, resolveCategory } from "../../services/finance/categories";
+import { categoryIdByName, keywordCategory } from "../../services/finance/categorize";
+import type { UserScope } from "../../db/with-user";
 import { affordability, compareSpending, spendingSummary } from "../../services/finance/insights";
 import {
   budgetStatus,
@@ -39,6 +41,12 @@ export function centsToDollarsDeep(v: unknown): unknown {
   return v;
 }
 
+/** Tells the model the real names so it can retry with one instead of guessing again. */
+async function unknownCategory(s: UserScope, name: string) {
+  const names = (await listCategories(s)).map((c) => c.name);
+  return `No category called "${name}". Pick one of: ${names.join(", ")}. If none fits, leave category out and ask the user.`;
+}
+
 const range = { from: dateArg("Start date (inclusive)"), to: dateArg("End date (inclusive)") };
 
 const FREQ = z.enum(["weekly", "biweekly", "monthly", "quarterly", "yearly"]);
@@ -62,6 +70,10 @@ export const financeTools = [
     async execute(a, ctx) {
       return ctx.run(async (s) => {
         const cat = a.category ? await resolveCategory(s, a.category) : null;
+        if (a.category && !cat) throw new Error(await unknownCategory(s, a.category));
+        // No category given: the same merchant words that sort bank lines ("Netflix" → Streaming).
+        const guess = !a.category ? keywordCategory({ description: a.name }, a.kind === "income" ? 1 : -1) : null;
+        const guessed = guess ? await categoryIdByName(s, guess) : null;
         const income = a.kind === "income";
         const r = await createRecurring(s, {
           name: a.name,
@@ -69,7 +81,7 @@ export const financeTools = [
           frequency: a.frequency,
           nextDueDate: a.nextDueDate ?? null,
           kind: a.kind ?? "bill",
-          categoryId: cat?.category.id ?? null,
+          categoryId: cat?.category.id ?? guessed?.id ?? null,
         });
         return { created: presentRecurring(r), viewAt: "/finances/bills" };
       });
@@ -271,7 +283,7 @@ export const financeTools = [
     async execute(a, ctx) {
       return ctx.run(async (s) => {
         const cat = a.category ? await resolveCategory(s, a.category) : null;
-        if (a.category && !cat) throw new Error(`No category named "${a.category}".`);
+        if (a.category && !cat) throw new Error(await unknownCategory(s, a.category));
         const row = await createTransaction(
           s,
           { accountId: a.accountId, date: a.date, description: a.description, amountCents: toCents(a.amount), categoryId: cat?.category.id, kind: a.kind },
@@ -317,7 +329,7 @@ export const financeTools = [
     async execute(a, ctx) {
       return ctx.run(async (s) => {
         const cat = await resolveCategory(s, a.category);
-        if (!cat) throw new Error(`No category named "${a.category}". Use list_categories.`);
+        if (!cat) throw new Error(await unknownCategory(s, a.category));
         const b = await setBudget(s, { month: a.month ?? ctx.today, categoryId: cat.category.id, limitCents: toCents(a.monthlyLimit) });
         return centsToDollarsDeep({
           saved: { category: cat.category.name, month: b.month.slice(0, 7), limitCents: b.limitCents },

@@ -52,7 +52,7 @@ test("an explicit request saves directly; dismissed suggestions are not used", a
   await expect(page.getByRole("button", { name: "Turn memory suggestions on" })).toBeVisible();
 });
 
-test("Ideas open Jarvis ready to send, and memory import waits for approval", async ({ page }) => {
+test("Ideas open Jarvis ready to send, and an import from another AI saves only what's ticked", async ({ page }) => {
   const email = await signUp(page, "Idea Tester");
   await page.goto("/jarvis/ideas");
   await expect(page.getByRole("region", { name: "For you" })).toContainText("No savings goal yet");
@@ -61,8 +61,35 @@ test("Ideas open Jarvis ready to send, and memory import waits for approval", as
   await page.keyboard.press("Escape");
 
   await page.getByRole("link", { name: /Bring what your other AI knows/ }).click();
-  await page.getByLabel("Paste the answer here").fill("- I work at Target on weekends.\n- I prefer studying at night.\n- My password is hunter2");
-  await page.getByRole("button", { name: "Add as suggestions" }).click();
-  await expect(page.getByText("2 suggestions added below")).toBeVisible();
-  expect(await queryAsUser<{ status: string }>(email, "select status from memories")).toEqual([{ status: "proposed" }, { status: "proposed" }]);
+  await page
+    .getByLabel("Paste the answer here")
+    .fill(
+      "ABOUT ME:\n- I work at Target on weekends.\n- My password is hunter2\nPREFERENCES:\n- I prefer studying at night.\nMILESTONES:\n- 2022 - Graduated from Lincoln High\n- Learned to drive\nGOALS:\n- Get a 3.5 GPA",
+    );
+  await page.getByRole("button", { name: "Sort it for me" }).click();
+  await expect(page.getByRole("region", { name: "Milestones" })).toContainText("Graduated from Lincoln High");
+  await expect(page.getByRole("region", { name: "Milestones" })).toContainText("2022 · School");
+  await page
+    .getByRole("region", { name: "Milestones" })
+    .getByLabel(/Learned to drive/)
+    .uncheck();
+  await page.getByRole("button", { name: "Save 5 items" }).click();
+  await expect(page).toHaveURL(/\/milestones\?imported=2\.1\.1/);
+  await expect(page.getByRole("status")).toContainText("Imported 2 about you, 1 milestone, 1 goal");
+  await expect(page.getByRole("region", { name: "2022" })).toContainText("Graduated from Lincoln High");
+  await expect(page.getByText("Learned to drive")).toHaveCount(0);
+  expect(await queryAsUser<{ status: string; category: string }>(email, "select status, category from memories order by category")).toEqual([
+    { status: "active", category: "fact" },
+    { status: "active", category: "preference" },
+  ]);
+
+  // Add one by hand.
+  await page.getByLabel("What happened", { exact: true }).fill("Moved to Atlanta");
+  await page.getByLabel("When", { exact: true }).fill("May 2023");
+  await page.getByLabel("Kind", { exact: true }).selectOption("travel");
+  await page.getByRole("button", { name: "Add milestone" }).click();
+  await expect(page.getByRole("region", { name: "2023" })).toContainText("May 2023 · Travel");
+  await page.getByRole("navigation", { name: "Milestones and goals" }).getByRole("link", { name: "Goals" }).click();
+  await expect(page).toHaveURL(/\/goals$/);
+  await expect(page.getByText("Get a 3.5 GPA")).toBeVisible();
 });

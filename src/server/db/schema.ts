@@ -383,6 +383,28 @@ export const announcements = pgTable(
   (t) => [index("announcements_window_idx").on(t.startsAt, t.endsAt)],
 );
 
+export const MILESTONE_CATEGORIES = ["school", "work", "money", "health", "travel", "family", "personal"] as const;
+export type MilestoneCategory = (typeof MILESTONE_CATEGORIES)[number];
+
+/** Things the user has done ("Graduated high school", "First job"). Reached goals are shown beside them, not copied. */
+export const lifeMilestones = pgTable(
+  "life_milestones",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    title: text("title").notNull(),
+    category: text("category").$type<MilestoneCategory>().notNull().default("personal"),
+    /** When it happened; with precision "year" only the year is meant (stored as Jan 1). */
+    happenedOn: date("happened_on", { mode: "string" }),
+    precision: text("precision").$type<"day" | "month" | "year">().notNull().default("day"),
+    note: text("note"),
+    source: text("source").$type<"user" | "jarvis" | "import">().notNull().default("user"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("life_milestones_user_idx").on(t.userId, t.happenedOn), ownerPolicy()],
+);
+
 /** Goals that aren't about money ("Run a 5K", "Read 12 books"). Money goals are financialGoals. */
 export const personalGoals = pgTable(
   "personal_goals",

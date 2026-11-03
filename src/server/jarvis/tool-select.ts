@@ -39,7 +39,10 @@ const WORDS: [ToolGroup, RegExp][] = [
   ["notes", /\bnotes?\b|wrote down|\bjot/],
   ["email", /e-?mail|gmail|inbox|\bmail\b|google calendar/],
   ["health", /\bsleep|\bsteps\b|workout|exercise|health|heart rate|\bweight\b|calories|\bgym\b/],
-  ["habits", /\bhabits?\b|streak|daily routine|\bgoals?\b|run a|read \d+|books?\b|marathon|\b5k\b/],
+  [
+    "habits",
+    /\bhabits?\b|streak|daily routine|\bgoals?\b|run a|read \d+|books?\b|marathon|\b5k\b|milestone|achiev|accomplish|graduat|proud|promot|\bhired\b|got (a|the|my) job|first (job|car|apartment|time)|moved (out|to)|dean'?s list|my (life|past)/,
+  ],
   ["projects", /\bprojects?\b/],
   ["memory", /\bforget\b|memor|what do you (know|remember)|know about me/],
 ];

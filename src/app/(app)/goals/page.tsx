@@ -21,6 +21,7 @@ import { goalsWithPlans } from "@/server/services/finance/goals";
 import { AskJarvisButton, CelebrateGoal } from "../money/money-client";
 import { archiveGoalAction, contributeGoalAction, createGoalAction, deleteGoalAction, updateGoalAction } from "../finances/actions";
 import { GoalTradeoff } from "./tradeoff";
+import { LIFE, SegmentedNav } from "@/components/ui/segmented-nav";
 
 export const metadata: Metadata = { title: "Goals" };
 
@@ -61,6 +62,9 @@ export default async function GoalsPage() {
   return (
     <>
       {celebrate && <CelebrateGoal goalId={celebrate.id} name={celebrate.name} percent={celebrate.milestoneToCelebrate!} />}
+      <div className="mb-4">
+        <SegmentedNav label="Milestones and goals" items={LIFE} active="goals" />
+      </div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-[1.75rem] font-medium tracking-tight">Goals</h1>
         <AskJarvisButton prompt="Help me set a goal. Ask me one question at a time about what I want to reach, then create it.">

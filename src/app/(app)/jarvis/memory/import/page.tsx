@@ -1,33 +1,32 @@
 import type { Metadata } from "next";
-import { ActionForm } from "@/components/action-form";
 import { CopyText } from "@/components/jarvis/idea-button";
-import { SubmitButton } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/field";
-import { IMPORT_PROMPT } from "@/server/services/memory";
-import { importMemoriesAction } from "../../actions";
+import { LIFE_IMPORT_PROMPT } from "@/lib/life-import";
+import { ImportReview } from "./import-review";
 
-export const metadata: Metadata = { title: "Import memory" };
+export const metadata: Metadata = { title: "Import from another AI" };
 
-/** Bring what another AI knows: run our prompt there, paste the answer here. Every fact waits for the user's OK. */
+/** Bring what another AI knows: run our prompt there, paste the answer here, tick what to keep. */
 export default function ImportMemoryPage() {
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header>
-        <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Import memory</h1>
-        <p className="mt-1 text-sm text-text-2">Copy this into a chat with your other AI assistant, then paste its answer below.</p>
+        <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Import from another AI</h1>
+        <p className="mt-1 text-sm text-text-2">Already told ChatGPT or another assistant about your life? Bring it here so Jarvis knows you from day one.</p>
       </header>
-      <div className="flex flex-col gap-3 rounded-3xl bg-surface p-5 shadow-soft">
-        <p className="text-[0.9375rem] text-text-2">{IMPORT_PROMPT}</p>
-        <CopyText text={IMPORT_PROMPT} />
-      </div>
-      <ActionForm action={importMemoriesAction} className="flex flex-col gap-3">
-        <label htmlFor="import-text" className="text-[0.9375rem] font-medium">
-          Paste the answer here
-        </label>
-        <Textarea id="import-text" name="text" rows={8} required maxLength={20000} placeholder="Paste your info here…" />
-        <SubmitButton>Add as suggestions</SubmitButton>
-        <p className="text-xs text-muted">Each fact shows up under Memory for you to keep or dismiss. Nothing is used until you approve it.</p>
-      </ActionForm>
+      <ol className="flex flex-col gap-3">
+        <li className="flex flex-col gap-3 rounded-3xl bg-surface p-5 shadow-soft">
+          <p className="text-sm font-semibold">1. Copy this and send it to your other AI</p>
+          <p className="text-[0.9375rem] whitespace-pre-line text-text-2">{LIFE_IMPORT_PROMPT}</p>
+          <CopyText text={LIFE_IMPORT_PROMPT} />
+        </li>
+        <li className="rounded-3xl bg-surface p-5 shadow-soft">
+          <p className="mb-3 text-sm font-semibold">2. Paste its answer and choose what to keep</p>
+          <ImportReview />
+        </li>
+      </ol>
+      <p className="text-xs text-muted">
+        Passwords and account numbers are left out automatically. Untick anything you&apos;d rather keep to yourself; you can delete anything later.
+      </p>
     </div>
   );
 }

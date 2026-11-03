@@ -9,7 +9,7 @@ test("five tabs, and every section is one tap from its tab", async ({ page }) =>
       "Plan sections",
       [
         ["To-dos", /\/tasks/],
-        ["Goals", /\/goals/],
+        ["Milestones", /\/milestones/],
         ["Health", /\/habits/],
         ["Work", /\/work/],
         ["Calendar", /\/plan$/],

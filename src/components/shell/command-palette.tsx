@@ -45,6 +45,7 @@ const PAGES: { title: string; href: string; icon: LucideIcon; words: string }[] 
   { title: "Transactions", href: "/finances/transactions", icon: Receipt, words: "spending" },
   { title: "Budgets", href: "/finances/budgets", icon: Wallet, words: "" },
   { title: "Goals", href: "/goals", icon: Flag, words: "savings dreams" },
+  { title: "Milestones", href: "/milestones", icon: Flag, words: "achievements life story import chatgpt" },
   { title: "Accounts and banks", href: "/finances/accounts", icon: Landmark, words: "plaid connect bank" },
   { title: "Settings", href: "/settings", icon: Settings, words: "profile security passkey" },
 ];

@@ -31,3 +31,8 @@ export const UPDATES = [
   { key: "jarvis", href: "/jarvis/says", label: "From Jarvis" },
   { key: "filed", href: "/inbox", label: "Filed" },
 ];
+
+export const LIFE = [
+  { key: "milestones", href: "/milestones", label: "Milestones" },
+  { key: "goals", href: "/goals", label: "Goals" },
+];
