@@ -173,6 +173,16 @@ The owner does not want to be the public face, so the character is the face of L
 - **Motion Control price (measured): 20 credits for 11.9 s at 720p** (about 1.7 credits per second). Scene 1 result: job `33528755-cc82-428f-b53c-ca7ceaeebde2` (720x1280, keeps the owner's original audio, so the voice still needs changing). The character copies the gestures and the head scratch well.
 - Credits: 47.59 at the start, 19.34 after scene 1. Not enough for scenes 3 and 4 as planned (about 50 credits more); waiting for the owner's decision.
 
+**Owner feedback on scene 1 (2026-11-03):** the movement and look are "amazing", but he does not want his own voice or his raw wording. Motion Control copies the take's words and audio, so the fix is: the owner re-films short takes saying the polished script exactly, then Motion Control plus Voice Change (Mark for Dev). Re-syncing lips to new audio was priced and rejected: Seedance 2.0 with references 54 credits for 12 s, Genjutsu motion control 84 credits, versus about 20 credits for 12 s with Motion Control.
+
+**Video 1 script v2 (polished, the owner films these exact lines):**
+1. Dev, standing (about 7 s): "Hey guys, I'm Dev. The developer behind LifeFlow. Built the whole thing myself. Honestly... I'm a genius." Head scratch on "genius", then snap.
+2. Real owner (existing clip c3, his real voice): "You said you built what now?" Snap.
+3. Polished owner at the HQ desk (about 12 s, AI voice, not Dev's voice): "Okay. Much better. I'm Ali. Full-time student, part-time job. I built LifeFlow to keep my money in check. Then I plugged in my classes, my shifts, my calendar and my email. Now it helps me run my whole life." Snap.
+4. Dev in the armchair (about 12 s): "Yep. You caught me. I'm Ali's AI character. The office, the voice, all AI. Real Ali is still in his hoodie. Stick around, I'll show you everything LifeFlow can do. For now, sign up, connect your life, and flow."
+5. End card: LifeFlow logo, Link in bio, AI-animated character.
+Estimated cost from 19.34 credits: about 52 credits of Motion Control at 720p for scenes 1, 3 and 4 plus voice changes, so the owner is recharging.
+
 **Series plan.** Video 1 (introduces the character): beat 1 character says he built LifeFlow and is the developer (about 6 s); snap; beat 2 the real owner says "No, I'm Ali, I built it, this is the character I made to speak for me, not pretend to be me" (about 10 s); snap; beat 3 the character continues and says he will explain the app in the next videos (about 10 s). The correction must land within about 6 seconds of the false claim, and the AI-animated label stays on the post. Videos 2 to 4: how and why it was built, a tour of the app one feature at a time, behind the scenes and what is coming.
 
 **Open items before the first character video:** pick sheet A or B; pick the name; pick the ElevenLabs voice (audition 2 or 3 male voices on one test line); the owner writes or approves the reveal line; run the 5-second test.
