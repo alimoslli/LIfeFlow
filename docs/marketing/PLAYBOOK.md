@@ -8,7 +8,7 @@ The single source of truth for LifeFlow's social media and ads. Any Claude chat,
 
 ## 1. The brand
 
-- **Name:** LifeFlow. **Site:** lifeflowweb.com. **Instagram:** @lifeflowweb.
+- **Name:** _not picked yet_. Decided 2026-11-03: it is NOT the owner's name (not Ali) and must not be the assistant's name. Until picked, scripts say "the face of LifeFlow" and use no name.
 - **What it is:** a personal assistant app that brings your schedule, school, work, money and goals into one place, and helps on its own, even when you don't open it.
 - **Audience:** LifeFlow is for everyone. Ads target students first (college, 18 to 24).
 - **The assistant:** inside the app he's called Jarvis by default (users can rename him). In ads and on the landing page hero, say **"your personal assistant"**, not "Jarvis".
@@ -84,10 +84,10 @@ The owner films on their phone and sends the clips into the chat. There are two 
   - A: job `4f7ae757-36dd-4046-95ab-89a025d140e2`
   - B: job `7986c912-569a-4f8b-8350-b39920984dbc`
   - C (the owner's own character, made 2026-11-03, 2.75 credits, model `gpt_image_2_5`, high, 2k, 16:9): job `f3303846-c6d9-4722-a577-ad1c326fae0f`. Result: smart, friendly, clean jaw, glasses and curly hair, consistent across all 8 views; it reads slightly slimmer and a little more auburn than the owner's photos, so ask the owner if he wants the face closer to his real one. Reference photos (Higgsfield media ids): `a78ae4bb-5353-41d3-b79d-ee6d84dc9d5c`, `3f6bbd52-614a-4623-a072-4991a1bab26d`, `e91883bb-0ac0-45a5-a13d-aaa72cf2acec`.
-  - **Chosen:** **C is the current pick** (awaiting the owner's approval of the face); A and B are superseded. Every video uses the chosen sheet's job id as the image reference.
+  - **Chosen:** **C is the confirmed pick** (owner said yes on 2026-11-03, after seeing the desk frame; the face may still be refined); A and B are superseded. Every video uses the chosen sheet's job id as the image reference.
   - (Earlier note, superseded by C) Claude's recommendation between A and B: **A.** A has the more defined jaw and the older, more confident face the look rules ask for; B's face is rounder and reads younger. Both have the same outfit and all four expressions (smile, surprised, thinking, laughing).
 - **Name:** Ali (the owner's own name, decided 2026-11-03; can change later, only appears in scripts for now). It must not be the assistant's name.
-- **Voice (decided 2026-11-03):** the owner's own voice, since the character is the owner. Plan: the owner records a clean 30 to 60 second sample (phone voice memo, quiet room); Claude checks the cost, builds a reusable voice from it in Higgsfield (`create_voice`), and tests one line. Fallback: keep the owner's real recorded audio in each video. No preset-voice auditions needed. Disclose the character as AI-animated on every post.
+- **Voice (decided 2026-11-03):** NOT the owner's voice. One ElevenLabs male voice, the same in every video. Claude plays 2 or 3 short samples of the same line, the owner picks, and the voice name and id are recorded here. Voice: _not picked yet_. Disclose the character as AI-animated on every post.
 - **Every video brief includes:** the character, location references, the owner's reference clips, the full script, and an action script (shots, camera moves, lighting changes, motion), plus music and clean captions.
 - **Credits:** an image is about 3 credits; video costs more, so Claude checks the price before every generation and asks before going over the agreed budget.
 
@@ -180,6 +180,7 @@ Update after every video. Newest at the top.
 - Don't change the app while doing marketing work unless asked.
 - The owner's clips are direction, not a template: the final video doesn't have to copy their exact movements.
 - Final videos are made with Higgsfield using the one LifeFlow character (section 3b); the owner provides credits. Check the price first and ask before spending past the agreed budget.
+- 2026-11-03: owner confirmed he wants the animated character (sheet C) as the face of LifeFlow, with a different name and a different voice from his own. He was losing interest until he saw a concrete frame and mock reel, so always show a concrete example before asking him to spend more time.
 - 2026-11-03: the character is performance-captured from the owner's own takes (section 3c), with a "snap" reveal in the first video. He does not claim to be the developer.
 - 2026-11-03: open conflicts to settle before posting: (1) price: this file says free while in testing, but the poster and the LinkedIn draft offer 15% off with code LifeFlowLaspo (the code must exist in Stripe); (2) the sign-up and onboarding ad briefly shows the app's intro line that contains "calm place", which the owner dislikes: re-cut the ad or change the app copy; (3) the Microsoft/Outlook connection exists on `main` but is not on the connectors images: add it once it is deployed and working.
 - 2026-11-03: branch `claude/lifeflow-ad-reel-higgsfield-s3r3v1` is well behind `main` (about 330 files differ). This file was copied from `main` onto that branch so it can be kept updated there; merge or cherry-pick it back to `main`.
