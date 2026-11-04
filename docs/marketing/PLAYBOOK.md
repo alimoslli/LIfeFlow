@@ -219,6 +219,11 @@ Estimated cost from 19.34 credits: about 52 credits of Motion Control at 720p fo
 - **Quality control:** all stills cut from one look (same lights, Dev in the same green zip every shot); audition 2 or 3 preset voices for the host on his line first (under 1 credit); check every take frame by frame (mouth drift, hands, mics melting) before the voice change; one signature move per clip, nothing more.
 - **Cost of one pass:** 4 stills 18 + Kling Pro 38 s 76 + voice changes about 5 = about 99 credits; stinger about 12 more; keep about 60 for retakes.
 
+**Video 2 character sheets (2026-11-04, xhigh 2k 16:9, 4.5 credits each).** Every still and clip for this video must use these as references so nobody drifts.
+- **Host** (original character, never a real person): `3024649f-bac9-4d87-a44e-5e1f56357277`. Late 30s, light olive skin, dark brown tight curls, short trimmed full beard, warm brown eyes; rust-orange overshirt open over a cream tee, charcoal chinos, brown chelsea boots, brown strap watch, black over-ear headphones around his neck.
+- **Dev, new outfit for this video** (owner: change the clothes every video, same idea): `9e320402-4baa-4ce1-9ae0-e1cd75cf1c57`. Same face, curly light-brown hair, blue-grey eyes and browline glasses; sand-beige suede-look trucker jacket open over a black tee, dark indigo jeans, white sneakers, black watch. Video 1 was the green zip; don't repeat outfits.
+- Credits after the sheets: 78.97.
+
 **Series plan.** Video 1 (introduces the character): beat 1 character says he built LifeFlow and is the developer (about 6 s); snap; beat 2 the real owner says "No, I'm Ali, I built it, this is the character I made to speak for me, not pretend to be me" (about 10 s); snap; beat 3 the character continues and says he will explain the app in the next videos (about 10 s). The correction must land within about 6 seconds of the false claim, and the AI-animated label stays on the post. Videos 2 to 4: how and why it was built, a tour of the app one feature at a time, behind the scenes and what is coming.
 
 **Open items before the first character video:** pick sheet A or B; pick the name; pick the ElevenLabs voice (audition 2 or 3 male voices on one test line); the owner writes or approves the reveal line; run the 5-second test.
