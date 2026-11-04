@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import type { SessionUser } from "../auth/sessions";
 import type { Database } from "../db/client";
 import { users } from "../db/schema";
-import { toSmsText } from "../integrations/twilio";
+import { isWhatsApp, toSmsText } from "../integrations/twilio";
 import { setSms, smsDecision, userForPhone } from "../services/sms";
 import { runJarvisTurn } from "./agent";
 import { decidePendingAction } from "./decide";
@@ -37,6 +37,8 @@ export async function answerText(
     })
     .from(users)
     .where(eq(users.id, userId));
+  // Reply on the channel the message came in on: WhatsApp back to WhatsApp, texts to the saved number.
+  const replyTo = isWhatsApp(from) ? from : u.phone!;
   const user: SessionUser = {
     id: u.id,
     email: u.email,
@@ -48,12 +50,12 @@ export async function answerText(
   };
   if (!isPro(user)) {
     const note = "Texting LifeFlow is part of Pro. Upgrade in the app under Settings, Plan.";
-    await deps.send(u.phone!, note);
+    await deps.send(replyTo, note);
     return note;
   }
   if (!aiAllowed(u.preferences)) {
     const note = "To text your assistant, open LifeFlow and allow Jarvis to use AI (Settings, Jarvis).";
-    await deps.send(u.phone!, note);
+    await deps.send(replyTo, note);
     return note;
   }
   const sms = u.preferences.sms ?? {};
@@ -96,6 +98,6 @@ export async function answerText(
     reply = text.trim() || "Done.";
   }
   const out = toSmsText(reply);
-  await deps.send(u.phone!, out);
+  await deps.send(replyTo, out);
   return out;
 }

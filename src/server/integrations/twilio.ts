@@ -1,19 +1,29 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 /** Texting Jarvis over SMS (Twilio). Not configured ⇒ the feature is hidden. */
-export type SmsConfig = { accountSid: string; authToken: string; from: string; appUrl: string };
+export type SmsConfig = {
+  accountSid: string;
+  authToken: string;
+  from: string;
+  appUrl: string;
+  /** WhatsApp sender (E.164), when one is approved. */ whatsappFrom?: string;
+};
 
 export function smsConfig(env: Record<string, string | undefined> = process.env): SmsConfig | null {
   const accountSid = env.TWILIO_ACCOUNT_SID?.trim();
   const authToken = env.TWILIO_AUTH_TOKEN?.trim();
   const from = env.TWILIO_PHONE_NUMBER?.trim();
   const appUrl = env.APP_URL?.trim().replace(/\/$/, "");
-  return accountSid && authToken && from && appUrl ? { accountSid, authToken, from, appUrl } : null;
+  const whatsappFrom = env.TWILIO_WHATSAPP_NUMBER?.trim().replace(/^whatsapp:/, "") || undefined;
+  return accountSid && authToken && from && appUrl ? { accountSid, authToken, from, appUrl, whatsappFrom } : null;
 }
 
 export class SmsError extends Error {}
 
-/** Sends a text. Returns Twilio's message id; anything else is an error (never report a text as sent without it). */
+/** WhatsApp addresses arrive and leave as "whatsapp:+1…"; everything else is a plain SMS number. */
+export const isWhatsApp = (address: string) => address.startsWith("whatsapp:");
+
+/** Sends a text (or a WhatsApp message when `to` is a "whatsapp:" address). Returns Twilio's message id; anything else is an error (never report a text as sent without it). */
 export async function sendSms(cfg: SmsConfig, to: string, body: string, fetchImpl: typeof fetch = fetch): Promise<string> {
   const res = await fetchImpl(`https://api.twilio.com/2010-04-01/Accounts/${cfg.accountSid}/Messages.json`, {
     method: "POST",
@@ -21,7 +31,7 @@ export async function sendSms(cfg: SmsConfig, to: string, body: string, fetchImp
       authorization: `Basic ${Buffer.from(`${cfg.accountSid}:${cfg.authToken}`).toString("base64")}`,
       "content-type": "application/x-www-form-urlencoded",
     },
-    body: new URLSearchParams({ To: to, From: cfg.from, Body: body }).toString(),
+    body: new URLSearchParams({ To: to, From: isWhatsApp(to) ? `whatsapp:${cfg.whatsappFrom ?? cfg.from}` : cfg.from, Body: body }).toString(),
   }).catch(() => null);
   const json = res ? ((await res.json().catch(() => ({}))) as { sid?: string; code?: number; message?: string }) : {};
   if (!res?.ok || !json.sid) {

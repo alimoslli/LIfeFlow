@@ -69,6 +69,11 @@ describe("texting Jarvis", () => {
     expect((await run((s) => listTasks(s, { status: "open" }))).map((x) => x.title)).not.toContain("Old chore");
     expect(t.sent.at(-1)).toEqual({ to: "+14045550134", body: done });
 
+    // The same number on WhatsApp is the same user, and the reply goes back over WhatsApp.
+    await answerText(db, "whatsapp:+14045550134", '/tool create_tasks {"tasks":[{"title":"Call mom"}]}', deps);
+    expect((await run((s) => listTasks(s, { status: "open" }))).map((x) => x.title)).toContain("Call mom");
+    expect(t.sent.at(-1)?.to).toBe("whatsapp:+14045550134");
+
     await unlinkPhone(db, user.id);
     expect((await smsStatus(db, user.id)).phone).toBeNull();
     expect(await answerText(db, "+14045550134", "hi", deps)).toBeNull();

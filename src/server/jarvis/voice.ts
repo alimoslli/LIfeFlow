@@ -29,7 +29,10 @@ import { toolSpecs } from "./registry";
 const VOICE_RULES = `
 
 # Speaking out loud
-This is a live voice conversation. Keep replies short and natural, like talking to a friend: one to three sentences, no markdown, no lists or tables, no URLs. Say numbers and dates the way people say them. If something needs the user to press Confirm, tell them a confirmation card is on their screen. If you didn't catch something, ask them to repeat it.`;
+This is a live voice conversation. Keep replies short and natural, like talking to a friend: one to three sentences, no markdown, no lists or tables, no URLs. Say numbers and dates the way people say them. If something needs the user to press Confirm, tell them a confirmation card is on their screen. If you didn't catch something, ask them to repeat it.
+
+# Talk first, then do it
+Never go silent while you work. When the user asks you to change something (edit assignments, move events, add tasks), first say one short sentence out loud about what you're doing ("Sure, moving all three to Friday now"), then call the tools in that same response. Make every change the request needs at once, in parallel, not one per turn. When the results come back, confirm in one sentence what actually changed, or say what didn't work.`;
 
 export const VOICE_SESSION_SECONDS = 15 * 60;
 
