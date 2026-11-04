@@ -314,6 +314,14 @@ Estimated cost from 19.34 credits: about 52 credits of Motion Control at 720p fo
 
 **Ep 03 poster options (2026-11-04, free, made with `cover.py` from existing frames):** A, Dev at the mic, "It catches what you miss": https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/f684a8c0-08ba-46d1-bc4d-31c631acd937.jpg ; B, Tyler laughing (frame from his confession take), "Missed a quiz for a shift?": https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/2642011e-3ff7-4c8b-bd42-90819298fbe4.jpg . Pending owner decision: the Ep 02 number bump and Ep 03 line rewrite (52 credits, waiting for top-up and OK).
 
+**Post-production upgrade (2026-11-04, no credits; owner: episodes didn't feel edited or produced enough).** New editor `/home/user/edit/pro_compose.py` (Higgsfield sandbox) adds, without AI generation:
+- **Animated intro** (`/home/user/edit/intro_build.py bg.png out.mp4 "EP 03" "subtitle"`): rack focus from blur, slow push-in, "WELCOME BACK TO / THE FLOW ROOM" with an ease-out-back pop and a light sheen, EP pill pop, subtitle slide, whip-zoom out; the music riser lands as the first speaker starts; the next shot whips in (`whip_in`).
+- **J-cuts** (`jcut` seconds per shot): the next speaker's audio starts about 0.3 s before the picture cuts; trims start just after speech onset. Captions include the lead-in words.
+- **Karaoke captions:** upcoming words dimmed, spoken words bright, LifeFlow in mint.
+- **Name tags** sliding in on first appearance ("TYLER CARDI · HOST", "DEV · LIFEFLOW'S AI").
+- **Handheld drift** (about 4 px) and a slow pull-back on the end card (`end_zoom`).
+- Tried a highlight glow (halation): blending in YUV turned everything purple, and in RGB it washed the image out. Off by default for now (`glow: false`).
+
 **Series plan.** Video 1 (introduces the character): beat 1 character says he built LifeFlow and is the developer (about 6 s); snap; beat 2 the real owner says "No, I'm Ali, I built it, this is the character I made to speak for me, not pretend to be me" (about 10 s); snap; beat 3 the character continues and says he will explain the app in the next videos (about 10 s). The correction must land within about 6 seconds of the false claim, and the AI-animated label stays on the post. Videos 2 to 4: how and why it was built, a tour of the app one feature at a time, behind the scenes and what is coming.
 
 **Open items before the first character video:** pick sheet A or B; pick the name; pick the ElevenLabs voice (audition 2 or 3 male voices on one test line); the owner writes or approves the reveal line; run the 5-second test.
