@@ -1,28 +1,41 @@
 import { expect, test } from "@playwright/test";
 import { queryAsUser, signUp } from "./helpers";
 
-test("a new user gets a short introduction, names their assistant, then a skippable tour", async ({ page }) => {
+test("a new user sees their day connected, names their assistant, then a skippable tour", async ({ page }) => {
   const email = await signUp(page, "Maya Chen", { onboarding: "stay" });
   await expect(page.getByRole("heading", { name: "Hi Maya." })).toBeVisible();
-  await page.getByRole("button", { name: "Show me" }).click();
-
-  // An introduction, not a form: nothing to connect or type.
-  await expect(page.getByRole("heading", { name: "Here's what LifeFlow does" })).toBeVisible();
-  await expect(page.getByRole("textbox")).toHaveCount(0);
-  await page.getByRole("button", { name: "Continue" }).click();
-
-  // How data gets in: connect, send a picture, or add it yourself. Free while testing.
-  await expect(page.getByRole("heading", { name: "How your week gets in" })).toBeVisible();
   await expect(page.getByText("LifeFlow is free while we're testing.")).toBeVisible();
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Let's go" }).click();
 
   await page.getByRole("radio", { name: /Both/ }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  // One class and where they work: optional, and saved for real.
+  await page.getByLabel("A class you're taking").fill("PSY 101");
+  await page.getByLabel("Where you work").fill("Target");
   await page.getByRole("button", { name: "Continue" }).click();
 
   await page.getByLabel("Assistant name").fill("Nova");
   await page.getByRole("radio", { name: /Coach/ }).click();
   await expect(page.getByText("Nova:", { exact: false })).toBeVisible();
-  await page.getByRole("button", { name: "Meet Nova" }).click();
+  await page.getByRole("button", { name: "Show me my day" }).click();
+
+  // Your day, connected: the sources connect, then Nova shows what it would do, built from their answers.
+  await expect(page.getByRole("heading", { name: "Maya, here's a day with everything connected." })).toBeVisible();
+  await expect(page.getByText("Nova is thinking…")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: "Here's what I'd do, Maya." })).toBeVisible({ timeout: 15_000 });
+  const cards = page.locator("article");
+  await expect(cards).toHaveCount(3);
+  await expect(cards.filter({ hasText: "PSY 101" })).not.toHaveCount(0);
+  await expect(cards.filter({ hasText: "Target" })).not.toHaveCount(0);
+  await expect(page.getByText("Example numbers. Connect your accounts and these become real.")).toBeVisible();
+  await cards.first().getByRole("button").click();
+  await expect(cards.first().getByRole("status")).toContainText("In the app,");
+  // Another day: Skip goes straight to the answer.
+  await page.getByRole("button", { name: "Show me another day" }).click();
+  await page.getByRole("button", { name: "Skip", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Here's what I'd do, Maya." })).toBeVisible();
+  await page.getByRole("button", { name: "Meet Nova first" }).click();
 
   // Today, with the tour running.
   await page.waitForURL((u) => u.pathname === "/");
@@ -35,14 +48,15 @@ test("a new user gets a short introduction, names their assistant, then a skippa
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Your calendar and to-dos" })).toHaveCount(0);
 
-  // Saved: what fills their week and their assistant, and nothing else was created.
+  // Saved: what fills their week, their assistant, and the class and job they typed.
   const [prefs] = await queryAsUser<{ p: { lifeStage?: string; assistantName?: string; assistantStyle?: string } }>(
     email,
     "select preferences as p from users where email = $1",
     [email],
   );
   expect(prefs.p).toMatchObject({ lifeStage: "both", assistantName: "Nova", assistantStyle: "coach" });
-  expect(await queryAsUser(email, "select id from courses")).toEqual([]);
+  expect(await queryAsUser(email, "select name from courses")).toEqual([{ name: "PSY 101" }]);
+  expect(await queryAsUser(email, "select name from employers")).toEqual([{ name: "Target" }]);
 
   // The tour doesn't come back, and setup isn't shown again.
   await expect
@@ -78,12 +92,13 @@ test("reduced motion: never a splash, even when requested", async ({ page }) => 
 
 test("the app follows what fills your week: tabs and pills adapt", async ({ page }) => {
   await signUp(page, "Sam Ortiz", { onboarding: "stay" });
-  await page.getByRole("button", { name: "Show me" }).click();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Let's go" }).click();
   await page.getByRole("radio", { name: /^Work/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Meet Jarvis" }).click();
+  await page.getByRole("button", { name: "Continue" }).click(); // where they work is optional
+  await page.getByRole("button", { name: "Show me my day" }).click();
+  await page.getByRole("button", { name: "Skip", exact: true }).click();
+  await page.getByRole("button", { name: "Meet Jarvis first" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   await page.getByRole("button", { name: "Skip tour" }).click();
 
