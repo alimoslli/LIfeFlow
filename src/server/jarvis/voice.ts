@@ -96,7 +96,14 @@ export async function startVoiceSession(user: SessionUser, module: JarvisModule 
       instructions: session.instructions,
       tools: session.tools,
       audio: {
-        input: { transcription: { model: "gpt-4o-mini-transcribe" }, turn_detection: { type: "semantic_vad" }, noise_reduction: { type: "near_field" } },
+        input: {
+          transcription: { model: "gpt-4o-mini-transcribe" },
+          // Semantic turn detection: it listens to what's said, so a mid-sentence pause ("so I need to... um") waits,
+          // and a finished thought gets an answer. The client also has a Done button for noisy places.
+          turn_detection: { type: "semantic_vad", eagerness: "auto", create_response: true, interrupt_response: true },
+          // Far-field suits laptop mics and phones on speaker, and keeps room noise from sounding like speech.
+          noise_reduction: { type: "far_field" },
+        },
         output: { voice: session.voice },
       },
     },

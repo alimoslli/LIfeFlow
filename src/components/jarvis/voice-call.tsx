@@ -1,14 +1,18 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AudioLines, Mic, MicOff } from "lucide-react";
+import { AudioLines, Check, Mic, MicOff } from "lucide-react";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { cn } from "@/lib/utils";
 import { gsap, prefersReducedMotion } from "../motion/gsap";
 import { statusWord } from "./status";
 import type { JarvisModule } from "./types";
 
-type Phase = "connecting" | "listening" | "thinking" | "speaking" | "ended" | "error";
+/** listening = waiting for you; hearing = you are talking (or it still thinks you are); thinking = working on the answer. */
+type Phase = "connecting" | "listening" | "hearing" | "thinking" | "speaking" | "ended" | "error";
+
+/** Realtime errors that are harmless races (an empty commit after Done, a second response request). */
+const BENIGN = new Set(["input_audio_buffer_commit_empty", "conversation_already_has_active_response", "response_cancel_not_active"]);
 
 const REALTIME_URL = "https://api.openai.com/v1/realtime/calls";
 
@@ -71,6 +75,7 @@ export function LiveVoice({
   const [muted, setMuted] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [tool, setTool] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
   const cb = useRef(events);
   // The latest callbacks, for event handlers that outlive a render.
   useEffect(() => {
@@ -165,7 +170,8 @@ export function LiveVoice({
     async function onEvent(ev: { type: string; [k: string]: unknown }) {
       switch (ev.type) {
         case "input_audio_buffer.speech_started":
-          setPhase("listening");
+          setNote(null);
+          setPhase("hearing");
           break;
         case "input_audio_buffer.speech_stopped":
           setPhase("thinking");
@@ -200,9 +206,16 @@ export function LiveVoice({
           } else setPhase("listening");
           break;
         }
-        case "error":
-          console.warn("[voice]", ev);
+        case "error": {
+          const err = (ev.error ?? {}) as { code?: string; type?: string };
+          if (err.code && BENIGN.has(err.code)) break;
+          console.warn("[voice]", err.type, err.code);
+          // Only the error's type and code, never what was said, so the owner sees voice problems on Admin → Errors.
+          void post("/api/errors", { message: `Voice: ${err.type ?? "error"} ${err.code ?? ""}`.trim(), route: "/jarvis (voice)" }).catch(() => {});
+          setNote("I didn't catch that. Try saying it again.");
+          setPhase("listening");
           break;
+        }
       }
     }
 
@@ -299,6 +312,15 @@ export function LiveVoice({
     live.current.mic?.getAudioTracks().forEach((t) => (t.enabled = !muted));
   }, [muted]);
 
+  /** "I'm done talking": for noisy rooms where background sound keeps the turn open. */
+  const finishTurn = () => {
+    const dc = live.current.dc;
+    if (dc?.readyState !== "open") return;
+    dc.send(JSON.stringify({ type: "input_audio_buffer.commit" }));
+    dc.send(JSON.stringify({ type: "response.create" }));
+    setPhase("thinking");
+  };
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && hangUp();
     window.addEventListener("keydown", onKey);
@@ -314,7 +336,14 @@ export function LiveVoice({
           ? `${assistantName} is talking`
           : muted
             ? "Muted"
-            : "Listening…";
+            : phase === "hearing"
+              ? "Hearing you…"
+              : "Your turn, go ahead";
+  const sub =
+    phase === "connecting"
+      ? "Voice"
+      : (note ??
+        (phase === "hearing" && !muted ? "Pause when you're done, or tap Done" : `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`));
 
   return (
     <div
@@ -330,10 +359,19 @@ export function LiveVoice({
         <p className="truncate text-[0.9375rem] font-medium" aria-live="polite">
           {label}
         </p>
-        <p className="tabular text-xs text-muted">
-          {phase === "connecting" ? "Voice" : `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`}
-        </p>
+        <p className="tabular truncate text-xs text-muted">{sub}</p>
       </div>
+      {phase === "hearing" && !muted && (
+        <button
+          type="button"
+          onClick={finishTurn}
+          aria-label="Done talking"
+          className="flex h-10 items-center gap-1.5 rounded-full bg-accent px-3.5 text-sm font-medium text-accent-text"
+        >
+          <Check className="h-4 w-4" aria-hidden />
+          Done
+        </button>
+      )}
       <button
         type="button"
         onClick={() => setMuted((m) => !m)}
