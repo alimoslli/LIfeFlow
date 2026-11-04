@@ -178,6 +178,24 @@ Dev gets smarter through a growing **situation library** (real situations writte
 
 **The problem:** the app looks like other apps restyled and put in one place. The owner wants a surface no one has seen before, one that changes how people manage their life and doesn't look like any existing app. Nobody knows yet what it looks like. It has to be created.
 
+### Know everything, show only what helps (owner's rule, 2026-11-04)
+
+There is a big difference between what the app **knows** (everything connected and synced every day) and what the user **sees**. The user doesn't need to see all their data.
+
+1. **What LifeFlow knows:** everything synced: transactions, schedules, sleep, goals, memories. It stays in the background.
+2. **What Dev uses:** all of it, to notice, plan and fix.
+3. **What the user sees:** only the moments that help. A decision is coming, something needs to change, here's the fix, or something worth celebrating. Plus anything they ask for.
+
+Example: the user tells Dev they have a budget goal. **No** progress bar, no "50% of your budget", no goal settings screen; that is just another money app. Instead the goal shapes Dev's help:
+
+- At a decision: "The concert is $60. You'd still hit your goal if you skip takeout twice next week."
+- In a fix: food spending is running high, so Dev quietly plans Sunday meal prep. The user gets the meal plan, not a percentage.
+- At the right time, rarely: "You're on track for Japan. Nothing to change." Or nothing at all.
+
+**The test for anything on screen:** does it help the user do or decide something now? If it only shows what they have, cut it, or let Dev use it instead.
+
+**Hidden by default, never hidden from the user.** Anyone can ask Dev "how's my budget?" and get the exact numbers, and the "What Dev knows" page shows everything, for privacy and trust.
+
 **Guardrails (they make the new surface usable, not plainer):**
 
 - **Everyday things stay instant.** The owner's rule: "I want my calendar, what's the easiest way? That's how a user should get there." Calendar, to-dos, money and the assistant are one obvious tap away, however new the surface is.
@@ -265,7 +283,7 @@ Decided by the owner (2026-11-04):
 
 Still open:
 
-4. **The Money lock:** money goals sit behind the Money lock today. How do connected insights that touch money show when the lock is on?
+4. **The Money lock:** money goals sit behind the Money lock today. How do connected insights that touch money show when the lock is on? Suggested: with the lock on, Dev still uses money data, but notifications and cards don't show amounts ("Dev has a money heads-up") until the user unlocks. Lock-screen notifications can be read by anyone holding the phone.
 
 ## 16. The honest hard parts
 
@@ -340,3 +358,7 @@ Still open:
 ### Answers to the open questions
 
 > dev is only my personal assistants name but to make it easier to refer to it, 2. it can, 3, if its fonna be predicted it has to be done perfectly, because our model rn is not even catching all my real subscriptions accurately, it will be predicted but we will use it in a very accurate way where our ai model sees past weeks and pay periods, how much i was scheduled and how much i got paid to calculate that, so that all becomes better over time, so he will see that when usually ali gets scheduled 25 hours hegeyx paid x, when he gets scheduled x he gets paid x, because there are differences in how long he clocked in, plus if he called out, plus taxes
+
+### What the app knows vs what the user sees
+
+> we have to understand there's a big difference between what the app knows and what, like what the app knows, what's connected to it and synced to it daily, and what the user is seeing. The user doesn't have to see all the data that's synced to him. So for example, I can tell the personal assistant that I have a goal to budget, but I don't want to see that I'm 50% in my budget goal and there's a UI setting for it and there's whatever. When I do a UI setting that shows how much of my goal is done, that's exactly doing another money app. No, we have to implement it into the user's life through the personal assistant in a way that has not been done before. So it's not just showing the user what he has, it's like using what he has to better his life.
