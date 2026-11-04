@@ -306,6 +306,12 @@ Estimated cost from 19.34 credits: about 52 credits of Motion Control at 720p fo
 
 **Delivered (2026-11-04):** Ep 02 rebuilt, 54.8 s: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/a00755a7-4993-44f5-a2cb-329f08fddd16.zip . Ep 03, 29.3 s: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/52417e2e-a882-4569-94cd-ab3ebd5953c9.zip . Both about -10.5 LUFS with voices balanced per take (Mark and Caspian levels vary take to take: always measure each section with ebur128 and set per-shot gain). Credits left: 1.72.
 
+**Owner rules after Ep 03 (2026-11-04):**
+- **Credits:** each episode is 3 clips max (Tyler asks, Dev answers in one long take, Tyler closes), about 50 to 60 credits. State the exact cost and wait for the owner's OK before generating. Reuse existing stills. (Ep 02's 9-line ping-pong cost about 140 credits and the owner was rightly upset.)
+- **No spoken "Link in bio" in the podcast, ever again** (it landed in the middle of Ep 03 and broke the flow). The end card shows only the LifeFlow logo.
+- **The old host is finished after Ep 02.** From Ep 03 on, no Ep 01 fly-in (the old host is visible through the door) and no hallway end card. Ep 03 opener: a slow push-in on the Tyler + Dev still (`adcc1f08...`, dark top for the hook); the same still closes the episode with the logo, so it loops.
+- Ep 03 fixed in the edit only (no credits).
+
 **Series plan.** Video 1 (introduces the character): beat 1 character says he built LifeFlow and is the developer (about 6 s); snap; beat 2 the real owner says "No, I'm Ali, I built it, this is the character I made to speak for me, not pretend to be me" (about 10 s); snap; beat 3 the character continues and says he will explain the app in the next videos (about 10 s). The correction must land within about 6 seconds of the false claim, and the AI-animated label stays on the post. Videos 2 to 4: how and why it was built, a tour of the app one feature at a time, behind the scenes and what is coming.
 
 **Open items before the first character video:** pick sheet A or B; pick the name; pick the ElevenLabs voice (audition 2 or 3 male voices on one test line); the owner writes or approves the reveal line; run the 5-second test.
