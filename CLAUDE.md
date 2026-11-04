@@ -89,6 +89,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 
 ## Product rules (from the owner)
 - Phone-first app that must also work perfectly on the web. Five tabs: Today, Plan, Jarvis, Money, School; Settings is the gear (an iOS-style list at /settings). Every page belongs to one pill in `section-nav.tsx` (ADR 0015); pills are tested in `tests/e2e/layout-phone.spec.ts`.
+- The product vision is `docs/vision.md` (2026-11-04: connect the dots; every piece of life data is a variable; solve, don't just warn; a new surface). Read it before any product or design work; where it disagrees with `docs/plan-v2.md`, the vision wins. Its open questions need the owner's answer before building those parts.
 - The product direction is `docs/plan-v2.md` (student first, cut before you add). No "safe to spend" or daily allowance: money is Available now (checking + cash), spent and came in.
 - User-facing text never names server settings, models, tokens or internal logs. Say "isn't available yet" instead. Diagnostics live behind `?debug=1`.
 - Money: never count income before it's deposited. Expected pay is shown (never counted) only for a salaried job whose paychecks land for the same amount; hourly pay is never predicted (`expectedPay` in forecast.ts). Today's money = one line: Available now (checking + cash) and the next bill this week. Money shows spent / came in this month with last month beside it, and the next 30 days as one bar (bills, usual spending, left).

@@ -2,6 +2,8 @@
 
 Drafted 2026-10-29 from the owner's decisions. Nothing in this plan is built yet. Build one phase at a time, and only after the owner says go.
 
+> **2026-11-04:** the owner set a new direction in `docs/vision.md` (connect the dots, solve instead of warn, a new surface). Where the two disagree, the vision wins. The app structure in section 3 will be revised from it.
+
 ## 0. Versus Muse from Meta
 
 This section is based on the App Store page, Meta's announcements, and the owner's screenshots and screen recording of the app (Ideas, agent profile, Import memory, Connectors, Appearance).
