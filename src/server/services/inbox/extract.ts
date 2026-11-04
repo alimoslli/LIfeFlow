@@ -79,7 +79,7 @@ export function extractionClient(): { client: OpenAI; model: string } | null {
 }
 
 export async function extractDocument(input: ExtractInput, llm = extractionClient()): Promise<Extraction> {
-  if (!llm) throw new Error("Jarvis can't read documents right now.");
+  if (!llm) throw new Error("Reading documents isn't available right now.");
   const content: ResponseInputContent[] = [
     {
       type: "input_text",

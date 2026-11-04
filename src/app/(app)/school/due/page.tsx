@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import { BookOpen } from "lucide-react";
 import { Card, EmptyState, PageHeader, Tabs } from "@/components/ui/surface";
@@ -56,11 +57,17 @@ export default async function DuePage({ searchParams }: { searchParams: Promise<
       <Card className="mb-10">
         {d.list.length === 0 ? (
           <EmptyState icon={<BookOpen />} title={view === "overdue" ? "Nothing overdue. Nice." : "Nothing here"}>
-            {view === "completed"
-              ? "Completed assignments will collect here."
-              : d.courses.length
-                ? "Send Jarvis your syllabus and every due date lands here."
-                : "Add a class first, then send Jarvis its syllabus."}
+            {view === "completed" ? (
+              "Completed assignments will collect here."
+            ) : d.courses.length ? (
+              <>
+                Send <AssistantName /> your syllabus and every due date lands here.
+              </>
+            ) : (
+              <>
+                Add a class first, then send <AssistantName /> its syllabus.
+              </>
+            )}
           </EmptyState>
         ) : (
           <div className="flex flex-col">

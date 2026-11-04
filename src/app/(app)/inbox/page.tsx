@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertCircle, CheckCircle2, CircleSlash, FileText, Mail, Undo2 } from "lucide-react";
@@ -40,15 +41,21 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header>
         <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Updates</h1>
-        <p className="mt-1 text-sm text-text-2">Send bills, receipts and school emails. Jarvis files them.</p>
+        <p className="mt-1 text-sm text-text-2">
+          Send bills, receipts and school emails. <AssistantName /> files them.
+        </p>
       </header>
       <SegmentedNav label="Updates" items={UPDATES} active="filed" />
-      {shared === "1" && <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">Got it. Jarvis filed what you shared; see it below.</p>}
+      {shared === "1" && (
+        <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
+          Got it. <AssistantName /> filed what you shared; see it below.
+        </p>
+      )}
       {shared === "0" && (
         <p className="rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">That share couldn&apos;t be read. Try adding it here instead.</p>
       )}
       {!d.canRead && (
-        <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2">Jarvis can&apos;t read documents yet. Items wait here until he can.</p>
+        <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2">Reading documents isn&apos;t available yet. Items wait here until it is.</p>
       )}
 
       <Card className="flex flex-col gap-4 p-5">

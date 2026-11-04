@@ -2,23 +2,28 @@
 import { useState, useTransition } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ACCENTS, type Accent, type TextSize, type Theme } from "@/lib/theme";
-import { setAccentAction, setTextSizeAction, setThemeAction } from "@/app/theme-actions";
+import type { TextSize, Theme } from "@/lib/theme";
+import { setTextSizeAction, setThemeAction } from "@/app/theme-actions";
 
+/** System is the default: the app follows the phone's own light or dark setting until you pick one. */
 const OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
+  { value: "system", label: "System", icon: Monitor },
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "Automatic", icon: Monitor },
 ];
+const BAR = { light: "#f4f2ec", dark: "#0e0e0d" };
 
-/** Light / Dark / Automatic. Applies instantly, then saves the choice. */
+/** System / Light / Dark. Applies instantly (page and the phone's status bar color), then saves the choice. */
 export function ThemePicker({ initial }: { initial: Theme }) {
   const [theme, setTheme] = useState<Theme>(initial);
   const [, start] = useTransition();
   const choose = (t: Theme) => {
     setTheme(t);
-    if (t === "system") document.documentElement.removeAttribute("data-theme");
-    else document.documentElement.setAttribute("data-theme", t);
+    const root = document.documentElement;
+    if (t === "system") root.removeAttribute("data-theme");
+    else root.setAttribute("data-theme", t);
+    const dark = t === "dark" || (t === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", dark ? BAR.dark : BAR.light));
     start(() => setThemeAction(t));
   };
   return (
@@ -38,36 +43,6 @@ export function ThemePicker({ initial }: { initial: Theme }) {
           <Icon className="h-5 w-5" strokeWidth={1.8} />
           {label}
         </button>
-      ))}
-    </div>
-  );
-}
-
-const SWATCH: Record<Accent, string> = { green: "#2f5d50", blue: "#2f5fa8", purple: "#6a4fa3", pink: "#b0406f", orange: "#b4581f" };
-
-/** The app's accent color. Applies instantly, then saves the choice on this device. */
-export function AccentPicker({ initial }: { initial: Accent }) {
-  const [accent, setAccent] = useState<Accent>(initial);
-  const [, start] = useTransition();
-  const choose = (a: Accent) => {
-    setAccent(a);
-    if (a === "green") document.documentElement.removeAttribute("data-accent");
-    else document.documentElement.setAttribute("data-accent", a);
-    start(() => setAccentAction(a));
-  };
-  return (
-    <div role="radiogroup" aria-label="Accent color" className="flex flex-wrap gap-3">
-      {ACCENTS.map((a) => (
-        <button
-          key={a}
-          type="button"
-          role="radio"
-          aria-checked={accent === a}
-          aria-label={a[0].toUpperCase() + a.slice(1)}
-          onClick={() => choose(a)}
-          className={cn("h-11 w-11 rounded-full ring-offset-2 ring-offset-bg transition-shadow", accent === a && "ring-2 ring-text")}
-          style={{ background: SWATCH[a] }}
-        />
       ))}
     </div>
   );

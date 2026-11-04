@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
@@ -11,7 +12,13 @@ import { manageBillingAction, upgradeAction } from "./actions";
 
 export const metadata: Metadata = { title: "Plan" };
 
-const PRO = ["Unlimited Jarvis", "Bank and card sync", "Gmail and Google Calendar", "Text Jarvis from your phone", "Talk to Jarvis by voice"];
+const PRO = [
+  "Unlimited assistant messages",
+  "Bank and card sync",
+  "Gmail and Google Calendar",
+  "Text your assistant from your phone",
+  "Talk to your assistant by voice",
+];
 
 /** Free vs Pro, with one button. Payments and cancelling happen on Stripe's pages. */
 export default async function PlanPage({ searchParams }: { searchParams: Promise<{ upgraded?: string; need?: string }> }) {
@@ -38,7 +45,11 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             </li>
           ))}
         </ul>
-        {!pro && <p className="mt-4 text-sm text-text-2">Free keeps everything you add yourself, plus {FREE_JARVIS_PER_DAY} messages with Jarvis a day.</p>}
+        {!pro && (
+          <p className="mt-4 text-sm text-text-2">
+            Free keeps everything you add yourself, plus {FREE_JARVIS_PER_DAY} messages with <AssistantName /> a day.
+          </p>
+        )}
         {inApp && !pro ? (
           <p className="mt-5 text-sm text-text-2">Upgrading isn&apos;t available in the app yet.</p>
         ) : (

@@ -269,9 +269,9 @@ export async function fileExtraction(scope: UserScope, tz: string, ex: Extractio
       return { filed };
     }
     case "class_schedule":
-      return { filed, review: "This looks like your class schedule, not a bill. Send the same photo to Jarvis in chat to add your classes." };
+      return { filed, review: "This looks like your class schedule, not a bill. Send the same photo to your assistant in chat to add your classes." };
     case "work_schedule":
-      return { filed, review: "This looks like a work schedule, not a bill. Send the same photo to Jarvis in chat to add your shifts." };
+      return { filed, review: "This looks like a work schedule, not a bill. Send the same photo to your assistant in chat to add your shifts." };
     default:
       return { filed, review: "Nothing to file. It's saved here so you can find it." };
   }
@@ -305,7 +305,7 @@ export async function processDocument(scope: UserScope, tz: string, today: strin
   let ex: Extraction;
   try {
     const [owner] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
-    if (!aiAllowed(owner?.preferences)) throw new Error("Saved. Allow Jarvis to use AI (Settings → Jarvis) to have it read and filed automatically.");
+    if (!aiAllowed(owner?.preferences)) throw new Error("Saved. Allow your assistant to use AI (in Settings) to have it read and filed automatically.");
     ex = await extract({ ...doc, today });
   } catch (e) {
     const [failed] = await scope.tx

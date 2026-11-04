@@ -31,7 +31,7 @@ export function WorkHours({ value, onChange, name }: { value: WorkSchedule | nul
             )}
           >
             <span className="text-[0.9375rem] font-medium">{label}</span>
-            <span className={cn("text-xs", !!value === fixed ? "opacity-80" : "text-muted")}>{hint}</span>
+            <span className={cn("text-xs", !!value === fixed ? "text-hero-text" : "text-muted")}>{hint}</span>
           </button>
         ))}
       </div>

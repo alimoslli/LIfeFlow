@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ChevronRight, GraduationCap } from "lucide-react";
@@ -45,7 +46,7 @@ export default async function SchoolPage() {
       {d.courses.length === 0 ? (
         <Card className="mb-8">
           <EmptyState icon={<GraduationCap />} title="Add your first course" action={<CourseDialog action={createCourseAction} trigger="Add course" />}>
-            Or tell Jarvis: “I&apos;m taking PSY 101, BIO 110 and MATH 152 this semester.”
+            Or tell <AssistantName />: “I&apos;m taking PSY 101, BIO 110 and MATH 152 this semester.”
           </EmptyState>
         </Card>
       ) : (
@@ -87,7 +88,9 @@ export default async function SchoolPage() {
         className="mb-4 flex w-full items-center gap-3 rounded-3xl bg-accent-soft px-5 py-4 text-left text-[0.9375rem] text-accent transition-transform active:scale-[0.99]"
       >
         <BrandMark className="h-8 w-8" alt="" />
-        <span className="flex-1">Have a syllabus or a screenshot? Send it to Jarvis and it&apos;ll add everything.</span>
+        <span className="flex-1">
+          Have a syllabus or a screenshot? Send it to <AssistantName /> and it&apos;ll add everything.
+        </span>
       </AskJarvisButton>
       {!d.canvas && (
         <Link

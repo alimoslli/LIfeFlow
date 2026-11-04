@@ -54,7 +54,7 @@ export async function answerText(
     return note;
   }
   if (!aiAllowed(u.preferences)) {
-    const note = "To text your assistant, open LifeFlow and allow Jarvis to use AI (Settings, Jarvis).";
+    const note = "To text your assistant, open LifeFlow and allow it to use AI (in Settings).";
     await deps.send(replyTo, note);
     return note;
   }

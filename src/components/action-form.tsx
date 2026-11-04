@@ -29,6 +29,8 @@ function useReportedAction(action: Action, report: (r: ActionState) => void) {
         r = { ok: false, error: "Couldn't reach LifeFlow. Check your connection and try again.", at: Date.now() };
       }
       reportRef.current(r);
+      // A save clears the page cache; the app shell warms the tabs again (see app-shell.tsx).
+      if (r?.ok) window.dispatchEvent(new Event("lf:saved"));
       return r;
     },
     [action],

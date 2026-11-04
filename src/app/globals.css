@@ -117,94 +117,6 @@
   font-size: 125%;
 }
 
-/* Accent colors (Settings → Profile & appearance). Green is the default in :root above. */
-:root[data-accent="blue"] {
-  --accent: #2f5fa8;
-  --accent-hover: #264f8d;
-  --accent-soft: #e3ebf7;
-  --accent-text: #ffffff;
-  --hero: #2f5fa8;
-}
-:root[data-accent="purple"] {
-  --accent: #6a4fa3;
-  --accent-hover: #5a4290;
-  --accent-soft: #ece6f6;
-  --accent-text: #ffffff;
-  --hero: #6a4fa3;
-}
-:root[data-accent="pink"] {
-  --accent: #b0406f;
-  --accent-hover: #963660;
-  --accent-soft: #f6e3eb;
-  --accent-text: #ffffff;
-  --hero: #b0406f;
-}
-:root[data-accent="orange"] {
-  --accent: #b4581f;
-  --accent-hover: #9a4a19;
-  --accent-soft: #f8e8dc;
-  --accent-text: #ffffff;
-  --hero: #b4581f;
-}
-:root[data-theme="dark"][data-accent="blue"] {
-  --accent: #8fb4ee;
-  --accent-hover: #a7c4f2;
-  --accent-soft: #1b2840;
-  --accent-text: #0b1424;
-  --hero: #233f6b;
-}
-:root[data-theme="dark"][data-accent="purple"] {
-  --accent: #bba6ec;
-  --accent-hover: #cbbaf1;
-  --accent-soft: #2a2140;
-  --accent-text: #160f26;
-  --hero: #45347a;
-}
-:root[data-theme="dark"][data-accent="pink"] {
-  --accent: #f0a3c2;
-  --accent-hover: #f4b7cf;
-  --accent-soft: #3c1f2c;
-  --accent-text: #2a0f1b;
-  --hero: #7a2c4d;
-}
-:root[data-theme="dark"][data-accent="orange"] {
-  --accent: #f2b07f;
-  --accent-hover: #f5c199;
-  --accent-soft: #3d2716;
-  --accent-text: #2a1607;
-  --hero: #7a3f17;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"])[data-accent="blue"] {
-    --accent: #8fb4ee;
-    --accent-hover: #a7c4f2;
-    --accent-soft: #1b2840;
-    --accent-text: #0b1424;
-    --hero: #233f6b;
-  }
-  :root:not([data-theme="light"])[data-accent="purple"] {
-    --accent: #bba6ec;
-    --accent-hover: #cbbaf1;
-    --accent-soft: #2a2140;
-    --accent-text: #160f26;
-    --hero: #45347a;
-  }
-  :root:not([data-theme="light"])[data-accent="pink"] {
-    --accent: #f0a3c2;
-    --accent-hover: #f4b7cf;
-    --accent-soft: #3c1f2c;
-    --accent-text: #2a0f1b;
-    --hero: #7a2c4d;
-  }
-  :root:not([data-theme="light"])[data-accent="orange"] {
-    --accent: #f2b07f;
-    --accent-hover: #f5c199;
-    --accent-soft: #3d2716;
-    --accent-text: #2a1607;
-    --hero: #7a3f17;
-  }
-}
-
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -371,10 +283,8 @@ body {
     0 16px 36px -14px rgb(60 45 20 / 0.28);
   --shadow-lift:
     inset 0 1px 0 var(--glass-edge), 0 0 0 1px rgb(255 255 255 / 0.65), 0 4px 10px -4px rgb(60 45 20 / 0.14), 0 30px 60px -20px rgb(60 45 20 / 0.38);
-  --scene:
-    radial-gradient(42% 45% at 95% -4%, rgb(89 139 108 / 0.5), transparent 70%), radial-gradient(36% 38% at 92% 94%, rgb(167 199 159 / 0.42), transparent 72%),
-    radial-gradient(48% 42% at -8% 102%, rgb(209 181 137 / 0.35), transparent 72%),
-    radial-gradient(64% 56% at 28% 16%, rgb(255 253 246 / 0.98), transparent 76%), linear-gradient(160deg, #f2eadc, #e3d6c0);
+  /* A plain, solid background (UX review): no light orbs. */
+  --scene: #f1ece2;
 }
 .lf-scene {
   position: fixed;
@@ -446,9 +356,7 @@ body {
     --glass-gloss: linear-gradient(160deg, rgb(255 255 255 / 0.08) 0%, rgb(255 255 255 / 0) 40%, rgb(255 255 255 / 0.03) 100%);
     --shadow: inset 0 1px 0 var(--glass-edge), 0 0 0 1px rgb(255 255 255 / 0.07), 0 18px 40px -16px rgb(0 0 0 / 0.7);
     --shadow-lift: inset 0 1px 0 var(--glass-edge), 0 0 0 1px rgb(255 255 255 / 0.11), 0 30px 60px -18px rgb(0 0 0 / 0.8);
-    --scene:
-      radial-gradient(38% 42% at 92% 4%, rgb(47 93 80 / 0.65), transparent 70%), radial-gradient(45% 40% at 100% 100%, rgb(33 73 61 / 0.75), transparent 70%),
-      radial-gradient(55% 45% at 0% 100%, rgb(120 86 48 / 0.4), transparent 70%), linear-gradient(165deg, #141712, #0b0c0b);
+    --scene: #0f100e;
   }
 }
 :root[data-theme="dark"] .lf-glass {
@@ -460,9 +368,7 @@ body {
   --glass-gloss: linear-gradient(160deg, rgb(255 255 255 / 0.08) 0%, rgb(255 255 255 / 0) 40%, rgb(255 255 255 / 0.03) 100%);
   --shadow: inset 0 1px 0 var(--glass-edge), 0 0 0 1px rgb(255 255 255 / 0.07), 0 18px 40px -16px rgb(0 0 0 / 0.7);
   --shadow-lift: inset 0 1px 0 var(--glass-edge), 0 0 0 1px rgb(255 255 255 / 0.11), 0 30px 60px -18px rgb(0 0 0 / 0.8);
-  --scene:
-    radial-gradient(38% 42% at 92% 4%, rgb(47 93 80 / 0.65), transparent 70%), radial-gradient(45% 40% at 100% 100%, rgb(33 73 61 / 0.75), transparent 70%),
-    radial-gradient(55% 45% at 0% 100%, rgb(120 86 48 / 0.4), transparent 70%), linear-gradient(165deg, #141712, #0b0c0b);
+  --scene: #0f100e;
 }
 
 /* Opening splash (see components/motion/splash.tsx). Hidden unless <html> has .lf-splash. */

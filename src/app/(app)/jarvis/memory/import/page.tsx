@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import { CopyText } from "@/components/jarvis/idea-button";
 import { LIFE_IMPORT_PROMPT } from "@/lib/life-import";
@@ -11,7 +12,9 @@ export default function ImportMemoryPage() {
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header>
         <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Import from another AI</h1>
-        <p className="mt-1 text-sm text-text-2">Already told ChatGPT or another assistant about your life? Bring it here so Jarvis knows you from day one.</p>
+        <p className="mt-1 text-sm text-text-2">
+          Already told ChatGPT or another assistant about your life? Bring it here so <AssistantName /> knows you from day one.
+        </p>
       </header>
       <ol className="flex flex-col gap-3">
         <li className="flex flex-col gap-3 rounded-3xl bg-surface p-5 shadow-soft">

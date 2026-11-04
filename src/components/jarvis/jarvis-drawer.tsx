@@ -104,7 +104,7 @@ export function JarvisDrawer({
             >
               <Maximize2 className="h-4 w-4" />
             </Link>
-            <button onClick={onClose} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-text" aria-label="Close Jarvis">
+            <button onClick={onClose} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-text" aria-label={`Close ${assistantName}`}>
               <X className="h-4 w-4" />
             </button>
           </div>

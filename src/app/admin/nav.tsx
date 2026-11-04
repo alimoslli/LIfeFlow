@@ -44,7 +44,7 @@ export function AdminNav({ email, counts }: { email: string; counts: { feedback:
         </div>
         <nav
           aria-label="Admin"
-          className="lf-hscroll -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-3 [scrollbar-width:none] sm:-mx-6 sm:px-6 [&::-webkit-scrollbar]:hidden"
+          className="lf-hscroll -mx-4 flex gap-1.5 overflow-x-auto px-4 pt-1 pb-3 [scrollbar-width:none] sm:-mx-6 sm:px-6 [&::-webkit-scrollbar]:hidden"
         >
           {ITEMS.map((i) => {
             const on = isOn(path, i.href);

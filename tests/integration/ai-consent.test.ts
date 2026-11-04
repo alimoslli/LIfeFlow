@@ -25,6 +25,6 @@ describe("AI consent (App Store 5.1.2(i))", () => {
       processDocument(s, TZ, todayIn(TZ), { channel: "email", subject: "Comcast bill", text: "Amount due $64.99", files: [] }, extract),
     );
     expect(called).toBe(false);
-    expect(row).toMatchObject({ status: "failed", reason: expect.stringMatching(/Allow Jarvis to use AI/) });
+    expect(row).toMatchObject({ status: "failed", reason: expect.stringMatching(/Allow your assistant to use AI/) });
   });
 });

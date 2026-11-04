@@ -19,10 +19,10 @@ export function CountedInput({
       className={cn("w-full resize-none rounded-2xl border border-border bg-surface px-4 py-3 text-[1rem] focus:border-accent focus:outline-none", className)}
     />
   ) : (
-    <input {...props} maxLength={max} onChange={(e) => setLen(e.target.value.length)} className={className} />
+    <input {...props} maxLength={max} onChange={(e) => setLen(e.target.value.length)} className={cn("w-full", className)} />
   );
   return (
-    <span className="relative block w-full">
+    <span className="relative block w-full min-w-0 flex-1">
       {field}
       <span aria-live="polite" className={cn("mt-1 block text-right text-xs", len >= max ? "text-danger" : "text-muted", !near && "sr-only")}>
         {len >= max ? `That's the ${max}-character limit.` : `${max - len} characters left`}

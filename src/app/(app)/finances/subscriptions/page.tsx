@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import { BILLS_SUBS, SegmentedNav } from "@/components/ui/segmented-nav";
 import type { Metadata } from "next";
 import { AlertTriangle, Copy, Hourglass, TrendingUp, ZapOff } from "lucide-react";
@@ -183,7 +184,9 @@ export default async function SubscriptionsPage() {
           ))}
         </section>
       )}
-      <p className="text-xs text-muted">Jarvis never cancels anything. Cancel help shows the steps; you decide.</p>
+      <p className="text-xs text-muted">
+        <AssistantName /> never cancels anything. Cancel help shows the steps; you decide.
+      </p>
     </div>
   );
 }

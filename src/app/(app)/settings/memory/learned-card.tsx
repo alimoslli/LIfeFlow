@@ -82,7 +82,7 @@ export function LearnedCard({
         <div className="border-t border-border px-5 py-3">
           <ActionButton
             action={resetLearningAction}
-            confirm="Forget what Jarvis learned from your responses and bring back everything you muted? Your memories stay."
+            confirm="Forget what your assistant learned from your responses and bring back everything you muted? Your memories stay."
             className="flex min-h-11 items-center gap-1.5 text-sm font-medium text-text-2 hover:text-danger"
           >
             <RotateCcw className="h-4 w-4" /> Reset what {name} learned

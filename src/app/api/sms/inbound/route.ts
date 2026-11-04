@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     const text =
       keyword === "help"
         ? smsHelpText(legalDetails().email)
-        : "LifeFlow: texts are back on. To text your assistant, add this number in the app under Settings, Text Jarvis.";
+        : "LifeFlow: texts are back on. To text your assistant, add this number in the app under Settings, Text your assistant.";
     after(() => sendSms(cfg, from, text).catch((e) => console.error("[sms] keyword reply failed", e instanceof Error ? e.name : e)));
     return EMPTY;
   }

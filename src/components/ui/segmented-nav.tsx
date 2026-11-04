@@ -28,7 +28,7 @@ export const BILLS_SUBS = [
 ];
 
 export const UPDATES = [
-  { key: "jarvis", href: "/jarvis/says", label: "From Jarvis" },
+  { key: "jarvis", href: "/jarvis/says", label: "From your assistant" },
   { key: "filed", href: "/inbox", label: "Filed" },
 ];
 

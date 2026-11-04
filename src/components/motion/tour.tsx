@@ -44,7 +44,7 @@ const steps = (name: string): Step[] => [
     target: "school",
     eyebrow: "School",
     title: "Courses and assignments",
-    body: "Bring in assignments from Canvas, or send a screenshot or syllabus from any other platform. See what's due, and get study time built around your free hours. Jarvis never does graded work.",
+    body: "Bring in assignments from Canvas, or send a screenshot or syllabus from any other platform. See what's due, and get study time built around your free hours. Your assistant never does graded work.",
   },
   {
     target: "ask",

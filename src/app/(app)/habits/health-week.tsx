@@ -1,4 +1,5 @@
 "use client";
+import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import { useState } from "react";
 import { ActionForm } from "@/components/action-form";
@@ -25,7 +26,8 @@ export function HealthWeek({ metrics, today }: { metrics: Metric[]; today: strin
       <section aria-label="This week" className="rounded-3xl bg-surface p-5 shadow-soft">
         <p className="text-[0.9375rem] font-medium">No health data yet</p>
         <p className="mt-1 text-sm text-text-2">
-          Connect Apple Health and your sleep, steps and workouts fill in by themselves. Or log something below, or tell Jarvis &ldquo;I slept 7 hours.&rdquo;
+          Connect Apple Health and your sleep, steps and workouts fill in by themselves. Or log something below, or tell <AssistantName /> &ldquo;I slept 7
+          hours.&rdquo;
         </p>
         <Link href="/settings/integrations" className="mt-3 flex min-h-11 items-center text-sm font-medium text-accent">
           Connect Apple Health

@@ -1,4 +1,5 @@
 "use server";
+import { assistantProfile } from "@/lib/assistant";
 import { rateLimit } from "@/server/rate-limit";
 import { sendFeedback } from "@/server/services/feedback";
 import { and, eq, ne } from "drizzle-orm";
@@ -82,13 +83,13 @@ const memoryCategory = (v: string | undefined) =>
 
 export async function addMemoryAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
-  return mutate("memory.create", async (s) => {
+  return mutate("memory.create", async (s, u) => {
     const r = await createMemory(
       s,
       { content: f.content ?? "", category: memoryCategory(f.category) ?? "preference", expiresAt: f.expiresAt ? new Date(f.expiresAt) : null },
       "user",
     );
-    return r.duplicate ? "Jarvis already remembers that." : "Saved";
+    return r.duplicate ? `${assistantProfile(u.preferences).name} already remembers that.` : "Saved";
   });
 }
 
@@ -182,7 +183,8 @@ export async function removeDeviceAction(id: string): Promise<ActionState> {
 export async function setJarvisLearningAction(on: boolean): Promise<ActionState> {
   return mutate("jarvis.learning", async (_s, u) => {
     await setJarvis(u, { learning: on });
-    return on ? "Jarvis will learn from your responses." : "Learning is off. Jarvis treats every message the same.";
+    const n = assistantProfile(u.preferences).name;
+    return on ? `${n} will learn from your responses.` : `Learning is off. ${n} treats every message the same.`;
   });
 }
 
@@ -196,7 +198,7 @@ export async function unmuteKindAction(kind: string): Promise<ActionState> {
 export async function resetLearningAction(): Promise<ActionState> {
   return mutate("jarvis.learning_reset", async (_s, u) => {
     await setJarvis(u, { learningResetAt: new Date().toISOString(), mutedKinds: [] });
-    return "Jarvis forgot what he learned from your responses.";
+    return `${assistantProfile(u.preferences).name} forgot what it learned from your responses.`;
   });
 }
 
@@ -204,7 +206,8 @@ export async function resetLearningAction(): Promise<ActionState> {
 export async function setAiConsentAction(on: boolean): Promise<ActionState> {
   return mutate("ai.consent", async (_s, u) => {
     await updatePreferences(getDb(), u.id, { aiConsentAt: on ? new Date().toISOString() : null });
-    return on ? "Jarvis can use AI now." : "Jarvis's AI is off. Nothing is sent to OpenAI.";
+    const n = assistantProfile(u.preferences).name;
+    return on ? `${n} can use AI now.` : `${n}'s AI is off. Nothing is sent to OpenAI.`;
   });
 }
 

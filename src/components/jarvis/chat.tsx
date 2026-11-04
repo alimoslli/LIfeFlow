@@ -294,7 +294,7 @@ export function JarvisChat({
             <div className="flex gap-3 rounded-2xl bg-warning-soft p-4 text-sm text-warning">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
-                <p className="font-medium">Jarvis isn&apos;t available right now.</p>
+                <p className="font-medium">{assistantName} isn&apos;t available right now.</p>
                 <p className="mt-1 opacity-90">Everything else in LifeFlow works as usual.</p>
               </div>
             </div>
@@ -318,7 +318,7 @@ export function JarvisChat({
               {!aiConsent ? (
                 <AiConsentCard name={assistantName} />
               ) : (
-                <div className="-mx-4 mt-5 flex w-[calc(100%+2rem)] snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:w-full sm:grid-cols-4 sm:overflow-visible sm:px-0">
+                <div className="-mx-4 mt-4 flex w-[calc(100%+2rem)] snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 pt-1 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:w-full sm:grid-cols-4 sm:overflow-visible sm:px-0">
                   {starterCards(module).map(({ icon: Icon, title, prompt }) => (
                     <button
                       key={title}
@@ -472,7 +472,7 @@ export function JarvisChat({
                       : `Allow ${assistantName} to start`
                 }
                 disabled={!canSend}
-                aria-label="Message Jarvis"
+                aria-label={`Message ${assistantName}`}
                 className="max-h-48 min-h-10 flex-1 resize-none bg-transparent px-1.5 py-2 text-[1rem] leading-6 placeholder:text-muted [field-sizing:content]"
               />
               {!busy && <VoiceButton assistantName={assistantName} disabled={!canSend} onStart={() => setTalking(true)} />}

@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Briefcase, ChevronRight, Download, Flag, GraduationCap, Heart, HeartPulse, Plane, PiggyBank, Sparkles, Trash2, Trophy } from "lucide-react";
@@ -58,7 +59,7 @@ export default async function MilestonesPage({ searchParams }: { searchParams: P
           <p className="text-sm text-text-2">Everything you&apos;ve done, and every goal you reach.</p>
         </div>
         <AskJarvisButton prompt={TELL_JARVIS}>
-          <Sparkles className="h-3.5 w-3.5" /> Tell Jarvis your story
+          <Sparkles className="h-3.5 w-3.5" /> Tell <AssistantName /> your story
         </AskJarvisButton>
       </div>
 
