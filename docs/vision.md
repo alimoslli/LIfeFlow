@@ -4,6 +4,8 @@ Captured 2026-11-04 from the owner, in a long thinking session with Claude Code.
 
 **Status:** the direction is agreed. The open questions (section 15) still need the owner's answers. Nothing here is built yet. App changes start only when the owner says go, one step at a time, following `docs/playbook.md`. Where this document and `plan-v2.md` disagree, this one is the newer direction.
 
+**Names:** "Dev" is the owner's own name for their assistant. The default name and renaming stay as they are; this document says Dev for short.
+
 ---
 
 ## 1. The idea
@@ -82,10 +84,24 @@ Every big event has hidden work before it. On paper, five midterms and a flight 
 
 Some facts arrive late. Shift schedules often drop only two weeks ahead.
 
-- **Plan with what's expected, clearly marked:** keep room for the usual shifts instead of pretending those nights are free. This estimates time, never pay; hourly pay is still never predicted as money.
+- **Plan with what's expected, clearly marked:** keep room for the usual shifts instead of pretending those nights are free.
 - **Know when the real facts land** (learned from history, or asked once).
 - **Say what's worth doing before then:** "Your December schedule usually comes out around Nov 26. If you want lighter shifts during midterms, ask your manager before then."
 - **Replan the moment new facts arrive:** "Your schedule's in. Thursday's shift is the night before Bio. I moved your Bio review to Wednesday morning. [Undo]"
+
+### Predicting pay for hourly jobs (owner's decision, 2026-11-04)
+
+Hourly pay will be predicted, but only when it can be done very accurately. Dev learns it from the user's own history, not from a formula:
+
+- **Each past pay period is a pair:** hours scheduled in that period, and the paycheck that actually landed. The pair already includes how long they really clocked in, call-outs and taxes, so Dev doesn't calculate any of those separately. "When Ali is scheduled 25 hours, about $X lands."
+- **Find the pay period:** how often pay lands (from deposit dates) and how many days after a period ends it arrives, by testing which fit matches past paychecks best.
+- **Predict a range, not a number:** the hours scheduled in the current period, compared with what similar periods paid, shown as a range ("about $410 to $450, Friday"). Recent periods count more, so a raise shows up.
+- **Earn the right to predict:** only after several pay periods of history, and only while past predictions landed close (for example within 5%). If they drift, Dev stops predicting for that user and says why.
+- **Check every paycheck:** when pay lands, compare it with the prediction and learn from the difference. It gets better over time.
+- **Never counted as money you have:** Available now stays checking + cash. Predicted pay is for planning ("you'll be short until Friday's paycheck") and is always marked as expected.
+- **Edge cases to test:** overtime, holiday pay, tips, a raise, a new job or two jobs, a missed paycheck, a schedule changed after it dropped, a call-out.
+
+This replaces the old rule "hourly pay is never predicted" once it is built and passes its tests. Until then, the old rule stands.
 
 ### Learn the person, not averages
 
@@ -110,6 +126,7 @@ The owner's example, with the dots it connects:
 
 - **The fix is personal.** Same problem, different fix per person. Someone 10 minutes from home: go home for lunch on long-break days, meal prep for long days. Someone 40 minutes away: cheaper campus options or prep only.
 - **Checking back is what sells it:** "You spent $35 less on food this week." That's when someone decides the app is worth paying for.
+- **Acting alone (owner's decision):** Dev may add study blocks and reminders (calendar and to-dos) by itself, always with Undo and a note saying what it did. Money never moves on its own.
 
 ### Two kinds of messages
 
@@ -187,11 +204,13 @@ Each becomes a test: the data, what Dev must notice and trace, what it suggests,
 2. **A purchase leaves you short.** $85 at Target leaves too little for Claude and the phone bill two days later, before payday. Dev warns with the trace and offers fixes. Must not: count pay that hasn't landed, or cry wolf over a few dollars.
 3. **The Cairo trip.** Flight Dec 10 in the morning. 5 midterms the week before, some online with flexible windows. Shifts continue until the day before, schedule unknown until 2 weeks out. Trip prep takes this person 1 to 2 weeks, and the trip costs money. Study time follows this person's real habits. Dev flags the heavy stretch about 5 weeks ahead, plans backwards from Dec 10, suggests asking for lighter shifts before the schedule drops, places online exams well, and replans when the schedule arrives. Must not: assume a fixed number of study hours, or pretend unknown nights are free.
 
+4. **The paycheck.** The user is usually scheduled about 25 hours a pay period, but what lands changes with real clock-in time, call-outs and taxes. Dev predicts the next paycheck as a range from past periods, uses it to plan, and compares it with what actually lands. Must not: predict before there's enough history, keep predicting when past predictions were off, or count predicted pay as money available.
+
 Still to write: about 30 more, including stay-quiet cases. For example: a subscription price went up; three short nights during exam week; a trip on the calendar with nothing saved; a smaller paycheck after fewer shifts; a professor moves a due date; aid or a scholarship lands; textbook week.
 
 ## 10. Order of work
 
-1. **Design fixes from the UX review** (section 13), in the other tab. Ship them.
+1. **Fix what's wrong today first.** Subscription detection misses some of the owner's real subscriptions. Trust-losing bugs come first (playbook), and every money insight depends on it. Use the owner's real list as the test. Alongside: the design fixes from the UX review (section 13), in the other tab.
 2. **Dev's brain:** the timeline, the general checks with traces, and the situation library as tests. Start with money + calendar + shifts + school, where the data is real.
 3. **Solve, don't just warn:** fixes, the two message kinds, the filter, checking back, Updates as the noticed feed.
 4. **Simplify:** fold the mini-apps into the connected model; everyday things one tap away.
@@ -236,15 +255,21 @@ Being done in another tab:
 
 The owner announced LifeFlow on Instagram and posted a lot of content, partly for attention and partly for feedback. After the changes land: show the change. "Here's what we changed and why" is content in itself. Follows `docs/marketing/PLAYBOOK.md`.
 
-## 15. Open questions for the owner
+## 15. Decisions and open questions
 
-1. **Name:** is "Dev" the default for every new user, or only the owner's choice?
-2. **How far Dev acts alone:** add study blocks and meal-prep reminders by itself (with Undo), or always ask first?
-3. **Hourly pay:** keep "never predicted", or let Dev mention "your paycheck usually lands Friday" without counting it?
-4. **Money and health goals on the surface:** money goals sit behind the Money lock today. How do connected insights that touch money show when the lock is on?
+Decided by the owner (2026-11-04):
+
+1. **Name:** "Dev" is only the owner's name for their assistant. Defaults and renaming stay as they are.
+2. **Acting alone:** Dev may add study blocks and reminders by itself, with Undo (section 5).
+3. **Hourly pay:** predicted, but only very accurately, learned from past pay periods and improving over time (section 4).
+
+Still open:
+
+4. **The Money lock:** money goals sit behind the Money lock today. How do connected insights that touch money show when the lock is on?
 
 ## 16. The honest hard parts
 
+- **Accuracy today:** subscription detection misses some of the owner's real subscriptions. Fix it before building on it.
 - **Messy data:** merchant names like ARAMARK for a cafeteria; Dev must learn them.
 - **New users have thin data:** the first week or two Dev knows little, and gets better.
 - **Staying quiet** is harder than noticing.
@@ -311,3 +336,7 @@ The owner announced LifeFlow on Instagram and posted a lot of content, partly fo
 ### The surface
 
 > Yes, so it also has to be on a surface that hasn't been seen before. So like I said, when people are opening my app, the UI and UX of it are just not what they expected for an app that's what it's meant to do. It just looks like connecting apps like the Apple Health app changing the UI of it and putting it in my app. Putting the calendar, changing it and putting it into the app. Putting it the bank, changing the design of it and putting it in the app. That's what it looks like. But we have to change it to a platform or UI surface. I don't know what it's gonna be or look like, something it's gonna we can't imagine now. It has to be created. Creatively, something that has no reference, I think, but that will change the game of how people will manage their life.
+
+### Answers to the open questions
+
+> dev is only my personal assistants name but to make it easier to refer to it, 2. it can, 3, if its fonna be predicted it has to be done perfectly, because our model rn is not even catching all my real subscriptions accurately, it will be predicted but we will use it in a very accurate way where our ai model sees past weeks and pay periods, how much i was scheduled and how much i got paid to calculate that, so that all becomes better over time, so he will see that when usually ali gets scheduled 25 hours hegeyx paid x, when he gets scheduled x he gets paid x, because there are differences in how long he clocked in, plus if he called out, plus taxes
