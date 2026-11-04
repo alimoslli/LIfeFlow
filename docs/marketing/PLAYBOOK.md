@@ -320,6 +320,7 @@ Estimated cost from 19.34 credits: about 52 credits of Motion Control at 720p fo
 - **Karaoke captions:** upcoming words dimmed, spoken words bright, LifeFlow in mint.
 - **Name tags** sliding in on first appearance ("TYLER CARDI · HOST", "DEV · LIFEFLOW'S AI").
 - **Handheld drift** (about 4 px) and a slow pull-back on the end card (`end_zoom`).
+- Name tag for Tyler is just "TYLER" (owner: not "Tyler Cardi"). Ep 03 final: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/6321918c-08c8-497f-b3e5-f77df8f5a335.zip
 - Ep 03 re-edited with all of this (no credits), 25.7 s: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/6a8a8fd3-982f-419a-851e-a0988419de2f.zip
 - Tried a highlight glow (halation): blending in YUV turned everything purple, and in RGB it washed the image out. Off by default for now (`glow: false`).
 
