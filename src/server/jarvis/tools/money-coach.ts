@@ -13,7 +13,7 @@ import { applyBudgetPlan, BUDGET_METHODS, suggestBudgets } from "../../services/
 import { TRANSACTION_KINDS, updateTransaction } from "../../services/finance/transactions";
 import { notFound, ServiceError } from "../../services/errors";
 import { moveToTrash } from "../../services/trash";
-import { listPlaidConnections, PlaidError, syncConnection } from "../../integrations/plaid";
+import { BANK_UNAVAILABLE, listPlaidConnections, PlaidError, syncConnection } from "../../integrations/plaid";
 import { centsToDollarsDeep } from "./finance";
 import { dateArg, defineTool, idArg, moneyArg, toCents } from "../tool";
 
@@ -41,10 +41,12 @@ export const moneyCoachTools = [
         try {
           results.push({ bank: i.displayName, ok: true, ...(await syncConnection(ctx.userId, i.id, ctx.tz, undefined, { live: true })) });
         } catch (e) {
+          // Plaid's messages are already plain words; anything else is logged here and never reaches the model.
+          if (!(e instanceof PlaidError)) console.error("[sync_bank_accounts]", e);
           results.push({
             bank: i.displayName,
             ok: false,
-            error: e instanceof PlaidError ? e.message : "Sync failed",
+            error: e instanceof PlaidError ? e.message : BANK_UNAVAILABLE,
             needsReconnect: e instanceof PlaidError && e.reauth,
           });
         }
