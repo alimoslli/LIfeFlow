@@ -183,6 +183,24 @@ export async function queryTransactions(scope: UserScope, q: TransactionQuery = 
   }));
 }
 
+/** The first (oldest) expense date in each category, across all history: when a category started having data. */
+export async function firstSpendDates(scope: UserScope, categoryIds: string[]): Promise<Map<string, string>> {
+  if (!categoryIds.length) return new Map();
+  const rows = await scope.tx
+    .select({ categoryId: transactions.categoryId, first: sql<string>`min(${transactions.date})` })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, scope.userId),
+        inArray(transactions.categoryId, categoryIds),
+        eq(transactions.kind, "expense"),
+        eq(transactions.excluded, false),
+      ),
+    )
+    .groupBy(transactions.categoryId);
+  return new Map(rows.filter((r) => r.categoryId).map((r) => [r.categoryId!, String(r.first)]));
+}
+
 // ---------------------------------------------------------------- CSV import / export
 
 /** Minimal RFC 4180 CSV parser (quotes, escaped quotes, CRLF). */

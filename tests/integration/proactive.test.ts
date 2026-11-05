@@ -264,6 +264,44 @@ describe("spending pace uses the weeks there really is data for (audit A24)", ()
     expect(m.facts).toMatchObject({ spentCents: 9500, usualCents: 4000, overCents: 5500 });
     expect(m.body).toContain("$95 on groceries this week, $55 more than usual");
   });
+
+  it("doesn't count a week whose same days came before the first charge (review probe)", async () => {
+    // Thursday Nov 5, 5 PM in New York: this week is Mon Nov 2 to today, compared with Mon to Thu of earlier weeks.
+    const now = new Date("2026-11-05T22:00:00Z");
+    const wk = "2026-11-02";
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s);
+      const food = (await getCategoryByName(s, "Groceries"))!;
+      const tx = (date: string, cents: number) =>
+        createTransaction(s, { accountId: acct.id, date, description: "Kroger", merchantName: "Kroger", amountCents: -cents, categoryId: food.id });
+      // The first-ever charge is on Sunday Oct 18: after Mon to Thu of that week (Oct 12 to 15), so that week has no data.
+      await tx(addDaysStr(wk, -15), 4000);
+      await tx(addDaysStr(wk, -14), 4000);
+      await tx(addDaysStr(wk, -7), 4000);
+      await tx(wk, 6000);
+    });
+    const out = (await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "transaction", now }))).filter((m) => m.kind === "spending_pace");
+    // Two comparable weeks at $40: too little to call $60 high (before, a third empty week made "usual" $26.67).
+    expect(out).toEqual([]);
+  });
+
+  it("counts every week when the category has older history than the 8 weeks", async () => {
+    const now = new Date("2026-11-05T22:00:00Z");
+    const wk = "2026-11-02";
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s);
+      const food = (await getCategoryByName(s, "Groceries"))!;
+      const tx = (date: string, cents: number) =>
+        createTransaction(s, { accountId: acct.id, date, description: "Kroger", merchantName: "Kroger", amountCents: -cents, categoryId: food.id });
+      await tx(addDaysStr(wk, -90), 4000); // before the 8 weeks
+      for (let w = 1; w <= 8; w++) await tx(addDaysStr(wk, -7 * w), 4000);
+      await tx(wk, 9500);
+    });
+    const [m] = (await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "transaction", now }))).filter((x) => x.kind === "spending_pace");
+    expect(m.facts).toMatchObject({ usualCents: 4000, overCents: 5500 });
+  });
 });
 
 describe("never asks to log by hand (audit A30)", () => {

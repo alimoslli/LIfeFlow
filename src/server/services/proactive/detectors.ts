@@ -21,7 +21,7 @@ import { billsAndPace, cashForecast } from "../finance/forecast";
 import { goalsWithPlans } from "../finance/goals";
 import { budgetStatus } from "../finance/planning";
 import { planPaycheck } from "../finance/coach";
-import { queryTransactions } from "../finance/transactions";
+import { firstSpendDates, queryTransactions } from "../finance/transactions";
 import { merchantKey } from "../finance/recurring-detect";
 import { listAssignments } from "../school";
 import { listShifts } from "../work";
@@ -79,27 +79,32 @@ const PACE_MIN_WEEKS = 3;
 
 /**
  * A category's spending this week vs. the same days of the previous weeks (up to 8), averaged over the weeks
- * there is data for (back to the category's first charge), so a new category or a new user isn't compared with
- * empty weeks. Quiet with fewer than PACE_MIN_WEEKS.
+ * there is data for: a week counts only if the category's first charge is on or before the end of that week's
+ * same-days window, so a new category or a new user isn't compared with empty weeks. Quiet with fewer than PACE_MIN_WEEKS.
  */
 const spendingPace: Detector = async ({ scope, today }) => {
   const wk = weekStart(today);
   const span = daysBetween(wk, today);
   const txns = await queryTransactions(scope, { from: addDaysStr(wk, -56), to: today, kinds: ["expense"], limit: 5000 });
-  const byCat = new Map<string, { id: string; name: string; now: number; past: number[]; weeks: number }>();
+  const byCat = new Map<string, { id: string; name: string; now: number; past: number[] }>();
   for (const t of txns) {
     if (!t.categoryId || !t.categoryName) continue;
-    const c = byCat.get(t.categoryId) ?? { id: t.categoryId, name: t.categoryName, now: 0, past: Array(8).fill(0), weeks: 0 };
+    const c = byCat.get(t.categoryId) ?? { id: t.categoryId, name: t.categoryName, now: 0, past: Array(8).fill(0) };
     if (t.date >= wk) c.now += spendOf(t);
     else {
       const w = Math.floor(daysBetween(t.date, wk) / 7.0001);
       const offset = daysBetween(addDaysStr(wk, -7 * (w + 1)), t.date);
-      if (w < 8) c.weeks = Math.max(c.weeks, w + 1);
       if (w < 8 && offset <= span) c.past[w] += spendOf(t);
     }
     byCat.set(t.categoryId, c);
   }
+  const first = await firstSpendDates(scope, [...byCat.keys()]);
+  const weeksWithData = (id: string) => {
+    const since = first.get(id) ?? today;
+    return [0, 1, 2, 3, 4, 5, 6, 7].filter((w) => addDaysStr(wk, -7 * (w + 1) + span) >= since).length;
+  };
   const worst = [...byCat.values()]
+    .map((c) => ({ ...c, weeks: weeksWithData(c.id) }))
     .filter((c) => c.weeks >= PACE_MIN_WEEKS)
     .map((c) => ({ ...c, usual: Math.round(c.past.reduce((a, b) => a + b, 0) / c.weeks) }))
     .filter((c) => c.usual > 0 && c.now - c.usual >= 2000 && c.now >= c.usual * 1.3)
