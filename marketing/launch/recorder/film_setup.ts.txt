@@ -8,13 +8,8 @@ import { runProactive } from "../../src/server/services/proactive/engine";
 
 async function main() {
   const db = getDb();
-  const [u] = await db.select().from(users).where(eq(users.email, "demo@budgetflow.local"));
-  const prefs = {
-    ...(u.preferences ?? {}),
-    assistantName: "Remy",
-    assistantStyle: "friend",
-    jarvis: { ...((u.preferences as any)?.jarvis ?? {}), learning: false },
-  } as any;
+  const [u] = await db.select().from(users).where(eq(users.email, process.env.FILM_EMAIL ?? "demo@budgetflow.local"));
+  const prefs = { ...(u.preferences ?? {}), assistantName: "Remy", assistantStyle: "friend", jarvis: { ...((u.preferences as any)?.jarvis ?? {}), learning: false } } as any;
   await db.update(users).set({ preferences: prefs }).where(eq(users.id, u.id));
   for (const trigger of ["morning", "midday"] as const) {
     const m = await withUser(u.id, (scope) => runProactive({ scope, tz: u.timezone, prefs, trigger }));
@@ -22,7 +17,4 @@ async function main() {
   }
   await closeDb();
 }
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+main().catch((e) => { console.error(e); process.exit(1); });

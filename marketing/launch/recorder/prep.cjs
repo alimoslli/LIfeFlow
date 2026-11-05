@@ -10,8 +10,8 @@ const SHIM = `(() => { const RD = Date, rnow = RD.now.bind(RD); class D extends 
   await ctx.addInitScript(SHIM);
   const p = await ctx.newPage();
   await p.goto(B + "/login");
-  await p.fill("input[name=email]", "demo@budgetflow.local");
-  await p.fill("input[name=password]", "budgetflow-demo");
+  await p.fill("input[name=email]", process.env.FILM_EMAIL || "demo@budgetflow.local");
+  await p.fill("input[name=password]", process.env.FILM_PASSWORD || "budgetflow-demo");
   await p.getByRole("button", { name: "Sign in", exact: true }).click();
   await p.waitForURL((u) => !/login/.test(u.pathname), { timeout: 30000 });
   await p.waitForTimeout(2000);

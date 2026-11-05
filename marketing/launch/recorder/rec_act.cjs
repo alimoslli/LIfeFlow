@@ -228,6 +228,69 @@ const INIT = `(() => {
       mark("plan");
       await wait(1.0);
     }
+  } else if (SCENE === "lock") {
+    const N = JSON.parse(fs.readFileSync(__dirname + "/lock/notes.json", "utf8"));
+    await p.goto("file://" + __dirname + "/lock/lock.html#" + encodeURIComponent(JSON.stringify(N)));
+    await sleep(1500);
+    await start();
+    mark("a");
+    await wait(0.7);
+    await p.evaluate(() => window.showN(0));
+    mark("n0");
+    await wait(2.0);
+    await p.evaluate(() => window.showN(1));
+    mark("n1");
+    await wait(1.5);
+    await p.evaluate(() => window.showN(2));
+    mark("n2");
+    await wait(1.8);
+    const bb = await p.locator("#n0").boundingBox();
+    log.taps.push({ t: now(), x: bb.x + bb.width / 2, y: bb.y + bb.height / 2 });
+    await wait(0.12);
+    await p.evaluate(() => window.pressN(0));
+    mark("tap");
+    await wait(0.45);
+  } else if (SCENE === "open") {
+    await go("/");
+    await start();
+    mark("a");
+    await wait(1.4);
+    await tapAt(p.getByRole("link", { name: /new update/ }).first(), 1.4);
+    mark("feed");
+    const title = p.getByText("Midterm exam vs. your shift").first();
+    const top = await title.evaluate((e) => e.getBoundingClientRect().top);
+    if (top > 200) {
+      await scrollBy(top - 170, 1.1);
+      await wait(0.5);
+    }
+    mark("card");
+    await tapAt(p.getByRole("button", { name: "Block it", exact: true }).first(), 1.6);
+    mark("done");
+    log.rects.feedcard = {
+      t: now(),
+      r: await p.evaluate(() => {
+        const t = [...document.querySelectorAll("*")].find((e) => e.childElementCount === 0 && e.textContent.trim() === "Midterm exam vs. your shift");
+        let e = t;
+        while (e && e.parentElement && !/Undo|Blocked/.test(e.textContent)) e = e.parentElement;
+        while (e && e.parentElement && e.getBoundingClientRect().width < 340) e = e.parentElement;
+        const r = e.getBoundingClientRect();
+        return [r.x, r.y, r.width, r.height];
+      }),
+    };
+    log.feedText = (await p.locator("main").innerText()).slice(0, 2500);
+    await wait(0.6);
+    await tapAt(nav("Plan"), 1.6);
+    mark("plan");
+    const blk = p.getByText(/Work on Midterm exam/).first();
+    if (await blk.count()) {
+      const y = await blk.evaluate((e) => e.getBoundingClientRect().top);
+      if (y > 560) {
+        await scrollBy(y - 420, 1.2);
+        await wait(0.4);
+      }
+    }
+    mark("planblock");
+    await wait(1.4);
   } else if (SCENE === "convo") {
     const turns = JSON.parse(fs.readFileSync(__dirname + "/turns.json", "utf8"));
     await go("/jarvis?new=1");

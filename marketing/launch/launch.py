@@ -225,7 +225,7 @@ def phone_parts():
     # status bar with the island
     st = Image.new("RGBA", (SW, STATUS), (0, 0, 0, 0))
     sd = ImageDraw.Draw(st)
-    sd.text((52, 33), "9:41", font=SANS(29, "SemiBold"), fill=INK, anchor="lm")
+    draw_status(sd, "9:41", INK)
     bx = SW - 46
     sd.rounded_rectangle((bx - 42, 23, bx, 43), radius=6, outline=INK, width=2)
     sd.rounded_rectangle((bx - 39, 26, bx - 10, 40), radius=3, fill=INK)
@@ -247,6 +247,35 @@ def phone_parts():
     return PHONE
 
 
+def draw_status(sd, time, col):
+    sd.text((52, 33), time, font=SANS(29, "SemiBold"), fill=col, anchor="lm")
+
+
+_status = {}
+STATUS_NOW = ("9:41", False)  # (clock, light text) for the scene being drawn; set per scene from the plan
+
+
+def status_bar():
+    """The phone's status bar for the current scene: its clock, dark text or light text (lock screen)."""
+    time, light = STATUS_NOW
+    if (time, light) == ("9:41", False):
+        return phone_parts()["status"]
+    if (time, light) not in _status:
+        col = WHITE if light else INK
+        st = Image.new("RGBA", (SW, STATUS), (0, 0, 0, 0))
+        sd = ImageDraw.Draw(st)
+        draw_status(sd, time, col)
+        bx = SW - 46
+        sd.rounded_rectangle((bx - 42, 23, bx, 43), radius=6, outline=col, width=2)
+        sd.rounded_rectangle((bx - 39, 26, bx - 10, 40), radius=3, fill=col)
+        for i in range(4):
+            hh = 7 + i * 4
+            sd.rounded_rectangle((bx - 106 + i * 9, 43 - hh, bx - 100 + i * 9, 43), radius=1, fill=col)
+        sd.rounded_rectangle((SW / 2 - 100, 12, SW / 2 + 100, 64), radius=26, fill=(0, 0, 0, 255))
+        _status[(time, light)] = st
+    return _status[(time, light)]
+
+
 def glass_phone(screen, glare):
     """screen: SWxSH RGB app frame. glare: 0..1 position of the sweeping catch-light (None = off)."""
     P = phone_parts()
@@ -254,7 +283,7 @@ def glass_phone(screen, glare):
     body = screen.convert("RGBA")
     scr.alpha_composite(body.crop((0, 0, SW, SH - STATUS)), (0, STATUS))
     scr.alpha_composite(body.crop((0, 0, SW, 2)).resize((SW, STATUS)), (0, 0))
-    scr.alpha_composite(P["status"])
+    scr.alpha_composite(status_bar())
     light = P["sheen"]
     if glare is not None and 0 < glare < 1:
         x = int(SW * 2 - glare * SW * 2.2)
@@ -629,6 +658,8 @@ PHONE_CX, PHONE_CY, PHONE_SCALE = W / 2 + 30, 1150, 0.84
 
 
 def render_phone(sc, si, lt, scr, t):
+    global STATUS_NOW
+    STATUS_NOW = (sc.get("status_time", "9:41"), bool(sc.get("status_light", False)))
     dur = sc["end"] - sc["start"]
     im = BG.copy()
     orbs_layer(im, t, 0.5)

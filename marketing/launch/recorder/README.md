@@ -36,3 +36,13 @@ a coffee budget, the trip goal, and setting its plan). Before filming, `film_mod
 account becomes a normal account and its rows lose the `demo` source, so the assistant talks as it would to a connected user instead of
 calling it a demo (the end card still says it is a sample account). The chat scrolls inside its own panel, so the reply cards are cropped
 from the frames while each reply streams in (`crop_convo.py`); `plan_convo.py` writes `plan_p_convo.json`.
+
+## "Monday morning" (Jordan): the morning notifications, then the app, then the chat
+
+A second sample person so the data is new: `film_seed_jordan.ts.txt` (copy to `scripts/_film/seed-jordan.ts` in a checkout of main)
+creates Jordan, a business student and café barista, on Monday Nov 9 at 8:22 AM (shift the clock with faketime as above). The
+assistant's real morning check (`FILM_EMAIL=jordan@film.local` with `film_setup`) then finds things days ahead: the STAT 201 midterm
+on Thursday after a Wednesday closing shift, car insurance due Wednesday with checking $43.82 short, and Today flags Friday's shift
+overlapping Spanish. The lock screen (`lock/lock.html`) shows the three notifications the app pushes, with their exact text from
+`jarvis_messages` (`lock/notes.json`); the phone frame's clock follows each scene (`status_time`, `status_light` in the plan).
+Scenes: `rec_act.cjs lock`, `open` (Today, the updates, Block it, Plan), `convo` with `turns.json`. `plan_jordan.py` builds the plan.

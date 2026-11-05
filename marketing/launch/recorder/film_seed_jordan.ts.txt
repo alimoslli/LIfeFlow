@@ -1,0 +1,129 @@
+// Local filming only (not committed to the app): a second sample person, Jordan, on a Monday morning.
+// Business student and café barista. Built so the assistant's real checks find things days ahead:
+// the STAT 201 midterm (Thu) after a Wednesday closing shift, car insurance due Wed with checking short,
+// and a Friday shift that overlaps Spanish class and the Spanish quiz.
+import "dotenv/config";
+import { eq } from "drizzle-orm";
+import { addDaysStr, todayIn, weekStart } from "../../src/lib/dates";
+import { closeDb, getDb } from "../../src/server/db/client";
+import { users } from "../../src/server/db/schema";
+import { withUser, type UserScope } from "../../src/server/db/with-user";
+import { registerUser } from "../../src/server/services/accounts";
+import { createEvent } from "../../src/server/services/calendar";
+import { createManualAccount } from "../../src/server/services/finance/accounts";
+import { getCategoryByName } from "../../src/server/services/finance/categories";
+import { createGoal, createRecurring, setBudget } from "../../src/server/services/finance/planning";
+import { createTransaction } from "../../src/server/services/finance/transactions";
+import { createMemory } from "../../src/server/services/memory";
+import { createAssignment, createCourse } from "../../src/server/services/school";
+import { createTask } from "../../src/server/services/tasks";
+import { addPaycheck, createEmployer, createShift, recordShiftHours } from "../../src/server/services/work";
+
+const EMAIL = "jordan@film.local";
+const PASSWORD = "film-jordan-2026";
+const TZ = "America/New_York";
+let seed = 7;
+const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+const between = (a: number, b: number) => Math.round(a + rand() * (b - a));
+
+async function main() {
+  const db = getDb();
+  const [old] = await db.select().from(users).where(eq(users.email, EMAIL));
+  if (old) await db.delete(users).where(eq(users.id, old.id));
+  const user = await registerUser(db, { name: "Jordan Reyes", email: EMAIL, password: PASSWORD, timezone: TZ });
+  const today = todayIn(TZ);
+  await withUser(user.id, (s) => seedAll(s, today));
+  console.log(`Film account ready: ${EMAIL} / ${PASSWORD} (today ${today})`);
+}
+
+async function seedAll(s: UserScope, today: string) {
+  const cat = async (n: string) => (await getCategoryByName(s, n))!.id;
+  const checking = await createManualAccount(s, { name: "Everyday Checking", type: "depository", subtype: "checking", institutionName: "Hometown Credit Union", mask: "2207", currentBalanceCents: 14_218 });
+  const savings = await createManualAccount(s, { name: "Savings", type: "depository", subtype: "savings", institutionName: "Hometown Credit Union", mask: "5530", currentBalanceCents: 126_000 });
+  const card = await createManualAccount(s, { name: "Student Card", type: "credit", institutionName: "Hometown Credit Union", mask: "8841", currentBalanceCents: 21_240, creditLimitCents: 100_000 });
+
+  const ids = {
+    groceries: await cat("Groceries"), restaurants: await cat("Restaurants"), coffee: await cat("Coffee"), delivery: await cat("Food Delivery"),
+    rent: await cat("Rent"), phone: await cat("Phone"), streaming: await cat("Streaming"), gas: await cat("Gas"), books: await cat("Books & Supplies"),
+    paycheck: await cat("Paycheck"), insurance: (await getCategoryByName(s, "Insurance"))?.id ?? (await cat("Transportation")), food: await cat("Food & Dining"),
+    shopping: (await getCategoryByName(s, "Shopping"))?.id ?? (await cat("Household")),
+  };
+  const tx = (accountId: string, date: string, description: string, amountCents: number, categoryId: string, extra: { kind?: "income" | "expense" | "transfer"; merchantName?: string } = {}) =>
+    createTransaction(s, { accountId, date, description, amountCents, categoryId, ...extra });
+  const start = addDaysStr(today, -95);
+  for (let d = start; d <= today; d = addDaysStr(d, 1)) {
+    const dow = new Date(`${d}T12:00:00Z`).getUTCDay();
+    const dom = Number(d.slice(8, 10));
+    if (dow === 0) await tx(card.id, d, "ALDI 77", -between(3200, 6100), ids.groceries, { merchantName: "Aldi" });
+    if (rand() < 0.3) await tx(card.id, d, "WAWA 8812", -between(380, 920), ids.coffee, { merchantName: "Wawa" });
+    if (rand() < 0.18) await tx(card.id, d, rand() < 0.5 ? "CHICK-FIL-A #0412" : "PANERA BREAD", -between(900, 1600), ids.restaurants, { merchantName: rand() < 0.5 ? "Chick-fil-A" : "Panera Bread" });
+    if (rand() < 0.07) await tx(card.id, d, "UBER *EATS", -between(1900, 3400), ids.delivery, { merchantName: "Uber Eats" });
+    if (dow === 4 && rand() < 0.7) await tx(card.id, d, "SUNOCO 0291", -between(2800, 4200), ids.gas, { merchantName: "Sunoco" });
+    if (dom === 1) await tx(checking.id, d, "MAPLE COURT APTS RENT", -78_000, ids.rent, { merchantName: "Maple Court Apartments" });
+    if (dom === 11) await tx(checking.id, d, "NORTHFIELD AUTO INS", -18_600, ids.insurance, { merchantName: "Northfield Auto Insurance" });
+    if (dom === 18) await tx(card.id, d, "SPOTIFY USA", -1199, ids.streaming, { merchantName: "Spotify" });
+    if (dom === 20) await tx(checking.id, d, "VISIBLE WIRELESS", -2500, ids.phone, { merchantName: "Visible" });
+  }
+  await tx(card.id, addDaysStr(today, -12), "CAMPUS BOOKSTORE", -6_840, ids.books, { merchantName: "Campus Bookstore" });
+  await tx(card.id, addDaysStr(today, -6), "TARGET 1170", -4_215, ids.shopping, { merchantName: "Target" });
+
+  const cafe = await createEmployer(s, { name: "Daily Grind Café", position: "Barista", payType: "hourly", hourlyRateCents: 1550 });
+  // paychecks every other Friday; the next one is this Friday
+  const ws = weekStart(today);
+  for (let fri = addDaysStr(ws, -10); fri >= start; fri = addDaysStr(fri, -14)) {
+    const net = between(41_000, 49_000);
+    await tx(checking.id, fri, "DAILY GRIND CAFE PAYROLL", net, ids.paycheck, { merchantName: "Daily Grind Café", kind: "income" });
+    await addPaycheck(s, { employerId: cafe.id, payDate: fri, grossCents: Math.round(net * 1.12), netCents: net, hours: 31 });
+  }
+
+  const month = `${today.slice(0, 7)}-01`;
+  await setBudget(s, { month, categoryId: ids.food, limitCents: 30_000 });
+  const nextDom = (dom: number) => { const d = `${today.slice(0, 7)}-${String(dom).padStart(2, "0")}`; return d >= today ? d : `${addDaysStr(month, 32).slice(0, 7)}-${String(dom).padStart(2, "0")}`; };
+  await createRecurring(s, { name: "Rent, Maple Court Apartments", amountCents: -78_000, frequency: "monthly", nextDueDate: nextDom(1), kind: "bill", categoryId: ids.rent });
+  await createRecurring(s, { name: "Car insurance", amountCents: -18_600, frequency: "monthly", nextDueDate: nextDom(11), kind: "bill", categoryId: ids.insurance });
+  await createRecurring(s, { name: "Visible phone", amountCents: -2500, frequency: "monthly", nextDueDate: nextDom(20), kind: "bill", categoryId: ids.phone });
+  await createRecurring(s, { name: "Spotify", amountCents: -1199, frequency: "monthly", nextDueDate: nextDom(18), kind: "subscription", categoryId: ids.streaming });
+  await createRecurring(s, { name: "Daily Grind Café paycheck", amountCents: 45_000, frequency: "biweekly", nextDueDate: addDaysStr(ws, 4), kind: "income", categoryId: ids.paycheck });
+  await createGoal(s, { name: "Spring break fund", targetCents: 90_000, savedCents: 26_000, targetDate: addDaysStr(today, 120) });
+
+  const course = (name: string, code: string, instructorName: string, meetingInfo: string, location: string) =>
+    createCourse(s, { name, code, term: "Fall 2026", instructorName, meetingInfo, location });
+  const stat = await course("Intro to Statistics", "STAT 201", "Prof. Maria Delgado", "Tue/Thu 10:00–11:15", "Business Hall 112");
+  const eng = await course("Business Writing", "ENG 210", "Dr. Kevin Brooks", "Tue/Thu 13:30–14:45", "Humanities 305");
+  const mktg = await course("Principles of Marketing", "MKTG 300", "Prof. Aisha Rahman", "Mon/Wed 12:00–13:15", "Business Hall 220");
+  const span = await course("Elementary Spanish II", "SPAN 102", "Prof. Elena Ruiz", "Mon/Wed/Fri 14:00–14:50", "Language Center 14");
+  const a = (courseId: string, title: string, days: number, time: string | null, kind: "assignment" | "exam" | "quiz" | "project" | "reading" = "assignment") =>
+    createAssignment(s, TZ, { courseId, title, dueDate: addDaysStr(today, days), dueTime: time, kind });
+  await a(stat.id, "Homework 6: Confidence intervals", 1, "23:59");
+  await a(stat.id, "Midterm exam", 3, "10:00", "exam");
+  await a(eng.id, "Cover letter draft", 2, "23:59");
+  await a(mktg.id, "Case study 3: Pricing", 4, "23:59");
+  await a(mktg.id, "Group presentation: Brand audit", 9, "12:00", "project");
+  await a(span.id, "Quiz: Preterite vs. imperfect", 4, "14:00", "quiz");
+  const cls = (title: string, courseId: string, days: number[], st: string, en: string, location: string) =>
+    createEvent(s, TZ, { title, courseId, kind: "class", date: addDaysStr(ws, -14), startTime: st, endTime: en, location, recurrence: { freq: "weekly", byDay: days, until: addDaysStr(today, 60) } });
+  await cls("STAT 201", stat.id, [2, 4], "10:00", "11:15", "Business Hall 112");
+  await cls("ENG 210", eng.id, [2, 4], "13:30", "14:45", "Humanities 305");
+  await cls("MKTG 300", mktg.id, [1, 3], "12:00", "13:15", "Business Hall 220");
+  await cls("SPAN 102", span.id, [1, 3, 5], "14:00", "14:50", "Language Center 14");
+  await createEvent(s, TZ, { title: "STAT 201 office hours", kind: "appointment", date: addDaysStr(today, 1), startTime: "15:00", endTime: "16:00", location: "Business Hall 410" });
+
+  // This week: Wednesday closing shift (night before the midterm), Friday afternoon (overlaps Spanish), weekend mornings
+  for (const [off, st, en] of [[2, "17:00", "23:00"], [4, "13:00", "18:00"], [5, "08:00", "14:00"], [6, "10:00", "16:00"], [9, "17:00", "23:00"], [11, "13:00", "18:00"]] as const)
+    await createShift(s, TZ, { employerId: cafe.id, date: addDaysStr(ws, off), startTime: st, endTime: en, breakMinutes: 30 });
+  for (const [off, st, en, i, o] of [[-5, "17:00", "23:00", "16:57", "23:08"], [-3, "13:00", "18:00", "13:02", "18:01"], [-2, "08:00", "14:00", "07:58", "14:05"], [-1, "10:00", "16:00", "10:01", "15:57"]] as const) {
+    const sh = await createShift(s, TZ, { employerId: cafe.id, date: addDaysStr(ws, off), startTime: st, endTime: en, breakMinutes: 30 });
+    await recordShiftHours(s, TZ, sh.id, { recordedStartTime: i, recordedEndTime: o });
+  }
+
+  await createTask(s, TZ, { title: "Return library laptop", priority: "medium", dueDate: addDaysStr(today, 1) });
+  await createTask(s, TZ, { title: "Email Prof. Rahman about group roles", priority: "high", dueDate: addDaysStr(today, 2), courseId: mktg.id });
+  await createTask(s, TZ, { title: "Book an oil change", priority: "low", dueDate: addDaysStr(today, 6) });
+
+  await createMemory(s, { content: "Works at Daily Grind Café: Wednesday closing shifts and weekend mornings.", category: "routine" }, "user");
+  await createMemory(s, { content: "Studies best in the morning.", category: "preference" }, "user");
+  await createMemory(s, { content: "Saving for spring break with friends.", category: "goal" }, "user");
+  await createMemory(s, { content: "Prefers short answers with a clear next step.", category: "instruction" }, "user");
+}
+
+main().catch((e) => { console.error(e); process.exitCode = 1; }).finally(closeDb);
