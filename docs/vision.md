@@ -25,7 +25,8 @@ A person's life is much more than what their phone knows. Friends, family, time 
 - **The app connects your digital life** (money, work schedule, school, calendar, email, health data: everything you use your phone to manage) **so you can organize it around your real life.** Real life is the point. The digital side exists to serve it.
 - **The gaps on the line are not empty. They are your life.** Free time is never shown as blank or as "available slots". It has quiet presence in words: "Evening at home", "Sunday, yours", "Nothing planned. Keep it."
 - **Dev protects real life instead of filling it.** No optimizing every hour. When Dev places study blocks, trip prep or project steps, it uses the stretches the person would least miss and leaves evenings and weekends alone unless the person says otherwise. Its reasons say so: "I kept Saturday free."
-- **Real life enters lightly, never by surveillance.** From the calendar (family dinner, a birthday), from Apple Health (a walk, a workout, sleep), and from one sentence to Dev ("I'm with my cousin tonight"). No screen-time tracking, no location trails, no logging of small things. The app doesn't need the detail; it needs to understand that the life is there.
+- **Real life enters lightly, never by surveillance.** From the calendar (family dinner, a birthday, a trip), from Apple Health (sleep, a workout the person planned), and from one sentence to Dev ("I'm with my cousin tonight"). No screen-time tracking, no location trails, no logging of small things. The app doesn't need the detail; it needs to understand that the life is there.
+- **Only what matters (owner, 2026-11-05).** Real life on the line is the level at which a life is organized: time with family and friends, rest, a trip, a wedding, a personal project, a day kept free. Never trivia: no walks between buildings, no errands, no step counts, no micro-moments. "We are a different level of organization."
 - **Dev may notice when real life is being squeezed** (three weeks without a free evening, no time with people before a hard stretch) and say it once, gently, as "just so you know". Never a nag, never a score.
 - **Checks gain a variable:** rest and time with people count alongside money, time, school and work when Dev decides whether a plan is good.
 - **How much the person tells the app:** lightly, by default. Calendar, health data and one-sentence tells when they feel like it. Never logging; that turns the app into a chore.
@@ -246,8 +247,8 @@ Example: the user tells Dev they have a budget goal. **No** progress bar, no "50
 | Money | Available now (checking + cash) over time; net worth on the horizon zoom. Scaled to the person's own range, with a floor so it never vanishes | Bills and pay due close together | Transactions, bills, pay |
 | School | | Pressure: class hours, assignments due this week, exams and the study shadow before them | Classes, due dates, exams |
 | Work | Hours scheduled | Shifts stacked with school | Shifts, pay landing |
-| Health | Rest: sleep hours (thin after a short night) | | Workouts, walks |
-| Life (real life) | Time that is the person's own and time with people | | Named moments: dinner with family, a walk, a call |
+| Health | Rest: sleep hours (thin after a short night) | | Workouts the person planned |
+| Life (real life) | Time that is the person's own and time with people | | Named moments that matter: dinner with family, a friend's birthday, a trip, a call with someone far away |
 
 Across all strands: expected is dotted, Dev-planned is dashed, the past fades, and missing data is a flat neutral strand that says "nothing synced here", never an invented shape. Each strand can be pulled out on its own to show its curve and the numbers that drive it; tapping any point shows the exact number and its source, so a person can check the line is honest. The braid is 3D (depth as the strands twist), always moving a little, still readable with reduced motion, and smooth on a phone. The mapping lives in one place in the code, one function per strand, so it is testable and later driven by real sync data.
 
@@ -439,3 +440,7 @@ Still open:
 ### Each line shows its real data
 
 > And we want to implement how that line looks, it's on how it's doing. So if you're like low on money, the line is thinner. If you're making, if like through time you made more money, the line gets thicker through time, then it becomes thinner, like thicker, thinner, you know, for like net worth, for example, for money. For school, you can just add like the pressure of it, like how, like when you have classes, like if it's like you mentioned it before, how the lines are different based if it's like a dotted line, whatever. We want to implement that into the flow of it and how they're all, each and different one is. I like the idea of being able to see each line on its own and how it's doing. That is a good thing, but also make sure it's like moving, it's 3D, is the new concept, it's accurate to what the real data is. We have to make sure each line accurately shows the data and it's just not a made up line showing a life.
+
+### Real life means what matters
+
+> and its not gonna be the small silly things like wall from cafetria or walking home from campus thst very dumb, we are a diffrent level of organization
