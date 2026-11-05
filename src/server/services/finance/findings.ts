@@ -1,10 +1,11 @@
 import { addDaysStr, daysBetween } from "@/lib/dates";
-import { merchantKey, type DetectTxn } from "./recurring-detect";
+import { detectRecurring, merchantKey, type DetectTxn } from "./recurring-detect";
 
 /**
  * Things worth catching in a bank feed that people rarely notice themselves:
- * - possible double charges: the same merchant and amount twice within 2 days
- *   (not pending copies, not things that normally repeat like coffee);
+ * - possible double charges: a bill or subscription charged twice in one cycle, however long it has run;
+ *   otherwise the same merchant and amount twice within 2 days (not pending copies, not things that
+ *   normally repeat like coffee);
  * - bank fees: overdraft, NSF, ATM, late, foreign transaction and monthly service fees.
  * Facts only; wording lives in jarvis-voice.
  */
@@ -30,6 +31,14 @@ export function scanTransactions(txns: ScanTxn[], today: string, opts: { days?: 
   }
   const doubleCharges: { merchant: string; amountCents: number; dates: [string, string] }[] = [];
   const seen = new Set<string>();
+  // A recurring charge billed a second time beside its usual one (Spotify twice on Oct 15), even after years of history.
+  for (const c of detectRecurring(txns))
+    for (const d of c.duplicates) {
+      const k = `${c.merchantKey}|${d.amountCents}`;
+      if (seen.has(k) || d.dates[1] < from || d.dates[1] > today || -d.amountCents < 500 || FEE.test(d.label)) continue;
+      seen.add(k);
+      doubleCharges.push({ merchant: d.label, amountCents: -d.amountCents, dates: d.dates });
+    }
   const sorted = [...recent].sort((a, b) => a.date.localeCompare(b.date));
   for (let i = 0; i < sorted.length; i++) {
     const a = sorted[i];
