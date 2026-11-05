@@ -1,4 +1,3 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { todayIn } from "@/lib/dates";
 import { getDb } from "@/server/db/client";
@@ -6,6 +5,7 @@ import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
 import { sniffMime } from "@/server/uploads";
 import { senderAuthenticated } from "@/server/services/inbox/email-auth";
+import { inboxWebhookAuth } from "@/server/services/inbox/webhook-auth";
 import { isVerifiedSender, processDocument, recordIgnored, saveInboxFile, userForAddress } from "@/server/services/inbox";
 
 export const dynamic = "force-dynamic";
@@ -33,16 +33,17 @@ const strip = (html: string) =>
     .replace(/\s+/g, " ");
 
 /**
- * Inbound email webhook (Postmark's inbound JSON format). The URL carries a
- * secret: https://<site>/api/inbox/email?key=<INBOX_WEBHOOK_SECRET>.
+ * Inbound email webhook (Postmark's inbound JSON format). The secret comes in basic auth
+ * (https://inbox:<INBOX_WEBHOOK_SECRET>@<site>/api/inbox/email) or the x-inbox-secret header;
+ * the old ?key=<secret> form still works for now but is logged as deprecated (webhook-auth.ts).
  * Mail is filed only when it's addressed to a user's forwarding address, comes
  * from one of their verified addresses, and passed SPF or DKIM.
  */
 export async function POST(req: Request) {
   try {
-    const secret = process.env.INBOX_WEBHOOK_SECRET ?? "";
-    const key = new URL(req.url).searchParams.get("key") ?? "";
-    if (!secret || key.length !== secret.length || !timingSafeEqual(Buffer.from(key), Buffer.from(secret))) throw new HttpError(401, "Unauthorized");
+    const auth = inboxWebhookAuth(req);
+    if (!auth) throw new HttpError(401, "Unauthorized");
+    if (auth === "query") console.warn("[inbox] Webhook secret sent as ?key= (deprecated, it lands in access logs); move it to basic auth in the webhook URL.");
     const mail = (await req.json().catch(() => null)) as InboundEmail | null;
     if (!mail) throw new HttpError(400, "Invalid email");
     const db = getDb();
