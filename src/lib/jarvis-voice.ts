@@ -80,7 +80,7 @@ const KINDS: Record<string, (f: F) => Parts> = {
     mood: "win",
   }),
   overdue_tasks: (f) => ({
-    headline: `${plural(n(f, "count"), "to-do")} slipped`,
+    headline: `${plural(n(f, "count"), "to-do")} past due`,
     fact: `${s(f, "titles")} ${n(f, "count") === 1 ? "is" : "are"} past due.`,
     ask: f.done ? "I moved them to tomorrow." : "Move them to tomorrow?",
     mood: "info",
@@ -105,7 +105,7 @@ const KINDS: Record<string, (f: F) => Parts> = {
   }),
   weekly_review: (f) => ({
     headline: "Your week in review",
-    fact: `${plural(n(f, "done"), "to-do")} done, ${n(f, "slipped")} slipped, ${usd(n(f, "spentCents"))} spent${n(f, "budgetCents") ? ` of about ${usd(n(f, "budgetCents"))} budgeted` : ""}.`,
+    fact: `${plural(n(f, "done"), "to-do")} done, ${n(f, "slipped")} still open, ${usd(n(f, "spentCents"))} spent${n(f, "budgetCents") ? ` of about ${usd(n(f, "budgetCents"))} budgeted` : ""}.`,
     ask: f.change ? `One change for next week: ${s(f, "change")}` : undefined,
     mood: "info",
   }),
@@ -129,12 +129,22 @@ const KINDS: Record<string, (f: F) => Parts> = {
     fact: `${n(f, "days")} in a row on "${s(f, "habit")}".${f.best ? " Best streak yet." : ""}`,
     mood: "win",
   }),
-  habit_struggle: (f) => ({
-    headline: `${s(f, "habit")} is slipping`,
-    fact: `"${s(f, "habit")}" slipped ${n(f, "missed")} times lately. That's a sign the step is too big, not that you failed.`,
-    ask: f.smaller ? `Try ${s(f, "smaller")} for two weeks?` : "Want to make it smaller for a while?",
-    mood: "info",
-  }),
+  habit_struggle: (f) => {
+    // Messages saved before Nov 2026 only have `missed` (of the last 5).
+    const of = n(f, "of") || 5;
+    const kept = f.kept === undefined ? Math.max(0, of - n(f, "missed")) : n(f, "kept");
+    const unit = s(f, "unit") || "times";
+    return {
+      headline: `${s(f, "habit")} is off track`,
+      fact: `"${s(f, "habit")}": ${kept} of the last ${of} ${unit}. That's off track${unit === "days" ? " this week" : ""}.`,
+      ask: f.slot
+        ? `${s(f, "slot")} is open to get back on track.`
+        : f.smaller
+          ? `Try ${s(f, "smaller")} for two weeks to get back on track?`
+          : "Want to make it smaller for a while to get back on track?",
+      mood: "info",
+    };
+  },
   subscription_price_up: (f) => ({
     headline: `${s(f, "name")} went up`,
     fact: `${s(f, "name")} went from ${usd(n(f, "fromCents"))} to ${usd(n(f, "toCents"))}, ${usd(n(f, "yearlyExtraCents"))} more a year.`,
@@ -246,7 +256,7 @@ export const KIND_LABELS: Record<string, string> = {
   monthly_review: "Monthly review",
   goal_forecast: "Goal forecasts",
   habit_streak: "Habit streaks",
-  habit_struggle: "Habits that slipped",
+  habit_struggle: "Habits off track",
   subscription_price_up: "Subscription price increases",
   trial_ending: "Free trials ending",
   new_subscription: "New subscriptions",

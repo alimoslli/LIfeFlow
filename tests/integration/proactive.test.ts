@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { addDaysStr, monthStart, todayIn, weekStart } from "@/lib/dates";
 import { closeDb } from "@/server/db/client";
-import { calendarEvents, jarvisMessages, memories, tasks, type UserPreferences } from "@/server/db/schema";
+import { calendarEvents, habits, jarvisMessages, memories, tasks, type UserPreferences } from "@/server/db/schema";
 import type { UserScope } from "@/server/db/with-user";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
@@ -11,6 +11,8 @@ import { contributeToGoal } from "@/server/services/finance/goals";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { createCourse, createAssignment } from "@/server/services/school";
 import { createTask } from "@/server/services/tasks";
+import { createEvent } from "@/server/services/calendar";
+import { checkHabit, createHabit } from "@/server/services/habits";
 import { createEmployer, createShift } from "@/server/services/work";
 import { inQuietHours, learnedStats, pushImportant, runProactive } from "@/server/services/proactive/engine";
 import { respondToMessage } from "@/server/services/proactive/respond";
@@ -324,8 +326,55 @@ describe("reviews and coaching", () => {
     const sunday = new Date(`${addDaysStr(today, daysToSunday)}T23:30:00Z`);
     const week = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now: sunday }));
     const review = week.find((m) => m.kind === "weekly_review")!;
-    expect(review.body).toMatch(/to-do.* done, \d+ slipped, \$\d+ spent/);
-    expect((review.facts.sections as { heading: string }[]).map((x) => x.heading)).toEqual(expect.arrayContaining(["Wins", "What slipped", "Spending"]));
+    expect(review.body).toMatch(/to-do.* done, \d+ still open, \$\d+ spent/);
+    expect((review.facts.sections as { heading: string }[]).map((x) => x.heading)).toEqual(expect.arrayContaining(["Wins", "Still open", "Spending"]));
+  });
+
+  it("says a habit is off track with real numbers, and offers an open slot only when the calendar shows one", async () => {
+    const { run } = await makeUser();
+    // A Tuesday evening in New York (Nov 10, 2026; UTC is already Wednesday).
+    const now = new Date("2026-11-11T01:30:00Z");
+    const day = todayIn(TZ, now);
+    expect(day).toBe("2026-11-10");
+    await run(async (s) => {
+      const gym = await createHabit(s, { title: "Gym", kind: "custom", cadence: "daily" });
+      const read = await createHabit(s, { title: "Read 20 pages", kind: "custom", cadence: "daily" });
+      for (const h of [gym, read]) {
+        await s.tx
+          .update(habits)
+          .set({ createdAt: new Date("2026-10-20T12:00:00Z") })
+          .where(eq(habits.id, h.id));
+        // Done 2 of the 5 days before today.
+        for (const d of [-2, -5]) await checkHabit(s, h.id, addDaysStr(day, d));
+      }
+      // Tomorrow has a class 7 to 9 AM, so the first open stretch starts at 9 AM.
+      await createEvent(s, TZ, { title: "BIO 101", date: addDaysStr(day, 1), startTime: "07:00", endTime: "09:00" });
+    });
+    const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now }));
+    const off = out.filter((m) => m.kind === "habit_struggle");
+    expect(off).toHaveLength(2);
+    for (const m of off) {
+      expect(m.facts).toMatchObject({ kept: 2, of: 5, unit: "days" });
+      expect(`${m.title} ${m.body}`).not.toMatch(/slipp|missed|failed/i);
+      expect(m.body).toContain(": 2 of the last 5 days. That's off track this week.");
+      expect(m.action).toMatchObject({ type: "open", href: "/goals" });
+      expect(m.facts.slot).toBe("Tomorrow 9 AM");
+      expect(m.body).toContain("Tomorrow 9 AM is open to get back on track.");
+    }
+
+    // With nothing on tomorrow's calendar, no slot is claimed.
+    const { run: run2 } = await makeUser();
+    await run2(async (s) => {
+      const h = await createHabit(s, { title: "Gym", kind: "custom", cadence: "daily" });
+      await s.tx
+        .update(habits)
+        .set({ createdAt: new Date("2026-10-20T12:00:00Z") })
+        .where(eq(habits.id, h.id));
+      await checkHabit(s, h.id, addDaysStr(day, -1));
+    });
+    const [lone] = (await run2((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now }))).filter((m) => m.kind === "habit_struggle");
+    expect(lone.facts).toMatchObject({ kept: 1, of: 5, slot: null });
+    expect(lone.body).not.toMatch(/is open/);
   });
 
   it("counts habit streaks by day and by week", async () => {

@@ -1,6 +1,6 @@
 import { usd } from "@/lib/jarvis-voice";
 import { and, eq, gte, isNotNull, lte, ne } from "drizzle-orm";
-import { addDaysStr, dayOfWeek, daysBetween, formatDateStr, localDateOf, monthStart, weekStart } from "@/lib/dates";
+import { addDaysStr, dayOfWeek, daysBetween, formatDateStr, formatIn, localDateOf, monthStart, weekStart } from "@/lib/dates";
 import { goalProjection } from "@/lib/goal-math";
 import { assignments, jarvisRuns, memories, tasks } from "../../db/schema";
 import { series } from "../../db/series";
@@ -11,6 +11,7 @@ import { budgetStatus, spendingByCategory } from "../finance/planning";
 import { listAccounts } from "../finance/accounts";
 import { balancesOf } from "../finance/overview";
 import { queryTransactions } from "../finance/transactions";
+import { freeSlots, getAgenda } from "../calendar";
 import { listHabits } from "../habits";
 import { listAssignments } from "../school";
 import { listShifts } from "../work";
@@ -147,7 +148,7 @@ export const eveningWrap: Detector = async ({ scope, tz, today }) => {
 
 // ------------------------------------------------------------------ weekly / monthly
 
-/** Sunday evening: wins, what slipped, spending vs. budget, goals and forecasts, one change for next week. */
+/** Sunday evening: wins, what is still open, spending vs. budget, goals and forecasts, one change for next week. */
 export const weeklyReview: Detector = async (ctx) => {
   const { scope, tz, today } = ctx;
   if (dayOfWeek(today) !== 0) return [];
@@ -183,7 +184,7 @@ export const weeklyReview: Detector = async (ctx) => {
     .map((g) => `${g.name}: ${g.percent}%${g.projectedDate ? `, on pace for ${formatDateStr(g.projectedDate, "MMMM yyyy")}` : ", no pace yet"}`);
   const sections: Section[] = [
     { heading: "Wins", lines: [`${done.length} to-do${done.length === 1 ? "" : "s"} done`, ...streaks].filter(Boolean) },
-    { heading: "What slipped", lines: slipped.length ? slipped.map((t) => t.title).slice(0, 5) : ["Nothing. Clean week."] },
+    { heading: "Still open", lines: slipped.length ? slipped.map((t) => t.title).slice(0, 5) : ["Nothing. Clean week."] },
     {
       heading: "Spending",
       lines: [weeklyBudget ? `${usd(spent)} spent of about ${usd(weeklyBudget)} budgeted for the week` : `${usd(spent)} spent this week`],
@@ -293,8 +294,24 @@ export const goalForecast: Detector = async ({ scope, today }) => {
   ];
 };
 
-/** Habits: celebrate streaks of 3, 7, 14 and 30; when one keeps slipping, suggest a smaller step. */
-export const habitCoach: Detector = async ({ scope, today }) => {
+const PERIOD_UNIT = { daily: "days", weekly: "weeks", payday: "weeks", weekends: "weekends" } as const;
+
+/**
+ * The first open stretch tomorrow (7 AM to 9 PM) long enough for a time-based habit, as "Tomorrow 9 AM".
+ * Only when tomorrow already has something on the calendar: an empty day means we don't know it, not that it's free.
+ */
+async function openSlotTomorrow({ scope, tz, today, now }: DetectContext, minutes: number) {
+  const day = addDaysStr(today, 1);
+  const items = await getAgenda(scope, tz, day, day, { now });
+  if (!items.some((i) => i.blocksTime && i.endsAt)) return null;
+  const slot = freeSlots(items, day, tz, "07:00", "21:00", minutes)[0];
+  if (!slot) return null;
+  return `Tomorrow ${formatIn(slot.startsAt, tz, formatIn(slot.startsAt, tz, "mm") === "00" ? "h a" : "h:mm a")}`;
+}
+
+/** Habits: celebrate streaks of 3, 7, 14 and 30; when one is off track, say so with the numbers and one way back. */
+export const habitCoach: Detector = async (ctx) => {
+  const { scope, today } = ctx;
   const out: Candidate[] = [];
   for (const h of await listHabits(scope, today)) {
     if (!h.active) continue;
@@ -306,16 +323,27 @@ export const habitCoach: Detector = async ({ scope, today }) => {
         facts: { habit: h.title, days: h.current, best: h.current >= h.best },
         priority: 50,
       });
-    const missed = h.recent.slice(1, 6).filter((d) => !d).length;
+    // The 5 periods before this one (this one may not be done yet).
+    const last = h.recent.slice(1, 6);
+    const kept = last.filter(Boolean).length;
     const age = daysBetween(h.createdAt.toISOString().slice(0, 10), today);
-    if (missed >= 3 && age >= (h.cadence === "daily" ? 5 : 28)) {
-      const smaller = h.target ? Math.max(1, Math.round(h.target / 2)) : null;
+    if (last.length - kept >= 3 && age >= (h.cadence === "daily" ? 5 : 28)) {
+      const half = h.target ? Math.max(1, Math.round(h.target / 2)) : null;
+      const smaller = half && h.kind === "save" ? usd(half) : half && h.kind === "study" ? `${half} minutes` : null;
+      const timed = (h.kind === "study" || h.kind === "custom") && (h.cadence === "daily" || h.cadence === "weekly");
       out.push({
         kind: "habit_struggle",
         topic: "habits",
         dedupeKey: `habit_struggle:${h.id}:${weekStart(today)}`,
-        facts: { habit: h.title, missed, smaller: smaller && h.kind === "save" ? usd(smaller) : smaller && h.kind === "study" ? `${smaller} minutes` : null },
-        action: { type: "open", label: "Adjust it", href: "/habits" },
+        facts: {
+          habit: h.title,
+          kept,
+          of: last.length,
+          unit: PERIOD_UNIT[h.cadence],
+          slot: timed ? await openSlotTomorrow(ctx, h.kind === "study" && h.target ? h.target : 30) : null,
+          smaller,
+        },
+        action: { type: "open", label: "Adjust it", href: "/goals" },
         priority: 45,
       });
     }

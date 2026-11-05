@@ -44,7 +44,7 @@ export const FOLLOW_UPS: Record<string, string[]> = {
   add_paycheck: ["Does it match my hours?", "Where should this paycheck go?"],
   add_account: ["What do I have available now?", "Set a savings goal"],
   delete_habit: ["Start a different habit", "Show my habits"],
-  list_habits: ["Which habit is slipping?", "Start a new habit"],
+  list_habits: ["Which habit is off track?", "Start a new habit"],
   list_goals: ["Am I on track for my goals?", "How much should I save each week?"],
   save_memory: ["What else do you know about me?"],
 };
