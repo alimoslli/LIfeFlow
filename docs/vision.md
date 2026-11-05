@@ -478,3 +478,9 @@ Still open:
 ### Which model, and don't lose the simple place
 
 > And are we sure that using Fable on Macs is the best way to go on with this? Because, I mean Fable on Macs, that's what I said. Macs. Yep. So, is it the best thing to use for this, or should we go back to Opus 5.5? I really want to make sure we're coming out with the correct output we were looking for. We want to create something life-changing, something that will change the market on how users are connecting their life and seeing it in a way that they understand it and know how to do a change, know what's wrong with their life and fix it using the AI. We still don't want to lose the vision that we had on the version 2 of the app, where it's still very simple. It's still where a place people go to see what they have, see what they're worth, see what they are handling, see what's happening in their life.
+
+### Sketch round 1 feedback (2026-11-05)
+
+> So if anything, it's going to be B or C, definitely. But I still don't believe that this is the best way to show the data. Let's brainstorm more ideas on the design of how we're going to show the timeline of that user. I want it to be like editable. Users can like clearly see it. It's like the thing I hate most about this is the reading time, number 3, as well as where real life lives is not at all what I wanted, like not at all the way I wanted it to be implemented to the digital life.
+
+Outcome: opening screen is B (line first, words under) or C (calmer braid, words under). Rejected: the time band with a moving cursor and an edge arrow; real life as a separate lane or as background water. Next: brainstorm other ways to show time and to merge real life with digital life, sketch the owner's picks.
