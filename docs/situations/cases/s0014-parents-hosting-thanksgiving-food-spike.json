@@ -1,0 +1,66 @@
+{
+  "id": "s0014-parents-hosting-thanksgiving-food-spike",
+  "title": "Food spending more than doubles the week they host Thanksgiving",
+  "life": {
+    "summary": "Office manager on a salary, married, two kids (6 and 10), hosting Thanksgiving for 12 this year; shares a joint checking account with her partner for the house",
+    "kinds": ["parent", "salaried"],
+    "time_zone": "America/Chicago",
+    "pay": { "type": "salary", "period": "biweekly" }
+  },
+  "now": "2026-11-24T21:00",
+  "known": [
+    { "id": "k1", "fact": "Hosting Thanksgiving this year, 12 people", "source": "told Dev" },
+    { "id": "k2", "fact": "Her partner is off Wednesday to Friday and has the kids while school is closed", "source": "told Dev" },
+    { "id": "k3", "fact": "Shares a joint checking account with her partner for the house", "source": "told Dev" },
+    { "id": "k4", "fact": "Routine: a big grocery run on Saturday mornings and small top-ups on weeknights after work", "source": "learned from 8 weeks of bank history" },
+    { "id": "k5", "fact": "Routine: works 8 to 4:30 at the office, Monday to Friday", "source": "calendar" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-11-21T14:00", "end": "2026-11-21T17:00", "state": "with people", "label": "Kids' soccer end-of-season party", "source": "calendar", "expected": false },
+    { "id": "t2", "start": "2026-11-22T10:00", "end": "2026-11-22T18:00", "state": "day off", "label": "Sunday at home with the family", "source": "calendar", "expected": false },
+    { "id": "t3", "start": "2026-11-23T08:00", "end": "2026-11-23T16:30", "state": "work", "label": "Office", "source": "calendar", "expected": false },
+    { "id": "t4", "start": "2026-11-24T08:00", "end": "2026-11-24T16:30", "state": "work", "label": "Office (done today)", "source": "calendar", "expected": false },
+    { "id": "t5", "start": "2026-11-24T17:30", "end": "2026-11-24T22:00", "state": "home", "label": "Home, cooking prep starts", "source": "calendar", "expected": false },
+    { "id": "t6", "start": "2026-11-25T08:00", "end": "2026-11-25T12:00", "state": "work", "label": "Office, half day", "source": "calendar", "expected": false },
+    { "id": "t7", "start": "2026-11-25T12:30", "end": "2026-11-25T22:00", "state": "home", "label": "Home with the kids, cooking", "source": "calendar", "expected": false },
+    { "id": "t8", "start": "2026-11-26T12:00", "end": "2026-11-26T20:00", "state": "with people", "label": "Thanksgiving at ours, 12 people", "source": "calendar", "expected": false },
+    { "id": "t9", "start": "2026-11-27T10:00", "end": "2026-11-27T18:00", "state": "day off", "label": "Friday off, family day", "source": "calendar", "expected": false },
+    { "id": "t10", "start": "2026-11-28T09:00", "end": "2026-11-28T12:00", "state": "with people", "label": "Her in-laws head home after breakfast", "source": "calendar", "expected": false },
+    { "id": "t11", "start": "2026-11-30T08:00", "end": "2026-11-30T16:30", "state": "work", "label": "Office", "source": "calendar", "expected": false }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-11-10T19:00", "part": "life", "kind": "event", "label": "Told Dev: 'We're hosting Thanksgiving this year, 12 people'", "amount_cents": null, "expected": false, "source": "told Dev" },
+    { "id": "a2", "at": "2026-11-15T00:00", "part": "money", "kind": "weekly average", "label": "Usual food spending: about $210 a week (8 weeks to Nov 15)", "amount_cents": -21000, "expected": false, "source": "Dev, from bank history" },
+    { "id": "a3", "at": "2026-11-20T06:00", "part": "money", "kind": "pay", "label": "Paycheck", "amount_cents": 218744, "expected": false, "source": "bank" },
+    { "id": "a4", "at": "2026-11-21T11:05", "part": "money", "kind": "spend", "label": "Warehouse club (Saturday run)", "amount_cents": -18642, "expected": false, "source": "bank" },
+    { "id": "a5", "at": "2026-11-22T09:40", "part": "money", "kind": "spend", "label": "Gas", "amount_cents": -4890, "expected": false, "source": "bank" },
+    { "id": "a6", "at": "2026-11-23T17:40", "part": "money", "kind": "spend", "label": "Grocery store", "amount_cents": -14287, "expected": false, "source": "bank" },
+    { "id": "a7", "at": "2026-11-24T18:15", "part": "money", "kind": "spend", "label": "Grocery store", "amount_cents": -9715, "expected": false, "source": "bank" },
+    { "id": "a8", "at": "2026-11-24T18:40", "part": "money", "kind": "spend", "label": "Liquor store", "amount_cents": -6430, "expected": false, "source": "bank" },
+    { "id": "a9", "at": "2026-11-25T00:00", "part": "school", "kind": "closure", "label": "School closed Wed Nov 25 to Fri Nov 27", "amount_cents": null, "expected": false, "source": "district calendar" },
+    { "id": "a10", "at": "2026-12-01T00:00", "part": "money", "kind": "bill", "label": "Mortgage", "amount_cents": -164000, "expected": false, "source": "bank history" },
+    { "id": "a11", "at": "2026-12-04T06:00", "part": "money", "kind": "pay", "label": "Paycheck (expected; same amount every time)", "amount_cents": 218744, "expected": true, "source": "pay history" }
+  ],
+  "money": { "available_now_cents": 329048, "checking_cents": 329048, "cash_cents": 0, "savings_cents": 1240000 },
+  "dev_must_notice": [],
+  "best_fix": {
+    "what": "Say nothing about this week's food spending and nothing about the school closure.",
+    "why": "The jump ($490.74 on food and drink since Saturday, against about $210 in a usual week) is the Thanksgiving she told Dev about two weeks ago, it's one week, and it follows her usual pattern (the Saturday run plus weeknight top-ups), just bigger. The mortgage on Dec 1 is covered by the $3,290.48 in checking without counting the Dec 4 paycheck. The school closure is covered too: her partner is off Wednesday to Friday and she works only Wednesday morning.",
+    "action": "none",
+    "needs_user": false
+  },
+  "must_not": [
+    "Send a food spending alert or compare this week with a usual week",
+    "Suggest changing how she shops (another store, a different day) for the holiday; her Saturday run and weeknight top-ups are her routine",
+    "Learn this week as her new usual food spending",
+    "Suggest cheaper recipes or a holiday budget",
+    "Ask who's watching the kids on Wednesday"
+  ],
+  "stay_quiet": true,
+  "assumptions": [
+    "Many Chicago-area districts close Wednesday to Friday of Thanksgiving week",
+    "Usual food spending is the average of the 8 weeks before Nov 15; it's a summary, not an extra transaction",
+    "Checking was $1,642.68 before the Nov 20 paycheck"
+  ],
+  "tags": ["stay quiet", "holiday", "kid's school closing", "food spending", "tempting: spending spike alert"]
+}

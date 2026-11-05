@@ -1,0 +1,68 @@
+{
+  "id": "s0013-student-sick-day-paid-sick-leave",
+  "title": "She called out sick from Saturday's shift; nothing else needs to move",
+  "life": {
+    "summary": "Community college student who works 15 hours a week at a bookstore and lives with her parents; her paycheck covers her own phone, car insurance, gas and food",
+    "kinds": ["student who works", "lives with family"],
+    "time_zone": "America/Los_Angeles",
+    "pay": { "type": "hourly", "period": "biweekly" }
+  },
+  "now": "2026-10-17T09:15",
+  "known": [
+    { "id": "k1", "fact": "Routine: works Tuesday and Thursday 4 to 9 PM and Saturday 10 AM to 3 PM, 15 hours a week, $17.50 an hour", "source": "schedule photos and pay stubs" },
+    { "id": "k2", "fact": "Lives with her parents; pays her own phone, car insurance, gas and food", "source": "told Dev" },
+    { "id": "k3", "fact": "Paid every other Friday; her stub lists paid sick leave", "source": "learned from pay stubs" },
+    { "id": "k4", "fact": "Routine: studies in the early afternoon on her own blocks (Sunday 1 to 3, Tuesday 1 to 3, Wednesday 3 to 5 this week); she placed them herself", "source": "Plan" },
+    { "id": "k5", "fact": "Routine: sleeps about 11:30 PM to 7:30 AM", "source": "Apple Health sleep, 3 months" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-10-15T16:00", "end": "2026-10-15T21:00", "state": "work", "label": "Bookstore shift", "source": "schedule photo", "expected": false },
+    { "id": "t2", "start": "2026-10-16T09:30", "end": "2026-10-16T12:20", "state": "class", "label": "Classes", "source": "class schedule", "expected": false },
+    { "id": "t3", "start": "2026-10-16T19:00", "end": "2026-10-16T22:30", "state": "with people", "label": "Movie night with friends", "source": "calendar", "expected": false },
+    { "id": "t4", "start": "2026-10-16T23:30", "end": "2026-10-17T08:00", "state": "asleep", "label": "Sleep (done)", "source": "Apple Health", "expected": false },
+    { "id": "t5", "start": "2026-10-17T08:00", "end": "2026-10-17T23:00", "state": "home", "label": "Home sick (called out of her 10 to 3 shift)", "source": "told Dev", "expected": false },
+    { "id": "t6", "start": "2026-10-18T13:00", "end": "2026-10-18T15:00", "state": "study", "label": "Midterm review block 1 (she placed it)", "source": "Plan", "expected": false },
+    { "id": "t7", "start": "2026-10-18T18:00", "end": "2026-10-18T20:30", "state": "with people", "label": "Family dinner", "source": "calendar", "expected": false },
+    { "id": "t8", "start": "2026-10-19T09:30", "end": "2026-10-19T12:20", "state": "class", "label": "Classes", "source": "class schedule", "expected": false },
+    { "id": "t9", "start": "2026-10-20T13:00", "end": "2026-10-20T15:00", "state": "study", "label": "Midterm review block 2", "source": "Plan", "expected": false },
+    { "id": "t10", "start": "2026-10-20T16:00", "end": "2026-10-20T21:00", "state": "work", "label": "Bookstore shift", "source": "schedule photo", "expected": false },
+    { "id": "t11", "start": "2026-10-21T15:00", "end": "2026-10-21T17:00", "state": "study", "label": "Midterm review block 3", "source": "Plan", "expected": false },
+    { "id": "t12", "start": "2026-10-22T09:30", "end": "2026-10-22T10:45", "state": "class", "label": "Psych midterm, in person", "source": "syllabus", "expected": false },
+    { "id": "t13", "start": "2026-10-22T16:00", "end": "2026-10-22T21:00", "state": "work", "label": "Bookstore shift", "source": "schedule photo", "expected": false },
+    { "id": "t14", "start": "2026-10-24T10:00", "end": "2026-10-24T15:00", "state": "work", "label": "Bookstore shift", "source": "schedule photo", "expected": false }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-10-17T08:30", "part": "work", "kind": "call-out", "label": "Told Dev: 'called out sick from today's shift'", "amount_cents": null, "expected": false, "source": "told Dev" },
+    { "id": "a2", "at": "2026-10-09T06:00", "part": "money", "kind": "pay", "label": "Paycheck, Sep 20 to Oct 3 (30 hours)", "amount_cents": 47801, "expected": false, "source": "bank and pay stub" },
+    { "id": "a3", "at": "2026-10-09T06:00", "part": "work", "kind": "pay stub", "label": "Pay stub: 14.5 hours of paid sick leave available", "amount_cents": null, "expected": false, "source": "pay stub" },
+    { "id": "a4", "at": "2026-10-11T12:30", "part": "money", "kind": "spend", "label": "Gas", "amount_cents": -3820, "expected": false, "source": "bank" },
+    { "id": "a5", "at": "2026-10-13T13:05", "part": "money", "kind": "spend", "label": "Lunch", "amount_cents": -1285, "expected": false, "source": "bank" },
+    { "id": "a6", "at": "2026-10-15T15:20", "part": "money", "kind": "spend", "label": "Food", "amount_cents": -940, "expected": false, "source": "bank" },
+    { "id": "a7", "at": "2026-10-20T00:00", "part": "money", "kind": "bill", "label": "Car insurance (autopay)", "amount_cents": -11800, "expected": false, "source": "bank history" },
+    { "id": "a8", "at": "2026-10-22T09:30", "part": "school", "kind": "exam", "label": "Psych midterm", "amount_cents": null, "expected": false, "source": "syllabus" },
+    { "id": "a9", "at": "2026-10-23T06:00", "part": "money", "kind": "pay", "label": "Paycheck for Oct 4 to 17 (amount not known until it lands)", "amount_cents": null, "expected": true, "source": "pay schedule" },
+    { "id": "a10", "at": "2026-10-28T00:00", "part": "money", "kind": "bill", "label": "Phone", "amount_cents": -3500, "expected": false, "source": "bank history" }
+  ],
+  "money": { "available_now_cents": 105655, "checking_cents": 103655, "cash_cents": 2000, "savings_cents": 230000 },
+  "dev_must_notice": [],
+  "best_fix": {
+    "what": "Nothing proactive. She told Dev she's sick, so the reply is one line ('Feel better. Nothing else needs to move today.') and the plan stays as it is.",
+    "why": "Her stub shows 14.5 hours of paid sick leave, more than the 5-hour shift, so there's no money story to tell, and the car insurance ($118) before the next payday is covered by the $1,056.55 she has without counting that paycheck. Her own routine already handles the midterm: review blocks Sunday, Tuesday and Wednesday afternoons, none of them today. Any warning or plan today is noise on a day she feels bad.",
+    "action": "none",
+    "needs_user": false
+  },
+  "must_not": [
+    "Suggest studying today 'since you're home'; she studies in the blocks she placed, and none is today",
+    "Warn that her next paycheck will be smaller, or estimate it",
+    "Move, add or shorten study blocks before she says she's still sick",
+    "Remind her about Thursday's midterm today",
+    "Comment on her sleep, her health or what she should do about it"
+  ],
+  "stay_quiet": true,
+  "assumptions": [
+    "California paid sick leave: at least 40 hours or 5 days a year, accrued 1 hour per 30 worked, paid at the regular rate",
+    "About 9% withheld (Social Security, Medicare, about 1.3% state disability insurance), no federal income tax at this income",
+    "Checking was $618.99 before the Oct 9 paycheck"
+  ],
+  "tags": ["stay quiet", "sick day", "paid sick leave", "student who works", "tempting: smaller paycheck warning"]
+}

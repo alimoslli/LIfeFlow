@@ -1,0 +1,76 @@
+{
+  "id": "s0015-newcomer-first-pay-issued-as-cheque",
+  "title": "Her first paycheck was issued as a cheque, two days before rent",
+  "life": {
+    "summary": "Arrived in Canada in late September, started as a care aide at a long-term care home on Oct 26, rents a room from her cousin's family; amounts in Canadian dollars",
+    "kinds": ["new to the country", "far from home", "shift worker", "lives with family"],
+    "time_zone": "America/Edmonton",
+    "pay": { "type": "hourly", "period": "biweekly" }
+  },
+  "now": "2026-11-13T06:05",
+  "known": [
+    { "id": "k1", "fact": "Arrived in Canada in late September; started as a care aide on Oct 26", "source": "told Dev" },
+    { "id": "k2", "fact": "Rents a room from her cousin: $700 on the 15th", "source": "told Dev" },
+    { "id": "k3", "fact": "The care home's office (payroll questions) is open weekdays 8:30 AM to 4:30 PM, on the ground floor of her building", "source": "orientation handout (photo)" },
+    { "id": "k4", "fact": "Sends $200 home on the 1st", "source": "told Dev" },
+    { "id": "k5", "fact": "Her bank account is new, opened in October", "source": "told Dev" },
+    { "id": "k6", "fact": "Routine: on day shifts she's up at 5:45, leaves at 6:30, works 7 to 3 with a break 11 to 11:30", "source": "Apple Health sleep and told Dev" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-10-26T07:00", "end": "2026-10-26T15:00", "state": "work", "label": "First day as a care aide (day shift)", "source": "schedule", "expected": false },
+    { "id": "t2", "start": "2026-11-07T15:00", "end": "2026-11-07T23:00", "state": "work", "label": "Evening shift (last day of her first pay period)", "source": "schedule", "expected": false },
+    { "id": "t3", "start": "2026-11-09T15:00", "end": "2026-11-09T23:00", "state": "work", "label": "Evening shift", "source": "schedule", "expected": false },
+    { "id": "t4", "start": "2026-11-10T15:00", "end": "2026-11-10T23:00", "state": "work", "label": "Evening shift", "source": "schedule", "expected": false },
+    { "id": "t5", "start": "2026-11-11T09:00", "end": "2026-11-11T21:00", "state": "day off", "label": "Remembrance Day, off", "source": "schedule", "expected": false },
+    { "id": "t6", "start": "2026-11-12T07:00", "end": "2026-11-12T15:00", "state": "work", "label": "Day shift", "source": "schedule", "expected": false },
+    { "id": "t7", "start": "2026-11-12T18:00", "end": "2026-11-12T21:00", "state": "with people", "label": "Dinner with her cousin's family", "source": "calendar", "expected": false },
+    { "id": "t8", "start": "2026-11-12T22:00", "end": "2026-11-13T05:45", "state": "asleep", "label": "Sleep, up at 5:45 as usual (done)", "source": "Apple Health", "expected": false },
+    { "id": "t9", "start": "2026-11-13T07:00", "end": "2026-11-13T15:00", "state": "work", "label": "Day shift, payday (break 11 to 11:30)", "source": "schedule", "expected": false },
+    { "id": "t10", "start": "2026-11-14T07:00", "end": "2026-11-14T15:00", "state": "work", "label": "Weekend day shift", "source": "schedule", "expected": false },
+    { "id": "t11", "start": "2026-11-15T07:00", "end": "2026-11-15T15:00", "state": "work", "label": "Weekend day shift", "source": "schedule", "expected": false },
+    { "id": "t12", "start": "2026-11-15T19:00", "end": "2026-11-15T20:00", "state": "with people", "label": "Video call with her parents back home (their Monday morning)", "source": "calendar", "expected": false },
+    { "id": "t13", "start": "2026-11-16T09:00", "end": "2026-11-16T21:00", "state": "day off", "label": "Monday off", "source": "schedule", "expected": false }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-10-23T10:00", "part": "work", "kind": "form", "label": "Handed in a direct deposit form at orientation", "amount_cents": null, "expected": false, "source": "told Dev" },
+    { "id": "a2", "at": "2026-11-01T08:00", "part": "money", "kind": "transfer", "label": "Money sent home", "amount_cents": -20000, "expected": false, "source": "bank" },
+    { "id": "a3", "at": "2026-11-02T07:40", "part": "money", "kind": "spend", "label": "Monthly transit pass", "amount_cents": -11500, "expected": false, "source": "bank" },
+    { "id": "a4", "at": "2026-11-03T17:30", "part": "money", "kind": "spend", "label": "Groceries", "amount_cents": -6840, "expected": false, "source": "bank" },
+    { "id": "a5", "at": "2026-11-05T00:00", "part": "money", "kind": "bill", "label": "Phone", "amount_cents": -4500, "expected": false, "source": "bank" },
+    { "id": "a6", "at": "2026-11-06T16:20", "part": "money", "kind": "spend", "label": "Work shoes", "amount_cents": -8999, "expected": false, "source": "bank" },
+    { "id": "a7", "at": "2026-11-08T12:10", "part": "money", "kind": "spend", "label": "Scrubs", "amount_cents": -14000, "expected": false, "source": "bank" },
+    { "id": "a8", "at": "2026-11-10T11:30", "part": "money", "kind": "spend", "label": "Groceries", "amount_cents": -5401, "expected": false, "source": "bank" },
+    { "id": "a9", "at": "2026-11-12T18:05", "part": "work", "kind": "pay stub", "label": "Pay statement ready: Oct 25 to Nov 7, 72 hours, net $1,131.58, payment method: cheque", "amount_cents": null, "expected": false, "source": "payroll portal email" },
+    { "id": "a10", "at": "2026-11-13T06:00", "part": "money", "kind": "missing deposit", "label": "No pay deposit this morning (her bank posts deposits by 6 AM)", "amount_cents": null, "expected": false, "source": "bank sync" },
+    { "id": "a11", "at": "2026-11-15T00:00", "part": "money", "kind": "bill", "label": "Room rent to her cousin", "amount_cents": -70000, "expected": false, "source": "told Dev" },
+    { "id": "a12", "at": "2026-12-01T08:00", "part": "money", "kind": "transfer", "label": "Money sent home (her plan)", "amount_cents": -20000, "expected": true, "source": "told Dev" }
+  ],
+  "money": { "available_now_cents": 39025, "checking_cents": 35025, "cash_cents": 4000, "savings_cents": 0 },
+  "dev_must_notice": [
+    { "check": "late fact", "what": "Her first pay statement, which arrived last night, says 'payment method: cheque', and no deposit came this morning, so the $1,131.58 won't arrive in the bank; it's most likely waiting at the office in her building, open 8:30 AM to 4:30 PM today", "by_when": "2026-11-13T06:25", "facts": ["a9", "a10", "a1", "k3"] },
+    { "check": "afford", "what": "Room rent ($700) is due Sunday and she has $390.25: $309.75 short until the cheque is picked up and deposited, and a new account may hold part of a deposited cheque for a few days", "by_when": "2026-11-13T06:25", "facts": ["a11", "k2", "a9", "k5"] }
+  ],
+  "best_fix": {
+    "what": "One push while she's getting ready, before she leaves at 6:30: 'Your first pay was issued as a cheque, so it won't show up in your bank. The office downstairs is open 8:30 to 4:30 today; your break is 11 to 11:30, or right after your shift ends at 3.' Offer a short draft for payroll asking to switch her to direct deposit (the orientation form may not have been processed). Remind her at 11 AM, at the start of her break. Whether to tell her cousin rent may be a day or two late is her call.",
+    "why": "If she learns this on Monday, rent is already late and the cheque has sat all weekend. Today she's in the same building as the office, and her break and the end of her shift both fall inside its hours, so the fix fits her day without leaving work. The stub came last night, but this morning's missing deposit is what confirms it.",
+    "action": "reminder",
+    "needs_user": true
+  },
+  "must_not": [
+    "Suggest she leave the floor during her shift to go to the office; her break (11 to 11:30) and 3 PM both fit its hours",
+    "Count the cheque as money she has before it's deposited and cleared",
+    "Contact her employer or her cousin for her",
+    "Suggest a payday loan or a cash advance",
+    "Assume the employer got her pay amount wrong",
+    "Wait until Monday to say it"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Some employers pay by cheque until direct deposit details are processed",
+    "Care aides in Alberta earn about $20.50 an hour; about 23% withheld (CPP, EI, income tax): 72 hours is $1,476.00 gross",
+    "New accounts can have part of a deposited cheque held for a few business days",
+    "Remembrance Day (Nov 11) is a general holiday in Alberta",
+    "Checking was $1,062.65 on Nov 1"
+  ],
+  "tags": ["missed paycheck", "new to the country", "cheque", "rent", "afford", "routine fit"]
+}

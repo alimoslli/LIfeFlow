@@ -1,0 +1,68 @@
+{
+  "id": "s0012-international-student-cancelled-tutorial-morning-routine",
+  "title": "A cancelled tutorial frees an afternoon, and the essay is already handled",
+  "life": {
+    "summary": "First-year master's student from overseas, arrived in July, not working yet, rents a room in a share house; her family sends money monthly; amounts in Australian dollars",
+    "kinds": ["student", "new to the country", "far from home", "roommates"],
+    "time_zone": "Australia/Melbourne",
+    "pay": { "type": "none (family support)", "period": "monthly transfer" }
+  },
+  "now": "2026-09-17T12:15",
+  "known": [
+    { "id": "k1", "fact": "Routine: studies 8 to 10 AM at the library on weekdays before her 10 o'clock classes, and Sunday 10 to noon; never studies in the afternoon", "source": "learned from 8 weeks of study blocks (kept 30 of 31 morning blocks)" },
+    { "id": "k2", "fact": "Needs about 8 hours for a 2,000-word essay, in 2-hour blocks", "source": "learned from her first essay's blocks" },
+    { "id": "k3", "fact": "Routine: Thursday evening is cooking night with her housemates", "source": "told Dev" },
+    { "id": "k4", "fact": "Routine: her family video-calls on Sunday evenings", "source": "calendar" },
+    { "id": "k5", "fact": "Arrived in July for her master's; not working yet", "source": "told Dev" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-09-15T08:00", "end": "2026-09-15T10:00", "state": "study", "label": "Essay block 1, library (kept)", "source": "Plan", "expected": false },
+    { "id": "t2", "start": "2026-09-16T08:00", "end": "2026-09-16T10:00", "state": "study", "label": "Essay block 2, library (kept)", "source": "Plan", "expected": false },
+    { "id": "t3", "start": "2026-09-17T08:00", "end": "2026-09-17T10:00", "state": "study", "label": "Essay block 3, library (kept, done today)", "source": "Plan", "expected": false },
+    { "id": "t4", "start": "2026-09-17T10:00", "end": "2026-09-17T12:00", "state": "class", "label": "Lecture (done today)", "source": "class timetable", "expected": false },
+    { "id": "t5", "start": "2026-09-17T12:00", "end": "2026-09-17T18:00", "state": "home", "label": "Afternoon, now hers (the 2 PM tutorial is cancelled)", "source": "class timetable and university email", "expected": false },
+    { "id": "t6", "start": "2026-09-17T18:30", "end": "2026-09-17T21:30", "state": "with people", "label": "Cooking night with her housemates", "source": "calendar", "expected": false },
+    { "id": "t7", "start": "2026-09-18T08:00", "end": "2026-09-18T10:00", "state": "study", "label": "Library, morning study (her usual)", "source": "learned routine", "expected": true },
+    { "id": "t8", "start": "2026-09-18T14:00", "end": "2026-09-18T16:00", "state": "class", "label": "Lab", "source": "class timetable", "expected": false },
+    { "id": "t9", "start": "2026-09-19T10:00", "end": "2026-09-19T18:00", "state": "with people", "label": "Saturday at the market and in the city with a friend from class", "source": "calendar", "expected": false },
+    { "id": "t10", "start": "2026-09-20T10:00", "end": "2026-09-20T12:00", "state": "study", "label": "Essay block 4 (planned)", "source": "Plan", "expected": false },
+    { "id": "t11", "start": "2026-09-20T21:00", "end": "2026-09-20T22:00", "state": "with people", "label": "Video call with her family (late afternoon their time)", "source": "calendar", "expected": false },
+    { "id": "t12", "start": "2026-09-21T10:00", "end": "2026-09-21T12:00", "state": "class", "label": "Lecture", "source": "class timetable", "expected": false }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-09-17T09:40", "part": "school", "kind": "message", "label": "Tutorial cancelled today (tutor unwell); no make-up, next week as usual", "amount_cents": null, "expected": false, "source": "university email (she opened it)" },
+    { "id": "a2", "at": "2026-09-21T23:59", "part": "school", "kind": "assignment", "label": "Essay due (2,000 words)", "amount_cents": null, "expected": false, "source": "course site" },
+    { "id": "a3", "at": "2026-09-01T09:00", "part": "money", "kind": "transfer", "label": "Monthly transfer from her family", "amount_cents": 160000, "expected": false, "source": "bank" },
+    { "id": "a4", "at": "2026-09-03T06:00", "part": "money", "kind": "bill", "label": "Rent, fortnightly", "amount_cents": -52000, "expected": false, "source": "bank" },
+    { "id": "a5", "at": "2026-09-06T15:30", "part": "money", "kind": "spend", "label": "Groceries", "amount_cents": -8430, "expected": false, "source": "bank" },
+    { "id": "a6", "at": "2026-09-10T06:00", "part": "money", "kind": "bill", "label": "Phone plan", "amount_cents": -3500, "expected": false, "source": "bank" },
+    { "id": "a7", "at": "2026-09-13T16:10", "part": "money", "kind": "spend", "label": "Groceries", "amount_cents": -9115, "expected": false, "source": "bank" },
+    { "id": "a8", "at": "2026-09-14T08:20", "part": "money", "kind": "spend", "label": "Transport card top-up", "amount_cents": -5000, "expected": false, "source": "bank" },
+    { "id": "a9", "at": "2026-09-17T06:00", "part": "money", "kind": "bill", "label": "Rent, fortnightly", "amount_cents": -52000, "expected": false, "source": "bank" },
+    { "id": "a10", "at": "2026-10-01T06:00", "part": "money", "kind": "bill", "label": "Rent, fortnightly", "amount_cents": -52000, "expected": false, "source": "bank history" },
+    { "id": "a11", "at": "2026-10-01T09:00", "part": "money", "kind": "transfer", "label": "Monthly transfer from her family (expected, not counted until it lands)", "amount_cents": 160000, "expected": true, "source": "transfer history" }
+  ],
+  "money": { "available_now_cents": 91195, "checking_cents": 91195, "cash_cents": 0, "savings_cents": 150000 },
+  "dev_must_notice": [],
+  "best_fix": {
+    "what": "Say nothing. The line already shows the tutorial as cancelled, from the email she opened. Leave the freed afternoon as hers.",
+    "why": "Her morning routine already handles the essay: 3 of 4 blocks kept, the last one Sunday at 10 in her usual slot, and it's due Monday night. She never studies in the afternoon, so an afternoon block would be skipped and would only turn her own time into homework. Money is fine too: A$911.95 covers groceries and the Oct 1 rent without counting the family transfer.",
+    "action": "none",
+    "needs_user": false
+  },
+  "must_not": [
+    "Offer to put an essay block in the freed afternoon; she studies only in the mornings and the essay is already covered there",
+    "Send a notification repeating the cancellation she already read",
+    "Suggest she use the time to job hunt or get ahead",
+    "Move Sunday's block or touch Thursday's cooking night",
+    "Write, outline or check any part of the essay"
+  ],
+  "stay_quiet": true,
+  "assumptions": [
+    "Amounts are Australian dollar cents",
+    "Melbourne is on standard time (UTC+10) until Oct 4",
+    "Share-house rent is paid fortnightly",
+    "Checking was A$612.40 on Sep 1 before the family transfer"
+  ],
+  "tags": ["stay quiet", "routine fit", "cancelled class", "new to the country", "protect real life", "tempting: fill the free afternoon"]
+}

@@ -1,0 +1,72 @@
+{
+  "id": "s0011-grad-student-treatment-moved-onto-grading-mornings",
+  "title": "Clinic moves her treatment onto the mornings she grades in",
+  "life": {
+    "summary": "PhD student and teaching assistant on a monthly stipend; has a treatment at a hospital day clinic every 8 weeks and keeps the next day light",
+    "kinds": ["student who works", "chronic condition"],
+    "time_zone": "America/Vancouver",
+    "pay": { "type": "stipend", "period": "monthly" }
+  },
+  "now": "2026-11-19T14:20",
+  "known": [
+    { "id": "k1", "fact": "Has a treatment at a day clinic every 8 weeks, about 4 hours; keeps the next day light (her own rule)", "source": "told Dev" },
+    { "id": "k2", "fact": "Routine: grades only in the morning, 8 AM to noon at her department desk; last term she finished 12 of 12 morning grading blocks and gave up on both afternoon ones", "source": "learned from last term's grading blocks" },
+    { "id": "k3", "fact": "Grading 60 lab reports takes her about 10 hours", "source": "learned from last term's grading blocks" },
+    { "id": "k4", "fact": "Routine: keeps weekends free unless she says otherwise", "source": "told Dev" },
+    { "id": "k5", "fact": "Doesn't want health details in anything sent to work", "source": "told Dev" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-11-19T08:00", "end": "2026-11-19T09:20", "state": "work", "label": "Morning at her desk, research (done today)", "source": "calendar", "expected": false },
+    { "id": "t2", "start": "2026-11-19T09:30", "end": "2026-11-19T11:20", "state": "work", "label": "Tutorial section A (done today)", "source": "teaching schedule", "expected": false },
+    { "id": "t3", "start": "2026-11-19T11:30", "end": "2026-11-19T13:20", "state": "work", "label": "Tutorial section B (done today)", "source": "teaching schedule", "expected": false },
+    { "id": "t4", "start": "2026-11-19T14:00", "end": "2026-11-19T17:30", "state": "work", "label": "Research, in the lab", "source": "calendar", "expected": false },
+    { "id": "t5", "start": "2026-11-28T09:00", "end": "2026-11-28T18:00", "state": "day off", "label": "Saturday, hers", "source": "calendar", "expected": false },
+    { "id": "t6", "start": "2026-11-29T11:00", "end": "2026-11-29T15:00", "state": "with people", "label": "Brunch with friends", "source": "calendar", "expected": false },
+    { "id": "t7", "start": "2026-11-30T08:00", "end": "2026-11-30T10:00", "state": "work", "label": "Grading block 1 (lab reports)", "source": "Dev plan", "expected": false },
+    { "id": "t8", "start": "2026-11-30T10:00", "end": "2026-11-30T12:00", "state": "class", "label": "PhD seminar", "source": "class schedule", "expected": false },
+    { "id": "t9", "start": "2026-12-01T09:00", "end": "2026-12-01T10:30", "state": "work", "label": "Lab meeting", "source": "calendar", "expected": false },
+    { "id": "t10", "start": "2026-12-01T10:30", "end": "2026-12-01T12:00", "state": "work", "label": "Grading block 2", "source": "Dev plan", "expected": false },
+    { "id": "t11", "start": "2026-12-02T08:00", "end": "2026-12-02T12:00", "state": "work", "label": "Grading block 3", "source": "Dev plan", "expected": false },
+    { "id": "t12", "start": "2026-12-02T09:00", "end": "2026-12-02T13:00", "state": "appointment", "label": "Treatment at the day clinic (moved here)", "source": "clinic portal", "expected": false },
+    { "id": "t13", "start": "2026-12-02T13:30", "end": "2026-12-02T21:00", "state": "home", "label": "Home after the treatment", "source": "calendar", "expected": true },
+    { "id": "t14", "start": "2026-12-03T09:30", "end": "2026-12-03T11:20", "state": "work", "label": "Tutorial section A (last of term)", "source": "teaching schedule", "expected": false },
+    { "id": "t15", "start": "2026-12-03T11:30", "end": "2026-12-03T13:20", "state": "work", "label": "Tutorial section B (last of term)", "source": "teaching schedule", "expected": false },
+    { "id": "t16", "start": "2026-12-03T14:00", "end": "2026-12-03T21:00", "state": "home", "label": "Home, a light day (her rule)", "source": "her rule", "expected": true },
+    { "id": "t17", "start": "2026-12-04T08:00", "end": "2026-12-04T10:30", "state": "work", "label": "Grading block 4", "source": "Dev plan", "expected": false },
+    { "id": "t18", "start": "2026-12-04T10:30", "end": "2026-12-04T16:00", "state": "work", "label": "Research (flexible)", "source": "calendar", "expected": false },
+    { "id": "t19", "start": "2026-12-04T18:00", "end": "2026-12-04T22:00", "state": "with people", "label": "End-of-term department party", "source": "calendar", "expected": false }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-11-19T14:05", "part": "health", "kind": "message", "label": "Clinic portal: treatment moved from Tue Nov 24 to Wed Dec 2, 9 AM (about 4 hours)", "amount_cents": null, "expected": false, "source": "clinic portal email" },
+    { "id": "a2", "at": "2026-11-27T17:00", "part": "work", "kind": "deadline", "label": "Students hand in lab reports (60)", "amount_cents": null, "expected": false, "source": "course site" },
+    { "id": "a3", "at": "2026-12-04T17:00", "part": "work", "kind": "deadline", "label": "Lab report grades due to the professor", "amount_cents": null, "expected": false, "source": "email from the professor" }
+  ],
+  "money": { "available_now_cents": 188430, "checking_cents": 183430, "cash_cents": 5000, "savings_cents": 350000 },
+  "dev_must_notice": [
+    { "check": "late fact", "what": "The clinic moved her treatment to Wednesday Dec 2, 9 AM to 1 PM, right on top of grading block 3, two days before 60 lab-report grades are due Friday at 5 PM", "by_when": "2026-11-19T17:30", "facts": ["a1", "t11", "t12", "a3"] },
+    { "check": "time", "what": "She grades only in the mornings. With Wednesday gone and Thursday teaching, the mornings left before Friday 5 PM hold 8.5 of the 10 hours she needs: Monday 8 to 10, Tuesday 8 to 9 and 10:30 to noon, Friday 8 to noon", "by_when": "2026-11-19T17:30", "facts": ["k2", "k3", "t7", "t8", "t9", "t10", "t14", "t15", "t17", "a2", "a3"] },
+    { "check": "rest", "what": "Her light day after the treatment is now Thursday Dec 3, the day she teaches both sections, the last of term", "by_when": "2026-11-19T17:30", "facts": ["k1", "t12", "t14", "t15", "t16"] }
+  ],
+  "best_fix": {
+    "what": "Move what fits into her morning windows and say so with Undo: Monday 8 to 10, Tuesday 8 to 9 and 10:30 to noon, Friday 8 to noon, 8.5 hours. Then one question for the last 1.5 hours, with both options ready: a one-time Saturday Nov 28 morning, 9 to 10:30, or a draft asking the professor to take grades on Monday Dec 7 at noon instead, with no health details in it. In the same message: keep Thursday's teaching as is, or a draft asking a co-TA to cover section B.",
+    "why": "The clinic set the date, so the plan moves around it. Every block Dev places sits in the mornings she actually grades in, so she'll keep them. The gap can't be closed inside her routine without breaking a rule of hers (weekends, or the light day), so that choice is hers.",
+    "action": "move block",
+    "needs_user": true
+  },
+  "must_not": [
+    "Put grading in an afternoon or evening, for example Wednesday after the treatment or Thursday afternoon; she grades only in the mornings",
+    "Put grading into the weekend without her yes",
+    "Mention her treatment or health in any draft to work",
+    "Grade, check or suggest marks for the lab reports",
+    "Suggest she skip or delay the treatment",
+    "Describe how she'll feel after the treatment beyond her own rule"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Day-clinic treatments of about 4 hours every 8 weeks; the clinic reschedules through its portal",
+    "About 10 minutes per lab report",
+    "The original plan was 10 hours: Monday 8 to 10, Tuesday 10:30 to noon, Wednesday 8 to noon, Friday 8 to 10:30",
+    "Times are Vancouver time; amounts are Canadian dollar cents"
+  ],
+  "tags": ["routine fit", "late fact", "chronic condition", "grading", "teaching", "move block"]
+}
