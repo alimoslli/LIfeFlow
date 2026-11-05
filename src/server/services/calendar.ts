@@ -334,6 +334,15 @@ export async function getAgenda(
 }
 
 /** Pairs of time-blocking items that overlap. */
+/** Courses whose class meetings are on the calendar (events of kind "class" linked to the course). */
+export async function coursesOnCalendar(scope: UserScope) {
+  const rows = await scope.tx
+    .selectDistinct({ id: calendarEvents.courseId })
+    .from(calendarEvents)
+    .where(and(eq(calendarEvents.userId, scope.userId), eq(calendarEvents.kind, "class"), isNotNull(calendarEvents.courseId)));
+  return new Set(rows.map((r) => r.id).filter((id): id is string => !!id));
+}
+
 export function findConflicts(items: AgendaItem[]) {
   const timed = items.filter((i) => i.blocksTime && i.endsAt).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   const conflicts: { a: AgendaItem; b: AgendaItem }[] = [];
@@ -347,7 +356,15 @@ export function findConflicts(items: AgendaItem[]) {
 
 /** Free gaps (minutes >= minMinutes) on a local day between dayStart and dayEnd (HH:mm). */
 /** Open blocks on a day between busy items. With `notBefore` (now), nothing earlier is offered; it starts on the next quarter hour. */
-export function freeSlots(items: AgendaItem[], date: string, tz: string, dayStart = "08:00", dayEnd = "22:00", minMinutes = 30, notBefore?: Date) {
+export function freeSlots(
+  items: Pick<AgendaItem, "blocksTime" | "startsAt" | "endsAt">[],
+  date: string,
+  tz: string,
+  dayStart = "08:00",
+  dayEnd = "22:00",
+  minMinutes = 30,
+  notBefore?: Date,
+) {
   const quarter = 15 * 60_000;
   const start = Math.max(localToInstant(date, dayStart, tz).getTime(), notBefore ? Math.ceil(notBefore.getTime() / quarter) * quarter : 0);
   const end = localToInstant(date, dayEnd, tz).getTime();

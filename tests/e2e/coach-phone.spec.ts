@@ -54,7 +54,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
     await goal.getByRole("button", { name: "Helpful", exact: true }).click();
     await expect(goal.getByRole("button", { name: "Helpful", exact: true })).toHaveAttribute("aria-pressed", "true");
 
-    const late = card(page, "to-dos slipped");
+    const late = card(page, "to-dos past due");
     await late.getByRole("button", { name: "More options" }).click();
     await late.getByRole("button", { name: "Don't suggest this again" }).click();
     await expect(late.getByRole("button", { name: "More options" })).toHaveCount(0);

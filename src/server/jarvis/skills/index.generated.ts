@@ -465,7 +465,7 @@ export const SKILLS: SkillFile[] = [
       "create_habit",
       "check_habit"
     ],
-    "body": "## Steps\n1. Show streaks (list_habits).\n2. For a new habit, make it small and specific; create it when asked.\n3. When one slips, suggest a smaller version instead of giving up.\n\n## Quality rules\n- Encouraging, never guilt-tripping.\n\n## Example\nUser: How are my habits going?\nAssistant: No-spend weekend: 3 in a row. Study 25 min/day slipped 3 days; try 10 minutes after class?",
+    "body": "## Steps\n1. Show streaks (list_habits).\n2. For a new habit, make it small and specific; create it when asked.\n3. When one is off track, say so plainly with the numbers (done 2 of the last 5 days) and offer one way back: a smaller version, or an open time on their calendar when you have one (never a made-up one).\n\n## Quality rules\n- Encouraging, never guilt-tripping: no \"slipping\", \"you missed\" or \"you failed\".\n\n## Example\nUser: How are my habits going?\nAssistant: No-spend weekend: 3 in a row. Study 25 min/day: 2 of the last 5 days, so it's off track this week. Try 10 minutes after class?",
     "evals": [
       {
         "prompt": "How are my habits going?",
@@ -1610,7 +1610,7 @@ export const SKILLS: SkillFile[] = [
   {
     "name": "weekly-review",
     "title": "Weekly review",
-    "description": "Recaps the week: wins, what slipped, money vs budget, and one change for next week.",
+    "description": "Recaps the week: wins, what is still open, money vs budget, and one change for next week.",
     "triggers": [
       "weekly review",
       "week review",
@@ -1631,7 +1631,7 @@ export const SKILLS: SkillFile[] = [
       "budget_status",
       "list_goals"
     ],
-    "body": "## Steps\n1. Get last 7 days of tasks (done and slipped), spending_summary for the week and budget_status.\n2. Name 1-3 wins with numbers.\n3. Name what slipped and why it likely slipped (overbooked day, no time block).\n4. Show spending vs budget for the top 2 categories.\n5. Suggest one specific change for next week and offer to schedule it.\n6. Look ahead with life_load: name the heaviest day and one thing to start on a lighter day before it.\n\n## Quality rules\n- Real numbers only.\n- One change, not a list of ten.\n\n## Example\nUser: Review my week\nAssistant: Wins: 9 of 12 to-dos done, $40 under on groceries. Slipped: the essay outline (Thursday was booked solid). Next week: block 2 hours Tuesday for the essay?",
+    "body": "## Steps\n1. Get last 7 days of tasks (done and still open), spending_summary for the week and budget_status.\n2. Name 1-3 wins with numbers.\n3. Name what is still open and why it likely didn't happen (overbooked day, no time block).\n4. Show spending vs budget for the top 2 categories.\n5. Suggest one specific change for next week and offer to schedule it.\n6. Look ahead with life_load: name the heaviest day and one thing to start on a lighter day before it.\n\n## Quality rules\n- Real numbers only.\n- One change, not a list of ten.\n- No guilt words (\"slipped\", \"you missed\", \"you failed\").\n\n## Example\nUser: Review my week\nAssistant: Wins: 9 of 12 to-dos done, $40 under on groceries. Still open: the essay outline (Thursday was booked solid). Next week: block 2 hours Tuesday for the essay?",
     "evals": [
       {
         "prompt": "Review my week",

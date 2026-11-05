@@ -9,6 +9,13 @@ export const UNNAMED_ASSISTANT = "your assistant";
 /** The name at the start of a sentence or as a heading: "Your assistant" until they choose one. */
 export const nameAtStart = (name: string) => (name === UNNAMED_ASSISTANT ? "Your assistant" : name);
 
+/** The empty chat's line under "What can I take off your plate?": only what this account has (services/integrations `whatAssistantKnows`). */
+export function knowsLine(areas: string[] | undefined) {
+  if (!areas?.length) return "Tell me about your week and I'll help you plan it.";
+  const list = areas.length < 2 ? areas[0] : `${areas.slice(0, -1).join(", ")} and ${areas[areas.length - 1]}`;
+  return `I know your ${list}.`;
+}
+
 /** A short noun label (the tab, a list row): "Assistant" until they choose a name. */
 export const assistantLabel = (name: string) => (name === UNNAMED_ASSISTANT ? "Assistant" : name);
 

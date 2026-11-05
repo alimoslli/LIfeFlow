@@ -44,7 +44,7 @@ export function CourseDialog({ action, course, trigger }: { action: Action; cour
             <Field label="Instructor email" htmlFor="c-em">
               <Input id="c-em" name="instructorEmail" type="email" defaultValue={course?.instructorEmail ?? ""} />
             </Field>
-            <Field label="Meets" htmlFor="c-meet" hint="e.g. Mon/Wed 10:00–11:15">
+            <Field label="Meets" htmlFor="c-meet" hint="e.g. Mon/Wed 10:00–11:15 AM">
               <Input id="c-meet" name="meetingInfo" defaultValue={course?.meetingInfo ?? ""} />
             </Field>
             <Field label="Location" htmlFor="c-loc">

@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
 import { addDaysStr, localTimeOf, todayIn } from "@/lib/dates";
-import { composeMessage, type JarvisTone } from "@/lib/jarvis-voice";
+import { composeMessage, KIND_LABELS, pushText, type JarvisTone } from "@/lib/jarvis-voice";
 import { assistantProfile } from "@/lib/assistant";
 import { jarvisMessages, notificationLog, type JarvisSettings, type UserPreferences } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
@@ -199,6 +199,9 @@ export async function runDueSlot(scope: UserScope, tz: string, prefs: UserPrefer
 
 // ------------------------------------------------------------------ reading
 
+/** Kinds that are still sent. Messages of a retired kind (e.g. the old "log spending" reminder) are never shown or pushed. */
+const currentKind = () => inArray(jarvisMessages.kind, Object.keys(KIND_LABELS));
+
 /** The one message that matters most right now (Today's Jarvis card). */
 export async function topMessage(scope: UserScope, now = new Date()) {
   const rows = await scope.tx
@@ -207,6 +210,7 @@ export async function topMessage(scope: UserScope, now = new Date()) {
     .where(
       and(
         eq(jarvisMessages.userId, scope.userId),
+        currentKind(),
         inArray(jarvisMessages.status, ["new", "snoozed"]),
         gte(jarvisMessages.createdAt, new Date(now.getTime() - 3 * 86_400_000)),
       ),
@@ -222,13 +226,23 @@ export async function unreadCount(scope: UserScope, now = new Date()) {
     .select({ n: sql<number>`count(*)::int` })
     .from(jarvisMessages)
     .where(
-      and(eq(jarvisMessages.userId, scope.userId), eq(jarvisMessages.status, "new"), gte(jarvisMessages.createdAt, new Date(now.getTime() - 3 * 86_400_000))),
+      and(
+        eq(jarvisMessages.userId, scope.userId),
+        currentKind(),
+        eq(jarvisMessages.status, "new"),
+        gte(jarvisMessages.createdAt, new Date(now.getTime() - 3 * 86_400_000)),
+      ),
     );
   return r?.n ?? 0;
 }
 
 export async function listMessages(scope: UserScope, limit = 100) {
-  return scope.tx.select().from(jarvisMessages).where(eq(jarvisMessages.userId, scope.userId)).orderBy(desc(jarvisMessages.createdAt)).limit(limit);
+  return scope.tx
+    .select()
+    .from(jarvisMessages)
+    .where(and(eq(jarvisMessages.userId, scope.userId), currentKind()))
+    .orderBy(desc(jarvisMessages.createdAt))
+    .limit(limit);
 }
 
 export async function getMessage(scope: UserScope, id: string) {
@@ -243,7 +257,11 @@ export async function getMessage(scope: UserScope, id: string) {
 
 export type PushFn = (key: string, msg: { title: string; body: string; url: string; tag?: string }) => Promise<boolean>;
 
-/** Pushes only urgent or important messages: never during quiet hours, never twice, at most `pushLimit` a day. */
+/**
+ * Pushes the reviews (morning brief, evening wrap-up, weekly and monthly) and urgent or important messages
+ * (priority 75+): never during quiet hours, never twice, at most `pushLimit` in 24 hours. Each push body is the
+ * one line of what was noticed and why plus the next step (`pushText`), not just the headline.
+ */
 export async function pushImportant(scope: UserScope, tz: string, prefs: UserPreferences | undefined, push: PushFn, now = new Date()) {
   const s = jarvisSettings(prefs);
   if (inQuietHours(localTimeOf(now, tz), s.quietStart, s.quietEnd)) return 0;
@@ -260,6 +278,7 @@ export async function pushImportant(scope: UserScope, tz: string, prefs: UserPre
     .where(
       and(
         eq(jarvisMessages.userId, scope.userId),
+        currentKind(),
         eq(jarvisMessages.status, "new"),
         sql`${jarvisMessages.pushedAt} is null`,
         gte(jarvisMessages.createdAt, new Date(now.getTime() - 12 * 3600_000)),
@@ -270,7 +289,8 @@ export async function pushImportant(scope: UserScope, tz: string, prefs: UserPre
   for (const m of due) {
     if (left <= 0) break;
     if (!m.urgent && m.priority < 75 && !REVIEW_KINDS.has(m.kind)) continue;
-    if (await push(`jarvis:${m.dedupeKey}`, { title: m.title, body: m.body, url: `/?jarvis=${m.id}`, tag: `jarvis-${m.kind}` })) {
+    const body = pushText(m.kind, m.facts)?.body || m.body;
+    if (await push(`jarvis:${m.dedupeKey}`, { title: m.title, body, url: `/?jarvis=${m.id}`, tag: `jarvis-${m.kind}` })) {
       await scope.tx.update(jarvisMessages).set({ pushedAt: now }).where(eq(jarvisMessages.id, m.id));
       left--;
       sent++;

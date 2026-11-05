@@ -57,7 +57,7 @@ const steps = (name: string): Step[] => [
     target: "settings",
     eyebrow: "Make it yours",
     title: "Settings",
-    body: "Name your assistant and choose its tone, pick the theme and accent, set quiet hours, and see what's connected. You can replay this tour from here.",
+    body: "Name your assistant and choose its tone, pick light or dark, set quiet hours, and see what's connected. You can replay this tour from here.",
   },
   {
     target: null,

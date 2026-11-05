@@ -7,6 +7,8 @@ import type { learnedStats } from "@/server/services/proactive/engine";
 import { resetLearningAction, setJarvisLearningAction, unmuteKindAction } from "../actions";
 
 const label = (k: string) => KIND_LABELS[k] ?? k.replace(/_/g, " ");
+/** Kinds that are no longer sent (e.g. the removed "log spending" reminder) aren't listed or offered back. */
+const current = (k: string) => k in KIND_LABELS;
 
 /** What Jarvis learned from how the user responds, and the switches to change it. */
 export function LearnedCard({
@@ -20,7 +22,8 @@ export function LearnedCard({
   muted: string[];
   stats: Awaited<ReturnType<typeof learnedStats>>;
 }) {
-  const kinds = stats.kinds.filter((k) => k.shown > 0).sort((a, b) => b.shown - a.shown);
+  const shownMuted = muted.filter(current);
+  const kinds = stats.kinds.filter((k) => k.shown > 0 && current(k.kind)).sort((a, b) => b.shown - a.shown);
   return (
     <Card>
       <CardHeader title={`What ${name} learned from you`} subtitle="From your Do it, Not now and ratings." />
@@ -63,11 +66,11 @@ export function LearnedCard({
           ))}
         </ul>
       )}
-      {muted.length > 0 && (
+      {shownMuted.length > 0 && (
         <div className="border-t border-border px-5 py-3">
           <p className="text-xs font-medium tracking-wide text-muted uppercase">You said don&apos;t suggest again</p>
           <ul className="mt-1">
-            {muted.map((k) => (
+            {shownMuted.map((k) => (
               <li key={k} className="flex min-h-11 items-center justify-between gap-3">
                 <span className="text-[0.9375rem]">{label(k)}</span>
                 <ActionButton action={unmuteKindAction.bind(null, k)} className="rounded-full bg-surface-2 px-3 py-1.5 text-sm font-medium">

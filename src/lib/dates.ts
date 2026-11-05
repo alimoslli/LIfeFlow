@@ -69,6 +69,12 @@ export function formatIn(instant: Date | string, tz: string, pattern: string): s
   return format(new TZDate(d, tz), pattern);
 }
 
+/** "Good morning" and so on for the hour in the user's time zone (never the device's or server's clock). */
+export function greetingIn(tz: string, now: Date = new Date()): string {
+  const hour = Number(formatIn(now, tz, "H"));
+  return hour < 5 ? "Up late" : hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+}
+
 /** HH:mm local time of an instant. */
 export function localTimeOf(instant: Date, tz: string): string {
   return formatIn(instant, tz, "HH:mm");

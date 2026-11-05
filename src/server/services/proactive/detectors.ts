@@ -21,7 +21,7 @@ import { cashForecast, upcomingBills } from "../finance/forecast";
 import { goalsWithPlans } from "../finance/goals";
 import { budgetStatus } from "../finance/planning";
 import { planPaycheck } from "../finance/coach";
-import { queryTransactions } from "../finance/transactions";
+import { firstSpendDates, queryTransactions } from "../finance/transactions";
 import { merchantKey } from "../finance/recurring-detect";
 import { listAssignments } from "../school";
 import { listShifts } from "../work";
@@ -74,7 +74,14 @@ const emailBrief: Detector = async ({ scope, tz, today }) => {
   ];
 };
 
-/** A category's spending this week vs. the same days of the previous 8 weeks. */
+/** Fewer past weeks than this in a category and there's no "usual" to compare with yet. */
+const PACE_MIN_WEEKS = 3;
+
+/**
+ * A category's spending this week vs. the same days of the previous weeks (up to 8), averaged over the weeks
+ * there is data for: a week counts only if the category's first charge is on or before the end of that week's
+ * same-days window, so a new category or a new user isn't compared with empty weeks. Quiet with fewer than PACE_MIN_WEEKS.
+ */
 const spendingPace: Detector = async ({ scope, today }) => {
   const wk = weekStart(today);
   const span = daysBetween(wk, today);
@@ -91,8 +98,15 @@ const spendingPace: Detector = async ({ scope, today }) => {
     }
     byCat.set(t.categoryId, c);
   }
+  const first = await firstSpendDates(scope, [...byCat.keys()]);
+  const weeksWithData = (id: string) => {
+    const since = first.get(id) ?? today;
+    return [0, 1, 2, 3, 4, 5, 6, 7].filter((w) => addDaysStr(wk, -7 * (w + 1) + span) >= since).length;
+  };
   const worst = [...byCat.values()]
-    .map((c) => ({ ...c, usual: Math.round(c.past.reduce((a, b) => a + b, 0) / 8) }))
+    .map((c) => ({ ...c, weeks: weeksWithData(c.id) }))
+    .filter((c) => c.weeks >= PACE_MIN_WEEKS)
+    .map((c) => ({ ...c, usual: Math.round(c.past.reduce((a, b) => a + b, 0) / c.weeks) }))
     .filter((c) => c.usual > 0 && c.now - c.usual >= 2000 && c.now >= c.usual * 1.3)
     .sort((a, b) => b.now - b.usual - (a.now - a.usual))[0];
   if (!worst) return [];
@@ -274,7 +288,7 @@ const taskStreak: Detector = async ({ scope, tz, today }) => {
   const rows = await scope.tx
     .select({ dueAt: tasks.dueAt, status: tasks.status, completedAt: tasks.completedAt })
     .from(tasks)
-    .where(and(eq(tasks.userId, scope.userId), isNotNull(tasks.dueAt), gte(tasks.dueAt, new Date(`${since}T00:00:00Z`))));
+    .where(and(eq(tasks.userId, scope.userId), isNotNull(tasks.dueAt), gte(tasks.dueAt, startOfLocalDay(since, tz))));
   const byDay = new Map<string, { due: number; done: number }>();
   for (const t of rows) {
     const d = localDateOf(t.dueAt!, tz);
@@ -296,26 +310,6 @@ const taskStreak: Detector = async ({ scope, tz, today }) => {
   let best = 0;
   for (let i = current; i < days.length; i++) best = Math.max(best, run(i));
   return [{ kind: "task_streak", topic: "habits", dedupeKey: `task_streak:${today}`, facts: { days: current, best: current > best }, priority: 50 }];
-};
-
-/** Manual-only users who stopped logging spending for 4+ days. */
-const logReminder: Detector = async ({ scope, today }) => {
-  const accounts = await listAccounts(scope);
-  if (!accounts.length || accounts.some((a) => a.source === "plaid")) return [];
-  const [last] = await queryTransactions(scope, { kinds: ["expense"], limit: 1 });
-  if (!last) return [];
-  const days = daysBetween(last.date, today);
-  if (days < 4) return [];
-  return [
-    {
-      kind: "log_reminder",
-      topic: "money",
-      dedupeKey: `log_reminder:${last.date}`,
-      facts: { days },
-      action: { type: "open", label: "Log spending", href: "/money?add=spending" },
-      priority: 45,
-    },
-  ];
 };
 
 /** Early in the month: saved more last month than the month before? */
@@ -560,7 +554,6 @@ export const DETECTORS = {
   billsDue,
   paydaySplit,
   taskStreak,
-  logReminder,
   savedMore,
   overdueTasks,
   unusualSpend,
@@ -582,7 +575,7 @@ export type DetectorName = keyof typeof DETECTORS;
 /** Which detectors run when. Events run right after the change that triggered them. */
 export const RUNS: Record<string, DetectorName[]> = {
   morning: ["emailBrief", "morningBrief", "monthlyReview", "savingsCheck", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
-  midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks", "subscriptionWatch", "moneyFinds", "reviewTransactions"],
+  midday: ["spendingPace", "unusualSpend", "billsDue", "overdueTasks", "subscriptionWatch", "moneyFinds", "reviewTransactions"],
   // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
   evening: [
     "goalCheckin",

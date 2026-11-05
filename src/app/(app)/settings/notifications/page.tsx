@@ -1,12 +1,14 @@
-import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Smartphone, Trash2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Card } from "@/components/ui/surface";
+import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { formatIn } from "@/lib/dates";
+import { pushSummary } from "@/lib/jarvis-voice";
 import { withCurrentUser } from "@/server/auth/current-user";
+import { jarvisSettings } from "@/server/services/proactive/engine";
 import { listSubscriptions, notificationPrefs, pushConfig } from "@/server/services/push";
 import { removeDeviceAction, saveNotificationPrefsAction } from "../actions";
 import { ThisDevice } from "./this-device";
@@ -15,10 +17,11 @@ import { SettingsHeader } from "../settings-header";
 export const metadata: Metadata = { title: "Notifications" };
 
 export default async function NotificationSettings() {
-  const { prefs, devices, tz } = await withCurrentUser(async (s, u) => ({
+  const { prefs, devices, tz, pushes } = await withCurrentUser(async (s, u) => ({
     prefs: notificationPrefs(u.preferences),
     devices: await listSubscriptions(s),
     tz: u.timezone,
+    pushes: pushSummary(nameAtStart(assistantProfile(u.preferences).name), jarvisSettings(u.preferences), notificationPrefs(u.preferences).reminders),
   }));
   const available = !!pushConfig();
   return (
@@ -40,9 +43,9 @@ export default async function NotificationSettings() {
             <input type="checkbox" name="reminders" defaultChecked={prefs.reminders} className="lf-switch" />
           </label>
           <p className="py-3 text-sm text-text-2">
-            <AssistantName start /> only notifies you about urgent things.{" "}
+            {pushes}{" "}
             <Link href="/settings/jarvis" className="font-medium text-accent">
-              Change how often
+              Change the limit or quiet hours
             </Link>
           </p>
           <SubmitButton className="mt-2 self-start">Save</SubmitButton>
