@@ -3,7 +3,7 @@
 const { chromium } = require("playwright");
 const fs = require("fs");
 const BASE = "http://localhost:3000";
-const SLOW = 0.2;
+const SLOW = 0.12;
 const DIR = __dirname + "/frames"; // scratch output, not committed
 const SEED = 1057; // previewDay seed: study block, charged twice, shift clash
 const TARGET = new Date("2026-11-04T13:06:00-05:00").getTime();
@@ -68,10 +68,10 @@ const INIT = `(() => {
   const loop = (async () => {
     while (rec) {
       const a = performance.now();
-      const r = await cdp.send("Page.captureScreenshot", { format: "jpeg", quality: 90 });
+      const buf = await p.screenshot({ type: "jpeg", quality: 90, scale: "device" });
       const bt = performance.now();
       const f = String(log.frames.length).padStart(5, "0") + ".jpg";
-      fs.writeFileSync(`${DIR}/${f}`, Buffer.from(r.data, "base64"));
+      fs.writeFileSync(`${DIR}/${f}`, buf);
       log.frames.push([f, (((a + bt) / 2 - t0) / 1000) * SLOW]);
       const gap = (1 / 60 / SLOW) * 1000 - (performance.now() - a);
       if (gap > 0) await sleep(gap);

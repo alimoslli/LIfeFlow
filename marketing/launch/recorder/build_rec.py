@@ -1,10 +1,12 @@
 """Slow-motion capture -> 30 fps clip (1080x2338) with a finger mark on every tap.
-Usage: python3 build_rec.py <dir with log.json + frames/> out.mp4"""
+Usage: python3 build_rec.py <dir> out.mp4 [log.json] [frames dir]"""
 import json, subprocess, sys, bisect
 from PIL import Image, ImageDraw, ImageFilter
 
 D, OUT = sys.argv[1], sys.argv[2]
-L = json.load(open(f"{D}/log.json"))
+LOG = sys.argv[3] if len(sys.argv) > 3 else "log.json"
+FR = sys.argv[4] if len(sys.argv) > 4 else "frames"
+L = json.load(open(f"{D}/{LOG}"))
 fr = sorted(L["frames"], key=lambda f: f[1])
 ts = [f[1] for f in fr]
 W, H, FPS, K = 1080, 2338, 60, 1080 / 390  # CSS px -> output px
@@ -43,7 +45,7 @@ for i in range(n):
     j = max(0, bisect.bisect_right(ts, t) - 1)
     if j + 1 < len(ts) and abs(ts[j + 1] - t) < abs(ts[j] - t):
         j += 1
-    im = Image.open(f"{D}/frames/{fr[j][0]}").convert("RGB").resize((W, H), Image.LANCZOS).convert("RGBA")
+    im = Image.open(f"{D}/{FR}/{fr[j][0]}").convert("RGB").resize((W, H), Image.LANCZOS).convert("RGBA")
     for tp in L["taps"]:
         e = env(t - tp["t"])
         if e:

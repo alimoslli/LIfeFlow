@@ -1,0 +1,294 @@
+{
+ "bpm": 100,
+ "duration": 34.1,
+ "vo": [],
+ "scenes": [
+  {
+   "kind": "phone",
+   "start": 0.0,
+   "end": 3.0,
+   "src": [
+    {
+     "rec": "try",
+     "from": 14.788,
+     "dur": 3.0,
+     "speed": 0.683
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "TEST-DRIVE YOUR",
+     "*ASSISTANT.*"
+    ],
+    "size": 104,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 3.0,
+   "end": 6.2,
+   "src": [
+    {
+     "rec": "try",
+     "from": 1.822,
+     "dur": 3.2,
+     "speed": 1.354
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "TELL IT ABOUT",
+     "*YOUR CLASSES.*"
+    ],
+    "size": 100,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 6.2,
+   "end": 8.2,
+   "src": [
+    {
+     "rec": "try",
+     "from": 6.056,
+     "dur": 2.0,
+     "speed": 0.931
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "GIVE IT",
+     "*A NAME.*"
+    ],
+    "size": 112,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 8.2,
+   "end": 14.5,
+   "src": [
+    {
+     "rec": "try",
+     "from": 7.917,
+     "dur": 6.3,
+     "speed": 1.095
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "IT READS",
+     "*YOUR WEEK.*"
+    ],
+    "size": 110,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 14.5,
+   "end": 17.1,
+   "src": [
+    {
+     "rec": "try",
+     "from": 14.818,
+     "dur": 2.6,
+     "speed": 0.758
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "IT TELLS YOU",
+     "*WHAT IT WOULD DO.*"
+    ],
+    "size": 88,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 17.1,
+   "end": 20.1,
+   "src": [
+    {
+     "rec": "try",
+     "from": 16.788,
+     "dur": 3.0,
+     "speed": 0.643
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "try_block",
+     "at": 0.85,
+     "dur": 2.15,
+     "y": 1180,
+     "w": 900
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "ONE TAP",
+     "*TO PLAN IT.*"
+    ],
+    "size": 108,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 20.1,
+   "end": 23.1,
+   "src": [
+    {
+     "rec": "try",
+     "from": 18.716,
+     "dur": 3.0,
+     "speed": 1.013
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "try_show",
+     "at": 0.85,
+     "dur": 2.15,
+     "y": 1180,
+     "w": 900
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "IT CATCHES",
+     "*DOUBLE CHARGES.*"
+    ],
+    "size": 96,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 23.1,
+   "end": 26.1,
+   "src": [
+    {
+     "rec": "try",
+     "from": 21.754,
+     "dur": 3.0,
+     "speed": 1.011
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "try_quiz",
+     "at": 0.85,
+     "dur": 2.15,
+     "y": 1180,
+     "w": 900
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "IT QUIZZES YOU",
+     "*BEFORE THE TEST.*"
+    ],
+    "size": 88,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 26.1,
+   "end": 30.1,
+   "src": [
+    {
+     "rec": "try",
+     "from": 24.788,
+     "dur": 4.0,
+     "speed": 2.473
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "SHOW ME",
+     "*ANOTHER DAY.*"
+    ],
+    "size": 104,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "gloss",
+   "outro": true,
+   "start": 30.1,
+   "end": 34.1,
+   "clip": "m/molecule.mp4",
+   "speed": 0.7,
+   "push": 0.03,
+   "fade_in": 0.3,
+   "haze": [
+    {
+     "cy": 1560,
+     "h": 900,
+     "s": 0.88
+    }
+   ],
+   "bold": {
+    "lines": [
+     "*TRY IT YOURSELF.*",
+     "TAP THE LINK",
+     "IN BIO."
+    ],
+    "size": 90,
+    "top": 1225,
+    "at": 0.15,
+    "out": false
+   },
+   "wordmark": {
+    "at": 1.2,
+    "y": 1600,
+    "sub": "lifeflowweb.com"
+   },
+   "note": {
+    "text": "Real app. The numbers shown are examples.",
+    "at": 1.3,
+    "y": 1850
+   }
+  }
+ ]
+}
