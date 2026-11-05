@@ -74,3 +74,20 @@ describe("newer categories", () => {
     expect(k("ATM WITHDRAWAL 1ST ST")).toBe("Cash & ATM");
   });
 });
+
+describe("travel, lifestyle, activities, sports and health", () => {
+  it("sorts them into the right place", () => {
+    const k = (d: string) => keywordCategory({ description: d });
+    expect(k("DELTA AIR 0062341")).toBe("Flights");
+    expect(k("AIRBNB * HMXYZ")).toBe("Hotels & Lodging");
+    expect(k("MARRIOTT DOWNTOWN")).toBe("Hotels & Lodging");
+    expect(k("TESLA SUPERCHARGER")).toBe("EV Charging");
+    expect(k("DICKS SPORTING GOODS")).toBe("Sports");
+    expect(k("TOPGOLF ATLANTA")).toBe("Activities");
+    expect(k("ZOO ATLANTA TICKETS")).toBe("Activities");
+    expect(k("SERENITY DAY SPA")).toBe("Lifestyle");
+    expect(k("BRIGHT SMILES DENTIST")).toBe("Dental & Vision");
+    expect(k("BETTERHELP INC")).toBe("Mental Health");
+    expect(k("PUBLIX SUPER MARKETS")).toBe("Groceries"); // not "pub"
+  });
+});

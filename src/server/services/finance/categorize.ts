@@ -37,6 +37,7 @@ const KEYWORDS: [RegExp, string][] = [
   ],
   [/\b(uber|lyft)\b/, "Rideshare"],
   [/\b(verizon|t[- ]?mobile|at ?& ?t|mint mobile|visible|cricket|xfinity mobile|boost mobile|metro by)\b/, "Phone"],
+  [/\b(supercharger|chargepoint|evgo|electrify america|ev charging)\b/, "EV Charging"],
   [/\b(jiffy lube|autozone|o'?reilly auto|advance auto|pep boys|valvoline|midas|discount tire|car wash|dmv)\b/, "Car Maintenance"],
   [/\b(shell|chevron|exxon|mobil|bp|sunoco|valero|marathon|speedway|wawa|quiktrip|racetrac|gas station|fuel)\b/, "Gas"],
   [/\b(mta|bart|metro|transit|septa|cta|marta|amtrak|caltrain|clipper|ventra)\b/, "Public Transit"],
@@ -46,7 +47,9 @@ const KEYWORDS: [RegExp, string][] = [
   [/\b(steam|playstation|xbox|nintendo|epic games)\b/, "Games"],
   [/\b(ticketmaster|stubhub|eventbrite|amc|regal|cinema)\b/, "Events"],
   [/\b(cvs|walgreens|rite aid|pharmacy)\b/, "Pharmacy"],
-  [/\b(urgent care|clinic|hospital|medical|dentist|doctor|physician|optometrist|labcorp|quest diagnostics|copay)\b/, "Medical"],
+  [/\b(dentist|orthodont\w*|optometrist|eye care|lenscrafters|warby parker|vision center)\b/, "Dental & Vision"],
+  [/\b(therapy|therapist|counseling|psychiatr\w*|betterhelp|talkspace|headspace therapy)\b/, "Mental Health"],
+  [/\b(urgent care|clinic|hospital|medical|doctor|physician|labcorp|quest diagnostics|copay)\b/, "Medical"],
   [/\b(sephora|ulta|barber|salon|haircut|nail spa|great clips|supercuts|sally beauty)\b/, "Personal Care"],
   [/\b(gofundme|red cross|donation|charity|church|unicef|st jude)\b/, "Gifts & Donations"],
   [/\b(planet fitness|equinox|la fitness|gym|peloton|crunch fitness|ymca)\b/, "Fitness"],
@@ -56,7 +59,13 @@ const KEYWORDS: [RegExp, string][] = [
   [/\b(best buy|apple store|newegg)\b/, "Electronics"],
   [/\b(amazon|amzn|etsy|ebay|temu|aliexpress|shopify|wish\.com|walmart\.com|target\.com)\b/, "Online Shopping"],
   [/\b(petco|petsmart|chewy|veterinar\w*|vet clinic|banfield)\b/, "Pets"],
-  [/\b(guitar center|michaels|hobby lobby|dick'?s sporting|rei|golf)\b/, "Hobbies & Sports"],
+  [/\b(dick'?s sporting|academy sports|decathlon|rei|golf|ski|climbing|rec league|sports authority)\b/, "Sports"],
+  [
+    /\b(topgolf|bowling|museum|zoo|aquarium|escape room|arcade|theme park|six flags|dave (&|and) buster'?s|trampoline|laser tag|mini golf|tour|workshop|class pass|classpass)\b/,
+    "Activities",
+  ],
+  [/\b(guitar center|michaels|hobby lobby)\b/, "Hobbies & Sports"],
+  [/\b(spa|massage|wellness|yoga|pilates|meditation|calm|tattoo|florist|flowers|dating|hinge|tinder|bumble)\b/, "Lifestyle"],
   [/\b(atm withdrawal|cash withdrawal|atm w\/d)\b/, "Cash & ATM"],
   [/\b(target|walmart|ikea|home depot|lowe'?s|bed bath|dollar general|dollar tree)\b/, "Household"],
   [/\b(h ?& ?m|zara|uniqlo|nike|adidas|old navy|gap|nordstrom|shein)\b/, "Clothing"],
@@ -65,10 +74,9 @@ const KEYWORDS: [RegExp, string][] = [
     /\b(electric|power|energy|con ?ed|pg ?& ?e|duke energy|water|sewer|gas company|utility|utilities|dominion|xcel|entergy|national grid|pseg|edison|fpl)\b/,
     "Utilities",
   ],
-  [
-    /\b(airbnb|hotel|marriott|hilton|hyatt|expedia|booking\.com|delta air|united airlines|american airlines|southwest|jetblue|spirit airlines|frontier airlines)\b/,
-    "Travel",
-  ],
+  [/\b(delta air|united airlines|american airlines|southwest|jetblue|spirit airlines|frontier airlines|alaska air|allegiant)\b/, "Flights"],
+  [/\b(airbnb|vrbo|hotel|motel|marriott|hilton|hyatt|holiday inn|best western|hostel|resort)\b/, "Hotels & Lodging"],
+  [/\b(expedia|booking\.com|kayak|priceline|tsa precheck|amtrak tours)\b/, "Travel"],
   [/\b(tuition|bursar|registrar)\b/, "Tuition"],
   [/\b(chegg|textbook|bookstore|pearson|mcgraw)\b/, "Books & Supplies"],
   [
@@ -111,6 +119,8 @@ const NEEDS = new Set([
   "Fees & Interest",
   "Bills & Subscriptions",
   "Car Maintenance",
+  "Dental & Vision",
+  "Mental Health",
 ]);
 export const needOrWant = (categoryName: string | null | undefined): "need" | "want" => (categoryName && NEEDS.has(categoryName) ? "need" : "want");
 

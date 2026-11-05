@@ -10,6 +10,7 @@ import { ServiceError } from "@/server/services/errors";
 import { archiveAccount, createManualAccount, updateAccountBalance, updateAccountDetails } from "@/server/services/finance/accounts";
 import { createGoal, createRecurring, setBudget, setRecurringStatus, updateGoal } from "@/server/services/finance/planning";
 import { createTransaction, importTransactionsCsv, updateTransaction } from "@/server/services/finance/transactions";
+import { tidyForUser } from "@/server/services/finance/tidy";
 
 const need = (v: number | undefined, what: string) => {
   if (v == null || Number.isNaN(v)) throw new ServiceError(`Enter a valid ${what}.`);
@@ -266,4 +267,13 @@ export async function setBankAccountUsedAction(id: string, use: boolean): Promis
   // Back on: import its transactions right away (the sync records its own errors on the connection).
   if (use && res?.ok && done.userId && done.integrationId) await syncConnection(done.userId, done.integrationId, done.tz ?? "UTC").catch(() => undefined);
   return res;
+}
+
+/** Plain vendor names and categories for every transaction that still needs them (the AI pass runs only if the user allowed AI). */
+export async function tidyTransactionsAction(): Promise<ActionState> {
+  return mutate("transaction.tidy", async (s) => {
+    const r = await tidyForUser(s);
+    if (!r.renamed && !r.categorized && !r.byAi) return "Everything already has a clear name and category.";
+    return `Tidied up: ${r.renamed} vendor name${r.renamed === 1 ? "" : "s"} simplified, ${r.categorized + r.byAi} categor${r.categorized + r.byAi === 1 ? "y" : "ies"} filled in.`;
+  });
 }
