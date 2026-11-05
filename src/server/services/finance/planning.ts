@@ -7,7 +7,8 @@ import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound } from "../errors";
 import { listCategories } from "./categories";
 import { rollupToParents, spendingByCategoryId } from "./cashflow";
-import { detectRecurring, merchantKey, nextOccurrence } from "./recurring-detect";
+import { PAID_EARLY_DAYS, nameRelation, paidOccurrences, trackedKeys, tracksSeries, type DueOccurrence } from "./bill-match";
+import { detectRecurring, merchantKey, merchantKeys, nextOccurrence, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 import { parsePatch } from "../patch";
 
@@ -220,28 +221,84 @@ export async function listRecurring(scope: UserScope, opts: { includeInactive?: 
   return opts.includeInactive ? rows : rows.filter((r) => r.status === "active");
 }
 
-/** Upcoming bills/income between two dates, projecting each active series forward. */
-export async function upcomingRecurring(scope: UserScope, from: string, to: string) {
+/**
+ * Upcoming bills/income between two dates, projecting each active series forward. A due date that a
+ * posted charge already paid (on the day or a few days before, `paidOccurrences`) is left out, so the
+ * next one is the following cycle. Worked out when read; stored due dates aren't rewritten. Pass `bank`
+ * when the caller already has it, so the detection runs once.
+ */
+export async function upcomingRecurring(scope: UserScope, from: string, to: string, bank?: BankSeries) {
   const items = await listRecurring(scope);
-  const out: { id: string; name: string; date: string; amountCents: number; kind: string }[] = [];
+  const due: { item: (typeof items)[number]; date: string }[] = [];
   for (const r of items) {
     if (!r.nextDueDate) continue;
     let d = r.nextDueDate;
     for (let guard = 0; d < from && guard < 200; guard++) d = nextOccurrence(d, r.frequency);
-    for (let guard = 0; d <= to && guard < 60; guard++, d = nextOccurrence(d, r.frequency)) {
-      out.push({ id: r.id, name: r.name, date: d, amountCents: r.amountCents, kind: r.kind });
-    }
+    for (let guard = 0; d <= to && guard < 60; guard++, d = nextOccurrence(d, r.frequency)) due.push({ item: r, date: d });
   }
-  return out.sort((a, b) => a.date.localeCompare(b.date));
+  if (!due.length) return [];
+  const charges = await queryTransactions(scope, { from: addDaysStr(from, -Math.max(...Object.values(PAID_EARLY_DAYS))), to, limit: 5000 });
+  // Bank series matched to an item add the names its charges post under and whether its amount moves.
+  // They're only needed when some charge could pay a due date, so the detection is skipped otherwise.
+  const couldPay = charges.some((t) =>
+    due.some(
+      ({ item, date }) =>
+        Math.sign(t.amountCents) === Math.sign(item.amountCents) &&
+        t.date <= date &&
+        daysBetween(t.date, date) <= PAID_EARLY_DAYS[item.frequency] &&
+        nameRelation(trackedKeys(item), merchantKeys(t)),
+    ),
+  );
+  const matched = bank ?? (couldPay ? await bankSeries(scope, from) : null);
+  const seriesOf = new Map(items.map((r) => [r.id, matched?.trackedActive.filter((c) => tracksSeries(r, c)) ?? []]));
+  const paid = paidOccurrences(
+    due.map(({ item, date }): DueOccurrence => {
+      const s = seriesOf.get(item.id) ?? [];
+      return {
+        keys: [...trackedKeys(item), ...s.map((c) => c.merchantKey)],
+        varies: s.some((c) => c.variableAmount),
+        frequency: item.frequency,
+        date,
+        amountCents: item.amountCents,
+      };
+    }),
+    charges,
+  );
+  return due
+    .filter((_, i) => !paid.has(i))
+    .map(({ item, date }): { id: string; name: string; date: string; amountCents: number; kind: string } => ({
+      id: item.id,
+      name: item.name,
+      date,
+      amountCents: item.amountCents,
+      kind: item.kind,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-/** Detection over the last 13 months, minus series the user already tracks. */
-export async function suggestRecurring(scope: UserScope, today: string) {
+/**
+ * Detection over the last 13 months, split into series the user already tracks and the rest. A tracked
+ * item matches by key, or by a name inside the other plus the same amount and schedule (`tracksSeries`),
+ * and only when money moves the same way. Paused and cancelled items still keep their series out of the
+ * suggestions, but only active ones (`trackedActive`) turn a series into a bill.
+ */
+export async function bankSeries(scope: UserScope, today: string) {
   const [txns, existing] = await series(
     () => queryTransactions(scope, { from: addDaysStr(today, -400), to: today, limit: 5000 }),
     () => listRecurring(scope, { includeInactive: true }),
   );
-  // Older tracked items may store the previous key format; their name gives the current one.
-  const known = new Set(existing.flatMap((e) => [e.merchantKey, merchantKey({ merchantName: e.name, description: e.name })]));
-  return detectRecurring(txns).filter((c) => !known.has(c.merchantKey));
+  const all = detectRecurring(txns);
+  const active = existing.filter((e) => e.status === "active");
+  const trackedBy = (items: typeof existing) => (c: RecurringCandidate) => items.some((e) => tracksSeries(e, c));
+  return {
+    tracked: all.filter(trackedBy(existing)),
+    untracked: all.filter((c) => !trackedBy(existing)(c)),
+    trackedActive: all.filter(trackedBy(active)),
+  };
+}
+export type BankSeries = Awaited<ReturnType<typeof bankSeries>>;
+
+/** Detection over the last 13 months, minus series the user already tracks. */
+export async function suggestRecurring(scope: UserScope, today: string) {
+  return (await bankSeries(scope, today)).untracked;
 }
