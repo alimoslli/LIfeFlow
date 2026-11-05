@@ -1,0 +1,334 @@
+{
+ "bpm": 100,
+ "duration": 38.2,
+ "vo": [],
+ "scenes": [
+  {
+   "kind": "phone",
+   "start": 0.0,
+   "end": 3.2,
+   "src": [
+    {
+     "rec": "act_today",
+     "from": 0.2,
+     "dur": 3.2,
+     "speed": 1.379
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "REAL WEEK.",
+     "*REAL MESS.*"
+    ],
+    "size": 120,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 3.2,
+   "end": 8.2,
+   "src": [
+    {
+     "rec": "act_tour",
+     "from": 0.388,
+     "dur": 5.0,
+     "speed": 1.957
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "IT SEES YOUR",
+     "*WHOLE WEEK.*"
+    ],
+    "size": 110,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 8.2,
+   "end": 10.8,
+   "src": [
+    {
+     "rec": "act_lab",
+     "from": 5.085,
+     "dur": 2.6,
+     "speed": 0.808
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "JUST TELL IT",
+     "*WHAT'S WRONG.*"
+    ],
+    "size": 104,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 10.8,
+   "end": 15.2,
+   "src": [
+    {
+     "rec": "act_lab",
+     "from": 7.185,
+     "dur": 1.8,
+     "speed": 5.324
+    },
+    {
+     "rec": "act_lab",
+     "from": 16.788,
+     "dur": 2.6,
+     "speed": 0.442
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "act_lab_reply1",
+     "at": 1.8,
+     "dur": 2.6,
+     "y": 1150,
+     "w": 920
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "IT BLOCKS",
+     "*THE TIME.*"
+    ],
+    "size": 116,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 15.2,
+   "end": 17.8,
+   "src": [
+    {
+     "rec": "act_lab",
+     "from": 18.147,
+     "dur": 2.6,
+     "speed": 1.135
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "ALREADY ON",
+     "*YOUR CALENDAR.*"
+    ],
+    "size": 104,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 17.8,
+   "end": 22.4,
+   "src": [
+    {
+     "rec": "act_swap",
+     "from": 5.482,
+     "dur": 2.0,
+     "speed": 3.209
+    },
+    {
+     "rec": "act_swap",
+     "from": 11.92,
+     "dur": 2.6,
+     "speed": 0.481
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "act_swap_reply1",
+     "at": 2.0,
+     "dur": 2.6,
+     "y": 1180,
+     "w": 920
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "IT WRITES",
+     "*THE SWAP TEXT.*"
+    ],
+    "size": 108,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 22.4,
+   "end": 26.8,
+   "src": [
+    {
+     "rec": "act_feed",
+     "from": 2.307,
+     "dur": 2.4,
+     "speed": 0.951
+    },
+    {
+     "rec": "act_feed",
+     "from": 4.599,
+     "dur": 2.0,
+     "speed": 0.45
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "act_feed_feedcard",
+     "at": 2.4,
+     "dur": 2.0,
+     "y": 1150,
+     "w": 920
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "IT CATCHES CLASHES",
+     "*BEFORE YOU DO.*"
+    ],
+    "size": 92,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 26.8,
+   "end": 30.2,
+   "src": [
+    {
+     "rec": "act_quiz",
+     "from": 12.027,
+     "dur": 3.4,
+     "speed": 1.704
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "act_quiz_reply1",
+     "at": 0.3,
+     "dur": 1.9,
+     "y": 1150,
+     "w": 920
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "THEN IT",
+     "*QUIZZES YOU.*"
+    ],
+    "size": 116,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 30.2,
+   "end": 34.2,
+   "src": [
+    {
+     "rec": "act_quiz",
+     "from": 17.82,
+     "dur": 1.2,
+     "speed": 1.996
+    },
+    {
+     "rec": "act_quiz",
+     "from": 20.235,
+     "dur": 2.8,
+     "speed": 0.5
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "act_quiz_reply2",
+     "at": 1.2,
+     "dur": 2.8,
+     "y": 1150,
+     "w": 920
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "AND CHECKS",
+     "*YOUR ANSWER.*"
+    ],
+    "size": 108,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "gloss",
+   "outro": true,
+   "start": 34.2,
+   "end": 38.2,
+   "clip": "m/molecule.mp4",
+   "speed": 0.7,
+   "push": 0.03,
+   "fade_in": 0.3,
+   "haze": [
+    {
+     "cy": 1560,
+     "h": 900,
+     "s": 0.88
+    }
+   ],
+   "bold": {
+    "lines": [
+     "*YOUR PERSONAL*",
+     "*ASSISTANT.*",
+     "TAP THE LINK IN BIO."
+    ],
+    "size": 86,
+    "top": 1225,
+    "at": 0.15,
+    "out": false
+   },
+   "wordmark": {
+    "at": 1.2,
+    "y": 1600,
+    "sub": "lifeflowweb.com"
+   },
+   "note": {
+    "text": "Real app and real assistant replies, on a sample account.",
+    "at": 1.3,
+    "y": 1850
+   }
+  }
+ ]
+}

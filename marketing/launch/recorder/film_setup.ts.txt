@@ -1,0 +1,28 @@
+// Local filming only (not committed): names the demo assistant and runs its morning + midday checks.
+import "dotenv/config";
+import { eq } from "drizzle-orm";
+import { closeDb, getDb } from "../../src/server/db/client";
+import { users } from "../../src/server/db/schema";
+import { withUser } from "../../src/server/db/with-user";
+import { runProactive } from "../../src/server/services/proactive/engine";
+
+async function main() {
+  const db = getDb();
+  const [u] = await db.select().from(users).where(eq(users.email, "demo@budgetflow.local"));
+  const prefs = {
+    ...(u.preferences ?? {}),
+    assistantName: "Remy",
+    assistantStyle: "friend",
+    jarvis: { ...((u.preferences as any)?.jarvis ?? {}), learning: false },
+  } as any;
+  await db.update(users).set({ preferences: prefs }).where(eq(users.id, u.id));
+  for (const trigger of ["morning", "midday"] as const) {
+    const m = await withUser(u.id, (scope) => runProactive({ scope, tz: u.timezone, prefs, trigger }));
+    console.log(trigger, m.map((x) => `${x.kind}${x.status === "done" ? " (done)" : ""}`).join(", "));
+  }
+  await closeDb();
+}
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
