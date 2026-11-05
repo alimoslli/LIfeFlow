@@ -239,6 +239,18 @@ Example: the user tells Dev they have a budget goal. **No** progress bar, no "50
 
 **Decision (owner, 2026-11-05): the surface is the braid.** Four prototypes were tried. The braid (concept 3) is the one: five strands of life twisting into one rope across the screen, loose when calm, tight and twisting when things collide, knots where strands pull on each other that untangle when the problem is solved, moving with the person's life. "This is where we start our build." The "one line" prototype (concept 4) was rejected because it looks like every other app; its mechanics (one tap to all of an area with real totals, Play, shifts from a photo, the why-line and mute, check-backs, visible trust, one plain price, three lives) move into the braid. The braid's one weakness, "a bit hard to understand", is fixed inside the braid with words on it, fewer symbols and a sentence from Dev that always says what it's showing, never by flattening it into a list. Prototypes: concept 3 `lifeflow-braid.html`, the upgrade `lifeflow-braid-v2.html` (scratch files; the published links are in the product chat).
 
+**Each strand is drawn from its data (owner's rule, 2026-11-05).** How a strand looks is how that part of life is doing, and every visual property is computed from the real data at that point in time, never drawn to look lifelike:
+
+| Strand | Thickness | Tightness and density | Beads |
+|---|---|---|---|
+| Money | Available now (checking + cash) over time; net worth on the horizon zoom. Scaled to the person's own range, with a floor so it never vanishes | Bills and pay due close together | Transactions, bills, pay |
+| School | | Pressure: class hours, assignments due this week, exams and the study shadow before them | Classes, due dates, exams |
+| Work | Hours scheduled | Shifts stacked with school | Shifts, pay landing |
+| Health | Rest: sleep hours (thin after a short night) | | Workouts, walks |
+| Life (real life) | Time that is the person's own and time with people | | Named moments: dinner with family, a walk, a call |
+
+Across all strands: expected is dotted, Dev-planned is dashed, the past fades, and missing data is a flat neutral strand that says "nothing synced here", never an invented shape. Each strand can be pulled out on its own to show its curve and the numbers that drive it; tapping any point shows the exact number and its source, so a person can check the line is honest. The braid is 3D (depth as the strands twist), always moving a little, still readable with reduced motion, and smooth on a phone. The mapping lives in one place in the code, one function per strand, so it is testable and later driven by real sync data.
+
 ## 9. Situations Dev must pass
 
 Each becomes a test: the data, what Dev must notice and trace, what it suggests, and what it must not do.
@@ -423,3 +435,7 @@ Still open:
 ### The promise
 
 > And you should be able to implement it perfectly. So that this whole life, this whole app is organizing your digital life and real life together, so that you can find the perfect way to balance both and not miss anything. Because we value the user's time, we value everyone's time. You know how important it is to not miss anything, to organize your life and time, and know where your life is going and how it looks like and where it's headed.
+
+### Each line shows its real data
+
+> And we want to implement how that line looks, it's on how it's doing. So if you're like low on money, the line is thinner. If you're making, if like through time you made more money, the line gets thicker through time, then it becomes thinner, like thicker, thinner, you know, for like net worth, for example, for money. For school, you can just add like the pressure of it, like how, like when you have classes, like if it's like you mentioned it before, how the lines are different based if it's like a dotted line, whatever. We want to implement that into the flow of it and how they're all, each and different one is. I like the idea of being able to see each line on its own and how it's doing. That is a good thing, but also make sure it's like moving, it's 3D, is the new concept, it's accurate to what the real data is. We have to make sure each line accurately shows the data and it's just not a made up line showing a life.
