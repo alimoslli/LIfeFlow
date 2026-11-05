@@ -17,7 +17,7 @@ import { gmailMessages, tasks, type JarvisTopic, type ProactiveAction } from "..
 import type { UserScope } from "../../db/with-user";
 import { listAccounts } from "../finance/accounts";
 import { balancesOf } from "../finance/overview";
-import { billsAndPace, cashForecast } from "../finance/forecast";
+import { cashForecast, upcomingBills } from "../finance/forecast";
 import { goalsWithPlans } from "../finance/goals";
 import { budgetStatus } from "../finance/planning";
 import { planPaycheck } from "../finance/coach";
@@ -197,7 +197,7 @@ const addMinutes = (hhmm: string, mins: number) => {
 
 /** Bills in the next 3 days, the same ones Today and Money show (tracked plus found in the bank); urgent when checking can't cover them. */
 const billsDue: Detector = async ({ scope, today }) => {
-  const { bills } = await billsAndPace(scope, today, today, addDaysStr(today, 3));
+  const bills = await upcomingBills(scope, today, today, addDaysStr(today, 3));
   if (!bills.length) return [];
   const accounts = await listAccounts(scope);
   if (!accounts.length) return [];
@@ -214,7 +214,8 @@ const billsDue: Detector = async ({ scope, today }) => {
       return {
         kind: "bill_short",
         topic: "money" as const,
-        dedupeKey: `bill_short:${b.key}:${b.date}`,
+        // The bill's cycle, not the day it's shown on: a late bill shown as due today again tomorrow is the same alert.
+        dedupeKey: `bill_short:${b.key}`,
         facts: { bill: b.name, billCents: -b.amountCents, dueIn: when, shortCents: short, options: `Two ways to cover it: ${options.join(", or ")}.` },
         action: {
           type: "create_task" as const,
@@ -229,7 +230,7 @@ const billsDue: Detector = async ({ scope, today }) => {
     return {
       kind: "bill_due",
       topic: "money" as const,
-      dedupeKey: `bill_due:${b.key}:${b.date}`,
+      dedupeKey: `bill_due:${b.key}`,
       facts: { bill: b.name, billCents: -b.amountCents, dueIn: when, cashCents: cash.cashCents },
       action: { type: "create_task" as const, label: "Remind me", title: `Pay ${b.name} (${usd(b.amountCents)})`, dueDate: b.date },
       priority: daysBetween(today, b.date) <= 1 ? 80 : 55,

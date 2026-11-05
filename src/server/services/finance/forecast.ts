@@ -5,7 +5,7 @@ import { summarizeCashflow } from "./cashflow";
 import { listAccounts } from "./accounts";
 import { balancesOf } from "./overview";
 import { nameRelation } from "./bill-match";
-import { bankSeries, budgetStatus, listRecurring, upcomingRecurring } from "./planning";
+import { bankSeries, budgetStatus, listRecurring, upcomingRecurring, type BankSeries } from "./planning";
 import { detectRecurring, merchantKey, merchantKeys, nextOccurrence, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 import { listEmployers } from "../work";
@@ -91,17 +91,10 @@ const dollars = (c: number) => {
 
 // ------------------------------------------------------------ data
 
-/**
- * Bills and subscriptions found in the bank feed that the user doesn't track yet (`found`), and the
- * series that are tracked bills under another name (`tracked`, so their charges aren't day-to-day spending).
- */
-async function foundBills(scope: UserScope, today: string) {
-  const { tracked, untracked } = await bankSeries(scope, today);
-  return {
-    found: untracked.filter((c) => c.kind !== "income" && c.latestAmountCents < 0 && c.confidence >= 0.6),
-    tracked: tracked.filter((c) => c.latestAmountCents < 0),
-  };
-}
+/** Bills and subscriptions found in the bank feed that the user doesn't track yet. */
+const foundBills = (bank: BankSeries) => bank.untracked.filter((c) => c.kind !== "income" && c.latestAmountCents < 0 && c.confidence >= 0.6);
+/** Series that are an active tracked bill under the bank's name: their charges are that bill, not day-to-day spending. */
+const trackedBills = (bank: BankSeries) => bank.trackedActive.filter((c) => c.latestAmountCents < 0);
 
 /** Average daily day-to-day spending over the last 8 weeks, leaving out bills (they're counted on their dates). */
 async function typicalDailySpend(scope: UserScope, today: string, billSeries: RecurringCandidate[] = []) {
@@ -120,30 +113,44 @@ async function typicalDailySpend(scope: UserScope, today: string, billSeries: Re
   return { dailyCents: Math.max(0, Math.round(spent / days)), basedOnDays: days };
 }
 
-/** `key` stays the same across reads: the tracked item's id, or `found:<merchant key>` for a bill found in the bank. */
+/**
+ * `key` names the bill and its cycle, and stays the same across days: `<tracked item id>:<due date>`, or
+ * `found:<merchant key>:<expected date>` for a bill found in the bank (even while it's late and shown as due today).
+ */
 export type UpcomingBill = DatedAmount & { found: boolean; key: string };
 
 /**
- * What goes out between two dates and the usual day-to-day pace. Bills are the tracked ones plus the
- * ones found in the bank feed but not tracked yet (`found: true`), so nothing real is left out. A found
- * bill up to 5 days late hasn't posted yet, so it still counts, dated `from`.
+ * What goes out between two dates: the tracked bills not paid yet plus the ones found in the bank feed but
+ * not tracked yet (`found: true`), so nothing real is left out. A found bill up to 5 days late hasn't posted
+ * yet, so it still counts, dated `from`.
  */
-export async function billsAndPace(scope: UserScope, today: string, from: string, to: string) {
-  const { found, tracked: trackedSeries } = await foundBills(scope, today);
-  const [tracked, typical] = await series(
-    () => upcomingRecurring(scope, from, to),
-    () => typicalDailySpend(scope, today, [...found, ...trackedSeries]),
-  );
+export async function upcomingBills(scope: UserScope, today: string, from: string, to: string, bank?: BankSeries): Promise<UpcomingBill[]> {
+  const b = bank ?? (await bankSeries(scope, today));
+  const tracked = await upcomingRecurring(scope, from, to, b);
   const bills: UpcomingBill[] = tracked
     .filter((u) => u.amountCents < 0)
-    .map((u) => ({ date: u.date, amountCents: u.amountCents, name: u.name, found: false, key: u.id }));
-  for (const c of found) {
-    let d = c.nextExpectedDate < from && daysBetween(c.nextExpectedDate, from) <= 5 ? from : c.nextExpectedDate;
-    for (let guard = 0; d < from && guard < 200; guard++) d = nextOccurrence(d, c.frequency);
-    for (let guard = 0; d <= to && guard < 60; guard++, d = nextOccurrence(d, c.frequency))
-      bills.push({ date: d, amountCents: c.latestAmountCents, name: c.name, found: true, key: `found:${c.merchantKey}` });
+    .map((u) => ({ date: u.date, amountCents: u.amountCents, name: u.name, found: false, key: `${u.id}:${u.date}` }));
+  for (const c of foundBills(b)) {
+    let cycle = c.nextExpectedDate;
+    const late = cycle < from && daysBetween(cycle, from) <= 5;
+    for (let guard = 0; !late && cycle < from && guard < 200; guard++) cycle = nextOccurrence(cycle, c.frequency);
+    for (let guard = 0; guard < 60; guard++, cycle = nextOccurrence(cycle, c.frequency)) {
+      const date = cycle < from ? from : cycle;
+      if (date > to) break;
+      bills.push({ date, amountCents: c.latestAmountCents, name: c.name, found: true, key: `found:${c.merchantKey}:${cycle}` });
+    }
   }
-  return { bills: bills.sort((a, b) => a.date.localeCompare(b.date)), typical };
+  return bills.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/** What goes out between two dates (`upcomingBills`) and the usual day-to-day pace. */
+export async function billsAndPace(scope: UserScope, today: string, from: string, to: string, bank?: BankSeries) {
+  const b = bank ?? (await bankSeries(scope, today));
+  const [bills, typical] = await series(
+    () => upcomingBills(scope, today, from, to, b),
+    () => typicalDailySpend(scope, today, [...foundBills(b), ...trackedBills(b)]),
+  );
+  return { bills, typical };
 }
 
 /** How a paycheck reads when it doesn't name the employer ("PAYROLL", "DIRECT DEP"). */
@@ -160,6 +167,7 @@ function salaryPayOf(jobs: { name: string; payType: string }[]) {
   return (name: string, keys = keyOf(name)) => {
     if (hourly.some((k) => nameRelation(k, keys))) return false;
     if (salaried.some((k) => nameRelation(k, keys))) return true;
+    // A paycheck that doesn't name the job ("Paycheck", "ADP") could be the hourly job's, so with any hourly job it's never expected (on purpose: hourly pay is never predicted).
     return !hourly.length && PAYCHECK_WORDS.test(`${name} ${keys.join(" ")}`);
   };
 }
@@ -169,11 +177,11 @@ function salaryPayOf(jobs: { name: string; payType: string }[]) {
  * amount on a regular schedule (or a pay item the user tracks for that job). Hourly pay is never predicted:
  * hours, tips, taxes and pay periods change every time. Shown as expected, never counted as available.
  */
-async function expectedPay(scope: UserScope, today: string, to: string): Promise<DatedAmount[]> {
+async function expectedPay(scope: UserScope, today: string, to: string, bank?: BankSeries): Promise<DatedAmount[]> {
   const jobs = await listEmployers(scope);
   if (!jobs.some((j) => j.payType === "salary")) return [];
   const isSalaryPay = salaryPayOf(jobs);
-  const tracked = (await upcomingRecurring(scope, today, to)).filter((u) => u.amountCents > 0 && isSalaryPay(u.name));
+  const tracked = (await upcomingRecurring(scope, today, to, bank)).filter((u) => u.amountCents > 0 && isSalaryPay(u.name));
   if (tracked.length) return tracked.map((t) => ({ date: t.date, amountCents: t.amountCents, name: t.name }));
   const deposits = await queryTransactions(scope, { from: addDaysStr(today, -120), to: today, kinds: ["income"], limit: 2000 });
   const pattern = detectRecurring(deposits)
@@ -190,9 +198,10 @@ export async function cashForecast(scope: UserScope, today: string, days = 30) {
   const to = addDaysStr(today, days);
   const accounts = await listAccounts(scope);
   const balances = balancesOf(accounts);
+  const bank = await bankSeries(scope, today);
   const [{ bills, typical }, pay] = await series(
-    () => billsAndPace(scope, today, addDaysStr(today, 1), to),
-    () => expectedPay(scope, today, to),
+    () => billsAndPace(scope, today, addDaysStr(today, 1), to, bank),
+    () => expectedPay(scope, today, to, bank),
   );
   const p = projectCash({ startCents: balances.cashCents, today, days, bills, income: pay, dailySpendCents: typical.dailyCents });
   const warnings: string[] = [];
