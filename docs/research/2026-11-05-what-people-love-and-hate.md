@@ -396,3 +396,14 @@ All read on 2026-11-05 through the search tool's summaries of each page; direct 
 7. **ChatGPT's finance preview** is Pro-only and US-only with no student reaction yet. Re-check in three months.
 8. **How working students actually receive their shift schedule** (which apps, paper, a photo in a group chat, how many days ahead) did not surface anywhere. This decides proposal 3. How to fix: survey question and interviews.
 9. **The stay-quiet cases.** Reviews only show what annoyed people, not what they were glad not to hear. How to fix: in interviews, ask "what does your bank or school app tell you that you wish it wouldn't".
+
+## 9. What changed because of this report
+
+Filled in by the product session, 2026-11-05.
+
+- **Five proposals accepted by the owner** (1 to 5), each now in `docs/vision.md` under "Decided from research" with done-means, tests and a measure. Numbers 4 and 5 come first.
+- **Red lines added to `docs/playbook.md`:** surprise billing, more than one push a day or a push with no why, losing a person's data, a redesign that loses simplicity, asking for every connection before it helps.
+- **`CLAUDE.md`:** every session reads the newest research before product or design work, and things to avoid are rules.
+- **The prototype in progress** received sections 2, 3.7, 4 and 5 as design constraints (notification why line, checking back, shifts from a photo, visible trust, one plain price, voice).
+- **Survey v1** gained the shift-schedule and apps-tried questions (proposal 9); the owner has not approved the survey yet.
+- **Not done yet:** situation seeds (section 6) are not in the library until the library exists as tests (vision, order of work step 2). Re-run with real review counts once the review sites are reachable.

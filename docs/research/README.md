@@ -19,6 +19,16 @@ Started 2026-11-05. The owner wants a researcher whose only job is to find out w
 3. **We decide together** in the product session. Accepted proposals go into the vision or the plan; the report stays as the reason.
 4. **Build, then check.** Later research or survey rounds tell us if the change worked.
 
+## From report to Git (owner's rule, 2026-11-05)
+
+Research is not for talking about. Every report has to change something, and the change has to be in the repository:
+
+1. **Accepted proposals** go into `docs/vision.md` under "Decided from research", each with done-means, tests and a measure.
+2. **Things to avoid** become red lines in `docs/playbook.md` and, when there is code to guard, a test that fails if we repeat the mistake.
+3. **Design constraints** go to whoever is building the surface at the time (the prototype brief, the implementation steps), not only to the plan.
+4. **Situation seeds** join the situation library as tests for Dev.
+5. **The report ends with "What changed because of this report"**, written by the product session, with links to the commits. A report with nothing under that heading is not finished.
+
 ## Rules
 
 - Evidence with links and dates. No guessing dressed up as findings.

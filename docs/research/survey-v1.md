@@ -1,6 +1,6 @@
 # Survey v1: How do you keep your life together?
 
-Draft 2026-11-05, for the owner's review. Updated the same day with three questions from the first research report (shift schedules, apps tried and why they quit). Market research before the new LifeFlow. It never mentions LifeFlow or an app: we collect how people actually manage their lives and what goes wrong, then show the problem and the fix in the product.
+**Status: not approved.** The owner looked briefly and said it isn't what they want yet; to be reworked together before anything is sent. Draft 2026-11-05, for the owner's review. Updated the same day with three questions from the first research report (shift schedules, apps tried and why they quit). Market research before the new LifeFlow. It never mentions LifeFlow or an app: we collect how people actually manage their lives and what goes wrong, then show the problem and the fix in the product.
 
 **Goals:** who they are · how they keep track today · what goes wrong (real recent incidents, not opinions) · how they handle change · money, without private numbers · what they'd want handled · what they already pay for and what it would be worth.
 
