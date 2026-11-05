@@ -138,7 +138,11 @@ export function AssistantCard({
           </Field>
         </div>
 
-        <Field label="Notifications a day (at most)" htmlFor="as-pl" hint="Only urgent or important things. 0 keeps everything in the app.">
+        <Field
+          label="Notifications a day (at most)"
+          htmlFor="as-pl"
+          hint="Your briefs and reviews, plus anything urgent or important. To-do reminders don't count. 0 keeps everything in the app."
+        >
           <select
             id="as-pl"
             name="pushLimit"

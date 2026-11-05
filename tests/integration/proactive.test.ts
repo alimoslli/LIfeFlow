@@ -165,6 +165,40 @@ describe("proactive Jarvis", () => {
     expect(composeMessage("spending_pace", facts, "coach", { seed: 0, brief: true }).body.startsWith("You spent")).toBe(true);
   });
 
+  it("every push says what was noticed in one line, not just a headline", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      await checking(s, 50_000);
+      await createRecurring(s, { name: "Rent", amountCents: -62_000, frequency: "monthly", nextDueDate: addDaysStr(today, 3), kind: "bill" });
+      await createTask(s, TZ, { title: "Email advisor", dueDate: today, priority: "high" });
+      const course = await createCourse(s, { name: "English 101", code: "ENG 101" });
+      await createAssignment(s, TZ, { courseId: course.id, title: "Essay draft", dueDate: addDaysStr(today, 3), dueTime: "23:59" });
+      const job = await createEmployer(s, { name: "Campus Cafe", hourlyRateCents: 1500 });
+      await createShift(s, TZ, { employerId: job.id, date: addDaysStr(today, 2), startTime: "18:00", endTime: "23:00" });
+    });
+    await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "morning" }));
+    const sent: { key: string; title: string; body: string }[] = [];
+    const push = async (key: string, msg: { title: string; body: string }) => {
+      sent.push({ key, ...msg });
+      return true;
+    };
+    expect(await run((s) => pushImportant(s, TZ, { jarvis: { pushLimit: 5, quietStart: "00:00", quietEnd: "00:00" } }, push))).toBeGreaterThanOrEqual(3);
+    const kinds = sent.map((p) => p.key.split(":")[1]);
+    expect(kinds).toEqual(expect.arrayContaining(["bill_short", "morning_brief", "deadline_conflict"]));
+    const saved = await msgs(run);
+    for (const p of sent) {
+      const m = saved.find((x) => `jarvis:${x.dedupeKey}` === p.key)!;
+      expect(p.title).toBe(m.title);
+      expect(p.body.length).toBeGreaterThan(20);
+      expect(p.body).not.toBe(p.title);
+      expect(p.body).not.toMatch(/\n|^(Hey!|Quick one:|Heads up:|Just so you know:)/);
+      expect(m.body).toContain(p.body);
+    }
+    expect(sent.find((p) => p.key.includes("bill_short"))!.body).toMatch(/^Rent \(\$620\) is due in 3 days and your checking is \$120 short\./);
+    expect(sent.find((p) => p.key.includes("morning_brief"))!.body).toMatch(/on today's list/);
+    expect(sent.find((p) => p.key.includes("deadline_conflict"))!.body).toMatch(/^Essay draft is due .* and you work .*\. Want me to block/);
+  });
+
   it("only learns from responses after the user agrees", async () => {
     const { user: u, run } = await makeUser();
     const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "morning" }));

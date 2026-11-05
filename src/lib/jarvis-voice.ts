@@ -237,6 +237,37 @@ export function composeMessage(kind: string, facts: F, tone: JarvisTone, opts: {
   return { title: p.headline, body: parts.filter(Boolean).join(" ") };
 }
 
+/**
+ * A push notification: the headline as the title and one line with what was noticed and why, then the fix or
+ * next step. No opener, so the fact is the first thing on a lock screen. Null for kinds with no wording here.
+ */
+export function pushText(kind: string, facts: F) {
+  const p = KINDS[kind]?.(facts);
+  if (!p) return null;
+  return { title: p.headline, body: [p.fact, p.ask].filter(Boolean).join(" ").replace(/\s+/g, " ").trim() };
+}
+
+/** "22:00" as "10 PM", "23:30" as "11:30 PM". */
+const clock = (hhmm: string) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h < 12 ? "AM" : "PM"}`;
+};
+
+/**
+ * What the assistant's pushes are, for Settings → Notifications. It has to match `pushImportant` in
+ * services/proactive/engine.ts: reviews plus urgent or important messages, `pushLimit` in 24 hours, quiet hours.
+ */
+export function pushSummary(name: string, s: { pushLimit: number; quietStart: string; quietEnd: string }) {
+  if (s.pushLimit <= 0) return `${name} keeps everything in the app and sends no notifications of its own. To-do reminders still come.`;
+  const quiet = s.quietStart === s.quietEnd ? "No quiet hours." : `None from ${clock(s.quietStart)} to ${clock(s.quietEnd)}.`;
+  return [
+    `${name} sends up to ${plural(s.pushLimit, "notification")} a day: your morning brief, evening wrap-up and weekly and monthly reviews, plus anything urgent or important it notices, like a bill your checking can't cover.`,
+    "Each one says in one line what it noticed and why, with the next step.",
+    quiet,
+    "To-do reminders don't count toward the limit.",
+  ].join(" ");
+}
+
 /** Plain names for each kind, for Settings (What Jarvis knows). */
 export const KIND_LABELS: Record<string, string> = {
   email_brief: "Morning email brief",
