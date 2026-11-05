@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { closeDb } from "@/server/db/client";
 import { runJarvisTurn, makeToolContext, type JarvisEvent } from "@/server/jarvis/agent";
 import { listMessages, loadHistory } from "@/server/jarvis/conversations";
@@ -256,12 +256,21 @@ describe("Jarvis tool loop", () => {
       }),
     };
     const events: JarvisEvent[] = [];
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const { conversationId } = await runJarvisTurn({ user: session, text: "hello", provider: failing, emit: (e) => events.push(e), now: NOW });
-    expect(events.find((e) => e.type === "error")).toMatchObject({ message: expect.stringMatching(/OPENAI_API_KEY/) });
+    // The details go to the server log only.
+    expect(log).toHaveBeenCalledWith("[jarvis] turn failed", expect.objectContaining({ status: 401, message: "Unauthorized" }));
+    log.mockRestore();
+    // People see plain words with their assistant's name ("your assistant" before they choose one).
+    const err = events.find((e) => e.type === "error");
+    expect(err).toEqual({ type: "error", message: "Your assistant isn't available right now. Try again later." });
     const msgs = await run((s) => listMessages(s, conversationId));
     expect(msgs.map((m) => [m.role, m.status])).toEqual([
       ["user", "complete"],
       ["assistant", "error"],
     ]);
+    // The saved message is the same plain text, never the raw error.
+    expect(msgs[1].content).toBe("Your assistant isn't available right now. Try again later.");
+    expect(msgs[1].content).not.toMatch(/unauthorized|openai|key|jarvis/i);
   });
 });

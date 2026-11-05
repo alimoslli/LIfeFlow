@@ -22,7 +22,8 @@ export function modelPrices(): ModelPrices {
 
 export function getProvider(): ModelProvider {
   const e = env();
-  if (!e.OPENAI_API_KEY) throw new ProviderUnavailableError("Jarvis isn't configured yet: add OPENAI_API_KEY to the server environment.");
+  // For the server log only; people see "isn't available right now" (chat route).
+  if (!e.OPENAI_API_KEY) throw new ProviderUnavailableError("No AI provider configured: OPENAI_API_KEY is not set.");
   return new OpenAIProvider({
     apiKey: e.OPENAI_API_KEY,
     model: e.OPENAI_MODEL,

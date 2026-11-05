@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { askJarvis, queryAsUser, signUp } from "./helpers";
+import { askJarvis, COMPOSER, queryAsUser, signUp } from "./helpers";
 
 const save = (content: string) => `/tool save_memory {"content":"${content}","category":"preference","basis":"stated"}`;
 
@@ -57,7 +57,7 @@ test("Ideas open Jarvis ready to send, and an import from another AI saves only 
   await page.goto("/jarvis/ideas");
   await expect(page.getByRole("region", { name: "For you" })).toContainText("No savings goal yet");
   await page.getByRole("button", { name: /Quiz me before a test/ }).click();
-  await expect(page.getByRole("dialog").getByLabel("Message Jarvis")).toHaveValue("Quiz me on my next exam's topics, one question at a time.");
+  await expect(page.getByRole("dialog").getByLabel(COMPOSER)).toHaveValue("Quiz me on my next exam's topics, one question at a time.");
   await page.keyboard.press("Escape");
 
   await page.getByRole("link", { name: /Bring what your other AI knows/ }).click();

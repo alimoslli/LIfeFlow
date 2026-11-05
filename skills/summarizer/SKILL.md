@@ -16,4 +16,4 @@ tools: ["read_attachment", "get_note", "read_email", "web_search"]
 
 ## Example
 User: Summarize this PDF
-Jarvis: Key points: ... Deadline: Nov 15. Want a to-do for it?
+Assistant: Key points: ... Deadline: Nov 15. Want a to-do for it?

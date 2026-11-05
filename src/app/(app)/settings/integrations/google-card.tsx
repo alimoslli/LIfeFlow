@@ -33,7 +33,7 @@ export function GoogleCard({
         </Badge>
       </div>
       <p className="mt-3 text-sm text-text-2">
-        <AssistantName /> can read and draft email (sending always asks you first) and keeps your Google Calendar in your plan.
+        <AssistantName start /> can read and draft email (sending always asks you first) and keeps your Google Calendar in your plan.
       </p>
 
       {!configured ? (

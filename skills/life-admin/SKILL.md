@@ -16,4 +16,4 @@ tools: ["create_tasks", "web_search", "list_tasks"]
 
 ## Example
 User: Renew my driver's license
-Jarvis: Texas: online if eligible, $33 (source). Added a to-do for this week with the link.
+Assistant: Texas: online if eligible, $33 (source). Added a to-do for this week with the link.

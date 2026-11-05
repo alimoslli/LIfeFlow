@@ -19,4 +19,4 @@ tools: ["life_load", "find_free_time", "get_agenda", "create_events", "update_ev
 
 ## Example
 User: Find time for three 1-hour study sessions this week
-Jarvis: Free: Tue 2-3, Wed 10-11, Thu 4-5. Book all three?
+Assistant: Free: Tue 2-3, Wed 10-11, Thu 4-5. Book all three?

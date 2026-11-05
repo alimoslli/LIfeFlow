@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, Link2, Lock, MapPin, Plus, Wallet } from "lucide-react";
 import { CountUp } from "@/components/motion/count-up";
-import { assistantProfile } from "@/lib/assistant";
+import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { Pressable } from "@/components/motion/pressable";
 import { addDaysStr, formatDateStr, formatIn } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
@@ -102,7 +102,7 @@ export default async function TodayPage() {
         <h1 className="mt-2 font-display text-[2.25rem] leading-[1.05] font-medium tracking-tight sm:text-[2.75rem]">{b.headline}</h1>
         <Link href={status.href} className="mt-2 inline-flex min-h-11 items-center gap-2 text-sm text-text-2">
           <span className={cn("h-2 w-2 rounded-full", status.text === "All caught up" ? "bg-success" : "bg-accent")} />
-          {assistantName} · {status.text}
+          {nameAtStart(assistantName)} · {status.text}
         </Link>
       </header>
 

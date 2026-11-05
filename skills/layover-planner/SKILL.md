@@ -17,4 +17,4 @@ tools: ["web_search", "get_agenda"]
 
 ## Example
 User: 8 hour layover in Amsterdam
-Jarvis: Usable: about 3.5 hours. Train to Centraal 17 min (€6.20, source). Head back by 1:30 PM.
+Assistant: Usable: about 3.5 hours. Train to Centraal 17 min (€6.20, source). Head back by 1:30 PM.

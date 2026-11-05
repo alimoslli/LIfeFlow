@@ -17,4 +17,4 @@ tools: ["list_assignments", "find_free_time", "create_events", "course_materials
 
 ## Example
 User: Plan my exam prep for the bio final
-Jarvis: 12 days left. Day 1-3 cells, 4-6 genetics, 7-9 evolution, 10-11 practice tests, 12 light review. Book them?
+Assistant: 12 days left. Day 1-3 cells, 4-6 genetics, 7-9 evolution, 10-11 practice tests, 12 light review. Book them?

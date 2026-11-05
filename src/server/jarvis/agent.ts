@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { todayIn } from "@/lib/dates";
 import { truncate } from "@/lib/utils";
+import { assistantProfile, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
 import { attachments, conversations, messages, type JarvisModule, type JarvisRunOutcome, type ToolResultRecord } from "../db/schema";
 import { withUser } from "../db/with-user";
 import type { SessionUser } from "../auth/sessions";
@@ -230,7 +231,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
     const aborted = !!input.signal?.aborted;
     outcome = aborted ? "cancelled" : "error";
     errorKind = errorKindOf(e, aborted);
-    const message = friendlyProviderError(e);
+    const message = friendlyProviderError(e, assistantProfile(user.preferences).name);
     await run((s) => s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: message, status: "error" }));
     emit({ type: "error", message });
   } finally {
@@ -264,16 +265,21 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   return { conversationId: conversation.id, runId };
 }
 
-export function friendlyProviderError(e: unknown): string {
+/**
+ * What the user reads (and what is saved as the assistant's message) when a turn fails: plain
+ * words with their assistant's name. Never the provider, a setting, a key or the raw error;
+ * the turn logs those with console.error.
+ */
+export function friendlyProviderError(e: unknown, name: string = UNNAMED_ASSISTANT): string {
+  const who = nameAtStart(name);
   const status = (e as { status?: number })?.status;
-  if (status === 401) return "Jarvis couldn't authenticate with OpenAI. Check OPENAI_API_KEY on the server.";
-  if (status === 429) return "OpenAI is rate-limiting requests or the account is out of quota. Try again shortly.";
-  if (status === 404) return "The configured OpenAI model wasn't found. Check OPENAI_MODEL.";
-  if (status && status >= 500) return "OpenAI is having trouble right now. Please try again.";
+  if (status === 401 || status === 403 || status === 404) return `${who} isn't available right now. Try again later.`;
+  if (status === 429) return `${who} is busy right now. Try again in a minute.`;
+  if (status && status >= 500) return `${who} isn't available right now. Try again in a minute.`;
   const msg = e instanceof Error ? e.message : "";
-  if (/fetch failed|ECONNREFUSED|ENOTFOUND|network|timed out/i.test(msg))
-    return "Jarvis couldn't reach the AI service (network error). Nothing further was changed.";
-  return `Something went wrong while Jarvis was responding${msg ? `: ${truncate(msg, 160)}` : ""}. Any actions already reported as completed were saved.`;
+  if (/fetch failed|ECONNREFUSED|ENOTFOUND|ECONNRESET|network|timed out/i.test(msg))
+    return `${who} couldn't get through just now. Try again in a minute. Nothing else was changed.`;
+  return `Something went wrong while ${name} was answering. Try again. Anything already shown as done was saved.`;
 }
 
 export type { ToolResultRecord };

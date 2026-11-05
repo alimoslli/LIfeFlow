@@ -88,7 +88,7 @@ export function CancelHelp({ id, name, via, saved }: { id: string; name: string;
             </p>
           )}
           <p className="text-xs text-muted">
-            <AssistantName /> never cancels anything for you. After you cancel, tap &quot;I cancelled it&quot; so the totals stay right.
+            <AssistantName start /> never cancels anything for you. After you cancel, tap &quot;I cancelled it&quot; so the totals stay right.
           </p>
         </div>
       </Sheet>

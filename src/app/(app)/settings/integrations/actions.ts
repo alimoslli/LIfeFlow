@@ -1,5 +1,5 @@
 "use server";
-import { assistantProfile } from "@/lib/assistant";
+import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { mutate, type ActionState } from "@/server/actions";
 import { disconnectGoogle, GoogleError, syncGoogleCalendar } from "@/server/integrations/google";
 import { disconnectMicrosoft, MicrosoftError, syncMicrosoftCalendar } from "@/server/integrations/microsoft";
@@ -112,7 +112,7 @@ export async function disconnectCanvasAction(): Promise<ActionState> {
 export async function setGmailFilingAction(on: boolean): Promise<ActionState> {
   return mutate("integration.gmail_filing", async (_s, u) => {
     await updatePreferences(getDb(), u.id, { gmailFiling: on });
-    const n = assistantProfile(u.preferences).name;
+    const n = nameAtStart(assistantProfile(u.preferences).name);
     return on ? `${n} will file new school, bill and work emails each morning.` : `${n} won't read your inbox on its own.`;
   });
 }

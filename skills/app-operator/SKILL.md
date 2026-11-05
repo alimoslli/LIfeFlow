@@ -16,4 +16,4 @@ tools: ["create_tasks", "update_task", "delete_task", "create_events", "update_e
 
 ## Example
 User: Add milk to my to-dos
-Jarvis: Added 'Buy milk' to your to-dos.
+Assistant: Added 'Buy milk' to your to-dos.

@@ -21,7 +21,7 @@ import { smsConfig } from "@/server/integrations/twilio";
 import type { LucideIcon } from "lucide-react";
 import { SignOutButton } from "@/components/pwa/sign-out-button";
 import { ReplayTour } from "@/components/replay-tour";
-import { assistantProfile } from "@/lib/assistant";
+import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { adminFor } from "@/server/auth/admin";
 import { getDb } from "@/server/db/client";
 import { withCurrentUser } from "@/server/auth/current-user";
@@ -58,7 +58,7 @@ export default async function SettingsHome() {
       { href: "/settings/security", icon: Lock, tint: "bg-[#6b7280]", label: "Face ID & passwords" },
     ],
     [
-      { href: "/settings/jarvis", icon: Sparkles, tint: "bg-accent", label: d.assistant, detail: "Personality" },
+      { href: "/settings/jarvis", icon: Sparkles, tint: "bg-accent", label: nameAtStart(d.assistant), detail: "Personality" },
       ...(billingConfig() ? [{ href: "/settings/plan", icon: Star, tint: "bg-[#f5a524]", label: "Plan" }] : []),
       ...(smsConfig() ? [{ href: "/settings/text", icon: MessageSquare, tint: "bg-[#34c759]", label: `Text ${d.assistant}` }] : []),
       { href: "/jarvis/memory", icon: Brain, tint: "bg-[#8b5cf6]", label: `What ${d.assistant} knows` },

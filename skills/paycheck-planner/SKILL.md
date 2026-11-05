@@ -17,4 +17,4 @@ tools: ["plan_paycheck", "recurring_payments", "list_goals", "money_overview"]
 
 ## Example
 User: I got paid $640, plan it
-Jarvis: Bills $310 (rent share, phone), Paris goal $100, savings $60, free to spend $170.
+Assistant: Bills $310 (rent share, phone), Paris goal $100, savings $60, free to spend $170.

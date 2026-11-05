@@ -26,9 +26,12 @@ export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding
   return email;
 }
 
-/** Sends a message in the Jarvis composer and waits for the reply to finish streaming. */
+/** The chat's message box. Until the user names their assistant it's "Message your assistant". */
+export const COMPOSER = "Message your assistant";
+
+/** Sends a message in the assistant's composer and waits for the reply to finish streaming. */
 export async function askJarvis(page: Page, text: string) {
-  const box = page.getByLabel("Message Jarvis");
+  const box = page.getByLabel(COMPOSER);
   await box.fill(text);
   await box.press("Enter");
   await expect(page.getByRole("button", { name: "Send" })).toBeVisible({ timeout: 30_000 });
@@ -47,6 +50,23 @@ export async function queryAsUser<T = Record<string, unknown>>(email: string, te
   } finally {
     client.release();
   }
+}
+
+/**
+ * Everything a person can see or hear on the page: the page title, the visible text (closed
+ * <details> opened first), and aria-label, placeholder, title and alt text, plus meta descriptions.
+ */
+export async function whatUsersSee(page: Page): Promise<string> {
+  return page.evaluate(() => {
+    for (const d of document.querySelectorAll("details")) d.open = true;
+    const attrs = [...document.querySelectorAll("[aria-label], [placeholder], [title], [alt]")].flatMap((el) =>
+      ["aria-label", "placeholder", "title", "alt"].map((a) => el.getAttribute(a) ?? ""),
+    );
+    const meta = [...document.querySelectorAll("meta[name=description], meta[property^='og:'], meta[name^='twitter:']")].map(
+      (m) => m.getAttribute("content") ?? "",
+    );
+    return [document.title, document.body.innerText, ...attrs, ...meta].join("\n");
+  });
 }
 
 /** Opens the quick-add sheet (Jarvis → Capture, Add buttons). Retries until the page has hydrated. */

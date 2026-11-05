@@ -164,7 +164,7 @@ export function describeToolResult(name: string, r: ToolResultRecord): { summary
       return { summary: summaries[String(d.status)] ?? "Done", viewAt: "/jarvis/memory" };
     }
     case "forget_memory":
-      return { summary: "Archived. You can restore it in What Jarvis knows", viewAt: "/jarvis/memory" };
+      return { summary: "Archived. You can restore it in Memory", viewAt: "/jarvis/memory" };
     case "save_note":
       return { summary: `Note ${d.action ?? "saved"}`, viewAt };
     case "draft_email":

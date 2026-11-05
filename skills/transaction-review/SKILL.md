@@ -1,7 +1,7 @@
 ---
 name: transaction-review
 title: Transaction review
-description: Goes through transactions Jarvis isn't sure about, together with the user, and categorizes them from their reply.
+description: Goes through transactions the assistant isn't sure about, together with the user, and categorizes them from their reply.
 triggers: ["categorize", "categorise", "uncategorized", "review my transactions", "fix my categories", "wrong category", "transactions you're not sure about"]
 modules: ["finances"]
 tools: ["transactions_to_review", "categorize_transactions", "list_categories", "recategorize_transaction"]
@@ -20,7 +20,7 @@ tools: ["transactions_to_review", "categorize_transactions", "list_categories", 
 
 ## Example
 User: Show me the transactions you're not sure about
-Jarvis: 3 I couldn't place:
+Assistant: 3 I couldn't place:
 1. Oct 28 · SQ *LUNA CAFE · $8.40 · my guess: Coffee
 2. Oct 27 · ZELLE FROM J SMITH · +$40 · my guess: ?
 3. Oct 25 · PAYPAL *STEAM · $19.99 · my guess: Games

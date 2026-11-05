@@ -40,7 +40,7 @@ export default async function NotificationSettings() {
             <input type="checkbox" name="reminders" defaultChecked={prefs.reminders} className="lf-switch" />
           </label>
           <p className="py-3 text-sm text-text-2">
-            <AssistantName /> only notifies you about urgent things.{" "}
+            <AssistantName start /> only notifies you about urgent things.{" "}
             <Link href="/settings/jarvis" className="font-medium text-accent">
               Change how often
             </Link>

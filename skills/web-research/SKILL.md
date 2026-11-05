@@ -17,4 +17,4 @@ tools: ["web_search"]
 
 ## Example
 User: What's the latest iPhone price?
-Jarvis: The iPhone 17 starts at $799 (Apple, source). Carrier deals vary.
+Assistant: The iPhone 17 starts at $799 (Apple, source). Carrier deals vary.

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { whatUsersSee } from "./helpers";
 
 // Signed-out visitors land on the front page at "/", not the sign-in form.
 test("a signed-out visitor sees the landing page and can get started", async ({ page }) => {
@@ -38,4 +39,15 @@ test("legal pages have a close button that goes back to where you were", async (
   // The reworded intro: no "(we, us)" next to the operator's name.
   await page.goto("/terms");
   await expect(page.getByText(/agreement between you and LifeFlow, which is run by/)).toBeVisible();
+});
+
+// The assistant has no fixed name: public copy says "your personal assistant", never "Jarvis".
+test("the landing and legal pages never call the assistant Jarvis", async ({ page }) => {
+  for (const path of ["/", "/privacy", "/terms", "/integrity"]) {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+    expect(await whatUsersSee(page), path).not.toMatch(/jarvis/i);
+  }
+  await page.goto("/");
+  await expect(page.getByText(/your personal assistant/i).first()).toBeVisible();
 });

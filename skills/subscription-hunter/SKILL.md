@@ -20,4 +20,4 @@ tools: ["money_findings", "find_subscriptions", "recurring_payments", "web_searc
 
 ## Example
 User: What subscriptions do I have?
-Jarvis: 5 subscriptions, $63/month ($756/year). Netflix went up $2.50. You have 3 video services; dropping Hulu saves $96/year.
+Assistant: 5 subscriptions, $63/month ($756/year). Netflix went up $2.50. You have 3 video services; dropping Hulu saves $96/year.

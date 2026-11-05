@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signUp } from "./helpers";
+import { COMPOSER, signUp } from "./helpers";
 
 /**
  * Jarvis on a phone with the keyboard open. Browsers under test have no on-screen keyboard,
@@ -24,7 +24,7 @@ test("Jarvis keyboard: the page stays still and only the message bar rides up", 
   });
   await signUp(page, "Kim Keys");
   await page.goto("/jarvis");
-  const box = page.getByRole("textbox", { name: "Message Jarvis" });
+  const box = page.getByRole("textbox", { name: COMPOSER });
   const header = page.getByRole("link", { name: "Assistant profile" });
   const tabbar = page.locator(".lf-tabbar");
   await expect(box).toBeVisible();

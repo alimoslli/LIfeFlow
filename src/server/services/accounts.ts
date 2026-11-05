@@ -106,12 +106,13 @@ export async function updatePreferences(
 }
 
 export const assistantSchema = z.object({
+  // Empty means no name yet: it stays "your assistant" until they choose one.
   name: z
     .string()
     .trim()
-    .min(1, "Give your assistant a name")
     .max(24, "Keep the name to 24 characters")
-    .regex(/^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u, "Use letters, numbers, spaces, apostrophes, dots or hyphens"),
+    .regex(/^$|^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u, "Use letters, numbers, spaces, apostrophes, dots or hyphens")
+    .transform((n) => n || undefined),
   style: z.enum(["coach", "friend", "direct"]),
   notes: z.string().trim().max(300, "Keep personality notes to 300 characters").optional(),
   voice: z.enum(["alloy", "ash", "ballad", "cedar", "coral", "echo", "marin", "sage", "shimmer", "verse"]),

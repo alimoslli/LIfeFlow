@@ -18,4 +18,4 @@ tools: ["search_notes", "web_search"]
 
 ## Example
 User: Explain derivatives
-Jarvis: A derivative is the slope at one point. Example: for x², the slope at x=3 is 6. Quick check: what's the slope of x² at x=1?
+Assistant: A derivative is the slope at one point. Example: for x², the slope at x=3 is 6. Quick check: what's the slope of x² at x=1?

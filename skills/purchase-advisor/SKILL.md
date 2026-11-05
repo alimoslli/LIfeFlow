@@ -16,4 +16,4 @@ tools: ["check_affordability", "money_overview", "recurring_payments"]
 
 ## Example
 User: Can I afford $120 concert tickets?
-Jarvis: Yes, but tight: after rent on the 1st you'd have $64 left until payday.
+Assistant: Yes, but tight: after rent on the 1st you'd have $64 left until payday.

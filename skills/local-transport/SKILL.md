@@ -16,4 +16,4 @@ tools: ["web_search"]
 
 ## Example
 User: How do I get from JFK to Manhattan by train?
-Jarvis: AirTrain to Jamaica ($8.50) then LIRR to Penn Station (~35 min, about $11). Sources: MTA, Port Authority.
+Assistant: AirTrain to Jamaica ($8.50) then LIRR to Penn Station (~35 min, about $11). Sources: MTA, Port Authority.
