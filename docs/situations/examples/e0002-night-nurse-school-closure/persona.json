@@ -1,0 +1,1266 @@
+{
+  "id": "p0002-night-nurse-parent",
+  "summary": "ER nurse on 12-hour nights with a first grader; her partner works days and travels for work some weeks; her sister lives nearby",
+  "kinds": [
+    "parent",
+    "shift worker",
+    "night shift"
+  ],
+  "time_zone": "America/New_York",
+  "pay": {
+    "type": "hourly",
+    "period": "biweekly"
+  },
+  "places": {
+    "home": "home",
+    "work": "the hospital",
+    "school": "Maya's school",
+    "gym": "the gym",
+    "family": "her parents' house",
+    "pool": "the pool",
+    "out": "town"
+  },
+  "commute_minutes": {
+    "home-work": 25,
+    "home-school": 8,
+    "home-gym": 10,
+    "home-family": 20,
+    "home-out": 15,
+    "school-work": 25,
+    "gym-school": 10,
+    "home-pool": 15,
+    "pool-work": 25
+  },
+  "commute_mode": "car",
+  "ready_minutes": 35,
+  "wind_down_minutes": 30,
+  "accounts": [
+    {
+      "id": "acc-joint",
+      "name": "Family Checking",
+      "official_name": "Joint Checking",
+      "type": "depository",
+      "subtype": "checking",
+      "institution_name": "Granite Federal Credit Union",
+      "mask": "2290",
+      "opening_balance_cents": 480000,
+      "short_name": "CHK"
+    },
+    {
+      "id": "acc-savings",
+      "name": "Family Savings",
+      "official_name": "Share Savings",
+      "type": "depository",
+      "subtype": "savings",
+      "institution_name": "Granite Federal Credit Union",
+      "mask": "2291",
+      "opening_balance_cents": 1240000,
+      "apy_bps": 150,
+      "short_name": "SAV"
+    },
+    {
+      "id": "acc-card",
+      "name": "Rewards Visa",
+      "official_name": "Granite Rewards Visa",
+      "type": "credit",
+      "subtype": "credit card",
+      "institution_name": "Granite Federal Credit Union",
+      "mask": "5518",
+      "credit_limit_cents": 900000,
+      "opening_balance_cents": 142000,
+      "last_statement_cents": 131500,
+      "statement_day": 8,
+      "due_days": 25,
+      "apr_bps": 2149,
+      "autopay": "statement",
+      "autopay_from": "acc-joint",
+      "payment_description": "GRANITE FCU VISA PAYMENT",
+      "payment_received": "PAYMENT RECEIVED THANK YOU"
+    }
+  ],
+  "income": [
+    {
+      "id": "inc-er",
+      "type": "hourly",
+      "job": "job-er",
+      "rate_cents": 4450,
+      "pay_period": "biweekly",
+      "period_anchor": "2025-10-05",
+      "days_after_period_end": 5,
+      "tax_share": 0.24,
+      "account": "acc-joint",
+      "description": "ST BRIGID MED CTR PAYROLL PPD ID: 3721004418",
+      "merchant_name": null
+    },
+    {
+      "id": "inc-dan",
+      "type": "salary",
+      "label": "Dan's salary",
+      "annual_cents": 6400000,
+      "pay_period": "semimonthly",
+      "tax_share": 0.27,
+      "account": "acc-joint",
+      "description": "NORTHLINE LOGISTICS PAYROLL PPD ID: 8830021147",
+      "merchant_name": null
+    }
+  ],
+  "bills": [
+    {
+      "id": "rent",
+      "name": "Rent",
+      "description": "BRIARWOOD APTS RENT WEB PMT",
+      "merchant_name": "Briarwood Apartments",
+      "pfc": "RENT_AND_UTILITIES_RENT",
+      "amount_cents": 195000,
+      "day": 1,
+      "via": "ach",
+      "account": "acc-joint",
+      "kind": "bill"
+    },
+    {
+      "id": "car-loan",
+      "name": "Car loan",
+      "description": "GRANITE FCU AUTO LOAN PMT",
+      "merchant_name": null,
+      "pfc": "LOAN_PAYMENTS_CAR_PAYMENT",
+      "amount_cents": 38900,
+      "day": 10,
+      "via": "ach",
+      "account": "acc-joint",
+      "kind": "bill"
+    },
+    {
+      "id": "electric",
+      "name": "Electric",
+      "description": "CITY POWER AND LIGHT",
+      "merchant_name": "City Power and Light",
+      "pfc": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY",
+      "amount_cents": 12500,
+      "day": 12,
+      "via": "ach",
+      "account": "acc-joint",
+      "kind": "bill",
+      "varies_pct": 0.18,
+      "month_scale": {
+        "12": 1.2,
+        "1": 1.3,
+        "2": 1.25
+      }
+    },
+    {
+      "id": "gas-heat",
+      "name": "Gas for heat",
+      "description": "TRISTATE GAS CO BILL PAY",
+      "merchant_name": "Tristate Gas",
+      "pfc": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY",
+      "amount_cents": 4800,
+      "day": 16,
+      "via": "ach",
+      "account": "acc-joint",
+      "kind": "bill",
+      "varies_pct": 0.2,
+      "month_scale": {
+        "11": 1.6,
+        "12": 2.4,
+        "1": 2.8,
+        "2": 2.5,
+        "3": 1.8
+      }
+    },
+    {
+      "id": "water",
+      "name": "Water",
+      "description": "CITY WATER DEPT WEB",
+      "merchant_name": null,
+      "pfc": "RENT_AND_UTILITIES_WATER",
+      "amount_cents": 5600,
+      "day": 20,
+      "via": "ach",
+      "account": "acc-joint",
+      "kind": "bill",
+      "varies_pct": 0.1
+    },
+    {
+      "id": "internet",
+      "name": "Internet",
+      "description": "FIBERLINE INTERNET",
+      "merchant_name": "Fiberline",
+      "pfc": "RENT_AND_UTILITIES_INTERNET_AND_CABLE",
+      "amount_cents": 6999,
+      "day": 9,
+      "via": "card",
+      "account": "acc-card",
+      "kind": "bill"
+    },
+    {
+      "id": "phones",
+      "name": "Family phone plan",
+      "description": "VERIZON WIRELESS PAYMENTS",
+      "merchant_name": "Verizon",
+      "pfc": "RENT_AND_UTILITIES_TELEPHONE",
+      "amount_cents": 12400,
+      "day": 22,
+      "via": "ach",
+      "account": "acc-joint",
+      "kind": "bill"
+    },
+    {
+      "id": "car-insurance",
+      "name": "Car insurance",
+      "description": "SAFEROUTE AUTO INS PREM",
+      "merchant_name": "SafeRoute Insurance",
+      "pfc": "GENERAL_SERVICES_INSURANCE",
+      "amount_cents": 18400,
+      "day": 3,
+      "via": "ach",
+      "account": "acc-joint",
+      "kind": "bill"
+    },
+    {
+      "id": "swim",
+      "name": "Maya's swim lessons",
+      "description": "SQ *LITTLE FINS SWIM",
+      "merchant_name": "Little Fins Swim School",
+      "pfc": "GENERAL_SERVICES_EDUCATION",
+      "amount_cents": 9500,
+      "day": 2,
+      "via": "card",
+      "account": "acc-card",
+      "kind": "bill"
+    },
+    {
+      "id": "netflix",
+      "name": "Netflix",
+      "description": "NETFLIX.COM",
+      "merchant_name": "Netflix",
+      "pfc": "ENTERTAINMENT_TV_AND_MOVIES",
+      "amount_cents": 1549,
+      "day": 8,
+      "via": "card",
+      "account": "acc-card",
+      "kind": "subscription"
+    },
+    {
+      "id": "disney",
+      "name": "Disney+",
+      "description": "DISNEY PLUS",
+      "merchant_name": "Disney+",
+      "pfc": "ENTERTAINMENT_TV_AND_MOVIES",
+      "amount_cents": 999,
+      "day": 19,
+      "via": "card",
+      "account": "acc-card",
+      "kind": "subscription"
+    },
+    {
+      "id": "gym",
+      "name": "Gym membership",
+      "description": "CROSSTOWN FITNESS CLUB",
+      "merchant_name": "Crosstown Fitness",
+      "pfc": "PERSONAL_CARE_GYMS_AND_FITNESS_CENTERS",
+      "amount_cents": 3499,
+      "day": 17,
+      "via": "card",
+      "account": "acc-card",
+      "kind": "subscription"
+    },
+    {
+      "id": "college-fund",
+      "name": "College savings for Maya",
+      "description": "STATE 529 PLAN CONTRIB",
+      "merchant_name": null,
+      "pfc": "TRANSFER_OUT_INVESTMENT_AND_RETIREMENT_FUNDS",
+      "amount_cents": 25000,
+      "day": 15,
+      "via": "ach",
+      "account": "acc-joint",
+      "kind": "other"
+    }
+  ],
+  "savings_plan": {
+    "from": "acc-joint",
+    "to": "acc-savings",
+    "amount_cents": 110000,
+    "on": "payday",
+    "skip_if_below_cents": 150000
+  },
+  "bank": {
+    "overdraft_fee_cents": 3200,
+    "low_balance_alert_cents": 50000,
+    "switch_to_card_below_cents": 40000
+  },
+  "spending": [
+    {
+      "id": "groceries",
+      "label": "Weekly family shop",
+      "pfc": "FOOD_AND_DRINK_GROCERIES",
+      "routine": "groceries",
+      "extra_per_week": 1.2,
+      "amount_cents": [
+        4500,
+        17500
+      ],
+      "card_share": 0.7,
+      "merchants": [
+        {
+          "description": "KROGER #0632",
+          "merchant_name": "Kroger",
+          "weight": 3
+        },
+        {
+          "description": "ALDI 63218",
+          "merchant_name": "Aldi",
+          "weight": 2
+        },
+        {
+          "description": "COSTCO WHSE #0388",
+          "merchant_name": "Costco",
+          "weight": 1,
+          "amount_cents": [
+            9000,
+            26000
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hospital-food",
+      "label": "Food on night shifts",
+      "pfc": "FOOD_AND_DRINK_RESTAURANT",
+      "per_week": 2.0,
+      "when": "work_days",
+      "time": [
+        "20:30",
+        "23:30"
+      ],
+      "amount_cents": [
+        650,
+        1250
+      ],
+      "card_share": 0.3,
+      "merchants": [
+        {
+          "description": "ST BRIGID CAFETERIA 01",
+          "merchant_name": null,
+          "weight": 3
+        },
+        {
+          "description": "SQ *NIGHT OWL VENDING",
+          "merchant_name": null,
+          "weight": 1,
+          "amount_cents": [
+            200,
+            600
+          ]
+        }
+      ]
+    },
+    {
+      "id": "coffee",
+      "label": "Coffee",
+      "pfc": "FOOD_AND_DRINK_COFFEE",
+      "per_week": 3.2,
+      "time": [
+        "06:30",
+        "18:45"
+      ],
+      "amount_cents": [
+        345,
+        715
+      ],
+      "card_share": 0.6,
+      "merchants": [
+        {
+          "description": "DUNKIN #348821",
+          "merchant_name": "Dunkin'",
+          "weight": 3
+        },
+        {
+          "description": "STARBUCKS STORE 11823",
+          "merchant_name": "Starbucks",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "takeout",
+      "label": "Family takeout",
+      "pfc": "FOOD_AND_DRINK_RESTAURANT",
+      "per_week": 1.6,
+      "time": [
+        "17:00",
+        "20:00"
+      ],
+      "amount_cents": [
+        2200,
+        5800
+      ],
+      "card_share": 0.8,
+      "merchants": [
+        {
+          "description": "DOMINO'S 7112",
+          "merchant_name": "Domino's",
+          "weight": 2
+        },
+        {
+          "description": "CHIPOTLE 2214",
+          "merchant_name": "Chipotle",
+          "weight": 2
+        },
+        {
+          "description": "PANERA BREAD #601441",
+          "merchant_name": "Panera Bread",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "sit-down",
+      "label": "Dinner out",
+      "pfc": "FOOD_AND_DRINK_RESTAURANT",
+      "per_week": 0.3,
+      "when": "free_days",
+      "time": [
+        "17:30",
+        "19:30"
+      ],
+      "amount_cents": [
+        4800,
+        9500
+      ],
+      "card_share": 0.9,
+      "tip_pct": [
+        18,
+        22
+      ],
+      "merchants": [
+        {
+          "description": "OLIVE GARDEN 1840",
+          "merchant_name": "Olive Garden",
+          "weight": 1
+        },
+        {
+          "description": "TST* HARBOR GRILL",
+          "merchant_name": "Harbor Grill",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "delivery",
+      "label": "Food delivery after nights",
+      "pfc": "FOOD_AND_DRINK_RESTAURANT",
+      "per_week": 0.5,
+      "time": [
+        "11:00",
+        "14:30"
+      ],
+      "amount_cents": [
+        1800,
+        3600
+      ],
+      "card_share": 1.0,
+      "merchants": [
+        {
+          "description": "DOORDASH*THAI SPICE",
+          "merchant_name": "DoorDash",
+          "weight": 1
+        },
+        {
+          "description": "UBER EATS PENDING",
+          "merchant_name": "Uber Eats",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "gas",
+      "label": "Gas",
+      "pfc": "TRANSPORTATION_GAS",
+      "per_week": 1.2,
+      "time": [
+        "07:40",
+        "18:45"
+      ],
+      "amount_cents": [
+        3800,
+        6200
+      ],
+      "card_share": 0.8,
+      "merchants": [
+        {
+          "description": "SUNOCO 0412883301",
+          "merchant_name": "Sunoco",
+          "weight": 2
+        },
+        {
+          "description": "WAWA 8812",
+          "merchant_name": "Wawa",
+          "weight": 2
+        }
+      ]
+    },
+    {
+      "id": "amazon",
+      "label": "Online orders",
+      "pfc": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES",
+      "per_week": 2.6,
+      "time": [
+        "09:00",
+        "23:30"
+      ],
+      "amount_cents": [
+        1199,
+        6999
+      ],
+      "card_share": 0.95,
+      "refund_chance": 0.06,
+      "month_scale": {
+        "11": 1.3,
+        "12": 1.8
+      },
+      "receipt_email": "orders-marketplace@example.com",
+      "merchants": [
+        {
+          "description": "AMZN Mktp US*{A6}",
+          "merchant_name": "Amazon",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "target",
+      "label": "Target run for the house and Maya",
+      "pfc": "GENERAL_MERCHANDISE_SUPERSTORES",
+      "per_week": 0.8,
+      "time": [
+        "09:30",
+        "17:30"
+      ],
+      "amount_cents": [
+        2500,
+        9500
+      ],
+      "card_share": 0.9,
+      "merchants": [
+        {
+          "description": "TARGET 00021455",
+          "merchant_name": "Target",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "pharmacy",
+      "label": "Pharmacy",
+      "pfc": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS",
+      "per_week": 0.4,
+      "time": [
+        "09:30",
+        "18:00"
+      ],
+      "amount_cents": [
+        800,
+        3500
+      ],
+      "card_share": 0.7,
+      "discretionary": false,
+      "merchants": [
+        {
+          "description": "CVS/PHARMACY #07261",
+          "merchant_name": "CVS",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "kid-clothes",
+      "label": "Clothes for Maya",
+      "pfc": "GENERAL_MERCHANDISE_CLOTHING_AND_ACCESSORIES",
+      "per_week": 0.25,
+      "time": [
+        "10:00",
+        "18:00"
+      ],
+      "amount_cents": [
+        1800,
+        6500
+      ],
+      "card_share": 0.9,
+      "merchants": [
+        {
+          "description": "OLD NAVY 6412",
+          "merchant_name": "Old Navy",
+          "weight": 1
+        },
+        {
+          "description": "CARTERS 0331",
+          "merchant_name": "Carter's",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "school-lunch",
+      "label": "School lunch account",
+      "pfc": "GENERAL_SERVICES_EDUCATION",
+      "per_week": 0.25,
+      "time": [
+        "19:00",
+        "22:00"
+      ],
+      "amount_cents": [
+        2000,
+        4000
+      ],
+      "discretionary": false,
+      "merchants": [
+        {
+          "description": "SCHOOLCAFE K12 TOPUP",
+          "merchant_name": null,
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "family-fun",
+      "label": "Weekend outings",
+      "pfc": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS",
+      "per_week": 0.3,
+      "days": [
+        "Sat",
+        "Sun"
+      ],
+      "time": [
+        "10:00",
+        "16:00"
+      ],
+      "amount_cents": [
+        1500,
+        6000
+      ],
+      "card_share": 0.9,
+      "merchants": [
+        {
+          "description": "REGAL CINEMAS 0442",
+          "merchant_name": "Regal",
+          "weight": 1
+        },
+        {
+          "description": "SQ *KIDS DISCOVERY MUSEUM",
+          "merchant_name": null,
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "gifts",
+      "label": "Gifts and birthday parties",
+      "pfc": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES",
+      "per_week": 0.2,
+      "time": [
+        "10:00",
+        "19:00"
+      ],
+      "amount_cents": [
+        1500,
+        4500
+      ],
+      "card_share": 0.9,
+      "month_scale": {
+        "12": 4
+      },
+      "merchants": [
+        {
+          "description": "PARTY CITY 0712",
+          "merchant_name": "Party City",
+          "weight": 1
+        },
+        {
+          "description": "BARNES & NOBLE #2217",
+          "merchant_name": "Barnes & Noble",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "sitter",
+      "label": "Paying Sara back for gas and snacks",
+      "pfc": "TRANSFER_OUT_ACCOUNT_TRANSFER",
+      "per_week": 0.3,
+      "time": [
+        "09:00",
+        "21:00"
+      ],
+      "amount_cents": [
+        2000,
+        5000
+      ],
+      "merchants": [
+        {
+          "description": "VENMO PAYMENT {n10}",
+          "merchant_name": "Venmo",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "personal-care",
+      "label": "Haircuts",
+      "pfc": "PERSONAL_CARE_HAIR_AND_BEAUTY",
+      "per_week": 0.12,
+      "time": [
+        "10:00",
+        "16:00"
+      ],
+      "amount_cents": [
+        2200,
+        6500
+      ],
+      "card_share": 0.8,
+      "merchants": [
+        {
+          "description": "GREAT CLIPS #4410",
+          "merchant_name": "Great Clips",
+          "weight": 1
+        }
+      ]
+    }
+  ],
+  "dependents": [
+    {
+      "id": "maya",
+      "name": "Maya",
+      "grade": "first grade",
+      "school": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "08:15",
+        "end": "15:00",
+        "calendar_source": "google",
+        "calendar_name": "Westbrook Schools calendar",
+        "calendar_added": "2025-08-20",
+        "no_school": [
+          {
+            "date": "2025-11-04",
+            "label": "No school: teacher work day"
+          },
+          {
+            "date": "2025-11-11",
+            "label": "No school: Veterans Day"
+          },
+          {
+            "from": "2025-11-26",
+            "to": "2025-11-28",
+            "label": "No school: Thanksgiving break"
+          },
+          {
+            "from": "2025-12-22",
+            "to": "2026-01-02",
+            "label": "No school: winter break"
+          },
+          {
+            "date": "2026-01-19",
+            "label": "No school: Martin Luther King Jr. Day"
+          },
+          {
+            "date": "2026-02-13",
+            "label": "No school: teacher work day"
+          },
+          {
+            "date": "2026-02-16",
+            "label": "No school: Presidents Day"
+          }
+        ]
+      }
+    }
+  ],
+  "work": {
+    "jobs": [
+      {
+        "id": "job-er",
+        "employer": "St. Brigid Medical Center",
+        "position": "Registered nurse, emergency department",
+        "place": "work",
+        "timeline_label": "Night shift, ER",
+        "source": "schedule",
+        "overtime_threshold_hours": 40,
+        "overtime_multiplier": 1.5,
+        "workweek_starts": "Sun",
+        "ready_minutes": 30,
+        "pattern": {
+          "type": "rotation",
+          "anchor": "2025-10-05",
+          "cycle_days": 14,
+          "on": [
+            0,
+            3,
+            4,
+            8,
+            10,
+            11
+          ],
+          "start": "19:00",
+          "end": "07:30",
+          "break_minutes": 30,
+          "extra_chance": 0.25
+        },
+        "posting": {
+          "block_days": 28,
+          "anchor": "2025-10-05",
+          "posted_days_ahead": 21,
+          "time": "10:00"
+        },
+        "cancel_rate": 0.03,
+        "cancel_note": "Called off, low census",
+        "sick_rate": 0.01,
+        "sent_home_rate": 0.02,
+        "stay_late_rate": 0.3
+      }
+    ]
+  },
+  "health": {
+    "goals": {
+      "workouts_per_week": 2,
+      "sleep_hours": 7
+    },
+    "steps": {
+      "work": [
+        12000,
+        16500
+      ],
+      "class": [
+        7000,
+        10000
+      ],
+      "free": [
+        4500,
+        9000
+      ]
+    },
+    "resting_heart_rate": 61,
+    "nutrition": {
+      "enabled": false
+    }
+  },
+  "routines": [
+    {
+      "id": "sleep",
+      "activity": "sleep",
+      "label": "Sleep",
+      "records_as": "health_sleep",
+      "variance_minutes": 30,
+      "late_night_rate": 0.08,
+      "early_before": "09:00",
+      "windows": [
+        {
+          "id": "school-night",
+          "day_type": "early_next_day",
+          "start": "22:30",
+          "end": "06:40",
+          "firmness": "usual"
+        },
+        {
+          "id": "free-night",
+          "day_type": "free_next_day",
+          "start": "23:00",
+          "end": "07:30",
+          "firmness": "loose"
+        },
+        {
+          "id": "after-nights",
+          "day_type": "after_night_shift",
+          "start": "08:30",
+          "end": "14:15",
+          "firmness": "firm"
+        }
+      ]
+    },
+    {
+      "id": "dropoff",
+      "activity": "care",
+      "label": "School drop-off",
+      "records_as": "none",
+      "timeline": "routine",
+      "keep_rate": 1.0,
+      "ready_minutes": 10,
+      "windows": [
+        {
+          "id": "weekday-morning",
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "07:50",
+          "end": "08:20",
+          "firmness": "fixed"
+        }
+      ],
+      "exceptions": [
+        {
+          "type": "school_days_only",
+          "dependent": "maya",
+          "label": "No school"
+        },
+        {
+          "type": "after_night_shift",
+          "label": "Dan does drop-off after her night shifts"
+        }
+      ],
+      "source_memory": "m-dan-dropoff"
+    },
+    {
+      "id": "pickup",
+      "activity": "care",
+      "label": "School pickup",
+      "records_as": "none",
+      "timeline": "routine",
+      "keep_rate": 1.0,
+      "ready_minutes": 10,
+      "windows": [
+        {
+          "id": "weekday-afternoon",
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "14:45",
+          "end": "15:15",
+          "firmness": "fixed"
+        }
+      ],
+      "exceptions": [
+        {
+          "type": "school_days_only",
+          "dependent": "maya",
+          "label": "No school"
+        }
+      ],
+      "source_memory": "m-day-sleep"
+    },
+    {
+      "id": "gym",
+      "activity": "workout",
+      "label": "Gym",
+      "where": "gym",
+      "records_as": "health_workout",
+      "keep_rate": 0.72,
+      "duration_minutes": [
+        45,
+        60
+      ],
+      "ready_minutes": 10,
+      "windows": [
+        {
+          "id": "tue-sat-morning",
+          "days": [
+            "Tue",
+            "Sat"
+          ],
+          "start": "08:30",
+          "end": "10:30",
+          "firmness": "usual"
+        }
+      ],
+      "exceptions": [
+        {
+          "type": "after_night_shift",
+          "label": "Not after a night shift"
+        }
+      ],
+      "workout_types": {
+        "Functional Strength Training": 2,
+        "Indoor Cycle": 1
+      },
+      "source_memory": "m-gym"
+    },
+    {
+      "id": "sunday-dinner",
+      "activity": "family",
+      "label": "Sunday dinner at her parents'",
+      "where": "family",
+      "records_as": "calendar_recurring",
+      "calendar_title": "Dinner at Mom and Dad's",
+      "keep_rate": 0.85,
+      "windows": [
+        {
+          "id": "sun-dinner",
+          "days": [
+            "Sun"
+          ],
+          "start": "16:00",
+          "end": "18:00",
+          "firmness": "firm"
+        }
+      ],
+      "source_memory": "m-sunday-dinner"
+    },
+    {
+      "id": "groceries",
+      "activity": "groceries",
+      "label": "Weekly family shop",
+      "where": "out",
+      "records_as": "bank",
+      "keep_rate": 0.8,
+      "duration_minutes": [
+        50,
+        80
+      ],
+      "timeline": "none",
+      "windows": [
+        {
+          "id": "sat-late-morning",
+          "days": [
+            "Sat"
+          ],
+          "start": "10:45",
+          "end": "12:30",
+          "firmness": "usual"
+        }
+      ]
+    }
+  ],
+  "real_life": {
+    "events": [
+      {
+        "id": "ev-dan-trip-nov",
+        "title": "Dan: Columbus (work)",
+        "start": "2025-11-17",
+        "end": "2025-11-21",
+        "state": "other",
+        "place": null,
+        "source": "google",
+        "timeline": false,
+        "created_days_before": 20
+      },
+      {
+        "id": "ev-maya-sara-nov",
+        "title": "Maya sleeps at Sara's",
+        "start": "2025-11-19T18:00",
+        "end": "2025-11-20T08:15",
+        "state": "care",
+        "source": "google",
+        "timeline": false,
+        "created_days_before": 10
+      },
+      {
+        "id": "ev-dan-trip-dec",
+        "title": "Dan: Atlanta (work)",
+        "start": "2025-12-08",
+        "end": "2025-12-12",
+        "state": "other",
+        "place": null,
+        "source": "google",
+        "timeline": false,
+        "created_days_before": 25
+      },
+      {
+        "id": "ev-maya-sara-dec",
+        "title": "Maya sleeps at Sara's",
+        "start": "2025-12-10T18:00",
+        "end": "2025-12-11T08:15",
+        "state": "care",
+        "source": "google",
+        "timeline": false,
+        "created_days_before": 12
+      },
+      {
+        "id": "ev-maya-checkup",
+        "title": "Maya's checkup",
+        "start": "2025-12-16T15:40",
+        "end": "2025-12-16T16:30",
+        "state": "appointment",
+        "place": "out",
+        "source": "google",
+        "created_days_before": 45
+      },
+      {
+        "id": "ev-christmas",
+        "title": "Christmas at Mom and Dad's",
+        "start": "2025-12-25T11:00",
+        "end": "2025-12-25T18:00",
+        "state": "with people",
+        "place": "family",
+        "source": "google",
+        "created_days_before": 30
+      },
+      {
+        "id": "ev-recital",
+        "title": "Maya's school winter show",
+        "start": "2025-12-18T18:00",
+        "end": "2025-12-18T19:00",
+        "state": "with people",
+        "place": "school",
+        "source": "google",
+        "created_days_before": 21
+      },
+      {
+        "id": "ev-swim",
+        "title": "Maya: swim lesson",
+        "start": "16:15",
+        "end": "17:00",
+        "repeat": {
+          "days": [
+            "Thu"
+          ],
+          "from": "2025-09-04"
+        },
+        "state": "care",
+        "place": "pool",
+        "source": "google",
+        "created_days_before": 10
+      },
+      {
+        "id": "ev-conference",
+        "title": "Parent-teacher conference",
+        "start": "2025-11-20T15:30",
+        "end": "2025-11-20T15:50",
+        "state": "appointment",
+        "place": "school",
+        "source": "google",
+        "created_days_before": 14
+      },
+      {
+        "id": "ev-party-1",
+        "title": "Birthday party for Maya's friend",
+        "start": "2025-11-08T13:00",
+        "end": "2025-11-08T15:00",
+        "state": "with people",
+        "place": "out",
+        "source": "google",
+        "created_days_before": 12
+      },
+      {
+        "id": "ev-party-2",
+        "title": "Birthday party for Maya's friend",
+        "start": "2026-01-24T14:00",
+        "end": "2026-01-24T16:00",
+        "state": "with people",
+        "place": "out",
+        "source": "google",
+        "created_days_before": 12
+      },
+      {
+        "id": "ev-staff",
+        "title": "ED staff meeting",
+        "start": "2025-12-03T14:00",
+        "end": "2025-12-03T15:00",
+        "state": "work",
+        "place": "work",
+        "source": "outlook",
+        "created_days_before": 30
+      },
+      {
+        "id": "ev-cpr",
+        "title": "BLS recertification class",
+        "start": "2026-02-10T09:00",
+        "end": "2026-02-10T13:00",
+        "state": "work",
+        "place": "work",
+        "source": "outlook",
+        "created_days_before": 40
+      },
+      {
+        "id": "ev-dentist",
+        "title": "Dentist",
+        "start": "2026-02-05T10:00",
+        "end": "2026-02-05T11:00",
+        "state": "appointment",
+        "place": "out",
+        "source": "google",
+        "created_days_before": 60
+      }
+    ],
+    "nights_out": null,
+    "trips": []
+  },
+  "email": {
+    "address": "dana.r.home@example.com",
+    "per_day": {
+      "promotions": 3.6,
+      "newsletters": 0.5,
+      "social": 0.5,
+      "personal": 0.2,
+      "security": 0.05,
+      "work_other": 0.6,
+      "kid_school": 0.35
+    },
+    "weekend_scale": 0.8
+  },
+  "memories": [
+    {
+      "id": "m-nights",
+      "content": "I work three 12-hour night shifts a week in the ER, 7 PM to 7:30 AM",
+      "category": "fact",
+      "via": "onboarding",
+      "told_at": "2025-09-02T15:10"
+    },
+    {
+      "id": "m-day-sleep",
+      "content": "After a night shift I sleep from about 8:30 to 2:15, then I pick Maya up from school at 3",
+      "category": "routine",
+      "via": "chat",
+      "told_at": "2025-09-02T15:14"
+    },
+    {
+      "id": "m-dan-dropoff",
+      "content": "Dan takes Maya to school the mornings I'm coming off a night shift",
+      "category": "routine",
+      "via": "chat",
+      "told_at": "2025-09-02T15:15"
+    },
+    {
+      "id": "m-sara",
+      "content": "When Dan travels, Maya sleeps at my sister Sara's on my work nights and Sara takes her to school",
+      "category": "routine",
+      "via": "chat",
+      "told_at": "2025-09-14T16:40"
+    },
+    {
+      "id": "m-sara-work",
+      "content": "Sara works days downtown, 8 to 5",
+      "category": "fact",
+      "via": "get-to-know answer",
+      "told_at": "2025-09-14T16:42"
+    },
+    {
+      "id": "m-gym",
+      "content": "Gym Tuesday and Saturday mornings, unless I'm coming off a shift",
+      "category": "routine",
+      "via": "chat",
+      "told_at": "2025-09-20T11:02"
+    },
+    {
+      "id": "m-sunday-dinner",
+      "content": "Sunday dinner at my parents' is a must",
+      "category": "preference",
+      "via": "get-to-know answer",
+      "told_at": "2025-09-21T19:30"
+    },
+    {
+      "id": "m-no-back-to-back",
+      "content": "I never work a night shift without sleeping first. Two nights in a row only with a full day sleep between",
+      "category": "instruction",
+      "via": "chat",
+      "told_at": "2025-10-03T14:20"
+    },
+    {
+      "id": "m-callout-rule",
+      "content": "The unit needs at least 4 hours' notice to call out or swap a shift",
+      "category": "fact",
+      "via": "chat",
+      "told_at": "2025-10-03T14:22"
+    }
+  ]
+}

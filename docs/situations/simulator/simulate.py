@@ -515,6 +515,7 @@ class Sim:
         sc = self.p.get("school")
         self.school = None
         self.term_off = {}
+        self.exam_dates = []
         if not sc:
             return
         term = sc["term"]
@@ -529,7 +530,9 @@ class Sim:
         cancels = {(c["course"], c["date"]): c for c in self.ch("class_cancel")}
         moves = {(c["course"], c["exam"]): c for c in self.ch("exam_move")}
         courses, items, anns = [], [], []
-        base = sc.get("lms_url", "https://canvas.example.com")
+        lms = sc.get("lms", "canvas")
+        base = sc.get("lms_url", f"https://{lms.replace('_', '')}.example.com")
+        src = {"canvas": "canvas", "google_classroom": "google"}.get(lms, "import")
         for ci, c in enumerate(sc["courses"]):
             code, cs = c["code"], slug(c["code"])
             cid = self.claim(f"course-{cs}")
@@ -538,7 +541,8 @@ class Sim:
                 "id": cid, "name": c["name"], "code": code, "term": term.get("name"), "instructor_name": c.get("instructor"),
                 "instructor_email": c.get("instructor_email"), "location": loc,
                 "meeting_info": "; ".join(f"{'/'.join(m['days'])} {m['start']}-{m['end']}" for m in c.get("meetings", [])) or "Online",
-                "grade_weights": c.get("grade_weights"), "source": "canvas", "provider_course_id": str(4100 + ci * 37), "url": f"{base}/courses/{4100 + ci * 37}",
+                "grade_weights": c.get("grade_weights"), "format": c.get("format", "in person"), "credits": c.get("credits"), "source": src,
+                "provider_course_id": str(4100 + ci * 37), "url": f"{base}/courses/{4100 + ci * 37}",
             })
             lo, hi = c.get("grade_pct", [74, 96])
             exam_days = set()
@@ -556,10 +560,11 @@ class Sim:
                     exam_days.add(s.date())
                     row.update({"due_at": self.iso(s), "starts_at": self.iso(s), "ends_at": self.iso(e), "window_opens_at": None, "window_closes_at": None,
                                 "duration_minutes": self.elapsed(s, e), "location": exd.get("location", loc)})
+                    self.exam_dates.append(s.date())
                     if self.d0 <= s.date() < self.d1:
-                        self.cal_row(f"ev-{eid}", f"{code} {ex['title']}", s, e, kind="exam", source="canvas", location=exd.get("location", loc), course_id=cid)
+                        self.cal_row(f"ev-{eid}", f"{code} {ex['title']}", s, e, kind="exam", source=src, location=exd.get("location", loc), course_id=cid)
                         self.claim(f"ev-{eid}")
-                        self.block(s, e, "class", f"{code} {ex['title']}", "campus", f"school.json#{eid}", ready=self.ready)
+                        self.block(s, e, "class", f"{code} {ex['title']}", exd.get("place", "campus"), f"school.json#{eid}", ready=self.ready)
                     due, done_at = s, e
                 else:
                     o, cl = T(exd["opens"]), T(exd["closes"])
@@ -567,6 +572,7 @@ class Sim:
                     row.update({"due_at": self.iso(cl), "starts_at": None, "ends_at": None, "window_opens_at": self.iso(o), "window_closes_at": self.iso(cl),
                                 "duration_minutes": dur, "location": "Online"})
                     due, done_at = cl, None
+                    self.exam_dates.append(cl.date())
                     if cl <= self.now:
                         t = o.replace(hour=max(o.hour, 9), minute=0) if o.hour < 9 else o + mins(30)
                         while t + mins(dur) < cl and not self.is_free(t, t + mins(dur)):
@@ -588,9 +594,11 @@ class Sim:
                     if cc and T(cc["announced_at"]) <= self.now:
                         continue
                     s, e = at(d, m["start"]), at(d, m["end"])
-                    eid = self.claim(f"class-{cs}-{d}")
-                    self.cal_row(eid, f"{code} {c['name']}", s, e, kind="class", source="canvas", location=m.get("location"), course_id=cid)
-                    self.block(s, e, "class", f"{code} {c['name']}", "campus", f"calendar.json#{eid}", ready=self.ready)
+                    eid = self.uid(f"class-{cs}-{d}")
+                    place = m.get("place", "home" if m.get("online") else "campus")
+                    self.cal_row(eid, f"{code} {c['name']}" + (f", {m['label']}" if m.get("label") else ""), s, e, kind="class", source=src,
+                                 location=m.get("location") or ("Online (live)" if m.get("online") else None), course_id=cid)
+                    self.block(s, e, "class", f"{code} {c['name']}" + (f", {m['label']}" if m.get("label") else ""), place, f"calendar.json#{eid}", ready=self.ready)
             # assignments on a cadence, then one-off items
             for rule in c.get("assignments", []):
                 n, d = rule.get("first_number", 1), D(rule["start"])
@@ -638,7 +646,7 @@ class Sim:
                 self.note(c["id"], c["id"])
         items.sort(key=lambda a: (a["due_at"] or "", a["id"]))
         anns.sort(key=lambda a: a["posted_at"])
-        self.school = {"provider": "canvas", "institution": sc.get("institution"), "lms_url": base,
+        self.school = {"provider": lms, "institution": sc.get("institution"), "lms_url": base,
                        "term": {"name": term.get("name"), "start": term["start"], "end": term["end"], "breaks": term.get("breaks", []), "no_class_days": term.get("no_class_days", [])},
                        "courses": courses, "assignments": items, "announcements": anns}
 
@@ -752,6 +760,8 @@ class Sim:
                         notes = "Sent home early"
                     elif y < job.get("sent_home_rate", 0.03) + job.get("stay_late_rate", 0.1):
                         re_ += mins(r.randint(15, 50))
+                    if re_ > self.now:  # still there, staying late
+                        status, re_ = "scheduled", None
                 elif status != "cancelled" and sh["start"] <= self.now:
                     rs = sh["start"] + mins(r.randint(-6, 4))
                 visible = pa <= self.now or sh["start"] <= self.now
@@ -821,6 +831,11 @@ class Sim:
             while s < b:
                 out.append((s, s + timedelta(days=n - 1)))
                 s += timedelta(days=n)
+        elif kind == "monthly":
+            y, m = a.year, a.month
+            while date(y, m, 1) < b:
+                out.append((date(y, m, 1), month_day(y, m, 31)))
+                y, m = (y + 1, 1) if m == 12 else (y, m + 1)
         elif kind == "semimonthly":
             y, m = a.year, a.month
             while date(y, m, 1) < b:
@@ -828,7 +843,7 @@ class Sim:
                 out.append((date(y, m, 16), month_day(y, m, 31)))
                 y, m = (y + 1, 1) if m == 12 else (y, m + 1)
         else:
-            raise SimError(f"pay_period {kind!r} is not weekly, biweekly or semimonthly")
+            raise SimError(f"pay_period {kind!r} is not weekly, biweekly, semimonthly or monthly")
         return out
 
     def pay_hourly(self, job, inc, js):
@@ -1073,7 +1088,18 @@ class Sim:
                     cands.append(t)
                 t += mins(30)
         rng.shuffle(cands)
-        for t in cands[:40]:
+        # people move a habit into time their other habits don't use
+        others = [(x, ow) for x in self.p.get("routines", []) if x["id"] != r["id"] and x["activity"] != "sleep" for ow in x["windows"]]
+
+        def clashes(t):
+            for x, ow in others:
+                for day in (t.date() - DAY, t.date()):
+                    if wd(day) in ow.get("days", []):
+                        a, b = span(day, ow)
+                        if a < t + dur and b > t:
+                            return True
+            return False
+        for t in [c for c in cands if not clashes(c)][:40]:
             if self.is_free(t, t + dur, 10, ignore=("home", "asleep")):
                 return t
         return None
@@ -1098,6 +1124,8 @@ class Sim:
             self.cal_row(rec_id, r.get("calendar_title", r["label"]), s0, e0, source=r.get("calendar_source", "google"),
                          recurrence={"freq": "weekly", "byDay": byday, "interval": 1, "until": None, "skip": None}, created_at=at(self.d0, "10:00") - timedelta(days=120))
         wk = self.d0 - timedelta(days=self.d0.weekday())
+        # Habits hold their rate over weeks: error diffusion with jitter, so the kept share lands near keep_rate.
+        acc = self.R("routine-acc", rid).random()
         while wk < self.d1:
             cands = [(d, w) for d in daterange(wk, wk + timedelta(days=7)) for w in r["windows"] if self.d0 <= d < self.d1 and wd(d) in w["days"]]
             per = r.get("per_week")
@@ -1106,6 +1134,9 @@ class Sim:
                 planned = sorted(rr.sample(cands, chance_round(rr, per)), key=lambda x: (x[0], x[1].get("id", "")))
             else:
                 planned = cands
+            if r.get("cram_days") and act == "study":
+                cram = [(d, w) for d, w in cands if any(0 < (x - d).days <= r["cram_days"] for x in self.exam_dates)]
+                planned = sorted({(d, w.get("id")): (d, w) for d, w in planned + cram}.values(), key=lambda x: (x[0], x[1].get("id", "")))
             for d, w in planned:
                 ws, we = span(d, w)
                 place = w.get("where", r.get("where"))
@@ -1143,7 +1174,12 @@ class Sim:
                     self.block(ws, we, state, r["label"], None, ref_mem)
                     continue
                 keep = r.get("keep_rate", FIRMNESS.get(w.get("firmness", "usual"), 0.78))
-                roll = ro.random()
+                acc += keep + ro.uniform(-0.25, 0.25)
+                if acc >= 1:
+                    acc -= 1
+                    roll = 0.0
+                else:
+                    roll = keep + (1 - keep) * ro.random()
                 s = None
                 if rec == "calendar_recurring":
                     outcome = "kept" if roll < keep else "skipped"
@@ -1280,7 +1316,7 @@ class Sim:
                 self.block(bed, wake, "asleep", "Asleep" if kind == "main" else "Asleep after the night shift", "home", f"health.json#{sid}")
                 if wake.date() >= self.d0:
                     off = max(abs((bed - ps).total_seconds()), abs((wake - pe).total_seconds())) / 60
-                    outcome = "kept" if off <= 60 else ("excepted" if clamped else "moved")
+                    outcome = "excepted" if clamped else ("kept" if off <= 60 else "moved")
                     log.append({"date": wake.date().isoformat(), "window": w.get("id", w["day_type"]), "outcome": outcome, "start": local(bed), "end": local(wake), "record": sid,
                                 "reason": "a commitment set the time" if outcome == "excepted" else None})
             else:
@@ -1352,11 +1388,12 @@ class Sim:
             for acc, dv in diffs.items():
                 openings[acc] += dv
         else:
-            raise SimError("could not pin the balances in scenario.money; check the persona's spending against its income")
+            raise SimError(f"could not pin the balances in scenario.money (still off by {diffs}); check the persona's spending against its income")
         for acc, how, want in targets:
             a = self.accounts()[acc]
             if a["type"] != "credit" and openings[acc] < 0:
-                raise SimError(f"pinning {acc} to {money(want)} needs a negative opening balance ({money(openings[acc])}); lower spending or raise income in the persona")
+                raise SimError(f"pinning {acc} to {money(want)} would need an opening balance of -{money(openings[acc])}: over this window the persona brings in more than it spends. "
+                               "Raise spending, lower income or savings_plan, shorten history_days, or try another seed")
         self.bank = res
         self.openings = openings
 
@@ -1507,11 +1544,12 @@ class Sim:
                     first_new_price.add(tid)
                 acc = b.get("account", chk)
                 desc = fill(b["description"], r)
+                auth = at(d, b.get("time", "04:00")) + mins(r.randint(0, 90))
+                rid_ = None if b.get("recurring") is False else f"rec-{b['id']}"
                 if b.get("via", "ach") == "card":
-                    auth = at(d, b.get("time", "04:00")) + mins(r.randint(0, 90))
-                    t = add(acc, auth, swipe_post(r, auth, (1, 1)), desc, b.get("merchant_name"), -amt, b["pfc"], 2, base=b["id"], tid=tid, card_like=True, recurring=f"rec-{b['id']}")
+                    t = add(acc, auth, swipe_post(r, auth, (1, 1)), desc, b.get("merchant_name"), -amt, b["pfc"], 2, base=b["id"], tid=tid, card_like=True, recurring=rid_)
                 else:
-                    t = add(acc, at(d, "06:00"), next_business(d), desc, b.get("merchant_name"), -amt, b["pfc"], 1, base=b["id"], tid=tid, recurring=f"rec-{b['id']}")
+                    t = add(acc, at(d, "06:00"), next_business(d), desc, b.get("merchant_name"), -amt, b["pfc"], 1, base=b["id"], tid=tid, recurring=rid_)
                 rec_charges[b["id"]].append(t)
                 if tid:
                     self.note(tid, tid)
@@ -1519,8 +1557,12 @@ class Sim:
             sp = P.get("savings_plan")
             if sp:
                 hit = (sp.get("on") == "payday" and any(dep["date"] == d and dep["acc"] == sp["from"] for dep in self.deposits)) or (sp.get("on") == "monthly" and d.day == sp.get("day", 1))
-                if hit and authbal[sp["from"]] - sp["amount_cents"] >= sp.get("skip_if_below_cents", 0):
-                    self.transfer(add, sp["from"], sp["to"], d, sp["amount_cents"], "savings")
+                if hit:
+                    k = ("save", d.isoformat())
+                    do = frozen[k] if frozen and k in frozen else authbal[sp["from"]] - sp["amount_cents"] >= sp.get("skip_if_below_cents", 0)
+                    rec[k] = do
+                    if do:
+                        self.transfer(add, sp["from"], sp["to"], d, sp["amount_cents"], "savings")
             for t in self.trip_buys:
                 if T(t["booked_at"]).date() == d:
                     pu = t["purchase"]
@@ -1607,9 +1649,9 @@ class Sim:
             for t in bucket[d]:
                 posted[t["acc"]] += -t["amount"] if credit(t["acc"]) else t["amount"]
             fee = bank_cfg.get("overdraft_fee_cents", 0)
-            if chk and posted[chk] < 0 and fee and any(t["acc"] == chk and t["amount"] < 0 for t in bucket[d]):
+            if chk and fee:
                 k = ("overdraft", d.isoformat())
-                do = frozen.get(k, True) if frozen else True
+                do = frozen.get(k, False) if frozen is not None else (posted[chk] < 0 and any(t["acc"] == chk and t["amount"] < 0 for t in bucket[d]))
                 rec[k] = do
                 if do:
                     t = add(chk, at(d, "23:30"), d, "OVERDRAFT FEE", None, -fee, "BANK_FEES_OVERDRAFT_FEES", 3, base="overdraft-fee")
@@ -1685,6 +1727,8 @@ class Sim:
             return wd(d) == b["weekday"]
         if f == "biweekly":
             return (d - D(b["anchor"])).days % 14 == 0
+        if f == "dates":
+            return d.isoformat() in b["dates"]
         if f == "quarterly":
             return d.month % 3 == b.get("month_offset", 0) and d == month_day(d.year, d.month, b["day"])
         raise SimError(f"bill {b['id']}: unknown frequency {f!r}")
@@ -1696,6 +1740,8 @@ class Sim:
         if kind == "salary":
             for ps, pe in self.pay_periods(inc, d - timedelta(days=40), d + timedelta(days=40)):
                 pay = prev_business(pe + timedelta(days=inc.get("days_after_period_end", 0)))
+                if inc.get("pay_day"):
+                    pay = prev_business(month_day(ps.year, ps.month, inc["pay_day"]))
                 if pay == d:
                     per_year = {"weekly": 52, "biweekly": 26, "semimonthly": 24, "monthly": 12}[inc["pay_period"]]
                     gross = half_up(Fraction(inc["annual_cents"], per_year))
@@ -1742,7 +1788,7 @@ class Sim:
                 status = "paid" if paid <= self.today else ("overdue" if due < self.today else "open")
                 if d >= self.d0 - timedelta(days=60):
                     out.append({"id": iid, "client": cl["name"], "issued_on": d.isoformat(), "due_on": due.isoformat(), "amount_cents": amt, "status": status,
-                                "paid_on": paid.isoformat() if status == "paid" else None, "deposit_transaction_id": f"tx-{paid}-{slug(cl['name'])}" if status == "paid" else None,
+                                "paid_on": paid.isoformat() if status == "paid" else None, "deposit_transaction_id": f"tx-{paid}-{iid}" if status == "paid" else None,
                                 "_paid": paid if status == "paid" and paid >= self.d0 else None})
                 d += timedelta(days=cl.get("every_days", 30))
                 n += 1
@@ -1818,7 +1864,7 @@ class Sim:
         recurring = []
         for b in res["bills"]:
             charges = [t for t in res["rec_charges"].get(b["id"], []) if t["auth"] <= self.now]
-            if len(charges) < 2 and not b.get("known"):
+            if (len(charges) < 2 and not b.get("known")) or b.get("recurring") is False:
                 continue
             amt = b["amount_cents"]
             for c in sorted(res["prices"].get(b["id"], []), key=lambda c: c["from"]):

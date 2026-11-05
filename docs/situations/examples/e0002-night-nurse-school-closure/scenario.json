@@ -1,0 +1,159 @@
+{
+  "id": "e0002-night-nurse-school-closure",
+  "title": "School closes the morning after a night shift, with another night shift to follow",
+  "persona": "p0002-night-nurse-parent",
+  "now": "2026-01-14T16:30",
+  "history_days": 90,
+  "future_days": 60,
+  "seed": 7202,
+  "changes": [
+    {
+      "id": "x-dan-told",
+      "type": "memory",
+      "content": "Dan is in Denver for work from Monday Jan 12 to Friday Jan 16",
+      "category": "temporary",
+      "via": "chat",
+      "told_at": "2026-01-08T20:45",
+      "expires_at": "2026-01-17T00:00"
+    },
+    {
+      "id": "x-dan-trip",
+      "type": "calendar_event",
+      "title": "Dan: Denver (work)",
+      "start": "2026-01-12",
+      "end": "2026-01-17",
+      "state": "other",
+      "place": null,
+      "source": "google",
+      "timeline": false,
+      "created_at": "2025-12-29T19:00"
+    },
+    {
+      "id": "x-maya-sara",
+      "type": "calendar_event",
+      "title": "Maya sleeps at Sara's",
+      "start": "2026-01-14T18:00",
+      "end": "2026-01-15T08:15",
+      "state": "care",
+      "source": "google",
+      "timeline": false,
+      "created_at": "2026-01-09T21:10"
+    },
+    {
+      "id": "x-maya-sara-thu",
+      "type": "calendar_event",
+      "title": "Maya sleeps at Sara's",
+      "start": "2026-01-15T18:00",
+      "end": "2026-01-16T08:15",
+      "state": "care",
+      "source": "google",
+      "timeline": false,
+      "created_at": "2026-01-09T21:11"
+    },
+    {
+      "id": "x-closure-email",
+      "type": "email",
+      "at": "2026-01-14T16:05",
+      "sender_type": "school_district",
+      "sender_name": "Westbrook Schools",
+      "from_address": "district-alerts@example.com",
+      "subject": "All Westbrook schools are closed Thursday, January 15, for the winter storm"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-closure",
+      "check": "collision",
+      "what": "School is closed tomorrow, Thursday Jan 15. Maya sleeps at Sara's tonight and was going to school from there, but Sara works days and Dan is in Denver until Friday. Nobody has Maya from 8 AM Thursday, the hours Dana sleeps between tonight's shift and Thursday night's.",
+      "by_when": "2026-01-14T17:30",
+      "facts": [
+        "x-closure-email",
+        "x-maya-sara",
+        "m-sara-work",
+        "x-dan-told",
+        "x-dan-trip",
+        "shift-er-2026-01-14",
+        "shift-er-2026-01-15",
+        "m-day-sleep"
+      ]
+    },
+    {
+      "id": "n-rest",
+      "check": "rest",
+      "what": "If she keeps Maya on Thursday, she goes from waking at 6:25 AM Wednesday through Thursday's night shift to Friday 7:30 AM without real sleep, about 49 hours, against her own rule to sleep between nights.",
+      "by_when": "2026-01-14T17:30",
+      "facts": [
+        "sleep-2026-01-14",
+        "shift-er-2026-01-14",
+        "shift-er-2026-01-15",
+        "m-no-back-to-back"
+      ]
+    }
+  ],
+  "best_fix": {
+    "action": "draft for them",
+    "needs_user": true,
+    "send_at": "2026-01-14T16:35",
+    "what": "Right away, one message with the trace (school closed tomorrow, Maya at Sara's tonight, Sara works days, Dan away until Friday, her day sleep before Thursday night's shift) and three drafts she can send herself: to her parents asking whether Maya can spend Thursday with them, to Sara asking whether she can keep Maya Thursday morning, and to the charge nurse giving up Thursday night's shift, which still has more than 4 hours' notice. Dev sends nothing.",
+    "why": "She has about two hours before she leaves for work. At 7:30 AM tomorrow, coming off the shift, she would have no options left. Tonight's shift can't be dropped with under 4 hours' notice; Thursday night's can, which protects her sleep either way.",
+    "placements": [
+      {
+        "id": "pl-day-sleep",
+        "activity": "sleep",
+        "label": "Day sleep before Thursday night's shift (keep it)",
+        "start": "2026-01-15T08:30",
+        "end": "2026-01-15T14:15"
+      }
+    ]
+  },
+  "must_not": [
+    "contact Sara, her parents or the hospital for her",
+    "assume Dan can fly back early",
+    "assume Sara's office closes for the storm too",
+    "plan for her to stay up with Maya on Thursday after the night shift (she sleeps 8:30 to 2:15 after nights and works again Thursday night)",
+    "offer calling out of tonight's shift as the easy answer (under 4 hours' notice)",
+    "wait until the morning to mention it",
+    "suggest a stranger or a sitter app as if it were settled"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Districts announce storm closures the afternoon before; this one came by email at 4:05 PM.",
+    "Her unit needs 4 hours' notice to call out or swap, as she told Dev.",
+    "Twelve-hour nights with a 30-minute unpaid break; the hourly rate includes the night differential.",
+    "A 24% tax share on her pay for a two-income household.",
+    "Her parents live 20 minutes away and host Sunday dinner, so asking them is reasonable but not assumed."
+  ],
+  "tags": [
+    "school closure",
+    "night shift",
+    "childcare",
+    "late fact",
+    "partner away",
+    "rest",
+    "routine fit",
+    "parent"
+  ],
+  "routine_fit": {
+    "placements": [
+      {
+        "placement": "pl-day-sleep",
+        "routine": "sleep",
+        "window": "after-nights",
+        "fits": true,
+        "note": "Every fix keeps her usual day sleep after the night shift."
+      }
+    ],
+    "tempting": [
+      {
+        "suggestion": "plan for her to stay up with Maya on Thursday after the night shift",
+        "routine": "sleep",
+        "why_wrong": "she sleeps 8:30 to 2:15 after every night shift and works again Thursday night",
+        "facts": [
+          "m-day-sleep",
+          "m-no-back-to-back",
+          "shift-er-2026-01-15"
+        ]
+      }
+    ]
+  }
+}

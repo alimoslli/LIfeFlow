@@ -2,7 +2,9 @@
 
 Updated by the situation writer after every batch. Run `python3 docs/situations/validate.py` for live counts.
 
-**Cases:** 15 (s0001 to s0015, batch 1, 2026-11-05) · **Stay-quiet share:** 4 of 15 (27%) · **Targets:** 30 before Dev's brain is built, 300 before the 10-student test, about a quarter stay-quiet.
+**Cases:** 15 (s0001 to s0015, batch 1, 2026-11-05) · **Stay-quiet share:** 4 of 15 (27%) · **Student share:** 5 of 15 (33%) · **Targets:** 30 before Dev's brain is built, 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
+
+Worked examples (full cases with generated connections, not counted above): `examples/e0001-student-aunt-away-short-before-payday` (community college student who works) and `examples/e0002-night-nurse-school-closure`.
 
 Stay-quiet cases: s0010 (pay $18.40 lower after daylight saving), s0012 (cancelled tutorial, essay already handled by her morning routine), s0013 (sick day covered by paid sick leave), s0014 (food spending spike from hosting Thanksgiving).
 
@@ -30,6 +32,36 @@ A case can carry more than one kind.
 | student (no job) | 1 (s0012) |
 | retired | 0 |
 | between jobs | 0 |
+
+## By kind of student
+
+Target: at least 70% of cases are students (`student` or `student who works`, or a persona with a `student` profile); `validate.py` warns below it. Today 5 of 15 (33%), so the next batches should be almost all students. Generated personas (`simulator/personas.py`) are 70% students by default and carry a profile the validator counts.
+
+| Kind of student | Cases |
+|---|---|
+| student who works | 4 (s0001, s0009, s0011, s0013) |
+| student, no job | 1 (s0012) |
+| community college | 2 (s0001, s0013) |
+| university | 1 (s0009) |
+| grad | 2 (s0011 PhD with a stipend, s0012 master's) |
+| part-time adult learner | 0 |
+| lives with family | 2 (s0001, s0013) |
+| roommates | 2 (s0009, s0012) |
+| international or far from home | 1 (s0012) |
+| dorm | 0 |
+| commuter | 0 |
+| campus job or work-study | 1 (s0011, teaching assistant) |
+| part-time job | 3 (s0001, s0009, s0013) |
+| nearly full-time, gig or two jobs | 0 |
+| student parent | 0 |
+| student athlete | 0 |
+| first-generation | 0 |
+| chronic condition | 1 (s0011) |
+| online, hybrid or night classes | 0 stated |
+| Blackboard, Moodle or Google Classroom | 0 stated |
+| crammer | 0 stated |
+
+Gaps: adult learners, dorm and commuter students, student parents, athletes, first-generation students, gig and nearly full-time work, online and night classes, other school systems, aid and refund dates, tuition due dates, textbook week, finals week, crammers and evening studiers.
 
 ## By check
 

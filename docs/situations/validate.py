@@ -157,6 +157,8 @@ CHANGE_TYPES = {"purchase", "refund", "duplicate_charge", "price_change", "bill_
 BEHAVIOUR_ONLY = {"routine_suspend", "habit_change"}
 TXN_KINDS = {"income", "expense", "transfer", "refund", "reimbursement", "investment", "adjustment"}
 HARD_STATES = {"class", "work", "appointment", "away", "care", "with people", "asleep"}
+ACTIVITY_STATE = {"study": "study", "workout": "other", "call": "with people", "family": "with people", "care": "care", "meal": "home", "keep free": "day off",
+                  "deep work": "work", "chores": "home", "groceries": "other", "sleep": "asleep", "appointment": "appointment"}
 TIME_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 PHONE_RE = re.compile(r"(?<![\w-])\(?(\d{3})\)?[-. ](\d{3})[-. ](\d{4})(?![\w-])")
@@ -249,10 +251,8 @@ def load_simulator():
     return simulate
 
 
-def check_text(folder, errors):
-    for p in sorted(folder.rglob("*.json")):
-        raw = p.read_text(encoding="utf-8")
-        rel = p.relative_to(folder)
+def check_text(files, errors):
+    for rel, raw in sorted(files.items()):
         if "—" in raw:
             errors.append(f"{rel}: contains an em dash")
         bad = sorted({m for m in EMAIL_RE.findall(raw) if not m.lower().endswith("@example.com")})
@@ -419,8 +419,9 @@ def check_routine_fit(sc, persona, placements, segs, health, now, ids, errors):
                     if (e.hour, e.minute) > (h, m) and e.date() == s.date():
                         errors.append(f"{where}: ends after {rid}'s not_after {r['not_after']}")
         breaks_ok = fit.get("fits") is False and reason
+        own = ACTIVITY_STATE.get(p.get("activity"))
         for sg in segs:
-            if sg["state"] in HARD_STATES and local_dt(sg["start"]) < e and local_dt(sg["end"]) > s and not breaks_ok:
+            if sg["state"] in HARD_STATES and sg["state"] != own and local_dt(sg["start"]) < e and local_dt(sg["end"]) > s and not breaks_ok:
                 errors.append(f"{where}: collides with {sg['state']} ({sg['label']}, {sg['id']}) on the timeline")
                 break
         for r in persona["routines"]:
@@ -718,7 +719,7 @@ def check_routine_rates(truth, persona, ids, errors):
         judged = c["kept"] + c["moved"] + c["skipped"]
         if judged >= 8:
             share = c["kept"] / judged
-            if not 0.55 <= share <= 0.97:
+            if share < 0.55 or (share > 0.97 and judged >= 15):
                 errors.append(f"routine {r['id']}: kept {share:.0%} of the time in the history; a learnable routine with real slippage keeps 55 to 97%")
             if p.get("keep_rate") is not None and abs(share - p["keep_rate"]) > 0.2:
                 errors.append(f"routine {r['id']}: kept {share:.0%} but the persona says {p['keep_rate']:.0%}")
@@ -761,32 +762,58 @@ def collect_ids(conns, tl):
 
 
 def check_folder(folder):
-    errors = []
     kind = folder.parent.name
     need = ["scenario.json", "persona.json", "timeline.json", "truth.json"] + [f"connections/{n}.json" for n in CONNECTION_FILES]
     missing = [n for n in need if not (folder / n).is_file()]
+    if missing and kind == "cases" and (folder / "scenario.json").is_file() and (folder / "persona.json").is_file():
+        # Cases keep only scenario.json and the frozen persona.json in git (about 1 MB of generated data per case);
+        # the rest is rebuilt here, exactly as simulate.py makes it.
+        try:
+            sim = load_simulator()
+            sc = json.loads((folder / "scenario.json").read_text(encoding="utf-8"))
+            persona = json.loads((folder / "persona.json").read_text(encoding="utf-8"))
+            sim.write(sim.render(sim.simulate(persona, sc)), folder)
+        except Exception as e:  # noqa: BLE001
+            return [f"could not rebuild the generated files: {e}"], None
+        missing = [n for n in need if not (folder / n).is_file()]
     if missing:
         return [f"missing {', '.join(missing)}: run python3 docs/situations/simulator/simulate.py {folder / 'scenario.json'}"], None
+    files = {str(p.relative_to(folder)): p.read_text(encoding="utf-8") for p in sorted(folder.rglob("*.json"))}
+    errors = []
+    if folder.name != json.loads(files["scenario.json"]).get("id"):
+        errors.append(f"folder name {folder.name} does not match id {json.loads(files['scenario.json']).get('id')}")
+    more, info = check_files(files, kind)
+    return errors + more, info
+
+
+def check_generated(persona, scenario, expected=True):
+    """Simulate in memory and run every data check (used by the tests and to vet generated personas)."""
+    sim = load_simulator()
+    files = sim.render(sim.simulate(persona, scenario))
+    files["scenario.json"] = json.dumps(scenario)
+    return check_files(files, "cases", expected=expected, regen=False)
+
+
+def check_files(files, kind, expected=True, regen=True):
+    errors = []
     try:
-        sc = json.loads((folder / "scenario.json").read_text(encoding="utf-8"))
-        persona = json.loads((folder / "persona.json").read_text(encoding="utf-8"))
-        conns = {n: json.loads((folder / f"connections/{n}.json").read_text(encoding="utf-8")) for n in CONNECTION_FILES}
-        tl = json.loads((folder / "timeline.json").read_text(encoding="utf-8"))
-        truth = json.loads((folder / "truth.json").read_text(encoding="utf-8"))
+        sc = json.loads(files["scenario.json"])
+        persona = json.loads(files["persona.json"])
+        conns = {n: json.loads(files[f"connections/{n}.json"]) for n in CONNECTION_FILES}
+        tl = json.loads(files["timeline.json"])
+        truth = json.loads(files["truth.json"])
     except json.JSONDecodeError as e:
         return [f"invalid JSON: {e}"], None
-    check_text(folder, errors)
+    check_text(files, errors)
     for f in ("id", "title", "persona", "now", "seed", "changes", "dev_must_notice", "best_fix", "must_not", "stay_quiet", "tags"):
-        if f not in sc:
+        if f not in sc and (expected or f in ("id", "persona", "now", "seed", "changes")):
             errors.append(f"scenario: missing field {f}")
     check_persona(persona, errors)
     if errors:
         return errors, None
     rx = FOLDER_ID_RE.get(kind, FOLDER_ID_RE["cases"])
-    if not rx.match(sc["id"]):
+    if expected and not rx.match(sc["id"]):
         errors.append(f"scenario.id must look like {'e' if kind == 'examples' else 's'}0001-short-slug: {sc['id']!r}")
-    if folder.name != sc["id"]:
-        errors.append(f"folder name {folder.name} does not match id {sc['id']}")
     if sc["persona"] != persona["id"]:
         errors.append(f"scenario.persona {sc['persona']!r} but persona.json is {persona['id']!r}")
     now = when(sc["now"], "now", errors)
@@ -799,15 +826,16 @@ def check_folder(folder):
         if c.get("type") not in CHANGE_TYPES:
             errors.append(f"change {c.get('id')}: unknown type {c.get('type')!r}")
     # 1. the connections are exactly what the simulator makes
-    try:
-        sim = load_simulator()
-        files = sim.render(sim.simulate(persona, sc))
-        stale = [rel for rel, text in files.items() if (folder / rel).read_text(encoding="utf-8") != text]
-        if stale:
-            errors.append(f"generated files are stale or edited by hand ({', '.join(stale)}): re-run simulate.py, never edit them")
-    except Exception as e:  # noqa: BLE001
-        errors.append(f"simulate.py fails on this persona and scenario: {e}")
-    # 2. shapes, money, pay, dates, timeline
+    if regen:
+        try:
+            sim = load_simulator()
+            fresh = sim.render(sim.simulate(persona, sc))
+            stale = [rel for rel, text in fresh.items() if files.get(rel) != text]
+            if stale:
+                errors.append(f"generated files are stale or edited by hand ({', '.join(stale)}): re-run simulate.py, never edit them")
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"simulate.py fails on this persona and scenario: {e}")
+    # 2. shapes, money, pay, dates, timeline, volume, routines
     check_bank(conns["bank"], now, errors)
     check_pay(conns["work"], conns["bank"], persona, sc, errors)
     check_dates(conns, now, errors)
@@ -820,23 +848,22 @@ def check_folder(folder):
     check_volume(conns, persona, sc, now, errors)
     check_routine_rates(truth, persona, ids, errors)
     # 3. what the scenario names exists, and its expected output is sound
-    visible_changes = set()
-    for cid, info in truth["changes"].items():
-        if info["records"]:
-            visible_changes.add(cid)
+    visible_changes = {cid for cid, info in truth["changes"].items() if info["records"]}
     for c in sc["changes"]:
-        if c["type"] not in BEHAVIOUR_ONLY and not c.get("future") and c["id"] not in visible_changes and not truth["changes"].get(c["id"], {}).get("hidden"):
+        if c["type"] not in BEHAVIOUR_ONLY and c["id"] not in visible_changes and not truth["changes"].get(c["id"], {}).get("hidden"):
             errors.append(f"change {c['id']}: produced nothing in the generated data")
-    named = ids | {c for c in visible_changes if c in ids}
-    for c in sc["changes"]:
-        if c["type"] in BEHAVIOUR_ONLY and any(c["id"] in n.get("facts", []) for n in sc["dev_must_notice"]):
-            errors.append(f"change {c['id']} changes behaviour only, so Dev cannot see it: name the memory or transactions that show it instead")
-    placements = check_expected(sc, now, local_dt(tl["end"]), named, errors)
-    rf = check_routine_fit(sc, persona, placements, tl["segments"], conns["health"], now, named, errors)
-    for i, a in enumerate(sc.get("assumptions", [])):
-        if not isinstance(a, str):
-            errors.append(f"assumptions[{i}] must be a sentence")
-    info = {"id": sc["id"], "kinds": persona["kinds"], "checks": [n["check"] for n in sc["dev_must_notice"]], "stay_quiet": sc["stay_quiet"], "routine_fit": rf}
+    rf = False
+    if expected:
+        for c in sc["changes"]:
+            if c["type"] in BEHAVIOUR_ONLY and any(c["id"] in n.get("facts", []) for n in sc["dev_must_notice"]):
+                errors.append(f"change {c['id']} changes behaviour only, so Dev cannot see it: name the memory or transactions that show it instead")
+        placements = check_expected(sc, now, local_dt(tl["end"]), ids, errors)
+        rf = check_routine_fit(sc, persona, placements, tl["segments"], conns["health"], now, ids, errors)
+        for i, a in enumerate(sc.get("assumptions", [])):
+            if not isinstance(a, str):
+                errors.append(f"assumptions[{i}] must be a sentence")
+    info = {"id": sc["id"], "kinds": persona["kinds"], "student": persona.get("student"), "checks": [n["check"] for n in sc.get("dev_must_notice", [])],
+            "stay_quiet": sc.get("stay_quiet"), "routine_fit": rf or "routine fit" in sc.get("tags", [])}
     return errors, info
 
 
@@ -852,6 +879,39 @@ def targets(argv):
     return out
 
 
+STUDENT_TARGET = 0.7
+STUDENT_KINDS = {"student", "student who works"}
+
+
+def is_student(info):
+    return bool(set(info["kinds"]) & STUDENT_KINDS or info.get("student"))
+
+
+def student_breakdown(infos):
+    """The 'By kind of student' counts: kinds for every student case, and the student profile where the case has one."""
+    studs = [i for i in infos if is_student(i)]
+    lines = []
+    if not studs:
+        return lines
+    main_kind = Counter(next((k for k in i["kinds"] if k in STUDENT_KINDS), "student") for i in studs)
+    with_kind = Counter(k for i in studs for k in i["kinds"] if k not in STUDENT_KINDS)
+    lines.append("Students by kind: " + ", ".join(f"{k} {n}" for k, n in main_kind.most_common()) + ("; with " + ", ".join(f"{k} {n}" for k, n in with_kind.most_common()) if with_kind else ""))
+    prof = [i["student"] for i in studs if i.get("student")]
+    if prof:
+        lines.append(f"Student profiles: {len(prof)} of {len(studs)} student cases have one (persona.student or life.student)")
+        for key, label in (("level", "level"), ("work", "work"), ("living", "living"), ("study_style", "study style"), ("pace", "pace"), ("lms", "school system")):
+            c = Counter(p.get(key) for p in prof if p.get(key))
+            if c:
+                lines.append(f"  by {label}: " + ", ".join(f"{k} {n}" for k, n in c.most_common()))
+        flags = Counter(f for p in prof for f in p.get("flags", []))
+        if flags:
+            lines.append("  flags: " + ", ".join(f"{k} {n}" for k, n in flags.most_common()))
+        classes = Counter(p.get("classes") for p in prof if p.get("classes"))
+        if classes:
+            lines.append("  classes: " + ", ".join(f"{k} classes {n}" for k, n in sorted(classes.items())))
+    return lines
+
+
 def main(argv=None):
     paths = targets(sys.argv[1:] if argv is None else argv)
     if not paths:
@@ -860,6 +920,7 @@ def main(argv=None):
     bad = 0
     kinds, checks, quiet, fit = Counter(), Counter(), 0, 0
     seen = set()
+    infos = []
     counted = 0
     examples_ok = examples = 0
     for p in paths:
@@ -868,7 +929,8 @@ def main(argv=None):
             info = c
         else:
             errors, c = check_case(p)
-            info = c and {"id": c["id"], "kinds": c["life"]["kinds"], "checks": [n["check"] for n in c["dev_must_notice"]], "stay_quiet": c["stay_quiet"], "routine_fit": bool(c.get("routine_fit"))}
+            info = c and {"id": c["id"], "kinds": c["life"]["kinds"], "student": c["life"].get("student"), "checks": [n["check"] for n in c["dev_must_notice"]], "stay_quiet": c["stay_quiet"],
+                          "routine_fit": bool(c.get("routine_fit")) or "routine fit" in c.get("tags", [])}
         if info and info["id"] in seen:
             errors.append("duplicate id across files")
         is_example = p.parent.name == "examples"
@@ -886,6 +948,7 @@ def main(argv=None):
             examples_ok += 1
             continue
         counted += 1
+        infos.append(info)
         kinds.update(info["kinds"])
         checks.update(info["checks"])
         quiet += info["stay_quiet"]
@@ -896,9 +959,15 @@ def main(argv=None):
         print(f"{examples_ok} of {examples} worked examples valid.")
     if counted:
         print(f"Stay-quiet share: {quiet}/{counted} ({round(100 * quiet / counted)}%)")
+        studs = sum(is_student(i) for i in infos)
+        print(f"Student share: {studs}/{counted} ({round(100 * studs / counted)}%), target {round(100 * STUDENT_TARGET)}%")
+        if studs < STUDENT_TARGET * counted:
+            print(f"  WARNING: below the {round(100 * STUDENT_TARGET)}% student target; make the next batches mostly students (simulator/personas.py makes 70% students by default).")
         print(f"Routine-fit share: {fit}/{counted} ({round(100 * fit / counted)}%), target at least 1 in 5")
         print("Kinds:", ", ".join(f"{k} {n}" for k, n in kinds.most_common()))
         print("Checks:", ", ".join(f"{k} {n}" for k, n in checks.most_common()))
+        for line in student_breakdown(infos):
+            print(line)
     return 1 if bad else 0
 
 

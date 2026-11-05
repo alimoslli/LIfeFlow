@@ -9,7 +9,7 @@
     "campus": "campus",
     "work": "the grocery store",
     "gym": "the campus rec center",
-    "out": "out with friends",
+    "out": "town",
     "airport": "the airport"
   },
   "commute_minutes": { "home-campus": 10, "home-work": 15, "campus-work": 15, "home-gym": 10, "gym-campus": 5, "home-out": 20, "out-work": 20, "home-airport": 35 },

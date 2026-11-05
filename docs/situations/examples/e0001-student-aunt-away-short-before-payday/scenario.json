@@ -17,10 +17,93 @@
     { "id": "x-target", "type": "purchase", "at": "2026-11-03T13:22", "account": "acc-checking", "description": "TARGET 00018762 CHICAGO IL", "merchant_name": "Target", "amount_cents": -8517,
       "pfc": "GENERAL_MERCHANDISE_SUPERSTORES", "pending": true }
   ],
-  "dev_must_notice": [],
-  "best_fix": { "what": "tbd", "why": "tbd", "action": "none", "needs_user": false },
-  "must_not": [],
+
+  "dev_must_notice": [
+    { "id": "n-short", "check": "afford",
+      "what": "After $85.17 at Target this afternoon, checking has $40.00 available. The phone bill ($30) and Claude ($20) come out Thursday, Nov 5, and pay lands Friday, Nov 6, so she comes up about $10 short on Thursday, before any coffee or lunch.",
+      "by_when": "2026-11-04T21:00",
+      "facts": ["x-target", "acc-checking", "rec-phone", "rec-claude", "tx-2026-10-23-pay-store", "tx-2026-10-09-pay-store"] },
+    { "id": "n-food", "check": "pattern",
+      "what": "Since Oct 12 she spends about $45 a week more on food: the campus cafeteria went from about $5 to $20 a week, mostly Monday and Wednesday lunches, and fast food from about $35 to $65. It started the day her aunt left and should end when she is back on Nov 22.",
+      "by_when": "2026-11-08T14:00",
+      "facts": ["x-aunt-told", "m-aunt-cooks", "tx-2026-10-12-cafeteria", "tx-2026-10-19-cafeteria", "tx-2026-10-21-cafeteria", "tx-2026-10-26-cafeteria", "tx-2026-10-28-cafeteria", "tx-2026-10-22-eating-out", "tx-2026-10-31-eating-out"] },
+    { "id": "n-december", "check": "heavy stretch",
+      "what": "Dec 1 to 8 holds five midterms (BIO Dec 2, MATH Dec 7 and CHEM Dec 8 in person; PSY and ENG online with open windows), her usual Tuesday and Saturday shifts, and about a week and a half of trip prep before the Dec 10 flight. Her schedule posts two weeks ahead, so the shifts for those weeks land around Nov 15 and Nov 22; until then those nights are unknown, not free.",
+      "by_when": "2026-11-10T20:00",
+      "facts": ["exam-bio-110-midterm-2", "exam-psy-101-midterm-2", "exam-eng-102-midterm-2", "exam-math-151-midterm-2", "exam-chem-101-midterm-2", "x-cairo-trip", "m-trip-prep", "post-store-2026-11-15", "m-study"] }
+  ],
+
+  "best_fix": [
+    { "for": "n-short", "action": "ask", "needs_user": true, "send_at": "2026-11-03T21:30",
+      "what": "Tonight, after her shift: one message with the trace ($85.17 at Target, $40 left, $50 of bills Thursday, pay on Friday) and two taps: [Move $10 from savings] or [Remind me Thursday morning]. The move happens only if she taps it.",
+      "why": "One tap before Thursday avoids a $29 overdraft fee; after Friday's paycheck the gap is gone." },
+    { "for": "n-food", "action": "plan", "needs_user": true, "send_at": "2026-11-08T14:00",
+      "what": "Sunday at 2 PM, before her usual Sunday shop: one cheap meal-prep recipe from a cited source that packs for Monday and Wednesday lunches, a note that home is 10 minutes away on those long breaks, and a 45-minute prep block after the shop. Check back the next Sunday with the real change in food spending.",
+      "why": "The rise has a clear cause and an end date. A plan for the next three weeks fits her goal to cook more and saves about $30 a week without nagging.",
+      "placements": [
+        { "id": "pl-prep", "activity": "meal prep", "label": "Meal prep for Monday and Wednesday lunches", "start": "2026-11-08T17:45", "end": "2026-11-08T18:30" }
+      ] },
+    { "for": "n-december", "action": "plan", "needs_user": true, "send_at": "2026-11-09T19:30",
+      "what": "Flag it now with a plan built backwards from Dec 10: morning study before class in her usual 8 to 9:50 window and on Saturday mornings, both online exams early on rested mornings inside their windows, trip errands on a free Sunday afternoon and packing on the last evening, and a suggestion to ask her manager for lighter shifts Dec 1 to 9 before that schedule posts around Nov 22. Replan when each schedule lands.",
+      "why": "Five exams, two shifts a week and trip prep land in the same nine days. Asking for lighter shifts only works before the schedule posts, and her mornings are where she actually studies.",
+      "placements": [
+        { "id": "pl-bio-1", "activity": "study", "label": "BIO 110 review, first pass", "start": "2026-11-25T08:10", "end": "2026-11-25T09:45" },
+        { "id": "pl-bio-2", "activity": "study", "label": "BIO 110 review", "start": "2026-11-30T08:10", "end": "2026-11-30T09:50" },
+        { "id": "pl-psy", "activity": "exam", "label": "PSY 101 Midterm 2, online, 60 minutes", "start": "2026-12-01T08:10", "end": "2026-12-01T09:10" },
+        { "id": "pl-bio-3", "activity": "study", "label": "BIO 110 last look before the 10 AM exam", "start": "2026-12-02T08:10", "end": "2026-12-02T09:30" },
+        { "id": "pl-eng", "activity": "exam", "label": "ENG 102 Midterm 2, online, 90 minutes", "start": "2026-12-03T08:10", "end": "2026-12-03T09:40" },
+        { "id": "pl-math-1", "activity": "study", "label": "MATH 151 review", "start": "2026-12-04T08:10", "end": "2026-12-04T09:50" },
+        { "id": "pl-math-2", "activity": "study", "label": "MATH 151 and CHEM 101 practice problems", "start": "2026-12-05T09:35", "end": "2026-12-05T11:50" },
+        { "id": "pl-errands", "activity": "trip prep", "label": "Trip errands: gifts, adapter, pharmacy", "start": "2026-12-06T13:00", "end": "2026-12-06T15:30" },
+        { "id": "pl-math-3", "activity": "study", "label": "MATH 151 last review", "start": "2026-12-07T08:10", "end": "2026-12-07T09:50" },
+        { "id": "pl-chem", "activity": "study", "label": "CHEM 101 last review", "start": "2026-12-08T08:10", "end": "2026-12-08T09:50" },
+        { "id": "pl-pack", "activity": "trip prep", "label": "Pack and check in for the flight", "start": "2026-12-09T19:00", "end": "2026-12-09T21:00" }
+      ] }
+  ],
+
+  "routine_fit": {
+    "placements": [
+      { "placement": "pl-prep", "routine": null, "fits": true, "note": "No routine for cooking; it sits after her Sunday shop and before her call with Mom." },
+      { "placement": "pl-bio-1", "routine": "study", "window": "before-class", "fits": true, "note": "Her usual weekday morning slot, during Thanksgiving break." },
+      { "placement": "pl-bio-2", "routine": "study", "window": "before-class", "fits": true },
+      { "placement": "pl-psy", "routine": "study", "window": "before-class", "fits": true, "note": "A rested morning inside the exam window, not after a shift." },
+      { "placement": "pl-bio-3", "routine": "study", "window": "before-class", "fits": true },
+      { "placement": "pl-eng", "routine": "study", "window": "before-class", "fits": true, "note": "First morning of the window, so the weekend stays free for MATH and CHEM." },
+      { "placement": "pl-math-1", "routine": "study", "window": "before-class", "fits": true },
+      { "placement": "pl-math-2", "routine": "study", "window": "sat-morning", "fits": true, "note": "Before a Saturday shift, if one is posted." },
+      { "placement": "pl-errands", "routine": null, "fits": true, "note": "After her kept-free Sunday morning, before her usual shop." },
+      { "placement": "pl-math-3", "routine": "study", "window": "before-class", "fits": true },
+      { "placement": "pl-chem", "routine": "study", "window": "before-class", "fits": true },
+      { "placement": "pl-pack", "routine": null, "fits": true, "note": "Packing is not study, so an evening is fine; classes are over for the term." }
+    ],
+    "tempting": [
+      { "suggestion": "put study blocks in her free weekday evenings", "routine": "study", "why_wrong": "she studies mornings before class and never after 1 PM", "facts": ["m-study", "study-2026-11-03"] },
+      { "suggestion": "plan study on a Sunday morning", "routine": "keep-free", "why_wrong": "Sunday mornings are hers", "facts": ["m-sunday-free"] },
+      { "suggestion": "schedule anything on Sunday evening", "routine": "call-mom", "why_wrong": "she calls her mom then", "facts": ["m-call-mom", "ev-call-mom"] },
+      { "suggestion": "suggest a second workout on a day she already went at 7 AM", "routine": "gym", "why_wrong": "she goes Monday, Wednesday and Friday at 7, once", "facts": ["m-gym", "wk-2026-11-02"] }
+    ]
+  },
+
+  "must_not": [
+    "count Friday's paycheck as money she has",
+    "move money between her accounts on its own",
+    "treat the higher food spending as permanent (her aunt is back Nov 22)",
+    "comment on her weight, her body or what she eats",
+    "put study blocks in her free weekday evenings (she studies mornings only, never after 1 PM)",
+    "plan study on a Sunday morning (kept free)",
+    "schedule anything on Sunday evening (her call with Mom)",
+    "suggest a second workout on a day she already went at 7 AM",
+    "treat the unposted December shifts as free nights",
+    "assume a fixed number of study hours per exam",
+    "send all three messages on the same day"
+  ],
   "stay_quiet": false,
-  "assumptions": [],
-  "tags": []
+  "assumptions": [
+    "The college's fall term ends Dec 9, with the second midterms from Dec 1 to Dec 8.",
+    "The grocery store posts schedules two weeks ahead, on Sunday afternoons.",
+    "A 9.5% tax share covers federal, state and FICA withholding on a part-time student job.",
+    "An overdraft costs $29 at her credit union.",
+    "Her aunt gets $150 on the 1st for groceries and utilities, and her parents send money by Zelle around the 1st."
+  ],
+  "tags": ["aunt away", "cafeteria", "payday gap", "trip shadow", "midterms", "unposted schedule", "routine fit", "student"]
 }

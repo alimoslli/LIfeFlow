@@ -11,3 +11,5 @@ next-env.d.ts
 *.md
 *.sql
 src/server/jarvis/skills/index.generated.ts
+# The situation library: cases, personas and simulator output (docs/situations/simulator/simulate.py writes these)
+docs/situations/**/*.json

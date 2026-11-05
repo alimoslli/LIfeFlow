@@ -46,3 +46,9 @@ next-env.d.ts
 # Python (situation simulator)
 __pycache__/
 *.pyc
+
+# Situation cases: only scenario.json and persona.json are committed; validate.py and simulate.py rebuild the rest
+# (worked examples in docs/situations/examples/ keep every file).
+docs/situations/cases/*/connections/
+docs/situations/cases/*/timeline.json
+docs/situations/cases/*/truth.json
