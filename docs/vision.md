@@ -155,7 +155,7 @@ The owner's example, with the dots it connects:
 - **"Just so you know":** nothing to do, just useful. "Your Spotify went up $2." "Three nights under 6 hours, exam Friday."
 - **"Want me to fix it?":** the meal prep, moving study time, setting money aside.
 
-The **Updates** page next to the chat becomes this feed: everything Dev noticed, with at most one push notification a day for what really matters.
+The **Updates** page next to the chat becomes this feed: everything Dev noticed, and push notifications carry what Dev noticed to the person (owner, 2026-11-05: notifications are how Dev brings people back every day; see "Decided from research" 5).
 
 ### Knowing what helps and what doesn't
 
@@ -309,7 +309,7 @@ From `docs/research/2026-11-05-what-people-love-and-hate.md`. The owner approved
 2. **Checking back is the weekly habit** (medium, step 3). Where money apps die, LifeFlow earns month two. **Done means:** every fix Dev makes or suggests gets one follow-up (default seven days later) with the real number from data: "$35 less on food this week", "you kept 3 of 4 study blocks". If the data can't support a number, Dev says what it saw or stays quiet. Never a guess. Follow-ups show on the line and in Updates; the user can turn them off. Tests: a detector, its wording, and a stay-quiet case. **Measure:** share of users active in week five who got at least one check-back.
 3. **Shifts are the fastest thing to add in the market** (medium, step 2). The hook for working students. **Done means:** a photo or screenshot of a schedule becomes shifts on the calendar in one step, with a confirm card listing each shift (day, start, end, place) and Undo; common formats work (a grid, a list, a scheduling app's screen); an uncertain read asks instead of guessing; a schedule is never filed as money; "I got a shift Friday, 4 to 10" by text or voice works too; Dev re-checks the week the moment shifts land (collisions, pay estimate). Tests: five schedule screenshot fixtures, no invented shifts. **Measure:** share of new users who add a shift in their first session; photo to saved shifts under 30 seconds.
 4. **One plain price** (small, before the 10-student test). A promise none of the money apps can make. **Rules:** one price and one student rate; never a sliding scale; never core features moved behind a new tier after launch; cancel in one tap inside the app (with exact steps when the subscription is through Apple or Google); a reminder a week before every renewal with a one-tap cancel; never bill after a cancel. The pricing page says all of it. Tests: the billing state machine, the reminder, the cancel path on web and iPhone. **Measure:** refund requests and store reviews that mention billing.
-5. **Notification discipline, measured** (small to medium, before the 10-student test). Canvas is the cautionary tale. **Done means:** at most one push a day by default, with a short list of exceptions that can't wait (a bill today that would overdraw, a shift starting within the hour, a changed exam time); every push says in one line why it was sent; school notices quiet by default; each push records opened, ignored or dismissed, per kind; Dev sends less of a kind the user ignores; "why did I get this" and "mute this kind" are one tap. Tests: the daily limit, the why line, quiet hours. **Measure:** notification opt-out rate, and the ignore rate per kind.
+5. **Notifications that bring people back every day** (owner, 2026-11-05; this replaces "one push a day"). Other planners get forgotten; notifications are how LifeFlow doesn't. The app runs on its connections, so a push never asks the person to log or type anything in. It gives them feedback on their life: what Dev noticed, what won't work in their schedule, a heads-up, a fix waiting for their yes. **Done means:** every push says in one line what Dev noticed and why, with the fix or the next step; no guilt words ("slipping", "you missed", "you failed"), but being off track for a goal is said plainly, with a way back; quiet hours respected; each push records opened, acted on, ignored or dismissed, per kind; Dev sends more of the kinds this person acts on and less of the ones they ignore; "why did I get this" and "mute this kind" are one tap. Kinds to design creatively and test: today's collisions in the morning, "I fixed this, Undo", money landed or on its way, the week ahead, on or off track for a goal, the schedule posted against the usual work days. **Measure:** the share of people who open the app every day, the act-on rate per kind, and the opt-out rate.
 
 Numbers 4 and 5 are small, and the 10-student test will exercise both, so they come first.
 
@@ -380,9 +380,14 @@ Still open:
 
 4. **The Money lock:** money goals sit behind the Money lock today. How do connected insights that touch money show when the lock is on? Suggested: with the lock on, Dev still uses money data, but notifications and cards don't show amounts ("Dev has a money heads-up") until the user unlocks. Lock-screen notifications can be read by anyone holding the phone.
 
-5. **What a student gets free** (research round 2, proposal 2). ChatGPT now links a bank for free in the US, and Google's Daily Brief is free for personal accounts. LifeFlow Free today is typing things in plus 15 messages a day (ADR 0018). Options: (a) a free first term for verified students with every connection; (b) free school and work connections (Canvas feed, a calendar, shifts from a photo), bank sync paid; (c) keep ADR 0018. Research recommends (a) or (b).
+Decided by the owner (2026-11-05, research round 2):
 
-Waiting for the owner's yes (research round 2, `build now`): money on its way (aid refunds, stipends, paychecks shown as expected, never counted); the student week check (time and sleep, 14 days ahead); "ask before the schedule drops" (exam dates to the manager before the schedule comes out); coming back is never punished; school accounts with no admin needed.
+5. **Price:** $9.99 a month; students $5.99 a month. No free first term.
+6. **Yes, build:** money on its way (aid refunds, stipends, paychecks shown as expected, dotted, never counted); the student week check (time and sleep, 14 days ahead, a plan for the week that won't fit).
+7. **No to "ask before the schedule drops".** Instead, **usual work days**: everyone who works while in school has an availability sheet. Dev asks once when the person usually works (or learns it from past shifts) and always has an idea of their work week before the schedule is posted, shown as expected work and never counted as pay. Example, the owner: works Friday to Monday, classes Tuesday and Thursday, Wednesday off, with extra things added on top. Shifts are the one thing a person may still type in; we keep finding ways to connect them (schedule emails in Gmail or Outlook, schedule apps).
+8. **Yes to school accounts with no admin needed,** and people can add school and bank accounts by hand when their bank isn't on Plaid or their school isn't Canvas or Teams (Teams is coming).
+9. **Goals:** Dev tells people plainly when they're off track for a goal they set, with a way back. Never the word "slipping".
+10. **Notifications are the engine,** not the problem: see "Decided from research" 5.
 
 ## 16. The honest hard parts
 
@@ -533,3 +538,13 @@ The hours a person actually lives (asleep, class, work, home, with people, a day
 ### Mostly students (2026-11-05)
 
 > for all the next sets of data, I want 70% of the data. The default of them, they are students. The amount of classes and assignments does change, plus everything else, but they are students.
+
+### Notifications, work days, price, goals (2026-11-05)
+
+> push notifications, they're not telling us to log stuff. No, we don't, like, the app is perfectly operatable without the user. The user is only there to fix his own life, like to see what the personal assistant suggests as a fix, and he's there to approve the fix on his calendar and his timeline. But push notifications are not the problem. Nope, we need push notifications to give the user feedback on his life, on what was noticed, what is like not gonna work in his schedule, like, and just heads up and stuff, more like that. We have to think very creatively with the notifications to bring back those customers and users every day to our app and not forget it like those other planners. I think the target is with the notifications. It's not with the with stopping the notifications.
+
+> I agree on one and two, but three is a no, because everyone that has a job in school already has like an availability sheet, which is something we can maybe ask the user on when does he usually work, so that the app would know before we would like send the schedule, because schedules are not synced and they are manually, but the app always has to have an idea of when this user usually works. Because for example, for me, I work Friday, Saturday, Sunday, Monday. On Tuesday, Thursdays, I have classes mainly, and on Wednesdays are my day offs.
+
+> Yes, school accounts also could be added manually as well with bank accounts, because not everyone's bank is on Plaid and not everyone's school is Canvas or Teams, because we will be adding Teams soon. No, students already have like 50% off with the pricing. So it's gonna be $9.99 a month, and I think $5.99 for students.
+
+> I don't like slipping, the word slipping. But yes, it is supposed to punish them, not punish them, but tell them that they're not on their track for their goals.

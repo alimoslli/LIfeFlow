@@ -551,3 +551,12 @@ Filled in by the product session, 2026-11-05.
 - **Proposals 1 and 6 (`fix now`)** are on the nightly fix list: one push a day by default, and retiring the "log your spending" nag.
 - **Proposals 3, 4, 5, 7 and 9 (`build now`)** are on the owner's yes or no list (vision section 15). **Proposal 2** is an open owner decision there. **Proposal 10** waits for the new surface. **Proposal 11** waits for the survey rework.
 - Round 1's corrections stand. The round 1 report keeps its text; read it together with section 4 here.
+
+**Owner's answers (2026-11-05, later the same day):**
+- Proposal 1 is reversed: notifications are how LifeFlow brings people back, so pushes aren't capped at one a day. Every push must say what was noticed and why, never ask to log, and use no guilt words. Vision "Decided from research" 5 and the playbook red lines are updated.
+- Proposal 2: no free term. $9.99 a month, students $5.99.
+- Proposals 3 and 4: yes.
+- Proposal 5: no, replaced by usual work days (asked once or learned).
+- Proposal 6: yes (the app works without the user typing anything; only shifts may need it).
+- Proposal 7: goals say plainly when someone is off track, with a way back, never "slipping".
+- Proposal 9: yes, plus adding school and bank accounts by hand.
