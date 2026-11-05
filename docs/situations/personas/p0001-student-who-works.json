@@ -1,0 +1,195 @@
+{
+  "id": "p0001-student-who-works",
+  "summary": "Second-year community college student who works part time at a grocery store and lives with her aunt near campus; her parents live in another state and her grandparents in Cairo",
+  "kinds": ["student who works", "lives with family", "far from home"],
+  "time_zone": "America/Chicago",
+  "pay": { "type": "hourly", "period": "biweekly" },
+  "places": {
+    "home": "home",
+    "campus": "campus",
+    "work": "the grocery store",
+    "gym": "the campus rec center",
+    "out": "out with friends",
+    "airport": "the airport"
+  },
+  "commute_minutes": { "home-campus": 10, "home-work": 15, "campus-work": 15, "home-gym": 10, "gym-campus": 5, "home-out": 20, "out-work": 20, "home-airport": 35 },
+  "commute_mode": "car",
+  "ready_minutes": 40,
+  "wind_down_minutes": 35,
+
+  "accounts": [
+    { "id": "acc-checking", "name": "Everyday Checking", "official_name": "Student Checking", "type": "depository", "subtype": "checking", "institution_name": "Lakeside Credit Union", "mask": "4821", "opening_balance_cents": 90000 },
+    { "id": "acc-savings", "name": "Savings", "official_name": "Share Savings", "type": "depository", "subtype": "savings", "institution_name": "Lakeside Credit Union", "mask": "4410", "opening_balance_cents": 210000, "apy_bps": 125, "interest_description": "DIVIDEND EARNED" },
+    { "id": "acc-card", "name": "Student Visa", "official_name": "Lakeside Student Visa", "type": "credit", "subtype": "credit card", "institution_name": "Lakeside Credit Union", "mask": "7713",
+      "credit_limit_cents": 100000, "opening_balance_cents": 18500, "last_statement_cents": 16200, "statement_day": 22, "due_days": 25, "apr_bps": 2399,
+      "autopay": "statement", "autopay_from": "acc-checking", "payment_description": "LAKESIDE CU VISA PMT AUTOPAY", "payment_received": "PAYMENT RECEIVED THANK YOU" }
+  ],
+
+  "income": [
+    { "id": "inc-store", "type": "hourly", "job": "job-store", "rate_cents": 1700, "pay_period": "biweekly", "period_anchor": "2026-08-09", "days_after_period_end": 6, "tax_share": 0.095,
+      "account": "acc-checking", "description": "FRESHWAY MARKETS PAYROLL PPD ID: 1416002387", "merchant_name": null },
+    { "id": "inc-parents", "type": "family", "label": "Money from her parents", "day_of_month": 1, "jitter_days": [0, 3], "amount_cents": [20000, 30000], "skip_chance": 0.1,
+      "account": "acc-checking", "description": "ZELLE FROM RANIA K CONF# {A8}", "merchant_name": null, "pfc": "TRANSFER_IN_ACCOUNT_TRANSFER" }
+  ],
+
+  "bills": [
+    { "id": "aunt-share", "name": "Share for groceries and utilities", "description": "ZELLE TO SAMIRA H CONF# {A8}", "merchant_name": null, "pfc": "TRANSFER_OUT_ACCOUNT_TRANSFER", "amount_cents": 15000, "day": 1, "via": "ach", "account": "acc-checking", "kind": "bill" },
+    { "id": "phone", "name": "Phone", "description": "TMOBILE*AUTO PAY", "merchant_name": "T-Mobile", "pfc": "RENT_AND_UTILITIES_TELEPHONE", "amount_cents": 3000, "day": 5, "via": "ach", "account": "acc-checking", "kind": "bill",
+      "email": { "name": "Phone company", "address": "billing-phone@example.com", "subject": "Your bill is ready", "days_before": 7 } },
+    { "id": "claude", "name": "Claude", "description": "CLAUDE.AI SUBSCRIPTION", "merchant_name": "Anthropic", "pfc": "GENERAL_SERVICES_OTHER_GENERAL_SERVICES", "amount_cents": 2000, "day": 5, "via": "card", "account": "acc-checking", "kind": "subscription",
+      "email": { "name": "Claude receipts", "address": "receipts-ai@example.com", "subject": "Your receipt", "days_before": 0 } },
+    { "id": "spotify", "name": "Spotify Student", "description": "Spotify USA", "merchant_name": "Spotify", "pfc": "ENTERTAINMENT_MUSIC_AND_AUDIO", "amount_cents": 599, "day": 14, "via": "card", "account": "acc-card", "kind": "subscription" },
+    { "id": "icloud", "name": "iCloud storage", "description": "APPLE.COM/BILL", "merchant_name": "Apple", "pfc": "GENERAL_SERVICES_OTHER_GENERAL_SERVICES", "amount_cents": 99, "day": 23, "via": "card", "account": "acc-card", "kind": "subscription" },
+    { "id": "car-insurance", "name": "Car insurance", "description": "SAFEROUTE AUTO INS PREM", "merchant_name": "SafeRoute Insurance", "pfc": "GENERAL_SERVICES_INSURANCE", "amount_cents": 9600, "day": 18, "via": "ach", "account": "acc-checking", "kind": "bill" }
+  ],
+
+  "savings_plan": { "from": "acc-checking", "to": "acc-savings", "amount_cents": 4000, "on": "payday", "skip_if_below_cents": 30000 },
+  "bank": { "overdraft_fee_cents": 2900, "low_balance_alert_cents": 7500, "switch_to_card_below_cents": 2500 },
+
+  "spending": [
+    { "id": "groceries", "label": "Her own groceries", "pfc": "FOOD_AND_DRINK_GROCERIES", "routine": "groceries", "extra_per_week": 0.3, "amount_cents": [1400, 4200], "card_share": 0.3,
+      "merchants": [ { "description": "ALDI 72031 CHICAGO IL", "merchant_name": "Aldi", "weight": 3 }, { "description": "FRESHWAY MKT #114", "merchant_name": "Freshway Markets", "weight": 2 } ] },
+    { "id": "cafeteria", "label": "Campus cafeteria", "pfc": "FOOD_AND_DRINK_RESTAURANT", "per_week": 0.8, "days": ["Mon", "Tue", "Wed", "Thu", "Fri"], "when": "class_days", "time": ["11:30", "13:30"],
+      "amount_cents": [725, 1395], "card_share": 0.15, "nutrition_kcal": 750, "on_routine_miss": { "routine": "lunch-home", "chance": 0.85 },
+      "merchants": [ { "description": "ARAMARK UNIV DINING 2231", "merchant_name": "Aramark", "weight": 3 }, { "description": "SQ *CAMPUS GRILL 0412", "merchant_name": "Campus Grill", "weight": 2 }, { "description": "CAMPUS C-STORE 0412", "merchant_name": null, "weight": 1, "amount_cents": [325, 895] } ] },
+    { "id": "eating-out", "label": "Fast food and takeout", "pfc": "FOOD_AND_DRINK_FAST_FOOD", "per_week": 0.8, "time": ["17:30", "21:30"], "amount_cents": [850, 1650], "card_share": 0.25, "nutrition_kcal": 900,
+      "on_routine_miss": { "routine": "dinner-home", "chance": 0.45 },
+      "merchants": [ { "description": "MCDONALD'S F29174", "merchant_name": "McDonald's", "weight": 2 }, { "description": "CHIPOTLE 1873", "merchant_name": "Chipotle", "weight": 2 }, { "description": "TACO BELL 031188", "merchant_name": "Taco Bell", "weight": 1 },
+                     { "description": "RAISING CANES 0451", "merchant_name": "Raising Cane's", "weight": 1 }, { "description": "SQ *SHAWARMA CORNER", "merchant_name": "Shawarma Corner", "weight": 1 } ] },
+    { "id": "coffee", "label": "Coffee before class", "pfc": "FOOD_AND_DRINK_COFFEE", "per_week": 2.6, "days": ["Mon", "Tue", "Wed", "Thu", "Fri"], "when": "class_days", "time": ["07:50", "09:55"], "amount_cents": [395, 695], "card_share": 0.1,
+      "merchants": [ { "description": "STARBUCKS STORE 08837", "merchant_name": "Starbucks", "weight": 2 }, { "description": "SQ *DAILY GRIND CAFE", "merchant_name": "Daily Grind", "weight": 3 } ] },
+    { "id": "gas", "label": "Gas", "pfc": "TRANSPORTATION_GAS", "per_week": 0.85, "time": ["07:00", "21:00"], "amount_cents": [2600, 4400], "card_share": 0.4,
+      "merchants": [ { "description": "SHELL OIL 57444211002", "merchant_name": "Shell", "weight": 2 }, { "description": "SPEEDWAY 04512", "merchant_name": "Speedway", "weight": 1 } ] },
+    { "id": "rideshare", "label": "Rides home from nights out", "pfc": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES", "per_week": 0.12, "days": ["Fri", "Sat"], "time": ["22:00", "23:50"], "amount_cents": [1100, 2400], "card_share": 0.6,
+      "merchants": [ { "description": "UBER *TRIP {A4}", "merchant_name": "Uber", "weight": 2 }, { "description": "LYFT *RIDE {A6}", "merchant_name": "Lyft", "weight": 1 } ] },
+    { "id": "shopping", "label": "Online and store shopping", "pfc": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES", "per_week": 0.8, "time": ["10:00", "23:00"], "amount_cents": [899, 4599], "card_share": 0.55, "refund_chance": 0.06,
+      "receipt_email": "orders-marketplace@example.com",
+      "merchants": [ { "description": "AMZN Mktp US*{A6}", "merchant_name": "Amazon", "weight": 4 }, { "description": "TARGET 00018762", "merchant_name": "Target", "weight": 1, "amount_cents": [1200, 3800] } ] },
+    { "id": "clothing", "label": "Clothes", "pfc": "GENERAL_MERCHANDISE_CLOTHING_AND_ACCESSORIES", "per_week": 0.12, "time": ["12:00", "20:00"], "amount_cents": [1999, 5499], "card_share": 0.7,
+      "merchants": [ { "description": "H&M 0912", "merchant_name": "H&M", "weight": 1 }, { "description": "OLD NAVY ON-LINE", "merchant_name": "Old Navy", "weight": 1 } ] },
+    { "id": "entertainment", "label": "Movies and bowling", "pfc": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS", "per_week": 0.25, "days": ["Fri", "Sat", "Sun"], "time": ["15:00", "21:00"], "amount_cents": [1200, 2600], "card_share": 0.5,
+      "merchants": [ { "description": "AMC 6512 ONLINE", "merchant_name": "AMC Theatres", "weight": 2 }, { "description": "ROUND1 BOWLING 0221", "merchant_name": null, "weight": 1 } ] },
+    { "id": "gifts", "label": "Gifts", "pfc": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES", "per_week": 0.08, "time": ["12:00", "20:00"], "amount_cents": [1500, 4000], "card_share": 0.5, "month_scale": { "12": 3 },
+      "merchants": [ { "description": "HALLMARK 0221", "merchant_name": "Hallmark", "weight": 1 }, { "description": "SQ *PAPER AND PETAL", "merchant_name": "Paper and Petal", "weight": 1 } ] },
+    { "id": "family-abroad", "label": "Money for her grandmother in Cairo", "pfc": "TRANSFER_OUT_ACCOUNT_TRANSFER", "per_week": 0.1, "time": ["18:00", "22:00"], "amount_cents": [4000, 8000], "discretionary": false,
+      "merchants": [ { "description": "REMITLY* {A8}", "merchant_name": "Remitly", "weight": 1 } ] },
+    { "id": "venmo", "label": "Splitting with friends", "pfc": "TRANSFER_OUT_ACCOUNT_TRANSFER", "per_week": 0.25, "time": ["12:00", "23:00"], "amount_cents": [800, 2500],
+      "merchants": [ { "description": "VENMO PAYMENT {n10}", "merchant_name": "Venmo", "weight": 1 } ] },
+    { "id": "personal-care", "label": "Haircut and care", "pfc": "PERSONAL_CARE_HAIR_AND_BEAUTY", "per_week": 0.08, "time": ["11:00", "18:00"], "amount_cents": [1800, 4500], "card_share": 0.5,
+      "merchants": [ { "description": "GREAT CLIPS #8812", "merchant_name": "Great Clips", "weight": 1 }, { "description": "ULTA #0331", "merchant_name": "Ulta Beauty", "weight": 1 } ] },
+    { "id": "pharmacy", "label": "Pharmacy", "pfc": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS", "per_week": 0.1, "time": ["10:00", "20:00"], "amount_cents": [600, 2400], "discretionary": false,
+      "merchants": [ { "description": "CVS/PHARMACY #04432", "merchant_name": "CVS", "weight": 1 } ] }
+  ],
+
+  "school": {
+    "institution": "Harbor Point Community College",
+    "lms_url": "https://canvas.example.com",
+    "term": {
+      "name": "Fall 2026", "start": "2026-08-24", "end": "2026-12-09",
+      "breaks": [ { "start": "2026-11-25", "end": "2026-11-29", "label": "Thanksgiving break" } ],
+      "no_class_days": [ { "date": "2026-09-07", "label": "Labor Day" } ]
+    },
+    "courses": [
+      { "code": "BIO 110", "name": "Biology I", "instructor": "Prof. Okafor", "instructor_email": "okafor-bio@example.com", "grade_weights": { "exam": 50, "assignment": 30, "lab": 20 }, "grade_pct": [78, 95],
+        "meetings": [ { "days": ["Mon", "Wed"], "start": "10:00", "end": "11:15", "location": "Science Hall 204" } ],
+        "assignments": [ { "title": "Problem Set {n}", "weekday": "Fri", "due": "23:59", "points": 20, "start": "2026-08-28", "end": "2026-12-04" } ],
+        "items": [ { "title": "Lab report 1", "kind": "lab", "due": "2026-09-18T23:59", "points": 40 }, { "title": "Lab report 2", "kind": "lab", "due": "2026-10-16T23:59", "points": 40 }, { "title": "Lab report 3", "kind": "lab", "due": "2026-11-13T23:59", "points": 40 } ],
+        "exams": [ { "title": "Midterm 1", "mode": "in_person", "date": "2026-10-07", "start": "10:00", "end": "11:15" }, { "title": "Midterm 2", "mode": "in_person", "date": "2026-12-02", "start": "10:00", "end": "11:15" } ] },
+      { "code": "MATH 151", "name": "Calculus I", "instructor": "Prof. Lindqvist", "instructor_email": "lindqvist-math@example.com", "grade_weights": { "exam": 60, "assignment": 40 }, "grade_pct": [70, 92],
+        "meetings": [ { "days": ["Mon", "Wed"], "start": "13:30", "end": "14:45", "location": "Main Hall 112" } ],
+        "assignments": [ { "title": "Homework {n}", "weekday": "Tue", "due": "23:59", "points": 10, "start": "2026-09-01", "end": "2026-12-08" } ],
+        "exams": [ { "title": "Midterm 1", "mode": "in_person", "date": "2026-10-05", "start": "13:30", "end": "14:45" }, { "title": "Midterm 2", "mode": "in_person", "date": "2026-12-07", "start": "13:30", "end": "14:45" } ] },
+      { "code": "ENG 102", "name": "Composition II", "instructor": "Prof. Haddad", "instructor_email": "haddad-eng@example.com", "grade_weights": { "exam": 30, "assignment": 70 }, "grade_pct": [82, 97],
+        "meetings": [ { "days": ["Tue", "Thu"], "start": "10:00", "end": "11:15", "location": "Arts Building 30" } ],
+        "assignments": [ { "title": "Reading response {n}", "kind": "discussion", "weekday": "Thu", "due": "09:00", "points": 5, "start": "2026-09-03", "end": "2026-12-03" } ],
+        "items": [ { "title": "Essay 1 final draft", "due": "2026-09-25T23:59", "points": 100 }, { "title": "Essay 2 final draft", "due": "2026-10-30T23:59", "points": 100 }, { "title": "Research essay proposal", "due": "2026-11-20T23:59", "points": 50 } ],
+        "exams": [ { "title": "Midterm 1", "mode": "online", "opens": "2026-10-08T08:00", "closes": "2026-10-10T23:59", "minutes": 90 }, { "title": "Midterm 2", "mode": "online", "opens": "2026-12-03T08:00", "closes": "2026-12-05T23:59", "minutes": 90 } ] },
+      { "code": "PSY 101", "name": "Introduction to Psychology", "instructor": "Prof. Brandt", "instructor_email": "brandt-psy@example.com", "grade_weights": { "exam": 50, "quiz": 50 }, "grade_pct": [80, 96],
+        "meetings": [ { "days": ["Tue", "Thu"], "start": "11:30", "end": "12:45", "location": "Main Hall 240" } ],
+        "assignments": [ { "title": "Chapter quiz {n}", "kind": "quiz", "weekday": "Sun", "due": "23:59", "points": 10, "start": "2026-08-30", "end": "2026-12-06" } ],
+        "exams": [ { "title": "Midterm 1", "mode": "online", "opens": "2026-10-06T08:00", "closes": "2026-10-09T23:59", "minutes": 60 }, { "title": "Midterm 2", "mode": "online", "opens": "2026-12-01T08:00", "closes": "2026-12-04T23:59", "minutes": 60 } ] },
+      { "code": "CHEM 101", "name": "General Chemistry I", "instructor": "Prof. Varga", "instructor_email": "varga-chem@example.com", "grade_weights": { "exam": 55, "assignment": 25, "lab": 20 }, "grade_pct": [72, 90],
+        "meetings": [ { "days": ["Tue", "Thu"], "start": "14:00", "end": "15:15", "location": "Science Hall 118" } ],
+        "assignments": [ { "title": "Online homework {n}", "weekday": "Mon", "due": "23:59", "points": 10, "start": "2026-08-31", "end": "2026-12-07" } ],
+        "exams": [ { "title": "Midterm 1", "mode": "in_person", "date": "2026-10-13", "start": "14:00", "end": "15:15" }, { "title": "Midterm 2", "mode": "in_person", "date": "2026-12-08", "start": "14:00", "end": "15:15" } ] }
+    ]
+  },
+
+  "work": {
+    "jobs": [
+      { "id": "job-store", "employer": "Freshway Markets", "position": "Cashier", "place": "work", "timeline_label": "Shift at the grocery store", "source": "schedule",
+        "overtime_threshold_hours": 40, "overtime_multiplier": 1.5, "workweek_starts": "Sun", "ready_minutes": 30,
+        "pattern": { "type": "weekly", "slots": [
+          { "days": ["Tue"], "start": "16:00", "end": "21:00", "chance": 0.95 },
+          { "days": ["Sat"], "start": "14:00", "end": "22:30", "break_minutes": 30, "chance": 0.95 },
+          { "days": ["Thu"], "start": "16:30", "end": "22:30", "break_minutes": 30, "chance": 0.12, "label": "extra" },
+          { "days": ["Sun"], "start": "11:00", "end": "15:30", "chance": 0.1, "label": "extra" } ] },
+        "closed_on": ["2026-11-26", "2026-12-25"],
+        "posting": { "block_days": 7, "anchor": "2026-08-02", "posted_days_ahead": 14, "time": "16:00", "jitter_days": [0, 0, 1] },
+        "cancel_rate": 0.02, "sick_rate": 0.01, "sent_home_rate": 0.04, "stay_late_rate": 0.12 }
+    ]
+  },
+
+  "health": {
+    "goals": { "workouts_per_week": 3, "sleep_hours": 7.5, "calories_per_day": 1900 },
+    "steps": { "work": [9000, 13500], "class": [6500, 9500], "free": [2500, 7000] },
+    "resting_heart_rate": 64,
+    "nutrition": { "enabled": true, "log_rate": 0.55, "base_kcal": 1750, "sd_kcal": 200, "goal_kcal": 1900 }
+  },
+
+  "routines": [
+    { "id": "sleep", "activity": "sleep", "label": "Sleep", "records_as": "health_sleep", "variance_minutes": 36, "late_night_rate": 0.1, "early_before": "09:00",
+      "windows": [ { "id": "before-early-day", "day_type": "early_next_day", "start": "23:30", "end": "06:30", "firmness": "usual" },
+                   { "id": "before-free-day", "day_type": "free_next_day", "start": "00:30", "end": "09:15", "firmness": "loose" } ] },
+    { "id": "gym", "activity": "workout", "label": "Gym before class", "where": "gym", "records_as": "health_workout", "keep_rate": 0.8, "duration_minutes": [45, 55], "ready_minutes": 15,
+      "windows": [ { "id": "mwf-7am", "days": ["Mon", "Wed", "Fri"], "start": "07:00", "end": "08:00", "firmness": "firm" } ],
+      "exceptions": [ { "type": "after_closing_shift", "label": "Sleeps in after a closing shift" } ],
+      "workout_types": { "Traditional Strength Training": 3, "Elliptical": 1, "Running": 1 }, "source_memory": "m-gym" },
+    { "id": "study", "activity": "study", "label": "Study at the library", "where": "campus", "records_as": "calendar", "per_week": 5, "keep_rate": 0.8, "duration_minutes": [60, 100], "not_after": "13:00", "ready_minutes": 30,
+      "windows": [ { "id": "before-class", "days": ["Mon", "Tue", "Wed", "Thu", "Fri"], "start": "08:05", "end": "09:50", "firmness": "firm" },
+                   { "id": "sat-morning", "days": ["Sat"], "start": "09:30", "end": "12:00", "firmness": "usual", "where": "home", "label": "Study at home" } ],
+      "exceptions": [ { "type": "after_closing_shift", "label": "No study the morning after a closing shift" } ], "source_memory": "m-study" },
+    { "id": "call-mom", "activity": "call", "label": "Call with Mom", "records_as": "calendar_recurring", "calendar_title": "Call Mom", "keep_rate": 0.88,
+      "windows": [ { "id": "sun-evening", "days": ["Sun"], "start": "19:00", "end": "19:45", "firmness": "firm" } ], "source_memory": "m-call-mom" },
+    { "id": "groceries", "activity": "groceries", "label": "Weekly grocery run", "where": "out", "records_as": "bank", "keep_rate": 0.8, "duration_minutes": [40, 60], "timeline": "none",
+      "windows": [ { "id": "sun-afternoon", "days": ["Sun"], "start": "16:00", "end": "17:30", "firmness": "usual" } ] },
+    { "id": "lunch-home", "activity": "meal", "label": "Lunch at home on long-break days", "where": "home", "records_as": "none", "timeline": "none", "keep_rate": 0.78, "duration_minutes": [45, 60],
+      "windows": [ { "id": "mw-break", "days": ["Mon", "Wed"], "start": "11:30", "end": "13:00", "firmness": "usual" } ], "source_memory": "m-aunt-cooks" },
+    { "id": "dinner-home", "activity": "meal", "label": "Dinner at home", "where": "home", "records_as": "none", "timeline": "none", "keep_rate": 0.85, "duration_minutes": [30, 45],
+      "windows": [ { "id": "evening", "days": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], "start": "18:30", "end": "19:45", "firmness": "usual" } ],
+      "exceptions": [ { "type": "on_work_days", "label": "Eats at work on shift days" } ], "source_memory": "m-aunt-cooks" },
+    { "id": "keep-free", "activity": "keep free", "label": "Sunday morning, kept free", "timeline": "routine", "records_as": "none", "keep_rate": 1.0,
+      "windows": [ { "id": "sun-morning", "days": ["Sun"], "start": "08:00", "end": "12:00", "firmness": "fixed" } ], "source_memory": "m-sunday-free" }
+  ],
+
+  "real_life": {
+    "events": [
+      { "id": "ev-leila-birthday", "title": "Leila's birthday dinner", "start": "2026-10-16T19:00", "end": "2026-10-16T22:00", "state": "with people", "place": "out", "source": "google", "created_days_before": 12 },
+      { "id": "ev-cousin-engagement", "title": "Cousin's engagement party", "start": "2026-11-13T19:00", "end": "2026-11-13T23:00", "state": "with people", "place": "out", "source": "google", "created_days_before": 20 },
+      { "id": "ev-dentist", "title": "Dentist", "start": "2026-11-19T15:30", "end": "2026-11-19T16:30", "state": "appointment", "place": "out", "source": "google", "created_days_before": 40 }
+    ],
+    "nights_out": { "per_month": 2, "days": ["Fri", "Sat"], "start": "19:30", "end": "23:00", "on_calendar": 0.4, "place": "out",
+                    "titles": ["Movie with Leila", "Dinner with friends", "Game night at Maya's", "Bowling with the study group"],
+                    "spend": { "habit": "eating-out", "amount_cents": [1400, 3200] } },
+    "trips": []
+  },
+
+  "email": {
+    "address": "nour.k.student@example.com",
+    "per_day": { "promotions": 3.0, "newsletters": 0.5, "social": 0.8, "personal": 0.15, "security": 0.05, "school_other": 0.35 },
+    "weekend_scale": 0.8
+  },
+
+  "memories": [
+    { "id": "m-home-campus", "content": "Home is about 10 minutes from campus by car", "category": "fact", "via": "get-to-know answer", "told_at": "2026-08-26T20:14" },
+    { "id": "m-aunt-cooks", "content": "My aunt does most of the cooking. She packs my lunch on Mondays and Wednesdays and we eat dinner together most nights", "category": "routine", "via": "chat", "told_at": "2026-08-30T21:02" },
+    { "id": "m-gym", "content": "Gym Monday, Wednesday and Friday at 7 before class", "category": "routine", "via": "chat", "told_at": "2026-08-31T07:58" },
+    { "id": "m-study", "content": "I study in the mornings before class. I can't focus at night", "category": "preference", "via": "chat", "told_at": "2026-09-02T09:40" },
+    { "id": "m-call-mom", "content": "I call my mom every Sunday evening", "category": "routine", "via": "get-to-know answer", "told_at": "2026-09-06T19:50" },
+    { "id": "m-sunday-free", "content": "Sunday mornings are mine. No plans", "category": "preference", "via": "chat", "told_at": "2026-09-06T10:15" },
+    { "id": "m-goal-food", "content": "I want to eat healthier and cook more this semester", "category": "goal", "via": "onboarding", "told_at": "2026-08-25T18:30" },
+    { "id": "m-trip-prep", "content": "Getting ready for a big trip takes me about a week and a half: shopping, errands, packing", "category": "fact", "via": "chat", "told_at": "2026-09-21T22:05" },
+    { "id": "m-grandma", "content": "My grandparents live in Cairo. I send my grandma a little money now and then", "category": "fact", "via": "chat", "told_at": "2026-09-21T22:07" },
+    { "id": "m-inferred-lunch", "content": "Buys lunch on campus on Tuesdays and Thursdays", "category": "routine", "source": "jarvis", "status": "proposed", "basis": "inferred", "via": "inferred from transactions", "told_at": "2026-10-02T08:00" }
+  ]
+}

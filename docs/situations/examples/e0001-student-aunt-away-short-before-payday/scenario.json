@@ -1,0 +1,26 @@
+{
+  "id": "e0001-student-aunt-away-short-before-payday",
+  "title": "Aunt away, $10 short before payday, and a heavy first week of December before a flight",
+  "persona": "p0001-student-who-works",
+  "now": "2026-11-03T19:10",
+  "history_days": 90,
+  "future_days": 60,
+  "seed": 4101,
+  "money": { "available_now_cents": 4000 },
+  "changes": [
+    { "id": "x-aunt-told", "type": "memory", "content": "My aunt is visiting family overseas from October 12 until November 22", "category": "temporary", "via": "chat", "told_at": "2026-10-10T21:30", "expires_at": "2026-11-23T00:00" },
+    { "id": "x-aunt-away", "type": "routine_suspend", "routines": ["lunch-home", "dinner-home"], "from": "2026-10-12", "until": "2026-11-22", "label": "Her aunt is away, so nobody is cooking at home" },
+    { "id": "x-cairo-trip", "type": "trip", "destination": "Cairo", "title": "Flight to Cairo", "booked_at": "2026-09-20T21:14", "depart": "2026-12-10T08:05", "arrive_local": "2026-12-11T11:40",
+      "destination_time_zone": "Africa/Cairo", "return_depart_local": "2027-01-06T09:30", "return": "2027-01-06T17:55", "from": "Chicago O'Hare",
+      "purchase": { "account": "acc-checking", "fund_from": "acc-savings", "description": "EGYPTAIR 0772 WEB BOOKING", "merchant_name": "EgyptAir", "amount_cents": -91480, "pfc": "TRAVEL_FLIGHTS" },
+      "email_sender": ["Airline reservations", "reservations-air@example.com"] },
+    { "id": "x-target", "type": "purchase", "at": "2026-11-03T13:22", "account": "acc-checking", "description": "TARGET 00018762 CHICAGO IL", "merchant_name": "Target", "amount_cents": -8517,
+      "pfc": "GENERAL_MERCHANDISE_SUPERSTORES", "pending": true }
+  ],
+  "dev_must_notice": [],
+  "best_fix": { "what": "tbd", "why": "tbd", "action": "none", "needs_user": false },
+  "must_not": [],
+  "stay_quiet": false,
+  "assumptions": [],
+  "tags": []
+}
