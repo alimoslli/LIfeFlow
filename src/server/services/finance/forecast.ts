@@ -4,7 +4,7 @@ import type { UserScope } from "../../db/with-user";
 import { summarizeCashflow } from "./cashflow";
 import { listAccounts } from "./accounts";
 import { balancesOf } from "./overview";
-import { budgetStatus, listRecurring, suggestRecurring, upcomingRecurring } from "./planning";
+import { bankSeries, budgetStatus, listRecurring, upcomingRecurring } from "./planning";
 import { detectRecurring, merchantKey, merchantKeys, nextOccurrence, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 import { listEmployers } from "../work";
@@ -90,12 +90,20 @@ const dollars = (c: number) => {
 
 // ------------------------------------------------------------ data
 
-/** Bills and subscriptions found in the bank feed that the user doesn't track yet. */
-const foundBills = async (scope: UserScope, today: string) =>
-  (await suggestRecurring(scope, today)).filter((c) => c.kind !== "income" && c.latestAmountCents < 0 && c.confidence >= 0.6);
+/**
+ * Bills and subscriptions found in the bank feed that the user doesn't track yet (`found`), and the
+ * series that are tracked bills under another name (`tracked`, so their charges aren't day-to-day spending).
+ */
+async function foundBills(scope: UserScope, today: string) {
+  const { tracked, untracked } = await bankSeries(scope, today);
+  return {
+    found: untracked.filter((c) => c.kind !== "income" && c.latestAmountCents < 0 && c.confidence >= 0.6),
+    tracked: tracked.filter((c) => c.latestAmountCents < 0),
+  };
+}
 
 /** Average daily day-to-day spending over the last 8 weeks, leaving out bills (they're counted on their dates). */
-async function typicalDailySpend(scope: UserScope, today: string, found: RecurringCandidate[] = []) {
+async function typicalDailySpend(scope: UserScope, today: string, billSeries: RecurringCandidate[] = []) {
   const from = addDaysStr(today, -56);
   const [txns, recurring] = await series(
     () => queryTransactions(scope, { from, to: addDaysStr(today, -1), limit: 20_000 }),
@@ -103,7 +111,7 @@ async function typicalDailySpend(scope: UserScope, today: string, found: Recurri
   );
   const billKeys = new Set([
     ...recurring.filter((r) => r.amountCents < 0).flatMap((r) => [r.merchantKey, merchantKey({ merchantName: r.name, description: r.name })]),
-    ...found.map((c) => c.merchantKey),
+    ...billSeries.map((c) => c.merchantKey),
   ]);
   const dayToDay = txns.filter((t) => !merchantKeys(t).some((k) => billKeys.has(k)));
   const spent = summarizeCashflow(dayToDay).netSpendingCents;
@@ -119,10 +127,10 @@ export type UpcomingBill = DatedAmount & { found: boolean };
  * bill up to 5 days late hasn't posted yet, so it still counts, dated `from`.
  */
 export async function billsAndPace(scope: UserScope, today: string, from: string, to: string) {
-  const found = await foundBills(scope, today);
+  const { found, tracked: trackedSeries } = await foundBills(scope, today);
   const [tracked, typical] = await series(
     () => upcomingRecurring(scope, from, to),
-    () => typicalDailySpend(scope, today, found),
+    () => typicalDailySpend(scope, today, [...found, ...trackedSeries]),
   );
   const bills: UpcomingBill[] = tracked.filter((u) => u.amountCents < 0).map((u) => ({ date: u.date, amountCents: u.amountCents, name: u.name, found: false }));
   for (const c of found) {

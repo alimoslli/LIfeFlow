@@ -7,7 +7,8 @@ import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound } from "../errors";
 import { listCategories } from "./categories";
 import { rollupToParents, spendingByCategoryId } from "./cashflow";
-import { detectRecurring, merchantKey, nextOccurrence } from "./recurring-detect";
+import { tracksSeries } from "./bill-match";
+import { detectRecurring, merchantKey, nextOccurrence, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 import { parsePatch } from "../patch";
 
@@ -235,13 +236,21 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
   return out.sort((a, b) => a.date.localeCompare(b.date));
 }
 
-/** Detection over the last 13 months, minus series the user already tracks. */
-export async function suggestRecurring(scope: UserScope, today: string) {
+/**
+ * Detection over the last 13 months, split into series the user already tracks and the rest. A tracked
+ * item matches by key, or by a name inside the other plus the same amount and schedule (`tracksSeries`).
+ */
+export async function bankSeries(scope: UserScope, today: string) {
   const [txns, existing] = await series(
     () => queryTransactions(scope, { from: addDaysStr(today, -400), to: today, limit: 5000 }),
     () => listRecurring(scope, { includeInactive: true }),
   );
-  // Older tracked items may store the previous key format; their name gives the current one.
-  const known = new Set(existing.flatMap((e) => [e.merchantKey, merchantKey({ merchantName: e.name, description: e.name })]));
-  return detectRecurring(txns).filter((c) => !known.has(c.merchantKey));
+  const all = detectRecurring(txns);
+  const isTracked = (c: RecurringCandidate) => existing.some((e) => tracksSeries(e, c));
+  return { tracked: all.filter(isTracked), untracked: all.filter((c) => !isTracked(c)) };
+}
+
+/** Detection over the last 13 months, minus series the user already tracks. */
+export async function suggestRecurring(scope: UserScope, today: string) {
+  return (await bankSeries(scope, today)).untracked;
 }
