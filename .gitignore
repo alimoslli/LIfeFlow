@@ -42,3 +42,7 @@ next-env.d.ts
 !.env.example
 /test-results/
 /playwright-report/
+
+# Python (situation simulator)
+__pycache__/
+*.pyc
