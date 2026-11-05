@@ -14,7 +14,7 @@ import { createTask } from "@/server/services/tasks";
 import { createEvent } from "@/server/services/calendar";
 import { checkHabit, createHabit } from "@/server/services/habits";
 import { createEmployer, createShift } from "@/server/services/work";
-import { inQuietHours, learnedStats, pushImportant, runProactive } from "@/server/services/proactive/engine";
+import { inQuietHours, learnedStats, listMessages, pushImportant, runProactive, topMessage, unreadCount } from "@/server/services/proactive/engine";
 import { respondToMessage } from "@/server/services/proactive/respond";
 import { openQuestions } from "@/server/services/proactive/questions";
 import { createMemory, listActiveMemories as listActive } from "@/server/services/memory";
@@ -287,6 +287,43 @@ describe("never asks to log by hand (audit A30)", () => {
     expect(Object.keys(DETECTORS)).not.toContain("logReminder");
     expect(Object.values(RUNS).flat()).not.toContain("logReminder");
     expect(KIND_LABELS).not.toHaveProperty("log_reminder");
+  });
+
+  it("hides 'log spending' messages saved before it was removed: Today, the dot, Updates and pushes (review)", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      await s.tx.insert(jarvisMessages).values([
+        {
+          userId: s.userId,
+          kind: "log_reminder",
+          topic: "money",
+          dedupeKey: "log_reminder:old",
+          title: "Catch up on spending",
+          body: "You haven't logged",
+          priority: 99,
+        },
+        {
+          userId: s.userId,
+          kind: "bank_fees",
+          topic: "money",
+          dedupeKey: "bank_fees:x",
+          title: "$35 in bank fees this month",
+          body: "Your bank charged 1 fee",
+          priority: 60,
+        },
+      ]);
+    });
+    expect((await run((s) => topMessage(s)))?.kind).toBe("bank_fees");
+    expect(await run((s) => unreadCount(s))).toBe(1);
+    expect((await run((s) => listMessages(s))).map((m) => m.kind)).toEqual(["bank_fees"]);
+    const pushed: string[] = [];
+    await run((s) =>
+      pushImportant(s, TZ, { jarvis: { quietStart: "00:00", quietEnd: "00:00" } }, async (key) => {
+        pushed.push(key);
+        return true;
+      }),
+    );
+    expect(pushed.filter((k) => k.includes("log_reminder"))).toEqual([]);
   });
 });
 
