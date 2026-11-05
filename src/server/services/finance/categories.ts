@@ -5,15 +5,17 @@ import type { UserScope } from "../../db/with-user";
 type Seed = { name: string; kind: "expense" | "income" | "transfer"; color: string; children?: string[] };
 
 export const DEFAULT_CATEGORIES: Seed[] = [
-  { name: "Food & Dining", kind: "expense", color: "#d97706", children: ["Groceries", "Restaurants", "Coffee", "Food Delivery"] },
+  { name: "Food & Dining", kind: "expense", color: "#d97706", children: ["Groceries", "Restaurants", "Coffee", "Food Delivery", "Bars & Alcohol"] },
   { name: "Housing", kind: "expense", color: "#7c3aed", children: ["Rent", "Utilities", "Internet"] },
-  { name: "Transportation", kind: "expense", color: "#0891b2", children: ["Gas", "Rideshare", "Public Transit", "Parking"] },
-  { name: "Shopping", kind: "expense", color: "#db2777", children: ["Clothing", "Electronics", "Household"] },
-  { name: "Entertainment", kind: "expense", color: "#ea580c", children: ["Streaming", "Events", "Games"] },
+  { name: "Transportation", kind: "expense", color: "#0891b2", children: ["Gas", "Rideshare", "Public Transit", "Parking", "Car Maintenance"] },
+  { name: "Shopping", kind: "expense", color: "#db2777", children: ["Clothing", "Electronics", "Household", "Online Shopping"] },
+  { name: "Entertainment", kind: "expense", color: "#ea580c", children: ["Streaming", "Events", "Games", "Hobbies & Sports"] },
   { name: "Health", kind: "expense", color: "#059669", children: ["Pharmacy", "Fitness", "Medical"] },
   { name: "Education", kind: "expense", color: "#2563eb", children: ["Tuition", "Books & Supplies"] },
-  { name: "Bills & Subscriptions", kind: "expense", color: "#4f46e5", children: ["Phone", "Insurance", "Software"] },
+  { name: "Bills & Subscriptions", kind: "expense", color: "#4f46e5", children: ["Phone", "Insurance", "Software", "Subscriptions"] },
   { name: "Personal Care", kind: "expense", color: "#c026d3" },
+  { name: "Pets", kind: "expense", color: "#a16207" },
+  { name: "Cash & ATM", kind: "expense", color: "#475569" },
   { name: "Travel", kind: "expense", color: "#0d9488" },
   { name: "Gifts & Donations", kind: "expense", color: "#be123c" },
   { name: "Fees & Interest", kind: "expense", color: "#64748b" },
@@ -37,8 +39,44 @@ export async function seedDefaultCategories({ tx, userId }: UserScope) {
   }
 }
 
-export async function listCategories({ tx, userId }: UserScope) {
-  return tx.select().from(categories).where(eq(categories.userId, userId)).orderBy(asc(categories.name));
+/** Defaults added after launch. Older accounts get just these, once; categories they deleted or renamed earlier stay as they chose. */
+const ADDED_LATER: { name: string; parent?: string }[] = [
+  { name: "Online Shopping", parent: "Shopping" },
+  { name: "Bars & Alcohol", parent: "Food & Dining" },
+  { name: "Car Maintenance", parent: "Transportation" },
+  { name: "Hobbies & Sports", parent: "Entertainment" },
+  { name: "Subscriptions", parent: "Bills & Subscriptions" },
+  { name: "Pets" },
+  { name: "Cash & ATM" },
+];
+
+/** Adds the newer default categories an older account is missing. Safe to repeat; costs one small query once they exist. */
+export async function ensureDefaultCategories(scope: UserScope) {
+  const have = await scope.tx.select({ name: categories.name }).from(categories).where(eq(categories.userId, scope.userId));
+  const names = new Set(have.map((c) => c.name));
+  if (names.has("Online Shopping")) return false;
+  if (!names.size) return false; // brand new account: registration seeds everything
+  for (const c of ADDED_LATER) {
+    if (names.has(c.name)) continue;
+    const seed = DEFAULT_CATEGORIES.find((d) => d.name === (c.parent ?? c.name));
+    const [parent] = c.parent
+      ? await scope.tx
+          .select()
+          .from(categories)
+          .where(and(eq(categories.userId, scope.userId), eq(categories.name, c.parent)))
+      : [];
+    if (c.parent && !parent) continue; // they removed the group; don't bring it back
+    await scope.tx
+      .insert(categories)
+      .values({ userId: scope.userId, name: c.name, kind: "expense", color: seed?.color ?? "#94a3b8", parentId: parent?.id ?? null, isSystem: true })
+      .onConflictDoNothing();
+  }
+  return true;
+}
+
+export async function listCategories(scope: UserScope) {
+  await ensureDefaultCategories(scope);
+  return scope.tx.select().from(categories).where(eq(categories.userId, scope.userId)).orderBy(asc(categories.name));
 }
 
 /** "Food and dining!" → "food dining"; plurals and "&"/"and" don't matter. */

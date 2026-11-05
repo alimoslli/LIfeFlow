@@ -29,8 +29,8 @@ const CASES: [description: string, merchantName: string | null, amountCents: num
   ["NETFLIX.COM 866-579-7172 CA", "Netflix", -1549, "Streaming"],
   ["SPOTIFY USA", "Spotify", -1199, "Streaming"],
   ["OPENAI *CHATGPT SUBSCR", "OpenAI", -2000, "Software"],
-  ["APPLE.COM/BILL 866-712-7753 CA", "Apple", -299, "Bills & Subscriptions"],
-  ["Amazon Prime*2K4L59AB3", "Amazon Prime", -1499, "Bills & Subscriptions"],
+  ["APPLE.COM/BILL 866-712-7753 CA", "Apple", -299, "Subscriptions"],
+  ["Amazon Prime*2K4L59AB3", "Amazon Prime", -1499, "Subscriptions"],
   ["PLANET FITNESS CLUB FEES", "Planet Fitness", -2499, "Fitness"],
   // Everyday spending
   ["STARBUCKS STORE 08812", "Starbucks", -545, "Coffee"],
@@ -40,7 +40,7 @@ const CASES: [description: string, merchantName: string | null, amountCents: num
   ["UBER EATS", "Uber Eats", -2400, "Food Delivery"],
   ["SHELL OIL 57444810", "Shell", -4000, "Gas"],
   ["TARGET T-1294 ATLANTA GA", "Target", -4218, "Household"],
-  ["AMZN Mktp US*2K1AB", "Amazon", -3200, "Household"],
+  ["AMZN Mktp US*2K1AB", "Amazon", -3200, "Online Shopping"],
   ["CVS/PHARMACY #1234", "CVS", -1500, "Pharmacy"],
   ["GEORGIA STATE UNIV BURSAR", null, -150000, "Tuition"],
   ["OVERDRAFT FEE FOR A TRANSACTION", null, -3500, "Fees & Interest"],
@@ -58,5 +58,19 @@ describe("categorizing statement lines", () => {
     })).filter((c) => c.got !== c.expected);
     console.log(`${CASES.length - wrong.length}/${CASES.length} right`, JSON.stringify(wrong, null, 1));
     expect(wrong).toEqual([]);
+  });
+});
+
+describe("newer categories", () => {
+  it("sorts online shopping, bars, pets, car care, subscriptions and cash", () => {
+    const k = (d: string) => keywordCategory({ description: d });
+    expect(k("AMZN Mktp US*2K4")).toBe("Online Shopping");
+    expect(k("ETSY.COM")).toBe("Online Shopping");
+    expect(k("TARGET STORE 1234")).toBe("Household"); // the store, not the website
+    expect(k("TOTAL WINE & MORE")).toBe("Bars & Alcohol");
+    expect(k("PETSMART #482")).toBe("Pets");
+    expect(k("JIFFY LUBE 4411")).toBe("Car Maintenance");
+    expect(k("AMAZON PRIME*TX")).toBe("Subscriptions");
+    expect(k("ATM WITHDRAWAL 1ST ST")).toBe("Cash & ATM");
   });
 });

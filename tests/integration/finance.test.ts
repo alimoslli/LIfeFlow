@@ -112,3 +112,23 @@ describe("finance", () => {
     expect(a.projectedCashAfterPurchaseCents).toBe(650000 - 90000 - 10000 - a.projectedDiscretionaryCents);
   });
 });
+
+describe("default categories", () => {
+  it("older accounts get the newer defaults without losing what they have", async () => {
+    const { run } = await makeUser();
+    const { categories } = await import("@/server/db/schema");
+    const { and, eq } = await import("drizzle-orm");
+    const { listCategories } = await import("@/server/services/finance/categories");
+    // Pretend this account predates Online Shopping and renamed a default.
+    await run((s) => s.tx.delete(categories).where(and(eq(categories.userId, s.userId), eq(categories.name, "Online Shopping"))));
+    await run((s) =>
+      s.tx
+        .update(categories)
+        .set({ name: "Eating out" })
+        .where(and(eq(categories.userId, s.userId), eq(categories.name, "Restaurants"))),
+    );
+    const names = (await run((s) => listCategories(s))).map((c) => c.name);
+    for (const n of ["Online Shopping", "Subscriptions", "Bars & Alcohol", "Pets", "Cash & ATM", "Groceries", "Gas", "Eating out"]) expect(names).toContain(n);
+    expect(names).not.toContain("Restaurants"); // what they renamed stays renamed
+  });
+});

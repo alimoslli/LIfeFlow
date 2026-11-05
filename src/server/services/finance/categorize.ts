@@ -3,7 +3,7 @@ import { addDaysStr } from "@/lib/dates";
 import { categories, categoryRules, transactions, type TransactionKind } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { notFound } from "../errors";
-import { listCategories } from "./categories";
+import { ensureDefaultCategories, listCategories } from "./categories";
 import { merchantKey, merchantKeys } from "./recurring-detect";
 import { inferKind } from "./transactions";
 
@@ -24,6 +24,7 @@ const INCOME_KEYWORDS: [RegExp, string][] = [
 /** Lowercase keyword (matched on word boundaries in merchant + description) → default category name. Order matters: specific first. */
 const KEYWORDS: [RegExp, string][] = [
   [/\b(overdraft|nsf|insufficient funds|late fee|interest charge|service fee|maintenance fee|atm fee|foreign transaction)\b/, "Fees & Interest"],
+  [/\b(total wine|bevmo|liquor|wine (&|and) spirits|brewery|brewing co|taproom|tavern|saloon|pub)\b/, "Bars & Alcohol"],
   [/\b(uber ?eats|doordash|grubhub|postmates|seamless|instacart)\b/, "Food Delivery"],
   [/\b(starbucks|dunkin|peet'?s|tim hortons|dutch bros|coffee|cafe)\b/, "Coffee"],
   [
@@ -36,11 +37,12 @@ const KEYWORDS: [RegExp, string][] = [
   ],
   [/\b(uber|lyft)\b/, "Rideshare"],
   [/\b(verizon|t[- ]?mobile|at ?& ?t|mint mobile|visible|cricket|xfinity mobile|boost mobile|metro by)\b/, "Phone"],
+  [/\b(jiffy lube|autozone|o'?reilly auto|advance auto|pep boys|valvoline|midas|discount tire|car wash|dmv)\b/, "Car Maintenance"],
   [/\b(shell|chevron|exxon|mobil|bp|sunoco|valero|marathon|speedway|wawa|quiktrip|racetrac|gas station|fuel)\b/, "Gas"],
   [/\b(mta|bart|metro|transit|septa|cta|marta|amtrak|caltrain|clipper|ventra)\b/, "Public Transit"],
   [/\b(parking|parkmobile|spothero)\b/, "Parking"],
   [/\b(netflix|hulu|disney ?\+?|disney plus|hbo max|hbo|spotify|apple music|youtube premium|paramount|peacock|crunchyroll)\b/, "Streaming"],
-  [/\b(amazon prime|prime video|apple\.com\/bill|apple com bill|itunes|google \*|patreon|audible|siriusxm)\b/, "Bills & Subscriptions"],
+  [/\b(amazon prime|prime video|apple\.com\/bill|apple com bill|itunes|google \*|patreon|audible|siriusxm)\b/, "Subscriptions"],
   [/\b(steam|playstation|xbox|nintendo|epic games)\b/, "Games"],
   [/\b(ticketmaster|stubhub|eventbrite|amc|regal|cinema)\b/, "Events"],
   [/\b(cvs|walgreens|rite aid|pharmacy)\b/, "Pharmacy"],
@@ -52,7 +54,11 @@ const KEYWORDS: [RegExp, string][] = [
   [/\b(geico|progressive|state farm|allstate|lemonade|insurance|dental|vision plan)\b/, "Insurance"],
   [/\b(adobe|microsoft|google storage|icloud|dropbox|notion|chatgpt|openai|github|canva|grammarly)\b/, "Software"],
   [/\b(best buy|apple store|newegg)\b/, "Electronics"],
-  [/\b(amazon|amzn|target|walmart|ikea|home depot|lowe'?s|bed bath|dollar general|dollar tree)\b/, "Household"],
+  [/\b(amazon|amzn|etsy|ebay|temu|aliexpress|shopify|wish\.com|walmart\.com|target\.com)\b/, "Online Shopping"],
+  [/\b(petco|petsmart|chewy|veterinar\w*|vet clinic|banfield)\b/, "Pets"],
+  [/\b(guitar center|michaels|hobby lobby|dick'?s sporting|rei|golf)\b/, "Hobbies & Sports"],
+  [/\b(atm withdrawal|cash withdrawal|atm w\/d)\b/, "Cash & ATM"],
+  [/\b(target|walmart|ikea|home depot|lowe'?s|bed bath|dollar general|dollar tree)\b/, "Household"],
   [/\b(h ?& ?m|zara|uniqlo|nike|adidas|old navy|gap|nordstrom|shein)\b/, "Clothing"],
   [/\b(rent|apartments?|apts|property management|landlord)\b/, "Rent"],
   [
@@ -104,6 +110,7 @@ const NEEDS = new Set([
   "Books & Supplies",
   "Fees & Interest",
   "Bills & Subscriptions",
+  "Car Maintenance",
 ]);
 export const needOrWant = (categoryName: string | null | undefined): "need" | "want" => (categoryName && NEEDS.has(categoryName) ? "need" : "want");
 
@@ -125,6 +132,7 @@ export async function ruleFor(scope: UserScope, t: { merchantName?: string | nul
 
 /** Category id by default name for this user. */
 export async function categoryIdByName(scope: UserScope, name: string) {
+  await ensureDefaultCategories(scope);
   const [cat] = await scope.tx
     .select()
     .from(categories)
@@ -150,6 +158,7 @@ export async function autoCategorize(scope: UserScope, t: { merchantName?: strin
   }
   const name = keywordCategory(t, t.amountCents);
   if (!name) return null;
+  await ensureDefaultCategories(scope);
   const [cat] = await scope.tx
     .select()
     .from(categories)

@@ -275,12 +275,23 @@ export function mapPfc(pfc: PlaidTxn["personal_finance_category"], amountCents: 
   const map: Record<string, (det: string) => string> = {
     BANK_FEES: () => "Fees & Interest",
     ENTERTAINMENT: (x) => (x.includes("TV_AND_MOVIES") || x.includes("MUSIC") ? "Streaming" : x.includes("VIDEO_GAMES") ? "Games" : "Events"),
-    FOOD_AND_DRINK: (x) => (x.includes("GROCERIES") ? "Groceries" : x.includes("COFFEE") ? "Coffee" : "Restaurants"),
-    GENERAL_MERCHANDISE: (x) => (x.includes("CLOTHING") ? "Clothing" : x.includes("ELECTRONICS") ? "Electronics" : "Household"),
+    FOOD_AND_DRINK: (x) =>
+      x.includes("GROCERIES") ? "Groceries" : x.includes("COFFEE") ? "Coffee" : x.includes("BEER_WINE") ? "Bars & Alcohol" : "Restaurants",
+    GENERAL_MERCHANDISE: (x) =>
+      x.includes("CLOTHING")
+        ? "Clothing"
+        : x.includes("ELECTRONICS")
+          ? "Electronics"
+          : x.includes("ONLINE_MARKETPLACES")
+            ? "Online Shopping"
+            : x.includes("PET_SUPPLIES")
+              ? "Pets"
+              : "Household",
     HOME_IMPROVEMENT: () => "Household",
-    MEDICAL: (x) => (x.includes("PHARMAC") ? "Pharmacy" : "Medical"),
+    MEDICAL: (x) => (x.includes("PHARMAC") ? "Pharmacy" : x.includes("VETERINARY") ? "Pets" : "Medical"),
     PERSONAL_CARE: (x) => (x.includes("GYMS") ? "Fitness" : "Personal Care"),
-    GENERAL_SERVICES: (x) => (x.includes("INSURANCE") ? "Insurance" : x.includes("EDUCATION") ? "Tuition" : "Other"),
+    GENERAL_SERVICES: (x) =>
+      x.includes("INSURANCE") ? "Insurance" : x.includes("EDUCATION") ? "Tuition" : x.includes("AUTOMOTIVE") ? "Car Maintenance" : "Other",
     GOVERNMENT_AND_NON_PROFIT: (x) => (x.includes("DONATIONS") ? "Gifts & Donations" : "Other"),
     TRANSPORTATION: (x) =>
       x.includes("GAS")
