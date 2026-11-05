@@ -1,0 +1,334 @@
+{
+ "bpm": 100,
+ "duration": 34.2,
+ "vo": [],
+ "scenes": [
+  {
+   "kind": "phone",
+   "start": 0.0,
+   "end": 2.6,
+   "src": [
+    {
+     "rec": "act_convo",
+     "from": 2.828,
+     "dur": 2.6,
+     "speed": 0.865
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "ONE CHAT.",
+     "*MY* *WHOLE* *DAY.*"
+    ],
+    "size": 116,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 2.6,
+   "end": 8.2,
+   "src": [
+    {
+     "rec": "act_convo",
+     "from": 5.078,
+     "dur": 3.0,
+     "speed": 1.709
+    },
+    {
+     "rec": "act_convo",
+     "from": 10.225,
+     "dur": 2.6,
+     "speed": 0.385
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "cv_brief",
+     "at": 2.6,
+     "dur": 3.0,
+     "y": 1150,
+     "w": 920
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "WHAT DOES",
+     "*TODAY* *LOOK* *LIKE?*"
+    ],
+    "size": 104,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 8.2,
+   "end": 12.2,
+   "src": [
+    {
+     "rec": "act_convo",
+     "from": 15.623,
+     "dur": 1.5,
+     "speed": 2.193
+    },
+    {
+     "rec": "act_convo",
+     "from": 18.912,
+     "dur": 0.8,
+     "speed": 5.153
+    },
+    {
+     "rec": "act_convo",
+     "from": 23.055,
+     "dur": 1.7,
+     "speed": 0.529
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "cv_remind",
+     "at": 2.3,
+     "dur": 1.7,
+     "y": 1150,
+     "w": 920
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "REMIND ME",
+     "*AT* *NOON.*"
+    ],
+    "size": 116,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 12.2,
+   "end": 17.2,
+   "src": [
+    {
+     "rec": "act_convo",
+     "from": 23.939,
+     "dur": 1.4,
+     "speed": 1.896
+    },
+    {
+     "rec": "act_convo",
+     "from": 26.594,
+     "dur": 1.2,
+     "speed": 7.63
+    },
+    {
+     "rec": "act_convo",
+     "from": 35.769,
+     "dur": 2.4,
+     "speed": 0.375
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "cv_money",
+     "at": 2.6,
+     "dur": 2.4,
+     "y": 1150,
+     "w": 920
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "WHERE'S MY",
+     "*MONEY* *GOING?*"
+    ],
+    "size": 108,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 17.2,
+   "end": 21.6,
+   "src": [
+    {
+     "rec": "act_convo",
+     "from": 36.653,
+     "dur": 1.5,
+     "speed": 2.233
+    },
+    {
+     "rec": "act_convo",
+     "from": 40.003,
+     "dur": 1.0,
+     "speed": 13.67
+    },
+    {
+     "rec": "act_convo",
+     "from": 53.693,
+     "dur": 1.9,
+     "speed": 0.474
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "cv_budget",
+     "at": 2.5,
+     "dur": 1.9,
+     "y": 1150,
+     "w": 920
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "SET A",
+     "*COFFEE* *BUDGET.*"
+    ],
+    "size": 112,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 21.6,
+   "end": 26.4,
+   "src": [
+    {
+     "rec": "act_convo",
+     "from": 54.576,
+     "dur": 1.4,
+     "speed": 2.095
+    },
+    {
+     "rec": "act_convo",
+     "from": 57.508,
+     "dur": 1.0,
+     "speed": 4.687
+    },
+    {
+     "rec": "act_convo",
+     "from": 62.215,
+     "dur": 2.4,
+     "speed": 0.375
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "cv_trip",
+     "at": 2.4,
+     "dur": 2.4,
+     "y": 1150,
+     "w": 920
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "AM I ON TRACK",
+     "*FOR* *MY* *TRIP?*"
+    ],
+    "size": 104,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 26.4,
+   "end": 30.2,
+   "src": [
+    {
+     "rec": "act_convo",
+     "from": 63.103,
+     "dur": 1.2,
+     "speed": 1.53
+    },
+    {
+     "rec": "act_convo",
+     "from": 64.939,
+     "dur": 0.8,
+     "speed": 4.453
+    },
+    {
+     "rec": "act_convo",
+     "from": 68.521,
+     "dur": 1.8,
+     "speed": 0.5
+    }
+   ],
+   "head": null,
+   "pops": [
+    {
+     "card": "cv_plan",
+     "at": 2.0,
+     "dur": 1.8,
+     "y": 1150,
+     "w": 920
+    }
+   ],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "YES,",
+     "*SET* *THAT* *UP.*"
+    ],
+    "size": 116,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "gloss",
+   "outro": true,
+   "start": 30.2,
+   "end": 34.2,
+   "clip": "m/molecule.mp4",
+   "speed": 0.7,
+   "push": 0.03,
+   "fade_in": 0.3,
+   "haze": [
+    {
+     "cy": 1560,
+     "h": 900,
+     "s": 0.88
+    }
+   ],
+   "bold": {
+    "lines": [
+     "*YOUR* *PERSONAL*",
+     "*ASSISTANT.*",
+     "TAP THE LINK IN BIO."
+    ],
+    "size": 86,
+    "top": 1225,
+    "at": 0.15,
+    "out": false
+   },
+   "wordmark": {
+    "at": 1.2,
+    "y": 1600,
+    "sub": "lifeflowweb.com"
+   },
+   "note": {
+    "text": "Real app and real replies, on a sample account.",
+    "at": 1.3,
+    "y": 1850
+   }
+  }
+ ]
+}

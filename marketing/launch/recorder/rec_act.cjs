@@ -228,6 +228,38 @@ const INIT = `(() => {
       mark("plan");
       await wait(1.0);
     }
+  } else if (SCENE === "convo") {
+    const turns = JSON.parse(fs.readFileSync(__dirname + "/turns.json", "utf8"));
+    await go("/jarvis?new=1");
+    await p
+      .getByRole("button", { name: /New chat/i })
+      .click({ timeout: 2000 })
+      .catch(() => {});
+    await sleep(1000);
+    await start();
+    mark("a");
+    await wait(0.4);
+    log.turns = [];
+    for (const [i, q] of turns.entries()) {
+      await ask(q);
+      mark("r" + i);
+      await replyRect(q, "reply" + i);
+      const full = await p.evaluate(() => document.documentElement.scrollHeight - innerHeight - scrollY);
+      log.turns.push({ q, sent: log.marks.sent, replied: log.marks.replied });
+      await wait(1.0);
+      if (i === 0) {
+        // the morning brief is long: scroll back to its top, then read down through it
+        const top = (log.rects["reply0"] || { r: [0, 0] }).r[1];
+        if (top < 60) {
+          await scrollBy(top - 120, 0.8);
+          await wait(0.6);
+          await scrollBy(-(top - 120), 2.6);
+          await wait(0.5);
+        }
+      }
+      log.turns[i].text = (await p.locator("main").innerText()).slice(-1800);
+    }
+    await wait(1.0);
   } else if (SCENE === "feed") {
     await go("/jarvis/says");
     await start();

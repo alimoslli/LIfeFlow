@@ -28,3 +28,11 @@ The fully connected look on the demo account, with the real assistant replying:
    assistant answers. `crop_rects.py` cuts the replies and the feed card for the pops; `plan_act.py` writes `plan_p_act.json`.
 
 Chat shots start when the message is sent: the empty chat shows a "Connect me to do more" banner on the demo account.
+
+## "One chat. My whole day." (the conversation, `rec_act.cjs convo`)
+
+One chat with the assistant, eight turns from `turns.json` (the reel uses the first six: today, a noon reminder, where the money goes,
+a coffee budget, the trip goal, and setting its plan). Before filming, `film_mode.sql` runs on the local filming database only: the demo
+account becomes a normal account and its rows lose the `demo` source, so the assistant talks as it would to a connected user instead of
+calling it a demo (the end card still says it is a sample account). The chat scrolls inside its own panel, so the reply cards are cropped
+from the frames while each reply streams in (`crop_convo.py`); `plan_convo.py` writes `plan_p_convo.json`.
