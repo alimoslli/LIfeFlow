@@ -40,6 +40,10 @@ The owner asked for the agents to keep running: audit the app (phone and web), f
 - Things to avoid become rules the same day.
 - Proposals are tagged `fix now`, `build now`, `needs the new surface` or `owner decision`.
 
+**What needs the owner's approval (owner, 2026-11-05)**
+- **Approved in advance:** small fixes and bugs (wrong numbers, broken flows, errors, rule breaks, copy that's wrong, accessibility, security slips). Builders fix them and they ship once verified.
+- **Needs the owner's yes first:** every real change (a new feature, a change to how something works or looks, removing a feature, pricing, anything on the new surface). It goes on the yes or no list, with a picture when words aren't enough.
+
 **What "straight away" means**
 - `fix now` findings and research "things to avoid" go in during the same round.
 - `build now` features go in after the owner's yes on a short daily yes or no list.
