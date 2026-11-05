@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { setAiConsentAction } from "@/app/(app)/settings/actions";
 
@@ -9,6 +9,15 @@ import { setAiConsentAction } from "@/app/(app)/settings/actions";
 export function AiConsentCard({ name }: { name: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  // On a phone the card can start below the composer on the first chat; bring its button into view (audit A22).
+  const allow = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const button = allow.current;
+    const scroller = button?.closest<HTMLElement>("[data-chat-scroll]");
+    if (!button || !scroller) return;
+    const below = button.getBoundingClientRect().bottom + 16 - scroller.getBoundingClientRect().bottom;
+    if (below > 0) scroller.scrollTop += below;
+  }, []);
   return (
     <div className="mt-6 w-full rounded-[24px] bg-surface p-5 text-left shadow-soft ring-1 ring-border/60" role="region" aria-label="Allow AI">
       <div className="flex items-center gap-2.5">
@@ -23,6 +32,7 @@ export function AiConsentCard({ name }: { name: string }) {
       </p>
       <div className="mt-4 flex items-center gap-3">
         <button
+          ref={allow}
           type="button"
           disabled={pending}
           onClick={() =>

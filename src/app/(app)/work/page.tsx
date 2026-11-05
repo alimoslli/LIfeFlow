@@ -217,7 +217,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
                 <h2 className="mb-1 text-[0.8125rem] font-semibold tracking-wide uppercase">UKG Pro</h2>
                 Not connected. UKG API access is normally issued to employers, not personal logins, so LifeFlow uses manual entry and schedule photos your
                 assistant reads for now.{" "}
-                <Link href="/settings/integrations" className="text-accent hover:underline">
+                <Link href="/settings/integrations" className="lf-hit text-accent hover:underline">
                   Details
                 </Link>
               </Card>

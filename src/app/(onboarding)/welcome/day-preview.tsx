@@ -214,7 +214,7 @@ export function DayPreview({
               <button
                 type="button"
                 onClick={() => setNote(note === g ? null : g)}
-                className="min-h-10 rounded-full bg-surface-2 px-4 text-sm font-medium transition-transform active:scale-[0.98]"
+                className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium transition-transform active:scale-[0.98]"
               >
                 {s.action}
               </button>

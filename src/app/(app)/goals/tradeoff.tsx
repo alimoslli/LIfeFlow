@@ -22,7 +22,7 @@ export function GoalTradeoff({ targetCents, savedCents, monthlyCents }: { target
         step={1000}
         value={extra}
         onChange={(e) => setExtra(Number(e.target.value))}
-        className="mt-2 w-full accent-[var(--accent)]"
+        className="h-11 w-full accent-[var(--accent)]"
         aria-label="Extra per month"
       />
       <p className="mt-1 text-sm" aria-live="polite">

@@ -27,7 +27,7 @@ export function GrowthCalculator({ startCents }: { startCents: number }) {
         </label>
         <label className="flex flex-col gap-1 text-xs text-text-2">
           For {years} years
-          <input type="range" min={1} max={50} value={years} onChange={(e) => setYears(Number(e.target.value))} className="mt-3 accent-[var(--accent)]" />
+          <input type="range" min={1} max={50} value={years} onChange={(e) => setYears(Number(e.target.value))} className="h-11 accent-[var(--accent)]" />
         </label>
       </div>
       {startCents > 0 && (
