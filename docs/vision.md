@@ -237,6 +237,8 @@ Example: the user tells Dev they have a budget goal. **No** progress bar, no "50
 
 **Starting ideas to push past:** your week as one flow, with the spots where things collide lit up (it fits the name); ripples, where tapping anything shows what it touches; a pressure view shading each day by how heavy it is across time, money and rest. These are starting points, not the answer.
 
+**Decision (owner, 2026-11-05): the surface is the braid.** Four prototypes were tried. The braid (concept 3) is the one: five strands of life twisting into one rope across the screen, loose when calm, tight and twisting when things collide, knots where strands pull on each other that untangle when the problem is solved, moving with the person's life. "This is where we start our build." The "one line" prototype (concept 4) was rejected because it looks like every other app; its mechanics (one tap to all of an area with real totals, Play, shifts from a photo, the why-line and mute, check-backs, visible trust, one plain price, three lives) move into the braid. The braid's one weakness, "a bit hard to understand", is fixed inside the braid with words on it, fewer symbols and a sentence from Dev that always says what it's showing, never by flattening it into a list. Prototypes: concept 3 `lifeflow-braid.html`, the upgrade `lifeflow-braid-v2.html` (scratch files; the published links are in the product chat).
+
 ## 9. Situations Dev must pass
 
 Each becomes a test: the data, what Dev must notice and trace, what it suggests, and what it must not do.
