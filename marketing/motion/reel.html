@@ -1,0 +1,139 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: Geist; src: url(Geist.woff2) format("woff2"); font-weight: 100 900; }
+@font-face { font-family: Serif; src: url(Newsreader.woff2) format("woff2"); font-weight: 200 800; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1080px; height: 1920px; overflow: hidden; font-family: Geist, sans-serif; background: #0f2a20; }
+.abs { position: absolute; }
+#bg { inset: 0; background: radial-gradient(120% 60% at 15% 5%, #3f8a69 0%, transparent 60%), radial-gradient(90% 55% at 95% 85%, #2b6a51 0%, transparent 65%), linear-gradient(170deg, #1d4535 0%, #0f2a20 55%, #0a1d16 100%); }
+.orb { border-radius: 50%; background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.45), rgba(160,215,190,.2) 35%, rgba(40,100,75,.12) 70%, transparent 72%); }
+/* captions: sticker boxes */
+#caps .cap { left: 0; width: 1080px; top: 196px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.cap .ln { font-weight: 850; font-size: 74px; line-height: 1; letter-spacing: -1.5px; color: #0f1a14; background: #fff; padding: 14px 30px 18px; border-radius: 22px; white-space: nowrap; box-shadow: 0 14px 36px rgba(0,0,0,.28); }
+.cap .ln.hl { background: #9fdcc0; color: #0c2419; }
+/* hook: the lock screen, big */
+#hook { inset: 0; }
+#hook .date { left: 0; width: 1080px; top: 500px; text-align: center; color: #fff; font-size: 42px; font-weight: 500; opacity: .92; }
+#hook .time { left: 0; width: 1080px; top: 552px; text-align: center; color: #fff; font-size: 196px; font-weight: 600; letter-spacing: -6px; line-height: 1; }
+.n { position: absolute; left: 0; top: 0; width: 370px; background: rgba(245,248,246,.93); color: #0e1a14; border-radius: 22px; padding: 12px 14px 13px; display: grid; grid-template-columns: 38px 1fr; gap: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.25); transform-origin: 0 0; }
+.n img { width: 38px; height: 38px; border-radius: 9px; box-shadow: 0 0 0 .5px rgba(0,0,0,.12); }
+.n .h { display: flex; justify-content: space-between; align-items: baseline; }
+.n .t { font-weight: 650; font-size: 15px; line-height: 1.25; }
+.n .when { font-size: 13px; color: rgba(20,30,25,.55); white-space: nowrap; margin-left: 8px; }
+.n .b { font-size: 15px; line-height: 1.3; margin-top: 2px; color: #18241e; }
+.finger { width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; background: rgba(40,40,40,.25); border: 6px solid rgba(255,255,255,.95); box-shadow: 0 6px 22px rgba(0,0,0,.3); display: none; }
+/* the app, cropped to the conversation */
+#card { left: 33px; top: 470px; width: 1014px; height: 1480px; overflow: hidden; border-radius: 0 0 44px 44px; background: #f4f1ea; transform-origin: 50% 35%;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 64px); mask-image: linear-gradient(to bottom, transparent 0, #000 64px); }
+#scr { position: absolute; left: 0; width: 1014px; height: 2080px; top: -611px; display: block; }
+#mclip { overflow: hidden; }
+.mk { position: absolute; background: rgba(143,208,181,.7); border-radius: 9px; transform-origin: left center; mix-blend-mode: multiply; }
+#flash { inset: 0; background: #fff; opacity: 0; }
+#end { inset: 0; display: none; background: linear-gradient(180deg, #fbfaf6, #ecefe8); text-align: center; }
+#end img { width: 300px; height: 300px; margin-top: 520px; }
+#end .w1 { font-family: Serif; font-size: 130px; color: #121714; margin-top: 0; letter-spacing: -2px; }
+#end .w2 { font-weight: 800; font-size: 66px; color: #285b45; margin-top: 18px; letter-spacing: -1px; }
+#end .w3 { display: inline-block; font-weight: 800; font-size: 50px; color: #fff; background: #285b45; padding: 18px 44px 22px; border-radius: 60px; margin-top: 56px; }
+#end .w4 { font-size: 28px; color: #7d877f; margin-top: 200px; }
+</style></head>
+<body>
+<div id="bg" class="abs"></div>
+<div class="abs orb" id="o1" style="width:520px;height:520px;left:-160px;top:1250px;opacity:.5"></div>
+<div class="abs orb" id="o2" style="width:300px;height:300px;left:840px;top:520px;opacity:.4"></div>
+<div id="hook" class="abs">
+  <div class="abs date">Monday, November 9</div>
+  <div class="abs time">8:22</div>
+  <div id="nlist"></div>
+  <div class="abs finger" id="hfg"></div>
+</div>
+<div id="card" class="abs"><img id="scr"><div id="mclip" class="abs"></div></div>
+<div id="caps"></div>
+<div id="flash" class="abs"></div>
+<div id="end" class="abs"><img src="mark.png"><div class="w1">LifeFlow</div><div class="w2">Your personal assistant.</div><div><span class="w3">Link in bio</span></div><div class="w4">Real app and real replies, on a sample account.</div></div>
+<script>
+const D = window.DATA;
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const P = (t, a, d) => clamp((t - a) / d);
+const out = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const io = (x) => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const back = (x, s = 1.6) => { x = clamp(x); return 1 + (s + 1) * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2); };
+const KC = 1014 / 390, Y0 = 235;      // card scale and the first app row shown
+const NS = 2.7;                       // notification scale in the hook
+// hook notifications (real pushed text, current app icon)
+D.hook.n.forEach((h) => { const m = D.notes[h.i]; const d = document.createElement('div'); d.className = 'n'; d.id = 'hn' + h.i;
+  d.innerHTML = `<img src="appicon.png" alt=""><div><div class="h"><span class="t">${m.title}</span><span class="when">now</span></div><div class="b">${m.body}</div></div>`; $('nlist').appendChild(d); });
+const NH = {}; D.hook.n.forEach((h) => (NH[h.i] = $('hn' + h.i).offsetHeight * NS));
+// captions
+$('caps').innerHTML = D.caps.map((c, i) => `<div class="abs cap" id="cap${i}">${c.lines.map((l) => `<div class="ln${l.startsWith('*') ? ' hl' : ''}">${l.replace(/\*/g, '')}</div>`).join('')}</div>`).join('');
+D.caps.forEach((c, i) => { const el = $('cap' + i); el.querySelectorAll('.ln').forEach((l) => { if (l.offsetWidth > 1010) l.style.fontSize = `${74 * 1010 / l.offsetWidth}px`; }); el.style.display = 'none'; });
+$('mclip').style.cssText = `left:0;top:${(D.sc[1] - Y0) * KC}px;width:1014px;height:${D.sc[3] * KC}px`;
+const herm = (keys, t) => { for (let k = 0; k + 1 < keys.length; k++) { const a = keys[k], b = keys[k + 1]; if (t < b.e || k + 2 === keys.length) { const dt = b.e - a.e, s = clamp((t - a.e) / dt); const s2 = s * s, s3 = s2 * s;
+  return (2 * s3 - 3 * s2 + 1) * a.c + (s3 - 2 * s2 + s) * dt * a.m + (-2 * s3 + 3 * s2) * b.c + (s3 - s2) * dt * b.m; } } };
+const nearestIdx = (ct) => { let lo = 0, hi = D.frames.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (D.frames[m][1] <= ct) lo = m; else hi = m - 1; } if (lo + 1 < D.frames.length && Math.abs(D.frames[lo + 1][1] - ct) < Math.abs(D.frames[lo][1] - ct)) lo++; return lo; };
+let last = '';
+async function seek(t) {
+  $('o1').style.transform = `translate(${Math.sin(t * .6) * 40}px, ${Math.cos(t * .5) * 30}px)`;
+  $('o2').style.transform = `translate(${Math.cos(t * .55) * 30}px, ${Math.sin(t * .45) * 40}px)`;
+  const H = D.hook, inHook = t < H.end;
+  // ---- hook: the warnings land, big
+  $('hook').style.display = inHook ? 'block' : 'none';
+  if (inHook) {
+    const order = [...H.n].sort((a, b) => b.at - a.at);
+    let y = 820;
+    const ys = {};
+    order.forEach((h) => { const k = out(P(t, h.at, 0.32)); ys[h.i] = y; y += (NH[h.i] + 26) * k; });
+    const hp = 1 + 0.035 * io(P(t, 0, H.end));
+    $('hook').style.transform = `scale(${hp})`; $('hook').style.transformOrigin = '540px 1000px';
+    H.n.forEach((h) => { const el = $('hn' + h.i); const k = P(t, h.at, 0.34); const kb = back(k, 1.7);
+      const press = h.i === 1 ? 1 - 0.04 * Math.sin(P(t, H.tapAt, 0.28) * Math.PI) : 1;
+      const s = NS * (1.12 - 0.12 * kb) * press;
+      el.style.display = t >= h.at ? 'grid' : 'none'; el.style.opacity = String(clamp(k * 3));
+      el.style.transform = `translate(${540 - 185 * s}px, ${ys[h.i] - (1 - kb) * 50}px) scale(${s})`; });
+    const tk = H.n.map((h) => Math.max(0, 1 - Math.abs(t - h.at - 0.06) / 0.16)).reduce((a, b) => Math.max(a, b));
+    $('bg').style.transform = `scale(${1 + 0.015 * tk})`;
+    const f = $('hfg'), dt = t - H.tapAt; let a = 0, s2 = 1;
+    if (dt >= -0.15 && dt < 0.4) { if (dt < 0) { s2 = 1.3 - 0.3 * (dt + 0.15) / 0.15; a = (dt + 0.15) / 0.15; } else if (dt < 0.12) { s2 = 1 - 0.08 * dt / 0.12; a = 1; } else { const k = (dt - 0.12) / 0.28; s2 = 0.92 + 0.4 * k; a = 1 - k; } }
+    f.style.display = a > 0.01 ? 'block' : 'none'; f.style.opacity = String(a); f.style.transform = `scale(${s2})`;
+    const r = $('hn1').getBoundingClientRect(); f.style.left = `${r.left + r.width * 0.6}px`; f.style.top = `${r.top + r.height * 0.55}px`;
+  } else $('bg').style.transform = 'none';
+  // ---- the chat clips
+  const bi = D.beats.findIndex((b) => t >= b.a && t < b.b);
+  const card = $('card');
+  card.style.display = bi >= 0 ? 'block' : 'none';
+  let idx = -1;
+  if (bi >= 0) {
+    const b = D.beats[bi];
+    const ct = herm(b.keys, t);
+    idx = nearestIdx(ct);
+    const src = D.dir + '/' + D.frames[idx][0];
+    if (src !== last) { $('scr').src = src; last = src; }
+    const kp = out(P(t, b.a, 0.38)); // the punch-in that marks the cut
+    const drift = 0.02 * P(t, b.a, b.b - b.a);
+    card.style.transform = `translateY(${(1 - kp) * 60}px) scale(${1.09 - 0.09 * kp + drift})`;
+  }
+  $('flash').style.opacity = String(D.beats.reduce((m, b) => Math.max(m, 0.22 * (1 - P(t, b.a, 0.12)) * (t >= b.a ? 1 : 0)), 0));
+  // highlights on the assistant's own bold words, following the real scroll
+  const mc = $('mclip'); let html = '';
+  if (idx >= 0) D.marks.forEach((m, i) => {
+    const rects = D.mk[idx][i]; if (!rects || t < m.at || t >= m.until) return;
+    rects.forEach(([x, y, w, h], j) => { const k = io(P(t, m.at + j * 0.1, 0.3));
+      html += `<div class="mk" style="left:${(x - 3) * KC}px;top:${(y - D.sc[1] + 1) * KC}px;width:${(w + 6) * KC}px;height:${(h - 1) * KC}px;transform:scaleX(${k})"></div>`; });
+  });
+  mc.innerHTML = html;
+  // ---- captions: sticker lines pop in, pop out
+  D.caps.forEach((c, i) => {
+    const el = $('cap' + i); const vis = t >= c.a && t < c.b; el.style.display = vis ? 'flex' : 'none'; if (!vis) return;
+    const ko = P(t, c.b - 0.1, 0.1);
+    el.querySelectorAll('.ln').forEach((l, j) => { const k = P(t, c.a + j * 0.07, 0.3); const s = back(k, 1.9) * (1 - 0.15 * ko);
+      l.style.transform = `scale(${0.55 + 0.45 * s})`; l.style.opacity = String(clamp(k * 4) * (1 - ko)); });
+  });
+  // ---- end card (a clear cut to the brand)
+  const e = $('end'); const ev = t >= D.endAt; e.style.display = ev ? 'block' : 'none';
+  if (ev) [...e.children].forEach((c, j) => { const k = P(t, D.endAt + 0.05 + j * 0.1, 0.4); c.style.opacity = String(clamp(k * 3)); c.style.transform = j === 0 ? `scale(${0.5 + 0.5 * back(k, 1.8)})` : `translateY(${(1 - out(k)) * 40}px)`; });
+  const img = $('scr'); if (img.src && !img.complete) await new Promise((r) => { img.onload = r; img.onerror = r; }); await img.decode().catch(() => {});
+}
+window.seek = seek;
+</script>
+</body></html>

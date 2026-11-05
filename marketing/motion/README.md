@@ -39,3 +39,17 @@ and the notification used the old logo, and the replies lagged.
 - `python3 build_chat2.py chat2_log.json <frames dir> captions2.json notes.json` writes `chat2_data.json` and `plan_chat2.json`
   (music: `../launch/music_launch.py plan_chat2.json music.wav`); `node render_chat2.cjs` renders 60 fps frames.
   Highlights are picked per turn in `captions2.json` (substring, or `=` for an exact bold phrase).
+
+## The reel (`reel.html`): short, hook first, clear cuts (current)
+
+Owner on the 40-second continuous chat: poor quality, no good hook, messy; and if there is a new clip, make the cut visible.
+So: 20 seconds, built from the same real take (`chat2_log.json`).
+- Hook in the first frame: the real warning notifications, full screen and readable (midterm vs. Wednesday shift; car insurance
+  due, checking short), with "MY ASSISTANT CAUGHT THIS / 3 DAYS EARLY." Then a tap.
+- One clip per thing the assistant did: study time booked, the car insurance fix, the text to the manager, the reminder. Each clip
+  plays the real take continuously; the wait for the reply runs faster on a smooth curve (Hermite keys, never a jump), and long
+  replies stream a little faster.
+- Every cut is marked on purpose: a punch-in, a short light flash and a whoosh plus tick in the music. Captions are sticker boxes
+  that change on each cut: a setup line, then the payoff when the reply lands. One highlight per clip, on the assistant's own bold words.
+- Clean frame: no phone mockup; the app is cropped to the conversation, 2.6x, with its top edge faded under the captions.
+- `python3 build_reel.py chat2_log.json <frames dir> notes.json` then `node render_reel.cjs`; music from `plan_reel.json`.

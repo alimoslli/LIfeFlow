@@ -1,0 +1,76 @@
+{
+ "bpm": 108,
+ "duration": 19.96,
+ "vo": [],
+ "scenes": [
+  {
+   "kind": "phone",
+   "enter": true,
+   "start": 0.0,
+   "end": 2.95,
+   "pops": [
+    {
+     "at": 0.0,
+     "dur": 1.0
+    },
+    {
+     "at": 1.25,
+     "dur": 1.0
+    }
+   ]
+  },
+  {
+   "kind": "phone",
+   "start": 2.95,
+   "end": 6.419,
+   "pops": [
+    {
+     "at": 2.019,
+     "dur": 0.6
+    }
+   ]
+  },
+  {
+   "kind": "phone",
+   "start": 6.419,
+   "end": 11.139,
+   "pops": [
+    {
+     "at": 3.071,
+     "dur": 0.6
+    }
+   ]
+  },
+  {
+   "kind": "phone",
+   "start": 11.139,
+   "end": 14.332,
+   "pops": [
+    {
+     "at": 1.543,
+     "dur": 0.6
+    }
+   ]
+  },
+  {
+   "kind": "phone",
+   "start": 14.332,
+   "end": 17.365,
+   "pops": [
+    {
+     "at": 1.783,
+     "dur": 0.6
+    }
+   ]
+  },
+  {
+   "kind": "gloss",
+   "outro": true,
+   "start": 17.365,
+   "end": 19.965,
+   "wordmark": {
+    "at": 0.25
+   }
+  }
+ ]
+}
