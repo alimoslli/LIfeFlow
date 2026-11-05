@@ -102,7 +102,7 @@ export const schoolTools = [
       term: z.string().max(60).optional(),
       instructorName: z.string().max(120).optional(),
       instructorEmail: z.string().email().optional(),
-      meetingInfo: z.string().max(200).optional().describe('e.g. "Mon/Wed 10:00–11:15"'),
+      meetingInfo: z.string().max(200).optional().describe('e.g. "Mon/Wed 10:00–11:15 AM" (always with AM or PM)'),
       location: z.string().max(200).optional(),
       url: z.string().url().optional(),
     }),
