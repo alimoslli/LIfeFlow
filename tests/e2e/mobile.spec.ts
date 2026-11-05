@@ -47,6 +47,17 @@ test("Extra large text still fits a phone screen", async ({ page, context, baseU
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow, `${path} overflows by ${overflow}px at Extra large text`).toBeLessThanOrEqual(1);
   }
+  // The assistant's Profile cards grow with the text instead of clipping their icons (audit A26), on a 393 px phone.
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/jarvis/profile");
+  await page.waitForLoadState("networkidle");
+  for (const name of [/Personality/, /Memory/]) {
+    const card = page.getByRole("link", { name });
+    const [box, icon] = [await card.boundingBox(), await card.locator("svg").last().boundingBox()];
+    expect(icon!.height, `${name} icon is squeezed at Extra large text`).toBeGreaterThan(20);
+    expect(icon!.y + icon!.height, `${name} icon is clipped at Extra large text`).toBeLessThanOrEqual(box!.y + box!.height);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
 });
 
 test("is installable: manifest and icons load without signing in", async ({ request }) => {
