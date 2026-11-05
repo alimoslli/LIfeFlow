@@ -13,6 +13,11 @@ import type { RecurringCandidate } from "@/server/services/finance/recurring-det
 
 const found = (p: Partial<RecurringCandidate>): RecurringCandidate => ({
   merchantKey: "parkview apartments",
+  seriesKey: "parkview apartments",
+  dueDay: 1,
+  priceChange: null,
+  charges: [],
+  duplicates: [],
   name: "Parkview Apartments",
   kind: "bill",
   frequency: "monthly",
@@ -111,6 +116,9 @@ describe("bill matching helpers", () => {
     expect(scheduleGap("2026-12-01", "2027-01-02", "monthly")).toBe(1);
     expect(scheduleGap("2027-01-01", "2026-12-01", "monthly")).toBe(0);
     expect(scheduleGap("2026-12-31", "2027-01-01", "monthly")).toBe(1);
+    // A bill on the 31st stays on the 31st after February (audit A15), not the 28th.
+    expect(scheduleGap("2026-01-31", "2026-03-31", "monthly")).toBe(0);
+    expect(scheduleGap("2026-01-31", "2026-05-31", "monthly")).toBe(0);
     expect(scheduleGap("2026-11-02", "2026-11-17", "weekly")).toBe(1);
   });
 });

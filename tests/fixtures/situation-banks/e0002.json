@@ -1,0 +1,3513 @@
+{
+  "about": "Copied from docs/situations/examples/e0002-night-nurse-school-closure (bank.json and truth.json, simulate.py output). Only the fields the recurring-charge test reads.",
+  "now": "2026-01-14",
+  "accounts": [
+    {
+      "id": "acc-joint",
+      "type": "depository",
+      "subtype": "checking",
+      "mask": "2290"
+    },
+    {
+      "id": "acc-savings",
+      "type": "depository",
+      "subtype": "savings",
+      "mask": "2291"
+    },
+    {
+      "id": "acc-card",
+      "type": "credit",
+      "subtype": "credit card",
+      "mask": "5518"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tx-2025-10-16-gas-heat",
+      "account_id": "acc-joint",
+      "date": "2025-10-16",
+      "description": "TRISTATE GAS CO BILL PAY",
+      "merchant_name": "Tristate Gas",
+      "amount_cents": -4174,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY"
+      }
+    },
+    {
+      "id": "tx-2025-10-16-hospital-food",
+      "account_id": "acc-joint",
+      "date": "2025-10-17",
+      "description": "ST BRIGID CAFETERIA 01",
+      "merchant_name": null,
+      "amount_cents": -1231,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-10-20-water",
+      "account_id": "acc-joint",
+      "date": "2025-10-20",
+      "description": "CITY WATER DEPT WEB",
+      "merchant_name": null,
+      "amount_cents": -5124,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_WATER"
+      }
+    },
+    {
+      "id": "tx-2025-10-17-gym",
+      "account_id": "acc-card",
+      "date": "2025-10-20",
+      "description": "CROSSTOWN FITNESS CLUB",
+      "merchant_name": "Crosstown Fitness",
+      "amount_cents": -3499,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "PERSONAL_CARE",
+        "detailed": "PERSONAL_CARE_GYMS_AND_FITNESS_CENTERS"
+      }
+    },
+    {
+      "id": "tx-2025-10-17-gas",
+      "account_id": "acc-joint",
+      "date": "2025-10-20",
+      "description": "SUNOCO 0412883301",
+      "merchant_name": "Sunoco",
+      "amount_cents": -4421,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2025-10-18-groceries",
+      "account_id": "acc-card",
+      "date": "2025-10-20",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -6468,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-10-18-coffee",
+      "account_id": "acc-joint",
+      "date": "2025-10-20",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -475,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-10-18-sit-down",
+      "account_id": "acc-card",
+      "date": "2025-10-20",
+      "description": "OLIVE GARDEN 1840",
+      "merchant_name": "Olive Garden",
+      "amount_cents": -8101,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-10-19-disney",
+      "account_id": "acc-card",
+      "date": "2025-10-20",
+      "description": "DISNEY PLUS",
+      "merchant_name": "Disney+",
+      "amount_cents": -999,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_TV_AND_MOVIES"
+      }
+    },
+    {
+      "id": "tx-2025-10-19-hospital-food",
+      "account_id": "acc-card",
+      "date": "2025-10-21",
+      "description": "SQ *NIGHT OWL VENDING",
+      "merchant_name": null,
+      "amount_cents": -335,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-10-19-amazon",
+      "account_id": "acc-card",
+      "date": "2025-10-21",
+      "description": "AMZN Mktp US*9JXL8X",
+      "merchant_name": "Amazon",
+      "amount_cents": -2767,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-10-20-amazon",
+      "account_id": "acc-joint",
+      "date": "2025-10-21",
+      "description": "AMZN Mktp US*HSVEA5",
+      "merchant_name": "Amazon",
+      "amount_cents": -5948,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-10-20-coffee",
+      "account_id": "acc-joint",
+      "date": "2025-10-21",
+      "description": "STARBUCKS STORE 11823",
+      "merchant_name": "Starbucks",
+      "amount_cents": -373,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-10-22-phones",
+      "account_id": "acc-joint",
+      "date": "2025-10-22",
+      "description": "VERIZON WIRELESS PAYMENTS",
+      "merchant_name": "Verizon",
+      "amount_cents": -12400,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_TELEPHONE"
+      }
+    },
+    {
+      "id": "tx-2025-10-20-takeout",
+      "account_id": "acc-card",
+      "date": "2025-10-22",
+      "description": "DOMINO'S 7112",
+      "merchant_name": "Domino's",
+      "amount_cents": -5440,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-10-21-target",
+      "account_id": "acc-card",
+      "date": "2025-10-22",
+      "description": "TARGET 00021455",
+      "merchant_name": "Target",
+      "amount_cents": -4232,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_SUPERSTORES"
+      }
+    },
+    {
+      "id": "tx-2025-10-23-pay-er",
+      "account_id": "acc-joint",
+      "date": "2025-10-23",
+      "description": "ST BRIGID MED CTR PAYROLL PPD ID: 3721004418",
+      "merchant_name": null,
+      "amount_cents": 168988,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2025-10-23-savings-in",
+      "account_id": "acc-savings",
+      "date": "2025-10-23",
+      "description": "ONLINE TRANSFER FROM CHK XXXXXX2290",
+      "merchant_name": null,
+      "amount_cents": 110000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2025-10-23-savings-out",
+      "account_id": "acc-joint",
+      "date": "2025-10-23",
+      "description": "ONLINE TRANSFER TO SAV XXXXXX2291",
+      "merchant_name": null,
+      "amount_cents": -110000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2025-10-22-coffee",
+      "account_id": "acc-card",
+      "date": "2025-10-23",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -402,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-10-22-target",
+      "account_id": "acc-card",
+      "date": "2025-10-23",
+      "description": "TARGET 00021455",
+      "merchant_name": "Target",
+      "amount_cents": -6827,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_SUPERSTORES"
+      }
+    },
+    {
+      "id": "tx-2025-10-22-groceries",
+      "account_id": "acc-card",
+      "date": "2025-10-24",
+      "description": "ALDI 63218",
+      "merchant_name": "Aldi",
+      "amount_cents": -16380,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-10-23-coffee",
+      "account_id": "acc-card",
+      "date": "2025-10-24",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -528,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-10-23-groceries",
+      "account_id": "acc-card",
+      "date": "2025-10-24",
+      "description": "ALDI 63218",
+      "merchant_name": "Aldi",
+      "amount_cents": -10794,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-10-23-sitter",
+      "account_id": "acc-joint",
+      "date": "2025-10-27",
+      "description": "VENMO PAYMENT 9576373109",
+      "merchant_name": "Venmo",
+      "amount_cents": -2700,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_ACCOUNT_TRANSFER"
+      }
+    },
+    {
+      "id": "tx-2025-10-23-amazon",
+      "account_id": "acc-card",
+      "date": "2025-10-27",
+      "description": "AMZN Mktp US*6Y63FY",
+      "merchant_name": "Amazon",
+      "amount_cents": -2657,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-10-24-takeout",
+      "account_id": "acc-joint",
+      "date": "2025-10-27",
+      "description": "CHIPOTLE 2214",
+      "merchant_name": "Chipotle",
+      "amount_cents": -2237,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-10-24-coffee",
+      "account_id": "acc-card",
+      "date": "2025-10-27",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -358,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-10-25-groceries",
+      "account_id": "acc-card",
+      "date": "2025-10-27",
+      "description": "COSTCO WHSE #0388",
+      "merchant_name": "Costco",
+      "amount_cents": -17442,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-10-25-coffee",
+      "account_id": "acc-card",
+      "date": "2025-10-27",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -412,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-10-25-family-fun",
+      "account_id": "acc-joint",
+      "date": "2025-10-27",
+      "description": "REGAL CINEMAS 0442",
+      "merchant_name": "Regal",
+      "amount_cents": -2674,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS"
+      }
+    },
+    {
+      "id": "tx-2025-10-25-hospital-food",
+      "account_id": "acc-card",
+      "date": "2025-10-27",
+      "description": "ST BRIGID CAFETERIA 01",
+      "merchant_name": null,
+      "amount_cents": -841,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-10-26-groceries",
+      "account_id": "acc-joint",
+      "date": "2025-10-27",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -10753,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-10-26-amazon",
+      "account_id": "acc-card",
+      "date": "2025-10-28",
+      "description": "AMZN Mktp US*HQ59H4",
+      "merchant_name": "Amazon",
+      "amount_cents": -3327,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-10-27-amazon",
+      "account_id": "acc-card",
+      "date": "2025-10-28",
+      "description": "AMZN Mktp US*QDYSHV",
+      "merchant_name": "Amazon",
+      "amount_cents": -1820,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-10-27-takeout",
+      "account_id": "acc-card",
+      "date": "2025-10-28",
+      "description": "CHIPOTLE 2214",
+      "merchant_name": "Chipotle",
+      "amount_cents": -3690,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-10-28-amazon-refund",
+      "account_id": "acc-card",
+      "date": "2025-10-29",
+      "description": "AMZN Mktp US*9JXL8X",
+      "merchant_name": "Amazon",
+      "amount_cents": 2767,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-10-28-gas",
+      "account_id": "acc-card",
+      "date": "2025-10-30",
+      "description": "WAWA 8812",
+      "merchant_name": "Wawa",
+      "amount_cents": -5388,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2025-10-28-amazon",
+      "account_id": "acc-card",
+      "date": "2025-10-30",
+      "description": "AMZN Mktp US*XYAFTS",
+      "merchant_name": "Amazon",
+      "amount_cents": -3182,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-10-28-takeout",
+      "account_id": "acc-joint",
+      "date": "2025-10-30",
+      "description": "DOMINO'S 7112",
+      "merchant_name": "Domino's",
+      "amount_cents": -3631,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-10-28-coffee",
+      "account_id": "acc-card",
+      "date": "2025-10-30",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -523,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-10-28-coffee-2",
+      "account_id": "acc-joint",
+      "date": "2025-10-30",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -494,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-10-31-pay-inc-dan",
+      "account_id": "acc-joint",
+      "date": "2025-10-31",
+      "description": "NORTHLINE LOGISTICS PAYROLL PPD ID: 8830021147",
+      "merchant_name": null,
+      "amount_cents": 194667,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2025-10-31-interest",
+      "account_id": "acc-savings",
+      "date": "2025-10-31",
+      "description": "INTEREST PAID",
+      "merchant_name": null,
+      "amount_cents": 1688,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_INTEREST_EARNED"
+      }
+    },
+    {
+      "id": "tx-2025-10-29-delivery",
+      "account_id": "acc-card",
+      "date": "2025-10-31",
+      "description": "UBER EATS PENDING",
+      "merchant_name": "Uber Eats",
+      "amount_cents": -2256,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-10-29-delivery-2",
+      "account_id": "acc-card",
+      "date": "2025-10-31",
+      "description": "UBER EATS PENDING",
+      "merchant_name": "Uber Eats",
+      "amount_cents": -2321,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-10-29-target",
+      "account_id": "acc-card",
+      "date": "2025-10-31",
+      "description": "TARGET 00021455",
+      "merchant_name": "Target",
+      "amount_cents": -5869,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_SUPERSTORES"
+      }
+    },
+    {
+      "id": "tx-2025-11-03-card-payment-in",
+      "account_id": "acc-card",
+      "date": "2025-11-03",
+      "description": "PAYMENT RECEIVED THANK YOU",
+      "merchant_name": null,
+      "amount_cents": 131500,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2025-11-01-rent",
+      "account_id": "acc-joint",
+      "date": "2025-11-03",
+      "description": "BRIARWOOD APTS RENT WEB PMT",
+      "merchant_name": "Briarwood Apartments",
+      "amount_cents": -195000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_RENT"
+      }
+    },
+    {
+      "id": "tx-2025-11-03-car-insurance",
+      "account_id": "acc-joint",
+      "date": "2025-11-03",
+      "description": "SAFEROUTE AUTO INS PREM",
+      "merchant_name": "SafeRoute Insurance",
+      "amount_cents": -18400,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_INSURANCE"
+      }
+    },
+    {
+      "id": "tx-2025-11-03-card-payment",
+      "account_id": "acc-joint",
+      "date": "2025-11-03",
+      "description": "GRANITE FCU VISA PAYMENT",
+      "merchant_name": null,
+      "amount_cents": -131500,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2025-10-30-gas",
+      "account_id": "acc-card",
+      "date": "2025-11-03",
+      "description": "WAWA 8812",
+      "merchant_name": "Wawa",
+      "amount_cents": -5349,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2025-10-31-target",
+      "account_id": "acc-card",
+      "date": "2025-11-03",
+      "description": "TARGET 00021455",
+      "merchant_name": "Target",
+      "amount_cents": -4866,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_SUPERSTORES"
+      }
+    },
+    {
+      "id": "tx-2025-10-31-takeout",
+      "account_id": "acc-card",
+      "date": "2025-11-03",
+      "description": "CHIPOTLE 2214",
+      "merchant_name": "Chipotle",
+      "amount_cents": -5471,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-10-31-amazon",
+      "account_id": "acc-card",
+      "date": "2025-11-03",
+      "description": "AMZN Mktp US*KS3B2B",
+      "merchant_name": "Amazon",
+      "amount_cents": -4523,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-01-groceries",
+      "account_id": "acc-card",
+      "date": "2025-11-03",
+      "description": "ALDI 63218",
+      "merchant_name": "Aldi",
+      "amount_cents": -5866,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-11-02-swim",
+      "account_id": "acc-card",
+      "date": "2025-11-03",
+      "description": "SQ *LITTLE FINS SWIM",
+      "merchant_name": "Little Fins Swim School",
+      "amount_cents": -9500,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_EDUCATION"
+      }
+    },
+    {
+      "id": "tx-2025-11-02-family-fun",
+      "account_id": "acc-card",
+      "date": "2025-11-04",
+      "description": "REGAL CINEMAS 0442",
+      "merchant_name": "Regal",
+      "amount_cents": -4273,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS"
+      }
+    },
+    {
+      "id": "tx-2025-11-04-sitter",
+      "account_id": "acc-joint",
+      "date": "2025-11-05",
+      "description": "VENMO PAYMENT 4358497411",
+      "merchant_name": "Venmo",
+      "amount_cents": -4797,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_ACCOUNT_TRANSFER"
+      }
+    },
+    {
+      "id": "tx-2025-11-06-pay-er",
+      "account_id": "acc-joint",
+      "date": "2025-11-06",
+      "description": "ST BRIGID MED CTR PAYROLL PPD ID: 3721004418",
+      "merchant_name": null,
+      "amount_cents": 305254,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2025-11-06-savings-in",
+      "account_id": "acc-savings",
+      "date": "2025-11-06",
+      "description": "ONLINE TRANSFER FROM CHK XXXXXX2290",
+      "merchant_name": null,
+      "amount_cents": 110000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2025-11-06-savings-out",
+      "account_id": "acc-joint",
+      "date": "2025-11-06",
+      "description": "ONLINE TRANSFER TO SAV XXXXXX2291",
+      "merchant_name": null,
+      "amount_cents": -110000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2025-11-04-coffee",
+      "account_id": "acc-card",
+      "date": "2025-11-06",
+      "description": "STARBUCKS STORE 11823",
+      "merchant_name": "Starbucks",
+      "amount_cents": -647,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-11-05-target",
+      "account_id": "acc-card",
+      "date": "2025-11-07",
+      "description": "TARGET 00021455",
+      "merchant_name": "Target",
+      "amount_cents": -7069,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_SUPERSTORES"
+      }
+    },
+    {
+      "id": "tx-2025-11-05-amazon",
+      "account_id": "acc-card",
+      "date": "2025-11-07",
+      "description": "AMZN Mktp US*MGDAVH",
+      "merchant_name": "Amazon",
+      "amount_cents": -3248,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-06-takeout-2",
+      "account_id": "acc-joint",
+      "date": "2025-11-07",
+      "description": "DOMINO'S 7112",
+      "merchant_name": "Domino's",
+      "amount_cents": -3263,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-11-06-school-lunch",
+      "account_id": "acc-joint",
+      "date": "2025-11-07",
+      "description": "SCHOOLCAFE K12 TOPUP",
+      "merchant_name": null,
+      "amount_cents": -2529,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_EDUCATION"
+      }
+    },
+    {
+      "id": "tx-2025-11-06-sitter",
+      "account_id": "acc-joint",
+      "date": "2025-11-07",
+      "description": "VENMO PAYMENT 7539108666",
+      "merchant_name": "Venmo",
+      "amount_cents": -3113,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_ACCOUNT_TRANSFER"
+      }
+    },
+    {
+      "id": "tx-2025-11-10-car-loan",
+      "account_id": "acc-joint",
+      "date": "2025-11-10",
+      "description": "GRANITE FCU AUTO LOAN PMT",
+      "merchant_name": null,
+      "amount_cents": -38900,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CAR_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2025-11-06-takeout",
+      "account_id": "acc-card",
+      "date": "2025-11-10",
+      "description": "DOMINO'S 7112",
+      "merchant_name": "Domino's",
+      "amount_cents": -3403,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-11-07-delivery",
+      "account_id": "acc-card",
+      "date": "2025-11-10",
+      "description": "DOORDASH*THAI SPICE",
+      "merchant_name": "DoorDash",
+      "amount_cents": -2468,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-11-07-coffee",
+      "account_id": "acc-joint",
+      "date": "2025-11-10",
+      "description": "STARBUCKS STORE 11823",
+      "merchant_name": "Starbucks",
+      "amount_cents": -451,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-11-07-amazon",
+      "account_id": "acc-card",
+      "date": "2025-11-10",
+      "description": "AMZN Mktp US*3JSRTA",
+      "merchant_name": "Amazon",
+      "amount_cents": -1913,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-08-netflix",
+      "account_id": "acc-card",
+      "date": "2025-11-10",
+      "description": "NETFLIX.COM",
+      "merchant_name": "Netflix",
+      "amount_cents": -1549,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_TV_AND_MOVIES"
+      }
+    },
+    {
+      "id": "tx-2025-11-08-coffee",
+      "account_id": "acc-joint",
+      "date": "2025-11-10",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -402,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-11-09-internet",
+      "account_id": "acc-card",
+      "date": "2025-11-10",
+      "description": "FIBERLINE INTERNET",
+      "merchant_name": "Fiberline",
+      "amount_cents": -6999,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_INTERNET_AND_CABLE"
+      }
+    },
+    {
+      "id": "tx-2025-11-12-electric",
+      "account_id": "acc-joint",
+      "date": "2025-11-12",
+      "description": "CITY POWER AND LIGHT",
+      "merchant_name": "City Power and Light",
+      "amount_cents": -11022,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY"
+      }
+    },
+    {
+      "id": "tx-2025-11-09-pharmacy",
+      "account_id": "acc-joint",
+      "date": "2025-11-12",
+      "description": "CVS/PHARMACY #07261",
+      "merchant_name": "CVS",
+      "amount_cents": -2862,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "MEDICAL",
+        "detailed": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS"
+      }
+    },
+    {
+      "id": "tx-2025-11-10-hospital-food",
+      "account_id": "acc-joint",
+      "date": "2025-11-12",
+      "description": "SQ *NIGHT OWL VENDING",
+      "merchant_name": null,
+      "amount_cents": -440,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-11-11-amazon-2",
+      "account_id": "acc-card",
+      "date": "2025-11-12",
+      "description": "AMZN Mktp US*B9QELW",
+      "merchant_name": "Amazon",
+      "amount_cents": -2820,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-11-amazon",
+      "account_id": "acc-card",
+      "date": "2025-11-13",
+      "description": "AMZN Mktp US*SF78MR",
+      "merchant_name": "Amazon",
+      "amount_cents": -1576,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-11-kid-clothes",
+      "account_id": "acc-card",
+      "date": "2025-11-13",
+      "description": "CARTERS 0331",
+      "merchant_name": "Carter's",
+      "amount_cents": -3859,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_CLOTHING_AND_ACCESSORIES"
+      }
+    },
+    {
+      "id": "tx-2025-11-12-coffee",
+      "account_id": "acc-card",
+      "date": "2025-11-13",
+      "description": "STARBUCKS STORE 11823",
+      "merchant_name": "Starbucks",
+      "amount_cents": -582,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-11-14-pay-inc-dan",
+      "account_id": "acc-joint",
+      "date": "2025-11-14",
+      "description": "NORTHLINE LOGISTICS PAYROLL PPD ID: 8830021147",
+      "merchant_name": null,
+      "amount_cents": 194667,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2025-11-12-amazon",
+      "account_id": "acc-card",
+      "date": "2025-11-14",
+      "description": "AMZN Mktp US*WK49MB",
+      "merchant_name": "Amazon",
+      "amount_cents": -3231,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-13-delivery",
+      "account_id": "acc-card",
+      "date": "2025-11-14",
+      "description": "UBER EATS PENDING",
+      "merchant_name": "Uber Eats",
+      "amount_cents": -1955,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-11-13-gas",
+      "account_id": "acc-card",
+      "date": "2025-11-14",
+      "description": "SUNOCO 0412883301",
+      "merchant_name": "Sunoco",
+      "amount_cents": -4410,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2025-11-15-college-fund",
+      "account_id": "acc-joint",
+      "date": "2025-11-17",
+      "description": "STATE 529 PLAN CONTRIB",
+      "merchant_name": null,
+      "amount_cents": -25000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_INVESTMENT_AND_RETIREMENT_FUNDS"
+      }
+    },
+    {
+      "id": "tx-2025-11-16-gas-heat",
+      "account_id": "acc-joint",
+      "date": "2025-11-17",
+      "description": "TRISTATE GAS CO BILL PAY",
+      "merchant_name": "Tristate Gas",
+      "amount_cents": -7119,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY"
+      }
+    },
+    {
+      "id": "tx-2025-11-14-gas",
+      "account_id": "acc-card",
+      "date": "2025-11-17",
+      "description": "SUNOCO 0412883301",
+      "merchant_name": "Sunoco",
+      "amount_cents": -5254,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2025-11-14-takeout",
+      "account_id": "acc-card",
+      "date": "2025-11-17",
+      "description": "CHIPOTLE 2214",
+      "merchant_name": "Chipotle",
+      "amount_cents": -2639,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-11-14-amazon",
+      "account_id": "acc-card",
+      "date": "2025-11-17",
+      "description": "AMZN Mktp US*MBS5T8",
+      "merchant_name": "Amazon",
+      "amount_cents": -4056,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-15-coffee",
+      "account_id": "acc-card",
+      "date": "2025-11-17",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -637,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-11-15-groceries",
+      "account_id": "acc-joint",
+      "date": "2025-11-17",
+      "description": "COSTCO WHSE #0388",
+      "merchant_name": "Costco",
+      "amount_cents": -23959,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-11-15-family-fun",
+      "account_id": "acc-card",
+      "date": "2025-11-17",
+      "description": "SQ *KIDS DISCOVERY MUSEUM",
+      "merchant_name": null,
+      "amount_cents": -5966,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS"
+      }
+    },
+    {
+      "id": "tx-2025-11-15-groceries-2",
+      "account_id": "acc-joint",
+      "date": "2025-11-17",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -9207,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-11-16-coffee",
+      "account_id": "acc-card",
+      "date": "2025-11-17",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -690,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-11-16-coffee-2",
+      "account_id": "acc-card",
+      "date": "2025-11-17",
+      "description": "STARBUCKS STORE 11823",
+      "merchant_name": "Starbucks",
+      "amount_cents": -571,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-11-16-amazon",
+      "account_id": "acc-card",
+      "date": "2025-11-17",
+      "description": "AMZN Mktp US*2CHWPZ",
+      "merchant_name": "Amazon",
+      "amount_cents": -5275,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-16-coffee-3",
+      "account_id": "acc-card",
+      "date": "2025-11-18",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -667,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-11-17-gym",
+      "account_id": "acc-card",
+      "date": "2025-11-18",
+      "description": "CROSSTOWN FITNESS CLUB",
+      "merchant_name": "Crosstown Fitness",
+      "amount_cents": -3499,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "PERSONAL_CARE",
+        "detailed": "PERSONAL_CARE_GYMS_AND_FITNESS_CENTERS"
+      }
+    },
+    {
+      "id": "tx-2025-11-20-pay-er",
+      "account_id": "acc-joint",
+      "date": "2025-11-20",
+      "description": "ST BRIGID MED CTR PAYROLL PPD ID: 3721004418",
+      "merchant_name": null,
+      "amount_cents": 305254,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2025-11-20-savings-in",
+      "account_id": "acc-savings",
+      "date": "2025-11-20",
+      "description": "ONLINE TRANSFER FROM CHK XXXXXX2290",
+      "merchant_name": null,
+      "amount_cents": 110000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2025-11-20-water",
+      "account_id": "acc-joint",
+      "date": "2025-11-20",
+      "description": "CITY WATER DEPT WEB",
+      "merchant_name": null,
+      "amount_cents": -5312,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_WATER"
+      }
+    },
+    {
+      "id": "tx-2025-11-20-savings-out",
+      "account_id": "acc-joint",
+      "date": "2025-11-20",
+      "description": "ONLINE TRANSFER TO SAV XXXXXX2291",
+      "merchant_name": null,
+      "amount_cents": -110000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2025-11-19-disney",
+      "account_id": "acc-card",
+      "date": "2025-11-20",
+      "description": "DISNEY PLUS",
+      "merchant_name": "Disney+",
+      "amount_cents": -999,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_TV_AND_MOVIES"
+      }
+    },
+    {
+      "id": "tx-2025-11-19-gas",
+      "account_id": "acc-card",
+      "date": "2025-11-21",
+      "description": "SUNOCO 0412883301",
+      "merchant_name": "Sunoco",
+      "amount_cents": -4735,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2025-11-19-hospital-food",
+      "account_id": "acc-card",
+      "date": "2025-11-21",
+      "description": "ST BRIGID CAFETERIA 01",
+      "merchant_name": null,
+      "amount_cents": -1026,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-11-22-phones",
+      "account_id": "acc-joint",
+      "date": "2025-11-24",
+      "description": "VERIZON WIRELESS PAYMENTS",
+      "merchant_name": "Verizon",
+      "amount_cents": -12400,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_TELEPHONE"
+      }
+    },
+    {
+      "id": "tx-2025-11-21-amazon",
+      "account_id": "acc-card",
+      "date": "2025-11-24",
+      "description": "AMZN Mktp US*YXM76U",
+      "merchant_name": "Amazon",
+      "amount_cents": -1433,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-21-amazon-2",
+      "account_id": "acc-card",
+      "date": "2025-11-24",
+      "description": "AMZN Mktp US*B452PH",
+      "merchant_name": "Amazon",
+      "amount_cents": -5087,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-22-groceries",
+      "account_id": "acc-card",
+      "date": "2025-11-24",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -12026,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-11-23-amazon",
+      "account_id": "acc-card",
+      "date": "2025-11-25",
+      "description": "AMZN Mktp US*2ZRL98",
+      "merchant_name": "Amazon",
+      "amount_cents": -2669,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-23-pharmacy",
+      "account_id": "acc-card",
+      "date": "2025-11-25",
+      "description": "CVS/PHARMACY #07261",
+      "merchant_name": "CVS",
+      "amount_cents": -2319,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "MEDICAL",
+        "detailed": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS"
+      }
+    },
+    {
+      "id": "tx-2025-11-24-kid-clothes",
+      "account_id": "acc-card",
+      "date": "2025-11-25",
+      "description": "CARTERS 0331",
+      "merchant_name": "Carter's",
+      "amount_cents": -2023,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_CLOTHING_AND_ACCESSORIES"
+      }
+    },
+    {
+      "id": "tx-2025-11-24-groceries",
+      "account_id": "acc-card",
+      "date": "2025-11-25",
+      "description": "COSTCO WHSE #0388",
+      "merchant_name": "Costco",
+      "amount_cents": -19370,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-11-24-amazon",
+      "account_id": "acc-card",
+      "date": "2025-11-25",
+      "description": "AMZN Mktp US*7UYR8J",
+      "merchant_name": "Amazon",
+      "amount_cents": -2172,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-24-amazon-2",
+      "account_id": "acc-card",
+      "date": "2025-11-25",
+      "description": "AMZN Mktp US*Q37AU3",
+      "merchant_name": "Amazon",
+      "amount_cents": -5771,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-24-coffee",
+      "account_id": "acc-joint",
+      "date": "2025-11-26",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -607,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-11-24-gas",
+      "account_id": "acc-card",
+      "date": "2025-11-26",
+      "description": "SUNOCO 0412883301",
+      "merchant_name": "Sunoco",
+      "amount_cents": -5556,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2025-11-28-pay-inc-dan",
+      "account_id": "acc-joint",
+      "date": "2025-11-28",
+      "description": "NORTHLINE LOGISTICS PAYROLL PPD ID: 8830021147",
+      "merchant_name": null,
+      "amount_cents": 194667,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2025-11-25-groceries",
+      "account_id": "acc-card",
+      "date": "2025-11-28",
+      "description": "ALDI 63218",
+      "merchant_name": "Aldi",
+      "amount_cents": -12157,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-11-26-amazon",
+      "account_id": "acc-card",
+      "date": "2025-11-28",
+      "description": "AMZN Mktp US*GQRFC7",
+      "merchant_name": "Amazon",
+      "amount_cents": -1670,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-27-coffee-3",
+      "account_id": "acc-joint",
+      "date": "2025-11-28",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -696,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-11-30-interest",
+      "account_id": "acc-savings",
+      "date": "2025-11-30",
+      "description": "INTEREST PAID",
+      "merchant_name": null,
+      "amount_cents": 1965,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_INTEREST_EARNED"
+      }
+    },
+    {
+      "id": "tx-2025-12-01-rent",
+      "account_id": "acc-joint",
+      "date": "2025-12-01",
+      "description": "BRIARWOOD APTS RENT WEB PMT",
+      "merchant_name": "Briarwood Apartments",
+      "amount_cents": -195000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_RENT"
+      }
+    },
+    {
+      "id": "tx-2025-11-27-coffee",
+      "account_id": "acc-card",
+      "date": "2025-12-01",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -390,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-11-27-coffee-2",
+      "account_id": "acc-card",
+      "date": "2025-12-01",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -508,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-11-29-groceries",
+      "account_id": "acc-joint",
+      "date": "2025-12-01",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -6301,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-11-29-amazon",
+      "account_id": "acc-card",
+      "date": "2025-12-01",
+      "description": "AMZN Mktp US*6XHDZN",
+      "merchant_name": "Amazon",
+      "amount_cents": -6639,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-11-29-groceries-2",
+      "account_id": "acc-card",
+      "date": "2025-12-01",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -13946,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-11-29-coffee",
+      "account_id": "acc-card",
+      "date": "2025-12-01",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -405,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-11-30-family-fun",
+      "account_id": "acc-card",
+      "date": "2025-12-01",
+      "description": "REGAL CINEMAS 0442",
+      "merchant_name": "Regal",
+      "amount_cents": -2559,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS"
+      }
+    },
+    {
+      "id": "tx-2025-12-01-target",
+      "account_id": "acc-card",
+      "date": "2025-12-02",
+      "description": "TARGET 00021455",
+      "merchant_name": "Target",
+      "amount_cents": -5134,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_SUPERSTORES"
+      }
+    },
+    {
+      "id": "tx-2025-12-03-card-payment-in",
+      "account_id": "acc-card",
+      "date": "2025-12-03",
+      "description": "PAYMENT RECEIVED THANK YOU",
+      "merchant_name": null,
+      "amount_cents": 175403,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2025-12-03-car-insurance",
+      "account_id": "acc-joint",
+      "date": "2025-12-03",
+      "description": "SAFEROUTE AUTO INS PREM",
+      "merchant_name": "SafeRoute Insurance",
+      "amount_cents": -18400,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_INSURANCE"
+      }
+    },
+    {
+      "id": "tx-2025-12-03-card-payment",
+      "account_id": "acc-joint",
+      "date": "2025-12-03",
+      "description": "GRANITE FCU VISA PAYMENT",
+      "merchant_name": null,
+      "amount_cents": -175403,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2025-12-02-swim",
+      "account_id": "acc-card",
+      "date": "2025-12-03",
+      "description": "SQ *LITTLE FINS SWIM",
+      "merchant_name": "Little Fins Swim School",
+      "amount_cents": -9500,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_EDUCATION"
+      }
+    },
+    {
+      "id": "tx-2025-12-02-gas",
+      "account_id": "acc-card",
+      "date": "2025-12-03",
+      "description": "WAWA 8812",
+      "merchant_name": "Wawa",
+      "amount_cents": -5631,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2025-12-02-takeout",
+      "account_id": "acc-joint",
+      "date": "2025-12-03",
+      "description": "DOMINO'S 7112",
+      "merchant_name": "Domino's",
+      "amount_cents": -4863,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-12-04-pay-er",
+      "account_id": "acc-joint",
+      "date": "2025-12-04",
+      "description": "ST BRIGID MED CTR PAYROLL PPD ID: 3721004418",
+      "merchant_name": null,
+      "amount_cents": 265543,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2025-12-04-savings-in",
+      "account_id": "acc-savings",
+      "date": "2025-12-04",
+      "description": "ONLINE TRANSFER FROM CHK XXXXXX2290",
+      "merchant_name": null,
+      "amount_cents": 110000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2025-12-04-savings-out",
+      "account_id": "acc-joint",
+      "date": "2025-12-04",
+      "description": "ONLINE TRANSFER TO SAV XXXXXX2291",
+      "merchant_name": null,
+      "amount_cents": -110000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2025-12-03-takeout",
+      "account_id": "acc-card",
+      "date": "2025-12-05",
+      "description": "PANERA BREAD #601441",
+      "merchant_name": "Panera Bread",
+      "amount_cents": -3120,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-12-05-amazon",
+      "account_id": "acc-card",
+      "date": "2025-12-08",
+      "description": "AMZN Mktp US*T4RCLD",
+      "merchant_name": "Amazon",
+      "amount_cents": -3960,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-06-groceries",
+      "account_id": "acc-card",
+      "date": "2025-12-08",
+      "description": "ALDI 63218",
+      "merchant_name": "Aldi",
+      "amount_cents": -10188,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-12-07-gas",
+      "account_id": "acc-card",
+      "date": "2025-12-08",
+      "description": "SUNOCO 0412883301",
+      "merchant_name": "Sunoco",
+      "amount_cents": -5897,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2025-12-07-coffee",
+      "account_id": "acc-card",
+      "date": "2025-12-08",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -370,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-07-school-lunch",
+      "account_id": "acc-joint",
+      "date": "2025-12-08",
+      "description": "SCHOOLCAFE K12 TOPUP",
+      "merchant_name": null,
+      "amount_cents": -3104,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_EDUCATION"
+      }
+    },
+    {
+      "id": "tx-2025-12-07-amazon-2",
+      "account_id": "acc-card",
+      "date": "2025-12-08",
+      "description": "AMZN Mktp US*SQBSDU",
+      "merchant_name": "Amazon",
+      "amount_cents": -1820,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-07-amazon",
+      "account_id": "acc-card",
+      "date": "2025-12-09",
+      "description": "AMZN Mktp US*DCFG2S",
+      "merchant_name": "Amazon",
+      "amount_cents": -2369,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-07-gifts",
+      "account_id": "acc-card",
+      "date": "2025-12-09",
+      "description": "BARNES & NOBLE #2217",
+      "merchant_name": "Barnes & Noble",
+      "amount_cents": -4105,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES"
+      }
+    },
+    {
+      "id": "tx-2025-12-08-netflix",
+      "account_id": "acc-card",
+      "date": "2025-12-09",
+      "description": "NETFLIX.COM",
+      "merchant_name": "Netflix",
+      "amount_cents": -1549,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_TV_AND_MOVIES"
+      }
+    },
+    {
+      "id": "tx-2025-12-10-car-loan",
+      "account_id": "acc-joint",
+      "date": "2025-12-10",
+      "description": "GRANITE FCU AUTO LOAN PMT",
+      "merchant_name": null,
+      "amount_cents": -38900,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CAR_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2025-12-08-amazon",
+      "account_id": "acc-card",
+      "date": "2025-12-10",
+      "description": "AMZN Mktp US*DD7QX3",
+      "merchant_name": "Amazon",
+      "amount_cents": -3011,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-09-internet",
+      "account_id": "acc-card",
+      "date": "2025-12-10",
+      "description": "FIBERLINE INTERNET",
+      "merchant_name": "Fiberline",
+      "amount_cents": -6999,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_INTERNET_AND_CABLE"
+      }
+    },
+    {
+      "id": "tx-2025-12-09-gas",
+      "account_id": "acc-card",
+      "date": "2025-12-10",
+      "description": "WAWA 8812",
+      "merchant_name": "Wawa",
+      "amount_cents": -5543,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2025-12-09-gifts",
+      "account_id": "acc-card",
+      "date": "2025-12-10",
+      "description": "BARNES & NOBLE #2217",
+      "merchant_name": "Barnes & Noble",
+      "amount_cents": -2888,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES"
+      }
+    },
+    {
+      "id": "tx-2025-12-09-coffee-2",
+      "account_id": "acc-joint",
+      "date": "2025-12-10",
+      "description": "STARBUCKS STORE 11823",
+      "merchant_name": "Starbucks",
+      "amount_cents": -397,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-09-coffee",
+      "account_id": "acc-card",
+      "date": "2025-12-11",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -403,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-10-hospital-food",
+      "account_id": "acc-card",
+      "date": "2025-12-11",
+      "description": "ST BRIGID CAFETERIA 01",
+      "merchant_name": null,
+      "amount_cents": -1025,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-12-12-electric",
+      "account_id": "acc-joint",
+      "date": "2025-12-12",
+      "description": "CITY POWER AND LIGHT",
+      "merchant_name": "City Power and Light",
+      "amount_cents": -16230,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY"
+      }
+    },
+    {
+      "id": "tx-2025-12-10-coffee",
+      "account_id": "acc-card",
+      "date": "2025-12-12",
+      "description": "STARBUCKS STORE 11823",
+      "merchant_name": "Starbucks",
+      "amount_cents": -383,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-11-amazon",
+      "account_id": "acc-card",
+      "date": "2025-12-12",
+      "description": "AMZN Mktp US*RDFPLZ",
+      "merchant_name": "Amazon",
+      "amount_cents": -6361,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-15-pay-inc-dan",
+      "account_id": "acc-joint",
+      "date": "2025-12-15",
+      "description": "NORTHLINE LOGISTICS PAYROLL PPD ID: 8830021147",
+      "merchant_name": null,
+      "amount_cents": 194667,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2025-12-15-college-fund",
+      "account_id": "acc-joint",
+      "date": "2025-12-15",
+      "description": "STATE 529 PLAN CONTRIB",
+      "merchant_name": null,
+      "amount_cents": -25000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_INVESTMENT_AND_RETIREMENT_FUNDS"
+      }
+    },
+    {
+      "id": "tx-2025-12-11-takeout",
+      "account_id": "acc-card",
+      "date": "2025-12-15",
+      "description": "CHIPOTLE 2214",
+      "merchant_name": "Chipotle",
+      "amount_cents": -2627,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-12-12-amazon",
+      "account_id": "acc-card",
+      "date": "2025-12-15",
+      "description": "AMZN Mktp US*LV6EKV",
+      "merchant_name": "Amazon",
+      "amount_cents": -3884,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-12-amazon-2",
+      "account_id": "acc-joint",
+      "date": "2025-12-15",
+      "description": "AMZN Mktp US*72CRPN",
+      "merchant_name": "Amazon",
+      "amount_cents": -6215,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-12-amazon-3",
+      "account_id": "acc-card",
+      "date": "2025-12-15",
+      "description": "AMZN Mktp US*577WH3",
+      "merchant_name": "Amazon",
+      "amount_cents": -5763,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-12-takeout",
+      "account_id": "acc-joint",
+      "date": "2025-12-15",
+      "description": "DOMINO'S 7112",
+      "merchant_name": "Domino's",
+      "amount_cents": -2498,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-12-13-groceries",
+      "account_id": "acc-card",
+      "date": "2025-12-15",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -9013,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-12-13-amazon",
+      "account_id": "acc-card",
+      "date": "2025-12-15",
+      "description": "AMZN Mktp US*FMPFSQ",
+      "merchant_name": "Amazon",
+      "amount_cents": -3218,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-13-coffee",
+      "account_id": "acc-card",
+      "date": "2025-12-15",
+      "description": "STARBUCKS STORE 11823",
+      "merchant_name": "Starbucks",
+      "amount_cents": -600,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-13-coffee-2",
+      "account_id": "acc-card",
+      "date": "2025-12-15",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -347,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-13-school-lunch",
+      "account_id": "acc-joint",
+      "date": "2025-12-15",
+      "description": "SCHOOLCAFE K12 TOPUP",
+      "merchant_name": null,
+      "amount_cents": -3753,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_EDUCATION"
+      }
+    },
+    {
+      "id": "tx-2025-12-16-gas-heat",
+      "account_id": "acc-joint",
+      "date": "2025-12-16",
+      "description": "TRISTATE GAS CO BILL PAY",
+      "merchant_name": "Tristate Gas",
+      "amount_cents": -9319,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY"
+      }
+    },
+    {
+      "id": "tx-2025-12-14-amazon",
+      "account_id": "acc-card",
+      "date": "2025-12-16",
+      "description": "AMZN Mktp US*FKK5PM",
+      "merchant_name": "Amazon",
+      "amount_cents": -1698,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-14-takeout",
+      "account_id": "acc-card",
+      "date": "2025-12-16",
+      "description": "CHIPOTLE 2214",
+      "merchant_name": "Chipotle",
+      "amount_cents": -3465,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-12-15-target",
+      "account_id": "acc-card",
+      "date": "2025-12-16",
+      "description": "TARGET 00021455",
+      "merchant_name": "Target",
+      "amount_cents": -7566,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_SUPERSTORES"
+      }
+    },
+    {
+      "id": "tx-2025-12-15-pharmacy",
+      "account_id": "acc-joint",
+      "date": "2025-12-16",
+      "description": "CVS/PHARMACY #07261",
+      "merchant_name": "CVS",
+      "amount_cents": -1307,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "MEDICAL",
+        "detailed": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS"
+      }
+    },
+    {
+      "id": "tx-2025-12-16-coffee",
+      "account_id": "acc-card",
+      "date": "2025-12-17",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -376,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-16-coffee-2",
+      "account_id": "acc-card",
+      "date": "2025-12-17",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -603,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-18-pay-er",
+      "account_id": "acc-joint",
+      "date": "2025-12-18",
+      "description": "ST BRIGID MED CTR PAYROLL PPD ID: 3721004418",
+      "merchant_name": null,
+      "amount_cents": 243335,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2025-12-18-savings-in",
+      "account_id": "acc-savings",
+      "date": "2025-12-18",
+      "description": "ONLINE TRANSFER FROM CHK XXXXXX2290",
+      "merchant_name": null,
+      "amount_cents": 110000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2025-12-18-savings-out",
+      "account_id": "acc-joint",
+      "date": "2025-12-18",
+      "description": "ONLINE TRANSFER TO SAV XXXXXX2291",
+      "merchant_name": null,
+      "amount_cents": -110000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2025-12-16-groceries",
+      "account_id": "acc-card",
+      "date": "2025-12-18",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -11902,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-12-17-gym",
+      "account_id": "acc-card",
+      "date": "2025-12-18",
+      "description": "CROSSTOWN FITNESS CLUB",
+      "merchant_name": "Crosstown Fitness",
+      "amount_cents": -3499,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "PERSONAL_CARE",
+        "detailed": "PERSONAL_CARE_GYMS_AND_FITNESS_CENTERS"
+      }
+    },
+    {
+      "id": "tx-2025-12-17-coffee",
+      "account_id": "acc-card",
+      "date": "2025-12-18",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -449,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-17-groceries",
+      "account_id": "acc-card",
+      "date": "2025-12-18",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -13666,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-12-17-coffee-2",
+      "account_id": "acc-joint",
+      "date": "2025-12-19",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -413,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-18-hospital-food",
+      "account_id": "acc-card",
+      "date": "2025-12-19",
+      "description": "ST BRIGID CAFETERIA 01",
+      "merchant_name": null,
+      "amount_cents": -1228,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2025-12-20-water",
+      "account_id": "acc-joint",
+      "date": "2025-12-22",
+      "description": "CITY WATER DEPT WEB",
+      "merchant_name": null,
+      "amount_cents": -5632,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_WATER"
+      }
+    },
+    {
+      "id": "tx-2025-12-20-amazon-refund",
+      "account_id": "acc-card",
+      "date": "2025-12-22",
+      "description": "AMZN Mktp US*577WH3",
+      "merchant_name": "Amazon",
+      "amount_cents": 5763,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-22-phones",
+      "account_id": "acc-joint",
+      "date": "2025-12-22",
+      "description": "VERIZON WIRELESS PAYMENTS",
+      "merchant_name": "Verizon",
+      "amount_cents": -12400,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_TELEPHONE"
+      }
+    },
+    {
+      "id": "tx-2025-12-19-disney",
+      "account_id": "acc-card",
+      "date": "2025-12-22",
+      "description": "DISNEY PLUS",
+      "merchant_name": "Disney+",
+      "amount_cents": -999,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_TV_AND_MOVIES"
+      }
+    },
+    {
+      "id": "tx-2025-12-19-target",
+      "account_id": "acc-card",
+      "date": "2025-12-22",
+      "description": "TARGET 00021455",
+      "merchant_name": "Target",
+      "amount_cents": -5132,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_SUPERSTORES"
+      }
+    },
+    {
+      "id": "tx-2025-12-19-groceries",
+      "account_id": "acc-card",
+      "date": "2025-12-22",
+      "description": "COSTCO WHSE #0388",
+      "merchant_name": "Costco",
+      "amount_cents": -9861,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-12-21-amazon",
+      "account_id": "acc-card",
+      "date": "2025-12-22",
+      "description": "AMZN Mktp US*HMX45Q",
+      "merchant_name": "Amazon",
+      "amount_cents": -3845,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-22-coffee-2",
+      "account_id": "acc-joint",
+      "date": "2025-12-23",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -510,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-22-coffee",
+      "account_id": "acc-card",
+      "date": "2025-12-24",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -665,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-23-gifts",
+      "account_id": "acc-card",
+      "date": "2025-12-26",
+      "description": "BARNES & NOBLE #2217",
+      "merchant_name": "Barnes & Noble",
+      "amount_cents": -2559,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES"
+      }
+    },
+    {
+      "id": "tx-2025-12-25-amazon",
+      "account_id": "acc-card",
+      "date": "2025-12-29",
+      "description": "AMZN Mktp US*ET3484",
+      "merchant_name": "Amazon",
+      "amount_cents": -3333,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-26-coffee",
+      "account_id": "acc-joint",
+      "date": "2025-12-29",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -435,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-27-groceries",
+      "account_id": "acc-card",
+      "date": "2025-12-29",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -7801,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-12-27-amazon",
+      "account_id": "acc-card",
+      "date": "2025-12-29",
+      "description": "AMZN Mktp US*KWK3DK",
+      "merchant_name": "Amazon",
+      "amount_cents": -3501,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-27-amazon-2",
+      "account_id": "acc-card",
+      "date": "2025-12-29",
+      "description": "AMZN Mktp US*2PAXVN",
+      "merchant_name": "Amazon",
+      "amount_cents": -5131,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-28-coffee",
+      "account_id": "acc-card",
+      "date": "2025-12-29",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -519,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-29-pharmacy",
+      "account_id": "acc-card",
+      "date": "2025-12-30",
+      "description": "CVS/PHARMACY #07261",
+      "merchant_name": "CVS",
+      "amount_cents": -1886,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "MEDICAL",
+        "detailed": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS"
+      }
+    },
+    {
+      "id": "tx-2025-12-29-gas",
+      "account_id": "acc-card",
+      "date": "2025-12-30",
+      "description": "SUNOCO 0412883301",
+      "merchant_name": "Sunoco",
+      "amount_cents": -6151,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2025-12-29-amazon-2",
+      "account_id": "acc-card",
+      "date": "2025-12-30",
+      "description": "AMZN Mktp US*NDQMZZ",
+      "merchant_name": "Amazon",
+      "amount_cents": -2210,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-31-pay-er",
+      "account_id": "acc-joint",
+      "date": "2025-12-31",
+      "description": "ST BRIGID MED CTR PAYROLL PPD ID: 3721004418",
+      "merchant_name": null,
+      "amount_cents": 253876,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2025-12-31-pay-inc-dan",
+      "account_id": "acc-joint",
+      "date": "2025-12-31",
+      "description": "NORTHLINE LOGISTICS PAYROLL PPD ID: 8830021147",
+      "merchant_name": null,
+      "amount_cents": 194667,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2025-12-31-savings-in",
+      "account_id": "acc-savings",
+      "date": "2025-12-31",
+      "description": "ONLINE TRANSFER FROM CHK XXXXXX2290",
+      "merchant_name": null,
+      "amount_cents": 110000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2025-12-31-interest",
+      "account_id": "acc-savings",
+      "date": "2025-12-31",
+      "description": "INTEREST PAID",
+      "merchant_name": null,
+      "amount_cents": 2242,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_INTEREST_EARNED"
+      }
+    },
+    {
+      "id": "tx-2025-12-31-savings-out",
+      "account_id": "acc-joint",
+      "date": "2025-12-31",
+      "description": "ONLINE TRANSFER TO SAV XXXXXX2291",
+      "merchant_name": null,
+      "amount_cents": -110000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2025-12-29-amazon",
+      "account_id": "acc-card",
+      "date": "2025-12-31",
+      "description": "AMZN Mktp US*UJEVSC",
+      "merchant_name": "Amazon",
+      "amount_cents": -1237,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2025-12-30-amazon",
+      "account_id": "acc-card",
+      "date": "2025-12-31",
+      "description": "AMZN Mktp US*4XS8HA",
+      "merchant_name": "Amazon",
+      "amount_cents": -3264,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-01-02-card-payment-in",
+      "account_id": "acc-card",
+      "date": "2026-01-02",
+      "description": "PAYMENT RECEIVED THANK YOU",
+      "merchant_name": null,
+      "amount_cents": 213099,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2026-01-01-rent",
+      "account_id": "acc-joint",
+      "date": "2026-01-02",
+      "description": "BRIARWOOD APTS RENT WEB PMT",
+      "merchant_name": "Briarwood Apartments",
+      "amount_cents": -195000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_RENT"
+      }
+    },
+    {
+      "id": "tx-2026-01-02-card-payment",
+      "account_id": "acc-joint",
+      "date": "2026-01-02",
+      "description": "GRANITE FCU VISA PAYMENT",
+      "merchant_name": null,
+      "amount_cents": -213099,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2025-12-30-groceries",
+      "account_id": "acc-card",
+      "date": "2026-01-02",
+      "description": "ALDI 63218",
+      "merchant_name": "Aldi",
+      "amount_cents": -13599,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2025-12-30-coffee",
+      "account_id": "acc-card",
+      "date": "2026-01-02",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -628,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2025-12-31-groceries",
+      "account_id": "acc-card",
+      "date": "2026-01-02",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -7746,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-01-01-hospital-food",
+      "account_id": "acc-joint",
+      "date": "2026-01-02",
+      "description": "ST BRIGID CAFETERIA 01",
+      "merchant_name": null,
+      "amount_cents": -1135,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-01-03-car-insurance",
+      "account_id": "acc-joint",
+      "date": "2026-01-05",
+      "description": "SAFEROUTE AUTO INS PREM",
+      "merchant_name": "SafeRoute Insurance",
+      "amount_cents": -18400,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_INSURANCE"
+      }
+    },
+    {
+      "id": "tx-2026-01-02-swim",
+      "account_id": "acc-card",
+      "date": "2026-01-05",
+      "description": "SQ *LITTLE FINS SWIM",
+      "merchant_name": "Little Fins Swim School",
+      "amount_cents": -9500,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_EDUCATION"
+      }
+    },
+    {
+      "id": "tx-2026-01-02-coffee",
+      "account_id": "acc-card",
+      "date": "2026-01-05",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -412,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-01-02-groceries",
+      "account_id": "acc-joint",
+      "date": "2026-01-05",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -11546,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-01-02-amazon",
+      "account_id": "acc-card",
+      "date": "2026-01-05",
+      "description": "AMZN Mktp US*6835SC",
+      "merchant_name": "Amazon",
+      "amount_cents": -1624,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-01-03-groceries",
+      "account_id": "acc-card",
+      "date": "2026-01-05",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -11625,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-01-03-amazon",
+      "account_id": "acc-card",
+      "date": "2026-01-05",
+      "description": "AMZN Mktp US*PP232D",
+      "merchant_name": "Amazon",
+      "amount_cents": -5889,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-01-03-amazon-2",
+      "account_id": "acc-joint",
+      "date": "2026-01-05",
+      "description": "AMZN Mktp US*59WNRM",
+      "merchant_name": "Amazon",
+      "amount_cents": -2541,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-01-04-gas",
+      "account_id": "acc-card",
+      "date": "2026-01-06",
+      "description": "SUNOCO 0412883301",
+      "merchant_name": "Sunoco",
+      "amount_cents": -5358,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2026-01-04-pharmacy",
+      "account_id": "acc-card",
+      "date": "2026-01-06",
+      "description": "CVS/PHARMACY #07261",
+      "merchant_name": "CVS",
+      "amount_cents": -3259,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "MEDICAL",
+        "detailed": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS"
+      }
+    },
+    {
+      "id": "tx-2026-01-05-coffee",
+      "account_id": "acc-joint",
+      "date": "2026-01-06",
+      "description": "STARBUCKS STORE 11823",
+      "merchant_name": "Starbucks",
+      "amount_cents": -645,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-01-05-takeout",
+      "account_id": "acc-card",
+      "date": "2026-01-06",
+      "description": "DOMINO'S 7112",
+      "merchant_name": "Domino's",
+      "amount_cents": -5534,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-01-05-pharmacy",
+      "account_id": "acc-joint",
+      "date": "2026-01-07",
+      "description": "CVS/PHARMACY #07261",
+      "merchant_name": "CVS",
+      "amount_cents": -1321,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "MEDICAL",
+        "detailed": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS"
+      }
+    },
+    {
+      "id": "tx-2026-01-05-amazon",
+      "account_id": "acc-card",
+      "date": "2026-01-07",
+      "description": "AMZN Mktp US*HCTPT6",
+      "merchant_name": "Amazon",
+      "amount_cents": -6814,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-01-06-gifts",
+      "account_id": "acc-card",
+      "date": "2026-01-07",
+      "description": "PARTY CITY 0712",
+      "merchant_name": "Party City",
+      "amount_cents": -4134,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES"
+      }
+    },
+    {
+      "id": "tx-2026-01-06-amazon",
+      "account_id": "acc-card",
+      "date": "2026-01-08",
+      "description": "AMZN Mktp US*F6M5LT",
+      "merchant_name": "Amazon",
+      "amount_cents": -5601,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-01-06-takeout",
+      "account_id": "acc-card",
+      "date": "2026-01-08",
+      "description": "PANERA BREAD #601441",
+      "merchant_name": "Panera Bread",
+      "amount_cents": -4264,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-01-07-gas",
+      "account_id": "acc-card",
+      "date": "2026-01-09",
+      "description": "SUNOCO 0412883301",
+      "merchant_name": "Sunoco",
+      "amount_cents": -4919,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2026-01-08-netflix",
+      "account_id": "acc-card",
+      "date": "2026-01-09",
+      "description": "NETFLIX.COM",
+      "merchant_name": "Netflix",
+      "amount_cents": -1549,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_TV_AND_MOVIES"
+      }
+    },
+    {
+      "id": "tx-2026-01-08-groceries",
+      "account_id": "acc-card",
+      "date": "2026-01-09",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -7425,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-01-08-amazon",
+      "account_id": "acc-card",
+      "date": "2026-01-09",
+      "description": "AMZN Mktp US*DEL5JV",
+      "merchant_name": "Amazon",
+      "amount_cents": -4158,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-01-10-car-loan",
+      "account_id": "acc-joint",
+      "date": "2026-01-12",
+      "description": "GRANITE FCU AUTO LOAN PMT",
+      "merchant_name": null,
+      "amount_cents": -38900,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CAR_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2026-01-11-amazon-refund",
+      "account_id": "acc-card",
+      "date": "2026-01-12",
+      "description": "AMZN Mktp US*4XS8HA",
+      "merchant_name": "Amazon",
+      "amount_cents": 3264,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-01-12-electric",
+      "account_id": "acc-joint",
+      "date": "2026-01-12",
+      "description": "CITY POWER AND LIGHT",
+      "merchant_name": "City Power and Light",
+      "amount_cents": -13813,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY"
+      }
+    },
+    {
+      "id": "tx-2026-01-09-internet",
+      "account_id": "acc-card",
+      "date": "2026-01-12",
+      "description": "FIBERLINE INTERNET",
+      "merchant_name": "Fiberline",
+      "amount_cents": -6999,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_INTERNET_AND_CABLE"
+      }
+    },
+    {
+      "id": "tx-2026-01-09-target",
+      "account_id": "acc-card",
+      "date": "2026-01-12",
+      "description": "TARGET 00021455",
+      "merchant_name": "Target",
+      "amount_cents": -4892,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_SUPERSTORES"
+      }
+    },
+    {
+      "id": "tx-2026-01-10-coffee",
+      "account_id": "acc-joint",
+      "date": "2026-01-12",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -442,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-01-10-groceries",
+      "account_id": "acc-card",
+      "date": "2026-01-12",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -5352,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-01-10-kid-clothes",
+      "account_id": "acc-card",
+      "date": "2026-01-12",
+      "description": "CARTERS 0331",
+      "merchant_name": "Carter's",
+      "amount_cents": -2072,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_CLOTHING_AND_ACCESSORIES"
+      }
+    },
+    {
+      "id": "tx-2026-01-10-coffee-2",
+      "account_id": "acc-card",
+      "date": "2026-01-12",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -668,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-01-10-groceries-2",
+      "account_id": "acc-card",
+      "date": "2026-01-12",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -7598,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-01-10-coffee-3",
+      "account_id": "acc-joint",
+      "date": "2026-01-12",
+      "description": "DUNKIN #348821",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -516,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-01-10-groceries-3",
+      "account_id": "acc-card",
+      "date": "2026-01-12",
+      "description": "KROGER #0632",
+      "merchant_name": "Kroger",
+      "amount_cents": -9273,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-01-12-takeout",
+      "account_id": "acc-card",
+      "date": "2026-01-13",
+      "description": "DOMINO'S 7112",
+      "merchant_name": "Domino's",
+      "amount_cents": -2745,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-01-12-gifts",
+      "account_id": "acc-card",
+      "date": "2026-01-14",
+      "description": "BARNES & NOBLE #2217",
+      "merchant_name": "Barnes & Noble",
+      "amount_cents": -3334,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES"
+      }
+    },
+    {
+      "id": "tx-2026-01-14-groceries",
+      "account_id": "acc-card",
+      "date": "2026-01-14",
+      "description": "COSTCO WHSE #0388",
+      "merchant_name": "Costco",
+      "amount_cents": -15397,
+      "pending": true,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    }
+  ],
+  "recurring": [
+    {
+      "bill": "rent",
+      "name": "Rent",
+      "frequency": "monthly",
+      "charges": ["tx-2025-11-01-rent", "tx-2025-12-01-rent", "tx-2026-01-01-rent"],
+      "price_changes": []
+    },
+    {
+      "bill": "car-loan",
+      "name": "Car loan",
+      "frequency": "monthly",
+      "charges": ["tx-2025-11-10-car-loan", "tx-2025-12-10-car-loan", "tx-2026-01-10-car-loan"],
+      "price_changes": []
+    },
+    {
+      "bill": "electric",
+      "name": "Electric",
+      "frequency": "monthly",
+      "charges": ["tx-2025-11-12-electric", "tx-2025-12-12-electric", "tx-2026-01-12-electric"],
+      "price_changes": []
+    },
+    {
+      "bill": "gas-heat",
+      "name": "Gas for heat",
+      "frequency": "monthly",
+      "charges": ["tx-2025-10-16-gas-heat", "tx-2025-11-16-gas-heat", "tx-2025-12-16-gas-heat"],
+      "price_changes": []
+    },
+    {
+      "bill": "water",
+      "name": "Water",
+      "frequency": "monthly",
+      "charges": ["tx-2025-10-20-water", "tx-2025-11-20-water", "tx-2025-12-20-water"],
+      "price_changes": []
+    },
+    {
+      "bill": "internet",
+      "name": "Internet",
+      "frequency": "monthly",
+      "charges": ["tx-2025-11-09-internet", "tx-2025-12-09-internet", "tx-2026-01-09-internet"],
+      "price_changes": []
+    },
+    {
+      "bill": "phones",
+      "name": "Family phone plan",
+      "frequency": "monthly",
+      "charges": ["tx-2025-10-22-phones", "tx-2025-11-22-phones", "tx-2025-12-22-phones"],
+      "price_changes": []
+    },
+    {
+      "bill": "car-insurance",
+      "name": "Car insurance",
+      "frequency": "monthly",
+      "charges": ["tx-2025-11-03-car-insurance", "tx-2025-12-03-car-insurance", "tx-2026-01-03-car-insurance"],
+      "price_changes": []
+    },
+    {
+      "bill": "swim",
+      "name": "Maya's swim lessons",
+      "frequency": "monthly",
+      "charges": ["tx-2025-11-02-swim", "tx-2025-12-02-swim", "tx-2026-01-02-swim"],
+      "price_changes": []
+    },
+    {
+      "bill": "netflix",
+      "name": "Netflix",
+      "frequency": "monthly",
+      "charges": ["tx-2025-11-08-netflix", "tx-2025-12-08-netflix", "tx-2026-01-08-netflix"],
+      "price_changes": []
+    },
+    {
+      "bill": "disney",
+      "name": "Disney+",
+      "frequency": "monthly",
+      "charges": ["tx-2025-10-19-disney", "tx-2025-11-19-disney", "tx-2025-12-19-disney"],
+      "price_changes": []
+    },
+    {
+      "bill": "gym",
+      "name": "Gym membership",
+      "frequency": "monthly",
+      "charges": ["tx-2025-10-17-gym", "tx-2025-11-17-gym", "tx-2025-12-17-gym"],
+      "price_changes": []
+    },
+    {
+      "bill": "college-fund",
+      "name": "College savings for Maya",
+      "frequency": "monthly",
+      "charges": ["tx-2025-11-15-college-fund", "tx-2025-12-15-college-fund"],
+      "price_changes": []
+    }
+  ],
+  "pay": ["2025-10-23", "2025-11-06", "2025-11-20", "2025-12-04", "2025-12-18", "2025-12-31"]
+}

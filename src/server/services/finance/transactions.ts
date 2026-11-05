@@ -165,6 +165,9 @@ export async function queryTransactions(scope: UserScope, q: TransactionQuery = 
       t: transactions,
       accountName: financialAccounts.name,
       accountSource: financialAccounts.source,
+      // Recurring detection tells a transfer between the user's own accounts from a payment to someone else by these.
+      accountType: financialAccounts.type,
+      accountMask: financialAccounts.mask,
       categoryName: categories.name,
       categoryColor: categories.color,
     })
@@ -178,6 +181,8 @@ export async function queryTransactions(scope: UserScope, q: TransactionQuery = 
     ...r.t,
     accountName: r.accountName,
     accountSource: r.accountSource,
+    accountType: r.accountType,
+    accountMask: r.accountMask,
     categoryName: r.categoryName,
     categoryColor: r.categoryColor,
   }));

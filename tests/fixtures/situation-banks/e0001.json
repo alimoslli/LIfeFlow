@@ -1,0 +1,2281 @@
+{
+  "about": "Copied from docs/situations/examples/e0001-student-aunt-away-short-before-payday (bank.json and truth.json, simulate.py output). Only the fields the recurring-charge test reads.",
+  "now": "2026-11-03",
+  "accounts": [
+    {
+      "id": "acc-checking",
+      "type": "depository",
+      "subtype": "checking",
+      "mask": "4821"
+    },
+    {
+      "id": "acc-savings",
+      "type": "depository",
+      "subtype": "savings",
+      "mask": "4410"
+    },
+    {
+      "id": "acc-card",
+      "type": "credit",
+      "subtype": "credit card",
+      "mask": "7713"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "tx-2026-08-05-phone",
+      "account_id": "acc-checking",
+      "date": "2026-08-05",
+      "description": "TMOBILE*AUTO PAY",
+      "merchant_name": "T-Mobile",
+      "amount_cents": -3000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_TELEPHONE"
+      }
+    },
+    {
+      "id": "tx-2026-08-05-claude",
+      "account_id": "acc-checking",
+      "date": "2026-08-06",
+      "description": "CLAUDE.AI SUBSCRIPTION",
+      "merchant_name": "Anthropic",
+      "amount_cents": -2000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_OTHER_GENERAL_SERVICES"
+      }
+    },
+    {
+      "id": "tx-2026-08-06-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-08-07",
+      "description": "AMZN Mktp US*5H46XZ",
+      "merchant_name": "Amazon",
+      "amount_cents": -1011,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-08-07-eating-out",
+      "account_id": "acc-card",
+      "date": "2026-08-10",
+      "description": "CHIPOTLE 1873",
+      "merchant_name": "Chipotle",
+      "amount_cents": -2702,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-08-07-rideshare",
+      "account_id": "acc-checking",
+      "date": "2026-08-10",
+      "description": "UBER *TRIP QKUK",
+      "merchant_name": "Uber",
+      "amount_cents": -1380,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES"
+      }
+    },
+    {
+      "id": "tx-2026-08-08-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-10",
+      "description": "CHIPOTLE 1873",
+      "merchant_name": "Chipotle",
+      "amount_cents": -1542,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-08-09-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-08-10",
+      "description": "FRESHWAY MKT #114",
+      "merchant_name": "Freshway Markets",
+      "amount_cents": -2632,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-08-09-groceries-2",
+      "account_id": "acc-checking",
+      "date": "2026-08-10",
+      "description": "FRESHWAY MKT #114",
+      "merchant_name": "Freshway Markets",
+      "amount_cents": -3107,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-08-09-gas",
+      "account_id": "acc-checking",
+      "date": "2026-08-11",
+      "description": "SHELL OIL 57444211002",
+      "merchant_name": "Shell",
+      "amount_cents": -3141,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2026-08-10-groceries",
+      "account_id": "acc-card",
+      "date": "2026-08-11",
+      "description": "ALDI 72031 CHICAGO IL",
+      "merchant_name": "Aldi",
+      "amount_cents": -2511,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-08-10-eating-out",
+      "account_id": "acc-card",
+      "date": "2026-08-11",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -957,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-08-12-shopping-refund",
+      "account_id": "acc-checking",
+      "date": "2026-08-12",
+      "description": "AMZN Mktp US*5H46XZ",
+      "merchant_name": "Amazon",
+      "amount_cents": 1011,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-08-14-pay-store",
+      "account_id": "acc-checking",
+      "date": "2026-08-14",
+      "description": "FRESHWAY MARKETS PAYROLL PPD ID: 1416002387",
+      "merchant_name": null,
+      "amount_cents": 46668,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2026-08-14-savings-in",
+      "account_id": "acc-savings",
+      "date": "2026-08-14",
+      "description": "ONLINE TRANSFER FROM CHECKING XXXXXX4821",
+      "merchant_name": null,
+      "amount_cents": 4000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2026-08-14-savings-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-14",
+      "description": "ONLINE TRANSFER TO SAVINGS XXXXXX4410",
+      "merchant_name": null,
+      "amount_cents": -4000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2026-08-17-card-payment-in",
+      "account_id": "acc-card",
+      "date": "2026-08-17",
+      "description": "PAYMENT RECEIVED THANK YOU",
+      "merchant_name": null,
+      "amount_cents": 16200,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2026-08-17-card-payment",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "LAKESIDE CU VISA PMT AUTOPAY",
+      "merchant_name": null,
+      "amount_cents": -16200,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2026-08-13-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "AMZN Mktp US*AFHRS3",
+      "merchant_name": "Amazon",
+      "amount_cents": -916,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-08-14-spotify",
+      "account_id": "acc-card",
+      "date": "2026-08-17",
+      "description": "Spotify USA",
+      "merchant_name": "Spotify",
+      "amount_cents": -599,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_MUSIC_AND_AUDIO"
+      }
+    },
+    {
+      "id": "tx-2026-08-14-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "ALDI 72031 CHICAGO IL",
+      "merchant_name": "Aldi",
+      "amount_cents": -2204,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-08-15-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "CHIPOTLE 1873",
+      "merchant_name": "Chipotle",
+      "amount_cents": -1509,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-08-15-rideshare",
+      "account_id": "acc-card",
+      "date": "2026-08-17",
+      "description": "UBER *TRIP B7JR",
+      "merchant_name": "Uber",
+      "amount_cents": -2185,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES"
+      }
+    },
+    {
+      "id": "tx-2026-08-16-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "ALDI 72031 CHICAGO IL",
+      "merchant_name": "Aldi",
+      "amount_cents": -1945,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-08-18-car-insurance",
+      "account_id": "acc-checking",
+      "date": "2026-08-18",
+      "description": "SAFEROUTE AUTO INS PREM",
+      "merchant_name": "SafeRoute Insurance",
+      "amount_cents": -9600,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_INSURANCE"
+      }
+    },
+    {
+      "id": "tx-2026-08-16-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-18",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -852,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-08-17-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-19",
+      "description": "SQ *SHAWARMA CORNER",
+      "merchant_name": "Shawarma Corner",
+      "amount_cents": -917,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-08-18-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-20",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1565,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-08-18-eating-out-2",
+      "account_id": "acc-checking",
+      "date": "2026-08-20",
+      "description": "CHIPOTLE 1873",
+      "merchant_name": "Chipotle",
+      "amount_cents": -1635,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-08-19-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-08-20",
+      "description": "AMZN Mktp US*FHK485",
+      "merchant_name": "Amazon",
+      "amount_cents": -3084,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-08-20-gas",
+      "account_id": "acc-card",
+      "date": "2026-08-21",
+      "description": "SPEEDWAY 04512",
+      "merchant_name": "Speedway",
+      "amount_cents": -3167,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2026-08-22-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-24",
+      "description": "SQ *SHAWARMA CORNER",
+      "merchant_name": "Shawarma Corner",
+      "amount_cents": -1162,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-08-23-icloud",
+      "account_id": "acc-card",
+      "date": "2026-08-24",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -99,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_OTHER_GENERAL_SERVICES"
+      }
+    },
+    {
+      "id": "tx-2026-08-23-groceries",
+      "account_id": "acc-card",
+      "date": "2026-08-24",
+      "description": "ALDI 72031 CHICAGO IL",
+      "merchant_name": "Aldi",
+      "amount_cents": -1683,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-08-23-pharmacy",
+      "account_id": "acc-checking",
+      "date": "2026-08-24",
+      "description": "CVS/PHARMACY #04432",
+      "merchant_name": "CVS",
+      "amount_cents": -2204,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "MEDICAL",
+        "detailed": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS"
+      }
+    },
+    {
+      "id": "tx-2026-08-23-gas",
+      "account_id": "acc-checking",
+      "date": "2026-08-25",
+      "description": "SPEEDWAY 04512",
+      "merchant_name": "Speedway",
+      "amount_cents": -3544,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2026-08-28-pay-store",
+      "account_id": "acc-checking",
+      "date": "2026-08-28",
+      "description": "FRESHWAY MARKETS PAYROLL PPD ID: 1416002387",
+      "merchant_name": null,
+      "amount_cents": 37001,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2026-08-28-savings-in",
+      "account_id": "acc-savings",
+      "date": "2026-08-28",
+      "description": "ONLINE TRANSFER FROM CHECKING XXXXXX4821",
+      "merchant_name": null,
+      "amount_cents": 4000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2026-08-28-savings-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-28",
+      "description": "ONLINE TRANSFER TO SAVINGS XXXXXX4410",
+      "merchant_name": null,
+      "amount_cents": -4000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2026-08-26-gas",
+      "account_id": "acc-checking",
+      "date": "2026-08-28",
+      "description": "SHELL OIL 57444211002",
+      "merchant_name": "Shell",
+      "amount_cents": -2960,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2026-08-26-gas-2",
+      "account_id": "acc-checking",
+      "date": "2026-08-28",
+      "description": "SHELL OIL 57444211002",
+      "merchant_name": "Shell",
+      "amount_cents": -3652,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2026-08-31-interest",
+      "account_id": "acc-savings",
+      "date": "2026-08-31",
+      "description": "DIVIDEND EARNED",
+      "merchant_name": null,
+      "amount_cents": 227,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_INTEREST_EARNED"
+      }
+    },
+    {
+      "id": "tx-2026-08-27-cafeteria",
+      "account_id": "acc-checking",
+      "date": "2026-08-31",
+      "description": "ARAMARK UNIV DINING 2231",
+      "merchant_name": "Aramark",
+      "amount_cents": -879,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-08-27-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-31",
+      "description": "SQ *SHAWARMA CORNER",
+      "merchant_name": "Shawarma Corner",
+      "amount_cents": -854,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-08-28-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-31",
+      "description": "CHIPOTLE 1873",
+      "merchant_name": "Chipotle",
+      "amount_cents": -851,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-08-29-entertainment",
+      "account_id": "acc-card",
+      "date": "2026-08-31",
+      "description": "ROUND1 BOWLING 0221",
+      "merchant_name": null,
+      "amount_cents": -2523,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS"
+      }
+    },
+    {
+      "id": "tx-2026-09-01-aunt-share",
+      "account_id": "acc-checking",
+      "date": "2026-09-01",
+      "description": "ZELLE TO SAMIRA H CONF# CQNJT9SQ",
+      "merchant_name": null,
+      "amount_cents": -15000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_ACCOUNT_TRANSFER"
+      }
+    },
+    {
+      "id": "tx-2026-08-30-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-09-01",
+      "description": "ALDI 72031 CHICAGO IL",
+      "merchant_name": "Aldi",
+      "amount_cents": -2959,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-09-02-inc-parents",
+      "account_id": "acc-checking",
+      "date": "2026-09-02",
+      "description": "ZELLE FROM RANIA K CONF# JN9B7AFR",
+      "merchant_name": null,
+      "amount_cents": 22499,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_ACCOUNT_TRANSFER"
+      }
+    },
+    {
+      "id": "tx-2026-09-01-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-02",
+      "description": "RAISING CANES 0451",
+      "merchant_name": "Raising Cane's",
+      "amount_cents": -972,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-09-03-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-04",
+      "description": "SQ *DAILY GRIND CAFE",
+      "merchant_name": "Daily Grind",
+      "amount_cents": -590,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-09-03-shopping",
+      "account_id": "acc-card",
+      "date": "2026-09-04",
+      "description": "AMZN Mktp US*GWMJXS",
+      "merchant_name": "Amazon",
+      "amount_cents": -1087,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-09-05-phone",
+      "account_id": "acc-checking",
+      "date": "2026-09-08",
+      "description": "TMOBILE*AUTO PAY",
+      "merchant_name": "T-Mobile",
+      "amount_cents": -3000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_TELEPHONE"
+      }
+    },
+    {
+      "id": "tx-2026-09-03-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-08",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1081,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-09-05-claude",
+      "account_id": "acc-checking",
+      "date": "2026-09-08",
+      "description": "CLAUDE.AI SUBSCRIPTION",
+      "merchant_name": "Anthropic",
+      "amount_cents": -2000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_OTHER_GENERAL_SERVICES"
+      }
+    },
+    {
+      "id": "tx-2026-09-05-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-08",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1298,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-09-05-rideshare",
+      "account_id": "acc-card",
+      "date": "2026-09-08",
+      "description": "UBER *TRIP 2BH5",
+      "merchant_name": "Uber",
+      "amount_cents": -1535,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES"
+      }
+    },
+    {
+      "id": "tx-2026-09-06-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-09-08",
+      "description": "ALDI 72031 CHICAGO IL",
+      "merchant_name": "Aldi",
+      "amount_cents": -1479,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-09-06-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-08",
+      "description": "CHIPOTLE 1873",
+      "merchant_name": "Chipotle",
+      "amount_cents": -1412,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-09-08-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-09-09",
+      "description": "ALDI 72031 CHICAGO IL",
+      "merchant_name": "Aldi",
+      "amount_cents": -3423,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-09-11-pay-store",
+      "account_id": "acc-checking",
+      "date": "2026-09-11",
+      "description": "FRESHWAY MARKETS PAYROLL PPD ID: 1416002387",
+      "merchant_name": null,
+      "amount_cents": 48694,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2026-09-11-savings-in",
+      "account_id": "acc-savings",
+      "date": "2026-09-11",
+      "description": "ONLINE TRANSFER FROM CHECKING XXXXXX4821",
+      "merchant_name": null,
+      "amount_cents": 4000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2026-09-11-savings-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-11",
+      "description": "ONLINE TRANSFER TO SAVINGS XXXXXX4410",
+      "merchant_name": null,
+      "amount_cents": -4000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2026-09-11-clothing",
+      "account_id": "acc-card",
+      "date": "2026-09-14",
+      "description": "H&M 0912",
+      "merchant_name": "H&M",
+      "amount_cents": -3136,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_CLOTHING_AND_ACCESSORIES"
+      }
+    },
+    {
+      "id": "tx-2026-09-11-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-14",
+      "description": "CHIPOTLE 1873",
+      "merchant_name": "Chipotle",
+      "amount_cents": -1908,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-09-12-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-14",
+      "description": "SQ *SHAWARMA CORNER",
+      "merchant_name": "Shawarma Corner",
+      "amount_cents": -1404,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-09-12-eating-out-2",
+      "account_id": "acc-checking",
+      "date": "2026-09-14",
+      "description": "CHIPOTLE 1873",
+      "merchant_name": "Chipotle",
+      "amount_cents": -990,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-09-14-spotify",
+      "account_id": "acc-card",
+      "date": "2026-09-15",
+      "description": "Spotify USA",
+      "merchant_name": "Spotify",
+      "amount_cents": -599,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_MUSIC_AND_AUDIO"
+      }
+    },
+    {
+      "id": "tx-2026-09-14-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-15",
+      "description": "SQ *DAILY GRIND CAFE",
+      "merchant_name": "Daily Grind",
+      "amount_cents": -612,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-09-14-cafeteria",
+      "account_id": "acc-card",
+      "date": "2026-09-15",
+      "description": "ARAMARK UNIV DINING 2231",
+      "merchant_name": "Aramark",
+      "amount_cents": -964,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-09-14-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-15",
+      "description": "CHIPOTLE 1873",
+      "merchant_name": "Chipotle",
+      "amount_cents": -1008,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-09-14-gas",
+      "account_id": "acc-card",
+      "date": "2026-09-15",
+      "description": "SPEEDWAY 04512",
+      "merchant_name": "Speedway",
+      "amount_cents": -3701,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2026-09-16-card-payment-in",
+      "account_id": "acc-card",
+      "date": "2026-09-16",
+      "description": "PAYMENT RECEIVED THANK YOU",
+      "merchant_name": null,
+      "amount_cents": 14421,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2026-09-16-card-payment",
+      "account_id": "acc-checking",
+      "date": "2026-09-16",
+      "description": "LAKESIDE CU VISA PMT AUTOPAY",
+      "merchant_name": null,
+      "amount_cents": -14421,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2026-09-15-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-17",
+      "description": "STARBUCKS STORE 08837",
+      "merchant_name": "Starbucks",
+      "amount_cents": -626,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-09-18-car-insurance",
+      "account_id": "acc-checking",
+      "date": "2026-09-18",
+      "description": "SAFEROUTE AUTO INS PREM",
+      "merchant_name": "SafeRoute Insurance",
+      "amount_cents": -9600,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_INSURANCE"
+      }
+    },
+    {
+      "id": "tx-2026-09-16-cafeteria",
+      "account_id": "acc-card",
+      "date": "2026-09-18",
+      "description": "CAMPUS C-STORE 0412",
+      "merchant_name": null,
+      "amount_cents": -641,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-09-17-cafeteria",
+      "account_id": "acc-checking",
+      "date": "2026-09-18",
+      "description": "ARAMARK UNIV DINING 2231",
+      "merchant_name": "Aramark",
+      "amount_cents": -855,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-09-20-trip-fund-in",
+      "account_id": "acc-checking",
+      "date": "2026-09-20",
+      "description": "ONLINE TRANSFER FROM SAVINGS XXXXXX4410",
+      "merchant_name": null,
+      "amount_cents": 91480,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2026-09-20-trip-fund-out",
+      "account_id": "acc-savings",
+      "date": "2026-09-20",
+      "description": "ONLINE TRANSFER TO CHECKING XXXXXX4821",
+      "merchant_name": null,
+      "amount_cents": -91480,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_ACCOUNT_TRANSFER"
+      }
+    },
+    {
+      "id": "tx-2026-09-17-cafeteria-2",
+      "account_id": "acc-card",
+      "date": "2026-09-21",
+      "description": "CAMPUS C-STORE 0412",
+      "merchant_name": null,
+      "amount_cents": -802,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-09-17-shopping",
+      "account_id": "acc-card",
+      "date": "2026-09-21",
+      "description": "AMZN Mktp US*J8SKA4",
+      "merchant_name": "Amazon",
+      "amount_cents": -1733,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-09-18-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-09-21",
+      "description": "AMZN Mktp US*VC4UCD",
+      "merchant_name": "Amazon",
+      "amount_cents": -4430,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-09-19-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-21",
+      "description": "TACO BELL 031188",
+      "merchant_name": "Taco Bell",
+      "amount_cents": -1516,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-09-20-eating-out",
+      "account_id": "acc-card",
+      "date": "2026-09-21",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1051,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "x-cairo-trip.purchase",
+      "account_id": "acc-checking",
+      "date": "2026-09-21",
+      "description": "EGYPTAIR 0772 WEB BOOKING",
+      "merchant_name": "EgyptAir",
+      "amount_cents": -91480,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRAVEL",
+        "detailed": "TRAVEL_FLIGHTS"
+      }
+    },
+    {
+      "id": "tx-2026-09-20-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-09-22",
+      "description": "FRESHWAY MKT #114",
+      "merchant_name": "Freshway Markets",
+      "amount_cents": -3564,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-09-21-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-23",
+      "description": "SQ *DAILY GRIND CAFE",
+      "merchant_name": "Daily Grind",
+      "amount_cents": -642,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-09-22-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-23",
+      "description": "SQ *DAILY GRIND CAFE",
+      "merchant_name": "Daily Grind",
+      "amount_cents": -648,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-09-22-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-24",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -985,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-09-23-icloud",
+      "account_id": "acc-card",
+      "date": "2026-09-24",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -99,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_OTHER_GENERAL_SERVICES"
+      }
+    },
+    {
+      "id": "tx-2026-09-25-pay-store",
+      "account_id": "acc-checking",
+      "date": "2026-09-25",
+      "description": "FRESHWAY MARKETS PAYROLL PPD ID: 1416002387",
+      "merchant_name": null,
+      "amount_cents": 33180,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2026-09-25-savings-in",
+      "account_id": "acc-savings",
+      "date": "2026-09-25",
+      "description": "ONLINE TRANSFER FROM CHECKING XXXXXX4821",
+      "merchant_name": null,
+      "amount_cents": 4000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2026-09-25-savings-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-25",
+      "description": "ONLINE TRANSFER TO SAVINGS XXXXXX4410",
+      "merchant_name": null,
+      "amount_cents": -4000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2026-09-24-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-28",
+      "description": "STARBUCKS STORE 08837",
+      "merchant_name": "Starbucks",
+      "amount_cents": -667,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-09-25-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-09-28",
+      "description": "AMZN Mktp US*Z9WYRX",
+      "merchant_name": "Amazon",
+      "amount_cents": -4196,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-09-25-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-28",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -914,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-09-27-groceries",
+      "account_id": "acc-card",
+      "date": "2026-09-29",
+      "description": "FRESHWAY MKT #114",
+      "merchant_name": "Freshway Markets",
+      "amount_cents": -1445,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-09-27-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-29",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1005,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-09-30-interest",
+      "account_id": "acc-savings",
+      "date": "2026-09-30",
+      "description": "DIVIDEND EARNED",
+      "merchant_name": null,
+      "amount_cents": 140,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_INTEREST_EARNED"
+      }
+    },
+    {
+      "id": "tx-2026-09-28-coffee",
+      "account_id": "acc-card",
+      "date": "2026-09-30",
+      "description": "SQ *DAILY GRIND CAFE",
+      "merchant_name": "Daily Grind",
+      "amount_cents": -468,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-09-29-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-30",
+      "description": "CHIPOTLE 1873",
+      "merchant_name": "Chipotle",
+      "amount_cents": -935,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-01-inc-parents",
+      "account_id": "acc-checking",
+      "date": "2026-10-01",
+      "description": "ZELLE FROM RANIA K CONF# VJF25L7E",
+      "merchant_name": null,
+      "amount_cents": 26690,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_ACCOUNT_TRANSFER"
+      }
+    },
+    {
+      "id": "tx-2026-10-01-aunt-share",
+      "account_id": "acc-checking",
+      "date": "2026-10-01",
+      "description": "ZELLE TO SAMIRA H CONF# JQ44LDLA",
+      "merchant_name": null,
+      "amount_cents": -15000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_ACCOUNT_TRANSFER"
+      }
+    },
+    {
+      "id": "tx-2026-09-30-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-01",
+      "description": "SQ *DAILY GRIND CAFE",
+      "merchant_name": "Daily Grind",
+      "amount_cents": -635,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-10-01-personal-care",
+      "account_id": "acc-checking",
+      "date": "2026-10-02",
+      "description": "GREAT CLIPS #8812",
+      "merchant_name": "Great Clips",
+      "amount_cents": -3119,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "PERSONAL_CARE",
+        "detailed": "PERSONAL_CARE_HAIR_AND_BEAUTY"
+      }
+    },
+    {
+      "id": "tx-2026-10-05-phone",
+      "account_id": "acc-checking",
+      "date": "2026-10-05",
+      "description": "TMOBILE*AUTO PAY",
+      "merchant_name": "T-Mobile",
+      "amount_cents": -3000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "RENT_AND_UTILITIES",
+        "detailed": "RENT_AND_UTILITIES_TELEPHONE"
+      }
+    },
+    {
+      "id": "tx-2026-10-04-entertainment",
+      "account_id": "acc-checking",
+      "date": "2026-10-05",
+      "description": "AMC 6512 ONLINE",
+      "merchant_name": "AMC Theatres",
+      "amount_cents": -2061,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS"
+      }
+    },
+    {
+      "id": "tx-2026-10-04-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-10-06",
+      "description": "ALDI 72031 CHICAGO IL",
+      "merchant_name": "Aldi",
+      "amount_cents": -3820,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-10-04-shopping",
+      "account_id": "acc-card",
+      "date": "2026-10-06",
+      "description": "TARGET 00018762",
+      "merchant_name": "Target",
+      "amount_cents": -2517,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-10-05-claude",
+      "account_id": "acc-checking",
+      "date": "2026-10-06",
+      "description": "CLAUDE.AI SUBSCRIPTION",
+      "merchant_name": "Anthropic",
+      "amount_cents": -2000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_OTHER_GENERAL_SERVICES"
+      }
+    },
+    {
+      "id": "tx-2026-10-06-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-07",
+      "description": "SQ *DAILY GRIND CAFE",
+      "merchant_name": "Daily Grind",
+      "amount_cents": -530,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-10-06-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-07",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1573,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-09-pay-store",
+      "account_id": "acc-checking",
+      "date": "2026-10-09",
+      "description": "FRESHWAY MARKETS PAYROLL PPD ID: 1416002387",
+      "merchant_name": null,
+      "amount_cents": 24898,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2026-10-09-savings-in",
+      "account_id": "acc-savings",
+      "date": "2026-10-09",
+      "description": "ONLINE TRANSFER FROM CHECKING XXXXXX4821",
+      "merchant_name": null,
+      "amount_cents": 4000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2026-10-09-savings-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-09",
+      "description": "ONLINE TRANSFER TO SAVINGS XXXXXX4410",
+      "merchant_name": null,
+      "amount_cents": -4000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2026-10-08-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-10-09",
+      "description": "AMZN Mktp US*PUAQXS",
+      "merchant_name": "Amazon",
+      "amount_cents": -4245,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-10-09-eating-out",
+      "account_id": "acc-card",
+      "date": "2026-10-13",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1945,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-10-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "CHIPOTLE 1873",
+      "merchant_name": "Chipotle",
+      "amount_cents": -1055,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-11-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "FRESHWAY MKT #114",
+      "merchant_name": "Freshway Markets",
+      "amount_cents": -2410,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-10-11-entertainment",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "AMC 6512 ONLINE",
+      "merchant_name": "AMC Theatres",
+      "amount_cents": -2474,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS"
+      }
+    },
+    {
+      "id": "tx-2026-10-12-cafeteria",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "ARAMARK UNIV DINING 2231",
+      "merchant_name": "Aramark",
+      "amount_cents": -1195,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-10-12-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-14",
+      "description": "SQ *DAILY GRIND CAFE",
+      "merchant_name": "Daily Grind",
+      "amount_cents": -511,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-10-13-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-15",
+      "description": "TACO BELL 031188",
+      "merchant_name": "Taco Bell",
+      "amount_cents": -1170,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-14-spotify",
+      "account_id": "acc-card",
+      "date": "2026-10-15",
+      "description": "Spotify USA",
+      "merchant_name": "Spotify",
+      "amount_cents": -599,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_MUSIC_AND_AUDIO"
+      }
+    },
+    {
+      "id": "tx-2026-10-19-card-payment-in",
+      "account_id": "acc-card",
+      "date": "2026-10-19",
+      "description": "PAYMENT RECEIVED THANK YOU",
+      "merchant_name": null,
+      "amount_cents": 19554,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2026-10-18-car-insurance",
+      "account_id": "acc-checking",
+      "date": "2026-10-19",
+      "description": "SAFEROUTE AUTO INS PREM",
+      "merchant_name": "SafeRoute Insurance",
+      "amount_cents": -9600,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_INSURANCE"
+      }
+    },
+    {
+      "id": "tx-2026-10-19-card-payment",
+      "account_id": "acc-checking",
+      "date": "2026-10-19",
+      "description": "LAKESIDE CU VISA PMT AUTOPAY",
+      "merchant_name": null,
+      "amount_cents": -19554,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "LOAN_PAYMENTS",
+        "detailed": "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT"
+      }
+    },
+    {
+      "id": "tx-2026-10-15-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-19",
+      "description": "SQ *SHAWARMA CORNER",
+      "merchant_name": "Shawarma Corner",
+      "amount_cents": -1547,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-17-shopping",
+      "account_id": "acc-card",
+      "date": "2026-10-19",
+      "description": "AMZN Mktp US*L7G6VQ",
+      "merchant_name": "Amazon",
+      "amount_cents": -2939,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-10-17-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-19",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1498,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-18-eating-out",
+      "account_id": "acc-card",
+      "date": "2026-10-19",
+      "description": "SQ *SHAWARMA CORNER",
+      "merchant_name": "Shawarma Corner",
+      "amount_cents": -1147,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-18-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-10-20",
+      "description": "FRESHWAY MKT #114",
+      "merchant_name": "Freshway Markets",
+      "amount_cents": -3646,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-10-19-cafeteria",
+      "account_id": "acc-checking",
+      "date": "2026-10-21",
+      "description": "ARAMARK UNIV DINING 2231",
+      "merchant_name": "Aramark",
+      "amount_cents": -1368,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-10-19-eating-out",
+      "account_id": "acc-card",
+      "date": "2026-10-21",
+      "description": "TACO BELL 031188",
+      "merchant_name": "Taco Bell",
+      "amount_cents": -1000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-20-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-21",
+      "description": "SQ *DAILY GRIND CAFE",
+      "merchant_name": "Daily Grind",
+      "amount_cents": -674,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-10-20-coffee-3",
+      "account_id": "acc-checking",
+      "date": "2026-10-21",
+      "description": "STARBUCKS STORE 08837",
+      "merchant_name": "Starbucks",
+      "amount_cents": -465,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-10-20-coffee-2",
+      "account_id": "acc-checking",
+      "date": "2026-10-22",
+      "description": "STARBUCKS STORE 08837",
+      "merchant_name": "Starbucks",
+      "amount_cents": -467,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-10-21-gas",
+      "account_id": "acc-card",
+      "date": "2026-10-22",
+      "description": "SPEEDWAY 04512",
+      "merchant_name": "Speedway",
+      "amount_cents": -2943,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2026-10-21-cafeteria",
+      "account_id": "acc-checking",
+      "date": "2026-10-22",
+      "description": "ARAMARK UNIV DINING 2231",
+      "merchant_name": "Aramark",
+      "amount_cents": -1000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-10-21-cafeteria-2",
+      "account_id": "acc-checking",
+      "date": "2026-10-22",
+      "description": "ARAMARK UNIV DINING 2231",
+      "merchant_name": "Aramark",
+      "amount_cents": -1288,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-10-23-pay-store",
+      "account_id": "acc-checking",
+      "date": "2026-10-23",
+      "description": "FRESHWAY MARKETS PAYROLL PPD ID: 1416002387",
+      "merchant_name": null,
+      "amount_cents": 48899,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_WAGES"
+      }
+    },
+    {
+      "id": "tx-2026-10-23-savings-in",
+      "account_id": "acc-savings",
+      "date": "2026-10-23",
+      "description": "ONLINE TRANSFER FROM CHECKING XXXXXX4821",
+      "merchant_name": null,
+      "amount_cents": 4000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_IN",
+        "detailed": "TRANSFER_IN_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2026-10-23-savings-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-23",
+      "description": "ONLINE TRANSFER TO SAVINGS XXXXXX4410",
+      "merchant_name": null,
+      "amount_cents": -4000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_SAVINGS"
+      }
+    },
+    {
+      "id": "tx-2026-10-21-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-23",
+      "description": "SQ *DAILY GRIND CAFE",
+      "merchant_name": "Daily Grind",
+      "amount_cents": -539,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-10-21-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-23",
+      "description": "SQ *SHAWARMA CORNER",
+      "merchant_name": "Shawarma Corner",
+      "amount_cents": -1067,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-22-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-26",
+      "description": "CHIPOTLE 1873",
+      "merchant_name": "Chipotle",
+      "amount_cents": -1200,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-22-eating-out-2",
+      "account_id": "acc-card",
+      "date": "2026-10-26",
+      "description": "RAISING CANES 0451",
+      "merchant_name": "Raising Cane's",
+      "amount_cents": -968,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-23-icloud",
+      "account_id": "acc-card",
+      "date": "2026-10-26",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -99,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_SERVICES",
+        "detailed": "GENERAL_SERVICES_OTHER_GENERAL_SERVICES"
+      }
+    },
+    {
+      "id": "tx-2026-10-23-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-26",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1200,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-23-eating-out-2",
+      "account_id": "acc-checking",
+      "date": "2026-10-26",
+      "description": "RAISING CANES 0451",
+      "merchant_name": "Raising Cane's",
+      "amount_cents": -2763,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-24-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-26",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1390,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-26-cafeteria",
+      "account_id": "acc-checking",
+      "date": "2026-10-27",
+      "description": "ARAMARK UNIV DINING 2231",
+      "merchant_name": "Aramark",
+      "amount_cents": -964,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-10-26-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-10-27",
+      "description": "FRESHWAY MKT #114",
+      "merchant_name": "Freshway Markets",
+      "amount_cents": -2087,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-10-27-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-28",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1634,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-27-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-29",
+      "description": "STARBUCKS STORE 08837",
+      "merchant_name": "Starbucks",
+      "amount_cents": -522,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-10-28-cafeteria",
+      "account_id": "acc-card",
+      "date": "2026-10-29",
+      "description": "ARAMARK UNIV DINING 2231",
+      "merchant_name": "Aramark",
+      "amount_cents": -907,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_RESTAURANT"
+      }
+    },
+    {
+      "id": "tx-2026-10-28-gas",
+      "account_id": "acc-card",
+      "date": "2026-10-30",
+      "description": "SPEEDWAY 04512",
+      "merchant_name": "Speedway",
+      "amount_cents": -4312,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSPORTATION",
+        "detailed": "TRANSPORTATION_GAS"
+      }
+    },
+    {
+      "id": "tx-2026-10-28-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-10-30",
+      "description": "TARGET 00018762",
+      "merchant_name": "Target",
+      "amount_cents": -3250,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "tx-2026-10-28-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-30",
+      "description": "RAISING CANES 0451",
+      "merchant_name": "Raising Cane's",
+      "amount_cents": -1355,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-29-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-30",
+      "description": "STARBUCKS STORE 08837",
+      "merchant_name": "Starbucks",
+      "amount_cents": -510,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_COFFEE"
+      }
+    },
+    {
+      "id": "tx-2026-10-29-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-30",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1063,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-31-interest",
+      "account_id": "acc-savings",
+      "date": "2026-10-31",
+      "description": "DIVIDEND EARNED",
+      "merchant_name": null,
+      "amount_cents": 149,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "INCOME",
+        "detailed": "INCOME_INTEREST_EARNED"
+      }
+    },
+    {
+      "id": "tx-2026-11-01-aunt-share",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "ZELLE TO SAMIRA H CONF# 5YD9SHXR",
+      "merchant_name": null,
+      "amount_cents": -15000,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "TRANSFER_OUT",
+        "detailed": "TRANSFER_OUT_ACCOUNT_TRANSFER"
+      }
+    },
+    {
+      "id": "tx-2026-10-31-entertainment",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "AMC 6512 ONLINE",
+      "merchant_name": "AMC Theatres",
+      "amount_cents": -1482,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "ENTERTAINMENT",
+        "detailed": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS"
+      }
+    },
+    {
+      "id": "tx-2026-10-31-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -892,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-10-31-eating-out-2",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "MCDONALD'S F29174",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1318,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_FAST_FOOD"
+      }
+    },
+    {
+      "id": "tx-2026-11-01-personal-care",
+      "account_id": "acc-checking",
+      "date": "2026-11-03",
+      "description": "ULTA #0331",
+      "merchant_name": "Ulta Beauty",
+      "amount_cents": -3775,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "PERSONAL_CARE",
+        "detailed": "PERSONAL_CARE_HAIR_AND_BEAUTY"
+      }
+    },
+    {
+      "id": "tx-2026-11-01-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-11-03",
+      "description": "FRESHWAY MKT #114",
+      "merchant_name": "Freshway Markets",
+      "amount_cents": -2269,
+      "pending": false,
+      "personal_finance_category": {
+        "primary": "FOOD_AND_DRINK",
+        "detailed": "FOOD_AND_DRINK_GROCERIES"
+      }
+    },
+    {
+      "id": "tx-2026-11-02-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "AMZN Mktp US*59K5VY",
+      "merchant_name": "Amazon",
+      "amount_cents": -4305,
+      "pending": true,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES"
+      }
+    },
+    {
+      "id": "x-target",
+      "account_id": "acc-checking",
+      "date": "2026-11-03",
+      "description": "TARGET 00018762 CHICAGO IL",
+      "merchant_name": "Target",
+      "amount_cents": -8517,
+      "pending": true,
+      "personal_finance_category": {
+        "primary": "GENERAL_MERCHANDISE",
+        "detailed": "GENERAL_MERCHANDISE_SUPERSTORES"
+      }
+    }
+  ],
+  "recurring": [
+    {
+      "bill": "aunt-share",
+      "name": "Share for groceries and utilities",
+      "frequency": "monthly",
+      "charges": ["tx-2026-09-01-aunt-share", "tx-2026-10-01-aunt-share", "tx-2026-11-01-aunt-share"],
+      "price_changes": []
+    },
+    {
+      "bill": "phone",
+      "name": "Phone",
+      "frequency": "monthly",
+      "charges": ["tx-2026-08-05-phone", "tx-2026-09-05-phone", "tx-2026-10-05-phone"],
+      "price_changes": []
+    },
+    {
+      "bill": "claude",
+      "name": "Claude",
+      "frequency": "monthly",
+      "charges": ["tx-2026-08-05-claude", "tx-2026-09-05-claude", "tx-2026-10-05-claude"],
+      "price_changes": []
+    },
+    {
+      "bill": "spotify",
+      "name": "Spotify Student",
+      "frequency": "monthly",
+      "charges": ["tx-2026-08-14-spotify", "tx-2026-09-14-spotify", "tx-2026-10-14-spotify"],
+      "price_changes": []
+    },
+    {
+      "bill": "icloud",
+      "name": "iCloud storage",
+      "frequency": "monthly",
+      "charges": ["tx-2026-08-23-icloud", "tx-2026-09-23-icloud", "tx-2026-10-23-icloud"],
+      "price_changes": []
+    },
+    {
+      "bill": "car-insurance",
+      "name": "Car insurance",
+      "frequency": "monthly",
+      "charges": ["tx-2026-08-18-car-insurance", "tx-2026-09-18-car-insurance", "tx-2026-10-18-car-insurance"],
+      "price_changes": []
+    }
+  ],
+  "pay": ["2026-08-14", "2026-08-28", "2026-09-11", "2026-09-25", "2026-10-09", "2026-10-23"]
+}

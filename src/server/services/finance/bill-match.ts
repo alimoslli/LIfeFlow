@@ -1,6 +1,6 @@
 import { daysBetween } from "@/lib/dates";
 import type { Frequency } from "../../db/schema";
-import { merchantKey, merchantKeys, nextOccurrence, type RecurringCandidate } from "./recurring-detect";
+import { merchantKey, merchantKeys, nthOccurrence, type RecurringCandidate } from "./recurring-detect";
 
 /**
  * Is it the same bill? Pure rules for telling when a bill the user tracks under their own name
@@ -44,13 +44,13 @@ export function amountsClose(expectedCents: number, actualCents: number, varies:
 
 /** Signed days from the nearest occurrence of `anchor`'s schedule to `date`: negative when `date` comes before it. */
 export function scheduleOffset(anchor: string, freq: Frequency, date: string): number {
-  // Walk the earlier date forward on the schedule until it passes the other, keeping the smallest gap.
+  // Walk the earlier date forward on the schedule (keeping its day of the month) until it passes the other, keeping the smallest gap.
   const forward = anchor <= date;
   const target = forward ? date : anchor;
-  let x = forward ? anchor : date;
-  let best = daysBetween(x, target);
-  for (let guard = 0; x < target && guard < 600; guard++) {
-    x = nextOccurrence(x, freq);
+  const start = forward ? anchor : date;
+  let best = daysBetween(start, target);
+  for (let n = 1, x = start; x < target && n <= 600; n++) {
+    x = nthOccurrence(start, freq, n);
     const gap = daysBetween(x, target);
     if (Math.abs(gap) < Math.abs(best)) best = gap;
   }
