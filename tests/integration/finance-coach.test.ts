@@ -77,7 +77,7 @@ describe("forecast, goals, paycheck and debt", () => {
     const u = await userWithHistory();
     await u.run(async (s) => {
       await createRecurring(s, { name: "Rent", amountCents: -120_000, frequency: "monthly", nextDueDate: "2026-11-01", kind: "bill", categoryId: u.rent.id });
-      await createRecurring(s, { name: "Payroll", amountCents: 150_000, frequency: "biweekly", nextDueDate: "2026-11-06", kind: "income" });
+      await createRecurring(s, { name: "Acme Labs payroll", amountCents: 150_000, frequency: "biweekly", nextDueDate: "2026-11-06", kind: "income" });
       const g = await createGoal(s, { name: "Japan trip", targetCents: 300_000, monthlyPlanCents: 30_000, purpose: "travel" });
       await contributeToGoal(s, { goalId: g.id, amountCents: 75_000, date: TODAY });
     });
@@ -100,6 +100,47 @@ describe("forecast, goals, paycheck and debt", () => {
 
     const debts = await u.run((s) => debtReport(s, TODAY));
     expect(debts).toMatchObject({ totalOwedCents: 90_000, overallUtilizationPercent: 45 });
+  });
+
+  it("shows expected pay only for the salaried job's own paychecks, never hourly pay or family money (A13)", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      await createManualAccount(s, { name: "Checking", type: "depository", currentBalanceCents: 50_000 });
+      await createEmployer(s, { name: "Acme Labs", payType: "salary", annualSalaryCents: 3_900_000 });
+      await createEmployer(s, { name: "Campus Coffee", hourlyRateCents: 1500 });
+      await createRecurring(s, { name: "Acme Labs payroll", amountCents: 150_000, frequency: "biweekly", nextDueDate: "2026-11-06", kind: "income" });
+      await createRecurring(s, { name: "Campus Coffee payroll", amountCents: 40_000, frequency: "biweekly", nextDueDate: "2026-11-04", kind: "income" });
+      await createRecurring(s, { name: "Mom", amountCents: 20_000, frequency: "monthly", nextDueDate: "2026-11-01", kind: "income" });
+    });
+    expect((await run((s) => cashForecast(s, TODAY, 14))).expectedPay).toEqual([{ date: "2026-11-06", amountCents: 150_000, name: "Acme Labs payroll" }]);
+  });
+
+  it("finds the salaried paycheck in deposits even when hourly pay or family money is bigger and just as steady (A13)", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await createManualAccount(s, { name: "Checking", type: "depository", currentBalanceCents: 50_000 });
+      await createEmployer(s, { name: "Acme Labs", payType: "salary", annualSalaryCents: 3_900_000 });
+      await createEmployer(s, { name: "Campus Coffee", hourlyRateCents: 1500 });
+      const deposit = (date: string, description: string, amountCents: number) =>
+        createTransaction(s, { accountId: acct.id, date, description, amountCents, kind: "income" });
+      for (const d of ["2026-08-14", "2026-08-28", "2026-09-11", "2026-09-25", "2026-10-09", "2026-10-23"]) await deposit(d, "ACME LABS PAYROLL", 150_000);
+      for (const d of ["2026-08-19", "2026-09-02", "2026-09-16", "2026-09-30", "2026-10-14", "2026-10-28"]) await deposit(d, "CAMPUS COFFEE PAYROLL", 160_000);
+      for (const d of ["2026-07-01", "2026-08-01", "2026-09-01", "2026-10-01"]) await deposit(d, "VENMO FROM MOM", 200_000);
+    });
+    expect((await run((s) => cashForecast(s, TODAY, 14))).expectedPay).toEqual([{ date: "2026-11-06", amountCents: 150_000, name: "Acme Labs Payroll" }]);
+  });
+
+  it("counts a paycheck that doesn't name the job only while every job is salaried (A13)", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      await createManualAccount(s, { name: "Checking", type: "depository", currentBalanceCents: 50_000 });
+      await createEmployer(s, { name: "Acme Labs", payType: "salary", annualSalaryCents: 3_900_000 });
+      await createRecurring(s, { name: "Payroll", amountCents: 150_000, frequency: "biweekly", nextDueDate: "2026-11-06", kind: "income" });
+    });
+    expect((await run((s) => cashForecast(s, TODAY, 14))).expectedPay).toEqual([{ date: "2026-11-06", amountCents: 150_000, name: "Payroll" }]);
+    // With an hourly job too, "Payroll" could be either job's, so nothing is expected.
+    await run((s) => createEmployer(s, { name: "Campus Coffee", hourlyRateCents: 1500 }));
+    expect((await run((s) => cashForecast(s, TODAY, 14))).expectedPay).toEqual([]);
   });
 
   it("refuses contributions that would make a goal negative", async () => {
