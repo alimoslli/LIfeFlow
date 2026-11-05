@@ -1,16 +1,16 @@
 # Survey v1: How do you keep your life together?
 
-Draft 2026-11-05, for the owner's review. Market research before the new LifeFlow. It never mentions LifeFlow or an app: we collect how people actually manage their lives and what goes wrong, then show the problem and the fix in the product.
+Draft 2026-11-05, for the owner's review. Updated the same day with three questions from the first research report (shift schedules, apps tried and why they quit). Market research before the new LifeFlow. It never mentions LifeFlow or an app: we collect how people actually manage their lives and what goes wrong, then show the problem and the fix in the product.
 
 **Goals:** who they are · how they keep track today · what goes wrong (real recent incidents, not opinions) · how they handle change · money, without private numbers · what they'd want handled · what they already pay for and what it would be worth.
 
-**Rules:** 3 to 4 minutes · anonymous · no names, no account numbers, no amounts · mostly tap-to-answer, two short open questions · the price question last so it doesn't color the rest · nothing frames anything as a problem; we only ask what happened.
+**Rules:** about 4 minutes · anonymous · no names, no account numbers, no amounts · mostly tap-to-answer, two short open questions · the price question last so it doesn't color the rest · nothing frames anything as a problem; we only ask what happened.
 
 ---
 
 ## How do you keep your life together?
 
-3 minutes, anonymous. No names, no account details. There are no right answers. We just want to know how you actually do it.
+About 4 minutes, anonymous. No names, no account details. There are no right answers. We just want to know how you actually do it.
 
 ### You
 
@@ -28,43 +28,54 @@ Draft 2026-11-05, for the owner's review. Market research before the new LifeFlo
 4. **Where does your life actually live?** (pick all that apply)
    Phone calendar · Paper planner or notebook · Notes app · To-do or reminders app · My bank app · A school portal like Canvas · A work scheduling app · Group chats and texts · My memory · Someone else keeps track for me
 
-5. **How many apps or places do you check to know what your day looks like?**
+5. **If you work shifts, where does your schedule show up?**
+   A scheduling app · A photo or message in a group chat · Paper at work · My manager tells me · It's the same every week · I don't work shifts
+
+6. **How far ahead do you usually know your shifts?**
+   A month or more · About 2 weeks · About a week · A few days or less · It's the same every week · I don't work shifts
+
+7. **How many apps or places do you check to know what your day looks like?**
    One · 2 to 3 · 4 to 5 · 6 or more · I don't check, I just go
 
-6. **How often does one part of your life collide with another, like work and class, or a plan and money?**
+8. **How often does one part of your life collide with another, like work and class, or a plan and money?**
    Almost never · A few times a year · Most months · Most weeks · Constantly
 
 ### What happened lately
 
-7. **In the last two months, which of these happened to you?** (pick all that apply)
+9. **In the last two months, which of these happened to you?** (pick all that apply)
    Paid a bill late or got a fee · Missed or nearly missed a deadline or assignment · Forgot a shift, appointment or plan · Ran low on money before pay, aid or allowance came in · Found a subscription you forgot you were paying for · Lost sleep because too much piled up at once · Double-booked yourself · None of these
 
-8. **Think of the most recent one. What happened, and how did you find out?** (short answer)
+10. **Think of the most recent one. What happened, and how did you find out?** (short answer)
 
-9. **When something changes, like a new shift, a surprise expense or a moved exam, how do you work out what else it affects?**
+11. **When something changes, like a new shift, a surprise expense or a moved exam, how do you work out what else it affects?**
    I figure it out in my head · I redo my plan or calendar · I don't, I deal with it when it hits · Someone else helps me · Other (say what)
 
 ### Money, no numbers
 
-10. **How well do you know where your money goes each month?**
+12. **How well do you know where your money goes each month?**
     To the dollar · Roughly · Vaguely · Honestly, no idea
 
-11. **The last few days before money comes in are usually:**
+13. **The last few days before money comes in are usually:**
     Fine · A bit careful · Tight · I've been short more than once this year · Doesn't apply to me
 
 ### What would help
 
-12. **If one part of keeping your life on track could be handled for you, what would it be?** (short answer)
+14. **If one part of keeping your life on track could be handled for you, what would it be?** (short answer)
 
-13. **What do you pay for right now to stay organized or on top of money?** (pick all that apply)
+15. **Which of these have you tried?** (pick all that apply)
+    Rocket Money · Monarch · Copilot · Cleo · YNAB · Structured · Motion · Todoist · Notion · MyStudyLife · Canvas · ChatGPT for planning or money · None of these
+
+16. **If you stopped using any of them, which one and why?** (short answer, optional)
+
+17. **What do you pay for right now to stay organized or on top of money?** (pick all that apply)
     Nothing · A planner or notebook · A calendar or to-do app · A budgeting app · An AI assistant like ChatGPT · Something else (say what)
 
-14. **If something made sure you never missed anything and caught problems before they hit, what would that be worth to you each month?**
+18. **If something made sure you never missed anything and caught problems before they hit, what would that be worth to you each month?**
     Nothing, I'd only use it free · $1 to 3 · $4 to 7 · $8 to 12 · More than $12 · Not sure
 
 ### Optional
 
-15. **Up for a 15-minute chat about this?** Leave an email or Instagram handle. Only used to reach you. (optional)
+19. **Up for a 15-minute chat about this?** Leave an email or Instagram handle. Only used to reach you. (optional)
 
 Thanks. That's it.
 
@@ -77,18 +88,19 @@ Thanks. That's it.
 - **Tool:** Google Forms (free, people trust it, exports to Sheets). Tally or Typeform also work. Short answers as "paragraph", everything else as checkboxes or multiple choice. Keep the order.
 - **Incentive:** one $25 gift card raffle lifts responses a lot. Ask for an email only for the raffle, optional, and say it's deleted after.
 - **Target:** 100 responses shows patterns. The first 30 show direction.
-- **If it feels long:** cut 3 and 11 first.
+- **In Google Forms, put 5 and 6 in their own section** that people who don't work shifts can skip in one tap.
+- **If it feels long:** cut 3 and 13 first.
 
 ## What each part tells us
 
 - 1 to 3: who they are, so answers can be split by student, shift worker, parent.
-- 4 to 6: how scattered life is today (how many places, how often things collide). This is the pain the line solves.
-- 7 to 9: real failures and how people handle change. 8 and 9 are also seeds for the situation library: real moments from many different lives, not just the owner's.
-- 10 to 11: how far people are from knowing their money, without any private numbers.
-- 12: the magic wand, in their words, for product and ad copy.
-- 13 to 14: what they already pay for and what this would be worth. 14 is last so it doesn't shape the rest.
-- 15: people to interview. Ten 15-minute chats are worth more than 100 more responses.
+- 4 to 8: how scattered life is today (how many places, how often things collide), and how shift schedules arrive and how far ahead. 5 and 6 decide how shifts get added (research proposal 3).
+- 9 to 11: real failures and how people handle change. 10 and 11 are also seeds for the situation library: real moments from many different lives, not just the owner's.
+- 12 to 13: how far people are from knowing their money, without any private numbers.
+- 14: the magic wand, in their words, for product and ad copy.
+- 15 to 18: which apps they tried and why they quit, what they already pay for, and what this would be worth. 18 is last so it doesn't shape the rest.
+- 19: people to interview. Ten 15-minute chats are worth more than 100 more responses.
 
 ## After
 
-Export the responses as CSV and hand them to Claude Code: segments, top three failures, how many places people check, the price curve, and the best quotes. Verbatims from 8, 9 and 12 go into the situation library and the marketing playbook.
+Export the responses as CSV and hand them to Claude Code: segments, top three failures, how many places people check, the price curve, and the best quotes. Verbatims from 10, 11, 14 and 16 go into the situation library and the marketing playbook.
