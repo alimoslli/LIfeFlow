@@ -1,0 +1,64 @@
+{
+  "id": "s0001-student-exam-moved-before-closing-shift",
+  "title": "Exam moves up two days, onto the morning after a closing shift",
+  "life": {
+    "summary": "Community college sophomore taking nursing prerequisites, works about 20 hours a week as a restaurant server, lives with her parents 15 minutes from campus",
+    "kinds": ["student who works", "lives with family"],
+    "time_zone": "America/Chicago",
+    "pay": { "type": "hourly", "period": "biweekly" }
+  },
+  "now": "2026-11-09T13:10",
+  "known": [
+    { "id": "k1", "fact": "Needs about 6 hours of review for a chemistry exam; kept every block before midterm 1", "source": "learned from study blocks kept" },
+    { "id": "k2", "fact": "Says she does badly on tests after less than 7 hours of sleep", "source": "told Dev" },
+    { "id": "k3", "fact": "Shift swaps go in the team chat and need 24 hours' notice and the manager's OK", "source": "told Dev" },
+    { "id": "k4", "fact": "Leaves home 30 minutes before an 8 AM class (15-minute drive plus parking)", "source": "told Dev" },
+    { "id": "k5", "fact": "Routine: studies at home in the afternoon, from after class until she leaves for work (about 12:30 to 4 PM); never after a shift and never before 8 AM", "source": "learned from 8 weeks of study blocks (kept 11 of 12 afternoon blocks, skipped both late-night ones)" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-11-09T11:00", "end": "2026-11-09T12:15", "state": "class", "label": "General Chemistry lecture (done today)", "source": "class schedule", "expected": false },
+    { "id": "t2", "start": "2026-11-09T12:30", "end": "2026-11-09T16:00", "state": "home", "label": "Home, her usual afternoon study window", "source": "calendar", "expected": false },
+    { "id": "t3", "start": "2026-11-09T16:30", "end": "2026-11-09T21:30", "state": "work", "label": "Server shift", "source": "schedule photo", "expected": false },
+    { "id": "t4", "start": "2026-11-09T23:00", "end": "2026-11-10T07:00", "state": "asleep", "label": "Sleep", "source": "Apple Health, usual pattern", "expected": true },
+    { "id": "t5", "start": "2026-11-10T09:30", "end": "2026-11-10T12:15", "state": "class", "label": "Anatomy lecture and lab", "source": "class schedule", "expected": false },
+    { "id": "t6", "start": "2026-11-10T12:30", "end": "2026-11-10T16:30", "state": "home", "label": "Home, her usual afternoon study window", "source": "calendar", "expected": false },
+    { "id": "t7", "start": "2026-11-10T17:00", "end": "2026-11-10T23:30", "state": "work", "label": "Closing shift", "source": "schedule photo", "expected": false },
+    { "id": "t8", "start": "2026-11-10T23:50", "end": "2026-11-11T06:45", "state": "asleep", "label": "Sleep if she goes straight to bed after closing (under 7 hours)", "source": "Dev, from her usual routine", "expected": true },
+    { "id": "t9", "start": "2026-11-11T08:00", "end": "2026-11-11T09:15", "state": "class", "label": "Chemistry midterm 2, in person (moved here from Friday)", "source": "course page", "expected": false },
+    { "id": "t10", "start": "2026-11-11T12:30", "end": "2026-11-11T15:00", "state": "study", "label": "Chem review block 1 (placed for the Friday exam)", "source": "Dev plan", "expected": false },
+    { "id": "t11", "start": "2026-11-12T12:30", "end": "2026-11-12T16:00", "state": "study", "label": "Chem review block 2 (placed for the Friday exam)", "source": "Dev plan", "expected": false },
+    { "id": "t12", "start": "2026-11-13T11:00", "end": "2026-11-13T12:15", "state": "class", "label": "General Chemistry lecture (the old exam slot)", "source": "class schedule", "expected": false },
+    { "id": "t13", "start": "2026-11-13T17:00", "end": "2026-11-13T22:00", "state": "work", "label": "Server shift", "source": "schedule photo", "expected": false },
+    { "id": "t14", "start": "2026-11-14T18:00", "end": "2026-11-14T21:30", "state": "with people", "label": "Cousin's birthday dinner", "source": "calendar", "expected": false }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-11-09T12:55", "part": "school", "kind": "announcement", "label": "Professor: midterm 2 moves from Friday 11 AM to Wednesday 8 AM because of a conference", "amount_cents": null, "expected": false, "source": "course page announcement" },
+    { "id": "a2", "at": "2026-11-11T08:00", "part": "school", "kind": "exam", "label": "Chemistry midterm 2, 20% of the grade", "amount_cents": null, "expected": false, "source": "syllabus and course page" }
+  ],
+  "money": { "available_now_cents": 31840, "checking_cents": 29840, "cash_cents": 2000, "savings_cents": 60000 },
+  "dev_must_notice": [
+    { "check": "late fact", "what": "The chemistry midterm moved from Friday 11 AM to Wednesday 8 AM, so both review blocks now fall after the exam", "by_when": "2026-11-09T15:30", "facts": ["a1", "a2", "t9", "t10", "t11"] },
+    { "check": "rest", "what": "Tuesday's closing shift ends at 11:30 PM and she has to leave at 7:30 AM for the exam: under 7 hours of sleep, the line she set for herself", "by_when": "2026-11-09T15:30", "facts": ["t7", "t8", "t9", "k2", "k4"] },
+    { "check": "time", "what": "Her only afternoon windows before the exam are today from 1:30 to 4 PM and Tuesday 12:30 to 4 PM: 6 hours, exactly what she needs. A swap of Tuesday's close needs 24 hours' notice, so it has to be asked before today's shift starts at 4:30", "by_when": "2026-11-09T15:30", "facts": ["t2", "t6", "t7", "k1", "k3", "k5"] }
+  ],
+  "best_fix": {
+    "what": "Move the review into her own afternoon windows and say so with Undo: today 1:30 to 4:00 PM (with a break) and Tuesday 12:30 to 4:00 PM, 6 hours in all, and remove the blocks after the exam. Then ask once: want to try for a swap of Tuesday's close so she sleeps 7 hours? Here's a draft for the team chat; it has to go up before 4:30 today.",
+    "why": "Otherwise she finds out Tuesday that her plan prepares her for an exam that already happened. Both new blocks sit in the afternoon window she actually uses, so she'll keep them. Moving blocks is something Dev may do alone with Undo; the swap is her call.",
+    "action": "move block",
+    "needs_user": true
+  },
+  "must_not": [
+    "Suggest reviewing after Tuesday's close or getting up early Wednesday to cram; she never studies after a shift or before 8 AM",
+    "Post the swap in the team chat or message the manager for her",
+    "Tell her to call in sick or skip the shift",
+    "Keep the old blocks after the exam, or put review time into Saturday's dinner with her cousin",
+    "Write practice answers, solve problems or check her chemistry work; plan the time only"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Restaurant swaps need 24 hours' notice (her own workplace rule, told Dev)",
+    "Professors sometimes move an exam to a special session with two days' notice",
+    "6 hours of review per chemistry exam is learned from her first midterm, not an average"
+  ],
+  "tags": ["late fact", "routine fit", "moved exam", "closing shift", "study plan", "swap"]
+}

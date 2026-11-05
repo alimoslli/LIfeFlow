@@ -1,0 +1,70 @@
+{
+  "id": "s0003-gig-driver-duplicate-insurance-charge",
+  "title": "Car insurance paid twice, four days before rent",
+  "life": {
+    "summary": "Delivery driver on two apps, about 40 hours a week, shares an apartment with two roommates and sends her rent share to one of them",
+    "kinds": ["gig worker", "roommates"],
+    "time_zone": "America/Phoenix",
+    "pay": { "type": "per gig", "period": "weekly payouts" }
+  },
+  "now": "2026-11-27T09:15",
+  "known": [
+    { "id": "k1", "fact": "Rent share is $725, sent to her roommate by the 1st; the landlord charges a late fee after the 3rd", "source": "told Dev" },
+    { "id": "k2", "fact": "Car insurance is on autopay on the 26th each month", "source": "noticed from 6 months of bank history, she confirmed" },
+    { "id": "k3", "fact": "Both apps pay out on Monday mornings for the week before", "source": "learned from deposits" },
+    { "id": "k4", "fact": "Routine: drives the lunch rush (10:30 AM to 2:30 PM) and dinner (5 to 10 PM); does calls and errands in the gap, 2:30 to 5", "source": "learned from 3 months of her calendar" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-11-23T10:30", "end": "2026-11-23T14:30", "state": "work", "label": "Driving, lunch rush", "source": "her calendar", "expected": false },
+    { "id": "t2", "start": "2026-11-23T17:00", "end": "2026-11-23T21:30", "state": "work", "label": "Driving, dinner", "source": "her calendar", "expected": false },
+    { "id": "t3", "start": "2026-11-24T17:00", "end": "2026-11-24T22:00", "state": "work", "label": "Driving, dinner", "source": "her calendar", "expected": false },
+    { "id": "t4", "start": "2026-11-25T10:30", "end": "2026-11-25T14:00", "state": "work", "label": "Driving, lunch rush", "source": "her calendar", "expected": false },
+    { "id": "t5", "start": "2026-11-25T18:00", "end": "2026-11-25T21:30", "state": "home", "label": "Evening at home with her roommates", "source": "her calendar", "expected": false },
+    { "id": "t6", "start": "2026-11-26T12:00", "end": "2026-11-26T20:00", "state": "with people", "label": "Thanksgiving at a friend's", "source": "her calendar", "expected": false },
+    { "id": "t7", "start": "2026-11-27T10:30", "end": "2026-11-27T14:30", "state": "work", "label": "Driving, lunch rush (planned)", "source": "her calendar", "expected": true },
+    { "id": "t8", "start": "2026-11-27T14:30", "end": "2026-11-27T17:00", "state": "home", "label": "Gap between rushes (her time for calls and errands)", "source": "learned routine", "expected": true },
+    { "id": "t9", "start": "2026-11-27T17:00", "end": "2026-11-27T22:00", "state": "work", "label": "Driving, dinner (planned)", "source": "her calendar", "expected": true },
+    { "id": "t10", "start": "2026-11-28T10:30", "end": "2026-11-28T14:30", "state": "work", "label": "Driving, lunch rush (planned)", "source": "her calendar", "expected": true },
+    { "id": "t11", "start": "2026-11-28T17:00", "end": "2026-11-28T22:00", "state": "work", "label": "Driving, dinner (planned)", "source": "her calendar", "expected": true },
+    { "id": "t12", "start": "2026-11-29T17:00", "end": "2026-11-29T21:00", "state": "work", "label": "Driving, dinner (planned)", "source": "her calendar", "expected": true },
+    { "id": "t13", "start": "2026-11-30T08:00", "end": "2026-11-30T10:30", "state": "home", "label": "Monday morning at home, before the lunch rush", "source": "learned routine", "expected": true }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-11-23T06:00", "part": "money", "kind": "pay", "label": "Weekly payout, delivery app A", "amount_cents": 41236, "expected": false, "source": "bank" },
+    { "id": "a2", "at": "2026-11-23T06:00", "part": "money", "kind": "pay", "label": "Weekly payout, delivery app B", "amount_cents": 18740, "expected": false, "source": "bank" },
+    { "id": "a3", "at": "2026-11-23T12:10", "part": "money", "kind": "spend", "label": "Gas", "amount_cents": -4620, "expected": false, "source": "bank" },
+    { "id": "a4", "at": "2026-11-24T16:20", "part": "money", "kind": "spend", "label": "Groceries", "amount_cents": -5288, "expected": false, "source": "bank" },
+    { "id": "a5", "at": "2026-11-25T09:50", "part": "money", "kind": "spend", "label": "Gas", "amount_cents": -4105, "expected": false, "source": "bank" },
+    { "id": "a6", "at": "2026-11-25T20:15", "part": "money", "kind": "bill", "label": "Car insurance, paid by hand in the insurer's app", "amount_cents": -14862, "expected": false, "source": "bank" },
+    { "id": "a7", "at": "2026-11-26T03:00", "part": "money", "kind": "bill", "label": "Car insurance, autopay (same amount, same insurer)", "amount_cents": -14862, "expected": false, "source": "bank" },
+    { "id": "a8", "at": "2026-11-30T06:00", "part": "money", "kind": "pay", "label": "Weekly payouts (amount unknown until they land)", "amount_cents": null, "expected": true, "source": "learned from deposits" },
+    { "id": "a9", "at": "2026-12-01T00:00", "part": "money", "kind": "bill", "label": "Rent share to her roommate", "amount_cents": -72500, "expected": false, "source": "told Dev" },
+    { "id": "a10", "at": "2026-12-02T00:00", "part": "money", "kind": "bill", "label": "Phone autopay", "amount_cents": -6500, "expected": true, "source": "bank history" }
+  ],
+  "money": { "available_now_cents": 48354, "checking_cents": 44854, "cash_cents": 3500, "savings_cents": 0 },
+  "dev_must_notice": [
+    { "check": "afford", "what": "The car insurance went out twice: $148.62 paid by hand Wednesday night and $148.62 by autopay Thursday. With rent ($725) due Tuesday she has $483.54, which is $241.46 short, and Monday's payouts aren't money until they land. The phone ($65) follows Wednesday", "by_when": "2026-11-27T14:30", "facts": ["a6", "a7", "a9", "a10", "a8", "k1", "k2", "k3"] }
+  ],
+  "best_fix": {
+    "what": "One message before her lunch rush ends: the two charges side by side and a short refund request for her to send in the insurer's app or read on the phone in her 2:30 to 5 PM gap (ask for the extra $148.62 back to her card, not a credit on next month). Show the trace to Tuesday's rent without counting Monday's payouts. Set a reminder for Monday 9 AM, after payouts usually land and before she starts driving, to check rent is covered.",
+    "why": "Insurers often keep a double payment as a credit on the next bill unless asked, and today is a business day. Her afternoon gap is when she makes calls, so the ask fits her day instead of a rush.",
+    "action": "draft for them",
+    "needs_user": true
+  },
+  "must_not": [
+    "Ask her to call the insurer during the lunch or dinner rush; her calls happen in the 2:30 to 5 PM gap",
+    "Contact the insurer, file a dispute or call the bank for her",
+    "Guess Monday's payouts or count them before they land",
+    "Turn off or change her autopay",
+    "Suggest a cash advance, a payday loan or a paid instant cash-out",
+    "Move money between her accounts"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Insurers usually refund a double payment within 5 to 10 business days, or credit it to the next bill unless asked",
+    "Both delivery apps pay weekly on Monday mornings",
+    "Arizona does not change clocks for daylight saving",
+    "Checking was $286.15 on Monday Nov 23 before the payouts"
+  ],
+  "tags": ["duplicate charge", "gig", "rent", "autopay", "afford"]
+}

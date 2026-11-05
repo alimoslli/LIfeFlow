@@ -1,0 +1,63 @@
+{
+  "id": "s0002-single-parent-school-closed-before-thanksgiving",
+  "title": "No school the day before Thanksgiving, and a 6 AM shift",
+  "life": {
+    "summary": "Single parent, deli clerk at a grocery store, son is 8 and in third grade; his dad has him on alternate weekends and some holidays",
+    "kinds": ["single parent", "parent", "shift worker"],
+    "time_zone": "America/New_York",
+    "pay": { "type": "hourly", "period": "weekly" }
+  },
+  "now": "2026-11-12T20:30",
+  "known": [
+    { "id": "k1", "fact": "Son is 8; before-care from 7:15 AM, school, then after-care until 6 PM", "source": "told Dev" },
+    { "id": "k2", "fact": "This year his dad has Thanksgiving: Thursday 10 AM to Friday 6 PM", "source": "co-parenting calendar" },
+    { "id": "k3", "fact": "Her sister can watch him on weekday afternoons after 3 PM; she works mornings", "source": "told Dev" },
+    { "id": "k4", "fact": "Routine: weekday shifts 8 AM to 2:30 PM while he's at school; drop-off 7:15, pickup 3:15", "source": "learned from 10 weeks of schedules and calendar" },
+    { "id": "k5", "fact": "Routine: reads and answers messages after his 8 PM bedtime, until about 9:30", "source": "learned from when she replies to Dev" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-11-12T08:00", "end": "2026-11-12T14:30", "state": "work", "label": "Deli shift (done today)", "source": "schedule photo", "expected": false },
+    { "id": "t2", "start": "2026-11-12T15:15", "end": "2026-11-12T20:00", "state": "home", "label": "Home with her son", "source": "calendar", "expected": false },
+    { "id": "t3", "start": "2026-11-12T20:00", "end": "2026-11-12T21:30", "state": "home", "label": "Evening after his bedtime (when she handles messages)", "source": "learned routine", "expected": false },
+    { "id": "t4", "start": "2026-11-22T10:00", "end": "2026-11-22T18:00", "state": "day off", "label": "Sunday with her son", "source": "calendar", "expected": false },
+    { "id": "t5", "start": "2026-11-23T08:00", "end": "2026-11-23T14:30", "state": "work", "label": "Deli shift", "source": "schedule photo", "expected": false },
+    { "id": "t6", "start": "2026-11-24T08:00", "end": "2026-11-24T14:30", "state": "work", "label": "Deli shift", "source": "schedule photo", "expected": false },
+    { "id": "t7", "start": "2026-11-24T15:15", "end": "2026-11-24T20:30", "state": "home", "label": "Home with her son", "source": "calendar", "expected": false },
+    { "id": "t8", "start": "2026-11-25T06:00", "end": "2026-11-25T14:30", "state": "work", "label": "Deli shift, day-before-Thanksgiving rush (6 AM start)", "source": "schedule photo", "expected": false },
+    { "id": "t9", "start": "2026-11-25T15:00", "end": "2026-11-25T21:00", "state": "home", "label": "Home with her son", "source": "calendar", "expected": false },
+    { "id": "t10", "start": "2026-11-26T13:00", "end": "2026-11-26T19:00", "state": "with people", "label": "Thanksgiving dinner at her sister's (her son is with his dad from 10 AM)", "source": "calendar", "expected": false },
+    { "id": "t11", "start": "2026-11-27T07:00", "end": "2026-11-27T15:30", "state": "work", "label": "Deli shift (her son is with his dad until 6 PM)", "source": "schedule photo", "expected": false },
+    { "id": "t12", "start": "2026-11-27T18:00", "end": "2026-11-27T21:00", "state": "home", "label": "Home with her son", "source": "calendar", "expected": false },
+    { "id": "t13", "start": "2026-11-28T09:00", "end": "2026-11-28T20:00", "state": "day off", "label": "Saturday off with her son", "source": "schedule photo", "expected": false }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-11-12T11:00", "part": "work", "kind": "schedule", "label": "Schedule posted for Nov 22 to 28: Mon, Tue, Wed (6 AM start), Fri; store closed Thursday", "amount_cents": null, "expected": false, "source": "schedule photo" },
+    { "id": "a2", "at": "2026-11-12T16:10", "part": "school", "kind": "message", "label": "District reminder: no school Wed Nov 25 to Fri Nov 27; before-care and after-care are closed too", "amount_cents": null, "expected": false, "source": "school email" },
+    { "id": "a3", "at": "2026-11-18T23:59", "part": "work", "kind": "deadline", "label": "Swap requests for Thanksgiving week close", "amount_cents": null, "expected": false, "source": "note on the posted schedule" }
+  ],
+  "money": { "available_now_cents": 48215, "checking_cents": 46215, "cash_cents": 2000, "savings_cents": 15000 },
+  "dev_must_notice": [
+    { "check": "collision", "what": "Wednesday Nov 25 she works 6 AM to 2:30 PM, and school, before-care and after-care are all closed. His dad has him only from Thursday 10 AM and her sister is free only after 3 PM, so nobody has him from 5:30 AM to 3 PM. A swap is only possible until Nov 18", "by_when": "2026-11-13T09:00", "facts": ["t8", "a1", "a2", "a3", "k1", "k2", "k3"] }
+  ],
+  "best_fix": {
+    "what": "Tonight, in her after-bedtime window, one message with the trace and a question: who could have him Wednesday from 5:30 AM to 3 PM? Offer two ready drafts for her to send: one asking his dad whether Thanksgiving could start Wednesday morning, and one swap request to her manager before the Nov 18 deadline. Check in once on Monday evening only if nothing is settled.",
+    "why": "Two weeks out there are still options, and the swap window closes in six days. She reads messages after 8 PM, so that's when it lands. Who to ask is her choice.",
+    "action": "ask",
+    "needs_user": true
+  },
+  "must_not": [
+    "Push this during her shift or at school pickup; she handles messages after his 8 PM bedtime",
+    "Message his dad, her sister or the manager for her",
+    "Assume his dad can take him early",
+    "Suggest leaving an 8-year-old at home alone",
+    "Suggest a specific camp or sitter without a cited source",
+    "Predict that week's pay because the store is closed Thursday"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Many US districts close Wednesday to Friday of Thanksgiving week, and district-run before- and after-care close with them",
+    "Grocery stores often schedule early starts the day before Thanksgiving",
+    "The swap deadline is printed on the posted schedule"
+  ],
+  "tags": ["kid's school closing", "holiday", "childcare", "collision", "single parent"]
+}

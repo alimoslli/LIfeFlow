@@ -1,0 +1,73 @@
+{
+  "id": "s0008-salaried-trip-fund-stopped-after-bank-switch",
+  "title": "The trip savings stopped when she switched banks",
+  "life": {
+    "summary": "Support analyst on a salary in London, moved from abroad five years ago, saving spending money for a two-week trip to see her family in February, amounts in pounds",
+    "kinds": ["salaried", "far from home"],
+    "time_zone": "Europe/London",
+    "pay": { "type": "salary", "period": "monthly (last working day)" }
+  },
+  "now": "2026-11-02T18:30",
+  "known": [
+    { "id": "k1", "fact": "Wants GBP 1,200 of spending money for the February trip in the Trip pot by Feb 1", "source": "told Dev" },
+    { "id": "k2", "fact": "Routine: moves money herself on payday evening, after work, never in the morning", "source": "told Dev, matches 5 months of transfers" },
+    { "id": "k3", "fact": "Routine: her family video-calls on Sunday mornings at 7 (3 PM their time)", "source": "calendar" },
+    { "id": "k4", "fact": "Switched banks with the switching service; the switch completed Sep 28", "source": "told Dev and bank sync" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-10-30T09:00", "end": "2026-10-30T17:30", "state": "work", "label": "Office day (payday)", "source": "calendar", "expected": false },
+    { "id": "t2", "start": "2026-10-31T19:00", "end": "2026-10-31T23:30", "state": "with people", "label": "Halloween party at a friend's", "source": "calendar", "expected": false },
+    { "id": "t3", "start": "2026-11-01T07:00", "end": "2026-11-01T08:00", "state": "with people", "label": "Video call with her family (3 to 4 PM their time)", "source": "calendar", "expected": false },
+    { "id": "t4", "start": "2026-11-01T11:00", "end": "2026-11-01T18:00", "state": "day off", "label": "Sunday, hers", "source": "calendar", "expected": false },
+    { "id": "t5", "start": "2026-11-02T09:00", "end": "2026-11-02T17:30", "state": "work", "label": "Working from home (done today)", "source": "calendar", "expected": false },
+    { "id": "t6", "start": "2026-11-02T17:30", "end": "2026-11-02T22:00", "state": "home", "label": "Evening at home", "source": "calendar", "expected": false },
+    { "id": "t7", "start": "2026-11-30T09:00", "end": "2026-11-30T17:30", "state": "work", "label": "Office day (payday)", "source": "calendar", "expected": false },
+    { "id": "t8", "start": "2026-12-24T12:00", "end": "2026-12-26T20:00", "state": "with people", "label": "Christmas with friends in London", "source": "calendar", "expected": false },
+    { "id": "t9", "start": "2027-01-29T09:00", "end": "2027-01-29T17:30", "state": "work", "label": "Office day (last payday before Feb 1)", "source": "calendar", "expected": false },
+    { "id": "t10", "start": "2027-02-12T09:00", "end": "2027-02-26T22:00", "state": "away", "label": "Trip to see her family (flights booked)", "source": "booking confirmation", "expected": false }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-06-01T06:00", "part": "money", "kind": "transfer", "label": "Old bank: GBP 150 to the Trip pot (a saving rule in the old bank's app, on the 1st)", "amount_cents": -15000, "expected": false, "source": "old bank history" },
+    { "id": "a2", "at": "2026-07-01T06:00", "part": "money", "kind": "transfer", "label": "Old bank: GBP 150 to the Trip pot", "amount_cents": -15000, "expected": false, "source": "old bank history" },
+    { "id": "a3", "at": "2026-08-01T06:00", "part": "money", "kind": "transfer", "label": "Old bank: GBP 150 to the Trip pot", "amount_cents": -15000, "expected": false, "source": "old bank history" },
+    { "id": "a4", "at": "2026-09-01T06:00", "part": "money", "kind": "transfer", "label": "Old bank: GBP 150 to the Trip pot", "amount_cents": -15000, "expected": false, "source": "old bank history" },
+    { "id": "a5", "at": "2026-09-08T19:30", "part": "money", "kind": "purchase", "label": "Return flights for the February trip (old bank)", "amount_cents": -78000, "expected": false, "source": "old bank history" },
+    { "id": "a6", "at": "2026-09-28T09:00", "part": "money", "kind": "account change", "label": "Bank switch completed: salary, standing orders and direct debits moved; she moved the Trip pot's GBP 600 to the new savings account herself", "amount_cents": null, "expected": false, "source": "bank sync and told Dev" },
+    { "id": "a7", "at": "2026-10-01T06:00", "part": "money", "kind": "missed transfer", "label": "No GBP 150 to the Trip pot", "amount_cents": null, "expected": false, "source": "Dev, from both banks' history" },
+    { "id": "a8", "at": "2026-10-30T06:00", "part": "money", "kind": "pay", "label": "Salary", "amount_cents": 241265, "expected": false, "source": "new bank" },
+    { "id": "a9", "at": "2026-10-31T13:10", "part": "money", "kind": "spend", "label": "Groceries", "amount_cents": -4643, "expected": false, "source": "new bank" },
+    { "id": "a10", "at": "2026-11-01T06:00", "part": "money", "kind": "bill", "label": "Rent (standing order)", "amount_cents": -105000, "expected": false, "source": "new bank" },
+    { "id": "a11", "at": "2026-11-01T06:00", "part": "money", "kind": "bill", "label": "Council tax", "amount_cents": -14200, "expected": false, "source": "new bank" },
+    { "id": "a12", "at": "2026-11-01T06:00", "part": "money", "kind": "bill", "label": "Phone", "amount_cents": -1800, "expected": false, "source": "new bank" },
+    { "id": "a13", "at": "2026-11-01T06:00", "part": "money", "kind": "missed transfer", "label": "No GBP 150 to the Trip pot", "amount_cents": null, "expected": false, "source": "Dev, from both banks' history" },
+    { "id": "a14", "at": "2026-11-30T06:00", "part": "money", "kind": "pay", "label": "Salary (expected; same amount every month)", "amount_cents": 241265, "expected": true, "source": "pay history" },
+    { "id": "a15", "at": "2027-02-01T00:00", "part": "life", "kind": "goal", "label": "Trip spending money: GBP 1,200 in the Trip pot", "amount_cents": null, "expected": false, "source": "told Dev" }
+  ],
+  "money": { "available_now_cents": 184622, "checking_cents": 184622, "cash_cents": 0, "trip_pot_cents": 60000, "savings_cents": 300000 },
+  "dev_must_notice": [
+    { "check": "drift", "what": "The Trip pot stopped growing. The GBP 150 on the 1st was a saving rule inside her old bank's app, and the switch on Sep 28 didn't carry it over, so Oct 1 and Nov 1 were skipped. It holds GBP 600 of the GBP 1,200 she wants by Feb 1, and restarting GBP 150 a month from Dec 1 would only reach GBP 900", "by_when": "2026-11-02T20:00", "facts": ["a1", "a2", "a3", "a4", "a6", "a7", "a13", "a15", "k1", "k4"] }
+  ],
+  "best_fix": {
+    "what": "This evening, after work, one message with the trace: the rule didn't move with the switch, GBP 600 of 1,200 so far, and the way back on track that fits how she already saves: GBP 200 on each of the three payday evenings left before Feb 1 (Nov 30, Dec 31, Jan 29). Offer a reminder at 6 PM on each of those evenings to move it herself, or a pointer to set up a new saving rule in her new bank's app. Dev doesn't move it.",
+    "why": "Each skipped month makes the catch-up bigger, and she'd otherwise find out in February. She moves money herself on payday evenings, so the catch-up is split across exactly those three evenings and the help is a reminder in that window, not a transfer.",
+    "action": "reminder",
+    "needs_user": true
+  },
+  "must_not": [
+    "Remind her at 6 AM when the salary lands or during work; she moves money on payday evening after work",
+    "Move money to the Trip pot or set up a saving rule for her",
+    "Count the Nov 30 salary as money she has now",
+    "Show a progress bar or a percentage for the goal",
+    "Blame her for the switch or call it a mistake",
+    "Suggest dropping the trip or cutting gifts for her family"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Amounts are pence",
+    "The UK switching service moves standing orders and direct debits but not saving rules inside the old bank's app",
+    "Pay lands on the last working day of the month (Oct 30, Nov 30, Dec 31, Jan 29)",
+    "The new current account had GBP 690.00 before the Oct 30 salary; old-bank items are history only and don't touch it",
+    "London is on GMT after Oct 25, so a 7 AM call is 3 PM in her family's city"
+  ],
+  "tags": ["drift", "savings goal", "bank switch", "trip", "salaried", "far from home"]
+}

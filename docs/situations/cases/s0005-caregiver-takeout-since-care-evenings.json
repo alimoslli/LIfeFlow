@@ -1,0 +1,86 @@
+{
+  "id": "s0005-caregiver-takeout-since-care-evenings",
+  "title": "Takeout tripled since she started evenings at her dad's",
+  "life": {
+    "summary": "Office coordinator on a salary, helps her dad three evenings a week since mid-September, lives alone about 25 minutes from him, amounts in Canadian dollars",
+    "kinds": ["caregiver", "salaried"],
+    "time_zone": "America/Toronto",
+    "pay": { "type": "salary", "period": "semi-monthly" }
+  },
+  "now": "2026-11-08T11:00",
+  "known": [
+    { "id": "k1", "fact": "Helps her dad Monday, Wednesday and Thursday evenings since Sep 14; he lives about 25 minutes away", "source": "told Dev" },
+    { "id": "k2", "fact": "Routine: works 9 to 5 at an office, Monday to Friday, and on care nights drives straight from work to her dad's", "source": "calendar" },
+    { "id": "k3", "fact": "Routine: cooks on Sunday afternoons, about 2 to 5 PM, from Saturday's grocery shop; never cooks on weeknights", "source": "told Dev, matches 12 weeks of grocery days" },
+    { "id": "k4", "fact": "Her dad eats an early dinner at 5:30; she eats after she gets home, around 9:30", "source": "told Dev" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-09-13T14:00", "end": "2026-09-13T17:00", "state": "home", "label": "Sunday cooking (before care started)", "source": "calendar", "expected": false },
+    { "id": "t2", "start": "2026-09-14T09:00", "end": "2026-09-14T17:00", "state": "work", "label": "Office", "source": "calendar", "expected": false },
+    { "id": "t3", "start": "2026-09-14T17:30", "end": "2026-09-14T21:00", "state": "care", "label": "First evening helping her dad", "source": "calendar", "expected": false },
+    { "id": "t4", "start": "2026-09-16T17:30", "end": "2026-09-16T21:00", "state": "care", "label": "Evening at her dad's", "source": "calendar", "expected": false },
+    { "id": "t5", "start": "2026-09-17T17:30", "end": "2026-09-17T21:00", "state": "care", "label": "Evening at her dad's", "source": "calendar", "expected": false },
+    { "id": "t6", "start": "2026-11-01T14:00", "end": "2026-11-01T17:00", "state": "home", "label": "Sunday cooking", "source": "calendar", "expected": false },
+    { "id": "t7", "start": "2026-11-02T09:00", "end": "2026-11-02T17:00", "state": "work", "label": "Office", "source": "calendar", "expected": false },
+    { "id": "t8", "start": "2026-11-02T17:30", "end": "2026-11-02T21:00", "state": "care", "label": "Evening at her dad's", "source": "calendar", "expected": false },
+    { "id": "t9", "start": "2026-11-03T18:00", "end": "2026-11-03T22:00", "state": "home", "label": "Evening at home", "source": "calendar", "expected": false },
+    { "id": "t10", "start": "2026-11-04T17:30", "end": "2026-11-04T21:00", "state": "care", "label": "Evening at her dad's", "source": "calendar", "expected": false },
+    { "id": "t11", "start": "2026-11-05T17:30", "end": "2026-11-05T21:00", "state": "care", "label": "Evening at her dad's", "source": "calendar", "expected": false },
+    { "id": "t12", "start": "2026-11-06T19:00", "end": "2026-11-06T23:00", "state": "with people", "label": "Friday dinner with friends", "source": "calendar", "expected": false },
+    { "id": "t13", "start": "2026-11-07T10:00", "end": "2026-11-07T16:00", "state": "day off", "label": "Saturday, hers (grocery shop done in the morning)", "source": "calendar and bank", "expected": false },
+    { "id": "t14", "start": "2026-11-08T14:00", "end": "2026-11-08T17:00", "state": "home", "label": "Sunday cooking (her usual)", "source": "learned routine", "expected": true },
+    { "id": "t15", "start": "2026-11-09T09:00", "end": "2026-11-09T17:00", "state": "work", "label": "Office", "source": "calendar", "expected": false },
+    { "id": "t16", "start": "2026-11-09T17:30", "end": "2026-11-09T21:00", "state": "care", "label": "Evening at her dad's", "source": "calendar", "expected": false },
+    { "id": "t17", "start": "2026-11-11T17:30", "end": "2026-11-11T21:00", "state": "care", "label": "Evening at her dad's", "source": "calendar", "expected": false },
+    { "id": "t18", "start": "2026-11-12T17:30", "end": "2026-11-12T21:00", "state": "care", "label": "Evening at her dad's", "source": "calendar", "expected": false },
+    { "id": "t19", "start": "2026-11-15T14:00", "end": "2026-11-15T17:00", "state": "home", "label": "Sunday cooking (check-back day)", "source": "learned routine", "expected": true }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-08-23T23:59", "part": "money", "kind": "weekly total", "label": "Takeout and delivery, week of Aug 17", "amount_cents": -3450, "expected": false, "source": "bank, summed" },
+    { "id": "a2", "at": "2026-08-30T23:59", "part": "money", "kind": "weekly total", "label": "Takeout and delivery, week of Aug 24", "amount_cents": -4120, "expected": false, "source": "bank, summed" },
+    { "id": "a3", "at": "2026-09-06T23:59", "part": "money", "kind": "weekly total", "label": "Takeout and delivery, week of Aug 31", "amount_cents": -2875, "expected": false, "source": "bank, summed" },
+    { "id": "a4", "at": "2026-09-13T23:59", "part": "money", "kind": "weekly total", "label": "Takeout and delivery, week of Sep 7", "amount_cents": -3910, "expected": false, "source": "bank, summed" },
+    { "id": "a5", "at": "2026-09-20T23:59", "part": "money", "kind": "weekly total", "label": "Takeout and delivery, week of Sep 14 (care evenings start)", "amount_cents": -9640, "expected": false, "source": "bank, summed" },
+    { "id": "a6", "at": "2026-09-27T23:59", "part": "money", "kind": "weekly total", "label": "Takeout and delivery, week of Sep 21", "amount_cents": -11825, "expected": false, "source": "bank, summed" },
+    { "id": "a7", "at": "2026-10-04T23:59", "part": "money", "kind": "weekly total", "label": "Takeout and delivery, week of Sep 28", "amount_cents": -10480, "expected": false, "source": "bank, summed" },
+    { "id": "a8", "at": "2026-10-11T23:59", "part": "money", "kind": "weekly total", "label": "Takeout and delivery, week of Oct 5", "amount_cents": -12260, "expected": false, "source": "bank, summed" },
+    { "id": "a9", "at": "2026-10-18T23:59", "part": "money", "kind": "weekly total", "label": "Takeout and delivery, week of Oct 12", "amount_cents": -10935, "expected": false, "source": "bank, summed" },
+    { "id": "a10", "at": "2026-10-25T23:59", "part": "money", "kind": "weekly total", "label": "Takeout and delivery, week of Oct 19", "amount_cents": -13190, "expected": false, "source": "bank, summed" },
+    { "id": "a11", "at": "2026-11-01T23:59", "part": "money", "kind": "weekly total", "label": "Takeout and delivery, week of Oct 26", "amount_cents": -11570, "expected": false, "source": "bank, summed" },
+    { "id": "a12", "at": "2026-11-02T21:05", "part": "money", "kind": "spend", "label": "Delivery, Monday 9:05 PM", "amount_cents": -3690, "expected": false, "source": "bank" },
+    { "id": "a13", "at": "2026-11-04T21:15", "part": "money", "kind": "spend", "label": "Delivery, Wednesday 9:15 PM", "amount_cents": -4175, "expected": false, "source": "bank" },
+    { "id": "a14", "at": "2026-11-05T20:50", "part": "money", "kind": "spend", "label": "Takeout, Thursday 8:50 PM", "amount_cents": -3840, "expected": false, "source": "bank" },
+    { "id": "a15", "at": "2026-09-13T23:59", "part": "money", "kind": "weekly average", "label": "Groceries, weekly average Aug 17 to Sep 13", "amount_cents": -9630, "expected": false, "source": "bank, averaged" },
+    { "id": "a16", "at": "2026-11-01T23:59", "part": "money", "kind": "weekly average", "label": "Groceries, weekly average Sep 14 to Nov 1", "amount_cents": -9480, "expected": false, "source": "bank, averaged" },
+    { "id": "a17", "at": "2026-11-03T07:50", "part": "money", "kind": "spend", "label": "Gas", "amount_cents": -5210, "expected": false, "source": "bank" },
+    { "id": "a18", "at": "2026-11-05T00:00", "part": "money", "kind": "bill", "label": "Phone", "amount_cents": -6500, "expected": false, "source": "bank" },
+    { "id": "a19", "at": "2026-11-07T10:20", "part": "money", "kind": "spend", "label": "Groceries (Saturday shop)", "amount_cents": -9820, "expected": false, "source": "bank" },
+    { "id": "a20", "at": "2026-11-13T06:00", "part": "money", "kind": "pay", "label": "Salary (expected; same amount every time)", "amount_cents": 174218, "expected": true, "source": "pay history" }
+  ],
+  "money": { "available_now_cents": 115405, "checking_cents": 115405, "cash_cents": 0, "savings_cents": 420000 },
+  "dev_must_notice": [
+    { "check": "pattern", "what": "Takeout went from about $36 a week (Aug 17 to Sep 13) to about $114 a week since her care evenings started on Sep 14. Almost every order is after 8:45 PM on a Monday, Wednesday or Thursday, on her way home from her dad's, and groceries stayed about the same, so it's dinner on care nights, not more food overall", "by_when": "2026-11-08T13:30", "facts": ["a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "a10", "a11", "a12", "a13", "a14", "a15", "a16", "t3", "t8", "t10", "t11", "k1", "k4"] }
+  ],
+  "best_fix": {
+    "what": "Late Sunday morning, before her usual 2 PM cooking, one message with the trace and one offer: cook a double batch of something cheap that reheats in today's cooking time, for Monday, Wednesday and Thursday nights (one recipe with a cited source and the two or three extra items it needs). Check back next Sunday, Nov 15, with that week's real takeout total.",
+    "why": "The cause is a life change, not a habit, so the fix touches only those three nights. It fits the one time she already cooks, Sunday afternoon, instead of asking her to cook on nights she gets home at 9:30. A real number a week later shows whether it helped.",
+    "action": "plan",
+    "needs_user": true
+  },
+  "must_not": [
+    "Suggest cooking on weeknights before or after care; she goes straight from work to her dad's and never cooks on weeknights",
+    "Call it overspending, or give her a food budget or a daily allowance",
+    "Suggest she spend fewer evenings with her dad",
+    "Comment on what or how much she eats",
+    "Promise a saving before the week has happened",
+    "Assume the care evenings are permanent or will end soon"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Amounts are Canadian dollar cents",
+    "Semi-monthly pay on the 15th and the last business day, paid the Friday before when that falls on a weekend",
+    "Weekly totals sum the bank's takeout and delivery transactions, Monday to Sunday; averages are summaries, not extra transactions",
+    "Checking was $1,486.40 on Monday Nov 2 after the Oct 30 pay and Nov 1 rent; a12 to a14 and a17 to a19 bring it to $1,154.05"
+  ],
+  "tags": ["pattern over weeks", "caregiver", "food spending", "routine fit", "check back"]
+}

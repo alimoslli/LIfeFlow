@@ -1,0 +1,75 @@
+{
+  "id": "s0004-freelancer-late-invoice-tax-prepayment",
+  "title": "A late client payment and the December tax prepayment",
+  "life": {
+    "summary": "Freelance illustrator in Berlin, shares a flat, invoices clients per project on 21-day terms, amounts in euros",
+    "kinds": ["freelancer", "roommates"],
+    "time_zone": "Europe/Berlin",
+    "pay": { "type": "per project", "period": "irregular, invoices on 21-day terms" }
+  },
+  "now": "2026-12-02T08:45",
+  "known": [
+    { "id": "k1", "fact": "Invoices on 21-day terms; this agency paid 9 days late once before, in June", "source": "learned from past invoices and payments" },
+    { "id": "k2", "fact": "Keeps a tax reserve in savings for the yearly tax bill and doesn't want to touch it unless she has to", "source": "told Dev" },
+    { "id": "k3", "fact": "Files VAT quarterly on a cash basis, so VAT is owed only when a client pays", "source": "told Dev" },
+    { "id": "k4", "fact": "Pays her share of the rent to her flatmate on the 1st", "source": "told Dev" },
+    { "id": "k5", "fact": "Routine: money and client email in an admin hour, Monday and Wednesday 9 to 10 AM; draws 10 AM to 5 PM with notifications off", "source": "told Dev, matches 3 months of her calendar" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-11-30T09:00", "end": "2026-11-30T10:00", "state": "work", "label": "Admin hour (invoices and email)", "source": "calendar", "expected": false },
+    { "id": "t2", "start": "2026-11-30T10:00", "end": "2026-11-30T17:00", "state": "work", "label": "Studio day at home, picture-book project", "source": "calendar", "expected": false },
+    { "id": "t3", "start": "2026-12-01T10:00", "end": "2026-12-01T17:00", "state": "work", "label": "Studio day", "source": "calendar", "expected": false },
+    { "id": "t4", "start": "2026-12-01T19:00", "end": "2026-12-01T22:30", "state": "with people", "label": "Dinner with her flatmate and friends", "source": "calendar", "expected": false },
+    { "id": "t5", "start": "2026-12-02T09:00", "end": "2026-12-02T10:00", "state": "work", "label": "Admin hour (invoices and email)", "source": "calendar", "expected": false },
+    { "id": "t6", "start": "2026-12-02T10:00", "end": "2026-12-02T17:00", "state": "work", "label": "Studio day", "source": "calendar", "expected": false },
+    { "id": "t7", "start": "2026-12-03T10:00", "end": "2026-12-03T11:00", "state": "work", "label": "Video call with the agency's art director (new project)", "source": "calendar", "expected": false },
+    { "id": "t8", "start": "2026-12-03T11:00", "end": "2026-12-03T17:00", "state": "work", "label": "Studio day", "source": "calendar", "expected": false },
+    { "id": "t9", "start": "2026-12-04T10:00", "end": "2026-12-04T15:00", "state": "work", "label": "Studio day", "source": "calendar", "expected": false },
+    { "id": "t10", "start": "2026-12-05T10:00", "end": "2026-12-05T20:00", "state": "day off", "label": "Saturday, hers", "source": "calendar", "expected": false },
+    { "id": "t11", "start": "2026-12-06T15:00", "end": "2026-12-06T20:00", "state": "with people", "label": "Christmas market with friends", "source": "calendar", "expected": false },
+    { "id": "t12", "start": "2026-12-07T09:00", "end": "2026-12-07T10:00", "state": "work", "label": "Admin hour (invoices and email)", "source": "calendar", "expected": false },
+    { "id": "t13", "start": "2026-12-09T09:00", "end": "2026-12-09T10:00", "state": "work", "label": "Admin hour (invoices and email)", "source": "calendar", "expected": false },
+    { "id": "t14", "start": "2026-12-10T10:00", "end": "2026-12-10T17:00", "state": "work", "label": "Studio day", "source": "calendar", "expected": false }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-10-30T16:00", "part": "money", "kind": "invoice", "label": "Invoice 2026-031 to the agency: EUR 2,380.00 (EUR 2,000 plus 19% VAT), due Nov 20", "amount_cents": 238000, "expected": true, "source": "her invoice PDF" },
+    { "id": "a2", "at": "2026-11-20T23:59", "part": "money", "kind": "late payment", "label": "Invoice 2026-031 due date passed; no payment and no reply since", "amount_cents": null, "expected": false, "source": "bank sync and her email" },
+    { "id": "a3", "at": "2026-11-08T09:00", "part": "money", "kind": "price change", "label": "Design software: annual plan renews Dec 8 at EUR 839.88, up from EUR 719.88", "amount_cents": null, "expected": false, "source": "email from the software company" },
+    { "id": "a4", "at": "2026-11-27T11:20", "part": "money", "kind": "pay", "label": "Payment from a publisher for a book cover", "amount_cents": 95200, "expected": false, "source": "bank" },
+    { "id": "a5", "at": "2026-11-28T12:40", "part": "money", "kind": "spend", "label": "Groceries", "amount_cents": -6430, "expected": false, "source": "bank" },
+    { "id": "a6", "at": "2026-12-01T08:00", "part": "money", "kind": "transfer", "label": "Rent share to her flatmate", "amount_cents": -69000, "expected": false, "source": "bank" },
+    { "id": "a7", "at": "2026-12-01T08:05", "part": "money", "kind": "bill", "label": "Phone", "amount_cents": -1999, "expected": false, "source": "bank" },
+    { "id": "a8", "at": "2026-12-08T00:00", "part": "money", "kind": "subscription", "label": "Design software annual renewal (debit card on file)", "amount_cents": -83988, "expected": false, "source": "price-change email" },
+    { "id": "a9", "at": "2026-12-10T00:00", "part": "money", "kind": "tax", "label": "Income tax prepayment for Q4 (direct debit)", "amount_cents": -64000, "expected": false, "source": "tax office prepayment notice" },
+    { "id": "a10", "at": "2026-12-15T00:00", "part": "money", "kind": "bill", "label": "Health insurance (direct debit)", "amount_cents": -41280, "expected": false, "source": "insurer's notice" },
+    { "id": "a11", "at": "2026-12-18T00:00", "part": "money", "kind": "invoice", "label": "Invoice 2026-034 due: EUR 850.00, another client", "amount_cents": 85000, "expected": true, "source": "her invoice PDF" }
+  ],
+  "money": { "available_now_cents": 142835, "checking_cents": 142835, "cash_cents": 0, "savings_cents": 420000 },
+  "dev_must_notice": [
+    { "check": "late fact", "what": "Invoice 2026-031 (EUR 2,380) is 12 days past due with no payment or reply, and she has a call with the same agency tomorrow at 10", "by_when": "2026-12-02T09:30", "facts": ["a1", "a2", "t7", "k1"] },
+    { "check": "afford", "what": "Without that payment, checking (EUR 1,428.35) covers the software renewal on Dec 8 (EUR 839.88, up EUR 120 from last year) but not the tax prepayment on Dec 10 (EUR 640): it would be EUR 51.53 short, and health insurance on Dec 15 (EUR 412.80) makes it EUR 464.33", "by_when": "2026-12-02T09:30", "facts": ["a8", "a3", "a9", "a10", "a1", "k2"] }
+  ],
+  "best_fix": {
+    "what": "In this morning's admin hour: a short, friendly payment reminder for invoice 2026-031 for her to send to the agency's accounts address (or raise on tomorrow's call), and the trace for Dec 8 to 15. In the same message, just so you know: the software renewal went up EUR 120 a year and she can switch plans or cancel herself before Dec 8. If the payment still hasn't landed, a reminder in her Wednesday Dec 9 admin hour, so she can decide whether to move money from her tax reserve herself before the Dec 10 debit.",
+    "why": "If the invoice lands, every payment is covered, so the reminder is the whole fix, and sent today it has a week to work. She deals with money only in her admin hour, so both messages land there and her drawing days stay quiet. The renewal is the only cost she can still change.",
+    "action": "draft for them",
+    "needs_user": true
+  },
+  "must_not": [
+    "Send money messages during her drawing hours (10 AM to 5 PM); she handles money in her Monday and Wednesday admin hour",
+    "Send the reminder or contact the client for her",
+    "Count invoice 2026-031 or 2026-034 as money she has",
+    "Move money from her tax reserve, or call the reserve spare",
+    "Cancel or change the software plan for her",
+    "Give tax advice beyond the dates and amounts on her own notices"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Amounts are euro cents",
+    "German income tax prepayments fall on 10 March, June, September and December",
+    "Self-employed people in public health insurance pay their own monthly contribution by direct debit",
+    "No overdraft on her account; a returned tax direct debit brings a late surcharge",
+    "Checking was EUR 1,250.64 on Nov 26"
+  ],
+  "tags": ["late paycheck", "freelance", "invoice", "tax", "subscription price change", "afford"]
+}

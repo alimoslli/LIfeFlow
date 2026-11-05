@@ -1,0 +1,67 @@
+{
+  "id": "s0007-two-jobs-split-shift-sister-birthday",
+  "title": "Four weeks of one free evening, and his sister's 30th on a work night",
+  "life": {
+    "summary": "School bus driver on a split shift who took a second job as a restaurant host in October to pay off a car repair loan by March",
+    "kinds": ["two jobs", "shift worker"],
+    "time_zone": "America/Detroit",
+    "pay": { "type": "hourly, two jobs", "period": "biweekly (bus) and weekly (restaurant)" }
+  },
+  "now": "2026-11-09T17:05",
+  "known": [
+    { "id": "k1", "fact": "Routine: drives a school bus on a split shift, 6:15 to 8:45 AM and 2:15 to 4:45 PM, weekdays; sleeps about an hour between routes", "source": "district schedule and Apple Health sleep" },
+    { "id": "k2", "fact": "Second job as a restaurant host since Oct 13, Tuesday to Saturday evenings; picks up Sunday brunch when it's offered", "source": "told Dev and schedule photos" },
+    { "id": "k3", "fact": "Restaurant time-off requests must go in by Tuesday noon for the next week's schedule", "source": "told Dev" },
+    { "id": "k4", "fact": "Took the second job to pay off a car repair loan by March", "source": "told Dev" },
+    { "id": "k5", "fact": "Routine: Monday evening is his one evening at home; that's when he answers messages and plans the week", "source": "learned from 4 weeks of when he replies" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-10-11T18:00", "end": "2026-10-11T22:00", "state": "with people", "label": "Game night at his cousin's (the last evening with people on his calendar)", "source": "calendar", "expected": false },
+    { "id": "t2", "start": "2026-10-13T17:30", "end": "2026-10-13T22:00", "state": "work", "label": "First host shift", "source": "schedule photo", "expected": false },
+    { "id": "t3", "start": "2026-10-25T10:00", "end": "2026-10-25T15:00", "state": "work", "label": "Picked-up Sunday brunch shift", "source": "schedule photo", "expected": false },
+    { "id": "t4", "start": "2026-11-01T10:00", "end": "2026-11-01T15:00", "state": "work", "label": "Picked-up Sunday brunch shift", "source": "schedule photo", "expected": false },
+    { "id": "t5", "start": "2026-11-07T17:30", "end": "2026-11-07T22:00", "state": "work", "label": "Saturday host shift", "source": "schedule photo", "expected": false },
+    { "id": "t6", "start": "2026-11-08T10:00", "end": "2026-11-08T15:00", "state": "work", "label": "Picked-up Sunday brunch shift", "source": "schedule photo", "expected": false },
+    { "id": "t7", "start": "2026-11-09T06:15", "end": "2026-11-09T08:45", "state": "work", "label": "Morning bus route (done today)", "source": "district schedule", "expected": false },
+    { "id": "t8", "start": "2026-11-09T08:45", "end": "2026-11-09T14:15", "state": "home", "label": "Between routes, at home (slept about an hour)", "source": "district schedule and Apple Health", "expected": false },
+    { "id": "t9", "start": "2026-11-09T14:15", "end": "2026-11-09T16:45", "state": "work", "label": "Afternoon bus route (done today)", "source": "district schedule", "expected": false },
+    { "id": "t10", "start": "2026-11-09T17:00", "end": "2026-11-09T21:30", "state": "home", "label": "Monday evening, his one free evening", "source": "calendar", "expected": false },
+    { "id": "t11", "start": "2026-11-10T17:30", "end": "2026-11-10T22:00", "state": "work", "label": "Host shift", "source": "schedule photo", "expected": false },
+    { "id": "t12", "start": "2026-11-14T17:30", "end": "2026-11-14T22:00", "state": "work", "label": "Saturday host shift", "source": "schedule photo", "expected": false },
+    { "id": "t13", "start": "2026-11-15T09:00", "end": "2026-11-15T21:00", "state": "day off", "label": "Sunday, nothing planned yet", "source": "calendar", "expected": false },
+    { "id": "t14", "start": "2026-11-20T17:30", "end": "2026-11-20T22:00", "state": "work", "label": "Friday host shift (his usual; schedule not out yet)", "source": "learned from his schedules", "expected": true },
+    { "id": "t15", "start": "2026-11-21T17:30", "end": "2026-11-21T22:00", "state": "work", "label": "Saturday host shift (his usual; schedule not out yet)", "source": "learned from his schedules", "expected": true },
+    { "id": "t16", "start": "2026-11-21T19:00", "end": "2026-11-21T22:30", "state": "with people", "label": "His sister's 30th birthday dinner", "source": "told Dev", "expected": false }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-11-02T20:10", "part": "life", "kind": "event", "label": "Sister's 30th birthday dinner, Saturday Nov 21 at 7 PM ('I can't miss it')", "amount_cents": null, "expected": false, "source": "told Dev" },
+    { "id": "a2", "at": "2026-11-10T12:00", "part": "work", "kind": "deadline", "label": "Time-off requests for the week of Nov 15 close (Tuesday noon)", "amount_cents": null, "expected": false, "source": "told Dev" },
+    { "id": "a3", "at": "2026-11-11T15:00", "part": "work", "kind": "schedule", "label": "Restaurant posts the Nov 15 to 21 schedule", "amount_cents": null, "expected": true, "source": "learned: it posts on Wednesdays" }
+  ],
+  "money": { "available_now_cents": 96240, "checking_cents": 92240, "cash_cents": 4000, "savings_cents": 30000 },
+  "dev_must_notice": [
+    { "check": "collision", "what": "His sister's 30th (Saturday Nov 21, 7 PM) falls on a Saturday evening he always works, and requests off for that week close tomorrow at noon, a day before the schedule comes out", "by_when": "2026-11-09T21:00", "facts": ["a1", "t15", "t16", "a2", "a3", "k3"] },
+    { "check": "real life squeezed", "what": "Since the second job started Oct 13 his only evening off is Monday, he picked up the last three Sundays, and the last evening with people on his calendar was Oct 11", "by_when": "2026-11-09T21:00", "facts": ["t1", "t2", "t3", "t4", "t6", "k2"] }
+  ],
+  "best_fix": {
+    "what": "Tonight, in his Monday evening at home, one message: a draft time-off request for Saturday Nov 21 for him to send to the manager before tomorrow's noon cutoff. Then, once and gently: 'Just so you know, it's been four weeks of one free evening a week. Sunday the 15th is still clear.' Nothing about the second job itself.",
+    "why": "Asking before the schedule is written is the difference between an easy yes and a swap hunt. Monday evening is when he reads and plans. The squeeze is real, but he chose the second job for a reason (the loan by March), so Dev names it once and protects the one open day instead of telling him to work less.",
+    "action": "draft for them",
+    "needs_user": true
+  },
+  "must_not": [
+    "Count the gap between bus routes as free time or time with people, or suggest seeing someone then; it's when he sleeps",
+    "Send it during a route or a host shift; Monday evening is when he handles messages",
+    "Send the request to the restaurant or message his manager for him",
+    "Tell him to quit the second job or cut hours",
+    "Repeat the squeeze note if he doesn't react",
+    "Put anything into Sunday Nov 15 without asking"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "School bus drivers commonly work split shifts around school start and end times",
+    "Restaurant schedules are written early in the week and posted midweek",
+    "He has worked every Saturday evening since Oct 17"
+  ],
+  "tags": ["split shift", "two jobs", "real life squeezed", "birthday", "time off request"]
+}

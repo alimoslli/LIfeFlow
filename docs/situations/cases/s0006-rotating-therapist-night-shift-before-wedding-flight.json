@@ -1,0 +1,67 @@
+{
+  "id": "s0006-rotating-therapist-night-shift-before-wedding-flight",
+  "title": "A night shift right before the flight to her sister's wedding",
+  "life": {
+    "summary": "Respiratory therapist on rotating 12-hour day and night shifts at a hospital; her sister is getting married in Atlanta, two time zones east",
+    "kinds": ["shift worker", "night shift", "far from home"],
+    "time_zone": "America/Denver",
+    "pay": { "type": "hourly", "period": "biweekly" }
+  },
+  "now": "2026-11-10T14:45",
+  "known": [
+    { "id": "k1", "fact": "Sister's wedding in Atlanta on Saturday Dec 5; she's a bridesmaid and must be at the rehearsal dinner on Friday", "source": "told Dev" },
+    { "id": "k2", "fact": "Routine: before a first night shift she naps 1 to 5 PM; after a night shift she sleeps about 8:30 AM to 2:30 PM, at home", "source": "Apple Health sleep, 6 months" },
+    { "id": "k3", "fact": "Swaps are allowed with a coworker in the same role, approved by the charge therapist, until the date on the schedule", "source": "told Dev" },
+    { "id": "k4", "fact": "The flights are basic economy and can't be changed", "source": "booking confirmation email" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-11-09T19:00", "end": "2026-11-10T07:30", "state": "work", "label": "Night shift (done this morning)", "source": "hospital schedule", "expected": false },
+    { "id": "t2", "start": "2026-11-10T08:30", "end": "2026-11-10T14:30", "state": "asleep", "label": "Sleep after the night shift (just woke up)", "source": "Apple Health", "expected": false },
+    { "id": "t3", "start": "2026-11-30T07:00", "end": "2026-11-30T19:30", "state": "work", "label": "Day shift, 12 hours", "source": "hospital schedule", "expected": false },
+    { "id": "t4", "start": "2026-12-01T07:00", "end": "2026-12-01T19:30", "state": "work", "label": "Day shift, 12 hours", "source": "hospital schedule", "expected": false },
+    { "id": "t5", "start": "2026-12-02T09:00", "end": "2026-12-02T20:00", "state": "day off", "label": "Wednesday off (packing for the trip)", "source": "hospital schedule", "expected": false },
+    { "id": "t6", "start": "2026-12-02T22:30", "end": "2026-12-03T06:30", "state": "asleep", "label": "Sleep", "source": "Apple Health, usual pattern", "expected": true },
+    { "id": "t7", "start": "2026-12-03T13:00", "end": "2026-12-03T17:00", "state": "asleep", "label": "Nap before a first night (her routine)", "source": "Apple Health, usual pattern", "expected": true },
+    { "id": "t8", "start": "2026-12-03T19:00", "end": "2026-12-04T07:30", "state": "work", "label": "Night shift, 12 hours", "source": "hospital schedule", "expected": false },
+    { "id": "t9", "start": "2026-12-04T10:15", "end": "2026-12-04T13:20", "state": "away", "label": "Flight Denver to Atlanta (lands 3:20 PM Atlanta time)", "source": "booking confirmation", "expected": false },
+    { "id": "t10", "start": "2026-12-04T16:30", "end": "2026-12-04T19:30", "state": "with people", "label": "Rehearsal dinner (6:30 to 9:30 PM Atlanta time)", "source": "sister's message", "expected": false },
+    { "id": "t11", "start": "2026-12-04T20:30", "end": "2026-12-05T05:00", "state": "asleep", "label": "First real sleep since Thursday's nap (10:30 PM to 7 AM Atlanta time)", "source": "Dev, from the plan", "expected": true },
+    { "id": "t12", "start": "2026-12-05T08:00", "end": "2026-12-05T21:00", "state": "with people", "label": "Sister's wedding day (10 AM to 11 PM Atlanta time)", "source": "invitation", "expected": false },
+    { "id": "t13", "start": "2026-12-06T07:00", "end": "2026-12-06T15:00", "state": "with people", "label": "Family brunch, then time with her parents", "source": "calendar", "expected": false },
+    { "id": "t14", "start": "2026-12-06T17:40", "end": "2026-12-06T21:25", "state": "away", "label": "Flight home (leaves 7:40 PM Atlanta time, lands 9:25 PM Denver time)", "source": "booking confirmation", "expected": false },
+    { "id": "t15", "start": "2026-12-06T22:30", "end": "2026-12-07T05:45", "state": "asleep", "label": "Sleep before Monday's day shift (about 7 hours)", "source": "Dev, from the plan", "expected": true },
+    { "id": "t16", "start": "2026-12-07T07:00", "end": "2026-12-07T19:30", "state": "work", "label": "Day shift, 12 hours", "source": "hospital schedule", "expected": false }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-11-09T18:00", "part": "work", "kind": "schedule", "label": "Six-week schedule posted, Nov 29 to Jan 9", "amount_cents": null, "expected": false, "source": "screenshot of the hospital scheduling app" },
+    { "id": "a2", "at": "2026-11-20T23:59", "part": "work", "kind": "deadline", "label": "Swap requests for this block close", "amount_cents": null, "expected": false, "source": "note on the posted schedule" },
+    { "id": "a3", "at": "2026-12-04T10:15", "part": "life", "kind": "trip", "label": "Flight Denver to Atlanta, 10:15 AM, basic economy (no changes)", "amount_cents": null, "expected": false, "source": "booking confirmation email" },
+    { "id": "a4", "at": "2026-12-04T16:30", "part": "life", "kind": "event", "label": "Rehearsal dinner, 6:30 PM Atlanta time", "amount_cents": null, "expected": false, "source": "sister's message" }
+  ],
+  "money": { "available_now_cents": 214530, "checking_cents": 210530, "cash_cents": 4000, "savings_cents": 500000 },
+  "dev_must_notice": [
+    { "check": "rest", "what": "The new schedule puts a night shift on Thursday Dec 3 (7 PM to 7:30 AM) right before her 10:15 AM flight. She'd land at 3:20 PM Atlanta time and go to the rehearsal dinner with no sleep since her Thursday nap: about 27 hours awake by 10:30 PM Atlanta time, and none of her usual after-night sleep", "by_when": "2026-11-10T18:00", "facts": ["t7", "t8", "t9", "t10", "t11", "a1", "a3", "k1", "k2", "k4"] }
+  ],
+  "best_fix": {
+    "what": "Now that she's awake after last night's shift, one line with the trace and a ready swap request for Thursday Dec 3 for her to post, offering a night on one of her days off in the block instead. Swaps are open until Nov 20. Leave the Monday after alone: the Sunday flight lands at 9:25 PM and still leaves about 7 hours before her 7 AM start.",
+    "why": "A swap is easy now and nearly impossible the week of. The flight can't change and the dinner is fixed, so the night shift is the only piece that can move. The message waits until she's up instead of landing in her daytime sleep.",
+    "action": "ask",
+    "needs_user": true
+  },
+  "must_not": [
+    "Offer 'sleep on the plane' or a nap before the dinner as the fix; her after-night sleep is 8:30 AM to 2:30 PM in bed at home, and a 3-hour flight isn't it",
+    "Send it during her daytime sleep after a night shift",
+    "Post the swap request or message coworkers for her",
+    "Suggest skipping the rehearsal dinner or calling in for the night shift",
+    "Show a time without saying whether it's Denver or Atlanta time",
+    "Suggest the flight can be changed (it's basic economy)",
+    "Comment on her health or tell her she's unsafe to work"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Times are Denver time; Atlanta is 2 hours ahead, and labels give Atlanta times where the event happens there",
+    "Hospitals post 4 to 6 week schedules and allow swaps until a set date",
+    "About 3 hours flying east, about 3 hours 45 minutes back"
+  ],
+  "tags": ["trip across time zones", "rest", "rotating shifts", "wedding", "swap", "routine fit"]
+}

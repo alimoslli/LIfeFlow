@@ -1,0 +1,75 @@
+{
+  "id": "s0009-student-finals-holiday-shifts-morning-routine",
+  "title": "Holiday opening shifts would take the mornings she studies in",
+  "life": {
+    "summary": "University junior who works about 20 hours a week at a big-box store, shares an apartment with two roommates, and wants every December hour she can get to pay the spring balance",
+    "kinds": ["student who works", "roommates"],
+    "time_zone": "Pacific/Honolulu",
+    "pay": { "type": "hourly", "period": "biweekly" }
+  },
+  "now": "2026-11-09T21:30",
+  "known": [
+    { "id": "k1", "fact": "Routine: studies only in the mornings: 7 to 9:30 AM at the library before 10 AM classes, 8 to 11 AM on weekends, 8 AM to noon in finals week", "source": "learned from 10 weeks of study blocks (kept 14 of 15 morning blocks) and last spring's finals week" },
+    { "id": "k2", "fact": "Skipped all 4 evening study blocks placed in September; said 'after a shift I'm done'", "source": "study blocks and told Dev" },
+    { "id": "k3", "fact": "Needs about 6 hours for an exam, 3 for a lab report and 8 for a paper", "source": "learned from midterm blocks kept" },
+    { "id": "k4", "fact": "Wants as many December hours as possible to pay the spring balance by Jan 8", "source": "told Dev" },
+    { "id": "k5", "fact": "Routine: works closing shifts, 4:30 to 9 PM Mon, Wed, Fri and 2 to 9 PM Saturday; last December her weekend holiday shifts were openings, 6 AM to 2:30 PM", "source": "schedule photos, this term and last December" },
+    { "id": "k6", "fact": "Store pays time and a half past 40 hours in a week", "source": "employee handbook (photo)" }
+  ],
+  "timeline": [
+    { "id": "t1", "start": "2026-11-09T07:00", "end": "2026-11-09T09:30", "state": "study", "label": "Library, morning study (done today)", "source": "Plan, block kept", "expected": false },
+    { "id": "t2", "start": "2026-11-09T10:00", "end": "2026-11-09T13:20", "state": "class", "label": "Classes (Mon, Wed, Fri)", "source": "class schedule", "expected": false },
+    { "id": "t3", "start": "2026-11-09T16:30", "end": "2026-11-09T21:00", "state": "work", "label": "Closing shift (done today)", "source": "schedule photo", "expected": false },
+    { "id": "t4", "start": "2026-11-27T06:00", "end": "2026-11-27T14:30", "state": "work", "label": "Black Friday opening shift", "source": "schedule photo", "expected": false },
+    { "id": "t5", "start": "2026-11-30T07:00", "end": "2026-11-30T09:30", "state": "study", "label": "Morning study window (her usual)", "source": "learned routine", "expected": true },
+    { "id": "t6", "start": "2026-11-30T10:00", "end": "2026-11-30T13:20", "state": "class", "label": "Last week of classes", "source": "class schedule", "expected": false },
+    { "id": "t7", "start": "2026-12-02T16:30", "end": "2026-12-02T21:00", "state": "work", "label": "Closing shift likely (schedule not out)", "source": "learned from her schedules", "expected": true },
+    { "id": "t8", "start": "2026-12-05T06:00", "end": "2026-12-05T14:30", "state": "work", "label": "Opening shift likely, like last December's weekends (schedule not out)", "source": "last December's schedule photos", "expected": true },
+    { "id": "t9", "start": "2026-12-06T06:00", "end": "2026-12-06T14:30", "state": "work", "label": "Opening shift likely (schedule not out)", "source": "last December's schedule photos", "expected": true },
+    { "id": "t10", "start": "2026-12-07T08:00", "end": "2026-12-07T10:00", "state": "class", "label": "Stats final, in person", "source": "syllabus", "expected": false },
+    { "id": "t11", "start": "2026-12-08T08:00", "end": "2026-12-08T12:00", "state": "study", "label": "Finals-week morning study (her usual)", "source": "learned routine", "expected": true },
+    { "id": "t12", "start": "2026-12-09T13:00", "end": "2026-12-09T15:00", "state": "class", "label": "Bio final, in person", "source": "syllabus", "expected": false },
+    { "id": "t13", "start": "2026-12-12T18:30", "end": "2026-12-12T22:30", "state": "with people", "label": "End-of-semester dinner with her roommates", "source": "calendar", "expected": false },
+    { "id": "t14", "start": "2026-12-13T06:00", "end": "2026-12-23T22:00", "state": "other", "label": "Open for full holiday shifts after finals (she said yes to all hours)", "source": "availability form", "expected": true },
+    { "id": "t15", "start": "2026-12-24T12:00", "end": "2026-12-26T18:00", "state": "away", "label": "Christmas with family on another island", "source": "calendar", "expected": false }
+  ],
+  "attached": [
+    { "id": "a1", "at": "2026-11-01T12:00", "part": "work", "kind": "form", "label": "Holiday availability form: all hours outside class, Nov 29 to Dec 24", "amount_cents": null, "expected": false, "source": "screenshot she shared" },
+    { "id": "a2", "at": "2026-11-18T23:59", "part": "work", "kind": "deadline", "label": "Requests to the manager for December", "amount_cents": null, "expected": false, "source": "note on the break-room board (photo)" },
+    { "id": "a3", "at": "2026-11-20T12:00", "part": "work", "kind": "schedule", "label": "December schedule posts (about two weeks ahead, as usual)", "amount_cents": null, "expected": true, "source": "learned from past postings" },
+    { "id": "a4", "at": "2026-12-04T23:59", "part": "school", "kind": "assignment", "label": "Bio lab report due", "amount_cents": null, "expected": false, "source": "course site" },
+    { "id": "a5", "at": "2026-12-07T08:00", "part": "school", "kind": "exam", "label": "Stats final (her hardest class)", "amount_cents": null, "expected": false, "source": "syllabus" },
+    { "id": "a6", "at": "2026-12-09T13:00", "part": "school", "kind": "exam", "label": "Bio final", "amount_cents": null, "expected": false, "source": "syllabus" },
+    { "id": "a7", "at": "2026-12-10T08:00", "part": "school", "kind": "exam", "label": "Econ final, online, 2 hours, any time until Dec 11 at 11:59 PM", "amount_cents": null, "expected": false, "source": "course site" },
+    { "id": "a8", "at": "2026-12-11T17:00", "part": "school", "kind": "assignment", "label": "Psych final paper due", "amount_cents": null, "expected": false, "source": "syllabus" },
+    { "id": "a9", "at": "2027-01-08T00:00", "part": "school", "kind": "bill", "label": "Spring semester balance due", "amount_cents": -114000, "expected": false, "source": "student account" }
+  ],
+  "money": { "available_now_cents": 48960, "checking_cents": 46960, "cash_cents": 2000, "savings_cents": 72000 },
+  "dev_must_notice": [
+    { "check": "heavy stretch", "what": "Nov 30 to Dec 11 holds two in-person finals, an online final, a lab report and a paper: about 29 hours of work at her pace, while she has said yes to every hour outside class", "by_when": "2026-11-12T20:00", "facts": ["a1", "a4", "a5", "a6", "a7", "a8", "k3", "k4"] },
+    { "check": "time", "what": "She only studies in the mornings. Counting just those windows, Nov 30 to Dec 11 holds about 34 hours; if the Dec 5 and 6 openings happen like last December, it drops to about 28, under what she needs, and those two mornings are her Stats review before Monday's 8 AM final", "by_when": "2026-11-16T20:00", "facts": ["k1", "k2", "k5", "t8", "t9", "t10", "a5", "a3"] }
+  ],
+  "best_fix": {
+    "what": "Make the month fit, not smaller. Suggest she asks the manager by Nov 18 for closing shifts instead of openings from Nov 30 to Dec 11 (same hours, in the evenings her routine already gives to work) and offers to take openings Dec 13 to 23 instead; draft the note for her. Pencil study blocks only into her morning windows, marked as planned until the schedule posts Nov 20, with the Econ final on Thursday Dec 10 at 8 AM, a finals-week morning. Replan the day the schedule posts.",
+    "why": "She needs the hours; the problem is which hours. Closings keep her mornings, which is the only time she actually studies, and a request made before the schedule is written is easy, while after Nov 20 she'd be trading shifts during finals.",
+    "action": "plan",
+    "needs_user": true
+  },
+  "must_not": [
+    "Put study blocks in the evening or after a shift; she skipped all 4 evening blocks in September",
+    "Tell her to work less or cut her December hours overall",
+    "Treat nights and weekends before the schedule posts as free",
+    "Predict her December pay or count it toward the spring balance",
+    "Write, outline or check the Psych paper; plan the time only",
+    "Put study or shifts into the dinner with her roommates or Christmas with family"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Big-box stores post schedules about two weeks ahead and ask for holiday availability in November",
+    "Hawaii doesn't change clocks",
+    "Federal overtime is time and a half past 40 hours a week",
+    "Morning windows: 5 class days at 2.5 hours, 2 weekend mornings at 3 hours, and finals-week mornings around the exams (about 16 hours) make about 34 hours",
+    "Study hours come from her own midterm blocks, not an average"
+  ],
+  "tags": ["heavy stretch", "routine fit", "finals", "holiday shifts", "overtime", "study plan"]
+}
