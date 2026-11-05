@@ -313,6 +313,18 @@ describe("Plaid", () => {
     expect(mapPfc({ primary: "TRANSPORTATION", detailed: "TRANSPORTATION_TAXIS_AND_RIDE_SHARES" }, -1500)).toEqual({ category: "Rideshare", kind: "expense" });
     expect(mapPfc({ primary: "FOOD_AND_DRINK", detailed: "FOOD_AND_DRINK_RESTAURANT" }, 1500)).toEqual({ category: "Restaurants", kind: "refund" });
     expect(mapPfc(null, -100)).toEqual({ category: null, kind: "expense" });
+    // Every RENT_AND_UTILITIES detailed code contains "RENT"; only the rent itself is Rent.
+    expect(mapPfc({ primary: "RENT_AND_UTILITIES", detailed: "RENT_AND_UTILITIES_RENT" }, -120000)).toEqual({ category: "Rent", kind: "expense" });
+    expect(mapPfc({ primary: "RENT_AND_UTILITIES", detailed: "RENT_AND_UTILITIES_TELEPHONE" }, -6500)).toEqual({ category: "Phone", kind: "expense" });
+    expect(mapPfc({ primary: "RENT_AND_UTILITIES", detailed: "RENT_AND_UTILITIES_INTERNET_AND_CABLE" }, -5999)).toEqual({
+      category: "Internet",
+      kind: "expense",
+    });
+    expect(mapPfc({ primary: "RENT_AND_UTILITIES", detailed: "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY" }, -8412)).toEqual({
+      category: "Utilities",
+      kind: "expense",
+    });
+    expect(mapPfc({ primary: "RENT_AND_UTILITIES", detailed: "RENT_AND_UTILITIES_WATER" }, -3100)).toEqual({ category: "Utilities", kind: "expense" });
   });
 });
 

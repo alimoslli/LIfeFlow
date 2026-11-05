@@ -293,7 +293,8 @@ export function mapPfc(pfc: PlaidTxn["personal_finance_category"], amountCents: 
               ? "Rideshare"
               : "Transportation",
     TRAVEL: () => "Travel",
-    RENT_AND_UTILITIES: (x) => (x.includes("RENT") ? "Rent" : x.includes("TELEPHONE") ? "Phone" : x.includes("INTERNET") ? "Internet" : "Utilities"),
+    // Every detailed code starts with RENT_AND_UTILITIES_, so match the suffix (includes("RENT") filed them all as Rent).
+    RENT_AND_UTILITIES: (x) => (x.endsWith("_RENT") ? "Rent" : x.includes("TELEPHONE") ? "Phone" : x.includes("INTERNET") ? "Internet" : "Utilities"),
   };
   const fn = map[p];
   return { category: fn ? fn(d) : null, kind: out ? "expense" : "refund" };
