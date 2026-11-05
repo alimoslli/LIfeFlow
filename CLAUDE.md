@@ -12,6 +12,7 @@ Specialists when they apply: **security-and-hardening** (auth, money, integratio
 If the plugins aren't loaded in a session, read the skills from github.com/addyosmani/agent-skills and github.com/alimoslli/everything-claude-code (read-only) and follow them directly.
 
 ## Ground rules
+- **Who does what** is in `docs/team.md` (the owner, the product chat, builders, the prototype builder, the auditor, the situation writer, the market researcher). Research is applied fast: things to avoid become rules at once; proposals go to the owner as a yes or no list.
 - **Every change follows `docs/playbook.md`** (the loop, the ten-point definition of done, red lines, and the assistant training loop). The owner's full playbook is the artifact https://claude.ai/artifact/Xngzg4E3JKBE6fEvVrTpA8; keep the two in sync.
 - Business logic lives in `src/server/services/*` and is shared by pages, server actions and Jarvis tools. Don't put queries in components or tools.
 - Anything user-scoped runs inside `withUser(userId, …)` (pages: `withCurrentUser`; actions: `mutate`). Inside a transaction, never `Promise.all` queries; use `series()` from `src/server/db/series.ts`.
