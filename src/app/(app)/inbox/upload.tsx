@@ -54,7 +54,7 @@ export function InboxUpload() {
         disabled={busy}
         className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent font-medium text-accent-text disabled:opacity-60"
       >
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />} {busy ? "Jarvis is reading it…" : "Add a photo or PDF"}
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />} {busy ? "Reading it…" : "Add a photo or PDF"}
       </button>
     </>
   );

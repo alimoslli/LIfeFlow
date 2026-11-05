@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import { twelveHourRanges } from "@/lib/utils";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -82,7 +83,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
             prompt={`Build a study plan for ${label} around my schedule.`}
             className="flex min-h-11 items-center rounded-full bg-surface px-4 text-[0.8125rem] font-medium shadow-soft"
           >
-            Study plan with Jarvis
+            Study plan with <AssistantName />
           </AskJarvisButton>
           <AskJarvisButton
             prompt={`About ${label}: `}

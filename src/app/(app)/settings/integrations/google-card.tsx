@@ -1,4 +1,5 @@
 "use client";
+import { AssistantName } from "@/components/assistant-name";
 import { Calendar, Mail, RefreshCw } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { Badge, Card } from "@/components/ui/surface";
@@ -31,7 +32,9 @@ export function GoogleCard({
           {connection ? (connection.status === "error" ? "Needs attention" : "Connected") : "Not connected"}
         </Badge>
       </div>
-      <p className="mt-3 text-sm text-text-2">Jarvis can read and draft email (sending always asks you first) and keeps your Google Calendar in your plan.</p>
+      <p className="mt-3 text-sm text-text-2">
+        <AssistantName /> can read and draft email (sending always asks you first) and keeps your Google Calendar in your plan.
+      </p>
 
       {!configured ? (
         <p className="mt-3 text-sm text-warning">Google isn&apos;t available yet. Check back soon.</p>
@@ -50,7 +53,9 @@ export function GoogleCard({
           >
             <span>
               <span className="block font-medium">File school, bill and work emails</span>
-              <span className="text-xs text-muted">Each morning Jarvis checks new mail for due dates, bills and shifts and files them, with Undo.</span>
+              <span className="text-xs text-muted">
+                Each morning <AssistantName /> checks new mail for due dates, bills and shifts and files them, with Undo.
+              </span>
             </span>
             <span className={filing ? "font-medium text-accent" : "text-muted"}>{filing ? "On" : "Off"}</span>
           </ActionButton>

@@ -1,8 +1,8 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { addDaysStr, localToInstant, startOfLocalDay, todayIn } from "@/lib/dates";
 import { parseIcs, type IcsTime } from "@/lib/ics";
 import { decryptSecret, encryptSecret } from "../crypto";
-import { assignments, calendarEvents, connectionRegistry, courses, integrations, type AssignmentKind } from "../db/schema";
+import { assignments, calendarEvents, connectionRegistry, courseMaterials, courses, integrations, notes, tasks, type AssignmentKind } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { ServiceError } from "../services/errors";
 
@@ -160,8 +160,102 @@ export async function syncCanvas(scope: UserScope, f: Fetch = fetch, tz = "UTC")
   const result = creds.feedUrl
     ? await syncFeed(scope, creds as Creds & { feedUrl: string }, f, tz)
     : await syncApi(scope, creds as Creds & { token: string }, f);
+  const merged = await mergeCanvasDuplicates(scope);
   await scope.tx.update(integrations).set({ status: "connected", lastSyncedAt: new Date(), lastError: null }).where(eq(integrations.id, conn.id));
-  return result;
+  return { ...result, merged };
+}
+
+const tokens = (s: string | null | undefined) =>
+  new Set(
+    (s ?? "")
+      .toLowerCase()
+      .replace(/\[[^\]]*\]|\([^)]*\)/g, " ")
+      .split(/[^a-z0-9]+/)
+      .filter((t) => t && !["the", "and", "of", "to", "in", "for", "a"].includes(t)),
+  );
+const subset = (a: Set<string>, b: Set<string>) => a.size > 0 && [...a].every((t) => b.has(t));
+const titleKey = (t: string) =>
+  t
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+/**
+ * Classes and assignments added by hand before Canvas was connected would otherwise sit next to the
+ * Canvas copies. After each sync, a hand-made class whose words all appear in exactly one Canvas class
+ * ("BIO 110" in "BIO 110 - Biology I [Fall]") is folded into it: Canvas's dates and names win, what the
+ * student did (done, grade, notes, their own items) moves across, and the duplicate class goes away.
+ * Hand-made assignments with the same title as a Canvas one in that class are merged the same way.
+ * Returns how many classes and assignments were merged.
+ */
+export async function mergeCanvasDuplicates(scope: UserScope) {
+  const all = await scope.tx.select().from(courses).where(eq(courses.userId, scope.userId));
+  const canvas = all.filter((c) => c.source === "canvas" && !c.archivedAt);
+  const mine = all.filter((c) => c.source !== "canvas" && !c.archivedAt);
+  let mergedCourses = 0;
+  let mergedAssignments = 0;
+
+  for (const m of mine) {
+    const mt = new Set([...tokens(m.name), ...tokens(m.code)]);
+    const hits = canvas.filter((c) => {
+      const ct = new Set([...tokens(c.name), ...tokens(c.code)]);
+      return subset(tokens(m.code ?? m.name), ct) || subset(tokens(m.name), ct) || (m.code && subset(tokens(c.code), mt));
+    });
+    if (hits.length !== 1) continue; // unsure: leave both rather than merge the wrong classes
+    const target = hits[0];
+    // Keep what the student typed that Canvas doesn't know.
+    await scope.tx
+      .update(courses)
+      .set({
+        instructorName: target.instructorName ?? m.instructorName,
+        instructorEmail: target.instructorEmail ?? m.instructorEmail,
+        location: target.location ?? m.location,
+        meetingInfo: target.meetingInfo ?? m.meetingInfo,
+        gradeWeights: target.gradeWeights ?? m.gradeWeights,
+        term: target.term ?? m.term,
+      })
+      .where(eq(courses.id, target.id));
+    for (const t of [calendarEvents, tasks, notes])
+      await scope.tx
+        .update(t)
+        .set({ courseId: target.id })
+        .where(and(eq(t.userId, scope.userId), eq(t.courseId, m.id)));
+    await scope.tx
+      .update(courseMaterials)
+      .set({ courseId: target.id })
+      .where(and(eq(courseMaterials.userId, scope.userId), eq(courseMaterials.courseId, m.id)));
+    await scope.tx
+      .update(assignments)
+      .set({ courseId: target.id })
+      .where(and(eq(assignments.userId, scope.userId), eq(assignments.courseId, m.id)));
+    await scope.tx.delete(courses).where(and(eq(courses.id, m.id), eq(courses.userId, scope.userId)));
+    mergedCourses++;
+  }
+
+  // Hand-made assignments that Canvas also has, in the same class.
+  const rows = await scope.tx
+    .select()
+    .from(assignments)
+    .where(
+      and(eq(assignments.userId, scope.userId), sql`${assignments.courseId} in (select id from courses where user_id = ${scope.userId} and source = 'canvas')`),
+    );
+  const theirs = new Map(rows.filter((a) => a.source === "canvas").map((a) => [`${a.courseId}:${titleKey(a.title)}`, a]));
+  for (const a of rows.filter((x) => x.source !== "canvas")) {
+    const real = theirs.get(`${a.courseId}:${titleKey(a.title)}`);
+    if (!real) continue;
+    await scope.tx
+      .update(assignments)
+      .set({
+        status: a.status !== "todo" && real.status === "todo" ? a.status : real.status,
+        completedAt: real.completedAt ?? a.completedAt,
+        grade: real.grade ?? a.grade,
+        description: real.description ?? a.description,
+      })
+      .where(eq(assignments.id, real.id));
+    await scope.tx.delete(assignments).where(and(eq(assignments.id, a.id), ne(assignments.id, real.id)));
+    mergedAssignments++;
+  }
+  return { courses: mergedCourses, assignments: mergedAssignments };
 }
 
 async function syncApi(scope: UserScope, creds: Creds & { token: string }, f: Fetch) {

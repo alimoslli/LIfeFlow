@@ -3,7 +3,7 @@ import { closeDb } from "@/server/db/client";
 import { addDaysStr, todayIn } from "@/lib/dates";
 import { canvasBaseUrl, canvasConnection, canvasFeedUrl, canvasKind, connectCanvas, connectCanvasFeed, syncCanvas } from "@/server/integrations/canvas";
 import { getAgenda } from "@/server/services/calendar";
-import { listAssignments, listCourses } from "@/server/services/school";
+import { createAssignment, createCourse, listAssignments, listCourses, updateAssignment } from "@/server/services/school";
 import { makeUser } from "../helpers";
 
 afterAll(closeDb);
@@ -58,7 +58,7 @@ describe("Canvas", () => {
 
     const c = fakeCanvas("2026-11-10T15:00:00Z");
     expect(await run((s) => connectCanvas(s, "canvas.state.edu", TOKEN, c.fetchImpl))).toEqual({ name: "Sam Ortiz", host: "canvas.state.edu" });
-    expect(await run((s) => syncCanvas(s, c.fetchImpl))).toEqual({ courses: 1, newCourses: 1, assignments: 3, events: 0 });
+    expect(await run((s) => syncCanvas(s, c.fetchImpl))).toMatchObject({ courses: 1, newCourses: 1, assignments: 3, events: 0 });
     expect(c.calls.some((u) => u.includes("evil.example"))).toBe(false);
 
     const [course] = await run((s) => listCourses(s));
@@ -77,6 +77,32 @@ describe("Canvas", () => {
     expect(after).toHaveLength(3);
     expect(after.find((a) => a.title === "Midterm Exam")!.dueAt!.toISOString()).toBe("2026-11-12T15:00:00.000Z");
     expect(await run((s) => canvasConnection(s))).toMatchObject({ host: "canvas.state.edu", status: "connected" });
+  });
+
+  it("folds classes and assignments added by hand into the Canvas ones, keeping progress and Canvas's dates", async () => {
+    const { run } = await makeUser();
+    const bio = await run((s) => createCourse(s, { name: "BIO 202", instructorName: "Dr. Lee" }));
+    const other = await run((s) => createCourse(s, { name: "Chemistry" })); // not in Canvas: stays
+    const mid = await run((s) => createAssignment(s, TZ, { courseId: bio.id, title: "Midterm exam", kind: "exam", dueDate: "2026-11-20", dueTime: "10:00" }));
+    await run((s) => updateAssignment(s, TZ, (mid as { assignment: { id: string } }).assignment.id, { status: "done" }));
+    await run((s) => createAssignment(s, TZ, { courseId: bio.id, title: "Read chapter 9", dueDate: "2026-11-18" })); // theirs alone: kept
+
+    const c = fakeCanvas("2026-11-10T15:00:00Z");
+    await run((s) => connectCanvas(s, "canvas.state.edu", TOKEN, c.fetchImpl));
+    const r = await run((s) => syncCanvas(s, c.fetchImpl, TZ));
+    expect(r.merged).toEqual({ courses: 1, assignments: 1 });
+
+    const cs = await run((s) => listCourses(s));
+    expect(cs.map((x) => x.name).sort()).toEqual(["Biology II", "Chemistry"]);
+    expect(cs.find((x) => x.name === "Biology II")).toMatchObject({ source: "canvas", instructorName: "Dr. Lee" });
+    expect(cs.find((x) => x.id === other.id)).toBeTruthy();
+    const all = await run((s) => listAssignments(s, TZ, { view: "all" }));
+    expect(all.map((a) => a.title).sort()).toEqual(["Lab 4", "Midterm Exam", "Quiz 3", "Read chapter 9"]);
+    const m = all.find((a) => a.title === "Midterm Exam")!;
+    expect(m.dueAt!.toISOString()).toBe("2026-11-10T15:00:00.000Z"); // Canvas's date wins
+    expect(m.status).toBe("done"); // what they did is kept
+    // Syncing again changes nothing.
+    expect((await run((s) => syncCanvas(s, c.fetchImpl, TZ))).merged).toEqual({ courses: 0, assignments: 0 });
   });
 
   it("only accepts real Canvas feed links", () => {
@@ -143,7 +169,7 @@ describe("Canvas", () => {
     );
     expect(await run((s) => connectCanvasFeed(s, FEED, f))).toEqual({ name: null, host: "state.instructure.com" });
     expect(calls.every((c) => c.redirect === "error")).toBe(true);
-    expect(await run((s) => syncCanvas(s, f, TZ))).toEqual({ courses: 2, newCourses: 2, assignments: 2, events: 1 });
+    expect(await run((s) => syncCanvas(s, f, TZ))).toMatchObject({ courses: 2, newCourses: 2, assignments: 2, events: 1 });
 
     const work = await run((s) => listAssignments(s, TZ, { view: "all" }));
     expect(work.map((a) => [a.title, a.kind, a.course.name, a.dueAllDay]).sort()).toEqual([

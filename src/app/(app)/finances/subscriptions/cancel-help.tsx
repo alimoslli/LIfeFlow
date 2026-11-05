@@ -1,4 +1,5 @@
 "use client";
+import { AssistantName } from "@/components/assistant-name";
 import { useState, useTransition } from "react";
 import { ExternalLink, Loader2, Search } from "lucide-react";
 import { Markdown } from "@/components/jarvis/markdown";
@@ -87,7 +88,7 @@ export function CancelHelp({ id, name, via, saved }: { id: string; name: string;
             </p>
           )}
           <p className="text-xs text-muted">
-            Jarvis never cancels anything for you. After you cancel, tap &quot;I cancelled it&quot; so the totals stay right.
+            <AssistantName /> never cancels anything for you. After you cancel, tap &quot;I cancelled it&quot; so the totals stay right.
           </p>
         </div>
       </Sheet>

@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Smartphone, Trash2 } from "lucide-react";
@@ -39,7 +40,7 @@ export default async function NotificationSettings() {
             <input type="checkbox" name="reminders" defaultChecked={prefs.reminders} className="lf-switch" />
           </label>
           <p className="py-3 text-sm text-text-2">
-            Jarvis only notifies you about urgent things.{" "}
+            <AssistantName /> only notifies you about urgent things.{" "}
             <Link href="/settings/jarvis" className="font-medium text-accent">
               Change how often
             </Link>

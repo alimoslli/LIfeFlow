@@ -123,13 +123,13 @@ export function buildDayPlan(
     .map((i) => ({ text: i.text, tone: i.tone === "attention" ? "attention" : "heads-up", href: i.action?.href }));
 
   const next: PlanNext = opts.jarvisNext
-    ? { text: opts.jarvisNext.title, href: "/jarvis/says", label: "See what Jarvis noticed" }
+    ? { text: opts.jarvisNext.title, href: "/jarvis/says", label: "See updates" }
     : priorities[0]
       ? { text: `Start with ${priorities[0].title}${priorities[0].late ? ", the oldest late item" : ""}.`, href: priorities[0].href, label: "Open it" }
       : {
           text: "You're all caught up. Want a plan for something you've been putting off?",
           prompt: "Help me plan something useful for today based on my goals.",
-          label: "Plan with Jarvis",
+          label: "Plan it with me",
         };
 
   const nextDueAt = dueToday.filter((i) => !i.allDay).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0]?.startsAt ?? null;

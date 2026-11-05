@@ -69,7 +69,7 @@ export function AssignmentDialog({ action, courses, defaultCourseId }: { action:
     <Dialog
       trigger="Add assignment"
       title="Add an assignment"
-      description="Or paste details into Jarvis to add many at once."
+      description="Or paste details into your assistant to add many at once."
       triggerProps={{ variant: "secondary" }}
     >
       {(close) => (

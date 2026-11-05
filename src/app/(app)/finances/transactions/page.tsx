@@ -93,7 +93,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         </div>
       </div>
 
-      <nav aria-label="Time range" className="-mx-1 mb-3 flex gap-1.5 overflow-x-auto px-1 pb-1">
+      <nav aria-label="Time range" className="-mx-1 -mt-1 mb-3 flex gap-1.5 overflow-x-auto px-1 pt-1 pb-1">
         {PERIOD_KEYS.map((k) => (
           <Link
             key={k}

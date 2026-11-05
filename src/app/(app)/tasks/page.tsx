@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import { series } from "@/server/db/series";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -63,7 +64,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
     <>
       <PageHeader title="To-dos" />
       <ActionForm action={createTaskAction} className="mb-6 hidden gap-2 md:flex">
-        <div className="flex items-center gap-2 rounded-full bg-surface p-1.5 pl-5 shadow-soft focus-within:shadow-lift">
+        <label className="flex cursor-text items-center gap-2 rounded-full bg-surface p-1.5 pl-5 shadow-soft focus-within:shadow-lift">
           <CountedInput
             name="title"
             placeholder="Add a to-do…"
@@ -75,7 +76,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
           <SubmitButton size="sm" className="h-9 px-4">
             Add
           </SubmitButton>
-        </div>
+        </label>
       </ActionForm>
 
       <Tabs
@@ -91,7 +92,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
       {tasks.length === 0 ? (
         <Card>
           <EmptyState icon={<CheckSquare />} title={view === "done" ? "Nothing completed yet" : "You're all caught up"}>
-            Tap + to add a to-do, or ask Jarvis: “Add all my assignments and organize them by deadline.”
+            Tap + to add a to-do, or ask <AssistantName />: “Add all my assignments and organize them by deadline.”
           </EmptyState>
         </Card>
       ) : (
@@ -168,7 +169,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
       {view !== "done" && (
         <ActionForm action={createTaskAction} className="mt-4 md:hidden">
           {view === "today" && <input type="hidden" name="dueDate" value={today} />}
-          <div className="flex min-h-14 items-center gap-3 rounded-3xl bg-surface pr-4 pl-2 shadow-soft">
+          <label className="flex min-h-14 cursor-text items-center gap-3 rounded-3xl bg-surface pr-4 pl-2 shadow-soft">
             <button
               type="submit"
               aria-label="Add to-do"
@@ -184,7 +185,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
               aria-label="Add a to-do"
               className="min-w-0 flex-1 bg-transparent py-3 text-[0.9375rem] placeholder:text-accent focus:outline-none"
             />
-          </div>
+          </label>
         </ActionForm>
       )}
     </>

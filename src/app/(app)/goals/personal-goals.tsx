@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import { Check, Trash2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -40,7 +41,13 @@ export function GoalCheckin({ goals, checkins, today }: { goals: { id: string; t
         prompt={CHECKIN_PROMPT}
         className="mt-3 inline-flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-medium text-accent-text"
       >
-        {todays.length ? "Add more" : "Tell Jarvis"}
+        {todays.length ? (
+          "Add more"
+        ) : (
+          <>
+            Tell <AssistantName />
+          </>
+        )}
       </AskJarvisButton>
     </Card>
   );

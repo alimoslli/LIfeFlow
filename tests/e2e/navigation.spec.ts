@@ -74,7 +74,7 @@ test("appearance can be set to light or dark and is remembered", async ({ page }
   await page.getByRole("radio", { name: "Light" }).click();
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await page.getByRole("radio", { name: "Automatic" }).click();
+  await page.getByRole("radio", { name: "System" }).click();
   await page.reload();
   await expect(page.locator("html")).not.toHaveAttribute("data-theme", /.+/);
 });

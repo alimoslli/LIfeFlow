@@ -31,7 +31,7 @@ export async function undoInboxAction(id: string): Promise<ActionState> {
     "inbox.undo",
     async (s) => {
       const n = await undoInboxItem(s, id);
-      return `Undone: removed ${n} thing${n === 1 ? "" : "s"} Jarvis filed.`;
+      return `Undone: removed ${n} thing${n === 1 ? "" : "s"} that were filed.`;
     },
     { revalidate: ["/inbox", "/"] },
   );

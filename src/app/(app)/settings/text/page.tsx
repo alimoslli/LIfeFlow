@@ -13,7 +13,7 @@ import { smsStatus } from "@/server/services/sms";
 import { SettingsHeader } from "../settings-header";
 import { setSmsMoneyAction, startPhoneLinkAction, unlinkPhoneAction, verifyPhoneLinkAction } from "./actions";
 
-export const metadata: Metadata = { title: "Text Jarvis" };
+export const metadata: Metadata = { title: "Text your assistant" };
 
 /** Link a phone to text Jarvis: add the number, enter the code we text it. */
 export default async function TextJarvisPage() {

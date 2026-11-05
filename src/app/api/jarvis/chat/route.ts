@@ -81,7 +81,7 @@ export async function POST(req: Request) {
           });
         } catch (e) {
           console.error("[jarvis] route", e);
-          emit({ type: "error", message: e instanceof Error && /not found/i.test(e.message) ? e.message : "Jarvis hit an unexpected error." });
+          emit({ type: "error", message: e instanceof Error && /not found/i.test(e.message) ? e.message : "Something went wrong. Try again." });
           emit({ type: "done", messageId: null });
         } finally {
           try {

@@ -271,7 +271,7 @@ export async function emergencyFundPlan(scope: UserScope, today: string, targetM
     based: `Essentials (housing, groceries, transport, health, phone, insurance, education) averaged ${usd(essentials)} a month over ${hist.months} month${hist.months === 1 ? "" : "s"}. Savings = accounts named or typed as savings.`,
     challenges: [
       { name: "52-week challenge", detail: "Save $1 in week 1, $2 in week 2, and so on: $1,378 in a year." },
-      { name: "No-spend weekend", detail: "One weekend a month with no wants spending. Jarvis can count what it saved." },
+      { name: "No-spend weekend", detail: "One weekend a month with no wants spending. Your assistant can count what it saved." },
       { name: "Round-ups", detail: "Move the round-up total to savings once a month (shown below)." },
     ],
   };

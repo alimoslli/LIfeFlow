@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import { PenLine, Plus, Settings, SquarePen } from "lucide-react";
 import { BrandMark } from "@/components/brand/brand-mark";
@@ -74,7 +75,7 @@ export function JarvisPage({
           <span className="lg:hidden">
             <HistorySheet items={items} activeId={activeId} />
           </span>
-          <p className="min-w-0 flex-1 truncate px-1 text-center text-[0.9375rem] font-semibold lg:text-left">{active?.title ?? "Jarvis"}</p>
+          <p className="min-w-0 flex-1 truncate px-1 text-center text-[0.9375rem] font-semibold lg:text-left">{active?.title ?? <AssistantName />}</p>
           <Link
             href="/jarvis"
             aria-label="New chat"
@@ -89,7 +90,7 @@ export function JarvisPage({
           >
             <Settings className="h-5 w-5" />
           </Link>
-          <Link href="/jarvis/profile" aria-label="Jarvis profile" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface-2">
+          <Link href="/jarvis/profile" aria-label="Assistant profile" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface-2">
             <BrandMark className="h-8 w-8" alt="" />
           </Link>
         </header>

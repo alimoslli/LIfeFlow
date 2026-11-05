@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition, type ReactNode } from "react";
-import { ArrowLeft, BookOpen, Briefcase, CalendarDays, Camera, GraduationCap, Layers, Link2, PencilLine, Sun, Wallet } from "lucide-react";
+import { ArrowLeft, BookOpen, Briefcase, Layers, Sun } from "lucide-react";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
 import { isHydrated } from "@/components/motion/intro";
 import { BrandMark } from "@/components/brand/brand-mark";
@@ -13,9 +13,11 @@ import type { Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { LifeStage } from "@/lib/life";
 import { completeOnboardingAction, skipOnboardingAction } from "./actions";
+import { DayPreview } from "./day-preview";
 
-type StepId = "hello" | "what" | "add" | "week" | "yours";
-const STEPS: StepId[] = ["hello", "what", "add", "week", "yours"];
+type StepId = "hello" | "week" | "details" | "yours" | "day";
+/** "details" (one class, where they work) is skipped when neither applies. "day" is Your day, connected. */
+const stepsFor = (stage: LifeStage | null): StepId[] => (stage === "life" ? ["hello", "week", "yours", "day"] : ["hello", "week", "details", "yours", "day"]);
 
 const NAMES = ["Jarvis", "Nova", "Sage", "Atlas", "Max"];
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u;
@@ -27,9 +29,9 @@ const SAMPLE: Record<AssistantStyle, string> = {
 };
 
 /**
- * First run: a short introduction, not a setup form. Nothing to connect or type in
- * except a name for their assistant; connecting the bank, Canvas and calendar comes
- * after the tour, when Jarvis points to it.
+ * First run: hello, what fills their week, one class or job (optional, saved for real),
+ * their assistant, then "Your day, connected": a day with everything connected, so they
+ * see what LifeFlow does before connecting anything. Ends at Connections or Today.
  */
 /** What's free. `paid` is false while LifeFlow is free for everyone (testing). */
 export type PlanInfo = { paid: boolean; freeChatsPerDay: number; proFeatures: string[] };
@@ -42,10 +44,15 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
   const dir = useRef(1);
 
   const [stage, setStage] = useState<LifeStage | null>(null);
+  const [course, setCourse] = useState("");
+  const [job, setJob] = useState("");
   const [name, setName] = useState("Jarvis");
   const [style, setStyle] = useState<AssistantStyle>("friend");
-  const step = STEPS[index];
-  const last = index === STEPS.length - 1;
+  const STEPS = stepsFor(stage);
+  const step = STEPS[Math.min(index, STEPS.length - 1)];
+  const last = step === "day";
+  const school = stage === "student" || stage === "both";
+  const work = stage === "working" || stage === "both";
   const cleanName = useMemo(() => name.trim().replace(/\s+/g, " "), [name]);
   const nameOk = cleanName.length > 0 && cleanName.length <= 24 && NAME_RE.test(cleanName);
 
@@ -70,13 +77,20 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
     dir.current = delta;
     setError(null);
     setIndex((i) => Math.max(0, Math.min(STEPS.length - 1, i + delta)));
+    window.scrollTo({ top: 0 });
   };
 
-  const finish = () =>
+  /** Saves everything (their class and job become real records) and goes to Connections or Today. */
+  const finish = (to: "/" | "/settings/integrations") =>
     start(async () => {
       if (!nameOk) return setError("Use letters, numbers, spaces or simple punctuation for the name (up to 24 characters).");
-      const r = await completeOnboardingAction({ lifeStage: stage ?? undefined, assistant: { name: cleanName, style } });
-      if (r?.ok) router.replace("/");
+      const r = await completeOnboardingAction({
+        lifeStage: stage ?? undefined,
+        assistant: { name: cleanName, style },
+        courses: school && course.trim() ? [course.trim()] : [],
+        job: work && job.trim() ? { name: job.trim() } : undefined,
+      });
+      if (r?.ok) router.replace(to);
       else setError(r?.error ?? "Couldn't save. Try again.");
     });
 
@@ -126,58 +140,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
             <p data-anim className="mt-4 text-[1.0625rem] leading-relaxed text-text-2">
               LifeFlow is your classes, work, money and plans in one place, with a personal assistant who helps with all of it.
             </p>
-          </>
-        )}
-
-        {step === "what" && (
-          <>
-            <Title>Here&apos;s what LifeFlow does</Title>
-            <ul className="mt-7 flex flex-col gap-5">
-              {(
-                [
-                  [null, "Your own assistant", "Ask anything. It plans your days, watches your money and keeps you ahead in school."],
-                  [CalendarDays, "Plan", "Classes, shifts and to-dos in one week, with your heaviest days spotted early."],
-                  [Wallet, "Money", "What's in your account, where it goes, and every subscription you pay for."],
-                  [GraduationCap, "School", "Every due date in one list, and study time that fits around work."],
-                ] as const
-              ).map(([Icon, title, text]) => (
-                <li key={title} data-anim className="flex gap-4">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent">
-                    {Icon ? <Icon className="h-5 w-5" /> : <BrandMark className="h-7 w-7" alt="" />}
-                  </span>
-                  <span>
-                    <span className="block text-[1rem] font-semibold">{title}</span>
-                    <span className="mt-0.5 block text-[0.9375rem] leading-snug text-text-2">{text}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-
-        {step === "add" && (
-          <>
-            <Title sub="Three ways, and you can mix them.">How your week gets in</Title>
-            <ul className="mt-7 flex flex-col gap-5">
-              {(
-                [
-                  [Link2, "Connect", "Canvas, Google Calendar, Microsoft Teams and your bank keep themselves up to date."],
-                  [Camera, "Send a picture", "A syllabus, your assignments, a work schedule or a bank statement. Your assistant reads it and adds it."],
-                  [PencilLine, "Add it yourself", "Any class, shift, bill or goal, in a few taps."],
-                ] as const
-              ).map(([Icon, title, text]) => (
-                <li key={title} data-anim className="flex gap-4">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <span>
-                    <span className="block text-[1rem] font-semibold">{title}</span>
-                    <span className="mt-0.5 block text-[0.9375rem] leading-snug text-text-2">{text}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <p data-anim className="mt-7 rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem] leading-snug text-text-2">
+            <p data-anim className="mt-6 rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem] leading-snug text-text-2">
               {plan.paid
                 ? `Free plan: everything you add yourself, and ${plan.freeChatsPerDay} chats with your assistant a day. Pro adds ${listOf(plan.proFeatures)}.`
                 : "LifeFlow is free while we're testing. Everything is open to you."}
@@ -216,6 +179,50 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
               ))}
             </div>
           </>
+        )}
+
+        {step === "details" && (
+          <>
+            <Title sub="Optional. I'll use it to show you a day like yours, and it's saved for you.">
+              {school && work ? "A class and your job" : school ? "One class you're taking" : "Where do you work?"}
+            </Title>
+            <div className="mt-6 flex flex-col gap-4">
+              {school && (
+                <Group label="A class you're taking">
+                  <Input
+                    value={course}
+                    onChange={(e) => setCourse(e.target.value)}
+                    maxLength={60}
+                    placeholder="BIO 110"
+                    aria-label="A class you're taking"
+                    autoComplete="off"
+                  />
+                </Group>
+              )}
+              {work && (
+                <Group label="Where you work">
+                  <Input
+                    value={job}
+                    onChange={(e) => setJob(e.target.value)}
+                    maxLength={60}
+                    placeholder="Campus Coffee"
+                    aria-label="Where you work"
+                    autoComplete="off"
+                  />
+                </Group>
+              )}
+            </div>
+          </>
+        )}
+
+        {step === "day" && stage && (
+          <DayPreview
+            firstName={firstName}
+            assistant={nameOk ? cleanName : "Your assistant"}
+            stage={stage}
+            course={school ? course : undefined}
+            job={work ? job : undefined}
+          />
         )}
 
         {step === "yours" && (
@@ -285,12 +292,17 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
       <div className="flex flex-col gap-3 pt-8">
         {error && <FormError message={error} />}
         {last ? (
-          <Button onClick={finish} loading={pending} disabled={!nameOk} className="h-12 text-[0.9375rem]">
-            Meet {nameOk ? cleanName : "your assistant"}
-          </Button>
+          <>
+            <Button onClick={() => finish("/settings/integrations")} loading={pending} disabled={!nameOk} className="h-12 text-[0.9375rem]">
+              Connect my accounts
+            </Button>
+            <Button variant="ghost" onClick={() => finish("/")} disabled={pending || !nameOk} className="h-12 text-[0.9375rem]">
+              Meet {nameOk ? cleanName : "your assistant"} first
+            </Button>
+          </>
         ) : (
-          <Button onClick={() => go(1)} disabled={step === "week" && !stage} className="h-12 text-[0.9375rem]">
-            {step === "hello" ? "Show me" : "Continue"}
+          <Button onClick={() => go(1)} disabled={(step === "week" && !stage) || (step === "yours" && !nameOk)} className="h-12 text-[0.9375rem]">
+            {step === "hello" ? "Let's go" : step === "yours" ? "Show me my day" : "Continue"}
           </Button>
         )}
       </div>

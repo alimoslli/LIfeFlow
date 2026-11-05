@@ -9,7 +9,7 @@ import { aiAllowed } from "@/lib/ai-consent";
 import { AssistantCard } from "../memory/assistant-card";
 import { SettingsHeader } from "../settings-header";
 
-export const metadata: Metadata = { title: "Jarvis" };
+export const metadata: Metadata = { title: "Assistant" };
 
 export default async function JarvisSettings() {
   const u = await requireUser();

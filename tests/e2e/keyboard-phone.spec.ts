@@ -25,7 +25,7 @@ test("Jarvis keyboard: the page stays still and only the message bar rides up", 
   await signUp(page, "Kim Keys");
   await page.goto("/jarvis");
   const box = page.getByRole("textbox", { name: "Message Jarvis" });
-  const header = page.getByRole("link", { name: "Jarvis profile" });
+  const header = page.getByRole("link", { name: "Assistant profile" });
   const tabbar = page.locator(".lf-tabbar");
   await expect(box).toBeVisible();
   const headerBefore = (await header.boundingBox())!;

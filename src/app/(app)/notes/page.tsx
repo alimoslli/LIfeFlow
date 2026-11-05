@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FileText, FolderKanban, Pin, Search } from "lucide-react";
@@ -45,12 +46,12 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
                 prompt={`Help me turn the "${project.name}" project into a concrete plan with tasks.`}
                 className="h-10 rounded-full bg-surface px-5 text-sm font-medium shadow-soft"
               >
-                Plan with Jarvis
+                Plan with <AssistantName />
               </AskJarvisButton>
             )}
             {!project && (
               <Link href="/jarvis/memory" className="flex h-10 items-center rounded-full bg-surface px-4 text-sm font-medium shadow-soft">
-                What Jarvis remembers
+                What <AssistantName /> remembers
               </Link>
             )}
             <ActionForm action={createNoteAction} className="flex-row">
@@ -120,7 +121,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
           {d.notes.length === 0 ? (
             <Card>
               <EmptyState icon={<FileText />} title={sp.q ? "No notes match your search" : "No notes yet"}>
-                Capture ideas, lecture notes or plans. Ask Jarvis to organize a brain-dump into a project.
+                Capture ideas, lecture notes or plans. Ask <AssistantName /> to organize a brain-dump into a project.
               </EmptyState>
             </Card>
           ) : (

@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["pg"],
   experimental: {
     serverActions: { bodySizeLimit: "6mb" },
+    // Tabs feel instant: a page you've seen in the last 2 minutes opens from the browser's copy, and fully
+    // prefetched tabs stay fresh for 5. Any save (server action) clears this cache, so changes always show.
+    staleTimes: { dynamic: 120, static: 300 },
   },
   turbopack: {
     rules: {

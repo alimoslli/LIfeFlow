@@ -1,3 +1,4 @@
+import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Archive, Brain, Check, RotateCcw, Trash2, X } from "lucide-react";
@@ -27,7 +28,7 @@ import { assistantProfile } from "@/lib/assistant";
 import { jarvisSettings, learnedStats } from "@/server/services/proactive/engine";
 import { LearnedCard } from "@/app/(app)/settings/memory/learned-card";
 
-export const metadata: Metadata = { title: "What Jarvis knows" };
+export const metadata: Metadata = { title: "What your assistant knows" };
 
 const seconds = (ms: number | null) => (ms == null ? "None yet" : `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`);
 const compact = (n: number) => new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n);
@@ -90,7 +91,15 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                   {m.supersedesId && <p className="text-xs text-muted line-through">{d.all.find((x) => x.id === m.supersedesId)?.content}</p>}
                   <p className="text-[0.9375rem]">{m.content}</p>
                   <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
-                    <Badge tone={m.basis === "inferred" ? "info" : "neutral"}>{m.basis === "inferred" ? "Jarvis noticed" : "You mentioned it"}</Badge>
+                    <Badge tone={m.basis === "inferred" ? "info" : "neutral"}>
+                      {m.basis === "inferred" ? (
+                        <>
+                          <AssistantName /> noticed
+                        </>
+                      ) : (
+                        "You mentioned it"
+                      )}
+                    </Badge>
                     <span>
                       {CATEGORY_LABEL[m.category]} · suggested {fmt(m.createdAt, "MMM d")}
                     </span>
@@ -120,8 +129,12 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
         <CardHeader title={`What ${d.assistant.name} knows about you`} subtitle="Edit, archive or delete anything." />
         <div className="mx-5 mb-2 flex items-center justify-between gap-3 rounded-2xl bg-surface-2 px-4 py-3">
           <div>
-            <p className="text-sm font-medium">Let Jarvis suggest things to remember</p>
-            <p className="text-xs text-muted">When off, Jarvis only saves what you explicitly ask it to remember.</p>
+            <p className="text-sm font-medium">
+              Let <AssistantName /> suggest things to remember
+            </p>
+            <p className="text-xs text-muted">
+              When off, <AssistantName /> only saves what you explicitly ask it to remember.
+            </p>
           </div>
           <ActionButton
             action={setMemorySuggestionsAction.bind(null, !d.suggestionsOn)}
@@ -137,7 +150,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
 
         {active.length === 0 ? (
           <EmptyState icon={<Brain />} title="Nothing remembered yet">
-            Tell Jarvis “Remember that I prefer studying in the morning”, or add one below.
+            Tell <AssistantName /> “Remember that I prefer studying in the morning”, or add one below.
           </EmptyState>
         ) : (
           groups.map((g) => (
@@ -150,7 +163,17 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                       <p className="text-[0.9375rem]">{m.content}</p>
                       <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
                         <Badge tone={m.basis === "inferred" ? "info" : "neutral"}>
-                          {m.basis === "inferred" ? "Jarvis noticed · you approved" : m.source === "user" ? "Added by you" : "You told Jarvis"}
+                          {m.basis === "inferred" ? (
+                            <>
+                              <AssistantName /> noticed · you approved
+                            </>
+                          ) : m.source === "user" ? (
+                            "Added by you"
+                          ) : (
+                            <>
+                              You told <AssistantName />
+                            </>
+                          )}
                         </Badge>
                         <span>{m.lastUsedAt ? `Last used ${fmt(m.lastUsedAt, "MMM d")}` : "Not used yet"}</span>
                         {m.expiresAt && <span>· until {fmt(m.expiresAt, "MMM d")}</span>}
@@ -164,7 +187,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                     />
                     <ActionButton
                       action={archiveMemoryAction.bind(null, m.id, "archived")}
-                      title="Archive (Jarvis stops using it)"
+                      title="Archive (stops being used)"
                       className="tap flex items-center justify-center rounded-full text-muted hover:text-text"
                     >
                       <Archive className="h-4 w-4" />
@@ -212,7 +235,10 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
         <Card>
           <details>
             <summary className="cursor-pointer list-none px-5 py-4 text-[0.9375rem] font-semibold [&::-webkit-details-marker]:hidden">
-              Archived &amp; dismissed ({history.length}) <span className="text-sm font-normal text-muted">· not used by Jarvis</span>
+              Archived &amp; dismissed ({history.length}){" "}
+              <span className="text-sm font-normal text-muted">
+                · not used by <AssistantName />
+              </span>
             </summary>
             <ul className="divide-y divide-border border-t border-border">
               {history.map((m) => {
@@ -267,7 +293,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
               </div>
               <Badge tone={status.available ? "success" : "warning"}>{status.available ? "Ready" : "Not configured"}</Badge>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Your Jarvis use in the last 30 days">
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Your assistant use in the last 30 days">
               <Stat label="Requests (30 days)" value={String(st.runs)} />
               <Stat
                 label="Typical reply"
@@ -297,7 +323,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                 Skills ({SKILLS.length}) <span className="text-sm font-normal text-muted">· how each one is doing</span>
               </summary>
               <p className="mt-2 text-sm text-muted">
-                Jarvis picks the right skill for each request. Rate answers with 👍 👎 in the chat; skills rated down often are flagged.
+                <AssistantName /> picks the right skill for each request. Rate answers with 👍 👎 in the chat; skills rated down often are flagged.
               </p>
               <ul className="mt-3 divide-y divide-border">
                 {d.skills.length === 0 && <li className="py-2 text-sm text-muted">No requests yet.</li>}

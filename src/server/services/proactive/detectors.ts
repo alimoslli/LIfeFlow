@@ -441,7 +441,7 @@ const goalCheckin: Detector = async ({ scope, today }) => {
           .join(", "),
         more: Math.max(0, open.length - 3),
       },
-      action: { type: "ask", label: "Tell Jarvis", prompt: "Check in on my goals with me: ask how I worked toward each one today, then save what I tell you." },
+      action: { type: "ask", label: "Check in", prompt: "Check in on my goals with me: ask how I worked toward each one today, then save what I tell you." },
       priority: 55,
     },
   ];
@@ -468,7 +468,7 @@ const weekAhead: Detector = async ({ scope, tz, today }) => {
         lighterHours: week.lighterBefore ? Math.round(week.lighterBefore.hours) : null,
       },
       action: lighter
-        ? { type: "ask", label: "Plan it with Jarvis", prompt: `${day} looks like my heaviest day (${why.join(", ")}). Help me move what I can to ${lighter}.` }
+        ? { type: "ask", label: "Help me plan it", prompt: `${day} looks like my heaviest day (${why.join(", ")}). Help me move what I can to ${lighter}.` }
         : { type: "open", label: "See your week", href: "/plan" },
       priority: 62,
     },
@@ -485,7 +485,7 @@ const reviewTransactions: Detector = async ({ scope, today }) => {
       topic: "money",
       dedupeKey: `review_tx:${weekStart(today)}`,
       facts: { count: r.total, example: r.items[0].description },
-      action: { type: "ask", label: "Categorize with Jarvis", prompt: "Show me the transactions you're not sure about so I can categorize them." },
+      action: { type: "ask", label: "Sort them out", prompt: "Show me the transactions you're not sure about so I can categorize them." },
       priority: 45,
     },
   ];

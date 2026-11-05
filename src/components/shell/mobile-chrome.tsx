@@ -1,4 +1,5 @@
 "use client";
+import { useAssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -19,7 +20,7 @@ const ROUTES: { test: RegExp; title: string; back?: string }[] = [
   { test: /^\/jarvis\/memory\/import/, title: "Import memory", back: "/jarvis/memory" },
   { test: /^\/jarvis\/memory/, title: "Memory", back: "/jarvis/profile" },
   { test: /^\/jarvis\/ideas/, title: "Ideas" },
-  { test: /^\/jarvis\/profile/, title: "Jarvis" },
+  { test: /^\/jarvis\/profile/, title: "@assistant" },
   { test: /^\/inbox/, title: "Updates" },
   { test: /^\/habits/, title: "Health" },
   { test: /^\/school\/courses\/[^/]+$/, title: "Class", back: "/school" },
@@ -38,11 +39,11 @@ const ROUTES: { test: RegExp; title: string; back?: string }[] = [
   { test: /^\/wealth/, title: "Investments", back: "/finances/accounts" },
   { test: /^\/settings$/, title: "Settings", back: "/" },
   { test: /^\/settings\/profile/, title: "Profile", back: "/settings" },
-  { test: /^\/settings\/jarvis/, title: "Jarvis", back: "/settings" },
+  { test: /^\/settings\/jarvis/, title: "@assistant", back: "/settings" },
   { test: /^\/settings\/notifications/, title: "Notifications", back: "/settings" },
   { test: /^\/settings\/security/, title: "Face ID & passwords", back: "/settings" },
   { test: /^\/settings\/plan/, title: "Plan", back: "/settings" },
-  { test: /^\/settings\/text/, title: "Text Jarvis", back: "/settings" },
+  { test: /^\/settings\/text/, title: "Text @assistant", back: "/settings" },
   { test: /^\/settings\/integrations/, title: "Connected accounts", back: "/settings" },
   { test: /^\/settings\/data/, title: "Privacy & data", back: "/settings" },
   { test: /^\/settings\/trash/, title: "Recently deleted", back: "/settings" },
@@ -62,6 +63,7 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
   const pathname = usePathname();
   const router = useRouter();
   const info = routeInfo(pathname);
+  const assistantName = useAssistantName();
   const [scrolled, setScrolled] = useState(false);
   const [demoHidden, setDemoHidden] = useState(true);
   useEffect(() => {
@@ -114,7 +116,7 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
         )}
         aria-hidden={!scrolled && !info.back}
       >
-        {info.title}
+        {info.title.replace("@assistant", assistantName)}
       </p>
       <div className="ml-auto flex items-center">
         {/* With a title showing, the label shrinks to a dot so it never covers the title. */}

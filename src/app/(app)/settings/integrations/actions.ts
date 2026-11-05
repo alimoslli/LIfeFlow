@@ -1,4 +1,5 @@
 "use server";
+import { assistantProfile } from "@/lib/assistant";
 import { mutate, type ActionState } from "@/server/actions";
 import { disconnectGoogle, GoogleError, syncGoogleCalendar } from "@/server/integrations/google";
 import { disconnectMicrosoft, MicrosoftError, syncMicrosoftCalendar } from "@/server/integrations/microsoft";
@@ -92,7 +93,7 @@ const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : w.endsWith("
 export async function syncCanvasAction(): Promise<ActionState> {
   const r = await mutate("integration.canvas.synced", async (s, u) => {
     const x = await syncCanvas(s, fetch, u.timezone);
-    return `Synced ${plural(x.courses, "class")} and ${plural(x.assignments, "assignment")}${x.events ? `, plus ${plural(x.events, "class event")}` : ""} from Canvas.`;
+    return `Synced ${plural(x.courses, "class")} and ${plural(x.assignments, "assignment")}${x.events ? `, plus ${plural(x.events, "class event")}` : ""} from Canvas.${x.merged.courses || x.merged.assignments ? ` Merged ${x.merged.courses} class${x.merged.courses === 1 ? "" : "es"} and ${plural(x.merged.assignments, "assignment")} you'd added by hand into the Canvas ones.` : ""}`;
   });
   if (r && !r.ok) {
     const u = await requireUser();
@@ -111,6 +112,7 @@ export async function disconnectCanvasAction(): Promise<ActionState> {
 export async function setGmailFilingAction(on: boolean): Promise<ActionState> {
   return mutate("integration.gmail_filing", async (_s, u) => {
     await updatePreferences(getDb(), u.id, { gmailFiling: on });
-    return on ? "Jarvis will file new school, bill and work emails each morning." : "Jarvis won't read your inbox on his own.";
+    const n = assistantProfile(u.preferences).name;
+    return on ? `${n} will file new school, bill and work emails each morning.` : `${n} won't read your inbox on its own.`;
   });
 }

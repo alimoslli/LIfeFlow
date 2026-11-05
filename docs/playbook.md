@@ -21,7 +21,7 @@ The owner's full playbook (product, brand, voice, approved copy) is the artifact
 6. Tests at every layer for the new path and edge cases; all green.
 7. Words follow the voice: plain, short, no em dashes, no tech talk, one clear action.
 8. Accessible: real controls and labels, visible focus, 4.5:1 contrast, reduced motion.
-9. Fast: no new load wait, limits on lists, timeouts on slow calls.
+9. Fast: no new load wait, limits on lists, timeouts on slow calls. `tests/e2e/perf.spec.ts` must pass: first visit to a tab under 3 s, repeat visits under 0.6 s with no skeleton (cached by `staleTimes`, tabs re-prefetched after saves).
 10. Recorded: ADR for big decisions; CLAUDE.md updated for the next session.
 
 ## Red lines (never ship)

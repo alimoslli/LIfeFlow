@@ -13,7 +13,7 @@ const CHIPS = [
 export function QuickChips() {
   const { openJarvis } = useShell();
   return (
-    <div className="lf-hscroll -mx-5 flex gap-2 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+    <div className="lf-hscroll -mx-5 -mt-2 -mb-4 flex gap-2 overflow-x-auto px-5 pt-2 pb-4 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
       {CHIPS.map(([label, prompt]) => (
         <button
           key={label}

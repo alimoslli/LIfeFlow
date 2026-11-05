@@ -26,7 +26,7 @@ export function PageHeader({ title, description, actions, eyebrow }: { title: Re
         <h1 className="font-display text-[2.375rem] leading-tight font-medium tracking-tight text-text">{title}</h1>
         {description && <p className="mt-1 max-w-2xl text-sm text-muted">{description}</p>}
       </div>
-      {actions && <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 [&>*]:shrink-0">{actions}</div>}
+      {actions && <div className="-mx-1 -my-1 flex items-center gap-2 overflow-x-auto px-1 py-1 [&>*]:shrink-0">{actions}</div>}
     </header>
   );
 }
@@ -69,7 +69,7 @@ export function SourceBadge({ source }: { source: string }) {
   const map: Record<string, { label: string; tone: Tone }> = {
     demo: { label: "Sample data", tone: "warning" },
     manual: { label: "Manual", tone: "neutral" },
-    jarvis: { label: "Added by Jarvis", tone: "accent" },
+    jarvis: { label: "Added by your assistant", tone: "accent" },
     import: { label: "Imported", tone: "info" },
     plaid: { label: "Synced · Plaid", tone: "success" },
     canvas: { label: "Synced · Canvas", tone: "success" },

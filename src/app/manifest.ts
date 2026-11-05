@@ -22,7 +22,12 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     // Long-press the home-screen icon (Android; iOS ignores shortcuts).
     shortcuts: [
-      { name: "Ask Jarvis", short_name: "Jarvis", url: "/jarvis", icons: [{ src: "/icons/shortcut-jarvis.png", sizes: "96x96", type: "image/png" }] },
+      {
+        name: "Ask your assistant",
+        short_name: "Assistant",
+        url: "/jarvis",
+        icons: [{ src: "/icons/shortcut-jarvis.png", sizes: "96x96", type: "image/png" }],
+      },
       { name: "Add to-do", short_name: "To-do", url: "/tasks?add=todo", icons: [{ src: "/icons/shortcut-todo.png", sizes: "96x96", type: "image/png" }] },
       {
         name: "Log spending",

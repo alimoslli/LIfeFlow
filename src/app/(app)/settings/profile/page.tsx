@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { AccentPicker, TextSizePicker, ThemePicker } from "@/components/theme-picker";
-import { ACCENT_COOKIE, TEXT_COOKIE, THEME_COOKIE, parseAccent, parseTextSize, parseTheme } from "@/lib/theme";
+import { TextSizePicker, ThemePicker } from "@/components/theme-picker";
+import { TEXT_COOKIE, THEME_COOKIE, parseTextSize, parseTheme } from "@/lib/theme";
 import { eq } from "drizzle-orm";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -24,15 +24,13 @@ export default async function ProfileSettings() {
   const zones = Intl.supportedValuesOf("timeZone");
   const jar = await cookies();
   const theme = parseTheme(jar.get(THEME_COOKIE)?.value);
-  const accent = parseAccent(jar.get(ACCENT_COOKIE)?.value);
   return (
     <div className="flex flex-col gap-5">
       <SettingsHeader title="Profile & appearance" />
       <Card className="p-6">
         <h2 className="mb-4 text-[0.9375rem] font-semibold">Appearance</h2>
         <ThemePicker initial={theme} />
-        <h3 className="mt-5 mb-3 text-sm font-medium text-text-2">Accent color</h3>
-        <AccentPicker initial={accent} />
+        <p className="mt-2 text-xs text-muted">System follows your phone&apos;s light or dark setting.</p>
         <h3 className="mt-5 mb-3 text-sm font-medium text-text-2">Text size</h3>
         <TextSizePicker initial={parseTextSize(jar.get(TEXT_COOKIE)?.value)} />
       </Card>

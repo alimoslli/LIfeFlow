@@ -37,7 +37,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Use `src/components/motion/*`: tokens and GSAP from `gsap.ts`, `CountUp` for money, `Pressable` for press feedback. Import GSAP only from there.
 - First-paint entrances stay CSS (`animate-rise`, `lf-*` classes) so server-rendered content never flashes. GSAP effects must skip the hydration pass (`isHydrated()`) or wait for the splash (`onSplashEnd`).
 - Animate transform/opacity only, always honour `prefersReducedMotion()`, and never make content depend on an animation finishing.
-- New accounts get `/welcome` (onboarding) and then the tour. Tests use `signUp()`, which skips both. The splash is off under automation unless `?splash=1`.
+- New accounts get `/welcome` (onboarding: hello, what fills your week, one class or job saved for real, make it yours, then "Your day, connected" from `lib/day-preview.ts`: a seeded, different-every-time day where every invented number is tagged "example") and then the tour. Tests use `signUp()`, which skips both. The splash is off under automation unless `?splash=1`.
 
 ## Sign-in security (see ADR 0009, 0011)
 - New passwords go through `checkPassword` (server-enforced; `NewPasswordField` in forms). Sign-in with 2FA on goes through `login_challenges` + `/login/verify`; never start a session before `completeLoginChallenge` succeeds. Rate-limit keys use `clientIp()` (`ipFromHeaders`), never the first X-Forwarded-For entry.

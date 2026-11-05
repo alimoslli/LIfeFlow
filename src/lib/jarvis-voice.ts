@@ -207,7 +207,7 @@ const KINDS: Record<string, (f: F) => Parts> = {
   question: (f) => ({
     headline: s(f, "question"),
     fact: "A quick one so I can help you better.",
-    ask: "Your answer goes into What Jarvis knows in Settings, where you can edit or delete it.",
+    ask: "Your answer goes into What your assistant knows in Settings, where you can edit or delete it.",
     mood: "info",
   }),
   consent: () => ({

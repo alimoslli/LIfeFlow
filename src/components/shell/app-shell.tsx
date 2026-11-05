@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { whenIdle } from "@/lib/idle";
 import { Toaster } from "@/components/ui/toaster";
 import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { setTourAction } from "@/app/(onboarding)/welcome/actions";
@@ -59,6 +60,23 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const tabs = NAV.filter((t) => t.module !== "school" || areas.school);
+  const router = useRouter();
+  // Keep every tab warm: after each move (and after a save clears the cache) prefetch the tabs again when idle,
+  // so switching tabs opens a ready page instead of a skeleton.
+  const tabHrefs = tabs.map((t) => t.href).join(" ");
+  useEffect(() => {
+    const warm = () => whenIdle(() => tabHrefs.split(" ").forEach((h) => router.prefetch(h)));
+    let cancel = warm();
+    // After a save (the cache is cleared) or coming back to the app, warm them again.
+    const again = () => (cancel(), (cancel = warm()));
+    window.addEventListener("lf:saved", again);
+    window.addEventListener("focus", again);
+    return () => {
+      cancel();
+      window.removeEventListener("lf:saved", again);
+      window.removeEventListener("focus", again);
+    };
+  }, [pathname, router, tabHrefs]);
   const [tourOpen, setTourOpen] = useState(tour);
   const endTour = useCallback(() => {
     setTourOpen(false);
@@ -100,6 +118,9 @@ export function AppShell({
   // The chat is full-screen; Updates, Profile and Memory are normal pages.
   const onJarvisPage =
     pathname.startsWith("/jarvis") && !["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"].some((p) => pathname.startsWith(p));
+  // The assistant's other pages (Updates, Ideas, Profile) keep the chat's own header and pill row,
+  // so moving between them never swaps the whole interface (UX review).
+  const assistantPage = !onJarvisPage && (pathname.startsWith("/jarvis") || pathname.startsWith("/inbox"));
   const initials = user.name
     .split(/\s+/)
     .map((p) => p[0])
@@ -149,15 +170,27 @@ export function AppShell({
               <main
                 className={cn(
                   "mx-auto w-full flex-1",
-                  onJarvisPage ? "max-w-none" : "lf-main-pad max-w-5xl px-5 sm:px-8 md:max-w-6xl md:px-6 md:pt-5 md:pb-28",
+                  onJarvisPage
+                    ? "max-w-none"
+                    : assistantPage
+                      ? "max-w-3xl pb-32 md:pb-16"
+                      : "lf-main-pad max-w-5xl px-5 sm:px-8 md:max-w-6xl md:px-6 md:pt-5 md:pb-28",
                 )}
               >
-                {!onJarvisPage && <MobileAppBar demo={user.accountKind === "demo"} onSearch={() => setPalette(true)} />}
-                {!onJarvisPage && (
+                {!onJarvisPage && !assistantPage && <MobileAppBar demo={user.accountKind === "demo"} onSearch={() => setPalette(true)} />}
+                {!onJarvisPage && !assistantPage && (
                   <TopBar firstName={user.name.split(" ")[0]} initials={initials} demo={user.accountKind === "demo"} settingsActive={settingsActive} />
                 )}
                 {onJarvisPage ? (
                   <PageMotion>{children}</PageMotion>
+                ) : assistantPage ? (
+                  <>
+                    <AssistantHeader name={assistantName} />
+                    <SectionNav inline />
+                    <div className="px-4 pt-4 md:px-6">
+                      <PageMotion>{children}</PageMotion>
+                    </div>
+                  </>
                 ) : (
                   // Desktop: the page sits in one large frosted panel. Phones: no panel.
                   <div className="md:rounded-[32px] md:bg-surface md:p-8 md:shadow-soft lg:p-10">
@@ -227,7 +260,7 @@ export function AppShell({
         <Suspense fallback={null}>
           <QuickAdd />
         </Suspense>
-        {!onJarvisPage && (
+        {!onJarvisPage && !assistantPage && (
           <button
             type="button"
             onClick={() => openJarvis()}
@@ -309,6 +342,26 @@ function useSlidingIndicator(ref: React.RefObject<HTMLElement | null>, pathname:
 }
 
 /** @deprecated Use BrandMark for new surfaces. Kept as the compatibility mark for existing LifeFlow pages. */
+/** The same top row the chat uses (title in the middle, Settings and the assistant's profile on the right). */
+function AssistantHeader({ name }: { name: string }) {
+  return (
+    <header className="flex items-center gap-0.5 px-2 pt-[max(0.5rem,env(safe-area-inset-top))] lg:px-4">
+      <span className="h-11 w-11 shrink-0 lg:hidden" aria-hidden />
+      <p className="min-w-0 flex-1 truncate px-1 text-center text-[0.9375rem] font-semibold lg:text-left">{name}</p>
+      <Link
+        href="/settings"
+        aria-label="Settings"
+        className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text"
+      >
+        <Settings className="h-5 w-5" />
+      </Link>
+      <Link href="/jarvis/profile" aria-label="Assistant profile" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface-2">
+        <BrandMark className="h-8 w-8" alt="" />
+      </Link>
+    </header>
+  );
+}
+
 export function Mark({ className }: { className?: string }) {
   return <BrandMark className={cn("h-8 w-8", className)} alt="" />;
 }

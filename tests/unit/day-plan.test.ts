@@ -82,7 +82,7 @@ describe("Jarvis day plan", () => {
     const p = buildDayPlan({ ...snap, overdue: [] }, { today: [], next: null, insights: [] }, { moneyHidden: true });
     expect(p.summary.join(" ")).not.toMatch(/\$/);
     expect(p.priorities).toEqual([]);
-    expect(p.next).toMatchObject({ label: "Plan with Jarvis" });
+    expect(p.next).toMatchObject({ label: "Plan it with me" });
   });
 
   it("uses undated to-dos when nothing is late or due, and Jarvis's message as the next step", () => {

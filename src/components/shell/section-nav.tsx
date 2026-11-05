@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { whenIdle } from "@/lib/idle";
 import { useEffect, useRef } from "react";
 import {
   BookOpen,
@@ -76,9 +77,15 @@ export function SectionNav({ inline = false, children }: { inline?: boolean; chi
   const areas = useLifeAreas();
   const section = sectionFor(pathname);
   const activeRef = useRef<HTMLAnchorElement>(null);
+  const router = useRouter();
   useEffect(() => {
     activeRef.current?.scrollIntoView({ block: "nearest", inline: "center" });
   }, [pathname]);
+  // Warm this tab's other pages once the screen is idle, so the next pill opens instantly.
+  useEffect(() => {
+    if (!section) return;
+    return whenIdle(() => SECTIONS[section].forEach((i) => router.prefetch(i.href)));
+  }, [section, pathname, router]);
   if (!section) return null;
   return (
     <nav
@@ -87,7 +94,7 @@ export function SectionNav({ inline = false, children }: { inline?: boolean; chi
     >
       <div
         className={cn(
-          "lf-hscroll mx-auto flex gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          "lf-hscroll mx-auto -my-1.5 flex gap-1.5 overflow-x-auto py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           inline ? "px-4" : "max-w-5xl px-5 sm:px-8",
         )}
       >

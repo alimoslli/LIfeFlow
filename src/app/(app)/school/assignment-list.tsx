@@ -1,4 +1,5 @@
 "use client";
+import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import { useState } from "react";
 import { ChevronRight, ExternalLink, Trash2 } from "lucide-react";
@@ -55,7 +56,11 @@ export function AssignmentList({ items, tz, showCourse = true, today }: { items:
                             {a.kind[0].toUpperCase() + a.kind.slice(1)}
                           </span>
                         )}
-                        {a.source === "jarvis" && <span>· added by Jarvis</span>}
+                        {a.source === "jarvis" && (
+                          <span>
+                            · added by <AssistantName />
+                          </span>
+                        )}
                       </span>
                     </span>
                     <span
