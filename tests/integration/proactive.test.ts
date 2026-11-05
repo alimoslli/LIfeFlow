@@ -411,8 +411,8 @@ describe("reviews and coaching", () => {
         // Done 2 of the 5 days before today.
         for (const d of [-2, -5]) await checkHabit(s, h.id, addDaysStr(day, d));
       }
-      // Tomorrow has a class 7 to 9 AM, so the first open stretch starts at 9 AM.
-      await createEvent(s, TZ, { title: "BIO 101", date: addDaysStr(day, 1), startTime: "07:00", endTime: "09:00" });
+      // Tomorrow (Wednesday) has a class 9 to 11 AM, so the first open stretch starts at 11 AM.
+      await createEvent(s, TZ, { title: "BIO 101", date: addDaysStr(day, 1), startTime: "09:00", endTime: "11:00" });
     });
     const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now }));
     const off = out.filter((m) => m.kind === "habit_struggle");
@@ -423,8 +423,10 @@ describe("reviews and coaching", () => {
       expect(`${m.title} ${m.body}`).not.toMatch(/slipp|missed|failed/i);
       expect(m.body).toContain(": 2 of the last 5 days. That's off track.");
       expect(m.action).toMatchObject({ type: "open", href: "/goals" });
-      expect(m.facts.slot).toBe("Tomorrow 9 AM");
-      expect(m.body).toContain("Tomorrow 9 AM is open to get back on track.");
+      // The real day and time, so it still reads right the next morning (never "tomorrow" in saved text).
+      expect(m.facts).toMatchObject({ slotDate: "2026-11-11", slotTime: "11:00" });
+      expect(m.body).toContain("Wednesday 11 AM is open to get back on track.");
+      expect(m.body).not.toMatch(/tomorrow/i);
     }
 
     // With nothing on tomorrow's calendar, no slot is claimed.
@@ -438,8 +440,69 @@ describe("reviews and coaching", () => {
       await checkHabit(s, h.id, addDaysStr(day, -1));
     });
     const [lone] = (await run2((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now }))).filter((m) => m.kind === "habit_struggle");
-    expect(lone.facts).toMatchObject({ kept: 1, of: 5, slot: null });
+    expect(lone.facts).toMatchObject({ kept: 1, of: 5, slotDate: null, slotTime: null });
     expect(lone.body).not.toMatch(/is open/);
+  });
+
+  describe("an open slot is only offered where it fits the person's day (review)", () => {
+    // Tuesday Nov 10, 8:30 PM in New York; tomorrow is Wednesday Nov 11.
+    const now = new Date("2026-11-11T01:30:00Z");
+    const day = "2026-11-10";
+    async function habitOffTrack(habit: { title: string; kind?: "study" | "custom"; target?: number }, setup: (s: UserScope) => Promise<void>) {
+      const { run } = await makeUser();
+      await run(async (s) => {
+        const h = await createHabit(s, { kind: "custom", cadence: "daily", ...habit });
+        await s.tx
+          .update(habits)
+          .set({ createdAt: new Date("2026-10-20T12:00:00Z") })
+          .where(eq(habits.id, h.id));
+        await checkHabit(s, h.id, addDaysStr(day, -2));
+        await setup(s);
+      });
+      const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now }));
+      return out.find((m) => m.kind === "habit_struggle")!;
+    }
+
+    it("never for a habit you keep all day, like No soda (the plain way back instead)", async () => {
+      const m = await habitOffTrack({ title: "No soda" }, (s) =>
+        createEvent(s, TZ, { title: "BIO 101", date: "2026-11-11", startTime: "18:00", endTime: "19:00" }).then(() => {}),
+      );
+      expect(m.facts).toMatchObject({ slotDate: null, slotTime: null });
+      expect(m.body).toMatch(/1 of the last 5 days\. That's off track\. Want to make it smaller for a while to get back on track\?$/);
+      expect(m.body).not.toMatch(/is open|AM|PM/);
+    });
+
+    it("never before 9 AM, even when the morning is empty", async () => {
+      const m = await habitOffTrack({ title: "Gym" }, (s) =>
+        createEvent(s, TZ, { title: "BIO 101", date: "2026-11-11", startTime: "18:00", endTime: "19:00" }).then(() => {}),
+      );
+      expect(m.facts).toMatchObject({ slotDate: "2026-11-11", slotTime: "09:00" });
+      expect(m.body).toContain("Wednesday 9 AM is open to get back on track.");
+    });
+
+    it("later for someone who goes to bed after 1 AM", async () => {
+      const m = await habitOffTrack({ title: "Study", kind: "study", target: 25 }, async (s) => {
+        await createMemory(s, { content: "When I usually go to bed on a weeknight: after 1 am.", category: "routine" }, "user");
+        await createEvent(s, TZ, { title: "Shift", date: "2026-11-11", startTime: "13:00", endTime: "17:00" });
+      });
+      expect(m.facts).toMatchObject({ slotDate: "2026-11-11", slotTime: "10:00" });
+      expect(m.body).toContain("Wednesday 10 AM is open to get back on track.");
+    });
+
+    it("works around class times typed on the course, and offers nothing when they can't be read", async () => {
+      const m = await habitOffTrack({ title: "Gym" }, async (s) => {
+        await createCourse(s, { name: "Biology", code: "BIO 101", meetingInfo: "Mon/Wed 9:00–11:30 AM" });
+      });
+      expect(m.facts).toMatchObject({ slotDate: "2026-11-11", slotTime: "11:30" });
+      expect(m.body).toContain("Wednesday 11:30 AM is open to get back on track.");
+
+      const unclear = await habitOffTrack({ title: "Gym" }, async (s) => {
+        await createCourse(s, { name: "Biology", code: "BIO 101", meetingInfo: "Wednesday mornings, see syllabus" });
+        await createEvent(s, TZ, { title: "Shift", date: "2026-11-11", startTime: "18:00", endTime: "21:00" });
+      });
+      expect(unclear.facts).toMatchObject({ slotDate: null, slotTime: null });
+      expect(unclear.body).not.toMatch(/is open/);
+    });
   });
 
   it("counts only periods since the habit began, and says 'this week' only when the days are this week (review)", async () => {

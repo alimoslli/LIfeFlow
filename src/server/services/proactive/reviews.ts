@@ -1,6 +1,7 @@
 import { usd } from "@/lib/jarvis-voice";
 import { and, eq, gte, isNotNull, lte, ne } from "drizzle-orm";
-import { addDaysStr, dayOfWeek, daysBetween, formatDateStr, formatIn, localDateOf, monthStart, weekStart } from "@/lib/dates";
+import { addDaysStr, dayOfWeek, daysBetween, formatDateStr, localDateOf, localTimeOf, localToInstant, monthStart, weekStart } from "@/lib/dates";
+import { earliestSlotStart, parseMeetingInfo } from "@/lib/routine";
 import { goalProjection } from "@/lib/goal-math";
 import { assignments, jarvisRuns, memories, tasks } from "../../db/schema";
 import { series } from "../../db/series";
@@ -12,8 +13,9 @@ import { listAccounts } from "../finance/accounts";
 import { balancesOf } from "../finance/overview";
 import { queryTransactions } from "../finance/transactions";
 import { freeSlots, getAgenda } from "../calendar";
-import { listHabits } from "../habits";
-import { listAssignments } from "../school";
+import { listHabits, slotMinutes } from "../habits";
+import { listActiveMemories } from "../memory";
+import { listAssignments, listCourses } from "../school";
 import { listShifts } from "../work";
 import type { Candidate, DetectContext, Detector } from "./detectors";
 
@@ -296,23 +298,42 @@ export const goalForecast: Detector = async ({ scope, today }) => {
 
 const PERIOD_UNIT = { daily: "days", weekly: "weeks", payday: "weeks", weekends: "weekends" } as const;
 
+/** Class times typed on the user's courses (`meetingInfo`) that fall on `day`, as busy blocks. Null if any can't be read. */
+async function classTimesOn({ scope, tz }: DetectContext, day: string) {
+  const busy: { blocksTime: true; startsAt: Date; endsAt: Date }[] = [];
+  for (const c of await listCourses(scope)) {
+    const meetings = parseMeetingInfo(c.meetingInfo);
+    if (!meetings) return null;
+    for (const m of meetings.filter((x) => x.days.includes(dayOfWeek(day))))
+      busy.push({ blocksTime: true, startsAt: localToInstant(day, m.start, tz), endsAt: localToInstant(day, m.end, tz) });
+  }
+  return busy;
+}
+
 /**
- * The first open stretch tomorrow (7 AM to 9 PM) long enough for a time-based habit, as "Tomorrow 9 AM".
- * Only when tomorrow already has something on the calendar: an empty day means we don't know it, not that it's free.
+ * The first open stretch tomorrow long enough for a time-boxed habit, as its real date and time (the message may be
+ * read days later). Safe or nothing: never before `earliest` (9 AM, or later for a late bedtime), around calendar
+ * items and class times; none when class times can't be read, or when tomorrow has nothing on it (an empty day means
+ * we don't know it, not that it's free).
  */
-async function openSlotTomorrow({ scope, tz, today, now }: DetectContext, minutes: number) {
-  const day = addDaysStr(today, 1);
-  const items = await getAgenda(scope, tz, day, day, { now });
+async function openSlotTomorrow(ctx: DetectContext, minutes: number, earliest: string | null) {
+  if (!earliest) return null;
+  const day = addDaysStr(ctx.today, 1);
+  const classes = await classTimesOn(ctx, day);
+  if (!classes) return null;
+  const items = [...(await getAgenda(ctx.scope, ctx.tz, day, day, { now: ctx.now })), ...classes];
   if (!items.some((i) => i.blocksTime && i.endsAt)) return null;
-  const slot = freeSlots(items, day, tz, "07:00", "21:00", minutes)[0];
-  if (!slot) return null;
-  return `Tomorrow ${formatIn(slot.startsAt, tz, formatIn(slot.startsAt, tz, "mm") === "00" ? "h a" : "h:mm a")}`;
+  const slot = freeSlots(items, day, ctx.tz, earliest, "21:00", minutes)[0];
+  return slot ? { date: day, time: localTimeOf(slot.startsAt, ctx.tz) } : null;
 }
 
 /** Habits: celebrate streaks of 3, 7, 14 and 30; when one is off track, say so with the numbers and one way back. */
 export const habitCoach: Detector = async (ctx) => {
   const { scope, today } = ctx;
   const out: Candidate[] = [];
+  // The bedtime answer, read once and only when a slot is wanted.
+  let earliest: Promise<string | null> | undefined;
+  const earliestStart = () => (earliest ??= listActiveMemories(scope, ctx.now).then(earliestSlotStart));
   for (const h of await listHabits(scope, today)) {
     if (!h.active) continue;
     if ([3, 7, 14, 30].includes(h.current) && h.doneThisPeriod)
@@ -332,7 +353,8 @@ export const habitCoach: Detector = async (ctx) => {
     if (last.length - kept >= 3 && age >= (h.cadence === "daily" ? 5 : 28)) {
       const half = h.target ? Math.max(1, Math.round(h.target / 2)) : null;
       const smaller = half && h.kind === "save" ? usd(half) : half && h.kind === "study" ? `${half} minutes` : null;
-      const timed = (h.kind === "study" || h.kind === "custom") && (h.cadence === "daily" || h.cadence === "weekly");
+      const minutes = slotMinutes(h);
+      const slot = minutes ? await openSlotTomorrow(ctx, minutes, await earliestStart()) : null;
       out.push({
         kind: "habit_struggle",
         topic: "habits",
@@ -344,7 +366,8 @@ export const habitCoach: Detector = async (ctx) => {
           unit: PERIOD_UNIT[h.cadence],
           // "This week" only when every counted day is in this week (daily habits late in the week).
           thisWeek: h.cadence === "daily" && h.recentStarts[counted[counted.length - 1]] >= weekStart(today),
-          slot: timed ? await openSlotTomorrow(ctx, h.kind === "study" && h.target ? h.target : 30) : null,
+          slotDate: slot?.date ?? null,
+          slotTime: slot?.time ?? null,
           smaller,
         },
         action: { type: "open", label: "Adjust it", href: "/goals" },

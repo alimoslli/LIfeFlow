@@ -9,23 +9,27 @@ describe("habit off track (owner, 2026-11-05)", () => {
   it("says plainly it's off track, with the numbers and one way back from the facts", () => {
     const withSlot = composeMessage(
       "habit_struggle",
-      { habit: "Gym", kept: 1, of: 5, unit: "days", thisWeek: true, slot: "Tomorrow 7 AM", smaller: null },
+      { habit: "Gym", kept: 1, of: 5, unit: "days", thisWeek: true, slotDate: "2026-11-11", slotTime: "09:30", smaller: null },
       "direct",
     );
     expect(withSlot.title).toBe("Gym is off track");
-    expect(withSlot.body).toBe('"Gym": 1 of the last 5 days. That\'s off track this week. Tomorrow 7 AM is open to get back on track.');
+    // The slot's real weekday and time: the message may be read the next morning or later, so never "tomorrow".
+    expect(withSlot.body).toBe('"Gym": 1 of the last 5 days. That\'s off track this week. Wednesday 9:30 AM is open to get back on track.');
+    expect(
+      composeMessage("habit_struggle", { habit: "Gym", kept: 1, of: 5, unit: "days", slotDate: "2026-11-12", slotTime: "14:00" }, "direct").body,
+    ).toContain("Thursday 2 PM is open");
 
-    const smaller = composeMessage("habit_struggle", { habit: "Save $10 each payday", kept: 2, of: 5, unit: "weeks", slot: null, smaller: "$5" }, "direct");
+    const smaller = composeMessage("habit_struggle", { habit: "Save $10 each payday", kept: 2, of: 5, unit: "weeks", slotDate: null, smaller: "$5" }, "direct");
     expect(smaller.body).toBe('"Save $10 each payday": 2 of the last 5 weeks. That\'s off track. Try $5 for two weeks to get back on track?');
 
     // No slot or smaller step in the facts: none is invented.
-    const plain = composeMessage("habit_struggle", { habit: "No-spend weekend", kept: 1, of: 5, unit: "weekends", slot: null, smaller: null }, "direct");
+    const plain = composeMessage("habit_struggle", { habit: "No-spend weekend", kept: 1, of: 5, unit: "weekends", slotDate: null, smaller: null }, "direct");
     expect(plain.body).toBe('"No-spend weekend": 1 of the last 5 weekends. That\'s off track. Want to make it smaller for a while to get back on track?');
     expect(plain.body).not.toMatch(/\d+(:\d\d)? ?(AM|PM)/);
   });
 
   it("says 'this week' only when the facts say the days are this week", () => {
-    const facts = { habit: "Read", kept: 1, of: 5, unit: "days", slot: null, smaller: null };
+    const facts = { habit: "Read", kept: 1, of: 5, unit: "days", slotDate: null, smaller: null };
     expect(composeMessage("habit_struggle", { ...facts, thisWeek: false }, "direct").body).toMatch(/^"Read": 1 of the last 5 days\. That's off track\. /);
     expect(composeMessage("habit_struggle", facts, "direct").body).not.toMatch(/this week/);
   });
@@ -67,7 +71,11 @@ describe("push text (owner, 2026-11-05: one line, what was noticed and why, and 
       "You spent $86 on food this week, $30 more than usual.",
     ],
     ["trial_ending", { name: "Spotify", daysLeft: 1, thenCents: 1199 }, "Your Spotify free trial turns into $11.99 in 1 day."],
-    ["habit_struggle", { habit: "Gym", kept: 1, of: 5, unit: "days", slot: "Tomorrow 7 AM", smaller: null }, '"Gym": 1 of the last 5 days.'],
+    [
+      "habit_struggle",
+      { habit: "Gym", kept: 1, of: 5, unit: "days", slotDate: "2026-11-11", slotTime: "09:00", smaller: null },
+      '"Gym": 1 of the last 5 days.',
+    ],
     ["weekly_review", { done: 9, slipped: 1, spentCents: 21_000, budgetCents: 0, change: null }, "9 to-dos done, 1 still open, $210 spent."],
   ];
 

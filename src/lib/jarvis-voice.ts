@@ -4,6 +4,8 @@
  * so the personality settings can preview it live.
  */
 
+import { formatDateStr } from "./dates";
+
 export type JarvisTone = "coach" | "friend" | "direct";
 export type Mood = "win" | "warn" | "info";
 export type Parts = { headline: string; fact: string; ask?: string; mood: Mood };
@@ -17,6 +19,12 @@ const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 type F = Record<string, unknown>;
 const s = (f: F, k: string) => String(f[k] ?? "");
 const n = (f: F, k: string) => Number(f[k] ?? 0);
+
+/** "22:00" as "10 PM", "23:30" as "11:30 PM". */
+const clock = (hhmm: string) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h < 12 ? "AM" : "PM"}`;
+};
 
 /** One entry per message kind. Facts come from the detectors in services/proactive. */
 const KINDS: Record<string, (f: F) => Parts> = {
@@ -137,8 +145,8 @@ const KINDS: Record<string, (f: F) => Parts> = {
     return {
       headline: `${s(f, "habit")} is off track`,
       fact: `"${s(f, "habit")}": ${kept} of the last ${of} ${unit}. That's off track${f.thisWeek ? " this week" : ""}.`,
-      ask: f.slot
-        ? `${s(f, "slot")} is open to get back on track.`
+      ask: f.slotDate
+        ? `${formatDateStr(s(f, "slotDate"), "EEEE")} ${clock(s(f, "slotTime"))} is open to get back on track.`
         : f.smaller
           ? `Try ${s(f, "smaller")} for two weeks to get back on track?`
           : "Want to make it smaller for a while to get back on track?",
@@ -246,12 +254,6 @@ export function pushText(kind: string, facts: F) {
   if (!p) return null;
   return { title: p.headline, body: [p.fact, p.ask].filter(Boolean).join(" ").replace(/\s+/g, " ").trim() };
 }
-
-/** "22:00" as "10 PM", "23:30" as "11:30 PM". */
-const clock = (hhmm: string) => {
-  const [h, m] = hhmm.split(":").map(Number);
-  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h < 12 ? "AM" : "PM"}`;
-};
 
 /**
  * What the assistant's pushes are, for Settings → Notifications. It has to match `pushImportant` in

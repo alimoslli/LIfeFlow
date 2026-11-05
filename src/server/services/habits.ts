@@ -55,6 +55,25 @@ export async function deleteHabit(scope: UserScope, id: string) {
   return row;
 }
 
+const TIME_BOXED =
+  /\b(gym|work ?out|exercise|run|running|jog|jogging|walk|walking|yoga|swim|swimming|lift|lifting|stretch|stretching|bike|biking|cycling|practice|practise|meditate|meditation|study|studying|read|reading)\b/i;
+const DURATION = /\b(\d{1,3})\s*(min|mins|minute|minutes|hr|hrs|hour|hours)\b/i;
+const KEEP_ALL_DAY = /^\s*(no|don'?t|stop|avoid|quit|less|limit|cut)\b/i;
+
+/**
+ * Minutes of calendar time a habit takes, when a time slot makes sense for it (study, workouts and other
+ * time-boxed habits done daily or weekly). Null for habits you keep all day ("No soda"), money habits and weekend ones.
+ */
+export function slotMinutes(h: { title: string; kind: string; cadence: string; target: number | null }): number | null {
+  if (h.cadence !== "daily" && h.cadence !== "weekly") return null;
+  const fit = (m: number) => Math.min(180, Math.max(15, Math.round(m)));
+  if (h.kind === "study") return fit(h.target ?? 30);
+  if (h.kind !== "custom" || KEEP_ALL_DAY.test(h.title)) return null;
+  const d = DURATION.exec(h.title);
+  if (d) return fit(Number(d[1]) * (/^h/i.test(d[2]) ? 60 : 1));
+  return TIME_BOXED.test(h.title) ? 30 : null;
+}
+
 /** Marks today (or a given day) done or not done for a habit. */
 export async function checkHabit(scope: UserScope, habitId: string, day: string, done = true) {
   const [h] = await scope.tx
