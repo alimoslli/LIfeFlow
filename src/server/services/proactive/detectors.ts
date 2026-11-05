@@ -74,25 +74,34 @@ const emailBrief: Detector = async ({ scope, tz, today }) => {
   ];
 };
 
-/** A category's spending this week vs. the same days of the previous 8 weeks. */
+/** Fewer past weeks than this in a category and there's no "usual" to compare with yet. */
+const PACE_MIN_WEEKS = 3;
+
+/**
+ * A category's spending this week vs. the same days of the previous weeks (up to 8), averaged over the weeks
+ * there is data for (back to the category's first charge), so a new category or a new user isn't compared with
+ * empty weeks. Quiet with fewer than PACE_MIN_WEEKS.
+ */
 const spendingPace: Detector = async ({ scope, today }) => {
   const wk = weekStart(today);
   const span = daysBetween(wk, today);
   const txns = await queryTransactions(scope, { from: addDaysStr(wk, -56), to: today, kinds: ["expense"], limit: 5000 });
-  const byCat = new Map<string, { id: string; name: string; now: number; past: number[] }>();
+  const byCat = new Map<string, { id: string; name: string; now: number; past: number[]; weeks: number }>();
   for (const t of txns) {
     if (!t.categoryId || !t.categoryName) continue;
-    const c = byCat.get(t.categoryId) ?? { id: t.categoryId, name: t.categoryName, now: 0, past: Array(8).fill(0) };
+    const c = byCat.get(t.categoryId) ?? { id: t.categoryId, name: t.categoryName, now: 0, past: Array(8).fill(0), weeks: 0 };
     if (t.date >= wk) c.now += spendOf(t);
     else {
       const w = Math.floor(daysBetween(t.date, wk) / 7.0001);
       const offset = daysBetween(addDaysStr(wk, -7 * (w + 1)), t.date);
+      if (w < 8) c.weeks = Math.max(c.weeks, w + 1);
       if (w < 8 && offset <= span) c.past[w] += spendOf(t);
     }
     byCat.set(t.categoryId, c);
   }
   const worst = [...byCat.values()]
-    .map((c) => ({ ...c, usual: Math.round(c.past.reduce((a, b) => a + b, 0) / 8) }))
+    .filter((c) => c.weeks >= PACE_MIN_WEEKS)
+    .map((c) => ({ ...c, usual: Math.round(c.past.reduce((a, b) => a + b, 0) / c.weeks) }))
     .filter((c) => c.usual > 0 && c.now - c.usual >= 2000 && c.now >= c.usual * 1.3)
     .sort((a, b) => b.now - b.usual - (a.now - a.usual))[0];
   if (!worst) return [];

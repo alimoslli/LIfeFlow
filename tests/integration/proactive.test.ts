@@ -236,6 +236,36 @@ describe("proactive Jarvis", () => {
   });
 });
 
+describe("spending pace uses the weeks there really is data for (audit A24)", () => {
+  // Groceries each week before this one, then `now` on this week's Monday.
+  async function groceries(weeks: number, usualCents: number, nowCents: number) {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s);
+      const food = (await getCategoryByName(s, "Groceries"))!;
+      const tx = (date: string, cents: number) =>
+        createTransaction(s, { accountId: acct.id, date, description: "Kroger", merchantName: "Kroger", amountCents: -cents, categoryId: food.id });
+      for (let w = 1; w <= weeks; w++) await tx(addDaysStr(weekStart(today), -7 * w), usualCents);
+      await tx(weekStart(today), nowCents);
+    });
+    return (await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "transaction" }))).filter((m) => m.kind === "spending_pace");
+  }
+
+  it("stays quiet on an ordinary week with only 3 weeks of history", async () => {
+    expect(await groceries(3, 4000, 4000)).toEqual([]);
+  });
+
+  it("stays quiet with too little history to know what's usual", async () => {
+    expect(await groceries(2, 4000, 12_000)).toEqual([]);
+  });
+
+  it("still notices a real jump, against the average of the weeks there are", async () => {
+    const [m] = await groceries(3, 4000, 9500);
+    expect(m.facts).toMatchObject({ spentCents: 9500, usualCents: 4000, overCents: 5500 });
+    expect(m.body).toContain("$95 on groceries this week, $55 more than usual");
+  });
+});
+
 describe("never asks to log by hand (audit A30)", () => {
   it("stays quiet for a manual-only user who stopped entering spending", async () => {
     const { run } = await makeUser();
