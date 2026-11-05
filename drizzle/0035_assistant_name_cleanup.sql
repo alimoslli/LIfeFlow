@@ -30,7 +30,7 @@ BEGIN
           THEN 'Your assistant couldn''t get through just now. Try again in a minute. Nothing else was changed.'
         ELSE 'Something went wrong while your assistant was answering. Try again. Anything already shown as done was saved.'
       END
-    WHERE "user_id" = u."id" AND "role" = 'assistant' AND "status" = 'error' AND (
+    WHERE "user_id" = u."id" AND "conversation_id" IN (SELECT "id" FROM "conversations" WHERE "user_id" = u."id") AND "role" = 'assistant' AND "status" = 'error' AND (
       "content" IN (
         'Jarvis couldn''t authenticate with OpenAI. Check OPENAI_API_KEY on the server.',
         'The configured OpenAI model wasn''t found. Check OPENAI_MODEL.',
@@ -43,7 +43,7 @@ BEGIN
     );
 
     UPDATE "messages" SET "tool_result" = jsonb_set("tool_result", '{data,unavailable}', to_jsonb('Live web search isn''t available right now.'::text))
-    WHERE "user_id" = u."id" AND "role" = 'tool' AND "tool_name" = 'web_search'
+    WHERE "user_id" = u."id" AND "conversation_id" IN (SELECT "id" FROM "conversations" WHERE "user_id" = u."id") AND "role" = 'tool' AND "tool_name" = 'web_search'
       AND "tool_result"->'data'->>'unavailable' LIKE 'The web search failed%';
 
     UPDATE "conversations" c SET "title" = 'Talking with ' || u."name"
