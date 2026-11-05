@@ -1,6 +1,6 @@
 # Jarvis intelligence: architecture, gaps and roadmap
 
-Jarvis gets better through **personal memory, user feedback, better tools, and measured changes to prompts, retrieval and workflows**. It does **not** train or fine-tune the AI model. The model is a configurable, stateless service (OpenAI by default). Everything Jarvis "learns" is stored as data in the user's own rows, where the user can review, correct and delete it.
+Jarvis gets better through **personal memory, user feedback, better tools, learned models we own (ADR 0023), and measured changes to prompts, retrieval and workflows**. It does **not** fine-tune the language model (that is level 2 in ADR 0023, after the 10-student test). The model is a configurable, stateless service (OpenAI by default). Everything Jarvis "learns" is stored as data in the user's own rows, where the user can review, correct and delete it.
 
 Status legend: ✅ built and verified by tests · 🟡 partly built · ⬜ not started
 
@@ -74,7 +74,7 @@ Not yet verified against the real OpenAI API: this workspace can't reach it. The
 - A life snapshot in the prompt (today, the week, money basics, deadlines), conversation summaries, the drawer resuming recent chats, token-based history trimming, effort routing by task type, web search, and PDF input.
 
 ### Phase 6: Privacy and operations
-- Conversation retention (30/90/365 days/forever). The feedback-sharing consent toggle. A training-data statement: LifeFlow does not train models on user data; provider data use follows the provider's API terms, which should be checked when the provider changes.
+- Conversation retention (30/90/365 days/forever). The feedback-sharing consent toggle. A training-data statement: LifeFlow does not train shared models on user data without explicit opt-in (ADR 0023); provider data use follows the provider's API terms, which should be checked when the provider changes.
 - **Production DB role without BYPASSRLS**: done 2026-10-29. Production connects as `budgetflow_app` (no BYPASSRLS, owns the app's tables), so FORCE RLS is enforced; see go-live checklist section 11. Export includes feedback and metrics.
 
 ## 4. Decisions

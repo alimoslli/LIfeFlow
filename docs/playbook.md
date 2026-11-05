@@ -33,15 +33,16 @@ Added 2026-11-05 from research on why people quit the apps they use (`docs/resea
 Retired phrases: "calm place", "chief of staff", "for students who juggle". Tagline: "Your whole life, in flow." Public copy says "your personal assistant"; in the app the user names their assistant, and until they do it is "your assistant". Never "Jarvis" in anything a user sees. LifeFlow is for anyone with a busy life; students are the first audience for ads.
 
 ## Training the assistant
-We improve the system around the model, never the model. No fine-tuning; user data is never used for training without explicit, informed opt-in (and then only with personal details removed and proof on the test set).
+We improve the brain we own (checks, learned models, tools, memory) and the instructions around the language model. We don't fine-tune the language model yet: that's level 2 in ADR 0023, after the 10-student test. Learned models start from made-up data and adjust to each person only from their own data. Real user data never trains anything shared without explicit, informed opt-in (then only with personal details removed and proof on the test set); Google data, health data and email or message content never do.
 
-### Six levers (fix the cause, not the symptom)
+### Seven levers (fix the cause, not the symptom)
 | Lever | Where | Fix it when |
 |---|---|---|
 | Instructions | `src/server/jarvis/prompt.ts` (bump `PROMPT_VERSION`) | It behaves wrongly everywhere |
 | Skills | `skills/<name>/SKILL.md` + `evals.json`, `npm run skills` | One kind of request goes badly |
 | Tools | `src/server/jarvis/tools/*` | It can't do something or reads the wrong data |
 | Memory | `services/memory.ts`, `jarvis/memory-retrieval.ts` | It forgets or brings up irrelevant things |
+| Learned models | services (ADR 0023), measured on the simulator | It misreads someone's pattern: a routine, pay, a bill or subscription, the best time |
 | Tests | `tests/fixtures/jarvis-eval.ts`, integrity, memory-retrieval, isolation | Always: every fix adds a test |
 | Feedback | answer ratings, `jarvis_runs` metrics | Tells us where to look |
 

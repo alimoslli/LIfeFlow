@@ -24,8 +24,8 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Server components can't pass functions to client components (e.g. `Dialog` render props) — wrap those in a `"use client"` file.
 - Tailwind v4 drops unused CSS variables; colors used by components must be registered in `@theme` in `globals.css`.
 
-## Jarvis intelligence rules (see docs/jarvis-intelligence.md, ADR 0005/0006)
-- Jarvis does not train models. It improves through user-approved memory, feedback, better tools and *measured* prompt/retrieval changes. Never use user data for training.
+## Jarvis intelligence rules (see docs/jarvis-intelligence.md, ADR 0005/0006/0023)
+- Dev's AI path is ADR 0023. The brain (timeline, checks and learned models, all in services) is ours and returns facts with sources; the language model only understands and words, and stays swappable behind `ModelProvider`. Learned models (routines, pay, bills and subscriptions, best time, what helps) start from made-up data (the simulator) and adjust to each person only from their own data, in their rows, shown in "What Dev knows" and deleted with the account. Each ships only at its targets in ADR 0023. Real user data never trains anything shared without that person's explicit opt-in, and Google data, health data and email or message content never do. We don't fine-tune or host our own language model yet (level 2, after the 10-student test).
 - Memory writes from Jarvis go only through `rememberForUser` / `correctMemoryForUser` (services/memory.ts). They save directly only when `explicitMemoryRequest(ctx.userText)` is true. Everything else is `proposed`, and proposed memories never reach a prompt. Don't trust the model's claim that the user asked.
 - `memories.content` is encrypted at rest (`sealedText`, ADR 0014): never filter or sort memories by content in SQL.
 - Prompts get memories only via `selectMemories` (jarvis/memory-retrieval.ts). If you change retrieval, add labelled cases to `tests/unit/memory-retrieval.test.ts`; the recall/precision test must stay green.

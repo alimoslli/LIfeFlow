@@ -186,13 +186,24 @@ Care points:
 
 ## 7. "Training the model": what it means now and later
 
-**Now:** we don't train our own AI model. Almost no app does; it costs millions, needs huge data, and would break the promise that user data never trains AI. We build a smart system around an existing model:
+Decided 2026-11-05, ADR 0023. The owner asked: if every message goes to the OpenAI API, how does our data change the app? It doesn't change OpenAI's model (it's stateless, `store: false`, and never learns from us), and it doesn't need to. Dev is two parts:
+
+- **The brain (ours):** the connections, one timeline, the checks, and learned models for the jobs that matter. It finds the facts, the clashes and the best time, each with a source.
+- **The words (rented for now):** the language model understands what the person says and words the answer. Swap it and Dev must give the same answer.
+
+How the brain works:
 
 1. **Find the dots (code, no AI):** one timeline of the user's life with every class, shift, exam, bill, payment, night of sleep and event on the same clock, plus what Dev knows.
 2. **Connect the dots:** written, tested checks for the important patterns, plus a daily AI look over the week for patterns no check covers. Every claim must point to real data or it's dropped.
 3. **Decide what helps:** the filter in section 5.
 
-Dev gets smarter through a growing **situation library** (real situations written as tests, including "stay quiet" cases; every real miss becomes a new test), user reactions, and measured changes to instructions. This is the training loop in `docs/playbook.md`.
+The three levels of owning our AI:
+
+1. **Now: our own learned models** for routines, pay from hours, bills and subscriptions, the best time for a task, and which suggestions this person takes. They start from the simulator's made-up lives and adjust to each person from their own history, inside their account, shown with sources in "What Dev knows". Each ships only at its targets in ADR 0023.
+2. **After the 10-student test: our own language model.** An open model we train on thousands of situations (simulator, plus real ones from people who say yes) and host ourselves, so no user data leaves LifeFlow. It replaces the current one only when it beats it on every test.
+3. **Not doing: a model built from zero.** It costs tens to hundreds of millions and wouldn't make Dev better than level 2.
+
+The **situation library** is the exam every version of Dev must pass, the material for tuning the checks, the training data for the learned models, and later for our own language model. Every real miss becomes a new case. This is the training loop in `docs/playbook.md`.
 
 **Later:** see section 11.
 
@@ -327,7 +338,7 @@ The path:
 
 1. Build on an existing model and make people love the product. Cursor and Perplexity started on other companies' models and trained their own only after millions of people used them.
 2. Grow the asset no one else has: the know-how of thousands of real situations, which dots mattered, and what helped.
-3. Train a specialized model on that know-how, only with users' explicit opt-in, personal details removed, and only when it beats the current system on the tests. `docs/playbook.md` already allows this.
+3. Train a specialized model on that know-how (level 2 in section 7 and ADR 0023), only with users' explicit opt-in, personal details removed, and only when it beats the current system on the tests.
 4. Partnerships come to the team that has the users and the best understanding of how a life fits together.
 
 Two things make it possible: **trust** (no one hands their whole life to a company that broke their trust once) and **the brain over the screen** (phone today, then watch, glasses, voice and maybe more; the part that understands a life is what lasts).
@@ -507,3 +518,9 @@ The hours a person actually lives (asleep, class, work, home, with people, a day
 ### Fit the routine
 
 > Yes, but also we have to know what the user is, what the user's normal life looks like, in order to suggest. So a normal user would always go back and do what his normal routine would look like, not what the app is telling him to do. So we're trying to fit what the app is telling him to do as close to his routine. So let's say he has a gap on free time from like 8 a.m. until like, let's say, sleep. We can't suggest that he should study in that time if he only studies in the morning. Or we can't suggest that he goes to the gym when he went to the gym in the morning that day. You know what I'm saying? We have to make sure it's very smart on how it catches those things and recommends the correct thing to do in the right time.
+
+### What are we training? (2026-11-05)
+
+> Yes, but what exactly are we training? Like, who are we giving this information to? Are we just giving it to the OpenAI API? Or what are we doing? Like, how are we putting those data in changing the app if it's, like, just going back to the OpenAI API? That's why I wanted to train my own AI model.
+
+> I don't understand your question, but I do know that you're gonna do the most optimal and best thing. I trust you, man.
