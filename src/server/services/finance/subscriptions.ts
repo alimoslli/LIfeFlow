@@ -6,8 +6,9 @@ import type { UserScope } from "../../db/with-user";
 import { searchWeb } from "../../integrations/web-search";
 import { ServiceError } from "../errors";
 import { createTask } from "../tasks";
-import { createRecurring, listRecurring, suggestRecurring } from "./planning";
-import { merchantKey, merchantKeys } from "./recurring-detect";
+import { amountsClose } from "./bill-match";
+import { bankSeries, createRecurring, listRecurring, seriesForItem, suggestRecurring } from "./planning";
+import { merchantKey, merchantKeys, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 
 /**
@@ -36,22 +37,52 @@ export function billedVia(description: string): "apple" | "google_play" | "paypa
   return null;
 }
 
+/**
+ * A price increase as people see it (positive cents), dated on the first charge at the new price. `key`
+ * names the change itself (merchant, new price, day it started), the same whether the subscription is
+ * tracked yet or only found in the bank, so it's announced once.
+ */
+type PriceUp = { fromCents: number; toCents: number; date: string; key: string };
+const priceUpOf = (c: RecurringCandidate): PriceUp | null => {
+  const p = c.priceChange;
+  // More than 50 cents more: rounding and tax changes aren't news.
+  return p && -p.toCents > -p.fromCents + 50
+    ? { fromCents: -p.fromCents, toCents: -p.toCents, date: p.date, key: `${c.merchantKey}:${-p.toCents}:${p.date}` }
+    : null;
+};
+
 export async function subscriptionsOverview(scope: UserScope, today: string) {
-  const [items, txns, detected] = await series(
+  const [items, txns, bank] = await series(
     () => listRecurring(scope, { includeInactive: true }),
     () => queryTransactions(scope, { from: addDaysStr(today, -400), to: today, kinds: ["expense"], limit: 20_000 }),
-    () => suggestRecurring(scope, today),
+    () => bankSeries(scope, today),
   );
+  const allSeries = [...bank.tracked, ...bank.untracked];
+  const at = (x: { date: string; amountCents: number }) => `${x.date}|${x.amountCents}`;
   const subs = items
     .filter((i) => i.kind === "subscription" && i.status !== "cancelled")
     .map((s) => {
       const key = merchantKey({ merchantName: s.name, description: s.name });
+      const found = seriesForItem(s, bank.tracked)[0];
+      // Its own charges: the matched series', or the merchant's minus those of its other services (Apple bills several).
+      const mine = found && new Set(found.charges.map(at));
+      const others = new Set(allSeries.filter((c) => c !== found).flatMap((c) => c.charges.map(at)));
       const charges = txns
         .filter((t) => !t.pending && merchantKeys(t).some((k) => k === key || k === s.merchantKey))
+        .filter((t) => (mine ? mine.has(at(t)) : !others.has(at(t))))
         .sort((a, b) => b.date.localeCompare(a.date));
       const latest = charges[0] ? -charges[0].amountCents : null;
-      const previous = charges.find((c, i) => i > 0 && -c.amountCents !== latest);
-      const priceUp = latest !== null && previous && latest > -previous.amountCents + 50 ? { fromCents: -previous.amountCents, toCents: latest } : null;
+      const previous = charges.findIndex((c, i) => i > 0 && -c.amountCents !== latest);
+      const priceUp: PriceUp | null = found
+        ? priceUpOf(found)
+        : latest !== null && previous > 0 && latest > -charges[previous].amountCents + 50
+          ? {
+              fromCents: -charges[previous].amountCents,
+              toCents: latest,
+              date: charges[previous - 1].date,
+              key: `${merchantKey(charges[0])}:${latest}:${charges[previous - 1].date}`,
+            }
+          : null;
       const monthlyCents = Math.round((-s.amountCents * PER_YEAR[s.frequency]) / 12);
       return {
         ...s,
@@ -66,19 +97,30 @@ export async function subscriptionsOverview(scope: UserScope, today: string) {
     })
     .sort((a, b) => b.yearlyCents - a.yearlyCents);
 
+  // Subscriptions found in transactions that aren't tracked yet.
+  const found = bank.untracked.filter((c) => c.kind === "subscription" && c.latestAmountCents < 0);
   const active = subs.filter((s) => s.status === "active");
   const families = FAMILIES.map(([family, re]) => ({ family, names: active.filter((s) => re.test(s.name)) })).filter((f) => f.names.length >= 2);
-  const sameService = Object.values(Object.groupBy(active, (s) => s.merchantKey ?? s.name)).filter((g) => (g?.length ?? 0) >= 2);
+  // The same service tracked twice costs about the same each time; one biller's different services don't (iCloud and Apple Music).
+  const sameService = Object.values(Object.groupBy(active, (s) => s.merchantKey ?? s.name))
+    .map((g = []) => g.filter((s) => g.some((o) => o !== s && amountsClose(o.amountCents, s.amountCents, false))))
+    .filter((g) => g.length >= 2);
+  const yearlyExtra = (p: PriceUp, freq: keyof typeof PER_YEAR) => (p.toCents - p.fromCents) * PER_YEAR[freq];
   const flags = [
     ...active
       .filter((s) => s.priceUp)
       .map((s) => ({
         kind: "price_up" as const,
-        id: s.id,
+        id: s.id as string | null,
         name: s.name,
         ...s.priceUp!,
-        yearlyExtraCents: (s.priceUp!.toCents - s.priceUp!.fromCents) * PER_YEAR[s.frequency],
+        yearlyExtraCents: yearlyExtra(s.priceUp!, s.frequency),
       })),
+    // Price increases on subscriptions found in the bank but not tracked yet count the same.
+    ...found.flatMap((c) => {
+      const p = priceUpOf(c);
+      return p ? [{ kind: "price_up" as const, id: null, name: c.name, ...p, yearlyExtraCents: yearlyExtra(p, c.frequency) }] : [];
+    }),
     ...active
       .filter((s) => s.trialDaysLeft !== null && s.trialDaysLeft <= 7)
       .map((s) => ({ kind: "trial" as const, id: s.id, name: s.name, daysLeft: s.trialDaysLeft!, thenCents: -s.amountCents })),
@@ -91,14 +133,11 @@ export async function subscriptionsOverview(scope: UserScope, today: string) {
     ...sameService.map((g) => ({
       kind: "duplicate" as const,
       family: "the same service",
-      names: g!.map((s) => s.name),
-      yearlyCents: g!.reduce((n, s) => n + s.yearlyCents, 0),
+      names: g.map((s) => s.name),
+      yearlyCents: g.reduce((n, s) => n + s.yearlyCents, 0),
     })),
     ...active.filter((s) => s.usage === "not_using").map((s) => ({ kind: "unused" as const, id: s.id, name: s.name, yearlyCents: s.yearlyCents })),
   ];
-  // Subscriptions found in transactions that aren't tracked yet.
-  const trackedKeys = new Set(subs.map((x) => merchantKey({ merchantName: x.name, description: x.name })));
-  const found = detected.filter((c) => c.kind === "subscription" && c.latestAmountCents < 0 && c.confidence >= 0.6 && !trackedKeys.has(c.merchantKey));
   // Totals count what was found in the bank too (it's real money going out), not only what's tracked.
   const foundYearly = found.reduce((n, c) => n + -c.latestAmountCents * PER_YEAR[c.frequency], 0);
   // How much bank history there is to look at: a subscription shows up after 2 to 3 charges.
@@ -146,9 +185,9 @@ export async function remindBeforeRenewal(scope: UserScope, tz: string, id: stri
   return { taskId: t.id, day };
 }
 
-/** Starts tracking a recurring charge found in transactions. */
+/** Starts tracking a recurring charge found in transactions. `key` is its `seriesKey` (one merchant can bill several). */
 export async function trackFound(scope: UserScope, today: string, key: string) {
-  const c = (await suggestRecurring(scope, today)).find((x) => x.merchantKey === key);
+  const c = (await suggestRecurring(scope, today)).find((x) => x.seriesKey === key);
   if (!c) throw new ServiceError("That charge is already tracked or no longer looks recurring.");
   return createRecurring(
     scope,

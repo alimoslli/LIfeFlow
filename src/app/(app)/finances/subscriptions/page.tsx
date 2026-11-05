@@ -169,7 +169,7 @@ export default async function SubscriptionsPage() {
         <section aria-label="Found in your transactions" className="flex flex-col gap-2">
           <h2 className="text-sm font-medium text-muted">Found in your transactions</h2>
           {d.found.map((c) => (
-            <Card as="div" key={c.merchantKey} className="flex items-center gap-3 p-4">
+            <Card as="div" key={c.seriesKey} className="flex items-center gap-3 p-4">
               <AlertTriangle className="h-5 w-5 shrink-0 text-muted" />
               <div className="min-w-0 flex-1">
                 <p className="text-[0.9375rem] font-medium break-words">{c.name}</p>
@@ -177,7 +177,7 @@ export default async function SubscriptionsPage() {
                   {usd(c.latestAmountCents)} every {FREQ[c.frequency]} · {c.occurrences} charges · next around {formatDateStr(c.nextExpectedDate, "MMM d")}
                 </p>
               </div>
-              <ActionButton action={trackFoundAction.bind(null, c.merchantKey)} className="rounded-full bg-accent px-4 text-sm font-medium text-accent-text">
+              <ActionButton action={trackFoundAction.bind(null, c.seriesKey)} className="rounded-full bg-accent px-4 text-sm font-medium text-accent-text">
                 Track
               </ActionButton>
             </Card>

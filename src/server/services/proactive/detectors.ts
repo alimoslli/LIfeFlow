@@ -501,7 +501,8 @@ const subscriptionWatch: Detector = async ({ scope, today }) => {
       out.push({
         kind: "subscription_price_up",
         topic: "money",
-        dedupeKey: `sub_price:${f.id}:${f.toCents}`,
+        // The change itself (merchant, new price, first day at it): once, whether it's tracked yet or only found in the bank.
+        dedupeKey: `sub_price:${f.key}`,
         facts: { name: f.name, fromCents: f.fromCents, toCents: f.toCents, yearlyExtraCents: f.yearlyExtraCents },
         action: { type: "open", label: "Review it", href: "/finances/subscriptions" },
         priority: 70,
@@ -521,7 +522,7 @@ const subscriptionWatch: Detector = async ({ scope, today }) => {
     out.push({
       kind: "new_subscription",
       topic: "money",
-      dedupeKey: `sub_found:${c.merchantKey}`,
+      dedupeKey: `sub_found:${c.seriesKey}`,
       facts: { name: c.name, amountCents: -c.latestAmountCents, count: c.occurrences },
       action: { type: "open", label: "Take a look", href: "/finances/subscriptions" },
       priority: 50,

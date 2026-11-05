@@ -365,6 +365,8 @@ export const financeTools = [
               latestAmountCents: r.latestAmountCents,
               nextExpectedDate: r.nextExpectedDate,
               ...(r.variableAmount ? { amountVaries: true } : {}),
+              // The latest change of price, from the first charge at the new one.
+              ...(r.priceChange ? { priceChange: { fromCents: r.priceChange.fromCents, toCents: r.priceChange.toCents, since: r.priceChange.date } } : {}),
             })),
           viewAt: "/finances/transactions",
         });

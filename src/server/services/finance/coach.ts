@@ -8,7 +8,8 @@ import { needOrWant } from "./categorize";
 import { rollupToParents, spendingByCategoryId } from "./cashflow";
 import { goalsWithPlans } from "./goals";
 import { balancesOf } from "./overview";
-import { budgetStatus, listRecurring, suggestRecurring, upcomingRecurring } from "./planning";
+import { amountsClose } from "./bill-match";
+import { bankSeries, budgetStatus, listRecurring, seriesForItem, upcomingRecurring } from "./planning";
 import { queryTransactions } from "./transactions";
 
 /**
@@ -81,11 +82,12 @@ export async function planPaycheck(scope: UserScope, today: string, amountCents:
 // ------------------------------------------------------------ subscriptions
 
 export async function subscriptionReport(scope: UserScope, today: string) {
-  const [tracked, detected, recent] = await series(
+  const [tracked, bank, recent] = await series(
     () => listRecurring(scope),
-    () => suggestRecurring(scope, today),
+    () => bankSeries(scope, today),
     () => queryTransactions(scope, { from: addDaysStr(today, -200), to: today, kinds: ["expense"], limit: 20_000 }),
   );
+  const detected = bank.untracked;
   const words = (x: string) =>
     new Set(
       x
@@ -103,10 +105,16 @@ export async function subscriptionReport(scope: UserScope, today: string) {
       nextDate: r.nextDueDate,
       tracked: true,
       merchantKey: merchantKey({ merchantName: r.name, description: r.name }) || r.merchantKey,
+      series: seriesForItem(r, bank.trackedActive)[0] ?? null,
     }));
-  // A detected pattern that shares a merchant key or a word with something tracked is the same thing (e.g. "Parkview Apartments" vs "Rent, Parkview Apartments").
-  const overlapsTracked = (d: { name: string; merchantKey: string }) =>
-    trackedItems.some((t) => t.merchantKey === d.merchantKey || [...words(d.name)].some((w) => words(t.name).has(w)));
+  // A detected pattern that shares a merchant key or a word with something tracked, for about the same amount, is the same
+  // thing (e.g. "Parkview Apartments" vs "Rent, Parkview Apartments"); one merchant's other service isn't (iCloud next to Apple Music).
+  const overlapsTracked = (d: { name: string; merchantKey: string; latestAmountCents: number; variableAmount: boolean }) =>
+    trackedItems.some(
+      (t) =>
+        (t.merchantKey === d.merchantKey || [...words(d.name)].some((w) => words(t.name).has(w))) &&
+        amountsClose(-t.amountCents, d.latestAmountCents, d.variableAmount),
+    );
   const items = [
     ...trackedItems,
     ...detected
@@ -120,12 +128,17 @@ export async function subscriptionReport(scope: UserScope, today: string) {
         nextDate: d.nextExpectedDate,
         tracked: false,
         merchantKey: d.merchantKey,
+        series: d,
         ...(d.variableAmount ? { amountVaries: true } : {}),
       })),
   ].map((i) => ({ ...i, yearlyCents: i.amountCents * yearlyFactor[i.frequency] }));
-  // Price increases: the latest charge from that merchant is higher than the first one in the window.
-  const priceChanges = items.flatMap((i) => {
+  // Price increases: the series' latest change of price; without a series, the latest charge from that merchant against the first one in the window.
+  const priceChanges = items.flatMap(({ series: found, ...i }) => {
     if (i.kind !== "subscription") return [];
+    if (found) {
+      const p = found.priceChange;
+      return p && -p.toCents > -p.fromCents + 50 ? [{ name: i.name, fromCents: -p.fromCents, toCents: -p.toCents }] : [];
+    }
     const charges = recent.filter((t) => !t.pending && merchantKey(t) === i.merchantKey);
     if (charges.length < 2) return [];
     const latest = -charges[0].amountCents;
@@ -143,7 +156,7 @@ export async function subscriptionReport(scope: UserScope, today: string) {
   // Subscriptions (tracked or found in transactions) count toward the total; bills like rent never do.
   const subs = items.filter((i) => i.kind === "subscription");
   return {
-    items: items.sort((a, b) => b.yearlyCents - a.yearlyCents),
+    items: items.map(({ series: _series, ...i }) => i).sort((a, b) => b.yearlyCents - a.yearlyCents),
     subscriptionsYearlyCents: subs.reduce((s, i) => s + i.yearlyCents, 0),
     priceChanges,
     overlaps,

@@ -7,7 +7,7 @@ import { listAccounts } from "./accounts";
 import { balancesOf } from "./overview";
 import { nameRelation } from "./bill-match";
 import { bankSeries, budgetStatus, listRecurring, upcomingRecurring, type BankSeries } from "./planning";
-import { detectRecurring, merchantKey, merchantKeys, nextOccurrence, type RecurringCandidate } from "./recurring-detect";
+import { MIN_CONFIDENCE, detectRecurring, merchantKey, merchantKeys, nthOccurrence, occurrencesBetween, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 import { listEmployers } from "../work";
 
@@ -93,7 +93,7 @@ const dollars = (c: number) => {
 // ------------------------------------------------------------ data
 
 /** Bills and subscriptions found in the bank feed that the user doesn't track yet. */
-const foundBills = (bank: BankSeries) => bank.untracked.filter((c) => c.kind !== "income" && c.latestAmountCents < 0 && c.confidence >= 0.6);
+const foundBills = (bank: BankSeries) => bank.untracked.filter((c) => c.kind !== "income" && c.latestAmountCents < 0 && c.confidence >= MIN_CONFIDENCE);
 /** Series that are an active tracked bill under the bank's name: their charges are that bill, not day-to-day spending. */
 const trackedBills = (bank: BankSeries) => bank.trackedActive.filter((c) => c.latestAmountCents < 0);
 
@@ -132,13 +132,15 @@ export async function upcomingBills(scope: UserScope, today: string, from: strin
     .filter((u) => u.amountCents < 0)
     .map((u) => ({ date: u.date, amountCents: u.amountCents, name: u.name, found: false, key: `${u.id}:${u.date}` }));
   for (const c of foundBills(b)) {
-    let cycle = c.nextExpectedDate;
-    const late = cycle < from && daysBetween(cycle, from) <= 5;
-    for (let guard = 0; !late && cycle < from && guard < 200; guard++) cycle = nextOccurrence(cycle, c.frequency);
-    for (let guard = 0; guard < 60; guard++, cycle = nextOccurrence(cycle, c.frequency)) {
-      const date = cycle < from ? from : cycle;
+    // Cycles counted from the next expected one, on the series' own day of the month (the 31st stays the 31st).
+    const cycle = (n: number) => nthOccurrence(c.nextExpectedDate, c.frequency, n, c.dueDay);
+    const late = c.nextExpectedDate < from && daysBetween(c.nextExpectedDate, from) <= 5;
+    let n = 0;
+    while (!late && cycle(n) < from && n < 400) n++;
+    for (const end = n + 60; n < end; n++) {
+      const date = cycle(n) < from ? from : cycle(n);
       if (date > to) break;
-      bills.push({ date, amountCents: c.latestAmountCents, name: c.name, found: true, key: `found:${c.merchantKey}:${cycle}` });
+      bills.push({ date, amountCents: c.latestAmountCents, name: c.name, found: true, key: `found:${c.seriesKey}:${cycle(n)}` });
     }
   }
   return bills.sort((a, b) => a.date.localeCompare(b.date));
@@ -186,13 +188,12 @@ async function expectedPay(scope: UserScope, today: string, to: string, bank?: B
   if (tracked.length) return tracked.map((t) => ({ date: t.date, amountCents: t.amountCents, name: t.name }));
   const deposits = await queryTransactions(scope, { from: addDaysStr(today, -120), to: today, kinds: ["income"], limit: 2000 });
   const pattern = detectRecurring(deposits)
-    .filter((c) => c.latestAmountCents > 0 && c.confidence >= 0.6 && !c.variableAmount && isSalaryPay(c.name, [c.merchantKey]))
+    .filter((c) => c.latestAmountCents > 0 && c.confidence >= MIN_CONFIDENCE && !c.variableAmount && isSalaryPay(c.name, [c.merchantKey]))
     .sort((a, b) => b.latestAmountCents - a.latestAmountCents)[0];
   if (!pattern) return [];
-  const out: DatedAmount[] = [];
-  for (let d = pattern.nextExpectedDate; d <= to; d = nextOccurrence(d, pattern.frequency))
-    if (d > today) out.push({ date: d, amountCents: pattern.latestAmountCents, name: pattern.name });
-  return out;
+  return occurrencesBetween(pattern.nextExpectedDate, pattern.frequency, pattern.nextExpectedDate, to, { day: pattern.dueDay })
+    .filter((d) => d > today)
+    .map((date) => ({ date, amountCents: pattern.latestAmountCents, name: pattern.name }));
 }
 
 export async function cashForecast(scope: UserScope, today: string, days = 30) {

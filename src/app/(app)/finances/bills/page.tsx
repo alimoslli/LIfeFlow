@@ -99,7 +99,7 @@ export default async function BillsPage() {
               <CardHeader title="Detected in your transactions" subtitle="Regular charges we found that you aren't tracking yet" />
               <ul className="divide-y divide-border">
                 {d.detected.slice(0, 8).map((c) => (
-                  <li key={c.merchantKey} className="flex items-center gap-3 px-5 py-3">
+                  <li key={c.seriesKey} className="flex items-center gap-3 px-5 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="line-clamp-2 break-words text-sm">{c.name}</p>
                       <p className="text-xs text-muted">

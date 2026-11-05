@@ -8,7 +8,7 @@ import { assertOwned, notFound } from "../errors";
 import { listCategories } from "./categories";
 import { rollupToParents, spendingByCategoryId } from "./cashflow";
 import { PAID_EARLY_DAYS, nameRelation, paidOccurrences, trackedKeys, tracksSeries, type DueOccurrence } from "./bill-match";
-import { detectRecurring, merchantKey, merchantKeys, nextOccurrence, type RecurringCandidate } from "./recurring-detect";
+import { MIN_CONFIDENCE, detectRecurring, merchantKey, merchantKeys, occurrencesBetween, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 import { parsePatch } from "../patch";
 
@@ -232,9 +232,8 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
   const due: { item: (typeof items)[number]; date: string }[] = [];
   for (const r of items) {
     if (!r.nextDueDate) continue;
-    let d = r.nextDueDate;
-    for (let guard = 0; d < from && guard < 200; guard++) d = nextOccurrence(d, r.frequency);
-    for (let guard = 0; d <= to && guard < 60; guard++, d = nextOccurrence(d, r.frequency)) due.push({ item: r, date: d });
+    // Projected from the stored date, so a bill due on the 31st stays on the 31st (or the month's last day).
+    for (const date of occurrencesBetween(r.nextDueDate, r.frequency, from, to)) due.push({ item: r, date });
   }
   if (!due.length) return [];
   const charges = await queryTransactions(scope, { from: addDaysStr(from, -Math.max(...Object.values(PAID_EARLY_DAYS))), to, limit: 5000 });
@@ -250,7 +249,7 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
     ),
   );
   const matched = bank ?? (couldPay ? await bankSeries(scope, from) : null);
-  const seriesOf = new Map(items.map((r) => [r.id, matched?.trackedActive.filter((c) => tracksSeries(r, c)) ?? []]));
+  const seriesOf = new Map(items.map((r) => [r.id, matched ? seriesForItem(r, matched.trackedActive) : []]));
   const paid = paidOccurrences(
     due.map(({ item, date }): DueOccurrence => {
       const s = seriesOf.get(item.id) ?? [];
@@ -276,11 +275,28 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
+type TrackedItem = Parameters<typeof tracksSeries>[0];
+
+/**
+ * The bank series a tracked item stands for (`tracksSeries`). One merchant can bill several (iCloud and
+ * Apple Music both read "APPLE.COM/BILL"): then the item stands for the one closest to its amount only,
+ * so tracking one never hides the other.
+ */
+export function seriesForItem(item: TrackedItem, all: RecurringCandidate[]): RecurringCandidate[] {
+  const byMerchant = Map.groupBy(
+    all.filter((c) => tracksSeries(item, c)),
+    (c) => c.merchantKey,
+  );
+  const off = (c: RecurringCandidate) => Math.abs(c.latestAmountCents - item.amountCents);
+  return [...byMerchant.values()].map((g) => g.reduce((best, c) => (off(c) < off(best) ? c : best)));
+}
+
 /**
  * Detection over the last 13 months, split into series the user already tracks and the rest. A tracked
  * item matches by key, or by a name inside the other plus the same amount and schedule (`tracksSeries`),
- * and only when money moves the same way. Paused and cancelled items still keep their series out of the
- * suggestions, but only active ones (`trackedActive`) turn a series into a bill.
+ * and only when money moves the same way (`seriesForItem`). Paused and cancelled items still keep their
+ * series out of the suggestions, but only active ones (`trackedActive`) turn a series into a bill. Only
+ * series at `MIN_CONFIDENCE` or more are suggested.
  */
 export async function bankSeries(scope: UserScope, today: string) {
   const [txns, existing] = await series(
@@ -288,12 +304,12 @@ export async function bankSeries(scope: UserScope, today: string) {
     () => listRecurring(scope, { includeInactive: true }),
   );
   const all = detectRecurring(txns);
-  const active = existing.filter((e) => e.status === "active");
-  const trackedBy = (items: typeof existing) => (c: RecurringCandidate) => items.some((e) => tracksSeries(e, c));
+  const ownedBy = (items: typeof existing) => new Set(items.flatMap((e) => seriesForItem(e, all)));
+  const [tracked, trackedActive] = [ownedBy(existing), ownedBy(existing.filter((e) => e.status === "active"))];
   return {
-    tracked: all.filter(trackedBy(existing)),
-    untracked: all.filter((c) => !trackedBy(existing)(c)),
-    trackedActive: all.filter(trackedBy(active)),
+    tracked: all.filter((c) => tracked.has(c)),
+    untracked: all.filter((c) => !tracked.has(c) && c.confidence >= MIN_CONFIDENCE),
+    trackedActive: all.filter((c) => trackedActive.has(c)),
   };
 }
 export type BankSeries = Awaited<ReturnType<typeof bankSeries>>;
