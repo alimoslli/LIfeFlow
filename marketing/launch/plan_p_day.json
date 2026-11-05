@@ -1,0 +1,199 @@
+{
+ "bpm": 100,
+ "duration": 27.2,
+ "vo": [],
+ "scenes": [
+  {
+   "kind": "phone",
+   "start": 0.0,
+   "end": 3.0,
+   "src": [
+    {
+     "rec": "day",
+     "from": 18.317,
+     "dur": 3.0,
+     "speed": 0.667
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "IT SPOTS WHAT",
+     "*YOU'D MISS.*"
+    ],
+    "size": 108,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 3.0,
+   "end": 6.0,
+   "src": [
+    {
+     "rec": "day",
+     "from": 0.948,
+     "dur": 3.0,
+     "speed": 1.095
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "TELL IT WHAT",
+     "*FILLS YOUR WEEK.*"
+    ],
+    "size": 96,
+    "top": 100,
+    "counter": "1 / 4"
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 6.0,
+   "end": 9.4,
+   "src": [
+    {
+     "rec": "day",
+     "from": 4.232,
+     "dur": 3.4,
+     "speed": 1.16
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "ADD *ONE CLASS*",
+     "AND YOUR JOB."
+    ],
+    "size": 100,
+    "top": 100,
+    "counter": "2 / 4"
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 9.4,
+   "end": 12.2,
+   "src": [
+    {
+     "rec": "day",
+     "from": 8.177,
+     "dur": 2.8,
+     "speed": 0.942
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "NAME IT. PICK",
+     "*HOW IT TALKS.*"
+    ],
+    "size": 100,
+    "top": 100,
+    "counter": "3 / 4"
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 12.2,
+   "end": 19.2,
+   "src": [
+    {
+     "rec": "day",
+     "from": 10.815,
+     "dur": 7.0,
+     "speed": 1.055
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "WATCH IT *READ*",
+     "YOUR WEEK."
+    ],
+    "size": 104,
+    "top": 100,
+    "counter": "4 / 4"
+   },
+   "punch": true
+  },
+  {
+   "kind": "phone",
+   "start": 19.2,
+   "end": 23.2,
+   "src": [
+    {
+     "rec": "day",
+     "from": 20.317,
+     "dur": 4.0,
+     "speed": 0.986
+    }
+   ],
+   "head": null,
+   "pops": [],
+   "pills": [],
+   "bold": {
+    "lines": [
+     "THEN IT TELLS YOU",
+     "*WHAT TO DO.*"
+    ],
+    "size": 92,
+    "top": 100
+   },
+   "punch": true
+  },
+  {
+   "kind": "gloss",
+   "outro": true,
+   "start": 23.2,
+   "end": 27.2,
+   "clip": "m/molecule.mp4",
+   "speed": 0.7,
+   "push": 0.03,
+   "fade_in": 0.3,
+   "haze": [
+    {
+     "cy": 1560,
+     "h": 900,
+     "s": 0.88
+    }
+   ],
+   "bold": {
+    "lines": [
+     "*TRY IT TODAY.*",
+     "TAP THE LINK",
+     "IN BIO."
+    ],
+    "size": 92,
+    "top": 1225,
+    "at": 0.15,
+    "out": false
+   },
+   "wordmark": {
+    "at": 1.2,
+    "y": 1600,
+    "sub": "lifeflowweb.com"
+   },
+   "note": {
+    "text": "Real app. The numbers shown are examples.",
+    "at": 1.3,
+    "y": 1850
+   }
+  }
+ ]
+}
