@@ -1,5 +1,6 @@
-import { desc, eq } from "drizzle-orm";
-import { integrations, syncJobs, type IntegrationProvider } from "../db/schema";
+import { and, desc, eq, isNull } from "drizzle-orm";
+import { courses, financialAccounts, integrations, syncJobs, workShifts, type IntegrationProvider } from "../db/schema";
+import { series } from "../db/series";
 import type { UserScope } from "../db/with-user";
 
 export type ProviderInfo = {
@@ -90,6 +91,21 @@ export async function integrationStatus(scope: UserScope) {
 }
 
 /** What isn't connected yet, in plain words, for Jarvis to suggest after onboarding (bank, Canvas, calendar). */
+/** What the assistant can see for this account, for the empty chat's "I know your ..." line. Only areas with real rows. */
+export async function whatAssistantKnows(scope: UserScope) {
+  const [classes, shifts, money] = await series(
+    () => scope.tx.select({ id: courses.id }).from(courses).where(eq(courses.userId, scope.userId)).limit(1),
+    () => scope.tx.select({ id: workShifts.id }).from(workShifts).where(eq(workShifts.userId, scope.userId)).limit(1),
+    () =>
+      scope.tx
+        .select({ id: financialAccounts.id })
+        .from(financialAccounts)
+        .where(and(eq(financialAccounts.userId, scope.userId), isNull(financialAccounts.archivedAt)))
+        .limit(1),
+  );
+  return [classes.length && "classes", shifts.length && "shifts", money.length && "money"].filter((x): x is string => !!x);
+}
+
 export async function missingConnections(scope: UserScope) {
   const rows = await scope.tx.select({ provider: integrations.provider }).from(integrations).where(eq(integrations.userId, scope.userId));
   const have = new Set(rows.map((r) => r.provider));

@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
-import { nameAtStart } from "@/lib/assistant";
+import { knowsLine, nameAtStart } from "@/lib/assistant";
 import { greetingIn } from "@/lib/dates";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { JarvisStatus, statusWord } from "./status";
@@ -57,6 +57,7 @@ export function JarvisChat({
   autoSend,
   onConversation,
   connect,
+  knows,
   startVoice,
 }: {
   conversationId?: string | null;
@@ -70,6 +71,8 @@ export function JarvisChat({
   onConversation?: (id: string, title: string) => void;
   /** Not connected yet; shown as one "connect me to do more" card on the empty screen. */
   connect?: string[];
+  /** What this account has (classes, shifts, money), for the empty screen's line; unknown means none is claimed. */
+  knows?: string[];
   /** Open with the voice bar already on. */
   startVoice?: boolean;
 }) {
@@ -316,7 +319,7 @@ export function JarvisChat({
               >
                 What can I take off your plate?
               </h2>
-              <p className="mt-2 max-w-xs text-[0.9375rem] leading-snug text-text-2">I know your classes, shifts and money.</p>
+              <p className="mt-2 max-w-xs text-[0.9375rem] leading-snug text-text-2">{knowsLine(knows)}</p>
               {!aiConsent ? (
                 <AiConsentCard name={assistantName} />
               ) : (
