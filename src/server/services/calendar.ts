@@ -334,6 +334,15 @@ export async function getAgenda(
 }
 
 /** Pairs of time-blocking items that overlap. */
+/** Courses whose class meetings are on the calendar (events of kind "class" linked to the course). */
+export async function coursesOnCalendar(scope: UserScope) {
+  const rows = await scope.tx
+    .selectDistinct({ id: calendarEvents.courseId })
+    .from(calendarEvents)
+    .where(and(eq(calendarEvents.userId, scope.userId), eq(calendarEvents.kind, "class"), isNotNull(calendarEvents.courseId)));
+  return new Set(rows.map((r) => r.id).filter((id): id is string => !!id));
+}
+
 export function findConflicts(items: AgendaItem[]) {
   const timed = items.filter((i) => i.blocksTime && i.endsAt).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   const conflicts: { a: AgendaItem; b: AgendaItem }[] = [];

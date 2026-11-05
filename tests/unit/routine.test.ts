@@ -4,23 +4,50 @@ import { slotMinutes } from "@/server/services/habits";
 
 describe("class times from a course's meeting text", () => {
   it("reads the common formats", () => {
-    expect(parseMeetingInfo("Mon/Wed 10:00–11:15")).toEqual([{ days: [1, 3], start: "10:00", end: "11:15" }]);
+    expect(parseMeetingInfo("Mon/Wed 10:00 AM–11:15 AM")).toEqual([{ days: [1, 3], start: "10:00", end: "11:15" }]);
     expect(parseMeetingInfo("Tue/Thu 13:00-14:15")).toEqual([{ days: [2, 4], start: "13:00", end: "14:15" }]);
+    expect(parseMeetingInfo("W 18:30-21:15")).toEqual([{ days: [3], start: "18:30", end: "21:15" }]);
+    expect(parseMeetingInfo("Tue 10:00-13:00")).toEqual([{ days: [2], start: "10:00", end: "13:00" }]); // 24-hour time in the range
+    expect(parseMeetingInfo("T 6:00-8:50 PM")).toEqual([{ days: [2], start: "18:00", end: "20:50" }]);
+    expect(parseMeetingInfo("Sat 9:00 AM - 12:00 PM")).toEqual([{ days: [6], start: "09:00", end: "12:00" }]);
+    expect(parseMeetingInfo("Th 10-11:15am")).toEqual([{ days: [4], start: "10:00", end: "11:15" }]);
+    expect(parseMeetingInfo("TuTh 2:30 pm - 3:45 pm")).toEqual([{ days: [2, 4], start: "14:30", end: "15:45" }]);
     expect(parseMeetingInfo("MWF 9:00-9:50 AM")).toEqual([{ days: [1, 3, 5], start: "09:00", end: "09:50" }]);
     expect(parseMeetingInfo("TTh 11:00–12:15 PM")).toEqual([{ days: [2, 4], start: "11:00", end: "12:15" }]);
     expect(parseMeetingInfo("Mon 9:00–10:00 am, Room 210")).toEqual([{ days: [1], start: "09:00", end: "10:00" }]);
     expect(parseMeetingInfo("Tuesdays and Thursdays 2:30 pm - 3:45 pm")).toEqual([{ days: [2, 4], start: "14:30", end: "15:45" }]);
-    expect(parseMeetingInfo("Mon/Wed 10:00–11:15, Fri 9:00–9:50")).toEqual([
+    expect(parseMeetingInfo("Mon/Wed 10:00–11:15 AM, Fri 9:00–9:50 AM")).toEqual([
       { days: [1, 3], start: "10:00", end: "11:15" },
       { days: [5], start: "09:00", end: "09:50" },
     ]);
   });
 
-  it("knows a class with no fixed time takes none", () => {
+  it("treats 1 to 11 o'clock with no AM or PM as unclear (an evening class is often typed 7:00-9:45; review)", () => {
+    for (const text of [
+      "W 7:00-9:45",
+      "TR 7:00-9:45",
+      "Tue 7:30-8:45",
+      "MW 8:00-9:15",
+      "Mon/Wed 10:00–11:15",
+      "MTWThF 8:00-8:50",
+      "Fri 12:00-2:00",
+      "MWF 1:00-1:50 PM, TTh 12:30-1:45",
+      "Mon 10:00-11:15; Tues office hours 3 pm",
+      "MW 10:00-11:15 / W lab 2:00-4:00 PM",
+      "MW 10.00-11.15",
+    ])
+      expect(parseMeetingInfo(text), text).toBeNull();
+    expect(parseMeetingInfo("Fri 12:00-12:50")).toEqual([{ days: [5], start: "12:00", end: "12:50" }]); // noon is clear
+  });
+
+  it("knows a class takes no fixed time only when the text says so (online, asynchronous)", () => {
     expect(parseMeetingInfo("Online, any time")).toEqual([]);
+    expect(parseMeetingInfo("Online")).toEqual([]);
     expect(parseMeetingInfo("Asynchronous")).toEqual([]);
-    expect(parseMeetingInfo("")).toEqual([]);
-    expect(parseMeetingInfo(null)).toEqual([]);
+    // No text (onboarding saves classes by name only): the times are unknown, not free.
+    expect(parseMeetingInfo("")).toBeNull();
+    expect(parseMeetingInfo("   ")).toBeNull();
+    expect(parseMeetingInfo(null)).toBeNull();
   });
 
   it("gives up (null) instead of guessing", () => {

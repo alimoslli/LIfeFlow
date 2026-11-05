@@ -578,6 +578,33 @@ describe("reviews and coaching", () => {
       expect(unclear.facts).toMatchObject({ slotDate: null, slotTime: null });
       expect(unclear.body).not.toMatch(/is open/);
     });
+
+    it("offers nothing when a class has no times typed and isn't on the calendar (review: onboarding saves only the name)", async () => {
+      const m = await habitOffTrack({ title: "Study 25 minutes a day", kind: "study", target: 25 }, async (s) => {
+        await createCourse(s, { name: "Biology" });
+        const job = await createEmployer(s, { name: "Cafe", hourlyRateCents: 1500 });
+        await createShift(s, TZ, { employerId: job.id, date: "2026-11-11", startTime: "14:00", endTime: "18:00" });
+      });
+      expect(m.facts).toMatchObject({ slotDate: null, slotTime: null });
+      expect(m.body).not.toMatch(/is open/);
+
+      // The same class with its meetings on the calendar: the day is known, so the slot goes around it.
+      const known = await habitOffTrack({ title: "Study 25 minutes a day", kind: "study", target: 25 }, async (s) => {
+        const bio = await createCourse(s, { name: "Biology" });
+        await createEvent(s, TZ, { title: "Biology", kind: "class", courseId: bio.id, date: "2026-11-11", startTime: "09:00", endTime: "10:15" });
+      });
+      expect(known.facts).toMatchObject({ slotDate: "2026-11-11", slotTime: "10:15" });
+      expect(known.body).toContain("Wednesday 10:15 AM is open to get back on track.");
+    });
+
+    it("offers nothing when an evening class is typed without PM (review: W 7:00-9:45 is 7 to 9:45 PM)", async () => {
+      const m = await habitOffTrack({ title: "Gym" }, async (s) => {
+        await createCourse(s, { name: "Night class", meetingInfo: "W 7:00-9:45" });
+        await createEvent(s, TZ, { title: "Internship", date: "2026-11-11", startTime: "09:45", endTime: "19:00" });
+      });
+      expect(m.facts).toMatchObject({ slotDate: null, slotTime: null });
+      expect(m.body).not.toMatch(/is open|PM/);
+    });
   });
 
   it("counts only periods since the habit began, and says 'this week' only when the days are this week (review)", async () => {

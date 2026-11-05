@@ -82,12 +82,14 @@ function minutesOf(h: number, m: number, mer: "a" | "p" | null) {
 }
 
 /**
- * Class meetings from free text such as "Mon/Wed 10:00–11:15", "MWF 9:00-9:50 AM" or "Tuesdays and Thursdays 2:30 pm - 3:45 pm".
- * [] when the class has no fixed time (online, asynchronous); null when the text can't be read reliably.
+ * Class meetings from free text such as "Tue/Thu 13:00–14:15", "MWF 9:00-9:50 AM" or "Tuesdays and Thursdays 2:30 pm - 3:45 pm".
+ * [] only when the text says the class has no fixed time (online, asynchronous). Null when it can't be read reliably,
+ * including no text at all (the times are unknown, not free) and 1 to 11 o'clock with no AM or PM ("W 7:00-9:45" is
+ * often an evening class), unless the range uses 24-hour time (13:00 and up).
  */
 export function parseMeetingInfo(text: string | null | undefined): Meeting[] | null {
   const s = (text ?? "").trim();
-  if (!s) return [];
+  if (!s) return null;
   const out: Meeting[] = [];
   let from = 0;
   for (const m of s.matchAll(RANGE)) {
@@ -97,7 +99,9 @@ export function parseMeetingInfo(text: string | null | undefined): Meeting[] | n
     const [sm, em] = [mer(m[3]), mer(m[6])];
     // Every time needs minutes or AM/PM ("10-11" could be anything).
     if ((!m[2] && !sm && !em) || (!m[5] && !em && !sm)) return null;
-    if (!sm && !em && Number(m[1]) < 7) return null; // "1:00-2:15" with no AM/PM: 1 AM or 1 PM?
+    const hours = [Number(m[1]), Number(m[4])];
+    // "7:00-9:45" with no AM/PM: morning or evening? Clear only in 24-hour time or at noon.
+    if (!sm && !em && !hours.some((h) => h >= 13) && hours.some((h) => h >= 1 && h <= 11)) return null;
     let start = minutesOf(Number(m[1]), Number(m[2] ?? 0), sm ?? em);
     let end = minutesOf(Number(m[4]), Number(m[5] ?? 0), em ?? sm);
     if (start == null || end == null) return null;

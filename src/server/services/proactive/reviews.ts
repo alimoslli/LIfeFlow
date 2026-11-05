@@ -12,7 +12,7 @@ import { budgetStatus, spendingByCategory } from "../finance/planning";
 import { listAccounts } from "../finance/accounts";
 import { balancesOf } from "../finance/overview";
 import { queryTransactions } from "../finance/transactions";
-import { freeSlots, getAgenda } from "../calendar";
+import { coursesOnCalendar, freeSlots, getAgenda } from "../calendar";
 import { listHabits, slotMinutes } from "../habits";
 import { listActiveMemories } from "../memory";
 import { listAssignments, listCourses } from "../school";
@@ -298,12 +298,20 @@ export const goalForecast: Detector = async ({ scope, today }) => {
 
 const PERIOD_UNIT = { daily: "days", weekly: "weeks", payday: "weeks", weekends: "weekends" } as const;
 
-/** Class times typed on the user's courses (`meetingInfo`) that fall on `day`, as busy blocks. Null if any can't be read. */
+/**
+ * Class times typed on the user's courses (`meetingInfo`) that fall on `day`, as busy blocks. Null when any course's
+ * times are unknown: text that can't be read, or no text and no class meetings on the calendar (onboarding saves
+ * classes by name only). A course with no text whose meetings are on the calendar is covered by the agenda.
+ */
 async function classTimesOn({ scope, tz }: DetectContext, day: string) {
   const busy: { blocksTime: true; startsAt: Date; endsAt: Date }[] = [];
+  let onCalendar: Set<string> | undefined;
   for (const c of await listCourses(scope)) {
     const meetings = parseMeetingInfo(c.meetingInfo);
-    if (!meetings) return null;
+    if (!meetings) {
+      if (!c.meetingInfo?.trim() && (onCalendar ??= await coursesOnCalendar(scope)).has(c.id)) continue;
+      return null;
+    }
     for (const m of meetings.filter((x) => x.days.includes(dayOfWeek(day))))
       busy.push({ blocksTime: true, startsAt: localToInstant(day, m.start, tz), endsAt: localToInstant(day, m.end, tz) });
   }
