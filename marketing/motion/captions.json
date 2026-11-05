@@ -1,0 +1,39 @@
+[
+  {
+    "lines": ["HOW'S MY", "*WEEK* *LOOKING?*"],
+    "marks": ["Wednesday: overloaded", "car insurance $186", "1–6 PM", "2–2:50 PM"],
+    "hold": 4.2,
+    "type": 0.5,
+    "wait": 1.1,
+    "zoom": 1.05,
+    "skip_typing": true
+  },
+  {
+    "lines": ["BLOCK TIME", "*FOR* *THE* *MIDTERM.*"],
+    "marks": ["Today, Nov 9", "Tomorrow, Nov 10"],
+    "hold": 3.0,
+    "type": 1.5,
+    "wait": 0.9
+  },
+  {
+    "lines": ["CAR INSURANCE", "*BEFORE* *PAYDAY?*"],
+    "marks": ["$43.82 gap", "$100 from savings to checking today"],
+    "hold": 3.6,
+    "type": 1.5,
+    "wait": 0.9
+  },
+  {
+    "lines": ["TEXT MY MANAGER", "*ABOUT* *FRIDAY.*"],
+    "marks": [],
+    "hold": 3.0,
+    "type": 1.5,
+    "wait": 0.9
+  },
+  {
+    "lines": ["REMIND ME", "*TOMORROW* *AT* *9.*"],
+    "marks": ["Call my insurance", "tomorrow, Tue Nov 10"],
+    "hold": 2.6,
+    "type": 1.4,
+    "wait": 0.8
+  }
+]
