@@ -4,7 +4,7 @@ import type { UserScope } from "@/server/db/with-user";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
 import { billsAndPace, cashForecast } from "@/server/services/finance/forecast";
-import { createRecurring, listRecurring, suggestRecurring } from "@/server/services/finance/planning";
+import { createRecurring, listRecurring, setRecurringStatus, suggestRecurring } from "@/server/services/finance/planning";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { DETECTORS } from "@/server/services/proactive/detectors";
 import { makeUser, TZ } from "../helpers";
@@ -78,7 +78,7 @@ describe("a bill that already posted isn't due again (A3)", () => {
     await run(async (s) => {
       const acct = await checking(s, 200_000);
       const utilities = (await getCategoryByName(s, "Utilities"))!;
-      // Tracked at $82; the bank took $69.06 today.
+      // Tracked at $82; the bill moves month to month, and the bank took $69.06 today.
       await createRecurring(s, {
         name: "City Utilities",
         amountCents: -8_200,
@@ -87,14 +87,20 @@ describe("a bill that already posted isn't due again (A3)", () => {
         kind: "bill",
         categoryId: utilities.id,
       });
-      await createTransaction(s, {
-        accountId: acct.id,
-        date: TODAY,
-        description: "CITY UTILITIES",
-        merchantName: "City Utilities",
-        amountCents: -6_906,
-        categoryId: utilities.id,
-      });
+      for (const [date, amountCents] of [
+        ["2026-08-05", -9_510],
+        ["2026-09-05", -7_840],
+        ["2026-10-05", -8_800],
+        [TODAY, -6_906],
+      ] as const)
+        await createTransaction(s, {
+          accountId: acct.id,
+          date,
+          description: "CITY UTILITIES",
+          merchantName: "City Utilities",
+          amountCents,
+          categoryId: utilities.id,
+        });
       // Due today, posted 2 days early.
       await createRecurring(s, { name: "Mint Mobile", amountCents: -1_500, frequency: "monthly", nextDueDate: TODAY, kind: "bill" });
       await createTransaction(s, { accountId: acct.id, date: "2026-11-03", description: "MINT MOBILE", amountCents: -1_500 });
@@ -153,5 +159,88 @@ describe("the urgent bill message reads the same bills as Today and Money (A14)"
       dedupeKey: "bill_short:found:t mobile:2026-11-07",
       facts: { bill: "T-Mobile", billCents: 8_500, dueIn: "in 2 days", shortCents: 4_500 },
     });
+  });
+
+  it("keeps one alert for a late found bill: the key is its cycle, not the day it's shown on", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s, 4_000);
+      for (const d of ["2026-08-07", "2026-09-07", "2026-10-07"])
+        await createTransaction(s, { accountId: acct.id, date: d, description: "T-MOBILE AUTOPAY", merchantName: "T-Mobile", amountCents: -8_500 });
+    });
+    const keys = new Set<string>();
+    for (const today of ["2026-11-05", "2026-11-06", "2026-11-07", "2026-11-08", "2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12"]) {
+      const out = await run((s) => DETECTORS.billsDue({ scope: s, tz: TZ, today, now: new Date(`${today}T14:00:00Z`) }));
+      expect(out.map((m) => m.kind)).toEqual(["bill_short"]);
+      for (const m of out) keys.add(m.dedupeKey);
+    }
+    expect([...keys]).toEqual(["bill_short:found:t mobile:2026-11-07"]);
+    // Late but not posted yet, it still shows as due today.
+    expect((await run((s) => billsAndPace(s, "2026-11-09", "2026-11-09", "2026-11-12"))).bills).toEqual([
+      expect.objectContaining({ name: "T-Mobile", date: "2026-11-09" }),
+    ]);
+  });
+});
+
+describe("review fixes: nothing else hides a bill or the money it costs", () => {
+  it("an ordinary Amazon purchase doesn't pay the Amazon Prime renewal", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s, 100_000);
+      await createRecurring(s, { name: "Amazon Prime", amountCents: -1_499, frequency: "monthly", nextDueDate: "2026-11-10", kind: "subscription" });
+      await createTransaction(s, { accountId: acct.id, date: "2026-11-06", description: "AMAZON MKTPL*ZX12", merchantName: "Amazon", amountCents: -1_380 });
+    });
+    const f = await run((s) => cashForecast(s, "2026-11-07", 10));
+    expect(f.bills.filter((b) => b.name === "Amazon Prime").map((b) => b.date)).toEqual(["2026-11-10"]);
+  });
+
+  it("tracked income from a university doesn't hide the tuition plan paid to it, or its cost", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s, 100_000);
+      for (const d of ["2026-07-15", "2026-08-15", "2026-09-15", "2026-10-15"])
+        await createTransaction(s, { accountId: acct.id, date: d, description: "STATE UNIVERSITY", merchantName: "State University", amountCents: -50_000 });
+      for (const [d, c] of [
+        ["2026-09-20", 4_100],
+        ["2026-10-02", 2_300],
+        ["2026-10-21", 7_700],
+        ["2026-11-01", 1_900],
+      ] as const)
+        await createTransaction(s, { accountId: acct.id, date: d, description: "KROGER", merchantName: "Kroger", amountCents: -c });
+    });
+    const before = await run((s) => billsAndPace(s, TODAY, TODAY, "2026-12-04"));
+    await run((s) => createRecurring(s, { name: "State University", amountCents: 120_000, frequency: "biweekly", nextDueDate: "2026-11-13", kind: "income" }));
+    const after = await run((s) => billsAndPace(s, TODAY, TODAY, "2026-12-04"));
+    expect(after.bills).toEqual([expect.objectContaining({ name: "State University", date: "2026-11-15", amountCents: -50_000, found: true })]);
+    expect(after.typical).toEqual(before.typical);
+  });
+
+  it("a cancelled tracked item's charges still count as spending (only active bills come out of day-to-day)", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s, 100_000);
+      for (const d of ["2026-08-20", "2026-09-20", "2026-10-20"])
+        await createTransaction(s, { accountId: acct.id, date: d, description: "NETFLIX.COM", merchantName: "Netflix", amountCents: -1_549 });
+      const item = await createRecurring(s, { name: "Netflix", amountCents: -1_549, frequency: "monthly", nextDueDate: "2026-11-20", kind: "subscription" });
+      await setRecurringStatus(s, item.id, "cancelled");
+    });
+    const { bills, typical } = await run((s) => billsAndPace(s, TODAY, TODAY, "2026-12-04"));
+    expect(bills).toEqual([]);
+    // Sep 20 and Oct 20 fall in the last 8 weeks: $30.98 over the 46 days since Sep 20.
+    expect(typical).toEqual({ dailyCents: Math.round(3_098 / 46), basedOnDays: 46 });
+  });
+
+  it("rent paid a week early under the bank's own name is paid, not counted again", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s, 300_000);
+      for (const d of ["2026-09-01", "2026-10-01", "2026-11-01", "2026-11-24"])
+        await createTransaction(s, { accountId: acct.id, date: d, description: "RENT CAMPUS EDGE APTS", amountCents: -120_000 });
+      await createRecurring(s, { name: "Rent", amountCents: -120_000, frequency: "monthly", nextDueDate: "2026-12-01", kind: "bill" });
+    });
+    const { bills } = await run((s) => billsAndPace(s, "2026-11-26", "2026-11-26", "2026-12-31"));
+    expect(bills.map((b) => `${b.name}@${b.date} ${b.found}`)).toEqual([]);
+    const next = await run((s) => billsAndPace(s, "2026-11-26", "2026-11-26", "2027-01-05"));
+    expect(next.bills.map((b) => `${b.name}@${b.date} ${b.found}`)).toEqual(["Rent@2027-01-01 false"]);
   });
 });
