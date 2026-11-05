@@ -91,7 +91,10 @@ export async function answerText(
           if (e.type === "error") text += `\n${e.message}`;
         },
       });
-    } catch {
+    } catch (e) {
+      // Only the kind of failure: an error's message can quote the text that was sent.
+      const err = e as { status?: number; code?: string } | undefined;
+      console.error("[sms] reply failed:", e instanceof Error ? e.constructor.name : typeof e, err?.status ?? err?.code ?? null);
       text = "I can't answer texts right now. Try again in a bit, or open LifeFlow.";
     }
     await setSms(db, user.id, { conversationId, pendingActionId: pending });

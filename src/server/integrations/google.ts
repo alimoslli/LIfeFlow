@@ -195,7 +195,11 @@ async function api<T>(scope: UserScope, url: string, init: RequestInit = {}, f: 
     if (res.status === 401 && attempt === 0) continue;
     if (res.status === 204) return undefined as T;
     const body = await res.json().catch(() => ({}));
-    if (!res.ok) throw new GoogleError(`Google returned an error (${res.status}${body?.error?.message ? `: ${truncate(body.error.message, 120)}` : ""}).`);
+    if (!res.ok) {
+      // Google's own wording goes to the server log; people get a plain sentence.
+      console.error("[google] api error", res.status, body?.error?.status ?? null, truncate(String(body?.error?.message ?? ""), 200));
+      throw new GoogleError("Google couldn't do that right now. Try again in a minute.");
+    }
     return body as T;
   }
   throw new GoogleError("Google rejected the request.", true);

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ServiceError } from "../../services/errors";
 import { formatIn } from "@/lib/dates";
 import { and, eq } from "drizzle-orm";
 import { workShifts } from "../../db/schema";
@@ -219,7 +220,7 @@ export const workTools = [
           .from(workShifts)
           .where(and(eq(workShifts.id, shiftId), eq(workShifts.userId, s.userId))),
       );
-      if (!sh) throw new Error("Shift not found.");
+      if (!sh) throw new ServiceError("Shift not found.");
       return `Delete the shift on ${formatIn(sh.startsAt, ctx.tz, "EEE, MMM d, h:mm a")}?`;
     },
     async execute({ shiftId }, ctx) {

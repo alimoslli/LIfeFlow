@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { parseSearchResponse, searchWeb, WebSearchError } from "@/server/integrations/web-search";
 
 const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -83,6 +83,25 @@ describe("web search", () => {
       maxRetries: 0,
       fetch: (async () => reply({ error: { message: "boom" } }, 500)) as typeof fetch,
     });
-    await expect(searchWeb("x", { search: { client, model: "m" } })).rejects.toThrow(/web search failed/);
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(searchWeb("x", { search: { client, model: "m" } })).rejects.toThrow("Live web search isn't available right now.");
+    log.mockRestore();
+  });
+
+  it("never passes the provider's raw error on; it goes to the server log only", async () => {
+    const raw = "Incorrect API key provided: sk-proj-abc123. You can find your API key at https://platform.openai.com/account/api-keys.";
+    const client = new OpenAI({
+      apiKey: "sk",
+      baseURL: "http://fake.local/v1",
+      maxRetries: 0,
+      fetch: (async () => reply({ error: { message: raw, type: "invalid_request_error", code: "invalid_api_key" } }, 401)) as typeof fetch,
+    });
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const err = await searchWeb("x", { search: { client, model: "m" } }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(WebSearchError);
+    expect((err as Error).message).toBe("Live web search isn't available right now.");
+    expect(log).toHaveBeenCalled();
+    expect(JSON.stringify(log.mock.calls)).toMatch(/Incorrect API key/);
+    log.mockRestore();
   });
 });
