@@ -30,7 +30,7 @@ Fake success · invented data or sample data in a real account · moving money o
 Added 2026-11-05 from research on why people quit the apps they use (`docs/research/2026-11-05-what-people-love-and-hate.md`): surprise billing (a sliding price, core features moved behind a new tier, a charge after a cancel, a renewal with no warning) · more than one push a day by default, or a push that doesn't say why · losing a person's data (every record exportable in one tap) · a redesign that loses simplicity · asking for every connection before it helps.
 
 ## Voice reminders
-Retired phrases: "calm place", "chief of staff", "for students who juggle". Tagline: "Your whole life, in flow." Public copy says "your personal assistant"; in the app the default name is Jarvis (renameable). LifeFlow is for anyone with a busy life; students are the first audience for ads.
+Retired phrases: "calm place", "chief of staff", "for students who juggle". Tagline: "Your whole life, in flow." Public copy says "your personal assistant"; in the app the user names their assistant, and until they do it is "your assistant". Never "Jarvis" in anything a user sees. LifeFlow is for anyone with a busy life; students are the first audience for ads.
 
 ## Training the assistant
 We improve the system around the model, never the model. No fine-tuning; user data is never used for training without explicit, informed opt-in (and then only with personal details removed and proof on the test set).
