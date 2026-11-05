@@ -224,7 +224,15 @@ Each becomes a test: the data, what Dev must notice and trace, what it suggests,
 
 4. **The paycheck.** The user is usually scheduled about 25 hours a pay period, but what lands changes with real clock-in time, call-outs and taxes. Dev predicts the next paycheck as a range from past periods, uses it to plan, and compares it with what actually lands. Must not: predict before there's enough history, keep predicting when past predictions were off, or count predicted pay as money available.
 
-Still to write: about 30 more, including stay-quiet cases. For example: a subscription price went up; three short nights during exam week; a trip on the calendar with nothing saved; a smaller paycheck after fewer shifts; a professor moves a due date; aid or a scholarship lands; textbook week.
+Still to write: about 30 more, including stay-quiet cases.
+
+### The owner's situations are seeds, not the spec (owner's note, 2026-11-05)
+
+The aunt, the cafeteria, Cairo and the paycheck are training examples. Dev will meet millions of lives that look nothing like them. So:
+
+- **The checks are written for any life**, in general terms (money, time, rest, a pattern that changed, something drifting, a heavy stretch ahead). Only the data differs from person to person.
+- **The situation library covers very different people**, not just the owner's week: a night-shift nurse with a kid, a freelancer with uneven income, a parent, someone with two jobs, a student with no job, someone who lives with family. Nothing gets built that only works for one kind of week.
+- **The first audience sets the first examples.** Students who work (the owner and the people around them) give the first 30 situations, as broad as possible. Every real user miss adds one. For example: a subscription price went up; three short nights during exam week; a trip on the calendar with nothing saved; a smaller paycheck after fewer shifts; a professor moves a due date; aid or a scholarship lands; textbook week.
 
 ## 10. Order of work
 
@@ -362,3 +370,7 @@ Still open:
 ### What the app knows vs what the user sees
 
 > we have to understand there's a big difference between what the app knows and what, like what the app knows, what's connected to it and synced to it daily, and what the user is seeing. The user doesn't have to see all the data that's synced to him. So for example, I can tell the personal assistant that I have a goal to budget, but I don't want to see that I'm 50% in my budget goal and there's a UI setting for it and there's whatever. When I do a UI setting that shows how much of my goal is done, that's exactly doing another money app. No, we have to implement it into the user's life through the personal assistant in a way that has not been done before. So it's not just showing the user what he has, it's like using what he has to better his life.
+
+### Examples, not the spec
+
+> I want to make sure that our AI model knows that this is just my, like, just examples that we're going to be training him on. My own traveling, coming back, school cafeteria, that's all examples we're training him on. But there's going to be millions of examples that he's going to face with users that are connecting to him. Maybe not train them on the millions of ones right now, but make sure he's going to be compatible with mainly a lot of what's going to be connected to him. Like, the people I know, like, they all work similarly to me, so I'm just trying to give him examples as broad as possible to be able to connect everything.
