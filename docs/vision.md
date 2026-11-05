@@ -484,3 +484,9 @@ Still open:
 > So if anything, it's going to be B or C, definitely. But I still don't believe that this is the best way to show the data. Let's brainstorm more ideas on the design of how we're going to show the timeline of that user. I want it to be like editable. Users can like clearly see it. It's like the thing I hate most about this is the reading time, number 3, as well as where real life lives is not at all what I wanted, like not at all the way I wanted it to be implemented to the digital life.
 
 Outcome: opening screen is B (line first, words under) or C (calmer braid, words under). Rejected: the time band with a moving cursor and an edge arrow; real life as a separate lane or as background water. Next: brainstorm other ways to show time and to merge real life with digital life, sketch the owner's picks.
+
+### Confirmed: real life is the timeline (owner, 2026-11-05)
+
+The hours a person actually lives (asleep, class, work, home, with people, a day off) are the timeline itself; digital life (money, deadlines, bills, pay, health data, Dev's notes) attaches to the moments it touches. Time is read in words (named parts of the day, "Tomorrow morning", "Friday night"), with the person standing still at now while life flows past. Five rows in words sit under the visual and follow the moment in focus. Being sketched as six live concepts on the same data: life line, braid around you, DNA, the road, day ring, day strips. Motion must be staged (not everything at once) and smooth.
+
+> yes this is what i meant i want to see it in a couple of ways, even ways implementing the braid and the dna one. All of these designs when moving and changing to not all be shown at the same tume must be very smooth and in a flow. Also the 5 ways to see it, i want to see all
