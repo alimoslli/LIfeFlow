@@ -232,6 +232,74 @@ export async function mergeCanvasDuplicates(scope: UserScope) {
     mergedCourses++;
   }
 
+  // The same class twice (two Canvas copies, or one left over): same code, or same name with no clashing code.
+  const live = await scope.tx
+    .select()
+    .from(courses)
+    .where(and(eq(courses.userId, scope.userId), sql`${courses.archivedAt} is null`));
+  const norm = (v: string | null | undefined) => (v ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const rank = (c: (typeof live)[number]) => (c.source === "canvas" && c.providerCourseId ? 0 : c.source === "canvas" ? 1 : 2);
+  const gone = new Set<string>();
+  for (const a of [...live].sort((x, y) => rank(x) - rank(y) || +x.createdAt - +y.createdAt)) {
+    if (gone.has(a.id)) continue;
+    for (const b of live) {
+      if (b.id === a.id || gone.has(b.id)) continue;
+      const sameCode = norm(a.code) && norm(a.code) === norm(b.code);
+      const sameName = norm(a.name) && norm(a.name) === norm(b.name) && (!norm(a.code) || !norm(b.code) || norm(a.code) === norm(b.code));
+      if (!sameCode && !sameName) continue;
+      await scope.tx
+        .update(courses)
+        .set({
+          instructorName: a.instructorName ?? b.instructorName,
+          instructorEmail: a.instructorEmail ?? b.instructorEmail,
+          location: a.location ?? b.location,
+          meetingInfo: a.meetingInfo ?? b.meetingInfo,
+          gradeWeights: a.gradeWeights ?? b.gradeWeights,
+          term: a.term ?? b.term,
+        })
+        .where(eq(courses.id, a.id));
+      for (const t of [calendarEvents, tasks, notes])
+        await scope.tx
+          .update(t)
+          .set({ courseId: a.id })
+          .where(and(eq(t.userId, scope.userId), eq(t.courseId, b.id)));
+      await scope.tx
+        .update(courseMaterials)
+        .set({ courseId: a.id })
+        .where(and(eq(courseMaterials.userId, scope.userId), eq(courseMaterials.courseId, b.id)));
+      await scope.tx
+        .update(assignments)
+        .set({ courseId: a.id })
+        .where(and(eq(assignments.userId, scope.userId), eq(assignments.courseId, b.id)));
+      await scope.tx.delete(courses).where(and(eq(courses.id, b.id), eq(courses.userId, scope.userId)));
+      gone.add(b.id);
+      mergedCourses++;
+    }
+  }
+
+  // The same assignment twice in one class (same title): keep the Canvas one with a real time, carry over progress.
+  const inClass = await scope.tx.select().from(assignments).where(eq(assignments.userId, scope.userId));
+  const groups = new Map<string, typeof inClass>();
+  for (const x of inClass) groups.set(`${x.courseId}:${titleKey(x.title)}`, [...(groups.get(`${x.courseId}:${titleKey(x.title)}`) ?? []), x]);
+  for (const list of groups.values()) {
+    if (list.length < 2) continue;
+    const score = (x: (typeof list)[number]) => (x.source === "canvas" ? 0 : 2) + (x.dueAllDay ? 1 : 0);
+    const [keep, ...rest] = [...list].sort((x, y) => score(x) - score(y) || +x.createdAt - +y.createdAt);
+    for (const d of rest) {
+      await scope.tx
+        .update(assignments)
+        .set({
+          status: d.status !== "todo" && keep.status === "todo" ? d.status : keep.status,
+          completedAt: keep.completedAt ?? d.completedAt,
+          grade: keep.grade ?? d.grade,
+          description: keep.description ?? d.description,
+        })
+        .where(eq(assignments.id, keep.id));
+      await scope.tx.delete(assignments).where(eq(assignments.id, d.id));
+      mergedAssignments++;
+    }
+  }
+
   // Hand-made assignments that Canvas also has, in the same class.
   const rows = await scope.tx
     .select()

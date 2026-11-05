@@ -3,6 +3,7 @@ import { formatDateStr } from "@/lib/dates";
 import { trashAction } from "../trash-actions";
 import { redirect } from "next/navigation";
 import { formNum, formObject, mutate, type ActionState } from "@/server/actions";
+import { mergeCanvasDuplicates } from "@/server/integrations/canvas";
 import { ServiceError } from "@/server/services/errors";
 import { addMaterial, createAssignment, createCourse, deleteMaterial, getAssignment, updateAssignment, updateCourse } from "@/server/services/school";
 
@@ -109,5 +110,14 @@ export async function setGradeWeightsAction(id: string, _p: ActionState, fd: For
   return mutate("course.weights", async (s) => {
     await updateCourse(s, id, { gradeWeights: Object.keys(weights).length ? weights : null });
     return "Saved";
+  });
+}
+
+/** Folds the same class (or assignment) that appears twice into one, keeping Canvas's dates and the student's progress. */
+export async function mergeDuplicateClassesAction(): Promise<ActionState> {
+  return mutate("course.merge_duplicates", async (s) => {
+    const r = await mergeCanvasDuplicates(s);
+    if (!r.courses && !r.assignments) return "No duplicates found.";
+    return `Merged ${r.courses} duplicate class${r.courses === 1 ? "" : "es"} and ${r.assignments} duplicate assignment${r.assignments === 1 ? "" : "s"}.`;
   });
 }
