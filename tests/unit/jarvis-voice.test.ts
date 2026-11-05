@@ -100,17 +100,24 @@ describe("push text (owner, 2026-11-05: one line, what was noticed and why, and 
 
 describe("Settings says what pushImportant does (audit A8)", () => {
   it("states the real limit, what counts, and the quiet hours", () => {
-    const text = pushSummary("Your assistant", jarvisSettings(undefined));
+    const text = pushSummary("Your assistant", jarvisSettings(undefined), true);
     expect(text).toBe(
       "Your assistant sends up to 3 notifications a day: your morning brief, evening wrap-up and weekly and monthly reviews, plus anything urgent or important it notices, like a bill your checking can't cover. Each one says in one line what it noticed and why, with the next step. None from 10 PM to 7 AM. To-do reminders don't count toward the limit.",
     );
     expect(text).not.toMatch(/only .*urgent/i);
-    const own = pushSummary("Nova", jarvisSettings({ jarvis: { pushLimit: 1, quietStart: "23:30", quietEnd: "06:00" } }));
+    const own = pushSummary("Nova", jarvisSettings({ jarvis: { pushLimit: 1, quietStart: "23:30", quietEnd: "06:00" } }), true);
     expect(own).toMatch(/^Nova sends up to 1 notification a day: /);
     expect(own).toContain("None from 11:30 PM to 6 AM.");
-    expect(pushSummary("Nova", jarvisSettings({ jarvis: { pushLimit: 2, quietStart: "00:00", quietEnd: "00:00" } }))).toContain("No quiet hours.");
-    expect(pushSummary("Nova", jarvisSettings({ jarvis: { pushLimit: 0 } }))).toBe(
+    expect(pushSummary("Nova", jarvisSettings({ jarvis: { pushLimit: 2, quietStart: "00:00", quietEnd: "00:00" } }), true)).toContain("No quiet hours.");
+    expect(pushSummary("Nova", jarvisSettings({ jarvis: { pushLimit: 0 } }), true)).toBe(
       "Nova keeps everything in the app and sends no notifications of its own. To-do reminders still come.",
     );
+  });
+
+  it("only mentions to-do reminders when that switch is on (review)", () => {
+    const off = pushSummary("Nova", jarvisSettings({ jarvis: { pushLimit: 0 } }), false);
+    expect(off).toBe("Nova keeps everything in the app and sends no notifications of its own.");
+    expect(pushSummary("Nova", jarvisSettings(undefined), false)).not.toMatch(/reminder/i);
+    expect(pushSummary("Nova", jarvisSettings(undefined), true)).toMatch(/To-do reminders don't count toward the limit\.$/);
   });
 });

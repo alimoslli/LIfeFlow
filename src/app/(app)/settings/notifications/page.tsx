@@ -21,7 +21,7 @@ export default async function NotificationSettings() {
     prefs: notificationPrefs(u.preferences),
     devices: await listSubscriptions(s),
     tz: u.timezone,
-    pushes: pushSummary(nameAtStart(assistantProfile(u.preferences).name), jarvisSettings(u.preferences)),
+    pushes: pushSummary(nameAtStart(assistantProfile(u.preferences).name), jarvisSettings(u.preferences), notificationPrefs(u.preferences).reminders),
   }));
   const available = !!pushConfig();
   return (
