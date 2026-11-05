@@ -2,6 +2,7 @@ import { series } from "@/server/db/series";
 import { addDaysStr, daysBetween, formatDateStr, monthEnd, monthStart } from "@/lib/dates";
 import type { UserScope } from "../../db/with-user";
 import { summarizeCashflow } from "./cashflow";
+import { keywordCategory, needOrWant } from "./categorize";
 import { listAccounts } from "./accounts";
 import { balancesOf } from "./overview";
 import { nameRelation } from "./bill-match";
@@ -52,7 +53,7 @@ export function budgetPace(i: {
   limitCents: number;
   spentCents: number;
   today: string;
-  /** Biggest merchant in this category this month, with its typical purchase. */
+  /** Biggest merchant in this category this month that's safe to skip (`skippableMerchant`), with its typical purchase. */
   topMerchant: { name: string; avgCents: number; count: number } | null;
 }) {
   const start = monthStart(i.today);
@@ -236,6 +237,25 @@ export async function cashForecast(scope: UserScope, today: string, days = 30) {
   };
 }
 
+/**
+ * The merchant a budget fix may suggest skipping: the biggest this month, bought at least twice, that's a want.
+ * Never an essential (groceries, rent, utilities, medical, getting to work or school), by the purchase's
+ * category or, when that's vague ("Food & Dining"), by the merchant's: skipping those isn't a fix anyone takes.
+ */
+export function skippableMerchant(txns: { merchantName: string | null; description: string; amountCents: number; categoryName?: string | null }[]) {
+  const byMerchant = new Map<string, { name: string; cents: number; count: number }>();
+  for (const t of txns) {
+    if (needOrWant(t.categoryName) === "need" || needOrWant(keywordCategory(t)) === "need") continue;
+    const k = merchantKey(t);
+    const m = byMerchant.get(k) ?? { name: t.merchantName ?? t.description, cents: 0, count: 0 };
+    m.cents -= t.amountCents;
+    m.count++;
+    byMerchant.set(k, m);
+  }
+  const top = [...byMerchant.values()].filter((m) => m.count >= 2).sort((a, c) => c.cents - a.cents)[0];
+  return top ? { name: top.name, avgCents: Math.round(top.cents / top.count), count: top.count } : null;
+}
+
 /** Early warnings for every budget, with a specific fix. */
 export async function budgetWarnings(scope: UserScope, today: string) {
   const [budgets, txns] = await series(
@@ -244,21 +264,12 @@ export async function budgetWarnings(scope: UserScope, today: string) {
   );
   return budgets.map((b) => {
     const inCat = txns.filter((t) => t.categoryId && b.childIds.includes(t.categoryId));
-    const byMerchant = new Map<string, { name: string; cents: number; count: number }>();
-    for (const t of inCat) {
-      const k = merchantKey(t);
-      const m = byMerchant.get(k) ?? { name: t.merchantName ?? t.description, cents: 0, count: 0 };
-      m.cents -= t.amountCents;
-      m.count++;
-      byMerchant.set(k, m);
-    }
-    const top = [...byMerchant.values()].sort((a, c) => c.cents - a.cents)[0];
     const pace = budgetPace({
       category: b.categoryName,
       limitCents: b.limitCents,
       spentCents: b.spentCents,
       today,
-      topMerchant: top && top.count >= 2 ? { name: top.name, avgCents: Math.round(top.cents / top.count), count: top.count } : null,
+      topMerchant: skippableMerchant(inCat),
     });
     return { ...b, ...pace };
   });

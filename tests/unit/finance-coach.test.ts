@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { keywordCategory, needOrWant } from "@/server/services/finance/categorize";
 import { simulatePayoff } from "@/server/services/finance/coach";
-import { budgetPace, projectCash } from "@/server/services/finance/forecast";
+import { budgetPace, projectCash, skippableMerchant } from "@/server/services/finance/forecast";
 import { goalProjection, goalTradeoff } from "@/server/services/finance/goals";
 import { projectInvesting } from "@/server/services/finance/investing";
 
@@ -42,6 +42,41 @@ describe("budget pace", () => {
     );
     expect(budgetPace({ category: "Shopping", limitCents: 20_000, spentCents: 25_000, today: "2026-10-10", topMerchant: null }).status).toBe("over");
     expect(budgetPace({ category: "Shopping", limitCents: 20_000, spentCents: 1_000, today: "2026-10-02", topMerchant: null }).status).toBe("on_track");
+  });
+});
+
+describe("the budget fix never cuts essentials (A17)", () => {
+  const buy = (merchantName: string, amountCents: number, categoryName: string | null) => ({
+    merchantName,
+    description: merchantName.toUpperCase(),
+    amountCents,
+    categoryName,
+  });
+
+  it("suggests the biggest discretionary merchant, never groceries", () => {
+    const food = [
+      ...Array.from({ length: 10 }, () => buy("Trader Joe's", -4_050, "Groceries")),
+      ...Array.from({ length: 4 }, () => buy("Chipotle", -1_250, "Restaurants")),
+      ...Array.from({ length: 2 }, () => buy("DoorDash", -3_100, "Food Delivery")),
+    ];
+    expect(skippableMerchant(food)).toEqual({ name: "DoorDash", avgCents: 3_100, count: 2 });
+    // Filed under the vague parent category, a grocery store is still a grocery store.
+    expect(
+      skippableMerchant([...Array.from({ length: 5 }, () => buy("Trader Joe's", -4_050, "Food & Dining")), buy("Chipotle", -1_250, "Restaurants")]),
+    ).toBeNull();
+  });
+
+  it("says nothing for rent, utilities, medical or getting to work, so the per-day limit is used", () => {
+    const essentials = [
+      ...Array.from({ length: 3 }, () => buy("Shell", -4_000, "Gas")),
+      ...Array.from({ length: 3 }, () => buy("CVS", -2_000, "Pharmacy")),
+      ...Array.from({ length: 2 }, () => buy("City Utilities", -8_000, "Utilities")),
+      ...Array.from({ length: 2 }, () => buy("MTA", -290, "Public Transit")),
+      ...Array.from({ length: 2 }, () => buy("Campus Edge Apts", -95_000, "Rent")),
+    ];
+    expect(skippableMerchant(essentials)).toBeNull();
+    const p = budgetPace({ category: "Groceries", limitCents: 30_000, spentCents: 25_000, today: "2026-10-14", topMerchant: skippableMerchant(essentials) });
+    expect(p.fix).toBe("Keep Groceries to about $2.94 a day for the last 17 days to stay within budget.");
   });
 });
 
