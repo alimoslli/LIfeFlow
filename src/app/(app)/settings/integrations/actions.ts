@@ -93,7 +93,7 @@ const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : w.endsWith("
 export async function syncCanvasAction(): Promise<ActionState> {
   const r = await mutate("integration.canvas.synced", async (s, u) => {
     const x = await syncCanvas(s, fetch, u.timezone);
-    return `Synced ${plural(x.courses, "class")} and ${plural(x.assignments, "assignment")}${x.events ? `, plus ${plural(x.events, "class event")}` : ""} from Canvas.`;
+    return `Synced ${plural(x.courses, "class")} and ${plural(x.assignments, "assignment")}${x.events ? `, plus ${plural(x.events, "class event")}` : ""} from Canvas.${x.merged.courses || x.merged.assignments ? ` Merged ${x.merged.courses} class${x.merged.courses === 1 ? "" : "es"} and ${plural(x.merged.assignments, "assignment")} you'd added by hand into the Canvas ones.` : ""}`;
   });
   if (r && !r.ok) {
     const u = await requireUser();
