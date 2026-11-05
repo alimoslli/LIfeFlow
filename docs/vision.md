@@ -302,6 +302,14 @@ From `docs/research/2026-11-05-what-people-love-and-hate.md`. The owner approved
 
 Numbers 4 and 5 are small, and the 10-student test will exercise both, so they come first.
 
+### North star: use your time the way you want and need (owner, 2026-11-05)
+
+LifeFlow changes how people manage tasks, time and their whole life: one simple timeline where a person sees their life connected in a flow and knows the best way to use their time. That means the best time to do a given task, the best use of free time, and what to do to keep a good life in health and wealth.
+
+- **Finding the best time is a core action.** Add a task ("Econ problem set, 2 hours, due Friday") and Dev places it in the best stretch with a one-line reason ("Thursday 3 to 5 PM: free, rested, a day before it's due. I kept Saturday free"), offers one alternative, and gives Undo.
+- **Optimizing means the person's way, not the most hours filled.** Best is measured against what the person wants and needs: rest, time with people and days kept free count as much as tasks and money. Dev never fills every hour, and never takes sleep or people time unless asked.
+- **Health and wealth are what "a good life" is measured on**, through the strands' real data (rest, movement, food against goals; money available, saved, going toward goals). Dev suggests what keeps both healthy, from the data only.
+
 ### The simplicity test (owner, 2026-11-05)
 
 Whatever the surface becomes, it stays the simple place from version 2 of the plan: where people go to see what they have, what they're worth, what they're handling, and what's happening in their life. If a screen doesn't answer those four in plain words at a glance, it isn't done.
@@ -490,3 +498,7 @@ Outcome: opening screen is B (line first, words under) or C (calmer braid, words
 The hours a person actually lives (asleep, class, work, home, with people, a day off) are the timeline itself; digital life (money, deadlines, bills, pay, health data, Dev's notes) attaches to the moments it touches. Time is read in words (named parts of the day, "Tomorrow morning", "Friday night"), with the person standing still at now while life flows past. Five rows in words sit under the visual and follow the moment in focus. Being sketched as six live concepts on the same data: life line, braid around you, DNA, the road, day ring, day strips. Motion must be staged (not everything at once) and smooth.
 
 > yes this is what i meant i want to see it in a couple of ways, even ways implementing the braid and the dna one. All of these designs when moving and changing to not all be shown at the same tume must be very smooth and in a flow. Also the 5 ways to see it, i want to see all
+
+### North star
+
+> In the end, we want a tool that changes the idea of how we task manage, how we do our tasks, how we manage our lives, how our timeline, how we use our time wisely. Our users have to use this app to use all of their time exactly how they want to and how they need to. Optimizing time is very important for time management, and this is what they are going to get from this. They're gonna control their whole life and manage it through one simple timeline, and the concept of it has to come to the simplicity of it, of how easily it is to see your life connected in a flow on a timeline and know what's the best thing or the best way to use the free time you have, or the time, or what time is the best to do a certain task, or what things would be optimal for you to do to maintain a good life in health and wealth.
