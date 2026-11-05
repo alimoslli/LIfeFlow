@@ -297,26 +297,6 @@ const taskStreak: Detector = async ({ scope, tz, today }) => {
   return [{ kind: "task_streak", topic: "habits", dedupeKey: `task_streak:${today}`, facts: { days: current, best: current > best }, priority: 50 }];
 };
 
-/** Manual-only users who stopped logging spending for 4+ days. */
-const logReminder: Detector = async ({ scope, today }) => {
-  const accounts = await listAccounts(scope);
-  if (!accounts.length || accounts.some((a) => a.source === "plaid")) return [];
-  const [last] = await queryTransactions(scope, { kinds: ["expense"], limit: 1 });
-  if (!last) return [];
-  const days = daysBetween(last.date, today);
-  if (days < 4) return [];
-  return [
-    {
-      kind: "log_reminder",
-      topic: "money",
-      dedupeKey: `log_reminder:${last.date}`,
-      facts: { days },
-      action: { type: "open", label: "Log spending", href: "/money?add=spending" },
-      priority: 45,
-    },
-  ];
-};
-
 /** Early in the month: saved more last month than the month before? */
 const savedMore: Detector = async ({ scope, today }) => {
   if (Number(today.slice(8, 10)) > 7) return [];
@@ -559,7 +539,6 @@ export const DETECTORS = {
   billsDue,
   paydaySplit,
   taskStreak,
-  logReminder,
   savedMore,
   overdueTasks,
   unusualSpend,
@@ -581,7 +560,7 @@ export type DetectorName = keyof typeof DETECTORS;
 /** Which detectors run when. Events run right after the change that triggered them. */
 export const RUNS: Record<string, DetectorName[]> = {
   morning: ["emailBrief", "morningBrief", "monthlyReview", "savingsCheck", "billsDue", "paydaySplit", "deadlineConflicts", "goalMilestones", "savedMore"],
-  midday: ["spendingPace", "unusualSpend", "logReminder", "billsDue", "overdueTasks", "subscriptionWatch", "moneyFinds", "reviewTransactions"],
+  midday: ["spendingPace", "unusualSpend", "billsDue", "overdueTasks", "subscriptionWatch", "moneyFinds", "reviewTransactions"],
   // The evening wrap-up offers to move what's left, so late to-dos are raised at midday.
   evening: [
     "goalCheckin",

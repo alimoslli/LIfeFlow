@@ -73,12 +73,6 @@ const KINDS: Record<string, (f: F) => Parts> = {
     fact: `You've finished every to-do ${n(f, "days")} days in a row.${f.best ? " Best streak yet." : ""}`,
     mood: "win",
   }),
-  log_reminder: (f) => ({
-    headline: "Catch up on spending",
-    fact: `You haven't logged spending in ${plural(n(f, "days"), "day")}.`,
-    ask: "Want to catch up in 30 seconds?",
-    mood: "info",
-  }),
   saved_more: (f) => ({
     headline: `You saved ${usd(n(f, "moreCents"))} more`,
     fact: `In ${s(f, "month")} you saved ${usd(n(f, "savedCents"))}, ${usd(n(f, "moreCents"))} more than the month before.`,
@@ -243,7 +237,6 @@ export const KIND_LABELS: Record<string, string> = {
   bill_due: "Bills coming due",
   payday_split: "Payday plans",
   task_streak: "To-do streaks",
-  log_reminder: "Reminders to log spending",
   saved_more: "Saving more than usual",
   overdue_tasks: "Overdue to-dos",
   unusual_spend: "Unusual charges",

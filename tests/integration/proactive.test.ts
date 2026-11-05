@@ -16,7 +16,8 @@ import { inQuietHours, learnedStats, pushImportant, runProactive } from "@/serve
 import { respondToMessage } from "@/server/services/proactive/respond";
 import { openQuestions } from "@/server/services/proactive/questions";
 import { createMemory, listActiveMemories as listActive } from "@/server/services/memory";
-import { composeMessage } from "@/lib/jarvis-voice";
+import { composeMessage, KIND_LABELS } from "@/lib/jarvis-voice";
+import { DETECTORS, RUNS } from "@/server/services/proactive/detectors";
 import { makeUser, TZ } from "../helpers";
 
 afterAll(closeDb);
@@ -114,11 +115,11 @@ describe("proactive Jarvis", () => {
     const prefs: UserPreferences = {};
     const me = user(u.id, prefs);
     await run(async (s) => {
-      await s.tx.insert(jarvisMessages).values({ userId: u.id, kind: "log_reminder", topic: "money", dedupeKey: "x1", title: "t", body: "b" });
+      await s.tx.insert(jarvisMessages).values({ userId: u.id, kind: "bank_fees", topic: "money", dedupeKey: "x1", title: "t", body: "b" });
     });
     const [x1] = (await msgs(run)).filter((m) => m.dedupeKey === "x1");
     await run((s) => respondToMessage(s, me, x1.id, "mute", today));
-    expect(me.preferences.jarvis?.mutedKinds).toEqual(["log_reminder"]);
+    expect(me.preferences.jarvis?.mutedKinds).toEqual(["bank_fees"]);
 
     // Three ignored in a row (with learning on): suppressed.
     const old = new Date(Date.now() - 3 * 86_400_000);
@@ -196,6 +197,30 @@ describe("proactive Jarvis", () => {
     await run((s) => respondToMessage(s, me, out.find((m) => m.kind !== "question")?.id ?? q.id, "down", today));
     expect((await run((s) => learnedStats(s))).kinds.length).toBeGreaterThan(0);
     expect((await run((s) => learnedStats(s, new Date(), new Date(Date.now() + 1000)))).kinds).toHaveLength(0);
+  });
+});
+
+describe("never asks to log by hand (audit A30)", () => {
+  it("stays quiet for a manual-only user who stopped entering spending", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s);
+      const food = (await getCategoryByName(s, "Groceries"))!;
+      await createTransaction(s, { accountId: acct.id, date: addDaysStr(today, -10), description: "Kroger", amountCents: -2500, categoryId: food.id });
+    });
+    const midday = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "midday" }));
+    expect(midday).toEqual([]);
+    const all = [
+      ...midday,
+      ...(await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "morning" }))),
+      ...(await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening" }))),
+      ...(await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "transaction" }))),
+    ];
+    expect(all.map((m) => m.kind)).not.toContain("log_reminder");
+    expect(all.filter((m) => /\blog(ged|ging)?\b|catch up/i.test(`${m.title} ${m.body}`))).toEqual([]);
+    expect(Object.keys(DETECTORS)).not.toContain("logReminder");
+    expect(Object.values(RUNS).flat()).not.toContain("logReminder");
+    expect(KIND_LABELS).not.toHaveProperty("log_reminder");
   });
 });
 
