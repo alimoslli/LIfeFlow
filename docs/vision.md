@@ -28,6 +28,16 @@ A person's life is much more than what their phone knows. Friends, family, time 
 - **Real life enters lightly, never by surveillance.** From the calendar (family dinner, a birthday), from Apple Health (a walk, a workout, sleep), and from one sentence to Dev ("I'm with my cousin tonight"). No screen-time tracking, no location trails, no logging of small things. The app doesn't need the detail; it needs to understand that the life is there.
 - **Dev may notice when real life is being squeezed** (three weeks without a free evening, no time with people before a hard stretch) and say it once, gently, as "just so you know". Never a nag, never a score.
 - **Checks gain a variable:** rest and time with people count alongside money, time, school and work when Dev decides whether a plan is good.
+- **How much the person tells the app:** lightly, by default. Calendar, health data and one-sentence tells when they feel like it. Never logging; that turns the app into a chore.
+
+### The promise (owner, 2026-11-05)
+
+> Organizing your digital life and real life together, so you find the perfect way to balance both and never miss anything. We value the user's time. Know where your life is going, how it looks, and where it's headed.
+
+- **Never miss anything** stays the promise from `plan-v2.md`.
+- **Balance** is felt, not measured. When real life is squeezed, the line and Dev's words say so. When it's fine, free stretches read as the person's own time. No scores, no percentages.
+- **Where your life is headed:** the line has a horizon. Zoomed out, it shows the destinations the person is moving toward (a trip, the end of the semester, a savings goal, a project finished) and, behind them, the milestones they reached. This is where goals and milestones live: on the line, not on their own pages. Dev states the direction in plain words from the data only ("You're on track for Cairo. The trip fund is $40 behind; one more set-aside fixes it."), never a number the data doesn't support.
+- **"Perfectly" means correct every time**, not clever. The way there is the brain (section 7): general checks, the situation library as tests, every real miss added, and real users for two weeks before anything is called done.
 
 ## 2. Why not just a money app (or any one niche)
 
@@ -395,3 +405,7 @@ Still open:
 ### Digital life and real life
 
 > We have built the app based around everything except like social life, family time, spending time on your own, chilling, doing nothing, studying. Like, I don't think, does our app understand that there's all these factors to a person's life? A person's life is way more than just that. I think if we're going to create a timeline, it's not just an app where it just connects, these things have to be implemented. The person is just not what digital life is. So we have to split between digital life and real life. So the app is connecting your digital life together so that you can perfectly organize it with your real life. Digital life as in all your finances that you see on your phone, all the work schedule, everything that's online and clicked to your phone that you like use your phone to organize and manage is all in one place in the same idea we have created. And then there's the real life where you're just out, maybe you took a walk, maybe you just sat with your cousin, maybe you just chatted on the phone with your friends, you scrolled on TikTok, you went to the bathroom. That's all in that timeline, no? If we're not going to add it to that much detail, we don't have to, but the app has to understand it, that there's a whole life to that. It's just not only that. There's a lot of, not just factors, but things going on other than the digital data it has.
+
+### The promise
+
+> And you should be able to implement it perfectly. So that this whole life, this whole app is organizing your digital life and real life together, so that you can find the perfect way to balance both and not miss anything. Because we value the user's time, we value everyone's time. You know how important it is to not miss anything, to organize your life and time, and know where your life is going and how it looks like and where it's headed.
