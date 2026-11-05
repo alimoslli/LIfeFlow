@@ -7,7 +7,11 @@ const GUILT = /slipp|you missed|you failed|\bfailed\b/i;
 
 describe("habit off track (owner, 2026-11-05)", () => {
   it("says plainly it's off track, with the numbers and one way back from the facts", () => {
-    const withSlot = composeMessage("habit_struggle", { habit: "Gym", kept: 1, of: 5, unit: "days", slot: "Tomorrow 7 AM", smaller: null }, "direct");
+    const withSlot = composeMessage(
+      "habit_struggle",
+      { habit: "Gym", kept: 1, of: 5, unit: "days", thisWeek: true, slot: "Tomorrow 7 AM", smaller: null },
+      "direct",
+    );
     expect(withSlot.title).toBe("Gym is off track");
     expect(withSlot.body).toBe('"Gym": 1 of the last 5 days. That\'s off track this week. Tomorrow 7 AM is open to get back on track.');
 
@@ -18,6 +22,12 @@ describe("habit off track (owner, 2026-11-05)", () => {
     const plain = composeMessage("habit_struggle", { habit: "No-spend weekend", kept: 1, of: 5, unit: "weekends", slot: null, smaller: null }, "direct");
     expect(plain.body).toBe('"No-spend weekend": 1 of the last 5 weekends. That\'s off track. Want to make it smaller for a while to get back on track?');
     expect(plain.body).not.toMatch(/\d+(:\d\d)? ?(AM|PM)/);
+  });
+
+  it("says 'this week' only when the facts say the days are this week", () => {
+    const facts = { habit: "Read", kept: 1, of: 5, unit: "days", slot: null, smaller: null };
+    expect(composeMessage("habit_struggle", { ...facts, thisWeek: false }, "direct").body).toMatch(/^"Read": 1 of the last 5 days\. That's off track\. /);
+    expect(composeMessage("habit_struggle", facts, "direct").body).not.toMatch(/this week/);
   });
 
   it("still words messages saved before the change (facts with only `missed`)", () => {

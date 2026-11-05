@@ -136,7 +136,7 @@ const KINDS: Record<string, (f: F) => Parts> = {
     const unit = s(f, "unit") || "times";
     return {
       headline: `${s(f, "habit")} is off track`,
-      fact: `"${s(f, "habit")}": ${kept} of the last ${of} ${unit}. That's off track${unit === "days" ? " this week" : ""}.`,
+      fact: `"${s(f, "habit")}": ${kept} of the last ${of} ${unit}. That's off track${f.thisWeek ? " this week" : ""}.`,
       ask: f.slot
         ? `${s(f, "slot")} is open to get back on track.`
         : f.smaller

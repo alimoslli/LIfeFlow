@@ -76,14 +76,14 @@ export function periodOf(cadence: string, day: string) {
   return addDaysStr(day, -((dow + 6) % 7));
 }
 
-/** Streaks from check-ins: current, best, and the recent record (true = done, false = missed). */
+/** Streaks from check-ins: current, best, and the recent record (true = done, false = missed) with each period's first day. */
 export function streakOf(cadence: string, doneDays: string[], today: string) {
   const done = new Set(doneDays.map((d) => periodOf(cadence, d)).filter((p): p is string => !!p));
   const step = cadence === "daily" ? 1 : 7;
   // Start from the current period; if it isn't done yet it doesn't break the streak.
   let p = periodOf(cadence, today) ?? periodOf(cadence, addDaysStr(today, -((dayOfWeek(today) + 1) % 7)))!;
-  const recent: boolean[] = [];
-  for (let i = 0; i < 8; i++) recent.push(done.has(addDaysStr(p, -step * i)));
+  const recentStarts = Array.from({ length: 8 }, (_, i) => addDaysStr(p, -step * i));
+  const recent = recentStarts.map((d) => done.has(d));
   if (!done.has(p)) p = addDaysStr(p, -step);
   let current = 0;
   while (done.has(addDaysStr(p, -step * current))) current++;
@@ -94,7 +94,7 @@ export function streakOf(cadence: string, doneDays: string[], today: string) {
     run = i > 0 && addDaysStr(sorted[i - 1], step) === sorted[i] ? run + 1 : 1;
     best = Math.max(best, run);
   }
-  return { current, best, recent };
+  return { current, best, recent, recentStarts };
 }
 
 export async function listHabits(scope: UserScope, today: string) {

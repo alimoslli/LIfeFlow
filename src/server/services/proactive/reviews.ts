@@ -323,10 +323,12 @@ export const habitCoach: Detector = async (ctx) => {
         facts: { habit: h.title, days: h.current, best: h.current >= h.best },
         priority: 50,
       });
-    // The 5 periods before this one (this one may not be done yet).
-    const last = h.recent.slice(1, 6);
+    // The 5 periods before this one (this one may not be done yet), counting only periods that began after the habit did.
+    const created = localDateOf(h.createdAt, ctx.tz);
+    const counted = [1, 2, 3, 4, 5].filter((i) => h.recentStarts[i] >= created);
+    const last = counted.map((i) => h.recent[i]);
     const kept = last.filter(Boolean).length;
-    const age = daysBetween(localDateOf(h.createdAt, ctx.tz), today);
+    const age = daysBetween(created, today);
     if (last.length - kept >= 3 && age >= (h.cadence === "daily" ? 5 : 28)) {
       const half = h.target ? Math.max(1, Math.round(h.target / 2)) : null;
       const smaller = half && h.kind === "save" ? usd(half) : half && h.kind === "study" ? `${half} minutes` : null;
@@ -340,6 +342,8 @@ export const habitCoach: Detector = async (ctx) => {
           kept,
           of: last.length,
           unit: PERIOD_UNIT[h.cadence],
+          // "This week" only when every counted day is in this week (daily habits late in the week).
+          thisWeek: h.cadence === "daily" && h.recentStarts[counted[counted.length - 1]] >= weekStart(today),
           slot: timed ? await openSlotTomorrow(ctx, h.kind === "study" && h.target ? h.target : 30) : null,
           smaller,
         },

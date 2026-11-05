@@ -418,9 +418,10 @@ describe("reviews and coaching", () => {
     const off = out.filter((m) => m.kind === "habit_struggle");
     expect(off).toHaveLength(2);
     for (const m of off) {
-      expect(m.facts).toMatchObject({ kept: 2, of: 5, unit: "days" });
+      // Wed Nov 4 to Mon Nov 9 reaches into last week, so no "this week".
+      expect(m.facts).toMatchObject({ kept: 2, of: 5, unit: "days", thisWeek: false });
       expect(`${m.title} ${m.body}`).not.toMatch(/slipp|missed|failed/i);
-      expect(m.body).toContain(": 2 of the last 5 days. That's off track this week.");
+      expect(m.body).toContain(": 2 of the last 5 days. That's off track.");
       expect(m.action).toMatchObject({ type: "open", href: "/goals" });
       expect(m.facts.slot).toBe("Tomorrow 9 AM");
       expect(m.body).toContain("Tomorrow 9 AM is open to get back on track.");
@@ -439,6 +440,35 @@ describe("reviews and coaching", () => {
     const [lone] = (await run2((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now }))).filter((m) => m.kind === "habit_struggle");
     expect(lone.facts).toMatchObject({ kept: 1, of: 5, slot: null });
     expect(lone.body).not.toMatch(/is open/);
+  });
+
+  it("counts only periods since the habit began, and says 'this week' only when the days are this week (review)", async () => {
+    const offTrack = async (title: string, cadence: "daily" | "weekly", created: string, now: Date) => {
+      const { run } = await makeUser();
+      await run(async (s) => {
+        const h = await createHabit(s, { title, kind: "custom", cadence });
+        await s.tx
+          .update(habits)
+          .set({ createdAt: new Date(created) })
+          .where(eq(habits.id, h.id));
+      });
+      return (await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now }))).find((m) => m.kind === "habit_struggle");
+    };
+    // Weekly, 28 days old on Wed Nov 11: the weeks of Oct 19, Oct 26 and Nov 2 (not the week it began, nor before).
+    const weekly = (await offTrack("Gym once a week", "weekly", "2026-10-14T16:00:00Z", new Date("2026-11-11T22:30:00Z")))!;
+    expect(weekly.facts).toMatchObject({ kept: 0, of: 3, unit: "weeks", thisWeek: false });
+    expect(weekly.body).toContain('"Gym once a week": 0 of the last 3 weeks. That\'s off track.');
+    expect(weekly.body).not.toMatch(/of the last 5/);
+    // Daily, on a Monday: the 5 days before are all last week.
+    const monday = (await offTrack("Read", "daily", "2026-10-14T16:00:00Z", new Date("2026-11-09T23:30:00Z")))!;
+    expect(monday.facts).toMatchObject({ kept: 0, of: 5, thisWeek: false });
+    expect(monday.body).not.toMatch(/this week/);
+    // Daily, on a Saturday: Monday to Friday are this week.
+    const saturday = (await offTrack("Read", "daily", "2026-10-14T16:00:00Z", new Date("2026-11-14T23:30:00Z")))!;
+    expect(saturday.facts).toMatchObject({ kept: 0, of: 5, thisWeek: true });
+    expect(saturday.body).toContain("0 of the last 5 days. That's off track this week.");
+    // Daily, 4 days old: only 4 days to count (and too new to be called off track anyway).
+    expect(await offTrack("Read", "daily", "2026-11-05T16:00:00Z", new Date("2026-11-09T23:30:00Z"))).toBeUndefined();
   });
 
   it("counts habit streaks by day and by week", async () => {
