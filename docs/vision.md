@@ -319,6 +319,7 @@ LifeFlow changes how people manage tasks, time and their whole life: one simple 
 
 - **Finding the best time is a core action.** Add a task ("Econ problem set, 2 hours, due Friday") and Dev places it in the best stretch with a one-line reason ("Thursday 3 to 5 PM: free, rested, a day before it's due. I kept Saturday free"), offers one alternative, and gives Undo.
 - **Optimizing means the person's way, not the most hours filled.** Best is measured against what the person wants and needs: rest, time with people and days kept free count as much as tasks and money. Dev never fills every hour, and never takes sleep or people time unless asked.
+- **Situation data is mostly students (owner, 2026-11-05).** At least 70% of every new batch of situations and simulated people are students. The number of classes and assignments changes, and so does everything else (level, format, work, money, living, routines), but they are students. The other 30% keep Dev honest for everyone else.
 - **Fit the person's routine (owner, 2026-11-05).** People go back to their routine, not to what an app tells them, so Dev's suggestions fit the routine first. Dev learns each routine from history (when they study, work out, call family, eat at home, sleep), shows it with its source in "What Dev knows", and lets the person correct it. A suggestion lands inside the matching routine window. It never proposes what's already done today (no gym tonight after the gym this morning) and never puts an activity where the person never does it (no evening study for a morning studier). Breaking a routine needs a one-line reason the person would accept ("only free morning before the exam"). Every situation case states the routine and the tempting suggestion that would break it.
 - **Health and wealth are what "a good life" is measured on**, through the strands' real data (rest, movement, food against goals; money available, saved, going toward goals). Dev suggests what keeps both healthy, from the data only.
 
@@ -524,3 +525,7 @@ The hours a person actually lives (asleep, class, work, home, with people, a day
 > Yes, but what exactly are we training? Like, who are we giving this information to? Are we just giving it to the OpenAI API? Or what are we doing? Like, how are we putting those data in changing the app if it's, like, just going back to the OpenAI API? That's why I wanted to train my own AI model.
 
 > I don't understand your question, but I do know that you're gonna do the most optimal and best thing. I trust you, man.
+
+### Mostly students (2026-11-05)
+
+> for all the next sets of data, I want 70% of the data. The default of them, they are students. The amount of classes and assignments does change, plus everything else, but they are students.
