@@ -21,4 +21,12 @@ describe("the greeting follows the user's time zone, not the device or server cl
     expect(chat).not.toMatch(/\.getHours\(\)/);
     expect(chat).toMatch(/greetingIn\(tz/);
   });
+
+  it("quick add's default date (offline too) is today in the user's zone, not the device's (review)", () => {
+    const quickAdd = readFileSync(path.resolve(import.meta.dirname, "../../src/components/shell/quick-add.tsx"), "utf8");
+    expect(quickAdd).not.toMatch(/\.get(FullYear|Month|Date|Hours)\(\)/);
+    expect(quickAdd).toMatch(/todayIn\(tz\)/);
+    // At 11 PM in Los Angeles it's still the 5th there, though the 6th in UTC.
+    expect(todayIn(LA, LATE)).toBe("2026-11-05");
+  });
 });
