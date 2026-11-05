@@ -4,7 +4,8 @@ import type { UserScope } from "../../db/with-user";
 import { summarizeCashflow } from "./cashflow";
 import { listAccounts } from "./accounts";
 import { balancesOf } from "./overview";
-import { budgetStatus, listRecurring, suggestRecurring, upcomingRecurring } from "./planning";
+import { nameRelation } from "./bill-match";
+import { bankSeries, budgetStatus, listRecurring, upcomingRecurring } from "./planning";
 import { detectRecurring, merchantKey, merchantKeys, nextOccurrence, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 import { listEmployers } from "../work";
@@ -90,12 +91,20 @@ const dollars = (c: number) => {
 
 // ------------------------------------------------------------ data
 
-/** Bills and subscriptions found in the bank feed that the user doesn't track yet. */
-const foundBills = async (scope: UserScope, today: string) =>
-  (await suggestRecurring(scope, today)).filter((c) => c.kind !== "income" && c.latestAmountCents < 0 && c.confidence >= 0.6);
+/**
+ * Bills and subscriptions found in the bank feed that the user doesn't track yet (`found`), and the
+ * series that are tracked bills under another name (`tracked`, so their charges aren't day-to-day spending).
+ */
+async function foundBills(scope: UserScope, today: string) {
+  const { tracked, untracked } = await bankSeries(scope, today);
+  return {
+    found: untracked.filter((c) => c.kind !== "income" && c.latestAmountCents < 0 && c.confidence >= 0.6),
+    tracked: tracked.filter((c) => c.latestAmountCents < 0),
+  };
+}
 
 /** Average daily day-to-day spending over the last 8 weeks, leaving out bills (they're counted on their dates). */
-async function typicalDailySpend(scope: UserScope, today: string, found: RecurringCandidate[] = []) {
+async function typicalDailySpend(scope: UserScope, today: string, billSeries: RecurringCandidate[] = []) {
   const from = addDaysStr(today, -56);
   const [txns, recurring] = await series(
     () => queryTransactions(scope, { from, to: addDaysStr(today, -1), limit: 20_000 }),
@@ -103,7 +112,7 @@ async function typicalDailySpend(scope: UserScope, today: string, found: Recurri
   );
   const billKeys = new Set([
     ...recurring.filter((r) => r.amountCents < 0).flatMap((r) => [r.merchantKey, merchantKey({ merchantName: r.name, description: r.name })]),
-    ...found.map((c) => c.merchantKey),
+    ...billSeries.map((c) => c.merchantKey),
   ]);
   const dayToDay = txns.filter((t) => !merchantKeys(t).some((k) => billKeys.has(k)));
   const spent = summarizeCashflow(dayToDay).netSpendingCents;
@@ -111,7 +120,8 @@ async function typicalDailySpend(scope: UserScope, today: string, found: Recurri
   return { dailyCents: Math.max(0, Math.round(spent / days)), basedOnDays: days };
 }
 
-export type UpcomingBill = DatedAmount & { found: boolean };
+/** `key` stays the same across reads: the tracked item's id, or `found:<merchant key>` for a bill found in the bank. */
+export type UpcomingBill = DatedAmount & { found: boolean; key: string };
 
 /**
  * What goes out between two dates and the usual day-to-day pace. Bills are the tracked ones plus the
@@ -119,34 +129,55 @@ export type UpcomingBill = DatedAmount & { found: boolean };
  * bill up to 5 days late hasn't posted yet, so it still counts, dated `from`.
  */
 export async function billsAndPace(scope: UserScope, today: string, from: string, to: string) {
-  const found = await foundBills(scope, today);
+  const { found, tracked: trackedSeries } = await foundBills(scope, today);
   const [tracked, typical] = await series(
     () => upcomingRecurring(scope, from, to),
-    () => typicalDailySpend(scope, today, found),
+    () => typicalDailySpend(scope, today, [...found, ...trackedSeries]),
   );
-  const bills: UpcomingBill[] = tracked.filter((u) => u.amountCents < 0).map((u) => ({ date: u.date, amountCents: u.amountCents, name: u.name, found: false }));
+  const bills: UpcomingBill[] = tracked
+    .filter((u) => u.amountCents < 0)
+    .map((u) => ({ date: u.date, amountCents: u.amountCents, name: u.name, found: false, key: u.id }));
   for (const c of found) {
     let d = c.nextExpectedDate < from && daysBetween(c.nextExpectedDate, from) <= 5 ? from : c.nextExpectedDate;
     for (let guard = 0; d < from && guard < 200; guard++) d = nextOccurrence(d, c.frequency);
     for (let guard = 0; d <= to && guard < 60; guard++, d = nextOccurrence(d, c.frequency))
-      bills.push({ date: d, amountCents: c.latestAmountCents, name: c.name, found: true });
+      bills.push({ date: d, amountCents: c.latestAmountCents, name: c.name, found: true, key: `found:${c.merchantKey}` });
   }
   return { bills: bills.sort((a, b) => a.date.localeCompare(b.date)), typical };
 }
 
+/** How a paycheck reads when it doesn't name the employer ("PAYROLL", "DIRECT DEP"). */
+const PAYCHECK_WORDS = /\b(?:payroll|paycheck|salary|direct dep(?:osit)?|dir dep)\b/i;
+
 /**
- * Expected pay, only when it's truly predictable: a salaried job, and paychecks that land for the same
- * amount on a regular schedule (or a pay item the user tracks). Hourly pay is never predicted: hours,
- * tips, taxes and pay periods change every time. Shown as expected, never counted as available.
+ * Whether income is a salaried job's own pay: named after a salaried job and no hourly one, or reading
+ * like a paycheck while every job is salaried. Hourly pay and money from family or friends never are.
+ */
+function salaryPayOf(jobs: { name: string; payType: string }[]) {
+  const keyOf = (name: string) => [merchantKey({ merchantName: name, description: name })];
+  const salaried = jobs.filter((j) => j.payType === "salary").map((j) => keyOf(j.name));
+  const hourly = jobs.filter((j) => j.payType !== "salary").map((j) => keyOf(j.name));
+  return (name: string, keys = keyOf(name)) => {
+    if (hourly.some((k) => nameRelation(k, keys))) return false;
+    if (salaried.some((k) => nameRelation(k, keys))) return true;
+    return !hourly.length && PAYCHECK_WORDS.test(`${name} ${keys.join(" ")}`);
+  };
+}
+
+/**
+ * Expected pay, only when it's truly predictable: a salaried job's own paychecks, landing for the same
+ * amount on a regular schedule (or a pay item the user tracks for that job). Hourly pay is never predicted:
+ * hours, tips, taxes and pay periods change every time. Shown as expected, never counted as available.
  */
 async function expectedPay(scope: UserScope, today: string, to: string): Promise<DatedAmount[]> {
   const jobs = await listEmployers(scope);
   if (!jobs.some((j) => j.payType === "salary")) return [];
-  const tracked = (await upcomingRecurring(scope, today, to)).filter((u) => u.amountCents > 0);
+  const isSalaryPay = salaryPayOf(jobs);
+  const tracked = (await upcomingRecurring(scope, today, to)).filter((u) => u.amountCents > 0 && isSalaryPay(u.name));
   if (tracked.length) return tracked.map((t) => ({ date: t.date, amountCents: t.amountCents, name: t.name }));
   const deposits = await queryTransactions(scope, { from: addDaysStr(today, -120), to: today, kinds: ["income"], limit: 2000 });
   const pattern = detectRecurring(deposits)
-    .filter((c) => c.latestAmountCents > 0 && c.confidence >= 0.6 && !c.variableAmount)
+    .filter((c) => c.latestAmountCents > 0 && c.confidence >= 0.6 && !c.variableAmount && isSalaryPay(c.name, [c.merchantKey]))
     .sort((a, b) => b.latestAmountCents - a.latestAmountCents)[0];
   if (!pattern) return [];
   const out: DatedAmount[] = [];
