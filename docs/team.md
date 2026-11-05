@@ -22,3 +22,28 @@ Set by the owner on 2026-11-05. Every Claude Code session on this repo reads thi
 ## Real misses become cases
 
 Whenever Dev gets something wrong (the owner's use, a tester, a thumbs-down, an error alert), it becomes a new situation in `docs/situations/cases/` before the fix. The fix isn't done until that case passes.
+
+## The always-on loop (owner, 2026-11-05)
+
+The owner asked for the agents to keep running: audit the app (phone and web), fix it, research competitors and what real people want, and check that every piece of information is correct. The product chat runs this on a schedule and reviews every result.
+
+**Every night**
+1. **Audit.** A fresh-eyes auditor checks the app against `CLAUDE.md`, the playbook, the vision and the research rules. It covers what changed since the last audit plus one area not yet covered. Findings go in `docs/audits/YYYY-MM-DD-*.md`, each classed `fix now`, `needs owner` or `waits for new surface`.
+2. **Fix.** Builders fix the top `fix now` findings straight away, one at a time, each with a test, in their own worktree.
+3. **Review.** A second reviewer who didn't write the fix checks each change for correctness, security and the rules. Then the product chat runs `npm run check`, plus the build and the relevant e2e tests for anything on screen, and pushes to the working branch.
+4. **Situations.** The situation writer adds a batch through the simulator, at least 70% students. `validate.py` must pass.
+
+**Twice a week (Monday and Thursday)**
+- **Research.** Competitors, what real people want (students first) and an audit of the last report. Every claim is checked against its source and corrected if wrong.
+- Things to avoid become rules the same day.
+- Proposals are tagged `fix now`, `build now`, `needs the new surface` or `owner decision`.
+
+**What "straight away" means**
+- `fix now` findings and research "things to avoid" go in during the same round.
+- `build now` features go in after the owner's yes on a short daily yes or no list.
+- Work that depends on the new surface waits for the owner's concept choice.
+- Nothing reaches `main` without the owner's go.
+
+**Everything is checked twice:** once by the tests and once by someone who didn't write it. Research claims are re-checked in the next round.
+
+**The owner gets one short report per round:** what was fixed, what was found, the yes or no list, and anything blocked.
