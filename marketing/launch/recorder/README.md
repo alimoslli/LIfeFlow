@@ -53,3 +53,11 @@ One continuous conversation, filmed so replies stream smoothly. Record at 390x80
 It pauses filming while the real server answers, then releases the real reply to the app on the slowed page clock;
 see `../../motion/README.md` (chat2). Restart the stack with the port freed (`fuser -k 3000/tcp`): a leftover `next-server`
 keeps the old clock offset. The lock screen uses `appicon.png` (public/brand/lifeflow-apple-touch.png), the current app icon.
+
+## Email with approval (reel v3)
+
+`film_stack.sh` brings up the local filming stack (Postgres and Next on the shifted clock, Jordan reseeded, the morning check)
+with `gmail_standin.cjs` preloaded: a local stand-in for Gmail and Google Calendar so the sample account's Gmail connection
+works without a real Google account. Local filming only, never production; nothing is sent. `chat_probe.cjs "msg" "msg2"`
+sends messages to the local assistant (one conversation) to test a prompt before filming. If sign-in says "too many attempts",
+clear `rate_limit_buckets` rows for `login:*` in the local filming database.

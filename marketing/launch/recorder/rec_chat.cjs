@@ -10,7 +10,7 @@ const SLOW = 0.05;
 const OFF = Number(fs.readFileSync(__dirname + '/off.txt', 'utf8').trim()) * 1000;
 const DIR = `${__dirname}/${process.env.OUT || 'frames_chat'}`;
 const TURNS = JSON.parse(fs.readFileSync(__dirname + '/' + (process.env.TURNS || 'turns.json'), 'utf8')).slice(0, Number(process.env.N || 99));
-const HOLD = [3.0, 2.3, 2.9, 2.3, 2.3];
+const HOLD = (process.env.HOLD || '3.0,2.3,2.9,2.3,2.3').split(',').map(Number);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const INIT = `(() => {
   const RD = Date, rnow = RD.now.bind(RD);
@@ -20,7 +20,7 @@ const INIT = `(() => {
   class D extends RD { constructor(...a) { if (a.length === 0) super(vnow()); else super(...a); } static now() { return vnow(); } }
   D.parse = RD.parse; D.UTC = RD.UTC; window.Date = D;
   const css = document.createElement('style');
-  css.textContent = '[data-sample-pill]{visibility:hidden!important}';
+  css.textContent = '[data-sample-pill]{visibility:hidden!important} *{overflow-anchor:none!important}'; // iPhone Safari has no scroll anchoring: replies glide, never snap
   const hide = () => { if (!css.isConnected && document.head) document.head.appendChild(css);
     for (const el of document.querySelectorAll('span,div,button')) { if (el.childElementCount < 3 && /^\\s*Sample data\\s*$/.test(el.textContent || '')) { (el.parentElement && /Sample data/.test(el.parentElement.textContent) && el.parentElement.textContent.trim().length < 20 ? el.parentElement : el).style.visibility = 'hidden'; } } };
   new MutationObserver(hide).observe(document, { childList: true, subtree: true });
@@ -30,9 +30,9 @@ const INIT = `(() => {
   Element.prototype.scrollTo = function (a, b) {
     if (a && typeof a === 'object' && a.behavior === 'smooth') {
       const el = this, s = el.__sa || (el.__sa = {});
-      s.from = el.scrollTop; s.to = a.top == null ? el.scrollTop : a.top; s.t0 = D.now();
+      s.from = el.scrollTop; s.to = Math.min(a.top == null ? el.scrollTop : a.top, el.scrollHeight - el.clientHeight); s.t0 = D.now(); // target fixed per call
       if (!s.run) { s.run = true; const step = () => { const k = Math.min(1, (D.now() - s.t0) / 420); const e = 1 - Math.pow(1 - k, 3);
-        const max = el.scrollHeight - el.clientHeight; el.scrollTop = s.from + (Math.min(s.to, max) - s.from) * e;
+        el.scrollTop = s.from + (s.to - s.from) * e;
         if (k < 1) requestAnimationFrame(step); else s.run = false; }; requestAnimationFrame(step); }
       return;
     }
@@ -45,6 +45,7 @@ const INIT = `(() => {
   window.__chat = null;
   window.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input.url;
+    if (/\\/api\\/jarvis\\/actions\\//.test(url)) { const t0 = D.now(); const r = await ofetch(input, init); while (D.now() - t0 < 450) await realSleep(10); return r; }
     if (!/\\/api\\/jarvis\\/chat$/.test(url)) return ofetch(input, init);
     const res = await ofetch(input, init);
     if (!res.ok || !res.body) return res;
@@ -146,7 +147,8 @@ const INIT = `(() => {
   await p.getByRole('button', { name: /New chat/i }).click({ timeout: 2000 }).catch(() => {});
   await sleep(800);
   await start(); mark('a'); await wait(0.3);
-  for (const [i, q] of TURNS.entries()) {
+  for (const [i, spec] of TURNS.entries()) {
+    const q = typeof spec === 'string' ? spec : spec.q;
     const box = p.locator('textarea').last();
     mark('tap' + i);
     await tapAt(box, 0.2);
@@ -164,6 +166,11 @@ const INIT = `(() => {
     tr.replied = now(); console.log('closed at real', Math.round(performance.now()));
     await wait(0.7);
     tr.text = await p.evaluate(() => window.__chat.text);
+    if (spec.confirm) { // read the preview, then approve it on the real Confirm card
+      await setRate(0.5); await wait(1.1); await setRate(SLOW);
+      const cb = p.getByRole('button', { name: 'Confirm', exact: true }).last();
+      if (await cb.count()) { tr.confirmTap = now(); await tapAt(cb, 1.0); tr.confirmed = now(); } else console.log('NO CONFIRM CARD');
+    }
     await setRate(0.5); await wait(HOLD[i] - 0.7); await setRate(SLOW);
     tr.end = now();
     log.turns.push(tr);

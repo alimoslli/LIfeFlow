@@ -15,6 +15,7 @@ import { getCategoryByName } from "../../src/server/services/finance/categories"
 import { createGoal, createRecurring, setBudget } from "../../src/server/services/finance/planning";
 import { createTransaction } from "../../src/server/services/finance/transactions";
 import { createMemory } from "../../src/server/services/memory";
+import { saveGoogleConnection } from "../../src/server/integrations/google";
 import { createAssignment, createCourse } from "../../src/server/services/school";
 import { createTask } from "../../src/server/services/tasks";
 import { addPaycheck, createEmployer, createShift, recordShiftHours } from "../../src/server/services/work";
@@ -121,6 +122,10 @@ async function seedAll(s: UserScope, today: string) {
   await createTask(s, TZ, { title: "Book an oil change", priority: "low", dueDate: addDaysStr(today, 6) });
 
   await createMemory(s, { content: "Works at Daily Grind Café: Wednesday closing shifts and weekend mornings.", category: "routine" }, "user");
+  await createMemory(s, { content: "Manager at Daily Grind Café is Scott Harlan (scott@dailygrind.cafe).", category: "fact" }, "user");
+  // Local filming only: a stand-in Gmail connection (answered by gmail_standin.cjs on the local server; nothing is sent).
+  await saveGoogleConnection(s, { refreshToken: "film-standin", accessToken: "film-standin", expiresAt: Date.now() + 365 * 86_400_000,
+    scope: "openid email https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose https://www.googleapis.com/auth/calendar.events" }, "jordan@film.local");
   await createMemory(s, { content: "Studies best in the morning.", category: "preference" }, "user");
   await createMemory(s, { content: "Saving for spring break with friends.", category: "goal" }, "user");
   await createMemory(s, { content: "Prefers short answers with a clear next step.", category: "instruction" }, "user");

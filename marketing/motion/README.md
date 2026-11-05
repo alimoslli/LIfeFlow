@@ -53,3 +53,20 @@ So: 20 seconds, built from the same real take (`chat2_log.json`).
   that change on each cut: a setup line, then the payoff when the reply lands. One highlight per clip, on the assistant's own bold words.
 - Clean frame: no phone mockup; the app is cropped to the conversation, 2.6x, with its top edge faded under the captions.
 - `python3 build_reel.py chat2_log.json <frames dir> notes.json` then `node render_reel.cjs`; music from `plan_reel.json`.
+
+### Reel v3: the email to the manager (current)
+
+The manager clip is now an email: "Email my manager Scott ... keep it formal and show me before you send" gives the real
+formal draft as a preview ("Draft saved to Gmail, not sent"), then "Looks good, send it." brings up the app's real Confirm card
+("Send email to scott@dailygrind.cafe: ...?"), the finger taps Confirm, the card shows "Working..." then "Done". Same design
+as every other clip: punch-in cut, sticker captions (three here: the ask, the preview, the approval), one highlight (the
+assistant's bold "Confirm"), smooth speed curve inside the clip, plus the finger on the real tap.
+- The sample account has no real Gmail, so on the local filming server only, Gmail is a stand-in: the seed saves a Google
+  connection with placeholder tokens and `../launch/recorder/gmail_standin.cjs` (preloaded into `next start`) answers Google's
+  API calls locally and logs them. The app's own flow (tools, draft, the Confirm card, the send after Confirm) is real code;
+  nothing is sent anywhere. Scott (scott@dailygrind.cafe) is a fictional manager in the sample data.
+- Take: `rec_chat.cjs` with `turns_chat.json`; `{ "q": ..., "confirm": true }` taps the real Confirm card on that turn.
+  `check_jumps.py` lists any instant scroll jump in a take (the reel's clips have none; turn 0 is not used).
+- Fixed in the recorder: its smooth scroll now fixes the target per call (it used to chase the bottom every frame, which
+  snapped the chat when the thumbs and suggestions appeared), and scroll anchoring is off (as on an iPhone).
+- `python3 build_reel.py reel_log.json <frames dir> notes.json`, then `node render_reel.cjs` (FROM/TO/LIST to split across workers).

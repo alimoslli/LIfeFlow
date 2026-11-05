@@ -1,6 +1,6 @@
 {
  "bpm": 108,
- "duration": 19.96,
+ "duration": 24.98,
  "vo": [],
  "scenes": [
   {
@@ -22,43 +22,47 @@
   {
    "kind": "phone",
    "start": 2.95,
-   "end": 6.419,
+   "end": 6.669,
    "pops": [
     {
-     "at": 2.019,
+     "at": 2.269,
      "dur": 0.6
     }
    ]
   },
   {
    "kind": "phone",
-   "start": 6.419,
-   "end": 11.139,
+   "start": 6.669,
+   "end": 11.385,
    "pops": [
     {
-     "at": 3.071,
+     "at": 3.066,
      "dur": 0.6
     }
    ]
   },
   {
    "kind": "phone",
-   "start": 11.139,
-   "end": 14.332,
+   "start": 11.385,
+   "end": 19.34,
    "pops": [
     {
-     "at": 1.543,
+     "at": 5.241,
      "dur": 0.6
+    },
+    {
+     "at": 6.693,
+     "dur": 0.5
     }
    ]
   },
   {
    "kind": "phone",
-   "start": 14.332,
-   "end": 17.365,
+   "start": 19.34,
+   "end": 22.375,
    "pops": [
     {
-     "at": 1.783,
+     "at": 1.785,
      "dur": 0.6
     }
    ]
@@ -66,8 +70,8 @@
   {
    "kind": "gloss",
    "outro": true,
-   "start": 17.365,
-   "end": 19.965,
+   "start": 22.375,
+   "end": 24.975,
    "wordmark": {
     "at": 0.25
    }
