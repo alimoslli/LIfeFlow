@@ -240,6 +240,8 @@ Example: the user tells Dev they have a budget goal. **No** progress bar, no "50
 
 **Decision (owner, 2026-11-05): the surface is the braid.** Four prototypes were tried. The braid (concept 3) is the one: five strands of life twisting into one rope across the screen, loose when calm, tight and twisting when things collide, knots where strands pull on each other that untangle when the problem is solved, moving with the person's life. "This is where we start our build." The "one line" prototype (concept 4) was rejected because it looks like every other app; its mechanics (one tap to all of an area with real totals, Play, shifts from a photo, the why-line and mute, check-backs, visible trust, one plain price, three lives) move into the braid. The braid's one weakness, "a bit hard to understand", is fixed inside the braid with words on it, fewer symbols and a sentence from Dev that always says what it's showing, never by flattening it into a list. Prototypes: concept 3 `lifeflow-braid.html`, the upgrade `lifeflow-braid-v2.html` (scratch files; the published links are in the product chat).
 
+**The form is still open, the rule is not (owner, 2026-11-05).** The owner likes the different lines and wants more forms explored before locking one: the braid, a heartbeat (the pulse of a life along time), strands of DNA (two backbones, digital life and real life, with rungs where they connect), and others we find. Whatever the form: it is a timeline with events in it; it may look complicated at rest, but when the person touches it, it simplifies and shows exactly what everything is, in words; and anything they want to know is one touch away. Next step: the same data and the same touch-to-simplify behaviour rendered in two or three forms side by side, then pick with real people.
+
 **Each strand is drawn from its data (owner's rule, 2026-11-05).** How a strand looks is how that part of life is doing, and every visual property is computed from the real data at that point in time, never drawn to look lifelike:
 
 | Strand | Thickness | Tightness and density | Beads |
@@ -249,6 +251,10 @@ Example: the user tells Dev they have a budget goal. **No** progress bar, no "50
 | Work | Hours scheduled | Shifts stacked with school | Shifts, pay landing |
 | Health | Rest: sleep hours (thin after a short night) | | Workouts the person planned |
 | Life (real life) | Time that is the person's own and time with people | | Named moments that matter: dinner with family, a friend's birthday, a trip, a call with someone far away |
+
+**Health, in full (owner, 2026-11-05).** The Health strand's state comes from everything connected to health: sleep, movement, exercise, food and calorie intake against the goals the person set (a gym goal, a calorie goal), and later, if the person chooses, medical treatments and medication. Movement data is an input to how the strand looks, never a moment on the braid (a walk changes the strand's thickness; it is not an event). Goals connect to each other: a gym goal and a calorie goal are read together. Medical data comes later, only with the strongest privacy, never used to diagnose (CLAUDE.md), and never shown as a score; the strand's thickness is the only "health bar" there is.
+
+**Every connection is a variable.** Each thing connected to the app, and every connection added later, changes how the strands move. A new connection must say which strands it feeds and how (the one-function-per-strand mapping), so the braid stays accurate as the app grows.
 
 Across all strands: expected is dotted, Dev-planned is dashed, the past fades, and missing data is a flat neutral strand that says "nothing synced here", never an invented shape. Each strand can be pulled out on its own to show its curve and the numbers that drive it; tapping any point shows the exact number and its source, so a person can check the line is honest. The braid is 3D (depth as the strands twist), always moving a little, still readable with reduced motion, and smooth on a phone. The mapping lives in one place in the code, one function per strand, so it is testable and later driven by real sync data.
 
@@ -444,3 +450,9 @@ Still open:
 ### Real life means what matters
 
 > and its not gonna be the small silly things like wall from cafetria or walking home from campus thst very dumb, we are a diffrent level of organization
+
+### Health in full, every connection a variable, and the form
+
+> Yes, but the data from Apple Health is gonna affect the health braid. So your health, how you're doing on your health. So maybe in the future, users can attach their medical treatments and what meds they take and everything else related to their medication so that we can have maybe a health bar or just in general, how the health is doing based on maybe movement and sleep and exercise and the type of food that we're eating. like calorie intake, or when we set goals for calories, that implements that. And we set goals to going to the gym, both of these connect. You have to see all of those connections. You have to think of every single connection of every single thing that can be connected in our app, plus anything else we're going to start connecting, like adding any additional connections. That will be extra variables to how all the lines change and move.
+
+> And it's not just a braid. Let's think of it as a timeline. What's the best way to portray time with events happening in it in the same way we are in it? So like, I like how it's braids. We can maybe, I was thinking heartbeat, like strains of DNA maybe. Those are just some concepts I was thinking of. Maybe we can discover some more concepts. But I do like that it's different lines. It looks complicated, but when you hover over it or touch it, it simplifies and it shows you exactly what everything is. And when you want to know something about your information, it's easy, accessible, and simple.
