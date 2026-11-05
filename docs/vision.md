@@ -302,6 +302,10 @@ From `docs/research/2026-11-05-what-people-love-and-hate.md`. The owner approved
 
 Numbers 4 and 5 are small, and the 10-student test will exercise both, so they come first.
 
+### The simplicity test (owner, 2026-11-05)
+
+Whatever the surface becomes, it stays the simple place from version 2 of the plan: where people go to see what they have, what they're worth, what they're handling, and what's happening in their life. If a screen doesn't answer those four in plain words at a glance, it isn't done.
+
 ### How we work from here (owner, 2026-11-05)
 
 Plan each change together before building. Build in small steps. While building, come back to the owner with questions at every real decision, with pictures where words aren't enough, so the result is exactly what we envision and no time or credits go into the wrong thing. The owner doesn't need to understand the technical fix; they need to see the choice.
@@ -470,3 +474,7 @@ Still open:
 ### Busy, and not the most useful information
 
 > the app itself, with everything going on, is like very busy. Maybe it's because we tried fitting it all on like all that in one page, but there is a way to make it less like simplified, but still showing all that info. And I think we're not showing the most optimal info. I think there's a lot of improvement left to be made, but it's all gonna happen once you keep on reviewing the app and keep on working towards the vision we are working for.
+
+### Which model, and don't lose the simple place
+
+> And are we sure that using Fable on Macs is the best way to go on with this? Because, I mean Fable on Macs, that's what I said. Macs. Yep. So, is it the best thing to use for this, or should we go back to Opus 5.5? I really want to make sure we're coming out with the correct output we were looking for. We want to create something life-changing, something that will change the market on how users are connecting their life and seeing it in a way that they understand it and know how to do a change, know what's wrong with their life and fix it using the AI. We still don't want to lose the vision that we had on the version 2 of the app, where it's still very simple. It's still where a place people go to see what they have, see what they're worth, see what they are handling, see what's happening in their life.
