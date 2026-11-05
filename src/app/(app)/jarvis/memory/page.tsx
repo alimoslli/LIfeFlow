@@ -24,7 +24,7 @@ import {
 } from "@/app/(app)/settings/actions";
 import { CATEGORY_LABEL, CATEGORY_OPTIONS } from "@/app/(app)/settings/memory/categories";
 import { EditMemory } from "@/app/(app)/settings/memory/edit-memory";
-import { assistantProfile } from "@/lib/assistant";
+import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { jarvisSettings, learnedStats } from "@/server/services/proactive/engine";
 import { LearnedCard } from "@/app/(app)/settings/memory/learned-card";
 
@@ -94,7 +94,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                     <Badge tone={m.basis === "inferred" ? "info" : "neutral"}>
                       {m.basis === "inferred" ? (
                         <>
-                          <AssistantName /> noticed
+                          <AssistantName start /> noticed
                         </>
                       ) : (
                         "You mentioned it"
@@ -165,7 +165,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                         <Badge tone={m.basis === "inferred" ? "info" : "neutral"}>
                           {m.basis === "inferred" ? (
                             <>
-                              <AssistantName /> noticed · you approved
+                              <AssistantName start /> noticed · you approved
                             </>
                           ) : m.source === "user" ? (
                             "Added by you"
@@ -323,7 +323,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                 Skills ({SKILLS.length}) <span className="text-sm font-normal text-muted">· how each one is doing</span>
               </summary>
               <p className="mt-2 text-sm text-muted">
-                <AssistantName /> picks the right skill for each request. Rate answers with 👍 👎 in the chat; skills rated down often are flagged.
+                <AssistantName start /> picks the right skill for each request. Rate answers with 👍 👎 in the chat; skills rated down often are flagged.
               </p>
               <ul className="mt-3 divide-y divide-border">
                 {d.skills.length === 0 && <li className="py-2 text-sm text-muted">No requests yet.</li>}
@@ -342,7 +342,9 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
         </>
       )}
 
-      <p className="px-1 text-xs text-muted">{d.assistant.name} never trains AI models on your data. Memories are encrypted and only used to help you.</p>
+      <p className="px-1 text-xs text-muted">
+        {nameAtStart(d.assistant.name)} never trains AI models on your data. Memories are encrypted and only used to help you.
+      </p>
     </div>
   );
 }

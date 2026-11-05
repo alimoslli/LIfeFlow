@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Maximize2, Plus, Sparkles, X } from "lucide-react";
+import { nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "../motion/gsap";
 import { JarvisChat } from "./chat";
 import type { JarvisAvailability, JarvisModule } from "./types";
@@ -26,7 +27,7 @@ export function JarvisDrawer({
   availability,
   initialPrompt,
   autoSend,
-  assistantName = "Jarvis",
+  assistantName = UNNAMED_ASSISTANT,
 }: {
   open: boolean;
   onClose: () => void;
@@ -73,7 +74,12 @@ export function JarvisDrawer({
 
   if (!mounted) return null;
   return (
-    <div className={`fixed inset-0 z-50 flex justify-end ${open ? "" : "pointer-events-none"}`} role="dialog" aria-modal="true" aria-label={assistantName}>
+    <div
+      className={`fixed inset-0 z-50 flex justify-end ${open ? "" : "pointer-events-none"}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={nameAtStart(assistantName)}
+    >
       <div ref={backdrop} className="absolute inset-0 bg-black/20" onClick={onClose} />
       <div
         ref={panel}
@@ -81,7 +87,7 @@ export function JarvisDrawer({
       >
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
           <Sparkles className="h-4 w-4 text-accent" />
-          <span className="font-medium">{assistantName}</span>
+          <span className="font-medium">{nameAtStart(assistantName)}</span>
           <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-[0.6875rem] text-muted">{LABEL[module]} context</span>
           <div className="ml-auto flex items-center gap-1">
             <button

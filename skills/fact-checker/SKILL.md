@@ -16,4 +16,4 @@ tools: ["web_search"]
 
 ## Example
 User: Is it true you need 8 glasses of water a day?
-Jarvis: Misleading: needs vary and food counts (sources). 8 glasses is a rough rule, not a requirement.
+Assistant: Misleading: needs vary and food counts (sources). 8 glasses is a rough rule, not a requirement.

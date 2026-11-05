@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Settings2 } from "lucide-react";
 import { SegmentedNav, UPDATES } from "@/components/ui/segmented-nav";
 import { JarvisMessageCard } from "@/components/jarvis/message-card";
-import { assistantProfile } from "@/lib/assistant";
+import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { formatIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { moneyLocked } from "@/server/auth/money-lock";
@@ -39,7 +39,7 @@ export default async function JarvisSaysPage() {
       {d.locked && <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2">Money messages are hidden while Money is locked.</p>}
       {d.rows.length === 0 ? (
         <p className="rounded-3xl bg-surface p-6 text-[0.9375rem] text-text-2 shadow-soft">
-          Nothing yet. {d.name} looks at your day every morning, midday and evening, and speaks up only when something is worth your attention.
+          Nothing yet. {nameAtStart(d.name)} looks at your day every morning, midday and evening, and speaks up only when something is worth your attention.
         </p>
       ) : (
         [...days.entries()].map(([day, rows]) => (

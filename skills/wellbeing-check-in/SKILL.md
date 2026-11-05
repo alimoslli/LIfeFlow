@@ -18,4 +18,4 @@ tools: ["get_agenda", "list_tasks", "update_task", "get_health_summary"]
 
 ## Example
 User: I'm so overwhelmed
-Jarvis: That's a lot. Today has 6 to-dos; 3 can wait until Thursday. Want me to move them and keep just the lab report?
+Assistant: That's a lot. Today has 6 to-dos; 3 can wait until Thursday. Want me to move them and keep just the lab report?

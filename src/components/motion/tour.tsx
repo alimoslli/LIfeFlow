@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { cn } from "@/lib/utils";
+import { nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
 import { gsap, MOTION, prefersReducedMotion } from "./gsap";
 import { isSplashActive, onSplashEnd } from "./intro";
 
@@ -29,9 +30,9 @@ const steps = (name: string): Step[] => [
     body: "Classes, shifts, events, tasks, goals and habits all live here. Tap any block to change it. Send a photo of your work schedule and your assistant adds the shifts.",
   },
   {
-    target: "jarvis",
-    eyebrow: "Your assistant",
-    title: name,
+    target: "assistant",
+    eyebrow: name === UNNAMED_ASSISTANT ? "Assistant" : "Your assistant",
+    title: nameAtStart(name),
     body: "Ask in plain words, like “When can I study on Wednesday?”, or tell it what to do. It shows exactly what it changed, and it asks before it deletes or sends anything.",
   },
   {
@@ -83,7 +84,7 @@ function findTarget(name: string): HTMLElement | null {
  * with a short caption for each. Steps whose screen isn't visible (School when it's off)
  * are skipped. Skip, Esc and the close are always available; arrow keys move between steps.
  */
-export function Tour({ onDone, assistantName = "Jarvis" }: { onDone: () => void; assistantName?: string }) {
+export function Tour({ onDone, assistantName = UNNAMED_ASSISTANT }: { onDone: () => void; assistantName?: string }) {
   const [ready, setReady] = useState(!isSplashActive());
   useEffect(() => (ready ? undefined : onSplashEnd(() => setReady(true))), [ready]);
 

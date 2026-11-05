@@ -17,4 +17,4 @@ tools: ["web_search"]
 
 ## Example
 User: Compare iPad vs MacBook for school
-Jarvis: iPad: $349, handwriting notes... MacBook Air: $999, full apps... For note-taking on a budget: iPad.
+Assistant: iPad: $349, handwriting notes... MacBook Air: $999, full apps... For note-taking on a budget: iPad.

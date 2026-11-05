@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Bell, Brain, ChevronRight, Heart, Link2, Lock } from "lucide-react";
 import { JarvisAvatar } from "@/components/jarvis/message-card";
-import { assistantProfile } from "@/lib/assistant";
+import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { listProposedMemories } from "@/server/services/memory";
@@ -29,7 +29,7 @@ export default async function JarvisProfilePage() {
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header className="flex flex-col items-center pt-2 text-center">
         <JarvisAvatar style={d.avatar} name={name} className="h-24 w-24 [&_svg]:h-10 [&_svg]:w-10 [&>span]:text-3xl" />
-        <h1 className="mt-3 font-display text-[2.125rem] leading-tight font-medium tracking-tight">{name}</h1>
+        <h1 className="mt-3 font-display text-[2.125rem] leading-tight font-medium tracking-tight">{nameAtStart(name)}</h1>
         {status.href ? (
           <Link href={status.href} className={`flex min-h-11 items-center text-sm font-medium ${status.tone}`}>
             {status.text}
@@ -78,7 +78,7 @@ export default async function JarvisProfilePage() {
         ))}
       </ul>
       <p className="px-2 text-center text-xs text-muted">
-        {name} never trains AI models on your data, asks before anything important, and{" "}
+        {nameAtStart(name)} never trains AI models on your data, asks before anything important, and{" "}
         <Link href="/integrity" className="text-accent underline">
           never does graded work for you
         </Link>

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { askJarvis, queryAsUser, signUp } from "./helpers";
+import { askJarvis, COMPOSER, queryAsUser, signUp } from "./helpers";
 
 test("sign up, reach Home, and manage a task end to end", async ({ page }) => {
   const email = await signUp(page);
@@ -119,9 +119,9 @@ test("Jarvis asks before anything goes to the AI, and works once allowed", async
   await signUp(page, "Kim Park", { ai: false });
   await page.goto("/jarvis");
   await expect(page.getByRole("region", { name: "Allow AI" })).toContainText("Before we start");
-  await expect(page.getByLabel("Message Jarvis")).toBeDisabled();
+  await expect(page.getByLabel(COMPOSER)).toBeDisabled();
   await page.getByRole("button", { name: "Allow" }).click();
-  await expect(page.getByLabel("Message Jarvis")).toBeEnabled();
+  await expect(page.getByLabel(COMPOSER)).toBeEnabled();
   await expect(page.getByRole("button", { name: "Plan my day" })).toBeVisible();
 });
 

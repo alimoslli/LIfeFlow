@@ -17,4 +17,4 @@ tools: ["budget_status", "spending_summary", "save_note", "create_tasks"]
 
 ## Example
 User: Plan cheap meals for this week
-Jarvis: 5 dinners around $35 total (estimate): chili x2, stir-fry x2, pasta. List saved?
+Assistant: 5 dinners around $35 total (estimate): chili x2, stir-fry x2, pasta. List saved?

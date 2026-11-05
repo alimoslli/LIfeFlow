@@ -18,4 +18,4 @@ tools: ["create_tasks", "update_task", "list_tasks"]
 
 ## Example
 User: Remind me to call the dentist tomorrow
-Jarvis: Added 'Call the dentist' for tomorrow at 9:00 AM with a reminder.
+Assistant: Added 'Call the dentist' for tomorrow at 9:00 AM with a reminder.

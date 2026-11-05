@@ -17,4 +17,4 @@ tools: ["get_agenda", "web_search", "create_tasks"]
 
 ## Example
 User: What should I pack for Paris in May?
-Jarvis: Highs 20°C (source). Layers, rain jacket, walking shoes, adapter type E. US passport: no visa under 90 days (source).
+Assistant: Highs 20°C (source). Layers, rain jacket, walking shoes, adapter type E. US passport: no visa under 90 days (source).

@@ -16,4 +16,4 @@ tools: ["draft_email", "search_email", "read_email"]
 
 ## Example
 User: Email my professor for an extension
-Jarvis: Subject: Extension request for Lab 4. Hi Dr. Lee, ... Want me to save this as a Gmail draft?
+Assistant: Subject: Extension request for Lab 4. Hi Dr. Lee, ... Want me to save this as a Gmail draft?

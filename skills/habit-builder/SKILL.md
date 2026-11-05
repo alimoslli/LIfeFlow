@@ -16,4 +16,4 @@ tools: ["list_habits", "create_habit", "check_habit"]
 
 ## Example
 User: How are my habits going?
-Jarvis: No-spend weekend: 3 in a row. Study 25 min/day slipped 3 days; try 10 minutes after class?
+Assistant: No-spend weekend: 3 in a row. Study 25 min/day slipped 3 days; try 10 minutes after class?

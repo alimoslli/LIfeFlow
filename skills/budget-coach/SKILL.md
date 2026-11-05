@@ -18,4 +18,4 @@ tools: ["money_findings", "money_overview", "spending_summary", "compare_spendin
 
 ## Example
 User: Why am I spending more this month?
-Jarvis: Food is $86 over last month (Oct 1-29), mostly delivery (6 orders). Cutting 2 orders saves about $40.
+Assistant: Food is $86 over last month (Oct 1-29), mostly delivery (6 orders). Cutting 2 orders saves about $40.

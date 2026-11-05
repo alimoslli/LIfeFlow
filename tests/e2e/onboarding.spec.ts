@@ -98,7 +98,7 @@ test("the app follows what fills your week: tabs and pills adapt", async ({ page
   await page.getByRole("button", { name: "Continue" }).click(); // where they work is optional
   await page.getByRole("button", { name: "Show me my day" }).click();
   await page.getByRole("button", { name: "Skip", exact: true }).click();
-  await page.getByRole("button", { name: "Meet Jarvis first" }).click();
+  await page.getByRole("button", { name: "Meet your assistant first" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   await page.getByRole("button", { name: "Skip tour" }).click();
 

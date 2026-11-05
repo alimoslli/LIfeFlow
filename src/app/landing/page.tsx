@@ -17,12 +17,15 @@ const button =
 const AREAS = [
   { name: "Today", body: "What's next, what's due, and what needs you. One screen, every morning." },
   { name: "Calendar", body: "Classes, shifts, events and deadlines together. Tap any block to change it. Syncs with Google Calendar." },
-  { name: "School", body: "Courses and assignments from Canvas, with study time built around your free hours. Jarvis coaches, and never does graded work." },
+  {
+    name: "School",
+    body: "Courses and assignments from Canvas, with study time built around your free hours. Your personal assistant coaches, and never does graded work.",
+  },
   { name: "Work", body: "Jobs, shifts and hours, and what you've earned so far." },
   { name: "Money", body: "Connect your bank and choose which accounts LifeFlow sees. Spending, bills and what's coming in. LifeFlow never moves money." },
   {
     name: "Goals and habits",
-    body: "Goals don't have to be about money. Jarvis checks in each evening and asks how you moved them forward, in your own words.",
+    body: "Goals don't have to be about money. Your personal assistant checks in each evening and asks how you moved them forward, in your own words.",
   },
   { name: "Health", body: "Sleep, steps and workouts from Apple Health, in the same week view as everything else." },
 ];
@@ -36,7 +39,7 @@ const STEPS = [
 const PRINCIPLES = [
   { title: "You choose what connects", body: "Turn any bank account on or off at any time." },
   { title: "Your data stays yours", body: "Never sold, and never used to train AI without your clear permission." },
-  { title: "Jarvis asks first", body: "He checks with you before sending, spending or deleting anything." },
+  { title: "Your assistant asks first", body: "It checks with you before sending, spending or deleting anything." },
   { title: "Only what's real", body: "Nothing shows as done until it is. Money counts only once it has landed." },
 ];
 
@@ -160,16 +163,16 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
           <CinematicHero signupHref={signupHref} />
         </div>
 
-        {/* Jarvis */}
+        {/* Your personal assistant */}
         <section className="border-t border-border">
           <div className="mx-auto grid max-w-6xl gap-14 px-5 py-20 sm:px-8 lg:grid-cols-2 lg:items-center lg:py-28">
             <div>
-              <p className="text-sm font-medium text-accent">Jarvis</p>
+              <p className="text-sm font-medium text-accent">Your personal assistant</p>
               <h2 className="mt-4 font-display text-[2.5rem] leading-[1.05] font-medium tracking-[-0.03em] text-balance sm:text-[3.5rem]">
                 Ask in plain words. Get a plan.
               </h2>
               <p className="mt-6 max-w-lg text-[1.0625rem] leading-relaxed text-text-2">
-                Jarvis checks your calendar, assignments, shifts and money before he answers, so you get a plan built around your real week.
+                Your assistant checks your calendar, assignments, shifts and money before it answers, so you get a plan built around your real week.
               </p>
             </div>
             <ul className="divide-y divide-border border-y border-border">

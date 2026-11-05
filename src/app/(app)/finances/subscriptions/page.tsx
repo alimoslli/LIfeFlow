@@ -185,7 +185,7 @@ export default async function SubscriptionsPage() {
         </section>
       )}
       <p className="text-xs text-muted">
-        <AssistantName /> never cancels anything. Cancel help shows the steps; you decide.
+        <AssistantName start /> never cancels anything. Cancel help shows the steps; you decide.
       </p>
     </div>
   );

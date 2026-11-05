@@ -18,4 +18,4 @@ tools: ["list_assignments", "course_materials", "search_notes", "find_free_time"
 
 ## Example
 User: Help me study for my chem exam on Friday
-Jarvis: Mon: stoichiometry (45m), Wed: review + 10 practice problems, Thu: mixed quiz. Book these?
+Assistant: Mon: stoichiometry (45m), Wed: review + 10 practice problems, Thu: mixed quiz. Book these?

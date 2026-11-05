@@ -92,7 +92,8 @@ const REMEMBER_NOTES: Record<RememberStatus, string> = {
   already_suggested: "This is already waiting for the user's approval.",
   previously_dismissed: "The user dismissed this suggestion before. Don't suggest it again unless they ask.",
   suggestions_off: "Not saved: the user turned off memory suggestions. Only an explicit request ('remember that…') saves a memory.",
-  too_many_pending: "Not saved: too many suggestions are waiting for approval. Ask the user to review them in Settings → Jarvis & memory.",
+  too_many_pending:
+    "Not saved: too many suggestions are waiting for approval. Ask the user to review them on the Memory page (their assistant's Profile, then Memory).",
 };
 
 export const memoryTools = [

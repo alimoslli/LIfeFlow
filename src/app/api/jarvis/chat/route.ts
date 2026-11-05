@@ -12,6 +12,7 @@ import { spendSinceMicros } from "@/server/jarvis/metrics";
 import { getDb } from "@/server/db/client";
 import { rateLimit } from "@/server/rate-limit";
 import { AI_CONSENT_NEEDED, aiAllowed } from "@/lib/ai-consent";
+import { assistantProfile, nameAtStart } from "@/lib/assistant";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -52,7 +53,10 @@ export async function POST(req: Request) {
     try {
       provider = getProvider();
     } catch (e) {
-      if (e instanceof ProviderUnavailableError) throw new HttpError(503, e.message);
+      if (e instanceof ProviderUnavailableError) {
+        console.error("[jarvis] provider unavailable:", e.message);
+        throw new HttpError(503, `${nameAtStart(assistantProfile(user.preferences).name)} isn't available right now. Try again in a minute.`);
+      }
       throw e;
     }
 

@@ -1,7 +1,7 @@
 ---
 name: memory-manager
 title: Memory manager
-description: Keeps what Jarvis knows accurate and shows the user.
+description: Keeps what the assistant knows accurate and shows the user.
 triggers: ["what do you know about me", "what do you remember", "forget", "update my memory", "remember that"]
 modules: ["settings"]
 tools: ["list_memories", "save_memory", "update_memory", "forget_memory"]
@@ -17,4 +17,4 @@ tools: ["list_memories", "save_memory", "update_memory", "forget_memory"]
 
 ## Example
 User: What do you know about me?
-Jarvis: You study in the morning, work at the library Tue/Thu, and are saving for Paris. Manage it in Settings → Assistant.
+Assistant: You study in the morning, work at the library Tue/Thu, and are saving for Paris. Manage it in Settings → Assistant.

@@ -5,7 +5,7 @@ import { JarvisAvatar } from "@/components/jarvis/message-card";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Card } from "@/components/ui/surface";
-import { ASSISTANT_STYLES, ASSISTANT_VOICES, type AssistantProfile, type AssistantStyle } from "@/lib/assistant";
+import { ASSISTANT_STYLES, ASSISTANT_VOICES, nameAtStart, UNNAMED_ASSISTANT, type AssistantProfile, type AssistantStyle } from "@/lib/assistant";
 import { composeMessage, PREVIEW_SAMPLES } from "@/lib/jarvis-voice";
 import type { ActionState } from "@/server/actions";
 
@@ -49,7 +49,8 @@ export function AssistantCard({
   settings: PersonalitySettings;
   action: (p: ActionState, fd: FormData) => Promise<ActionState>;
 }) {
-  const [name, setName] = useState(profile.name);
+  // Empty until they choose a name (it's "your assistant" until then); clearing it goes back to that.
+  const [name, setName] = useState(profile.named ? profile.name : "");
   const [style, setStyle] = useState<AssistantStyle>(profile.style);
   const [avatar, setAvatar] = useState(settings.avatar);
   return (
@@ -65,9 +66,9 @@ export function AssistantCard({
           const m = composeMessage(p.kind, p.facts, style === "friend" ? "friend" : style, { seed: i });
           return (
             <div key={p.kind} className="flex items-start gap-3 rounded-2xl bg-surface p-3 shadow-soft">
-              <JarvisAvatar style={avatar} name={name || "J"} className="h-8 w-8" />
+              <JarvisAvatar style={avatar} name={name || UNNAMED_ASSISTANT} className="h-8 w-8" />
               <div className="min-w-0">
-                <p className="text-xs text-muted">{name || "Jarvis"}</p>
+                <p className="text-xs text-muted">{name || nameAtStart(UNNAMED_ASSISTANT)}</p>
                 <p className="text-sm font-semibold">{m.title}</p>
                 <p className="text-sm text-text-2">{m.body}</p>
               </div>
@@ -78,7 +79,7 @@ export function AssistantCard({
 
       <ActionForm action={action} reset={false} className="mt-5 gap-5">
         <Field label="Name" htmlFor="as-name">
-          <Input id="as-name" name="name" required maxLength={24} value={name} onChange={(e) => setName(e.target.value)} className="max-w-xs" />
+          <Input id="as-name" name="name" maxLength={24} value={name} placeholder="Optional" onChange={(e) => setName(e.target.value)} className="max-w-xs" />
         </Field>
 
         <fieldset>
@@ -108,7 +109,7 @@ export function AssistantCard({
             {(["spark", "orb", "initial"] as const).map((a) => (
               <label key={a} className={`${chip} flex items-center gap-2`}>
                 <input type="radio" name="avatar" value={a} checked={avatar === a} onChange={() => setAvatar(a)} className="sr-only" />
-                <JarvisAvatar style={a} name={name || "J"} className="h-7 w-7" />
+                <JarvisAvatar style={a} name={name || UNNAMED_ASSISTANT} className="h-7 w-7" />
                 <span className="text-sm capitalize">{a === "initial" ? "Letter" : a}</span>
               </label>
             ))}

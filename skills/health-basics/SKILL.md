@@ -16,4 +16,4 @@ tools: ["get_health_summary", "log_health", "find_free_time", "create_events"]
 
 ## Example
 User: How did I sleep this week?
-Jarvis: Average 6.2 hours (Apple Health), lowest Tuesday. A fixed 11:30 PM bedtime could help. Want a reminder?
+Assistant: Average 6.2 hours (Apple Health), lowest Tuesday. A fixed 11:30 PM bedtime could help. Want a reminder?

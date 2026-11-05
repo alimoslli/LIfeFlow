@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, Loader2, Search, Settings, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { nameAtStart } from "@/lib/assistant";
 import { haptic } from "@/lib/haptics";
 import { BrandMark } from "@/components/brand/brand-mark";
 
@@ -52,6 +53,12 @@ const ROUTES: { test: RegExp; title: string; back?: string }[] = [
 
 export function routeInfo(pathname: string): { title: string; back?: string } {
   return ROUTES.find((r) => r.test.test(pathname)) ?? { title: "LifeFlow" };
+}
+
+/** "@assistant" in a title is the user's name for their assistant ("Your assistant" as the whole title until they choose one). */
+function titleWithName(title: string, name: string) {
+  const at = "@assistant";
+  return title.startsWith(at) ? nameAtStart(name) + title.slice(at.length) : title.replace(at, name);
 }
 
 /**
@@ -116,7 +123,7 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
         )}
         aria-hidden={!scrolled && !info.back}
       >
-        {info.title.replace("@assistant", assistantName)}
+        {titleWithName(info.title, assistantName)}
       </p>
       <div className="ml-auto flex items-center">
         {/* With a title showing, the label shrinks to a dot so it never covers the title. */}

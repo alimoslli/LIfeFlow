@@ -20,4 +20,4 @@ tools: ["goals_today", "log_goal_checkin", "list_habits", "check_habit"]
 
 ## Example
 User: I skipped takeout and put $20 toward the car, and walked 30 minutes.
-Jarvis: Saved: $20 to Car fund (now $820 of $3,000) and "walked 30 minutes" for Lose 10 lbs. Two wins today.
+Assistant: Saved: $20 to Car fund (now $820 of $3,000) and "walked 30 minutes" for Lose 10 lbs. Two wins today.
