@@ -52,3 +52,6 @@ __pycache__/
 docs/situations/cases/*/connections/
 docs/situations/cases/*/timeline.json
 docs/situations/cases/*/truth.json
+
+# Agent worktrees (builders work in these; their commits are merged, the folders are not)
+.claude/worktrees/
