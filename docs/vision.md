@@ -196,6 +196,8 @@ Example: the user tells Dev they have a budget goal. **No** progress bar, no "50
 
 **Hidden by default, never hidden from the user.** Anyone can ask Dev "how's my budget?" and get the exact numbers, and the "What Dev knows" page shows everything, for privacy and trust.
 
+**The line is the main thing, not the only thing (owner's rule, 2026-11-05).** From the line, one tap shows everything in one area of life: all your money (available now, what came in and what went out this month, in total, then the list), all your classes, all your assignments, all your shifts. Not a tab and not a page. The line itself opens into that area (for example, tap the money part of the line and it becomes your money line with the totals above it) and closes back with one tap, without losing your place in time. Totals are always real sums of the data, never estimates, and expected pay is never added to "available now".
+
 **Guardrails (they make the new surface usable, not plainer):**
 
 - **Everyday things stay instant.** The owner's rule: "I want my calendar, what's the easiest way? That's how a user should get there." Calendar, to-dos, money and the assistant are one obvious tap away, however new the surface is.
@@ -374,3 +376,7 @@ Still open:
 ### Examples, not the spec
 
 > I want to make sure that our AI model knows that this is just my, like, just examples that we're going to be training him on. My own traveling, coming back, school cafeteria, that's all examples we're training him on. But there's going to be millions of examples that he's going to face with users that are connecting to him. Maybe not train them on the millions of ones right now, but make sure he's going to be compatible with mainly a lot of what's going to be connected to him. Like, the people I know, like, they all work similarly to me, so I'm just trying to give him examples as broad as possible to be able to connect everything.
+
+### The line is the main thing, not the only thing
+
+> I want like all the data that's also connected to it to be able to be viewed simply by the users, by them just like, I don't know, clicking on the line maybe, on their money, seeing all their money, you know, because seeing all their money, what came in, what came out in total is very crucial to my app too. Like see the total of the stuff, like total, like all, see all your classes in one button, see all your assignments in one button, with it not just being the flow of the line. Like that should be the main thing, but it shouldn't also be the only thing. So that if users want to see all the money coming in, all the money coming out, they can see that. But it's not there, like it's not a whole tab, it's not a whole page, and it's not there to make it overcomplicated, but it is accessible very in a very simple, creative way, implemented to the idea we already have.
