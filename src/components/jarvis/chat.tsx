@@ -25,6 +25,7 @@ import {
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
 import { nameAtStart } from "@/lib/assistant";
+import { greetingIn } from "@/lib/dates";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { JarvisStatus, statusWord } from "./status";
 import { useShell } from "../shell/app-shell";
@@ -73,7 +74,7 @@ export function JarvisChat({
   startVoice?: boolean;
 }) {
   const router = useRouter();
-  const { assistantName, firstName, aiConsent } = useShell();
+  const { assistantName, firstName, aiConsent, tz } = useShell();
   const canSend = availability.available && aiConsent;
   const [conversationId, setConversationId] = useState(initialId ?? null);
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
@@ -307,7 +308,7 @@ export function JarvisChat({
                 <BrandMark className="lf-float relative h-full w-full" alt="" priority />
               </div>
               <p className="mt-3 text-[0.75rem] font-semibold tracking-[0.18em] text-muted uppercase">
-                {greeting()}
+                {greetingIn(tz)}
                 {firstName ? `, ${firstName}` : ""}
               </p>
               <h2
@@ -678,11 +679,6 @@ function RateAnswer({ runId, initial }: { runId: string; initial: 1 | -1 | null 
       </button>
     </div>
   );
-}
-
-function greeting(now = new Date()) {
-  const h = now.getHours();
-  return h < 5 ? "Up late" : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
 }
 
 const ICONS = [CalendarDays, GraduationCap, Wallet, Repeat];

@@ -326,7 +326,7 @@ export const habitCoach: Detector = async (ctx) => {
     // The 5 periods before this one (this one may not be done yet).
     const last = h.recent.slice(1, 6);
     const kept = last.filter(Boolean).length;
-    const age = daysBetween(h.createdAt.toISOString().slice(0, 10), today);
+    const age = daysBetween(localDateOf(h.createdAt, ctx.tz), today);
     if (last.length - kept >= 3 && age >= (h.cadence === "daily" ? 5 : 28)) {
       const half = h.target ? Math.max(1, Math.round(h.target / 2)) : null;
       const smaller = half && h.kind === "save" ? usd(half) : half && h.kind === "study" ? `${half} minutes` : null;

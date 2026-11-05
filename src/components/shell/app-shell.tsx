@@ -29,8 +29,15 @@ import { NAME_KEY } from "../motion/splash";
 import type { JarvisAvailability } from "../jarvis/types";
 import { BrandMark } from "@/components/brand/brand-mark";
 
-type ShellCtx = { openJarvis: (prompt?: string, opts?: { send?: boolean }) => void; assistantName: string; firstName: string; aiConsent: boolean };
-const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: UNNAMED_ASSISTANT, firstName: "", aiConsent: false });
+type ShellCtx = {
+  openJarvis: (prompt?: string, opts?: { send?: boolean }) => void;
+  assistantName: string;
+  firstName: string;
+  aiConsent: boolean;
+  /** The user's time zone (Settings), for anything that depends on their local time. */
+  tz: string;
+};
+const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: UNNAMED_ASSISTANT, firstName: "", aiConsent: false, tz: "UTC" });
 export const useShell = () => useContext(Ctx);
 
 type Drawer = { open: boolean; prompt?: string; send?: boolean; key: number };
@@ -53,7 +60,7 @@ export function AppShell({
   assistantName?: string;
   /** The user allowed Jarvis to send their data to the AI provider. */
   aiConsent?: boolean;
-  user: { name: string; email: string; accountKind: "standard" | "demo" };
+  user: { name: string; email: string; accountKind: "standard" | "demo"; timezone?: string };
   jarvis: JarvisAvailability;
   /** Show the guided tour (once, after onboarding or when replayed). */
   tour?: boolean;
@@ -131,7 +138,7 @@ export function AppShell({
   const settingsActive = pathname.startsWith("/settings");
 
   return (
-    <Ctx.Provider value={{ openJarvis, assistantName, firstName: user.name.split(" ")[0], aiConsent }}>
+    <Ctx.Provider value={{ openJarvis, assistantName, firstName: user.name.split(" ")[0], aiConsent, tz: user.timezone ?? "UTC" }}>
       <LifeAreasContext.Provider value={areas}>
         <div className="lf-glass">
           <TiltLayer />

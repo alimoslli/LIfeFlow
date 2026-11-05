@@ -379,7 +379,7 @@ export const financeTools = [
     mutates: false,
     async execute(_a, ctx) {
       return ctx.run(async (s) => {
-        const to = new Date(ctx.now.getTime() + 30 * 86_400_000).toISOString().slice(0, 10);
+        const to = addDaysStr(ctx.today, 30);
         const [tracked, upcoming, detected] = await series(
           () => listRecurring(s),
           () => upcomingRecurring(s, ctx.today, to),

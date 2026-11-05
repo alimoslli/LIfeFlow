@@ -1,4 +1,4 @@
-import { addDaysStr, daysBetween, monthStart, todayIn } from "@/lib/dates";
+import { addDaysStr, daysBetween, localDateOf, monthStart, todayIn } from "@/lib/dates";
 import type { SessionUser } from "../auth/sessions";
 import { series } from "../db/series";
 import type { UserScope } from "../db/with-user";
@@ -58,7 +58,7 @@ export async function collectSnapshot(s: UserScope, user: SessionUser, now = new
       ...overdueTasks.map((t) => ({ id: t.id, title: t.title, context: "Task", dueAt: t.dueAt!, kind: "task" as const, href: "/tasks" })),
     ].sort((a, b) => b.dueAt.getTime() - a.dueAt.getTime()),
     exams: upcomingA
-      .filter((a) => (a.kind === "exam" || a.kind === "quiz") && a.dueAt && a.dueAt.toISOString().slice(0, 10) <= horizon)
+      .filter((a) => (a.kind === "exam" || a.kind === "quiz") && a.dueAt && localDateOf(a.dueAt, tz) <= horizon)
       .map((a) => ({
         id: a.id,
         title: a.title,

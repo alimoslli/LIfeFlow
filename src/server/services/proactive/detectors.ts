@@ -282,7 +282,7 @@ const taskStreak: Detector = async ({ scope, tz, today }) => {
   const rows = await scope.tx
     .select({ dueAt: tasks.dueAt, status: tasks.status, completedAt: tasks.completedAt })
     .from(tasks)
-    .where(and(eq(tasks.userId, scope.userId), isNotNull(tasks.dueAt), gte(tasks.dueAt, new Date(`${since}T00:00:00Z`))));
+    .where(and(eq(tasks.userId, scope.userId), isNotNull(tasks.dueAt), gte(tasks.dueAt, startOfLocalDay(since, tz))));
   const byDay = new Map<string, { due: number; done: number }>();
   for (const t of rows) {
     const d = localDateOf(t.dueAt!, tz);
