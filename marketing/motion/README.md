@@ -5,7 +5,8 @@
 frames. Content is real: the lock-screen recording frames (`lockf/`, from `../launch/rec/act_lock.mp4`), the
 notification cards (`jl_n*.png` from `../launch/cards/`), and the numbers from Jordan's sample account.
 
-Setup next to `mg.html`: Geist and Newsreader woff2 fonts, `icon.png` (public/icons/icon-192.png), the `jl_n*.png`
+Setup next to `mg.html`: Geist and Newsreader woff2 fonts, `mark.png` (the current logo: public/brand/lifeflow-mark-transparent-512.png;
+never the old wave icon in public/icons), the `jl_n*.png`
 cards, and `lockf/` frames (`ffmpeg -i act_lock.mp4 -vf fps=30,scale=510:1104 lockf/%04d.jpg`).
 Render: `node render.cjs 10.4`, then mux with the music from `../launch/music_launch.py plan_mg.json music.wav`.
 
@@ -18,3 +19,23 @@ marker sweeps on the assistant's own bold phrases (their on-screen positions are
 and the real lock-screen notification at the start. No invented screens.
 `python3 build_chat.py chat_log.json <frames dir> captions.json` writes `chat_data.json`; `node render_chat.cjs` renders.
 The renderer reads the raw 3x frames listed in `chat_log.json` (about 3,000 JPEGs from `rec_act.cjs convo`, kept out of git).
+
+## Smooth chat edit (`chat2.html`): one continuous take, no cuts
+
+Replaces `chat.html`, whose replies looked choppy and whose turns looked like separate clips. The owner's notes: the end card
+and the notification used the old logo, and the replies lagged.
+
+- Filmed with `../launch/recorder/rec_chat.cjs` (`TURNS=turns_chat.json OUT=frames_chat2 LOG=log_chat2.json node rec_chat.cjs`).
+  The page clock runs at 0.05x while filming, so the app gets about 60 captured frames per second of its own time. Each reply
+  is fetched from the real server (real tools, real calendar and reminder changes). While the server works, filming pauses with
+  the clock frozen. Then the real reply is handed to the app at a steady pace on the page clock: the status words, the
+  streaming text and the auto-scroll all play smoothly. Text is released at word boundaries, never inside a `**bold**` pair.
+  The browser's smooth scroll runs on real time, so the recorder swaps in an eased scroll on the page clock. Every frame
+  also logs where the assistant's bold phrases are (`window.__probe`), so the highlights follow the real scroll exactly.
+- The edit plays the take straight through at 1x. The camera is one steady framing on the conversation, smoothed with a
+  Gaussian so it never jumps. The lock screen is live HTML with the real pushed texts (`../launch/recorder/lock/notes.json`)
+  and the real app icon (`appicon.png` = public/brand/lifeflow-apple-touch.png). A tap opens the app out of the
+  notification, with no white flash. The end card uses `mark.png` (public/brand/lifeflow-mark-transparent-512.png).
+- `python3 build_chat2.py chat2_log.json <frames dir> captions2.json notes.json` writes `chat2_data.json` and `plan_chat2.json`
+  (music: `../launch/music_launch.py plan_chat2.json music.wav`); `node render_chat2.cjs` renders 60 fps frames.
+  Highlights are picked per turn in `captions2.json` (substring, or `=` for an exact bold phrase).

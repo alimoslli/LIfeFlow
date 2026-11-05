@@ -1,0 +1,210 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: Geist; src: url(Geist.woff2) format("woff2"); font-weight: 100 900; }
+@font-face { font-family: Serif; src: url(Newsreader.woff2) format("woff2"); font-weight: 200 800; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --ink: #121714; --moss: #285b45; --mint: #8fd0b5; }
+html, body { width: 1080px; height: 1920px; overflow: hidden; font-family: Geist, sans-serif; background: #f3f2ec; }
+.abs { position: absolute; }
+#bg { inset: 0; background: radial-gradient(55% 35% at 12% 88%, rgba(143,208,181,.5), transparent 70%), radial-gradient(50% 30% at 92% 8%, rgba(246,228,196,.85), transparent 70%), linear-gradient(180deg, #fbfaf6, #ecefe8); }
+.blob { border-radius: 50%; filter: blur(70px); }
+#capbg { left: 0; top: 0; width: 1080px; height: 430px; background: linear-gradient(180deg, rgba(250,249,245,.98) 0%, rgba(250,249,245,.95) 70%, rgba(250,249,245,0) 100%); }
+.cap { left: 40px; width: 1000px; top: 92px; text-align: center; font-weight: 820; font-size: 100px; line-height: 1.02; letter-spacing: -1px; color: var(--ink); }
+.cap .ln { white-space: nowrap; }
+.cap .w { display: inline-block; overflow: hidden; vertical-align: top; padding: 0 .07em; }
+.cap .w span { display: inline-block; }
+.cap .hl { color: var(--moss); }
+#cam { left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: 0 0; }
+#phone { left: 163px; top: 392px; width: 754px; border-radius: 104px; background: #151816; padding: 16px; box-shadow: 0 70px 140px rgba(20,40,30,.30), inset 0 0 0 3px #3c413e; }
+#screen { position: relative; width: 722px; height: 1561px; border-radius: 88px; overflow: hidden; background: #0f2a20; }
+#island { left: 50%; top: 26px; width: 200px; height: 56px; margin-left: -100px; background: #000; border-radius: 28px; z-index: 9; }
+/* lock screen, laid out in 390x844 phone points and scaled to the screen */
+#lock { left: 0; top: 0; width: 390px; height: 844px; transform-origin: 0 0; color: #fff; overflow: hidden; }
+#lock .wall { position: absolute; inset: 0; background: radial-gradient(120% 70% at 20% 10%, #3f8a69 0%, transparent 60%), radial-gradient(90% 60% at 90% 80%, #2b6a51 0%, transparent 65%), linear-gradient(170deg, #1d4535 0%, #0f2a20 55%, #0a1d16 100%); }
+#lock .orb { position: absolute; border-radius: 50%; filter: blur(2px); background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.55), rgba(160,215,190,.25) 35%, rgba(40,100,75,.15) 70%, transparent 72%); }
+#lock .top { position: absolute; top: 92px; width: 100%; text-align: center; }
+#lock .date { font-size: 19px; font-weight: 500; opacity: .92; letter-spacing: .2px; }
+#lock .time { font-size: 92px; font-weight: 600; letter-spacing: -2px; line-height: 1; margin-top: 4px; }
+#lock .lockic { position: absolute; top: 56px; left: 50%; transform: translateX(-50%); width: 14px; height: 18px; }
+#lock .list { position: absolute; left: 10px; right: 10px; top: 300px; }
+.n { background: rgba(245,248,246,.84); color: #0e1a14; border-radius: 22px; padding: 12px 14px 13px; display: grid; grid-template-columns: 38px 1fr; gap: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.18); width: 370px; }
+#lock .n { position: absolute; left: 0; }
+.n img { width: 38px; height: 38px; border-radius: 9px; box-shadow: 0 0 0 .5px rgba(0,0,0,.12); }
+.n .h { display: flex; justify-content: space-between; align-items: baseline; }
+.n .t { font-weight: 650; font-size: 15px; line-height: 1.25; }
+.n .when { font-size: 13px; color: rgba(20,30,25,.55); white-space: nowrap; margin-left: 8px; }
+.n .b { font-size: 15px; line-height: 1.3; margin-top: 2px; color: #18241e; }
+#lock .bar { position: absolute; bottom: 9px; left: 50%; margin-left: -67px; width: 134px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.85); }
+#lock .cam, #lock .torch { position: absolute; bottom: 52px; width: 50px; height: 50px; border-radius: 50%; background: rgba(0,0,0,.28); display: grid; place-items: center; }
+#lock .cam { right: 46px; } #lock .torch { left: 46px; }
+#lock .sb { position: absolute; top: 0; left: 0; right: 0; height: 44px; }
+/* the app */
+#app { left: 0; top: 0; width: 722px; height: 1561px; background: #f4f1ea; transform-origin: 361px 600px; }
+#scr { position: absolute; left: 0; top: 82px; width: 722px; height: 1481px; display: block; }
+#sbar { left: 0; top: 0; width: 722px; height: 82px; background: #f3efe6; color: #121714; font-weight: 650; font-size: 31px; }
+#sbar .tm { position: absolute; left: 70px; top: 26px; }
+.sicons { position: absolute; right: 56px; top: 30px; display: flex; gap: 10px; align-items: center; }
+#ov { left: 0; top: 82px; width: 722px; height: 1481px; pointer-events: none; }
+#mclip { overflow: hidden; }
+.mk { background: rgba(143,208,181,.66); border-radius: 7px; transform-origin: left center; mix-blend-mode: multiply; }
+.finger { width: 84px; height: 84px; margin: -42px 0 0 -42px; border-radius: 50%; background: rgba(40,40,40,.28); border: 4px solid rgba(255,255,255,.92); box-shadow: 0 4px 18px rgba(0,0,0,.25); z-index: 8; }
+/* the notification lifted out of the phone */
+#big { left: 70px; top: 0; width: 370px; transform-origin: 0 0; }
+#big .n { box-shadow: 0 30px 70px rgba(10,30,20,.30), 0 0 0 1px rgba(255,255,255,.7) inset; background: rgba(250,252,250,.97); overflow: hidden; position: relative; }
+#big .shine { position: absolute; top: 0; bottom: 0; width: 90px; background: linear-gradient(100deg, transparent, rgba(255,255,255,.75), transparent); }
+#end { inset: 0; display: none; text-align: center; }
+#end img { width: 230px; height: 230px; margin-top: 600px; }
+#end .w1 { font-family: Serif; font-size: 112px; color: var(--ink); margin-top: 10px; letter-spacing: -1px; }
+#end .w2 { font-weight: 800; font-size: 64px; color: var(--moss); margin-top: 22px; letter-spacing: -.5px; }
+#end .w3 { font-weight: 700; font-size: 46px; color: var(--ink); margin-top: 40px; }
+#end .w4 { font-size: 28px; color: #7d877f; margin-top: 220px; }
+</style></head>
+<body>
+<div id="bg" class="abs"></div>
+<div class="abs blob" id="bl1" style="width:560px;height:560px;left:-160px;top:1280px;background:rgba(143,208,181,.5)"></div>
+<div class="abs blob" id="bl2" style="width:440px;height:440px;left:760px;top:160px;background:rgba(246,226,190,.75)"></div>
+<div id="cam" class="abs">
+  <div id="phone" class="abs"><div id="screen">
+    <div id="lock" class="abs">
+      <div class="wall"></div>
+      <div class="orb" style="width:220px;height:220px;left:-60px;top:520px;opacity:.55"></div>
+      <div class="orb" style="width:140px;height:140px;right:-30px;top:200px;opacity:.45"></div>
+      <div class="orb" style="width:90px;height:90px;left:250px;top:640px;opacity:.5"></div>
+      <div class="sb"><span class="sicons" style="right:30px;top:16px;transform:scale(.54);transform-origin:right top;color:#fff" id="lockicons"></span></div>
+      <svg class="lockic" viewBox="0 0 14 18"><rect x="1" y="7" width="12" height="10" rx="2.2" fill="#fff"/><path d="M3.8 7V5a3.2 3.2 0 0 1 6.4 0v2" fill="none" stroke="#fff" stroke-width="1.8"/></svg>
+      <div class="top"><div class="date">Monday, November 9</div><div class="time">8:22</div></div>
+      <div class="list" id="list"></div>
+      <div class="torch"><svg width="18" height="22" viewBox="0 0 18 22"><path d="M5 1h8l-1 6H6z M6 8h6v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" fill="#fff"/></svg></div>
+      <div class="cam"><svg width="22" height="18" viewBox="0 0 22 18"><path d="M3 4h4l2-3h4l2 3h4a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="#fff"/><circle cx="11" cy="10" r="3.6" fill="#333"/></svg></div>
+      <div class="bar"></div>
+    </div>
+    <div id="app" class="abs">
+      <img id="scr">
+      <div id="sbar" class="abs"><span class="tm">8:24</span><span class="sicons" id="appicons"></span></div>
+      <div id="ov" class="abs"><div id="mclip" class="abs"></div></div>
+    </div>
+    <div id="lfg" class="abs finger"></div>
+    <div id="island" class="abs"></div>
+  </div></div>
+</div>
+<div id="capbg" class="abs"></div>
+<div id="caps"></div>
+<div id="big" class="abs"></div>
+<div id="end" class="abs"><img src="mark.png"><div class="w1">LifeFlow</div><div class="w2">Your personal assistant.</div><div class="w3">Tap the link in bio.</div><div class="w4">Real app and real replies, on a sample account.</div></div>
+<script>
+const D = window.DATA;
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const P = (t, a, d) => clamp((t - a) / d);
+const out = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const io = (x) => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const back = (x, s = 1.5) => { x = clamp(x); return 1 + (s + 1) * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2); };
+const lerp = (a, b, k) => a + (b - a) * k;
+const K = 722 / 390, SB = 82;
+const ICONS = '<svg width="34" height="20" viewBox="0 0 34 20"><rect x="0" y="12" width="5" height="8" rx="1.5" fill="currentColor"/><rect x="9" y="8" width="5" height="12" rx="1.5" fill="currentColor"/><rect x="18" y="4" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="27" y="0" width="5" height="20" rx="1.5" fill="currentColor"/></svg><svg width="50" height="24" viewBox="0 0 50 24"><rect x="1" y="1" width="42" height="22" rx="6" fill="none" stroke="currentColor" stroke-width="2" opacity=".5"/><rect x="4" y="4" width="32" height="16" rx="3.5" fill="currentColor"/><rect x="45" y="8" width="3.5" height="8" rx="1.5" fill="currentColor" opacity=".5"/></svg>';
+$('appicons').innerHTML = ICONS; $('lockicons').innerHTML = ICONS;
+$('lock').style.transform = `scale(${K})`;
+// notifications (real text from the app's pushes), app icon = the current LifeFlow icon
+const noteHTML = (m) => `<img src="appicon.png" alt=""><div><div class="h"><span class="t">${m.title}</span><span class="when">now</span></div><div class="b">${m.body}</div></div>`;
+D.notes.forEach((m, i) => { const d = document.createElement('div'); d.className = 'n'; d.id = 'n' + i; d.innerHTML = noteHTML(m); $('list').appendChild(d); });
+$('big').innerHTML = `<div class="n">${noteHTML(D.notes[0])}<div class="shine" id="shine"></div></div>`;
+// stack the notifications (newest on top): measure heights
+const NH = D.notes.map((_, i) => $('n' + i).offsetHeight);
+// captions
+$('caps').innerHTML = D.caps.map((c, i) => `<div class="abs cap" id="cap${i}">${c.lines.map((l) => '<div class="ln">' + l.split(' ').map((w) => `<span class="w"><span class="${w.startsWith('*') ? 'hl' : ''}">${w.replace(/\*/g, '')}</span></span>`).join(' ') + '</div>').join('')}</div>`).join('');
+D.caps.forEach((c, i) => { const el = $('cap' + i); el.style.display = 'block'; let w = 0; el.querySelectorAll('.ln').forEach((l) => { l.style.display = 'inline-block'; w = Math.max(w, l.scrollWidth); l.style.display = 'block'; }); if (w > 990) el.style.fontSize = `${100 * 990 / w}px`; el.style.display = 'none'; });
+// markers and fingers
+$('mclip').innerHTML = D.marks.map((m, i) => `<div id="mk${i}"></div>`).join('');
+$('ov').insertAdjacentHTML('beforeend', D.taps.map((f, i) => `<div class="abs finger" id="fg${i}" style="left:${f.x * K}px;top:${f.y * K}px"></div>`).join(''));
+const nearestIdx = (ct) => { let lo = 0, hi = D.frames.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (D.frames[m][1] <= ct) lo = m; else hi = m - 1; } if (lo + 1 < D.frames.length && Math.abs(D.frames[lo + 1][1] - ct) < Math.abs(D.frames[lo][1] - ct)) lo++; return lo; };
+const camAt = (t) => { const f = t * D.camFps, i = Math.floor(f), k = f - i; const A = D.cam[Math.max(0, Math.min(D.cam.length - 1, i))], B2 = D.cam[Math.max(0, Math.min(D.cam.length - 1, i + 1))]; return [lerp(A[0], B2[0], k), lerp(A[1], B2[1], k)]; };
+let last = '';
+async function seek(t) {
+  $('bl1').style.transform = `translate(${Math.sin(t * .5) * 40}px, ${Math.cos(t * .4) * 30}px)`;
+  $('bl2').style.transform = `translate(${Math.cos(t * .45) * 40}px, ${Math.sin(t * .35) * 30}px)`;
+  const L = D.lock;
+  // camera: scale s around a focus point fy that lands at screen y = D.anchor
+  const [s, fy] = camAt(t);
+  const kIn = out(P(t, 0, 0.85));
+  const endK = io(P(t, D.endAt - 0.55, 0.55));
+  const ty = D.anchor - fy * s + (1 - kIn) * 1000 + endK * 260;
+  $('cam').style.transform = `translate(${540 - 540 * s}px, ${ty}px) scale(${s * (1 - 0.08 * endK)})`;
+  $('cam').style.opacity = String(1 - endK);
+  // lock screen notifications slide in, newest on top
+  const shown = L.noteAt.map((a) => P(t, a, 0.5));
+  const order = D.notes.map((_, i) => i).sort((a, b) => L.noteAt[b] - L.noteAt[a]);
+  let acc = 0; const tops = {};
+  order.forEach((i) => { const k = out(shown[i]); tops[i] = acc; acc += (NH[i] + 9) * k; });
+  D.notes.forEach((_, i) => { const el = $('n' + i); const k = shown[i]; const kb = back(k, 1.3);
+    el.style.display = k > 0 ? 'grid' : 'none'; el.style.opacity = String(clamp(k * 2.2));
+    const press = t >= L.tapAt && t < L.tapAt + 0.3 && i === 0 ? 1 - 0.035 * Math.sin(P(t, L.tapAt, 0.3) * Math.PI) : 1;
+    el.style.transform = `translateY(${tops[i] + (1 - kb) * -30}px) scale(${(0.94 + 0.06 * kb) * press})`; });
+  // the morning brief lifts out of the phone, then settles back
+  const bk = P(t, L.bigAt, 0.6), bx = io(P(t, L.bigOut, 0.45));
+  const big = $('big'); const bv = t >= L.bigAt && t < L.bigOut + 0.45;
+  big.style.display = bv ? 'block' : 'none';
+  if (bv) {
+    const n0 = $('n0').getBoundingClientRect();
+    const S1 = 940 / 370, X1 = 70, Y1 = L.bigY;
+    const kk = back(bk, 1.2) * (1 - bx);
+    big.style.transform = `translate(${lerp(n0.left, X1, kk)}px, ${lerp(n0.top, Y1, kk)}px) scale(${lerp(n0.width / 370, S1, kk)})`;
+    big.style.left = '0px';
+    big.style.opacity = String(clamp(bk * 4) * (bx > 0.85 ? 1 - (bx - 0.85) / 0.15 : 1));
+    $('shine').style.left = `${-120 + 560 * io(P(t, L.bigAt + 0.45, 0.8))}px`;
+  }
+  // tap the notification: the app opens out of it
+  const ok = io(P(t, L.openAt, 0.5));
+  const lockR = $('n0').getBoundingClientRect(), scrR = $('screen').getBoundingClientRect();
+  const sc = scrR.width / 722;
+  const r0 = { x: (lockR.left - scrR.left) / sc, y: (lockR.top - scrR.top) / sc, w: lockR.width / sc, h: lockR.height / sc };
+  const app = $('app');
+  app.style.display = t >= L.openAt ? 'block' : 'none';
+  if (t >= L.openAt) {
+    const top = lerp(r0.y, 0, ok), left = lerp(r0.x, 0, ok), right = lerp(722 - r0.x - r0.w, 0, ok), bottom = lerp(1561 - r0.y - r0.h, 0, ok);
+    app.style.clipPath = ok < 1 ? `inset(${top}px ${right}px ${bottom}px ${left}px round ${lerp(22 * K, 0, ok)}px)` : 'none';
+    app.style.transform = `scale(${lerp(0.9, 1, ok)})`;
+    app.style.opacity = String(clamp(ok * 3));
+  }
+  $('lock').style.filter = t >= L.openAt ? `blur(${ok * 10}px) brightness(${1 - 0.3 * ok})` : 'none';
+  $('lock').style.display = ok >= 1 ? 'none' : 'block';
+  // the chat take, played straight through
+  let idx = -1;
+  if (t >= L.openAt) {
+    const ct = D.clip0 + (t - L.openAt);
+    idx = nearestIdx(ct);
+    const src = D.dir + '/' + D.frames[idx][0];
+    if (src !== last) { $('scr').src = src; last = src; }
+  }
+  // highlights on the assistant's own bold words, following the real scroll frame by frame
+  const pr = idx >= 0 ? D.probes[idx] : null;
+  const mc = $('mclip');
+  if (pr && pr.sc) { mc.style.left = '0px'; mc.style.top = `${pr.sc[1] * K}px`; mc.style.width = '722px'; mc.style.height = `${pr.sc[3] * K}px`; }
+  D.marks.forEach((m, i) => {
+    const el = $('mk' + i);
+    const vis = t >= m.at && t < m.until && pr && pr.m && pr.m[i];
+    if (!vis) { el.innerHTML = ''; return; }
+    const k = io(P(t, m.at, 0.32)) * (1 - io(P(t, m.until - 0.25, 0.25)));
+    el.innerHTML = pr.m[i].map(([x, y2, w, h], j) => { const kj = io(P(t, m.at + j * 0.12, 0.3)); return `<div class="abs mk" style="left:${(x - 3) * K}px;top:${(y2 - pr.sc[1] + 1) * K}px;width:${(w + 6) * K}px;height:${(h - 1) * K}px;transform:scaleX(${kj});opacity:${1 - io(P(t, m.until - 0.25, 0.25))}"></div>`; }).join('');
+  });
+  D.taps.forEach((f, i) => { const el = $('fg' + i); const dt = t - f.at; let s2 = 0, a = 0; if (dt >= -0.15 && dt < 0.45) { if (dt < 0) { s2 = 1.3 - 0.3 * (dt + 0.15) / 0.15; a = (dt + 0.15) / 0.15; } else if (dt < 0.12) { s2 = 1 - 0.08 * dt / 0.12; a = 1; } else { const k = (dt - 0.12) / 0.33; s2 = 0.92 + 0.5 * k; a = 1 - k; } } el.style.display = a > 0.01 ? 'block' : 'none'; el.style.opacity = String(a); el.style.transform = `scale(${s2})`; });
+  { // the tap on the notification
+    const el = $('lfg'); const dt = t - L.tapAt; let s2 = 0, a = 0; if (dt >= -0.15 && dt < 0.45) { if (dt < 0) { s2 = 1.3 - 0.3 * (dt + 0.15) / 0.15; a = (dt + 0.15) / 0.15; } else if (dt < 0.12) { s2 = 1 - 0.08 * dt / 0.12; a = 1; } else { const k = (dt - 0.12) / 0.33; s2 = 0.92 + 0.5 * k; a = 1 - k; } }
+    el.style.display = a > 0.01 ? 'block' : 'none'; el.style.opacity = String(a); el.style.transform = `scale(${s2})`;
+    el.style.left = `${r0.x + r0.w * 0.55}px`; el.style.top = `${r0.y + r0.h * 0.5}px`; }
+  // captions
+  D.caps.forEach((c, i) => {
+    const el = $('cap' + i); const vis = t >= c.a - 0.01 && t < c.b;
+    el.style.display = vis ? 'block' : 'none'; if (!vis) return;
+    const ko = io(P(t, c.b - 0.24, 0.24));
+    el.querySelectorAll('.w > span').forEach((w, j) => { const k = out(P(t, c.a + j * 0.055, 0.42)); w.style.transform = `translateY(${(1 - k) * 110 - ko * 110}%)`; w.style.opacity = String(clamp(k * 1.4) * (1 - ko)); });
+  });
+  $('capbg').style.opacity = String(1 - endK);
+  // end card
+  const e = $('end'); e.style.display = t >= D.endAt - 0.2 ? 'block' : 'none';
+  if (t >= D.endAt - 0.2) { [...e.children].forEach((c, j) => { const k = out(P(t, D.endAt + j * 0.12, 0.55)); c.style.opacity = String(k); c.style.transform = j === 0 ? `scale(${0.7 + 0.3 * back(P(t, D.endAt, 0.7), 1.6)})` : `translateY(${(1 - k) * 40}px)`; }); }
+  const img = $('scr'); if (img.src && !img.complete) await new Promise((r) => { img.onload = r; img.onerror = r; }); await img.decode().catch(() => {});
+}
+window.seek = seek;
+</script>
+</body></html>

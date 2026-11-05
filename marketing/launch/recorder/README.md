@@ -46,3 +46,10 @@ on Thursday after a Wednesday closing shift, car insurance due Wednesday with ch
 overlapping Spanish. The lock screen (`lock/lock.html`) shows the three notifications the app pushes, with their exact text from
 `jarvis_messages` (`lock/notes.json`); the phone frame's clock follows each scene (`status_time`, `status_light` in the plan).
 Scenes: `rec_act.cjs lock`, `open` (Today, the updates, Block it, Plan), `convo` with `turns.json`. `plan_jordan.py` builds the plan.
+
+## Smooth chat take (`rec_chat.cjs`)
+
+One continuous conversation, filmed so replies stream smoothly. Record at 390x800 (the edit adds the status bar above).
+It pauses filming while the real server answers, then releases the real reply to the app on the slowed page clock;
+see `../../motion/README.md` (chat2). Restart the stack with the port freed (`fuser -k 3000/tcp`): a leftover `next-server`
+keeps the old clock offset. The lock screen uses `appicon.png` (public/brand/lifeflow-apple-touch.png), the current app icon.
