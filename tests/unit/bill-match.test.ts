@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { amountsClose, nameRelation, scheduleGap, tracksSeries } from "@/server/services/finance/bill-match";
+import {
+  amountsClose,
+  nameRelation,
+  paidOccurrences,
+  scheduleGap,
+  tracksSeries,
+  type DueOccurrence,
+  type PostedCharge,
+} from "@/server/services/finance/bill-match";
 import type { RecurringCandidate } from "@/server/services/finance/recurring-detect";
 
 const found = (p: Partial<RecurringCandidate>): RecurringCandidate => ({
@@ -83,5 +91,66 @@ describe("bill matching helpers", () => {
     expect(scheduleGap("2027-01-01", "2026-12-01", "monthly")).toBe(0);
     expect(scheduleGap("2026-12-31", "2027-01-01", "monthly")).toBe(1);
     expect(scheduleGap("2026-11-02", "2026-11-17", "weekly")).toBe(1);
+  });
+});
+
+describe("a bill that already posted is paid for that cycle (A3)", () => {
+  const due = (p: Partial<DueOccurrence>): DueOccurrence => ({
+    name: "City Utilities",
+    merchantKey: "city utilities",
+    kind: "bill",
+    frequency: "monthly",
+    date: "2026-11-05",
+    amountCents: -8_200,
+    ...p,
+  });
+  const charge = (p: Partial<PostedCharge>): PostedCharge => ({
+    date: "2026-11-05",
+    amountCents: -6_906,
+    merchantName: "City Utilities",
+    description: "CITY UTILITIES",
+    kind: "expense",
+    pending: false,
+    ...p,
+  });
+  const paid = (d: DueOccurrence[], c: PostedCharge[]) => [...paidOccurrences(d, c)].sort();
+
+  it("counts a charge on the due date or a few days before, at the bill's amount (a utility may vary)", () => {
+    expect(paid([due({})], [charge({})])).toEqual([0]);
+    expect(paid([due({})], [charge({ date: "2026-11-03" })])).toEqual([0]);
+    expect(
+      paid(
+        [due({ name: "Rent, Parkview Apartments", merchantKey: null, amountCents: -95_000 })],
+        [charge({ merchantName: "Parkview Apartments", description: "PARKVIEW APARTMENTS RENT", amountCents: -95_000 })],
+      ),
+    ).toEqual([0]);
+  });
+
+  it("doesn't count a charge too early, after the due date, still pending, a refund, another merchant or another amount", () => {
+    expect(paid([due({})], [charge({ date: "2026-10-30" })])).toEqual([]);
+    expect(paid([due({})], [charge({ date: "2026-11-06" })])).toEqual([]);
+    expect(paid([due({})], [charge({ pending: true })])).toEqual([]);
+    expect(paid([due({ amountCents: 8_200, kind: "income" })], [charge({ amountCents: 8_200, kind: "refund" })])).toEqual([]);
+    expect(paid([due({})], [charge({ merchantName: "Georgia Power", description: "GEORGIA POWER" })])).toEqual([]);
+    expect(
+      paid(
+        [due({ kind: "subscription", amountCents: -1_549, name: "Netflix", merchantKey: "netflix" })],
+        [charge({ merchantName: "Netflix", description: "NETFLIX.COM", amountCents: -2_299 })],
+      ),
+    ).toEqual([]);
+    // A name inside the other needs the amount to hold (10% or $2), even for a bill.
+    expect(
+      paid(
+        [due({ name: "Parkview Apartments", merchantKey: null, amountCents: -95_000 })],
+        [charge({ merchantName: null, description: "PARKVIEW APARTMENTS PARKING", amountCents: -7_500 })],
+      ),
+    ).toEqual([]);
+  });
+
+  it("lets one charge pay one bill, the closest amount first", () => {
+    const phone = due({ name: "Verizon", merchantKey: "verizon", amountCents: -8_500 });
+    const internet = due({ name: "Verizon", merchantKey: "verizon", amountCents: -7_000 });
+    expect(paid([phone, internet], [charge({ merchantName: "Verizon", description: "VERIZON", amountCents: -7_000 })])).toEqual([1]);
+    expect(paid([due({}), due({})], [charge({})])).toEqual([0]);
   });
 });

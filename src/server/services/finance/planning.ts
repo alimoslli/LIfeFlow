@@ -7,7 +7,7 @@ import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound } from "../errors";
 import { listCategories } from "./categories";
 import { rollupToParents, spendingByCategoryId } from "./cashflow";
-import { tracksSeries } from "./bill-match";
+import { SLACK_DAYS, paidOccurrences, tracksSeries, type DueOccurrence } from "./bill-match";
 import { detectRecurring, merchantKey, nextOccurrence, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 import { parsePatch } from "../patch";
@@ -221,19 +221,35 @@ export async function listRecurring(scope: UserScope, opts: { includeInactive?: 
   return opts.includeInactive ? rows : rows.filter((r) => r.status === "active");
 }
 
-/** Upcoming bills/income between two dates, projecting each active series forward. */
+/**
+ * Upcoming bills/income between two dates, projecting each active series forward. A due date that a
+ * posted charge already paid (on the day or a few days before, `paidOccurrences`) is left out, so the
+ * next one is the following cycle. Worked out when read; stored due dates aren't rewritten.
+ */
 export async function upcomingRecurring(scope: UserScope, from: string, to: string) {
   const items = await listRecurring(scope);
-  const out: { id: string; name: string; date: string; amountCents: number; kind: string }[] = [];
+  const due: (DueOccurrence & { id: string })[] = [];
   for (const r of items) {
     if (!r.nextDueDate) continue;
     let d = r.nextDueDate;
     for (let guard = 0; d < from && guard < 200; guard++) d = nextOccurrence(d, r.frequency);
     for (let guard = 0; d <= to && guard < 60; guard++, d = nextOccurrence(d, r.frequency)) {
-      out.push({ id: r.id, name: r.name, date: d, amountCents: r.amountCents, kind: r.kind });
+      due.push({ id: r.id, name: r.name, merchantKey: r.merchantKey, kind: r.kind, frequency: r.frequency, date: d, amountCents: r.amountCents });
     }
   }
-  return out.sort((a, b) => a.date.localeCompare(b.date));
+  if (!due.length) return [];
+  const charges = await queryTransactions(scope, { from: addDaysStr(from, -Math.max(...Object.values(SLACK_DAYS))), to, limit: 5000 });
+  const paid = paidOccurrences(due, charges);
+  return due
+    .filter((_, i) => !paid.has(i))
+    .map((u): { id: string; name: string; date: string; amountCents: number; kind: string } => ({
+      id: u.id,
+      name: u.name,
+      date: u.date,
+      amountCents: u.amountCents,
+      kind: u.kind,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 /**

@@ -4,9 +4,10 @@ import type { UserScope } from "@/server/db/with-user";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
 import { billsAndPace, cashForecast } from "@/server/services/finance/forecast";
-import { createRecurring, suggestRecurring } from "@/server/services/finance/planning";
+import { createRecurring, listRecurring, suggestRecurring } from "@/server/services/finance/planning";
 import { createTransaction } from "@/server/services/finance/transactions";
-import { makeUser } from "../helpers";
+import { DETECTORS } from "@/server/services/proactive/detectors";
+import { makeUser, TZ } from "../helpers";
 
 afterAll(closeDb);
 const TODAY = "2026-11-05";
@@ -68,5 +69,57 @@ describe("one bill, counted once (A2)", () => {
       "Parkview Apartments -95000 false",
       "Parkview Apartments Parking -7500 true",
     ]);
+  });
+});
+
+describe("a bill that already posted isn't due again (A3)", () => {
+  it("leaves a bill paid today and one paid 2 days early out of the bills, Today's next bill and the bill message", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s, 200_000);
+      const utilities = (await getCategoryByName(s, "Utilities"))!;
+      // Tracked at $82; the bank took $69.06 today.
+      await createRecurring(s, {
+        name: "City Utilities",
+        amountCents: -8_200,
+        frequency: "monthly",
+        nextDueDate: TODAY,
+        kind: "bill",
+        categoryId: utilities.id,
+      });
+      await createTransaction(s, {
+        accountId: acct.id,
+        date: TODAY,
+        description: "CITY UTILITIES",
+        merchantName: "City Utilities",
+        amountCents: -6_906,
+        categoryId: utilities.id,
+      });
+      // Due today, posted 2 days early.
+      await createRecurring(s, { name: "Mint Mobile", amountCents: -1_500, frequency: "monthly", nextDueDate: TODAY, kind: "bill" });
+      await createTransaction(s, { accountId: acct.id, date: "2026-11-03", description: "MINT MOBILE", amountCents: -1_500 });
+      // Not posted yet: still due.
+      await createRecurring(s, { name: "Car insurance", amountCents: -12_000, frequency: "monthly", nextDueDate: "2026-11-07", kind: "bill" });
+    });
+
+    const week = await run((s) => billsAndPace(s, TODAY, TODAY, "2026-11-12"));
+    expect(week.bills.map((b) => b.name)).toEqual(["Car insurance"]);
+    // Today's next bill is the first of these (src/app/(app)/page.tsx).
+    expect(week.bills[0]).toMatchObject({ name: "Car insurance", date: "2026-11-07" });
+
+    // The paid ones move to their next cycle when read.
+    const later = await run((s) => billsAndPace(s, TODAY, TODAY, "2026-12-10"));
+    expect(later.bills.map((b) => `${b.name}@${b.date}`)).toEqual([
+      "Car insurance@2026-11-07",
+      "City Utilities@2026-12-05",
+      "Mint Mobile@2026-12-05",
+      "Car insurance@2026-12-07",
+    ]);
+
+    const messages = await run((s) => DETECTORS.billsDue({ scope: s, tz: TZ, today: TODAY, now: new Date(`${TODAY}T14:00:00Z`) }));
+    expect(messages.map((m) => `${m.kind} ${m.facts.bill}`)).toEqual(["bill_due Car insurance"]);
+
+    // Read time only: the stored rows keep their dates.
+    expect((await run((s) => listRecurring(s))).find((r) => r.name === "City Utilities")!.nextDueDate).toBe(TODAY);
   });
 });
