@@ -18,6 +18,17 @@ LifeFlow is not a health app, a money app, a calendar or a to-do list. Those exi
 
 Today the app doesn't show any of this. It looks like Apple Health, a calendar and a bank app, each restyled and put in one app. A new user sees copies of apps they already have, so the vision is invisible.
 
+### Digital life and real life (owner's principle, 2026-11-05)
+
+A person's life is much more than what their phone knows. Friends, family, time alone, a walk, a call, doing nothing, resting, studying. The app has been built around everything except that.
+
+- **The app connects your digital life** (money, work schedule, school, calendar, email, health data: everything you use your phone to manage) **so you can organize it around your real life.** Real life is the point. The digital side exists to serve it.
+- **The gaps on the line are not empty. They are your life.** Free time is never shown as blank or as "available slots". It has quiet presence in words: "Evening at home", "Sunday, yours", "Nothing planned. Keep it."
+- **Dev protects real life instead of filling it.** No optimizing every hour. When Dev places study blocks, trip prep or project steps, it uses the stretches the person would least miss and leaves evenings and weekends alone unless the person says otherwise. Its reasons say so: "I kept Saturday free."
+- **Real life enters lightly, never by surveillance.** From the calendar (family dinner, a birthday), from Apple Health (a walk, a workout, sleep), and from one sentence to Dev ("I'm with my cousin tonight"). No screen-time tracking, no location trails, no logging of small things. The app doesn't need the detail; it needs to understand that the life is there.
+- **Dev may notice when real life is being squeezed** (three weeks without a free evening, no time with people before a hard stretch) and say it once, gently, as "just so you know". Never a nag, never a score.
+- **Checks gain a variable:** rest and time with people count alongside money, time, school and work when Dev decides whether a plan is good.
+
 ## 2. Why not just a money app (or any one niche)
 
 The owner considered narrowing back to personal finance, where LifeFlow started (BudgetFlow). The answer is no:
@@ -380,3 +391,7 @@ Still open:
 ### The line is the main thing, not the only thing
 
 > I want like all the data that's also connected to it to be able to be viewed simply by the users, by them just like, I don't know, clicking on the line maybe, on their money, seeing all their money, you know, because seeing all their money, what came in, what came out in total is very crucial to my app too. Like see the total of the stuff, like total, like all, see all your classes in one button, see all your assignments in one button, with it not just being the flow of the line. Like that should be the main thing, but it shouldn't also be the only thing. So that if users want to see all the money coming in, all the money coming out, they can see that. But it's not there, like it's not a whole tab, it's not a whole page, and it's not there to make it overcomplicated, but it is accessible very in a very simple, creative way, implemented to the idea we already have.
+
+### Digital life and real life
+
+> We have built the app based around everything except like social life, family time, spending time on your own, chilling, doing nothing, studying. Like, I don't think, does our app understand that there's all these factors to a person's life? A person's life is way more than just that. I think if we're going to create a timeline, it's not just an app where it just connects, these things have to be implemented. The person is just not what digital life is. So we have to split between digital life and real life. So the app is connecting your digital life together so that you can perfectly organize it with your real life. Digital life as in all your finances that you see on your phone, all the work schedule, everything that's online and clicked to your phone that you like use your phone to organize and manage is all in one place in the same idea we have created. And then there's the real life where you're just out, maybe you took a walk, maybe you just sat with your cousin, maybe you just chatted on the phone with your friends, you scrolled on TikTok, you went to the bathroom. That's all in that timeline, no? If we're not going to add it to that much detail, we don't have to, but the app has to understand it, that there's a whole life to that. It's just not only that. There's a lot of, not just factors, but things going on other than the digital data it has.
