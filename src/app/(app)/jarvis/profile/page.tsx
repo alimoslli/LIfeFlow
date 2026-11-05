@@ -46,7 +46,7 @@ export default async function JarvisProfilePage() {
         >
           <span>
             <span className="block text-xl font-semibold tracking-tight">Personality</span>
-            <span className="text-xs opacity-80">Tone, voice, when he speaks up</span>
+            <span className="text-xs opacity-80">Tone, voice, when it speaks up</span>
           </span>
           <Heart className="h-6 w-6 self-end opacity-80" />
         </Link>

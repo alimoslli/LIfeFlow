@@ -4,27 +4,35 @@ import { COMPOSER, queryAsUser, signUp, whatUsersSee } from "./helpers";
 /**
  * The assistant has no fixed name. A new user who taps through setup without naming it
  * sees "your assistant" (or "Assistant" where a short label is needed) and never "Jarvis":
- * not in text, aria labels, placeholders, titles or alt text, on phone or desktop.
+ * not in text, aria labels, placeholders, titles or alt text, on phone or desktop. Nor is it
+ * "he": a new account shows only our own copy, and none of it uses he, his or him.
  */
 const PAGES = [
   "/",
   "/plan",
   "/tasks",
+  "/goals",
+  "/inbox",
   "/jarvis",
   "/jarvis/says",
   "/jarvis/ideas",
   "/jarvis/profile",
   "/jarvis/memory",
   "/money",
+  "/finances/subscriptions",
   "/school",
   "/school/due",
   "/settings",
   "/settings/jarvis",
   "/settings/notifications",
+  "/settings/integrations",
+  "/settings/text", // not found unless texting is set up; then the page itself is checked
 ];
 
 async function expectNoJarvis(page: Page, where: string) {
-  expect(await whatUsersSee(page), where).not.toMatch(/jarvis/i);
+  const seen = await whatUsersSee(page);
+  expect(seen, where).not.toMatch(/jarvis/i);
+  expect(seen, `${where}: the assistant is "it", not "he"`).not.toMatch(/\b(he|his|him|himself)\b/i);
 }
 
 async function visit(page: Page, path: string) {

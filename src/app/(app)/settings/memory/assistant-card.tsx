@@ -117,7 +117,7 @@ export function AssistantCard({
         </fieldset>
 
         <fieldset>
-          <legend className="mb-2 text-sm font-medium text-text-2">How often he checks in</legend>
+          <legend className="mb-2 text-sm font-medium text-text-2">How often it checks in</legend>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {(Object.keys(FREQ) as (keyof typeof FREQ)[]).map((f) => (
               <label key={f} className={chip}>
@@ -154,7 +154,7 @@ export function AssistantCard({
         </Field>
 
         <fieldset>
-          <legend className="mb-1 text-sm font-medium text-text-2">Topics he can bring up</legend>
+          <legend className="mb-1 text-sm font-medium text-text-2">Topics it can bring up</legend>
           <div className="grid grid-cols-1 sm:grid-cols-2 sm:gap-x-6">
             {(Object.keys(TOPIC_LABELS) as (keyof typeof TOPIC_LABELS)[]).map((t) => (
               <Switch key={t} name={`topic_${t}`} label={TOPIC_LABELS[t]} defaultChecked={settings.topics[t]} />
@@ -166,18 +166,18 @@ export function AssistantCard({
           <legend className="mb-1 text-sm font-medium text-text-2">Allowed without asking</legend>
           <Switch name="auto_tasks" label="Add to-dos and reminders, move late to-dos" defaultChecked={settings.autonomy.tasks} />
           <Switch name="auto_calendar" label="Block time on my calendar" defaultChecked={settings.autonomy.calendar} />
-          <p className="text-xs text-muted">Anything with money, or contacting someone, always asks first. Everything he does on his own can be undone.</p>
+          <p className="text-xs text-muted">Anything with money, or contacting someone, always asks first. Everything it does on its own can be undone.</p>
         </fieldset>
 
         <Switch
           name="learning"
           label="Learn from how I respond"
-          hint="He speaks up less about what you skip and more about what helps. Your answers stay in your account."
+          hint="It speaks up less about what you skip and more about what helps. Your answers stay in your account."
           defaultChecked={settings.learning}
         />
 
         <Field
-          label="Anything else about his personality? (optional)"
+          label="Anything else about its personality? (optional)"
           htmlFor="as-notes"
           hint="For example: calls me 'boss', uses sports metaphors, keeps me calm before exams."
         >
