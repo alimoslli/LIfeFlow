@@ -1,11 +1,11 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { closeDb } from "@/server/db/client";
 import { runJarvisTurn, makeToolContext, type JarvisEvent } from "@/server/jarvis/agent";
 import { listMessages, loadHistory } from "@/server/jarvis/conversations";
 import { executeToolCall, resolvePendingAction } from "@/server/jarvis/executor";
 import { ScriptedProvider, type Responder } from "@/server/jarvis/providers/scripted";
 import type { ModelProvider } from "@/server/jarvis/providers/types";
-import { toolSpecs } from "@/server/jarvis/registry";
+import { getTool, toolSpecs } from "@/server/jarvis/registry";
 import { createCourse, listAssignments } from "@/server/services/school";
 import { createTask, getTask, listTasks } from "@/server/services/tasks";
 import { listActiveMemories } from "@/server/services/memory";
@@ -244,6 +244,41 @@ describe("Jarvis tool loop", () => {
     expect(row.memoryIds).toHaveLength(1);
   });
 
+  it("never shows a tool's raw error: not in the chat, the saved result or what the model reads", async () => {
+    const { session, run } = await jarvisUser();
+    const RAW = "401 Incorrect API key provided: sk-proj-abc123. You can find your API key at https://platform.openai.com/account/api-keys.";
+    const leak = /Incorrect API key|sk-proj|openai|api-keys/i;
+    const execute = vi.spyOn(getTool("list_tasks")!, "execute").mockRejectedValueOnce(Object.assign(new Error(RAW), { status: 401 }));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    // The scripted model echoes the tool output it was given, so `text` is what the model read.
+    const r = await turn(session, "what's on my list?", callThenSummarize([{ name: "list_tasks", args: {} }]));
+    execute.mockRestore();
+    // The details go to the server log.
+    expect(log).toHaveBeenCalledWith("[jarvis] tool list_tasks failed", expect.objectContaining({ message: RAW }));
+    log.mockRestore();
+    const end = r.events.find((e) => e.type === "tool_end");
+    expect(end).toMatchObject({ ok: false, summary: "That didn't work this time. Try again in a minute." });
+    expect(JSON.stringify(r.events)).not.toMatch(leak);
+    expect(r.text).toContain("That didn't work this time.");
+    expect(r.text).not.toMatch(leak);
+    const saved = await run((s) => listMessages(s, r.conversationId));
+    expect(saved.some((m) => m.role === "tool")).toBe(true);
+    expect(JSON.stringify(saved)).not.toMatch(leak);
+  });
+
+  it("still passes on the messages tools write for the model, like an unknown category with the real list", async () => {
+    const { session } = await jarvisUser();
+    const r = await turn(
+      session,
+      "track my phone bill",
+      callThenSummarize([{ name: "add_bill", args: { name: "Phone", amount: 40, frequency: "monthly", category: "Zzz not a category" } }]),
+    );
+    const end = r.events.find((e) => e.type === "tool_end");
+    expect(end).toMatchObject({ ok: false });
+    expect((end as { summary: string }).summary).toMatch(/No category called "Zzz not a category". Pick one of: /);
+    expect((end as { summary: string }).summary).not.toBe("That didn't work this time. Try again in a minute.");
+  });
+
   it("reports provider failures honestly and persists them", async () => {
     const { session, run } = await jarvisUser();
     const failing: ModelProvider = {
@@ -256,12 +291,21 @@ describe("Jarvis tool loop", () => {
       }),
     };
     const events: JarvisEvent[] = [];
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const { conversationId } = await runJarvisTurn({ user: session, text: "hello", provider: failing, emit: (e) => events.push(e), now: NOW });
-    expect(events.find((e) => e.type === "error")).toMatchObject({ message: expect.stringMatching(/OPENAI_API_KEY/) });
+    // The details go to the server log only.
+    expect(log).toHaveBeenCalledWith("[jarvis] turn failed", expect.objectContaining({ status: 401, message: "Unauthorized" }));
+    log.mockRestore();
+    // People see plain words with their assistant's name ("your assistant" before they choose one).
+    const err = events.find((e) => e.type === "error");
+    expect(err).toEqual({ type: "error", message: "Your assistant isn't available right now. Try again later." });
     const msgs = await run((s) => listMessages(s, conversationId));
     expect(msgs.map((m) => [m.role, m.status])).toEqual([
       ["user", "complete"],
       ["assistant", "error"],
     ]);
+    // The saved message is the same plain text, never the raw error.
+    expect(msgs[1].content).toBe("Your assistant isn't available right now. Try again later.");
+    expect(msgs[1].content).not.toMatch(/unauthorized|openai|key|jarvis/i);
   });
 });

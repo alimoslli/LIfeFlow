@@ -42,13 +42,13 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
       <header>
         <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Updates</h1>
         <p className="mt-1 text-sm text-text-2">
-          Send bills, receipts and school emails. <AssistantName /> files them.
+          Send bills, receipts and school emails. <AssistantName start /> files them.
         </p>
       </header>
       <SegmentedNav label="Updates" items={UPDATES} active="filed" />
       {shared === "1" && (
         <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
-          Got it. <AssistantName /> filed what you shared; see it below.
+          Got it. <AssistantName start /> filed what you shared; see it below.
         </p>
       )}
       {shared === "0" && (

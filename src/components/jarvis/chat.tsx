@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
+import { nameAtStart } from "@/lib/assistant";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { JarvisStatus, statusWord } from "./status";
 import { useShell } from "../shell/app-shell";
@@ -294,7 +295,7 @@ export function JarvisChat({
             <div className="flex gap-3 rounded-2xl bg-warning-soft p-4 text-sm text-warning">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
-                <p className="font-medium">{assistantName} isn&apos;t available right now.</p>
+                <p className="font-medium">{nameAtStart(assistantName)} isn&apos;t available right now.</p>
                 <p className="mt-1 opacity-90">Everything else in LifeFlow works as usual.</p>
               </div>
             </div>
@@ -466,7 +467,7 @@ export function JarvisChat({
                 rows={1}
                 placeholder={
                   !availability.available
-                    ? `${assistantName} isn't available right now`
+                    ? `${nameAtStart(assistantName)} isn't available right now`
                     : aiConsent
                       ? `Message ${assistantName}…`
                       : `Allow ${assistantName} to start`
@@ -498,7 +499,7 @@ export function JarvisChat({
             </form>
           )}
           <p className="lf-chat-note mt-2 text-center text-[0.6875rem] text-muted/80">
-            {assistantName} tells you everything it changes. Deletions always ask first.
+            {nameAtStart(assistantName)} tells you everything it changes. Deletions always ask first.
           </p>
         </div>
       </div>

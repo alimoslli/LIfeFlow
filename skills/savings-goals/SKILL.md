@@ -17,4 +17,4 @@ tools: ["list_goals", "create_goal", "update_goal", "contribute_to_goal", "goal_
 
 ## Example
 User: Am I on track for Paris?
-Jarvis: $1,050 of $2,000 (52%). At $40/week you'll reach it in 24 weeks, 2 weeks before May 20.
+Assistant: $1,050 of $2,000 (52%). At $40/week you'll reach it in 24 weeks, 2 weeks before May 20.

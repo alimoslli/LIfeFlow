@@ -18,4 +18,4 @@ tools: ["search_notes", "get_note", "web_search"]
 
 ## Example
 User: Give me feedback on my essay intro
-Jarvis: Strong hook. The thesis is vague: name your two reasons. Paragraph 2 needs a source for the 40% claim.
+Assistant: Strong hook. The thesis is vague: name your two reasons. Paragraph 2 needs a source for the 40% claim.

@@ -19,7 +19,8 @@ type StepId = "hello" | "week" | "details" | "yours" | "day";
 /** "details" (one class, where they work) is skipped when neither applies. "day" is Your day, connected. */
 const stepsFor = (stage: LifeStage | null): StepId[] => (stage === "life" ? ["hello", "week", "yours", "day"] : ["hello", "week", "details", "yours", "day"]);
 
-const NAMES = ["Jarvis", "Nova", "Sage", "Atlas", "Max"];
+/** Ideas only: the name starts empty and nothing is picked, so it stays "your assistant" unless they choose. */
+const NAMES = ["Nova", "Sage", "Atlas", "Max"];
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u;
 /** How each personality answers "What's due this week?" (shown live as they pick). */
 const SAMPLE: Record<AssistantStyle, string> = {
@@ -46,7 +47,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
   const [stage, setStage] = useState<LifeStage | null>(null);
   const [course, setCourse] = useState("");
   const [job, setJob] = useState("");
-  const [name, setName] = useState("Jarvis");
+  const [name, setName] = useState("");
   const [style, setStyle] = useState<AssistantStyle>("friend");
   const STEPS = stepsFor(stage);
   const step = STEPS[Math.min(index, STEPS.length - 1)];
@@ -54,7 +55,9 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
   const school = stage === "student" || stage === "both";
   const work = stage === "working" || stage === "both";
   const cleanName = useMemo(() => name.trim().replace(/\s+/g, " "), [name]);
-  const nameOk = cleanName.length > 0 && cleanName.length <= 24 && NAME_RE.test(cleanName);
+  // Naming is optional; an empty name keeps "your assistant".
+  const nameOk = cleanName.length === 0 || (cleanName.length <= 24 && NAME_RE.test(cleanName));
+  const shown = cleanName && nameOk ? cleanName : null;
 
   const panel = useRef<HTMLDivElement>(null);
   useGSAP(
@@ -86,7 +89,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
       if (!nameOk) return setError("Use letters, numbers, spaces or simple punctuation for the name (up to 24 characters).");
       const r = await completeOnboardingAction({
         lifeStage: stage ?? undefined,
-        assistant: { name: cleanName, style },
+        assistant: { name: cleanName || undefined, style },
         courses: school && course.trim() ? [course.trim()] : [],
         job: work && job.trim() ? { name: job.trim() } : undefined,
       });
@@ -218,7 +221,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
         {step === "day" && stage && (
           <DayPreview
             firstName={firstName}
-            assistant={nameOk ? cleanName : "Your assistant"}
+            assistant={shown ?? "Your assistant"}
             stage={stage}
             course={school ? course : undefined}
             job={work ? job : undefined}
@@ -234,6 +237,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={24}
+                  placeholder="Optional"
                   aria-label="Assistant name"
                   autoCapitalize="words"
                   autoComplete="off"
@@ -245,6 +249,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
                       key={n}
                       type="button"
                       onClick={() => setName(n)}
+                      aria-pressed={cleanName === n}
                       className={cn(
                         "min-h-9 rounded-full px-3.5 text-sm transition-all",
                         cleanName === n ? "bg-hero text-hero-text shadow-soft" : "bg-surface text-text-2 shadow-soft hover:text-text",
@@ -277,7 +282,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
                 <div className="mt-3 flex gap-2.5 rounded-2xl bg-surface-2 p-3.5" aria-live="polite">
                   <BrandMark className="h-6 w-6" alt="" />
                   <p className="text-[0.875rem] leading-relaxed text-text-2">
-                    <span className="font-semibold text-text">{nameOk ? cleanName : "Your assistant"}:</span> {SAMPLE[style]}
+                    <span className="font-semibold text-text">{shown ?? "Your assistant"}:</span> {SAMPLE[style]}
                   </p>
                 </div>
               </Group>
@@ -297,7 +302,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
               Connect my accounts
             </Button>
             <Button variant="ghost" onClick={() => finish("/")} disabled={pending || !nameOk} className="h-12 text-[0.9375rem]">
-              Meet {nameOk ? cleanName : "your assistant"} first
+              Meet {shown ?? "your assistant"} first
             </Button>
           </>
         ) : (

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ServiceError } from "../../services/errors";
 import { getProject, updateProject } from "../../services/notes";
 import { createHabit, checkHabit, deleteHabit, listHabits, updateHabit } from "../../services/habits";
 import { getCourse, updateCourse } from "../../services/school";
@@ -106,7 +107,7 @@ export const manageTools = [
     mutates: true,
     async confirm({ id }, ctx) {
       const e = (await ctx.run((s) => listEmployers(s))).find((x) => x.id === id);
-      if (!e) throw new Error("No such job. Use list_jobs.");
+      if (!e) throw new ServiceError("No such job. Use list_jobs.");
       return `Remove ${e.name}? Past shifts and pay stay in your history.`;
     },
     async execute({ id }, ctx) {

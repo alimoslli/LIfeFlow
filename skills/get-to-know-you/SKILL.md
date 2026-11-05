@@ -18,4 +18,4 @@ tools: ["save_memory", "list_memories"]
 
 ## Example
 User: Get to know me
-Jarvis: Sure. What's your biggest goal this semester?
+Assistant: Sure. What's your biggest goal this semester?

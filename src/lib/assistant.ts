@@ -1,7 +1,16 @@
 import type { UserPreferences } from "@/server/db/schema";
 
-/** The user's personal assistant: they choose its name, personality and voice. */
-export const DEFAULT_ASSISTANT_NAME = "Jarvis";
+/**
+ * The user's personal assistant: they choose its name, personality and voice. It has no
+ * name of its own: until they pick one, sentences say "your assistant".
+ */
+export const UNNAMED_ASSISTANT = "your assistant";
+
+/** The name at the start of a sentence or as a heading: "Your assistant" until they choose one. */
+export const nameAtStart = (name: string) => (name === UNNAMED_ASSISTANT ? "Your assistant" : name);
+
+/** A short noun label (the tab, a list row): "Assistant" until they choose a name. */
+export const assistantLabel = (name: string) => (name === UNNAMED_ASSISTANT ? "Assistant" : name);
 
 export const ASSISTANT_STYLES = {
   coach: {
@@ -38,11 +47,14 @@ export const ASSISTANT_VOICES = {
 } as const;
 export type AssistantVoice = keyof typeof ASSISTANT_VOICES;
 
-export type AssistantProfile = { name: string; style: AssistantStyle; notes: string | null; voice: AssistantVoice };
+/** `name` is what to call it in a sentence; `named` is false until the user has chosen a name. */
+export type AssistantProfile = { name: string; named: boolean; style: AssistantStyle; notes: string | null; voice: AssistantVoice };
 
 export function assistantProfile(p: UserPreferences | undefined | null): AssistantProfile {
+  const chosen = p?.assistantName?.trim();
   return {
-    name: p?.assistantName?.trim() || DEFAULT_ASSISTANT_NAME,
+    name: chosen || UNNAMED_ASSISTANT,
+    named: !!chosen,
     style: styleOf(p?.assistantStyle),
     notes: p?.assistantNotes?.trim() || null,
     voice: p?.assistantVoice && p.assistantVoice in ASSISTANT_VOICES ? p.assistantVoice : "marin",

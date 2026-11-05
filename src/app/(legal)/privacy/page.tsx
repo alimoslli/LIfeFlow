@@ -109,8 +109,8 @@ export default function PrivacyPolicy() {
 
       <h2 id="ai">3. The AI assistant</h2>
       <p>
-        Nothing is sent to our AI provider until you allow it. The first time you use the assistant, we ask; you can turn it off anytime in Settings, Jarvis,
-        and the rest of LifeFlow keeps working.
+        Nothing is sent to our AI provider until you allow it. The first time you use the assistant, we ask; you can turn it off anytime in Settings, under your
+        assistant, and the rest of LifeFlow keeps working.
       </p>
       <p>
         When you use the assistant, the parts of your information needed to answer your request (your message, relevant records, relevant approved memories,

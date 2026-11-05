@@ -17,4 +17,4 @@ tools: ["list_shifts", "add_shifts", "update_shift", "delete_shift", "work_earni
 
 ## Example
 User: How many hours do I work this week?
-Jarvis: 18 hours over 4 shifts, about $288 before tax (estimate). Thursday's shift ends at 10 PM and your essay is due Friday.
+Assistant: 18 hours over 4 shifts, about $288 before tax (estimate). Thursday's shift ends at 10 PM and your essay is due Friday.

@@ -37,7 +37,7 @@ export const onboardingSchema = z.object({
   /** Something the user wants Jarvis to know; saved as a confirmed memory. */
   aboutMe: z.string().trim().max(500).optional(),
   /** Their assistant's name and personality, chosen in "Make it yours". */
-  assistant: z.object({ name: assistantSchema.shape.name, style: z.enum(["coach", "friend", "direct"]) }).optional(),
+  assistant: z.object({ name: assistantSchema.shape.name.optional(), style: z.enum(["coach", "friend", "direct"]) }).optional(),
 });
 
 export type OnboardingInput = z.input<typeof onboardingSchema>;

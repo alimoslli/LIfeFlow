@@ -9,7 +9,7 @@ const SHOTS = process.env.SHOTS;
 const TABS: [string, string, string[]][] = [
   ["Today", "/", []],
   ["Plan", "/plan", ["/calendar", "/tasks", "/milestones", "/habits", "/work"]],
-  ["Jarvis", "/jarvis", ["/jarvis/says", "/jarvis/ideas", "/jarvis/profile"]],
+  ["Assistant", "/jarvis", ["/jarvis/says", "/jarvis/ideas", "/jarvis/profile"]],
   ["Money", "/money", ["/finances/accounts", "/wealth", "/finances/budgets", "/finances/transactions", "/finances/subscriptions", "/finances/bills"]],
   ["School", "/school", ["/school/due", "/notes"]],
 ];
@@ -25,7 +25,7 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
   // Tab bar: exactly five tabs, short labels, nothing truncated; no Settings tab.
   await page.goto("/");
   const tabs = page.getByRole("navigation", { name: "Main" }).last().getByRole("link");
-  expect(await tabs.allInnerTexts()).toEqual(["Today", "Plan", "Jarvis", "Money", "School"]);
+  expect(await tabs.allInnerTexts()).toEqual(["Today", "Plan", "Assistant", "Money", "School"]);
   for (const t of await tabs.all()) {
     const cut = await t.evaluate((el) => [...el.querySelectorAll("span.truncate")].some((s) => s.scrollWidth > s.clientWidth + 1));
     if (cut) problems.push(`tab label clipped: ${await t.innerText()}`);
@@ -120,7 +120,7 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
       if (lastBottom > bar.top + 1) out.push(`content under tab bar (${Math.round(lastBottom)} > ${Math.round(bar.top)})`);
       if (fab && lastBottom > fab.top + 1) {
         const under = leaves.filter(({ b }) => b.bottom > fab.top && b.top < fab.bottom && b.right > fab.left && b.left < fab.right);
-        if (under.length) out.push(`Jarvis button covers: ${under[0].e.tagName} ${under[0].e.textContent?.slice(0, 40)}`);
+        if (under.length) out.push(`Assistant button covers: ${under[0].e.tagName} ${under[0].e.textContent?.slice(0, 40)}`);
       }
       return out;
     });

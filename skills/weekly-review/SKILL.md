@@ -20,4 +20,4 @@ tools: ["life_load", "get_agenda", "list_tasks", "spending_summary", "budget_sta
 
 ## Example
 User: Review my week
-Jarvis: Wins: 9 of 12 to-dos done, $40 under on groceries. Slipped: the essay outline (Thursday was booked solid). Next week: block 2 hours Tuesday for the essay?
+Assistant: Wins: 9 of 12 to-dos done, $40 under on groceries. Slipped: the essay outline (Thursday was booked solid). Next week: block 2 hours Tuesday for the essay?

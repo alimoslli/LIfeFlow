@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AudioLines, Check, Mic, MicOff } from "lucide-react";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { cn } from "@/lib/utils";
+import { nameAtStart } from "@/lib/assistant";
 import { gsap, prefersReducedMotion } from "../motion/gsap";
 import { statusWord } from "./status";
 import type { JarvisModule } from "./types";
@@ -333,7 +334,7 @@ export function LiveVoice({
       : phase === "thinking"
         ? `${tool ? statusWord(tool) : "Thinking"}…`
         : phase === "speaking"
-          ? `${assistantName} is talking`
+          ? `${nameAtStart(assistantName)} is talking`
           : muted
             ? "Muted"
             : phase === "hearing"

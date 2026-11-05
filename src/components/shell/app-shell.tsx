@@ -7,6 +7,7 @@ import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutE
 import { setTourAction } from "@/app/(onboarding)/welcome/actions";
 import { Settings, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { assistantLabel, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
 import { NAV, isActive, moduleForPath } from "./nav-items";
 import { LifeAreasContext } from "./life-areas";
 import type { LifeAreas } from "@/lib/life";
@@ -29,7 +30,7 @@ import type { JarvisAvailability } from "../jarvis/types";
 import { BrandMark } from "@/components/brand/brand-mark";
 
 type ShellCtx = { openJarvis: (prompt?: string, opts?: { send?: boolean }) => void; assistantName: string; firstName: string; aiConsent: boolean };
-const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: "Jarvis", firstName: "", aiConsent: false });
+const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: UNNAMED_ASSISTANT, firstName: "", aiConsent: false });
 export const useShell = () => useContext(Ctx);
 
 type Drawer = { open: boolean; prompt?: string; send?: boolean; key: number };
@@ -38,7 +39,7 @@ export function AppShell({
   user,
   jarvis,
   tour = false,
-  assistantName = "Jarvis",
+  assistantName = UNNAMED_ASSISTANT,
   aiConsent = false,
   unread = 0,
   areas = ALL_AREAS,
@@ -48,7 +49,7 @@ export function AppShell({
   areas?: LifeAreas;
   /** New Jarvis messages: a dot on the Jarvis tab. */
   unread?: number;
-  /** The name the user gave their assistant. */
+  /** The name the user gave their assistant ("your assistant" until they choose one). */
   assistantName?: string;
   /** The user allowed Jarvis to send their data to the AI provider. */
   aiConsent?: boolean;
@@ -159,7 +160,7 @@ export function AppShell({
                       )}
                     >
                       <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
-                      {item.href === "/jarvis" ? assistantName : item.label}
+                      {item.href === "/jarvis" ? assistantLabel(assistantName) : item.label}
                     </Link>
                   );
                 })}
@@ -185,7 +186,7 @@ export function AppShell({
                   <PageMotion>{children}</PageMotion>
                 ) : assistantPage ? (
                   <>
-                    <AssistantHeader name={assistantName} />
+                    <AssistantHeader name={nameAtStart(assistantName)} />
                     <SectionNav inline />
                     <div className="px-4 pt-4 md:px-6">
                       <PageMotion>{children}</PageMotion>
@@ -230,7 +231,7 @@ export function AppShell({
                         <span className="absolute -top-0.5 -right-1 h-2.5 w-2.5 rounded-full bg-danger ring-2 ring-surface" aria-label={`${unread} new`} />
                       )}
                     </span>
-                    <span className="max-w-full truncate px-0.5">{item.href === "/jarvis" ? assistantName : item.label}</span>
+                    <span className="max-w-full truncate px-0.5">{item.href === "/jarvis" ? assistantLabel(assistantName) : item.label}</span>
                   </Link>
                 );
               })}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ServiceError } from "../../services/errors";
 import { moveToTrash } from "../../services/trash";
 import { addDaysStr, daysBetween, formatIn, localDateOf } from "@/lib/dates";
 import { EVENT_KINDS, createEvent, findConflicts, freeSlots, getAgenda, getEvent, updateEvent, type AgendaItem } from "../../services/calendar";
@@ -72,7 +73,7 @@ export const calendarTools = [
     schema: z.object({ from: dateArg(), to: dateArg() }),
     mutates: false,
     async execute({ from, to }, ctx) {
-      if (to < from || daysBetween(from, to) > 62) throw new Error("Range must be 0–62 days and to >= from.");
+      if (to < from || daysBetween(from, to) > 62) throw new ServiceError("Range must be 0–62 days and to >= from.");
       const items = await ctx.run((s) => getAgenda(s, ctx.tz, from, to, { now: ctx.now }));
       const conflicts = findConflicts(items).map((c) => ({ a: c.a.title, b: c.b.title, at: formatIn(c.b.startsAt, ctx.tz, "yyyy-MM-dd HH:mm") }));
       return { from, to, items: items.map((i) => presentAgendaItem(i, ctx)), conflicts };
@@ -90,7 +91,7 @@ export const calendarTools = [
     }),
     mutates: false,
     async execute(a, ctx) {
-      if (a.to < a.from || daysBetween(a.from, a.to) > 14) throw new Error("Range must be 0–14 days.");
+      if (a.to < a.from || daysBetween(a.from, a.to) > 14) throw new ServiceError("Range must be 0–14 days.");
       const items = await ctx.run((s) => getAgenda(s, ctx.tz, a.from, a.to, { include: ["event", "shift"], now: ctx.now }));
       const days = [];
       for (let d = a.from; d <= a.to; d = addDaysStr(d, 1)) {

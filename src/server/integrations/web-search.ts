@@ -83,7 +83,9 @@ export async function searchWeb(
       ...(opts.json && { text: { format: { type: "json_schema", name: opts.json.name, schema: opts.json.schema, strict: true } } }),
     });
   } catch (e) {
-    throw new WebSearchError(e instanceof Error ? `The web search failed: ${e.message.slice(0, 200)}` : "The web search failed.");
+    // The provider's details (which can name keys or settings) go to the server log only.
+    console.error("[web-search] failed:", (e as { status?: number })?.status ?? null, e instanceof Error ? e.message.slice(0, 300) : e);
+    throw new WebSearchError("Live web search isn't available right now.");
   }
   const { answer, sources } = parseSearchResponse(res);
   if (!answer) throw new WebSearchError("The web search returned nothing.");

@@ -20,4 +20,4 @@ tools: ["get_daily_briefing", "life_load", "get_agenda", "list_tasks", "find_fre
 
 ## Example
 User: Plan my day
-Jarvis: 9:00 Biology (class). 12-2 free: start the lab report (due tomorrow). 5-10 shift at the library. Want me to block 12-2 for the lab report?
+Assistant: 9:00 Biology (class). 12-2 free: start the lab report (due tomorrow). 5-10 shift at the library. Want me to block 12-2 for the lab report?

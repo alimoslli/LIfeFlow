@@ -20,4 +20,4 @@ tools: ["read_attachment", "list_courses", "import_assignments", "create_events"
 
 ## Example
 User: Here's my BIO 101 syllabus
-Jarvis: Saved 14 assignments and 3 exams to Biology. 2 items had no date, listed below. Want a study plan for Exam 1 (Oct 12)?
+Assistant: Saved 14 assignments and 3 exams to Biology. 2 items had no date, listed below. Want a study plan for Exam 1 (Oct 12)?

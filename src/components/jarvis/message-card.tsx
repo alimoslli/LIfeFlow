@@ -6,6 +6,7 @@ import { BellOff, Check, Clock, Loader2, MoreHorizontal, Sparkles, ThumbsDown, T
 import { respondAction } from "@/app/(app)/jarvis/proactive-actions";
 import { haptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
+import { assistantLabel, nameAtStart } from "@/lib/assistant";
 import { useShell } from "../shell/app-shell";
 import { toast } from "../ui/toaster";
 
@@ -37,7 +38,7 @@ export function JarvisAvatar({ style, name, className }: { style: "spark" | "orb
       )}
     >
       {style === "initial" ? (
-        <span className="text-sm font-semibold">{name.slice(0, 1).toUpperCase()}</span>
+        <span className="text-sm font-semibold">{assistantLabel(name).slice(0, 1).toUpperCase()}</span>
       ) : style === "spark" ? (
         <Sparkles className="h-4 w-4" />
       ) : null}
@@ -73,7 +74,7 @@ export function JarvisMessageCard({ m, name, avatar, compact }: { m: CardMessage
         <JarvisAvatar style={avatar} name={name} />
         <div className="min-w-0 flex-1">
           <p className="text-xs text-muted">
-            {name} · {m.when}
+            {nameAtStart(name)} · {m.when}
           </p>
           <h3 className="mt-0.5 text-[0.9375rem] font-semibold">{m.title}</h3>
           <p className="mt-1 text-[0.9375rem] leading-relaxed text-text-2">{m.body}</p>

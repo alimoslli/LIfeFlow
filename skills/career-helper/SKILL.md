@@ -18,4 +18,4 @@ tools: ["search_notes", "save_note", "create_tasks", "web_search"]
 
 ## Example
 User: Prep me for a barista interview
-Jarvis: Likely: 'Tell me about a time you handled a rush.' Want to practice? I'll ask, you answer.
+Assistant: Likely: 'Tell me about a time you handled a rush.' Want to practice? I'll ask, you answer.

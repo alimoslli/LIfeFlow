@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { closeDb, getDb } from "@/server/db/client";
 import { normalizePhone, toSmsText, twilioSignature, validTwilioRequest, type SmsConfig } from "@/server/integrations/twilio";
 import { answerText } from "@/server/jarvis/sms";
@@ -77,5 +77,24 @@ describe("texting Jarvis", () => {
     await unlinkPhone(db, user.id);
     expect((await smsStatus(db, user.id)).phone).toBeNull();
     expect(await answerText(db, "+14045550134", "hi", deps)).toBeNull();
+  });
+
+  it("when the assistant can't answer, says so plainly and logs the failure without the text", async () => {
+    const db = getDb();
+    const { user } = await makeUser("Kai");
+    const t = twilio();
+    await startPhoneLink(db, user.id, "(404) 555-0177", CFG, t.fetchImpl);
+    await verifyPhoneLink(db, user.id, t.sent[0].body.match(/\d{6}/)![0]);
+    const secret = "my rent is 1450 and my bank pin is 9921";
+    const provider = () => {
+      // Errors can quote what was sent (a failed query lists its params); none of it may reach the log.
+      throw Object.assign(new Error(`Failed query: insert into messages params: ${secret}`), { status: 503 });
+    };
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const out = await answerText(db, "+14045550177", secret, { provider, send: async () => {} });
+    expect(out).toBe("I can't answer texts right now. Try again in a bit, or open LifeFlow.");
+    expect(log).toHaveBeenCalledWith("[sms] reply failed:", "Error", 503);
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(/1450|9921|rent|Failed query/);
+    log.mockRestore();
   });
 });

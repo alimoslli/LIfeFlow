@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { askJarvis, queryAsUser, signUp } from "./helpers";
+import { askJarvis, COMPOSER, queryAsUser, signUp } from "./helpers";
 
 test.use({ permissions: ["microphone"], launchOptions: { args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] } });
 
@@ -10,14 +10,14 @@ test("talking happens inside the chat: no call screen, same conversation, and a 
   await expect(page).toHaveURL(/\/jarvis\/[0-9a-f-]{36}$/);
   const chatUrl = page.url();
 
-  await page.getByRole("button", { name: "Talk to Jarvis" }).click();
+  await page.getByRole("button", { name: "Talk to your assistant" }).click();
   // The composer turns into the voice bar; there's no separate call screen.
-  await expect(page.getByRole("group", { name: "Talking with Jarvis" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Talking with your assistant" })).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   // The test environment can't reach OpenAI's voice servers: the bar closes and the chat says why.
   await expect(page.getByRole("alert")).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByRole("group", { name: "Talking with Jarvis" })).toHaveCount(0);
-  await expect(page.getByLabel("Message Jarvis")).toBeVisible();
+  await expect(page.getByRole("group", { name: "Talking with your assistant" })).toHaveCount(0);
+  await expect(page.getByLabel(COMPOSER)).toBeVisible();
   // Still the same chat, and the call was recorded in that conversation (no content).
   expect(page.url()).toBe(chatUrl);
   const conversationId = chatUrl.split("/").pop();

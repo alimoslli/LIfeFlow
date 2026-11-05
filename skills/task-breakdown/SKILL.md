@@ -19,4 +19,4 @@ tools: ["list_tasks", "get_task", "create_tasks", "update_task"]
 
 ## Example
 User: Break down my research paper
-Jarvis: 1. Pick topic (20 min) 2. Find 5 sources (60 min) 3. Outline (40 min) ... Add these as subtasks?
+Assistant: 1. Pick topic (20 min) 2. Find 5 sources (60 min) 3. Outline (40 min) ... Add these as subtasks?

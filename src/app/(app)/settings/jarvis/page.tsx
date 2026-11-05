@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { assistantProfile } from "@/lib/assistant";
+import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { requireUser } from "@/server/auth/current-user";
 import { jarvisSettings } from "@/server/services/proactive/engine";
 import { setAiConsentAction, updateAssistantAction } from "../actions";
@@ -14,21 +14,22 @@ export const metadata: Metadata = { title: "Assistant" };
 export default async function JarvisSettings() {
   const u = await requireUser();
   const profile = assistantProfile(u.preferences);
+  const who = nameAtStart(profile.name);
   const s = jarvisSettings(u.preferences);
   return (
     <div className="flex flex-col gap-5">
-      <SettingsHeader title={profile.name} />
+      <SettingsHeader title={who} />
       <Card className="flex flex-col gap-3 p-5">
         <div>
           <h2 className="font-medium">Use AI</h2>
           <p className="mt-1 text-sm text-text-2">
-            {profile.name} sends your messages and the LifeFlow data it needs to answer to OpenAI. They don&apos;t use it to train their models.{" "}
+            {who} sends your messages and the LifeFlow data it needs to answer to OpenAI. They don&apos;t use it to train their models.{" "}
             {aiAllowed(u.preferences) ? "Turn this off and nothing more is sent; the rest of LifeFlow keeps working." : "It's off, so nothing is sent."}
           </p>
         </div>
         <ActionButton
           action={setAiConsentAction.bind(null, !aiAllowed(u.preferences))}
-          confirm={aiAllowed(u.preferences) ? `Turn off AI? ${profile.name} won't be able to chat, text or file emails until you turn it back on.` : undefined}
+          confirm={aiAllowed(u.preferences) ? `Turn off AI? ${who} won't be able to chat, text or file emails until you turn it back on.` : undefined}
           className={`flex min-h-11 items-center self-start rounded-full px-5 text-sm font-medium ${aiAllowed(u.preferences) ? "bg-surface-2 text-text" : "bg-accent text-accent-text"}`}
         >
           {aiAllowed(u.preferences) ? "Turn off" : "Allow"}
