@@ -43,8 +43,9 @@ const overdueRule: Rule = (s) => {
   ];
 };
 
+/** Clashes still ahead (or happening now): items that already ended can't clash any more. */
 const conflictRule: Rule = (s) =>
-  findConflicts(s.week)
+  findConflicts(s.week.filter((i) => !i.endsAt || i.endsAt.getTime() > s.now.getTime()))
     .slice(0, 1)
     .map(({ a, b }) => ({
       id: `conflict-${a.key}-${b.key}`,
