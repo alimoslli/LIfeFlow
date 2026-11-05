@@ -13,3 +13,5 @@ next-env.d.ts
 src/server/jarvis/skills/index.generated.ts
 # The situation library: cases, personas and simulator output (docs/situations/simulator/simulate.py writes these)
 docs/situations/**/*.json
+# Agent worktrees (copies of the repo)
+.claude/worktrees/
