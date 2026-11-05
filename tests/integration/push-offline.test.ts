@@ -55,10 +55,16 @@ describe("push notifications", () => {
 
     const { sent, send } = fakeSender();
     expect((await run((s) => runNotifications(s, TZ, undefined, send, NOW))).sent).toBe(1);
-    expect(sent[0]).toMatchObject({ title: "Call the bank", body: "Due at 10:00", url: `/tasks/${task.id}` });
+    expect(sent[0]).toMatchObject({ title: "Call the bank", body: "Due at 10:00 AM", url: `/tasks/${task.id}` });
     // Running again (the scheduler calls often) sends nothing new. Bills and the brief come from Jarvis (proactive tests).
     const again = fakeSender();
     expect((await run((s) => runNotifications(s, TZ, undefined, again.send, new Date(NOW.getTime() + 10 * 60_000)))).sent).toBe(0);
+
+    // 12-hour time in the user's zone, like the rest of the app (not "Due at 14:00").
+    await run((s) => createTask(s, TZ, { title: "Pick up keys", dueDate: "2026-10-28", dueTime: "14:00", reminder: "1h" }));
+    const later = fakeSender();
+    expect((await run((s) => runNotifications(s, TZ, undefined, later.send, new Date(NOW.getTime() + 4 * 3600_000)))).sent).toBe(1);
+    expect(later.sent[0]).toMatchObject({ title: "Pick up keys", body: "Due at 2:00 PM" });
   });
 
   it("never lets one account take over another account's device", async () => {

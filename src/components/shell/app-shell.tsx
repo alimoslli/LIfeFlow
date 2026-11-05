@@ -25,7 +25,7 @@ import { PageMotion } from "../motion/page-motion";
 import { gsap, MOTION, prefersReducedMotion } from "../motion/gsap";
 import { TiltLayer } from "../motion/tilt";
 import { Tour } from "../motion/tour";
-import { NAME_KEY } from "../motion/splash";
+import { NAME_KEY, TZ_KEY } from "../motion/splash";
 import type { JarvisAvailability } from "../jarvis/types";
 import { BrandMark } from "@/components/brand/brand-mark";
 
@@ -53,7 +53,7 @@ export function AppShell({
   assistantName?: string;
   /** The user allowed Jarvis to send their data to the AI provider. */
   aiConsent?: boolean;
-  user: { name: string; email: string; accountKind: "standard" | "demo" };
+  user: { name: string; email: string; accountKind: "standard" | "demo"; timezone?: string };
   jarvis: JarvisAvailability;
   /** Show the guided tour (once, after onboarding or when replayed). */
   tour?: boolean;
@@ -94,12 +94,13 @@ export function AppShell({
     [setDrawer],
   );
 
-  // Remembered on this device so the opening screen can greet by name.
+  // Remembered on this device so the opening screen can greet by name, at the hour in the user's time zone.
   useEffect(() => {
     try {
       localStorage.setItem(NAME_KEY, user.name.split(" ")[0]);
+      if (user.timezone) localStorage.setItem(TZ_KEY, user.timezone);
     } catch {}
-  }, [user.name]);
+  }, [user.name, user.timezone]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
