@@ -119,7 +119,8 @@ async function typicalDailySpend(scope: UserScope, today: string, billSeries: Re
   return { dailyCents: Math.max(0, Math.round(spent / days)), basedOnDays: days };
 }
 
-export type UpcomingBill = DatedAmount & { found: boolean };
+/** `key` stays the same across reads: the tracked item's id, or `found:<merchant key>` for a bill found in the bank. */
+export type UpcomingBill = DatedAmount & { found: boolean; key: string };
 
 /**
  * What goes out between two dates and the usual day-to-day pace. Bills are the tracked ones plus the
@@ -132,12 +133,14 @@ export async function billsAndPace(scope: UserScope, today: string, from: string
     () => upcomingRecurring(scope, from, to),
     () => typicalDailySpend(scope, today, [...found, ...trackedSeries]),
   );
-  const bills: UpcomingBill[] = tracked.filter((u) => u.amountCents < 0).map((u) => ({ date: u.date, amountCents: u.amountCents, name: u.name, found: false }));
+  const bills: UpcomingBill[] = tracked
+    .filter((u) => u.amountCents < 0)
+    .map((u) => ({ date: u.date, amountCents: u.amountCents, name: u.name, found: false, key: u.id }));
   for (const c of found) {
     let d = c.nextExpectedDate < from && daysBetween(c.nextExpectedDate, from) <= 5 ? from : c.nextExpectedDate;
     for (let guard = 0; d < from && guard < 200; guard++) d = nextOccurrence(d, c.frequency);
     for (let guard = 0; d <= to && guard < 60; guard++, d = nextOccurrence(d, c.frequency))
-      bills.push({ date: d, amountCents: c.latestAmountCents, name: c.name, found: true });
+      bills.push({ date: d, amountCents: c.latestAmountCents, name: c.name, found: true, key: `found:${c.merchantKey}` });
   }
   return { bills: bills.sort((a, b) => a.date.localeCompare(b.date)), typical };
 }

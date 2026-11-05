@@ -123,3 +123,35 @@ describe("a bill that already posted isn't due again (A3)", () => {
     expect((await run((s) => listRecurring(s))).find((r) => r.name === "City Utilities")!.nextDueDate).toBe(TODAY);
   });
 });
+
+describe("the urgent bill message reads the same bills as Today and Money (A14)", () => {
+  it("warns about a bill found in the bank but never tracked when checking can't cover it", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s, 4_000);
+      const phone = (await getCategoryByName(s, "Phone"))!;
+      for (const d of ["2026-08-07", "2026-09-07", "2026-10-07"])
+        await createTransaction(s, {
+          accountId: acct.id,
+          date: d,
+          description: "T-MOBILE AUTOPAY",
+          merchantName: "T-Mobile",
+          amountCents: -8_500,
+          categoryId: phone.id,
+        });
+    });
+    // Today and Money see it on Nov 7...
+    const { bills } = await run((s) => billsAndPace(s, TODAY, TODAY, "2026-11-08"));
+    expect(bills).toEqual([expect.objectContaining({ name: "T-Mobile", date: "2026-11-07", amountCents: -8_500, found: true })]);
+
+    // ...and so does the warning, as facts only (wording is in lib/jarvis-voice).
+    const out = await run((s) => DETECTORS.billsDue({ scope: s, tz: TZ, today: TODAY, now: new Date(`${TODAY}T14:00:00Z`) }));
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({
+      kind: "bill_short",
+      urgent: true,
+      dedupeKey: "bill_short:found:t mobile:2026-11-07",
+      facts: { bill: "T-Mobile", billCents: 8_500, dueIn: "in 2 days", shortCents: 4_500 },
+    });
+  });
+});
