@@ -302,6 +302,10 @@ From `docs/research/2026-11-05-what-people-love-and-hate.md`. The owner approved
 
 Numbers 4 and 5 are small, and the 10-student test will exercise both, so they come first.
 
+### How we work from here (owner, 2026-11-05)
+
+Plan each change together before building. Build in small steps. While building, come back to the owner with questions at every real decision, with pictures where words aren't enough, so the result is exactly what we envision and no time or credits go into the wrong thing. The owner doesn't need to understand the technical fix; they need to see the choice.
+
 ## 11. Where this is going
 
 The owner's dream: an AI model trained, at large scale, specifically to understand a person's whole life, connect the dots, see what's coming and help them plan. Possibly built with a partner like OpenAI, and one day on new kinds of devices.
