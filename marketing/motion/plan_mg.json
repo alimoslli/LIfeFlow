@@ -1,0 +1,6 @@
+{"bpm": 100, "duration": 10.4, "vo": [], "scenes": [
+ {"kind": "gloss", "start": 0.0, "end": 1.8},
+ {"kind": "phone", "start": 1.8, "end": 4.5, "enter": true, "pops": [{"at": 0.95, "dur": 1.6}]},
+ {"kind": "phone", "start": 4.5, "end": 6.95, "pops": [{"at": 0.9, "dur": 1.2}, {"at": 1.7, "dur": 0.8}]},
+ {"kind": "phone", "start": 6.95, "end": 9.15, "pops": [{"at": 1.0, "dur": 0.9}, {"at": 1.8, "dur": 0.4}]},
+ {"kind": "gloss", "outro": true, "start": 9.15, "end": 10.4, "wordmark": {"at": 0.1}}]}

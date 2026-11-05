@@ -1,0 +1,684 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: Geist;
+        src: url(Geist.woff2) format("woff2");
+        font-weight: 100 900;
+      }
+      @font-face {
+        font-family: Serif;
+        src: url(Newsreader.woff2) format("woff2");
+        font-weight: 200 800;
+      }
+      @font-face {
+        font-family: SerifI;
+        src: url(Newsreader-Italic.woff2) format("woff2");
+        font-weight: 200 800;
+        font-style: italic;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --ink: #121714;
+        --moss: #285b45;
+        --green: #2f6b52;
+        --mint: #8fd0b5;
+        --cream: #f4f1ea;
+        --red: #d2493f;
+        --amber: #d99a2b;
+      }
+      html,
+      body {
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: #0e241b;
+        font-family: Geist, sans-serif;
+      }
+      .abs {
+        position: absolute;
+      }
+      #dark {
+        inset: 0;
+        background:
+          radial-gradient(70% 45% at 30% 25%, #3d8566 0%, transparent 70%), radial-gradient(60% 40% at 80% 85%, #2a6a50 0%, transparent 70%),
+          linear-gradient(165deg, #1b4434, #0c2219 70%);
+      }
+      #light {
+        inset: 0;
+        background:
+          radial-gradient(55% 35% at 15% 85%, rgba(143, 208, 181, 0.45), transparent 70%),
+          radial-gradient(50% 30% at 90% 10%, rgba(246, 232, 206, 0.8), transparent 70%), linear-gradient(180deg, #fbfaf6, #eef0ea);
+      }
+      .blob {
+        border-radius: 50%;
+        filter: blur(60px);
+      }
+      /* intro type */
+      #monday {
+        left: 0;
+        width: 1080px;
+        top: 640px;
+        text-align: center;
+        color: var(--cream);
+        font-weight: 800;
+        font-size: 168px;
+        letter-spacing: 6px;
+        white-space: nowrap;
+      }
+      #monday span {
+        display: inline-block;
+      }
+      #clock {
+        left: 0;
+        width: 1080px;
+        top: 840px;
+        text-align: center;
+        color: var(--mint);
+        font-weight: 650;
+        font-size: 120px;
+        letter-spacing: 2px;
+      }
+      #clock {
+        line-height: 1.05em;
+      }
+      #clock .st {
+        display: inline-block;
+        vertical-align: top;
+        line-height: 1.05em;
+      }
+      #clock .roll {
+        display: inline-block;
+        height: 1.05em;
+        overflow: hidden;
+        vertical-align: top;
+      }
+      #clock .roll div {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.05em;
+      }
+      #line {
+        left: 240px;
+        top: 1010px;
+        height: 4px;
+        width: 600px;
+        background: var(--mint);
+        border-radius: 2px;
+        transform-origin: left center;
+      }
+      #sub {
+        left: 0;
+        width: 1080px;
+        top: 1050px;
+        text-align: center;
+        color: #e8efe9;
+        font-family: SerifI;
+        font-style: italic;
+        font-size: 64px;
+      }
+      /* captions */
+      .cap {
+        left: 60px;
+        width: 960px;
+        top: 120px;
+        text-align: center;
+        font-weight: 820;
+        font-size: 112px;
+        line-height: 1.02;
+        letter-spacing: -1px;
+        color: var(--ink);
+      }
+      .cap .w {
+        display: inline-block;
+        overflow: hidden;
+        vertical-align: top;
+        padding: 0 0.08em;
+      }
+      .cap .w span {
+        display: inline-block;
+      }
+      .cap .hl {
+        color: var(--moss);
+      }
+      /* phone */
+      #phone {
+        left: 285px;
+        top: 520px;
+        width: 510px;
+        height: 1104px;
+        border-radius: 74px;
+        background: #161917;
+        padding: 14px;
+        box-shadow:
+          0 60px 120px rgba(20, 40, 30, 0.35),
+          inset 0 0 0 3px #3a3f3c;
+        transform-origin: 50% 60%;
+      }
+      #phone img.scr {
+        width: 482px;
+        height: 1076px;
+        border-radius: 60px;
+        object-fit: cover;
+        display: block;
+      }
+      #island {
+        left: 50%;
+        top: 30px;
+        width: 150px;
+        height: 42px;
+        margin-left: -75px;
+        background: #000;
+        border-radius: 22px;
+      }
+      .note {
+        width: 940px;
+        left: 70px;
+        border-radius: 46px;
+        box-shadow:
+          0 40px 90px rgba(10, 30, 20, 0.28),
+          0 0 0 2px rgba(255, 255, 255, 0.6) inset;
+        overflow: hidden;
+      }
+      .note img {
+        width: 100%;
+        display: block;
+      }
+      .shine {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 240px;
+        background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+      }
+      /* week card */
+      #week {
+        left: 50px;
+        top: 470px;
+        width: 980px;
+        height: 1180px;
+        border-radius: 56px;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow:
+          0 40px 100px rgba(20, 50, 35, 0.16),
+          inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+      }
+      .col {
+        top: 140px;
+        width: 172px;
+        height: 940px;
+        border-radius: 28px;
+        background: rgba(40, 91, 69, 0.06);
+      }
+      .day {
+        top: 52px;
+        width: 172px;
+        text-align: center;
+        font-weight: 750;
+        font-size: 40px;
+        letter-spacing: 3px;
+        color: #5b675f;
+      }
+      #today {
+        top: 1096px;
+        left: 30px;
+        width: 172px;
+        height: 56px;
+        border-radius: 28px;
+        background: var(--moss);
+        color: #fff;
+        font-size: 28px;
+        font-weight: 750;
+        letter-spacing: 3px;
+        text-align: center;
+        line-height: 56px;
+      }
+      .blk {
+        width: 158px;
+        border-radius: 24px;
+        padding: 18px 14px;
+        color: #fff;
+        font-size: 29px;
+        font-weight: 650;
+        line-height: 1.2;
+        transform-origin: 50% 0%;
+      }
+      .blk b {
+        display: block;
+        font-size: 31px;
+        font-weight: 800;
+        margin-bottom: 4px;
+      }
+      #bShift {
+        background: var(--red);
+      }
+      #bExam {
+        background: var(--amber);
+      }
+      #bStudy {
+        background: var(--green);
+      }
+      .check {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: #fff;
+        color: var(--green);
+        font-size: 40px;
+        font-weight: 900;
+        text-align: center;
+        line-height: 64px;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+      }
+      #arcLabel {
+        font-family: SerifI;
+        font-style: italic;
+        font-size: 54px;
+        color: var(--moss);
+        white-space: nowrap;
+      }
+      #blkLabel {
+        font-weight: 750;
+        font-size: 34px;
+        color: var(--green);
+        white-space: nowrap;
+      }
+      /* money card */
+      #money {
+        left: 50px;
+        top: 500px;
+        width: 980px;
+        height: 1060px;
+        border-radius: 56px;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow:
+          0 40px 100px rgba(20, 50, 35, 0.16),
+          inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+      }
+      #mTitle {
+        left: 70px;
+        top: 80px;
+        font-size: 54px;
+        font-weight: 750;
+        color: var(--ink);
+      }
+      #mSub {
+        left: 70px;
+        top: 156px;
+        font-size: 40px;
+        color: #66726a;
+      }
+      #track {
+        left: 70px;
+        top: 430px;
+        width: 840px;
+        height: 128px;
+        border-radius: 64px;
+        background: #e7ebe6;
+        overflow: hidden;
+      }
+      #fill {
+        left: 0;
+        top: 0;
+        height: 128px;
+        background: linear-gradient(90deg, #2f6b52, #3f8a69);
+        border-radius: 64px 0 0 64px;
+      }
+      #gap {
+        top: 0;
+        height: 128px;
+        background: repeating-linear-gradient(-45deg, #e7675e 0 16px, #d2493f 16px 32px);
+      }
+      #save {
+        top: 0;
+        height: 128px;
+        background: linear-gradient(90deg, #8fd0b5, #6cbf9c);
+      }
+      #mark {
+        left: 907px;
+        top: 396px;
+        width: 7px;
+        height: 196px;
+        border-radius: 3px;
+        background: var(--ink);
+      }
+      .lbl {
+        font-size: 42px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      #have {
+        left: 70px;
+        top: 610px;
+        color: var(--green);
+      }
+      #due {
+        left: 700px;
+        top: 320px;
+        color: var(--ink);
+      }
+      #short {
+        left: 600px;
+        top: 596px;
+        color: var(--red);
+        font-size: 68px;
+        font-weight: 850;
+      }
+      #plus {
+        left: 70px;
+        top: 740px;
+        color: #2c8a63;
+        font-size: 50px;
+      }
+      #covered {
+        left: 70px;
+        top: 860px;
+        padding: 16px 40px;
+        border-radius: 50px;
+        background: var(--green);
+        color: #fff;
+        font-size: 54px;
+        font-weight: 800;
+      }
+      #brand {
+        left: 0;
+        width: 1080px;
+        top: 860px;
+        text-align: center;
+      }
+      #brand img {
+        width: 150px;
+        height: 150px;
+        border-radius: 34px;
+      }
+      #brand div {
+        font-family: Serif;
+        font-size: 96px;
+        color: var(--ink);
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="light" class="abs"></div>
+    <div class="abs blob" id="bl1" style="width: 520px; height: 520px; left: -120px; top: 1300px; background: rgba(143, 208, 181, 0.55)"></div>
+    <div class="abs blob" id="bl2" style="width: 420px; height: 420px; left: 760px; top: 180px; background: rgba(246, 226, 190, 0.7)"></div>
+    <div id="dark" class="abs"></div>
+
+    <!-- A: intro -->
+    <div id="monday" class="abs"></div>
+    <div id="clock" class="abs">
+      <span class="st">8:2</span
+      ><span class="roll"
+        ><div id="rollD"><span>1</span><span>2</span></div></span
+      ><span class="st">&nbsp;AM</span>
+    </div>
+    <div id="line" class="abs"></div>
+    <div id="sub" class="abs">Your assistant is already up.</div>
+
+    <!-- B: phone + notifications -->
+    <div id="capB" class="abs cap"></div>
+    <div id="phone" class="abs">
+      <img class="scr" id="scr" src="lockf/0001.jpg" />
+      <div id="island" class="abs"></div>
+    </div>
+    <div id="n0" class="abs note">
+      <img src="jl_n0.png" />
+      <div class="shine" id="sh0"></div>
+    </div>
+
+    <!-- C: week -->
+    <div id="capC" class="abs cap"></div>
+    <div id="week" class="abs">
+      <div id="cols"></div>
+      <div id="today" class="abs">TODAY</div>
+      <div id="bShift" class="abs blk"><b>Shift</b>5 to 11 PM</div>
+      <div id="bExam" class="abs blk"><b>Midterm</b>STAT 201<br />10 AM</div>
+      <div id="bStudy" class="abs blk"><b>Study</b>11:15 AM</div>
+      <div id="ck" class="abs check">✓</div>
+      <svg id="arc" class="abs" width="980" height="1180" style="left: 0; top: 0; overflow: visible">
+        <path
+          id="arcP"
+          d="M116 1080 C 200 820, 580 830, 668 452"
+          fill="none"
+          stroke="#285b45"
+          stroke-width="7"
+          stroke-linecap="round"
+          stroke-dasharray="14 16"
+        />
+        <path id="arcH" d="M644 474 L668 446 L688 476" fill="none" stroke="#285b45" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <div id="arcLabel" class="abs">spotted 3 days early</div>
+      <div id="blkLabel" class="abs">blocked for you</div>
+    </div>
+
+    <!-- D: money -->
+    <div id="capD" class="abs cap"></div>
+    <div id="money" class="abs">
+      <div id="mTitle" class="abs">Car insurance · due Wednesday</div>
+      <div id="mSub" class="abs">Payday is Friday</div>
+      <div id="due" class="abs lbl">$186 due</div>
+      <div id="track" class="abs">
+        <div id="fill" class="abs"></div>
+        <div id="gap" class="abs"></div>
+        <div id="save" class="abs"></div>
+      </div>
+      <div id="mark" class="abs"></div>
+      <div id="have" class="abs lbl">$0 in checking</div>
+      <div id="short" class="abs lbl">−$0.00</div>
+      <div id="plus" class="abs lbl">+$125 from savings</div>
+      <div id="covered" class="abs">Covered ✓</div>
+    </div>
+
+    <div id="brand" class="abs">
+      <img src="icon.png" />
+      <div>LifeFlow</div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+      const P = (t, a, d) => clamp((t - a) / d);
+      const out = (x) => 1 - Math.pow(1 - clamp(x), 3);
+      const io = (x) => {
+        x = clamp(x);
+        return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      };
+      const back = (x, s = 1.7) => {
+        x = clamp(x);
+        return 1 + (s + 1) * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2);
+      };
+      const lerp = (a, b, k) => a + (b - a) * k;
+      const st = (id, css) => Object.assign($(id).style, css);
+
+      // build pieces
+      $("monday").innerHTML = [..."MONDAY"].map((c) => `<span>${c}</span>`).join("");
+      const capWords = (id, lines) => {
+        $(id).innerHTML = lines
+          .map((l) =>
+            l
+              .split(" ")
+              .map((w) => `<span class="w"><span class="${w.startsWith("*") ? "hl" : ""}">${w.replace(/\*/g, "")}</span></span>`)
+              .join(" "),
+          )
+          .join("<br>");
+      };
+      capWords("capB", ["IT TEXTS YOU", "*FIRST.*"]);
+      capWords("capC", ["IT WARNS YOU", "*DAYS* *AHEAD.*"]);
+      capWords("capD", ["SHORT BEFORE", "*PAYDAY?*"]);
+      const DAYS = ["MON", "TUE", "WED", "THU", "FRI"];
+      $("cols").innerHTML = DAYS.map(
+        (d, i) =>
+          `<div class="abs col" id="c${i}" style="left:${30 + i * 186}px"></div><div class="abs day" id="d${i}" style="left:${30 + i * 186}px">${d}</div>`,
+      ).join("");
+      const colX = (i) => 30 + i * 186 + 7;
+      st("bShift", { left: colX(2) + "px", top: "850px" });
+      st("bExam", { left: colX(3) + "px", top: "250px" });
+      st("bStudy", { left: colX(1) + "px", top: "390px" });
+      st("ck", { left: colX(1) + 116 + "px", top: "358px" });
+      st("arcLabel", { left: "96px", top: "700px" });
+      st("blkLabel", { left: colX(1) - 4 + "px", top: "560px" });
+
+      function caption(id, t, a, end) {
+        const words = $(id).querySelectorAll(".w > span");
+        const vis = t >= a - 0.01 && t < end;
+        $(id).style.display = vis ? "block" : "none";
+        if (!vis) return;
+        const ko = io(P(t, end - 0.25, 0.25));
+        words.forEach((w, i) => {
+          const k = out(P(t, a + i * 0.07, 0.42));
+          w.style.transform = `translateY(${(1 - k) * 110 - ko * 60}%)`;
+          w.style.opacity = String(clamp(k * 1.4) * (1 - ko));
+        });
+      }
+
+      let lastSrc = "";
+      async function seek(t) {
+        // backgrounds: dark intro, circle-wipe into the light world
+        const wipe = io(P(t, 1.7, 0.6));
+        $("dark").style.clipPath = wipe > 0 ? `circle(${(1 - wipe) * 150}% at 50% 62%)` : "none";
+        $("dark").style.display = wipe >= 1 ? "none" : "block";
+        st("bl1", { transform: `translate(${Math.sin(t * 0.5) * 40}px, ${Math.cos(t * 0.4) * 30}px)` });
+        st("bl2", { transform: `translate(${Math.cos(t * 0.45) * 40}px, ${Math.sin(t * 0.35) * 30}px)` });
+
+        // A: MONDAY / 8:22 AM
+        const aOut = io(P(t, 1.55, 0.5));
+        const aVis = t < 2.1;
+        ["monday", "clock", "line", "sub"].forEach((id) => ($(id).style.display = aVis ? "block" : "none"));
+        if (aVis) {
+          [...$("monday").children].forEach((s, i) => {
+            const k = out(P(t, 0.12 + i * 0.045, 0.5));
+            s.style.transform = `translateY(${(1 - k) * 90}px)`;
+            s.style.opacity = String(k);
+          });
+          const kc = out(P(t, 0.45, 0.5));
+          st("clock", { opacity: String(kc), transform: `translateY(${(1 - kc) * 40}px)` });
+          $("rollD").style.transform = `translateY(${-io(P(t, 0.85, 0.35)) * 50}%)`;
+          st("line", { transform: `scaleX(${io(P(t, 0.3, 0.8))})` });
+          const ks = out(P(t, 1.05, 0.45));
+          st("sub", { opacity: String(ks), transform: `translateY(${(1 - ks) * 24}px)` });
+          const z = 1 + aOut * 0.35;
+          const base = { monday: 1, clock: kc, line: 1, sub: ks };
+          ["monday", "clock", "line", "sub"].forEach((id) => {
+            $(id).style.filter = `blur(${aOut * 8}px)`;
+            $(id).style.opacity = String(base[id] * (1 - aOut));
+          });
+          $("monday").style.transform = `scale(${z})`;
+        }
+
+        // B: phone rises in 3D, the real lock screen plays, the brief pops out
+        const bVis = t >= 1.8 && t < 4.75;
+        $("phone").style.display = bVis ? "block" : "none";
+        if (bVis) {
+          const k = out(P(t, 1.8, 0.9));
+          const ex = io(P(t, 4.35, 0.4));
+          st("phone", {
+            transform: `perspective(2200px) translateY(${(1 - k) * 700 + ex * 900}px) rotateX(${(1 - k) * 28}deg) scale(${0.86 + 0.14 * k})`,
+            opacity: String(clamp(k * 2)),
+          });
+          const ct = clamp(0.25 + (t - 1.8) * 1.0, 0, 6.4);
+          const src = `lockf/${String(Math.min(197, Math.max(1, Math.round(ct * 30) + 1))).padStart(4, "0")}.jpg`;
+          if (src !== lastSrc) {
+            $("scr").src = src;
+            lastSrc = src;
+          }
+        }
+        caption("capB", t, 2.25, 4.6);
+        const nVis = t >= 2.75 && t < 4.6;
+        $("n0").style.display = nVis ? "block" : "none";
+        if (nVis) {
+          const k = back(P(t, 2.75, 0.55), 1.4);
+          const ex = io(P(t, 4.3, 0.3));
+          st("n0", {
+            top: `${lerp(770, 1270, out(P(t, 2.75, 0.55)))}px`,
+            transform: `scale(${0.55 + 0.45 * k}) translateY(${ex * 80}px)`,
+            opacity: String(clamp(P(t, 2.75, 0.12)) * (1 - ex)),
+          });
+          $("sh0").style.left = `${lerp(-300, 1100, io(P(t, 3.15, 0.8)))}px`;
+        }
+
+        // C: the week
+        const cVis = t >= 4.5 && t < 7.15;
+        $("week").style.display = cVis ? "block" : "none";
+        caption("capC", t, 4.62, 7.05);
+        if (cVis) {
+          const k = out(P(t, 4.5, 0.5));
+          const ex = io(P(t, 6.85, 0.3));
+          st("week", { transform: `translateY(${(1 - k) * 260 - ex * 120}px) scale(${0.94 + 0.06 * k})`, opacity: String(k * (1 - ex)) });
+          DAYS.forEach((_, i) => {
+            const kk = out(P(t, 4.65 + i * 0.06, 0.4));
+            st("c" + i, { transform: `scaleY(${kk})`, transformOrigin: "50% 100%", opacity: String(kk) });
+            st("d" + i, { opacity: String(kk), transform: `translateY(${(1 - kk) * 20}px)` });
+          });
+          const kt = back(P(t, 5.0, 0.4));
+          st("today", { transform: `scale(${kt})` });
+          st("c0", { background: `rgba(40,91,69,${0.06 + 0.1 * clamp(P(t, 5.0, 0.3))})` });
+          st("bShift", { transform: `scaleY(${back(P(t, 5.2, 0.45), 1.2)})`, opacity: String(clamp(P(t, 5.2, 0.1))) });
+          const ke = P(t, 5.4, 0.5);
+          st("bExam", { transform: `translateY(${(1 - back(ke, 1.6)) * -260}px)`, opacity: String(clamp(ke * 4)) });
+          const len = 1000,
+            ka = io(P(t, 5.6, 0.6));
+          $("arcP").style.strokeDashoffset = "0";
+          $("arcP").setAttribute("stroke-dasharray", `14 16`);
+          $("arcP").style.clipPath = `inset(0 ${(1 - ka) * 100}% 0 0)`;
+          $("arcH").style.opacity = String(clamp(P(t, 6.1, 0.12)));
+          st("arcLabel", { opacity: String(out(P(t, 5.95, 0.35))), transform: `translateY(${(1 - out(P(t, 5.95, 0.35))) * 20}px)` });
+          const ks = P(t, 6.2, 0.45);
+          st("bStudy", { transform: `translateY(${(1 - back(ks, 1.6)) * -240}px)`, opacity: String(clamp(ks * 4)) });
+          st("ck", { transform: `scale(${back(P(t, 6.5, 0.3), 2.2)})` });
+          st("blkLabel", { opacity: String(out(P(t, 6.55, 0.3))) });
+        }
+
+        // D: money
+        const dVis = t >= 6.95 && t < 9.25;
+        $("money").style.display = dVis ? "block" : "none";
+        caption("capD", t, 7.05, 9.15);
+        if (dVis) {
+          const k = out(P(t, 6.95, 0.5));
+          const ex = io(P(t, 8.95, 0.3));
+          st("money", { transform: `translateY(${(1 - k) * 260}px) scale(${(0.94 + 0.06 * k) * (1 - 0.06 * ex)})`, opacity: String(k * (1 - ex)) });
+          const W = 840,
+            have = 142.18 / 186;
+          const kf = io(P(t, 7.25, 0.7));
+          st("fill", { width: `${W * have * kf}px` });
+          $("have").textContent = `$${(142.18 * kf).toFixed(2)} in checking`;
+          st("mark", { opacity: String(clamp(P(t, 7.55, 0.2))), transform: `scaleY(${out(P(t, 7.55, 0.3))})` });
+          st("due", { opacity: String(clamp(P(t, 7.6, 0.25))) });
+          const kg = out(P(t, 7.95, 0.35));
+          const cov = io(P(t, 8.4, 0.45));
+          st("gap", {
+            left: `${W * have}px`,
+            width: `${W * (1 - have) * kg}px`,
+            opacity: String(1 - cov),
+            filter: `brightness(${1 + 0.15 * Math.sin(t * 18) * (1 - cov)})`,
+          });
+          $("short").textContent = `−$${(43.82 * kg).toFixed(2)}`;
+          st("short", { opacity: String(clamp(P(t, 7.95, 0.15)) * (1 - cov)), transform: `scale(${back(P(t, 7.95, 0.35), 2)})` });
+          st("save", { left: `${W * have}px`, width: `${W * (1 - have) * cov}px` });
+          st("plus", { opacity: String(out(P(t, 8.35, 0.3))), transform: `translateX(${(1 - out(P(t, 8.35, 0.3))) * -40}px)` });
+          st("covered", { transform: `scale(${back(P(t, 8.75, 0.3), 2)})` });
+        }
+
+        // brand flash
+        const kb = out(P(t, 9.15, 0.45));
+        $("brand").style.display = t >= 9.15 ? "block" : "none";
+        st("brand", { opacity: String(kb), transform: `scale(${0.9 + 0.1 * kb})` });
+
+        const img = $("scr");
+        if (bVis && !img.complete)
+          await new Promise((r) => {
+            img.onload = r;
+            img.onerror = r;
+          });
+        if (bVis) await img.decode().catch(() => {});
+      }
+      window.seek = seek;
+    </script>
+  </body>
+</html>
