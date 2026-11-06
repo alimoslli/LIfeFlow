@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { Secret, TOTP } from "otpauth";
 import { closeDb, getDb } from "@/server/db/client";
-import { loginChallenges, users } from "@/server/db/schema";
+import { loginChallenges, passwordResets, users } from "@/server/db/schema";
 import {
   beginTotpSetup,
   checkTotp,
@@ -10,6 +10,7 @@ import {
   confirmTotpSetup,
   createLoginChallenge,
   disableTwoFactor,
+  EMAIL_CODE_RESET_COOLDOWN_MS,
   issueLoginEmailCode,
   maskEmail,
   MAX_CHALLENGE_ATTEMPTS,
@@ -82,7 +83,7 @@ describe("second step at sign-in", () => {
 
   it("a challenge allows a few tries, then locks", async () => {
     const { user, db, secret } = await enabledUser();
-    const { token } = await createLoginChallenge(db, user.id, T0);
+    const { token } = await createLoginChallenge(db, user.id, "password", T0);
     for (let i = 1; i < MAX_CHALLENGE_ATTEMPTS; i++)
       expect(await completeLoginChallenge(db, token, "000000", T0 + 60_000)).toEqual({ ok: false, reason: "wrong" });
     expect(await completeLoginChallenge(db, token, "000000", T0 + 60_000)).toEqual({ ok: false, reason: "locked" });
@@ -92,11 +93,11 @@ describe("second step at sign-in", () => {
 
   it("a correct code completes the challenge once; expired or forged tokens fail", async () => {
     const { user, db, secret } = await enabledUser();
-    const { token } = await createLoginChallenge(db, user.id, T0);
+    const { token } = await createLoginChallenge(db, user.id, "password", T0);
     expect(await completeLoginChallenge(db, "forged-token", code(secret, T0 + 60_000), T0 + 60_000)).toEqual({ ok: false, reason: "expired" });
     expect(await completeLoginChallenge(db, token, code(secret, T0 + 60_000), T0 + 60_000)).toEqual({ ok: true, userId: user.id, method: "totp" });
     expect(await completeLoginChallenge(db, token, code(secret, T0 + 90_000), T0 + 90_000)).toEqual({ ok: false, reason: "expired" });
-    const late = await createLoginChallenge(db, user.id, T0);
+    const late = await createLoginChallenge(db, user.id, "password", T0);
     expect(await completeLoginChallenge(db, late.token, code(secret, T0 + 11 * 60_000), T0 + 11 * 60_000)).toEqual({ ok: false, reason: "expired" });
   });
 
@@ -130,7 +131,7 @@ describe("email me a code (owner, 2026-11-06)", () => {
 
   it("emails a 6-digit code bound to this sign-in; it works once and only a hash is stored", async () => {
     const { user, db } = await enabledUser();
-    const { token } = await createLoginChallenge(db, user.id, T0);
+    const { token } = await createLoginChallenge(db, user.id, "password", T0);
     const r = await issueLoginEmailCode(db, token, T0 + MIN);
     if (!r.ok) throw new Error(`not issued: ${r.reason}`);
     expect(r.code).toMatch(/^\d{6}$/);
@@ -151,7 +152,7 @@ describe("email me a code (owner, 2026-11-06)", () => {
 
   it("a new code replaces the old one, codes expire, and at most 3 are sent per sign-in", async () => {
     const { user, db } = await enabledUser();
-    const { token } = await createLoginChallenge(db, user.id, T0);
+    const { token } = await createLoginChallenge(db, user.id, "password", T0);
     const a = await issueLoginEmailCode(db, token, T0);
     const b = await issueLoginEmailCode(db, token, T0 + MIN);
     const c = await issueLoginEmailCode(db, token, T0 + 2 * MIN);
@@ -165,7 +166,7 @@ describe("email me a code (owner, 2026-11-06)", () => {
 
   it("wrong email codes use up the same 5 tries", async () => {
     const { user, db } = await enabledUser();
-    const { token } = await createLoginChallenge(db, user.id, T0);
+    const { token } = await createLoginChallenge(db, user.id, "password", T0);
     const r = await issueLoginEmailCode(db, token, T0);
     if (!r.ok) throw new Error("not issued");
     const wrong = r.code === "000000" ? "111111" : "000000";
@@ -176,13 +177,52 @@ describe("email me a code (owner, 2026-11-06)", () => {
 
   it("a code for one sign-in never works on another, and a forged sign-in gets nothing", async () => {
     const { user, db } = await enabledUser();
-    const first = await createLoginChallenge(db, user.id, T0);
-    const second = await createLoginChallenge(db, user.id, T0);
+    const first = await createLoginChallenge(db, user.id, "password", T0);
+    const second = await createLoginChallenge(db, user.id, "password", T0);
     const r = await issueLoginEmailCode(db, first.token, T0);
     if (!r.ok) throw new Error("not issued");
     expect(await completeLoginChallenge(db, second.token, r.code, T0 + MIN)).toEqual({ ok: false, reason: "wrong" });
     expect(await issueLoginEmailCode(db, "forged-token", T0)).toEqual({ ok: false, reason: "expired" });
     expect(await issueLoginEmailCode(db, first.token, T0 + 11 * MIN)).toEqual({ ok: false, reason: "expired" });
+  });
+
+  it("is never offered after Google or Apple (same inbox), only after the password", async () => {
+    const { user, db } = await enabledUser();
+    const viaGoogle = await createLoginChallenge(db, user.id, "oauth", T0);
+    expect(await issueLoginEmailCode(db, viaGoogle.token, T0)).toEqual({ ok: false, reason: "not_password" });
+    const viaPassword = await createLoginChallenge(db, user.id, "password", T0);
+    expect((await issueLoginEmailCode(db, viaPassword.token, T0)).ok).toBe(true);
+  });
+
+  it("is off for 7 days after a password reset, so an inbox alone can't get past two-step", async () => {
+    const { user, db } = await enabledUser();
+    const now = Date.now();
+    await db.insert(passwordResets).values({ id: `r-${user.id}`, userId: user.id, expiresAt: new Date(now), usedAt: new Date(now - 2 * 24 * 3_600_000) });
+    const a = await createLoginChallenge(db, user.id, "password", now);
+    expect(await issueLoginEmailCode(db, a.token, now)).toEqual({ ok: false, reason: "recent_reset" });
+    await db
+      .update(passwordResets)
+      .set({ usedAt: new Date(now - EMAIL_CODE_RESET_COOLDOWN_MS - 60_000) })
+      .where(eq(passwordResets.userId, user.id));
+    expect((await issueLoginEmailCode(db, a.token, now)).ok).toBe(true);
+  });
+
+  it("one code can never start two sessions, even when sent twice at the same moment", async () => {
+    const { user, db } = await enabledUser();
+    const { token } = await createLoginChallenge(db, user.id, "password", T0);
+    const r = await issueLoginEmailCode(db, token, T0);
+    if (!r.ok) throw new Error("not issued");
+    const results = await Promise.all([completeLoginChallenge(db, token, r.code, T0 + MIN), completeLoginChallenge(db, token, r.code, T0 + MIN)]);
+    expect(results.filter((x) => x.ok)).toHaveLength(1);
+  });
+
+  it("sending a code extends the sign-in to the code's 10 minutes", async () => {
+    const { user, db } = await enabledUser();
+    const { token, expiresAt } = await createLoginChallenge(db, user.id, "password", T0);
+    const r = await issueLoginEmailCode(db, token, T0 + 9 * MIN);
+    if (!r.ok) throw new Error("not issued");
+    expect(r.expiresAt.getTime()).toBeGreaterThan(expiresAt.getTime());
+    expect(await completeLoginChallenge(db, token, r.code, T0 + 15 * MIN)).toEqual({ ok: true, userId: user.id, method: "email" });
   });
 
   it("shows the address without giving it away", () => {

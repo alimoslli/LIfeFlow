@@ -1,6 +1,7 @@
 "use server";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { CHALLENGE_COOKIE, completeLoginChallenge, createLoginChallenge, issueLoginEmailCode } from "@/server/auth/two-factor";
 import { emailConfig, sendEmail } from "@/server/integrations/email";
 import { ZodError } from "zod";
@@ -40,7 +41,7 @@ export async function login(_prev: AuthState, fd: FormData): Promise<AuthState> 
   if (user.suspendedAt) return { error: "This account has been suspended. Please contact support.", email };
   if (user.totpEnabledAt) {
     // Password is right; the session only starts after the authenticator code.
-    const { token, expiresAt } = await createLoginChallenge(db, user.id);
+    const { token, expiresAt } = await createLoginChallenge(db, user.id, "password");
     (await cookies()).set(CHALLENGE_COOKIE, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -84,7 +85,7 @@ export async function verifyLogin(_prev: VerifyState, fd: FormData): Promise<Ver
   await startSession(r.userId);
   await consumePendingAppleLink(db, r.userId);
   await withUser(r.userId, (s) => audit(s, "user", "auth.login", undefined, { ip, secondFactor: r.method }));
-  if (r.method === "email") await noticeEmailSignIn(r.userId);
+  if (r.method === "email") after(() => noticeEmailSignIn(r.userId));
   redirect(safeNext(fd.get("next")));
 }
 
@@ -102,9 +103,20 @@ export async function sendLoginEmailCode(_prev: EmailCodeState): Promise<EmailCo
   const r = await issueLoginEmailCode(db, jar.get(CHALLENGE_COOKIE)?.value ?? "");
   if (!r.ok) {
     if (r.reason === "too_many") return { error: "We've sent 3 codes for this sign-in. Use the newest one, or sign in again." };
+    if (r.reason === "not_password") return { error: "Email codes work after signing in with your email and password. Sign in that way to use one." };
+    if (r.reason === "recent_reset")
+      return { error: "For safety, email codes are off for 7 days after a password reset. Use your authenticator app, a backup code or a passkey." };
     jar.delete(CHALLENGE_COOKIE);
     return { expired: true, error: "This sign-in expired. Please sign in again." };
   }
+  // The sign-in now lasts as long as the code: keep the cookie alive with it.
+  jar.set(CHALLENGE_COOKIE, jar.get(CHALLENGE_COOKIE)?.value ?? "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    expires: r.expiresAt,
+  });
   try {
     await sendEmail(cfg, {
       to: r.email,

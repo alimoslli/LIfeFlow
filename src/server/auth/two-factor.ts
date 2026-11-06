@@ -1,8 +1,8 @@
 import { createHash, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
-import { and, eq, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, gte, isNotNull, isNull, lt, sql } from "drizzle-orm";
 import { Secret, TOTP } from "otpauth";
 import type { Database } from "../db/client";
-import { loginChallenges, recoveryCodes, users } from "../db/schema";
+import { loginChallenges, passwordResets, recoveryCodes, users } from "../db/schema";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { verifyPassword } from "./password";
 
@@ -17,7 +17,9 @@ import { verifyPassword } from "./password";
  *   5 attempts, 10 minutes) stands in for the session until the code is right.
  * - "Email me a code" (owner, 2026-11-06, after a lockout): after the password step, a 6-digit code can be emailed to
  *   the account's address. It is stored only as a hash bound to that one challenge, works once, expires in 10 minutes,
- *   shares the challenge's 5 tries, and at most 3 can be sent per sign-in.
+ *   shares the challenge's 5 tries, and at most 3 can be sent per sign-in. Only after the password step (never after
+ *   Google or Apple, whose inbox is the same one), and not for 7 days after a password reset (an inbox alone must
+ *   never be enough to get past two-step sign-in).
  */
 
 export class TwoFactorError extends Error {}
@@ -29,6 +31,8 @@ export const EMAIL_CODE_TTL_MS = 10 * 60_000;
 export const MAX_EMAIL_SENDS = 3;
 /** A sign-in that asked for an email code may run this long in total, however many codes were sent. */
 const CHALLENGE_MAX_LIFE_MS = 30 * 60_000;
+/** No email codes this long after a password reset, so a reset email plus an email code can't take an account. */
+export const EMAIL_CODE_RESET_COOLDOWN_MS = 7 * 24 * 3_600_000;
 const RECOVERY_CODE_COUNT = 10;
 const PERIOD = 30;
 
@@ -155,10 +159,10 @@ export async function regenerateRecoveryCodes(db: Database, userId: string, code
 // ---------------------------------------------------------------------------
 // Sign-in challenge (between the password and the code)
 
-export async function createLoginChallenge(db: Database, userId: string, now = Date.now()) {
+export async function createLoginChallenge(db: Database, userId: string, firstFactor: "password" | "oauth", now = Date.now()) {
   const token = randomBytes(32).toString("base64url");
   await db.delete(loginChallenges).where(lt(loginChallenges.expiresAt, new Date(now)));
-  await db.insert(loginChallenges).values({ id: sha256(token), userId, expiresAt: new Date(now + CHALLENGE_TTL_MS) });
+  await db.insert(loginChallenges).values({ id: sha256(token), userId, firstFactor, expiresAt: new Date(now + CHALLENGE_TTL_MS) });
   return { token, expiresAt: new Date(now + CHALLENGE_TTL_MS) };
 }
 
@@ -179,7 +183,8 @@ export function maskEmail(email: string) {
   return `${name.slice(0, 1)}•••@${domain}`;
 }
 
-export type EmailCodeResult = { ok: true; to: string; email: string; code: string } | { ok: false; reason: "expired" | "too_many" };
+export type EmailCodeResult =
+  { ok: true; to: string; email: string; code: string; expiresAt: Date } | { ok: false; reason: "expired" | "too_many" | "not_password" | "recent_reset" };
 
 /**
  * Makes a fresh 6-digit code for a pending sign-in (the password step already passed). The caller emails it and only
@@ -191,22 +196,30 @@ export async function issueLoginEmailCode(db: Database, token: string, now = Dat
   const id = sha256(token);
   const [c] = await db.select().from(loginChallenges).where(eq(loginChallenges.id, id));
   if (!c || c.expiresAt.getTime() < now) return { ok: false, reason: "expired" };
+  if (c.firstFactor !== "password") return { ok: false, reason: "not_password" };
+  const [reset] = await db
+    .select({ id: passwordResets.id })
+    .from(passwordResets)
+    .where(and(eq(passwordResets.userId, c.userId), isNotNull(passwordResets.usedAt), gte(passwordResets.usedAt, new Date(now - EMAIL_CODE_RESET_COOLDOWN_MS))))
+    .limit(1);
+  if (reset) return { ok: false, reason: "recent_reset" };
   if (c.emailSends >= MAX_EMAIL_SENDS) return { ok: false, reason: "too_many" };
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   const expiresAt = new Date(Math.min(now + EMAIL_CODE_TTL_MS, c.createdAt.getTime() + CHALLENGE_MAX_LIFE_MS));
+  const challengeExpires = new Date(Math.max(c.expiresAt.getTime(), expiresAt.getTime()));
   const [updated] = await db
     .update(loginChallenges)
     .set({
       emailCodeHash: emailCodeHash(id, code),
       emailCodeExpiresAt: expiresAt,
       emailSends: sql`${loginChallenges.emailSends} + 1`,
-      expiresAt: new Date(Math.max(c.expiresAt.getTime(), expiresAt.getTime())),
+      expiresAt: challengeExpires,
     })
     .where(and(eq(loginChallenges.id, id), lt(loginChallenges.emailSends, MAX_EMAIL_SENDS)))
     .returning({ id: loginChallenges.id });
   if (!updated) return { ok: false, reason: "too_many" };
   const u = await getUser(db, c.userId);
-  return { ok: true, to: maskEmail(u.email), email: u.email, code };
+  return { ok: true, to: maskEmail(u.email), email: u.email, code, expiresAt: challengeExpires };
 }
 
 /** Checks the code for a pending sign-in. Each wrong try counts; after 5 the challenge is gone. */
@@ -237,6 +250,8 @@ export async function completeLoginChallenge(db: Database, token: string, code: 
     await db.delete(loginChallenges).where(eq(loginChallenges.id, id));
     return { ok: false, reason: "locked" };
   }
-  await db.delete(loginChallenges).where(eq(loginChallenges.id, id));
+  // Only the request that actually removes the challenge wins, so one code can never start two sessions.
+  const gone = await db.delete(loginChallenges).where(eq(loginChallenges.id, id)).returning({ id: loginChallenges.id });
+  if (!gone.length) return { ok: false, reason: "expired" };
   return { ok: true, userId: c.userId, method };
 }

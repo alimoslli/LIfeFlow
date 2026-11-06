@@ -36,4 +36,11 @@ The owner was locked out: their account had two-step sign-in on, they couldn't f
 - After an email-code sign-in, a notice goes to the same address so a sign-in the person didn't make doesn't go unnoticed.
 - The audit row records `secondFactor: "email"`.
 
-**Trade-off, accepted by the owner:** whoever controls the account's email and knows the password can get in, admin included, because the admin check looks at the account's two-step setup, not at how this session signed in. Authenticator codes, backup codes and passkeys stay the stronger options.
+**Tightened after a fresh-eyes security review (same day):**
+- **Password sign-in only.** Email codes are offered only when the first step was the password (`login_challenges.first_factor`, migration 0042). After Google or Apple sign-in the inbox is usually the same account, so it can't count as a second factor.
+- **Not right after a reset.** They're refused for 7 days after a password reset, so control of the inbox alone (reset link, then email code) can never get past two-step sign-in.
+- **Truly single use.** The challenge is removed with `delete … returning`, so two simultaneous requests can't both start a session.
+- **The sign-in cookie lasts as long as the code.** It's refreshed when a code is sent.
+- **The sign-in never waits on the email service.** The notice is sent with `after()`, and every Resend call has a 10-second limit.
+
+**Trade-off, accepted by the owner:** whoever controls the account's email AND knows the current password (not reset in the last 7 days) can get in, admin included, because the admin check looks at the account's two-step setup, not at how this session signed in. Authenticator codes, backup codes and passkeys stay the stronger options.

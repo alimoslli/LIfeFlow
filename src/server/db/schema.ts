@@ -287,6 +287,8 @@ export const loginChallenges = pgTable(
     emailCodeHash: text("email_code_hash"),
     emailCodeExpiresAt: tstz("email_code_expires_at"),
     emailSends: integer("email_sends").notNull().default(0),
+    /** How the first step was passed. Email codes are offered only after the password ("oauth" = Google or Apple). */
+    firstFactor: text("first_factor").$type<"password" | "oauth">(),
     createdAt: createdAt(),
   },
   (t) => [index("login_challenges_user_idx").on(t.userId)],
