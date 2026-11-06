@@ -45,6 +45,18 @@ export function amountsClose(expectedCents: number, actualCents: number, varies:
   return Math.abs(actualCents - expectedCents) <= Math.max(Math.abs(expectedCents) * (varies ? 0.25 : 0.1), 50);
 }
 
+/** Categories whose bills usually move from one to the next (usage, overage). */
+const USUALLY_VARIES = /^(?:utilities|phone|internet)$/i;
+
+/**
+ * Whether a tracked bill's amount moves: its found series' charges tell, and before the bank shows a series (a bill
+ * tracked by hand, no history yet), its category does. With no series, a charge can pay it only under the bill's own
+ * keys (its name's, its stored one or its brand's: `paidOccurrences`), so the wider band never reaches another merchant.
+ */
+export function billVaries(series: { variableAmount: boolean }[], category: string | null | undefined): boolean {
+  return series.length ? series.some((c) => c.variableAmount) : USUALLY_VARIES.test(category?.trim() ?? "");
+}
+
 /** Signed days from the nearest occurrence of `anchor`'s schedule to `date`: negative when `date` comes before it. */
 export function scheduleOffset(anchor: string, freq: Frequency, date: string): number {
   // Walk the earlier date forward on the schedule (keeping its day of the month) until it passes the other, keeping the smallest gap.
@@ -93,7 +105,7 @@ export function tracksSeries(
 
 /**
  * One due date of a tracked item. `keys` are the item's own keys plus those of bank series already matched
- * to it (`tracksSeries`); `varies` is true when such a series' amount moves from bill to bill.
+ * to it (`tracksSeries`); `varies` is true when its amount moves from bill to bill (`billVaries`).
  */
 export type DueOccurrence = { keys: string[]; varies: boolean; frequency: Frequency; date: string; amountCents: number };
 export type PostedCharge = { date: string; amountCents: number; merchantName: string | null; description: string; kind: string; pending: boolean };
