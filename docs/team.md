@@ -39,7 +39,7 @@ The owner asked for the agents to keep running: audit the app (phone and web), f
 - **Research** twice a week.
 - **Up to three agents at a time,** never four.
 - **Read only what's needed.** Agents read the sections of `docs/vision.md` and `CLAUDE.md` their task needs, not whole files. Few screenshots, at scale 1.
-- **Leave the morning free.** A round stops, saves its carry-over and reports when it reaches about 70% of the 5-hour limit, so the owner still has room when they wake up.
+- **Use the whole limit (owner, 2026-11-06).** A round keeps working until the 5-hour limit is spent. Before the last of it goes, it saves its carry-over and writes the morning report, so nothing is lost when the limit runs out. (This replaces "stop at about 70%".)
 
 **The owner's hours (owner, 2026-11-05, changed late that night):** the agents run while the owner sleeps. Rounds start at 3 AM Pacific, or at the first usage-limit reset after 3 AM if the limit is spent. The report and the yes or no list are waiting in the app by morning (a message plus a push). Nobody waits for approval during a round: approved work goes ahead, and real changes go on the list for the owner to answer the next day.
 
