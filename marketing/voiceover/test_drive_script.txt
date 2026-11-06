@@ -1,0 +1,12 @@
+Voice: Mark (Higgsfield preset 27c04473-84a9-4b60-a41f-c8e8458bd4f1, ElevenLabs engine), the same voice as Dev.
+
+0.1   Thirty seconds from now... your week's handled.
+3.1   Tell it one class. That's the whole setup.
+6.3   Name it. Go wild.
+8.4   It reads your whole week... classes, work, money... and finds what you'd miss.
+14.6  Then it tells you the plan.
+17.1  Exam Friday? Two hours today. One tap.
+20.1  Netflix charged you twice? Caught it. Message already written.
+23.8  Quiz tomorrow? It quizzes you tonight.
+26.4  Tap for another day. It keeps going.
+30.4  Thirty seconds. Told you. Link's in bio.
