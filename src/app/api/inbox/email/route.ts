@@ -6,7 +6,7 @@ import { errorResponse, HttpError } from "@/server/http";
 import { sniffMime } from "@/server/uploads";
 import { senderAuthenticated } from "@/server/services/inbox/email-auth";
 import { inboxWebhookAuth } from "@/server/services/inbox/webhook-auth";
-import { isVerifiedSender, processDocument, recordIgnored, saveInboxFile, userForAddress } from "@/server/services/inbox";
+import { isVerifiedSender, processForwardedEmail, recordIgnored, saveInboxFile, userForAddress } from "@/server/services/inbox";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
         files.push({ filename: a.Name ?? "file", mimeType: mime, base64: a.Content });
       }
       const text = mail.TextBody?.trim() || strip(mail.HtmlBody ?? "");
-      await processDocument(s, user.timezone, today, { channel: "email", from, subject, text, files, attachmentIds: ids });
+      await processForwardedEmail(s, user.timezone, today, { channel: "email", from, subject, text, files, attachmentIds: ids });
     });
     return NextResponse.json({ ok: true });
   } catch (e) {

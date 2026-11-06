@@ -1356,7 +1356,7 @@ export const inboxItems = pgTable(
     fromAddress: text("from_address"),
     subject: text("subject"),
     receivedAt: tstz("received_at").notNull().defaultNow(),
-    status: text("status").$type<"processing" | "filed" | "needs_review" | "ignored" | "failed" | "undone">().notNull().default("processing"),
+    status: text("status").$type<"processing" | "suggested" | "filed" | "needs_review" | "ignored" | "failed" | "undone">().notNull().default("processing"),
     type: text("type"),
     summary: text("summary"),
     /** Why it wasn't filed (e.g. not from a verified address). */

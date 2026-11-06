@@ -292,6 +292,9 @@ describe("review round: marker escapes and display names", () => {
     expect(senderLabel('"<alerts@chase.com>" <x@evil.io>')).toBe("x@evil.io");
     expect(senderLabel('"alerts@chase.com" <x@evil.io>')).toBe("x@evil.io");
     expect(senderLabel("<x@evil.io>")).toBe("x@evil.io");
+    // Look-alike @ signs are normalised before the check.
+    expect(senderLabel('"alerts\uff20chase.com" <x@evil.io>')).toBe("x@evil.io");
+    expect(senderLabel('"alerts\ufe6bchase.com" <x@evil.io>')).toBe("x@evil.io");
   });
 });
 

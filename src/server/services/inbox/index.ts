@@ -291,7 +291,14 @@ async function undoFiled(scope: UserScope, f: InboxFiled) {
 export type IncomingDocument = Omit<ExtractInput, "today"> & { channel: "email" | "upload" | "share"; from?: string | null; attachmentIds?: string[] };
 
 /** Reads and files one document. Always leaves an inbox row saying what happened. */
-export async function processDocument(scope: UserScope, tz: string, today: string, doc: IncomingDocument, extract = extractDocument) {
+export async function processDocument(
+  scope: UserScope,
+  tz: string,
+  today: string,
+  doc: IncomingDocument,
+  extract = extractDocument,
+  opts: { suggestOnly?: boolean } = {},
+) {
   const [row] = await scope.tx
     .insert(inboxItems)
     .values({
@@ -315,6 +322,21 @@ export async function processDocument(scope: UserScope, tz: string, today: strin
       .returning();
     return failed;
   }
+  if (opts.suggestOnly && SUGGESTIBLE[ex.type]) {
+    // Nothing is filed yet: the person's own tap is the approval (see fileSuggestion).
+    const [sug] = await scope.tx
+      .update(inboxItems)
+      .set({
+        status: "suggested",
+        type: ex.type,
+        summary: ex.summary.slice(0, 500),
+        extracted: ex as unknown as Record<string, unknown>,
+        reason: `File this ${SUGGESTIBLE[ex.type]}?`,
+      })
+      .where(eq(inboxItems.id, row.id))
+      .returning();
+    return sug;
+  }
   const { filed, review } = await fileExtraction(scope, tz, ex, today);
   const [done] = await scope.tx
     .update(inboxItems)
@@ -327,6 +349,42 @@ export async function processDocument(scope: UserScope, tz: string, today: strin
       reason: review ?? null,
     })
     .where(eq(inboxItems.id, row.id))
+    .returning();
+  return done;
+}
+
+/** What a forwarded email can be offered as; anything else needs nothing from the person. */
+const SUGGESTIBLE: Partial<Record<Extraction["type"], string>> = {
+  bill: "bill",
+  receipt: "receipt",
+  assignment: "assignment",
+  exam: "exam",
+  flight: "booking",
+  hotel: "booking",
+  train: "booking",
+  pay_stub: "pay stub",
+};
+
+/**
+ * Forwarded email is read but only SUGGESTED: its sender check can't yet be fully trusted (see email-auth.ts),
+ * so the person files it with one tap (fileSuggestion).
+ */
+export const processForwardedEmail = (scope: UserScope, tz: string, today: string, doc: IncomingDocument, extract = extractDocument) =>
+  processDocument(scope, tz, today, doc, extract, { suggestOnly: true });
+
+/** The person's tap on "File this?": files what was extracted, with Undo as for any filed item. */
+export async function fileSuggestion(scope: UserScope, tz: string, today: string, id: string) {
+  const [row] = await scope.tx
+    .select()
+    .from(inboxItems)
+    .where(and(eq(inboxItems.id, id), eq(inboxItems.userId, scope.userId)));
+  if (!row) throw new ServiceError("Not found", "not_found");
+  if (row.status !== "suggested" || !row.extracted) throw new ServiceError("There's nothing waiting to be filed here.");
+  const { filed, review } = await fileExtraction(scope, tz, row.extracted as unknown as Extraction, today);
+  const [done] = await scope.tx
+    .update(inboxItems)
+    .set({ status: filed.length ? "filed" : "needs_review", filed, reason: review ?? null })
+    .where(eq(inboxItems.id, id))
     .returning();
   return done;
 }

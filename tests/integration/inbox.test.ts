@@ -5,7 +5,7 @@ import { assignments, calendarEvents, paychecks, recurringItems, tasks, transact
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { createCourse } from "@/server/services/school";
 import { createEmployer } from "@/server/services/work";
-import { inboxAddress, isVerifiedSender, processDocument, undoInboxItem, userForAddress } from "@/server/services/inbox";
+import { inboxAddress, isVerifiedSender, fileSuggestion, processDocument, processForwardedEmail, undoInboxItem, userForAddress } from "@/server/services/inbox";
 import { senderAuthenticated } from "@/server/services/inbox/email-auth";
 import type { Extraction } from "@/server/services/inbox/extract";
 import { makeUser, TZ } from "../helpers";
@@ -120,5 +120,46 @@ describe("smart inbox", () => {
     ).toBe(false);
     expect(senderAuthenticated([], from, PM)).toBe(false);
     delete process.env.INBOX_DOMAIN;
+  });
+});
+
+describe("forwarded mail is a suggestion, filed by the person's tap", () => {
+  const billEx = { type: "bill" as const, bill: { payee: "Comcast", amount_usd: 64.99, due_date: addDaysStr(today, 10), repeats: "monthly" as const } };
+
+  it("a normal forward, or one whose header check was fooled, files nothing until the tap; Undo still works", async () => {
+    const { run } = await makeUser();
+    // Even with a header set that passes the check (a forged Received-SPF placed first would), nothing is filed.
+    const from = "riley@gmail.com";
+    const forged = [{ Name: "Received-SPF", Value: `Pass identity=mailfrom; envelope-from=${from}; receiver=u-abc@in.example.test` }];
+    expect(senderAuthenticated(forged, from, { via: "postmark", recipient: "u-abc@in.example.test" })).toBe(true);
+
+    const row = await run((s) => processForwardedEmail(s, TZ, today, doc, fixed(billEx)));
+    expect(row.status).toBe("suggested");
+    expect(row.filed).toEqual([]);
+    expect(row.reason).toBe("File this bill?");
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(0);
+    expect(await run((s) => s.tx.select().from(tasks))).toHaveLength(0);
+
+    const filed = await run((s) => fileSuggestion(s, TZ, today, row.id));
+    expect(filed.status).toBe("filed");
+    expect(filed.filed.map((f) => f.kind)).toEqual(["recurring", "task"]);
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(1);
+    // Only once.
+    await expect(run((s) => fileSuggestion(s, TZ, today, row.id))).rejects.toThrow(/nothing waiting/);
+
+    await run((s) => undoInboxItem(s, row.id));
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(0);
+  });
+
+  it("something with nothing to file isn't offered as a suggestion", async () => {
+    const { run } = await makeUser();
+    const row = await run((s) => processForwardedEmail(s, TZ, today, doc, fixed({ type: "other" })));
+    expect(row.status).toBe("needs_review");
+  });
+
+  it("uploads still file straight away", async () => {
+    const { run } = await makeUser();
+    const row = await run((s) => processDocument(s, TZ, today, { ...doc, channel: "upload" }, fixed(billEx)));
+    expect(row.status).toBe("filed");
   });
 });

@@ -23,12 +23,12 @@ export const wrapUntrusted = (tag: string, s: string, nonce = crypto.randomUUID(
  * contains "@" (a name that poses as an address), the real address is shown instead.
  */
 export function senderLabel(from: string, max = 40) {
-  const name = from
-    .replace(/<[^>]*>/g, "")
+  // Normalise first, so fullwidth "＠" and small "﹫" are seen as "@".
+  const name = neutralize(from.replace(/<[^>]*>/g, ""))
     .replace(/["\\]/g, "")
     .replace(/\s+/g, " ")
     .trim();
-  const shown = name && !name.includes("@") ? name : parseFromAddress(from) || "unknown sender";
+  const shown = name && !name.includes("@") ? name : parseFromAddress(from.normalize("NFKC")) || "unknown sender";
   const clean = neutralize(shown).replace(/[<>]/g, "");
   return clean.length > max ? `${clean.slice(0, max - 1).trimEnd()}…` : clean;
 }

@@ -114,6 +114,12 @@ export function senderAuthenticated(headers: Header[], from: string, source: Aut
     return false;
   }
 
+  // TODO(auto-file): the forwarding route does NOT auto-file on the strength of this check. We have not
+  // confirmed that Postmark's Received-SPF is always the topmost one, so a forged Pass placed first could be
+  // trusted, and rejecting mail with several Received-SPF lines would block normal forwards (a Gmail forward
+  // carries Gmail's own). Forwarded mail therefore only becomes a suggestion the person files with one tap.
+  // Auto-filing can return once a real captured Postmark inbound payload (saved in tests/fixtures/) confirms
+  // the header order.
   // Postmark: the TOPMOST Received-SPF is the one Postmark itself wrote (every hop before it is lower).
   // It must name the address the mail was delivered to (the webhook's OriginalRecipient) as its receiver.
   const spf = named("received-spf")[0];

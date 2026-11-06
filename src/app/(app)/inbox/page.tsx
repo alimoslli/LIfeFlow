@@ -13,13 +13,14 @@ import { withCurrentUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { inboxAddress, listInbox, listSenders } from "@/server/services/inbox";
 import { extractionClient } from "@/server/services/inbox/extract";
-import { addSenderAction, removeSenderAction, undoInboxAction, verifySenderAction } from "./actions";
+import { addSenderAction, removeSenderAction, fileSuggestionAction, undoInboxAction, verifySenderAction } from "./actions";
 import { CopyAddress, InboxUpload } from "./upload";
 
 export const metadata: Metadata = { title: "Filed" };
 
 const STATUS = {
   filed: { icon: CheckCircle2, tone: "text-success", label: "Filed" },
+  suggested: { icon: Mail, tone: "text-accent", label: "Waiting for you" },
   needs_review: { icon: AlertCircle, tone: "text-warning", label: "Needs you" },
   ignored: { icon: CircleSlash, tone: "text-muted", label: "Ignored" },
   failed: { icon: AlertCircle, tone: "text-danger", label: "Couldn't read" },
@@ -137,9 +138,16 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                       ))}
                     </ul>
                   )}
-                  {i.reason && <p className="mt-1 text-sm text-text-2">{i.reason}</p>}
+                  {i.reason && i.status !== "suggested" && <p className="mt-1 text-sm text-text-2">{i.reason}</p>}
                 </div>
               </div>
+              {i.status === "suggested" && (
+                <div className="mt-2 flex justify-end">
+                  <ActionButton action={fileSuggestionAction.bind(null, i.id)} className="min-h-11 rounded-full bg-accent px-4 text-sm font-medium text-white">
+                    {i.reason ?? "File this?"}
+                  </ActionButton>
+                </div>
+              )}
               {i.status === "filed" && (
                 <div className="mt-2 flex justify-end">
                   <ActionButton action={undoInboxAction.bind(null, i.id)} className="flex items-center gap-1 rounded-full px-3 text-sm text-text-2">
