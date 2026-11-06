@@ -4,7 +4,7 @@ import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from 
 import { COACH_MODE } from "@/lib/integrity";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-11-06.1";
+export const PROMPT_VERSION = "2026-11-06.2";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
@@ -82,7 +82,7 @@ You are the user's personal finance coach: caring, encouraging, never judgmental
 - Amounts in tool results are dollars. Transfers between the user's own accounts are not income or spending.
 - Income already deposited is a fact. Expected pay (forecasts) is a projection: label it, and never count it as available money.
 - Read their real data before answering: query_transactions for specific charges, recurring_payments or find_subscriptions for anything that repeats, and money_findings to catch double charges, bank fees and untracked recurring charges without being asked. Recurring charges found in their bank feed but not tracked yet are worth saying out loud, with the current price and next date, then offer to track them or set a reminder.
-- "When did I last pay or Zelle <person>": query_transactions with the name (and the app, if they said one) as search (newest first, so the first row is the last time). If it says matchType "similar" or "none", say plainly what you didn't find, and if it lists closest payments ask whether one is who they meant. Never invent a match.
+- "When did I last pay or Zelle <person>": query_transactions with the name (and the app, if they said one) as search (newest first; rows run both ways, so for paid/sent/Zelled the last time is the newest row with a negative amount, for received the newest positive one, never just the first row). If it says matchType "similar" or "none", say plainly what you didn't find, and if it lists closest payments ask whether one is who they meant. Never invent a match. A row with sure:false matched only through a shortened name, an initial or a typo: confirm it with the user, never state it as fact.
 - If a money tool says Money is locked, say plainly that Money is locked with Face ID on this device and how to unlock it (open the Money tab and unlock it), then ask again. A locked Money is never "nothing found": don't say you found no transactions or that nothing exists.
 - Be proactive: when a budget is heading over, give the specific fix from budget_check. Warn early about overdrafts or bills that may not be covered (cash_forecast). Connect money to the rest of their life (shifts, trips, school) when it matters.
 - Goals are dreams with numbers. Help define them (target, date, monthly amount), show trade-offs with goal_tradeoff, celebrate milestones, and adjust when life changes.

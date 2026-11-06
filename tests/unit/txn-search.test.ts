@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseSearch, rowMatches, scoreRow } from "@/lib/txn-search";
+import { ACCENT_FROM, ACCENT_TO, parseSearch, rowMatches, scoreRow, words } from "@/lib/txn-search";
 
 const match = (search: string, description: string, merchantName: string | null = null) => rowMatches(parseSearch(search).terms, { description, merchantName });
 const fuzzy = (search: string, description: string, merchantName: string | null = null) =>
@@ -7,7 +7,7 @@ const fuzzy = (search: string, description: string, merchantName: string | null 
 
 describe("parseSearch", () => {
   it("drops filler words and treats payment apps as hints", () => {
-    expect(parseSearch("last time I Zelled Omar Mousselli")).toEqual({ terms: ["omar", "mousselli"], apps: ["zelle"] });
+    expect(parseSearch("last time I Zelled Omar Mousselli")).toEqual({ terms: ["omar", "mousselli"], apps: ["zelle"], phrase: false });
     expect(parseSearch("payment sent to my Omar").terms).toEqual(["omar"]);
     expect(parseSearch("Cash App Dana").apps).toEqual(["cashapp"]);
   });
@@ -74,5 +74,51 @@ describe("fuzzy pass for misspelled names", () => {
     expect(fuzzy("Sam Lee", "ZELLE TO PAM LEE")).toBe(false); // short names get no typos
     expect(fuzzy("Omar Mousselli", "ZELLE TO AMAR MOUSSELLI")).toBe(false);
     expect(fuzzy("Omar Mousselli", "ZELLE TO OMAR MOSLI")).toBe(false);
+  });
+});
+
+const sure = (search: string, description: string) => scoreRow(parseSearch(search).terms, { description }, false);
+
+describe("search that leaves no usable word never drops the filter (H1)", () => {
+  it.each(["Омар", "محمد", "Zelle 李明", "Zelle J", "J"])("%s falls back to the raw phrase", (q) => {
+    expect(parseSearch(q).phrase).toBe(true);
+  });
+  it("app and filler words alone still search", () => {
+    expect(parseSearch("Zelle")).toMatchObject({ phrase: false, terms: ["zelle"] });
+    expect(parseSearch("the payment").phrase).toBe(false);
+    expect(parseSearch("Zelle Omar").phrase).toBe(false);
+  });
+});
+
+describe("sibling names are not exact (H2, M1)", () => {
+  it.each([
+    ["Samir Haddad", "ZELLE TO SAMIRA HADDAD"],
+    ["Daniel Lee", "ZELLE TO DANIELLE LEE"],
+    ["Julia Chen", "ZELLE TO JULIAN CHEN"],
+    ["Mike Johns", "ZELLE TO MIKE JOHNSON"],
+  ])("%s does not match %s as exact", (q, line) => expect(rowMatches(parseSearch(q).terms, { description: line })).toBe(false));
+
+  it("a shortened name or bare initial matches but is not sure", () => {
+    expect(sure("Samira Haddad", "ZELLE TO SAMIR HADDAD")).toMatchObject({ all: true, sure: false });
+    expect(sure("Christopher Lee", "ZELLE TO CHRIS LEE")).toMatchObject({ all: true, sure: false });
+    expect(sure("Omar Mousselli", "ZELLE TO OMAR MOUSSEL")).toMatchObject({ all: true, sure: false });
+    expect(sure("John Mousselli", "ZELLE TO JOHN M 4412")).toMatchObject({ all: true, sure: false });
+    expect(sure("Omar Mousselli", "ZELLE TO MOUSSELLI OMAR 1")).toMatchObject({ all: true, sure: true });
+    expect(sure("starbuck", "STARBUCKS 1")).toMatchObject({ all: true, sure: true });
+  });
+  it("apostrophes join the name instead of splitting it", () => {
+    expect(words("ZELLE TO OMAR O'BRIEN")).toContain("obrien");
+    expect(rowMatches(parseSearch("Omar Ozturk").terms, { description: "ZELLE TO OMAR O'BRIEN" })).toBe(false);
+    expect(rowMatches(parseSearch("Omar O'Brien").terms, { description: "ZELLE TO OMAR OBRIEN" })).toBe(true);
+  });
+});
+
+describe("Cash App and folding (M2, L2)", () => {
+  it("a bare Cash App search matches 'CASH APP*DANA'", () => {
+    expect(rowMatches(parseSearch("Cash App").terms, { description: "CASH APP*DANA LEE*" })).toBe(true);
+  });
+  it("folds letters NFKD leaves alone", () => {
+    expect(words("Łukasz Søren Đorđe")).toEqual(["lukasz", "soren", "dorde"]);
+    expect(ACCENT_FROM.length).toBe(ACCENT_TO.length);
   });
 });

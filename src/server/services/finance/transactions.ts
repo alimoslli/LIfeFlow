@@ -9,7 +9,7 @@ import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound, ServiceError } from "../errors";
 import { listCategories, resolveCategory } from "./categories";
 import { cleanVendorName } from "@/lib/vendor";
-import { P2P_NEEDLES, parseSearch, prefilterNeedles, scoreRow } from "@/lib/txn-search";
+import { ACCENT_FROM, ACCENT_TO, P2P_NEEDLES, parseSearch, prefilterNeedles, scoreRow } from "@/lib/txn-search";
 import { autoCategorize, learnCategoryRule } from "./categorize";
 import { parsePatch } from "../patch";
 
@@ -145,6 +145,8 @@ export type TransactionQuery = {
   search?: string;
   /** Match `search` as one exact case-insensitive phrase instead (the old behaviour). */
   phrase?: boolean;
+  /** Forgiving search, but keep only rows where every word matched as the same word (no shortened names, initials or typos). For totals. */
+  sureOnly?: boolean;
   minAmountCents?: number;
   maxAmountCents?: number;
   includeExcluded?: boolean;
@@ -157,12 +159,21 @@ const anyTextLike = (needle: string) => {
   return or(ilike(transactions.description, p), ilike(transactions.merchantName, p), ilike(transactions.notes, p))!;
 };
 
-/** How many rows the forgiving search reads before narrowing in code. */
-const SEARCH_SCAN_LIMIT = 5000;
+/** Accent- and apostrophe-blind containment, like the matcher in code (stored text is not folded). */
+const foldedLike = (needle: string) => {
+  const p = `%${likeEscape(needle)}%`;
+  const fold = (col: typeof transactions.description | typeof transactions.merchantName | typeof transactions.notes) =>
+    sql`translate(replace(lower(coalesce(${col}, '')), '''', ''), ${ACCENT_FROM}, ${ACCENT_TO}) like ${p}`;
+  return or(fold(transactions.description), fold(transactions.merchantName), fold(transactions.notes))!;
+};
+
+/** The forgiving search reads candidates in pages of this size, up to a hard cap, until it has enough matches. */
+const SEARCH_PAGE = 1000;
+const SEARCH_SCAN_CAP = 20000;
 /** Person-to-person lookups only look this far back. */
 const P2P_LOOKBACK = sql`(current_date - interval '2 years')`;
 
-async function selectRows(scope: UserScope, conds: ReturnType<typeof eq>[], limit: number) {
+async function selectRows(scope: UserScope, conds: ReturnType<typeof eq>[], limit: number, offset = 0) {
   const rows = await scope.tx
     .select({
       t: transactions,
@@ -178,10 +189,13 @@ async function selectRows(scope: UserScope, conds: ReturnType<typeof eq>[], limi
     .innerJoin(financialAccounts, eq(financialAccounts.id, transactions.accountId))
     .leftJoin(categories, eq(categories.id, transactions.categoryId))
     .where(and(...conds))
-    .orderBy(desc(transactions.date), desc(transactions.createdAt))
-    .limit(limit);
+    .orderBy(desc(transactions.date), desc(transactions.createdAt), desc(transactions.id))
+    .limit(limit)
+    .offset(offset);
   return rows.map((r) => ({
     ...r.t,
+    /** false only for forgiving-search rows that matched through a shortened name, an initial or a typo. */
+    sure: true,
     accountName: r.accountName,
     accountSource: r.accountSource,
     accountType: r.accountType,
@@ -220,12 +234,25 @@ export async function queryTransactions(scope: UserScope, q: TransactionQuery = 
     conds.push(anyTextLike(search));
     return selectRows(scope, conds, limit);
   }
-  // Forgiving: narrow in SQL (newest first, uses the user/date index), then require every word in code.
-  const { terms } = parseSearch(search);
-  if (!terms.length) return selectRows(scope, conds, limit);
-  conds.push(or(...prefilterNeedles(terms).map(anyTextLike))!);
-  const candidates = await selectRows(scope, conds, SEARCH_SCAN_LIMIT);
-  return candidates.filter((r) => scoreRow(terms, r).all).slice(0, limit);
+  // Forgiving: narrow in SQL (newest first, accent-blind), then require every word in code, page by page.
+  const parsed = parseSearch(search);
+  if (parsed.phrase) {
+    // Nothing usable as words (another alphabet, a lone letter): the raw text as one phrase. Never drop the filter.
+    conds.push(anyTextLike(search));
+    return selectRows(scope, conds, limit);
+  }
+  const { terms } = parsed;
+  conds.push(or(...prefilterNeedles(terms).map(foldedLike))!);
+  const out: Awaited<ReturnType<typeof selectRows>> = [];
+  for (let offset = 0; offset < SEARCH_SCAN_CAP && out.length < limit; offset += SEARCH_PAGE) {
+    const page = await selectRows(scope, conds, SEARCH_PAGE, offset);
+    for (const r of page) {
+      const m = scoreRow(terms, r);
+      if (m.all && (m.sure || !q.sureOnly)) out.push({ ...r, sure: m.sure });
+    }
+    if (page.length < SEARCH_PAGE) break;
+  }
+  return out.slice(0, limit);
 }
 
 export type TransactionRow = Awaited<ReturnType<typeof queryTransactions>>[number];
@@ -243,9 +270,11 @@ export type TransactionFind =
 export async function findTransactions(scope: UserScope, q: TransactionQuery = {}): Promise<TransactionFind> {
   const rows = await queryTransactions(scope, q);
   const search = q.search?.trim();
-  if (rows.length || !search || q.phrase) return { match: "exact", rows, closest: [] };
+  if (rows.length) return { match: rows.some((r) => r.sure) ? "exact" : "similar", rows, closest: [] };
+  if (!search || q.phrase) return { match: "exact", rows, closest: [] };
 
-  const { terms, apps } = parseSearch(search);
+  const { terms, apps, phrase } = parseSearch(search);
+  if (phrase) return { match: "none", rows: [], closest: [] };
   const conds = await baseConds(scope, q);
   conds.push(or(...P2P_NEEDLES.map(anyTextLike))!);
   if (!q.from) conds.push(gte(transactions.date, sql`${P2P_LOOKBACK}`));
@@ -253,7 +282,7 @@ export async function findTransactions(scope: UserScope, q: TransactionQuery = {
   const scored = recent.map((r) => ({ r, ...scoreRow(terms, r, true) }));
   const limit = Math.min(q.limit ?? 5, 5);
   const similar = scored.filter((x) => x.all);
-  if (similar.length) return { match: "similar", rows: similar.slice(0, Math.min(q.limit ?? 500, 20)).map((x) => x.r), closest: [] };
+  if (similar.length) return { match: "similar", rows: similar.slice(0, Math.min(q.limit ?? 500, 20)).map((x) => ({ ...x.r, sure: false })), closest: [] };
   // Best partial matches first, then newest. Offer people-payments only when the person mentioned a payment app
   // or something partly matched: a missing "Starbucks" must not come back as Zelle lines.
   const partial = scored.some((x) => x.score > 0);
@@ -261,6 +290,7 @@ export async function findTransactions(scope: UserScope, q: TransactionQuery = {
   const closest = scored
     .map((x, i) => ({ ...x, i }))
     .sort((a, b) => b.score - a.score || a.i - b.i)
+    .filter((x) => !partial || x.score > 0)
     .slice(0, limit)
     .map((x) => x.r);
   return { match: "none", rows: [], closest };

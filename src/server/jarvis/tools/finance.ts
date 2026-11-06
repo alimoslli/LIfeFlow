@@ -212,7 +212,7 @@ export const financeTools = [
   defineTool({
     name: "query_transactions",
     description:
-      "Look up individual transactions. Amounts in dollars: negative = money out. Also use it for 'when did I last pay, Zelle, Venmo or Cash App someone' (search the person's name, plus the app if they said one, e.g. search \"Zelle Omar Mousselli\"; newest first, so the first row is the last time). search is forgiving: every word must appear somewhere in the bank line, merchant or notes, in any order, truncated names and payment-app words are fine, and you do not need to add 'Zelle' or 'to'. If nothing matches, the result has matchType 'none' and closestPayments (recent person-to-person payments): say plainly what you didn't find, and if closestPayments has rows ask whether one is who they meant. matchType 'similar' means the spelling differs: confirm with the user.",
+      "Look up individual transactions. Amounts in dollars: negative = money out. Also use it for 'when did I last pay, Zelle, Venmo or Cash App someone' (search the person's name, plus the app if they said one, e.g. search \"Zelle Omar Mousselli\"; newest first. Rows run both ways: for 'paid/sent/Zelled' the last time is the newest row with a negative amount, for 'received' the newest positive one; never assume the first row). search is forgiving: every word must appear somewhere in the bank line, merchant or notes, in any order, truncated names and payment-app words are fine, and you do not need to add 'Zelle' or 'to'. If nothing matches, the result has matchType 'none' and closestPayments (recent person-to-person payments): say plainly what you didn't find, and if closestPayments has rows ask whether one is who they meant. matchType 'similar' means the spelling differs: confirm with the user. A row with sure:false matched only through a shortened name, a bare initial or a typo: never state it as fact, ask the user to confirm it is who they meant.",
     schema: z.object({
       from: dateArg().optional(),
       to: dateArg().optional(),
@@ -246,11 +246,16 @@ export const financeTools = [
         account: t.accountName,
         pending: t.pending,
         source: t.source,
+        sure: t.sure,
       });
       return centsToDollarsDeep({
         count: found.rows.length,
         matchType: found.match,
         ...(found.match === "exact" && !found.rows.length && { note: "No transactions match those filters. Say so plainly, naming what you looked for." }),
+        ...(found.match === "exact" &&
+          found.rows.some((r) => !r.sure) && {
+            note: "Rows with sure:false matched only through a shortened name, a bare initial or a typo. Do not state them as fact: confirm with the user that it is who they meant.",
+          }),
         ...(found.match === "similar" && { note: "No exact match for that spelling. These look similar: confirm with the user that it is who they meant." }),
         ...(found.match === "none" &&
           a.search && {

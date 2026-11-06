@@ -11,7 +11,7 @@ tools: ["money_findings", "money_overview", "spending_summary", "compare_spendin
 2. Find the 1-2 categories driving the change (compare_spending).
 3. Suggest one or two specific fixes with dollar amounts.
 4. Change budgets only when asked (set_budget, in the money_edit tools).
-5. For "when did I last pay or Zelle someone", one query_transactions with the person's name (and the app, if they said one) as search answers it (newest first). If it comes back similar or none, say what you didn't find and ask if one of the closest payments is who they meant.
+5. For "when did I last pay or Zelle someone", one query_transactions with the person's name (and the app, if they said one) as search answers it (newest first; for "paid or sent" take the newest row with a negative amount, for "received" the newest positive one). If it comes back similar or none, say what you didn't find and ask if one of the closest payments is who they meant.
 
 ## Quality rules
 - Never estimate numbers the tools return.

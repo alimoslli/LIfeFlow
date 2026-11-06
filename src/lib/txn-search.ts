@@ -48,33 +48,55 @@ export type ParsedSearch = {
   terms: string[];
   /** Payment-app words the user mentioned (optional hints). */
   apps: string[];
+  /**
+   * True when the words can't carry the search (other alphabets, a lone letter): the caller must match the raw
+   * text as one phrase instead, and never drop the filter.
+   */
+  phrase: boolean;
 };
 
+/** Letters Unicode decomposition leaves alone. */
+const EXTRA_FOLD: Record<string, string> = { ł: "l", ø: "o", đ: "d", ð: "d", æ: "ae", œ: "oe", ß: "ss", ı: "i", þ: "th" };
+/** The same accent folding for SQL `translate()` (stored text is not folded in the database). */
+export const ACCENT_FROM = "áàâäãåāéèêëēíìîïīóòôöõōøúùûüūñçýÿšžłđ";
+export const ACCENT_TO = "aaaaaaaeeeeeiiiiiooooooouuuuuncyyszld";
+
 export function words(s: string | null | undefined): string[] {
-  return s ? normalizeText(s).split(" ").filter(Boolean) : [];
+  if (!s) return [];
+  const folded = s
+    .toLowerCase()
+    .replace(/['\u2019`]/g, "") // O'BRIEN is one name
+    .replace(/cash\s*app/g, "cashapp")
+    .replace(/[łøđðæœßıþ]/g, (c) => EXTRA_FOLD[c]);
+  return normalizeText(folded).split(" ").filter(Boolean);
 }
 
 export function parseSearch(search: string): ParsedSearch {
-  const all = words(
-    search
-      .replace(/cash\s*app/gi, "cashapp")
-      .replace(/\bzelled\b/gi, "zelle")
-      .replace(/\bvenmoed\b/gi, "venmo"),
-  );
+  const all = words(search.replace(/\bzelled\b/gi, "zelle").replace(/\bvenmoed\b/gi, "venmo"));
   const apps = all.filter((w) => APPS.has(w));
-  let terms = all.filter((w) => !APPS.has(w) && !FILLER.has(w) && w.length > 1);
-  // A search made only of app or filler words ("Zelle", "payments") still needs something to match.
-  if (!terms.length) terms = apps.length ? apps : all;
-  return { terms: [...new Set(terms)], apps };
+  const rest = all.filter((w) => !APPS.has(w) && !FILLER.has(w));
+  const terms = rest.filter((w) => w.length > 1);
+  // Another alphabet (the folding would drop it), or a lone letter next to nothing usable.
+  const nonLatin = /\p{L}/u.test(search.replace(/\p{Script=Latin}/gu, ""));
+  const lone = rest.length > terms.length && !terms.length;
+  if (nonLatin || lone) return { terms: [], apps, phrase: true };
+  // Only app or filler words ("Zelle", "payments") still need something to match.
+  if (!terms.length) return { terms: apps.length ? apps : all, apps, phrase: !all.length };
+  return { terms: [...new Set(terms)], apps, phrase: false };
 }
 
 export type SearchRow = { description?: string | null; merchantName?: string | null; notes?: string | null };
 
-/** Word match: equal, a truncated bank word of 5+ letters ("MOUSSEL" for "mousselli", never "JOHN" for "johnson"), or a short suffix ("starbuck" / "STARBUCKS"). Never "omar" in "OMARKET". */
+/** 2 = the same word (or its plural), 1 = a shortened bank word of 5+ letters ("MOUSSEL" for "mousselli"), 0 = no match. "samir" is not "samira"; "omar" is not "OMARKET". */
+export function wordKind(term: string, w: string): 0 | 1 | 2 {
+  if (w === term) return 2;
+  if (term.length >= 4 && w.length >= 4 && (w === term + "s" || w === term + "es" || term === w + "s" || term === w + "es")) return 2;
+  if (w.length >= 5 && term.length > w.length && term.startsWith(w)) return 1;
+  return 0;
+}
+
 export function wordMatches(term: string, w: string): boolean {
-  if (w === term) return true;
-  if (w.length >= 5 && term.length > w.length && term.startsWith(w)) return true;
-  return term.length >= 5 && w.startsWith(term) && w.length - term.length <= 2;
+  return wordKind(term, w) > 0;
 }
 
 export function editDistance(a: string, b: string): number {
@@ -113,32 +135,35 @@ export const FUZZY_THRESHOLD = 0.6;
 
 type Hit = { field: number; index: number };
 
-function matchTerm(term: string, fields: string[][], fuzzy: boolean): { score: number; hit?: Hit } {
+function matchTerm(term: string, fields: string[][], fuzzy: boolean): { score: number; strong: boolean; hit?: Hit } {
   let best = 0;
+  let strong = false;
   let hit: Hit | undefined;
   fields.forEach((ws, field) =>
     ws.forEach((w, index) => {
-      const s = wordMatches(term, w) ? 1 : fuzzy ? similarity(term, w) : 0;
+      const k = wordKind(term, w);
+      const s = k === 2 ? 1 : k === 1 ? 0.95 : fuzzy ? similarity(term, w) : 0;
       if (s > best) {
         best = s;
+        strong = k === 2;
         hit = { field, index };
       }
     }),
   );
-  return { score: best, hit };
+  return { score: best, strong, hit };
 }
 
 /**
- * Scores a row against the terms. Exact mode: `all` is true only when every term matches.
- * Fuzzy mode: `score` is the mean similarity and `all` says whether every term cleared the threshold.
- * A bare initial next to a matched word counts as the other name ("OMAR M" for "Omar Mousselli").
+ * Scores a row against the terms. `all` is true when every term matched (fuzzy mode allows sensible typos).
+ * `sure` is true only when every word matched as the same word: false when a match leans on a shortened bank word,
+ * a bare initial ("OMAR M" for "Omar Mousselli") or a typo, so the caller must confirm before stating it as fact.
  */
-export function scoreRow(terms: string[], row: SearchRow, fuzzy = false): { score: number; all: boolean } {
-  if (!terms.length) return { score: 1, all: true };
+export function scoreRow(terms: string[], row: SearchRow, fuzzy = false): { score: number; all: boolean; sure: boolean } {
+  if (!terms.length) return { score: 1, all: true, sure: true };
   const fields = [words(row.description), words(row.merchantName), words(row.notes)];
   const results = terms.map((t) => matchTerm(t, fields, fuzzy));
-  const pass = (s: number) => (fuzzy ? s > FUZZY_THRESHOLD : s >= 1);
-  const ok = results.map((r) => pass(r.score));
+  const ok = results.map((r) => r.score > FUZZY_THRESHOLD);
+  const viaInitial = new Set<number>();
   if (terms.length >= 2) {
     results.forEach((r, i) => {
       if (ok[i]) return;
@@ -148,20 +173,26 @@ export function scoreRow(terms: string[], row: SearchRow, fuzzy = false): { scor
         const ws = fields[h.field];
         if (ws[h.index - 1] === terms[i][0] || ws[h.index + 1] === terms[i][0]) {
           ok[i] = true;
+          viaInitial.add(i);
           r.score = Math.max(r.score, 0.9);
           return;
         }
       }
     });
   }
-  return { score: results.reduce((s, r) => s + r.score, 0) / results.length, all: ok.every(Boolean) };
+  const all = ok.every(Boolean);
+  return {
+    score: results.reduce((s, r) => s + r.score, 0) / results.length,
+    all,
+    sure: all && !fuzzy && results.every((r, i) => r.strong && !viaInitial.has(i)),
+  };
 }
 
 export function rowMatches(terms: string[], row: SearchRow): boolean {
   return scoreRow(terms, row, false).all;
 }
 
-/** Text any matching row must contain: the first 4 letters of a word (the whole word when shorter). */
+/** Text any matching row must contain: the first 4 letters of a word (the whole word when shorter). Compared accent-folded in SQL. */
 export function prefilterNeedles(terms: string[]): string[] {
   return [...new Set(terms.map((t) => t.slice(0, 4)))];
 }

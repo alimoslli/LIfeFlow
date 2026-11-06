@@ -4,6 +4,7 @@ import { makeToolContext } from "@/server/jarvis/agent";
 import { executeToolCall } from "@/server/jarvis/executor";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { createTransaction, findTransactions, queryTransactions, updateTransaction } from "@/server/services/finance/transactions";
+import { spendingSummary } from "@/server/services/finance/insights";
 import { makeUser, TZ } from "../helpers";
 
 afterAll(closeDb);
@@ -12,14 +13,14 @@ function daysAgo(n: number) {
   return new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
 }
 
-async function bank(lines: { daysAgo: number; description: string; cents: number; merchant?: string | null }[]) {
+async function bank(lines: { daysAgo: number; description: string; cents: number; merchant?: string | null; notes?: string }[]) {
   const u = await makeUser("Search Tester");
   await u.run(async (s) => {
     const acct = await createManualAccount(s, { name: "Checking", type: "depository", currentBalanceCents: 100000 });
     for (const l of lines) {
       const t = await createTransaction(s, { accountId: acct.id, date: daysAgo(l.daysAgo), description: l.description, amountCents: -l.cents });
       // The vendor tidy writes the clean name afterwards.
-      if (l.merchant) await updateTransaction(s, t.id, { merchantName: l.merchant });
+      if (l.merchant || l.notes) await updateTransaction(s, t.id, { ...(l.merchant && { merchantName: l.merchant }), ...(l.notes && { notes: l.notes }) });
     }
   });
   return u;
@@ -122,5 +123,105 @@ describe("forgiving transaction search", () => {
     expect(r.error).toMatch(/Money is locked/);
     expect(r.error).toMatch(/open the Money tab and unlock/);
     expect(JSON.stringify(r)).not.toMatch(/matchType|closestPayments|"count"/);
+  });
+});
+
+type ToolData = {
+  matchType: string;
+  count: number;
+  note?: string;
+  closestPayments?: { description: string }[];
+  transactions: { description: string; sure: boolean }[];
+};
+const tool = async (u: Awaited<ReturnType<typeof bank>>, args: object) =>
+  ((await executeToolCall("query_transactions", JSON.stringify(args), makeToolContext(session(u), crypto.randomUUID()), "p")) as { result: { data: ToolData } })
+    .result.data;
+
+describe("review fixes", () => {
+  it("H1: a search with no usable word never turns into 'everything'", async () => {
+    const u = await bank([
+      { daysAgo: 3, description: "ZELLE TO DANA REYES 77120", cents: 1800 },
+      { daysAgo: 2, description: "KROGER 331", cents: 6100 },
+    ]);
+    for (const q of ["Омар", "محمد", "Zelle 李明", "Zelle J"]) {
+      const d = await tool(u, { search: q });
+      expect(d.count, q).toBe(0);
+      expect(d.matchType, q).toBe("none");
+    }
+    const hit = await bank([{ daysAgo: 3, description: "ZELLE TO Омар К 1", cents: 500 }]);
+    expect((await tool(hit, { search: "Омар" })).count).toBe(1);
+    expect((await tool(u, { search: "Zelle" })).count).toBe(1);
+  });
+
+  it("H2/M1: sibling names and initials are never stated as sure", async () => {
+    const u = await bank([
+      { daysAgo: 3, description: "ZELLE TO SAMIRA HADDAD 1234", cents: 1800 },
+      { daysAgo: 5, description: "ZELLE TO JOHN M 4412", cents: 2500 },
+      { daysAgo: 6, description: "ZELLE TO OMAR O'BRIEN", cents: 700 },
+    ]);
+    const samir = await tool(u, { search: "Zelle Samir Haddad" });
+    expect(samir.transactions.every((t) => !t.sure)).toBe(true);
+    expect(samir.matchType).toBe("similar");
+    const john = await tool(u, { search: "John Mousselli" });
+    expect(john.transactions.map((t) => [t.description, t.sure])).toEqual([["ZELLE TO JOHN M 4412", false]]);
+    expect(john.matchType).toBe("similar");
+    expect((await tool(u, { search: "Omar Ozturk" })).count).toBe(0);
+    const owner = await bank([
+      { daysAgo: 10, description: "ZELLE TO MOUSSELLI OMAR 1", cents: 1500 },
+      { daysAgo: 20, description: "ZELLE TO OMAR MOUSSEL", cents: 1000 },
+    ]);
+    const o = await tool(owner, { search: "Omar Mousselli" });
+    expect(o.matchType).toBe("exact");
+    expect(o.transactions.map((t) => t.sure)).toEqual([true, false]);
+    expect(o.note).toMatch(/sure:false/);
+  });
+
+  it("M2: a bare Cash App search finds the row", async () => {
+    const u = await bank([{ daysAgo: 3, description: "CASH APP*DANA LEE*", cents: 1800 }]);
+    const d = await tool(u, { search: "Cash App" });
+    expect(d.matchType).toBe("exact");
+    expect(d.count).toBe(1);
+  });
+
+  it("M4: totals count the same people the lookup does", async () => {
+    const u = await bank([
+      { daysAgo: 3, description: "ZELLE TO MOUSSELLI OMAR 1", cents: 4000 },
+      { daysAgo: 5, description: "Zelle payment to Omar Mousselli", cents: 2500 },
+      { daysAgo: 6, description: "ZELLE TO OMAR MOUSSEL", cents: 900 }, // shortened: found by the lookup, not in totals
+    ]);
+    expect(await u.run((s) => queryTransactions(s, { search: "Omar Mousselli" }))).toHaveLength(3);
+    const sum = await u.run((s) => spendingSummary(s, { from: daysAgo(30), to: daysAgo(0), search: "Omar Mousselli" }));
+    expect(sum.netSpendingCents).toBe(6500);
+  });
+
+  it("L1: old real matches survive many newer rows that share the first letters", async () => {
+    const u = await bank([
+      { daysAgo: 400, description: "ZELLE TO DARIUS KOWALSKI", cents: 1000 },
+      ...Array.from({ length: 1100 }, (_, i) => ({ daysAgo: 1 + (i % 300), description: `DARTS CLUB ${i}`, cents: 100 })),
+    ]);
+    const rows = await u.run((s) => queryTransactions(s, { search: "Darius Kowalski" }));
+    expect(rows.map((r) => r.description)).toEqual(["ZELLE TO DARIUS KOWALSKI"]);
+  }, 60_000);
+
+  it("L2: accents in stored text and letters like ł are found", async () => {
+    const u = await bank([
+      { daysAgo: 3, description: "CAFE 12", cents: 1800, merchant: "Café Rio" },
+      { daysAgo: 4, description: "ZELLE 9", cents: 500, notes: "rent to José" },
+      { daysAgo: 5, description: "ZELLE TO ŁUKASZ NOWAK", cents: 500 },
+    ]);
+    expect((await tool(u, { search: "Cafe Rio" })).count).toBe(1);
+    expect((await tool(u, { search: "Jose" })).count).toBe(1);
+    expect((await tool(u, { search: "José" })).count).toBe(1);
+    expect((await tool(u, { search: "Lukasz Nowak" })).count).toBe(1);
+  });
+
+  it("L3: closest payments drop unrelated rows once something partly matched", async () => {
+    const u = await bank([
+      { daysAgo: 3, description: "ZELLE TO OMAR HADDAD 5", cents: 500 },
+      { daysAgo: 2, description: "PAYPAL *SPOTIFY", cents: 999 },
+    ]);
+    const r = await u.run((s) => findTransactions(s, { search: "Zelle Omar Mousselli" }));
+    expect(r.match).toBe("none");
+    expect(r.closest.map((x) => x.description)).toEqual(["ZELLE TO OMAR HADDAD 5"]);
   });
 });
