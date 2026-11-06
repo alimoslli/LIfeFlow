@@ -230,3 +230,4 @@ The owner asked for their own room in the office, with themselves drawn as a cha
 - **Real data only.** You are the one looking, so you're at your desk. Next to you is a small stack of cards for the approvals waiting, using the real count. There's no stack when nothing is waiting.
 - **Tapping yourself** opens your Founder Office: the Approvals inbox at the top, then your existing admin (Overview, Users, Feedback, Growth, Errors, Health, Activity), unchanged.
 - **The office has six rooms in total:** yours plus the five employees'. Each employee room holds both a desk and a bed or couch, so a person is either at the desk or resting in the same room. The lounge stays on the ground floor.
+- **Door tag (owner, 2026-11-06):** a small brass plate on the founder's door that reads "I'M THE CEO, BITCH". HQ is owner-only, so no app user ever sees it.
