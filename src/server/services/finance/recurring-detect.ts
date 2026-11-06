@@ -530,18 +530,22 @@ function mainSeriesOf(cycles: Cycle[], ctx: Context): Found[] {
   const splittable = last.amountCents < 0 && (!isEveryday(category) || KNOWN_SUBSCRIPTION.test(ctx.key));
   if (!splittable) return seriesIn(cycles, ctx);
   // Runs of one exact price, oldest first. A later price that starts one period after another stops continues it;
-  // a price seen only once does that only on time and right after a price that held at least twice.
+  // a price seen only once does that only on time and right after a price that held at least 3 times.
   const byPrice = [...Map.groupBy(cycles, (c) => c.t.amountCents).values()].sort((a, b) => a[0].t.date.localeCompare(b[0].t.date));
   const chains: Cycle[][] = [];
   for (const group of byPrice) {
     const start = group[0].t;
     const continues = chains.find((ch) => {
       const end = ch[ch.length - 1].t;
-      if (end.date >= start.date || !plausibleChange(end.amountCents, start.amountCents)) return false;
+      // A service's new price among a merchant's other charges: within half again or a third less (a doubling is another purchase).
+      const ratio = start.amountCents / end.amountCents;
+      if (end.date >= start.date || ratio > 1.5 || ratio < 2 / 3) return false;
       const runs = runsOf(ch);
-      if (group.length < 2 && runs[runs.length - 1].length < 2) return false;
+      if (group.length < 2 && runs[runs.length - 1].length < 3) return false;
       const p = PERIODS.find((x) => Math.abs(median(ch.slice(1).map((c, i) => daysBetween(ch[i].t.date, c.t.date))) - x.days) <= x.tolerance);
-      return !!p && Math.abs(daysBetween(end.date, start.date) - p.days) <= p.tolerance * (group.length >= 2 ? 1.5 : 1);
+      // Only a price on a subscription's schedule (monthly or longer) has a next price; two purchases two weeks apart don't.
+      if (!p || p.freq === "weekly" || p.freq === "biweekly") return false;
+      return Math.abs(daysBetween(end.date, start.date) - p.days) <= p.tolerance * (group.length >= 2 ? 1.5 : 1);
     });
     if (continues) continues.push(...group);
     else if (group.length >= 2) chains.push([...group]);
@@ -642,6 +646,8 @@ export function detectRecurring(txns: DetectTxn[], opts: { today?: string } = {}
     if (t.kind === "adjustment" || (t.pending && hasPostedCopy(t))) continue;
     if (t.kind === "transfer" && !(t.amountCents < 0 && paysSomeoneElse(t))) continue;
     if (t.amountCents < 0 && (isBankFee(t) || t.categoryName === "Fees & Interest")) continue;
+    // Money from people through an app (family by Zelle, friends paying back by Venmo) is never a bill, and never predicted as pay.
+    if (t.amountCents > 0 && PAYMENT_APP.test(lineOf(t))) continue;
     const key = merchantKey(t);
     if (!key) continue;
     const k = `${key}|${t.amountCents < 0 ? "out" : "in"}`;

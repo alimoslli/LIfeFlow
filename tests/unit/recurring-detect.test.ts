@@ -340,3 +340,45 @@ describe("only series still billing, and the charges that make them (review 2, 5
     expect(detectRecurring(visits)).toEqual([]);
   });
 });
+
+describe("held-out people (review follow-up)", () => {
+  it("never offers money from family by Zelle as recurring income", () => {
+    const family = months("2026-07-08", 4).map((d) =>
+      tx(d, 34_897, null, "ZELLE FROM PARENT A4KQ CONF# 8XQ2", { kind: "income", categoryName: "Side Income" }),
+    );
+    expect(detectRecurring(family)).toEqual([]);
+  });
+
+  it("doesn't let two same-price purchases two weeks apart swallow iCloud as a 'price change'", () => {
+    const apple = (date: string, cents: number, pending = false) => tx(date, -cents, "Apple", "APPLE.COM/BILL", { pending });
+    const r = detectRecurring([
+      apple("2026-08-10", 357),
+      apple("2026-08-18", 832),
+      apple("2026-08-24", 604),
+      apple("2026-08-24", 357),
+      apple("2026-09-08", 299),
+      apple("2026-09-25", 739),
+      apple("2026-10-06", 299),
+      apple("2026-10-26", 880),
+      apple("2026-11-02", 921),
+      apple("2026-11-05", 299, true),
+    ]);
+    expect(r.map((c) => [c.latestAmountCents, c.charges.map((x) => x.date)])).toEqual([[-299, ["2026-09-08", "2026-10-06", "2026-11-05"]]]);
+  });
+
+  it("doesn't call two Amazon orders and a dearer third a subscription with a price change", () => {
+    const orders = every("2026-06-02", 4, 40).map((d, i) => tx(d, -(1_000 + ((i * 3_571) % 7_000)), "Amazon", "AMZN Mktp US"));
+    const r = detectRecurring(
+      [
+        ...orders,
+        tx("2026-08-26", -560, "Amazon", "AMZN Mktp US"),
+        tx("2026-09-28", -560, "Amazon", "AMZN Mktp US"),
+        tx("2026-10-30", -677, "Amazon", "AMZN Mktp US"),
+      ],
+      {
+        today: "2026-11-05",
+      },
+    );
+    expect(r).toEqual([]);
+  });
+});
