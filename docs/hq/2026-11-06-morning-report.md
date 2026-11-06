@@ -13,7 +13,7 @@ Branch `claude/sharp-lovelace-8fr6z5`. Nothing is live and nothing is on main.
   - **Settings:** chats, HQ keys, the usage plan and "Import the starting list".
   - **Founder Office:** your admin, unchanged.
 - **Real data only.** The starting list is the handover's open work (6 missions) and your 6 waiting decisions. Each employee's state comes from records. With no data, they are asleep or offline, never "working".
-- **Your character:** the cool CEO, redrawn from your second photo. Dark curls with a fringe above thick dark brows, blue-grey eyes, sunglasses pushed up on the curls, a half-smile, an open charcoal blazer over a navy polo, and a tall leather chair. You're always at your desk with a card stack showing what waits for your yes.
+- **Your character:** the cool CEO, redrawn from your second photo. Dark curls with a fringe above thick dark brows, blue-grey eyes, your own browline glasses, a half-smile, an open charcoal blazer over a navy polo, and a tall leather chair. You're always at your desk with a card stack showing what waits for your yes.
 - **No AI to open it.** Animations are CSS. The chats report in through a check-in after each turn, which never sends message text.
 
 ## Checks

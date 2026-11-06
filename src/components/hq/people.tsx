@@ -77,6 +77,10 @@ function Hair({ who, sleeping }: { who: Who; sleeping: boolean }) {
             [2, -16.5, 4.8],
             [9, -15.5, 4.6],
             [15, -12.5, 3.8],
+            [-22.5, -7, 4.6],
+            [22.5, -7, 4.6],
+            [-23.5, -1, 3.6],
+            [23.5, -1, 3.6],
           ].map(([x, y, r], i) => (
             <circle key={i} cx={x} cy={y} r={r} />
           ))}
@@ -158,15 +162,21 @@ function Accessories({ who }: { who: Who }) {
         </g>
       );
     case "founder":
-      // The cool-CEO touch: black sunglasses pushed up on the curls (eyes stay visible).
+      // The owner's own glasses: browline frames (thick matte-black top bar, thin metal rims below, silver bridge).
       return (
-        <g transform="rotate(-6)">
-          <rect x="-16" y="-24" width="13.5" height="6.4" rx="2.2" fill={v("shades")} />
-          <rect x="2.5" y="-24" width="13.5" height="6.4" rx="2.2" fill={v("shades")} />
-          <path d="M-2.5-21.6Q0-23 2.5-21.6" stroke={v("shades")} strokeWidth="1.6" fill="none" strokeLinecap="round" />
-          <path d="M-14-22.4h5M4.5-22.4h5" stroke="#fff" strokeWidth=".9" strokeLinecap="round" opacity=".35" />
-          <circle cx="-16" cy="-22.6" r="1" fill="#d7dbe0" />
-          <circle cx="16" cy="-22.6" r="1" fill="#d7dbe0" />
+        <g>
+          {[-8.6, 8.6].map((x) => (
+            <g key={x}>
+              <rect x={x - 6.9} y="-8.4" width="13.8" height="11.2" rx="4.2" fill="#fff" fillOpacity=".14" stroke={v("rim")} strokeWidth=".8" />
+              <path
+                d={`M${x - 7.4} -4.6V-6.4Q${x - 7.4} -9 ${x - 4.6} -9H${x + 4.6}Q${x + 7.4} -9 ${x + 7.4} -6.4V-4.6Q${x} -6.8 ${x - 7.4} -4.6Z`}
+                fill={v("shades")}
+              />
+              <path d={`M${x - 4.4} 1.4l2.6-3.4`} stroke="#fff" strokeWidth=".9" strokeLinecap="round" opacity=".45" />
+            </g>
+          ))}
+          <path d="M-1.7-6.2Q0-7.6 1.7-6.2" stroke={v("rim")} strokeWidth="1.4" fill="none" strokeLinecap="round" />
+          <path d="M-16-7L-21.5-5.4M16-7L21.5-5.4" stroke={v("shades")} strokeWidth="1.6" strokeLinecap="round" />
         </g>
       );
     default:
