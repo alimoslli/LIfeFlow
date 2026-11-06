@@ -355,19 +355,29 @@ function evaluate(cycles: Cycle[], { key, strict }: Context): Found | null {
   const amounts = ts.map((t) => t.amountCents);
   const med = median(amounts);
   const near = (a: number, pct: number) => Math.abs(a - med) <= Math.max(Math.abs(med) * pct, 100);
-  const billLike = !!category && BILL_CATEGORY.test(category);
-  const everyday = isEveryday(category);
   const transfer = ts.some((t) => t.kind === "transfer");
+  // Bills keep their schedule even when the amount moves, and so does a share of one paid to a person (utilities by Venmo).
+  const billLike = (!!category && BILL_CATEGORY.test(category)) || transfer;
+  const everyday = isEveryday(category);
   const exact = amounts.every((a) => a === amounts[0]);
   const known = KNOWN_SUBSCRIPTION.test(name) || KNOWN_SUBSCRIPTION.test(key);
   // A loan payment or a 529 contribution is planned; two equal ones a month apart are enough, like a known subscription.
   const scheduled = transfer && ts.some((t) => LENDER.test(lineOf(t)) || COLLEGE_PLAN.test(lineOf(t)));
-  const minCount = period.freq === "yearly" || (!strict && (known || scheduled) && exact && period.freq === "monthly") ? 2 : 3;
+  // A price picked out of other purchases (strict) needs more: 3 monthly or yearly charges, 4 quarterly ones.
+  const minCount = strict
+    ? period.freq === "quarterly"
+      ? 4
+      : 3
+    : period.freq === "yearly" || ((known || scheduled) && exact && period.freq === "monthly")
+      ? 2
+      : 3;
   if (ts.length < minCount) return null;
   const regular = gaps.filter((g) => onSchedule(g, period)).length / gaps.length;
   if (everyday && !(exact && regular === 1)) return null;
   // A price picked out of other purchases has to bill like a subscription: monthly or longer, every time on schedule.
-  if (strict && (regular < 1 || period.freq === "weekly" || period.freq === "biweekly")) return null;
+  // So does money sent to a person through an app (rent or a share by Zelle or Venmo), or friends' payments look like a bill.
+  const toPerson = transfer && ts.every((t) => PAYMENT_APP.test(lineOf(t)));
+  if ((strict || toPerson) && (regular < 1 || period.freq === "weekly" || period.freq === "biweekly")) return null;
   // A price that holds between a few clean changes (Netflix at $15.49 twice, then $17.99) is a steady amount, not a wobbling one.
   const runs = runsOf(cycles);
   const runStart = (i: number) => daysBetween(runs[i - 1][runs[i - 1].length - 1].t.date, runs[i][0].t.date);
@@ -378,16 +388,19 @@ function evaluate(cycles: Cycle[], { key, strict }: Context): Found | null {
     new Set(runs.map((r) => r[0].t.amountCents)).size === runs.length &&
     runs.some((r) => r.length >= 2) &&
     runs.slice(1).every((r, i) => plausibleChange(runs[i][0].t.amountCents, r[0].t.amountCents) && onSchedule(runStart(i + 1), period));
+  // Something other than a bill whose amount moves (a class paid per visit) needs 4 charges before it's a series.
+  if (!billLike && !steps && ts.length < 4 && !amounts.every((a) => near(a, 0.05))) return null;
   // Bills keep their schedule even when the amount moves; everything else has to hold its price (±15%).
   const amountStable = steps ? 1 : amounts.filter((a) => near(a, billLike ? 0.6 : 0.15)).length / amounts.length;
   const evidence = minCount === 2 && ts.length === 2 ? 0.8 : Math.min(1, ts.length / 4);
   const confidence = Math.round(regular * amountStable * evidence * 100) / 100;
   if (confidence < 0.5) return null;
   const variable = !amounts.every((a) => near(a, 0.05));
-  // The latest change of price, once the old price held at least twice and the new one came on schedule.
+  // The latest change of price, once the old price held at least twice and the new one came on schedule. For a bill
+  // (its amount may move) only when it had one fixed price until then (internet at $55, then $57).
   const [prev, cur] = runs.length >= 2 ? [runs[runs.length - 2], runs[runs.length - 1]] : [];
   const priceChange =
-    !billLike &&
+    (!billLike || runs.length === 2) &&
     prev &&
     cur &&
     prev.length >= 2 &&
@@ -445,9 +458,28 @@ function byDay(cycles: Cycle[], ctx: Context): Found[] {
   return monthly.length >= 2 && covered >= cycles.length - 1 ? monthly : [];
 }
 
+/**
+ * A strict series with its strays left out: a same-price charge off the schedule (an App Store purchase
+ * at iCloud's $2.99) shouldn't break iCloud. At most 1 stray in 6 charges, and never a gap left open.
+ */
+function withoutStrays(cycles: Cycle[]): Cycle[] | null {
+  const p = PERIODS.find((x) => Math.abs(median(cycles.slice(1).map((c, i) => daysBetween(cycles[i].t.date, c.t.date))) - x.days) <= x.tolerance * 2);
+  if (!p) return null;
+  let best: Cycle[] | null = null;
+  for (const start of [0, 1]) {
+    const kept = [cycles[start]];
+    for (const c of cycles.slice(start + 1)) if (daysBetween(kept[kept.length - 1].t.date, c.t.date) >= p.days - p.tolerance * 1.5) kept.push(c);
+    const strays = cycles.length - kept.length;
+    const onTime = kept.every((c, i) => i === 0 || onSchedule(daysBetween(kept[i - 1].t.date, c.t.date), p));
+    if (onTime && strays >= 1 && strays <= Math.max(1, Math.floor(kept.length / 6)) && (!best || kept.length > best.length)) best = kept;
+  }
+  return best;
+}
+
 /** The series in a set of charges: one, or (money going out) one per day of the month when that fits better. */
 function seriesIn(cycles: Cycle[], ctx: Context): Found[] {
-  const f = evaluate(cycles, ctx);
+  const kept = ctx.strict && !evaluate(cycles, ctx) ? withoutStrays(cycles) : null;
+  const f = evaluate(kept ?? cycles, ctx);
   if (f && f.frequency !== "weekly" && f.frequency !== "biweekly") return [f];
   // A real weekly or biweekly charge keeps its interval to the day or so.
   const p = PERIODS.find((x) => x.freq === f?.frequency);
@@ -487,6 +519,36 @@ function seriesOf(cycles: Cycle[], ctx: Context): Found[] {
     else if (group.length >= 2) chains.push([...group]);
   }
   const own = chains.flatMap((ch) => seriesIn(ch, { ...ctx, strict: ch.length < cycles.length }));
+  // A share of a bill paid to a person through an app moves each month (utilities by Venmo) among other payments
+  // to friends: charges of a similar size (within 1.5x of each other, $15 or more) that keep their own schedule.
+  if (cycles.every((c) => c.t.kind === "transfer" && PAYMENT_APP.test(lineOf(c.t)))) {
+    const used = new Set(own.flatMap((f) => f.cycles));
+    // Smallest to largest payment (amounts going out are negative).
+    const rest = cycles.filter((c) => !used.has(c)).sort((a, b) => b.t.amountCents - a.t.amountCents);
+    const bands: Cycle[][] = [];
+    for (const c of rest) {
+      const band = bands[bands.length - 1];
+      if (band && c.t.amountCents / band[band.length - 1].t.amountCents <= 1.5) band.push(c);
+      else bands.push([c]);
+    }
+    // A band that keeps no schedule may be two sizes run together (friends' $25 dinners next to a $38 share):
+    // split it where the sizes are furthest apart and try each part.
+    const tryBand = (band: Cycle[], depth: number): Found[] => {
+      if (band.length < 3) return [];
+      const found =
+        band.length < cycles.length && -median(band.map((c) => c.t.amountCents)) >= 1_500
+          ? seriesIn(
+              [...band].sort((a, b) => a.t.date.localeCompare(b.t.date)),
+              { ...ctx, strict: true },
+            )
+          : [];
+      if (found.length || depth >= 3 || band.length < 6) return found;
+      let at = 1;
+      for (let i = 2; i < band.length; i++) if (band[i].t.amountCents / band[i - 1].t.amountCents > band[at].t.amountCents / band[at - 1].t.amountCents) at = i;
+      return [...tryBand(band.slice(0, at), depth + 1), ...tryBand(band.slice(at), depth + 1)];
+    };
+    for (const band of bands) own.push(...tryBand(band, 0));
+  }
   // A price that stopped before the newest one started is an old price, not a second service.
   const newestStart = own.reduce((s, f) => (f.charges[0].date > s ? f.charges[0].date : s), "");
   const current = own.filter((f) => f.lastDate >= newestStart);
@@ -500,8 +562,10 @@ function seriesOf(cycles: Cycle[], ctx: Context): Found[] {
 
 /**
  * Finds series of charges (or deposits) from the same merchant at a regular interval.
- * - Pending copies are ignored; a second charge of the same amount within 2 days is one charge billed
- *   twice (reported in `duplicates`), unless the merchant often bills that way.
+ * - A pending charge counts only when no posted copy sits beside it; a second charge of the same amount
+ *   within 2 days is one charge billed twice (reported in `duplicates`), unless the merchant often bills that way.
+ * - A series that missed its last expected charge has stopped and isn't returned (`today`, by default the
+ *   newest transaction's date).
  * - 3+ charges (2 for yearly) at a steady interval and amount; bills (rent, utilities, phone, insurance)
  *   may vary in amount, and a price change on schedule keeps the series.
  * - Known subscription services, loan payments and planned contributions count after 2 identical charges
@@ -512,11 +576,24 @@ function seriesOf(cycles: Cycle[], ctx: Context): Found[] {
  * - Everyday spending that merely repeats (coffee, groceries, rides) never qualifies: its amounts and
  *   intervals wander, and food, drink and fuel need a fixed price on a steady schedule.
  */
-export function detectRecurring(txns: DetectTxn[]): RecurringCandidate[] {
+export function detectRecurring(txns: DetectTxn[], opts: { today?: string } = {}): RecurringCandidate[] {
+  const today = opts.today ?? txns.reduce((m, t) => (t.date > m ? t.date : m), "");
   const paysSomeoneElse = makePaysSomeoneElse(txns);
+  // A pending charge counts when no posted copy of it sits within a week (this month's charge, not yet posted).
+  const posted = Map.groupBy(
+    txns.filter((t) => !t.pending),
+    (t) => merchantKey(t),
+  );
+  const hasPostedCopy = (t: DetectTxn) =>
+    (posted.get(merchantKey(t)) ?? []).some(
+      (u) =>
+        Math.sign(u.amountCents) === Math.sign(t.amountCents) &&
+        Math.abs(u.amountCents - t.amountCents) <= Math.max(Math.abs(t.amountCents) * 0.2, 100) &&
+        Math.abs(daysBetween(u.date, t.date)) <= 7,
+    );
   const groups = new Map<string, DetectTxn[]>();
   for (const t of txns) {
-    if (t.pending || t.kind === "adjustment") continue;
+    if (t.kind === "adjustment" || (t.pending && hasPostedCopy(t))) continue;
     if (t.kind === "transfer" && !(t.amountCents < 0 && paysSomeoneElse(t))) continue;
     if (t.amountCents < 0 && (isBankFee(t) || t.categoryName === "Fees & Interest")) continue;
     const key = merchantKey(t);
@@ -531,7 +608,10 @@ export function detectRecurring(txns: DetectTxn[]): RecurringCandidate[] {
     if (list.length < 2) continue;
     const key = k.split("|")[0];
     const sorted = [...list].sort((a, b) => a.date.localeCompare(b.date));
-    const found = seriesOf(cyclesOf(sorted), { key }).sort((a, b) => a.charges[0].date.localeCompare(b.charges[0].date));
+    // A series that missed its last expected charge (by a week, or a quarter of its period) has stopped.
+    const found = seriesOf(cyclesOf(sorted), { key })
+      .filter((f) => daysBetween(f.nextExpectedDate, today) <= Math.max(7, PERIODS.find((p) => p.freq === f.frequency)!.days * 0.25))
+      .sort((a, b) => a.charges[0].date.localeCompare(b.charges[0].date));
     found.forEach(({ cycles: _cycles, ...series }, i) => out.push({ ...series, seriesKey: i === 0 ? key : `${key}~${i + 1}` }));
   }
   return out.sort((a, b) => b.confidence - a.confidence);
