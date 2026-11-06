@@ -1,0 +1,178 @@
+{
+  "id": "s0019-student-mandatory-night-before-final",
+  "title": "A mandatory extra night shift lands on her one night of sleep, ending 2.5 hours before her 9 AM final",
+  "persona": "p1027-cc-overnight-warehouse-four-nights",
+  "now": "2026-12-06T14:45",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 1919,
+  "changes": [
+    {
+      "id": "x-peak-email",
+      "type": "email",
+      "at": "2026-11-16T09:30",
+      "sender_type": "work_other",
+      "sender_name": "Valley Fulfillment HR",
+      "from_address": "hr-noreply@example.com",
+      "subject": "Peak season: mandatory extra time may be scheduled Nov 29 to Dec 24"
+    },
+    {
+      "id": "x-met-sunday",
+      "type": "shift_add",
+      "job": "job-warehouse",
+      "start": "2026-12-13T22:00",
+      "end": "2026-12-14T06:30",
+      "break_minutes": 30,
+      "posted_at": "2026-12-06T12:00",
+      "notes": "Mandatory extra time (peak season)"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-met",
+      "check": "rest",
+      "what": "Her Dec 13 to 19 schedule posted at noon with a mandatory extra night: Sunday Dec 13, 10 PM to 6:30 AM. Sunday is the one night she never works and the night she sleeps before Monday, and her BIO 105 final is Monday Dec 14 at 9 AM, two and a half hours after the shift ends. After Saturday's night shift she sleeps about six hours on Sunday afternoon, so she would sit the final with almost no sleep in more than a day.",
+      "by_when": "2026-12-06T18:00",
+      "facts": [
+        "x-met-sunday",
+        "post-warehouse-2026-12-13",
+        "em-2026-12-06-04",
+        "exam-bio-105-final-exam",
+        "m-availability",
+        "m-day-sleep",
+        "shift-warehouse-2026-12-12",
+        "sleep-2026-12-06",
+        "x-peak-email"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-met",
+      "action": "draft for them",
+      "needs_user": true,
+      "send_at": "2026-12-06T14:50",
+      "what": "Now, while she is up and before her Sunday study, one push: \"Your new schedule adds a mandatory night Sunday Dec 13, 10 PM to 6:30 AM. Your BIO 105 final is at 9 the next morning: no sleep between.\" Two drafts she can send herself: to her shift manager, \"I have a final exam Monday Dec 14 at 9 AM. Can I be excused from the extra night on Sunday Dec 13, or work it Monday night Dec 14 instead?\", and, only if that is refused, a request to use 8 of her saved unpaid time off hours for that night. The line marks Sunday night as a clash until she says it is settled. Dev sends nothing.",
+      "why": "A week's notice is enough to move or drop a mandatory night; on Sunday afternoon Dec 13 it is too late. Monday night is the only swap with no exam the next morning (ENG 101 is Wednesday at 10, PSY 101 is online)."
+    },
+    {
+      "for": "n-met",
+      "action": "plan",
+      "needs_user": true,
+      "send_at": "2026-12-06T14:50",
+      "what": "Whatever the answer, her BIO 105 review sits in her usual times before the final: Monday and Tuesday afternoons after class this week, and Sunday Dec 13 after her day sleep, which stays as it is. Dev labels the blocks, with Undo.",
+      "why": "If the extra night stays, Sunday evening is gone, so the review cannot be left for the last day; her own afternoon times already fit it.",
+      "placements": [
+        {
+          "id": "pl-bio-1",
+          "activity": "study",
+          "label": "BIO 105 final review",
+          "start": "2026-12-07T15:05",
+          "end": "2026-12-07T17:05"
+        },
+        {
+          "id": "pl-bio-2",
+          "activity": "study",
+          "label": "BIO 105 final review",
+          "start": "2026-12-08T15:05",
+          "end": "2026-12-08T17:05"
+        },
+        {
+          "id": "pl-day-sleep",
+          "activity": "sleep",
+          "label": "Day sleep after Saturday's night shift (keep it)",
+          "start": "2026-12-13T07:15",
+          "end": "2026-12-13T14:15"
+        },
+        {
+          "id": "pl-bio-3",
+          "activity": "study",
+          "label": "BIO 105 last look",
+          "start": "2026-12-13T15:35",
+          "end": "2026-12-13T17:35"
+        }
+      ]
+    }
+  ],
+  "routine_fit": {
+    "placements": [
+      {
+        "placement": "pl-bio-1",
+        "routine": "study",
+        "window": "after-class",
+        "fits": true
+      },
+      {
+        "placement": "pl-bio-2",
+        "routine": "study",
+        "window": "after-class",
+        "fits": true,
+        "note": "After her Tuesday lab, her usual time."
+      },
+      {
+        "placement": "pl-day-sleep",
+        "routine": "sleep",
+        "window": "after-nights",
+        "fits": true,
+        "note": "Every plan keeps her usual day sleep."
+      },
+      {
+        "placement": "pl-bio-3",
+        "routine": "study",
+        "window": "sun-afternoon",
+        "fits": true,
+        "note": "Ends before Sunday dinner with her family."
+      }
+    ],
+    "tempting": [
+      {
+        "suggestion": "plan BIO review in the mornings after her night shifts",
+        "routine": "sleep",
+        "why_wrong": "she sleeps from about 7:15 to 2 after every night shift",
+        "facts": [
+          "m-day-sleep",
+          "sleep-2026-12-06"
+        ]
+      },
+      {
+        "suggestion": "put review on Sunday evening during dinner with her mom and brothers",
+        "routine": "family-dinner",
+        "why_wrong": "Sunday dinner together is their standing time",
+        "facts": [
+          "m-family"
+        ]
+      }
+    ]
+  },
+  "must_not": [
+    "suggest she stays up after the shift and goes straight to the exam, or sleeps after the exam instead",
+    "suggest caffeine, energy drinks or a night of review",
+    "suggest she skips the shift without telling anyone",
+    "suggest she skips or moves the final",
+    "suggest swapping the extra night to Tuesday Dec 15 (her ENG 101 final is Wednesday at 10 AM)",
+    "send anything to her manager or HR for her",
+    "plan BIO review in the mornings after her night shifts (she sleeps from about 7:15 to 2)",
+    "put review on Sunday evening during dinner with her mom and brothers",
+    "count the extra night's pay as money she has"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Fulfillment centers add mandatory extra nights in peak season and post them with the weekly schedule a week ahead; HR warned of it on Nov 16.",
+    "A worker can ask to be excused from a mandatory night or to move it for a final exam, or use saved unpaid time off hours; she told Dev she has about 20.",
+    "The $20.75 hourly rate includes the night differential, and pay is weekly.",
+    "Finals week has no regular classes; her finals are BIO 105 Monday at 9, ENG 101 Wednesday at 10 and PSY 101 online from Dec 14 to 17."
+  ],
+  "tags": [
+    "notification",
+    "catch",
+    "pair with s0020",
+    "night shift",
+    "mandatory overtime",
+    "peak season",
+    "final exam",
+    "rest",
+    "usual work days",
+    "canvas",
+    "student"
+  ]
+}

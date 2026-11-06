@@ -1,0 +1,119 @@
+{
+  "id": "s0017-student-aid-refund-after-rent-verification",
+  "title": "Her held aid refund is now on its way for Dec 9, but rent is due Dec 1",
+  "persona": "p1026-university-first-gen-roommates-aid-held",
+  "now": "2026-11-23T14:10",
+  "history_days": 90,
+  "future_days": 60,
+  "seed": 1717,
+  "money": {
+    "available_now_cents": 38800
+  },
+  "changes": [
+    {
+      "id": "x-verify-selected",
+      "type": "email",
+      "at": "2026-08-27T10:12",
+      "sender_type": "school_other",
+      "sender_name": "Office of Financial Aid",
+      "from_address": "finaid@example.com",
+      "subject": "Action required: your aid application was selected for verification"
+    },
+    {
+      "id": "x-docs-received",
+      "type": "email",
+      "at": "2026-10-28T15:40",
+      "sender_type": "school_other",
+      "sender_name": "Office of Financial Aid",
+      "from_address": "finaid@example.com",
+      "subject": "We received your verification documents"
+    },
+    {
+      "id": "x-refund-scheduled",
+      "type": "email",
+      "at": "2026-11-18T11:05",
+      "sender_type": "school_other",
+      "sender_name": "Office of Financial Aid",
+      "from_address": "finaid@example.com",
+      "subject": "Verification complete: your fall refund of $1,412.00 is scheduled for December 9"
+    },
+    {
+      "id": "x-refund-told",
+      "type": "memory",
+      "content": "Financial aid says my refund comes December 9",
+      "category": "temporary",
+      "via": "chat",
+      "told_at": "2026-11-18T20:15",
+      "expires_at": "2026-12-16T00:00"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-rent",
+      "check": "afford",
+      "what": "Rent is $640 on Tuesday Dec 1 and checking has $388.00 available, so she is $252 short before any groceries or gas (about $165 a week lately). Her $1,412 refund is on its way for Dec 9, eight days after rent, and her next paycheck lands Dec 4; neither is money she has yet. She has been living on summer savings since the refund was held in August.",
+      "by_when": "2026-11-24T12:00",
+      "facts": [
+        "acc-checking",
+        "rec-rent",
+        "tx-2026-11-01-rent",
+        "x-refund-scheduled",
+        "x-refund-told",
+        "m-aid-held",
+        "x-docs-received",
+        "tx-2026-11-20-pay-campus",
+        "tx-2026-11-06-pay-campus"
+      ]
+    }
+  ],
+  "best_fix": {
+    "action": "ask",
+    "needs_user": true,
+    "send_at": "2026-11-23T14:15",
+    "what": "Now, while she is home between class and her 6 PM shift, one push with the trace: \"Rent $640 on Dec 1 → $388 available → your refund ($1,412) is on its way for Dec 9, after rent.\" The refund shows on the line on Dec 9, dotted and labelled from the aid office's email, and is never added to Available now. Three taps: [Draft a short-term loan request] (an email to the aid office asking for a $500 short-term loan against the Dec 9 refund, quoting their Nov 18 email), [Draft a note to the leasing office] (asking to pay December's rent on Dec 9, with the aid office's email attached), [Remind me tomorrow at 11]. She sends anything that goes out. One line says why now: the aid office is closed Thursday and Friday for Thanksgiving. When the refund lands, Dev marks it and stops; if it is not in by Dec 10, Dev says so once.",
+    "why": "The gap is real and dated a week ahead, and the fixes that work (the aid office's own short-term loan, a written late-pay request) need a few business days that Thanksgiving shortens. Counting the refund would hide the problem until rent bounces."
+  },
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "suggest she asks her family for the money on Saturday's call",
+        "routine": "call-family",
+        "why_wrong": "her family does not send her money, and the Saturday call is her time with them, not a step in Dev's fix",
+        "facts": [
+          "m-02",
+          "m-first-gen"
+        ]
+      }
+    ]
+  },
+  "must_not": [
+    "count the Dec 9 refund or the Dec 4 paycheck as money she has",
+    "suggest a cash advance, an advance app or a payday loan",
+    "move money, or apply or send anything for her",
+    "contact the aid office, the leasing office or her roommates for her",
+    "suggest she asks her family for the money on Saturday's call (they don't send money, and the call is theirs)",
+    "say she should have planned for verification, or mention being first-generation as the reason",
+    "push during her 6 to 9 PM dining hall shift",
+    "repeat the same warning every day until Dec 1"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Refunds are released about a week after aid is applied; hers was held until verification finished on Nov 18.",
+    "The university's aid office offers a short-term loan of up to $500 against a pending refund, with no interest, repaid from the refund and reviewed in two to three business days.",
+    "The aid office is open Monday to Wednesday this week and closed Thursday and Friday for Thanksgiving.",
+    "Maple Court charges a $50 late fee after the 5th and takes written requests to pay late.",
+    "About $165 a week is the average of her last four weeks of everyday spending, bills not included."
+  ],
+  "tags": [
+    "money on its way",
+    "aid refund",
+    "verification",
+    "rent",
+    "afford",
+    "notification",
+    "first-generation",
+    "canvas",
+    "student"
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "id": "s0016-student-schedule-off-her-usual-days-grandma-wednesday",
+  "title": "The posted schedule leaves her usual Friday to Monday: a Wednesday shift on Grandma's appointment, the day before her midterm",
+  "persona": "p1022-cc-retail-fri-to-mon-grandma",
+  "now": "2026-11-08T17:40",
+  "history_days": 90,
+  "future_days": 60,
+  "seed": 26,
+  "changes": [
+    { "id": "x-wed-shift", "type": "shift_add", "job": "job-store", "start": "2026-11-18T10:00", "end": "2026-11-18T16:00", "break_minutes": 30, "posted_at": "2026-11-08T15:00" }
+  ],
+
+  "dev_must_notice": [
+    { "id": "n-schedule", "check": "collision",
+      "what": "The schedule for Nov 15 to 21 posted at 3 PM and it is not her usual week. Her availability is Friday to Monday and none of her shifts since August fell on a Tuesday, Wednesday or Thursday. This week has Wednesday Nov 18, 10 AM to 4 PM, and no Monday Nov 16. The Wednesday shift lands on Grandma's 9:15 appointment, and she is the only one who drives her.",
+      "by_when": "2026-11-08T19:00",
+      "facts": ["x-wed-shift", "post-store-2026-11-15", "em-2026-11-08-02", "m-availability", "ev-grandma", "m-grandma", "shift-store-2026-11-15", "shift-store-2026-11-20", "shift-store-2026-11-21"] },
+    { "id": "n-midterm", "check": "time",
+      "what": "The same shift takes her Wednesday library afternoon, the last study time before BIO 120 Midterm 2 on Thursday Nov 19 at 11 AM. If Wednesday stays a work day, her only usual study time left before the exam is Tuesday evening.",
+      "by_when": "2026-11-08T19:00",
+      "facts": ["x-wed-shift", "exam-bio-120-midterm-2", "m-study"] }
+  ],
+
+  "best_fix": [
+    { "for": "n-schedule", "action": "draft for them", "needs_user": true, "send_at": "2026-11-08T17:45",
+      "what": "One push now that she is home from her Sunday shift: \"Your Nov 15 to 21 schedule is in, and it isn't your usual week: Wednesday 10 to 4, on Grandma's appointment, and no Monday.\" It opens a draft she can send her manager herself: \"Hi, I'm on the schedule Wednesday the 18th, 10 to 4, but my availability is Friday to Monday. Wednesday mornings I drive my grandmother to her appointment. Could I swap it for Monday the 16th, 4 to 9, or another day in my availability?\" [Copy] [Edit]. The posted shifts go on the line as they are, with Wednesday marked as a clash. Nov 22 to 28 is not posted yet, so it keeps showing her usual Friday to Monday as expected work, never as pay.",
+      "why": "The swap costs her nothing (24.5 hours instead of 25) and is easiest to get tonight, a week before the shift. Dev knew her usual week before the schedule came out, so it can say exactly what is different instead of listing the whole schedule." },
+    { "for": "n-midterm", "action": "plan", "needs_user": true, "send_at": "2026-11-08T17:45",
+      "what": "In the same message, one line: \"If Wednesday stays, your Tuesday evening study is the BIO review.\" Dev labels her usual Tuesday evening block for BIO 120, with Undo. When she says how the swap went, Dev replans once: swap approved, nothing else changes; swap refused, it asks how Grandma gets to her appointment and keeps the review on Tuesday.",
+      "why": "Tuesday evening is already one of her study times, so the plan asks nothing new of her and survives either answer from the manager.",
+      "placements": [
+        { "id": "pl-bio-tue", "activity": "study", "label": "BIO 120 Midterm 2 review", "start": "2026-11-17T19:05", "end": "2026-11-17T21:15" }
+      ] }
+  ],
+
+  "routine_fit": {
+    "placements": [
+      { "placement": "pl-bio-tue", "routine": "study", "window": "tue-thu-evening", "fits": true, "note": "Her usual Tuesday evening, home after her 2:45 class; it only gets a label." }
+    ],
+    "tempting": [
+      { "suggestion": "suggest she moves Grandma's appointment", "routine": "grandma", "why_wrong": "the appointment is fixed every Wednesday morning and she is the only one who drives", "facts": ["m-grandma", "ev-grandma"] },
+      { "suggestion": "plan study on Monday Nov 16", "routine": "study", "why_wrong": "Monday is a work day in her availability, not a study day, and it is the day the swap asks for", "facts": ["m-availability", "m-study"] }
+    ]
+  },
+
+  "must_not": [
+    "send the swap request or contact her manager for her",
+    "suggest she moves Grandma's appointment (it is fixed, and she is the only one who drives)",
+    "plan study on Monday Nov 16 (a work day in her availability, and the day the swap asks for)",
+    "count the posted hours, or any expected pay, as money she has",
+    "treat the unposted week of Nov 22 as free (it stays her usual Friday to Monday, expected)",
+    "push while she is still at work (her shift ends at 5)",
+    "list the whole schedule back to her instead of what changed",
+    "send a second push about the same schedule"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "The store posts each week's schedule on Sunday at 3 PM, one week ahead, by email and in its scheduling app.",
+    "Retail managers often schedule outside a worker's availability in November, before the holidays, and a swap asked for the same evening is normal.",
+    "Her availability sheet at the store says Friday to Monday, as she told Dev.",
+    "Shifts of six hours or more carry a 30-minute unpaid break."
+  ],
+  "tags": ["usual work days", "schedule posted", "availability", "caregiver", "midterm", "notification", "routine fit", "first-generation", "blackboard", "student"]
+}

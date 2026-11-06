@@ -29,15 +29,15 @@ The owner asked for the agents to keep running: audit the app (phone and web), f
 
 **Light in the day, heavy at night (owner, 2026-11-05).** The owner's Claude usage has a 5-hour limit. During the day, agents do only light work: answering the owner, small fixes, short checks. Audits, builders, reviewers, situation batches, research, full test runs and e2e run in the night round, so the limit resets by morning.
 
-**The owner's hours (owner, 2026-11-05):** rounds start about 10 PM Pacific. The report and the yes or no list reach the owner by 11:45 PM. After 12 AM the work goes on without waiting for anyone: a question after midnight is "if you're up", and its item moves to the next day's list.
+**The owner's hours (owner, 2026-11-05, changed late that night):** the agents run while the owner sleeps. Rounds start at 3 AM Pacific, or at the first usage-limit reset after 3 AM if the limit is spent. The report and the yes or no list are waiting in the app by morning (a message plus a push). Nobody waits for approval during a round: approved work goes ahead, and real changes go on the list for the owner to answer the next day.
 
-**Every night (about 10 PM)**
+**Every night (3 AM Pacific)**
 1. **Audit everything.** A fresh-eyes auditor uses the app on phone and web and looks for every kind of error, not only design: does it work, does everything flow, is everything connected. It traces data end to end (a bank charge into bills, Today, the forecast and a notification; an assignment into Plan and a study block; a shift into pay; an assistant action into the records it claims and its Undo), and checks errors, wrong numbers, stale data and security slips. It drives the assistant through the e2e fake model server, never a paid API key. It checks the app against `CLAUDE.md`, the playbook, the vision and the research rules, and covers what changed since the last audit plus one area not yet covered. Findings go in `docs/audits/YYYY-MM-DD-*.md`, each classed `fix now`, `needs owner` or `waits for new surface`.
 2. **Fix.** Builders fix the top `fix now` findings straight away, one at a time, each with a test, in their own worktree.
 3. **Review.** A second reviewer who didn't write the fix checks each change for correctness, security and the rules. Then the product chat runs `npm run check`, plus the build and the relevant e2e tests for anything on screen, and pushes to the working branch.
 4. **Situations.** The situation writer adds a batch through the simulator, at least 70% students. `validate.py` must pass.
 
-**Twice a week (Monday and Thursday, about 10 PM)**
+**Twice a week (Monday and Thursday, 3 AM Pacific)**
 - **Research.** Competitors, what real people want (students first) and an audit of the last report. Every claim is checked against its source and corrected if wrong.
 - Things to avoid become rules the same day.
 - Proposals are tagged `fix now`, `build now`, `needs the new surface` or `owner decision`.

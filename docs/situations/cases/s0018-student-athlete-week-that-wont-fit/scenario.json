@@ -1,0 +1,221 @@
+{
+  "id": "s0018-student-athlete-week-that-wont-fit",
+  "title": "Two midterms, an essay, a group project and an away tournament in the week after Thanksgiving: the week won't fit",
+  "persona": "p1009-university-dorm-athlete-rec-desk",
+  "now": "2026-11-19T18:30",
+  "history_days": 90,
+  "future_days": 60,
+  "seed": 1818,
+  "changes": [
+    {
+      "id": "x-sun-off",
+      "type": "shift_cancel",
+      "job": "job-rec",
+      "date": "2026-12-06",
+      "reason": "Time off approved: team travel",
+      "at": "2026-11-12T10:00"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-week",
+      "check": "heavy stretch",
+      "what": "The week of Nov 30 won't fit. It holds SPAN 249 Midterm 2 (Wed Dec 2, 1 PM), MATH 135 Midterm 2 (Fri Dec 4, 11 AM), the ART 318 group project final (Thu Dec 3), ENG 108 Essay 3 and two lab reports (BIO 197, CHEM 350) due Fri Dec 4, practice every afternoon, a rec center shift Friday at 6 and the conference tournament Saturday and Sunday from a 7 AM bus. At her own pace (about 4 hours per midterm, two evenings per essay) the midterms and the essay alone need about 13.5 hours; her Sunday to Thursday study evenings that week hold at most 12.5, with Tuesday's cut by the ART group meeting. The evenings of Thanksgiving week are still open.",
+      "by_when": "2026-11-20T20:00",
+      "facts": [
+        "exam-span-249-midterm-2",
+        "exam-math-135-midterm-2",
+        "asg-art-318-group-project-final",
+        "asg-eng-108-essay-3",
+        "asg-bio-197-lab-report-7",
+        "asg-chem-350-lab-report-7",
+        "ev-group-art-13",
+        "ev-tournament-1",
+        "ev-tournament-2",
+        "shift-rec-2026-12-04",
+        "ev-practice",
+        "m-pace",
+        "m-01",
+        "m-sleep",
+        "m-tournament"
+      ]
+    }
+  ],
+  "best_fix": {
+    "action": "plan",
+    "needs_user": true,
+    "send_at": "2026-11-19T18:35",
+    "what": "Tonight, before her evening study, one message: \"The week after Thanksgiving won't fit: two midterms, Essay 3, the ART final and two lab reports, then the tournament. Starting the essay and the lab reports this Sunday fixes it.\" The plan sits on her line, dashed until she says yes: [Put these in] [Change]. Every block is in her usual Sunday to Thursday evenings and ends by 9:45, so Thanksgiving evening, Friday nights, Saturdays, her Saturday call home and her 11 PM bedtime stay as they are. Weekly homework and quizzes ride along in the same evenings, as they do every week. The Friday shift stays: it starts after the MATH exam and ends at 9. If a block is skipped, Dev moves it once to the next open evening and says so; on Sunday Nov 29 it checks back with how many blocks she kept.",
+    "why": "About 7 hours of the essay and lab reports have to move into Thanksgiving week for the week of Nov 30 to fit without taking sleep, practice or the tournament, and that has to start this Sunday, ten days ahead.",
+    "placements": [
+      {
+        "id": "pl-essay-1",
+        "activity": "study",
+        "label": "ENG 108 Essay 3, first evening",
+        "start": "2026-11-22T19:05",
+        "end": "2026-11-22T21:35"
+      },
+      {
+        "id": "pl-essay-2",
+        "activity": "study",
+        "label": "ENG 108 Essay 3, second evening",
+        "start": "2026-11-23T19:05",
+        "end": "2026-11-23T21:35"
+      },
+      {
+        "id": "pl-labs",
+        "activity": "study",
+        "label": "BIO 197 and CHEM 350 lab reports",
+        "start": "2026-11-24T19:05",
+        "end": "2026-11-24T21:15"
+      },
+      {
+        "id": "pl-span-1",
+        "activity": "study",
+        "label": "SPAN 249 Midterm 2 review, part 1",
+        "start": "2026-11-25T19:05",
+        "end": "2026-11-25T21:05"
+      },
+      {
+        "id": "pl-span-2",
+        "activity": "study",
+        "label": "SPAN 249 Midterm 2 review, part 2",
+        "start": "2026-11-29T19:05",
+        "end": "2026-11-29T21:05"
+      },
+      {
+        "id": "pl-math-1",
+        "activity": "study",
+        "label": "MATH 135 Midterm 2 review, part 1",
+        "start": "2026-11-30T19:05",
+        "end": "2026-11-30T21:05"
+      },
+      {
+        "id": "pl-art",
+        "activity": "study",
+        "label": "ART 318 group project final, her part",
+        "start": "2026-12-01T20:20",
+        "end": "2026-12-01T21:30"
+      },
+      {
+        "id": "pl-math-2",
+        "activity": "study",
+        "label": "MATH 135 Midterm 2 review, part 2",
+        "start": "2026-12-02T19:05",
+        "end": "2026-12-02T21:05"
+      },
+      {
+        "id": "pl-math-3",
+        "activity": "study",
+        "label": "MATH 135 last look, then submit the ART final",
+        "start": "2026-12-03T19:05",
+        "end": "2026-12-03T20:35"
+      }
+    ]
+  },
+  "routine_fit": {
+    "placements": [
+      {
+        "placement": "pl-essay-1",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-essay-2",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-labs",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-span-1",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-span-2",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-math-1",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-art",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-math-2",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-math-3",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      }
+    ],
+    "tempting": [
+      {
+        "suggestion": "use her free Thanksgiving break mornings and afternoons for study",
+        "routine": "study",
+        "why_wrong": "she studies in the evenings after dinner, never in the daytime",
+        "facts": [
+          "m-01"
+        ]
+      },
+      {
+        "suggestion": "plan study past 10:30 PM",
+        "routine": "sleep",
+        "why_wrong": "she needs 8 hours in season and is in bed by 11 on weeknights",
+        "facts": [
+          "m-sleep"
+        ]
+      }
+    ]
+  },
+  "must_not": [
+    "plan study past 10:30 PM, or suggest less sleep as the fix (she needs 8 hours in season and is in bed by 11)",
+    "use her free Thanksgiving break mornings and afternoons for study (she studies in the evenings)",
+    "put anything on Thanksgiving evening after the team dinner",
+    "suggest skipping practice, the tournament or her Saturday call home",
+    "plan anything for Friday night before the 7 AM bus",
+    "assume more hours per exam than her own pace",
+    "write, outline or check any part of Essay 3, the lab reports or the group project",
+    "wait until the week starts to say it"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Dev's student week check looks 14 days ahead and adds up the hidden work at this person's own pace, which she told Dev in September.",
+    "Practice continues over Thanksgiving break, and the team has its Thanksgiving dinner together.",
+    "The conference tournament is an overnight bus trip, back around 5 PM Sunday.",
+    "Moodle lists both lab reports and Essay 3 as due Friday Dec 4 at 11:59 PM."
+  ],
+  "tags": [
+    "student week check",
+    "heavy stretch",
+    "time",
+    "student athlete",
+    "dorm",
+    "moodle",
+    "evening studier",
+    "sleep protected",
+    "routine fit",
+    "student"
+  ]
+}

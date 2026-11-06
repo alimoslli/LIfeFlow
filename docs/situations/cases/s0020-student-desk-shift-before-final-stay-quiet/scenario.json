@@ -1,0 +1,66 @@
+{
+  "id": "s0020-student-desk-shift-before-final-stay-quiet",
+  "title": "Desk shifts the nights before two 8 AM finals look like a clash, but it is her normal week: stay quiet",
+  "persona": "p1032-university-international-library-desk",
+  "now": "2026-12-06T17:30",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 2020,
+  "changes": [],
+  "dev_must_notice": [],
+  "best_fix": {
+    "action": "none",
+    "needs_user": false,
+    "what": "Say nothing. Finals week shows on her line as it is: desk shifts Monday Dec 14 and Wednesday Dec 16 from 6 to 10 PM, BIO 240 Final Tuesday at 8 AM and PSY 231 Final Thursday at 8 AM. No push and no week-ahead warning.",
+    "why": "It looks like work the night before two finals, but it is the week she has lived all term: desk until 10 on Monday and Wednesday, then BIO 240 at 8 on Tuesday and Thursday mornings. She is home by 10:10 and in bed around midnight either way, about 7 hours before an 8 AM start, the same as every Tuesday and Thursday this term. She reads at the desk when it is quiet, her Sunday, Tuesday and Thursday study evenings stay as they are, and 12 hours a week is well under her 20-hour visa limit. There is nothing for her to do or decide."
+  },
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "plan study on Tuesday or Thursday morning before the 8 AM finals",
+        "routine": "study",
+        "why_wrong": "she studies in the evenings, and those mornings start at about 7:10 for the exam",
+        "facts": [
+          "m-01"
+        ]
+      },
+      {
+        "suggestion": "suggest dropping or swapping the Monday or Wednesday desk shift in finals week",
+        "routine": "sleep",
+        "why_wrong": "she goes to bed around midnight whether or not she works, so the shift takes no sleep, and she reads at the desk",
+        "facts": [
+          "m-bed",
+          "m-desk"
+        ]
+      }
+    ]
+  },
+  "must_not": [
+    "suggest dropping or swapping the Monday or Wednesday desk shift in finals week",
+    "plan study on Tuesday or Thursday morning before the 8 AM finals (she studies in the evenings)",
+    "send a work-and-exams warning or a heavy-week push",
+    "add study blocks after a desk shift (she reads at the desk and goes to bed around midnight)",
+    "bring up her visa work limit (12 hours is well under 20)",
+    "suggest skipping her 7 AM workouts to save energy"
+  ],
+  "stay_quiet": true,
+  "assumptions": [
+    "University libraries keep the help desk open through finals week, and quiet evening shifts let student workers read.",
+    "Students on F-1 visas may work up to 20 hours a week on campus while classes are in session.",
+    "The library posts its schedule three weeks ahead; finals week was posted on Nov 22.",
+    "Her sleep before Tuesday and Thursday 8 AM classes this term averaged about 6.9 hours, from her health data."
+  ],
+  "tags": [
+    "stay quiet",
+    "pair with s0019",
+    "looks like a clash",
+    "campus job",
+    "international",
+    "finals week",
+    "routine fit",
+    "evening studier",
+    "canvas",
+    "student"
+  ]
+}

@@ -1,0 +1,1389 @@
+{
+  "id": "p1009-university-dorm-athlete-rec-desk",
+  "summary": "Full-time university student athlete, 6 classes (18 credits), lives in a dorm far from home, works 7 hours a week at the campus rec center front desk, studies in the evenings, practice every weekday afternoon and away games on some Saturdays",
+  "kinds": [
+    "student who works",
+    "far from home"
+  ],
+  "student": {
+    "level": "university",
+    "classes": 6,
+    "credits": 18,
+    "lms": "moodle",
+    "formats": [
+      "in person",
+      "online"
+    ],
+    "work": "campus job",
+    "living": "dorm",
+    "flags": [
+      "student athlete"
+    ],
+    "study_style": "evening",
+    "pace": "steady",
+    "aid": false,
+    "loans": false,
+    "scholarship": false,
+    "family_support": true
+  },
+  "time_zone": "America/Denver",
+  "pay": {
+    "type": "hourly",
+    "period": "biweekly"
+  },
+  "places": {
+    "home": "home",
+    "campus": "campus",
+    "work": "the rec center",
+    "field": "the practice field",
+    "out": "town"
+  },
+  "commute_minutes": {
+    "home-campus": 5,
+    "home-work": 8,
+    "campus-work": 5,
+    "home-field": 5,
+    "field-campus": 5,
+    "home-out": 15,
+    "field-work": 5
+  },
+  "commute_mode": "walk",
+  "ready_minutes": 40,
+  "wind_down_minutes": 30,
+  "accounts": [
+    {
+      "id": "acc-checking",
+      "name": "Checking",
+      "official_name": "Everyday Checking",
+      "type": "depository",
+      "subtype": "checking",
+      "institution_name": "Lakeside Credit Union",
+      "mask": "1619",
+      "opening_balance_cents": 265841
+    },
+    {
+      "id": "acc-savings",
+      "name": "Savings",
+      "official_name": "Share Savings",
+      "type": "depository",
+      "subtype": "savings",
+      "institution_name": "Lakeside Credit Union",
+      "mask": "4693",
+      "opening_balance_cents": 293705,
+      "apy_bps": 100,
+      "interest_description": "INTEREST PAID"
+    },
+    {
+      "id": "acc-card",
+      "name": "Visa",
+      "official_name": "Rewards Visa",
+      "type": "credit",
+      "subtype": "credit card",
+      "institution_name": "Lakeside Credit Union",
+      "mask": "9312",
+      "credit_limit_cents": 50000,
+      "opening_balance_cents": 2882,
+      "last_statement_cents": 2882,
+      "statement_day": 24,
+      "due_days": 25,
+      "apr_bps": 2399,
+      "autopay": "statement",
+      "autopay_from": "acc-checking",
+      "payment_description": "CARD PAYMENT AUTOPAY",
+      "payment_received": "PAYMENT RECEIVED THANK YOU"
+    }
+  ],
+  "income": [
+    {
+      "id": "inc-rec",
+      "type": "hourly",
+      "job": "job-rec",
+      "rate_cents": 1450,
+      "pay_period": "biweekly",
+      "period_anchor": "2026-08-02",
+      "days_after_period_end": 6,
+      "tax_share": 0.04,
+      "account": "acc-checking",
+      "description": "RIDGEVIEW UNIV PAYROLL PPD ID: 1400360211",
+      "merchant_name": null
+    },
+    {
+      "id": "inc-family",
+      "type": "family",
+      "label": "Money from family",
+      "day_of_month": 17,
+      "jitter_days": [
+        0,
+        3
+      ],
+      "amount_cents": [
+        40000,
+        90000
+      ],
+      "skip_chance": 0.1,
+      "account": "acc-checking",
+      "description": "ZELLE FROM PARENT {A4} CONF# {A8}",
+      "pfc": "TRANSFER_IN_ACCOUNT_TRANSFER"
+    }
+  ],
+  "bills": [
+    {
+      "id": "tuition-plan",
+      "name": "Tuition payment plan",
+      "description": "CAMPUS PAY PLAN TUITION",
+      "merchant_name": null,
+      "pfc": "GENERAL_SERVICES_EDUCATION",
+      "amount_cents": 90900,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill",
+      "frequency": "dates",
+      "dates": [
+        "2026-08-05",
+        "2026-09-05",
+        "2026-10-05",
+        "2026-11-05",
+        "2026-12-05"
+      ],
+      "known": true
+    },
+    {
+      "id": "textbooks",
+      "name": "Textbooks and access codes",
+      "description": "CAMPUS BOOKSTORE {n4}",
+      "merchant_name": null,
+      "pfc": "GENERAL_MERCHANDISE_BOOKSTORES_AND_NEWSSTANDS",
+      "amount_cents": 39338,
+      "via": "card",
+      "account": "acc-card",
+      "kind": "other",
+      "frequency": "dates",
+      "dates": [
+        "2026-08-26"
+      ],
+      "recurring": false
+    },
+    {
+      "id": "course-fee",
+      "name": "Online course access code",
+      "description": "PEARSON *ACCESS CODE",
+      "merchant_name": null,
+      "pfc": "GENERAL_MERCHANDISE_BOOKSTORES_AND_NEWSSTANDS",
+      "amount_cents": 8224,
+      "via": "card",
+      "account": "acc-checking",
+      "kind": "other",
+      "frequency": "dates",
+      "dates": [
+        "2026-09-06"
+      ],
+      "recurring": false
+    },
+    {
+      "id": "phone",
+      "name": "Phone",
+      "description": "TMOBILE*AUTO PAY",
+      "merchant_name": null,
+      "pfc": "RENT_AND_UTILITIES_TELEPHONE",
+      "amount_cents": 4500,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill",
+      "day": 21,
+      "email": {
+        "name": "Phone company",
+        "address": "billing-phone@example.com",
+        "subject": "Your bill is ready",
+        "days_before": 5
+      }
+    },
+    {
+      "id": "hulu",
+      "name": "Hulu",
+      "description": "HULU 877-555-0142",
+      "merchant_name": "Hulu",
+      "pfc": "ENTERTAINMENT_TV_AND_MOVIES",
+      "amount_cents": 999,
+      "via": "card",
+      "account": "acc-card",
+      "kind": "subscription",
+      "day": 1
+    }
+  ],
+  "bank": {
+    "overdraft_fee_cents": 2500,
+    "low_balance_alert_cents": 5000,
+    "switch_to_card_below_cents": 2000
+  },
+  "spending": [
+    {
+      "id": "campus-food",
+      "label": "Campus dining",
+      "pfc": "FOOD_AND_DRINK_RESTAURANT",
+      "per_week": 0.8,
+      "amount_cents": [
+        227,
+        507
+      ],
+      "merchants": [
+        {
+          "description": "ARAMARK UNIV DINING 6752",
+          "merchant_name": "Aramark",
+          "weight": 2
+        },
+        {
+          "description": "SQ *CAMPUS GRILL 5315",
+          "merchant_name": "Campus Grill",
+          "weight": 2
+        }
+      ],
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ],
+      "when": "class_days",
+      "time": [
+        "11:15",
+        "14:00"
+      ],
+      "card_share": 0.2
+    },
+    {
+      "id": "eating-out",
+      "label": "Fast food and takeout",
+      "pfc": "FOOD_AND_DRINK_FAST_FOOD",
+      "per_week": 2.78,
+      "amount_cents": [
+        215,
+        555
+      ],
+      "merchants": [
+        {
+          "description": "CHIPOTLE 2849",
+          "merchant_name": "Chipotle",
+          "weight": 2
+        },
+        {
+          "description": "MCDONALD'S F22756",
+          "merchant_name": "McDonald's",
+          "weight": 2
+        },
+        {
+          "description": "TACO BELL 028591",
+          "merchant_name": "Taco Bell",
+          "weight": 1
+        },
+        {
+          "description": "SQ *NOODLE BAR",
+          "merchant_name": null,
+          "weight": 1
+        }
+      ],
+      "time": [
+        "17:00",
+        "22:00"
+      ],
+      "card_share": 0.3
+    },
+    {
+      "id": "coffee",
+      "label": "Coffee",
+      "pfc": "FOOD_AND_DRINK_COFFEE",
+      "per_week": 4.44,
+      "amount_cents": [
+        150,
+        216
+      ],
+      "merchants": [
+        {
+          "description": "STARBUCKS STORE 19299",
+          "merchant_name": "Starbucks",
+          "weight": 2
+        },
+        {
+          "description": "SQ *CORNER CAFE",
+          "merchant_name": "Corner Cafe",
+          "weight": 2
+        },
+        {
+          "description": "DUNKIN #396446",
+          "merchant_name": "Dunkin'",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "07:00",
+        "15:00"
+      ],
+      "card_share": 0.2
+    },
+    {
+      "id": "rideshare",
+      "label": "Rides",
+      "pfc": "TRANSPORTATION_TAXIS_AND_RIDE_SHARES",
+      "per_week": 0.4,
+      "amount_cents": [
+        315,
+        840
+      ],
+      "merchants": [
+        {
+          "description": "UBER *TRIP {A4}",
+          "merchant_name": "Uber",
+          "weight": 2
+        },
+        {
+          "description": "LYFT *RIDE {A6}",
+          "merchant_name": "Lyft",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "18:00",
+        "23:30"
+      ],
+      "card_share": 0.6
+    },
+    {
+      "id": "shopping",
+      "label": "Online orders",
+      "pfc": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES",
+      "per_week": 1.67,
+      "amount_cents": [
+        227,
+        1387
+      ],
+      "merchants": [
+        {
+          "description": "AMZN Mktp US*{A6}",
+          "merchant_name": "Amazon",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "09:00",
+        "23:30"
+      ],
+      "card_share": 0.6,
+      "refund_chance": 0.05,
+      "receipt_email": "orders-marketplace@example.com",
+      "month_scale": {
+        "11": 1.3,
+        "12": 1.6
+      }
+    },
+    {
+      "id": "target",
+      "label": "Target run",
+      "pfc": "GENERAL_MERCHANDISE_SUPERSTORES",
+      "per_week": 0.69,
+      "amount_cents": [
+        378,
+        1513
+      ],
+      "merchants": [
+        {
+          "description": "TARGET 00000809",
+          "merchant_name": "Target",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "20:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "entertainment",
+      "label": "Movies and going out",
+      "pfc": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS",
+      "per_week": 0.3,
+      "amount_cents": [
+        420,
+        1225
+      ],
+      "merchants": [
+        {
+          "description": "AMC 3668 ONLINE",
+          "merchant_name": "AMC Theatres",
+          "weight": 1
+        },
+        {
+          "description": "EVENTBRITE *TICKETS",
+          "merchant_name": "Eventbrite",
+          "weight": 1
+        }
+      ],
+      "days": [
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "time": [
+        "15:00",
+        "22:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "venmo",
+      "label": "Splitting with friends",
+      "pfc": "TRANSFER_OUT_ACCOUNT_TRANSFER",
+      "per_week": 0.56,
+      "amount_cents": [
+        151,
+        756
+      ],
+      "merchants": [
+        {
+          "description": "VENMO PAYMENT {n10}",
+          "merchant_name": "Venmo",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "11:00",
+        "23:30"
+      ]
+    },
+    {
+      "id": "gifts",
+      "label": "Gifts",
+      "pfc": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES",
+      "per_week": 0.1,
+      "amount_cents": [
+        525,
+        1575
+      ],
+      "merchants": [
+        {
+          "description": "SQ *GIFT SHOP",
+          "merchant_name": null,
+          "weight": 1
+        }
+      ],
+      "time": [
+        "11:00",
+        "20:00"
+      ],
+      "card_share": 0.5,
+      "month_scale": {
+        "12": 3
+      }
+    },
+    {
+      "id": "pharmacy",
+      "label": "Pharmacy",
+      "pfc": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS",
+      "per_week": 0.15,
+      "amount_cents": [
+        210,
+        980
+      ],
+      "merchants": [
+        {
+          "description": "CVS/PHARMACY #02363",
+          "merchant_name": "CVS",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "20:00"
+      ],
+      "discretionary": false
+    },
+    {
+      "id": "personal-care",
+      "label": "Haircuts and care",
+      "pfc": "PERSONAL_CARE_HAIR_AND_BEAUTY",
+      "per_week": 0.1,
+      "amount_cents": [
+        525,
+        1575
+      ],
+      "merchants": [
+        {
+          "description": "GREAT CLIPS #2562",
+          "merchant_name": "Great Clips",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "18:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "convenience",
+      "label": "Snacks and convenience store",
+      "pfc": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK",
+      "per_week": 2.22,
+      "amount_cents": [
+        150,
+        303
+      ],
+      "merchants": [
+        {
+          "description": "7-ELEVEN 22314",
+          "merchant_name": "7-Eleven",
+          "weight": 2
+        },
+        {
+          "description": "CAMPUS C-STORE 4191",
+          "merchant_name": null,
+          "weight": 2
+        }
+      ],
+      "time": [
+        "10:00",
+        "23:30"
+      ],
+      "card_share": 0.1
+    },
+    {
+      "id": "app-store",
+      "label": "Apps and in-app purchases",
+      "pfc": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE",
+      "per_week": 0.69,
+      "amount_cents": [
+        150,
+        378
+      ],
+      "merchants": [
+        {
+          "description": "APPLE.COM/BILL",
+          "merchant_name": "Apple",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "12:00",
+        "23:59"
+      ],
+      "card_share": 0.5
+    }
+  ],
+  "school": {
+    "institution": "Ridgeview University",
+    "lms": "moodle",
+    "term": {
+      "name": "Fall 2026",
+      "start": "2026-08-24",
+      "end": "2026-12-18",
+      "breaks": [
+        {
+          "start": "2026-11-25",
+          "end": "2026-11-29",
+          "label": "Thanksgiving break"
+        },
+        {
+          "start": "2026-12-14",
+          "end": "2026-12-18",
+          "label": "Finals week, no regular classes"
+        }
+      ],
+      "no_class_days": [
+        {
+          "date": "2026-09-07",
+          "label": "Labor Day"
+        }
+      ]
+    },
+    "courses": [
+      {
+        "code": "ENG 108",
+        "name": "Composition II",
+        "format": "in person",
+        "credits": 3,
+        "instructor": "Prof. Varga",
+        "grade_pct": [
+          68,
+          98
+        ],
+        "meetings": [
+          {
+            "days": [
+              "Mon",
+              "Wed",
+              "Fri"
+            ],
+            "start": "09:00",
+            "end": "09:50",
+            "location": "Science Hall 203"
+          }
+        ],
+        "announcements_per_month": 3,
+        "instructor_email": "varga-eng@example.com",
+        "assignments": [
+          {
+            "title": "Discussion post {n}",
+            "kind": "discussion",
+            "weekday": "Wed",
+            "due": "23:59",
+            "points": 5,
+            "start": "2026-08-27",
+            "end": "2026-12-11"
+          },
+          {
+            "title": "Quiz {n}",
+            "kind": "quiz",
+            "weekday": "Sun",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-09-03",
+            "end": "2026-12-11",
+            "every_weeks": 1
+          }
+        ],
+        "items": [
+          {
+            "title": "Essay 1",
+            "due": "2026-10-02T23:59",
+            "points": 100
+          },
+          {
+            "title": "Essay 2",
+            "due": "2026-11-06T23:59",
+            "points": 100
+          },
+          {
+            "title": "Essay 3",
+            "due": "2026-12-04T23:59",
+            "points": 100
+          }
+        ],
+        "exams": [
+          {
+            "title": "Final exam",
+            "mode": "in_person",
+            "date": "2026-12-15",
+            "start": "10:30",
+            "end": "12:30",
+            "location": "Exam hall"
+          }
+        ]
+      },
+      {
+        "code": "SPAN 249",
+        "name": "Spanish II",
+        "format": "in person",
+        "credits": 3,
+        "instructor": "Prof. Chen",
+        "grade_pct": [
+          75,
+          96
+        ],
+        "meetings": [
+          {
+            "days": [
+              "Mon",
+              "Wed",
+              "Fri"
+            ],
+            "start": "13:00",
+            "end": "13:50",
+            "location": "Main Hall 165"
+          }
+        ],
+        "announcements_per_month": 1,
+        "instructor_email": "chen-span@example.com",
+        "assignments": [
+          {
+            "title": "Homework {n}",
+            "weekday": "Wed",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-08-27",
+            "end": "2026-12-11"
+          },
+          {
+            "title": "Quiz {n}",
+            "kind": "quiz",
+            "weekday": "Fri",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-09-03",
+            "end": "2026-12-11",
+            "every_weeks": 1
+          }
+        ],
+        "items": [],
+        "exams": [
+          {
+            "title": "Midterm 1",
+            "mode": "in_person",
+            "date": "2026-10-12",
+            "start": "13:00",
+            "end": "13:50"
+          },
+          {
+            "title": "Midterm 2",
+            "mode": "in_person",
+            "date": "2026-12-02",
+            "start": "13:00",
+            "end": "13:50"
+          },
+          {
+            "title": "Final exam",
+            "mode": "in_person",
+            "date": "2026-12-15",
+            "start": "13:00",
+            "end": "15:00",
+            "location": "Exam hall"
+          }
+        ]
+      },
+      {
+        "code": "MATH 135",
+        "name": "Calculus I",
+        "format": "in person",
+        "credits": 3,
+        "instructor": "Prof. Haddad",
+        "grade_pct": [
+          77,
+          94
+        ],
+        "meetings": [
+          {
+            "days": [
+              "Mon",
+              "Wed",
+              "Fri"
+            ],
+            "start": "11:00",
+            "end": "11:50",
+            "location": "Arts Building 214"
+          }
+        ],
+        "announcements_per_month": 2,
+        "instructor_email": "haddad-math@example.com",
+        "assignments": [
+          {
+            "title": "Homework {n}",
+            "weekday": "Wed",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-08-27",
+            "end": "2026-12-11"
+          },
+          {
+            "title": "Quiz {n}",
+            "kind": "quiz",
+            "weekday": "Mon",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-09-03",
+            "end": "2026-12-11",
+            "every_weeks": 1
+          }
+        ],
+        "items": [],
+        "exams": [
+          {
+            "title": "Midterm 1",
+            "mode": "in_person",
+            "date": "2026-10-12",
+            "start": "11:00",
+            "end": "11:50"
+          },
+          {
+            "title": "Midterm 2",
+            "mode": "in_person",
+            "date": "2026-12-04",
+            "start": "11:00",
+            "end": "11:50"
+          },
+          {
+            "title": "Final exam",
+            "mode": "in_person",
+            "date": "2026-12-16",
+            "start": "18:00",
+            "end": "20:00",
+            "location": "Exam hall"
+          }
+        ]
+      },
+      {
+        "code": "CHEM 350",
+        "name": "General Chemistry I",
+        "format": "online",
+        "credits": 3,
+        "instructor": "Prof. Okafor",
+        "grade_pct": [
+          76,
+          97
+        ],
+        "meetings": [],
+        "announcements_per_month": 4,
+        "instructor_email": "okafor-chem@example.com",
+        "assignments": [
+          {
+            "title": "Homework {n}",
+            "weekday": "Thu",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-08-27",
+            "end": "2026-12-11"
+          },
+          {
+            "title": "Discussion post {n}",
+            "kind": "discussion",
+            "weekday": "Sun",
+            "due": "23:59",
+            "points": 5,
+            "start": "2026-08-27",
+            "end": "2026-12-11"
+          },
+          {
+            "title": "Lab report {n}",
+            "kind": "lab",
+            "weekday": "Fri",
+            "due": "23:59",
+            "points": 40,
+            "start": "2026-09-06",
+            "end": "2026-12-11",
+            "every_weeks": 2
+          }
+        ],
+        "items": [],
+        "exams": [
+          {
+            "title": "Midterm 1",
+            "mode": "online",
+            "opens": "2026-10-08T08:00",
+            "closes": "2026-10-10T23:59",
+            "minutes": 60
+          },
+          {
+            "title": "Midterm 2",
+            "mode": "online",
+            "opens": "2026-11-12T08:00",
+            "closes": "2026-11-15T23:59",
+            "minutes": 45
+          },
+          {
+            "title": "Final exam",
+            "mode": "online",
+            "opens": "2026-12-14T08:00",
+            "closes": "2026-12-16T23:59",
+            "minutes": 120
+          }
+        ]
+      },
+      {
+        "code": "ART 318",
+        "name": "Drawing I",
+        "format": "online",
+        "credits": 3,
+        "instructor": "Prof. Moreno",
+        "grade_pct": [
+          70,
+          89
+        ],
+        "meetings": [],
+        "announcements_per_month": 2,
+        "instructor_email": "moreno-art@example.com",
+        "assignments": [
+          {
+            "title": "Discussion post {n}",
+            "kind": "discussion",
+            "weekday": "Wed",
+            "due": "23:59",
+            "points": 5,
+            "start": "2026-08-27",
+            "end": "2026-12-11"
+          },
+          {
+            "title": "Quiz {n}",
+            "kind": "quiz",
+            "weekday": "Sun",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-09-03",
+            "end": "2026-12-11",
+            "every_weeks": 1
+          }
+        ],
+        "items": [
+          {
+            "title": "Group project proposal",
+            "kind": "project",
+            "due": "2026-09-24T23:59",
+            "points": 50
+          },
+          {
+            "title": "Group project draft",
+            "kind": "project",
+            "due": "2026-10-29T23:59",
+            "points": 50
+          },
+          {
+            "title": "Group project final",
+            "kind": "project",
+            "due": "2026-12-03T23:59",
+            "points": 150
+          }
+        ],
+        "exams": [
+          {
+            "title": "Midterm",
+            "mode": "online",
+            "opens": "2026-10-15T08:00",
+            "closes": "2026-10-16T23:59",
+            "minutes": 60
+          },
+          {
+            "title": "Final exam",
+            "mode": "online",
+            "opens": "2026-12-15T08:00",
+            "closes": "2026-12-17T23:59",
+            "minutes": 90
+          }
+        ]
+      },
+      {
+        "code": "BIO 197",
+        "name": "Biology I",
+        "format": "in person",
+        "credits": 3,
+        "instructor": "Prof. Brandt",
+        "grade_pct": [
+          68,
+          96
+        ],
+        "meetings": [
+          {
+            "days": [
+              "Tue",
+              "Thu"
+            ],
+            "start": "11:00",
+            "end": "12:15",
+            "location": "Main Hall 314"
+          }
+        ],
+        "announcements_per_month": 4,
+        "instructor_email": "brandt-bio@example.com",
+        "assignments": [
+          {
+            "title": "Homework {n}",
+            "weekday": "Tue",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-08-27",
+            "end": "2026-12-11"
+          },
+          {
+            "title": "Quiz {n}",
+            "kind": "quiz",
+            "weekday": "Mon",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-09-03",
+            "end": "2026-12-11",
+            "every_weeks": 1
+          },
+          {
+            "title": "Lab report {n}",
+            "kind": "lab",
+            "weekday": "Fri",
+            "due": "23:59",
+            "points": 40,
+            "start": "2026-09-06",
+            "end": "2026-12-11",
+            "every_weeks": 2
+          }
+        ],
+        "items": [],
+        "exams": [
+          {
+            "title": "Midterm 1",
+            "mode": "online",
+            "opens": "2026-10-08T08:00",
+            "closes": "2026-10-11T23:59",
+            "minutes": 60
+          },
+          {
+            "title": "Midterm 2",
+            "mode": "in_person",
+            "date": "2026-11-10",
+            "start": "11:00",
+            "end": "12:15"
+          },
+          {
+            "title": "Final exam",
+            "mode": "in_person",
+            "date": "2026-12-18",
+            "start": "18:00",
+            "end": "20:00",
+            "location": "Exam hall"
+          }
+        ]
+      }
+    ],
+    "lms_url": "https://moodle.example.com"
+  },
+  "work": {
+    "jobs": [
+      {
+        "id": "job-rec",
+        "employer": "Campus Rec Center",
+        "position": "Front desk attendant",
+        "place": "work",
+        "timeline_label": "Shift at the rec center front desk",
+        "source": "schedule",
+        "overtime_threshold_hours": 40,
+        "overtime_multiplier": 1.5,
+        "workweek_starts": "Sun",
+        "ready_minutes": 15,
+        "pattern": {
+          "type": "weekly",
+          "slots": [
+            {
+              "days": [
+                "Fri"
+              ],
+              "start": "18:00",
+              "end": "21:00",
+              "chance": 0.95
+            },
+            {
+              "days": [
+                "Sun"
+              ],
+              "start": "10:00",
+              "end": "14:00",
+              "chance": 0.95
+            }
+          ]
+        },
+        "closed_on": [
+          "2026-11-27",
+          "2026-11-29",
+          "2026-12-25"
+        ],
+        "posting": {
+          "block_days": 7,
+          "anchor": "2026-08-02",
+          "posted_days_ahead": 21,
+          "time": "15:00",
+          "jitter_days": [
+            0,
+            0,
+            1
+          ]
+        },
+        "cancel_rate": 0.02,
+        "sick_rate": 0.01,
+        "sent_home_rate": 0.02,
+        "stay_late_rate": 0.05
+      }
+    ]
+  },
+  "health": {
+    "goals": {
+      "workouts_per_week": 0,
+      "sleep_hours": 8
+    },
+    "steps": {
+      "work": [
+        8000,
+        13000
+      ],
+      "class": [
+        6000,
+        10000
+      ],
+      "free": [
+        2500,
+        7000
+      ]
+    },
+    "resting_heart_rate": 66,
+    "nutrition": {
+      "enabled": true,
+      "log_rate": 0.5,
+      "base_kcal": 1900,
+      "sd_kcal": 220,
+      "goal_kcal": 2000
+    }
+  },
+  "routines": [
+    {
+      "id": "sleep",
+      "activity": "sleep",
+      "label": "Sleep",
+      "records_as": "health_sleep",
+      "variance_minutes": 28,
+      "late_night_rate": 0.09,
+      "early_before": "10:00",
+      "windows": [
+        {
+          "id": "before-early-day",
+          "day_type": "early_next_day",
+          "start": "23:00",
+          "end": "07:15",
+          "firmness": "usual"
+        },
+        {
+          "id": "before-free-day",
+          "day_type": "free_next_day",
+          "start": "00:00",
+          "end": "08:30",
+          "firmness": "loose"
+        }
+      ]
+    },
+    {
+      "id": "study",
+      "activity": "study",
+      "label": "Study in her dorm room",
+      "where": "home",
+      "records_as": "calendar",
+      "per_week": 4.4,
+      "keep_rate": 0.73,
+      "duration_minutes": [
+        50,
+        110
+      ],
+      "ready_minutes": 20,
+      "windows": [
+        {
+          "id": "evening-1",
+          "days": [
+            "Sun",
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu"
+          ],
+          "start": "19:00",
+          "end": "21:45",
+          "firmness": "firm"
+        }
+      ],
+      "source_memory": "m-01",
+      "not_after": "22:30"
+    },
+    {
+      "id": "call-family",
+      "activity": "call",
+      "label": "Call with family",
+      "records_as": "calendar_recurring",
+      "timeline": "routine",
+      "calendar_title": "Call home",
+      "keep_rate": 0.78,
+      "windows": [
+        {
+          "id": "weekly",
+          "days": [
+            "Sat"
+          ],
+          "start": "19:00",
+          "end": "19:45",
+          "firmness": "firm"
+        }
+      ],
+      "source_memory": "m-03"
+    }
+  ],
+  "real_life": {
+    "events": [
+      {
+        "id": "ev-group-art-8",
+        "title": "Group project meeting, ART 318",
+        "start": "2026-10-22T18:30",
+        "end": "2026-10-22T19:45",
+        "state": "with people",
+        "place": "campus",
+        "source": "google",
+        "created_days_before": 6
+      },
+      {
+        "id": "ev-practice",
+        "title": "Team practice",
+        "start": "15:30",
+        "end": "17:45",
+        "repeat": {
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "from": "2026-08-24"
+        },
+        "state": "other",
+        "place": "field",
+        "source": "google",
+        "created_days_before": 20
+      },
+      {
+        "id": "ev-game-1",
+        "title": "Away game",
+        "start": "2026-09-19T09:00",
+        "end": "2026-09-19T19:00",
+        "state": "with people",
+        "place": "field",
+        "source": "google",
+        "created_days_before": 30
+      },
+      {
+        "id": "ev-game-2",
+        "title": "Away game",
+        "start": "2026-10-10T09:00",
+        "end": "2026-10-10T19:00",
+        "state": "with people",
+        "place": "field",
+        "source": "google",
+        "created_days_before": 30
+      },
+      {
+        "id": "ev-game-3",
+        "title": "Away game",
+        "start": "2026-10-31T09:00",
+        "end": "2026-10-31T19:00",
+        "state": "with people",
+        "place": "field",
+        "source": "google",
+        "created_days_before": 30
+      },
+      {
+        "id": "ev-game-4",
+        "title": "Away game",
+        "start": "2026-11-21T09:00",
+        "end": "2026-11-21T19:00",
+        "state": "with people",
+        "place": "field",
+        "source": "google",
+        "created_days_before": 30
+      },
+      {
+        "id": "ev-group-art-13",
+        "title": "Group project meeting, ART 318 (final)",
+        "start": "2026-12-01T19:00",
+        "end": "2026-12-01T20:15",
+        "state": "with people",
+        "place": "campus",
+        "source": "google",
+        "created_days_before": 16
+      },
+      {
+        "id": "ev-team-thanksgiving",
+        "title": "Team Thanksgiving dinner",
+        "start": "2026-11-26T15:00",
+        "end": "2026-11-26T19:00",
+        "state": "with people",
+        "place": "out",
+        "source": "google",
+        "created_days_before": 25
+      },
+      {
+        "id": "ev-tournament-1",
+        "title": "Conference tournament (away), bus leaves 7 AM",
+        "start": "2026-12-05T07:00",
+        "end": "2026-12-05T22:00",
+        "state": "with people",
+        "place": "field",
+        "source": "google",
+        "created_days_before": 40
+      },
+      {
+        "id": "ev-tournament-2",
+        "title": "Conference tournament (away), back around 5 PM",
+        "start": "2026-12-06T08:00",
+        "end": "2026-12-06T17:00",
+        "state": "with people",
+        "place": "field",
+        "source": "google",
+        "created_days_before": 40
+      }
+    ],
+    "nights_out": null,
+    "trips": []
+  },
+  "email": {
+    "address": "zara.okoro.student@example.com",
+    "per_day": {
+      "promotions": 3.0,
+      "newsletters": 0.5,
+      "social": 0.7,
+      "personal": 0.15,
+      "security": 0.05,
+      "school_other": 0.4
+    },
+    "weekend_scale": 0.8
+  },
+  "memories": [
+    {
+      "id": "m-meal-plan",
+      "content": "My meal plan covers 14 meals a week in the dining hall",
+      "category": "fact",
+      "via": "get-to-know answer",
+      "told_at": "2026-08-27T20:10"
+    },
+    {
+      "id": "m-01",
+      "content": "I study in the evenings, usually after dinner",
+      "category": "preference",
+      "via": "chat",
+      "told_at": "2026-07-31T20:07"
+    },
+    {
+      "id": "m-02",
+      "content": "Practice is every weekday from 3:30 to 5:45, and we travel for some Saturday games",
+      "category": "routine",
+      "via": "chat",
+      "told_at": "2026-07-31T21:14"
+    },
+    {
+      "id": "m-03",
+      "content": "I call my family every Saturday evening",
+      "category": "routine",
+      "via": "chat",
+      "told_at": "2026-07-31T22:21"
+    },
+    {
+      "id": "m-04",
+      "content": "Home is about 5 minutes from campus",
+      "category": "fact",
+      "via": "get-to-know answer",
+      "told_at": "2026-07-31T19:28"
+    },
+    {
+      "id": "m-sleep",
+      "content": "In season I need my 8 hours. I'm in bed by 11 on weeknights",
+      "category": "preference",
+      "via": "chat",
+      "told_at": "2026-08-30T21:40"
+    },
+    {
+      "id": "m-pace",
+      "content": "A midterm takes me about 4 hours of review, and an essay takes me two evenings",
+      "category": "fact",
+      "via": "chat",
+      "told_at": "2026-09-27T20:30"
+    },
+    {
+      "id": "m-tournament",
+      "content": "Conference tournament is Dec 5 and 6, we're on the bus at 7 Saturday",
+      "category": "fact",
+      "via": "chat",
+      "told_at": "2026-10-28T20:05"
+    }
+  ],
+  "generated": {
+    "by": "personas.py",
+    "seed": 9,
+    "term": "Fall 2026",
+    "edited": "s0018: rec center job, second midterms in SPAN and MATH, conference tournament Dec 5 and 6, sleep by 11, Moodle"
+  }
+}
