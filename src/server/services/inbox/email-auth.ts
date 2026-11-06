@@ -1,3 +1,5 @@
+import { getDomain } from "tldts";
+
 type Header = { Name: string; Value: string };
 
 /**
@@ -59,22 +61,14 @@ export function parseFromAddress(from: string) {
 
 const domainOf = (v: string) => (v.trim().replace(/^<|>$/g, "").toLowerCase().split("@").pop() ?? "").replace(/^@/, "").replace(/\.$/, "");
 
-/** A short list of public suffixes with two labels; relaxed alignment must never treat one of these as an owner's domain. */
-const PUBLIC_SUFFIXES = new Set(
-  "co.uk org.uk ac.uk gov.uk com.au net.au org.au edu.au co.nz co.jp ne.jp or.jp co.in com.br com.cn com.mx co.za com.sg com.hk github.io herokuapp.com appspot.com blogspot.com vercel.app netlify.app pages.dev workers.dev azurewebsites.net cloudfront.net amazonaws.com".split(
-    " ",
-  ),
-);
-const isSuffixOnly = (d: string) => d.split(".").length < 2 || PUBLIC_SUFFIXES.has(d);
+/** The registrable ("organisational") domain, or null for a public suffix such as co.uk, ac.jp or k12.ca.us. */
+const orgDomain = (d: string) => getDomain(d, { allowPrivateDomains: true });
 
-/** DMARC relaxed alignment: the same domain, or one is a subdomain of the other, below the public suffix. */
+/** DMARC relaxed alignment: both names share the same registrable domain, never just a public suffix. */
 export function aligned(a: string, b: string) {
-  const x = domainOf(a);
-  const y = domainOf(b);
-  if (!x || !y) return false;
-  if (x === y) return !isSuffixOnly(x);
-  const [parent, child] = x.length < y.length ? [x, y] : [y, x];
-  return child.endsWith(`.${parent}`) && !isSuffixOnly(parent);
+  const x = orgDomain(domainOf(a));
+  const y = orgDomain(domainOf(b));
+  return !!x && x === y;
 }
 
 /** "ptype.property=value" tokens of one result clause. */
@@ -91,10 +85,9 @@ export type AuthSource =
   /** Gmail API messages: only the topmost Authentication-Results, written by mx.google.com itself. */
   | { via: "gmail" }
   /** Postmark inbound webhook: Authentication-Results is ignored; only Postmark's own topmost Received-SPF counts. */
-  | { via: "postmark" };
+  | { via: "postmark"; recipient: string };
 
 export const GMAIL_AUTHSERV = "mx.google.com";
-export const POSTMARK_INBOUND_HOST = "inbound.postmarkapp.com";
 
 /**
  * Was this email really sent by `from` (a bare address)? Only the receiving server's own result
@@ -121,9 +114,12 @@ export function senderAuthenticated(headers: Header[], from: string, source: Aut
     return false;
   }
 
-  // Postmark: the topmost Received-SPF that Postmark itself wrote (its receiver= names Postmark's inbound host).
-  const spf = named("received-spf").find((v) => new RegExp(`receiver=[^\\s;]*@?${POSTMARK_INBOUND_HOST.replace(/\./g, "\\.")}(\\s|;|$)`).test(v));
+  // Postmark: the TOPMOST Received-SPF is the one Postmark itself wrote (every hop before it is lower).
+  // It must name the address the mail was delivered to (the webhook's OriginalRecipient) as its receiver.
+  const spf = named("received-spf")[0];
   if (!spf || !/^\s*pass\b/.test(spf)) return false;
+  const receiver = spf.match(/receiver=<?([^\s;>]+)/)?.[1];
+  if (!receiver || !source.recipient || receiver !== source.recipient.trim().toLowerCase()) return false;
   const envelope = spf.match(/envelope-from=<?([^\s;>]+)/)?.[1];
   return !!envelope && aligned(envelope, domain);
 }

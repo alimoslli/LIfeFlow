@@ -1,5 +1,4 @@
 import { aiAllowed } from "@/lib/ai-consent";
-import { neutralize } from "@/lib/untrusted";
 import { createHash, randomBytes, randomInt } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { addDaysStr, DATE_RE, formatDateStr, TIME_RE } from "@/lib/dates";
@@ -291,14 +290,6 @@ async function undoFiled(scope: UserScope, f: InboxFiled) {
 
 export type IncomingDocument = Omit<ExtractInput, "today"> & { channel: "email" | "upload" | "share"; from?: string | null; attachmentIds?: string[] };
 
-/** Titles, payees and summaries come from untrusted text: neutralise anything shaped like a prompt marker before it is stored. */
-function sanitizeExtraction<T>(v: T): T {
-  if (typeof v === "string") return neutralize(v) as T;
-  if (Array.isArray(v)) return v.map(sanitizeExtraction) as T;
-  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, sanitizeExtraction(x)])) as T;
-  return v;
-}
-
 /** Reads and files one document. Always leaves an inbox row saying what happened. */
 export async function processDocument(scope: UserScope, tz: string, today: string, doc: IncomingDocument, extract = extractDocument) {
   const [row] = await scope.tx
@@ -315,7 +306,7 @@ export async function processDocument(scope: UserScope, tz: string, today: strin
   try {
     const [owner] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
     if (!aiAllowed(owner?.preferences)) throw new Error("Saved. Allow your assistant to use AI (in Settings) to have it read and filed automatically.");
-    ex = sanitizeExtraction(await extract({ ...doc, today }));
+    ex = await extract({ ...doc, today });
   } catch (e) {
     const [failed] = await scope.tx
       .update(inboxItems)

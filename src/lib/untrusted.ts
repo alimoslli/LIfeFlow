@@ -1,3 +1,5 @@
+import { parseFromAddress } from "../server/services/inbox/email-auth";
+
 /**
  * Third-party text (email, documents) goes to the model inside a marker pair such as
  * <untrusted_email_9f3a…>…</untrusted_email_9f3a…>. Two defences, both applied:
@@ -16,17 +18,18 @@ export const wrapUntrusted = (tag: string, s: string, nonce = crypto.randomUUID(
   return `<${t}>\n${neutralize(s)}\n</${t}>`;
 };
 
-/** A sender for a one-line summary: the display name only (or the address), capped, markers neutralised. */
+/**
+ * A sender for a one-line summary: the display name, capped, markers neutralised. When the name is empty or
+ * contains "@" (a name that poses as an address), the real address is shown instead.
+ */
 export function senderLabel(from: string, max = 40) {
-  const name =
-    from
-      .replace(/<[^>]*>/g, "")
-      .replace(/["\\]/g, "")
-      .replace(/\s+/g, " ")
-      .trim() ||
-    from.match(/<([^>]+)>/)?.[1] ||
-    from.trim();
-  const clean = neutralize(name).replace(/[<>]/g, "");
+  const name = from
+    .replace(/<[^>]*>/g, "")
+    .replace(/["\\]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const shown = name && !name.includes("@") ? name : parseFromAddress(from) || "unknown sender";
+  const clean = neutralize(shown).replace(/[<>]/g, "");
   return clean.length > max ? `${clean.slice(0, max - 1).trimEnd()}…` : clean;
 }
 

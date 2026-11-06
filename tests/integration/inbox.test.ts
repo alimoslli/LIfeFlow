@@ -103,10 +103,10 @@ describe("smart inbox", () => {
     const spf = (r: string, extra = "") => [
       {
         Name: "Received-SPF",
-        Value: `${r} (sender SPF authorized) identity=mailfrom; client-ip=1.2.3.4; envelope-from=${extra || "me@school.edu"}; receiver=u@inbound.postmarkapp.com`,
+        Value: `${r} (sender SPF authorized) identity=mailfrom; client-ip=1.2.3.4; envelope-from=${extra || "me@school.edu"}; receiver=u-abc@in.example.test`,
       },
     ];
-    const PM = { via: "postmark" } as const;
+    const PM = { via: "postmark", recipient: "u-abc@in.example.test" } as const;
     expect(senderAuthenticated(spf("Pass"), from, PM)).toBe(true);
     expect(senderAuthenticated(spf("Softfail"), from, PM)).toBe(false);
     expect(senderAuthenticated(spf("Pass", "me@evil.com"), from, PM)).toBe(false);

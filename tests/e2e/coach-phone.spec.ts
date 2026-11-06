@@ -124,7 +124,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
         Headers: [
           {
             Name: "Received-SPF",
-            Value: `Pass (sender SPF authorized) identity=mailfrom; client-ip=209.85.212.52; helo=mail-vw0-f52.google.com; envelope-from=riley@gmail.com; receiver=u-${inbox_token}@inbound.postmarkapp.com`,
+            Value: `Pass (sender SPF authorized) identity=mailfrom; client-ip=209.85.212.52; helo=mail-vw0-f52.google.com; envelope-from=riley@gmail.com; receiver=u-${inbox_token}@in.example.com`,
           },
         ],
       },
