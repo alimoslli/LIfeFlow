@@ -74,7 +74,7 @@ export function CommandPalette({ open, onClose, onAsk }: { open: boolean; onClos
   }, [open]);
 
   useEffect(() => {
-    if (q.trim().length < 2) return;
+    if (q.trim().length < 1) return;
     const ctl = new AbortController();
     const t = setTimeout(async () => {
       const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: ctl.signal }).catch(() => null);
@@ -105,7 +105,7 @@ export function CommandPalette({ open, onClose, onAsk }: { open: boolean; onClos
       { key: "log-spending", title: "Log spending", icon: Plus, run: () => go("/money?add=spending") },
     ].filter((x) => !term || x.title.toLowerCase().includes(term));
     const found: Item[] =
-      term.length >= 2
+      term.length >= 1
         ? hits.map((h) => ({ key: `${h.kind}:${h.id}`, title: h.title, subtitle: h.subtitle, icon: KIND_ICON[h.kind], run: () => go(h.href) }))
         : [];
     const ask: Item = {
@@ -138,7 +138,7 @@ export function CommandPalette({ open, onClose, onAsk }: { open: boolean; onClos
           onChange={(e) => {
             setQ(e.target.value);
             setSel(0);
-            if (e.target.value.trim().length < 2) setHits([]);
+            if (e.target.value.trim().length < 1) setHits([]);
           }}
           onKeyDown={(e) => {
             if (e.key === "ArrowDown") {
