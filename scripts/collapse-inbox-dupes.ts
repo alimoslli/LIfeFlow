@@ -6,7 +6,7 @@ import { collapseInboxDuplicates } from "../src/server/services/inbox/cleanup";
 
 /**
  * One-off (and safe to repeat): collapses bills, to-dos and exams the inbox filed more than once from the same email.
- * The original stays and anything pointing at a copy is moved to it. Run once after the 0039 migration:
+ * The original stays and anything pointing at a copy is moved to it. Run once after the 0040 migration:
  * `npm run db:collapse-inbox-dupes`.
  */
 async function main() {
