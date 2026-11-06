@@ -51,6 +51,19 @@ describe("Apple Health ingest route: keys and limits", () => {
     expect((await POST(req(wrong(3), JSON.stringify(day), "198.51.100.9"))).status).toBe(401);
   });
 
+  it("someone sharing your network can't block your sync with fake keys, and your own uploads don't count against the IP", async () => {
+    const { run } = await makeUser();
+    const { token } = await run((s) => createHealthToken(s, "iPhone"));
+    expect((await POST(req(token, JSON.stringify(day), "192.0.2.50"))).status).toBe(200);
+    expect(await buckets("health-ip:192.0.2.50")).toBe(0);
+    // A neighbour fills the shared IP's window with fake keys...
+    await POST(req(`lfh_${"z".repeat(32)}`, JSON.stringify(day), "192.0.2.50"));
+    await getDb().update(rateLimitBuckets).set({ count: 300 }).where(like(rateLimitBuckets.key, "health-ip:192.0.2.50"));
+    expect((await POST(req(`lfh_${"y".repeat(32)}`, JSON.stringify(day), "192.0.2.50"))).status).toBe(429);
+    // ...and the real key from the same IP still goes through.
+    expect((await POST(req(token, JSON.stringify(day), "192.0.2.50"))).status).toBe(200);
+  });
+
   it("a real key saves, and its own per-key limit applies whatever IP it comes from", async () => {
     const { run } = await makeUser();
     const { id, token } = await run((s) => createHealthToken(s, "iPhone"));

@@ -15,7 +15,9 @@ export const dynamic = "force-dynamic";
  * session cookie, so it is a public route in proxy.ts.
  *
  * A bearer that isn't shaped like a real key is refused before anything is counted (made-up values can't dodge a limit
- * or fill rate_limit_buckets). Then a limit by IP, the key lookup, and a limit per key (same order as the HQ API).
+ * or fill rate_limit_buckets). A well-shaped key is looked up; only a failed lookup counts against the caller's IP, so
+ * people sharing one network (a campus, a carrier) can't block each other's sync with fake keys, and a real key is
+ * limited per key. Keys are 192 random bits, so the IP limit is about load, not guessing.
  */
 const NO_KEY = "Invalid or revoked key. Create a new one in LifeFlow Settings, Integrations.";
 const MAX_BODY = 200_000;
@@ -24,9 +26,11 @@ export async function POST(req: Request) {
   try {
     const raw = req.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1] ?? "";
     if (!isHealthKeyFormat(raw)) throw new HttpError(401, NO_KEY);
-    await enforceRateLimit(`health-ip:${ipFromHeaders(req.headers)}`, 300, 3600);
     const owner = await resolveHealthToken(getDb(), raw);
-    if (!owner) throw new HttpError(401, NO_KEY);
+    if (!owner) {
+      await enforceRateLimit(`health-ip:${ipFromHeaders(req.headers)}`, 300, 3600);
+      throw new HttpError(401, NO_KEY);
+    }
     await enforceRateLimit(`health-ingest:${owner.tokenId}`, 60, 3600);
     const text = await readLimitedBody(req, MAX_BODY);
     let body: unknown;
