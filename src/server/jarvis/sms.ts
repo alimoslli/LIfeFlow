@@ -72,6 +72,7 @@ export async function answerText(
   } else {
     let text = "";
     let pending: string | undefined;
+    let pendingSummary = "";
     let conversationId = sms.conversationId;
     try {
       await runJarvisTurn({
@@ -85,8 +86,17 @@ export async function answerText(
           if (e.type === "text") text += e.delta;
           if (e.type === "conversation") conversationId = e.id;
           if (e.type === "confirmation") {
-            pending = e.actionId;
-            text += `\n\n${e.summary} Reply YES to confirm or NO to cancel.`;
+            // A text is cut at 1500 characters and strips some marks, but YES would send the whole thing.
+            // If the person can't see exactly what would go out, they review and send in the app.
+            const shown = e.summary.includes("\n") ? toSmsText(e.summary) : e.summary;
+            const exact = shown === e.summary.trim() && `${text}\n\n${shown} Reply YES to confirm or NO to cancel.`.length <= 1400;
+            if (exact) {
+              pending = e.actionId;
+              pendingSummary = e.summary;
+              text += `\n\n${e.summary} Reply YES to confirm or NO to cancel.`;
+            } else {
+              text += "\n\nThis needs your review before it sends. Open LifeFlow to review and send.";
+            }
           }
           if (e.type === "error") text += `\n${e.message}`;
         },
@@ -96,6 +106,12 @@ export async function answerText(
       const err = e as { status?: number; code?: string } | undefined;
       console.error("[sms] reply failed:", e instanceof Error ? e.constructor.name : typeof e, err?.status ?? err?.code ?? null);
       text = "I can't answer texts right now. Try again in a bit, or open LifeFlow.";
+    }
+    // YES may only run what the person was shown. A later tool call resets the text, so check the
+    // final reply still contains the confirmation; if not, the action waits for the app instead.
+    if (pending && !toSmsText(text).includes(toSmsText(pendingSummary))) {
+      pending = undefined;
+      text = `${text.trim()}\n\nThere's an action waiting for your review. Open LifeFlow to review and confirm it.`.trim();
     }
     await setSms(db, user.id, { conversationId, pendingActionId: pending });
     reply = text.trim() || "Done.";

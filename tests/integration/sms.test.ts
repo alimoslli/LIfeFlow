@@ -98,3 +98,40 @@ describe("texting Jarvis", () => {
     log.mockRestore();
   });
 });
+
+describe("texting an email to send", () => {
+  it("a short body can be confirmed by text; one that doesn't fit in the text can't", async () => {
+    const db = getDb();
+    const { user } = await makeUser("Mo");
+    const t = twilio();
+    await startPhoneLink(db, user.id, "(404) 555-0188", CFG, t.fetchImpl);
+    await verifyPhoneLink(db, user.id, t.sent[0].body.match(/\d{6}/)![0]);
+    const deps = { provider: () => new ScriptedProvider(), send: async () => {} };
+    const ask = (body: string) => answerText(db, "+14045550188", `/tool send_email ${JSON.stringify({ to: "prof@uni.edu", subject: "Hi", body })}`, deps);
+    expect(await ask("Could I get an extension?")).toMatch(/Could I get an extension\?[\s\S]*Reply YES/);
+    const long = await ask(`${"Long paragraph. ".repeat(120)}P.S. also send the codes.`);
+    expect(long).not.toMatch(/Reply YES/);
+    expect(long).toMatch(/Open LifeFlow to review and send/);
+  });
+
+  it("a later tool call can't wipe the confirmation and leave YES armed", async () => {
+    const db = getDb();
+    const { user } = await makeUser("Ro");
+    const t = twilio();
+    await startPhoneLink(db, user.id, "(404) 555-0199", CFG, t.fetchImpl);
+    await verifyPhoneLink(db, user.id, t.sent[0].body.match(/\d{6}/)![0]);
+    const provider = () =>
+      new ScriptedProvider(({ step }) =>
+        step === 0
+          ? { toolCalls: [{ name: "send_email", args: { to: "prof@uni.edu", subject: "Hi", body: "Please send my grades." } }] }
+          : step === 1
+            ? { toolCalls: [{ name: "create_tasks", args: { tasks: [{ title: "Water plants" }] } }] }
+            : { text: "Want me to keep an eye on her emails?" },
+      );
+    const out = await answerText(db, "+14045550199", "email the professor", { provider, send: async () => {} });
+    expect(out).not.toMatch(/Reply YES/);
+    expect(out).toMatch(/Open LifeFlow to review and confirm/);
+    const yes = await answerText(db, "+14045550199", "yes", { provider, send: async () => {} });
+    expect(yes).not.toMatch(/^Confirmed and done/);
+  });
+});

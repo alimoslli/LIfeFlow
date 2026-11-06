@@ -1,7 +1,8 @@
 "use server";
 import { formObject, mutate, type ActionState } from "@/server/actions";
+import { todayIn } from "@/lib/dates";
 import { getDb } from "@/server/db/client";
-import { addSender, removeSender, undoInboxItem, verifySender } from "@/server/services/inbox";
+import { addSender, removeSender, fileSuggestion, undoInboxItem, verifySender } from "@/server/services/inbox";
 
 const R = { revalidate: ["/inbox"] };
 
@@ -32,6 +33,17 @@ export async function undoInboxAction(id: string): Promise<ActionState> {
     async (s) => {
       const n = await undoInboxItem(s, id);
       return `Undone: removed ${n} thing${n === 1 ? "" : "s"} that were filed.`;
+    },
+    { revalidate: ["/inbox", "/"] },
+  );
+}
+
+export async function fileSuggestionAction(id: string): Promise<ActionState> {
+  return mutate(
+    "inbox.file_suggestion",
+    async (s, u) => {
+      const r = await fileSuggestion(s, u.timezone, todayIn(u.timezone), id);
+      return r.status === "filed" ? "Filed. You can undo it below." : (r.reason ?? "Couldn't file that one.");
     },
     { revalidate: ["/inbox", "/"] },
   );
