@@ -468,3 +468,29 @@ describe("series keys don't move with weekends (review follow-up 2)", () => {
     expect([...keys].sort()).toEqual(["apple~d10", "apple~d24"]);
   });
 });
+
+describe("the reviewer's held-out wrong ones (review follow-up, optional)", () => {
+  it("doesn't make a bill of three friends' Venmo payments that happen to land a month apart", () => {
+    // Person h3025: about six payments in 90 days, $4 to $20; three of the larger fall on the 21st or 22nd.
+    const venmo = [
+      ["2026-08-10", 1_869],
+      ["2026-08-13", 434],
+      ["2026-08-21", 2_034],
+      ["2026-09-21", 1_770],
+      ["2026-10-15", 883],
+      ["2026-10-22", 1_407],
+    ].map(([d, c]) => tx(d as string, -(c as number), "Venmo", `VENMO PAYMENT 31${c}`, transfer()));
+    expect(detectRecurring(venmo, { today: "2026-11-05" })).toEqual([]);
+  });
+
+  it("doesn't call a remittance three months apart, or three event tickets a week apart, a series", () => {
+    const remit = ["2026-05-04", "2026-08-06", "2026-11-02"].map((d) => tx(d, -3_500, "Remitly", "REMITLY* 8XQ2KD4M", transfer()));
+    expect(detectRecurring(remit)).toEqual([]);
+    const tickets = ["2026-10-19", "2026-10-27", "2026-11-02"].map((d) => tx(d, -1_452, "Eventbrite", "EVENTBRITE", { categoryName: "Events" }));
+    expect(detectRecurring(tickets)).toEqual([]);
+    // A fourth on schedule makes it weekly.
+    expect(detectRecurring([...tickets, tx("2026-11-09", -1_452, "Eventbrite", "EVENTBRITE", { categoryName: "Events" })])).toMatchObject([
+      { frequency: "weekly" },
+    ]);
+  });
+});

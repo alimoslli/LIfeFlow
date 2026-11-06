@@ -325,8 +325,9 @@ function cyclesOf(sorted: DetectTxn[]): Cycle[] {
  * `strict`: a price picked out of a merchant that also bills other things (Apple, Amazon) needs 3 charges, never 2.
  * `refunds`: money that merchant gave back, so a double charge already refunded isn't reported.
  * `today`: when a new price seen once can be trusted (`provisional`).
+ * `noStrays`: a share paid to a person, where another payment of a similar size means friends' payments, not a stray.
  */
-type Context = { key: string; strict?: boolean; refunds?: { date: string; amountCents: number }[]; today?: string };
+type Context = { key: string; strict?: boolean; refunds?: { date: string; amountCents: number }[]; today?: string; noStrays?: boolean };
 
 /** Days past a cycle's due date before a new price seen once is trusted: a charge due on a Saturday posts by Tuesday. */
 const CONFIRM_DAYS = 3;
@@ -399,7 +400,10 @@ function evaluate(cycles: Cycle[], ctx: Context): Found | null {
       : 3
     : period.freq === "yearly" || ((known || scheduled) && exact && period.freq === "monthly")
       ? 2
-      : 3;
+      : // Three tickets a week apart are a busy month, not a weekly subscription.
+        period.freq === "weekly"
+        ? 4
+        : 3;
   if (ts.length < minCount) return null;
   const regular = gaps.filter((g) => onSchedule(g, period)).length / gaps.length;
   if (everyday && !(exact && regular === 1)) return null;
@@ -407,6 +411,8 @@ function evaluate(cycles: Cycle[], ctx: Context): Found | null {
   // So does money sent to a person through an app (rent or a share by Zelle or Venmo), or friends' payments look like a bill.
   const toPerson = transfer && ts.every((t) => PAYMENT_APP.test(lineOf(t)));
   if ((strict || toPerson) && (regular < 1 || period.freq === "weekly" || period.freq === "biweekly")) return null;
+  // Rent or a share paid to a person comes monthly; a remittance three months apart is a pattern by chance.
+  if (toPerson && period.freq !== "monthly") return null;
   // A price that holds between a few clean changes (Netflix at $15.49 twice, then $17.99) is a steady amount, not a wobbling one.
   const runs = runsOf(cycles);
   const runStart = (i: number) => daysBetween(runs[i - 1][runs[i - 1].length - 1].t.date, runs[i][0].t.date);
@@ -535,7 +541,7 @@ function withoutStrays(cycles: Cycle[]): Cycle[] | null {
 
 /** The series in a set of charges: one, or (money going out) one per day of the month when that fits better. */
 function seriesIn(cycles: Cycle[], ctx: Context): Found[] {
-  const kept = ctx.strict && !evaluate(cycles, ctx) ? withoutStrays(cycles) : null;
+  const kept = ctx.strict && !ctx.noStrays && !evaluate(cycles, ctx) ? withoutStrays(cycles) : null;
   const f = evaluate(kept ?? cycles, ctx);
   if (f && f.frequency !== "weekly" && f.frequency !== "biweekly") return [f];
   // A real weekly or biweekly charge keeps its interval to the day or so.
@@ -646,7 +652,7 @@ function mainSeriesOf(cycles: Cycle[], ctx: Context): Found[] {
         band.length < cycles.length && -median(band.map((c) => c.t.amountCents)) >= 1_500
           ? seriesIn(
               [...band].sort((a, b) => a.t.date.localeCompare(b.t.date)),
-              { ...ctx, strict: true },
+              { ...ctx, strict: true, noStrays: true },
             )
           : [];
       if (found.length || depth >= 3 || band.length < 6) return found;
