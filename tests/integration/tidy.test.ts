@@ -216,4 +216,61 @@ describe("tidy transactions", () => {
     expect(r).toEqual({ renamed: 0, categorized: 0, byAi: 0 });
     expect(queries).toBeLessThanOrEqual(5);
   });
+
+  async function unknownVendors(n: number) {
+    const { run } = await makeUser();
+    const acct = await run((s) => createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 0 }));
+    await run((s) =>
+      s.tx.insert(transactions).values(
+        Array.from({ length: n }, (_, i) => ({
+          userId: s.userId,
+          accountId: acct.id,
+          date: "2026-10-01",
+          description: `ZXQ ${String.fromCharCode(97 + Math.floor(i / 26), 97 + (i % 26))}${String.fromCharCode(113 + (i % 5))}vk HOLDINGS LLC`,
+          amountCents: -1800,
+          kind: "expense" as const,
+        })),
+      ),
+    );
+    return run;
+  }
+  const askedLlm =
+    (seen: Set<string>): TidyLlm =>
+    async (items) => {
+      items.forEach((i) => seen.add(i.key));
+      return items.map((i) => ({ key: i.key, name: "Zed Hardware", category: "Household" }));
+    };
+
+  it("asks the AI about every unknown vendor over several runs, 40 at a time", async () => {
+    const run = await unknownVendors(100);
+    const seen = new Set<string>();
+    const sizes: number[] = [];
+    for (let i = 0; i < 4; i++) {
+      const before = seen.size;
+      await run((s) => tidyTransactions(s, { llm: askedLlm(seen) }));
+      sizes.push(seen.size - before);
+    }
+    expect(sizes).toEqual([40, 40, 20, 0]);
+    const left = await run(
+      async (s) =>
+        (
+          await s.tx
+            .select({ n: sql<number>`count(*)::int` })
+            .from(transactions)
+            .where(and(eq(transactions.userId, s.userId), isNull(transactions.categoryId)))
+        )[0].n,
+    );
+    expect(left).toBe(0);
+  });
+
+  it("gives rows tidied with the AI off their AI turn once it is allowed", async () => {
+    const run = await unknownVendors(10);
+    await run((s) => tidyTransactions(s, {}));
+    const seen = new Set<string>();
+    await run((s) => tidyTransactions(s, { llm: askedLlm(seen) }));
+    expect(seen.size).toBe(10);
+    const again = new Set<string>();
+    await run((s) => tidyTransactions(s, { llm: askedLlm(again) }));
+    expect(again.size).toBe(0);
+  });
 });

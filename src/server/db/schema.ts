@@ -660,6 +660,8 @@ export const transactions = pgTable(
     excluded: boolean("excluded").notNull().default(false),
     /** The vendor/category tidy version that last went over this row (see TIDY_VERSION); 0 = never. */
     tidyVersion: integer("tidy_version").notNull().default(0),
+    /** Tidied without the AI while its vendor was still unknown or messy: the AI pass should look at it once allowed. */
+    tidyAiPending: boolean("tidy_ai_pending").notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

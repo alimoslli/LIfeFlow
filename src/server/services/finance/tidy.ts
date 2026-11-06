@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { and, desc, eq, inArray, lt } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, or } from "drizzle-orm";
 import { z } from "zod";
 import { aiAllowed } from "@/lib/ai-consent";
 import { cleanVendorName, correctedVendorName, looksMessy } from "@/lib/vendor";
@@ -101,6 +101,7 @@ function billCategoryForRent(texts: (string | null | undefined)[]): string | nul
 export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm | null } = {}): Promise<TidyResult> {
   await ensureDefaultCategories(scope);
   // Only rows not yet tidied at this version, newest first, one run's worth. A row is handled once per version.
+  // With AI on, rows an earlier run left for the AI (it was off, or its batch was full) come back too.
   const rows = await scope.tx
     .select({
       id: transactions.id,
@@ -111,9 +112,16 @@ export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm |
       amountCents: transactions.amountCents,
       source: transactions.source,
       createdAt: transactions.createdAt,
+      tidyVersion: transactions.tidyVersion,
     })
     .from(transactions)
-    .where(and(eq(transactions.userId, scope.userId), eq(transactions.excluded, false), lt(transactions.tidyVersion, TIDY_VERSION)))
+    .where(
+      and(
+        eq(transactions.userId, scope.userId),
+        eq(transactions.excluded, false),
+        or(lt(transactions.tidyVersion, TIDY_VERSION), opts.llm ? eq(transactions.tidyAiPending, true) : undefined),
+      ),
+    )
     .orderBy(desc(transactions.date))
     .limit(MAX_CHANGES);
   const out: TidyResult = { renamed: 0, categorized: 0, byAi: 0 };
@@ -162,7 +170,15 @@ export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm |
           out.categorized++;
         }
       }
-    } else if (rentId && catId === rentId && r.source === "plaid" && r.createdAt < PLAID_RENT_FIX_AT && r.kind === "expense" && r.amountCents < 0) {
+    } else if (
+      rentId &&
+      catId === rentId &&
+      r.tidyVersion < TIDY_VERSION &&
+      r.source === "plaid" &&
+      r.createdAt < PLAID_RENT_FIX_AT &&
+      r.kind === "expense" &&
+      r.amountCents < 0
+    ) {
       // One-time correction (each row is tidied once per version): an old Plaid sync filed every rent-and-utilities
       // charge as Rent. Only a known provider's brand moves, and never a landlord, a person, or a merchant with a rule.
       const to = billCategoryForRent([r.merchantName, r.description, name]);
@@ -218,18 +234,26 @@ export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm |
       }
     }
   }
-  await scope.tx
-    .update(transactions)
-    .set({ tidyVersion: TIDY_VERSION })
-    .where(
-      and(
-        eq(transactions.userId, scope.userId),
-        inArray(
-          transactions.id,
-          rows.map((r) => r.id),
-        ),
-      ),
-    );
+  // Stamp the rows. One the AI still has to look at stays open when AI is on and its vendor wasn't in this batch;
+  // with AI off it is stamped but marked pending, so a later run with AI on asks about it.
+  const asked = new Set(opts.llm ? [...unknown.keys()].slice(0, MAX_AI) : []);
+  const needsAi = new Map<string, boolean>(); // row id -> still to be asked
+  for (const [key, g] of unknown) for (const x of g.rows) needsAi.set(x.id, !asked.has(key));
+  const done: string[] = [];
+  const pending: string[] = [];
+  for (const r of rows) {
+    if (!needsAi.get(r.id)) done.push(r.id);
+    else if (!opts.llm) pending.push(r.id);
+  }
+  const stamp = async (ids: string[], aiPending: boolean) => {
+    if (ids.length)
+      await scope.tx
+        .update(transactions)
+        .set({ tidyVersion: TIDY_VERSION, tidyAiPending: aiPending })
+        .where(and(eq(transactions.userId, scope.userId), inArray(transactions.id, ids)));
+  };
+  await stamp(done, false);
+  await stamp(pending, true);
   return out;
 }
 
