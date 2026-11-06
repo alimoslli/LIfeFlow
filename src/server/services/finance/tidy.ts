@@ -77,7 +77,8 @@ export type TidyResult = { renamed: number; categorized: number; byAi: number };
 export const TIDY_VERSION = 1;
 
 /** Plaid rows created before the fix for rent-and-utilities charges (2026-11-05) may have a bill filed as Rent. */
-const PLAID_RENT_FIX_AT = new Date("2026-11-05T09:30:37Z");
+// The fix was committed 2026-11-05T09:30Z but reached main (and production) only on 2026-11-06 around 01:00Z; leave room for the deploy.
+const PLAID_RENT_FIX_AT = new Date("2026-11-06T06:00:00Z");
 const P2P = /\b(venmo|zelle|cash ?app|paypal|apple cash)\b/i;
 const LANDLORD = /\b(rent|rentals?|apart\w*|apts?|propert(?:y|ies)|landlord|realty|leasing|lease|homes?|residential|village|towers?)\b|apartmen|center apart/i;
 /** Known phone, internet and utility brands only: never a generic word like "water" or "utilities". */

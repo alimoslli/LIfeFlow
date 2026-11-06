@@ -146,7 +146,7 @@ describe("tidy transactions", () => {
       { description: "COX PROPERTIES" },
       { description: "ZELLE VERIZON WIRELESS" },
       { description: "COMCAST", source: "manual" as const },
-      { description: "XFINITY MOBILE", createdAt: new Date("2026-11-05T12:00:00Z") },
+      { description: "XFINITY MOBILE", createdAt: new Date("2026-11-06T12:00:00Z") },
     ];
     const { cat } = await rentRows(run, lines);
     for (const l of lines) expect(cat(l.description)).toBe("Rent");
