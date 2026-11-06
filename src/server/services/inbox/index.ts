@@ -16,6 +16,7 @@ import { createAssignment, deleteAssignment, resolveCourse } from "../school";
 import { createEvent, deleteEvent } from "../calendar";
 import { createTask, deleteTask } from "../tasks";
 import { addPaycheck, deletePaycheck, listEmployers } from "../work";
+import { restoreMerged } from "./cleanup";
 import { extractDocument, type ExtractInput, type Extraction } from "./extract";
 import {
   attachReceipt,
@@ -430,6 +431,11 @@ export async function undoInboxItem(scope: UserScope, id: string) {
     .from(inboxItems)
     .where(and(eq(inboxItems.id, id), eq(inboxItems.userId, scope.userId)));
   if (!row) throw new ServiceError("Not found", "not_found");
+  // A copy the cleanup merged away: Undo brings back what it removed.
+  if (row.status === "duplicate") {
+    const n = await restoreMerged(scope, id);
+    if (n) return n;
+  }
   if (row.status !== "filed") throw new ServiceError("There's nothing to undo here.");
   for (const f of [...row.filed].reverse()) await undoFiled(scope, f);
   await scope.tx.update(inboxItems).set({ status: "undone" }).where(eq(inboxItems.id, id));

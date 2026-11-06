@@ -1,14 +1,15 @@
+import type { UserScope } from "@/server/db/with-user";
 import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { addDaysStr, todayIn } from "@/lib/dates";
 import { closeDb } from "@/server/db/client";
-import { assignments, financialAccounts, inboxItems, recurringItems, tasks, transactions, type InboxFiled } from "@/server/db/schema";
+import { assignments, financialAccounts, inboxItems, recurringItems, tasks, transactions, users, type InboxFiled } from "@/server/db/schema";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { bankSeries, createRecurring } from "@/server/services/finance/planning";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { createAssignment, createCourse } from "@/server/services/school";
 import { processDocument, undoInboxItem } from "@/server/services/inbox";
-import { attachWaitingReceipts, collapseInboxDuplicates } from "@/server/services/inbox/cleanup";
+import { attachWaitingReceipts, collapseInboxDuplicates, runInboxCleanupOnce } from "@/server/services/inbox/cleanup";
 import { contentSigFor, normalizeMessageId } from "@/server/services/inbox/dedupe";
 import type { Extraction } from "@/server/services/inbox/extract";
 import { makeUser, TZ } from "../helpers";
@@ -202,7 +203,7 @@ describe("Gmail items show up once", () => {
 });
 
 describe("collapse what was already filed twice", () => {
-  it("keeps the original and moves references", async () => {
+  const legacy = async (collapse: (s: UserScope) => Promise<unknown>) => {
     const { run, user } = await setup();
     const counts = await run(async (s) => {
       const bill = (due: string, usd = 64.99): Extraction => ({
@@ -279,7 +280,7 @@ describe("collapse what was already filed twice", () => {
       await mk(6, exam("Exam 1", "2026-10-12"), [entry("assignment", solo.assignment.id)]);
       expect(canvas.status).toBe("created");
 
-      const first = await collapseInboxDuplicates(s);
+      const first = await collapse(s);
       // Safe to repeat.
       expect(await collapseInboxDuplicates(s)).toEqual({ inboxItems: 0, bills: 0, tasks: 0, exams: 0 });
       const left = {
@@ -309,6 +310,26 @@ describe("collapse what was already filed twice", () => {
       return first;
     });
     expect(user.id).toBeTruthy();
-    expect(counts).toEqual({ inboxItems: 2, bills: 3, tasks: 2, exams: 1 });
+    return { counts, run, user };
+  };
+  const EXPECTED = { inboxItems: 2, bills: 3, tasks: 2, exams: 1 };
+
+  it("keeps the original and moves references", async () => {
+    const { counts } = await legacy((s) => collapseInboxDuplicates(s));
+    expect(counts).toEqual(EXPECTED);
+  });
+
+  it("runs by itself once per account (next morning run), and Undo on a merged copy brings its rows back", async () => {
+    const { counts, run, user } = await legacy((s) => runInboxCleanupOnce(s));
+    expect(counts).toEqual(EXPECTED);
+    // The marker is set: the next run does nothing.
+    expect(await run((s) => runInboxCleanupOnce(s))).toBeNull();
+    const [u] = await run((s) => s.tx.select({ p: users.preferences }).from(users).where(eq(users.id, user.id)));
+    expect(u.p.inboxDedupeVersion).toBe(1);
+    // Undo on the merged-away copy (the 2nd email) restores the bill and reminder it had filed.
+    const dup = (await run((s) => s.tx.select().from(inboxItems))).find((i) => i.status === "duplicate" && i.receivedAt.getUTCDate() === 2)!;
+    expect(await run((s) => undoInboxItem(s, dup.id))).toBe(2);
+    expect((await run((s) => s.tx.select().from(recurringItems))).length).toBe(2);
+    expect((await run((s) => s.tx.select().from(inboxItems))).find((i) => i.id === dup.id)!.status).toBe("filed");
   });
 });

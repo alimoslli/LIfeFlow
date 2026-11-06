@@ -1,5 +1,5 @@
-import { and, asc, eq, inArray, like } from "drizzle-orm";
-import { assignments, inboxItems, recurringItems, savingsOpportunities, tasks, type InboxFiled } from "../../db/schema";
+import { and, asc, desc, eq, inArray, like, sql } from "drizzle-orm";
+import { assignments, inboxItems, recurringItems, savingsOpportunities, tasks, users, type InboxFiled } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { normalizeText } from "@/lib/utils";
 import { amountsClose, nameRelation, trackedKeys } from "../finance/bill-match";
@@ -17,13 +17,20 @@ export type CollapseCounts = { inboxItems: number; bills: number; tasks: number;
 type Item = typeof inboxItems.$inferSelect;
 const isSame = (kind: InboxFiled["kind"]) => kind === "recurring" || kind === "recurring_update";
 
-export async function collapseInboxDuplicates(scope: UserScope): Promise<CollapseCounts> {
+/** A removed row, kept on the inbox item that filed it so Undo can bring it back. */
+type Snap = { table: "recurring" | "task" | "assignment"; row: Record<string, unknown>; entry: InboxFiled };
+const TABLES = { recurring: recurringItems, task: tasks, assignment: assignments } as const;
+
+export async function collapseInboxDuplicates(scope: UserScope, opts: { limit?: number } = {}): Promise<CollapseCounts> {
   const counts: CollapseCounts = { inboxItems: 0, bills: 0, tasks: 0, exams: 0 };
-  const items = await scope.tx
+  // Bounded: the newest `limit` filed items (oldest first within them), so a big account can't slow a sync.
+  const newest = await scope.tx
     .select()
     .from(inboxItems)
     .where(and(eq(inboxItems.userId, scope.userId), eq(inboxItems.status, "filed")))
-    .orderBy(asc(inboxItems.receivedAt), asc(inboxItems.createdAt), asc(inboxItems.id));
+    .orderBy(desc(inboxItems.receivedAt), desc(inboxItems.createdAt), desc(inboxItems.id))
+    .limit(opts.limit ?? 5000);
+  const items = newest.reverse();
   const dirty = new Set<string>();
   const touch = (i: Item) => dirty.add(i.id);
 
@@ -43,6 +50,16 @@ export async function collapseInboxDuplicates(scope: UserScope): Promise<Collaps
     touch(i);
   };
 
+  // Keeps a copy of a row about to be removed on the inbox item that filed it (Undo on that item restores it).
+  const stash = (table: Snap["table"], row: { id: string }) => {
+    const owner = items.find((i) => i.filed.some((f) => f.id === row.id));
+    const entry = owner?.filed.find((f) => f.id === row.id);
+    if (!owner || !entry) return;
+    const ex = (owner.extracted ?? {}) as Record<string, unknown>;
+    owner.extracted = { ...ex, merged: [...((ex.merged as Snap[] | undefined) ?? []), { table, row, entry: { ...entry } } satisfies Snap] };
+    touch(owner);
+  };
+
   const removeRecurring = async (keepId: string, dropId: string) => {
     const [keep] = await scope.tx.select().from(recurringItems).where(eq(recurringItems.id, keepId));
     const [drop] = await scope.tx.select().from(recurringItems).where(eq(recurringItems.id, dropId));
@@ -55,6 +72,7 @@ export async function collapseInboxDuplicates(scope: UserScope): Promise<Collaps
     if (later && drop.amountCents !== keep.amountCents && nextDueDate) history.push({ amountCents: keep.amountCents, until: nextDueDate });
     await scope.tx.update(recurringItems).set({ nextDueDate, amountCents, priceHistory: history }).where(eq(recurringItems.id, keep.id));
     await scope.tx.update(savingsOpportunities).set({ recurringId: keep.id }).where(eq(savingsOpportunities.recurringId, drop.id));
+    stash("recurring", drop);
     await scope.tx.delete(recurringItems).where(and(eq(recurringItems.id, drop.id), eq(recurringItems.userId, scope.userId)));
     counts.bills++;
     return true;
@@ -67,6 +85,7 @@ export async function collapseInboxDuplicates(scope: UserScope): Promise<Collaps
       .where(and(eq(tasks.id, dropId), eq(tasks.userId, scope.userId)));
     // An open reminder only: one the user finished or started on stays.
     if (!drop || drop.status !== "todo") return false;
+    stash("task", drop);
     await scope.tx
       .update(tasks)
       .set({ parentId: keepId })
@@ -82,6 +101,7 @@ export async function collapseInboxDuplicates(scope: UserScope): Promise<Collaps
       .from(assignments)
       .where(and(eq(assignments.id, dropId), eq(assignments.userId, scope.userId)));
     if (!drop || drop.status !== "todo" || drop.grade) return false;
+    stash("assignment", drop);
     await scope.tx.delete(assignments).where(eq(assignments.id, dropId));
     counts.exams++;
     return true;
@@ -201,7 +221,7 @@ export async function collapseInboxDuplicates(scope: UserScope): Promise<Collaps
     if (dirty.has(i.id))
       await scope.tx
         .update(inboxItems)
-        .set({ filed: i.filed, status: i.status, reason: i.reason, duplicateOf: i.duplicateOf, contentSig: i.contentSig })
+        .set({ filed: i.filed, status: i.status, reason: i.reason, duplicateOf: i.duplicateOf, contentSig: i.contentSig, extracted: i.extracted })
         .where(eq(inboxItems.id, i.id));
   return counts;
 }
@@ -238,4 +258,46 @@ export async function attachWaitingReceipts(scope: UserScope): Promise<number> {
     n++;
   }
   return n;
+}
+
+/** Brings back what the cleanup removed for an inbox item (Undo on a "duplicate" item that has copies saved). Null when there is nothing to restore. */
+export async function restoreMerged(scope: UserScope, id: string): Promise<number | null> {
+  const [item] = await scope.tx
+    .select()
+    .from(inboxItems)
+    .where(and(eq(inboxItems.id, id), eq(inboxItems.userId, scope.userId)));
+  const { merged, ...rest } = (item?.extracted ?? {}) as Record<string, unknown> & { merged?: Snap[] };
+  if (!item || !merged?.length) return null;
+  const revive = (row: Record<string, unknown>) =>
+    Object.fromEntries(Object.entries(row).map(([k, v]) => [k, typeof v === "string" && /At$/.test(k) ? new Date(v) : v]));
+  for (const m of merged) {
+    const t = TABLES[m.table];
+    await scope.tx
+      .insert(t)
+      .values({ ...revive(m.row), userId: scope.userId } as never)
+      .onConflictDoNothing();
+  }
+  await scope.tx
+    .update(inboxItems)
+    .set({ status: "filed", duplicateOf: null, reason: null, filed: [...item.filed, ...merged.map((m) => m.entry)], extracted: rest })
+    .where(eq(inboxItems.id, id));
+  return merged.length;
+}
+
+export const INBOX_DEDUPE_VERSION = 1;
+/** Newest filed inbox items one run looks at. */
+const CLEANUP_BATCH = 1000;
+
+/**
+ * Cleans an account's duplicate inbox filings once per INBOX_DEDUPE_VERSION (marker in the user's preferences), inside the
+ * caller's scope. Returns the counts, or null when this account already had it.
+ */
+export async function runInboxCleanupOnce(scope: UserScope): Promise<CollapseCounts | null> {
+  const [u] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
+  if ((u?.preferences?.inboxDedupeVersion ?? 0) >= INBOX_DEDUPE_VERSION) return null;
+  const counts = await collapseInboxDuplicates(scope, { limit: CLEANUP_BATCH });
+  await scope.tx.execute(
+    sql`update users set preferences = coalesce(preferences, '{}'::jsonb) || jsonb_build_object('inboxDedupeVersion', ${INBOX_DEDUPE_VERSION}::int) where id = ${scope.userId}`,
+  );
+  return counts;
 }

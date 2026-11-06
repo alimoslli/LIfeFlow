@@ -77,6 +77,8 @@ export type UserPreferences = {
   memorySuggestions?: boolean;
   /** Let Jarvis read new school, bill and work emails in Gmail each morning and file them (off unless turned on). */
   gmailFiling?: boolean;
+  /** The version of the one-time inbox duplicate cleanup this account has had (see runInboxCleanupOnce). */
+  inboxDedupeVersion?: number;
   /** What fills the user's week (from onboarding); helps Jarvis and the briefing. */
   lifeStage?: "student" | "working" | "both" | "life";
   /** First-run setup: "pending" only for accounts created since onboarding launched. */
