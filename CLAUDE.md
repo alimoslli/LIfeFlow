@@ -46,15 +46,15 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Every Money page starts with `const locked = await moneyGate(); if (locked) return locked;` (not a layout). New money tools go in `finance.ts`/`money-coach.ts` so the Jarvis money lock covers them.
 - Reset and email links use `APP_URL`, never the Host header. Report an email as sent only with the provider's id.
 
-## Admin page (see ADR 0022)
+## Admin page (see ADR 0022, 0027)
 - `/admin` is owner-only: `ADMIN_EMAILS` plus two-step sign-in or a passkey, checked by `requireAdmin()` on every admin page **and every admin action** (never a layout alone). Anyone else gets a 404.
 - It shows accounts and operations only. Per-user content stays behind RLS and must never be reachable from admin code. Admin reads go through `services/admin.ts` (5 s timeout, hard limits) and each panel loads inside `safe()` so one failure can't blank the page.
 - Every change (sign out, suspend, plan, delete, clear error) writes `admin_actions` and refuses the admin themself, other admins and the demo account. Deleting needs the typed email and refuses active Pro users.
 - Suspension is enforced in `validateSession`, so a new session-starting path can't skip it.
 - Feedback reaches the admin page only through `owner_inbox` (a copy written by `sendFeedback`); never remove RLS from `feedback`. Announcements (`announcements`, `activeAnnouncement`) are one banner at a time, shown by `AnnouncementBanner` in the app layout; links must be `/…` or `https://…`.
 
-## LifeFlow HQ (see ADR 0024, docs/hq/)
-- `/admin/hq` is the owner's office (founder-only, same `requireAdmin()` rule on every page and action). The existing admin pages are its "Founder Office", unchanged.
+## LifeFlow HQ (see ADR 0024 to 0027, docs/hq/)
+- Admin and HQ are one area (ADR 0027): a menu of five places plus a settings gear. Office `/admin` (the HQ office plus "The app today"), Work `/admin/work` (needs your yes, missions, this week), Marketing `/admin/hq/marketing`, People `/admin/people` (users, feedback, announcements), App `/admin/app` (growth, AI use, errors, health, activity log), gear `/admin/hq/settings`. Same founder-only `requireAdmin()` rule on every page and action. Old URLs (`/admin/hq/approvals`, `/admin/users`, `/admin/feedback`, …) only call `requireAdmin()` and redirect, keeping the query string. Each part is a colocated `section.tsx` composed by the page; don't add tabs or a sixth menu item.
 - HQ links to the owner's real Claude Code chats (`chatUrl()`); it never reads, embeds or drives them, and never uses the owner's claude.ai login. Chats report in through `scripts/hq.ts` (Stop hook `.claude/hooks/hq-checkin.sh`, no message text, a no-op without `HQ_URL`).
 - HQ data (`hq_*` tables) is owner operations data with no RLS, reached only through `services/hq.ts`. Never put app users' content in it. Agents write only through `/api/hq/report` and `/api/hq/inbox` with an `lfq_` key (stored as a hash).
 - Only real records: an employee's state comes from `employeeState()` (hq/state.ts); with no data it is asleep or offline, never "working". The budget tile shows a measured number or "Not measured yet". No AI is ever called to render HQ; animations are CSS.
