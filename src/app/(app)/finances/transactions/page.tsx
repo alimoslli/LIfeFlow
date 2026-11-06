@@ -124,7 +124,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           </Button>
         </div>
         <details className="group px-1" open={activeFilters > 0}>
-          <summary className="flex cursor-pointer list-none items-center gap-1.5 py-1 text-sm text-muted [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-sm text-muted [&::-webkit-details-marker]:hidden">
             <SlidersHorizontal className="h-3.5 w-3.5" /> Filters{activeFilters ? ` · ${activeFilters}` : ""}
             {filtered && (
               <Link href="/finances/transactions" className="ml-auto text-accent">
@@ -180,7 +180,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             {d.accounts.length ? (
               "Add one manually or import a CSV from your bank."
             ) : (
-              <Link href="/finances/accounts" className="text-accent hover:underline">
+              <Link href="/finances/accounts" className="inline-flex min-h-11 items-center text-accent hover:underline">
                 Add an account first.
               </Link>
             )}

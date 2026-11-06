@@ -81,7 +81,7 @@ Settings → Integrations → Apple Health → Create a key (shown once) → fol
 1. Pick a subdomain just for this, e.g. `in.yourdomain.com`. In your DNS, add an **MX** record for it pointing to `inbound.postmarkapp.com` (priority 10).
 2. Postmark → Servers → your server → **Inbound** stream → Settings:
    - Inbound domain: `in.yourdomain.com`
-   - Webhook URL: `https://yoursite/api/inbox/email?key=<your INBOX_WEBHOOK_SECRET>`
+   - Webhook URL: `https://inbox:<your INBOX_WEBHOOK_SECRET>@yoursite/api/inbox/email` (Postmark sends the part before `@` as basic auth, so the secret stays out of access logs; the old `?key=` form still works for now but is deprecated)
 3. In Vercel set `INBOX_DOMAIN=in.yourdomain.com` and `INBOX_WEBHOOK_SECRET`, redeploy.
 4. In LifeFlow: Plan → Inbox shows your address. Add the email you'll forward from (Apple sign-in emails are trusted automatically; others get a 6-digit code, which needs step 4's Resend setup).
 5. Forward a bill to the address. It shows up in the Inbox as Filed, with Undo. Mail from any other sender, or mail that fails SPF/DKIM, shows as Ignored with the reason.

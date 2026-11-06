@@ -37,7 +37,7 @@ export function VoiceButton({
       aria-label={`Talk to ${assistantName}`}
       title={`Talk to ${assistantName}`}
       className={cn(
-        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40",
+        "flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40",
         className,
       )}
     >
@@ -367,7 +367,7 @@ export function LiveVoice({
           type="button"
           onClick={finishTurn}
           aria-label="Done talking"
-          className="flex h-10 items-center gap-1.5 rounded-full bg-accent px-3.5 text-sm font-medium text-accent-text"
+          className="flex h-11 items-center gap-1.5 rounded-full bg-accent px-3.5 text-sm font-medium text-accent-text"
         >
           <Check className="h-4 w-4" aria-hidden />
           Done
@@ -378,14 +378,14 @@ export function LiveVoice({
         onClick={() => setMuted((m) => !m)}
         aria-pressed={muted}
         aria-label={muted ? "Unmute" : "Mute"}
-        className={cn("flex h-10 w-10 items-center justify-center rounded-full transition-colors", muted ? "bg-text text-bg" : "bg-surface-2 text-text")}
+        className={cn("flex h-11 w-11 items-center justify-center rounded-full transition-colors", muted ? "bg-text text-bg" : "bg-surface-2 text-text")}
       >
         {muted ? <MicOff className="h-[18px] w-[18px]" /> : <Mic className="h-[18px] w-[18px]" />}
       </button>
       <button
         type="button"
         onClick={() => hangUp()}
-        className="flex h-10 items-center rounded-full bg-danger px-4 text-sm font-medium text-white"
+        className="flex h-11 items-center rounded-full bg-danger px-4 text-sm font-medium text-white"
         aria-label="End"
       >
         End

@@ -445,7 +445,7 @@ export function JarvisChat({
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40"
                 aria-label="Attach a file or screenshot"
                 title="Attach a screenshot, syllabus or text file"
                 disabled={!canSend}
@@ -478,14 +478,14 @@ export function JarvisChat({
                 }
                 disabled={!canSend}
                 aria-label={`Message ${assistantName}`}
-                className="max-h-48 min-h-10 flex-1 resize-none bg-transparent px-1.5 py-2 text-[1rem] leading-6 placeholder:text-muted [field-sizing:content]"
+                className="max-h-48 min-h-11 flex-1 resize-none bg-transparent px-1.5 py-2.5 text-[1rem] leading-6 placeholder:text-muted [field-sizing:content]"
               />
               {!busy && <VoiceButton assistantName={assistantName} disabled={!canSend} onStart={() => setTalking(true)} />}
               {busy ? (
                 <button
                   type="button"
                   onClick={() => abortRef.current?.abort()}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-text text-bg"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-text text-bg"
                   aria-label="Stop"
                 >
                   <Square className="h-3.5 w-3.5" />
@@ -494,7 +494,7 @@ export function JarvisChat({
                 <button
                   type="submit"
                   disabled={!canSend || (!input.trim() && !pending.some((p) => !p.uploading && !p.error))}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft transition-all active:scale-95 disabled:bg-surface-3 disabled:text-muted disabled:shadow-none"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft transition-all active:scale-95 disabled:bg-surface-3 disabled:text-muted disabled:shadow-none"
                   aria-label="Send"
                 >
                   <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.4} />

@@ -1,5 +1,5 @@
 import { createHash, generateKeyPairSync, sign } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { closeDb, getDb } from "@/server/db/client";
 import { connectionRegistry, financialAccounts, holdings, integrations, transactions } from "@/server/db/schema";
@@ -18,6 +18,7 @@ import {
 import { moneyOverview } from "@/server/services/finance/overview";
 import { listAccounts, listTurnedOffAccounts } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
+import { getTool } from "@/server/jarvis/registry";
 import { makeUser, TZ } from "../helpers";
 
 afterAll(closeDb);
@@ -157,14 +158,25 @@ describe("Plaid", () => {
     });
   });
 
-  it("explains when Plaid credentials do not match the selected environment", async () => {
-    const invalidKeys = (async () =>
-      new Response(JSON.stringify({ error_code: "INVALID_API_KEYS", display_message: null }), {
-        status: 400,
-        headers: { "content-type": "application/json" },
-      })) as typeof fetch;
-
-    await expect(createLinkToken("user-1", {}, invalidKeys)).rejects.toThrow(/credentials don't match the selected environment/i);
+  it("never names server settings or Plaid codes when a request is rejected; the details go to the server log", async () => {
+    const rejecting = (code: string) =>
+      (async () =>
+        new Response(JSON.stringify({ error_code: code, error_message: "client_id or secret invalid", display_message: null }), {
+          status: 400,
+          headers: { "content-type": "application/json" },
+        })) as typeof fetch;
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      for (const code of ["INVALID_API_KEYS", "INVALID_CLIENT_ID", "INVALID_FIELD"]) {
+        const err = await createLinkToken("user-1", {}, rejecting(code)).catch((e: Error) => e);
+        expect(err).toBeInstanceOf(Error);
+        expect((err as Error).message).toBe("The bank connection isn't available right now. Please try again later.");
+        expect((err as Error).message).not.toMatch(/PLAID_|Plaid|INVALID|secret|client/i);
+        expect(log).toHaveBeenCalledWith("[plaid]", "/link/token/create", 400, undefined, code, "client_id or secret invalid", undefined);
+      }
+    } finally {
+      log.mockRestore();
+    }
   });
 
   it("stores only an encrypted access token and registers the item for webhooks", async () => {
@@ -325,6 +337,33 @@ describe("Plaid", () => {
       kind: "expense",
     });
     expect(mapPfc({ primary: "RENT_AND_UTILITIES", detailed: "RENT_AND_UTILITIES_WATER" }, -3100)).toEqual({ category: "Utilities", kind: "expense" });
+  });
+
+  it("the sync tool tells the assistant the bank connection isn't available, never Plaid's setup text", async () => {
+    const { user, run } = await connected();
+    const tool = getTool("sync_bank_accounts")!;
+    const ctx = { userId: user.id, tz: TZ, today: "2026-10-28", now: new Date(), conversationId: "", userText: "", memorySuggestions: false, run };
+    const invalidKeys = (async () =>
+      new Response(JSON.stringify({ error_code: "INVALID_API_KEYS", display_message: null }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      })) as typeof fetch;
+    vi.stubGlobal("fetch", invalidKeys);
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      const out = (await tool.execute({}, ctx)) as { results: { ok: boolean; error?: string; needsReconnect?: boolean }[] };
+      expect(out.results).toEqual([
+        { bank: "First Platypus Bank", ok: false, error: "The bank connection isn't available right now. Please try again later.", needsReconnect: false },
+      ]);
+      expect(JSON.stringify(out)).not.toMatch(/PLAID_|INVALID_API_KEYS|Check /);
+      expect(log).toHaveBeenCalled();
+      // The Accounts page shows the same plain words.
+      const [row] = await run((s) => s.tx.select().from(integrations).where(eq(integrations.userId, user.id)));
+      expect(row.lastError).toBe("The bank connection isn't available right now. Please try again later.");
+    } finally {
+      log.mockRestore();
+      vi.unstubAllGlobals();
+    }
   });
 });
 

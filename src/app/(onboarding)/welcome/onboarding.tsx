@@ -108,7 +108,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <header className="flex h-10 items-center justify-between">
         {index > 0 ? (
-          <button onClick={() => go(-1)} className="-ml-2 rounded-full p-2 text-muted hover:text-text" aria-label="Back">
+          <button onClick={() => go(-1)} className="-ml-3 flex h-11 w-11 items-center justify-center rounded-full text-muted hover:text-text" aria-label="Back">
             <ArrowLeft className="h-5 w-5" />
           </button>
         ) : (
@@ -125,7 +125,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
             />
           ))}
         </div>
-        <button onClick={skipAll} disabled={pending} className="text-sm text-muted hover:text-text">
+        <button onClick={skipAll} disabled={pending} className="-mr-2 flex min-h-11 items-center rounded-full px-2 text-sm text-muted hover:text-text">
           Skip setup
         </button>
       </header>
@@ -251,7 +251,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
                       onClick={() => setName(n)}
                       aria-pressed={cleanName === n}
                       className={cn(
-                        "min-h-9 rounded-full px-3.5 text-sm transition-all",
+                        "min-h-11 rounded-full px-3.5 text-sm transition-all",
                         cleanName === n ? "bg-hero text-hero-text shadow-soft" : "bg-surface text-text-2 shadow-soft hover:text-text",
                       )}
                     >

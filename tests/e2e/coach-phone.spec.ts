@@ -114,7 +114,8 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
 
     const [{ id, inbox_token }] = (await pool.query("select id, inbox_token from users where email = $1", [email])).rows;
     await queryAsUser(email, "insert into inbox_senders (user_id, email, verified_at) values ($1, 'riley@gmail.com', now())", [id]);
-    const res = await page.request.post("/api/inbox/email?key=e2e-inbox-secret", {
+    const res = await page.request.post("/api/inbox/email", {
+      headers: { authorization: `Basic ${Buffer.from("inbox:e2e-inbox-secret").toString("base64")}` },
       data: {
         OriginalRecipient: `u-${inbox_token}@in.example.com`,
         FromFull: { Email: "riley@gmail.com" },

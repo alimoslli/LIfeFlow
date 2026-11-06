@@ -7,13 +7,17 @@ import { markHydrated, setSplashActive } from "./intro";
 const SESSION_KEY = "lf_splash_shown";
 /** The signed-in user's first name, remembered on this device for the greeting. */
 export const NAME_KEY = "lf_first_name";
+/** The user's time zone (Settings), remembered on this device so the greeting follows it, not the device clock. */
+export const TZ_KEY = "lf_tz";
 
 /**
  * Runs before first paint (inline in <body>): shows the splash once per
  * session, never with reduced motion, and not under automation (tests)
  * unless forced with ?splash=1. Uses a class on <html> so there's no flash.
+ * The greeting uses the hour in the user's time zone (TZ_KEY), or the device
+ * clock until the app has saved it on this device.
  */
-export const SPLASH_SCRIPT = `try{var q=location.search,s=sessionStorage;if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&(/[?&]splash=1/.test(q)||(!s.getItem("${SESSION_KEY}")&&!navigator.webdriver&&!/[?&]nosplash/.test(q)))){var r=document.documentElement,h=new Date().getHours(),n="";try{n=(localStorage.getItem("${NAME_KEY}")||"").slice(0,24)}catch(e){}r.style.setProperty("--lf-greet",JSON.stringify(h<5?"Up late":h<12?"Good morning":h<17?"Good afternoon":"Good evening"));r.style.setProperty("--lf-name",JSON.stringify(n||"Welcome back"));r.classList.add("lf-splash");s.setItem("${SESSION_KEY}","1")}}catch(e){}`;
+export const SPLASH_SCRIPT = `try{var q=location.search,s=sessionStorage;if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&(/[?&]splash=1/.test(q)||(!s.getItem("${SESSION_KEY}")&&!navigator.webdriver&&!/[?&]nosplash/.test(q)))){var r=document.documentElement,h=new Date().getHours(),n="";try{n=(localStorage.getItem("${NAME_KEY}")||"").slice(0,24)}catch(e){}try{var z=localStorage.getItem("${TZ_KEY}");if(z)h=+new Intl.DateTimeFormat("en-US",{hour:"numeric",hourCycle:"h23",timeZone:z}).format(new Date())%24}catch(e){}r.style.setProperty("--lf-greet",JSON.stringify(h<5?"Up late":h<12?"Good morning":h<17?"Good afternoon":"Good evening"));r.style.setProperty("--lf-name",JSON.stringify(n||"Welcome back"));r.classList.add("lf-splash");s.setItem("${SESSION_KEY}","1")}}catch(e){}`;
 
 const MIN_VISIBLE_MS = 1500;
 /** Never longer than this, even on a very slow connection. */
@@ -41,7 +45,7 @@ function pageReady() {
 /**
  * Opening screen: the official LifeFlow mark appears, then "Good morning" and
  * the user's first name rise into focus (CSS, set before first paint from the
- * device clock, so no flicker). It stays until the app has really loaded (the
+ * hour in the user's time zone, so no flicker). It stays until the app has really loaded (the
  * page's data is in, no loading placeholder, fonts and images done), so people
  * don't land on a half-loaded screen; at least 1.5s, never more than 8s. A CSS
  * failsafe hides it after 9.5s even if JavaScript never runs.

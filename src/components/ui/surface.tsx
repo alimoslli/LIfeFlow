@@ -130,7 +130,7 @@ export function Tabs({ items, current }: { items: { href: string; label: string;
           href={i.href}
           aria-current={i.key === current ? "page" : undefined}
           className={cn(
-            "flex min-h-10 flex-1 shrink-0 items-center justify-center rounded-full px-3.5 text-sm whitespace-nowrap transition-all",
+            "flex min-h-11 flex-1 shrink-0 items-center justify-center rounded-full px-3.5 text-sm whitespace-nowrap transition-all",
             i.key === current ? "bg-surface font-medium text-text shadow-soft" : "text-text-2 hover:text-text",
           )}
         >

@@ -249,7 +249,7 @@ export default async function WealthPage() {
           <Card className="p-5 text-sm text-text-2">
             <h2 className="mb-2 text-[0.8125rem] font-semibold tracking-wide uppercase">Synced investments</h2>
             Connect your brokerage, Roth IRA or crypto account on the{" "}
-            <Link href="/finances/accounts" className="text-accent">
+            <Link href="/finances/accounts" className="lf-hit text-accent">
               Accounts
             </Link>{" "}
             page. Balances and holdings then sync daily and are marked &quot;Synced&quot;. Some brokerages share balances only.

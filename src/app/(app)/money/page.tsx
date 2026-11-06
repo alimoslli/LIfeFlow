@@ -63,7 +63,7 @@ export default async function MoneyPage() {
           <p className="mt-1 text-sm text-muted">Then you&apos;ll see what you have, what you spent, and your bills.</p>
           <div className="mx-auto mt-5 flex max-w-sm flex-col items-center gap-3 text-left">
             <PlaidLinkButton configured={d.plaidReady} />
-            <Link href="/finances/accounts" className="text-sm font-medium text-accent">
+            <Link href="/finances/accounts" className="flex min-h-11 items-center text-sm font-medium text-accent">
               Or add an account yourself
             </Link>
           </div>
@@ -134,7 +134,10 @@ export default async function MoneyPage() {
               <p className="relative mt-2 text-sm opacity-80">In checking and cash. Savings are under Accounts.</p>
               {o.balances.creditOwedCents > 0 && (
                 // Cards: what's owed, and what checking would hold after paying them off.
-                <Link href="/finances/accounts" className="relative mt-3 flex items-center justify-between gap-3 rounded-2xl bg-white/10 px-3.5 py-2.5 text-sm">
+                <Link
+                  href="/finances/accounts"
+                  className="relative mt-3 flex min-h-11 items-center justify-between gap-3 rounded-2xl bg-white/10 px-3.5 py-2.5 text-sm"
+                >
                   <span>
                     Cards owed <span className="tabular font-medium">{whole(o.balances.creditOwedCents)}</span>
                   </span>

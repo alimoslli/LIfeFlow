@@ -110,6 +110,7 @@ test("APIs reject unauthenticated and cross-site requests", async ({ request, pa
   expect(cross.status()).toBe(403);
   const exp = await page.request.get("/api/export");
   expect(exp.status()).toBe(200);
+  expect(exp.headers()["content-disposition"]).toContain("lifeflow-export-");
   const body = await exp.json();
   expect(body.profile.name).toBe("Morgan Cross");
   expect(JSON.stringify(body)).not.toContain("encrypted_credentials");

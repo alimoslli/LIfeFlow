@@ -686,6 +686,18 @@ html[data-typing="true"] .lf-fab {
   min-width: 44px;
   min-height: 44px;
 }
+/* A 44×44 tap area around a small link that follows a sentence, without moving anything (an invisible hit area). */
+.lf-hit {
+  position: relative;
+}
+.lf-hit::after {
+  content: "";
+  position: absolute;
+  top: min(0px, calc((100% - 44px) / 2));
+  bottom: min(0px, calc((100% - 44px) / 2));
+  left: min(0px, calc((100% - 44px) / 2));
+  right: min(0px, calc((100% - 44px) / 2));
+}
 
 /* Touch screens: 44px targets for the shared controls, and 16px text in fields so iOS doesn't zoom in on focus. */
 @media (pointer: coarse) {
