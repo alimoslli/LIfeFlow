@@ -3,7 +3,7 @@ import { closeDb } from "@/server/db/client";
 import { makeToolContext } from "@/server/jarvis/agent";
 import { executeToolCall } from "@/server/jarvis/executor";
 import { createManualAccount } from "@/server/services/finance/accounts";
-import { createTransaction, findTransactions, queryTransactions, updateTransaction } from "@/server/services/finance/transactions";
+import { SEARCH_PAGE, createTransaction, findTransactions, queryTransactions, updateTransaction } from "@/server/services/finance/transactions";
 import { spendingSummary } from "@/server/services/finance/insights";
 import { makeUser, TZ } from "../helpers";
 
@@ -223,5 +223,56 @@ describe("review fixes", () => {
     const r = await u.run((s) => findTransactions(s, { search: "Zelle Omar Mousselli" }));
     expect(r.match).toBe("none");
     expect(r.closest.map((x) => x.description)).toEqual(["ZELLE TO OMAR HADDAD 5"]);
+  });
+});
+
+describe("second review fixes", () => {
+  it("M1: keyset paging returns every row once, in order, even when many share a date and creation time", async () => {
+    // One transaction inserts them all, so date and created_at tie across pages: only the id breaks the tie.
+    const n = SEARCH_PAGE * 2 + 300;
+    const u = await bank(Array.from({ length: n }, (_, i) => ({ daysAgo: 1 + Math.floor(i / 500), description: `ZELLE TO DANA REYES ${i}`, cents: 100 + i })));
+    const paged = await u.run((s) => queryTransactions(s, { search: "Dana Reyes", limit: 5000 }));
+    const plain = await u.run((s) => queryTransactions(s, { search: "Dana Reyes", phrase: true, limit: 5000 }));
+    expect(paged).toHaveLength(n);
+    expect(new Set(paged.map((r) => r.id)).size).toBe(n);
+    expect(paged.map((r) => r.id)).toEqual(plain.map((r) => r.id));
+    // A row added after the first read (a sync) shows up once and moves nothing else.
+    await u.run(async (s) => {
+      const acct = (await s.tx.query.financialAccounts.findFirst())!;
+      await createTransaction(s, { accountId: acct.id, date: daysAgo(0), description: "ZELLE TO DANA REYES NEW", amountCents: -1 });
+    });
+    const after = await u.run((s) => queryTransactions(s, { search: "Dana Reyes", limit: 5000 }));
+    expect(after).toHaveLength(n + 1);
+    expect(new Set(after.map((r) => r.id)).size).toBe(n + 1);
+  }, 120_000);
+
+  it("L1: totals report the unconfirmed amount apart", async () => {
+    const u = await bank([
+      { daysAgo: 3, description: "ZELLE TO MOUSSELLI OMAR 1", cents: 4000 },
+      { daysAgo: 6, description: "ZELLE TO OMAR MOUSSEL", cents: 5000 },
+      { daysAgo: 7, description: "ZELLE TO OMAR M 4412", cents: 3500 },
+    ]);
+    const sum = await u.run((s) => spendingSummary(s, { from: daysAgo(30), to: daysAgo(0), search: "Omar Mousselli" }));
+    expect(sum.netSpendingCents).toBe(4000);
+    expect(sum.unconfirmed).toEqual({ count: 2, cents: 8500 });
+    const none = await u.run((s) => spendingSummary(s, { from: daysAgo(30), to: daysAgo(0) }));
+    expect(none.unconfirmed).toEqual({ count: 0, cents: 0 });
+  });
+
+  it("L2: a curly apostrophe or backtick in stored text is ignored like the straight one", async () => {
+    const u = await bank([
+      { daysAgo: 3, description: "RISTORANTE 1", cents: 1800, notes: "dinner at L\u2019Osteria" },
+      { daysAgo: 4, description: "ZELLE 2", cents: 500, notes: "to O`Brien" },
+    ]);
+    expect((await tool(u, { search: "Osteria" })).count).toBe(0); // joined word is "losteria"
+    expect((await tool(u, { search: "L'Osteria" })).count).toBe(1);
+    expect((await tool(u, { search: "OBrien" })).count).toBe(1);
+  });
+
+  it("L3: Nichola is not sure to be Nicholas", async () => {
+    const u = await bank([{ daysAgo: 3, description: "ZELLE TO NICHOLAS ROSS 9", cents: 500 }]);
+    const d = await tool(u, { search: "Nichola Ross" });
+    expect(d.transactions.map((t) => t.sure)).toEqual([false]);
+    expect(d.matchType).toBe("similar");
   });
 });

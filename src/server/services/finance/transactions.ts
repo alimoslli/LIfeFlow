@@ -9,7 +9,7 @@ import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound, ServiceError } from "../errors";
 import { listCategories, resolveCategory } from "./categories";
 import { cleanVendorName } from "@/lib/vendor";
-import { ACCENT_FROM, ACCENT_TO, P2P_NEEDLES, parseSearch, prefilterNeedles, scoreRow } from "@/lib/txn-search";
+import { ACCENT_FROM, ACCENT_TO, IGNORED_MARKS, P2P_NEEDLES, parseSearch, prefilterNeedles, scoreRow } from "@/lib/txn-search";
 import { autoCategorize, learnCategoryRule } from "./categorize";
 import { parsePatch } from "../patch";
 
@@ -163,17 +163,17 @@ const anyTextLike = (needle: string) => {
 const foldedLike = (needle: string) => {
   const p = `%${likeEscape(needle)}%`;
   const fold = (col: typeof transactions.description | typeof transactions.merchantName | typeof transactions.notes) =>
-    sql`translate(replace(lower(coalesce(${col}, '')), '''', ''), ${ACCENT_FROM}, ${ACCENT_TO}) like ${p}`;
+    sql`translate(translate(lower(coalesce(${col}, '')), ${IGNORED_MARKS}, ''), ${ACCENT_FROM}, ${ACCENT_TO}) like ${p}`;
   return or(fold(transactions.description), fold(transactions.merchantName), fold(transactions.notes))!;
 };
 
 /** The forgiving search reads candidates in pages of this size, up to a hard cap, until it has enough matches. */
-const SEARCH_PAGE = 1000;
+export const SEARCH_PAGE = 1000;
 const SEARCH_SCAN_CAP = 20000;
 /** Person-to-person lookups only look this far back. */
 const P2P_LOOKBACK = sql`(current_date - interval '2 years')`;
 
-async function selectRows(scope: UserScope, conds: ReturnType<typeof eq>[], limit: number, offset = 0) {
+async function selectPage(scope: UserScope, conds: ReturnType<typeof eq>[], limit: number, after?: { date: string; createdAt: string; id: string }) {
   const rows = await scope.tx
     .select({
       t: transactions,
@@ -184,15 +184,23 @@ async function selectRows(scope: UserScope, conds: ReturnType<typeof eq>[], limi
       accountMask: financialAccounts.mask,
       categoryName: categories.name,
       categoryColor: categories.color,
+      // Full-precision text for the paging cursor (a JS Date would cut the microseconds).
+      createdAtRaw: sql<string>`${transactions.createdAt}::text`,
     })
     .from(transactions)
     .innerJoin(financialAccounts, eq(financialAccounts.id, transactions.accountId))
     .leftJoin(categories, eq(categories.id, transactions.categoryId))
-    .where(and(...conds))
+    .where(
+      and(
+        ...conds,
+        after
+          ? sql`(${transactions.date}, ${transactions.createdAt}, ${transactions.id}) < (${after.date}::date, ${after.createdAt}::timestamptz, ${after.id}::uuid)`
+          : undefined,
+      ),
+    )
     .orderBy(desc(transactions.date), desc(transactions.createdAt), desc(transactions.id))
-    .limit(limit)
-    .offset(offset);
-  return rows.map((r) => ({
+    .limit(limit);
+  const mapped = rows.map((r) => ({
     ...r.t,
     /** false only for forgiving-search rows that matched through a shortened name, an initial or a typo. */
     sure: true,
@@ -203,6 +211,12 @@ async function selectRows(scope: UserScope, conds: ReturnType<typeof eq>[], limi
     categoryName: r.categoryName,
     categoryColor: r.categoryColor,
   }));
+  const last = rows[rows.length - 1];
+  return { rows: mapped, last: last ? { date: last.t.date, createdAt: last.createdAtRaw, id: last.t.id } : undefined };
+}
+
+async function selectRows(scope: UserScope, conds: ReturnType<typeof eq>[], limit: number) {
+  return (await selectPage(scope, conds, limit)).rows;
 }
 
 /** Every filter except the text search. */
@@ -244,13 +258,20 @@ export async function queryTransactions(scope: UserScope, q: TransactionQuery = 
   const { terms } = parsed;
   conds.push(or(...prefilterNeedles(terms).map(foldedLike))!);
   const out: Awaited<ReturnType<typeof selectRows>> = [];
-  for (let offset = 0; offset < SEARCH_SCAN_CAP && out.length < limit; offset += SEARCH_PAGE) {
-    const page = await selectRows(scope, conds, SEARCH_PAGE, offset);
-    for (const r of page) {
+  // Keyset paging (date, created, id) in the same newest-first order: a row inserted or removed between pages
+  // (a sync) can't shift later pages, and the seen set means no row is ever counted twice.
+  const seen = new Set<string>();
+  let after: { date: string; createdAt: string; id: string } | undefined;
+  for (let scanned = 0; scanned < SEARCH_SCAN_CAP && out.length < limit; scanned += SEARCH_PAGE) {
+    const page = await selectPage(scope, conds, SEARCH_PAGE, after);
+    for (const r of page.rows) {
+      if (seen.has(r.id)) continue;
+      seen.add(r.id);
       const m = scoreRow(terms, r);
       if (m.all && (m.sure || !q.sureOnly)) out.push({ ...r, sure: m.sure });
     }
-    if (page.length < SEARCH_PAGE) break;
+    if (page.rows.length < SEARCH_PAGE || !page.last) break;
+    after = page.last;
   }
   return out.slice(0, limit);
 }

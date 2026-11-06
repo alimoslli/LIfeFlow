@@ -59,13 +59,15 @@ export type ParsedSearch = {
 const EXTRA_FOLD: Record<string, string> = { ł: "l", ø: "o", đ: "d", ð: "d", æ: "ae", œ: "oe", ß: "ss", ı: "i", þ: "th" };
 /** The same accent folding for SQL `translate()` (stored text is not folded in the database). */
 export const ACCENT_FROM = "áàâäãåāéèêëēíìîïīóòôöõōøúùûüūñçýÿšžłđ";
+/** Marks the matcher deletes so names join up (L'Osteria, O'BRIEN); SQL deletes the same ones. */
+export const IGNORED_MARKS = "'\u2019`";
 export const ACCENT_TO = "aaaaaaaeeeeeiiiiiooooooouuuuuncyyszld";
 
 export function words(s: string | null | undefined): string[] {
   if (!s) return [];
   const folded = s
     .toLowerCase()
-    .replace(/['\u2019`]/g, "") // O'BRIEN is one name
+    .replace(/['\u2019`]/g, "") // O'BRIEN is one name (keep in step with IGNORED_MARKS)
     .replace(/cash\s*app/g, "cashapp")
     .replace(/[łøđðæœßıþ]/g, (c) => EXTRA_FOLD[c]);
   return normalizeText(folded).split(" ").filter(Boolean);
@@ -87,10 +89,10 @@ export function parseSearch(search: string): ParsedSearch {
 
 export type SearchRow = { description?: string | null; merchantName?: string | null; notes?: string | null };
 
-/** 2 = the same word (or its plural), 1 = a shortened bank word of 5+ letters ("MOUSSEL" for "mousselli"), 0 = no match. "samir" is not "samira"; "omar" is not "OMARKET". */
-export function wordKind(term: string, w: string): 0 | 1 | 2 {
+/** 2 = the same word, 3 = its plural (sure for merchants, not for people: Nichola is not Nicholas), 1 = a shortened bank word of 5+ letters ("MOUSSEL" for "mousselli"), 0 = no match. "samir" is not "samira"; "omar" is not "OMARKET". */
+export function wordKind(term: string, w: string): 0 | 1 | 2 | 3 {
   if (w === term) return 2;
-  if (term.length >= 4 && w.length >= 4 && (w === term + "s" || w === term + "es" || term === w + "s" || term === w + "es")) return 2;
+  if (term.length >= 4 && w.length >= 4 && (w === term + "s" || w === term + "es" || term === w + "s" || term === w + "es")) return 3;
   if (w.length >= 5 && term.length > w.length && term.startsWith(w)) return 1;
   return 0;
 }
@@ -135,22 +137,24 @@ export const FUZZY_THRESHOLD = 0.6;
 
 type Hit = { field: number; index: number };
 
-function matchTerm(term: string, fields: string[][], fuzzy: boolean): { score: number; strong: boolean; hit?: Hit } {
+function matchTerm(term: string, fields: string[][], fuzzy: boolean): { score: number; strong: boolean; plural: boolean; hit?: Hit } {
   let best = 0;
   let strong = false;
+  let plural = false;
   let hit: Hit | undefined;
   fields.forEach((ws, field) =>
     ws.forEach((w, index) => {
       const k = wordKind(term, w);
-      const s = k === 2 ? 1 : k === 1 ? 0.95 : fuzzy ? similarity(term, w) : 0;
-      if (s > best) {
+      const s = k >= 2 ? 1 : k === 1 ? 0.95 : fuzzy ? similarity(term, w) : 0;
+      if (s > best || (s === best && k === 2 && !strong)) {
         best = s;
         strong = k === 2;
+        plural = k === 3;
         hit = { field, index };
       }
     }),
   );
-  return { score: best, strong, hit };
+  return { score: best, strong, plural, hit };
 }
 
 /**
@@ -181,10 +185,11 @@ export function scoreRow(terms: string[], row: SearchRow, fuzzy = false): { scor
     });
   }
   const all = ok.every(Boolean);
+  const p2p = fields.flat().some((w) => APPS.has(w));
   return {
     score: results.reduce((s, r) => s + r.score, 0) / results.length,
     all,
-    sure: all && !fuzzy && results.every((r, i) => r.strong && !viaInitial.has(i)),
+    sure: all && !fuzzy && results.every((r, i) => (r.strong || (r.plural && !p2p)) && !viaInitial.has(i)),
   };
 }
 

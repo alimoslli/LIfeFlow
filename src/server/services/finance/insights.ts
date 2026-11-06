@@ -10,7 +10,11 @@ import { queryTransactions, type TransactionQuery } from "./transactions";
 
 /** Everything Jarvis needs to answer "how much did I spend/earn on X between A and B". */
 export async function spendingSummary(scope: UserScope, q: TransactionQuery & { from: string; to: string }) {
-  const txns = await queryTransactions(scope, { ...q, sureOnly: true, limit: 5000 }); // totals use the same all-words match as lookups, without shortened names, initials or typos
+  const found = await queryTransactions(scope, { ...q, limit: 5000 });
+  // Totals count only rows that matched as the same words; the rest (a shortened name, an initial) are reported apart.
+  const txns = found.filter((t) => t.sure);
+  const unsure = found.filter((t) => !t.sure);
+  const unconfirmed = { count: unsure.length, cents: unsure.reduce((n, t) => n + Math.max(0, -t.amountCents), 0) };
   const cats = await listCategories(scope);
   const summary = summarizeCashflow(txns);
   const byCategory = rollupToParents(spendingByCategoryId(txns), cats).slice(0, 10);
@@ -28,6 +32,7 @@ export async function spendingSummary(scope: UserScope, q: TransactionQuery & { 
     range: { from: q.from, to: q.to, days: daysBetween(q.from, q.to) + 1 },
     filters: { category: q.categoryName ?? null, search: q.search ?? null, accountId: q.accountId ?? null },
     ...summary,
+    unconfirmed,
     topCategories: byCategory,
     topMerchants: [...merchants.values()].sort((a, b) => b.cents - a.cents).slice(0, 8),
     dataSources: sources,

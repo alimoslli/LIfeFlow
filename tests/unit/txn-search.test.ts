@@ -122,3 +122,15 @@ describe("Cash App and folding (M2, L2)", () => {
     expect(ACCENT_FROM.length).toBe(ACCENT_TO.length);
   });
 });
+
+describe("plural rule and people (L3)", () => {
+  it("a plural is sure for merchants but not for people", () => {
+    expect(sure("Nichola Ross", "ZELLE TO NICHOLAS ROSS")).toMatchObject({ all: true, sure: false });
+    expect(sure("Nichola Ross", "VENMO PAYMENT NICHOLAS ROSS")).toMatchObject({ all: true, sure: false });
+    expect(sure("starbuck", "STARBUCKS 1")).toMatchObject({ all: true, sure: true });
+    expect(sure("Omar Mousselli", "ZELLE TO MOUSSELLI OMAR")).toMatchObject({ sure: true });
+  });
+  it("ignores the same marks as the SQL fold", () => {
+    expect(words("L\u2019Osteria `x")).toEqual(["losteria", "x"]);
+  });
+});
