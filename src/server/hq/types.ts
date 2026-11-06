@@ -1,3 +1,4 @@
+import type { HqContentKind, HqContentStatus, HqNetwork, HqRoundSwitches } from "../db/schema";
 import type { HqLink, HqRole } from "../db/schema";
 import type { EmployeeState } from "./state";
 
@@ -144,3 +145,51 @@ export type WeeklySummary = {
   /** Plain lines the HQ Assistant puts at the top, built from the numbers above (no AI). */
   headline: string[];
 };
+
+// --- marketing and controls (ADR 0025) -----------------------------------------------------------------------------
+
+export type ContentItem = {
+  id: string;
+  kind: HqContentKind;
+  title: string;
+  hook: string | null;
+  body: string | null;
+  platforms: HqNetwork[];
+  status: HqContentStatus;
+  scheduledFor: Date | null;
+  publishedUrl: string | null;
+  externalId: string | null;
+  links: HqLink[];
+  approvalId: string | null;
+  sessionId: string | null;
+  source: "owner" | "agent" | "import";
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+/** One network's latest real readings. Empty `latest` means no numbers have arrived for it yet. */
+export type NetworkPerformance = {
+  network: HqNetwork;
+  latest: { metric: string; value: number; takenOn: string; previous: number | null }[];
+  asOf: string | null; // yyyy-mm-dd of the newest reading
+};
+
+export type MarketingView = {
+  now: Date;
+  /** Scheduled, approved or waiting items dated in the next 14 days, soonest first (max 30). */
+  week: ContentItem[];
+  /** Drafts and ideas with no date yet, newest first (max 20). */
+  unscheduled: ContentItem[];
+  /** Items waiting for the owner's yes, with their publish approval (max 20). */
+  waiting: { content: ContentItem; approval: Approval | null }[];
+  /** Sourced research findings, newest first (max 20). */
+  research: ContentItem[];
+  /** Published in the last 30 days, newest first (max 20). */
+  published: ContentItem[];
+  /** Every network in HQ_NETWORKS, in that order. */
+  performance: NetworkPerformance[];
+};
+
+export type HqControls = { autonomous: boolean; rounds: HqRoundSwitches; creditBudget: number; updatedAt: Date | null; updatedByEmail: string | null };
+
+export type MarketingWeek = { drafted: number; approved: number; scheduled: number; published: number };

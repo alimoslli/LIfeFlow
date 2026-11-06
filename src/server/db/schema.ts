@@ -1684,3 +1684,75 @@ export const hqKeys = pgTable(
   },
   (t) => [uniqueIndex("hq_keys_hash_uq").on(t.tokenHash)],
 );
+
+// ---------------------------------------------------------------------------
+// LifeFlow HQ marketing and controls (ADR 0025). Same rules as the hq_* tables above: owner operations data, no
+// user_id, no RLS, reached only through the HQ services after requireAdmin() or with an HQ key. Marketing numbers are
+// only ever real readings a chat sent (from Metricool); nothing here is estimated.
+
+export const HQ_CONTENT_STATUSES = ["idea", "draft", "waiting", "approved", "scheduled", "published", "dropped"] as const;
+export type HqContentStatus = (typeof HQ_CONTENT_STATUSES)[number];
+export const HQ_CONTENT_KINDS = ["concept", "script", "post", "research"] as const;
+export type HqContentKind = (typeof HQ_CONTENT_KINDS)[number];
+export const HQ_NETWORKS = ["instagram", "tiktok", "youtube", "facebook", "linkedin"] as const;
+export type HqNetwork = (typeof HQ_NETWORKS)[number];
+
+/** Marketing content and research: concepts, scripts, posts (with their schedule) and sourced findings. */
+export const hqContent = pgTable(
+  "hq_content",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    kind: text("kind").$type<HqContentKind>().notNull(),
+    title: text("title").notNull(),
+    hook: text("hook"),
+    /** Script, storyboard, caption and call to action, or the finding for research. Plain text. */
+    body: text("body"),
+    platforms: jsonb("platforms").$type<HqNetwork[]>().notNull().default([]),
+    status: text("status").$type<HqContentStatus>().notNull().default("draft"),
+    scheduledFor: tstz("scheduled_for"),
+    publishedUrl: text("published_url"),
+    /** The id the scheduling tool (Metricool) gave the post. */
+    externalId: text("external_id"),
+    /** Assets and sources. */
+    links: jsonb("links").$type<HqLink[]>().notNull().default([]),
+    /** The "publish" approval for this item, when one was asked for. */
+    approvalId: uuid("approval_id").references(() => hqApprovals.id, { onDelete: "set null" }),
+    sessionId: text("session_id"),
+    source: text("source").$type<HqSource>().notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("hq_content_status_idx").on(t.status, t.scheduledFor), index("hq_content_kind_idx").on(t.kind, t.createdAt)],
+);
+
+/** Real marketing numbers, one reading per day, network and metric (and optionally one post). */
+export const hqMetrics = pgTable(
+  "hq_metrics",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    takenOn: date("taken_on").notNull(),
+    network: text("network").$type<HqNetwork>().notNull(),
+    metric: text("metric").notNull(),
+    value: numeric("value", { mode: "number" }).notNull(),
+    contentId: uuid("content_id").references(() => hqContent.id, { onDelete: "set null" }),
+    /** contentId as text or "" (so a reading for the whole account and one for a post can both be unique). */
+    contentRef: text("content_ref").notNull().default(""),
+    source: text("source").notNull().default("metricool"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("hq_metrics_reading_uq").on(t.takenOn, t.network, t.metric, t.contentRef), index("hq_metrics_network_idx").on(t.network, t.takenOn)],
+);
+
+export type HqRoundSwitches = { night: boolean; research: boolean; marketing: boolean };
+
+/** One row (id "hq"): the owner's controls that every round reads through /api/hq/inbox. */
+export const hqSettings = pgTable("hq_settings", {
+  id: text("id").primaryKey().default("hq"),
+  /** Off = every scheduled round skips. */
+  autonomous: boolean("autonomous").notNull().default(true),
+  rounds: jsonb("rounds").$type<HqRoundSwitches>().notNull().default({ night: true, research: true, marketing: true }),
+  /** Higgsfield credits the marketing round may spend in a week without asking. 0 = always ask. */
+  creditBudget: integer("credit_budget").notNull().default(0),
+  updatedByEmail: text("updated_by_email"),
+  updatedAt: updatedAt(),
+});
