@@ -189,3 +189,32 @@ Every status line says "as of [time]". HQ never invents activity.
 - A non-admin and a signed-out visitor both get a 404.
 - Opening HQ makes no AI calls: there are no OpenAI or Anthropic requests in server logs or `jarvis_runs`.
 - `git log` on main and on LF V3's branch is untouched.
+
+## Design reference (added 2026-11-06, the owner's concept image)
+`docs/hq/concept.webp`. What Phase 1 takes from it:
+- **Layout:**
+  - a left menu with HQ first;
+  - "Good evening" with the status counts (working, waiting, asleep);
+  - three tiles: Needs your approval, Done this week and Weekly AI budget against the 50% ceiling;
+  - the office scene in the middle;
+  - Approvals cards on the right, each with Review and Later;
+  - Recent activity on the right;
+  - this week's missions along the bottom;
+  - on phones, all of it stacks into one column.
+- **Look:**
+  - a two-floor cutaway with a desk room per person upstairs and beds downstairs;
+  - a lounge, warm lamps, plants and the eucalyptus green in dark and light themes;
+  - each room has a name plate and a status chip.
+
+What changes, so it stays true to the brief and the plan:
+- **Five rooms, not six:** Developer, Designer / V3, Researcher, Marketing and HQ Assistant (the concept's "Chief of Staff"). Community and Business Ops are tools of Marketing, not separate people (brief section 2).
+- **Only real data.**
+  - The concept's numbers, the "Simulated usage" label, the tasks on the screens and the comments and DMs replied to are examples only.
+  - HQ shows real records or a plain empty line.
+  - The budget tile shows the measured weekly share once check-ins send it, and "not measured yet" before then.
+- **Drawn, not rendered.** The scene is lightweight SVG and CSS in the concept's spirit (flatter, simpler figures), so it costs nothing to run and every state is real. Painted, rendered art like the concept would need generated images, which cost credits, so that is the owner's call later.
+- **Menu items appear only when they work:**
+  - "Inbox" is the Approvals inbox;
+  - "Calendar" waits for Phase 3 (marketing);
+  - "Agents" is the conversations list;
+  - the "Autonomous mode" switch waits for Phase 2, when rounds read it.
