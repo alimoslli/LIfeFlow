@@ -15,3 +15,5 @@ src/server/jarvis/skills/index.generated.ts
 docs/situations/**/*.json
 # Agent worktrees (copies of the repo)
 .claude/worktrees/
+# Review harness scripts (kept as written)
+docs/situations/eval/
