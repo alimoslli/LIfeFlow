@@ -39,6 +39,7 @@ test("HQ is owner-only: signed out is sent to sign in, everyone else gets a 404"
 
 test("HQ: the office, missions, approvals, reports and keys work end to end", async ({ browser, request }) => {
   test.setTimeout(150_000);
+  await pool.query("truncate hq_missions, hq_approvals, hq_activity, hq_keys, hq_chats, hq_usage_samples cascade");
   const op = await ownerPage(browser);
 
   // The office: six rooms, the founder's door plate, and plain counts.
@@ -47,7 +48,7 @@ test("HQ: the office, missions, approvals, reports and keys work end to end", as
   const rooms = op.locator("a.hq-room");
   await expect(rooms).toHaveCount(6);
   await expect(op.getByText("I'M THE CEO, BITCH", { exact: true })).toBeVisible();
-  await expect(op.getByRole("link", { name: /^Developer, \w[\w ]*: / })).toBeVisible();
+  await expect(op.getByRole("link", { name: /^Developer\s*,\s*[\w ]+\s*:\s*\S/ })).toBeVisible();
   await expect(op.getByText("Nothing waiting for you.").first()).toBeVisible();
 
   // Office <-> Workspace.
@@ -95,7 +96,7 @@ test("HQ: the office, missions, approvals, reports and keys work end to end", as
     .catch(() => undefined);
   await op.goto("/admin/hq/settings");
   await expect(op.getByTestId("hq-new-key")).toHaveCount(0);
-  await expect(op.getByText("e2e rounds")).toBeVisible();
+  await expect(op.getByText("e2e rounds").first()).toBeVisible();
 
   // An agent files an approval with the key; it appears in the inbox and the owner says yes.
   const posted = await request.post("/api/hq/report", {
@@ -105,7 +106,7 @@ test("HQ: the office, missions, approvals, reports and keys work end to end", as
   expect(posted.status()).toBe(200);
   await op.goto("/admin/hq/approvals");
   const card = op.locator("article", { hasText: "Ship the calendar fix" });
-  await expect(card.getByText("Go live")).toBeVisible();
+  await expect(card.getByText("Go live", { exact: true })).toBeVisible();
   await expect(card.getByText(/acts on it at their next round/)).toBeVisible();
   await card.getByLabel("Note (optional)").fill("Go ahead");
   await card.getByRole("button", { name: "Yes" }).click();

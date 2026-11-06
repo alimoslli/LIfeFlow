@@ -84,8 +84,8 @@ export default async function HqHome({ searchParams }: { searchParams: Promise<{
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
-        <div className="min-w-0 lg:order-1">
+      <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_21rem] 2xl:items-start">
+        <div className="min-w-0 2xl:order-1">
           {view === "office" ? (
             <OfficeScene snapshot={s} />
           ) : (
@@ -129,7 +129,7 @@ export default async function HqHome({ searchParams }: { searchParams: Promise<{
           )}
         </div>
 
-        <aside className="flex min-w-0 flex-col gap-5 lg:order-2">
+        <aside className="grid min-w-0 content-start gap-5 md:grid-cols-2 md:items-start 2xl:order-2 2xl:grid-cols-1">
           <Section
             title="Needs your yes"
             action={

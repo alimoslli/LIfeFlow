@@ -59,26 +59,24 @@ function Hair({ who, sleeping }: { who: Who; sleeping: boolean }) {
   switch (who) {
     case "founder":
       return (
+        // Tousled curls on top, a curly fringe falling over the forehead, short sides (the owner's look).
         <g fill={c}>
-          <path d="M-23 4C-27-18-12-27 0-27S27-18 23 4C20-6 14-12 0-12S-20-6-23 4Z" />
+          <path d="M-22 0C-25-17-12-25 0-25S25-17 22 0C20-8 15-13 0-13S-20-8-22 0Z" />
           {[
-            [-20, -14, 8],
-            [-13, -22, 8.5],
-            [-4, -26, 8.5],
-            [6, -26, 8.5],
-            [15, -21, 8],
-            [21, -12, 7.5],
-            [-24, -3, 6],
-            [24, -3, 6],
-            [-14, -10, 5.5],
-            [-6, -12, 5.5],
-            [3, -13, 5.5],
-            [11, -11, 5.5],
-            [17, -7, 4.5],
-            [-19, -6, 4.5],
+            [-17, -18, 7],
+            [-8, -24, 8],
+            [3, -26, 8.5],
+            [13, -22, 7.5],
+            [19, -14, 6],
+            [-21, -10, 5],
+            [-13, -12, 5],
+            [-5, -13, 5.5],
+            [4, -13, 5.5],
+            [12, -12, 5],
           ].map(([x, y, r], i) => (
             <circle key={i} cx={x} cy={y} r={r} />
           ))}
+          <path d="M-9-10q-3 4 1 6M1-10q-2 4 2 5.5M9-10q2 4-1 6" stroke={c} strokeWidth="2.4" strokeLinecap="round" fill="none" />
         </g>
       );
     case "designer":
@@ -157,15 +155,15 @@ function Accessories({ who }: { who: Who }) {
       );
     case "founder":
       return (
+        // Black sunglasses pulled down the nose (eyes show above), tiny silver details at the hinges.
         <g>
-          <path d="M-5 3.6Q0 1.6 5 3.6" stroke={v("shades")} strokeWidth="2.2" fill="none" strokeLinecap="round" />
-          <rect x="-19" y="3.4" width="15.5" height="9.2" rx="3.2" fill={v("shades")} />
-          <rect x="3.5" y="3.4" width="15.5" height="9.2" rx="3.2" fill={v("shades")} />
-          <path d="M-16.5 5.6h7M6 5.6h7" stroke="#fff" strokeWidth="1.1" strokeLinecap="round" opacity=".28" />
-          <circle cx="-19.2" cy="5.4" r="1.3" fill="#d7dbe0" />
-          <circle cx="19.2" cy="5.4" r="1.3" fill="#d7dbe0" />
-          <circle cx="-19.2" cy="5.4" r=".5" fill="#8d949c" />
-          <circle cx="19.2" cy="5.4" r=".5" fill="#8d949c" />
+          <path d="M-2.5 6.2Q0 4.6 2.5 6.2" stroke={v("shades")} strokeWidth="1.6" fill="none" strokeLinecap="round" />
+          <rect x="-16.5" y="4.2" width="14" height="6.6" rx="2.2" fill={v("shades")} />
+          <rect x="2.5" y="4.2" width="14" height="6.6" rx="2.2" fill={v("shades")} />
+          <path d="M-14.3 5.9h5.5M4.8 5.9h5.5" stroke="#fff" strokeWidth=".9" strokeLinecap="round" opacity=".3" />
+          <path d="M-16.5 5.4L-21 3.6M16.5 5.4L21 3.6" stroke={v("shades")} strokeWidth="1.4" strokeLinecap="round" />
+          <circle cx="-16.6" cy="5.3" r="1.1" fill="#d7dbe0" />
+          <circle cx="16.6" cy="5.3" r="1.1" fill="#d7dbe0" />
         </g>
       );
     default:
@@ -182,9 +180,15 @@ export function Head({ who, sleeping = false }: { who: Who; sleeping?: boolean }
       <circle r="22" fill={v("skin")} />
       <Hair who={who} sleeping={sleeping} />
       <Eyes who={who} closed={sleeping} />
-      <circle cx="-13" cy="8" r="3.6" fill={v("blush")} opacity=".55" />
-      <circle cx="13" cy="8" r="3.6" fill={v("blush")} opacity=".55" />
-      <path d={sleeping ? "M-3 12q3 2 6 0" : "M-4 11q4 4 8 0"} stroke={v("ink")} strokeWidth="1.6" strokeLinecap="round" fill="none" />
+      <circle cx={who === "founder" ? -15 : -13} cy={who === "founder" ? 12 : 8} r="3.4" fill={v("blush")} opacity=".55" />
+      <circle cx={who === "founder" ? 15 : 13} cy={who === "founder" ? 12 : 8} r="3.4" fill={v("blush")} opacity=".55" />
+      <path
+        d={sleeping ? "M-3 12q3 2 6 0" : who === "founder" ? "M-3.5 15.2q3.5 2.6 7 0" : "M-4 11q4 4 8 0"}
+        stroke={v("ink")}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        fill="none"
+      />
       {!sleeping && <Accessories who={who} />}
     </g>
   );

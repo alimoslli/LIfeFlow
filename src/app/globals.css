@@ -1135,8 +1135,8 @@ input[type="checkbox"].lf-switch:focus-visible {
   gap: 0.5rem;
   padding: 0.35rem 1rem;
   border-radius: 0.75rem;
-  background: var(--hq-wall);
-  color: var(--hq-ink);
+  background: var(--hq-paper);
+  color: #3a2d22;
   font-family: var(--font-display, serif);
   font-size: 1.125rem;
   font-weight: 500;
