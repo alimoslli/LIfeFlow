@@ -5,11 +5,20 @@
  * Pure and conservative: it only removes what's clearly bank noise, and a clean name stays as it is.
  */
 
-/** Well-known merchants: the statement pattern, and the name to show. Order matters: specific first. */
+/**
+ * Well-known merchants: the statement pattern, and the name to show. Order matters: specific first. A pattern
+ * matches only that merchant: a shared word (Southwest Gas and Southwest Airlines, Costco's gas station and its
+ * warehouse) or one company's separate services (Verizon Fios and Verizon Wireless) are different merchants, with
+ * their own bills, categories and rules.
+ */
 const BRANDS: [RegExp, string][] = [
   [/amazon prime|prime video|amzn prime/, "Amazon Prime"],
+  [/amazon web services|\baws\b/, "Amazon Web Services"],
+  [/amazon fresh/, "Amazon Fresh"],
+  [/amazon music/, "Amazon Music"],
   [/amzn|amazon/, "Amazon"],
-  [/apple\.com\/bill|apple com bill|itunes|apple store|apple cash/, "Apple"],
+  [/apple cash/, "Apple Cash"],
+  [/apple\.com\/bill|apple com bill|itunes|apple store/, "Apple"],
   [/google \*?(?:storage|one)|google play|goog\*/, "Google"],
   [/uber ?eats/, "Uber Eats"],
   [/\buber\b/, "Uber"],
@@ -22,7 +31,8 @@ const BRANDS: [RegExp, string][] = [
   [/hulu/, "Hulu"],
   [/disney ?(?:\+|plus)/, "Disney+"],
   [/hbo ?max|\bmax\.com/, "Max"],
-  [/youtube ?(?:premium|tv)?/, "YouTube"],
+  [/youtube ?tv/, "YouTube TV"],
+  [/youtube ?(?:premium)?/, "YouTube"],
   [/chat ?gpt|openai/, "OpenAI"],
   [/adobe/, "Adobe"],
   [/starbucks/, "Starbucks"],
@@ -36,32 +46,39 @@ const BRANDS: [RegExp, string][] = [
   [/burger king/, "Burger King"],
   [/panera/, "Panera"],
   [/domino'?s/, "Domino's"],
-  [/subway(?! station)/, "Subway"],
+  // The sandwich shop, not a subway fare ("MTA*NYCT PAYGO SUBWAY").
+  [/^(?!.*\b(?:mta|nyct|transit|metro|bart|septa|marta|cta|wmata)\b).*\bsubway\b(?! station| fare)/, "Subway"],
   [/walmart|wal-mart/, "Walmart"],
   [/\btarget\b/, "Target"],
+  [/costco (?:gas|fuel)/, "Costco Gas"],
   [/costco/, "Costco"],
   [/trader joe/, "Trader Joe's"],
   [/whole foods/, "Whole Foods"],
+  [/kroger fuel|kroger gas/, "Kroger Fuel"],
   [/kroger/, "Kroger"],
   [/publix/, "Publix"],
+  [/safeway (?:fuel|gas)/, "Safeway Fuel"],
   [/safeway/, "Safeway"],
   [/\baldi\b/, "Aldi"],
   [/\bh-?e-?b\b/, "H-E-B"],
-  [/cvs/, "CVS"],
+  [/\bcvs\b/, "CVS"],
   [/walgreens/, "Walgreens"],
   [/home depot/, "Home Depot"],
-  [/lowe'?s/, "Lowe's"],
+  [/\blowe'?s\b/, "Lowe's"],
   [/best buy/, "Best Buy"],
   [/\bikea\b/, "IKEA"],
-  [/shell oil|\bshell\b/, "Shell"],
+  // The gas station, not a restaurant or a shop with "shell" in its name.
+  [/shell oil|shell service|^shell(?: \d| #|$)/, "Shell"],
   [/chevron/, "Chevron"],
   [/exxon/, "Exxon"],
   [/\bbp\b/, "BP"],
   [/wawa/, "Wawa"],
   [/planet fitness/, "Planet Fitness"],
   [/t-?mobile/, "T-Mobile"],
+  [/verizon fios|\bfios\b/, "Verizon Fios"],
   [/verizon/, "Verizon"],
   [/at ?& ?t|\batt\b/, "AT&T"],
+  [/xfinity mobile|comcast mobile/, "Xfinity Mobile"],
   [/comcast|xfinity/, "Xfinity"],
   [/venmo/, "Venmo"],
   [/cash ?app/, "Cash App"],
@@ -70,7 +87,7 @@ const BRANDS: [RegExp, string][] = [
   [/delta air/, "Delta"],
   [/united airlines/, "United Airlines"],
   [/american airlines/, "American Airlines"],
-  [/southwest/, "Southwest Airlines"],
+  [/southwest air(?:lines)?\b|southwes air|\bswa\b/, "Southwest Airlines"],
   [/airbnb/, "Airbnb"],
   [/ticketmaster/, "Ticketmaster"],
 ];

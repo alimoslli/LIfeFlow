@@ -38,3 +38,58 @@ describe("cleanVendorName", () => {
     expect(looksMessy("Blue Bottle Coffee")).toBe(false);
   });
 });
+
+describe("brands that share a word stay apart (review: over-broad brand patterns)", () => {
+  // [line, name it's shown as]: each pair used to come out as one brand.
+  const pairs: [string, string][][] = [
+    [
+      ["SOUTHWEST GAS CORP PAYMENT", "Southwest Gas Corp"],
+      ["SOUTHWEST AIRLINES 5262191234567", "Southwest Airlines"],
+    ],
+    [
+      ["VERIZON FIOS 800-837-4966", "Verizon Fios"],
+      ["VERIZON WIRELESS PAYMENTS", "Verizon"],
+    ],
+    [
+      ["XFINITY MOBILE 888-936-4968", "Xfinity Mobile"],
+      ["COMCAST CABLE COMM", "Xfinity"],
+    ],
+    [
+      ["COSTCO GAS #0123", "Costco Gas"],
+      ["COSTCO WHSE #0123", "Costco"],
+    ],
+    [
+      ["KROGER FUEL #455", "Kroger Fuel"],
+      ["KROGER #455", "Kroger"],
+    ],
+    [
+      ["AWS EMEA aws.amazon.co", "Amazon Web Services"],
+      ["AMZN Mktp US*2K1AB3", "Amazon"],
+    ],
+    [
+      ["MTA*NYCT PAYGO SUBWAY", "Mta Nyct Paygo Subway"],
+      ["SUBWAY 12345 ATLANTA GA", "Subway"],
+    ],
+    [
+      ["SHELL SHACK SEAFOOD", "Shell Shack Seafood"],
+      ["SHELL OIL 57444810", "Shell"],
+    ],
+    [
+      ["YOUTUBE TV 855-978-3324", "YouTube TV"],
+      ["GOOGLE *YouTube Premium", "YouTube"],
+    ],
+    [
+      ["SAFEWAY FUEL 1234", "Safeway Fuel"],
+      ["SAFEWAY #1234", "Safeway"],
+    ],
+    [
+      ["APPLE CASH SENT MONEY", "Apple Cash"],
+      ["APPLE.COM/BILL 866-712-7753 CA", "Apple"],
+    ],
+  ];
+  for (const [a, b] of pairs)
+    it(`${a[0]} isn't ${b[1]}`, () => {
+      expect(cleanVendorName(a[0])).toBe(a[1]);
+      expect(cleanVendorName(b[0])).toBe(b[1]);
+    });
+});
