@@ -158,7 +158,7 @@ describe("approvals", () => {
         return { ok: true, gone: false };
       });
       await createApproval(db(), agent, { role: "designer", kind: "design", title: "Pick one", summary: "s" });
-      expect(sent).toEqual([expect.objectContaining({ title: "Designer / V3 needs your yes", body: "Pick one", url: "/admin/hq/approvals" })]);
+      expect(sent).toEqual([expect.objectContaining({ title: "Product & Design needs your yes", body: "Pick one", url: "/admin/hq/approvals" })]);
       await createApproval(db(), owner, { role: "designer", kind: "design", title: "Mine", summary: "s" });
       expect(sent).toHaveLength(1);
       setHqPushSender(async () => {
@@ -258,12 +258,13 @@ describe("import seed", () => {
 describe("office snapshot, detail, summary", () => {
   it("is honest with no data", async () => {
     const s = await officeSnapshot(db());
-    expect(s.employees.map((e) => e.state)).toEqual(["offline", "offline", "offline", "offline", "sleeping"]);
-    expect(s.counts).toEqual({ working: 0, done: 0, waiting: 0, asleep: 1, blocked: 0, offline: 4 });
+    expect(s.employees.map((e) => e.role)).toEqual(["assistant", "developer", "designer", "researcher", "marketing", "qa", "support"]);
+    expect(s.employees.map((e) => e.state)).toEqual(["offline", "offline", "offline", "offline", "offline", "sleeping", "sleeping"]);
+    expect(s.counts).toEqual({ working: 0, done: 0, waiting: 0, asleep: 2, blocked: 0, offline: 5 });
     expect(s.budget).toMatchObject({ weekPct: null, roundsPct: null, target: 40, ceiling: 50 });
   });
 
-  it("builds cards from real rows; the assistant works when approvals are pending", async () => {
+  it("builds cards from real rows; the Chief of Staff's state comes from its chat", async () => {
     await saveChat(db(), admin, { id: SID, role: "developer", title: "LF Main", isPrimary: true });
     await recordCheckin(db(), { sessionId: SID, status: "working" });
     const m = await createMission(db(), owner, { role: "developer", title: "Do the thing", priority: "high" });
@@ -277,14 +278,14 @@ describe("office snapshot, detail, summary", () => {
     expect(by.developer.primaryChat?.title).toBe("LF Main");
     expect(by.developer.asOf).not.toBeNull();
     expect(by.designer).toMatchObject({ state: "offline", asOf: null });
-    expect(by.assistant).toMatchObject({ state: "working", line: "Sorting 1 thing that needs you" });
+    expect(by.assistant).toMatchObject({ state: "offline" }); // no chat of its own yet: never "working" from app logic
     expect(s.founder.pendingApprovals).toBe(1);
     expect(s.approvals.map((x) => x.id)).toEqual([a.id]);
     expect(s.weekMissions.map((x) => x.title)).toEqual(["Do the thing", "Later"]);
-    expect(s.counts.working).toBe(2);
+    expect(s.counts.working).toBe(1);
     await decideApproval(db(), admin, a.id, "approved");
     const after = await officeSnapshot(db());
-    expect(after.employees.find((e) => e.role === "assistant")?.state).toBe("sleeping");
+    expect(after.employees.find((e) => e.role === "assistant")?.state).toBe("offline");
 
     const d = await employeeDetail(db(), "developer");
     expect(d.current.map((x) => x.title)).toEqual(["Do the thing"]);

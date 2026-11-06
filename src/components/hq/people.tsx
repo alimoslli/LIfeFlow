@@ -10,6 +10,8 @@ const HAIR: Record<Who, string> = {
   researcher: "hair-res",
   marketing: "hair-mkt",
   assistant: "hair-ast",
+  qa: "hair-qa",
+  support: "hair-sup",
   founder: "hair-founder",
 };
 const TOP: Record<Who, string> = {
@@ -18,6 +20,8 @@ const TOP: Record<Who, string> = {
   researcher: "cardigan",
   marketing: "tee",
   assistant: "blazer",
+  qa: "polo",
+  support: "knit",
   founder: "ljacket",
 };
 
@@ -115,6 +119,19 @@ function Hair({ who, sleeping }: { who: Who; sleeping: boolean }) {
           <path d="M-24 14C-28-14-12-25 0-25S28-14 24 14L18 14C18 0 14-8 0-10-14-8-18 0-18 14Z" />
         </g>
       );
+    case "qa":
+      return (
+        <g fill={c}>
+          <path d="M-23 4C-27-18-10-27 0-27S27-18 23 4C21-5 14-9 4-12 -6-9-16-6-23 4Z" />
+        </g>
+      );
+    case "support":
+      return (
+        <g fill={c}>
+          <circle cx="0" cy="-27" r="9" />
+          <path d="M-23 5C-27-16-12-24 0-24S27-16 23 5C20-5 13-10 0-10S-20-5-23 5Z" />
+        </g>
+      );
     default:
       return (
         <g fill={c}>
@@ -152,13 +169,22 @@ function Accessories({ who }: { who: Who }) {
           <circle cx="0" cy="-23" r="2.2" fill={v("cap-d")} />
         </g>
       );
-    case "assistant":
+    case "support":
       return (
         <g>
           <path d="M-24-4C-24-30 24-30 24-4" stroke={v("phones")} strokeWidth="3.4" fill="none" strokeLinecap="round" />
           <rect x="-28" y="-8" width="8" height="15" rx="4" fill={v("phones")} />
           <path d="M-24 7Q-20 22-6 16" stroke={v("phones")} strokeWidth="2" fill="none" strokeLinecap="round" />
           <circle cx="-5" cy="16" r="2.4" fill={v("phones-in")} />
+        </g>
+      );
+    case "qa":
+      // Safety glasses: wide clear lenses with a tint, a brow bar and side arms.
+      return (
+        <g>
+          <rect x="-17" y="-9.5" width="34" height="14" rx="6" fill={v("lens")} fillOpacity=".5" stroke={v("shield-d")} strokeWidth="1.6" />
+          <path d="M0-9.5v14M-17-3.5L-22-4.5M17-3.5L22-4.5" stroke={v("shield-d")} strokeWidth="1.6" strokeLinecap="round" />
+          <path d="M-13-6l4 0M3-6l4 0" stroke="#fff" strokeWidth="1.2" strokeLinecap="round" opacity=".7" />
         </g>
       );
     case "founder":
@@ -233,6 +259,20 @@ function Torso({ who }: { who: Who }) {
         <g>
           <path d="M-9 17L0 34 9 17" fill="#fff" />
           <path d="M-9 17L0 34-6 40-15 24ZM9 17L0 34 6 40 15 24Z" fill={v("blazer-d")} />
+        </g>
+      )}
+      {who === "qa" && (
+        <g>
+          <path d="M-9 17L0 28 9 17" fill={v("skin")} stroke={v("polo-d")} strokeWidth="2" strokeLinejoin="round" />
+          {/* shield badge on the shirt */}
+          <path d="M9 34h12v8c0 4-3 6-6 8-3-2-6-4-6-8z" fill={v("shield")} stroke={v("shield-d")} strokeWidth="1.2" strokeLinejoin="round" />
+          <path d="M12 41l2.4 2.6L18.6 38" stroke="#fff" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+      )}
+      {who === "support" && (
+        <g>
+          <path d="M-9 17Q0 29 9 17" fill={v("skin")} stroke={v("knit-d")} strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M-12 40h24" stroke={v("knit-d")} strokeWidth="1.4" opacity=".5" />
         </g>
       )}
       {who === "founder" && (

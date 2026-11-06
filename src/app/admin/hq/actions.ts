@@ -235,3 +235,15 @@ export async function saveControlsAction(fd: FormData) {
     return "Saved";
   });
 }
+
+/** What the Chief of Staff may decide: three switches. Unchecked switches arrive as missing, so each is read explicitly. */
+export async function saveDelegationsAction(fd: FormData) {
+  const admin = await requireAdmin();
+  await run(to("/admin/hq/settings"), async () => {
+    const on = (k: string) => fd.get(k) === "on";
+    await saveControls(getDb(), admin, {
+      delegations: { fixOrder: on("fixOrder"), researchTopics: on("researchTopics"), postingTimes: on("postingTimes") },
+    });
+    return "Saved";
+  });
+}

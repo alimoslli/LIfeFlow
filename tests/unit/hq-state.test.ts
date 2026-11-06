@@ -16,7 +16,7 @@ const mission = (o: Partial<StateInput["missions"][number]> = {}) => ({
   updatedAt: ago(MIN),
   ...o,
 });
-const input = (o: Partial<StateInput> = {}): StateInput => ({ appLogic: false, chats: [chat()], missions: [], pendingApprovals: 0, ...o });
+const input = (o: Partial<StateInput> = {}): StateInput => ({ noOwnChat: false, chats: [chat()], missions: [], pendingApprovals: 0, ...o });
 
 describe("employeeState", () => {
   it("is offline with no chat, an archived chat, no check-in, or a stale one", () => {
@@ -61,9 +61,15 @@ describe("employeeState", () => {
     expect(employeeState(d({ doneAt: ago(24 * HOUR) }), now).state).toBe("done");
     expect(employeeState(d({ doneAt: ago(24 * HOUR + 1) }), now).state).toBe("sleeping");
   });
-  it("app logic is never offline and works whenever a mission is doing", () => {
-    expect(employeeState(input({ appLogic: true, chats: [] }), now).state).toBe("sleeping");
-    expect(employeeState(input({ appLogic: true, chats: [], missions: [mission({ status: "doing" })] }), now).state).toBe("working");
+  it("a role with no chat of its own is never offline; it sleeps until something blocks or needs you", () => {
+    expect(employeeState(input({ noOwnChat: true, chats: [] }), now).state).toBe("sleeping");
+    // A mission in progress alone is not proof of work (no check-in): the cross-chat rule in the service decides that.
+    expect(employeeState(input({ noOwnChat: true, chats: [], missions: [mission({ status: "doing" })] }), now).state).toBe("sleeping");
+    expect(employeeState(input({ noOwnChat: true, chats: [], missions: [mission({ status: "blocked", blockedReason: "Needs a key" })] }), now)).toEqual({
+      state: "blocked",
+      reason: "Needs a key",
+    });
+    expect(employeeState(input({ noOwnChat: true, chats: [], pendingApprovals: 2 }), now).state).toBe("needs_you");
   });
 });
 

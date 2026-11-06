@@ -133,38 +133,76 @@ function MarketingProps({ working, off }: { working: boolean; off: boolean }) {
   );
 }
 
-function AssistantProps({ working }: { working: boolean }) {
+function QaProps({ working, off }: { working: boolean; off: boolean }) {
   return (
     <g>
-      {/* clipboard on the wall */}
-      <rect x="168" y="18" width="38" height="46" rx="4" fill={v("wood-l")} />
-      <rect x="172" y="24" width="30" height="36" rx="2" fill={v("paper")} />
-      <rect x="180" y="15" width="14" height="7" rx="2" fill={v("brass")} />
+      {/* checklist board on the wall */}
+      <rect x="150" y="16" width="92" height="58" rx="4" fill={v("wood-d")} />
+      <rect x="154" y="20" width="84" height="50" rx="2" fill={v("paper")} />
+      <rect x="178" y="12" width="36" height="8" rx="3" fill={v("brass")} />
       {[0, 1, 2].map((i) => (
         <g key={i}>
-          <rect x="175" y={30 + i * 10} width="5" height="5" rx="1" fill="none" stroke={v("blazer")} strokeWidth="1" />
-          <path d={`M183 ${33 + i * 10}h15`} stroke={v("wood")} strokeWidth="2" strokeLinecap="round" />
+          <rect x="160" y={27 + i * 14} width="9" height="9" rx="2" fill="none" stroke={v("polo-d")} strokeWidth="1.4" />
+          <path d={`M174 ${31.5 + i * 14}h54`} stroke={v("wood")} strokeWidth="2.4" strokeLinecap="round" />
+          <path
+            className={`hq-tick hq-tick-${i + 1}`}
+            d={`M161.5 ${31.5 + i * 14}l2.8 3 5-6.4`}
+            stroke={v("tick")}
+            strokeWidth="2.2"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={working ? undefined : i < 2 ? 1 : 0}
+          />
         </g>
       ))}
-      <path d="M175.5 32.5l1.6 1.8 3-3.6" stroke={v("plant-d")} strokeWidth="1.2" fill="none" />
-      {/* pin board */}
-      <rect x="222" y="20" width="74" height="40" rx="3" fill={v("cork")} />
-      {[
-        [228, 26, "#f6e27a"],
-        [250, 30, "#f2a08f"],
-        [272, 25, "#a9d8c0"],
-        [262, 44, "#9fc4ec"],
-      ].map(([x, y, c]) => (
-        <rect key={String(x)} x={Number(x)} y={Number(y)} width="16" height="14" rx="1.5" fill={String(c)} />
-      ))}
-      {/* inbox trays */}
-      {[0, 1, 2].map((i) => (
-        <g key={i}>
-          <rect x="262" y={116 + i * 11} width="48" height="9" rx="2" fill={v("wood-d")} />
-          <rect x="265" y={112 + i * 11} width="38" height="5" rx="1" fill={v("paper")} opacity=".95" />
+      {/* small screen with ticks */}
+      <rect x="262" y="96" width="52" height="40" rx="4" fill={v("wood-d")} />
+      <rect x="265" y="99" width="46" height="34" rx="2" fill={off ? v("screen-off") : v("screen")} />
+      {!off &&
+        [0, 1, 2].map((i) => (
+          <g key={i}>
+            <path d={`M269 ${108 + i * 9}l2.4 2.6 4.4-5.4`} stroke="#8fe3b8" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <rect x="280" y={105 + i * 9} width={24 - i * 5} height="2.6" rx="1.3" fill={v(["screen-a", "screen-c", "screen-b"][i])} opacity=".9" />
+          </g>
+        ))}
+      <rect x="282" y="136" width="12" height="12" fill={v("wood-d")} />
+    </g>
+  );
+}
+
+function SupportProps({ working, off }: { working: boolean; off: boolean }) {
+  return (
+    <g>
+      {/* chat bubbles on the wall */}
+      <rect x="150" y="18" width="150" height="48" rx="4" fill={v("paper")} opacity=".92" />
+      <g>
+        <rect x="158" y="24" width="52" height="16" rx="8" fill={v("knit")} opacity=".9" />
+        <path d="M166 40l-3 6 9-6z" fill={v("knit")} opacity=".9" />
+        <path d="M168 32h30" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
+        <rect x="222" y="34" width="68" height="16" rx="8" fill={v("sky-a")} />
+        <path d="M280 50l4 6-10-6z" fill={v("sky-a")} />
+        <path d="M232 42h12M250 42h8" stroke={v("ink")} strokeWidth="2.4" strokeLinecap="round" opacity=".6" />
+        <path d="M278 38.6c-1.2-2 -4.4-.8-3.2 1.6l3.2 3 3.2-3c1.2-2.4-2-3.6-3.2-1.6z" fill={v("heart")} />
+      </g>
+      {/* laptop, back of the lid with a bubble */}
+      <rect x="262" y="118" width="54" height="30" rx="4" fill={v("laptop")} />
+      <path d="M281 126h16a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-9l-4 4v-4h-3a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3z" fill={off ? v("screen-off") : "#fff"} opacity=".9" />
+      {/* a message pops above the laptop while typing */}
+      {working && (
+        <g className="hq-popbubble">
+          <rect x="274" y="92" width="34" height="18" rx="9" fill={v("paper")} stroke={v("knit-d")} strokeWidth="1.4" />
+          <circle cx="284" cy="101" r="2" fill={v("knit-d")} />
+          <circle cx="291" cy="101" r="2" fill={v("knit-d")} />
+          <circle cx="298" cy="101" r="2" fill={v("knit-d")} />
         </g>
-      ))}
-      <rect className={working ? "hq-card-slide" : undefined} x="268" y="104" width="34" height="6" rx="1" fill="#fff" stroke={v("blazer")} strokeWidth="1" />
+      )}
+      {/* heart mug */}
+      <g transform="translate(246 148)">
+        <rect x="-8" y="-17" width="16" height="17" rx="4" fill={v("paper")} stroke={v("wood")} strokeWidth="1" />
+        <path d="M8-13c6 0 6 8 0 8" stroke={v("paper")} strokeWidth="2.6" fill="none" />
+        <path d="M0-4.4c-5-3.4-5.4-7.4-2.6-8.2 1.4-.4 2.6.6 2.6 1.8 0-1.2 1.2-2.2 2.6-1.8 2.8.8 2.4 4.8-2.6 8.2z" fill={v("heart")} />
+      </g>
     </g>
   );
 }
@@ -179,8 +217,12 @@ function Props({ role, working, off }: { role: HqRole; working: boolean; off: bo
       return <ResearcherProps working={working} />;
     case "marketing":
       return <MarketingProps working={working} off={off} />;
-    case "assistant":
-      return <AssistantProps working={working} />;
+    case "qa":
+      return <QaProps working={working} off={off} />;
+    case "support":
+      return <SupportProps working={working} off={off} />;
+    default:
+      return null;
   }
 }
 
@@ -254,6 +296,7 @@ function Plug({ x, y }: { x: number; y: number }) {
 
 /** An employee's room: a desk area and a bed, with the person at one of them. 320 x 220. */
 export function EmployeeRoomArt({ role, state }: { role: HqRole; state: EmployeeState }) {
+  if (role === "assistant") return <ChiefRoomArt state={state} />;
   const off = state === "offline";
   const sleeping = state === "sleeping";
   const seated = !off && !sleeping;
@@ -287,6 +330,81 @@ export function EmployeeRoomArt({ role, state }: { role: HqRole; state: Employee
       {off && <Plug x={232} y={178} />}
       {sleeping && <Zzz x={70} y={114} />}
       {seated && <Overlay state={state} x={258} y={64} />}
+    </svg>
+  );
+}
+
+const DEPT_DOTS = ["#4d9a6a", "#e5b23f", "#e08a5b", "#6f9bd1", "#b78ac2", "#e0546f"] as const;
+
+/** The Chief of Staff's wide room: a team board with six department dots, a tablet, the desk facing the room. 480 x 200. */
+export function ChiefRoomArt({ state }: { state: EmployeeState }) {
+  const off = state === "offline";
+  const sleeping = state === "sleeping";
+  const seated = !off && !sleeping;
+  return (
+    <svg viewBox="0 0 480 200" role="presentation" aria-hidden="true" focusable="false" className="hq-art" preserveAspectRatio="xMidYMid slice">
+      <Shell w={480} h={200} floorY={150}>
+        <Window x={18} y={24} w={58} h={54} />
+        <rect x="88" y="62" width="40" height="5" rx="2" fill={v("wood-l")} />
+        <use href="#hq-plant" transform="translate(108 62) scale(.7)" />
+        {/* clipboard */}
+        <rect x="160" y="22" width="34" height="42" rx="4" fill={v("wood-l")} />
+        <rect x="164" y="28" width="26" height="32" rx="2" fill={v("paper")} />
+        <rect x="170" y="19" width="14" height="7" rx="2" fill={v("brass")} />
+        {[0, 1, 2].map((i) => (
+          <path key={i} d={`M168 ${36 + i * 8}h18`} stroke={v("wood")} strokeWidth="2" strokeLinecap="round" />
+        ))}
+        {/* team board: the Chief of Staff in the middle, six department dots */}
+        <rect x="236" y="14" width="150" height="56" rx="4" fill={v("wood-d")} />
+        <rect x="240" y="18" width="142" height="48" rx="2" fill={v("paper")} />
+        <circle cx="311" cy="28" r="7" fill={v("blazer")} />
+        <path d="M308 28l2.2 2.4 3.8-4.6" stroke="#fff" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M311 35v6M258 41H364M258 41v6M276 41v6M294 41v6M328 41v6M346 41v6M364 41v6"
+          stroke={v("ink")}
+          strokeWidth="1.2"
+          opacity=".5"
+          strokeLinecap="round"
+        />
+        {DEPT_DOTS.map((c, i) => (
+          <circle key={c} cx={[258, 276, 294, 328, 346, 364][i]} cy="52" r="5.4" fill={c} />
+        ))}
+      </Shell>
+      <ellipse cx="350" cy="190" rx="110" ry="9" fill={v("rug")} opacity=".7" />
+      <Bed />
+      <ellipse cx="36" cy="143" rx="25" ry="10" fill={v("pillow")} />
+      {sleeping && <SleepingHead who="assistant" x={38} y={132} />}
+      <g className={sleeping ? "hq-breathe" : undefined}>
+        <rect x="56" y="136" width="70" height="30" rx="12" fill={v("blanket")} />
+        <rect x="56" y="136" width="70" height="8" rx="4" fill="#fff" opacity=".16" />
+        <use href="#hq-leaf" transform="translate(80 146) scale(.5)" opacity=".7" />
+      </g>
+      <rect x="318" y="100" width="64" height="52" rx="16" fill={v("wood-d")} opacity=".95" />
+      {seated && <SeatedBody who="assistant" x={350} y={102} />}
+      {/* the tablet in hand, upright in front of the jacket */}
+      <g transform="rotate(-6 350 132)">
+        <rect x="334" y="116" width="36" height="30" rx="4" fill={v("laptop")} />
+        <rect x="337" y="119" width="30" height="24" rx="2" fill={off || sleeping ? v("screen-off") : v("screen")} />
+        {seated && (
+          <g>
+            {[0, 1, 2].map((i) => (
+              <rect key={i} x="341" y={123 + i * 6} width={[16, 22, 12][i]} height="2.6" rx="1.3" fill={v(["screen-a", "screen-b", "screen-c"][i])} />
+            ))}
+            <circle className="hq-tap" cx="359" cy="130" r="3" fill="#fff" opacity=".85" />
+            <circle className="hq-tap hq-tap-2" cx="352" cy="138" r="3" fill="#fff" opacity=".85" />
+          </g>
+        )}
+      </g>
+      <Desk x={256} w={200} />
+      {seated && <Hands x={350} y={146} />}
+      <use href="#hq-lamp" transform="translate(282 148)" />
+      <use href="#hq-mug" transform="translate(316 148)" />
+      <use href="#hq-books" transform="translate(402 148)" />
+      <use href="#hq-plant" transform="translate(218 198) scale(1.15)" />
+      {!off && <Glow x={298} y={116} r={sleeping ? 40 : 70} className={sleeping ? "hq-glow-dim" : ""} />}
+      {off && <Plug x={350} y={180} />}
+      {sleeping && <Zzz x={70} y={114} />}
+      {seated && <Overlay state={state} x={420} y={72} />}
     </svg>
   );
 }

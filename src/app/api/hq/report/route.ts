@@ -10,6 +10,7 @@ import {
   HqError,
   importSeed,
   recordAgentActivity,
+  recordBrief,
   recordCheckin,
   normalizeSessionId,
   updateMission,
@@ -24,7 +25,15 @@ const body = z.discriminatedUnion("type", [
   z.object({ type: z.literal("checkin") }).passthrough(),
   z.object({ type: z.literal("mission"), id: z.string().optional() }).passthrough(),
   z.object({ type: z.literal("approval") }).passthrough(),
-  z.object({ type: z.literal("activity"), role, text: z.string(), link: z.string().nullish(), sessionId: z.string().nullish() }),
+  z.object({
+    type: z.literal("activity"),
+    role,
+    text: z.string(),
+    kind: z.enum(["note", "decision"]).optional(),
+    link: z.string().nullish(),
+    sessionId: z.string().nullish(),
+  }),
+  z.object({ type: z.literal("brief"), body: z.string(), needsYou: z.number().nullish(), sessionId: z.string().nullish() }),
   z.object({ type: z.literal("import"), seed: z.unknown() }),
   z.object({ type: z.literal("content"), id: z.string().optional() }).passthrough(),
   z.object({ type: z.literal("metrics"), rows: z.array(z.unknown()).max(200, "Too many readings in one call (max 200).") }),
@@ -42,7 +51,7 @@ export async function POST(req: Request) {
       throw new HttpError(400, "Body must be JSON");
     }
     const parsed = body.safeParse(json);
-    if (!parsed.success) throw new HttpError(400, "Unknown or missing type (checkin, mission, approval, activity, content, metrics, import).");
+    if (!parsed.success) throw new HttpError(400, "Unknown or missing type (checkin, mission, approval, activity, brief, content, metrics, import).");
     const b = parsed.data as Record<string, unknown> & { type: string };
     let sessionId: string | null = null;
     if (typeof b.sessionId === "string" && b.sessionId) {
@@ -72,8 +81,18 @@ export async function POST(req: Request) {
           return NextResponse.json({ ok: true, id: (await createApproval(db, actor, rest as never)).id });
         }
         case "activity":
-          await recordAgentActivity(db, actor, { role: b.role as never, text: b.text as string, link: (b.link as string | null) ?? null, sessionId });
+          await recordAgentActivity(db, actor, {
+            role: b.role as never,
+            text: b.text as string,
+            link: (b.link as string | null) ?? null,
+            sessionId,
+            kind: (b.kind as "note" | "decision" | undefined) ?? "note",
+          });
           return NextResponse.json({ ok: true });
+        case "brief": {
+          const r = await recordBrief(db, actor, { body: b.body as string, needsYou: (b.needsYou as number | null) ?? null });
+          return NextResponse.json({ ok: true, id: r.id });
+        }
         case "content": {
           const { type: _t, id, sessionId: _s, ...rest } = b;
           // The chat doing the work is recorded; an agent can never approve (updateContent refuses it).

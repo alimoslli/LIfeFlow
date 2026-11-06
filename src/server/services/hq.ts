@@ -8,10 +8,12 @@ import {
   adminActions,
   hqActivity,
   hqApprovals,
+  hqBriefs,
   hqChats,
   hqContent,
   hqKeys,
   hqMissions,
+  errorReports,
   hqUsageSamples,
   users,
   type HqLink,
@@ -25,6 +27,8 @@ import type {
   Activity,
   Approval,
   ApprovalKind,
+  Brief,
+  ErrorGroup,
   ApprovalStatus,
   Budget,
   Chat,
@@ -233,6 +237,8 @@ const toChat = (r: ChatRow): Chat => ({
   url: chatUrl(r.id),
 });
 
+const ROUNDS_LINE = "Works in the Chief of Staff's rounds";
+
 const priorityRank = sql`case ${hqMissions.priority} when 'high' then 0 when 'normal' then 1 else 2 end`;
 const PRIORITY_ORDER: Record<string, number> = { high: 0, normal: 1, low: 2 };
 const byPriorityThenOldest = (a: Mission, b: Mission) =>
@@ -270,18 +276,14 @@ async function loadBase(tx: Tx, now: Date): Promise<Base> {
 
 function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
   const e = employee(role);
-  const isAssistant = role === "assistant";
   const chats = base.chats.filter((c) => c.role === role);
   const mine = base.missions.filter((m) => m.role === role);
   const myPending = base.pending.filter((a) => a.role === role).length;
   const stateMissions = mine.filter((m) => m.status !== "done" || (m.doneAt && now.getTime() - m.doneAt.getTime() <= DAY));
-  let result = employeeState({ appLogic: isAssistant, chats, missions: stateMissions, pendingApprovals: myPending }, now);
-  let line = result.reason;
-  if (isAssistant && result.state === "sleeping" && base.pending.length > 0) {
-    const n = base.pending.length;
-    result = { state: "working", reason: n === 1 ? "Sorting 1 thing that needs you" : `Sorting ${n} things that need you` };
-    line = result.reason;
-  }
+  // Every role's state comes from its chat and missions (ADR 0026). Roles with no chat of their own work in the Chief
+  // of Staff's rounds: they are asleep, never offline, until a mission in progress shows real work.
+  let result = employeeState({ noOwnChat: !e.ownChat, chats, missions: stateMissions, pendingApprovals: myPending }, now);
+  let line = result.state === "sleeping" && !e.ownChat ? ROUNDS_LINE : result.reason;
   // Work done for this employee in another chat (the night round fixing a Developer mission in the agents chat) is
   // real work: a mission in progress whose own chat checked in recently makes them "working". It never hides
   // "blocked" or "needs you".
@@ -338,6 +340,8 @@ export async function officeSnapshot(db: Database, now: Date = new Date()): Prom
     }
     const activityRows = await tx.select().from(hqActivity).orderBy(desc(hqActivity.createdAt)).limit(12);
     const budget = await budgetIn(tx, now);
+    const brief = await latestBriefIn(tx);
+    const decisionRows = await tx.select().from(hqActivity).where(eq(hqActivity.kind, "decision")).orderBy(desc(hqActivity.createdAt)).limit(5);
     const weekAgo = now.getTime() - 7 * DAY;
     const doneWeek = base.missions
       .filter((m) => m.status === "done" && m.doneAt && m.doneAt.getTime() >= weekAgo)
@@ -353,6 +357,8 @@ export async function officeSnapshot(db: Database, now: Date = new Date()): Prom
       weekMissions: [...open, ...doneWeek].slice(0, 8),
       doneThisWeek: doneWeek.length,
       budget,
+      brief,
+      decisions: decisionRows.map(toActivity),
     };
   });
 }
@@ -376,6 +382,7 @@ export async function employeeDetail(db: Database, roleName: HqRole, now: Date =
       .orderBy(desc(hqApprovals.decidedAt))
       .limit(10);
     const act = await tx.select().from(hqActivity).where(eq(hqActivity.role, roleName)).orderBy(desc(hqActivity.createdAt)).limit(20);
+    const briefs = roleName === "assistant" ? await listBriefsIn(tx, 10) : undefined;
     return {
       card,
       jobs: employee(roleName).jobs,
@@ -386,6 +393,7 @@ export async function employeeDetail(db: Database, roleName: HqRole, now: Date =
       approvals: base.pending.filter((a) => a.role === roleName),
       decided: decided.map(toApproval),
       activity: act.map(toActivity),
+      ...(briefs ? { briefs } : {}),
     };
   });
 }
@@ -445,6 +453,93 @@ export async function pendingApprovalCount(db: Database): Promise<number> {
   return timed(db, async (tx) => {
     const [r] = await tx.select({ n: count() }).from(hqApprovals).where(eq(hqApprovals.status, "pending"));
     return r?.n ?? 0;
+  });
+}
+
+// --- briefs, decisions and the error feed (ADR 0026) ------------------------------------------------------------
+
+type BriefRow = typeof hqBriefs.$inferSelect;
+const toBrief = (r: BriefRow): Brief => ({ id: r.id, body: r.body, needsYou: r.needsYou, sessionId: r.sessionId, createdAt: r.createdAt });
+
+async function latestBriefIn(tx: Tx): Promise<Brief | null> {
+  const [r] = await tx.select().from(hqBriefs).orderBy(desc(hqBriefs.createdAt)).limit(1);
+  return r ? toBrief(r) : null;
+}
+async function listBriefsIn(tx: Tx, limit: number): Promise<Brief[]> {
+  const rows = await tx.select().from(hqBriefs).orderBy(desc(hqBriefs.createdAt)).limit(limit);
+  return rows.map(toBrief);
+}
+
+export async function latestBrief(db: Database): Promise<Brief | null> {
+  return timed(db, latestBriefIn);
+}
+/** Newest first, default 10, max 20. */
+export async function listBriefs(db: Database, limit = 10): Promise<Brief[]> {
+  const n = Math.min(20, Math.max(1, Math.floor(Number.isFinite(limit) ? limit : 10)));
+  return timed(db, (tx) => listBriefsIn(tx, n));
+}
+/** The decisions the Chief of Staff made for the owner (activity kind "decision"), newest first, default 5, max 50. */
+export async function listDecisions(db: Database, limit = 5): Promise<Activity[]> {
+  const n = Math.min(50, Math.max(1, Math.floor(Number.isFinite(limit) ? limit : 5)));
+  return timed(db, async (tx) => {
+    const rows = await tx.select().from(hqActivity).where(eq(hqActivity.kind, "decision")).orderBy(desc(hqActivity.createdAt)).limit(n);
+    return rows.map(toActivity);
+  });
+}
+
+/** The Chief of Staff's brief: plain text, 1–2000 characters. HQ stores it and pushes it; it never acts on it. */
+export async function recordBrief(db: Database, actor: HqActor, input: { body: string; needsYou?: number | null }): Promise<Brief> {
+  const d = parse(
+    z.object({
+      body: z.string().transform(cleanText).pipe(z.string().min(1, "is required").max(2000, "is too long (max 2000)")),
+      needsYou: z.number("must be a number").int("must be a whole number").min(0, "can't be negative").max(999, "is too large (max 999)").nullish(),
+    }),
+    input,
+  );
+  const brief = await db.transaction(async (tx) => {
+    const needsYou = d.needsYou ?? (await tx.select({ n: count() }).from(hqApprovals).where(eq(hqApprovals.status, "pending")))[0]?.n ?? 0;
+    const [row] = await tx
+      .insert(hqBriefs)
+      .values({ body: d.body, needsYou, sessionId: actorSession(actor) })
+      .returning();
+    await logActivity(tx, {
+      actor: actor.kind,
+      role: "assistant",
+      kind: "brief",
+      text: "Brief from your Chief of Staff",
+      link: "/admin/hq",
+      sessionId: actorSession(actor),
+    });
+    return toBrief(row);
+  });
+  await notifyOwner(db, {
+    key: `hq-brief:${brief.id}`,
+    title: "Your Chief of Staff",
+    body: cleanLine(brief.body.split("\n").find((l) => l.trim()) ?? brief.body).slice(0, 140),
+    url: "/admin/hq",
+    tag: `hq-brief-${brief.id}`,
+  });
+  return brief;
+}
+
+/** App error groups for Customer Success: already scrubbed of personal details by recordError. Newest first, max 100. */
+export async function listErrorGroups(db: Database, limit = 50): Promise<ErrorGroup[]> {
+  const n = Math.min(100, Math.max(1, Math.floor(Number.isFinite(limit) ? limit : 50)));
+  return timed(db, async (tx) => {
+    const rows = await tx
+      .select({
+        fingerprint: errorReports.fingerprint,
+        source: errorReports.source,
+        route: errorReports.route,
+        message: errorReports.message,
+        count: errorReports.count,
+        firstSeenAt: errorReports.firstSeenAt,
+        lastSeenAt: errorReports.lastSeenAt,
+      })
+      .from(errorReports)
+      .orderBy(desc(errorReports.lastSeenAt))
+      .limit(n);
+    return rows;
   });
 }
 
@@ -536,7 +631,7 @@ export async function weeklyBudget(db: Database, now: Date = new Date()): Promis
 }
 
 /** The owner's time zone (first ADMIN_EMAILS user), so "today" and "due soon" match their calendar, not UTC. */
-async function ownerTimeZone(tx: Tx): Promise<string> {
+export async function ownerTimeZone(tx: Tx): Promise<string> {
   const emails = adminEmails();
   if (emails.length) {
     const [u] = await tx
@@ -748,8 +843,8 @@ export function setHqPushSender(fn: (() => Promise<Sender | null>) | null) {
   pushSenderOverride = fn;
 }
 
-/** Tells the owner's phone a chat asked for their yes. Never throws: a push problem must not fail the request. */
-async function notifyApproval(db: Database, a: Approval): Promise<void> {
+/** Tells the owner's phone something happened. Never throws: a push problem must not fail the request. */
+async function notifyOwner(db: Database, p: { key: string; title: string; body: string; url: string; tag: string }): Promise<void> {
   try {
     const send = await (pushSenderOverride ?? webPushSender)();
     if (!send) return;
@@ -761,22 +856,21 @@ async function notifyApproval(db: Database, a: Approval): Promise<void> {
       .where(and(eq(users.accountKind, "standard"), inArray(sql`lower(${users.email})`, emails)))
       .limit(5);
     for (const o of owners) {
-      await withUser(
-        o.id,
-        (scope) =>
-          sendOnce(
-            scope,
-            `hq-approval:${a.id}`,
-            { title: `${employee(a.role).title} needs your yes`, body: a.title, url: "/admin/hq/approvals", tag: `hq-${a.id}` },
-            send,
-          ),
-        db,
-      );
+      await withUser(o.id, (scope) => sendOnce(scope, p.key, { title: p.title, body: p.body, url: p.url, tag: p.tag }, send), db);
     }
   } catch (e) {
     console.error("HQ push failed:", e instanceof Error ? e.name : "error");
   }
 }
+
+const notifyApproval = (db: Database, a: Approval) =>
+  notifyOwner(db, {
+    key: `hq-approval:${a.id}`,
+    title: `${employee(a.role).title} needs your yes`,
+    body: a.title,
+    url: "/admin/hq/approvals",
+    tag: `hq-${a.id}`,
+  });
 
 export async function createApproval(db: Database, actor: HqActor, input: ApprovalInput): Promise<Approval> {
   const d = parse(approvalInputSchema, input);
@@ -1034,14 +1128,16 @@ export async function recordCheckin(db: Database, input: CheckinInput): Promise<
 export async function recordAgentActivity(
   db: Database,
   actor: HqActor,
-  input: { role: HqRole; text: string; link?: string | null; sessionId?: string | null },
+  input: { role: HqRole; text: string; link?: string | null; sessionId?: string | null; kind?: "note" | "decision" },
 ): Promise<void> {
-  const d = parse(z.object({ role, text: line(1, 400), link: url.nullish() }), input);
+  const d = parse(z.object({ role, text: line(1, 400), link: url.nullish(), kind: z.enum(["note", "decision"]).optional() }), input);
+  // Only the Chief of Staff makes (delegated) decisions; HQ just logs them. No API lets an agent decide an approval.
+  if (d.kind === "decision" && d.role !== "assistant") throw new HqError("Only your Chief of Staff logs decisions.");
   await db.transaction(async (tx) => {
     await logActivity(tx, {
       actor: actor.kind,
       role: d.role,
-      kind: "note",
+      kind: d.kind ?? "note",
       text: d.text,
       link: d.link ?? null,
       sessionId: input.sessionId ? normalizeSessionId(input.sessionId) : actorSession(actor),
@@ -1053,7 +1149,13 @@ export async function recordAgentActivity(
 export async function agentInbox(
   db: Database,
   input: { role?: HqRole; since?: Date } = {},
-): Promise<{ missions: Mission[]; decisions: Approval[]; approvedContent: ContentItem[]; controls: HqControls }> {
+): Promise<{
+  missions: Mission[];
+  decisions: Approval[];
+  approvedContent: ContentItem[];
+  controls: HqControls;
+  chats: { id: string; title: string; role: HqRole }[];
+}> {
   const since = input.since && !Number.isNaN(input.since.getTime()) ? input.since : new Date(Date.now() - 7 * DAY);
   return timed(db, async (tx) => {
     const missions = await tx
@@ -1070,7 +1172,14 @@ export async function agentInbox(
       .limit(50);
     const approvedContent = await approvedContentIn(tx);
     const controls = await controlsIn(tx);
-    return { missions: missions.map(toMission), decisions: decisions.map(toApproval), approvedContent, controls };
+    const mapped = await tx
+      .select({ id: hqChats.id, title: hqChats.title, role: hqChats.role })
+      .from(hqChats)
+      .where(isNotNull(hqChats.role))
+      .orderBy(asc(hqChats.createdAt))
+      .limit(100);
+    const chats = mapped.flatMap((c) => (c.role ? [{ id: c.id, title: c.title, role: c.role }] : []));
+    return { missions: missions.map(toMission), decisions: decisions.map(toApproval), approvedContent, controls, chats };
   });
 }
 

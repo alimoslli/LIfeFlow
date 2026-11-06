@@ -117,6 +117,10 @@ export type OfficeSnapshot = {
   weekMissions: Mission[];
   doneThisWeek: number;
   budget: Budget;
+  /** The Chief of Staff's latest brief, or null before the first one. */
+  brief: Brief | null;
+  /** The Chief of Staff's delegated decisions (activity kind "decision"), newest first (max 5). */
+  decisions: Activity[];
 };
 
 export type EmployeeDetail = {
@@ -129,6 +133,8 @@ export type EmployeeDetail = {
   approvals: Approval[]; // pending for this role
   decided: Approval[]; // decided, newest first, max 10
   activity: Activity[]; // newest first, max 20
+  /** Only for the Chief of Staff: its briefs, newest first (max 10). */
+  briefs?: Brief[];
 };
 
 export type WeeklySummary = {

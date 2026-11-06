@@ -39,27 +39,27 @@ test("HQ is owner-only: signed out is sent to sign in, everyone else gets a 404"
 
 test("HQ: the office, missions, approvals, reports and keys work end to end", async ({ browser, request }) => {
   test.setTimeout(150_000);
-  await pool.query("truncate hq_missions, hq_approvals, hq_activity, hq_keys, hq_chats, hq_usage_samples cascade");
+  await pool.query("truncate hq_missions, hq_approvals, hq_activity, hq_keys, hq_chats, hq_usage_samples, hq_briefs cascade");
   const op = await ownerPage(browser);
 
-  // The office: six rooms, the founder's door plate, and plain counts.
+  // The office: eight rooms (the founder and seven employees; the lounge is not a link), the founder's door plate, and plain counts.
   expect((await op.goto("/admin/hq"))?.status()).toBe(200);
   await expect(op.getByRole("heading", { level: 1, name: /^Good (morning|afternoon|evening), Owner\.$/ })).toBeVisible();
   const rooms = op.locator("a.hq-room");
-  await expect(rooms).toHaveCount(6);
+  await expect(rooms).toHaveCount(8);
   await expect(op.getByText("I'M THE CEO, BITCH", { exact: true })).toBeVisible();
-  await expect(op.getByRole("link", { name: /^Developer\s*,\s*[\w ]+\s*:\s*\S/ })).toBeVisible();
+  await expect(op.getByRole("link", { name: /^Engineering\s*,\s*[\w ]+\s*:\s*\S/ })).toBeVisible();
   await expect(op.getByText("Nothing waiting for you.").first()).toBeVisible();
 
   // Office <-> Workspace.
   await op.getByRole("link", { name: "Workspace", exact: true }).click();
   await expect(op).toHaveURL(/view=workspace/);
   await expect(op.locator("a.hq-room")).toHaveCount(0);
-  await expect(op.getByRole("heading", { name: "Researcher", level: 2 })).toBeVisible();
+  await expect(op.getByRole("heading", { name: "Research & Insights", level: 2 })).toBeVisible();
   await op.getByRole("link", { name: "Office", exact: true }).first().click();
-  await expect(op.locator("a.hq-room")).toHaveCount(6);
+  await expect(op.locator("a.hq-room")).toHaveCount(8);
 
-  // A mission for the Developer: it shows on their page, moves to doing, then done with a result.
+  // A mission for Engineering: it shows on their page, moves to doing, then done with a result.
   await op.goto("/admin/hq/missions");
   await op.getByLabel("Who is it for").selectOption("developer");
   await op.getByLabel("Title").fill("Fix the calendar sync");
@@ -67,7 +67,7 @@ test("HQ: the office, missions, approvals, reports and keys work end to end", as
   await op.getByRole("button", { name: "New mission" }).click();
   await expect(op.getByText("Mission added.")).toBeVisible();
   await op.goto("/admin/hq/developer");
-  await expect(op.getByRole("heading", { name: "Developer", level: 1 })).toBeVisible();
+  await expect(op.getByRole("heading", { name: "Engineering", level: 1 })).toBeVisible();
   await op
     .getByRole("link", { name: /Fix the calendar sync/ })
     .first()
@@ -76,11 +76,11 @@ test("HQ: the office, missions, approvals, reports and keys work end to end", as
   await op.getByLabel("Status", { exact: true }).selectOption("doing");
   await op.getByRole("button", { name: "Save status" }).click();
   await expect(op.getByText("Status updated.")).toBeVisible();
-  await expect(op.getByText("Doing · Developer")).toBeVisible();
+  await expect(op.getByText("Doing · Engineering")).toBeVisible();
   await op.getByLabel("Status", { exact: true }).selectOption("done");
   await op.getByLabel("Result (when done)").fill("Events now arrive on time.");
   await op.getByRole("button", { name: "Save status" }).click();
-  await expect(op.getByText("Done · Developer")).toBeVisible();
+  await expect(op.getByText("Done · Engineering")).toBeVisible();
   await expect(op.getByText("Events now arrive on time.").first()).toBeVisible();
 
   // Settings: create a key, see the token once, then it is gone.
@@ -120,6 +120,32 @@ test("HQ: the office, missions, approvals, reports and keys work end to end", as
   await expect(op.locator("section", { hasText: "The headline" }).locator("li").first()).toBeVisible();
   await expect(op.getByRole("heading", { name: "Weekly Claude use" })).toBeVisible();
   await expect(op.getByText("Not measured yet").first()).toBeVisible();
+
+  // The Chief of Staff's brief and a decision it made show on the Office.
+  await op.goto("/admin/hq");
+  await expect(op.getByTestId("hq-brief").getByText("Your Chief of Staff's first brief arrives after the next round.")).toBeVisible();
+  await expect(op.getByText("Connect its chat in Settings")).toBeVisible();
+  await expect(op.getByText("Nothing decided for you yet.")).toBeVisible();
+  const brief = await request.post("/api/hq/report", {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { type: "brief", body: "Good round: 2 fixes shipped, nothing blocked.\nNeeds you: nothing today.", needsYou: 0 },
+  });
+  expect(brief.status()).toBe(200);
+  const decision = await request.post("/api/hq/report", {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { type: "activity", role: "assistant", kind: "decision", text: "Put the calendar fix first, because it blocks sync." },
+  });
+  expect(decision.status()).toBe(200);
+  await op.goto("/admin/hq");
+  await expect(op.getByTestId("hq-brief-body")).toContainText("Good round: 2 fixes shipped, nothing blocked.");
+  await expect(op.getByTestId("hq-brief").getByRole("link", { name: /needs? you/ })).toBeVisible();
+  await expect(op.getByRole("heading", { name: "Decided for you" })).toBeVisible();
+  await expect(op.getByText("Put the calendar fix first, because it blocks sync.").first()).toBeVisible();
+  await op.goto("/admin/hq/assistant");
+  await expect(op.getByRole("heading", { name: "Chief of Staff", level: 1 })).toBeVisible();
+  await expect(op.getByText("Good round: 2 fixes shipped, nothing blocked.").first()).toBeVisible();
+  await op.goto("/admin/hq/qa");
+  await expect(op.getByText("Works inside the Chief of Staff's rounds.", { exact: false }).first()).toBeVisible();
 
   // A wrong key is refused.
   expect((await request.post("/api/hq/report", { headers: { Authorization: "Bearer lfq_nope" }, data: { type: "activity" } })).status()).toBe(401);

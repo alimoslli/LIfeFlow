@@ -137,4 +137,18 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   const body = await inbox.json();
   expect(body.controls.autonomous).toBe(false);
   expect(body.controls.creditBudget).toBe(25);
+
+  // What the Chief of Staff can decide: turning posting times off saves, and the rounds see it.
+  await op.goto("/admin/hq/settings");
+  await expect(op.getByRole("heading", { name: "What your Chief of Staff can decide" })).toBeVisible();
+  await expect(op.getByRole("heading", { name: "Never decided without you" })).toBeVisible();
+  await expect(op.getByRole("switch", { name: "Posting times" })).toBeChecked();
+  await op.getByRole("switch", { name: "Posting times" }).uncheck();
+  await op.getByRole("button", { name: "Save choices" }).click();
+  await expect(op.getByText("Saved", { exact: true })).toBeVisible();
+  await expect(op.getByRole("switch", { name: "Posting times" })).not.toBeChecked();
+  await expect(op.getByRole("switch", { name: "The order of fixes" })).toBeChecked();
+  const again = await (await request.get("/api/hq/inbox", { headers })).json();
+  expect(again.controls.delegations.postingTimes).toBe(false);
+  expect(again.controls.delegations.fixOrder).toBe(true);
 });

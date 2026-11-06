@@ -56,7 +56,7 @@ export function employeeState(input: StateInput, now: Date): StateResult {
   }
 
   const doing = input.missions.find((m) => m.status === "doing");
-  const recentlyActive = (lastCheckin !== null && t - lastCheckin <= WORKING_WINDOW_MS);
+  const recentlyActive = lastCheckin !== null && t - lastCheckin <= WORKING_WINDOW_MS;
   if (doing && recentlyActive) return { state: "working", reason: doing.title };
 
   const freshDone = input.missions

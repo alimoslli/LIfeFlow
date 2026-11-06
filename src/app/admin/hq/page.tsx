@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import { BriefCard } from "@/components/hq/brief";
 import { ActivityList, ApprovalMini, BudgetBody, Empty, MissionLine, Section } from "@/components/hq/cards";
 import { countsLine, greeting } from "@/components/hq/labels";
 import { OfficeScene } from "@/components/hq/office-scene";
 import { StateChip } from "@/components/hq/status-chip";
+import { employee } from "@/server/hq/team";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { getSessionUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
@@ -73,6 +75,8 @@ export default async function HqHome({ searchParams }: { searchParams: Promise<{
         </nav>
       </header>
 
+      <BriefCard brief={s.brief} chief={s.employees.find((e) => e.role === "assistant")} pending={n} />
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Tile
           label="Needs your yes"
@@ -122,7 +126,9 @@ export default async function HqHome({ searchParams }: { searchParams: Promise<{
                         <span className="sr-only">for {e.title} (opens in a new tab)</span>
                       </a>
                     ) : (
-                      <span className="text-sm text-muted">{e.role === "assistant" ? "Plain app logic, no chat" : "No chat connected yet"}</span>
+                      <span className="text-sm text-muted">
+                        {employee(e.role).ownChat ? "No chat connected yet" : "Works inside the Chief of Staff's rounds"}
+                      </span>
                     )}
                     <Link href={`/admin/hq/${e.role}`} className="inline-flex min-h-11 items-center text-sm text-text-2 underline underline-offset-2">
                       {e.title} workspace
@@ -154,6 +160,9 @@ export default async function HqHome({ searchParams }: { searchParams: Promise<{
             ) : (
               <Empty>Nothing waiting for you.</Empty>
             )}
+          </Section>
+          <Section title="Decided for you" sub="Small calls your Chief of Staff made, within what you allowed.">
+            <ActivityList items={s.decisions} empty="Nothing decided for you yet." />
           </Section>
           <Section title="Recent activity">
             <ActivityList items={s.activity.slice(0, 6)} />

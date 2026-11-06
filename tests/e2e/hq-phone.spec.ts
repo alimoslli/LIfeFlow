@@ -27,7 +27,7 @@ test("HQ on a phone: no sideways scroll, big room targets, no serious accessibil
   test.setTimeout(120_000);
   await owner(page);
   // Long, real-shaped content (the owner's own items once overflowed the missions strip on a phone).
-  await pool.query("truncate hq_activity, hq_approvals, hq_missions, hq_chats");
+  await pool.query("truncate hq_activity, hq_approvals, hq_missions, hq_chats cascade");
   const long = "Ship the calendar duplicate fixes and search-as-you-type to main after the full check, build and e2e";
   await pool.query(
     `insert into hq_missions (role, title, priority, status, source) values
@@ -50,6 +50,8 @@ test("HQ on a phone: no sideways scroll, big room targets, no serious accessibil
     "/admin/hq/reports",
     "/admin/hq/settings",
     "/admin/hq/developer",
+    "/admin/hq/assistant",
+    "/admin/hq/qa",
     "/admin/hq/founder",
   ];
   const problems: string[] = [];
@@ -65,17 +67,19 @@ test("HQ on a phone: no sideways scroll, big room targets, no serious accessibil
 
   await page.goto("/admin/hq");
   const rooms = page.locator("a.hq-room");
-  await expect(rooms).toHaveCount(6);
-  for (let i = 0; i < 6; i++) {
+  await expect(rooms).toHaveCount(8);
+  for (let i = 0; i < 8; i++) {
     const box = await rooms.nth(i).boundingBox();
     expect(box?.height ?? 0, `room ${i}`).toBeGreaterThanOrEqual(44);
   }
-  // Two columns under the founder's full-width office.
+  // The founder and the Chief of Staff take the full width, then two columns.
   const founder = await rooms.first().boundingBox();
-  const second = await rooms.nth(1).boundingBox();
+  const chief = await rooms.nth(1).boundingBox();
   const third = await rooms.nth(2).boundingBox();
-  expect(founder!.width).toBeGreaterThan(second!.width * 1.8);
-  expect(Math.abs(second!.y - third!.y)).toBeLessThan(2);
+  const fourth = await rooms.nth(3).boundingBox();
+  expect(chief!.width).toBeGreaterThan(third!.width * 1.8);
+  expect(Math.abs(founder!.width - chief!.width)).toBeLessThan(2);
+  expect(Math.abs(third!.y - fourth!.y)).toBeLessThan(2);
 
   // Bigger text still fits.
   await page.evaluate(() => (document.documentElement.style.fontSize = "125%"));

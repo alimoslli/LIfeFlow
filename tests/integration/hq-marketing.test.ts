@@ -141,7 +141,8 @@ describe("content lifecycle", () => {
   it("an approval for something else leaves content alone; a decided one can't move content later", async () => {
     const c = await createContent(db(), agent, { kind: "post", title: "C", ask: true });
     await updateContent(db(), owner, c.id, { status: "dropped" });
-    await decideApproval(db(), admin, c.approvalId!, "approved");
+    // Dropping closes the pending request, so it can't be answered later.
+    await expect(decideApproval(db(), admin, c.approvalId!, "approved")).rejects.toThrow(/already decided/);
     expect((await getContent(db(), c.id))?.status).toBe("dropped");
   });
 

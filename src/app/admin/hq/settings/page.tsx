@@ -4,7 +4,7 @@ import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Empty, Section } from "@/components/hq/cards";
 import { ClearOnce } from "@/components/hq/copy-open";
-import { ControlsForm } from "@/components/hq/marketing";
+import { ControlsForm, DelegationsForm } from "@/components/hq/marketing";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { getDb } from "@/server/db/client";
 import { EMPLOYEES, USAGE_PLAN } from "@/server/hq/team";
@@ -20,7 +20,7 @@ import { NEW_KEY_COOKIE } from "../shared";
 const RoleSelect = ({ id, value }: { id: string; value: string | null }) => (
   <Select id={id} name="role" defaultValue={value ?? ""}>
     <option value="">No one yet</option>
-    {EMPLOYEES.filter((e) => e.role !== "assistant").map((e) => (
+    {EMPLOYEES.filter((e) => e.ownChat).map((e) => (
       <option key={e.role} value={e.role}>
         {e.title}
       </option>
@@ -83,6 +83,10 @@ export default async function HqSettings({ searchParams }: { searchParams: Promi
 
       <Section title="How the team runs" sub="Read by every round before it starts.">
         {controls.ok ? <ControlsForm c={controls.data} tz={tz} /> : <Empty>{Failed()}</Empty>}
+      </Section>
+
+      <Section title="What your Chief of Staff can decide" sub="Small calls it makes for you and tells you about in its brief.">
+        {controls.ok ? <DelegationsForm c={controls.data} /> : <Empty>{Failed()}</Empty>}
       </Section>
 
       <Section title="Chats" sub="Which real Claude Code chat belongs to which employee. HQ only links to them.">

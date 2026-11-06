@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { decideContentAction, saveControlsAction } from "@/app/admin/hq/actions";
+import { decideContentAction, saveControlsAction, saveDelegationsAction } from "@/app/admin/hq/actions";
 import { fmt } from "@/app/admin/format";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
@@ -196,7 +196,7 @@ export function NetworkBlock({ p }: { p: NetworkPerformance }) {
   );
 }
 
-function Switch({ name, label, hint, on }: { name: string; label: string; hint?: string; on: boolean }) {
+export function Switch({ name, label, hint, on }: { name: string; label: string; hint?: string; on: boolean }) {
   return (
     <label className="relative flex min-h-11 cursor-pointer items-center justify-between gap-4 rounded-2xl px-1 py-1.5">
       <input
@@ -252,5 +252,45 @@ export function ControlsForm({ c, tz }: { c: HqControls; tz: string }) {
         </span>
       </div>
     </form>
+  );
+}
+
+const NEVER_DECIDED = [
+  "Deploys that aren't fixes",
+  "V3 merges",
+  "New features",
+  "Design changes",
+  "Pricing",
+  "Money and credits",
+  "Publishing",
+  "Messages to anyone",
+  "Subscriptions",
+  "Deleting anything",
+  "Security changes",
+];
+
+/** "What your Chief of Staff can decide": three switches, then the fixed list it never decides without the owner. */
+export function DelegationsForm({ c }: { c: HqControls }) {
+  const d = c.delegations;
+  return (
+    <>
+      <form action={saveDelegationsAction} className="flex flex-col gap-1">
+        <Switch name="fixOrder" label="The order of fixes" hint="Which approved fix goes first." on={d.fixOrder} />
+        <Switch name="researchTopics" label="Research topics" hint="What the Monday research covers, within your priorities." on={d.researchTopics} />
+        <Switch name="postingTimes" label="Posting times" hint="When an approved post goes to Metricool for your final tap." on={d.postingTimes} />
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <SubmitButton pendingText="Saving…">Save choices</SubmitButton>
+          <span className="min-w-0 text-xs text-muted">Every round reads these before it starts.</span>
+        </div>
+      </form>
+      <div className="mt-4 border-t border-border/60 pt-4">
+        <h3 className="text-sm font-semibold text-text">Never decided without you</h3>
+        <ul className="mt-2 grid list-disc gap-x-6 gap-y-1 pl-5 text-sm text-text-2 sm:grid-cols-2">
+          {NEVER_DECIDED.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
+      </div>
+    </>
   );
 }

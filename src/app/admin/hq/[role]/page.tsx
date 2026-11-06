@@ -6,7 +6,7 @@ import { CopyAndOpen } from "@/components/hq/copy-open";
 import { StateChip } from "@/components/hq/status-chip";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { getDb } from "@/server/db/client";
-import { isHqRole } from "@/server/hq/team";
+import { employee, isHqRole } from "@/server/hq/team";
 import { employeeDetail } from "@/server/services/hq";
 import { safe } from "@/server/services/admin";
 import { Failed, adminTz, ago, fmt } from "../../format";
@@ -56,9 +56,9 @@ export default async function EmployeePage({
         </ul>
       </Section>
 
-      {role === "assistant" ? (
+      {!employee(role).ownChat ? (
         <Section title="Chat">
-          <p className="text-sm text-text-2">Plain app logic, no AI: it reads missions and approvals.</p>
+          <p className="text-sm text-text-2">Works inside the Chief of Staff&apos;s rounds. It has no chat of its own.</p>
         </Section>
       ) : (
         <Section title={d.chats.length > 1 ? "Chats" : "Chat"} sub="HQ links to the real chat. It can't read or drive it.">
@@ -103,6 +103,28 @@ export default async function EmployeePage({
             <Empty>No chat is connected to {c.title} yet. Add one in Settings.</Empty>
           )}
         </Section>
+      )}
+
+      {role === "assistant" && (
+        <div className="grid gap-5 lg:grid-cols-2">
+          <Section title="Last briefs" sub="What it told you after each round.">
+            {d.briefs?.length ? (
+              <ul className="flex flex-col divide-y divide-border/60">
+                {d.briefs.slice(0, 5).map((b) => (
+                  <li key={b.id} className="py-3 first:pt-0 last:pb-0">
+                    <p className="text-xs text-muted">{ago(b.createdAt)}</p>
+                    <p className="mt-1 text-sm whitespace-pre-line text-text">{b.body}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Empty>No brief yet. The first one arrives after the next round.</Empty>
+            )}
+          </Section>
+          <Section title="Decided for you" sub="Small calls it made within what you allowed in Settings.">
+            <ActivityList items={d.activity.filter((a) => a.kind === "decision")} empty="Nothing decided for you yet." />
+          </Section>
+        </div>
       )}
 
       <div className="grid gap-5 lg:grid-cols-2">

@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Admin } from "../auth/admin";
 import type { Database } from "../db/client";
 import {
+  adminActions,
   HQ_CONTENT_KINDS,
   HQ_CONTENT_STATUSES,
   HQ_NETWORKS,
@@ -13,13 +14,14 @@ import {
   hqSettings,
   type HqContentKind,
   type HqContentStatus,
+  type HqDelegations,
   type HqLink,
   type HqNetwork,
   type HqRoundSwitches,
 } from "../db/schema";
 import type { Approval, ContentItem, HqControls, MarketingView, MarketingWeek, NetworkPerformance } from "../hq/types";
 import { HqError, line, linksSchema, logActivity, logAdmin, optLine, optText, parse, sessionIdField, timed, url, type Tx } from "../hq/validate";
-import { createApproval, type HqActor } from "./hq";
+import { createApproval, ownerTimeZone, type HqActor } from "./hq";
 
 /**
  * LifeFlow HQ marketing and controls (ADR 0025). Content, research and real metrics arrive from the owner's chats
@@ -55,7 +57,7 @@ export type ContentPatch = Partial<{
   links: HqLink[];
 }>;
 export type MetricInput = { takenOn: string; network: HqNetwork; metric: string; value: number; contentId?: string | null };
-export type ControlsPatch = Partial<{ autonomous: boolean; rounds: Partial<HqRoundSwitches>; creditBudget: number }>;
+export type ControlsPatch = Partial<{ autonomous: boolean; rounds: Partial<HqRoundSwitches>; creditBudget: number; delegations: Partial<HqDelegations> }>;
 
 // --- validation -----------------------------------------------------------------------------------------------------
 
@@ -264,16 +266,17 @@ export async function approvedContentIn(tx: Tx): Promise<ContentItem[]> {
 
 // --- writes ---------------------------------------------------------------------------------------------------------
 
-const whenWords = (d: Date | null | undefined) =>
+/** The planned time in the owner's own time zone (the same lookup the weekly summary uses). */
+const whenWords = (d: Date | null | undefined, tz: string) =>
   d
-    ? `${d.toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "UTC" })} (UTC)`
+    ? `${d.toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: tz, timeZoneName: "short" })}`
     : "no date yet";
 
 /** What the owner reads on the approval card, in plain words. */
-function askSummary(c: { hook: string | null; title: string; platforms: HqNetwork[]; scheduledFor: Date | null }): string {
+function askSummary(c: { hook: string | null; title: string; platforms: HqNetwork[]; scheduledFor: Date | null }, tz: string): string {
   const where = c.platforms.length ? c.platforms.map((p) => NETWORK_NAMES[p]).join(", ") : "no network picked yet";
   const hook = c.hook ? `Hook: ${c.hook}. ` : "";
-  return `${hook}For ${where}. Planned for ${whenWords(c.scheduledFor)}. Saying yes only lets the next marketing round put it into Metricool for your final review; nothing is published from here.`.slice(
+  return `${hook}For ${where}. Planned for ${whenWords(c.scheduledFor, tz)}. Saying yes only lets the next marketing round put it into Metricool for your final review; nothing is published from here.`.slice(
     0,
     2000,
   );
@@ -315,7 +318,7 @@ export async function createContent(db: Database, actor: HqActor, input: Content
     role: "marketing",
     kind: "publish",
     title: `Publish: ${created.title}`.slice(0, 140),
-    summary: askSummary(created),
+    summary: askSummary(created, await timed(db, ownerTimeZone)),
     links: created.links ?? [],
   });
   return db.transaction(async (tx) => {
@@ -387,6 +390,23 @@ export async function updateContent(db: Database, actor: HqActor, id: string, pa
       .set({ ...set, updatedAt: now })
       .where(eq(hqContent.id, id))
       .returning();
+    // Dropping an item with a pending publish request closes that request too, so it doesn't wait for a yes forever.
+    if (set.status === "dropped" && cur.approvalId) {
+      const [closed] = await tx
+        .update(hqApprovals)
+        .set({ status: "declined", decisionNote: "Dropped by you", decidedAt: now, updatedAt: now })
+        .where(and(eq(hqApprovals.id, cur.approvalId), eq(hqApprovals.status, "pending")))
+        .returning();
+      if (closed) {
+        await logActivity(tx, { actor: "owner", role: "marketing", kind: "approval_declined", text: `You said no: ${closed.title}`, approvalId: closed.id });
+        if (actor.kind === "owner")
+          await tx.insert(adminActions).values({
+            actorEmail: actor.email,
+            action: "hq.approval_decided",
+            metadata: { approvalId: closed.id, decision: "declined", reason: "content dropped" },
+          });
+      }
+    }
     const activityKind = set.status === "scheduled" ? "content_scheduled" : set.status === "published" ? "content_published" : "content_updated";
     for (const text of lines) await logActivity(tx, { actor: actor.kind, role: "marketing", kind: activityKind, text, sessionId: actorSession(actor) });
     return toContent(row);
@@ -449,6 +469,13 @@ export async function recordMetrics(db: Database, actor: HqActor, rows: MetricIn
 // --- controls -------------------------------------------------------------------------------------------------------
 
 const DEFAULT_ROUNDS: HqRoundSwitches = { night: true, research: true, marketing: true };
+const DEFAULT_DELEGATIONS: HqDelegations = { fixOrder: true, researchTopics: true, postingTimes: true };
+/** What each switch lets the Chief of Staff decide, for the activity line. */
+const DELEGATION_NAMES: Record<keyof HqDelegations, string> = {
+  fixOrder: "decide the fix order",
+  researchTopics: "pick the research topics",
+  postingTimes: "choose posting times",
+};
 
 export async function controlsIn(tx: Tx): Promise<HqControls> {
   await tx.insert(hqSettings).values({ id: "hq" }).onConflictDoNothing();
@@ -457,6 +484,7 @@ export async function controlsIn(tx: Tx): Promise<HqControls> {
     autonomous: r.autonomous,
     rounds: { ...DEFAULT_ROUNDS, ...(r.rounds ?? {}) },
     creditBudget: r.creditBudget,
+    delegations: { ...DEFAULT_DELEGATIONS, ...(r.delegations ?? {}) },
     updatedAt: r.updatedAt,
     updatedByEmail: r.updatedByEmail,
   };
@@ -474,6 +502,10 @@ const controlsPatchSchema = z
       .object({ night: z.boolean("must be on or off"), research: z.boolean("must be on or off"), marketing: z.boolean("must be on or off") })
       .partial()
       .strict(),
+    delegations: z
+      .object({ fixOrder: z.boolean("must be on or off"), researchTopics: z.boolean("must be on or off"), postingTimes: z.boolean("must be on or off") })
+      .partial()
+      .strict(),
     creditBudget: z.number("must be a number").int("must be a whole number").min(0, "can't be negative").max(10000, "is too large (max 10000)"),
   })
   .partial()
@@ -488,7 +520,7 @@ export async function saveControls(db: Database, admin: Admin, patch: ControlsPa
     await tx.execute(sql`select set_config('statement_timeout', '5000', true)`);
     const cur = await controlsIn(tx);
     const lines: string[] = [];
-    const next = { autonomous: cur.autonomous, rounds: { ...cur.rounds }, creditBudget: cur.creditBudget };
+    const next = { autonomous: cur.autonomous, rounds: { ...cur.rounds }, creditBudget: cur.creditBudget, delegations: { ...cur.delegations } };
     if (d.autonomous !== undefined && d.autonomous !== cur.autonomous) {
       next.autonomous = d.autonomous;
       lines.push(d.autonomous ? "Autonomous mode on" : "Autonomous mode off");
@@ -498,6 +530,13 @@ export async function saveControls(db: Database, admin: Admin, patch: ControlsPa
       if (v !== undefined && v !== cur.rounds[k]) {
         next.rounds[k] = v;
         lines.push(`${ROUND_NAMES[k]} turned ${v ? "on" : "off"}`);
+      }
+    }
+    for (const k of ["fixOrder", "researchTopics", "postingTimes"] as const) {
+      const v = d.delegations?.[k];
+      if (v !== undefined && v !== cur.delegations[k]) {
+        next.delegations[k] = v;
+        lines.push(`Your Chief of Staff may ${DELEGATION_NAMES[k]}: ${v ? "on" : "off"}`);
       }
     }
     if (d.creditBudget !== undefined && d.creditBudget !== cur.creditBudget) {
@@ -516,6 +555,7 @@ export async function saveControls(db: Database, admin: Admin, patch: ControlsPa
       autonomous: row.autonomous,
       rounds: { ...DEFAULT_ROUNDS, ...row.rounds },
       creditBudget: row.creditBudget,
+      delegations: { ...DEFAULT_DELEGATIONS, ...row.delegations },
       updatedAt: row.updatedAt,
       updatedByEmail: row.updatedByEmail,
     };

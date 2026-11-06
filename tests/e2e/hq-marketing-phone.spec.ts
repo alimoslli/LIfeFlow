@@ -70,8 +70,8 @@ test("Marketing on a phone: long titles wrap, no sideways scroll, switches are b
   // Switches and decision buttons are real, big targets.
   await page.goto("/admin/hq/settings");
   const switches = page.getByRole("switch");
-  await expect(switches).toHaveCount(4);
-  for (let i = 0; i < 4; i++) {
+  await expect(switches).toHaveCount(7);
+  for (let i = 0; i < 7; i++) {
     const box = await switches.nth(i).boundingBox();
     expect(box?.height ?? 0, `switch ${i}`).toBeGreaterThanOrEqual(44);
   }

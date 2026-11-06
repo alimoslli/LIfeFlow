@@ -49,8 +49,8 @@ function Plate({ title, tagline, chip }: { title: string; tagline: string; chip?
 function EmployeeRoom({ e }: { e: EmployeeCard }) {
   // DOM order gives the accessible name "Title, State: line, tagline"; the grid areas lay it out the way it reads on screen.
   return (
-    <Link href={`/admin/hq/${e.role}`} className="hq-room" data-state={e.state}>
-      <div className="hq-stage">
+    <Link href={`/admin/hq/${e.role}`} className={e.role === "assistant" ? "hq-room hq-room-chief" : "hq-room"} data-state={e.state}>
+      <div className={e.role === "assistant" ? "hq-stage hq-stage-chief" : "hq-stage"}>
         <EmployeeRoomArt role={e.role} state={e.state} />
       </div>
       <div className="hq-meta">
@@ -67,7 +67,7 @@ function EmployeeRoom({ e }: { e: EmployeeCard }) {
   );
 }
 
-/** The whole building: roof and sign, the founder's corner office on top, five employee rooms and the lounge. Server-rendered, no client JS. */
+/** The whole building: roof and sign, the founder's corner office on top, seven employee rooms and the lounge. Server-rendered, no client JS. */
 export function OfficeScene({ snapshot }: { snapshot: OfficeSnapshot }) {
   const n = snapshot.founder.pendingApprovals;
   return (

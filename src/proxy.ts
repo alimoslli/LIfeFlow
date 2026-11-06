@@ -22,6 +22,7 @@ const PUBLIC = [
   "/api/apple-health/ingest",
   "/api/hq/report",
   "/api/hq/inbox",
+  "/api/hq/errors",
   "/api/integrations/plaid/webhook",
   "/api/cron/sync",
   "/api/cron/notify",

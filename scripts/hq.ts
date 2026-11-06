@@ -1,7 +1,7 @@
 /**
  * LifeFlow HQ command line (ADR 0024): how the owner's Claude Code chats and night rounds report to HQ.
  * Deterministic, no AI. Env: HQ_URL (the app's base URL) and HQ_KEY (sent as a Bearer key; never printed).
- * Usage: npx tsx scripts/hq.ts checkin|mission|approval|activity|content|metrics|inbox|import ...
+ * Usage: npx tsx scripts/hq.ts checkin|mission|approval|activity|brief|errors|content|metrics|inbox|import ...
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync, statSync } from "node:fs";
@@ -136,20 +136,29 @@ export function buildRequest(
       if (phase && !["round_start", "round_end"].includes(phase)) throw new Error("--phase must be round_start or round_end");
       const status = one(p, "status");
       if (status && !["working", "idle", "blocked"].includes(status)) throw new Error("--status must be working, idle or blocked");
-      if (!extra.sessionId) throw new Error("No chat id");
+      // --session relays ANOTHER chat's status: its id replaces ours, and our branch, commit and usage are left out.
+      const relay = one(p, "session");
+      let sessionId = extra.sessionId;
+      if (relay !== undefined) {
+        const m = /^(?:session|cse)_([A-Za-z0-9]{10,64})$/.exec(relay.trim());
+        if (!m) throw new Error("--session must be a chat id like session_01ABC... (or cse_...)");
+        sessionId = `session_${m[1]}`;
+      }
+      if (!sessionId) throw new Error("No chat id");
+      const own = relay === undefined;
       return {
         method: "POST" as const,
         path: "/api/hq/report",
         body: {
           type: "checkin",
-          sessionId: extra.sessionId,
+          sessionId,
           ...(one(p, "title") ? { title: one(p, "title") } : {}),
-          ...(extra.branch ? { branch: extra.branch } : {}),
-          ...(extra.commit ? { commit: extra.commit } : {}),
+          ...(own && extra.branch ? { branch: extra.branch } : {}),
+          ...(own && extra.commit ? { commit: extra.commit } : {}),
           ...(status ? { status } : {}),
           ...(one(p, "summary") ? { summary: one(p, "summary") } : {}),
           ...(one(p, "needs") ? { needsAction: one(p, "needs") } : {}),
-          ...(extra.usage ? { usage: { ...extra.usage, ...(phase ? { phase } : {}) } } : {}),
+          ...(own && extra.usage ? { usage: { ...extra.usage, ...(phase ? { phase } : {}) } } : {}),
         },
       };
     }
@@ -202,7 +211,32 @@ export function buildRequest(
           ...(extra.sessionId ? { sessionId: extra.sessionId } : {}),
         },
       };
-    case "activity":
+    case "brief": {
+      const file = one(p, "file");
+      let text = one(p, "text");
+      if (file && file !== "true") {
+        if (!extra.readFile) throw new Error("Can't read files here");
+        text = extra.readFile(file);
+      }
+      if (!text || text === "true" || !text.trim()) throw new Error('Usage: brief --file PATH | --text "..." [--needs N]');
+      const needsRaw = one(p, "needs");
+      let needsYou: number | undefined;
+      if (needsRaw !== undefined) {
+        needsYou = Number(needsRaw);
+        if (needsRaw.trim() === "" || !Number.isInteger(needsYou) || needsYou < 0 || needsYou > 999)
+          throw new Error("--needs must be a whole number from 0 to 999");
+      }
+      return {
+        method: "POST" as const,
+        path: "/api/hq/report",
+        body: { type: "brief", body: text, ...(needsYou !== undefined ? { needsYou } : {}), ...(extra.sessionId ? { sessionId: extra.sessionId } : {}) },
+      };
+    }
+    case "errors":
+      return { method: "GET" as const, path: "/api/hq/errors", body: undefined };
+    case "activity": {
+      const kind = one(p, "kind");
+      if (kind && !["note", "decision"].includes(kind)) throw new Error("--kind must be note or decision");
       return {
         method: "POST" as const,
         path: "/api/hq/report",
@@ -210,10 +244,12 @@ export function buildRequest(
           type: "activity",
           role: need("role"),
           text: need("text"),
+          ...(kind ? { kind } : {}),
           ...(one(p, "link") ? { link: one(p, "link") } : {}),
           ...(extra.sessionId ? { sessionId: extra.sessionId } : {}),
         },
       };
+    }
     case "content add": {
       const kind = need("kind");
       if (!["concept", "script", "post", "research"].includes(kind)) throw new Error("--kind must be concept, script, post or research");
@@ -291,7 +327,9 @@ export function buildRequest(
       return { method: "GET" as const, path: `/api/hq/inbox${q.size ? `?${q}` : ""}`, body: undefined };
     }
     default:
-      throw new Error(`Unknown command "${cmd}". Try checkin, mission add|update, approval, activity, content add|update, metrics, inbox, import.`);
+      throw new Error(
+        `Unknown command "${cmd}". Try checkin, mission add|update, approval, activity, brief, errors, content add|update, metrics, inbox, import.`,
+      );
   }
 }
 
@@ -326,7 +364,7 @@ async function main() {
       if (!file) throw new Error("Usage: import <file.json>");
       req = { method: "POST", path: "/api/hq/report", body: { type: "import", seed: JSON.parse(readFileSync(file, "utf8")) } };
     } else if (cmd === "checkin") {
-      if (!sessionId) return;
+      if (!sessionId && !p.flags.session) return;
       let usage: UsageFile | null = null;
       try {
         const f = join(process.env.HOME ?? homedir(), ".claude", "hq-usage.json");

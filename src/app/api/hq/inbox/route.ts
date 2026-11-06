@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     const since = sinceRaw ? new Date(sinceRaw) : undefined;
     if (since && Number.isNaN(since.getTime())) throw new HttpError(400, "since must be a date.");
     const r = await agentInbox(getDb(), { role: role && isHqRole(role) ? role : undefined, since });
-    return NextResponse.json({ missions: r.missions, decisions: r.decisions, approvedContent: r.approvedContent, controls: r.controls });
+    return NextResponse.json({ missions: r.missions, decisions: r.decisions, approvedContent: r.approvedContent, controls: r.controls, chats: r.chats });
   } catch (e) {
     return errorResponse(e);
   }
