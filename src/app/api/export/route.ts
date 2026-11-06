@@ -1,17 +1,27 @@
 import { getSessionUser } from "@/server/auth/current-user";
+import { moneyLocked } from "@/server/auth/money-lock";
 import { withUser } from "@/server/db/with-user";
 import { enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { audit } from "@/server/services/audit";
-import { exportUserData } from "@/server/services/data-export";
+import { exportStream } from "@/server/services/data-export";
 import { queryTransactions, toCsv } from "@/server/services/finance/transactions";
 
 export const dynamic = "force-dynamic";
 
-/** Full personal data export (JSON, every user table: services/data-export.ts) or transactions CSV. Secrets and hashes are never included. */
+/** Said as plain text, since the browser shows it in place of the download. */
+const MONEY_LOCKED = "Unlock Money first, then download your data again.";
+
+/**
+ * Full personal data export (JSON, every user table: services/data-export.ts) or transactions CSV. Secrets and
+ * hashes are never included. Both hold money, so both wait while Money is locked. The JSON is streamed table by
+ * table in batches, so years of transactions never build one huge string (and Vercel's 4.5 MB limit only applies
+ * to responses that aren't streamed).
+ */
 export async function GET(req: Request) {
   try {
     const user = await getSessionUser();
     if (!user) throw new HttpError(401, "Not signed in");
+    if (await moneyLocked(user)) return new Response(MONEY_LOCKED, { status: 403, headers: { "content-type": "text/plain; charset=utf-8" } });
     await enforceRateLimit(`export:${user.id}`, 10, 3600);
     const format = new URL(req.url).searchParams.get("format");
     const stamp = new Date().toISOString().slice(0, 10);
@@ -28,13 +38,13 @@ export async function GET(req: Request) {
         headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="lifeflow-transactions-${stamp}.csv"` },
       });
     }
-    const data = await withUser(user.id, async (s) => {
-      const out = await exportUserData(s, user);
-      await audit(s, "user", "data.export.json");
-      return out;
-    });
-    return new Response(JSON.stringify(data, null, 2), {
-      headers: { "content-type": "application/json", "content-disposition": `attachment; filename="lifeflow-export-${stamp}.json"` },
+    await withUser(user.id, (s) => audit(s, "user", "data.export.json"));
+    return new Response(exportStream(user.id, user), {
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "content-disposition": `attachment; filename="lifeflow-export-${stamp}.json"`,
+        "cache-control": "no-store",
+      },
     });
   } catch (e) {
     return errorResponse(e);
