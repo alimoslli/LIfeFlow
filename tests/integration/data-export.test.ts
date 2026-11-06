@@ -94,16 +94,14 @@ describe("Download my data", () => {
         );
       }
       // A year of the background sync log, every 30 minutes: never exported.
-      await s.tx
-        .insert(syncJobs)
-        .values(
-          Array.from({ length: 2000 }, () => ({
-            userId: s.userId,
-            kind: "plaid.sync",
-            status: "failed" as const,
-            error: "Check PLAID_CLIENT_ID, PLAID_SECRET",
-          })),
-        );
+      await s.tx.insert(syncJobs).values(
+        Array.from({ length: 2000 }, () => ({
+          userId: s.userId,
+          kind: "plaid.sync",
+          status: "failed" as const,
+          error: "Check PLAID_CLIENT_ID, PLAID_SECRET",
+        })),
+      );
     });
 
     const res = await GET(new Request("http://localhost/api/export"));
