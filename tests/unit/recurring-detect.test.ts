@@ -494,3 +494,26 @@ describe("the reviewer's held-out wrong ones (review follow-up, optional)", () =
     ]);
   });
 });
+
+describe("rent paid to a person every week or two (review follow-up)", () => {
+  it("finds biweekly rent by Zelle and weekly rent by Venmo as one bill each, not four monthly ones", () => {
+    const zelle = every("2026-07-03", 14, 9).map((d) => tx(d, -47_500, null, "ZELLE TO OAK STREET LANDLORD CONF# K8QX", transfer()));
+    expect(detectRecurring(zelle)).toMatchObject([{ kind: "bill", frequency: "biweekly", latestAmountCents: -47_500, occurrences: 9 }]);
+    const venmo = every("2026-08-07", 7, 13).map((d, i) => tx(d, -15_000, "Venmo", `VENMO PAYMENT 77${i}31`, transfer()));
+    const friends = ["2026-08-12", "2026-08-30", "2026-09-17", "2026-10-02", "2026-10-21"].map((d, i) =>
+      tx(d, -[1_250, 2_830, 940, 1_710, 2_260][i], "Venmo", `VENMO PAYMENT 51${i}`, transfer()),
+    );
+    expect(detectRecurring([...venmo, ...friends])).toMatchObject([{ kind: "bill", frequency: "weekly", latestAmountCents: -15_000, occurrences: 13 }]);
+  });
+
+  it("still needs enough charges at one exact amount, every one on schedule", () => {
+    const three = every("2026-10-09", 7, 3).map((d) => tx(d, -15_000, "Venmo", "VENMO PAYMENT 1", transfer()));
+    expect(detectRecurring(three)).toEqual([]);
+    const moving = every("2026-07-03", 14, 8).map((d, i) => tx(d, -(40_000 + i * 2_500), null, "ZELLE TO OAK STREET LANDLORD", transfer()));
+    expect(detectRecurring(moving)).toEqual([]);
+    const late = ["2026-07-03", "2026-07-17", "2026-08-05", "2026-08-14", "2026-08-28"].map((d) =>
+      tx(d, -47_500, null, "ZELLE TO OAK STREET LANDLORD", transfer()),
+    );
+    expect(detectRecurring(late)).toEqual([]);
+  });
+});

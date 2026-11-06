@@ -416,9 +416,9 @@ function evaluate(cycles: Cycle[], ctx: Context): Found | null {
   const known = KNOWN_SUBSCRIPTION.test(name) || KNOWN_SUBSCRIPTION.test(key);
   // A loan payment or a 529 contribution is planned; two equal ones a month apart are enough, like a known subscription.
   const scheduled = transfer && ts.some((t) => LENDER.test(lineOf(t)) || COLLEGE_PLAN.test(lineOf(t)));
-  // A price picked out of other purchases (strict) needs more: 3 monthly or yearly charges, 4 quarterly ones.
+  // A price picked out of other purchases (strict) needs more: 3 monthly or yearly charges, 4 quarterly or weekly ones.
   const minCount = strict
-    ? period.freq === "quarterly"
+    ? period.freq === "quarterly" || period.freq === "weekly"
       ? 4
       : 3
     : period.freq === "yearly" || ((known || scheduled) && exact && period.freq === "monthly")
@@ -433,9 +433,11 @@ function evaluate(cycles: Cycle[], ctx: Context): Found | null {
   // A price picked out of other purchases has to bill like a subscription: monthly or longer, every time on schedule.
   // So does money sent to a person through an app (rent or a share by Zelle or Venmo), or friends' payments look like a bill.
   const toPerson = transfer && ts.every((t) => PAYMENT_APP.test(lineOf(t)));
-  if ((strict || toPerson) && (regular < 1 || period.freq === "weekly" || period.freq === "biweekly")) return null;
-  // Rent or a share paid to a person comes monthly; a remittance three months apart is a pattern by chance.
-  if (toPerson && period.freq !== "monthly") return null;
+  // Rent paid to a person every week or two (by Zelle or Venmo, even to a landlord) is one exact amount, every time on time.
+  const weeklyRent = toPerson && exact && regular === 1 && (period.freq === "weekly" || period.freq === "biweekly");
+  if ((strict || toPerson) && !weeklyRent && (regular < 1 || period.freq === "weekly" || period.freq === "biweekly")) return null;
+  // Otherwise rent or a share paid to a person comes monthly; a remittance three months apart is a pattern by chance.
+  if (toPerson && !weeklyRent && period.freq !== "monthly") return null;
   // A price that holds between a few clean changes (Netflix at $15.49 twice, then $17.99) is a steady amount, not a wobbling one.
   const runs = runsOf(cycles);
   const runStart = (i: number) => daysBetween(runs[i - 1][runs[i - 1].length - 1].t.date, runs[i][0].t.date);
