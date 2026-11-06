@@ -7,6 +7,7 @@ import { assertOwned, notFound, ServiceError } from "./errors";
 import { getAssignment, listAssignments, updateAssignment } from "./school";
 import { getTask, listTasks, updateTask } from "./tasks";
 import { listShifts } from "./work";
+import { mergeCrossSource, sourceLabel } from "./calendar-merge";
 
 export const EVENT_KINDS = ["personal", "class", "exam", "work", "study", "appointment", "reminder", "other"] as const;
 
@@ -211,6 +212,8 @@ export type AgendaItem = {
   blocksTime: boolean;
   /** A day of a repeating event (its date can be removed on its own). */
   repeats?: boolean;
+  /** Where this event lives, when more than one place has it (e.g. "Google + Outlook"). */
+  sources?: string[];
 };
 
 export async function listEventsInRange(scope: UserScope, tz: string, from: string, to: string) {
@@ -228,7 +231,11 @@ export async function listEventsInRange(scope: UserScope, tz: string, from: stri
       ),
     )
     .orderBy(asc(calendarEvents.startsAt));
-  return rows.flatMap(({ event, courseColor, courseName }) => expandOccurrences(event, from, to, tz).map((o) => ({ ...event, ...o, courseColor, courseName })));
+  const occurrences = rows.flatMap(({ event, courseColor, courseName }) =>
+    expandOccurrences(event, from, to, tz).map((o) => ({ ...event, ...o, courseColor, courseName })),
+  );
+  // The same event on Google and Outlook (or Canvas, or LifeFlow) is one event, read time only; no provider row is touched.
+  return mergeCrossSource(occurrences, tz).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
 }
 
 const KIND_COLORS: Record<string, string> = {
@@ -241,6 +248,11 @@ const KIND_COLORS: Record<string, string> = {
   reminder: "#64748b",
   other: "#64748b",
 };
+
+function sourcesNote(sources: string[]) {
+  const labels = [...new Set(sources.map(sourceLabel))];
+  return labels.length > 1 ? `On ${labels.join(" + ")}` : null;
+}
 
 export async function getAgenda(
   scope: UserScope,
@@ -263,10 +275,11 @@ export async function getAgenda(
         allDay: e.allDay,
         kind: e.kind,
         color: e.courseColor ?? KIND_COLORS[e.kind],
-        subtitle: [e.courseName, e.location].filter(Boolean).join(" · ") || null,
+        subtitle: [e.courseName, e.location, sourcesNote(e.sources)].filter(Boolean).join(" · ") || null,
         href: `/calendar?date=${localDateOf(e.startsAt, tz)}`,
         blocksTime: !e.allDay,
         repeats: !!e.recurrence,
+        sources: e.sources,
       });
     }
   }

@@ -4,6 +4,7 @@ import { parseIcs, type IcsTime } from "@/lib/ics";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { assignments, calendarEvents, connectionRegistry, courseMaterials, courses, integrations, notes, tasks, type AssignmentKind } from "../db/schema";
 import type { UserScope } from "../db/with-user";
+import { upsertProviderEvent } from "./calendar-upsert";
 import { ServiceError } from "../services/errors";
 
 /**
@@ -460,15 +461,8 @@ async function syncFeed(scope: UserScope, creds: Creds & { feedUrl: string }, f:
         kind: "class" as const,
         courseId: label || ref ? await courseFor(ref, label) : null,
       };
-      const [existing] = await scope.tx
-        .select({ id: calendarEvents.id })
-        .from(calendarEvents)
-        .where(and(eq(calendarEvents.userId, scope.userId), eq(calendarEvents.source, "canvas"), eq(calendarEvents.providerEventId, providerEventId)));
-      if (existing) await scope.tx.update(calendarEvents).set(fields).where(eq(calendarEvents.id, existing.id));
-      else {
-        await scope.tx.insert(calendarEvents).values({ userId: scope.userId, ...fields, source: "canvas", providerEventId });
-        added++;
-      }
+      const r = await upsertProviderEvent(scope, "canvas", providerEventId, fields);
+      if (r.added) added++;
     }
   }
   return { courses: seen.size, newCourses, assignments: saved, events: added };

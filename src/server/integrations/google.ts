@@ -5,6 +5,7 @@ import { truncate } from "@/lib/utils";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { calendarEvents, connectionRegistry, gmailMessages, integrations } from "../db/schema";
 import { withUser, type UserScope } from "../db/with-user";
+import { upsertProviderEvent } from "./calendar-upsert";
 
 /**
  * Google (Gmail + Google Calendar) for one LifeFlow user.
@@ -463,17 +464,9 @@ export async function syncGoogleCalendar(scope: UserScope, tz: string, now = new
       location: e.location ?? null,
       ...t,
     };
-    const [existing] = await scope.tx
-      .select({ id: calendarEvents.id })
-      .from(calendarEvents)
-      .where(and(eq(calendarEvents.userId, scope.userId), eq(calendarEvents.source, "google"), eq(calendarEvents.providerEventId, e.id)));
-    if (existing) {
-      await scope.tx.update(calendarEvents).set(values).where(eq(calendarEvents.id, existing.id));
-      updated++;
-    } else {
-      await scope.tx.insert(calendarEvents).values({ userId: scope.userId, source: "google", providerEventId: e.id, kind: "personal", ...values });
-      added++;
-    }
+    const r = await upsertProviderEvent(scope, "google", e.id, { kind: "personal", ...values });
+    if (r.added) added++;
+    else updated++;
   }
   const stale = await scope.tx
     .delete(calendarEvents)
@@ -514,9 +507,8 @@ export async function addGoogleEvent(
   const created = await api<GEvent & { htmlLink?: string }>(scope, `${CAL}/events`, { method: "POST", body: JSON.stringify(body) }, f);
   if (!created?.id) throw new GoogleError("Google Calendar didn't confirm the event.");
   const t = eventTimes(created, tz);
-  await scope.tx
-    .insert(calendarEvents)
-    .values({ userId: scope.userId, source: "google", providerEventId: created.id, kind: "personal", title: o.title, location: o.location ?? null, ...t });
+  // Upsert on Google's id: a sync that already mirrored this event must not leave a second copy.
+  await upsertProviderEvent(scope, "google", created.id, { kind: "personal", title: o.title, location: o.location ?? null, ...t });
   return { googleEventId: created.id, htmlLink: created.htmlLink ?? null };
 }
 

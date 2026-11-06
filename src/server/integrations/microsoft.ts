@@ -5,6 +5,7 @@ import { truncate } from "@/lib/utils";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { calendarEvents, connectionRegistry, integrations } from "../db/schema";
 import { withUser, type UserScope } from "../db/with-user";
+import { upsertProviderEvent } from "./calendar-upsert";
 
 /**
  * Microsoft 365 (Outlook calendar, which holds Teams meetings) for one LifeFlow user.
@@ -268,17 +269,9 @@ export async function syncMicrosoftCalendar(scope: UserScope, tz: string, now = 
       location: e.location?.displayName?.trim() || (teams ? "Microsoft Teams" : null),
       ...t,
     };
-    const [existing] = await scope.tx
-      .select({ id: calendarEvents.id })
-      .from(calendarEvents)
-      .where(and(eq(calendarEvents.userId, scope.userId), eq(calendarEvents.source, "outlook"), eq(calendarEvents.providerEventId, e.id)));
-    if (existing) {
-      await scope.tx.update(calendarEvents).set(values).where(eq(calendarEvents.id, existing.id));
-      updated++;
-    } else {
-      await scope.tx.insert(calendarEvents).values({ userId: scope.userId, source: "outlook", providerEventId: e.id, kind: "personal", ...values });
-      added++;
-    }
+    const r = await upsertProviderEvent(scope, "outlook", e.id, { kind: "personal", ...values });
+    if (r.added) added++;
+    else updated++;
   }
   const stale = await scope.tx
     .delete(calendarEvents)

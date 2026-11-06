@@ -267,6 +267,13 @@
       "when": 1793900000000,
       "tag": "0037_transaction_tidy_ai_pending",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794000000000,
+      "tag": "0038_calendar_events_unique",
+      "breakpoints": true
     }
   ]
 }

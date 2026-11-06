@@ -969,7 +969,12 @@ export const calendarEvents = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index("events_user_start_idx").on(t.userId, t.startsAt), ownerPolicy()],
+  (t) => [
+    index("events_user_start_idx").on(t.userId, t.startsAt),
+    // One row per provider event (nulls stay distinct, so manual events are unaffected). Syncs upsert on this key.
+    uniqueIndex("events_user_source_provider_uq").on(t.userId, t.source, t.providerEventId),
+    ownerPolicy(),
+  ],
 );
 
 export type Priority = "low" | "medium" | "high" | "urgent";
@@ -1527,7 +1532,7 @@ export const pendingActions = pgTable(
     toolCallId: text("tool_call_id").notNull(),
     args: jsonb("args").$type<Record<string, unknown>>().notNull(),
     summary: text("summary").notNull(),
-    status: text("status").$type<"pending" | "executed" | "cancelled" | "failed" | "expired">().notNull().default("pending"),
+    status: text("status").$type<"pending" | "running" | "executed" | "cancelled" | "failed" | "expired">().notNull().default("pending"),
     result: jsonb("result").$type<ToolResultRecord>(),
     expiresAt: tstz("expires_at").notNull(),
     resolvedAt: tstz("resolved_at"),
