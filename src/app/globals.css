@@ -722,6 +722,26 @@ html[data-typing="true"] .lf-fab {
     width: 22px;
     height: 22px;
   }
+  /* iOS Safari (and the iPhone app's WebKit view) draws date and time fields at their own width, ignoring the
+     width class, so they spill under the next control (the "Expires" field ran under its Add button). Keep them
+     inside their box everywhere. */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="week"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value,
+  input[type="datetime-local"]::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.5em;
+  }
   label:has(> input[type="checkbox"]),
   label:has(> input[type="radio"]) {
     min-height: 44px;
