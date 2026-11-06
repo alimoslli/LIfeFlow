@@ -106,31 +106,76 @@ async function runTool(name: string, args: unknown, ctx: ToolContext): Promise<T
   }
 }
 
-/** Executes or cancels a pending action after the user's explicit decision. */
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Executes or cancels a pending action after the user's explicit decision.
+ * Idempotent: the action is claimed atomically (pending -> running), so only the first call runs it.
+ * A second call (double tap, two devices, a retried request) waits for the first and gets its saved
+ * result back with `replayed: true`; nothing runs twice.
+ */
 export async function resolvePendingAction(id: string, decision: "confirm" | "cancel", ctx: ToolContext) {
-  const [action] = await ctx.run(({ tx, userId }) =>
+  const [peek] = await ctx.run(({ tx, userId }) =>
     tx
       .select()
       .from(pendingActions)
       .where(and(eq(pendingActions.id, id), eq(pendingActions.userId, userId))),
   );
-  if (!action) throw new ServiceError("Action not found", "not_found");
-  if (action.status !== "pending") throw new ServiceError(`This action was already ${action.status}.`, "conflict");
-  const expired = action.expiresAt < new Date();
+  if (!peek) throw new ServiceError("Action not found", "not_found");
+  if (decision === "confirm" && peek.status === "pending" && ctx.moneyLocked && MONEY_TOOLS.has(peek.toolName)) {
+    throw new ServiceError("Money is locked. Unlock it in the Money tab with Face ID, then confirm again.", "forbidden");
+  }
+  // The claim: only one caller gets a row back.
+  const [claimed] = await ctx.run(({ tx, userId }) =>
+    tx
+      .update(pendingActions)
+      .set({ status: "running" })
+      .where(and(eq(pendingActions.id, id), eq(pendingActions.userId, userId), eq(pendingActions.status, "pending")))
+      .returning(),
+  );
+  if (!claimed) return await replayFinished(id, ctx);
+
+  const action = claimed;
   let status: "executed" | "cancelled" | "failed" | "expired";
   let result: ToolResultRecord;
-  if (expired) {
+  if (action.expiresAt < new Date()) {
     status = "expired";
     result = { ok: false, error: "Confirmation expired; nothing was changed." };
   } else if (decision === "cancel") {
     status = "cancelled";
     result = { ok: false, error: "The user cancelled this action; nothing was changed." };
-  } else if (ctx.moneyLocked && MONEY_TOOLS.has(action.toolName)) {
-    throw new ServiceError("Money is locked. Unlock it in the Money tab with Face ID, then confirm again.", "forbidden");
   } else {
-    result = await runTool(action.toolName, action.args, { ...ctx, conversationId: action.conversationId });
+    try {
+      result = await runTool(action.toolName, action.args, { ...ctx, conversationId: action.conversationId });
+    } catch (e) {
+      console.error(`[jarvis] pending action ${id} crashed`, e);
+      result = { ok: false, error: errorMessage(e) };
+    }
     status = result.ok ? "executed" : "failed";
   }
   await ctx.run(({ tx }) => tx.update(pendingActions).set({ status, result, resolvedAt: new Date() }).where(eq(pendingActions.id, id)));
-  return { action, status, result };
+  return { action, status, result, replayed: false };
+}
+
+/** Someone else claimed the action: wait for them to finish, then return what they saved. */
+async function replayFinished(id: string, ctx: ToolContext) {
+  for (let i = 0; i < 300; i++) {
+    const [row] = await ctx.run(({ tx, userId }) =>
+      tx
+        .select()
+        .from(pendingActions)
+        .where(and(eq(pendingActions.id, id), eq(pendingActions.userId, userId))),
+    );
+    if (!row) throw new ServiceError("Action not found", "not_found");
+    if (row.status !== "pending" && row.status !== "running") {
+      return {
+        action: row,
+        status: row.status as "executed" | "cancelled" | "failed" | "expired",
+        result: row.result ?? { ok: false, error: "No result was saved." },
+        replayed: true,
+      };
+    }
+    await sleep(100);
+  }
+  throw new ServiceError("This action is still being processed. Check back in a moment.", "conflict");
 }

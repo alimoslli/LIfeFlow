@@ -155,7 +155,8 @@ describe("Jarvis tool loop", () => {
     const resolved = await resolvePendingAction(confirmation.actionId, "confirm", ctx);
     expect(resolved.status).toBe("executed");
     await expect(run((s) => getTask(s, task.id))).rejects.toThrow(/not found/);
-    await expect(resolvePendingAction(confirmation.actionId, "confirm", ctx)).rejects.toThrow(/already executed/);
+    // Confirming again is idempotent: the saved result comes back and nothing runs twice.
+    expect(await resolvePendingAction(confirmation.actionId, "confirm", ctx)).toMatchObject({ status: "executed", replayed: true });
   });
 
   it("cannot act on another user's records even with a valid id", async () => {
