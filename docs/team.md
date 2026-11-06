@@ -6,6 +6,7 @@ Set by the owner on 2026-11-05. Every Claude Code session on this repo reads thi
 |---|---|---|
 | **The owner** | Decides what LifeFlow is. Uses the app every day and reports what's wrong. Approves design choices and research proposals. | This repo's plan: `docs/vision.md` |
 | **The product chat** | Turns the owner's decisions into the plan, briefs the builders, reviews every build before the owner sees it, runs the other agents, keeps the plan up to date. | `docs/vision.md`, `docs/design/`, this file |
+| **The nightly audits chat** ("LifeFlow nightly audits", branch `claude/nightly-audits`) | Runs the always-on loop below while the owner sleeps: audit, fixes, reviews, one approved feature for the owner's okay, situations and research. It leaves a morning report. Set up by the owner on 2026-11-06 so the product chat stays on LifeFlow v3. | `docs/audits/`, `docs/research/`, `docs/situations/` |
 | **Builders** (Claude Code chats that write the app) | Build Dev's brain (the checks, the timeline, memory) and the surface, in small tested steps, following `CLAUDE.md` and `docs/playbook.md`. | `src/`, `tests/` |
 | **Prototype builder** (Fable) | Builds concept prototypes from a brief so the owner can see an idea before it is built. | Published artifacts; screenshots in the scratch folder |
 | **Auditor** (Opus, fresh eyes) | Audits each prototype or build with no context from the conversation, so nothing gets a pass because we're used to it. | `docs/design/*-audit.md` |
@@ -29,28 +30,28 @@ The owner asked for the agents to keep running: audit the app (phone and web), f
 
 **Light in the day, heavy at night (owner, 2026-11-05).** The owner's Claude usage has a 5-hour limit. During the day, agents do only light work: answering the owner, small fixes, short checks. Audits, builders, reviewers, situation batches, research, full test runs and e2e run in the night round, so the limit resets by morning.
 
-**Cost rules (owner, 2026-11-06).** Spend usage well, not less: the owner wants the app to keep improving every night ("don't cut it down that much"), without waste.
-- **Models.** Builders, the situation writer and the researcher run on Sonnet. The auditor and the reviewers of money, security or data changes use Opus.
-- **Per night:**
-  - one audit (what changed plus one area);
-  - up to 6 fixes;
-  - one approved feature, built on a branch and shown to the owner with screenshots in the morning, and shipped to main only after the owner's okay;
-  - 10 situations.
-- **Research** twice a week.
-- **Up to three agents at a time,** never four.
-- **Read only what's needed.** Agents read the sections of `docs/vision.md` and `CLAUDE.md` their task needs, not whole files. Few screenshots, at scale 1.
-- **Use the whole limit (owner, 2026-11-06).** A round keeps working until the 5-hour limit is spent. Before the last of it goes, it saves its carry-over and writes the morning report, so nothing is lost when the limit runs out. (This replaces "stop at about 70%".)
-- **Work while the owner is away (owner, 2026-11-06).** Any day and time, an hourly check runs in the audits chat. If the owner used another Claude session in the last hour, it only replies "OK" (that still starts a fresh 5-hour window after a reset). Otherwise it resumes unfinished work, or takes the next item: carry-over, `fix now` findings, the current approved feature's next step, situations, then a fresh audit of an uncovered area. It works until the limit is spent, saves the carry-over first, and adds what it did to the morning report under "Done while you were away". When the limit runs out mid-task, the next hourly check after the reset picks it up again.
+**Cost rules (owner, 2026-11-06, tightened the same night: "overall it's too much usage for the weekly usage too").**
+- **Night rounds run three nights a week** (Sunday, Tuesday and Thursday at 3 AM), each with:
+  - one audit;
+  - up to 3 fixes;
+  - 5 situations.
+
+  Research runs once a week (Monday). Features are built only after the owner has okayed a picture.
+- **Models:** Sonnet for everything by default, including auditors and builders. Opus only reviews changes that touch money, security or a data migration.
+- **Two agents at a time at most,** in the night rounds and in the product chat alike.
+- **Review rounds:** one review per fix. A second round only when the first found a money, security or data-loss defect.
+- **Read only what's needed;** few screenshots, at scale 1.
+- **Stop at about 40% of the 5-hour limit,** save the carry-over and report.
 
 **The owner's hours (owner, 2026-11-05, changed late that night):** the agents run while the owner sleeps. Rounds start at 3 AM Pacific, or at the first usage-limit reset after 3 AM if the limit is spent. The report and the yes or no list are waiting in the app by morning (a message plus a push). Nobody waits for approval during a round: approved work goes ahead, and real changes go on the list for the owner to answer the next day.
 
-**Every night (3 AM Pacific)**
-1. **Audit everything.** A fresh-eyes auditor uses the app on phone and web and looks for every kind of error, not only design: does it work, does everything flow, is everything connected. It traces data end to end (a bank charge into bills, Today, the forecast and a notification; an assignment into Plan and a study block; a shift into pay; an assistant action into the records it claims and its Undo), and checks errors, wrong numbers, stale data and security slips. It drives the assistant through the e2e fake model server, never a paid API key. It checks the app against `CLAUDE.md`, the playbook, the vision and the research rules, and covers what changed since the last audit plus one area not yet covered. Findings go in `docs/audits/YYYY-MM-DD-*.md`, each classed `fix now`, `needs owner` or `waits for new surface`.
+**Night rounds (Sunday, Tuesday, Thursday, 3 AM Pacific)**
+1. **Audit everything.** A fresh-eyes auditor uses the app on phone and web and looks for every kind of error, not only design: does it work, does everything flow, is everything connected. It traces data end to end (a bank charge into bills, Today, the forecast and a notification; an assignment into Plan and a study block; a shift into pay; an assistant action into the records it claims and its Undo), and checks errors, wrong numbers, stale data and security slips. It also checks two things the owner caught before we did (2026-11-06): **no control ever overlaps or covers another** (every form and dialog at phone sizes and Extra large text, `tests/e2e/no-overlap-phone.spec.ts`; iPhone WebKit differs from the Chromium we test in, so WebKit-only issues need global CSS rules and the owner's screenshots become cases), and **nothing imported from a connection ever shows up twice** (Google Calendar, Gmail and what's filed from it, Canvas, Outlook, Plaid). It drives the assistant through the e2e fake model server, never a paid API key. It checks the app against `CLAUDE.md`, the playbook, the vision and the research rules, and covers what changed since the last audit plus one area not yet covered. Findings go in `docs/audits/YYYY-MM-DD-*.md`, each classed `fix now`, `needs owner` or `waits for new surface`.
 2. **Fix.** Builders fix the top `fix now` findings straight away, one at a time, each with a test, in their own worktree.
 3. **Review.** A second reviewer who didn't write the fix checks each change for correctness, security and the rules. Then the product chat runs `npm run check`, plus the build and the relevant e2e tests for anything on screen, and pushes to the working branch.
 4. **Situations.** The situation writer adds a batch through the simulator, at least 70% students. `validate.py` must pass.
 
-**Twice a week (Monday and Thursday, 3 AM Pacific)**
+**Once a week (Monday, 3 AM Pacific)**
 - **Research.** Competitors, what real people want (students first) and an audit of the last report. Every claim is checked against its source and corrected if wrong.
 - Things to avoid become rules the same day.
 - Proposals are tagged `fix now`, `build now`, `needs the new surface` or `owner decision`.
