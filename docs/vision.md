@@ -399,6 +399,11 @@ Decided by the owner (2026-11-05, research round 2):
    - **Goals:** option A, one calm list. Each goal is one line with a plain status. A goal is added by one sentence and Dev's plan card. Habits are goals with a rhythm. Money progress comes from the linked account. There are no forms or sliders on the main screen. Milestones become a short "Your story".
    - **Connected accounts:** option A, "What Dev can see". One short list in words, a status at a glance, one-tap fixes, no jargon by default, adding a school or bank by hand, and one privacy line each.
    - **With the timeline surface:** goals as flags on the timeline (Goals B), and connections grouped by part of life (Connections B).
+   - **How goals work (owner, 2026-11-06):** "We're supposed to be changing the concept into the new way… we are inventing that new way."
+     - **No preset choices.** No category picker, no fixed time frames, no tabs by goal type. The person says any goal in their own words, any size, any time span or none. Dev works out what kind it is and links the data; it never asks the person to classify.
+     - **One list for everything:** money, health, school, habits, life, one-off and ongoing. Milestones are things done, as many as there are, from any time.
+     - **No simulators** ("what if I added $X a month"). Dev states one concrete plan from real data, or "just track it".
+     - **No daily "how did you work toward your goals?" prompt.** Progress comes from the data; when something can't be known, Dev asks one short question at the right moment.
 
 ## 16. The honest hard parts
 
