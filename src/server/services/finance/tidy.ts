@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { aiAllowed } from "@/lib/ai-consent";
-import { cleanVendorName, looksMessy } from "@/lib/vendor";
+import { cleanVendorName, correctedVendorName, looksMessy } from "@/lib/vendor";
 import { categories, transactions, users } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { env } from "../../env";
@@ -96,9 +96,12 @@ export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm |
   for (const r of rows) {
     if (changes >= MAX_CHANGES) break;
     const raw = r.merchantName?.trim() || r.description;
-    const name = cleanVendorName(raw);
+    // A name an earlier, broader brand pattern wrote ("Southwest Airlines" on a "SOUTHWEST GAS" line) is put right
+    // from the bank's line. Any other stored name, such as one the person typed, is left as it is.
+    const fixed = correctedVendorName(r.merchantName, r.description);
+    const name = fixed ?? cleanVendorName(raw);
     const patch: { merchantName?: string; categoryId?: string; kind?: (typeof transactions.$inferSelect)["kind"] } = {};
-    if (name && name !== r.merchantName && name !== r.description.trim()) patch.merchantName = name;
+    if (fixed || (name && name !== r.merchantName && name !== r.description.trim())) patch.merchantName = name;
     else if (name && !r.merchantName && name === r.description.trim()) {
       /* already readable: nothing to store */
     }

@@ -5,20 +5,24 @@
  * Pure and conservative: it only removes what's clearly bank noise, and a clean name stays as it is.
  */
 
+/** Marks a brand added when the list was narrowed (Nov 6, 2026): the earlier list didn't have it. */
+const ADDED = false;
+
 /**
  * Well-known merchants: the statement pattern, and the name to show. Order matters: specific first. A pattern
  * matches only that merchant: a shared word (Southwest Gas and Southwest Airlines, Costco's gas station and its
  * warehouse) or one company's separate services (Verizon Fios and Verizon Wireless) are different merchants, with
- * their own bills, categories and rules.
+ * their own bills, categories and rules. The third value is the earlier, broader pattern a name was once stored
+ * under (or ADDED), so those names can be put right (`correctedVendorName`).
  */
-const BRANDS: [RegExp, string][] = [
+const BRANDS: [RegExp, string, (RegExp | typeof ADDED)?][] = [
   [/amazon prime|prime video|amzn prime/, "Amazon Prime"],
-  [/amazon web services|\baws\b/, "Amazon Web Services"],
-  [/amazon fresh/, "Amazon Fresh"],
-  [/amazon music/, "Amazon Music"],
+  [/amazon web services|\baws\b/, "Amazon Web Services", ADDED],
+  [/amazon fresh/, "Amazon Fresh", ADDED],
+  [/amazon music/, "Amazon Music", ADDED],
   [/amzn|amazon/, "Amazon"],
-  [/apple cash/, "Apple Cash"],
-  [/apple\.com\/bill|apple com bill|itunes|apple store/, "Apple"],
+  [/apple cash/, "Apple Cash", ADDED],
+  [/apple\.com\/bill|apple com bill|itunes|apple store/, "Apple", /apple\.com\/bill|apple com bill|itunes|apple store|apple cash/],
   [/google \*?(?:storage|one)|google play|goog\*/, "Google"],
   [/uber ?eats/, "Uber Eats"],
   [/\buber\b/, "Uber"],
@@ -31,8 +35,8 @@ const BRANDS: [RegExp, string][] = [
   [/hulu/, "Hulu"],
   [/disney ?(?:\+|plus)/, "Disney+"],
   [/hbo ?max|\bmax\.com/, "Max"],
-  [/youtube ?tv/, "YouTube TV"],
-  [/youtube ?(?:premium)?/, "YouTube"],
+  [/youtube ?tv/, "YouTube TV", ADDED],
+  [/youtube ?(?:premium)?/, "YouTube", /youtube ?(?:premium|tv)?/],
   [/chat ?gpt|openai/, "OpenAI"],
   [/adobe/, "Adobe"],
   [/starbucks/, "Starbucks"],
@@ -47,38 +51,38 @@ const BRANDS: [RegExp, string][] = [
   [/panera/, "Panera"],
   [/domino'?s/, "Domino's"],
   // The sandwich shop, not a subway fare ("MTA*NYCT PAYGO SUBWAY").
-  [/^(?!.*\b(?:mta|nyct|transit|metro|bart|septa|marta|cta|wmata)\b).*\bsubway\b(?! station| fare)/, "Subway"],
+  [/^(?!.*\b(?:mta|nyct|transit|metro|bart|septa|marta|cta|wmata)\b).*\bsubway\b(?! station| fare)/, "Subway", /subway(?! station)/],
   [/walmart|wal-mart/, "Walmart"],
   [/\btarget\b/, "Target"],
-  [/costco (?:gas|fuel)/, "Costco Gas"],
+  [/costco (?:gas|fuel)/, "Costco Gas", ADDED],
   [/costco/, "Costco"],
   [/trader joe/, "Trader Joe's"],
   [/whole foods/, "Whole Foods"],
-  [/kroger fuel|kroger gas/, "Kroger Fuel"],
+  [/kroger fuel|kroger gas/, "Kroger Fuel", ADDED],
   [/kroger/, "Kroger"],
   [/publix/, "Publix"],
-  [/safeway (?:fuel|gas)/, "Safeway Fuel"],
+  [/safeway (?:fuel|gas)/, "Safeway Fuel", ADDED],
   [/safeway/, "Safeway"],
   [/\baldi\b/, "Aldi"],
   [/\bh-?e-?b\b/, "H-E-B"],
-  [/\bcvs\b/, "CVS"],
+  [/\bcvs(?:pharmacy)?\b/, "CVS", /cvs/],
   [/walgreens/, "Walgreens"],
   [/home depot/, "Home Depot"],
-  [/\blowe'?s\b/, "Lowe's"],
+  [/\blowe'?s\b/, "Lowe's", /lowe'?s/],
   [/best buy/, "Best Buy"],
   [/\bikea\b/, "IKEA"],
   // The gas station, not a restaurant or a shop with "shell" in its name.
-  [/shell oil|shell service|^shell(?: \d| #|$)/, "Shell"],
+  [/shell oil|shell service|^shell(?: \d| #|$)/, "Shell", /shell oil|\bshell\b/],
   [/chevron/, "Chevron"],
   [/exxon/, "Exxon"],
   [/\bbp\b/, "BP"],
   [/wawa/, "Wawa"],
   [/planet fitness/, "Planet Fitness"],
   [/t-?mobile/, "T-Mobile"],
-  [/verizon fios|\bfios\b/, "Verizon Fios"],
+  [/verizon fios|\bfios\b/, "Verizon Fios", ADDED],
   [/verizon/, "Verizon"],
   [/at ?& ?t|\batt\b/, "AT&T"],
-  [/xfinity mobile|comcast mobile/, "Xfinity Mobile"],
+  [/xfinity mobile|comcast mobile/, "Xfinity Mobile", ADDED],
   [/comcast|xfinity/, "Xfinity"],
   [/venmo/, "Venmo"],
   [/cash ?app/, "Cash App"],
@@ -87,7 +91,7 @@ const BRANDS: [RegExp, string][] = [
   [/delta air/, "Delta"],
   [/united airlines/, "United Airlines"],
   [/american airlines/, "American Airlines"],
-  [/southwest air(?:lines)?\b|southwes air|\bswa\b/, "Southwest Airlines"],
+  [/southwest air(?:lines)?\b|southwes air|\bswa\b/, "Southwest Airlines", /southwest/],
   [/airbnb/, "Airbnb"],
   [/ticketmaster/, "Ticketmaster"],
 ];
@@ -125,6 +129,30 @@ export function brandName(raw: string | null | undefined): string | null {
   if (!lowered) return null;
   for (const [re, name] of BRANDS) if (re.test(lowered)) return name;
   return null;
+}
+
+/**
+ * The name the earlier, broader list gave a line ("SOUTHWEST GAS" was "Southwest Airlines", "VERIZON FIOS" was
+ * "Verizon"). Rows tidied then still carry it.
+ */
+function earlierBrandName(raw: string): string | null {
+  const lowered = raw.trim().toLowerCase().replace(/\*/g, " ").replace(/\s+/g, " ");
+  for (const [re, name, was] of BRANDS) if (was !== ADDED && (was ?? re).test(lowered)) return name;
+  return null;
+}
+const EARLIER_NAMES = new Set(BRANDS.filter(([, , was]) => was !== ADDED).map(([, name]) => name));
+
+/**
+ * Today's name for a row whose stored name came from the earlier, broader list: a Southwest Gas bill stored as
+ * "Southwest Airlines", Fios as "Verizon", YouTube TV as "YouTube". It's recomputed from the bank's own line. Null
+ * when there's nothing to put right: the stored name isn't what the earlier list gave this line (it's Plaid's, or
+ * one the person typed: "Hulu" on an "APPLE.COM/BILL HULU" line, "Gas bill"), or it's still today's name.
+ */
+export function correctedVendorName(stored: string | null | undefined, line: string): string | null {
+  const name = stored?.trim();
+  if (!name || !EARLIER_NAMES.has(name) || earlierBrandName(line) !== name) return null;
+  const now = cleanVendorName(line);
+  return now && now !== name ? now : null;
 }
 
 export function cleanVendorName(raw: string | null | undefined): string {

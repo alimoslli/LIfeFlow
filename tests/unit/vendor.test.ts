@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanVendorName, looksMessy } from "@/lib/vendor";
+import { cleanVendorName, correctedVendorName, looksMessy } from "@/lib/vendor";
 
 describe("cleanVendorName", () => {
   const cases: [string, string][] = [
@@ -92,4 +92,21 @@ describe("brands that share a word stay apart (review: over-broad brand patterns
       expect(cleanVendorName(a[0])).toBe(a[1]);
       expect(cleanVendorName(b[0])).toBe(b[1]);
     });
+});
+
+describe("names the earlier, broader patterns gave (review: rows renamed by the old tidy)", () => {
+  it("recomputes a name an old pattern gave from the bank's line, and leaves Plaid's or the person's names alone", () => {
+    expect(correctedVendorName("Southwest Airlines", "SOUTHWEST GAS CORP PAYMENT")).toBe("Southwest Gas Corp");
+    expect(correctedVendorName("Verizon", "VERIZON FIOS 800-837-4966")).toBe("Verizon Fios");
+    expect(correctedVendorName("Xfinity", "XFINITY MOBILE 888-936-4968")).toBe("Xfinity Mobile");
+    expect(correctedVendorName("YouTube", "YOUTUBE TV 855-978-3324")).toBe("YouTube TV");
+    expect(correctedVendorName("Costco", "COSTCO GAS #0123")).toBe("Costco Gas");
+    expect(correctedVendorName("Shell", "SHELL SHACK SEAFOOD")).toBe("Shell Shack Seafood");
+    // Already right, from Plaid, or typed by the person: nothing to correct.
+    expect(correctedVendorName("Southwest Airlines", "SOUTHWEST AIRLINES 5262191234567")).toBeNull();
+    expect(correctedVendorName("Verizon", "VERIZON WIRELESS PAYMENTS")).toBeNull();
+    expect(correctedVendorName("Hulu", "APPLE.COM/BILL HULU")).toBeNull();
+    expect(correctedVendorName("Gas bill", "SOUTHWEST GAS CORP PAYMENT")).toBeNull();
+    expect(correctedVendorName(null, "SOUTHWEST GAS CORP PAYMENT")).toBeNull();
+  });
 });

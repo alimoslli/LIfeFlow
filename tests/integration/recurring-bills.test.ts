@@ -1,13 +1,15 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { addDaysStr, todayIn } from "@/lib/dates";
 import { closeDb } from "@/server/db/client";
-import { categoryRules, integrations } from "@/server/db/schema";
+import { and, eq } from "drizzle-orm";
+import { categoryRules, integrations, transactions } from "@/server/db/schema";
 import type { UserScope } from "@/server/db/with-user";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
 import { billsAndPace, budgetWarnings } from "@/server/services/finance/forecast";
 import { createRecurring, setBudget, suggestRecurring, upcomingRecurring } from "@/server/services/finance/planning";
 import { subscriptionsOverview, trackFound } from "@/server/services/finance/subscriptions";
+import { tidyTransactions } from "@/server/services/finance/tidy";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { DETECTORS } from "@/server/services/proactive/detectors";
 import { saveMessage } from "@/server/services/proactive/engine";
@@ -489,5 +491,55 @@ describe("the budget fix never cuts essentials (A17)", () => {
     expect(w.fix).toBe(
       "This budget is already over by $21.50. Raise the limit to what you really spend on Food & Dining, or move the difference from a budget for wants.",
     );
+  });
+});
+
+describe("rows the earlier vendor tidy named too broadly (review: final check)", () => {
+  it("keys a Southwest Gas bill stored as 'Southwest Airlines' by its bank line, and the re-tidy renames only what the tidy wrote", async () => {
+    const { run } = await makeUser();
+    const got = await run(async (s) => {
+      const { checking, card } = await accounts(s);
+      const utilities = (await getCategoryByName(s, "Utilities"))!;
+      const gas = [6_210, 4_480, 3_920, 4_105, 5_330, 7_940];
+      for (const [i, cents] of gas.entries())
+        await createTransaction(s, {
+          accountId: checking.id,
+          date: addDaysStr("2026-05-18", Math.round(i * 30.4)),
+          description: "SOUTHWEST GAS",
+          amountCents: -cents,
+          categoryId: utilities.id,
+        });
+      for (const [d, cents] of [
+        ["2026-06-02", 18_940],
+        ["2026-08-21", 24_120],
+        ["2026-10-09", 15_670],
+      ] as const)
+        await createTransaction(s, { accountId: card.id, date: d, description: "SOUTHWEST AIRLINES 5262191234567", amountCents: -cents });
+      const fios = await createTransaction(s, { accountId: checking.id, date: "2026-10-20", description: "VERIZON FIOS 800-837-4966", amountCents: -8_999 });
+      // What the earlier tidy stored: every "southwest" line as the airline, Fios as "Verizon".
+      await s.tx
+        .update(transactions)
+        .set({ merchantName: "Southwest Airlines" })
+        .where(and(eq(transactions.userId, s.userId), eq(transactions.description, "SOUTHWEST GAS")));
+      await s.tx.update(transactions).set({ merchantName: "Verizon" }).where(eq(transactions.id, fios!.id));
+      // A name the person typed stays theirs.
+      const mine = await createTransaction(s, { accountId: checking.id, date: "2026-10-22", description: "VERIZON FIOS 800-837-4966", amountCents: -1_000 });
+      await s.tx.update(transactions).set({ merchantName: "Home internet" }).where(eq(transactions.id, mine!.id));
+
+      const before = (await suggestRecurring(s, TODAY)).map((c) => [c.name, c.merchantKey, c.occurrences]);
+      const tidied = await tidyTransactions(s, { llm: null });
+      const rows = await s.tx.select({ d: transactions.description, n: transactions.merchantName }).from(transactions).where(eq(transactions.userId, s.userId));
+      const after = (await suggestRecurring(s, TODAY)).map((c) => [c.name, c.merchantKey, c.occurrences]);
+      return { before, after, tidied, names: [...new Set(rows.map((r) => `${r.d} = ${r.n}`))].sort() };
+    });
+    expect(got.before).toEqual([["Southwest Gas", "southwest gas", 6]]);
+    expect(got.after).toEqual([["Southwest Gas", "southwest gas", 6]]);
+    expect(got.tidied.renamed).toBe(7);
+    expect(got.names).toEqual([
+      "SOUTHWEST AIRLINES 5262191234567 = Southwest Airlines",
+      "SOUTHWEST GAS = Southwest Gas",
+      "VERIZON FIOS 800-837-4966 = Home internet",
+      "VERIZON FIOS 800-837-4966 = Verizon Fios",
+    ]);
   });
 });

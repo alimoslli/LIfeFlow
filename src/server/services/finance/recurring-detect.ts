@@ -1,6 +1,6 @@
 import type { Frequency } from "../../db/schema";
 import { normalizeText } from "@/lib/utils";
-import { brandName } from "@/lib/vendor";
+import { brandName, correctedVendorName } from "@/lib/vendor";
 import { addDaysStr, daysBetween } from "@/lib/dates";
 
 export type DetectTxn = {
@@ -154,8 +154,16 @@ export function merchantKey(t: Pick<DetectTxn, "merchantName" | "description">):
   const via = VIA_APP.test(`${t.merchantName ?? ""} ${t.description}`) ? appPayee(t) : null;
   if (via) return normalizeText([via.app, ...via.payee].join(" "));
   if (VIA_APP.test(`${t.merchantName ?? ""} ${t.description}`)) return wordsKey(t.description) || wordsKey(t.merchantName ?? "");
-  const name = t.merchantName?.trim() || t.description;
+  const name = vendorName(t) || t.description;
   return wordsKey(brandName(name) ?? name);
+}
+
+/**
+ * The stored vendor name, except one the earlier, broader brand list gave ("Southwest Airlines" on a "SOUTHWEST
+ * GAS" line, "Verizon" on a Fios line): that's today's name for the bank's own line instead.
+ */
+function vendorName(t: Pick<DetectTxn, "merchantName" | "description">): string {
+  return correctedVendorName(t.merchantName, t.description) ?? (t.merchantName?.trim() || "");
 }
 
 /**
@@ -170,12 +178,12 @@ export function storedKeyForms(key: string | null | undefined): string[] {
 
 /** The key format used before the vendor tidy (Nov 6, 2026): the vendor name as it was, or the line. Still in older rules and bills. */
 function previousMerchantKey(t: Pick<DetectTxn, "merchantName" | "description">): string {
-  return wordsKey(t.merchantName?.trim() || t.description);
+  return wordsKey(vendorName(t) || t.description);
 }
 
 /** A readable merchant name: the vendor name when there is one, else the cleaned description ("PAYPAL *HULU 402-935-7733" → "Hulu"). */
 export function merchantDisplayName(t: Pick<DetectTxn, "merchantName" | "description"> & { amountCents?: number }): string {
-  const name = t.merchantName?.trim();
+  const name = vendorName(t);
   // Money through an app is named by who it went to ("Zelle to Jordan Miller"), not just the app.
   const via = VIA_APP.test(`${name ?? ""} ${t.description}`) ? appPayee(t) : null;
   if (via?.payee.length)
@@ -187,7 +195,7 @@ export function merchantDisplayName(t: Pick<DetectTxn, "merchantName" | "descrip
 
 /** The key format used before Oct 31, 2026, still stored in older category rules and tracked bills. */
 export function legacyMerchantKey(t: Pick<DetectTxn, "merchantName" | "description">): string {
-  return normalizeText(t.merchantName || t.description)
+  return normalizeText(vendorName(t) || t.description)
     .replace(/\b\d{3,}\b/g, "")
     .replace(/\s+/g, " ")
     .trim();

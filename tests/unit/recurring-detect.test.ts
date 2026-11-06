@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { addDaysStr } from "@/lib/dates";
 import {
   detectRecurring,
+  merchantDisplayName,
   merchantKey,
+  merchantKeys,
   nextOccurrence,
   nthOccurrence,
   occurrencesBetween,
@@ -603,5 +605,29 @@ describe("brands that share a word stay separate bills (review: over-broad brand
       xfinity: -5_500,
       "xfinity mobile": -3_000,
     });
+  });
+});
+
+describe("rows the old tidy named wrongly (review: final check)", () => {
+  it("keys and names a Southwest Gas row stored as 'Southwest Airlines' by its bank line, and finds the bill again", () => {
+    const gas = months("2026-05-18", 6).map((d, i) =>
+      tx(d, -[6_210, 4_480, 3_920, 4_105, 5_330, 7_940][i], "Southwest Airlines", "SOUTHWEST GAS CORP PAYMENT", { categoryName: "Utilities" }),
+    );
+    const flights = ["2026-06-02", "2026-08-21", "2026-10-09"].map((d, i) =>
+      tx(d, -[18_940, 24_120, 15_670][i], "Southwest Airlines", "SOUTHWEST AIRLINES 52621912", { categoryName: "Flights" }),
+    );
+    expect(merchantKey(gas[0])).toBe("southwest gas");
+    expect(merchantKeys(gas[0])).toEqual(["southwest gas", "southwest gas corp"]);
+    expect(merchantKey(flights[0])).toBe("southwest airlines");
+    const r = detectRecurring([...gas, ...flights], { today: "2026-11-05" });
+    expect(r.map((c) => [c.name, c.kind, c.occurrences])).toEqual([["Southwest Gas Corp", "bill", 6]]);
+    // The coordinator's case: the line is just "SOUTHWEST GAS".
+    expect(merchantKey({ merchantName: "Southwest Airlines", description: "SOUTHWEST GAS" })).toBe("southwest gas");
+    expect(merchantDisplayName({ merchantName: "Southwest Airlines", description: "SOUTHWEST GAS" })).toBe("Southwest Gas");
+    // Fios rows the old tidy called "Verizon" are Fios again, apart from Wireless.
+    expect(merchantKey({ merchantName: "Verizon", description: "VERIZON FIOS 800-837-4966" })).toBe("verizon fios");
+    expect(merchantKey({ merchantName: "Verizon", description: "VERIZON WIRELESS PAYMENTS" })).toBe("verizon");
+    // Hulu billed through Apple keeps Plaid's name.
+    expect(merchantKey({ merchantName: "Hulu", description: "APPLE.COM/BILL HULU" })).toBe("hulu");
   });
 });
