@@ -525,22 +525,34 @@ export async function addGoogleEvent(
     createHash("sha256")
       .update(JSON.stringify([scope.userId, body]))
       .digest("hex");
-  let created: (GEvent & { htmlLink?: string; status?: string }) | undefined;
+  type Created = GEvent & { htmlLink?: string; status?: string };
+  const addFresh = () => api<Created>(scope, `${CAL}/events`, { method: "POST", body: JSON.stringify(body) }, f);
+  let created: Created | undefined;
   try {
-    created = await api<GEvent & { htmlLink?: string }>(scope, `${CAL}/events`, { method: "POST", body: JSON.stringify({ ...body, id: clientId }) }, f);
+    created = await api<Created>(scope, `${CAL}/events`, { method: "POST", body: JSON.stringify({ ...body, id: clientId }) }, f);
   } catch (e) {
     if (!(e instanceof GoogleError) || e.status !== 409) throw e;
-    const existing = await api<GEvent & { htmlLink?: string; status?: string }>(scope, `${CAL}/events/${clientId}`, {}, f);
-    // Deleted in Google since: that id can't be reused, so add it as a new event.
-    created =
-      existing?.status === "cancelled"
-        ? await api<GEvent & { htmlLink?: string }>(scope, `${CAL}/events`, { method: "POST", body: JSON.stringify(body) }, f)
-        : existing;
+    // The id exists. It is the same request only if the event is still there with the same title and times;
+    // if it was deleted, moved or renamed in Google since, this is a new event, so add it with a fresh id.
+    const existing = await api<Created>(scope, `${CAL}/events/${clientId}`, {}, f).catch((err) => {
+      if (err instanceof GoogleError && err.status === 404) return undefined;
+      throw err;
+    });
+    const want = eventTimes(body as GEvent, tz);
+    const have = existing ? eventTimes(existing, tz) : null;
+    const same =
+      !!existing &&
+      existing.status !== "cancelled" &&
+      existing.summary === o.title &&
+      !!have &&
+      have.startsAt.getTime() === want.startsAt.getTime() &&
+      have.endsAt.getTime() === want.endsAt.getTime();
+    created = same ? existing : await addFresh();
   }
   if (!created?.id) throw new GoogleError("Google Calendar didn't confirm the event.");
   const t = eventTimes(created, tz);
   // Upsert on Google's id: a sync that already mirrored this event must not leave a second copy.
-  await upsertProviderEvent(scope, "google", created.id, { title: o.title, location: o.location ?? null, ...t });
+  await upsertProviderEvent(scope, "google", created.id, { title: created.summary || o.title, location: o.location ?? null, ...t });
   return { googleEventId: created.id, htmlLink: created.htmlLink ?? null };
 }
 

@@ -521,3 +521,99 @@ describe("timeout overrides are ignored in production", () => {
     expect(runLimitMs({ NODE_ENV: "test", ACTION_RUN_LIMIT_MS: "300" } as never)).toBe(300);
   });
 });
+
+describe("a repeated add only reuses Google's event when it is still the same event", () => {
+  // A stand-in Google that honours client ids, answers 409 for a taken id, and lets a test change or remove events.
+  function store() {
+    const events = new Map<string, Record<string, unknown>>();
+    const posts: (string | undefined)[] = [];
+    let n = 0;
+    const base = fakeGoogle(() => []);
+    const f = (async (input: string | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/calendars/primary/events") && init?.method === "POST") {
+        const b = JSON.parse(String(init.body));
+        posts.push(b.id);
+        if (b.id && events.has(b.id)) return json({ error: { message: "exists" } }, 409);
+        const id = b.id ?? `rnd${++n}`;
+        events.set(id, { ...b, id, htmlLink: "https://calendar.google.com/x" });
+        return json(events.get(id));
+      }
+      const m = url.match(/\/calendars\/primary\/events\/([^/?]+)$/);
+      if (m) return events.has(m[1]) ? json(events.get(m[1])) : json({ error: { message: "nf" } }, 404);
+      return base(input, init);
+    }) as typeof fetch;
+    return { events, posts, f };
+  }
+  const gym = { title: "Gym", date: "2026-11-20", startTime: "07:00", endTime: "08:00" };
+  async function setup() {
+    const g = store();
+    const u = await makeUser();
+    const { creds, email } = await exchangeCode("code", "v", "https://app.test/cb", g.f);
+    await u.run((s) => saveGoogleConnection(s, creds, email));
+    return { ...g, u };
+  }
+
+  it("Gym at 7, moved in Google, added at 7 again: a new event at 7", async () => {
+    const { events, u, f } = await setup();
+    const first = await u.run((s) => addGoogleEvent(s, TZ, gym, f));
+    const ev = events.get(first.googleEventId)!;
+    ev.start = { dateTime: "2026-11-20T20:00:00Z" }; // moved in Google
+    ev.end = { dateTime: "2026-11-20T21:00:00Z" };
+    const second = await u.run((s) => addGoogleEvent(s, TZ, gym, f));
+    expect(second.googleEventId).not.toBe(first.googleEventId);
+    expect(events.size).toBe(2);
+    const local = await u.run((s) => s.tx.select().from(calendarEvents));
+    expect(local).toHaveLength(2);
+    expect(local.some((r) => r.startsAt.toISOString() === "2026-11-20T12:00:00.000Z")).toBe(true); // 7:00 New York
+  });
+
+  it("a deliberate identical second add returns the existing event", async () => {
+    const { events, u, f } = await setup();
+    const first = await u.run((s) => addGoogleEvent(s, TZ, gym, f));
+    const second = await u.run((s) => addGoogleEvent(s, TZ, gym, f));
+    expect(second.googleEventId).toBe(first.googleEventId);
+    expect(events.size).toBe(1);
+  });
+
+  it("a renamed or cancelled event, or a lookup that finds nothing (404), gets a fresh create", async () => {
+    const { events, u, f } = await setup();
+    const first = await u.run((s) => addGoogleEvent(s, TZ, gym, f));
+    events.get(first.googleEventId)!.summary = "Gym (renamed)";
+    const renamed = await u.run((s) => addGoogleEvent(s, TZ, gym, f));
+    expect(renamed.googleEventId).not.toBe(first.googleEventId);
+    // The lookup after the 409 says 404: a fresh create, not an error.
+    const g2 = store();
+    const u2 = await makeUser();
+    const { creds, email } = await exchangeCode("code", "v", "https://app.test/cb", g2.f);
+    await u2.run((s) => saveGoogleConnection(s, creds, email));
+    const a = await u2.run((s) => addGoogleEvent(s, TZ, gym, g2.f));
+    const vanishing = (async (input: string | URL, init?: RequestInit) => {
+      if (/\/events\/lf[0-9a-f]+$/.test(String(input))) return json({ error: { message: "nf" } }, 404);
+      return g2.f(input, init);
+    }) as typeof fetch;
+    const b = await u2.run((s) => addGoogleEvent(s, TZ, gym, vanishing));
+    expect(b.googleEventId).not.toBe(a.googleEventId);
+    expect(g2.events.size).toBe(2);
+    // Cancelled in Google since.
+    g2.events.get(b.googleEventId)!.status = "cancelled";
+    g2.events.get(a.googleEventId)!.status = "cancelled";
+    const c = await u2.run((s) => addGoogleEvent(s, TZ, gym, g2.f));
+    expect([a.googleEventId, b.googleEventId]).not.toContain(c.googleEventId);
+    expect(g2.events.get(c.googleEventId)!.status).not.toBe("cancelled");
+  });
+
+  it("the local copy keeps the title and times Google returned, not the requested ones", async () => {
+    const { u, f } = await setup();
+    const altering = (async (input: string | URL, init?: RequestInit) => {
+      const res = await f(input, init);
+      if (init?.method !== "POST") return res;
+      const b = await res.json();
+      return json({ ...b, summary: "Gym (Google)", start: { dateTime: "2026-11-20T13:00:00Z" }, end: { dateTime: "2026-11-20T14:00:00Z" } });
+    }) as typeof fetch;
+    await u.run((s) => addGoogleEvent(s, TZ, gym, altering));
+    const [row] = await u.run((s) => s.tx.select().from(calendarEvents));
+    expect(row.title).toBe("Gym (Google)");
+    expect(row.startsAt.toISOString()).toBe("2026-11-20T13:00:00.000Z");
+  });
+});
