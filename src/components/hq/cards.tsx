@@ -71,7 +71,7 @@ export function MissionLine({ m, showOwner = true }: { m: Mission; showOwner?: b
     <Link href={`/admin/hq/missions/${m.id}`} className="flex min-h-11 items-center gap-3 rounded-2xl px-2 py-1.5 hover:bg-surface-2">
       <StatusIcon status={m.status} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[0.9375rem] text-text">{m.title}</span>
+        <span className="line-clamp-2 block text-[0.9375rem] text-text">{m.title}</span>
         <span className="block truncate text-xs text-muted">
           {showOwner && `${employee(m.role).title}`}
           {showOwner && " · "}

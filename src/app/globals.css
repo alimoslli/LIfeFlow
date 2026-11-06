@@ -1141,7 +1141,9 @@ input[type="checkbox"].lf-switch:focus-visible {
   font-size: 1.125rem;
   font-weight: 500;
   white-space: nowrap;
-  box-shadow: 0 2px 0 var(--hq-wood-d), 0 6px 12px -6px rgb(0 0 0 / 0.4);
+  box-shadow:
+    0 2px 0 var(--hq-wood-d),
+    0 6px 12px -6px rgb(0 0 0 / 0.4);
 }
 .hq-sign svg {
   fill: none;

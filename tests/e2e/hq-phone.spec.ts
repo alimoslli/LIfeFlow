@@ -26,6 +26,22 @@ const noSideScroll = (page: Page) => page.evaluate(() => document.documentElemen
 test("HQ on a phone: no sideways scroll, big room targets, no serious accessibility problems", async ({ page }) => {
   test.setTimeout(120_000);
   await owner(page);
+  // Long, real-shaped content (the owner's own items once overflowed the missions strip on a phone).
+  await pool.query("truncate hq_activity, hq_approvals, hq_missions, hq_chats");
+  const long = "Ship the calendar duplicate fixes and search-as-you-type to main after the full check, build and e2e";
+  await pool.query(
+    `insert into hq_missions (role, title, priority, status, source) values
+       ('developer', $1, 'high', 'todo', 'owner'),
+       ('developer', 'Finish the "Same bill?" and "Did the exam move?" cards', 'high', 'doing', 'owner'),
+       ('marketing', 'Retake the reel narration with the Sienna voice', 'normal', 'blocked', 'owner')`,
+    [long],
+  );
+  await pool.query("update hq_missions set blocked_reason = 'Out of Higgsfield credits (0.37 left on 2026-11-06). Needs 3 or more.' where status = 'blocked'");
+  await pool.query(`insert into hq_approvals (role, kind, title, summary, source) values ('designer', 'design', $1, $1, 'owner')`, [long]);
+  await pool.query(
+    `insert into hq_chats (id, role, title, is_primary, status, needs_action, last_checkin_at) values
+       ('session_01Mhcz6Ao4XdmNh3eAPYd3QN', 'designer', 'LF V3', true, 'blocked', 'Reply yes to commit the unfinished work and push fix-gmail-items and fix-search', now())`,
+  );
   const paths = [
     "/admin/hq",
     "/admin/hq?view=workspace",

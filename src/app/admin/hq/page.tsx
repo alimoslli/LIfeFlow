@@ -165,7 +165,7 @@ export default async function HqHome({ searchParams }: { searchParams: Promise<{
         }
       >
         {s.weekMissions.length ? (
-          <ul className="grid gap-x-4 sm:grid-cols-2 xl:grid-cols-4">
+          <ul className="grid grid-cols-1 gap-x-4 sm:grid-cols-2 2xl:grid-cols-3">
             {s.weekMissions.map((m) => (
               <li key={m.id}>
                 <MissionLine m={m} />
