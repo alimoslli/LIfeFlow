@@ -7,7 +7,7 @@ import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound } from "../errors";
 import { listCategories } from "./categories";
 import { rollupToParents, spendingByCategoryId } from "./cashflow";
-import { PAID_EARLY_DAYS, nameRelation, paidOccurrences, trackedKeys, tracksSeries, type DueOccurrence } from "./bill-match";
+import { PAID_EARLY_DAYS, amountsClose, nameRelation, paidOccurrences, trackedKeys, tracksSeries, type DueOccurrence } from "./bill-match";
 import { MIN_CONFIDENCE, detectRecurring, merchantKey, merchantKeys, occurrencesBetween, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 import { parsePatch } from "../patch";
@@ -245,7 +245,8 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
         Math.sign(t.amountCents) === Math.sign(item.amountCents) &&
         t.date <= date &&
         daysBetween(t.date, date) <= PAID_EARLY_DAYS[item.frequency] &&
-        nameRelation(trackedKeys(item), merchantKeys(t)),
+        // A transfer can pay a bill tracked under any name (rent by Zelle), when the amount is close.
+        (nameRelation(trackedKeys(item), merchantKeys(t)) || (t.kind === "transfer" && amountsClose(item.amountCents, t.amountCents, true))),
     ),
   );
   const matched = bank ?? (couldPay ? await bankSeries(scope, from) : null);

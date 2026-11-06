@@ -60,6 +60,30 @@ describe("bills paid by transfer (A4)", () => {
   });
 });
 
+describe("a hand-tracked bill paid by transfer is counted once (review 3)", () => {
+  it("lets 'Rent' and 'Car loan' claim the Zelle and loan series, and a posted payment pays the due date", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const { checking } = await accounts(s);
+      const add = (date: string, description: string, amountCents: number) =>
+        createTransaction(s, { accountId: checking.id, date, description, amountCents, kind: "transfer" });
+      for (const d of ["2026-08-01", "2026-09-01", "2026-10-01", "2026-11-02"]) await add(d, `ZELLE TO JORDAN M CONF# ${d.replace(/-/g, "")}Q`, -60_000);
+      for (const d of ["2026-08-10", "2026-09-10", "2026-10-12"]) await add(d, "GRANITE FCU AUTO LOAN PMT", -38_900);
+      await createRecurring(s, { name: "Rent", amountCents: -60_000, frequency: "monthly", nextDueDate: "2026-11-01", kind: "bill" });
+      await createRecurring(s, { name: "Car loan", amountCents: -38_900, frequency: "monthly", nextDueDate: "2026-11-10", kind: "bill" });
+    });
+    expect(await run((s) => suggestRecurring(s, TODAY))).toEqual([]);
+    const { bills } = await run((s) => billsAndPace(s, TODAY, TODAY, "2026-12-15"));
+    // Nov 1's rent went out by Zelle on Nov 2, so the next rent is Dec 1; each bill once, under the user's name.
+    expect(bills.map((b) => [b.name, b.date, b.amountCents, b.found])).toEqual([
+      ["Car loan", "2026-11-10", -38_900, false],
+      ["Rent", "2026-12-01", -60_000, false],
+      ["Car loan", "2026-12-10", -38_900, false],
+    ]);
+    expect((await run((s) => upcomingRecurring(s, TODAY, "2026-11-30"))).map((u) => [u.name, u.date])).toEqual([["Car loan", "2026-11-10"]]);
+  });
+});
+
 describe("two subscriptions from one merchant (A5)", () => {
   it("finds iCloud and Apple Music separately, tracks the one tapped, and never calls them the same service", async () => {
     const { run } = await makeUser();

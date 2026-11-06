@@ -66,7 +66,8 @@ export function scheduleGap(a: string, b: string, freq: Frequency): number {
  * A series found in the bank is a bill the user already tracks when money moves the same way and it has
  * the tracked key, or when one name holds the other and it also bills the same amount on the same schedule.
  * Amount and day are what keep two different bills from one landlord or merchant (rent and parking) apart;
- * amount and day alone never make a match (Netflix and Hulu can both be $15.49 on the 15th).
+ * amount and day alone never make a match (Netflix and Hulu can both be $15.49 on the 15th), except for a
+ * series paid by transfer, whose line never carries the user's own name for the bill.
  */
 export function tracksSeries(
   item: { name: string; merchantKey: string | null; amountCents: number; frequency: Frequency; nextDueDate: string | null },
@@ -76,7 +77,9 @@ export function tracksSeries(
   if (Math.sign(item.amountCents) !== Math.sign(c.latestAmountCents)) return false;
   const rel = nameRelation(trackedKeys(item), [c.merchantKey]);
   if (rel === "same") return true;
-  if (!rel || !item.nextDueDate || item.frequency !== c.frequency) return false;
+  // Money sent by transfer posts under the bank's wording ("ZELLE TO JORDAN M", "GRANITE FCU AUTO LOAN PMT"), never
+  // the user's name for it ("Rent", "Car loan"): for those, the same amount on the same schedule is enough.
+  if ((!rel && !c.transfer) || !item.nextDueDate || item.frequency !== c.frequency) return false;
   const close = amountsClose(item.amountCents, c.latestAmountCents, c.variableAmount) || amountsClose(item.amountCents, c.averageAmountCents, c.variableAmount);
   const onSchedule = scheduleGap(item.nextDueDate, c.nextExpectedDate, item.frequency) <= SLACK_DAYS[item.frequency];
   // The last charge paid a due date early (rent a week ahead), which moves the series' next date.

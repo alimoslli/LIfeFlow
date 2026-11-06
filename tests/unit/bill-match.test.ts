@@ -94,6 +94,25 @@ describe("same bill: a tracked item next to a series found in the bank (A2)", ()
   });
 });
 
+describe("a bill tracked under the user's own name and paid by transfer (review 3)", () => {
+  const zelle = found({ merchantKey: "zelle to jordan m", name: "Zelle To Jordan M", latestAmountCents: -60_000, averageAmountCents: -60_000, transfer: true });
+  const rentItem = { name: "Rent", merchantKey: "rent", amountCents: -60_000, frequency: "monthly" as const, nextDueDate: "2026-12-01" };
+
+  it("matches on the same amount and schedule alone", () => {
+    expect(tracksSeries(rentItem, zelle)).toBe(true);
+    expect(tracksSeries({ ...rentItem, name: "Car loan", merchantKey: "car loan" }, zelle)).toBe(true);
+  });
+
+  it("still needs the amount, the schedule and the direction", () => {
+    expect(tracksSeries({ ...rentItem, amountCents: -45_000 }, zelle)).toBe(false);
+    expect(tracksSeries({ ...rentItem, nextDueDate: "2026-12-16" }, zelle)).toBe(false);
+    expect(tracksSeries({ ...rentItem, frequency: "weekly" }, zelle)).toBe(false);
+    expect(tracksSeries({ ...rentItem, amountCents: 60_000 }, zelle)).toBe(false);
+    // A card charge with the same amount and day is still never matched without a name in common.
+    expect(tracksSeries(rentItem, { ...zelle, transfer: false })).toBe(false);
+  });
+});
+
 describe("bill matching helpers", () => {
   it("relates names by equal keys or every word of one inside the other", () => {
     expect(nameRelation(["netflix"], ["netflix", "netflix com ca"])).toBe("same");
