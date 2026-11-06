@@ -355,3 +355,10 @@ Classes: `fix now` (bug or safety slip, approved in advance), `owner decision` (
 3. **Trips from email.** Flight and hotel confirmations become one trip, keyed by confirmation code. A schedule change moves it instead of adding a copy, and Google's own copy is merged (D5). A trip check then says when the trip collides with shifts, exams and classes, and casts the prep shadow from the vision ("Cairo Dec 10: you're on shift that afternoon and the final is Dec 11. Want help asking for the shift off and moving the exam?").
 4. **An update updates.** Exam moved, bill changed, price change, schedule corrected: change the existing item with Undo and one line saying which email changed it (D6, D7, D10, D11). People trust an app that never shows the same thing twice.
 5. **The assistant uses email when it matters.** Offer the email tools for flight, package, refund and "did X send" questions (G15). Turn the morning list into facts with a next step ("Maya needs your Thanksgiving answer by Sunday and asked if you can cover Saturday"). Show refunds and financial aid as money coming, never counted until it lands (G14).
+
+## Carry-over for the product chat (paused 2026-11-06 at the owner's request: no agents while awake)
+
+Resume when the owner says goodnight:
+1. **"Same bill?" and "Did the exam move?" cards** on Updates, branch `fix-gmail-items` (worktree `.claude/worktrees/fix-gmail-items`, 5 uncommitted files). Then one review (Opus: it touches money and data), the gates, a merge and main.
+2. **Forgiving transaction search** ("when did I last Zelle Omar Mousselli"), branch `fix-search` (14 uncommitted files): word-order and truncation matching, closest P2P payments when nothing matches, the money-lock message and an eval case. Then the gates, a merge and main.
+3. **On `claude/pensive-mendel-r1yy4a`, merged but not yet pushed to main:** the calendar duplicate fixes (`fix-gcal`, reviewed over 4 rounds plus the final 409 fix) and search-as-you-type (`fix-livesearch`). Run the full check, the build and e2e, then main.
