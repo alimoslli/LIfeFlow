@@ -5,6 +5,7 @@ import { Download, MoreHorizontal, Receipt, Search, Sparkles, SlidersHorizontal,
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { Button, SubmitButton } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
+import { LiveSearchInput } from "@/components/ui/live-search";
 import { Card, EmptyState, Money, SourceBadge } from "@/components/ui/surface";
 import { daysBetween, formatDateStr, isValidDateStr, todayIn } from "@/lib/dates";
 import { PERIOD_KEYS, PERIOD_NAMES, resolvePeriod } from "@/lib/periods";
@@ -119,9 +120,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         {d.period.key !== "month" && d.period.key !== "custom" && <input type="hidden" name="period" value={d.period.key} />}
         <div className="flex items-center gap-2 rounded-full bg-surface p-1.5 pl-4 shadow-soft focus-within:shadow-lift">
           <Search className="h-4 w-4 shrink-0 text-muted" />
-          <input
+          <LiveSearchInput
             name="q"
-            defaultValue={sp.q}
+            defaultValue={sp.q ?? ""}
             placeholder="Search merchant or description"
             aria-label="Search"
             className="min-w-0 flex-1 bg-transparent py-1.5 text-[0.9375rem] placeholder:text-muted focus:outline-none"
