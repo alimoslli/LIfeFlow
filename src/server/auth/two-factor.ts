@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
 import { and, eq, isNull, lt, sql } from "drizzle-orm";
 import { Secret, TOTP } from "otpauth";
 import type { Database } from "../db/client";
@@ -15,6 +15,9 @@ import { verifyPassword } from "./password";
  * - Backup codes are random and stored only as SHA-256 hashes; each works once.
  * - After the password step, a short-lived challenge (hashed token in a cookie,
  *   5 attempts, 10 minutes) stands in for the session until the code is right.
+ * - "Email me a code" (owner, 2026-11-06, after a lockout): after the password step, a 6-digit code can be emailed to
+ *   the account's address. It is stored only as a hash bound to that one challenge, works once, expires in 10 minutes,
+ *   shares the challenge's 5 tries, and at most 3 can be sent per sign-in.
  */
 
 export class TwoFactorError extends Error {}
@@ -22,6 +25,10 @@ export class TwoFactorError extends Error {}
 export const CHALLENGE_COOKIE = "bf_mfa";
 export const CHALLENGE_TTL_MS = 10 * 60_000;
 export const MAX_CHALLENGE_ATTEMPTS = 5;
+export const EMAIL_CODE_TTL_MS = 10 * 60_000;
+export const MAX_EMAIL_SENDS = 3;
+/** A sign-in that asked for an email code may run this long in total, however many codes were sent. */
+const CHALLENGE_MAX_LIFE_MS = 30 * 60_000;
 const RECOVERY_CODE_COUNT = 10;
 const PERIOD = 30;
 
@@ -155,7 +162,52 @@ export async function createLoginChallenge(db: Database, userId: string, now = D
   return { token, expiresAt: new Date(now + CHALLENGE_TTL_MS) };
 }
 
-export type ChallengeResult = { ok: true; userId: string; method: "totp" | "recovery" } | { ok: false; reason: "expired" | "wrong" | "locked" };
+export type ChallengeResult = { ok: true; userId: string; method: "totp" | "recovery" | "email" } | { ok: false; reason: "expired" | "wrong" | "locked" };
+
+const emailCodeHash = (challengeId: string, code: string) => sha256(`${challengeId}:${code}`);
+
+function sameHash(a: string, b: string) {
+  const x = Buffer.from(a, "hex");
+  const y = Buffer.from(b, "hex");
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+
+/** "a•••@gmail.com": enough for the person to recognise the address, not enough to read it off the screen. */
+export function maskEmail(email: string) {
+  const [name, domain] = email.split("@");
+  if (!domain) return "your email";
+  return `${name.slice(0, 1)}•••@${domain}`;
+}
+
+export type EmailCodeResult = { ok: true; to: string; email: string; code: string } | { ok: false; reason: "expired" | "too_many" };
+
+/**
+ * Makes a fresh 6-digit code for a pending sign-in (the password step already passed). The caller emails it and only
+ * says "sent" once the provider returns an id. A new code replaces the previous one. Sending extends the sign-in to
+ * 10 minutes from now, but never past 30 minutes from the password step.
+ */
+export async function issueLoginEmailCode(db: Database, token: string, now = Date.now()): Promise<EmailCodeResult> {
+  if (!token || token.length > 100) return { ok: false, reason: "expired" };
+  const id = sha256(token);
+  const [c] = await db.select().from(loginChallenges).where(eq(loginChallenges.id, id));
+  if (!c || c.expiresAt.getTime() < now) return { ok: false, reason: "expired" };
+  if (c.emailSends >= MAX_EMAIL_SENDS) return { ok: false, reason: "too_many" };
+  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+  const expiresAt = new Date(Math.min(now + EMAIL_CODE_TTL_MS, c.createdAt.getTime() + CHALLENGE_MAX_LIFE_MS));
+  const [updated] = await db
+    .update(loginChallenges)
+    .set({
+      emailCodeHash: emailCodeHash(id, code),
+      emailCodeExpiresAt: expiresAt,
+      emailSends: sql`${loginChallenges.emailSends} + 1`,
+      expiresAt: new Date(Math.max(c.expiresAt.getTime(), expiresAt.getTime())),
+    })
+    .where(and(eq(loginChallenges.id, id), lt(loginChallenges.emailSends, MAX_EMAIL_SENDS)))
+    .returning({ id: loginChallenges.id });
+  if (!updated) return { ok: false, reason: "too_many" };
+  const u = await getUser(db, c.userId);
+  return { ok: true, to: maskEmail(u.email), email: u.email, code };
+}
 
 /** Checks the code for a pending sign-in. Each wrong try counts; after 5 the challenge is gone. */
 export async function completeLoginChallenge(db: Database, token: string, code: string, now = Date.now()): Promise<ChallengeResult> {
@@ -172,7 +224,14 @@ export async function completeLoginChallenge(db: Database, token: string, code: 
     await db.delete(loginChallenges).where(eq(loginChallenges.id, id));
     return { ok: false, reason: "locked" };
   }
-  const method = await verifySecondFactor(db, c.userId, code, now);
+  const typed = code.replace(/\s/g, "");
+  const emailOk =
+    !!c.emailCodeHash &&
+    !!c.emailCodeExpiresAt &&
+    c.emailCodeExpiresAt.getTime() >= now &&
+    /^\d{6}$/.test(typed) &&
+    sameHash(emailCodeHash(id, typed), c.emailCodeHash);
+  const method = emailOk ? ("email" as const) : await verifySecondFactor(db, c.userId, code, now);
   if (!method) {
     if (bumped.attempts < MAX_CHALLENGE_ATTEMPTS) return { ok: false, reason: "wrong" };
     await db.delete(loginChallenges).where(eq(loginChallenges.id, id));

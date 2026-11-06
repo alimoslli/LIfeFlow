@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { Secret, TOTP } from "otpauth";
 import { closeDb, getDb } from "@/server/db/client";
-import { users } from "@/server/db/schema";
+import { loginChallenges, users } from "@/server/db/schema";
 import {
   beginTotpSetup,
   checkTotp,
@@ -10,7 +10,10 @@ import {
   confirmTotpSetup,
   createLoginChallenge,
   disableTwoFactor,
+  issueLoginEmailCode,
+  maskEmail,
   MAX_CHALLENGE_ATTEMPTS,
+  MAX_EMAIL_SENDS,
   regenerateRecoveryCodes,
   twoFactorStatus,
   verifySecondFactor,
@@ -119,5 +122,71 @@ describe("turning it off and new backup codes", () => {
     const fresh = await regenerateRecoveryCodes(db, user.id, code(secret, T0 + 30_000), T0 + 30_000);
     expect(await verifySecondFactor(db, user.id, recoveryCodes[0], T0)).toBeNull();
     expect(await verifySecondFactor(db, user.id, fresh[0], T0)).toBe("recovery");
+  });
+});
+
+describe("email me a code (owner, 2026-11-06)", () => {
+  const MIN = 60_000;
+
+  it("emails a 6-digit code bound to this sign-in; it works once and only a hash is stored", async () => {
+    const { user, db } = await enabledUser();
+    const { token } = await createLoginChallenge(db, user.id, T0);
+    const r = await issueLoginEmailCode(db, token, T0 + MIN);
+    if (!r.ok) throw new Error(`not issued: ${r.reason}`);
+    expect(r.code).toMatch(/^\d{6}$/);
+    expect(r.email).toBe(user.email);
+    expect(r.to).toBe(maskEmail(user.email));
+    const rows = await db.select().from(loginChallenges).where(eq(loginChallenges.userId, user.id));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].emailCodeHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(rows[0].emailCodeHash).not.toContain(r.code);
+    expect(rows[0].emailSends).toBe(1);
+    expect(await completeLoginChallenge(db, token, r.code.slice(0, 3) + " " + r.code.slice(3), T0 + 2 * MIN)).toEqual({
+      ok: true,
+      userId: user.id,
+      method: "email",
+    });
+    expect(await completeLoginChallenge(db, token, r.code, T0 + 2 * MIN)).toEqual({ ok: false, reason: "expired" });
+  });
+
+  it("a new code replaces the old one, codes expire, and at most 3 are sent per sign-in", async () => {
+    const { user, db } = await enabledUser();
+    const { token } = await createLoginChallenge(db, user.id, T0);
+    const a = await issueLoginEmailCode(db, token, T0);
+    const b = await issueLoginEmailCode(db, token, T0 + MIN);
+    const c = await issueLoginEmailCode(db, token, T0 + 2 * MIN);
+    if (!a.ok || !b.ok || !c.ok) throw new Error("not issued");
+    expect(await issueLoginEmailCode(db, token, T0 + 3 * MIN)).toEqual({ ok: false, reason: "too_many" });
+    expect(MAX_EMAIL_SENDS).toBe(3);
+    if (a.code !== c.code) expect(await completeLoginChallenge(db, token, a.code, T0 + 3 * MIN)).toEqual({ ok: false, reason: "wrong" });
+    // c was sent at minute 2, so it is gone after minute 12.
+    expect(await completeLoginChallenge(db, token, c.code, T0 + 13 * MIN)).toEqual({ ok: false, reason: "expired" });
+  });
+
+  it("wrong email codes use up the same 5 tries", async () => {
+    const { user, db } = await enabledUser();
+    const { token } = await createLoginChallenge(db, user.id, T0);
+    const r = await issueLoginEmailCode(db, token, T0);
+    if (!r.ok) throw new Error("not issued");
+    const wrong = r.code === "000000" ? "111111" : "000000";
+    for (let i = 1; i < MAX_CHALLENGE_ATTEMPTS; i++) expect(await completeLoginChallenge(db, token, wrong, T0 + MIN)).toEqual({ ok: false, reason: "wrong" });
+    expect(await completeLoginChallenge(db, token, wrong, T0 + MIN)).toEqual({ ok: false, reason: "locked" });
+    expect(await completeLoginChallenge(db, token, r.code, T0 + MIN)).toEqual({ ok: false, reason: "expired" });
+  });
+
+  it("a code for one sign-in never works on another, and a forged sign-in gets nothing", async () => {
+    const { user, db } = await enabledUser();
+    const first = await createLoginChallenge(db, user.id, T0);
+    const second = await createLoginChallenge(db, user.id, T0);
+    const r = await issueLoginEmailCode(db, first.token, T0);
+    if (!r.ok) throw new Error("not issued");
+    expect(await completeLoginChallenge(db, second.token, r.code, T0 + MIN)).toEqual({ ok: false, reason: "wrong" });
+    expect(await issueLoginEmailCode(db, "forged-token", T0)).toEqual({ ok: false, reason: "expired" });
+    expect(await issueLoginEmailCode(db, first.token, T0 + 11 * MIN)).toEqual({ ok: false, reason: "expired" });
+  });
+
+  it("shows the address without giving it away", () => {
+    expect(maskEmail("ali@gmail.com")).toBe("a•••@gmail.com");
+    expect(maskEmail("nope")).toBe("your email");
   });
 });

@@ -20,3 +20,20 @@
 - OpenID Connect with the same Google OAuth client as Gmail (`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`) and `APP_URL`; the button shows only when all three are set. Scope is `openid email profile` only; Gmail and Calendar stay a separate opt-in.
 - `/api/auth/google/start` saves a single-use state (nonce + PKCE verifier) in `auth_challenges` with a SameSite=Lax cookie; the callback checks the cookie matches the state, takes the challenge once, swaps the code with the verifier, and verifies the id_token against Google's keys (issuer, audience, expiry, nonce).
 - Apple and Google share `server/auth/oauth.ts`: a known provider id signs in (2FA still applies), an email matching an existing account needs one real sign-in before linking, and new accounts start with no password. Unlinking needs a password or the other provider.
+
+## Addendum (owner, 2026-11-06): "Email me a code"
+The owner was locked out: their account had two-step sign-in on, they couldn't find the authenticator entry, and their passkey wouldn't work. They asked for a code by email when that happens.
+
+**How it works:**
+- The second step can now also take a 6-digit code emailed to the account's address.
+- It's only offered after the password step: it belongs to the pending `login_challenges` row, never to a bare email address.
+- Only a SHA-256 hash of the code is stored, bound to that challenge (`email_code_hash`).
+- A code works once and expires in 10 minutes.
+- It shares the challenge's 5 tries.
+- At most 3 codes per sign-in, plus 6 an hour per IP.
+- Sending extends the sign-in to 10 minutes from now, never past 30 minutes from the password step.
+- "Sent" is shown only when Resend returns an id. Without `RESEND_API_KEY`/`EMAIL_FROM` the button doesn't appear.
+- After an email-code sign-in, a notice goes to the same address so a sign-in the person didn't make doesn't go unnoticed.
+- The audit row records `secondFactor: "email"`.
+
+**Trade-off, accepted by the owner:** whoever controls the account's email and knows the password can get in, admin included, because the admin check looks at the account's two-step setup, not at how this session signed in. Authenticator codes, backup codes and passkeys stay the stronger options.

@@ -1,10 +1,13 @@
 "use server";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { CHALLENGE_COOKIE, completeLoginChallenge, createLoginChallenge } from "@/server/auth/two-factor";
+import { CHALLENGE_COOKIE, completeLoginChallenge, createLoginChallenge, issueLoginEmailCode } from "@/server/auth/two-factor";
+import { emailConfig, sendEmail } from "@/server/integrations/email";
 import { ZodError } from "zod";
 import { clientIp, endSession, startSession } from "@/server/auth/current-user";
+import { eq } from "drizzle-orm";
 import { getDb } from "@/server/db/client";
+import { users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { purgeOldRateLimits, rateLimit } from "@/server/rate-limit";
 import { purgeExpiredSessions } from "@/server/auth/sessions";
@@ -81,7 +84,59 @@ export async function verifyLogin(_prev: VerifyState, fd: FormData): Promise<Ver
   await startSession(r.userId);
   await consumePendingAppleLink(db, r.userId);
   await withUser(r.userId, (s) => audit(s, "user", "auth.login", undefined, { ip, secondFactor: r.method }));
+  if (r.method === "email") await noticeEmailSignIn(r.userId);
   redirect(safeNext(fd.get("next")));
+}
+
+export type EmailCodeState = { sentTo?: string; error?: string; expired?: boolean } | null;
+
+/** "Email me a code": after the password step, sends a 6-digit code to the account's email (owner, 2026-11-06). */
+export async function sendLoginEmailCode(_prev: EmailCodeState): Promise<EmailCodeState> {
+  const cfg = emailConfig();
+  if (!cfg) return { error: "Email codes aren't available yet. Use your app or a backup code." };
+  const db = getDb();
+  const ip = await clientIp();
+  const limit = await rateLimit(db, `mfa-email:ip:${ip}`, 6, 3600);
+  if (!limit.allowed) return { error: "Too many codes sent. Please wait a while and try again." };
+  const jar = await cookies();
+  const r = await issueLoginEmailCode(db, jar.get(CHALLENGE_COOKIE)?.value ?? "");
+  if (!r.ok) {
+    if (r.reason === "too_many") return { error: "We've sent 3 codes for this sign-in. Use the newest one, or sign in again." };
+    jar.delete(CHALLENGE_COOKIE);
+    return { expired: true, error: "This sign-in expired. Please sign in again." };
+  }
+  try {
+    await sendEmail(cfg, {
+      to: r.email,
+      subject: `${r.code} is your LifeFlow sign-in code`,
+      text: `Your LifeFlow sign-in code is ${r.code}.\n\nIt works once, for 10 minutes. If you didn't just try to sign in, change your password.`,
+      html: `<p>Your LifeFlow sign-in code is</p><p style="font-size:28px;font-weight:600;letter-spacing:4px">${r.code}</p><p>It works once, for 10 minutes. If you didn't just try to sign in, change your password.</p>`,
+    });
+  } catch (e) {
+    await recordError(db, { source: "server", route: "/login/verify", message: `email code send failed: ${e instanceof Error ? e.name : "EmailError"}` }).catch(
+      () => {},
+    );
+    return { error: "We couldn't send the email just now. Try again in a minute." };
+  }
+  return { sentTo: r.to };
+}
+
+/** Lets the person know an email code was used to sign in, so a sign-in they didn't make doesn't go unnoticed. */
+async function noticeEmailSignIn(userId: string) {
+  const cfg = emailConfig();
+  if (!cfg) return;
+  try {
+    const [u] = await getDb().select({ email: users.email }).from(users).where(eq(users.id, userId));
+    if (!u) return;
+    await sendEmail(cfg, {
+      to: u.email,
+      subject: "You signed in to LifeFlow with an email code",
+      text: "You just signed in to LifeFlow with a code we emailed you. If this wasn't you, change your password now.",
+      html: "<p>You just signed in to LifeFlow with a code we emailed you.</p><p>If this wasn't you, change your password now.</p>",
+    });
+  } catch {
+    // A missed notice never blocks the sign-in.
+  }
 }
 
 export async function signup(_prev: AuthState, fd: FormData): Promise<AuthState> {

@@ -283,6 +283,10 @@ export const loginChallenges = pgTable(
     userId: userRef(),
     expiresAt: tstz("expires_at").notNull(),
     attempts: integer("attempts").notNull().default(0),
+    /** "Email me a code" (owner, 2026-11-06): hash of the emailed 6-digit code, bound to this challenge; single use. */
+    emailCodeHash: text("email_code_hash"),
+    emailCodeExpiresAt: tstz("email_code_expires_at"),
+    emailSends: integer("email_sends").notNull().default(0),
     createdAt: createdAt(),
   },
   (t) => [index("login_challenges_user_idx").on(t.userId)],
