@@ -20,23 +20,4 @@ export async function authenticateHq(req: Request): Promise<{ id: string; name: 
   return key;
 }
 
-/** Reads a request body as bytes with a hard limit; refuses early on content-length. Returns the text. */
-export async function readLimitedBody(req: Request, max = 64_000): Promise<string> {
-  const declared = Number(req.headers.get("content-length"));
-  if (Number.isFinite(declared) && declared > max) throw new HttpError(413, "Too much data in one request");
-  const reader = req.body?.getReader();
-  if (!reader) return "";
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    size += value.byteLength;
-    if (size > max) {
-      await reader.cancel().catch(() => {});
-      throw new HttpError(413, "Too much data in one request");
-    }
-    chunks.push(value);
-  }
-  return Buffer.concat(chunks).toString("utf8");
-}
+export { readLimitedBody } from "../http";

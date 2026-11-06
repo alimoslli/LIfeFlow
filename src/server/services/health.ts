@@ -61,6 +61,11 @@ export type HealthIngest = z.input<typeof ingestSchema>;
 
 const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 const TOKEN_PREFIX = "lfh_";
+/** The exact shape createHealthToken makes: the prefix and 24 random bytes in base64url. */
+const TOKEN_RE = /^lfh_[A-Za-z0-9_-]{32}$/;
+
+/** True only for a value shaped like a real key, so made-up values are refused before anything is looked up or counted. */
+export const isHealthKeyFormat = (raw: string) => TOKEN_RE.test(raw);
 
 /** Creates a personal key for the Shortcut. The raw key is returned once and never stored. */
 export async function createHealthToken({ tx, userId }: UserScope, name: string) {
@@ -95,8 +100,8 @@ export async function revokeHealthToken({ tx, userId }: UserScope, id: string) {
 }
 
 /** Looks up a raw key before any user context exists (like sessions). Returns the owner, or null. */
-export async function resolveHealthToken(db: Database, raw: string): Promise<{ userId: string; timezone: string } | null> {
-  if (!raw.startsWith(TOKEN_PREFIX) || raw.length > 100) return null;
+export async function resolveHealthToken(db: Database, raw: string): Promise<{ tokenId: string; userId: string; timezone: string } | null> {
+  if (!isHealthKeyFormat(raw)) return null;
   const [row] = await db
     .select({ id: healthTokens.id, userId: healthTokens.userId, timezone: users.timezone })
     .from(healthTokens)
@@ -104,7 +109,7 @@ export async function resolveHealthToken(db: Database, raw: string): Promise<{ u
     .where(and(eq(healthTokens.tokenHash, sha256(raw)), isNull(healthTokens.revokedAt)));
   if (!row) return null;
   await db.update(healthTokens).set({ lastUsedAt: new Date() }).where(eq(healthTokens.id, row.id));
-  return { userId: row.userId, timezone: row.timezone };
+  return { tokenId: row.id, userId: row.userId, timezone: row.timezone };
 }
 
 /** Saves the Shortcut's daily values. Re-sending a day replaces that day's values. Unknown fields are reported, not saved. */

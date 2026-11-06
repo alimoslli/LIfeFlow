@@ -1,11 +1,11 @@
-import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getDb } from "@/server/db/client";
+import { ipFromHeaders } from "@/server/auth/current-user";
 import { withUser } from "@/server/db/with-user";
-import { enforceRateLimit, errorResponse, HttpError } from "@/server/http";
+import { enforceRateLimit, errorResponse, HttpError, readLimitedBody } from "@/server/http";
 import { ServiceError } from "@/server/services/errors";
-import { ingestHealth, resolveHealthToken } from "@/server/services/health";
+import { ingestHealth, isHealthKeyFormat, resolveHealthToken } from "@/server/services/health";
 
 export const dynamic = "force-dynamic";
 
@@ -13,15 +13,22 @@ export const dynamic = "force-dynamic";
  * Receives Apple Health daily totals from the user's iOS Shortcut.
  * Authenticated by a personal key (Authorization: Bearer lfh_...), not a
  * session cookie, so it is a public route in proxy.ts.
+ *
+ * A bearer that isn't shaped like a real key is refused before anything is counted (made-up values can't dodge a limit
+ * or fill rate_limit_buckets). Then a limit by IP, the key lookup, and a limit per key (same order as the HQ API).
  */
+const NO_KEY = "Invalid or revoked key. Create a new one in LifeFlow Settings, Integrations.";
+const MAX_BODY = 200_000;
+
 export async function POST(req: Request) {
   try {
     const raw = req.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1] ?? "";
-    await enforceRateLimit(`health-ingest:${createHash("sha256").update(raw).digest("hex").slice(0, 16)}`, 60, 3600);
-    const owner = raw ? await resolveHealthToken(getDb(), raw) : null;
-    if (!owner) throw new HttpError(401, "Invalid or revoked key. Create a new one in LifeFlow Settings, Integrations.");
-    const text = await req.text();
-    if (text.length > 200_000) throw new HttpError(413, "Too much data in one request");
+    if (!isHealthKeyFormat(raw)) throw new HttpError(401, NO_KEY);
+    await enforceRateLimit(`health-ip:${ipFromHeaders(req.headers)}`, 300, 3600);
+    const owner = await resolveHealthToken(getDb(), raw);
+    if (!owner) throw new HttpError(401, NO_KEY);
+    await enforceRateLimit(`health-ingest:${owner.tokenId}`, 60, 3600);
+    const text = await readLimitedBody(req, MAX_BODY);
     let body: unknown;
     try {
       body = JSON.parse(text);
