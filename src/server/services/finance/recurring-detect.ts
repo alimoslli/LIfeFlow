@@ -80,15 +80,18 @@ const NOISE = new Set(
 /** Codes that change with every payment: "CONF# RECEAGTV", "REF # WFCT0XYZ1234". */
 const PAYMENT_CODE = /\b(?:conf(?:irmation)?|ref(?:erence)?|trace)\b\s*(?:#|no\.?|:)\s*[a-z0-9]+/gi;
 
-/** The words that identify a merchant in a name or a statement line. */
-function wordsKey(text: string): string {
+/**
+ * The words that identify a merchant in a name or a statement line. A trailing two-letter word is a state code
+ * ("... CA") in a line, but part of the name in a well-known merchant's ("YouTube TV"), so `brand` keeps it.
+ */
+function wordsKey(text: string, brand = false): string {
   const words = normalizeText(
     text
       .replace(PROCESSOR, "")
       .replace(PAYMENT_CODE, " ")
       .replace(/\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4}/g, " ") // phone numbers
       .replace(/#\s*\d+/g, " ") // store numbers
-      .replace(/\s[A-Z]{2}$/, " "), // trailing state code
+      .replace(/\s[A-Z]{2}$/, brand ? "$&" : " "), // trailing state code
   )
     .split(" ")
     .filter((w) => w && !NOISE.has(w) && !/\d/.test(w)); // reference codes and ids always contain digits
@@ -155,7 +158,8 @@ export function merchantKey(t: Pick<DetectTxn, "merchantName" | "description">):
   if (via) return normalizeText([via.app, ...via.payee].join(" "));
   if (VIA_APP.test(`${t.merchantName ?? ""} ${t.description}`)) return wordsKey(t.description) || wordsKey(t.merchantName ?? "");
   const name = vendorName(t) || t.description;
-  return wordsKey(brandName(name) ?? name);
+  const brand = brandName(name);
+  return brand ? wordsKey(brand, true) : wordsKey(name);
 }
 
 /**
@@ -173,7 +177,7 @@ function vendorName(t: Pick<DetectTxn, "merchantName" | "description">): string 
 export function storedKeyForms(key: string | null | undefined): string[] {
   if (!key) return [];
   const brand = brandName(key);
-  return [...new Set([key, brand ? wordsKey(brand) : key])];
+  return [...new Set([key, brand ? wordsKey(brand, true) : key])];
 }
 
 /** The key format used before the vendor tidy (Nov 6, 2026): the vendor name as it was, or the line. Still in older rules and bills. */
@@ -201,9 +205,19 @@ export function legacyMerchantKey(t: Pick<DetectTxn, "merchantName" | "descripti
     .trim();
 }
 
-/** Every key a stored rule or bill might use for this transaction (current first). */
+/**
+ * Every key a stored rule or bill might use for this transaction (current first). An older key that is another
+ * well-known merchant's ("youtube" for a YouTube TV row) belongs to that merchant, not this one.
+ */
 export function merchantKeys(t: Pick<DetectTxn, "merchantName" | "description">): string[] {
-  return [...new Set([merchantKey(t), previousMerchantKey(t), legacyMerchantKey(t)].filter(Boolean))];
+  const key = merchantKey(t);
+  return [...new Set([key, previousMerchantKey(t), legacyMerchantKey(t)].filter((k) => k && sameMerchant(k, key)))];
+}
+
+/** An older key can be this merchant's unless it's another well-known merchant's ("youtube" next to "youtube tv"). */
+function sameMerchant(older: string, key: string): boolean {
+  const brand = brandName(older);
+  return !brand || brand === brandName(key);
 }
 
 /** Services people subscribe to; two matching charges a month apart are enough to call these a subscription. */
@@ -554,7 +568,7 @@ function evaluate(cycles: Cycle[], ctx: Context): Found | null {
     charges: ts.map((t) => ({ date: t.date, amountCents: t.amountCents })),
     duplicates: duplicatesOf(cycles, ctx.refunds ?? []),
     transfer,
-    formerKeys: [...new Set(ts.map(previousMerchantKey))].filter((k) => k && k !== key),
+    formerKeys: [...new Set(ts.map(previousMerchantKey))].filter((k) => k && k !== key && sameMerchant(k, key)),
     confidence,
     cycles,
   };

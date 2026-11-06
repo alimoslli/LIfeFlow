@@ -608,7 +608,7 @@ describe("brands that share a word stay separate bills (review: over-broad brand
   });
 });
 
-describe("rows the old tidy named wrongly (review: final check)", () => {
+describe("rows the old tidy named wrongly, and names ending in TV (review: final check)", () => {
   it("keys and names a Southwest Gas row stored as 'Southwest Airlines' by its bank line, and finds the bill again", () => {
     const gas = months("2026-05-18", 6).map((d, i) =>
       tx(d, -[6_210, 4_480, 3_920, 4_105, 5_330, 7_940][i], "Southwest Airlines", "SOUTHWEST GAS CORP PAYMENT", { categoryName: "Utilities" }),
@@ -629,5 +629,16 @@ describe("rows the old tidy named wrongly (review: final check)", () => {
     expect(merchantKey({ merchantName: "Verizon", description: "VERIZON WIRELESS PAYMENTS" })).toBe("verizon");
     // Hulu billed through Apple keeps Plaid's name.
     expect(merchantKey({ merchantName: "Hulu", description: "APPLE.COM/BILL HULU" })).toBe("hulu");
+  });
+
+  it("gives YouTube TV and YouTube Premium separate keys (TV isn't a state code)", () => {
+    const tv = merchantKey({ merchantName: "YouTube TV", description: "YOUTUBE TV 855-978-3324" });
+    expect(tv).toBe("youtube tv");
+    expect(merchantKey({ merchantName: "YouTube", description: "GOOGLE *YouTube Premium" })).toBe("youtube");
+    // A rule or bill saved under one is never the other's, and the old shared key stays Premium's.
+    expect(storedKeyForms("youtube tv")).toEqual(["youtube tv"]);
+    expect(merchantKeys({ merchantName: "YouTube TV", description: "YOUTUBE TV 855-978-3324" })).toEqual(["youtube tv"]);
+    expect(merchantKey({ merchantName: null, description: "NETFLIX.COM 866-579-7172 CA" })).toBe("netflix");
+    expect(merchantKey({ merchantName: null, description: "JOES CRAB SHACK MIAMI FL" })).toBe("joes crab shack miami");
   });
 });

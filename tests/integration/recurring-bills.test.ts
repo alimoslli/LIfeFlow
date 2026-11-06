@@ -6,6 +6,7 @@ import { categoryRules, integrations, transactions } from "@/server/db/schema";
 import type { UserScope } from "@/server/db/with-user";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
+import { learnCategoryRule, ruleFor } from "@/server/services/finance/categorize";
 import { billsAndPace, budgetWarnings } from "@/server/services/finance/forecast";
 import { createRecurring, setBudget, suggestRecurring, upcomingRecurring } from "@/server/services/finance/planning";
 import { subscriptionsOverview, trackFound } from "@/server/services/finance/subscriptions";
@@ -540,6 +541,49 @@ describe("rows the earlier vendor tidy named too broadly (review: final check)",
       "SOUTHWEST GAS = Southwest Gas",
       "VERIZON FIOS 800-837-4966 = Home internet",
       "VERIZON FIOS 800-837-4966 = Verizon Fios",
+    ]);
+  });
+
+  it("keeps YouTube TV and YouTube Premium apart: their own keys, series and category rules", async () => {
+    const { run } = await makeUser();
+    const got = await run(async (s) => {
+      const { card } = await accounts(s);
+      const [streaming, subscriptions] = [(await getCategoryByName(s, "Streaming"))!, (await getCategoryByName(s, "Subscriptions"))!];
+      for (let i = 0; i < 5; i++) {
+        await createTransaction(s, {
+          accountId: card.id,
+          date: addDaysStr("2026-06-12", Math.round(i * 30.4)),
+          description: "YOUTUBE TV 855-978-3324",
+          amountCents: -8_299,
+        });
+        await createTransaction(s, {
+          accountId: card.id,
+          date: addDaysStr("2026-06-03", Math.round(i * 30.4)),
+          description: "GOOGLE *YouTube Premium",
+          amountCents: -1_399,
+        });
+      }
+      const tv = { merchantName: "YouTube TV", description: "YOUTUBE TV 855-978-3324" };
+      const premium = { merchantName: "YouTube", description: "GOOGLE *YouTube Premium" };
+      await learnCategoryRule(s, tv, streaming.id);
+      await learnCategoryRule(s, premium, subscriptions.id);
+      // Learning one never replaces the other's rule; a TV row the earlier tidy stored as "YouTube" is still TV.
+      const rules = (await s.tx.select({ key: categoryRules.merchantKey }).from(categoryRules).where(eq(categoryRules.userId, s.userId)))
+        .map((r) => r.key)
+        .sort();
+      const ids = {
+        tv: (await ruleFor(s, tv))?.categoryId,
+        oldTv: (await ruleFor(s, { merchantName: "YouTube", description: "YOUTUBE TV 855-978-3324" }))?.categoryId,
+        premium: (await ruleFor(s, premium))?.categoryId,
+      };
+      const found = (await suggestRecurring(s, TODAY)).map((c) => [c.name, c.merchantKey, c.latestAmountCents]).sort();
+      return { rules, ids, found, streaming: streaming.id, subscriptions: subscriptions.id };
+    });
+    expect(got.rules).toEqual(["youtube", "youtube tv"]);
+    expect(got.ids).toEqual({ tv: got.streaming, oldTv: got.streaming, premium: got.subscriptions });
+    expect(got.found).toEqual([
+      ["YouTube TV", "youtube tv", -8_299],
+      ["YouTube", "youtube", -1_399],
     ]);
   });
 });
