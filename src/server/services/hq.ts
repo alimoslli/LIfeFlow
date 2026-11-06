@@ -104,6 +104,10 @@ export type MissionPatch = Partial<{
 export type ApprovalInput = { role: HqRole; kind: ApprovalKind; title: string; summary: string; links?: HqLink[]; missionId?: string | null };
 export type CheckinInput = {
   sessionId: string;
+  /** The Chief of Staff reporting another chat's status: only status, summary and needs change, and only for a chat HQ already knows. */
+  relay?: boolean;
+  /** With relay: when that chat was last really active (ISO). Never later than now, never older than what HQ already has. */
+  activeAt?: string;
   title?: string | null;
   branch?: string | null;
   commit?: string | null;
@@ -863,7 +867,8 @@ async function notifyOwner(db: Database, p: { key: string; title: string; body: 
   }
 }
 
-const notifyApproval = (db: Database, a: Approval) =>
+/** Sends the owner's phone the "needs your yes" push for an approval. Never throws. Call it after the transaction that made the approval has committed. */
+export const sendApprovalPush = (db: Database, a: Approval) =>
   notifyOwner(db, {
     key: `hq-approval:${a.id}`,
     title: `${employee(a.role).title} needs your yes`,
@@ -872,9 +877,14 @@ const notifyApproval = (db: Database, a: Approval) =>
     tag: `hq-${a.id}`,
   });
 
-export async function createApproval(db: Database, actor: HqActor, input: ApprovalInput): Promise<Approval> {
+/**
+ * Creates a request for the owner's yes. With `{ tx }` it joins the caller's transaction, and with `notify: false` it sends no push
+ * (the caller sends it with sendApprovalPush after its own commit).
+ */
+export async function createApproval(db: Database, actor: HqActor, input: ApprovalInput, opts: { tx?: Tx; notify?: boolean } = {}): Promise<Approval> {
   const d = parse(approvalInputSchema, input);
-  const approval = await db.transaction(async (tx) => {
+  const run = <T>(fn: (tx: Tx) => Promise<T>): Promise<T> => (opts.tx ? fn(opts.tx) : db.transaction(fn));
+  const approval = await run(async (tx) => {
     if (d.missionId) {
       const [m] = await tx.select({ id: hqMissions.id }).from(hqMissions).where(eq(hqMissions.id, d.missionId));
       if (!m) throw new HqError("That mission no longer exists.");
@@ -902,7 +912,7 @@ export async function createApproval(db: Database, actor: HqActor, input: Approv
     });
     return toApproval(row);
   });
-  if (actor.kind === "agent") await notifyApproval(db, approval);
+  if (actor.kind === "agent" && opts.notify !== false) await sendApprovalPush(db, approval);
   return approval;
 }
 
@@ -1049,6 +1059,8 @@ export async function resolveHqKey(db: Database, raw: string): Promise<{ id: str
 }
 
 const checkinSchema = z.object({
+  relay: z.boolean().optional(),
+  activeAt: z.string().max(40).optional(),
   title: optLine(140),
   branch: optLine(200),
   commit: optLine(64),
@@ -1080,10 +1092,21 @@ export async function recordCheckin(db: Database, input: CheckinInput): Promise<
   await db.transaction(async (tx) => {
     const now = new Date();
     const [cur] = await tx.select().from(hqChats).where(eq(hqChats.id, sessionId)).for("update");
-    const set: Partial<typeof hqChats.$inferInsert> = { lastCheckinAt: now, updatedAt: now };
-    if (d.title) set.title = d.title;
-    if (d.branch !== undefined) set.branch = d.branch;
-    if (d.commit !== undefined) set.lastCommit = d.commit;
+    const set: Partial<typeof hqChats.$inferInsert> = { updatedAt: now };
+    if (d.relay) {
+      // The Chief of Staff reporting another chat: it can't create a chat, rename one or touch its branch, and it can't make a chat look active.
+      if (!cur) throw new HqError("Unknown chat. A relayed status can only update a chat HQ already knows.");
+      const at = d.activeAt ? new Date(d.activeAt) : null;
+      if (at && !Number.isNaN(at.getTime())) {
+        const clamped = at.getTime() > now.getTime() ? now : at;
+        if (!cur.lastCheckinAt || clamped.getTime() > cur.lastCheckinAt.getTime()) set.lastCheckinAt = clamped;
+      }
+    } else {
+      set.lastCheckinAt = now;
+      if (d.title) set.title = d.title;
+      if (d.branch !== undefined) set.branch = d.branch;
+      if (d.commit !== undefined) set.lastCommit = d.commit;
+    }
     if (d.status) set.status = d.status;
     if (d.summary !== undefined) set.summary = d.summary;
     if (d.needsAction !== undefined) set.needsAction = d.needsAction;
@@ -1108,7 +1131,7 @@ export async function recordCheckin(db: Database, input: CheckinInput): Promise<
       });
     }
 
-    const u = d.usage;
+    const u = d.relay ? null : d.usage;
     const five = clampPct(u?.fiveHourPct);
     const seven = clampPct(u?.sevenDayPct);
     if (u && (five !== null || seven !== null)) {
@@ -1153,7 +1176,7 @@ export async function agentInbox(
   missions: Mission[];
   decisions: Approval[];
   approvedContent: ContentItem[];
-  controls: HqControls;
+  controls: Omit<HqControls, "updatedByEmail" | "updatedAt">;
   chats: { id: string; title: string; role: HqRole }[];
 }> {
   const since = input.since && !Number.isNaN(input.since.getTime()) ? input.since : new Date(Date.now() - 7 * DAY);
@@ -1171,7 +1194,8 @@ export async function agentInbox(
       .orderBy(desc(hqApprovals.decidedAt))
       .limit(50);
     const approvedContent = await approvedContentIn(tx);
-    const controls = await controlsIn(tx);
+    // The owner's email and edit time are for the owner's pages only; an agent gets the switches and nothing else.
+    const { updatedByEmail: _email, updatedAt: _at, ...controls } = await controlsIn(tx);
     const mapped = await tx
       .select({ id: hqChats.id, title: hqChats.title, role: hqChats.role })
       .from(hqChats)

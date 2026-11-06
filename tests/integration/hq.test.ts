@@ -206,6 +206,53 @@ describe("check-ins", () => {
     expect((await listChats(db())).find((c) => c.id === "session_0000000000AAA")?.title).toBe("Untitled chat");
   });
 
+  it("a relayed check-in updates status and summary only: no new chat, no rename, no fake activity", async () => {
+    const OTHER = "session_01Mhcz6BYyF8TLLXwBiWcWyk";
+    await expect(recordCheckin(db(), { sessionId: OTHER, relay: true, status: "working" })).rejects.toThrow(/Unknown chat/);
+    expect(await listChats(db())).toHaveLength(0);
+
+    await saveChat(db(), admin, { id: SID, role: "developer", title: "LF Dev", isPrimary: true, branch: "feature/x" });
+    const old = new Date(Date.now() - 10 * 86_400_000);
+    await db().update(hqChats).set({ lastCheckinAt: old }).where(eq(hqChats.id, SID));
+    await createMission(db(), owner, { role: "developer", title: "Big thing" });
+    const [m] = await listMissions(db(), { role: "developer" });
+    await updateMission(db(), owner, m.id, { status: "doing" });
+
+    await recordCheckin(db(), { sessionId: SID, relay: true, title: "Hijacked", branch: "evil", status: "working", summary: "Reported by the Chief of Staff" });
+    const [chat] = await listChats(db());
+    expect(chat).toMatchObject({ title: "LF Dev", branch: "feature/x", status: "working", summary: "Reported by the Chief of Staff" });
+    expect(chat.lastCheckinAt?.getTime()).toBe(old.getTime());
+    const dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer");
+    expect(dev?.state).not.toBe("working");
+
+    // An older activeAt is ignored; a future one is clamped to now; a recent real one shows working.
+    await recordCheckin(db(), { sessionId: SID, relay: true, activeAt: new Date(old.getTime() - 86_400_000).toISOString() });
+    expect((await listChats(db()))[0].lastCheckinAt?.getTime()).toBe(old.getTime());
+    const before = Date.now();
+    await recordCheckin(db(), { sessionId: SID, relay: true, activeAt: new Date(Date.now() + 3_600_000).toISOString() });
+    const at = (await listChats(db()))[0].lastCheckinAt!.getTime();
+    expect(at).toBeGreaterThanOrEqual(before - 1000);
+    expect(at).toBeLessThanOrEqual(Date.now());
+    await recordCheckin(db(), { sessionId: SID, relay: true, activeAt: new Date(Date.now() - 60_000).toISOString() });
+    const dev2 = (await officeSnapshot(db())).employees.find((e) => e.role === "developer");
+    expect(dev2?.state).toBe("working");
+  });
+
+  it("the agent inbox leaves the owner's email and edit time out of the controls", async () => {
+    const { saveControls } = await import("@/server/services/hq-marketing");
+    const { getControls: current } = await import("@/server/services/hq-marketing");
+    const flipped = !(await current(db())).autonomous;
+    await saveControls(db(), admin, { autonomous: flipped });
+    const inbox = await agentInbox(db(), {});
+    expect(inbox.controls.autonomous).toBe(flipped);
+    expect(Object.keys(inbox.controls)).not.toContain("updatedByEmail");
+    expect(Object.keys(inbox.controls)).not.toContain("updatedAt");
+    expect(JSON.stringify(inbox)).not.toContain(admin.email);
+    // The owner's own pages still show who changed what.
+    const { getControls } = await import("@/server/services/hq-marketing");
+    expect((await getControls(db())).updatedByEmail).toBe(admin.email);
+  });
+
   it("saves and removes chats, one primary per role, with admin_actions", async () => {
     await saveChat(db(), admin, { id: SID, role: "designer", title: "LF V3", isPrimary: true });
     await saveChat(db(), admin, { id: "session_0000000000BBB", role: "designer", title: "Other", isPrimary: true });

@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as inboxGET } from "@/app/api/hq/inbox/route";
 import { POST as reportPOST } from "@/app/api/hq/report/route";
 import { closeDb, getDb } from "@/server/db/client";
@@ -99,6 +99,83 @@ describe("content lifecycle", () => {
     expect(t).toContain(`"Two subscriptions" scheduled`);
     expect(t).toContain(`"Two subscriptions" published`);
     expect(sent).toHaveLength(0); // no owner with a subscription here; the sender is still consulted without failing
+  });
+
+  it("an agent schedules an approved post and sets its time in the same update", async () => {
+    const c = await createContent(db(), agent, { kind: "post", title: "Time me", ask: true });
+    await decideApproval(db(), admin, c.approvalId!, "approved");
+    expect((await agentInbox(db(), {})).approvedContent.map((x) => x.id)).toEqual([c.id]);
+    const when = day(2).toISOString();
+    // Without the scheduler id in the same update, the time can't be set.
+    await expect(updateContent(db(), agent, c.id, { scheduledFor: when })).rejects.toThrow(/scheduledFor/);
+    const done = await updateContent(db(), agent, c.id, { status: "scheduled", externalId: "mc_9", scheduledFor: when });
+    expect(done).toMatchObject({ status: "scheduled", externalId: "mc_9" });
+    expect(done.scheduledFor?.toISOString()).toBe(when);
+    expect((await agentInbox(db(), {})).approvedContent).toEqual([]);
+    // After that the agent can't move it again.
+    await expect(updateContent(db(), agent, c.id, { scheduledFor: day(3).toISOString() })).rejects.toThrow(/scheduledFor/);
+  });
+
+  it("queued lists approved or scheduled posts that have no place in the week", async () => {
+    const mk = async (title: string, scheduledFor?: string) => {
+      const c = await createContent(db(), agent, { kind: "post", title, ask: true, ...(scheduledFor ? { scheduledFor } : {}) });
+      await decideApproval(db(), admin, c.approvalId!, "approved");
+      return c;
+    };
+    const none = await mk("No date");
+    const past = await mk("Past", day(-2).toISOString());
+    const far = await mk("Far", day(30).toISOString());
+    const soon = await mk("Soon", day(3).toISOString());
+    const v = await marketingView(db());
+    expect(v.week.map((x) => x.id)).toEqual([soon.id]);
+    expect(v.queued.map((x) => x.id)).toEqual([past.id, far.id, none.id]);
+  });
+
+  it("asking for a yes is one step: linked and waiting, one push, and a failed push undoes nothing", async () => {
+    const prev = process.env.ADMIN_EMAILS;
+    process.env.ADMIN_EMAILS = admin.email;
+    try {
+      const { withUser } = await import("@/server/db/with-user");
+      const { saveSubscription } = await import("@/server/services/push");
+      await withUser(
+        admin.id,
+        (sc) => saveSubscription(sc, { endpoint: `https://push.example.test/${admin.id}`, keys: { p256dh: "p".repeat(20), auth: "a".repeat(12) } }),
+        db(),
+      );
+      let sent = 0;
+      let fail = false;
+      setHqPushSender(async () => async () => {
+        sent++;
+        if (fail) throw new Error("push service down");
+        return { ok: true, gone: false };
+      });
+      const c = await createContent(db(), agent, { kind: "post", title: "Atomic", ask: true });
+      expect(c).toMatchObject({ status: "waiting" });
+      expect(c.approvalId).toBeTruthy();
+      const [ap] = await db().select().from(hqApprovals).where(eq(hqApprovals.id, c.approvalId!));
+      expect(ap).toMatchObject({ status: "pending", title: "Publish: Atomic" });
+      expect(sent).toBe(1);
+
+      fail = true;
+      const err = vi.spyOn(console, "error").mockImplementation(() => undefined);
+      const c2 = await createContent(db(), agent, { kind: "post", title: "Atomic two", ask: true });
+      err.mockRestore();
+      expect(sent).toBe(2);
+      expect(await getContent(db(), c2.id)).toMatchObject({ status: "waiting", approvalId: c2.approvalId });
+      expect(await db().select().from(hqApprovals)).toHaveLength(2);
+    } finally {
+      if (prev === undefined) delete process.env.ADMIN_EMAILS;
+      else process.env.ADMIN_EMAILS = prev;
+    }
+  });
+
+  it("a failure while asking leaves no half-made post", async () => {
+    // A publish request can't be made for research, and nothing is saved when it is refused.
+    await expect(
+      createContent(db(), agent, { kind: "research", title: "R", links: [{ label: "s", url: "https://a.example/x" }], ask: true }),
+    ).rejects.toThrow();
+    expect(await db().select().from(hqContent)).toHaveLength(0);
+    expect(await db().select().from(hqApprovals)).toHaveLength(0);
   });
 
   it("pushes the owner when an agent asks", async () => {

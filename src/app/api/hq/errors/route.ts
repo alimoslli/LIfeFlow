@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/server/db/client";
 import { errorResponse } from "@/server/http";
 import { authenticateHq } from "@/server/hq/request";
+import { untrustedErrors } from "@/server/hq/untrusted";
 import { listErrorGroups } from "@/server/services/hq";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export async function GET(req: Request) {
     await authenticateHq(req);
     const raw = Number(new URL(req.url).searchParams.get("limit"));
     const errors = await listErrorGroups(getDb(), Number.isFinite(raw) && raw > 0 ? raw : 50);
-    return NextResponse.json({ errors });
+    return NextResponse.json(untrustedErrors(errors));
   } catch (e) {
     return errorResponse(e);
   }

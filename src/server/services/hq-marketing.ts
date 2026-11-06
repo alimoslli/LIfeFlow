@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, gte, inArray, isNull, lt, lte, ne, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Admin } from "../auth/admin";
 import type { Database } from "../db/client";
@@ -21,7 +21,7 @@ import {
 } from "../db/schema";
 import type { Approval, ContentItem, HqControls, MarketingView, MarketingWeek, NetworkPerformance } from "../hq/types";
 import { HqError, line, linksSchema, logActivity, logAdmin, optLine, optText, parse, sessionIdField, timed, url, type Tx } from "../hq/validate";
-import { createApproval, ownerTimeZone, type HqActor } from "./hq";
+import { createApproval, ownerTimeZone, sendApprovalPush, type HqActor } from "./hq";
 
 /**
  * LifeFlow HQ marketing and controls (ADR 0025). Content, research and real metrics arrive from the owner's chats
@@ -68,10 +68,25 @@ const platforms = z
   .array(z.enum(HQ_NETWORKS, { error: "isn't a network HQ knows (instagram, tiktok, youtube, facebook, linkedin)" }))
   .max(5, "has too many networks (max 5)")
   .transform((a) => [...new Set(a)]);
+const WHEN_HELP = "Give a time and time zone, e.g. 2026-11-30T09:00:00-08:00";
+const WHEN_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})$/;
+/** True when the date and time exist (2026-02-31 and 25:00 don't) and the zone offset is sane. */
+export function isRealWhen(s: string): boolean {
+  const m = WHEN_RE.exec(s);
+  if (!m) return false;
+  const [y, mo, d, h, mi, sec] = [m[1], m[2], m[3], m[4], m[5], m[6] ?? "0"].map(Number);
+  if (h > 23 || mi > 59 || sec > 59) return false;
+  const check = new Date(Date.UTC(y, mo - 1, d));
+  if (check.getUTCFullYear() !== y || check.getUTCMonth() !== mo - 1 || check.getUTCDate() !== d) return false;
+  if (m[7] !== "Z") {
+    const [oh, om] = m[7].slice(1).split(":").map(Number);
+    if (oh > 14 || om > 59) return false;
+  }
+  return !Number.isNaN(Date.parse(s));
+}
 const when = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}/, "must be a date and time like 2026-11-30T18:00:00Z")
-  .refine((s) => !Number.isNaN(Date.parse(s)), "is not a real date")
+  .refine(isRealWhen, WHEN_HELP)
   .transform((s) => new Date(s))
   .nullish();
 
@@ -188,6 +203,17 @@ export async function marketingView(db: Database, now: Date = new Date()): Promi
       .where(and(inArray(hqContent.status, ["scheduled", "approved", "waiting"]), gte(hqContent.scheduledFor, now), lte(hqContent.scheduledFor, soon)))
       .orderBy(asc(hqContent.scheduledFor), asc(hqContent.createdAt))
       .limit(30);
+    const queued = await tx
+      .select()
+      .from(hqContent)
+      .where(
+        and(
+          inArray(hqContent.status, ["approved", "scheduled"]),
+          or(isNull(hqContent.scheduledFor), lt(hqContent.scheduledFor, now), gt(hqContent.scheduledFor, soon)),
+        ),
+      )
+      .orderBy(sql`${hqContent.scheduledFor} asc nulls last`, asc(hqContent.createdAt))
+      .limit(20);
     const unscheduled = await tx
       .select()
       .from(hqContent)
@@ -218,6 +244,7 @@ export async function marketingView(db: Database, now: Date = new Date()): Promi
     return {
       now,
       week: week.map(toContent),
+      queued: queued.map(toContent),
       unscheduled: unscheduled.map(toContent),
       waiting: waitingRows.map((r) => ({ content: toContent(r.content), approval: r.approval ? toApprovalView(r.approval) : null })),
       research: research.map(toContent),
@@ -287,7 +314,8 @@ export async function createContent(db: Database, actor: HqActor, input: Content
   if (d.kind === "research" && !(d.links && d.links.length > 0)) throw new HqError("Research needs at least one source link.");
   if (d.ask && d.kind === "research") throw new HqError("Research isn't published, so it has no publish request.");
   const sessionId = d.sessionId ?? (actor.kind === "agent" ? (actor.sessionId ?? null) : null);
-  const created = await db.transaction(async (tx) => {
+  // The post, its publish request and the link between them are saved together; the push goes out after the commit.
+  const { content, approval } = await db.transaction(async (tx) => {
     const [row] = await tx
       .insert(hqContent)
       .values({
@@ -310,25 +338,28 @@ export async function createContent(db: Database, actor: HqActor, input: Content
       text: d.kind === "research" ? `Added research: ${quoted(d.title)}` : `Added a ${d.kind}: ${quoted(d.title)}`,
       sessionId: actorSession(actor) ?? sessionId,
     });
-    return row;
-  });
-  if (!d.ask) return toContent(created);
-  // The approval is created through hq.ts so the owner's phone gets the push and the activity line is written.
-  const approval = await createApproval(db, actor, {
-    role: "marketing",
-    kind: "publish",
-    title: `Publish: ${created.title}`.slice(0, 140),
-    summary: askSummary(created, await timed(db, ownerTimeZone)),
-    links: created.links ?? [],
-  });
-  return db.transaction(async (tx) => {
-    const [row] = await tx
+    if (!d.ask) return { content: row, approval: null };
+    const ap = await createApproval(
+      db,
+      actor,
+      {
+        role: "marketing",
+        kind: "publish",
+        title: `Publish: ${row.title}`.slice(0, 140),
+        summary: askSummary(row, await ownerTimeZone(tx)),
+        links: row.links ?? [],
+      },
+      { tx, notify: false },
+    );
+    const [linked] = await tx
       .update(hqContent)
-      .set({ approvalId: approval.id, status: "waiting", updatedAt: new Date() })
-      .where(eq(hqContent.id, created.id))
+      .set({ approvalId: ap.id, status: "waiting", updatedAt: new Date() })
+      .where(eq(hqContent.id, row.id))
       .returning();
-    return toContent(row);
+    return { content: linked, approval: ap };
   });
+  if (approval && actor.kind === "agent") await sendApprovalPush(db, approval);
+  return toContent(content);
 }
 
 const CONTENT_FIELDS = ["title", "hook", "body", "platforms", "scheduledFor", "links"] as const;
@@ -356,7 +387,9 @@ export async function updateContent(db: Database, actor: HqActor, id: string, pa
 
     // After a yes (or while waiting for one) an agent can't change what was approved; changes go through a new draft.
     if (actor.kind === "agent" && ["waiting", "approved", "scheduled", "published"].includes(cur.status)) {
-      const touched = CONTENT_FIELDS.filter((f) => d[f] !== undefined);
+      // One exception: putting an approved post into the scheduler sets its time in the same update as the status and the scheduler id.
+      const settingTime = cur.status === "approved" && d.status === "scheduled" && !!d.externalId;
+      const touched = CONTENT_FIELDS.filter((f) => d[f] !== undefined && !(f === "scheduledFor" && settingTime));
       if (touched.length) throw new HqError(`Can't change ${touched[0]} after it was sent for a yes. Make a new draft instead.`);
     }
 

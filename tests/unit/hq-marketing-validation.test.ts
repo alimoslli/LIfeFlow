@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Database } from "@/server/db/client";
-import { createContent, recordMetrics, saveControls, updateContent } from "@/server/services/hq-marketing";
+import { createContent, isRealWhen, recordMetrics, saveControls, updateContent } from "@/server/services/hq-marketing";
 
 // Validation runs before the database is touched, so these never need one.
 const noDb = null as unknown as Database;
@@ -92,5 +92,29 @@ describe("controls validation", () => {
     await bad(saveControls(noDb, admin, { creditBudget: 1.5 }), /whole number/);
     await bad(saveControls(noDb, admin, { rounds: { weekend: true } as never }), /nrecognized|weekend/i);
     await bad(saveControls(noDb, admin, { autonomous: "yes" as never }), /autonomous/);
+  });
+});
+
+describe("strict dates for when and scheduledFor", () => {
+  const HELP = /Give a time and time zone, e\.g\. 2026-11-30T09:00:00-08:00/;
+  it("accepts an ISO date-time with a zone", () => {
+    for (const ok of ["2026-11-30T09:00:00-08:00", "2026-11-30T18:00:00Z", "2026-11-30T18:00Z", "2026-11-30T18:00:00.250+05:30"])
+      expect(isRealWhen(ok)).toBe(true);
+  });
+  it("refuses date-only, no zone, impossible dates and times", () => {
+    for (const bad of [
+      "2026-11-30",
+      "2026-11-30T09:00:00",
+      "2026-02-31T09:00:00Z",
+      "2026-11-30T25:00:00Z",
+      "2026-11-30T09:60:00Z",
+      "tomorrow",
+      "2026-11-30T09:00:00+99:00",
+    ])
+      expect(isRealWhen(bad)).toBe(false);
+  });
+  it("says what to give when a date has no time", async () => {
+    await bad(createContent(noDb, agent, { kind: "post", title: "t", scheduledFor: "2026-11-30" }), HELP);
+    await bad(createContent(noDb, agent, { kind: "post", title: "t", scheduledFor: "2026-02-31T09:00:00Z" }), HELP);
   });
 });

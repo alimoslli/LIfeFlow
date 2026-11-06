@@ -52,11 +52,14 @@ describe("hq cli: content", () => {
     const r = build("content add", ["content", "add", "--kind", "concept", "--title", "T", "--body", "Hello"]);
     expect(r.body).toEqual({ type: "content", kind: "concept", title: "T", body: "Hello", sessionId: S.sessionId });
   });
-  it("content add refuses a missing title, a bad kind and a bad date", () => {
+  it("passes --when through as typed; the server checks it", () => {
+    const r = build("content add", ["content", "add", "--kind", "post", "--title", "T", "--when", "2026-11-12"]);
+    expect(r.body).toMatchObject({ scheduledFor: "2026-11-12" });
+    expect(isoWhen("tomorrow")).toBe("tomorrow");
+  });
+  it("content add refuses a missing title and a bad kind", () => {
     expect(() => build("content add", ["content", "add", "--kind", "post"])).toThrow(/--title/);
     expect(() => build("content add", ["content", "add", "--kind", "meme", "--title", "T"])).toThrow(/--kind/);
-    expect(() => build("content add", ["content", "add", "--kind", "post", "--title", "T", "--when", "tomorrow"])).toThrow(/--when/);
-    expect(() => isoWhen("2026-11-12")).not.toThrow();
   });
   it("content update maps the flags", () => {
     const r = build("content update", [

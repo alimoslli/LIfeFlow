@@ -67,6 +67,18 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
         )}
       </Section>
 
+      <Section title="Approved, waiting to go out">
+        {v.queued.length ? (
+          <div className="flex flex-col">
+            {v.queued.map((c) => (
+              <ContentLine key={c.id} c={c} tz={tz} showDate />
+            ))}
+          </div>
+        ) : (
+          <Empty>Nothing approved is waiting to go out.</Empty>
+        )}
+      </Section>
+
       <Section title="Research" sub="Findings from the researcher, with where they came from.">
         {v.research.length ? (
           <ul className="flex flex-col divide-y divide-border/60">

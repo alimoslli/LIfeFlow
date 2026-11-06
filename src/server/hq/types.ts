@@ -185,6 +185,8 @@ export type MarketingView = {
   now: Date;
   /** Scheduled, approved or waiting items dated in the next 14 days, soonest first (max 30). */
   week: ContentItem[];
+  /** Approved or scheduled posts that aren't in `week` (no date, a past date, or more than 14 days out), soonest first (max 20). */
+  queued: ContentItem[];
   /** Drafts and ideas with no date yet, newest first (max 20). */
   unscheduled: ContentItem[];
   /** Items waiting for the owner's yes, with their publish approval (max 20). */
