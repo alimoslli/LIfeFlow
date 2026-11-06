@@ -84,6 +84,28 @@ describe("a hand-tracked bill paid by transfer is counted once (review 3)", () =
   });
 });
 
+describe("usual spending leaves out a bill's own charges, not its merchant (review 2)", () => {
+  it("keeps the other Amazon orders in day-to-day spending next to a monthly Amazon charge", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const { card } = await accounts(s);
+      const amazon = (date: string, cents: number) =>
+        createTransaction(s, { accountId: card.id, date, description: "AMAZON", merchantName: "Amazon", amountCents: -cents });
+      for (const d of ["2026-07-26", "2026-08-26", "2026-09-26", "2026-10-26"]) await amazon(d, 1_499);
+      for (const [d, cents] of [
+        ["2026-09-15", 4_000],
+        ["2026-10-03", 6_000],
+        ["2026-10-20", 5_000],
+      ] as const)
+        await amazon(d, cents);
+    });
+    expect((await run((s) => suggestRecurring(s, TODAY))).map((c) => c.latestAmountCents)).toEqual([-1_499]);
+    const { typical } = await run((s) => billsAndPace(s, TODAY, TODAY, addDaysStr(TODAY, 30)));
+    // $150 of orders since Sep 15 (51 days), the $14.99 charges left out.
+    expect(typical).toEqual({ dailyCents: Math.round(15_000 / 51), basedOnDays: 51 });
+  });
+});
+
 describe("two subscriptions from one merchant (A5)", () => {
   it("finds iCloud and Apple Music separately, tracks the one tapped, and never calls them the same service", async () => {
     const { run } = await makeUser();

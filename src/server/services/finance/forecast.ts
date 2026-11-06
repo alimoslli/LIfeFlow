@@ -5,7 +5,7 @@ import { summarizeCashflow } from "./cashflow";
 import { keywordCategory, needOrWant } from "./categorize";
 import { listAccounts } from "./accounts";
 import { balancesOf } from "./overview";
-import { nameRelation } from "./bill-match";
+import { nameRelation, trackedKeys, tracksSeries } from "./bill-match";
 import { bankSeries, budgetStatus, listRecurring, upcomingRecurring, type BankSeries } from "./planning";
 import { MIN_CONFIDENCE, detectRecurring, merchantKey, merchantKeys, nthOccurrence, occurrencesBetween, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
@@ -104,11 +104,11 @@ async function typicalDailySpend(scope: UserScope, today: string, billSeries: Re
     () => queryTransactions(scope, { from, to: addDaysStr(today, -1), limit: 20_000 }),
     () => listRecurring(scope),
   );
-  const billKeys = new Set([
-    ...recurring.filter((r) => r.amountCents < 0).flatMap((r) => [r.merchantKey, merchantKey({ merchantName: r.name, description: r.name })]),
-    ...billSeries.map((c) => c.merchantKey),
-  ]);
-  const dayToDay = txns.filter((t) => !merchantKeys(t).some((k) => billKeys.has(k)));
+  // A bill's own charges come out, never the rest of what that merchant sells: Prime is a bill, the other Amazon orders aren't.
+  const billCharges = new Set(billSeries.flatMap((c) => c.charges.map((x) => `${c.merchantKey}|${x.date}|${x.amountCents}`)));
+  // A tracked bill the bank shows no series for yet comes out by its name.
+  const billKeys = new Set(recurring.filter((r) => r.amountCents < 0 && !billSeries.some((c) => tracksSeries(r, c))).flatMap((r) => trackedKeys(r)));
+  const dayToDay = txns.filter((t) => !billCharges.has(`${merchantKey(t)}|${t.date}|${t.amountCents}`) && !merchantKeys(t).some((k) => billKeys.has(k)));
   const spent = summarizeCashflow(dayToDay).netSpendingCents;
   const days = Math.max(1, Math.min(56, txns.length ? daysBetween(txns[txns.length - 1].date, today) : 1));
   return { dailyCents: Math.max(0, Math.round(spent / days)), basedOnDays: days };
