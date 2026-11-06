@@ -40,7 +40,7 @@ describe("review fixes: nothing is merged on a guess", () => {
     const whens = j.entries.map((e) => e.when);
     expect(new Set(whens).size).toBe(whens.length);
     expect(whens).toEqual([...whens].sort((a, b) => a - b));
-    expect(j.entries.find((e) => e.tag === "0040_inbox_dedupe")!.when).toBe(1794200000000);
+    expect(j.entries.find((e) => e.tag === "0046_inbox_dedupe")!.when).toBe(1794800000000);
   });
 
   it("2: three Verizon lines stay separate; a near amount on the same day is asked about, not merged", async () => {

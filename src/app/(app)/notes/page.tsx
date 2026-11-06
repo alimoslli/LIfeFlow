@@ -5,7 +5,8 @@ import { FileText, FolderKanban, Pin, Search } from "lucide-react";
 import { ActionForm } from "@/components/action-form";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { SubmitButton } from "@/components/ui/button";
-import { Input } from "@/components/ui/field";
+import { control, Input } from "@/components/ui/field";
+import { LiveSearchInput } from "@/components/ui/live-search";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/surface";
 import { formatIn } from "@/lib/dates";
 import { cn, truncate } from "@/lib/utils";
@@ -106,7 +107,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
           <form action="/notes" className="relative mb-4">
             <Search className="absolute top-2.5 left-3 h-4 w-4 text-muted" />
             {projectId && <input type="hidden" name="project" value={projectId} />}
-            <Input name="q" defaultValue={sp.q} placeholder="Search notes…" className="pl-9" aria-label="Search notes" />
+            <LiveSearchInput name="q" defaultValue={sp.q ?? ""} placeholder="Search notes…" aria-label="Search notes" className={cn(control, "h-10 pl-9")} />
           </form>
           {project && d.projectTasks.length > 0 && (
             <Card className="mb-4 p-4">

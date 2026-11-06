@@ -1,8 +1,8 @@
-import { createHash, randomBytes } from "node:crypto";
-import { and, eq, isNull, lt, sql } from "drizzle-orm";
+import { createHash, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
+import { and, eq, isNull, lt, ne, sql } from "drizzle-orm";
 import { Secret, TOTP } from "otpauth";
 import type { Database } from "../db/client";
-import { loginChallenges, recoveryCodes, users } from "../db/schema";
+import { loginChallenges, recoveryCodes, sessions, users } from "../db/schema";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { verifyPassword } from "./password";
 
@@ -15,6 +15,11 @@ import { verifyPassword } from "./password";
  * - Backup codes are random and stored only as SHA-256 hashes; each works once.
  * - After the password step, a short-lived challenge (hashed token in a cookie,
  *   5 attempts, 10 minutes) stands in for the session until the code is right.
+ * - "Email me a code" (owner, 2026-11-06, after a lockout): after the password step, a 6-digit code can be emailed to
+ *   the account's address. It is stored only as a hash bound to that one challenge, works once, expires in 10 minutes,
+ *   shares the challenge's 5 tries, and at most 3 can be sent per sign-in. Only after the password step (never after
+ *   Google or Apple, whose inbox is the same one), and not after a password reset until the person signs in once with
+ *   the authenticator, a backup code or a passkey (an inbox alone must never be enough to get past two-step sign-in).
  */
 
 export class TwoFactorError extends Error {}
@@ -22,6 +27,10 @@ export class TwoFactorError extends Error {}
 export const CHALLENGE_COOKIE = "bf_mfa";
 export const CHALLENGE_TTL_MS = 10 * 60_000;
 export const MAX_CHALLENGE_ATTEMPTS = 5;
+export const EMAIL_CODE_TTL_MS = 10 * 60_000;
+export const MAX_EMAIL_SENDS = 3;
+/** A sign-in that asked for an email code may run this long in total, however many codes were sent. */
+const CHALLENGE_MAX_LIFE_MS = 30 * 60_000;
 const RECOVERY_CODE_COUNT = 10;
 const PERIOD = 30;
 
@@ -148,14 +157,64 @@ export async function regenerateRecoveryCodes(db: Database, userId: string, code
 // ---------------------------------------------------------------------------
 // Sign-in challenge (between the password and the code)
 
-export async function createLoginChallenge(db: Database, userId: string, now = Date.now()) {
+export async function createLoginChallenge(db: Database, userId: string, firstFactor: "password" | "oauth", now = Date.now()) {
   const token = randomBytes(32).toString("base64url");
   await db.delete(loginChallenges).where(lt(loginChallenges.expiresAt, new Date(now)));
-  await db.insert(loginChallenges).values({ id: sha256(token), userId, expiresAt: new Date(now + CHALLENGE_TTL_MS) });
+  await db.insert(loginChallenges).values({ id: sha256(token), userId, firstFactor, expiresAt: new Date(now + CHALLENGE_TTL_MS) });
   return { token, expiresAt: new Date(now + CHALLENGE_TTL_MS) };
 }
 
-export type ChallengeResult = { ok: true; userId: string; method: "totp" | "recovery" } | { ok: false; reason: "expired" | "wrong" | "locked" };
+export type ChallengeResult = { ok: true; userId: string; method: "totp" | "recovery" | "email" } | { ok: false; reason: "expired" | "wrong" | "locked" };
+
+const emailCodeHash = (challengeId: string, code: string) => sha256(`${challengeId}:${code}`);
+
+function sameHash(a: string, b: string) {
+  const x = Buffer.from(a, "hex");
+  const y = Buffer.from(b, "hex");
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+
+/** "a•••@gmail.com": enough for the person to recognise the address, not enough to read it off the screen. */
+export function maskEmail(email: string) {
+  const [name, domain] = email.split("@");
+  if (!domain) return "your email";
+  return `${name.slice(0, 1)}•••@${domain}`;
+}
+
+export type EmailCodeResult =
+  { ok: true; to: string; email: string; code: string; expiresAt: Date } | { ok: false; reason: "expired" | "too_many" | "not_password" | "after_reset" };
+
+/**
+ * Makes a fresh 6-digit code for a pending sign-in (the password step already passed). The caller emails it and only
+ * says "sent" once the provider returns an id. A new code replaces the previous one. Sending extends the sign-in to
+ * 10 minutes from now, but never past 30 minutes from the password step.
+ */
+export async function issueLoginEmailCode(db: Database, token: string, now = Date.now()): Promise<EmailCodeResult> {
+  if (!token || token.length > 100) return { ok: false, reason: "expired" };
+  const id = sha256(token);
+  const [c] = await db.select().from(loginChallenges).where(eq(loginChallenges.id, id));
+  if (!c || c.expiresAt.getTime() < now) return { ok: false, reason: "expired" };
+  if (c.firstFactor !== "password") return { ok: false, reason: "not_password" };
+  const [owner] = await db.select({ blocked: users.emailCodesBlockedAt }).from(users).where(eq(users.id, c.userId));
+  if (owner?.blocked) return { ok: false, reason: "after_reset" };
+  if (c.emailSends >= MAX_EMAIL_SENDS) return { ok: false, reason: "too_many" };
+  const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
+  const expiresAt = new Date(Math.min(now + EMAIL_CODE_TTL_MS, c.createdAt.getTime() + CHALLENGE_MAX_LIFE_MS));
+  const challengeExpires = new Date(Math.max(c.expiresAt.getTime(), expiresAt.getTime()));
+  const [updated] = await db
+    .update(loginChallenges)
+    .set({
+      emailCodeHash: emailCodeHash(id, code),
+      emailCodeExpiresAt: expiresAt,
+      emailSends: sql`${loginChallenges.emailSends} + 1`,
+      expiresAt: challengeExpires,
+    })
+    .where(and(eq(loginChallenges.id, id), lt(loginChallenges.emailSends, MAX_EMAIL_SENDS)))
+    .returning({ id: loginChallenges.id });
+  if (!updated) return { ok: false, reason: "too_many" };
+  const u = await getUser(db, c.userId);
+  return { ok: true, to: maskEmail(u.email), email: u.email, code, expiresAt: challengeExpires };
+}
 
 /** Checks the code for a pending sign-in. Each wrong try counts; after 5 the challenge is gone. */
 export async function completeLoginChallenge(db: Database, token: string, code: string, now = Date.now()): Promise<ChallengeResult> {
@@ -172,12 +231,60 @@ export async function completeLoginChallenge(db: Database, token: string, code: 
     await db.delete(loginChallenges).where(eq(loginChallenges.id, id));
     return { ok: false, reason: "locked" };
   }
-  const method = await verifySecondFactor(db, c.userId, code, now);
+  const typed = code.replace(/\s/g, "");
+  const emailOk =
+    !!c.emailCodeHash &&
+    !!c.emailCodeExpiresAt &&
+    c.emailCodeExpiresAt.getTime() >= now &&
+    /^\d{6}$/.test(typed) &&
+    sameHash(emailCodeHash(id, typed), c.emailCodeHash);
+  const method = emailOk ? ("email" as const) : await verifySecondFactor(db, c.userId, code, now);
   if (!method) {
     if (bumped.attempts < MAX_CHALLENGE_ATTEMPTS) return { ok: false, reason: "wrong" };
     await db.delete(loginChallenges).where(eq(loginChallenges.id, id));
     return { ok: false, reason: "locked" };
   }
-  await db.delete(loginChallenges).where(eq(loginChallenges.id, id));
+  // Only the request that actually removes the challenge wins, so one code can never start two sessions.
+  const gone = await db.delete(loginChallenges).where(eq(loginChallenges.id, id)).returning({ id: loginChallenges.id });
+  if (!gone.length) return { ok: false, reason: "expired" };
+  // A sign-in with the authenticator or a backup code proves the person still has their strong factor.
+  if (method !== "email") await db.update(users).set({ emailCodesBlockedAt: null }).where(eq(users.id, c.userId));
   return { ok: true, userId: c.userId, method };
+}
+
+// ---------------------------------------------------------------------------
+// Settings → "Lost your app? Start over" (owner, 2026-11-06). The signed-in person proves their password, gets a code
+// by email (the same rules as the sign-in email code: hashed, bound, single use, 10 minutes, 5 tries, 3 sends, refused
+// after a password reset until a strong sign-in), and two-step sign-in is reset so they can set up a new app and new
+// backup codes. Turning it off the normal way still needs a code from the old app.
+
+export async function beginTwoFactorRestart(db: Database, userId: string, password: string, now = Date.now()) {
+  const u = await getUser(db, userId);
+  if (!u.totpEnabledAt) throw new TwoFactorError("Two-step sign-in is already off.");
+  if (!(await verifyPassword(password, u.passwordHash))) throw new TwoFactorError("Password is incorrect.");
+  const { token } = await createLoginChallenge(db, userId, "password", now);
+  const r = await issueLoginEmailCode(db, token, now);
+  if (!r.ok) {
+    await db.delete(loginChallenges).where(eq(loginChallenges.id, sha256(token)));
+    throw new TwoFactorError(
+      r.reason === "after_reset"
+        ? "For safety, email codes are off after a password reset until you sign in once with your authenticator app, a backup code or a passkey."
+        : "Couldn't send a code just now. Try again in a minute.",
+    );
+  }
+  return { token, to: r.to, email: r.email, code: r.code, expiresAt: r.expiresAt };
+}
+
+/** `keepSessionId` is the hashed id of the session doing the reset; every other session is signed out. */
+export async function finishTwoFactorRestart(db: Database, userId: string, token: string, code: string, keepSessionId: string | null, now = Date.now()) {
+  const r = await completeLoginChallenge(db, token, code, now);
+  if (!r.ok) {
+    if (r.reason === "wrong") throw new TwoFactorError("That code didn't match. Check the newest email.");
+    throw new TwoFactorError(r.reason === "locked" ? "Too many wrong codes. Ask for a new one." : "That code expired. Ask for a new one.");
+  }
+  if (r.userId !== userId) throw new TwoFactorError("That code isn't for this account.");
+  await db.update(users).set({ totpSecret: null, totpEnabledAt: null, totpLastStep: null }).where(eq(users.id, userId));
+  await db.delete(recoveryCodes).where(eq(recoveryCodes.userId, userId));
+  // A lost phone that was still signed in shouldn't stay signed in.
+  await db.delete(sessions).where(keepSessionId ? and(eq(sessions.userId, userId), ne(sessions.id, keepSessionId)) : eq(sessions.userId, userId));
 }

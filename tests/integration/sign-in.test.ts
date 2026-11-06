@@ -265,6 +265,9 @@ describe("forgot password", () => {
     expect(await authenticate(db, user.email, "a brand new long passphrase 42")).not.toBeNull();
     expect(await authenticate(db, user.email, "correct horse battery")).toBeNull();
     expect(await validateSession(db, session.token)).toBeNull();
+    // A reset turns email sign-in codes off until a sign-in with a strong factor (ADR 0009 addendum).
+    const [after] = await db.select({ blocked: users.emailCodesBlockedAt }).from(users).where(eq(users.id, user.id));
+    expect(after.blocked).not.toBeNull();
     await expect(resetPassword(db, token, "another long passphrase 99")).rejects.toThrow(/expired or was already used/);
   });
 
