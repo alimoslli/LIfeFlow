@@ -50,8 +50,8 @@ export function toUiMessages(rows: Msg[], actions: Action[], atts: Att[], memory
         a.confirmations.push({
           actionId: action.id,
           summary: action.summary,
-          status: action.status,
-          resultText: action.result ? (action.result.ok ? "Done" : action.result.error) : undefined,
+          status: action.status === "running" ? "pending" : action.status,
+          resultText: action.status === "running" ? "Working…" : action.result ? (action.result.ok ? "Done" : action.result.error) : undefined,
         });
       } else {
         const d = describeToolResult(m.toolName, m.toolResult ?? { ok: false });
