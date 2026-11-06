@@ -1,8 +1,9 @@
 # Voiceovers on finished videos
 
 `mix_vo.py` puts a one-take voiceover on a finished video, line by line on its beats, and mixes it over the video's own music.
-- Generate the whole script as ONE take (consistent energy), Mark's voice (Higgsfield preset `27c04473-84a9-4b60-a41f-c8e8458bd4f1`,
-  `text2speech_v2`, `variant: elevenlabs`; 1.5 credits for about 60 words). Lines on their own paragraphs, "..." for pauses.
+- Generate the whole script as ONE take (consistent energy). App videos use Sienna, the narrator (Higgsfield preset
+  `41023a48-71ab-478a-bea7-c7b5a78f6b36`; `text2speech_v2` variant elevenlabs 1.35 credits for about 60 words, or
+  `elevenlabs_v4` stability 0.55 / similarity 0.8, 2.07 credits). Mark (`27c04473...`) is only for Dev in the podcast videos. Lines on their own paragraphs, "..." for pauses.
 - The take is split only inside real silences (energy at least 32 dB under speech for 0.18 s), never on Whisper word times:
   those were up to 0.4 s off and would have clipped words. Pauses inside a line are capped at 0.30 s. A light 1.07x speed-up
   (pitch kept, `atempo`) fits the lines to their beats.
