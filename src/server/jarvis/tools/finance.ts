@@ -212,7 +212,7 @@ export const financeTools = [
   defineTool({
     name: "query_transactions",
     description:
-      "Look up individual transactions. Amounts in dollars: negative = money out. Also use it for 'when did I last pay, Zelle, Venmo or Cash App someone' (search the person's name, e.g. search \"Omar Mousselli\"; newest first, so the first row is the last time). search is forgiving: every word must appear somewhere in the bank line, merchant or notes, in any order, truncated names and payment-app words are fine, and you do not need to add 'Zelle' or 'to'. If nothing matches, the result has matchType 'none' and closestPayments (recent person-to-person payments): never say you found nothing; tell the user what you didn't find and ask if one of the closest is who they meant. matchType 'similar' means the spelling differs: confirm with the user.",
+      "Look up individual transactions. Amounts in dollars: negative = money out. Also use it for 'when did I last pay, Zelle, Venmo or Cash App someone' (search the person's name, plus the app if they said one, e.g. search \"Zelle Omar Mousselli\"; newest first, so the first row is the last time). search is forgiving: every word must appear somewhere in the bank line, merchant or notes, in any order, truncated names and payment-app words are fine, and you do not need to add 'Zelle' or 'to'. If nothing matches, the result has matchType 'none' and closestPayments (recent person-to-person payments): say plainly what you didn't find, and if closestPayments has rows ask whether one is who they meant. matchType 'similar' means the spelling differs: confirm with the user.",
     schema: z.object({
       from: dateArg().optional(),
       to: dateArg().optional(),
@@ -250,10 +250,11 @@ export const financeTools = [
       return centsToDollarsDeep({
         count: found.rows.length,
         matchType: found.match,
+        ...(found.match === "exact" && !found.rows.length && { note: "No transactions match those filters. Say so plainly, naming what you looked for." }),
         ...(found.match === "similar" && { note: "No exact match for that spelling. These look similar: confirm with the user that it is who they meant." }),
         ...(found.match === "none" &&
           a.search && {
-            note: `Nothing matches "${a.search}". Do not say you found nothing and stop: name what you looked for, and offer the closest payments to people, if any, asking if one is who they meant.`,
+            note: `Nothing matches "${a.search}". Say so plainly, naming what you looked for. If closestPayments has rows, ask whether one of them is who they meant; never invent a match.`,
             closestPayments: found.closest.map(shape),
           }),
         transactions: found.rows.map(shape),

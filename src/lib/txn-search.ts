@@ -70,10 +70,10 @@ export function parseSearch(search: string): ParsedSearch {
 
 export type SearchRow = { description?: string | null; merchantName?: string | null; notes?: string | null };
 
-/** Word match: equal, a truncated bank word ("MOUSSEL" for "mousselli"), or a short suffix ("starbuck" / "STARBUCKS"). Never "omar" in "OMARKET". */
+/** Word match: equal, a truncated bank word of 5+ letters ("MOUSSEL" for "mousselli", never "JOHN" for "johnson"), or a short suffix ("starbuck" / "STARBUCKS"). Never "omar" in "OMARKET". */
 export function wordMatches(term: string, w: string): boolean {
   if (w === term) return true;
-  if (w.length >= 4 && term.length > w.length && term.startsWith(w)) return true;
+  if (w.length >= 5 && term.length > w.length && term.startsWith(w)) return true;
   return term.length >= 5 && w.startsWith(term) && w.length - term.length <= 2;
 }
 
@@ -88,16 +88,27 @@ export function editDistance(a: string, b: string): number {
   return prev[b.length];
 }
 
-/** 0..1 similarity of a search word to a bank word; a truncated bank word is compared with the same-length start of the search word. */
+/** Typos allowed in a word: none under 5 letters (Sam is not Pam), one for 5 to 7, two from 8. */
+export function typoBudget(len: number): number {
+  return len < 5 ? 0 : len < 8 ? 1 : 2;
+}
+
+/**
+ * 0..1 similarity of a search word to a bank word, 0 when it needs more typos than the word allows.
+ * A truncated bank word is compared with the same-length start of the search word.
+ */
 export function similarity(term: string, w: string): number {
-  if (term.length < 3 || w.length < 3) return term === w ? 1 : 0;
-  const sim = (a: string, b: string) => 1 - editDistance(a, b) / Math.max(a.length, b.length);
-  let best = sim(term, w);
-  if (w.length >= 4 && term.length > w.length) best = Math.max(best, sim(term.slice(0, w.length), w));
+  if (term === w) return 1;
+  const score = (a: string, b: string) => {
+    const d = editDistance(a, b);
+    return d <= typoBudget(Math.min(a.length, b.length)) ? 1 - d / Math.max(a.length, b.length) : 0;
+  };
+  let best = score(term, w);
+  if (w.length >= 5 && term.length > w.length) best = Math.max(best, score(term.slice(0, w.length), w));
   return best;
 }
 
-/** A fuzzy word counts as a match above this similarity. */
+/** A fuzzy word counts as a match above this similarity (0 means over the typo budget). */
 export const FUZZY_THRESHOLD = 0.6;
 
 type Hit = { field: number; index: number };

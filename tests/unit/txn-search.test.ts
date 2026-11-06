@@ -47,6 +47,17 @@ describe("matching real bank line shapes", () => {
     expect(match("Mousselli", "ZELLE MOU 1")).toBe(false);
   });
 
+  it("a short truncated bank word never matches a longer different name", () => {
+    expect(match("Johnson", "ZELLE TO JOHN SMITH")).toBe(false);
+    expect(match("Johnson", "ZELLE TO JOHNS")).toBe(true);
+  });
+
+  it("is case and spacing blind, and works with first or last name alone", () => {
+    expect(match("  omar    MOUSSELLI ", "zelle to Omar   Mousselli")).toBe(true);
+    expect(match("mousselli", "ZELLE TO MOUSSELLI OMAR")).toBe(true);
+    expect(match("Venmo Dana", "VENMO PAYMENT 99 DANA LEE")).toBe(true);
+  });
+
   it("matches words in any order and a trailing s", () => {
     expect(match("starbuck", "STARBUCKS #1234")).toBe(true);
   });
@@ -56,10 +67,12 @@ describe("fuzzy pass for misspelled names", () => {
   it("finds spellings that are close", () => {
     expect(fuzzy("Omar Mousselli", "ZELLE TO O MOUSSELI 4412")).toBe(true);
     expect(fuzzy("Omar Mousselli", "ZELLE TO OMAR MOUSELLI")).toBe(true);
-    expect(fuzzy("Omar Mosli", "ZELLE TO OMAR MOUSSELI")).toBe(true);
   });
   it("still rejects different people", () => {
     expect(fuzzy("Omar Mousselli", "ZELLE TO JOHN SMITH")).toBe(false);
     expect(fuzzy("Omar Mousselli", "ZELLE TO OSCAR PETERSON")).toBe(false);
+    expect(fuzzy("Sam Lee", "ZELLE TO PAM LEE")).toBe(false); // short names get no typos
+    expect(fuzzy("Omar Mousselli", "ZELLE TO AMAR MOUSSELLI")).toBe(false);
+    expect(fuzzy("Omar Mousselli", "ZELLE TO OMAR MOSLI")).toBe(false);
   });
 });

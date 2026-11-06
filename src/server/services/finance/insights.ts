@@ -10,7 +10,7 @@ import { queryTransactions, type TransactionQuery } from "./transactions";
 
 /** Everything Jarvis needs to answer "how much did I spend/earn on X between A and B". */
 export async function spendingSummary(scope: UserScope, q: TransactionQuery & { from: string; to: string }) {
-  const txns = await queryTransactions(scope, { ...q, phrase: true, limit: 5000 }); // totals keep exact phrase matching;
+  const txns = await queryTransactions(scope, { ...q, phrase: true, limit: 5000 }); // totals keep exact phrase matching
   const cats = await listCategories(scope);
   const summary = summarizeCashflow(txns);
   const byCategory = rollupToParents(spendingByCategoryId(txns), cats).slice(0, 10);

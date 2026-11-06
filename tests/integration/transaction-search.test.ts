@@ -78,16 +78,30 @@ describe("forgiving transaction search", () => {
     expect(similar.match).toBe("similar");
     expect(similar.rows.map((r) => r.amountCents)).toEqual([-4000]);
 
-    const none = await u.run((s) => findTransactions(s, { search: "Priya Raman" }));
+    const none = await u.run((s) => findTransactions(s, { search: "Zelle Priya Raman" }));
     expect(none.match).toBe("none");
     expect(none.rows).toEqual([]);
     expect(none.closest.map((r) => r.description)).toEqual(["VENMO PAYMENT 99 DANA LEE", "ZELLE TO O MOUSSELI 4412"]);
 
-    const out = await executeToolCall("query_transactions", JSON.stringify({ search: "Priya Raman" }), makeToolContext(session(u), crypto.randomUUID()), "c2");
+    const out = await executeToolCall(
+      "query_transactions",
+      JSON.stringify({ search: "Zelle Priya Raman" }),
+      makeToolContext(session(u), crypto.randomUUID()),
+      "c2",
+    );
     const data = (out as { result: { data: { matchType: string; note: string; closestPayments: unknown[] } } }).result.data;
     expect(data.matchType).toBe("none");
     expect(data.closestPayments).toHaveLength(2);
-    expect(data.note).toMatch(/Do not say you found nothing/);
+    expect(data.note).toMatch(/Nothing matches/);
+
+    // A missing merchant is not answered with Zelle lines, but still says so plainly.
+    const merchant = await u.run((s) => findTransactions(s, { search: "Starbucks" }));
+    expect(merchant).toEqual({ match: "none", rows: [], closest: [] });
+    const out2 = await executeToolCall("query_transactions", JSON.stringify({ search: "Starbucks" }), makeToolContext(session(u), crypto.randomUUID()), "c4");
+    const d2 = (out2 as { result: { data: { matchType: string; note: string; count: number; closestPayments: unknown[] } } }).result.data;
+    expect(d2).toMatchObject({ matchType: "none", count: 0 });
+    expect(d2.note).toMatch(/Nothing matches "Starbucks"/);
+    expect(d2.closestPayments).toEqual([]);
   });
 
   it("never reads another user's rows", async () => {

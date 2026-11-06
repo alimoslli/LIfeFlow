@@ -245,7 +245,7 @@ export async function findTransactions(scope: UserScope, q: TransactionQuery = {
   const search = q.search?.trim();
   if (rows.length || !search || q.phrase) return { match: "exact", rows, closest: [] };
 
-  const { terms } = parseSearch(search);
+  const { terms, apps } = parseSearch(search);
   const conds = await baseConds(scope, q);
   conds.push(or(...P2P_NEEDLES.map(anyTextLike))!);
   if (!q.from) conds.push(gte(transactions.date, sql`${P2P_LOOKBACK}`));
@@ -254,7 +254,10 @@ export async function findTransactions(scope: UserScope, q: TransactionQuery = {
   const limit = Math.min(q.limit ?? 5, 5);
   const similar = scored.filter((x) => x.all);
   if (similar.length) return { match: "similar", rows: similar.slice(0, Math.min(q.limit ?? 500, 20)).map((x) => x.r), closest: [] };
-  // Best partial matches first, then newest; with nothing alike, the newest payments to people.
+  // Best partial matches first, then newest. Offer people-payments only when the person mentioned a payment app
+  // or something partly matched: a missing "Starbucks" must not come back as Zelle lines.
+  const partial = scored.some((x) => x.score > 0);
+  if (!apps.length && !partial) return { match: "none", rows: [], closest: [] };
   const closest = scored
     .map((x, i) => ({ ...x, i }))
     .sort((a, b) => b.score - a.score || a.i - b.i)
