@@ -1,5 +1,5 @@
 import { addDaysStr, daysBetween } from "@/lib/dates";
-import { detectRecurring, merchantKey, type DetectTxn } from "./recurring-detect";
+import { detectRecurring, isBankFee, merchantKey, type DetectTxn } from "./recurring-detect";
 
 /**
  * Things worth catching in a bank feed that people rarely notice themselves:
@@ -11,12 +11,8 @@ import { detectRecurring, merchantKey, type DetectTxn } from "./recurring-detect
  */
 export type ScanTxn = DetectTxn & { id?: string };
 
-const FEE =
-  /\b(overdraft|od fee|nsf|insufficient funds|returned item|atm (?:fee|surcharge|withdrawal fee)|non-?network atm|late (?:fee|charge|payment fee)|foreign (?:transaction|exchange) fee|intl? (?:transaction )?fee|monthly (?:service|maintenance) fee|maintenance fee|service charge|paper statement fee)\b/i;
-
-export function isBankFee(t: Pick<ScanTxn, "description" | "merchantName" | "categoryName">) {
-  return FEE.test(`${t.description} ${t.merchantName ?? ""}`);
-}
+/** Bank fees (overdraft, NSF, ATM, late, foreign transaction, monthly service): the same rule the bill finder uses to leave them out. */
+export { isBankFee };
 
 export function scanTransactions(txns: ScanTxn[], today: string, opts: { days?: number } = {}) {
   const from = addDaysStr(today, -(opts.days ?? 30));
@@ -35,7 +31,7 @@ export function scanTransactions(txns: ScanTxn[], today: string, opts: { days?: 
   for (const c of detectRecurring(txns))
     for (const d of c.duplicates) {
       const k = `${c.merchantKey}|${d.amountCents}`;
-      if (seen.has(k) || d.dates[1] < from || d.dates[1] > today || -d.amountCents < 500 || FEE.test(d.label)) continue;
+      if (seen.has(k) || d.dates[1] < from || d.dates[1] > today || -d.amountCents < 500 || isBankFee({ description: d.label, merchantName: null })) continue;
       seen.add(k);
       doubleCharges.push({ merchant: d.label, amountCents: -d.amountCents, dates: d.dates });
     }

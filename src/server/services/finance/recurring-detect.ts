@@ -140,8 +140,6 @@ const isEveryday = (category: string | null | undefined) => !!category && EVERYD
 
 /** Transfer categories that only move the user's own money (Plaid's TRANSFER_OUT_SAVINGS and credit card payments). */
 const OWN_MONEY_CATEGORY = new Set(["Savings Transfer", "Credit Card Payment"]);
-/** A payment on a debt: a bill even when the loan's account is linked too. */
-const LOAN = /\b(?:loan|mortgage|lease|heloc|navient|nelnet|mohela|aidvantage|sallie mae|great lakes|edfinancial)\b/i;
 /** Statement lines that move money between the user's own accounts, pay their own card, or take out cash. */
 const OWN_MONEY_TEXT = new RegExp(
   [
@@ -153,17 +151,48 @@ const OWN_MONEY_TEXT = new RegExp(
   ].join("|"),
   "i",
 );
-/** Contributions people schedule on purpose (a loan, a 529, an IRA): two equal ones a month apart are enough, like a known subscription. */
-const SCHEDULED_TRANSFER = /\b(?:loan|mortgage|lease|529|ira|roth|contrib|contribution|navient|nelnet|mohela|aidvantage|sallie mae)\b/i;
+/** A payment app moving the user's own money: topping up the balance or cashing it out. */
+const APP_OWN_MONEY =
+  /\b(?:add(?:ed)? (?:funds|money|cash)|cash ?out|inst(?:ant)? (?:xfer|transfer)|standard transfer|top ?up|transfer to bank|to (?:my )?bank)\b/i;
+/** Lenders and loan words: a payment on a debt is a bill, even when the loan's account is linked too. */
+const LENDER = new RegExp(
+  String.raw`\b(?:loan|ln|mortgage|mtg|lease|heloc|student|auto (?:loan|finance|financing)|car (?:loan|payment|pmt)|navient|nelnet|mohela|aidvantage|sallie mae|great lakes|edfinancial|fedloan|dept (?:of )?ed(?:ucation)?|` +
+    String.raw`toyota (?:financial|motor credit|fin)|(?:american )?honda (?:financial|finance|fin)|ford (?:motor )?credit|gm financial|nissan (?:motor acceptance|finance)|hyundai (?:capital|motor finance)|` +
+    String.raw`kia (?:motors )?finance|santander consumer|carmax auto|westlake|credit acceptance|ally auto|tesla finance|bmw financial|mercedes-benz financial|vw credit|chrysler capital|exeter finance|` +
+    String.raw`upstart|lending ?club|prosper|best egg|avant|oportun|onemain|lightstream|affirm|klarna|afterpay|sezzle|rocket mortgage|mr cooper|loancare|freedom mortgage|pennymac|shellpoint|newrez|nationstar)\b`,
+  "i",
+);
+/** Rent paid by transfer. */
+const RENT_TRANSFER = /\b(?:rent|apts?|apartments?|property management|prop mgmt|landlord|leasing office)\b/i;
+/** College savings and tuition plans (a 529). */
+const COLLEGE_PLAN = /\b(?:529|tuition|college sav\w*|nest ?529|my ?529|scholarshare|edvest|collegeinvest|collegeadvantage|bright start)\b/i;
+/** Banks, brokerages and card issuers people move their own money to (savings, investing, paying a card). */
+const OWN_MONEY_PLACE = new RegExp(
+  String.raw`\b(?:ally|marcus|goldman sachs|gs ?bank|sofi|capital one|citi|citibank|citicard|chase|discover|amex|american express|barclaycard|barclays|synchrony|apple ?card|applecard|` +
+    String.raw`wells fargo|bank of america|us bank|credit one|mission lane|bilt|cit bank|wealthfront|betterment|robinhood|acorns|stash|vanguard|fidelity|schwab|e ?trade|ameritrade|merrill|webull|` +
+    String.raw`m1 finance|coinbase|kraken|gemini|chime|varo|digit|qapital|treasurydirect|treasury direct)\b`,
+  "i",
+);
+/** Payment apps and money transfer services: money sent through them to a person (a roommate, family) is a bill paid to that person. */
+const PAYMENT_APP = /\b(?:zelle|venmo|cash ?app|square cash|paypal|apple cash|remitly|wise|western union|moneygram|xoom|worldremit)\b/i;
 /** Another account's last 4 digits as statements print them ("TO SAV XXXXXX4410", "ACCT ...4410"). */
 const ACCOUNT_DIGITS = /(?:x{2,}|\*+|\.{3}|acct|account|ending in|ending)\s*#?\s*(\d{4})\b/gi;
+
+/** Overdraft, NSF, ATM, late, foreign transaction and monthly service fees: never a bill or a subscription. */
+const FEE =
+  /\b(overdraft|od fee|nsf|insufficient funds|returned item|atm (?:fee|surcharge|withdrawal fee)|non-?network atm|late (?:fee|charge|payment fee)|foreign (?:transaction|exchange) fee|intl? (?:transaction )?fee|monthly (?:service|maintenance) fee|maintenance fee|service charge|paper statement fee)\b/i;
+export function isBankFee(t: Pick<DetectTxn, "description" | "merchantName">) {
+  return FEE.test(`${t.description} ${t.merchantName ?? ""}`);
+}
 
 const lineOf = (t: Pick<DetectTxn, "merchantName" | "description">) => `${t.merchantName ?? ""} ${t.description}`;
 
 /**
- * Whether an outgoing transfer pays someone else (a lender, a roommate by Zelle or Venmo, a 529 plan)
- * rather than moving the user's own money: the same amount landing in another of their accounts within
- * 4 days, a savings or card-payment category, a line that says so, or one naming another of their accounts.
+ * Whether an outgoing transfer pays someone else, and so can be a bill. Only with evidence: a lender or
+ * loan, rent, a 529 or tuition plan, or a payment app sending money to a person (Zelle to a roommate,
+ * Venmo for the utilities). Everything else is the user's own money moving (savings at Ally or Marcus,
+ * investing at Vanguard, paying the Citi card, topping up Venmo): the same amount landing in another of
+ * their accounts within 4 days, a savings or card-payment category, a line or an institution that says so.
  */
 function makePaysSomeoneElse(txns: DetectTxn[]) {
   const incoming = new Map<number, DetectTxn[]>();
@@ -187,12 +216,13 @@ function makePaysSomeoneElse(txns: DetectTxn[]) {
               (u.kind === "transfer" || u.accountType === "credit" || u.accountType === "loan"),
           )
       : undefined;
-    if (LOAN.test(line) || otherHalf?.accountType === "loan") return true;
-    if (otherHalf) return false;
+    if (otherHalf) return otherHalf.accountType === "loan";
     if (t.categoryName && OWN_MONEY_CATEGORY.has(t.categoryName)) return false;
-    if (OWN_MONEY_TEXT.test(line)) return false;
+    if (OWN_MONEY_TEXT.test(line) || APP_OWN_MONEY.test(line)) return false;
+    if (LENDER.test(line) || RENT_TRANSFER.test(line) || COLLEGE_PLAN.test(line)) return true;
     for (const m of line.matchAll(ACCOUNT_DIGITS)) if (m[1] !== t.accountMask && ownDigits.has(m[1])) return false;
-    return true;
+    if (OWN_MONEY_PLACE.test(line)) return false;
+    return PAYMENT_APP.test(line);
   };
 }
 
@@ -330,7 +360,8 @@ function evaluate(cycles: Cycle[], { key, strict }: Context): Found | null {
   const transfer = ts.some((t) => t.kind === "transfer");
   const exact = amounts.every((a) => a === amounts[0]);
   const known = KNOWN_SUBSCRIPTION.test(name) || KNOWN_SUBSCRIPTION.test(key);
-  const scheduled = transfer && ts.some((t) => SCHEDULED_TRANSFER.test(lineOf(t)) || t.categoryName === "Investment Transfer");
+  // A loan payment or a 529 contribution is planned; two equal ones a month apart are enough, like a known subscription.
+  const scheduled = transfer && ts.some((t) => LENDER.test(lineOf(t)) || COLLEGE_PLAN.test(lineOf(t)));
   const minCount = period.freq === "yearly" || (!strict && (known || scheduled) && exact && period.freq === "monthly") ? 2 : 3;
   if (ts.length < minCount) return null;
   const regular = gaps.filter((g) => onSchedule(g, period)).length / gaps.length;
@@ -487,6 +518,7 @@ export function detectRecurring(txns: DetectTxn[]): RecurringCandidate[] {
   for (const t of txns) {
     if (t.pending || t.kind === "adjustment") continue;
     if (t.kind === "transfer" && !(t.amountCents < 0 && paysSomeoneElse(t))) continue;
+    if (t.amountCents < 0 && (isBankFee(t) || t.categoryName === "Fees & Interest")) continue;
     const key = merchantKey(t);
     if (!key) continue;
     const k = `${key}|${t.amountCents < 0 ? "out" : "in"}`;

@@ -96,6 +96,41 @@ describe("bills paid by transfer (A4)", () => {
     ];
     expect(detectRecurring(own)).toEqual([]);
   });
+
+  it("needs evidence to call a transfer a bill: savings banks, brokerages, card issuers and app top-ups are the person's own money", () => {
+    // Plaid files these as plain transfers, or Vanguard and Fidelity as investment transfers (reviewer's cases).
+    const own = [
+      ["ALLY BANK TRANSFER", null],
+      ["ONLINE TRANSFER TO ALLY BANK", null],
+      ["MARCUS GOLDMAN SACHS DES:TRANSFER", null],
+      ["CAPITAL ONE 360 DES:TRANSFER", null],
+      ["SOFI BANK DES:TRANSFER", null],
+      ["WEALTHFRONT EDI PYMNTS", null],
+      ["ROBINHOOD DES:FUNDS", null],
+      ["VANGUARD BUY INVESTMENT", "Investment Transfer"],
+      ["FIDELITY MONEYLINE", "Investment Transfer"],
+      ["VENMO ADD FUNDS", null],
+      ["PAYPAL INST XFER", null],
+      ["CASH APP*CASH OUT", null],
+      ["CITI AUTOPAY PAYMENT 230510", null],
+      ["CAPITAL ONE MOBILE PYMT", null],
+      ["APPLECARD GSBANK PAYMENT", null],
+      ["BARCLAYCARD US EPAY", null],
+      ["SYNCHRONY BANK PAYMENT", null],
+      ["ONLINE PAYMENT 5521", null],
+    ] as const;
+    for (const [line, categoryName] of own)
+      expect([line, detectRecurring(months("2026-05-03", 6).map((d) => tx(d, -20_000, null, line, transfer({ categoryName }))))]).toEqual([line, []]);
+    const bills = ["TOYOTA FINANCIAL PMT", "DEPT EDUCATION STUDENT LN", "ZELLE TO ROOMMATE CONF# 8KQ2", "SOFI STUDENT LOAN PMT", "ALLY AUTO PAYMENT"];
+    for (const line of bills)
+      expect([line, detectRecurring(months("2026-05-03", 6).map((d) => tx(d, -38_900, null, line, transfer()))).map((c) => c.kind)]).toEqual([line, ["bill"]]);
+  });
+
+  it("never offers bank fees, however regular", () => {
+    const fees = every("2026-05-04", 14, 12).map((d) => tx(d, -2_500, null, "OVERDRAFT FEE"));
+    const service = months("2026-05-01", 6).map((d) => tx(d, -1_200, null, "MONTHLY SERVICE FEE", { categoryName: "Fees & Interest" }));
+    expect(detectRecurring([...fees, ...service])).toEqual([]);
+  });
 });
 
 describe("two subscriptions from one merchant (A5)", () => {
