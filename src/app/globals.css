@@ -995,8 +995,14 @@ input[type="checkbox"].lf-switch:focus-visible {
   --hq-eye-founder: #8fa9bd;
   --hq-blazer-ceo: #34373e;
   --hq-blazer-ceo-d: #24272d;
-  --hq-leather: #2c2521;
-  --hq-leather-l: #41362f;
+  --hq-leather: #8e4f26;
+  --hq-leather-l: #b06a38;
+  --hq-ljacket: #1a1a1d;
+  --hq-ljacket-d: #0d0d0f;
+  --hq-ljacket-sheen: #44444c;
+  --hq-white-tee: #f3f1ec;
+  --hq-silver: #dfe3e8;
+  --hq-silver-d: #8f969f;
   --hq-rim: #c9ccd1;
   --hq-phones: #2f3a45;
   --hq-phones-in: #8bd1b0;

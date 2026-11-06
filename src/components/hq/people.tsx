@@ -18,7 +18,7 @@ const TOP: Record<Who, string> = {
   researcher: "cardigan",
   marketing: "tee",
   assistant: "blazer",
-  founder: "blazer-ceo",
+  founder: "ljacket",
 };
 
 /** Local coordinates: the head's centre is (0,0), radius 22. */
@@ -236,15 +236,24 @@ function Torso({ who }: { who: Who }) {
         </g>
       )}
       {who === "founder" && (
-        // Open charcoal blazer over the navy polo, with a small green pocket square.
+        // Dripped out: black leather jacket open over a white tee, a silver Cuban chain.
         <g>
-          <path d="M-11 16H11L7 70H-7Z" fill={v("polo")} />
-          <path d="M-12 16L-1 24-6 30-15 20ZM12 16L1 24 6 30 15 20Z" fill={v("polo-d")} />
-          <path d="M-2 24H2V40H-2Z" fill={v("polo-d")} />
-          <circle cx="0" cy="30" r="1.2" fill="#d9dde3" />
-          <circle cx="0" cy="36.5" r="1.2" fill="#d9dde3" />
-          <path d="M-12 16L-4 46-9 50-17 24ZM12 16L4 46 9 50 17 24Z" fill={v("blazer-ceo-d")} />
-          <path d="M11 41l8-1.5 1 4.5-8 1.2Z" fill={v("accent")} />
+          <path d="M-11 16H11L8 70H-8Z" fill={v("white-tee")} />
+          <path d="M-8 16Q0 21 8 16" stroke="#d9d4c8" strokeWidth="1.4" fill="none" />
+          <ellipse cx="-8.0" cy="19.0" rx="1.35" ry="1" fill={v("silver")} stroke={v("silver-d")} strokeWidth=".35" />
+          <ellipse cx="-6.4" cy="21.5" rx="1.35" ry="1" fill={v("silver")} stroke={v("silver-d")} strokeWidth=".35" />
+          <ellipse cx="-4.8" cy="23.5" rx="1.35" ry="1" fill={v("silver")} stroke={v("silver-d")} strokeWidth=".35" />
+          <ellipse cx="-3.2" cy="24.9" rx="1.35" ry="1" fill={v("silver")} stroke={v("silver-d")} strokeWidth=".35" />
+          <ellipse cx="-1.6" cy="25.7" rx="1.35" ry="1" fill={v("silver")} stroke={v("silver-d")} strokeWidth=".35" />
+          <ellipse cx="0.0" cy="26.0" rx="1.35" ry="1" fill={v("silver")} stroke={v("silver-d")} strokeWidth=".35" />
+          <ellipse cx="1.6" cy="25.7" rx="1.35" ry="1" fill={v("silver")} stroke={v("silver-d")} strokeWidth=".35" />
+          <ellipse cx="3.2" cy="24.9" rx="1.35" ry="1" fill={v("silver")} stroke={v("silver-d")} strokeWidth=".35" />
+          <ellipse cx="4.8" cy="23.5" rx="1.35" ry="1" fill={v("silver")} stroke={v("silver-d")} strokeWidth=".35" />
+          <ellipse cx="6.4" cy="21.5" rx="1.35" ry="1" fill={v("silver")} stroke={v("silver-d")} strokeWidth=".35" />
+          <ellipse cx="8.0" cy="19.0" rx="1.35" ry="1" fill={v("silver")} stroke={v("silver-d")} strokeWidth=".35" />
+          <path d="M-12 15L-4 38-9 46-19 22ZM12 15L4 38 9 46 19 22Z" fill={v("ljacket-d")} />
+          <path d="M-8 44V70M8 44V70" stroke={v("silver")} strokeWidth="1" strokeDasharray="1.4 1.2" opacity=".85" />
+          <path d="M-21 26Q-18 20-12 18M21 26Q18 20 12 18" stroke={v("ljacket-sheen")} strokeWidth="1.6" fill="none" strokeLinecap="round" />
         </g>
       )}
     </g>

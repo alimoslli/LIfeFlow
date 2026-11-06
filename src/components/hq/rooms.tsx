@@ -318,11 +318,18 @@ export function FounderRoomArt({ pending }: { pending: number }) {
       <SeatedBody who="founder" x={288} y={92} />
       <Desk x={184} w={210} y={138} />
       <Hands x={288} y={136} />
+      {/* a gold watch on the left wrist */}
+      <g transform="translate(266 131) rotate(-35)">
+        <rect x="-1.6" y="-4.6" width="3.2" height="9.2" rx="1" fill="#a8863a" />
+        <circle r="2.7" fill="#e2c06a" />
+        <circle r="1.8" fill="#16202c" />
+        <path d="M0-1.2V0l.8.6" stroke="#e2c06a" strokeWidth=".45" strokeLinecap="round" fill="none" />
+      </g>
       <use href="#hq-lamp" transform="translate(206 138)" />
       <use href="#hq-mug" transform="translate(238 138)" />
-      {/* laptop, lid toward us */}
-      <rect x="262" y="118" width="52" height="22" rx="4" fill={v("laptop")} />
-      <use href="#hq-leaf" transform="translate(281 121) scale(.46)" opacity=".9" />
+      {/* a phone lying on the desk (no laptop in front, so the outfit shows) */}
+      <rect x="316" y="133.5" width="18" height="4.5" rx="1.4" fill={v("laptop")} />
+      <rect x="318" y="134.4" width="14" height="1.6" rx=".8" fill={v("accent")} opacity=".7" />
       <use href="#hq-plant" transform="translate(168 188) scale(1.3)" />
       <use href="#hq-plant" transform="translate(402 188) scale(1.1)" />
       <Glow x={226} y={104} r={80} />
