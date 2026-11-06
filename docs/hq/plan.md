@@ -231,3 +231,4 @@ The owner asked for their own room in the office, with themselves drawn as a cha
 - **Tapping yourself** opens your Founder Office: the Approvals inbox at the top, then your existing admin (Overview, Users, Feedback, Growth, Errors, Health, Activity), unchanged.
 - **The office has six rooms in total:** yours plus the five employees'. Each employee room holds both a desk and a bed or couch, so a person is either at the desk or resting in the same room. The lounge stays on the ground floor.
 - **Door tag (owner, 2026-11-06):** a small brass plate on the founder's door that reads "I'M THE CEO, BITCH". HQ is owner-only, so no app user ever sees it.
+- **Updated (owner, 2026-11-06, second photo):** the founder is drawn without sunglasses: dense dark curls with a fringe above thick dark brows, blue-grey eyes, a fuller face, a navy polo with a collar, two buttons and a small colourful chest print. The photos stay out of the repo.

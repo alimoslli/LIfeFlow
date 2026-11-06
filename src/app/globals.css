@@ -989,6 +989,10 @@ input[type="checkbox"].lf-switch:focus-visible {
   --hq-sweater: #4b5058;
   --hq-sweater-d: #383c43;
   --hq-shades: #17171a;
+  --hq-polo: #1f2638;
+  --hq-polo-d: #151a28;
+  --hq-brows: #2b1c13;
+  --hq-eye-founder: #8fa9bd;
   --hq-phones: #2f3a45;
   --hq-phones-in: #8bd1b0;
 }

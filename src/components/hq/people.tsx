@@ -18,7 +18,7 @@ const TOP: Record<Who, string> = {
   researcher: "cardigan",
   marketing: "tee",
   assistant: "blazer",
-  founder: "sweater",
+  founder: "polo",
 };
 
 /** Local coordinates: the head's centre is (0,0), radius 22. */
@@ -31,17 +31,21 @@ function Eyes({ who, closed }: { who: Who; closed: boolean }) {
       </g>
     );
   if (who === "founder")
+    // The owner: thick dark brows, blue-grey eyes.
     return (
-      <g className="hq-blink">
-        <path d="M-13-9q5-3 10 0M3-9q5-3 10 0" stroke={v("hair-founder")} strokeWidth="2.6" strokeLinecap="round" fill="none" />
-        {[-8, 8].map((x) => (
-          <g key={x}>
-            <circle cx={x} cy="-3" r="3.6" fill="#fff" stroke={v("ink")} strokeWidth=".6" />
-            <circle cx={x} cy="-3" r="2.4" fill={v("eye-blue")} />
-            <circle cx={x} cy="-3" r="1.1" fill={v("ink")} />
-            <circle cx={x + 0.9} cy="-4" r=".7" fill="#fff" />
-          </g>
-        ))}
+      <g>
+        <path d="M-14.5-9.5Q-9-12.5-3.5-10.2M3.5-10.2Q9-12.5 14.5-9.5" stroke={v("brows")} strokeWidth="3.2" strokeLinecap="round" fill="none" />
+        <g className="hq-blink">
+          {[-8.5, 8.5].map((x) => (
+            <g key={x}>
+              <ellipse cx={x} cy="-3" rx="3.9" ry="3.3" fill="#fff" />
+              <circle cx={x} cy="-3" r="2.5" fill={v("eye-founder")} />
+              <circle cx={x} cy="-3" r="1.15" fill={v("ink")} />
+              <circle cx={x + 1} cy="-4" r=".75" fill="#fff" />
+              <path d={`M${x - 4} -4.6Q${x} -7.4 ${x + 4} -4.6`} stroke={v("ink")} strokeWidth="1" fill="none" strokeLinecap="round" />
+            </g>
+          ))}
+        </g>
       </g>
     );
   return (
@@ -59,24 +63,24 @@ function Hair({ who, sleeping }: { who: Who; sleeping: boolean }) {
   switch (who) {
     case "founder":
       return (
-        // Tousled curls on top, a curly fringe falling over the forehead, short sides (the owner's look).
+        // The owner: dense dark curls on top, a curly fringe falling to the brows, short faded sides.
         <g fill={c}>
-          <path d="M-22 0C-25-17-12-25 0-25S25-17 22 0C20-8 15-13 0-13S-20-8-22 0Z" />
+          <path d="M-21.5 2C-24-14-13-23 0-23S24-14 21.5 2C20-6 17-11 12-14C6-16-6-16-12-14C-17-11-20-6-21.5 2Z" />
           {[
-            [-17, -18, 7],
-            [-8, -24, 8],
-            [3, -26, 8.5],
-            [13, -22, 7.5],
-            [19, -14, 6],
-            [-21, -10, 5],
-            [-13, -12, 5],
-            [-5, -13, 5.5],
-            [4, -13, 5.5],
-            [12, -12, 5],
+            [-16, -17, 6.5],
+            [-8, -22, 7],
+            [1, -24, 7.5],
+            [10, -22, 7],
+            [17, -16, 6],
+            [-12, -15, 4.4],
+            [-5, -16, 4.8],
+            [2, -16.5, 4.8],
+            [9, -15.5, 4.6],
+            [15, -12.5, 3.8],
           ].map(([x, y, r], i) => (
             <circle key={i} cx={x} cy={y} r={r} />
           ))}
-          <path d="M-9-10q-3 4 1 6M1-10q-2 4 2 5.5M9-10q2 4-1 6" stroke={c} strokeWidth="2.4" strokeLinecap="round" fill="none" />
+          <path d="M-9-14q-2.5 2.5-.5 4M-1-15q-2 2.6.5 4M7-14.5q2 2.5-.5 4" stroke={c} strokeWidth="2.2" strokeLinecap="round" fill="none" />
         </g>
       );
     case "designer":
@@ -154,18 +158,7 @@ function Accessories({ who }: { who: Who }) {
         </g>
       );
     case "founder":
-      return (
-        // Black sunglasses pulled down the nose (eyes show above), tiny silver details at the hinges.
-        <g>
-          <path d="M-2.5 6.2Q0 4.6 2.5 6.2" stroke={v("shades")} strokeWidth="1.6" fill="none" strokeLinecap="round" />
-          <rect x="-16.5" y="4.2" width="14" height="6.6" rx="2.2" fill={v("shades")} />
-          <rect x="2.5" y="4.2" width="14" height="6.6" rx="2.2" fill={v("shades")} />
-          <path d="M-14.3 5.9h5.5M4.8 5.9h5.5" stroke="#fff" strokeWidth=".9" strokeLinecap="round" opacity=".3" />
-          <path d="M-16.5 5.4L-21 3.6M16.5 5.4L21 3.6" stroke={v("shades")} strokeWidth="1.4" strokeLinecap="round" />
-          <circle cx="-16.6" cy="5.3" r="1.1" fill="#d7dbe0" />
-          <circle cx="16.6" cy="5.3" r="1.1" fill="#d7dbe0" />
-        </g>
-      );
+      return null; // no glasses in the newest reference photo
     default:
       return null;
   }
@@ -180,10 +173,10 @@ export function Head({ who, sleeping = false }: { who: Who; sleeping?: boolean }
       <circle r="22" fill={v("skin")} />
       <Hair who={who} sleeping={sleeping} />
       <Eyes who={who} closed={sleeping} />
-      <circle cx={who === "founder" ? -15 : -13} cy={who === "founder" ? 12 : 8} r="3.4" fill={v("blush")} opacity=".55" />
-      <circle cx={who === "founder" ? 15 : 13} cy={who === "founder" ? 12 : 8} r="3.4" fill={v("blush")} opacity=".55" />
+      <circle cx={who === "founder" ? -15 : -13} cy={who === "founder" ? 7 : 8} r="3.4" fill={v("blush")} opacity=".55" />
+      <circle cx={who === "founder" ? 15 : 13} cy={who === "founder" ? 7 : 8} r="3.4" fill={v("blush")} opacity=".55" />
       <path
-        d={sleeping ? "M-3 12q3 2 6 0" : who === "founder" ? "M-3.5 15.2q3.5 2.6 7 0" : "M-4 11q4 4 8 0"}
+        d={sleeping ? "M-3 12q3 2 6 0" : who === "founder" ? "M-4 11.5q4 2.6 8 0" : "M-4 11q4 4 8 0"}
         stroke={v("ink")}
         strokeWidth="1.6"
         strokeLinecap="round"
@@ -223,12 +216,18 @@ function Torso({ who }: { who: Who }) {
         </g>
       )}
       {who === "founder" && (
+        // Navy polo: collar, placket with two buttons, a small colourful print on the chest.
         <g>
-          <path d="M-8 16L0 27 8 16Z" fill="#fff" />
-          <path d="M-13 16Q0 29 13 16V22Q0 33-13 22Z" fill={v("sweater-d")} />
-          <path d="M0 27V62" stroke="#c9ced4" strokeWidth="1.8" strokeLinecap="round" />
-          <rect x="-1.6" y="27" width="3.2" height="7" rx="1.2" fill="#e8ebee" />
-          <path d="M-8 17L0 27 8 17" fill="none" stroke="#fff" strokeWidth="2" strokeLinejoin="round" />
+          <path d="M-12 16L-1 24-6 30-15 20ZM12 16L1 24 6 30 15 20Z" fill={v("polo-d")} />
+          <path d="M-2 24H2V42H-2Z" fill={v("polo-d")} />
+          <circle cx="0" cy="31" r="1.3" fill="#d9dde3" />
+          <circle cx="0" cy="38" r="1.3" fill="#d9dde3" />
+          <g transform="translate(-15 44)">
+            <ellipse cx="0" cy="2" rx="4.2" ry="2.2" fill="#9a6a3c" />
+            <circle cx="-1" cy="-2" r="1.6" fill="#c8343a" />
+            <circle cx="3" cy="-1.5" r="1.4" fill="#3d5fa8" />
+            <path d="M-3-4 2-7" stroke="#e8dcc0" strokeWidth=".8" strokeLinecap="round" />
+          </g>
         </g>
       )}
     </g>
