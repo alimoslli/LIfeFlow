@@ -1,6 +1,6 @@
 import { financeTools } from "./tools/finance";
 import { moneyCoachTools } from "./tools/money-coach";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import { ZodError } from "zod";
 import { pendingActions, type ToolResultRecord } from "../db/schema";
 import { audit } from "../services/audit";
@@ -106,8 +106,12 @@ async function runTool(name: string, args: unknown, ctx: ToolContext): Promise<T
   }
 }
 
-/** A confirmed action that has been running longer than this is treated as lost (the process died). */
-export const ACTION_RUN_LIMIT_MS = 45_000;
+/**
+ * A confirmed action that has been running longer than this is treated as lost (the process died).
+ * Above attempts (2) x provider timeout (20 s) x token refresh + call, plus a margin for the database.
+ */
+export const ACTION_RUN_LIMIT_MS = 90_000;
+const runLimitMs = () => Number(process.env.ACTION_RUN_LIMIT_MS) || ACTION_RUN_LIMIT_MS;
 const LOST_MESSAGE = "This may have gone through; check your calendar or email. It was not run again.";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -157,12 +161,17 @@ export async function resolvePendingAction(id: string, decision: "confirm" | "ca
     }
     status = result.ok ? "executed" : "failed";
   }
-  // Only if still ours: a run that was declared lost stays failed.
+  // The real result always replaces a "lost" verdict (the run finished after all), so the card and the chat agree.
   await ctx.run(({ tx }) =>
     tx
       .update(pendingActions)
       .set({ status, result, resolvedAt: new Date() })
-      .where(and(eq(pendingActions.id, id), eq(pendingActions.status, "running"))),
+      .where(
+        and(
+          eq(pendingActions.id, id),
+          or(eq(pendingActions.status, "running"), and(eq(pendingActions.status, "failed"), sql`${pendingActions.result}->>'error' = ${LOST_MESSAGE}`)),
+        ),
+      ),
   );
   return { action, status, result, replayed: false };
 }
@@ -190,7 +199,7 @@ async function replayFinished(id: string, ctx: ToolContext) {
       };
     }
     const claimedAt = row.claimedAt?.getTime() ?? 0;
-    if (Date.now() - claimedAt >= ACTION_RUN_LIMIT_MS) {
+    if (Date.now() - claimedAt >= runLimitMs()) {
       const lost = { ok: false, error: LOST_MESSAGE };
       // Atomic: only the first caller to see it stale writes the verdict.
       await ctx.run(({ tx, userId }) =>

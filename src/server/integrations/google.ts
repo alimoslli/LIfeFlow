@@ -6,6 +6,7 @@ import { decryptSecret, encryptSecret } from "../crypto";
 import { calendarEvents, connectionRegistry, gmailMessages, integrations } from "../db/schema";
 import { withUser, type UserScope } from "../db/with-user";
 import { upsertProviderEvent } from "./calendar-upsert";
+import { fetchWithTimeout, ProviderTimeout } from "./timeout";
 
 /**
  * Google (Gmail + Google Calendar) for one LifeFlow user.
@@ -93,7 +94,7 @@ function emailFromIdToken(idToken: string | undefined): string | null {
 export async function exchangeCode(code: string, verifier: string, redirectUri: string, f: Fetch = fetch, env = process.env) {
   const cfg = googleConfig(env);
   if (!cfg) throw new GoogleError("Google isn't available yet.");
-  const res = await f(TOKEN_URL, {
+  const res = await timed(f, TOKEN_URL, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -160,7 +161,7 @@ async function accessToken(scope: UserScope, f: Fetch, force = false): Promise<s
   if (!force && creds.expiresAt - Date.now() > 60_000) return creds.accessToken;
   const cfg = googleConfig();
   if (!cfg) throw new GoogleError("Google isn't available yet.");
-  const res = await f(TOKEN_URL, {
+  const res = await timed(f, TOKEN_URL, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ client_id: cfg.clientId, client_secret: cfg.clientSecret, refresh_token: creds.refreshToken, grant_type: "refresh_token" }),
@@ -185,11 +186,21 @@ async function accessToken(scope: UserScope, f: Fetch, force = false): Promise<s
   return next.accessToken;
 }
 
+/** A Google call with a time limit; running out of time says so plainly (a write may or may not have gone through). */
+async function timed(f: Fetch, url: string, init: RequestInit) {
+  try {
+    return await fetchWithTimeout(f, url, init);
+  } catch (e) {
+    if (e instanceof ProviderTimeout) throw new GoogleError("Google took too long to answer. It may or may not have gone through; check before trying again.");
+    throw e;
+  }
+}
+
 /** Authorized JSON request to a Google API, refreshing the token once on 401. */
 async function api<T>(scope: UserScope, url: string, init: RequestInit = {}, f: Fetch = fetch): Promise<T> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const token = await accessToken(scope, f, attempt > 0);
-    const res = await f(url, {
+    const res = await timed(f, url, {
       ...init,
       headers: { ...(init.headers ?? {}), authorization: `Bearer ${token}`, ...(init.body ? { "content-type": "application/json" } : {}) },
     });

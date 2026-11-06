@@ -92,11 +92,11 @@ export function mergeCrossSource<T extends MergeableEvent>(events: T[]): Merged<
       hit = (byTitle.get(title) ?? []).find(
         (c) =>
           !c.members.some((m) => m.source === e.source) &&
+          // Compatible with EVERY member (so an unclassified copy can't bridge a class and an exam into one group)
+          // and on the same time as at least one.
+          c.members.every((m) => kindsMatch(m.kind, e.kind)) &&
           c.members.some(
-            (m) =>
-              kindsMatch(m.kind, e.kind) &&
-              Math.abs(m.startsAt.getTime() - e.startsAt.getTime()) <= SAME_TIME_MS &&
-              Math.abs(m.endsAt.getTime() - e.endsAt.getTime()) <= SAME_TIME_MS,
+            (m) => Math.abs(m.startsAt.getTime() - e.startsAt.getTime()) <= SAME_TIME_MS && Math.abs(m.endsAt.getTime() - e.endsAt.getTime()) <= SAME_TIME_MS,
           ),
       );
     }

@@ -269,6 +269,7 @@ describe("7. migration 0038 keeps what the dropped copy knew and repoints refere
         ).rows[0].id as string;
       const keep = await ins(course.id, "personal", null, null, "2026-11-01T00:00:00Z");
       const dup = await ins(null, "exam", "my notes", "Room 4", "2026-11-02T00:00:00Z");
+      const dup2 = await ins(null, "personal", null, null, "2026-11-03T00:00:00Z");
       const conv = (await client.query(`INSERT INTO conversations (user_id) VALUES ($1) RETURNING id`, [u.user.id])).rows[0].id;
       await client.query(
         `INSERT INTO pending_actions (user_id, conversation_id, tool_name, tool_call_id, args, summary, expires_at, status)
@@ -277,11 +278,16 @@ describe("7. migration 0038 keeps what the dropped copy knew and repoints refere
       );
       await client.query(
         `INSERT INTO messages (user_id, conversation_id, role, tool_name, tool_call_id, tool_args, tool_result) VALUES ($1, $2, 'tool', 'delete_event', 'c1', $3, $4)`,
-        [u.user.id, conv, JSON.stringify({ id: dup }), JSON.stringify({ ok: true, data: { deleted: dup } })],
+        [
+          u.user.id,
+          conv,
+          JSON.stringify({ id: dup }),
+          JSON.stringify({ ok: true, data: { deleted: dup, also: [dup2, dup], note: `removed ${dup} and ${dup2}` } }),
+        ],
       );
       await client.query(`INSERT INTO trash (user_id, kind, label, payload) VALUES ($1, 'course', 'x', $2)`, [
         u.user.id,
-        JSON.stringify({ unrelated: [{ eventId: dup }] }),
+        JSON.stringify({ unrelated: [{ eventId: dup }, { eventId: dup2 }] }),
       ]);
 
       const sqlText = readFileSync("drizzle/0038_calendar_events_unique.sql", "utf8");
@@ -295,12 +301,115 @@ describe("7. migration 0038 keeps what the dropped copy knew and repoints refere
       expect((await client.query("SELECT args FROM pending_actions WHERE conversation_id = $1", [conv])).rows[0].args).toEqual({ id: keep });
       const m = (await client.query("SELECT tool_args, tool_result FROM messages WHERE conversation_id = $1", [conv])).rows[0];
       expect(m.tool_args).toEqual({ id: keep });
-      expect(m.tool_result.data.deleted).toBe(keep);
-      expect((await client.query("SELECT payload FROM trash WHERE user_id = $1", [u.user.id])).rows[0].payload).toEqual({ unrelated: [{ eventId: keep }] });
+      expect(m.tool_result.data).toEqual({ deleted: keep, also: [keep, keep], note: `removed ${keep} and ${keep}` }); // every dropped id, not just one per record
+      expect((await client.query("SELECT payload FROM trash WHERE user_id = $1", [u.user.id])).rows[0].payload).toEqual({
+        unrelated: [{ eventId: keep }, { eventId: keep }],
+      });
     } finally {
       await client.query("ROLLBACK").catch(() => {});
       client.release();
       await pool.end();
+    }
+  });
+});
+
+describe("merge: an unclassified copy can't bridge a class and an exam", () => {
+  it("Google CHEM 201 (personal) with a Canvas class and a manual exam at the same time leaves the exam visible", async () => {
+    const u = await makeUser();
+    await seed(u.run, [
+      { title: "CHEM 201", kind: "class", source: "canvas", providerEventId: "canvas:1", ...at("2026-11-12T15:00:00Z") },
+      { title: "CHEM 201", kind: "exam", source: "manual", ...at("2026-11-12T15:00:00Z") },
+      { title: "CHEM 201", source: "google", providerEventId: "g1", ...at("2026-11-12T15:00:00Z") },
+    ]);
+    const a = await agendaOf(u.run, "2026-11-12");
+    expect(a.map((x) => x.kind).sort()).toEqual(["class", "exam"]);
+    // Deleting the exam takes only its own group (the exam, and the Google copy if it was grouped with it), never the class.
+    const exam = a.find((x) => x.kind === "exam")!;
+    await u.run((s) => moveToTrash(s, "event", exam.id));
+    const left = await u.run((s) => s.tx.select().from(calendarEvents));
+    expect(left.some((r) => r.kind === "exam")).toBe(false);
+    expect(left.some((r) => r.kind === "class")).toBe(true); // the class is never taken along
+  });
+});
+
+describe("provider calls have a time limit, and a slow success beats the lost verdict", () => {
+  async function connected(f: typeof fetch) {
+    const u = await makeUser();
+    const { creds, email } = await exchangeCode("code", "v", "https://app.test/cb", f);
+    await u.run((s) => saveGoogleConnection(s, creds, email));
+    return u;
+  }
+  async function proposeEmail(u: Awaited<ReturnType<typeof makeUser>>) {
+    const session = { id: u.user.id, email: u.user.email, name: u.user.name, timezone: TZ, accountKind: "standard" as const };
+    const events: JarvisEvent[] = [];
+    await runJarvisTurn({
+      user: session,
+      text: "mail",
+      emit: (e) => events.push(e),
+      provider: new ScriptedProvider(({ step }) =>
+        step === 0 ? { toolCalls: [{ name: "send_email", args: { to: "prof@uni.edu", subject: "Hi", body: "Hello" } }] } : { text: "ok" },
+      ),
+    });
+    const c = events.find((e) => e.type === "confirmation") as Extract<JarvisEvent, { type: "confirmation" }>;
+    return { session, actionId: c.actionId };
+  }
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  it("a call that takes longer than the lost limit still finishes: its real result replaces the lost verdict", async () => {
+    let sends = 0;
+    const base = fakeGoogle(() => []);
+    const slow = (async (input: string | URL, init?: RequestInit) => {
+      if (String(input).endsWith("/messages/send")) {
+        sends++;
+        await sleep(900);
+        return json({ id: "sent1", threadId: "t1", labelIds: ["SENT"] });
+      }
+      return base(input, init);
+    }) as typeof fetch;
+    const u = await connected(slow);
+    const { session, actionId } = await proposeEmail(u);
+    const prevFetch = globalThis.fetch;
+    globalThis.fetch = slow;
+    process.env.ACTION_RUN_LIMIT_MS = "300";
+    try {
+      const ctx = makeToolContext(session, "00000000-0000-0000-0000-000000000000");
+      const first = resolvePendingAction(actionId, "confirm", ctx);
+      await sleep(100);
+      const second = await resolvePendingAction(actionId, "confirm", ctx); // the retry gives up waiting at the limit
+      expect(second).toMatchObject({ status: "failed", replayed: true });
+      expect(second.result.error).toMatch(/may have gone through/i);
+      const r = await first;
+      expect(r.status).toBe("executed");
+      const [row] = await u.run((s) => s.tx.select().from(pendingActions).where(eq(pendingActions.id, actionId)));
+      expect(row).toMatchObject({ status: "executed" }); // the card agrees with the chat
+      expect(row.result).toMatchObject({ ok: true });
+      expect(sends).toBe(1);
+    } finally {
+      globalThis.fetch = prevFetch;
+      delete process.env.ACTION_RUN_LIMIT_MS;
+    }
+  });
+
+  it("a Google call that never answers is cut off at the limit with a plain message", async () => {
+    const base = fakeGoogle(() => []);
+    const hang = (async (input: string | URL, init?: RequestInit) => {
+      if (!String(input).endsWith("/messages/send")) return base(input, init);
+      return new Promise<Response>((_, reject) => init?.signal?.addEventListener("abort", () => reject(init.signal!.reason)));
+    }) as typeof fetch;
+    const u = await connected(hang);
+    const { session, actionId } = await proposeEmail(u);
+    const prevFetch = globalThis.fetch;
+    globalThis.fetch = hang;
+    process.env.PROVIDER_TIMEOUT_MS = "80";
+    try {
+      const t0 = Date.now();
+      const r = await resolvePendingAction(actionId, "confirm", makeToolContext(session, "00000000-0000-0000-0000-000000000000"));
+      expect(Date.now() - t0).toBeLessThan(3000);
+      expect(r.status).toBe("failed");
+      expect(r.result.error).toMatch(/took too long/i);
+    } finally {
+      globalThis.fetch = prevFetch;
+      delete process.env.PROVIDER_TIMEOUT_MS;
     }
   });
 });

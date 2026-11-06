@@ -11,7 +11,7 @@
 CREATE TEMP TABLE "_cal_dups" ("dup_id" uuid PRIMARY KEY, "keep_id" uuid NOT NULL);
 --> statement-breakpoint
 DO $$
-DECLARE u record;
+DECLARE u record; pr record;
 BEGIN
   FOR u IN SELECT "id" FROM "users" LOOP
     PERFORM set_config('app.user_id', u."id"::text, true);
@@ -57,17 +57,17 @@ BEGIN
     FROM "_cal_dups" m
     WHERE p."args"->>'id' = m."dup_id"::text;
 
-    -- Saved chat tool calls and results that mention a dropped copy's id (a plain id swap inside the JSON).
-    UPDATE "messages" g SET
-      "tool_args" = replace(g."tool_args"::text, m."dup_id"::text, m."keep_id"::text)::jsonb,
-      "tool_result" = replace(g."tool_result"::text, m."dup_id"::text, m."keep_id"::text)::jsonb
-    FROM "_cal_dups" m
-    WHERE g."tool_args"::text LIKE '%' || m."dup_id"::text || '%' OR g."tool_result"::text LIKE '%' || m."dup_id"::text || '%';
+    -- Saved chat tool calls and results, and trashed items, that mention a dropped copy's id (a plain id swap
+    -- inside the JSON). One dropped copy at a time, so a record naming several of them gets every one repointed.
+    FOR pr IN SELECT "dup_id", "keep_id" FROM "_cal_dups" LOOP
+      UPDATE "messages" SET
+        "tool_args" = replace("tool_args"::text, pr."dup_id"::text, pr."keep_id"::text)::jsonb,
+        "tool_result" = replace("tool_result"::text, pr."dup_id"::text, pr."keep_id"::text)::jsonb
+      WHERE "tool_args"::text LIKE '%' || pr."dup_id"::text || '%' OR "tool_result"::text LIKE '%' || pr."dup_id"::text || '%';
 
-    -- Trashed items that mention a dropped copy's id.
-    UPDATE "trash" t SET "payload" = replace(t."payload"::text, m."dup_id"::text, m."keep_id"::text)::jsonb
-    FROM "_cal_dups" m
-    WHERE t."payload"::text LIKE '%' || m."dup_id"::text || '%';
+      UPDATE "trash" SET "payload" = replace("payload"::text, pr."dup_id"::text, pr."keep_id"::text)::jsonb
+      WHERE "payload"::text LIKE '%' || pr."dup_id"::text || '%';
+    END LOOP;
 
     UPDATE "inbox_items" i SET "filed" = (
       SELECT jsonb_agg(

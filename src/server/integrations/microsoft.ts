@@ -6,6 +6,7 @@ import { decryptSecret, encryptSecret } from "../crypto";
 import { calendarEvents, connectionRegistry, integrations } from "../db/schema";
 import { withUser, type UserScope } from "../db/with-user";
 import { upsertProviderEvent } from "./calendar-upsert";
+import { fetchWithTimeout, ProviderTimeout } from "./timeout";
 
 /**
  * Microsoft 365 (Outlook calendar, which holds Teams meetings) for one LifeFlow user.
@@ -81,10 +82,19 @@ function emailFromIdToken(idToken: string | undefined): string | null {
   }
 }
 
+async function timed(f: Fetch, url: string, init: RequestInit) {
+  try {
+    return await fetchWithTimeout(f, url, init);
+  } catch (e) {
+    if (e instanceof ProviderTimeout) throw new MicrosoftError("Microsoft took too long to answer. Try again in a minute.");
+    throw e;
+  }
+}
+
 async function tokenRequest(params: Record<string, string>, f: Fetch, env = process.env) {
   const cfg = microsoftConfig(env);
   if (!cfg) throw new MicrosoftError("Microsoft isn't available yet.");
-  const res = await f(`${authBase(cfg.tenant)}/token`, {
+  const res = await timed(f, `${authBase(cfg.tenant)}/token`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ client_id: cfg.clientId, client_secret: cfg.clientSecret, scope: MICROSOFT_SCOPES.join(" "), ...params }),
@@ -183,7 +193,7 @@ async function accessToken(scope: UserScope, f: Fetch, force = false): Promise<s
 async function graph<T>(scope: UserScope, url: string, headers: Record<string, string>, f: Fetch): Promise<T> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const token = await accessToken(scope, f, attempt > 0);
-    const res = await f(url, { headers: { ...headers, authorization: `Bearer ${token}` } });
+    const res = await timed(f, url, { headers: { ...headers, authorization: `Bearer ${token}` } });
     if (res.status === 401 && attempt === 0) continue;
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new MicrosoftError(`Microsoft returned an error (${res.status}${body?.error?.code ? `: ${truncate(body.error.code, 80)}` : ""}).`);
