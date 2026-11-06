@@ -9,6 +9,7 @@ import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound, ServiceError } from "../errors";
 import { listCategories, resolveCategory } from "./categories";
 import { cleanVendorName } from "@/lib/vendor";
+import { P2P_NEEDLES, parseSearch, prefilterNeedles, scoreRow } from "@/lib/txn-search";
 import { autoCategorize, learnCategoryRule } from "./categorize";
 import { parsePatch } from "../patch";
 
@@ -137,33 +138,31 @@ export type TransactionQuery = {
   categoryName?: string;
   categoryIds?: string[];
   kinds?: TransactionKind[];
+  /**
+   * Forgiving by default: every meaningful word must match somewhere (description, merchant or notes),
+   * in any order; payment-app words are hints; truncated names match. See lib/txn-search.ts.
+   */
   search?: string;
+  /** Match `search` as one exact case-insensitive phrase instead (the old behaviour). */
+  phrase?: boolean;
   minAmountCents?: number;
   maxAmountCents?: number;
   includeExcluded?: boolean;
   limit?: number;
 };
 
-export async function queryTransactions(scope: UserScope, q: TransactionQuery = {}) {
-  const conds = [eq(transactions.userId, scope.userId)];
-  if (q.from) conds.push(gte(transactions.date, q.from));
-  if (q.to) conds.push(lte(transactions.date, q.to));
-  if (q.accountId) conds.push(eq(transactions.accountId, q.accountId));
-  let categoryIds = q.categoryIds;
-  if (q.categoryName) {
-    const resolved = await resolveCategory(scope, q.categoryName);
-    if (!resolved) throw new ServiceError(`No category named "${q.categoryName}".`, "not_found");
-    categoryIds = resolved.ids;
-  }
-  if (categoryIds) conds.push(categoryIds.length ? inArray(transactions.categoryId, categoryIds) : sql`false`);
-  if (q.kinds?.length) conds.push(inArray(transactions.kind, q.kinds));
-  if (!q.includeExcluded) conds.push(eq(transactions.excluded, false));
-  if (q.search) {
-    const s = `%${q.search.replace(/[%_]/g, "")}%`;
-    conds.push(or(ilike(transactions.description, s), ilike(transactions.merchantName, s), ilike(transactions.notes, s))!);
-  }
-  if (q.minAmountCents != null) conds.push(sql`abs(${transactions.amountCents}) >= ${q.minAmountCents}`);
-  if (q.maxAmountCents != null) conds.push(sql`abs(${transactions.amountCents}) <= ${q.maxAmountCents}`);
+const likeEscape = (s: string) => s.replace(/[\\%_]/g, "");
+const anyTextLike = (needle: string) => {
+  const p = `%${likeEscape(needle)}%`;
+  return or(ilike(transactions.description, p), ilike(transactions.merchantName, p), ilike(transactions.notes, p))!;
+};
+
+/** How many rows the forgiving search reads before narrowing in code. */
+const SEARCH_SCAN_LIMIT = 5000;
+/** Person-to-person lookups only look this far back. */
+const P2P_LOOKBACK = sql`(current_date - interval '2 years')`;
+
+async function selectRows(scope: UserScope, conds: ReturnType<typeof eq>[], limit: number) {
   const rows = await scope.tx
     .select({
       t: transactions,
@@ -180,7 +179,7 @@ export async function queryTransactions(scope: UserScope, q: TransactionQuery = 
     .leftJoin(categories, eq(categories.id, transactions.categoryId))
     .where(and(...conds))
     .orderBy(desc(transactions.date), desc(transactions.createdAt))
-    .limit(Math.min(q.limit ?? 500, 5000));
+    .limit(limit);
   return rows.map((r) => ({
     ...r.t,
     accountName: r.accountName,
@@ -190,6 +189,78 @@ export async function queryTransactions(scope: UserScope, q: TransactionQuery = 
     categoryName: r.categoryName,
     categoryColor: r.categoryColor,
   }));
+}
+
+/** Every filter except the text search. */
+async function baseConds(scope: UserScope, q: TransactionQuery) {
+  const conds = [eq(transactions.userId, scope.userId)] as ReturnType<typeof eq>[];
+  if (q.from) conds.push(gte(transactions.date, q.from));
+  if (q.to) conds.push(lte(transactions.date, q.to));
+  if (q.accountId) conds.push(eq(transactions.accountId, q.accountId));
+  let categoryIds = q.categoryIds;
+  if (q.categoryName) {
+    const resolved = await resolveCategory(scope, q.categoryName);
+    if (!resolved) throw new ServiceError(`No category named "${q.categoryName}".`, "not_found");
+    categoryIds = resolved.ids;
+  }
+  if (categoryIds) conds.push(categoryIds.length ? inArray(transactions.categoryId, categoryIds) : sql`false`);
+  if (q.kinds?.length) conds.push(inArray(transactions.kind, q.kinds));
+  if (!q.includeExcluded) conds.push(eq(transactions.excluded, false));
+  if (q.minAmountCents != null) conds.push(sql`abs(${transactions.amountCents}) >= ${q.minAmountCents}`);
+  if (q.maxAmountCents != null) conds.push(sql`abs(${transactions.amountCents}) <= ${q.maxAmountCents}`);
+  return conds;
+}
+
+export async function queryTransactions(scope: UserScope, q: TransactionQuery = {}) {
+  const conds = await baseConds(scope, q);
+  const limit = Math.min(q.limit ?? 500, 5000);
+  const search = q.search?.trim();
+  if (!search) return selectRows(scope, conds, limit);
+  if (q.phrase) {
+    conds.push(anyTextLike(search));
+    return selectRows(scope, conds, limit);
+  }
+  // Forgiving: narrow in SQL (newest first, uses the user/date index), then require every word in code.
+  const { terms } = parseSearch(search);
+  if (!terms.length) return selectRows(scope, conds, limit);
+  conds.push(or(...prefilterNeedles(terms).map(anyTextLike))!);
+  const candidates = await selectRows(scope, conds, SEARCH_SCAN_LIMIT);
+  return candidates.filter((r) => scoreRow(terms, r).all).slice(0, limit);
+}
+
+export type TransactionRow = Awaited<ReturnType<typeof queryTransactions>>[number];
+
+export type TransactionFind =
+  | { match: "exact"; rows: TransactionRow[]; closest: [] }
+  | { match: "similar"; rows: TransactionRow[]; closest: [] }
+  | { match: "none"; rows: []; closest: TransactionRow[] };
+
+/**
+ * queryTransactions plus a helpful miss. No row matches every word: try a spelling-tolerant pass over
+ * recent person-to-person payments (Zelle, Venmo, Cash App, PayPal), and if that finds nothing, return
+ * the closest few of them so the caller can ask "is that who you meant?".
+ */
+export async function findTransactions(scope: UserScope, q: TransactionQuery = {}): Promise<TransactionFind> {
+  const rows = await queryTransactions(scope, q);
+  const search = q.search?.trim();
+  if (rows.length || !search || q.phrase) return { match: "exact", rows, closest: [] };
+
+  const { terms } = parseSearch(search);
+  const conds = await baseConds(scope, q);
+  conds.push(or(...P2P_NEEDLES.map(anyTextLike))!);
+  if (!q.from) conds.push(gte(transactions.date, sql`${P2P_LOOKBACK}`));
+  const recent = await selectRows(scope, conds, 1500);
+  const scored = recent.map((r) => ({ r, ...scoreRow(terms, r, true) }));
+  const limit = Math.min(q.limit ?? 5, 5);
+  const similar = scored.filter((x) => x.all);
+  if (similar.length) return { match: "similar", rows: similar.slice(0, Math.min(q.limit ?? 500, 20)).map((x) => x.r), closest: [] };
+  // Best partial matches first, then newest; with nothing alike, the newest payments to people.
+  const closest = scored
+    .map((x, i) => ({ ...x, i }))
+    .sort((a, b) => b.score - a.score || a.i - b.i)
+    .slice(0, limit)
+    .map((x) => x.r);
+  return { match: "none", rows: [], closest };
 }
 
 /** The first (oldest) expense date in each category, across all history: when a category started having data. */

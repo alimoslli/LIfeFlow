@@ -2,7 +2,7 @@
 name: budget-coach
 title: Budget coach
 description: Explains spending, catches overspending and suggests fixes.
-triggers: ["budget", "overspend", "spending", "spent", "where does my money go", "cut back", "save money", "where did my money go", "my money go", "where my money went"]
+triggers: ["budget", "overspend", "spending", "spent", "where does my money go", "cut back", "save money", "where did my money go", "my money go", "where my money went", "zelle", "zelled", "venmo", "cash app", "last time i paid", "last time i zelled", "when did i last pay"]
 modules: ["finances"]
 tools: ["money_findings", "money_overview", "spending_summary", "compare_spending", "budget_status", "query_transactions"]
 ---
@@ -11,6 +11,7 @@ tools: ["money_findings", "money_overview", "spending_summary", "compare_spendin
 2. Find the 1-2 categories driving the change (compare_spending).
 3. Suggest one or two specific fixes with dollar amounts.
 4. Change budgets only when asked (set_budget, in the money_edit tools).
+5. For "when did I last pay or Zelle someone", one query_transactions with just the person's name as search answers it (newest first). If it comes back similar or none, say what you didn't find and ask if one of the closest payments is who they meant.
 
 ## Quality rules
 - Never estimate numbers the tools return.
