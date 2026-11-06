@@ -71,7 +71,7 @@ export default async function BillsPage() {
                       <ActionButton
                         action={setRecurringStatusAction.bind(null, r.id, "paused")}
                         title="Pause"
-                        className="tap -m-2 flex items-center justify-center text-muted hover:text-text"
+                        className="tap -m-1.5 flex items-center justify-center text-muted hover:text-text"
                       >
                         <Pause className="h-3.5 w-3.5" />
                       </ActionButton>
@@ -84,7 +84,7 @@ export default async function BillsPage() {
                       <ActionButton
                         action={setRecurringStatusAction.bind(null, r.id, "cancelled")}
                         title="Mark cancelled"
-                        className="tap -m-2 flex items-center justify-center text-muted hover:text-danger"
+                        className="tap -m-1.5 flex items-center justify-center text-muted hover:text-danger"
                       >
                         <X className="h-3.5 w-3.5" />
                       </ActionButton>
