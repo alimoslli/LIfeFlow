@@ -388,6 +388,18 @@ Decided by the owner (2026-11-05, research round 2):
 8. **Yes to school accounts with no admin needed,** and people can add school and bank accounts by hand when their bank isn't on Plaid or their school isn't Canvas or Teams (Teams is coming).
 9. **Goals:** Dev tells people plainly when they're off track for a goal they set, with a way back. Never the word "slipping".
 10. **Notifications are the engine,** not the problem: see "Decided from research" 5.
+14. **Short on money: look at everything the person has (owner, 2026-11-06).** "Being short on money can mean moving money from your savings or taking your earnings from brokerage and investments… if the user's stocks are doing good, selling $50 of that stock's profit can help pay the user's car insurance." When the afford check finds a gap, Dev's fix looks across every account, not just checking. The rules for doing it:
+   - **The gentlest option first:**
+     1. a bill that can move a few days without a fee;
+     2. savings;
+     3. uninvested cash in a brokerage;
+     4. selling a small part of an investment that's up.
+
+     Each option says what it costs the person: a goal pushed back, interest lost, or a possible tax on gains (short-term versus long-term). Never a loan, a cash advance, margin or a card balance.
+   - **Facts, not predictions or advice.** "VTI is up $212 since you bought it. Selling $50 of it covers the $48 insurance on the 14th" is fine. "Sell now, it will drop" is never fine. Dev shows options; the person chooses. (A legal check before launch: personalised suggestions about selling securities can count as investment advice.)
+   - **Goals and safety nets are respected.** Dev doesn't suggest the emergency fund for a non-emergency, or a goal's money (Montréal), without saying what it does to that goal.
+   - **Dev never moves money or trades.** It lays out the steps, deep-links to the bank or brokerage where possible, and the person does it. This is an existing red line.
+
 13. **iPhone Shortcuts pack: yes. Android notification reading: not now (owner, 2026-11-06).** iPhones don't let apps read other apps' notifications. Instead, the person turns on a few ready-made Shortcuts automations once, each sending Dev one kind of event:
    - Apple Pay taps (merchant and amount in real time, matched later to the bank's copy so nothing counts twice);
    - arriving at and leaving work or campus (the real-life timeline fills itself);
