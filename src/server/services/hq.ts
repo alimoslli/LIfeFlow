@@ -4,7 +4,20 @@ import { z } from "zod";
 import { adminEmails, type Admin } from "../auth/admin";
 import { addDaysStr, localDateOf } from "../../lib/dates";
 import type { Database } from "../db/client";
-import { adminActions, hqActivity, hqApprovals, hqChats, hqContent, hqKeys, hqMissions, hqUsageSamples, users, type HqLink, type HqRole, HQ_ROLES } from "../db/schema";
+import {
+  adminActions,
+  hqActivity,
+  hqApprovals,
+  hqChats,
+  hqContent,
+  hqKeys,
+  hqMissions,
+  hqUsageSamples,
+  users,
+  type HqLink,
+  type HqRole,
+  HQ_ROLES,
+} from "../db/schema";
 import { withUser } from "../db/with-user";
 import { chatUrl, EMPLOYEES, employee, isHqRole, USAGE_PLAN } from "../hq/team";
 import { employeeState, WORKING_WINDOW_MS } from "../hq/state";
@@ -57,7 +70,6 @@ export { cleanLine, cleanText, HqError, isSafeLinkUrl, normalizeSessionId };
  * hq_activity row. Reads have a 5 s statement timeout and hard limits, like services/admin.ts. No AI is ever called
  * from here: HQ costs nothing to open.
  */
-
 
 /** Who made a change, for the activity log. */
 export type HqActor = { kind: "owner"; email: string } | { kind: "agent"; keyName: string; sessionId?: string | null };
@@ -846,11 +858,7 @@ export async function decideApproval(
           role: "marketing",
           kind: decision === "approved" ? "content_approved" : "content_updated",
           text:
-            decision === "approved"
-              ? `${quoted} approved`
-              : decision === "declined"
-                ? `${quoted} dropped`
-                : `${quoted} sent back to draft${n ? `: ${n}` : ""}`,
+            decision === "approved" ? `${quoted} approved` : decision === "declined" ? `${quoted} dropped` : `${quoted} sent back to draft${n ? `: ${n}` : ""}`,
           approvalId: row.id,
         });
       }

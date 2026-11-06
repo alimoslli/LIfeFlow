@@ -1,4 +1,4 @@
-# How the team works with HQ (Phase 2)
+# How the team works with HQ (Phases 2 to 5)
 
 Owner, 2026-11-06: "the best digital HQ ever with the best agent loadout and workflow", and HQ must show real progress and change. This is the loadout and the steps every automated round follows. It sits on top of `docs/team.md` (cost rules, the owner's hours, approvals), which still decides.
 
@@ -8,7 +8,7 @@ Owner, 2026-11-06: "the best digital HQ ever with the best agent loadout and wor
 | **Researcher / Agent Ops** | The only automation runner: the LF V3 — Agents chat, which runs every scheduled round. | Yes, only in rounds |
 | **Developer** | Night-round fixes, made by Sonnet builders the runner starts, plus LF Main when the owner works there. | Only in rounds |
 | **Designer / V3** | LF V3, the owner's product chat. No automation. | Only when the owner works there |
-| **Marketing** | LF Marketing. A weekly marketing round comes in Phase 3, after the owner's yes. | Not yet |
+| **Marketing** | LF Marketing. A weekly marketing round (after the owner's yes) turns approved posts into Metricool "for review" posts and records real numbers. Never publishes; the owner presses the last button. | Only in its round |
 | **HQ Assistant** | App logic: approvals, deadlines, the weekly summary. | Never |
 
 **Specialists, started inside a round only, at most two at a time, Sonnet by default:**
@@ -46,7 +46,8 @@ HQ is a mirror, never a blocker. If `HQ_URL` isn't set or a command fails, carry
 1. **Start.**
    - Run `checkin --status working --phase round_start --summary "<round> started"`.
    - Then run `inbox`. It returns the owner's open missions and the decisions made since the last round:
-     - a **yes** means do it;
+     - **Controls first:** if `controls.autonomous` is false or this round's switch (`controls.rounds.night|research|marketing`) is false, reply "Skipped: turned off in HQ" and stop;
+   - a **yes** means do it;
      - a **no** means drop it and mark the mission `dropped`;
      - **changes** means follow the owner's note.
 2. **Usage gate** (before every new agent). Read this session's `get_session` → `external_metadata.rate_limit_info`:
@@ -83,4 +84,5 @@ HQ is a mirror, never a blocker. If `HQ_URL` isn't set or a command fails, carry
 - [x] `HQ_URL` and the key are saved on the "LifeFlow" cloud environment (2026-11-06). The key is a network secret for lifeflowweb.com, added by the proxy. The first real check-in was accepted. `scripts/hq.ts` turns on Node's proxy support by itself (`NODE_USE_ENV_PROXY=1`), because Node's fetch ignores the cloud proxy otherwise.
 - [x] Night round and research tasks point at this file (2026-11-06; blocks in `docs/hq/round-prompts.md`, applied by the LF V3 — Agents chat, checked with get_trigger).
 - [ ] LF Main's environment gets the same two settings.
-- [ ] Phase 3: a weekly marketing round, after the owner's yes.
+- [ ] Migration `0044_hq_marketing` deployed; the "Controls" block from `round-prompts.md` added to the night and research tasks (ADR 0025).
+- [ ] Phase 3: a weekly marketing round, after the owner's yes. It reads `approvedContent` from `inbox`, puts each post into Metricool with `createScheduledPostForReview`, then reports `content update <id> --status scheduled --external-id <id>` (and `--status published --published-url <link>` after the owner presses the final button). New ideas and scripts: `content add ... --ask`. Real numbers: `metrics --network instagram --date <day> --metric followers=<n>`. No comments, no DMs, no paid generation without a `paid` approval within the credit budget.

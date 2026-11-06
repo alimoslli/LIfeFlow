@@ -94,11 +94,11 @@ function CalendarItem({ c, tz }: { c: ContentItem; tz: string }) {
       className="flex min-h-11 min-w-0 items-start gap-3 rounded-2xl px-2 py-2 hover:bg-surface-2 lg:flex-col lg:gap-1 lg:bg-surface-2"
     >
       {c.scheduledFor && <span className="tabular w-16 shrink-0 pt-0.5 text-xs text-muted lg:w-auto">{timeOnly(c.scheduledFor, tz)}</span>}
-      <span className="min-w-0 flex-1">
+      <span className="flex min-w-0 flex-1 flex-col items-start gap-1">
         <span className="line-clamp-2 block text-[0.9375rem] break-words text-text">{c.title}</span>
-        <span className="block truncate text-xs text-muted">{platformsLine(c.platforms)}</span>
+        <span className="block max-w-full truncate text-xs text-muted">{platformsLine(c.platforms)}</span>
+        <ContentChip status={c.status} />
       </span>
-      <ContentChip status={c.status} />
     </Link>
   );
 }
@@ -199,7 +199,13 @@ export function NetworkBlock({ p }: { p: NetworkPerformance }) {
 function Switch({ name, label, hint, on }: { name: string; label: string; hint?: string; on: boolean }) {
   return (
     <label className="relative flex min-h-11 cursor-pointer items-center justify-between gap-4 rounded-2xl px-1 py-1.5">
-      <input type="checkbox" role="switch" name={name} defaultChecked={on} className="peer absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+      <input
+        type="checkbox"
+        role="switch"
+        name={name}
+        defaultChecked={on}
+        className="peer absolute inset-0 m-0 h-full min-h-11 w-full cursor-pointer appearance-none opacity-0"
+      />
       <span className="min-w-0">
         <span className="block text-[0.9375rem] text-text">{label}</span>
         {hint && <span className="block text-xs text-muted">{hint}</span>}

@@ -106,6 +106,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await expect(op.getByRole("link", { name: /Needs your yes/ }).first()).toContainText("0");
 
   // The detail page: change the title, then drop it.
+  await op.goto("/admin/hq/marketing");
   await week.getByRole("link", { name: /The Sunday reset reel/ }).click();
   await expect(op.getByRole("heading", { name: "The Sunday reset reel", level: 1 })).toBeVisible();
   await op.getByLabel("Title").fill("The Sunday reset reel, take two");
@@ -130,7 +131,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await expect(op.getByText(/Last changed .* by admin-owner@example.com/)).toBeVisible();
   await expect(op.getByRole("switch", { name: "Autonomous mode" })).not.toBeChecked();
   await op.goto("/admin/hq");
-  await expect(op.getByText("Autonomous mode off")).toBeVisible();
+  await expect(op.locator("header p", { hasText: "Autonomous mode off" })).toBeVisible();
   const inbox = await request.get("/api/hq/inbox", { headers });
   expect(inbox.status()).toBe(200);
   const body = await inbox.json();

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import type { Database } from "@/server/db/client";
-import { HqError } from "@/server/services/hq";
 import { createContent, recordMetrics, saveControls, updateContent } from "@/server/services/hq-marketing";
 
 // Validation runs before the database is touched, so these never need one.
@@ -49,7 +48,7 @@ describe("content validation", () => {
     await bad(updateContent(noDb, owner, ID, { status: "approved" }), /Only your yes/);
     await bad(updateContent(noDb, agent, ID, { status: "waiting" }), /Ask for a yes/);
     await bad(updateContent(noDb, agent, ID, { kind: "post" } as never), /kind|nrecognized/i);
-    await bad(updateContent(noDb, agent, "nope", { title: "x" }), HqError);
+    await bad(updateContent(noDb, agent, "nope", { title: "x" }), /Unknown content/);
     await bad(updateContent(noDb, agent, ID, { publishedUrl: "http://a.example" }), /https/);
   });
 });

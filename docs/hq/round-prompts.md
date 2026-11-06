@@ -6,6 +6,12 @@ These blocks are added to the two scheduled tasks that post into the LF V3 — A
 
 Add each block **as it is**. Keep everything else in each prompt, the schedules and the cost rules unchanged. Only the chat a task posts into can change its prompt (`update_trigger`).
 
+## Controls (owner, 2026-11-06): add to BOTH blocks below, right after `inbox`
+
+```
+**Controls.** `inbox` also returns `controls`. If `controls.autonomous` is false, or this round's switch is false (`controls.rounds.night` for the night round, `controls.rounds.research` for research), reply "Skipped: turned off in HQ", run `checkin --status idle --phase round_end --summary "Skipped: turned off in HQ"` and stop. Start no agent and change nothing.
+```
+
 ## Night round: insert just before the last line ("Follow the red lines and CLAUDE.md. No PRs.")
 
 ```

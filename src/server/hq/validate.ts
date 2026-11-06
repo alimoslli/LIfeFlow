@@ -82,7 +82,6 @@ export const sessionIdField = z
     }
   });
 
-
 export function parse<S extends z.ZodType>(schema: S, input: unknown): z.output<S> {
   const r = schema.safeParse(input);
   if (r.success) return r.data;
@@ -124,4 +123,3 @@ export async function logActivity(tx: Tx, a: ActivityInput) {
 export async function logAdmin(tx: Tx, admin: Admin, action: string, metadata: Record<string, unknown>) {
   await tx.insert(adminActions).values({ actorUserId: admin.id, actorEmail: admin.email, action, metadata });
 }
-
