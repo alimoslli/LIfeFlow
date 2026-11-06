@@ -1,0 +1,148 @@
+{
+  "chats": [
+    {
+      "id": "session_014H9m2SQ58sgx7ZG8Ntv7Zx",
+      "title": "LF Main",
+      "role": "developer",
+      "isPrimary": true
+    },
+    {
+      "id": "session_01Mhcz6Ao4XdmNh3eAPYd3QN",
+      "title": "LF V3",
+      "role": "designer",
+      "isPrimary": true,
+      "branch": "claude/pensive-mendel-r1yy4a"
+    },
+    {
+      "id": "session_01Mhcz6BYyF8TLLXwBiWcWyk",
+      "title": "LF V3 — Agents",
+      "role": "researcher",
+      "isPrimary": true,
+      "branch": "claude/nightly-audits"
+    },
+    {
+      "id": "session_01Mhcz6CyarVMRum5SxqLMqM",
+      "title": "LF Marketing",
+      "role": "marketing",
+      "isPrimary": true,
+      "branch": "claude/lifeflow-ad-reel-higgsfield-s3r3v1"
+    }
+  ],
+  "missions": [
+    {
+      "role": "developer",
+      "priority": "high",
+      "status": "todo",
+      "title": "Finish the \"Same bill?\" and \"Did the exam move?\" cards",
+      "detail": "Branch fix-gmail-items; then one Opus review (money and data), the gates and main.",
+      "progress": "Started in LF V3; saved only on that chat's machine until it is pushed.",
+      "sessionId": "session_01Mhcz6Ao4XdmNh3eAPYd3QN",
+      "branch": "fix-gmail-items"
+    },
+    {
+      "role": "developer",
+      "priority": "high",
+      "status": "todo",
+      "title": "Forgiving transaction search",
+      "detail": "The owner's real miss: \"when did I last Zelle Omar Mousselli\" found nothing. Branch fix-search, then the gates and main.",
+      "progress": "Started in LF V3; saved only on that chat's machine until it is pushed.",
+      "sessionId": "session_01Mhcz6Ao4XdmNh3eAPYd3QN",
+      "branch": "fix-search"
+    },
+    {
+      "role": "developer",
+      "priority": "high",
+      "status": "todo",
+      "title": "Ship the calendar duplicate fixes and search-as-you-type to main",
+      "detail": "Merged on claude/pensive-mendel-r1yy4a but not on main yet; run the full check, the build and e2e, then main.",
+      "branch": "claude/pensive-mendel-r1yy4a"
+    },
+    {
+      "role": "researcher",
+      "priority": "normal",
+      "status": "todo",
+      "title": "Finish the nightly carry-over",
+      "detail": "docs/audits/2026-11-05-app-audit.md: night audit, fix-small R2 and title-casing, situations s0021 to s0025, finishing research round 3.",
+      "sessionId": "session_01Mhcz6BYyF8TLLXwBiWcWyk",
+      "branch": "claude/nightly-audits"
+    },
+    {
+      "role": "marketing",
+      "priority": "normal",
+      "status": "blocked",
+      "title": "Retake the reel narration with the Sienna voice",
+      "blockedReason": "Out of Higgsfield credits (0.37 left on 2026-11-06). Needs 3 or more.",
+      "sessionId": "session_01Mhcz6CyarVMRum5SxqLMqM"
+    },
+    {
+      "role": "designer",
+      "priority": "normal",
+      "status": "waiting",
+      "title": "Build the chosen timeline concept as V3",
+      "progress": "Waiting for your pick of the six timeline concepts.",
+      "links": [
+        {
+          "label": "Timeline concepts",
+          "url": "https://claude.ai/artifact/96o6wygYzrQAt6bkg5iyCW"
+        }
+      ],
+      "sessionId": "session_01Mhcz6Ao4XdmNh3eAPYd3QN"
+    }
+  ],
+  "approvals": [
+    {
+      "role": "designer",
+      "kind": "design",
+      "title": "Goals redesign, option A",
+      "summary": "One calm list: each goal is one line with a plain status, added by one sentence. No forms or sliders on the main screen.",
+      "links": [
+        {
+          "label": "Goals option A",
+          "url": "https://claude.ai/artifact/EUmH35NgRB1pDvJHcqsFwB"
+        }
+      ]
+    },
+    {
+      "role": "designer",
+      "kind": "design",
+      "title": "Connected accounts: \"What Dev can see\"",
+      "summary": "One short list in words with a status at a glance and one-tap fixes, plus the iPhone Shortcuts pack.",
+      "links": [
+        {
+          "label": "What Dev can see",
+          "url": "https://claude.ai/artifact/MyHqEmJ5foFJvdCMm1GLG1"
+        }
+      ]
+    },
+    {
+      "role": "designer",
+      "kind": "design",
+      "title": "Pick one of the six timeline concepts",
+      "summary": "Still waiting for your pick. Also: should Batch 1 (Today, Plan, To-dos) simply be the timeline?",
+      "links": [
+        {
+          "label": "Timeline concepts",
+          "url": "https://claude.ai/artifact/96o6wygYzrQAt6bkg5iyCW"
+        }
+      ]
+    },
+    {
+      "role": "developer",
+      "kind": "feature",
+      "title": "Gmail abilities",
+      "summary": "Shifts from schedule emails, trips from email, reading the emails that matter (not only the newest 100), and asking about anything in email."
+    },
+    {
+      "role": "developer",
+      "kind": "design",
+      "title": "Search: bold the matched letters?",
+      "summary": "When you search, the letters you typed would show in bold in each result."
+    },
+    {
+      "role": "researcher",
+      "kind": "other",
+      "title": "Agent workload: before, now or midpoint",
+      "summary": "The current setting is \"Now\": runs happen only while you sleep or are away."
+    }
+  ]
+}
