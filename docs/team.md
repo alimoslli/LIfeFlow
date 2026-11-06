@@ -30,6 +30,12 @@ The owner asked for the agents to keep running: audit the app (phone and web), f
 
 **Light in the day, heavy at night (owner, 2026-11-05).** The owner's Claude usage has a 5-hour limit. During the day, agents do only light work: answering the owner, small fixes, short checks. Audits, builders, reviewers, situation batches, research, full test runs and e2e run in the night round, so the limit resets by morning.
 
+**No background agents while the owner is awake (owner, 2026-11-06).** The owner may open Claude Code at any time, so agents never run in the background while the owner is using it. Agents run only after a start phrase from the owner, or during the 3 AM night rounds.
+- **"Goodnight"** (or "good night", "gn") in any chat starts the night's work: that chat's own carry-over and a night round in the audits chat. Only one round runs per night; the 3 AM round skips if one already ran since the goodnight.
+- **"I'm at work", "start the agents" or "go"** in the audits chat starts a round while the owner is away for hours.
+- **"Good morning", "stop the agents", or the owner simply messaging the chat** means stop. Running agents finish their current step, save the carry-over and stop. No new agents start.
+- **In the product chat:** while the owner is talking, only light work that answers them. Builders and reviewers wait for the start phrase.
+
 **Cost rules (owner, 2026-11-06, tightened the same night: "overall it's too much usage for the weekly usage too").**
 - **Night rounds run three nights a week** (Sunday, Tuesday and Thursday at 3 AM), each with:
   - one audit;

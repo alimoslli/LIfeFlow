@@ -1,6 +1,6 @@
 import { financeTools } from "./tools/finance";
 import { moneyCoachTools } from "./tools/money-coach";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import { ZodError } from "zod";
 import { pendingActions, type ToolResultRecord } from "../db/schema";
 import { audit } from "../services/audit";
@@ -106,31 +106,115 @@ async function runTool(name: string, args: unknown, ctx: ToolContext): Promise<T
   }
 }
 
-/** Executes or cancels a pending action after the user's explicit decision. */
+/**
+ * A confirmed action that has been running longer than this is treated as lost (the process died).
+ * Above attempts (2) x provider timeout (20 s) x token refresh + call, plus a margin for the database.
+ */
+export const ACTION_RUN_LIMIT_MS = 90_000;
+/** Production always uses the default; elsewhere ACTION_RUN_LIMIT_MS may shorten it (tests). Junk falls back to the default. */
+export function runLimitMs(env: NodeJS.ProcessEnv = process.env) {
+  if (env.NODE_ENV === "production") return ACTION_RUN_LIMIT_MS;
+  const n = Number(env.ACTION_RUN_LIMIT_MS);
+  return Number.isFinite(n) && n > 0 ? n : ACTION_RUN_LIMIT_MS;
+}
+const LOST_MESSAGE = "This may have gone through; check your calendar or email. It was not run again.";
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Executes or cancels a pending action after the user's explicit decision.
+ * Idempotent: the action is claimed atomically (pending -> running), so only the first call runs it.
+ * A second call (double tap, two devices, a retried request) waits for the first and gets its saved
+ * result back with `replayed: true`; nothing runs twice.
+ */
 export async function resolvePendingAction(id: string, decision: "confirm" | "cancel", ctx: ToolContext) {
-  const [action] = await ctx.run(({ tx, userId }) =>
+  const [peek] = await ctx.run(({ tx, userId }) =>
     tx
       .select()
       .from(pendingActions)
       .where(and(eq(pendingActions.id, id), eq(pendingActions.userId, userId))),
   );
-  if (!action) throw new ServiceError("Action not found", "not_found");
-  if (action.status !== "pending") throw new ServiceError(`This action was already ${action.status}.`, "conflict");
-  const expired = action.expiresAt < new Date();
+  if (!peek) throw new ServiceError("Action not found", "not_found");
+  if (decision === "confirm" && peek.status === "pending" && ctx.moneyLocked && MONEY_TOOLS.has(peek.toolName)) {
+    throw new ServiceError("Money is locked. Unlock it in the Money tab with Face ID, then confirm again.", "forbidden");
+  }
+  // The claim: only one caller gets a row back.
+  const [claimed] = await ctx.run(({ tx, userId }) =>
+    tx
+      .update(pendingActions)
+      .set({ status: "running", claimedAt: new Date() })
+      .where(and(eq(pendingActions.id, id), eq(pendingActions.userId, userId), eq(pendingActions.status, "pending")))
+      .returning(),
+  );
+  if (!claimed) return await replayFinished(id, ctx);
+
+  const action = claimed;
   let status: "executed" | "cancelled" | "failed" | "expired";
   let result: ToolResultRecord;
-  if (expired) {
+  if (action.expiresAt < new Date()) {
     status = "expired";
     result = { ok: false, error: "Confirmation expired; nothing was changed." };
   } else if (decision === "cancel") {
     status = "cancelled";
     result = { ok: false, error: "The user cancelled this action; nothing was changed." };
-  } else if (ctx.moneyLocked && MONEY_TOOLS.has(action.toolName)) {
-    throw new ServiceError("Money is locked. Unlock it in the Money tab with Face ID, then confirm again.", "forbidden");
   } else {
-    result = await runTool(action.toolName, action.args, { ...ctx, conversationId: action.conversationId });
+    try {
+      result = await runTool(action.toolName, action.args, { ...ctx, conversationId: action.conversationId });
+    } catch (e) {
+      console.error(`[jarvis] pending action ${id} crashed`, e);
+      result = { ok: false, error: errorMessage(e) };
+    }
     status = result.ok ? "executed" : "failed";
   }
-  await ctx.run(({ tx }) => tx.update(pendingActions).set({ status, result, resolvedAt: new Date() }).where(eq(pendingActions.id, id)));
-  return { action, status, result };
+  // The real result always replaces a "lost" verdict (the run finished after all), so the card and the chat agree.
+  await ctx.run(({ tx }) =>
+    tx
+      .update(pendingActions)
+      .set({ status, result, resolvedAt: new Date() })
+      .where(
+        and(
+          eq(pendingActions.id, id),
+          or(eq(pendingActions.status, "running"), and(eq(pendingActions.status, "failed"), sql`${pendingActions.result}->>'error' = ${LOST_MESSAGE}`)),
+        ),
+      ),
+  );
+  return { action, status, result, replayed: false };
+}
+
+/**
+ * Someone else claimed the action: wait for them to finish, then return what they saved.
+ * A run older than ACTION_RUN_LIMIT_MS is declared lost (marked failed, with a plain message) and never re-run.
+ */
+async function replayFinished(id: string, ctx: ToolContext) {
+  for (;;) {
+    const [row] = await ctx.run(({ tx, userId }) =>
+      tx
+        .select()
+        .from(pendingActions)
+        .where(and(eq(pendingActions.id, id), eq(pendingActions.userId, userId))),
+    );
+    if (!row) throw new ServiceError("Action not found", "not_found");
+    if (row.status === "pending") throw new ServiceError("This action is not ready yet. Try again.", "conflict");
+    if (row.status !== "running") {
+      return {
+        action: row,
+        status: row.status as "executed" | "cancelled" | "failed" | "expired",
+        result: row.result ?? { ok: false, error: "No result was saved." },
+        replayed: true,
+      };
+    }
+    const claimedAt = row.claimedAt?.getTime() ?? 0;
+    if (Date.now() - claimedAt >= runLimitMs()) {
+      const lost = { ok: false, error: LOST_MESSAGE };
+      // Atomic: only the first caller to see it stale writes the verdict.
+      await ctx.run(({ tx, userId }) =>
+        tx
+          .update(pendingActions)
+          .set({ status: "failed", result: lost, resolvedAt: new Date() })
+          .where(and(eq(pendingActions.id, id), eq(pendingActions.userId, userId), eq(pendingActions.status, "running"))),
+      );
+      continue;
+    }
+    await sleep(100);
+  }
 }
