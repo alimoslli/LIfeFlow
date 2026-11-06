@@ -100,20 +100,25 @@ describe("smart inbox", () => {
     expect(await run((s) => isVerifiedSender(s, user.email))).toBe(false);
 
     const from = "me@school.edu";
+    const spf = (r: string, extra = "") => [
+      {
+        Name: "Received-SPF",
+        Value: `${r} (sender SPF authorized) identity=mailfrom; client-ip=1.2.3.4; envelope-from=${extra || "me@school.edu"}; receiver=u@inbound.postmarkapp.com`,
+      },
+    ];
+    const PM = { via: "postmark" } as const;
+    expect(senderAuthenticated(spf("Pass"), from, PM)).toBe(true);
+    expect(senderAuthenticated(spf("Softfail"), from, PM)).toBe(false);
+    expect(senderAuthenticated(spf("Pass", "me@evil.com"), from, PM)).toBe(false);
+    // Forged Authentication-Results never counts on the forwarding route, even on top.
     expect(
       senderAuthenticated(
-        [
-          {
-            Name: "Received-SPF",
-            Value: "Pass (sender SPF authorized) identity=mailfrom; client-ip=1.2.3.4; envelope-from=me@school.edu; domain of me@school.edu",
-          },
-        ],
+        [{ Name: "Authentication-Results", Value: "mx.example; dkim=pass header.d=school.edu; spf=pass smtp.mailfrom=me@school.edu" }],
         from,
+        PM,
       ),
-    ).toBe(true);
-    expect(senderAuthenticated([{ Name: "Authentication-Results", Value: "mx.example; dkim=pass header.d=school.edu; spf=fail" }], from)).toBe(true);
-    expect(senderAuthenticated([{ Name: "Authentication-Results", Value: "mx.example; dkim=pass header.d=evil.com" }], from)).toBe(false);
-    expect(senderAuthenticated([], from)).toBe(false);
+    ).toBe(false);
+    expect(senderAuthenticated([], from, PM)).toBe(false);
     delete process.env.INBOX_DOMAIN;
   });
 });

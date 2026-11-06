@@ -85,8 +85,16 @@ export async function answerText(
           if (e.type === "text") text += e.delta;
           if (e.type === "conversation") conversationId = e.id;
           if (e.type === "confirmation") {
-            pending = e.actionId;
-            text += `\n\n${e.summary} Reply YES to confirm or NO to cancel.`;
+            // A text is cut at 1500 characters and strips some marks, but YES would send the whole thing.
+            // If the person can't see exactly what would go out, they review and send in the app.
+            const shown = e.summary.includes("\n") ? toSmsText(e.summary) : e.summary;
+            const exact = shown === e.summary.trim() && `${text}\n\n${shown} Reply YES to confirm or NO to cancel.`.length <= 1400;
+            if (exact) {
+              pending = e.actionId;
+              text += `\n\n${e.summary} Reply YES to confirm or NO to cancel.`;
+            } else {
+              text += "\n\nThis needs your review before it sends. Open LifeFlow to review and send.";
+            }
           }
           if (e.type === "error") text += `\n${e.message}`;
         },

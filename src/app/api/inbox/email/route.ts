@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     const today = todayIn(user.timezone);
     await withUser(user.id, async (s) => {
       if (!(await isVerifiedSender(s, from))) return recordIgnored(s, from, subject, "Not from one of your verified addresses. Add it in the Inbox settings.");
-      if (!senderAuthenticated(mail.Headers ?? [], from))
+      if (!senderAuthenticated(mail.Headers ?? [], from, { via: "postmark" }))
         return recordIgnored(s, from, subject, "The sending server couldn't prove it was really this address (SPF/DKIM failed).");
       const files: { filename: string; mimeType: string; base64: string }[] = [];
       const ids: string[] = [];

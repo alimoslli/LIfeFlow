@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import type { ResponseInputContent } from "openai/resources/responses/responses";
-import { neutralize } from "../../../lib/untrusted";
+import { wrapUntrusted } from "../../../lib/untrusted";
 import { env } from "../../env";
 
 /**
@@ -84,7 +84,7 @@ export async function extractDocument(input: ExtractInput, llm = extractionClien
   const content: ResponseInputContent[] = [
     {
       type: "input_text",
-      text: `Today is ${input.today}.\n<untrusted_document>\nSubject: ${neutralize(input.subject ?? "")}\n\n${neutralize((input.text ?? "").slice(0, 40_000))}\n</untrusted_document>`,
+      text: `Today is ${input.today}.\n${wrapUntrusted("untrusted_document", `Subject: ${input.subject ?? ""}\n\n${(input.text ?? "").slice(0, 40_000)}`)}`,
     },
     ...input.files.map((f): ResponseInputContent =>
       f.mimeType.startsWith("image/")
