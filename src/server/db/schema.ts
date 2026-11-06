@@ -1557,7 +1557,8 @@ export const pendingActions = pgTable(
 // requireAdmin() (pages and actions) or an HQ key (the /api/hq routes). Never put app users' content here.
 
 /** The five HQ employees. The founder is the owner, not a row. */
-export const HQ_ROLES = ["developer", "designer", "researcher", "marketing", "assistant"] as const;
+/** The six departments plus the Chief of Staff ("assistant", the head manager the CEO talks to; company.md). */
+export const HQ_ROLES = ["developer", "designer", "researcher", "marketing", "qa", "support", "assistant"] as const;
 export type HqRole = (typeof HQ_ROLES)[number];
 export type HqLink = { label: string; url: string };
 export type HqSource = "owner" | "agent" | "import";
@@ -1753,6 +1754,25 @@ export const hqSettings = pgTable("hq_settings", {
   rounds: jsonb("rounds").$type<HqRoundSwitches>().notNull().default({ night: true, research: true, marketing: true }),
   /** Higgsfield credits the marketing round may spend in a week without asking. 0 = always ask. */
   creditBudget: integer("credit_budget").notNull().default(0),
+  /** What the Chief of Staff may decide on its own (docs/hq/company.md, decision rights). Owner switched all three on. */
+  delegations: jsonb("delegations").$type<HqDelegations>().notNull().default({ fixOrder: true, researchTopics: true, postingTimes: true }),
   updatedByEmail: text("updated_by_email"),
   updatedAt: updatedAt(),
 });
+
+/** Level 1 decision rights. Never-delegated items (deploys, features, design, money, publishing, messages…) aren't switches. */
+export type HqDelegations = { fixOrder: boolean; researchTopics: boolean; postingTimes: boolean };
+
+/** The Chief of Staff's brief to the CEO after each round (company.md, "The brief"). Plain text, newest shown on the Office. */
+export const hqBriefs = pgTable(
+  "hq_briefs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    body: text("body").notNull(),
+    /** How many things wait for the CEO when the brief was written. */
+    needsYou: integer("needs_you").notNull().default(0),
+    sessionId: text("session_id"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("hq_briefs_created_idx").on(t.createdAt)],
+);

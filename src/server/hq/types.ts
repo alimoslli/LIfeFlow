@@ -1,4 +1,4 @@
-import type { HqContentKind, HqContentStatus, HqNetwork, HqRoundSwitches } from "../db/schema";
+import type { HqContentKind, HqContentStatus, HqDelegations, HqNetwork, HqRoundSwitches } from "../db/schema";
 import type { HqLink, HqRole } from "../db/schema";
 import type { EmployeeState } from "./state";
 
@@ -191,6 +191,27 @@ export type MarketingView = {
   performance: NetworkPerformance[];
 };
 
-export type HqControls = { autonomous: boolean; rounds: HqRoundSwitches; creditBudget: number; updatedAt: Date | null; updatedByEmail: string | null };
+export type HqControls = {
+  autonomous: boolean;
+  rounds: HqRoundSwitches;
+  creditBudget: number;
+  delegations: HqDelegations;
+  updatedAt: Date | null;
+  updatedByEmail: string | null;
+};
+
+/** The Chief of Staff's latest brief to the CEO. */
+export type Brief = { id: string; body: string; needsYou: number; sessionId: string | null; createdAt: Date };
+
+/** An app error group as the admin page shows it: already scrubbed of personal details (services/error-reports.ts). */
+export type ErrorGroup = {
+  fingerprint: string;
+  source: "server" | "client";
+  route: string;
+  message: string;
+  count: number;
+  firstSeenAt: Date;
+  lastSeenAt: Date;
+};
 
 export type MarketingWeek = { drafted: number; approved: number; scheduled: number; published: number };
