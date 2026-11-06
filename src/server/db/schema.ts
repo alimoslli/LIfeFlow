@@ -658,6 +658,8 @@ export const transactions = pgTable(
     pendingTransactionId: text("pending_transaction_id"),
     notes: text("notes"),
     excluded: boolean("excluded").notNull().default(false),
+    /** The vendor/category tidy version that last went over this row (see TIDY_VERSION); 0 = never. */
+    tidyVersion: integer("tidy_version").notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

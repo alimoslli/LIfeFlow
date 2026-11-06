@@ -4,7 +4,7 @@ import { closeDb } from "@/server/db/client";
 import { categories, transactions } from "@/server/db/schema";
 import { categoryIdByName, learnCategoryRule } from "@/server/services/finance/categorize";
 import { createManualAccount } from "@/server/services/finance/accounts";
-import { tidyTransactions, type TidyLlm } from "@/server/services/finance/tidy";
+import { tidyTransactions, TIDY_VERSION, type TidyLlm } from "@/server/services/finance/tidy";
 import { createTransaction, queryTransactions } from "@/server/services/finance/transactions";
 import { makeUser } from "../helpers";
 
@@ -85,38 +85,71 @@ describe("tidy transactions", () => {
     expect(left).toBe(0);
   });
 
-  it("moves phone, internet and utility bills filed as Rent, but never a landlord or a row with a rule", async () => {
-    const { run } = await makeUser();
+  /** Plaid rows filed as Rent by the old sync (created before the fix), plus manual ones. */
+  async function rentRows(
+    run: Awaited<ReturnType<typeof makeUser>>["run"],
+    lines: { description: string; merchantName?: string; source?: "plaid" | "manual"; createdAt?: Date }[],
+  ) {
     const acct = await run((s) => createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 0 }));
-    const names = ["VERIZON WIRELESS", "COMCAST", "XFINITY", "PG&E", "PARKVIEW APARTMENTS RENT"];
     const rent = await run((s) => categoryIdByName(s, "Rent"));
     await run((s) =>
       s.tx.insert(transactions).values(
-        names.map((d) => ({
+        lines.map((l) => ({
           userId: s.userId,
           accountId: acct.id,
           date: "2026-10-01",
-          description: d,
+          description: l.description,
+          merchantName: l.merchantName ?? null,
           amountCents: -9000,
           kind: "expense" as const,
           categoryId: rent!.id,
+          source: l.source ?? "plaid",
+          createdAt: l.createdAt ?? new Date("2026-10-01T12:00:00Z"),
         })),
       ),
     );
     await run((s) => tidyTransactions(s, {}));
-    const got = await run(async (s) =>
+    const got = await run((s) =>
       s.tx
-        .select({ d: transactions.description, m: transactions.merchantName, c: categories.name })
+        .select({ d: transactions.description, c: categories.name })
         .from(transactions)
         .innerJoin(categories, eq(categories.id, transactions.categoryId))
         .where(eq(transactions.userId, s.userId)),
     );
-    const cat = (d: string) => got.find((g) => g.d === d)!.c;
+    return { rent: rent!, cat: (d: string) => got.find((g) => g.d === d)!.c };
+  }
+
+  it("moves phone, internet and utility bills filed as Rent by the old sync", async () => {
+    const { run } = await makeUser();
+    const { cat } = await rentRows(run, [
+      { description: "VERIZON WIRELESS" },
+      { description: "COMCAST" },
+      { description: "XFINITY" },
+      { description: "PG&E" },
+      { description: "PARKVIEW APARTMENTS RENT" },
+    ]);
     expect(cat("VERIZON WIRELESS")).toBe("Phone");
     expect(cat("COMCAST")).toBe("Internet");
     expect(cat("XFINITY")).toBe("Internet");
     expect(cat("PG&E")).toBe("Utilities");
     expect(cat("PARKVIEW APARTMENTS RENT")).toBe("Rent");
+  });
+
+  it("never moves person-to-person lines, landlords, truncated or merchant-named apartments, manual or newer rows", async () => {
+    const { run } = await makeUser();
+    const lines = [
+      { description: "VENMO *JORDAN MILLER XFINITY" },
+      { description: "ZELLE TO MARIA LOPEZ UTILITIES INCLUDED" },
+      { description: "VERIZON CENTER APARTMEN" },
+      { description: "ACH DEBIT VERIZON CENTER", merchantName: "Verizon Center Apartments" },
+      { description: "EDISON PROPERTIES" },
+      { description: "COX PROPERTIES" },
+      { description: "ZELLE VERIZON WIRELESS" },
+      { description: "COMCAST", source: "manual" as const },
+      { description: "XFINITY MOBILE", createdAt: new Date("2026-11-05T12:00:00Z") },
+    ];
+    const { cat } = await rentRows(run, lines);
+    for (const l of lines) expect(cat(l.description)).toBe("Rent");
   });
 
   it("leaves a Verizon row alone when the user has a rule saying Rent", async () => {
@@ -132,6 +165,8 @@ describe("tidy transactions", () => {
         amountCents: -9000,
         kind: "expense",
         categoryId: rent!.id,
+        source: "plaid",
+        createdAt: new Date("2026-10-01T00:00:00Z"),
       }),
     );
     await run((s) => learnCategoryRule(s, { merchantName: null, description: "VERIZON WIRELESS" }, rent!.id));
@@ -144,5 +179,41 @@ describe("tidy transactions", () => {
         .where(eq(transactions.userId, s.userId)),
     );
     expect(row.c).toBe("Rent");
+  });
+
+  it("a steady-state run on a 20,000-row account makes only a handful of queries, and the first runs take at most 600 rows", async () => {
+    const { run } = await makeUser();
+    const acct = await run((s) => createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 0 }));
+    const rows = Array.from({ length: 20000 }, (_, i) => ({
+      userId: acct.userId,
+      accountId: acct.id,
+      date: new Date(Date.UTC(2015, 0, 1 + Math.floor(i / 10))).toISOString().slice(0, 10),
+      description: i % 3 ? `ZELLE TO PERSON ${i}` : `SQ *BLUE BOTTLE COFFEE ${i} SAN FRANCISCO CA`,
+      amountCents: -500,
+      kind: "expense" as const,
+    }));
+    await run(async (s) => {
+      for (let i = 0; i < rows.length; i += 2000) await s.tx.insert(transactions).values(rows.slice(i, i + 2000));
+    });
+    const first = await run((s) => tidyTransactions(s, {}));
+    expect(first.renamed + first.categorized).toBeLessThanOrEqual(1200);
+    const done = await run(async (s) => {
+      await s.tx.update(transactions).set({ tidyVersion: TIDY_VERSION }).where(eq(transactions.userId, s.userId));
+      return true;
+    });
+    expect(done).toBe(true);
+    let queries = 0;
+    const counted = (tx: object): typeof tx =>
+      new Proxy(tx, {
+        get(t, k, r) {
+          const v = Reflect.get(t, k, r);
+          if (["select", "update", "insert", "delete", "execute"].includes(String(k)) && typeof v === "function")
+            return (...a: unknown[]) => (queries++, v.apply(t, a));
+          return v;
+        },
+      });
+    const r = await run((s) => tidyTransactions({ ...s, tx: counted(s.tx) as typeof s.tx }, { llm: async () => [] }));
+    expect(r).toEqual({ renamed: 0, categorized: 0, byAi: 0 });
+    expect(queries).toBeLessThanOrEqual(5);
   });
 });

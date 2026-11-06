@@ -1,14 +1,15 @@
 import OpenAI from "openai";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { z } from "zod";
 import { aiAllowed } from "@/lib/ai-consent";
 import { cleanVendorName, correctedVendorName, looksMessy } from "@/lib/vendor";
-import { categories, transactions, users } from "../../db/schema";
+import { categories, categoryRules, transactions, users } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { env } from "../../env";
-import { autoCategorize, categoryIdByName, findRule, keywordCategory } from "./categorize";
+import { keywordCategory, matchRule } from "./categorize";
 import { ensureDefaultCategories } from "./categories";
 import { merchantKey } from "./recurring-detect";
+import { inferKind } from "./transactions";
 
 /**
  * Makes every transaction easy to read: a plain vendor name ("SQ *BLUE BOTTLE 4411 SF CA" → "Blue Bottle Coffee")
@@ -72,8 +73,33 @@ const okName = (n: string) => n.length >= 2 && n.length <= 40 && !/https?:|www\.
 
 export type TidyResult = { renamed: number; categorized: number; byAi: number };
 
+/** Bump this to have every account's rows tidied once more: rows below it are picked up again, 600 per run. */
+export const TIDY_VERSION = 1;
+
+/** Plaid rows created before the fix for rent-and-utilities charges (2026-11-05) may have a bill filed as Rent. */
+const PLAID_RENT_FIX_AT = new Date("2026-11-05T09:30:37Z");
+const P2P = /\b(venmo|zelle|cash ?app|paypal|apple cash)\b/i;
+const LANDLORD = /\b(rent|rentals?|apart\w*|apts?|propert(?:y|ies)|landlord|realty|leasing|lease|homes?|residential|village|towers?)\b|apartmen|center apart/i;
+/** Known phone, internet and utility brands only: never a generic word like "water" or "utilities". */
+const BILL_BRANDS: [RegExp, string][] = [
+  [/\b(verizon wireless|verizon|t[- ]?mobile|at ?& ?t|mint mobile|cricket wireless|boost mobile|xfinity mobile|comcast mobile)\b/i, "Phone"],
+  [/\b(comcast|xfinity|spectrum|cox communications|cox internet|cox cable|optimum|fios|centurylink|frontier communications)\b/i, "Internet"],
+  [
+    /\b(pg ?& ?e|pacific gas|sce|southern california edison|con ?ed|consolidated edison|duke energy|dominion energy|xcel energy|national grid|pseg|fpl|entergy|sdg ?& ?e)\b/i,
+    "Utilities",
+  ],
+];
+/** Phone, internet or utilities, when a Rent expense is really a known provider's bill and not a landlord or a person. */
+function billCategoryForRent(texts: (string | null | undefined)[]): string | null {
+  const all = texts.filter(Boolean).join(" | ");
+  if (P2P.test(all) || LANDLORD.test(all)) return null;
+  for (const [re, name] of BILL_BRANDS) if (re.test(all)) return name;
+  return null;
+}
+
 export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm | null } = {}): Promise<TidyResult> {
   await ensureDefaultCategories(scope);
+  // Only rows not yet tidied at this version, newest first, one run's worth. A row is handled once per version.
   const rows = await scope.tx
     .select({
       id: transactions.id,
@@ -82,28 +108,34 @@ export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm |
       categoryId: transactions.categoryId,
       kind: transactions.kind,
       amountCents: transactions.amountCents,
+      source: transactions.source,
+      createdAt: transactions.createdAt,
     })
     .from(transactions)
-    .where(and(eq(transactions.userId, scope.userId), eq(transactions.excluded, false)))
-    .orderBy(desc(transactions.date));
-  // Every row is looked at (reading is cheap, and rows that are already right cost nothing and use no budget), but
-  // a run stops after MAX_CHANGES edits. Repeated runs therefore walk through the whole account.
-
+    .where(and(eq(transactions.userId, scope.userId), eq(transactions.excluded, false), lt(transactions.tidyVersion, TIDY_VERSION)))
+    .orderBy(desc(transactions.date))
+    .limit(MAX_CHANGES);
   const out: TidyResult = { renamed: 0, categorized: 0, byAi: 0 };
+  if (!rows.length) return out;
+
+  const cats = await scope.tx
+    .select({ id: categories.id, name: categories.name, kind: categories.kind })
+    .from(categories)
+    .where(eq(categories.userId, scope.userId));
+  const catByName = new Map(cats.map((c) => [c.name, c]));
+  const rules = await scope.tx.select().from(categoryRules).where(eq(categoryRules.userId, scope.userId));
+  const rentId = catByName.get("Rent")?.id;
+
   let changes = 0;
-  type Left = { ids: string[]; text: string; spent: boolean; name: string };
+  type Left = {
+    rows: { id: string; merchantName: string | null; description: string; categoryId: string | null }[];
+    text: string;
+    spent: boolean;
+    name: string;
+  };
   const unknown = new Map<string, Left>();
-  // One-time correction: phone/internet/utility bills that older syncs filed as Rent.
-  const rentId = (await categoryIdByName(scope, "Rent"))?.id;
-  const billCats = new Map<string, string>();
-  for (const n of ["Phone", "Internet", "Utilities"]) {
-    const c = await categoryIdByName(scope, n);
-    if (c) billCats.set(n, c.id);
-  }
-  const LANDLORD = /\b(rent|rental|apartments?|apts|property management|landlord|realty|leasing|lease)\b/i;
 
   for (const r of rows) {
-    if (changes >= MAX_CHANGES) break;
     const raw = r.merchantName?.trim() || r.description;
     // A name an earlier, broader brand pattern wrote ("Southwest Airlines" on a "SOUTHWEST GAS" line) is put right
     // from the bank's line. Any other stored name, such as one the person typed, is left as it is.
@@ -111,27 +143,33 @@ export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm |
     const name = fixed ?? cleanVendorName(raw);
     const patch: { merchantName?: string; categoryId?: string; kind?: (typeof transactions.$inferSelect)["kind"] } = {};
     if (fixed || (name && name !== r.merchantName && name !== r.description.trim())) patch.merchantName = name;
-    else if (name && !r.merchantName && name === r.description.trim()) {
-      /* already readable: nothing to store */
-    }
     let catId = r.categoryId;
     if (!catId && r.kind !== "transfer") {
-      const auto = await autoCategorize(scope, { merchantName: name || r.merchantName, description: r.description, amountCents: r.amountCents });
-      if (auto) {
-        patch.categoryId = auto.categoryId;
-        patch.kind = auto.kind;
-        catId = auto.categoryId;
+      const t = { merchantName: name || r.merchantName, description: r.description };
+      const rule = matchRule(rules, t);
+      if (rule) {
+        patch.categoryId = rule.categoryId;
+        if (rule.kind) patch.kind = rule.kind;
+        catId = rule.categoryId;
         out.categorized++;
+      } else {
+        const cat = catByName.get(keywordCategory(t, r.amountCents) ?? "");
+        if (cat) {
+          patch.categoryId = cat.id;
+          patch.kind = inferKind(r.amountCents, cat.kind);
+          catId = cat.id;
+          out.categorized++;
+        }
       }
-    }
-    if (rentId && catId === rentId && r.kind === "expense" && r.amountCents < 0) {
-      const text = `${name} ${r.description}`;
-      const to = LANDLORD.test(text) ? null : keywordCategory({ merchantName: name, description: r.description }, r.amountCents);
-      const toId = to ? billCats.get(to) : undefined;
+    } else if (rentId && catId === rentId && r.source === "plaid" && r.createdAt < PLAID_RENT_FIX_AT && r.kind === "expense" && r.amountCents < 0) {
+      // One-time correction (each row is tidied once per version): an old Plaid sync filed every rent-and-utilities
+      // charge as Rent. Only a known provider's brand moves, and never a landlord, a person, or a merchant with a rule.
+      const to = billCategoryForRent([r.merchantName, r.description, name]);
+      const toId = to ? catByName.get(to)?.id : undefined;
       if (
         toId &&
-        !(await findRule(scope, { merchantName: name || r.merchantName, description: r.description })) &&
-        !(await findRule(scope, { merchantName: r.merchantName, description: r.description }))
+        !matchRule(rules, { merchantName: r.merchantName, description: r.description }) &&
+        !matchRule(rules, { merchantName: name, description: r.description })
       ) {
         patch.categoryId = toId;
         catId = toId;
@@ -146,17 +184,13 @@ export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm |
     if ((!catId && r.kind !== "transfer") || looksMessy(name || r.description)) {
       const key = merchantKey({ merchantName: name || r.merchantName, description: r.description });
       if (!key) continue;
-      const g = unknown.get(key) ?? { ids: [], text: r.description.slice(0, 120), spent: r.amountCents < 0, name };
-      g.ids.push(r.id);
+      const g = unknown.get(key) ?? { rows: [], text: r.description.slice(0, 120), spent: r.amountCents < 0, name };
+      g.rows.push({ id: r.id, merchantName: patch.merchantName ?? r.merchantName, description: r.description, categoryId: catId });
       unknown.set(key, g);
     }
   }
 
   if (opts.llm && unknown.size) {
-    const cats = await scope.tx
-      .select({ id: categories.id, name: categories.name, kind: categories.kind })
-      .from(categories)
-      .where(eq(categories.userId, scope.userId));
     const byName = new Map(cats.map((c) => [c.name, c]));
     const batch = [...unknown.entries()].slice(0, MAX_AI).map(([key, g]) => ({ key, text: g.text, spent: g.spent }));
     const guesses = await opts.llm(
@@ -168,23 +202,33 @@ export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm |
       if (!left) continue; // only keys we asked about
       const cat = g.category ? byName.get(g.category) : undefined;
       const name = okName(g.name.trim()) ? g.name.trim() : null;
-      for (const id of left.ids) {
-        const [cur] = await scope.tx
-          .select({ categoryId: transactions.categoryId, merchantName: transactions.merchantName, description: transactions.description })
-          .from(transactions)
-          .where(eq(transactions.id, id));
+      for (const cur of left.rows) {
+        if (changes >= MAX_CHANGES) break;
         const patch: { merchantName?: string; categoryId?: string } = {};
         // Only a name we made ourselves (or a messy one) is improved; one the person typed or edited is theirs.
-        const ours = !cur?.merchantName || cur.merchantName === cleanVendorName(cur.description) || looksMessy(cur.merchantName);
-        if (name && ours && left.spent) patch.merchantName = name;
-        if (cat && !cur?.categoryId && left.spent) patch.categoryId = cat.id;
+        const ours = !cur.merchantName || cur.merchantName === cleanVendorName(cur.description) || looksMessy(cur.merchantName);
+        if (name && ours && left.spent && name !== cur.merchantName) patch.merchantName = name;
+        if (cat && !cur.categoryId && left.spent) patch.categoryId = cat.id;
         if (Object.keys(patch).length) {
-          await scope.tx.update(transactions).set(patch).where(eq(transactions.id, id));
+          await scope.tx.update(transactions).set(patch).where(eq(transactions.id, cur.id));
+          changes++;
           out.byAi++;
         }
       }
     }
   }
+  await scope.tx
+    .update(transactions)
+    .set({ tidyVersion: TIDY_VERSION })
+    .where(
+      and(
+        eq(transactions.userId, scope.userId),
+        inArray(
+          transactions.id,
+          rows.map((r) => r.id),
+        ),
+      ),
+    );
   return out;
 }
 
