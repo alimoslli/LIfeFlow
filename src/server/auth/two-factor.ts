@@ -1,8 +1,8 @@
 import { createHash, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
-import { and, eq, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, ne, sql } from "drizzle-orm";
 import { Secret, TOTP } from "otpauth";
 import type { Database } from "../db/client";
-import { loginChallenges, recoveryCodes, users } from "../db/schema";
+import { loginChallenges, recoveryCodes, sessions, users } from "../db/schema";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { verifyPassword } from "./password";
 
@@ -275,7 +275,8 @@ export async function beginTwoFactorRestart(db: Database, userId: string, passwo
   return { token, to: r.to, email: r.email, code: r.code, expiresAt: r.expiresAt };
 }
 
-export async function finishTwoFactorRestart(db: Database, userId: string, token: string, code: string, now = Date.now()) {
+/** `keepSessionId` is the hashed id of the session doing the reset; every other session is signed out. */
+export async function finishTwoFactorRestart(db: Database, userId: string, token: string, code: string, keepSessionId: string | null, now = Date.now()) {
   const r = await completeLoginChallenge(db, token, code, now);
   if (!r.ok) {
     if (r.reason === "wrong") throw new TwoFactorError("That code didn't match. Check the newest email.");
@@ -284,4 +285,6 @@ export async function finishTwoFactorRestart(db: Database, userId: string, token
   if (r.userId !== userId) throw new TwoFactorError("That code isn't for this account.");
   await db.update(users).set({ totpSecret: null, totpEnabledAt: null, totpLastStep: null }).where(eq(users.id, userId));
   await db.delete(recoveryCodes).where(eq(recoveryCodes.userId, userId));
+  // A lost phone that was still signed in shouldn't stay signed in.
+  await db.delete(sessions).where(keepSessionId ? and(eq(sessions.userId, userId), ne(sessions.id, keepSessionId)) : eq(sessions.userId, userId));
 }

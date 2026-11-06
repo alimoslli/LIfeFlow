@@ -5,6 +5,8 @@ import { cookies } from "next/headers";
 import { after } from "next/server";
 import { requireUser } from "@/server/auth/current-user";
 import { emailConfig, sendEmail } from "@/server/integrations/email";
+import { createHash } from "node:crypto";
+import { SESSION_COOKIE } from "@/server/auth/sessions";
 import {
   beginTotpSetup,
   beginTwoFactorRestart,
@@ -95,7 +97,9 @@ export async function emailRestartCode(password: string) {
 export async function finishRestart(code: string) {
   return guarded("auth.2fa.reset_by_email", async (userId) => {
     const jar = await cookies();
-    await finishTwoFactorRestart(getDb(), userId, jar.get(RESTART_COOKIE)?.value ?? "", String(code).slice(0, 40));
+    const own = jar.get(SESSION_COOKIE)?.value;
+    const keep = own ? createHash("sha256").update(own).digest("hex") : null;
+    await finishTwoFactorRestart(getDb(), userId, jar.get(RESTART_COOKIE)?.value ?? "", String(code).slice(0, 40), keep);
     jar.delete({ name: RESTART_COOKIE, path: "/settings/security" });
     const user = await requireUser();
     const cfg = emailConfig();

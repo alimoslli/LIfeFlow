@@ -20,6 +20,9 @@ import {
   twoFactorStatus,
   verifySecondFactor,
 } from "@/server/auth/two-factor";
+import { createHash } from "node:crypto";
+import { createSession, validateSession } from "@/server/auth/sessions";
+import { changePassword } from "@/server/services/accounts";
 import { makeUser } from "../helpers";
 
 afterAll(closeDb);
@@ -243,23 +246,29 @@ describe("lost your app? start over with an email code (owner, 2026-11-06)", () 
   it("needs the password, then the emailed code resets two-step so a new app can be set up", async () => {
     const { user, db, recoveryCodes } = await enabledUser();
     await expect(beginTwoFactorRestart(db, user.id, "wrong password", T0)).rejects.toThrow(/Password is incorrect/);
+    const mine = await createSession(db, user.id);
+    const lostPhone = await createSession(db, user.id);
+    const keep = createHash("sha256").update(mine.token).digest("hex");
     const r = await beginTwoFactorRestart(db, user.id, PW, T0);
     expect(r.code).toMatch(/^\d{6}$/);
     expect(r.email).toBe(user.email);
     // a wrong code changes nothing
     const wrong = r.code === "000000" ? "111111" : "000000";
-    await expect(finishTwoFactorRestart(db, user.id, r.token, wrong, T0 + 60_000)).rejects.toThrow(/didn't match/);
+    await expect(finishTwoFactorRestart(db, user.id, r.token, wrong, null, T0 + 60_000)).rejects.toThrow(/didn't match/);
     expect((await twoFactorStatus(db, user.id)).enabled).toBe(true);
-    await finishTwoFactorRestart(db, user.id, r.token, r.code, T0 + 60_000);
+    await finishTwoFactorRestart(db, user.id, r.token, r.code, keep, T0 + 60_000);
     const status = await twoFactorStatus(db, user.id);
     expect(status).toMatchObject({ enabled: false, recoveryCodesLeft: 0 });
+    // the session doing the reset stays; every other device is signed out
+    expect(await validateSession(db, mine.token)).not.toBeNull();
+    expect(await validateSession(db, lostPhone.token)).toBeNull();
     // the old backup codes are gone, and a brand new setup works
     expect(await verifySecondFactor(db, user.id, recoveryCodes[1], T0)).toBeNull();
     const { secret } = await beginTotpSetup(db, user.id);
     const again = await confirmTotpSetup(db, user.id, code(secret, T0 + 120_000), T0 + 120_000);
     expect(again.recoveryCodes).toHaveLength(10);
     // the code worked once
-    await expect(finishTwoFactorRestart(db, user.id, r.token, r.code, T0 + 60_000)).rejects.toThrow(/expired/);
+    await expect(finishTwoFactorRestart(db, user.id, r.token, r.code, keep, T0 + 60_000)).rejects.toThrow(/expired/);
   });
 
   it("is refused after a password reset until a strong sign-in, and never resets another account", async () => {
@@ -272,7 +281,15 @@ describe("lost your app? start over with an email code (owner, 2026-11-06)", () 
     await db.update(users).set({ emailCodesBlockedAt: null }).where(eq(users.id, user.id));
     const other = await enabledUser();
     const r = await beginTwoFactorRestart(db, user.id, PW, T0);
-    await expect(finishTwoFactorRestart(db, other.user.id, r.token, r.code, T0 + 60_000)).rejects.toThrow(/isn't for this account/);
+    await expect(finishTwoFactorRestart(db, other.user.id, r.token, r.code, null, T0 + 60_000)).rejects.toThrow(/isn't for this account/);
     expect((await twoFactorStatus(db, other.user.id)).enabled).toBe(true);
+  });
+  it("a first password on a two-step account turns email codes off, so session + inbox can't reset two-step", async () => {
+    const { user, db } = await enabledUser();
+    await db.update(users).set({ passwordHash: "!google" }).where(eq(users.id, user.id));
+    await changePassword(db, user.id, "", "a brand new long passphrase 77");
+    const [u] = await db.select({ blocked: users.emailCodesBlockedAt }).from(users).where(eq(users.id, user.id));
+    expect(u.blocked).not.toBeNull();
+    await expect(beginTwoFactorRestart(db, user.id, "a brand new long passphrase 77", T0)).rejects.toThrow(/after a password reset/);
   });
 });

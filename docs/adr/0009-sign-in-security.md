@@ -56,3 +56,6 @@ The owner was locked out: their account had two-step sign-in on, they couldn't f
 - **Notice:** an email confirms the reset.
 - **Logged:** `auth.2fa.restart_code_sent` and `auth.2fa.reset_by_email`.
 - **Cookie:** `bf_2fa_restart`, httpOnly, strict, scoped to `/settings/security`, 10 minutes.
+- **After a third review:**
+  - **First passwords.** Setting a first password on a two-step account (one made with Google or Apple) also sets `email_codes_blocked_at`, so a stolen session plus the inbox can't set a password and then reset two-step.
+  - **Other devices.** The restart signs out every other session; the one doing the reset stays signed in.
