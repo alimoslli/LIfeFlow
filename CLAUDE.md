@@ -59,7 +59,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - HQ data (`hq_*` tables) is owner operations data with no RLS, reached only through `services/hq.ts`. Never put app users' content in it. Agents write only through `/api/hq/report` and `/api/hq/inbox` with an `lfq_` key (stored as a hash).
 - Only real records: an employee's state comes from `employeeState()` (hq/state.ts); with no data it is asleep or offline, never "working". The budget tile shows a measured number or "Not measured yet". No AI is ever called to render HQ; animations are CSS.
 - An approval is only recorded; HQ never carries it out. Deploys, V3 design merges, features, design changes, publishing, outbound messages, paid ads, subscriptions, destructive and security changes need the owner's yes there.
-- The HQ migration is `0040_lifeflow_hq` (journal `when` after 0039); a new migration must sort after it.
+- The HQ migrations are `0040_lifeflow_hq` to `0045_hq_company` (journal `when` 1794200000000 to 1794700000000); a new migration takes the next number and a `when` after the newest one.
 - Context (owner, 2026-11-06): every chat and agent compacts at 75% of its context (`CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=75` in `.claude/settings.json` `env`, and on the cloud environment, which only the owner can set). Cloud chats with more than one repository read only plugins from this repo's settings (no hooks, `env` or status line), so the Chief of Staff's chat has only the LifeFlow repo and relays the other chats' status to HQ.
 
 ## Integrations (see ADR 0010)
