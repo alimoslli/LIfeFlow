@@ -7,7 +7,7 @@ import type { Database } from "../db/client";
 import { adminActions, hqActivity, hqApprovals, hqChats, hqKeys, hqMissions, hqUsageSamples, users, type HqLink, type HqRole, HQ_ROLES } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { chatUrl, EMPLOYEES, employee, isHqRole, USAGE_PLAN } from "../hq/team";
-import { employeeState } from "../hq/state";
+import { employeeState, WORKING_WINDOW_MS } from "../hq/state";
 import type {
   Activity,
   Approval,
@@ -358,6 +358,25 @@ function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
     result = { state: "working", reason: n === 1 ? "Sorting 1 thing that needs you" : `Sorting ${n} things that need you` };
     line = result.reason;
   }
+  // Work done for this employee in another chat (the night round fixing a Developer mission in the agents chat) is
+  // real work: a mission in progress whose own chat checked in recently makes them "working". It never hides
+  // "blocked" or "needs you".
+  let viaChat: Chat | null = null;
+  if (result.state === "sleeping" || result.state === "offline" || result.state === "done") {
+    for (const m of mine) {
+      if (m.status !== "doing" || !m.sessionId) continue;
+      const c = base.chats.find((x) => x.id === m.sessionId && x.lastCheckinAt && now.getTime() - x.lastCheckinAt.getTime() <= WORKING_WINDOW_MS);
+      if (c) {
+        viaChat = c;
+        result =
+          myPending > 0
+            ? { state: "needs_you", reason: myPending === 1 ? "1 thing needs your yes" : `${myPending} things need your yes` }
+            : { state: "working", reason: c.role === role ? m.title : `${m.title} (in ${c.title})` };
+        line = result.reason;
+        break;
+      }
+    }
+  }
   const open = mine.filter((m) => (OPEN as readonly string[]).includes(m.status)).sort(byPriorityThenOldest);
   const currentMission =
     open.find((m) => m.status === "doing") ??
@@ -365,7 +384,8 @@ function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
     open.find((m) => m.status === "todo") ??
     null;
   let asOf: Date | null = null;
-  for (const d of [...chats.map((c) => c.lastCheckinAt), ...mine.map((m) => m.updatedAt)]) if (d && (!asOf || d > asOf)) asOf = d;
+  for (const d of [...chats.map((c) => c.lastCheckinAt), ...mine.map((m) => m.updatedAt), viaChat?.lastCheckinAt ?? null])
+    if (d && (!asOf || d > asOf)) asOf = d;
   return {
     role,
     title: e.title,

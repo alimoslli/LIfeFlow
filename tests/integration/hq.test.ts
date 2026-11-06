@@ -297,6 +297,30 @@ describe("office snapshot, detail, summary", () => {
     await expect(employeeDetail(db(), "ceo" as never)).rejects.toThrow(HqError);
   });
 
+  it("counts work done for an employee in another chat (the night round) as working, but never hides needs-you", async () => {
+    const AGENTS = "session_01Mhcz6BYyF8TLLXwBiWcWyk";
+    await saveChat(db(), admin, { id: SID, role: "developer", title: "LF Main", isPrimary: true }); // never checked in
+    await saveChat(db(), admin, { id: AGENTS, role: "researcher", title: "LF V3 — Agents", isPrimary: true });
+    const m = await createMission(db(), owner, { role: "developer", title: "Forgiving transaction search" });
+    await updateMission(db(), owner, m.id, { status: "doing", sessionId: AGENTS });
+    let dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
+    expect(dev.state).toBe("offline"); // the agents chat hasn't checked in yet: no claim of work
+    await recordCheckin(db(), { sessionId: AGENTS, status: "working" });
+    dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
+    expect(dev).toMatchObject({ state: "working", line: "Forgiving transaction search (in LF V3 — Agents)" });
+    expect(dev.asOf).not.toBeNull();
+    await createApproval(db(), agent, { role: "developer", kind: "deploy", title: "Ship it", summary: "s" });
+    dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
+    expect(dev.state).toBe("needs_you");
+    await db()
+      .update(hqChats)
+      .set({ lastCheckinAt: new Date(Date.now() - 60 * 60_000) })
+      .where(eq(hqChats.id, AGENTS));
+    await db().delete(hqApprovals);
+    dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
+    expect(dev.state).toBe("offline"); // an hour-old check-in is not "working"
+  });
+
   it("measures the budget from real samples", async () => {
     const now = new Date();
     expect(await weeklyBudget(db(), now)).toMatchObject({ weekPct: null, roundsPct: null });
