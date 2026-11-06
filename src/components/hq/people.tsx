@@ -18,7 +18,7 @@ const TOP: Record<Who, string> = {
   researcher: "cardigan",
   marketing: "tee",
   assistant: "blazer",
-  founder: "polo",
+  founder: "blazer-ceo",
 };
 
 /** Local coordinates: the head's centre is (0,0), radius 22. */
@@ -34,7 +34,7 @@ function Eyes({ who, closed }: { who: Who; closed: boolean }) {
     // The owner: thick dark brows, blue-grey eyes.
     return (
       <g>
-        <path d="M-14.5-9.5Q-9-12.5-3.5-10.2M3.5-10.2Q9-12.5 14.5-9.5" stroke={v("brows")} strokeWidth="3.2" strokeLinecap="round" fill="none" />
+        <path d="M-14.5-10.8Q-9-14.6-3.5-11.6M3.5-10.2Q9-12.5 14.5-9.5" stroke={v("brows")} strokeWidth="3.2" strokeLinecap="round" fill="none" />
         <g className="hq-blink">
           {[-8.5, 8.5].map((x) => (
             <g key={x}>
@@ -158,7 +158,17 @@ function Accessories({ who }: { who: Who }) {
         </g>
       );
     case "founder":
-      return null; // no glasses in the newest reference photo
+      // The cool-CEO touch: black sunglasses pushed up on the curls (eyes stay visible).
+      return (
+        <g transform="rotate(-6)">
+          <rect x="-16" y="-24" width="13.5" height="6.4" rx="2.2" fill={v("shades")} />
+          <rect x="2.5" y="-24" width="13.5" height="6.4" rx="2.2" fill={v("shades")} />
+          <path d="M-2.5-21.6Q0-23 2.5-21.6" stroke={v("shades")} strokeWidth="1.6" fill="none" strokeLinecap="round" />
+          <path d="M-14-22.4h5M4.5-22.4h5" stroke="#fff" strokeWidth=".9" strokeLinecap="round" opacity=".35" />
+          <circle cx="-16" cy="-22.6" r="1" fill="#d7dbe0" />
+          <circle cx="16" cy="-22.6" r="1" fill="#d7dbe0" />
+        </g>
+      );
     default:
       return null;
   }
@@ -176,7 +186,7 @@ export function Head({ who, sleeping = false }: { who: Who; sleeping?: boolean }
       <circle cx={who === "founder" ? -15 : -13} cy={who === "founder" ? 7 : 8} r="3.4" fill={v("blush")} opacity=".55" />
       <circle cx={who === "founder" ? 15 : 13} cy={who === "founder" ? 7 : 8} r="3.4" fill={v("blush")} opacity=".55" />
       <path
-        d={sleeping ? "M-3 12q3 2 6 0" : who === "founder" ? "M-4 11.5q4 2.6 8 0" : "M-4 11q4 4 8 0"}
+        d={sleeping ? "M-3 12q3 2 6 0" : who === "founder" ? "M-4.5 11.8q4.6 2.4 9-1.6" : "M-4 11q4 4 8 0"}
         stroke={v("ink")}
         strokeWidth="1.6"
         strokeLinecap="round"
@@ -216,18 +226,15 @@ function Torso({ who }: { who: Who }) {
         </g>
       )}
       {who === "founder" && (
-        // Navy polo: collar, placket with two buttons, a small colourful print on the chest.
+        // Open charcoal blazer over the navy polo, with a small green pocket square.
         <g>
+          <path d="M-11 16H11L7 70H-7Z" fill={v("polo")} />
           <path d="M-12 16L-1 24-6 30-15 20ZM12 16L1 24 6 30 15 20Z" fill={v("polo-d")} />
-          <path d="M-2 24H2V42H-2Z" fill={v("polo-d")} />
-          <circle cx="0" cy="31" r="1.3" fill="#d9dde3" />
-          <circle cx="0" cy="38" r="1.3" fill="#d9dde3" />
-          <g transform="translate(-15 44)">
-            <ellipse cx="0" cy="2" rx="4.2" ry="2.2" fill="#9a6a3c" />
-            <circle cx="-1" cy="-2" r="1.6" fill="#c8343a" />
-            <circle cx="3" cy="-1.5" r="1.4" fill="#3d5fa8" />
-            <path d="M-3-4 2-7" stroke="#e8dcc0" strokeWidth=".8" strokeLinecap="round" />
-          </g>
+          <path d="M-2 24H2V40H-2Z" fill={v("polo-d")} />
+          <circle cx="0" cy="30" r="1.2" fill="#d9dde3" />
+          <circle cx="0" cy="36.5" r="1.2" fill="#d9dde3" />
+          <path d="M-12 16L-4 46-9 50-17 24ZM12 16L4 46 9 50 17 24Z" fill={v("blazer-ceo-d")} />
+          <path d="M11 41l8-1.5 1 4.5-8 1.2Z" fill={v("accent")} />
         </g>
       )}
     </g>

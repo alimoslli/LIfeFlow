@@ -311,7 +311,10 @@ export function FounderRoomArt({ pending }: { pending: number }) {
         <path d="M431 48.5h18" stroke={v("wood-d")} strokeWidth="1.2" strokeLinecap="round" />
       </Shell>
       <ellipse cx="300" cy="176" rx="130" ry="9" fill={v("rug")} opacity=".7" />
-      <rect x="258" y="108" width="62" height="44" rx="14" fill={v("wood-d")} />
+      {/* tall leather executive chair */}
+      <rect x="250" y="54" width="76" height="98" rx="20" fill={v("leather")} />
+      <rect x="258" y="62" width="60" height="84" rx="15" fill={v("leather-l")} />
+      <path d="M272 70v66M288 68v70M304 70v66" stroke={v("leather")} strokeWidth="1.4" opacity=".6" />
       <SeatedBody who="founder" x={288} y={92} />
       <Desk x={184} w={210} y={138} />
       <Hands x={288} y={136} />
