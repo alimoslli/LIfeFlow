@@ -106,6 +106,10 @@ async function runTool(name: string, args: unknown, ctx: ToolContext): Promise<T
   }
 }
 
+/** A confirmed action that has been running longer than this is treated as lost (the process died). */
+export const ACTION_RUN_LIMIT_MS = 45_000;
+const LOST_MESSAGE = "This may have gone through; check your calendar or email. It was not run again.";
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
@@ -129,7 +133,7 @@ export async function resolvePendingAction(id: string, decision: "confirm" | "ca
   const [claimed] = await ctx.run(({ tx, userId }) =>
     tx
       .update(pendingActions)
-      .set({ status: "running" })
+      .set({ status: "running", claimedAt: new Date() })
       .where(and(eq(pendingActions.id, id), eq(pendingActions.userId, userId), eq(pendingActions.status, "pending")))
       .returning(),
   );
@@ -153,13 +157,22 @@ export async function resolvePendingAction(id: string, decision: "confirm" | "ca
     }
     status = result.ok ? "executed" : "failed";
   }
-  await ctx.run(({ tx }) => tx.update(pendingActions).set({ status, result, resolvedAt: new Date() }).where(eq(pendingActions.id, id)));
+  // Only if still ours: a run that was declared lost stays failed.
+  await ctx.run(({ tx }) =>
+    tx
+      .update(pendingActions)
+      .set({ status, result, resolvedAt: new Date() })
+      .where(and(eq(pendingActions.id, id), eq(pendingActions.status, "running"))),
+  );
   return { action, status, result, replayed: false };
 }
 
-/** Someone else claimed the action: wait for them to finish, then return what they saved. */
+/**
+ * Someone else claimed the action: wait for them to finish, then return what they saved.
+ * A run older than ACTION_RUN_LIMIT_MS is declared lost (marked failed, with a plain message) and never re-run.
+ */
 async function replayFinished(id: string, ctx: ToolContext) {
-  for (let i = 0; i < 300; i++) {
+  for (;;) {
     const [row] = await ctx.run(({ tx, userId }) =>
       tx
         .select()
@@ -167,7 +180,8 @@ async function replayFinished(id: string, ctx: ToolContext) {
         .where(and(eq(pendingActions.id, id), eq(pendingActions.userId, userId))),
     );
     if (!row) throw new ServiceError("Action not found", "not_found");
-    if (row.status !== "pending" && row.status !== "running") {
+    if (row.status === "pending") throw new ServiceError("This action is not ready yet. Try again.", "conflict");
+    if (row.status !== "running") {
       return {
         action: row,
         status: row.status as "executed" | "cancelled" | "failed" | "expired",
@@ -175,7 +189,18 @@ async function replayFinished(id: string, ctx: ToolContext) {
         replayed: true,
       };
     }
+    const claimedAt = row.claimedAt?.getTime() ?? 0;
+    if (Date.now() - claimedAt >= ACTION_RUN_LIMIT_MS) {
+      const lost = { ok: false, error: LOST_MESSAGE };
+      // Atomic: only the first caller to see it stale writes the verdict.
+      await ctx.run(({ tx, userId }) =>
+        tx
+          .update(pendingActions)
+          .set({ status: "failed", result: lost, resolvedAt: new Date() })
+          .where(and(eq(pendingActions.id, id), eq(pendingActions.userId, userId), eq(pendingActions.status, "running"))),
+      );
+      continue;
+    }
     await sleep(100);
   }
-  throw new ServiceError("This action is still being processed. Check back in a moment.", "conflict");
 }

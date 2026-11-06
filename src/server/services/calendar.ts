@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, isNotNull, isNull, lt, or } from "drizzle-orm";
+import { and, asc, eq, gt, gte, isNotNull, isNull, inArray, lt, lte, or } from "drizzle-orm";
 import { z } from "zod";
 import { DATE_RE, TIME_RE, addDaysStr, daysBetween, dayOfWeek, localDateOf, localTimeOf, localToInstant, startOfLocalDay, weekStart } from "@/lib/dates";
 import { calendarEvents, courses, type EventKind, type Recurrence, type DataSource } from "../db/schema";
@@ -72,9 +72,36 @@ export async function createEvent(scope: UserScope, tz: string, input: EventInpu
   return row;
 }
 
+/**
+ * The other rows the lists show as the same event (e.g. its Outlook copy when you act on the Google one).
+ * Dragging, editing the time and deleting act on all of them, so nothing is left behind showing twice.
+ */
+export async function eventTwins(scope: UserScope, id: string): Promise<(typeof calendarEvents.$inferSelect)[]> {
+  const [ev] = await scope.tx
+    .select()
+    .from(calendarEvents)
+    .where(and(eq(calendarEvents.id, id), eq(calendarEvents.userId, scope.userId)));
+  if (!ev || ev.recurrence) return [];
+  const day = 24 * 3_600_000;
+  const near = await scope.tx
+    .select()
+    .from(calendarEvents)
+    .where(
+      and(
+        eq(calendarEvents.userId, scope.userId),
+        isNull(calendarEvents.recurrence),
+        gte(calendarEvents.startsAt, new Date(ev.startsAt.getTime() - day)),
+        lte(calendarEvents.startsAt, new Date(ev.startsAt.getTime() + day)),
+      ),
+    );
+  const group = mergeCrossSource(near).find((m) => m.mergedIds.includes(id));
+  return near.filter((r) => r.id !== id && group?.mergedIds.includes(r.id));
+}
+
 export async function updateEvent(scope: UserScope, tz: string, id: string, input: EventInput) {
   const d = eventInputSchema.parse(input);
   await assertOwned(scope, courses, d.courseId, "Course");
+  const twins = d.recurrence ? [] : await eventTwins(scope, id);
   const [row] = await scope.tx
     .update(calendarEvents)
     .set({
@@ -90,6 +117,20 @@ export async function updateEvent(scope: UserScope, tz: string, id: string, inpu
     .where(and(eq(calendarEvents.id, id), eq(calendarEvents.userId, scope.userId)))
     .returning();
   if (!row) throw notFound("Event");
+  // Copies shown as this same event follow its new time, so they stay one event.
+  if (twins.length)
+    await scope.tx
+      .update(calendarEvents)
+      .set({ startsAt: row.startsAt, endsAt: row.endsAt, allDay: row.allDay })
+      .where(
+        and(
+          eq(calendarEvents.userId, scope.userId),
+          inArray(
+            calendarEvents.id,
+            twins.map((t) => t.id),
+          ),
+        ),
+      );
   return row;
 }
 
@@ -134,13 +175,18 @@ export async function moveAgendaItem(scope: UserScope, tz: string, origin: "even
     .where(and(eq(calendarEvents.id, id), eq(calendarEvents.userId, scope.userId)));
   if (!ev) throw notFound("Event");
   if (ev.recurrence) throw new ServiceError("Repeating events can't be dragged. Open the event to change it.");
-  // Same local time on the new day (DST-safe); multi-day events keep their length.
-  const from = localDateOf(ev.startsAt, tz);
-  const shift = startOfLocalDay(date, tz).getTime() - startOfLocalDay(from, tz).getTime();
-  const startsAt = ev.allDay ? new Date(ev.startsAt.getTime() + shift) : localToInstant(date, localTimeOf(ev.startsAt, tz), tz);
-  const endsAt = new Date(ev.endsAt.getTime() + (startsAt.getTime() - ev.startsAt.getTime()));
-  const [row] = await scope.tx.update(calendarEvents).set({ startsAt, endsAt }).where(eq(calendarEvents.id, id)).returning();
-  return row;
+  // Same local time on the new day (DST-safe); multi-day events keep their length. Copies shown as the same event move with it.
+  const twins = await eventTwins(scope, id);
+  let moved = ev;
+  for (const e of [ev, ...twins]) {
+    const from = localDateOf(e.startsAt, tz);
+    const shift = startOfLocalDay(date, tz).getTime() - startOfLocalDay(from, tz).getTime();
+    const startsAt = e.allDay ? new Date(e.startsAt.getTime() + shift) : localToInstant(date, localTimeOf(e.startsAt, tz), tz);
+    const endsAt = new Date(e.endsAt.getTime() + (startsAt.getTime() - e.startsAt.getTime()));
+    const [row] = await scope.tx.update(calendarEvents).set({ startsAt, endsAt }).where(eq(calendarEvents.id, e.id)).returning();
+    if (e.id === id) moved = row;
+  }
+  return moved;
 }
 
 export async function deleteEvent(scope: UserScope, id: string) {
@@ -235,7 +281,7 @@ export async function listEventsInRange(scope: UserScope, tz: string, from: stri
     expandOccurrences(event, from, to, tz).map((o) => ({ ...event, ...o, courseColor, courseName })),
   );
   // The same event on Google and Outlook (or Canvas, or LifeFlow) is one event, read time only; no provider row is touched.
-  return mergeCrossSource(occurrences, tz).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+  return mergeCrossSource(occurrences).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
 }
 
 const KIND_COLORS: Record<string, string> = {

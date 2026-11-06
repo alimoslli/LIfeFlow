@@ -464,7 +464,7 @@ export async function syncGoogleCalendar(scope: UserScope, tz: string, now = new
       location: e.location ?? null,
       ...t,
     };
-    const r = await upsertProviderEvent(scope, "google", e.id, { kind: "personal", ...values });
+    const r = await upsertProviderEvent(scope, "google", e.id, values);
     if (r.added) added++;
     else updated++;
   }
@@ -508,7 +508,7 @@ export async function addGoogleEvent(
   if (!created?.id) throw new GoogleError("Google Calendar didn't confirm the event.");
   const t = eventTimes(created, tz);
   // Upsert on Google's id: a sync that already mirrored this event must not leave a second copy.
-  await upsertProviderEvent(scope, "google", created.id, { kind: "personal", title: o.title, location: o.location ?? null, ...t });
+  await upsertProviderEvent(scope, "google", created.id, { title: o.title, location: o.location ?? null, ...t });
   return { googleEventId: created.id, htmlLink: created.htmlLink ?? null };
 }
 

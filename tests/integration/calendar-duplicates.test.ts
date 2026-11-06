@@ -185,6 +185,7 @@ describe("D1: two syncs at once keep one row per event", () => {
 
       const sqlText = readFileSync("drizzle/0038_calendar_events_unique.sql", "utf8");
       for (const stmt of sqlText.split("--> statement-breakpoint")) await client.query(stmt);
+      await client.query("SELECT set_config('app.user_id', $1, true)", [u.user.id]); // the migration resets it; look again as this person
 
       const after = (await client.query("SELECT count(*)::int AS n FROM calendar_events")).rows[0].n;
       expect(before - after).toBe(41); // 41 extra copies removed
@@ -383,6 +384,7 @@ describe("D4/D5: the same event from different places shows once", () => {
       title,
       source,
       startsAt: new Date("2026-11-10T15:00:00Z"),
+      endsAt: new Date("2026-11-10T16:00:00Z"),
       kind: "personal",
       courseId: null,
       recurrence: null,
@@ -390,7 +392,7 @@ describe("D4/D5: the same event from different places shows once", () => {
       location: null,
       updatedAt: new Date("2026-11-01T00:00:00Z"),
     });
-    expect(mergeCrossSource([mk("a", "CS 101", "google"), mk("b", "BIO 202", "outlook")], TZ)).toHaveLength(2);
+    expect(mergeCrossSource([mk("a", "CS 101", "google"), mk("b", "BIO 202", "outlook")])).toHaveLength(2);
   });
 });
 

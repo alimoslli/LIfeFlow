@@ -1536,6 +1536,8 @@ export const pendingActions = pgTable(
     result: jsonb("result").$type<ToolResultRecord>(),
     expiresAt: tstz("expires_at").notNull(),
     resolvedAt: tstz("resolved_at"),
+    /** When a confirm claimed it (status "running"); a run older than the limit counts as lost. */
+    claimedAt: tstz("claimed_at"),
     createdAt: createdAt(),
   },
   (t) => [index("pending_actions_conv_idx").on(t.conversationId), ownerPolicy()],

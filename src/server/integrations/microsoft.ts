@@ -269,7 +269,7 @@ export async function syncMicrosoftCalendar(scope: UserScope, tz: string, now = 
       location: e.location?.displayName?.trim() || (teams ? "Microsoft Teams" : null),
       ...t,
     };
-    const r = await upsertProviderEvent(scope, "outlook", e.id, { kind: "personal", ...values });
+    const r = await upsertProviderEvent(scope, "outlook", e.id, values);
     if (r.added) added++;
     else updated++;
   }

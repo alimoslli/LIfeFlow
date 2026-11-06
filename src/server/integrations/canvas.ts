@@ -458,10 +458,9 @@ async function syncFeed(scope: UserScope, creds: Creds & { feedUrl: string }, f:
         endsAt: end > at ? end : new Date(at.getTime() + 3600_000),
         allDay: !e.start.time,
         location: e.location?.slice(0, 300) ?? null,
-        kind: "class" as const,
-        courseId: label || ref ? await courseFor(ref, label) : null,
       };
-      const r = await upsertProviderEvent(scope, "canvas", providerEventId, fields);
+      const initial = { kind: "class" as const, courseId: label || ref ? await courseFor(ref, label) : null };
+      const r = await upsertProviderEvent(scope, "canvas", providerEventId, fields, initial);
       if (r.added) added++;
     }
   }
