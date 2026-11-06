@@ -1,10 +1,11 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
+import type { Pool } from "pg";
 import { closeDb, getDb } from "@/server/db/client";
 import { attachments, inboxSenders, integrations, syncJobs, transactions, users } from "@/server/db/schema";
 import { encryptSecret } from "@/server/crypto";
 import { createSession, setMoneyUnlockedAt, type SessionUser } from "@/server/auth/sessions";
-import { exportStream } from "@/server/services/data-export";
+import { exportChunks, exportStream } from "@/server/services/data-export";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { createHabit, checkHabit } from "@/server/services/habits";
 import { createMemory } from "@/server/services/memory";
@@ -149,6 +150,108 @@ describe("Download my data", () => {
     expect(csv.status).toBe(200);
     expect(csv.headers.get("content-disposition")).toContain("lifeflow-transactions-");
     expect((await csv.text()).split("\n")[0]).toBe("date,description,merchant,amount,kind,category,account,pending,source");
+  });
+
+  it("reads one snapshot: a bank sync during a long download neither drops a re-posted transaction nor adds one without its account (R5)", async () => {
+    const { run, user } = await makeUser("Rita Snapshot");
+    const TOTAL = 1_200;
+    const ids = await run(async (s) => {
+      const acct = await createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 100_000 });
+      const rows = await s.tx
+        .insert(transactions)
+        .values(
+          Array.from({ length: TOTAL }, (_, i) => ({
+            userId: s.userId,
+            accountId: acct.id,
+            date: "2026-10-01",
+            description: `COFFEE #${i}`,
+            amountCents: -(100 + i),
+            kind: "expense" as const,
+          })),
+        )
+        .returning({ id: transactions.id });
+      return rows.map((r) => r.id).sort();
+    });
+    const lastId = ids[ids.length - 1];
+    const REPOSTED = "00000000-0000-4000-8000-000000000001"; // sorts before every batch already read
+    const LATE = "ffffffff-ffff-4fff-bfff-ffffffffffff"; // sorts after every batch
+
+    let text = "";
+    let synced = false;
+    for await (const chunk of exportChunks(user.id, profileOf(user), 100)) {
+      text += chunk;
+      // Part of the transactions are in the file: the bank re-posts the last one under a new id, and adds a new account with a transaction.
+      if (!synced && text.includes(`"transactions":[{`)) {
+        synced = true;
+        await run(async (s) => {
+          const [old] = await s.tx.delete(transactions).where(eq(transactions.id, lastId)).returning();
+          await s.tx.insert(transactions).values({ ...old, id: REPOSTED });
+          const card = await createManualAccount(s, { name: "New card", type: "credit", subtype: "credit card", currentBalanceCents: 0 });
+          await s.tx
+            .insert(transactions)
+            .values({ id: LATE, userId: s.userId, accountId: card.id, date: "2026-10-02", description: "LATE", amountCents: -500, kind: "expense" });
+        });
+      }
+    }
+    expect(synced).toBe(true);
+    const data = JSON.parse(text) as { accounts: { id: string }[]; transactions: { id: string; accountId: string }[] };
+    // Everything as it was when the download started: nothing missing, nothing added.
+    expect(data.transactions.map((t) => t.id).sort()).toEqual(ids);
+    expect(data.accounts).toHaveLength(1);
+    const accounts = new Set(data.accounts.map((a) => a.id));
+    expect(data.transactions.every((t) => accounts.has(t.accountId))).toBe(true);
+
+    // The next download has the sync.
+    const after = JSON.parse(await readAll(exportStream(user.id, profileOf(user)))) as typeof data;
+    expect(after.transactions.map((t) => t.id)).toEqual(expect.arrayContaining([REPOSTED, LATE]));
+    expect(after.transactions.map((t) => t.id)).not.toContain(lastId);
+    expect(after.accounts).toHaveLength(2);
+  });
+
+  it("lets its database connection go when the download is cancelled or stops being read (R5)", async () => {
+    const { run, user } = await makeUser("Cal Cancel");
+    await run(async (s) => {
+      const acct = await createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 100_000 });
+      await s.tx
+        .insert(transactions)
+        .values(
+          Array.from({ length: 300 }, (_, i) => ({
+            userId: s.userId,
+            accountId: acct.id,
+            date: "2026-10-01",
+            description: `T${i}`,
+            amountCents: -100,
+            kind: "expense" as const,
+          })),
+        );
+    });
+    const pool = (globalThis as unknown as { __bfPool: Pool }).__bfPool;
+    const inUse = () => pool.totalCount - pool.idleCount;
+    const readUntilRows = async (reader: ReadableStreamDefaultReader<Uint8Array>) => {
+      const dec = new TextDecoder();
+      let text = "";
+      while (!text.includes(`"transactions":[{`)) text += dec.decode((await reader.read()).value);
+    };
+
+    // Cancelled mid-download (the browser closed the tab): the snapshot ends and the connection is back in the pool.
+    const cancelled = exportStream(user.id, profileOf(user), 100).getReader();
+    await readUntilRows(cancelled);
+    expect(inUse()).toBe(1);
+    await cancelled.cancel();
+    expect(inUse()).toBe(0);
+
+    // Nobody reads it any more: the connection is let go after the idle time, and the download fails rather than looking complete.
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const stalled = exportStream(user.id, profileOf(user), 100, 50).getReader();
+    await readUntilRows(stalled);
+    await new Promise((r) => setTimeout(r, 200));
+    expect(inUse()).toBe(0);
+    await expect(
+      (async () => {
+        for (;;) if ((await stalled.read()).done) return;
+      })(),
+    ).rejects.toThrow();
+    errors.mockRestore();
   });
 
   it("works as before when the Money lock is off, and refuses anyone signed out", async () => {

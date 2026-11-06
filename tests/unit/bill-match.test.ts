@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   PAID_EARLY_DAYS,
   amountsClose,
+  billVaries,
   nameRelation,
   paidOccurrences,
   scheduleGap,
@@ -114,6 +115,16 @@ describe("a bill tracked under the user's own name and paid by transfer (review 
   });
 });
 
+describe("a bill whose amount usually moves (R1)", () => {
+  it("is told by its found series, or by its category before the bank shows one", () => {
+    for (const category of ["Utilities", "Phone", "Internet", " internet "]) expect(billVaries([], category), category).toBe(true);
+    for (const category of ["Streaming", "Rent", "Insurance", "Housing", "", null, undefined]) expect(billVaries([], category), String(category)).toBe(false);
+    // Once the bank shows the bill, its own charges decide.
+    expect(billVaries([found({ variableAmount: false })], "Utilities")).toBe(false);
+    expect(billVaries([found({ variableAmount: true })], "Rent")).toBe(true);
+  });
+});
+
 describe("bill matching helpers", () => {
   it("relates names by equal keys or every word of one inside the other", () => {
     expect(nameRelation(["netflix"], ["netflix", "netflix com ca"])).toBe("same");
@@ -173,6 +184,16 @@ describe("a bill that already posted is paid for that cycle (A3)", () => {
     expect(paid([due({ varies: false })], [charge({ amountCents: -6_906 })])).toEqual([]);
   });
 
+  it("counts a utility, phone or internet bill under the tracked amount before the bank has its history (R1)", () => {
+    // City Utilities, tracked at $82: its first charge is $69.06 today, and no series is found yet.
+    expect(paid([due({ varies: billVaries([], "Utilities") })], [charge({ amountCents: -6_906 })])).toEqual([0]);
+    expect(paid([due({ varies: billVaries([], "Streaming") })], [charge({ amountCents: -6_906 })])).toEqual([]);
+    // Still only under the bill's own keys: a utility with a longer name at that amount isn't this one.
+    expect(
+      paid([due({ varies: true })], [charge({ merchantName: "City Utilities Water Dept", description: "CITY UTILITIES WATER DEPT", amountCents: -6_906 })]),
+    ).toEqual([]);
+  });
+
   it("counts a bank line under another name only through a series already matched to the item", () => {
     const parkview = charge({ merchantName: "Parkview Apartments", description: "PARKVIEW APARTMENTS RENT", amountCents: -95_000 });
     expect(paid([due({ keys: ["rent parkview apartments"], amountCents: -95_000 })], [parkview])).toEqual([]);
@@ -222,5 +243,48 @@ describe("a bill that already posted is paid for that cycle (A3)", () => {
     const internet = due({ keys: ["verizon"], varies: true, amountCents: -7_000 });
     expect(paid([phone, internet], [charge({ merchantName: "Verizon", description: "VERIZON", amountCents: -7_000 })])).toEqual([1]);
     expect(paid([due({}), due({})], [charge({})])).toEqual([0]);
+  });
+});
+
+describe("a charge pays the due date it belongs to, never the next one (R2)", () => {
+  const netflix = (p: Partial<DueOccurrence>): DueOccurrence => ({ keys: ["netflix"], varies: false, frequency: "monthly", date: "2026-11-15", amountCents: -1_549, ...p });
+  const nf = (date: string, p: Partial<PostedCharge> = {}): PostedCharge => ({
+    date,
+    amountCents: -1_549,
+    merchantName: "Netflix",
+    description: "NETFLIX.COM",
+    kind: "expense",
+    pending: false,
+    ...p,
+  });
+  const paid = (d: DueOccurrence[], c: PostedCharge[]) => [...paidOccurrences(d, c)].sort();
+
+  it("two $15.49 Netflix plans, one tracked: the other plan's charge a week before the due date doesn't pay it", () => {
+    // Last month both plans billed (the 7th and the 15th) and the 15th paid the tracked one: Nov 7 is the other plan again.
+    expect(paid([netflix({})], [nf("2026-10-07"), nf("2026-10-15"), nf("2026-11-07")])).toEqual([]);
+    // The tracked plan's own charge still pays it.
+    expect(paid([netflix({})], [nf("2026-10-07"), nf("2026-10-15"), nf("2026-11-07"), nf("2026-11-15")])).toEqual([0]);
+    // With no earlier cycle to tell them apart, a charge 8 days early still pays it, as before.
+    expect(paid([netflix({})], [nf("2026-11-07")])).toEqual([0]);
+  });
+
+  it("never lets a charge of another found series pay it", () => {
+    const tracked = netflix({ series: ["netflix~d15"] });
+    expect(paid([tracked], [nf("2026-11-07", { series: "netflix~d7" })])).toEqual([]);
+    expect(paid([tracked], [nf("2026-11-13", { series: "netflix~d15" })])).toEqual([0]);
+    expect(paid([tracked], [nf("2026-11-13")])).toEqual([0]);
+  });
+
+  it("pays the due date it's nearest, even one just before the range, so it can't pay the next bill too", () => {
+    // Both plans tracked; the one due Nov 7 is already past when this is read on Nov 8.
+    expect(paid([netflix({ date: "2026-11-07" }), netflix({})], [nf("2026-11-07")])).toEqual([0]);
+  });
+
+  it("still counts a bill paid early every cycle, and this cycle's charge after a double charge last cycle", () => {
+    const rent = (date: string) => nf(date, { merchantName: null, description: "RENT CAMPUS EDGE APTS", amountCents: -120_000 });
+    const due1 = netflix({ keys: ["rent campus edge apts"], date: "2026-12-01", amountCents: -120_000 });
+    expect(paid([due1], [rent("2026-09-24"), rent("2026-10-24"), rent("2026-11-24")])).toEqual([0]);
+    expect(paid([netflix({})], [nf("2026-10-15"), nf("2026-10-15"), nf("2026-11-15")])).toEqual([0]);
+    expect(paid([netflix({})], [nf("2026-10-14"), nf("2026-10-15"), nf("2026-11-14")])).toEqual([0]);
   });
 });
