@@ -23,12 +23,16 @@ function basicPassword(header: string | null) {
  * How the inbound email webhook proved it knows INBOX_WEBHOOK_SECRET.
  * "header": basic auth (Postmark: https://inbox:<secret>@<site>/api/inbox/email) or the x-inbox-secret header.
  * "query": the old ?key=<secret> form, which lands in access logs; still accepted until the live setup moves.
- * null: refused. A header that's present but wrong is refused even if the URL also carries a key.
+ * null: refused. When either header is present (even malformed or not Basic), only the headers count: a key in the URL never rescues it.
  */
 export function inboxWebhookAuth(req: Request, secret = process.env.INBOX_WEBHOOK_SECRET ?? ""): "header" | "query" | null {
   if (!secret) return null;
-  const fromHeader = basicPassword(req.headers.get("authorization")) ?? req.headers.get(INBOX_SECRET_HEADER);
-  if (fromHeader !== null) return sameSecret(fromHeader, secret) ? "header" : null;
+  const authorization = req.headers.get("authorization");
+  const custom = req.headers.get(INBOX_SECRET_HEADER);
+  if (authorization !== null || custom !== null) {
+    const given = [basicPassword(authorization), custom];
+    return given.some((v) => v !== null && sameSecret(v, secret)) ? "header" : null;
+  }
   const key = new URL(req.url).searchParams.get("key");
   if (key !== null) return sameSecret(key, secret) ? "query" : null;
   return null;

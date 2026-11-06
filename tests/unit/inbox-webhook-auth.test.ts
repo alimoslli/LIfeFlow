@@ -28,8 +28,12 @@ describe("inbox webhook secret", () => {
     expect(inboxWebhookAuth(req(`${URL_}?key=wrong`), SECRET)).toBeNull();
     expect(inboxWebhookAuth(req(`${URL_}?key=${SECRET}x`), SECRET)).toBeNull();
     expect(inboxWebhookAuth(req(), SECRET)).toBeNull();
-    // A wrong header isn't rescued by a right key in the URL.
+    // Any header means the header path only: a wrong, malformed or non-Basic header isn't rescued by a right key in the URL.
     expect(inboxWebhookAuth(req(`${URL_}?key=${SECRET}`, { "x-inbox-secret": "wrong" }), SECRET)).toBeNull();
+    expect(inboxWebhookAuth(req(`${URL_}?key=${SECRET}`, { authorization: basic("inbox", "wrong") }), SECRET)).toBeNull();
+    expect(inboxWebhookAuth(req(`${URL_}?key=${SECRET}`, { authorization: `Bearer ${SECRET}` }), SECRET)).toBeNull();
+    expect(inboxWebhookAuth(req(`${URL_}?key=${SECRET}`, { authorization: "Basic !!!not-base64" }), SECRET)).toBeNull();
+    expect(inboxWebhookAuth(req(`${URL_}?key=${SECRET}`, { authorization: "" }), SECRET)).toBeNull();
     expect(inboxWebhookAuth(req(URL_, { authorization: basic("inbox", "") }), "")).toBeNull();
     expect(inboxWebhookAuth(req(`${URL_}?key=`), "")).toBeNull();
   });
