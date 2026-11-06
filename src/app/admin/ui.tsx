@@ -43,3 +43,21 @@ export function Notice({ done, error }: { done?: string; error?: string }) {
     </>
   );
 }
+
+/** A named part of a page: an h2 with an anchor id, so a page can hold several parts without tabs. */
+export function PageSection({ id, title, sub, action, children }: { id: string; title: string; sub?: ReactNode; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section id={id} aria-labelledby={`${id}-title`} className="flex scroll-mt-6 flex-col gap-4">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h2 id={`${id}-title`} className="font-display text-[1.5rem] leading-tight font-medium tracking-tight">
+            {title}
+          </h2>
+          {sub && <p className="mt-1 text-sm text-text-2">{sub}</p>}
+        </div>
+        {action}
+      </header>
+      {children}
+    </section>
+  );
+}

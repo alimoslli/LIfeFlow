@@ -36,7 +36,7 @@ export default async function EmployeePage({
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-col gap-2">
-        <Link href="/admin/hq" className="inline-flex min-h-11 items-center text-sm text-text-2">
+        <Link href="/admin" className="inline-flex min-h-11 items-center text-sm text-text-2">
           ← Back to the office
         </Link>
         <div className="flex flex-wrap items-center gap-3">
@@ -141,7 +141,7 @@ export default async function EmployeePage({
           title="Needs your yes"
           action={
             d.approvals.length ? (
-              <Link href="/admin/hq/approvals" className="inline-flex min-h-11 items-center text-sm text-accent">
+              <Link href="/admin/work#approvals" className="inline-flex min-h-11 items-center text-sm text-accent">
                 Inbox
               </Link>
             ) : undefined
