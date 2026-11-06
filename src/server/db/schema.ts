@@ -155,6 +155,8 @@ export const users = pgTable("users", {
   /** Authenticator-app (TOTP) secret, AES-GCM encrypted. Set while setting up; active once totpEnabledAt is set. */
   totpSecret: text("totp_secret"),
   totpEnabledAt: tstz("totp_enabled_at"),
+  /** Set when a password reset is used. Email sign-in codes stay off until a sign-in with the authenticator, a backup code or a passkey (ADR 0009 addendum). */
+  emailCodesBlockedAt: tstz("email_codes_blocked_at"),
   /** Last accepted 30-second time step, so a code can't be used twice. */
   totpLastStep: integer("totp_last_step"),
   /** Random part of the personal forwarding address (u-<token>@<INBOX_DOMAIN>). */

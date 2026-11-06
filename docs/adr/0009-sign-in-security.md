@@ -38,9 +38,9 @@ The owner was locked out: their account had two-step sign-in on, they couldn't f
 
 **Tightened after a fresh-eyes security review (same day):**
 - **Password sign-in only.** Email codes are offered only when the first step was the password (`login_challenges.first_factor`, migration 0042). After Google or Apple sign-in the inbox is usually the same account, so it can't count as a second factor.
-- **Not right after a reset.** They're refused for 7 days after a password reset, so control of the inbox alone (reset link, then email code) can never get past two-step sign-in.
+- **Not after a reset, until a strong sign-in.** A password reset sets `users.email_codes_blocked_at` (migration 0043). Email codes stay off until the person signs in once with their authenticator, a backup code or a passkey. Waiting doesn't help (a second review found a fixed 7 days could simply be waited out), so control of the inbox alone can never get past two-step sign-in.
 - **Truly single use.** The challenge is removed with `delete … returning`, so two simultaneous requests can't both start a session.
 - **The sign-in cookie lasts as long as the code.** It's refreshed when a code is sent.
 - **The sign-in never waits on the email service.** The notice is sent with `after()`, and every Resend call has a 10-second limit.
 
-**Trade-off, accepted by the owner:** whoever controls the account's email AND knows the current password (not reset in the last 7 days) can get in, admin included, because the admin check looks at the account's two-step setup, not at how this session signed in. Authenticator codes, backup codes and passkeys stay the stronger options.
+**Trade-off, accepted by the owner:** whoever controls the account's email AND knows the current password (not set through a reset since their last strong sign-in) can get in, admin included, because the admin check looks at the account's two-step setup, not at how this session signed in. Authenticator codes, backup codes and passkeys stay the stronger options.

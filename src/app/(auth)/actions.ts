@@ -104,8 +104,10 @@ export async function sendLoginEmailCode(_prev: EmailCodeState): Promise<EmailCo
   if (!r.ok) {
     if (r.reason === "too_many") return { error: "We've sent 3 codes for this sign-in. Use the newest one, or sign in again." };
     if (r.reason === "not_password") return { error: "Email codes work after signing in with your email and password. Sign in that way to use one." };
-    if (r.reason === "recent_reset")
-      return { error: "For safety, email codes are off for 7 days after a password reset. Use your authenticator app, a backup code or a passkey." };
+    if (r.reason === "after_reset")
+      return {
+        error: "For safety, email codes are off after a password reset until you sign in once with your authenticator app, a backup code or a passkey.",
+      };
     jar.delete(CHALLENGE_COOKIE);
     return { expired: true, error: "This sign-in expired. Please sign in again." };
   }

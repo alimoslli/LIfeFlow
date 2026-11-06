@@ -1,8 +1,8 @@
 import { createHash, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
-import { and, eq, gte, isNotNull, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, sql } from "drizzle-orm";
 import { Secret, TOTP } from "otpauth";
 import type { Database } from "../db/client";
-import { loginChallenges, passwordResets, recoveryCodes, users } from "../db/schema";
+import { loginChallenges, recoveryCodes, users } from "../db/schema";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { verifyPassword } from "./password";
 
@@ -18,8 +18,8 @@ import { verifyPassword } from "./password";
  * - "Email me a code" (owner, 2026-11-06, after a lockout): after the password step, a 6-digit code can be emailed to
  *   the account's address. It is stored only as a hash bound to that one challenge, works once, expires in 10 minutes,
  *   shares the challenge's 5 tries, and at most 3 can be sent per sign-in. Only after the password step (never after
- *   Google or Apple, whose inbox is the same one), and not for 7 days after a password reset (an inbox alone must
- *   never be enough to get past two-step sign-in).
+ *   Google or Apple, whose inbox is the same one), and not after a password reset until the person signs in once with
+ *   the authenticator, a backup code or a passkey (an inbox alone must never be enough to get past two-step sign-in).
  */
 
 export class TwoFactorError extends Error {}
@@ -31,8 +31,6 @@ export const EMAIL_CODE_TTL_MS = 10 * 60_000;
 export const MAX_EMAIL_SENDS = 3;
 /** A sign-in that asked for an email code may run this long in total, however many codes were sent. */
 const CHALLENGE_MAX_LIFE_MS = 30 * 60_000;
-/** No email codes this long after a password reset, so a reset email plus an email code can't take an account. */
-export const EMAIL_CODE_RESET_COOLDOWN_MS = 7 * 24 * 3_600_000;
 const RECOVERY_CODE_COUNT = 10;
 const PERIOD = 30;
 
@@ -184,7 +182,7 @@ export function maskEmail(email: string) {
 }
 
 export type EmailCodeResult =
-  { ok: true; to: string; email: string; code: string; expiresAt: Date } | { ok: false; reason: "expired" | "too_many" | "not_password" | "recent_reset" };
+  { ok: true; to: string; email: string; code: string; expiresAt: Date } | { ok: false; reason: "expired" | "too_many" | "not_password" | "after_reset" };
 
 /**
  * Makes a fresh 6-digit code for a pending sign-in (the password step already passed). The caller emails it and only
@@ -197,12 +195,8 @@ export async function issueLoginEmailCode(db: Database, token: string, now = Dat
   const [c] = await db.select().from(loginChallenges).where(eq(loginChallenges.id, id));
   if (!c || c.expiresAt.getTime() < now) return { ok: false, reason: "expired" };
   if (c.firstFactor !== "password") return { ok: false, reason: "not_password" };
-  const [reset] = await db
-    .select({ id: passwordResets.id })
-    .from(passwordResets)
-    .where(and(eq(passwordResets.userId, c.userId), isNotNull(passwordResets.usedAt), gte(passwordResets.usedAt, new Date(now - EMAIL_CODE_RESET_COOLDOWN_MS))))
-    .limit(1);
-  if (reset) return { ok: false, reason: "recent_reset" };
+  const [owner] = await db.select({ blocked: users.emailCodesBlockedAt }).from(users).where(eq(users.id, c.userId));
+  if (owner?.blocked) return { ok: false, reason: "after_reset" };
   if (c.emailSends >= MAX_EMAIL_SENDS) return { ok: false, reason: "too_many" };
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   const expiresAt = new Date(Math.min(now + EMAIL_CODE_TTL_MS, c.createdAt.getTime() + CHALLENGE_MAX_LIFE_MS));
@@ -253,5 +247,7 @@ export async function completeLoginChallenge(db: Database, token: string, code: 
   // Only the request that actually removes the challenge wins, so one code can never start two sessions.
   const gone = await db.delete(loginChallenges).where(eq(loginChallenges.id, id)).returning({ id: loginChallenges.id });
   if (!gone.length) return { ok: false, reason: "expired" };
+  // A sign-in with the authenticator or a backup code proves the person still has their strong factor.
+  if (method !== "email") await db.update(users).set({ emailCodesBlockedAt: null }).where(eq(users.id, c.userId));
   return { ok: true, userId: c.userId, method };
 }

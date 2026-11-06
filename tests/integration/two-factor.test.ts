@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { Secret, TOTP } from "otpauth";
 import { closeDb, getDb } from "@/server/db/client";
-import { loginChallenges, passwordResets, users } from "@/server/db/schema";
+import { loginChallenges, users } from "@/server/db/schema";
 import {
   beginTotpSetup,
   checkTotp,
@@ -10,7 +10,6 @@ import {
   confirmTotpSetup,
   createLoginChallenge,
   disableTwoFactor,
-  EMAIL_CODE_RESET_COOLDOWN_MS,
   issueLoginEmailCode,
   maskEmail,
   MAX_CHALLENGE_ATTEMPTS,
@@ -194,17 +193,22 @@ describe("email me a code (owner, 2026-11-06)", () => {
     expect((await issueLoginEmailCode(db, viaPassword.token, T0)).ok).toBe(true);
   });
 
-  it("is off for 7 days after a password reset, so an inbox alone can't get past two-step", async () => {
-    const { user, db } = await enabledUser();
-    const now = Date.now();
-    await db.insert(passwordResets).values({ id: `r-${user.id}`, userId: user.id, expiresAt: new Date(now), usedAt: new Date(now - 2 * 24 * 3_600_000) });
-    const a = await createLoginChallenge(db, user.id, "password", now);
-    expect(await issueLoginEmailCode(db, a.token, now)).toEqual({ ok: false, reason: "recent_reset" });
+  it("is off after a password reset until a sign-in with the authenticator, so an inbox alone never gets past two-step", async () => {
+    const { user, db, secret } = await enabledUser();
     await db
-      .update(passwordResets)
-      .set({ usedAt: new Date(now - EMAIL_CODE_RESET_COOLDOWN_MS - 60_000) })
-      .where(eq(passwordResets.userId, user.id));
-    expect((await issueLoginEmailCode(db, a.token, now)).ok).toBe(true);
+      .update(users)
+      .set({ emailCodesBlockedAt: new Date(T0) })
+      .where(eq(users.id, user.id));
+    const blocked = await createLoginChallenge(db, user.id, "password", T0);
+    expect(await issueLoginEmailCode(db, blocked.token, T0)).toEqual({ ok: false, reason: "after_reset" });
+    // Waiting doesn't help: still off a month later.
+    const monthLater = await createLoginChallenge(db, user.id, "password", T0 + 30 * 24 * 3_600_000);
+    expect(await issueLoginEmailCode(db, monthLater.token, T0 + 30 * 24 * 3_600_000)).toEqual({ ok: false, reason: "after_reset" });
+    // One sign-in with the authenticator turns email codes back on.
+    const strong = await createLoginChallenge(db, user.id, "password", T0 + MIN);
+    expect(await completeLoginChallenge(db, strong.token, code(secret, T0 + 2 * MIN), T0 + 2 * MIN)).toMatchObject({ ok: true, method: "totp" });
+    const again = await createLoginChallenge(db, user.id, "password", T0 + 3 * MIN);
+    expect((await issueLoginEmailCode(db, again.token, T0 + 3 * MIN)).ok).toBe(true);
   });
 
   it("one code can never start two sessions, even when sent twice at the same moment", async () => {
