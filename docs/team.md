@@ -75,4 +75,6 @@ The owner asked for the agents to keep running: audit the app (phone and web), f
 
 **Everything is checked twice:** once by the tests and once by someone who didn't write it. Research claims are re-checked in the next round.
 
+**Rounds report into HQ (owner, 2026-11-06).** Every scheduled round follows `docs/hq/workflow.md`: it reads the owner's missions and decisions from HQ, makes each piece of work a mission, sends real changes as approvals (with a push), and ends with a check-in and the report as an activity line. HQ is a mirror, never a blocker.
+
 **The owner gets one short report per round:** what was fixed, what was found, the yes or no list, and anything blocked.

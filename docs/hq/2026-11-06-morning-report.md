@@ -1,6 +1,6 @@
 # HQ build, night of 2026-11-06: morning report
 
-Branch `claude/sharp-lovelace-8fr6z5`. Nothing is live and nothing is on main.
+Branch `claude/sharp-lovelace-8fr6z5`. **Update, later on 2026-11-06:** with the owner's yes, HQ is on main (`df6a462`), so Vercel deploys it to lifeflowweb.com/admin/hq. The night round and research now report into HQ (see `docs/hq/workflow.md`).
 
 ## What's done
 - **LifeFlow HQ Phase 1 works** at `/admin/hq` (owner-only, the same sign-in rule as admin):
