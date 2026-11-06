@@ -34,7 +34,7 @@ Branch `claude/sharp-lovelace-8fr6z5`. Nothing is live and nothing is on main.
 
 ## Needs you (yes or no)
 1. **The look:** the screenshots in the chat. Yes means it can go live.
-2. **LF V3's unsaved work:** open LF V3 and say yes. That chat is waiting to commit and push the unfinished "Same bill?" and search work, which today exists only on its cloud machine.
+2. **LF V3's unsaved work: done.** With your yes, LF V3 committed its unfinished work and pushed both branches, which are now safe on GitHub: `fix-gmail-items` at 1270db3 and `fix-search` at c8594f8. Neither is reviewed or tested yet; the next steps are in the handover.
 3. **Going live, in this order** (after your yes):
    1. Ship LF V3's verified fixes first: calendar duplicates and search as you type. The HQ branch includes them, and their migrations 0038 and 0039 must reach production before HQ's 0040.
    2. Merge the HQ branch. The deploy runs the migration.
