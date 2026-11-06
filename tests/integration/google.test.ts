@@ -165,7 +165,7 @@ describe("Gmail", () => {
           step === 0 ? { toolCalls: [{ name: "send_email", args: { to: "prof@uni.edu", subject: "Hi", body: "Hello" } }] } : { text: "Press Confirm." },
         ),
       });
-      expect(events.find((e) => e.type === "confirmation")).toMatchObject({ summary: 'Send email to prof@uni.edu: "Hi"?' });
+      expect(events.find((e) => e.type === "confirmation")).toMatchObject({ summary: 'Send email to prof@uni.edu: "Hi"?\n\nHello' });
       expect(hits.filter((h) => h.includes("gmail"))).toEqual([]);
     } finally {
       globalThis.fetch = realFetch;

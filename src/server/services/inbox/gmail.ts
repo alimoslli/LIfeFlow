@@ -3,12 +3,15 @@ import { inboxItems } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { getGoogleConnection, readEmail, searchEmail } from "../../integrations/google";
 import { extractDocument, extractionClient } from "./extract";
-import { processDocument } from "./index";
+import { senderAuthenticated } from "./email-auth";
+import { processDocument, recordIgnored } from "./index";
 
 /** Recent mail that's likely school, bills or work. Promotions and social are skipped. */
 export const GMAIL_FILING_QUERY =
   'newer_than:2d -category:promotions -category:social (syllabus OR due OR exam OR deadline OR quiz OR "rescheduled" OR "moved to" OR bill OR invoice OR "payment due" OR statement OR shift OR schedule OR paystub OR "pay stub")';
 const MAX_PER_RUN = 10;
+/** The only Authentication-Results we trust for Gmail messages: the one Gmail itself added. */
+const GMAIL_AUTHSERV = "mx.google.com";
 
 /**
  * Files new school, bill and work emails from the user's Gmail (only when they turned
@@ -41,6 +44,15 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
     if (seen.has(`gmail:${m.id}`)) continue;
     checked++;
     const mail = await readEmail(scope, m.id, deps.fetch);
+    const address = (mail.from.match(/<([^>]+)>/)?.[1] ?? mail.from).trim().toLowerCase();
+    if (!senderAuthenticated(mail.authHeaders, address, { authserv: GMAIL_AUTHSERV })) {
+      const [ig] = await recordIgnored(scope, address, mail.subject, "Gmail couldn't confirm this was really sent by this address (SPF/DKIM failed).");
+      await scope.tx
+        .update(inboxItems)
+        .set({ externalId: `gmail:${m.id}` })
+        .where(eq(inboxItems.id, ig.id));
+      continue;
+    }
     const row = await processDocument(scope, tz, today, { channel: "email", from: mail.from, subject: mail.subject, text: mail.body, files: [] }, deps.extract);
     await scope.tx
       .update(inboxItems)

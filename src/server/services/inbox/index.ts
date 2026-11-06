@@ -333,9 +333,10 @@ export async function processDocument(scope: UserScope, tz: string, today: strin
 
 /** Logs an email that was turned away (only who/what, never the content). */
 export async function recordIgnored(scope: UserScope, from: string, subject: string, reason: string) {
-  await scope.tx
+  return scope.tx
     .insert(inboxItems)
-    .values({ userId: scope.userId, channel: "email", fromAddress: from.slice(0, 200), subject: subject.slice(0, 300), status: "ignored", reason });
+    .values({ userId: scope.userId, channel: "email", fromAddress: from.slice(0, 200), subject: subject.slice(0, 300), status: "ignored", reason })
+    .returning({ id: inboxItems.id });
 }
 
 export async function undoInboxItem(scope: UserScope, id: string) {
