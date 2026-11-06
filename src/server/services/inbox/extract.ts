@@ -13,7 +13,7 @@ export type Extraction = {
   summary: string;
   bill: { payee: string; amount_usd: number; due_date: string | null; repeats: "none" | "weekly" | "monthly" | "yearly" } | null;
   receipt: { merchant: string; total_usd: number; date: string | null } | null;
-  school: { course: string; title: string; due_date: string | null; due_time: string | null } | null;
+  school: { course: string; title: string; due_date: string | null; due_time: string | null; old_due_date?: string | null } | null;
   travel: {
     destination: string | null;
     items: {
@@ -41,7 +41,7 @@ const SCHEMA = obj({
   summary: str,
   bill: nullable(obj({ payee: str, amount_usd: num, due_date: nstr, repeats: { type: "string", enum: ["none", "weekly", "monthly", "yearly"] } })),
   receipt: nullable(obj({ merchant: str, total_usd: num, date: nstr })),
-  school: nullable(obj({ course: str, title: str, due_date: nstr, due_time: nstr })),
+  school: nullable(obj({ course: str, title: str, due_date: nstr, due_time: nstr, old_due_date: nstr })),
   travel: nullable(
     obj({
       destination: nstr,
@@ -65,6 +65,7 @@ const SCHEMA = obj({
 const INSTRUCTIONS = `You file documents for a personal-organizer app. Read the document and fill the schema with facts that are written in it. Never guess: use null when something isn't stated.
 - First decide what the document is from what is written in it. type: bill (an amount the user owes with a due date), receipt (a purchase already paid), assignment or exam (one piece of school work with a due date), flight/hotel/train (bookings: put every booking in travel.items), pay_stub (wages paid), class_schedule (a timetable or list of courses with days, times or rooms), work_schedule (shifts with names, days and hours), other.
 - bill, receipt and pay_stub need a dollar amount written in the document. A schedule, syllabus, list or screenshot without a printed amount is never a bill or receipt. When unsure, use other.
+- For an exam or assignment that is moved, rescheduled or postponed, school.due_date is the new date and school.old_due_date the date it had before, when the email states it (else null). Use the exam's own name in school.title.
 - For class_schedule and work_schedule, leave bill, receipt, school, travel and pay null and describe it in summary.
 - Dates as YYYY-MM-DD; times as 24h HH:mm; travel start/end as YYYY-MM-DDTHH:mm in local time at that place, or just YYYY-MM-DD.
 - Amounts in US dollars as numbers. summary: one plain sentence.

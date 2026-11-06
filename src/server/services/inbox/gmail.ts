@@ -41,11 +41,14 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
     if (seen.has(`gmail:${m.id}`)) continue;
     checked++;
     const mail = await readEmail(scope, m.id, deps.fetch);
-    const row = await processDocument(scope, tz, today, { channel: "email", from: mail.from, subject: mail.subject, text: mail.body, files: [] }, deps.extract);
-    await scope.tx
-      .update(inboxItems)
-      .set({ externalId: `gmail:${m.id}` })
-      .where(eq(inboxItems.id, row.id));
+    // The Message-ID is what Gmail's copy and a forward that kept it have in common (see processDocument).
+    const row = await processDocument(
+      scope,
+      tz,
+      today,
+      { channel: "email", from: mail.from, subject: mail.subject, text: mail.body, files: [], externalId: `gmail:${m.id}`, messageId: mail.messageId },
+      deps.extract,
+    );
     if (row.status === "filed") filed++;
   }
   return { filed, checked };

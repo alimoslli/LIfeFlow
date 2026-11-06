@@ -24,6 +24,7 @@ const STATUS = {
   ignored: { icon: CircleSlash, tone: "text-muted", label: "Ignored" },
   failed: { icon: AlertCircle, tone: "text-danger", label: "Couldn't read" },
   undone: { icon: Undo2, tone: "text-muted", label: "Undone" },
+  duplicate: { icon: CircleSlash, tone: "text-muted", label: "Already filed" },
   processing: { icon: FileText, tone: "text-muted", label: "Reading" },
 } as const;
 

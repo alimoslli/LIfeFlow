@@ -716,6 +716,8 @@ export const recurringItems = pgTable(
     /** A free trial that turns paid on this date. */
     trialEndsOn: date("trial_ends_on", { mode: "string" }),
     keptAt: tstz("kept_at"),
+    /** Earlier prices, newest last: `amountCents` was charged until `until` (the date a price change took over). Signed like amountCents. */
+    priceHistory: jsonb("price_history").$type<{ amountCents: number; until: string }[]>().notNull().default([]),
     /** Official cancellation steps found by a live web search (answer + cited sources). */
     cancelHelp: jsonb("cancel_help").$type<{ answer: string; sources: { title: string; url: string }[]; at: string } | null>(),
     createdAt: createdAt(),
@@ -1339,10 +1341,16 @@ export const inboxSenders = pgTable(
 );
 
 export type InboxFiled = {
-  kind: "transaction" | "recurring" | "task" | "assignment" | "event" | "paycheck";
+  /**
+   * The `*_update` kinds changed a row that already existed instead of adding one (a bill's amount and due date, an
+   * exam's date, a note on a bank transaction): Undo puts `prev` back and never deletes the row.
+   */
+  kind: "transaction" | "recurring" | "task" | "assignment" | "event" | "paycheck" | "recurring_update" | "assignment_update" | "transaction_note";
   id: string;
   label: string;
   href?: string;
+  /** What the row held before an update (Undo restores it). */
+  prev?: Record<string, unknown>;
 };
 
 export const inboxItems = pgTable(
@@ -1356,7 +1364,7 @@ export const inboxItems = pgTable(
     fromAddress: text("from_address"),
     subject: text("subject"),
     receivedAt: tstz("received_at").notNull().defaultNow(),
-    status: text("status").$type<"processing" | "filed" | "needs_review" | "ignored" | "failed" | "undone">().notNull().default("processing"),
+    status: text("status").$type<"processing" | "filed" | "needs_review" | "ignored" | "failed" | "undone" | "duplicate">().notNull().default("processing"),
     type: text("type"),
     summary: text("summary"),
     /** Why it wasn't filed (e.g. not from a verified address). */
@@ -1364,10 +1372,22 @@ export const inboxItems = pgTable(
     filed: jsonb("filed").$type<InboxFiled[]>().notNull().default([]),
     extracted: jsonb("extracted").$type<Record<string, unknown> | null>(),
     attachmentIds: jsonb("attachment_ids").$type<string[]>().notNull().default([]),
+    /** The email's own Message-ID header (no angle brackets): a forward that keeps it, and the same mail seen through Gmail, are one email. */
+    messageId: text("message_id"),
+    /** What the document says (type, payee or class, amount, date): a re-typed forward of a bill already filed has the same key. */
+    contentSig: text("content_sig"),
+    /** Set when status is "duplicate": the inbox item that already filed this. */
+    duplicateOf: uuid("duplicate_of"),
     createdAt: createdAt(),
   },
   (t) => [
     index("inbox_items_user_idx").on(t.userId, t.receivedAt),
+    index("inbox_items_message_idx")
+      .on(t.userId, t.messageId)
+      .where(sql`message_id is not null`),
+    index("inbox_items_content_sig_idx")
+      .on(t.userId, t.contentSig)
+      .where(sql`content_sig is not null`),
     uniqueIndex("inbox_items_external_uq")
       .on(t.userId, t.externalId)
       .where(sql`external_id is not null`),

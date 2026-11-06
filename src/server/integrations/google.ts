@@ -328,7 +328,7 @@ export async function syncGoogleEmail(scope: UserScope, f: Fetch = fetch) {
 export async function readEmail(scope: UserScope, id: string, f: Fetch = fetch) {
   if (!/^[A-Za-z0-9_-]{6,64}$/.test(id)) throw new GoogleError("That doesn't look like a Gmail message id.");
   const m = await api<GmailMessage>(scope, `${GMAIL}/messages/${id}?format=full`, {}, f);
-  return { ...summary(m), to: header(m, "To"), cc: header(m, "Cc"), body: truncate(messageText(m.payload), 20_000) };
+  return { ...summary(m), messageId: header(m, "Message-ID"), to: header(m, "To"), cc: header(m, "Cc"), body: truncate(messageText(m.payload), 20_000) };
 }
 
 const clean = (s: string) => s.replace(/[\r\n]+/g, " ").trim();
