@@ -2,6 +2,16 @@
 
 The owner's full playbook (product, brand, voice, approved copy) is the artifact https://claude.ai/artifact/Xngzg4E3JKBE6fEvVrTpA8. This file is the part every coding session must follow. Keep both in sync when either changes.
 
+## The vision (the company in one page)
+LifeFlow is a personal assistant with one job: serve you and help you get the most out of your time.
+- **Built by someone living the problem.** The founder carries seven classes a semester, working 30 hours a week at a retail job, side projects and transfer applications, all at once. No app connected any of it, so he built the one he needed, and now builds it for everyone with a full life. He keeps asking users what they need.
+- **One job.** Not research, not websites, not "anything". Every feature helps you run your life.
+- **Always connected.** Classes, shifts, money, calendar and health are connected at the same time, so it finds the dots, connects them and acts: a shift that clashes with an exam, a bill before payday.
+- **Helps without being asked.** It notices first, a few quiet messages a day, with the numbers behind each one.
+- **Why not a big AI assistant?** Big assistants try to do everything for everyone. LifeFlow does one thing: it's your personal assistant, connected to your classes, shifts, money and calendar all the time, so it sees how your whole week fits together and helps before you ask. And it's built by a student who works 30 hours a week and carries a full course load, who uses it every day and builds what people like him actually need.
+- **Short line:** "Built by a student solving his own problem, for everyone with a full life."
+- Stay honest: never claim other assistants *can't* connect to things; say LifeFlow is built around it. No em dashes in public copy.
+
 ## Every change: the loop
 1. **Listen:** feedback inbox, error alerts, admin overview, the owner's messages.
 2. **Pick:** rank by people affected, how much it hurts, and how small the fix is. Trust-losing bugs first.
