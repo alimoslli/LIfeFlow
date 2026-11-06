@@ -388,6 +388,14 @@ Decided by the owner (2026-11-05, research round 2):
 8. **Yes to school accounts with no admin needed,** and people can add school and bank accounts by hand when their bank isn't on Plaid or their school isn't Canvas or Teams (Teams is coming).
 9. **Goals:** Dev tells people plainly when they're off track for a goal they set, with a way back. Never the word "slipping".
 10. **Notifications are the engine,** not the problem: see "Decided from research" 5.
+13. **iPhone Shortcuts pack: yes. Android notification reading: not now (owner, 2026-11-06).** iPhones don't let apps read other apps' notifications. Instead, the person turns on a few ready-made Shortcuts automations once, each sending Dev one kind of event:
+   - Apple Pay taps (merchant and amount in real time, matched later to the bank's copy so nothing counts twice);
+   - arriving at and leaving work or campus (the real-life timeline fills itself);
+   - texts or emails from a chosen contact with words like "schedule", "shift" or "cover";
+   - alarm and wind-down.
+
+   Each one is listed in "What Dev can see" with what it sends, what it never sends, and an off switch. The setup gets shown as a picture first. Android's notification access waits until after the student test.
+
 12. **Every page follows the new simple concept (owner, 2026-11-06).** "We are aiming for all pages to be the new simple concept in organizing life and imply understanding your life and having it all in the app with as little effort from the user." Every page must pass these checks:
    - **Understood in 5 seconds:** what's going on and what needs me, in plain words, from the person's real data.
    - **The app knows; the person approves.** Data comes from connections. Anything the person adds is one sentence to their assistant or one tap, never a form by default. Forms live one tap deeper, only for corrections.
