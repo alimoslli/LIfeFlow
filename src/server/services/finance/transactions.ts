@@ -8,6 +8,7 @@ import { categories, financialAccounts, transactions, type DataSource, type Tran
 import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound, ServiceError } from "../errors";
 import { listCategories, resolveCategory } from "./categories";
+import { cleanVendorName } from "@/lib/vendor";
 import { autoCategorize, learnCategoryRule } from "./categorize";
 import { parsePatch } from "../patch";
 
@@ -44,6 +45,9 @@ export async function createTransaction(
 ) {
   const d = transactionInputSchema.parse(input);
   await assertOwned(scope, financialAccounts, d.accountId, "Account");
+  // A plain vendor name, when the bank's line had noise (the raw line stays in description).
+  const tidy = cleanVendorName(d.merchantName || d.description);
+  if (tidy && tidy !== d.description.trim()) d.merchantName = tidy;
   let catKind: "expense" | "income" | "transfer" | null = null;
   if (!d.categoryId && !d.kind) {
     // Learned rules first, then well-known merchants; otherwise left uncategorized.

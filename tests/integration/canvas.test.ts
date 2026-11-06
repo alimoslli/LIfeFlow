@@ -1,7 +1,16 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { closeDb } from "@/server/db/client";
 import { addDaysStr, todayIn } from "@/lib/dates";
-import { canvasBaseUrl, canvasConnection, canvasFeedUrl, canvasKind, connectCanvas, connectCanvasFeed, syncCanvas } from "@/server/integrations/canvas";
+import {
+  mergeCanvasDuplicates,
+  canvasBaseUrl,
+  canvasConnection,
+  canvasFeedUrl,
+  canvasKind,
+  connectCanvas,
+  connectCanvasFeed,
+  syncCanvas,
+} from "@/server/integrations/canvas";
 import { getAgenda } from "@/server/services/calendar";
 import { createAssignment, createCourse, listAssignments, listCourses, updateAssignment } from "@/server/services/school";
 import { makeUser } from "../helpers";
@@ -103,6 +112,25 @@ describe("Canvas", () => {
     expect(m.status).toBe("done"); // what they did is kept
     // Syncing again changes nothing.
     expect((await run((s) => syncCanvas(s, c.fetchImpl, TZ))).merged).toEqual({ courses: 0, assignments: 0 });
+  });
+
+  it("merges the same class that exists twice (two Canvas copies), keeping the real due times and progress", async () => {
+    const { run } = await makeUser();
+    const a = await run((s) => createCourse(s, { name: "Anthropology", code: "20460" }));
+    const b = await run((s) => createCourse(s, { name: "Anthropology", code: "20460" }));
+    const lab = await run((s) => createCourse(s, { name: "Anthropology Lab", code: "20463" })); // a different class: stays
+    await run((s) => createAssignment(s, TZ, { courseId: a.id, title: "QUIZ 8", dueDate: "2026-11-09", dueTime: "23:59" }));
+    const second = await run((s) => createAssignment(s, TZ, { courseId: b.id, title: "Quiz 8", dueDate: "2026-11-09" }));
+    await run((s) => updateAssignment(s, TZ, (second as { assignment: { id: string } }).assignment.id, { status: "done" }));
+    await run((s) => createAssignment(s, TZ, { courseId: b.id, title: "Paper 2", dueDate: "2026-11-20" }));
+
+    expect(await run((s) => mergeCanvasDuplicates(s))).toEqual({ courses: 1, assignments: 1 });
+    const cs = await run((s) => listCourses(s));
+    expect(cs.map((c) => c.code).sort()).toEqual(["20460", "20463"]);
+    expect(cs.find((c) => c.id === lab.id)).toBeTruthy();
+    const all = await run((s) => listAssignments(s, TZ, { view: "all" }));
+    expect(all.map((x) => x.title).sort()).toEqual(["Paper 2", "QUIZ 8"]);
+    expect(all.find((x) => x.title === "QUIZ 8")!.status).toBe("done"); // progress kept
   });
 
   it("only accepts real Canvas feed links", () => {
