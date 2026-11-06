@@ -388,6 +388,13 @@ Decided by the owner (2026-11-05, research round 2):
 8. **Yes to school accounts with no admin needed,** and people can add school and bank accounts by hand when their bank isn't on Plaid or their school isn't Canvas or Teams (Teams is coming).
 9. **Goals:** Dev tells people plainly when they're off track for a goal they set, with a way back. Never the word "slipping".
 10. **Notifications are the engine,** not the problem: see "Decided from research" 5.
+12. **Every page follows the new simple concept (owner, 2026-11-06).** "We are aiming for all pages to be the new simple concept in organizing life and imply understanding your life and having it all in the app with as little effort from the user." Every page must pass these checks:
+   - **Understood in 5 seconds:** what's going on and what needs me, in plain words, from the person's real data.
+   - **The app knows; the person approves.** Data comes from connections. Anything the person adds is one sentence to their assistant or one tap, never a form by default. Forms live one tap deeper, only for corrections.
+   - **Show only what helps.** One clear next step per thing. No dense lists, sliders, percentages, jargon or settings names on the main view. Details are one tap away.
+   - **Same calm look and voice everywhere:** the assistant's one sentence on top, plain status lines, and the same tokens and words.
+   - **Pages are steps toward the timeline (v3).** Each simplified page should fit into the timeline surface later, not compete with it.
+
 11. **Goals and Connected accounts get simpler now (2026-11-06).** The owner found both pages far too complicated ("the goals page… is nowhere near how our app is supposed to be"; "the connected accounts page is wayyyy too complicated").
    - **Goals:** option A, one calm list. Each goal is one line with a plain status. A goal is added by one sentence and Dev's plan card. Habits are goals with a rhythm. Money progress comes from the linked account. There are no forms or sliders on the main screen. Milestones become a short "Your story".
    - **Connected accounts:** option A, "What Dev can see". One short list in words, a status at a glance, one-tap fixes, no jargon by default, adding a school or bank by hand, and one privacy line each.

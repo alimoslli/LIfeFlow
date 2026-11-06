@@ -91,6 +91,13 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 
 ## Product rules (from the owner)
 - Phone-first app that must also work perfectly on the web.
+- Every page follows the simple concept (owner, 2026-11-06; `docs/vision.md` section 15, item 12):
+  - understood in 5 seconds;
+  - the app knows and the person approves (data from connections, adding by one sentence or one tap, forms only one tap deeper for corrections);
+  - show only what helps (one next step, no dense lists, sliders, percentages or jargon on the main view);
+  - the same calm look and voice everywhere.
+
+  No new page or redesign ships without the owner's okay on a picture.
 - Design rule (owner, 2026-11-05): LifeFlow is a new concept for managing a life, designed from scratch. Never copy iOS, Android or other apps' patterns as the design: no iOS-style settings lists, no stock tab bars, no components lifted from other apps. Platform basics people rely on stay (back gesture, text size, screen readers, 44 px targets); the look, the forms and the words are ours, and they have to be instantly understandable without borrowing. The surface is defined in `docs/vision.md` (the braid: Flow, the assistant, You).
 - The app today still carries the old shell until the new surface replaces it: five tabs (Today, Plan, the assistant, Money, School), Settings behind the gear, pills in `section-nav.tsx` (ADR 0015), tested in `tests/e2e/layout-phone.spec.ts`. Fix bugs in it; don't extend it, and don't add iOS-style pieces to it.
 - The assistant has no fixed name. The user names it, and every user-facing text uses that name (or "your assistant" before they choose one). "Jarvis" never appears to users: not in tabs, titles, buttons, notifications, onboarding or marketing. "Jarvis" in this file and in code paths (`src/server/jarvis/`, `jarvis_runs`) is the internal name of the subsystem only.
