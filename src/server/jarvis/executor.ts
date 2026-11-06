@@ -111,7 +111,12 @@ async function runTool(name: string, args: unknown, ctx: ToolContext): Promise<T
  * Above attempts (2) x provider timeout (20 s) x token refresh + call, plus a margin for the database.
  */
 export const ACTION_RUN_LIMIT_MS = 90_000;
-const runLimitMs = () => Number(process.env.ACTION_RUN_LIMIT_MS) || ACTION_RUN_LIMIT_MS;
+/** Production always uses the default; elsewhere ACTION_RUN_LIMIT_MS may shorten it (tests). Junk falls back to the default. */
+export function runLimitMs(env: NodeJS.ProcessEnv = process.env) {
+  if (env.NODE_ENV === "production") return ACTION_RUN_LIMIT_MS;
+  const n = Number(env.ACTION_RUN_LIMIT_MS);
+  return Number.isFinite(n) && n > 0 ? n : ACTION_RUN_LIMIT_MS;
+}
 const LOST_MESSAGE = "This may have gone through; check your calendar or email. It was not run again.";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

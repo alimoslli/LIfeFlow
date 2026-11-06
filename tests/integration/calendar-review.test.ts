@@ -4,10 +4,11 @@ import { eq } from "drizzle-orm";
 import { Pool } from "pg";
 import { closeDb } from "@/server/db/client";
 import { calendarEvents, courses, pendingActions, trash } from "@/server/db/schema";
-import { exchangeCode, saveGoogleConnection, syncGoogleCalendar } from "@/server/integrations/google";
+import { addGoogleEvent, exchangeCode, saveGoogleConnection, syncGoogleCalendar } from "@/server/integrations/google";
+import { providerTimeoutMs } from "@/server/integrations/timeout";
 import { saveMicrosoftConnection, syncMicrosoftCalendar } from "@/server/integrations/microsoft";
 import { makeToolContext, runJarvisTurn, type JarvisEvent } from "@/server/jarvis/agent";
-import { resolvePendingAction } from "@/server/jarvis/executor";
+import { resolvePendingAction, runLimitMs } from "@/server/jarvis/executor";
 import { ScriptedProvider } from "@/server/jarvis/providers/scripted";
 import { toUiMessages } from "@/server/jarvis/ui-messages";
 import { freeSlots, getAgenda, moveAgendaItem, updateEvent } from "@/server/services/calendar";
@@ -411,5 +412,112 @@ describe("provider calls have a time limit, and a slow success beats the lost ve
       globalThis.fetch = prevFetch;
       delete process.env.PROVIDER_TIMEOUT_MS;
     }
+  });
+});
+
+describe("a sync cut off while the body downloads never deletes anything", () => {
+  const cutOff = () =>
+    new Response(
+      new ReadableStream({
+        start(c) {
+          c.enqueue(new TextEncoder().encode('{"items":[{"id":"g1","sum'));
+          c.error(new DOMException("The operation timed out.", "TimeoutError"));
+        },
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+
+  it("Google: a body that times out mid-stream fails the sync and every row survives", async () => {
+    let broken = false;
+    const base = fakeGoogle(() => [
+      { id: "g1", summary: "Dentist", start: { dateTime: "2026-11-12T15:00:00Z" }, end: { dateTime: "2026-11-12T16:00:00Z" } },
+      { id: "g2", summary: "Lab", start: { dateTime: "2026-11-13T15:00:00Z" }, end: { dateTime: "2026-11-13T16:00:00Z" } },
+    ]);
+    const f = (async (input: string | URL, init?: RequestInit) =>
+      broken && String(input).includes("/calendars/primary/events?") ? cutOff() : base(input, init)) as typeof fetch;
+    const u = await makeUser();
+    const { creds, email } = await exchangeCode("code", "v", "https://app.test/cb", f);
+    await u.run((s) => saveGoogleConnection(s, creds, email));
+    await u.run((s) => syncGoogleCalendar(s, TZ, NOW, f));
+    const before = await u.run((s) => s.tx.select().from(calendarEvents));
+    expect(before).toHaveLength(2);
+    broken = true;
+    await expect(u.run((s) => syncGoogleCalendar(s, TZ, NOW, f))).rejects.toThrow();
+    const after = await u.run((s) => s.tx.select().from(calendarEvents));
+    expect(after.map((r) => r.id).sort()).toEqual(before.map((r) => r.id).sort()); // same rows, same ids
+  });
+
+  it("Outlook: the same", async () => {
+    const m = await makeUser();
+    await m.run((s) =>
+      saveMicrosoftConnection(s, { refreshToken: "rt", accessToken: "at", expiresAt: Date.now() + 3_600_000, scope: "Calendars.Read" }, "m@school.edu"),
+    );
+    const soon = new Date(NOW.getTime() + 24 * 3_600_000).toISOString().replace("Z", "0000");
+    let broken = false;
+    const f = (async () =>
+      broken ? cutOff() : json({ value: [{ id: "o1", subject: "Quiz", start: { dateTime: soon }, end: { dateTime: soon } }] })) as unknown as typeof fetch;
+    await m.run((s) => syncMicrosoftCalendar(s, TZ, NOW, f));
+    const before = await m.run((s) => s.tx.select().from(calendarEvents));
+    broken = true;
+    await expect(m.run((s) => syncMicrosoftCalendar(s, TZ, NOW, f))).rejects.toThrow();
+    expect((await m.run((s) => s.tx.select().from(calendarEvents))).map((r) => r.id)).toEqual(before.map((r) => r.id));
+  });
+});
+
+describe("creating a Google event is idempotent, so a retry after an aborted create makes one event", () => {
+  it("the same event asked for twice sends the same Google id; a 409 returns the existing event", async () => {
+    const store = new Map<string, Record<string, unknown>>();
+    const posts: string[] = [];
+    let firstCall = true;
+    const base = fakeGoogle(() => []);
+    const f = (async (input: string | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/calendars/primary/events") && init?.method === "POST") {
+        const b = JSON.parse(String(init.body));
+        posts.push(b.id);
+        if (store.has(b.id)) return json({ error: { message: "exists" } }, 409);
+        store.set(b.id, { id: b.id, htmlLink: "https://calendar.google.com/x", ...b });
+        if (firstCall) {
+          firstCall = false; // Google did it, but the answer never arrives
+          return new Promise<Response>((_, reject) => init.signal?.addEventListener("abort", () => reject(init.signal!.reason)));
+        }
+        return json(store.get(b.id));
+      }
+      const m = url.match(/\/calendars\/primary\/events\/([^/?]+)$/);
+      if (m) return store.has(m[1]) ? json(store.get(m[1])) : json({ error: {} }, 404);
+      return base(input, init);
+    }) as typeof fetch;
+    const u = await makeUser();
+    const { creds, email } = await exchangeCode("code", "v", "https://app.test/cb", f);
+    await u.run((s) => saveGoogleConnection(s, creds, email));
+    const ev = { title: "Study group", date: "2026-11-20", startTime: "14:00", endTime: "15:00" };
+    process.env.PROVIDER_TIMEOUT_MS = "80";
+    try {
+      await expect(u.run((s) => addGoogleEvent(s, TZ, ev, f))).rejects.toThrow(/too long/);
+    } finally {
+      delete process.env.PROVIDER_TIMEOUT_MS;
+    }
+    const r = await u.run((s) => addGoogleEvent(s, TZ, ev, f)); // the retry
+    expect(store.size).toBe(1); // one event in Google
+    expect(posts[0]).toBe(posts[1]);
+    expect(posts[0]).toMatch(/^[0-9a-v]{5,1024}$/); // allowed characters for a Google event id
+    expect(r.googleEventId).toBe(posts[0]);
+    const rows = await u.run((s) => s.tx.select().from(calendarEvents));
+    expect(rows).toHaveLength(1);
+    // A different event gets a different id.
+    await u.run((s) => addGoogleEvent(s, TZ, { ...ev, title: "Other" }, f));
+    expect(store.size).toBe(2);
+  });
+});
+
+describe("timeout overrides are ignored in production", () => {
+  it("production uses the defaults whatever the env says; elsewhere a sane override is allowed, junk is not", () => {
+    expect(providerTimeoutMs({ NODE_ENV: "production", PROVIDER_TIMEOUT_MS: "1" } as never)).toBe(20_000);
+    expect(runLimitMs({ NODE_ENV: "production", ACTION_RUN_LIMIT_MS: "1" } as never)).toBe(90_000);
+    expect(providerTimeoutMs({ NODE_ENV: "test", PROVIDER_TIMEOUT_MS: "80" } as never)).toBe(80);
+    expect(providerTimeoutMs({ NODE_ENV: "test", PROVIDER_TIMEOUT_MS: "-5" } as never)).toBe(20_000);
+    expect(providerTimeoutMs({ NODE_ENV: "test", PROVIDER_TIMEOUT_MS: "abc" } as never)).toBe(20_000);
+    expect(runLimitMs({ NODE_ENV: "development", ACTION_RUN_LIMIT_MS: "0" } as never)).toBe(90_000);
+    expect(runLimitMs({ NODE_ENV: "test", ACTION_RUN_LIMIT_MS: "300" } as never)).toBe(300);
   });
 });

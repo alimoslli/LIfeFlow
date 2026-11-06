@@ -41,7 +41,7 @@ function fakeGoogle(opts: { events?: () => object[]; delayMs?: number } = {}) {
     if (url.includes("/calendars/primary/events?")) return json({ items: opts.events?.() ?? [] });
     if (url.endsWith("/calendars/primary/events") && method === "POST") {
       const b = JSON.parse(String(init!.body));
-      return json({ id: `gnew${++created}`, htmlLink: "https://calendar.google.com/x", ...b });
+      return json({ ...b, id: `gnew${++created}`, htmlLink: "https://calendar.google.com/x" }); // (a stand-in: it chooses its own ids)
     }
     if (url.endsWith("/messages/send") && method === "POST") return json({ id: "sent1", threadId: "th1", labelIds: ["SENT"] });
     if (url.includes("/messages?")) return json({ messages: [{ id: "m1" }] });

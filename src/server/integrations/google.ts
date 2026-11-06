@@ -6,7 +6,7 @@ import { decryptSecret, encryptSecret } from "../crypto";
 import { calendarEvents, connectionRegistry, gmailMessages, integrations } from "../db/schema";
 import { withUser, type UserScope } from "../db/with-user";
 import { upsertProviderEvent } from "./calendar-upsert";
-import { fetchWithTimeout, ProviderTimeout } from "./timeout";
+import { fetchWithTimeout, ProviderTimeout, readJson } from "./timeout";
 
 /**
  * Google (Gmail + Google Calendar) for one LifeFlow user.
@@ -41,6 +41,7 @@ export class GoogleError extends Error {
   constructor(
     message: string,
     public reauth = false,
+    public status?: number,
   ) {
     super(message);
   }
@@ -206,11 +207,13 @@ async function api<T>(scope: UserScope, url: string, init: RequestInit = {}, f: 
     });
     if (res.status === 401 && attempt === 0) continue;
     if (res.status === 204) return undefined as T;
-    const body = await res.json().catch(() => ({}));
+    // A body that is cut off or unreadable on a good answer is an error, never an empty result
+    // (a sync that read "nothing" would delete the person's events).
+    const body = await readJson(res, (m) => new GoogleError(m));
     if (!res.ok) {
       // Google's own wording goes to the server log; people get a plain sentence.
       console.error("[google] api error", res.status, body?.error?.status ?? null, truncate(String(body?.error?.message ?? ""), 200));
-      throw new GoogleError("Google couldn't do that right now. Try again in a minute.");
+      throw new GoogleError("Google couldn't do that right now. Try again in a minute.", false, res.status);
     }
     return body as T;
   }
@@ -515,7 +518,25 @@ export async function addGoogleEvent(
         start: { dateTime: localToInstant(o.date, o.startTime, tz).toISOString(), timeZone: tz },
         end: { dateTime: localToInstant(o.date, o.endTime ?? o.startTime, tz).toISOString(), timeZone: tz },
       };
-  const created = await api<GEvent & { htmlLink?: string }>(scope, `${CAL}/events`, { method: "POST", body: JSON.stringify(body) }, f);
+  // The Google id comes from what is being added, so asking again after an aborted create (Google may have
+  // done it) finds the same event (409) instead of making a second one.
+  const clientId =
+    "lf" +
+    createHash("sha256")
+      .update(JSON.stringify([scope.userId, body]))
+      .digest("hex");
+  let created: (GEvent & { htmlLink?: string; status?: string }) | undefined;
+  try {
+    created = await api<GEvent & { htmlLink?: string }>(scope, `${CAL}/events`, { method: "POST", body: JSON.stringify({ ...body, id: clientId }) }, f);
+  } catch (e) {
+    if (!(e instanceof GoogleError) || e.status !== 409) throw e;
+    const existing = await api<GEvent & { htmlLink?: string; status?: string }>(scope, `${CAL}/events/${clientId}`, {}, f);
+    // Deleted in Google since: that id can't be reused, so add it as a new event.
+    created =
+      existing?.status === "cancelled"
+        ? await api<GEvent & { htmlLink?: string }>(scope, `${CAL}/events`, { method: "POST", body: JSON.stringify(body) }, f)
+        : existing;
+  }
   if (!created?.id) throw new GoogleError("Google Calendar didn't confirm the event.");
   const t = eventTimes(created, tz);
   // Upsert on Google's id: a sync that already mirrored this event must not leave a second copy.

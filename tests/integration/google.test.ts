@@ -87,7 +87,7 @@ function fakeGoogle(opts: { refreshFails?: boolean; events?: object[] } = {}) {
     if (url.includes("/calendars/primary/events?")) return json({ items: opts.events ?? [] });
     if (url.endsWith("/calendars/primary/events") && method === "POST") {
       const b = JSON.parse(body!);
-      return json({ id: "gev-new", htmlLink: "https://calendar.google.com/x", ...b });
+      return json({ ...b, id: "gev-new", htmlLink: "https://calendar.google.com/x" });
     }
     return json({ error: { message: `unhandled ${method} ${url}` } }, 404);
   }) as typeof fetch;

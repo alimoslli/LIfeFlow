@@ -11,7 +11,7 @@
 CREATE TEMP TABLE "_cal_dups" ("dup_id" uuid PRIMARY KEY, "keep_id" uuid NOT NULL);
 --> statement-breakpoint
 DO $$
-DECLARE u record; pr record;
+DECLARE u record; pr record; msg record; pat text;
 BEGIN
   FOR u IN SELECT "id" FROM "users" LOOP
     PERFORM set_config('app.user_id', u."id"::text, true);
@@ -58,16 +58,29 @@ BEGIN
     WHERE p."args"->>'id' = m."dup_id"::text;
 
     -- Saved chat tool calls and results, and trashed items, that mention a dropped copy's id (a plain id swap
-    -- inside the JSON). One dropped copy at a time, so a record naming several of them gets every one repointed.
-    FOR pr IN SELECT "dup_id", "keep_id" FROM "_cal_dups" LOOP
-      UPDATE "messages" SET
-        "tool_args" = replace("tool_args"::text, pr."dup_id"::text, pr."keep_id"::text)::jsonb,
-        "tool_result" = replace("tool_result"::text, pr."dup_id"::text, pr."keep_id"::text)::jsonb
-      WHERE "tool_args"::text LIKE '%' || pr."dup_id"::text || '%' OR "tool_result"::text LIKE '%' || pr."dup_id"::text || '%';
+    -- inside the JSON). Only for people who had duplicates, and in one pass: the rows that mention any dropped id
+    -- are found with a single scan, then every dropped id in each of those rows is swapped at once.
+    IF EXISTS (SELECT 1 FROM "_cal_dups") THEN
+      SELECT string_agg("dup_id"::text, '|') INTO pat FROM "_cal_dups";
 
-      UPDATE "trash" SET "payload" = replace("payload"::text, pr."dup_id"::text, pr."keep_id"::text)::jsonb
-      WHERE "payload"::text LIKE '%' || pr."dup_id"::text || '%';
-    END LOOP;
+      FOR msg IN
+        SELECT "id", "tool_args"::text AS a, "tool_result"::text AS r FROM "messages"
+        WHERE "tool_args"::text ~ pat OR "tool_result"::text ~ pat
+      LOOP
+        FOR pr IN SELECT "dup_id", "keep_id" FROM "_cal_dups" LOOP
+          msg.a := replace(msg.a, pr."dup_id"::text, pr."keep_id"::text);
+          msg.r := replace(msg.r, pr."dup_id"::text, pr."keep_id"::text);
+        END LOOP;
+        UPDATE "messages" SET "tool_args" = msg.a::jsonb, "tool_result" = msg.r::jsonb WHERE "id" = msg."id";
+      END LOOP;
+
+      FOR msg IN SELECT "id", "payload"::text AS a FROM "trash" WHERE "payload"::text ~ pat LOOP
+        FOR pr IN SELECT "dup_id", "keep_id" FROM "_cal_dups" LOOP
+          msg.a := replace(msg.a, pr."dup_id"::text, pr."keep_id"::text);
+        END LOOP;
+        UPDATE "trash" SET "payload" = msg.a::jsonb WHERE "id" = msg."id";
+      END LOOP;
+    END IF;
 
     UPDATE "inbox_items" i SET "filed" = (
       SELECT jsonb_agg(

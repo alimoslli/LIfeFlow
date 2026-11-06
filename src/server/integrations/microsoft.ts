@@ -6,7 +6,7 @@ import { decryptSecret, encryptSecret } from "../crypto";
 import { calendarEvents, connectionRegistry, integrations } from "../db/schema";
 import { withUser, type UserScope } from "../db/with-user";
 import { upsertProviderEvent } from "./calendar-upsert";
-import { fetchWithTimeout, ProviderTimeout } from "./timeout";
+import { fetchWithTimeout, ProviderTimeout, readJson } from "./timeout";
 
 /**
  * Microsoft 365 (Outlook calendar, which holds Teams meetings) for one LifeFlow user.
@@ -195,7 +195,7 @@ async function graph<T>(scope: UserScope, url: string, headers: Record<string, s
     const token = await accessToken(scope, f, attempt > 0);
     const res = await timed(f, url, { headers: { ...headers, authorization: `Bearer ${token}` } });
     if (res.status === 401 && attempt === 0) continue;
-    const body = await res.json().catch(() => ({}));
+    const body = await readJson(res, (m) => new MicrosoftError(m));
     if (!res.ok) throw new MicrosoftError(`Microsoft returned an error (${res.status}${body?.error?.code ? `: ${truncate(body.error.code, 80)}` : ""}).`);
     return body as T;
   }
