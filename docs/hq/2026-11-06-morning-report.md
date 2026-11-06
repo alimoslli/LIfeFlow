@@ -17,7 +17,7 @@ Branch `claude/sharp-lovelace-8fr6z5`. Nothing is live and nothing is on main.
 - **No AI to open it.** Animations are CSS. The chats report in through a check-in after each turn, which never sends message text.
 
 ## Checks
-- **The full unit and integration suite** was green before the review fixes. A final run after them was still going when I wrote this, and its result is in the chat.
+- **The full unit and integration suite passes after the review fixes:** 773 tests in 107 files.
 - **The project's type, lint and format checks pass.**
 - **The build passes.**
 - **E2E:** HQ (desktop and iPhone size) and admin pass. The full e2e suite was not run.
