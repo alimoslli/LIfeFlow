@@ -75,7 +75,7 @@ export function OfficeScene({ snapshot }: { snapshot: OfficeSnapshot }) {
       <SceneDefs />
       <Roof />
       <div className="hq-floors">
-        <Link href="/admin/hq/founder" className="hq-room hq-room-founder" data-state={n > 0 ? "needs_you" : "sleeping"}>
+        <Link href="/admin/work" className="hq-room hq-room-founder" data-state={n > 0 ? "needs_you" : "sleeping"}>
           <div className="hq-stage hq-stage-wide">
             <FounderRoomArt pending={n} />
           </div>

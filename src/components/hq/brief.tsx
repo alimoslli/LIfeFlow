@@ -41,7 +41,7 @@ export function BriefCard({ brief, chief, pending }: { brief: Brief | null; chie
       )}
 
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
-        <Link href="/admin/hq/approvals" className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-accent">
+        <Link href="/admin/work#approvals" className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-accent">
           {pending === 0 ? "Nothing needs you" : pending === 1 ? "1 thing needs you" : `${pending} things need you`}
           <ArrowRight className="h-4 w-4" aria-hidden />
         </Link>

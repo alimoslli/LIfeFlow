@@ -520,7 +520,7 @@ export async function recordBrief(db: Database, actor: HqActor, input: { body: s
       role: "assistant",
       kind: "brief",
       text: "Brief from your Chief of Staff",
-      link: "/admin/hq",
+      link: "/admin",
       sessionId: actorSession(actor),
     });
     return toBrief(row);
@@ -529,7 +529,7 @@ export async function recordBrief(db: Database, actor: HqActor, input: { body: s
     key: `hq-brief:${brief.id}`,
     title: "Your Chief of Staff",
     body: cleanLine(brief.body.split("\n").find((l) => l.trim()) ?? brief.body).slice(0, 140),
-    url: "/admin/hq",
+    url: "/admin",
     tag: `hq-brief-${brief.id}`,
   });
   return brief;
@@ -882,7 +882,7 @@ export const sendApprovalPush = (db: Database, a: Approval) =>
     key: `hq-approval:${a.id}`,
     title: `${employee(a.role).title} needs your yes`,
     body: a.title,
-    url: "/admin/hq/approvals",
+    url: "/admin/work#approvals",
     tag: `hq-${a.id}`,
   });
 

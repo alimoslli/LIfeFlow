@@ -10,12 +10,27 @@ import { employee } from "@/server/hq/team";
 import type { Activity, Approval, Budget, Mission, MissionStatus } from "@/server/hq/types";
 import { KIND_LABEL, STATUS_LABEL, dayLabel } from "./labels";
 
-export function Section({ title, sub, action, children, id }: { title: string; sub?: ReactNode; action?: ReactNode; children: ReactNode; id?: string }) {
+export function Section({
+  title,
+  sub,
+  action,
+  children,
+  id,
+  as: Heading = "h2",
+}: {
+  title: string;
+  sub?: ReactNode;
+  action?: ReactNode;
+  children: ReactNode;
+  id?: string;
+  /** "h3" when the card sits inside a page section (which has the h2). */
+  as?: "h2" | "h3";
+}) {
   return (
     <section id={id} className="rounded-3xl bg-surface p-4 shadow-soft sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[0.9375rem] font-semibold text-text">{title}</h2>
+          <Heading className="text-[0.9375rem] font-semibold text-text">{title}</Heading>
           {sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}
         </div>
         {action}
@@ -95,7 +110,7 @@ export function ActivityList({ items, empty = "Nothing has happened yet." }: { i
             <span className="shrink-0 text-xs text-muted">{ago(a.createdAt)}</span>
           </>
         );
-        const href = a.missionId ? `/admin/hq/missions/${a.missionId}` : a.approvalId ? `/admin/hq/approvals#${a.approvalId}` : null;
+        const href = a.missionId ? `/admin/hq/missions/${a.missionId}` : a.approvalId ? `/admin/work#${a.approvalId}` : null;
         return (
           <li key={a.id}>
             {href ? (
@@ -121,7 +136,7 @@ export function ApprovalMini({ a }: { a: Approval }) {
         <span className="text-xs text-muted">{employee(a.role).title} asks</span>
       </div>
       <p className="mt-1.5 text-[0.9375rem] font-medium text-text">{a.title}</p>
-      <Link href={`/admin/hq/approvals#${a.id}`} className="mt-2 inline-flex min-h-11 items-center gap-1 text-sm font-medium text-accent">
+      <Link href={`/admin/work#${a.id}`} className="mt-2 inline-flex min-h-11 items-center gap-1 text-sm font-medium text-accent">
         Review <ArrowRight className="h-4 w-4" aria-hidden />
       </Link>
     </li>

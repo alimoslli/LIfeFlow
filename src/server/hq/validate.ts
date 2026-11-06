@@ -27,7 +27,7 @@ export const cleanLine = (s: string) => s.replace(BAD_CHARS, "").replace(/\s+/g,
 /** Several lines: control characters removed, newlines and tabs kept. */
 export const cleanText = (s: string) => s.replace(BAD_CHARS, "").replace(/\r\n?/g, "\n").trim();
 
-/** Only https links or same-site paths ("/admin/hq"). Never javascript:, data:, http:, "//host" or "/\host". */
+/** Only https links or same-site paths ("/admin/work"). Never javascript:, data:, http:, "//host" or "/\host". */
 export function isSafeLinkUrl(u: string): boolean {
   if (typeof u !== "string" || u.length === 0 || u.length > 2000) return false;
   if (/[\u0000-\u0020\u007F\\]/.test(u)) return false;
@@ -59,7 +59,7 @@ export const optText = (max: number) =>
     .transform((s) => cleanText(s) || null)
     .pipe(z.string().max(max, `is too long (max ${max})`).nullable())
     .nullish();
-export const url = z.string().refine(isSafeLinkUrl, "must be an https:// link or a path like /admin/hq");
+export const url = z.string().refine(isSafeLinkUrl, "must be an https:// link or a path like /admin/work");
 export const linkSchema = z.object({ label: line(1, 60), url });
 export const linksSchema = z.array(linkSchema).max(10, "has too many links (max 10)");
 export const dueOn = z
