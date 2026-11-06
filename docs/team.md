@@ -12,6 +12,7 @@ Set by the owner on 2026-11-05. Every Claude Code session on this repo reads thi
 | **Auditor** (Opus, fresh eyes) | Audits each prototype or build with no context from the conversation, so nothing gets a pass because we're used to it. | `docs/design/*-audit.md` |
 | **Situation writer** | Keeps writing realistic life situations for Dev's exam and later training: real life as the timeline, digital life attached, the clashes, the fix, the stay-quiet cases. | `.claude/agents/situation-writer.md`, `docs/situations/` |
 | **Market researcher** | Finds what people need from online research, reviews of similar apps and our surveys, and proposes what to build and what to avoid. | `.claude/agents/market-researcher.md`, `docs/research/` |
+| **LifeFlow HQ** (`/admin/hq`, set up 2026-11-06) | The owner's office: five employees that are the face of the four real chats (Developer = LF Main, Designer / V3 = LF V3, Researcher = LF V3 — Agents, Marketing = LF Marketing) plus the HQ Assistant (plain app logic). Missions, the approval inbox and the weekly summary live there; chats report in through `scripts/hq.ts`. No new AI workers. | `docs/hq/`, ADR 0024 |
 
 ## Research goes into the app fast
 

@@ -53,6 +53,14 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Suspension is enforced in `validateSession`, so a new session-starting path can't skip it.
 - Feedback reaches the admin page only through `owner_inbox` (a copy written by `sendFeedback`); never remove RLS from `feedback`. Announcements (`announcements`, `activeAnnouncement`) are one banner at a time, shown by `AnnouncementBanner` in the app layout; links must be `/…` or `https://…`.
 
+## LifeFlow HQ (see ADR 0024, docs/hq/)
+- `/admin/hq` is the owner's office (founder-only, same `requireAdmin()` rule on every page and action). The existing admin pages are its "Founder Office", unchanged.
+- HQ links to the owner's real Claude Code chats (`chatUrl()`); it never reads, embeds or drives them, and never uses the owner's claude.ai login. Chats report in through `scripts/hq.ts` (Stop hook `.claude/hooks/hq-checkin.sh`, no message text, a no-op without `HQ_URL`).
+- HQ data (`hq_*` tables) is owner operations data with no RLS, reached only through `services/hq.ts`. Never put app users' content in it. Agents write only through `/api/hq/report` and `/api/hq/inbox` with an `lfq_` key (stored as a hash).
+- Only real records: an employee's state comes from `employeeState()` (hq/state.ts); with no data it is asleep or offline, never "working". The budget tile shows a measured number or "Not measured yet". No AI is ever called to render HQ; animations are CSS.
+- An approval is only recorded; HQ never carries it out. Deploys, V3 design merges, features, design changes, publishing, outbound messages, paid ads, subscriptions, destructive and security changes need the owner's yes there.
+- The HQ migration is `0040_lifeflow_hq` (journal `when` after 0039); a new migration must sort after it.
+
 ## Integrations (see ADR 0010)
 - Plaid (`integrations/plaid.ts`): an account the user turns off (`excludedAt`) stays archived through every sync and its transactions/holdings are skipped and removed; turning it on resets the cursor. Accounts the bank stops sharing ("Choose accounts" = Link update mode with account selection) are archived. Investments/liabilities are only requested when the item has those account types and never fail the sync (only re-auth errors do). "Sync now" asks for live balances (`/accounts/balance/get`, falls back to `/accounts/get`).
 - Microsoft (Teams meetings + Outlook calendar) goes through `src/server/integrations/microsoft.ts` (provider and event source `"outlook"`): read-only `Calendars.Read` via the `common` endpoint so school, work and personal accounts work; Teams join links go in the event description. Teams for Education assignments need school admin consent, so they are not requested (screenshots instead).
