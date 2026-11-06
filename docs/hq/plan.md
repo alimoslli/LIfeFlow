@@ -218,3 +218,15 @@ What changes, so it stays true to the brief and the plan:
   - "Calendar" waits for Phase 3 (marketing);
   - "Agents" is the conversations list;
   - the "Autonomous mode" switch waits for Phase 2, when rounds read it.
+
+## The founder's room (owner, 2026-11-06)
+The owner asked for their own room in the office, with themselves drawn as a character in the same style as the team. The owner's photo is used only as a reference for the character's features and is kept out of the repo.
+- **The character, drawn in the same cute style as the team:**
+  - big, tousled dark-brown curly hair falling over the forehead;
+  - light blue eyes and fair skin;
+  - black rectangular sunglasses with small silver details at the hinges, worn pulled down the nose so the eyes show over them (their signature look);
+  - a charcoal grey quarter-zip sweater over a white T-shirt.
+- **The room:** a corner office at the top of the building with a big window, a desk, a lamp, a plant and a mug. It reads as the room where the decisions happen.
+- **Real data only.** You are the one looking, so you're at your desk. Next to you is a small stack of cards for the approvals waiting, using the real count. There's no stack when nothing is waiting.
+- **Tapping yourself** opens your Founder Office: the Approvals inbox at the top, then your existing admin (Overview, Users, Feedback, Growth, Errors, Health, Activity), unchanged.
+- **The office has six rooms in total:** yours plus the five employees'. Each employee room holds both a desk and a bed or couch, so a person is either at the desk or resting in the same room. The lounge stays on the ground floor.
