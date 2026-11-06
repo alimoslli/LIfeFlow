@@ -1,8 +1,8 @@
 import { series } from "@/server/db/series";
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, asc, eq, max, ne } from "drizzle-orm";
 import { z } from "zod";
 import { DATE_RE, addDaysStr, daysBetween, monthEnd, monthStart } from "@/lib/dates";
-import { budgets, categories, financialAccounts, financialGoals, recurringItems } from "../../db/schema";
+import { budgets, categories, financialAccounts, financialGoals, integrations, recurringItems } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound } from "../errors";
 import { listCategories } from "./categories";
@@ -300,11 +300,26 @@ export function seriesForItem(item: TrackedItem, all: RecurringCandidate[]): Rec
  * series at `MIN_CONFIDENCE` or more are suggested.
  */
 export async function bankSeries(scope: UserScope, today: string) {
-  const [txns, existing] = await series(
+  const [txns, existing, synced] = await series(
     () => queryTransactions(scope, { from: addDaysStr(today, -400), to: today, limit: 5000 }),
     () => listRecurring(scope, { includeInactive: true }),
+    () =>
+      scope.tx
+        .select({ at: max(integrations.lastSyncedAt) })
+        .from(integrations)
+        .where(and(eq(integrations.userId, scope.userId), eq(integrations.provider, "plaid"))),
   );
-  const all = detectRecurring(txns);
+  // What the feed is current to: its newest transaction, or the last time the bank synced when that's later
+  // (a quiet account still confirms a price change and notices a stopped bill). Never the calendar alone:
+  // a bank that stopped syncing doesn't make every bill look stopped.
+  const later = (a: string, b: string) => (a > b ? a : b);
+  // The sync's UTC date can run a day ahead of the user's local today.
+  const syncedOn = synced[0]?.at ? [synced[0].at.toISOString().slice(0, 10), today].sort()[0] : "";
+  const asOf = later(
+    txns.reduce((m, t) => later(m, t.date), ""),
+    syncedOn,
+  );
+  const all = detectRecurring(txns, asOf ? { today: asOf } : {});
   const ownedBy = (items: typeof existing) => new Set(items.flatMap((e) => seriesForItem(e, all)));
   const [tracked, trackedActive] = [ownedBy(existing), ownedBy(existing.filter((e) => e.status === "active"))];
   return {

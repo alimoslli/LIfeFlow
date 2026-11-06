@@ -31,7 +31,7 @@ export function scanTransactions(txns: ScanTxn[], today: string, opts: { days?: 
     refunds.some((r) => merchantKey(r) === merchantKey(a) && r.amountCents === -a.amountCents && r.date >= a.date && daysBetween(b.date, r.date) <= 14);
   const doubleCharges: { merchant: string; amountCents: number; dates: [string, string] }[] = [];
   const seen = new Set<string>();
-  const series = detectRecurring(txns);
+  const series = detectRecurring(txns, { today });
   // Amounts a bill or subscription charges: whether two of them close together are a double charge is the series' call.
   const recurringAmount = new Set(series.flatMap((c) => c.charges.map((x) => `${c.merchantKey}|${x.amountCents}`)));
   // A recurring charge billed a second time beside its usual one (Spotify twice on Oct 15), even after years of history.

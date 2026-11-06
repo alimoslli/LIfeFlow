@@ -1,6 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { addDaysStr, todayIn } from "@/lib/dates";
 import { closeDb } from "@/server/db/client";
+import { integrations } from "@/server/db/schema";
 import type { UserScope } from "@/server/db/with-user";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
@@ -217,6 +218,36 @@ describe("a price change on a subscription not tracked yet (A6)", () => {
         .map((f) => f.name)
         .sort(),
     ).toEqual(["Hulu", "Spotify"]);
+  });
+});
+
+describe("a quiet account (review follow-up: today passed explicitly)", () => {
+  it("confirms a price rise once the bank has synced past its due window, without waiting for another purchase", async () => {
+    const { run } = await makeUser();
+    const today = todayIn(TZ);
+    await run(async (s) => {
+      const { card } = await accounts(s);
+      for (const [n, cents] of [
+        [-65, 1_549],
+        [-35, 1_549],
+        [-5, 1_799],
+      ] as const)
+        await createTransaction(s, {
+          accountId: card.id,
+          date: addDaysStr(today, n),
+          description: "NETFLIX.COM",
+          merchantName: "Netflix",
+          amountCents: -cents,
+        });
+    });
+    // Nothing newer than the $17.99 charge, and no bank connection: it might still be a one-off, so it waits.
+    expect((await run((s) => subscriptionsOverview(s, today))).found).toMatchObject([{ latestAmountCents: -1_549, priceChange: null }]);
+    // The bank synced this morning: the feed is current, the due window has passed with no $15.49 charge.
+    await run((s) =>
+      s.tx.insert(integrations).values({ userId: s.userId, provider: "plaid", status: "connected", externalId: "item-quiet", lastSyncedAt: new Date() }),
+    );
+    const o = await run((s) => subscriptionsOverview(s, today));
+    expect(o.found).toMatchObject([{ latestAmountCents: -1_799, priceChange: { fromCents: -1_549, toCents: -1_799 } }]);
   });
 });
 
