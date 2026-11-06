@@ -149,8 +149,22 @@ describe("two subscriptions from one merchant (A5)", () => {
       ["subscription", "monthly", -1_099, "2026-10-20", "2026-11-20"],
       ["subscription", "monthly", -299, "2026-10-03", "2026-11-03"],
     ]);
-    expect(new Set(r.map((c) => c.seriesKey))).toEqual(new Set(["apple", "apple~2"]));
+    expect(new Set(r.map((c) => c.seriesKey))).toEqual(new Set(["apple~d3", "apple~d20"]));
     expect(r.every((c) => c.merchantKey === "apple" && c.confidence >= 0.6)).toBe(true);
+  });
+
+  it("keys each series by its own day and price, so a key doesn't move when another series starts or stops (review 8)", () => {
+    const keys = (txns: DetectTxn[]) =>
+      detectRecurring(txns, { today: "2026-11-05" })
+        .map((c) => c.seriesKey)
+        .sort();
+    expect(keys([...icloud, ...music])).toEqual(["apple~d20", "apple~d3"]);
+    // Apple Arcade starts in September on the 9th: iCloud and Apple Music keep their keys.
+    const arcade = months("2026-08-09", 3).map((d) => tx(d, -699, "Apple", "APPLE.COM/BILL"));
+    expect(keys([...icloud, ...music, ...arcade])).toEqual(["apple~d20", "apple~d3", "apple~d9"]);
+    // Two on the same day are told apart by price.
+    const tv = months("2026-07-03", 4).map((d) => tx(d, -999, "Apple", "APPLE.COM/BILL"));
+    expect(keys([...icloud, ...tv])).toEqual(["apple~d3-299", "apple~d3-999"]);
   });
 
   it("splits two same-price subscriptions billed on different days", () => {

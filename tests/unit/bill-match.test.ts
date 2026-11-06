@@ -18,6 +18,7 @@ const found = (p: Partial<RecurringCandidate>): RecurringCandidate => ({
   priceChange: null,
   charges: [],
   duplicates: [],
+  transfer: false,
   name: "Parkview Apartments",
   kind: "bill",
   frequency: "monthly",

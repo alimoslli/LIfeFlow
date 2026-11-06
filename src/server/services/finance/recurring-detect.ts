@@ -24,8 +24,10 @@ export type RecurringKind = "subscription" | "bill" | "income";
 export type RecurringCandidate = {
   merchantKey: string;
   /**
-   * One per series: the merchant key, or `<merchant key>~2`, `~3` for the later ones when one merchant
-   * bills several (iCloud and Apple Music both read "APPLE.COM/BILL").
+   * One per series: the merchant key when the merchant bills one thing. When it bills several (iCloud and
+   * Apple Music both read "APPLE.COM/BILL"), the merchant key plus the series' own day: `apple~d3`, `apple~d20`
+   * (`~w2` for a weekly one's weekday), and its price only when two share a day (`apple~d3-299`). So a key
+   * doesn't move when another series starts or stops.
    */
   seriesKey: string;
   name: string;
@@ -45,8 +47,10 @@ export type RecurringCandidate = {
   priceChange: { fromCents: number; toCents: number; date: string } | null;
   /** The series' charges, one per cycle. */
   charges: { date: string; amountCents: number }[];
-  /** A second charge of the same amount within 2 days of one of the series' charges, when the series doesn't usually bill twice. */
+  /** A second charge of the same amount within 2 days of one of the series' charges, when the cycles around it were billed once. */
   duplicates: { dates: [string, string]; amountCents: number; label: string }[];
+  /** Paid by transfer (a loan, rent by Zelle): the bank's line never carries the user's own name for the bill. */
+  transfer: boolean;
   confidence: number;
 };
 
@@ -415,6 +419,7 @@ function evaluate(cycles: Cycle[], ctx: Context): Found | null {
     priceChange,
     charges: ts.map((t) => ({ date: t.date, amountCents: t.amountCents })),
     duplicates: duplicatesOf(cycles, ctx.refunds ?? []),
+    transfer,
     confidence,
     cycles,
   };
@@ -583,6 +588,18 @@ function mainSeriesOf(cycles: Cycle[], ctx: Context): Found[] {
   return best ? [best] : [];
 }
 
+/** Keys for one merchant's series, from what each one is (its day, then its price), never from their order. */
+function seriesKeys(key: string, found: Found[]): string[] {
+  if (found.length === 1) return [key];
+  const weekday = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay();
+  let tags = found.map((f) => (f.frequency === "weekly" || f.frequency === "biweekly" ? `w${weekday(f.lastDate)}` : `d${f.dueDay}`));
+  const clash = (t: string[]) => (x: string) => t.filter((y) => y === x).length > 1;
+  tags = tags.map((t, i) => (clash(tags)(t) ? `${t}-${Math.abs(found[i].latestAmountCents)}` : t));
+  // Identical twins (two plans, same day, same price) can only be told apart by order, and either key fits either.
+  tags = tags.map((t, i, all) => (clash(all)(t) ? `${t}-${all.slice(0, i).filter((x) => x === t).length + 1}` : t));
+  return tags.map((t) => `${key}~${t}`);
+}
+
 /**
  * Finds series of charges (or deposits) from the same merchant at a regular interval.
  * - A pending charge counts only when no posted copy sits beside it. A second charge of the same amount
@@ -641,7 +658,8 @@ export function detectRecurring(txns: DetectTxn[], opts: { today?: string } = {}
     const found = seriesOf(cyclesOf(sorted), { key, refunds: refunds.get(key) ?? [] })
       .filter((f) => daysBetween(f.nextExpectedDate, today) <= Math.max(7, PERIODS.find((p) => p.freq === f.frequency)!.days * 0.25))
       .sort((a, b) => a.charges[0].date.localeCompare(b.charges[0].date));
-    found.forEach(({ cycles: _cycles, ...series }, i) => out.push({ ...series, seriesKey: i === 0 ? key : `${key}~${i + 1}` }));
+    const keys = seriesKeys(key, found);
+    found.forEach(({ cycles: _cycles, ...series }, i) => out.push({ ...series, seriesKey: keys[i] }));
   }
   return out.sort((a, b) => b.confidence - a.confidence);
 }

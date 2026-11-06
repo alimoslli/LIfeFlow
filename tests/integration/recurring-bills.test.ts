@@ -74,20 +74,20 @@ describe("two subscriptions from one merchant (A5)", () => {
     const found = await run((s) => suggestRecurring(s, TODAY));
     expect(found.map((c) => [c.seriesKey, c.latestAmountCents, c.nextExpectedDate])).toEqual(
       expect.arrayContaining([
-        ["apple", -299, "2026-11-03"],
-        ["apple~2", -1_099, "2026-11-20"],
+        ["apple~d3", -299, "2026-11-03"],
+        ["apple~d20", -1_099, "2026-11-20"],
       ]),
     );
     expect(found).toHaveLength(2);
 
     // Tracking Apple Music doesn't hide iCloud, and Apple Music's charges are its own (no price "increase" from $2.99).
-    await run((s) => trackFound(s, TODAY, "apple~2"));
+    await run((s) => trackFound(s, TODAY, "apple~d20"));
     const o = await run((s) => subscriptionsOverview(s, TODAY));
     expect(o.subscriptions.map((x) => [x.name, x.amountCents, x.chargeCount, x.priceUp])).toEqual([["Apple", -1_099, 4, null]]);
     expect(o.found.map((c) => c.latestAmountCents)).toEqual([-299]);
     expect(o.monthlyCents).toBe(1_099 + 299);
 
-    await run((s) => trackFound(s, TODAY, "apple"));
+    await run((s) => trackFound(s, TODAY, "apple~d3"));
     const both = await run((s) => subscriptionsOverview(s, TODAY));
     expect(both.subscriptions.map((x) => x.amountCents).sort()).toEqual([-1_099, -299]);
     expect(both.found).toEqual([]);
