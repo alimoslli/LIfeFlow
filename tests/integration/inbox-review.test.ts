@@ -465,7 +465,88 @@ describe("questions the person answers (Same bill? / Did it move?)", () => {
     expect(await days()).toEqual(["2026-11-19"]);
     await run((s) => undoInboxItem(s, q.id));
     expect(await days()).toEqual(["2026-11-03"]);
+    // No keeps the old date and adds nothing.
+    const no = await run((s) => answerQuestion(s, TZ, today, q.id, false));
+    expect(no.filed).toEqual([]);
+    expect(await days()).toEqual(["2026-11-03"]);
+    // Another copy of the same news is not asked about again.
+    const again = await file(examEx("MATH 152", "Exam 1", "2026-11-19", { moved: true }), { messageId: "x2@s.edu" });
+    expect(again.reason).toContain("kept Exam 1 on its old date");
+    expect((again.extracted as { ask?: unknown }).ask).toBeUndefined();
+    expect(await days()).toEqual(["2026-11-03"]);
+    // Undo of the "no" asks again.
+    await run((s) => undoInboxItem(s, q.id));
+    expect((await run((s) => s.tx.select().from(inboxItems).where(eq(inboxItems.id, q.id))))[0].status).toBe("needs_review");
+  });
+
+  it("an exam already on the new day gets no card", async () => {
+    const { run, file } = await setup();
+    await run(async (s) => {
+      const c = await createCourse(s, { name: "Calculus II", code: "MATH 152" });
+      await createAssignment(s, TZ, { courseId: c.id, title: "Exam 1", kind: "exam", dueDate: "2026-11-19" });
+    });
+    const r = await file(examEx("MATH 152", "Exam 1", "2026-11-19", { moved: true }), { messageId: "same-day@s.edu" });
+    expect((r.extracted as { ask?: unknown }).ask).toBeUndefined();
+  });
+
+  it("spoof: an unchecked sender gets no card and changes nothing; a forged card can't be answered", async () => {
+    const { run, file } = await setup();
+    const c = await run(async (s) => {
+      const c = await createCourse(s, { name: "Calculus II", code: "MATH 152" });
+      await createAssignment(s, TZ, { courseId: c.id, title: "Exam 1", kind: "exam", dueDate: "2026-11-03" });
+      await createRecurring(s, { name: "Verizon", amountCents: -4500, frequency: "monthly", nextDueDate: "2026-11-12", kind: "bill" });
+      return c;
+    });
+    const exam = await file(examEx("MATH 152", "Exam 1", "2026-11-19", { moved: true }), { messageId: "sp1@evil.com", authenticated: false });
+    expect((exam.extracted as { ask?: unknown }).ask).toBeUndefined();
+    expect(exam.reason).toContain("sender check");
+    const bill = await file(billEx("Verizon", 50, "2026-11-12"), { messageId: "sp2@evil.com", authenticated: false });
+    expect((bill.extracted as { ask?: unknown }).ask).toBeUndefined();
+    expect(bill.reason).toContain("sender check");
+    const rows = await run((s) => s.tx.select().from(assignments));
+    expect(rows.filter((a) => a.courseId === c.id).map((a) => dayOf(a.dueAt))).toEqual(["2026-11-03"]);
+    expect((await run((s) => s.tx.select().from(recurringItems)))[0].amountCents).toBe(-4500);
+    // Answering them (or a hand-made card without the verified mark) is refused.
+    await expect(run((s) => answerQuestion(s, TZ, today, exam.id, true))).rejects.toThrow();
+    await run((s) =>
+      s.tx
+        .update(inboxItems)
+        .set({ extracted: { ...(bill.extracted as object), ask: { kind: "bill", text: "x", sameAs: "00000000-0000-0000-0000-000000000000" } } })
+        .where(eq(inboxItems.id, bill.id)),
+    );
+    await expect(run((s) => answerQuestion(s, TZ, today, bill.id, true))).rejects.toThrow();
+    // A look-alike copy from an unchecked sender is held without a card, nothing added.
+    const first = await file(billEx("Xfinity", 64.99, "2026-11-20"), { messageId: "t1@x.com" });
+    const fake = await file(billEx("Xfinity", 64.99, "2026-11-20"), { messageId: "t2@evil.com", authenticated: false });
+    expect(first.status).toBe("filed");
+    expect(fake.status).toBe("needs_review");
+    expect((fake.extracted as { ask?: unknown }).ask).toBeUndefined();
+    await expect(run((s) => answerQuestion(s, TZ, today, fake.id, false))).rejects.toThrow();
+  });
+
+  it("another person's card can't be answered", async () => {
+    const A = await setup();
+    const B = await setup();
+    await A.run((s) => createRecurring(s, { name: "Verizon", amountCents: -4500, frequency: "monthly", nextDueDate: "2026-11-12", kind: "bill" }));
+    const q = await A.file(billEx("Verizon", 50, "2026-11-12"), { messageId: "own@vz.com" });
+    await expect(B.run((s) => answerQuestion(s, TZ, today, q.id, true))).rejects.toThrow();
+    expect((await A.run((s) => s.tx.select().from(recurringItems)))[0].amountCents).toBe(-4500);
+  });
+
+  it("'No, keep both' on a bill is remembered: the next statement is not asked about again", async () => {
+    const { run, file } = await setup();
+    await run((s) => createRecurring(s, { name: "Verizon", amountCents: -4500, frequency: "monthly", nextDueDate: "2026-11-12", kind: "bill" }));
+    const q = await file(billEx("Verizon", 50, "2026-11-12"), { messageId: "pair1@vz.com" });
     await run((s) => answerQuestion(s, TZ, today, q.id, false));
-    expect(await days()).toEqual(["2026-11-03", "2026-11-19"]);
+    const next = await file(billEx("Verizon", 50, "2026-12-12"), { messageId: "pair2@vz.com" });
+    expect((next.extracted as { ask?: unknown }).ask).toBeUndefined();
+    expect(next.filed.map((f) => f.kind)).toContain("recurring_update");
+    const bills = (await run((s) => s.tx.select().from(recurringItems))).map((r) => [r.amountCents, r.nextDueDate]).sort();
+    expect(bills).toEqual(
+      [
+        [-5000, "2026-12-12"],
+        [-4500, "2026-11-12"],
+      ].sort(),
+    );
   });
 });

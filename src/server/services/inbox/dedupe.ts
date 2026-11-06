@@ -98,6 +98,32 @@ export async function findFiledTwin(
 const billLabel = (i: { name: string; amountCents: number; nextDueDate: string | null }) =>
   `${i.name} ${usd(i.amountCents)}${i.nextDueDate ? ` on ${fmtDay(i.nextDueDate)}` : ""}`;
 
+const pairKey = (a: string, b: string) => [a, b].sort().join("|");
+
+/**
+ * Pairs of bills the person answered "No, they're different" about: the bills the email could have been, each with the
+ * bill that was added for it. They are never asked about again.
+ */
+async function differentPairs(scope: UserScope): Promise<Set<string>> {
+  const rows = await scope.tx
+    .select({ extracted: inboxItems.extracted, filed: inboxItems.filed })
+    .from(inboxItems)
+    .where(
+      and(
+        eq(inboxItems.userId, scope.userId),
+        sql`${inboxItems.extracted} #>> '{ask,answered}' = 'different'`,
+        sql`${inboxItems.extracted} #>> '{ask,kind}' = 'bill'`,
+      ),
+    );
+  const out = new Set<string>();
+  for (const r of rows) {
+    const candidates = ((r.extracted as { ask?: { candidates?: string[] } } | null)?.ask?.candidates ?? []).filter(Boolean);
+    const created = r.filed.filter((f) => f.kind === "recurring").map((f) => f.id);
+    for (const c of candidates) for (const n of created) out.add(pairKey(c, n));
+  }
+  return out;
+}
+
 export type BillFacts = { payee: string; amountCents: number; frequency: Frequency; due: string; accountRef?: string | null };
 type Virtual = { name: string; merchantKey: string | null; amountCents: number; frequency: Frequency; nextDueDate: string };
 
@@ -159,6 +185,12 @@ export async function findTrackedBill(scope: UserScope, bill: BillFacts, today: 
     const plausible = onSchedule.filter(({ item }) => amountsClose(item.amountCents, v.amountCents, true));
     const sure = plausible.filter(({ item }) => item.nextDueDate && amountsClose(item.amountCents, v.amountCents, false));
     if (sure.length === 1 && plausible.length === 1) return { kind: "item", item: sure[0].item };
+    // Others that look like it but that the person already said are different bills from it: not asked about again.
+    if (sure.length === 1) {
+      const apart = await differentPairs(scope);
+      if (plausible.every(({ item }) => item.id === sure[0].item.id || apart.has(pairKey(item.id, sure[0].item.id))))
+        return { kind: "item", item: sure[0].item };
+    }
     if (plausible.length) return { kind: "ask", names: plausible.map(({ item }) => billLabel(item)), ids: plausible.map(({ item }) => item.id) };
     return null; // related names, but another day or a very different amount: another line or bill
   }

@@ -113,7 +113,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
         {d.items.length === 0 && <p className="text-sm text-muted">Nothing yet. Forward an email or add a photo to try it.</p>}
         {d.items.map((i) => {
           const st = STATUS[i.status];
-          const ask = (i.extracted as { ask?: { answered?: string; sameAs?: string; twin?: string } } | null)?.ask;
+          const ask = (i.extracted as { ask?: { kind?: "bill" | "exam"; verified?: boolean; answered?: string; sameAs?: string; twin?: string } } | null)?.ask;
           return (
             <Card as="article" key={i.id} className="p-4">
               <div className="flex items-start gap-3">
@@ -150,25 +150,25 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                   </ActionButton>
                 </div>
               )}
-              {i.status === "needs_review" && ask && !ask.answered && (
+              {i.status === "needs_review" && ask?.verified && !ask.answered && (
                 <div className="mt-2 flex flex-wrap justify-end gap-2" data-testid="same-question">
                   {(ask.sameAs || ask.twin) && (
                     <ActionButton
                       action={answerQuestionAction.bind(null, i.id, true)}
                       className="min-h-11 rounded-full bg-accent px-4 text-sm font-medium text-white"
                     >
-                      Yes, it&apos;s the same
+                      {ask.kind === "exam" ? "Yes, it moved" : "Yes, it\u2019s the same"}
                     </ActionButton>
                   )}
                   <ActionButton
                     action={answerQuestionAction.bind(null, i.id, false)}
                     className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium text-text"
                   >
-                    No, they&apos;re different
+                    {ask.kind === "exam" ? "No, keep the old date" : "No, keep both"}
                   </ActionButton>
                 </div>
               )}
-              {(i.status === "filed" || (i.status === "duplicate" && ask?.answered)) && (
+              {(i.status === "filed" || (i.status !== "undone" && ask?.answered)) && (
                 <div className="mt-2 flex justify-end">
                   <ActionButton action={undoInboxAction.bind(null, i.id)} className="flex items-center gap-1 rounded-full px-3 text-sm text-text-2">
                     <Undo2 className="h-4 w-4" /> Undo

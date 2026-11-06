@@ -54,12 +54,14 @@ export async function answerQuestionAction(id: string, same: boolean): Promise<A
     "inbox.answer_question",
     async (s, u) => {
       const r = await answerQuestion(s, u.timezone, todayIn(u.timezone), id, same);
+      const exam = (r.extracted as { ask?: { kind?: string } } | null)?.ask?.kind === "exam";
+      if (exam) return same ? (r.status === "filed" ? "Moved. You can undo it below." : "Nothing changed.") : "Kept the old date.";
       return r.status === "duplicate"
         ? "Got it, it's the same. Nothing was added."
         : same
           ? "Updated. You can undo it below."
-          : "Kept as its own. You can undo it below.";
+          : "Kept both. You can undo it below.";
     },
-    { revalidate: ["/inbox", "/", "/finances/bills"] },
+    { revalidate: ["/inbox", "/", "/finances/bills", "/plan", "/school"] },
   );
 }
