@@ -133,7 +133,7 @@ const forgetBrandedRules = (scope: UserScope) => brandedRules.delete(scope.tx);
  * The user's rule for a transaction: saved under one of its keys, or under the name its merchant had before the
  * vendor tidy (a rule for "comcast" still applies to a row now shown as Xfinity). Read-time only: rules aren't rewritten.
  */
-async function findRule(scope: UserScope, t: { merchantName?: string | null; description: string }) {
+export async function findRule(scope: UserScope, t: { merchantName?: string | null; description: string }) {
   const keys = merchantKeys({ merchantName: t.merchantName ?? null, description: t.description });
   if (!keys.length) return null;
   const [rule] = await scope.tx

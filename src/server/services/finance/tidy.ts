@@ -6,7 +6,7 @@ import { cleanVendorName, correctedVendorName, looksMessy } from "@/lib/vendor";
 import { categories, transactions, users } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { env } from "../../env";
-import { autoCategorize } from "./categorize";
+import { autoCategorize, categoryIdByName, findRule, keywordCategory } from "./categorize";
 import { ensureDefaultCategories } from "./categories";
 import { merchantKey } from "./recurring-detect";
 
@@ -85,13 +85,22 @@ export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm |
     })
     .from(transactions)
     .where(and(eq(transactions.userId, scope.userId), eq(transactions.excluded, false)))
-    .orderBy(desc(transactions.date))
-    .limit(3000);
+    .orderBy(desc(transactions.date));
+  // Every row is looked at (reading is cheap, and rows that are already right cost nothing and use no budget), but
+  // a run stops after MAX_CHANGES edits. Repeated runs therefore walk through the whole account.
 
   const out: TidyResult = { renamed: 0, categorized: 0, byAi: 0 };
   let changes = 0;
   type Left = { ids: string[]; text: string; spent: boolean; name: string };
   const unknown = new Map<string, Left>();
+  // One-time correction: phone/internet/utility bills that older syncs filed as Rent.
+  const rentId = (await categoryIdByName(scope, "Rent"))?.id;
+  const billCats = new Map<string, string>();
+  for (const n of ["Phone", "Internet", "Utilities"]) {
+    const c = await categoryIdByName(scope, n);
+    if (c) billCats.set(n, c.id);
+  }
+  const LANDLORD = /\b(rent|rental|apartments?|apts|property management|landlord|realty|leasing|lease)\b/i;
 
   for (const r of rows) {
     if (changes >= MAX_CHANGES) break;
@@ -112,6 +121,20 @@ export async function tidyTransactions(scope: UserScope, opts: { llm?: TidyLlm |
         patch.categoryId = auto.categoryId;
         patch.kind = auto.kind;
         catId = auto.categoryId;
+        out.categorized++;
+      }
+    }
+    if (rentId && catId === rentId && r.kind === "expense" && r.amountCents < 0) {
+      const text = `${name} ${r.description}`;
+      const to = LANDLORD.test(text) ? null : keywordCategory({ merchantName: name, description: r.description }, r.amountCents);
+      const toId = to ? billCats.get(to) : undefined;
+      if (
+        toId &&
+        !(await findRule(scope, { merchantName: name || r.merchantName, description: r.description })) &&
+        !(await findRule(scope, { merchantName: r.merchantName, description: r.description }))
+      ) {
+        patch.categoryId = toId;
+        catId = toId;
         out.categorized++;
       }
     }
