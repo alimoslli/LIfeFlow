@@ -47,7 +47,7 @@ test("Marketing on a phone: long titles wrap, no sideways scroll, switches are b
   );
 
   const problems: string[] = [];
-  for (const path of ["/admin/hq/marketing", "/admin/hq/settings", "/admin/hq/reports"]) {
+  for (const path of ["/admin/hq/marketing", "/admin/hq/settings", "/admin/work"]) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");
     expect(await noSideScroll(page), `${path} scrolls sideways`).toBe(true);

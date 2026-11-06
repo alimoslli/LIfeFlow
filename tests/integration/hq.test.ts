@@ -158,7 +158,7 @@ describe("approvals", () => {
         return { ok: true, gone: false };
       });
       await createApproval(db(), agent, { role: "designer", kind: "design", title: "Pick one", summary: "s" });
-      expect(sent).toEqual([expect.objectContaining({ title: "Product & Design needs your yes", body: "Pick one", url: "/admin/hq/approvals" })]);
+      expect(sent).toEqual([expect.objectContaining({ title: "Product & Design needs your yes", body: "Pick one", url: "/admin/work#approvals" })]);
       await createApproval(db(), owner, { role: "designer", kind: "design", title: "Mine", summary: "s" });
       expect(sent).toHaveLength(1);
       setHqPushSender(async () => {

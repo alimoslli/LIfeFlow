@@ -173,7 +173,7 @@ describe("briefs", () => {
     expect((await employeeDetail(db(), "assistant")).briefs).toHaveLength(2);
     expect((await employeeDetail(db(), "developer")).briefs).toBeUndefined();
     const acts = await listActivity(db(), { limit: 50 });
-    expect(acts.filter((a) => a.text === "Brief from your Chief of Staff" && a.role === "assistant" && a.link === "/admin/hq")).toHaveLength(2);
+    expect(acts.filter((a) => a.text === "Brief from your Chief of Staff" && a.role === "assistant" && a.link === "/admin")).toHaveLength(2);
   });
 
   it("pushes the owner the first line, trimmed to 140 characters", async () => {
@@ -193,7 +193,7 @@ describe("briefs", () => {
       });
       await recordBrief(db(), agent, { body: `${"A".repeat(300)}\nsecond line` });
       expect(sent).toHaveLength(1);
-      expect(sent[0]).toMatchObject({ title: "Your Chief of Staff", url: "/admin/hq" });
+      expect(sent[0]).toMatchObject({ title: "Your Chief of Staff", url: "/admin" });
       expect(sent[0].body).toBe("A".repeat(140));
     } finally {
       if (prev === undefined) delete process.env.ADMIN_EMAILS;

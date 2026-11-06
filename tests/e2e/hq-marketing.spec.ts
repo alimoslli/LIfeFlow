@@ -93,7 +93,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await expect(op.getByText("No numbers yet", { exact: true })).toHaveCount(4);
 
   // The Office counts it, then the owner says yes.
-  await op.goto("/admin/hq");
+  await op.goto("/admin");
   const tile = op.getByRole("link", { name: /Needs your yes/ }).first();
   await expect(tile).toContainText("1");
   await op.goto("/admin/hq/marketing");
@@ -102,7 +102,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await expect(op.getByText("No drafts yet. The marketing round adds them on Wednesdays.")).toBeVisible();
   const week = op.locator("section", { has: op.getByRole("heading", { name: "This week", level: 2 }) });
   await expect(week.getByText("Approved", { exact: true })).toBeVisible();
-  await op.goto("/admin/hq");
+  await op.goto("/admin");
   await expect(op.getByRole("link", { name: /Needs your yes/ }).first()).toContainText("0");
 
   // The detail page: change the title, then drop it.
@@ -118,7 +118,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await expect(op.getByText("Dropped", { exact: true }).first()).toBeVisible();
 
   // Reports carry a marketing section.
-  await op.goto("/admin/hq/reports");
+  await op.goto("/admin/work");
   await expect(op.getByRole("heading", { name: "Marketing this week", level: 2 })).toBeVisible();
 
   // The controls: Autonomous mode off shows on the Office and in the inbox the rounds read.
@@ -130,7 +130,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await expect(op.getByText("Saved", { exact: true })).toBeVisible();
   await expect(op.getByText(/Last changed .* by admin-owner@example.com/)).toBeVisible();
   await expect(op.getByRole("switch", { name: "Autonomous mode" })).not.toBeChecked();
-  await op.goto("/admin/hq");
+  await op.goto("/admin");
   await expect(op.locator("header p", { hasText: "Autonomous mode off" })).toBeVisible();
   const inbox = await request.get("/api/hq/inbox", { headers });
   expect(inbox.status()).toBe(200);

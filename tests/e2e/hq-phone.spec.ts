@@ -42,18 +42,7 @@ test("HQ on a phone: no sideways scroll, big room targets, no serious accessibil
     `insert into hq_chats (id, role, title, is_primary, status, needs_action, last_checkin_at) values
        ('session_01Mhcz6Ao4XdmNh3eAPYd3QN', 'designer', 'LF V3', true, 'blocked', 'Reply yes to commit the unfinished work and push fix-gmail-items and fix-search', now())`,
   );
-  const paths = [
-    "/admin/hq",
-    "/admin/hq?view=workspace",
-    "/admin/hq/missions",
-    "/admin/hq/approvals",
-    "/admin/hq/reports",
-    "/admin/hq/settings",
-    "/admin/hq/developer",
-    "/admin/hq/assistant",
-    "/admin/hq/qa",
-    "/admin/hq/founder",
-  ];
+  const paths = ["/admin", "/admin?view=workspace", "/admin/work", "/admin/hq/settings", "/admin/hq/developer", "/admin/hq/assistant", "/admin/hq/qa"];
   const problems: string[] = [];
   for (const path of paths) {
     await page.goto(path);
@@ -65,7 +54,7 @@ test("HQ on a phone: no sideways scroll, big room targets, no serious accessibil
   }
   expect(problems, problems.join("\n")).toEqual([]);
 
-  await page.goto("/admin/hq");
+  await page.goto("/admin");
   const rooms = page.locator("a.hq-room");
   await expect(rooms).toHaveCount(8);
   for (let i = 0; i < 8; i++) {
