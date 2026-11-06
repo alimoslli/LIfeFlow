@@ -2,7 +2,7 @@
 import { formObject, mutate, type ActionState } from "@/server/actions";
 import { todayIn } from "@/lib/dates";
 import { getDb } from "@/server/db/client";
-import { addSender, removeSender, fileSuggestion, undoInboxItem, verifySender } from "@/server/services/inbox";
+import { addSender, answerQuestion, removeSender, fileSuggestion, undoInboxItem, verifySender } from "@/server/services/inbox";
 
 const R = { revalidate: ["/inbox"] };
 
@@ -46,5 +46,20 @@ export async function fileSuggestionAction(id: string): Promise<ActionState> {
       return r.status === "filed" ? "Filed. You can undo it below." : (r.reason ?? "Couldn't file that one.");
     },
     { revalidate: ["/inbox", "/"] },
+  );
+}
+
+export async function answerQuestionAction(id: string, same: boolean): Promise<ActionState> {
+  return mutate(
+    "inbox.answer_question",
+    async (s, u) => {
+      const r = await answerQuestion(s, u.timezone, todayIn(u.timezone), id, same);
+      return r.status === "duplicate"
+        ? "Got it, it's the same. Nothing was added."
+        : same
+          ? "Updated. You can undo it below."
+          : "Kept as its own. You can undo it below.";
+    },
+    { revalidate: ["/inbox", "/", "/finances/bills"] },
   );
 }

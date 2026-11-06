@@ -13,7 +13,7 @@ import { withCurrentUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { inboxAddress, listInbox, listSenders } from "@/server/services/inbox";
 import { extractionClient } from "@/server/services/inbox/extract";
-import { addSenderAction, removeSenderAction, fileSuggestionAction, undoInboxAction, verifySenderAction } from "./actions";
+import { addSenderAction, removeSenderAction, fileSuggestionAction, answerQuestionAction, undoInboxAction, verifySenderAction } from "./actions";
 import { CopyAddress, InboxUpload } from "./upload";
 
 export const metadata: Metadata = { title: "Filed" };
@@ -113,6 +113,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
         {d.items.length === 0 && <p className="text-sm text-muted">Nothing yet. Forward an email or add a photo to try it.</p>}
         {d.items.map((i) => {
           const st = STATUS[i.status];
+          const ask = (i.extracted as { ask?: { answered?: string; sameAs?: string; twin?: string } } | null)?.ask;
           return (
             <Card as="article" key={i.id} className="p-4">
               <div className="flex items-start gap-3">
@@ -149,7 +150,25 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                   </ActionButton>
                 </div>
               )}
-              {i.status === "filed" && (
+              {i.status === "needs_review" && ask && !ask.answered && (
+                <div className="mt-2 flex flex-wrap justify-end gap-2" data-testid="same-question">
+                  {(ask.sameAs || ask.twin) && (
+                    <ActionButton
+                      action={answerQuestionAction.bind(null, i.id, true)}
+                      className="min-h-11 rounded-full bg-accent px-4 text-sm font-medium text-white"
+                    >
+                      Yes, it&apos;s the same
+                    </ActionButton>
+                  )}
+                  <ActionButton
+                    action={answerQuestionAction.bind(null, i.id, false)}
+                    className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium text-text"
+                  >
+                    No, they&apos;re different
+                  </ActionButton>
+                </div>
+              )}
+              {(i.status === "filed" || (i.status === "duplicate" && ask?.answered)) && (
                 <div className="mt-2 flex justify-end">
                   <ActionButton action={undoInboxAction.bind(null, i.id)} className="flex items-center gap-1 rounded-full px-3 text-sm text-text-2">
                     <Undo2 className="h-4 w-4" /> Undo

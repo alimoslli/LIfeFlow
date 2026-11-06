@@ -7,10 +7,11 @@ import { withUser } from "@/server/db/with-user";
 import { assignments, financialAccounts, inboxItems, notificationLog, recurringItems, tasks, transactions, users, type InboxFiled } from "@/server/db/schema";
 import { mergeCanvasDuplicates } from "@/server/integrations/canvas";
 import { createManualAccount } from "@/server/services/finance/accounts";
+import { upcomingBills } from "@/server/services/finance/forecast";
 import { createRecurring } from "@/server/services/finance/planning";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { createAssignment, createCourse } from "@/server/services/school";
-import { fileSuggestion, processDocument, processForwardedEmail, undoInboxItem } from "@/server/services/inbox";
+import { answerQuestion, fileSuggestion, processDocument, processForwardedEmail, undoInboxItem } from "@/server/services/inbox";
 import { attachWaitingReceipts, collapseInboxDuplicates } from "@/server/services/inbox/cleanup";
 import { runDueSlot } from "@/server/services/proactive/engine";
 import type { Extraction } from "@/server/services/inbox/extract";
@@ -49,7 +50,7 @@ describe("review fixes: nothing is merged on a guess", () => {
     const c = await file(billEx("Verizon", 55, "2026-11-25"), { messageId: "c@vz.com" });
     expect(a.filed[0].kind).toBe("recurring");
     expect(b.filed[0].kind).toBe("recurring");
-    expect(c.filed.map((f) => f.kind)).toEqual(["task"]);
+    expect(c.filed).toEqual([]);
     expect(c.reason).toContain("Same bill?");
     const bills = await run((s) => s.tx.select().from(recurringItems));
     expect(bills.map((r) => [r.amountCents, r.nextDueDate]).sort()).toEqual([
@@ -109,7 +110,7 @@ describe("review fixes: nothing is merged on a guess", () => {
     expect(await list()).toContain("Essay 1 Draft:2026-11-10");
     // Moved but no old date: asked, nothing changes.
     const noOld = await file(examEx("MATH 152", "Exam", "2026-11-17", { moved: true }), { messageId: "m1@s.edu" });
-    expect(noOld.reason).toContain("Same exam?");
+    expect(noOld.reason).toBe("Did Exam move to Tue, Nov 17?"); // one item is called "Exam": asked, nothing changed
     expect(await list()).toContain("Exam 2:2026-11-12");
     // Moved, vague title, the old date points at Exam 2 only.
     const moved = await file(examEx("MATH 152", "Exam", "2026-11-17", { moved: true, old: "2026-11-12" }), { messageId: "m2@s.edu", from: "prof@s.edu" });
@@ -122,7 +123,7 @@ describe("review fixes: nothing is merged on a guess", () => {
     expect(none.reason).toContain("Same exam?");
     // A title naming another number never matches by date alone.
     const wrong = await file(examEx("MATH 152", "Exam 1", "2026-11-19", { moved: true, old: "2026-11-17" }), { messageId: "m4@s.edu" });
-    expect(wrong.reason).toContain("Same exam?");
+    expect(wrong.reason).toBe("Did Exam 1 move to Thu, Nov 19?");
     expect(await list()).toContain("Exam 2:2026-11-17");
   });
 
@@ -391,5 +392,80 @@ describe("review fixes: the cleanup", () => {
     const B = await makeUser();
     expect(await B.run((s) => collapseInboxDuplicates(s))).toEqual({ inboxItems: 0, bills: 0, tasks: 0, exams: 0 });
     expect(await A.run((s) => s.tx.select().from(assignments))).toHaveLength(2);
+  });
+});
+
+describe("questions the person answers (Same bill? / Did it move?)", () => {
+  const asked = (item: { extracted: unknown }) => (item.extracted as { ask?: { sameAs?: string; twin?: string; answered?: string; text: string } }).ask!;
+
+  it("a possible duplicate bill is counted once while it waits; yes updates, no adds, and Undo asks again", async () => {
+    const { run, file } = await setup();
+    await run((s) => createRecurring(s, { name: "Verizon", amountCents: -4500, frequency: "monthly", nextDueDate: "2026-11-12", kind: "bill" }));
+    const bar = async () => {
+      const list = await run((s) => upcomingBills(s, "2026-11-01", "2026-11-01", "2026-11-30"));
+      return list.reduce((sum, b) => sum + Math.abs(b.amountCents), 0);
+    };
+    const q = await file(billEx("Verizon", 50, "2026-11-12"), { messageId: "ask1@vz.com" });
+    expect(q.status).toBe("needs_review");
+    expect(asked(q).text).toBe("Same bill? Verizon $50.00 on Thu, Nov 12 from your email, and Verizon $45.00 on Thu, Nov 12 in your bills.");
+    expect(asked(q).sameAs).toBeTruthy();
+    // Waiting: nothing added, no reminder, the 30-day bar counts the bill once.
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(1);
+    expect(await run((s) => s.tx.select().from(tasks))).toHaveLength(0);
+    expect(await bar()).toBe(4500);
+
+    const yes = await run((s) => answerQuestion(s, TZ, today, q.id, true));
+    expect(yes.filed.map((f) => f.kind)).toEqual(["recurring_update", "task"]);
+    expect((await run((s) => s.tx.select().from(recurringItems)))[0].amountCents).toBe(-5000);
+    await run((s) => undoInboxItem(s, q.id));
+    expect((await run((s) => s.tx.select().from(recurringItems)))[0].amountCents).toBe(-4500);
+    const again = (await run((s) => s.tx.select().from(inboxItems).where(eq(inboxItems.id, q.id))))[0];
+    expect([again.status, asked(again).answered]).toEqual(["needs_review", undefined]);
+
+    const no = await run((s) => answerQuestion(s, TZ, today, q.id, false));
+    expect(no.filed.map((f) => f.kind)).toEqual(["recurring", "task"]);
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(2);
+    await run((s) => undoInboxItem(s, q.id));
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(1);
+    expect(await bar()).toBe(4500);
+    // Answering twice is refused.
+    await run((s) => answerQuestion(s, TZ, today, q.id, true));
+    await expect(run((s) => answerQuestion(s, TZ, today, q.id, false))).rejects.toThrow();
+  });
+
+  it("two emails for one bill with no account number: yes marks the second a copy, Undo asks again", async () => {
+    const { run, file } = await setup();
+    const first = await file(billEx("Xfinity", 64.99, "2026-11-20"), { messageId: "t1@x.com", subject: "Your Xfinity bill" });
+    const second = await file(billEx("Xfinity", 64.99, "2026-11-20"), { messageId: "t2@gmail.com", subject: "Fwd: bill" });
+    expect(asked(second).twin).toBe(first.id);
+    const done = await run((s) => answerQuestion(s, TZ, today, second.id, true));
+    expect([done.status, done.duplicateOf]).toEqual(["duplicate", first.id]);
+    await run((s) => undoInboxItem(s, second.id));
+    expect((await run((s) => s.tx.select().from(inboxItems).where(eq(inboxItems.id, second.id))))[0].status).toBe("needs_review");
+    const no = await run((s) => answerQuestion(s, TZ, today, second.id, false));
+    expect(no.status).toBe("filed");
+  });
+
+  it("'Did Exam 1 move to Nov 19?': yes moves it, no adds it, Undo asks again", async () => {
+    const { run, file } = await setup();
+    const c = await run(async (s) => {
+      const c = await createCourse(s, { name: "Calculus II", code: "MATH 152" });
+      await createAssignment(s, TZ, { courseId: c.id, title: "Exam 1", kind: "exam", dueDate: "2026-11-03" });
+      return c;
+    });
+    const days = async () =>
+      (await run((s) => s.tx.select().from(assignments)))
+        .filter((a) => a.courseId === c.id)
+        .map((a) => dayOf(a.dueAt))
+        .sort();
+    const q = await file(examEx("MATH 152", "Exam 1", "2026-11-19", { moved: true }), { messageId: "x1@s.edu" });
+    expect(asked(q).text).toBe("Did Exam 1 move to Thu, Nov 19?");
+    expect(await days()).toEqual(["2026-11-03"]);
+    await run((s) => answerQuestion(s, TZ, today, q.id, true));
+    expect(await days()).toEqual(["2026-11-19"]);
+    await run((s) => undoInboxItem(s, q.id));
+    expect(await days()).toEqual(["2026-11-03"]);
+    await run((s) => answerQuestion(s, TZ, today, q.id, false));
+    expect(await days()).toEqual(["2026-11-03", "2026-11-19"]);
   });
 });

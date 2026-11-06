@@ -94,6 +94,10 @@ export async function findFiledTwin(
 
 // ------------------------------------------------------------------ bills (D6, D7, D8, D11)
 
+/** "Verizon $45.00 on Nov 12", for a question to the person. */
+const billLabel = (i: { name: string; amountCents: number; nextDueDate: string | null }) =>
+  `${i.name} ${usd(i.amountCents)}${i.nextDueDate ? ` on ${fmtDay(i.nextDueDate)}` : ""}`;
+
 export type BillFacts = { payee: string; amountCents: number; frequency: Frequency; due: string; accountRef?: string | null };
 type Virtual = { name: string; merchantKey: string | null; amountCents: number; frequency: Frequency; nextDueDate: string };
 
@@ -101,7 +105,7 @@ export type BillMatch =
   | { kind: "item"; item: typeof recurringItems.$inferSelect }
   | { kind: "series"; series: RecurringCandidate }
   /** Could be a bill we track but not sure enough to change anything: the user is asked ("Same bill?"). */
-  | { kind: "ask"; names: string[] }
+  | { kind: "ask"; names: string[]; ids: string[] }
   | null;
 
 /**
@@ -155,14 +159,14 @@ export async function findTrackedBill(scope: UserScope, bill: BillFacts, today: 
     const plausible = onSchedule.filter(({ item }) => amountsClose(item.amountCents, v.amountCents, true));
     const sure = plausible.filter(({ item }) => item.nextDueDate && amountsClose(item.amountCents, v.amountCents, false));
     if (sure.length === 1 && plausible.length === 1) return { kind: "item", item: sure[0].item };
-    if (plausible.length) return { kind: "ask", names: plausible.map(({ item }) => `${item.name} ${usd(item.amountCents)}`) };
+    if (plausible.length) return { kind: "ask", names: plausible.map(({ item }) => billLabel(item)), ids: plausible.map(({ item }) => item.id) };
     return null; // related names, but another day or a very different amount: another line or bill
   }
 
   const bank = await bankSeries(scope, today);
   const viaSeries = items.filter((item) => seriesForItem(item, bank.trackedActive).some((c) => looseSeriesMatch(v, c)));
   if (viaSeries.length === 1) return { kind: "item", item: viaSeries[0] };
-  if (viaSeries.length > 1) return { kind: "ask", names: viaSeries.map((i) => `${i.name} ${usd(i.amountCents)}`) };
+  if (viaSeries.length > 1) return { kind: "ask", names: viaSeries.map(billLabel), ids: viaSeries.map((i) => i.id) };
   const open = bank.untracked.filter((c) => looseSeriesMatch(v, c));
   return open.length === 1 ? { kind: "series", series: open[0] } : null;
 }
@@ -171,9 +175,15 @@ export async function findTrackedBill(scope: UserScope, bill: BillFacts, today: 
  * A new statement for a bill already tracked: its next due date moves (never backwards past a different cycle) and its
  * amount follows. A different amount is a price change; the old price is kept in `priceHistory`.
  */
-export async function updateTrackedBill(scope: UserScope, item: typeof recurringItems.$inferSelect, bill: BillFacts): Promise<InboxFiled | null> {
+export async function updateTrackedBill(
+  scope: UserScope,
+  item: typeof recurringItems.$inferSelect,
+  bill: BillFacts,
+  opts: { sameCycleOk?: boolean } = {},
+): Promise<InboxFiled | null> {
   // Only a statement for a newer period changes the bill; an older (or the same) one is already behind us.
-  if (item.nextDueDate && bill.due <= item.nextDueDate) return null;
+  // (When the person said "same bill", a corrected statement for the same cycle counts too.)
+  if (item.nextDueDate && (opts.sameCycleOk ? bill.due < item.nextDueDate : bill.due <= item.nextDueDate)) return null;
   const newAmount = -bill.amountCents;
   const priceChanged = newAmount !== item.amountCents;
   const priceHistory = priceChanged ? [...item.priceHistory, { amountCents: item.amountCents, until: bill.due }] : item.priceHistory;
@@ -384,4 +394,13 @@ export async function undoUpdate(scope: UserScope, f: InboxFiled) {
       .update(transactions)
       .set({ notes: (prev.notes as string | null) ?? null })
       .where(and(eq(transactions.id, f.id), eq(transactions.userId, scope.userId)));
+}
+
+/** The course's open items with this exact name (normalized), for "Did Exam 1 move?" when the old date can't pin it down. */
+export async function findOpenByTitle(scope: UserScope, q: { courseId: string; kind: "exam" | "assignment"; title: string }) {
+  const rows = await scope.tx
+    .select()
+    .from(assignments)
+    .where(and(eq(assignments.userId, scope.userId), eq(assignments.courseId, q.courseId), eq(assignments.kind, q.kind), ne(assignments.status, "done")));
+  return rows.filter((a) => normalizeText(a.title) === normalizeText(q.title));
 }

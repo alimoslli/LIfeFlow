@@ -5,11 +5,11 @@ import { addDaysStr, DATE_RE, formatDateStr, TIME_RE } from "@/lib/dates";
 
 const fmtDay = (d: string) => formatDateStr(d, "EEE, MMM d");
 import type { Database } from "../../db/client";
-import { attachments, inboxItems, inboxSenders, oauthIdentities, users, type Frequency, type InboxFiled } from "../../db/schema";
+import { assignments, attachments, inboxItems, inboxSenders, oauthIdentities, users, type Frequency, type InboxFiled } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { emailConfig, sendEmail } from "../../integrations/email";
 import { ServiceError } from "../errors";
-import { createRecurring, deleteRecurring } from "../finance/planning";
+import { createRecurring, deleteRecurring, getRecurring } from "../finance/planning";
 import { createTransaction, deleteTransaction, queryTransactions } from "../finance/transactions";
 import { createAssignment, deleteAssignment, resolveCourse } from "../school";
 import { createEvent, deleteEvent } from "../calendar";
@@ -25,6 +25,7 @@ import {
   isStrongSig,
   weakSigPrefix,
   findMovedSchoolItem,
+  findOpenByTitle,
   findFiledTwin,
   findPurchaseTwin,
   findTrackedBill,
@@ -149,14 +150,28 @@ export async function isVerifiedSender(scope: UserScope, email: string) {
 const cents = (usd: number | null | undefined) => (usd == null || !Number.isFinite(usd) ? null : Math.round(Math.abs(usd) * 100));
 const date = (d: string | null | undefined) => (d && DATE_RE.test(d) ? d : null);
 
+/**
+ * A question for the person ("Same bill?", "Did Exam 1 move?"), kept on the inbox item (in `extracted.ask`) with one tap
+ * for yes and one for no. Nothing is added or changed until it is answered, so nothing is counted twice meanwhile.
+ */
+export type Ask = {
+  kind: "bill" | "exam";
+  text: string;
+  /** Yes means: this is the bill / exam with this id (update it). */
+  sameAs?: string;
+  /** Yes means: this is a copy of the email filed in this inbox item. */
+  twin?: string;
+  answered?: "same" | "different";
+};
+
 /** Puts what was read where it belongs. Returns what was created (for Undo) and anything that needs the user. */
 export async function fileExtraction(
   scope: UserScope,
   tz: string,
   ex: Extraction,
   today: string,
-  ctx: { from?: string | null; authenticated?: boolean } = {},
-): Promise<{ filed: InboxFiled[]; review?: string }> {
+  ctx: { from?: string | null; authenticated?: boolean; decision?: { sameAs?: string; separate?: boolean } } = {},
+): Promise<{ filed: InboxFiled[]; review?: string; ask?: Ask }> {
   const filed: InboxFiled[] = [];
   // Changing something the user already has (a bill, an exam, a bank charge's note) needs an email that passed the sender
   // check (SPF/DKIM). Otherwise the change is only suggested; nothing is touched.
@@ -170,24 +185,14 @@ export async function fileExtraction(
       const due = date(b.due_date) ?? addDaysStr(today, 7);
       let note: string | undefined;
       let reminder = true;
+      let ask: Ask | undefined;
+      const decision = ctx.decision;
       if (b.repeats !== "none") {
         const facts = { payee: b.payee.slice(0, 120), amountCents: amount, frequency: b.repeats as Frequency, due, accountRef: b.account_ref };
-        // A bill we already track (or the bank's series for it) is updated, never added a second time. Not sure: ask, don't guess.
-        const match = await findTrackedBill(scope, facts, today);
-        if (match?.kind === "ask") note = `Same bill? This could be ${match.names.join(" or ")}. I didn't add or change a bill; tell me which.`;
-        else if (match?.kind === "item" && !auth) note = `Same bill as ${match.item.name}? ${needsSenderCheck}`;
-        else if (match?.kind === "item") {
-          const updated = await updateTrackedBill(scope, match.item, facts);
-          if (updated) filed.push(updated);
-          else {
-            note = `${match.item.name} is already tracked past ${fmtDay(facts.due)}, so this older statement changed nothing.`;
-            reminder = false;
-          }
-        } else if (match?.kind === "series") filed.push(await saveBillAsSeries(scope, match.series, facts));
-        else {
+        const createBill = async () => {
           const r = await createRecurring(
             scope,
-            { name: b.payee.slice(0, 120), amountCents: -amount, frequency: b.repeats, nextDueDate: due, kind: "bill" },
+            { name: b.payee.slice(0, 120), amountCents: -amount, frequency: b.repeats as Frequency, nextDueDate: due, kind: "bill" },
             "detected",
           );
           filed.push({
@@ -196,6 +201,30 @@ export async function fileExtraction(
             label: `Bill: ${b.payee} $${(amount / 100).toFixed(2)} ${b.repeats}, next ${fmtDay(due)}`,
             href: "/finances/bills",
           });
+        };
+        const applyTo = async (item: Awaited<ReturnType<typeof getRecurring>>, sameCycleOk = false) => {
+          const updated = await updateTrackedBill(scope, item, facts, { sameCycleOk });
+          if (updated) filed.push(updated);
+          else {
+            note = `${item.name} is already tracked past ${fmtDay(facts.due)}, so this older statement changed nothing.`;
+            reminder = false;
+          }
+        };
+        // The person's answer comes first; otherwise a bill we already track (or the bank's series for it) is updated, never
+        // added a second time. Not sure: ask, don't guess.
+        if (decision?.separate) await createBill();
+        else if (decision?.sameAs) await applyTo(await getRecurring(scope, decision.sameAs), true);
+        else {
+          const match = await findTrackedBill(scope, facts, today);
+          if (match?.kind === "ask") {
+            const text = `Same bill? ${b.payee} $${(amount / 100).toFixed(2)} on ${fmtDay(due)} from your email, and ${match.names.join(" or ")} in your bills.`;
+            ask = { kind: "bill", text, sameAs: match.ids.length === 1 ? match.ids[0] : undefined };
+            note = text;
+            reminder = false;
+          } else if (match?.kind === "item" && !auth) note = `Same bill as ${match.item.name}? ${needsSenderCheck}`;
+          else if (match?.kind === "item") await applyTo(match.item);
+          else if (match?.kind === "series") filed.push(await saveBillAsSeries(scope, match.series, facts));
+          else await createBill();
         }
       }
       if (reminder) {
@@ -207,7 +236,7 @@ export async function fileExtraction(
         );
         filed.push({ kind: "task", id: t.id, label: `Reminder: pay ${b.payee} by ${fmtDay(due)}`, href: `/tasks/${t.id}` });
       }
-      return { filed, review: note ?? (b.due_date ? undefined : "No due date was printed; I set it for a week out. Check it.") };
+      return { filed, ask, review: note ?? (b.due_date ? undefined : "No due date was printed; I set it for a week out. Check it.") };
     }
     case "receipt": {
       const r = ex.receipt;
@@ -276,20 +305,38 @@ export async function fileExtraction(
       // "Exam 2 moved to Nov 17": only an email that says it moved, names the old date, and finds exactly one exam due then
       // moves it (Undo moves it back). Anything unclear is asked, never guessed, and never added as a second exam.
       const dueDate = date(s.due_date);
-      if (s.moved) {
-        const found = dueDate
-          ? await findMovedSchoolItem(scope, tz, { courseId: course.id, kind, title: s.title, oldDate: date(s.old_due_date) })
-          : ({ match: null, why: "none" } as const);
-        if (!found.match) {
-          const why = found.why === "no_date" ? "the email doesn't say the old date" : found.why === "many" ? "more than one is due then" : "none is due then";
-          return { filed, review: `Same ${kind}? "${s.title}" looks moved in ${course.name}, but ${why}. I didn't add or change anything.` };
-        }
-        if (!auth) return { filed, review: `"${s.title}" looks moved in ${course.name}. ${needsSenderCheck}` };
-        const label = `${kind === "exam" ? "Exam" : "Assignment"}: ${found.match.title} in ${course.name}`;
+      if (s.moved && !ctx.decision?.separate) {
         const time = s.due_time && TIME_RE.test(s.due_time) ? s.due_time : null;
-        const moved = await moveSchoolItem(scope, tz, found.match, { date: dueDate!, time }, ctx.from ?? null, label);
-        if ("filed" in moved) return { filed: [moved.filed] };
-        return { filed, review: `${found.match.title} is already in ${course.name} on that day.` };
+        const move = async (row: Awaited<ReturnType<typeof findOpenByTitle>>[number]) => {
+          const label = `${kind === "exam" ? "Exam" : "Assignment"}: ${row.title} in ${course.name}`;
+          const moved = await moveSchoolItem(scope, tz, row, { date: dueDate!, time }, ctx.from ?? null, label);
+          if ("filed" in moved) return { filed: [moved.filed] };
+          return { filed, review: `${row.title} is already in ${course.name} on that day.` };
+        };
+        if (ctx.decision?.sameAs) {
+          const [row] = await scope.tx
+            .select()
+            .from(assignments)
+            .where(and(eq(assignments.id, ctx.decision.sameAs), eq(assignments.userId, scope.userId)));
+          if (row && dueDate) return move(row);
+        } else {
+          const found = dueDate
+            ? await findMovedSchoolItem(scope, tz, { courseId: course.id, kind, title: s.title, oldDate: date(s.old_due_date) })
+            : ({ match: null, why: "none" } as const);
+          if (!found.match) {
+            // The old date can't pin it down, but exactly one item has this name: ask "did it move?" with one tap each way.
+            const named = dueDate ? await findOpenByTitle(scope, { courseId: course.id, kind, title: s.title }) : [];
+            if (named.length === 1) {
+              const text = `Did ${named[0].title} move to ${fmtDay(dueDate!)}?`;
+              return { filed, review: text, ask: { kind: "exam", text, sameAs: named[0].id } };
+            }
+            const why =
+              found.why === "no_date" ? "the email doesn't say the old date" : found.why === "many" ? "more than one is due then" : "none is due then";
+            return { filed, review: `Same ${kind}? "${s.title}" looks moved in ${course.name}, but ${why}. I didn't add or change anything.` };
+          }
+          if (!auth) return { filed, review: `"${s.title}" looks moved in ${course.name}. ${needsSenderCheck}` };
+          return move(found.match);
+        }
       }
       const r = await createAssignment(
         scope,
@@ -449,21 +496,23 @@ export async function processDocument(
   const sameBill = isStrongSig(contentSig) ? await findFiledTwin(scope, { contentSig }, row.id) : null;
   if (sameBill) return markDuplicate(scope, row.id, sameBill.id, { type: ex.type, summary: ex.summary.slice(0, 500), contentSig });
   const similar = contentSig && !isStrongSig(contentSig) ? await findFiledTwin(scope, { similarTo: weakSigPrefix(contentSig) }, row.id) : null;
-  if (similar) {
-    const [ask] = await scope.tx
+  if (similar && ex.bill) {
+    const text = `Same bill? ${ex.bill.payee} $${Math.abs(ex.bill.amount_usd).toFixed(2)} on ${fmtDay(ex.bill.due_date ?? today)} came in two emails${similar.subject ? `: "${similar.subject.slice(0, 60)}" and "${(doc.subject ?? "this one").slice(0, 60)}"` : ""}, and neither has an account or line number to tell them apart. Nothing was added.`;
+    const ask: Ask = { kind: "bill", text, twin: similar.id };
+    const [asked] = await scope.tx
       .update(inboxItems)
       .set({
         contentSig,
         status: "needs_review",
         type: ex.type,
         summary: ex.summary.slice(0, 500),
-        extracted: ex as unknown as Record<string, unknown>,
+        extracted: { ...ex, ask } as unknown as Record<string, unknown>,
         duplicateOf: similar.id,
-        reason: `Same bill? It looks like one already filed${similar.subject ? ` ("${similar.subject.slice(0, 80)}")` : ""}: same payee, amount and due date, and no account or line number to tell them apart. Nothing was added.`,
+        reason: text,
       })
       .where(eq(inboxItems.id, row.id))
       .returning();
-    return ask;
+    return asked;
   }
   if (opts.suggestOnly && SUGGESTIBLE[ex.type]) {
     // Nothing is filed yet: the person's own tap is the approval (see fileSuggestion).
@@ -481,7 +530,7 @@ export async function processDocument(
       .returning();
     return sug;
   }
-  const { filed, review } = await fileExtraction(scope, tz, ex, today, { from: doc.from, authenticated: doc.authenticated ?? doc.channel !== "email" });
+  const { filed, review, ask } = await fileExtraction(scope, tz, ex, today, { from: doc.from, authenticated: doc.authenticated ?? doc.channel !== "email" });
   const [done] = await scope.tx
     .update(inboxItems)
     .set({
@@ -489,7 +538,7 @@ export async function processDocument(
       status: filed.length ? "filed" : "needs_review",
       type: ex.type,
       summary: ex.summary.slice(0, 500),
-      extracted: ex as unknown as Record<string, unknown>,
+      extracted: (ask ? { ...ex, ask } : ex) as unknown as Record<string, unknown>,
       filed,
       reason: review ?? null,
     })
@@ -526,10 +575,10 @@ export async function fileSuggestion(scope: UserScope, tz: string, today: string
   if (!row) throw new ServiceError("Not found", "not_found");
   if (row.status !== "suggested" || !row.extracted) throw new ServiceError("There's nothing waiting to be filed here.");
   // The person's tap is the approval, so this is the authenticated path (it may update what they already have).
-  const { filed, review } = await fileExtraction(scope, tz, row.extracted as unknown as Extraction, today, { from: row.fromAddress, authenticated: true });
+  const { filed, review, ask } = await fileExtraction(scope, tz, row.extracted as unknown as Extraction, today, { from: row.fromAddress, authenticated: true });
   const [done] = await scope.tx
     .update(inboxItems)
-    .set({ status: filed.length ? "filed" : "needs_review", filed, reason: review ?? null })
+    .set({ status: filed.length ? "filed" : "needs_review", filed, reason: review ?? null, ...(ask && { extracted: { ...row.extracted, ask } }) })
     .where(eq(inboxItems.id, id))
     .returning();
   return done;
@@ -552,9 +601,15 @@ export async function undoInboxItem(scope: UserScope, id: string) {
   // Something the cleanup merged away: Undo brings back what it removed (whatever the item's status), before anything else.
   const restored = await restoreMerged(scope, id);
   if (restored) return restored;
+  // An answered question: Undo asks it again.
+  if (row.status === "duplicate" && askOf(row.extracted)?.answered) {
+    await reopenQuestion(scope, row);
+    return 1;
+  }
   if (row.status !== "filed") throw new ServiceError("There's nothing to undo here.");
   for (const f of [...row.filed].reverse()) await undoFiled(scope, f);
-  await scope.tx.update(inboxItems).set({ status: "undone" }).where(eq(inboxItems.id, id));
+  if (askOf(row.extracted)?.answered) await reopenQuestion(scope, row);
+  else await scope.tx.update(inboxItems).set({ status: "undone" }).where(eq(inboxItems.id, id));
   return row.filed.length;
 }
 
@@ -578,19 +633,45 @@ export async function saveInboxFile(scope: UserScope, f: { filename: string; mim
   return a.id;
 }
 
-/** The user's answer to a "Same bill?" suggestion: yes marks it a copy; no files it as a bill of its own (updates still need the sender check). */
-export async function answerSameBill(scope: UserScope, tz: string, today: string, id: string, same: boolean) {
+/** The question kept on an inbox item, if any. */
+const askOf = (extracted: Record<string, unknown> | null) => (extracted?.ask as Ask | undefined) ?? null;
+
+/**
+ * The person's answer to a question ("Same bill?", "Did Exam 1 move?"). Yes: a copy is marked as one, or the bill / exam it
+ * names is updated. No: it is filed as its own bill / exam. Either way the answer is kept so Undo can ask again.
+ */
+export async function answerQuestion(scope: UserScope, tz: string, today: string, id: string, same: boolean) {
   const [row] = await scope.tx
     .select()
     .from(inboxItems)
     .where(and(eq(inboxItems.id, id), eq(inboxItems.userId, scope.userId)));
-  if (!row || row.status !== "needs_review" || !row.duplicateOf || !row.extracted) throw new ServiceError("There's nothing to answer here.");
-  if (same) return markDuplicate(scope, id, row.duplicateOf);
-  const { filed, review } = await fileExtraction(scope, tz, row.extracted as unknown as Extraction, today, { from: row.fromAddress, authenticated: true });
+  const ask = row ? askOf(row.extracted) : null;
+  if (!row || row.status !== "needs_review" || !ask || ask.answered) throw new ServiceError("There's nothing to answer here.");
+  const answered: Ask = { ...ask, answered: same ? "same" : "different" };
+  const extracted = { ...row.extracted, ask: answered };
+  if (same && ask.twin) return markDuplicate(scope, id, ask.twin, { extracted });
+  if (same && !ask.sameAs) throw new ServiceError("I can't tell which one it is. Tap No to keep it as its own.");
+  const { ask: _drop, ...ex } = row.extracted as Record<string, unknown>;
+  const { filed, review } = await fileExtraction(scope, tz, ex as unknown as Extraction, today, {
+    from: row.fromAddress,
+    authenticated: true, // the person's tap is the approval
+    decision: same ? { sameAs: ask.sameAs } : { separate: true },
+  });
   const [done] = await scope.tx
     .update(inboxItems)
-    .set({ status: filed.length ? "filed" : "needs_review", duplicateOf: null, filed, reason: review ?? null })
+    .set({ status: filed.length ? "filed" : "needs_review", duplicateOf: null, filed, reason: review ?? null, extracted })
     .where(eq(inboxItems.id, id))
     .returning();
   return done;
+}
+export const answerSameBill = answerQuestion;
+
+/** Undo of an answered question: back to the question, nothing added or changed. */
+async function reopenQuestion(scope: UserScope, row: typeof inboxItems.$inferSelect) {
+  const ask = askOf(row.extracted)!;
+  const { answered: _a, ...open } = ask;
+  await scope.tx
+    .update(inboxItems)
+    .set({ status: "needs_review", filed: [], reason: ask.text, duplicateOf: ask.twin ?? null, extracted: { ...row.extracted, ask: open } })
+    .where(eq(inboxItems.id, row.id));
 }
