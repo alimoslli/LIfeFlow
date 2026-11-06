@@ -49,12 +49,26 @@ export function parseLink(s: string): { label: string; url: string } {
 }
 
 /** CLAUDE_CODE_REMOTE_SDK_URL like https://host/v1/code/sessions/cse_XXX → session_XXX. Null when absent. */
+/** The key is only sent over https (or to this machine). Returns the cleaned base URL, or null when it isn't safe. */
+export function safeHqBase(raw: string | undefined): string | null {
+  const v = raw?.trim().replace(/\/+$/, "");
+  if (!v) return null;
+  try {
+    const u = new URL(v);
+    if (u.protocol === "https:") return v;
+    if (u.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(u.hostname)) return v;
+  } catch {
+    /* not a URL */
+  }
+  return null;
+}
+
 export function sessionIdFromEnv(env: Record<string, string | undefined>): string | null {
   const m = /\/sessions\/(?:cse|session)_([A-Za-z0-9]{10,64})(?:[/?#]|$)/.exec(env.CLAUDE_CODE_REMOTE_SDK_URL ?? "");
   return m ? `session_${m[1]}` : null;
 }
 
-export type UsageFile = { fiveHourPct?: number; sevenDayPct?: number; sevenDayResetsAt?: string };
+export type UsageFile = { fiveHourPct?: number; sevenDayPct?: number; sevenDayResetsAt?: string; readAt?: string };
 
 /** The status line's saved readings. Null when missing, malformed or older than 6 hours. */
 export function parseUsageFile(raw: string, nowMs: number, maxAgeMs = 6 * 3_600_000): UsageFile | null {
@@ -74,7 +88,9 @@ export function parseUsageFile(raw: string, nowMs: number, maxAgeMs = 6 * 3_600_
   if (five !== undefined) out.fiveHourPct = five;
   if (seven !== undefined) out.sevenDayPct = seven;
   if (resets !== undefined) out.sevenDayResetsAt = new Date(resets * (resets < 1e12 ? 1000 : 1)).toISOString();
-  return Object.keys(out).length ? out : null;
+  if (Object.keys(out).length === 0) return null;
+  out.readAt = new Date(savedAt).toISOString();
+  return out;
 }
 
 /** Turns parsed args into the request body for a command. Throws Error with a one-line message on bad input. */
@@ -195,10 +211,13 @@ async function main() {
   const [a, b] = p.positional;
   const cmd = a === "mission" ? `mission ${b ?? ""}`.trim() : a;
   const quiet = !!p.flags.quiet;
-  const base = process.env.HQ_URL?.trim().replace(/\/+$/, "");
+  const rawBase = process.env.HQ_URL?.trim();
+  const base = safeHqBase(rawBase);
   if (!base) {
     if (cmd === "checkin") return;
-    console.error("HQ_URL is not set.");
+    console.error(
+      rawBase ? "HQ_URL must start with https:// (http is only allowed for localhost), so the key is never sent in the clear." : "HQ_URL is not set.",
+    );
     process.exit(1);
   }
   try {

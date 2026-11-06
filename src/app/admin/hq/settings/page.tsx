@@ -12,7 +12,7 @@ import { listChats, listHqKeys } from "@/server/services/hq";
 import { safe } from "@/server/services/admin";
 import { Failed, adminTz, fmt } from "../../format";
 import { AdminTitle, Notice } from "../../ui";
-import { createKeyAction, removeChatAction, revokeKeyAction, saveChatAction } from "../actions";
+import { createKeyAction, importSeedAction, removeChatAction, revokeKeyAction, saveChatAction } from "../actions";
 import { NEW_KEY_COOKIE } from "../shared";
 
 const RoleSelect = ({ id, value }: { id: string; value: string | null }) => (
@@ -80,11 +80,29 @@ export default async function HqSettings({ searchParams }: { searchParams: Promi
           {!chats.ok ? (
             <Empty>{Failed()}</Empty>
           ) : chats.data.length ? (
-            chats.data.map((c) => <ChatForm key={c.id} chat={c} />)
+            <>
+              {chats.data.some((c) => c.role) && chats.data.filter((c) => c.role).map((c) => <ChatForm key={c.id} chat={c} />)}
+              {chats.data.some((c) => !c.role) && (
+                <>
+                  <p className="mt-2 text-sm font-medium text-text">Not assigned yet (newest first)</p>
+                  {chats.data
+                    .filter((c) => !c.role)
+                    .map((c) => (
+                      <ChatForm key={c.id} chat={c} />
+                    ))}
+                </>
+              )}
+            </>
           ) : (
             <Empty>No chats added yet.</Empty>
           )}
         </div>
+        <form action={importSeedAction} className="mt-4 flex flex-wrap items-center gap-3 border-t border-border/60 pt-4">
+          <SubmitButton variant="secondary" size="sm" pendingText="Importing…">
+            Import the starting list
+          </SubmitButton>
+          <span className="min-w-0 text-xs text-muted">Adds the real chats, missions and approvals from the handover. Safe to press twice.</span>
+        </form>
         <form action={saveChatAction} className="mt-4 grid gap-3 border-t border-border/60 pt-4 sm:grid-cols-2">
           <p className="text-sm font-medium text-text sm:col-span-2">Add a chat by its session id</p>
           <Field label="Session id" htmlFor="n-id" hint="The last part of the chat's address, like session_01Abc…">

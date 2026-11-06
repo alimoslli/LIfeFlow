@@ -44,7 +44,7 @@
       "priority": "high",
       "status": "todo",
       "title": "Forgiving transaction search",
-      "detail": "The owner's real miss: \"when did I last Zelle Omar Mousselli\" found nothing. Branch fix-search, then the gates and main.",
+      "detail": "The owner's real miss: searching for their last Zelle to a friend by name found nothing. Branch fix-search, then the gates and main.",
       "progress": "Started in LF V3; saved only on that chat's machine until it is pushed.",
       "sessionId": "session_01Mhcz6Ao4XdmNh3eAPYd3QN",
       "branch": "fix-search"

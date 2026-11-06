@@ -1,4 +1,6 @@
 "use server";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -7,7 +9,7 @@ import { requireAdmin } from "@/server/auth/require-admin";
 import { getDb } from "@/server/db/client";
 import { isHqRole } from "@/server/hq/team";
 import type { MissionPriority, MissionStatus } from "@/server/hq/types";
-import { HqError, createHqKey, createMission, decideApproval, removeChat, revokeHqKey, saveChat, updateMission } from "@/server/services/hq";
+import { HqError, createHqKey, createMission, decideApproval, importSeedAsOwner, removeChat, revokeHqKey, saveChat, updateMission } from "@/server/services/hq";
 
 /* Every action re-checks the admin first (a layout is not enough), runs, refreshes and comes back with ?done= or ?error=. */
 
@@ -119,6 +121,23 @@ export async function saveChatAction(fd: FormData) {
       branch: text(fd, "branch", 160) || null,
     });
     return "Chat saved.";
+  });
+}
+
+/** Loads docs/hq/seed.json (the real starting list). Owner-only: unlike an agent's import, it may map chats to employees. */
+export async function importSeedAction() {
+  const admin = await requireAdmin();
+  await run(to("/admin/hq/settings"), async () => {
+    let seed: unknown;
+    try {
+      seed = JSON.parse(await readFile(join(process.cwd(), "docs/hq/seed.json"), "utf8"));
+    } catch {
+      throw new HqError("The starting list isn't available on this server.");
+    }
+    const r = await importSeedAsOwner(getDb(), admin, seed);
+    return r.chats + r.missions + r.approvals
+      ? `Imported ${r.chats} chats, ${r.missions} missions and ${r.approvals} approvals.`
+      : "Everything on the starting list is already here.";
   });
 }
 

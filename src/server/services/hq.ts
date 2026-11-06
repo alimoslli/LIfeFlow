@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lt, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { adminEmails, type Admin } from "../auth/admin";
-import { localDateOf, addDaysStr } from "@/lib/dates";
+import { addDaysStr, localDateOf } from "../../lib/dates";
 import type { Database } from "../db/client";
 import { adminActions, hqActivity, hqApprovals, hqChats, hqKeys, hqMissions, hqUsageSamples, users, type HqLink, type HqRole, HQ_ROLES } from "../db/schema";
 import { withUser } from "../db/with-user";
@@ -70,7 +70,13 @@ export type CheckinInput = {
   status?: ChatStatus | null;
   summary?: string | null;
   needsAction?: string | null;
-  usage?: { fiveHourPct?: number | null; sevenDayPct?: number | null; sevenDayResetsAt?: string | null; phase?: "sample" | "round_start" | "round_end" } | null;
+  usage?: {
+    fiveHourPct?: number | null;
+    sevenDayPct?: number | null;
+    sevenDayResetsAt?: string | null;
+    readAt?: string | null;
+    phase?: "sample" | "round_start" | "round_end";
+  } | null;
 };
 export type HqKeyRow = { id: string; name: string; createdAt: Date; lastUsedAt: Date | null; revokedAt: Date | null };
 
@@ -318,8 +324,15 @@ async function logAdmin(tx: Tx, admin: Admin, action: string, metadata: Record<s
 type Base = { chats: Chat[]; missions: Mission[]; pending: Approval[] };
 
 /** Everything the cards need, in a few bounded queries run one after another. */
+/** Every mapped chat (max 100), then the unmapped ones newest first (max 50), so new sessions can't push mapped chats out. */
+async function loadChats(tx: Tx): Promise<Chat[]> {
+  const mapped = await tx.select().from(hqChats).where(isNotNull(hqChats.role)).orderBy(asc(hqChats.createdAt)).limit(100);
+  const unmapped = await tx.select().from(hqChats).where(isNull(hqChats.role)).orderBy(desc(hqChats.createdAt)).limit(50);
+  return [...mapped, ...unmapped].map(toChat);
+}
+
 async function loadBase(tx: Tx, now: Date): Promise<Base> {
-  const chats = await tx.select().from(hqChats).orderBy(asc(hqChats.createdAt)).limit(200);
+  const chats = await loadChats(tx);
   const weekAgo = new Date(now.getTime() - 7 * DAY);
   const missions = await tx
     .select()
@@ -328,7 +341,7 @@ async function loadBase(tx: Tx, now: Date): Promise<Base> {
     .orderBy(priorityRank, asc(hqMissions.createdAt))
     .limit(500);
   const pending = await tx.select().from(hqApprovals).where(eq(hqApprovals.status, "pending")).orderBy(asc(hqApprovals.createdAt)).limit(500);
-  return { chats: chats.map(toChat), missions: missions.map(toMission), pending: pending.map(toApproval) };
+  return { chats, missions: missions.map(toMission), pending: pending.map(toApproval) };
 }
 
 function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
@@ -370,9 +383,10 @@ export async function officeSnapshot(db: Database, now: Date = new Date()): Prom
   return timed(db, async (tx) => {
     const base = await loadBase(tx, now);
     const employees = EMPLOYEES.map((e) => buildCard(e.role, base, now));
-    const counts = { working: 0, waiting: 0, asleep: 0, blocked: 0, offline: 0 };
+    const counts = { working: 0, done: 0, waiting: 0, asleep: 0, blocked: 0, offline: 0 };
     for (const c of employees) {
-      if (c.state === "working" || c.state === "done") counts.working++;
+      if (c.state === "working") counts.working++;
+      else if (c.state === "done") counts.done++;
       else if (c.state === "needs_you") counts.waiting++;
       else if (c.state === "sleeping") counts.asleep++;
       else if (c.state === "blocked") counts.blocked++;
@@ -491,10 +505,7 @@ export async function pendingApprovalCount(db: Database): Promise<number> {
 }
 
 export async function listChats(db: Database): Promise<Chat[]> {
-  return timed(db, async (tx) => {
-    const rows = await tx.select().from(hqChats).orderBy(asc(hqChats.createdAt)).limit(200);
-    return rows.map(toChat);
-  });
+  return timed(db, loadChats);
 }
 
 /** Newest first, default limit 30, max 100. */
@@ -513,21 +524,18 @@ export async function listActivity(db: Database, filter: { role?: HqRole | "foun
 
 async function budgetIn(tx: Tx, now: Date): Promise<Budget> {
   const from = new Date(now.getTime() - 7 * DAY);
-  const [latest] = await tx
+  const samples = await tx
     .select()
     .from(hqUsageSamples)
     .where(and(gte(hqUsageSamples.createdAt, from), lte(hqUsageSamples.createdAt, now), isNotNull(hqUsageSamples.sevenDayPct)))
-    .orderBy(desc(hqUsageSamples.createdAt))
-    .limit(1);
-  const rounds = await tx
-    .select()
-    .from(hqUsageSamples)
-    .where(and(gte(hqUsageSamples.createdAt, from), lte(hqUsageSamples.createdAt, now), inArray(hqUsageSamples.phase, ["round_start", "round_end"])))
     .orderBy(asc(hqUsageSamples.createdAt))
-    .limit(2000);
+    .limit(5000);
+  const latest = samples.at(-1);
+  // A reading from before the weekly reset describes last week: show "not measured yet" until a new one arrives.
+  const stale = !!latest?.sevenDayResetsAt && latest.sevenDayResetsAt.getTime() < now.getTime();
   return {
-    weekPct: latest?.sevenDayPct ?? null,
-    roundsPct: roundsShare(rounds),
+    weekPct: latest && !stale ? latest.sevenDayPct : null,
+    roundsPct: stale ? null : roundsShare(samples),
     target: USAGE_PLAN.target,
     ceiling: USAGE_PLAN.ceiling,
     asOf: latest?.createdAt ?? null,
@@ -535,39 +543,83 @@ async function budgetIn(tx: Tx, now: Date): Promise<Budget> {
   };
 }
 
-/** Sum over sessions of (round_end − the preceding round_start), negatives clamped to 0. Null with no complete pair. */
-export function roundsShare(samples: { sessionId: string | null; phase: string; sevenDayPct: number | null }[]): number | null {
+type UsageReading = { sessionId: string | null; phase: string; sevenDayPct: number | null; createdAt: Date };
+
+/**
+ * The share of the week used by automated rounds. The meter is account-wide, so rounds from different sessions that
+ * overlap are merged into one span first; each span counts (last reading at or before its end) minus (first reading at
+ * or after its start), never below 0. Null with no complete span (a round_start and a round_end with readings).
+ */
+export function roundsShare(samples: UsageReading[]): number | null {
+  const sorted = samples.filter((s) => s.sevenDayPct != null).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  const all = [...samples].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   const open = new Map<string, number>();
-  let total = 0;
-  let pairs = 0;
-  for (const s of samples) {
+  const spans: [number, number][] = [];
+  for (const s of all) {
     const key = s.sessionId ?? "";
+    const t = s.createdAt.getTime();
     if (s.phase === "round_start") {
-      if (s.sevenDayPct != null) open.set(key, s.sevenDayPct);
+      if (s.sevenDayPct != null) open.set(key, t);
       else open.delete(key);
     } else if (s.phase === "round_end") {
       const start = open.get(key);
       open.delete(key);
-      if (start != null && s.sevenDayPct != null) {
-        total += Math.max(0, s.sevenDayPct - start);
-        pairs++;
-      }
+      if (start !== undefined && s.sevenDayPct != null) spans.push([start, t]);
     }
   }
-  return pairs ? Math.round(total * 10) / 10 : null;
+  if (!spans.length) return null;
+  spans.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const merged: [number, number][] = [];
+  for (const sp of spans) {
+    const last = merged.at(-1);
+    if (last && sp[0] <= last[1]) last[1] = Math.max(last[1], sp[1]);
+    else merged.push([sp[0], sp[1]]);
+  }
+  let total = 0;
+  let counted = 0;
+  for (const [start, end] of merged) {
+    const first = sorted.find((r) => r.createdAt.getTime() >= start);
+    const lastR = [...sorted].reverse().find((r) => r.createdAt.getTime() <= end);
+    if (!first || !lastR || first.createdAt.getTime() > lastR.createdAt.getTime()) continue;
+    total += Math.max(0, lastR.sevenDayPct! - first.sevenDayPct!);
+    counted++;
+  }
+  return counted ? Math.round(total * 10) / 10 : null;
 }
 
 export async function weeklyBudget(db: Database, now: Date = new Date()): Promise<Budget> {
   return timed(db, (tx) => budgetIn(tx, now));
 }
 
+/** The owner's time zone (first ADMIN_EMAILS user), so "today" and "due soon" match their calendar, not UTC. */
+async function ownerTimeZone(tx: Tx): Promise<string> {
+  const emails = adminEmails();
+  if (emails.length) {
+    const [u] = await tx
+      .select({ timezone: users.timezone })
+      .from(users)
+      .where(and(eq(users.accountKind, "standard"), eq(sql`lower(${users.email})`, emails[0])))
+      .limit(1);
+    if (u?.timezone) {
+      try {
+        new Intl.DateTimeFormat("en-US", { timeZone: u.timezone });
+        return u.timezone;
+      } catch {
+        /* fall through */
+      }
+    }
+  }
+  return "America/Los_Angeles";
+}
+
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
 export async function weeklySummary(db: Database, now: Date = new Date()): Promise<WeeklySummary> {
   const from = new Date(now.getTime() - 7 * DAY);
-  const today = now.toISOString().slice(0, 10);
-  const soon = new Date(now.getTime() + 7 * DAY).toISOString().slice(0, 10);
   return timed(db, async (tx) => {
+    const tz = await ownerTimeZone(tx);
+    const today = localDateOf(now, tz);
+    const soon = addDaysStr(today, 7);
     const done = await tx
       .select()
       .from(hqMissions)
@@ -885,6 +937,8 @@ export async function removeChat(db: Database, admin: Admin, id: string): Promis
 }
 
 const KEY_PREFIX = "lfq_";
+/** `lfq_` + 24 random bytes as base64url (32 characters). Anything else is never looked up or counted. */
+export const isHqKeyFormat = (raw: unknown): raw is string => typeof raw === "string" && /^lfq_[A-Za-z0-9_-]{32}$/.test(raw);
 
 /** The raw key is returned once and never stored. */
 export async function createHqKey(db: Database, admin: Admin, name: string): Promise<{ id: string; token: string }> {
@@ -920,7 +974,7 @@ export async function revokeHqKey(db: Database, admin: Admin, id: string): Promi
 // --- agent side (/api/hq, authenticated by an HQ key) ------------------------------------------------------------
 
 export async function resolveHqKey(db: Database, raw: string): Promise<{ id: string; name: string } | null> {
-  if (typeof raw !== "string" || !raw.startsWith(KEY_PREFIX) || raw.length > 100) return null;
+  if (!isHqKeyFormat(raw)) return null;
   const [row] = await db
     .select({ id: hqKeys.id, name: hqKeys.name })
     .from(hqKeys)
@@ -942,10 +996,19 @@ const checkinSchema = z.object({
       fiveHourPct: z.number().nullish(),
       sevenDayPct: z.number().nullish(),
       sevenDayResetsAt: z.string().max(40).nullish(),
+      readAt: z.string().max(40).nullish(),
       phase: z.enum(["sample", "round_start", "round_end"]).optional(),
     })
     .nullish(),
 });
+
+/** When the meter was read: the reported time if it is not in the future and under 6 h old, else now. */
+export function readingTime(readAt: string | null | undefined, now: Date): Date {
+  const t = readAt ? new Date(readAt) : null;
+  if (!t || Number.isNaN(t.getTime())) return now;
+  const age = now.getTime() - t.getTime();
+  return age < 0 || age > 6 * 3_600_000 ? now : t;
+}
 
 export async function recordCheckin(db: Database, input: CheckinInput): Promise<void> {
   const sessionId = normalizeSessionId(input?.sessionId);
@@ -992,6 +1055,7 @@ export async function recordCheckin(db: Database, input: CheckinInput): Promise<
         sevenDayPct: seven,
         sevenDayResetsAt: resets && !Number.isNaN(resets.getTime()) ? resets : null,
         phase: u.phase ?? "sample",
+        createdAt: readingTime(u.readAt, now),
       });
     }
   });
@@ -1072,7 +1136,11 @@ export async function importSeed(db: Database, actor: HqActor, seed: unknown): P
       const id = normalizeSessionId(c.id);
       const [hit] = await tx.select({ id: hqChats.id }).from(hqChats).where(eq(hqChats.id, id));
       if (hit) continue;
-      await tx.insert(hqChats).values({ id, title: c.title, role: c.role, isPrimary: c.isPrimary && c.role !== null, branch: c.branch ?? null });
+      // Only the owner's import may map a chat to an employee; an agent's import leaves that to the owner in Settings.
+      const role = actor.kind === "owner" ? c.role : null;
+      const isPrimary = actor.kind === "owner" && c.isPrimary && role !== null;
+      if (isPrimary) await tx.update(hqChats).set({ isPrimary: false }).where(eq(hqChats.role, role!));
+      await tx.insert(hqChats).values({ id, title: c.title, role, isPrimary, branch: c.branch ?? null });
       out.chats++;
     }
     for (const m of d.missions) {
@@ -1115,4 +1183,11 @@ export async function importSeed(db: Database, actor: HqActor, seed: unknown): P
     }
     return out;
   });
+}
+
+/** Settings: "Import the starting list". Owner-only (the caller has checked requireAdmin); may set roles and main chats. */
+export async function importSeedAsOwner(db: Database, admin: Admin, seed: unknown): Promise<{ chats: number; missions: number; approvals: number }> {
+  const out = await importSeed(db, { kind: "owner", email: admin.email }, seed);
+  await db.insert(adminActions).values({ actorUserId: admin.id, actorEmail: admin.email, action: "hq.seed_imported", metadata: out });
+  return out;
 }

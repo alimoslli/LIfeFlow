@@ -68,31 +68,34 @@ describe("employeeState", () => {
 });
 
 describe("roundsShare (budget math)", () => {
-  const s = (sessionId: string | null, phase: string, sevenDayPct: number | null) => ({ sessionId, phase, sevenDayPct });
-  it("sums end minus start per session", () => {
-    expect(roundsShare([s("a", "round_start", 10), s("a", "round_end", 15), s("b", "round_start", 20), s("b", "round_end", 27)])).toBe(12);
+  let t = 0;
+  const at = (min: number) => new Date(Date.parse("2026-11-06T00:00:00Z") + min * 60_000);
+  const s = (sessionId: string | null, phase: string, sevenDayPct: number | null, min: number = ++t) => ({ sessionId, phase, sevenDayPct, createdAt: at(min) });
+  it("sums end minus start for separate rounds", () => {
+    expect(roundsShare([s("a", "round_start", 10, 1), s("a", "round_end", 15, 2), s("b", "round_start", 20, 10), s("b", "round_end", 27, 11)])).toBe(12);
   });
-  it("handles interleaved sessions and several rounds", () => {
+  it("merges overlapping rounds from different sessions (the meter is account-wide)", () => {
+    // a: 1..4, b: 2..6 overlap into one span 1..6 (1% -> 6% = 5), not (3) + (4) = 7.
     expect(
       roundsShare([
-        s("a", "round_start", 1),
-        s("b", "round_start", 2),
-        s("a", "round_end", 4),
-        s("b", "round_end", 3),
-        s("a", "round_start", 5),
-        s("a", "round_end", 6),
+        s("a", "round_start", 1, 1),
+        s("b", "round_start", 2, 2),
+        s("a", "round_end", 4, 4),
+        s("b", "round_end", 6, 6),
+        s("a", "round_start", 7, 20),
+        s("a", "round_end", 8, 21),
       ]),
-    ).toBe(5);
+    ).toBe(6);
   });
   it("clamps negatives (a weekly reset) to zero", () => {
-    expect(roundsShare([s("a", "round_start", 90), s("a", "round_end", 2)])).toBe(0);
+    expect(roundsShare([s("a", "round_start", 90, 1), s("a", "round_end", 2, 2)])).toBe(0);
   });
-  it("is null without a complete pair or with null readings", () => {
+  it("is null without a complete span or with null readings", () => {
     expect(roundsShare([])).toBeNull();
     expect(roundsShare([s("a", "round_start", 10)])).toBeNull();
     expect(roundsShare([s("a", "round_end", 10)])).toBeNull();
-    expect(roundsShare([s("a", "round_start", null), s("a", "round_end", 10)])).toBeNull();
-    expect(roundsShare([s("a", "round_start", 5), s("a", "round_end", null)])).toBeNull();
+    expect(roundsShare([s("a", "round_start", null, 1), s("a", "round_end", 10, 2)])).toBeNull();
+    expect(roundsShare([s("a", "round_start", 5, 1), s("a", "round_end", null, 2)])).toBeNull();
     expect(roundsShare([s("a", "sample", 5)])).toBeNull();
   });
 });

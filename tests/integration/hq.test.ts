@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
-import { eq } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as inboxGET } from "@/app/api/hq/inbox/route";
 import { POST as reportPOST } from "@/app/api/hq/report/route";
 import { closeDb, getDb } from "@/server/db/client";
-import { adminActions, hqActivity, hqApprovals, hqChats, hqKeys, hqMissions, hqUsageSamples } from "@/server/db/schema";
+import { adminActions, hqActivity, hqApprovals, hqChats, hqKeys, hqMissions, hqUsageSamples, rateLimitBuckets } from "@/server/db/schema";
 import {
   agentInbox,
   createApproval,
@@ -14,6 +14,7 @@ import {
   employeeDetail,
   HqError,
   importSeed,
+  importSeedAsOwner,
   listActivity,
   listApprovals,
   listChats,
@@ -23,6 +24,7 @@ import {
   officeSnapshot,
   pendingApprovalCount,
   recordCheckin,
+  readingTime,
   removeChat,
   resolveHqKey,
   revokeHqKey,
@@ -256,7 +258,7 @@ describe("office snapshot, detail, summary", () => {
   it("is honest with no data", async () => {
     const s = await officeSnapshot(db());
     expect(s.employees.map((e) => e.state)).toEqual(["offline", "offline", "offline", "offline", "sleeping"]);
-    expect(s.counts).toEqual({ working: 0, waiting: 0, asleep: 1, blocked: 0, offline: 4 });
+    expect(s.counts).toEqual({ working: 0, done: 0, waiting: 0, asleep: 1, blocked: 0, offline: 4 });
     expect(s.budget).toMatchObject({ weekPct: null, roundsPct: null, target: 40, ceiling: 50 });
   });
 
@@ -404,5 +406,152 @@ describe("HQ API", () => {
     expect(j.decisions).toEqual([]);
     expect((await get("?role=ceo", token)).status).toBe(400);
     expect((await get("?since=nope", token)).status).toBe(400);
+  });
+});
+
+describe("review fixes", () => {
+  const post = (body: unknown, key?: string, headers: Record<string, string> = {}, raw?: string) =>
+    reportPOST(
+      new Request("https://lifeflow.test/api/hq/report", {
+        method: "POST",
+        headers: { "content-type": "application/json", ...(key ? { authorization: `Bearer ${key}` } : {}), ...headers },
+        body: raw ?? JSON.stringify(body),
+      }),
+    );
+  const buckets = async (prefix: string) =>
+    (
+      await db()
+        .select()
+        .from(rateLimitBuckets)
+        .where(like(rateLimitBuckets.key, `${prefix}%`))
+    ).map((b) => b.key);
+
+  it("refuses a malformed bearer before any rate-limit bucket exists, then limits by IP and by key", async () => {
+    await db().delete(rateLimitBuckets).where(like(rateLimitBuckets.key, "hq%"));
+    for (let i = 0; i < 5; i++) expect((await post({ type: "checkin", sessionId: SID }, `lfq_made_up_${i}`, { "x-real-ip": "9.9.9.9" })).status).toBe(401);
+    expect(await buckets("hq")).toEqual([]);
+    const wrongShape = await post({ type: "checkin", sessionId: SID }, `lfq_${"a".repeat(31)}`, { "x-real-ip": "9.9.9.9" });
+    expect(wrongShape.status).toBe(401);
+    expect(await buckets("hq")).toEqual([]);
+    // Right shape, wrong key: counted by IP only (bounded), never by the made-up value.
+    expect((await post({ type: "checkin", sessionId: SID }, `lfq_${"b".repeat(32)}`, { "x-real-ip": "9.9.9.9" })).status).toBe(401);
+    expect(await buckets("hq")).toEqual(["hq-ip:9.9.9.9"]);
+    const { id, token } = await createHqKey(db(), admin, "k");
+    expect((await post({ type: "checkin", sessionId: SID }, token, { "x-real-ip": "9.9.9.9" })).status).toBe(200);
+    expect((await buckets("hq")).sort()).toEqual([`hq-ip:9.9.9.9`, `hq:${id}`].sort());
+  });
+
+  it("an agent's import never maps chats; the owner's import does, and keeps one main chat per role", async () => {
+    const seed = JSON.parse(readFileSync("docs/hq/seed.json", "utf8"));
+    await importSeed(db(), { kind: "agent", keyName: "k", sessionId: null }, seed);
+    const afterAgent = await listChats(db());
+    expect(afterAgent).toHaveLength(4);
+    expect(afterAgent.every((c) => c.role === null && !c.isPrimary)).toBe(true);
+    await db().delete(hqChats);
+    await importSeedAsOwner(db(), admin, seed);
+    const mapped = (await listChats(db())).filter((c) => c.role);
+    expect(mapped.length).toBeGreaterThan(0);
+    expect(mapped.some((c) => c.isPrimary)).toBe(true);
+    expect((await db().select().from(adminActions).where(eq(adminActions.action, "hq.seed_imported"))).length).toBe(1);
+  });
+
+  it("setting a main chat clears the role's other main chat", async () => {
+    const A = "session_01AAAAAAAAAAAAAAAAAAAAAAAA";
+    const B = "session_01BBBBBBBBBBBBBBBBBBBBBBBB";
+    await saveChat(db(), admin, { id: A, role: "developer", title: "A", isPrimary: true });
+    await saveChat(db(), admin, { id: B, role: "developer", title: "B", isPrimary: true });
+    const chats = await listChats(db());
+    expect(chats.filter((c) => c.isPrimary).map((c) => c.id)).toEqual([B]);
+    // An owner import of a new primary chat for the same role also clears it.
+    await importSeed(db(), owner, { chats: [{ id: "session_01CCCCCCCCCCCCCCCCCCCCCCCC", title: "C", role: "developer", isPrimary: true }] });
+    expect((await listChats(db())).filter((c) => c.isPrimary).map((c) => c.id)).toEqual(["session_01CCCCCCCCCCCCCCCCCCCCCCCC"]);
+  });
+
+  it("always lists every mapped chat, plus the newest unmapped ones (max 50)", async () => {
+    const t0 = Date.parse("2026-01-01T00:00:00Z");
+    const id = (n: number) => `session_01${String(n).padStart(24, "0")}`;
+    await db()
+      .insert(hqChats)
+      .values([
+        { id: id(1), title: "mapped 1", role: "developer", createdAt: new Date(t0) },
+        { id: id(2), title: "mapped 2", role: "designer", createdAt: new Date(t0 + 1) },
+        ...Array.from({ length: 260 }, (_, i) => ({ id: id(100 + i), title: `new ${i}`, role: null, createdAt: new Date(t0 + 1000 + i) })),
+      ]);
+    const chats = await listChats(db());
+    expect(chats).toHaveLength(52);
+    expect(chats.slice(0, 2).map((c) => c.title)).toEqual(["mapped 1", "mapped 2"]);
+    expect(chats[2].title).toBe("new 259");
+    expect((await officeSnapshot(db())).employees.find((e) => e.role === "developer")?.primaryChat?.title).toBe("mapped 1");
+  });
+
+  it("counts a finished employee as done, not working", async () => {
+    await saveChat(db(), admin, { id: SID, role: "designer", title: "LF V3", isPrimary: true });
+    await recordCheckin(db(), { sessionId: SID, status: "idle" });
+    const m = await createMission(db(), owner, { role: "designer", title: "Concepts" });
+    await updateMission(db(), owner, m.id, { status: "done" });
+    const s = await officeSnapshot(db());
+    expect(s.employees.find((e) => e.role === "designer")?.state).toBe("done");
+    expect(s.counts).toMatchObject({ working: 0, done: 1 });
+  });
+
+  it("shows no weekly figure once the meter's week has reset, and dates a reading by when it was read", async () => {
+    const now = new Date();
+    const readAt = new Date(now.getTime() - 2 * 3600_000);
+    await recordCheckin(db(), {
+      sessionId: SID,
+      usage: { sevenDayPct: 40, sevenDayResetsAt: new Date(now.getTime() + 3 * 86400_000).toISOString(), readAt: readAt.toISOString() },
+    });
+    let b = await weeklyBudget(db(), now);
+    expect(b.weekPct).toBe(40);
+    expect(Math.abs(b.asOf!.getTime() - readAt.getTime())).toBeLessThan(1000);
+    // Last week's reading: the reset time has passed.
+    b = await weeklyBudget(db(), new Date(now.getTime() + 4 * 86400_000));
+    expect(b).toMatchObject({ weekPct: null, roundsPct: null });
+    // A reading dated in the future or over 6 h old is stored as "now".
+    expect(readingTime(new Date(now.getTime() + 60_000).toISOString(), now)).toBe(now);
+    expect(readingTime(new Date(now.getTime() - 7 * 3600_000).toISOString(), now)).toBe(now);
+    expect(readingTime("nope", now)).toBe(now);
+    expect(readingTime(readAt.toISOString(), now).getTime()).toBe(readAt.getTime());
+  });
+
+  it("uses the owner's time zone for overdue and due soon", async () => {
+    const { user } = await makeUser("Owner TZ"); // America/New_York
+    const prev = process.env.ADMIN_EMAILS;
+    process.env.ADMIN_EMAILS = user.email;
+    try {
+      // 02:00 UTC on Nov 7 is still the evening of Nov 6 in New York.
+      const now = new Date("2026-11-07T02:00:00Z");
+      await createMission(db(), owner, { role: "developer", title: "Due today", dueOn: "2026-11-06" });
+      await createMission(db(), owner, { role: "developer", title: "Due yesterday", dueOn: "2026-11-05" });
+      const w = await weeklySummary(db(), now);
+      expect(w.overdue.map((m) => m.title)).toEqual(["Due yesterday"]);
+      expect(w.dueSoon.map((m) => m.title)).toEqual(["Due today"]);
+    } finally {
+      if (prev === undefined) delete process.env.ADMIN_EMAILS;
+      else process.env.ADMIN_EMAILS = prev;
+    }
+  });
+
+  it("validates mission chat ids and records the calling chat on an agent's mission", async () => {
+    const { token } = await createHqKey(db(), admin, "k");
+    const bad = await post({ type: "mission", role: "developer", title: "T", sessionId: "not a chat" }, token);
+    expect(bad.status).toBe(400);
+    expect((await bad.json()).error).toMatch(/chat id/);
+    await expect(updateMission(db(), owner, (await createMission(db(), owner, { role: "developer", title: "U" })).id, { sessionId: "nope" })).rejects.toThrow(
+      HqError,
+    );
+    const ok = await post({ type: "mission", role: "developer", title: "Mine", sessionId: `cse_${SID.slice(8)}` }, token);
+    expect(ok.status).toBe(200);
+    expect((await listMissions(db())).find((m) => m.title === "Mine")?.sessionId).toBe(SID);
+    const direct = await createMission(db(), { kind: "agent", keyName: "k", sessionId: SID }, { role: "developer", title: "From actor" });
+    expect(direct.sessionId).toBe(SID);
+  });
+
+  it("caps the body by bytes and by content-length before reading", async () => {
+    const { token } = await createHqKey(db(), admin, "k");
+    expect((await post(null, token, { "content-length": "64001" }, "{}")).status).toBe(413);
+    // 40,000 two-byte characters are under 64,000 characters but over 64,000 bytes.
+    const multi = JSON.stringify({ type: "activity", role: "developer", text: "é".repeat(40_000) });
+    expect((await post(null, token, {}, multi)).status).toBe(413);
   });
 });

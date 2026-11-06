@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRequest, parseArgs, parseLink, parseUsageFile, sessionIdFromEnv } from "../../scripts/hq";
+import { buildRequest, parseArgs, parseLink, parseUsageFile, safeHqBase, sessionIdFromEnv } from "../../scripts/hq";
 
 describe("hq cli parsing", () => {
   it("parses flags, = form, bare flags and repeats", () => {
@@ -50,7 +50,12 @@ describe("usage file", () => {
   const file = (savedAt: number) =>
     JSON.stringify({ saved_at: savedAt, five_hour: { used_percentage: 23 }, seven_day: { used_percentage: 31, resets_at: 1794800000 } });
   it("parses a fresh file", () => {
-    expect(parseUsageFile(file(now / 1000 - 60), now)).toEqual({ fiveHourPct: 23, sevenDayPct: 31, sevenDayResetsAt: new Date(1794800000_000).toISOString() });
+    expect(parseUsageFile(file(now / 1000 - 60), now)).toEqual({
+      fiveHourPct: 23,
+      sevenDayPct: 31,
+      sevenDayResetsAt: new Date(1794800000_000).toISOString(),
+      readAt: new Date(now - 60_000).toISOString(),
+    });
   });
   it("rejects old, future, malformed and empty files", () => {
     expect(parseUsageFile(file(now / 1000 - 6 * 3600 - 1), now)).toBeNull();
@@ -58,5 +63,18 @@ describe("usage file", () => {
     expect(parseUsageFile("nope", now)).toBeNull();
     expect(parseUsageFile(JSON.stringify({ saved_at: now / 1000 }), now)).toBeNull();
     expect(parseUsageFile(JSON.stringify({ five_hour: { used_percentage: 1 } }), now)).toBeNull();
+  });
+});
+
+describe("HQ_URL safety", () => {
+  it("only allows https, or http to this machine", () => {
+    expect(safeHqBase("https://lifeflow.example/")).toBe("https://lifeflow.example");
+    expect(safeHqBase("http://localhost:3000")).toBe("http://localhost:3000");
+    expect(safeHqBase("http://127.0.0.1:3100/")).toBe("http://127.0.0.1:3100");
+    expect(safeHqBase("http://lifeflow.example")).toBeNull();
+    expect(safeHqBase("http://localhost.evil.com")).toBeNull();
+    expect(safeHqBase("ftp://x")).toBeNull();
+    expect(safeHqBase("nope")).toBeNull();
+    expect(safeHqBase(undefined)).toBeNull();
   });
 });
