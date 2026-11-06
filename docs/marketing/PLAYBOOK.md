@@ -10,7 +10,7 @@ The single source of truth for LifeFlow's social media and ads. Any Claude chat,
 
 **The vision (use it in every script, caption and answer):**
 LifeFlow is a personal assistant with one job: serve you and help you get the most out of your time.
-- **Built by someone living the problem.** The founder carries seven classes a semester, 30 hours a week at a retail job, side projects and transfer applications, all at once. No app connected any of it, so he built the one he needed, and now builds it for everyone with a full life. He keeps asking users what they need.
+- **Built by someone living the problem.** The founder carries seven classes a semester, working 30 hours a week at a retail job, side projects and transfer applications, all at once. No app connected any of it, so he built the one he needed, and now builds it for everyone with a full life. He keeps asking users what they need.
 - **One job.** Not research, not websites, not "anything". Every feature helps you run your life.
 - **Always connected.** Classes, shifts, money, calendar and health are connected at the same time, so it finds the dots, connects them and acts: a shift that clashes with an exam, a bill before payday.
 - **Helps without being asked.** It notices first, a few quiet messages a day, with the numbers behind each one.
