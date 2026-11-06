@@ -39,21 +39,25 @@ export default async function JarvisProfilePage() {
         )}
       </header>
 
-      {/* 4:3 cards that grow with large text: no clipping, and icons that never shrink away (audit A26). */}
+      {/* 4:3 cards that grow with large text: no clipping, icons that never shrink away, and a title that never runs past
+          the padding on a narrow phone at Extra large text (capped by the card's width, 18cqw; audit A26). */}
       <div className="grid grid-cols-2 gap-3">
         <Link
           href="/settings/jarvis"
-          className="relative flex aspect-[4/3] min-w-0 flex-col justify-between rounded-3xl bg-hero p-4 text-hero-text shadow-soft"
+          className="@container relative flex aspect-[4/3] min-w-0 flex-col justify-between rounded-3xl bg-hero p-4 text-hero-text shadow-soft"
         >
           <span>
-            <span className="block text-xl font-semibold tracking-tight">Personality</span>
+            <span className="block text-[min(1.25rem,18cqw)] leading-[1.4] font-semibold tracking-tight">Personality</span>
             <span className="text-xs opacity-80">Tone, voice, when it speaks up</span>
           </span>
           <Heart className="h-6 w-6 shrink-0 self-end opacity-80" />
         </Link>
-        <Link href="/jarvis/memory" className="relative flex aspect-[4/3] min-w-0 flex-col justify-between rounded-3xl bg-hero p-4 text-hero-text shadow-soft">
+        <Link
+          href="/jarvis/memory"
+          className="@container relative flex aspect-[4/3] min-w-0 flex-col justify-between rounded-3xl bg-hero p-4 text-hero-text shadow-soft"
+        >
           <span>
-            <span className="block text-xl font-semibold tracking-tight">Memory</span>
+            <span className="block text-[min(1.25rem,18cqw)] leading-[1.4] font-semibold tracking-tight">Memory</span>
             <span className="text-xs opacity-80">What {name} knows about you</span>
           </span>
           <Brain className="h-6 w-6 shrink-0 self-end opacity-80" />

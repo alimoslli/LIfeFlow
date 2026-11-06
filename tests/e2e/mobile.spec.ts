@@ -47,17 +47,33 @@ test("Extra large text still fits a phone screen", async ({ page, context, baseU
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow, `${path} overflows by ${overflow}px at Extra large text`).toBeLessThanOrEqual(1);
   }
-  // The assistant's Profile cards grow with the text instead of clipping their icons (audit A26), on a 393 px phone.
-  await page.setViewportSize({ width: 393, height: 852 });
-  await page.goto("/jarvis/profile");
-  await page.waitForLoadState("networkidle");
-  for (const name of [/Personality/, /Memory/]) {
-    const card = page.getByRole("link", { name });
-    const [box, icon] = [await card.boundingBox(), await card.locator("svg").last().boundingBox()];
-    expect(icon!.height, `${name} icon is squeezed at Extra large text`).toBeGreaterThan(20);
-    expect(icon!.y + icon!.height, `${name} icon is clipped at Extra large text`).toBeLessThanOrEqual(box!.y + box!.height);
+  // The assistant's Profile cards grow with the text instead of clipping their icons (audit A26), and their words stay
+  // inside the card's padding, on 360, 375 and 393 px phones.
+  for (const width of [360, 375, 393]) {
+    await page.setViewportSize({ width, height: 852 });
+    await page.goto("/jarvis/profile");
+    await page.waitForLoadState("networkidle");
+    for (const name of [/Personality/, /Memory/]) {
+      const card = page.getByRole("link", { name });
+      const [box, icon] = [await card.boundingBox(), await card.locator("svg").last().boundingBox()];
+      expect(icon!.height, `${name} icon is squeezed at Extra large text, ${width} px`).toBeGreaterThan(20);
+      expect(icon!.y + icon!.height, `${name} icon is clipped at Extra large text, ${width} px`).toBeLessThanOrEqual(box!.y + box!.height);
+      // How far the words themselves (each text node, not its box) reach past the card's padding on the right.
+      const spill = await card.evaluate((c) => {
+        const right = c.getBoundingClientRect().right - parseFloat(getComputedStyle(c).paddingRight);
+        const walk = document.createTreeWalker(c, NodeFilter.SHOW_TEXT);
+        let most = -Infinity;
+        for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+          const range = document.createRange();
+          range.selectNodeContents(n);
+          for (const rect of range.getClientRects()) most = Math.max(most, rect.right - right);
+        }
+        return most;
+      });
+      expect(spill, `${name} text spills past the card at Extra large text, ${width} px`).toBeLessThanOrEqual(0);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
   }
-  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
 });
 
 test("is installable: manifest and icons load without signing in", async ({ request }) => {
