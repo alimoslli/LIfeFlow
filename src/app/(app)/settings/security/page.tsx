@@ -79,8 +79,12 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
             <input type="checkbox" name="enabled" defaultChecked={d.lock.enabled} disabled={!d.passkeys.length} className="lf-switch" />
           </label>
           <label className="flex min-h-14 items-center gap-3 py-2">
-            <span className="flex-1 text-[0.9375rem]">Lock after</span>
-            <select name="idleMinutes" defaultValue={String(d.lock.idleMinutes)} className="h-11 rounded-xl border border-border bg-surface px-3 text-[1rem]">
+            <span className="min-w-0 flex-1 text-[0.9375rem]">Lock after</span>
+            <select
+              name="idleMinutes"
+              defaultValue={String(d.lock.idleMinutes)}
+              className="h-11 min-w-0 max-w-[60%] rounded-xl border border-border bg-surface px-3 text-[1rem]"
+            >
               {MONEY_LOCK_IDLE_CHOICES.map((m) => (
                 <option key={m} value={m}>
                   {m} minute{m === 1 ? "" : "s"} without use

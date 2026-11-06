@@ -328,7 +328,18 @@ export async function syncGoogleEmail(scope: UserScope, f: Fetch = fetch) {
 export async function readEmail(scope: UserScope, id: string, f: Fetch = fetch) {
   if (!/^[A-Za-z0-9_-]{6,64}$/.test(id)) throw new GoogleError("That doesn't look like a Gmail message id.");
   const m = await api<GmailMessage>(scope, `${GMAIL}/messages/${id}?format=full`, {}, f);
-  return { ...summary(m), messageId: header(m, "Message-ID"), to: header(m, "To"), cc: header(m, "Cc"), body: truncate(messageText(m.payload), 20_000) };
+  // Only the receiving server's results, in the order Gmail gives them (topmost first), for the sender check.
+  const authHeaders = (m.payload?.headers ?? [])
+    .filter((h) => /^(authentication-results|received-spf)$/i.test(h.name))
+    .map((h) => ({ Name: h.name, Value: h.value }));
+  return {
+    ...summary(m),
+    messageId: header(m, "Message-ID"),
+    to: header(m, "To"),
+    cc: header(m, "Cc"),
+    body: truncate(messageText(m.payload), 20_000),
+    authHeaders,
+  };
 }
 
 const clean = (s: string) => s.replace(/[\r\n]+/g, " ").trim();

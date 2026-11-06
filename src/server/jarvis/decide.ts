@@ -15,7 +15,7 @@ export async function decidePendingAction(user: SessionUser, id: string, decisio
   const { action, status, result } = await resolvePendingAction(id, decision, toolCtx);
   const message =
     status === "executed"
-      ? `Confirmed and done: ${action.summary.replace(/\?$/, "")}.`
+      ? `Confirmed and done: ${action.summary.split("\n")[0].replace(/\?$/, "")}.`
       : status === "cancelled"
         ? "Cancelled. Nothing was changed."
         : (result.error ?? "Failed.");

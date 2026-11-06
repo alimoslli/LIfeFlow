@@ -405,7 +405,14 @@ async function markDuplicate(scope: UserScope, id: string, of: string, extra: Pa
 }
 
 /** Reads and files one document. Always leaves an inbox row saying what happened. */
-export async function processDocument(scope: UserScope, tz: string, today: string, doc: IncomingDocument, extract = extractDocument) {
+export async function processDocument(
+  scope: UserScope,
+  tz: string,
+  today: string,
+  doc: IncomingDocument,
+  extract = extractDocument,
+  opts: { suggestOnly?: boolean } = {},
+) {
   const messageId = normalizeMessageId(doc.messageId);
   const [row] = await scope.tx
     .insert(inboxItems)
@@ -458,6 +465,22 @@ export async function processDocument(scope: UserScope, tz: string, today: strin
       .returning();
     return ask;
   }
+  if (opts.suggestOnly && SUGGESTIBLE[ex.type]) {
+    // Nothing is filed yet: the person's own tap is the approval (see fileSuggestion).
+    const [sug] = await scope.tx
+      .update(inboxItems)
+      .set({
+        contentSig,
+        status: "suggested",
+        type: ex.type,
+        summary: ex.summary.slice(0, 500),
+        extracted: ex as unknown as Record<string, unknown>,
+        reason: `File this ${SUGGESTIBLE[ex.type]}?`,
+      })
+      .where(eq(inboxItems.id, row.id))
+      .returning();
+    return sug;
+  }
   const { filed, review } = await fileExtraction(scope, tz, ex, today, { from: doc.from, authenticated: doc.authenticated ?? doc.channel !== "email" });
   const [done] = await scope.tx
     .update(inboxItems)
@@ -475,11 +498,49 @@ export async function processDocument(scope: UserScope, tz: string, today: strin
   return done;
 }
 
+/** What a forwarded email can be offered as; anything else needs nothing from the person. */
+const SUGGESTIBLE: Partial<Record<Extraction["type"], string>> = {
+  bill: "bill",
+  receipt: "receipt",
+  assignment: "assignment",
+  exam: "exam",
+  flight: "booking",
+  hotel: "booking",
+  train: "booking",
+  pay_stub: "pay stub",
+};
+
+/**
+ * Forwarded email is read but only SUGGESTED: its sender check can't yet be fully trusted (see email-auth.ts),
+ * so the person files it with one tap (fileSuggestion).
+ */
+export const processForwardedEmail = (scope: UserScope, tz: string, today: string, doc: IncomingDocument, extract = extractDocument) =>
+  processDocument(scope, tz, today, doc, extract, { suggestOnly: true });
+
+/** The person's tap on "File this?": files what was extracted, with Undo as for any filed item. */
+export async function fileSuggestion(scope: UserScope, tz: string, today: string, id: string) {
+  const [row] = await scope.tx
+    .select()
+    .from(inboxItems)
+    .where(and(eq(inboxItems.id, id), eq(inboxItems.userId, scope.userId)));
+  if (!row) throw new ServiceError("Not found", "not_found");
+  if (row.status !== "suggested" || !row.extracted) throw new ServiceError("There's nothing waiting to be filed here.");
+  // The person's tap is the approval, so this is the authenticated path (it may update what they already have).
+  const { filed, review } = await fileExtraction(scope, tz, row.extracted as unknown as Extraction, today, { from: row.fromAddress, authenticated: true });
+  const [done] = await scope.tx
+    .update(inboxItems)
+    .set({ status: filed.length ? "filed" : "needs_review", filed, reason: review ?? null })
+    .where(eq(inboxItems.id, id))
+    .returning();
+  return done;
+}
+
 /** Logs an email that was turned away (only who/what, never the content). */
 export async function recordIgnored(scope: UserScope, from: string, subject: string, reason: string) {
-  await scope.tx
+  return scope.tx
     .insert(inboxItems)
-    .values({ userId: scope.userId, channel: "email", fromAddress: from.slice(0, 200), subject: subject.slice(0, 300), status: "ignored", reason });
+    .values({ userId: scope.userId, channel: "email", fromAddress: from.slice(0, 200), subject: subject.slice(0, 300), status: "ignored", reason })
+    .returning({ id: inboxItems.id });
 }
 
 export async function undoInboxItem(scope: UserScope, id: string) {
@@ -525,7 +586,7 @@ export async function answerSameBill(scope: UserScope, tz: string, today: string
     .where(and(eq(inboxItems.id, id), eq(inboxItems.userId, scope.userId)));
   if (!row || row.status !== "needs_review" || !row.duplicateOf || !row.extracted) throw new ServiceError("There's nothing to answer here.");
   if (same) return markDuplicate(scope, id, row.duplicateOf);
-  const { filed, review } = await fileExtraction(scope, tz, row.extracted as unknown as Extraction, today, { from: row.fromAddress });
+  const { filed, review } = await fileExtraction(scope, tz, row.extracted as unknown as Extraction, today, { from: row.fromAddress, authenticated: true });
   const [done] = await scope.tx
     .update(inboxItems)
     .set({ status: filed.length ? "filed" : "needs_review", duplicateOf: null, filed, reason: review ?? null })

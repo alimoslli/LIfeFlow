@@ -4,11 +4,13 @@ import {
   createDraft,
   getGoogleConnection,
   GoogleError,
+  parseRecipients,
   readEmail,
   searchEmail,
   sendEmail,
   syncGoogleCalendar,
 } from "../../integrations/google";
+import { wrapUntrusted } from "../../../lib/untrusted";
 import { ServiceError } from "../../services/errors";
 import { dateArg, defineTool, timeArg } from "../tool";
 
@@ -19,7 +21,7 @@ import { dateArg, defineTool, timeArg } from "../tool";
  * Email content is third-party data: wrapped as untrusted.
  */
 
-const untrusted = (s: string) => `<untrusted_email>\n${s}\n</untrusted_email>`;
+const untrusted = (s: string) => wrapUntrusted("untrusted_email", s);
 
 /** Google's errors are worded for people ("Google isn't connected…"), so they reach the model and the chat as they are. */
 async function viaGoogle<T>(fn: () => Promise<T>): Promise<T> {
@@ -29,9 +31,10 @@ async function viaGoogle<T>(fn: () => Promise<T>): Promise<T> {
     throw e instanceof GoogleError ? new ServiceError(e.message) : e;
   }
 }
+const oneLine = (s: string) => !/[\r\n\u2028\u2029]/.test(s);
 const emailArgs = {
-  to: z.string().min(3).max(1000).describe("Recipient address(es), comma-separated"),
-  subject: z.string().min(1).max(300),
+  to: z.string().min(3).max(1000).refine(oneLine, "Recipients must be on one line").describe("Recipient address(es), comma-separated"),
+  subject: z.string().min(1).max(300).refine(oneLine, "The subject must be on one line"),
   body: z.string().min(1).max(20_000).describe("Plain-text body, written in the user's voice"),
   replyToId: z.string().max(64).optional().describe("Gmail message id when replying, to keep the thread"),
 };
@@ -46,7 +49,10 @@ export const googleTools = [
     mutates: false,
     async execute({ query, max }, ctx) {
       const messages = await viaGoogle(() => ctx.run((s) => searchEmail(s, query, max)));
-      return { count: messages.length, messages: messages.map((m) => ({ ...m, subject: untrusted(m.subject), snippet: untrusted(m.snippet) })) };
+      return {
+        count: messages.length,
+        messages: messages.map((m) => ({ ...m, from: untrusted(m.from), subject: untrusted(m.subject), snippet: untrusted(m.snippet) })),
+      };
     },
   }),
   defineTool({
@@ -56,7 +62,16 @@ export const googleTools = [
     mutates: false,
     async execute({ id }, ctx) {
       const m = await viaGoogle(() => ctx.run((s) => readEmail(s, id)));
-      return { ...m, subject: untrusted(m.subject), snippet: undefined, body: untrusted(m.body) };
+      const { authHeaders: _auth, ...rest } = m;
+      return {
+        ...rest,
+        from: untrusted(m.from),
+        to: untrusted(m.to),
+        cc: untrusted(m.cc),
+        subject: untrusted(m.subject),
+        snippet: undefined,
+        body: untrusted(m.body),
+      };
     },
   }),
   defineTool({
@@ -83,7 +98,17 @@ export const googleTools = [
     description: "Send an email from the user's Gmail. Requires the user's confirmation. Report it as sent only if the result says sent: true.",
     schema: z.object(emailArgs),
     mutates: true,
-    confirm: (a) => `Send email to ${a.to}: "${a.subject}"?`,
+    // First line is the short form; the rest is exactly what will be sent, so the person approves the words, not a summary.
+    // Shows the exact addresses the mail goes to (not a display name that could say "Mom").
+    confirm: (a) => {
+      let to: string;
+      try {
+        to = parseRecipients(a.to).join(", ");
+      } catch (e) {
+        throw new ServiceError(e instanceof Error ? e.message : "Check the recipients.");
+      }
+      return `Send email to ${to}: "${a.subject}"?\n\n${a.body}`;
+    },
     async execute(a, ctx) {
       return viaGoogle(() => ctx.run((s) => sendEmail(s, a)));
     },

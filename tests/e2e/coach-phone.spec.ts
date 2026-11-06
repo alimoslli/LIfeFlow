@@ -121,7 +121,12 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
         FromFull: { Email: "riley@gmail.com" },
         Subject: "Fwd: Your Comcast bill",
         TextBody: "Your bill of $64.99 is due.",
-        Headers: [{ Name: "Received-SPF", Value: "Pass (sender SPF authorized) identity=mailfrom; domain=gmail.com" }],
+        Headers: [
+          {
+            Name: "Received-SPF",
+            Value: `Pass (sender SPF authorized) identity=mailfrom; client-ip=209.85.212.52; helo=mail-vw0-f52.google.com; envelope-from=riley@gmail.com; receiver=u-${inbox_token}@in.example.com`,
+          },
+        ],
       },
     });
     expect(res.ok()).toBe(true);

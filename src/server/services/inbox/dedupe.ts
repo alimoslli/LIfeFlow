@@ -84,7 +84,7 @@ export async function findFiledTwin(
         key,
         ne(inboxItems.id, exceptId),
         // An undone item counts: the user took it back, so another copy must not file it again.
-        inArray(inboxItems.status, ["filed", "needs_review", "undone"]),
+        inArray(inboxItems.status, ["suggested", "filed", "needs_review", "undone"]),
       ),
     )
     .orderBy(asc(inboxItems.receivedAt))

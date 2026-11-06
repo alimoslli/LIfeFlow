@@ -1,4 +1,5 @@
 import { usd } from "@/lib/jarvis-voice";
+import { senderLabel, subjectLabel } from "../../../lib/untrusted";
 import { checkedInOn, openGoals } from "../goal-checkins";
 import { and, desc, eq, gte, inArray, isNotNull, lt, ne } from "drizzle-orm";
 import {
@@ -61,7 +62,7 @@ const emailBrief: Detector = async ({ scope, tz, today }) => {
     .limit(20);
   const important = rows.filter((m) => !m.labels.includes("CATEGORY_PROMOTIONS") && !m.labels.includes("CATEGORY_SOCIAL")).slice(0, 4);
   if (!important.length) return [];
-  const emails = important.map((m) => `${m.from}: ${m.subject}`).join(" · ");
+  const emails = important.map((m) => `${senderLabel(m.from)}: ${subjectLabel(m.subject)}`).join(" · ");
   return [
     {
       kind: "email_brief",

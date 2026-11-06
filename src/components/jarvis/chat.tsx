@@ -552,7 +552,12 @@ function AssistantBubble({
         {!m.streaming && m.runId && m.text && <RateAnswer runId={m.runId} initial={m.rating ?? null} />}
         {m.confirmations.map((c) => (
           <div key={c.actionId} className="rounded-2xl bg-surface p-4 shadow-soft">
-            <p className="text-[0.9375rem] font-medium">{c.summary}</p>
+            <p className="text-[0.9375rem] font-medium">{c.summary.split("\n")[0]}</p>
+            {c.summary.includes("\n") && (
+              <p className="mt-2 whitespace-pre-wrap break-words rounded-xl bg-surface-2 p-3 text-[0.8125rem] text-text-2">
+                {c.summary.slice(c.summary.indexOf("\n")).trim()}
+              </p>
+            )}
             {c.status === "pending" && !c.resultText ? (
               <div className="mt-3 flex gap-2">
                 <button onClick={() => onDecide(c.actionId, "confirm")} className="rounded-full bg-danger px-4 py-2 text-sm font-medium text-white">

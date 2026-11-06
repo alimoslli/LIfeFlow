@@ -10,7 +10,7 @@ import { createManualAccount } from "@/server/services/finance/accounts";
 import { createRecurring } from "@/server/services/finance/planning";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { createAssignment, createCourse } from "@/server/services/school";
-import { processDocument, undoInboxItem } from "@/server/services/inbox";
+import { fileSuggestion, processDocument, processForwardedEmail, undoInboxItem } from "@/server/services/inbox";
 import { attachWaitingReceipts, collapseInboxDuplicates } from "@/server/services/inbox/cleanup";
 import { runDueSlot } from "@/server/services/proactive/engine";
 import type { Extraction } from "@/server/services/inbox/extract";
@@ -215,6 +215,27 @@ describe("review fixes: nothing is merged on a guess", () => {
       (await file({ type: "receipt", receipt: { merchant: "Target", total_usd: 23.45, date: addDaysStr(today, -2) } }, { messageId: "q3@x.com" })).filed[0]
         .kind,
     ).toBe("transaction_note");
+  });
+
+  it("8: forwarded mail only suggests; the person's tap on the suggestion applies the update", async () => {
+    const { run } = await setup();
+    await run((s) => createRecurring(s, { name: "Spotify", amountCents: -1199, frequency: "monthly", nextDueDate: "2026-11-15", kind: "subscription" }));
+    const sug = await run((s) =>
+      processForwardedEmail(
+        s,
+        TZ,
+        today,
+        { channel: "email", subject: "price", text: "x", files: [], messageId: "f1@x.com" },
+        fixed(billEx("Spotify", 12.49, "2026-12-15")),
+      ),
+    );
+    expect(sug.status).toBe("suggested");
+    expect((await run((s) => s.tx.select().from(recurringItems)))[0].amountCents).toBe(-1199);
+    const done = await run((s) => fileSuggestion(s, TZ, today, sug.id));
+    expect(done.filed.map((f) => f.kind)).toEqual(["recurring_update", "task"]);
+    expect((await run((s) => s.tx.select().from(recurringItems)))[0].amountCents).toBe(-1249);
+    await run((s) => undoInboxItem(s, done.id));
+    expect((await run((s) => s.tx.select().from(recurringItems)))[0].amountCents).toBe(-1199);
   });
 
   it("12: a receipt for cash or an unlinked card is spending; one for a linked card waits for its charge", async () => {
