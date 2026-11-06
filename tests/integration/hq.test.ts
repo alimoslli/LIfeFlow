@@ -4,7 +4,7 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as inboxGET } from "@/app/api/hq/inbox/route";
 import { POST as reportPOST } from "@/app/api/hq/report/route";
 import { closeDb, getDb } from "@/server/db/client";
-import { adminActions, hqActivity, hqApprovals, hqChats, hqKeys, hqMissions, hqUsageSamples, rateLimitBuckets } from "@/server/db/schema";
+import { adminActions, hqActivity, hqApprovals, hqChats, hqContent, hqKeys, hqMissions, hqUsageSamples, rateLimitBuckets } from "@/server/db/schema";
 import {
   agentInbox,
   createApproval,
@@ -52,6 +52,7 @@ let admin: { id: string; email: string };
 
 beforeEach(async () => {
   const d = db();
+  await d.delete(hqContent);
   await d.delete(hqActivity);
   await d.delete(hqApprovals);
   await d.delete(hqMissions);

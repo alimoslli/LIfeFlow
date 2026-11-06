@@ -20,6 +20,14 @@ import { makeUser } from "../helpers";
 
 afterAll(async () => {
   setHqPushSender(null);
+  // Leave the shared test database clean for the other HQ tests (weekly headline counts).
+  const d = getDb();
+  await d.delete(hqMetrics);
+  await d.delete(hqContent);
+  await d.delete(hqActivity);
+  await d.delete(hqApprovals);
+  await d.delete(hqKeys);
+  await d.delete(adminActions);
   await closeDb();
 });
 
