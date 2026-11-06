@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { addDaysStr, monthStart, todayIn, weekStart } from "@/lib/dates";
 import { closeDb } from "@/server/db/client";
-import { calendarEvents, jarvisMessages, memories, tasks, type UserPreferences } from "@/server/db/schema";
+import { calendarEvents, habits, jarvisMessages, memories, tasks, type UserPreferences } from "@/server/db/schema";
 import type { UserScope } from "@/server/db/with-user";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
@@ -11,12 +11,15 @@ import { contributeToGoal } from "@/server/services/finance/goals";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { createCourse, createAssignment } from "@/server/services/school";
 import { createTask } from "@/server/services/tasks";
+import { createEvent } from "@/server/services/calendar";
+import { checkHabit, createHabit } from "@/server/services/habits";
 import { createEmployer, createShift } from "@/server/services/work";
-import { inQuietHours, learnedStats, pushImportant, runProactive } from "@/server/services/proactive/engine";
+import { inQuietHours, learnedStats, listMessages, pushImportant, runProactive, topMessage, unreadCount } from "@/server/services/proactive/engine";
 import { respondToMessage } from "@/server/services/proactive/respond";
 import { openQuestions } from "@/server/services/proactive/questions";
 import { createMemory, listActiveMemories as listActive } from "@/server/services/memory";
-import { composeMessage } from "@/lib/jarvis-voice";
+import { composeMessage, KIND_LABELS } from "@/lib/jarvis-voice";
+import { DETECTORS, RUNS } from "@/server/services/proactive/detectors";
 import { makeUser, TZ } from "../helpers";
 
 afterAll(closeDb);
@@ -114,11 +117,11 @@ describe("proactive Jarvis", () => {
     const prefs: UserPreferences = {};
     const me = user(u.id, prefs);
     await run(async (s) => {
-      await s.tx.insert(jarvisMessages).values({ userId: u.id, kind: "log_reminder", topic: "money", dedupeKey: "x1", title: "t", body: "b" });
+      await s.tx.insert(jarvisMessages).values({ userId: u.id, kind: "bank_fees", topic: "money", dedupeKey: "x1", title: "t", body: "b" });
     });
     const [x1] = (await msgs(run)).filter((m) => m.dedupeKey === "x1");
     await run((s) => respondToMessage(s, me, x1.id, "mute", today));
-    expect(me.preferences.jarvis?.mutedKinds).toEqual(["log_reminder"]);
+    expect(me.preferences.jarvis?.mutedKinds).toEqual(["bank_fees"]);
 
     // Three ignored in a row (with learning on): suppressed.
     const old = new Date(Date.now() - 3 * 86_400_000);
@@ -162,6 +165,40 @@ describe("proactive Jarvis", () => {
     expect(composeMessage("spending_pace", facts, "coach", { seed: 0, brief: true }).body.startsWith("You spent")).toBe(true);
   });
 
+  it("every push says what was noticed in one line, not just a headline", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      await checking(s, 50_000);
+      await createRecurring(s, { name: "Rent", amountCents: -62_000, frequency: "monthly", nextDueDate: addDaysStr(today, 3), kind: "bill" });
+      await createTask(s, TZ, { title: "Email advisor", dueDate: today, priority: "high" });
+      const course = await createCourse(s, { name: "English 101", code: "ENG 101" });
+      await createAssignment(s, TZ, { courseId: course.id, title: "Essay draft", dueDate: addDaysStr(today, 3), dueTime: "23:59" });
+      const job = await createEmployer(s, { name: "Campus Cafe", hourlyRateCents: 1500 });
+      await createShift(s, TZ, { employerId: job.id, date: addDaysStr(today, 2), startTime: "18:00", endTime: "23:00" });
+    });
+    await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "morning" }));
+    const sent: { key: string; title: string; body: string }[] = [];
+    const push = async (key: string, msg: { title: string; body: string }) => {
+      sent.push({ key, ...msg });
+      return true;
+    };
+    expect(await run((s) => pushImportant(s, TZ, { jarvis: { pushLimit: 5, quietStart: "00:00", quietEnd: "00:00" } }, push))).toBeGreaterThanOrEqual(3);
+    const kinds = sent.map((p) => p.key.split(":")[1]);
+    expect(kinds).toEqual(expect.arrayContaining(["bill_short", "morning_brief", "deadline_conflict"]));
+    const saved = await msgs(run);
+    for (const p of sent) {
+      const m = saved.find((x) => `jarvis:${x.dedupeKey}` === p.key)!;
+      expect(p.title).toBe(m.title);
+      expect(p.body.length).toBeGreaterThan(20);
+      expect(p.body).not.toBe(p.title);
+      expect(p.body).not.toMatch(/\n|^(Hey!|Quick one:|Heads up:|Just so you know:)/);
+      expect(m.body).toContain(p.body);
+    }
+    expect(sent.find((p) => p.key.includes("bill_short"))!.body).toMatch(/^Rent \(\$620\) is due in 3 days and your checking is \$120 short\./);
+    expect(sent.find((p) => p.key.includes("morning_brief"))!.body).toMatch(/on today's list/);
+    expect(sent.find((p) => p.key.includes("deadline_conflict"))!.body).toMatch(/^Essay draft is due .* and you work .*\. Want me to block/);
+  });
+
   it("only learns from responses after the user agrees", async () => {
     const { user: u, run } = await makeUser();
     const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "morning" }));
@@ -196,6 +233,135 @@ describe("proactive Jarvis", () => {
     await run((s) => respondToMessage(s, me, out.find((m) => m.kind !== "question")?.id ?? q.id, "down", today));
     expect((await run((s) => learnedStats(s))).kinds.length).toBeGreaterThan(0);
     expect((await run((s) => learnedStats(s, new Date(), new Date(Date.now() + 1000)))).kinds).toHaveLength(0);
+  });
+});
+
+describe("spending pace uses the weeks there really is data for (audit A24)", () => {
+  // Groceries each week before this one, then `now` on this week's Monday.
+  async function groceries(weeks: number, usualCents: number, nowCents: number) {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s);
+      const food = (await getCategoryByName(s, "Groceries"))!;
+      const tx = (date: string, cents: number) =>
+        createTransaction(s, { accountId: acct.id, date, description: "Kroger", merchantName: "Kroger", amountCents: -cents, categoryId: food.id });
+      for (let w = 1; w <= weeks; w++) await tx(addDaysStr(weekStart(today), -7 * w), usualCents);
+      await tx(weekStart(today), nowCents);
+    });
+    return (await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "transaction" }))).filter((m) => m.kind === "spending_pace");
+  }
+
+  it("stays quiet on an ordinary week with only 3 weeks of history", async () => {
+    expect(await groceries(3, 4000, 4000)).toEqual([]);
+  });
+
+  it("stays quiet with too little history to know what's usual", async () => {
+    expect(await groceries(2, 4000, 12_000)).toEqual([]);
+  });
+
+  it("still notices a real jump, against the average of the weeks there are", async () => {
+    const [m] = await groceries(3, 4000, 9500);
+    expect(m.facts).toMatchObject({ spentCents: 9500, usualCents: 4000, overCents: 5500 });
+    expect(m.body).toContain("$95 on groceries this week, $55 more than usual");
+  });
+
+  it("doesn't count a week whose same days came before the first charge (review probe)", async () => {
+    // Thursday Nov 5, 5 PM in New York: this week is Mon Nov 2 to today, compared with Mon to Thu of earlier weeks.
+    const now = new Date("2026-11-05T22:00:00Z");
+    const wk = "2026-11-02";
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s);
+      const food = (await getCategoryByName(s, "Groceries"))!;
+      const tx = (date: string, cents: number) =>
+        createTransaction(s, { accountId: acct.id, date, description: "Kroger", merchantName: "Kroger", amountCents: -cents, categoryId: food.id });
+      // The first-ever charge is on Sunday Oct 18: after Mon to Thu of that week (Oct 12 to 15), so that week has no data.
+      await tx(addDaysStr(wk, -15), 4000);
+      await tx(addDaysStr(wk, -14), 4000);
+      await tx(addDaysStr(wk, -7), 4000);
+      await tx(wk, 6000);
+    });
+    const out = (await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "transaction", now }))).filter((m) => m.kind === "spending_pace");
+    // Two comparable weeks at $40: too little to call $60 high (before, a third empty week made "usual" $26.67).
+    expect(out).toEqual([]);
+  });
+
+  it("counts every week when the category has older history than the 8 weeks", async () => {
+    const now = new Date("2026-11-05T22:00:00Z");
+    const wk = "2026-11-02";
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s);
+      const food = (await getCategoryByName(s, "Groceries"))!;
+      const tx = (date: string, cents: number) =>
+        createTransaction(s, { accountId: acct.id, date, description: "Kroger", merchantName: "Kroger", amountCents: -cents, categoryId: food.id });
+      await tx(addDaysStr(wk, -90), 4000); // before the 8 weeks
+      for (let w = 1; w <= 8; w++) await tx(addDaysStr(wk, -7 * w), 4000);
+      await tx(wk, 9500);
+    });
+    const [m] = (await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "transaction", now }))).filter((x) => x.kind === "spending_pace");
+    expect(m.facts).toMatchObject({ usualCents: 4000, overCents: 5500 });
+  });
+});
+
+describe("never asks to log by hand (audit A30)", () => {
+  it("stays quiet for a manual-only user who stopped entering spending", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s);
+      const food = (await getCategoryByName(s, "Groceries"))!;
+      await createTransaction(s, { accountId: acct.id, date: addDaysStr(today, -10), description: "Kroger", amountCents: -2500, categoryId: food.id });
+    });
+    const midday = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "midday" }));
+    expect(midday).toEqual([]);
+    const all = [
+      ...midday,
+      ...(await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "morning" }))),
+      ...(await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening" }))),
+      ...(await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "transaction" }))),
+    ];
+    expect(all.map((m) => m.kind)).not.toContain("log_reminder");
+    expect(all.filter((m) => /\blog(ged|ging)?\b|catch up/i.test(`${m.title} ${m.body}`))).toEqual([]);
+    expect(Object.keys(DETECTORS)).not.toContain("logReminder");
+    expect(Object.values(RUNS).flat()).not.toContain("logReminder");
+    expect(KIND_LABELS).not.toHaveProperty("log_reminder");
+  });
+
+  it("hides 'log spending' messages saved before it was removed: Today, the dot, Updates and pushes (review)", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      await s.tx.insert(jarvisMessages).values([
+        {
+          userId: s.userId,
+          kind: "log_reminder",
+          topic: "money",
+          dedupeKey: "log_reminder:old",
+          title: "Catch up on spending",
+          body: "You haven't logged",
+          priority: 99,
+        },
+        {
+          userId: s.userId,
+          kind: "bank_fees",
+          topic: "money",
+          dedupeKey: "bank_fees:x",
+          title: "$35 in bank fees this month",
+          body: "Your bank charged 1 fee",
+          priority: 60,
+        },
+      ]);
+    });
+    expect((await run((s) => topMessage(s)))?.kind).toBe("bank_fees");
+    expect(await run((s) => unreadCount(s))).toBe(1);
+    expect((await run((s) => listMessages(s))).map((m) => m.kind)).toEqual(["bank_fees"]);
+    const pushed: string[] = [];
+    await run((s) =>
+      pushImportant(s, TZ, { jarvis: { quietStart: "00:00", quietEnd: "00:00" } }, async (key) => {
+        pushed.push(key);
+        return true;
+      }),
+    );
+    expect(pushed.filter((k) => k.includes("log_reminder"))).toEqual([]);
   });
 });
 
@@ -299,8 +465,175 @@ describe("reviews and coaching", () => {
     const sunday = new Date(`${addDaysStr(today, daysToSunday)}T23:30:00Z`);
     const week = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now: sunday }));
     const review = week.find((m) => m.kind === "weekly_review")!;
-    expect(review.body).toMatch(/to-do.* done, \d+ slipped, \$\d+ spent/);
-    expect((review.facts.sections as { heading: string }[]).map((x) => x.heading)).toEqual(expect.arrayContaining(["Wins", "What slipped", "Spending"]));
+    expect(review.body).toMatch(/to-do.* done, \d+ still open, \$\d+ spent/);
+    expect((review.facts.sections as { heading: string }[]).map((x) => x.heading)).toEqual(expect.arrayContaining(["Wins", "Still open", "Spending"]));
+  });
+
+  it("says a habit is off track with real numbers, and offers an open slot only when the calendar shows one", async () => {
+    const { run } = await makeUser();
+    // A Tuesday evening in New York (Nov 10, 2026; UTC is already Wednesday).
+    const now = new Date("2026-11-11T01:30:00Z");
+    const day = todayIn(TZ, now);
+    expect(day).toBe("2026-11-10");
+    await run(async (s) => {
+      const gym = await createHabit(s, { title: "Gym", kind: "custom", cadence: "daily" });
+      const read = await createHabit(s, { title: "Read 20 pages", kind: "custom", cadence: "daily" });
+      for (const h of [gym, read]) {
+        await s.tx
+          .update(habits)
+          .set({ createdAt: new Date("2026-10-20T12:00:00Z") })
+          .where(eq(habits.id, h.id));
+        // Done 2 of the 5 days before today.
+        for (const d of [-2, -5]) await checkHabit(s, h.id, addDaysStr(day, d));
+      }
+      // Tomorrow (Wednesday) has a class 9 to 11 AM, so the first open stretch starts at 11 AM.
+      await createEvent(s, TZ, { title: "BIO 101", date: addDaysStr(day, 1), startTime: "09:00", endTime: "11:00" });
+    });
+    const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now }));
+    const off = out.filter((m) => m.kind === "habit_struggle");
+    expect(off).toHaveLength(2);
+    for (const m of off) {
+      // Wed Nov 4 to Mon Nov 9 reaches into last week, so no "this week".
+      expect(m.facts).toMatchObject({ kept: 2, of: 5, unit: "days", thisWeek: false });
+      expect(`${m.title} ${m.body}`).not.toMatch(/slipp|missed|failed/i);
+      expect(m.body).toContain(": 2 of the last 5 days. That's off track.");
+      expect(m.action).toMatchObject({ type: "open", href: "/goals" });
+      // The real day and time, so it still reads right the next morning (never "tomorrow" in saved text).
+      expect(m.facts).toMatchObject({ slotDate: "2026-11-11", slotTime: "11:00" });
+      expect(m.body).toContain("Wednesday 11 AM is open to get back on track.");
+      expect(m.body).not.toMatch(/tomorrow/i);
+    }
+
+    // With nothing on tomorrow's calendar, no slot is claimed.
+    const { run: run2 } = await makeUser();
+    await run2(async (s) => {
+      const h = await createHabit(s, { title: "Gym", kind: "custom", cadence: "daily" });
+      await s.tx
+        .update(habits)
+        .set({ createdAt: new Date("2026-10-20T12:00:00Z") })
+        .where(eq(habits.id, h.id));
+      await checkHabit(s, h.id, addDaysStr(day, -1));
+    });
+    const [lone] = (await run2((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now }))).filter((m) => m.kind === "habit_struggle");
+    expect(lone.facts).toMatchObject({ kept: 1, of: 5, slotDate: null, slotTime: null });
+    expect(lone.body).not.toMatch(/is open/);
+  });
+
+  describe("an open slot is only offered where it fits the person's day (review)", () => {
+    // Tuesday Nov 10, 8:30 PM in New York; tomorrow is Wednesday Nov 11.
+    const now = new Date("2026-11-11T01:30:00Z");
+    const day = "2026-11-10";
+    async function habitOffTrack(habit: { title: string; kind?: "study" | "custom"; target?: number }, setup: (s: UserScope) => Promise<void>) {
+      const { run } = await makeUser();
+      await run(async (s) => {
+        const h = await createHabit(s, { kind: "custom", cadence: "daily", ...habit });
+        await s.tx
+          .update(habits)
+          .set({ createdAt: new Date("2026-10-20T12:00:00Z") })
+          .where(eq(habits.id, h.id));
+        await checkHabit(s, h.id, addDaysStr(day, -2));
+        await setup(s);
+      });
+      const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now }));
+      return out.find((m) => m.kind === "habit_struggle")!;
+    }
+
+    it("never for a habit you keep all day, like No soda (the plain way back instead)", async () => {
+      const m = await habitOffTrack({ title: "No soda" }, (s) =>
+        createEvent(s, TZ, { title: "BIO 101", date: "2026-11-11", startTime: "18:00", endTime: "19:00" }).then(() => {}),
+      );
+      expect(m.facts).toMatchObject({ slotDate: null, slotTime: null });
+      expect(m.body).toMatch(/1 of the last 5 days\. That's off track\. Want to make it smaller for a while to get back on track\?$/);
+      expect(m.body).not.toMatch(/is open|AM|PM/);
+    });
+
+    it("never before 9 AM, even when the morning is empty", async () => {
+      const m = await habitOffTrack({ title: "Gym" }, (s) =>
+        createEvent(s, TZ, { title: "BIO 101", date: "2026-11-11", startTime: "18:00", endTime: "19:00" }).then(() => {}),
+      );
+      expect(m.facts).toMatchObject({ slotDate: "2026-11-11", slotTime: "09:00" });
+      expect(m.body).toContain("Wednesday 9 AM is open to get back on track.");
+    });
+
+    it("later for someone who goes to bed after 1 AM", async () => {
+      const m = await habitOffTrack({ title: "Study", kind: "study", target: 25 }, async (s) => {
+        await createMemory(s, { content: "When I usually go to bed on a weeknight: after 1 am.", category: "routine" }, "user");
+        await createEvent(s, TZ, { title: "Shift", date: "2026-11-11", startTime: "13:00", endTime: "17:00" });
+      });
+      expect(m.facts).toMatchObject({ slotDate: "2026-11-11", slotTime: "10:00" });
+      expect(m.body).toContain("Wednesday 10 AM is open to get back on track.");
+    });
+
+    it("works around class times typed on the course, and offers nothing when they can't be read", async () => {
+      const m = await habitOffTrack({ title: "Gym" }, async (s) => {
+        await createCourse(s, { name: "Biology", code: "BIO 101", meetingInfo: "Mon/Wed 9:00–11:30 AM" });
+      });
+      expect(m.facts).toMatchObject({ slotDate: "2026-11-11", slotTime: "11:30" });
+      expect(m.body).toContain("Wednesday 11:30 AM is open to get back on track.");
+
+      const unclear = await habitOffTrack({ title: "Gym" }, async (s) => {
+        await createCourse(s, { name: "Biology", code: "BIO 101", meetingInfo: "Wednesday mornings, see syllabus" });
+        await createEvent(s, TZ, { title: "Shift", date: "2026-11-11", startTime: "18:00", endTime: "21:00" });
+      });
+      expect(unclear.facts).toMatchObject({ slotDate: null, slotTime: null });
+      expect(unclear.body).not.toMatch(/is open/);
+    });
+
+    it("offers nothing when a class has no times typed and isn't on the calendar (review: onboarding saves only the name)", async () => {
+      const m = await habitOffTrack({ title: "Study 25 minutes a day", kind: "study", target: 25 }, async (s) => {
+        await createCourse(s, { name: "Biology" });
+        const job = await createEmployer(s, { name: "Cafe", hourlyRateCents: 1500 });
+        await createShift(s, TZ, { employerId: job.id, date: "2026-11-11", startTime: "14:00", endTime: "18:00" });
+      });
+      expect(m.facts).toMatchObject({ slotDate: null, slotTime: null });
+      expect(m.body).not.toMatch(/is open/);
+
+      // The same class with its meetings on the calendar: the day is known, so the slot goes around it.
+      const known = await habitOffTrack({ title: "Study 25 minutes a day", kind: "study", target: 25 }, async (s) => {
+        const bio = await createCourse(s, { name: "Biology" });
+        await createEvent(s, TZ, { title: "Biology", kind: "class", courseId: bio.id, date: "2026-11-11", startTime: "09:00", endTime: "10:15" });
+      });
+      expect(known.facts).toMatchObject({ slotDate: "2026-11-11", slotTime: "10:15" });
+      expect(known.body).toContain("Wednesday 10:15 AM is open to get back on track.");
+    });
+
+    it("offers nothing when an evening class is typed without PM (review: W 7:00-9:45 is 7 to 9:45 PM)", async () => {
+      const m = await habitOffTrack({ title: "Gym" }, async (s) => {
+        await createCourse(s, { name: "Night class", meetingInfo: "W 7:00-9:45" });
+        await createEvent(s, TZ, { title: "Internship", date: "2026-11-11", startTime: "09:45", endTime: "19:00" });
+      });
+      expect(m.facts).toMatchObject({ slotDate: null, slotTime: null });
+      expect(m.body).not.toMatch(/is open|PM/);
+    });
+  });
+
+  it("counts only periods since the habit began, and says 'this week' only when the days are this week (review)", async () => {
+    const offTrack = async (title: string, cadence: "daily" | "weekly", created: string, now: Date) => {
+      const { run } = await makeUser();
+      await run(async (s) => {
+        const h = await createHabit(s, { title, kind: "custom", cadence });
+        await s.tx
+          .update(habits)
+          .set({ createdAt: new Date(created) })
+          .where(eq(habits.id, h.id));
+      });
+      return (await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening", now }))).find((m) => m.kind === "habit_struggle");
+    };
+    // Weekly, 28 days old on Wed Nov 11: the weeks of Oct 19, Oct 26 and Nov 2 (not the week it began, nor before).
+    const weekly = (await offTrack("Gym once a week", "weekly", "2026-10-14T16:00:00Z", new Date("2026-11-11T22:30:00Z")))!;
+    expect(weekly.facts).toMatchObject({ kept: 0, of: 3, unit: "weeks", thisWeek: false });
+    expect(weekly.body).toContain('"Gym once a week": 0 of the last 3 weeks. That\'s off track.');
+    expect(weekly.body).not.toMatch(/of the last 5/);
+    // Daily, on a Monday: the 5 days before are all last week.
+    const monday = (await offTrack("Read", "daily", "2026-10-14T16:00:00Z", new Date("2026-11-09T23:30:00Z")))!;
+    expect(monday.facts).toMatchObject({ kept: 0, of: 5, thisWeek: false });
+    expect(monday.body).not.toMatch(/this week/);
+    // Daily, on a Saturday: Monday to Friday are this week.
+    const saturday = (await offTrack("Read", "daily", "2026-10-14T16:00:00Z", new Date("2026-11-14T23:30:00Z")))!;
+    expect(saturday.facts).toMatchObject({ kept: 0, of: 5, thisWeek: true });
+    expect(saturday.body).toContain("0 of the last 5 days. That's off track this week.");
+    // Daily, 4 days old: only 4 days to count (and too new to be called off track anyway).
+    expect(await offTrack("Read", "daily", "2026-11-05T16:00:00Z", new Date("2026-11-09T23:30:00Z"))).toBeUndefined();
   });
 
   it("counts habit streaks by day and by week", async () => {

@@ -5,7 +5,7 @@ import { listMessages, loadHistory } from "@/server/jarvis/conversations";
 import { executeToolCall, resolvePendingAction } from "@/server/jarvis/executor";
 import { ScriptedProvider, type Responder } from "@/server/jarvis/providers/scripted";
 import type { ModelProvider } from "@/server/jarvis/providers/types";
-import { toolSpecs } from "@/server/jarvis/registry";
+import { getTool, toolSpecs } from "@/server/jarvis/registry";
 import { createCourse, listAssignments } from "@/server/services/school";
 import { createTask, getTask, listTasks } from "@/server/services/tasks";
 import { listActiveMemories } from "@/server/services/memory";
@@ -242,6 +242,41 @@ describe("Jarvis tool loop", () => {
     const { eq } = await import("drizzle-orm");
     const [row] = await run((s) => s.tx.select().from(jarvisRuns).where(eq(jarvisRuns.id, relevant.runId!)));
     expect(row.memoryIds).toHaveLength(1);
+  });
+
+  it("never shows a tool's raw error: not in the chat, the saved result or what the model reads", async () => {
+    const { session, run } = await jarvisUser();
+    const RAW = "401 Incorrect API key provided: sk-proj-abc123. You can find your API key at https://platform.openai.com/account/api-keys.";
+    const leak = /Incorrect API key|sk-proj|openai|api-keys/i;
+    const execute = vi.spyOn(getTool("list_tasks")!, "execute").mockRejectedValueOnce(Object.assign(new Error(RAW), { status: 401 }));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    // The scripted model echoes the tool output it was given, so `text` is what the model read.
+    const r = await turn(session, "what's on my list?", callThenSummarize([{ name: "list_tasks", args: {} }]));
+    execute.mockRestore();
+    // The details go to the server log.
+    expect(log).toHaveBeenCalledWith("[jarvis] tool list_tasks failed", expect.objectContaining({ message: RAW }));
+    log.mockRestore();
+    const end = r.events.find((e) => e.type === "tool_end");
+    expect(end).toMatchObject({ ok: false, summary: "That didn't work this time. Try again in a minute." });
+    expect(JSON.stringify(r.events)).not.toMatch(leak);
+    expect(r.text).toContain("That didn't work this time.");
+    expect(r.text).not.toMatch(leak);
+    const saved = await run((s) => listMessages(s, r.conversationId));
+    expect(saved.some((m) => m.role === "tool")).toBe(true);
+    expect(JSON.stringify(saved)).not.toMatch(leak);
+  });
+
+  it("still passes on the messages tools write for the model, like an unknown category with the real list", async () => {
+    const { session } = await jarvisUser();
+    const r = await turn(
+      session,
+      "track my phone bill",
+      callThenSummarize([{ name: "add_bill", args: { name: "Phone", amount: 40, frequency: "monthly", category: "Zzz not a category" } }]),
+    );
+    const end = r.events.find((e) => e.type === "tool_end");
+    expect(end).toMatchObject({ ok: false });
+    expect((end as { summary: string }).summary).toMatch(/No category called "Zzz not a category". Pick one of: /);
+    expect((end as { summary: string }).summary).not.toBe("That didn't work this time. Try again in a minute.");
   });
 
   it("reports provider failures honestly and persists them", async () => {

@@ -27,13 +27,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "LifeFlow",
-    title: "LifeFlow — Your whole life, made simple.",
+    title: "LifeFlow: Your whole life, in flow.",
     description: "A personal planner and AI assistant that brings your whole week into one calm place.",
     images: [{ url: "/brand/lifeflow-social.png", width: 1200, height: 630, alt: "LifeFlow" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "LifeFlow — Your whole life, made simple.",
+    title: "LifeFlow: Your whole life, in flow.",
     description: "A personal planner and AI assistant that brings your whole week into one calm place.",
     images: ["/brand/lifeflow-social.png"],
   },

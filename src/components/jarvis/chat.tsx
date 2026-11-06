@@ -24,7 +24,8 @@ import {
 } from "lucide-react";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
-import { nameAtStart } from "@/lib/assistant";
+import { knowsLine, nameAtStart } from "@/lib/assistant";
+import { greetingIn } from "@/lib/dates";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { JarvisStatus, statusWord } from "./status";
 import { useShell } from "../shell/app-shell";
@@ -56,6 +57,7 @@ export function JarvisChat({
   autoSend,
   onConversation,
   connect,
+  knows,
   startVoice,
 }: {
   conversationId?: string | null;
@@ -69,11 +71,13 @@ export function JarvisChat({
   onConversation?: (id: string, title: string) => void;
   /** Not connected yet; shown as one "connect me to do more" card on the empty screen. */
   connect?: string[];
+  /** What this account has (classes, shifts, money), for the empty screen's line; unknown means none is claimed. */
+  knows?: string[];
   /** Open with the voice bar already on. */
   startVoice?: boolean;
 }) {
   const router = useRouter();
-  const { assistantName, firstName, aiConsent } = useShell();
+  const { assistantName, firstName, aiConsent, tz } = useShell();
   const canSend = availability.available && aiConsent;
   const [conversationId, setConversationId] = useState(initialId ?? null);
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
@@ -307,7 +311,7 @@ export function JarvisChat({
                 <BrandMark className="lf-float relative h-full w-full" alt="" priority />
               </div>
               <p className="mt-3 text-[0.75rem] font-semibold tracking-[0.18em] text-muted uppercase">
-                {greeting()}
+                {greetingIn(tz)}
                 {firstName ? `, ${firstName}` : ""}
               </p>
               <h2
@@ -315,7 +319,7 @@ export function JarvisChat({
               >
                 What can I take off your plate?
               </h2>
-              <p className="mt-2 max-w-xs text-[0.9375rem] leading-snug text-text-2">I know your classes, shifts and money.</p>
+              <p className="mt-2 max-w-xs text-[0.9375rem] leading-snug text-text-2">{knowsLine(knows)}</p>
               {!aiConsent ? (
                 <AiConsentCard name={assistantName} />
               ) : (
@@ -441,7 +445,7 @@ export function JarvisChat({
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40"
                 aria-label="Attach a file or screenshot"
                 title="Attach a screenshot, syllabus or text file"
                 disabled={!canSend}
@@ -474,14 +478,14 @@ export function JarvisChat({
                 }
                 disabled={!canSend}
                 aria-label={`Message ${assistantName}`}
-                className="max-h-48 min-h-10 flex-1 resize-none bg-transparent px-1.5 py-2 text-[1rem] leading-6 placeholder:text-muted [field-sizing:content]"
+                className="max-h-48 min-h-11 flex-1 resize-none bg-transparent px-1.5 py-2.5 text-[1rem] leading-6 placeholder:text-muted [field-sizing:content]"
               />
               {!busy && <VoiceButton assistantName={assistantName} disabled={!canSend} onStart={() => setTalking(true)} />}
               {busy ? (
                 <button
                   type="button"
                   onClick={() => abortRef.current?.abort()}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-text text-bg"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-text text-bg"
                   aria-label="Stop"
                 >
                   <Square className="h-3.5 w-3.5" />
@@ -490,7 +494,7 @@ export function JarvisChat({
                 <button
                   type="submit"
                   disabled={!canSend || (!input.trim() && !pending.some((p) => !p.uploading && !p.error))}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft transition-all active:scale-95 disabled:bg-surface-3 disabled:text-muted disabled:shadow-none"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft transition-all active:scale-95 disabled:bg-surface-3 disabled:text-muted disabled:shadow-none"
                   aria-label="Send"
                 >
                   <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.4} />
@@ -678,11 +682,6 @@ function RateAnswer({ runId, initial }: { runId: string; initial: 1 | -1 | null 
       </button>
     </div>
   );
-}
-
-function greeting(now = new Date()) {
-  const h = now.getHours();
-  return h < 5 ? "Up late" : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
 }
 
 const ICONS = [CalendarDays, GraduationCap, Wallet, Repeat];

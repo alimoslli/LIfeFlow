@@ -27,6 +27,8 @@ Whenever Dev gets something wrong (the owner's use, a tester, a thumbs-down, an 
 
 The owner asked for the agents to keep running: audit the app (phone and web), fix it, research competitors and what real people want, and check that every piece of information is correct. The product chat runs this on a schedule and reviews every result.
 
+**Light in the day, heavy at night (owner, 2026-11-05).** The owner's Claude usage has a 5-hour limit. During the day, agents do only light work: answering the owner, small fixes, short checks. Audits, builders, reviewers, situation batches, research, full test runs and e2e run in the night round, so the limit resets by morning.
+
 **The owner's hours (owner, 2026-11-05):** rounds start about 10 PM Pacific. The report and the yes or no list reach the owner by 11:45 PM. After 12 AM the work goes on without waiting for anyone: a question after midnight is "if you're up", and its item moves to the next day's list.
 
 **Every night (about 10 PM)**
@@ -39,6 +41,10 @@ The owner asked for the agents to keep running: audit the app (phone and web), f
 - **Research.** Competitors, what real people want (students first) and an audit of the last report. Every claim is checked against its source and corrected if wrong.
 - Things to avoid become rules the same day.
 - Proposals are tagged `fix now`, `build now`, `needs the new surface` or `owner decision`.
+
+**What needs the owner's approval (owner, 2026-11-05)**
+- **Approved in advance:** small fixes and bugs (wrong numbers, broken flows, errors, rule breaks, copy that's wrong, accessibility, security slips). Builders fix them and they ship once verified.
+- **Needs the owner's yes first:** every real change (a new feature, a change to how something works or looks, removing a feature, pricing, anything on the new surface). It goes on the yes or no list, with a picture when words aren't enough.
 
 **What "straight away" means**
 - `fix now` findings and research "things to avoid" go in during the same round.

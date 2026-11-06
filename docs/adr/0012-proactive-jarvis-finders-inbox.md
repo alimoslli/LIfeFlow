@@ -53,7 +53,7 @@ It had to stay honest: no guessed numbers, no claims without the saved record, m
   - "not using".
 - **Smart inbox.**
   - Each user gets a forwarding address `u-<token>@INBOX_DOMAIN`.
-  - The webhook `/api/inbox/email?key=INBOX_WEBHOOK_SECRET` takes Postmark's inbound JSON.
+  - The webhook `/api/inbox/email` takes Postmark's inbound JSON. The secret (`INBOX_WEBHOOK_SECRET`) comes as the basic-auth password (`https://inbox:<secret>@<site>/api/inbox/email`) or in `x-inbox-secret`, compared in constant time. (2026-11-05, audit A25: the old `?key=` form put the secret in access logs; it still works, with a deprecation warning, until the live setup moves, then it is turned off.)
   - Mail is filed only when it comes from one of the user's verified addresses **and** passed SPF or DKIM for that domain. Otherwise it is recorded as ignored, with the reason.
   - Unknown addresses are accepted and dropped, so senders can't probe which addresses exist.
   - Content is untrusted. The LLM extracts into a strict JSON schema, and services file it:

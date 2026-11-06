@@ -10,10 +10,12 @@ import { CountedInput } from "@/components/ui/counted-input";
 import { Field, Input, Select } from "@/components/ui/field";
 import { DateField, PriorityField, TimeField } from "@/components/ui/pickers";
 import { Sheet } from "@/components/ui/sheet";
+import { todayIn } from "@/lib/dates";
 import { haptic } from "@/lib/haptics";
 import { parseMoneyToCents } from "@/lib/money";
 import { enqueue } from "@/lib/offline-queue";
 import { cn } from "@/lib/utils";
+import { useShell } from "./app-shell";
 
 type Kind = "todo" | "shift" | "spending";
 type Ctx = { today: string; employers: { id: string; name: string }[]; accounts: { id: string; name: string; type: string }[] };
@@ -23,10 +25,6 @@ const SAVED = "Saved on this phone. It will sync when you're back online.";
 const str = (fd: FormData, k: string) => {
   const v = fd.get(k);
   return typeof v === "string" && v.trim() ? v.trim() : null;
-};
-const localToday = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
 // Offline versions of the three forms: saved on the device, synced by PwaClient when back online.
@@ -57,7 +55,8 @@ const offlineShift = async (fd: FormData) => {
   });
   return SAVED;
 };
-const offlineSpending = async (fd: FormData) => {
+/** Offline spending, dated today in the user's time zone (Settings) when no date was picked. */
+const offlineSpending = (tz: string) => async (fd: FormData) => {
   const cents = parseMoneyToCents(str(fd, "amount") ?? "");
   const description = str(fd, "description");
   const accountId = str(fd, "accountId");
@@ -66,7 +65,7 @@ const offlineSpending = async (fd: FormData) => {
   await enqueue({
     kind: "transaction.create",
     id: crypto.randomUUID(),
-    data: { accountId, amountCents: cents, description: description.slice(0, 300), date: str(fd, "date") ?? localToday() },
+    data: { accountId, amountCents: cents, description: description.slice(0, 300), date: str(fd, "date") ?? todayIn(tz) },
   });
   return SAVED;
 };
@@ -76,6 +75,7 @@ const offlineSpending = async (fd: FormData) => {
  * Jarvis ("Capture"), any QuickAddButton, or ?add=todo|shift|spending (home-screen shortcuts).
  */
 export function QuickAdd() {
+  const { tz } = useShell();
   const params = useSearchParams();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -100,12 +100,12 @@ export function QuickAdd() {
           // Offline: use the jobs and accounts from last time (cleared when signing out).
           try {
             const saved = JSON.parse(localStorage.getItem(CTX_KEY) ?? "null") as Ctx | null;
-            if (saved) setCtx({ ...saved, today: localToday() });
+            if (saved) setCtx({ ...saved, today: todayIn(tz) });
           } catch {}
         }
       }
     },
-    [ctx],
+    [ctx, tz],
   );
 
   useEffect(() => {
@@ -203,7 +203,7 @@ export function QuickAdd() {
           (ctx && ctx.accounts.length === 0 ? (
             <p className="py-4 text-sm text-text-2">Connect a bank or add an account on Money, Accounts first.</p>
           ) : (
-            <ActionForm key={`m${formKey}`} action={createTransactionAction} offline={offlineSpending} onSuccess={done} className="gap-4">
+            <ActionForm key={`m${formKey}`} action={createTransactionAction} offline={offlineSpending(tz)} onSuccess={done} className="gap-4">
               <input type="hidden" name="direction" value="out" />
               <Field label="Amount ($)" htmlFor="qa-amt">
                 <Input id="qa-amt" name="amount" inputMode="decimal" required autoFocus placeholder="12.50" className="h-14 text-[1.375rem]" />

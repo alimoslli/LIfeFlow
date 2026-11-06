@@ -59,7 +59,7 @@ export function DayPreview({
   const [run, setRun] = useState(() => Math.floor(Math.random() * 1e9));
   const day = useMemo(() => previewDay({ stage, course, job, now: new Date() }, seeded(run)), [stage, course, job, run]);
   const [phase, setPhase] = useState<"connecting" | "result">(() => (prefersReducedMotion() ? "result" : "connecting"));
-  const [status, setStatus] = useState("Connecting your accounts…");
+  const [status, setStatus] = useState("Putting together an example day…");
   const [note, setNote] = useState<number | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const orb = useRef<HTMLDivElement>(null);
@@ -76,7 +76,7 @@ export function DayPreview({
     const el = root.current;
     const srcs = el.querySelectorAll<HTMLElement>("[data-src]");
     const chips = el.querySelectorAll<HTMLElement>("[data-cloud] [data-chip]");
-    setStatus("Connecting your accounts…");
+    setStatus("Putting together an example day…");
     gsap.set(chips, { opacity: 0, scale: 0.6, y: 10 });
     gsap.set(el.querySelectorAll("[data-head]"), { opacity: 0, y: 8 });
     const t = gsap.timeline({ onComplete: () => setPhase("result") });
@@ -90,7 +90,7 @@ export function DayPreview({
         "<",
       );
     });
-    t.call(() => setStatus("Reading your week…"), undefined, "+=0.2")
+    t.call(() => setStatus("Reading the example week…"), undefined, "+=0.2")
       .to(chips, { opacity: 1, scale: 1, y: 0, duration: 0.4, stagger: 0.13, ease: "back.out(2)" })
       .call(() => setStatus(`${assistant} is thinking…`), undefined, "+=1.1")
       .to(chips, {
@@ -214,7 +214,7 @@ export function DayPreview({
               <button
                 type="button"
                 onClick={() => setNote(note === g ? null : g)}
-                className="min-h-10 rounded-full bg-surface-2 px-4 text-sm font-medium transition-transform active:scale-[0.98]"
+                className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium transition-transform active:scale-[0.98]"
               >
                 {s.action}
               </button>

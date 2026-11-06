@@ -117,7 +117,7 @@ export default async function SubscriptionsPage() {
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              <ActionButton action={keepSubscriptionAction.bind(null, s.id)} className="rounded-full bg-surface-2 px-4 text-sm font-medium">
+              <ActionButton action={keepSubscriptionAction.bind(null, s.id)} className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium">
                 Keep
               </ActionButton>
               <CancelHelp
@@ -126,7 +126,7 @@ export default async function SubscriptionsPage() {
                 via={s.via === "apple" || s.via === "google_play" || s.via === "paypal" ? s.via : null}
                 saved={s.cancelHelp ? { answer: s.cancelHelp.answer, sources: s.cancelHelp.sources } : null}
               />
-              <ActionButton action={remindRenewalAction.bind(null, s.id)} className="rounded-full bg-surface-2 px-4 text-sm font-medium">
+              <ActionButton action={remindRenewalAction.bind(null, s.id)} className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium">
                 Remind me before renewal
               </ActionButton>
             </div>

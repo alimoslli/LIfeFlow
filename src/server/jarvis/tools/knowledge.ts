@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { ServiceError } from "../../services/errors";
 import { z } from "zod";
 import { moveToTrash } from "../../services/trash";
 import { formatIn, localDateOf } from "@/lib/dates";
@@ -210,7 +211,7 @@ export const systemTools = [
           .from(attachments)
           .where(and(eq(attachments.id, id), eq(attachments.userId, s.userId))),
       );
-      if (!a) throw new Error("Attachment not found");
+      if (!a) throw new ServiceError("Attachment not found");
       if (a.mimeType.startsWith("image/") || a.mimeType === "application/pdf")
         return { filename: a.filename, note: "This file was provided directly in the user's message; read it there." };
       const text = Buffer.from(a.dataBase64, "base64").toString("utf8");

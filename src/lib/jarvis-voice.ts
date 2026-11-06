@@ -4,6 +4,8 @@
  * so the personality settings can preview it live.
  */
 
+import { formatDateStr } from "./dates";
+
 export type JarvisTone = "coach" | "friend" | "direct";
 export type Mood = "win" | "warn" | "info";
 export type Parts = { headline: string; fact: string; ask?: string; mood: Mood };
@@ -17,6 +19,12 @@ const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : "s"}`;
 type F = Record<string, unknown>;
 const s = (f: F, k: string) => String(f[k] ?? "");
 const n = (f: F, k: string) => Number(f[k] ?? 0);
+
+/** "22:00" as "10 PM", "23:30" as "11:30 PM". */
+const clock = (hhmm: string) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h < 12 ? "AM" : "PM"}`;
+};
 
 /** One entry per message kind. Facts come from the detectors in services/proactive. */
 const KINDS: Record<string, (f: F) => Parts> = {
@@ -73,12 +81,6 @@ const KINDS: Record<string, (f: F) => Parts> = {
     fact: `You've finished every to-do ${n(f, "days")} days in a row.${f.best ? " Best streak yet." : ""}`,
     mood: "win",
   }),
-  log_reminder: (f) => ({
-    headline: "Catch up on spending",
-    fact: `You haven't logged spending in ${plural(n(f, "days"), "day")}.`,
-    ask: "Want to catch up in 30 seconds?",
-    mood: "info",
-  }),
   saved_more: (f) => ({
     headline: `You saved ${usd(n(f, "moreCents"))} more`,
     fact: `In ${s(f, "month")} you saved ${usd(n(f, "savedCents"))}, ${usd(n(f, "moreCents"))} more than the month before.`,
@@ -86,7 +88,7 @@ const KINDS: Record<string, (f: F) => Parts> = {
     mood: "win",
   }),
   overdue_tasks: (f) => ({
-    headline: `${plural(n(f, "count"), "to-do")} slipped`,
+    headline: `${plural(n(f, "count"), "to-do")} past due`,
     fact: `${s(f, "titles")} ${n(f, "count") === 1 ? "is" : "are"} past due.`,
     ask: f.done ? "I moved them to tomorrow." : "Move them to tomorrow?",
     mood: "info",
@@ -111,7 +113,7 @@ const KINDS: Record<string, (f: F) => Parts> = {
   }),
   weekly_review: (f) => ({
     headline: "Your week in review",
-    fact: `${plural(n(f, "done"), "to-do")} done, ${n(f, "slipped")} slipped, ${usd(n(f, "spentCents"))} spent${n(f, "budgetCents") ? ` of about ${usd(n(f, "budgetCents"))} budgeted` : ""}.`,
+    fact: `${plural(n(f, "done"), "to-do")} done, ${n(f, "slipped")} still open, ${usd(n(f, "spentCents"))} spent${n(f, "budgetCents") ? ` of about ${usd(n(f, "budgetCents"))} budgeted` : ""}.`,
     ask: f.change ? `One change for next week: ${s(f, "change")}` : undefined,
     mood: "info",
   }),
@@ -135,12 +137,22 @@ const KINDS: Record<string, (f: F) => Parts> = {
     fact: `${n(f, "days")} in a row on "${s(f, "habit")}".${f.best ? " Best streak yet." : ""}`,
     mood: "win",
   }),
-  habit_struggle: (f) => ({
-    headline: `${s(f, "habit")} is slipping`,
-    fact: `"${s(f, "habit")}" slipped ${n(f, "missed")} times lately. That's a sign the step is too big, not that you failed.`,
-    ask: f.smaller ? `Try ${s(f, "smaller")} for two weeks?` : "Want to make it smaller for a while?",
-    mood: "info",
-  }),
+  habit_struggle: (f) => {
+    // Messages saved before Nov 2026 only have `missed` (of the last 5).
+    const of = n(f, "of") || 5;
+    const kept = f.kept === undefined ? Math.max(0, of - n(f, "missed")) : n(f, "kept");
+    const unit = s(f, "unit") || "times";
+    return {
+      headline: `${s(f, "habit")} is off track`,
+      fact: `"${s(f, "habit")}": ${kept} of the last ${of} ${unit}. That's off track${f.thisWeek ? " this week" : ""}.`,
+      ask: f.slotDate
+        ? `${formatDateStr(s(f, "slotDate"), "EEEE")} ${clock(s(f, "slotTime"))} is open to get back on track.`
+        : f.smaller
+          ? `Try ${s(f, "smaller")} for two weeks to get back on track?`
+          : "Want to make it smaller for a while to get back on track?",
+      mood: "info",
+    };
+  },
   subscription_price_up: (f) => ({
     headline: `${s(f, "name")} went up`,
     fact: `${s(f, "name")} went from ${usd(n(f, "fromCents"))} to ${usd(n(f, "toCents"))}, ${usd(n(f, "yearlyExtraCents"))} more a year.`,
@@ -233,6 +245,34 @@ export function composeMessage(kind: string, facts: F, tone: JarvisTone, opts: {
   return { title: p.headline, body: parts.filter(Boolean).join(" ") };
 }
 
+/**
+ * A push notification: the headline as the title and one line with what was noticed and why, then the fix or
+ * next step. No opener, so the fact is the first thing on a lock screen. Null for kinds with no wording here.
+ */
+export function pushText(kind: string, facts: F) {
+  const p = KINDS[kind]?.(facts);
+  if (!p) return null;
+  return { title: p.headline, body: [p.fact, p.ask].filter(Boolean).join(" ").replace(/\s+/g, " ").trim() };
+}
+
+/**
+ * What the assistant's pushes are, for Settings → Notifications. It has to match `pushImportant` in
+ * services/proactive/engine.ts: reviews plus urgent or important messages, `pushLimit` in 24 hours, quiet hours.
+ * `reminders` is the To-do reminders switch on the same page; they're mentioned only while it's on.
+ */
+export function pushSummary(name: string, s: { pushLimit: number; quietStart: string; quietEnd: string }, reminders: boolean) {
+  if (s.pushLimit <= 0) return `${name} keeps everything in the app and sends no notifications of its own.${reminders ? " To-do reminders still come." : ""}`;
+  const quiet = s.quietStart === s.quietEnd ? "No quiet hours." : `None from ${clock(s.quietStart)} to ${clock(s.quietEnd)}.`;
+  return [
+    `${name} sends up to ${plural(s.pushLimit, "notification")} a day: your morning brief, evening wrap-up and weekly and monthly reviews, plus anything urgent or important it notices, like a bill your checking can't cover.`,
+    "Each one says in one line what it noticed and why, with the next step.",
+    quiet,
+    reminders ? "To-do reminders don't count toward the limit." : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 /** Plain names for each kind, for Settings (What Jarvis knows). */
 export const KIND_LABELS: Record<string, string> = {
   email_brief: "Morning email brief",
@@ -243,7 +283,6 @@ export const KIND_LABELS: Record<string, string> = {
   bill_due: "Bills coming due",
   payday_split: "Payday plans",
   task_streak: "To-do streaks",
-  log_reminder: "Reminders to log spending",
   saved_more: "Saving more than usual",
   overdue_tasks: "Overdue to-dos",
   unusual_spend: "Unusual charges",
@@ -253,7 +292,7 @@ export const KIND_LABELS: Record<string, string> = {
   monthly_review: "Monthly review",
   goal_forecast: "Goal forecasts",
   habit_streak: "Habit streaks",
-  habit_struggle: "Habits that slipped",
+  habit_struggle: "Habits off track",
   subscription_price_up: "Subscription price increases",
   trial_ending: "Free trials ending",
   new_subscription: "New subscriptions",

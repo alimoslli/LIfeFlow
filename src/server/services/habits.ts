@@ -55,6 +55,25 @@ export async function deleteHabit(scope: UserScope, id: string) {
   return row;
 }
 
+const TIME_BOXED =
+  /\b(gym|work ?out|exercise|run|running|jog|jogging|walk|walking|yoga|swim|swimming|lift|lifting|stretch|stretching|bike|biking|cycling|practice|practise|meditate|meditation|study|studying|read|reading)\b/i;
+const DURATION = /\b(\d{1,3})\s*(min|mins|minute|minutes|hr|hrs|hour|hours)\b/i;
+const KEEP_ALL_DAY = /^\s*(no|don'?t|stop|avoid|quit|less|limit|cut)\b/i;
+
+/**
+ * Minutes of calendar time a habit takes, when a time slot makes sense for it (study, workouts and other
+ * time-boxed habits done daily or weekly). Null for habits you keep all day ("No soda"), money habits and weekend ones.
+ */
+export function slotMinutes(h: { title: string; kind: string; cadence: string; target: number | null }): number | null {
+  if (h.cadence !== "daily" && h.cadence !== "weekly") return null;
+  const fit = (m: number) => Math.min(180, Math.max(15, Math.round(m)));
+  if (h.kind === "study") return fit(h.target ?? 30);
+  if (h.kind !== "custom" || KEEP_ALL_DAY.test(h.title)) return null;
+  const d = DURATION.exec(h.title);
+  if (d) return fit(Number(d[1]) * (/^h/i.test(d[2]) ? 60 : 1));
+  return TIME_BOXED.test(h.title) ? 30 : null;
+}
+
 /** Marks today (or a given day) done or not done for a habit. */
 export async function checkHabit(scope: UserScope, habitId: string, day: string, done = true) {
   const [h] = await scope.tx
@@ -76,14 +95,14 @@ export function periodOf(cadence: string, day: string) {
   return addDaysStr(day, -((dow + 6) % 7));
 }
 
-/** Streaks from check-ins: current, best, and the recent record (true = done, false = missed). */
+/** Streaks from check-ins: current, best, and the recent record (true = done, false = missed) with each period's first day. */
 export function streakOf(cadence: string, doneDays: string[], today: string) {
   const done = new Set(doneDays.map((d) => periodOf(cadence, d)).filter((p): p is string => !!p));
   const step = cadence === "daily" ? 1 : 7;
   // Start from the current period; if it isn't done yet it doesn't break the streak.
   let p = periodOf(cadence, today) ?? periodOf(cadence, addDaysStr(today, -((dayOfWeek(today) + 1) % 7)))!;
-  const recent: boolean[] = [];
-  for (let i = 0; i < 8; i++) recent.push(done.has(addDaysStr(p, -step * i)));
+  const recentStarts = Array.from({ length: 8 }, (_, i) => addDaysStr(p, -step * i));
+  const recent = recentStarts.map((d) => done.has(d));
   if (!done.has(p)) p = addDaysStr(p, -step);
   let current = 0;
   while (done.has(addDaysStr(p, -step * current))) current++;
@@ -94,7 +113,7 @@ export function streakOf(cadence: string, doneDays: string[], today: string) {
     run = i > 0 && addDaysStr(sorted[i - 1], step) === sorted[i] ? run + 1 : 1;
     best = Math.max(best, run);
   }
-  return { current, best, recent };
+  return { current, best, recent, recentStarts };
 }
 
 export async function listHabits(scope: UserScope, today: string) {

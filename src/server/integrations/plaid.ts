@@ -5,6 +5,8 @@ import { decryptSecret, encryptSecret } from "../crypto";
 import { connectionRegistry, financialAccounts, holdings, integrations, syncJobs, transactions, type AccountType, type TransactionKind } from "../db/schema";
 import type { Database } from "../db/client";
 import { withUser, type UserScope } from "../db/with-user";
+import { cleanVendorName } from "@/lib/vendor";
+import { tidyForUser } from "../services/finance/tidy";
 import { categoryIdByName, keywordCategory, ruleFor } from "../services/finance/categorize";
 import { recordNetWorth } from "../services/finance/investing";
 
@@ -48,6 +50,9 @@ export function plaidConfig(env: Record<string, string | undefined> = process.en
   };
 }
 
+/** What the person (and the assistant) is told when a bank request fails for a reason they can't fix. */
+export const BANK_UNAVAILABLE = "The bank connection isn't available right now. Please try again later.";
+
 const REAUTH = new Set(["ITEM_LOGIN_REQUIRED", "PENDING_EXPIRATION", "ACCESS_NOT_GRANTED", "INVALID_ACCESS_TOKEN"]);
 
 async function call<T>(path: string, body: Record<string, unknown>, f: Fetch = fetch): Promise<T> {
@@ -68,14 +73,10 @@ async function call<T>(path: string, body: Record<string, unknown>, f: Fetch = f
     const code = typeof json.error_code === "string" ? json.error_code : null;
     // Plaid's own error details (never the request body, which holds the secret), so setup problems show in the server logs.
     console.error("[plaid]", path, res.status, json.error_type, code, json.error_message, json.request_id);
+    // Plaid's display_message is written for the person; anything else (wrong keys, a bad field) is ours to fix, so the
+    // person and the assistant only hear that the connection isn't available. Never name settings or codes to them.
     const displayMessage = typeof json.display_message === "string" ? json.display_message : "";
-    const msg =
-      displayMessage ||
-      (code === "INVALID_API_KEYS" || code === "INVALID_CLIENT_ID"
-        ? "Plaid credentials don't match the selected environment. Check PLAID_CLIENT_ID, PLAID_SECRET, and PLAID_ENV."
-        : code
-          ? `Plaid rejected this request (${code}).`
-          : "Plaid rejected this request without an error code.");
+    const msg = displayMessage || BANK_UNAVAILABLE;
     throw new PlaidError(code && REAUTH.has(code) ? "Your bank needs you to sign in again. Use Reconnect." : msg, code, !!code && REAUTH.has(code));
   }
   return json as T;
@@ -274,13 +275,42 @@ export function mapPfc(pfc: PlaidTxn["personal_finance_category"], amountCents: 
   if (p === "LOAN_PAYMENTS") return { category: d.includes("CREDIT_CARD") ? "Credit Card Payment" : null, kind: "transfer" };
   const map: Record<string, (det: string) => string> = {
     BANK_FEES: () => "Fees & Interest",
-    ENTERTAINMENT: (x) => (x.includes("TV_AND_MOVIES") || x.includes("MUSIC") ? "Streaming" : x.includes("VIDEO_GAMES") ? "Games" : "Events"),
-    FOOD_AND_DRINK: (x) => (x.includes("GROCERIES") ? "Groceries" : x.includes("COFFEE") ? "Coffee" : "Restaurants"),
-    GENERAL_MERCHANDISE: (x) => (x.includes("CLOTHING") ? "Clothing" : x.includes("ELECTRONICS") ? "Electronics" : "Household"),
+    ENTERTAINMENT: (x) =>
+      x.includes("TV_AND_MOVIES") || x.includes("MUSIC")
+        ? "Streaming"
+        : x.includes("VIDEO_GAMES")
+          ? "Games"
+          : x.includes("AMUSEMENT") || x.includes("MUSEUM")
+            ? "Activities"
+            : x.includes("SPORTING_EVENTS")
+              ? "Sports"
+              : "Events",
+    FOOD_AND_DRINK: (x) =>
+      x.includes("GROCERIES") ? "Groceries" : x.includes("COFFEE") ? "Coffee" : x.includes("BEER_WINE") ? "Bars & Alcohol" : "Restaurants",
+    GENERAL_MERCHANDISE: (x) =>
+      x.includes("CLOTHING")
+        ? "Clothing"
+        : x.includes("ELECTRONICS")
+          ? "Electronics"
+          : x.includes("ONLINE_MARKETPLACES")
+            ? "Online Shopping"
+            : x.includes("PET_SUPPLIES")
+              ? "Pets"
+              : "Household",
     HOME_IMPROVEMENT: () => "Household",
-    MEDICAL: (x) => (x.includes("PHARMAC") ? "Pharmacy" : "Medical"),
+    MEDICAL: (x) =>
+      x.includes("PHARMAC")
+        ? "Pharmacy"
+        : x.includes("VETERINARY")
+          ? "Pets"
+          : x.includes("DENTAL") || x.includes("EYE_CARE")
+            ? "Dental & Vision"
+            : x.includes("MENTAL")
+              ? "Mental Health"
+              : "Medical",
     PERSONAL_CARE: (x) => (x.includes("GYMS") ? "Fitness" : "Personal Care"),
-    GENERAL_SERVICES: (x) => (x.includes("INSURANCE") ? "Insurance" : x.includes("EDUCATION") ? "Tuition" : "Other"),
+    GENERAL_SERVICES: (x) =>
+      x.includes("INSURANCE") ? "Insurance" : x.includes("EDUCATION") ? "Tuition" : x.includes("AUTOMOTIVE") ? "Car Maintenance" : "Other",
     GOVERNMENT_AND_NON_PROFIT: (x) => (x.includes("DONATIONS") ? "Gifts & Donations" : "Other"),
     TRANSPORTATION: (x) =>
       x.includes("GAS")
@@ -292,7 +322,7 @@ export function mapPfc(pfc: PlaidTxn["personal_finance_category"], amountCents: 
             : x.includes("TAXIS")
               ? "Rideshare"
               : "Transportation",
-    TRAVEL: () => "Travel",
+    TRAVEL: (x) => (x.includes("FLIGHTS") ? "Flights" : x.includes("LODGING") ? "Hotels & Lodging" : "Travel"),
     // Every detailed code starts with RENT_AND_UTILITIES_, so match the suffix (includes("RENT") filed them all as Rent).
     RENT_AND_UTILITIES: (x) => (x.endsWith("_RENT") ? "Rent" : x.includes("TELEPHONE") ? "Phone" : x.includes("INTERNET") ? "Internet" : "Utilities"),
   };
@@ -329,6 +359,8 @@ export async function syncItem(scope: UserScope, integrationId: string, tz: stri
     .insert(syncJobs)
     .values({ userId: scope.userId, integrationId, kind: "plaid.sync", status: "succeeded", startedAt: started, finishedAt: new Date(), stats: result.stats });
   await recordNetWorth(scope, todayIn(tz));
+  // Plain vendor names and categories for what just arrived. Never lets a tidy-up problem fail the sync.
+  await tidyForUser(scope).catch((e) => console.error("[tidy]", e instanceof Error ? e.name : e));
   return result.stats;
 }
 
@@ -422,7 +454,10 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
       if (!accountId) continue;
       const amountCents = -Math.round(t.amount * 100); // Plaid: positive = money out
       const description = t.name.slice(0, 300);
-      const merchantName = t.merchant_name?.slice(0, 200) ?? null;
+      const rawMerchant = t.merchant_name?.slice(0, 200) ?? null;
+      const tidyName = cleanVendorName(rawMerchant || description);
+      // Show a plain name; the bank's own line stays in description.
+      const merchantName = tidyName && tidyName !== description.trim() ? tidyName : rawMerchant;
       const rule = await ruleFor(scope, { merchantName, description });
       const pfc = mapPfc(t.personal_finance_category, amountCents, `${merchantName ?? ""} ${description}`);
       const categoryName = pickCategory(pfc, keywordCategory({ merchantName, description }, amountCents));
@@ -441,14 +476,26 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
         pendingTransactionId: t.pending_transaction_id,
       };
       const [existing] = await scope.tx
-        .select({ id: transactions.id, categoryId: transactions.categoryId, kind: transactions.kind, notes: transactions.notes })
+        .select({
+          id: transactions.id,
+          categoryId: transactions.categoryId,
+          kind: transactions.kind,
+          notes: transactions.notes,
+          merchantName: transactions.merchantName,
+        })
         .from(transactions)
         .where(and(eq(transactions.userId, scope.userId), eq(transactions.providerTransactionId, t.transaction_id)));
       if (existing) {
         // Keep the user's own category choice and notes; refresh everything else from the bank.
         await scope.tx
           .update(transactions)
-          .set({ ...values, categoryId: existing.categoryId ?? values.categoryId, kind: existing.categoryId ? existing.kind : values.kind })
+          .set({
+            ...values,
+            // Keep a name the user (or a tidy-up) already chose; refresh the rest from the bank.
+            merchantName: existing.merchantName ?? values.merchantName,
+            categoryId: existing.categoryId ?? values.categoryId,
+            kind: existing.categoryId ? existing.kind : values.kind,
+          })
           .where(eq(transactions.id, existing.id));
         stats.modified++;
       } else {

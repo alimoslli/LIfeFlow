@@ -1,4 +1,4 @@
-import { addDaysStr, daysBetween, formatDateStr, formatIn, localDateOf } from "@/lib/dates";
+import { addDaysStr, daysBetween, formatDateStr, formatIn, greetingIn, localDateOf } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
 import { findConflicts, type AgendaItem } from "../services/calendar";
 import type { Briefing, DayGlance, Insight, LifeSnapshot } from "./types";
@@ -43,8 +43,9 @@ const overdueRule: Rule = (s) => {
   ];
 };
 
+/** Clashes still ahead (or happening now): items that already ended can't clash any more. */
 const conflictRule: Rule = (s) =>
-  findConflicts(s.week)
+  findConflicts(s.week.filter((i) => !i.endsAt || i.endsAt.getTime() > s.now.getTime()))
     .slice(0, 1)
     .map(({ a, b }) => ({
       id: `conflict-${a.key}-${b.key}`,
@@ -256,13 +257,6 @@ export function weekGlance(s: LifeSnapshot): DayGlance[] {
   });
 }
 
-function greeting(hour: number) {
-  if (hour < 5) return "Up late";
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}
-
 /** One or two human sentences describing the rest of today. */
 export function summarizeDay(s: LifeSnapshot, todayItems: AgendaItem[]): string {
   const upcoming = todayItems.filter((i) => (i.endsAt ?? i.startsAt) > s.now);
@@ -284,7 +278,7 @@ export function buildBriefing(s: LifeSnapshot): Briefing {
   const today = s.week.filter((i) => localDateOf(i.startsAt, s.tz) === s.today);
   const next = today.find((i) => i.blocksTime && i.endsAt && i.endsAt > s.now) ?? null;
   return {
-    headline: `${greeting(Number(formatIn(s.now, s.tz, "H")))}, ${s.firstName}.`,
+    headline: `${greetingIn(s.tz, s.now)}, ${s.firstName}.`,
     summary: summarizeDay(s, today),
     next,
     today,

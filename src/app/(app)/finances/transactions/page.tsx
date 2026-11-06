@@ -1,7 +1,7 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, MoreHorizontal, Receipt, Search, SlidersHorizontal, Trash2, Wand2 } from "lucide-react";
+import { Download, MoreHorizontal, Receipt, Search, Sparkles, SlidersHorizontal, Trash2, Wand2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { Button, SubmitButton } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
@@ -15,7 +15,7 @@ import { listAccounts } from "@/server/services/finance/accounts";
 import { listCategories } from "@/server/services/finance/categories";
 import { summarizeCashflow } from "@/server/services/finance/cashflow";
 import { TRANSACTION_KINDS, queryTransactions } from "@/server/services/finance/transactions";
-import { createTransactionAction, deleteTransactionAction, importCsvAction, updateTransactionAction } from "../actions";
+import { createTransactionAction, deleteTransactionAction, importCsvAction, tidyTransactionsAction, updateTransactionAction } from "../actions";
 import { AddTransactionDialog, CategoryOptions, ImportCsvDialog, KIND_LABELS } from "../forms";
 
 export const metadata: Metadata = { title: "Transactions" };
@@ -84,6 +84,13 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
               <a href="/api/export?format=transactions.csv" className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm hover:bg-surface-2">
                 <Download className="h-4 w-4 text-muted" /> Export CSV
               </a>
+              <ActionButton
+                action={tidyTransactionsAction}
+                title="Simplify vendor names and fill in missing categories"
+                className="flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm hover:bg-surface-2"
+              >
+                <Sparkles className="h-4 w-4 text-muted" /> Tidy up names
+              </ActionButton>
               <Link href="/finances/rules" className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm hover:bg-surface-2">
                 <Wand2 className="h-4 w-4 text-muted" /> Category rules
               </Link>
@@ -124,7 +131,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           </Button>
         </div>
         <details className="group px-1" open={activeFilters > 0}>
-          <summary className="flex cursor-pointer list-none items-center gap-1.5 py-1 text-sm text-muted [&::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-sm text-muted [&::-webkit-details-marker]:hidden">
             <SlidersHorizontal className="h-3.5 w-3.5" /> Filters{activeFilters ? ` · ${activeFilters}` : ""}
             {filtered && (
               <Link href="/finances/transactions" className="ml-auto text-accent">
@@ -180,7 +187,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             {d.accounts.length ? (
               "Add one manually or import a CSV from your bank."
             ) : (
-              <Link href="/finances/accounts" className="text-accent hover:underline">
+              <Link href="/finances/accounts" className="inline-flex min-h-11 items-center text-accent hover:underline">
                 Add an account first.
               </Link>
             )}

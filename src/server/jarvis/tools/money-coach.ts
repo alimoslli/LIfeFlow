@@ -11,9 +11,9 @@ import { GENERAL_INFO, investmentReport, LESSONS, projectInvesting } from "../..
 import { createGoal, updateGoal } from "../../services/finance/planning";
 import { applyBudgetPlan, BUDGET_METHODS, suggestBudgets } from "../../services/finance/smart-budgets";
 import { TRANSACTION_KINDS, updateTransaction } from "../../services/finance/transactions";
-import { notFound } from "../../services/errors";
+import { notFound, ServiceError } from "../../services/errors";
 import { moveToTrash } from "../../services/trash";
-import { listPlaidConnections, PlaidError, syncConnection } from "../../integrations/plaid";
+import { BANK_UNAVAILABLE, listPlaidConnections, PlaidError, syncConnection } from "../../integrations/plaid";
 import { centsToDollarsDeep } from "./finance";
 import { dateArg, defineTool, idArg, moneyArg, toCents } from "../tool";
 
@@ -41,10 +41,12 @@ export const moneyCoachTools = [
         try {
           results.push({ bank: i.displayName, ok: true, ...(await syncConnection(ctx.userId, i.id, ctx.tz, undefined, { live: true })) });
         } catch (e) {
+          // Plaid's messages are already plain words; anything else is logged here and never reaches the model.
+          if (!(e instanceof PlaidError)) console.error("[sync_bank_accounts]", e);
           results.push({
             bank: i.displayName,
             ok: false,
-            error: e instanceof PlaidError ? e.message : "Sync failed",
+            error: e instanceof PlaidError ? e.message : BANK_UNAVAILABLE,
             needsReconnect: e instanceof PlaidError && e.reauth,
           });
         }
@@ -104,7 +106,7 @@ export const moneyCoachTools = [
         const lines = [];
         for (const l of a.lines) {
           const c = await resolveCategory(s, l.category);
-          if (!c) throw new Error(`No category named "${l.category}". Use list_categories.`);
+          if (!c) throw new ServiceError(`No category named "${l.category}". Use list_categories.`);
           lines.push({ categoryId: c.category.id, limitCents: toCents(l.monthlyLimit) });
         }
         const r = await applyBudgetPlan(s, { month: a.month ?? ctx.today, lines });
@@ -167,7 +169,7 @@ export const moneyCoachTools = [
     async execute(a, ctx) {
       return ctx.run(async (s) => {
         const c = await resolveCategory(s, a.category);
-        if (!c) throw new Error(`No category named "${a.category}". Use list_categories.`);
+        if (!c) throw new ServiceError(`No category named "${a.category}". Use list_categories.`);
         const row = await updateTransaction(s, a.id, { categoryId: c.category.id, kind: a.kind }, { learn: true });
         const past = a.applyToPast && row.learnedRule ? await applyRuleToPast(s, row.learnedRule.id) : 0;
         return {
@@ -433,7 +435,7 @@ export const moneyCoachTools = [
           })
           .where(and(eq(financialAccounts.id, a.id), eq(financialAccounts.userId, s.userId), eq(financialAccounts.source, "manual")))
           .returning();
-        if (!r) throw new Error("Account not found, or it's synced from a bank (its balance updates automatically).");
+        if (!r) throw new ServiceError("Account not found, or it's synced from a bank (its balance updates automatically).");
         return r;
       });
       return centsToDollarsDeep({

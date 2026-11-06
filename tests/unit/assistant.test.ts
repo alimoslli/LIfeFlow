@@ -29,6 +29,10 @@ describe("assistant profile", () => {
     expect(who).not.toMatch(/Your name is/);
     expect(who).toMatch(/hasn't named you yet/);
     expect(who).toMatch(/don't give yourself a name/i);
+    // The shared instructions don't assume a name was chosen either.
+    const shared = plain.slice(0, plain.indexOf("# Who you are"));
+    expect(shared).not.toMatch(/chose your name/);
+    expect(shared).toMatch(/The user may give you a name; use it if they did/);
   });
 
   it("puts the chosen name and personality in the per-user part of the prompt only", () => {

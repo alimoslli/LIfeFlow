@@ -85,6 +85,21 @@ describe("briefing", () => {
     expect(portfolioReturn([{ valueCents: 5_000, costBasisCents: null }])).toBeNull();
   });
 
+  it("doesn't warn about a clash that is already over (audit A19)", () => {
+    // Today at 4:41 PM: a shift and a class overlapped at 1:00 PM and both ended.
+    const clash = [item("MATH 152", TODAY, "13:00", "14:15"), item("Work · Campus Library", TODAY, "12:30", "15:00", { origin: "shift", kind: "work" })];
+    const late = snapshot({ now: localToInstant(TODAY, "16:41", TZ), week: clash });
+    expect(deriveInsights(late).filter((i) => i.id.startsWith("conflict"))).toEqual([]);
+    // Earlier the same day it's still ahead (or happening), so it's raised.
+    const early = deriveInsights(snapshot({ now: localToInstant(TODAY, "11:00", TZ), week: clash })).find((i) => i.id.startsWith("conflict"));
+    expect(early?.text).toMatch(/overlaps .* today at 1:00 PM\./);
+    const during = deriveInsights(snapshot({ now: localToInstant(TODAY, "14:00", TZ), week: clash }));
+    expect(during.some((i) => i.id.startsWith("conflict"))).toBe(true);
+    // One ended, the other still going: the overlap is over.
+    const after = deriveInsights(snapshot({ now: localToInstant(TODAY, "14:30", TZ), week: clash }));
+    expect(after.some((i) => i.id.startsWith("conflict"))).toBe(false);
+  });
+
   it("ranks overdue work and conflicts above everything else", () => {
     const s = snapshot({
       overdue: [{ id: "a", title: "Lab report", context: "BIO 210", dueAt: localToInstant("2026-10-26", "17:00", TZ), kind: "assignment", href: "/" }],

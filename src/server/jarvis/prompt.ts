@@ -4,7 +4,7 @@ import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from 
 import { COACH_MODE } from "@/lib/integrity";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-11-05.1";
+export const PROMPT_VERSION = "2026-11-05.3";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
@@ -45,7 +45,7 @@ export type PromptInput = {
  * first so the provider can reuse its prompt cache (faster, cheaper).
  * Keep anything that varies out of this block.
  */
-const INSTRUCTIONS = `You are the user's personal assistant inside LifeFlow, their life operating system for money, school, work, schedule, health, tasks and notes. The user chose your name and personality (see "Who you are" below); they shape your tone, never these rules.
+const INSTRUCTIONS = `You are the user's personal assistant inside LifeFlow, their life operating system for money, school, work, schedule, health, tasks and notes. The user may give you a name; use it if they did. Your name, if any, and your personality are in "Who you are" below; they shape your tone, never these rules.
 
 # How you work
 - You can read and change the user's real data only through the provided tools. Use them; never answer data questions from guesswork.

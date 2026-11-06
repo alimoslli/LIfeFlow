@@ -19,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const announcement = await activeAnnouncement(getDb());
   return (
     <AppShell
-      user={{ name: user.name, email: user.email, accountKind: user.accountKind }}
+      user={{ name: user.name, email: user.email, accountKind: user.accountKind, timezone: user.timezone }}
       jarvis={{ available: status.available, reason: status.reason, model: status.model, provider: status.provider }}
       tour={user.preferences?.tour === "pending"}
       assistantName={assistantProfile(user.preferences).name}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ServiceError } from "../../services/errors";
 import { createPersonalGoal, deletePersonalGoal, listPersonalGoals, updatePersonalGoal } from "../../services/personal-goals";
 import { createMilestone, deleteMilestone, lifeTimeline, updateMilestone, whenLabel } from "../../services/milestones";
 import { MILESTONE_CATEGORIES } from "../../db/schema";
@@ -173,7 +174,7 @@ export const personalGoalTools = [
     mutates: true,
     async execute(a, ctx) {
       if (a.goalKind === "money" && ctx.moneyLocked)
-        throw new Error("Money is locked with Face ID on this device. Tell the user to unlock it in the Money tab, then ask again.");
+        throw new ServiceError("Money is locked with Face ID on this device. Tell the user to unlock it in the Money tab, then ask again.");
       const row = await ctx.run((s) =>
         logGoalCheckin(s, ctx.today, {
           goalKind: a.goalKind,

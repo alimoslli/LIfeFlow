@@ -14,11 +14,17 @@ const CONFIRM_TTL_MS = 30 * 60_000;
 export type ExecOutcome =
   { kind: "result"; result: ToolResultRecord } | { kind: "confirmation"; result: ToolResultRecord; pendingActionId: string; summary: string };
 
+/** Said when a tool fails for a reason we didn't word ourselves (the details are in the server log). */
+export const TOOL_FAILED = "That didn't work this time. Try again in a minute.";
+
+/**
+ * What the model and the chat see when a tool fails. Only messages we wrote for people (ServiceError) pass
+ * through; anything else (a provider's raw error, a database error) could name keys or settings, so it doesn't.
+ */
 function errorMessage(e: unknown): string {
   if (e instanceof ZodError) return `Invalid arguments: ${e.issues.map((i) => `${i.path.join(".") || "(root)"} ${i.message}`).join("; ")}`;
   if (e instanceof ServiceError) return e.message;
-  if (e instanceof Error && !/Failed query|duplicate key|violates/.test(e.message)) return e.message;
-  return "The operation failed due to an internal error.";
+  return TOOL_FAILED;
 }
 
 /** Serializes a result for the model, truncating oversized payloads. */
@@ -79,6 +85,7 @@ export async function executeToolCall(name: string, rawArgs: string, ctx: ToolCo
         },
       };
     } catch (e) {
+      if (!(e instanceof ServiceError)) console.error(`[jarvis] tool ${name} confirm failed`, e);
       return { kind: "result", result: { ok: false, error: errorMessage(e) } };
     }
   }

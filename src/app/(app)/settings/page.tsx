@@ -32,6 +32,8 @@ import { integrationStatus } from "@/server/services/integrations";
 export const metadata: Metadata = { title: "Settings" };
 
 type Row = { href: string; icon: LucideIcon; tint: string; label: string; detail?: string };
+/** Every row's icon tile uses the one green theme (audit A23), readable in light and dark. */
+const TILE = "bg-accent-soft text-accent";
 
 /** Settings home: a short grouped list, like the phone's own Settings. */
 export default async function SettingsHome() {
@@ -53,34 +55,34 @@ export default async function SettingsHome() {
     .toUpperCase();
   const groups: Row[][] = [
     [
-      { href: "/settings/profile", icon: Palette, tint: "bg-[#5b7cfa]", label: "Profile & appearance" },
-      { href: "/settings/notifications", icon: Bell, tint: "bg-[#ef5b5b]", label: "Notifications" },
-      { href: "/settings/security", icon: Lock, tint: "bg-[#6b7280]", label: "Face ID & passwords" },
+      { href: "/settings/profile", icon: Palette, tint: TILE, label: "Profile & appearance" },
+      { href: "/settings/notifications", icon: Bell, tint: TILE, label: "Notifications" },
+      { href: "/settings/security", icon: Lock, tint: TILE, label: "Face ID & passwords" },
     ],
     [
-      { href: "/settings/jarvis", icon: Sparkles, tint: "bg-accent", label: nameAtStart(d.assistant), detail: "Personality" },
-      ...(billingConfig() ? [{ href: "/settings/plan", icon: Star, tint: "bg-[#f5a524]", label: "Plan" }] : []),
-      ...(smsConfig() ? [{ href: "/settings/text", icon: MessageSquare, tint: "bg-[#34c759]", label: `Text ${d.assistant}` }] : []),
-      { href: "/jarvis/memory", icon: Brain, tint: "bg-[#8b5cf6]", label: `What ${d.assistant} knows` },
+      { href: "/settings/jarvis", icon: Sparkles, tint: TILE, label: nameAtStart(d.assistant), detail: "Personality" },
+      ...(billingConfig() ? [{ href: "/settings/plan", icon: Star, tint: TILE, label: "Plan" }] : []),
+      ...(smsConfig() ? [{ href: "/settings/text", icon: MessageSquare, tint: TILE, label: `Text ${d.assistant}` }] : []),
+      { href: "/jarvis/memory", icon: Brain, tint: TILE, label: `What ${d.assistant} knows` },
     ],
     [
       {
         href: "/settings/integrations",
         icon: Link2,
-        tint: "bg-[#0ea5e9]",
+        tint: TILE,
         label: "Connected accounts",
         detail: d.connected ? `${d.connected} connected` : "None yet",
       },
     ],
     [
-      { href: "/settings/data", icon: Shield, tint: "bg-[#10b981]", label: "Privacy & data" },
-      { href: "/settings/trash", icon: Trash2, tint: "bg-[#9ca3af]", label: "Recently deleted" },
+      { href: "/settings/data", icon: Shield, tint: TILE, label: "Privacy & data" },
+      { href: "/settings/trash", icon: Trash2, tint: TILE, label: "Recently deleted" },
     ],
     [
-      { href: "/settings/invite", icon: Gift, tint: "bg-[#f97316]", label: "Invite friends" },
-      { href: "/settings/feedback", icon: MessageCircleHeart, tint: "bg-[#ec4899]", label: "Send feedback" },
+      { href: "/settings/invite", icon: Gift, tint: TILE, label: "Invite friends" },
+      { href: "/settings/feedback", icon: MessageCircleHeart, tint: TILE, label: "Send feedback" },
     ],
-    ...(isAdmin ? [[{ href: "/admin", icon: LayoutDashboard, tint: "bg-[#111827]", label: "Admin", detail: "Owner only" }]] : []),
+    ...(isAdmin ? [[{ href: "/admin", icon: LayoutDashboard, tint: TILE, label: "Admin", detail: "Owner only" }]] : []),
   ];
   return (
     <div className="flex flex-col gap-6">
@@ -98,7 +100,7 @@ export default async function SettingsHome() {
           {g.map((r) => (
             <li key={r.href}>
               <Link href={r.href} className="flex min-h-14 items-center gap-3 px-4 transition-colors hover:bg-surface-2">
-                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] text-white ${r.tint}`}>
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] ${r.tint}`}>
                   <r.icon className="h-[18px] w-[18px]" />
                 </span>
                 <span className="min-w-0 flex-1 truncate text-[1rem]">{r.label}</span>

@@ -1,5 +1,15 @@
 import { z } from "zod";
-import { addGoogleEvent, createDraft, getGoogleConnection, readEmail, searchEmail, sendEmail, syncGoogleCalendar } from "../../integrations/google";
+import {
+  addGoogleEvent,
+  createDraft,
+  getGoogleConnection,
+  GoogleError,
+  readEmail,
+  searchEmail,
+  sendEmail,
+  syncGoogleCalendar,
+} from "../../integrations/google";
+import { ServiceError } from "../../services/errors";
 import { dateArg, defineTool, timeArg } from "../tool";
 
 /**
@@ -10,6 +20,15 @@ import { dateArg, defineTool, timeArg } from "../tool";
  */
 
 const untrusted = (s: string) => `<untrusted_email>\n${s}\n</untrusted_email>`;
+
+/** Google's errors are worded for people ("Google isn't connected…"), so they reach the model and the chat as they are. */
+async function viaGoogle<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    throw e instanceof GoogleError ? new ServiceError(e.message) : e;
+  }
+}
 const emailArgs = {
   to: z.string().min(3).max(1000).describe("Recipient address(es), comma-separated"),
   subject: z.string().min(1).max(300),
@@ -26,7 +45,7 @@ export const googleTools = [
     schema: z.object({ query: z.string().max(300).default("in:inbox newer_than:7d"), max: z.number().int().min(1).max(25).default(10) }),
     mutates: false,
     async execute({ query, max }, ctx) {
-      const messages = await ctx.run((s) => searchEmail(s, query, max));
+      const messages = await viaGoogle(() => ctx.run((s) => searchEmail(s, query, max)));
       return { count: messages.length, messages: messages.map((m) => ({ ...m, subject: untrusted(m.subject), snippet: untrusted(m.snippet) })) };
     },
   }),
@@ -36,7 +55,7 @@ export const googleTools = [
     schema: z.object({ id: z.string().min(6).max(64) }),
     mutates: false,
     async execute({ id }, ctx) {
-      const m = await ctx.run((s) => readEmail(s, id));
+      const m = await viaGoogle(() => ctx.run((s) => readEmail(s, id)));
       return { ...m, subject: untrusted(m.subject), snippet: undefined, body: untrusted(m.body) };
     },
   }),
@@ -55,7 +74,7 @@ export const googleTools = [
           reason: "Gmail isn't connected; here's the draft text. The user can connect Gmail in Settings, Integrations.",
           draft: a,
         };
-      const d = await ctx.run((s) => createDraft(s, a));
+      const d = await viaGoogle(() => ctx.run((s) => createDraft(s, a)));
       return { sent: false, savedToGmail: true, draftId: d.draftId, to: d.to, subject: d.subject, viewAt: "https://mail.google.com/mail/u/0/#drafts" };
     },
   }),
@@ -66,7 +85,7 @@ export const googleTools = [
     mutates: true,
     confirm: (a) => `Send email to ${a.to}: "${a.subject}"?`,
     async execute(a, ctx) {
-      return ctx.run((s) => sendEmail(s, a));
+      return viaGoogle(() => ctx.run((s) => sendEmail(s, a)));
     },
   }),
   defineTool({
@@ -75,7 +94,7 @@ export const googleTools = [
     schema: z.object({}),
     mutates: true,
     async execute(_a, ctx) {
-      return { synced: await ctx.run((s) => syncGoogleCalendar(s, ctx.tz, ctx.now)), viewAt: "/calendar" };
+      return { synced: await viaGoogle(() => ctx.run((s) => syncGoogleCalendar(s, ctx.tz, ctx.now))), viewAt: "/calendar" };
     },
   }),
   defineTool({
@@ -94,7 +113,7 @@ export const googleTools = [
     mutates: true,
     confirm: (a) => `Add "${a.title}" to your Google Calendar on ${a.date}${a.startTime ? ` at ${a.startTime}` : ""}?`,
     async execute(a, ctx) {
-      const r = await ctx.run((s) => addGoogleEvent(s, ctx.tz, a));
+      const r = await viaGoogle(() => ctx.run((s) => addGoogleEvent(s, ctx.tz, a)));
       return { added: true, ...r, viewAt: "/calendar" };
     },
   }),

@@ -8,7 +8,7 @@ import { inviterFor } from "@/server/services/invites";
 
 /** The front page for anyone who isn't signed in. Signed-in visitors never see it (see proxy.ts). */
 export const metadata: Metadata = {
-  title: { absolute: "LifeFlow: Your whole life, made simple" },
+  title: { absolute: "LifeFlow: Your whole life, in flow." },
 };
 
 const button =

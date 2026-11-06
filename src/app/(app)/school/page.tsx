@@ -10,7 +10,8 @@ import { twelveHourRanges } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { listAssignments, listCourses } from "@/server/services/school";
-import { createAssignmentAction, createCourseAction } from "./actions";
+import { ActionButton } from "@/components/action-form";
+import { createAssignmentAction, createCourseAction, mergeDuplicateClassesAction } from "./actions";
 import { AssignmentDialog, CourseDialog } from "./forms";
 import { canvasConnection } from "@/server/integrations/canvas";
 
@@ -27,6 +28,15 @@ export default async function SchoolPage() {
   });
   const nextByCourse = new Map<string, (typeof d.all)[number]>();
   for (const a of d.all) if (!nextByCourse.has(a.course.id)) nextByCourse.set(a.course.id, a);
+  // The same class listed twice (same code, or same name): offer one tap to fold them together.
+  const seenKeys = new Set<string>();
+  let hasDuplicates = false;
+  for (const c of d.courses) {
+    for (const k of [c.code, c.name].map((v) => (v ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "")).filter(Boolean)) {
+      if (seenKeys.has(k)) hasDuplicates = true;
+      seenKeys.add(k);
+    }
+  }
   const openCount = new Map<string, number>();
   for (const a of d.all) openCount.set(a.course.id, (openCount.get(a.course.id) ?? 0) + 1);
 
@@ -42,6 +52,17 @@ export default async function SchoolPage() {
           </>
         }
       />
+
+      {hasDuplicates && (
+        <Card className="mb-5 flex flex-wrap items-center justify-between gap-3 p-4">
+          <p className="min-w-0 flex-1 text-[0.9375rem]">
+            A class shows up twice. Merge them into one, keeping Canvas&apos;s dates and anything you marked done.
+          </p>
+          <ActionButton action={mergeDuplicateClassesAction} className="min-h-11 rounded-full bg-hero px-5 text-sm font-medium text-hero-text">
+            Merge duplicates
+          </ActionButton>
+        </Card>
+      )}
 
       {d.courses.length === 0 ? (
         <Card className="mb-8">

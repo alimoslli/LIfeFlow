@@ -1,6 +1,6 @@
 import { and, eq, gt, isNull, lte, ne } from "drizzle-orm";
 import { z } from "zod";
-import { localTimeOf } from "@/lib/dates";
+import { formatIn } from "@/lib/dates";
 import { notificationLog, pushSubscriptions, tasks, type UserPreferences } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 
@@ -119,7 +119,7 @@ export async function runNotifications(scope: UserScope, tz: string, prefs: User
         ),
       );
     for (const t of due) {
-      const when = t.dueAt ? (t.dueAllDay ? "today" : `at ${localTimeOf(t.dueAt, tz)}`) : "";
+      const when = t.dueAt ? (t.dueAllDay ? "today" : `at ${formatIn(t.dueAt, tz, "h:mm a")}`) : "";
       if (
         await sendOnce(
           scope,

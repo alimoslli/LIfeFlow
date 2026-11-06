@@ -1,4 +1,5 @@
 import { series } from "@/server/db/series";
+import { ServiceError } from "../../services/errors";
 import { z } from "zod";
 import { monthStart } from "@/lib/dates";
 import { ACCOUNT_TYPES, createManualAccount, listAccounts, summarizeBalances } from "../../services/finance/accounts";
@@ -70,7 +71,7 @@ export const financeTools = [
     async execute(a, ctx) {
       return ctx.run(async (s) => {
         const cat = a.category ? await resolveCategory(s, a.category) : null;
-        if (a.category && !cat) throw new Error(await unknownCategory(s, a.category));
+        if (a.category && !cat) throw new ServiceError(await unknownCategory(s, a.category));
         // No category given: the same merchant words that sort bank lines ("Netflix" → Streaming).
         const guess = !a.category ? keywordCategory({ description: a.name }, a.kind === "income" ? 1 : -1) : null;
         const guessed = guess ? await categoryIdByName(s, guess) : null;
@@ -283,7 +284,7 @@ export const financeTools = [
     async execute(a, ctx) {
       return ctx.run(async (s) => {
         const cat = a.category ? await resolveCategory(s, a.category) : null;
-        if (a.category && !cat) throw new Error(await unknownCategory(s, a.category));
+        if (a.category && !cat) throw new ServiceError(await unknownCategory(s, a.category));
         const row = await createTransaction(
           s,
           { accountId: a.accountId, date: a.date, description: a.description, amountCents: toCents(a.amount), categoryId: cat?.category.id, kind: a.kind },
@@ -329,7 +330,7 @@ export const financeTools = [
     async execute(a, ctx) {
       return ctx.run(async (s) => {
         const cat = await resolveCategory(s, a.category);
-        if (!cat) throw new Error(await unknownCategory(s, a.category));
+        if (!cat) throw new ServiceError(await unknownCategory(s, a.category));
         const b = await setBudget(s, { month: a.month ?? ctx.today, categoryId: cat.category.id, limitCents: toCents(a.monthlyLimit) });
         return centsToDollarsDeep({
           saved: { category: cat.category.name, month: b.month.slice(0, 7), limitCents: b.limitCents },
@@ -381,7 +382,7 @@ export const financeTools = [
     mutates: false,
     async execute(_a, ctx) {
       return ctx.run(async (s) => {
-        const to = new Date(ctx.now.getTime() + 30 * 86_400_000).toISOString().slice(0, 10);
+        const to = addDaysStr(ctx.today, 30);
         const [tracked, upcoming, detected] = await series(
           () => listRecurring(s),
           () => upcomingRecurring(s, ctx.today, to),

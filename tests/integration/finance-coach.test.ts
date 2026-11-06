@@ -40,7 +40,7 @@ describe("categorization that learns", () => {
     expect(txns.every((t) => t.categoryName === "Food Delivery")).toBe(true);
     const restaurants = (await u.run((s) => getCategoryByName(s, "Restaurants")))!;
     const updated = await u.run((s) => updateTransaction(s, txns[0].id, { categoryId: restaurants.id }, { learn: true }));
-    expect(updated.learnedRule).toMatchObject({ merchant: "DOORDASH ORDER", othersToUpdate: 2 });
+    expect(updated.learnedRule).toMatchObject({ merchant: "DoorDash", othersToUpdate: 2 });
     // New transactions follow the rule.
     const fresh = await u.run((s) => createTransaction(s, { accountId: u.card.id, date: TODAY, description: "DOORDASH ORDER", amountCents: -1_500 }));
     expect(fresh!.categoryId).toBe(restaurants.id);
