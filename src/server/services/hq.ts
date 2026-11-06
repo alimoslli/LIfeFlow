@@ -307,6 +307,15 @@ function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
       }
     }
   }
+  // The Chief of Staff's work is the round itself, not a mission: its own chat checking in "working" within the last
+  // 20 minutes is that real work, shown with the chat's own summary (ADR 0026). Blocked and needs-you still win.
+  if (role === "assistant" && (result.state === "sleeping" || result.state === "done")) {
+    const live = chats.find((c) => c.status === "working" && c.lastCheckinAt && now.getTime() - c.lastCheckinAt.getTime() <= WORKING_WINDOW_MS);
+    if (live) {
+      result = { state: "working", reason: live.summary?.trim() || e.workingLine };
+      line = result.reason;
+    }
+  }
   const open = mine.filter((m) => (OPEN as readonly string[]).includes(m.status)).sort(byPriorityThenOldest);
   const currentMission =
     open.find((m) => m.status === "doing") ??

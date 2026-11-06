@@ -130,6 +130,23 @@ describe("the team", () => {
     await saveChat(db(), admin, { id: COS, role: "assistant", title: "LF Chief of Staff", isPrimary: true });
     await recordCheckin(db(), { sessionId: COS, status: "idle" });
     expect((await by("assistant")).state).toBe("sleeping");
+    // Running a round is its work: its own "working" check-in shows it, with its own summary.
+    await recordCheckin(db(), { sessionId: COS, status: "working", summary: "Night round: Engineering is on fix 2 of 3" });
+    expect(await by("assistant")).toMatchObject({ state: "working", line: "Night round: Engineering is on fix 2 of 3" });
+    await recordCheckin(db(), { sessionId: COS, status: "working", summary: null });
+    expect(await by("assistant")).toMatchObject({ state: "working", line: "Running the team" });
+    // Twenty minutes without a check-in reads as resting, and needs-you still wins.
+    await db()
+      .update(hqChats)
+      .set({ lastCheckinAt: new Date(Date.now() - 21 * 60_000) })
+      .where(eq(hqChats.id, COS));
+    expect((await by("assistant")).state).toBe("sleeping");
+    await recordCheckin(db(), { sessionId: COS, status: "working" });
+    await createApproval(db(), agent, { role: "assistant", kind: "other", title: "Need a yes", summary: "s" });
+    expect((await by("assistant")).state).toBe("needs_you");
+    await db().delete(hqApprovals);
+    await recordCheckin(db(), { sessionId: COS, status: "idle" });
+    expect((await by("assistant")).state).toBe("sleeping");
     const m = await createMission(db(), owner, { role: "assistant", title: "Run the round" });
     await updateMission(db(), owner, m.id, { status: "doing" });
     expect(await by("assistant")).toMatchObject({ state: "working", line: "Run the round" });
