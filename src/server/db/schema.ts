@@ -79,6 +79,8 @@ export type UserPreferences = {
   gmailFiling?: boolean;
   /** The version of the one-time inbox duplicate cleanup this account has had (see runInboxCleanupOnce). */
   inboxDedupeVersion?: number;
+  /** Set when the inbox cleanup failed: it is not tried again before this date (YYYY-MM-DD). */
+  inboxDedupeRetryAfter?: string;
   /** What fills the user's week (from onboarding); helps Jarvis and the briefing. */
   lifeStage?: "student" | "working" | "both" | "life";
   /** First-run setup: "pending" only for accounts created since onboarding launched. */
@@ -1353,6 +1355,8 @@ export type InboxFiled = {
   href?: string;
   /** What the row held before an update (Undo restores it). */
   prev?: Record<string, unknown>;
+  /** Set when the cleanup pointed this entry at the row that stayed after a merge (Undo of the merge removes it). */
+  merged?: true;
 };
 
 export const inboxItems = pgTable(

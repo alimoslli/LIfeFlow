@@ -9,7 +9,6 @@ import { attachments, inboxItems, inboxSenders, oauthIdentities, users, type Fre
 import type { UserScope } from "../../db/with-user";
 import { emailConfig, sendEmail } from "../../integrations/email";
 import { ServiceError } from "../errors";
-import { listAccounts } from "../finance/accounts";
 import { createRecurring, deleteRecurring } from "../finance/planning";
 import { createTransaction, deleteTransaction, queryTransactions } from "../finance/transactions";
 import { createAssignment, deleteAssignment, resolveCourse } from "../school";
@@ -20,11 +19,13 @@ import { restoreMerged } from "./cleanup";
 import { extractDocument, type ExtractInput, type Extraction } from "./extract";
 import {
   attachReceipt,
-  bankFeedCovers,
+  handAccount,
+  receiptPolicy,
   contentSigFor,
-  findExistingSchoolItem,
+  isStrongSig,
+  weakSigPrefix,
+  findMovedSchoolItem,
   findFiledTwin,
-  findOpenPayTask,
   findPurchaseTwin,
   findTrackedBill,
   moveSchoolItem,
@@ -154,21 +155,35 @@ export async function fileExtraction(
   tz: string,
   ex: Extraction,
   today: string,
-  ctx: { from?: string | null } = {},
+  ctx: { from?: string | null; authenticated?: boolean } = {},
 ): Promise<{ filed: InboxFiled[]; review?: string }> {
   const filed: InboxFiled[] = [];
+  // Changing something the user already has (a bill, an exam, a bank charge's note) needs an email that passed the sender
+  // check (SPF/DKIM). Otherwise the change is only suggested; nothing is touched.
+  const auth = ctx.authenticated === true;
+  const needsSenderCheck = "I only change what you already have from an email that passed the sender check, so I left it as it is.";
   switch (ex.type) {
     case "bill": {
       const b = ex.bill;
       const amount = cents(b?.amount_usd);
       if (!b || !amount) return { filed, review: "Couldn't read the amount due." };
       const due = date(b.due_date) ?? addDaysStr(today, 7);
+      let note: string | undefined;
+      let reminder = true;
       if (b.repeats !== "none") {
-        const facts = { payee: b.payee.slice(0, 120), amountCents: amount, frequency: b.repeats as Frequency, due };
-        // A bill we already track (or the bank's series for it) is updated, never added a second time.
+        const facts = { payee: b.payee.slice(0, 120), amountCents: amount, frequency: b.repeats as Frequency, due, accountRef: b.account_ref };
+        // A bill we already track (or the bank's series for it) is updated, never added a second time. Not sure: ask, don't guess.
         const match = await findTrackedBill(scope, facts, today);
-        if (match?.kind === "item") filed.push(await updateTrackedBill(scope, match.item, facts));
-        else if (match?.kind === "series") filed.push(await saveBillAsSeries(scope, match.series, facts));
+        if (match?.kind === "ask") note = `Same bill? This could be ${match.names.join(" or ")}. I didn't add or change a bill; tell me which.`;
+        else if (match?.kind === "item" && !auth) note = `Same bill as ${match.item.name}? ${needsSenderCheck}`;
+        else if (match?.kind === "item") {
+          const updated = await updateTrackedBill(scope, match.item, facts);
+          if (updated) filed.push(updated);
+          else {
+            note = `${match.item.name} is already tracked past ${fmtDay(facts.due)}, so this older statement changed nothing.`;
+            reminder = false;
+          }
+        } else if (match?.kind === "series") filed.push(await saveBillAsSeries(scope, match.series, facts));
         else {
           const r = await createRecurring(
             scope,
@@ -183,8 +198,7 @@ export async function fileExtraction(
           });
         }
       }
-      // The same reminder (payee and day) from an earlier copy is reused.
-      if (!(await findOpenPayTask(scope, tz, b.payee, due))) {
+      if (reminder) {
         const t = await createTask(
           scope,
           tz,
@@ -193,7 +207,7 @@ export async function fileExtraction(
         );
         filed.push({ kind: "task", id: t.id, label: `Reminder: pay ${b.payee} by ${fmtDay(due)}`, href: `/tasks/${t.id}` });
       }
-      return { filed, review: b.due_date ? undefined : "No due date was printed; I set it for a week out. Check it." };
+      return { filed, review: note ?? (b.due_date ? undefined : "No due date was printed; I set it for a week out. Check it.") };
     }
     case "receipt": {
       const r = ex.receipt;
@@ -204,6 +218,7 @@ export async function fileExtraction(
       // The bank's copy (or one already on file) is the purchase; the receipt only rides along on it.
       const twin = await findPurchaseTwin(scope, receipt);
       if (twin?.source === "plaid") {
+        if (!auth) return { filed, review: `This matches ${twin.description} from your bank. ${needsSenderCheck}` };
         filed.push(await attachReceipt(scope, twin, receipt));
         return { filed };
       }
@@ -212,14 +227,20 @@ export async function fileExtraction(
         (await queryTransactions(scope, { from: addDaysStr(day, -2), to: addDaysStr(day, 2), minAmountCents: amount, maxAmountCents: amount, limit: 5 }))[0];
       if (seen)
         return { filed, review: `This matches a transaction you already have (${seen.description} on ${fmtDay(seen.date)}), so I didn't add it again.` };
-      // A connected bank brings every purchase itself: counting the receipt too would count it twice.
-      if (await bankFeedCovers(scope))
+      // A linked bank brings its own purchases: a receipt for one waits for its charge instead of counting twice. Cash and
+      // cards that aren't linked are spending, so those are added.
+      const policy = await receiptPolicy(scope, { day, last4: r.payment_last4 }, today);
+      if (policy === "hold")
         return {
           filed,
-          review: `${WAITING_FOR_BANK}: ${r.merchant.slice(0, 80)} $${(amount / 100).toFixed(2)} isn't there yet. It's kept here and attached when the charge posts; it isn't counted in your spending.`,
+          review: `${WAITING_FOR_BANK}: ${r.merchant.slice(0, 80)} $${(amount / 100).toFixed(2)} isn't there yet. It's kept here and attached when the charge posts; it isn't counted in your spending yet.`,
         };
-      const account = (await listAccounts(scope)).find((a) => a.type === "credit") ?? (await listAccounts(scope)).find((a) => a.type === "depository");
-      if (!account) return { filed, review: "Add an account on Money first, then I can record receipts." };
+      const account = await handAccount(scope);
+      if (!account)
+        return {
+          filed,
+          review: "Add a cash or card account on Money first (your linked bank brings its own purchases), then I can record receipts paid another way.",
+        };
       const t = await createTransaction(
         scope,
         { accountId: account.id, date: day, description: r.merchant.slice(0, 200), merchantName: r.merchant.slice(0, 120), amountCents: -amount },
@@ -231,7 +252,13 @@ export async function fileExtraction(
         label: `Spending: ${r.merchant} $${(amount / 100).toFixed(2)} on ${fmtDay(day)} (${account.name})`,
         href: "/finances/transactions",
       });
-      return { filed };
+      return {
+        filed,
+        review:
+          policy === "spend_unmatched"
+            ? "No matching charge from a linked bank, so I counted this as spending (cash or a card that isn't linked). Undo it if the bank has it."
+            : undefined,
+      };
     }
     case "assignment":
     case "exam": {
@@ -246,17 +273,23 @@ export async function fileExtraction(
             : `I couldn't find the class "${s.course}". Add it on Classes, then forward again.`,
         };
       const kind = ex.type === "exam" ? "exam" : "assignment";
-      // "Exam 2 moved to Nov 17": the exam we have moves (Undo moves it back); a second one is never added.
+      // "Exam 2 moved to Nov 17": only an email that says it moved, names the old date, and finds exactly one exam due then
+      // moves it (Undo moves it back). Anything unclear is asked, never guessed, and never added as a second exam.
       const dueDate = date(s.due_date);
-      if (dueDate) {
-        const existing = await findExistingSchoolItem(scope, tz, { courseId: course.id, kind, title: s.title, oldDate: date(s.old_due_date) });
-        if (existing) {
-          const label = `${kind === "exam" ? "Exam" : "Assignment"}: ${existing.title} in ${course.name}`;
-          const time = s.due_time && TIME_RE.test(s.due_time) ? s.due_time : null;
-          const moved = await moveSchoolItem(scope, tz, existing, { date: dueDate, time }, ctx.from ?? null, label);
-          if ("filed" in moved) return { filed: [moved.filed] };
-          return { filed, review: `${existing.title} is already in ${course.name}.` };
+      if (s.moved) {
+        const found = dueDate
+          ? await findMovedSchoolItem(scope, tz, { courseId: course.id, kind, title: s.title, oldDate: date(s.old_due_date) })
+          : ({ match: null, why: "none" } as const);
+        if (!found.match) {
+          const why = found.why === "no_date" ? "the email doesn't say the old date" : found.why === "many" ? "more than one is due then" : "none is due then";
+          return { filed, review: `Same ${kind}? "${s.title}" looks moved in ${course.name}, but ${why}. I didn't add or change anything.` };
         }
+        if (!auth) return { filed, review: `"${s.title}" looks moved in ${course.name}. ${needsSenderCheck}` };
+        const label = `${kind === "exam" ? "Exam" : "Assignment"}: ${found.match.title} in ${course.name}`;
+        const time = s.due_time && TIME_RE.test(s.due_time) ? s.due_time : null;
+        const moved = await moveSchoolItem(scope, tz, found.match, { date: dueDate!, time }, ctx.from ?? null, label);
+        if ("filed" in moved) return { filed: [moved.filed] };
+        return { filed, review: `${found.match.title} is already in ${course.name} on that day.` };
       }
       const r = await createAssignment(
         scope,
@@ -354,6 +387,11 @@ export type IncomingDocument = Omit<ExtractInput, "today"> & {
   externalId?: string | null;
   /** The email's Message-ID header: Gmail's copy and a forward that kept it are the same email. */
   messageId?: string | null;
+  /**
+   * The email passed the sender check (SPF/DKIM). Uploads and shares are the user's own act, so they count. Without it,
+   * an email never changes a bill, an exam or a bank charge's note, it only suggests the change.
+   */
+  authenticated?: boolean;
 };
 
 /** Marks an inbox row as a copy of one already filed: nothing is created, and it says which one. */
@@ -399,9 +437,28 @@ export async function processDocument(scope: UserScope, tz: string, today: strin
   }
   // A re-typed or forwarded copy of a bill already filed (same payee, amount and due date) is the same bill.
   const contentSig = contentSigFor(ex);
-  const sameBill = await findFiledTwin(scope, { contentSig }, row.id);
+  // With an account or line on it, the same signature is the same bill. Without one, two lines of a plan look alike:
+  // it is only a suggestion, and nothing is filed until the user answers.
+  const sameBill = isStrongSig(contentSig) ? await findFiledTwin(scope, { contentSig }, row.id) : null;
   if (sameBill) return markDuplicate(scope, row.id, sameBill.id, { type: ex.type, summary: ex.summary.slice(0, 500), contentSig });
-  const { filed, review } = await fileExtraction(scope, tz, ex, today, { from: doc.from });
+  const similar = contentSig && !isStrongSig(contentSig) ? await findFiledTwin(scope, { similarTo: weakSigPrefix(contentSig) }, row.id) : null;
+  if (similar) {
+    const [ask] = await scope.tx
+      .update(inboxItems)
+      .set({
+        contentSig,
+        status: "needs_review",
+        type: ex.type,
+        summary: ex.summary.slice(0, 500),
+        extracted: ex as unknown as Record<string, unknown>,
+        duplicateOf: similar.id,
+        reason: `Same bill? It looks like one already filed${similar.subject ? ` ("${similar.subject.slice(0, 80)}")` : ""}: same payee, amount and due date, and no account or line number to tell them apart. Nothing was added.`,
+      })
+      .where(eq(inboxItems.id, row.id))
+      .returning();
+    return ask;
+  }
+  const { filed, review } = await fileExtraction(scope, tz, ex, today, { from: doc.from, authenticated: doc.authenticated ?? doc.channel !== "email" });
   const [done] = await scope.tx
     .update(inboxItems)
     .set({
@@ -431,11 +488,9 @@ export async function undoInboxItem(scope: UserScope, id: string) {
     .from(inboxItems)
     .where(and(eq(inboxItems.id, id), eq(inboxItems.userId, scope.userId)));
   if (!row) throw new ServiceError("Not found", "not_found");
-  // A copy the cleanup merged away: Undo brings back what it removed.
-  if (row.status === "duplicate") {
-    const n = await restoreMerged(scope, id);
-    if (n) return n;
-  }
+  // Something the cleanup merged away: Undo brings back what it removed (whatever the item's status), before anything else.
+  const restored = await restoreMerged(scope, id);
+  if (restored) return restored;
   if (row.status !== "filed") throw new ServiceError("There's nothing to undo here.");
   for (const f of [...row.filed].reverse()) await undoFiled(scope, f);
   await scope.tx.update(inboxItems).set({ status: "undone" }).where(eq(inboxItems.id, id));
@@ -460,4 +515,21 @@ export async function saveInboxFile(scope: UserScope, f: { filename: string; mim
     })
     .returning({ id: attachments.id });
   return a.id;
+}
+
+/** The user's answer to a "Same bill?" suggestion: yes marks it a copy; no files it as a bill of its own (updates still need the sender check). */
+export async function answerSameBill(scope: UserScope, tz: string, today: string, id: string, same: boolean) {
+  const [row] = await scope.tx
+    .select()
+    .from(inboxItems)
+    .where(and(eq(inboxItems.id, id), eq(inboxItems.userId, scope.userId)));
+  if (!row || row.status !== "needs_review" || !row.duplicateOf || !row.extracted) throw new ServiceError("There's nothing to answer here.");
+  if (same) return markDuplicate(scope, id, row.duplicateOf);
+  const { filed, review } = await fileExtraction(scope, tz, row.extracted as unknown as Extraction, today, { from: row.fromAddress });
+  const [done] = await scope.tx
+    .update(inboxItems)
+    .set({ status: filed.length ? "filed" : "needs_review", duplicateOf: null, filed, reason: review ?? null })
+    .where(eq(inboxItems.id, id))
+    .returning();
+  return done;
 }

@@ -8,7 +8,7 @@ import { createManualAccount } from "@/server/services/finance/accounts";
 import { bankSeries, createRecurring } from "@/server/services/finance/planning";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { createAssignment, createCourse } from "@/server/services/school";
-import { processDocument, undoInboxItem } from "@/server/services/inbox";
+import { answerSameBill, processDocument, undoInboxItem } from "@/server/services/inbox";
 import { attachWaitingReceipts, collapseInboxDuplicates, runInboxCleanupOnce } from "@/server/services/inbox/cleanup";
 import { contentSigFor, normalizeMessageId } from "@/server/services/inbox/dedupe";
 import type { Extraction } from "@/server/services/inbox/extract";
@@ -19,8 +19,8 @@ const today = todayIn(TZ);
 const base: Omit<Extraction, "type" | "summary"> = { bill: null, receipt: null, school: null, travel: null, pay: null };
 const doc = { channel: "email" as const, subject: "Fwd", text: "…", files: [] };
 const fixed = (ex: Partial<Extraction> & Pick<Extraction, "type">) => async () => ({ ...base, summary: "s", ...ex }) as Extraction;
-const billEx = (payee: string, usd: number, due: string, repeats: "monthly" | "none" = "monthly") =>
-  ({ type: "bill", bill: { payee, amount_usd: usd, due_date: due, repeats } }) as const;
+const billEx = (payee: string, usd: number, due: string, repeats: "monthly" | "none" = "monthly", account_ref: string | null = null) =>
+  ({ type: "bill", bill: { payee, amount_usd: usd, due_date: due, repeats, account_ref } }) as const;
 
 /** The 15th of the month `back` months ago (UTC, so the test never depends on the clock's day). */
 const fifteenth = (back: number) => {
@@ -31,7 +31,7 @@ const fifteenth = (back: number) => {
 const setup = async () => {
   const { user, run } = await makeUser();
   const file = (ex: Partial<Extraction> & Pick<Extraction, "type">, extra: Partial<Parameters<typeof processDocument>[3]> = {}) =>
-    run((s) => processDocument(s, TZ, today, { ...doc, ...extra }, fixed(ex)));
+    run((s) => processDocument(s, TZ, today, { ...doc, authenticated: true, ...extra }, fixed(ex)));
   const rows = <T>(f: (s: Parameters<Parameters<typeof run>[0]>[0]) => Promise<T>) => run(f);
   return { user, run, file, rows };
 };
@@ -45,7 +45,7 @@ describe("Gmail items show up once", () => {
   });
 
   it("D6: a bill in Gmail and forwarded is filed once (same Message-ID, or the same content when the forward lost it)", async () => {
-    const { file, rows } = await setup();
+    const { run, file, rows } = await setup();
     const due = addDaysStr(today, 10);
     const first = await file(billEx("Xfinity", 64.99, due), { externalId: "gmail:abc", messageId: "<M1@xfinity.com>", from: "billing@xfinity.com" });
     expect(first.filed.map((f) => f.kind)).toEqual(["recurring", "task"]);
@@ -53,12 +53,22 @@ describe("Gmail items show up once", () => {
     const forwarded = await file(billEx("Xfinity", 64.99, due), { messageId: "m1@xfinity.com", from: "me@gmail.com" });
     expect(forwarded.status).toBe("duplicate");
     expect(forwarded.duplicateOf).toBe(first.id);
-    // A hand forward has a new Message-ID and a different sender: the content (payee, amount, due date) matches.
+    // A hand forward has a new Message-ID, a different sender and no account number: it looks the same, but two lines of
+    // a plan would too, so nothing is filed and the user is asked ("Same bill?").
     const hand = await file(billEx("XFINITY", 64.99, due), { messageId: "other@gmail.com", from: "me@gmail.com" });
-    expect(hand.status).toBe("duplicate");
+    expect(hand.status).toBe("needs_review");
     expect(hand.duplicateOf).toBe(first.id);
+    expect(hand.reason).toContain("Same bill?");
+    // With the account number on both, the same signature is the same bill.
+    const withAcct = await file(billEx("Xfinity", 90, due, "monthly", "acct 5521"), { messageId: "a1@x.com" });
+    const sameAcct = await file(billEx("Xfinity", 90, due, "monthly", "5521"), { messageId: "a2@gmail.com" });
+    expect(withAcct.status).toBe("filed");
+    expect(sameAcct.status).toBe("duplicate");
+    expect(sameAcct.duplicateOf).toBe(withAcct.id);
+    // Answering "yes, same bill" closes the suggestion; "no" files it as its own bill.
+    expect((await run((s) => answerSameBill(s, TZ, today, hand.id, true))).status).toBe("duplicate");
     const n = await rows(async (s) => ({ bills: (await s.tx.select().from(recurringItems)).length, tasks: (await s.tx.select().from(tasks)).length }));
-    expect(n).toEqual({ bills: 1, tasks: 1 });
+    expect(n).toEqual({ bills: 2, tasks: 2 }); // Xfinity, plus the $90 account 5521 bill
   });
 
   it("D7 and D11: a new statement updates the tracked bill; a price change keeps the old price; Undo puts both back", async () => {
@@ -74,11 +84,11 @@ describe("Gmail items show up once", () => {
 
     // Spotify tracked at $11.99; "your price is changing to $12.99 from Dec 1".
     await run((s) => createRecurring(s, { name: "Spotify", amountCents: -1199, frequency: "monthly", nextDueDate: "2026-11-15", kind: "subscription" }));
-    const price = await file(billEx("Spotify Premium", 12.99, "2026-12-01"), { messageId: "sp@spotify.com" });
+    const price = await file(billEx("Spotify Premium", 12.99, "2026-12-15"), { messageId: "sp@spotify.com" });
     expect(price.filed[0].kind).toBe("recurring_update");
     const spotify = async () => (await rows((s) => s.tx.select().from(recurringItems))).filter((b) => b.name.startsWith("Spotify"));
     expect(await spotify()).toHaveLength(1);
-    expect((await spotify())[0]).toMatchObject({ amountCents: -1299, nextDueDate: "2026-12-01", priceHistory: [{ amountCents: -1199, until: "2026-12-01" }] });
+    expect((await spotify())[0]).toMatchObject({ amountCents: -1299, nextDueDate: "2026-12-15", priceHistory: [{ amountCents: -1199, until: "2026-12-15" }] });
     await run((s) => undoInboxItem(s, price.id));
     expect((await spotify())[0]).toMatchObject({ amountCents: -1199, nextDueDate: "2026-11-15", priceHistory: [] });
 
@@ -89,7 +99,7 @@ describe("Gmail items show up once", () => {
     expect(nov.status).toBe("filed");
   });
 
-  it("D7: a different charge from one merchant (rent and parking) is not folded into the bill", async () => {
+  it("D7: a very different charge from one merchant (rent and parking) is its own bill", async () => {
     const { file, rows } = await setup();
     await file(billEx("Parkview Apartments", 1200, "2026-12-01"), { messageId: "r@p.com" });
     await file(billEx("Parkview Apartments", 85, "2026-12-05"), { messageId: "p@p.com" });
@@ -115,7 +125,8 @@ describe("Gmail items show up once", () => {
     expect(first.filed[0].label).toContain("same as your bank's");
     // The second email is the same bill again.
     const second = await file(billEx("Federal Student Aid", 214.37, due), { messageId: "fsa2@ed.gov" });
-    expect(second.status).toBe("duplicate");
+    expect(second.status).toBe("needs_review");
+    expect(second.reason).toContain("Same bill?");
     const bills = await rows((s) => s.tx.select().from(recurringItems));
     expect(bills).toHaveLength(1);
     expect(bills[0].amountCents).toBe(-21_437);
@@ -151,10 +162,10 @@ describe("Gmail items show up once", () => {
     expect(waiting.status).toBe("needs_review");
     expect(waiting.reason).toContain("Waiting for your bank");
     expect(await txnCount()).toBe(1);
-    expect(await run((s) => attachWaitingReceipts(s))).toBe(0);
+    expect(await run((s) => attachWaitingReceipts(s, today))).toBe(0);
     // The charge posts; the waiting receipt attaches to it.
     await run((s) => createTransaction(s, { accountId: card.id, date: today, description: "TRADER JOES #123", amountCents: -4110 }, "plaid", "p-2"));
-    expect(await run((s) => attachWaitingReceipts(s))).toBe(1);
+    expect(await run((s) => attachWaitingReceipts(s, today))).toBe(1);
     expect(await txnCount()).toBe(2);
     const [done] = await rows((s) => s.tx.select().from(inboxItems).where(eq(inboxItems.id, waiting.id)));
     expect(done.status).toBe("filed");
@@ -170,7 +181,7 @@ describe("Gmail items show up once", () => {
       return c;
     });
     const moved = await file(
-      { type: "exam", school: { course: "MATH 152", title: "Exam 2", due_date: "2026-11-17", due_time: null, old_due_date: "2026-11-12" } },
+      { type: "exam", school: { course: "MATH 152", title: "Exam 2", due_date: "2026-11-17", due_time: null, old_due_date: "2026-11-12", moved: true } },
       { from: "prof@school.edu", messageId: "mv1@school.edu" },
     );
     expect(moved.status).toBe("filed");
@@ -184,7 +195,10 @@ describe("Gmail items show up once", () => {
     expect(list[0].sourceRef).toContain("Moved by an email from prof@school.edu");
     // Same exam under another name, found by the old date.
     const again = await file(
-      { type: "exam", school: { course: "MATH 152", title: "Second midterm", due_date: "2026-11-19", due_time: "10:00", old_due_date: "2026-11-17" } },
+      {
+        type: "exam",
+        school: { course: "MATH 152", title: "Second midterm", due_date: "2026-11-19", due_time: "10:00", old_due_date: "2026-11-17", moved: true },
+      },
       { messageId: "mv2@school.edu" },
     );
     expect(again.filed[0].kind).toBe("assignment_update");
@@ -210,7 +224,7 @@ describe("collapse what was already filed twice", () => {
         ...base,
         type: "bill",
         summary: "s",
-        bill: { payee: "Xfinity", amount_usd: usd, due_date: due, repeats: "monthly" },
+        bill: { payee: "Xfinity", amount_usd: usd, due_date: due, repeats: "monthly", account_ref: "1234" },
       });
       const mk = async (i: number, ex: Extraction, filed: InboxFiled[], extra: Partial<typeof inboxItems.$inferInsert> = {}) => {
         const [r] = await s.tx
@@ -295,7 +309,7 @@ describe("collapse what was already filed twice", () => {
       expect(left.bills[0]).toMatchObject({ nextDueDate: "2026-12-20", amountCents: -6999 });
       expect(left.bills[0].priceHistory).toEqual([{ amountCents: -6499, until: "2026-12-20" }]);
       expect(left.tasks.map((t) => t.id).sort()).toEqual([t1.id, t4.id].sort());
-      expect(left.exams.map((a) => `${a.title}:${a.source}`).sort()).toEqual(["Exam 1:manual", "Exam 2:canvas"]);
+      expect(left.exams.map((a) => `${a.title}:${a.source}`).sort()).toEqual(["Exam 1:manual", "Exam 2:canvas", "Exam 2:manual"]);
       const byDay = new Map(left.items.map((i) => [i.receivedAt.getUTCDate(), i]));
       expect(byDay.get(2)!.status).toBe("duplicate");
       expect(byDay.get(2)!.duplicateOf).toBe(byDay.get(1)!.id);
@@ -306,13 +320,14 @@ describe("collapse what was already filed twice", () => {
         ["recurring_update", r1.id],
         ["task", t4.id],
       ]);
-      expect(byDay.get(5)!.filed[0]).toMatchObject({ kind: "assignment_update", id: canvas.assignment.id });
+      // Same title is never a reason to merge: the Canvas row and the email's row both stay.
+      expect(byDay.get(5)!.filed[0]).toMatchObject({ kind: "assignment", id: viaEmail.assignment.id });
       return first;
     });
     expect(user.id).toBeTruthy();
     return { counts, run, user };
   };
-  const EXPECTED = { inboxItems: 2, bills: 3, tasks: 2, exams: 1 };
+  const EXPECTED = { inboxItems: 2, bills: 3, tasks: 2, exams: 0 };
 
   it("keeps the original and moves references", async () => {
     const { counts } = await legacy((s) => collapseInboxDuplicates(s));

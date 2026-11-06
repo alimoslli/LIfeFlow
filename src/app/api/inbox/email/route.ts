@@ -74,7 +74,7 @@ export async function POST(req: Request) {
       const text = mail.TextBody?.trim() || strip(mail.HtmlBody ?? "");
       // An auto-forward keeps the original Message-ID, so the same mail from Gmail and from here is filed once.
       const messageId = mail.Headers?.find((h) => h.Name.toLowerCase() === "message-id")?.Value;
-      await processDocument(s, user.timezone, today, { channel: "email", from, subject, text, files, attachmentIds: ids, messageId });
+      await processDocument(s, user.timezone, today, { channel: "email", from, subject, text, files, attachmentIds: ids, messageId, authenticated: true });
     });
     return NextResponse.json({ ok: true });
   } catch (e) {

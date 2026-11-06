@@ -1,8 +1,8 @@
-import { and, asc, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, eq, inArray, like, ne, sql } from "drizzle-orm";
 import { addDaysStr, daysBetween, formatDateStr, localDateOf, localTimeOf, localToInstant } from "@/lib/dates";
 import { brandName } from "@/lib/vendor";
 import { normalizeText } from "@/lib/utils";
-import { assignments, inboxItems, recurringItems, tasks, transactions, type Frequency, type InboxFiled } from "../../db/schema";
+import { assignments, inboxItems, recurringItems, transactions, type Frequency, type InboxFiled } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { amountsClose, nameRelation, SLACK_DAYS, scheduleGap, trackedKeys, tracksSeries } from "../finance/bill-match";
 import { merchantKey, merchantKeys, type RecurringCandidate } from "../finance/recurring-detect";
@@ -35,30 +35,53 @@ export function normalizeMessageId(raw: string | null | undefined): string | nul
   return id.length >= 3 ? id.slice(0, 300) : null;
 }
 
+/** "Account 5521", "xxxx-5521" and "5521" are one account: the last 4 digits when there are any. */
+export function normalizeAccountRef(ref: string | null | undefined): string {
+  const digits = (ref ?? "").replace(/\D/g, "");
+  return digits.length >= 3 ? digits.slice(-4) : normalizeText(ref ?? "").replace(/ /g, "");
+}
+
 /**
- * What a bill says, independent of the door it came through. The sender's domain is no use here: a forwarded copy
- * comes from the user's own address, so the key uses who is owed (the brand), the amount and the due date. A bill
- * without a due date has no key (two monthly statements for the same amount would look alike).
+ * What a bill says, independent of the door it came through: who is owed (the brand), the amount, the due date and
+ * the account or line printed on it. The sender's domain is no use (a forwarded copy comes from the user's own address).
+ * Without an account or line, two lines of one plan (same amount, same date) look alike, so such a signature is only
+ * ever a suggestion ("Same bill?"), never a reason to drop the email (see `isStrongSig`). A bill without a due date has none.
  */
 export function contentSigFor(ex: Pick<Extraction, "type" | "bill">): string | null {
   const b = ex.bill;
   if (ex.type !== "bill" || !b || !b.due_date || !Number.isFinite(b.amount_usd)) return null;
   const amount = Math.round(Math.abs(b.amount_usd) * 100);
   const who = merchantKey({ merchantName: b.payee, description: b.payee });
-  return who && amount ? `bill|${who}|${amount}|${b.due_date}` : null;
+  const acct = normalizeAccountRef(b.account_ref);
+  return who && amount ? `bill|${who}|${amount}|${b.due_date}|${acct}` : null;
 }
 
+/** A signature that names an account or line: two emails with the same one are the same bill. */
+export const isStrongSig = (sig: string | null | undefined): sig is string => !!sig && !sig.endsWith("|");
+/** The part of a signature without the account: what a "Same bill?" suggestion compares. */
+export const weakSigPrefix = (sig: string) => sig.slice(0, sig.lastIndexOf("|") + 1);
+
 /** The first inbox item (oldest) that already filed this email, if any. Failed and ignored items never filed anything. */
-export async function findFiledTwin(scope: UserScope, by: { messageId?: string | null; contentSig?: string | null }, exceptId: string) {
-  const key = by.messageId ? { col: inboxItems.messageId, v: by.messageId } : by.contentSig ? { col: inboxItems.contentSig, v: by.contentSig } : null;
+export async function findFiledTwin(
+  scope: UserScope,
+  by: { messageId?: string | null; contentSig?: string | null; similarTo?: string | null },
+  exceptId: string,
+) {
+  const key = by.messageId
+    ? eq(inboxItems.messageId, by.messageId)
+    : by.contentSig
+      ? eq(inboxItems.contentSig, by.contentSig)
+      : by.similarTo
+        ? like(inboxItems.contentSig, `${by.similarTo.replace(/[\\%_]/g, "")}%`)
+        : null;
   if (!key) return null;
   const rows = await scope.tx
-    .select({ id: inboxItems.id, status: inboxItems.status })
+    .select({ id: inboxItems.id, status: inboxItems.status, subject: inboxItems.subject })
     .from(inboxItems)
     .where(
       and(
         eq(inboxItems.userId, scope.userId),
-        eq(key.col, key.v),
+        key,
         ne(inboxItems.id, exceptId),
         // An undone item counts: the user took it back, so another copy must not file it again.
         inArray(inboxItems.status, ["filed", "needs_review", "undone"]),
@@ -71,10 +94,15 @@ export async function findFiledTwin(scope: UserScope, by: { messageId?: string |
 
 // ------------------------------------------------------------------ bills (D6, D7, D8, D11)
 
-export type BillFacts = { payee: string; amountCents: number; frequency: Frequency; due: string };
+export type BillFacts = { payee: string; amountCents: number; frequency: Frequency; due: string; accountRef?: string | null };
 type Virtual = { name: string; merchantKey: string | null; amountCents: number; frequency: Frequency; nextDueDate: string };
 
-export type BillMatch = { kind: "item"; item: typeof recurringItems.$inferSelect } | { kind: "series"; series: RecurringCandidate } | null;
+export type BillMatch =
+  | { kind: "item"; item: typeof recurringItems.$inferSelect }
+  | { kind: "series"; series: RecurringCandidate }
+  /** Could be a bill we track but not sure enough to change anything: the user is asked ("Same bill?"). */
+  | { kind: "ask"; names: string[] }
+  | null;
 
 /**
  * An email's bill against a bank series when the names don't relate ("Federal Student Aid" and "MOHELA STUDENT LN",
@@ -91,8 +119,11 @@ function looseSeriesMatch(v: Virtual, c: RecurringCandidate): boolean {
 }
 
 /**
- * The bill already tracked that this email is about, if any:
- * 1. a tracked bill whose name relates (the same brand, "Comcast" and "Xfinity" included) on the same schedule;
+ * The bill already tracked that this email is about, if any. When in doubt nothing is merged:
+ * 1. a tracked bill whose name relates (the same brand, "Comcast" and "Xfinity" included), on the same schedule (due
+ *    day within the usual slack) and within the usual amount tolerance is the bill; exactly one, else we ask.
+ *    A name that relates on the same schedule but at a very different amount is asked about too (a price change?).
+ *    The same name on another day of the month is another line (three Verizon lines), so it is a new bill;
  * 2. a tracked bill standing for a bank series that matches (names differ, amount and day agree);
  * 3. a bank series the user doesn't track yet: the new bill is saved as that series, so it counts once.
  */
@@ -101,56 +132,56 @@ export async function findTrackedBill(scope: UserScope, bill: BillFacts, today: 
   const items = (await listRecurring(scope)).filter((i) => i.amountCents < 0 && i.kind !== "income" && i.frequency === bill.frequency);
   const mine = trackedKeys(v);
 
-  const related = items.flatMap((item) => {
+  // Two lines of one plan: a tracked bill that came from an email naming another account or line is another bill.
+  const mineRef = normalizeAccountRef(bill.accountRef);
+  const sameAccount = async (itemId: string) => {
+    if (!mineRef) return true;
+    const filedBy = await scope.tx
+      .select({ extracted: inboxItems.extracted })
+      .from(inboxItems)
+      .where(and(eq(inboxItems.userId, scope.userId), sql`${inboxItems.filed} @> ${JSON.stringify([{ id: itemId }])}::jsonb`));
+    const refs = filedBy.map((r) => normalizeAccountRef((r.extracted as Partial<Extraction> | null)?.bill?.account_ref)).filter(Boolean);
+    return !refs.length || refs.includes(mineRef);
+  };
+  const related: { item: (typeof items)[number]; rel: "same" | "contained" }[] = [];
+  for (const item of items) {
     const rel = nameRelation(trackedKeys(item), mine);
-    return rel ? [{ item, rel }] : [];
-  });
-  const fits = related.filter(({ item, rel }) =>
-    rel === "same"
-      ? // A price change is welcome (Spotify 11.99 to 12.99); a different charge from one merchant (rent and parking) is not.
-        amountsClose(item.amountCents, v.amountCents, true)
-      : amountsClose(item.amountCents, v.amountCents, false) &&
-        (!item.nextDueDate || scheduleGap(item.nextDueDate, bill.due, bill.frequency) <= SLACK_DAYS[bill.frequency]),
-  );
-  const closest = (list: typeof fits) =>
-    list.reduce((best, x) => (Math.abs(x.item.amountCents - v.amountCents) < Math.abs(best.item.amountCents - v.amountCents) ? x : best));
-  if (fits.length) return { kind: "item", item: closest(fits).item };
+    if (rel && (await sameAccount(item.id))) related.push({ item, rel });
+  }
+  if (related.length) {
+    // No stored date: the schedule can't be checked, so it can't be told from another line.
+    const onSchedule = related.filter(({ item }) => !item.nextDueDate || scheduleGap(item.nextDueDate, bill.due, bill.frequency) <= SLACK_DAYS[bill.frequency]);
+    // A very different amount (rent and parking at one landlord) is another bill; a plausible one is a price change or a mistake.
+    const plausible = onSchedule.filter(({ item }) => amountsClose(item.amountCents, v.amountCents, true));
+    const sure = plausible.filter(({ item }) => item.nextDueDate && amountsClose(item.amountCents, v.amountCents, false));
+    if (sure.length === 1 && plausible.length === 1) return { kind: "item", item: sure[0].item };
+    if (plausible.length) return { kind: "ask", names: plausible.map(({ item }) => `${item.name} ${usd(item.amountCents)}`) };
+    return null; // related names, but another day or a very different amount: another line or bill
+  }
 
   const bank = await bankSeries(scope, today);
   const viaSeries = items.filter((item) => seriesForItem(item, bank.trackedActive).some((c) => looseSeriesMatch(v, c)));
   if (viaSeries.length === 1) return { kind: "item", item: viaSeries[0] };
-  if (viaSeries.length > 1) return null; // ambiguous: never guess between two bills
+  if (viaSeries.length > 1) return { kind: "ask", names: viaSeries.map((i) => `${i.name} ${usd(i.amountCents)}`) };
   const open = bank.untracked.filter((c) => looseSeriesMatch(v, c));
   return open.length === 1 ? { kind: "series", series: open[0] } : null;
-}
-
-/** Same title (a "Pay X ($Y)" to-do) already open for that payee and date? Then the second email reuses it. */
-export async function findOpenPayTask(scope: UserScope, tz: string, payee: string, due: string) {
-  const rows = await scope.tx
-    .select({ id: tasks.id, title: tasks.title, dueAt: tasks.dueAt })
-    .from(tasks)
-    .where(and(eq(tasks.userId, scope.userId), ne(tasks.status, "done")));
-  const want = normalizeText(`Pay ${payee}`);
-  return rows.find((t) => t.dueAt && localDateOf(t.dueAt, tz) === due && normalizeText(t.title).startsWith(want)) ?? null;
 }
 
 /**
  * A new statement for a bill already tracked: its next due date moves (never backwards past a different cycle) and its
  * amount follows. A different amount is a price change; the old price is kept in `priceHistory`.
  */
-export async function updateTrackedBill(scope: UserScope, item: typeof recurringItems.$inferSelect, bill: BillFacts): Promise<InboxFiled> {
+export async function updateTrackedBill(scope: UserScope, item: typeof recurringItems.$inferSelect, bill: BillFacts): Promise<InboxFiled | null> {
+  // Only a statement for a newer period changes the bill; an older (or the same) one is already behind us.
+  if (item.nextDueDate && bill.due <= item.nextDueDate) return null;
   const newAmount = -bill.amountCents;
-  const moves = !item.nextDueDate || bill.due > item.nextDueDate || scheduleGap(item.nextDueDate, bill.due, item.frequency) <= SLACK_DAYS[item.frequency];
-  const nextDueDate = moves ? bill.due : item.nextDueDate;
   const priceChanged = newAmount !== item.amountCents;
   const priceHistory = priceChanged ? [...item.priceHistory, { amountCents: item.amountCents, until: bill.due }] : item.priceHistory;
   await scope.tx
     .update(recurringItems)
-    .set({ amountCents: newAmount, nextDueDate, priceHistory })
+    .set({ amountCents: newAmount, nextDueDate: bill.due, priceHistory })
     .where(and(eq(recurringItems.id, item.id), eq(recurringItems.userId, scope.userId)));
-  const what = priceChanged
-    ? `price ${usd(item.amountCents)} to ${usd(newAmount)} from ${fmtDay(bill.due)}`
-    : `${usd(newAmount)}, next ${fmtDay(nextDueDate ?? bill.due)}`;
+  const what = priceChanged ? `price ${usd(item.amountCents)} to ${usd(newAmount)} from ${fmtDay(bill.due)}` : `${usd(newAmount)}, next ${fmtDay(bill.due)}`;
   return {
     kind: "recurring_update",
     id: item.id,
@@ -187,10 +218,26 @@ export async function saveBillAsSeries(scope: UserScope, series: RecurringCandid
 
 export const WAITING_FOR_BANK = "Waiting for your bank";
 
-/** Does a bank feed (Plaid) cover the accounts a receipt could belong to? Then the bank brings the spending; the receipt never adds to it. */
-export async function bankFeedCovers(scope: UserScope) {
-  const accounts = await listAccounts(scope);
-  return accounts.some((a) => a.source === "plaid" && !a.excludedAt && (a.type === "credit" || a.type === "depository"));
+/** How many days a receipt waits for its bank charge before it counts as spending paid some other way (cash, a card that isn't linked). */
+export const RECEIPT_WAIT_DAYS = 5;
+
+/**
+ * Does the bank bring this purchase? "hold": a linked account is the one it was paid with (the card's last 4 digits match),
+ * or no payment method is printed and the charge may still post (within RECEIPT_WAIT_DAYS): the receipt waits and is not
+ * counted. "spend": no bank feed, a card that isn't linked, or no charge showed up in time: it is spending.
+ */
+export async function receiptPolicy(scope: UserScope, r: { day: string; last4?: string | null }, today: string): Promise<"hold" | "spend" | "spend_unmatched"> {
+  const linked = (await listAccounts(scope)).filter((a) => a.source === "plaid" && !a.excludedAt && (a.type === "credit" || a.type === "depository"));
+  if (!linked.length) return "spend";
+  const last4 = (r.last4 ?? "").replace(/\D/g, "").slice(-4);
+  if (last4.length === 4) return linked.some((a) => a.mask === last4) ? "hold" : "spend_unmatched";
+  return daysBetween(r.day, today) <= RECEIPT_WAIT_DAYS ? "hold" : "spend_unmatched";
+}
+
+/** Where spending the bank doesn't bring goes: a card or account the user keeps by hand. */
+export async function handAccount(scope: UserScope) {
+  const hand = (await listAccounts(scope)).filter((a) => a.source !== "plaid");
+  return hand.find((a) => a.type === "credit") ?? hand.find((a) => a.type === "depository") ?? null;
 }
 
 type Receipt = { merchant: string; amountCents: number; day: string };
@@ -235,39 +282,31 @@ export async function attachReceipt(
 
 // ------------------------------------------------------------------ exams moved (D10)
 
-const EXAM_WORDS = new Set(["exam", "test", "midterm", "final", "quiz"]);
 const numbersIn = (t: string) => normalizeText(t).match(/\d+/g) ?? [];
 
 /**
- * The course's open exam (or assignment) an email is about: the same name, one name inside the other, the old date
- * the email names, or the same exam number ("Midterm 2" and "Exam 2" for an exam). Never a finished one.
+ * The exam (or assignment) a "moved" email is about. Only a moved email gets here, and it must give the date the item had:
+ * the match is the course's one open item of that kind that is due on that date now. Zero or several matches, or a
+ * title that names another number ("Exam 1" for "Exam 2"), is not a match: the caller asks the user instead. A new
+ * item whose name merely resembles an existing one ("Essay 1" and "Essay 1 Draft") never gets here.
  */
-export async function findExistingSchoolItem(
+export async function findMovedSchoolItem(
   scope: UserScope,
   tz: string,
   q: { courseId: string; kind: "exam" | "assignment"; title: string; oldDate: string | null },
-) {
+): Promise<{ match: typeof assignments.$inferSelect } | { match: null; why: "no_date" | "none" | "many" }> {
+  if (!q.oldDate) return { match: null, why: "no_date" };
   const rows = await scope.tx
     .select()
     .from(assignments)
     .where(and(eq(assignments.userId, scope.userId), eq(assignments.courseId, q.courseId), eq(assignments.kind, q.kind), ne(assignments.status, "done")))
     .orderBy(asc(assignments.createdAt));
-  const title = normalizeText(q.title);
-  const words = new Set(title.split(" ").filter(Boolean));
-  const hit = (a: (typeof rows)[number]) => {
-    const other = normalizeText(a.title);
-    if (other === title) return 4;
-    const ow = new Set(other.split(" ").filter(Boolean));
-    if (title && other && ([...words].every((w) => ow.has(w)) || [...ow].every((w) => words.has(w)))) return 3;
-    if (q.oldDate && a.dueAt && localDateOf(a.dueAt, tz) === q.oldDate) return 2;
-    const [n1, n2] = [numbersIn(q.title), numbersIn(a.title)];
-    if (q.kind === "exam" && n1.length && n1.join() === n2.join() && [...words].some((w) => EXAM_WORDS.has(w)) && [...ow].some((w) => EXAM_WORDS.has(w)))
-      return 1;
-    return 0;
-  };
-  const best = rows.map((a) => ({ a, s: hit(a) })).filter((x) => x.s > 0);
-  best.sort((x, y) => y.s - x.s);
-  return best[0]?.a ?? null;
+  const mine = numbersIn(q.title);
+  const hits = rows.filter(
+    (a) => a.dueAt && localDateOf(a.dueAt, tz) === q.oldDate && (!mine.length || !numbersIn(a.title).length || mine.join() === numbersIn(a.title).join()),
+  );
+  if (hits.length === 1) return { match: hits[0] };
+  return { match: null, why: hits.length ? "many" : "none" };
 }
 
 /** Moves an existing exam to the date the email gives. Null when nothing would change or the new date is already taken by a copy. */
@@ -284,7 +323,9 @@ export async function moveSchoolItem(
   // An email that gives only a new day keeps the exam's time.
   const time = to.time ?? prevTime;
   if (prevDate === to.date && prevTime === time) return { same: true };
-  const key = assignmentDedupeKey(row.courseId, row.title, to.date);
+  // Canvas owns its rows' key (`canvas:<id>`): changing it would stop Canvas's own date from ever applying again.
+  const canvasOwned = row.source === "canvas" || row.dedupeKey.startsWith("canvas:");
+  const key = canvasOwned ? row.dedupeKey : assignmentDedupeKey(row.courseId, row.title, to.date);
   const [clash] = await scope.tx
     .select({ id: assignments.id })
     .from(assignments)
@@ -293,7 +334,8 @@ export async function moveSchoolItem(
   const note = `Moved by an email${from ? ` from ${from.replace(/[\r\n]+/g, " ").slice(0, 120)}` : ""}${prevDate ? `; it was ${prevDate}` : ""}`.slice(0, 300);
   await scope.tx
     .update(assignments)
-    .set({ dueAt: localToInstant(to.date, time, tz), dueAllDay: !time, dedupeKey: key, sourceRef: note })
+    // A Canvas row keeps its source reference; the change lives in this inbox item (and Canvas's date wins at its next sync).
+    .set({ dueAt: localToInstant(to.date, time, tz), dueAllDay: !time, dedupeKey: key, ...(canvasOwned ? {} : { sourceRef: note }) })
     .where(and(eq(assignments.id, row.id), eq(assignments.userId, scope.userId)));
   return {
     filed: {
