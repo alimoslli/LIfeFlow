@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, isNull, or } from "drizzle-orm";
+import { and, desc, eq, ilike, isNull, or, type AnyColumn, type SQL } from "drizzle-orm";
 import { assignments, calendarEvents, courses, financialGoals, notes, tasks, transactions } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 
@@ -10,18 +10,24 @@ export type SearchHit = {
   href: string;
 };
 
-/** One search box for the whole app (⌘K). Plain substring match, newest first, a few per kind. */
-export async function searchEverything(scope: UserScope, q: string, perKind = 5): Promise<SearchHit[]> {
+/**
+ * One search box for the whole app (⌘K), live from the first letter typed. One letter matches the start of a
+ * word ("g" finds "Gym" and "Rent, Green St"); two or more match anywhere. Newest first, a few per kind.
+ * Money (transactions, money goals) is left out while the Money lock is on.
+ */
+export async function searchEverything(scope: UserScope, q: string, perKind = 5, opts: { moneyLocked?: boolean } = {}): Promise<SearchHit[]> {
   const term = q.trim().slice(0, 80);
-  if (term.length < 2) return [];
-  const like = `%${term.replace(/[%_\\]/g, "")}%`;
+  if (term.length < 1) return [];
+  const clean = term.replace(/[%_\\]/g, "");
+  if (!clean) return [];
+  const match = (col: AnyColumn): SQL => (clean.length >= 2 ? ilike(col, `%${clean}%`) : or(ilike(col, `${clean}%`), ilike(col, `% ${clean}%`))!);
   const u = scope.userId;
   const t = scope.tx;
   const out: SearchHit[] = [];
   const taskRows = await t
     .select({ id: tasks.id, title: tasks.title, status: tasks.status })
     .from(tasks)
-    .where(and(eq(tasks.userId, u), isNull(tasks.parentId), ilike(tasks.title, like)))
+    .where(and(eq(tasks.userId, u), isNull(tasks.parentId), match(tasks.title)))
     .orderBy(desc(tasks.updatedAt))
     .limit(perKind);
   out.push(
@@ -30,21 +36,21 @@ export async function searchEverything(scope: UserScope, q: string, perKind = 5)
   const noteRows = await t
     .select({ id: notes.id, title: notes.title })
     .from(notes)
-    .where(and(eq(notes.userId, u), or(ilike(notes.title, like), ilike(notes.body, like))))
+    .where(and(eq(notes.userId, u), or(match(notes.title), match(notes.body))))
     .orderBy(desc(notes.updatedAt))
     .limit(perKind);
   out.push(...noteRows.map((r) => ({ kind: "note" as const, id: r.id, title: r.title || "Untitled note", subtitle: "Note", href: `/notes/${r.id}` })));
   const asg = await t
     .select({ id: assignments.id, title: assignments.title, courseId: assignments.courseId })
     .from(assignments)
-    .where(and(eq(assignments.userId, u), ilike(assignments.title, like)))
+    .where(and(eq(assignments.userId, u), match(assignments.title)))
     .orderBy(desc(assignments.updatedAt))
     .limit(perKind);
   out.push(...asg.map((r) => ({ kind: "assignment" as const, id: r.id, title: r.title, subtitle: "Assignment", href: `/school/courses/${r.courseId}` })));
   const crs = await t
     .select({ id: courses.id, name: courses.name, code: courses.code })
     .from(courses)
-    .where(and(eq(courses.userId, u), or(ilike(courses.name, like), ilike(courses.code, like))))
+    .where(and(eq(courses.userId, u), or(match(courses.name), match(courses.code))))
     .limit(perKind);
   out.push(
     ...crs.map((r) => ({
@@ -58,10 +64,11 @@ export async function searchEverything(scope: UserScope, q: string, perKind = 5)
   const ev = await t
     .select({ id: calendarEvents.id, title: calendarEvents.title })
     .from(calendarEvents)
-    .where(and(eq(calendarEvents.userId, u), ilike(calendarEvents.title, like)))
+    .where(and(eq(calendarEvents.userId, u), match(calendarEvents.title)))
     .orderBy(desc(calendarEvents.startsAt))
     .limit(perKind);
   out.push(...ev.map((r) => ({ kind: "event" as const, id: r.id, title: r.title, subtitle: "Event", href: `/calendar?event=${r.id}` })));
+  if (opts.moneyLocked) return out;
   const tx = await t
     .select({
       id: transactions.id,
@@ -71,7 +78,7 @@ export async function searchEverything(scope: UserScope, q: string, perKind = 5)
       amount: transactions.amountCents,
     })
     .from(transactions)
-    .where(and(eq(transactions.userId, u), or(ilike(transactions.description, like), ilike(transactions.merchantName, like))))
+    .where(and(eq(transactions.userId, u), or(match(transactions.description), match(transactions.merchantName))))
     .orderBy(desc(transactions.date))
     .limit(perKind);
   out.push(
@@ -86,7 +93,7 @@ export async function searchEverything(scope: UserScope, q: string, perKind = 5)
   const goals = await t
     .select({ id: financialGoals.id, name: financialGoals.name })
     .from(financialGoals)
-    .where(and(eq(financialGoals.userId, u), ilike(financialGoals.name, like)))
+    .where(and(eq(financialGoals.userId, u), match(financialGoals.name)))
     .limit(perKind);
   out.push(...goals.map((r) => ({ kind: "goal" as const, id: r.id, title: r.name, subtitle: "Goal", href: "/goals" })));
   return out;

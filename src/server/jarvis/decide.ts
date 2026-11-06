@@ -12,13 +12,14 @@ import { resolvePendingAction } from "./executor";
  */
 export async function decidePendingAction(user: SessionUser, id: string, decision: "confirm" | "cancel", moneyLocked: boolean, via: "app" | "sms" = "app") {
   const toolCtx = makeToolContext(user, "00000000-0000-0000-0000-000000000000", new Date(), "", moneyLocked);
-  const { action, status, result } = await resolvePendingAction(id, decision, toolCtx);
+  const { action, status, result, replayed } = await resolvePendingAction(id, decision, toolCtx);
   const message =
     status === "executed"
       ? `Confirmed and done: ${action.summary.split("\n")[0].replace(/\?$/, "")}.`
       : status === "cancelled"
         ? "Cancelled. Nothing was changed."
         : (result.error ?? "Failed.");
+  if (replayed) return { status, message, ok: result.ok };
   await withUser(user.id, async (s) => {
     await s.tx
       .update(messages)

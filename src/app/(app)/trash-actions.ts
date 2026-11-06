@@ -32,7 +32,7 @@ export async function restoreAction(trashId: string): Promise<ActionState> {
   const id = z.string().uuid().parse(trashId);
   return mutate("trash.restore", async (s) => {
     const r = await restoreFromTrash(s, id);
-    return `Restored "${r.label}".`;
+    return `Restored "${r.label}".${r.note ? ` ${r.note}` : ""}`;
   });
 }
 

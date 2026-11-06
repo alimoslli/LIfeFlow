@@ -18,6 +18,7 @@ import {
 } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { notFound, ServiceError } from "./errors";
+import { eventTwins } from "./calendar";
 
 /**
  * One delete pattern for the whole app: deleting moves the item (and the
@@ -72,6 +73,13 @@ export async function moveToTrash(scope: UserScope, kind: TrashKind, id: string)
   const blocked = spec.guard?.(row);
   if (blocked) throw new ServiceError(blocked);
   const payload: Record<string, Record<string, unknown>[]> = { [getTableName(spec.table)]: [row] };
+  // An event the lists show merged from several places goes to the trash as one entry, with all its copies.
+  const twinIds: string[] = [];
+  if (kind === "event") {
+    const twins = await eventTwins(scope, id);
+    payload[getTableName(spec.table)].push(...(twins as unknown as Record<string, unknown>[]));
+    twinIds.push(...twins.map((t) => t.id));
+  }
   for (const c of spec.children ?? []) {
     const rows = (await scope.tx
       .select()
@@ -81,7 +89,7 @@ export async function moveToTrash(scope: UserScope, kind: TrashKind, id: string)
   }
   const label = spec.label(row).slice(0, 200);
   const [entry] = await scope.tx.insert(trash).values({ userId: scope.userId, kind, label, payload }).returning();
-  await scope.tx.delete(spec.table).where(and(eq(col(spec.table, "id"), id), eq(col(spec.table, "userId"), scope.userId)));
+  await scope.tx.delete(spec.table).where(and(inArray(col(spec.table, "id"), [id, ...twinIds]), eq(col(spec.table, "userId"), scope.userId)));
   return { trashId: entry.id, kind, label };
 }
 
@@ -107,12 +115,17 @@ export async function restoreFromTrash(scope: UserScope, trashId: string) {
   if (!entry) throw new ServiceError("That item is no longer in the trash.", "not_found");
   const spec = SPECS[entry.kind];
   // Parent first, then children; a task's subtasks live in the same table, so order rows parents-first.
+  let mergedInto: string | null = null;
   const order = [getTableName(spec.table), ...(spec.children ?? []).map((c) => getTableName(c.table))].filter((v, i, a) => a.indexOf(v) === i);
   for (const name of order) {
     const table = TABLES.find((t) => getTableName(t) === name)!;
     const rows = entry.payload[name] ?? [];
     for (const r of rows) {
       if (r.userId !== scope.userId) throw new ServiceError("This item can't be restored.");
+      if (table === (calendarEvents as unknown) && (await mergeIntoLiveEvent(scope, r))) {
+        mergedInto = String(r.source);
+        continue;
+      }
       await scope.tx
         .insert(table)
         .values(revive(table, r) as never)
@@ -120,7 +133,43 @@ export async function restoreFromTrash(scope: UserScope, trashId: string) {
     }
   }
   await scope.tx.delete(trash).where(eq(trash.id, entry.id));
-  return { kind: entry.kind, label: entry.label };
+  const note = mergedInto
+    ? `${SOURCE_NAMES[mergedInto] ?? "The provider"} already added this event back, so your notes and settings were merged into it instead.`
+    : undefined;
+  return { kind: entry.kind, label: entry.label, note };
+}
+
+const SOURCE_NAMES: Record<string, string> = { google: "Google", outlook: "Outlook", canvas: "Canvas" };
+
+/**
+ * A synced event that was trashed and then synced back has the same key as the trashed row, so a plain
+ * restore would add nothing and lose the person's notes. Merge what they had into the live row instead.
+ * Returns true when it did (the restore of that row is then done).
+ */
+async function mergeIntoLiveEvent(scope: UserScope, r: Record<string, unknown>) {
+  if (!r.providerEventId || !r.source) return false;
+  const [live] = await scope.tx
+    .select()
+    .from(calendarEvents)
+    .where(
+      and(
+        eq(calendarEvents.userId, scope.userId),
+        eq(calendarEvents.source, r.source as "google"),
+        eq(calendarEvents.providerEventId, String(r.providerEventId)),
+      ),
+    );
+  if (!live) return false;
+  const notes = typeof r.description === "string" && r.description.trim() ? r.description : null;
+  await scope.tx
+    .update(calendarEvents)
+    .set({
+      description: notes && !live.description?.includes(notes) ? [live.description, notes].filter(Boolean).join("\n\n") : live.description,
+      kind: live.kind === "personal" && typeof r.kind === "string" ? (r.kind as typeof live.kind) : live.kind,
+      courseId: live.courseId ?? (typeof r.courseId === "string" ? r.courseId : null),
+      location: live.location ?? (typeof r.location === "string" ? r.location : null),
+    })
+    .where(eq(calendarEvents.id, live.id));
+  return true;
 }
 
 export async function listTrash(scope: UserScope, now = new Date()) {

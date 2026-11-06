@@ -16,5 +16,24 @@
         "repo": "addyosmani/agent-skills"
       }
     }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash .claude/hooks/hq-statusline.sh"
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/hq-checkin.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "75"
   }
 }

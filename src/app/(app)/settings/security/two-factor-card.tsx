@@ -4,10 +4,10 @@ import { Copy, Download, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, FormError, Input } from "@/components/ui/field";
 import { Badge, Card } from "@/components/ui/surface";
-import { confirmTwoFactorSetup, newRecoveryCodes, startTwoFactorSetup, turnOffTwoFactor } from "./two-factor-actions";
+import { confirmTwoFactorSetup, emailRestartCode, finishRestart, newRecoveryCodes, startTwoFactorSetup, turnOffTwoFactor } from "./two-factor-actions";
 
 type Status = { enabled: boolean; enabledOn: string | null; recoveryCodesLeft: number; available: boolean };
-type Mode = "idle" | "setup" | "codes" | "disable" | "regenerate";
+type Mode = "idle" | "setup" | "codes" | "disable" | "regenerate" | "restart";
 
 /** Settings → Security: two-step sign-in with an authenticator app. */
 export function TwoFactorCard({ status }: { status: Status }) {
@@ -15,6 +15,7 @@ export function TwoFactorCard({ status }: { status: Status }) {
   const [setup, setSetup] = useState<{ secret: string; qr: string } | null>(null);
   const [codes, setCodes] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [restartSentTo, setRestartSentTo] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   const run = <T,>(fn: () => Promise<({ ok: true } & T) | { ok: false; error: string }>, then: (r: T) => void) =>
@@ -146,7 +147,86 @@ export function TwoFactorCard({ status }: { status: Status }) {
                 Turn off
               </Button>
             </div>
+            <button
+              type="button"
+              onClick={() => (setRestartSentTo(null), setMode("restart"))}
+              className="min-h-11 self-start text-sm text-muted underline-offset-2 hover:text-text hover:underline"
+            >
+              Lost your app? Start over with an email code
+            </button>
           </>
+        )}
+
+        {mode === "restart" && !restartSentTo && (
+          <form
+            className="flex flex-col gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const password = String(new FormData(e.currentTarget).get("password") ?? "");
+              run(
+                () => emailRestartCode(password),
+                (r) => setRestartSentTo(r.sentTo),
+              );
+            }}
+          >
+            <p className="text-sm text-text-2">
+              We&apos;ll email you a code. With it, two-step sign-in resets and you set up your app again, with new backup codes.
+            </p>
+            <Field label="Password" htmlFor="tf-restart-pw">
+              <Input id="tf-restart-pw" name="password" type="password" autoComplete="current-password" required className="max-w-xs" />
+            </Field>
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" loading={pending}>
+                Email me a code
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setMode("idle")}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {mode === "restart" && restartSentTo && (
+          <form
+            className="flex flex-col gap-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const code = String(new FormData(e.currentTarget).get("code") ?? "");
+              run(
+                () => finishRestart(code),
+                () =>
+                  run(startTwoFactorSetup, (r) => {
+                    setSetup(r);
+                    setMode("setup");
+                  }),
+              );
+            }}
+          >
+            <p className="text-sm text-text-2">We emailed a 6-digit code to {restartSentTo}. It works once, for 10 minutes.</p>
+            <Field label="Code from the email" htmlFor="tf-restart-code">
+              <Input
+                id="tf-restart-code"
+                name="code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="\s*\d{3}\s?\d{3}\s*"
+                maxLength={7}
+                required
+                className="max-w-40"
+              />
+            </Field>
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" size="sm" loading={pending}>
+                Reset and set up again
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setRestartSentTo(null)}>
+                Send a new code
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => setMode("idle")}>
+                Cancel
+              </Button>
+            </div>
+          </form>
         )}
 
         {mode === "regenerate" && (

@@ -70,7 +70,7 @@ export async function resetPassword(db: Database, token: string, password: strin
   if (!won) throw new ResetError("This link was already used. Ask for a new one.");
   await db
     .update(users)
-    .set({ passwordHash: await hashPassword(password) })
+    .set({ passwordHash: await hashPassword(password), emailCodesBlockedAt: new Date() })
     .where(eq(users.id, r.userId));
   await db
     .update(passwordResets)

@@ -24,7 +24,7 @@ export async function finishOAuth(outcome: OAuthOutcome, o: { provider: OAuthPro
       return go("/welcome");
     case "signed-in": {
       if (outcome.totpEnabled) {
-        const { token, expiresAt } = await createLoginChallenge(getDb(), outcome.userId);
+        const { token, expiresAt } = await createLoginChallenge(getDb(), outcome.userId, "oauth");
         jar.set(CHALLENGE_COOKIE, token, { httpOnly: true, secure: secure(), sameSite: "lax", path: "/", expires: expiresAt });
         return go(o.next === "/" ? "/login/verify" : `/login/verify?next=${encodeURIComponent(o.next)}`);
       }
