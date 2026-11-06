@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   PAID_EARLY_DAYS,
   amountsClose,
+  billVaries,
   nameRelation,
   paidOccurrences,
   scheduleGap,
@@ -114,6 +115,16 @@ describe("a bill tracked under the user's own name and paid by transfer (review 
   });
 });
 
+describe("a bill whose amount usually moves (R1)", () => {
+  it("is told by its found series, or by its category before the bank shows one", () => {
+    for (const category of ["Utilities", "Phone", "Internet", " internet "]) expect(billVaries([], category), category).toBe(true);
+    for (const category of ["Streaming", "Rent", "Insurance", "Housing", "", null, undefined]) expect(billVaries([], category), String(category)).toBe(false);
+    // Once the bank shows the bill, its own charges decide.
+    expect(billVaries([found({ variableAmount: false })], "Utilities")).toBe(false);
+    expect(billVaries([found({ variableAmount: true })], "Rent")).toBe(true);
+  });
+});
+
 describe("bill matching helpers", () => {
   it("relates names by equal keys or every word of one inside the other", () => {
     expect(nameRelation(["netflix"], ["netflix", "netflix com ca"])).toBe("same");
@@ -171,6 +182,16 @@ describe("a bill that already posted is paid for that cycle (A3)", () => {
     // A utility whose bank series varies may come in under the tracked amount.
     expect(paid([due({ varies: true })], [charge({ amountCents: -6_906 })])).toEqual([0]);
     expect(paid([due({ varies: false })], [charge({ amountCents: -6_906 })])).toEqual([]);
+  });
+
+  it("counts a utility, phone or internet bill under the tracked amount before the bank has its history (R1)", () => {
+    // City Utilities, tracked at $82: its first charge is $69.06 today, and no series is found yet.
+    expect(paid([due({ varies: billVaries([], "Utilities") })], [charge({ amountCents: -6_906 })])).toEqual([0]);
+    expect(paid([due({ varies: billVaries([], "Streaming") })], [charge({ amountCents: -6_906 })])).toEqual([]);
+    // Still only under the bill's own keys: a utility with a longer name at that amount isn't this one.
+    expect(
+      paid([due({ varies: true })], [charge({ merchantName: "City Utilities Water Dept", description: "CITY UTILITIES WATER DEPT", amountCents: -6_906 })]),
+    ).toEqual([]);
   });
 
   it("counts a bank line under another name only through a series already matched to the item", () => {

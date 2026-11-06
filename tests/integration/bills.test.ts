@@ -128,6 +128,50 @@ describe("a bill that already posted isn't due again (A3)", () => {
     // Read time only: the stored rows keep their dates.
     expect((await run((s) => listRecurring(s))).find((r) => r.name === "City Utilities")!.nextDueDate).toBe(TODAY);
   });
+
+  it("a hand-tracked bill that usually varies is paid by its first charge, before the bank has any history (R1)", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s, 200_000);
+      const utilities = (await getCategoryByName(s, "Utilities"))!;
+      // Tracked at $82; the first charge ever is $69.06, today.
+      await createRecurring(s, {
+        name: "City Utilities",
+        amountCents: -8_200,
+        frequency: "monthly",
+        nextDueDate: TODAY,
+        kind: "bill",
+        categoryId: utilities.id,
+      });
+      await createTransaction(s, {
+        accountId: acct.id,
+        date: TODAY,
+        description: "CITY UTILITIES",
+        merchantName: "City Utilities",
+        amountCents: -6_906,
+        categoryId: utilities.id,
+      });
+      // No category picked: the name reads as a phone bill. $72 against $85, under its brand's key.
+      await createRecurring(s, { name: "Verizon", amountCents: -8_500, frequency: "monthly", nextDueDate: TODAY, kind: "bill" });
+      await createTransaction(s, { accountId: acct.id, date: "2026-11-04", description: "VERIZON WIRELESS PAYMENTS", amountCents: -7_200 });
+      // A plan whose price doesn't move keeps the 10% band: $13 isn't the $15.49 plan.
+      await createRecurring(s, { name: "Netflix", amountCents: -1_549, frequency: "monthly", nextDueDate: TODAY, kind: "subscription" });
+      await createTransaction(s, { accountId: acct.id, date: TODAY, description: "NETFLIX.COM", amountCents: -1_300 });
+    });
+
+    const week = await run((s) => billsAndPace(s, TODAY, TODAY, "2026-11-12"));
+    expect(week.bills.map((b) => b.name)).toEqual(["Netflix"]);
+    // Counted once: this cycle already left checking, so only December's is still to come.
+    const later = await run((s) => billsAndPace(s, TODAY, TODAY, "2026-12-10"));
+    expect(later.bills.map((b) => `${b.date} ${b.name}`).sort()).toEqual([
+      "2026-11-05 Netflix",
+      "2026-12-05 City Utilities",
+      "2026-12-05 Netflix",
+      "2026-12-05 Verizon",
+    ]);
+    const messages = await run((s) => DETECTORS.billsDue({ scope: s, tz: TZ, today: TODAY, now: new Date(`${TODAY}T14:00:00Z`) }));
+    expect(messages.map((m) => m.facts.bill)).not.toContain("City Utilities");
+  });
 });
 
 describe("the urgent bill message reads the same bills as Today and Money (A14)", () => {

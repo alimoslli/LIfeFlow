@@ -7,7 +7,8 @@ import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound } from "../errors";
 import { listCategories } from "./categories";
 import { rollupToParents, spendingByCategoryId } from "./cashflow";
-import { PAID_EARLY_DAYS, amountsClose, nameRelation, paidOccurrences, trackedKeys, tracksSeries, type DueOccurrence } from "./bill-match";
+import { PAID_EARLY_DAYS, amountsClose, billVaries, nameRelation, paidOccurrences, trackedKeys, tracksSeries, type DueOccurrence } from "./bill-match";
+import { keywordCategory } from "./categorize";
 import { MIN_CONFIDENCE, detectRecurring, merchantKey, merchantKeys, occurrencesBetween, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 import { parsePatch } from "../patch";
@@ -251,12 +252,15 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
   );
   const matched = bank ?? (couldPay ? await bankSeries(scope, from) : null);
   const seriesOf = new Map(items.map((r) => [r.id, matched ? seriesForItem(r, matched.trackedActive) : []]));
+  // A bill with no series yet varies by its category: the one picked, else the one its name reads as ("Verizon": Phone).
+  const named = couldPay ? await scope.tx.select({ id: categories.id, name: categories.name }).from(categories).where(eq(categories.userId, scope.userId)) : [];
+  const categoryOf = new Map(named.map((c) => [c.id, c.name]));
   const paid = paidOccurrences(
     due.map(({ item, date }): DueOccurrence => {
       const s = seriesOf.get(item.id) ?? [];
       return {
         keys: [...trackedKeys(item), ...s.map((c) => c.merchantKey)],
-        varies: s.some((c) => c.variableAmount),
+        varies: billVaries(s, (item.categoryId && categoryOf.get(item.categoryId)) || keywordCategory({ description: item.name })),
         frequency: item.frequency,
         date,
         amountCents: item.amountCents,
