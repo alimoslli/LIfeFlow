@@ -1,0 +1,1989 @@
+{
+  "about": "Simulated person (seed 836 student) from docs/situations/simulator via the bills reviewer's gen.py: iCloud among App Store purchases, last charge pending (90 days, held-out seed). Only the fields the test reads.",
+  "now": "2026-11-05",
+  "accounts": [{ "id": "acc-checking", "type": "depository", "mask": "9386" }],
+  "transactions": [
+    {
+      "id": "tx-2026-08-07-pay-main",
+      "account_id": "acc-checking",
+      "date": "2026-08-07",
+      "description": "CITY PHARMACY PAYROLL PPD ID: 1406620284",
+      "merchant_name": null,
+      "amount_cents": 28865,
+      "pending": false,
+      "personal_finance_category": { "primary": "INCOME", "detailed": "INCOME_WAGES" }
+    },
+    {
+      "id": "tx-2026-08-07-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-08-10",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -275,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-07-target",
+      "account_id": "acc-checking",
+      "date": "2026-08-10",
+      "description": "TARGET 00003992",
+      "merchant_name": "Target",
+      "amount_cents": -2663,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_SUPERSTORES" }
+    },
+    {
+      "id": "tx-2026-08-08-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-08-10",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -277,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-08-app-store",
+      "account_id": "acc-checking",
+      "date": "2026-08-10",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -357,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE" }
+    },
+    {
+      "id": "tx-2026-08-08-gas",
+      "account_id": "acc-checking",
+      "date": "2026-08-10",
+      "description": "SPEEDWAY 05229",
+      "merchant_name": "Speedway",
+      "amount_cents": -2617,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSPORTATION", "detailed": "TRANSPORTATION_GAS" }
+    },
+    {
+      "id": "tx-2026-08-09-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-08-10",
+      "description": "KROGER #0908",
+      "merchant_name": "Kroger",
+      "amount_cents": -2704,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-08-09-shopping-2",
+      "account_id": "acc-checking",
+      "date": "2026-08-10",
+      "description": "AMZN Mktp US*SWWGLP",
+      "merchant_name": "Amazon",
+      "amount_cents": -2480,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-08-09-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-08-11",
+      "description": "AMZN Mktp US*KKBMYG",
+      "merchant_name": "Amazon",
+      "amount_cents": -2204,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-08-09-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-11",
+      "description": "CHIPOTLE 1957",
+      "merchant_name": "Chipotle",
+      "amount_cents": -915,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-08-10-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-08-11",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -307,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-14-car-insurance",
+      "account_id": "acc-checking",
+      "date": "2026-08-14",
+      "description": "SAFEROUTE AUTO INS PREM",
+      "merchant_name": "SafeRoute Insurance",
+      "amount_cents": -12411,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_SERVICES", "detailed": "GENERAL_SERVICES_INSURANCE" }
+    },
+    {
+      "id": "tx-2026-08-12-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-08-14",
+      "description": "DUNKIN #334589",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -418,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-13-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-08-14",
+      "description": "TRADER JOE'S #621",
+      "merchant_name": "Trader Joe's",
+      "amount_cents": -2146,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-08-14-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -347,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-14-coffee-2",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "DUNKIN #334589",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -313,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-14-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "7-ELEVEN 27007",
+      "merchant_name": "7-Eleven",
+      "amount_cents": -694,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-08-14-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "AMZN Mktp US*3N645P",
+      "merchant_name": "Amazon",
+      "amount_cents": -1101,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-08-15-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "AMZN Mktp US*L564HH",
+      "merchant_name": "Amazon",
+      "amount_cents": -1989,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-08-15-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -393,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-15-shopping-2",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "AMZN Mktp US*6ZSRSA",
+      "merchant_name": "Amazon",
+      "amount_cents": -2027,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-08-15-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "CAMPUS C-STORE 4180",
+      "merchant_name": null,
+      "amount_cents": -367,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-08-15-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "MCDONALD'S F13093",
+      "merchant_name": "McDonald's",
+      "amount_cents": -551,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-08-15-entertainment",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "AMC 6378 ONLINE",
+      "merchant_name": "AMC Theatres",
+      "amount_cents": -1870,
+      "pending": false,
+      "personal_finance_category": { "primary": "ENTERTAINMENT", "detailed": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS" }
+    },
+    {
+      "id": "tx-2026-08-16-entertainment",
+      "account_id": "acc-checking",
+      "date": "2026-08-17",
+      "description": "EVENTBRITE *TICKETS",
+      "merchant_name": "Eventbrite",
+      "amount_cents": -1843,
+      "pending": false,
+      "personal_finance_category": { "primary": "ENTERTAINMENT", "detailed": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS" }
+    },
+    {
+      "id": "tx-2026-08-16-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-08-18",
+      "description": "KROGER #0908",
+      "merchant_name": "Kroger",
+      "amount_cents": -3402,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-08-17-app-store",
+      "account_id": "acc-checking",
+      "date": "2026-08-18",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -832,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE" }
+    },
+    {
+      "id": "tx-2026-08-18-gas",
+      "account_id": "acc-checking",
+      "date": "2026-08-19",
+      "description": "SHELL OIL 50069218905",
+      "merchant_name": "Shell",
+      "amount_cents": -3916,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSPORTATION", "detailed": "TRANSPORTATION_GAS" }
+    },
+    {
+      "id": "tx-2026-08-18-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-08-19",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -246,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-18-coffee-2",
+      "account_id": "acc-checking",
+      "date": "2026-08-20",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -356,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-18-coffee-3",
+      "account_id": "acc-checking",
+      "date": "2026-08-20",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -362,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-21-pay-main",
+      "account_id": "acc-checking",
+      "date": "2026-08-21",
+      "description": "CITY PHARMACY PAYROLL PPD ID: 1406620284",
+      "merchant_name": null,
+      "amount_cents": 30776,
+      "pending": false,
+      "personal_finance_category": { "primary": "INCOME", "detailed": "INCOME_WAGES" }
+    },
+    {
+      "id": "tx-2026-08-20-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-08-21",
+      "description": "DUNKIN #334589",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -366,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-20-gas",
+      "account_id": "acc-checking",
+      "date": "2026-08-21",
+      "description": "SPEEDWAY 05229",
+      "merchant_name": "Speedway",
+      "amount_cents": -3820,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSPORTATION", "detailed": "TRANSPORTATION_GAS" }
+    },
+    {
+      "id": "tx-2026-08-20-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-08-24",
+      "description": "AMZN Mktp US*RAQBLJ",
+      "merchant_name": "Amazon",
+      "amount_cents": -1587,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-08-20-app-store",
+      "account_id": "acc-checking",
+      "date": "2026-08-24",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -604,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE" }
+    },
+    {
+      "id": "tx-2026-08-22-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-08-24",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -263,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-22-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-24",
+      "description": "CHIPOTLE 1957",
+      "merchant_name": "Chipotle",
+      "amount_cents": -738,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-08-22-app-store",
+      "account_id": "acc-checking",
+      "date": "2026-08-24",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -357,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE" }
+    },
+    {
+      "id": "tx-2026-08-23-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-08-24",
+      "description": "CAMPUS C-STORE 4180",
+      "merchant_name": null,
+      "amount_cents": -500,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-08-23-gas",
+      "account_id": "acc-checking",
+      "date": "2026-08-25",
+      "description": "SPEEDWAY 05229",
+      "merchant_name": "Speedway",
+      "amount_cents": -3744,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSPORTATION", "detailed": "TRANSPORTATION_GAS" }
+    },
+    {
+      "id": "tx-2026-08-23-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-08-25",
+      "description": "AMZN Mktp US*N77VSC",
+      "merchant_name": "Amazon",
+      "amount_cents": -702,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-08-23-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-08-25",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -348,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-23-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-25",
+      "description": "CHIPOTLE 1957",
+      "merchant_name": "Chipotle",
+      "amount_cents": -736,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-08-24-campus-food",
+      "account_id": "acc-checking",
+      "date": "2026-08-25",
+      "description": "SQ *CAMPUS GRILL 9109",
+      "merchant_name": "Campus Grill",
+      "amount_cents": -1103,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_RESTAURANT" }
+    },
+    {
+      "id": "tx-2026-08-24-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-08-25",
+      "description": "CHIPOTLE 1957",
+      "merchant_name": "Chipotle",
+      "amount_cents": -555,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-08-26-phone",
+      "account_id": "acc-checking",
+      "date": "2026-08-26",
+      "description": "MINT MOBILE",
+      "merchant_name": null,
+      "amount_cents": -6500,
+      "pending": false,
+      "personal_finance_category": { "primary": "RENT_AND_UTILITIES", "detailed": "RENT_AND_UTILITIES_TELEPHONE" }
+    },
+    {
+      "id": "tx-2026-08-24-app-store",
+      "account_id": "acc-checking",
+      "date": "2026-08-26",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -277,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE" }
+    },
+    {
+      "id": "tx-2026-08-25-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-08-26",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -329,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-25-campus-food",
+      "account_id": "acc-checking",
+      "date": "2026-08-26",
+      "description": "SQ *CAMPUS GRILL 9109",
+      "merchant_name": "Campus Grill",
+      "amount_cents": -1257,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_RESTAURANT" }
+    },
+    {
+      "id": "tx-2026-08-25-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-08-26",
+      "description": "AMZN Mktp US*PG4564",
+      "merchant_name": "Amazon",
+      "amount_cents": -1987,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-08-25-personal-care",
+      "account_id": "acc-checking",
+      "date": "2026-08-27",
+      "description": "GREAT CLIPS #7965",
+      "merchant_name": "Great Clips",
+      "amount_cents": -2742,
+      "pending": false,
+      "personal_finance_category": { "primary": "PERSONAL_CARE", "detailed": "PERSONAL_CARE_HAIR_AND_BEAUTY" }
+    },
+    {
+      "id": "tx-2026-08-25-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-08-27",
+      "description": "KROGER #0908",
+      "merchant_name": "Kroger",
+      "amount_cents": -4738,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-08-25-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-08-27",
+      "description": "7-ELEVEN 27007",
+      "merchant_name": "7-Eleven",
+      "amount_cents": -751,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-08-26-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-08-27",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -385,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-08-26-campus-food",
+      "account_id": "acc-checking",
+      "date": "2026-08-27",
+      "description": "ARAMARK UNIV DINING 8758",
+      "merchant_name": "Aramark",
+      "amount_cents": -1224,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_RESTAURANT" }
+    },
+    {
+      "id": "tx-2026-08-26-personal-care",
+      "account_id": "acc-checking",
+      "date": "2026-08-28",
+      "description": "GREAT CLIPS #7965",
+      "merchant_name": "Great Clips",
+      "amount_cents": -3855,
+      "pending": false,
+      "personal_finance_category": { "primary": "PERSONAL_CARE", "detailed": "PERSONAL_CARE_HAIR_AND_BEAUTY" }
+    },
+    {
+      "id": "tx-2026-08-27-textbooks",
+      "account_id": "acc-checking",
+      "date": "2026-08-28",
+      "description": "CAMPUS BOOKSTORE 2668",
+      "merchant_name": null,
+      "amount_cents": -23273,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_BOOKSTORES_AND_NEWSSTANDS" }
+    },
+    {
+      "id": "tx-2026-08-28-overdraft-fee",
+      "account_id": "acc-checking",
+      "date": "2026-08-28",
+      "description": "OVERDRAFT FEE",
+      "merchant_name": null,
+      "amount_cents": -2500,
+      "pending": false,
+      "personal_finance_category": { "primary": "BANK_FEES", "detailed": "BANK_FEES_OVERDRAFT_FEES" }
+    },
+    {
+      "id": "tx-2026-08-29-pharmacy",
+      "account_id": "acc-checking",
+      "date": "2026-08-31",
+      "description": "CVS/PHARMACY #06022",
+      "merchant_name": "CVS",
+      "amount_cents": -2159,
+      "pending": false,
+      "personal_finance_category": { "primary": "MEDICAL", "detailed": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS" }
+    },
+    {
+      "id": "tx-2026-08-31-overdraft-fee",
+      "account_id": "acc-checking",
+      "date": "2026-08-31",
+      "description": "OVERDRAFT FEE",
+      "merchant_name": null,
+      "amount_cents": -2500,
+      "pending": false,
+      "personal_finance_category": { "primary": "BANK_FEES", "detailed": "BANK_FEES_OVERDRAFT_FEES" }
+    },
+    {
+      "id": "tx-2026-09-02-inc-aid",
+      "account_id": "acc-checking",
+      "date": "2026-09-02",
+      "description": "FINANCIAL AID REFUND STUDENT ACCT",
+      "merchant_name": null,
+      "amount_cents": 261451,
+      "pending": false,
+      "personal_finance_category": { "primary": "INCOME", "detailed": "INCOME_OTHER_INCOME" }
+    },
+    {
+      "id": "tx-2026-09-04-pay-main",
+      "account_id": "acc-checking",
+      "date": "2026-09-04",
+      "description": "CITY PHARMACY PAYROLL PPD ID: 1406620284",
+      "merchant_name": null,
+      "amount_cents": 32483,
+      "pending": false,
+      "personal_finance_category": { "primary": "INCOME", "detailed": "INCOME_WAGES" }
+    },
+    {
+      "id": "tx-2026-09-02-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-04",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -239,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-09-02-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-09-04",
+      "description": "AMZN Mktp US*2FN9DW",
+      "merchant_name": "Amazon",
+      "amount_cents": -3304,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-09-03-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-08",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -421,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-09-05-icloud",
+      "account_id": "acc-checking",
+      "date": "2026-09-08",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -299,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_SERVICES", "detailed": "GENERAL_SERVICES_OTHER_GENERAL_SERVICES" }
+    },
+    {
+      "id": "tx-2026-09-05-venmo",
+      "account_id": "acc-checking",
+      "date": "2026-09-08",
+      "description": "VENMO PAYMENT 3113075895",
+      "merchant_name": "Venmo",
+      "amount_cents": -1737,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSFER_OUT", "detailed": "TRANSFER_OUT_ACCOUNT_TRANSFER" }
+    },
+    {
+      "id": "tx-2026-09-05-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-09-08",
+      "description": "7-ELEVEN 27007",
+      "merchant_name": "7-Eleven",
+      "amount_cents": -568,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-09-05-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-08",
+      "description": "MCDONALD'S F13093",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1181,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-09-06-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-08",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -391,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-09-06-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-09-08",
+      "description": "KROGER #0908",
+      "merchant_name": "Kroger",
+      "amount_cents": -1738,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-09-08-course-fee",
+      "account_id": "acc-checking",
+      "date": "2026-09-09",
+      "description": "PEARSON *ACCESS CODE",
+      "merchant_name": null,
+      "amount_cents": -8562,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_BOOKSTORES_AND_NEWSSTANDS" }
+    },
+    {
+      "id": "tx-2026-09-09-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-10",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -410,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-09-09-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-09-10",
+      "description": "CAMPUS C-STORE 4180",
+      "merchant_name": null,
+      "amount_cents": -326,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-09-09-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-10",
+      "description": "MCDONALD'S F13093",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1172,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-09-09-coffee-2",
+      "account_id": "acc-checking",
+      "date": "2026-09-11",
+      "description": "DUNKIN #334589",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -296,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-09-14-car-insurance",
+      "account_id": "acc-checking",
+      "date": "2026-09-14",
+      "description": "SAFEROUTE AUTO INS PREM",
+      "merchant_name": "SafeRoute Insurance",
+      "amount_cents": -12411,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_SERVICES", "detailed": "GENERAL_SERVICES_INSURANCE" }
+    },
+    {
+      "id": "tx-2026-09-10-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-14",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -378,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-09-10-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-09-14",
+      "description": "7-ELEVEN 27007",
+      "merchant_name": "7-Eleven",
+      "amount_cents": -706,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-09-11-gas",
+      "account_id": "acc-checking",
+      "date": "2026-09-14",
+      "description": "SHELL OIL 50069218905",
+      "merchant_name": "Shell",
+      "amount_cents": -3275,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSPORTATION", "detailed": "TRANSPORTATION_GAS" }
+    },
+    {
+      "id": "tx-2026-09-11-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-09-14",
+      "description": "AMZN Mktp US*9P8MRC",
+      "merchant_name": "Amazon",
+      "amount_cents": -820,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-09-12-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-14",
+      "description": "TACO BELL 021188",
+      "merchant_name": "Taco Bell",
+      "amount_cents": -1296,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-09-12-eating-out-2",
+      "account_id": "acc-checking",
+      "date": "2026-09-14",
+      "description": "MCDONALD'S F13093",
+      "merchant_name": "McDonald's",
+      "amount_cents": -645,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-09-13-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-14",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -275,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-09-13-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-09-15",
+      "description": "ALDI 77284",
+      "merchant_name": "Aldi",
+      "amount_cents": -4254,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-09-13-venmo",
+      "account_id": "acc-checking",
+      "date": "2026-09-15",
+      "description": "VENMO PAYMENT 2563889726",
+      "merchant_name": "Venmo",
+      "amount_cents": -869,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSFER_OUT", "detailed": "TRANSFER_OUT_ACCOUNT_TRANSFER" }
+    },
+    {
+      "id": "tx-2026-09-13-gifts",
+      "account_id": "acc-checking",
+      "date": "2026-09-15",
+      "description": "SQ *GIFT SHOP",
+      "merchant_name": null,
+      "amount_cents": -1887,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES" }
+    },
+    {
+      "id": "tx-2026-09-15-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-17",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -339,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-09-15-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-17",
+      "description": "TACO BELL 021188",
+      "merchant_name": "Taco Bell",
+      "amount_cents": -584,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-09-16-gas",
+      "account_id": "acc-checking",
+      "date": "2026-09-17",
+      "description": "SHELL OIL 50069218905",
+      "merchant_name": "Shell",
+      "amount_cents": -3703,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSPORTATION", "detailed": "TRANSPORTATION_GAS" }
+    },
+    {
+      "id": "tx-2026-09-18-pay-main",
+      "account_id": "acc-checking",
+      "date": "2026-09-18",
+      "description": "CITY PHARMACY PAYROLL PPD ID: 1406620284",
+      "merchant_name": null,
+      "amount_cents": 23465,
+      "pending": false,
+      "personal_finance_category": { "primary": "INCOME", "detailed": "INCOME_WAGES" }
+    },
+    {
+      "id": "tx-2026-09-17-coffee-2",
+      "account_id": "acc-checking",
+      "date": "2026-09-18",
+      "description": "DUNKIN #334589",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -378,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-09-17-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-21",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -454,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-09-17-gas",
+      "account_id": "acc-checking",
+      "date": "2026-09-21",
+      "description": "SHELL OIL 50069218905",
+      "merchant_name": "Shell",
+      "amount_cents": -2448,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSPORTATION", "detailed": "TRANSPORTATION_GAS" }
+    },
+    {
+      "id": "tx-2026-09-19-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-21",
+      "description": "CHIPOTLE 1957",
+      "merchant_name": "Chipotle",
+      "amount_cents": -993,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-09-19-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-09-21",
+      "description": "AMZN Mktp US*H3RSJV",
+      "merchant_name": "Amazon",
+      "amount_cents": -571,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-09-20-personal-care",
+      "account_id": "acc-checking",
+      "date": "2026-09-21",
+      "description": "GREAT CLIPS #7965",
+      "merchant_name": "Great Clips",
+      "amount_cents": -1588,
+      "pending": false,
+      "personal_finance_category": { "primary": "PERSONAL_CARE", "detailed": "PERSONAL_CARE_HAIR_AND_BEAUTY" }
+    },
+    {
+      "id": "tx-2026-09-20-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-22",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -240,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-09-20-pharmacy",
+      "account_id": "acc-checking",
+      "date": "2026-09-22",
+      "description": "CVS/PHARMACY #06022",
+      "merchant_name": "CVS",
+      "amount_cents": -1549,
+      "pending": false,
+      "personal_finance_category": { "primary": "MEDICAL", "detailed": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS" }
+    },
+    {
+      "id": "tx-2026-09-20-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-09-22",
+      "description": "TRADER JOE'S #621",
+      "merchant_name": "Trader Joe's",
+      "amount_cents": -5153,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-09-21-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-09-23",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -348,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-09-22-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-09-23",
+      "description": "ALDI 77284",
+      "merchant_name": "Aldi",
+      "amount_cents": -3639,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-09-22-target",
+      "account_id": "acc-checking",
+      "date": "2026-09-24",
+      "description": "TARGET 00003992",
+      "merchant_name": "Target",
+      "amount_cents": -3311,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_SUPERSTORES" }
+    },
+    {
+      "id": "tx-2026-09-23-app-store",
+      "account_id": "acc-checking",
+      "date": "2026-09-24",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -328,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE" }
+    },
+    {
+      "id": "tx-2026-09-23-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-09-25",
+      "description": "AMZN Mktp US*JGBBAP",
+      "merchant_name": "Amazon",
+      "amount_cents": -3356,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-09-23-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-09-25",
+      "description": "TRADER JOE'S #621",
+      "merchant_name": "Trader Joe's",
+      "amount_cents": -3362,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-09-23-app-store-2",
+      "account_id": "acc-checking",
+      "date": "2026-09-25",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -739,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE" }
+    },
+    {
+      "id": "tx-2026-09-23-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-25",
+      "description": "MCDONALD'S F13093",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1174,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-09-26-phone",
+      "account_id": "acc-checking",
+      "date": "2026-09-28",
+      "description": "MINT MOBILE",
+      "merchant_name": null,
+      "amount_cents": -6500,
+      "pending": false,
+      "personal_finance_category": { "primary": "RENT_AND_UTILITIES", "detailed": "RENT_AND_UTILITIES_TELEPHONE" }
+    },
+    {
+      "id": "tx-2026-09-26-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-09-28",
+      "description": "AMZN Mktp US*QA36K7",
+      "merchant_name": "Amazon",
+      "amount_cents": -711,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-09-26-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-09-28",
+      "description": "TACO BELL 021188",
+      "merchant_name": "Taco Bell",
+      "amount_cents": -604,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-09-27-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-09-28",
+      "description": "KROGER #0908",
+      "merchant_name": "Kroger",
+      "amount_cents": -3375,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-09-27-entertainment",
+      "account_id": "acc-checking",
+      "date": "2026-09-28",
+      "description": "EVENTBRITE *TICKETS",
+      "merchant_name": "Eventbrite",
+      "amount_cents": -2519,
+      "pending": false,
+      "personal_finance_category": { "primary": "ENTERTAINMENT", "detailed": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS" }
+    },
+    {
+      "id": "tx-2026-09-29-gas",
+      "account_id": "acc-checking",
+      "date": "2026-10-01",
+      "description": "SHELL OIL 50069218905",
+      "merchant_name": "Shell",
+      "amount_cents": -2674,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSPORTATION", "detailed": "TRANSPORTATION_GAS" }
+    },
+    {
+      "id": "tx-2026-09-29-campus-food",
+      "account_id": "acc-checking",
+      "date": "2026-10-01",
+      "description": "ARAMARK UNIV DINING 8758",
+      "merchant_name": "Aramark",
+      "amount_cents": -1114,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_RESTAURANT" }
+    },
+    {
+      "id": "tx-2026-10-02-pay-main",
+      "account_id": "acc-checking",
+      "date": "2026-10-02",
+      "description": "CITY PHARMACY PAYROLL PPD ID: 1406620284",
+      "merchant_name": null,
+      "amount_cents": 24051,
+      "pending": false,
+      "personal_finance_category": { "primary": "INCOME", "detailed": "INCOME_WAGES" }
+    },
+    {
+      "id": "tx-2026-09-30-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-02",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -416,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-01-campus-food",
+      "account_id": "acc-checking",
+      "date": "2026-10-02",
+      "description": "ARAMARK UNIV DINING 8758",
+      "merchant_name": "Aramark",
+      "amount_cents": -983,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_RESTAURANT" }
+    },
+    {
+      "id": "tx-2026-10-01-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-05",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -331,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-01-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-10-05",
+      "description": "CAMPUS C-STORE 4180",
+      "merchant_name": null,
+      "amount_cents": -236,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-10-01-gifts",
+      "account_id": "acc-checking",
+      "date": "2026-10-05",
+      "description": "SQ *GIFT SHOP",
+      "merchant_name": null,
+      "amount_cents": -3665,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES" }
+    },
+    {
+      "id": "tx-2026-10-01-venmo",
+      "account_id": "acc-checking",
+      "date": "2026-10-05",
+      "description": "VENMO PAYMENT 2768565276",
+      "merchant_name": "Venmo",
+      "amount_cents": -1187,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSFER_OUT", "detailed": "TRANSFER_OUT_ACCOUNT_TRANSFER" }
+    },
+    {
+      "id": "tx-2026-10-01-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-05",
+      "description": "CHIPOTLE 1957",
+      "merchant_name": "Chipotle",
+      "amount_cents": -843,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-10-02-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-05",
+      "description": "CHIPOTLE 1957",
+      "merchant_name": "Chipotle",
+      "amount_cents": -1377,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-10-03-gas",
+      "account_id": "acc-checking",
+      "date": "2026-10-05",
+      "description": "SHELL OIL 50069218905",
+      "merchant_name": "Shell",
+      "amount_cents": -3411,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSPORTATION", "detailed": "TRANSPORTATION_GAS" }
+    },
+    {
+      "id": "tx-2026-10-04-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-10-05",
+      "description": "KROGER #0908",
+      "merchant_name": "Kroger",
+      "amount_cents": -3492,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-10-04-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-10-05",
+      "description": "CAMPUS C-STORE 4180",
+      "merchant_name": null,
+      "amount_cents": -454,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-10-04-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-05",
+      "description": "CHIPOTLE 1957",
+      "merchant_name": "Chipotle",
+      "amount_cents": -1130,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-10-05-icloud",
+      "account_id": "acc-checking",
+      "date": "2026-10-06",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -299,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_SERVICES", "detailed": "GENERAL_SERVICES_OTHER_GENERAL_SERVICES" }
+    },
+    {
+      "id": "tx-2026-10-07-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-09",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -276,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-08-gas",
+      "account_id": "acc-checking",
+      "date": "2026-10-09",
+      "description": "SPEEDWAY 05229",
+      "merchant_name": "Speedway",
+      "amount_cents": -3335,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSPORTATION", "detailed": "TRANSPORTATION_GAS" }
+    },
+    {
+      "id": "tx-2026-10-08-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-10-09",
+      "description": "AMZN Mktp US*GEHKSY",
+      "merchant_name": "Amazon",
+      "amount_cents": -2052,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-10-09-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -295,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-09-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "CHIPOTLE 1957",
+      "merchant_name": "Chipotle",
+      "amount_cents": -1160,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-10-10-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "AMZN Mktp US*QMNMWB",
+      "merchant_name": "Amazon",
+      "amount_cents": -3078,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-10-11-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "TRADER JOE'S #621",
+      "merchant_name": "Trader Joe's",
+      "amount_cents": -2766,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-10-11-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "DUNKIN #334589",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -421,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-11-coffee-2",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "DUNKIN #334589",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -441,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-12-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -294,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-12-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "AMZN Mktp US*S8HE78",
+      "merchant_name": "Amazon",
+      "amount_cents": -1937,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-10-12-campus-food",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "SQ *CAMPUS GRILL 9109",
+      "merchant_name": "Campus Grill",
+      "amount_cents": -639,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_RESTAURANT" }
+    },
+    {
+      "id": "tx-2026-10-12-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-13",
+      "description": "SQ *NOODLE BAR",
+      "merchant_name": null,
+      "amount_cents": -1065,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-10-14-car-insurance",
+      "account_id": "acc-checking",
+      "date": "2026-10-14",
+      "description": "SAFEROUTE AUTO INS PREM",
+      "merchant_name": "SafeRoute Insurance",
+      "amount_cents": -12411,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_SERVICES", "detailed": "GENERAL_SERVICES_INSURANCE" }
+    },
+    {
+      "id": "tx-2026-10-12-eating-out-2",
+      "account_id": "acc-checking",
+      "date": "2026-10-14",
+      "description": "MCDONALD'S F13093",
+      "merchant_name": "McDonald's",
+      "amount_cents": -952,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-10-13-gas",
+      "account_id": "acc-checking",
+      "date": "2026-10-14",
+      "description": "SHELL OIL 50069218905",
+      "merchant_name": "Shell",
+      "amount_cents": -2904,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSPORTATION", "detailed": "TRANSPORTATION_GAS" }
+    },
+    {
+      "id": "tx-2026-10-13-campus-food",
+      "account_id": "acc-checking",
+      "date": "2026-10-15",
+      "description": "SQ *CAMPUS GRILL 9109",
+      "merchant_name": "Campus Grill",
+      "amount_cents": -651,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_RESTAURANT" }
+    },
+    {
+      "id": "tx-2026-10-16-pay-main",
+      "account_id": "acc-checking",
+      "date": "2026-10-16",
+      "description": "CITY PHARMACY PAYROLL PPD ID: 1406620284",
+      "merchant_name": null,
+      "amount_cents": 31108,
+      "pending": false,
+      "personal_finance_category": { "primary": "INCOME", "detailed": "INCOME_WAGES" }
+    },
+    {
+      "id": "tx-2026-10-14-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-16",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -289,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-14-campus-food",
+      "account_id": "acc-checking",
+      "date": "2026-10-16",
+      "description": "ARAMARK UNIV DINING 8758",
+      "merchant_name": "Aramark",
+      "amount_cents": -1217,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_RESTAURANT" }
+    },
+    {
+      "id": "tx-2026-10-14-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-10-16",
+      "description": "AMZN Mktp US*BTN79K",
+      "merchant_name": "Amazon",
+      "amount_cents": -1374,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-10-15-campus-food",
+      "account_id": "acc-checking",
+      "date": "2026-10-16",
+      "description": "SQ *CAMPUS GRILL 9109",
+      "merchant_name": "Campus Grill",
+      "amount_cents": -1228,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_RESTAURANT" }
+    },
+    {
+      "id": "tx-2026-10-15-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-10-16",
+      "description": "7-ELEVEN 27007",
+      "merchant_name": "7-Eleven",
+      "amount_cents": -365,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-10-15-campus-food-2",
+      "account_id": "acc-checking",
+      "date": "2026-10-19",
+      "description": "ARAMARK UNIV DINING 8758",
+      "merchant_name": "Aramark",
+      "amount_cents": -1093,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_RESTAURANT" }
+    },
+    {
+      "id": "tx-2026-10-15-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-10-19",
+      "description": "AMZN Mktp US*9268WN",
+      "merchant_name": "Amazon",
+      "amount_cents": -3209,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-10-16-pharmacy",
+      "account_id": "acc-checking",
+      "date": "2026-10-19",
+      "description": "CVS/PHARMACY #06022",
+      "merchant_name": "CVS",
+      "amount_cents": -609,
+      "pending": false,
+      "personal_finance_category": { "primary": "MEDICAL", "detailed": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS" }
+    },
+    {
+      "id": "tx-2026-10-17-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-10-19",
+      "description": "CAMPUS C-STORE 4180",
+      "merchant_name": null,
+      "amount_cents": -511,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-10-18-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-10-19",
+      "description": "KROGER #0908",
+      "merchant_name": "Kroger",
+      "amount_cents": -4549,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-10-19-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-21",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -409,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-19-coffee-2",
+      "account_id": "acc-checking",
+      "date": "2026-10-21",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -358,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-19-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-21",
+      "description": "MCDONALD'S F13093",
+      "merchant_name": "McDonald's",
+      "amount_cents": -1351,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-10-20-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-21",
+      "description": "DUNKIN #334589",
+      "merchant_name": "Dunkin'",
+      "amount_cents": -253,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-20-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-10-22",
+      "description": "AMZN Mktp US*56A4JG",
+      "merchant_name": "Amazon",
+      "amount_cents": -1952,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-10-20-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-22",
+      "description": "TACO BELL 021188",
+      "merchant_name": "Taco Bell",
+      "amount_cents": -833,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-10-21-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-23",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -344,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-26-phone",
+      "account_id": "acc-checking",
+      "date": "2026-10-26",
+      "description": "MINT MOBILE",
+      "merchant_name": null,
+      "amount_cents": -6500,
+      "pending": false,
+      "personal_finance_category": { "primary": "RENT_AND_UTILITIES", "detailed": "RENT_AND_UTILITIES_TELEPHONE" }
+    },
+    {
+      "id": "tx-2026-10-22-personal-care",
+      "account_id": "acc-checking",
+      "date": "2026-10-26",
+      "description": "GREAT CLIPS #7965",
+      "merchant_name": "Great Clips",
+      "amount_cents": -2186,
+      "pending": false,
+      "personal_finance_category": { "primary": "PERSONAL_CARE", "detailed": "PERSONAL_CARE_HAIR_AND_BEAUTY" }
+    },
+    {
+      "id": "tx-2026-10-23-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-26",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -340,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-23-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-10-26",
+      "description": "7-ELEVEN 27007",
+      "merchant_name": "7-Eleven",
+      "amount_cents": -557,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-10-23-app-store",
+      "account_id": "acc-checking",
+      "date": "2026-10-26",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -880,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE" }
+    },
+    {
+      "id": "tx-2026-10-24-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-10-26",
+      "description": "MCDONALD'S F13093",
+      "merchant_name": "McDonald's",
+      "amount_cents": -778,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-10-25-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-10-26",
+      "description": "AMZN Mktp US*HMA8VX",
+      "merchant_name": "Amazon",
+      "amount_cents": -1153,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-10-25-shopping-2",
+      "account_id": "acc-checking",
+      "date": "2026-10-26",
+      "description": "AMZN Mktp US*YDUAM8",
+      "merchant_name": "Amazon",
+      "amount_cents": -2521,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-10-26-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-28",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -436,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-27-gifts",
+      "account_id": "acc-checking",
+      "date": "2026-10-28",
+      "description": "SQ *GIFT SHOP",
+      "merchant_name": null,
+      "amount_cents": -3347,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES" }
+    },
+    {
+      "id": "tx-2026-10-27-target",
+      "account_id": "acc-checking",
+      "date": "2026-10-28",
+      "description": "TARGET 00003992",
+      "merchant_name": "Target",
+      "amount_cents": -2800,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_SUPERSTORES" }
+    },
+    {
+      "id": "tx-2026-10-27-campus-food",
+      "account_id": "acc-checking",
+      "date": "2026-10-29",
+      "description": "ARAMARK UNIV DINING 8758",
+      "merchant_name": "Aramark",
+      "amount_cents": -937,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_RESTAURANT" }
+    },
+    {
+      "id": "tx-2026-10-27-gifts-2",
+      "account_id": "acc-checking",
+      "date": "2026-10-29",
+      "description": "SQ *GIFT SHOP",
+      "merchant_name": null,
+      "amount_cents": -1720,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES" }
+    },
+    {
+      "id": "tx-2026-10-28-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-10-29",
+      "description": "AMZN Mktp US*BK5XUV",
+      "merchant_name": "Amazon",
+      "amount_cents": -783,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-10-30-pay-main",
+      "account_id": "acc-checking",
+      "date": "2026-10-30",
+      "description": "CITY PHARMACY PAYROLL PPD ID: 1406620284",
+      "merchant_name": null,
+      "amount_cents": 22750,
+      "pending": false,
+      "personal_finance_category": { "primary": "INCOME", "detailed": "INCOME_WAGES" }
+    },
+    {
+      "id": "tx-2026-10-28-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-10-30",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -338,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-28-coffee-2",
+      "account_id": "acc-checking",
+      "date": "2026-10-30",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -236,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-10-28-gas",
+      "account_id": "acc-checking",
+      "date": "2026-10-30",
+      "description": "SHELL OIL 50069218905",
+      "merchant_name": "Shell",
+      "amount_cents": -3665,
+      "pending": false,
+      "personal_finance_category": { "primary": "TRANSPORTATION", "detailed": "TRANSPORTATION_GAS" }
+    },
+    {
+      "id": "tx-2026-10-29-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "AMZN Mktp US*35XRKA",
+      "merchant_name": "Amazon",
+      "amount_cents": -3113,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-10-30-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "CAMPUS C-STORE 4180",
+      "merchant_name": null,
+      "amount_cents": -370,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-10-30-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "CHIPOTLE 1957",
+      "merchant_name": "Chipotle",
+      "amount_cents": -920,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-10-31-app-store",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -921,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE" }
+    },
+    {
+      "id": "tx-2026-10-31-eating-out",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "CHIPOTLE 1957",
+      "merchant_name": "Chipotle",
+      "amount_cents": -1159,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_FAST_FOOD" }
+    },
+    {
+      "id": "tx-2026-10-31-convenience",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "7-ELEVEN 27007",
+      "merchant_name": "7-Eleven",
+      "amount_cents": -718,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK" }
+    },
+    {
+      "id": "tx-2026-10-31-entertainment",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "AMC 6378 ONLINE",
+      "merchant_name": "AMC Theatres",
+      "amount_cents": -1138,
+      "pending": false,
+      "personal_finance_category": { "primary": "ENTERTAINMENT", "detailed": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS" }
+    },
+    {
+      "id": "tx-2026-11-01-shopping",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "AMZN Mktp US*CFCF85",
+      "merchant_name": "Amazon",
+      "amount_cents": -3273,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES" }
+    },
+    {
+      "id": "tx-2026-11-01-groceries",
+      "account_id": "acc-checking",
+      "date": "2026-11-02",
+      "description": "KROGER #0908",
+      "merchant_name": "Kroger",
+      "amount_cents": -2764,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_GROCERIES" }
+    },
+    {
+      "id": "tx-2026-11-02-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-11-03",
+      "description": "STARBUCKS STORE 20172",
+      "merchant_name": "Starbucks",
+      "amount_cents": -313,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-11-02-target",
+      "account_id": "acc-checking",
+      "date": "2026-11-03",
+      "description": "TARGET 00003992",
+      "merchant_name": "Target",
+      "amount_cents": -1085,
+      "pending": false,
+      "personal_finance_category": { "primary": "GENERAL_MERCHANDISE", "detailed": "GENERAL_MERCHANDISE_SUPERSTORES" }
+    },
+    {
+      "id": "tx-2026-11-03-coffee",
+      "account_id": "acc-checking",
+      "date": "2026-11-04",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -423,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-11-03-coffee-2",
+      "account_id": "acc-checking",
+      "date": "2026-11-04",
+      "description": "SQ *CORNER CAFE",
+      "merchant_name": "Corner Cafe",
+      "amount_cents": -297,
+      "pending": false,
+      "personal_finance_category": { "primary": "FOOD_AND_DRINK", "detailed": "FOOD_AND_DRINK_COFFEE" }
+    },
+    {
+      "id": "tx-2026-11-05-icloud",
+      "account_id": "acc-checking",
+      "date": "2026-11-05",
+      "description": "APPLE.COM/BILL",
+      "merchant_name": "Apple",
+      "amount_cents": -299,
+      "pending": true,
+      "personal_finance_category": { "primary": "GENERAL_SERVICES", "detailed": "GENERAL_SERVICES_OTHER_GENERAL_SERVICES" }
+    }
+  ],
+  "recurring": [
+    {
+      "bill": "car-insurance",
+      "frequency": "monthly",
+      "charges": ["tx-2026-08-14-car-insurance", "tx-2026-09-14-car-insurance", "tx-2026-10-14-car-insurance"],
+      "price_changes": []
+    },
+    { "bill": "textbooks", "frequency": "dates", "charges": ["tx-2026-08-27-textbooks"], "price_changes": [] },
+    { "bill": "course-fee", "frequency": "dates", "charges": ["tx-2026-09-08-course-fee"], "price_changes": [] },
+    { "bill": "phone", "frequency": "monthly", "charges": ["tx-2026-08-26-phone", "tx-2026-09-26-phone", "tx-2026-10-26-phone"], "price_changes": [] },
+    { "bill": "icloud", "frequency": "monthly", "charges": ["tx-2026-09-05-icloud", "tx-2026-10-05-icloud", "tx-2026-11-05-icloud"], "price_changes": [] }
+  ]
+}
