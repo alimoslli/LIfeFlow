@@ -70,7 +70,7 @@ The CEO raises or lowers the Chief of Staff's authority in **HQ › Settings ›
 - **Level 1 (switched on by the CEO, 2026-11-06):**
   - **The order of fixes:** which approved fix or `fix now` finding goes first.
   - **Research topics:** what the Monday research covers, within the owner's priorities.
-  - **Posting times:** when an approved post goes into Metricool for review.
+  - **Posting times:** when an approved post goes into Metricool for review. Switched off, HQ accepts only the time already on the post.
 - **Level 2 (later, one at a time, only when the CEO switches it on):** for example small copy fixes in drafts, situation batch topics, or which step of an approved feature comes first.
 - **Never delegated:**
   - deploying anything that isn't a verified fix;

@@ -270,8 +270,9 @@ describe("inbox chats and API", () => {
     const client = j.groups.find((g: { source: string }) => g.source === "client");
     const server = j.groups.find((g: { source: string }) => g.source === "server");
     expect(client.untrusted).toBe(true);
-    expect(server.untrusted).toBeUndefined();
-    expect(Object.keys(server).sort()).toEqual(["count", "fingerprint", "firstSeenAt", "lastSeenAt", "message", "route", "source"]);
+    // Server errors can quote what a request carried, so they are outside text too.
+    expect(server.untrusted).toBe(true);
+    expect(Object.keys(server).sort()).toEqual(["count", "fingerprint", "firstSeenAt", "lastSeenAt", "message", "route", "source", "untrusted"]);
     expect(text).not.toContain("jane.doe@example.com");
     expect(text).not.toContain("SECRET FEEDBACK TEXT");
     expect((await listErrorGroups(db(), 1)).length).toBe(1);

@@ -116,6 +116,32 @@ describe("content lifecycle", () => {
     await expect(updateContent(db(), agent, c.id, { scheduledFor: day(3).toISOString() })).rejects.toThrow(/scheduledFor/);
   });
 
+  it("with posting times switched off, an agent schedules only at the time on the post", async () => {
+    await saveControls(db(), admin, { delegations: { postingTimes: false } });
+    const planned = day(2).toISOString();
+    const c = await createContent(db(), agent, { kind: "post", title: "Owner's time", ask: true, scheduledFor: planned });
+    await decideApproval(db(), admin, c.approvalId!, "approved");
+    // A time of its own choosing is refused, and nothing changes.
+    await expect(updateContent(db(), agent, c.id, { status: "scheduled", externalId: "mc_1", scheduledFor: day(3).toISOString() })).rejects.toThrow(
+      /switched off/,
+    );
+    await expect(updateContent(db(), agent, c.id, { status: "scheduled", externalId: "mc_1", scheduledFor: null })).rejects.toThrow(/switched off/);
+    expect(await getContent(db(), c.id)).toMatchObject({ status: "approved", externalId: null });
+    // The time the owner saw on the request is fine, sent again or left out.
+    const same = await updateContent(db(), agent, c.id, { status: "scheduled", externalId: "mc_1", scheduledFor: planned });
+    expect(same.scheduledFor?.toISOString()).toBe(planned);
+    const d = await createContent(db(), agent, { kind: "post", title: "No time given", ask: true, scheduledFor: planned });
+    await decideApproval(db(), admin, d.approvalId!, "approved");
+    expect(await updateContent(db(), agent, d.id, { status: "scheduled", externalId: "mc_2" })).toMatchObject({ status: "scheduled" });
+    // Switched back on, the Chief of Staff may pick the time.
+    await saveControls(db(), admin, { delegations: { postingTimes: true } });
+    const e = await createContent(db(), agent, { kind: "post", title: "Picked time", ask: true, scheduledFor: planned });
+    await decideApproval(db(), admin, e.approvalId!, "approved");
+    const chosen = day(4).toISOString();
+    const picked = await updateContent(db(), agent, e.id, { status: "scheduled", externalId: "mc_3", scheduledFor: chosen });
+    expect(picked.scheduledFor?.toISOString()).toBe(chosen);
+  });
+
   it("queued lists approved or scheduled posts that have no place in the week", async () => {
     const mk = async (title: string, scheduledFor?: string) => {
       const c = await createContent(db(), agent, { kind: "post", title, ask: true, ...(scheduledFor ? { scheduledFor } : {}) });
