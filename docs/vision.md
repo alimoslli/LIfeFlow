@@ -388,6 +388,10 @@ Decided by the owner (2026-11-05, research round 2):
 8. **Yes to school accounts with no admin needed,** and people can add school and bank accounts by hand when their bank isn't on Plaid or their school isn't Canvas or Teams (Teams is coming).
 9. **Goals:** Dev tells people plainly when they're off track for a goal they set, with a way back. Never the word "slipping".
 10. **Notifications are the engine,** not the problem: see "Decided from research" 5.
+11. **Goals and Connected accounts get simpler now (2026-11-06).** The owner found both pages far too complicated ("the goals page… is nowhere near how our app is supposed to be"; "the connected accounts page is wayyyy too complicated").
+   - **Goals:** option A, one calm list. Each goal is one line with a plain status. A goal is added by one sentence and Dev's plan card. Habits are goals with a rhythm. Money progress comes from the linked account. There are no forms or sliders on the main screen. Milestones become a short "Your story".
+   - **Connected accounts:** option A, "What Dev can see". One short list in words, a status at a glance, one-tap fixes, no jargon by default, adding a school or bank by hand, and one privacy line each.
+   - **With the timeline surface:** goals as flags on the timeline (Goals B), and connections grouped by part of life (Connections B).
 
 ## 16. The honest hard parts
 
