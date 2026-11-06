@@ -20,6 +20,18 @@ describe("hq cli parsing", () => {
     expect(add.body).toMatchObject({ type: "mission", role: "marketing", title: "T", priority: "high", dueOn: "2026-12-01" });
     const upd = buildRequest("mission update", parseArgs(["mission", "update", "abc", "--status", "blocked", "--blocked", "No credits"]));
     expect(upd.body).toMatchObject({ type: "mission", id: "abc", status: "blocked", blockedReason: "No credits" });
+    // The chat doing the work is recorded, so HQ can show the night round working on a Developer mission.
+    const S = { sessionId: "session_01Mhcz6BYyF8TLLXwBiWcWyk" };
+    expect(buildRequest("mission add", parseArgs(["mission", "add", "--role", "developer", "--title", "T"]), S).body).toMatchObject(S);
+    expect(buildRequest("mission update", parseArgs(["mission", "update", "abc", "--status", "doing"]), S).body).toMatchObject({
+      id: "abc",
+      status: "doing",
+      ...S,
+    });
+    expect(
+      buildRequest("approval", parseArgs(["approval", "--role", "developer", "--kind", "deploy", "--title", "T", "--summary", "S"]), S).body,
+    ).toMatchObject(S);
+    expect(add.body).not.toHaveProperty("sessionId");
     expect(buildRequest("inbox", parseArgs(["inbox", "--role", "designer"])).path).toBe("/api/hq/inbox?role=designer");
     expect(() => buildRequest("approval", parseArgs(["approval", "--role", "developer"]))).toThrow(/Missing --kind/);
     expect(() => buildRequest("nope", parseArgs(["nope"]))).toThrow(/Unknown command/);

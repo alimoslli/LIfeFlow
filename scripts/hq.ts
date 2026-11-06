@@ -140,6 +140,7 @@ export function buildRequest(
           ...(one(p, "priority") ? { priority: one(p, "priority") } : {}),
           ...(one(p, "due") ? { dueOn: one(p, "due") } : {}),
           ...(links.length ? { links } : {}),
+          ...(extra.sessionId ? { sessionId: extra.sessionId } : {}),
         },
       };
     case "mission update": {
@@ -157,6 +158,7 @@ export function buildRequest(
           ...(one(p, "blocked") ? { blockedReason: one(p, "blocked") } : {}),
           ...(one(p, "branch") ? { branch: one(p, "branch") } : {}),
           ...(links.length ? { links } : {}),
+          ...(extra.sessionId ? { sessionId: extra.sessionId } : {}),
         },
       };
     }
@@ -172,6 +174,7 @@ export function buildRequest(
           summary: need("summary"),
           ...(links.length ? { links } : {}),
           ...(one(p, "mission") ? { missionId: one(p, "mission") } : {}),
+          ...(extra.sessionId ? { sessionId: extra.sessionId } : {}),
         },
       };
     case "activity":
