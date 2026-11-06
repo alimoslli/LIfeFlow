@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lt, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { adminEmails, type Admin } from "../auth/admin";
+import { localDateOf, addDaysStr } from "@/lib/dates";
 import type { Database } from "../db/client";
 import { adminActions, hqActivity, hqApprovals, hqChats, hqKeys, hqMissions, hqUsageSamples, users, type HqLink, type HqRole, HQ_ROLES } from "../db/schema";
 import { withUser } from "../db/with-user";
@@ -37,7 +38,15 @@ export class HqError extends Error {}
 /** Who made a change, for the activity log. */
 export type HqActor = { kind: "owner"; email: string } | { kind: "agent"; keyName: string; sessionId?: string | null };
 
-export type MissionInput = { role: HqRole; title: string; detail?: string | null; priority?: MissionPriority; dueOn?: string | null; links?: HqLink[] };
+export type MissionInput = {
+  role: HqRole;
+  title: string;
+  detail?: string | null;
+  priority?: MissionPriority;
+  dueOn?: string | null;
+  links?: HqLink[];
+  sessionId?: string | null;
+};
 export type MissionPatch = Partial<{
   role: HqRole;
   title: string;
@@ -134,7 +143,22 @@ const dueOn = z
   .nullish();
 const role = z.enum(HQ_ROLES);
 
+/** A chat id (session_…) or nothing. Anything else is refused with a plain message. */
+const sessionIdField = z
+  .string()
+  .nullish()
+  .transform((v, ctx) => {
+    if (v == null || v.trim() === "") return null;
+    try {
+      return normalizeSessionId(v);
+    } catch (e) {
+      ctx.addIssue({ code: "custom", message: e instanceof Error ? e.message : "isn't a chat id" });
+      return z.NEVER;
+    }
+  });
+
 const missionInputSchema = z.object({
+  sessionId: sessionIdField,
   role,
   title: line(1, 140),
   detail: optText(4000),
@@ -153,7 +177,7 @@ const missionPatchSchema = z
     blockedReason: optText(1000),
     result: optText(1000),
     links: linksSchema,
-    sessionId: optLine(100),
+    sessionId: sessionIdField,
     branch: optLine(200),
     dueOn,
   })
@@ -636,7 +660,7 @@ export async function createMission(db: Database, actor: HqActor, input: Mission
         links: d.links ?? [],
         dueOn: d.dueOn ?? null,
         source: actorKind(actor),
-        sessionId: actor.kind === "agent" ? (actor.sessionId ?? null) : null,
+        sessionId: d.sessionId ?? (actor.kind === "agent" ? (actor.sessionId ?? null) : null),
       })
       .returning();
     await logActivity(tx, {

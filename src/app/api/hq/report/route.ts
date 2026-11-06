@@ -1,9 +1,9 @@
-import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { HQ_ROLES } from "@/server/db/schema";
 import { getDb } from "@/server/db/client";
-import { enforceRateLimit, errorResponse, HttpError } from "@/server/http";
+import { errorResponse, HttpError } from "@/server/http";
+import { authenticateHq, readLimitedBody } from "@/server/hq/request";
 import {
   createApproval,
   createMission,
@@ -11,7 +11,7 @@ import {
   importSeed,
   recordAgentActivity,
   recordCheckin,
-  resolveHqKey,
+  normalizeSessionId,
   updateMission,
   type HqActor,
 } from "@/server/services/hq";
@@ -30,12 +30,8 @@ const body = z.discriminatedUnion("type", [
 /** Receives reports from the owner's chats (check-ins, missions, approvals, notes). Authenticated by an HQ key, so it is a public route in proxy.ts. */
 export async function POST(req: Request) {
   try {
-    const raw = req.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1] ?? "";
-    await enforceRateLimit(`hq:${createHash("sha256").update(raw).digest("hex").slice(0, 16)}`, 600, 3600);
-    const key = raw ? await resolveHqKey(getDb(), raw) : null;
-    if (!key) throw new HttpError(401, "Invalid or revoked key.");
-    const text = await req.text();
-    if (text.length > 64_000) throw new HttpError(413, "Too much data in one request");
+    const key = await authenticateHq(req);
+    const text = await readLimitedBody(req);
     let json: unknown;
     try {
       json = JSON.parse(text);
@@ -45,8 +41,15 @@ export async function POST(req: Request) {
     const parsed = body.safeParse(json);
     if (!parsed.success) throw new HttpError(400, "Unknown or missing type (checkin, mission, approval, activity, import).");
     const b = parsed.data as Record<string, unknown> & { type: string };
-    const sessionId = typeof b.sessionId === "string" ? b.sessionId : null;
-    const actor: HqActor = { kind: "agent", keyName: key.name, sessionId: null };
+    let sessionId: string | null = null;
+    if (typeof b.sessionId === "string" && b.sessionId) {
+      try {
+        sessionId = normalizeSessionId(b.sessionId);
+      } catch {
+        throw new HttpError(400, "That isn't a chat id (it looks like session_01ABC...).");
+      }
+    }
+    const actor: HqActor = { kind: "agent", keyName: key.name, sessionId };
     const db = getDb();
     try {
       switch (b.type) {
@@ -56,7 +59,8 @@ export async function POST(req: Request) {
           return NextResponse.json({ ok: true });
         }
         case "mission": {
-          const { type: _t, id, ...rest } = b;
+          const { type: _t, id, sessionId: _s, ...rest } = b;
+          if (sessionId) (rest as Record<string, unknown>).sessionId = sessionId;
           if (typeof id === "string" && id) return NextResponse.json({ ok: true, id: (await updateMission(db, actor, id, rest as never)).id });
           return NextResponse.json({ ok: true, id: (await createMission(db, actor, rest as never)).id });
         }

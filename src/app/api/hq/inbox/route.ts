@@ -1,19 +1,16 @@
-import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { getDb } from "@/server/db/client";
 import { isHqRole } from "@/server/hq/team";
-import { enforceRateLimit, errorResponse, HttpError } from "@/server/http";
-import { agentInbox, resolveHqKey } from "@/server/services/hq";
+import { errorResponse, HttpError } from "@/server/http";
+import { authenticateHq } from "@/server/hq/request";
+import { agentInbox } from "@/server/services/hq";
 
 export const dynamic = "force-dynamic";
 
 /** What a chat should pick up: its open missions and the owner's decisions. Authenticated by an HQ key (public route in proxy.ts). */
 export async function GET(req: Request) {
   try {
-    const raw = req.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1] ?? "";
-    await enforceRateLimit(`hq:${createHash("sha256").update(raw).digest("hex").slice(0, 16)}`, 600, 3600);
-    const key = raw ? await resolveHqKey(getDb(), raw) : null;
-    if (!key) throw new HttpError(401, "Invalid or revoked key.");
+    await authenticateHq(req);
     const params = new URL(req.url).searchParams;
     const role = params.get("role");
     if (role && !isHqRole(role)) throw new HttpError(400, "Unknown role.");
