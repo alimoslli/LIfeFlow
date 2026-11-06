@@ -27,6 +27,8 @@ Whenever Dev gets something wrong (the owner's use, a tester, a thumbs-down, an 
 
 The owner asked for the agents to keep running: audit the app (phone and web), fix it, research competitors and what real people want, and check that every piece of information is correct. The product chat runs this on a schedule and reviews every result.
 
+**Light in the day, heavy at night (owner, 2026-11-05).** The owner's Claude usage has a 5-hour limit. During the day, agents do only light work: answering the owner, small fixes, short checks. Audits, builders, reviewers, situation batches, research, full test runs and e2e run in the night round, so the limit resets by morning.
+
 **The owner's hours (owner, 2026-11-05):** rounds start about 10 PM Pacific. The report and the yes or no list reach the owner by 11:45 PM. After 12 AM the work goes on without waiting for anyone: a question after midnight is "if you're up", and its item moves to the next day's list.
 
 **Every night (about 10 PM)**
