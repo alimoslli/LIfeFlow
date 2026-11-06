@@ -25,10 +25,17 @@ export function scanTransactions(txns: ScanTxn[], today: string, opts: { days?: 
     const k = `${merchantKey(t)}|${t.amountCents}`;
     sameAmountDays.set(k, (sameAmountDays.get(k) ?? new Set()).add(t.date));
   }
+  // Money the merchant gave back: a double charge already refunded (or refunded and charged again) is settled.
+  const refunds = txns.filter((t) => !t.pending && t.amountCents > 0 && (t.kind === "refund" || t.kind === "reimbursement"));
+  const refunded = (a: ScanTxn, b: ScanTxn) =>
+    refunds.some((r) => merchantKey(r) === merchantKey(a) && r.amountCents === -a.amountCents && r.date >= a.date && daysBetween(b.date, r.date) <= 14);
   const doubleCharges: { merchant: string; amountCents: number; dates: [string, string] }[] = [];
   const seen = new Set<string>();
+  const series = detectRecurring(txns);
+  // Amounts a bill or subscription charges: whether two of them close together are a double charge is the series' call.
+  const recurringAmount = new Set(series.flatMap((c) => c.charges.map((x) => `${c.merchantKey}|${x.amountCents}`)));
   // A recurring charge billed a second time beside its usual one (Spotify twice on Oct 15), even after years of history.
-  for (const c of detectRecurring(txns))
+  for (const c of series)
     for (const d of c.duplicates) {
       const k = `${c.merchantKey}|${d.amountCents}`;
       if (seen.has(k) || d.dates[1] < from || d.dates[1] > today || -d.amountCents < 500 || isBankFee({ description: d.label, merchantName: null })) continue;
@@ -40,9 +47,9 @@ export function scanTransactions(txns: ScanTxn[], today: string, opts: { days?: 
     const a = sorted[i];
     if (-a.amountCents < 500 || isBankFee(a)) continue;
     const k = `${merchantKey(a)}|${a.amountCents}`;
-    if (seen.has(k) || (sameAmountDays.get(k)?.size ?? 0) > 3) continue;
+    if (seen.has(k) || recurringAmount.has(k) || (sameAmountDays.get(k)?.size ?? 0) > 3) continue;
     const b = sorted.slice(i + 1).find((x) => x !== a && `${merchantKey(x)}|${x.amountCents}` === k && daysBetween(a.date, x.date) <= 2);
-    if (!b) continue;
+    if (!b || refunded(a, b)) continue;
     seen.add(k);
     doubleCharges.push({ merchant: a.merchantName || a.description, amountCents: -a.amountCents, dates: [a.date, b.date] });
   }

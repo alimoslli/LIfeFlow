@@ -61,3 +61,36 @@ describe("double charges on bills and subscriptions, however long they've run (A
     expect(scanTransactions(days.map(latte), "2026-11-05").doubleCharges).toEqual([]);
   });
 });
+
+describe("no false double charges (review 6)", () => {
+  const charge = (date: string, amountCents: number, description = "Spotify USA", kind = amountCents < 0 ? "expense" : "refund") => ({
+    date,
+    amountCents,
+    merchantName: null,
+    description,
+    kind,
+  });
+  const months = (from: number, to: number, day: string, cents: number, description?: string) =>
+    Array.from({ length: to - from + 1 }, (_, i) => charge(`2026-${String(from + i).padStart(2, "0")}-${day}`, cents, description));
+
+  it("leaves out a double charge already refunded, and a refund followed by a fresh charge", () => {
+    const base = months(5, 9, "15", -1_199);
+    expect(
+      scanTransactions([...base, charge("2026-10-15", -1_199), charge("2026-10-15", -1_199), charge("2026-10-17", 1_199)], "2026-11-05").doubleCharges,
+    ).toEqual([]);
+    expect(
+      scanTransactions([...base, charge("2026-10-15", -1_199), charge("2026-10-15", 1_199), charge("2026-10-16", -1_199)], "2026-11-05").doubleCharges,
+    ).toEqual([]);
+  });
+
+  it("treats a second line or plan billed beside the first every month as two items, after its first month", () => {
+    const line = months(1, 10, "13", -4_500, "VERIZON WIRELESS PAYMENTS");
+    const second = (to: number) => months(9, to, "13", -4_500, "VERIZON WIRELESS PAYMENTS");
+    // September: a new line or a double charge? It's flagged once...
+    expect(scanTransactions([...line.slice(0, 9), ...second(9)], "2026-09-20").doubleCharges).toHaveLength(1);
+    // ...and from October, when it's billed again, it's a second line.
+    expect(scanTransactions([...line, ...second(10)], "2026-10-20").doubleCharges).toEqual([]);
+    const plans = [...months(1, 10, "15", -1_549, "NETFLIX.COM"), ...months(9, 10, "16", -1_549, "NETFLIX.COM")];
+    expect(scanTransactions(plans, "2026-10-20").doubleCharges).toEqual([]);
+  });
+});

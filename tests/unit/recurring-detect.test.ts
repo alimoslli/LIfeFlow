@@ -217,9 +217,29 @@ describe("a double charge on a long-running subscription (A7)", () => {
     expect(next).toMatchObject({ occurrences: 4, nextExpectedDate: "2026-11-15", duplicates: [{ dates: ["2026-10-15", "2026-10-16"], amountCents: -1_199 }] });
   });
 
-  it("doesn't call two identical subscriptions billed together every month a double charge", () => {
+  it("calls a pair billed together every cycle two items, not a double charge", () => {
     const twice = months("2026-06-15", 5).flatMap((d) => spotify([d, d]));
-    expect(detectRecurring(twice)[0].duplicates).toEqual([]);
+    expect(detectRecurring(twice).map((c) => [c.occurrences, c.duplicates])).toEqual([
+      [5, []],
+      [5, []],
+    ]);
+    // Two iCloud plans a day apart, and a class on Mondays and Wednesdays at the same price.
+    const icloud = [...months("2025-11-14", 12), ...months("2025-11-15", 12)].map((d) => tx(d, -299, "Apple", "APPLE.COM/BILL"));
+    expect(
+      detectRecurring(icloud)
+        .map((c) => [c.frequency, c.occurrences, c.dueDay])
+        .sort(),
+    ).toEqual([
+      ["monthly", 12, 14],
+      ["monthly", 12, 15],
+    ]);
+    const classes = [...every("2026-08-03", 7, 12), ...every("2026-08-05", 7, 12)].map((d) =>
+      tx(d, -1_500, null, "SQ *YOGA LOFT", { categoryName: "Fitness" }),
+    );
+    expect(detectRecurring(classes).map((c) => [c.frequency, c.occurrences, c.latestAmountCents])).toEqual([
+      ["weekly", 12, -1_500],
+      ["weekly", 12, -1_500],
+    ]);
   });
 });
 

@@ -292,38 +292,28 @@ type Cycle = { t: DetectTxn; extra: DetectTxn[] };
 const DUPLICATE_DAYS = 2;
 
 /**
- * Charges of the same amount on the same day are one charge billed twice. Within 2 days too, unless the
- * merchant often bills that way (a class on Mondays and Wednesdays): then they stay separate charges.
+ * One cycle per charge, with the same-amount charges within 2 days of it beside it. Whether those are a
+ * double charge or a second item billed together (a class on Mondays and Wednesdays, a second phone line)
+ * is decided from the series (`duplicatesOf`, `parallelOf`).
  */
 function cyclesOf(sorted: DetectTxn[]): Cycle[] {
   const cycles: Cycle[] = [];
   for (const t of sorted) {
-    // Sorted by date, so a same-day copy is among the last few.
-    let same: Cycle | undefined;
-    for (let j = cycles.length - 1; j >= 0 && cycles[j].t.date === t.date && !same; j--) if (cycles[j].t.amountCents === t.amountCents) same = cycles[j];
-    if (same) same.extra.push(t);
+    // Sorted by date, so a cycle this charge repeats is among the last few: the same amount within 2 days of its first charge.
+    let first: Cycle | undefined;
+    for (let j = cycles.length - 1; j >= 0 && daysBetween(cycles[j].t.date, t.date) <= DUPLICATE_DAYS && !first; j--)
+      if (cycles[j].t.amountCents === t.amountCents) first = cycles[j];
+    if (first) first.extra.push(t);
     else cycles.push({ t, extra: [] });
   }
-  // The earlier charge of the same amount at most 2 days before, if any.
-  const firstOf = (i: number) => {
-    for (let j = i - 1; j >= 0 && daysBetween(cycles[j].t.date, cycles[i].t.date) <= DUPLICATE_DAYS; j--)
-      if (cycles[j].t.amountCents === cycles[i].t.amountCents) return j;
-    return -1;
-  };
-  const near = new Map<number, number>();
-  cycles.forEach((_, i) => {
-    const j = firstOf(i);
-    if (j >= 0) near.set(i, j);
-  });
-  if (!near.size || near.size > Math.max(1, Math.floor(cycles.length / 3))) return cycles;
-  // Fold each into the charge it repeats (following a chain of repeats back to the first).
-  const home = (i: number): number => (near.has(i) ? home(near.get(i)!) : i);
-  for (const [i] of near) cycles[home(i)].extra.push(cycles[i].t, ...cycles[i].extra);
-  return cycles.filter((_, i) => !near.has(i));
+  return cycles;
 }
 
-/** `strict`: a price picked out of a merchant that also bills other things (Apple, Amazon) needs 3 charges, never 2. */
-type Context = { key: string; strict?: boolean };
+/**
+ * `strict`: a price picked out of a merchant that also bills other things (Apple, Amazon) needs 3 charges, never 2.
+ * `refunds`: money that merchant gave back, so a double charge already refunded isn't reported.
+ */
+type Context = { key: string; strict?: boolean; refunds?: { date: string; amountCents: number }[] };
 /** A series before it's given its series key. */
 type Found = Omit<RecurringCandidate, "seriesKey"> & { cycles: Cycle[] };
 
@@ -343,7 +333,8 @@ function runsOf(cycles: Cycle[]) {
 }
 
 /** Scores charges as one series: a steady interval, a steady amount (or a few clean price changes), and enough of them. */
-function evaluate(cycles: Cycle[], { key, strict }: Context): Found | null {
+function evaluate(cycles: Cycle[], ctx: Context): Found | null {
+  const { key, strict } = ctx;
   if (cycles.length < 2) return null;
   const ts = cycles.map((c) => c.t);
   const last = ts[ts.length - 1];
@@ -423,20 +414,47 @@ function evaluate(cycles: Cycle[], { key, strict }: Context): Found | null {
     dueDay,
     priceChange,
     charges: ts.map((t) => ({ date: t.date, amountCents: t.amountCents })),
-    duplicates: duplicatesOf(cycles),
+    duplicates: duplicatesOf(cycles, ctx.refunds ?? []),
     confidence,
     cycles,
   };
 }
 
-/** Cycles billed more often than this series usually is: a second charge of the same amount within 2 days. */
-function duplicatesOf(cycles: Cycle[]): RecurringCandidate["duplicates"] {
-  const usual = median(cycles.map((c) => 1 + c.extra.length));
-  return cycles
-    .filter((c) => 1 + c.extra.length > usual)
-    .flatMap((c) =>
-      c.extra.map((x) => ({ dates: [c.t.date, x.date] as [string, string], amountCents: x.amountCents, label: x.merchantName || x.description })),
-    );
+/**
+ * A second charge beside one of the series' charges, in a cycle whose neighbours were billed once: a double
+ * charge. The same pair cycle after cycle is two items (a second phone line, two family plans), and a charge
+ * the merchant refunded (or refunded and charged again) is settled, so neither is reported.
+ */
+function duplicatesOf(cycles: Cycle[], refunds: { date: string; amountCents: number }[]): RecurringCandidate["duplicates"] {
+  const doubled = (i: number) => (cycles[i]?.extra.length ?? 0) > 0;
+  const refunded = (c: Cycle, x: DetectTxn) => refunds.some((r) => r.amountCents === -x.amountCents && r.date >= c.t.date && daysBetween(x.date, r.date) <= 14);
+  return cycles.flatMap((c, i) =>
+    doubled(i) && !doubled(i - 1) && !doubled(i + 1)
+      ? c.extra
+          .filter((x) => !refunded(c, x))
+          .map((x) => ({ dates: [c.t.date, x.date] as [string, string], amountCents: x.amountCents, label: x.merchantName || x.description }))
+      : [],
+  );
+}
+
+/**
+ * The second item behind a pair billed together cycle after cycle (a second line, a second plan a day later):
+ * the extra charges of a run of doubled cycles, as their own series.
+ */
+function parallelOf(f: Found, ctx: Context): Found[] {
+  const runs: Cycle[][] = [];
+  f.cycles.forEach((c, i) => {
+    if (!c.extra.length) return;
+    const extra = { t: c.extra[0], extra: c.extra.slice(1) };
+    if (i > 0 && f.cycles[i - 1].extra.length) runs[runs.length - 1].push(extra);
+    else runs.push([extra]);
+  });
+  return runs
+    .filter((r) => r.length >= 2)
+    .flatMap((r) => {
+      const p = evaluate(r, { ...ctx, strict: false });
+      return p ? [p, ...parallelOf(p, ctx)] : [];
+    });
 }
 
 /**
@@ -495,6 +513,11 @@ function seriesIn(cycles: Cycle[], ctx: Context): Found[] {
  * A one-off purchase from the same merchant joins none.
  */
 function seriesOf(cycles: Cycle[], ctx: Context): Found[] {
+  const found = mainSeriesOf(cycles, ctx);
+  return [...found, ...found.flatMap((f) => parallelOf(f, ctx))];
+}
+
+function mainSeriesOf(cycles: Cycle[], ctx: Context): Found[] {
   if (cycles.length < 2) return [];
   // Only money going out is split by price, and a café or grocery store only when it sells a subscription (DashPass).
   const last = cycles[cycles.length - 1].t;
@@ -562,8 +585,9 @@ function seriesOf(cycles: Cycle[], ctx: Context): Found[] {
 
 /**
  * Finds series of charges (or deposits) from the same merchant at a regular interval.
- * - A pending charge counts only when no posted copy sits beside it; a second charge of the same amount
- *   within 2 days is one charge billed twice (reported in `duplicates`), unless the merchant often bills that way.
+ * - A pending charge counts only when no posted copy sits beside it. A second charge of the same amount
+ *   within 2 days is a double charge (`duplicates`) when the cycles around it were billed once and it wasn't
+ *   refunded; the same pair cycle after cycle is a second item, with its own series.
  * - A series that missed its last expected charge has stopped and isn't returned (`today`, by default the
  *   newest transaction's date).
  * - 3+ charges (2 for yearly) at a steady interval and amount; bills (rent, utilities, phone, insurance)
@@ -591,6 +615,11 @@ export function detectRecurring(txns: DetectTxn[], opts: { today?: string } = {}
         Math.abs(u.amountCents - t.amountCents) <= Math.max(Math.abs(t.amountCents) * 0.2, 100) &&
         Math.abs(daysBetween(u.date, t.date)) <= 7,
     );
+  // Money merchants gave back, by merchant: a refunded double charge is settled.
+  const refunds = Map.groupBy(
+    txns.filter((t) => !t.pending && t.amountCents > 0 && (t.kind === "refund" || t.kind === "reimbursement")),
+    (t) => merchantKey(t),
+  );
   const groups = new Map<string, DetectTxn[]>();
   for (const t of txns) {
     if (t.kind === "adjustment" || (t.pending && hasPostedCopy(t))) continue;
@@ -609,7 +638,7 @@ export function detectRecurring(txns: DetectTxn[], opts: { today?: string } = {}
     const key = k.split("|")[0];
     const sorted = [...list].sort((a, b) => a.date.localeCompare(b.date));
     // A series that missed its last expected charge (by a week, or a quarter of its period) has stopped.
-    const found = seriesOf(cyclesOf(sorted), { key })
+    const found = seriesOf(cyclesOf(sorted), { key, refunds: refunds.get(key) ?? [] })
       .filter((f) => daysBetween(f.nextExpectedDate, today) <= Math.max(7, PERIODS.find((p) => p.freq === f.frequency)!.days * 0.25))
       .sort((a, b) => a.charges[0].date.localeCompare(b.charges[0].date));
     found.forEach(({ cycles: _cycles, ...series }, i) => out.push({ ...series, seriesKey: i === 0 ? key : `${key}~${i + 1}` }));
