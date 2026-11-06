@@ -4,7 +4,17 @@ import type { UserScope } from "../../db/with-user";
 import { addDaysStr, daysBetween } from "@/lib/dates";
 import { amountsClose, nameRelation, SLACK_DAYS, scheduleGap, trackedKeys } from "../finance/bill-match";
 import { createTransaction } from "../finance/transactions";
-import { attachReceipt, contentSigFor, findPurchaseTwin, handAccount, isStrongSig, RECEIPT_WAIT_DAYS, WAITING_FOR_BANK } from "./dedupe";
+import {
+  attachReceipt,
+  contentSigFor,
+  differentPairs,
+  pairKey,
+  findPurchaseTwin,
+  handAccount,
+  isStrongSig,
+  RECEIPT_WAIT_DAYS,
+  WAITING_FOR_BANK,
+} from "./dedupe";
 import type { Extraction } from "./extract";
 
 /**
@@ -181,11 +191,14 @@ export async function collapseInboxDuplicates(scope: UserScope, opts: { limit?: 
     (a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id),
   );
   const cur = new Map(bills.map((b) => [b.id, b]));
+  // Bills the person answered "No, keep both" about are never merged again.
+  const apart = await differentPairs(scope);
   for (const b of bills) {
     if (!madeByInbox.has(b.id) || !cur.has(b.id) || !b.nextDueDate) continue;
     const fits = [...cur.values()].filter(
       (o) =>
         o.id !== b.id &&
+        !apart.has(pairKey(o.id, b.id)) &&
         !!o.nextDueDate &&
         o.status === b.status &&
         o.kind !== "income" &&

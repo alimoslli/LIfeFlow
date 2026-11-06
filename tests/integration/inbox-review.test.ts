@@ -174,10 +174,10 @@ describe("review fixes: nothing is merged on a guess", () => {
     const after = await rows();
     expect(after).toHaveLength(1);
     expect(dayOf(after[0].dueAt)).toBe("2026-11-19");
-    // Undo puts the email's change back without touching the key either.
-    await run((s) => undoInboxItem(s, r.id));
+    // Canvas changed the date after the email did, so Undo refuses (it would throw Canvas's date away) and the key stays.
+    await expect(run((s) => undoInboxItem(s, r.id))).rejects.toThrow(/changed after/);
     [row] = await rows();
-    expect(row.dedupeKey).toBe("canvas:555");
+    expect([row.dedupeKey, dayOf(row.dueAt)]).toEqual(["canvas:555", "2026-11-19"]);
   });
 
   it("8: without the sender check, no email changes a bill, an exam or a bank charge", async () => {
@@ -548,5 +548,246 @@ describe("questions the person answers (Same bill? / Did it move?)", () => {
         [-4500, "2026-11-12"],
       ].sort(),
     );
+  });
+});
+
+describe("round 2: accounts, unrelated names, several candidates, Undo after a later change", () => {
+  const asked = (item: { extracted: unknown }) =>
+    (item.extracted as { ask?: { sameAs?: string; candidates?: string[]; options?: { id: string; label: string }[]; text: string } }).ask;
+  const dayN = (n: number, back: number) => {
+    const d = new Date(`${today}T12:00:00Z`);
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - back, n)).toISOString().slice(0, 10);
+  };
+  const bills = async (run: Awaited<ReturnType<typeof setup>>["run"]) =>
+    (await run((s) => s.tx.select().from(recurringItems))).map((b) => [b.name, b.amountCents, b.nextDueDate]).sort();
+  const verizonBank = (run: Awaited<ReturnType<typeof setup>>["run"]) =>
+    run(async (s) => {
+      const a = await createManualAccount(s, { name: "Checking", type: "depository", currentBalanceCents: 500_000 });
+      for (const back of [1, 2, 3, 4, 5])
+        await createTransaction(s, {
+          accountId: a.id,
+          date: dayN(15, back),
+          description: "VERIZON WIRELESS",
+          merchantName: "VERIZON WIRELESS",
+          amountCents: -4500,
+        });
+    });
+
+  it("H1a: another line (account 2222) is never swallowed by a bill through its bank series, and 3333 never overwrites line 1111", async () => {
+    const { run, file } = await setup();
+    await verizonBank(run);
+    const due = dayN(15, -1);
+    const a = await file(billEx("Verizon", 45, due, "acct 1111"), { messageId: "a@vz" });
+    expect(a.filed[0].kind).toBe("recurring");
+    const b = await file(billEx("Verizon", 45, due, "acct 2222"), { messageId: "b@vz" });
+    expect(b.filed.map((f) => f.kind)).not.toContain("recurring_update");
+    const c = await file(billEx("Verizon", 45, dayN(15, -2), "acct 3333"), { messageId: "c@vz" });
+    expect(c.filed.map((f) => f.kind)).not.toContain("recurring_update");
+    const rows = await run((s) => s.tx.select().from(recurringItems));
+    expect(rows.find((r) => r.id === a.filed[0].id)!.nextDueDate).toBe(due);
+  });
+
+  it("H1b: a bill with no number on record is asked about, not overwritten by a line with a number; a yes records it, so it is asked once", async () => {
+    const { run, file } = await setup();
+    await run((s) => createRecurring(s, { name: "Austin Energy", amountCents: -8200, frequency: "monthly", nextDueDate: "2026-11-05", kind: "bill" }));
+    const q = await file(billEx("Austin Energy", 79, "2026-11-05", "acct 7788"), { messageId: "w1@ae" });
+    expect(q.status).toBe("needs_review");
+    expect(asked(q)!.text).toContain("Same bill?");
+    expect(await bills(run)).toEqual([["Austin Energy", -8200, "2026-11-05"]]);
+    await run((s) => answerQuestion(s, TZ, today, q.id, true));
+    const next = await file(billEx("Austin Energy", 79, "2026-12-05", "acct 7788"), { messageId: "w2@ae" });
+    expect(asked(next)).toBeUndefined();
+    expect(next.filed.map((f) => f.kind)).toContain("recurring_update");
+    // A different number is another bill, with no card.
+    const other = await file(billEx("Austin Energy", 79, "2026-12-05", "acct 9900"), { messageId: "w3@ae" });
+    expect(other.filed.map((f) => f.kind)).toContain("recurring");
+  });
+
+  it("H2: rent paid by Zelle is not overwritten by a loan email of a similar size; it is a card", async () => {
+    const { run, file } = await setup();
+    await run(async (s) => {
+      const a = await createManualAccount(s, { name: "Checking", type: "depository", currentBalanceCents: 900_000 });
+      for (const back of [1, 2, 3, 4, 5])
+        await createTransaction(s, {
+          accountId: a.id,
+          date: dayN(1, back),
+          description: "ZELLE TO JOHN SMITH",
+          merchantName: "ZELLE TO JOHN SMITH",
+          amountCents: -120000,
+        });
+      await createRecurring(s, { name: "Rent", amountCents: -120000, frequency: "monthly", nextDueDate: dayN(1, -1), kind: "bill" });
+    });
+    const loan = await file(billEx("Nelnet", 1180, dayN(3, -1)), { messageId: "loan@nelnet" });
+    expect(loan.status).toBe("needs_review");
+    expect(asked(loan)).toBeDefined();
+    expect(loan.filed).toEqual([]);
+    expect(await bills(run)).toEqual([["Rent", -120000, dayN(1, -1)]]);
+    // No keeps both: the loan becomes its own bill and Rent stays at $1,200.
+    await run((s) => answerQuestion(s, TZ, today, loan.id, false));
+    expect(await bills(run)).toEqual([
+      ["Nelnet", -118000, dayN(3, -1)],
+      ["Rent", -120000, dayN(1, -1)],
+    ]);
+  });
+
+  it("M1: with several candidates the person taps the one it is (only an offered one), or says it is a new bill", async () => {
+    const { run, file } = await setup();
+    const ids = await run(async (s) => {
+      const a = await createRecurring(s, { name: "Verizon", amountCents: -4500, frequency: "monthly", nextDueDate: "2026-11-12", kind: "bill" });
+      const b = await createRecurring(s, { name: "Verizon", amountCents: -4500, frequency: "monthly", nextDueDate: "2026-11-14", kind: "bill" });
+      return [a.id, b.id];
+    });
+    const q = await file(billEx("Verizon", 45, "2026-12-12"), { messageId: "m1@vz" });
+    const ask = asked(q)!;
+    expect(ask.options!.map((o) => o.id).sort()).toEqual([...ids].sort());
+    expect(new Set(ask.options!.map((o) => o.label)).size).toBe(2); // told apart by their next due date
+    await expect(run((s) => answerQuestion(s, TZ, today, q.id, true))).rejects.toThrow();
+    await expect(run((s) => answerQuestion(s, TZ, today, q.id, true, "00000000-0000-0000-0000-000000000000"))).rejects.toThrow();
+    await run((s) => answerQuestion(s, TZ, today, q.id, true, ids[0]));
+    const rows = await run((s) => s.tx.select().from(recurringItems));
+    expect(rows).toHaveLength(2);
+    expect(rows.find((r) => r.id === ids[0])!.nextDueDate).toBe("2026-12-12");
+    expect(rows.find((r) => r.id === ids[1])!.nextDueDate).toBe("2026-11-14");
+    // "A new bill" adds one instead.
+    const q2 = await file(billEx("Verizon", 45, "2026-12-14"), { messageId: "m2@vz" });
+    await run((s) => answerQuestion(s, TZ, today, q2.id, false));
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(3);
+  });
+
+  it("M2: Undo of an earlier update refuses once a newer one changed the bill, and the question stays answered", async () => {
+    const { run, file } = await setup();
+    await run((s) => createRecurring(s, { name: "Verizon", amountCents: -4500, frequency: "monthly", nextDueDate: "2026-11-12", kind: "bill" }));
+    const q = await file(billEx("Verizon", 50, "2026-11-12"), { messageId: "q@vz" });
+    await run((s) => answerQuestion(s, TZ, today, q.id, true));
+    const dec = await file(billEx("Verizon", 50, "2026-12-12"), { messageId: "dec@vz" });
+    expect(dec.filed.map((f) => f.kind)).toContain("recurring_update");
+    await expect(run((s) => undoInboxItem(s, q.id))).rejects.toThrow(/Undo the newer one first/);
+    const [bill] = await run((s) => s.tx.select().from(recurringItems));
+    expect([bill.amountCents, bill.nextDueDate]).toEqual([-5000, "2026-12-12"]);
+    const [item] = await run((s) => s.tx.select().from(inboxItems).where(eq(inboxItems.id, q.id)));
+    expect([item.status, asked(item)!.sameAs !== undefined, (item.extracted as { ask: { answered?: string } }).ask.answered]).toEqual(["filed", true, "same"]);
+    // Newest first works: both go back.
+    await run((s) => undoInboxItem(s, dec.id));
+    await run((s) => undoInboxItem(s, q.id));
+    expect((await run((s) => s.tx.select().from(recurringItems)))[0].amountCents).toBe(-4500);
+  });
+
+  it("M2: the same for an exam moved twice", async () => {
+    const { run, file } = await setup();
+    const c = await run(async (s) => {
+      const c = await createCourse(s, { name: "Calculus II", code: "MATH 152" });
+      await createAssignment(s, TZ, { courseId: c.id, title: "Exam 1", kind: "exam", dueDate: "2026-11-03" });
+      return c;
+    });
+    const days = async () => (await run((s) => s.tx.select().from(assignments))).filter((a) => a.courseId === c.id).map((a) => dayOf(a.dueAt));
+    const q = await file(examEx("MATH 152", "Exam 1", "2026-11-19", { moved: true }), { messageId: "x1@s.edu" });
+    await run((s) => answerQuestion(s, TZ, today, q.id, true));
+    const later = await file(examEx("MATH 152", "Exam 1", "2026-11-24", { moved: true, old: "2026-11-19" }), { messageId: "x2@s.edu" });
+    expect(later.filed.map((f) => f.kind)).toEqual(["assignment_update"]);
+    await expect(run((s) => undoInboxItem(s, q.id))).rejects.toThrow(/Undo the newer one first/);
+    expect(await days()).toEqual(["2026-11-24"]);
+  });
+
+  it("M3: Yes on a same-cycle correction updates the one reminder instead of adding a second; Undo puts its title back", async () => {
+    const { run, file } = await setup();
+    await file(billEx("Verizon", 45, "2026-11-12"), { messageId: "1@vz" });
+    const q = await file(billEx("Verizon", 50, "2026-11-12"), { messageId: "2@vz" });
+    expect(asked(q)).toBeDefined();
+    await run((s) => answerQuestion(s, TZ, today, q.id, true));
+    let t = await run((s) => s.tx.select().from(tasks));
+    expect(t.map((x) => x.title)).toEqual(["Pay Verizon ($50.00)"]);
+    await run((s) => undoInboxItem(s, q.id));
+    t = await run((s) => s.tx.select().from(tasks));
+    expect(t.map((x) => x.title)).toEqual(["Pay Verizon ($45.00)"]);
+  });
+
+  it("L1: a Yes on a stale card files nothing", async () => {
+    const { run, file } = await setup();
+    await run((s) => createRecurring(s, { name: "Verizon", amountCents: -4500, frequency: "monthly", nextDueDate: "2026-11-12", kind: "bill" }));
+    const q = await file(billEx("Verizon", 50, "2026-11-12"), { messageId: "q@vz" });
+    await file(billEx("Verizon", 45, "2026-12-12"), { messageId: "dec@vz" });
+    const r = await run((s) => answerQuestion(s, TZ, today, q.id, true));
+    expect(r.filed).toEqual([]);
+    expect((await run((s) => s.tx.select().from(recurringItems)))[0].nextDueDate).toBe("2026-12-12");
+  });
+
+  it("L2: a Yes is refused when the exam was renamed or moved since it was asked", async () => {
+    const { run, file } = await setup();
+    const c = await run(async (s) => {
+      const c = await createCourse(s, { name: "Calculus II", code: "MATH 152" });
+      await createAssignment(s, TZ, { courseId: c.id, title: "Exam 1", kind: "exam", dueDate: "2026-11-03" });
+      return c;
+    });
+    const q = await file(examEx("MATH 152", "Exam 1", "2026-11-19", { moved: true }), { messageId: "x1@s.edu" });
+    await run((s) => s.tx.update(assignments).set({ title: "Midterm" }).where(eq(assignments.courseId, c.id)));
+    const r = await run((s) => answerQuestion(s, TZ, today, q.id, true));
+    expect(r.filed).toEqual([]);
+    const [row] = await run((s) => s.tx.select().from(assignments).where(eq(assignments.courseId, c.id)));
+    expect(dayOf(row.dueAt)).toBe("2026-11-03");
+  });
+
+  it("L3: a forwarded look-alike gets the one-tap 'File this?' and the true reason, not 'unchecked address'", async () => {
+    const { run, file } = await setup();
+    await file(billEx("Xfinity", 64.99, "2026-11-20"), { messageId: "t1@x.com" });
+    const fwd = await run((s) =>
+      processForwardedEmail(
+        s,
+        TZ,
+        today,
+        { channel: "email", subject: "Fwd", text: "x", files: [], messageId: "t2@gmail.com" },
+        fixed(billEx("Xfinity", 64.99, "2026-11-20")),
+      ),
+    );
+    expect(fwd.status).toBe("suggested");
+    expect(fwd.reason).toContain("already have");
+    expect(fwd.reason).not.toContain("check");
+  });
+
+  it("L6: two taps on File this? file it once", async () => {
+    const { run } = await setup();
+    const fwd = await run((s) =>
+      processForwardedEmail(
+        s,
+        TZ,
+        today,
+        { channel: "email", subject: "Fwd", text: "x", files: [], messageId: "f1@gmail.com" },
+        fixed(billEx("Hulu", 12, "2026-11-20")),
+      ),
+    );
+    await run((s) => fileSuggestion(s, TZ, today, fwd.id));
+    await expect(run((s) => fileSuggestion(s, TZ, today, fwd.id))).rejects.toThrow();
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(1);
+  });
+
+  it("L5: the cleanup never re-merges bills the person answered 'No, keep both' about", async () => {
+    const { run, user } = await setup();
+    const ids = await run(async (s) => {
+      const a = await createRecurring(s, { name: "Xfinity", amountCents: -6499, frequency: "monthly", nextDueDate: "2026-11-20", kind: "bill" }, "detected");
+      const b = await createRecurring(s, { name: "Xfinity", amountCents: -6999, frequency: "monthly", nextDueDate: "2026-12-20", kind: "bill" }, "detected");
+      await s.tx
+        .update(recurringItems)
+        .set({ createdAt: new Date("2026-11-01T00:00:00Z") })
+        .where(eq(recurringItems.id, a.id));
+      await s.tx.insert(inboxItems).values({
+        userId: s.userId,
+        channel: "email",
+        status: "filed",
+        type: "bill",
+        extracted: {
+          ...base,
+          summary: "s",
+          ...billEx("Xfinity", 69.99, "2026-12-20"),
+          ask: { kind: "bill", text: "x", verified: true, candidates: [a.id], answered: "different" },
+        },
+        filed: [{ kind: "recurring", id: b.id, label: "b" }],
+        receivedAt: new Date(Date.UTC(2026, 9, 2)),
+        messageId: "dec@x",
+      });
+      return [a.id, b.id];
+    });
+    void user;
+    expect((await run((s) => collapseInboxDuplicates(s))).bills).toBe(0);
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(2);
+    void ids;
   });
 });

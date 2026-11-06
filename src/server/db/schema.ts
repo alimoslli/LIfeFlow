@@ -1368,6 +1368,8 @@ export type InboxFiled = {
   href?: string;
   /** What the row held before an update (Undo restores it). */
   prev?: Record<string, unknown>;
+  /** What the update wrote: Undo restores `prev` only while the row still holds this (a newer change is never thrown away). */
+  next?: Record<string, unknown>;
   /** Set when the cleanup pointed this entry at the row that stayed after a merge (Undo of the merge removes it). */
   merged?: true;
 };

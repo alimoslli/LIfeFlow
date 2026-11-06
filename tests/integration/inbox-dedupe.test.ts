@@ -8,7 +8,7 @@ import { createManualAccount } from "@/server/services/finance/accounts";
 import { bankSeries, createRecurring } from "@/server/services/finance/planning";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { createAssignment, createCourse } from "@/server/services/school";
-import { answerSameBill, processDocument, undoInboxItem } from "@/server/services/inbox";
+import { answerQuestion, processDocument, undoInboxItem } from "@/server/services/inbox";
 import { attachWaitingReceipts, collapseInboxDuplicates, runInboxCleanupOnce } from "@/server/services/inbox/cleanup";
 import { contentSigFor, normalizeMessageId } from "@/server/services/inbox/dedupe";
 import type { Extraction } from "@/server/services/inbox/extract";
@@ -66,7 +66,7 @@ describe("Gmail items show up once", () => {
     expect(sameAcct.status).toBe("duplicate");
     expect(sameAcct.duplicateOf).toBe(withAcct.id);
     // Answering "yes, same bill" closes the suggestion; "no" files it as its own bill.
-    expect((await run((s) => answerSameBill(s, TZ, today, hand.id, true))).status).toBe("duplicate");
+    expect((await run((s) => answerQuestion(s, TZ, today, hand.id, true))).status).toBe("duplicate");
     const n = await rows(async (s) => ({ bills: (await s.tx.select().from(recurringItems)).length, tasks: (await s.tx.select().from(tasks)).length }));
     expect(n).toEqual({ bills: 2, tasks: 2 }); // Xfinity, plus the $90 account 5521 bill
   });
@@ -120,7 +120,12 @@ describe("Gmail items show up once", () => {
         });
     });
     const due = fifteenth(-1) > today ? fifteenth(-1) : fifteenth(-2);
-    const first = await file(billEx("Federal Student Aid", 214.37, due), { messageId: "fsa1@ed.gov" });
+    // The names differ, so it is a card (same amount and day is not proof): nothing is added until the person says yes.
+    const asked = await file(billEx("Federal Student Aid", 214.37, due), { messageId: "fsa1@ed.gov" });
+    expect(asked.status).toBe("needs_review");
+    expect(asked.reason).toContain("Same bill?");
+    expect(await rows((s) => s.tx.select().from(recurringItems))).toHaveLength(0);
+    const first = await run((s) => answerQuestion(s, TZ, today, asked.id, true));
     expect(first.filed[0].kind).toBe("recurring");
     expect(first.filed[0].label).toContain("same as your bank's");
     // The second email is the same bill again.

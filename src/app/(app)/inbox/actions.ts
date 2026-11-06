@@ -49,12 +49,14 @@ export async function fileSuggestionAction(id: string): Promise<ActionState> {
   );
 }
 
-export async function answerQuestionAction(id: string, same: boolean): Promise<ActionState> {
+export async function answerQuestionAction(id: string, same: boolean, pick?: string): Promise<ActionState> {
   return mutate(
     "inbox.answer_question",
     async (s, u) => {
-      const r = await answerQuestion(s, u.timezone, todayIn(u.timezone), id, same);
+      const r = await answerQuestion(s, u.timezone, todayIn(u.timezone), id, same, pick);
       const exam = (r.extracted as { ask?: { kind?: string } } | null)?.ask?.kind === "exam";
+      // Worded from what really happened: a stale card (the bill or exam moved on since) changes nothing and says so.
+      if (same && r.status !== "duplicate" && !r.filed.length) return "Nothing changed. It had already moved on since I asked.";
       if (exam) return same ? (r.status === "filed" ? "Moved. You can undo it below." : "Nothing changed.") : "Kept the old date.";
       return r.status === "duplicate"
         ? "Got it, it's the same. Nothing was added."

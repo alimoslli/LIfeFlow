@@ -2,7 +2,8 @@ import { and, asc, eq, inArray, like, ne, sql } from "drizzle-orm";
 import { addDaysStr, daysBetween, formatDateStr, localDateOf, localTimeOf, localToInstant } from "@/lib/dates";
 import { brandName } from "@/lib/vendor";
 import { normalizeText } from "@/lib/utils";
-import { assignments, inboxItems, recurringItems, transactions, type Frequency, type InboxFiled } from "../../db/schema";
+import { ServiceError } from "../errors";
+import { assignments, inboxItems, recurringItems, tasks, transactions, type Frequency, type InboxFiled } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { amountsClose, nameRelation, SLACK_DAYS, scheduleGap, trackedKeys, tracksSeries } from "../finance/bill-match";
 import { merchantKey, merchantKeys, type RecurringCandidate } from "../finance/recurring-detect";
@@ -98,13 +99,13 @@ export async function findFiledTwin(
 const billLabel = (i: { name: string; amountCents: number; nextDueDate: string | null }) =>
   `${i.name} ${usd(i.amountCents)}${i.nextDueDate ? ` on ${fmtDay(i.nextDueDate)}` : ""}`;
 
-const pairKey = (a: string, b: string) => [a, b].sort().join("|");
+export const pairKey = (a: string, b: string) => [a, b].sort().join("|");
 
 /**
  * Pairs of bills the person answered "No, they're different" about: the bills the email could have been, each with the
  * bill that was added for it. They are never asked about again.
  */
-async function differentPairs(scope: UserScope): Promise<Set<string>> {
+export async function differentPairs(scope: UserScope): Promise<Set<string>> {
   const rows = await scope.tx
     .select({ extracted: inboxItems.extracted, filed: inboxItems.filed })
     .from(inboxItems)
@@ -131,7 +132,7 @@ export type BillMatch =
   | { kind: "item"; item: typeof recurringItems.$inferSelect }
   | { kind: "series"; series: RecurringCandidate }
   /** Could be a bill we track but not sure enough to change anything: the user is asked ("Same bill?"). */
-  | { kind: "ask"; names: string[]; ids: string[] }
+  | { kind: "ask"; names: string[]; ids: string[]; seriesKey?: string }
   | null;
 
 /**
@@ -163,44 +164,93 @@ export async function findTrackedBill(scope: UserScope, bill: BillFacts, today: 
   const mine = trackedKeys(v);
 
   // Two lines of one plan: a tracked bill that came from an email naming another account or line is another bill.
+  // A tracked bill with no number on record (added by hand, or found in the bank) can't be told from the email's line,
+  // so it is never merged on its own: the person is asked once, and a yes records the number (through the filed entry).
   const mineRef = normalizeAccountRef(bill.accountRef);
-  const sameAccount = async (itemId: string) => {
-    if (!mineRef) return true;
-    const filedBy = await scope.tx
-      .select({ extracted: inboxItems.extracted })
-      .from(inboxItems)
-      .where(and(eq(inboxItems.userId, scope.userId), sql`${inboxItems.filed} @> ${JSON.stringify([{ id: itemId }])}::jsonb`));
-    const refs = filedBy.map((r) => normalizeAccountRef((r.extracted as Partial<Extraction> | null)?.bill?.account_ref)).filter(Boolean);
-    return !refs.length || refs.includes(mineRef);
+  const states = new Map<string, "same" | "other" | "unknown" | "n/a">();
+  const refState = async (itemId: string) => {
+    if (!mineRef) return "n/a" as const;
+    const cached = states.get(itemId);
+    if (cached) return cached;
+    const refs = await billRefs(scope, itemId);
+    const st = !refs.length ? "unknown" : refs.includes(mineRef) ? "same" : "other";
+    states.set(itemId, st);
+    return st;
   };
+  // Only a bill whose number is on record and equal to the email's (or an email with no number) is sure to be the one.
+  const sureRef = (id: string) => states.get(id) !== "unknown";
+  const describe = async (items: (typeof recurringItems.$inferSelect)[]) => Promise.all(items.map((i) => describeBill(scope, i)));
+  const askAbout = async (list: (typeof recurringItems.$inferSelect)[]): Promise<BillMatch> => ({
+    kind: "ask",
+    ids: list.map((i) => i.id),
+    names: await describe(list),
+  });
+  const apart = await differentPairs(scope);
+  const surelyOne = (list: (typeof recurringItems.$inferSelect)[], one: typeof recurringItems.$inferSelect) =>
+    sureRef(one.id) && list.every((i) => i.id === one.id || apart.has(pairKey(i.id, one.id)));
+
   const related: { item: (typeof items)[number]; rel: "same" | "contained" }[] = [];
   for (const item of items) {
     const rel = nameRelation(trackedKeys(item), mine);
-    if (rel && (await sameAccount(item.id))) related.push({ item, rel });
+    if (rel && (await refState(item.id)) !== "other") related.push({ item, rel });
   }
   if (related.length) {
     // No stored date: the schedule can't be checked, so it can't be told from another line.
     const onSchedule = related.filter(({ item }) => !item.nextDueDate || scheduleGap(item.nextDueDate, bill.due, bill.frequency) <= SLACK_DAYS[bill.frequency]);
     // A very different amount (rent and parking at one landlord) is another bill; a plausible one is a price change or a mistake.
-    const plausible = onSchedule.filter(({ item }) => amountsClose(item.amountCents, v.amountCents, true));
+    let plausible = onSchedule.filter(({ item }) => amountsClose(item.amountCents, v.amountCents, true));
+    // A bill whose recorded number is the email's number is the one.
+    const exact = plausible.filter(({ item }) => states.get(item.id) === "same");
+    if (exact.length) plausible = exact;
     const sure = plausible.filter(({ item }) => item.nextDueDate && amountsClose(item.amountCents, v.amountCents, false));
-    if (sure.length === 1 && plausible.length === 1) return { kind: "item", item: sure[0].item };
+    if (sure.length === 1 && plausible.length === 1 && sureRef(sure[0].item.id)) return { kind: "item", item: sure[0].item };
     // Others that look like it but that the person already said are different bills from it: not asked about again.
-    if (sure.length === 1) {
-      const apart = await differentPairs(scope);
-      if (plausible.every(({ item }) => item.id === sure[0].item.id || apart.has(pairKey(item.id, sure[0].item.id))))
-        return { kind: "item", item: sure[0].item };
-    }
-    if (plausible.length) return { kind: "ask", names: plausible.map(({ item }) => billLabel(item)), ids: plausible.map(({ item }) => item.id) };
+    if (
+      sure.length === 1 &&
+      surelyOne(
+        plausible.map((p) => p.item),
+        sure[0].item,
+      )
+    )
+      return { kind: "item", item: sure[0].item };
+    if (plausible.length) return askAbout(plausible.map((p) => p.item));
     return null; // related names, but another day or a very different amount: another line or bill
   }
 
   const bank = await bankSeries(scope, today);
-  const viaSeries = items.filter((item) => seriesForItem(item, bank.trackedActive).some((c) => looseSeriesMatch(v, c)));
-  if (viaSeries.length === 1) return { kind: "item", item: viaSeries[0] };
-  if (viaSeries.length > 1) return { kind: "ask", names: viaSeries.map(billLabel), ids: viaSeries.map((i) => i.id) };
+  const nameMatchesSeries = (c: RecurringCandidate) => !!nameRelation(mine, [c.merchantKey]);
+  const viaSeries: typeof items = [];
+  let allRelated = true;
+  for (const item of items) {
+    const hits = seriesForItem(item, bank.trackedActive).filter((c) => looseSeriesMatch(v, c));
+    if (!hits.length || (await refState(item.id)) === "other") continue;
+    viaSeries.push(item);
+    // The email's name must relate to the bank's wording; otherwise (rent paid by Zelle, a loan of a similar size) it is only a guess.
+    if (!hits.some(nameMatchesSeries)) allRelated = false;
+  }
+  if (viaSeries.length === 1 && allRelated && sureRef(viaSeries[0].id)) return { kind: "item", item: viaSeries[0] };
+  if (viaSeries.length) return askAbout(viaSeries);
   const open = bank.untracked.filter((c) => looseSeriesMatch(v, c));
-  return open.length === 1 ? { kind: "series", series: open[0] } : null;
+  if (open.length !== 1) return null;
+  if (nameMatchesSeries(open[0])) return { kind: "series", series: open[0] };
+  // The names differ ("Federal Student Aid", "MOHELA STUDENT LN"): same amount and day, but the person decides.
+  return { kind: "ask", ids: [], names: [`${open[0].name} ${usd(open[0].latestAmountCents)} in your bank`], seriesKey: open[0].merchantKey ?? undefined };
+}
+
+/** The account or line numbers on record for a tracked bill: those printed on the emails that filed or updated it. */
+async function billRefs(scope: UserScope, itemId: string): Promise<string[]> {
+  const filedBy = await scope.tx
+    .select({ extracted: inboxItems.extracted })
+    .from(inboxItems)
+    .where(and(eq(inboxItems.userId, scope.userId), eq(inboxItems.status, "filed"), sql`${inboxItems.filed} @> ${JSON.stringify([{ id: itemId }])}::jsonb`));
+  return filedBy.map((r) => normalizeAccountRef((r.extracted as Partial<Extraction> | null)?.bill?.account_ref)).filter(Boolean);
+}
+
+/** What tells one bill from another when the person is asked: next due date, price (and the one before it), account ending. */
+async function describeBill(scope: UserScope, i: typeof recurringItems.$inferSelect): Promise<string> {
+  const was = i.priceHistory.at(-1);
+  const ref = (await billRefs(scope, i.id)).find((r) => /^\d{4}$/.test(r));
+  return `${billLabel(i)}${was ? ` (was ${usd(was.amountCents)})` : ""}${ref ? `, account ending ${ref}` : ""}`;
 }
 
 /**
@@ -230,6 +280,7 @@ export async function updateTrackedBill(
     label: `Bill updated: ${item.name} ${what}`,
     href: "/finances/bills",
     prev: { amountCents: item.amountCents, nextDueDate: item.nextDueDate, priceHistory: item.priceHistory },
+    next: { amountCents: newAmount, nextDueDate: bill.due, priceHistory },
   };
 }
 
@@ -386,6 +437,7 @@ export async function moveSchoolItem(
       label: `${label} moved to ${fmtDay(to.date)}${prevDate ? ` (was ${fmtDay(prevDate)})` : ""}`,
       href: `/school/courses/${row.courseId}`,
       prev: { dueAt: row.dueAt?.toISOString() ?? null, dueAllDay: row.dueAllDay, dedupeKey: row.dedupeKey, sourceRef: row.sourceRef },
+      next: { dueAt: localToInstant(to.date, time, tz).toISOString(), dueAllDay: !time, dedupeKey: key },
     },
   };
 }
@@ -395,7 +447,26 @@ export async function moveSchoolItem(
 /** Puts back what an update changed. Quiet when the row is gone. */
 export async function undoUpdate(scope: UserScope, f: InboxFiled) {
   const prev = f.prev ?? {};
-  if (f.kind === "recurring_update" && "amountCents" in prev)
+  const next = f.next;
+  const changedAfter = () => new ServiceError("This changed after. Undo the newer one first.");
+  if (f.kind === "recurring_update" && "amountCents" in prev) {
+    if (next) {
+      const [now] = await scope.tx
+        .select()
+        .from(recurringItems)
+        .where(and(eq(recurringItems.id, f.id), eq(recurringItems.userId, scope.userId)));
+      if (
+        now &&
+        (now.amountCents !== next.amountCents || now.nextDueDate !== next.nextDueDate || JSON.stringify(now.priceHistory) !== JSON.stringify(next.priceHistory))
+      )
+        throw changedAfter();
+    }
+    const rem = prev.reminder as { id: string; title: string } | undefined;
+    if (rem)
+      await scope.tx
+        .update(tasks)
+        .set({ title: rem.title })
+        .where(and(eq(tasks.id, rem.id), eq(tasks.userId, scope.userId)));
     await scope.tx
       .update(recurringItems)
       .set({
@@ -404,7 +475,15 @@ export async function undoUpdate(scope: UserScope, f: InboxFiled) {
         priceHistory: (prev.priceHistory as { amountCents: number; until: string }[]) ?? [],
       })
       .where(and(eq(recurringItems.id, f.id), eq(recurringItems.userId, scope.userId)));
+  }
   if (f.kind === "assignment_update" && "dedupeKey" in prev) {
+    if (next) {
+      const [now] = await scope.tx
+        .select()
+        .from(assignments)
+        .where(and(eq(assignments.id, f.id), eq(assignments.userId, scope.userId)));
+      if (now && (now.dueAt?.toISOString() ?? null) !== (next.dueAt ?? null)) throw changedAfter();
+    }
     const key = prev.dedupeKey as string;
     const [clash] = await scope.tx
       .select({ id: assignments.id })
@@ -426,6 +505,15 @@ export async function undoUpdate(scope: UserScope, f: InboxFiled) {
       .update(transactions)
       .set({ notes: (prev.notes as string | null) ?? null })
       .where(and(eq(transactions.id, f.id), eq(transactions.userId, scope.userId)));
+}
+
+/** The open "Pay <payee> (…)" reminder an earlier statement made for this due date, if any. */
+export async function findPayReminder(scope: UserScope, tz: string, payee: string, due: string) {
+  const rows = await scope.tx
+    .select({ id: tasks.id, title: tasks.title, dueAt: tasks.dueAt })
+    .from(tasks)
+    .where(and(eq(tasks.userId, scope.userId), ne(tasks.status, "done"), like(tasks.title, `Pay ${payee.replace(/[\\%_]/g, "")} (%`)));
+  return rows.find((t) => t.dueAt && localDateOf(t.dueAt, tz) === due) ?? null;
 }
 
 /** The course's open items with this exact name (normalized), for "Did Exam 1 move?" when the old date can't pin it down. */
