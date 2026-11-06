@@ -45,7 +45,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await expect(op.getByText("HQ never posts. Approved posts go to Metricool for your final tap.")).toBeVisible();
   await expect(op.getByText("No drafts yet. The marketing round adds them on Wednesdays.")).toBeVisible();
   await expect(op.getByText("No numbers yet", { exact: true })).toHaveCount(5);
-  await expect(op.getByText("Connect it in Metricool", { exact: true }).first()).toBeVisible();
+  await expect(op.getByText("Comes with the weekly marketing round, once it is connected in Metricool", { exact: true }).first()).toBeVisible();
   await expect(op.getByText(/Comments and messages: not connected yet/)).toBeVisible();
 
   // A key, then the agent posts a concept that asks, plus real numbers.

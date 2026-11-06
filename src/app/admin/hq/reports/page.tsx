@@ -111,7 +111,7 @@ export default async function Reports() {
             ))}
           </div>
         ) : (
-          <p className="mt-3 text-sm text-muted">No numbers yet. Connect your networks in Metricool.</p>
+          <p className="mt-3 text-sm text-muted">No numbers yet. They come with the weekly marketing round from the networks connected in Metricool.</p>
         )}
       </Section>
       <Section title="Weekly Claude use" sub={w.budget.asOf ? `As of ${fmt(w.budget.asOf, tz)}` : undefined}>

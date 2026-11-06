@@ -189,7 +189,7 @@ export function NetworkBlock({ p }: { p: NetworkPerformance }) {
       ) : (
         <>
           <p className="mt-2 text-sm font-medium text-text">No numbers yet</p>
-          <p className="text-xs text-muted">Connect it in Metricool</p>
+          <p className="text-xs text-muted">Comes with the weekly marketing round, once it is connected in Metricool</p>
         </>
       )}
     </div>
