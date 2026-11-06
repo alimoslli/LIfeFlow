@@ -1542,3 +1542,137 @@ export const pendingActions = pgTable(
   },
   (t) => [index("pending_actions_conv_idx").on(t.conversationId), ownerPolicy()],
 );
+
+// ---------------------------------------------------------------------------
+// LifeFlow HQ (ADR 0024): the owner's private office for running the company. Owner-only operations data, like
+// admin_actions and owner_inbox: no user_id and no RLS, read and written only through services/hq.ts behind
+// requireAdmin() (pages and actions) or an HQ key (the /api/hq routes). Never put app users' content here.
+
+/** The five HQ employees. The founder is the owner, not a row. */
+export const HQ_ROLES = ["developer", "designer", "researcher", "marketing", "assistant"] as const;
+export type HqRole = (typeof HQ_ROLES)[number];
+export type HqLink = { label: string; url: string };
+export type HqSource = "owner" | "agent" | "import";
+
+/** Missions: the real task board. */
+export const hqMissions = pgTable(
+  "hq_missions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    role: text("role").$type<HqRole>().notNull(),
+    title: text("title").notNull(),
+    detail: text("detail"),
+    priority: text("priority").$type<"high" | "normal" | "low">().notNull().default("normal"),
+    status: text("status").$type<"todo" | "doing" | "waiting" | "blocked" | "done" | "dropped">().notNull().default("todo"),
+    /** One line on what is happening now. */
+    progress: text("progress"),
+    blockedReason: text("blocked_reason"),
+    /** What was done, in plain words, once finished. */
+    result: text("result"),
+    links: jsonb("links").$type<HqLink[]>().notNull().default([]),
+    /** The Claude Code session that works on it, and its branch. */
+    sessionId: text("session_id"),
+    branch: text("branch"),
+    source: text("source").$type<HqSource>().notNull(),
+    dueOn: date("due_on"),
+    startedAt: tstz("started_at"),
+    doneAt: tstz("done_at"),
+    /** When the owner opened it after it was done (the "Done" sparkle stops then). */
+    seenAt: tstz("seen_at"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("hq_missions_role_status_idx").on(t.role, t.status), index("hq_missions_updated_idx").on(t.updatedAt)],
+);
+
+/** The owner's approval inbox. A decision is only recorded here; HQ never carries it out. */
+export const hqApprovals = pgTable(
+  "hq_approvals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    role: text("role").$type<HqRole>().notNull(),
+    missionId: uuid("mission_id").references(() => hqMissions.id, { onDelete: "set null" }),
+    kind: text("kind")
+      .$type<"deploy" | "v3_merge" | "feature" | "design" | "publish" | "outbound" | "paid" | "subscription" | "destructive" | "security" | "other">()
+      .notNull(),
+    title: text("title").notNull(),
+    summary: text("summary").notNull(),
+    links: jsonb("links").$type<HqLink[]>().notNull().default([]),
+    status: text("status").$type<"pending" | "approved" | "declined" | "changes">().notNull().default("pending"),
+    decisionNote: text("decision_note"),
+    decidedAt: tstz("decided_at"),
+    source: text("source").$type<HqSource>().notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("hq_approvals_status_idx").on(t.status, t.createdAt)],
+);
+
+/** Append-only action log: every change in HQ, by the owner or an agent. */
+export const hqActivity = pgTable(
+  "hq_activity",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actor: text("actor").$type<"owner" | "agent" | "system">().notNull(),
+    role: text("role").$type<HqRole | "founder">(),
+    kind: text("kind").notNull(),
+    text: text("text").notNull(),
+    missionId: uuid("mission_id"),
+    approvalId: uuid("approval_id"),
+    sessionId: text("session_id"),
+    link: text("link"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("hq_activity_created_idx").on(t.createdAt), index("hq_activity_role_idx").on(t.role, t.createdAt)],
+);
+
+/** The owner's real Claude Code chats (one row per session), with the latest check-in. HQ links to them; it never drives them. */
+export const hqChats = pgTable("hq_chats", {
+  /** The Claude Code session id, e.g. session_014H9m... */
+  id: text("id").primaryKey(),
+  /** Which employee this chat belongs to; null for chats not mapped yet. */
+  role: text("role").$type<HqRole>(),
+  title: text("title").notNull(),
+  /** The employee's main chat (one per role). */
+  isPrimary: boolean("is_primary").notNull().default(false),
+  branch: text("branch"),
+  lastCommit: text("last_commit"),
+  status: text("status").$type<"working" | "idle" | "blocked" | "archived" | "unknown">().notNull().default("unknown"),
+  /** One line on what it did last (from the chat's own summary). */
+  summary: text("summary"),
+  needsAction: text("needs_action"),
+  lastCheckinAt: tstz("last_checkin_at"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+/** Claude usage readings sent by check-ins (the status line's rate_limits). Used for the weekly budget tile. */
+export const hqUsageSamples = pgTable(
+  "hq_usage_samples",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sessionId: text("session_id"),
+    fiveHourPct: numeric("five_hour_pct", { mode: "number" }),
+    sevenDayPct: numeric("seven_day_pct", { mode: "number" }),
+    sevenDayResetsAt: tstz("seven_day_resets_at"),
+    /** start/end mark an automated round, so its share of the week can be worked out. */
+    phase: text("phase").$type<"sample" | "round_start" | "round_end">().notNull().default("sample"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("hq_usage_created_idx").on(t.createdAt)],
+);
+
+/** Keys the owner's chats use to report to HQ (Authorization: Bearer lfq_...). Only a hash is stored. */
+export const hqKeys = pgTable(
+  "hq_keys",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    createdByEmail: text("created_by_email").notNull(),
+    lastUsedAt: tstz("last_used_at"),
+    revokedAt: tstz("revoked_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("hq_keys_hash_uq").on(t.tokenHash)],
+);
