@@ -15,6 +15,7 @@ import {
   updateMission,
   type HqActor,
 } from "@/server/services/hq";
+import { createContent, recordMetrics, updateContent } from "@/server/services/hq-marketing";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,8 @@ const body = z.discriminatedUnion("type", [
   z.object({ type: z.literal("approval") }).passthrough(),
   z.object({ type: z.literal("activity"), role, text: z.string(), link: z.string().nullish(), sessionId: z.string().nullish() }),
   z.object({ type: z.literal("import"), seed: z.unknown() }),
+  z.object({ type: z.literal("content"), id: z.string().optional() }).passthrough(),
+  z.object({ type: z.literal("metrics"), rows: z.array(z.unknown()).max(200, "Too many readings in one call (max 200).") }),
 ]);
 
 /** Receives reports from the owner's chats (check-ins, missions, approvals, notes). Authenticated by an HQ key, so it is a public route in proxy.ts. */
@@ -39,7 +42,7 @@ export async function POST(req: Request) {
       throw new HttpError(400, "Body must be JSON");
     }
     const parsed = body.safeParse(json);
-    if (!parsed.success) throw new HttpError(400, "Unknown or missing type (checkin, mission, approval, activity, import).");
+    if (!parsed.success) throw new HttpError(400, "Unknown or missing type (checkin, mission, approval, activity, content, metrics, import).");
     const b = parsed.data as Record<string, unknown> & { type: string };
     let sessionId: string | null = null;
     if (typeof b.sessionId === "string" && b.sessionId) {
@@ -71,6 +74,14 @@ export async function POST(req: Request) {
         case "activity":
           await recordAgentActivity(db, actor, { role: b.role as never, text: b.text as string, link: (b.link as string | null) ?? null, sessionId });
           return NextResponse.json({ ok: true });
+        case "content": {
+          const { type: _t, id, sessionId: _s, ...rest } = b;
+          // The chat doing the work is recorded; an agent can never approve (updateContent refuses it).
+          if (typeof id === "string" && id) return NextResponse.json({ ok: true, id: (await updateContent(db, actor, id, rest as never)).id });
+          return NextResponse.json({ ok: true, id: (await createContent(db, actor, { ...rest, sessionId } as never)).id });
+        }
+        case "metrics":
+          return NextResponse.json({ ok: true, ...(await recordMetrics(db, actor, b.rows as never)) });
         default:
           return NextResponse.json({ ok: true, ...(await importSeed(db, actor, b.seed)) });
       }

@@ -9,6 +9,9 @@ import { requireAdmin } from "@/server/auth/require-admin";
 import { getDb } from "@/server/db/client";
 import { isHqRole } from "@/server/hq/team";
 import type { MissionPriority, MissionStatus } from "@/server/hq/types";
+import { fromLocalInput } from "@/components/hq/marketing-labels";
+import { getSessionUser } from "@/server/auth/current-user";
+import { getContent, saveControls, updateContent } from "@/server/services/hq-marketing";
 import { HqError, createHqKey, createMission, decideApproval, importSeedAsOwner, removeChat, revokeHqKey, saveChat, updateMission } from "@/server/services/hq";
 
 /* Every action re-checks the admin first (a layout is not enough), runs, refreshes and comes back with ?done= or ?error=. */
@@ -172,5 +175,63 @@ export async function revokeKeyAction(fd: FormData) {
   await run(to("/admin/hq/settings"), async () => {
     await revokeHqKey(getDb(), admin, text(fd, "id", 64));
     return "Key revoked.";
+  });
+}
+
+/* --- Marketing and controls (ADR 0025). HQ only records the answer; the next round acts on it. --- */
+
+export async function decideContentAction(fd: FormData) {
+  const admin = await requireAdmin();
+  const decision = text(fd, "decision");
+  await run(to("/admin/hq/marketing"), async () => {
+    if (decision !== "approved" && decision !== "declined" && decision !== "changes") throw new HqError("Pick Yes, No or Changes.");
+    const id = text(fd, "approvalId", 64);
+    if (!id) throw new HqError("This item has no question to answer.");
+    await decideApproval(getDb(), admin, id, decision, text(fd, "note", 500) || null);
+    return decision === "approved" ? "You said yes." : decision === "declined" ? "You said no." : "You asked for changes.";
+  });
+}
+
+const CONTENT_ID = /^[0-9a-f-]{20,40}$/i;
+
+export async function updateContentAction(fd: FormData) {
+  const admin = await requireAdmin();
+  const id = text(fd, "id", 64);
+  await run(to(CONTENT_ID.test(id) ? `/admin/hq/marketing/${enc(id)}` : "/admin/hq/marketing"), async () => {
+    if (!CONTENT_ID.test(id)) throw new HqError("That item isn't here.");
+    const actor = { kind: "owner", email: admin.email } as const;
+    const op = text(fd, "op");
+    if (op === "drop") {
+      await updateContent(getDb(), actor, id, { status: "dropped" });
+      return "Dropped. It won't be posted.";
+    }
+    if (op === "edit") {
+      const title = text(fd, "title", 160);
+      if (title.length < 3) throw new HqError("Give it a short title.");
+      const when = text(fd, "scheduledFor", 40);
+      const tz = (await getSessionUser())?.timezone || "UTC";
+      const iso = when ? fromLocalInput(when, tz) : null;
+      if (when && !iso) throw new HqError("That date and time doesn't look right.");
+      if (!(await getContent(getDb(), id))) throw new HqError("That item isn't here.");
+      await updateContent(getDb(), actor, id, { title, hook: text(fd, "hook", 400) || null, scheduledFor: iso });
+      return "Saved.";
+    }
+    throw new HqError("Nothing to change.");
+  });
+}
+
+export async function saveControlsAction(fd: FormData) {
+  const admin = await requireAdmin();
+  await run(to("/admin/hq/settings"), async () => {
+    const raw = text(fd, "creditBudget", 10);
+    const creditBudget = raw === "" ? 0 : Number(raw);
+    if (!Number.isInteger(creditBudget) || creditBudget < 0 || creditBudget > 10000) throw new HqError("Credits must be a whole number from 0 to 10000.");
+    const on = (k: string) => fd.get(k) === "on";
+    await saveControls(getDb(), admin, {
+      autonomous: on("autonomous"),
+      rounds: { night: on("night"), research: on("research"), marketing: on("marketing") },
+      creditBudget,
+    });
+    return "Saved";
   });
 }

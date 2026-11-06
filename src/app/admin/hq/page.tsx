@@ -8,6 +8,7 @@ import { requireAdmin } from "@/server/auth/require-admin";
 import { getSessionUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { officeSnapshot } from "@/server/services/hq";
+import { getControls } from "@/server/services/hq-marketing";
 import { safe } from "@/server/services/admin";
 import { cn } from "@/lib/utils";
 import { Failed, adminTz, fmt } from "../format";
@@ -21,6 +22,7 @@ export default async function HqHome({ searchParams }: { searchParams: Promise<{
   const sp = await searchParams;
   const view = sp.view === "workspace" ? "workspace" : "office";
   const r = await safe("hq-office", () => officeSnapshot(getDb()));
+  const controls = await safe("hq-controls", () => getControls(getDb()));
   const user = await getSessionUser();
   const tz = await adminTz();
 
@@ -44,7 +46,10 @@ export default async function HqHome({ searchParams }: { searchParams: Promise<{
           <h1 className="font-display text-[2rem] leading-tight font-medium tracking-tight">
             {greeting(s.now, tz)}, {first}.
           </h1>
-          <p className="mt-1 text-sm text-text-2">{counts || "Everyone is quiet."}</p>
+          <p className="mt-1 text-sm text-text-2">
+            {counts || "Everyone is quiet."}
+            {controls.ok && !controls.data.autonomous && " · Autonomous mode off"}
+          </p>
         </div>
         <nav aria-label="View" className="inline-flex rounded-full bg-surface-2 p-1">
           {(

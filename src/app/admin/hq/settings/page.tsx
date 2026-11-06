@@ -4,11 +4,13 @@ import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Empty, Section } from "@/components/hq/cards";
 import { ClearOnce } from "@/components/hq/copy-open";
+import { ControlsForm } from "@/components/hq/marketing";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { getDb } from "@/server/db/client";
 import { EMPLOYEES, USAGE_PLAN } from "@/server/hq/team";
 import type { Chat } from "@/server/hq/types";
 import { listChats, listHqKeys } from "@/server/services/hq";
+import { getControls } from "@/server/services/hq-marketing";
 import { safe } from "@/server/services/admin";
 import { Failed, adminTz, fmt } from "../../format";
 import { AdminTitle, Notice } from "../../ui";
@@ -66,14 +68,22 @@ export default async function HqSettings({ searchParams }: { searchParams: Promi
   await requireAdmin();
   const sp = await searchParams;
   const db = getDb();
-  const [chats, keys] = await Promise.all([safe("hq-chats", () => listChats(db)), safe("hq-keys", () => listHqKeys(db))]);
+  const [chats, keys, controls] = await Promise.all([
+    safe("hq-chats", () => listChats(db)),
+    safe("hq-keys", () => listHqKeys(db)),
+    safe("hq-controls", () => getControls(db)),
+  ]);
   const tz = await adminTz();
   const newKey = (await cookies()).get(NEW_KEY_COOKIE)?.value ?? null;
 
   return (
     <div className="flex flex-col gap-5">
-      <AdminTitle title="HQ settings" sub="Chats, keys and the weekly plan." />
+      <AdminTitle title="HQ settings" sub="How the team runs, chats, keys and the weekly plan." />
       <Notice done={sp.done} error={sp.error} />
+
+      <Section title="How the team runs" sub="Read by every round before it starts.">
+        {controls.ok ? <ControlsForm c={controls.data} tz={tz} /> : <Empty>{Failed()}</Empty>}
+      </Section>
 
       <Section title="Chats" sub="Which real Claude Code chat belongs to which employee. HQ only links to them.">
         <div className="flex flex-col gap-3">
@@ -190,7 +200,7 @@ export default async function HqSettings({ searchParams }: { searchParams: Promi
       </Section>
 
       <Section title="Connections">
-        <p className="text-sm text-text-2">Marketing connections arrive in Phase 3.</p>
+        <p className="text-sm text-text-2">Marketing numbers come from Metricool. Connect each network there; HQ only shows what the team reports.</p>
       </Section>
     </div>
   );

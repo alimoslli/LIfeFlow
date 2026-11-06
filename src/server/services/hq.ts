@@ -4,7 +4,7 @@ import { z } from "zod";
 import { adminEmails, type Admin } from "../auth/admin";
 import { addDaysStr, localDateOf } from "../../lib/dates";
 import type { Database } from "../db/client";
-import { adminActions, hqActivity, hqApprovals, hqChats, hqKeys, hqMissions, hqUsageSamples, users, type HqLink, type HqRole, HQ_ROLES } from "../db/schema";
+import { adminActions, hqActivity, hqApprovals, hqChats, hqContent, hqKeys, hqMissions, hqUsageSamples, users, type HqLink, type HqRole, HQ_ROLES } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { chatUrl, EMPLOYEES, employee, isHqRole, USAGE_PLAN } from "../hq/team";
 import { employeeState, WORKING_WINDOW_MS } from "../hq/state";
@@ -16,6 +16,8 @@ import type {
   Budget,
   Chat,
   ChatStatus,
+  ContentItem,
+  HqControls,
   EmployeeCard,
   EmployeeDetail,
   Mission,
@@ -24,7 +26,30 @@ import type {
   OfficeSnapshot,
   WeeklySummary,
 } from "../hq/types";
+import {
+  cleanLine,
+  cleanText,
+  dueOn,
+  HqError,
+  isSafeLinkUrl,
+  line,
+  linksSchema,
+  logActivity,
+  logAdmin,
+  normalizeSessionId,
+  optLine,
+  optText,
+  parse,
+  sessionIdField,
+  timed,
+  url,
+  type Tx,
+} from "../hq/validate";
 import { sendOnce, webPushSender, type Sender } from "./push";
+import { approvedContentIn, controlsIn, marketingWeekIn } from "./hq-marketing";
+
+// Re-exported so existing callers (and tests) keep importing them from here.
+export { cleanLine, cleanText, HqError, isSafeLinkUrl, normalizeSessionId };
 
 /**
  * LifeFlow HQ (ADR 0024): the owner's office. Owner-only operations data (no user content, no RLS). Pages and
@@ -33,7 +58,6 @@ import { sendOnce, webPushSender, type Sender } from "./push";
  * from here: HQ costs nothing to open.
  */
 
-export class HqError extends Error {}
 
 /** Who made a change, for the activity log. */
 export type HqActor = { kind: "owner"; email: string } | { kind: "agent"; keyName: string; sessionId?: string | null };
@@ -82,15 +106,6 @@ export type HqKeyRow = { id: string; name: string; createdAt: Date; lastUsedAt: 
 
 // --- plumbing -------------------------------------------------------------------------------------------------------
 
-type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
-
-async function timed<T>(db: Database, fn: (tx: Tx) => Promise<T>): Promise<T> {
-  return db.transaction(async (tx) => {
-    await tx.execute(sql`select set_config('statement_timeout', '5000', true)`);
-    return fn(tx);
-  });
-}
-
 const sha256 = (s: string) => createHash("sha256").update(s).digest("hex");
 const DAY = 24 * 3_600_000;
 
@@ -100,68 +115,7 @@ const APPROVAL_KINDS = ["deploy", "v3_merge", "feature", "design", "publish", "o
 const CHAT_STATUSES = ["working", "idle", "blocked", "archived", "unknown"] as const;
 const OPEN = ["todo", "doing", "waiting", "blocked"] as const;
 
-// Control characters, bidi overrides and zero-width characters never belong in HQ text.
-const BAD_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g;
-/** One line of plain text: control characters removed, whitespace collapsed. */
-export const cleanLine = (s: string) => s.replace(BAD_CHARS, "").replace(/\s+/g, " ").trim();
-/** Several lines: control characters removed, newlines and tabs kept. */
-export const cleanText = (s: string) => s.replace(BAD_CHARS, "").replace(/\r\n?/g, "\n").trim();
-
-/** Only https links or same-site paths ("/admin/hq"). Never javascript:, data:, http:, "//host" or "/\host". */
-export function isSafeLinkUrl(u: string): boolean {
-  if (typeof u !== "string" || u.length === 0 || u.length > 2000) return false;
-  if (/[\u0000-\u0020\u007F\\]/.test(u)) return false;
-  if (u.startsWith("/")) return !u.startsWith("//");
-  if (!u.startsWith("https://")) return false;
-  try {
-    const url = new URL(u);
-    return url.protocol === "https:" && url.hostname.length > 0;
-  } catch {
-    return false;
-  }
-}
-
-const line = (min: number, max: number) =>
-  z
-    .string()
-    .transform(cleanLine)
-    .pipe(z.string().min(min, "is required").max(max, `is too long (max ${max})`));
-/** Optional text; an empty string means "nothing" (null). */
-const optLine = (max: number) =>
-  z
-    .string()
-    .transform((s) => cleanLine(s) || null)
-    .pipe(z.string().max(max, `is too long (max ${max})`).nullable())
-    .nullish();
-const optText = (max: number) =>
-  z
-    .string()
-    .transform((s) => cleanText(s) || null)
-    .pipe(z.string().max(max, `is too long (max ${max})`).nullable())
-    .nullish();
-const url = z.string().refine(isSafeLinkUrl, "must be an https:// link or a path like /admin/hq");
-const linkSchema = z.object({ label: line(1, 60), url });
-const linksSchema = z.array(linkSchema).max(10, "has too many links (max 10)");
-const dueOn = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "must look like 2026-11-30")
-  .refine((d) => !Number.isNaN(Date.parse(`${d}T00:00:00Z`)) && new Date(`${d}T00:00:00Z`).toISOString().startsWith(d), "is not a real date")
-  .nullish();
 const role = z.enum(HQ_ROLES);
-
-/** A chat id (session_…) or nothing. Anything else is refused with a plain message. */
-const sessionIdField = z
-  .string()
-  .nullish()
-  .transform((v, ctx) => {
-    if (v == null || v.trim() === "") return null;
-    try {
-      return normalizeSessionId(v);
-    } catch (e) {
-      ctx.addIssue({ code: "custom", message: e instanceof Error ? e.message : "isn't a chat id" });
-      return z.NEVER;
-    }
-  });
 
 const missionInputSchema = z.object({
   sessionId: sessionIdField,
@@ -196,21 +150,6 @@ const approvalInputSchema = z.object({
   links: linksSchema.optional(),
   missionId: z.uuid().nullish(),
 });
-
-function parse<S extends z.ZodType>(schema: S, input: unknown): z.output<S> {
-  const r = schema.safeParse(input);
-  if (r.success) return r.data;
-  const i = r.error.issues[0];
-  const where = i?.path.length ? `${i.path.join(".")} ` : "";
-  throw new HqError(`${where}${i?.message ?? "is not valid"}`.slice(0, 160));
-}
-
-/** Accepts `session_<id>` or `cse_<id>` and returns `session_<id>`. */
-export function normalizeSessionId(raw: string): string {
-  const m = /^(?:session|cse)_([A-Za-z0-9]{10,64})$/.exec(typeof raw === "string" ? raw.trim() : "");
-  if (!m) throw new HqError("That isn't a chat id (it looks like session_01ABC...).");
-  return `session_${m[1]}`;
-}
 
 const clampPct = (n: number | null | undefined) => (n == null || !Number.isFinite(n) ? null : Math.min(100, Math.max(0, n)));
 
@@ -289,35 +228,8 @@ const byPriorityThenOldest = (a: Mission, b: Mission) =>
 
 // --- activity log -----------------------------------------------------------------------------------------------------
 
-type ActivityInput = {
-  actor: "owner" | "agent" | "system";
-  role: HqRole | "founder" | null;
-  kind: string;
-  text: string;
-  missionId?: string | null;
-  approvalId?: string | null;
-  sessionId?: string | null;
-  link?: string | null;
-};
-
-async function logActivity(tx: Tx, a: ActivityInput) {
-  await tx.insert(hqActivity).values({
-    actor: a.actor,
-    role: a.role,
-    kind: a.kind,
-    text: cleanLine(a.text).slice(0, 400),
-    missionId: a.missionId ?? null,
-    approvalId: a.approvalId ?? null,
-    sessionId: a.sessionId ?? null,
-    link: a.link ?? null,
-  });
-}
 const actorKind = (a: HqActor) => a.kind;
 const actorSession = (a: HqActor) => (a.kind === "agent" ? (a.sessionId ?? null) : null);
-
-async function logAdmin(tx: Tx, admin: Admin, action: string, metadata: Record<string, unknown>) {
-  await tx.insert(adminActions).values({ actorUserId: admin.id, actorEmail: admin.email, action, metadata });
-}
 
 // --- reads (pages) ------------------------------------------------------------------------------------------------
 
@@ -671,6 +583,7 @@ export async function weeklySummary(db: Database, now: Date = new Date()): Promi
       .orderBy(asc(hqMissions.dueOn))
       .limit(50);
     const budget = await budgetIn(tx, now);
+    const marketing = await marketingWeekIn(tx, from, now);
 
     const headline: string[] = [];
     headline.push(done.length ? `${done.length} ${plural(done.length, "mission", "missions")} finished this week.` : "Nothing finished this week yet.");
@@ -686,6 +599,10 @@ export async function weeklySummary(db: Database, now: Date = new Date()): Promi
       );
     if (overdue.length) headline.push(`${overdue.length} ${plural(overdue.length, "mission is", "missions are")} overdue.`);
     if (dueSoon.length) headline.push(`${dueSoon.length} ${plural(dueSoon.length, "mission is", "missions are")} due in the next 7 days.`);
+    if (marketing.drafted + marketing.approved + marketing.scheduled + marketing.published > 0)
+      headline.push(
+        `Marketing: ${marketing.drafted} ${plural(marketing.drafted, "draft", "drafts")}, ${marketing.approved} approved, ${marketing.scheduled} scheduled, ${marketing.published} published.`,
+      );
     headline.push(
       budget.roundsPct != null
         ? `Automated rounds used ${Math.round(budget.roundsPct)}% of the week (aim ${USAGE_PLAN.targetLow}–${USAGE_PLAN.target}%, ceiling ${USAGE_PLAN.ceiling}%).`
@@ -702,6 +619,7 @@ export async function weeklySummary(db: Database, now: Date = new Date()): Promi
       overdue: overdue.map(toMission),
       dueSoon: dueSoon.map(toMission),
       budget,
+      marketing,
       headline,
     };
   });
@@ -913,6 +831,30 @@ export async function decideApproval(
       missionId: row.missionId,
     });
     await logAdmin(tx, admin, "hq.approval_decided", { approvalId: row.id, decision });
+    if (row.kind === "publish") {
+      // The owner's decision moves the post it was asked for (ADR 0025). HQ only records it; the marketing round acts on it.
+      const to = decision === "approved" ? "approved" : decision === "declined" ? "dropped" : "draft";
+      const moved = await tx
+        .update(hqContent)
+        .set({ status: to, updatedAt: now })
+        .where(and(eq(hqContent.approvalId, id), eq(hqContent.status, "waiting")))
+        .returning({ title: hqContent.title });
+      for (const c of moved) {
+        const quoted = `"${c.title.length > 80 ? `${c.title.slice(0, 77)}...` : c.title}"`;
+        await logActivity(tx, {
+          actor: "owner",
+          role: "marketing",
+          kind: decision === "approved" ? "content_approved" : "content_updated",
+          text:
+            decision === "approved"
+              ? `${quoted} approved`
+              : decision === "declined"
+                ? `${quoted} dropped`
+                : `${quoted} sent back to draft${n ? `: ${n}` : ""}`,
+          approvalId: row.id,
+        });
+      }
+    }
     return toApproval(row);
   });
 }
@@ -1100,7 +1042,10 @@ export async function recordAgentActivity(
 }
 
 /** What an agent should pick up: open missions (optionally for one role) and approval decisions since a time. */
-export async function agentInbox(db: Database, input: { role?: HqRole; since?: Date } = {}): Promise<{ missions: Mission[]; decisions: Approval[] }> {
+export async function agentInbox(
+  db: Database,
+  input: { role?: HqRole; since?: Date } = {},
+): Promise<{ missions: Mission[]; decisions: Approval[]; approvedContent: ContentItem[]; controls: HqControls }> {
   const since = input.since && !Number.isNaN(input.since.getTime()) ? input.since : new Date(Date.now() - 7 * DAY);
   return timed(db, async (tx) => {
     const missions = await tx
@@ -1115,7 +1060,9 @@ export async function agentInbox(db: Database, input: { role?: HqRole; since?: D
       .where(and(ne(hqApprovals.status, "pending"), gte(hqApprovals.decidedAt, since), input.role ? eq(hqApprovals.role, input.role) : undefined))
       .orderBy(desc(hqApprovals.decidedAt))
       .limit(50);
-    return { missions: missions.map(toMission), decisions: decisions.map(toApproval) };
+    const approvedContent = await approvedContentIn(tx);
+    const controls = await controlsIn(tx);
+    return { missions: missions.map(toMission), decisions: decisions.map(toApproval), approvedContent, controls };
   });
 }
 

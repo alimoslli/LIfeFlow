@@ -1,7 +1,7 @@
 /**
  * LifeFlow HQ command line (ADR 0024): how the owner's Claude Code chats and night rounds report to HQ.
  * Deterministic, no AI. Env: HQ_URL (the app's base URL) and HQ_KEY (sent as a Bearer key; never printed).
- * Usage: npx tsx scripts/hq.ts checkin|mission|approval|activity|inbox|import ...
+ * Usage: npx tsx scripts/hq.ts checkin|mission|approval|activity|content|metrics|inbox|import ...
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync, statSync } from "node:fs";
@@ -94,10 +94,35 @@ export function parseUsageFile(raw: string, nowMs: number, maxAgeMs = 6 * 3_600_
 }
 
 /** Turns parsed args into the request body for a command. Throws Error with a one-line message on bad input. */
+type MetricRow = { takenOn: string; network: string; metric: string; value: number; contentId?: string | null };
+
+/** A date and time for --when; refuses anything Date can't read, so a typo is caught before it is sent. */
+export function isoWhen(s: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}/.test(s) || Number.isNaN(Date.parse(s))) throw new Error("--when must be a date like 2026-11-30 or 2026-11-30T18:00:00Z");
+  return s;
+}
+
+/** --body TEXT or --body-file PATH (the file wins); nothing when neither is given. */
+function bodyFrom(p: Parsed, extra: { readFile?: (path: string) => string }): { body?: string } {
+  const file = one(p, "body-file");
+  if (file) {
+    if (!extra.readFile) throw new Error("Can't read files here");
+    return { body: extra.readFile(file) };
+  }
+  const b = one(p, "body");
+  return b && b !== "true" ? { body: b } : {};
+}
+
 export function buildRequest(
   cmd: string,
   p: Parsed,
-  extra: { sessionId?: string | null; branch?: string | null; commit?: string | null; usage?: UsageFile | null } = {},
+  extra: {
+    sessionId?: string | null;
+    branch?: string | null;
+    commit?: string | null;
+    usage?: UsageFile | null;
+    readFile?: (path: string) => string;
+  } = {},
 ) {
   const need = (n: string) => {
     const v = one(p, n);
@@ -189,6 +214,76 @@ export function buildRequest(
           ...(extra.sessionId ? { sessionId: extra.sessionId } : {}),
         },
       };
+    case "content add": {
+      const kind = need("kind");
+      if (!["concept", "script", "post", "research"].includes(kind)) throw new Error("--kind must be concept, script, post or research");
+      const platforms = p.flags.platform ?? [];
+      return {
+        method: "POST" as const,
+        path: "/api/hq/report",
+        body: {
+          type: "content",
+          kind,
+          title: need("title"),
+          ...(one(p, "hook") ? { hook: one(p, "hook") } : {}),
+          ...bodyFrom(p, extra),
+          ...(platforms.length ? { platforms } : {}),
+          ...(one(p, "when") ? { scheduledFor: isoWhen(need("when")) } : {}),
+          ...(links.length ? { links } : {}),
+          ...(p.flags.ask ? { ask: true } : {}),
+          ...(extra.sessionId ? { sessionId: extra.sessionId } : {}),
+        },
+      };
+    }
+    case "content update": {
+      const id = p.positional[2];
+      if (!id) throw new Error("Usage: content update <id> [--status S] [--external-id X] [--published-url U] [--when ISO] ...");
+      return {
+        method: "POST" as const,
+        path: "/api/hq/report",
+        body: {
+          type: "content",
+          id,
+          ...(one(p, "status") ? { status: one(p, "status") } : {}),
+          ...(one(p, "external-id") ? { externalId: one(p, "external-id") } : {}),
+          ...(one(p, "published-url") ? { publishedUrl: one(p, "published-url") } : {}),
+          ...(one(p, "when") ? { scheduledFor: isoWhen(need("when")) } : {}),
+          ...(one(p, "title") ? { title: one(p, "title") } : {}),
+          ...(one(p, "hook") ? { hook: one(p, "hook") } : {}),
+          ...bodyFrom(p, extra),
+          ...(links.length ? { links } : {}),
+          ...(extra.sessionId ? { sessionId: extra.sessionId } : {}),
+        },
+      };
+    }
+    case "metrics": {
+      const file = one(p, "file");
+      let rows: MetricRow[];
+      if (file) {
+        if (!extra.readFile) throw new Error("Can't read files here");
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(extra.readFile(file));
+        } catch {
+          throw new Error("--file must be a JSON file with a list of readings");
+        }
+        const list = Array.isArray(parsed) ? parsed : (parsed as { rows?: unknown })?.rows;
+        if (!Array.isArray(list)) throw new Error("--file must hold a list of readings (or { rows: [...] })");
+        rows = list as MetricRow[];
+      } else {
+        const network = need("network");
+        const date = need("date");
+        const pairs = p.flags.metric ?? [];
+        if (!pairs.length) throw new Error("Missing --metric name=value");
+        rows = pairs.map((pair) => {
+          const i = pair.indexOf("=");
+          const value = i > 0 ? Number(pair.slice(i + 1)) : Number.NaN;
+          if (i <= 0 || pair.slice(i + 1).trim() === "" || !Number.isFinite(value)) throw new Error(`--metric needs name=number, got "${pair}"`);
+          return { takenOn: date, network, metric: pair.slice(0, i).trim(), value, ...(one(p, "content") ? { contentId: one(p, "content") } : {}) };
+        });
+      }
+      return { method: "POST" as const, path: "/api/hq/report", body: { type: "metrics", rows } };
+    }
     case "inbox": {
       const q = new URLSearchParams();
       if (one(p, "role")) q.set("role", one(p, "role")!);
@@ -196,7 +291,7 @@ export function buildRequest(
       return { method: "GET" as const, path: `/api/hq/inbox${q.size ? `?${q}` : ""}`, body: undefined };
     }
     default:
-      throw new Error(`Unknown command "${cmd}". Try checkin, mission add|update, approval, activity, inbox, import.`);
+      throw new Error(`Unknown command "${cmd}". Try checkin, mission add|update, approval, activity, content add|update, metrics, inbox, import.`);
   }
 }
 
@@ -212,7 +307,7 @@ async function main() {
   const argv = process.argv.slice(2);
   const p = parseArgs(argv);
   const [a, b] = p.positional;
-  const cmd = a === "mission" ? `mission ${b ?? ""}`.trim() : a;
+  const cmd = a === "mission" || a === "content" ? `${a} ${b ?? ""}`.trim() : a;
   const quiet = !!p.flags.quiet;
   const rawBase = process.env.HQ_URL?.trim();
   const base = safeHqBase(rawBase);
@@ -242,7 +337,7 @@ async function main() {
       }
       req = buildRequest(cmd, p, { sessionId, branch: git(["rev-parse", "--abbrev-ref", "HEAD"]), commit: git(["rev-parse", "--short", "HEAD"]), usage });
     } else {
-      req = buildRequest(cmd, p, { sessionId });
+      req = buildRequest(cmd, p, { sessionId, readFile: (f) => readFileSync(f, "utf8") });
     }
     const res = await fetch(`${base}${req.path}`, {
       method: req.method,

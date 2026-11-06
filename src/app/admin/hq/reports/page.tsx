@@ -1,8 +1,11 @@
 import Link from "next/link";
+import { NetworkBlock } from "@/components/hq/marketing";
 import { BudgetBody, DecisionLine, Empty, MissionLine, Section } from "@/components/hq/cards";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { getDb } from "@/server/db/client";
+import type { MarketingWeek } from "@/server/hq/types";
 import { weeklySummary } from "@/server/services/hq";
+import { marketingView } from "@/server/services/hq-marketing";
 import { safe } from "@/server/services/admin";
 import { Failed, adminTz, fmt } from "../../format";
 import { AdminTitle } from "../../ui";
@@ -11,6 +14,7 @@ import { AdminTitle } from "../../ui";
 export default async function Reports() {
   await requireAdmin();
   const r = await safe("hq-weekly", () => weeklySummary(getDb()));
+  const perf = await safe("hq-weekly-perf", async () => (await marketingView(getDb())).performance);
   const tz = await adminTz();
   if (!r.ok)
     return (
@@ -20,6 +24,8 @@ export default async function Reports() {
       </div>
     );
   const w = r.data;
+  const mk = (w as { marketing?: MarketingWeek }).marketing;
+  const withNumbers = perf.ok ? perf.data.filter((p) => p.latest.length) : [];
   const day = (d: Date) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: tz }).format(d);
   return (
     <div className="flex flex-col gap-5">
@@ -83,6 +89,31 @@ export default async function Reports() {
           )}
         </Section>
       </div>
+      <Section
+        title="Marketing this week"
+        action={
+          <Link href="/admin/hq/marketing" className="inline-flex min-h-11 items-center text-sm text-accent">
+            Open Marketing
+          </Link>
+        }
+      >
+        {mk ? (
+          <p className="text-sm text-text">
+            {mk.drafted} drafted · {mk.approved} approved · {mk.scheduled} scheduled · {mk.published} published
+          </p>
+        ) : (
+          <Empty>No marketing activity yet.</Empty>
+        )}
+        {withNumbers.length > 0 ? (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {withNumbers.map((p) => (
+              <NetworkBlock key={p.network} p={p} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-muted">No numbers yet. Connect your networks in Metricool.</p>
+        )}
+      </Section>
       <Section title="Weekly Claude use" sub={w.budget.asOf ? `As of ${fmt(w.budget.asOf, tz)}` : undefined}>
         <BudgetBody b={w.budget} />
       </Section>

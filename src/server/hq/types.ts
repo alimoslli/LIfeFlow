@@ -142,6 +142,7 @@ export type WeeklySummary = {
   overdue: Mission[];
   dueSoon: Mission[]; // due in the next 7 days, not done
   budget: Budget;
+  marketing: MarketingWeek;
   /** Plain lines the HQ Assistant puts at the top, built from the numbers above (no AI). */
   headline: string[];
 };

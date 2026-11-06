@@ -309,6 +309,13 @@
       "when": 1794500000000,
       "tag": "0043_email_codes_blocked",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1794600000000,
+      "tag": "0044_hq_marketing",
+      "breakpoints": true
     }
   ]
 }
