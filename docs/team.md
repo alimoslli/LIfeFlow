@@ -29,12 +29,17 @@ The owner asked for the agents to keep running: audit the app (phone and web), f
 
 **Light in the day, heavy at night (owner, 2026-11-05).** The owner's Claude usage has a 5-hour limit. During the day, agents do only light work: answering the owner, small fixes, short checks. Audits, builders, reviewers, situation batches, research, full test runs and e2e run in the night round, so the limit resets by morning.
 
-**Cost rules (owner, 2026-11-06: "22% in 34 minutes is insane").** Usage is the owner's money; spend it like it.
-- **Models.** Builders, the situation writer and the researcher run on Sonnet. Only the auditor and reviewers of money, security or data changes use Opus.
-- **Per night:** one audit (what changed plus one area), at most 3 fixes, and 5 situations. Research twice a week.
-- **One or two agents at a time,** never four at once.
+**Cost rules (owner, 2026-11-06).** Spend usage well, not less: the owner wants the app to keep improving every night ("don't cut it down that much"), without waste.
+- **Models.** Builders, the situation writer and the researcher run on Sonnet. The auditor and the reviewers of money, security or data changes use Opus.
+- **Per night:**
+  - one audit (what changed plus one area);
+  - up to 6 fixes;
+  - one approved feature, built on a branch and shown to the owner with screenshots in the morning, and shipped to main only after the owner's okay;
+  - 10 situations.
+- **Research** twice a week.
+- **Up to three agents at a time,** never four.
 - **Read only what's needed.** Agents read the sections of `docs/vision.md` and `CLAUDE.md` their task needs, not whole files. Few screenshots, at scale 1.
-- **Stop early.** If a round passes about a third of the 5-hour limit, it stops, saves its carry-over and reports.
+- **Leave the morning free.** A round stops, saves its carry-over and reports when it reaches about 70% of the 5-hour limit, so the owner still has room when they wake up.
 
 **The owner's hours (owner, 2026-11-05, changed late that night):** the agents run while the owner sleeps. Rounds start at 3 AM Pacific, or at the first usage-limit reset after 3 AM if the limit is spent. The report and the yes or no list are waiting in the app by morning (a message plus a push). Nobody waits for approval during a round: approved work goes ahead, and real changes go on the list for the owner to answer the next day.
 
