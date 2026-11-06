@@ -1,6 +1,6 @@
 import { usd } from "@/lib/jarvis-voice";
 import { checkedInOn, openGoals } from "../goal-checkins";
-import { and, desc, eq, gte, isNotNull, lt, ne } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, lt, ne } from "drizzle-orm";
 import {
   addDaysStr,
   dayOfWeek,
@@ -13,7 +13,7 @@ import {
   startOfLocalDay,
   weekStart,
 } from "@/lib/dates";
-import { gmailMessages, tasks, type JarvisTopic, type ProactiveAction } from "../../db/schema";
+import { gmailMessages, jarvisMessages, tasks, type JarvisTopic, type ProactiveAction } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { listAccounts } from "../finance/accounts";
 import { balancesOf } from "../finance/overview";
@@ -495,18 +495,32 @@ const reviewTransactions: Detector = async ({ scope, today }) => {
 /** Subscriptions: price increases, trials about to turn paid, and new recurring charges. */
 const subscriptionWatch: Detector = async ({ scope, today }) => {
   const o = await subscriptionsOverview(scope, today);
+  // A price rise is news for about a month: older ones show on the Subscriptions page, they aren't pushed.
+  const recent = o.flags.flatMap((f) => (f.kind === "price_up" && f.date >= addDaysStr(today, -40) ? [f] : []));
+  // A change announced while the subscription was only found in the bank isn't announced again once it's tracked.
+  const sentAs = recent.flatMap((f) => f.sentAs.map((k) => `sub_price:${k}`));
+  const sent = new Set(
+    sentAs.length
+      ? (
+          await scope.tx
+            .select({ key: jarvisMessages.dedupeKey })
+            .from(jarvisMessages)
+            .where(and(eq(jarvisMessages.userId, scope.userId), inArray(jarvisMessages.dedupeKey, sentAs)))
+        ).map((m) => m.key)
+      : [],
+  );
   const out: Candidate[] = [];
-  for (const f of o.flags) {
-    if (f.kind === "price_up")
+  for (const f of recent)
+    if (!f.sentAs.some((k) => sent.has(`sub_price:${k}`)))
       out.push({
         kind: "subscription_price_up",
         topic: "money",
-        // The change itself (merchant, new price, first day at it): once, whether it's tracked yet or only found in the bank.
-        dedupeKey: `sub_price:${f.key}`,
+        dedupeKey: `sub_price:${f.alertKey}`,
         facts: { name: f.name, fromCents: f.fromCents, toCents: f.toCents, yearlyExtraCents: f.yearlyExtraCents },
         action: { type: "open", label: "Review it", href: "/finances/subscriptions" },
         priority: 70,
       });
+  for (const f of o.flags) {
     if (f.kind === "trial")
       out.push({
         kind: "trial_ending",

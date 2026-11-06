@@ -40,7 +40,7 @@ export function billedVia(description: string): "apple" | "google_play" | "paypa
 /**
  * A price increase as people see it (positive cents), dated on the first charge at the new price. `key`
  * names the change itself (merchant, new price, day it started), the same whether the subscription is
- * tracked yet or only found in the bank, so it's announced once.
+ * tracked yet or only found in the bank.
  */
 type PriceUp = { fromCents: number; toCents: number; date: string; key: string };
 const priceUpOf = (c: RecurringCandidate): PriceUp | null => {
@@ -115,11 +115,27 @@ export async function subscriptionsOverview(scope: UserScope, today: string) {
         name: s.name,
         ...s.priceUp!,
         yearlyExtraCents: yearlyExtra(s.priceUp!, s.frequency),
+        // The alert's name: a tracked subscription's as it has always been (its id and new price), so alerts already
+        // sent stay sent. `sentAs` is the same change announced while it was only found in the bank.
+        alertKey: `${s.id}:${s.priceUp!.toCents}`,
+        sentAs: [`found:${s.priceUp!.key}`],
       })),
     // Price increases on subscriptions found in the bank but not tracked yet count the same.
     ...found.flatMap((c) => {
       const p = priceUpOf(c);
-      return p ? [{ kind: "price_up" as const, id: null, name: c.name, ...p, yearlyExtraCents: yearlyExtra(p, c.frequency) }] : [];
+      return p
+        ? [
+            {
+              kind: "price_up" as const,
+              id: null,
+              name: c.name,
+              ...p,
+              yearlyExtraCents: yearlyExtra(p, c.frequency),
+              alertKey: `found:${p.key}`,
+              sentAs: [] as string[],
+            },
+          ]
+        : [];
     }),
     ...active
       .filter((s) => s.trialDaysLeft !== null && s.trialDaysLeft <= 7)

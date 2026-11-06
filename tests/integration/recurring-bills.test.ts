@@ -6,7 +6,6 @@ import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
 import { billsAndPace, budgetWarnings } from "@/server/services/finance/forecast";
 import { createRecurring, setBudget, suggestRecurring, upcomingRecurring } from "@/server/services/finance/planning";
-import { nthOccurrence } from "@/server/services/finance/recurring-detect";
 import { subscriptionsOverview, trackFound } from "@/server/services/finance/subscriptions";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { DETECTORS } from "@/server/services/proactive/detectors";
@@ -16,8 +15,6 @@ import { makeUser, TZ } from "../helpers";
 /** The bills-and-subscriptions finder end to end (audit 2026-11-05: A4 to A7, A15 to A17). */
 afterAll(closeDb);
 const TODAY = "2026-11-05";
-const monthsBack = (today: string, n: number, day: number) =>
-  Array.from({ length: n }, (_, i) => nthOccurrence(`${today.slice(0, 8)}${String(day).padStart(2, "0")}`, "monthly", i - n));
 
 async function accounts(s: UserScope) {
   return {
@@ -145,7 +142,8 @@ describe("a price change on a subscription not tracked yet (A6)", () => {
   it("flags Netflix going from $15.49 to $17.99 on the first changed charge, once, before and after it's tracked", async () => {
     const { run } = await makeUser();
     const today = todayIn(TZ);
-    const [a, b, c] = monthsBack(today, 3, 2);
+    // A month apart, the last one yesterday: still billing, and the change is recent.
+    const [a, b, c] = [-61, -31, -1].map((n) => addDaysStr(today, n));
     await run(async (s) => {
       const { card } = await accounts(s);
       for (const [d, cents] of [
@@ -169,14 +167,54 @@ describe("a price change on a subscription not tracked yet (A6)", () => {
     const first = await watch();
     expect(first).toEqual([expect.objectContaining({ facts: { name: "Netflix", fromCents: 1_549, toCents: 1_799, yearlyExtraCents: 3_000 } })]);
     expect(await run((s) => saveMessage(s, first[0], "friend", false, "midday"))).not.toBeNull();
-    // Later runs, and after tracking it: the same change, so no second message.
+    // Later runs: the same change, so no second message.
     expect(await run((s) => saveMessage(s, first[0], "friend", false, "evening"))).toBeNull();
-    await run((s) => trackFound(s, today, "netflix"));
+    // Tracked, it keeps the tracked key (`sub_price:<id>:<new price>`), but this change was already announced.
+    const item = await run((s) => trackFound(s, today, "netflix"));
     const tracked = await run((s) => subscriptionsOverview(s, today));
     expect(tracked.subscriptions).toMatchObject([{ name: "Netflix", priceUp: { fromCents: 1_549, toCents: 1_799 } }]);
-    const after = await watch();
-    expect(after.map((m) => m.dedupeKey)).toEqual([first[0].dedupeKey]);
-    expect(await run((s) => saveMessage(s, after[0], "friend", false, "midday"))).toBeNull();
+    expect(tracked.flags).toEqual([expect.objectContaining({ kind: "price_up", alertKey: `${item.id}:1799` })]);
+    expect(await watch()).toEqual([]);
+  });
+
+  it("alerts a tracked subscription's price rise under its own key, only while it's recent (review 4)", async () => {
+    const { run } = await makeUser();
+    const today = todayIn(TZ);
+    const at = (n: number) => addDaysStr(today, n);
+    const ids = await run(async (s) => {
+      const { card } = await accounts(s);
+      const charge = (name: string, date: string, cents: number) =>
+        createTransaction(s, { accountId: card.id, date, description: name, merchantName: name, amountCents: -cents });
+      // Hulu went up yesterday; Spotify went up four months ago.
+      for (const [d, c] of [
+        [at(-61), 1_799],
+        [at(-31), 1_799],
+        [at(-1), 1_899],
+      ] as const)
+        await charge("Hulu", d, c);
+      for (const [d, c] of [
+        [at(-182), 1_099],
+        [at(-152), 1_099],
+        [at(-121), 1_199],
+        [at(-91), 1_199],
+        [at(-61), 1_199],
+        [at(-31), 1_199],
+        [at(-1), 1_199],
+      ] as const)
+        await charge("Spotify", d, c);
+      const hulu = await createRecurring(s, { name: "Hulu", amountCents: -1_899, frequency: "monthly", nextDueDate: at(29), kind: "subscription" });
+      await createRecurring(s, { name: "Spotify", amountCents: -1_199, frequency: "monthly", nextDueDate: at(29), kind: "subscription" });
+      return { hulu: hulu.id };
+    });
+    const out = (await run((s) => DETECTORS.subscriptionWatch({ scope: s, tz: TZ, today, now: new Date() }))).filter((m) => m.kind === "subscription_price_up");
+    expect(out.map((m) => [m.dedupeKey, (m.facts as { name: string }).name])).toEqual([[`sub_price:${ids.hulu}:1899`, "Hulu"]]);
+    // Spotify's older rise still shows on the Subscriptions page.
+    expect(
+      (await run((s) => subscriptionsOverview(s, today))).flags
+        .filter((f) => f.kind === "price_up")
+        .map((f) => f.name)
+        .sort(),
+    ).toEqual(["Hulu", "Spotify"]);
   });
 });
 
