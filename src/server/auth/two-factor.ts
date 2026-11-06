@@ -251,3 +251,37 @@ export async function completeLoginChallenge(db: Database, token: string, code: 
   if (method !== "email") await db.update(users).set({ emailCodesBlockedAt: null }).where(eq(users.id, c.userId));
   return { ok: true, userId: c.userId, method };
 }
+
+// ---------------------------------------------------------------------------
+// Settings → "Lost your app? Start over" (owner, 2026-11-06). The signed-in person proves their password, gets a code
+// by email (the same rules as the sign-in email code: hashed, bound, single use, 10 minutes, 5 tries, 3 sends, refused
+// after a password reset until a strong sign-in), and two-step sign-in is reset so they can set up a new app and new
+// backup codes. Turning it off the normal way still needs a code from the old app.
+
+export async function beginTwoFactorRestart(db: Database, userId: string, password: string, now = Date.now()) {
+  const u = await getUser(db, userId);
+  if (!u.totpEnabledAt) throw new TwoFactorError("Two-step sign-in is already off.");
+  if (!(await verifyPassword(password, u.passwordHash))) throw new TwoFactorError("Password is incorrect.");
+  const { token } = await createLoginChallenge(db, userId, "password", now);
+  const r = await issueLoginEmailCode(db, token, now);
+  if (!r.ok) {
+    await db.delete(loginChallenges).where(eq(loginChallenges.id, sha256(token)));
+    throw new TwoFactorError(
+      r.reason === "after_reset"
+        ? "For safety, email codes are off after a password reset until you sign in once with your authenticator app, a backup code or a passkey."
+        : "Couldn't send a code just now. Try again in a minute.",
+    );
+  }
+  return { token, to: r.to, email: r.email, code: r.code, expiresAt: r.expiresAt };
+}
+
+export async function finishTwoFactorRestart(db: Database, userId: string, token: string, code: string, now = Date.now()) {
+  const r = await completeLoginChallenge(db, token, code, now);
+  if (!r.ok) {
+    if (r.reason === "wrong") throw new TwoFactorError("That code didn't match. Check the newest email.");
+    throw new TwoFactorError(r.reason === "locked" ? "Too many wrong codes. Ask for a new one." : "That code expired. Ask for a new one.");
+  }
+  if (r.userId !== userId) throw new TwoFactorError("That code isn't for this account.");
+  await db.update(users).set({ totpSecret: null, totpEnabledAt: null, totpLastStep: null }).where(eq(users.id, userId));
+  await db.delete(recoveryCodes).where(eq(recoveryCodes.userId, userId));
+}

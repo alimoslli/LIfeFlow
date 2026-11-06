@@ -5,11 +5,13 @@ import { closeDb, getDb } from "@/server/db/client";
 import { loginChallenges, users } from "@/server/db/schema";
 import {
   beginTotpSetup,
+  beginTwoFactorRestart,
   checkTotp,
   completeLoginChallenge,
   confirmTotpSetup,
   createLoginChallenge,
   disableTwoFactor,
+  finishTwoFactorRestart,
   issueLoginEmailCode,
   maskEmail,
   MAX_CHALLENGE_ATTEMPTS,
@@ -232,5 +234,45 @@ describe("email me a code (owner, 2026-11-06)", () => {
   it("shows the address without giving it away", () => {
     expect(maskEmail("ali@gmail.com")).toBe("a•••@gmail.com");
     expect(maskEmail("nope")).toBe("your email");
+  });
+});
+
+describe("lost your app? start over with an email code (owner, 2026-11-06)", () => {
+  const PW = "correct horse battery"; // makeUser's password
+
+  it("needs the password, then the emailed code resets two-step so a new app can be set up", async () => {
+    const { user, db, recoveryCodes } = await enabledUser();
+    await expect(beginTwoFactorRestart(db, user.id, "wrong password", T0)).rejects.toThrow(/Password is incorrect/);
+    const r = await beginTwoFactorRestart(db, user.id, PW, T0);
+    expect(r.code).toMatch(/^\d{6}$/);
+    expect(r.email).toBe(user.email);
+    // a wrong code changes nothing
+    const wrong = r.code === "000000" ? "111111" : "000000";
+    await expect(finishTwoFactorRestart(db, user.id, r.token, wrong, T0 + 60_000)).rejects.toThrow(/didn't match/);
+    expect((await twoFactorStatus(db, user.id)).enabled).toBe(true);
+    await finishTwoFactorRestart(db, user.id, r.token, r.code, T0 + 60_000);
+    const status = await twoFactorStatus(db, user.id);
+    expect(status).toMatchObject({ enabled: false, recoveryCodesLeft: 0 });
+    // the old backup codes are gone, and a brand new setup works
+    expect(await verifySecondFactor(db, user.id, recoveryCodes[1], T0)).toBeNull();
+    const { secret } = await beginTotpSetup(db, user.id);
+    const again = await confirmTotpSetup(db, user.id, code(secret, T0 + 120_000), T0 + 120_000);
+    expect(again.recoveryCodes).toHaveLength(10);
+    // the code worked once
+    await expect(finishTwoFactorRestart(db, user.id, r.token, r.code, T0 + 60_000)).rejects.toThrow(/expired/);
+  });
+
+  it("is refused after a password reset until a strong sign-in, and never resets another account", async () => {
+    const { user, db } = await enabledUser();
+    await db
+      .update(users)
+      .set({ emailCodesBlockedAt: new Date(T0) })
+      .where(eq(users.id, user.id));
+    await expect(beginTwoFactorRestart(db, user.id, PW, T0)).rejects.toThrow(/after a password reset/);
+    await db.update(users).set({ emailCodesBlockedAt: null }).where(eq(users.id, user.id));
+    const other = await enabledUser();
+    const r = await beginTwoFactorRestart(db, user.id, PW, T0);
+    await expect(finishTwoFactorRestart(db, other.user.id, r.token, r.code, T0 + 60_000)).rejects.toThrow(/isn't for this account/);
+    expect((await twoFactorStatus(db, other.user.id)).enabled).toBe(true);
   });
 });

@@ -44,3 +44,15 @@ The owner was locked out: their account had two-step sign-in on, they couldn't f
 - **The sign-in never waits on the email service.** The notice is sent with `after()`, and every Resend call has a 10-second limit.
 
 **Trade-off, accepted by the owner:** whoever controls the account's email AND knows the current password (not set through a reset since their last strong sign-in) can get in, admin included, because the admin check looks at the account's two-step setup, not at how this session signed in. Authenticator codes, backup codes and passkeys stay the stronger options.
+
+### "Lost your app? Start over" (owner, 2026-11-06)
+- **Why:** turning two-step off, or making new backup codes, needs a code from the old app. Someone who lost the app but got in with an email code couldn't set up a new one.
+- **Where:** Settings → Security now has "Lost your app? Start over with an email code".
+- **How:**
+  - The signed-in person enters their password.
+  - A 6-digit code is emailed: the same machinery and rules as the sign-in email code (`beginTwoFactorRestart` → `issueLoginEmailCode`, so it's refused after a password reset until a strong sign-in).
+  - The code is checked through `completeLoginChallenge`, and must belong to the signed-in account (`finishTwoFactorRestart`).
+- **What it resets:** the authenticator secret and every backup code. The person goes straight into setting up a new app and gets new backup codes.
+- **Notice:** an email confirms the reset.
+- **Logged:** `auth.2fa.restart_code_sent` and `auth.2fa.reset_by_email`.
+- **Cookie:** `bf_2fa_restart`, httpOnly, strict, scoped to `/settings/security`, 10 minutes.
