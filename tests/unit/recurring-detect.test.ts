@@ -197,11 +197,11 @@ describe("two subscriptions from one merchant (A5)", () => {
 });
 
 describe("a price change keeps the subscription (A6)", () => {
-  it("reports Netflix at $15.49 twice, then $17.99, on the first changed charge", () => {
-    const r = detectRecurring([
-      ...months("2026-08-09", 2).map((d) => tx(d, -1_549, "Netflix", "NETFLIX.COM")),
-      tx("2026-10-09", -1_799, "Netflix", "NETFLIX.COM"),
-    ]);
+  it("reports Netflix at $15.49 twice, then $17.99, on the first changed charge (trusted 3 days after its due date)", () => {
+    const charges = [...months("2026-08-09", 2).map((d) => tx(d, -1_549, "Netflix", "NETFLIX.COM")), tx("2026-10-09", -1_799, "Netflix", "NETFLIX.COM")];
+    // The day it posts, it could still be something else bought there: the series goes on at $15.49 for now.
+    expect(detectRecurring(charges, { today: "2026-10-09" })).toMatchObject([{ latestAmountCents: -1_549, priceChange: null }]);
+    const r = detectRecurring(charges, { today: "2026-10-12" });
     expect(r).toHaveLength(1);
     expect(r[0].confidence).toBeGreaterThanOrEqual(0.6);
     expect(r[0]).toMatchObject({ kind: "subscription", latestAmountCents: -1_799, priceChange: { fromCents: -1_549, toCents: -1_799, date: "2026-10-09" } });
@@ -380,5 +380,91 @@ describe("held-out people (review follow-up)", () => {
       },
     );
     expect(r).toEqual([]);
+  });
+});
+
+describe("a new price is provisional until its cycle has passed (review follow-up 1)", () => {
+  const A = { merchantName: "Apple", categoryName: "Software" };
+  const apple = (date: string, cents: number) => tx(date, -cents, "Apple", "APPLE.COM/BILL", A);
+  const icloud = months("2026-01-11", 10).map((d) => apple(d, 299));
+  const latest = (txns: DetectTxn[], today: string) => detectRecurring(txns, { today }).map((c) => [c.latestAmountCents, c.priceChange]);
+
+  it("doesn't call a $3.99 App Store purchase two days before iCloud's $2.99 charge a price rise", () => {
+    const app = apple("2026-11-09", 399);
+    expect(latest([...icloud, app], "2026-11-09")).toEqual([[-299, null]]);
+    expect(latest([...icloud, app], "2026-11-10")).toEqual([[-299, null]]);
+    // iCloud posts as usual: the purchase was a one-off.
+    expect(latest([...icloud, app, apple("2026-11-11", 299)], "2026-11-11")).toEqual([[-299, null]]);
+    expect(latest([...icloud, app, apple("2026-11-11", 299)], "2026-12-01")).toEqual([[-299, null]]);
+  });
+
+  it("still catches a real rise on its first charge, confirmed once the due window has passed", () => {
+    const rise = apple("2026-11-11", 399);
+    expect(latest([...icloud, rise], "2026-11-12")).toEqual([[-299, null]]);
+    expect(latest([...icloud, rise], "2026-11-14")).toEqual([[-399, { fromCents: -299, toCents: -399, date: "2026-11-11" }]]);
+  });
+
+  it("never lets an app purchase take over iCloud when its real rise comes days later (person h3323)", () => {
+    const history = [
+      "2025-10-14",
+      "2025-11-12",
+      "2025-12-11",
+      "2026-01-12",
+      "2026-02-11",
+      "2026-03-11",
+      "2026-04-13",
+      "2026-05-11",
+      "2026-06-11",
+      "2026-07-13",
+      "2026-08-11",
+    ];
+    // Other App Store purchases all year, none near September's due date.
+    const others = every("2025-10-03", 9, 44)
+      .map((d, i) => apple(d, 150 + ((i * 97) % 700)))
+      .filter((t) => t.date < "2026-09-04" || t.date > "2026-09-18");
+    const base = [...history.map((d) => apple(d, 299)), ...others.filter((t) => t.amountCents !== -299 && t.amountCents !== -331 && t.amountCents !== -374)];
+    const cloud = (txns: DetectTxn[], today: string) =>
+      detectRecurring(txns, { today })
+        .filter((c) => c.charges.some((x) => x.date === "2026-08-11"))
+        .map((c) => [c.latestAmountCents, c.priceChange]);
+    const app = apple("2026-09-08", 331);
+    expect(cloud([...base, app], "2026-09-09")).toEqual([[-299, null]]);
+    const rise = [apple("2026-09-11", 374), apple("2026-10-13", 374)];
+    expect(cloud([...base, app, rise[0]], "2026-09-14")).toEqual([[-374, { fromCents: -299, toCents: -374, date: "2026-09-11" }]]);
+    expect(cloud([...base, app, ...rise], "2026-11-05")).toEqual([[-374, { fromCents: -299, toCents: -374, date: "2026-09-11" }]]);
+  });
+});
+
+describe("two new prices around one due date (review follow-up 1)", () => {
+  it("waits for one of them to repeat before calling either a price change", () => {
+    const apple = (date: string, cents: number) => tx(date, -cents, "Apple", "APPLE.COM/BILL", { categoryName: "Software" });
+    const icloud = months("2026-01-11", 10).map((d) => apple(d, 299));
+    const cloud = (txns: DetectTxn[], today: string) => detectRecurring(txns, { today }).map((c) => [c.latestAmountCents, c.priceChange?.toCents ?? null]);
+    const both = [apple("2026-11-10", 336), apple("2026-11-11", 374)];
+    expect(cloud([...icloud, ...both], "2026-11-20")).toEqual([[-299, null]]);
+    // December's charge is $3.74 again: that's the new price, from Nov 11.
+    expect(cloud([...icloud, ...both, apple("2026-12-11", 374)], "2026-12-12")).toEqual([[-374, -374]]);
+  });
+});
+
+describe("series keys don't move with weekends (review follow-up 2)", () => {
+  it("keeps one key per series while charges post on the 10th, 11th or 12th", () => {
+    // Posted the next business day, as banks do: a charge due on a Saturday posts on Monday.
+    const post = (d: string) => {
+      const w = new Date(`${d}T00:00:00Z`).getUTCDay();
+      return w === 6 ? addDaysStr(d, 2) : w === 0 ? addDaysStr(d, 1) : d;
+    };
+    const txns = months("2025-10-10", 14).flatMap((d) => [
+      tx(post(d), -1_099, "Apple", "APPLE.COM/BILL", { categoryName: "Software" }),
+      tx(post(nthOccurrence(d, "monthly", 0, 24)), -299, "Apple", "APPLE.COM/BILL", { categoryName: "Software" }),
+    ]);
+    const keys = new Set<string>();
+    for (let d = "2026-05-01"; d <= "2026-11-05"; d = addDaysStr(d, 1))
+      for (const c of detectRecurring(
+        txns.filter((t) => t.date <= d),
+        { today: d },
+      ))
+        keys.add(c.seriesKey);
+    expect([...keys].sort()).toEqual(["apple~d10", "apple~d24"]);
   });
 });

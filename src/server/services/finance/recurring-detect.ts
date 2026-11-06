@@ -271,6 +271,14 @@ export function occurrencesBetween(start: string, freq: Frequency, from: string,
   return out;
 }
 
+/** The day of the month a series usually bills (most often; the earlier day on a tie, since weekends only push charges later). */
+function usualDay(dates: string[]): number {
+  const due = dueDayOf(dates);
+  if (due >= 29) return due;
+  const counts = Map.groupBy(dates, dayOf);
+  return [...counts.entries()].sort((a, b) => b[1].length - a[1].length || a[0] - b[0])[0][0];
+}
+
 /** The day a monthly (or longer) series keeps: its last charge's, unless that's a short month's last day standing in for the 29th to 31st. */
 function dueDayOf(dates: string[]): number {
   const last = dates[dates.length - 1];
@@ -316,10 +324,35 @@ function cyclesOf(sorted: DetectTxn[]): Cycle[] {
 /**
  * `strict`: a price picked out of a merchant that also bills other things (Apple, Amazon) needs 3 charges, never 2.
  * `refunds`: money that merchant gave back, so a double charge already refunded isn't reported.
+ * `today`: when a new price seen once can be trusted (`provisional`).
  */
-type Context = { key: string; strict?: boolean; refunds?: { date: string; amountCents: number }[] };
-/** A series before it's given its series key. */
-type Found = Omit<RecurringCandidate, "seriesKey"> & { cycles: Cycle[] };
+type Context = { key: string; strict?: boolean; refunds?: { date: string; amountCents: number }[]; today?: string };
+
+/** Days past a cycle's due date before a new price seen once is trusted: a charge due on a Saturday posts by Tuesday. */
+const CONFIRM_DAYS = 3;
+
+/** The period the charges keep, from their typical gap. */
+const periodOf = (cycles: Cycle[]) =>
+  PERIODS.find((x) => Math.abs(median(cycles.slice(1).map((c, i) => daysBetween(cycles[i].t.date, c.t.date))) - x.days) <= x.tolerance);
+
+/**
+ * Whether the last charge is a new price seen only once whose cycle hasn't passed yet. It could be the price going
+ * up, or a purchase from the same merchant ($3.99 at the App Store two days before iCloud's $2.99): until the due
+ * window has passed with no charge at the old price, it's provisional, and the series goes on at the old price.
+ */
+function provisional(cycles: Cycle[], today: string | undefined): boolean {
+  if (!today || cycles.length < 3) return false;
+  const [older, prev, last] = cycles.slice(-3).map((c) => c.t);
+  if (last.amountCents === prev.amountCents || prev.amountCents !== older.amountCents) return false;
+  const before = cycles.slice(0, -1);
+  const p = periodOf(before);
+  if (!p) return false;
+  const due =
+    p.freq === "weekly" || p.freq === "biweekly" ? addDaysStr(prev.date, p.days) : nthOccurrence(prev.date, p.freq, 1, dueDayOf(before.map((c) => c.t.date)));
+  return daysBetween(last.date > due ? last.date : due, today) < CONFIRM_DAYS;
+}
+/** A series before it's given its series key. `heldAt`: the cycle billed on that day at a price not trusted yet. */
+type Found = Omit<RecurringCandidate, "seriesKey"> & { cycles: Cycle[]; heldAt?: string };
 
 const onSchedule = (gap: number, p: (typeof PERIODS)[number]) => Math.abs(gap - p.days) <= p.tolerance * 1.5;
 /** A price change people actually see: at most double, at least half. */
@@ -340,6 +373,7 @@ function runsOf(cycles: Cycle[]) {
 function evaluate(cycles: Cycle[], ctx: Context): Found | null {
   const { key, strict } = ctx;
   if (cycles.length < 2) return null;
+  if (provisional(cycles, ctx.today)) return evaluate(cycles.slice(0, -1), ctx);
   const ts = cycles.map((c) => c.t);
   const last = ts[ts.length - 1];
   const name = merchantDisplayName(last);
@@ -529,28 +563,69 @@ function mainSeriesOf(cycles: Cycle[], ctx: Context): Found[] {
   const category = last.categoryName ?? cycles.find((c) => c.t.categoryName)?.t.categoryName;
   const splittable = last.amountCents < 0 && (!isEveryday(category) || KNOWN_SUBSCRIPTION.test(ctx.key));
   if (!splittable) return seriesIn(cycles, ctx);
-  // Runs of one exact price, oldest first. A later price that starts one period after another stops continues it;
-  // a price seen only once does that only on time and right after a price that held at least 3 times.
+  // Runs of one exact price. A later price that starts one period after another stops continues it (a price change);
+  // a price seen only once does that only right after a price that held at least 3 times. When several could, a
+  // price seen twice beats one seen once, then the one nearest the due date: an App Store purchase three days
+  // before iCloud's real rise never takes iCloud over.
   const byPrice = [...Map.groupBy(cycles, (c) => c.t.amountCents).values()].sort((a, b) => a[0].t.date.localeCompare(b[0].t.date));
-  const chains: Cycle[][] = [];
-  for (const group of byPrice) {
-    const start = group[0].t;
-    const continues = chains.find((ch) => {
+  const chains: Cycle[][] = byPrice.filter((g) => g.length >= 2).map((g) => [...g]);
+  const heldAt = new Map<Cycle[], string>();
+  const singles = byPrice.filter((g) => g.length === 1).map((g) => g[0]);
+  for (let merged = true; merged;) {
+    merged = false;
+    for (const ch of [...chains].sort((a, b) => a[a.length - 1].t.date.localeCompare(b[b.length - 1].t.date))) {
+      if (!chains.includes(ch)) continue;
+      const p = periodOf(ch);
+      // Only a price that held 3 times on a subscription's schedule (monthly or longer) has a next price; two purchases
+      // two weeks, or three months, apart don't.
+      if (!p || p.freq === "weekly" || p.freq === "biweekly" || ch.length < 3) continue;
       const end = ch[ch.length - 1].t;
+      // Due on the day it usually bills (a charge due on a Saturday posts Monday), not the last charge's day.
+      const due = nthOccurrence(end.date, p.freq, 1, usualDay(ch.map((c) => c.t.date)));
+      const off = (t: DetectTxn) => Math.abs(daysBetween(due, t.date));
       // A service's new price among a merchant's other charges: within half again or a third less (a doubling is another purchase).
-      const ratio = start.amountCents / end.amountCents;
-      if (end.date >= start.date || ratio > 1.5 || ratio < 2 / 3) return false;
+      const fits = (start: DetectTxn, seen: number) =>
+        start.amountCents / end.amountCents <= 1.5 &&
+        start.amountCents / end.amountCents >= 2 / 3 &&
+        Math.abs(daysBetween(end.date, start.date) - p.days) <= p.tolerance * (seen >= 2 ? 1.5 : 1);
+      // What could come next: another price's charges after this one stops. An earlier purchase at that price
+      // (an app at $3.74 back in February) stays behind as a one-off.
+      const pieces = [...chains.filter((o) => o !== ch), ...singles.map((c) => [c])]
+        .map((g) => ({ g, tail: g.filter((c) => c.t.date > end.date) }))
+        .filter((x) => x.tail.length && fits(x.tail[0].t, x.tail.length))
+        .sort((x, y) => off(x.tail[0].t) - off(y.tail[0].t));
+      const take = ({ g, tail }: (typeof pieces)[number]) => {
+        const left = g.filter((c) => !tail.includes(c));
+        if (chains.includes(g)) chains.splice(chains.indexOf(g), 1);
+        for (const c of tail) if (singles.includes(c)) singles.splice(singles.indexOf(c), 1);
+        if (left.length >= 2) chains.push(left);
+        else singles.push(...left);
+        ch.push(...tail);
+        merged = true;
+      };
+      const twice = pieces.find((x) => x.tail.length >= 2);
+      if (twice) {
+        take(twice);
+        continue;
+      }
       const runs = runsOf(ch);
-      if (group.length < 2 && runs[runs.length - 1].length < 3) return false;
-      const p = PERIODS.find((x) => Math.abs(median(ch.slice(1).map((c, i) => daysBetween(ch[i].t.date, c.t.date))) - x.days) <= x.tolerance);
-      // Only a price on a subscription's schedule (monthly or longer) has a next price; two purchases two weeks apart don't.
-      if (!p || p.freq === "weekly" || p.freq === "biweekly") return false;
-      return Math.abs(daysBetween(end.date, start.date) - p.days) <= p.tolerance * (group.length >= 2 ? 1.5 : 1);
-    });
-    if (continues) continues.push(...group);
-    else if (group.length >= 2) chains.push([...group]);
+      if (runs[runs.length - 1].length < 3) continue;
+      const [once, other] = pieces;
+      if (!once) continue;
+      // Two new prices seen once each, about as near the due date, can't be told apart yet: wait for one to repeat.
+      // The cycle was billed, though, so the series hasn't stopped.
+      if (other && off(other.tail[0].t) - off(once.tail[0].t) < 2) {
+        heldAt.set(ch, once.tail[0].t.date > other.tail[0].t.date ? once.tail[0].t.date : other.tail[0].t.date);
+        continue;
+      }
+      take(once);
+    }
   }
-  const own = chains.flatMap((ch) => seriesIn(ch, { ...ctx, strict: ch.length < cycles.length }));
+  const own = chains.flatMap((ch) =>
+    seriesIn(ch, { ...ctx, strict: ch.length < cycles.length }).map((f) =>
+      heldAt.has(ch) && f.lastDate === ch[ch.length - 1].t.date ? { ...f, heldAt: heldAt.get(ch) } : f,
+    ),
+  );
   // A share of a bill paid to a person through an app moves each month (utilities by Venmo) among other payments
   // to friends: charges of a similar size (within 1.5x of each other, $15 or more) that keep their own schedule.
   if (cycles.every((c) => c.t.kind === "transfer" && PAYMENT_APP.test(lineOf(c.t)))) {
@@ -588,15 +663,20 @@ function mainSeriesOf(cycles: Cycle[], ctx: Context): Found[] {
   // Otherwise all of the merchant's charges together (a bill whose amount moves, a price change), or the one price that holds.
   const whole = seriesIn(cycles, ctx);
   const best = current[0];
-  if (whole.length >= 2 || (whole[0] && (!best || whole[0].confidence >= best.confidence))) return whole;
-  return best ? [best] : [];
+  if (!best) return whole;
+  // Next to a price that holds its own schedule, all of the merchant's charges win only as one series (a bill whose
+  // amount moves, a price change), never split by day: a day's slot keeps whichever purchase came first.
+  return whole.length === 1 && whole[0].confidence >= best.confidence ? whole : [best];
 }
 
 /** Keys for one merchant's series, from what each one is (its day, then its price), never from their order. */
 function seriesKeys(key: string, found: Found[]): string[] {
   if (found.length === 1) return [key];
   const weekday = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay();
-  let tags = found.map((f) => (f.frequency === "weekly" || f.frequency === "biweekly" ? `w${weekday(f.lastDate)}` : `d${f.dueDay}`));
+  // The day it usually bills, not its last charge's: a charge due on a Saturday posts on Monday, and the key stays.
+  let tags = found.map((f) =>
+    f.frequency === "weekly" || f.frequency === "biweekly" ? `w${weekday(f.lastDate)}` : `d${usualDay(f.charges.map((x) => x.date))}`,
+  );
   const clash = (t: string[]) => (x: string) => t.filter((y) => y === x).length > 1;
   tags = tags.map((t, i) => (clash(tags)(t) ? `${t}-${Math.abs(found[i].latestAmountCents)}` : t));
   // Identical twins (two plans, same day, same price) can only be told apart by order, and either key fits either.
@@ -661,11 +741,16 @@ export function detectRecurring(txns: DetectTxn[], opts: { today?: string } = {}
     const key = k.split("|")[0];
     const sorted = [...list].sort((a, b) => a.date.localeCompare(b.date));
     // A series that missed its last expected charge (by a week, or a quarter of its period) has stopped.
-    const found = seriesOf(cyclesOf(sorted), { key, refunds: refunds.get(key) ?? [] })
-      .filter((f) => daysBetween(f.nextExpectedDate, today) <= Math.max(7, PERIODS.find((p) => p.freq === f.frequency)!.days * 0.25))
+    const found = seriesOf(cyclesOf(sorted), { key, refunds: refunds.get(key) ?? [], today })
+      .filter((f) => {
+        const p = PERIODS.find((x) => x.freq === f.frequency)!;
+        // Billed at a price still being checked counts as billed: the next one is a period after that.
+        const next = f.heldAt ? nthOccurrence(f.heldAt, f.frequency, 1) : f.nextExpectedDate;
+        return daysBetween(next, today) <= Math.max(7, p.days * 0.25);
+      })
       .sort((a, b) => a.charges[0].date.localeCompare(b.charges[0].date));
     const keys = seriesKeys(key, found);
-    found.forEach(({ cycles: _cycles, ...series }, i) => out.push({ ...series, seriesKey: keys[i] }));
+    found.forEach(({ cycles: _cycles, heldAt: _held, ...series }, i) => out.push({ ...series, seriesKey: keys[i] }));
   }
   return out.sort((a, b) => b.confidence - a.confidence);
 }

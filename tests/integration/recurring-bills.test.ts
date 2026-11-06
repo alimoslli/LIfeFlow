@@ -142,8 +142,8 @@ describe("a price change on a subscription not tracked yet (A6)", () => {
   it("flags Netflix going from $15.49 to $17.99 on the first changed charge, once, before and after it's tracked", async () => {
     const { run } = await makeUser();
     const today = todayIn(TZ);
-    // A month apart, the last one yesterday: still billing, and the change is recent.
-    const [a, b, c] = [-61, -31, -1].map((n) => addDaysStr(today, n));
+    // A month apart, the last one 5 days ago: still billing, the change recent, and its cycle's due window has passed.
+    const [a, b, c] = [-65, -35, -5].map((n) => addDaysStr(today, n));
     await run(async (s) => {
       const { card } = await accounts(s);
       for (const [d, cents] of [
@@ -152,6 +152,8 @@ describe("a price change on a subscription not tracked yet (A6)", () => {
         [c, 1_799],
       ] as const)
         await createTransaction(s, { accountId: card.id, date: d, description: "NETFLIX.COM", merchantName: "Netflix", amountCents: -cents });
+      // Everyday spending since then: the feed is current, so the due window has really passed.
+      await createTransaction(s, { accountId: card.id, date: today, description: "CORNER CAFE", merchantName: "Corner Cafe", amountCents: -450 });
     });
     const o = await run((s) => subscriptionsOverview(s, today));
     expect(o.found).toMatchObject([{ name: "Netflix", latestAmountCents: -1_799 }]);
@@ -185,11 +187,11 @@ describe("a price change on a subscription not tracked yet (A6)", () => {
       const { card } = await accounts(s);
       const charge = (name: string, date: string, cents: number) =>
         createTransaction(s, { accountId: card.id, date, description: name, merchantName: name, amountCents: -cents });
-      // Hulu went up yesterday; Spotify went up four months ago.
+      // Hulu went up 5 days ago; Spotify went up four months ago.
       for (const [d, c] of [
-        [at(-61), 1_799],
-        [at(-31), 1_799],
-        [at(-1), 1_899],
+        [at(-65), 1_799],
+        [at(-35), 1_799],
+        [at(-5), 1_899],
       ] as const)
         await charge("Hulu", d, c);
       for (const [d, c] of [

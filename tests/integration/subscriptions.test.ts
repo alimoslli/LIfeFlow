@@ -19,7 +19,8 @@ describe("subscription finder", () => {
       const acct = await createManualAccount(s, { name: "Card", type: "credit", currentBalanceCents: 0 });
       const charge = (name: string, cents: number, daysAgo: number, desc = name) =>
         createTransaction(s, { accountId: acct.id, date: addDaysStr(today, -daysAgo), description: desc, merchantName: name, amountCents: -cents });
-      for (const [i, c] of [1099, 1099, 1199].entries()) await charge("Spotify", c, 60 - i * 30);
+      // The new price is trusted once its cycle's due window has passed (a few days), so it went up 5 days ago.
+      for (const [i, c] of [1099, 1099, 1199].entries()) await charge("Spotify", c, 65 - i * 30);
       for (const d of [65, 35, 5]) await charge("Netflix", 1549, d);
       for (const d of [62, 32, 2]) await charge("Hulu", 999, d, "APPLE.COM/BILL HULU");
       for (const d of [61, 31, 1]) await charge("Gym Pass", 2500, d);
