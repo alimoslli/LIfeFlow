@@ -59,11 +59,16 @@ e. End: `checkin --status idle --phase round_end --summary "<N drafts, M schedul
 Never publish, message, reply to or contact anyone; never spend credits beyond the budget without a paid approval.
 ```
 
-## Replacing the old tasks
-1. Create the three tasks above with `create_trigger`, each with `persistent_session_id` = the LF Chief of Staff session, `initiation` "human_request", and the connectors Metricool and Higgsfield for the marketing round.
-2. Pause the old ones (`update_trigger enabled=false`):
-   - the night round, `trig_01JHv2DjF8YHYSrrdEF3YPc1`;
-   - research, `trig_018U3a2TpShQpwUd4AHn7baT`.
+## Replacing the old tasks (done 2026-11-06)
+The LF Chief of Staff chat is `session_01Mhcz6B4zzXGnxZwJcmd4dE` (LifeFlow environment, LIfeFlow repo only, Sonnet).
 
-   The hourly task `trig_01JSrD2Q36DZyo6ZKL5Hvqej` is already paused.
-3. Check each one with `get_trigger`.
+Tasks bound to it (`persistent_session_id`), all enabled:
+- night round: `trig_01KUeAPoWooMQC9pf5zMK71B`;
+- research and the weekly plan: `trig_01XyCrQ5XWe6CzNreS2n3N6p`;
+- marketing: `trig_01KiwPCzTwv5evUEVaeDizbJ`.
+
+Connectors per task aren't available on this account. A task that wakes an existing chat uses that chat's connectors.
+
+Paused (`enabled=false`), bound to LF V3 — Agents: night `trig_01JHv2DjF8YHYSrrdEF3YPc1`, research `trig_018U3a2TpShQpwUd4AHn7baT`. The hourly `trig_01JSrD2Q36DZyo6ZKL5Hvqej` stays paused.
+
+To change a round, edit its block above, then `update_trigger <id> prompt=...` with the common opening plus that block, and check it with `get_trigger`.

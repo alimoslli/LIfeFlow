@@ -80,9 +80,10 @@ HQ is a mirror, never a blocker. If `HQ_URL` isn't set or a command fails, carry
 
 ## Turning it on (status)
 - [x] HQ merged to main (2026-11-06, `df6a462`). Vercel deploys lifeflowweb.com; the owner's first look confirms it.
-- [ ] HQ Settings: "Import the starting list", then create a key named "cloud environment".
+- [x] HQ Settings: "Import the starting list", then create a key named "cloud environment".
 - [x] `HQ_URL` and the key are saved on the "LifeFlow" cloud environment (2026-11-06). The key is a network secret for lifeflowweb.com, added by the proxy. The first real check-in was accepted. `scripts/hq.ts` turns on Node's proxy support by itself (`NODE_USE_ENV_PROXY=1`), because Node's fetch ignores the cloud proxy otherwise.
 - [x] Night round and research tasks point at this file (2026-11-06; blocks in `docs/hq/round-prompts.md`, applied by the LF V3 — Agents chat, checked with get_trigger).
 - [ ] LF Main's environment gets the same two settings.
-- [ ] Migration `0044_hq_marketing` deployed; the "Controls" block from `round-prompts.md` added to the night and research tasks (ADR 0025).
+- [x] Migrations `0044_hq_marketing` and `0045_hq_company` deployed (2026-11-06, main `9171c03`). Every round now runs in the LF Chief of Staff chat with the v2 prompts (`round-prompts.md`); the old tasks are paused.
+- [x] The Chief of Staff's first start (2026-11-06): check-in, relays, error triage and the first brief went through. It stopped at the usage gate (weekly allowance at its warning level), as the rules say.
 - [ ] Phase 3: a weekly marketing round, after the owner's yes. It reads `approvedContent` from `inbox`, puts each post into Metricool with `createScheduledPostForReview`, then reports `content update <id> --status scheduled --external-id <id>` (and `--status published --published-url <link>` after the owner presses the final button). New ideas and scripts: `content add ... --ask`. Real numbers: `metrics --network instagram --date <day> --metric followers=<n>`. No comments, no DMs, no paid generation without a `paid` approval within the credit budget.
