@@ -325,4 +325,29 @@ describe("the budget fix never cuts essentials (A17)", () => {
     expect(w.status).toBe("heading_over");
     expect(w.fix).toBe("Skip 2 DoorDash purchases (about $33 each) and you're back on track.");
   });
+
+  it("doesn't say to pause Food & Dining (it holds groceries) once the budget is over", async () => {
+    const { run } = await makeUser();
+    const today = "2026-10-20";
+    await run(async (s) => {
+      const { checking } = await accounts(s);
+      const food = await getCategoryByName(s, "Food & Dining");
+      const groceries = await getCategoryByName(s, "Groceries");
+      await setBudget(s, { month: today, categoryId: food!.id, limitCents: 10_000 });
+      for (const d of ["2026-10-02", "2026-10-09", "2026-10-16"])
+        await createTransaction(s, {
+          accountId: checking.id,
+          date: d,
+          description: "TRADER JOE'S #552",
+          merchantName: "Trader Joe's",
+          amountCents: -4_050,
+          categoryId: groceries!.id,
+        });
+    });
+    const [w] = await run((s) => budgetWarnings(s, today));
+    expect(w.status).toBe("over");
+    expect(w.fix).toBe(
+      "This budget is already over by $21.50. Raise the limit to what you really spend on Food & Dining, or move the difference from a budget for wants.",
+    );
+  });
 });

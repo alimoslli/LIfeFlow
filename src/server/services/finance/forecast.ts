@@ -2,6 +2,7 @@ import { series } from "@/server/db/series";
 import { addDaysStr, daysBetween, formatDateStr, monthEnd, monthStart } from "@/lib/dates";
 import type { UserScope } from "../../db/with-user";
 import { summarizeCashflow } from "./cashflow";
+import { listCategories } from "./categories";
 import { keywordCategory, needOrWant } from "./categorize";
 import { listAccounts } from "./accounts";
 import { balancesOf } from "./overview";
@@ -55,6 +56,8 @@ export function budgetPace(i: {
   today: string;
   /** Biggest merchant in this category this month that's safe to skip (`skippableMerchant`), with its typical purchase. */
   topMerchant: { name: string; avgCents: number; count: number } | null;
+  /** The budget covers needs (groceries, rent, medical, getting to work or school): never tell anyone to pause those. Default: by the category's name. */
+  essential?: boolean;
 }) {
   const start = monthStart(i.today);
   const end = monthEnd(i.today);
@@ -76,6 +79,8 @@ export function budgetPace(i: {
       fix = `Skip ${skip} ${i.topMerchant.name} purchase${skip === 1 ? "" : "s"} (about ${dollars(i.topMerchant.avgCents)} each) and you're back on track.`;
     } else if (status === "heading_over") {
       fix = `Keep ${i.category} to about ${dollars(perDay)} a day for the last ${left} day${left === 1 ? "" : "s"} to stay within budget.`;
+    } else if (i.essential ?? needOrWant(i.category) === "need") {
+      fix = `This budget is already over by ${dollars(-remaining)}. Raise the limit to what you really spend on ${i.category}, or move the difference from a budget for wants.`;
     } else {
       fix = `This budget is already over by ${dollars(-remaining)}. Pausing ${i.category} spending for the rest of the month keeps it from growing, or raise the limit if it was too low.`;
     }
@@ -259,10 +264,12 @@ export function skippableMerchant(txns: { merchantName: string | null; descripti
 
 /** Early warnings for every budget, with a specific fix. */
 export async function budgetWarnings(scope: UserScope, today: string) {
-  const [budgets, txns] = await series(
+  const [budgets, txns, cats] = await series(
     () => budgetStatus(scope, today),
     () => queryTransactions(scope, { from: monthStart(today), to: today, kinds: ["expense"], limit: 20_000 }),
+    () => listCategories(scope),
   );
+  const names = new Map(cats.map((c) => [c.id, c.name]));
   return budgets.map((b) => {
     const inCat = txns.filter((t) => t.categoryId && b.childIds.includes(t.categoryId));
     const pace = budgetPace({
@@ -271,6 +278,8 @@ export async function budgetWarnings(scope: UserScope, today: string) {
       spentCents: b.spentCents,
       today,
       topMerchant: skippableMerchant(inCat),
+      // Food & Dining holds Groceries: a budget is essential when it or any category inside it is a need.
+      essential: b.childIds.some((id) => needOrWant(names.get(id)) === "need"),
     });
     return { ...b, ...pace };
   });

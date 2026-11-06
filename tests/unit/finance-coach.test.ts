@@ -80,6 +80,22 @@ describe("the budget fix never cuts essentials (A17)", () => {
   });
 });
 
+describe("an over budget never tells anyone to pause essentials (review 7)", () => {
+  const over = (category: string, essential?: boolean) =>
+    budgetPace({ category, limitCents: 30_000, spentCents: 34_000, today: "2026-10-20", topMerchant: null, essential }).fix;
+
+  it("suggests a new limit or moving money from wants for groceries, rent or medical, and pausing only for wants", () => {
+    for (const c of ["Groceries", "Rent", "Medical", "Public Transit"])
+      expect(over(c)).toBe(
+        `This budget is already over by $40. Raise the limit to what you really spend on ${c}, or move the difference from a budget for wants.`,
+      );
+    expect(over("Food & Dining", true)).not.toContain("Pausing");
+    expect(over("Shopping")).toBe(
+      "This budget is already over by $40. Pausing Shopping spending for the rest of the month keeps it from growing, or raise the limit if it was too low.",
+    );
+  });
+});
+
 describe("goals", () => {
   it("projects the finish date and the effect of saving more", () => {
     expect(goalProjection({ targetCents: 300_000, savedCents: 60_000, targetDate: "2027-06-01" }, 20_000, "2026-10-28")).toMatchObject({
