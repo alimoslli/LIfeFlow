@@ -52,6 +52,8 @@ export type RecurringCandidate = {
   duplicates: { dates: [string, string]; amountCents: number; label: string }[];
   /** Paid by transfer (a loan, rent by Zelle): the bank's line never carries the user's own name for the bill. */
   transfer: boolean;
+  /** Keys its charges had in the format before the vendor tidy ("zelle" for Zelle rent), so alerts already sent under them stay sent. */
+  formerKeys: string[];
   confidence: number;
 };
 
@@ -75,12 +77,15 @@ const NOISE = new Set(
   ),
 );
 
+/** Codes that change with every payment: "CONF# RECEAGTV", "REF # WFCT0XYZ1234". */
+const PAYMENT_CODE = /\b(?:conf(?:irmation)?|ref(?:erence)?|trace)\b\s*(?:#|no\.?|:)\s*[a-z0-9]+/gi;
+
 /** The words that identify a merchant in a name or a statement line. */
 function wordsKey(text: string): string {
   const words = normalizeText(
     text
       .replace(PROCESSOR, "")
-      .replace(/\b(?:conf(?:irmation)?|ref(?:erence)?|trace)\b\s*(?:#|no\.?|:)\s*[a-z0-9]+/gi, " ") // "CONF# RECEAGTV": a new code each payment
+      .replace(PAYMENT_CODE, " ")
       .replace(/\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4}/g, " ") // phone numbers
       .replace(/#\s*\d+/g, " ") // store numbers
       .replace(/\s[A-Z]{2}$/, " "), // trailing state code
@@ -90,8 +95,50 @@ function wordsKey(text: string): string {
   return words.slice(0, 4).join(" ");
 }
 
+/** Payment apps, how statement lines name them, and the name to show. */
+const APPS: [RegExp, string][] = [
+  [/\bzelle\b/i, "Zelle"],
+  [/\bvenmo\b/i, "Venmo"],
+  [/\bcash ?app\b|\bsquare cash\b/i, "Cash App"],
+  [/\bapple cash\b/i, "Apple Cash"],
+  [/\bpaypal\b/i, "PayPal"],
+  [/\bremitly\b/i, "Remitly"],
+  [/\bwise\b/i, "Wise"],
+  [/\bwestern union\b/i, "Western Union"],
+  [/\bmoneygram\b/i, "MoneyGram"],
+  [/\bxoom\b/i, "Xoom"],
+  [/\bworldremit\b/i, "WorldRemit"],
+];
 /** Money through a payment app: who it went to (or came from) is only in the bank's own line ("ZELLE TO JORDAN M"). */
-const VIA_APP = /\b(?:zelle|venmo|cash ?app|square cash|apple cash|paypal|remitly|wise|western union|moneygram|xoom|worldremit)\b/i;
+const VIA_APP = new RegExp(APPS.map(([re]) => re.source).join("|"), "i");
+/**
+ * The words around the payee in app payment lines, whatever the bank: "Zelle money sent to Jordan Miller" (Capital
+ * One), "Zelle Payment To Jordan Miller JPM99…" (Chase), "Zelle Transfer Conf# 4ab3c; Jordan Miller" (Bank of
+ * America), "ZELLE TO MILLER JORDAN ON 10/01 REF # …" (Wells Fargo), "P2P ZELLE SENT JORDAN MILLER" (credit unions),
+ * "VENMO DES:PAYMENT ID:… INDN:…" (an ACH line).
+ */
+const APP_FILLER = new Set(
+  "money sent send sending received receive to from payment payments pmt pymt transfer transfers xfer trnsfr tfr instant inst on via des id indn co ppd web online mobile recipient request for the a of p2p debit credit purchase pos".split(
+    " ",
+  ),
+);
+
+/** A payment app line's app and payee (up to 3 words), or null for a merchant paid through PayPal ("PAYPAL *HULU"). */
+function appPayee(t: Pick<DetectTxn, "merchantName" | "description">): { app: string; payee: string[] } | null {
+  const line = t.description;
+  if (PROCESSOR.test(line)) return null;
+  const found = APPS.find(([re]) => re.test(line)) ?? APPS.find(([re]) => re.test(t.merchantName ?? ""));
+  if (!found) return null;
+  const payee = normalizeText(
+    line
+      .replace(found[0], " ")
+      .replace(PAYMENT_CODE, " ")
+      .replace(/#\s*\S+/g, " "),
+  )
+    .split(" ")
+    .filter((w) => w && !APP_FILLER.has(w) && !/\d/.test(w));
+  return { app: found[1], payee: payee.slice(0, 3) };
+}
 
 /**
  * A stable key for "the same merchant" across messy statement lines and the names shown for them:
@@ -99,13 +146,26 @@ const VIA_APP = /\b(?:zelle|venmo|cash ?app|square cash|apple cash|paypal|remitl
  * "PAYPAL *HULU 402-935-7733" → "hulu", "RENT PAYMENT CAMPUS EDGE APTS ACH 8KQ2M1Z4" → "rent campus edge apts".
  * The vendor name (Plaid's, or the tidied one) wins when it's there, and a well-known merchant is one merchant
  * under any of its names: the bank's "COMCAST", Plaid's "Comcast" and the tidied "Xfinity" are all "xfinity", so a
- * series doesn't split while transactions are being tidied. Money through a payment app is keyed by the bank's
- * line, since the tidied name ("Zelle") would put a roommate's rent and a parent's share together.
+ * series doesn't split while transactions are being tidied. Money through a payment app is keyed by the app and
+ * who it went to, from the bank's line ("zelle jordan miller"), since the tidied name ("Zelle") would put a
+ * roommate's rent and a parent's share together.
  */
 export function merchantKey(t: Pick<DetectTxn, "merchantName" | "description">): string {
+  const via = VIA_APP.test(`${t.merchantName ?? ""} ${t.description}`) ? appPayee(t) : null;
+  if (via) return normalizeText([via.app, ...via.payee].join(" "));
   if (VIA_APP.test(`${t.merchantName ?? ""} ${t.description}`)) return wordsKey(t.description) || wordsKey(t.merchantName ?? "");
   const name = t.merchantName?.trim() || t.description;
   return wordsKey(brandName(name) ?? name);
+}
+
+/**
+ * The forms a key saved earlier can match: itself, and its brand's key ("comcast" → "xfinity", "hbo max" → "max"),
+ * so a category rule or a tracked bill saved before the vendor tidy still finds its tidied rows. Read-time only.
+ */
+export function storedKeyForms(key: string | null | undefined): string[] {
+  if (!key) return [];
+  const brand = brandName(key);
+  return [...new Set([key, brand ? wordsKey(brand) : key])];
 }
 
 /** The key format used before the vendor tidy (Nov 6, 2026): the vendor name as it was, or the line. Still in older rules and bills. */
@@ -114,14 +174,15 @@ function previousMerchantKey(t: Pick<DetectTxn, "merchantName" | "description">)
 }
 
 /** A readable merchant name: the vendor name when there is one, else the cleaned description ("PAYPAL *HULU 402-935-7733" → "Hulu"). */
-export function merchantDisplayName(t: Pick<DetectTxn, "merchantName" | "description">): string {
+export function merchantDisplayName(t: Pick<DetectTxn, "merchantName" | "description"> & { amountCents?: number }): string {
   const name = t.merchantName?.trim();
-  const key = merchantKey(t);
-  const titled = key.replace(/(^|\s)\S/g, (c) => c.toUpperCase());
-  // Money through an app is named by who it went to ("Zelle To Jordan M"), not just the app.
-  if (key.includes(" ") && VIA_APP.test(`${name ?? ""} ${t.description}`)) return titled;
+  // Money through an app is named by who it went to ("Zelle to Jordan Miller"), not just the app.
+  const via = VIA_APP.test(`${name ?? ""} ${t.description}`) ? appPayee(t) : null;
+  if (via?.payee.length)
+    return `${via.app} ${(t.amountCents ?? -1) > 0 ? "from" : "to"} ${via.payee.map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}`;
   if (name) return name;
-  return key ? titled : t.description;
+  const key = merchantKey(t);
+  return key ? key.replace(/(^|\s)\S/g, (c) => c.toUpperCase()) : t.description;
 }
 
 /** The key format used before Oct 31, 2026, still stored in older category rules and tracked bills. */
@@ -485,6 +546,7 @@ function evaluate(cycles: Cycle[], ctx: Context): Found | null {
     charges: ts.map((t) => ({ date: t.date, amountCents: t.amountCents })),
     duplicates: duplicatesOf(cycles, ctx.refunds ?? []),
     transfer,
+    formerKeys: [...new Set(ts.map(previousMerchantKey))].filter((k) => k && k !== key),
     confidence,
     cycles,
   };

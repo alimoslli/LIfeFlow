@@ -1,6 +1,6 @@
 import { daysBetween } from "@/lib/dates";
 import type { Frequency } from "../../db/schema";
-import { merchantKey, merchantKeys, nthOccurrence, type RecurringCandidate } from "./recurring-detect";
+import { merchantKey, merchantKeys, nthOccurrence, storedKeyForms, type RecurringCandidate } from "./recurring-detect";
 
 /**
  * Is it the same bill? Pure rules for telling when a bill the user tracks under their own name
@@ -17,9 +17,12 @@ export const SLACK_DAYS: Record<Frequency, number> = { weekly: 1, biweekly: 2, m
  */
 export const PAID_EARLY_DAYS: Record<Frequency, number> = { weekly: 1, biweekly: 2, monthly: 10, quarterly: 10, yearly: 10 };
 
-/** The keys a tracked item goes by: the stored one (older items keep the previous format) and its name's. */
+/**
+ * The keys a tracked item goes by: the stored one (older items keep the previous format, and its brand's key when
+ * the vendor tidy renamed it, "comcast" → "xfinity") and its name's.
+ */
 export function trackedKeys(item: { name: string; merchantKey?: string | null }): string[] {
-  return [...new Set([item.merchantKey, merchantKey({ merchantName: item.name, description: item.name })].filter((k): k is string => !!k))];
+  return [...new Set([...storedKeyForms(item.merchantKey), merchantKey({ merchantName: item.name, description: item.name })].filter((k): k is string => !!k))];
 }
 
 const words = (key: string) => new Set(key.split(" ").filter(Boolean));

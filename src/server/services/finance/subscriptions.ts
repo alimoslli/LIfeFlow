@@ -8,7 +8,7 @@ import { ServiceError } from "../errors";
 import { createTask } from "../tasks";
 import { amountsClose } from "./bill-match";
 import { bankSeries, createRecurring, listRecurring, seriesForItem, suggestRecurring } from "./planning";
-import { merchantKey, merchantKeys, type RecurringCandidate } from "./recurring-detect";
+import { merchantKey, merchantKeys, storedKeyForms, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 
 /**
@@ -68,7 +68,7 @@ export async function subscriptionsOverview(scope: UserScope, today: string) {
       const mine = found && new Set(found.charges.map(at));
       const others = new Set(allSeries.filter((c) => c !== found).flatMap((c) => c.charges.map(at)));
       const charges = txns
-        .filter((t) => !t.pending && merchantKeys(t).some((k) => k === key || k === s.merchantKey))
+        .filter((t) => !t.pending && merchantKeys(t).some((k) => k === key || storedKeyForms(s.merchantKey).includes(k)))
         .filter((t) => (mine ? mine.has(at(t)) : !others.has(at(t))))
         .sort((a, b) => b.date.localeCompare(a.date));
       const latest = charges[0] ? -charges[0].amountCents : null;

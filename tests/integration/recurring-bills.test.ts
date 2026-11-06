@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { addDaysStr, todayIn } from "@/lib/dates";
 import { closeDb } from "@/server/db/client";
-import { integrations } from "@/server/db/schema";
+import { categoryRules, integrations } from "@/server/db/schema";
 import type { UserScope } from "@/server/db/with-user";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
@@ -285,6 +285,64 @@ describe("month-end bills keep their day (A15)", () => {
   });
 });
 
+describe("keys saved before the vendor tidy (review: old rules and alerts)", () => {
+  it("applies a category rule saved as 'comcast' to a row now tidied as Xfinity", async () => {
+    const { run } = await makeUser();
+    const got = await run(async (s) => {
+      const { checking } = await accounts(s);
+      const utilities = (await getCategoryByName(s, "Utilities"))!;
+      // Saved before the tidy, from the bank's old name (the keywords alone would say Internet).
+      await s.tx.insert(categoryRules).values({ userId: s.userId, merchantKey: "comcast", label: "Comcast", categoryId: utilities.id });
+      const t = await createTransaction(s, {
+        accountId: checking.id,
+        date: "2026-11-02",
+        description: "COMCAST CABLE COMM 800-COMCAST",
+        merchantName: "Comcast",
+        amountCents: -7_999,
+      });
+      return { merchantName: t!.merchantName, categoryId: t!.categoryId, utilities: utilities.id };
+    });
+    expect(got.merchantName).toBe("Xfinity");
+    expect(got.categoryId).toBe(got.utilities);
+  });
+
+  it("doesn't send a Zelle rent alert again because its key changed from 'zelle' to who it went to", async () => {
+    const { run } = await makeUser();
+    const today = "2026-10-30";
+    await run(async (s) => {
+      const { checking } = await accounts(s);
+      for (const d of ["2026-07-01", "2026-08-01", "2026-09-01", "2026-10-01"])
+        await createTransaction(s, {
+          accountId: checking.id,
+          date: d,
+          description: "Zelle money sent to Jordan Miller",
+          amountCents: -60_000,
+          kind: "transfer",
+        });
+    });
+    const now = new Date(`${today}T14:00:00Z`);
+    const due = async () => (await run((s) => DETECTORS.billsDue({ scope: s, tz: TZ, today, now }))).map((m) => m.dedupeKey);
+    expect(await due()).toEqual(["bill_due:found:zelle jordan miller:2026-11-01"]);
+    // An alert for this cycle already went out under the old key ("zelle", how every Zelle payment read after the tidy).
+    await run((s) =>
+      saveMessage(
+        s,
+        {
+          kind: "bill_due",
+          topic: "money",
+          dedupeKey: "bill_due:found:zelle:2026-11-01",
+          facts: { bill: "Zelle", billCents: 60_000, dueIn: "in 2 days", cashCents: 300_000 },
+          priority: 55,
+        },
+        "friend",
+        false,
+        "morning",
+      ),
+    );
+    expect(await due()).toEqual([]);
+  });
+});
+
 describe("bills under the tidied vendor names (merge with the vendor tidy)", () => {
   it("lets a bill tracked as 'Comcast' claim the bank's charges, now shown as Xfinity, so it's counted once", async () => {
     const { run } = await makeUser();
@@ -325,8 +383,8 @@ describe("bills under the tidied vendor names (merge with the vendor tidy)", () 
     });
     const found = await run((s) => suggestRecurring(s, TODAY));
     expect(found.map((c) => [c.name, c.kind, c.latestAmountCents]).sort()).toEqual([
-      ["Zelle To Jordan M", "bill", -60_000],
-      ["Zelle To Mom", "bill", -60_000],
+      ["Zelle to Jordan M", "bill", -60_000],
+      ["Zelle to Mom", "bill", -60_000],
     ]);
   });
 });

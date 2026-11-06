@@ -4,7 +4,8 @@ import { categories, categoryRules, transactions, type TransactionKind } from ".
 import type { UserScope } from "../../db/with-user";
 import { notFound } from "../errors";
 import { ensureDefaultCategories, listCategories } from "./categories";
-import { merchantKey, merchantKeys } from "./recurring-detect";
+import { brandName } from "@/lib/vendor";
+import { merchantKey, merchantKeys, storedKeyForms } from "./recurring-detect";
 import { inferKind } from "./transactions";
 
 /**
@@ -124,14 +125,37 @@ const NEEDS = new Set([
 ]);
 export const needOrWant = (categoryName: string | null | undefined): "need" | "want" => (categoryName && NEEDS.has(categoryName) ? "need" : "want");
 
-/** The user's own rule for this merchant, if any (counts a hit). */
-export async function ruleFor(scope: UserScope, t: { merchantName?: string | null; description: string }) {
+/** Rules saved under a name the vendor tidy now maps to a brand ("comcast", "hbo max"), loaded once per transaction. */
+const brandedRules = new WeakMap<UserScope["tx"], Promise<(typeof categoryRules.$inferSelect)[]>>();
+const forgetBrandedRules = (scope: UserScope) => brandedRules.delete(scope.tx);
+
+/**
+ * The user's rule for a transaction: saved under one of its keys, or under the name its merchant had before the
+ * vendor tidy (a rule for "comcast" still applies to a row now shown as Xfinity). Read-time only: rules aren't rewritten.
+ */
+async function findRule(scope: UserScope, t: { merchantName?: string | null; description: string }) {
   const keys = merchantKeys({ merchantName: t.merchantName ?? null, description: t.description });
   if (!keys.length) return null;
   const [rule] = await scope.tx
     .select()
     .from(categoryRules)
     .where(and(eq(categoryRules.userId, scope.userId), inArray(categoryRules.merchantKey, keys)));
+  if (rule || !brandName(t.merchantName || t.description)) return rule ?? null;
+  if (!brandedRules.has(scope.tx))
+    brandedRules.set(
+      scope.tx,
+      scope.tx
+        .select()
+        .from(categoryRules)
+        .where(eq(categoryRules.userId, scope.userId))
+        .then((rows) => rows.filter((r) => storedKeyForms(r.merchantKey).length > 1)),
+    );
+  return (await brandedRules.get(scope.tx)!).find((r) => storedKeyForms(r.merchantKey).some((k) => keys.includes(k))) ?? null;
+}
+
+/** The user's own rule for this merchant, if any (counts a hit). */
+export async function ruleFor(scope: UserScope, t: { merchantName?: string | null; description: string }) {
+  const rule = await findRule(scope, t);
   if (!rule) return null;
   await scope.tx
     .update(categoryRules)
@@ -152,12 +176,8 @@ export async function categoryIdByName(scope: UserScope, name: string) {
 
 /** Picks a category (and kind) for a new transaction that arrived without one. */
 export async function autoCategorize(scope: UserScope, t: { merchantName?: string | null; description: string; amountCents: number }) {
-  const keys = merchantKeys({ merchantName: t.merchantName ?? null, description: t.description });
-  if (keys.length) {
-    const [rule] = await scope.tx
-      .select()
-      .from(categoryRules)
-      .where(and(eq(categoryRules.userId, scope.userId), inArray(categoryRules.merchantKey, keys)));
+  {
+    const rule = await findRule(scope, t);
     if (rule) {
       await scope.tx
         .update(categoryRules)
@@ -191,14 +211,20 @@ export async function learnCategoryRule(
   const key = merchantKey(txn);
   if (!key) return null;
   const label = (txn.merchantName || txn.description).slice(0, 120);
-  // An older rule for the same merchant (previous key format) is replaced by this correction.
-  const stale = merchantKeys(txn).filter((k) => k !== key);
-  if (stale.length) await scope.tx.delete(categoryRules).where(and(eq(categoryRules.userId, scope.userId), inArray(categoryRules.merchantKey, stale)));
+  // An older rule for the same merchant (a previous key format, or its name before the vendor tidy) is replaced by this correction.
+  const keys = merchantKeys(txn);
+  const existing = await scope.tx
+    .select({ id: categoryRules.id, merchantKey: categoryRules.merchantKey })
+    .from(categoryRules)
+    .where(eq(categoryRules.userId, scope.userId));
+  const stale = existing.filter((r) => r.merchantKey !== key && storedKeyForms(r.merchantKey).some((k) => keys.includes(k))).map((r) => r.id);
+  if (stale.length) await scope.tx.delete(categoryRules).where(and(eq(categoryRules.userId, scope.userId), inArray(categoryRules.id, stale)));
   const [rule] = await scope.tx
     .insert(categoryRules)
     .values({ userId: scope.userId, merchantKey: key, label, categoryId, kind: kind ?? null })
     .onConflictDoUpdate({ target: [categoryRules.userId, categoryRules.merchantKey], set: { categoryId, kind: kind ?? null, label, updatedAt: new Date() } })
     .returning();
+  forgetBrandedRules(scope);
   const others = await matchingTransactions(scope, key, categoryId);
   return { rule, othersToUpdate: others.length };
 }
@@ -208,7 +234,8 @@ async function matchingTransactions(scope: UserScope, key: string, categoryId: s
     .select({ id: transactions.id, merchantName: transactions.merchantName, description: transactions.description, categoryId: transactions.categoryId })
     .from(transactions)
     .where(eq(transactions.userId, scope.userId));
-  return rows.filter((r) => r.categoryId !== categoryId && merchantKeys(r).includes(key));
+  const forms = storedKeyForms(key);
+  return rows.filter((r) => r.categoryId !== categoryId && merchantKeys(r).some((k) => forms.includes(k)));
 }
 
 /** Applies a rule to existing transactions from that merchant. Returns how many changed. */
@@ -238,6 +265,7 @@ export async function deleteCategoryRule(scope: UserScope, id: string) {
     .delete(categoryRules)
     .where(and(eq(categoryRules.id, id), eq(categoryRules.userId, scope.userId)))
     .returning({ id: categoryRules.id });
+  forgetBrandedRules(scope);
   if (!row) throw notFound("Rule");
 }
 

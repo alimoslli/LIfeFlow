@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { addDaysStr } from "@/lib/dates";
-import { detectRecurring, nextOccurrence, nthOccurrence, occurrencesBetween, type DetectTxn } from "@/server/services/finance/recurring-detect";
+import {
+  detectRecurring,
+  merchantKey,
+  nextOccurrence,
+  nthOccurrence,
+  occurrencesBetween,
+  storedKeyForms,
+  type DetectTxn,
+} from "@/server/services/finance/recurring-detect";
 
 /**
  * Recurring charges real people pay (audit 2026-11-05, A4 to A7, A15, A16). The cases are the auditor's
@@ -49,7 +57,7 @@ describe("bills paid by transfer (A4)", () => {
   it("finds rent sent to a roommate by Zelle", () => {
     const r = detectRecurring(months("2026-07-01", 4).map((d, i) => tx(d, -60_000, null, `ZELLE TO JORDAN M CONF# ${i}7Q${i}X`, transfer())));
     expect(r).toHaveLength(1);
-    expect(r[0]).toMatchObject({ kind: "bill", frequency: "monthly", latestAmountCents: -60_000, name: "Zelle To Jordan M" });
+    expect(r[0]).toMatchObject({ kind: "bill", frequency: "monthly", latestAmountCents: -60_000, name: "Zelle to Jordan M" });
   });
 
   it("finds a 529 contribution after two months, like a known subscription", () => {
@@ -515,5 +523,85 @@ describe("rent paid to a person every week or two (review follow-up)", () => {
       tx(d, -47_500, null, "ZELLE TO OAK STREET LANDLORD", transfer()),
     );
     expect(detectRecurring(late)).toEqual([]);
+  });
+});
+
+describe("payment-app lines from every big bank keep who the money went to (review: one key per payee)", () => {
+  // Two payees per format, as the bank prints them.
+  const formats: [string, (who: string, i: number) => string][] = [
+    ["Chase", (who, i) => `Zelle Payment To ${who} JPM99a${i}c123`],
+    ["Capital One", (who) => `Zelle money sent to ${who}`],
+    ["Bank of America", (who, i) => `Zelle Transfer Conf# 4ab${i}c; ${who}`],
+    ["Wells Fargo", (who, i) => `ZELLE TO ${who.split(" ").reverse().join(" ").toUpperCase()} ON 10/0${i + 1} REF # WFCT0XYZ12${i}4`],
+    ["credit union", (who, i) => `ZELLE TO ${who.toUpperCase()} CONF# Q${i}KX8ZT`],
+    ["credit union P2P", (who) => `P2P ZELLE SENT ${who.toUpperCase()}`],
+    ["Venmo by card", (who) => `VENMO *${who.toUpperCase()}`],
+    ["Cash App", (who) => `Cash App*${who}`],
+  ];
+  for (const [bank, line] of formats)
+    it(`${bank}: one key per payee`, () => {
+      const key = (who: string, i: number) => merchantKey({ merchantName: "Zelle", description: line(who, i) });
+      expect(key("Jordan Miller", 0)).toBe(key("Jordan Miller", 1));
+      expect(key("Jordan Miller", 0)).not.toBe(key("Priya Shah", 0));
+      expect(key("Jordan Miller", 0)).not.toMatch(/\b(?:money|sent|to|payment|transfer|on|conf|ref)\b/);
+    });
+
+  it("names the bill by who it went to, and finds a share that moves among other payees", () => {
+    const rent = months("2026-07-01", 4).map((d) => tx(d, -60_000, "Zelle", "Zelle money sent to Jordan Miller", transfer()));
+    const share = months("2026-07-12", 4).map((d, i) => tx(d, -[5_290, 4_322, 5_729, 4_870][i], "Zelle", "Zelle money sent to Priya Shah", transfer()));
+    const r = detectRecurring([...rent, ...share], { today: "2026-11-05" });
+    expect(r.map((c) => [c.name, c.latestAmountCents]).sort()).toEqual([
+      ["Zelle to Jordan Miller", -60_000],
+      ["Zelle to Priya Shah", -4_870],
+    ]);
+  });
+
+  it("keys Venmo's ACH lines, which name no payee, as Venmo", () => {
+    expect(merchantKey({ merchantName: "Venmo", description: "VENMO PAYMENT 1023456789" })).toBe("venmo");
+    expect(merchantKey({ merchantName: null, description: "PAYPAL *HULU 402-935-7733" })).toBe("hulu");
+  });
+});
+
+describe("keys saved before the vendor tidy still match (review: old rules)", () => {
+  it("maps a stored key through the brand list", () => {
+    expect(storedKeyForms("comcast")).toContain(merchantKey({ merchantName: "Xfinity", description: "COMCAST CABLE COMM" }));
+    expect(storedKeyForms("verizon wireless")).toContain(merchantKey({ merchantName: "Verizon", description: "VERIZON WIRELESS PAYMENTS" }));
+    expect(storedKeyForms("hbo max")).toContain(merchantKey({ merchantName: "Max", description: "HBO MAX" }));
+    expect(storedKeyForms("google one")).toContain(merchantKey({ merchantName: "Google", description: "GOOGLE *GOOGLE ONE" }));
+    expect(storedKeyForms("blue bottle coffee")).toEqual(["blue bottle coffee"]);
+  });
+});
+
+describe("brands that share a word stay separate bills (review: over-broad brand patterns)", () => {
+  it("keeps the Southwest Gas bill whole when Southwest Airlines flights are on the same feed", () => {
+    const gas = months("2026-05-18", 6).map((d, i) =>
+      tx(d, -[6_210, 4_480, 3_920, 4_105, 5_330, 7_940][i], "Southwest Gas Corp", "SOUTHWEST GAS CORP PAYMENT", { categoryName: "Utilities" }),
+    );
+    const flights = ["2026-06-02", "2026-08-21", "2026-10-09"].map((d, i) =>
+      tx(d, -[18_940, 24_120, 15_670][i], "Southwest Airlines", "SOUTHWEST AIRLINES 52621912", { categoryName: "Flights" }),
+    );
+    const r = detectRecurring([...gas, ...flights], { today: "2026-11-05" });
+    expect(r.map((c) => [c.name, c.kind, c.occurrences])).toEqual([["Southwest Gas Corp", "bill", 6]]);
+    expect(r[0].confidence).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it("finds Verizon Fios and Verizon Wireless, and Xfinity internet and Xfinity Mobile, as separate bills", () => {
+    const bill = (start: string, cents: number, merchantName: string, description: string, categoryName: string) =>
+      months(start, 4).map((d) => tx(d, -cents, merchantName, description, { categoryName }));
+    const r = detectRecurring(
+      [
+        ...bill("2026-07-08", 7_999, "Verizon Fios", "VERIZON FIOS 800-837-4966", "Internet"),
+        ...bill("2026-07-08", 6_500, "Verizon", "VERIZON WIRELESS PAYMENTS", "Phone"),
+        ...bill("2026-07-14", 5_500, "Xfinity", "COMCAST CABLE COMM", "Internet"),
+        ...bill("2026-07-20", 3_000, "Xfinity Mobile", "XFINITY MOBILE 888-936-4968", "Phone"),
+      ],
+      { today: "2026-11-05" },
+    );
+    expect(Object.fromEntries(r.map((c) => [c.merchantKey, c.latestAmountCents]))).toEqual({
+      verizon: -6_500,
+      "verizon fios": -7_999,
+      xfinity: -5_500,
+      "xfinity mobile": -3_000,
+    });
   });
 });

@@ -123,7 +123,12 @@ async function typicalDailySpend(scope: UserScope, today: string, billSeries: Re
  * `key` names the bill and its cycle, and stays the same across days: `<tracked item id>:<due date>`, or
  * `found:<merchant key>:<expected date>` for a bill found in the bank (even while it's late and shown as due today).
  */
-export type UpcomingBill = DatedAmount & { found: boolean; key: string };
+export type UpcomingBill = DatedAmount & {
+  found: boolean;
+  key: string;
+  /** The same cycle's key under the format before the vendor tidy: an alert sent under it isn't sent again. */
+  sentAs?: string[];
+};
 
 /**
  * What goes out between two dates: the tracked bills not paid yet plus the ones found in the bank feed but
@@ -145,7 +150,14 @@ export async function upcomingBills(scope: UserScope, today: string, from: strin
     for (const end = n + 60; n < end; n++) {
       const date = cycle(n) < from ? from : cycle(n);
       if (date > to) break;
-      bills.push({ date, amountCents: c.latestAmountCents, name: c.name, found: true, key: `found:${c.seriesKey}:${cycle(n)}` });
+      bills.push({
+        date,
+        amountCents: c.latestAmountCents,
+        name: c.name,
+        found: true,
+        key: `found:${c.seriesKey}:${cycle(n)}`,
+        sentAs: c.formerKeys.map((k) => `found:${k}:${cycle(n)}`),
+      });
     }
   }
   return bills.sort((a, b) => a.date.localeCompare(b.date));

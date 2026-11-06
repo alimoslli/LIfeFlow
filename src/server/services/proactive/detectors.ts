@@ -216,8 +216,21 @@ const billsDue: Detector = async ({ scope, today }) => {
   const accounts = await listAccounts(scope);
   if (!accounts.length) return [];
   const cash = balancesOf(accounts);
+  // A found bill's alert sent under the key it had before the vendor tidy ("found:zelle:…") isn't sent again.
+  const formerly = bills.flatMap((b) => (b.sentAs ?? []).flatMap((k) => [`bill_short:${k}`, `bill_due:${k}`]));
+  const sent = new Set(
+    formerly.length
+      ? (
+          await scope.tx
+            .select({ key: jarvisMessages.dedupeKey })
+            .from(jarvisMessages)
+            .where(and(eq(jarvisMessages.userId, scope.userId), inArray(jarvisMessages.dedupeKey, formerly)))
+        ).map((m) => m.key)
+      : [],
+  );
+  const alerted = (kind: string, b: (typeof bills)[number]) => (b.sentAs ?? []).some((k) => sent.has(`${kind}:${k}`));
   let running = cash.cashCents;
-  return bills.map((b) => {
+  return bills.flatMap((b) => {
     running += b.amountCents;
     const dueIn = relativeDayLabel(b.date, today).toLowerCase().replace(/^on /, "");
     const when = daysBetween(today, b.date) <= 1 ? dueIn : `in ${daysBetween(today, b.date)} days`;
@@ -225,6 +238,7 @@ const billsDue: Detector = async ({ scope, today }) => {
       // Only this bill's part of the gap (an earlier bill may already have used the cash).
       const short = Math.min(-running, -b.amountCents);
       const options = [cash.savingsCents >= short ? `move ${usd(short)} from savings` : null, `hold spending to essentials until it clears`].filter(Boolean);
+      if (alerted("bill_short", b)) return [];
       return {
         kind: "bill_short",
         topic: "money" as const,
@@ -241,6 +255,7 @@ const billsDue: Detector = async ({ scope, today }) => {
         urgent: true,
       };
     }
+    if (alerted("bill_due", b)) return [];
     return {
       kind: "bill_due",
       topic: "money" as const,
