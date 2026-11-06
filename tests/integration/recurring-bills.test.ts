@@ -247,7 +247,56 @@ describe("month-end bills keep their day (A15)", () => {
     const tracked = await run((s) => upcomingRecurring(s, "2027-02-01", "2027-05-31"));
     expect(tracked.map((u) => u.date)).toEqual(["2027-02-28", "2027-03-31", "2027-04-30", "2027-05-31"]);
     const { bills } = await run((s) => billsAndPace(s, TODAY, TODAY, "2027-03-31"));
-    expect(bills.filter((b) => b.name === "Comcast").map((b) => b.date)).toEqual(["2026-11-30", "2026-12-31", "2027-01-31", "2027-02-28", "2027-03-31"]);
+    // Saved under its everyday name by the vendor tidy (Comcast's service is Xfinity).
+    const comcast = bills.filter((b) => b.found && b.amountCents === -4_500);
+    expect(comcast.map((b) => b.date)).toEqual(["2026-11-30", "2026-12-31", "2027-01-31", "2027-02-28", "2027-03-31"]);
+    expect(new Set(comcast.map((b) => b.name))).toEqual(new Set(["Xfinity"]));
+  });
+});
+
+describe("bills under the tidied vendor names (merge with the vendor tidy)", () => {
+  it("lets a bill tracked as 'Comcast' claim the bank's charges, now shown as Xfinity, so it's counted once", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const { checking } = await accounts(s);
+      for (const d of ["2026-08-12", "2026-09-12", "2026-10-12"])
+        await createTransaction(s, {
+          accountId: checking.id,
+          date: d,
+          description: "COMCAST CABLE COMM 800-COMCAST",
+          merchantName: "Comcast",
+          amountCents: -7_999,
+        });
+      await createRecurring(s, { name: "Comcast", amountCents: -7_999, frequency: "monthly", nextDueDate: "2026-11-12", kind: "bill" });
+    });
+    expect(await run((s) => suggestRecurring(s, TODAY))).toEqual([]);
+    const { bills } = await run((s) => billsAndPace(s, TODAY, TODAY, "2026-12-15"));
+    expect(bills.map((b) => [b.name, b.date, b.found])).toEqual([
+      ["Comcast", "2026-11-12", false],
+      ["Comcast", "2026-12-12", false],
+    ]);
+  });
+
+  it("keeps rent to a roommate and a share to Mom apart, and named by who they went to, though both now read 'Zelle'", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const { checking } = await accounts(s);
+      const zelle = (date: string, to: string, cents: number) =>
+        createTransaction(s, {
+          accountId: checking.id,
+          date,
+          description: `ZELLE TO ${to} CONF# Q${date.replace(/-/g, "")}K`,
+          amountCents: -cents,
+          kind: "transfer",
+        });
+      for (const d of ["2026-08-01", "2026-09-01", "2026-10-01", "2026-11-02"]) await zelle(d, "JORDAN M", 60_000);
+      for (const d of ["2026-08-15", "2026-09-15", "2026-10-15"]) await zelle(d, "MOM", 60_000);
+    });
+    const found = await run((s) => suggestRecurring(s, TODAY));
+    expect(found.map((c) => [c.name, c.kind, c.latestAmountCents]).sort()).toEqual([
+      ["Zelle To Jordan M", "bill", -60_000],
+      ["Zelle To Mom", "bill", -60_000],
+    ]);
   });
 });
 

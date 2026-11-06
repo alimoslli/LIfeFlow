@@ -1,5 +1,6 @@
 import type { Frequency } from "../../db/schema";
 import { normalizeText } from "@/lib/utils";
+import { brandName } from "@/lib/vendor";
 import { addDaysStr, daysBetween } from "@/lib/dates";
 
 export type DetectTxn = {
@@ -74,16 +75,12 @@ const NOISE = new Set(
   ),
 );
 
-/**
- * A stable key for "the same merchant" across messy statement lines:
- * "NETFLIX.COM 866-579-7172 CA" → "netflix", "Spotify P2AB9C4D1" → "spotify",
- * "PAYPAL *HULU 402-935-7733" → "hulu", "RENT PAYMENT CAMPUS EDGE APTS ACH 8KQ2M1Z4" → "rent campus edge apts".
- * Plaid's merchant name wins when it's there.
- */
-export function merchantKey(t: Pick<DetectTxn, "merchantName" | "description">): string {
-  const raw = (t.merchantName?.trim() || t.description).replace(PROCESSOR, "");
+/** The words that identify a merchant in a name or a statement line. */
+function wordsKey(text: string): string {
   const words = normalizeText(
-    raw
+    text
+      .replace(PROCESSOR, "")
+      .replace(/\b(?:conf(?:irmation)?|ref(?:erence)?|trace)\b\s*(?:#|no\.?|:)\s*[a-z0-9]+/gi, " ") // "CONF# RECEAGTV": a new code each payment
       .replace(/\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4}/g, " ") // phone numbers
       .replace(/#\s*\d+/g, " ") // store numbers
       .replace(/\s[A-Z]{2}$/, " "), // trailing state code
@@ -93,12 +90,38 @@ export function merchantKey(t: Pick<DetectTxn, "merchantName" | "description">):
   return words.slice(0, 4).join(" ");
 }
 
-/** A readable merchant name: Plaid's when it has one, else the cleaned description ("PAYPAL *HULU 402-935-7733" → "Hulu"). */
+/** Money through a payment app: who it went to (or came from) is only in the bank's own line ("ZELLE TO JORDAN M"). */
+const VIA_APP = /\b(?:zelle|venmo|cash ?app|square cash|apple cash|paypal|remitly|wise|western union|moneygram|xoom|worldremit)\b/i;
+
+/**
+ * A stable key for "the same merchant" across messy statement lines and the names shown for them:
+ * "NETFLIX.COM 866-579-7172 CA" → "netflix", "Spotify P2AB9C4D1" → "spotify",
+ * "PAYPAL *HULU 402-935-7733" → "hulu", "RENT PAYMENT CAMPUS EDGE APTS ACH 8KQ2M1Z4" → "rent campus edge apts".
+ * The vendor name (Plaid's, or the tidied one) wins when it's there, and a well-known merchant is one merchant
+ * under any of its names: the bank's "COMCAST", Plaid's "Comcast" and the tidied "Xfinity" are all "xfinity", so a
+ * series doesn't split while transactions are being tidied. Money through a payment app is keyed by the bank's
+ * line, since the tidied name ("Zelle") would put a roommate's rent and a parent's share together.
+ */
+export function merchantKey(t: Pick<DetectTxn, "merchantName" | "description">): string {
+  if (VIA_APP.test(`${t.merchantName ?? ""} ${t.description}`)) return wordsKey(t.description) || wordsKey(t.merchantName ?? "");
+  const name = t.merchantName?.trim() || t.description;
+  return wordsKey(brandName(name) ?? name);
+}
+
+/** The key format used before the vendor tidy (Nov 6, 2026): the vendor name as it was, or the line. Still in older rules and bills. */
+function previousMerchantKey(t: Pick<DetectTxn, "merchantName" | "description">): string {
+  return wordsKey(t.merchantName?.trim() || t.description);
+}
+
+/** A readable merchant name: the vendor name when there is one, else the cleaned description ("PAYPAL *HULU 402-935-7733" → "Hulu"). */
 export function merchantDisplayName(t: Pick<DetectTxn, "merchantName" | "description">): string {
   const name = t.merchantName?.trim();
-  if (name) return name;
   const key = merchantKey(t);
-  return key ? key.replace(/(^|\s)\S/g, (c) => c.toUpperCase()) : t.description;
+  const titled = key.replace(/(^|\s)\S/g, (c) => c.toUpperCase());
+  // Money through an app is named by who it went to ("Zelle To Jordan M"), not just the app.
+  if (key.includes(" ") && VIA_APP.test(`${name ?? ""} ${t.description}`)) return titled;
+  if (name) return name;
+  return key ? titled : t.description;
 }
 
 /** The key format used before Oct 31, 2026, still stored in older category rules and tracked bills. */
@@ -111,7 +134,7 @@ export function legacyMerchantKey(t: Pick<DetectTxn, "merchantName" | "descripti
 
 /** Every key a stored rule or bill might use for this transaction (current first). */
 export function merchantKeys(t: Pick<DetectTxn, "merchantName" | "description">): string[] {
-  return [...new Set([merchantKey(t), legacyMerchantKey(t)].filter(Boolean))];
+  return [...new Set([merchantKey(t), previousMerchantKey(t), legacyMerchantKey(t)].filter(Boolean))];
 }
 
 /** Services people subscribe to; two matching charges a month apart are enough to call these a subscription. */

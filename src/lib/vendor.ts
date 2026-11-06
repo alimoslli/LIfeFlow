@@ -102,11 +102,19 @@ function titleCase(s: string) {
     .join(" ");
 }
 
+/** The well-known merchant a line names ("COMCAST" and "Xfinity" are both "Xfinity"), if any. */
+export function brandName(raw: string | null | undefined): string | null {
+  const lowered = (raw ?? "").trim().toLowerCase().replace(/\*/g, " ").replace(/\s+/g, " ");
+  if (!lowered) return null;
+  for (const [re, name] of BRANDS) if (re.test(lowered)) return name;
+  return null;
+}
+
 export function cleanVendorName(raw: string | null | undefined): string {
   const original = (raw ?? "").trim();
   if (!original) return "";
-  const lowered = original.toLowerCase().replace(/\*/g, " ").replace(/\s+/g, " ");
-  for (const [re, name] of BRANDS) if (re.test(lowered)) return name;
+  const brand = brandName(original);
+  if (brand) return brand;
 
   let s = original
     .replace(/\s+/g, " ")
