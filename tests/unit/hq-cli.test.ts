@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRequest, parseArgs, parseLink, parseUsageFile, safeHqBase, sessionIdFromEnv } from "../../scripts/hq";
+import { buildRequest, needsProxyRerun, parseArgs, parseLink, parseUsageFile, safeHqBase, sessionIdFromEnv } from "../../scripts/hq";
 
 describe("hq cli parsing", () => {
   it("parses flags, = form, bare flags and repeats", () => {
@@ -88,5 +88,11 @@ describe("HQ_URL safety", () => {
     expect(safeHqBase("ftp://x")).toBeNull();
     expect(safeHqBase("nope")).toBeNull();
     expect(safeHqBase(undefined)).toBeNull();
+  });
+  it("turns on Node's proxy support when the cloud proxy is set (Node fetch ignores HTTPS_PROXY otherwise)", () => {
+    expect(needsProxyRerun({ HTTPS_PROXY: "http://127.0.0.1:1" })).toBe(true);
+    expect(needsProxyRerun({ https_proxy: "http://127.0.0.1:1" })).toBe(true);
+    expect(needsProxyRerun({ HTTPS_PROXY: "http://127.0.0.1:1", NODE_USE_ENV_PROXY: "1" })).toBe(false);
+    expect(needsProxyRerun({})).toBe(false);
   });
 });

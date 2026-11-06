@@ -80,7 +80,7 @@ HQ is a mirror, never a blocker. If `HQ_URL` isn't set or a command fails, carry
 ## Turning it on (status)
 - [x] HQ merged to main (2026-11-06, `df6a462`). Vercel deploys lifeflowweb.com; the owner's first look confirms it.
 - [ ] HQ Settings: "Import the starting list", then create a key named "cloud environment".
-- [ ] Save `HQ_URL` and the key on the cloud environment. The owner closed the key form on 2026-11-06. To add it by hand: open the environment menu, choose Edit, then Network secrets, and add one for lifeflowweb.com with the Authorization header set to `Bearer lfq_…`. Until then, rounds carry on and say HQ isn't connected.
+- [x] `HQ_URL` and the key are saved on the "LifeFlow" cloud environment (2026-11-06). The key is a network secret for lifeflowweb.com, added by the proxy. The first real check-in was accepted. `scripts/hq.ts` turns on Node's proxy support by itself (`NODE_USE_ENV_PROXY=1`), because Node's fetch ignores the cloud proxy otherwise.
 - [x] Night round and research tasks point at this file (2026-11-06; blocks in `docs/hq/round-prompts.md`, applied by the LF V3 — Agents chat, checked with get_trigger).
 - [ ] LF Main's environment gets the same two settings.
 - [ ] Phase 3: a weekly marketing round, after the owner's yes.

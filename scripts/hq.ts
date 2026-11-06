@@ -3,7 +3,7 @@
  * Deterministic, no AI. Env: HQ_URL (the app's base URL) and HQ_KEY (sent as a Bearer key; never printed).
  * Usage: npx tsx scripts/hq.ts checkin|mission|approval|activity|inbox|import ...
  */
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -262,4 +262,20 @@ async function main() {
   }
 }
 
-if (process.argv[1]?.endsWith("hq.ts")) void main();
+/**
+ * Node's built-in fetch ignores HTTPS_PROXY unless NODE_USE_ENV_PROXY=1 is set at startup, and cloud sessions reach the
+ * internet only through that proxy (which also adds the HQ key). So when a proxy is set, run once more with the flag.
+ */
+export function needsProxyRerun(env: Record<string, string | undefined>): boolean {
+  return !!(env.HTTPS_PROXY || env.https_proxy) && env.NODE_USE_ENV_PROXY !== "1";
+}
+
+if (process.argv[1]?.endsWith("hq.ts")) {
+  if (needsProxyRerun(process.env)) {
+    const r = spawnSync(process.execPath, [...process.execArgv, ...process.argv.slice(1)], {
+      stdio: "inherit",
+      env: { ...process.env, NODE_USE_ENV_PROXY: "1", NODE_NO_WARNINGS: "1" },
+    });
+    process.exit(r.status ?? 0);
+  } else void main();
+}
