@@ -2,13 +2,16 @@
  * How an HQ employee looks right now, worked out only from real records (ADR 0024). Nothing here is invented: when
  * there's no data the answer is "sleeping" or "offline", never "working".
  *
- * Order of precedence: offline, blocked, needs you, working, done, sleeping.
+ * Order of precedence: offline (only for roles with their own chat), blocked, needs you, working, done, sleeping.
  */
 export type EmployeeState = "offline" | "blocked" | "needs_you" | "working" | "done" | "sleeping";
 
 export type StateInput = {
-  /** Whether this employee is plain app logic (the HQ Assistant): it is never offline and works whenever something waits. */
-  appLogic: boolean;
+  /**
+   * True for a department with no chat of its own (QA, Customer Success: they work inside the Chief of Staff's
+   * rounds). It is never "offline" for lacking a chat; it sleeps until a mission in progress shows real work.
+   */
+  noOwnChat: boolean;
   /** Their chats, if any. */
   chats: { status: "working" | "idle" | "blocked" | "archived" | "unknown"; needsAction: string | null; lastCheckinAt: Date | null; isPrimary: boolean }[];
   missions: {
@@ -36,7 +39,7 @@ export function employeeState(input: StateInput, now: Date): StateResult {
   const primary = input.chats.find((c) => c.isPrimary) ?? input.chats[0];
   const lastCheckin = input.chats.reduce<number | null>((m, c) => (c.lastCheckinAt ? Math.max(m ?? 0, c.lastCheckinAt.getTime()) : m), null);
 
-  if (!input.appLogic) {
+  if (!input.noOwnChat) {
     if (!primary) return { state: "offline", reason: "No chat connected yet" };
     if (primary.status === "archived") return { state: "offline", reason: "Their chat is archived" };
     if (lastCheckin === null) return { state: "offline", reason: "Hasn't checked in yet" };
@@ -53,7 +56,7 @@ export function employeeState(input: StateInput, now: Date): StateResult {
   }
 
   const doing = input.missions.find((m) => m.status === "doing");
-  const recentlyActive = input.appLogic || (lastCheckin !== null && t - lastCheckin <= WORKING_WINDOW_MS);
+  const recentlyActive = (lastCheckin !== null && t - lastCheckin <= WORKING_WINDOW_MS);
   if (doing && recentlyActive) return { state: "working", reason: doing.title };
 
   const freshDone = input.missions
