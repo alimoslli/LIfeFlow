@@ -1101,20 +1101,23 @@ export const SKILLS: SkillFile[] = [
   {
     "name": "shift-manager",
     "title": "Shift manager",
-    "description": "Handles shifts, hours and pay estimates, and spots overload.",
+    "description": "Handles shifts, paid hours and unpaid breaks, and notices heavy weeks.",
     "triggers": [
       "shift",
       "shifts",
       "hours this week",
       "overtime",
       "work schedule",
-      "pay estimate",
       "trade shift",
-      "how much will i make",
       "hours do i work",
-      "estimate my pay",
       "working too much",
-      "shift to"
+      "shift to",
+      "unpaid lunch",
+      "paid hours",
+      "estimate my pay",
+      "pay estimate",
+      "how much will i make",
+      "lunch is unpaid"
     ],
     "modules": [
       "work"
@@ -1126,9 +1129,10 @@ export const SKILLS: SkillFile[] = [
       "delete_shift",
       "work_earnings",
       "record_shift_hours",
-      "list_jobs"
+      "list_jobs",
+      "update_job"
     ],
-    "body": "## Steps\n1. Get the shifts for the range (list_shifts).\n2. Add, change or remove shifts as asked; deletions need confirmation.\n3. Estimate pay with work_earnings and label it an estimate (pay counts only when deposited).\n4. Flag overload: over 25 hours in a school week or shifts right before deadlines.\n\n## Quality rules\n- Estimates are not income until paid.\n\n## Example\nUser: How many hours do I work this week?\nAssistant: 18 hours over 4 shifts, about $288 before tax (estimate). Thursday's shift ends at 10 PM and your essay is due Friday.",
+    "body": "## Steps\n1. Get the shifts for the range (list_shifts) or the hours (work_earnings). Quote the paid hours the tools return; never add up times yourself.\n2. Add, change or remove shifts as asked; deletions need confirmation. Leave the break out of add_shifts so the job's break rule applies.\n3. If the user says a lunch is unpaid (\"7.5 hour shifts have a half hour unpaid\"), save it with update_job breakRules (by shift length, longest match wins), then report the paid hours it returns.\n4. Hours only; if asked what they will earn, say hourly pay isn't predicted and give the paid hours. Never estimate or calculate pay from hours or a rate; pay is what a paycheck or deposit shows.\n5. If a week is heavy next to school deadlines, say so plainly with a fix and offer it (block study time). Never name a threshold.\n\n## Quality rules\n- Paid hours, with the number of shifts: \"42 paid hours over 6 shifts\".\n- No dollar amounts for hourly work, not even \"about\" or \"before tax\".\n- Plain words: no flags, thresholds or \"overload\".\n\n## Example\nUser: How many hours do I work this week?\nAssistant: 18 paid hours over 4 shifts. Thursday's shift ends at 10 PM and your essay is due Friday. Want me to block study time Wednesday?",
     "evals": [
       {
         "prompt": "How many hours do I work this week?",
@@ -1148,6 +1152,10 @@ export const SKILLS: SkillFile[] = [
       },
       {
         "prompt": "Move my Saturday shift to Sunday",
+        "expect": "routes to shift-manager"
+      },
+      {
+        "prompt": "Lunch is unpaid on my 9 hour shifts, so I get paid 8 hours",
         "expect": "routes to shift-manager"
       }
     ]

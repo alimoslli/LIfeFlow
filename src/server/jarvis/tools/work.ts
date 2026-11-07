@@ -11,7 +11,10 @@ import {
   fillRegularShifts,
   listEmployers,
   listShifts,
+  paidHoursOf,
+  regularHoursOf,
   recordShiftHours,
+  shiftPaidMinutes,
   setShiftStatus,
   updateEmployer,
   updateShift,
@@ -22,7 +25,9 @@ import { scheduleLabel } from "@/lib/work-schedule";
 import { centsToDollarsDeep } from "./finance";
 import { dateArg, defineTool, idArg, moneyArg, timeArg, toCents } from "../tool";
 
-const REGULAR_HOURS = workScheduleSchema.describe("Days 0=Sunday..6=Saturday, start and end as HH:MM (24h), optional unpaid breakMinutes");
+const REGULAR_HOURS = workScheduleSchema.describe(
+  "Days 0=Sunday..6=Saturday, start and end as HH:MM (24h), optional unpaid breakMinutes (a fixed break for these days; for lunch that depends on shift length use update_job breakRules)",
+);
 
 export const workTools = [
   defineTool({
@@ -38,9 +43,9 @@ export const workTools = [
           name: e.name,
           position: e.position,
           payType: e.payType,
-          hourlyRateCents: e.hourlyRateCents,
           overtimeAfterHours: Number(e.overtimeThresholdHours),
-          regularHours: e.schedule ? scheduleLabel(e.schedule) : null,
+          regularHours: regularHoursOf(e.schedule) ? scheduleLabel(regularHoursOf(e.schedule)!) : null,
+          unpaidBreakRule: e.schedule?.breakRules?.length ? e.schedule.breakRules : null,
         })),
       });
     },
@@ -71,7 +76,7 @@ export const workTools = [
         return { e, shiftsAdded: await fillRegularShifts(s, ctx.tz, ctx.today) };
       });
       return {
-        created: { id: r.e.id, name: r.e.name, regularHours: r.e.schedule ? scheduleLabel(r.e.schedule) : null },
+        created: { id: r.e.id, name: r.e.name, regularHours: regularHoursOf(r.e.schedule) ? scheduleLabel(regularHoursOf(r.e.schedule)!) : null },
         shiftsAdded: r.shiftsAdded,
         viewAt: "/work",
       };
@@ -110,12 +115,18 @@ export const workTools = [
         const e = await updateEmployer(s, a.jobId, { schedule: a.regularHours });
         return { e, shiftsAdded: await fillRegularShifts(s, ctx.tz, ctx.today) };
       });
-      return { job: r.e.name, regularHours: r.e.schedule ? scheduleLabel(r.e.schedule) : null, shiftsAdded: r.shiftsAdded, viewAt: "/work" };
+      return {
+        job: r.e.name,
+        regularHours: regularHoursOf(r.e.schedule) ? scheduleLabel(regularHoursOf(r.e.schedule)!) : null,
+        shiftsAdded: r.shiftsAdded,
+        viewAt: "/work",
+      };
     },
   }),
   defineTool({
     name: "list_shifts",
-    description: "Scheduled and worked shifts in a date range (scheduled times and recorded punches are separate).",
+    description:
+      "Scheduled and worked shifts in a date range (scheduled times and recorded punches are separate). Each shift has its paid hours (unpaid break taken out) and `total` has the paid hours for the range: quote those, never add up times yourself.",
     schema: z.object({ from: dateArg(), to: dateArg() }),
     mutates: false,
     async execute(a, ctx) {
@@ -128,16 +139,19 @@ export const workTools = [
           scheduledStart: f(r.startsAt),
           scheduledEnd: f(r.endsAt),
           breakMinutes: r.breakMinutes,
+          paidHours: Math.round((shiftPaidMinutes(r).minutes / 60) * 100) / 100,
           recordedStart: f(r.recordedStart),
           recordedEnd: f(r.recordedEnd),
           status: r.status,
         })),
+        total: paidHoursOf(rows),
       };
     },
   }),
   defineTool({
     name: "add_shifts",
-    description: "Add scheduled work shifts. End time before start time means the shift ends the next day.",
+    description:
+      "Add scheduled work shifts. End time before start time means the shift ends the next day. Leave breakMinutes out so the job's unpaid-break rule (by shift length) applies; pass it only when the user states this shift's break. Returns each shift's paid hours and the total: quote those.",
     schema: z.object({
       shifts: z
         .array(
@@ -161,14 +175,21 @@ export const workTools = [
           const r = await createShift(
             s,
             ctx.tz,
-            { employerId: sh.jobId, date: sh.date, startTime: sh.startTime, endTime: sh.endTime, breakMinutes: sh.breakMinutes ?? 0, notes: sh.notes },
+            { employerId: sh.jobId, date: sh.date, startTime: sh.startTime, endTime: sh.endTime, breakMinutes: sh.breakMinutes, notes: sh.notes },
             "jarvis",
           );
-          out.push({ id: r.id, start: formatIn(r.startsAt, ctx.tz, "yyyy-MM-dd HH:mm"), end: formatIn(r.endsAt, ctx.tz, "yyyy-MM-dd HH:mm") });
+          out.push({
+            id: r.id,
+            start: formatIn(r.startsAt, ctx.tz, "yyyy-MM-dd HH:mm"),
+            end: formatIn(r.endsAt, ctx.tz, "yyyy-MM-dd HH:mm"),
+            unpaidBreakMinutes: r.breakMinutes,
+            paidHours: Math.round((shiftPaidMinutes(r).minutes / 60) * 100) / 100,
+            _row: r,
+          });
         }
         return out;
       });
-      return { created, viewAt: "/work" };
+      return { created: created.map(({ _row, ...c }) => c), total: paidHoursOf(created.map((c) => c._row)), viewAt: "/work" };
     },
   }),
   defineTool({
@@ -231,7 +252,7 @@ export const workTools = [
   defineTool({
     name: "work_earnings",
     description:
-      "Hours and ESTIMATED gross earnings per job for a range (uses recorded punches when available, else schedule). Not actual pay — actual pay comes from paychecks/deposits.",
+      "Paid hours per job for a range (unpaid breaks taken out; recorded punches when available, else the schedule), with overtime hours. Hours only: never estimate or calculate pay from hours; actual pay comes from paychecks and deposits.",
     schema: z.object({ from: dateArg(), to: dateArg() }),
     mutates: false,
     async execute(a, ctx) {

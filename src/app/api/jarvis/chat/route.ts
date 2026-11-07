@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { z } from "zod";
 import { getSessionUser } from "@/server/auth/current-user";
 import { moneyLocked } from "@/server/auth/money-lock";
@@ -22,6 +23,8 @@ const body = z.object({
   message: z.string().max(8000).default(""),
   module: z.enum(["home", "finances", "wealth", "school", "work", "calendar", "tasks", "notes", "settings"]).nullish(),
   attachmentIds: z.array(z.string().uuid()).max(5).default([]),
+  /** The id the app made for this send. The same id arriving again (a retry) never starts a second turn. */
+  clientMessageId: z.string().uuid().nullish(),
 });
 
 /** Streams a Jarvis turn as newline-delimited JSON events. */
@@ -61,6 +64,11 @@ export async function POST(req: Request) {
     }
 
     const encoder = new TextEncoder();
+    // The platform keeps this function alive until the turn is saved, even after the phone drops the connection
+    // (screen locked, app switched, weak signal). after() waits on the turn, up to maxDuration.
+    let turnSettled: () => void = () => {};
+    const turnDone = new Promise<void>((resolve) => (turnSettled = resolve));
+    after(() => turnDone);
     const stream = new ReadableStream({
       async start(controller) {
         const emit = (e: JarvisEvent) => {
@@ -79,7 +87,8 @@ export async function POST(req: Request) {
             text: parsed.data.message,
             module: parsed.data.module,
             attachmentIds: parsed.data.attachmentIds,
-            signal: req.signal,
+            clientMessageId: parsed.data.clientMessageId,
+            // Deliberately no req.signal: a dropped connection must not cancel the turn (Stop is its own request).
             prices: modelPrices(),
             moneyLocked: locked,
           });
@@ -88,6 +97,7 @@ export async function POST(req: Request) {
           emit({ type: "error", message: e instanceof Error && /not found/i.test(e.message) ? e.message : "Something went wrong. Try again." });
           emit({ type: "done", messageId: null });
         } finally {
+          turnSettled();
           try {
             controller.close();
           } catch {}

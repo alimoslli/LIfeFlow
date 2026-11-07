@@ -135,10 +135,10 @@ describe("work earnings", () => {
   it("applies weekly overtime", () => {
     // 6 x 8h shifts (7.5h paid) in one week = 45h -> 5h overtime
     const shifts = [19, 20, 21, 22, 23, 24].map((d) => shift(`2026-10-${d}T13:00:00Z`, `2026-10-${d}T21:00:00Z`));
-    const e = estimateEarnings(shifts, { payType: "hourly", hourlyRateCents: 2000, overtimeThresholdHours: 40, overtimeMultiplier: 1.5 }, TZ);
+    const e = estimateEarnings(shifts, { payType: "hourly", overtimeThresholdHours: 40, overtimeMultiplier: 1.5 }, TZ);
     expect(e.paidHours).toBe(45);
     expect(e.overtimeHours).toBe(5);
-    expect(e.estimatedGrossCents).toBe(40 * 2000 + 5 * 3000);
+    expect(e).not.toHaveProperty("estimatedGrossCents"); // hourly pay is never predicted
     expect(e.basis).toBe("scheduled");
   });
 

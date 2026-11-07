@@ -7,8 +7,20 @@ import type { UserScope } from "../../db/with-user";
 import { assertOwned, notFound } from "../errors";
 import { listCategories } from "./categories";
 import { rollupToParents, spendingByCategoryId } from "./cashflow";
-import { PAID_EARLY_DAYS, amountsClose, nameRelation, paidOccurrences, trackedKeys, tracksSeries, type DueOccurrence } from "./bill-match";
-import { MIN_CONFIDENCE, detectRecurring, merchantKey, merchantKeys, occurrencesBetween, type RecurringCandidate } from "./recurring-detect";
+import {
+  PAID_EARLY_DAYS,
+  SLACK_DAYS,
+  amountsClose,
+  billVaries,
+  nameRelation,
+  paidOccurrences,
+  scheduleGap,
+  trackedKeys,
+  tracksSeries,
+  type DueOccurrence,
+} from "./bill-match";
+import { keywordCategory } from "./categorize";
+import { MIN_CONFIDENCE, detectRecurring, merchantKey, merchantKeys, nthOccurrence, occurrencesBetween, type RecurringCandidate } from "./recurring-detect";
 import { queryTransactions } from "./transactions";
 import { parsePatch } from "../patch";
 
@@ -229,19 +241,22 @@ export async function listRecurring(scope: UserScope, opts: { includeInactive?: 
  */
 export async function upcomingRecurring(scope: UserScope, from: string, to: string, bank?: BankSeries) {
   const items = await listRecurring(scope);
+  const early = Math.max(...Object.values(PAID_EARLY_DAYS));
   const due: { item: (typeof items)[number]; date: string }[] = [];
   for (const r of items) {
     if (!r.nextDueDate) continue;
-    // Projected from the stored date, so a bill due on the 31st stays on the 31st (or the month's last day).
-    for (const date of occurrencesBetween(r.nextDueDate, r.frequency, from, to)) due.push({ item: r, date });
+    // Projected from the stored date, so a bill due on the 31st stays on the 31st (or the month's last day). The due
+    // dates just before `from` are matched too, so a charge that paid one of those can't pay a later one.
+    for (const date of occurrencesBetween(r.nextDueDate, r.frequency, addDaysStr(from, -early), to)) due.push({ item: r, date });
   }
-  if (!due.length) return [];
-  const charges = await queryTransactions(scope, { from: addDaysStr(from, -Math.max(...Object.values(PAID_EARLY_DAYS))), to, limit: 5000 });
+  const ahead = due.filter((d) => d.date >= from);
+  if (!ahead.length) return [];
+  const recent = await queryTransactions(scope, { from: addDaysStr(from, -early), to, limit: 5000 });
   // Bank series matched to an item add the names its charges post under and whether its amount moves.
   // They're only needed when some charge could pay a due date, so the detection is skipped otherwise.
-  const couldPay = charges.some((t) =>
-    due.some(
-      ({ item, date }) =>
+  const payable = ahead.filter(({ item, date }) =>
+    recent.some(
+      (t) =>
         Math.sign(t.amountCents) === Math.sign(item.amountCents) &&
         t.date <= date &&
         daysBetween(t.date, date) <= PAID_EARLY_DAYS[item.frequency] &&
@@ -249,23 +264,49 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
         (nameRelation(trackedKeys(item), merchantKeys(t)) || (t.kind === "transfer" && amountsClose(item.amountCents, t.amountCents, true))),
     ),
   );
-  const matched = bank ?? (couldPay ? await bankSeries(scope, from) : null);
-  const seriesOf = new Map(items.map((r) => [r.id, matched ? seriesForItem(r, matched.trackedActive) : []]));
-  const paid = paidOccurrences(
-    due.map(({ item, date }): DueOccurrence => {
-      const s = seriesOf.get(item.id) ?? [];
-      return {
-        keys: [...trackedKeys(item), ...s.map((c) => c.merchantKey)],
-        varies: s.some((c) => c.variableAmount),
-        frequency: item.frequency,
-        date,
-        amountCents: item.amountCents,
-      };
-    }),
-    charges,
-  );
+  let paid = new Set<number>();
+  if (payable.length) {
+    const matched = bank ?? (await bankSeries(scope, from));
+    const seriesOf = new Map(items.map((r) => [r.id, seriesForItem(r, matched.trackedActive)]));
+    // The charges reach back one cycle of the longest schedule that could be paid: what the last cycle's charges paid
+    // tells a second plan from the same merchant (`paidOccurrences`).
+    const back = [
+      addDaysStr(from, -early),
+      ...payable.map(({ item: r }) => addDaysStr(nthOccurrence(from, r.frequency, -1), -PAID_EARLY_DAYS[r.frequency] - SLACK_DAYS[r.frequency])),
+    ].sort()[0];
+    const [charges, named] = await series(
+      () => queryTransactions(scope, { from: back, to, limit: 5000 }),
+      () => scope.tx.select({ id: categories.id, name: categories.name }).from(categories).where(eq(categories.userId, scope.userId)),
+    );
+    // A bill with no series yet varies by its category: the one picked, else the one its name reads as ("Verizon": Phone).
+    const categoryOf = new Map(named.map((c) => [c.id, c.name]));
+    // The found series each charge is a cycle of: a charge of another series is that bill's, never this one's.
+    const cycles = Map.groupBy(
+      matched.all.flatMap((c) => c.charges.map((x) => ({ at: `${x.date}|${x.amountCents}`, key: c.merchantKey, series: c.seriesKey }))),
+      (x) => x.at,
+    );
+    const cycleOf = (t: (typeof charges)[number]) => {
+      const here = cycles.get(`${t.date}|${t.amountCents}`);
+      return here && (here.find((x) => x.key === merchantKey(t))?.series ?? null);
+    };
+    paid = paidOccurrences(
+      due.map(({ item, date }): DueOccurrence => {
+        const s = seriesOf.get(item.id) ?? [];
+        return {
+          keys: [...trackedKeys(item), ...s.map((c) => c.merchantKey)],
+          series: s.map((c) => c.seriesKey),
+          varies: billVaries(s, (item.categoryId && categoryOf.get(item.categoryId)) || keywordCategory({ description: item.name })),
+          frequency: item.frequency,
+          date,
+          day: Number(item.nextDueDate!.slice(8, 10)),
+          amountCents: item.amountCents,
+        };
+      }),
+      charges.map((t) => ({ ...t, series: cycleOf(t) })),
+    );
+  }
   return due
-    .filter((_, i) => !paid.has(i))
+    .filter((d, i) => d.date >= from && !paid.has(i))
     .map(({ item, date }): { id: string; name: string; date: string; amountCents: number; kind: string } => ({
       id: item.id,
       name: item.name,
@@ -280,8 +321,8 @@ type TrackedItem = Parameters<typeof tracksSeries>[0];
 
 /**
  * The bank series a tracked item stands for (`tracksSeries`). One merchant can bill several (iCloud and
- * Apple Music both read "APPLE.COM/BILL"): then the item stands for the one closest to its amount only,
- * so tracking one never hides the other.
+ * Apple Music both read "APPLE.COM/BILL"): then the item stands for the one closest to its amount only (at one
+ * price, the one on its schedule), so tracking one never hides the other.
  */
 export function seriesForItem(item: TrackedItem, all: RecurringCandidate[]): RecurringCandidate[] {
   const byMerchant = Map.groupBy(
@@ -289,7 +330,10 @@ export function seriesForItem(item: TrackedItem, all: RecurringCandidate[]): Rec
     (c) => c.merchantKey,
   );
   const off = (c: RecurringCandidate) => Math.abs(c.latestAmountCents - item.amountCents);
-  return [...byMerchant.values()].map((g) => g.reduce((best, c) => (off(c) < off(best) ? c : best)));
+  // Two at one price (two Netflix plans): the one on the item's own schedule.
+  const gap = (c: RecurringCandidate) => (item.nextDueDate ? scheduleGap(item.nextDueDate, c.nextExpectedDate, item.frequency) : 0);
+  const better = (c: RecurringCandidate, best: RecurringCandidate) => off(c) < off(best) || (off(c) === off(best) && gap(c) < gap(best));
+  return [...byMerchant.values()].map((g) => g.reduce((best, c) => (better(c, best) ? c : best)));
 }
 
 /**
@@ -326,6 +370,7 @@ export async function bankSeries(scope: UserScope, today: string) {
     tracked: all.filter((c) => tracked.has(c)),
     untracked: all.filter((c) => !tracked.has(c) && c.confidence >= MIN_CONFIDENCE),
     trackedActive: all.filter((c) => trackedActive.has(c)),
+    all,
   };
 }
 export type BankSeries = Awaited<ReturnType<typeof bankSeries>>;

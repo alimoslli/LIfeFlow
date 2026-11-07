@@ -1,0 +1,101 @@
+{
+  "id": "s0024-international-student-extra-shifts-over-twenty-hours",
+  "title": "Two extra union desk shifts take his week to 22 hours, past the 20 hour limit on his student visa",
+  "persona": "p2044-university-international-campus-job",
+  "now": "2026-11-09T16:45",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 2404,
+  "changes": [
+    {
+      "id": "x-extra-tue",
+      "type": "shift_add",
+      "job": "job-campus",
+      "start": "2026-11-17T14:00",
+      "end": "2026-11-17T18:00",
+      "break_minutes": 0,
+      "posted_at": "2026-11-09T15:00",
+      "notes": "Extra cover, added by supervisor"
+    },
+    {
+      "id": "x-extra-sat",
+      "type": "shift_add",
+      "job": "job-campus",
+      "start": "2026-11-21T13:00",
+      "end": "2026-11-21T19:00",
+      "break_minutes": 0,
+      "posted_at": "2026-11-09T15:00",
+      "notes": "Extra cover, added by supervisor"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-limit",
+      "check": "late fact",
+      "what": "At 3 PM today the Student Union desk added two shifts to the week of Nov 15 to 21: Tuesday Nov 17 from 2 to 6 PM and Saturday Nov 21 from 1 to 7 PM. With his regular Monday, Wednesday and Friday 6 to 10 PM shifts that week is 12 + 4 + 6 = 22 hours, 2 over the 20 hours a week he told Dev his student visa allows. Both extra shifts say they were added by the supervisor, and the schedule had been posted since Oct 25. Dev says the total and the limit, as facts. It does not say what the rule is or that he will be in trouble: it only tells him the sum passes the number he gave it.",
+      "by_when": "2026-11-09T17:30",
+      "facts": [
+        "x-extra-tue",
+        "x-extra-sat",
+        "shift-campus-2026-11-16",
+        "shift-campus-2026-11-18",
+        "shift-campus-2026-11-20",
+        "m-04",
+        "post-campus-2026-11-15"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-limit",
+      "action": "draft for them",
+      "needs_user": true,
+      "send_at": "2026-11-09T16:50",
+      "what": "One push now, an hour before his Monday desk shift at 6: \"Two extra shifts were added to the week of Nov 15: Tue 2 to 6 and Sat 1 to 7. With your regular shifts that is 22 hours, 2 over your 20 hour limit.\" It opens a draft he can send his supervisor himself: \"Hi, thanks for asking me to cover. My student visa limits me to 20 hours a week. With my regular shifts I can take 8 more hours that week: Tuesday 2 to 6 and Saturday 1 to 5, or Saturday 1 to 7 alone. Which works for you?\" [Copy] [Edit]. It lists his three ways to get to 20 or under (both with Saturday ending at 5; Tuesday alone, 16 hours; Saturday alone, 18) and leaves the choice to him. The two shifts stay on his line as posted, with the week total shown as 22 hours until he changes them.",
+      "why": "The limit is his own number, the extra shifts are a day old, and the supervisor can fix it today at his regular shift tonight. Dev puts the sum and the options in front of him and writes the message, and never contacts the supervisor, drops a shift or decides between the options."
+    }
+  ],
+  "must_not": [
+    "contact the supervisor or drop either shift for him",
+    "say that 22 hours is fine, or round it down to 20",
+    "give legal or immigration advice, or tell him what happens if he goes over",
+    "move the Saturday extra shift to the morning so his evening is free",
+    "mention what the extra shifts would pay (hourly pay is never predicted)",
+    "tell him to give up the Tuesday evening study to take more hours",
+    "send the push after 5:30 PM, when he is on his way to the 6 PM shift"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "F-1 students may work up to 20 hours a week on campus while classes are in session; the number comes from what he told Dev (m-04), and Dev never states the rule itself.",
+    "The Student Union desk posts the schedule three weeks ahead and supervisors add cover shifts later by the same app; the extra shifts show up with a note.",
+    "The workweek runs Sunday to Saturday.",
+    "Hours are counted as scheduled; Dev would update the week total from punches when they exist."
+  ],
+  "tags": [
+    "student",
+    "international",
+    "work-hour limit",
+    "campus job",
+    "late fact",
+    "notification",
+    "draft for them",
+    "evening studier",
+    "crammer",
+    "first-generation",
+    "canvas",
+    "commuter"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "move the Saturday extra shift to the morning so his evening is free",
+        "routine": "call-family",
+        "why_wrong": "Saturday 9 AM is his weekly call with his family and 10:30 to noon is his grocery run, so the 1 to 7 PM slot is the one that leaves them alone",
+        "facts": [
+          "m-02"
+        ]
+      }
+    ]
+  }
+}

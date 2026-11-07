@@ -1,6 +1,6 @@
 # Notifications that bring people back: what works, 15 ideas for LifeFlow, and an audit of round 2
 
-Report 2026-11-06, round 3. Written by the market researcher, ordered by the owner: "We have to think very creatively with the notifications to bring back those customers and users every day to our app and not forget it like those other planners. I think the target is with the notifications." Everything below was read on 2026-11-06.
+Report 2026-11-06, round 3. Written by the market researcher, ordered by the owner: "We have to think very creatively with the notifications to bring back those customers and users every day to our app and not forget it like those other planners. I think the target is with the notifications." Everything below was read on 2026-11-06. Finished and re-checked on 2026-11-07 (see the notes marked 11-07).
 
 **How this was done, and the same limit as rounds 1 and 2.** I tried each review and research site once. Blocked (connection refused at the proxy, or "host not allowed" in the page reader): apps.apple.com, play.google.com, reddit.com, trustpilot.com, blog.duolingo.com, research.duolingo.com, airship.com, onesignal.com, businessofapps.com, 9to5google.com, techcrunch.com, webkit.org, consumerfinance.gov, support.google.com, community.canvaslms.com, copilot.money, monarchmoney.com, rocketmoney.com, dl.acm.org, arxiv.org, nber.org, bc.edu, fincap.org.uk and advanced-hindsight.com. Two sources I could read myself: **Apple's design guidelines** (developer.apple.com: notifications, managing notifications, Live Activities) and **the browser support tables MDN publishes** (raw.githubusercontent.com). Everything else comes from a search engine's summary of a page. Counts are **sources raising a theme**, not store reviews.
 
@@ -22,7 +22,7 @@ People don't turn off notifications because there are many; they turn them off b
 
 | Example | What it does | What works | What backfires | Lesson for LifeFlow |
 |---|---|---|---|---|
-| **Duolingo** | A daily practice reminder picked per person by a learning system | It learns which message works for each person and rotates so the message stays fresh: +0.5% daily users, +2% new-user retention [M, from a scraped copy of the KDD 2020 paper]. Learners on a 7-day streak are 2.4 times as likely to come back the next day (Duolingo's blog) [M] | Guilt: "You made Duo sad" style pushes; a student writer (student paper, exact page unclear in the search summary): "if they're busy and miss their usual study time, the app starts guilt-tripping them. It's annoying" [W]. When its reminders are ignored for a while (reports say about a week) it sends "These reminders don't seem to be working" and stops [M] | Learn per person, rotate wording, stop when ignored, and say so. Copy the back-off, never the guilt. |
+| **Duolingo** | A daily practice reminder picked per person by a learning system | It learns which message works for each person and rotates so the message stays fresh: +0.5% daily users, +2% new-user retention [M, from a scraped copy of the KDD 2020 paper]. Learners on a 7-day streak are 2.4 times as likely to come back the next day (Duolingo's blog) [M] | Guilt: "You made Duo sad" style pushes; a student writer (student paper, exact page unclear in the search summary): "if they're busy and miss their usual study time, the app starts guilt-tripping them. It's annoying" [W]. When its reminders are ignored for a while (reports say about a week) it sends "These reminders don't seem to be working. We'll stop sending them for now" and stops [M]. 11-07: Duolingo has published no result for this message; one newsletter saw reminders return after about 3 days [W] | Learn per person, rotate wording, stop when ignored, and say so. Copy the back-off, never the guilt. |
 | **Snapchat streaks** | A count of days in a row two friends have snapped | Gets daily opens | Of 300 teens aged 13 to 21: 25% paid to restore a broken streak, 51% would feel bad if the other person broke it, and **42% would choose to get rid of streaks** (Bits of Freedom, March 2026, via EDRi) [M] | Daily opens bought with pressure. No streak counters. |
 | **BeReal** | One push a day at a random time | A shared moment at first | Daily users reportedly fell about 52%, from about 14.7 to 7.7 million (Digiday, year unclear) [W]; earlier falls in 2023 [M] | A daily push without a personal reason wears off. |
 | **Apple Screen Time weekly report** | Every Sunday, a chart of your phone use | Some people set goals from it [W] | Arrives on Sunday "just as people are trying to unwind"; a listener learned to treat it "as meaningless and ignore it" (Marketplace) [W] | A weekly scorecard that judges you gets ignored. |
@@ -154,6 +154,35 @@ Tags: `fix now`, `build now`, `needs the new surface`, `owner decision`. Notific
 
 **Buttons on iPhone** need the native app (3.2). Until then the iPhone shows the line, and tapping opens the card with the same buttons. Android and desktop Chrome can show them now.
 
+### 4.0 The proposals at a glance (problem, source, value, effort, risk)
+
+"Source" points to the finding that backs it. Effort is small, medium or large. Risk is what could go wrong for the person or for us.
+
+| # | Problem it solves | Source | Value | Effort | Risk | Tag |
+|---|---|---|---|---|---|---|
+| 1 | A change happened and the student must find it | 3.2 actionable; 3.3 "second step" quote | Something done for them | small | Acting outside allowed autonomy | `build now` |
+| 2 | A named bill would overdraw | Journal of Finance 2025 [S]; UK regulator [M] | Avoids a fee, protects trust | medium | Money worry; wrong forecast | `build now` |
+| 3 | A real clash today | 3.1 Daily Brief and Pulse | Morning push that means something | medium | Becoming a daily summary | `build now` |
+| 4 | Good news has no moment | 3.1 Monarch; vision "Decided" 1 | Pay day opens | small | Amount on lock screen | `build now` |
+| 5 | A new schedule changes the week | Round 2 (schedules arrive late) | Schedule day becomes our day | small | Three pushes for one change | `build now` |
+| 6 | A week that cannot fit | Round 2; vision decision 6 | Early warning with a plan | large | Weekly alarm | `build now` |
+| 7 | Closing shift then early class | Round 2 (sleep) | Sleep protected by a move | small | Sounding like a parent | `build now` |
+| 8 | Due date Canvas can't judge | 3.1 Canvas | The one due-date push Canvas can't send | small | Becoming Canvas | `build now` |
+| 9 | Aid or stipend is late | Round 2 | Real options days early | medium | Anxiety | `build now` |
+| 10 | No proof the app helps | Vision "Decided" 2 | Reason to stay in week five | medium | A guessed number | `build now` |
+| 11 | Off track for a goal | Owner rule 2026-11-05 | Plain truth with a way back | small | Guilt wording | `build now` |
+| 12 | Trial or price rise unnoticed | Rocket Money model | Money saved in one tap | small | Low | `build now` |
+| 13 | A kind of push is ignored | Duolingo, Pinterest, LinkedIn | Fewer opt-outs | small | Sounding hurt | `build now` |
+| 14 | Leaving late | Google Calendar | Most loved assistant push | medium | Tracking feel; Google's version broke | `owner decision` |
+| 15 | The day is a tight sequence | Apple Live Activities guide [S] | Day visible without opening | large | Native app needed | `needs the new surface` |
+| R1 | Pushes sent without a reason | Apple guide [S]; 3.2 | One check for every push | small | Low | `build now` |
+| R2 | Daily ask to log in the code | 3.4 item 4; owner rule | Matches owner's rule | small | Low | `fix now` |
+| R3 | No record of taps | 3.4 item 2 | Base for every number | small | Privacy: keep per person | `build now` |
+| R4 | Flat cap of 3 a day | LinkedIn, Pinterest, Meta | Right amount per person | medium | A bug floods someone | `owner decision` |
+| R5 | Cold permission ask | Airship via Admiral [M] | More students allow pushes | small | Low | `build now` |
+| R6 | Money on the lock screen | Apple guide [S] | Privacy | small | Low | `owner decision` |
+| R7 | No buttons on iPhone web push | MDN table [S] | Buttons work | medium to large | Cost | `owner decision` |
+
 ### 4.1 Fifteen notification ideas
 
 | # | Idea | Fires when | Data | Size | Tag |
@@ -172,7 +201,7 @@ Tags: `fix now`, `build now`, `needs the new surface`, `owner decision`. Notific
 | 12 | Trial ending or price up | 2 days before a trial bills; the first charge at a new price | have | small | `build now` |
 | 13 | I'll send fewer of these | A kind is ignored several times in a row | have | small | `build now` |
 | 14 | Time to leave | Traffic moves the leave time for a shift or exam | **new**: maps and traffic, plus a start place told once | medium | `owner decision` |
-| 15 | Today on the lock screen | A shift or exam day with a tight sequence | **new**: the native app (Live Activity) | large | `owner decision` |
+| 15 | Today on the lock screen | A shift or exam day with a tight sequence | **new**: the native app (Live Activity) | large | `needs the new surface` + `owner decision` |
 
 **Why these 15 (the findings behind them):** each one is about the person's own next step, from their own data (3.2, personal versus generic), carries the fix as a button (3.2, actionable), and stays silent when there's nothing to say (3.1, Daily Brief and Pulse). Sizes assume the checks in "Decided from research" and section 15 get built anyway; ideas 6, 7 and 9 are the push side of the student week check and money on its way.
 
@@ -187,7 +216,8 @@ Tags: `fix now`, `build now`, `needs the new surface`, `owner decision`. Notific
 
 **2. Short before a bill** · `build now` · data: have
 - **When and trigger:** 2 to 3 days before a bill or subscription renewal would push checking below zero, counting usual spending until then and leaving out expected pay. Sent at the person's usual quiet time of day, never at night.
-- **Wording:** "Your Claude renewal is Thursday ($20). With gas and lunches, checking will be about $12 by then. Pay lands Friday. Want two ways to cover it?"
+- **Wording:** "Your Claude renewal is Thursday ($20). With gas and lunches, checking will be about $12 by then. Want two ways to cover it?"
+- **Wording note (11-07):** mention a payday only when it is a salaried paycheck of a known amount or a date the person told us. Hourly pay is never predicted, so for hourly students the line stops at the shortfall.
 - **Buttons:** Show 2 ways · Remind me Thursday · I've got it
 - **Why a student comes back:** this is the owner's own notification (vision, "Notifications that understand the situation"). Automatic bank alerts cut unplanned overdraft charges by 17 to 19% [S], and this one names the bill and the day, where a flat low-balance alert gave weak evidence [M].
 - **Spam risk and guard:** money worry. Only when a named charge is really at risk, once per bill. Never suggest a cash advance. With the Money lock on, the lock screen shows "Money heads-up for this week" with no amounts (4.2, rule 6). Time Sensitive only on the due day itself.
@@ -266,7 +296,7 @@ Tags: `fix now`, `build now`, `needs the new surface`, `owner decision`. Notific
 - **When and trigger:** after a kind of push has been ignored or dismissed several times in a row (start with 3 and tune it in the test).
 - **Wording:** "My morning clash notes haven't been useful lately, so I'll only send one when something needs to change. You can turn them back up anytime."
 - **Buttons:** That's right · Keep sending them
-- **Why a student comes back:** it shows Dev listens. Duolingo's "These reminders don't seem to be working" is called one of its most successful pushes [W]; Pinterest found that unsubscribes cost more than clicks gain [M].
+- **Why a student comes back:** it shows Dev listens. Duolingo's "These reminders don't seem to be working" is called its most effective push by a design blog, but that is opinion, not published data (11-07 re-check) [W]; Pinterest found that unsubscribes cost more than clicks gain [M].
 - **Spam risk and guard:** sounding hurt. Plain and neutral, no "you ignored". Never for Time Sensitive kinds (bills today, a shift within the hour).
 
 **14. Time to leave** · `owner decision` · data: **new** (a maps and traffic service, plus a start place told once: "home" or "campus", never tracked location)
@@ -276,7 +306,7 @@ Tags: `fix now`, `build now`, `needs the new surface`, `owner decision`. Notific
 - **Why a student comes back:** it is the most loved assistant push there is, and it is rarely wrong in a way that hurts.
 - **Spam risk and guard:** Google's own version broke for many people [M]. Only for shifts and exams, only when the time changes. Time Sensitive is allowed here (within the hour). **The decision:** whether a maps connection fits "real life enters lightly, never by surveillance". My recommendation: yes, with a start place told once and no tracking.
 
-**15. Today on the lock screen** · `owner decision` · data: **new** (the native app; Live Activities on iPhone, Live Updates on Android)
+**15. Today on the lock screen** · `needs the new surface`, `owner decision` · data: **new** (the native app; Live Activities on iPhone, Live Updates on Android)
 - **When and trigger:** on a day with a tight sequence, such as class, then a shift, then an online quiz window closing at midnight. It starts when the first item starts and ends within eight hours (Apple's limit).
 - **What it shows:** "Shift until 10 · Quiz closes 11:59 · 1 hour 45 free after work", updated only when something changes.
 - **Buttons:** Undo the last change (if Dev moved something)
@@ -324,6 +354,8 @@ Tags: `fix now`, `build now`, `needs the new surface`, `owner decision`. Notific
 
 ## 5. Things to avoid
 
+Each is written as a rule a test can check. The lead applies them (docs/team.md); I only list them.
+
 1. **Guilt and pressure.** No mascot that's sad, no streak counters, no "you haven't". Duolingo's guilt pushes are mocked by students, and 42% of teens would remove Snapchat streaks if they could.
 2. **A daily summary on days with nothing to say.** ChatGPT retired Pulse; Gemini's brief is "oddly empty" some days; BeReal's daily push wore off. Silence on empty days is part of the product.
 3. **Flat low-balance alerts.** The UK regulator found weak evidence for them. Warn about a named charge on a named day.
@@ -334,7 +366,20 @@ Tags: `fix now`, `build now`, `needs the new surface`, `owner decision`. Notific
 8. **Private details on the lock screen.** Amounts, merchants and health facts stay off it when the Money lock is on.
 9. **A weekly scorecard.** Screen Time's Sunday chart gets ignored or resented. Report a change with a fix, never a score.
 10. **Judging a kind by the next day's taps.** A push that gets a tap today and an opt-out tomorrow is a loss (Pinterest, Meta).
-11. **Asking the person to log, check in or sort things.** The app runs on its connections (owner, 2026-11-05).
+11. **Asking the person to log, check in or sort things.** The app runs on its connections (owner, 2026-11-05). Today's `goal_checkin` ("Tell me what you did and I'll save it") breaks this.
+12. **A flat number of pushes per day for everyone.** Judge each kind by this person's act-on rate over weeks, not a global cap (LinkedIn, Pinterest, Meta). Keep only a high safety ceiling.
+13. **Quoting a payday that isn't known.** A push never mentions pay that is hourly or unconfirmed (owner money rules).
+14. **Asking for permission on the first screen.** About half say no when asked cold (Airship via Admiral). Ask at the first real find.
+15. **Wording that blames.** A test bans "you ignored", "you missed", "slipping", "you haven't", "failed", plus em dashes, in every push line.
+
+### Rules as a checklist (for the lead)
+
+- No push without: what was noticed, why it matters now, and a fix or what was already done.
+- No push on a day with nothing to say, and no "all clear".
+- One push per trigger; same-moment triggers merge.
+- Hold stressful kinds (money, off track) until quiet hours end.
+- Money lock on: no amounts or merchants on the lock screen.
+- Every kind has a stay-quiet test and a wording test.
 
 ## 6. Situation seeds
 
@@ -471,10 +516,20 @@ All 103 links read on 2026-11-06. Read directly: the Apple and MDN pages and our
 - https://apps.appfollow.io/ios/shovel-study-planner/1467742357?country=us
 - https://appgoblin.info/apps/1467742357
 
+**Re-checked 2026-11-07 (search summaries)**
+- https://growth-dives.kit.com/posts/20-days-of-blackmail
+- https://www.lazyweb.com/research/duolingo-retention-experiments.md
+- https://help.rocketmoney.com/en/articles/2217739-how-much-does-rocket-money-cost
+- https://www.wallstreetsurvivor.com/rocket-money-premium-vs-premium-plus/
+- https://www.emarketer.com/content/rocket-money-launches-anthropic-powered-virtual-assistant
+- https://arhsharbinger.com/25142/letters-to-the-editor/adjusting-canvas-notifications-can-reduce-stress/ (not opened)
+
 **Our own repository (read, not changed)**
 - `src/server/services/push.ts`, `public/sw.js`, `src/server/services/proactive/engine.ts`, `src/server/services/proactive/detectors.ts`, `src/lib/jarvis-voice.ts`, `src/server/services/health.ts`, `docs/integrations.md`, `docs/native-app-plan.md`, `docs/vision.md`, `docs/playbook.md`.
 
 ## 8. Gaps
+
+0. **11-07 re-check limits:** the Canvas forum and a student letter on adjusting Canvas notifications (arhsharbinger.com) could not be opened from this session. Those hosts would need to be allowed in the network settings. Searching for 2026 student reddit complaints about planner notifications returned only school help pages, so the student voice stays weak (item 9).
 
 1. **No independent numbers on how many pushes are too many.** The per-week opt-out figures are old vendor surveys. Fix: the 10-student test with 4.2, rule 3 in place: opt-out rate, act-on rate per kind and daily opens over four weeks.
 2. **Duolingo's results (+0.5% daily users, +2% retention)** come from a scraped copy of the paper; the official PDF was blocked. Fix: allow research.duolingo.com for one session.
@@ -486,6 +541,17 @@ All 103 links read on 2026-11-06. Read directly: the Apple and MDN pages and our
 8. **Round 2 items still unverifiable:** Child Trends' parenting-student figures, the Lumina-Gallup reason split, and Monarch's first-year price for existing members.
 9. **Review sites are still blocked** (App Store, Google Play, Reddit, Trustpilot), so the student quotes in 3.3 are weak. Fix: the allowlist from round 2's gaps, or ten 15-minute interviews.
 
-## 9. What changed because of this report
+## 9. Yes or no for the owner
 
-To be filled in by the product session.
+1. **Yes or no:** Dev pushes "I fixed this, Undo" when a new shift or a moved due date made it rearrange your study time (ideas 1 and 5, one push, never three).
+2. **Yes or no:** Dev warns 2 to 3 days before a named bill or renewal would overdraw checking, never at night, never with a cash advance (idea 2).
+3. **Yes or no:** a morning push only on days with a real clash, and total silence on ordinary days (idea 3, with the "I'll send fewer of these" brake, idea 13).
+4. **Yes or no:** when you are off track for a goal, one plain line with a way back, and the daily "tell me what you did" check-in is removed (idea 11 and rule R2).
+5. **Yes or no:** replace the flat limit of 3 pushes a day with a learned amount per kind and per person, plus a high safety ceiling (rule R4, option b).
+
+## 10. What changed because of this report
+
+2026-11-07, by the HQ build chat:
+- **Things to avoid 1 to 15 are rules now.** CLAUDE.md's Notifications rule points here, so every new push follows them. The ones that need code (the banned-words test in rule 15, the "no daily check-in that asks the user to log what they did" in rule 11, and the flat cap of 3 pushes a day in rule 12) go to the owner first, because they change how something works.
+- **The owner's yes or no list** (section 9, top 5) was sent to the owner in the chat on 2026-11-07, waiting for their answers.
+- **Round 2 corrections** (Trellis 58% is one college; the shift-notice figure belongs to the Shift Project) are recorded in section 7 above.

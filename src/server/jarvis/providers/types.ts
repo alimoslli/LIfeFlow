@@ -28,7 +28,7 @@ export interface ModelProvider {
   /** The model id requests go to (recorded with every run). */
   readonly model: string;
   /** `cacheKey` keeps one user's requests on the same provider cache; `effort` is the per-turn thinking level. */
-  startTurn(input: { system: string; history: ChatItem[]; tools: ToolSpec[]; cacheKey?: string; effort?: TurnEffort }): ModelTurn;
+  startTurn(input: { system: string; history: ChatItem[]; tools: ToolSpec[]; cacheKey?: string; effort?: TurnEffort; signal?: AbortSignal }): ModelTurn;
 }
 
 export class ProviderUnavailableError extends Error {}

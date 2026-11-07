@@ -1,0 +1,158 @@
+{
+  "id": "s0022-student-schedule-late-pay-on-its-way",
+  "title": "A housing deposit drafts two days before payday and the next tutoring schedule is late: usual work days stay expected, and no money counts until it lands",
+  "persona": "p2048-university-dorm-campus-job",
+  "persona_overrides": {
+    "memories": [
+      {
+        "id": "m-work-days",
+        "content": "I tutor at the center Mondays 6 to 9 PM and Thursdays 4 to 7 PM",
+        "category": "routine",
+        "via": "chat",
+        "told_at": "2026-08-02T10:15"
+      }
+    ],
+    "income": [
+      {
+        "id": "inc-family",
+        "amount_cents": [
+          6000,
+          15000
+        ],
+        "skip_chance": 0.3
+      }
+    ],
+    "work": {
+      "jobs": [
+        {
+          "id": "job-campus",
+          "closed_on": [
+            "2026-11-26"
+          ]
+        }
+      ]
+    }
+  },
+  "now": "2026-11-08T10:30",
+  "history_days": 45,
+  "future_days": 45,
+  "seed": 2202,
+  "money": {
+    "available_now_cents": 18600
+  },
+  "changes": [
+    {
+      "id": "x-housing-email",
+      "type": "email",
+      "at": "2026-11-05T14:40",
+      "sender_type": "school",
+      "sender_name": "Housing and Residence Life",
+      "from_address": "housing@example.com",
+      "subject": "Spring housing deposit: $250.00 drafts from your account Nov 11, late fee $15 after Nov 20"
+    },
+    {
+      "id": "x-late-schedule",
+      "type": "schedule_posted_late",
+      "job": "job-campus",
+      "covers_from": "2026-11-15",
+      "posted_at": "2026-11-09T15:00"
+    },
+    {
+      "id": "x-refund-email",
+      "type": "email",
+      "at": "2026-11-05T09:12",
+      "sender_type": "school",
+      "sender_name": "Student Accounts",
+      "from_address": "studentaccounts@example.com",
+      "subject": "Your refund of $312.00 is scheduled for direct deposit on Nov 16"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-short",
+      "check": "afford",
+      "what": "Housing's email says the $250.00 spring deposit drafts from checking on Wednesday Nov 11, with a $15 late fee only after Nov 20. He has $186.00 available now, pending charges included, so the draft is $64.00 more than he has even if he spends nothing else before then. Two things are on their way and neither counts yet: his biweekly tutoring paycheck on Friday Nov 13, two days after the draft, and the $312.00 refund Student Accounts scheduled for Monday Nov 16. The Nov 13 paycheck has no amount: his hourly pay is not predicted, and neither deposit is in the $186.00.",
+      "by_when": "2026-11-08T12:00",
+      "facts": [
+        "x-housing-email",
+        "acc-checking",
+        "x-refund-email",
+        "pay-campus-2026-10-30"
+      ]
+    },
+    {
+      "id": "n-expected",
+      "check": "late fact",
+      "what": "The tutoring schedule for the week of Nov 15 to 21 is not posted. The center has posted each week about three weeks ahead, and this one is late. His usual work days are Monday 6 to 9 PM and Thursday 4 to 7 PM (what he told Dev, and how the posted weeks have run), so Dev shows Monday Nov 16 and Thursday Nov 19 as expected work, in the style of expected, until the real schedule posts. Expected work is hours on his line, never pay.",
+      "by_when": "2026-11-08T12:00",
+      "facts": [
+        "post-campus-2026-11-08",
+        "m-work-days",
+        "shift-campus-2026-11-09",
+        "shift-campus-2026-11-12"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-short",
+      "action": "draft for them",
+      "needs_user": true,
+      "send_at": "2026-11-08T11:00",
+      "what": "One push on his day off, before the Sunday 8 PM family call: \"Housing's $250 deposit drafts Wednesday and you have $186 available. Your Friday paycheck and the $312 refund on the 16th come after, and I don't count them until they land.\" It opens a draft he sends himself: \"Hi, I'm Alex Reed (spring housing deposit). My account would be short on Nov 11. Could the $250 draft move to Tuesday Nov 17, before the Nov 20 late date?\" [Copy] [Edit]. If Housing says no, Dev says the draft is $64 short on the 11th plus whatever he spends before then, and asks if he wants to choose what to cover it with; it moves no money.",
+      "why": "Moving a bill that has no fee is the gentlest way to close a gap, and the email gives the room: 3 days of slack before the late fee. He keeps full say; Dev never contacts Housing or moves money. The two incoming amounts are context he already knows, so they are named without being counted."
+    },
+    {
+      "for": "n-expected",
+      "action": "just so you know",
+      "needs_user": false,
+      "what": "No push. On the Plan line, Monday Nov 16 6 to 9 PM and Thursday Nov 19 4 to 7 PM show as expected work (a lighter style) with the label \"schedule not posted yet\". When it posts on Monday Nov 9, the real shifts replace them without another message, and a different week would then be a catch of its own.",
+      "why": "Showing his usual days keeps the week from looking free, and nothing here needs a decision."
+    }
+  ],
+  "must_not": [
+    "count the Nov 13 paycheck or the $312.00 refund as money he has, or say he will be fine on the 11th",
+    "predict the Nov 13 paycheck amount or any pay for the Nov 16 and 19 expected shifts (hourly pay is never predicted)",
+    "treat Monday Nov 16 evening and Thursday Nov 19 afternoon as free for study because the schedule is not posted (they are his usual work hours)",
+    "write to Housing or move the draft for him",
+    "move money from anywhere or tell him to skip the deposit",
+    "suggest extra tutoring shifts to cover the gap in the week of two midterms",
+    "use guilt words about his spending"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Housing deposits for next term draft by ACH on the date in the email and carry a late fee after a later date; a student can ask to move the draft.",
+    "Student Accounts schedules refunds by direct deposit; the $312.00 is the amount in its email and is not in the account until it posts.",
+    "The tutoring center posts each week about three weeks ahead (Sunday 3 PM); the Nov 15 week is posted late on Monday Nov 9 at 3 PM.",
+    "He has no savings account on file, so the gentlest option left is moving the bill.",
+    "Student is named Alex Reed only inside the draft text; the person is made up."
+  ],
+  "tags": [
+    "student",
+    "money on its way",
+    "never count before deposited",
+    "usual work days",
+    "expected work",
+    "late fact",
+    "dorm",
+    "first-generation",
+    "campus job",
+    "canvas",
+    "moving a bill",
+    "draft for them"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "treat Monday Nov 16 evening and Thursday Nov 19 afternoon as free for study because the schedule is not posted",
+        "routine": "study",
+        "why_wrong": "those are his usual work hours, and he studies in the mornings before class, not in the evening",
+        "facts": [
+          "m-work-days",
+          "m-01"
+        ]
+      }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
-import { daysBetween } from "@/lib/dates";
+import { addDaysStr, daysBetween } from "@/lib/dates";
 import type { Frequency } from "../../db/schema";
-import { merchantKey, merchantKeys, nthOccurrence, storedKeyForms, type RecurringCandidate } from "./recurring-detect";
+import { DUPLICATE_DAYS, merchantKey, merchantKeys, nthOccurrence, storedKeyForms, type RecurringCandidate } from "./recurring-detect";
 
 /**
  * Is it the same bill? Pure rules for telling when a bill the user tracks under their own name
@@ -43,6 +43,18 @@ export function nameRelation(a: string[], b: string[]): "same" | "contained" | n
 export function amountsClose(expectedCents: number, actualCents: number, varies: boolean): boolean {
   if (Math.sign(expectedCents) !== Math.sign(actualCents)) return false;
   return Math.abs(actualCents - expectedCents) <= Math.max(Math.abs(expectedCents) * (varies ? 0.25 : 0.1), 50);
+}
+
+/** Categories whose bills usually move from one to the next (usage). Phone and internet are not here: their amounts are steady, and a wide band lets the brand's other products pay them. */
+const USUALLY_VARIES = /^utilities$/i;
+
+/**
+ * Whether a tracked bill's amount moves: its found series' charges tell, and before the bank shows a series (a bill
+ * tracked by hand, no history yet), its category does. With no series, a charge can pay it only under the bill's own
+ * keys (its name's, its stored one or its brand's: `paidOccurrences`), so the wider band never reaches another merchant.
+ */
+export function billVaries(series: { variableAmount: boolean }[], category: string | null | undefined): boolean {
+  return series.length ? series.some((c) => c.variableAmount) : USUALLY_VARIES.test(category?.trim() ?? "");
 }
 
 /** Signed days from the nearest occurrence of `anchor`'s schedule to `date`: negative when `date` comes before it. */
@@ -93,10 +105,21 @@ export function tracksSeries(
 
 /**
  * One due date of a tracked item. `keys` are the item's own keys plus those of bank series already matched
- * to it (`tracksSeries`); `varies` is true when such a series' amount moves from bill to bill.
+ * to it (`tracksSeries`), and `series` those series' `seriesKey`s; `varies` is true when its amount moves from bill
+ * to bill (`billVaries`). `day` is the schedule's day of the month when `date` was moved to a short month's last day
+ * (a bill due the 31st is due Feb 28), so the cycle before it is Jan 31, not Jan 28.
  */
-export type DueOccurrence = { keys: string[]; varies: boolean; frequency: Frequency; date: string; amountCents: number };
-export type PostedCharge = { date: string; amountCents: number; merchantName: string | null; description: string; kind: string; pending: boolean };
+export type DueOccurrence = { keys: string[]; varies: boolean; frequency: Frequency; date: string; amountCents: number; series?: string[]; day?: number };
+/** A posted transaction; `series` is the found series it's a cycle of (its `seriesKey`), if any. */
+export type PostedCharge = {
+  date: string;
+  amountCents: number;
+  merchantName: string | null;
+  description: string;
+  kind: string;
+  pending: boolean;
+  series?: string | null;
+};
 
 /** Rows that never pay a bill: they undo or correct other money. */
 const NOT_A_PAYMENT = new Set(["refund", "reimbursement", "adjustment"]);
@@ -105,20 +128,72 @@ const NOT_A_PAYMENT = new Set(["refund", "reimbursement", "adjustment"]);
  * The due dates (indexes into `due`) a posted charge already paid: a charge under one of the item's exact
  * keys (never a merchant name merely inside it, so an Amazon purchase can't pay Amazon Prime), a close
  * amount, on the due date or up to PAID_EARLY_DAYS before it. Pending charges don't count yet. Each charge
- * pays one due date, closest amount first, so two bills from one merchant can't share a payment.
+ * pays one due date, closest amount and then nearest date first, so two bills from one merchant can't share a payment
+ * (pass the due dates just before the range too: a charge that paid one of those can't pay a later one).
+ *
+ * A charge that's another bill's own never pays this one (a second $15.49 Netflix plan billed a week earlier): one in a
+ * found series that isn't the item's, or one that repeats a charge of the previous cycle that wasn't this bill's payment
+ * then (`repeatsOther`). `charges` should reach back a cycle for that.
  */
 export function paidOccurrences(due: DueOccurrence[], charges: PostedCharge[]): Set<number> {
-  const pairs: { o: number; c: number; score: number }[] = [];
-  charges.forEach((t, c) => {
-    if (t.pending || NOT_A_PAYMENT.has(t.kind)) return;
-    const keys = merchantKeys(t);
-    due.forEach((d, o) => {
-      const early = daysBetween(t.date, d.date);
-      if (early < 0 || early > PAID_EARLY_DAYS[d.frequency]) return;
-      if (!keys.some((k) => d.keys.includes(k)) || !amountsClose(d.amountCents, t.amountCents, d.varies)) return;
-      pairs.push({ o, c, score: Math.abs(t.amountCents - d.amountCents) / Math.abs(d.amountCents) + early / 1000 });
-    });
-  });
+  const keys: string[][] = [];
+  const fits = (d: DueOccurrence, c: number) => {
+    const t = charges[c];
+    if (t.pending || NOT_A_PAYMENT.has(t.kind) || (t.series && !d.series?.includes(t.series))) return false;
+    return (keys[c] ??= merchantKeys(t)).some((k) => d.keys.includes(k)) && amountsClose(d.amountCents, t.amountCents, d.varies);
+  };
+  const score = (d: DueOccurrence, c: number, date: string) =>
+    Math.abs(charges[c].amountCents - d.amountCents) / Math.abs(d.amountCents) + daysBetween(charges[c].date, date) / 1000;
+  /** The charges that could pay `d` if it were due on `date`, best first. */
+  const payers = (d: DueOccurrence, date: string) => {
+    const start = addDaysStr(date, -PAID_EARLY_DAYS[d.frequency]);
+    return charges.flatMap((t, c) => (t.date >= start && t.date <= date && fits(d, c) ? [c] : [])).sort((a, b) => score(d, a, date) - score(d, b, date));
+  };
+  /**
+   * The previous cycle was paid by one charge, and another one (more than a double charge's 2 days from it) sits nearer
+   * to this charge's place a cycle back (as many days before that due date): this charge is that one's next cycle, a different bill from the same merchant.
+   */
+  /**
+   * A refund or reimbursement of that charge (the same amount, under the bill's keys, within a week after `u`): it was
+   * taken back, so it isn't another plan's. A small credit (a $2 promo) doesn't undo a charge.
+   */
+  const undone = (d: DueOccurrence, u: PostedCharge) =>
+    charges.some(
+      (r, ri) =>
+        NOT_A_PAYMENT.has(r.kind) &&
+        !r.pending &&
+        r.kind !== "adjustment" &&
+        r.date >= u.date &&
+        r.date <= addDaysStr(u.date, 7) &&
+        amountsClose(Math.abs(u.amountCents), Math.abs(r.amountCents), false) &&
+        (keys[ri] ??= merchantKeys(r)).some((k) => d.keys.includes(k)),
+    );
+  const repeatsOther = (d: DueOccurrence, c: number) => {
+    const before = nthOccurrence(d.date, d.frequency, -1, d.day);
+    const [payment] = payers(d, before);
+    if (payment === undefined) return false;
+    // The same number of days before the due date, a cycle back (not the charge's own date a month back: months differ in length).
+    const back = addDaysStr(before, -daysBetween(charges[c].date, d.date));
+    const off = (u: number) => Math.abs(daysBetween(charges[u].date, back));
+    // Only a charge from before that cycle's due date counts: one after it can't be an early payment of that cycle.
+    return charges.some(
+      (u, i) =>
+        i !== payment &&
+        u.date <= before &&
+        off(i) <= SLACK_DAYS[d.frequency] &&
+        off(i) < off(payment) &&
+        Math.abs(daysBetween(u.date, charges[payment].date)) > DUPLICATE_DAYS &&
+        fits(d, i) &&
+        // The strict band even for a varying bill: its parts or a late fee are not another plan.
+        amountsClose(charges[c].amountCents, u.amountCents, false) &&
+        !undone(d, u),
+    );
+  };
+  const pairs = due.flatMap((d, o) =>
+    payers(d, d.date)
+      .filter((c) => !repeatsOther(d, c))
+      .map((c) => ({ o, c, score: score(d, c, d.date) })),
+  );
   const paid = new Set<number>();
   const used = new Set<number>();
   for (const p of pairs.sort((a, b) => a.score - b.score))
