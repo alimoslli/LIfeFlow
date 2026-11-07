@@ -199,13 +199,12 @@ const STORIES: Record<PreviewStory["kind"], ((c: Ctx) => PreviewStory)[]> = {
     },
     (c) => {
       const hours = c.pick([12.5, 14.5, 16, 18.5]);
-      const rate = c.pick([14, 15, 16.5]);
       return {
         id: "hours",
         kind: "work",
-        chips: [ex(`${hours} h this week · ${c.job}`), ex(`${money(rate)} an hour`)],
-        title: `About ${money(Math.round(hours * rate))} before taxes this week.`,
-        why: "It's an estimate until the paycheck lands. Nothing counts until then.",
+        chips: [ex(`${hours} paid hours this week · ${c.job}`)],
+        title: `${hours} paid hours at ${c.job} this week.`,
+        why: "Unpaid breaks are already taken out. Pay counts only when it lands in your account.",
         action: "See shifts",
         note: "In the app, this opens Work.",
       };

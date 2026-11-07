@@ -51,7 +51,7 @@ export async function createShiftAction(_p: ActionState, fd: FormData): Promise<
       date: f.date,
       startTime: f.startTime,
       endTime: f.endTime,
-      breakMinutes: formNum(f.breakMinutes) ?? 0,
+      breakMinutes: formNum(f.breakMinutes) ?? undefined,
       notes: f.notes,
     });
     const n = await shiftOverlaps(s, shift);
