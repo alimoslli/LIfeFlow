@@ -1739,7 +1739,7 @@ export const hqChats = pgTable("hq_chats", {
   needsAction: text("needs_action"),
   lastCheckinAt: tstz("last_checkin_at"),
   /** Live HQ (ADR 0030): "busy" or "idle" from the chat's own hooks, what it is doing in one short line, and when. */
-  liveState: text("live_state").$type<"busy" | "idle">(),
+  liveState: text("live_state").$type<"busy" | "idle" | "relayed">(),
   liveLine: text("live_line"),
   liveAt: tstz("live_at"),
   createdAt: createdAt(),

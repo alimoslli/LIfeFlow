@@ -54,11 +54,18 @@ export const WORKING_WINDOW_MS = 20 * 60_000;
 /** A busy chat stays "working right now" this long after its last ping (one command, such as the browser tests, can run ~20 minutes). */
 export const LIVE_WINDOW_MS = 30 * 60_000;
 
-/** Live HQ (ADR 0030): a chat is working right now while its own hooks last said "busy" within LIVE_WINDOW_MS. Returns its line, or null. */
+/** The hourly sync (ADR 0030 addendum) says a chat is working: that holds until the next sync is due, with a little slack. */
+export const RELAY_WINDOW_MS = 75 * 60_000;
+
+/**
+ * Live HQ (ADR 0030): a chat is working right now while its own hooks last said "busy" within LIVE_WINDOW_MS, or the
+ * hourly sync of Claude's own chat list last said "working" within RELAY_WINDOW_MS ("relayed"). Returns its line, or null.
+ */
 export function liveNow(c: { liveState?: string | null; liveLine?: string | null; liveAt?: Date | null; status?: string }, now: Date): string | null {
-  if (c.status === "archived" || c.liveState !== "busy" || !c.liveAt) return null;
+  if (c.status === "archived" || !c.liveAt || (c.liveState !== "busy" && c.liveState !== "relayed")) return null;
   const age = now.getTime() - c.liveAt.getTime();
-  return age >= -60_000 && age <= LIVE_WINDOW_MS ? c.liveLine?.trim() || "Working in its chat" : null;
+  const window = c.liveState === "relayed" ? RELAY_WINDOW_MS : LIVE_WINDOW_MS;
+  return age >= -60_000 && age <= window ? c.liveLine?.trim() || "Working in its chat" : null;
 }
 
 /** No check-in at all for this long means offline. */

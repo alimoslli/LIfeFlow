@@ -98,3 +98,27 @@ What HQ knew until now:
 - The office tells the truth within about 15 s for every chat with hooks. For the others, the COO's 2-hourly relay stays.
 - The live line is the agent's own description of its step. It is cleaned and shown only to the owner, who owns every chat.
 - If Claude changes the fire endpoint (a research preview), starting from HQ shows a plain error and the link still works.
+
+## Addendum (owner, 2026-11-07, later): HQ knows what every chat is doing
+
+The owner: "I still don't think HQ is running well … I see myself ending up in the Claude app doing everything myself. It doesn't look like HQ knows what the agents and the chats are doing."
+
+**Why.** The Claude app shows every chat's own record: whether it's working and on what, what it last finished, and what it needs from you. HQ couldn't see it. Live hooks only run in chats with just the LifeFlow repo, in the LifeFlow environment. The chats the owner actually uses (LF Main on the Default environment, LF V3, Marketing and the planning chat, all with two repositories) can't run them. The COO's 2-hourly relay covered only chats mapped to a department.
+
+**Decision: an hourly sync of Claude's own chat list.**
+- **The scheduled task:** "HQ sync", hourly from 7:43 AM to 11:43 PM Pacific, a fresh session in the LifeFlow environment with no repository.
+  - It calls `list_sessions` (the owner's chats, newest 50) and posts one `{type:"sessions", sessions:[…]}` report.
+  - Each chat carries: id, title, status bucket, archived, `task_summary` (what it's doing), `recent_action` (what it last finished), `needs_action` (what it needs from the owner) and `updated_at`.
+  - It posts with `curl` through the proxy that adds the HQ key, so it needs no repository.
+- **The server (`recordSessionSync`)**
+  - A chat HQ doesn't know is added only while active: working, blocked or ready for a look.
+  - "Working" becomes a `relayed` live line. `liveNow` holds it for `RELAY_WINDOW_MS` (75 minutes, until the next sync is due); a chat's own hook line wins while fresh.
+  - The status, the last thing it finished (`summary`) and `needsAction` are copied. The COO's chat keeps its own status and summary, since its rounds use them.
+  - A department, a main chat and the owner's title for a chat are never changed. Archived chats wait on nothing.
+  - All text is the chats' own words, cleaned by `liveLineText`, shown only to the owner and never treated as instructions.
+- **The office**
+  - "Right now" lists synced chats too, marked "checked … ago".
+  - New **"Waiting on you"** (`waitingItems`) lists every chat that says it needs the owner, for example "Approve or deny the plan" or "Top up credits", with **Open** straight into that chat.
+  - Rooms already showed these as door notes.
+
+**What it can't do:** HQ still can't read or type into a chat (Claude doesn't let a website do that). Replying happens in Claude, one tap away. Synced chats are up to an hour old; chats with their own hooks (desk tasks, tasks started from HQ, the COO) are live to within seconds.
