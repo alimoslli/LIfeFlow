@@ -5,6 +5,7 @@ import { getDb } from "@/server/db/client";
 import { errorResponse, HttpError } from "@/server/http";
 import { authenticateHq, hasHqKeyShape, isLiveOnly, readLimitedBody } from "@/server/hq/request";
 import {
+  recordSessionSync,
   createApproval,
   createMission,
   HqError,
@@ -37,6 +38,7 @@ const body = z.discriminatedUnion("type", [
   }),
   z.object({ type: z.literal("brief"), body: z.string(), needsYou: z.number().nullish(), sessionId: z.string().nullish() }),
   z.object({ type: z.literal("import"), seed: z.unknown() }),
+  z.object({ type: z.literal("sessions"), sessions: z.array(z.unknown()).max(100, "Too many chats in one sync (max 100).") }),
   z.object({ type: z.literal("content"), id: z.string().optional() }).passthrough(),
   z.object({ type: z.literal("metrics"), rows: z.array(z.unknown()).max(200, "Too many readings in one call (max 200).") }),
 ]);
@@ -78,6 +80,11 @@ export async function POST(req: Request) {
     const db = getDb();
     try {
       switch (b.type) {
+        case "sessions": {
+          // The hourly sync of Claude's own chat list (ADR 0030 addendum).
+          const r = await recordSessionSync(db, { sessions: b.sessions });
+          return NextResponse.json({ ok: true, ...r });
+        }
         case "checkin": {
           const { type: _t, ...rest } = b;
           await recordCheckin(db, rest as never);

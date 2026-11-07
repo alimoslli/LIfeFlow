@@ -130,7 +130,8 @@ export type Chat = {
   needsAction: string | null;
   lastCheckinAt: Date | null;
   /** Live HQ (ADR 0030): from the chat's own hooks. `live` is the line while it is busy right now (see `liveNow`), else null. */
-  liveState: "busy" | "idle" | null;
+  /** "busy"/"idle" from the chat's own hooks; "relayed" when the hourly sync copied Claude's own "working" for it. */
+  liveState: "busy" | "idle" | "relayed" | null;
   liveLine: string | null;
   liveAt: Date | null;
   url: string; // chatUrl(id)
@@ -175,7 +176,12 @@ export type LiveItem = {
   at: Date;
   missionId: string | null;
   missionTitle: string | null;
+  /** From the hourly sync of Claude's own chat list, not the chat's own hooks: "checked … ago", not "… ago". */
+  relayed: boolean;
 };
+
+/** A chat that says it needs the owner (Claude's own "needs action"): what, which chat, and since when. */
+export type WaitingItem = { chatId: string; url: string; who: string; needs: string; at: Date | null };
 
 export type OfficeSnapshot = {
   now: Date;
@@ -198,6 +204,8 @@ export type OfficeSnapshot = {
   live: LiveItem[];
   /** When the next scheduled round starts ("COO pass at 10:13 AM"), for when nobody is working. */
   nextRound: string | null;
+  /** Chats waiting on the owner, newest first (max 8). */
+  waiting: WaitingItem[];
 };
 
 export type EmployeeDetail = {

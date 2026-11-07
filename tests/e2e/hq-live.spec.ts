@@ -73,12 +73,31 @@ test("Live HQ on a phone: Right now fits, with no sideways scroll and a 44 px Wa
     `insert into hq_chats (id, role, title, is_primary, status, last_checkin_at, live_state, live_line, live_at)
      values ('session_01LiveMainChatAbcdefg', 'developer', 'LF Main', true, 'working', now(), 'busy', 'Run the full browser test suite on phone and web', now())`,
   );
+  // From the hourly sync of Claude's own chat list: a chat waiting on the owner, and one working ("checked … ago").
+  await pool.query(
+    `insert into hq_chats (id, title, status, last_checkin_at, needs_action) values
+       ('session_01LiveWaitingChatAbcdef', 'Marketing LF', 'blocked', now() - interval '5 minutes', 'Top up credits (3 or more) so the take can be generated')`,
+  );
+  await pool.query(
+    `insert into hq_chats (id, title, status, last_checkin_at, live_state, live_line, live_at) values
+       ('session_01LiveRelayedChatAbcdef', 'LF V3', 'working', now(), 'relayed', 'Drawing the timeline', now() - interval '12 minutes')`,
+  );
   const op = await ownerPage(browser, { viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, deviceScaleFactor: SHOTS ? 3 : 1 });
   await op.goto("/admin");
   const now = op.getByTestId("hq-right-now");
+  const waiting = op.getByTestId("hq-waiting");
+  await expect(waiting).toContainText("Waiting on you");
+  await expect(waiting).toContainText("Marketing LF");
+  await expect(waiting).toContainText("Top up credits (3 or more) so the take can be generated");
+  await expect(waiting.getByRole("link", { name: "Open Marketing LF in Claude" })).toHaveAttribute(
+    "href",
+    "https://claude.ai/code/session_01LiveWaitingChatAbcdef",
+  );
+  expect((await waiting.getByRole("link", { name: /Open/ }).boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await expect(now).toContainText("Drawing the timeline · checked 12 min ago");
   await expect(now).toContainText("Engineering");
   await expect(now).toContainText("Run the full browser test suite on phone and web");
-  const watch = (await now.getByRole("link", { name: /Watch/ }).boundingBox())!;
+  const watch = (await now.getByRole("link", { name: /Watch/ }).first().boundingBox())!;
   expect(watch.height).toBeGreaterThanOrEqual(44);
   expect(await op.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
   if (SHOTS) await now.screenshot({ path: `${SHOTS}/live-phone.png` });

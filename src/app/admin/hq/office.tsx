@@ -100,7 +100,7 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
       </header>
 
       <LiveRefresh />
-      <RightNow items={s.live} now={s.now} nextRound={s.nextRound} />
+      <RightNow items={s.live} waiting={s.waiting} now={s.now} nextRound={s.nextRound} />
       <BriefCard brief={s.brief} chief={s.employees.find((e) => e.role === "assistant")} pending={n} />
       {children}
 

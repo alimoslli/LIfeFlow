@@ -24,7 +24,7 @@ import {
 } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { chatUrl, EMPLOYEES, employee, isHqRole, USAGE_PLAN } from "../hq/team";
-import { employeeState, liveNow, WORKING_WINDOW_MS } from "../hq/state";
+import { employeeState, LIVE_WINDOW_MS, liveNow, WORKING_WINDOW_MS } from "../hq/state";
 import { nextWake, onDuty, ROUND_MAX_MS, roundOf, wakeLine, type Round } from "../hq/rounds";
 import type {
   Activity,
@@ -44,6 +44,7 @@ import type {
   EmployeeCard,
   EmployeeDetail,
   LiveItem,
+  WaitingItem,
   Mission,
   MissionPriority,
   MissionStatus,
@@ -537,6 +538,7 @@ export async function officeSnapshot(db: Database, now: Date = new Date()): Prom
       decisions: decisionRows.map(toActivity),
       live: liveItems(base, now),
       nextRound: nextRoundLine(base, now),
+      waiting: waitingItems(base),
     };
   });
 }
@@ -562,9 +564,25 @@ export function liveItems(base: Pick<Base, "chats" | "missions">, now: Date): Li
       at: c.liveAt,
       missionId: m?.id ?? null,
       missionTitle: m?.title ?? null,
+      relayed: c.liveState === "relayed",
     });
   }
   return items.sort((a, b) => b.at.getTime() - a.at.getTime()).slice(0, 8);
+}
+
+/** "Waiting on you": every chat that says it needs the owner (its own words, cleaned), newest first (max 8). */
+export function waitingItems(base: Pick<Base, "chats">): WaitingItem[] {
+  return base.chats
+    .filter((c) => c.status !== "archived" && c.needsAction?.trim())
+    .map((c) => ({
+      chatId: c.id,
+      url: c.url,
+      who: c.role ? `${employee(c.role).title} · ${c.title}` : c.title,
+      needs: c.needsAction!.trim(),
+      at: c.lastCheckinAt,
+    }))
+    .sort((a, b) => (b.at?.getTime() ?? 0) - (a.at?.getTime() ?? 0))
+    .slice(0, 8);
 }
 
 /** When the next scheduled round starts, for "Nobody's working right now" (the COO's schedule, in the owner's time zone). */
@@ -1449,6 +1467,95 @@ export function readingTime(readAt: string | null | undefined, now: Date): Date 
   if (!t || Number.isNaN(t.getTime())) return now;
   const age = now.getTime() - t.getTime();
   return age < 0 || age > 6 * 3_600_000 ? now : t;
+}
+
+// --- the hourly sync of Claude's own chat list (ADR 0030 addendum) ----------------------------------------------------
+
+const syncItemSchema = z.object({
+  id: z.string().max(80),
+  title: z.string().max(400).nullish(),
+  /** Claude's status bucket: working, blocked, review_ready, completed, failed (any case, with or without a prefix). */
+  bucket: z.string().max(80).nullish(),
+  archived: z.boolean().nullish(),
+  /** What it is doing right now (task_summary). */
+  doing: z.string().max(2000).nullish(),
+  /** What it last finished (post_turn_summary.recent_action). */
+  last: z.string().max(2000).nullish(),
+  /** What it needs from the owner (post_turn_summary.needs_action). */
+  needs: z.string().max(2000).nullish(),
+  updatedAt: z.string().max(40).nullish(),
+});
+const syncSchema = z.object({ sessions: z.array(z.unknown()).max(100) });
+
+const bucketOf = (raw: string | null | undefined) =>
+  (raw ?? "")
+    .toLowerCase()
+    .replace(/^session_status_bucket_/, "")
+    .trim();
+
+/**
+ * The hourly sync (ADR 0030 addendum): a small scheduled task copies Claude's own list of the owner's chats into HQ, so
+ * HQ knows what every chat is doing, including chats whose hooks can't run (two repos, or the Default environment). It
+ * is Claude's record, copied: whether each chat is working and on what, what it last finished, and what it needs from
+ * the owner. Text is the chats' own words, cleaned (`liveLineText`), shown only to the owner, never instructions.
+ * - A chat HQ doesn't know yet is added only while it is active (working, waiting on the owner, or ready for a look).
+ * - "Working" becomes a "relayed" live line (`liveNow`: until the next sync is due). A chat's own hooks win while fresh.
+ * - The COO's chat keeps its own status (its rounds use it); its live line and needs are still copied.
+ * - A department mapping, a main chat and an owner's title are never changed.
+ */
+export async function recordSessionSync(db: Database, input: unknown, now: Date = new Date()): Promise<{ updated: number; added: number }> {
+  const d = parse(syncSchema, input);
+  let updated = 0;
+  let added = 0;
+  for (const raw of d.sessions) {
+    const r = syncItemSchema.safeParse(raw);
+    if (!r.success) continue;
+    const it = r.data;
+    let id: string;
+    try {
+      id = normalizeSessionId(it.id);
+    } catch {
+      continue;
+    }
+    const bucket = bucketOf(it.bucket);
+    const active = !it.archived && (bucket === "working" || bucket === "blocked" || bucket === "review_ready");
+    const clean = (t: string | null | undefined) => (t ? liveLineText(t) : "") || null;
+    const at = it.updatedAt ? new Date(it.updatedAt) : null;
+    const activeAt = at && !Number.isNaN(at.getTime()) ? new Date(Math.min(at.getTime(), now.getTime())) : null;
+    await db.transaction(async (tx) => {
+      const [cur] = await tx.select().from(hqChats).where(eq(hqChats.id, id)).for("update");
+      if (!cur && !active) return;
+      const set: Partial<typeof hqChats.$inferInsert> = { updatedAt: now };
+      if (it.archived) set.status = "archived";
+      else if (cur?.role !== "assistant") set.status = bucket === "working" ? "working" : bucket === "blocked" ? "blocked" : "idle";
+      if (activeAt && (!cur?.lastCheckinAt || activeAt.getTime() > cur.lastCheckinAt.getTime())) set.lastCheckinAt = activeAt;
+      const last = clean(it.last);
+      if (last && cur?.role !== "assistant") set.summary = last;
+      set.needsAction = it.archived ? null : clean(it.needs);
+      // Working: a relayed live line, unless the chat's own hooks said something fresher.
+      const hooksFresh = cur?.liveState === "busy" && cur.liveAt && now.getTime() - cur.liveAt.getTime() <= LIVE_WINDOW_MS;
+      if (!hooksFresh) {
+        if (bucket === "working" && !it.archived) {
+          set.liveState = "relayed";
+          set.liveLine = clean(it.doing) ?? last ?? "Working in its chat";
+          set.liveAt = now;
+        } else if (cur?.liveState === "relayed") {
+          set.liveState = "idle";
+          set.liveAt = now;
+        }
+      }
+      const title = clean(it.title);
+      if (!cur) {
+        await tx.insert(hqChats).values({ id, title: title ?? "Untitled chat", ...set });
+        added++;
+      } else {
+        if (title && cur.title === "Untitled chat") set.title = title;
+        await tx.update(hqChats).set(set).where(eq(hqChats.id, id));
+        updated++;
+      }
+    });
+  }
+  return { updated, added };
 }
 
 export async function recordCheckin(db: Database, input: CheckinInput): Promise<void> {
