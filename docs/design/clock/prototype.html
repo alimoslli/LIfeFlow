@@ -46,11 +46,13 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .days button { height: 36px; min-width: 0; padding: 0 6px; border-radius: 18px; font-size: 0.95rem; color: var(--fg); display: grid; place-items: center; white-space: nowrap; }
 .days button.arrow { color: var(--fg2); min-width: 30px; padding: 0; flex: none; }
 .days button.on { background: var(--mint); color: var(--mint-ink); font-weight: 600; padding: 0 13px; flex: none; }
-@media (max-width: 380px) { .days button.arrow { display: none; } .days button { font-size: 0.9rem; } }
-.chips { position: absolute; left: 0; right: 0; height: 38px; display: flex; justify-content: safe center; gap: 8px; z-index: 8; padding: 0 16px; pointer-events: none; overflow-x: auto; scrollbar-width: none; }
-.chips::-webkit-scrollbar { display: none; }
-.chip { flex: none; height: 38px; padding: 0 12px; border-radius: 19px; background: var(--chip); display: flex; align-items: center; gap: 7px; font-size: 0.85rem; white-space: nowrap; opacity: 0; font-variant-numeric: tabular-nums; }
+.chips { position: absolute; left: 0; right: 0; height: 38px; display: flex; justify-content: center; gap: 6px; z-index: 8; padding: 0 12px; pointer-events: none; overflow: hidden; }
+/* chips fit the row: if they don't, only the widest one's name ends in "…" (fitChips); the time never does */
+.chip { flex: none; min-width: 0; height: 38px; padding: 0 11px; border-radius: 19px; background: var(--chip); display: flex; align-items: center; gap: 6px; font-size: 0.8rem; white-space: nowrap; opacity: 0; font-variant-numeric: tabular-nums; }
 .chip svg { flex: none; }
+.chip .cn { min-width: 1.6em; overflow: hidden; text-overflow: ellipsis; }
+.chip .ct { flex: none; color: var(--fg2); }
+@media (max-width: 380px) { .days button.arrow { display: none; } .days button { font-size: 0.9rem; } .chip { font-size: 0.76rem; padding: 0 9px; gap: 5px; } .chip svg { width: 14px; height: 14px; } }
 
 #hit { position: absolute; z-index: 7; border-radius: 50%; touch-action: pan-y; cursor: pointer; }
 .hint { position: absolute; left: 0; right: 0; text-align: center; font-size: 0.8rem; color: var(--fg3); z-index: 3; pointer-events: none; }
@@ -216,39 +218,39 @@ const T = (d, h, m = 0) => d * 1440 + h * 60 + m;
 const BASE = new Date(2026, 10, 7); // Saturday, Nov 7
 const DAYS = [-3, -2, -1, 0, 1, 2, 3];
 const ITEMS = [
-  { id: 'w1', kind: 'block', icon: '🧪', name: 'Chem lab', start: T(-3, 10), end: T(-3, 11, 50), src: 'From your school calendar' },
+  { id: 'w1', kind: 'block', icon: '🧪', name: 'Chem lab', cat: 'class', start: T(-3, 10), end: T(-3, 11, 50), src: 'From your school calendar' },
   { id: 'w2', kind: 'spend', icon: '☕', name: 'Coffee', at: T(-3, 12, 5), cents: 540, src: 'Blue Bottle, from your bank' },
-  { id: 'w3', kind: 'block', icon: '💼', name: 'Work', start: T(-3, 13), end: T(-3, 18), src: 'From your work schedule' },
+  { id: 'w3', kind: 'block', icon: '💼', name: 'Work', cat: 'work', start: T(-3, 13), end: T(-3, 18), src: 'From your work schedule' },
   { id: 'w4', kind: 'spend', icon: '🛒', name: 'Groceries', at: T(-3, 18, 40), cents: 6318, src: "Trader Joe's, from your bank" },
   { id: 'w5', kind: 'sleep', icon: '🌙', name: 'Sleep', start: T(-3, 23, 40), end: T(-2, 7, 5), src: 'From Apple Health' },
-  { id: 'h1', kind: 'block', icon: '🦷', name: 'Dentist', start: T(-2, 9, 30), end: T(-2, 10, 15), src: 'From Google Calendar' },
-  { id: 'h2', kind: 'block', icon: '💼', name: 'Work', start: T(-2, 11), end: T(-2, 17, 30), src: 'From your work schedule' },
+  { id: 'h1', kind: 'block', icon: '🦷', name: 'Dentist', cat: 'appt', start: T(-2, 9, 30), end: T(-2, 10, 15), src: 'From Google Calendar' },
+  { id: 'h2', kind: 'block', icon: '💼', name: 'Work', cat: 'work', start: T(-2, 11), end: T(-2, 17, 30), src: 'From your work schedule' },
   { id: 'h3', kind: 'spend', icon: '🏠', name: 'Rent to Maya', at: T(-2, 19, 15), cents: 64000, src: 'Zelle, from your bank' },
   { id: 'h4', kind: 'block', icon: '🏀', name: 'Pickup game', start: T(-2, 20, 30), end: T(-2, 21, 45), src: 'From Google Calendar' },
+  { id: 'h6', kind: 'due', icon: '📄', name: 'Lab report', at: T(-2, 23, 59), src: 'Due on Canvas, from your school account' },
   { id: 'h5', kind: 'sleep', icon: '🌙', name: 'Sleep', start: T(-1, 0, 20), end: T(-1, 7, 30), src: 'From Apple Health' },
   { id: 'f1', kind: 'income', icon: '💵', name: 'Paycheck', at: T(-1, 6), cents: 61240, src: 'Deposit, from your bank' },
-  { id: 'f2', kind: 'block', icon: '💼', name: 'Work', start: T(-1, 8), end: T(-1, 14, 30), src: 'From your work schedule' },
+  { id: 'f2', kind: 'block', icon: '💼', name: 'Work', cat: 'work', start: T(-1, 8), end: T(-1, 14, 30), src: 'From your work schedule' },
   { id: 'f3', kind: 'spend', icon: '🌯', name: 'Lunch', at: T(-1, 14, 50), cents: 1160, src: 'Chipotle, from your bank' },
   { id: 'f4', kind: 'spend', icon: '🎬', name: 'Movie with Sam', at: T(-1, 19, 52), cents: 1650, src: 'AMC, from your bank' },
   { id: 'f5', kind: 'sleep', icon: '🌙', name: 'Sleep', start: T(0, 0, 45), end: T(0, 8, 5), src: 'From Apple Health' },
-  { id: 's1', kind: 'block', icon: '💼', name: 'Work', start: T(0, 9), end: T(0, 16, 30), src: 'From your work schedule' },
+  { id: 's1', kind: 'block', icon: '💼', name: 'Work', cat: 'work', start: T(0, 9), end: T(0, 16, 30), src: 'From your work schedule' },
   { id: 's2', kind: 'spend', icon: '🍽️', name: 'Lunch', at: T(0, 13), cents: 1420, src: 'Lunch at work, from your bank' },
   { id: 's3', kind: 'spend', icon: '⛽', name: 'Gas', at: T(0, 17, 15), cents: 5500, src: 'Shell, from your bank' },
-  { id: 's4', kind: 'block', icon: '🎓', name: 'Class', start: T(0, 18), end: T(0, 20), src: 'From your school calendar' },
+  { id: 's4', kind: 'block', icon: '🎓', name: 'Class', cat: 'class', start: T(0, 18), end: T(0, 20), src: 'From your school calendar' },
   { id: 's5', kind: 'block', icon: '📚', name: 'Study for exam', start: T(0, 20, 30), end: T(0, 22), src: 'Your plan. The exam is Monday at 10:00 AM.' },
   { id: 's6', kind: 'sleep', icon: '🌙', name: 'Bedtime', usual: true, start: T(0, 23), end: T(1, 7), src: 'Your usual bedtime, from Apple Health' },
   { id: 'u1', kind: 'block', icon: '🥞', name: 'Brunch with Jordan', start: T(1, 11, 30), end: T(1, 13), src: 'From Google Calendar' },
-  { id: 'u2', kind: 'block', icon: '📖', name: 'Study group', start: T(1, 15), end: T(1, 17), src: 'From Google Calendar' },
+  { id: 'u2', kind: 'block', icon: '📖', name: 'Study group', cat: 'class', start: T(1, 15), end: T(1, 17), src: 'From Google Calendar' },
   { id: 'u3', kind: 'sleep', icon: '🌙', name: 'Bedtime', usual: true, start: T(1, 23), end: T(2, 7), src: 'Your usual bedtime, from Apple Health' },
-  { id: 'm1', kind: 'block', icon: '📝', name: 'Exam', start: T(2, 10), end: T(2, 11, 30), src: 'From your school calendar' },
-  { id: 'm2', kind: 'block', icon: '💼', name: 'Work', start: T(2, 13), end: T(2, 18), src: 'From your work schedule' },
+  { id: 'm1', kind: 'block', icon: '📝', name: 'Exam', cat: 'due', start: T(2, 10), end: T(2, 11, 30), src: 'From your school calendar' },
+  { id: 'm2', kind: 'block', icon: '💼', name: 'Work', cat: 'work', start: T(2, 13), end: T(2, 18), src: 'From your work schedule' },
   { id: 'm3', kind: 'sleep', icon: '🌙', name: 'Bedtime', usual: true, start: T(2, 23), end: T(3, 7), src: 'Your usual bedtime, from Apple Health' },
   { id: 't1', kind: 'bill', icon: '📱', name: 'Phone bill', at: T(3, 9), cents: 4500, src: 'Due Tuesday. Usually paid from checking.' },
-  { id: 't2', kind: 'block', icon: '🙋', name: 'Office hours', start: T(3, 12, 30), end: T(3, 13, 15), src: 'From your school calendar' },
-  { id: 't3', kind: 'block', icon: '💼', name: 'Work', start: T(3, 15), end: T(3, 20), src: 'From your work schedule' },
+  { id: 't2', kind: 'block', icon: '🙋', name: 'Office hours', cat: 'class', start: T(3, 12, 30), end: T(3, 13, 15), src: 'From your school calendar' },
+  { id: 't3', kind: 'block', icon: '💼', name: 'Work', cat: 'work', start: T(3, 15), end: T(3, 20), src: 'From your work schedule' },
   { id: 't4', kind: 'sleep', icon: '🌙', name: 'Bedtime', usual: true, start: T(3, 23), end: T(4, 7), src: 'Your usual bedtime, from Apple Health' },
 ];
-const STEPS_PAST = { '-3': 11320, '-2': 13905, '-1': 9870 };
 const STEP_GOAL = 15000;
 const STEP_TOTAL_TODAY = 14600; // where the usual pace lands; shown only as "expected"
 const STEP_W = { 8: .05, 9: .07, 10: .05, 11: .05, 12: .06, 13: .10, 14: .05, 15: .05, 16: .08, 17: .12, 18: .06, 19: .06, 20: .08, 21: .07, 22: .05 };
@@ -364,6 +366,9 @@ function clockModel(now) {
     } else if (it.kind === 'bill') {
       if (it.at < now || it.at > we) continue;
       marks.push({ it, t: it.at, label: money(it.cents) + ' due', past: false });
+    } else if (it.kind === 'due') {
+      if (it.at < ws || it.at > we) continue;
+      marks.push({ it, t: it.at, label: 'due ' + fmt(it.at), past: it.at <= now });
     }
   }
   // spread markers so they never overlap; the hairline still points at the real time
@@ -519,7 +524,7 @@ function rebuildTrack() {
     b.className = 'node ' + (n.past ? 'past' : 'future');
     b.style.left = n.x + 'px';
     b.dataset.id = it.id;
-    const name = it.kind === 'spend' ? `${it.name} · ${money(it.cents)}` : it.kind === 'income' ? `${it.name} +${money(it.cents)}` : it.kind === 'bill' ? `${it.name} · ${money(it.cents)} due` : it.name;
+    const name = it.kind === 'spend' ? `${it.name} · ${money(it.cents)}` : it.kind === 'income' ? `${it.name} +${money(it.cents)}` : it.kind === 'bill' ? `${it.name} · ${money(it.cents)} due` : it.kind === 'due' ? `${it.name} due` : it.name;
     const time = it.kind === 'bill' ? dayName(dayOf(it.at)) : (it.usual ? '~' : '') + fmt(n.t);
     b.innerHTML = `<span class="n-ic">${it.icon}</span><span class="n-dot"></span><span class="n-t">${time}</span><span class="n-n">${name}</span>`;
     b.setAttribute('aria-label', `${name}, ${time}`);
@@ -600,37 +605,76 @@ function setDay(d) {
   S.day = d; markDay(); buildChips(); showDetail();
 }
 const ICONS = {
-  wallet: '<svg width="18" height="16" viewBox="0 0 18 16" fill="none" stroke="#7ee0ae" stroke-width="1.6"><rect x="1" y="3" width="16" height="12" rx="3"/><path d="M1 6.5h16M12.5 10.5h1.5" stroke-linecap="round"/><path d="M3.5 3 12 1l1 2"/></svg>',
-  steps: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7ee0ae" stroke-width="1.6" stroke-linecap="round"><path d="M2 14V9M6 14V5M10 14V8M14 14V2"/></svg>',
-  moon: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7ee0ae" stroke-width="1.6" stroke-linejoin="round"><path d="M13.5 10.2A6 6 0 0 1 5.8 2.5 6 6 0 1 0 13.5 10.2z"/></svg>',
+  work: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7ee0ae" stroke-width="1.6" stroke-linejoin="round"><rect x="1.5" y="4.5" width="13" height="9.5" rx="2.2"/><path d="M5.5 4.5V3.3c0-.7.5-1.3 1.2-1.3h2.6c.7 0 1.2.6 1.2 1.3v1.2M1.5 8.6h13"/></svg>',
+  class: '<svg width="18" height="16" viewBox="0 0 18 16" fill="none" stroke="#7ee0ae" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M9 2 1.2 6 9 10l7.8-4L9 2z"/><path d="M4.6 8v3.4c1.7 1.6 7.1 1.6 8.8 0V8M16.8 6v4"/></svg>',
+  due: '<svg width="15" height="16" viewBox="0 0 15 16" fill="none" stroke="#7ee0ae" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M2.5 15V1.8M2.5 2.4h9.2L9.6 5.8l2.1 3.4H2.5"/></svg>',
 };
-function dayStats(d) {
-  const now = S.now;
-  const inDay = (t) => dayOf(t) === d;
-  const spent = ITEMS.filter((it) => it.kind === 'spend' && inDay(it.at) && it.at <= now).reduce((s, it) => s + it.cents, 0);
-  const due = ITEMS.filter((it) => it.kind === 'bill' && inDay(it.at)).reduce((s, it) => s + it.cents, 0);
-  const night = ITEMS.find((it) => it.kind === 'sleep' && !it.usual && it.end > d * 1440 + 240 && it.end <= d * 1440 + 720);
-  const usual = ITEMS.find((it) => it.kind === 'sleep' && it.usual && inDay(it.start));
+// "9 AM–4:30 PM", "6–8 PM": the meridiem once when both ends share it
+function span(a, b) {
+  const fa = fmtShort(a), fb = fmtShort(b);
+  return fa.slice(-2) === fb.slice(-2) ? `${fa.slice(0, -3)}–${fb}` : `${fa}–${fb}`;
+}
+const isDue = (it) => it.kind === 'bill' || it.kind === 'due' || it.cat === 'due';
+// The chips round up the day in view with what's tied to the clock: its shift, its class, its deadline.
+// Only real items; a kind the day doesn't have gets no chip. Today and later days also show the next deadline ahead.
+function dayChips(d) {
+  const now = S.now, inDay = (it) => dayOf(t0(it)) === d;
+  const live = (it) => it.end != null && it.start <= now && it.end > now;
+  const pick = (list) => list.find(live) || (d === 0 && list.find((it) => t0(it) > now)) || list[0];
+  const byTime = (a, b) => t0(a) - t0(b);
+  // "till 4:30": a running block's end needs no AM/PM when it's the same half of the day as now
+  const till = (e) => 'till ' + (fmt(e).slice(-2) === fmt(now).slice(-2) ? fmtShort(e).slice(0, -3) : fmtShort(e));
   const out = [];
-  if (d <= 0) out.push({ key: 'money', icon: 'wallet', text: money(spent), label: `${money(spent)} spent` });
-  else if (due) out.push({ key: 'money', icon: 'wallet', text: `${money(due)} due`, label: `${money(due)} due` });
-  if (d < 0) out.push({ key: 'steps', icon: 'steps', text: STEPS_PAST[d].toLocaleString('en-US') + ' steps' });
-  else if (d === 0) out.push({ key: 'steps', icon: 'steps', text: stepsAt(now).toLocaleString('en-US') + ' steps' });
-  else out.push({ key: 'steps', icon: 'steps', text: '15,000 goal' });
-  if (night && night.end <= now) out.push({ key: 'sleep', icon: 'moon', text: dur(night.end - night.start), label: dur(night.end - night.start) + ' of sleep' });
-  else if (usual) out.push({ key: 'sleep', icon: 'moon', text: 'Bed ~' + fmtShort(usual.start) });
-  return out;
+  const work = ITEMS.filter((it) => it.cat === 'work' && inDay(it)).sort(byTime);
+  if (work.length) {
+    const w = pick(work);
+    // running: when it ends; over: the hours it took (from the schedule); later: when it is
+    const hrs = (m) => `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`;
+    const over = w.end <= now;
+    out.push({ it: w, icon: 'work', name: 'Work', time: live(w) ? till(w.end) : over ? hrs(w.end - w.start) : span(w.start, w.end), label: over ? `Work, ${hrs(w.end - w.start)}, ${fmt(w.start)} to ${fmt(w.end)}` : `Work, ${fmt(w.start)} to ${fmt(w.end)}` });
+  }
+  const cls = ITEMS.filter((it) => it.cat === 'class' && inDay(it)).sort(byTime);
+  if (cls.length) {
+    const c = pick(cls);
+    out.push({ it: c, icon: 'class', name: c.name, time: live(c) ? till(c.end) : fmtShort(c.start), label: `${c.name}, ${fmt(c.start)} to ${fmt(c.end)}` });
+  }
+  let due = ITEMS.filter((it) => isDue(it) && inDay(it)).sort(byTime)[0], ahead = false;
+  if (!due && d >= 0) { due = ITEMS.filter((it) => isDue(it) && t0(it) >= (d + 1) * 1440).sort(byTime)[0]; ahead = true; }
+  if (due) {
+    const t = t0(due);
+    const time = ahead ? WD[dateOf(dayOf(t)).getDay()] : due.kind === 'bill' ? 'due' : fmtShort(t);
+    out.push({ it: due, icon: 'due', name: due.name, time, label: `${due.name}, due ${dayLong(dayOf(t))} at ${fmt(t)}`, ahead });
+  }
+  // in the order they happen; a deadline on a later day goes last
+  return out.sort((a, b) => (a.ahead ? 1e9 : t0(a.it)) - (b.ahead ? 1e9 : t0(b.it)));
 }
 function buildChips() {
   chips.textContent = '';
-  dayStats(S.day).forEach((c) => {
+  dayChips(S.day).forEach((c) => {
     const b = document.createElement('button');
-    b.className = 'chip'; b.innerHTML = ICONS[c.icon] + `<span>${c.text}</span>`;
-    b.setAttribute('aria-label', c.label || c.text);
-    b.addEventListener('click', () => { S.sel = 'chip:' + c.key; showDetail(); markSel(); });
+    b.className = 'chip'; b.innerHTML = ICONS[c.icon] + `<span class="cn">${c.name}</span><span class="ct">${c.time}</span>`;
+    b.setAttribute('aria-label', c.label);
+    b.addEventListener('click', () => {
+      S.sel = c.it.id; showDetail(); markSel();
+      // same day: bring its node into view; a later day's deadline just opens its card
+      const n = TM.nodes.find((x) => x.it.id === c.it.id);
+      if (n && dayOf(n.t) === S.day) {
+        const v = n.x - trackWrap.scrollLeft;
+        if (v < 50 || v > G.W - 50) trackWrap.scrollTo({ left: clamp(n.x - G.W / 2, 0, TM.total - G.W), behavior: reduce ? 'auto' : 'smooth' });
+      }
+    });
     chips.appendChild(b);
   });
   if (S.open) chips.querySelectorAll('.chip').forEach((c) => { c.style.opacity = 1; });
+  fitChips();
+}
+// Too wide for the row: let the widest chip's name give way first, then the next widest.
+function fitChips() {
+  const list = [...chips.querySelectorAll('.chip')];
+  list.forEach((c) => { c.style.flexShrink = 0; });
+  const fits = () => chips.scrollWidth <= chips.clientWidth + 0.5;
+  list.sort((a, b) => b.offsetWidth - a.offsetWidth);
+  for (const c of list) { if (fits()) break; c.style.flexShrink = 1; }
 }
 function defaultSel() {
   const nodes = TM.nodes.filter((n) => dayOf(n.t) === S.day);
@@ -647,24 +691,12 @@ function markSel() {
 function showDetail() {
   const id = S.sel || defaultSel();
   let html = '';
-  if (id && id.startsWith('chip:')) {
-    const key = id.slice(5), d = S.day;
-    if (key === 'steps') {
-      const v = d === 0 ? stepsAt(S.now) : STEPS_PAST[d];
-      const sub = d === 0 ? (S.now >= 600 ? `At your usual pace you'll end around ${STEP_TOTAL_TODAY.toLocaleString('en-US')} (expected).` : 'Too early in the day to tell where you\'ll end.') : d < 0 ? (v >= STEP_GOAL ? 'Goal reached.' : `${(STEP_GOAL - v).toLocaleString('en-US')} short of your goal.`) : 'Your goal is 15,000 steps.';
-      html = card('👟', d > 0 ? 'Goal' : dayLong(d), d > 0 ? '15,000 steps' : `${(v ?? 0).toLocaleString('en-US')} of 15,000 steps`, '', `${sub} From Apple Health.`);
-    } else if (key === 'money') {
-      const items = ITEMS.filter((it) => (it.kind === 'spend' || it.kind === 'bill') && dayOf(it.at) === d && (it.kind === 'bill' || it.at <= S.now));
-      html = card('💳', d === 0 ? 'Today so far' : dayLong(d), items.length ? items.map((it) => `${it.name} ${money(it.cents)}`).join(' · ') : 'Nothing spent', '', 'From your bank.');
-    } else {
-      const s = dayStats(d).find((c) => c.key === 'sleep');
-      html = card('🌙', dayLong(d), s ? s.text : '', '', d > 0 ? 'Your usual bedtime, from Apple Health.' : 'Last night, from Apple Health.');
-    }
-  } else if (id) {
+  if (id) {
     const it = ITEMS.find((x) => x.id === id), t = t0(it);
     let kick = dayLong(dayOf(t));
     if (dayOf(t) === 0) kick = it.end != null && t <= S.now && it.end > S.now ? 'Now' : t > S.now ? 'Up next' : 'Earlier today';
-    const when = it.end != null ? `${fmt(it.start)} – ${fmt(it.end)}` : it.kind === 'bill' ? `${money(it.cents)} due ${dayName(dayOf(it.at))}` : `${it.kind === 'income' ? '+' : ''}${money(it.cents)} at ${fmt(it.at)}`;
+    else if (dayOf(t) > 0 && S.day === 0) kick += dayOf(t) === 1 ? ' · tomorrow' : ` · in ${dayOf(t)} days`;
+    const when = it.end != null ? `${fmt(it.start)} – ${fmt(it.end)}` : it.kind === 'bill' ? `${money(it.cents)} due ${dayName(dayOf(it.at))}` : it.kind === 'due' ? `Due ${fmt(it.at)}` : `${it.kind === 'income' ? '+' : ''}${money(it.cents)} at ${fmt(it.at)}`;
     const title = it.kind === 'sleep' && it.usual ? 'Bedtime (usual)' : it.name;
     html = card(it.icon, kick, title, when, it.src + '.');
   }

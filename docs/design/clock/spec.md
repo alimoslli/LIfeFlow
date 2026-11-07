@@ -34,8 +34,8 @@ Owner's concept, 2026-11-07. The look is set by the owner's two GIFs (`owner-con
   - Spends show the amount ("$14.20").
   - Markers never overlap: they spread apart, and the hairline points to the real time.
   - Things that are over are faded.
-- **Steps (Apple Health):** one quiet line inside the face, above the 6 ("6,240 of 15,000 steps"). On the timeline it becomes a chip. Tapping the chip shows where you'll likely end the day ("about 14,800 by bedtime"), labelled as expected.
-- **Sleep (Apple Health):** the usual bedtime is a marker on the rim (🌙 11:00 PM). Last night's sleep is a chip on the timeline.
+- **Steps (Apple Health):** one quiet line inside the face, above the 6 ("6,240 of 15,000 steps"). It is not a chip on the timeline (see section 4).
+- **Sleep (Apple Health):** the usual bedtime is a marker on the rim (🌙 11:00 PM). Sleep is a soft band on the timeline, not a chip.
 - **What appears on the clock:**
   - Only real things from connections: calendars, school, work, the bank, Apple Health.
   - A spend appears only after it happens; nothing is guessed onto the rim.
@@ -67,12 +67,17 @@ One continuous, reversible motion driven by a single progress value `p` from 0 t
 
 ## 4. The timeline (frames 5 and 6)
 - **The header:** the logo and bell stay. "Today ⌄" becomes a day picker, "‹ Wed Thu Fri [Today] Sun Mon Tue ›", with today in a mint pill and the day centred.
-- **Three chips** round up the day in view:
-  - what was spent (a wallet icon);
-  - steps;
-  - sleep.
+- **Up to three chips** round up the day in view with what's tied to the clock: its time-bound commitments. *(Owner, 2026-11-07, through the COO: "work shifts, deadlines, classes and the like", not spent, steps or sleep, and not tasks or focus.)*
+  - **Work shift:** "Work till 4:30" while it runs, "Work 1–6 PM" before it starts, and the hours it took ("Work 7h 30m") once it's over. The hours come from the schedule; the chip never shows pay.
+  - **Class:** the class running ("Class till 8") or the next one that day ("Class 6 PM"), otherwise the day's first.
+  - **Deadline:** that day's exam, assignment or bill due ("Exam 10 AM", "Phone bill due"). On today and later days with no deadline of their own, the next deadline ahead with its day ("Exam Mon").
 
-  On future days they show only known things (bills due, usual sleep). They never show a made-up number.
+  The chips:
+  - **Only real items.** A day without a shift, class or deadline simply has fewer chips. Appointments and plans (the dentist, a study session) stay on the line, not in the chips.
+  - **Order:** the order they happen; a deadline on a later day comes last.
+  - **Fitting:** a mint icon (briefcase, cap, flag), the name, then the time in grey. If they don't fit the row, the widest chip's name ends in "…" first; the time is never cut.
+  - **Tap:** opens that item's card (a later day's deadline says "in 2 days"). A same-day item also scrolls its node into view.
+- **Spending, steps and sleep** stay where they were: spends are pins on the rim and nodes on the line, steps are the line inside the face, sleep is the bedtime marker and a band on the line.
 - **The line:**
   - one horizontal mint line;
   - a node for each thing, with its icon above and its time and name below (for spends, the name and amount);
@@ -115,4 +120,4 @@ One continuous, reversible motion driven by a single progress value `p` from 0 t
 ## 8. Open for the owner
 1. Should the rim show the 12 hours around now (last 2, next 10)? That's my pick.
 2. Should a pull also turn it into the timeline, or only a tap?
-3. Should the three chips be spent, steps and sleep, or spent, tasks and focus (as in the second GIF)?
+3. ~~Should the three chips be spent, steps and sleep, or spent, tasks and focus?~~ Answered (owner, 2026-11-07, through the COO): neither. The chips show time-bound commitments: shifts, classes and deadlines (section 4).
