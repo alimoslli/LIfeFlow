@@ -5,6 +5,8 @@ import { truncate } from "@/lib/utils";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { calendarEvents, connectionRegistry, gmailMessages, integrations } from "../db/schema";
 import { withUser, type UserScope } from "../db/with-user";
+import { upsertProviderEvent } from "./calendar-upsert";
+import { fetchWithTimeout, ProviderTimeout, readJson } from "./timeout";
 
 /**
  * Google (Gmail + Google Calendar) for one LifeFlow user.
@@ -39,6 +41,7 @@ export class GoogleError extends Error {
   constructor(
     message: string,
     public reauth = false,
+    public status?: number,
   ) {
     super(message);
   }
@@ -92,7 +95,7 @@ function emailFromIdToken(idToken: string | undefined): string | null {
 export async function exchangeCode(code: string, verifier: string, redirectUri: string, f: Fetch = fetch, env = process.env) {
   const cfg = googleConfig(env);
   if (!cfg) throw new GoogleError("Google isn't available yet.");
-  const res = await f(TOKEN_URL, {
+  const res = await timed(f, TOKEN_URL, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -159,7 +162,7 @@ async function accessToken(scope: UserScope, f: Fetch, force = false): Promise<s
   if (!force && creds.expiresAt - Date.now() > 60_000) return creds.accessToken;
   const cfg = googleConfig();
   if (!cfg) throw new GoogleError("Google isn't available yet.");
-  const res = await f(TOKEN_URL, {
+  const res = await timed(f, TOKEN_URL, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ client_id: cfg.clientId, client_secret: cfg.clientSecret, refresh_token: creds.refreshToken, grant_type: "refresh_token" }),
@@ -184,21 +187,33 @@ async function accessToken(scope: UserScope, f: Fetch, force = false): Promise<s
   return next.accessToken;
 }
 
+/** A Google call with a time limit; running out of time says so plainly (a write may or may not have gone through). */
+async function timed(f: Fetch, url: string, init: RequestInit) {
+  try {
+    return await fetchWithTimeout(f, url, init);
+  } catch (e) {
+    if (e instanceof ProviderTimeout) throw new GoogleError("Google took too long to answer. It may or may not have gone through; check before trying again.");
+    throw e;
+  }
+}
+
 /** Authorized JSON request to a Google API, refreshing the token once on 401. */
 async function api<T>(scope: UserScope, url: string, init: RequestInit = {}, f: Fetch = fetch): Promise<T> {
   for (let attempt = 0; attempt < 2; attempt++) {
     const token = await accessToken(scope, f, attempt > 0);
-    const res = await f(url, {
+    const res = await timed(f, url, {
       ...init,
       headers: { ...(init.headers ?? {}), authorization: `Bearer ${token}`, ...(init.body ? { "content-type": "application/json" } : {}) },
     });
     if (res.status === 401 && attempt === 0) continue;
     if (res.status === 204) return undefined as T;
-    const body = await res.json().catch(() => ({}));
+    // A body that is cut off or unreadable on a good answer is an error, never an empty result
+    // (a sync that read "nothing" would delete the person's events).
+    const body = await readJson(res, (m) => new GoogleError(m));
     if (!res.ok) {
       // Google's own wording goes to the server log; people get a plain sentence.
       console.error("[google] api error", res.status, body?.error?.status ?? null, truncate(String(body?.error?.message ?? ""), 200));
-      throw new GoogleError("Google couldn't do that right now. Try again in a minute.");
+      throw new GoogleError("Google couldn't do that right now. Try again in a minute.", false, res.status);
     }
     return body as T;
   }
@@ -328,7 +343,18 @@ export async function syncGoogleEmail(scope: UserScope, f: Fetch = fetch) {
 export async function readEmail(scope: UserScope, id: string, f: Fetch = fetch) {
   if (!/^[A-Za-z0-9_-]{6,64}$/.test(id)) throw new GoogleError("That doesn't look like a Gmail message id.");
   const m = await api<GmailMessage>(scope, `${GMAIL}/messages/${id}?format=full`, {}, f);
-  return { ...summary(m), to: header(m, "To"), cc: header(m, "Cc"), body: truncate(messageText(m.payload), 20_000) };
+  // Only the receiving server's results, in the order Gmail gives them (topmost first), for the sender check.
+  const authHeaders = (m.payload?.headers ?? [])
+    .filter((h) => /^(authentication-results|received-spf)$/i.test(h.name))
+    .map((h) => ({ Name: h.name, Value: h.value }));
+  return {
+    ...summary(m),
+    messageId: header(m, "Message-ID"),
+    to: header(m, "To"),
+    cc: header(m, "Cc"),
+    body: truncate(messageText(m.payload), 20_000),
+    authHeaders,
+  };
 }
 
 const clean = (s: string) => s.replace(/[\r\n]+/g, " ").trim();
@@ -463,17 +489,9 @@ export async function syncGoogleCalendar(scope: UserScope, tz: string, now = new
       location: e.location ?? null,
       ...t,
     };
-    const [existing] = await scope.tx
-      .select({ id: calendarEvents.id })
-      .from(calendarEvents)
-      .where(and(eq(calendarEvents.userId, scope.userId), eq(calendarEvents.source, "google"), eq(calendarEvents.providerEventId, e.id)));
-    if (existing) {
-      await scope.tx.update(calendarEvents).set(values).where(eq(calendarEvents.id, existing.id));
-      updated++;
-    } else {
-      await scope.tx.insert(calendarEvents).values({ userId: scope.userId, source: "google", providerEventId: e.id, kind: "personal", ...values });
-      added++;
-    }
+    const r = await upsertProviderEvent(scope, "google", e.id, values);
+    if (r.added) added++;
+    else updated++;
   }
   const stale = await scope.tx
     .delete(calendarEvents)
@@ -511,12 +529,41 @@ export async function addGoogleEvent(
         start: { dateTime: localToInstant(o.date, o.startTime, tz).toISOString(), timeZone: tz },
         end: { dateTime: localToInstant(o.date, o.endTime ?? o.startTime, tz).toISOString(), timeZone: tz },
       };
-  const created = await api<GEvent & { htmlLink?: string }>(scope, `${CAL}/events`, { method: "POST", body: JSON.stringify(body) }, f);
+  // The Google id comes from what is being added, so asking again after an aborted create (Google may have
+  // done it) finds the same event (409) instead of making a second one.
+  const clientId =
+    "lf" +
+    createHash("sha256")
+      .update(JSON.stringify([scope.userId, body]))
+      .digest("hex");
+  type Created = GEvent & { htmlLink?: string; status?: string };
+  const addFresh = () => api<Created>(scope, `${CAL}/events`, { method: "POST", body: JSON.stringify(body) }, f);
+  let created: Created | undefined;
+  try {
+    created = await api<Created>(scope, `${CAL}/events`, { method: "POST", body: JSON.stringify({ ...body, id: clientId }) }, f);
+  } catch (e) {
+    if (!(e instanceof GoogleError) || e.status !== 409) throw e;
+    // The id exists. It is the same request only if the event is still there with the same title and times;
+    // if it was deleted, moved or renamed in Google since, this is a new event, so add it with a fresh id.
+    const existing = await api<Created>(scope, `${CAL}/events/${clientId}`, {}, f).catch((err) => {
+      if (err instanceof GoogleError && err.status === 404) return undefined;
+      throw err;
+    });
+    const want = eventTimes(body as GEvent, tz);
+    const have = existing ? eventTimes(existing, tz) : null;
+    const same =
+      !!existing &&
+      existing.status !== "cancelled" &&
+      existing.summary === o.title &&
+      !!have &&
+      have.startsAt.getTime() === want.startsAt.getTime() &&
+      have.endsAt.getTime() === want.endsAt.getTime();
+    created = same ? existing : await addFresh();
+  }
   if (!created?.id) throw new GoogleError("Google Calendar didn't confirm the event.");
   const t = eventTimes(created, tz);
-  await scope.tx
-    .insert(calendarEvents)
-    .values({ userId: scope.userId, source: "google", providerEventId: created.id, kind: "personal", title: o.title, location: o.location ?? null, ...t });
+  // Upsert on Google's id: a sync that already mirrored this event must not leave a second copy.
+  await upsertProviderEvent(scope, "google", created.id, { title: created.summary || o.title, location: o.location ?? null, ...t });
   return { googleEventId: created.id, htmlLink: created.htmlLink ?? null };
 }
 

@@ -1,0 +1,716 @@
+/* ===== The LifeFlow HQ building (owner, 2026-11-07; ADR 0029 addenda) ============================================
+   One building cut open like the owner's concept (docs/hq/concept.webp): a rendered roof with the LifeFlow HQ sign, then the
+   rooms side by side between walnut walls and floor beams, the lobby and the steps. The colours come from the rendered art
+   (walnut, brass, eucalyptus green) and stay the same in light and dark mode. Imported only by office-scene.tsx; every class
+   starts with hq- so nothing here touches the rest of the app. Transform and opacity animations only. */
+
+.hq-tower {
+  position: relative;
+  margin-top: 0.25rem;
+  padding: 1rem 0.625rem 0;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  isolation: isolate;
+  color: #f3efe3;
+  background: radial-gradient(120% 55% at 50% 0%, rgb(126 220 160 / 0.13), transparent 62%), linear-gradient(180deg, #17372b 0%, #112b21 55%, #0d2119 100%);
+  box-shadow:
+    0 24px 50px -22px rgb(10 40 28 / 0.55),
+    inset 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+/* A few quiet stars behind the roof. */
+.hq-tower::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 16rem;
+  z-index: -1;
+  opacity: 0.55;
+  pointer-events: none;
+  background:
+    radial-gradient(1.5px 1.5px at 8% 18%, #fff, transparent), radial-gradient(1px 1px at 19% 42%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 31% 9%, #fff, transparent), radial-gradient(1px 1px at 72% 14%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 84% 36%, #fff, transparent), radial-gradient(1px 1px at 93% 11%, #fff, transparent),
+    radial-gradient(1px 1px at 58% 6%, #fff, transparent);
+}
+@media (min-width: 1024px) {
+  .hq-tower {
+    padding: 1.5rem 1.25rem 0;
+  }
+}
+
+/* ---- The roof and its sign ---- */
+.hq-roof-art {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+  line-height: 0;
+  container-type: inline-size;
+}
+@media (min-width: 1024px) {
+  .hq-roof-art {
+    width: min(100%, 38rem);
+  }
+}
+.hq-roof-img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.hq-roof-sign {
+  position: absolute;
+  left: var(--sign-l);
+  top: var(--sign-t);
+  width: var(--sign-w);
+  height: var(--sign-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2cqi;
+  margin: 0;
+  white-space: nowrap;
+  font-family: var(--font-display, serif);
+  font-size: 4.4cqi;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: #effbea;
+  text-shadow:
+    0 0 0.35em rgb(150 240 170 / 0.75),
+    0 0 0.9em rgb(80 200 120 / 0.45);
+}
+.hq-roof-sign b {
+  font-weight: 600;
+  color: #f6e5ab;
+  text-shadow:
+    0 0 0.35em rgb(240 210 130 / 0.7),
+    0 0 0.9em rgb(240 200 110 / 0.35);
+}
+.hq-roof-mark {
+  width: 6.5cqi;
+  height: 6.5cqi;
+  filter: drop-shadow(0 0 0.6cqi rgb(150 240 170 / 0.8));
+}
+
+/* ---- The body: walnut walls, floor beams, rooms side by side ---- */
+.hq-floors {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 0.375rem;
+  padding: 0 0.375rem;
+  background: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.03) 0 2px, transparent 2px 44px), linear-gradient(180deg, #3f2f27, #31241e);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.35);
+}
+.hq-slab {
+  grid-column: 1 / -1;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  height: 1.25rem;
+  margin: 0 -0.375rem;
+  padding: 0 0.75rem;
+  background: linear-gradient(180deg, #9a7e6a 0 1px, #63503f 1px, #4f4038 60%, #3b2f29);
+  box-shadow: 0 2px 5px rgb(0 0 0 / 0.5);
+  color: #ecd79f;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+/* The first beam is the cornice under the roof: a little thicker. */
+.hq-slab:first-child {
+  height: 1.5rem;
+  border-radius: 3px 3px 0 0;
+}
+.hq-room {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: #14221b;
+  color: #f3efe3;
+  --c: #7fdcab;
+}
+.hq-stage {
+  position: relative;
+  isolation: isolate;
+  flex: 1 0 auto;
+  aspect-ratio: var(--ar, 16 / 10);
+  overflow: hidden;
+  line-height: 0;
+  background: #14221b;
+}
+.hq-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+/* Ceiling shade at the top, a dark floor at the bottom so the room's line reads on any picture. */
+.hq-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.38), transparent 24%, transparent 50%, rgb(6 14 10 / 0.85));
+}
+.hq-room-founder .hq-stage::after,
+.hq-room-lounge .hq-stage::after {
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.38), transparent 26%);
+}
+a.hq-room:hover .hq-photo {
+  transform: scale(1.03);
+}
+a.hq-room:focus-visible {
+  outline: 3px solid var(--brass-l);
+  outline-offset: -3px;
+}
+
+/* Phone: a slim tower, one room a floor. */
+.hq-slab-nop {
+  display: none;
+}
+.hq-room-founder .hq-stage {
+  --ar: 3 / 2;
+}
+.hq-room-lounge .hq-stage {
+  --ar: 2 / 1;
+}
+/* Tablet: two rooms a floor; Customer Success shares the ground floor with the lounge. */
+@media (min-width: 640px) {
+  .hq-floors {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hq-slab-nop {
+    display: flex;
+  }
+  .hq-slab-not {
+    display: none;
+  }
+  .hq-room-founder {
+    grid-column: 1 / -1;
+  }
+  .hq-stage,
+  .hq-room-lounge .hq-stage {
+    --ar: 3 / 2;
+  }
+  .hq-room-founder .hq-stage {
+    --ar: 2 / 1;
+  }
+}
+/* Wide: three rooms a floor like the concept; the COO shares the penthouse with you; the lobby runs the full width. */
+@media (min-width: 1024px) {
+  .hq-floors {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 0.5rem;
+    padding: 0 0.5rem;
+  }
+  .hq-slab {
+    margin: 0 -0.5rem;
+  }
+  .hq-slab-not {
+    display: flex;
+  }
+  .hq-slab-nod {
+    display: none;
+  }
+  .hq-room-founder {
+    grid-column: span 2;
+  }
+  .hq-room-lounge {
+    grid-column: 1 / -1;
+  }
+  .hq-room[data-role="assistant"] .hq-stage {
+    aspect-ratio: auto;
+  }
+  .hq-room[data-role="assistant"] .hq-photo {
+    object-position: 62% 50%;
+  }
+  .hq-room-lounge .hq-stage {
+    aspect-ratio: auto;
+    height: 14rem;
+  }
+  .hq-room-lounge .hq-photo {
+    object-position: center 62%;
+  }
+}
+
+/* ---- The label on each room (like the concept): icon, name, what they do, state; the line and any note at the bottom ---- */
+.hq-meta {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "ico title chip"
+    "ico tag chip"
+    ". . ."
+    "line line line"
+    "note note note";
+  column-gap: 0.5rem;
+  padding: 0.875rem 0.95rem 0.7rem;
+  line-height: 1.25;
+}
+.hq-label-bg,
+.hq-label {
+  border-radius: 0.75rem;
+  background: rgb(10 20 15 / 0.72);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  box-shadow: 0 6px 16px -6px rgb(0 0 0 / 0.6);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.hq-label-bg {
+  grid-area: 1 / 1 / 3 / 4;
+  margin: -0.45rem -0.5rem;
+}
+.hq-label {
+  position: absolute;
+  left: 0.5rem;
+  top: 0.5rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: calc(100% - 1rem);
+  padding: 0.4rem 0.75rem 0.4rem 0.45rem;
+  line-height: 1.25;
+}
+/* The business card has the top right of the penthouse. */
+.hq-label-founder {
+  max-width: calc(100% - 8.5rem);
+}
+.hq-ico {
+  grid-area: ico;
+  align-self: center;
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 0.5rem;
+  background: rgb(231 207 143 / 0.14);
+  border: 1px solid rgb(231 207 143 / 0.32);
+  color: #e7cf8f;
+}
+.hq-ico svg {
+  width: 1rem;
+  height: 1rem;
+}
+.hq-title {
+  grid-area: title;
+  align-self: end;
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-display, serif);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #f6efdb;
+}
+.hq-tag {
+  grid-area: tag;
+  position: relative;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  color: #c5d6cb;
+}
+.hq-meta > .hq-chip {
+  grid-area: chip;
+  align-self: center;
+  position: relative;
+}
+.hq-line {
+  grid-area: line;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  color: #fff;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.85);
+}
+/* What waits on the owner: a small brass note on the door, never the room's state. */
+.hq-note {
+  grid-area: note;
+  justify-self: start;
+  max-width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.375rem;
+  background: rgb(36 28 10 / 0.82);
+  border: 1px solid rgb(234 195 109 / 0.55);
+  color: #ffe2a3;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  /* One line on the room; the whole note is in the room's name for screen readers and on the room's page. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* The CMO's seat over Marketing: a dashed brass plate, "Coming soon". */
+.hq-cmo {
+  /* Under the label, on the right: the bottom of the room stays for the line. */
+  grid-row: 3;
+  grid-column: 1 / -1;
+  justify-self: end;
+  align-self: start;
+  margin-top: 0.75rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px dashed rgb(234 195 109 / 0.7);
+  background: rgb(10 20 15 / 0.7);
+  color: #f6efdb;
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
+}
+.hq-cmo b {
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.hq-cmo span {
+  color: #ffe2a3;
+}
+
+/* ---- States: the picture shows who is there; these only add light ---- */
+.hq-room[data-state="working"] {
+  box-shadow: inset 0 0 0 2px rgb(255 199 102 / 0.6);
+}
+.hq-room[data-state="working"] .hq-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(circle at 68% 58%, rgb(255 208 140 / 0.3), transparent 58%);
+  animation: hq-glowpulse 2.8s ease-in-out infinite;
+}
+@keyframes hq-glowpulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.hq-room[data-state="done"] {
+  box-shadow: inset 0 0 0 2px rgb(127 220 171 / 0.7);
+}
+.hq-room[data-state="offline"] .hq-photo {
+  filter: saturate(0.35) brightness(0.7);
+}
+.hq-zs {
+  position: absolute;
+  left: 15%;
+  top: 38%;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.15rem;
+  font:
+    800 1rem/1 system-ui,
+    sans-serif;
+  color: #d9e6ff;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 0.55);
+  pointer-events: none;
+}
+.hq-zs i {
+  font-style: normal;
+  animation: hq-zzz 2.6s ease-in-out infinite;
+}
+.hq-zs i:nth-child(2) {
+  font-size: 1.2rem;
+  animation-delay: 0.5s;
+}
+.hq-zs i:nth-child(3) {
+  font-size: 1.45rem;
+  animation-delay: 1s;
+}
+/* Goodnight: the office dims; only rooms with real work running keep their lamps. */
+.hq-tower[data-night="on"] .hq-room:not([data-state="working"]) .hq-photo {
+  filter: brightness(0.5) saturate(0.75);
+}
+.hq-tower[data-night="on"] .hq-roof-img {
+  filter: brightness(0.7);
+}
+.hq-tower[data-night="on"] .hq-roof-sign {
+  opacity: 0.7;
+}
+
+/* ---- The penthouse: the whole picture on a phone, a wider crop above; the pile button sits on the drawn folders ---- */
+.hq-founder-art {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  transform: translateY(-50%);
+}
+.hq-desk-pile {
+  position: absolute;
+  left: var(--pile-l);
+  top: var(--pile-t);
+  width: var(--pile-w);
+  height: var(--pile-h);
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  z-index: 3;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  background: transparent;
+}
+.hq-desk-pile:hover {
+  background: rgb(255 228 160 / 0.14);
+}
+.hq-desk-pile:focus-visible {
+  outline: 3px solid var(--brass-l);
+  outline-offset: 1px;
+}
+.hq-pile-count {
+  position: absolute;
+  left: calc(var(--pile-l) - 1.5%);
+  top: calc(var(--pile-t) - 5%);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #1f4a3a;
+  border: 2px solid #e7cf8f;
+  color: #f6efdb;
+  font:
+    800 0.8125rem/1 system-ui,
+    sans-serif;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.4);
+  pointer-events: none;
+}
+/* The three plain buttons: a walnut ledge under the picture on a phone and tablet, glass buttons on the picture when wide. */
+.hq-founder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem 0.75rem;
+  background: linear-gradient(180deg, #4f4038, #3b2f29);
+  box-shadow: inset 0 1px 0 #8f7461;
+}
+.hq-founder-actions form {
+  display: contents;
+}
+@media (max-width: 639px) {
+  .hq-founder-actions {
+    gap: 0.4rem;
+    padding: 0.5rem 0.5rem 0.625rem;
+  }
+  .hq-founder-actions .hq-fbtn {
+    padding: 0 0.75rem;
+    font-size: 0.8125rem;
+  }
+}
+@media (min-width: 1024px) {
+  .hq-founder-actions {
+    position: absolute;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    z-index: 3;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+  }
+}
+.hq-fbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.32);
+  background: rgb(10 20 15 / 0.62);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #f6efdb;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.hq-fbtn:focus-visible {
+  outline: 3px solid var(--brass-l);
+  outline-offset: 2px;
+}
+.hq-fbtn-desk {
+  border: 0;
+  background: linear-gradient(180deg, #e7cf8f, #c9a24f);
+  color: #2a2008;
+}
+.hq-fbtn-gold {
+  border-color: #eac36d;
+  color: #ffe2a3;
+}
+.hq-desk-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #1f4a3a;
+  color: #f6efdb;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* The CEO's business card: a small ivory card pinned in the corner (name only on a phone). */
+.hq-bcard {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  z-index: 2;
+  width: min(7rem, 30%);
+  display: grid;
+  gap: 0.05rem;
+  padding: 0.35rem 0.45rem 0.3rem;
+  text-align: left;
+  line-height: 1.2;
+  border-radius: 3px;
+  background: linear-gradient(160deg, #fffefa, #f6f1e4);
+  color: #1f4a3a;
+  transform: rotate(-3deg);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.9) inset,
+    0 10px 22px -4px rgb(0 0 0 / 0.45),
+    0 2px 4px rgb(0 0 0 / 0.25);
+  pointer-events: none;
+}
+.hq-bcard-pin {
+  position: absolute;
+  left: 50%;
+  top: -5px;
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #f0d58f, #a8812f);
+  box-shadow: 0 2px 3px rgb(0 0 0 / 0.4);
+}
+.hq-bcard-l1 {
+  overflow-wrap: anywhere;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #1f4a3a;
+}
+.hq-bcard-l2 {
+  font-size: 0.5625rem;
+  font-weight: 500;
+  color: #2b2a26;
+}
+.hq-bcard-l3 {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.1rem;
+  font-size: 0.4375rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #1f4a3a;
+}
+.hq-bcard-l4 {
+  font-size: 0.5rem;
+  font-weight: 500;
+  color: #5b574d;
+}
+@media (max-width: 639px) {
+  .hq-bcard-l3,
+  .hq-bcard-l4 {
+    display: none;
+  }
+}
+@media (min-width: 640px) {
+  .hq-bcard {
+    top: 0.6rem;
+    right: 0.75rem;
+    width: min(9rem, 22%);
+    padding: 0.45rem 0.55rem 0.4rem;
+  }
+  .hq-bcard-l1 {
+    font-size: 0.8125rem;
+  }
+  .hq-bcard-l2 {
+    font-size: 0.625rem;
+  }
+  .hq-bcard-l3 {
+    font-size: 0.5rem;
+  }
+}
+
+/* ---- The lobby steps and the ground ---- */
+.hq-plinth {
+  position: relative;
+  height: 2rem;
+  margin: 0 -0.625rem;
+  background: linear-gradient(180deg, #0c1d16, #09160f);
+}
+.hq-plinth::before,
+.hq-plinth::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  height: 0.5rem;
+  box-shadow: inset 0 1px 0 #9a7e6a;
+  background: linear-gradient(180deg, #6d5a4f, #4a3c35);
+}
+.hq-plinth::before {
+  left: 0.375rem;
+  right: 0.375rem;
+}
+.hq-plinth::after {
+  top: 0.5rem;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, #5b4a41, #3c302a);
+  box-shadow:
+    inset 0 1px 0 #7d6656,
+    0 10px 18px -6px rgb(0 0 0 / 0.6);
+}
+@media (min-width: 1024px) {
+  .hq-plinth {
+    margin: 0 -1.25rem;
+  }
+  .hq-plinth::before {
+    left: 0.75rem;
+    right: 0.75rem;
+  }
+  .hq-plinth::after {
+    left: 0.25rem;
+    right: 0.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hq-room[data-state="working"] .hq-stage::before,
+  .hq-zs i {
+    animation: none;
+  }
+  .hq-photo {
+    transition: none;
+  }
+}

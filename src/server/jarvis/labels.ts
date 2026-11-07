@@ -49,7 +49,7 @@ const LABELS: Record<string, string> = {
   record_shift_hours: "Recording hours",
   update_shift: "Updating shift",
   delete_shift: "Preparing to delete shift",
-  work_earnings: "Estimating earnings",
+  work_earnings: "Adding up your hours",
   search_notes: "Searching notes",
   get_note: "Reading note",
   save_note: "Saving note",

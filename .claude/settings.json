@@ -16,5 +16,48 @@
         "repo": "addyosmani/agent-skills"
       }
     }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash .claude/hooks/hq-statusline.sh"
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/hq-checkin.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/hq-live.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/hq-live.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/hq-live.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "75"
   }
 }

@@ -62,6 +62,7 @@ const userRef = () =>
     .references(() => users.id, { onDelete: "cascade" });
 
 const tsvector = customType<{ data: string }>({ dataType: () => "tsvector" });
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
 
 // ---------------------------------------------------------------------------
 // identity (no RLS: needed before a user context exists, e.g. login)
@@ -77,6 +78,10 @@ export type UserPreferences = {
   memorySuggestions?: boolean;
   /** Let Jarvis read new school, bill and work emails in Gmail each morning and file them (off unless turned on). */
   gmailFiling?: boolean;
+  /** The version of the one-time inbox duplicate cleanup this account has had (see runInboxCleanupOnce). */
+  inboxDedupeVersion?: number;
+  /** Set when the inbox cleanup failed: it is not tried again before this date (YYYY-MM-DD). */
+  inboxDedupeRetryAfter?: string;
   /** What fills the user's week (from onboarding); helps Jarvis and the briefing. */
   lifeStage?: "student" | "working" | "both" | "life";
   /** First-run setup: "pending" only for accounts created since onboarding launched. */
@@ -155,6 +160,8 @@ export const users = pgTable("users", {
   /** Authenticator-app (TOTP) secret, AES-GCM encrypted. Set while setting up; active once totpEnabledAt is set. */
   totpSecret: text("totp_secret"),
   totpEnabledAt: tstz("totp_enabled_at"),
+  /** Set when a password reset is used. Email sign-in codes stay off until a sign-in with the authenticator, a backup code or a passkey (ADR 0009 addendum). */
+  emailCodesBlockedAt: tstz("email_codes_blocked_at"),
   /** Last accepted 30-second time step, so a code can't be used twice. */
   totpLastStep: integer("totp_last_step"),
   /** Random part of the personal forwarding address (u-<token>@<INBOX_DOMAIN>). */
@@ -283,6 +290,12 @@ export const loginChallenges = pgTable(
     userId: userRef(),
     expiresAt: tstz("expires_at").notNull(),
     attempts: integer("attempts").notNull().default(0),
+    /** "Email me a code" (owner, 2026-11-06): hash of the emailed 6-digit code, bound to this challenge; single use. */
+    emailCodeHash: text("email_code_hash"),
+    emailCodeExpiresAt: tstz("email_code_expires_at"),
+    emailSends: integer("email_sends").notNull().default(0),
+    /** How the first step was passed. Email codes are offered only after the password ("oauth" = Google or Apple). */
+    firstFactor: text("first_factor").$type<"password" | "oauth">(),
     createdAt: createdAt(),
   },
   (t) => [index("login_challenges_user_idx").on(t.userId)],
@@ -565,7 +578,13 @@ export const syncJobs = pgTable(
 export type DataSource = "manual" | "jarvis" | "import" | "demo" | "plaid" | "canvas" | "ukg" | "google" | "outlook" | "apple_health" | "schedule";
 
 /** Regular hours for a job (e.g. full-time Mon–Fri 08:00–17:00). Days are 0 = Sunday … 6 = Saturday. */
-export type WorkSchedule = { days: number[]; start: string; end: string; breakMinutes?: number };
+export type WorkSchedule = { days: number[]; start: string; end: string; breakMinutes?: number; breakRules?: BreakRule[] };
+
+/**
+ * Unpaid lunch by shift length: a shift of at least `minShiftMinutes` gets `unpaidMinutes` unpaid (the largest matching rule wins).
+ * Lives in the job's `schedule` jsonb. A job with a break rule but no regular hours stores `days: []`.
+ */
+export type BreakRule = { minShiftMinutes: number; unpaidMinutes: number };
 
 export type AccountType = "depository" | "credit" | "loan" | "investment" | "cash" | "other";
 
@@ -658,6 +677,10 @@ export const transactions = pgTable(
     pendingTransactionId: text("pending_transaction_id"),
     notes: text("notes"),
     excluded: boolean("excluded").notNull().default(false),
+    /** The vendor/category tidy version that last went over this row (see TIDY_VERSION); 0 = never. */
+    tidyVersion: integer("tidy_version").notNull().default(0),
+    /** Tidied without the AI while its vendor was still unknown or messy: the AI pass should look at it once allowed. */
+    tidyAiPending: boolean("tidy_ai_pending").notNull().default(false),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -712,6 +735,8 @@ export const recurringItems = pgTable(
     /** A free trial that turns paid on this date. */
     trialEndsOn: date("trial_ends_on", { mode: "string" }),
     keptAt: tstz("kept_at"),
+    /** Earlier prices, newest last: `amountCents` was charged until `until` (the date a price change took over). Signed like amountCents. */
+    priceHistory: jsonb("price_history").$type<{ amountCents: number; until: string }[]>().notNull().default([]),
     /** Official cancellation steps found by a live web search (answer + cited sources). */
     cancelHelp: jsonb("cancel_help").$type<{ answer: string; sources: { title: string; url: string }[]; at: string } | null>(),
     createdAt: createdAt(),
@@ -965,7 +990,12 @@ export const calendarEvents = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index("events_user_start_idx").on(t.userId, t.startsAt), ownerPolicy()],
+  (t) => [
+    index("events_user_start_idx").on(t.userId, t.startsAt),
+    // One row per provider event (nulls stay distinct, so manual events are unaffected). Syncs upsert on this key.
+    uniqueIndex("events_user_source_provider_uq").on(t.userId, t.source, t.providerEventId),
+    ownerPolicy(),
+  ],
 );
 
 export type Priority = "low" | "medium" | "high" | "urgent";
@@ -1150,9 +1180,15 @@ export const messages = pgTable(
       .array()
       .notNull()
       .default(sql`'{}'::uuid[]`),
+    /** The id the app made for this send. The same send arriving twice (a retry) never starts a second turn, and Stop finds its turn by it. */
+    clientMessageId: uuid("client_message_id"),
     createdAt: createdAt(),
   },
-  (t) => [index("messages_conversation_idx").on(t.conversationId, t.seq), ownerPolicy()],
+  (t) => [
+    index("messages_conversation_idx").on(t.conversationId, t.seq),
+    uniqueIndex("messages_client_message_uq").on(t.userId, t.clientMessageId),
+    ownerPolicy(),
+  ],
 );
 
 export const attachments = pgTable(
@@ -1335,10 +1371,22 @@ export const inboxSenders = pgTable(
 );
 
 export type InboxFiled = {
-  kind: "transaction" | "recurring" | "task" | "assignment" | "event" | "paycheck";
+  /**
+   * The `*_update` kinds changed a row that already existed instead of adding one (a bill's amount and due date, an
+   * exam's date, a note on a bank transaction): Undo puts `prev` back and never deletes the row.
+   */
+  kind: "transaction" | "recurring" | "task" | "assignment" | "event" | "paycheck" | "recurring_update" | "assignment_update" | "transaction_note";
   id: string;
   label: string;
   href?: string;
+  /** What the row held before an update (Undo restores it). */
+  prev?: Record<string, unknown>;
+  /** What the update wrote: Undo restores `prev` only while the row still holds this (a newer change is never thrown away). */
+  next?: Record<string, unknown>;
+  /** Set when Undo found the row changed by something else (Canvas, a hand edit): it is left as it is and Undo is no longer offered. */
+  stale?: true;
+  /** Set when the cleanup pointed this entry at the row that stayed after a merge (Undo of the merge removes it). */
+  merged?: true;
 };
 
 export const inboxItems = pgTable(
@@ -1352,7 +1400,10 @@ export const inboxItems = pgTable(
     fromAddress: text("from_address"),
     subject: text("subject"),
     receivedAt: tstz("received_at").notNull().defaultNow(),
-    status: text("status").$type<"processing" | "filed" | "needs_review" | "ignored" | "failed" | "undone">().notNull().default("processing"),
+    status: text("status")
+      .$type<"processing" | "suggested" | "filed" | "needs_review" | "ignored" | "failed" | "undone" | "duplicate">()
+      .notNull()
+      .default("processing"),
     type: text("type"),
     summary: text("summary"),
     /** Why it wasn't filed (e.g. not from a verified address). */
@@ -1360,10 +1411,22 @@ export const inboxItems = pgTable(
     filed: jsonb("filed").$type<InboxFiled[]>().notNull().default([]),
     extracted: jsonb("extracted").$type<Record<string, unknown> | null>(),
     attachmentIds: jsonb("attachment_ids").$type<string[]>().notNull().default([]),
+    /** The email's own Message-ID header (no angle brackets): a forward that keeps it, and the same mail seen through Gmail, are one email. */
+    messageId: text("message_id"),
+    /** What the document says (type, payee or class, amount, date): a re-typed forward of a bill already filed has the same key. */
+    contentSig: text("content_sig"),
+    /** Set when status is "duplicate": the inbox item that already filed this. */
+    duplicateOf: uuid("duplicate_of"),
     createdAt: createdAt(),
   },
   (t) => [
     index("inbox_items_user_idx").on(t.userId, t.receivedAt),
+    index("inbox_items_message_idx")
+      .on(t.userId, t.messageId)
+      .where(sql`message_id is not null`),
+    index("inbox_items_content_sig_idx")
+      .on(t.userId, t.contentSig)
+      .where(sql`content_sig is not null`),
     uniqueIndex("inbox_items_external_uq")
       .on(t.userId, t.externalId)
       .where(sql`external_id is not null`),
@@ -1523,11 +1586,286 @@ export const pendingActions = pgTable(
     toolCallId: text("tool_call_id").notNull(),
     args: jsonb("args").$type<Record<string, unknown>>().notNull(),
     summary: text("summary").notNull(),
-    status: text("status").$type<"pending" | "executed" | "cancelled" | "failed" | "expired">().notNull().default("pending"),
+    status: text("status").$type<"pending" | "running" | "executed" | "cancelled" | "failed" | "expired">().notNull().default("pending"),
     result: jsonb("result").$type<ToolResultRecord>(),
     expiresAt: tstz("expires_at").notNull(),
     resolvedAt: tstz("resolved_at"),
+    /** When a confirm claimed it (status "running"); a run older than the limit counts as lost. */
+    claimedAt: tstz("claimed_at"),
     createdAt: createdAt(),
   },
   (t) => [index("pending_actions_conv_idx").on(t.conversationId), ownerPolicy()],
+);
+
+// ---------------------------------------------------------------------------
+// LifeFlow HQ (ADR 0024): the owner's private office for running the company. Owner-only operations data, like
+// admin_actions and owner_inbox: no user_id and no RLS, read and written only through services/hq.ts behind
+// requireAdmin() (pages and actions) or an HQ key (the /api/hq routes). Never put app users' content here.
+
+/** The five HQ employees. The founder is the owner, not a row. */
+/** The six departments plus the COO ("assistant", the head manager the CEO talks to; company.md). */
+export const HQ_ROLES = ["developer", "designer", "researcher", "marketing", "qa", "support", "assistant"] as const;
+export type HqRole = (typeof HQ_ROLES)[number];
+export type HqLink = { label: string; url: string };
+export type HqSource = "owner" | "agent" | "import";
+
+/** Missions: the real task board. */
+export const hqMissions = pgTable(
+  "hq_missions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    role: text("role").$type<HqRole>().notNull(),
+    title: text("title").notNull(),
+    detail: text("detail"),
+    priority: text("priority").$type<"high" | "normal" | "low">().notNull().default("normal"),
+    status: text("status").$type<"todo" | "doing" | "waiting" | "blocked" | "done" | "dropped">().notNull().default("todo"),
+    /** One line on what is happening now. */
+    progress: text("progress"),
+    blockedReason: text("blocked_reason"),
+    /** What was done, in plain words, once finished. */
+    result: text("result"),
+    links: jsonb("links").$type<HqLink[]>().notNull().default([]),
+    /** The Claude Code session that works on it, and its branch. */
+    sessionId: text("session_id"),
+    branch: text("branch"),
+    source: text("source").$type<HqSource>().notNull(),
+    dueOn: date("due_on"),
+    startedAt: tstz("started_at"),
+    doneAt: tstz("done_at"),
+    /** When the owner opened it after it was done (the "Done" sparkle stops then). */
+    seenAt: tstz("seen_at"),
+    /** The first prompt for its own Claude Code chat. Set = a task file on the CEO's desk (ADR 0029). Plain text, max 1,500. */
+    deskPrompt: text("desk_prompt"),
+    /** Who last wrote the desk prompt or title: the owner, or an agent through the HQ key (ADR 0030). */
+    deskPromptBy: text("desk_prompt_by").$type<"owner" | "agent">(),
+    /** A start from HQ is on its way until then (ADR 0030): one start per task at a time. */
+    startHoldUntil: tstz("start_hold_until"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("hq_missions_role_status_idx").on(t.role, t.status),
+    index("hq_missions_updated_idx").on(t.updatedAt),
+    index("hq_missions_desk_idx")
+      .on(t.createdAt)
+      .where(sql`desk_prompt is not null`),
+  ],
+);
+
+/** The owner's approval inbox. A decision is only recorded here; HQ never carries it out. */
+export const hqApprovals = pgTable(
+  "hq_approvals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    role: text("role").$type<HqRole>().notNull(),
+    missionId: uuid("mission_id").references(() => hqMissions.id, { onDelete: "set null" }),
+    kind: text("kind")
+      .$type<"deploy" | "v3_merge" | "feature" | "design" | "publish" | "outbound" | "paid" | "subscription" | "destructive" | "security" | "other">()
+      .notNull(),
+    title: text("title").notNull(),
+    summary: text("summary").notNull(),
+    links: jsonb("links").$type<HqLink[]>().notNull().default([]),
+    status: text("status").$type<"pending" | "approved" | "declined" | "changes">().notNull().default("pending"),
+    decisionNote: text("decision_note"),
+    decidedAt: tstz("decided_at"),
+    source: text("source").$type<HqSource>().notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+    // Decision card (ADR 0028). All null on old requests, which show as "being rewritten"; new ones always have every field.
+    why: text("why"),
+    changes: jsonb("changes").$type<string[]>(),
+    onYes: text("on_yes"),
+    onNo: text("on_no"),
+    effort: text("effort").$type<"small" | "medium" | "large">(),
+    risk: text("risk"),
+    recommendation: text("recommendation"),
+    previews: jsonb("previews").$type<HqPreview[]>(),
+    /** One thread per ask: every version shares it. The first version's threadId is its own id. */
+    threadId: uuid("thread_id"),
+    version: integer("version").notNull().default(1),
+    changedSinceNote: text("changed_since_note"),
+    /** Set when a newer version of the same thread replaced this one. */
+    supersededAt: tstz("superseded_at"),
+    /** The mission that builds an approved ask, set only by linkApprovalMission. `missionId` stays the mission that asked. */
+    buildMissionId: uuid("build_mission_id").references(() => hqMissions.id, { onDelete: "set null" }),
+  },
+  (t) => [index("hq_approvals_status_idx").on(t.status, t.createdAt), index("hq_approvals_thread_idx").on(t.threadId, t.version)],
+);
+
+export type HqPreview = { fileId: string; label: string | null };
+
+/** Preview pictures for decision cards (ADR 0028). Owner-ops data like the other hq_* tables: no user_id, no RLS; served only to the admin. */
+export const hqFiles = pgTable("hq_files", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contentType: text("content_type").notNull(),
+  size: integer("size").notNull(),
+  sha256: text("sha256").notNull(),
+  data: bytea("data").notNull(),
+  createdAt: createdAt(),
+});
+
+/** Append-only action log: every change in HQ, by the owner or an agent. */
+export const hqActivity = pgTable(
+  "hq_activity",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actor: text("actor").$type<"owner" | "agent" | "system">().notNull(),
+    role: text("role").$type<HqRole | "founder">(),
+    kind: text("kind").notNull(),
+    text: text("text").notNull(),
+    missionId: uuid("mission_id"),
+    approvalId: uuid("approval_id"),
+    sessionId: text("session_id"),
+    link: text("link"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("hq_activity_created_idx").on(t.createdAt), index("hq_activity_role_idx").on(t.role, t.createdAt)],
+);
+
+/** The owner's real Claude Code chats (one row per session), with the latest check-in. HQ links to them; it never drives them. */
+export const hqChats = pgTable("hq_chats", {
+  /** The Claude Code session id, e.g. session_014H9m... */
+  id: text("id").primaryKey(),
+  /** Which employee this chat belongs to; null for chats not mapped yet. */
+  role: text("role").$type<HqRole>(),
+  title: text("title").notNull(),
+  /** The employee's main chat (one per role). */
+  isPrimary: boolean("is_primary").notNull().default(false),
+  branch: text("branch"),
+  lastCommit: text("last_commit"),
+  status: text("status").$type<"working" | "idle" | "blocked" | "archived" | "unknown">().notNull().default("unknown"),
+  /** One line on what it did last (from the chat's own summary). */
+  summary: text("summary"),
+  needsAction: text("needs_action"),
+  lastCheckinAt: tstz("last_checkin_at"),
+  /** Live HQ (ADR 0030): "busy" or "idle" from the chat's own hooks, what it is doing in one short line, and when. */
+  liveState: text("live_state").$type<"busy" | "idle" | "relayed">(),
+  liveLine: text("live_line"),
+  liveAt: tstz("live_at"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+/** Claude usage readings sent by check-ins (the status line's rate_limits). Used for the weekly budget tile. */
+export const hqUsageSamples = pgTable(
+  "hq_usage_samples",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sessionId: text("session_id"),
+    fiveHourPct: numeric("five_hour_pct", { mode: "number" }),
+    sevenDayPct: numeric("seven_day_pct", { mode: "number" }),
+    sevenDayResetsAt: tstz("seven_day_resets_at"),
+    /** start/end mark an automated round, so its share of the week can be worked out. */
+    phase: text("phase").$type<"sample" | "round_start" | "round_end">().notNull().default("sample"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("hq_usage_created_idx").on(t.createdAt)],
+);
+
+/** Keys the owner's chats use to report to HQ (Authorization: Bearer lfq_...). Only a hash is stored. */
+export const hqKeys = pgTable(
+  "hq_keys",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    tokenHash: text("token_hash").notNull(),
+    createdByEmail: text("created_by_email").notNull(),
+    lastUsedAt: tstz("last_used_at"),
+    revokedAt: tstz("revoked_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("hq_keys_hash_uq").on(t.tokenHash)],
+);
+
+// ---------------------------------------------------------------------------
+// LifeFlow HQ marketing and controls (ADR 0025). Same rules as the hq_* tables above: owner operations data, no
+// user_id, no RLS, reached only through the HQ services after requireAdmin() or with an HQ key. Marketing numbers are
+// only ever real readings a chat sent (from Metricool); nothing here is estimated.
+
+export const HQ_CONTENT_STATUSES = ["idea", "draft", "waiting", "approved", "scheduled", "published", "dropped"] as const;
+export type HqContentStatus = (typeof HQ_CONTENT_STATUSES)[number];
+export const HQ_CONTENT_KINDS = ["concept", "script", "post", "research"] as const;
+export type HqContentKind = (typeof HQ_CONTENT_KINDS)[number];
+export const HQ_NETWORKS = ["instagram", "tiktok", "youtube", "facebook", "linkedin"] as const;
+export type HqNetwork = (typeof HQ_NETWORKS)[number];
+
+/** Marketing content and research: concepts, scripts, posts (with their schedule) and sourced findings. */
+export const hqContent = pgTable(
+  "hq_content",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    kind: text("kind").$type<HqContentKind>().notNull(),
+    title: text("title").notNull(),
+    hook: text("hook"),
+    /** Script, storyboard, caption and call to action, or the finding for research. Plain text. */
+    body: text("body"),
+    platforms: jsonb("platforms").$type<HqNetwork[]>().notNull().default([]),
+    status: text("status").$type<HqContentStatus>().notNull().default("draft"),
+    scheduledFor: tstz("scheduled_for"),
+    publishedUrl: text("published_url"),
+    /** The id the scheduling tool (Metricool) gave the post. */
+    externalId: text("external_id"),
+    /** Assets and sources. */
+    links: jsonb("links").$type<HqLink[]>().notNull().default([]),
+    /** The "publish" approval for this item, when one was asked for. */
+    approvalId: uuid("approval_id").references(() => hqApprovals.id, { onDelete: "set null" }),
+    sessionId: text("session_id"),
+    source: text("source").$type<HqSource>().notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("hq_content_status_idx").on(t.status, t.scheduledFor), index("hq_content_kind_idx").on(t.kind, t.createdAt)],
+);
+
+/** Real marketing numbers, one reading per day, network and metric (and optionally one post). */
+export const hqMetrics = pgTable(
+  "hq_metrics",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    takenOn: date("taken_on").notNull(),
+    network: text("network").$type<HqNetwork>().notNull(),
+    metric: text("metric").notNull(),
+    value: numeric("value", { mode: "number" }).notNull(),
+    contentId: uuid("content_id").references(() => hqContent.id, { onDelete: "set null" }),
+    /** contentId as text or "" (so a reading for the whole account and one for a post can both be unique). */
+    contentRef: text("content_ref").notNull().default(""),
+    source: text("source").notNull().default("metricool"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("hq_metrics_reading_uq").on(t.takenOn, t.network, t.metric, t.contentRef), index("hq_metrics_network_idx").on(t.network, t.takenOn)],
+);
+
+export type HqRoundSwitches = { night: boolean; research: boolean; marketing: boolean };
+
+/** One row (id "hq"): the owner's controls that every round reads through /api/hq/inbox. */
+export const hqSettings = pgTable("hq_settings", {
+  id: text("id").primaryKey().default("hq"),
+  /** Off = every scheduled round skips. */
+  autonomous: boolean("autonomous").notNull().default(true),
+  rounds: jsonb("rounds").$type<HqRoundSwitches>().notNull().default({ night: true, research: true, marketing: true }),
+  /** Higgsfield credits the marketing round may spend in a week without asking. 0 = always ask. */
+  creditBudget: integer("credit_budget").notNull().default(0),
+  /** What the COO may decide on its own (docs/hq/company.md, decision rights). Owner switched all three on. */
+  delegations: jsonb("delegations").$type<HqDelegations>().notNull().default({ fixOrder: true, researchTopics: true, postingTimes: true }),
+  /** When the owner said goodnight (ADR 0029): the office dims until 5 AM in their time zone. It starts nothing. */
+  goodnightAt: tstz("goodnight_at"),
+  updatedByEmail: text("updated_by_email"),
+  updatedAt: updatedAt(),
+});
+
+/** Level 1 decision rights. Never-delegated items (deploys, features, design, money, publishing, messages…) aren't switches. */
+export type HqDelegations = { fixOrder: boolean; researchTopics: boolean; postingTimes: boolean };
+
+/** The COO's brief to the CEO after each round (company.md, "The brief"). Plain text, newest shown on the Office. */
+export const hqBriefs = pgTable(
+  "hq_briefs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    body: text("body").notNull(),
+    /** How many things wait for the CEO when the brief was written. */
+    needsYou: integer("needs_you").notNull().default(0),
+    sessionId: text("session_id"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("hq_briefs_created_idx").on(t.createdAt)],
 );

@@ -87,7 +87,7 @@ function fakeGoogle(opts: { refreshFails?: boolean; events?: object[] } = {}) {
     if (url.includes("/calendars/primary/events?")) return json({ items: opts.events ?? [] });
     if (url.endsWith("/calendars/primary/events") && method === "POST") {
       const b = JSON.parse(body!);
-      return json({ id: "gev-new", htmlLink: "https://calendar.google.com/x", ...b });
+      return json({ ...b, id: "gev-new", htmlLink: "https://calendar.google.com/x" });
     }
     return json({ error: { message: `unhandled ${method} ${url}` } }, 404);
   }) as typeof fetch;
@@ -165,7 +165,7 @@ describe("Gmail", () => {
           step === 0 ? { toolCalls: [{ name: "send_email", args: { to: "prof@uni.edu", subject: "Hi", body: "Hello" } }] } : { text: "Press Confirm." },
         ),
       });
-      expect(events.find((e) => e.type === "confirmation")).toMatchObject({ summary: 'Send email to prof@uni.edu: "Hi"?' });
+      expect(events.find((e) => e.type === "confirmation")).toMatchObject({ summary: 'Send email to prof@uni.edu: "Hi"?\n\nHello' });
       expect(hits.filter((h) => h.includes("gmail"))).toEqual([]);
     } finally {
       globalThis.fetch = realFetch;

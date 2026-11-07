@@ -14,6 +14,18 @@
  * fund goal; one to-do due today.
  */
 
+/**
+ * Person-to-person lines added on top of the bank feed, written the way real banks do (the owner's real miss:
+ * "when was the last time I Zelled Omar Mousselli?" found nothing). Kept before September so month totals and
+ * the 8-week averages in the other questions do not move. "OMARKET" must never match "Omar".
+ */
+export const EVAL_P2P = [
+  { date: "2026-07-18", amountCents: -4000, description: "ZELLE TO MOUSSELLI OMAR 48213", merchantName: "Zelle" },
+  { date: "2026-06-09", amountCents: -2500, description: "Zelle payment to OMAR M Conf# x7k2", merchantName: null },
+  { date: "2026-07-30", amountCents: -900, description: "OMARKET 4412 ATLANTA GA", merchantName: "Omarket" },
+  { date: "2026-06-21", amountCents: -1800, description: "ZELLE TO DANA REYES 77120", merchantName: "Zelle" },
+];
+
 export const EVAL_NOW = new Date("2026-11-02T15:00:00Z");
 
 export type EvalCase = {
@@ -100,8 +112,9 @@ export const EVAL: EvalCase[] = [
     skill: "shift-manager",
     plan: [{ tool: "work_earnings", args: { from: "2026-11-02", to: "2026-11-08" } }],
     budget: 1,
-    facts: ['"shiftCount":3', '"scheduledHours":15.5', '"estimatedGross":232.5', '"hourlyRate":15'],
-    answer: "15.5 hours over 3 shifts at Campus Coffee. At $15 an hour that's about $232.50 before taxes. It's an estimate until the pay actually lands.",
+    facts: ['"shiftCount":3', '"paidHours":15.5'],
+    answer:
+      "15.5 paid hours over 3 shifts at Campus Coffee (the unpaid break on Saturday is already taken out). I can't predict what you'll make from hours, because pay changes with taxes, tips and pay periods; once your paycheck lands, it'll show what you actually got.",
   },
   {
     id: "hardest",
@@ -146,5 +159,20 @@ export const EVAL: EvalCase[] = [
     budget: 2,
     facts: ['"start":"14:15","end":"22:00"', '"start":"2026-11-03 15:00","end":"2026-11-03 17:00"', '"conflicts":[]'],
     answer: "Booked: Study for BIO 110 Exam 2, Tuesday 3 to 5 PM. Tuesday afternoon is wide open and it's two days before the exam. It's on your calendar.",
+  },
+  {
+    id: "zelle",
+    question: "When was the last time I Zelled Omar Mousselli?",
+    skill: "budget-coach",
+    plan: [{ tool: "query_transactions", args: { search: "Omar Mousselli", limit: 5 } }],
+    budget: 1,
+    facts: [
+      '"matchType":"exact"',
+      '"date":"2026-07-18"',
+      '"description":"ZELLE TO MOUSSELLI OMAR 48213"',
+      '"date":"2026-06-09"',
+      "Zelle payment to OMAR M Conf# x7k2",
+    ],
+    answer: "The last time was July 18: $40 to Omar Mousselli by Zelle. Before that, $25 on June 9. Want me to list everything you've sent him?",
   },
 ];

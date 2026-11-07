@@ -253,6 +253,125 @@
       "when": 1793700000000,
       "tag": "0035_assistant_name_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793800000000,
+      "tag": "0036_transaction_tidy_version",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1793900000000,
+      "tag": "0037_transaction_tidy_ai_pending",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794000000000,
+      "tag": "0038_calendar_events_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1794100000000,
+      "tag": "0039_pending_action_claimed_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1794200000000,
+      "tag": "0040_lifeflow_hq",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1794300000000,
+      "tag": "0041_login_email_code",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1794400000000,
+      "tag": "0042_login_first_factor",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1794500000000,
+      "tag": "0043_email_codes_blocked",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1794600000000,
+      "tag": "0044_hq_marketing",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1794700000000,
+      "tag": "0045_hq_company",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1794800000000,
+      "tag": "0046_inbox_dedupe",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1795000000000,
+      "tag": "0048_decision_cards",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1795500000000,
+      "tag": "0049_hq_desk",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1795600000000,
+      "tag": "0050_hq_coo_chat",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1795700000000,
+      "tag": "0051_hq_coo_opus",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1795800000000,
+      "tag": "0052_chat_client_message_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1795900000000,
+      "tag": "0053_hq_live",
+      "breakpoints": true
     }
   ]
 }

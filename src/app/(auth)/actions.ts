@@ -1,10 +1,15 @@
 "use server";
+import { provisionalName } from "@/lib/provisional-name";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { CHALLENGE_COOKIE, completeLoginChallenge, createLoginChallenge } from "@/server/auth/two-factor";
+import { after } from "next/server";
+import { CHALLENGE_COOKIE, completeLoginChallenge, createLoginChallenge, issueLoginEmailCode } from "@/server/auth/two-factor";
+import { emailConfig, sendEmail } from "@/server/integrations/email";
 import { ZodError } from "zod";
 import { clientIp, endSession, startSession } from "@/server/auth/current-user";
+import { eq } from "drizzle-orm";
 import { getDb } from "@/server/db/client";
+import { users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { purgeOldRateLimits, rateLimit } from "@/server/rate-limit";
 import { purgeExpiredSessions } from "@/server/auth/sessions";
@@ -37,7 +42,7 @@ export async function login(_prev: AuthState, fd: FormData): Promise<AuthState> 
   if (user.suspendedAt) return { error: "This account has been suspended. Please contact support.", email };
   if (user.totpEnabledAt) {
     // Password is right; the session only starts after the authenticator code.
-    const { token, expiresAt } = await createLoginChallenge(db, user.id);
+    const { token, expiresAt } = await createLoginChallenge(db, user.id, "password");
     (await cookies()).set(CHALLENGE_COOKIE, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -81,7 +86,72 @@ export async function verifyLogin(_prev: VerifyState, fd: FormData): Promise<Ver
   await startSession(r.userId);
   await consumePendingAppleLink(db, r.userId);
   await withUser(r.userId, (s) => audit(s, "user", "auth.login", undefined, { ip, secondFactor: r.method }));
+  if (r.method === "email") after(() => noticeEmailSignIn(r.userId));
   redirect(safeNext(fd.get("next")));
+}
+
+export type EmailCodeState = { sentTo?: string; error?: string; expired?: boolean } | null;
+
+/** "Email me a code": after the password step, sends a 6-digit code to the account's email (owner, 2026-11-06). */
+export async function sendLoginEmailCode(_prev: EmailCodeState): Promise<EmailCodeState> {
+  const cfg = emailConfig();
+  if (!cfg) return { error: "Email codes aren't available yet. Use your app or a backup code." };
+  const db = getDb();
+  const ip = await clientIp();
+  const limit = await rateLimit(db, `mfa-email:ip:${ip}`, 6, 3600);
+  if (!limit.allowed) return { error: "Too many codes sent. Please wait a while and try again." };
+  const jar = await cookies();
+  const r = await issueLoginEmailCode(db, jar.get(CHALLENGE_COOKIE)?.value ?? "");
+  if (!r.ok) {
+    if (r.reason === "too_many") return { error: "We've sent 3 codes for this sign-in. Use the newest one, or sign in again." };
+    if (r.reason === "not_password") return { error: "Email codes work after signing in with your email and password. Sign in that way to use one." };
+    if (r.reason === "after_reset")
+      return {
+        error: "For safety, email codes are off after a password reset until you sign in once with your authenticator app, a backup code or a passkey.",
+      };
+    jar.delete(CHALLENGE_COOKIE);
+    return { expired: true, error: "This sign-in expired. Please sign in again." };
+  }
+  // The sign-in now lasts as long as the code: keep the cookie alive with it.
+  jar.set(CHALLENGE_COOKIE, jar.get(CHALLENGE_COOKIE)?.value ?? "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    expires: r.expiresAt,
+  });
+  try {
+    await sendEmail(cfg, {
+      to: r.email,
+      subject: `${r.code} is your LifeFlow sign-in code`,
+      text: `Your LifeFlow sign-in code is ${r.code}.\n\nIt works once, for 10 minutes. If you didn't just try to sign in, change your password.`,
+      html: `<p>Your LifeFlow sign-in code is</p><p style="font-size:28px;font-weight:600;letter-spacing:4px">${r.code}</p><p>It works once, for 10 minutes. If you didn't just try to sign in, change your password.</p>`,
+    });
+  } catch (e) {
+    await recordError(db, { source: "server", route: "/login/verify", message: `email code send failed: ${e instanceof Error ? e.name : "EmailError"}` }).catch(
+      () => {},
+    );
+    return { error: "We couldn't send the email just now. Try again in a minute." };
+  }
+  return { sentTo: r.to };
+}
+
+/** Lets the person know an email code was used to sign in, so a sign-in they didn't make doesn't go unnoticed. */
+async function noticeEmailSignIn(userId: string) {
+  const cfg = emailConfig();
+  if (!cfg) return;
+  try {
+    const [u] = await getDb().select({ email: users.email }).from(users).where(eq(users.id, userId));
+    if (!u) return;
+    await sendEmail(cfg, {
+      to: u.email,
+      subject: "You signed in to LifeFlow with an email code",
+      text: "You just signed in to LifeFlow with a code we emailed you. If this wasn't you, change your password now.",
+      html: "<p>You just signed in to LifeFlow with a code we emailed you.</p><p>If this wasn't you, change your password now.</p>",
+    });
+  } catch {
+    // A missed notice never blocks the sign-in.
+  }
 }
 
 export async function signup(_prev: AuthState, fd: FormData): Promise<AuthState> {
@@ -90,11 +160,13 @@ export async function signup(_prev: AuthState, fd: FormData): Promise<AuthState>
   const limit = await rateLimit(db, `signup:ip:${ip}`, 10, 3600);
   const email = String(fd.get("email") ?? "");
   if (!limit.allowed) return { error: "Too many accounts created from this network. Try again later.", email };
-  const strength = checkPassword(String(fd.get("password") ?? ""), [String(fd.get("name") ?? ""), email]);
+  // Sign-up asks only for email and password. The name is asked on the first screen after (a placeholder from the email until then).
+  const name = String(fd.get("name") ?? "").trim() || provisionalName(email);
+  const strength = checkPassword(String(fd.get("password") ?? ""), [name, email]);
   if (!strength.ok) return { error: `Choose a stronger password. ${strength.message}`, email };
   try {
     const user = await registerUser(db, {
-      name: String(fd.get("name") ?? ""),
+      name,
       email,
       password: String(fd.get("password") ?? ""),
       timezone: String(fd.get("timezone") ?? "UTC"),

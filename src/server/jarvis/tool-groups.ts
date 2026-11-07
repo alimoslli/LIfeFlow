@@ -149,7 +149,7 @@ const GROUP_INFO: Record<LoadableGroup, string> = {
   money: "look up accounts, transactions, spending, budgets, bills, subscriptions, affordability, cash forecast",
   money_edit: "add, edit, delete or categorize transactions; set budgets; add or change bills; accounts and bank sync",
   savings: "savings goals, paycheck plans, debt, investing",
-  work: "jobs, shifts, hours, pay estimates, paychecks",
+  work: "jobs, shifts, paid hours, breaks, paychecks",
   notes: "the user's notes",
   email: "Gmail and Google Calendar",
   health: "sleep, steps, workouts",

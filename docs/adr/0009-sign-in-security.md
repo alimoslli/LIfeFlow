@@ -20,3 +20,42 @@
 - OpenID Connect with the same Google OAuth client as Gmail (`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`) and `APP_URL`; the button shows only when all three are set. Scope is `openid email profile` only; Gmail and Calendar stay a separate opt-in.
 - `/api/auth/google/start` saves a single-use state (nonce + PKCE verifier) in `auth_challenges` with a SameSite=Lax cookie; the callback checks the cookie matches the state, takes the challenge once, swaps the code with the verifier, and verifies the id_token against Google's keys (issuer, audience, expiry, nonce).
 - Apple and Google share `server/auth/oauth.ts`: a known provider id signs in (2FA still applies), an email matching an existing account needs one real sign-in before linking, and new accounts start with no password. Unlinking needs a password or the other provider.
+
+## Addendum (owner, 2026-11-06): "Email me a code"
+The owner was locked out: their account had two-step sign-in on, they couldn't find the authenticator entry, and their passkey wouldn't work. They asked for a code by email when that happens.
+
+**How it works:**
+- The second step can now also take a 6-digit code emailed to the account's address.
+- It's only offered after the password step: it belongs to the pending `login_challenges` row, never to a bare email address.
+- Only a SHA-256 hash of the code is stored, bound to that challenge (`email_code_hash`).
+- A code works once and expires in 10 minutes.
+- It shares the challenge's 5 tries.
+- At most 3 codes per sign-in, plus 6 an hour per IP.
+- Sending extends the sign-in to 10 minutes from now, never past 30 minutes from the password step.
+- "Sent" is shown only when Resend returns an id. Without `RESEND_API_KEY`/`EMAIL_FROM` the button doesn't appear.
+- After an email-code sign-in, a notice goes to the same address so a sign-in the person didn't make doesn't go unnoticed.
+- The audit row records `secondFactor: "email"`.
+
+**Tightened after a fresh-eyes security review (same day):**
+- **Password sign-in only.** Email codes are offered only when the first step was the password (`login_challenges.first_factor`, migration 0042). After Google or Apple sign-in the inbox is usually the same account, so it can't count as a second factor.
+- **Not after a reset, until a strong sign-in.** A password reset sets `users.email_codes_blocked_at` (migration 0043). Email codes stay off until the person signs in once with their authenticator, a backup code or a passkey. Waiting doesn't help (a second review found a fixed 7 days could simply be waited out), so control of the inbox alone can never get past two-step sign-in.
+- **Truly single use.** The challenge is removed with `delete … returning`, so two simultaneous requests can't both start a session.
+- **The sign-in cookie lasts as long as the code.** It's refreshed when a code is sent.
+- **The sign-in never waits on the email service.** The notice is sent with `after()`, and every Resend call has a 10-second limit.
+
+**Trade-off, accepted by the owner:** whoever controls the account's email AND knows the current password (not set through a reset since their last strong sign-in) can get in, admin included, because the admin check looks at the account's two-step setup, not at how this session signed in. Authenticator codes, backup codes and passkeys stay the stronger options.
+
+### "Lost your app? Start over" (owner, 2026-11-06)
+- **Why:** turning two-step off, or making new backup codes, needs a code from the old app. Someone who lost the app but got in with an email code couldn't set up a new one.
+- **Where:** Settings → Security now has "Lost your app? Start over with an email code".
+- **How:**
+  - The signed-in person enters their password.
+  - A 6-digit code is emailed: the same machinery and rules as the sign-in email code (`beginTwoFactorRestart` → `issueLoginEmailCode`, so it's refused after a password reset until a strong sign-in).
+  - The code is checked through `completeLoginChallenge`, and must belong to the signed-in account (`finishTwoFactorRestart`).
+- **What it resets:** the authenticator secret and every backup code. The person goes straight into setting up a new app and gets new backup codes.
+- **Notice:** an email confirms the reset.
+- **Logged:** `auth.2fa.restart_code_sent` and `auth.2fa.reset_by_email`.
+- **Cookie:** `bf_2fa_restart`, httpOnly, strict, scoped to `/settings/security`, 10 minutes.
+- **After a third review:**
+  - **First passwords.** Setting a first password on a two-step account (one made with Google or Apple) also sets `email_codes_blocked_at`, so a stolen session plus the inbox can't set a password and then reset two-step.
+  - **Other devices.** The restart signs out every other session; the one doing the reset stays signed in.

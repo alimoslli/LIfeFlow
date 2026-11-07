@@ -13,7 +13,6 @@ const ALLOWED: Record<string, string> = {
   "manifest.ts": "the installed app's theme and background colour must be literal values",
   "layout.tsx": "the browser chrome colour (theme-color meta) must be a literal value",
   "(app)/settings/security/page.tsx": "Google's sign-in button colours are fixed by Google's brand rules",
-  "(auth)/layout.tsx": "the sign-in preview cards are always white, so their text colour is fixed",
 };
 
 function files(dir: string): string[] {

@@ -388,6 +388,42 @@ Decided by the owner (2026-11-05, research round 2):
 8. **Yes to school accounts with no admin needed,** and people can add school and bank accounts by hand when their bank isn't on Plaid or their school isn't Canvas or Teams (Teams is coming).
 9. **Goals:** Dev tells people plainly when they're off track for a goal they set, with a way back. Never the word "slipping".
 10. **Notifications are the engine,** not the problem: see "Decided from research" 5.
+14. **Short on money: look at everything the person has (owner, 2026-11-06).** "Being short on money can mean moving money from your savings or taking your earnings from brokerage and investments… if the user's stocks are doing good, selling $50 of that stock's profit can help pay the user's car insurance." When the afford check finds a gap, Dev's fix looks across every account, not just checking. The rules for doing it:
+   - **The gentlest option first:**
+     1. a bill that can move a few days without a fee;
+     2. savings;
+     3. uninvested cash in a brokerage;
+     4. selling a small part of an investment that's up.
+
+     Each option says what it costs the person: a goal pushed back, interest lost, or a possible tax on gains (short-term versus long-term). Never a loan, a cash advance, margin or a card balance.
+   - **Facts, not predictions or advice.** "VTI is up $212 since you bought it. Selling $50 of it covers the $48 insurance on the 14th" is fine. "Sell now, it will drop" is never fine. Dev shows options; the person chooses. (A legal check before launch: personalised suggestions about selling securities can count as investment advice.)
+   - **Goals and safety nets are respected.** Dev doesn't suggest the emergency fund for a non-emergency, or a goal's money (Montréal), without saying what it does to that goal.
+   - **Dev never moves money or trades.** It lays out the steps, deep-links to the bank or brokerage where possible, and the person does it. This is an existing red line.
+
+13. **iPhone Shortcuts pack: yes. Android notification reading: not now (owner, 2026-11-06).** iPhones don't let apps read other apps' notifications. Instead, the person turns on a few ready-made Shortcuts automations once, each sending Dev one kind of event:
+   - Apple Pay taps (merchant and amount in real time, matched later to the bank's copy so nothing counts twice);
+   - arriving at and leaving work or campus (the real-life timeline fills itself);
+   - texts or emails from a chosen contact with words like "schedule", "shift" or "cover";
+   - alarm and wind-down.
+
+   Each one is listed in "What Dev can see" with what it sends, what it never sends, and an off switch. The setup gets shown as a picture first. Android's notification access waits until after the student test.
+
+12. **Every page follows the new simple concept (owner, 2026-11-06).** "We are aiming for all pages to be the new simple concept in organizing life and imply understanding your life and having it all in the app with as little effort from the user." Every page must pass these checks:
+   - **Understood in 5 seconds:** what's going on and what needs me, in plain words, from the person's real data.
+   - **The app knows; the person approves.** Data comes from connections. Anything the person adds is one sentence to their assistant or one tap, never a form by default. Forms live one tap deeper, only for corrections.
+   - **Show only what helps.** One clear next step per thing. No dense lists, sliders, percentages, jargon or settings names on the main view. Details are one tap away.
+   - **Same calm look and voice everywhere:** the assistant's one sentence on top, plain status lines, and the same tokens and words.
+   - **Pages are steps toward the timeline (v3).** Each simplified page should fit into the timeline surface later, not compete with it.
+
+11. **Goals and Connected accounts get simpler now (2026-11-06).** The owner found both pages far too complicated ("the goals page… is nowhere near how our app is supposed to be"; "the connected accounts page is wayyyy too complicated").
+   - **Goals:** option A, one calm list. Each goal is one line with a plain status. A goal is added by one sentence and Dev's plan card. Habits are goals with a rhythm. Money progress comes from the linked account. There are no forms or sliders on the main screen. Milestones become a short "Your story".
+   - **Connected accounts:** option A, "What Dev can see". One short list in words, a status at a glance, one-tap fixes, no jargon by default, adding a school or bank by hand, and one privacy line each.
+   - **With the timeline surface:** goals as flags on the timeline (Goals B), and connections grouped by part of life (Connections B).
+   - **How goals work (owner, 2026-11-06):** "We're supposed to be changing the concept into the new way… we are inventing that new way."
+     - **No preset choices.** No category picker, no fixed time frames, no tabs by goal type. The person says any goal in their own words, any size, any time span or none. Dev works out what kind it is and links the data; it never asks the person to classify.
+     - **One list for everything:** money, health, school, habits, life, one-off and ongoing. Milestones are things done, as many as there are, from any time.
+     - **No simulators** ("what if I added $X a month"). Dev states one concrete plan from real data, or "just track it".
+     - **No daily "how did you work toward your goals?" prompt.** Progress comes from the data; when something can't be known, Dev asks one short question at the right moment.
 
 ## 16. The honest hard parts
 

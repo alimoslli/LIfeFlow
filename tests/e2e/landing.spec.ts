@@ -5,9 +5,11 @@ import { whatUsersSee } from "./helpers";
 test("a signed-out visitor sees the landing page and can get started", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("heading", { level: 1 }).first()).toHaveText("Your whole life, in flow.");
+  await expect(page.getByRole("heading", { level: 1 }).first()).toHaveText("Every app sees one slice. LifeFlow sees all of it.");
   await expect(page.locator("[data-app-loading]")).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "See how it works" })).toHaveAttribute("href", "#how-it-works");
+  await expect(page.getByRole("link", { name: "See what it does" })).toHaveAttribute("href", "#moments");
+  // Real logos for what it connects to.
+  await expect(page.getByText("Connects to what you already use")).toBeVisible();
   // Questions open in place, and the Instagram link points at @lifeflowweb.
   await page.getByText("Is my data private?").click();
   await expect(page.getByText(/locked to your account/)).toBeVisible();
@@ -17,7 +19,9 @@ test("a signed-out visitor sees the landing page and can get started", async ({ 
 
   await page.getByRole("link", { name: "Get started" }).first().click();
   await page.waitForURL("**/signup");
-  await expect(page.getByLabel("Your name")).toBeVisible();
+  // Sign-up asks only for email and password; the name comes on the first screen after.
+  await expect(page.getByLabel("Email")).toBeVisible();
+  await expect(page.getByLabel("Your name")).toHaveCount(0);
 });
 
 test("the landing page never scrolls sideways", async ({ page }) => {
@@ -32,7 +36,7 @@ test("legal pages have a close button that goes back to where you were", async (
   await page.getByRole("navigation", { name: "Footer" }).getByRole("link", { name: "Privacy" }).click();
   await expect(page.getByRole("heading", { name: "Privacy Policy" })).toBeVisible();
   await page.getByRole("button", { name: "Close" }).click();
-  await expect(page.getByRole("heading", { level: 1 }).first()).toHaveText("Your whole life, in flow.");
+  await expect(page.getByRole("heading", { level: 1 }).first()).toHaveText("Every app sees one slice. LifeFlow sees all of it.");
 
   await expect(page).toHaveURL(/\/$/);
 
@@ -49,5 +53,5 @@ test("the landing and legal pages never call the assistant Jarvis", async ({ pag
     expect(await whatUsersSee(page), path).not.toMatch(/jarvis/i);
   }
   await page.goto("/");
-  await expect(page.getByText(/your personal assistant/i).first()).toBeVisible();
+  await expect(page.getByText(/personal assistant/i).first()).toBeVisible();
 });

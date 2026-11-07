@@ -129,6 +129,15 @@ export const needOrWant = (categoryName: string | null | undefined): "need" | "w
 const brandedRules = new WeakMap<UserScope["tx"], Promise<(typeof categoryRules.$inferSelect)[]>>();
 const forgetBrandedRules = (scope: UserScope) => brandedRules.delete(scope.tx);
 
+/** The same match as `findRule`, over rules already loaded (one query per run, not one per row). */
+export function matchRule(rules: (typeof categoryRules.$inferSelect)[], t: { merchantName?: string | null; description: string }) {
+  const keys = merchantKeys({ merchantName: t.merchantName ?? null, description: t.description });
+  if (!keys.length) return null;
+  const direct = rules.find((r) => keys.includes(r.merchantKey));
+  if (direct || !brandName(t.merchantName || t.description)) return direct ?? null;
+  return rules.find((r) => storedKeyForms(r.merchantKey).length > 1 && storedKeyForms(r.merchantKey).some((k) => keys.includes(k))) ?? null;
+}
+
 /**
  * The user's rule for a transaction: saved under one of its keys, or under the name its merchant had before the
  * vendor tidy (a rule for "comcast" still applies to a row now shown as Xfinity). Read-time only: rules aren't rewritten.

@@ -99,12 +99,14 @@ export class OpenAIProvider implements ModelProvider {
     tools,
     cacheKey,
     effort,
+    signal,
   }: {
     system: string;
     history: ChatItem[];
     tools: ToolSpec[];
     cacheKey?: string;
     effort?: TurnEffort;
+    signal?: AbortSignal;
   }): ModelTurn {
     const input: ResponseInputItem[] = toResponsesInput(history);
     let toolDefs = toToolDefs(tools);
@@ -132,11 +134,11 @@ export class OpenAIProvider implements ModelProvider {
         const retention = config.cacheRetention && !noRetention.has(config.model) ? config.cacheRetention : undefined;
         let stream;
         try {
-          stream = await client.responses.create(retention ? { ...body, prompt_cache_retention: retention } : body);
+          stream = await client.responses.create(retention ? { ...body, prompt_cache_retention: retention } : body, { signal });
         } catch (e) {
           if (!retention || !refusedRetention(e)) throw e;
           noRetention.add(config.model);
-          stream = await client.responses.create(body);
+          stream = await client.responses.create(body, { signal });
         }
         let text = "";
         let output: ResponseOutputItem[] | null = null;

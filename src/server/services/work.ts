@@ -2,7 +2,7 @@ import { series } from "@/server/db/series";
 import { and, asc, desc, eq, gt, gte, isNull, lt, ne } from "drizzle-orm";
 import { z } from "zod";
 import { DATE_RE, TIME_RE, addDaysStr, dayOfWeek, localDateOf, localTimeOf, localToInstant, startOfLocalDay, weekStart } from "@/lib/dates";
-import { employers, paychecks, workShifts, type DataSource, type WorkSchedule } from "../db/schema";
+import { employers, paychecks, workShifts, type BreakRule, type DataSource, type WorkSchedule } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound, ServiceError } from "./errors";
 import { parsePatch } from "./patch";
@@ -33,7 +33,6 @@ export function shiftPaidMinutes(s: ShiftLike): { minutes: number; basis: "recor
 
 export type EmployerRates = {
   payType: "hourly" | "salary";
-  hourlyRateCents: number | null;
   overtimeThresholdHours: number;
   overtimeMultiplier: number;
 };
@@ -45,15 +44,14 @@ export type EarningsEstimate = {
   paidHours: number;
   regularHours: number;
   overtimeHours: number;
-  estimatedGrossCents: number | null;
   basis: "recorded" | "scheduled" | "mixed" | "none";
   assumptions: string[];
 };
 
 /**
- * Estimates gross wages for hourly work. Overtime is computed per local
- * week (Mon–Sun) above the employer's threshold. This is an estimate before
- * taxes/deductions — it is never presented as actual pay.
+ * Adds up paid hours for a set of shifts, by local week (Mon–Sun), split at the
+ * employer's overtime threshold. Hours only: hourly pay is never predicted (owner's
+ * rule), so there is deliberately no money in here. Real pay is a paycheck or deposit.
  */
 export function estimateEarnings(shifts: ShiftLike[], rates: EmployerRates, tz: string): EarningsEstimate {
   const active = shifts.filter((s) => s.status !== "cancelled");
@@ -77,13 +75,7 @@ export function estimateEarnings(shifts: ShiftLike[], rates: EmployerRates, tz: 
     regular += Math.min(mins, threshold);
     overtime += Math.max(0, mins - threshold);
   }
-  const assumptions = ["Gross pay before taxes and deductions.", `Overtime above ${rates.overtimeThresholdHours}h/week at ${rates.overtimeMultiplier}x.`];
-  let gross: number | null = null;
-  if (rates.payType === "hourly" && rates.hourlyRateCents != null) {
-    gross = Math.round((regular / 60) * rates.hourlyRateCents + (overtime / 60) * rates.hourlyRateCents * rates.overtimeMultiplier);
-  } else {
-    assumptions.push(rates.payType === "salary" ? "Salaried: hours do not change pay." : "No hourly rate set.");
-  }
+  const assumptions = ["Paid hours: unpaid breaks are taken out.", `Overtime hours are those above ${rates.overtimeThresholdHours}h/week.`];
   const basis = bases.size === 0 ? "none" : bases.size === 2 ? "mixed" : ([...bases][0] as "recorded" | "scheduled");
   if (basis !== "recorded" && basis !== "none") assumptions.push("Some hours come from the schedule, not recorded punches.");
   const h = (m: number) => Math.round((m / 60) * 100) / 100;
@@ -94,7 +86,6 @@ export function estimateEarnings(shifts: ShiftLike[], rates: EmployerRates, tz: 
     paidHours: h(regular + overtime),
     regularHours: h(regular),
     overtimeHours: h(overtime),
-    estimatedGrossCents: gross,
     basis,
     assumptions,
   };
@@ -102,11 +93,29 @@ export function estimateEarnings(shifts: ShiftLike[], rates: EmployerRates, tz: 
 
 // ---------------------------------------------------------------- employers
 
+export const breakRuleSchema = z
+  .object({ minShiftMinutes: z.number().int().min(1).max(1440), unpaidMinutes: z.number().int().min(0).max(240) })
+  .refine((r) => r.unpaidMinutes < r.minShiftMinutes, "The unpaid break must be shorter than the shift length it applies to.");
+export const breakRulesSchema = z.array(breakRuleSchema).max(6);
+
+/** Unpaid break for a shift of this length: the largest rule it reaches, else none. */
+export function breakForLength(rules: BreakRule[] | null | undefined, shiftMinutes: number): number {
+  let best: BreakRule | null = null;
+  for (const r of rules ?? []) if (shiftMinutes >= r.minShiftMinutes && (!best || r.minShiftMinutes > best.minShiftMinutes)) best = r;
+  return best?.unpaidMinutes ?? 0;
+}
+
+/** Regular hours only when there are days; a break-rule-only schedule has none. */
+export function regularHoursOf(s: WorkSchedule | null | undefined): WorkSchedule | null {
+  return s && s.days.length ? s : null;
+}
+
 export const workScheduleSchema = z.object({
   days: z.array(z.number().int().min(0).max(6)).min(1).max(7),
   start: z.string().regex(TIME_RE),
   end: z.string().regex(TIME_RE),
   breakMinutes: z.number().int().min(0).max(240).optional(),
+  breakRules: breakRulesSchema.optional(),
 });
 
 export const employerInputSchema = z.object({
@@ -143,8 +152,22 @@ export async function createEmployer(scope: UserScope, input: z.input<typeof emp
 
 export async function updateEmployer(scope: UserScope, id: string, patch: Partial<z.input<typeof employerInputSchema>>) {
   const d = parsePatch(employerInputSchema.partial(), patch);
-  const { overtimeThresholdHours, overtimeMultiplier, ...rest } = d;
-  if (d.schedule !== undefined) {
+  const { overtimeThresholdHours, overtimeMultiplier, schedule: newSchedule, ...rest } = d;
+  let schedule: WorkSchedule | null | undefined;
+  if (newSchedule !== undefined) {
+    // Changing regular hours keeps the job's break rule unless a new one comes with them.
+    const [cur] = await scope.tx
+      .select({ schedule: employers.schedule })
+      .from(employers)
+      .where(and(eq(employers.id, id), eq(employers.userId, scope.userId)));
+    const keep = cur?.schedule?.breakRules;
+    schedule = newSchedule
+      ? { ...newSchedule, ...(newSchedule.breakRules === undefined && keep?.length ? { breakRules: keep } : {}) }
+      : keep?.length
+        ? { days: [], start: "00:00", end: "00:00", breakRules: keep }
+        : null;
+  }
+  if (schedule !== undefined) {
     // New hours replace the future days filled from the old ones; worked, edited or added shifts stay.
     await scope.tx
       .delete(workShifts)
@@ -162,7 +185,7 @@ export async function updateEmployer(scope: UserScope, id: string, patch: Partia
     .update(employers)
     .set({
       ...rest,
-      ...(d.schedule !== undefined && { scheduleFilledThrough: null }),
+      ...(schedule !== undefined && { schedule, scheduleFilledThrough: null }),
       ...(overtimeThresholdHours !== undefined && { overtimeThresholdHours: String(overtimeThresholdHours) }),
       ...(overtimeMultiplier !== undefined && { overtimeMultiplier: String(overtimeMultiplier) }),
     })
@@ -194,7 +217,6 @@ export async function listEmployers(scope: UserScope) {
 export function ratesOf(e: typeof employers.$inferSelect): EmployerRates {
   return {
     payType: e.payType,
-    hourlyRateCents: e.hourlyRateCents,
     overtimeThresholdHours: Number(e.overtimeThresholdHours),
     overtimeMultiplier: Number(e.overtimeMultiplier),
   };
@@ -207,7 +229,8 @@ export const shiftInputSchema = z.object({
   date: z.string().regex(DATE_RE),
   startTime: z.string().regex(TIME_RE),
   endTime: z.string().regex(TIME_RE),
-  breakMinutes: z.number().int().min(0).max(600).default(0),
+  /** Left out = the job's break rule decides (by shift length); 0 = no break. */
+  breakMinutes: z.number().int().min(0).max(600).optional(),
   breakPaid: z.boolean().default(false),
   notes: z.string().max(2000).nullish(),
 });
@@ -230,6 +253,14 @@ export async function createShift(
   await assertOwned(scope, employers, d.employerId, "Employer");
   const { startsAt, endsAt } = shiftInstants(d.date, d.startTime, d.endTime, tz);
   if (endsAt.getTime() - startsAt.getTime() > 24 * 3600_000) throw new ServiceError("Shifts cannot exceed 24 hours.");
+  let breakMinutes = d.breakMinutes;
+  if (breakMinutes === undefined) {
+    const [job] = await scope.tx
+      .select({ schedule: employers.schedule })
+      .from(employers)
+      .where(and(eq(employers.id, d.employerId), eq(employers.userId, scope.userId)));
+    breakMinutes = breakForLength(job?.schedule?.breakRules, (endsAt.getTime() - startsAt.getTime()) / 60000);
+  }
   const [row] = await scope.tx
     .insert(workShifts)
     .values({
@@ -238,8 +269,8 @@ export async function createShift(
       employerId: d.employerId,
       startsAt,
       endsAt,
-      breakMinutes: d.breakMinutes,
-      breakPaid: d.breakPaid,
+      breakMinutes,
+      breakPaid: d.breakPaid ?? false,
       notes: d.notes ?? null,
       source,
     })
@@ -272,6 +303,18 @@ export async function updateShift(scope: UserScope, tz: string, id: string, inpu
   const end = d.endTime ?? localTimeOf(shift.endsAt, tz);
   const { startsAt, endsAt } = shiftInstants(date, start, end, tz);
   if (endsAt.getTime() - startsAt.getTime() > 24 * 3600_000) throw new ServiceError("Shifts cannot exceed 24 hours.");
+  // A break the job's rule gave follows the new length; a hand-set one stays. The page's form always sends the break it
+  // shows, so the same value as before counts as "not changed by hand".
+  let ruleBreak: number | undefined;
+  if ((d.breakMinutes == null || d.breakMinutes === shift.breakMinutes) && !shift.breakPaid) {
+    const [job] = await scope.tx
+      .select({ schedule: employers.schedule })
+      .from(employers)
+      .where(and(eq(employers.id, d.employerId ?? shift.employerId), eq(employers.userId, scope.userId)));
+    const rules = job?.schedule?.breakRules;
+    if (rules?.length && shift.breakMinutes === breakForLength(rules, minutesBetween(shift.startsAt, shift.endsAt)))
+      ruleBreak = breakForLength(rules, minutesBetween(startsAt, endsAt));
+  }
   const [row] = await scope.tx
     .update(workShifts)
     .set({
@@ -279,6 +322,7 @@ export async function updateShift(scope: UserScope, tz: string, id: string, inpu
       endsAt,
       ...(d.employerId && { employerId: d.employerId }),
       ...(d.breakMinutes != null && { breakMinutes: d.breakMinutes }),
+      ...(ruleBreak !== undefined && { breakMinutes: ruleBreak }),
       ...(d.notes !== undefined && { notes: d.notes ?? null }),
     })
     .where(eq(workShifts.id, id))
@@ -306,9 +350,21 @@ export async function recordShiftHours(scope: UserScope, tz: string, id: string,
   if (!shift) throw notFound("Shift");
   const date = localDateOf(shift.startsAt, tz);
   const { startsAt, endsAt } = shiftInstants(date, d.recordedStartTime, d.recordedEndTime, tz);
+  // A break the job's rule gave (or none) follows the recorded length; a hand-set one stays.
+  let ruleBreak: number | undefined;
+  if (!shift.breakPaid) {
+    const [job] = await scope.tx
+      .select({ schedule: employers.schedule })
+      .from(employers)
+      .where(and(eq(employers.id, shift.employerId), eq(employers.userId, scope.userId)));
+    const rules = job?.schedule?.breakRules;
+    const scheduledRule = rules?.length ? breakForLength(rules, minutesBetween(shift.startsAt, shift.endsAt)) : 0;
+    if (rules?.length && (shift.breakMinutes === 0 || shift.breakMinutes === scheduledRule))
+      ruleBreak = breakForLength(rules, minutesBetween(startsAt, endsAt));
+  }
   const [row] = await scope.tx
     .update(workShifts)
-    .set({ recordedStart: startsAt, recordedEnd: endsAt, status: "worked" })
+    .set({ recordedStart: startsAt, recordedEnd: endsAt, status: "worked", ...(ruleBreak !== undefined && { breakMinutes: ruleBreak }) })
     .where(eq(workShifts.id, id))
     .returning();
   return row;
@@ -349,14 +405,14 @@ export async function listShifts(scope: UserScope, tz: string, from: string, to:
   return rows.map((r) => ({ ...r.shift, employer: r.employer }));
 }
 
-/** Per-employer estimate for a date range. */
+/** Per-employer hours for a date range (paid hours, never pay). */
 export async function workSummary(scope: UserScope, tz: string, from: string, to: string) {
   const [emps, shifts] = await series(
     () => listEmployers(scope),
     () => listShifts(scope, tz, from, to),
   );
   return emps.map((e) => ({
-    employer: { id: e.id, name: e.name, payType: e.payType, hourlyRateCents: e.hourlyRateCents },
+    employer: { id: e.id, name: e.name, payType: e.payType },
     estimate: estimateEarnings(
       shifts.filter((s) => s.employerId === e.id),
       ratesOf(e),
@@ -405,7 +461,7 @@ const SCHEDULE_WEEKS_AHEAD = 3;
  * (a holiday, a day off) isn't put back. Returns how many shifts were added.
  */
 export async function fillRegularShifts(scope: UserScope, tz: string, today: string) {
-  const jobs = (await listEmployers(scope)).filter((e) => e.schedule && !e.archivedAt);
+  const jobs = (await listEmployers(scope)).filter((e) => regularHoursOf(e.schedule) && !e.archivedAt);
   const until = addDaysStr(today, SCHEDULE_WEEKS_AHEAD * 7 - 1);
   let added = 0;
   for (const job of jobs) {
@@ -416,15 +472,74 @@ export async function fillRegularShifts(scope: UserScope, tz: string, today: str
       if (!sched.days.includes(dayOfWeek(d))) continue;
       const { startsAt } = shiftInstants(d, sched.start, sched.end, tz);
       if (startsAt.getTime() <= Date.now()) continue;
-      await createShift(
-        scope,
-        tz,
-        { employerId: job.id, date: d, startTime: sched.start, endTime: sched.end, breakMinutes: sched.breakMinutes ?? 0 },
-        "schedule",
-      );
+      await createShift(scope, tz, { employerId: job.id, date: d, startTime: sched.start, endTime: sched.end, breakMinutes: sched.breakMinutes }, "schedule");
       added++;
     }
     await scope.tx.update(employers).set({ scheduleFilledThrough: until }).where(eq(employers.id, job.id));
   }
   return added;
+}
+
+// ---------------------------------------------------------------- break rule
+
+/**
+ * Saves a job's unpaid-break rule (empty list = none) and brings the job's shifts from the start of
+ * this local week on (past and recorded ones too, so a rule set mid-week fixes the whole week) in line:
+ * a shift with no break, or whose break is what the old rule gave for its length, gets what the new rule
+ * gives. A break set by hand stays. Returns the real result: shifts changed and the paid hours.
+ */
+export async function setBreakRules(scope: UserScope, tz: string, id: string, rules: BreakRule[], now: Date = new Date()) {
+  const parsed = breakRulesSchema.parse(rules);
+  const [job] = await scope.tx
+    .select()
+    .from(employers)
+    .where(and(eq(employers.id, id), eq(employers.userId, scope.userId)));
+  if (!job) throw notFound("Employer");
+  const { breakRules: oldRules, ...rest } = job.schedule ?? { days: [], start: "00:00", end: "00:00" };
+  const next: WorkSchedule | null = parsed.length ? { ...rest, breakRules: parsed } : rest.days.length ? rest : null;
+  await scope.tx
+    .update(employers)
+    .set({ schedule: next })
+    .where(and(eq(employers.id, id), eq(employers.userId, scope.userId)));
+  const weekFrom = weekStart(localDateOf(now, tz));
+  const weekFromAt = startOfLocalDay(weekFrom, tz);
+  const weekToAt = startOfLocalDay(addDaysStr(weekFrom, 7), tz);
+  const shifts = await scope.tx
+    .select()
+    .from(workShifts)
+    .where(and(eq(workShifts.userId, scope.userId), eq(workShifts.employerId, id), ne(workShifts.status, "cancelled"), gte(workShifts.startsAt, weekFromAt)));
+  let updated = 0;
+  const final: (typeof shifts)[number][] = [];
+  for (const sh of shifts) {
+    let row = sh;
+    if (!sh.breakPaid) {
+      const len = sh.recordedStart && sh.recordedEnd ? minutesBetween(sh.recordedStart, sh.recordedEnd) : minutesBetween(sh.startsAt, sh.endsAt);
+      const want = breakForLength(parsed, len);
+      if (want !== sh.breakMinutes && (sh.breakMinutes === 0 || sh.breakMinutes === breakForLength(oldRules, len))) {
+        [row] = await scope.tx
+          .update(workShifts)
+          .set({ breakMinutes: want })
+          .where(and(eq(workShifts.id, sh.id), eq(workShifts.userId, scope.userId)))
+          .returning();
+        updated++;
+      }
+    }
+    final.push(row);
+  }
+  const hours = (list: typeof final) => paidHoursOf(list).paidHours;
+  const upcoming = final.filter((x) => x.status === "scheduled" && x.startsAt.getTime() > now.getTime());
+  return {
+    breakRules: parsed,
+    shiftsUpdated: updated,
+    weekPaidHours: hours(final.filter((x) => x.startsAt < weekToAt)),
+    upcomingShifts: upcoming.length,
+    upcomingPaidHours: hours(upcoming),
+  };
+}
+
+/** Total paid hours for shifts (cancelled ones excluded). */
+export function paidHoursOf(shifts: ShiftLike[]) {
+  const active = shifts.filter((s) => s.status !== "cancelled");
+  const mins = active.reduce((a, s) => a + shiftPaidMinutes(s).minutes, 0);
+  return { shiftCount: active.length, paidHours: Math.round((mins / 60) * 100) / 100 };
 }

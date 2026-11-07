@@ -6,7 +6,7 @@ import { errorResponse, HttpError } from "@/server/http";
 import { sniffMime } from "@/server/uploads";
 import { senderAuthenticated } from "@/server/services/inbox/email-auth";
 import { inboxWebhookAuth } from "@/server/services/inbox/webhook-auth";
-import { isVerifiedSender, processDocument, recordIgnored, saveInboxFile, userForAddress } from "@/server/services/inbox";
+import { isVerifiedSender, processForwardedEmail, recordIgnored, saveInboxFile, userForAddress } from "@/server/services/inbox";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
     const today = todayIn(user.timezone);
     await withUser(user.id, async (s) => {
       if (!(await isVerifiedSender(s, from))) return recordIgnored(s, from, subject, "Not from one of your verified addresses. Add it in the Inbox settings.");
-      if (!senderAuthenticated(mail.Headers ?? [], from))
+      if (!senderAuthenticated(mail.Headers ?? [], from, { via: "postmark", recipient: mail.OriginalRecipient ?? "" }))
         return recordIgnored(s, from, subject, "The sending server couldn't prove it was really this address (SPF/DKIM failed).");
       const files: { filename: string; mimeType: string; base64: string }[] = [];
       const ids: string[] = [];
@@ -72,7 +72,10 @@ export async function POST(req: Request) {
         files.push({ filename: a.Name ?? "file", mimeType: mime, base64: a.Content });
       }
       const text = mail.TextBody?.trim() || strip(mail.HtmlBody ?? "");
-      await processDocument(s, user.timezone, today, { channel: "email", from, subject, text, files, attachmentIds: ids });
+      // An auto-forward keeps the original Message-ID, so the same mail from Gmail and from here is filed once.
+      const messageId = mail.Headers?.find((h) => h.Name.toLowerCase() === "message-id")?.Value;
+      // Forwarded mail is only suggested; the person's tap files it (fileSuggestion).
+      await processForwardedEmail(s, user.timezone, today, { channel: "email", from, subject, text, files, attachmentIds: ids, messageId });
     });
     return NextResponse.json({ ok: true });
   } catch (e) {

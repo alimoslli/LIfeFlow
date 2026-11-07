@@ -33,6 +33,17 @@ describe("cleanVendorName", () => {
     expect(cleanVendorName("A".repeat(80)).length).toBeLessThanOrEqual(40);
   });
 
+  it("keeps an apostrophe's tail lower case, and capitalises real name parts", () => {
+    expect(cleanVendorName("SHELL'S SEAFOOD")).toBe("Shell's Seafood");
+    expect(cleanVendorName("DON'T PANIC DINER")).toBe("Don't Panic Diner");
+    expect(cleanVendorName("MARIO'S PIZZA")).toBe("Mario's Pizza");
+    expect(cleanVendorName("O'BRIEN'S PUB")).toBe("O'Brien's Pub");
+    expect(cleanVendorName("O’BRIEN BAR")).toBe("O’Brien Bar");
+    expect(cleanVendorName("D'ANGELO SUBS")).toBe("D'Angelo Subs");
+    expect(cleanVendorName("MCDONALD'S F18234 ATLANTA GA")).toBe("McDonald's");
+    expect(cleanVendorName("AT&T WIRELESS")).toBe("AT&T");
+  });
+
   it("flags names that still look like statement noise", () => {
     expect(looksMessy("KJSDF*2234 LLC")).toBe(true);
     expect(looksMessy("Blue Bottle Coffee")).toBe(false);

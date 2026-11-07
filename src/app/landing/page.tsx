@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { BrandLockup } from "@/components/brand/brand-mark";
-import { CinematicHero } from "@/components/ui/cinematic-landing-hero";
+import { AssistantScene } from "@/components/landing/assistant-scene";
+import { CanvasLogo, GmailLogo, GoogleCalendarLogo, MicrosoftLogo } from "@/components/landing/logos";
 import { getDb } from "@/server/db/client";
 import { inviterFor } from "@/server/services/invites";
 
@@ -12,59 +13,61 @@ export const metadata: Metadata = {
 };
 
 const button =
-  "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-accent px-7 text-[0.9375rem] font-medium text-accent-text transition-colors hover:bg-accent-hover";
+  "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-accent px-7 text-[0.9375rem] font-medium text-accent-text shadow-[0_10px_24px_-12px_rgb(31_72_56_/_0.7)] transition-[transform,background-color] hover:bg-accent-hover active:scale-[0.98]";
 
-const AREAS = [
-  { name: "Today", body: "What's next, what's due, and what needs you. One screen, every morning." },
-  { name: "Calendar", body: "Classes, shifts, events and deadlines together. Tap any block to change it. Syncs with Google Calendar." },
+const MOMENTS = [
   {
-    name: "School",
-    body: "Courses and assignments from Canvas, with study time built around your free hours. Your personal assistant coaches, and never does graded work.",
+    tag: "Shift vs exam",
+    tone: "bg-warning-soft text-warning",
+    title: "Your Thursday shift runs until 10. Your Bio exam is Friday at 9.",
+    body: "It moves your study block to Wednesday and asks before touching anything.",
+    used: [
+      ["Exam · Fri 9 AM", "bg-warning-soft"],
+      ["Shift · Thu 5 to 10 PM", "bg-info-soft"],
+    ],
   },
-  { name: "Work", body: "Jobs, shifts and hours, and what you've earned so far." },
-  { name: "Money", body: "Connect your bank and choose which accounts LifeFlow sees. Spending, bills and what's coming in. LifeFlow never moves money." },
   {
-    name: "Goals and habits",
-    body: "Goals don't have to be about money. Your personal assistant checks in each evening and asks how you moved them forward, in your own words.",
+    tag: "Rent before payday",
+    tone: "bg-accent-soft text-accent",
+    title: "Checking could hit $0 on Friday.",
+    body: "Rent comes out before your next paycheck. It tells you the one thing that fixes it.",
+    used: [
+      ["$412 available", "bg-accent-soft"],
+      ["Rent $950 · Fri", "bg-surface-2"],
+    ],
   },
-  { name: "Health", body: "Sleep, steps and workouts from Apple Health, in the same week view as everything else." },
+  {
+    tag: "Double charge",
+    tone: "bg-info-soft text-info",
+    title: "You were charged twice for Spotify.",
+    body: "It wrote the message to get your $11.99 back. You send it, or you don't.",
+    used: [["Spotify × 2 · Monday", "bg-info-soft"]],
+  },
 ];
 
-const STEPS = [
-  { title: "Create your account", body: "Sign up in under a minute." },
-  { title: "Add your week", body: "Classes, a job, bills and goals. Connect the rest whenever you're ready." },
-  { title: "Follow Today", body: "Open Today and go. A short tour shows you the rest." },
+const TRUST = [
+  ["Read-only bank connections.", "It can see, never move, your money."],
+  ["Locked to your account.", "Nobody else can see your data."],
+  ["Never sold,", "and never used to train AI without your clear permission."],
+  ["It asks first", "before sending, spending or deleting anything."],
 ];
 
-const PRINCIPLES = [
-  { title: "You choose what connects", body: "Turn any bank account on or off at any time." },
-  { title: "Your data stays yours", body: "Never sold, and never used to train AI without your clear permission." },
-  { title: "Your assistant asks first", body: "It checks with you before sending, spending or deleting anything." },
-  { title: "Only what's real", body: "Nothing shows as done until it is. Money counts only once it has landed." },
+const WHY = [
+  ["One job", "A personal assistant, and nothing else. Every feature exists to help you run your life."],
+  ["Always connected", "Classes, shifts, money, calendar and health at the same time, so it sees how they affect each other."],
+  ["Built by someone living it", "Made by a person with your schedule, who keeps asking what you need."],
 ];
 
 const INSTAGRAM = "https://www.instagram.com/lifeflowweb";
 
 const FAQS: { q: string; a: string }[] = [
   {
-    q: "What is LifeFlow?",
-    a: "A personal planner and AI assistant in one app. It keeps your classes, shifts, to-dos, money, goals, habits and health together, and your assistant uses all of it to plan your day.",
-  },
-  {
-    q: "Who is it for?",
-    a: "Anyone with a busy week. It's built especially for people juggling school and work, but you only use the parts you need.",
-  },
-  {
-    q: "How much does it cost?",
-    a: "LifeFlow is free while we're testing. When it launches on the App Store there will be a free plan and a paid plan, and we'll tell you before anything changes.",
-  },
-  {
     q: "Do I have to connect my bank or school?",
-    a: "No. You can add everything yourself, or send your assistant a picture of a syllabus, a list of assignments, a work schedule or a bank statement and it adds it for you. Connecting Canvas, Google Calendar or your bank is optional.",
+    a: "No. Add everything yourself, or send your assistant a photo of a syllabus, a work schedule or a bank statement and it adds it for you. Connecting is optional.",
   },
   {
     q: "My school doesn't use Canvas. Can I still use it?",
-    a: "Yes. Send screenshots of your assignments or upload your syllabus, or just tell your assistant your classes.",
+    a: "Yes. Send screenshots of your assignments, upload your syllabus, or tell your assistant your classes.",
   },
   {
     q: "Is my data private?",
@@ -83,6 +86,9 @@ const FAQS: { q: string; a: string }[] = [
     a: "The App Store app is on the way. Today you can open LifeFlow in Safari and add it to your Home Screen, and it works like an app.",
   },
 ];
+
+const h2 = "font-display text-[2.25rem] leading-[1.02] font-medium tracking-[-0.03em] text-balance sm:text-[3.25rem]";
+const eyebrow = "text-xs font-medium tracking-[0.08em] text-muted uppercase";
 
 /** Instagram's glyph (lucide no longer ships brand icons). */
 function InstagramIcon({ className }: { className?: string }) {
@@ -103,14 +109,14 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
   const signupHref = inviter ? `/signup?invite=${encodeURIComponent(code)}` : "/signup";
   return (
     <div className="min-h-dvh overflow-x-clip bg-bg text-text">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-6 sm:px-8">
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
         <BrandLockup markClassName="h-8 w-8" priority />
         <nav className="flex items-center gap-1" aria-label="Account">
           <a
-            href="#faq"
+            href="#why"
             className="hidden min-h-11 items-center rounded-full px-4 text-[0.9375rem] text-text-2 transition-colors hover:text-text sm:inline-flex"
           >
-            FAQ
+            Why LifeFlow
           </a>
           <Link href="/login" className="inline-flex min-h-11 items-center rounded-full px-4 text-[0.9375rem] text-text-2 transition-colors hover:text-text">
             Sign in
@@ -122,127 +128,142 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
       </header>
 
       <main>
-        {/* What LifeFlow is, in plain words, before anything moves. */}
-        <section className="mx-auto max-w-6xl px-5 pt-10 pb-14 sm:px-8 sm:pt-16 lg:pt-20">
-          <div className="max-w-4xl">
+        <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pt-6 pb-16 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-14 lg:pb-20">
+          <div>
             {inviter && (
               <p className="animate-rise mb-5 inline-flex rounded-full bg-accent-soft px-4 py-2 text-sm font-medium text-text">
                 {inviter.firstName} invited you to LifeFlow.
               </p>
             )}
-            <p className="animate-rise text-sm font-medium text-accent">A personal planner and AI assistant</p>
-            <h1 className="animate-rise mt-4 font-display text-[3rem] leading-[1.0] font-medium tracking-[-0.04em] text-balance sm:text-[5rem] lg:text-[5.75rem]">
-              Your whole life, in flow.
+            <p className={`animate-rise ${eyebrow}`}>A personal assistant that sees your whole life</p>
+            <h1
+              className="animate-rise mt-4 font-display text-[2.9rem] leading-[0.98] font-medium tracking-[-0.045em] text-balance sm:text-[4.5rem] lg:text-[4.9rem]"
+              style={{ animationDelay: "60ms" }}
+            >
+              Every app sees one slice. <em className="text-accent">LifeFlow sees all of it.</em>
             </h1>
-            <p className="animate-rise mt-6 max-w-2xl text-[1.125rem] leading-relaxed text-text-2 sm:text-[1.25rem]" style={{ animationDelay: "80ms" }}>
-              LifeFlow is one app for your classes, shifts, money, goals and health. Your personal assistant knows your week and plans around all of it.
+            <p className="animate-rise mt-5 max-w-[46ch] text-[1.125rem] leading-relaxed text-text-2" style={{ animationDelay: "120ms" }}>
+              Your bank, your classes, your shifts and your calendar, connected at once. Your assistant finds what&apos;s about to clash and fixes it before you
+              feel it.
             </p>
-            <div className="animate-rise mt-9 flex flex-col items-start gap-4 sm:flex-row sm:items-center" style={{ animationDelay: "160ms" }}>
+            <div className="animate-rise mt-8 flex flex-wrap items-center gap-x-4 gap-y-2" style={{ animationDelay: "180ms" }}>
               <Link href={signupHref} className={button}>
                 Get started
-                <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
-              <a
-                href="#how-it-works"
-                className="inline-flex min-h-12 items-center gap-2 rounded-full px-0 text-[0.9375rem] font-medium text-text-2 transition-colors hover:text-text"
-              >
-                See how it works
-                <ChevronDown className="h-4 w-4 motion-safe:animate-bounce" aria-hidden />
+              <a href="#moments" className="inline-flex min-h-12 items-center px-2 text-[0.9375rem] font-medium text-text-2 transition-colors hover:text-text">
+                See what it does
               </a>
             </div>
-            <p className="animate-rise mt-4 text-sm text-muted" style={{ animationDelay: "220ms" }}>
-              Already have an account?{" "}
-              <Link href="/login" className="text-text-2 underline underline-offset-4 hover:text-text">
-                Sign in
-              </Link>
-            </p>
+            <ul className="animate-rise mt-5 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-muted" style={{ animationDelay: "240ms" }}>
+              {["Set up in two minutes", "Never moves your money", "Built by a student"].map((t) => (
+                <li key={t} className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
+                  {t}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="mx-auto w-full max-w-[320px] pb-8 lg:max-w-[330px]">
+            <AssistantScene />
           </div>
         </section>
 
-        <div id="how-it-works" className="scroll-mt-0 border-t border-border">
-          <CinematicHero signupHref={signupHref} />
+        {/* Real services it connects to */}
+        <div className="border-y border-border px-5 py-6 sm:px-8">
+          <div className="mx-auto grid max-w-6xl items-center gap-4 lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-10">
+            <p className="max-w-[22ch] text-sm leading-snug text-muted">Connects to what you already use</p>
+            <ul className="flex flex-wrap items-center gap-x-7 gap-y-3.5 text-[0.9375rem] font-medium text-text-2">
+              <li className="flex items-center gap-2.5">
+                <CanvasLogo className="h-[22px] w-[22px]" />
+                Canvas
+              </li>
+              <li className="flex items-center gap-2.5">
+                <GoogleCalendarLogo className="h-[22px] w-[22px]" />
+                Google Calendar
+              </li>
+              <li className="flex items-center gap-2.5">
+                <GmailLogo className="h-[22px] w-[22px]" />
+                Gmail
+              </li>
+              <li className="flex items-center gap-2.5">
+                <MicrosoftLogo className="h-[22px] w-[22px]" />
+                Outlook and Teams
+              </li>
+              <li>
+                <span className="font-semibold tracking-tight">Plaid</span> for your bank
+              </li>
+              <li>Apple Health</li>
+            </ul>
+          </div>
         </div>
 
-        {/* Your personal assistant */}
-        <section className="border-t border-border">
-          <div className="mx-auto grid max-w-6xl gap-14 px-5 py-20 sm:px-8 lg:grid-cols-2 lg:items-center lg:py-28">
-            <div>
-              <p className="text-sm font-medium text-accent">Your personal assistant</p>
-              <h2 className="mt-4 font-display text-[2.5rem] leading-[1.05] font-medium tracking-[-0.03em] text-balance sm:text-[3.5rem]">
-                Ask in plain words. Get a plan.
-              </h2>
-              <p className="mt-6 max-w-lg text-[1.0625rem] leading-relaxed text-text-2">
-                Your assistant checks your calendar, assignments, shifts and money before it answers, so you get a plan built around your real week.
+        <section id="moments" className="scroll-mt-4 px-5 py-16 sm:px-8 lg:py-20">
+          <div className="mx-auto max-w-6xl">
+            <p className={eyebrow}>What it does before you ask</p>
+            <h2 className={`mt-3 max-w-[18ch] ${h2}`}>It notices the problem while there&apos;s still time to fix it.</h2>
+            <p className="mt-4 max-w-[52ch] text-[1.0625rem] text-text-2">
+              Three things your assistant does on a normal week. Each one shows the numbers it used.
+            </p>
+            <ul className="mt-9 grid gap-3.5 md:grid-cols-3">
+              {MOMENTS.map((m) => (
+                <li key={m.tag} className="flex min-w-0 flex-col gap-2.5 rounded-[26px] bg-surface p-5 shadow-soft">
+                  <span className={`self-start rounded-full px-2.5 py-1 text-[0.6875rem] font-medium tracking-[0.06em] uppercase ${m.tone}`}>{m.tag}</span>
+                  <h3 className="font-display text-[1.4375rem] leading-[1.12] font-medium tracking-[-0.02em]">{m.title}</h3>
+                  <p className="text-[0.9375rem] text-text-2">{m.body}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {m.used.map(([t, bg]) => (
+                      <span key={t} className={`rounded-full px-2.5 py-1 text-[0.6875rem] font-medium ${bg}`}>
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                  <small className="mt-auto pt-2 text-xs text-muted">Example</small>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        <section id="why" className="scroll-mt-4 border-t border-border px-5 py-16 sm:px-8 lg:py-20">
+          <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-12">
+            <blockquote className="font-display text-[1.75rem] leading-[1.15] font-medium tracking-[-0.03em] text-balance sm:text-[2.5rem]">
+              Built by a student solving <em className="text-accent">his own problem</em>, for everyone with a full life.
+            </blockquote>
+            <div className="space-y-3 text-[1.0625rem] text-text-2">
+              <p>Seven classes. Working 30 hours a week. Side projects. Applications. Nothing connected any of it, so I built the assistant I needed.</p>
+              <p>
+                It has one job: serve you. It isn&apos;t made for research or websites. It&apos;s made to find the dots across your whole week and help you make
+                the most of your time.
               </p>
             </div>
-            <ul className="divide-y divide-border border-y border-border">
-              {["When can I study before my shift on Wednesday?", "Can I afford concert tickets this week?", "What should I do first today?"].map((q) => (
-                <li key={q} className="flex items-center justify-between gap-6 py-5 text-[1.0625rem]">
-                  <span>{q}</span>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
-                </li>
-              ))}
-            </ul>
           </div>
+          <ul className="mx-auto mt-9 grid max-w-6xl gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+            {TRUST.map(([b, t]) => (
+              <li key={b} className="flex items-start gap-2.5 text-sm leading-snug text-text-2">
+                <span className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent" aria-hidden>
+                  <Check className="h-3 w-3" strokeWidth={3.2} />
+                </span>
+                <span>
+                  <b className="font-semibold text-text">{b}</b> {t}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <ul className="mx-auto mt-10 grid max-w-6xl gap-7 md:grid-cols-3">
+            {WHY.map(([t, b]) => (
+              <li key={t} className="border-t-2 border-accent pt-3.5">
+                <h3 className="font-display text-[1.5rem] font-medium tracking-[-0.02em]">{t}</h3>
+                <p className="mt-1.5 text-[0.96875rem] text-text-2">{b}</p>
+              </li>
+            ))}
+          </ul>
         </section>
 
-        {/* Everything in one place */}
-        <section className="border-t border-border">
-          <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-              <h2 className="font-display text-[2.5rem] leading-[1.05] font-medium tracking-[-0.03em] text-balance sm:text-[3.5rem]">
-                One place for the whole week.
-              </h2>
-            </div>
-            <ul className="mt-14 border-t border-border">
-              {AREAS.map((a) => (
-                <li key={a.name} className="grid gap-2 border-b border-border py-7 sm:grid-cols-[minmax(0,0.35fr)_minmax(0,0.65fr)] sm:gap-10">
-                  <h3 className="text-[1.1875rem] font-semibold tracking-[-0.01em]">{a.name}</h3>
-                  <p className="text-[1rem] leading-relaxed text-text-2">{a.body}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {/* Setup */}
-        <section className="border-t border-border bg-surface/50">
-          <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
-            <h2 className="font-display text-[2.5rem] leading-[1.05] font-medium tracking-[-0.03em] text-balance sm:text-[3.5rem]">Ready in three steps.</h2>
-            <ol className="mt-14 grid gap-10 md:grid-cols-3">
-              {STEPS.map((s, i) => (
-                <li key={s.title}>
-                  <span className="font-display text-[0.9375rem] text-accent">0{i + 1}</span>
-                  <h3 className="mt-3 text-[1.3125rem] font-semibold tracking-[-0.01em]">{s.title}</h3>
-                  <p className="mt-2 text-[1rem] leading-relaxed text-text-2">{s.body}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        {/* Principles */}
-        <section className="border-t border-border">
-          <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
-            <h2 className="max-w-2xl font-display text-[2.5rem] leading-[1.05] font-medium tracking-[-0.03em] text-balance sm:text-[3.5rem]">
-              Built so you stay in charge.
-            </h2>
-            <ul className="mt-14 grid gap-x-12 gap-y-10 sm:grid-cols-2">
-              {PRINCIPLES.map((p) => (
-                <li key={p.title} className="border-t border-border pt-6">
-                  <h3 className="text-[1.1875rem] font-semibold tracking-[-0.01em]">{p.title}</h3>
-                  <p className="mt-2 text-[1rem] leading-relaxed text-text-2">{p.body}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {/* Questions */}
-        <section id="faq" className="scroll-mt-6 border-t border-border">
-          <div className="mx-auto grid max-w-6xl gap-10 px-5 py-20 sm:px-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:py-28">
+        <section id="faq" className="scroll-mt-4 border-t border-border px-5 py-16 sm:px-8 lg:py-20">
+          <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
             <div>
-              <h2 className="font-display text-[2.5rem] leading-[1.05] font-medium tracking-[-0.03em] text-balance sm:text-[3.5rem]">Questions</h2>
+              <p className={eyebrow}>Questions</p>
+              <h2 className={`mt-3 ${h2}`}>Straight answers.</h2>
               <p className="mt-4 max-w-sm text-[1.0625rem] leading-relaxed text-text-2">
                 Something else? Message us on{" "}
                 <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" className="font-medium text-accent underline underline-offset-4">
@@ -265,25 +286,28 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
           </div>
         </section>
 
-        {/* Closing */}
-        <section className="border-t border-border">
-          <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-5 py-20 sm:px-8 md:flex-row md:items-end md:justify-between lg:py-28">
-            <h2 className="font-display text-[2.75rem] leading-[1.02] font-medium tracking-[-0.035em] text-balance sm:text-[4rem]">
+        <section className="px-5 pb-6 sm:px-8">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[36px] bg-hero p-8 text-hero-text sm:p-14">
+            <span
+              className="pointer-events-none absolute -top-20 -right-20 h-72 w-72 rounded-full bg-[radial-gradient(closest-side,rgb(255_255_255_/_0.16),transparent)]"
+              aria-hidden
+            />
+            <h2 className="relative max-w-[16ch] font-display text-[2.25rem] leading-none font-medium tracking-[-0.035em] text-balance sm:text-[3.5rem]">
               Start your week in order.
             </h2>
-            <div className="flex flex-col gap-3">
-              <Link href={signupHref} className={button}>
-                Get started
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </Link>
-              <p className="text-sm text-muted">
-                Already have an account?{" "}
-                <Link href="/login" className="text-text-2 underline underline-offset-4 hover:text-text">
-                  Sign in
-                </Link>
-              </p>
-            </div>
+            <p className="relative mt-5 max-w-[44ch] opacity-85">Add everything yourself, or connect it later.</p>
+            <Link
+              href={signupHref}
+              className="relative mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-surface px-7 text-[0.9375rem] font-medium text-text transition-transform active:scale-[0.98]"
+            >
+              Get started
+            </Link>
           </div>
+          <p className="mx-auto mt-5 max-w-6xl text-xs leading-relaxed text-muted">
+            Canvas is a trademark of Instructure, Inc. Google, Google Calendar and Gmail are trademarks of Google LLC. Microsoft, Outlook and Teams are
+            trademarks of the Microsoft group of companies. Apple and Apple Health are trademarks of Apple Inc. Plaid is a trademark of Plaid Inc. LifeFlow
+            works with these services and is not endorsed by them.
+          </p>
         </section>
       </main>
 

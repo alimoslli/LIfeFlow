@@ -21,6 +21,7 @@ export async function sendEmail(
 ) {
   const res = await fetchImpl("https://api.resend.com/emails", {
     method: "POST",
+    signal: AbortSignal.timeout(10_000),
     headers: { authorization: `Bearer ${cfg.apiKey}`, "content-type": "application/json" },
     body: JSON.stringify({ from: cfg.from, to: [msg.to], subject: msg.subject, text: msg.text, html: msg.html, ...(msg.replyTo && { reply_to: msg.replyTo }) }),
   });

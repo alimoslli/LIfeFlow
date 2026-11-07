@@ -37,8 +37,8 @@ export default async function AdminUser({
   const locked = !!u && (u.isAdmin || u.isDemo);
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/admin/users" className="text-sm text-muted hover:text-text">
-        ← All users
+      <Link href="/admin/people#people" className="text-sm text-muted hover:text-text">
+        ← All people
       </Link>
       <Notice done={sp.done} error={sp.error} />
       {!u ? (

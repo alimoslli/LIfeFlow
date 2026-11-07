@@ -2,11 +2,23 @@
 
 Updated by the situation writer after every batch. Run `python3 docs/situations/validate.py` for live counts.
 
-**Cases:** 15 (s0001 to s0015, batch 1, 2026-11-05) · **Stay-quiet share:** 4 of 15 (27%) · **Student share:** 5 of 15 (33%) · **Targets:** 30 before Dev's brain is built, 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
+**Cases:** 25 (s0001 to s0015 batch 1, s0016 to s0020 batch 2, s0021 to s0025 batch 3, 2026-11-07) · **Stay-quiet share:** 6 of 25 (24%) · **Student share:** 15 of 25 (60%, the last two batches are 10 of 10) · **Routine-fit share:** 17 of 25 (68%) · **Targets:** 30 before Dev's brain is built, 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
 
 Worked examples (full cases with generated connections, not counted above): `examples/e0001-student-aunt-away-short-before-payday` (community college student who works) and `examples/e0002-night-nurse-school-closure`.
 
 Stay-quiet cases: s0010 (pay $18.40 lower after daylight saving), s0012 (cancelled tutorial, essay already handled by her morning routine), s0013 (sick day covered by paid sick leave), s0014 (food spending spike from hosting Thanksgiving).
+
+## Batch 3 (s0021 to s0025, 2026-11-07): all students
+
+| Case | Student | Covers |
+|---|---|---|
+| s0021 | adult learner, evening program, nearly full-time grocery job, own place, night owl crammer, Canvas | the owner's 2026-11-07 case: six 7.5 hour shifts are 42 paid hours (45 on the clock); the unpaid lunch rule is saved when told (30 min on 6 and 7.5 hour shifts, 60 min on 9); hourly pay never predicted; heavy stretch with two midterms; week check |
+| s0022 | university, dorm, first-generation, campus tutor, 19 credits, morning crammer, Canvas | money on its way (Friday paycheck and a $312 refund, neither counted) against a $250 housing draft; late schedule shown as expected usual work days; move-a-bill draft |
+| s0023 | university, dorm, no job, 19 credits, afternoon steady, Moodle, online midterm window | student week check, stay quiet (looks heavy, inside her routine) |
+| s0024 | international university, campus info desk, evening crammer, Canvas | notification-worthy catch: two supervisor-added shifts make 22 hours against his 20 hour visa limit; draft for the supervisor |
+| s0025 | university, roommates, campus tutor and clinical, evening steady, Canvas | off-track money goal said plainly ($150 behind on $500 textbooks), a way back with one tap, no guilt words |
+
+Kinds added: adult learner (s0021), own place, international student with a work limit (s0024), student with a savings goal (s0025). Stay-quiet: s0023 (and s0020). Gaps still open: student parent, athlete (s0018 only), gig work, community college day students, Blackboard, a first-hand follow-up a week later.
 
 ## By kind of life
 

@@ -3,7 +3,8 @@ import { inboxItems } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
 import { getGoogleConnection, readEmail, searchEmail } from "../../integrations/google";
 import { extractDocument, extractionClient } from "./extract";
-import { processDocument } from "./index";
+import { parseFromAddress, senderAuthenticated } from "./email-auth";
+import { processDocument, recordIgnored } from "./index";
 
 /** Recent mail that's likely school, bills or work. Promotions and social are skipped. */
 export const GMAIL_FILING_QUERY =
@@ -41,11 +42,37 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
     if (seen.has(`gmail:${m.id}`)) continue;
     checked++;
     const mail = await readEmail(scope, m.id, deps.fetch);
-    const row = await processDocument(scope, tz, today, { channel: "email", from: mail.from, subject: mail.subject, text: mail.body, files: [] }, deps.extract);
-    await scope.tx
-      .update(inboxItems)
-      .set({ externalId: `gmail:${m.id}` })
-      .where(eq(inboxItems.id, row.id));
+    const address = parseFromAddress(mail.from);
+    if (!address || !senderAuthenticated(mail.authHeaders, address, { via: "gmail" })) {
+      const [ig] = await recordIgnored(
+        scope,
+        address || mail.from,
+        mail.subject,
+        "Gmail couldn't confirm this was really sent by this address (SPF/DKIM failed).",
+      );
+      await scope.tx
+        .update(inboxItems)
+        .set({ externalId: `gmail:${m.id}` })
+        .where(eq(inboxItems.id, ig.id));
+      continue;
+    }
+    // Past the sender check above, so this is the authenticated path: it may update what the user already has.
+    const row = await processDocument(
+      scope,
+      tz,
+      today,
+      {
+        channel: "email",
+        from: address,
+        subject: mail.subject,
+        text: mail.body,
+        files: [],
+        externalId: `gmail:${m.id}`,
+        messageId: mail.messageId,
+        authenticated: true,
+      },
+      deps.extract,
+    );
     if (row.status === "filed") filed++;
   }
   return { filed, checked };
