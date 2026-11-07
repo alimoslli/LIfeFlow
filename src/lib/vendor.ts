@@ -109,6 +109,9 @@ const STATES = new Set(
 
 const CITY_START = new Set("san los las new st saint santa fort el la salt palo north south east west port mount".split(" "));
 
+/** What follows an apostrophe in a possessive or contraction (Shell's, Don't, We'll), which stays lower case. */
+const CONTRACTION = /^(?:s|t|d|m|re|ll|ve)$/;
+
 function titleCase(s: string) {
   return s
     .split(" ")
@@ -118,7 +121,10 @@ function titleCase(s: string) {
       if (i > 0 && SMALL.has(lower)) return lower;
       // Short all-consonant tokens are acronyms (KFC, CVS, UPS); mixed words are names.
       if (w.length <= 4 && !/[aeiouy]/i.test(w)) return w.toUpperCase();
-      return lower.replace(/(^|[-'’./])([a-z])/g, (_m, a: string, b: string) => a + b.toUpperCase());
+      // The first letter after an apostrophe is capitalised in a name (O'Brien) but not in a contraction or possessive (Shell's, Don't).
+      return lower.replace(/(^|[-'’./])([a-z])([a-z]*)/g, (_m, a: string, b: string, rest: string) =>
+        (a === "'" || a === "’") && CONTRACTION.test(b + rest) ? a + b + rest : a + b.toUpperCase() + rest,
+      );
     })
     .join(" ");
 }

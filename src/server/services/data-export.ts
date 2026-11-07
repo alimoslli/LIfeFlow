@@ -1,7 +1,8 @@
-import { and, asc, eq, getTableColumns, gt } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, gt, sql } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import * as schema from "../db/schema";
-import { withUser } from "../db/with-user";
+import { getDb } from "../db/client";
+import { withUser, type UserScope } from "../db/with-user";
 
 type UserTable = PgTable & { userId: PgColumn; id: PgColumn };
 
@@ -83,8 +84,22 @@ const OMIT_COLUMNS: Partial<Record<keyof typeof EXPORT_TABLES, string[]>> = {
   inboxSenders: ["codeHash"],
 };
 
-/** Rows read per query. Each batch is its own short transaction, so a slow download never holds a database connection. */
+/** Rows read per query. All the batches of one export read one snapshot (`openSnapshot`). */
 export const EXPORT_BATCH = 500;
+
+/** How long a download may go unread before its snapshot is let go: the download then fails, never looking complete. */
+export const EXPORT_IDLE_MS = 60_000;
+
+/** The longest one download may hold its snapshot (and a pool connection), however steadily it is read. Then it fails cleanly. */
+export const EXPORT_DEADLINE_MS = 120_000;
+
+/** No single read of a batch runs longer than this, so a stuck query can't hold the snapshot's locks. */
+export const EXPORT_STATEMENT_TIMEOUT_MS = 15_000;
+
+/** The users with a download open right now (one per user, so a few slow readers can't take the whole connection pool). */
+const openExports = new Map<string, number>();
+/** Open until it finishes or is cancelled; a download whose response was dropped without either lapses after its total time. */
+export const exportBusy = (userId: string) => (openExports.get(userId) ?? 0) > Date.now();
 
 /** Exported column names (database names) per table, for the test that no secret or hash slips in. */
 export function exportedColumns(key: keyof typeof EXPORT_TABLES): string[] {
@@ -112,49 +127,133 @@ function exportablePreferences(prefs: schema.UserPreferences | undefined) {
 export type ExportProfile = { name: string; email: string; timezone: string; preferences?: schema.UserPreferences };
 
 /**
- * The export as JSON text, piece by piece: the profile, then each table in batches of EXPORT_BATCH rows in id order.
- * Every batch runs in its own withUser transaction, so row-level security limits every read to this person.
+ * One read-only REPEATABLE READ transaction for a whole export, as this user (`withUser`, so row-level security
+ * still limits every read). Every batch reads the same snapshot, so a bank sync during a long download can't leave
+ * out a transaction it re-posted under a new id, or add one whose account isn't in the file. The connection goes
+ * back to the pool on `close`, or once no batch has been read for `idleMs` (a download nobody is reading).
+ */
+export function openSnapshot(userId: string, idleMs: number, deadlineMs = EXPORT_DEADLINE_MS) {
+  let release!: () => void;
+  const held = new Promise<void>((r) => (release = r));
+  let scope!: Promise<UserScope>;
+  // Settles once the transaction has ended and its connection is back in the pool. It only reads, so how it ends doesn't matter.
+  const ended = new Promise<void>((settled) => {
+    scope = new Promise<UserScope>((opened, failed) => {
+      withUser(
+        userId,
+        async (s) => {
+          await s.tx.execute(sql`select set_config('statement_timeout', ${String(EXPORT_STATEMENT_TIMEOUT_MS)}, true)`);
+          opened(s);
+          return held;
+        },
+        getDb(),
+        { isolationLevel: "repeatable read", accessMode: "read only" },
+      ).then(settled, (e) => {
+        failed(e); // couldn't open: the first read fails with it
+        settled();
+      });
+    });
+  });
+  scope.catch(() => {}); // closed before any read: nothing left to report
+  let closed = false;
+  let idle: ReturnType<typeof setTimeout> | undefined;
+  const close = async () => {
+    closed = true;
+    clearTimeout(idle);
+    clearTimeout(deadline);
+    release();
+    await ended;
+  };
+  // Unread from the start counts as idle, and the whole download has a total time.
+  idle = setTimeout(() => void close(), idleMs);
+  const deadline = setTimeout(() => void close(), deadlineMs);
+  return {
+    async read<T>(fn: (s: UserScope) => Promise<T>): Promise<T> {
+      clearTimeout(idle);
+      if (closed) throw new Error("export: the download stopped being read");
+      try {
+        return await fn(await scope);
+      } finally {
+        if (!closed) idle = setTimeout(() => void close(), idleMs);
+      }
+    },
+    close,
+  };
+}
+
+/**
+ * The export as JSON text, piece by piece: the profile, then each table in batches of EXPORT_BATCH rows in id order,
+ * all from one snapshot (`openSnapshot`), whose connection is let go when the generator finishes, fails or is closed early.
  * Memories come back decrypted by their column type, as everywhere else in the app.
  */
-export async function* exportChunks(userId: string, profile: ExportProfile, batch = EXPORT_BATCH): AsyncGenerator<string> {
+export async function* exportChunks(
+  userId: string,
+  profile: ExportProfile,
+  batch = EXPORT_BATCH,
+  idleMs = EXPORT_IDLE_MS,
+  deadlineMs = EXPORT_DEADLINE_MS,
+): AsyncGenerator<string> {
+  if (exportBusy(userId)) throw new Error("export: a download is already open for this account");
+  openExports.set(userId, Date.now() + deadlineMs + idleMs);
+  try {
+    yield* exportBody(userId, profile, batch, idleMs, deadlineMs);
+  } finally {
+    openExports.delete(userId);
+  }
+}
+
+async function* exportBody(userId: string, profile: ExportProfile, batch: number, idleMs: number, deadlineMs: number): AsyncGenerator<string> {
   const head = {
     exportedAt: new Date().toISOString(),
     profile: { name: profile.name, email: profile.email, timezone: profile.timezone, preferences: exportablePreferences(profile.preferences) },
   };
   yield JSON.stringify(head).slice(0, -1); // the object stays open for the tables
-  for (const [key, table] of Object.entries(EXPORT_TABLES) as [keyof typeof EXPORT_TABLES, UserTable][]) {
-    const omit = OMIT_COLUMNS[key] ?? [];
-    yield `,${JSON.stringify(key)}:[`;
-    let after: string | null = null;
-    let first = true;
-    for (;;) {
-      const rows = (await withUser(userId, (s) =>
-        s.tx
-          .select()
-          .from(table)
-          .where(and(eq(table.userId, s.userId), after === null ? undefined : gt(table.id, after)))
-          .orderBy(asc(table.id))
-          .limit(batch),
-      )) as Record<string, unknown>[];
-      if (!rows.length) break;
-      yield (first ? "" : ",") + rows.map((r) => JSON.stringify(strip(r, omit))).join(",");
-      first = false;
-      after = rows[rows.length - 1].id as string;
-      if (rows.length < batch) break;
+  const snapshot = openSnapshot(userId, idleMs, deadlineMs);
+  try {
+    for (const [key, table] of Object.entries(EXPORT_TABLES) as [keyof typeof EXPORT_TABLES, UserTable][]) {
+      const omit = OMIT_COLUMNS[key] ?? [];
+      yield `,${JSON.stringify(key)}:[`;
+      let after: string | null = null;
+      let first = true;
+      for (;;) {
+        const rows = (await snapshot.read((s) =>
+          s.tx
+            .select()
+            .from(table)
+            .where(and(eq(table.userId, s.userId), after === null ? undefined : gt(table.id, after)))
+            .orderBy(asc(table.id))
+            .limit(batch),
+        )) as Record<string, unknown>[];
+        if (!rows.length) break;
+        yield (first ? "" : ",") + rows.map((r) => JSON.stringify(strip(r, omit))).join(",");
+        first = false;
+        after = rows[rows.length - 1].id as string;
+        if (rows.length < batch) break;
+      }
+      yield "]";
     }
-    yield "]";
+  } finally {
+    await snapshot.close();
   }
   yield "}";
 }
 
 /** exportChunks as a byte stream for the response; reads the next batch only when the client is ready for it. */
-export function exportStream(userId: string, profile: ExportProfile, batch = EXPORT_BATCH): ReadableStream<Uint8Array> {
-  const chunks = exportChunks(userId, profile, batch);
+export function exportStream(
+  userId: string,
+  profile: ExportProfile,
+  batch = EXPORT_BATCH,
+  idleMs = EXPORT_IDLE_MS,
+  deadlineMs = EXPORT_DEADLINE_MS,
+): ReadableStream<Uint8Array> {
+  const chunks = exportChunks(userId, profile, batch, idleMs, deadlineMs);
   const encoder = new TextEncoder();
+  let cancelled = false;
   return new ReadableStream<Uint8Array>({
     async pull(controller) {
       try {
         const next = await chunks.next();
+        if (cancelled) return; // the client left while this batch was read
         if (next.done) controller.close();
         else controller.enqueue(encoder.encode(next.value));
       } catch (e) {
@@ -163,7 +262,9 @@ export function exportStream(userId: string, profile: ExportProfile, batch = EXP
         controller.error(e);
       }
     },
+    // The client disconnected (Next cancels the body): ends the snapshot, so the connection goes back to the pool.
     async cancel() {
+      cancelled = true;
       await chunks.return(undefined);
     },
   });

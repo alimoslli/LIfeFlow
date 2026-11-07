@@ -407,7 +407,7 @@ function kindOf(name: string, category: string | null | undefined, amounts: numb
 /** One charge per cycle, with the extra copies that landed beside it. */
 type Cycle = { t: DetectTxn; extra: DetectTxn[] };
 /** How far apart two charges of the same amount can be and still be one charge billed twice. */
-const DUPLICATE_DAYS = 2;
+export const DUPLICATE_DAYS = 2;
 
 /**
  * One cycle per charge, with the same-amount charges within 2 days of it beside it. Whether those are a

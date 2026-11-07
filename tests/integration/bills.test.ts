@@ -4,7 +4,7 @@ import type { UserScope } from "@/server/db/with-user";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
 import { billsAndPace, cashForecast } from "@/server/services/finance/forecast";
-import { createRecurring, listRecurring, setRecurringStatus, suggestRecurring } from "@/server/services/finance/planning";
+import { createRecurring, listRecurring, setRecurringStatus, suggestRecurring, upcomingRecurring } from "@/server/services/finance/planning";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { DETECTORS } from "@/server/services/proactive/detectors";
 import { makeUser, TZ } from "../helpers";
@@ -128,6 +128,64 @@ describe("a bill that already posted isn't due again (A3)", () => {
     // Read time only: the stored rows keep their dates.
     expect((await run((s) => listRecurring(s))).find((r) => r.name === "City Utilities")!.nextDueDate).toBe(TODAY);
   });
+
+  it("a hand-tracked bill that usually varies is paid by its first charge, before the bank has any history (R1)", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s, 200_000);
+      const utilities = (await getCategoryByName(s, "Utilities"))!;
+      // Tracked at $82; the first charge ever is $69.06, today.
+      await createRecurring(s, {
+        name: "City Utilities",
+        amountCents: -8_200,
+        frequency: "monthly",
+        nextDueDate: TODAY,
+        kind: "bill",
+        categoryId: utilities.id,
+      });
+      await createTransaction(s, {
+        accountId: acct.id,
+        date: TODAY,
+        description: "CITY UTILITIES",
+        merchantName: "City Utilities",
+        amountCents: -6_906,
+        categoryId: utilities.id,
+      });
+      // Phone bills keep the 10% band (F1): $78 against $85, under its brand's key.
+      await createRecurring(s, { name: "Verizon", amountCents: -8_500, frequency: "monthly", nextDueDate: TODAY, kind: "bill" });
+      await createTransaction(s, { accountId: acct.id, date: "2026-11-04", description: "VERIZON WIRELESS PAYMENTS", amountCents: -7_800 });
+      // A plan whose price doesn't move keeps the 10% band: $13 isn't the $15.49 plan.
+      await createRecurring(s, { name: "Netflix", amountCents: -1_549, frequency: "monthly", nextDueDate: TODAY, kind: "subscription" });
+      await createTransaction(s, { accountId: acct.id, date: TODAY, description: "NETFLIX.COM", amountCents: -1_300 });
+    });
+
+    const week = await run((s) => billsAndPace(s, TODAY, TODAY, "2026-11-12"));
+    expect(week.bills.map((b) => b.name)).toEqual(["Netflix"]);
+    // Counted once: this cycle already left checking, so only December's is still to come.
+    const later = await run((s) => billsAndPace(s, TODAY, TODAY, "2026-12-10"));
+    expect(later.bills.map((b) => `${b.date} ${b.name}`).sort()).toEqual([
+      "2026-11-05 Netflix",
+      "2026-12-05 City Utilities",
+      "2026-12-05 Netflix",
+      "2026-12-05 Verizon",
+    ]);
+    const messages = await run((s) => DETECTORS.billsDue({ scope: s, tz: TZ, today: TODAY, now: new Date(`${TODAY}T14:00:00Z`) }));
+    expect(messages.map((m) => m.facts.bill)).not.toContain("City Utilities");
+  });
+});
+
+describe("a phone bill is not paid by the same brand's other purchase (F1)", () => {
+  it("keeps a hand-tracked Verizon bill due after a $69.99 Verizon store purchase", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s, 200_000);
+      const phone = (await getCategoryByName(s, "Phone"))!;
+      await createRecurring(s, { name: "Verizon", amountCents: -8_500, frequency: "monthly", nextDueDate: "2026-11-10", kind: "bill", categoryId: phone.id });
+      await createTransaction(s, { accountId: acct.id, date: "2026-11-05", description: "VERIZON STORE #1234", amountCents: -6_999 });
+    });
+    const week = await run((s) => billsAndPace(s, TODAY, TODAY, "2026-11-12"));
+    expect(week.bills.map((b) => `${b.date} ${b.name}`)).toEqual(["2026-11-10 Verizon"]);
+  });
 });
 
 describe("the urgent bill message reads the same bills as Today and Money (A14)", () => {
@@ -179,6 +237,45 @@ describe("the urgent bill message reads the same bills as Today and Money (A14)"
     expect((await run((s) => billsAndPace(s, "2026-11-09", "2026-11-09", "2026-11-12"))).bills).toEqual([
       expect.objectContaining({ name: "T-Mobile", date: "2026-11-09" }),
     ]);
+  });
+});
+
+describe("two $15.49 Netflix plans, only one tracked (R2)", () => {
+  async function twoPlans(dates: string[]) {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s, 100_000);
+      for (const date of dates)
+        await createTransaction(s, { accountId: acct.id, date, description: "NETFLIX.COM", merchantName: "Netflix", amountCents: -1_549 });
+      await createRecurring(s, { name: "Netflix", amountCents: -1_549, frequency: "monthly", nextDueDate: "2026-11-15", kind: "subscription" });
+    });
+    return run;
+  }
+  const show = (bills: { date: string; name: string; found: boolean }[]) => bills.map((b) => `${b.date} ${b.name}${b.found ? " (found)" : ""}`);
+
+  it("the other plan's charge a week before the tracked due date doesn't mark it paid, with one month of history", async () => {
+    const run = await twoPlans(["2026-10-07", "2026-10-15", "2026-11-07"]);
+    expect(show((await run((s) => billsAndPace(s, "2026-11-08", "2026-11-08", "2026-11-20"))).bills)).toEqual(["2026-11-15 Netflix"]);
+  });
+
+  it("or with months of it, when the bank shows both plans: each charge belongs to its own plan", async () => {
+    const run = await twoPlans(["2026-08-07", "2026-08-15", "2026-09-07", "2026-09-15", "2026-10-07", "2026-10-15", "2026-11-07"]);
+    // The tracked plan is still due on the 15th; the other is found in the bank and comes again on Dec 7.
+    expect(show((await run((s) => billsAndPace(s, "2026-11-08", "2026-11-08", "2026-12-08"))).bills)).toEqual([
+      "2026-11-15 Netflix",
+      "2026-12-07 Netflix (found)",
+    ]);
+  });
+
+  it("is paid once its own charge posts", async () => {
+    const run = await twoPlans(["2026-10-07", "2026-10-15", "2026-11-07", "2026-11-15"]);
+    expect(show((await run((s) => upcomingRecurring(s, "2026-11-15", "2026-12-20"))).map((u) => ({ ...u, found: false })))).toEqual(["2026-12-15 Netflix"]);
+  });
+
+  it("with both tracked, the charge for the plan due yesterday doesn't pay the other one too", async () => {
+    const run = await twoPlans(["2026-11-07"]);
+    await run((s) => createRecurring(s, { name: "Netflix", amountCents: -1_549, frequency: "monthly", nextDueDate: "2026-11-07", kind: "subscription" }));
+    expect(show((await run((s) => upcomingRecurring(s, "2026-11-08", "2026-11-20"))).map((u) => ({ ...u, found: false })))).toEqual(["2026-11-15 Netflix"]);
   });
 });
 
