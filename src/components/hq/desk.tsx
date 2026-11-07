@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { FileText, Plus, X } from "lucide-react";
 import { addDeskTaskAction } from "@/app/admin/hq/actions";
 
@@ -134,7 +135,8 @@ export function Desk({ files, roles }: { files: DeskFileView[]; roles: { role: s
         </details>
       </dialog>
 
-      {opening && <MacBook file={opening.file} copied={opening.copied} onClose={() => setOpening(null)} />}
+      {/* On document.body: the penthouse picture is transformed (and filtered at night), which would trap a fixed overlay. */}
+      {opening && createPortal(<MacBook file={opening.file} copied={opening.copied} onClose={() => setOpening(null)} />, document.body)}
     </>
   );
 }

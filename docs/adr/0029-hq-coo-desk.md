@@ -86,3 +86,46 @@ The owner: "I want him always there doing something like a real COO, he's super 
    - Order: working, offline, done, ready, asleep.
    - The COO's Ready line: "Next check-in 2:13 PM · Last: <his last check-in summary>".
    - A department's Ready line: "On call · next round Thu 3:07 AM".
+
+## Addendum (owner, 2026-11-07, later still): the rendered office
+
+The owner: "the design is super simple and doesn't look like the thing I envisioned", and the "I'm CEO" card was too big. They chose rendered art like their concept (`docs/hq/concept.webp`) over redrawn SVG.
+- Every room is now a picture in the concept's style, stored in `public/hq/office`.
+- The pictures were made once with OpenAI's `gpt-image-2`, using the concept as the style reference, at about 23 images and a few dollars, one time. Each room's three pictures are made from the same base, so the room and the person match.
+- **Pictures per person:**
+  - `<role>-working.webp`: at the desk, busy;
+  - `<role>-ready.webp`: at the desk, relaxed;
+  - `<role>-asleep.webp`: in bed, screens off.
+- **Other pictures:** `penthouse.webp` (the CEO at the desk, the pile of task files, the closed laptop) and `lounge.webp`.
+- **How the state picks a picture:**
+  - working shows `working`;
+  - ready and done show `ready`;
+  - asleep shows `asleep`;
+  - offline shows `asleep`, greyed by CSS.
+- **CSS effects:**
+  - a soft pulsing glow while working;
+  - floating z's while asleep;
+  - a check badge when done;
+  - night mode dims.
+- **Unchanged rules:** nothing calls an AI when HQ opens, and every state is still a real record.
+- **The penthouse:** the desk button sits on the drawn folders (`PILE` in office-scene.tsx, in percent of the picture). The business card is now a small card pinned in the picture's top-right corner.
+- **New pictures:** a new person or room gets its three pictures the same way. Generate the working one from the concept, then make ready and asleep from it, so the room stays the same.
+
+## Addendum (owner, 2026-11-07, later still): one headquarters building
+
+The owner: "keep the functionality but implement the more headquarters building design, keeping the brand identity and the simplicity of understanding and managing it." The rooms were separate cards; the concept is one building cut open.
+- **One building** (`components/hq/building.css`, imported only by `office-scene.tsx`; every class starts with `hq-`):
+  - a rendered roof (`public/hq/office/roof.webp`, made once in the concept's style and cut out of its background) with the LifeFlow HQ sign. The sign's words and mark are HTML with the real `BrandMark`, so the brand never drifts and stays sharp;
+  - the rooms side by side between walnut walls, with floor beams that carry the floor's name;
+  - the lobby across the bottom and the steps.
+- **Each room carries its own label, like the concept:**
+  - at the top: icon, name, what the department does, state;
+  - at the bottom: the one line (what it's doing, or when it's next on), and any note waiting on the owner (one line).
+  - The DOM order still reads "Name, State: line, note, what it does" for screen readers.
+- **Layouts:**
+  - a phone gets a slim tower, one room a floor (Floor 7 to 1);
+  - a tablet gets two rooms a floor;
+  - a wide screen gets three, with the COO sharing the penthouse with the CEO.
+- **The penthouse buttons** (Your desk, Needs your yes, Goodnight) sit on a walnut ledge under the picture on a phone and tablet, and on the picture when wide.
+- **The business card** is a small card pinned in the corner.
+- **Unchanged:** every function, link and state rule. Only the look changed.

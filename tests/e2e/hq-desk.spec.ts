@@ -44,6 +44,16 @@ test("The desk: the pile opens the files, a file plays the MacBook and lands in 
   const op = await ownerPage(browser, { viewport: { width: 1280, height: 900 }, deviceScaleFactor: SHOTS ? 2 : 1 });
   await op.goto("/admin");
   await expect(op.getByTestId("hq-desk-open")).toContainText("2");
+  // One building like the concept: the COO shares the penthouse with you, then three rooms a floor, the lobby the full width.
+  const rooms = op.locator(".hq-room");
+  const [you, coo, eng, design, research] = await Promise.all([0, 1, 2, 3, 4].map(async (i) => (await rooms.nth(i).boundingBox())!));
+  expect(Math.abs(you.y - coo.y)).toBeLessThan(2);
+  expect(you.width).toBeGreaterThan(coo.width * 1.8);
+  expect(eng.y).toBeGreaterThan(you.y + you.height - 1);
+  expect(Math.abs(eng.y - design.y)).toBeLessThan(2);
+  expect(Math.abs(design.y - research.y)).toBeLessThan(2);
+  const lobby = (await op.locator(".hq-room-lounge").boundingBox())!;
+  expect(lobby.width).toBeGreaterThan(you.width);
   if (SHOTS) await op.locator(".hq-tower").screenshot({ path: `${SHOTS}/office-web.png` });
 
   // The drawn pile is a button.

@@ -63,17 +63,17 @@ test("HQ on a phone: no sideways scroll, big room targets, no serious accessibil
     const box = await rooms.nth(i).boundingBox();
     expect(box?.height ?? 0, `room ${i}`).toBeGreaterThanOrEqual(44);
   }
-  // The penthouse takes the full width, then two rooms to a floor.
-  const founder = await rooms.first().boundingBox();
-  const chief = await rooms.nth(1).boundingBox();
-  const third = await rooms.nth(2).boundingBox();
-  const fifth = await rooms.nth(4).boundingBox();
-  expect(founder!.width).toBeGreaterThan(chief!.width * 1.8);
-  expect(Math.abs(chief!.y - third!.y)).toBeLessThan(2);
-  expect(Math.abs(chief!.width - third!.width)).toBeLessThan(2);
-  expect(fifth!.y).toBeGreaterThan(third!.y);
-  for (const label of ["Penthouse", "Floor 4", "Floor 3", "Floor 2", "Ground"])
-    await expect(page.locator(".hq-slab:visible", { hasText: label })).toHaveCount(1);
+  // The building on a phone is a slim tower: the penthouse, then one room a floor, each the full width, top to bottom.
+  const boxes = await Promise.all([0, 1, 2, 3, 4].map(async (i) => (await rooms.nth(i).boundingBox())!));
+  const founder = boxes[0];
+  for (let i = 1; i < boxes.length; i++) {
+    expect(Math.abs(boxes[i].width - founder.width), `room ${i} width`).toBeLessThan(2);
+    expect(boxes[i].y, `room ${i} below room ${i - 1}`).toBeGreaterThan(boxes[i - 1].y + boxes[i - 1].height - 1);
+  }
+  for (const label of ["Penthouse", "Floor 7", "Floor 6", "Floor 5", "Floor 4", "Floor 3", "Floor 2", "Floor 1", "Lobby"])
+    await expect(page.locator(".hq-slab:visible", { hasText: new RegExp(`^${label}$`) })).toHaveCount(1);
+  // The roof carries the sign.
+  await expect(page.locator(".hq-roof-sign")).toHaveText("LifeFlow HQ");
   // The business card stays inside the penthouse on a phone.
   const card = await page.getByRole("img", { name: /^Business card/ }).boundingBox();
   expect(card!.x + card!.width).toBeLessThanOrEqual(founder!.x + founder!.width + 4);
