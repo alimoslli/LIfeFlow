@@ -59,11 +59,12 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 
 #hit { position: absolute; z-index: 7; border-radius: 50%; touch-action: pan-y; cursor: pointer; }
 .hint { position: absolute; left: 0; right: 0; text-align: center; font-size: 0.8rem; color: var(--fg3); z-index: 3; pointer-events: none; }
+#hintWrap { z-index: 6; opacity: 0; }
 
 .co { position: absolute; left: 0; top: 0; font-size: 0.8rem; color: var(--fg); white-space: nowrap; transform-origin: 0 0; font-variant-numeric: tabular-nums; }
 .mi { position: absolute; left: 0; top: 0; width: 30px; height: 30px; display: grid; place-items: center; font-size: 26px; line-height: 1; will-change: transform; }
 
-#trackWrap { position: absolute; left: 0; right: 0; height: 156px; overflow-x: auto; overflow-y: hidden; z-index: 5; scrollbar-width: none; -webkit-overflow-scrolling: touch; pointer-events: none; clip-path: inset(0 50% 0 50%); overscroll-behavior-x: contain; }
+#trackWrap { position: absolute; left: 0; right: 0; height: 156px; overflow-x: auto; overflow-y: hidden; z-index: 5; touch-action: pan-x; scrollbar-width: none; -webkit-overflow-scrolling: touch; pointer-events: none; clip-path: inset(0 50% 0 50%); overscroll-behavior-x: contain; }
 #trackWrap::-webkit-scrollbar { display: none; }
 #track { position: relative; height: 100%; }
 .tl-line { position: absolute; left: 0; height: 2px; border-radius: 1px; top: 69px; }
@@ -80,7 +81,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .node .n-n { position: absolute; left: 0; right: 0; top: 104px; font-size: 0.75rem; color: var(--fg2); text-align: center; line-height: 1.25; opacity: var(--tlab, 1); }
 .node.later .n-ic { opacity: var(--tlab, 1); }
 .node.mapped .n-ic { visibility: hidden; }
-.nowpill { position: absolute; top: 24px; height: 26px; padding: 0 10px; margin-left: 0; border-radius: 13px; background: var(--mint); color: var(--mint-ink); font-size: 0.78rem; font-weight: 600; display: grid; place-items: center; white-space: nowrap; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+.nowpill { position: absolute; top: 24px; height: 26px; padding: 0 10px 0 7px; margin-left: 0; border-radius: 13px; background: var(--mint); color: var(--mint-ink); font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 5px; white-space: nowrap; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
 .nowpill::after { content: ""; position: absolute; left: 50%; top: 26px; width: 2px; height: 20px; margin-left: -1px; background: var(--mint); }
 .nowpill i { position: absolute; left: 50%; top: 40px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 10px rgba(126,224,174,.7); }
 
@@ -170,6 +171,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
       <div class="chips" id="chips"></div>
       <div id="trackWrap" aria-label="Timeline"><div id="track"></div></div>
       <div class="detail" id="detail" aria-live="polite"></div>
+      <div class="hint" id="hintWrap">Pull down to wrap your day</div>
       <div id="hit" role="button" tabindex="0" aria-label="Open your day"></div>
     </div>
   </div>
@@ -310,6 +312,7 @@ function layout() {
   chips.style.top = G.chipY + 'px';
   trackWrap.style.top = G.wrapTop + 'px';
   detail.style.top = G.detailY + 'px';
+  $('#hintWrap').style.top = (G.detailY + 6) + 'px';
   hint.style.top = (G.cy + G.R + 78) + 'px';
   const hr = G.R + 54;
   Object.assign(hit.style, { left: (G.cx - hr) + 'px', top: (G.cy - hr) + 'px', width: hr * 2 + 'px', height: hr * 2 + 'px' });
@@ -404,13 +407,15 @@ function rebuildClock() {
   for (const a of CM.arcs) {
     const d = arcPath(ang(a.a), ang(a.b), R);
     const op = a.past ? 0.32 : (a.sleep ? 0.55 : 1);
-    if (!a.past) el('path', { d, fill: 'none', stroke: '#7ee0ae', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: op * 0.55, filter: 'url(#soft)' }, arcsG);
-    el('path', { d, fill: 'none', stroke: '#7ee0ae', 'stroke-width': 3, 'stroke-linecap': 'round', opacity: op }, arcsG);
+    a.els = [];
+    if (!a.past) a.els.push(el('path', { d, fill: 'none', stroke: '#7ee0ae', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: op * 0.55, filter: 'url(#soft)' }, arcsG));
+    a.els.push(el('path', { d, fill: 'none', stroke: '#7ee0ae', 'stroke-width': 3, 'stroke-linecap': 'round', opacity: op }, arcsG));
   }
   for (const p of CM.pins) {
     const [x, y] = pol(ang(p.t), R);
-    el('circle', { cx: x, cy: y, r: 4.2, fill: '#7ee0ae', stroke: '#000', 'stroke-width': 2 }, arcsG);
+    p.el = el('circle', { cx: x, cy: y, r: 4.2, fill: '#7ee0ae', stroke: '#000', 'stroke-width': 2 }, arcsG);
   }
+  G.rimFill = 1;
   // steps complication
   stepsG.textContent = '';
   const steps = stepsAt(now);
@@ -460,7 +465,7 @@ function trackModel(now) {
   const gap = (a, b) => {
     const dt = b.t - a.t;
     if (a.kind === 'mid' || b.kind === 'mid') return 44 + clamp((dt - 120) / 60 * 4, 0, 26);
-    if (a.kind === 'now' || b.kind === 'now') return 58 + clamp((dt - 60) / 60 * 5, 0, 28);
+    if (a.kind === 'now' || b.kind === 'now') return 66 + clamp((dt - 60) / 60 * 5, 0, 24);
     return 96 + clamp((dt - 180) / 60 * 6, 0, 30);
   };
   const pad = G.W / 2;
@@ -538,7 +543,8 @@ function rebuildTrack() {
   }
   const np = document.createElement('button');
   np.className = 'nowpill'; np.style.left = TM.nowX + 'px';
-  np.innerHTML = `<span>${fmt(S.now)}</span><i></i>`;
+  const ma = (S.now % 60) / 60 * 360, ha = ((S.now / 60) % 12) / 12 * 360;
+  np.innerHTML = `<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" transform="rotate(${ma.toFixed(1)} 7 7)"/><path d="M7 7V4.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" transform="rotate(${ha.toFixed(1)} 7 7)"/></svg><span>${fmt(S.now)}</span><i></i>`;
   np.setAttribute('aria-label', `Now, ${fmt(S.now)}. Back to the clock`);
   np.addEventListener('click', () => close());
   track.appendChild(np);
@@ -546,9 +552,11 @@ function rebuildTrack() {
 }
 
 /* ---------- Map clock markers onto line nodes for the morph ---------- */
-function prepMorph() {
+function prepMorph(keepScroll) {
   const sl = homeScroll();
-  trackWrap.scrollLeft = sl;
+  G.home = sl;
+  if (keepScroll && Math.abs(trackWrap.scrollLeft - sl) > 1) G.wrapSl = trackWrap.scrollLeft;
+  else { G.wrapSl = null; trackWrap.scrollLeft = sl; }
   micons.textContent = '';
   TM.nodes.forEach((n) => n.el.classList.remove('mapped'));
   const capL = G.cx - G.capHW + 18, capR = G.cx + G.capHW - 18;
@@ -781,9 +789,24 @@ function drawGoo(u) {
 }
 
 /* ---------- Render one frame of the motion, a pure function of p ---------- */
+// The rim's busy arcs and pins, drawn up to a share f of its 12-hour window (from 2 hours ago, clockwise).
+function fillRim(f) {
+  if (G.rimFill === f) return;
+  G.rimFill = f;
+  const rt = CM.ws + f * (CM.we - CM.ws);
+  for (const a of CM.arcs) {
+    const e = Math.min(a.b, rt), on = e > a.a + 1;
+    const d = on ? arcPath(ang(a.a), ang(e), G.R) : '';
+    for (const x of a.els) { x.style.visibility = on ? 'visible' : 'hidden'; if (on) x.setAttribute('d', d); }
+  }
+  for (const p of CM.pins) p.el.style.visibility = p.t <= rt ? 'visible' : 'hidden';
+}
 function render() {
-  const P = clamp(S.p, 0, 1), pr = S.press;
+  const P = clamp(S.p, 0, 1), pr = S.press, prC = clamp(pr, 0, 1);
   const R = G.R;
+  // wrapping back from another part of the line: it rewinds to now in the first part of the same motion
+  if (G.wrapSl != null) trackWrap.scrollLeft = lerp(G.home, G.wrapSl, eIO(seg(P, 0.78, 1)));
+  const shift = G.wrapSl != null ? G.home - trackWrap.scrollLeft : 0;
   if (reduce) return renderReduced(P);
   // body
   const s = eIO(seg(P, 0.36, 0.78));
@@ -794,12 +817,14 @@ function render() {
   const dip = 1 - 0.02 * pr * (1 - seg(P, 0, 0.15));
   faceG.setAttribute('transform', `translate(${G.cx} ${by}) scale(${(rx / R) * fScale * dip} ${(ry / R) * fScale * dip})`);
   $('#rimC').style.opacity = 1 - seg(P, 0.0, 0.05);
-  arcsG.style.opacity = 1 - seg(P, 0.2, 0.36);
+  // the rim empties as the clock stretches open, and refills clockwise from 2 hours ago as the timeline wraps back in
+  fillRim(Math.round(eIO(1 - seg(P, 0.1, 0.34)) * 400) / 400);
+  arcsG.style.opacity = 1 - seg(P, 0.3, 0.4);
   ticksG.style.opacity = stepsG.style.opacity = $('#handsG').style.opacity = 1 - seg(P, 0.3, 0.5);
-  stepsG.style.opacity = (1 - seg(P, 0.02, 0.2)) * (1 - 0.6 * pr);
-  $('#pressG').setAttribute('opacity', pr * (1 - seg(P, 0.3, 0.5)));
-  $('#haloC').setAttribute('opacity', 0.35 * pr * (1 - seg(P, 0.05, 0.3)));
-  const hc = `rgb(${Math.round(lerp(243, 126, pr))},${Math.round(lerp(245, 224, pr))},${Math.round(lerp(244, 174, pr))})`;
+  stepsG.style.opacity = (1 - seg(P, 0.02, 0.2)) * (1 - 0.6 * prC);
+  $('#pressG').setAttribute('opacity', prC * (1 - seg(P, 0.3, 0.5)));
+  $('#haloC').setAttribute('opacity', 0.35 * prC * (1 - seg(P, 0.05, 0.3)));
+  const hc = `rgb(${Math.round(lerp(243, 126, prC))},${Math.round(lerp(245, 224, prC))},${Math.round(lerp(244, 174, prC))})`;
   $('#hourH').setAttribute('stroke', hc); $('#minH').setAttribute('stroke', hc); $('#hubC').setAttribute('fill', hc);
   // markers
   const lab = 1 - seg(P, 0, 0.12);
@@ -821,7 +846,7 @@ function render() {
     const ex = (ox - G.cx) / (rx + gap), ey = (oy - by) / (ry + gap), dd = Math.hypot(ex, ey);
     if (dd < 1 && dd > 1e-3) { ox = G.cx + ex / dd * (rx + gap); oy = by + ey / dd * (ry + gap); }
     ox = clamp(ox, 24, G.W - 24);
-    const x = lerp(ox, k.p2[0], tb), y = lerp(oy, k.p2[1], tb);
+    const x = lerp(ox, k.p2[0] + shift, tb), y = lerp(oy, k.p2[1], tb);
     const sc = lerp(lerp(1, 0.86, seg(P, 0.05, 0.25)), 1.04, seg(P, 0.6, 0.9));
     const op = lerp(k.dim ? 0.5 : 1, 1, seg(P, 0.05, 0.3));
     k.el.style.transform = `translate3d(${(x - 15).toFixed(2)}px, ${(y - 15).toFixed(2)}px, 0) scale(${sc.toFixed(3)})`;
@@ -858,7 +883,9 @@ function render() {
   chips.querySelectorAll('.chip').forEach((c, i) => { const t = seg(P, 0.8 + i * 0.03, 0.95 + i * 0.02); c.style.opacity = t; c.style.transform = `translateY(${(10 * (1 - eOut(t))).toFixed(2)}px)`; });
   const dt = seg(P, 0.86, 1);
   detail.style.opacity = dt; detail.style.transform = `translateY(${(12 * (1 - eOut(dt))).toFixed(2)}px)`;
+  wrapHint(P);
 }
+function wrapHint(P) { $('#hintWrap').style.opacity = detail.innerHTML ? 0 : seg(P, 0.92, 1); }
 function renderReduced(P) {
   faceG.setAttribute('transform', `translate(${G.cx} ${G.cy})`);
   $('#face').style.opacity = 1 - P; callouts.style.opacity = 1 - P; hint.style.opacity = 1 - P;
@@ -871,6 +898,7 @@ function renderReduced(P) {
   $('#todayBtn').style.opacity = 1 - P; $('#todayBtn').style.visibility = P > 0.5 ? 'hidden' : 'visible';
   daysNav.style.opacity = P; chips.querySelectorAll('.chip').forEach((c) => { c.style.opacity = P; });
   detail.style.opacity = P;
+  wrapHint(P);
 }
 
 /* ---------- Driving the motion ---------- */
@@ -925,18 +953,90 @@ function open() {
   haptic(8);
   animateTo(1, reduce ? 240 : 1300, reduce ? (t) => t : ePlay, finishOpen);
 }
+// Wrapping the timeline back into the clock: the exact path of the open, run backwards as one motion.
+// From another day the line first rewinds to now; then the tiles and labels leave, the line gathers into the
+// capsule, the bubbles rise out of it and turn back around the rim, the rim refills clockwise, and the clock
+// lands with a small spring.
+function beginWrap() {
+  S.open = false; S.sel = null; showDetail(); markSel();
+  if (S.press < 1) S.press = 1;
+  prepMorph(true); micons.style.visibility = 'visible';
+}
+function finishClose() {
+  setInteractive(false);
+  G.wrapSl = null; trackWrap.scrollLeft = G.home;
+  S.day = 0; markDay(); buildChips();
+  render();
+  // the landing: the press lets go with a slight overshoot, so the clock settles instead of stopping
+  const from = S.press, start = performance.now(), ms = reduce ? 160 : 520;
+  cancelAnimationFrame(S.pressAnim);
+  const step = (now) => {
+    const t = clamp((now - start) / ms, 0, 1);
+    S.press = from * (1 - (reduce ? eOut(t) : eBack(t)));
+    if (!S.open) render();
+    if (t < 1) S.pressAnim = requestAnimationFrame(step);
+  };
+  S.pressAnim = requestAnimationFrame(step);
+}
 function close() {
   if (!S.open || S.anim) return;
-  const go = () => {
-    S.open = false; setInteractive(false);
-    S.day = 0; S.sel = null; markDay();
-    prepMorph(); micons.style.visibility = 'visible';
-    animateTo(0, reduce ? 200 : 1100, reduce ? (t) => t : ePlay, () => pressTo(0, 260));
-  };
-  const target = homeScroll();
-  if (Math.abs(trackWrap.scrollLeft - target) > 2) { trackWrap.scrollTo({ left: target, behavior: reduce ? 'auto' : 'smooth' }); setTimeout(go, reduce ? 0 : 420); }
-  else go();
+  const dist = Math.abs(trackWrap.scrollLeft - homeScroll());
+  beginWrap();
+  setInteractive(false);
+  animateTo(0, reduce ? 260 : 1150 + Math.min(450, dist * 0.12), reduce ? eIO : ePlay, finishClose);
 }
+
+/* pull the line down, or pinch it, to wrap it back into the clock; it follows the finger and settles on release */
+const pts = new Map();
+let wrap = null, wrapSuppressClick = 0;
+trackWrap.addEventListener('pointerdown', (e) => {
+  if (!S.open || S.anim) return;
+  pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pts.size === 1) wrap = { kind: null, x: e.clientX, y: e.clientY, id: e.pointerId, lastP: 1, lastT: performance.now(), v: 0, armed: false };
+  else if (pts.size === 2 && wrap && wrap.kind !== 'pull') {
+    const [a, b] = [...pts.values()];
+    wrap.kind = 'pinch'; wrap.d0 = Math.max(40, Math.hypot(a.x - b.x, a.y - b.y));
+    beginWrap();
+  }
+});
+trackWrap.addEventListener('pointermove', (e) => {
+  if (!pts.has(e.pointerId) || !wrap) return;
+  pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  let p = null;
+  if (wrap.kind === 'pinch' && pts.size >= 2) {
+    const [a, b] = [...pts.values()];
+    p = clamp(1 - (1 - Math.hypot(a.x - b.x, a.y - b.y) / wrap.d0) * 1.6, 0, 1);
+  } else if (e.pointerId === wrap.id) {
+    const dx = e.clientX - wrap.x, dy = e.clientY - wrap.y;
+    if (!wrap.kind && dy > 10 && dy > Math.abs(dx) * 1.2) {
+      wrap.kind = 'pull';
+      try { trackWrap.setPointerCapture(e.pointerId); } catch (er) { /* ignore */ }
+      beginWrap();
+    }
+    if (wrap.kind === 'pull') p = clamp(1 - (dy - 10) / 250, 0, 1);
+  }
+  if (p == null) return;
+  const now = performance.now();
+  wrap.v = (p - wrap.lastP) / Math.max(1, now - wrap.lastT) * 1000; wrap.lastP = p; wrap.lastT = now;
+  // one tick when the pull has gone far enough to wrap on release
+  if (!wrap.armed && p < 0.7) { wrap.armed = true; haptic(6); } else if (wrap.armed && p > 0.74) wrap.armed = false;
+  S.p = p; render(); syncMorphSlider();
+});
+const endWrap = (e, cancelled) => {
+  pts.delete(e.pointerId);
+  if (!wrap || (wrap.kind !== 'pinch' && e.pointerId !== wrap.id) || (wrap.kind === 'pinch' && pts.size)) { if (!pts.size) wrap = null; return; }
+  const w = wrap; wrap = null; pts.clear();
+  if (!w.kind) return;
+  wrapSuppressClick = performance.now();
+  // a flick counts only if the finger was still moving when it let go
+  const v = performance.now() - w.lastT > 90 ? 0 : w.v;
+  if (!cancelled && (S.p < 0.7 || v < -2)) animateTo(0, 760 * S.p + 260, eOut, finishClose);
+  else animateTo(1, 420 * (1 - S.p) + 180, eOut, () => { G.wrapSl = null; finishOpen(); });
+};
+trackWrap.addEventListener('pointerup', (e) => endWrap(e, false));
+trackWrap.addEventListener('pointercancel', (e) => endWrap(e, true));
+// a pull that started on a node is not a tap on it
+trackWrap.addEventListener('click', (e) => { if (performance.now() - wrapSuppressClick < 350) { e.stopPropagation(); e.preventDefault(); } }, true);
 
 /* pull sideways to open; tap to open */
 let drag = null;
@@ -961,7 +1061,8 @@ const endDrag = (e, cancelled) => {
   if (!drag || e.pointerId !== drag.id) return;
   const d = drag; drag = null;
   if (!d.moved) { if (cancelled) pressTo(0); else open(); return; }
-  if (!cancelled && (S.p > 0.35 || d.v > 1.6)) animateTo(1, 700 * (1 - S.p) + 250, eOut, finishOpen);
+  const v = performance.now() - d.lastT > 90 ? 0 : d.v;
+  if (!cancelled && (S.p > 0.35 || v > 1.6)) animateTo(1, 700 * (1 - S.p) + 250, eOut, finishOpen);
   else animateTo(0, 600 * S.p + 150, eOut, () => pressTo(0, 220));
 };
 hit.addEventListener('pointerup', (e) => endDrag(e, false));
@@ -985,6 +1086,7 @@ trackWrap.addEventListener('scroll', () => {
 const timeR = $('#timeR'), morphR = $('#morphR');
 function syncMorphSlider() { morphR.value = Math.round(clamp(S.p, 0, 1) * 1000); $('#morphO').textContent = Math.round(clamp(S.p, 0, 1) * 100) + '%'; }
 function rebuild() {
+  G.wrapSl = null;
   rebuildClock(); rebuildTrack(); buildDays(); markDay(); buildChips(); showDetail();
   if (S.open) { finishOpen(); trackWrap.scrollLeft = homeScroll(); S.day = 0; markDay(); buildChips(); showDetail(); }
   else { prepMorph(); }
@@ -998,7 +1100,7 @@ timeR.addEventListener('input', () => {
 function scrubTo(p, press) {
   if (S.anim) { cancelAnimationFrame(S.anim.id); S.anim = null; }
   if (press != null) S.press = press;
-  if (S.open && p < 1) { S.open = false; setInteractive(false); trackWrap.scrollLeft = homeScroll(); }
+  if (S.open && p < 1) { S.open = false; setInteractive(false); G.wrapSl = null; trackWrap.scrollLeft = homeScroll(); }
   if (!S.open) { prepMorph(); micons.style.visibility = 'visible'; S.day = 0; S.sel = null; buildChips(); markDay(); showDetail(); }
   S.p = p;
   if (p >= 1) { render(); finishOpen(); } else { if (press == null && p > 0) S.press = 1; render(); }

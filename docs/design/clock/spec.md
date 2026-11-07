@@ -66,6 +66,20 @@ One continuous, reversible motion driven by a single progress value `p` from 0 t
   - On the web: `navigator.vibrate` where it exists, and the iOS 18 switch-tap where it doesn't.
   - Never more than 3 per open.
 
+### The wrap: timeline back into the clock (owner, 2026-11-07, through the COO)
+The way back is as crafted as the way in. It is never a plain fade or cut: it is the same path, run backwards as one motion, with its own touches.
+- **Ways to start it:**
+  - **Pull the line down** (or pinch it). It follows your finger: 250 px of pull is the whole way.
+  - **Let go** and it wraps if it's past 30%, or if you flick down. Otherwise it springs back open.
+  - **One haptic tick** when you've pulled far enough to wrap.
+  - **Tap the "now" pill** (it carries a tiny clock showing the time) or "Today", press Escape, or use the back gesture. The same wrap plays, in 1.15 s.
+  - **The hint:** a quiet line under the tiles says "Pull down to wrap your day" until a card is open.
+- **From another day** there's no wait. The line rewinds to now in the first part of the same motion (`p` 1 to 0.78), and up to 0.45 s is added for a long rewind. The bubbles ride with the line, so nothing jumps.
+- **The order:** the tiles, labels and day picker leave. The line gathers from both ends into the glowing capsule, and the bubbles rise out of it on liquid necks. The ring turns back until the markers sit at their real times, and the face returns.
+- **The rim refills clockwise** from 2 hours ago (`p` 0.34 to 0.1), so the day visibly pours back into the clock. Opening runs the same in reverse: the rim empties as the clock stretches.
+- **The landing:** the press glow lets go with a slight overshoot, so the clock settles rather than stops, with a haptic tick.
+- **Reduced motion:** a calm crossfade that still follows the finger, with no liquid and no rewind sweep.
+
 ## 4. The timeline (frames 5 and 6)
 - **The header:** the logo and bell stay. "Today ⌄" becomes a day picker, "‹ Wed Thu Fri [Today] Sun Mon Tue ›", with today in a mint pill and the day centred. The line sits right under it.
 - **Up to three tiles under the line** (where the owner's frame 6 puts them) round up the day in view with what's tied to the clock: its time-bound commitments. *(Owner, 2026-11-07, through the COO: "work shifts, deadlines, classes and the like", not spent, steps or sleep, and not tasks or focus.)*
@@ -90,7 +104,7 @@ One continuous, reversible motion driven by a single progress value `p` from 0 t
   - Midnight is a small tick with the day's name.
   - The day picker and tiles follow the day in the middle of the screen. Tapping a day scrolls to it.
 - **No card until you ask.** Like frame 6, the open timeline shows the line and the tiles only. **Tapping a node** (or a tile) opens one quiet card under the tiles; tapping it again, or changing the day, puts it away. The card: the icon, name, time, where it came from ("from your work calendar", "from Chase", "from Apple Health") and one action.
-- **Back to the clock:** tap the "now" pill or "Today", or use the back gesture. The line first scrolls home to now, then the motion reverses.
+- **Back to the clock (the wrap, section 3):** pull the line down or pinch it. Or tap the "now" pill (with its tiny clock) or "Today", or use the back gesture.
 
 ## 5. States
 - **First open of the day:** the clock.
@@ -120,6 +134,8 @@ One continuous, reversible motion driven by a single progress value `p` from 0 t
 - The week view.
 
 ## 8. Open for the owner
-1. Should the rim show the 12 hours around now (last 2, next 10)? That's my pick.
-2. Should a pull also turn it into the timeline, or only a tap?
+1. **The rim, waiting for the owner's pick.** He asked to see both: `rim-options.png` shows them side by side, with the same day and data at 8:45 PM.
+   - **A:** the whole day on one face, like his frames. 9 AM and 9 PM share the same spot, so the arcs overlap.
+   - **B:** the 12 hours around now (last 2, next 10). This is what the prototype does; it's my pick.
+2. Should a pull also turn it into the timeline, or only a tap? (Still open; the prototype does both.)
 3. ~~Should the three chips be spent, steps and sleep, or spent, tasks and focus?~~ Answered (owner, 2026-11-07, through the COO): neither. The chips show time-bound commitments: shifts, classes and deadlines (section 4).
