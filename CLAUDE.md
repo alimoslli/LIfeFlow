@@ -13,6 +13,7 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 
 ## Ground rules
 - **Approval (owner, 2026-11-05):** small fixes and bugs are approved in advance; every real change (a new feature, a change to how something works or looks, removing a feature, pricing) needs the owner's yes first. See `docs/team.md`.
+- **Don't interrupt the owner (owner, 2026-11-07, for every chat and agent):** the owner is at work and doesn't want to approve anything. Keep working on plan without questions or approval requests. Anything that really needs the owner is built and held: never published, posted, deployed, merged to main or sent out until the owner agrees. Report it once, briefly, and wait. Pre-approved small fixes and bugs still go ahead. This stands until the owner says otherwise.
 - **Who does what** is in `docs/team.md` (the owner, the product chat, builders, the prototype builder, the auditor, the situation writer, the market researcher). Research is applied fast: things to avoid become rules at once; proposals go to the owner as a yes or no list.
 - **Every change follows `docs/playbook.md`** (the loop, the ten-point definition of done, red lines, and the assistant training loop). The owner's full playbook is the artifact https://claude.ai/artifact/Xngzg4E3JKBE6fEvVrTpA8; keep the two in sync.
 - Business logic lives in `src/server/services/*` and is shared by pages, server actions and Jarvis tools. Don't put queries in components or tools.
