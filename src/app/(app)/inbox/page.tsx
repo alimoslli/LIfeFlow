@@ -189,7 +189,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                   </ActionButton>
                 </div>
               )}
-              {(i.status === "filed" || (i.status !== "undone" && ask?.answered)) && (
+              {(i.status === "filed" || (i.status !== "undone" && ask?.answered)) && !i.filed.some((f) => f.stale) && (
                 <div className="mt-2 flex justify-end">
                   <ActionButton action={undoInboxAction.bind(null, i.id)} className="flex items-center gap-1 rounded-full px-3 text-sm text-text-2">
                     <Undo2 className="h-4 w-4" /> Undo

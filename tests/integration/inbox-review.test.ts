@@ -8,7 +8,7 @@ import { assignments, financialAccounts, inboxItems, notificationLog, recurringI
 import { mergeCanvasDuplicates } from "@/server/integrations/canvas";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { upcomingBills } from "@/server/services/finance/forecast";
-import { createRecurring } from "@/server/services/finance/planning";
+import { bankSeries, createRecurring } from "@/server/services/finance/planning";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { createAssignment, createCourse } from "@/server/services/school";
 import { answerQuestion, fileSuggestion, processDocument, processForwardedEmail, undoInboxItem } from "@/server/services/inbox";
@@ -174,8 +174,8 @@ describe("review fixes: nothing is merged on a guess", () => {
     const after = await rows();
     expect(after).toHaveLength(1);
     expect(dayOf(after[0].dueAt)).toBe("2026-11-19");
-    // Canvas changed the date after the email did, so Undo refuses (it would throw Canvas's date away) and the key stays.
-    await expect(run((s) => undoInboxItem(s, r.id))).rejects.toThrow(/changed after/);
+    // Canvas changed the date after the email did, so Undo leaves it (it would throw Canvas's date away) and the key stays.
+    expect(await run((s) => undoInboxItem(s, r.id))).toBe(0);
     [row] = await rows();
     expect([row.dedupeKey, dayOf(row.dueAt)]).toEqual(["canvas:555", "2026-11-19"]);
   });
@@ -553,7 +553,7 @@ describe("questions the person answers (Same bill? / Did it move?)", () => {
 
 describe("round 2: accounts, unrelated names, several candidates, Undo after a later change", () => {
   const asked = (item: { extracted: unknown }) =>
-    (item.extracted as { ask?: { sameAs?: string; candidates?: string[]; options?: { id: string; label: string }[]; text: string } }).ask;
+    (item.extracted as { ask?: { sameAs?: string; candidates?: string[]; seriesKey?: string; options?: { id: string; label: string }[]; text: string } }).ask;
   const dayN = (n: number, back: number) => {
     const d = new Date(`${today}T12:00:00Z`);
     return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - back, n)).toISOString().slice(0, 10);
@@ -789,5 +789,100 @@ describe("round 2: accounts, unrelated names, several candidates, Undo after a l
     expect((await run((s) => collapseInboxDuplicates(s))).bills).toBe(0);
     expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(2);
     void ids;
+  });
+
+  it("R3: a Yes on a series card the person has since started tracking never adds a second bill", async () => {
+    const { run, file } = await setup();
+    await run(async (s) => {
+      const acct = await createManualAccount(s, { name: "Checking", type: "depository", currentBalanceCents: 500_000 });
+      for (const back of [1, 2, 3, 4, 5])
+        await createTransaction(s, {
+          accountId: acct.id,
+          date: dayN(15, back),
+          description: "MOHELA STUDENT LN",
+          merchantName: "MOHELA STUDENT LN",
+          amountCents: -21_437,
+        });
+    });
+    const due = dayN(15, -1);
+    const q = await file(billEx("Federal Student Aid", 214.37, due), { messageId: "fsa@ed.gov" });
+    const key = asked(q)!.seriesKey!;
+    const cand = (await run((s) => bankSeries(s, today))).untracked.find((c) => c.merchantKey === key)!;
+    await run((s) =>
+      s.tx.insert(recurringItems).values({
+        userId: s.userId,
+        name: cand.name,
+        merchantKey: cand.merchantKey,
+        amountCents: -21_437,
+        frequency: "monthly",
+        nextDueDate: due,
+        kind: "bill",
+        source: "detected",
+      }),
+    );
+    const yes = await run((s) => answerQuestion(s, TZ, today, q.id, true));
+    expect(yes.filed.filter((f) => f.kind === "recurring")).toEqual([]);
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(1);
+    expect(yes.reason).toContain("changed since I asked");
+  });
+
+  it("R5: the cleanup never merges two lines whose emails print different account numbers", async () => {
+    const { run, file } = await setup();
+    await file(billEx("Verizon", 45, "2026-11-12", "acct 1111"), { messageId: "c1@vz" });
+    await file(billEx("Verizon", 45, "2026-12-12", "acct 2222"), { messageId: "c2@vz" });
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(2);
+    expect((await run((s) => collapseInboxDuplicates(s))).bills).toBe(0);
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(2);
+  });
+
+  it("R6: two copies of one receipt attach once; Undo removes only its own line", async () => {
+    const { run, file } = await setup();
+    await run(async (s) => {
+      const [a] = await s.tx
+        .insert(financialAccounts)
+        .values({ userId: s.userId, name: "Visa", type: "credit", source: "plaid", currentBalanceCents: 0 })
+        .returning();
+      await createTransaction(s, { accountId: a.id, date: addDaysStr(today, -2), description: "TARGET 00012345", amountCents: -2345 }, "plaid", "p-1");
+    });
+    const rc = { type: "receipt", receipt: { merchant: "Target", total_usd: 23.45, date: addDaysStr(today, -3) } } as const;
+    const one = await file(rc, { messageId: "r1@target.com" });
+    const two = await file(rc, { messageId: "r2@gmail.com" });
+    expect(one.filed.map((f) => f.kind)).toEqual(["transaction_note"]);
+    expect(two.filed).toEqual([]);
+    const notes = async () => (await run((s) => s.tx.select().from(transactions)))[0].notes;
+    expect((await notes())!.split("\n")).toHaveLength(1);
+    // A note the person adds by hand survives Undo.
+    const notesNow = await notes();
+    await run((s) =>
+      s.tx
+        .update(transactions)
+        .set({ notes: `Mine\n${notesNow}` })
+        .where(eq(transactions.description, "TARGET 00012345")),
+    );
+    await run((s) => undoInboxItem(s, one.id));
+    expect(await notes()).toBe("Mine");
+  });
+
+  it("L2: an exam changed by hand or Canvas after the email: Undo leaves it, says so, and stops being offered", async () => {
+    const { run, file } = await setup();
+    const c = await run(async (s) => {
+      const c = await createCourse(s, { name: "Calculus II", code: "MATH 152" });
+      await createAssignment(s, TZ, { courseId: c.id, title: "Exam 1", kind: "exam", dueDate: "2026-11-03" });
+      return c;
+    });
+    const q = await file(examEx("MATH 152", "Exam 1", "2026-11-19", { moved: true }), { messageId: "x1@s.edu" });
+    await run((s) => answerQuestion(s, TZ, today, q.id, true));
+    await run((s) =>
+      s.tx
+        .update(assignments)
+        .set({ dueAt: new Date("2026-11-26T18:00:00Z") })
+        .where(eq(assignments.courseId, c.id)),
+    );
+    expect(await run((s) => undoInboxItem(s, q.id))).toBe(0);
+    const [item] = await run((s) => s.tx.select().from(inboxItems).where(eq(inboxItems.id, q.id)));
+    expect(item.status).toBe("filed");
+    expect(item.filed.every((f) => f.stale)).toBe(true);
+    const [row] = await run((s) => s.tx.select().from(assignments).where(eq(assignments.courseId, c.id)));
+    expect(dayOf(row.dueAt)).toBe("2026-11-26");
   });
 });

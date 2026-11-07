@@ -179,7 +179,11 @@ export async function findTrackedBill(scope: UserScope, bill: BillFacts, today: 
   };
   // Only a bill whose number is on record and equal to the email's (or an email with no number) is sure to be the one.
   const sureRef = (id: string) => states.get(id) !== "unknown";
-  const describe = async (items: (typeof recurringItems.$inferSelect)[]) => Promise.all(items.map((i) => describeBill(scope, i)));
+  const describe = async (items: (typeof recurringItems.$inferSelect)[]) => {
+    const out: string[] = [];
+    for (const i of items) out.push(await describeBill(scope, i)); // one query at a time: a transaction has one connection
+    return out;
+  };
   const askAbout = async (list: (typeof recurringItems.$inferSelect)[]): Promise<BillMatch> => ({
     kind: "ask",
     ids: list.map((i) => i.id),
@@ -357,8 +361,10 @@ export async function attachReceipt(
   scope: UserScope,
   txn: { id: string; notes: string | null; description: string; date: string },
   r: Receipt,
-): Promise<InboxFiled> {
+): Promise<InboxFiled | null> {
   const line = `Receipt by email: ${r.merchant.slice(0, 80)} ${usd(r.amountCents)} on ${r.day}`;
+  // A second copy of the same receipt adds nothing.
+  if ((txn.notes ?? "").split("\n").includes(line)) return null;
   const notes = [txn.notes, line].filter(Boolean).join("\n").slice(0, 2000);
   await scope.tx
     .update(transactions)
@@ -370,6 +376,7 @@ export async function attachReceipt(
     label: `Receipt attached to ${txn.description} ${usd(r.amountCents)} on ${fmtDay(txn.date)} (not counted twice)`,
     href: "/finances/transactions",
     prev: { notes: txn.notes },
+    next: { line },
   };
 }
 
@@ -500,11 +507,52 @@ export async function undoUpdate(scope: UserScope, f: InboxFiled) {
       })
       .where(and(eq(assignments.id, f.id), eq(assignments.userId, scope.userId)));
   }
-  if (f.kind === "transaction_note" && "notes" in prev)
-    await scope.tx
-      .update(transactions)
-      .set({ notes: (prev.notes as string | null) ?? null })
-      .where(and(eq(transactions.id, f.id), eq(transactions.userId, scope.userId)));
+  if (f.kind === "transaction_note" && "notes" in prev) {
+    const line = next?.line as string | undefined;
+    if (line) {
+      // Only this receipt's own line goes; a note the person or another copy added stays.
+      const [now] = await scope.tx
+        .select({ notes: transactions.notes })
+        .from(transactions)
+        .where(and(eq(transactions.id, f.id), eq(transactions.userId, scope.userId)));
+      if (!now) return;
+      const lines = (now.notes ?? "").split("\n");
+      const at = lines.indexOf(line);
+      if (at >= 0) lines.splice(at, 1);
+      await scope.tx
+        .update(transactions)
+        .set({ notes: lines.join("\n") || null })
+        .where(and(eq(transactions.id, f.id), eq(transactions.userId, scope.userId)));
+    } else
+      await scope.tx
+        .update(transactions)
+        .set({ notes: (prev.notes as string | null) ?? null })
+        .where(and(eq(transactions.id, f.id), eq(transactions.userId, scope.userId)));
+  }
+}
+
+/** Whether the row an update changed has been changed again since (so putting `prev` back would throw that change away). */
+export async function updateBlocked(scope: UserScope, f: InboxFiled): Promise<boolean> {
+  const next = f.next;
+  if (!next) return false;
+  if (f.kind === "recurring_update") {
+    const [now] = await scope.tx
+      .select()
+      .from(recurringItems)
+      .where(and(eq(recurringItems.id, f.id), eq(recurringItems.userId, scope.userId)));
+    return (
+      !!now &&
+      (now.amountCents !== next.amountCents || now.nextDueDate !== next.nextDueDate || JSON.stringify(now.priceHistory) !== JSON.stringify(next.priceHistory))
+    );
+  }
+  if (f.kind === "assignment_update") {
+    const [now] = await scope.tx
+      .select()
+      .from(assignments)
+      .where(and(eq(assignments.id, f.id), eq(assignments.userId, scope.userId)));
+    return !!now && (now.dueAt?.toISOString() ?? null) !== (next.dueAt ?? null);
+  }
+  return false;
 }
 
 /** The open "Pay <payee> (…)" reminder an earlier statement made for this due date, if any. */

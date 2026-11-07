@@ -1,6 +1,6 @@
 import { aiAllowed } from "@/lib/ai-consent";
 import { createHash, randomBytes, randomInt } from "node:crypto";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, gt, ne, sql } from "drizzle-orm";
 import { addDaysStr, DATE_RE, formatDateStr, localDateOf, TIME_RE } from "@/lib/dates";
 
 const fmtDay = (d: string) => formatDateStr(d, "EEE, MMM d");
@@ -35,6 +35,7 @@ import {
   normalizeMessageId,
   saveBillAsSeries,
   undoUpdate,
+  updateBlocked,
   updateTrackedBill,
   WAITING_FOR_BANK,
 } from "./dedupe";
@@ -247,7 +248,13 @@ export async function fileExtraction(
         else if (decision?.seriesKey) {
           const series = (await bankSeries(scope, today)).untracked.find((c) => c.merchantKey === decision.seriesKey);
           if (series) filed.push(await saveBillAsSeries(scope, series, facts));
-          else await createBill();
+          else {
+            // The bank's series is tracked by now: update the bill that tracks it, if that is clear. Never add a second bill.
+            const now = await findTrackedBill(scope, facts, today);
+            if (now?.kind === "item") await applyTo(now.item, true);
+            else note = "It changed since I asked, so I left it as it is.";
+            if (!now || now.kind !== "item") reminder = false;
+          }
         } else if (decision?.sameAs) await applyTo(await getRecurring(scope, decision.sameAs), true);
         else {
           const match = await findTrackedBill(scope, facts, today);
@@ -292,7 +299,9 @@ export async function fileExtraction(
       const twin = await findPurchaseTwin(scope, receipt);
       if (twin?.source === "plaid") {
         if (!auth) return { filed, review: `This matches ${twin.description} from your bank. ${needsSenderCheck}` };
-        filed.push(await attachReceipt(scope, twin, receipt));
+        const attached = await attachReceipt(scope, twin, receipt);
+        if (!attached) return { filed, review: `This receipt is already attached to ${twin.description}, so I didn't add it again.` };
+        filed.push(attached);
         return { filed };
       }
       const seen =
@@ -711,6 +720,23 @@ export async function undoInboxItem(scope: UserScope, id: string) {
     return 1;
   }
   if (row.status !== "filed") throw new ServiceError("There's nothing to undo here.");
+  // Putting back an update must not throw away a later change. A newer email's update: undo that first. Anything else
+  // (Canvas, a hand edit): leave it alone and stop offering Undo.
+  const blocked: InboxFiled[] = [];
+  for (const f of row.filed) if (await updateBlocked(scope, f)) blocked.push(f);
+  if (blocked.length) {
+    const later = await scope.tx
+      .select({ id: inboxItems.id, filed: inboxItems.filed })
+      .from(inboxItems)
+      .where(and(eq(inboxItems.userId, scope.userId), eq(inboxItems.status, "filed"), gt(inboxItems.receivedAt, row.receivedAt), ne(inboxItems.id, id)));
+    const newer = later.some((l) => l.filed.some((x) => blocked.some((b) => b.id === x.id)));
+    if (newer) throw new ServiceError("This changed after. Undo the newer one first.");
+    await scope.tx
+      .update(inboxItems)
+      .set({ filed: row.filed.map((f) => (blocked.includes(f) ? { ...f, stale: true as const } : f)) })
+      .where(eq(inboxItems.id, id));
+    return 0;
+  }
   for (const f of [...row.filed].reverse()) await undoFiled(scope, f);
   if (askOf(row.extracted)?.answered) await reopenQuestion(scope, row);
   else await scope.tx.update(inboxItems).set({ status: "undone" }).where(eq(inboxItems.id, id));

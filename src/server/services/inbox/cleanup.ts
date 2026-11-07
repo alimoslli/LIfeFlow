@@ -8,6 +8,7 @@ import {
   attachReceipt,
   contentSigFor,
   differentPairs,
+  normalizeAccountRef,
   pairKey,
   findPurchaseTwin,
   handAccount,
@@ -193,12 +194,24 @@ export async function collapseInboxDuplicates(scope: UserScope, opts: { limit?: 
   const cur = new Map(bills.map((b) => [b.id, b]));
   // Bills the person answered "No, keep both" about are never merged again.
   const apart = await differentPairs(scope);
+  // The account or line numbers the filing emails printed, per bill: two bills with different numbers are two lines, never one.
+  const refsByBill = new Map<string, Set<string>>();
+  for (const i of items)
+    for (const f of i.filed) {
+      const ref = normalizeAccountRef((i.extracted as Partial<Extraction> | null)?.bill?.account_ref);
+      if (ref && isSame(f.kind)) refsByBill.set(f.id, (refsByBill.get(f.id) ?? new Set()).add(ref));
+    }
+  const differentLines = (x: string, y: string) => {
+    const [a, b] = [refsByBill.get(x), refsByBill.get(y)];
+    return !!a && !!b && ![...a].some((r) => b.has(r));
+  };
   for (const b of bills) {
     if (!madeByInbox.has(b.id) || !cur.has(b.id) || !b.nextDueDate) continue;
     const fits = [...cur.values()].filter(
       (o) =>
         o.id !== b.id &&
         !apart.has(pairKey(o.id, b.id)) &&
+        !differentLines(o.id, b.id) &&
         !!o.nextDueDate &&
         o.status === b.status &&
         o.kind !== "income" &&
@@ -258,7 +271,11 @@ export async function attachWaitingReceipts(scope: UserScope, today: string): Pr
       const filed = await attachReceipt(scope, twin, receipt);
       await scope.tx
         .update(inboxItems)
-        .set({ status: "filed", filed: [filed], reason: null })
+        .set(
+          filed
+            ? { status: "filed", filed: [filed], reason: null }
+            : { status: "duplicate", filed: [], reason: "This receipt was already attached to the bank's charge, so I didn't add it again." },
+        )
         .where(eq(inboxItems.id, w.id));
       n++;
       continue;

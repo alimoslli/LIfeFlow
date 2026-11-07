@@ -32,6 +32,7 @@ export async function undoInboxAction(id: string): Promise<ActionState> {
     "inbox.undo",
     async (s) => {
       const n = await undoInboxItem(s, id);
+      if (n === 0) return "It changed after this (in Canvas or by hand), so I left it as it is.";
       return `Undone: removed ${n} thing${n === 1 ? "" : "s"} that were filed.`;
     },
     { revalidate: ["/inbox", "/"] },
