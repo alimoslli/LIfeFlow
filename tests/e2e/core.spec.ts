@@ -24,6 +24,34 @@ test("sign up, reach Home, and manage a task end to end", async ({ page }) => {
   await expect(page.getByRole("link", { name: /Renew parking permit/ })).toBeVisible();
 });
 
+test("a failed save keeps what was typed and explains the problem in plain words", async ({ page }) => {
+  await signUp(page);
+  await page.goto("/work");
+  await page.getByLabel("Employer").fill("Campus Library");
+  await page.getByLabel("Hourly rate ($)").fill("16.5");
+  await page.getByRole("button", { name: "Save job" }).click();
+  await page.getByText("Record a paycheck").click();
+
+  // A net pay that can't be saved (negative) fails on the server.
+  await page.getByLabel("Hours", { exact: true }).fill("12.5");
+  await page.getByLabel("Net pay ($)").fill("-5");
+  await page.getByLabel("Gross pay ($)").fill("200");
+  await page.getByRole("button", { name: "Save paycheck" }).click();
+
+  const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Save paycheck" }) });
+  await expect(form.getByRole("alert")).toContainText("Enter an amount of $0 or more");
+  await expect(form.getByRole("alert")).not.toContainText(/netCents|expected/);
+  await expect(page.getByLabel("Hours", { exact: true })).toHaveValue("12.5");
+  await expect(page.getByLabel("Net pay ($)")).toHaveValue("-5");
+  await expect(page.getByLabel("Gross pay ($)")).toHaveValue("200");
+
+  // Fixing it and saving works as before, and the form clears.
+  await page.getByLabel("Net pay ($)").fill("150");
+  await page.getByRole("button", { name: "Save paycheck" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Saved." })).toBeVisible();
+  await expect(page.getByLabel("Net pay ($)")).toHaveValue("");
+});
+
 test("Jarvis saves assignments and tasks that then appear in School and Tasks", async ({ page }) => {
   await signUp(page, "Riley Park");
   // A course to attach work to.
