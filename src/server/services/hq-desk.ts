@@ -2,9 +2,10 @@ import { and, asc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Admin } from "../auth/admin";
 import type { Database } from "../db/client";
-import { HQ_ROLES, hqMissions, hqSettings } from "../db/schema";
+import { HQ_ROLES, hqChats, hqMissions, hqSettings } from "../db/schema";
 import { addDaysStr, localDateOf, localToInstant } from "../../lib/dates";
-import { deskLink, type DeskLink } from "../hq/desk";
+import { deskLink, startStalled, type DeskLink } from "../hq/desk";
+import { liveNow } from "../hq/state";
 import type { Mission } from "../hq/types";
 import { DESK_PROMPT_MAX, line, logActivity, logAdmin, parse, timed, type Tx } from "../hq/validate";
 import { createMission, ownerTimeZone, toMission } from "./hq";
@@ -15,7 +16,7 @@ import { createMission, ownerTimeZone, toMission } from "./hq";
  * round and drives no chat (owner, 2026-11-07: rounds run on their schedule only).
  */
 
-export type DeskFile = { mission: Mission; link: DeskLink; status: string };
+export type DeskFile = { mission: Mission; link: DeskLink; status: string; /** Its chat is working right now (ADR 0030). */ live: boolean };
 export type DeskView = { files: DeskFile[]; night: { on: boolean; since: Date | null; endsAt: Date | null } };
 
 const OPEN = ["todo", "doing", "waiting", "blocked"] as const;
@@ -51,10 +52,23 @@ export async function deskView(db: Database, now: Date = new Date()): Promise<De
       .where(and(isNotNull(hqMissions.deskPrompt), inArray(hqMissions.status, [...OPEN])))
       .orderBy(asc(hqMissions.createdAt))
       .limit(30);
+    // Live HQ (ADR 0030): a task whose chat is busy right now shows what that chat is doing.
+    const ids = [...new Set(rows.map((r) => r.sessionId).filter((x): x is string => !!x))];
+    const chats = ids.length ? await tx.select().from(hqChats).where(inArray(hqChats.id, ids)) : [];
+    const liveOf = (id: string | null) => {
+      const c = id ? chats.find((x) => x.id === id) : undefined;
+      return c ? liveNow(c, now) : null;
+    };
     const files = rows
       .map(toMission)
       .sort((a, b) => (RANK[a.priority] ?? 1) - (RANK[b.priority] ?? 1) || a.createdAt.getTime() - b.createdAt.getTime())
-      .map((m) => ({ mission: m, link: deskLink(m), status: deskStatus(m) }));
+      .map((m) => {
+        const live = liveOf(m.sessionId);
+        // A start from HQ whose chat never said a word: offer to start it again rather than a chat that did nothing.
+        const stalled = !live && startStalled(m, m.sessionId ? chats.find((c) => c.id === m.sessionId) : null, now);
+        if (stalled) return { mission: m, link: deskLink({ ...m, sessionId: null }), status: "Didn't start. Tap to start it again.", live: false };
+        return { mission: m, link: deskLink(m), status: live ?? deskStatus(m), live: !!live };
+      });
     const s = await settingsRow(tx);
     const tz = await ownerTimeZone(tx);
     const endsAt = s.goodnightAt ? nightEndsAt(s.goodnightAt, tz) : null;

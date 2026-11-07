@@ -1,8 +1,17 @@
 # The CEO's desk (ADR 0029)
 
-The penthouse desk holds the owner's big tasks as files. Clicking the pile lists them; picking one plays a short MacBook animation and opens that task's Claude Code chat:
-- **First click** (no chat yet): a new chat in the LifeFlow repo with the first prompt typed in. Press send. The prompt starts with `npx tsx scripts/hq.ts mission update <id> --status doing`, which tells HQ which chat took the task.
-- **Later clicks**: the task's own chat opens and the next prompt ("Back on …, where it stands, next step") is copied, ready to paste.
+The penthouse desk holds the owner's big tasks as files. Clicking the pile lists them; picking one plays a short MacBook animation and opens that task's Claude Code chat (ADR 0029, addendum 2):
+- **First click** (no chat yet): a new chat in the LifeFlow repo and the **LifeFlow** environment (the one with HQ's address and key), with the first prompt typed in and also copied. Press send. On a computer the link is Claude's web pre-fill link (`claude.ai/code?prompt=…&repositories=…&environment=LifeFlow`); on a phone or tablet it is the Claude app's (`claude.ai/code/new?q=…&repo=…&environment=LifeFlow`).
+- **The first prompt** is HQ's wrapper around the file's text:
+  - who the chat is (the department and its `.claude/agents/` file) and the documents it follows;
+  - the claim, `mission update <id> --status doing --claim`, which tells HQ which chat took the task. If HQ_URL isn't set, the chat is outside the LifeFlow environment and says so;
+  - the file's text;
+  - how to report: progress, decision cards tied to the task, what needs a yes;
+  - how to ship, and the done line with the commit link.
+- **Later clicks**: the task's own chat opens and the next prompt ("Back on …, where it stands, next step") is copied, ready to paste. Only a claim moves a desk task to a chat: the COO's progress relay never does.
+- **The file's own text** says only the task, without who the chat is: the wrapper adds that.
+- **Starting from HQ** (ADR 0030): once the owner has made the "LifeFlow desk task starter" token and put it in Vercel (`HQ_DESK_FIRE_URL`, `HQ_DESK_FIRE_TOKEN`), tapping a file with no chat shows its exact first prompt with **Start it**, and the task starts right in HQ. A file the team wrote says so; read it first, because its chat runs on its own. The new chat reads the prompt from HQ (`npx tsx scripts/hq.ts desk <id> --pin <pin>`) and refuses if it changed after the tap. The owner watches it under "Right now". A task that has a chat continues there (Open); it never gets a second one. Without the token, the link above is used.
+- **Watching:** every chat with the LifeFlow repo alone, in the LifeFlow environment, reports what it's doing as it works. The desk file shows that line, the room says it, and "Right now" lists it with Watch.
 
 A desk file is a mission with a `desk_prompt` (plain text, at most 1,500 characters). Add one from the desk ("Add a file to your desk") or from a chat: `npx tsx scripts/hq.ts mission add --role developer --title "…" --priority high --desk-prompt-file prompt.txt`. Finishing the task (`--status done`) takes it off the desk.
 
@@ -10,8 +19,8 @@ A desk file is a mission with a `desk_prompt` (plain text, at most 1,500 charact
 
 ### Finish the V3 redesign revision (designer)
 ```
-You're LifeFlow's Product & Design lead (.claude/agents/product-designer.md). Goal: finish the V3 redesign revision so I can say yes to it.
-1. Read docs/vision.md (the braid: Flow, the assistant, You; section 15), the newest reports in docs/research/ (their "Things to avoid" are rules) and the V3 work so far (the LF V3 chat's branch and notes).
+Goal: finish the V3 redesign revision so I can say yes to it.
+1. Read docs/vision.md (the braid: Flow, the assistant, You; section 15), the newest reports in docs/research/ (their "Things to avoid" are rules) and the V3 work so far: the product chat's notes (docs/hq/handover-from-product-chat.md), the page order (docs/design/2026-11-06-page-inventory.md) and its pictures, read with the Artifact tool: Braid https://claude.ai/artifact/RKFZBJiYmZKU2MQhHoLMSd, timeline concepts https://claude.ai/artifact/96o6wygYzrQAt6bkg5iyCW, Goals https://claude.ai/artifact/EUmH35NgRB1pDvJHcqsFwB, What Dev can see https://claude.ai/artifact/MyHqEmJ5foFJvdCMm1GLG1.
 2. In five lines, tell me what the revision still needs and anything you think is wrong with it.
 3. Finish it as pictures only: phone first and web, at scale 2, every main screen of the revision. Follow the simple concept (understood in 5 seconds, one next step, no dense lists, nothing copied from iOS or other apps).
 4. Send it to me as one decision card (npx tsx scripts/hq.ts approval --kind design ... with the pictures), with your recommendation.
@@ -55,11 +64,11 @@ Never invent bank data; demo data only through scripts/seed-demo.ts.
 
 ### Vercel work: deploy setup, variables and crons (developer)
 ```
-Goal: the Vercel work: make the deploy setup complete and tidy. Read docs/go-live-checklist.md, vercel.json, package.json (vercel-build) and src/app/api/cron/.
+Goal: the Vercel work: make the deploy setup complete and tidy. Read docs/go-live-checklist.md, vercel.json, package.json (vercel-build), scripts/deploy-db.ts and src/app/api/cron/.
 1. Make one list of every environment variable the app reads (grep process.env), what each turns on, and whether it's required. Compare it with the go-live checklist and fix the checklist where it's out of date. Names only; never ask for or print a value.
 2. Cron jobs: what runs, how often it needs to run, and what Vercel Hobby allows (once a day) versus Pro. Recommend one setup with its cost.
-3. Check the build: vercel-build runs the migrations, the memory encryption, the demo seed and the skills. Make sure a failed step stops the deploy and nothing runs twice.
-4. Previews: Neon preview branches connect as neondb_owner (RLS skipped). Say if that's acceptable or how to fix it.
+3. Check the build: vercel-build runs scripts/deploy-db.ts (migrations, memory encryption, demo seed; production deploys only since 2026-11-07, previews skip them) and the skills. Make sure a failed step stops the deploy and nothing runs twice.
+4. Previews: find which database and which role preview deploys use while they run (RLS needs the app role, not neondb_owner). Say if that's acceptable or how to fix it, for example a Neon branch per preview.
 5. Give me the exact clicks for anything only I can do in Vercel, numbered. Code fixes that are small are approved.
 ```
 

@@ -365,6 +365,13 @@
       "when": 1795800000000,
       "tag": "0052_chat_client_message_id",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1795900000000,
+      "tag": "0053_hq_live",
+      "breakpoints": true
     }
   ]
 }

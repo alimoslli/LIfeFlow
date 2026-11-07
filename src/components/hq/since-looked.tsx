@@ -6,7 +6,7 @@ import { employee } from "@/server/hq/team";
 import type { SinceLine } from "@/server/hq/types";
 import { runningLine } from "@/server/hq/running-line";
 import { errorsLast24h, health, overview, safe } from "@/server/services/admin";
-import { LOOKED_COOKIE, sinceFrom, sinceLooked } from "@/server/services/hq-summary";
+import { LOOKED_COOKIE, VISIT_COOKIE, sinceFrom, sinceLooked } from "@/server/services/hq-summary";
 import { MarkLooked } from "./mark-looked";
 import Link from "next/link";
 
@@ -50,7 +50,11 @@ const Group = ({ title, items }: { title: string; items: SinceLine[] }) =>
  */
 export async function SinceLookedCard() {
   const now = new Date();
-  const seen = (await cookies()).get(LOOKED_COOKIE)?.value;
+  const jar = await cookies();
+  // This visit keeps its window (VISIT_COOKIE) while the page refreshes itself; a new visit starts from the last look.
+  const visit = jar.get(VISIT_COOKIE)?.value;
+  const raw = visit ?? jar.get(LOOKED_COOKIE)?.value;
+  const seen = raw && /^\d{10,14}$/.test(raw) ? raw : undefined;
   const since = sinceFrom(seen, now);
   const db = getDb();
   const [r, errs, ov, h, tz] = await Promise.all([
@@ -93,7 +97,7 @@ export async function SinceLookedCard() {
           )}
         </div>
       </Card>
-      {r.ok && <MarkLooked name={LOOKED_COOKIE} />}
+      {r.ok && <MarkLooked name={LOOKED_COOKIE} visitName={VISIT_COOKIE} visitValue={seen ?? "none"} />}
     </section>
   );
 }

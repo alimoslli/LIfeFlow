@@ -21,7 +21,14 @@ export type StateInput = {
    */
   noOwnChat: boolean;
   /** Their chats, if any. */
-  chats: { status: "working" | "idle" | "blocked" | "archived" | "unknown"; needsAction: string | null; lastCheckinAt: Date | null; isPrimary: boolean }[];
+  chats: {
+    status: "working" | "idle" | "blocked" | "archived" | "unknown";
+    needsAction: string | null;
+    lastCheckinAt: Date | null;
+    isPrimary: boolean;
+    /** What it is doing right now, when its own hooks say it is busy (`liveNow`), else null or absent. */
+    live?: string | null;
+  }[];
   missions: {
     status: "todo" | "doing" | "waiting" | "blocked" | "done" | "dropped";
     blockedReason: string | null;
@@ -44,6 +51,16 @@ export type StateResult = { state: EmployeeState; reason: string; note: string |
 
 /** A chat that checked in this recently while a mission is in progress counts as working. */
 export const WORKING_WINDOW_MS = 20 * 60_000;
+/** A busy chat stays "working right now" this long after its last ping (one command, such as the browser tests, can run ~20 minutes). */
+export const LIVE_WINDOW_MS = 30 * 60_000;
+
+/** Live HQ (ADR 0030): a chat is working right now while its own hooks last said "busy" within LIVE_WINDOW_MS. Returns its line, or null. */
+export function liveNow(c: { liveState?: string | null; liveLine?: string | null; liveAt?: Date | null; status?: string }, now: Date): string | null {
+  if (c.status === "archived" || c.liveState !== "busy" || !c.liveAt) return null;
+  const age = now.getTime() - c.liveAt.getTime();
+  return age >= -60_000 && age <= LIVE_WINDOW_MS ? c.liveLine?.trim() || "Working in its chat" : null;
+}
+
 /** No check-in at all for this long means offline. */
 export const OFFLINE_AFTER_MS = 7 * 24 * 3_600_000;
 /** A finished mission shows the "done" sparkle this long, until the owner opens it. */
@@ -76,6 +93,10 @@ export function employeeState(input: StateInput, now: Date): StateResult {
     // A connected chat that hasn't reported yet is resting, not gone (the COO before its first round): say so on the door.
     if (lastCheckin === null) note = note ? `Hasn't checked in yet · ${note}` : "Hasn't checked in yet";
   }
+
+  // Live HQ (ADR 0030): one of its own chats is working right now; its line says on what.
+  const live = input.chats.find((c) => c.live)?.live;
+  if (live) return { state: "working", reason: live, note };
 
   const doing = input.missions.find((m) => m.status === "doing");
   const recentlyActive = lastCheckin !== null && t - lastCheckin <= WORKING_WINDOW_MS;

@@ -1636,6 +1636,10 @@ export const hqMissions = pgTable(
     seenAt: tstz("seen_at"),
     /** The first prompt for its own Claude Code chat. Set = a task file on the CEO's desk (ADR 0029). Plain text, max 1,500. */
     deskPrompt: text("desk_prompt"),
+    /** Who last wrote the desk prompt or title: the owner, or an agent through the HQ key (ADR 0030). */
+    deskPromptBy: text("desk_prompt_by").$type<"owner" | "agent">(),
+    /** A start from HQ is on its way until then (ADR 0030): one start per task at a time. */
+    startHoldUntil: tstz("start_hold_until"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -1734,6 +1738,10 @@ export const hqChats = pgTable("hq_chats", {
   summary: text("summary"),
   needsAction: text("needs_action"),
   lastCheckinAt: tstz("last_checkin_at"),
+  /** Live HQ (ADR 0030): "busy" or "idle" from the chat's own hooks, what it is doing in one short line, and when. */
+  liveState: text("live_state").$type<"busy" | "idle">(),
+  liveLine: text("live_line"),
+  liveAt: tstz("live_at"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

@@ -12,11 +12,12 @@ async function ownerPage(browser: Browser, opts: BrowserContextOptions = {}): Pr
   const op = await ctx.newPage();
   await op.goto("/signup");
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
-  await op.getByLabel("Your name").fill("Owner Olu");
   await op.getByLabel("Email").fill(ADMIN_EMAIL);
   await op.getByLabel("Password").fill("correct horse battery");
   await op.getByRole("button", { name: "Create account" }).click();
   await op.waitForURL("**/welcome");
+  // Sign-up takes only email and password; give the owner a name so greetings read "Good morning, Owner."
+  await pool.query("update users set name = $1 where email = $2", ["Owner Olu", ADMIN_EMAIL]);
   await op.getByRole("button", { name: "Skip setup" }).click();
   await op.waitForURL((u) => u.pathname === "/");
   await op.getByRole("button", { name: "Skip tour" }).click();
@@ -67,25 +68,31 @@ test("The desk: the pile opens the files, a file plays the MacBook and lands in 
   expect(axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id)).toEqual([]);
   if (SHOTS) await op.screenshot({ path: `${SHOTS}/desk-web.png` });
 
-  // A new task: the MacBook opens, then this tab goes to a new Claude Code chat with the prompt typed in.
+  // A new task: the MacBook opens, then this tab goes to a new Claude Code chat (Claude's documented web pre-fill link)
+  // in the LifeFlow repo and environment, with the first prompt typed in. It is copied too, in case the box arrives empty.
+  await op.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: "http://localhost:3100" });
   await sheet.getByRole("button", { name: /Finish the V3 redesign revision/ }).click();
   const mac = op.getByTestId("hq-macbook");
   await expect(mac).toBeVisible();
   await expect(mac).toContainText("Claude Code");
   await expect(mac).toContainText("Finish the V3 redesign revision");
-  await expect(mac).toContainText("Opening your chat…");
+  await expect(mac).toContainText("First prompt typed in and copied. Press send.");
   if (SHOTS) {
     await op.waitForTimeout(900);
     await op.screenshot({ path: `${SHOTS}/macbook-web.png` });
   }
-  await op.waitForURL(/^https:\/\/claude\.ai\/code\/new\?q=/, { timeout: 5000 });
+  const firstCopied = await op.evaluate(() => navigator.clipboard.readText());
+  await op.waitForURL(/^https:\/\/claude\.ai\/code\?prompt=/, { timeout: 5000 });
   const u = new URL(op.url());
-  expect(u.searchParams.get("repo")).toBe("alimoslli/LIfeFlow");
-  expect(u.searchParams.get("q")).toContain(`npx tsx scripts/hq.ts mission update ${ids["Finish the V3 redesign revision"]} --status doing`);
-  expect(u.searchParams.get("q")).toContain("Finish it as pictures for my yes.");
+  expect(u.searchParams.get("repositories")).toBe("alimoslli/LIfeFlow");
+  expect(u.searchParams.get("environment")).toBe("LifeFlow");
+  const v3 = ids["Finish the V3 redesign revision"];
+  expect(u.searchParams.get("prompt")).toContain(`npx tsx scripts/hq.ts mission update ${v3} --status doing --claim`);
+  expect(u.searchParams.get("prompt")).toContain("You are LifeFlow's Product & Design lead (.claude/agents/product-designer.md).");
+  expect(u.searchParams.get("prompt")).toContain("Finish it as pictures for my yes.");
+  expect(firstCopied).toBe(u.searchParams.get("prompt"));
 
   // A task with a chat: the next prompt is copied, then its own chat opens.
-  await op.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: "http://localhost:3100" });
   await op.goto("/admin");
   await op.getByTestId("hq-desk-open").click();
   await op
@@ -118,8 +125,39 @@ test("The desk with reduced motion goes straight to the chat; Add to my desk put
     .getByRole("dialog", { name: "Your desk" })
     .getByRole("button", { name: /Make sure Plaid works end to end/ })
     .click();
-  await op.waitForURL(/^https:\/\/claude\.ai\/code\/new\?q=/, { timeout: 3000 });
-  expect(new URL(op.url()).searchParams.get("q")).toContain("Run the Plaid tests and fix what fails.");
+  await op.waitForURL(/^https:\/\/claude\.ai\/code\?prompt=/, { timeout: 3000 });
+  expect(new URL(op.url()).searchParams.get("prompt")).toContain("Run the Plaid tests and fix what fails.");
+
+  // Its mission page starts it the same way: a new chat with the same first prompt.
+  const [{ id }] = (await pool.query("select id from hq_missions where title = 'Make sure Plaid works end to end'")).rows as { id: string }[];
+  await op.goto(`/admin/hq/missions/${id}`);
+  await expect(op.getByRole("button", { name: "Start in a new chat" })).toBeVisible();
+  await op.getByText("See the prompt").click();
+  await expect(op.getByText(`mission update ${id} --status doing --claim`)).toBeVisible();
+});
+
+test("On a phone, a desk file opens the Claude app's own link, with the same prompt, repo and environment", async ({ browser }) => {
+  test.setTimeout(90_000);
+  await seed();
+  const op = await ownerPage(browser, {
+    viewport: { width: 393, height: 852 },
+    isMobile: true,
+    hasTouch: true,
+    reducedMotion: "reduce",
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1",
+  });
+  await op.goto("/admin");
+  await op.getByTestId("hq-desk-open").click();
+  await op
+    .getByRole("dialog", { name: "Your desk" })
+    .getByRole("button", { name: /Finish the V3 redesign revision/ })
+    .click();
+  await op.waitForURL(/^https:\/\/claude\.ai\/code\/new\?q=/, { timeout: 5000 });
+  const u = new URL(op.url());
+  expect(u.searchParams.get("repo")).toBe("alimoslli/LIfeFlow");
+  expect(u.searchParams.get("environment")).toBe("LifeFlow");
+  expect(u.searchParams.get("q")).toContain("--status doing --claim");
+  expect(u.searchParams.get("q")).toContain("Finish it as pictures for my yes.");
 });
 
 test("Goodnight dims the office and starts nothing; Lights on ends it; the CMO seat says Coming soon", async ({ browser }) => {

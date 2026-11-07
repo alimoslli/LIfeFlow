@@ -49,6 +49,7 @@ test("a new user who never names the assistant never sees 'Jarvis'", async ({ pa
 
   // Setup, every step, without typing a name.
   await expectNoJarvis(page, "welcome: hello");
+  await page.getByLabel("What should I call you?").fill("Riley");
   await page.getByRole("button", { name: "Let's go" }).click();
   await expectNoJarvis(page, "welcome: week");
   await page.getByRole("radio", { name: /Both/ }).click();

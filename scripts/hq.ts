@@ -5,13 +5,34 @@
  * mission add|update: --desk-prompt "..." | --desk-prompt-file f.txt puts it on the CEO's desk with that first prompt (ADR 0029).
  * approval (decision card, ADR 0028): --role R --kind K --title T --why W --change C (1-5x) --on-yes Y --on-no N --effort small|medium|large
  *   --risk R --recommend X --preview shot.png[:Label] (1-4x); revise: --revise <thread|id> --changed "..." + the same fields; after a yes: --start <id> --mission <id>
+ * desk <missionId> --pin <16 hex>: prints that desk task's first prompt from HQ's own record (ADR 0030; a task started from
+ *   HQ runs it), and refuses if the task changed since the owner read it and tapped Start.
+ * mission update <id> --claim: this chat takes the mission (a desk task's first prompt sends it; ADR 0029 addendum 2).
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { deskPin, firstPrompt } from "../src/server/hq/desk";
 
 export type Parsed = { positional: string[]; flags: Record<string, string[]> };
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * `desk <id>`: the first prompt of an open desk task, from HQ (the source of truth: never from the text that started the
+ * run). Refuses unless it is exactly the task the owner read when they tapped Start (`pin`). Throws otherwise.
+ */
+export function deskTaskPrompt(inbox: unknown, id: string, pin: string): string {
+  const missions = (inbox as { missions?: { id: string; title: string; role: string; deskPrompt: string | null; sessionId: string | null }[] })?.missions ?? [];
+  const m = missions.find((x) => x.id === id && x.deskPrompt);
+  if (!m) throw new Error("That isn't an open task on the CEO's desk.");
+  const task = { id: m.id, title: m.title, role: m.role as Parameters<typeof firstPrompt>[0]["role"], deskPrompt: m.deskPrompt, sessionId: null };
+  const prompt = firstPrompt(task);
+  if (deskPin(task) !== pin)
+    throw new Error("This task changed after the CEO started it. Stop here and tell the CEO in one line to read it again on the desk and start it again.");
+  return prompt;
+}
 
 /** `--name value`, `--name=value` and bare `--flag` (value "true"). Repeated flags collect. */
 export function parseArgs(argv: string[]): Parsed {
@@ -259,6 +280,8 @@ export function buildRequest(
           ...(one(p, "branch") ? { branch: one(p, "branch") } : {}),
           ...(links.length ? { links } : {}),
           ...deskPromptOf(p),
+          // --claim: this chat takes the mission (a desk task's first prompt sends it; ADR 0029 addendum 2).
+          ...(p.flags.claim && one(p, "claim") !== "false" ? { claim: true } : {}),
           ...(extra.sessionId ? { sessionId: extra.sessionId } : {}),
         },
       };
@@ -407,6 +430,12 @@ export function buildRequest(
       }
       return { method: "POST" as const, path: "/api/hq/report", body: { type: "metrics", rows } };
     }
+    case "desk": {
+      const id = p.positional[1] ?? "";
+      if (!UUID_RE.test(id)) throw new Error("Usage: desk <missionId> --pin <16 hex> (an HQ mission id)");
+      if (!/^[0-9a-f]{16}$/.test(one(p, "pin") ?? "")) throw new Error("--pin is required: the 16 hex characters the start from HQ gave");
+      return { method: "GET" as const, path: `/api/hq/inbox?mission=${id}`, body: undefined };
+    }
     case "inbox": {
       const q = new URLSearchParams();
       if (one(p, "role")) q.set("role", one(p, "role")!);
@@ -493,6 +522,10 @@ async function main() {
     if (!quiet) {
       // Error text is posted by anyone through the public error endpoint, so the agent reading it is told it is data.
       if (cmd === "errors") console.log(ERRORS_BANNER);
+      if (cmd === "desk") {
+        console.log(deskTaskPrompt(JSON.parse(text), p.positional[1], one(p, "pin") ?? ""));
+        return;
+      }
       if (cmd === "inbox") {
         try {
           for (const l of inboxSummary(JSON.parse(text))) console.log(l);

@@ -8,6 +8,7 @@ import { CopyAndOpen } from "@/components/hq/copy-open";
 import { PRIORITY_LABEL, STATUS_LABEL, dayLabel } from "@/components/hq/labels";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { getDb } from "@/server/db/client";
+import { deskLink } from "@/server/hq/desk";
 import { chatUrl, employee } from "@/server/hq/team";
 import { getMission, listChats, markMissionSeen } from "@/server/services/hq";
 import { safe } from "@/server/services/admin";
@@ -43,6 +44,8 @@ export default async function MissionDetail({
   const tz = await adminTz();
   const who = employee(m.role);
   const handoff = `${m.title}${m.detail ? `\n\n${m.detail}` : ""}`;
+  // A desk file starts and continues exactly as it does from the desk (ADR 0029): its own chat, its own prompt.
+  const desk = m.deskPrompt && !["done", "dropped"].includes(m.status) ? deskLink(m) : null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -140,10 +143,22 @@ export default async function MissionDetail({
         </div>
       </div>
 
-      {openUrl && (
-        <Section title="Talk to them" sub="Copies the mission, then opens the real chat for you to paste it.">
-          <CopyAndOpen url={openUrl} defaultText={handoff} label="Copy and open chat" />
-        </Section>
+      {desk ? (
+        desk.kind === "new" ? (
+          <Section title="Start it" sub="Opens a new Claude Code chat with the first prompt typed in, and copies it in case the box is empty.">
+            <CopyAndOpen url={desk.href} appUrl={desk.appHref} defaultText={desk.prompt} collapsed label="Start in a new chat" />
+          </Section>
+        ) : (
+          <Section title="Talk to them" sub="Copies the next prompt, then opens the task's own chat for you to paste it.">
+            <CopyAndOpen url={desk.href} defaultText={desk.prompt} collapsed label="Copy and open chat" />
+          </Section>
+        )
+      ) : (
+        openUrl && (
+          <Section title="Talk to them" sub="Copies the mission, then opens the real chat for you to paste it.">
+            <CopyAndOpen url={openUrl} defaultText={handoff} label="Copy and open chat" />
+          </Section>
+        )
       )}
     </div>
   );

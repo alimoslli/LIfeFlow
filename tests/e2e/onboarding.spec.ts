@@ -3,6 +3,9 @@ import { queryAsUser, signUp } from "./helpers";
 
 test("a new user sees their day connected, names their assistant, then a skippable tour", async ({ page }) => {
   const email = await signUp(page, "Maya Chen", { onboarding: "stay" });
+  // Sign-up took only email and password, so the first screen asks what to call them.
+  await expect(page.getByRole("heading", { name: /^Hi/ })).toBeVisible();
+  await page.getByLabel("What should I call you?").fill("Maya");
   await expect(page.getByRole("heading", { name: "Hi Maya." })).toBeVisible();
   await expect(page.getByText("LifeFlow is free while we're testing.")).toBeVisible();
   await page.getByRole("button", { name: "Let's go" }).click();
@@ -57,6 +60,8 @@ test("a new user sees their day connected, names their assistant, then a skippab
   expect(prefs.p).toMatchObject({ lifeStage: "both", assistantName: "Nova", assistantStyle: "coach" });
   expect(await queryAsUser(email, "select name from courses")).toEqual([{ name: "PSY 101" }]);
   expect(await queryAsUser(email, "select name from employers")).toEqual([{ name: "Target" }]);
+  // The name typed on the first screen was saved (the test's sign-up had set "Maya Chen").
+  expect(await queryAsUser(email, "select name from users where email = $1", [email])).toEqual([{ name: "Maya" }]);
 
   // The tour doesn't come back, and setup isn't shown again.
   await expect
@@ -92,6 +97,7 @@ test("reduced motion: never a splash, even when requested", async ({ page }) => 
 
 test("the app follows what fills your week: tabs and pills adapt", async ({ page }) => {
   await signUp(page, "Sam Ortiz", { onboarding: "stay" });
+  await page.getByLabel("What should I call you?").fill("Sam");
   await page.getByRole("button", { name: "Let's go" }).click();
   await page.getByRole("radio", { name: /^Work/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();

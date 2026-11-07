@@ -1,4 +1,5 @@
 "use server";
+import { provisionalName } from "@/lib/provisional-name";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
@@ -159,11 +160,13 @@ export async function signup(_prev: AuthState, fd: FormData): Promise<AuthState>
   const limit = await rateLimit(db, `signup:ip:${ip}`, 10, 3600);
   const email = String(fd.get("email") ?? "");
   if (!limit.allowed) return { error: "Too many accounts created from this network. Try again later.", email };
-  const strength = checkPassword(String(fd.get("password") ?? ""), [String(fd.get("name") ?? ""), email]);
+  // Sign-up asks only for email and password. The name is asked on the first screen after (a placeholder from the email until then).
+  const name = String(fd.get("name") ?? "").trim() || provisionalName(email);
+  const strength = checkPassword(String(fd.get("password") ?? ""), [name, email]);
   if (!strength.ok) return { error: `Choose a stronger password. ${strength.message}`, email };
   try {
     const user = await registerUser(db, {
-      name: String(fd.get("name") ?? ""),
+      name,
       email,
       password: String(fd.get("password") ?? ""),
       timezone: String(fd.get("timezone") ?? "UTC"),

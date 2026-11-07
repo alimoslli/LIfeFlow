@@ -8,11 +8,12 @@ export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding
   // Every test signs up from the same IP; reset only the sign-up limiter so the suite can grow past its 10/hour cap.
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
   await page.goto("/signup");
-  await page.getByLabel("Your name").fill(name);
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("correct horse battery");
   await page.getByRole("button", { name: "Create account" }).click();
   await page.waitForURL("**/welcome");
+  // Sign-up asks only for email and password; the name is asked on the first screen after. Tests set it directly so greetings read the same.
+  await pool.query("update users set name = $1 where email = $2", [name, email]);
   // Tests talk to Jarvis; the "Before we start" consent is tested on its own.
   if (opts.ai !== false)
     await pool.query(`update users set preferences = preferences || '{"aiConsentAt":"2026-01-01T00:00:00.000Z"}'::jsonb where email = $1`, [email]);

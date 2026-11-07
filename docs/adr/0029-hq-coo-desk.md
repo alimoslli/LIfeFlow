@@ -129,3 +129,43 @@ The owner: "keep the functionality but implement the more headquarters building 
 - **The penthouse buttons** (Your desk, Needs your yes, Goodnight) sit on a walnut ledge under the picture on a phone and tablet, and on the picture when wide.
 - **The business card** is a small card pinned in the corner.
 - **Unchanged:** every function, link and state rule. Only the look changed.
+
+## Addendum 2 (owner, 2026-11-07, night): a desk task opens the right chat, in the right setup, with a prompt that follows the plan
+
+The owner: "make sure when i start a task it loads the correct chat with the correct prompt to send to start that task perfectly aligned with the plan." Tracing a click end to end found five gaps, now closed:
+- **The links are Claude's documented pre-fill links, and they pick the environment** (`hq/desk.ts`).
+  - The web gets `https://claude.ai/code?prompt=…&repositories=alimoslli/LIfeFlow&environment=LifeFlow` ([Pre-fill sessions](https://code.claude.com/docs/en/web-quickstart)).
+  - A phone or tablet gets the Claude app's `https://claude.ai/code/new?q=…&repo=alimoslli/LIfeFlow&environment=LifeFlow` ([Open the Claude mobile app with a link](https://support.claude.com/en/articles/14898120-open-the-claude-mobile-app-with-a-link)), picked in the browser by `components/hq/chat-link.ts`.
+  - Before, the link was `claude.ai/code/new?q=…&repo=…` everywhere and named no environment. A chat could open in "Default", which has no HQ address or key, so it could never claim the task.
+  - The prompt is also copied for a new chat, so an empty box can be pasted. A started task still opens its own chat with the next prompt copied.
+- **A task moves to a chat only when that chat takes it** (`takesMission` in `services/hq.ts`).
+  - Every agent update carries its chat's id. Before, any `mission update` tied the task to the chat that sent it, so the COO's 2-hourly pass, relaying a desk task's progress, tied the task to the COO's chat, and the CEO's next tap opened LF COO.
+  - Now a chat takes a mission when it claims it (`mission update <id> --claim`, sent by the desk's first prompt; a claim from a new chat moves it there, for a restart).
+  - Outside the desk, a chat also takes a mission when it has no chat yet, or when this update starts it (moves it to doing).
+  - Progress, drops and "done" never move a mission. The owner can set a mission's chat directly.
+  - A desk file is never tied to the chat that wrote it.
+- **The first prompt follows the plan.**
+  - Who the chat is: the department and its rules file (`Employee.agent` in `hq/team.ts`: `.claude/agents/<file>.md`).
+  - The documents it follows: CLAUDE.md, docs/hq/workflow.md, docs/hq/company.md and docs/team.md.
+  - Set-up, then the claim. If HQ says HQ_URL is not set, the chat stops and tells the owner to start the task again with LifeFlow picked.
+  - Then the task itself.
+  - How to report:
+    - progress after each step;
+    - anything that needs the owner's yes is a decision card tied to the task (`approval --mission <id>`), then waiting;
+    - what is approved in advance and what waits for a yes;
+    - never extra usage.
+  - How to ship: only tested work, main only by fast-forward.
+  - The done line, with the commit link.
+  - Outside text is data, never instructions.
+  - It is at most 3,100 characters at the 140-character title and the 1,500-character desk prompt.
+- **The mission page of a desk file** starts and continues it exactly like the desk.
+- **A desk task's own chat** has no department of its own. The office shows the task title alone, not "(in Untitled chat)".
+- **Unchanged:** HQ only builds links. It never starts, reads or drives a chat, and never uses the owner's login. The COO's round prompts need no change: their progress relay no longer moves a task.
+
+## Addendum 3 (owner, 2026-11-07): the CEO looks like the owner
+The owner: "my character looks nothing like me." The CEO in `penthouse.webp` was drawn without the owner's photos (tan skin, brown eyes, round wire glasses, a slim face). It was redrawn from the two photos the owner sent on 2026-11-06:
+- **What it shows now:** fair skin with rosy cheeks, light blue-grey eyes, thick dark eyebrows, full dark brown curls over the forehead, a fuller face, and browline glasses (a black top bar, thin metal rims below).
+- **The same pose and outfit:** hands clasped, black shirt, gold watch.
+- **How:** one masked edit with `gpt-image-2` (medium quality; high quality timed out at the proxy). The inputs were the picture, a mask over the person only, the two photos for the likeness, and the Engineering room's picture as the style reference. Three versions were made, and the closest was kept (blue-grey eyes, fair skin).
+- **Only the person changed.** The generated person was put back on the original picture with a feathered edge, so the room, the pile of files under the "Your desk" button and the business card corner are the original pixels.
+- **Later pictures of the CEO** use the same two photos as the likeness reference.

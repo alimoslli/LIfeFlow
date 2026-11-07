@@ -82,6 +82,12 @@ export async function completeOnboarding(scope: UserScope, input: OnboardingInpu
   return { courses, job: !!d.job, checking: !!d.checking, memory: !!d.aboutMe && d.aboutMe.length >= 3 };
 }
 
+/** The name they want to be called, asked on the first screen after sign-up. */
+export async function setDisplayName(scope: UserScope, name: string) {
+  const clean = z.string().trim().min(1, "Enter a name").max(80).parse(name).replace(/\s+/g, " ");
+  await scope.tx.update(users).set({ name: clean }).where(eq(users.id, scope.userId));
+}
+
 /** Marks setup finished (also used by "Skip setup") and queues the guided tour. */
 export async function finishOnboarding(
   scope: UserScope,

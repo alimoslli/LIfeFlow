@@ -383,6 +383,15 @@ describe("office snapshot, detail, summary", () => {
     expect(dev.state).toBe("sleeping"); // an hour-old check-in is not "working"
   });
 
+  it('a desk task\'s own chat (no department of its own) shows the task alone, not "(in Untitled chat)"', async () => {
+    const DESK = "session_01DeskOwnChatAbcdefgh";
+    const m = await createMission(db(), owner, { role: "developer", title: "Ship LifeFlow to the App Store", deskPrompt: "Readiness check." });
+    await updateMission(db(), { kind: "agent", keyName: "k", sessionId: DESK }, m.id, { status: "doing", claim: true, sessionId: DESK });
+    await recordCheckin(db(), { sessionId: DESK, status: "working" }); // the Stop hook: no title, no department
+    const dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
+    expect(dev).toMatchObject({ state: "working", line: "Ship LifeFlow to the App Store" });
+  });
+
   it("measures the budget from real samples", async () => {
     const now = new Date();
     expect(await weeklyBudget(db(), now)).toMatchObject({ weekPct: null, roundsPct: null });

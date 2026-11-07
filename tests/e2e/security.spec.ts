@@ -14,7 +14,6 @@ async function signIn(page: Page, email: string) {
 
 test("weak passwords are refused at sign-up, with a live meter", async ({ page }) => {
   await page.goto("/signup");
-  await page.getByLabel("Your name").fill("Weak Pass");
   await page.getByLabel("Email").fill(`weak-${Date.now()}@example.com`);
   await page.getByLabel("Password").fill("password123");
   await expect(page.getByText(/weak/i).first()).toBeVisible();

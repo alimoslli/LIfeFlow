@@ -67,13 +67,21 @@ describe("the CEO's desk", () => {
     expect(first.status).toBe("Not started");
     expect(first.link.kind).toBe("new");
     const u = new URL(first.link.href);
-    expect(u.origin + u.pathname).toBe("https://claude.ai/code/new");
-    expect(u.searchParams.get("repo")).toBe("alimoslli/LIfeFlow");
-    expect(u.searchParams.get("q")).toContain(`npx tsx scripts/hq.ts mission update ${hi.id} --status doing`);
-    expect(u.searchParams.get("q")).toContain("Finish it as pictures.");
+    expect(u.origin + u.pathname).toBe("https://claude.ai/code");
+    expect(u.searchParams.get("repositories")).toBe("alimoslli/LIfeFlow");
+    expect(u.searchParams.get("environment")).toBe("LifeFlow");
+    expect(u.searchParams.get("prompt")).toContain(`npx tsx scripts/hq.ts mission update ${hi.id} --status doing --claim`);
+    expect(u.searchParams.get("prompt")).toContain("You are LifeFlow's Product & Design lead (.claude/agents/product-designer.md).");
+    expect(u.searchParams.get("prompt")).toContain("Finish it as pictures.");
+    expect(new URL(first.link.appHref).searchParams.get("q")).toBe(u.searchParams.get("prompt"));
 
-    // The chat that took it reports in (mission update from that chat sends its id): the file now reopens that chat.
-    await updateMission(db(), { kind: "agent", keyName: "k", sessionId: SID }, low.id, { status: "doing", sessionId: SID, progress: "Listing env vars" });
+    // The chat that took it claims it (mission update from that chat sends its id): the file now reopens that chat.
+    await updateMission(db(), { kind: "agent", keyName: "k", sessionId: SID }, low.id, {
+      status: "doing",
+      claim: true,
+      sessionId: SID,
+      progress: "Listing env vars",
+    });
     const v2 = await deskView(db());
     const vercel = v2.files.find((f) => f.mission.id === low.id)!;
     expect(vercel).toMatchObject({ status: "Listing env vars", link: { kind: "open", href: `https://claude.ai/code/${SID}` } });
@@ -120,6 +128,82 @@ describe("the CEO's desk", () => {
 
 const addDesk = (o: Partial<{ role: string; title: string; prompt: string }>) =>
   addDeskTask(db(), admin, { role: "developer", title: "A task", prompt: "Do it.", ...o });
+
+// ADR 0029 addendum 2: every agent update carries its chat's id; only a claim (or, outside the desk, a start) moves a task.
+describe("which chat a task belongs to", () => {
+  const COO = "session_01DeskCooChatAbcdefgh";
+  const NEW_CHAT = "session_01DeskRestartAbcdefg";
+  const reporter = async () => {
+    const { token } = await createHqKey(db(), admin, "k");
+    return async (body: Record<string, unknown>, sessionId: string) => {
+      const res = await reportPOST(
+        new Request("https://lifeflow.test/api/hq/report", {
+          method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+          body: JSON.stringify({ type: "mission", ...body, sessionId }),
+        }),
+      );
+      expect(res.status, await res.clone().text()).toBe(200);
+      return ((await res.json()) as { id: string }).id;
+    };
+  };
+  const chatOf = async (id: string) => (await db().select().from(hqMissions).where(eq(hqMissions.id, id)))[0].sessionId;
+
+  it("a desk file written by a chat waits for the chat that claims it", async () => {
+    const post = await reporter();
+    const id = await post({ role: "developer", title: "Finish Twilio", deskPrompt: "Check the SMS path." }, COO);
+    expect(await chatOf(id)).toBeNull();
+    expect((await deskView(db())).files[0].link.kind).toBe("new");
+  });
+
+  it("the COO's progress relay, a drop or a done never move a desk task to another chat", async () => {
+    const post = await reporter();
+    const m = await addDeskTask(db(), admin, { role: "developer", title: "Plaid end to end", prompt: "Run the Plaid tests." });
+    // A progress relay before anyone took it doesn't take it either.
+    await post({ id: m.id, progress: "Not started yet" }, COO);
+    expect(await chatOf(m.id)).toBeNull();
+    await post({ id: m.id, status: "doing", claim: true, progress: "Started" }, SID);
+    expect(await chatOf(m.id)).toBe(SID);
+    // The 2-hourly pass relays the chat's own summary from the COO's chat.
+    await post({ id: m.id, progress: "Sandbox sync passes" }, COO);
+    expect(await chatOf(m.id)).toBe(SID);
+    const f = (await deskView(db())).files.find((x) => x.mission.id === m.id)!;
+    expect(f).toMatchObject({ status: "Sandbox sync passes", link: { kind: "open", href: `https://claude.ai/code/${SID}` } });
+    // Even a start from another chat isn't a claim on a desk file.
+    await post({ id: m.id, status: "blocked", blockedReason: "Plaid keys" }, COO);
+    await post({ id: m.id, status: "doing" }, COO);
+    expect(await chatOf(m.id)).toBe(SID);
+    await post({ id: m.id, status: "dropped" }, COO);
+    expect(await chatOf(m.id)).toBe(SID);
+  });
+
+  it("a claim from a new chat moves the task there (a restart)", async () => {
+    const post = await reporter();
+    const m = await addDeskTask(db(), admin, { role: "developer", title: "Vercel work", prompt: "Tidy the deploy." });
+    await post({ id: m.id, status: "doing", claim: true }, SID);
+    await post({ id: m.id, status: "doing", claim: true, progress: "Started again" }, NEW_CHAT);
+    expect(await chatOf(m.id)).toBe(NEW_CHAT);
+    await post({ id: m.id, status: "done", result: "Tidied" }, NEW_CHAT);
+    expect(await chatOf(m.id)).toBe(NEW_CHAT);
+  });
+
+  it("outside the desk, the first chat to touch a mission has it, and the chat that starts it takes it", async () => {
+    const post = await reporter();
+    const owner = await createMission(db(), { kind: "owner", email: admin.email }, { role: "developer", title: "Fix the calendar" });
+    await post({ id: owner.id, progress: "Looking" }, SID);
+    expect(await chatOf(owner.id)).toBe(SID);
+    // The night round's Engineering starts it in the COO's chat: the work is there now.
+    await post({ id: owner.id, status: "doing" }, COO);
+    expect(await chatOf(owner.id)).toBe(COO);
+    // Relaying progress or finishing from elsewhere doesn't move it again.
+    await post({ id: owner.id, progress: "Relayed" }, SID);
+    await post({ id: owner.id, status: "done", result: "Fixed" }, SID);
+    expect(await chatOf(owner.id)).toBe(COO);
+    // A mission a chat writes for itself is that chat's from the start.
+    const own = await post({ role: "developer", title: "Its own fix" }, SID);
+    expect(await chatOf(own)).toBe(SID);
+  });
+});
 
 describe("Goodnight", () => {
   it("ends at the first 5 AM after it, in the owner's time zone", () => {

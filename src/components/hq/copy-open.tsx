@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { ClipboardCopy } from "lucide-react";
+import { pickChatHref } from "./chat-link";
 
 /**
  * Copies an instruction to the clipboard, then opens the real chat in a new tab for the owner to paste.
@@ -8,20 +9,26 @@ import { ClipboardCopy } from "lucide-react";
  */
 export function CopyAndOpen({
   url,
+  appUrl,
   defaultText,
   editable = false,
+  collapsed = false,
   label = "Copy and open",
 }: {
   url: string;
+  /** The Claude app's link for the same chat, followed on a phone or tablet (chat-link.ts). */
+  appUrl?: string;
   defaultText: string;
   editable?: boolean;
+  /** Long prompts: shown behind "See the prompt". */
+  collapsed?: boolean;
   label?: string;
 }) {
   const [text, setText] = useState(defaultText);
   const [msg, setMsg] = useState("");
   async function go() {
     // Open first, synchronously, so browsers still count it as the tap.
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(pickChatHref(url, appUrl), "_blank", "noopener,noreferrer");
     try {
       await navigator.clipboard.writeText(text);
       setMsg("Copied. Paste it into the chat.");
@@ -42,6 +49,11 @@ export function CopyAndOpen({
             className="min-h-20 w-full rounded-xl border border-border/80 bg-surface px-3.5 py-2 text-sm font-normal text-text focus:border-accent focus:ring-2 focus:ring-[var(--ring)] focus:outline-none"
           />
         </label>
+      ) : collapsed ? (
+        <details className="rounded-xl bg-surface-2 px-3.5 py-2 text-sm text-text-2">
+          <summary className="flex min-h-11 cursor-pointer items-center font-medium text-text">See the prompt</summary>
+          <p className="pb-1 break-words whitespace-pre-wrap">{text}</p>
+        </details>
       ) : (
         <p className="rounded-xl bg-surface-2 px-3.5 py-2 text-sm break-words whitespace-pre-wrap text-text-2">{text}</p>
       )}

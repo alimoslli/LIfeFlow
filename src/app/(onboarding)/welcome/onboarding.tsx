@@ -12,7 +12,7 @@ import { ASSISTANT_STYLES, type AssistantStyle } from "@/lib/assistant";
 import type { Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { LifeStage } from "@/lib/life";
-import { completeOnboardingAction, skipOnboardingAction } from "./actions";
+import { completeOnboardingAction, setNameAction, skipOnboardingAction } from "./actions";
 import { DayPreview } from "./day-preview";
 
 type StepId = "hello" | "week" | "details" | "yours" | "day";
@@ -48,6 +48,9 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
   const [course, setCourse] = useState("");
   const [job, setJob] = useState("");
   const [name, setName] = useState("");
+  // What to call the person: asked here (sign-up only takes email and password), saved when they leave this step.
+  const [yourName, setYourName] = useState(firstName === "there" ? "" : firstName);
+  const cleanYou = yourName.trim().replace(/\s+/g, " ");
   const [style, setStyle] = useState<AssistantStyle>("friend");
   const STEPS = stepsFor(stage);
   const step = STEPS[Math.min(index, STEPS.length - 1)];
@@ -75,6 +78,18 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
     },
     { dependencies: [index], scope: panel },
   );
+
+  const next = () => {
+    if (step === "hello" && cleanYou && cleanYou !== firstName) {
+      start(async () => {
+        const r = await setNameAction(cleanYou);
+        if (!r?.ok) return setError(r?.error ?? "Couldn't save your name. Try again.");
+        go(1);
+      });
+      return;
+    }
+    go(1);
+  };
 
   const go = (delta: number) => {
     dir.current = delta;
@@ -138,11 +153,21 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
               <BrandMark className="lf-float relative h-full w-full" priority />
             </div>
             <h1 data-anim className="mt-8 font-display text-[2.75rem] leading-[1.05] font-medium tracking-tight">
-              Hi {firstName}.
+              Hi{cleanYou ? ` ${cleanYou.split(" ")[0]}` : ""}.
             </h1>
             <p data-anim className="mt-4 text-[1.0625rem] leading-relaxed text-text-2">
               LifeFlow is your classes, work, money and plans in one place, with a personal assistant who helps with all of it.
             </p>
+            <label data-anim className="mt-6 flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-text-2">What should I call you?</span>
+              <Input
+                aria-label="What should I call you?"
+                value={yourName}
+                onChange={(e) => setYourName(e.target.value)}
+                maxLength={80}
+                autoComplete="given-name"
+              />
+            </label>
             <p data-anim className="mt-6 rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem] leading-snug text-text-2">
               {plan.paid
                 ? `Free plan: everything you add yourself, and ${plan.freeChatsPerDay} chats with your assistant a day. Pro adds ${listOf(plan.proFeatures)}.`
@@ -220,7 +245,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
 
         {step === "day" && stage && (
           <DayPreview
-            firstName={firstName}
+            firstName={cleanYou.split(" ")[0] || firstName}
             assistant={shown ?? "Your assistant"}
             stage={stage}
             course={school ? course : undefined}
@@ -306,7 +331,11 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
             </Button>
           </>
         ) : (
-          <Button onClick={() => go(1)} disabled={(step === "week" && !stage) || (step === "yours" && !nameOk)} className="h-12 text-[0.9375rem]">
+          <Button
+            onClick={next}
+            disabled={pending || (step === "hello" && !cleanYou) || (step === "week" && !stage) || (step === "yours" && !nameOk)}
+            className="h-12 text-[0.9375rem]"
+          >
             {step === "hello" ? "Let's go" : step === "yours" ? "Show me my day" : "Continue"}
           </Button>
         )}

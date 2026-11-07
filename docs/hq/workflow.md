@@ -58,7 +58,8 @@ HQ is a mirror, never a blocker. If `HQ_URL` isn't set or a command fails, carry
    Never turn on extra usage.
 3. **Every piece of work is a mission.**
    - Create it: `mission add --role developer --title "…" --priority high`. Or reuse the owner's mission from the inbox.
-   - When you start: `mission update <id> --status doing --progress "…"`.
+   - When you start: `mission update <id> --status doing --progress "…"`. Starting a mission (not a desk file) makes your chat its chat.
+   - A desk task (one with a desk prompt) is taken only with `--claim` (the desk's first prompt sends `--status doing --claim`). Relaying its progress from another chat never moves it (ADR 0029, addendum 2).
    - Fixes belong to the Developer, audits and research to the Researcher, situations to the Researcher.
 4. **Show the work as it happens.**
    - After each step, run `checkin --status working --summary "<one line: what is happening now>"`.
