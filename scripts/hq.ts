@@ -259,6 +259,8 @@ export function buildRequest(
           ...(one(p, "branch") ? { branch: one(p, "branch") } : {}),
           ...(links.length ? { links } : {}),
           ...deskPromptOf(p),
+          // --claim: this chat takes the mission (a desk task's first prompt sends it; ADR 0029 addendum 2).
+          ...(p.flags.claim && one(p, "claim") !== "false" ? { claim: true } : {}),
           ...(extra.sessionId ? { sessionId: extra.sessionId } : {}),
         },
       };

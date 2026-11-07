@@ -110,6 +110,8 @@ export type MissionPatch = Partial<{
   branch: string | null;
   dueOn: string | null;
   deskPrompt: string | null;
+  /** This chat takes the mission (`mission update --claim`): the only way a desk task gets its chat, or changes it. */
+  claim: boolean;
 }>;
 /** The decision card an agent sends (ADR 0028). Everything is required; `summary` is the optional extra detail on top of `why`. */
 export type ApprovalInput = {
@@ -190,6 +192,7 @@ const missionPatchSchema = z
     branch: optLine(200),
     dueOn,
     deskPrompt: deskPromptField,
+    claim: z.boolean(),
   })
   .partial();
 const cardFields = {
@@ -432,7 +435,8 @@ function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
       const c = base.chats.find((x) => x.id === m.sessionId && x.lastCheckinAt && now.getTime() - x.lastCheckinAt.getTime() <= WORKING_WINDOW_MS);
       if (c) {
         viaChat = c;
-        result = { ...result, state: "working", reason: c.role === role ? m.title : `${m.title} (in ${c.title})` };
+        // A desk task's own chat has no department of its own: the task's title says it all.
+        result = { ...result, state: "working", reason: c.role === role || !c.role ? m.title : `${m.title} (in ${c.title})` };
         break;
       }
     }
@@ -898,7 +902,8 @@ export async function createMission(db: Database, actor: HqActor, input: Mission
         dueOn: d.dueOn ?? null,
         deskPrompt: d.deskPrompt ?? null,
         source: actorKind(actor),
-        sessionId: d.sessionId ?? (actor.kind === "agent" ? (actor.sessionId ?? null) : null),
+        // A desk file waits for the chat that claims it, never the chat that wrote it (ADR 0029 addendum 2).
+        sessionId: d.deskPrompt && actor.kind === "agent" ? null : (d.sessionId ?? (actor.kind === "agent" ? (actor.sessionId ?? null) : null)),
       })
       .returning();
     await logActivity(tx, {
@@ -911,6 +916,20 @@ export async function createMission(db: Database, actor: HqActor, input: Mission
     });
     return toMission(row);
   });
+}
+
+/**
+ * Whether the chat sending this update becomes the mission's chat (ADR 0029 addendum 2). Every agent update carries its
+ * chat's id, so without this the COO relaying a desk task's progress tied the task to the COO's chat, and the CEO's
+ * next tap opened the wrong chat. A chat takes a mission only by claiming it (`--claim`), or, for a mission that isn't a
+ * desk file, when it has no chat yet or this update starts it. Progress, drops and "done" never move it. The owner sets
+ * it directly.
+ */
+function takesMission(actor: HqActor, cur: { sessionId: string | null; status: string; deskPrompt: string | null }, p: MissionPatch): boolean {
+  if (actor.kind === "owner" || p.claim === true) return true;
+  const desk = (p.deskPrompt !== undefined ? p.deskPrompt : cur.deskPrompt) != null;
+  if (desk) return false;
+  return !cur.sessionId || (p.status === "doing" && cur.status !== "doing");
 }
 
 export async function updateMission(db: Database, actor: HqActor, id: string, patch: MissionPatch): Promise<Mission> {
@@ -928,7 +947,7 @@ export async function updateMission(db: Database, actor: HqActor, id: string, pa
     if (p.progress !== undefined) next.progress = p.progress;
     if (p.result !== undefined) next.result = p.result;
     if (p.links !== undefined) next.links = p.links;
-    if (p.sessionId !== undefined) next.sessionId = p.sessionId;
+    if (p.sessionId !== undefined && takesMission(actor, cur, p)) next.sessionId = p.sessionId;
     if (p.branch !== undefined) next.branch = p.branch;
     if (p.dueOn !== undefined) next.dueOn = p.dueOn;
     if (p.deskPrompt !== undefined) next.deskPrompt = p.deskPrompt;

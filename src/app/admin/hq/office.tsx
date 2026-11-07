@@ -50,6 +50,7 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
           status: f.status,
           kind: f.link.kind,
           href: f.link.href,
+          appHref: f.link.appHref,
           prompt: f.link.prompt,
         }))
       : [],

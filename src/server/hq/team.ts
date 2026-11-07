@@ -22,6 +22,8 @@ export type Employee = {
    * them inside its rounds, so "no chat" is normal and never means offline (ADR 0026, 0029).
    */
   ownChat: boolean;
+  /** Their rules, which every chat doing their work follows (the desk's first prompt names it). */
+  agent: string;
 };
 
 export const EMPLOYEES: readonly Employee[] = [
@@ -39,6 +41,7 @@ export const EMPLOYEES: readonly Employee[] = [
     workingLine: "Running the round",
     chatTitle: "LF COO",
     ownChat: true,
+    agent: ".claude/agents/coo.md",
   },
   {
     role: "developer",
@@ -48,6 +51,7 @@ export const EMPLOYEES: readonly Employee[] = [
     workingLine: "Coding at the desk",
     chatTitle: "LF Main",
     ownChat: true,
+    agent: ".claude/agents/engineer.md",
   },
   {
     role: "designer",
@@ -57,6 +61,7 @@ export const EMPLOYEES: readonly Employee[] = [
     workingLine: "Sketching on the tablet",
     chatTitle: "LF V3",
     ownChat: true,
+    agent: ".claude/agents/product-designer.md",
   },
   {
     role: "researcher",
@@ -72,6 +77,7 @@ export const EMPLOYEES: readonly Employee[] = [
     workingLine: "Reading with the magnifier",
     chatTitle: null,
     ownChat: false,
+    agent: ".claude/agents/market-researcher.md",
   },
   {
     role: "marketing",
@@ -87,6 +93,7 @@ export const EMPLOYEES: readonly Employee[] = [
     workingLine: "Filming at the ring light",
     chatTitle: "LF Marketing",
     ownChat: true,
+    agent: ".claude/agents/marketer.md",
   },
   {
     role: "qa",
@@ -96,6 +103,7 @@ export const EMPLOYEES: readonly Employee[] = [
     workingLine: "Testing every screen",
     chatTitle: null,
     ownChat: false,
+    agent: ".claude/agents/qa-security.md",
   },
   {
     role: "support",
@@ -110,6 +118,7 @@ export const EMPLOYEES: readonly Employee[] = [
     workingLine: "Reading the error feed",
     chatTitle: null,
     ownChat: false,
+    agent: ".claude/agents/customer-success.md",
   },
 ];
 
