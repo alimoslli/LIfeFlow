@@ -131,9 +131,11 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
   await expect(op.getByText("Suspended a user", { exact: true })).toBeVisible();
   await expect(op.getByText("Deleted a user", { exact: true })).toBeVisible();
 
-  // Errors and health pages render.
+  // Errors and health render (one page: going to a #part of the page you're on is not a new load, so leave it first).
+  await op.goto("/admin");
   expect((await op.goto("/admin/app#errors"))?.status()).toBe(200);
-  expect((await op.goto("/admin/app#health"))?.status()).toBe(200);
+  await expect(op.locator("#errors")).toBeVisible();
+  await expect(op.locator("#health")).toBeVisible();
   await expect(op.getByText("Integrations")).toBeVisible();
   await op.goto("/admin/app#activity");
   await expect(op.getByText("Published an announcement", { exact: true })).toBeVisible();

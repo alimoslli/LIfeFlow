@@ -113,6 +113,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await op.goto("/admin/work");
   await op.locator("article", { hasText: "The Sunday reset reel" }).getByRole("button", { name: "Yes, go" }).click();
   await expect(op.getByText("You said yes.")).toBeVisible();
+  await op.goto("/admin/hq/marketing");
   await expect(op.getByText("No drafts yet. The marketing round adds them on Wednesdays.")).toBeVisible();
   const week = op.locator("section", { has: op.getByRole("heading", { name: "This week", level: 2 }) });
   await expect(week.getByText("Approved", { exact: true })).toBeVisible();
@@ -133,7 +134,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
 
   // Reports carry a marketing section.
   await op.goto("/admin/work");
-  await expect(op.getByRole("heading", { name: "Marketing this week", level: 2 })).toBeVisible();
+  await expect(op.getByRole("heading", { name: "Marketing this week", level: 3 })).toBeVisible();
 
   // The controls: Autonomous mode off shows on the Office and in the inbox the rounds read.
   await op.goto("/admin/hq/settings");
