@@ -13,6 +13,7 @@ import { fromLocalInput } from "@/components/hq/marketing-labels";
 import { getSessionUser } from "@/server/auth/current-user";
 import { getContent, saveControls, updateContent } from "@/server/services/hq-marketing";
 import { addDeskTask, lightsOn, sayGoodnight } from "@/server/services/hq-desk";
+import { startDeskTask } from "@/server/services/hq-desk-start";
 import { HqError, createHqKey, createMission, decideApproval, importSeedAsOwner, removeChat, revokeHqKey, saveChat, updateMission } from "@/server/services/hq";
 
 /* Every action re-checks the admin first (a layout is not enough), runs, refreshes and comes back with ?done= or ?error=. */
@@ -259,6 +260,19 @@ export async function addDeskTaskAction(fd: FormData) {
     const m = await addDeskTask(getDb(), admin, { role, title: text(fd, "title", 160), prompt: text(fd, "prompt", 1600) });
     return `On your desk: ${m.title}`;
   });
+}
+
+/** Start a desk task from HQ (ADR 0030): returns to the desk with the new chat's link, so the owner can stay in HQ. */
+export async function startDeskTaskAction(id: string, pin: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const admin = await requireAdmin();
+  try {
+    const r = await startDeskTask(getDb(), admin, String(id ?? "").slice(0, 64), String(pin ?? "").slice(0, 32));
+    revalidatePath("/admin", "layout");
+    return { ok: true, url: r.url };
+  } catch (e) {
+    if (e instanceof HqError) return { ok: false, error: e.message };
+    throw e;
+  }
 }
 
 export async function goodnightAction() {

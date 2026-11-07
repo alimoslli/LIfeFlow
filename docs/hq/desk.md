@@ -10,6 +10,8 @@ The penthouse desk holds the owner's big tasks as files. Clicking the pile lists
   - how to ship, and the done line with the commit link.
 - **Later clicks**: the task's own chat opens and the next prompt ("Back on …, where it stands, next step") is copied, ready to paste. Only a claim moves a desk task to a chat: the COO's progress relay never does.
 - **The file's own text** says only the task, without who the chat is: the wrapper adds that.
+- **Starting from HQ** (ADR 0030): once the owner has made the "LifeFlow desk task starter" token and put it in Vercel (`HQ_DESK_FIRE_URL`, `HQ_DESK_FIRE_TOKEN`), tapping a file with no chat shows its exact first prompt with **Start it**, and the task starts right in HQ. A file the team wrote says so; read it first, because its chat runs on its own. The new chat reads the prompt from HQ (`npx tsx scripts/hq.ts desk <id> --pin <pin>`) and refuses if it changed after the tap. The owner watches it under "Right now". A task that has a chat continues there (Open); it never gets a second one. Without the token, the link above is used.
+- **Watching:** every chat with the LifeFlow repo alone, in the LifeFlow environment, reports what it's doing as it works. The desk file shows that line, the room says it, and "Right now" lists it with Watch.
 
 A desk file is a mission with a `desk_prompt` (plain text, at most 1,500 characters). Add one from the desk ("Add a file to your desk") or from a chat: `npx tsx scripts/hq.ts mission add --role developer --title "…" --priority high --desk-prompt-file prompt.txt`. Finishing the task (`--status done`) takes it off the desk.
 

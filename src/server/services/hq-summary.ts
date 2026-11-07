@@ -12,6 +12,12 @@ import { timed } from "../hq/validate";
 
 const DAY = 24 * 3_600_000;
 export const LOOKED_COOKIE = "hq_last_looked";
+/**
+ * The window this visit shows (ADR 0030): set on the first render of a visit to the last-looked value it used ("none" on a
+ * first visit), so the 15 s refresh and coming back from another tab keep showing the same window. Gone when the owner
+ * leaves the page, and after 2 hours at most.
+ */
+export const VISIT_COOKIE = "hq_looked_from";
 
 /** The window start: the cookie's time when it is a real past time (never older than 30 days), else the last 7 days. */
 export function sinceFrom(cookie: string | undefined, now: Date): Date {

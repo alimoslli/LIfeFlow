@@ -3,7 +3,7 @@ import { z } from "zod";
 import { HQ_ROLES } from "@/server/db/schema";
 import { getDb } from "@/server/db/client";
 import { errorResponse, HttpError } from "@/server/http";
-import { authenticateHq, readLimitedBody } from "@/server/hq/request";
+import { authenticateHq, hasHqKeyShape, isLiveOnly, readLimitedBody } from "@/server/hq/request";
 import {
   createApproval,
   createMission,
@@ -44,14 +44,25 @@ const body = z.discriminatedUnion("type", [
 /** Receives reports from the owner's chats (check-ins, missions, approvals, notes). Authenticated by an HQ key, so it is a public route in proxy.ts. */
 export async function POST(req: Request) {
   try {
-    const key = await authenticateHq(req);
+    if (!hasHqKeyShape(req)) throw new HttpError(401, "Invalid or revoked key.");
     const text = await readLimitedBody(req);
     let json: unknown;
+    let bad = false;
     try {
       json = JSON.parse(text);
     } catch {
-      throw new HttpError(400, "Body must be JSON");
+      bad = true;
     }
+    // Live pings (ADR 0030) count in their own limit; one over it is dropped quietly (the next one says the same).
+    const live = !bad && isLiveOnly(json);
+    let key: { id: string; name: string };
+    try {
+      key = await authenticateHq(req, { live });
+    } catch (e) {
+      if (live && e instanceof HttpError && e.status === 429) return NextResponse.json({ ok: true, dropped: true });
+      throw e;
+    }
+    if (bad) throw new HttpError(400, "Body must be JSON");
     const parsed = body.safeParse(json);
     if (!parsed.success) throw new HttpError(400, "Unknown or missing type (checkin, mission, approval, activity, brief, content, metrics, import).");
     const b = parsed.data as Record<string, unknown> & { type: string };

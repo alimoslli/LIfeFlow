@@ -1,9 +1,11 @@
+import { createHash } from "node:crypto";
 import type { HqRole } from "../db/schema";
 import { chatUrl, employee } from "./team";
 
 /**
- * The CEO's desk (ADR 0029): each task file opens a Claude Code chat for that task. HQ only builds links: it never starts,
- * reads or drives a chat, and never uses the owner's claude.ai login.
+ * The CEO's desk (ADR 0029, 0030): each task file opens a Claude Code chat for that task. HQ builds links, and, on the
+ * owner's tap after they've read the prompt, may start one through the owner's own desk task starter (hq-desk-start.ts).
+ * It never reads or types into a chat, and never uses the owner's claude.ai login.
  *
  * First click (no chat yet): a new chat in the LifeFlow repo and the LifeFlow environment (the only one with HQ's address
  * and key), with the first prompt typed in; the owner presses send. The links are Claude's documented pre-fill links
@@ -20,8 +22,22 @@ export const CLAUDE_CODE_APP = "https://claude.ai/code/new";
 const COMMIT_LINK = `https://github.com/${DESK_REPO}/commit/<sha>`;
 
 export type DeskTask = { id: string; title: string; role: HqRole; deskPrompt: string | null; sessionId: string | null };
-/** `href` is for a browser, `appHref` for the Claude app on a phone or tablet (the same chat link once the task has one). */
-export type DeskLink = { kind: "new" | "open"; href: string; appHref: string; prompt: string };
+/**
+ * `href` is for a browser, `appHref` for the Claude app on a phone or tablet (the same chat link once the task has one).
+ * `pin` fingerprints the task (`deskPin`): a task started from HQ runs only what the owner read (ADR 0030).
+ */
+export type DeskLink = { kind: "new" | "open"; href: string; appHref: string; prompt: string; pin: string };
+
+/**
+ * A short fingerprint (16 hex characters of a SHA-256) of everything in a desk task's first prompt that can change outside
+ * the code: its id, title, department and text. The wrapper's own wording is code, so a release that rewords it never
+ * breaks a start that is on its way.
+ */
+export const deskPin = (t: Pick<DeskTask, "id" | "title" | "role" | "deskPrompt">) =>
+  createHash("sha256")
+    .update(JSON.stringify([t.id, t.title, t.role, (t.deskPrompt ?? "").trim()]), "utf8")
+    .digest("hex")
+    .slice(0, 16);
 
 const hq = (args: string) => `npx tsx scripts/hq.ts mission update ${args}`;
 
@@ -58,13 +74,30 @@ export function nextPrompt(t: DeskTask): string {
   ].join("\n");
 }
 
+/** What a task started from HQ says until its chat reports (ADR 0030). */
+export const STARTING = "Starting in its chat";
+/** A start whose chat hasn't said a word this long after it never got going; it can be started again. */
+export const START_STALL_MS = 10 * 60_000;
+
+/**
+ * A task started from HQ whose chat never reported (no live ping, no claim) for START_STALL_MS: the run stopped before it
+ * began (a refused fingerprint, a setup problem). The desk offers to start it again instead of a chat that did nothing.
+ */
+export function startStalled(
+  m: { status: string; sessionId: string | null; progress: string | null; updatedAt: Date },
+  chat: { liveAt: Date | null } | null | undefined,
+  now: Date,
+): boolean {
+  return !!m.sessionId && m.status === "doing" && m.progress === STARTING && !chat?.liveAt && now.getTime() - m.updatedAt.getTime() > START_STALL_MS;
+}
+
 const enc = encodeURIComponent;
 
 /** Where a click on the file goes, and the prompt it carries (typed in for a new chat, copied for an existing one). */
 export function deskLink(t: DeskTask): DeskLink {
   if (t.sessionId) {
     const href = chatUrl(t.sessionId);
-    return { kind: "open", href, appHref: href, prompt: nextPrompt(t) };
+    return { kind: "open", href, appHref: href, prompt: nextPrompt(t), pin: deskPin(t) };
   }
   const p = enc(firstPrompt(t));
   const repo = enc(DESK_REPO);
@@ -74,5 +107,6 @@ export function deskLink(t: DeskTask): DeskLink {
     href: `${CLAUDE_CODE_WEB}?prompt=${p}&repositories=${repo}&environment=${env}`,
     appHref: `${CLAUDE_CODE_APP}?q=${p}&repo=${repo}&environment=${env}`,
     prompt: firstPrompt(t),
+    pin: deskPin(t),
   };
 }

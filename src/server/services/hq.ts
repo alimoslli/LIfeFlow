@@ -24,7 +24,7 @@ import {
 } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { chatUrl, EMPLOYEES, employee, isHqRole, USAGE_PLAN } from "../hq/team";
-import { employeeState, WORKING_WINDOW_MS } from "../hq/state";
+import { employeeState, liveNow, WORKING_WINDOW_MS } from "../hq/state";
 import { nextWake, onDuty, ROUND_MAX_MS, roundOf, wakeLine, type Round } from "../hq/rounds";
 import type {
   Activity,
@@ -43,6 +43,7 @@ import type {
   HqControls,
   EmployeeCard,
   EmployeeDetail,
+  LiveItem,
   Mission,
   MissionPriority,
   MissionStatus,
@@ -151,6 +152,8 @@ export type CheckinInput = {
     readAt?: string | null;
     phase?: "sample" | "round_start" | "round_end";
   } | null;
+  /** Live HQ (ADR 0030), from the chat's own hooks: busy with one short line on what it is doing, or idle (the line stays). */
+  live?: { state: "busy" | "idle"; line?: string | null; /** When the hook saw it (ms since 1970). */ at?: number } | null;
 };
 export type HqKeyRow = { id: string; name: string; createdAt: Date; lastUsedAt: Date | null; revokedAt: Date | null };
 
@@ -273,6 +276,7 @@ export const toMission = (r: MissionRow): Mission => ({
   doneAt: r.doneAt,
   seenAt: r.seenAt,
   deskPrompt: r.deskPrompt,
+  deskPromptBy: r.deskPromptBy ?? null,
   createdAt: r.createdAt,
   updatedAt: r.updatedAt,
 });
@@ -323,6 +327,9 @@ const toChat = (r: ChatRow): Chat => ({
   summary: r.summary,
   needsAction: r.needsAction,
   lastCheckinAt: r.lastCheckinAt,
+  liveState: r.liveState ?? null,
+  liveLine: r.liveLine ?? null,
+  liveAt: r.liveAt ?? null,
   url: chatUrl(r.id),
 });
 
@@ -423,12 +430,35 @@ function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
   // Day in the owner's time zone and reachable (its own chat, or the COO's for a department with none): ready, not asleep.
   const duty = onDuty(now, base.tz) && (e.ownChat || cooChat(base.chats) !== null);
   let result = employeeState(
-    { noOwnChat: !e.ownChat, chats, missions: stateMissions, pendingApprovals: myPending, round: roundLine ? { line: roundLine } : null, onDuty: duty },
+    {
+      noOwnChat: !e.ownChat,
+      chats: chats.map((c) => ({ ...c, live: liveNow(c, now) })),
+      missions: stateMissions,
+      pendingApprovals: myPending,
+      round: roundLine ? { line: roundLine } : null,
+      onDuty: duty,
+    },
     now,
   );
-  // Work done for this employee in another chat (the night round fixing an Engineering mission in the COO's chat) is
-  // real work: a mission in progress whose own chat checked in recently makes them "working".
+  // Work done for this employee in another chat is real work. Live HQ (ADR 0030): an open mission whose chat is busy
+  // right now (a desk task's own chat) shows the task and what that chat is doing.
   let viaChat: Chat | null = null;
+  if (result.state !== "working") {
+    for (const m of mine) {
+      if (m.status !== "doing" || !m.sessionId) continue;
+      // Through a desk task's own chat (no department) or the department's own chat: the COO's chat being busy with
+      // something else never makes a mission it filed for Engineering look worked on.
+      const c = base.chats.find((x) => x.id === m.sessionId && (!x.role || x.role === role));
+      const doing = c ? liveNow(c, now) : null;
+      if (c && doing) {
+        viaChat = c;
+        result = { ...result, state: "working", reason: `${m.title}: ${doing}` };
+        break;
+      }
+    }
+  }
+  // Otherwise a mission in progress whose own chat checked in recently (the night round fixing an Engineering mission in
+  // the COO's chat, or a chat with no live hooks) makes them "working".
   if (result.state !== "working") {
     for (const m of mine) {
       if (m.status !== "doing" || !m.sessionId) continue;
@@ -451,6 +481,8 @@ function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
   let asOf: Date | null = null;
   for (const d of [
     ...chats.map((c) => c.lastCheckinAt),
+    ...chats.map((c) => c.liveAt),
+    viaChat?.liveAt ?? null,
     ...mine.map((m) => m.updatedAt),
     viaChat?.lastCheckinAt ?? null,
     inRound ? live.chat.lastCheckinAt : null,
@@ -503,8 +535,44 @@ export async function officeSnapshot(db: Database, now: Date = new Date()): Prom
       budget,
       brief,
       decisions: decisionRows.map(toActivity),
+      live: liveItems(base, now),
+      nextRound: nextRoundLine(base, now),
     };
   });
+}
+
+/**
+ * "Right now" (Live HQ, ADR 0030): every chat whose own hooks say it is busy, newest first (max 8), with its department
+ * (its own, or the department of the open mission it works on) and that mission.
+ */
+export function liveItems(base: Pick<Base, "chats" | "missions">, now: Date): LiveItem[] {
+  const items: LiveItem[] = [];
+  for (const c of base.chats) {
+    const line = liveNow(c, now);
+    if (!line || !c.liveAt) continue;
+    // The task it's on: a mission in progress tied to it, of its own department (any, for a desk task's own chat).
+    const m = base.missions.find((x) => x.sessionId === c.id && x.status === "doing" && (!c.role || x.role === c.role)) ?? null;
+    const role = c.role ?? m?.role ?? null;
+    items.push({
+      chatId: c.id,
+      url: c.url,
+      role,
+      who: role ? employee(role).title : c.title,
+      line,
+      at: c.liveAt,
+      missionId: m?.id ?? null,
+      missionTitle: m?.title ?? null,
+    });
+  }
+  return items.sort((a, b) => b.at.getTime() - a.at.getTime()).slice(0, 8);
+}
+
+/** When the next scheduled round starts, for "Nobody's working right now" (the COO's schedule, in the owner's time zone). */
+function nextRoundLine(base: Pick<Base, "tz">, now: Date): string | null {
+  const w = nextWake("assistant", now);
+  if (!w) return null;
+  const sameDay = formatIn(w.at, base.tz, "yyyy-MM-dd") === formatIn(now, base.tz, "yyyy-MM-dd");
+  return `${w.round.name} at ${formatIn(w.at, base.tz, sameDay ? "h:mm a" : "EEE h:mm a")}`;
 }
 
 export async function employeeDetail(db: Database, roleName: HqRole, now: Date = new Date()): Promise<EmployeeDetail> {
@@ -901,6 +969,7 @@ export async function createMission(db: Database, actor: HqActor, input: Mission
         links: d.links ?? [],
         dueOn: d.dueOn ?? null,
         deskPrompt: d.deskPrompt ?? null,
+        deskPromptBy: d.deskPrompt ? (actor.kind === "owner" ? "owner" : "agent") : null,
         source: actorKind(actor),
         // A desk file waits for the chat that claims it, never the chat that wrote it (ADR 0029 addendum 2).
         sessionId: d.deskPrompt && actor.kind === "agent" ? null : (d.sessionId ?? (actor.kind === "agent" ? (actor.sessionId ?? null) : null)),
@@ -951,6 +1020,8 @@ export async function updateMission(db: Database, actor: HqActor, id: string, pa
     if (p.branch !== undefined) next.branch = p.branch;
     if (p.dueOn !== undefined) next.dueOn = p.dueOn;
     if (p.deskPrompt !== undefined) next.deskPrompt = p.deskPrompt;
+    // Who last wrote what a desk task says (ADR 0030): the desk tells the owner when the team wrote it.
+    if (p.deskPrompt !== undefined || (p.title !== undefined && cur.deskPrompt)) next.deskPromptBy = actor.kind === "owner" ? "owner" : "agent";
 
     const status = p.status ?? cur.status;
     const changed = status !== cur.status;
@@ -1349,7 +1420,28 @@ const checkinSchema = z.object({
       phase: z.enum(["sample", "round_start", "round_end"]).optional(),
     })
     .nullish(),
+  live: z.object({ state: z.enum(["busy", "idle"]), line: optText(1000), at: z.number().int().positive().optional() }).nullish(),
 });
+
+/** A live line as the office shows it: one plain line, without emails, keys or tokens, at most 140 characters. */
+export function liveLineText(raw: string): string {
+  // Like scrub() in error-reports.ts, but short numbers stay ("Running 1092 tests", "0053_hq_live.sql").
+  const t = raw
+    .replace(/\bhttps?:\/\/\S+/gi, "[link]")
+    .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[email]")
+    .replace(/\b(?:sk|pk|rk|ek|whsec|lfq|lfh)[-_][A-Za-z0-9_-]{8,}/g, "[secret]")
+    .replace(/\bBearer\s+(?=[A-Za-z0-9._~+/-]*\d)[A-Za-z0-9._~+/-]{8,}=*/g, "[secret]")
+    .replace(/\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/g, "[secret]")
+    // Long key-like runs need a letter and a digit, so paths and words stay; 40 characters with "/" or "+" is a cloud secret.
+    .replace(/(?<![\w/+])(?=[A-Za-z0-9/+]*\d)(?=[A-Za-z0-9/+]*[A-Z])(?=[A-Za-z0-9/+]*[a-z])[A-Za-z0-9/+]{40}(?![\w/+])/g, "[token]")
+    .replace(/\b(?=[A-Za-z0-9_=-]*\d)(?=[A-Za-z0-9_=-]*[A-Za-z])[A-Za-z0-9_=-]{32,}/g, "[token]")
+    // Phone, card and account numbers (7+ digits); dates stay.
+    .replace(/\+?\d[\d\s().-]{5,}\d/g, (m) => (/^\d{4}-\d{2}-\d{2}$/.test(m) || m.replace(/\D/g, "").length < 7 ? m : "[n]"))
+    .replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2060-\u2069\ufeff]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return t.length > 140 ? `${t.slice(0, 139).trimEnd()}…` : t;
+}
 
 /** When the meter was read: the reported time if it is not in the future and under 6 h old, else now. */
 export function readingTime(readAt: string | null | undefined, now: Date): Date {
@@ -1377,7 +1469,22 @@ export async function recordCheckin(db: Database, input: CheckinInput): Promise<
         if (!cur.lastCheckinAt || clamped.getTime() > cur.lastCheckinAt.getTime()) set.lastCheckinAt = clamped;
       }
     } else {
-      set.lastCheckinAt = now;
+      // Live HQ (ADR 0030): what the chat is doing right now, kept apart from status and summary (the COO's rounds use
+      // them). A ping that only says that leaves the check-in time alone, so ROUND_MAX_MS still counts from real check-ins.
+      const liveOnly = !!d.live && d.status == null && d.summary === undefined && d.needsAction === undefined && !d.title && !d.usage;
+      if (!liveOnly) set.lastCheckinAt = now;
+      if (d.live) {
+        // Hooks send in the background, so pings can arrive out of order: keep only one newer than what HQ has.
+        // A real held-back ping is at most ~15 s old; a far older time means a skewed clock, so it counts as now.
+        const at = typeof d.live.at === "number" && Number.isFinite(d.live.at) ? d.live.at : NaN;
+        const sent = at <= now.getTime() && at >= now.getTime() - 2 * 60_000 ? new Date(at) : now;
+        if (!cur?.liveAt || sent.getTime() > cur.liveAt.getTime()) {
+          set.liveState = d.live.state;
+          set.liveAt = sent;
+          const line = d.live.line ? liveLineText(d.live.line) : "";
+          if (line) set.liveLine = line;
+        }
+      }
       if (d.title) set.title = d.title;
       if (d.branch !== undefined) set.branch = d.branch;
       if (d.commit !== undefined) set.lastCommit = d.commit;

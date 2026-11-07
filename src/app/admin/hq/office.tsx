@@ -4,13 +4,16 @@ import { ExternalLink } from "lucide-react";
 import { BriefCard } from "@/components/hq/brief";
 import { ActivityList, ApprovalMini, BudgetBody, Empty, MissionLine, Section } from "@/components/hq/cards";
 import { countsLine, greeting } from "@/components/hq/labels";
+import { LiveRefresh } from "@/components/hq/live-refresh";
 import { OfficeScene } from "@/components/hq/office-scene";
+import { RightNow } from "@/components/hq/right-now";
 import { StateChip } from "@/components/hq/status-chip";
 import { employee } from "@/server/hq/team";
 import { getSessionUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { officeSnapshot } from "@/server/services/hq";
 import { deskView } from "@/server/services/hq-desk";
+import { fireConfig } from "@/server/services/hq-desk-start";
 import { EMPLOYEES } from "@/server/hq/team";
 import { getControls } from "@/server/services/hq-marketing";
 import { safe } from "@/server/services/admin";
@@ -52,10 +55,13 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
           href: f.link.href,
           appHref: f.link.appHref,
           prompt: f.link.prompt,
+          pin: f.link.pin,
+          byYou: f.mission.deskPromptBy === "owner",
         }))
       : [],
     roles: EMPLOYEES.map((x) => ({ role: x.role, title: x.title })),
     night: { on: deskR.ok && deskR.data.night.on, endsAt: deskR.ok ? deskR.data.night.endsAt : null },
+    canStart: fireConfig() !== null,
   };
 
   return (
@@ -93,6 +99,8 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
         </nav>
       </header>
 
+      <LiveRefresh />
+      <RightNow items={s.live} now={s.now} nextRound={s.nextRound} />
       <BriefCard brief={s.brief} chief={s.employees.find((e) => e.role === "assistant")} pending={n} />
       {children}
 

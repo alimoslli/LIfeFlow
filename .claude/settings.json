@@ -28,6 +28,30 @@
           {
             "type": "command",
             "command": "bash .claude/hooks/hq-checkin.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/hq-live.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/hq-live.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/hq-live.sh"
           }
         ]
       }

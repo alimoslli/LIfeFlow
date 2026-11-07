@@ -6,18 +6,36 @@ import { isHqKeyFormat, resolveHqKey } from "../services/hq";
 /** The same plain answer for a missing, malformed, wrong or revoked key. */
 const NO_KEY = "Invalid or revoked key.";
 
+/** Live pings (ADR 0030) are counted apart, so many busy chats can never use up the limit the real reports need. */
+export const HQ_LIMITS = { ip: 1200, key: 600, liveIp: 6000, liveKey: 4000 } as const;
+
 /**
  * Authenticates an /api/hq request (ADR 0024). A bearer that isn't the exact key shape is refused before anything is
  * counted, so a caller can't make up values to dodge a limit or fill rate_limit_buckets. Then: by IP first, then by key.
+ * `live`: a live-only check-in (ADR 0030), counted in its own buckets.
  */
-export async function authenticateHq(req: Request): Promise<{ id: string; name: string }> {
+export async function authenticateHq(req: Request, opts: { live?: boolean } = {}): Promise<{ id: string; name: string }> {
   const raw = req.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1] ?? "";
   if (!isHqKeyFormat(raw)) throw new HttpError(401, NO_KEY);
-  await enforceRateLimit(`hq-ip:${ipFromHeaders(req.headers)}`, 1200, 3600);
+  const ip = ipFromHeaders(req.headers);
+  await enforceRateLimit(opts.live ? `hq-live-ip:${ip}` : `hq-ip:${ip}`, opts.live ? HQ_LIMITS.liveIp : HQ_LIMITS.ip, 3600);
   const key = await resolveHqKey(getDb(), raw);
   if (!key) throw new HttpError(401, NO_KEY);
-  await enforceRateLimit(`hq:${key.id}`, 600, 3600);
+  await enforceRateLimit(opts.live ? `hq-live:${key.id}` : `hq:${key.id}`, opts.live ? HQ_LIMITS.liveKey : HQ_LIMITS.key, 3600);
   return key;
+}
+
+/** The bearer is shaped like an HQ key (nothing counted, nothing read): checked before a body is read. */
+export function hasHqKeyShape(req: Request): boolean {
+  return isHqKeyFormat(req.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1] ?? "");
+}
+
+/** A check-in that only says what the chat is doing right now (the live hooks), and nothing else. */
+export function isLiveOnly(json: unknown): boolean {
+  if (!json || typeof json !== "object") return false;
+  const b = json as Record<string, unknown>;
+  if (b.type !== "checkin" || !b.live || typeof b.live !== "object") return false;
+  return Object.keys(b).every((k) => k === "type" || k === "live" || k === "sessionId");
 }
 
 export { readLimitedBody } from "../http";

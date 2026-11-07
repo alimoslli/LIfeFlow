@@ -151,7 +151,13 @@ function EmployeeRoom({ e }: { e: EmployeeCard }) {
   );
 }
 
-export type OfficeDesk = { files: DeskFileView[]; roles: { role: string; title: string }[]; night: { on: boolean; endsAt: Date | null } };
+export type OfficeDesk = {
+  files: DeskFileView[];
+  roles: { role: string; title: string }[];
+  night: { on: boolean; endsAt: Date | null };
+  /** Starting from HQ is set up (ADR 0030). */
+  canStart?: boolean;
+};
 
 /** The penthouse: the CEO at the desk with the pile of task files and the closed MacBook, the business card, three plain buttons. */
 function Penthouse({ pending, desk }: { pending: number; desk: OfficeDesk }) {
@@ -169,7 +175,7 @@ function Penthouse({ pending, desk }: { pending: number; desk: OfficeDesk }) {
               {n > 99 ? "99+" : n}
             </span>
           )}
-          <Desk files={desk.files} roles={desk.roles} />
+          <Desk files={desk.files} roles={desk.roles} canStart={desk.canStart} />
         </div>
         <div className="hq-label hq-label-founder">
           <span className="hq-ico" aria-hidden="true">

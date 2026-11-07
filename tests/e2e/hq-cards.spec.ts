@@ -151,8 +151,12 @@ test("Office: Since you last looked lists what was fixed and found, then goes qu
   await expect(since.getByText("Quiet since you last looked.")).toHaveCount(0);
   expect(await noSideScroll(op)).toBe(true);
 
-  // The page remembers that the owner looked; next time only what is newer shows.
-  await expect.poll(async () => (await op.context().cookies()).some((c) => c.name === "hq_last_looked")).toBe(true);
+  // The visit keeps its window (ADR 0030): the page refreshes itself every 15 s and still shows the same things.
+  await expect.poll(async () => (await op.context().cookies()).some((c) => c.name === "hq_looked_from")).toBe(true);
+  await op.waitForTimeout(16_000);
+  await expect(since.getByText("Fix the calendar crash")).toBeVisible();
+  await expect(since.getByText("Quiet since you last looked.")).toHaveCount(0);
+  // Leaving the page remembers that the owner looked; next time only what is newer shows.
   await op.reload();
   await expect(since.getByText("Quiet since you last looked.")).toBeVisible();
   await expect(since.getByText("Fix the calendar crash")).toHaveCount(0);

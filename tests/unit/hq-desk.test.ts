@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { onPhoneOrTablet } from "@/components/hq/chat-link";
 import { HQ_ROLES } from "@/server/db/schema";
 import { DESK_PROMPT_MAX } from "@/server/hq/validate";
-import { deskLink, firstPrompt, nextPrompt } from "@/server/hq/desk";
+import { deskLink, deskPin, firstPrompt, nextPrompt } from "@/server/hq/desk";
 import { EMPLOYEES } from "@/server/hq/team";
 import { deskStatus } from "@/server/services/hq-desk";
 import { buildRequest, deskPromptOf, parseArgs } from "../../scripts/hq";
@@ -32,6 +32,13 @@ describe("desk links (ADR 0029, addendum 2)", () => {
     expect(l.href).not.toMatch(/\+/);
     expect(l.appHref).not.toMatch(/\+/);
     expect(l.prompt).toBe(firstPrompt(task));
+    // The fingerprint a start from HQ carries: 16 hex characters, and any change to the task changes it.
+    expect(l.pin).toMatch(/^[0-9a-f]{16}$/);
+    expect(deskLink({ ...task, deskPrompt: "Check the SMS path & fix it." }).pin).not.toBe(l.pin);
+    expect(deskLink({ ...task, title: "Finish Twilio now" }).pin).not.toBe(l.pin);
+    expect(deskLink({ ...task, role: "designer" }).pin).not.toBe(l.pin);
+    // Only the task decides it, never HQ's own wording or whether a chat exists yet.
+    expect(deskLink({ ...task, sessionId: "session_01ABCdefGHIjklMNOpqr" }).pin).toBe(l.pin);
   });
 
   it("the first prompt follows the plan: who the chat is, its rules, the claim, the task, how to report, ship and finish", () => {
@@ -71,6 +78,7 @@ describe("desk links (ADR 0029, addendum 2)", () => {
       href: "https://claude.ai/code/session_01ABCdefGHIjklMNOpqr",
       appHref: "https://claude.ai/code/session_01ABCdefGHIjklMNOpqr",
       prompt: nextPrompt(task),
+      pin: deskPin(task),
     });
     expect(l.prompt).toContain(`Back on "Finish Twilio" (HQ mission ${ID})`);
     expect(l.prompt).toContain(`mission update ${ID} --progress`);

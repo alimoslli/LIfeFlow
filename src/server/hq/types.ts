@@ -34,6 +34,8 @@ export type Mission = {
   seenAt: Date | null;
   /** The first prompt for its own chat: set = a task file on the CEO's desk (ADR 0029). */
   deskPrompt: string | null;
+  /** Who last wrote the desk prompt or title (ADR 0030); null on files from before it was recorded. */
+  deskPromptBy: "owner" | "agent" | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -127,6 +129,10 @@ export type Chat = {
   summary: string | null;
   needsAction: string | null;
   lastCheckinAt: Date | null;
+  /** Live HQ (ADR 0030): from the chat's own hooks. `live` is the line while it is busy right now (see `liveNow`), else null. */
+  liveState: "busy" | "idle" | null;
+  liveLine: string | null;
+  liveAt: Date | null;
   url: string; // chatUrl(id)
 };
 
@@ -158,6 +164,19 @@ export type EmployeeCard = {
   primaryChat: Chat | null;
 };
 
+/** One chat working right now (Live HQ, ADR 0030): who, what it's doing, since when, and the task it's on. */
+export type LiveItem = {
+  chatId: string;
+  url: string;
+  role: HqRole | null;
+  /** The department, or the chat's title for a chat no department has. */
+  who: string;
+  line: string;
+  at: Date;
+  missionId: string | null;
+  missionTitle: string | null;
+};
+
 export type OfficeSnapshot = {
   now: Date;
   employees: EmployeeCard[];
@@ -175,6 +194,10 @@ export type OfficeSnapshot = {
   brief: Brief | null;
   /** The COO's delegated decisions (activity kind "decision"), newest first (max 5). */
   decisions: Activity[];
+  /** Live HQ (ADR 0030): the chats working right now, newest first (max 8). */
+  live: LiveItem[];
+  /** When the next scheduled round starts ("COO pass at 10:13 AM"), for when nobody is working. */
+  nextRound: string | null;
 };
 
 export type EmployeeDetail = {
