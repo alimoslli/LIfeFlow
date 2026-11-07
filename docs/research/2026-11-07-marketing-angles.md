@@ -155,3 +155,7 @@ Earlier reports reused (in this repo): 2026-11-05-students-and-competitors.md, 2
 ## What changed because of this report
 
 Nothing yet. The product session fills this in after the owner's decision.
+
+## What changed because of this report
+- 2026-11-07: Marketing made a 20-second reel from the "shift and the exam" angle, adapted to what the real demo footage shows (a quiz due Friday and a shift on Thursday, study time blocked on Wednesday). Product & Design made one feed post and a story crop from the "bill before payday" angle (the real City Utilities $82 card). Both went to the CEO as publish decision cards in HQ. Nothing is posted until the CEO says yes.
+- The third angle (built by a student who works 30 hours a week) waits for the owner on camera.
