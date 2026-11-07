@@ -40,10 +40,10 @@ export function Portrait({ role, size = 44 }: { role: Approval["role"]; size?: n
 }
 
 const Label = ({ children }: { children: ReactNode }) => (
-  <h4 className="mt-5 mb-2 flex items-center gap-3 text-[0.6875rem] font-semibold tracking-[0.12em] text-muted uppercase">
+  <h5 className="mt-5 mb-2 flex items-center gap-3 text-[0.6875rem] font-semibold tracking-[0.12em] text-muted uppercase">
     {children}
     <span className="h-px flex-1 bg-border/70" aria-hidden />
-  </h4>
+  </h5>
 );
 
 /** v1 · Nov 5 — Your note · Nov 6 — v2 · today. The last chip is the one on the table. */
@@ -140,13 +140,13 @@ export function DecisionCard({ thread, tz }: { thread: DecisionThread; tz: strin
           )
         }
       />
-      <h3 id={`t-${a.id}`} className="mt-3 font-display text-[1.5rem] leading-tight font-medium text-text">
+      <h4 id={`t-${a.id}`} className="mt-3 font-display text-[1.5rem] leading-tight font-medium text-text">
         {a.title}
-      </h3>
+      </h4>
 
       {a.version > 1 && (
         <div className="mt-4 rounded-2xl border border-border bg-accent-soft/60 p-4">
-          <h4 className="font-display text-[1.0625rem] font-medium text-text">What changed since your note</h4>
+          <h5 className="font-display text-[1.0625rem] font-medium text-text">What changed since your note</h5>
           {prev?.decisionNote && (
             <p className="mt-1 text-sm text-text-2 italic">
               “{prev.decisionNote}” <span className="not-italic">— you{prev.decidedAt ? `, ${dayOnly(prev.decidedAt, tz)}` : ""}</span>
@@ -277,8 +277,9 @@ export function ProgressCard({ thread, tz }: { thread: DecisionThread; tz: strin
   if (!lc) return null;
   const live = lc.stage === "live";
   const links = lc.mission?.links ?? [];
-  const note =
-    lc.mission?.status === "blocked"
+  const note = lc.stopped
+    ? `Stopped: ${lc.stopped}. Your Chief of Staff will start new work for it.`
+    : lc.mission?.status === "blocked"
       ? `Stuck: ${lc.mission.blockedReason ?? "waiting on something"}`
       : live
         ? (lc.mission?.result ?? "Done and live.")
@@ -302,9 +303,9 @@ export function ProgressCard({ thread, tz }: { thread: DecisionThread; tz: strin
           </span>
         }
       />
-      <h3 id={`t-${a.id}`} className="mt-3 font-display text-[1.25rem] leading-tight font-medium text-text">
+      <h4 id={`t-${a.id}`} className="mt-3 font-display text-[1.25rem] leading-tight font-medium text-text">
         {a.title}
-      </h3>
+      </h4>
       <div className="mt-4">
         <LifecycleSteps lc={lc} tz={tz} />
       </div>
@@ -335,7 +336,7 @@ export function RevisingCard({ thread, tz }: { thread: DecisionThread; tz: strin
         tz={tz}
         aside={<span className="rounded-full bg-warning-soft px-3 py-1 text-[0.6875rem] font-semibold tracking-wide text-warning uppercase">With {who}</span>}
       />
-      <h3 className="mt-3 font-display text-[1.25rem] leading-tight font-medium text-text">{a.title}</h3>
+      <h4 className="mt-3 font-display text-[1.25rem] leading-tight font-medium text-text">{a.title}</h4>
       <div className="mt-3">
         <ThreadChips versions={thread.versions} tz={tz} waitingFor={a.version + 1} />
       </div>

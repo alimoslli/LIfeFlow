@@ -1662,6 +1662,8 @@ export const hqApprovals = pgTable(
     changedSinceNote: text("changed_since_note"),
     /** Set when a newer version of the same thread replaced this one. */
     supersededAt: tstz("superseded_at"),
+    /** The mission that builds an approved ask, set only by linkApprovalMission. `missionId` stays the mission that asked. */
+    buildMissionId: uuid("build_mission_id").references(() => hqMissions.id, { onDelete: "set null" }),
   },
   (t) => [index("hq_approvals_status_idx").on(t.status, t.createdAt), index("hq_approvals_thread_idx").on(t.threadId, t.version)],
 );

@@ -287,6 +287,7 @@ export const toApproval = (r: ApprovalRow): Approval => ({
   version: r.version,
   changedSinceNote: r.changedSinceNote,
   supersededAt: r.supersededAt,
+  buildMissionId: r.buildMissionId,
 });
 const toActivity = (r: ActivityRow): Activity => ({
   id: r.id,
@@ -1041,6 +1042,11 @@ export async function reviseApproval(db: Database, actor: HqActor, target: strin
     if (cur.status !== "changes")
       throw new HqError(cur.status === "approved" ? "The owner already said yes to this." : "The owner already said no, so this ask is closed.");
     if (d.role && d.role !== cur.role) throw new HqError("A revision stays with the same department.");
+    if (d.kind && d.kind !== cur.kind) throw new HqError("A revision keeps the same kind of request. Start a new request for a different kind.");
+    if (d.missionId) {
+      const [m] = await tx.select({ id: hqMissions.id }).from(hqMissions).where(eq(hqMissions.id, d.missionId));
+      if (!m) throw new HqError("That mission no longer exists.");
+    }
     await assertPreviewsExist(tx, d.previews);
     const now = new Date();
     await tx.update(hqApprovals).set({ supersededAt: now, updatedAt: now }).where(eq(hqApprovals.id, cur.id));
@@ -1050,13 +1056,19 @@ export async function reviseApproval(db: Database, actor: HqActor, target: strin
         threadId: cur.threadId,
         version: cur.version + 1,
         role: cur.role,
-        kind: d.kind ?? cur.kind,
+        kind: cur.kind,
         ...cardValues(d),
         changedSinceNote: d.changedSinceNote,
         missionId: d.missionId ?? cur.missionId,
         source: actorKind(actor),
       })
       .returning();
+    // A publish ask's post follows the newest version, so the owner's answer on it moves the post (decideApproval).
+    if (cur.kind === "publish")
+      await tx
+        .update(hqContent)
+        .set({ approvalId: row.id, status: "waiting", updatedAt: now })
+        .where(and(eq(hqContent.approvalId, cur.id), inArray(hqContent.status, ["draft", "idea", "waiting"])));
     await logActivity(tx, {
       actor: actor.kind,
       role: cur.role,
@@ -1079,10 +1091,14 @@ export async function linkApprovalMission(db: Database, actor: HqActor, approval
     const [cur] = await tx.select().from(hqApprovals).where(eq(hqApprovals.id, approvalId)).for("update");
     if (!cur) throw new HqError("That request no longer exists.");
     if (cur.status !== "approved") throw new HqError("Only a request the owner said yes to can be linked to a mission.");
-    if (cur.missionId && cur.missionId !== missionId) throw new HqError("That request already has a mission.");
-    const [m] = await tx.select({ id: hqMissions.id }).from(hqMissions).where(eq(hqMissions.id, missionId));
+    const [m] = await tx.select({ id: hqMissions.id, status: hqMissions.status }).from(hqMissions).where(eq(hqMissions.id, missionId));
     if (!m) throw new HqError("That mission no longer exists.");
-    const [row] = await tx.update(hqApprovals).set({ missionId, updatedAt: new Date() }).where(eq(hqApprovals.id, approvalId)).returning();
+    if (m.status === "done" || m.status === "dropped") throw new HqError("That mission is already finished or dropped. Link the mission that builds this.");
+    if (cur.buildMissionId && cur.buildMissionId !== missionId) {
+      const [old] = await tx.select({ status: hqMissions.status }).from(hqMissions).where(eq(hqMissions.id, cur.buildMissionId));
+      if (old && old.status !== "dropped") throw new HqError("That request already has a mission.");
+    }
+    const [row] = await tx.update(hqApprovals).set({ buildMissionId: missionId, updatedAt: new Date() }).where(eq(hqApprovals.id, approvalId)).returning();
     await logActivity(tx, {
       actor: actor.kind,
       role: row.role,
@@ -1361,7 +1377,7 @@ export async function agentInbox(
   revisions: Approval[];
   /** Old requests with no decision card. Rewrite each in the new format as a new request. */
   needsRewrite: Approval[];
-  /** Asks the owner said yes to that no mission builds yet. Create or link one (`approval --link <id> --mission <missionId>`). */
+  /** Asks the owner said yes to that no mission builds yet. Create or link one (`approval --start <id> --mission <missionId>`). */
   approvedWithoutMission: Approval[];
   approvedContent: ContentItem[];
   controls: Omit<HqControls, "updatedByEmail" | "updatedAt">;
@@ -1397,7 +1413,17 @@ export async function agentInbox(
     const unlinked = await tx
       .select()
       .from(hqApprovals)
-      .where(and(eq(hqApprovals.status, "approved"), isNull(hqApprovals.missionId), isNotNull(hqApprovals.why), mine))
+      .where(
+        and(
+          eq(hqApprovals.status, "approved"),
+          isNotNull(hqApprovals.why),
+          mine,
+          or(
+            isNull(hqApprovals.buildMissionId),
+            sql`exists (select 1 from hq_missions bm where bm.id = ${hqApprovals.buildMissionId} and bm.status = 'dropped')`,
+          ),
+        ),
+      )
       .orderBy(asc(hqApprovals.decidedAt))
       .limit(50);
     const approvedContent = await approvedContentIn(tx);
@@ -1521,9 +1547,10 @@ export async function importSeedAsOwner(db: Database, admin: Admin, seed: unknow
 /**
  * Where an approved card is, taken from its linked mission (nothing is stored twice):
  * approved = the owner's yes; being built = mission doing (or blocked); ready for your look = mission waiting;
- * live = mission done. With no mission yet, or a todo/dropped one, it stays at "approved".
+ * live = mission done. The mission is the BUILD mission (`buildMissionId`, set by linkApprovalMission), never the one that asked. With none yet, or a todo one, it stays at "approved"; a dropped one stays there too, marked `stopped` with its reason.
  */
 export function lifecycleOf(a: Approval, m: Mission | null): Lifecycle {
+  const stopped = m?.status === "dropped" ? (m.result ?? m.blockedReason ?? m.progress ?? "the work was dropped") : null;
   const stage: Lifecycle["stage"] = !m
     ? "approved"
     : m.status === "done"
@@ -1541,6 +1568,7 @@ export function lifecycleOf(a: Approval, m: Mission | null): Lifecycle {
       look: m?.status === "waiting" ? m.updatedAt : null,
       live: m?.status === "done" ? m.doneAt : null,
     },
+    stopped,
     mission: m ? { id: m.id, title: m.title, status: m.status, blockedReason: m.blockedReason, result: m.result, links: m.links } : null,
   };
 }
@@ -1548,7 +1576,14 @@ export function lifecycleOf(a: Approval, m: Mission | null): Lifecycle {
 /** Every decision card grouped by thread (newest activity first, max 400 requests), and the old requests waiting to be rewritten. */
 export async function listDecisionThreads(db: Database): Promise<{ threads: DecisionThread[]; rewriting: Approval[] }> {
   return timed(db, async (tx) => {
-    const rows = await tx.select().from(hqApprovals).where(isNotNull(hqApprovals.why)).orderBy(desc(hqApprovals.createdAt)).limit(400);
+    // Every waiting ask (the same set the badge counts), the newest others, and all versions of the waiting threads.
+    const waitingRows = await tx.select().from(hqApprovals).where(NEEDS_YES).orderBy(desc(hqApprovals.createdAt)).limit(500);
+    const recent = await tx.select().from(hqApprovals).where(isNotNull(hqApprovals.why)).orderBy(desc(hqApprovals.createdAt)).limit(400);
+    const waitingThreads = [...new Set(waitingRows.map((r) => r.threadId).filter((x): x is string => !!x))];
+    const versionsOf = waitingThreads.length ? await tx.select().from(hqApprovals).where(inArray(hqApprovals.threadId, waitingThreads)) : [];
+    const rows = [...new Map([...waitingRows, ...recent, ...versionsOf].map((r) => [r.id, r])).values()].sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    );
     const legacy = await tx
       .select()
       .from(hqApprovals)
@@ -1561,7 +1596,7 @@ export async function listDecisionThreads(db: Database): Promise<{ threads: Deci
       const k = a.threadId ?? a.id;
       byThread.set(k, [...(byThread.get(k) ?? []), a]);
     }
-    const missionIds = [...new Set([...byThread.values()].flatMap((v) => v.map((a) => a.missionId).filter((x): x is string => !!x)))];
+    const missionIds = [...new Set([...byThread.values()].flatMap((v) => v.map((a) => a.buildMissionId).filter((x): x is string => !!x)))];
     const missions = missionIds.length ? await tx.select().from(hqMissions).where(inArray(hqMissions.id, missionIds)) : [];
     const mById = new Map(missions.map((m) => [m.id, toMission(m)]));
     const threads: DecisionThread[] = [...byThread.entries()].map(([threadId, desc_]) => {
@@ -1574,7 +1609,7 @@ export async function listDecisionThreads(db: Database): Promise<{ threads: Deci
         versions,
         latest,
         state,
-        lifecycle: state === "approved" ? lifecycleOf(latest, latest.missionId ? (mById.get(latest.missionId) ?? null) : null) : null,
+        lifecycle: state === "approved" ? lifecycleOf(latest, latest.buildMissionId ? (mById.get(latest.buildMissionId) ?? null) : null) : null,
       };
     });
     return { threads, rewriting: legacy.map(toApproval) };

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { eq, gt, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Database } from "../db/client";
 import { hqFiles } from "../db/schema";
@@ -11,6 +11,8 @@ import { HqError } from "../hq/validate";
  */
 
 export const MAX_PREVIEW_BYTES = 2 * 1024 * 1024;
+/** What one day of uploads may add up to, so a runaway agent can't fill the database. */
+export const MAX_DAILY_PREVIEW_BYTES = 200 * 1024 * 1024;
 export const PREVIEW_TYPES = ["image/png", "image/jpeg", "image/webp"] as const;
 export type PreviewType = (typeof PREVIEW_TYPES)[number];
 
@@ -36,10 +38,16 @@ export async function storePreview(
   const declared = declaredType?.split(";")[0].trim().toLowerCase();
   if (declared && declared !== real) throw new HqError(`The file is a ${real.replace("image/", "")}, not a ${declared.replace("image/", "")}.`);
   const buf = Buffer.from(bytes);
-  const [row] = await db
-    .insert(hqFiles)
-    .values({ contentType: real, size: buf.length, sha256: createHash("sha256").update(buf).digest("hex"), data: buf })
-    .returning({ id: hqFiles.id });
+  const sha256 = createHash("sha256").update(buf).digest("hex");
+  // The same picture again is the same file: nothing new is stored.
+  const [same] = await db.select({ id: hqFiles.id }).from(hqFiles).where(eq(hqFiles.sha256, sha256)).limit(1);
+  if (same) return { id: same.id, contentType: real, size: buf.length };
+  const [day] = await db
+    .select({ n: sql<number>`coalesce(sum(${hqFiles.size}), 0)::float8` })
+    .from(hqFiles)
+    .where(gt(hqFiles.createdAt, new Date(Date.now() - 24 * 3_600_000)));
+  if ((day?.n ?? 0) + buf.length > MAX_DAILY_PREVIEW_BYTES) throw new HqError("Too many pictures were uploaded in the last 24 hours. Try again tomorrow.");
+  const [row] = await db.insert(hqFiles).values({ contentType: real, size: buf.length, sha256, data: buf }).returning({ id: hqFiles.id });
   return { id: row.id, contentType: real, size: buf.length };
 }
 
@@ -48,4 +56,17 @@ export async function getPreview(db: Database, id: string): Promise<{ contentTyp
   if (!z.uuid().safeParse(id).success) return null;
   const [r] = await db.select({ contentType: hqFiles.contentType, data: hqFiles.data, sha256: hqFiles.sha256 }).from(hqFiles).where(eq(hqFiles.id, id));
   return r ?? null;
+}
+
+/** Deletes pictures older than a day that no decision card lists any more. Called from the daily cron. Returns how many went. */
+export async function purgeUnusedPreviews(db: Database): Promise<number> {
+  const gone = await db.execute(sql`
+    delete from hq_files f
+    where f.created_at < now() - interval '24 hours'
+      and not exists (
+        select 1 from hq_approvals a, jsonb_array_elements(coalesce(a.previews, '[]'::jsonb)) p
+        where p->>'fileId' = f.id::text
+      )
+    returning f.id`);
+  return (gone as unknown as { rows?: unknown[] }).rows?.length ?? (Array.isArray(gone) ? gone.length : 0);
 }

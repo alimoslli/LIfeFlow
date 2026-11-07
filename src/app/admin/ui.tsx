@@ -38,8 +38,16 @@ export function Tile({ label, value, sub, href, tone }: { label: string; value: 
 export function Notice({ done, error }: { done?: string; error?: string }) {
   return (
     <>
-      {done && <p className="mb-4 rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">{done.slice(0, 200)}</p>}
-      {error && <p className="mb-4 rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">{error.slice(0, 300)}</p>}
+      {done && (
+        <p role="status" className="mb-4 rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
+          {done.slice(0, 200)}
+        </p>
+      )}
+      {error && (
+        <p role="status" className="mb-4 rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">
+          {error.slice(0, 300)}
+        </p>
+      )}
     </>
   );
 }

@@ -84,14 +84,16 @@ test("Your desk: a full decision card, a version 2 thread, lifecycle cards and a
   await expect(chips.nth(2)).toContainText("v2");
   const order = ["Why", "What it will look like", "Exactly what changes", "What happens next", "Effort and risk"];
   const tops: number[] = [];
-  for (const h of order) tops.push((await card.getByRole("heading", { name: h, level: 4 }).boundingBox())!.y);
+  for (const h of order) tops.push((await card.getByRole("heading", { name: h, level: 5 }).boundingBox())!.y);
   expect([...tops].sort((a, b) => a - b)).toEqual(tops);
   await expect(card.getByText("If you say yes", { exact: true }).first()).toBeVisible();
   await expect(card.getByText("If you say no", { exact: true })).toBeVisible();
   await expect(card.getByText("recommends:")).toBeVisible();
   const imgs = card.getByRole("img", { name: /picture 1 of 2|picture 2 of 2/ });
   await expect(imgs).toHaveCount(2);
-  expect(await imgs.first().evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)).toBe(true);
+  // The pictures load lazily: scroll the first into view, then wait for it.
+  await imgs.first().scrollIntoViewIfNeeded();
+  await expect.poll(() => imgs.first().evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth > 0)).toBe(true);
 
   // Lifecycle and old requests.
   const built = op.locator("article", { hasText: "Search as you type on Plan" });
@@ -120,7 +122,7 @@ test("Your desk: a full decision card, a version 2 thread, lifecycle cards and a
   // Yes on the other one.
   await op.locator(`article[id="${fresh}"]`).getByRole("button", { name: "Yes, go" }).click();
   await expect(op.getByText("You said yes.")).toBeVisible();
-  await expect(op.getByText("Nothing waiting for you.")).toBeVisible();
+  await expect(op.getByText("Nothing waiting for you.", { exact: true })).toBeVisible();
   await expect(op.locator(`article[id="${fresh}"]`).getByText("Approved", { exact: true }).first()).toBeVisible();
 });
 

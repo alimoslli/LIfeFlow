@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { decideContentAction, saveControlsAction, saveDelegationsAction } from "@/app/admin/hq/actions";
+import { saveControlsAction, saveDelegationsAction } from "@/app/admin/hq/actions";
 import { fmt } from "@/app/admin/format";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
@@ -61,25 +61,20 @@ export function WaitingCard({ content: c, approval, tz }: { content: ContentItem
       <p className="mt-1 text-xs text-muted">{c.scheduledFor ? `Planned for ${fmt(c.scheduledFor, tz)}` : "No date yet"}</p>
       <ReadMore label="Read the script" body={c.body} />
       <Links links={c.links} />
-      {approval ? (
-        <form action={decideContentAction} className="mt-4 flex flex-col gap-3">
-          <input type="hidden" name="approvalId" value={approval.id} />
-          <Field label="Note (optional)" htmlFor={`note-${c.id}`}>
-            <Input id={`note-${c.id}`} name="note" maxLength={500} className="h-11" placeholder="Anything they should know" />
-          </Field>
-          <div className="flex flex-wrap gap-2">
-            <SubmitButton name="decision" value="approved" pendingText="Saving…">
-              Yes
-            </SubmitButton>
-            <SubmitButton name="decision" value="declined" variant="secondary" pendingText="Saving…">
-              No
-            </SubmitButton>
-            <SubmitButton name="decision" value="changes" variant="secondary" pendingText="Saving…">
-              Changes
-            </SubmitButton>
-          </div>
-          <p className="text-xs text-muted">Your answer is saved here. {who} acts on it at their next round; HQ doesn&apos;t run anything itself.</p>
-        </form>
+      {approval?.card ? (
+        <div className="mt-4 flex flex-col gap-2">
+          <p className="text-sm text-text-2">
+            {who} sent the full request with pictures and the exact steps. Answer it on your desk: Yes, go, Send changes (with a note) or No.
+          </p>
+          <Link
+            href={`/admin/work#${approval.id}`}
+            className="inline-flex min-h-11 items-center self-start rounded-full bg-accent px-5 text-sm font-medium text-accent-text"
+          >
+            Review and answer
+          </Link>
+        </div>
+      ) : approval ? (
+        <p className="mt-3 text-sm text-muted">Being rewritten by your Chief of Staff. You&apos;ll get the full request with a picture to answer.</p>
       ) : (
         <p className="mt-3 text-sm text-muted">Nothing to answer on this one yet.</p>
       )}

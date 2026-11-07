@@ -22,6 +22,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
       "content-length": String(f.data.length),
       "cache-control": "private, max-age=31536000, immutable",
       "x-content-type-options": "nosniff",
+      "content-security-policy": "default-src 'none'; sandbox",
+      "content-disposition": "inline",
       etag: `"${f.sha256}"`,
     },
   });

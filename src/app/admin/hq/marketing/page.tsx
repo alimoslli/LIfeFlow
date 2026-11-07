@@ -25,10 +25,12 @@ export default async function Marketing({ searchParams }: { searchParams: Promis
       </div>
     );
   const v = r.data;
+  // Only requests in the decision-card format can be answered (old ones are being rewritten), the same set the Office counts.
+  const answerable = v.waiting.filter((w) => w.approval?.card).length;
   const scheduled = v.week.filter((c) => c.status === "scheduled").length;
   const sub =
-    v.waiting.length || scheduled
-      ? `${plural(v.waiting.length, "draft", "drafts")} waiting for you · ${scheduled} scheduled this week`
+    answerable || scheduled
+      ? `${plural(answerable, "draft", "drafts")} waiting for you · ${scheduled} scheduled this week`
       : "Nothing waiting for you and nothing scheduled yet.";
 
   return (

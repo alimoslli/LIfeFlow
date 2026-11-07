@@ -25,6 +25,8 @@ ALTER TABLE "hq_approvals" ADD COLUMN IF NOT EXISTS "changed_since_note" text;
 --> statement-breakpoint
 ALTER TABLE "hq_approvals" ADD COLUMN IF NOT EXISTS "superseded_at" timestamp with time zone;
 --> statement-breakpoint
+ALTER TABLE "hq_approvals" ADD COLUMN IF NOT EXISTS "build_mission_id" uuid REFERENCES "hq_missions"("id") ON DELETE SET NULL;
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "hq_approvals_thread_idx" ON "hq_approvals" USING btree ("thread_id","version");
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "hq_files" (

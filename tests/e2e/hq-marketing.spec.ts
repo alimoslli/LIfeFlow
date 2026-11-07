@@ -99,7 +99,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await expect(card.getByText("Instagram, TikTok")).toBeVisible();
   await card.getByText("Read the script").click();
   await expect(card.getByText("Scene 2: the assistant sorts the week.")).toBeVisible();
-  await expect(card.getByText(/acts on it at their next round/)).toBeVisible();
+  await expect(card.getByRole("link", { name: "Review and answer" })).toHaveAttribute("href", /\/admin\/work#/);
   await expect(op.getByText("1 draft waiting for you")).toBeVisible();
   const perf = op.locator("section", { has: op.getByRole("heading", { name: "Performance", level: 2 }) });
   await expect(perf.getByText("1,234")).toBeVisible();
@@ -110,8 +110,8 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await op.goto("/admin");
   const tile = op.getByRole("link", { name: /Waiting for you/ }).first();
   await expect(tile).toContainText("1");
-  await op.goto("/admin/hq/marketing");
-  await op.locator("article", { hasText: "The Sunday reset reel" }).getByRole("button", { name: "Yes" }).click();
+  await op.goto("/admin/work");
+  await op.locator("article", { hasText: "The Sunday reset reel" }).getByRole("button", { name: "Yes, go" }).click();
   await expect(op.getByText("You said yes.")).toBeVisible();
   await expect(op.getByText("No drafts yet. The marketing round adds them on Wednesdays.")).toBeVisible();
   const week = op.locator("section", { has: op.getByRole("heading", { name: "This week", level: 2 }) });

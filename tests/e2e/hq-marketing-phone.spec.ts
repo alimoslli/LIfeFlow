@@ -74,8 +74,6 @@ test("Marketing on a phone: long titles wrap, no sideways scroll, switches are b
     expect(box?.height ?? 0, `switch ${i}`).toBeGreaterThanOrEqual(44);
   }
   await page.goto("/admin/hq/marketing");
-  for (const name of ["Yes", "No", "Changes"]) {
-    const box = await page.getByRole("button", { name, exact: true }).first().boundingBox();
-    expect(box?.height ?? 0, name).toBeGreaterThanOrEqual(44);
-  }
+  const review = await page.getByRole("link", { name: "Review and answer" }).first().boundingBox();
+  expect(review?.height ?? 0, "Review and answer").toBeGreaterThanOrEqual(44);
 });

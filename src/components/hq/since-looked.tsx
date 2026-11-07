@@ -93,7 +93,7 @@ export async function SinceLookedCard() {
           )}
         </div>
       </Card>
-      <MarkLooked name={LOOKED_COOKIE} />
+      {r.ok && <MarkLooked name={LOOKED_COOKIE} />}
     </section>
   );
 }

@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, isNotNull, notExists, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, notExists, or, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { hqApprovals, hqMissions, type HqLink } from "../db/schema";
 import type { SinceLine, SinceLooked } from "../hq/types";
@@ -31,23 +31,17 @@ const MAX = 8;
 
 export async function sinceLooked(db: Database, since: Date): Promise<SinceLooked> {
   return timed(db, async (tx) => {
-    const linkedToAsk = tx
+    // Missions that needed no yes: no request of any kind (old or new) asked for them or builds them. Newest first.
+    const anyAsk = tx
       .select({ x: sql`1` })
       .from(hqApprovals)
-      .where(and(eq(hqApprovals.missionId, hqMissions.id), isNotNull(hqApprovals.why)));
-    const done = await tx
+      .where(or(eq(hqApprovals.missionId, hqMissions.id), eq(hqApprovals.buildMissionId, hqMissions.id)));
+    const fixedRows = await tx
       .select()
       .from(hqMissions)
-      .where(and(eq(hqMissions.status, "done"), gte(hqMissions.doneAt, since)))
+      .where(and(eq(hqMissions.status, "done"), gte(hqMissions.doneAt, since), notExists(anyAsk)))
       .orderBy(desc(hqMissions.doneAt))
-      .limit(60);
-    const noAsk = await tx
-      .select({ id: hqMissions.id })
-      .from(hqMissions)
-      .where(and(eq(hqMissions.status, "done"), gte(hqMissions.doneAt, since), notExists(linkedToAsk)))
-      .limit(60);
-    const needed = new Set(done.map((m) => m.id));
-    for (const r of noAsk) needed.delete(r.id);
+      .limit(MAX);
     const created = await tx
       .select()
       .from(hqMissions)
@@ -57,7 +51,7 @@ export async function sinceLooked(db: Database, since: Date): Promise<SinceLooke
     const live = await tx
       .select({ a: hqApprovals, m: hqMissions })
       .from(hqApprovals)
-      .innerJoin(hqMissions, eq(hqApprovals.missionId, hqMissions.id))
+      .innerJoin(hqMissions, eq(hqApprovals.buildMissionId, hqMissions.id))
       .where(and(eq(hqApprovals.status, "approved"), isNotNull(hqApprovals.why), eq(hqMissions.status, "done"), gte(hqMissions.doneAt, since)))
       .orderBy(desc(hqMissions.doneAt))
       .limit(MAX + 1);
@@ -69,7 +63,7 @@ export async function sinceLooked(db: Database, since: Date): Promise<SinceLooke
       commitUrl: m ? commitUrlOf(m.links ?? []) : null,
       role: m?.role ?? null,
     });
-    const fixed = done.filter((m) => !needed.has(m.id)).map((m) => line(m.title, m.doneAt ?? m.updatedAt, m, `/admin/hq/missions/${m.id}`));
+    const fixed = fixedRows.map((m) => line(m.title, m.doneAt ?? m.updatedAt, m, `/admin/hq/missions/${m.id}`));
     // Asks that reached Live. A finished mission with a commit link and no ask shows in "fixed" with its commit link.
     const changed = live.map((l) => line(l.a.title, l.m.doneAt ?? l.m.updatedAt, l.m, `/admin/work#${l.a.id}`));
     const found = created.map((m) => line(m.title, m.createdAt, m, `/admin/hq/missions/${m.id}`));

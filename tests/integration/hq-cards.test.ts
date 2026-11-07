@@ -23,6 +23,9 @@ import {
   type HqActor,
 } from "@/server/services/hq";
 import { sinceLooked, sinceFrom } from "@/server/services/hq-summary";
+import { purgeUnusedPreviews, storePreview } from "@/server/services/hq-files";
+import { createContent } from "@/server/services/hq-marketing";
+import { reqCard } from "../hq-fixtures";
 import { withUser } from "@/server/db/with-user";
 import { saveSubscription } from "@/server/services/push";
 import { makeUser } from "../helpers";
@@ -418,5 +421,126 @@ describe("since you last looked", () => {
     expect((await sinceLooked(db(), sinceFrom(undefined, now))).found.map((l) => l.text)).toEqual(["Found three days ago"]);
     expect((await sinceLooked(db(), sinceFrom(String(now.getTime() - 24 * H), now))).found).toEqual([]);
     expect((await sinceLooked(db(), sinceFrom(String(now.getTime() - 4 * 24 * H), now))).found).toHaveLength(1);
+  });
+});
+
+describe("review fixes", () => {
+  const H = 3_600_000;
+  it("follows the BUILD mission, not the mission that asked", async () => {
+    const asking = await createMission(db(), agent, { role: "developer", title: "Design the thing" });
+    const a = await createApproval(db(), agent, await card({ role: "developer", kind: "feature", title: "Ask", missionId: asking.id }));
+    await updateMission(db(), agent, asking.id, { status: "waiting" });
+    await decideApproval(db(), admin, a.id, "approved");
+    let t = (await getDecisionThread(db(), a.id))!;
+    expect(t.lifecycle).toMatchObject({ stage: "approved", mission: null });
+    expect((await agentInbox(db(), {})).approvedWithoutMission.map((x) => x.id)).toEqual([a.id]);
+    const build = await createMission(db(), agent, { role: "developer", title: "Build it" });
+    await linkApprovalMission(db(), agent, a.id, build.id);
+    await updateMission(db(), agent, asking.id, { status: "done" });
+    t = (await getDecisionThread(db(), a.id))!;
+    expect(t.lifecycle?.stage).toBe("approved"); // the asking mission closing never makes it Live
+    await updateMission(db(), agent, build.id, { status: "doing" });
+    expect((await getDecisionThread(db(), a.id))!.lifecycle?.stage).toBe("built");
+    expect((await sinceLooked(db(), new Date(Date.now() - H))).changed).toEqual([]);
+    await updateMission(db(), agent, build.id, { status: "done" });
+    expect((await sinceLooked(db(), new Date(Date.now() - H))).changed.map((l) => l.text)).toEqual(["Ask"]);
+  });
+
+  it("refuses a finished mission, and a dropped build mission shows Stopped and is listed again", async () => {
+    const a = await createApproval(db(), agent, await card(base));
+    await decideApproval(db(), admin, a.id, "approved");
+    const done = await createMission(db(), agent, { role: "designer", title: "Already done" });
+    await updateMission(db(), agent, done.id, { status: "done" });
+    await expect(linkApprovalMission(db(), agent, a.id, done.id)).rejects.toThrow(/finished or dropped/);
+    const m = await createMission(db(), agent, { role: "designer", title: "Build" });
+    await linkApprovalMission(db(), agent, a.id, m.id);
+    await updateMission(db(), agent, m.id, { status: "dropped", result: "Not needed now" });
+    const t = (await getDecisionThread(db(), a.id))!;
+    expect(t.lifecycle).toMatchObject({ stage: "approved", stopped: "Not needed now" });
+    expect((await agentInbox(db(), {})).approvedWithoutMission.map((x) => x.id)).toEqual([a.id]);
+    const m2 = await createMission(db(), agent, { role: "designer", title: "Build again" });
+    await linkApprovalMission(db(), agent, a.id, m2.id);
+    expect((await getDecisionThread(db(), a.id))!.lifecycle?.stopped).toBeNull();
+  });
+
+  it("a revised publish ask moves its post to the new version, so a yes approves the post", async () => {
+    const c = await createContent(db(), agent, { kind: "post", title: "Reel", ask: true, request: await reqCard() });
+    const v1 = c.approvalId!;
+    await decideApproval(db(), admin, v1, "changes", "shorter");
+    const v2 = await reviseApproval(db(), agent, v1, { ...(await card({ role: "marketing", kind: "publish", title: "Reel" })), changedSinceNote: "Shorter" });
+    const [row] = await db().select().from(hqContent).where(eq(hqContent.id, c.id));
+    expect(row).toMatchObject({ approvalId: v2.id, status: "waiting" });
+    await decideApproval(db(), admin, v2.id, "approved");
+    expect((await db().select().from(hqContent).where(eq(hqContent.id, c.id)))[0].status).toBe("approved");
+  });
+
+  it("a revision checks its mission, and can't change the kind", async () => {
+    const v1 = await createApproval(db(), agent, await card(base));
+    await decideApproval(db(), admin, v1.id, "changes", "n");
+    const full = { ...(await card(base)), changedSinceNote: "x" };
+    await expect(reviseApproval(db(), agent, v1.id, { ...full, missionId: "00000000-0000-4000-8000-000000000000" })).rejects.toThrow(HqError);
+    await expect(reviseApproval(db(), agent, v1.id, { ...full, kind: "deploy" })).rejects.toThrow(/same kind/);
+  });
+
+  it("pictures: the same bytes are stored once, a daily cap holds, and unused old ones are purged", async () => {
+    const a = await storePreview(db(), PNG, "image/png");
+    const b = await storePreview(db(), PNG, "image/png");
+    expect(b.id).toBe(a.id);
+    expect(await db().select().from(hqFiles)).toHaveLength(1);
+    const [filler] = await db()
+      .insert(hqFiles)
+      .values({ contentType: "image/png", size: 200 * 1024 * 1024, sha256: "filler", data: Buffer.from("x") })
+      .returning();
+    const other = Buffer.concat([PNG, Buffer.from("different")]);
+    await expect(storePreview(db(), other, "image/png")).rejects.toThrow(/last 24 hours/);
+    // Old and unused goes; old but used by a card stays; new stays.
+    const used = await makePreview();
+    await createApproval(db(), agent, { ...(await card(base)), previews: [{ fileId: used }] });
+    await db()
+      .update(hqFiles)
+      .set({ createdAt: new Date(Date.now() - 48 * H) });
+    const fresh = (
+      await db()
+        .insert(hqFiles)
+        .values({ contentType: "image/png", size: 10, sha256: "fresh", data: Buffer.from("y") })
+        .returning()
+    )[0];
+    expect(await purgeUnusedPreviews(db())).toBeGreaterThanOrEqual(1);
+    const left = (await db().select({ id: hqFiles.id }).from(hqFiles)).map((r) => r.id);
+    expect(left).toContain(used);
+    expect(left).toContain(fresh.id);
+    expect(left).not.toContain(filler.id);
+  });
+
+  it("the summary shows the newest fixes first, and never counts a mission tied to any ask, old or new", async () => {
+    for (let i = 0; i < 12; i++) {
+      const m = await createMission(db(), agent, { role: "developer", title: `Fix ${i}` });
+      await updateMission(db(), agent, m.id, { status: "done" });
+      await db()
+        .update(hqMissions)
+        .set({ doneAt: new Date(Date.now() - (12 - i) * 60_000) })
+        .where(eq(hqMissions.id, m.id));
+    }
+    const tied = await createMission(db(), agent, { role: "developer", title: "Tied to an old ask" });
+    await updateMission(db(), agent, tied.id, { status: "done" });
+    await db().insert(hqApprovals).values({ role: "developer", kind: "other", title: "old", summary: "s", source: "agent", missionId: tied.id });
+    const s = await sinceLooked(db(), new Date(Date.now() - H));
+    expect(s.fixed).toHaveLength(8);
+    expect(s.fixed[0].text).toBe("Fix 11");
+    expect(s.fixed.map((l) => l.text)).not.toContain("Tied to an old ask");
+  });
+
+  it("the desk lists every waiting ask the badge counts", async () => {
+    for (let i = 0; i < 3; i++) await createApproval(db(), agent, await card({ ...base, title: `T${i}` }));
+    const { threads } = await listDecisionThreads(db());
+    expect(threads.filter((t) => t.state === "waiting")).toHaveLength(await pendingApprovalCount(db()));
+  });
+
+  it("the picture route sends a locked-down content policy", async () => {
+    h.admin = true;
+    const id = await makePreview();
+    const r = await fileGET(new Request("https://lifeflow.test/x"), { params: Promise.resolve({ id }) });
+    expect(r.headers.get("content-security-policy")).toBe("default-src 'none'; sandbox");
+    expect(r.headers.get("content-disposition")).toBe("inline");
   });
 });

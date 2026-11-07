@@ -55,6 +55,8 @@ export type Approval = {
   version: number;
   changedSinceNote: string | null;
   supersededAt: Date | null;
+  /** The mission that builds an approved ask (set when the Chief of Staff links it). */
+  buildMissionId: string | null;
 };
 
 export type ApprovalEffort = "small" | "medium" | "large";
@@ -75,6 +77,8 @@ export type Lifecycle = {
   stage: LifecycleStage;
   /** The date each step happened; null when HQ has no record of it. */
   dates: Record<LifecycleStage, Date | null>;
+  /** Why the build mission was dropped, when it was; the card shows "Stopped: ...". */
+  stopped: string | null;
   mission: { id: string; title: string; status: MissionStatus; blockedReason: string | null; result: string | null; links: HqLink[] } | null;
 };
 
