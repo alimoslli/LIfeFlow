@@ -355,6 +355,9 @@ describe("a charge pays the due date it belongs to, never the next one (R2)", ()
     const gp = (date: string, amountCents: number) => nf(date, { merchantName: "Georgia Power", description: "GEORGIA POWER", amountCents });
     const power = netflix({ keys: ["georgia power"], varies: true, amountCents: -8_200 });
     expect(paid([power], [gp("2026-10-06", -7_000), gp("2026-10-15", -7_500), gp("2026-11-06", -8_500)])).toEqual([0]);
+    // A small credit (a $2 promo) doesn't undo the other plan's charge, so that plan is still told apart (review P11).
+    const credit = nf("2026-10-09", { kind: "refund", amountCents: 200 });
+    expect(paid([netflix({ date: "2026-11-15" })], [nf("2026-10-07"), credit, nf("2026-10-15"), nf("2026-11-07")])).toEqual([]);
     // The other plan is still told apart when nothing was refunded.
     expect(paid([netflix({})], [nf("2026-10-07"), nf("2026-10-15"), nf("2026-11-07")])).toEqual([]);
   });

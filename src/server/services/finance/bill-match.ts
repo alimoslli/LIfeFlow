@@ -153,7 +153,10 @@ export function paidOccurrences(due: DueOccurrence[], charges: PostedCharge[]): 
    * The previous cycle was paid by one charge, and another one (more than a double charge's 2 days from it) sits nearer
    * to this charge's place a cycle back (as many days before that due date): this charge is that one's next cycle, a different bill from the same merchant.
    */
-  /** A refund or reimbursement under the bill's keys within a week after `u`: that charge was taken back, so it isn't another plan's. */
+  /**
+   * A refund or reimbursement of that charge (the same amount, under the bill's keys, within a week after `u`): it was
+   * taken back, so it isn't another plan's. A small credit (a $2 promo) doesn't undo a charge.
+   */
   const undone = (d: DueOccurrence, u: PostedCharge) =>
     charges.some(
       (r, ri) =>
@@ -162,6 +165,7 @@ export function paidOccurrences(due: DueOccurrence[], charges: PostedCharge[]): 
         r.kind !== "adjustment" &&
         r.date >= u.date &&
         r.date <= addDaysStr(u.date, 7) &&
+        amountsClose(Math.abs(u.amountCents), Math.abs(r.amountCents), false) &&
         (keys[ri] ??= merchantKeys(r)).some((k) => d.keys.includes(k)),
     );
   const repeatsOther = (d: DueOccurrence, c: number) => {
