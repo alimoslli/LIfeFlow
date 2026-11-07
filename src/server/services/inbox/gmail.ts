@@ -56,11 +56,23 @@ export async function fileFromGmail(scope: UserScope, tz: string, today: string,
         .where(eq(inboxItems.id, ig.id));
       continue;
     }
-    const row = await processDocument(scope, tz, today, { channel: "email", from: address, subject: mail.subject, text: mail.body, files: [] }, deps.extract);
-    await scope.tx
-      .update(inboxItems)
-      .set({ externalId: `gmail:${m.id}` })
-      .where(eq(inboxItems.id, row.id));
+    // Past the sender check above, so this is the authenticated path: it may update what the user already has.
+    const row = await processDocument(
+      scope,
+      tz,
+      today,
+      {
+        channel: "email",
+        from: address,
+        subject: mail.subject,
+        text: mail.body,
+        files: [],
+        externalId: `gmail:${m.id}`,
+        messageId: mail.messageId,
+        authenticated: true,
+      },
+      deps.extract,
+    );
     if (row.status === "filed") filed++;
   }
   return { filed, checked };

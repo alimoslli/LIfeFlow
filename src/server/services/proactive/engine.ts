@@ -10,6 +10,7 @@ import { nextQuestion } from "./questions";
 import { performAction } from "./respond";
 import { fillRegularShifts } from "../work";
 import { listActiveMemories } from "../memory";
+import { attachWaitingReceiptsSafely, runInboxCleanupOnce } from "../inbox/cleanup";
 import { fileFromGmail } from "../inbox/gmail";
 
 export type Slot = "morning" | "midday" | "evening";
@@ -191,6 +192,10 @@ export async function runDueSlot(scope: UserScope, tz: string, prefs: UserPrefer
   if (!first) return [];
   // Keep regular work hours filled in ahead, so detectors and Today see them.
   await fillRegularShifts(scope, tz, todayIn(tz, now));
+  // Once per account: collapse bills, to-dos and exams the inbox filed twice (bounded; never blocks the rest).
+  await runInboxCleanupOnce(scope, todayIn(tz, now));
+  // Receipts kept while their bank charge hadn't posted ride along on it once it has. Never blocks the rest.
+  await attachWaitingReceiptsSafely(scope, todayIn(tz, now));
   // Mornings, if the user turned it on: file new school, bill and work emails from Gmail. Never blocks the rest.
   if (slot === "morning" && prefs?.gmailFiling)
     await fileFromGmail(scope, tz, todayIn(tz, now)).catch((e) => console.error("[gmail filing]", e instanceof Error ? e.name : e));

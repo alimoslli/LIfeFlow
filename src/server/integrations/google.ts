@@ -347,7 +347,14 @@ export async function readEmail(scope: UserScope, id: string, f: Fetch = fetch) 
   const authHeaders = (m.payload?.headers ?? [])
     .filter((h) => /^(authentication-results|received-spf)$/i.test(h.name))
     .map((h) => ({ Name: h.name, Value: h.value }));
-  return { ...summary(m), to: header(m, "To"), cc: header(m, "Cc"), body: truncate(messageText(m.payload), 20_000), authHeaders };
+  return {
+    ...summary(m),
+    messageId: header(m, "Message-ID"),
+    to: header(m, "To"),
+    cc: header(m, "Cc"),
+    body: truncate(messageText(m.payload), 20_000),
+    authHeaders,
+  };
 }
 
 const clean = (s: string) => s.replace(/[\r\n]+/g, " ").trim();

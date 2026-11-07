@@ -13,7 +13,7 @@ import { withCurrentUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { inboxAddress, listInbox, listSenders } from "@/server/services/inbox";
 import { extractionClient } from "@/server/services/inbox/extract";
-import { addSenderAction, removeSenderAction, fileSuggestionAction, undoInboxAction, verifySenderAction } from "./actions";
+import { addSenderAction, removeSenderAction, fileSuggestionAction, answerQuestionAction, undoInboxAction, verifySenderAction } from "./actions";
 import { CopyAddress, InboxUpload } from "./upload";
 
 export const metadata: Metadata = { title: "Filed" };
@@ -25,6 +25,7 @@ const STATUS = {
   ignored: { icon: CircleSlash, tone: "text-muted", label: "Ignored" },
   failed: { icon: AlertCircle, tone: "text-danger", label: "Couldn't read" },
   undone: { icon: Undo2, tone: "text-muted", label: "Undone" },
+  duplicate: { icon: CircleSlash, tone: "text-muted", label: "Already filed" },
   processing: { icon: FileText, tone: "text-muted", label: "Reading" },
 } as const;
 
@@ -112,6 +113,19 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
         {d.items.length === 0 && <p className="text-sm text-muted">Nothing yet. Forward an email or add a photo to try it.</p>}
         {d.items.map((i) => {
           const st = STATUS[i.status];
+          const ask = (
+            i.extracted as {
+              ask?: {
+                kind?: "bill" | "exam";
+                verified?: boolean;
+                answered?: string;
+                sameAs?: string;
+                twin?: string;
+                seriesKey?: string;
+                options?: { id: string; label: string }[];
+              };
+            } | null
+          )?.ask;
           return (
             <Card as="article" key={i.id} className="p-4">
               <div className="flex items-start gap-3">
@@ -148,7 +162,34 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                   </ActionButton>
                 </div>
               )}
-              {i.status === "filed" && (
+              {i.status === "needs_review" && ask?.verified && !ask.answered && (
+                <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end" data-testid="same-question">
+                  {ask.options?.map((o) => (
+                    <ActionButton
+                      key={o.id}
+                      action={answerQuestionAction.bind(null, i.id, true, o.id)}
+                      className="min-h-11 rounded-2xl bg-accent px-4 py-2 text-left text-[0.875rem] font-medium text-white"
+                    >
+                      It&apos;s this one: {o.label}
+                    </ActionButton>
+                  ))}
+                  {!ask.options && (ask.sameAs || ask.twin || ask.seriesKey) && (
+                    <ActionButton
+                      action={answerQuestionAction.bind(null, i.id, true, undefined)}
+                      className="min-h-11 rounded-full bg-accent px-4 text-sm font-medium text-white"
+                    >
+                      {ask.kind === "exam" ? "Yes, it moved" : "Yes, it\u2019s the same"}
+                    </ActionButton>
+                  )}
+                  <ActionButton
+                    action={answerQuestionAction.bind(null, i.id, false, undefined)}
+                    className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium text-text"
+                  >
+                    {ask.kind === "exam" ? "No, keep the old date" : ask.options ? "It\u2019s a new bill" : "No, keep both"}
+                  </ActionButton>
+                </div>
+              )}
+              {(i.status === "filed" || (i.status !== "undone" && ask?.answered)) && !i.filed.some((f) => f.stale) && (
                 <div className="mt-2 flex justify-end">
                   <ActionButton action={undoInboxAction.bind(null, i.id)} className="flex items-center gap-1 rounded-full px-3 text-sm text-text-2">
                     <Undo2 className="h-4 w-4" /> Undo
