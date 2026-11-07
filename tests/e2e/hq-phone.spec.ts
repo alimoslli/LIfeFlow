@@ -11,7 +11,6 @@ async function owner(page: Page) {
   await pool.query("delete from users where email = $1", [ADMIN_EMAIL]);
   await page.goto("/signup");
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
-  await page.getByLabel("Your name").fill("Owner Olu");
   await page.getByLabel("Email").fill(ADMIN_EMAIL);
   await page.getByLabel("Password").fill("correct horse battery");
   await page.getByRole("button", { name: "Create account" }).click();

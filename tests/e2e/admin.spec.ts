@@ -21,7 +21,6 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
   const op = await owner.newPage();
   await op.goto("/signup");
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
-  await op.getByLabel("Your name").fill("Owner Olu");
   await op.getByLabel("Email").fill(ADMIN_EMAIL);
   await op.getByLabel("Password").fill("correct horse battery");
   await op.getByRole("button", { name: "Create account" }).click();

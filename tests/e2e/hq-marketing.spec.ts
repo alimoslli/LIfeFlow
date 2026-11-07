@@ -11,7 +11,6 @@ async function ownerPage(browser: Browser): Promise<Page> {
   const op = await ctx.newPage();
   await op.goto("/signup");
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
-  await op.getByLabel("Your name").fill("Owner Olu");
   await op.getByLabel("Email").fill(ADMIN_EMAIL);
   await op.getByLabel("Password").fill("correct horse battery");
   await op.getByRole("button", { name: "Create account" }).click();
@@ -26,7 +25,6 @@ async function ownerPage(browser: Browser): Promise<Page> {
 test("Marketing is owner-only: everyone else gets a 404", async ({ page }) => {
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
   await page.goto("/signup");
-  await page.getByLabel("Your name").fill("Regular Rhea");
   await page.getByLabel("Email").fill(`rhea-mk-${Date.now()}@example.com`);
   await page.getByLabel("Password").fill("correct horse battery");
   await page.getByRole("button", { name: "Create account" }).click();
