@@ -117,8 +117,9 @@ describe("a bill tracked under the user's own name and paid by transfer (review 
 
 describe("a bill whose amount usually moves (R1)", () => {
   it("is told by its found series, or by its category before the bank shows one", () => {
-    for (const category of ["Utilities", "Phone", "Internet", " internet "]) expect(billVaries([], category), category).toBe(true);
-    for (const category of ["Streaming", "Rent", "Insurance", "Housing", "", null, undefined]) expect(billVaries([], category), String(category)).toBe(false);
+    for (const category of ["Utilities", " utilities "]) expect(billVaries([], category), category).toBe(true);
+    for (const category of ["Phone", "Internet", "Streaming", "Rent", "Insurance", "Housing", "", null, undefined])
+      expect(billVaries([], category), String(category)).toBe(false);
     // Once the bank shows the bill, its own charges decide.
     expect(billVaries([found({ variableAmount: false })], "Utilities")).toBe(false);
     expect(billVaries([found({ variableAmount: true })], "Rent")).toBe(true);
@@ -332,5 +333,29 @@ describe("a charge pays the due date it belongs to, never the next one (R2)", ()
     expect(paid([power], [bill("2026-11-12", -11_900)])).toEqual([0]);
     expect(paid([power], [bill("2026-11-12", -13_000)])).toEqual([]);
     expect(paid([power], [nf("2026-11-12", { amountCents: -10_000 })])).toEqual([]);
+  });
+
+  it("a phone or internet bill with no series is not paid by the same brand's other product (F1)", () => {
+    const store = nf("2026-11-14", { merchantName: null, description: "VERIZON STORE #1234", amountCents: -6_999 });
+    const verizon = netflix({ keys: ["verizon"], amountCents: -8_500, date: "2026-11-20", varies: billVaries([], "Phone") });
+    expect(paid([verizon], [store])).toEqual([]);
+    const att = netflix({ keys: ["at t"], amountCents: -8_000, date: "2026-11-10", varies: billVaries([], "Internet") });
+    expect(paid([att], [nf("2026-11-03", { merchantName: null, description: "AT&T UVERSE", amountCents: -6_500 })])).toEqual([]);
+    // Within the usual 10% it is still paid.
+    expect(paid([verizon], [nf("2026-11-14", { merchantName: null, description: "VERIZON WIRELESS", amountCents: -8_200 })])).toEqual([0]);
+  });
+
+  it("a refunded and re-charged previous cycle, or a varying bill paid in two parts, doesn't hide this cycle's payment (F3)", () => {
+    // Nov 9 charge refunded the next day, re-charged Nov 12: the Nov 9 one was never a second plan.
+    const refund = nf("2026-11-10", { kind: "refund", amountCents: 1_549 });
+    expect(paid([netflix({ date: "2026-12-15" })], [nf("2026-11-09"), refund, nf("2026-11-12"), nf("2026-12-09")])).toEqual([0]);
+    const reimbursed = nf("2026-11-14", { kind: "reimbursement", amountCents: 1_549 });
+    expect(paid([netflix({ date: "2026-12-15" })], [nf("2026-11-09"), reimbursed, nf("2026-11-12"), nf("2026-12-09")])).toEqual([0]);
+    // A varying bill paid $70 and $75 last cycle, $85 this cycle: the parts are one bill's, not another plan's.
+    const gp = (date: string, amountCents: number) => nf(date, { merchantName: "Georgia Power", description: "GEORGIA POWER", amountCents });
+    const power = netflix({ keys: ["georgia power"], varies: true, amountCents: -8_200 });
+    expect(paid([power], [gp("2026-10-06", -7_000), gp("2026-10-15", -7_500), gp("2026-11-06", -8_500)])).toEqual([0]);
+    // The other plan is still told apart when nothing was refunded.
+    expect(paid([netflix({})], [nf("2026-10-07"), nf("2026-10-15"), nf("2026-11-07")])).toEqual([]);
   });
 });

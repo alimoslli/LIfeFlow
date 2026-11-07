@@ -45,8 +45,8 @@ export function amountsClose(expectedCents: number, actualCents: number, varies:
   return Math.abs(actualCents - expectedCents) <= Math.max(Math.abs(expectedCents) * (varies ? 0.25 : 0.1), 50);
 }
 
-/** Categories whose bills usually move from one to the next (usage, overage). */
-const USUALLY_VARIES = /^(?:utilities|phone|internet)$/i;
+/** Categories whose bills usually move from one to the next (usage). Phone and internet are not here: their amounts are steady, and a wide band lets the brand's other products pay them. */
+const USUALLY_VARIES = /^utilities$/i;
 
 /**
  * Whether a tracked bill's amount moves: its found series' charges tell, and before the bank shows a series (a bill
@@ -153,6 +153,17 @@ export function paidOccurrences(due: DueOccurrence[], charges: PostedCharge[]): 
    * The previous cycle was paid by one charge, and another one (more than a double charge's 2 days from it) sits nearer
    * to this charge's place a cycle back (as many days before that due date): this charge is that one's next cycle, a different bill from the same merchant.
    */
+  /** A refund or reimbursement under the bill's keys within a week after `u`: that charge was taken back, so it isn't another plan's. */
+  const undone = (d: DueOccurrence, u: PostedCharge) =>
+    charges.some(
+      (r, ri) =>
+        NOT_A_PAYMENT.has(r.kind) &&
+        !r.pending &&
+        r.kind !== "adjustment" &&
+        r.date >= u.date &&
+        r.date <= addDaysStr(u.date, 7) &&
+        (keys[ri] ??= merchantKeys(r)).some((k) => d.keys.includes(k)),
+    );
   const repeatsOther = (d: DueOccurrence, c: number) => {
     const before = nthOccurrence(d.date, d.frequency, -1, d.day);
     const [payment] = payers(d, before);
@@ -169,7 +180,9 @@ export function paidOccurrences(due: DueOccurrence[], charges: PostedCharge[]): 
         off(i) < off(payment) &&
         Math.abs(daysBetween(u.date, charges[payment].date)) > DUPLICATE_DAYS &&
         fits(d, i) &&
-        amountsClose(charges[c].amountCents, u.amountCents, d.varies),
+        // The strict band even for a varying bill: its parts or a late fee are not another plan.
+        amountsClose(charges[c].amountCents, u.amountCents, false) &&
+        !undone(d, u),
     );
   };
   const pairs = due.flatMap((d, o) =>

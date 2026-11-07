@@ -1,11 +1,11 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { Pool } from "pg";
 import { closeDb, getDb } from "@/server/db/client";
 import { attachments, inboxSenders, integrations, syncJobs, transactions, users } from "@/server/db/schema";
 import { encryptSecret } from "@/server/crypto";
 import { createSession, setMoneyUnlockedAt, type SessionUser } from "@/server/auth/sessions";
-import { exportChunks, exportStream } from "@/server/services/data-export";
+import { exportBusy, exportChunks, exportStream, openSnapshot } from "@/server/services/data-export";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { createHabit, checkHabit } from "@/server/services/habits";
 import { createMemory } from "@/server/services/memory";
@@ -250,6 +250,69 @@ describe("Download my data", () => {
       })(),
     ).rejects.toThrow();
     errors.mockRestore();
+  });
+
+  it("ends a download after its total time, reads under a statement timeout, and allows one open download per user (F2)", async () => {
+    const { run, user } = await makeUser("Dee Deadline");
+    await run(async (s) => {
+      const acct = await createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 100_000 });
+      await s.tx.insert(transactions).values(
+        Array.from({ length: 300 }, (_, i) => ({
+          userId: s.userId,
+          accountId: acct.id,
+          date: "2026-10-01",
+          description: `T${i}`,
+          amountCents: -100,
+          kind: "expense" as const,
+        })),
+      );
+    });
+    const pool = (globalThis as unknown as { __bfPool: Pool }).__bfPool;
+    const inUse = () => pool.totalCount - pool.idleCount;
+    const readUntilRows = async (reader: ReadableStreamDefaultReader<Uint8Array>) => {
+      const dec = new TextDecoder();
+      let text = "";
+      while (!text.includes(`"transactions":[{`)) text += dec.decode((await reader.read()).value);
+    };
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    // Every read runs under a 15 s statement timeout.
+    const snap = openSnapshot(user.id, 60_000, 60_000);
+    expect(await snap.read((s) => s.tx.execute(sql`show statement_timeout`))).toMatchObject({ rows: [{ statement_timeout: "15s" }] });
+    await snap.close();
+
+    // A slow reader that keeps reading still ends at the total deadline, and the download fails.
+    const slow = exportStream(user.id, profileOf(user), 100, 60_000, 150).getReader();
+    await readUntilRows(slow);
+    expect(inUse()).toBe(1);
+    await new Promise((r) => setTimeout(r, 300));
+    expect(inUse()).toBe(0);
+    await expect(
+      (async () => {
+        for (;;) if ((await slow.read()).done) return;
+      })(),
+    ).rejects.toThrow();
+
+    // One open download per user: a second one waits to be asked again, and the first is unharmed.
+    const first = exportStream(user.id, profileOf(user), 100).getReader();
+    await readUntilRows(first);
+    expect(exportBusy(user.id)).toBe(true);
+    await expect(exportChunks(user.id, profileOf(user)).next()).rejects.toThrow(/already/);
+    await first.cancel();
+    expect(exportBusy(user.id)).toBe(false);
+    expect(JSON.parse(await readAll(exportStream(user.id, profileOf(user)))).transactions).toHaveLength(300);
+    errors.mockRestore();
+  });
+
+  it("answers a second download for the same user with a plain 429 while one is open (F2)", async () => {
+    const { user } = await signIn("Una Uno");
+    const first = exportStream(user.id, profileOf(user), 100).getReader();
+    await first.read();
+    await first.read();
+    const res = await GET(new Request("http://localhost/api/export"));
+    expect(res.status).toBe(429);
+    await first.cancel();
+    expect((await GET(new Request("http://localhost/api/export"))).status).toBe(200);
   });
 
   it("works as before when the Money lock is off, and refuses anyone signed out", async () => {
