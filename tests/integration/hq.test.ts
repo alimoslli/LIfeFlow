@@ -360,21 +360,21 @@ describe("office snapshot, detail, summary", () => {
     const m = await createMission(db(), owner, { role: "developer", title: "Forgiving transaction search" });
     await updateMission(db(), owner, m.id, { status: "doing", sessionId: AGENTS });
     let dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
-    expect(dev.state).toBe("offline"); // the agents chat hasn't checked in yet: no claim of work
+    expect(dev).toMatchObject({ state: "sleeping", note: "Hasn't checked in yet" }); // no chat has checked in: no claim of work
     await recordCheckin(db(), { sessionId: AGENTS, status: "working" });
     dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
     expect(dev).toMatchObject({ state: "working", line: "Forgiving transaction search (in LF V3 — Agents)" });
     expect(dev.asOf).not.toBeNull();
     await createApproval(db(), agent, await card({ role: "developer", kind: "deploy", title: "Ship it" }));
     dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
-    expect(dev).toMatchObject({ state: "working", note: "1 thing for your yes" });
+    expect(dev).toMatchObject({ state: "working", note: "Hasn't checked in yet · 1 thing for your yes" }); // its own chat still hasn't reported
     await db()
       .update(hqChats)
       .set({ lastCheckinAt: new Date(Date.now() - 60 * 60_000) })
       .where(eq(hqChats.id, AGENTS));
     await db().delete(hqApprovals);
     dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
-    expect(dev.state).toBe("offline"); // an hour-old check-in is not "working"
+    expect(dev.state).toBe("sleeping"); // an hour-old check-in is not "working"
   });
 
   it("measures the budget from real samples", async () => {
