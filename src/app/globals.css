@@ -2199,3 +2199,221 @@ a.hq-room:focus-visible {
   width: 3.25rem;
   height: 3.25rem;
 }
+
+/* The rendered office (owner, 2026-11-07, ADR 0029 addendum): every room is a picture in the concept's style
+   (public/hq/office). The state picks the picture; CSS adds a soft glow while working and floating z's while asleep. */
+.hq-stage-photo,
+.hq-stage-penthouse {
+  position: relative;
+  overflow: hidden;
+  line-height: 0;
+  background: #14221b;
+}
+.hq-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+}
+.hq-room[data-state="working"] .hq-stage-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 68% 55%, rgb(255 208 140 / 0.28), transparent 58%);
+  animation: hq-glowpulse 2.8s ease-in-out infinite;
+}
+@keyframes hq-glowpulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.hq-zs {
+  position: absolute;
+  left: 16%;
+  top: 20%;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.15rem;
+  font:
+    800 1rem/1 system-ui,
+    sans-serif;
+  color: #d9e6ff;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 0.5);
+  pointer-events: none;
+}
+.hq-zs i {
+  font-style: normal;
+  animation: hq-zzz 2.6s ease-in-out infinite;
+}
+.hq-zs i:nth-child(2) {
+  font-size: 1.2rem;
+  animation-delay: 0.5s;
+}
+.hq-zs i:nth-child(3) {
+  font-size: 1.45rem;
+  animation-delay: 1s;
+}
+.hq-done-badge {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.5rem;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: #4fae7b;
+  color: #fff;
+  font:
+    800 0.9rem/1 system-ui,
+    sans-serif;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
+}
+/* Rendered asleep pictures are already night: no extra darkening in dark mode. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hq-room[data-state="sleeping"] .hq-stage-photo {
+    filter: none;
+  }
+}
+:root[data-theme="dark"] .hq-room[data-state="sleeping"] .hq-stage-photo {
+  filter: none;
+}
+/* The penthouse: the whole picture on a phone, a wider crop on a big screen; the pile button sits on the drawn folders. */
+.hq-stage-penthouse {
+  aspect-ratio: 3 / 2;
+}
+.hq-stage-penthouse .hq-founder-art {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  margin: 0;
+  transform: translateY(-50%);
+}
+@media (min-width: 1024px) {
+  .hq-stage-penthouse {
+    aspect-ratio: 2 / 1;
+  }
+}
+.hq-stage-penthouse .hq-desk-pile {
+  left: var(--pile-l);
+  top: var(--pile-t);
+  width: var(--pile-w);
+  height: var(--pile-h);
+}
+.hq-pile-count {
+  position: absolute;
+  left: calc(var(--pile-l) - 1.5%);
+  top: calc(var(--pile-t) - 5%);
+  display: grid;
+  place-items: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #1f4a3a;
+  border: 2px solid #e7cf8f;
+  color: #f6efdb;
+  font:
+    800 0.8125rem/1 system-ui,
+    sans-serif;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.4);
+  pointer-events: none;
+}
+/* The CEO's business card: small, pinned in the corner of the penthouse picture (it was too big). */
+.hq-stage-penthouse .hq-bcard {
+  top: 5%;
+  right: 3%;
+  bottom: auto;
+  width: min(6.75rem, 27%);
+  gap: 0.05rem;
+  padding: 0.35rem 0.45rem 0.3rem;
+  line-height: 1.2;
+}
+.hq-stage-penthouse .hq-bcard-l1 {
+  font-size: 0.6875rem;
+}
+.hq-stage-penthouse .hq-bcard-l2 {
+  font-size: 0.5625rem;
+}
+/* On a phone the card is a small name tag; the company and site lines come back on a bigger screen. */
+@media (max-width: 639px) {
+  .hq-stage-penthouse .hq-bcard-l3,
+  .hq-stage-penthouse .hq-bcard-l4 {
+    display: none;
+  }
+}
+.hq-stage-penthouse .hq-bcard-l3 {
+  font-size: 0.4375rem;
+  margin-top: 0.1rem;
+  gap: 0.2rem;
+}
+.hq-stage-penthouse .hq-bcard-l3 img {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+.hq-stage-penthouse .hq-bcard-l4 {
+  font-size: 0.5rem;
+}
+.hq-room-founder .hq-plate {
+  min-height: 0;
+  padding-right: 0.75rem;
+}
+@media (min-width: 640px) {
+  .hq-stage-penthouse .hq-bcard {
+    top: 5%;
+    right: 2.5%;
+    bottom: auto;
+    width: min(9rem, 19%);
+    padding: 0.45rem 0.55rem 0.4rem;
+  }
+  .hq-stage-penthouse .hq-bcard-l1 {
+    font-size: 0.8125rem;
+  }
+  .hq-stage-penthouse .hq-bcard-l2 {
+    font-size: 0.625rem;
+  }
+  .hq-stage-penthouse .hq-bcard-l3 {
+    font-size: 0.5rem;
+  }
+  .hq-room-founder .hq-plate {
+    min-height: 0;
+    padding-right: 0.75rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hq-room[data-state="working"] .hq-stage-photo::after,
+  .hq-zs i {
+    animation: none;
+  }
+}
+.hq-coo-face {
+  flex: none;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 999px;
+  border: 2px solid #e7cf8f;
+  background: #14221b url("/hq/office/assistant-working.webp") no-repeat;
+  background-size: 500% auto;
+  background-position: 66% 16%;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.35);
+}
+/* The lounge on a big screen: a calm wide strip, not a second hero. */
+@media (min-width: 1024px) {
+  .hq-room-lounge .hq-stage-photo {
+    flex: 3;
+    height: 13rem;
+  }
+  .hq-room-lounge .hq-photo {
+    height: 100%;
+    aspect-ratio: auto;
+    object-position: center 60%;
+  }
+}

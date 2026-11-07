@@ -1,17 +1,32 @@
+import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Moon, Sun } from "lucide-react";
 import type { OfficeSnapshot, EmployeeCard } from "@/server/hq/types";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { goodnightAction, lightsOnAction } from "@/app/admin/hq/actions";
 import { Desk, OpenDeskButton, type DeskFileView } from "./desk";
-import { SceneDefs } from "./parts";
-import { EmployeeRoomArt, FounderRoomArt, LoungeArt } from "./rooms";
 import { StateChip } from "./status-chip";
 
 export const CEO_LINE = "I'm CEO, Bitch.";
 export const CEO_NAME = "Ali Moslli";
 export const CEO_SITE = "lifeflowweb.com";
+
+/**
+ * The rendered office (owner, 2026-11-07: "it doesn't look like the thing I envisioned"): every room is a picture in the style of
+ * the owner's concept (docs/hq/concept.webp), made once with an image model and stored in public/hq/office. Each person has three:
+ * at the desk working, at the desk ready, and asleep in bed. Nothing calls an AI when HQ opens; the state picks the picture.
+ */
+const OFFICE = "/hq/office";
+const PICTURE: Record<EmployeeCard["state"], "working" | "ready" | "asleep"> = {
+  working: "working",
+  done: "ready",
+  ready: "ready",
+  sleeping: "asleep",
+  offline: "asleep",
+};
+/** Where the pile of task files sits in penthouse.webp, in percent of the picture (the desk button covers it). */
+const PILE = { left: 15.5, top: 55, width: 17, height: 17 };
 
 /** The CEO's business card, pinned to the penthouse. Plain text (no address, phone or social), with one label for screen readers. */
 function BusinessCard() {
@@ -76,8 +91,27 @@ function EmployeeRoom({ e }: { e: EmployeeCard }) {
   // DOM order gives the accessible name "Title, State: line, note, tagline"; the grid areas lay it out the way it reads on screen.
   return (
     <Link href={`/admin/hq/${e.role}`} className="hq-room" data-state={e.state}>
-      <div className={e.role === "assistant" ? "hq-stage hq-stage-chief" : "hq-stage"}>
-        <EmployeeRoomArt role={e.role} state={e.state} />
+      <div className="hq-stage hq-stage-photo">
+        <Image
+          src={`${OFFICE}/${e.role}-${PICTURE[e.state]}.webp`}
+          alt=""
+          width={960}
+          height={640}
+          sizes="(min-width: 1024px) 26rem, 50vw"
+          className="hq-photo"
+        />
+        {e.state === "sleeping" && (
+          <span className="hq-zs" aria-hidden="true">
+            <i>z</i>
+            <i>z</i>
+            <i>Z</i>
+          </span>
+        )}
+        {e.state === "done" && (
+          <span className="hq-done-badge" aria-hidden="true">
+            ✓
+          </span>
+        )}
       </div>
       <div className="hq-meta">
         {e.role === "marketing" && <CmoSeat />}
@@ -107,18 +141,26 @@ function Penthouse({ pending, desk }: { pending: number; desk: OfficeDesk }) {
   const n = desk.files.length;
   return (
     <div className="hq-room hq-room-founder" data-state={pending > 0 ? "needs_you" : "sleeping"} id="desk">
-      <div className="hq-stage hq-stage-wide">
-        <div className="hq-founder-art">
-          <FounderRoomArt files={n} />
+      <div className="hq-stage hq-stage-penthouse">
+        <div
+          className="hq-founder-art"
+          style={{ "--pile-l": `${PILE.left}%`, "--pile-t": `${PILE.top}%`, "--pile-w": `${PILE.width}%`, "--pile-h": `${PILE.height}%` } as CSSProperties}
+        >
+          <Image src={`${OFFICE}/penthouse.webp`} alt="" width={1536} height={1024} sizes="(min-width: 1024px) 52rem, 100vw" className="hq-photo" priority />
+          {n > 0 && (
+            <span className="hq-pile-count" aria-hidden="true">
+              {n > 99 ? "99+" : n}
+            </span>
+          )}
           <Desk files={desk.files} roles={desk.roles} />
         </div>
+        <BusinessCard />
       </div>
       <div className="hq-plate">
         <div className="min-w-0">
           <p className="hq-plate-title">Founder Office</p>
           <p className="hq-plate-tag">CEO · {n === 0 ? "Nothing on your desk" : `${n} ${n === 1 ? "file" : "files"} on your desk`}</p>
         </div>
-        <BusinessCard />
       </div>
       <div className="hq-founder-actions">
         <OpenDeskButton count={n} className="hq-fbtn hq-fbtn-desk" />
@@ -154,7 +196,6 @@ export function OfficeScene({ snapshot, desk }: { snapshot: OfficeSnapshot; desk
   const room = (role: string) => (e[role] ? <EmployeeRoom e={e[role]!} /> : null);
   return (
     <div className="hq-tower" data-night={desk.night.on ? "on" : undefined}>
-      <SceneDefs />
       <Crest />
       <div className="hq-floors">
         <Slab>Penthouse</Slab>
@@ -174,8 +215,8 @@ export function OfficeScene({ snapshot, desk }: { snapshot: OfficeSnapshot; desk
         {room("support")}
         <Slab only="d">Lobby</Slab>
         <div className="hq-room hq-room-lounge" data-state="lounge">
-          <div className="hq-stage">
-            <LoungeArt />
+          <div className="hq-stage hq-stage-photo">
+            <Image src={`${OFFICE}/lounge.webp`} alt="" width={960} height={640} sizes="(min-width: 1024px) 52rem, 100vw" className="hq-photo" />
           </div>
           <Plate title="Lounge" tagline="Coffee · Quiet · Everyone" />
         </div>

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { ago } from "@/app/admin/format";
 import type { Brief, EmployeeCard } from "@/server/hq/types";
-import { Portrait } from "./people";
 
 /**
  * "From your COO": the newest brief, how many things wait for the owner, and the one button to talk to it.
@@ -14,7 +13,8 @@ export function BriefCard({ brief, chief, pending }: { brief: Brief | null; chie
   return (
     <section aria-labelledby="hq-brief-title" data-testid="hq-brief" className="hq-brief p-4 sm:p-6">
       <div className="relative z-10 flex items-center gap-3">
-        <Portrait who="assistant" className="hq-portrait-lg" />
+        {/* The COO's face, cropped from his room picture (public/hq/office). */}
+        <span className="hq-coo-face" aria-hidden="true" />
         <div className="min-w-0">
           <h2 id="hq-brief-title" className="font-display text-[1.375rem] leading-tight font-medium">
             From your {title}

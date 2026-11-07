@@ -86,3 +86,27 @@ The owner: "I want him always there doing something like a real COO, he's super 
    - Order: working, offline, done, ready, asleep.
    - The COO's Ready line: "Next check-in 2:13 PM · Last: <his last check-in summary>".
    - A department's Ready line: "On call · next round Thu 3:07 AM".
+
+## Addendum (owner, 2026-11-07, later still): the rendered office
+
+The owner: "the design is super simple and doesn't look like the thing I envisioned", and the "I'm CEO" card was too big. They chose rendered art like their concept (`docs/hq/concept.webp`) over redrawn SVG.
+- Every room is now a picture in the concept's style, stored in `public/hq/office`.
+- The pictures were made once with OpenAI's `gpt-image-2`, using the concept as the style reference, at about 23 images and a few dollars, one time. Each room's three pictures are made from the same base, so the room and the person match.
+- **Pictures per person:**
+  - `<role>-working.webp`: at the desk, busy;
+  - `<role>-ready.webp`: at the desk, relaxed;
+  - `<role>-asleep.webp`: in bed, screens off.
+- **Other pictures:** `penthouse.webp` (the CEO at the desk, the pile of task files, the closed laptop) and `lounge.webp`.
+- **How the state picks a picture:**
+  - working shows `working`;
+  - ready and done show `ready`;
+  - asleep shows `asleep`;
+  - offline shows `asleep`, greyed by CSS.
+- **CSS effects:**
+  - a soft pulsing glow while working;
+  - floating z's while asleep;
+  - a check badge when done;
+  - night mode dims.
+- **Unchanged rules:** nothing calls an AI when HQ opens, and every state is still a real record.
+- **The penthouse:** the desk button sits on the drawn folders (`PILE` in office-scene.tsx, in percent of the picture). The business card is now a small card pinned in the picture's top-right corner.
+- **New pictures:** a new person or room gets its three pictures the same way. Generate the working one from the concept, then make ready and asleep from it, so the room stays the same.
