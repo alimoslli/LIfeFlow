@@ -61,14 +61,20 @@ test("HQ on a phone: no sideways scroll, big room targets, no serious accessibil
     const box = await rooms.nth(i).boundingBox();
     expect(box?.height ?? 0, `room ${i}`).toBeGreaterThanOrEqual(44);
   }
-  // The founder and the Chief of Staff take the full width, then two columns.
+  // The penthouse takes the full width, then two rooms to a floor.
   const founder = await rooms.first().boundingBox();
   const chief = await rooms.nth(1).boundingBox();
   const third = await rooms.nth(2).boundingBox();
-  const fourth = await rooms.nth(3).boundingBox();
-  expect(chief!.width).toBeGreaterThan(third!.width * 1.8);
-  expect(Math.abs(founder!.width - chief!.width)).toBeLessThan(2);
-  expect(Math.abs(third!.y - fourth!.y)).toBeLessThan(2);
+  const fifth = await rooms.nth(4).boundingBox();
+  expect(founder!.width).toBeGreaterThan(chief!.width * 1.8);
+  expect(Math.abs(chief!.y - third!.y)).toBeLessThan(2);
+  expect(Math.abs(chief!.width - third!.width)).toBeLessThan(2);
+  expect(fifth!.y).toBeGreaterThan(third!.y);
+  for (const label of ["Penthouse", "Floor 4", "Floor 3", "Floor 2", "Ground"])
+    await expect(page.locator(".hq-slab:visible", { hasText: label })).toHaveCount(1);
+  // The business card stays inside the penthouse on a phone.
+  const card = await page.getByRole("img", { name: /^Business card/ }).boundingBox();
+  expect(card!.x + card!.width).toBeLessThanOrEqual(founder!.x + founder!.width + 4);
 
   // Bigger text still fits.
   await page.evaluate(() => (document.documentElement.style.fontSize = "125%"));

@@ -103,9 +103,11 @@ test("One admin area on a phone: no sideways scroll, 44 px targets, no serious a
     await op.waitForLoadState("networkidle");
     expect(await noSideScroll(op), `${path} scrolls sideways`).toBe(true);
     const links = op.getByRole("navigation", { name: "Admin" }).getByRole("link");
-    await expect(links).toHaveCount(6); // five places and the gear
+    await expect(links).toHaveCount(5); // the five places; the gear sits beside the masthead
+    const gear = op.getByRole("link", { name: "Settings", exact: true });
+    const targets = [...(await links.all()), gear];
     for (let i = 0; i < 6; i++) {
-      const box = await links.nth(i).boundingBox();
+      const box = await targets[i].boundingBox();
       expect(box?.height ?? 0, `${path} menu item ${i}`).toBeGreaterThanOrEqual(43.5);
       expect(box?.width ?? 0, `${path} menu item ${i}`).toBeGreaterThanOrEqual(43.5);
     }

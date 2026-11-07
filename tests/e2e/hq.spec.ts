@@ -57,7 +57,14 @@ test("HQ: the office, work (missions, approvals, report) and keys work end to en
   await expect(op.getByRole("heading", { level: 1, name: /^Good (morning|afternoon|evening), Owner\.$/ })).toBeVisible();
   const rooms = op.locator("a.hq-room");
   await expect(rooms).toHaveCount(8);
-  await expect(op.getByText("I'M THE CEO, BITCH", { exact: true })).toBeVisible();
+  // The penthouse: the floor label and the CEO's business card (exact words, no address or phone).
+  await expect(op.getByText("Penthouse", { exact: true })).toBeVisible();
+  const ceoCard = op.getByRole("img", { name: /^Business card: I'm CEO, Bitch\. Ali Moslli/ });
+  await expect(ceoCard).toBeVisible();
+  await expect(ceoCard.getByText("I'm CEO, Bitch.", { exact: true })).toBeVisible();
+  await expect(ceoCard.getByText("Ali Moslli", { exact: true })).toBeVisible();
+  await expect(ceoCard.getByText("lifeflowweb.com", { exact: true })).toBeVisible();
+  await expect(op.getByText("I'M THE CEO, BITCH")).toHaveCount(0);
   await expect(op.getByRole("link", { name: /^Engineering\s*,\s*[\w ]+\s*:\s*\S/ })).toBeVisible();
   await expect(op.getByText("Nothing waiting for you.").first()).toBeVisible();
 
@@ -148,7 +155,7 @@ test("HQ: the office, work (missions, approvals, report) and keys work end to en
   expect(decision.status()).toBe(200);
   await op.goto("/admin");
   await expect(op.getByTestId("hq-brief-body")).toContainText("Good round: 2 fixes shipped, nothing blocked.");
-  await expect(op.getByTestId("hq-brief").getByRole("link", { name: /needs? you/ })).toBeVisible();
+  await expect(op.getByTestId("hq-brief").getByRole("link", { name: /^Open the .*decision|^Nothing needs you/ })).toBeVisible();
   await expect(op.getByRole("heading", { name: "Decided for you" })).toBeVisible();
   await expect(op.getByText("Put the calendar fix first, because it blocks sync.").first()).toBeVisible();
   await op.goto("/admin/hq/assistant");

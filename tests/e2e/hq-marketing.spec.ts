@@ -94,7 +94,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
 
   // The Office counts it, then the owner says yes.
   await op.goto("/admin");
-  const tile = op.getByRole("link", { name: /Needs your yes/ }).first();
+  const tile = op.getByRole("link", { name: /Waiting for you/ }).first();
   await expect(tile).toContainText("1");
   await op.goto("/admin/hq/marketing");
   await op.locator("article", { hasText: "The Sunday reset reel" }).getByRole("button", { name: "Yes" }).click();
@@ -103,7 +103,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   const week = op.locator("section", { has: op.getByRole("heading", { name: "This week", level: 2 }) });
   await expect(week.getByText("Approved", { exact: true })).toBeVisible();
   await op.goto("/admin");
-  await expect(op.getByRole("link", { name: /Needs your yes/ }).first()).toContainText("0");
+  await expect(op.getByRole("link", { name: /Waiting for you/ }).first()).toContainText("0");
 
   // The detail page: change the title, then drop it.
   await op.goto("/admin/hq/marketing");
