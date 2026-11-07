@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
 import { BriefCard } from "@/components/hq/brief";
 import { ActivityList, ApprovalMini, BudgetBody, Empty, MissionLine, Section } from "@/components/hq/cards";
@@ -16,7 +17,7 @@ import { Failed, adminTz, fmt } from "../format";
 import { Tile } from "../ui";
 
 /** The Office: the office (a drawn building with a room per person) or a plain workspace list, from one snapshot. The top of the Office page. */
-export async function OfficeSection({ view }: { view: "office" | "workspace" }) {
+export async function OfficeSection({ view, children }: { view: "office" | "workspace"; children?: ReactNode }) {
   const r = await safe("hq-office", () => officeSnapshot(getDb()));
   const controls = await safe("hq-controls", () => getControls(getDb()));
   const user = await getSessionUser();
@@ -34,12 +35,15 @@ export async function OfficeSection({ view }: { view: "office" | "workspace" }) 
   const counts = countsLine(s.counts);
   const b = s.budget;
   const n = s.founder.pendingApprovals;
+  const weekday = new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: tz }).format(s.now);
+  const dayPart = `${weekday} ${greeting(s.now, tz).replace("Good ", "")}`;
 
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="font-display text-[2rem] leading-tight font-medium tracking-tight">
+          <p className="hq-eyebrow">{dayPart}</p>
+          <h1 className="mt-1 font-display text-[2rem] leading-tight font-medium tracking-tight">
             {greeting(s.now, tz)}, {first}.
           </h1>
           <p className="mt-1 text-sm text-text-2">
@@ -70,14 +74,15 @@ export async function OfficeSection({ view }: { view: "office" | "workspace" }) 
       </header>
 
       <BriefCard brief={s.brief} chief={s.employees.find((e) => e.role === "assistant")} pending={n} />
+      {children}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Tile
-          label="Needs your yes"
-          value={n}
-          sub={n === 0 ? "Nothing waiting for you." : "Open the inbox"}
+          label="Waiting for you"
+          value={n === 1 ? "1 decision" : `${n} decisions`}
+          sub={n === 0 ? "Nothing waiting for you." : "Open Work to decide →"}
           href="/admin/work#approvals"
-          tone={n > 0 ? "attention" : undefined}
+          tone={n > 0 ? "gold" : undefined}
         />
         <Tile label="Done in the last 7 days" value={s.doneThisWeek} sub="See the weekly report" href="/admin/work#report" />
         <div className="min-w-0 rounded-3xl bg-surface p-4 shadow-soft">

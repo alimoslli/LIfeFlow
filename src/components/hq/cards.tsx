@@ -30,7 +30,7 @@ export function Section({
     <section id={id} className="rounded-3xl bg-surface p-4 shadow-soft sm:p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <Heading className="text-[0.9375rem] font-semibold text-text">{title}</Heading>
+          <Heading className="font-display text-[1.25rem] leading-tight font-medium text-text">{title}</Heading>
           {sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}
         </div>
         {action}

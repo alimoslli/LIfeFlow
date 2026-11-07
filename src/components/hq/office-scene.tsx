@@ -1,38 +1,52 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { OfficeSnapshot, EmployeeCard } from "@/server/hq/types";
-import { SceneDefs, v } from "./parts";
+import { BrandMark } from "@/components/brand/brand-mark";
+import { SceneDefs } from "./parts";
 import { EmployeeRoomArt, FounderRoomArt, LoungeArt } from "./rooms";
 import { StateChip } from "./status-chip";
 
-export const DOOR_PLATE = "I'M THE CEO, BITCH";
+export const CEO_LINE = "I'm CEO, Bitch.";
+export const CEO_NAME = "Ali Moslli";
+export const CEO_SITE = "lifeflowweb.com";
 
-function Roof() {
+/** The CEO's business card, pinned to the penthouse. Plain text (no address, phone or social), with one label for screen readers. */
+function BusinessCard() {
   return (
-    <div className="hq-roof" aria-hidden="true">
-      <svg viewBox="0 0 600 70" preserveAspectRatio="none" width="100%" height="100%" focusable="false">
-        <path d="M0 70L40 12Q50 4 70 4H530Q550 4 560 12L600 70Z" fill={v("roof")} />
-        <path d="M0 70L40 12Q50 4 70 4H530Q550 4 560 12L600 70" fill="none" stroke="#000" strokeOpacity=".12" strokeWidth="3" />
-        {Array.from({ length: 14 }, (_, i) => (
-          <path key={i} d={`M${20 + i * 42} 66l18-52`} stroke="#fff" strokeOpacity=".06" strokeWidth="6" />
-        ))}
-      </svg>
-      <div className="hq-roof-plants">
-        <svg viewBox="0 0 400 40" width="100%" height="100%" preserveAspectRatio="xMinYMax meet" focusable="false">
-          {[30, 96, 160, 232, 300, 366].map((x, i) => (
-            <use key={x} href="#hq-plant" transform={`translate(${x} 40) scale(${0.9 + (i % 3) * 0.2})`} />
-          ))}
-        </svg>
-      </div>
-      <div className="hq-sign">
-        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-          <use href="#hq-leaf" transform="translate(1 1) scale(.9)" />
-        </svg>
-        <span>LifeFlow HQ</span>
-      </div>
+    <div className="hq-bcard" role="img" aria-label={`Business card: ${CEO_LINE} ${CEO_NAME}, LifeFlow Corporate Headquarters, ${CEO_SITE}`}>
+      <i className="hq-bcard-pin" aria-hidden="true" />
+      <b className="hq-bcard-l1">{CEO_LINE}</b>
+      <span className="hq-bcard-l2">{CEO_NAME}</span>
+      <span className="hq-bcard-l3">
+        <BrandMark className="h-5 w-5" alt="" />
+        <span>
+          LifeFlow
+          <br />
+          Corporate Headquarters
+        </span>
+      </span>
+      <span className="hq-bcard-l4">{CEO_SITE}</span>
     </div>
   );
 }
+
+/** The tower's crest and name. */
+function Crest() {
+  return (
+    <>
+      <div className="hq-crown" aria-hidden="true">
+        <div className="hq-medal">
+          <BrandMark className="h-16 w-16" alt="" />
+        </div>
+      </div>
+      <p className="hq-sign">
+        LifeFlow <span>Headquarters</span>
+      </p>
+    </>
+  );
+}
+
+const Slab = ({ children, only }: { children: string; only?: "p" | "d" }) => <p className={only ? `hq-slab hq-slab-${only}` : "hq-slab"}>{children}</p>;
 
 function Plate({ title, tagline, chip }: { title: string; tagline: string; chip?: ReactNode }) {
   return (
@@ -49,7 +63,7 @@ function Plate({ title, tagline, chip }: { title: string; tagline: string; chip?
 function EmployeeRoom({ e }: { e: EmployeeCard }) {
   // DOM order gives the accessible name "Title, State: line, tagline"; the grid areas lay it out the way it reads on screen.
   return (
-    <Link href={`/admin/hq/${e.role}`} className={e.role === "assistant" ? "hq-room hq-room-chief" : "hq-room"} data-state={e.state}>
+    <Link href={`/admin/hq/${e.role}`} className="hq-room" data-state={e.state}>
       <div className={e.role === "assistant" ? "hq-stage hq-stage-chief" : "hq-stage"}>
         <EmployeeRoomArt role={e.role} state={e.state} />
       </div>
@@ -67,14 +81,21 @@ function EmployeeRoom({ e }: { e: EmployeeCard }) {
   );
 }
 
-/** The whole building: roof and sign, the founder's corner office on top, seven employee rooms and the lounge. Server-rendered, no client JS. */
+/**
+ * The whole building: crest, the penthouse (the Founder Office with the business card), then the floors. Rooms are laid in one
+ * DOM order; the grid groups them two to a floor on a phone and three to a floor on a wide screen (floor labels switch with it).
+ * Server-rendered, no client JS.
+ */
 export function OfficeScene({ snapshot }: { snapshot: OfficeSnapshot }) {
   const n = snapshot.founder.pendingApprovals;
+  const e = Object.fromEntries(snapshot.employees.map((x) => [x.role, x])) as Record<string, EmployeeCard | undefined>;
+  const room = (role: string) => (e[role] ? <EmployeeRoom e={e[role]!} /> : null);
   return (
-    <div className="hq-building">
+    <div className="hq-tower">
       <SceneDefs />
-      <Roof />
+      <Crest />
       <div className="hq-floors">
+        <Slab>Penthouse</Slab>
         <Link href="/admin/work" className="hq-room hq-room-founder" data-state={n > 0 ? "needs_you" : "sleeping"}>
           <div className="hq-stage hq-stage-wide">
             <FounderRoomArt pending={n} />
@@ -84,12 +105,23 @@ export function OfficeScene({ snapshot }: { snapshot: OfficeSnapshot }) {
               <p className="hq-plate-title">Founder Office</p>
               <p className="hq-plate-tag">{n > 0 ? `${n} ${n === 1 ? "thing needs" : "things need"} your yes` : "Nothing waiting for you"}</p>
             </div>
-            <span className="hq-brass">{DOOR_PLATE}</span>
           </div>
+          <BusinessCard />
         </Link>
-        {snapshot.employees.map((e) => (
-          <EmployeeRoom key={e.role} e={e} />
-        ))}
+        <Slab only="p">Floor 4</Slab>
+        {room("assistant")}
+        <Slab only="d">Floor 2</Slab>
+        {room("developer")}
+        <Slab only="p">Floor 3</Slab>
+        {room("designer")}
+        {room("researcher")}
+        <Slab only="p">Floor 2</Slab>
+        <Slab only="d">Floor 1</Slab>
+        {room("marketing")}
+        {room("qa")}
+        <Slab only="p">Ground</Slab>
+        {room("support")}
+        <Slab only="d">Lobby</Slab>
         <div className="hq-room hq-room-lounge" data-state="lounge">
           <div className="hq-stage">
             <LoungeArt />

@@ -14,7 +14,9 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
   const sp = await searchParams;
   return (
     <div className="hq flex flex-col gap-5">
-      <OfficeSection view={sp.view === "workspace" ? "workspace" : "office"} />
+      <OfficeSection view={sp.view === "workspace" ? "workspace" : "office"}>
+        {/* Under the Chief of Staff's brief: the "Since you last looked" card goes here (claude/hq-cards). */}
+      </OfficeSection>
       <AppToday />
     </div>
   );
