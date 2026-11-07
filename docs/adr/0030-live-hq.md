@@ -106,7 +106,9 @@ The owner: "I still don't think HQ is running well … I see myself ending up in
 **Why.** The Claude app shows every chat's own record: whether it's working and on what, what it last finished, and what it needs from you. HQ couldn't see it. Live hooks only run in chats with just the LifeFlow repo, in the LifeFlow environment. The chats the owner actually uses (LF Main on the Default environment, LF V3, Marketing and the planning chat, all with two repositories) can't run them. The COO's 2-hourly relay covered only chats mapped to a department.
 
 **Decision: an hourly sync of Claude's own chat list.**
-- **The scheduled task:** "HQ sync", hourly from 7:43 AM to 11:43 PM Pacific, a fresh session in the LifeFlow environment with no repository.
+- **The "HQ sync" chat:** `session_01Mhcz6C2smYHWY1gvs4Jt75`, in the LifeFlow environment, with no repository, on Sonnet.
+  - A scheduled task, "HQ sync (hourly)" (`trig_01WeCohXn3w1a3yamNv8hNEx`), wakes it every hour from 7:43 AM to 11:43 PM Pacific.
+  - It has to be a standing chat: a fresh session started by a scheduled task doesn't get the tool that lists chats. The first try refused rather than post an empty list.
   - It calls `list_sessions` (the owner's chats, newest 50) and posts one `{type:"sessions", sessions:[…]}` report.
   - Each chat carries: id, title, status bucket, archived, `task_summary` (what it's doing), `recent_action` (what it last finished), `needs_action` (what it needs from the owner) and `updated_at`.
   - It posts with `curl` through the proxy that adds the HQ key, so it needs no repository.
