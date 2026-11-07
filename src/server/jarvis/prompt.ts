@@ -4,14 +4,14 @@ import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from 
 import { COACH_MODE } from "@/lib/integrity";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-11-06.2";
+export const PROMPT_VERSION = "2026-11-07.1";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
   finances: "Money: prioritize money questions; start with money_overview and budget_check",
   wealth: "Investments: investments, net worth and retirement accounts",
   school: "School: courses, assignments and exams; use import_assignments to save anything academic",
-  work: "Work: jobs, shifts, hours and estimated earnings",
+  work: "Work: jobs, shifts, paid hours and paychecks",
   calendar: "Calendar: schedule, events and free time",
   tasks: "To-dos: tasks, priorities and due dates",
   notes: "Notes & Projects: knowledge and turning ideas into plans",
@@ -57,6 +57,7 @@ const INSTRUCTIONS = `You are the user's personal assistant inside LifeFlow, the
 - Actions marked awaiting_user_confirmation are NOT done. Tell the user to press Confirm.
 - Ask a brief clarifying question when a required detail is truly ambiguous (e.g. which course, an unreadable date). Otherwise act.
 - Before scheduling, check get_agenda / find_free_time and do not double-book existing commitments. Mention conflicts.
+- Work hours: quote paid hours straight from the tools (unpaid breaks are already out); never add up shift times yourself. If the user says lunch is unpaid, save it as the job's break rule with update_job (by shift length) and report the paid hours it returns. Never estimate or calculate pay from hours or a rate: hourly pay is only what a paycheck or deposit shows. Use plain words, never internal thresholds or flag names.
 - Look across modules when it helps (e.g. food spending vs. busy work weeks; study plans around shifts and exams), and say which records you used.
 
 # The web

@@ -9,7 +9,7 @@ import { Card, CardHeader, EmptyState, Money, PageHeader, Stat } from "@/compone
 import { addDaysStr, currentInstant, formatDateStr, isValidDateStr, monthEnd, monthStart, todayIn, weekStart } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
-import { estimateEarnings, listEmployers, listPaychecks, listShifts, ratesOf, shiftPaidMinutes } from "@/server/services/work";
+import { estimateEarnings, listEmployers, listPaychecks, listShifts, ratesOf, regularHoursOf, shiftPaidMinutes } from "@/server/services/work";
 import { JobHoursForm, ShiftDialog, WorkHoursField } from "./forms";
 import { ShiftList } from "./shift-list";
 import { addPaycheckAction, createEmployerAction, createShiftAction, setJobHoursAction } from "./actions";
@@ -41,9 +41,8 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
           tz,
         ),
       )
-      .reduce((a, b) => ({ hours: a.hours + b.paidHours, cents: a.cents + (b.estimatedGrossCents ?? 0), shifts: a.shifts + b.shiftCount }), {
+      .reduce((a, b) => ({ hours: a.hours + b.paidHours, shifts: a.shifts + b.shiftCount }), {
         hours: 0,
-        cents: 0,
         shifts: 0,
       });
   const week = est(d.shifts);
@@ -54,7 +53,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
     <>
       <PageHeader
         title="Work"
-        description="Your shifts, hours and pay."
+        description="Your shifts and paid hours."
         actions={
           d.employers.length > 0 ? (
             <>
@@ -77,11 +76,9 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
         </Card>
       ) : (
         <>
-          <Card className="mb-5 grid grid-cols-2 gap-5 p-5 md:grid-cols-4">
-            <Stat label="Hours this week" value={week.hours.toFixed(1)} sub={`${week.shifts} shift${week.shifts === 1 ? "" : "s"}`} />
-            <Stat label="Est. gross this week" value={<Money cents={week.cents} />} sub="Before taxes" />
-            <Stat label="Hours this month" value={month.hours.toFixed(1)} />
-            <Stat label="Est. gross this month" value={<Money cents={month.cents} />} sub="Estimate, not actual pay" />
+          <Card className="mb-5 grid grid-cols-2 gap-5 p-5">
+            <Stat label="Paid hours this week" value={week.hours.toFixed(1)} sub={`${week.shifts} shift${week.shifts === 1 ? "" : "s"}, unpaid breaks out`} />
+            <Stat label="Paid hours this month" value={month.hours.toFixed(1)} />
           </Card>
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.6fr_1fr]">
             <Card>
@@ -154,9 +151,10 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
                       </span>
                       <details className="w-full">
                         <summary className="flex min-h-11 cursor-pointer items-center text-xs text-text-2">
-                          {e.schedule ? `Regular hours: ${scheduleLabel(e.schedule)}` : "Shifts change week to week"} · Edit hours
+                          {regularHoursOf(e.schedule) ? `Regular hours: ${scheduleLabel(regularHoursOf(e.schedule)!)}` : "Shifts change week to week"} · Edit
+                          hours
                         </summary>
-                        <JobHoursForm action={setJobHoursAction} employerId={e.id} initial={e.schedule} />
+                        <JobHoursForm action={setJobHoursAction} employerId={e.id} initial={regularHoursOf(e.schedule)} />
                       </details>
                     </li>
                   ))}

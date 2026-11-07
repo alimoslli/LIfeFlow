@@ -4,7 +4,7 @@ import { getProject, updateProject } from "../../services/notes";
 import { createHabit, checkHabit, deleteHabit, listHabits, updateHabit } from "../../services/habits";
 import { getCourse, updateCourse } from "../../services/school";
 import { moveToTrash } from "../../services/trash";
-import { archiveEmployer, listEmployers, updateEmployer } from "../../services/work";
+import { archiveEmployer, listEmployers, setBreakRules, updateEmployer } from "../../services/work";
 import { dateArg, defineTool, idArg, moneyArg, toCents, toDollars } from "../tool";
 
 /** Edit and remove the things other tools create: courses, projects, jobs, habits. */
@@ -77,25 +77,37 @@ export const manageTools = [
   }),
   defineTool({
     name: "update_job",
-    description: "Change a job's name, position or hourly rate. Only pass fields that change.",
+    description:
+      "Change a job's name, position or hourly rate, or its unpaid-break rule. breakRules is by shift length, e.g. [{minShiftMinutes:360,unpaidMinutes:30},{minShiftMinutes:540,unpaidMinutes:60}] means shifts of 6h or more lose 30 min and shifts of 9h or more lose 60 min; the largest match wins; [] clears it. Saving a rule also gives the job's upcoming shifts that have no break the right one. Returns the real paid hours of the upcoming shifts: quote those. Only pass fields that change.",
     schema: z.object({
       id: idArg("Job"),
       name: z.string().min(1).max(200).optional(),
       position: z.string().max(120).optional(),
       hourlyRate: moneyArg("Hourly rate").optional(),
       overtimeAfterHours: z.number().min(0).max(168).optional(),
+      breakRules: z
+        .array(z.object({ minShiftMinutes: z.number().int().min(1).max(1440), unpaidMinutes: z.number().int().min(0).max(240) }))
+        .max(6)
+        .optional(),
     }),
     mutates: true,
-    async execute({ id, hourlyRate, overtimeAfterHours, ...patch }, ctx) {
-      const e = await ctx.run((s) =>
-        updateEmployer(s, id, {
+    async execute({ id, hourlyRate, overtimeAfterHours, breakRules, ...patch }, ctx) {
+      const r = await ctx.run(async (s) => {
+        const fields = {
           ...patch,
           ...(hourlyRate !== undefined && { hourlyRateCents: toCents(hourlyRate) }),
           ...(overtimeAfterHours !== undefined && { overtimeThresholdHours: overtimeAfterHours }),
-        }),
-      );
+        };
+        if (!Object.keys(fields).length && breakRules === undefined) throw new ServiceError("Say what to change on the job.");
+        const breaks = breakRules !== undefined ? await setBreakRules(s, id, breakRules) : null;
+        const e = Object.keys(fields).length ? await updateEmployer(s, id, fields) : (await listEmployers(s)).find((x) => x.id === id);
+        if (!e) throw new ServiceError("No such job. Use list_jobs.");
+        return { e, breaks };
+      });
+      const e = r.e;
       return {
         updated: { id: e.id, name: e.name, position: e.position, hourlyRate: e.hourlyRateCents == null ? null : toDollars(e.hourlyRateCents) },
+        ...(r.breaks && { unpaidBreakRule: r.breaks }),
         viewAt: "/work",
       };
     },
