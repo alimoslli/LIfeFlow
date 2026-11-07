@@ -44,6 +44,7 @@ export default async function EmployeePage({
           <StateChip state={c.state} />
         </div>
         <p className="text-sm text-text-2">{c.line}</p>
+        {c.note && <p className="text-sm font-medium text-brass-ink">{c.note}</p>}
         <p className="text-xs text-muted">As of {c.asOf ? fmt(c.asOf, tz) : "never: nothing recorded yet"}</p>
       </header>
       <Notice done={sp.done} error={sp.error} />
@@ -58,7 +59,7 @@ export default async function EmployeePage({
 
       {!employee(role).ownChat ? (
         <Section title="Chat">
-          <p className="text-sm text-text-2">Works inside the Chief of Staff&apos;s rounds. It has no chat of its own.</p>
+          <p className="text-sm text-text-2">Works inside the COO&apos;s rounds. It has no chat of its own.</p>
         </Section>
       ) : (
         <Section title={d.chats.length > 1 ? "Chats" : "Chat"} sub="HQ links to the real chat. It can't read or drive it.">

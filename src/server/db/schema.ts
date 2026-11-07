@@ -1597,7 +1597,7 @@ export const pendingActions = pgTable(
 // requireAdmin() (pages and actions) or an HQ key (the /api/hq routes). Never put app users' content here.
 
 /** The five HQ employees. The founder is the owner, not a row. */
-/** The six departments plus the Chief of Staff ("assistant", the head manager the CEO talks to; company.md). */
+/** The six departments plus the COO ("assistant", the head manager the CEO talks to; company.md). */
 export const HQ_ROLES = ["developer", "designer", "researcher", "marketing", "qa", "support", "assistant"] as const;
 export type HqRole = (typeof HQ_ROLES)[number];
 export type HqLink = { label: string; url: string };
@@ -1628,10 +1628,18 @@ export const hqMissions = pgTable(
     doneAt: tstz("done_at"),
     /** When the owner opened it after it was done (the "Done" sparkle stops then). */
     seenAt: tstz("seen_at"),
+    /** The first prompt for its own Claude Code chat. Set = a task file on the CEO's desk (ADR 0029). Plain text, max 1,500. */
+    deskPrompt: text("desk_prompt"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index("hq_missions_role_status_idx").on(t.role, t.status), index("hq_missions_updated_idx").on(t.updatedAt)],
+  (t) => [
+    index("hq_missions_role_status_idx").on(t.role, t.status),
+    index("hq_missions_updated_idx").on(t.updatedAt),
+    index("hq_missions_desk_idx")
+      .on(t.createdAt)
+      .where(sql`desk_prompt is not null`),
+  ],
 );
 
 /** The owner's approval inbox. A decision is only recorded here; HQ never carries it out. */
@@ -1823,8 +1831,10 @@ export const hqSettings = pgTable("hq_settings", {
   rounds: jsonb("rounds").$type<HqRoundSwitches>().notNull().default({ night: true, research: true, marketing: true }),
   /** Higgsfield credits the marketing round may spend in a week without asking. 0 = always ask. */
   creditBudget: integer("credit_budget").notNull().default(0),
-  /** What the Chief of Staff may decide on its own (docs/hq/company.md, decision rights). Owner switched all three on. */
+  /** What the COO may decide on its own (docs/hq/company.md, decision rights). Owner switched all three on. */
   delegations: jsonb("delegations").$type<HqDelegations>().notNull().default({ fixOrder: true, researchTopics: true, postingTimes: true }),
+  /** When the owner said goodnight (ADR 0029): the office dims until 5 AM in their time zone. It starts nothing. */
+  goodnightAt: tstz("goodnight_at"),
   updatedByEmail: text("updated_by_email"),
   updatedAt: updatedAt(),
 });
@@ -1832,7 +1842,7 @@ export const hqSettings = pgTable("hq_settings", {
 /** Level 1 decision rights. Never-delegated items (deploys, features, design, money, publishing, messages…) aren't switches. */
 export type HqDelegations = { fixOrder: boolean; researchTopics: boolean; postingTimes: boolean };
 
-/** The Chief of Staff's brief to the CEO after each round (company.md, "The brief"). Plain text, newest shown on the Office. */
+/** The COO's brief to the CEO after each round (company.md, "The brief"). Plain text, newest shown on the Office. */
 export const hqBriefs = pgTable(
   "hq_briefs",
   {

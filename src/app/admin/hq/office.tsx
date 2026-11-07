@@ -10,6 +10,8 @@ import { employee } from "@/server/hq/team";
 import { getSessionUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { officeSnapshot } from "@/server/services/hq";
+import { deskView } from "@/server/services/hq-desk";
+import { EMPLOYEES } from "@/server/hq/team";
 import { getControls } from "@/server/services/hq-marketing";
 import { safe } from "@/server/services/admin";
 import { cn } from "@/lib/utils";
@@ -20,6 +22,7 @@ import { Tile } from "../ui";
 export async function OfficeSection({ view, children }: { view: "office" | "workspace"; children?: ReactNode }) {
   const r = await safe("hq-office", () => officeSnapshot(getDb()));
   const controls = await safe("hq-controls", () => getControls(getDb()));
+  const deskR = await safe("hq-desk", () => deskView(getDb()));
   const user = await getSessionUser();
   const tz = await adminTz();
 
@@ -37,6 +40,22 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
   const n = s.founder.pendingApprovals;
   const weekday = new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: tz }).format(s.now);
   const dayPart = `${weekday} ${greeting(s.now, tz).replace("Good ", "")}`;
+  const roleTitle = (r: string) => EMPLOYEES.find((x) => x.role === r)?.title ?? r;
+  const desk = {
+    files: deskR.ok
+      ? deskR.data.files.map((f) => ({
+          id: f.mission.id,
+          title: f.mission.title,
+          who: roleTitle(f.mission.role),
+          status: f.status,
+          kind: f.link.kind,
+          href: f.link.href,
+          prompt: f.link.prompt,
+        }))
+      : [],
+    roles: EMPLOYEES.map((x) => ({ role: x.role, title: x.title })),
+    night: { on: deskR.ok && deskR.data.night.on, endsAt: deskR.ok ? deskR.data.night.endsAt : null },
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -95,7 +114,7 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
       <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_21rem] 2xl:items-start">
         <div className="min-w-0 2xl:order-1">
           {view === "office" ? (
-            <OfficeScene snapshot={s} />
+            <OfficeScene snapshot={s} desk={desk} />
           ) : (
             <div className="flex flex-col gap-3">
               {s.employees.map((e) => (
@@ -105,6 +124,7 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
                     <StateChip state={e.state} />
                   </div>
                   <p className="mt-1 text-sm text-text-2">{e.line}</p>
+                  {e.note && <p className="mt-1 text-sm font-medium text-brass-ink">{e.note}</p>}
                   {e.currentMission && (
                     <p className="mt-1 text-xs text-muted">
                       Current mission:{" "}
@@ -125,9 +145,7 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
                         <span className="sr-only">for {e.title} (opens in a new tab)</span>
                       </a>
                     ) : (
-                      <span className="text-sm text-muted">
-                        {employee(e.role).ownChat ? "No chat connected yet" : "Works inside the Chief of Staff's rounds"}
-                      </span>
+                      <span className="text-sm text-muted">{employee(e.role).ownChat ? "No chat connected yet" : "Works in the COO's rounds"}</span>
                     )}
                     <Link href={`/admin/hq/${e.role}`} className="inline-flex min-h-11 items-center text-sm text-text-2 underline underline-offset-2">
                       {e.title} workspace
@@ -160,7 +178,7 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
               <Empty>Nothing waiting for you.</Empty>
             )}
           </Section>
-          <Section title="Decided for you" sub="Small calls your Chief of Staff made, within what you allowed.">
+          <Section title="Decided for you" sub="Small calls your COO made, within what you allowed.">
             <ActivityList items={s.decisions} empty="Nothing decided for you yet." />
           </Section>
           <Section title="Recent activity">

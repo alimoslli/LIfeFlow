@@ -207,7 +207,7 @@ Every status line says "as of [time]". HQ never invents activity.
   - each room has a name plate and a status chip.
 
 What changes, so it stays true to the brief and the plan:
-- **Five rooms, not six:** Developer, Designer / V3, Researcher, Marketing and HQ Assistant (the concept's "Chief of Staff"). Community and Business Ops are tools of Marketing, not separate people (brief section 2).
+- **Five rooms, not six:** Developer, Designer / V3, Researcher, Marketing and HQ Assistant (the concept's "COO"). Community and Business Ops are tools of Marketing, not separate people (brief section 2).
 - **Only real data.**
   - The concept's numbers, the "Simulated usage" label, the tasks on the screens and the comments and DMs replied to are examples only.
   - HQ shows real records or a plain empty line.

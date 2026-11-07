@@ -60,6 +60,9 @@ export const optText = (max: number) =>
     .pipe(z.string().max(max, `is too long (max ${max})`).nullable())
     .nullish();
 export const url = z.string().refine(isSafeLinkUrl, "must be an https:// link or a path like /admin/work");
+/** A desk task's first prompt (ADR 0029): plain text that goes into a Claude Code link, so it stays short. */
+export const DESK_PROMPT_MAX = 1500;
+export const deskPromptField = optText(DESK_PROMPT_MAX);
 export const linkSchema = z.object({ label: line(1, 60), url });
 export const linksSchema = z.array(linkSchema).max(10, "has too many links (max 10)");
 export const dueOn = z

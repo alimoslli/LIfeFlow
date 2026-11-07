@@ -278,7 +278,7 @@ export function ProgressCard({ thread, tz }: { thread: DecisionThread; tz: strin
   const live = lc.stage === "live";
   const links = lc.mission?.links ?? [];
   const note = lc.stopped
-    ? `Stopped: ${lc.stopped}. Your Chief of Staff will start new work for it.`
+    ? `Stopped: ${lc.stopped}. Your COO will start new work for it.`
     : lc.mission?.status === "blocked"
       ? `Stuck: ${lc.mission.blockedReason ?? "waiting on something"}`
       : live
@@ -289,7 +289,7 @@ export function ProgressCard({ thread, tz }: { thread: DecisionThread; tz: strin
             ? "Being built on its own branch. You get pictures to okay before it goes live."
             : lc.mission
               ? "Approved. Work hasn't started yet."
-              : "Approved. Your Chief of Staff will start the work at the next round.";
+              : "Approved. Your COO will start the work at the next round.";
   return (
     <article id={a.id} aria-labelledby={`t-${a.id}`} className="scroll-mt-24 rounded-3xl bg-surface p-4 shadow-soft target:ring-2 target:ring-accent sm:p-5">
       <Header
@@ -347,14 +347,14 @@ export function RevisingCard({ thread, tz }: { thread: DecisionThread; tz: strin
   );
 }
 
-/** An old request with no decision card: no buttons, not counted. Your Chief of Staff rewrites it in the new format. */
+/** An old request with no decision card: no buttons, not counted. Your COO rewrites it in the new format. */
 export function RewritingLine({ a, tz }: { a: Approval; tz: string }) {
   return (
     <li id={a.id} className="flex items-center gap-3 py-3">
       <Portrait role={a.role} size={36} />
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium break-words text-text">{a.title}</span>
-        <span className="block text-xs text-muted">Being rewritten by your Chief of Staff · asked {dayOnly(a.createdAt, tz)}</span>
+        <span className="block text-xs text-muted">Being rewritten by your COO · asked {dayOnly(a.createdAt, tz)}</span>
       </span>
     </li>
   );

@@ -1,5 +1,5 @@
 import type { HqContentKind, HqContentStatus, HqNetwork } from "@/server/db/schema";
-import type { EmployeeState } from "@/server/hq/state";
+import type { ChipState } from "@/server/hq/state";
 
 export const NETWORK_LABEL: Record<HqNetwork, string> = {
   instagram: "Instagram",
@@ -22,7 +22,7 @@ export const CONTENT_STATUS_LABEL: Record<HqContentStatus, string> = {
 };
 
 /** The chip colours reuse the office chip states. */
-export const CONTENT_STATUS_CHIP: Record<HqContentStatus, EmployeeState> = {
+export const CONTENT_STATUS_CHIP: Record<HqContentStatus, ChipState> = {
   idea: "offline",
   draft: "offline",
   waiting: "needs_you",

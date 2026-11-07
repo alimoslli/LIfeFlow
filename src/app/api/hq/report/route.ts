@@ -85,7 +85,7 @@ export async function POST(req: Request) {
             const a = await reviseApproval(db, actor, revise, rest as never);
             return NextResponse.json({ ok: true, id: a.id, threadId: a.threadId, version: a.version });
           }
-          // After a yes: the Chief of Staff links the mission that builds it (`link`: the approval id).
+          // After a yes: the COO links the mission that builds it (`link`: the approval id).
           if (typeof link === "string" && link) {
             const a = await linkApprovalMission(db, actor, link, String(rest.missionId ?? ""));
             return NextResponse.json({ ok: true, id: a.id });

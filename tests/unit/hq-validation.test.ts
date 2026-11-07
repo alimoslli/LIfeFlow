@@ -53,9 +53,9 @@ describe("session ids", () => {
 });
 
 describe("header counts line", () => {
-  it("keeps the order working, done, waiting, blocked, asleep, offline and hides zeros", async () => {
+  it("keeps the order working, done, asleep, offline and hides zeros", async () => {
     const { countsLine } = await import("@/components/hq/labels");
-    expect(countsLine({ working: 1, done: 1, waiting: 0, asleep: 1, blocked: 1, offline: 1 })).toBe("1 working · 1 done · 1 blocked · 1 asleep · 1 offline");
-    expect(countsLine({ working: 0, done: 0, waiting: 0, asleep: 0, blocked: 0, offline: 0 })).toBe("");
+    expect(countsLine({ working: 1, done: 0, asleep: 5, offline: 1 })).toBe("1 working · 5 asleep · 1 offline");
+    expect(countsLine({ working: 0, done: 0, asleep: 0, offline: 0 })).toBe("");
   });
 });

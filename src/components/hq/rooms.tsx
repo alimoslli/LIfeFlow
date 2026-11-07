@@ -229,19 +229,6 @@ function Props({ role, working, off }: { role: HqRole; working: boolean; off: bo
 /* ---- Overlays ---------------------------------------------------------------------------------------------------- */
 
 function Overlay({ state, x, y }: { state: EmployeeState; x: number; y: number }) {
-  if (state === "needs_you")
-    return (
-      <g transform={`translate(${x} ${y})`}>
-        <g className="hq-bounce">
-          <rect x="-13" y="-15" width="26" height="26" rx="10" fill={v("paper")} stroke={v("accent")} strokeWidth="2" />
-          <path d="M-4 9l4 6 4-6z" fill={v("paper")} stroke={v("accent")} strokeWidth="2" strokeLinejoin="round" />
-          <rect x="-6" y="7" width="12" height="4" fill={v("paper")} />
-          <text x="0" y="5" textAnchor="middle" fontSize="18" fontWeight="800" fill={v("accent")} fontFamily="system-ui,sans-serif">
-            !
-          </text>
-        </g>
-      </g>
-    );
   if (state === "done")
     return (
       <g transform={`translate(${x} ${y})`}>
@@ -253,14 +240,6 @@ function Overlay({ state, x, y }: { state: EmployeeState; x: number; y: number }
         <g className="hq-sparkle hq-sparkle-2" fill="#ffd978">
           <path d="M-18-12l1.6 3.4 3.4 1.6-3.4 1.6-1.6 3.4-1.6-3.4-3.4-1.6 3.4-1.6z" />
         </g>
-      </g>
-    );
-  if (state === "blocked")
-    return (
-      <g transform={`translate(${x} ${y})`}>
-        <path d="M0-15L15 11H-15Z" fill="#f0b23c" stroke="#9a5806" strokeWidth="2" strokeLinejoin="round" />
-        <path d="M0-6v9" stroke="#5a3303" strokeWidth="2.6" strokeLinecap="round" />
-        <circle cx="0" cy="7" r="1.6" fill="#5a3303" />
       </g>
     );
   return null;
@@ -336,7 +315,7 @@ export function EmployeeRoomArt({ role, state }: { role: HqRole; state: Employee
 
 const DEPT_DOTS = ["#4d9a6a", "#e5b23f", "#e08a5b", "#6f9bd1", "#b78ac2", "#e0546f"] as const;
 
-/** The Chief of Staff's wide room: a team board with six department dots, a tablet, the desk facing the room. 480 x 200. */
+/** The COO's wide room: a team board with six department dots, a tablet, the desk facing the room. 480 x 200. */
 export function ChiefRoomArt({ state }: { state: EmployeeState }) {
   const off = state === "offline";
   const sleeping = state === "sleeping";
@@ -354,7 +333,7 @@ export function ChiefRoomArt({ state }: { state: EmployeeState }) {
         {[0, 1, 2].map((i) => (
           <path key={i} d={`M168 ${36 + i * 8}h18`} stroke={v("wood")} strokeWidth="2" strokeLinecap="round" />
         ))}
-        {/* team board: the Chief of Staff in the middle, six department dots */}
+        {/* team board: the COO in the middle, six department dots */}
         <rect x="236" y="14" width="150" height="56" rx="4" fill={v("wood-d")} />
         <rect x="240" y="18" width="142" height="48" rx="2" fill={v("paper")} />
         <circle cx="311" cy="28" r="7" fill={v("blazer")} />
@@ -410,8 +389,8 @@ export function ChiefRoomArt({ state }: { state: EmployeeState }) {
 }
 
 /** The founder's corner office. 480 x 190. */
-export function FounderRoomArt({ pending }: { pending: number }) {
-  const cards = Math.min(pending, 5);
+export function FounderRoomArt({ files }: { files: number }) {
+  const pile = Math.min(files, 6);
   return (
     <svg viewBox="0 0 480 190" role="presentation" aria-hidden="true" focusable="false" className="hq-art hq-art-wide" preserveAspectRatio="xMidYMax meet">
       <Shell w={480} h={190} floorY={140}>
@@ -434,7 +413,8 @@ export function FounderRoomArt({ pending }: { pending: number }) {
       <rect x="258" y="62" width="60" height="84" rx="15" fill={v("leather-l")} />
       <path d="M272 70v66M288 68v70M304 70v66" stroke={v("leather")} strokeWidth="1.4" opacity=".6" />
       <SeatedBody who="founder" x={288} y={92} />
-      <Desk x={184} w={210} y={138} />
+      {/* a long executive desk: the task files sit on its left end, clear of the business card */}
+      <Desk x={150} w={244} y={138} />
       <Hands x={288} y={136} />
       {/* a gold watch on the left wrist */}
       <g transform="translate(266 131) rotate(-35)">
@@ -443,27 +423,34 @@ export function FounderRoomArt({ pending }: { pending: number }) {
         <circle r="1.8" fill="#16202c" />
         <path d="M0-1.2V0l.8.6" stroke="#e2c06a" strokeWidth=".45" strokeLinecap="round" fill="none" />
       </g>
-      <use href="#hq-lamp" transform="translate(206 138)" />
-      <use href="#hq-mug" transform="translate(238 138)" />
-      {/* a phone lying on the desk (no laptop in front, so the outfit shows) */}
-      <rect x="316" y="133.5" width="18" height="4.5" rx="1.4" fill={v("laptop")} />
-      <rect x="318" y="134.4" width="14" height="1.6" rx=".8" fill={v("accent")} opacity=".7" />
-      <use href="#hq-plant" transform="translate(168 188) scale(1.3)" />
+      {/* the lamp and mug sit on the right, under the business card; the left of the desk is for the task files */}
+      <use href="#hq-lamp" transform="translate(372 138)" />
+      <use href="#hq-mug" transform="translate(346 138)" />
+      {/* the MacBook, closed flat in front of the CEO (it opens when a task file is picked; the outfit still shows) */}
+      <rect x="262" y="133" width="54" height="5" rx="1.6" fill="#cfd3d8" />
+      <rect x="262" y="133" width="54" height="1.4" rx=".7" fill="#eef0f2" />
+      <circle cx="289" cy="135.6" r="1.3" fill="#9aa1a9" />
+      <use href="#hq-plant" transform="translate(118 188) scale(1.2)" />
       <use href="#hq-plant" transform="translate(402 188) scale(1.1)" />
       <Glow x={226} y={104} r={80} />
-      {/* approvals waiting: a small stack of cards, only when there are some */}
-      {cards > 0 && (
+      {/* the task files on the desk: a pile of folders, only when there are some (the desk button sits on top of it) */}
+      {pile > 0 && (
         <g>
-          {Array.from({ length: cards }, (_, i) => (
-            <g key={i}>
-              <rect x={346 + (i % 2)} y={134 - i * 4.5} width="34" height="6" rx="1.5" fill={v("paper")} stroke={v("wood")} strokeWidth=".8" />
-              <rect x={349 + (i % 2)} y={135.5 - i * 4.5} width="14" height="1.6" rx=".8" fill={v("accent")} />
+          {Array.from({ length: pile }, (_, i) => (
+            <g key={i} transform={`translate(${158 + (i % 2) * 2} ${131 - i * 5}) rotate(${i % 2 ? 2 : -2})`}>
+              <path
+                d="M0 1.5h9l2-2h9v1.5h18a2 2 0 0 1 2 2v3a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1z"
+                fill={i % 3 === 2 ? "#d9b262" : "#e8c77a"}
+                stroke="#a37e33"
+                strokeWidth=".8"
+              />
+              <path d="M4 4.2h14" stroke="#fff6dc" strokeWidth="1" strokeLinecap="round" opacity=".7" />
             </g>
           ))}
-          <g transform={`translate(380 ${130 - cards * 4.5})`}>
+          <g transform={`translate(154 ${122 - pile * 5})`}>
             <circle r="9" fill={v("accent")} />
-            <text x="0" y="3.8" textAnchor="middle" fontSize={pending > 9 ? 9 : 11} fontWeight="800" fill={v("accent-text")} fontFamily="system-ui,sans-serif">
-              {pending > 99 ? "99+" : pending}
+            <text x="0" y="3.8" textAnchor="middle" fontSize={files > 9 ? 9 : 11} fontWeight="800" fill={v("accent-text")} fontFamily="system-ui,sans-serif">
+              {files > 99 ? "99+" : files}
             </text>
           </g>
         </g>

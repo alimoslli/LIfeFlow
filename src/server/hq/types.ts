@@ -32,6 +32,8 @@ export type Mission = {
   startedAt: Date | null;
   doneAt: Date | null;
   seenAt: Date | null;
+  /** The first prompt for its own chat: set = a task file on the CEO's desk (ADR 0029). */
+  deskPrompt: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -55,7 +57,7 @@ export type Approval = {
   version: number;
   changedSinceNote: string | null;
   supersededAt: Date | null;
-  /** The mission that builds an approved ask (set when the Chief of Staff links it). */
+  /** The mission that builds an approved ask (set when the COO links it). */
   buildMissionId: string | null;
 };
 
@@ -145,8 +147,10 @@ export type EmployeeCard = {
   title: string;
   tagline: string;
   state: EmployeeState;
-  /** One plain line: the reason for the state (blocked reason, current mission, "Resting"). */
+  /** One plain line: what they're doing, or when they next wake ("Wakes Sun 3:07 AM, night round"). */
   line: string;
+  /** What waits on the owner, as a note on the door ("1 thing for your yes · Waiting: Higgsfield credits"), or null. */
+  note: string | null;
   /** When the data behind the state was last updated (latest check-in or mission change), for "as of". */
   asOf: Date | null;
   pendingApprovals: number;
@@ -158,7 +162,7 @@ export type OfficeSnapshot = {
   now: Date;
   employees: EmployeeCard[];
   founder: { pendingApprovals: number };
-  counts: { working: number; done: number; waiting: number; asleep: number; blocked: number; offline: number };
+  counts: { working: number; done: number; asleep: number; offline: number };
   /** Pending approvals, oldest first (max 20). */
   approvals: Approval[];
   /** Newest first (max 12). */
@@ -167,9 +171,9 @@ export type OfficeSnapshot = {
   weekMissions: Mission[];
   doneThisWeek: number;
   budget: Budget;
-  /** The Chief of Staff's latest brief, or null before the first one. */
+  /** The COO's latest brief, or null before the first one. */
   brief: Brief | null;
-  /** The Chief of Staff's delegated decisions (activity kind "decision"), newest first (max 5). */
+  /** The COO's delegated decisions (activity kind "decision"), newest first (max 5). */
   decisions: Activity[];
 };
 
@@ -183,7 +187,7 @@ export type EmployeeDetail = {
   approvals: Approval[]; // pending for this role
   decided: Approval[]; // decided, newest first, max 10
   activity: Activity[]; // newest first, max 20
-  /** Only for the Chief of Staff: its briefs, newest first (max 10). */
+  /** Only for the COO: its briefs, newest first (max 10). */
   briefs?: Brief[];
 };
 
@@ -258,7 +262,7 @@ export type HqControls = {
   updatedByEmail: string | null;
 };
 
-/** The Chief of Staff's latest brief to the CEO. */
+/** The COO's latest brief to the CEO. */
 export type Brief = { id: string; body: string; needsYou: number; sessionId: string | null; createdAt: Date };
 
 /** An app error group as the admin page shows it: already scrubbed of personal details (services/error-reports.ts). */

@@ -142,7 +142,7 @@ describe("content lifecycle", () => {
     const d = await createContent(db(), agent, { kind: "post", title: "No time given", ask: true, request: await reqCard(), scheduledFor: planned });
     await decideApproval(db(), admin, d.approvalId!, "approved");
     expect(await updateContent(db(), agent, d.id, { status: "scheduled", externalId: "mc_2" })).toMatchObject({ status: "scheduled" });
-    // Switched back on, the Chief of Staff may pick the time.
+    // Switched back on, the COO may pick the time.
     await saveControls(db(), admin, { delegations: { postingTimes: true } });
     const e = await createContent(db(), agent, { kind: "post", title: "Picked time", ask: true, request: await reqCard(), scheduledFor: planned });
     await decideApproval(db(), admin, e.approvalId!, "approved");

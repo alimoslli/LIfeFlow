@@ -74,7 +74,7 @@ export function WaitingCard({ content: c, approval, tz }: { content: ContentItem
           </Link>
         </div>
       ) : approval ? (
-        <p className="mt-3 text-sm text-muted">Being rewritten by your Chief of Staff. You&apos;ll get the full request with a picture to answer.</p>
+        <p className="mt-3 text-sm text-muted">Being rewritten by your COO. You&apos;ll get the full request with a picture to answer.</p>
       ) : (
         <p className="mt-3 text-sm text-muted">Nothing to answer on this one yet.</p>
       )}
@@ -264,7 +264,7 @@ const NEVER_DECIDED = [
   "Security changes",
 ];
 
-/** "What your Chief of Staff can decide": three switches, then the fixed list it never decides without the owner. */
+/** "What your COO can decide": three switches, then the fixed list it never decides without the owner. */
 export function DelegationsForm({ c }: { c: HqControls }) {
   const d = c.delegations;
   return (

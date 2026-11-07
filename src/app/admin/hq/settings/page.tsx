@@ -85,7 +85,7 @@ export default async function HqSettings({ searchParams }: { searchParams: Promi
         {controls.ok ? <ControlsForm c={controls.data} tz={tz} /> : <Empty>{Failed()}</Empty>}
       </Section>
 
-      <Section title="What your Chief of Staff can decide" sub="Small calls it makes for you and tells you about in its brief.">
+      <Section title="What your COO can decide" sub="Small calls it makes for you and tells you about in its brief.">
         {controls.ok ? <DelegationsForm c={controls.data} /> : <Empty>{Failed()}</Empty>}
       </Section>
 

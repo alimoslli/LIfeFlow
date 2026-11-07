@@ -18,7 +18,7 @@ const mission = (o: Partial<StateInput["missions"][number]> = {}) => ({
 });
 const input = (o: Partial<StateInput> = {}): StateInput => ({ noOwnChat: false, chats: [chat()], missions: [], pendingApprovals: 0, ...o });
 
-describe("employeeState", () => {
+describe("employeeState: the sleep rule (ADR 0029)", () => {
   it("is offline with no chat, an archived chat, no check-in, or a stale one", () => {
     expect(employeeState(input({ chats: [] }), now).state).toBe("offline");
     expect(employeeState(input({ chats: [chat({ status: "archived" })] }), now).state).toBe("offline");
@@ -26,50 +26,72 @@ describe("employeeState", () => {
     expect(employeeState(input({ chats: [chat({ lastCheckinAt: ago(7 * 24 * HOUR + 1) })] }), now).state).toBe("offline");
     expect(employeeState(input({ chats: [chat({ lastCheckinAt: ago(7 * 24 * HOUR) })] }), now).state).toBe("sleeping");
   });
-  it("offline beats blocked and needs_you", () => {
-    expect(employeeState(input({ chats: [], missions: [mission({ status: "blocked", blockedReason: "x" })], pendingApprovals: 2 }), now).state).toBe("offline");
-  });
-  it("blocked beats needs_you and working; the reason is shown", () => {
+  it("never shows Blocked or Needs you: a blocked mission, a chat's question and a yes are notes on the door of a sleeping room", () => {
     const r = employeeState(
-      input({ missions: [mission({ status: "blocked", blockedReason: "No credits" }), mission({ status: "doing" })], pendingApprovals: 1 }),
+      input({ missions: [mission({ status: "blocked", blockedReason: "Higgsfield credits ran out" }), mission()], pendingApprovals: 2 }),
       now,
     );
-    expect(r).toEqual({ state: "blocked", reason: "No credits" });
-    expect(employeeState(input({ missions: [mission({ status: "blocked", title: "T" })] }), now).reason).toBe("Blocked: T");
-  });
-  it("a chat that is blocked or needs action blocks too", () => {
-    expect(employeeState(input({ chats: [chat({ status: "blocked" })] }), now).state).toBe("blocked");
-    expect(employeeState(input({ chats: [chat({ needsAction: "Approve the deploy" })] }), now).reason).toBe("Approve the deploy");
-  });
-  it("needs_you when approvals are pending", () => {
-    expect(employeeState(input({ pendingApprovals: 1 }), now)).toEqual({ state: "needs_you", reason: "1 thing needs your yes" });
-    expect(employeeState(input({ pendingApprovals: 3 }), now).reason).toBe("3 things need your yes");
+    expect(r).toEqual({ state: "sleeping", reason: "Asleep", note: "2 things for your yes · Waiting: Higgsfield credits ran out" });
+    expect(employeeState(input({ missions: [mission({ status: "blocked", title: "T" })] }), now).note).toBe("Waiting: T");
+    expect(employeeState(input({ chats: [chat({ needsAction: "Approve the deploy" })] }), now)).toEqual({
+      state: "sleeping",
+      reason: "Asleep",
+      note: "Waiting: Approve the deploy",
+    });
+    expect(employeeState(input({ chats: [chat({ status: "blocked" })] }), now).note).toBe("Waiting on something in its chat");
+    expect(employeeState(input({ pendingApprovals: 1 }), now)).toEqual({ state: "sleeping", reason: "Asleep", note: "1 thing for your yes" });
+    expect(employeeState(input(), now).note).toBeNull();
+    // An archived chat's old question is not shown.
+    expect(employeeState(input({ chats: [chat({ isPrimary: false, status: "archived", needsAction: "Old" }), chat()] }), now).note).toBeNull();
+    // Offline keeps the note too.
+    expect(employeeState(input({ chats: [], pendingApprovals: 1 }), now)).toMatchObject({ state: "offline", note: "1 thing for your yes" });
   });
   it("working needs a doing mission AND a check-in within 20 minutes", () => {
     const doing = [mission({ status: "doing", title: "Build" })];
-    expect(employeeState(input({ missions: doing, chats: [chat({ lastCheckinAt: ago(20 * MIN) })] }), now).state).toBe("working");
+    expect(employeeState(input({ missions: doing, chats: [chat({ lastCheckinAt: ago(20 * MIN) })] }), now)).toEqual({
+      state: "working",
+      reason: "Build",
+      note: null,
+    });
     expect(employeeState(input({ missions: doing, chats: [chat({ lastCheckinAt: ago(20 * MIN + 1) })] }), now)).toEqual({
       state: "sleeping",
-      reason: "Resting. Next: Build",
+      reason: "Asleep",
+      note: null,
     });
     expect(employeeState(input({ missions: [mission()] }), now).state).toBe("sleeping");
+    // A fresh check-in with nothing in progress is not work.
+    expect(employeeState(input({ chats: [chat({ status: "working", lastCheckinAt: ago(MIN) })] }), now).state).toBe("sleeping");
+  });
+  it("a running round they work in makes them working, even with no chat of their own or an offline chat", () => {
+    expect(employeeState(input({ noOwnChat: true, chats: [], round: { line: "Testing every screen · night round" } }), now)).toEqual({
+      state: "working",
+      reason: "Testing every screen · night round",
+      note: null,
+    });
+    expect(employeeState(input({ chats: [], round: { line: "x" } }), now).state).toBe("working");
+    expect(employeeState(input({ noOwnChat: true, chats: [], round: null }), now).state).toBe("sleeping");
   });
   it("done shows for 24h until the owner has seen it", () => {
     const d = (o: object) => input({ missions: [mission({ status: "done", title: "Ship", doneAt: ago(HOUR), ...o })] });
-    expect(employeeState(d({}), now)).toEqual({ state: "done", reason: "Finished: Ship" });
+    expect(employeeState(d({}), now)).toEqual({ state: "done", reason: "Finished: Ship", note: null });
     expect(employeeState(d({ seenAt: ago(MIN) }), now).state).toBe("sleeping");
     expect(employeeState(d({ doneAt: ago(24 * HOUR) }), now).state).toBe("done");
     expect(employeeState(d({ doneAt: ago(24 * HOUR + 1) }), now).state).toBe("sleeping");
   });
-  it("a role with no chat of its own is never offline; it sleeps until something blocks or needs you", () => {
+  it("a role with no chat of its own is never offline; it sleeps, with notes, until a round or real work wakes it", () => {
     expect(employeeState(input({ noOwnChat: true, chats: [] }), now).state).toBe("sleeping");
     // A mission in progress alone is not proof of work (no check-in): the cross-chat rule in the service decides that.
     expect(employeeState(input({ noOwnChat: true, chats: [], missions: [mission({ status: "doing" })] }), now).state).toBe("sleeping");
     expect(employeeState(input({ noOwnChat: true, chats: [], missions: [mission({ status: "blocked", blockedReason: "Needs a key" })] }), now)).toEqual({
-      state: "blocked",
-      reason: "Needs a key",
+      state: "sleeping",
+      reason: "Asleep",
+      note: "Waiting: Needs a key",
     });
-    expect(employeeState(input({ noOwnChat: true, chats: [], pendingApprovals: 2 }), now).state).toBe("needs_you");
+  });
+  it("cuts a long note", () => {
+    const n = employeeState(input({ missions: [mission({ status: "blocked", blockedReason: "x".repeat(200) })] }), now).note!;
+    expect(n.length).toBeLessThanOrEqual(100);
+    expect(n.endsWith("…")).toBe(true);
   });
 });
 

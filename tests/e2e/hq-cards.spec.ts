@@ -101,7 +101,7 @@ test("Your desk: a full decision card, a version 2 thread, lifecycle cards and a
   const live = op.locator("article", { hasText: "Turn error groups into fixes" });
   await expect(live.getByText("Live", { exact: true }).first()).toBeVisible();
   await expect(live.getByText("Live for everyone")).toBeVisible();
-  await expect(op.getByText("Being rewritten by your Chief of Staff")).toBeVisible();
+  await expect(op.getByText("Being rewritten by your COO")).toBeVisible();
   await expect(op.locator("li", { hasText: "An old request" }).getByRole("button")).toHaveCount(0);
 
   expect(await noSideScroll(op)).toBe(true);
