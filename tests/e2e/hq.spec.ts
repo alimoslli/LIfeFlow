@@ -71,7 +71,7 @@ test("HQ: the office, work (missions, approvals, report) and keys work end to en
   await expect(ceoCard.getByText("lifeflowweb.com", { exact: true })).toBeVisible();
   await expect(op.getByText("I'M THE CEO, BITCH")).toHaveCount(0);
   await expect(op.getByRole("link", { name: /^Engineering\s*,\s*[\w ]+\s*:\s*\S/ })).toBeVisible();
-  await expect(op.getByText("Nothing waiting for you.").first()).toBeVisible();
+  await expect(op.getByTestId("hq-waiting")).toContainText("Nothing needs you right now.");
 
   // Office <-> Workspace.
   await op.getByRole("link", { name: "Workspace", exact: true }).click();
@@ -150,7 +150,10 @@ test("HQ: the office, work (missions, approvals, report) and keys work end to en
   await card.getByRole("textbox").fill("Go ahead");
   await card.getByRole("button", { name: "Yes, go" }).click();
   await expect(op.getByText("You said yes.")).toBeVisible();
+  // The Office no longer asks for it; Engineering's page shows the yes in its activity.
   await op.goto("/admin");
+  await expect(op.getByTestId("hq-waiting")).not.toContainText("Ship the calendar fix");
+  await op.goto("/admin/hq/developer");
   await expect(op.getByText(/You said yes/).first()).toBeVisible();
 
   // Reports: headline lines from the records.
@@ -160,10 +163,12 @@ test("HQ: the office, work (missions, approvals, report) and keys work end to en
   await expect(op.getByRole("heading", { name: "Weekly Claude use" })).toBeVisible();
   await expect(op.getByText("Not measured yet").first()).toBeVisible();
 
-  // The COO's brief and a decision it made show on the Office.
+  // The COO's brief shows on the Office; the decisions it made, on the COO's page (the Office stays short).
   await op.goto("/admin");
   await expect(op.getByTestId("hq-brief").getByText("Your COO's first brief arrives after the next round.")).toBeVisible();
   await expect(op.getByText("Connect its chat in Settings")).toBeVisible();
+  await expect(op.getByTestId("hq-waiting")).toContainText("Nothing needs you right now.");
+  await op.goto("/admin/hq/assistant");
   await expect(op.getByText("Nothing decided for you yet.")).toBeVisible();
   const brief = await request.post("/api/hq/report", {
     headers: { Authorization: `Bearer ${token}` },
@@ -178,9 +183,9 @@ test("HQ: the office, work (missions, approvals, report) and keys work end to en
   await op.goto("/admin");
   await expect(op.getByTestId("hq-brief-body")).toContainText("Good round: 2 fixes shipped, nothing blocked.");
   await expect(op.getByTestId("hq-brief").getByRole("link", { name: /^Open the .*decision|^Nothing needs you/ })).toBeVisible();
+  await op.goto("/admin/hq/assistant");
   await expect(op.getByRole("heading", { name: "Decided for you" })).toBeVisible();
   await expect(op.getByText("Put the calendar fix first, because it blocks sync.").first()).toBeVisible();
-  await op.goto("/admin/hq/assistant");
   await expect(op.getByRole("heading", { name: "COO", level: 1 })).toBeVisible();
   await expect(op.getByText("Good round: 2 fixes shipped, nothing blocked.").first()).toBeVisible();
   await op.goto("/admin/hq/qa");

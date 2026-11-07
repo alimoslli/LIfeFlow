@@ -86,7 +86,7 @@ test("Live HQ on a phone: Right now fits, with no sideways scroll and a 44 px Wa
   await op.goto("/admin");
   const now = op.getByTestId("hq-right-now");
   const waiting = op.getByTestId("hq-waiting");
-  await expect(waiting).toContainText("Waiting on you");
+  await expect(waiting).toContainText("Needs you");
   await expect(waiting).toContainText("Marketing LF");
   await expect(waiting).toContainText("Top up credits (3 or more) so the take can be generated");
   await expect(waiting.getByRole("link", { name: "Open Marketing LF in Claude" })).toHaveAttribute(

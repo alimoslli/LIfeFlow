@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
 import { BriefCard } from "@/components/hq/brief";
-import { ActivityList, ApprovalMini, BudgetBody, Empty, MissionLine, Section } from "@/components/hq/cards";
 import { countsLine, greeting } from "@/components/hq/labels";
 import { LiveRefresh } from "@/components/hq/live-refresh";
 import { OfficeScene } from "@/components/hq/office-scene";
@@ -18,8 +17,7 @@ import { EMPLOYEES } from "@/server/hq/team";
 import { getControls } from "@/server/services/hq-marketing";
 import { safe } from "@/server/services/admin";
 import { cn } from "@/lib/utils";
-import { Failed, adminTz, fmt } from "../format";
-import { Tile } from "../ui";
+import { Failed, adminTz } from "../format";
 
 /** The Office: the office (a drawn building with a room per person) or a plain workspace list, from one snapshot. The top of the Office page. */
 export async function OfficeSection({ view, children }: { view: "office" | "workspace"; children?: ReactNode }) {
@@ -74,6 +72,7 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
           </h1>
           <p className="mt-1 text-sm text-text-2">
             {counts || "Everyone is quiet."}
+            {b.weekPct !== null && ` · Claude use this week: ${Math.round(b.weekPct)}%`}
             {controls.ok && !controls.data.autonomous && " · Autonomous mode off"}
           </p>
         </div>
@@ -100,28 +99,12 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
       </header>
 
       <LiveRefresh />
-      <RightNow items={s.live} waiting={s.waiting} now={s.now} nextRound={s.nextRound} />
+      <RightNow items={s.live} waiting={s.waiting} approvals={s.approvals.slice(0, 3)} pending={n} now={s.now} nextRound={s.nextRound} />
       <BriefCard brief={s.brief} chief={s.employees.find((e) => e.role === "assistant")} pending={n} />
       {children}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Tile
-          label="Waiting for you"
-          value={n === 1 ? "1 decision" : `${n} decisions`}
-          sub={n === 0 ? "Nothing waiting for you." : "Open Work to decide →"}
-          href="/admin/work#approvals"
-          tone={n > 0 ? "gold" : undefined}
-        />
-        <Tile label="Done in the last 7 days" value={s.doneThisWeek} sub="See the weekly report" href="/admin/work#report" />
-        <div className="min-w-0 rounded-3xl bg-surface p-4 shadow-soft">
-          <p className="text-xs text-muted">Weekly Claude use</p>
-          <BudgetBody b={b} />
-          {b.asOf && <p className="mt-1 text-[0.6875rem] text-muted">As of {fmt(b.asOf, tz)}</p>}
-        </div>
-      </div>
-
-      <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_21rem] 2xl:items-start">
-        <div className="min-w-0 2xl:order-1">
+      <div>
+        <div className="min-w-0">
           {view === "office" ? (
             <OfficeScene snapshot={s} desk={desk} />
           ) : (
@@ -165,57 +148,7 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
             </div>
           )}
         </div>
-
-        <aside className="grid min-w-0 content-start gap-5 md:grid-cols-2 md:items-start 2xl:order-2 2xl:grid-cols-1">
-          <Section
-            title="Needs your yes"
-            action={
-              n > 0 ? (
-                <Link href="/admin/work#approvals" className="inline-flex min-h-11 items-center text-sm text-accent">
-                  View all
-                </Link>
-              ) : undefined
-            }
-          >
-            {s.approvals.length ? (
-              <ul className="flex flex-col gap-2">
-                {s.approvals.slice(0, 3).map((a) => (
-                  <ApprovalMini key={a.id} a={a} />
-                ))}
-              </ul>
-            ) : (
-              <Empty>Nothing waiting for you.</Empty>
-            )}
-          </Section>
-          <Section title="Decided for you" sub="Small calls your COO made, within what you allowed.">
-            <ActivityList items={s.decisions} empty="Nothing decided for you yet." />
-          </Section>
-          <Section title="Recent activity">
-            <ActivityList items={s.activity.slice(0, 6)} />
-          </Section>
-        </aside>
       </div>
-
-      <Section
-        title="This week's missions"
-        action={
-          <Link href="/admin/work#missions" className="inline-flex min-h-11 items-center text-sm text-accent">
-            Open the board
-          </Link>
-        }
-      >
-        {s.weekMissions.length ? (
-          <ul className="grid grid-cols-1 gap-x-4 sm:grid-cols-2 2xl:grid-cols-3">
-            {s.weekMissions.map((m) => (
-              <li key={m.id}>
-                <MissionLine m={m} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Empty>No missions yet. Add one on the Work page.</Empty>
-        )}
-      </Section>
     </div>
   );
 }

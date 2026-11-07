@@ -106,10 +106,10 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await expect(perf.getByText("Followers")).toBeVisible();
   await expect(op.getByText("No numbers yet", { exact: true })).toHaveCount(4);
 
-  // The Office counts it, then the owner says yes.
+  // The Office lists it under Needs you, then the owner says yes.
   await op.goto("/admin");
-  const tile = op.getByRole("link", { name: /Waiting for you/ }).first();
-  await expect(tile).toContainText("1");
+  await expect(op.getByTestId("hq-waiting")).toContainText("The Sunday reset reel");
+  await expect(op.getByTestId("hq-waiting").getByRole("link", { name: /^Decide: / })).toHaveCount(1);
   await op.goto("/admin/work");
   await op.locator("article", { hasText: "The Sunday reset reel" }).getByRole("button", { name: "Yes, go" }).click();
   await expect(op.getByText("You said yes.")).toBeVisible();
@@ -118,7 +118,8 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   const week = op.locator("section", { has: op.getByRole("heading", { name: "This week", level: 2 }) });
   await expect(week.getByText("Approved", { exact: true })).toBeVisible();
   await op.goto("/admin");
-  await expect(op.getByRole("link", { name: /Waiting for you/ }).first()).toContainText("0");
+  await expect(op.getByTestId("hq-waiting")).not.toContainText("The Sunday reset reel");
+  await expect(op.getByTestId("hq-waiting").getByRole("link", { name: /^Decide: / })).toHaveCount(0);
 
   // The detail page: change the title, then drop it.
   await op.goto("/admin/hq/marketing");
