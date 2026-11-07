@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { BookOpen, Split, Wallet } from "lucide-react";
-import { BrandLockup, BrandMark } from "@/components/brand/brand-mark";
+import { BrandLockup } from "@/components/brand/brand-mark";
+import { AssistantScene } from "@/components/landing/assistant-scene";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+    <div className="grid min-h-dvh lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
       <div className="flex flex-col px-6 pt-10 pb-8 sm:px-10">
         <BrandLockup markClassName="h-10 w-10" priority />
         <div className="flex flex-1 items-center">
@@ -36,43 +36,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             />
           ))}
         </svg>
-        <div className="relative flex h-full flex-col justify-center px-14 xl:px-20">
-          <div className="mb-9 flex h-20 w-20 items-center justify-center rounded-[28px] bg-white/14 p-2.5 shadow-[inset_0_1px_0_rgb(255_255_255_/_0.35),0_18px_44px_-20px_rgb(0_0_0_/_0.6)] ring-1 ring-white/20">
-            <BrandMark className="h-full w-full" alt="" priority />
-          </div>
-          <p className="max-w-md font-display text-[2.75rem] leading-[1.06] font-medium tracking-tight text-white">Your whole life, in flow.</p>
-          <p className="mt-4 max-w-sm text-[0.9375rem] text-white/75">
-            Every morning, LifeFlow tells you what matters, and your assistant helps you handle it.
-          </p>
-          <div className="mt-10 flex max-w-md flex-col gap-3">
-            <Preview
-              icon={<Split className="h-[18px] w-[18px]" />}
-              tone="bg-danger-soft text-danger"
-              text="Your library shift overlaps Calculus on Thursday."
-              action="Help me sort it out"
-            />
-            <Preview
-              icon={<BookOpen className="h-[18px] w-[18px]" />}
-              tone="bg-warning-soft text-warning"
-              text="Psychology midterm is next Wednesday."
-              action="Plan study time"
-            />
-            <Preview icon={<Wallet className="h-[18px] w-[18px]" />} tone="bg-success-soft text-success" text="You've spent 12% less than last month." />
+        <div className="relative flex h-full items-center justify-center px-10 pt-10 pb-20">
+          <div className="w-full max-w-[340px]">
+            <AssistantScene tone="hero" />
           </div>
         </div>
       </aside>
-    </div>
-  );
-}
-
-function Preview({ icon, tone, text, action }: { icon: React.ReactNode; tone: string; text: string; action?: string }) {
-  return (
-    <div className="flex gap-3.5 rounded-3xl bg-white/95 p-4 shadow-lift">
-      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tone}`}>{icon}</span>
-      <div className="pt-1.5">
-        <p className="text-[0.9375rem] leading-snug text-[#1b1a17]">{text}</p>
-        {action && <p className="mt-2 text-sm font-medium text-[#2f5d50]">✦ {action}</p>}
-      </div>
     </div>
   );
 }

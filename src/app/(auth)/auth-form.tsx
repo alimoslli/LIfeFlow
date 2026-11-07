@@ -38,9 +38,9 @@ export function AuthForm({
   return (
     <form action={action} className="flex flex-col gap-4">
       <div className="mb-3">
-        <h1 className="font-display text-[2.375rem] leading-[1.05] font-medium tracking-tight">{mode === "login" ? "Welcome back." : "Let's get started."}</h1>
+        <h1 className="font-display text-[2.375rem] leading-[1.05] font-medium tracking-tight">{mode === "login" ? "Welcome back." : "Start your week."}</h1>
         <p className="mt-2 text-[0.9375rem] text-muted">
-          {mode === "login" ? "Sign in to see your day." : "Create your account. You can add everything else later."}
+          {mode === "login" ? "Sign in to see your day." : "Just an email and a password. Everything else comes next."}
         </p>
       </div>
       {notice && !state?.error && (
@@ -53,14 +53,17 @@ export function AuthForm({
           {notice.text}
         </p>
       )}
+      {mode === "signup" && (
+        <div className="rounded-3xl bg-surface p-4 shadow-soft lg:hidden">
+          <span className="rounded-full bg-warning-soft px-2.5 py-1 text-[0.6875rem] font-medium tracking-[0.06em] text-warning uppercase">Example</span>
+          <p className="mt-2 font-display text-[1.1875rem] leading-snug font-medium tracking-[-0.02em]">
+            Your Thursday shift runs until 10. Your Bio exam is Friday at 9.
+          </p>
+          <p className="mt-1 text-sm text-text-2">Your assistant moved your study block to Wednesday.</p>
+        </div>
+      )}
       <FormError message={state?.error} />
       <SignInOptions mode={mode} apple={apple} google={google} next={next} />
-      {mode === "signup" && (
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-2">Your name</span>
-          <input id="name" name="name" autoComplete="name" required maxLength={80} className={input} />
-        </label>
-      )}
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-text-2">Email</span>
         <input

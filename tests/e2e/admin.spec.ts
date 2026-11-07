@@ -21,11 +21,12 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
   const op = await owner.newPage();
   await op.goto("/signup");
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
-  await op.getByLabel("Your name").fill("Owner Olu");
   await op.getByLabel("Email").fill(ADMIN_EMAIL);
   await op.getByLabel("Password").fill("correct horse battery");
   await op.getByRole("button", { name: "Create account" }).click();
   await op.waitForURL("**/welcome");
+  // Sign-up takes only email and password; give the owner a name so greetings read "Good morning, Owner."
+  await pool.query("update users set name = $1 where email = $2", ["Owner Olu", ADMIN_EMAIL]);
   expect((await op.goto("/admin"))?.status()).toBe(404);
   await op.goto("/welcome");
   await op.getByRole("button", { name: "Skip setup" }).click();

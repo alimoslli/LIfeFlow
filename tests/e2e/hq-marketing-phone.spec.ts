@@ -11,11 +11,12 @@ async function owner(page: Page) {
   await pool.query("delete from users where email = $1", [ADMIN_EMAIL]);
   await page.goto("/signup");
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
-  await page.getByLabel("Your name").fill("Owner Olu");
   await page.getByLabel("Email").fill(ADMIN_EMAIL);
   await page.getByLabel("Password").fill("correct horse battery");
   await page.getByRole("button", { name: "Create account" }).click();
   await page.waitForURL("**/welcome");
+  // Sign-up takes only email and password; give the owner a name so greetings read "Good morning, Owner."
+  await pool.query("update users set name = $1 where email = $2", ["Owner Olu", ADMIN_EMAIL]);
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   await page.getByRole("button", { name: "Skip tour" }).click();

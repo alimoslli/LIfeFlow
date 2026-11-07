@@ -11,11 +11,12 @@ async function ownerPhone(browser: Browser): Promise<Page> {
   const op = await ctx.newPage();
   await op.goto("/signup");
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
-  await op.getByLabel("Your name").fill("Owner Olu");
   await op.getByLabel("Email").fill(ADMIN_EMAIL);
   await op.getByLabel("Password").fill("correct horse battery");
   await op.getByRole("button", { name: "Create account" }).click();
   await op.waitForURL("**/welcome");
+  // Sign-up takes only email and password; give the owner a name so greetings read "Good morning, Owner."
+  await pool.query("update users set name = $1 where email = $2", ["Owner Olu", ADMIN_EMAIL]);
   await op.getByRole("button", { name: "Skip setup" }).click();
   await op.waitForURL((u) => u.pathname === "/");
   await op.getByRole("button", { name: "Skip tour" }).click();
