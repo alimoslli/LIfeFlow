@@ -16,7 +16,7 @@ import { createTransaction } from "@/server/services/finance/transactions";
 import { createAssignment, createCourse } from "@/server/services/school";
 import { createTask } from "@/server/services/tasks";
 import { createEmployer, createShift } from "@/server/services/work";
-import { EVAL, EVAL_NOW } from "../fixtures/jarvis-eval";
+import { EVAL, EVAL_NOW, EVAL_P2P } from "../fixtures/jarvis-eval";
 import { txns } from "../fixtures/student-bank";
 import { makeUser, TZ } from "../helpers";
 
@@ -50,6 +50,8 @@ beforeAll(async () => {
         pending: t.pending ?? false,
       });
     }
+
+    for (const t of EVAL_P2P) await createTransaction(s, { accountId: account.id, ...t, kind: "expense", categoryId: null });
 
     const bio = await createCourse(s, { name: "Intro to Biology", code: "BIO 110" });
     const eng = await createCourse(s, { name: "Composition II", code: "ENG 102" });

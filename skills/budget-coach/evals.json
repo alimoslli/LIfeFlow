@@ -22,5 +22,17 @@
   {
     "prompt": "Where did my money go last month?",
     "expect": "routes to budget-coach"
+  },
+  {
+    "prompt": "When was the last time I Zelled Omar Mousselli?",
+    "expect": "routes to budget-coach"
+  },
+  {
+    "prompt": "When did I last pay Sam on Venmo?",
+    "expect": "routes to budget-coach"
+  },
+  {
+    "prompt": "What was the last time I sent money to my landlord on Zelle?",
+    "expect": "routes to budget-coach"
   }
 ]

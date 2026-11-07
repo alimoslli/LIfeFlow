@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import {
   AlertTriangle,
   ChevronRight,
@@ -83,6 +83,10 @@ export function JarvisChat({
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
   const [input, setInput] = useState(initialPrompt ?? "");
   const [busy, setBusy] = useState(false);
+  // A reply that changed data refreshes the page. In a new conversation that refresh also moves to /jarvis/<id>, and the
+  // page keys this chat by conversation, so it is rebuilt when the refresh lands. Until then nothing can be typed or
+  // sent here, or it would be wiped with the old chat.
+  const [refreshing, startRefresh] = useTransition();
   const [pending, setPending] = useState<(UiAttachment & { uploading?: boolean; error?: string })[]>([]);
   const [lastTool, setLastTool] = useState<string | null>(null);
   const [talking, setTalking] = useState(!!startVoice && canSend);
@@ -128,7 +132,7 @@ export function JarvisChat({
   async function send(text: string) {
     const message = text.trim();
     const ready = pending.filter((p) => !p.uploading && !p.error);
-    if ((!message && !ready.length) || busy || !availability.available) return;
+    if ((!message && !ready.length) || busy || refreshing || !availability.available) return;
     setInput("");
     setPending([]);
     setBusy(true);
@@ -213,7 +217,7 @@ export function JarvisChat({
       updateAssistant((a) => void (a.streaming = false));
       setBusy(false);
       abortRef.current = null;
-      if (mutated) router.refresh();
+      if (mutated) startRefresh(() => router.refresh());
     }
   }
 
@@ -243,7 +247,7 @@ export function JarvisChat({
           : m,
       ),
     );
-    if (data.status === "executed") router.refresh();
+    if (data.status === "executed") startRefresh(() => router.refresh());
   }
 
   async function decideMemory(memoryId: string, decision: "keep" | "dismiss") {
@@ -289,7 +293,9 @@ export function JarvisChat({
   const empty = messages.length === 0;
   const lastQuestion = [...messages].reverse().find((m) => m.role === "user");
   const followUps =
-    busy || empty || messages.at(-1)?.role !== "assistant" ? undefined : ((lastTool && FOLLOW_UPS[lastTool]) ?? defaultFollowUps(module, lastQuestion?.text));
+    busy || refreshing || empty || messages.at(-1)?.role !== "assistant"
+      ? undefined
+      : ((lastTool && FOLLOW_UPS[lastTool]) ?? defaultFollowUps(module, lastQuestion?.text));
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -477,10 +483,12 @@ export function JarvisChat({
                       : `Allow ${assistantName} to start`
                 }
                 disabled={!canSend}
+                readOnly={refreshing}
+                aria-busy={refreshing || undefined}
                 aria-label={`Message ${assistantName}`}
                 className="max-h-48 min-h-11 flex-1 resize-none bg-transparent px-1.5 py-2.5 text-[1rem] leading-6 placeholder:text-muted [field-sizing:content]"
               />
-              {!busy && <VoiceButton assistantName={assistantName} disabled={!canSend} onStart={() => setTalking(true)} />}
+              {!busy && <VoiceButton assistantName={assistantName} disabled={!canSend || refreshing} onStart={() => setTalking(true)} />}
               {busy ? (
                 <button
                   type="button"
@@ -493,7 +501,7 @@ export function JarvisChat({
               ) : (
                 <button
                   type="submit"
-                  disabled={!canSend || (!input.trim() && !pending.some((p) => !p.uploading && !p.error))}
+                  disabled={!canSend || refreshing || (!input.trim() && !pending.some((p) => !p.uploading && !p.error))}
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft transition-all active:scale-95 disabled:bg-surface-3 disabled:text-muted disabled:shadow-none"
                   aria-label="Send"
                 >

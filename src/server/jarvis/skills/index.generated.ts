@@ -72,7 +72,14 @@ export const SKILLS: SkillFile[] = [
       "save money",
       "where did my money go",
       "my money go",
-      "where my money went"
+      "where my money went",
+      "zelle",
+      "zelled",
+      "venmo",
+      "cash app",
+      "last time i paid",
+      "last time i zelled",
+      "when did i last pay"
     ],
     "modules": [
       "finances"
@@ -85,7 +92,7 @@ export const SKILLS: SkillFile[] = [
       "budget_status",
       "query_transactions"
     ],
-    "body": "## Steps\n1. For \"where did my money go\" in a period, spending_summary for that range answers it in one call. Otherwise start from money_overview or budget_status. Quote the date range. Run money_findings too and mention anything it caught (a double charge, bank fees, a recurring charge they aren't tracking).\n2. Find the 1-2 categories driving the change (compare_spending).\n3. Suggest one or two specific fixes with dollar amounts.\n4. Change budgets only when asked (set_budget, in the money_edit tools).\n\n## Quality rules\n- Never estimate numbers the tools return.\n- Never project income.\n\n## Example\nUser: Why am I spending more this month?\nAssistant: Food is $86 over last month (Oct 1-29), mostly delivery (6 orders). Cutting 2 orders saves about $40.",
+    "body": "## Steps\n1. For \"where did my money go\" in a period, spending_summary for that range answers it in one call. Otherwise start from money_overview or budget_status. Quote the date range. Run money_findings too and mention anything it caught (a double charge, bank fees, a recurring charge they aren't tracking).\n2. Find the 1-2 categories driving the change (compare_spending).\n3. Suggest one or two specific fixes with dollar amounts.\n4. Change budgets only when asked (set_budget, in the money_edit tools).\n5. For \"when did I last pay or Zelle someone\", one query_transactions with the person's name (and the app, if they said one) as search answers it (newest first; for \"paid or sent\" take the newest row with a negative amount, for \"received\" the newest positive one). If it comes back similar or none, say what you didn't find and ask if one of the closest payments is who they meant.\n\n## Quality rules\n- Never estimate numbers the tools return.\n- Never project income.\n\n## Example\nUser: Why am I spending more this month?\nAssistant: Food is $86 over last month (Oct 1-29), mostly delivery (6 orders). Cutting 2 orders saves about $40.",
     "evals": [
       {
         "prompt": "How's my budget this month?",
@@ -109,6 +116,18 @@ export const SKILLS: SkillFile[] = [
       },
       {
         "prompt": "Where did my money go last month?",
+        "expect": "routes to budget-coach"
+      },
+      {
+        "prompt": "When was the last time I Zelled Omar Mousselli?",
+        "expect": "routes to budget-coach"
+      },
+      {
+        "prompt": "When did I last pay Sam on Venmo?",
+        "expect": "routes to budget-coach"
+      },
+      {
+        "prompt": "What was the last time I sent money to my landlord on Zelle?",
         "expect": "routes to budget-coach"
       }
     ]
