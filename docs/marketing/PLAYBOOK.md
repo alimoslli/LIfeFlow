@@ -162,6 +162,21 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
    - **v8 "One chat. My whole day."** and **v13 "My assistant caught this 3 days early"** passed.
 5. **v14 voiceover:** used the wrong voice (Mark). App videos use Sienna; Mark is only Dev. It's blocked on a top-up of 3 or more credits.
 
+**Tried on 2026-11-07 (COO push, all unposted, files in HQ Marketing cards):**
+1. **Reel "Quiz Friday, shift Thursday" (20 s, old screen recordings, Sienna) and image "The $82 bill, two days early":** declined by the owner. Too much like every earlier video: screen recordings, one narrator, sticker captions, cream end card.
+2. **Three 5-second samples ("Domino" cinematic VFX, "Closing Shift" silent film, "Deadpan" skit):** Domino rejected, the other two "not what I'm expecting".
+3. **TV spot "Your life, connected" (30 s, 16:9 + 9:16, about 43 credits):** one AI-cast actress across 5 cinematic scenes, real app composited into two phone shots, original score, Sienna voiceover. Owner: "in the right direction", wanted simpler, a real situation, a story, not looking like a commercial.
+4. **"It Didn't Forget" clip 1 with AI dialogue (Kling 3.0 with sound, about 30 credits):** rejected hard. Flat delivery, lips not matching the words, she looked at the camera instead of her friend, dead air.
+5. **Teaser "She forgot. It didn't." (12 s, about 34 credits) and film "It didn't forget" (24 s, about 28 more):** 35mm film look, one actress, no dialogue, no app screens, short on-screen lines, original piano score, sound logo. Built from the reference board (OpenAI "Road Trip", Google "Loretta", Anthropic's film look). Owner said "I approve of everything" for the teaser; the film is held in HQ for his yes.
+
+**What we learned on 2026-11-07:**
+- **No AI on-camera dialogue or lip sync.** It can't deliver emotion yet. Tell the story with looks, reactions, short on-screen lines, voiceover or real actors.
+- **Film look beats commercial look:** grain, real skin, warm practical light, shallow depth of field. The big assistant brands shoot on film on purpose; "human" earns trust.
+- **The story is about showing up for someone,** and the helper stays quiet. The app never does the personal part (Google pulled "Dear Sydney" for that).
+- **Start from real references** (the board: https://claude.ai/artifact/QyU2cnH2359VNLm1BEVw7A), not guesses. Blend them; never copy.
+- **Credits:** a Kling 3.0 pro 5 s shot is 7.5; a 15 s shot with sound is about 30; ElevenLabs music about 3.6 per 25 s; Seedance 1080p is 80 per 5 s (avoid). Reuse shots between a teaser and the full cut.
+- **Music license is unverified:** ElevenLabs Music's commercial terms depend on the plan, and some secondary sources say paid ads are excluded on lower tiers. Confirm the terms (elevenlabs.io/music-terms) before posting any track made with it, or swap in a cleared track.
+
 **What didn't work (the owner's rules now):**
 - **Hook:** it must be in the very first frame.
 - **Cuts and pacing:** every cut must be visible (punch-in, flash or sound). No lag, and no turn that looks like a new clip.
@@ -186,6 +201,8 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
 ## 6. Decisions and preferences (keep adding)
 
 - Owner wants short replies and quick recaps, especially during work hours.
+- 2026-11-07: owner at work: don't ask him for approvals. Keep working on plan; anything that needs him is built and held, never published, deployed or merged until he agrees.
+- 2026-11-07: no AI lip-sync dialogue in ads; emotional, film-look stories built from real reference ads.
 - Don't change the app while doing marketing work unless asked.
 - The owner's clips are direction, not a template: the final video doesn't have to copy their exact movements.
 - Final videos are made with Higgsfield using the one LifeFlow character (section 3b); the owner provides credits. Check the price first and ask before spending past the agreed budget.
