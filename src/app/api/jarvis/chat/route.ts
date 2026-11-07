@@ -23,8 +23,8 @@ const body = z.object({
   message: z.string().max(8000).default(""),
   module: z.enum(["home", "finances", "wealth", "school", "work", "calendar", "tasks", "notes", "settings"]).nullish(),
   attachmentIds: z.array(z.string().uuid()).max(5).default([]),
-  newConversationId: z.string().uuid().nullish(),
-  resend: z.boolean().default(false),
+  /** The id the app made for this send. The same id arriving again (a retry) never starts a second turn. */
+  clientMessageId: z.string().uuid().nullish(),
 });
 
 /** Streams a Jarvis turn as newline-delimited JSON events. */
@@ -87,8 +87,7 @@ export async function POST(req: Request) {
             text: parsed.data.message,
             module: parsed.data.module,
             attachmentIds: parsed.data.attachmentIds,
-            newConversationId: parsed.data.newConversationId,
-            resend: parsed.data.resend,
+            clientMessageId: parsed.data.clientMessageId,
             // Deliberately no req.signal: a dropped connection must not cancel the turn (Stop is its own request).
             prices: modelPrices(),
             moneyLocked: locked,

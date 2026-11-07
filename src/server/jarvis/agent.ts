@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
-import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
+import { createHash, randomUUID } from "node:crypto";
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { todayIn } from "@/lib/dates";
 import { truncate } from "@/lib/utils";
 import { assistantProfile, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
@@ -9,6 +9,7 @@ import type { SessionUser } from "../auth/sessions";
 import { listActiveMemories, touchMemories } from "../services/memory";
 import { createConversation, getConversation, loadHistory } from "./conversations";
 import { stopRequested } from "./stop";
+import { turnStateOf, TURN_DEADLINE_MS } from "./turn-state";
 import { executeToolCall, serializeResult } from "./executor";
 import { selectMemories } from "./memory-retrieval";
 import { addUsage, errorKindOf, estimateCostMicros, recordRun, type ModelPrices } from "./metrics";
@@ -31,10 +32,20 @@ export type JarvisEvent =
   | { type: "tool_end"; callId: string; name: string; ok: boolean; summary: string; viewAt?: string; sources?: { title: string; url: string }[] }
   | { type: "confirmation"; actionId: string; callId: string; toolName: string; summary: string }
   | { type: "memory_proposal"; callId: string; memoryId: string; content: string; replaces?: string }
+  /** This send was already received (a retry): nothing new runs; the app fetches the saved answer. */
+  | { type: "already"; state: "running" | "finished" }
   | { type: "done"; messageId: string | null; runId?: string | null }
   | { type: "error"; message: string };
 
 export const MAX_STEPS = 8;
+
+class DuplicateSend extends Error {}
+
+class TimedOutError extends Error {
+  constructor() {
+    super("Took too long.");
+  }
+}
 
 class StoppedError extends Error {
   constructor() {
@@ -52,12 +63,11 @@ export type TurnInput = {
   emit: (e: JarvisEvent) => void;
   now?: Date;
   /**
-   * For a brand-new chat, the id the app chose before sending (so it can find the chat again if the connection drops).
-   * If a chat with this id is already the user's own, the turn continues in it instead of making a second one.
+   * The id the app made for this send. If a message with this id is already saved, no second turn starts: a finished one
+   * is reported as such, a running one is left to finish, and one that died without an answer is continued (the message
+   * is not saved twice). Stop is keyed by it too. Without one (older callers) the server makes its own.
    */
-  newConversationId?: string | null;
-  /** Re-asking after a dropped connection: if the chat's latest message from the user is this exact text, it is not saved a second time. */
-  resend?: boolean;
+  clientMessageId?: string | null;
   /** Model prices for cost estimates; omitted ⇒ cost recorded as unknown. */
   prices?: ModelPrices;
   /** Money is behind the Face ID lock right now (see auth/money-lock). */
@@ -87,7 +97,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   const { user, provider } = input;
   const now = input.now ?? new Date();
   const started = performance.now();
-  const startedAt = new Date();
+  const deadline = Date.now() + TURN_DEADLINE_MS;
   let firstTokenMs: number | null = null;
   const emit = (e: JarvisEvent) => {
     if (e.type === "text" && firstTokenMs == null) firstTokenMs = performance.now() - started;
@@ -99,52 +109,69 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   };
   const run = <T>(fn: Parameters<typeof withUser<T>>[1]) => withUser(user.id, fn);
 
+  // 0. The same send arriving again (a retry after a dropped connection) never starts a second turn.
+  const clientMessageId = input.clientMessageId ?? randomUUID();
+  const prior = input.clientMessageId ? await run((s) => turnStateOf(s, clientMessageId)) : null;
+  const alreadyHandled = async (state: "running" | "finished", conversationId: string) => {
+    const conv = await run((s) => getConversation(s, conversationId));
+    input.emit({ type: "conversation", id: conv.id, title: conv.title });
+    input.emit({ type: "already", state });
+    return { conversationId: conv.id, runId: null as string | null };
+  };
+  if (prior && prior.conversationId && (prior.state === "running" || prior.state === "finished")) return alreadyHandled(prior.state, prior.conversationId);
+  const continuing = prior && prior.state === "stalled" ? prior.conversationId : null;
+
   // 1–2. Conversation, user message and context in one transaction (fewer round trips before the first word).
-  const { conversation, history, approved, curious } = await run(async (s) => {
-    const title = truncate(input.text.replace(/\s+/g, " ").trim() || "Attachment", 60);
-    const conversation = input.conversationId
-      ? await getConversation(s, input.conversationId)
-      : input.newConversationId
-        ? ((await getConversation(s, input.newConversationId).catch(() => null)) ?? (await createConversation(s, input.module, title, input.newConversationId)))
-        : await createConversation(s, input.module, title);
-    const ids = input.attachmentIds ?? [];
-    let attachmentIds: string[] = [];
-    if (ids.length) {
-      // Only the user's own, unlinked (or already-this-conversation) uploads may be attached.
-      const rows = await s.tx
-        .select({ id: attachments.id })
-        .from(attachments)
-        .where(
-          and(
-            eq(attachments.userId, s.userId),
-            inArray(attachments.id, ids),
-            or(isNull(attachments.conversationId), eq(attachments.conversationId, conversation.id)),
-          ),
-        );
-      attachmentIds = rows.map((r) => r.id);
-      if (attachmentIds.length) await s.tx.update(attachments).set({ conversationId: conversation.id }).where(inArray(attachments.id, attachmentIds));
-    }
-    let alreadySaved = false;
-    if (input.resend) {
-      const [lastRow] = await s.tx
-        .select({ content: messages.content })
-        .from(messages)
-        .where(and(eq(messages.conversationId, conversation.id), eq(messages.userId, s.userId), eq(messages.role, "user")))
-        .orderBy(desc(messages.seq))
-        .limit(1);
-      alreadySaved = lastRow?.content === input.text;
-    }
-    if (!alreadySaved)
-      await s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "user", content: input.text, attachmentIds });
-    const history = await loadHistory(s, conversation.id);
-    const approved = await listActiveMemories(s, now);
-    // A fresh chat with learning on: the questions Jarvis could still ask (it picks at most one, when it fits).
-    const curious = user.preferences?.jarvis?.learning && history.length <= 1 ? (await openQuestions(s, user.preferences, approved)).questions : [];
-    // Rotate daily so an unanswered question doesn't come up in every new chat.
-    const day = Math.floor(now.getTime() / 86_400_000);
-    const pick = [0, 1, 2].filter((i) => i < curious.length).map((i) => curious[(day + i) % curious.length].ask);
-    return { conversation, history, approved, curious: pick };
-  });
+  let opened;
+  try {
+    opened = await run(async (s) => {
+      const conversation = continuing
+        ? await getConversation(s, continuing)
+        : input.conversationId
+          ? await getConversation(s, input.conversationId)
+          : await createConversation(s, input.module, truncate(input.text.replace(/\s+/g, " ").trim() || "Attachment", 60));
+      const ids = input.attachmentIds ?? [];
+      let attachmentIds: string[] = [];
+      if (ids.length && !continuing) {
+        // Only the user's own, unlinked (or already-this-conversation) uploads may be attached.
+        const rows = await s.tx
+          .select({ id: attachments.id })
+          .from(attachments)
+          .where(
+            and(
+              eq(attachments.userId, s.userId),
+              inArray(attachments.id, ids),
+              or(isNull(attachments.conversationId), eq(attachments.conversationId, conversation.id)),
+            ),
+          );
+        attachmentIds = rows.map((r) => r.id);
+        if (attachmentIds.length) await s.tx.update(attachments).set({ conversationId: conversation.id }).where(inArray(attachments.id, attachmentIds));
+      }
+      if (!continuing) {
+        const saved = await s.tx
+          .insert(messages)
+          .values({ userId: s.userId, conversationId: conversation.id, role: "user", content: input.text, attachmentIds, clientMessageId })
+          .onConflictDoNothing()
+          .returning({ id: messages.id });
+        // Two copies of the same send raced; the other one owns the turn. Undo this one (including a chat it just made).
+        if (!saved.length) throw new DuplicateSend();
+      }
+      const history = await loadHistory(s, conversation.id);
+      const approved = await listActiveMemories(s, now);
+      // A fresh chat with learning on: the questions Jarvis could still ask (it picks at most one, when it fits).
+      const curious = user.preferences?.jarvis?.learning && history.length <= 1 ? (await openQuestions(s, user.preferences, approved)).questions : [];
+      // Rotate daily so an unanswered question doesn't come up in every new chat.
+      const day = Math.floor(now.getTime() / 86_400_000);
+      const pick = [0, 1, 2].filter((i) => i < curious.length).map((i) => curious[(day + i) % curious.length].ask);
+      return { conversation, history, approved, curious: pick };
+    });
+  } catch (e) {
+    if (!(e instanceof DuplicateSend)) throw e;
+    const again = await run((s) => turnStateOf(s, clientMessageId));
+    if (again.conversationId) return alreadyHandled(again.state === "finished" ? "finished" : "running", again.conversationId);
+    throw e;
+  }
+  const { conversation, history, approved, curious } = opened;
   emit({ type: "conversation", id: conversation.id, title: conversation.title });
   const openedFrom = input.module ?? conversation.contextModule;
   // Only memories relevant to this request (and earlier messages in this chat) reach the model.
@@ -180,7 +207,14 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   const hasFiles = last?.type === "user" && !!(last.images?.length || last.files?.length);
   const groups = new Set<ToolGroup>(selectToolGroups({ text: input.text, module: openedFrom, skills, history }));
   const effort = chooseEffort({ text: input.text, skills, hasFiles, coachMode });
-  const turn = provider.startTurn({ system, history, tools: toolSpecsFor(groups), cacheKey: promptCacheKey(user.id), effort });
+  const turn = provider.startTurn({
+    system,
+    history,
+    tools: toolSpecsFor(groups),
+    cacheKey: promptCacheKey(user.id),
+    effort,
+    signal: AbortSignal.timeout(TURN_DEADLINE_MS),
+  });
   let nextTools: ToolSpec[] | undefined;
   let toolResults: { callId: string; output: string }[] | undefined;
   let finalMessageId: string | null = null;
@@ -190,7 +224,8 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   // Only the Stop button ends a turn early. A dropped connection (a phone locking, a network blip) never does:
   // the turn runs to the end and is saved whether or not anyone is still listening.
   const stopIfAsked = async () => {
-    if (await stopRequested(user.id, conversation.id, startedAt)) throw new StoppedError();
+    if (Date.now() >= deadline) throw new TimedOutError();
+    if (await stopRequested(user.id, clientMessageId)) throw new StoppedError();
   };
   try {
     for (let step = 0; step < MAX_STEPS; step++) {
@@ -271,9 +306,10 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       errorKind = "cancelled";
     } else {
       console.error("[jarvis] turn failed", e);
+      const timedOut = e instanceof TimedOutError || Date.now() >= deadline;
       outcome = "error";
-      errorKind = errorKindOf(e, false);
-      const message = friendlyProviderError(e, assistantProfile(user.preferences).name);
+      errorKind = timedOut ? "timeout" : errorKindOf(e, false);
+      const message = timedOut ? TOOK_TOO_LONG : friendlyProviderError(e, assistantProfile(user.preferences).name);
       await run((s) =>
         s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: message, status: "error" }),
       );
@@ -326,6 +362,9 @@ export function friendlyProviderError(e: unknown, name: string = UNNAMED_ASSISTA
     return `${who} couldn't get through just now. Try again in a minute. Nothing else was changed.`;
   return `Something went wrong while ${name} was answering. Try again. Anything already shown as done was saved.`;
 }
+
+/** Saved and shown when a turn runs out of time (its deadline is a little before the platform's own limit). */
+export const TOOK_TOO_LONG = "That took too long, so I stopped. Try again.";
 
 export type { ToolResultRecord };
 

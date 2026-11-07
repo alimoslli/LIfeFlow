@@ -49,10 +49,13 @@ function respond(body) {
     });
     return textEvents(lines.join("\n\n"));
   }
-  const text = (last?.content ?? [])
-    .filter((c) => c.type === "input_text")
-    .map((c) => c.text)
-    .join("\n");
+  const text =
+    typeof last?.content === "string"
+      ? last.content
+      : (Array.isArray(last?.content) ? last.content : [])
+          .filter((c) => c.type === "input_text")
+          .map((c) => c.text)
+          .join("\n");
   const calls = text
     .split("\n")
     .map((l) => l.match(/^\/tool\s+([a-z_]+)\s*(.*)$/))

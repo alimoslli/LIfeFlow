@@ -24,4 +24,8 @@ export async function rateLimit(db: Database, key: string, limit: number, window
 export async function purgeOldRateLimits(db: Database) {
   // Keep 31 days: some limits count over 30 days (testing-phase monthly limits).
   await db.delete(rateLimitBuckets).where(sql`${rateLimitBuckets.windowStart} < now() - interval '31 days'`);
+  // Stop requests only matter while their turn runs (at most a few minutes).
+  await db
+    .delete(rateLimitBuckets)
+    .where(sql`${rateLimitBuckets.key} like 'jarvis:stop:%' and ${rateLimitBuckets.windowStart} < now() - interval '10 minutes'`);
 }

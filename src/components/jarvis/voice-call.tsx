@@ -1,4 +1,5 @@
 "use client";
+import { plainMessage } from "@/lib/plain-error";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AudioLines, Check, Mic, MicOff } from "lucide-react";
@@ -277,7 +278,7 @@ export function LiveVoice({
         await pc.setRemoteDescription({ type: "answer", sdp: await answer.text() });
       } catch (e) {
         if (cancelled) return;
-        hangUp((e as Error).message || "start failed");
+        hangUp(plainMessage((e as Error).message, "Couldn't start the call. Try again in a moment."));
       }
     })();
 
