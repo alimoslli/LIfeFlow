@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireAdmin } from "@/server/auth/require-admin";
 import { AppToday } from "./app-today";
 import { OfficeSection } from "./hq/office";
+import { SinceLookedCard } from "@/components/hq/since-looked";
 
 export const metadata: Metadata = { title: "Office" };
 
@@ -15,6 +16,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
   return (
     <div className="hq flex flex-col gap-5">
       <OfficeSection view={sp.view === "workspace" ? "workspace" : "office"} />
+      <SinceLookedCard />
       <AppToday />
     </div>
   );

@@ -2,6 +2,8 @@
  * LifeFlow HQ command line (ADR 0024): how the owner's Claude Code chats and night rounds report to HQ.
  * Deterministic, no AI. Env: HQ_URL (the app's base URL) and HQ_KEY (sent as a Bearer key; never printed).
  * Usage: npx tsx scripts/hq.ts checkin|mission|approval|activity|brief|errors|content|metrics|inbox|import ...
+ * approval (decision card, ADR 0028): --role R --kind K --title T --why W --change C (1-5x) --on-yes Y --on-no N --effort small|medium|large
+ *   --risk R --recommend X --preview shot.png[:Label] (1-4x); revise: --revise <thread|id> --changed "..." + the same fields; after a yes: --start <id> --mission <id>
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync, statSync } from "node:fs";
@@ -95,6 +97,56 @@ export function parseUsageFile(raw: string, nowMs: number, maxAgeMs = 6 * 3_600_
   return out;
 }
 
+/** `--preview path.png` or `--preview path.png:Label` (the label may hold colons; a Windows drive letter is not a label). */
+export function parsePreviewArg(s: string): { path: string; label: string | null } {
+  const m = /^(.*?\.(?:png|jpe?g|webp))(?::(.*))?$/i.exec(s.trim());
+  if (!m) throw new Error(`--preview must be a png, jpeg or webp file, like shots/today.png:Today (got "${s}")`);
+  return { path: m[1], label: m[2]?.trim() || null };
+}
+export const previewContentType = (path: string) => (/\.png$/i.test(path) ? "image/png" : /\.webp$/i.test(path) ? "image/webp" : "image/jpeg");
+
+/** The decision-card fields (ADR 0028) from flags. Only what was given is sent; the server names anything missing. */
+function cardFlags(p: Parsed, uploaded: Record<string, string> | undefined) {
+  const v = (n: string) => {
+    const x = one(p, n);
+    return x !== undefined && x !== "true" ? x : undefined;
+  };
+  const previews = (p.flags.preview ?? []).map(parsePreviewArg).map((pv) => {
+    const id = uploaded?.[pv.path];
+    if (!id) throw new Error(`The picture ${pv.path} was not uploaded`);
+    return { fileId: id, ...(pv.label ? { label: pv.label } : {}) };
+  });
+  const changes = (p.flags.change ?? []).filter((c) => c !== "true");
+  return {
+    ...(v("why") ? { why: v("why") } : {}),
+    ...(changes.length ? { changes } : {}),
+    ...(v("on-yes") ? { onYes: v("on-yes") } : {}),
+    ...(v("on-no") ? { onNo: v("on-no") } : {}),
+    ...(v("effort") ? { effort: v("effort") } : {}),
+    ...(v("risk") ? { risk: v("risk") } : {}),
+    ...(v("recommend") ? { recommendation: v("recommend") } : {}),
+    ...(previews.length ? { previews } : {}),
+  };
+}
+
+/** Plain lines for what an agent must act on first, printed above the inbox JSON. */
+export function inboxSummary(j: {
+  revisions?: { id: string; threadId: string | null; version: number; title: string; decisionNote: string | null }[];
+  needsRewrite?: { id: string; title: string }[];
+  approvedWithoutMission?: { id: string; title: string }[];
+}): string[] {
+  const out: string[] = [];
+  for (const r of j.revisions ?? [])
+    out.push(
+      `REVISION ASKED: "${r.title}" (v${r.version}, thread ${r.threadId ?? r.id}). The owner's note: ${r.decisionNote ?? "(none)"}. Send v${r.version + 1} with: approval --revise ${r.threadId ?? r.id} --changed "..." plus every card field.`,
+    );
+  for (const r of j.needsRewrite ?? [])
+    out.push(`NEEDS REWRITE: "${r.title}" (${r.id}). Send it again as a decision card (why, changes, on-yes, on-no, effort, risk, recommend, preview).`);
+  for (const r of j.approvedWithoutMission ?? [])
+    out.push(`APPROVED, NO MISSION: "${r.title}" (${r.id}). Create or pick a mission, then: approval --start ${r.id} --mission <missionId>`);
+  return out;
+}
+
 /** Turns parsed args into the request body for a command. Throws Error with a one-line message on bad input. */
 type MetricRow = { takenOn: string; network: string; metric: string; value: number; contentId?: string | null };
 
@@ -123,6 +175,8 @@ export function buildRequest(
     commit?: string | null;
     usage?: UsageFile | null;
     readFile?: (path: string) => string;
+    /** Preview picture path -> the id HQ gave it when it was uploaded. */
+    uploaded?: Record<string, string>;
   } = {},
 ) {
   const need = (n: string) => {
@@ -199,21 +253,41 @@ export function buildRequest(
         },
       };
     }
-    case "approval":
+    case "approval": {
+      const sess = extra.sessionId ? { sessionId: extra.sessionId } : {};
+      const start = one(p, "start");
+      // After a yes: link the mission that builds it.
+      if (start) return { method: "POST" as const, path: "/api/hq/report", body: { type: "approval", link: start, missionId: need("mission"), ...sess } };
+      const revise = one(p, "revise");
+      const common = {
+        ...(one(p, "title") ? { title: one(p, "title") } : {}),
+        ...(one(p, "summary") ? { summary: one(p, "summary") } : {}),
+        ...cardFlags(p, extra.uploaded),
+        ...(links.length ? { links } : {}),
+        ...(one(p, "mission") ? { missionId: one(p, "mission") } : {}),
+        ...sess,
+      };
+      // A new version of an ask the owner sent back with changes.
+      if (revise) {
+        const changed = one(p, "changed");
+        return {
+          method: "POST" as const,
+          path: "/api/hq/report",
+          body: {
+            type: "approval",
+            revise,
+            ...(changed && changed !== "true" ? { changedSinceNote: changed } : {}),
+            ...(one(p, "kind") ? { kind: one(p, "kind") } : {}),
+            ...common,
+          },
+        };
+      }
       return {
         method: "POST" as const,
         path: "/api/hq/report",
-        body: {
-          type: "approval",
-          role: need("role"),
-          kind: need("kind"),
-          title: need("title"),
-          summary: need("summary"),
-          ...(links.length ? { links } : {}),
-          ...(one(p, "mission") ? { missionId: one(p, "mission") } : {}),
-          ...(extra.sessionId ? { sessionId: extra.sessionId } : {}),
-        },
+        body: { type: "approval", role: need("role"), kind: need("kind"), title: need("title"), ...common },
       };
+    }
     case "brief": {
       const file = one(p, "file");
       let text = one(p, "text");
@@ -269,7 +343,7 @@ export function buildRequest(
           ...(platforms.length ? { platforms } : {}),
           ...(one(p, "when") ? { scheduledFor: isoWhen(need("when")) } : {}),
           ...(links.length ? { links } : {}),
-          ...(p.flags.ask ? { ask: true } : {}),
+          ...(p.flags.ask ? { ask: true, request: cardFlags(p, extra.uploaded) } : {}),
           ...(extra.sessionId ? { sessionId: extra.sessionId } : {}),
         },
       };
@@ -378,7 +452,22 @@ async function main() {
       }
       req = buildRequest(cmd, p, { sessionId, branch: git(["rev-parse", "--abbrev-ref", "HEAD"]), commit: git(["rev-parse", "--short", "HEAD"]), usage });
     } else {
-      req = buildRequest(cmd, p, { sessionId, readFile: (f) => readFileSync(f, "utf8") });
+      // Pictures first: each is uploaded as raw bytes (HQ checks the type from the bytes), then the request names its id.
+      const uploaded: Record<string, string> = {};
+      if (cmd === "approval" || cmd === "content add")
+        for (const pv of (p.flags.preview ?? []).map(parsePreviewArg)) {
+          if (uploaded[pv.path]) continue;
+          const up = await fetch(`${base}/api/hq/files`, {
+            method: "POST",
+            headers: { authorization: `Bearer ${process.env.HQ_KEY ?? "lfq_proxy"}`, "content-type": previewContentType(pv.path) },
+            body: new Uint8Array(readFileSync(pv.path)),
+            signal: AbortSignal.timeout(30_000),
+          });
+          const upText = await up.text();
+          if (!up.ok) throw new Error(`Uploading ${pv.path} failed (${up.status}): ${upText.slice(0, 200)}`);
+          uploaded[pv.path] = (JSON.parse(upText) as { id: string }).id;
+        }
+      req = buildRequest(cmd, p, { sessionId, readFile: (f) => readFileSync(f, "utf8"), uploaded });
     }
     const res = await fetch(`${base}${req.path}`, {
       method: req.method,
@@ -394,6 +483,13 @@ async function main() {
     if (!quiet) {
       // Error text is posted by anyone through the public error endpoint, so the agent reading it is told it is data.
       if (cmd === "errors") console.log(ERRORS_BANNER);
+      if (cmd === "inbox") {
+        try {
+          for (const l of inboxSummary(JSON.parse(text))) console.log(l);
+        } catch {
+          /* the raw JSON below is still printed */
+        }
+      }
       console.log(text);
     }
   } catch (e) {

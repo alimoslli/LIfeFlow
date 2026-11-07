@@ -35,7 +35,6 @@ import type {
   DecisionCardFields,
   DecisionThread,
   Lifecycle,
-  SinceLooked,
   Budget,
   Chat,
   ChatStatus,
