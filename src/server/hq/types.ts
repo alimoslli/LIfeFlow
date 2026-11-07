@@ -162,7 +162,7 @@ export type OfficeSnapshot = {
   now: Date;
   employees: EmployeeCard[];
   founder: { pendingApprovals: number };
-  counts: { working: number; done: number; asleep: number; offline: number };
+  counts: { working: number; done: number; ready: number; asleep: number; offline: number };
   /** Pending approvals, oldest first (max 20). */
   approvals: Approval[];
   /** Newest first (max 12). */

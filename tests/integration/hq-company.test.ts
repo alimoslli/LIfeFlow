@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as errorsGET } from "@/app/api/hq/errors/route";
 import { GET as inboxGET } from "@/app/api/hq/inbox/route";
 import { POST as reportPOST } from "@/app/api/hq/report/route";
@@ -91,6 +91,12 @@ beforeEach(async () => {
 const by = async (role: string) => (await officeSnapshot(db())).employees.find((e) => e.role === role)!;
 
 describe("the team", () => {
+  // Pinned at night (Tuesday 2 AM Pacific), so rooms read asleep, not "ready" (on duty), whatever time the suite runs.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-10T10:00:00Z"));
+  });
+  afterEach(() => vi.useRealTimers());
   it("has the COO and six departments, in order", () => {
     expect(EMPLOYEES.map((e) => [e.role, e.title])).toEqual([
       ["assistant", "COO"],
@@ -195,6 +201,30 @@ describe("the team", () => {
     const m = await createMission(db(), owner, { role: "assistant", title: "Run the round" });
     await updateMission(db(), owner, m.id, { status: "doing" });
     expect(await by("assistant")).toMatchObject({ state: "working", line: "Run the round" });
+  });
+
+  it("by day the team is Ready: awake at their desks, on call, with the COO's next check-in and last pass", async () => {
+    vi.setSystemTime(new Date("2026-11-10T22:00:00Z")); // Tuesday 2 PM Pacific
+    // No COO chat yet: departments with no chat of their own can't be reached, so they stay asleep.
+    expect((await by("qa")).state).toBe("sleeping");
+    await saveChat(db(), admin, { id: COS, role: "assistant", title: "LF COO", isPrimary: true });
+    await recordCheckin(db(), { sessionId: COS, status: "idle", summary: "Pass: 2 errors became fixes" });
+    const s = await officeSnapshot(db());
+    const card = (r: string) => s.employees.find((e) => e.role === r)!;
+    expect(card("assistant")).toMatchObject({ state: "ready", line: "Next check-in 2:13 PM · Last: Pass: 2 errors became fixes" });
+    expect(card("qa")).toMatchObject({ state: "ready", line: "On call · next round Thu 3:07 AM" });
+    expect(card("researcher")).toMatchObject({ state: "ready", line: "On call · next round Thu 3:07 AM" });
+    expect(card("designer").state).toBe("offline"); // no chat connected: never "ready"
+    expect(s.counts).toMatchObject({ ready: 4, offline: 3, working: 0 });
+    // A pass running: the COO works, the departments stay ready (passes are his alone).
+    await recordCheckin(db(), { sessionId: COS, status: "working", summary: "Pass started" });
+    expect(await by("assistant")).toMatchObject({ state: "working", line: "Pass started" });
+    expect((await by("qa")).state).toBe("ready");
+    // Late at night everyone sleeps again, with when they wake.
+    await recordCheckin(db(), { sessionId: COS, status: "idle", summary: "Pass: quiet" });
+    vi.setSystemTime(new Date("2026-11-11T07:30:00Z")); // Tuesday 11:30 PM Pacific
+    expect(await by("assistant")).toMatchObject({ state: "sleeping", line: "Wakes Wed 3:41 AM" });
+    expect(await by("qa")).toMatchObject({ state: "sleeping", line: "Wakes Thu 3:07 AM, night round" });
   });
 });
 

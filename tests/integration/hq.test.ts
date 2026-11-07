@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { eq, like } from "drizzle-orm";
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as inboxGET } from "@/app/api/hq/inbox/route";
 import { POST as reportPOST } from "@/app/api/hq/report/route";
 import { closeDb, getDb } from "@/server/db/client";
@@ -307,12 +307,18 @@ describe("import seed", () => {
 });
 
 describe("office snapshot, detail, summary", () => {
+  // Pinned at night (Tuesday 2 AM Pacific), so rooms read asleep, not "ready" (on duty), whatever time the suite runs.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-10T10:00:00Z"));
+  });
+  afterEach(() => vi.useRealTimers());
   it("is honest with no data", async () => {
     const s = await officeSnapshot(db());
     expect(s.employees.map((e) => e.role)).toEqual(["assistant", "developer", "designer", "researcher", "marketing", "qa", "support"]);
     // Research, QA and Customer Success work in the COO's rounds (no chat of their own): asleep, never offline.
     expect(s.employees.map((e) => e.state)).toEqual(["offline", "offline", "offline", "sleeping", "offline", "sleeping", "sleeping"]);
-    expect(s.counts).toEqual({ working: 0, done: 0, asleep: 3, offline: 4 });
+    expect(s.counts).toEqual({ working: 0, done: 0, ready: 0, asleep: 3, offline: 4 });
     expect(s.employees.find((e) => e.role === "qa")?.line).toMatch(/^Wakes (Sun|Tue|Thu) 3:07 AM, night round$/);
     expect(s.employees.every((e) => e.note === null)).toBe(true);
     expect(s.budget).toMatchObject({ weekPct: null, roundsPct: null, target: 40, ceiling: 50 });

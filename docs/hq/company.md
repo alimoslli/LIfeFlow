@@ -16,7 +16,7 @@ This is how the company runs. It sits on top of `docs/team.md` (cost rules, the 
 ```
 
 - **CEO (the owner):** decides direction, answers the yes/no list and okays pictures. Talks only to the COO. The other chats stay open for when the owner wants to dig in.
-- **COO (head manager):** `.claude/agents/coo.md`. Runs every scheduled round, decides the order of work, hands work between departments, makes the decisions it's allowed to make, and brings the CEO one short brief per round.
+- **COO (head manager):** `.claude/agents/coo.md`, on Opus in the "LF COO" chat (owner, 2026-11-07: "always there, like a real COO"). A light pass every 2 hours from 8 AM to 10 PM, plus the night rounds. Runs every scheduled round, decides the order of work, hands work between departments, makes the decisions it's allowed to make, and brings the CEO one short brief per round.
 - **CMO (coming soon, owner 2026-11-07):** a real person, the owner's partner, over Marketing & Growth. HQ shows the seat as "Coming soon"; their own sign-in is a separate step with its own security review.
 - **Departments.** Each department is a lead agent: a role file the COO starts inside a round, at most two at a time, Sonnet by default. Each has a room in HQ.
 
@@ -29,7 +29,7 @@ This is how the company runs. It sits on top of `docs/team.md` (cost rules, the 
 | Marketing & Growth | Marketing | `marketer.md` | Wednesday | Concepts and drafts, scheduling approved posts, real metrics | CEO (publish yes/no), Research (what resonated) |
 | Customer Success | Support | `customer-success.md` | Every night round | Error reports, turned into fixes; patterns in what breaks for people | Engineering, COO |
 
-**Who is awake (owner, 2026-11-07, ADR 0029).** Everyone is asleep unless real work is running. A room shows Working only while a round it works in runs (from the COO's round_start and round_end check-ins), or while its own chat checks in on a mission in progress. QA, Customer Success and Research have no chat of their own: they work in the COO's rounds. Anything waiting on the CEO (a yes, a blocked mission, a chat's question) is a note on the door, never the room's state. Each sleeping room says when it next wakes.
+**Who is awake (owner, 2026-11-07, ADR 0029).** Nobody shows Working unless real work is running. From 8 AM to 11 PM in the CEO's time zone everyone who can be reached is **Ready** (awake at their desk, on call: their own chat is connected, or the COO's for QA, Customer Success and Research), and at night they are **Asleep**. A room shows Working only while a round it works in runs (from the COO's round_start and round_end check-ins), or while its own chat checks in on a mission in progress. QA, Customer Success and Research have no chat of their own: they work in the COO's rounds. Anything waiting on the CEO (a yes, a blocked mission, a chat's question) is a note on the door, never the room's state. Each sleeping room says when it next wakes.
 
 ## How the departments work together
 Work moves between departments only as **HQ records**, never as chat. Every handoff can be seen, has an owner, and a later round picks it up.
