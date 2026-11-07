@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { closeDb } from "@/server/db/client";
 import { getTool } from "@/server/jarvis/registry";
-import { createEmployer, createShift, listShifts } from "@/server/services/work";
+import { createEmployer, createShift, listShifts, updateShift } from "@/server/services/work";
 import { makeUser, TZ } from "../helpers";
 
 afterAll(closeDb);
@@ -168,6 +168,28 @@ describe("rule-given breaks follow the rule, hand-set ones do not", () => {
     await call("update_shift", { shiftId: b.id, endTime: "12:00" });
     const rows = await run((s) => listShifts(s, TZ, "2027-03-01", "2027-03-02"));
     expect(rows.map((x) => x.breakMinutes)).toEqual([0, 45]);
+  });
+
+  it("an edit from the page that sends back the same break, and recorded hours, follow the rule (review)", async () => {
+    const { run, call } = await setup();
+    const job = await run((s) => createEmployer(s, { name: "Library", hourlyRateCents: 2300 }));
+    await call("update_job", { id: job.id, breakRules: RULE });
+    const added = await call("add_shifts", { shifts: [{ jobId: job.id, date: DAYS[0], startTime: "08:00", endTime: "12:00" }] });
+    const id = added.created[0].id as string;
+    expect(added.created[0].unpaidBreakMinutes).toBe(0);
+    // The page's form sends the break it shows (0) with the new times: a 9 h shift now gets the rule's 60.
+    await run((s) => updateShift(s, TZ, id, { startTime: "08:00", endTime: "17:00", breakMinutes: 0 }));
+    expect((await run((s) => listShifts(s, TZ, DAYS[0], DAYS[0])))[0].breakMinutes).toBe(60);
+    // A hand-set break the form changes stays as typed.
+    await run((s) => updateShift(s, TZ, id, { breakMinutes: 45 }));
+    expect((await run((s) => listShifts(s, TZ, DAYS[0], DAYS[0])))[0].breakMinutes).toBe(45);
+
+    // Recorded hours: scheduled 5 h 50 (no break), worked 6 h 30, so the rule gives 30.
+    const short = await call("add_shifts", { shifts: [{ jobId: job.id, date: DAYS[1], startTime: "08:00", endTime: "13:50" }] });
+    const sid = short.created[0].id as string;
+    expect(short.created[0].unpaidBreakMinutes).toBe(0);
+    await call("record_shift_hours", { shiftId: sid, clockIn: "08:00", clockOut: "14:30" });
+    expect((await run((s) => listShifts(s, TZ, DAYS[1], DAYS[1])))[0].breakMinutes).toBe(30);
   });
 
   it("refuses a break as long as the shift length it applies to", async () => {

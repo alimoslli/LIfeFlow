@@ -303,9 +303,10 @@ export async function updateShift(scope: UserScope, tz: string, id: string, inpu
   const end = d.endTime ?? localTimeOf(shift.endsAt, tz);
   const { startsAt, endsAt } = shiftInstants(date, start, end, tz);
   if (endsAt.getTime() - startsAt.getTime() > 24 * 3600_000) throw new ServiceError("Shifts cannot exceed 24 hours.");
-  // A break the job's rule gave follows the new length; a hand-set one stays.
+  // A break the job's rule gave follows the new length; a hand-set one stays. The page's form always sends the break it
+  // shows, so the same value as before counts as "not changed by hand".
   let ruleBreak: number | undefined;
-  if (d.breakMinutes == null && !shift.breakPaid) {
+  if ((d.breakMinutes == null || d.breakMinutes === shift.breakMinutes) && !shift.breakPaid) {
     const [job] = await scope.tx
       .select({ schedule: employers.schedule })
       .from(employers)
@@ -349,9 +350,21 @@ export async function recordShiftHours(scope: UserScope, tz: string, id: string,
   if (!shift) throw notFound("Shift");
   const date = localDateOf(shift.startsAt, tz);
   const { startsAt, endsAt } = shiftInstants(date, d.recordedStartTime, d.recordedEndTime, tz);
+  // A break the job's rule gave (or none) follows the recorded length; a hand-set one stays.
+  let ruleBreak: number | undefined;
+  if (!shift.breakPaid) {
+    const [job] = await scope.tx
+      .select({ schedule: employers.schedule })
+      .from(employers)
+      .where(and(eq(employers.id, shift.employerId), eq(employers.userId, scope.userId)));
+    const rules = job?.schedule?.breakRules;
+    const scheduledRule = rules?.length ? breakForLength(rules, minutesBetween(shift.startsAt, shift.endsAt)) : 0;
+    if (rules?.length && (shift.breakMinutes === 0 || shift.breakMinutes === scheduledRule))
+      ruleBreak = breakForLength(rules, minutesBetween(startsAt, endsAt));
+  }
   const [row] = await scope.tx
     .update(workShifts)
-    .set({ recordedStart: startsAt, recordedEnd: endsAt, status: "worked" })
+    .set({ recordedStart: startsAt, recordedEnd: endsAt, status: "worked", ...(ruleBreak !== undefined && { breakMinutes: ruleBreak }) })
     .where(eq(workShifts.id, id))
     .returning();
   return row;
