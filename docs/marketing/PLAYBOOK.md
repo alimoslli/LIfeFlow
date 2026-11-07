@@ -150,3 +150,11 @@ Update after every video. Newest at the top.
 - Don't change the app while doing marketing work unless asked.
 - The owner's clips are direction, not a template: the final video doesn't have to copy their exact movements.
 - Final videos are made with Higgsfield using the one LifeFlow character (section 3b); the owner provides credits. Check the price first and ask before spending past the agreed budget.
+- **Growth push (owner, 2026-11-07):** "I will do anything to get those numbers up as long as we're working in the correct direction." Instagram @lifeflowweb is the connected account (Metricool).
+  - **Posting:** one tap per post stays. Every post goes to Metricool for review, and the owner presses publish.
+  - **Format follows the evidence:** for each post, the marketer picks the format the research and real numbers say will reach students:
+    - a reel the owner films from a shot list (`b-roll-shot-list`);
+    - a Higgsfield reel with the LifeFlow character (credits only with a `paid` approval);
+    - a carousel (`carousel-builder`, `viral-carousel`).
+  - **Says why:** each draft states why that format, with the source or the metric. Every few weeks it checks what actually grew (`analytics-readout`, `content-audit`) and shifts the mix.
+  - **Content skills:** they live in `docs/marketing/skills/` (see its README).
