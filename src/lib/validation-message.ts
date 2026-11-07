@@ -19,6 +19,9 @@ const LABELS: Record<string, string> = {
   notes: "notes",
 };
 
+/** Zod's own wording ("Too small: expected number to be >=0", "Invalid input: …"). Anything else was written for people. */
+const LIBRARY_WORDING = /^(invalid|too (small|big)|expected|required|unrecognized|number must|string must|array must)\b|expected .+ received|>=|<=/i;
+
 /** One validation problem as a plain sentence: no field names, no library wording. */
 export function plainIssue(i: Pick<ZodIssue, "code" | "path" | "message"> & Record<string, unknown>): string {
   const key = i.path.length ? String(i.path.at(-1)) : "";
@@ -31,6 +34,8 @@ export function plainIssue(i: Pick<ZodIssue, "code" | "path" | "message"> & Reco
   const show = (n: number) => (money ? `$${(n / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}` : String(n));
   const noun = money ? "an amount" : "a number";
   const code = String(i.code);
+  // A message the schema wrote for people (e.g. "Give the to-do a title.") is already plain: keep it.
+  if (typeof i.message === "string" && i.message && !LIBRARY_WORDING.test(i.message)) return i.message;
 
   switch (code) {
     case "too_small":

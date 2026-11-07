@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { plainValidation } from "@/lib/validation-message";
+import { plainIssue, plainValidation } from "@/lib/validation-message";
 
 const say = (schema: z.ZodType, value: unknown) => {
   const r = schema.safeParse(value);
@@ -40,5 +40,15 @@ describe("validation messages are plain", () => {
     for (const c of cases) {
       expect(c).not.toMatch(/netCents|grossCents|someInternalField|expected|Cents|received|Invalid input/i);
     }
+  });
+
+  it("keeps a message the schema wrote for people, and replaces only the library's wording", () => {
+    expect(plainIssue({ code: "too_small", path: ["title"], message: "Give the to-do a title.", minimum: 1, origin: "string" })).toBe(
+      "Give the to-do a title.",
+    );
+    expect(plainIssue({ code: "custom", path: ["timezone"], message: "Unknown time zone" })).toBe("Unknown time zone");
+    expect(plainIssue({ code: "too_small", path: ["netCents"], message: "Too small: expected number to be >=0", minimum: 0, origin: "number" })).not.toMatch(
+      /expected|netCents/,
+    );
   });
 });

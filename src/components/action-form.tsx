@@ -44,7 +44,11 @@ function useReportedAction(action: Action, report: (r: ActionState) => void) {
 function restoreValues(form: HTMLFormElement, sent: FormData) {
   for (const el of Array.from(form.elements)) {
     if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) || !el.name) continue;
-    if (el instanceof HTMLInputElement && (el.type === "hidden" || el.type === "file" || el.type === "submit" || el.type === "button")) continue;
+    if (
+      el instanceof HTMLInputElement &&
+      (el.type === "hidden" || el.type === "file" || el.type === "submit" || el.type === "button" || el.type === "password")
+    )
+      continue;
     const values = sent.getAll(el.name).filter((v): v is string => typeof v === "string");
     if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) el.checked = values.includes(el.value);
     else if (el instanceof HTMLSelectElement && el.multiple) for (const o of Array.from(el.options)) o.selected = values.includes(o.value);
