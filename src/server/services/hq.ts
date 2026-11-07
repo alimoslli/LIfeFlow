@@ -977,10 +977,14 @@ const cardValues = (d: z.output<typeof approvalInputSchema> | z.output<typeof re
   links: d.links ?? [],
 });
 
-/** Every picture a card lists must be one HQ stored: a made-up id is refused, never shown as a broken image. */
+/**
+ * Every picture a card lists must be one HQ stored: a made-up id is refused, never shown as a broken image. The pictures
+ * are marked fresh in the card's own transaction: the row lock makes a running purge wait, and once the card is saved the
+ * purge's re-check skips them. If the purge got there first, the card is refused cleanly instead of saved with a hole.
+ */
 async function assertPreviewsExist(tx: Tx, previews: { fileId: string }[]): Promise<void> {
   const ids = [...new Set(previews.map((p) => p.fileId))];
-  const rows = await tx.select({ id: hqFiles.id }).from(hqFiles).where(inArray(hqFiles.id, ids));
+  const rows = await tx.update(hqFiles).set({ createdAt: new Date() }).where(inArray(hqFiles.id, ids)).returning({ id: hqFiles.id });
   if (rows.length !== ids.length) throw new HqError("A picture in previews was not uploaded. Upload it first (--preview path.png).");
 }
 

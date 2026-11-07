@@ -512,6 +512,33 @@ describe("review fixes", () => {
     expect(left).not.toContain(filler.id);
   });
 
+  it("a picture a card is using can't be purged: reuse marks it fresh, and a purge running while the card is saved waits and skips it (review R2, R3)", async () => {
+    // R2: an old unused picture uploaded again is fresh again, so the daily purge keeps it for the card that follows.
+    const old = await makePreview();
+    await db()
+      .update(hqFiles)
+      .set({ createdAt: new Date(Date.now() - 30 * H) });
+    const [file] = await db().select().from(hqFiles).where(eq(hqFiles.id, old));
+    expect((await storePreview(db(), file.data, "image/png")).id).toBe(old);
+    await purgeUnusedPreviews(db());
+    expect(await db().select({ id: hqFiles.id }).from(hqFiles).where(eq(hqFiles.id, old))).toHaveLength(1);
+
+    // R3: the picture is old and unused again; the purge starts on another connection while the card is being saved.
+    await db()
+      .update(hqFiles)
+      .set({ createdAt: new Date(Date.now() - 30 * H) });
+    let purge: Promise<number> | undefined;
+    const ap = await db().transaction(async (tx) => {
+      const a = await createApproval(db(), agent, { ...(await card(base)), previews: [{ fileId: old }] }, { tx, notify: false });
+      purge = purgeUnusedPreviews(db()); // waits on the row the card just marked fresh
+      await new Promise((r) => setTimeout(r, 300));
+      return a;
+    });
+    await purge;
+    expect(ap.id).toBeTruthy();
+    expect(await db().select({ id: hqFiles.id }).from(hqFiles).where(eq(hqFiles.id, old))).toHaveLength(1);
+  });
+
   it("the summary shows the newest fixes first, and never counts a mission tied to any ask, old or new", async () => {
     for (let i = 0; i < 12; i++) {
       const m = await createMission(db(), agent, { role: "developer", title: `Fix ${i}` });

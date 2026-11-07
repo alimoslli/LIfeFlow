@@ -39,8 +39,9 @@ export async function storePreview(
   if (declared && declared !== real) throw new HqError(`The file is a ${real.replace("image/", "")}, not a ${declared.replace("image/", "")}.`);
   const buf = Buffer.from(bytes);
   const sha256 = createHash("sha256").update(buf).digest("hex");
-  // The same picture again is the same file: nothing new is stored.
-  const [same] = await db.select({ id: hqFiles.id }).from(hqFiles).where(eq(hqFiles.sha256, sha256)).limit(1);
+  // The same picture again is the same file: nothing new is stored. Using it again makes it fresh, so the daily purge of
+  // unused pictures (older than a day) can't remove it before the card that uses it is saved.
+  const [same] = await db.update(hqFiles).set({ createdAt: new Date() }).where(eq(hqFiles.sha256, sha256)).returning({ id: hqFiles.id });
   if (same) return { id: same.id, contentType: real, size: buf.length };
   const [day] = await db
     .select({ n: sql<number>`coalesce(sum(${hqFiles.size}), 0)::float8` })
