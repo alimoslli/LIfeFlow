@@ -9,10 +9,18 @@ import http from "node:http";
 const port = Number(process.env.FAKE_OPENAI_PORT ?? 4010);
 let n = 0;
 
+// A client can hang up at any time (the tests drop connections on purpose); a write to it must never crash this server.
+const alive = (res) => !res.destroyed && !res.writableEnded;
+process.on("uncaughtException", (e) => console.error("[fake-openai] ignored", e?.message));
+
 function sse(res, events) {
+  if (!alive(res)) return;
   res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache" });
-  for (const e of events) res.write(`event: ${e.type}\ndata: ${JSON.stringify({ sequence_number: n++, ...e })}\n\n`);
-  res.end();
+  for (const e of events) {
+    if (!alive(res)) return;
+    res.write(`event: ${e.type}\ndata: ${JSON.stringify({ sequence_number: n++, ...e })}\n\n`);
+  }
+  if (alive(res)) res.end();
 }
 
 function respond(body) {
@@ -175,6 +183,8 @@ globalThis.__lfWebFixtures = fixtures;
 
 http
   .createServer((req, res) => {
+    res.on("error", () => {});
+    req.on("error", () => {});
     if (req.method === "GET") return res.end("ok");
     let raw = "";
     req.on("data", (c) => (raw += c));
@@ -199,8 +209,10 @@ http
       // "/slow <ms>" in the user's message holds the answer back, so tests can drop the connection while the server is still working.
       const slow = JSON.stringify(body.input ?? []).match(/\/slow (\d+)/);
       const events = respond(body);
-      if (slow) setTimeout(() => sse(res, events), Math.min(Number(slow[1]), 15_000));
-      else sse(res, events);
+      if (slow) {
+        const timer = setTimeout(() => sse(res, events), Math.min(Number(slow[1]), 15_000));
+        res.on("close", () => clearTimeout(timer));
+      } else sse(res, events);
     });
   })
   .listen(port, "127.0.0.1", () => console.log(`fake openai on ${port}`));
