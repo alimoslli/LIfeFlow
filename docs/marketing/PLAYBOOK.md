@@ -148,7 +148,7 @@ Update after every video. Newest at the top.
 
 Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playbook from that chat, with every owner reaction, is on branch `claude/lifeflow-ad-reel-higgsfield-s3r3v1` and still needs merging here.
 
-**The real numbers: unknown.** Metricool shows @lifeflowweb with 0 posts and 0 followers, but the owner doesn't use Metricool and the account was never properly connected (owner, 2026-11-07), so those zeros mean nothing. Until Instagram is connected for real, the marketer has no audience numbers. It says "no numbers yet" and never reads Metricool's zeros as results. The drafts below were judged by the owner, not the audience.
+**The real numbers: unknown.** Metricool shows @lifeflowweb with 0 posts and 0 followers, but the owner doesn't use Metricool and the account was never properly connected (owner, 2026-11-07), so those zeros mean nothing. Until Instagram is connected for real, the marketer has no audience numbers. It says "no numbers yet" and never reads Metricool's zeros as results. **Posted (owner, 2026-11-07):** the owner posted several of the videos below straight to Instagram (not all of them; which ones isn't recorded yet). Their real views, likes, saves and followers are the first audience data LifeFlow has. Read them as soon as Instagram is connected, then update this section with which videos were posted and how each did.
 
 **Tried (Nov 2 to 6, all unposted):**
 1. **App screen-recording set:** a "Too lazy to budget?" reel, four 15-second problem videos, a sign-up ad and a logo wall. The sign-up ad still contains "calm place"; fix it before posting.
