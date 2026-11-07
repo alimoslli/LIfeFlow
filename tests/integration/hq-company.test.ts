@@ -46,6 +46,7 @@ import { createContent, getContent, getControls, saveControls, updateContent } f
 import { recordError } from "@/server/services/error-reports";
 import { saveSubscription } from "@/server/services/push";
 import { makeUser } from "../helpers";
+import { card, reqCard } from "../hq-fixtures";
 
 afterAll(async () => {
   setHqPushSender(null);
@@ -114,7 +115,7 @@ describe("the team", () => {
     await updateMission(db(), owner, m.id, { status: "doing", sessionId: COS });
     qa = await by("qa");
     expect(qa).toMatchObject({ state: "working", line: "Audit Plan on phone (in LF Chief of Staff)" });
-    await createApproval(db(), agent, { role: "qa", kind: "other", title: "Need a yes", summary: "s" });
+    await createApproval(db(), agent, await card({ role: "qa", kind: "other", title: "Need a yes" }));
     expect((await by("qa")).state).toBe("needs_you");
     await db().delete(hqApprovals);
     const b = await createMission(db(), owner, { role: "support", title: "Blocked thing" });
@@ -124,7 +125,7 @@ describe("the team", () => {
 
   it("the Chief of Staff's state comes from its chat, not app logic", async () => {
     expect((await by("assistant")).state).toBe("offline");
-    await createApproval(db(), agent, { role: "developer", kind: "other", title: "x", summary: "s" });
+    await createApproval(db(), agent, await card({ role: "developer", kind: "other", title: "x" }));
     expect((await by("assistant")).state).toBe("offline"); // pending approvals no longer make it "working"
     await db().delete(hqApprovals);
     await saveChat(db(), admin, { id: COS, role: "assistant", title: "LF Chief of Staff", isPrimary: true });
@@ -142,7 +143,7 @@ describe("the team", () => {
       .where(eq(hqChats.id, COS));
     expect((await by("assistant")).state).toBe("sleeping");
     await recordCheckin(db(), { sessionId: COS, status: "working" });
-    await createApproval(db(), agent, { role: "assistant", kind: "other", title: "Need a yes", summary: "s" });
+    await createApproval(db(), agent, await card({ role: "assistant", kind: "other", title: "Need a yes" }));
     expect((await by("assistant")).state).toBe("needs_you");
     await db().delete(hqApprovals);
     await recordCheckin(db(), { sessionId: COS, status: "idle" });
@@ -162,7 +163,7 @@ describe("briefs", () => {
     await expect(recordBrief(db(), agent, { body: "ok", needsYou: -1 })).rejects.toThrow(HqError);
     expect(await latestBrief(db())).toBeNull();
     expect((await officeSnapshot(db())).brief).toBeNull();
-    await createApproval(db(), agent, { role: "developer", kind: "other", title: "x", summary: "s" });
+    await createApproval(db(), agent, await card({ role: "developer", kind: "other", title: "x" }));
     const b1 = await recordBrief(db(), agent, { body: "Good round.\nDone: one fix." });
     expect(b1.needsYou).toBe(1);
     const b2 = await recordBrief(db(), agent, { body: "Second brief", needsYou: 0 });
@@ -298,7 +299,7 @@ describe("inbox chats and API", () => {
 
 describe("marketing fixes", () => {
   it("dropping content closes its pending publish request as declined", async () => {
-    const c = await createContent(db(), agent, { kind: "post", title: "Drop me", ask: true });
+    const c = await createContent(db(), agent, { kind: "post", title: "Drop me", ask: true, request: await reqCard() });
     await updateContent(db(), owner, c.id, { status: "dropped" });
     const [a] = await db().select().from(hqApprovals).where(eq(hqApprovals.id, c.approvalId!));
     expect(a).toMatchObject({ status: "declined", decisionNote: "Dropped by you" });
@@ -316,7 +317,7 @@ describe("marketing fixes", () => {
     try {
       const { users } = await import("@/server/db/schema");
       await db().update(users).set({ timezone: "America/New_York" }).where(eq(users.id, user.id));
-      const c = await createContent(db(), agent, { kind: "post", title: "Timed", scheduledFor: "2026-12-01T23:30:00Z", ask: true });
+      const c = await createContent(db(), agent, { kind: "post", title: "Timed", scheduledFor: "2026-12-01T23:30:00Z", ask: true, request: await reqCard() });
       const [a] = await db().select().from(hqApprovals).where(eq(hqApprovals.id, c.approvalId!));
       expect(a.summary).toContain("6:30 PM");
       expect(a.summary).toContain("EST");
@@ -330,7 +331,7 @@ describe("marketing fixes", () => {
 
 describe("decision rights have no API", () => {
   it("an agent cannot decide an approval (only decideApproval, called by the owner's action)", async () => {
-    const a = await createApproval(db(), agent, { role: "developer", kind: "feature", title: "New thing", summary: "s" });
+    const a = await createApproval(db(), agent, await card({ role: "developer", kind: "feature", title: "New thing" }));
     const { token } = await createHqKey(db(), admin, "k");
     const res = await reportPOST(
       new Request("https://lifeflow.test/api/hq/report", {

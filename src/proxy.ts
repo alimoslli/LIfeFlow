@@ -23,6 +23,7 @@ const PUBLIC = [
   "/api/hq/report",
   "/api/hq/inbox",
   "/api/hq/errors",
+  "/api/hq/files",
   "/api/integrations/plaid/webhook",
   "/api/cron/sync",
   "/api/cron/notify",
