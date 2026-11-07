@@ -1,5 +1,6 @@
-import { like } from "drizzle-orm";
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { randomBytes } from "node:crypto";
+import { eq, like } from "drizzle-orm";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/apple-health/ingest/route";
 import { closeDb, getDb } from "@/server/db/client";
 import { rateLimitBuckets } from "@/server/db/schema";
@@ -49,6 +50,43 @@ describe("Apple Health ingest route: keys and limits", () => {
     expect((await POST(req(wrong(2), JSON.stringify(day)))).status).toBe(429);
     // Another IP is unaffected.
     expect((await POST(req(wrong(3), JSON.stringify(day), "198.51.100.9"))).status).toBe(401);
+  });
+
+  it("rotating random keys from one IP all land in one IP bucket and hit its limit; badly shaped ones make no row", async () => {
+    // Pin the clock mid-hour so the hourly window can't roll over during the run (only Date is faked; I/O runs normally).
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-07T12:30:00Z"));
+    try {
+      const ip = "198.51.100.77";
+      const rand = (bytes: number) => randomBytes(bytes).toString("base64url");
+      const NO_KEY = { error: "Invalid or revoked key. Create a new one in LifeFlow Settings, Integrations." };
+      for (const bad of [rand(24), `lfh_${rand(24).slice(0, 31)}`, `lfh_${rand(25).slice(0, 33)}`, `lfq_${rand(24)}`]) {
+        const r = await POST(req(bad, JSON.stringify(day), ip));
+        expect(r.status, bad).toBe(401);
+        expect(await r.json()).toEqual(NO_KEY);
+      }
+      expect(await buckets("health-")).toBe(0);
+
+      const ipRows = () =>
+        getDb()
+          .select()
+          .from(rateLimitBuckets)
+          .where(eq(rateLimitBuckets.key, `health-ip:${ip}`));
+      for (let i = 0; i < 300; i++) expect((await POST(req(`lfh_${rand(24)}`, JSON.stringify(day), ip))).status).toBe(401);
+      const rows = await ipRows();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].count).toBe(300);
+      expect(await buckets("health-ingest:")).toBe(0);
+
+      // A fresh random key is still stopped: rotating values can't dodge the IP limit or add rows.
+      expect((await POST(req(`lfh_${rand(24)}`, JSON.stringify(day), ip))).status).toBe(429);
+      expect(await ipRows()).toHaveLength(1);
+      expect(await buckets("health-")).toBe(1);
+      // Another IP is unaffected.
+      expect((await POST(req(`lfh_${rand(24)}`, JSON.stringify(day), "198.51.100.78"))).status).toBe(401);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("someone sharing your network can't block your sync with fake keys, and your own uploads don't count against the IP", async () => {
