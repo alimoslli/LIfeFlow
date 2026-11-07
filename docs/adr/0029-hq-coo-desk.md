@@ -110,3 +110,22 @@ The owner: "the design is super simple and doesn't look like the thing I envisio
 - **Unchanged rules:** nothing calls an AI when HQ opens, and every state is still a real record.
 - **The penthouse:** the desk button sits on the drawn folders (`PILE` in office-scene.tsx, in percent of the picture). The business card is now a small card pinned in the picture's top-right corner.
 - **New pictures:** a new person or room gets its three pictures the same way. Generate the working one from the concept, then make ready and asleep from it, so the room stays the same.
+
+## Addendum (owner, 2026-11-07, later still): one headquarters building
+
+The owner: "keep the functionality but implement the more headquarters building design, keeping the brand identity and the simplicity of understanding and managing it." The rooms were separate cards; the concept is one building cut open.
+- **One building** (`components/hq/building.css`, imported only by `office-scene.tsx`; every class starts with `hq-`):
+  - a rendered roof (`public/hq/office/roof.webp`, made once in the concept's style and cut out of its background) with the LifeFlow HQ sign. The sign's words and mark are HTML with the real `BrandMark`, so the brand never drifts and stays sharp;
+  - the rooms side by side between walnut walls, with floor beams that carry the floor's name;
+  - the lobby across the bottom and the steps.
+- **Each room carries its own label, like the concept:**
+  - at the top: icon, name, what the department does, state;
+  - at the bottom: the one line (what it's doing, or when it's next on), and any note waiting on the owner (one line).
+  - The DOM order still reads "Name, State: line, note, what it does" for screen readers.
+- **Layouts:**
+  - a phone gets a slim tower, one room a floor (Floor 7 to 1);
+  - a tablet gets two rooms a floor;
+  - a wide screen gets three, with the COO sharing the penthouse with the CEO.
+- **The penthouse buttons** (Your desk, Needs your yes, Goodnight) sit on a walnut ledge under the picture on a phone and tablet, and on the picture when wide.
+- **The business card** is a small card pinned in the corner.
+- **Unchanged:** every function, link and state rule. Only the look changed.
