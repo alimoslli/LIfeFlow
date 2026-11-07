@@ -885,4 +885,65 @@ describe("round 2: accounts, unrelated names, several candidates, Undo after a l
     const [row] = await run((s) => s.tx.select().from(assignments).where(eq(assignments.courseId, c.id)));
     expect(dayOf(row.dueAt)).toBe("2026-11-26");
   });
+
+  it("R7: after a merge the kept bill stands for both lines, so a third line can't merge through a bill with no number", async () => {
+    const { run, file } = await setup();
+    await run((s) => createRecurring(s, { name: "Verizon", amountCents: -4500, frequency: "monthly", nextDueDate: "2026-10-12", kind: "bill" }, "detected"));
+    await run((s) => s.tx.update(recurringItems).set({ createdAt: new Date("2026-10-01T00:00:00Z") }));
+    const mk = (n: number, due: string, ref: string) =>
+      run((s) =>
+        s.tx
+          .insert(inboxItems)
+          .values({
+            userId: s.userId,
+            channel: "email",
+            status: "filed",
+            type: "bill",
+            extracted: { ...base, summary: "s", ...billEx("Verizon", 45, due, ref) },
+            filed: [],
+            receivedAt: new Date(Date.UTC(2026, 9, n)),
+            messageId: `r7-${n}@vz`,
+          })
+          .returning(),
+      );
+    void file;
+    const ids = await run(async (s) => {
+      const x = await createRecurring(s, { name: "Verizon", amountCents: -4500, frequency: "monthly", nextDueDate: "2026-11-12", kind: "bill" }, "detected");
+      const y = await createRecurring(s, { name: "Verizon", amountCents: -4500, frequency: "monthly", nextDueDate: "2026-12-12", kind: "bill" }, "detected");
+      return [x.id, y.id];
+    });
+    const [i1] = await mk(2, "2026-11-12", "acct 2222");
+    const [i2] = await mk(3, "2026-12-12", "acct 3333");
+    await run(async (s) => {
+      await s.tx
+        .update(inboxItems)
+        .set({ filed: [{ kind: "recurring", id: ids[0], label: "x" }] })
+        .where(eq(inboxItems.id, i1.id));
+      await s.tx
+        .update(inboxItems)
+        .set({ filed: [{ kind: "recurring", id: ids[1], label: "y" }] })
+        .where(eq(inboxItems.id, i2.id));
+    });
+    // 2222 may fold into the hand-added bill (it has no number), but 3333 must not follow it there.
+    const n = await run((s) => collapseInboxDuplicates(s));
+    expect(n.bills).toBe(1);
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(2);
+  });
+
+  it("R8: Undo finds the newer change by state: a stuck chain ends when the newer entry itself is stale", async () => {
+    const { run, file } = await setup();
+    await run((s) => createRecurring(s, { name: "Verizon", amountCents: -4500, frequency: "monthly", nextDueDate: "2026-11-12", kind: "bill" }));
+    const q = await file(billEx("Verizon", 50, "2026-11-12"), { messageId: "q8@vz" });
+    await run((s) => answerQuestion(s, TZ, today, q.id, true));
+    const dec = await file(billEx("Verizon", 50, "2026-12-12"), { messageId: "d8@vz" });
+    await run((s) => s.tx.update(recurringItems).set({ amountCents: -5500 }));
+    // The card's Undo waits for the email's.
+    await expect(run((s) => undoInboxItem(s, q.id))).rejects.toThrow(/Undo the newer one first/);
+    // The email's Undo finds a hand edit: it is left and stops being offered.
+    expect(await run((s) => undoInboxItem(s, dec.id))).toBe(0);
+    // Now nothing newer is left for the card either.
+    expect(await run((s) => undoInboxItem(s, q.id))).toBe(0);
+    const [bill] = await run((s) => s.tx.select().from(recurringItems));
+    expect(bill.amountCents).toBe(-5500);
+  });
 });

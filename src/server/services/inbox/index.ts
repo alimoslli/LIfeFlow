@@ -1,6 +1,6 @@
 import { aiAllowed } from "@/lib/ai-consent";
 import { createHash, randomBytes, randomInt } from "node:crypto";
-import { and, desc, eq, gt, ne, sql } from "drizzle-orm";
+import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { addDaysStr, DATE_RE, formatDateStr, localDateOf, TIME_RE } from "@/lib/dates";
 
 const fmtDay = (d: string) => formatDateStr(d, "EEE, MMM d");
@@ -725,11 +725,18 @@ export async function undoInboxItem(scope: UserScope, id: string) {
   const blocked: InboxFiled[] = [];
   for (const f of row.filed) if (await updateBlocked(scope, f)) blocked.push(f);
   if (blocked.length) {
+    // The newer change is another filed item's update of the same row that started from what this one wrote.
     const later = await scope.tx
-      .select({ id: inboxItems.id, filed: inboxItems.filed })
+      .select({ filed: inboxItems.filed })
       .from(inboxItems)
-      .where(and(eq(inboxItems.userId, scope.userId), eq(inboxItems.status, "filed"), gt(inboxItems.receivedAt, row.receivedAt), ne(inboxItems.id, id)));
-    const newer = later.some((l) => l.filed.some((x) => blocked.some((b) => b.id === x.id)));
+      .where(and(eq(inboxItems.userId, scope.userId), eq(inboxItems.status, "filed"), ne(inboxItems.id, id)));
+    const startsFrom = (x: InboxFiled, b: InboxFiled) =>
+      x.id === b.id &&
+      !x.stale &&
+      !!x.prev &&
+      !!b.next &&
+      Object.entries(b.next).every(([k, v]) => k in x.prev! && JSON.stringify(x.prev![k]) === JSON.stringify(v));
+    const newer = later.some((l) => l.filed.some((x) => blocked.some((b) => startsFrom(x, b))));
     if (newer) throw new ServiceError("This changed after. Undo the newer one first.");
     await scope.tx
       .update(inboxItems)

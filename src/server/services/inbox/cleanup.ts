@@ -230,6 +230,8 @@ export async function collapseInboxDuplicates(scope: UserScope, opts: { limit?: 
     cur.delete(b.id);
     const [fresh] = await scope.tx.select().from(recurringItems).where(eq(recurringItems.id, keeper.id));
     cur.set(keeper.id, fresh);
+    // The kept bill now stands for the removed one's lines too, so a third line can't slip in through a bill with no number.
+    refsByBill.set(keeper.id, new Set([...(refsByBill.get(keeper.id) ?? []), ...(refsByBill.get(b.id) ?? [])]));
     repoint(b.id, keeper.id, "recurring_update");
   }
 
