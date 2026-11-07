@@ -31,10 +31,16 @@ This is how the company runs. It sits on top of `docs/team.md` (cost rules, the 
 
 **Who is awake (owner, 2026-11-07, ADR 0029).** Nobody shows Working unless real work is running. From 8 AM to 11 PM in the CEO's time zone everyone who can be reached is **Ready** (awake at their desk, on call: their own chat is connected, or the COO's for QA, Customer Success and Research), and at night they are **Asleep**. A room shows Working only while a round it works in runs (from the COO's round_start and round_end check-ins), or while its own chat checks in on a mission in progress. QA, Customer Success and Research have no chat of their own: they work in the COO's rounds. Anything waiting on the CEO (a yes, a blocked mission, a chat's question) is a note on the door, never the room's state. Each sleeping room says when it next wakes.
 
+## The chain of command (owner, 2026-11-07)
+Everything goes through the COO, both ways.
+1. **The team reports to the COO first.** Every department, agent and chat (LF Main, LF V3, LF Marketing, desk-task chats, every lead agent) reports results, findings, blockers and anything that needs a decision to the COO, never straight to the CEO. They do it as an HQ record the COO reads in `inbox`: `mission add --role assistant --title "For the COO: <what>" --detail "<the result or ask, why, evidence, files or links>"`, or a check-in on their own mission.
+2. **The COO reports to the CEO.** The COO checks the work, combines it, decides what it is allowed to decide, and brings the CEO only what truly needs him: one brief, and decision cards the COO itself sends (`approval`, `content add … --ask`). Departments never send a card, a brief or a push to the CEO themselves. While the CEO's standing order is on (don't interrupt the owner, 2026-11-07), the COO holds those cards and reports them once, briefly.
+3. **The CEO's answer goes back through the COO.** Yes, no and changes come back to the COO (`inbox`), and the COO turns them into missions for the right department, with the CEO's words attached, and follows them up.
+
 ## How the departments work together
 Work moves between departments only as **HQ records**, never as chat. Every handoff can be seen, has an owner, and a later round picks it up.
 - **A finding for another department:** a mission for it, with `mission add --role <department> --title … --detail "<why, the evidence, the link>"`.
-- **A real change:** a decision card for the CEO (below), with the department's recommendation on it.
+- **A real change:** a report to the COO with the department's recommendation (`mission add --role assistant --title "For the COO: …"`); the COO turns it into a decision card for the CEO (below).
 - **Research:** a research item in Marketing (`content add --kind research`) or a report in `docs/research/`.
 
 Examples:
