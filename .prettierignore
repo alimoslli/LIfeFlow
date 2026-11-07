@@ -17,3 +17,5 @@ docs/situations/**/*.json
 .claude/worktrees/
 # Review harness scripts (kept as written)
 docs/situations/eval/
+# Design prototypes, kept exactly as published
+docs/design/**/*.html
