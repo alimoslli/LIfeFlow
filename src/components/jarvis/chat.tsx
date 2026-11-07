@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
+import { isAppPath, viewAtName } from "@/lib/app-routes";
 import { knowsLine, nameAtStart } from "@/lib/assistant";
 import { greetingIn } from "@/lib/dates";
 import { BrandMark } from "@/components/brand/brand-mark";
@@ -44,6 +45,19 @@ type ServerEvent =
   | { type: "memory_proposal"; callId: string; memoryId: string; content: string; replaces?: string }
   | { type: "done"; messageId: string | null; runId?: string | null }
   | { type: "error"; message: string };
+
+const CONNECTION_DROPPED = "The connection dropped. Getting your answer…";
+const ANSWER_LOST = "Your message was saved, but the answer didn't come through.";
+const MESSAGE_LOST = "Your message didn't go through.";
+const POLL_MS = 2000;
+const RECOVER_MS = 90_000;
+/** If the message never reached the server, there is no point waiting the full time. */
+const UNSAVED_MS = 20_000;
+
+/** A message the server told people in plain words (sign-in, limits, not available); shown as is. */
+class PlainError extends Error {}
+
+type Attempt = { text: string; attachments: (UiAttachment & { uploading?: boolean; error?: string })[]; conv: string | null; base: number; saved: boolean };
 
 const ACCEPT = "application/pdf,.pdf,image/png,image/jpeg,image/webp,image/gif,text/plain,text/csv,text/markdown,application/json,.md,.csv,.txt";
 
@@ -91,6 +105,12 @@ export function JarvisChat({
   const [lastTool, setLastTool] = useState<string | null>(null);
   const [talking, setTalking] = useState(!!startVoice && canSend);
   const abortRef = useRef<AbortController | null>(null);
+  const attemptRef = useRef<Attempt | null>(null);
+  const turnConvRef = useRef<string | null>(null);
+  const stoppedRef = useRef(false);
+  const takeoverRef = useRef(false);
+  const aliveRef = useRef(true);
+  const pokeRef = useRef<(() => void) | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -103,6 +123,23 @@ export function JarvisChat({
   // Desktop only: on phones focusing opens the keyboard (and hides the tab bar) before the user asks.
   useEffect(() => {
     if (!window.matchMedia("(pointer: coarse)").matches) inputRef.current?.focus();
+  }, []);
+
+  // Coming back to the page (unlocking the phone, switching back to the app) is when a dropped answer is looked for at once.
+  useEffect(() => {
+    aliveRef.current = true;
+    const wake = () => {
+      if (document.visibilityState !== "hidden") pokeRef.current?.();
+    };
+    document.addEventListener("visibilitychange", wake);
+    window.addEventListener("pageshow", wake);
+    window.addEventListener("online", wake);
+    return () => {
+      aliveRef.current = false;
+      document.removeEventListener("visibilitychange", wake);
+      window.removeEventListener("pageshow", wake);
+      window.removeEventListener("online", wake);
+    };
   }, []);
 
   const autoSent = useRef(false);
@@ -129,29 +166,142 @@ export function JarvisChat({
     });
   }, []);
 
-  async function send(text: string) {
+  /** Polls the saved conversation until the turn that started with `attempt` has an answer on the server. */
+  async function snapshotOf(conv: string) {
+    const res = await fetch(`/api/jarvis/chat/messages?conversationId=${conv}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return (await res.json()) as { title: string; messages: UiMessage[]; finished: boolean; missing?: boolean };
+  }
+
+  /** Shows the saved conversation (the truth on the server) and refreshes the page's data if the turn changed anything. */
+  function adoptSaved(conv: string, snap: { title: string; messages: UiMessage[] }) {
+    setMessages(snap.messages);
+    if (!conversationId) {
+      setConversationId(conv);
+      onConversation?.(conv, snap.title);
+      if (!compact) window.history.replaceState(null, "", `/jarvis/${conv}`);
+    }
+    const last = snap.messages.at(-1);
+    if (last?.role === "assistant" && last.tools.some((t) => t.status === "ok")) startRefresh(() => router.refresh());
+  }
+
+  /**
+   * The connection dropped (a phone locking, the app in the background, a network blip). The server keeps the turn running
+   * and saves it, so ask for the saved answer until it is there; coming back to the page asks at once.
+   */
+  async function recover(attempt: Attempt) {
+    const conv = attempt.conv;
+    const notice = (n: { kind: "recovering" | "lost"; text: string } | undefined) => updateAssistant((a) => void ((a.notice = n), (a.error = undefined)));
+    notice({ kind: "recovering", text: CONNECTION_DROPPED });
+    const began = Date.now();
+    let saved = false;
+    while (conv && !stoppedRef.current && aliveRef.current && Date.now() - began < RECOVER_MS) {
+      try {
+        const snap = await snapshotOf(conv);
+        if (snap) {
+          saved = !snap.missing && snap.messages.filter((m) => m.role === "user").length > attempt.base;
+          if (saved && snap.finished) {
+            adoptSaved(conv, snap);
+            return;
+          }
+        }
+      } catch {
+        /* offline for now; keep trying */
+      }
+      if (!saved && Date.now() - began > UNSAVED_MS) break;
+      await new Promise<void>((resolve) => {
+        const t = setTimeout(resolve, POLL_MS);
+        pokeRef.current = () => (clearTimeout(t), resolve());
+      });
+    }
+    pokeRef.current = null;
+    if (stoppedRef.current) return void updateAssistant((a) => void ((a.notice = undefined), (a.error = "Stopped.")));
+    attemptRef.current = { ...attempt, saved };
+    notice({ kind: "lost", text: saved ? ANSWER_LOST : MESSAGE_LOST });
+  }
+
+  function tryAgain() {
+    const attempt = attemptRef.current;
+    if (!attempt || busy || refreshing) return;
+    // Drop the failed attempt's two bubbles; the server keeps its saved copy and is told not to save it twice.
+    setMessages((m) => m.slice(0, -2));
+    void send(attempt.text, attempt);
+  }
+
+  function stop() {
+    stoppedRef.current = true;
+    const conv = turnConvRef.current;
+    if (conv)
+      void fetch("/api/jarvis/chat/stop", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ conversationId: conv }),
+      }).catch(() => undefined);
+    abortRef.current?.abort();
+    pokeRef.current?.();
+  }
+
+  async function send(text: string, again?: Attempt) {
     const message = text.trim();
-    const ready = pending.filter((p) => !p.uploading && !p.error);
+    const ready = again ? again.attachments : pending.filter((p) => !p.uploading && !p.error);
     if ((!message && !ready.length) || busy || refreshing || !availability.available) return;
     setInput("");
     setPending([]);
     setBusy(true);
     setLastTool(null);
+    stoppedRef.current = false;
+    takeoverRef.current = false;
+    // A new chat gets its id here, so the answer can be found again if the connection drops before the app hears it.
+    const conv = conversationId ?? again?.conv ?? (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : null);
+    const attempt: Attempt = {
+      text: message,
+      attachments: ready,
+      conv,
+      base: again ? again.base : messages.filter((m) => m.role === "user").length,
+      saved: false,
+    };
+    attemptRef.current = attempt;
+    turnConvRef.current = conv;
     const userMsg: UiMessage = { id: `u-${Date.now()}`, role: "user", text: message, attachments: ready };
     setMessages((m) => [...m, userMsg, { id: `a-${Date.now()}`, role: "assistant", text: "", tools: [], confirmations: [], memories: [], streaming: true }]);
     const controller = new AbortController();
     abortRef.current = controller;
     let mutated = false;
+    let finished = false;
+    let plain: string | null = null;
+    // Coming back to a page whose stream went quiet: if the server already has the answer, take it and drop the dead stream.
+    pokeRef.current = () => {
+      if (!conv) return;
+      void snapshotOf(conv)
+        .then((snap) => {
+          if (snap && !snap.missing && snap.finished && snap.messages.filter((m) => m.role === "user").length > attempt.base) {
+            takeoverRef.current = true;
+            controller.abort();
+          }
+        })
+        .catch(() => undefined);
+    };
     try {
       const res = await fetch("/api/jarvis/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ conversationId, message, module, attachmentIds: ready.map((a) => a.id) }),
+        body: JSON.stringify({
+          conversationId,
+          newConversationId: conversationId ? undefined : (conv ?? undefined),
+          resend: again?.saved || undefined,
+          message,
+          module,
+          attachmentIds: ready.map((a) => a.id),
+        }),
         signal: controller.signal,
       });
       if (!res.ok || !res.body) {
-        const err = await res.json().catch(() => ({ error: `Request failed (${res.status})` }));
-        throw new Error(err.error ?? `Request failed (${res.status})`);
+        // Only messages the server wrote for people are shown; anything else is treated as a dropped connection.
+        const err = (await res.json().catch(() => null)) as { error?: string } | null;
+        if (res.status === 401) plain = "Please sign in again to keep going.";
+        else if ([402, 403, 429, 503].includes(res.status) && typeof err?.error === "string") plain = err.error;
+        if (plain) throw new PlainError(plain);
+        throw new Error("dropped");
       }
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -168,6 +318,7 @@ export function JarvisChat({
           const ev = JSON.parse(line) as ServerEvent;
           switch (ev.type) {
             case "conversation":
+              turnConvRef.current = ev.id;
               if (!conversationId) {
                 setConversationId(ev.id);
                 onConversation?.(ev.id, ev.title);
@@ -205,15 +356,20 @@ export function JarvisChat({
               updateAssistant((a) => void (a.error = ev.message));
               break;
             case "done":
+              finished = true;
               updateAssistant((a) => void (a.runId = ev.runId ?? null));
               break;
           }
         }
       }
+      // The stream ended without its last event: the answer may still be coming, so go and get it.
+      if (!finished) await recover(attempt);
     } catch (e) {
-      const aborted = (e as Error).name === "AbortError";
-      updateAssistant((a) => void (a.error = aborted ? "Stopped." : (e as Error).message || "Network error"));
+      if (e instanceof PlainError) updateAssistant((a) => void (a.error = e.message));
+      else if (stoppedRef.current) updateAssistant((a) => void (a.error = "Stopped."));
+      else if (!finished || takeoverRef.current) await recover(attempt);
     } finally {
+      pokeRef.current = null;
       updateAssistant((a) => void (a.streaming = false));
       setBusy(false);
       abortRef.current = null;
@@ -233,15 +389,21 @@ export function JarvisChat({
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ decision }),
-    });
-    const data = (await res.json().catch(() => ({}))) as { status?: "executed" | "cancelled" | "failed" | "expired"; message?: string; error?: string };
+    }).catch(() => null);
+    const data = (await (res?.json() ?? Promise.resolve({})).catch(() => ({}))) as {
+      status?: "executed" | "cancelled" | "failed" | "expired";
+      message?: string;
+      error?: string;
+    };
     setMessages((prev) =>
       prev.map((m) =>
         m.role === "assistant"
           ? {
               ...m,
               confirmations: m.confirmations.map((c) =>
-                c.actionId === actionId ? { ...c, status: data.status ?? "failed", resultText: data.message ?? data.error } : c,
+                c.actionId === actionId
+                  ? { ...c, status: data.status ?? "failed", resultText: data.message ?? data.error ?? "That didn't go through. Try again." }
+                  : c,
               ),
             }
           : m,
@@ -281,10 +443,23 @@ export function JarvisChat({
       try {
         const res = await fetch("/api/attachments", { method: "POST", body: fd });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Upload failed");
+        if (!res.ok) throw Object.assign(new Error(typeof data.error === "string" ? data.error : "Couldn't upload that file."), { name: "UploadError" });
         setPending((p) => p.map((x) => (x.id === tempId ? { id: data.id, filename: data.filename, mimeType: data.mimeType } : x)));
       } catch (e) {
-        setPending((p) => p.map((x) => (x.id === tempId ? { ...x, uploading: false, error: (e as Error).message } : x)));
+        setPending((p) =>
+          p.map((x) =>
+            x.id === tempId
+              ? {
+                  ...x,
+                  uploading: false,
+                  error:
+                    e instanceof PlainError || (e instanceof Error && e.name === "UploadError")
+                      ? e.message
+                      : "Couldn't upload. Check your connection and try again.",
+                }
+              : x,
+          ),
+        );
       }
     }
     if (fileRef.current) fileRef.current.value = "";
@@ -360,7 +535,11 @@ export function JarvisChat({
             </div>
           )}
           {messages.map((m) =>
-            m.role === "user" ? <UserBubble key={m.id} m={m} /> : <AssistantBubble key={m.id} m={m} onDecide={decide} onMemory={decideMemory} />,
+            m.role === "user" ? (
+              <UserBubble key={m.id} m={m} />
+            ) : (
+              <AssistantBubble key={m.id} m={m} onDecide={decide} onMemory={decideMemory} onRetry={tryAgain} />
+            ),
           )}
           {!aiConsent && !empty && <AiConsentCard name={assistantName} />}
           {followUps && aiConsent && (
@@ -492,7 +671,7 @@ export function JarvisChat({
               {busy ? (
                 <button
                   type="button"
-                  onClick={() => abortRef.current?.abort()}
+                  onClick={stop}
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-text text-bg"
                   aria-label="Stop"
                 >
@@ -543,8 +722,10 @@ function AssistantBubble({
   m,
   onDecide,
   onMemory,
+  onRetry,
 }: {
   m: Extract<UiMessage, { role: "assistant" }>;
+  onRetry: () => void;
   onDecide: (id: string, d: "confirm" | "cancel") => void;
   onMemory: (memoryId: string, d: "keep" | "dismiss") => void;
 }) {
@@ -557,6 +738,18 @@ function AssistantBubble({
         {working && <JarvisStatus word={statusWord(runningTool)} />}
         {m.text && <Markdown text={m.text} />}
         <SourceList tools={m.tools} />
+        <OpenLinks tools={m.tools} />
+        {m.notice && (
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2" role="status">
+            {m.notice.kind === "recovering" && <Loader2 className="h-4 w-4 shrink-0 animate-spin" />}
+            <span className="min-w-0 flex-1">{m.notice.text}</span>
+            {m.notice.kind === "lost" && (
+              <button type="button" onClick={onRetry} className="min-h-11 rounded-full bg-accent px-4 text-sm font-medium text-accent-text">
+                Try again
+              </button>
+            )}
+          </div>
+        )}
         {!m.streaming && m.runId && m.text && <RateAnswer runId={m.runId} initial={m.rating ?? null} />}
         {m.confirmations.map((c) => (
           <div key={c.actionId} className="rounded-2xl bg-surface p-4 shadow-soft">
@@ -631,6 +824,27 @@ function MemoryCard({ s, onDecide }: { s: UiMemorySuggestion; onDecide: (memoryI
           </Link>
         </p>
       )}
+    </div>
+  );
+}
+
+/** "Open Work": where a change can be seen, as a real link (tools return the place as viewAt). */
+function OpenLinks({ tools }: { tools: UiTool[] }) {
+  const seen = new Set<string>();
+  const places = tools.flatMap((t) => (t.status === "ok" && t.viewAt && isAppPath(t.viewAt) && !seen.has(t.viewAt) && !!seen.add(t.viewAt) ? [t.viewAt] : []));
+  if (!places.length) return null;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {places.slice(0, 3).map((href) => (
+        <Link
+          key={href}
+          href={href}
+          className="inline-flex min-h-11 items-center gap-1 rounded-full bg-surface px-4 text-[0.875rem] font-medium text-accent shadow-soft ring-1 ring-border/60"
+        >
+          Open {viewAtName(href)}
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+      ))}
     </div>
   );
 }

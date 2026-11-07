@@ -22,6 +22,8 @@ const body = z.object({
   message: z.string().max(8000).default(""),
   module: z.enum(["home", "finances", "wealth", "school", "work", "calendar", "tasks", "notes", "settings"]).nullish(),
   attachmentIds: z.array(z.string().uuid()).max(5).default([]),
+  newConversationId: z.string().uuid().nullish(),
+  resend: z.boolean().default(false),
 });
 
 /** Streams a Jarvis turn as newline-delimited JSON events. */
@@ -79,7 +81,9 @@ export async function POST(req: Request) {
             text: parsed.data.message,
             module: parsed.data.module,
             attachmentIds: parsed.data.attachmentIds,
-            signal: req.signal,
+            newConversationId: parsed.data.newConversationId,
+            resend: parsed.data.resend,
+            // Deliberately no req.signal: a dropped connection must not cancel the turn (Stop is its own request).
             prices: modelPrices(),
             moneyLocked: locked,
           });

@@ -27,6 +27,8 @@ export type UiMessage =
       confirmations: UiConfirmation[];
       memories: UiMemorySuggestion[];
       error?: string;
+      /** A calm status line instead of an error (the connection dropped and the answer is being fetched, or could not be). */
+      notice?: { kind: "recovering" | "lost"; text: string };
       streaming?: boolean;
       /** The jarvis_runs row for this answer, for 👍 / 👎. */
       runId?: string | null;

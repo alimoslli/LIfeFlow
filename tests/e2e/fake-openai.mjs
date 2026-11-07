@@ -196,7 +196,11 @@ http
         res.writeHead(200, { "content-type": "application/json" });
         return res.end(JSON.stringify(webSearchResponse(body)));
       }
-      sse(res, respond(body));
+      // "/slow <ms>" in the user's message holds the answer back, so tests can drop the connection while the server is still working.
+      const slow = JSON.stringify(body.input ?? []).match(/\/slow (\d+)/);
+      const events = respond(body);
+      if (slow) setTimeout(() => sse(res, events), Math.min(Number(slow[1]), 15_000));
+      else sse(res, events);
     });
   })
   .listen(port, "127.0.0.1", () => console.log(`fake openai on ${port}`));
