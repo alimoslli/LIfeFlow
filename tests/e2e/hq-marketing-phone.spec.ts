@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { pool } from "./helpers";
+import { insertCard } from "./hq-cards-helpers";
 
 test.use({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true });
 
@@ -29,10 +30,7 @@ test("Marketing on a phone: long titles wrap, no sideways scroll, switches are b
   await pool.query("truncate hq_content, hq_metrics, hq_approvals, hq_activity, hq_settings cascade");
   const long = "Ship the Sunday reset reel with the long caption about planning your whole week, money and classes in one minute flat";
   const tomorrow = new Date(Date.now() + 86_400_000).toISOString();
-  const { rows } = await pool.query(
-    `insert into hq_approvals (role, kind, title, summary, source) values ('marketing', 'publish', $1, $1, 'agent') returning id`,
-    [long],
-  );
+  const rows = [{ id: await insertCard({ role: "marketing", kind: "publish", title: long }) }];
   await pool.query(
     `insert into hq_content (kind, title, hook, body, platforms, status, scheduled_for, approval_id, links, source) values
        ('concept', $1, $1, $1, '["instagram","tiktok","youtube","facebook","linkedin"]', 'waiting', $2, $3, '[{"label":"Where it came from, a very long source name","url":"https://example.com/a/very/long/path/that/keeps/going/and/going/and/going"}]', 'agent'),

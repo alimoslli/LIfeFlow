@@ -1,5 +1,6 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { pool } from "./helpers";
+import { PNG_BYTES } from "./hq-cards-helpers";
 
 const ADMIN_EMAIL = "admin-owner@example.com"; // matches ADMIN_EMAILS in playwright.config.ts
 
@@ -56,6 +57,9 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   expect(token).toMatch(/^lfq_/);
   const headers = { Authorization: `Bearer ${token}` };
   const when = new Date(Date.now() + 2 * 86_400_000).toISOString();
+  const up = await request.post("/api/hq/files", { headers: { ...headers, "content-type": "image/png" }, data: PNG_BYTES });
+  expect(up.status()).toBe(200);
+  const picture = (await up.json()) as { id: string };
   const posted = await request.post("/api/hq/report", {
     headers,
     data: {
@@ -68,6 +72,16 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
       scheduledFor: when,
       status: "draft",
       ask: true,
+      request: {
+        why: "Students who plan on Sunday are our best first week.",
+        changes: ["Posts a 20-second reel to Instagram and TikTok"],
+        onYes: "The next marketing round puts it into Metricool; you tap the final button there.",
+        onNo: "Nothing is posted.",
+        effort: "small",
+        risk: "Low: nothing posts without your final tap.",
+        recommendation: "Yes.",
+        previews: [{ fileId: picture.id, label: "The reel" }],
+      },
     },
   });
   expect(posted.status(), await posted.text()).toBe(200);
