@@ -60,6 +60,8 @@ test("a new user who never names the assistant never sees 'Jarvis'", async ({ pa
   // Make it yours: the name starts empty, no suggestion is picked, and "Jarvis" isn't offered.
   const nameBox = page.getByLabel("Assistant name");
   await expect(nameBox).toHaveValue("");
+  await expect(nameBox).toHaveAttribute("placeholder", "your assistant");
+  await expect(page.getByRole("button", { name: "Jarvis" })).toHaveCount(0);
   await expect(page.getByRole("button", { pressed: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Nova" })).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByText("Your assistant:", { exact: false })).toBeVisible();

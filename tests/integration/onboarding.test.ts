@@ -7,6 +7,7 @@ import { listActiveMemories } from "@/server/services/memory";
 import { completeOnboarding, finishOnboarding, setTourState } from "@/server/services/onboarding";
 import { listCourses } from "@/server/services/school";
 import { listEmployers } from "@/server/services/work";
+import { assistantProfile } from "@/lib/assistant";
 import { makeUser } from "../helpers";
 
 afterAll(closeDb);
@@ -36,6 +37,14 @@ describe("onboarding", () => {
     const [mem] = await run((s) => listActiveMemories(s));
     expect(mem).toMatchObject({ content: "Saving for a car.", source: "user", status: "active" });
     expect(await prefs(user.id)).toMatchObject({ lifeStage: "both", studyTime: "evening", jarvisTone: "concise", onboarding: "done", tour: "pending" });
+  });
+
+  it("finishing setup with no assistant name leaves it 'your assistant', never 'Jarvis'", async () => {
+    const { user, run } = await makeUser();
+    await run((s) => completeOnboarding(s, { lifeStage: "both", assistant: { name: undefined, style: "friend" } }));
+    const p = await prefs(user.id);
+    expect(p.assistantName).toBeUndefined();
+    expect(assistantProfile(p)).toMatchObject({ name: "your assistant", named: false });
   });
 
   it("is all-or-nothing: a refused step saves nothing", async () => {
