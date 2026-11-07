@@ -22,7 +22,7 @@ LifeFlow is a personal assistant with one job: serve you and help you get the mo
 - **Name:** LifeFlow. **Site:** lifeflowweb.com. **Instagram:** @lifeflowweb.
 - **What it is:** a personal assistant app that brings your schedule, school, work, money and goals into one place, and helps on its own, even when you don't open it.
 - **Audience:** LifeFlow is for everyone with a full life. Not just students (owner, 2026-11-07): students (college, 18 to 24) are one audience, alongside working people, parents, side hustlers and anyone juggling schedule, work and money. The marketer tests different audiences and leans into whichever the real numbers show growing.
-- **The assistant:** inside the app he's called Jarvis by default (users can rename him). In ads and on the landing page hero, say **"your personal assistant"**, not "Jarvis".
+- **The assistant:** it has no fixed name. Each person names it, and until they do the app says "your assistant". In ads, captions, scripts and on the landing page, always say **"your personal assistant"**. Never "Jarvis": that's only an internal code name and never appears to anyone outside the team (owner's rule, CLAUDE.md).
 - **Look:** deep green hero colour on cream, the green wave logo mark. Brand guide: https://claude.ai/artifact/Xngzg4E3JKBE6fEvVrTpA8
 - **Price:** free while in testing. At App Store launch it becomes paid through Apple in-app purchase. Don't show an App Store badge until the app is live there.
 

@@ -1,0 +1,130 @@
+{
+  "id": "s0028-student-tuition-installment-moved-not-the-savings",
+  "title": "$610 in checking and a $857.19 tuition installment on Dec 7: the school lets her move the date free, so Dev starts there and leaves her goal savings and her VTI gain alone",
+  "persona": "p4009-university-dorm-care-home-evening-crammer",
+  "persona_overrides": {
+    "accounts": [
+      {
+        "id": "acc-savings",
+        "apy_bps": 300,
+        "interest_description": "INTEREST PAID"
+      }
+    ],
+    "income": [
+      {
+        "id": "inc-family",
+        "amount_cents": [
+          20000,
+          35000
+        ]
+      }
+    ],
+    "spending": [
+      {
+        "id": "eating-out",
+        "per_week": 3.6
+      },
+      {
+        "id": "shopping",
+        "per_week": 2.4
+      }
+    ]
+  },
+  "now": "2026-11-30T19:00",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 2801,
+  "money": {
+    "available_now_cents": 61000,
+    "savings_cents": 252000
+  },
+  "changes": [
+    {
+      "id": "c-plan-email",
+      "type": "email",
+      "at": "2026-11-24T10:15",
+      "sender_type": "school",
+      "sender_name": "Student Accounts",
+      "from_address": "studentaccounts@example.com",
+      "subject": "Payment plan: change your December due date at no charge through Dec 3"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-tuition",
+      "check": "afford",
+      "what": "Checking is $610.00 available and the $857.19 tuition plan installment (due Sat Dec 5, it posts Mon Dec 7) is $247.19 more than that. Her next paycheck is Fri Dec 11 and money from family usually comes mid-month, both after the 7th and neither counted until it lands. Student Accounts emailed on Nov 24 that the December due date can move to any day through Dec 14 at no charge if she changes it by Dec 3. Her savings are $2,520.00: $1,000 is the emergency fund and $1,500 is the housing deposit goal due Jan 15, so $20.00 is free. The brokerage account holds $0.00 in cash and her VTI is up $362.00 ($1,182.00 against $820.00 paid, bought Aug 22, 2024).",
+      "by_when": "2026-12-03T12:00",
+      "facts": [
+        "c-plan-email",
+        "rec-tuition-plan",
+        "acc-checking",
+        "acc-savings",
+        "m-ef",
+        "m-goal",
+        "acc-brokerage",
+        "h-vti",
+        "pay-main-2026-11-27"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-tuition",
+      "action": "plan",
+      "needs_user": true,
+      "send_at": "2026-11-30T19:05",
+      "what": "One push tonight: \"Your $857.19 tuition installment posts Monday Dec 7 and checking is $610.00, so it's $247.19 short. Student Accounts lets you move the date to any day through Dec 14 at no charge if you change it by Thursday. Moving it to Monday Dec 14 puts it after your Dec 11 paycheck. I'll look at the real balance the night that pay lands.\" Buttons: [Show me the steps] [Not now]. The steps: open the payment plan portal, pick Dec 14 for the December installment, save. Dev links to the portal and does not change the date. On Fri Dec 11 evening, if the paycheck has landed, Dev compares the real balance with the $857.19 and says plainly if a gap is left. If one is, the next steps come in order (savings above her goal and emergency fund, then brokerage cash, then a small sale) and each says what it does to her housing deposit goal or what a gain costs.",
+      "why": "The gentlest option is moving a bill a few days with no fee, so Dev starts there. Savings are all spoken for: $1,000 emergency fund, $1,500 for the Jan 15 deposit. Selling VTI is the last option and is not needed yet. Moving past Dec 11 gives Dev real money to check instead of a prediction, and pay is never counted before it lands. Facts only."
+    }
+  ],
+  "must_not": [
+    "predict the market or call this a good time to sell VTI",
+    "move money for her or change the due date in the portal: Dev lays out the steps, she does them",
+    "touch the emergency fund for a non-emergency: the $1,000 stays out",
+    "use the $1,500 housing deposit goal without saying what it does to the goal, and never offer it first",
+    "suggest selling VTI or moving savings before the free date move",
+    "count the Dec 11 paycheck or family money as already hers, or predict what her hourly pay will be",
+    "suggest the free move after Dec 3, or a date past Dec 14",
+    "send the push on Tuesday or Wednesday evening, 7 to 9:45 PM (study evenings)"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "The payment plan portal allows one free due date change per installment, through Dec 14, if made by Dec 3 (typical for school plans; stated in the email).",
+    "The installment is an ACH draft: due Sat Dec 5, it posts Mon Dec 7. A move to Dec 14 posts Mon Dec 14.",
+    "Savings split: $1,000 emergency fund and $1,500 goal, both told to Dev; $20.00 is left over.",
+    "VTI: $362.00 gain over $820.00 paid, held since Aug 22, 2024 (long-term). Not needed in this case; a $250 sale would carry about $76.57 of gain at her average cost.",
+    "The Dec 11 paycheck is not predicted; it is checked only when it lands."
+  ],
+  "tags": [
+    "student",
+    "university",
+    "dorm",
+    "part-time job",
+    "evening studier",
+    "crammer",
+    "canvas",
+    "afford",
+    "move a bill first",
+    "goal respected",
+    "emergency fund respected",
+    "money rule 14",
+    "facts not advice",
+    "tuition plan",
+    "notification",
+    "night classes"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "send the push on Tuesday or Wednesday evening, 7 to 9:45 PM (study evenings)",
+        "routine": "study",
+        "why_wrong": "she studies Tuesday and Wednesday evenings from 7 to 9:45 PM and crams before exams",
+        "facts": [
+          "m-01"
+        ]
+      }
+    ]
+  }
+}

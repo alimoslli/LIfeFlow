@@ -1,5 +1,5 @@
 "use client";
-import { useActionState, useCallback, useEffect, useRef, type ReactNode } from "react";
+import { useActionState, useCallback, useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import type { ActionState } from "@/server/actions";
 import { FormError } from "./ui/field";
 import { toast } from "./ui/toaster";
@@ -37,6 +37,25 @@ function useReportedAction(action: Action, report: (r: ActionState) => void) {
   );
 }
 
+/**
+ * React 19 resets an uncontrolled form after its action finishes, even when the
+ * action failed. Put back what the person typed so they can fix it and resubmit.
+ */
+function restoreValues(form: HTMLFormElement, sent: FormData) {
+  for (const el of Array.from(form.elements)) {
+    if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) || !el.name) continue;
+    if (
+      el instanceof HTMLInputElement &&
+      (el.type === "hidden" || el.type === "file" || el.type === "submit" || el.type === "button" || el.type === "password")
+    )
+      continue;
+    const values = sent.getAll(el.name).filter((v): v is string => typeof v === "string");
+    if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) el.checked = values.includes(el.value);
+    else if (el instanceof HTMLSelectElement && el.multiple) for (const o of Array.from(el.options)) o.selected = values.includes(o.value);
+    else el.value = values[0] ?? "";
+  }
+}
+
 /** A form bound to a server action, with inline error display and reset-on-success. */
 export function ActionForm({
   action,
@@ -57,7 +76,15 @@ export function ActionForm({
   offline?: (fd: FormData) => Promise<string>;
 }) {
   const ref = useRef<HTMLFormElement>(null);
-  const reported = useReportedAction(action, (r) => {
+  const sent = useRef<FormData | null>(null);
+  const remember = useCallback(
+    (prev: ActionState, fd: FormData) => {
+      sent.current = fd;
+      return action(prev, fd);
+    },
+    [action],
+  );
+  const reported = useReportedAction(remember, (r) => {
     if (!r?.ok) return;
     if (reset) ref.current?.reset();
     // Every save gives feedback: inline when the form asks for it, otherwise a toast.
@@ -65,6 +92,10 @@ export function ActionForm({
     onSuccess?.();
   });
   const [state, formAction] = useActionState(reported, null);
+  // The reset happens as the failed result commits; this runs right after it.
+  useLayoutEffect(() => {
+    if (state && !state.ok && ref.current && sent.current) restoreValues(ref.current, sent.current);
+  }, [state]);
   return (
     <form
       ref={ref}

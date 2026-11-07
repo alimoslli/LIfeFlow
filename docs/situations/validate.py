@@ -173,6 +173,7 @@ SHAPES = {
     "transaction": {"id": S, "account_id": S, "date": S, "authorized_date": (S, N), "description": S, "merchant_name": (S, N), "amount_cents": I, "currency": S, "kind": S,
                     "category": (S, N), "pending": B, "source": S, "provider_transaction_id": S, "pending_transaction_id": (S, N), "personal_finance_category": O,
                     "recurring_id": (S, N), "balance_after_cents": (I, N), "excluded": B},
+    "holding": {"id": S, "account_id": S, "symbol": (S, N), "name": S, "security_type": S, "quantity": S, "value_cents": I, "cost_basis_cents": (I, N), "source": S},
     "recurring": {"id": S, "name": S, "amount_cents": I, "frequency": S, "next_due_date": (S, N), "kind": S, "account_id": S, "status": S, "source": S},
     "event": {"id": S, "title": S, "starts_at": S, "ends_at": S, "all_day": B, "kind": S, "recurrence": (O, N), "source": S},
     "course": {"id": S, "name": S, "code": (S, N), "source": S},
@@ -504,6 +505,10 @@ def check_bank(bank, now, errors):
             errors.append(f"account {k}: available {a['available_balance_cents']} is not current plus pending charges ({avail})")
     for r in bank["recurring"]:
         shape(r, "recurring", f"recurring {r.get('id')}", errors)
+    for h in bank.get("holdings", []):
+        shape(h, "holding", f"holding {h.get('id')}", errors)
+        if h.get("account_id") not in accts or accts[h["account_id"]]["type"] != "investment":
+            errors.append(f"holding {h.get('id')}: account {h.get('account_id')!r} is not an investment account")
 
 
 def check_pay(work, bank, persona, scenario, errors):
