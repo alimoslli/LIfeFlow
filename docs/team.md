@@ -13,6 +13,9 @@ Set by the owner on 2026-11-05. Every Claude Code session on this repo reads thi
 | **Situation writer** | Keeps writing realistic life situations for Dev's exam and later training: real life as the timeline, digital life attached, the clashes, the fix, the stay-quiet cases. | `.claude/agents/situation-writer.md`, `docs/situations/` |
 | **Market researcher** | Finds what people need from online research, reviews of similar apps and our surveys, and proposes what to build and what to avoid. | `.claude/agents/market-researcher.md`, `docs/research/` |
 
+## Fresh made-up data in every picture (owner, 2026-11-07)
+Prototypes and demo screens never reuse the same made-up day. These are retired: the 2 to 9 shift, BIO 101, gym at 6:15, "$10 short", Ali's Wednesday. Use the owner's example day when one is given. Otherwise make each day genuinely different and realistic (hours, spending, people), and vary every day in a week view.
+
 ## Research goes into the app fast
 
 1. The researcher writes a report with ranked proposals and things to avoid.
