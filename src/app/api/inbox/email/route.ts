@@ -72,7 +72,10 @@ export async function POST(req: Request) {
         files.push({ filename: a.Name ?? "file", mimeType: mime, base64: a.Content });
       }
       const text = mail.TextBody?.trim() || strip(mail.HtmlBody ?? "");
-      await processForwardedEmail(s, user.timezone, today, { channel: "email", from, subject, text, files, attachmentIds: ids });
+      // An auto-forward keeps the original Message-ID, so the same mail from Gmail and from here is filed once.
+      const messageId = mail.Headers?.find((h) => h.Name.toLowerCase() === "message-id")?.Value;
+      // Forwarded mail is only suggested; the person's tap files it (fileSuggestion).
+      await processForwardedEmail(s, user.timezone, today, { channel: "email", from, subject, text, files, attachmentIds: ids, messageId });
     });
     return NextResponse.json({ ok: true });
   } catch (e) {
