@@ -46,13 +46,16 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .days button { height: 36px; min-width: 0; padding: 0 6px; border-radius: 18px; font-size: 0.95rem; color: var(--fg); display: grid; place-items: center; white-space: nowrap; }
 .days button.arrow { color: var(--fg2); min-width: 30px; padding: 0; flex: none; }
 .days button.on { background: var(--mint); color: var(--mint-ink); font-weight: 600; padding: 0 13px; flex: none; }
-.chips { position: absolute; left: 0; right: 0; height: 38px; display: flex; justify-content: center; gap: 6px; z-index: 8; padding: 0 12px; pointer-events: none; overflow: hidden; }
-/* chips fit the row: if they don't, only the widest one's name ends in "…" (fitChips); the time never does */
-.chip { flex: none; min-width: 0; height: 38px; padding: 0 11px; border-radius: 19px; background: var(--chip); display: flex; align-items: center; gap: 6px; font-size: 0.8rem; white-space: nowrap; opacity: 0; font-variant-numeric: tabular-nums; }
-.chip svg { flex: none; }
-.chip .cn { min-width: 1.6em; overflow: hidden; text-overflow: ellipsis; }
-.chip .ct { flex: none; color: var(--fg2); }
-@media (max-width: 380px) { .days button.arrow { display: none; } .days button { font-size: 0.9rem; } .chip { font-size: 0.76rem; padding: 0 9px; gap: 5px; } .chip svg { width: 14px; height: 14px; } }
+.chips { position: absolute; left: 0; right: 0; height: 58px; display: flex; justify-content: center; gap: 8px; z-index: 8; padding: 0 16px; pointer-events: none; }
+/* Tiles under the line (owner's frame 6): a mint icon, a small label, the time. Equal widths when they fit;
+   if the row is too tight, only the widest tile gives way and ends in "…" (fitChips). */
+.chip { flex: 1 1 0; max-width: 150px; height: 58px; padding: 0 12px; border-radius: 18px; background: var(--chip); display: flex; align-items: center; gap: 10px; text-align: left; opacity: 0; }
+.chip svg { flex: none; width: 20px; height: 20px; }
+.chip .cx { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.chip .cn { font-size: 0.72rem; color: var(--fg2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip .ct { font-size: 0.95rem; font-weight: 600; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px var(--mint); }
+@media (max-width: 380px) { .days button.arrow { display: none; } .days button { font-size: 0.9rem; } .chips { gap: 6px; padding: 0 12px; } .chip { padding: 0 10px; gap: 8px; } .chip svg { width: 18px; height: 18px; } }
 
 #hit { position: absolute; z-index: 7; border-radius: 50%; touch-action: pan-y; cursor: pointer; }
 .hint { position: absolute; left: 0; right: 0; text-align: center; font-size: 0.8rem; color: var(--fg3); z-index: 3; pointer-events: none; }
@@ -81,6 +84,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .nowpill::after { content: ""; position: absolute; left: 50%; top: 26px; width: 2px; height: 20px; margin-left: -1px; background: var(--mint); }
 .nowpill i { position: absolute; left: 50%; top: 40px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 10px rgba(126,224,174,.7); }
 
+.detail:empty { display: none; }
 .detail { position: absolute; left: 18px; right: 18px; z-index: 8; background: var(--surface); border: 1px solid var(--hair); border-radius: 22px; padding: 16px; display: flex; gap: 14px; align-items: flex-start; opacity: 0; pointer-events: none; }
 .detail .d-ic { width: 46px; height: 46px; border-radius: 50%; background: var(--chip); display: grid; place-items: center; font-size: 24px; flex: none; }
 .detail .d-k { font-size: 0.7rem; letter-spacing: .09em; text-transform: uppercase; color: var(--mint); margin-bottom: 3px; }
@@ -295,9 +299,9 @@ function layout() {
   const framed = getComputedStyle($('.statusbar')).display !== 'none';
   const ti = framed ? 50 : 14;
   Object.assign(G, { W, H, ti });
-  G.hdrY = ti; G.subY = ti + 46; G.chipY = ti + 100;
-  G.lineY = ti + 100 + 38 + 96; G.wrapTop = G.lineY - 70; G.iconY = G.lineY - 34;
-  G.detailY = G.lineY + 104;
+  G.hdrY = ti; G.subY = ti + 46;
+  G.lineY = ti + 186; G.wrapTop = G.lineY - 70; G.iconY = G.lineY - 34;
+  G.chipY = G.lineY + 92; G.detailY = G.chipY + 58 + 16;
   G.R = Math.round(Math.min(W * 0.3, 120, (H - ti - 120) * 0.24));
   G.cx = W / 2; G.cy = Math.round(ti + 96 + (H - ti - 96) * 0.36);
   G.ycap = G.lineY - 12; G.capHW = W / 2 - 14; G.capHH = 56;
@@ -528,7 +532,7 @@ function rebuildTrack() {
     const time = it.kind === 'bill' ? dayName(dayOf(it.at)) : (it.usual ? '~' : '') + fmt(n.t);
     b.innerHTML = `<span class="n-ic">${it.icon}</span><span class="n-dot"></span><span class="n-t">${time}</span><span class="n-n">${name}</span>`;
     b.setAttribute('aria-label', `${name}, ${time}`);
-    b.addEventListener('click', () => { S.sel = it.id; showDetail(); markSel(); });
+    b.addEventListener('click', () => select(it.id));
     n.el = b;
     track.appendChild(b);
   }
@@ -622,28 +626,29 @@ function dayChips(d) {
   const live = (it) => it.end != null && it.start <= now && it.end > now;
   const pick = (list) => list.find(live) || (d === 0 && list.find((it) => t0(it) > now)) || list[0];
   const byTime = (a, b) => t0(a) - t0(b);
-  // "till 4:30": a running block's end needs no AM/PM when it's the same half of the day as now
-  const till = (e) => 'till ' + (fmt(e).slice(-2) === fmt(now).slice(-2) ? fmtShort(e).slice(0, -3) : fmtShort(e));
+  // a running block's end needs no AM/PM when it's the same half of the day as now
+  const endsAt = (e) => (fmt(e).slice(-2) === fmt(now).slice(-2) ? fmtShort(e).slice(0, -3) : fmtShort(e));
+  const hrs = (m) => `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`;
   const out = [];
   const work = ITEMS.filter((it) => it.cat === 'work' && inDay(it)).sort(byTime);
   if (work.length) {
     const w = pick(work);
-    // running: when it ends; over: the hours it took (from the schedule); later: when it is
-    const hrs = (m) => `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`;
-    const over = w.end <= now;
-    out.push({ it: w, icon: 'work', name: 'Work', time: live(w) ? till(w.end) : over ? hrs(w.end - w.start) : span(w.start, w.end), label: over ? `Work, ${hrs(w.end - w.start)}, ${fmt(w.start)} to ${fmt(w.end)}` : `Work, ${fmt(w.start)} to ${fmt(w.end)}` });
+    // running: when it ends; over: the hours it took (from the schedule, never pay); later: when it starts
+    const [name, time] = live(w) ? ['Work till', endsAt(w.end)] : w.end <= now ? ['Worked', hrs(w.end - w.start)] : ['Work', fmtShort(w.start)];
+    out.push({ it: w, icon: 'work', name, time, label: `Work, ${fmt(w.start)} to ${fmt(w.end)}` });
   }
   const cls = ITEMS.filter((it) => it.cat === 'class' && inDay(it)).sort(byTime);
   if (cls.length) {
     const c = pick(cls);
-    out.push({ it: c, icon: 'class', name: c.name, time: live(c) ? till(c.end) : fmtShort(c.start), label: `${c.name}, ${fmt(c.start)} to ${fmt(c.end)}` });
+    out.push({ it: c, icon: 'class', name: c.name, time: live(c) ? `till ${endsAt(c.end)}` : fmtShort(c.start), label: `${c.name}, ${fmt(c.start)} to ${fmt(c.end)}` });
   }
   let due = ITEMS.filter((it) => isDue(it) && inDay(it)).sort(byTime)[0], ahead = false;
   if (!due && d >= 0) { due = ITEMS.filter((it) => isDue(it) && t0(it) >= (d + 1) * 1440).sort(byTime)[0]; ahead = true; }
   if (due) {
     const t = t0(due);
-    const time = ahead ? WD[dateOf(dayOf(t)).getDay()] : due.kind === 'bill' ? 'due' : fmtShort(t);
-    out.push({ it: due, icon: 'due', name: due.name, time, label: `${due.name}, due ${dayLong(dayOf(t))} at ${fmt(t)}`, ahead });
+    const whole = (c) => '$' + (c % 100 ? (c / 100).toFixed(2) : String(c / 100));
+    const time = ahead ? WD[dateOf(dayOf(t)).getDay()] : due.kind === 'bill' ? `${whole(due.cents)} due` : fmtShort(t);
+    out.push({ it: due, icon: 'due', name: due.name, time, label: `${due.name}, due ${dayLong(dayOf(t))}${due.kind === 'bill' ? '' : ` at ${fmt(t)}`}`, ahead });
   }
   // in the order they happen; a deadline on a later day goes last
   return out.sort((a, b) => (a.ahead ? 1e9 : t0(a.it)) - (b.ahead ? 1e9 : t0(b.it)));
@@ -652,10 +657,11 @@ function buildChips() {
   chips.textContent = '';
   dayChips(S.day).forEach((c) => {
     const b = document.createElement('button');
-    b.className = 'chip'; b.innerHTML = ICONS[c.icon] + `<span class="cn">${c.name}</span><span class="ct">${c.time}</span>`;
+    b.className = 'chip'; b.dataset.id = c.it.id;
+    b.innerHTML = ICONS[c.icon] + `<span class="cx"><span class="cn">${c.name}</span><span class="ct">${c.time}</span></span>`;
     b.setAttribute('aria-label', c.label);
     b.addEventListener('click', () => {
-      S.sel = c.it.id; showDetail(); markSel();
+      select(c.it.id);
       // same day: bring its node into view; a later day's deadline just opens its card
       const n = TM.nodes.find((x) => x.it.id === c.it.id);
       if (n && dayOf(n.t) === S.day) {
@@ -666,30 +672,29 @@ function buildChips() {
     chips.appendChild(b);
   });
   if (S.open) chips.querySelectorAll('.chip').forEach((c) => { c.style.opacity = 1; });
-  fitChips();
+  fitChips(); markSel();
 }
-// Too wide for the row: let the widest chip's name give way first, then the next widest.
+// Too tight for the row: let the widest tile give way first ("…"), then the next widest.
 function fitChips() {
   const list = [...chips.querySelectorAll('.chip')];
-  list.forEach((c) => { c.style.flexShrink = 0; });
+  list.forEach((c) => { c.style.minWidth = ''; });
   const fits = () => chips.scrollWidth <= chips.clientWidth + 0.5;
   list.sort((a, b) => b.offsetWidth - a.offsetWidth);
-  for (const c of list) { if (fits()) break; c.style.flexShrink = 1; }
-}
-function defaultSel() {
-  const nodes = TM.nodes.filter((n) => dayOf(n.t) === S.day);
-  if (S.day === 0) {
-    const cur = nodes.find((n) => n.it.end != null && n.t <= S.now && n.it.end > S.now);
-    return (cur || nodes.find((n) => n.t > S.now) || nodes[nodes.length - 1])?.it.id;
-  }
-  return nodes[0]?.it.id;
+  for (const c of list) { if (fits()) break; c.style.minWidth = '0'; }
 }
 function markSel() {
-  const id = S.sel || defaultSel();
+  const id = S.sel;
   TM.nodes.forEach((n) => n.el.classList.toggle('sel', n.it.id === id));
+  chips.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.id === id)));
+}
+// One quiet card, only when you ask for it: tap a node or a tile; tap it again to put it away.
+function select(id) {
+  S.sel = S.sel === id ? null : id;
+  showDetail(); markSel();
+  if (S.sel && !reduce && detail.animate) detail.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
 }
 function showDetail() {
-  const id = S.sel || defaultSel();
+  const id = S.sel;
   let html = '';
   if (id) {
     const it = ITEMS.find((x) => x.id === id), t = t0(it);
@@ -845,9 +850,10 @@ function render() {
   trackWrap.style.setProperty('--tlab', seg(P, 0.82, 1).toFixed(3));
   const tN = seg(P, 0.88, 1);
   if (TM.nowEl) { TM.nowEl.style.opacity = tN; TM.nowEl.style.transform = `translateX(-50%) translateY(${(-16 * (1 - eBack(tN))).toFixed(2)}px)`; }
-  $('#todayBtn').style.opacity = 1 - seg(P, 0.7, 0.82);
-  $('#todayBtn').style.visibility = P > 0.82 ? 'hidden' : 'visible';
-  const pk = seg(P, 0.76, 0.94);
+  // "Today ⌄" leaves before the day picker arrives, so the two never overlap
+  $('#todayBtn').style.opacity = 1 - seg(P, 0.66, 0.77);
+  $('#todayBtn').style.visibility = P > 0.77 ? 'hidden' : 'visible';
+  const pk = seg(P, 0.78, 0.94);
   daysNav.style.opacity = pk; daysNav.style.transform = `translateY(${(-8 * (1 - pk)).toFixed(2)}px)`;
   chips.querySelectorAll('.chip').forEach((c, i) => { const t = seg(P, 0.8 + i * 0.03, 0.95 + i * 0.02); c.style.opacity = t; c.style.transform = `translateY(${(10 * (1 - eOut(t))).toFixed(2)}px)`; });
   const dt = seg(P, 0.86, 1);
