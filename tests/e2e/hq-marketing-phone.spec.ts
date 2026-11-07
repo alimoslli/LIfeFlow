@@ -15,6 +15,8 @@ async function owner(page: Page) {
   await page.getByLabel("Password").fill("correct horse battery");
   await page.getByRole("button", { name: "Create account" }).click();
   await page.waitForURL("**/welcome");
+  // Sign-up takes only email and password; give the owner a name so greetings read "Good morning, Owner."
+  await pool.query("update users set name = $1 where email = $2", ["Owner Olu", ADMIN_EMAIL]);
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   await page.getByRole("button", { name: "Skip tour" }).click();
