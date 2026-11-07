@@ -18,5 +18,5 @@ The owner opened Approvals, found 7 requests and understood none well enough to 
 ## Consequences
 
 - Agents must send every field and at least one picture, so Product & Design makes the picture before a request goes in.
-- Migration `0047_decision_cards` (journal `when` 1794900000000) is additive; old rows stay valid with null card fields.
+- Migration `0048_decision_cards` (journal `when` 1795000000000) is additive; old rows stay valid with null card fields.
 - The pictures are small and few; if they grow, move them to object storage behind the same route.
