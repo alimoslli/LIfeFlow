@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { pool } from "./helpers";
+import { insertCard } from "./hq-cards-helpers";
 
 const ADMIN_EMAIL = "admin-owner@example.com"; // matches ADMIN_EMAILS in playwright.config.ts
 
@@ -31,11 +32,7 @@ const here = (page: Page) => {
 test("One admin area: five places and a gear, old URLs land on their new page, a decision works on Work", async ({ browser }) => {
   test.setTimeout(150_000);
   await pool.query("truncate hq_missions, hq_approvals, hq_activity, hq_chats, hq_briefs cascade");
-  const id = (
-    await pool.query(
-      `insert into hq_approvals (role, kind, title, summary, source) values ('developer', 'deploy', 'Ship the one-place admin', 'Ready.', 'owner') returning id`,
-    )
-  ).rows[0].id as string;
+  const id = await insertCard({ role: "developer", kind: "deploy", title: "Ship the one-place admin" });
   const op = await ownerPage(browser);
 
   // The menu: exactly five links, the settings gear beside it, no group labels.
@@ -76,11 +73,11 @@ test("One admin area: five places and a gear, old URLs land on their new page, a
 
   // Work: three sections in order; a card is reachable by its id and a decision works.
   await op.goto(`/admin/work#${id}`);
-  await expect(op.getByRole("heading", { name: "Work", level: 1 })).toBeVisible();
+  await expect(op.getByRole("heading", { name: "Your desk", level: 1 })).toBeVisible();
   await expect(op.getByRole("heading", { level: 2 })).toHaveText(["Needs your yes", "Missions", "This week"]);
   const card = op.locator(`article[id="${id}"]`);
   await expect(card).toBeVisible();
-  await card.getByRole("button", { name: "Yes" }).click();
+  await card.getByRole("button", { name: "Yes, go" }).click();
   await expect(op.getByText("You said yes.")).toBeVisible();
 
   // People and App hold their sections; the gear opens settings and is the active place.

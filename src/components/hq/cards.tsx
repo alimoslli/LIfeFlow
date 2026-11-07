@@ -2,8 +2,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AlertTriangle, ArrowRight, CheckCircle2, Circle, Clock, Loader2, XCircle } from "lucide-react";
 import type { HqLink } from "@/server/db/schema";
-import { decideAction } from "@/app/admin/hq/actions";
-import { SubmitButton } from "@/components/ui/button";
 import { Badge } from "@/components/ui/surface";
 import { ago } from "@/app/admin/format";
 import { employee } from "@/server/hq/team";
@@ -140,52 +138,6 @@ export function ApprovalMini({ a }: { a: Approval }) {
         Review <ArrowRight className="h-4 w-4" aria-hidden />
       </Link>
     </li>
-  );
-}
-
-/** The full approval card: who asks, what, why, links, and Yes / No / Changes. */
-export function ApprovalCard({ a, decide = true }: { a: Approval; decide?: boolean }) {
-  const who = employee(a.role).title;
-  return (
-    <article id={a.id} className="scroll-mt-24 rounded-3xl bg-surface p-4 shadow-soft target:ring-2 target:ring-accent sm:p-5">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge tone="accent">{KIND_LABEL[a.kind]}</Badge>
-        <span className="text-xs text-muted">
-          {who} asks · {ago(a.createdAt)}
-        </span>
-      </div>
-      <h3 className="mt-2 text-[1.0625rem] font-semibold text-text">{a.title}</h3>
-      <p className="mt-1 text-sm break-words whitespace-pre-wrap text-text-2">{a.summary}</p>
-      <Links links={a.links} />
-      {decide ? (
-        <form action={decideAction} className="mt-4 flex flex-col gap-3">
-          <input type="hidden" name="id" value={a.id} />
-          <label className="flex flex-col gap-1.5 text-[0.8125rem] font-medium text-text-2">
-            Note (optional)
-            <input
-              name="note"
-              maxLength={500}
-              className="h-11 w-full rounded-xl border border-border/80 bg-surface px-3.5 text-sm font-normal text-text focus:border-accent focus:ring-2 focus:ring-[var(--ring)] focus:outline-none"
-              placeholder="Anything they should know"
-            />
-          </label>
-          <div className="flex flex-wrap gap-2">
-            <SubmitButton name="decision" value="approved" size="md" pendingText="Saving…">
-              Yes
-            </SubmitButton>
-            <SubmitButton name="decision" value="declined" variant="secondary" size="md" pendingText="Saving…">
-              No
-            </SubmitButton>
-            <SubmitButton name="decision" value="changes" variant="secondary" size="md" pendingText="Saving…">
-              Changes
-            </SubmitButton>
-          </div>
-          <p className="text-xs text-muted">Your answer is saved here. {who} acts on it at their next round; HQ doesn&apos;t run anything itself.</p>
-        </form>
-      ) : (
-        <DecisionLine a={a} />
-      )}
-    </article>
   );
 }
 

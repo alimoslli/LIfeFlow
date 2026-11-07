@@ -9,6 +9,8 @@ import {
   createMission,
   HqError,
   importSeed,
+  linkApprovalMission,
+  reviseApproval,
   recordAgentActivity,
   recordBrief,
   recordCheckin,
@@ -77,8 +79,19 @@ export async function POST(req: Request) {
           return NextResponse.json({ ok: true, id: (await createMission(db, actor, rest as never)).id });
         }
         case "approval": {
-          const { type: _t, ...rest } = b;
-          return NextResponse.json({ ok: true, id: (await createApproval(db, actor, rest as never)).id });
+          const { type: _t, revise, link, sessionId: _s, ...rest } = b;
+          // A new version of an ask the owner sent back with changes (`revise`: the thread id or a version's id).
+          if (typeof revise === "string" && revise) {
+            const a = await reviseApproval(db, actor, revise, rest as never);
+            return NextResponse.json({ ok: true, id: a.id, threadId: a.threadId, version: a.version });
+          }
+          // After a yes: the Chief of Staff links the mission that builds it (`link`: the approval id).
+          if (typeof link === "string" && link) {
+            const a = await linkApprovalMission(db, actor, link, String(rest.missionId ?? ""));
+            return NextResponse.json({ ok: true, id: a.id });
+          }
+          const a = await createApproval(db, actor, rest as never);
+          return NextResponse.json({ ok: true, id: a.id, threadId: a.threadId, version: a.version });
         }
         case "activity":
           await recordAgentActivity(db, actor, {

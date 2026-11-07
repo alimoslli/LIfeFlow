@@ -13,7 +13,7 @@ export default async function Work({ searchParams }: { searchParams: Promise<{ d
   const sp = await searchParams;
   return (
     <div className="hq flex flex-col gap-8">
-      <AdminTitle title="Work" sub="What needs you, and what your team is doing." />
+      <AdminTitle title="Your desk" sub="What needs your yes, and what your team is doing." />
       <Notice done={sp.done} error={sp.error} />
       <ApprovalsSection />
       <MissionsSection />

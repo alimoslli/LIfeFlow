@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lt, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { adminEmails, type Admin } from "../auth/admin";
@@ -11,12 +11,14 @@ import {
   hqBriefs,
   hqChats,
   hqContent,
+  hqFiles,
   hqKeys,
   hqMissions,
   errorReports,
   hqUsageSamples,
   users,
   type HqLink,
+  type HqPreview,
   type HqRole,
   HQ_ROLES,
 } from "../db/schema";
@@ -30,6 +32,9 @@ import type {
   Brief,
   ErrorGroup,
   ApprovalStatus,
+  DecisionCardFields,
+  DecisionThread,
+  Lifecycle,
   Budget,
   Chat,
   ChatStatus,
@@ -101,7 +106,25 @@ export type MissionPatch = Partial<{
   branch: string | null;
   dueOn: string | null;
 }>;
-export type ApprovalInput = { role: HqRole; kind: ApprovalKind; title: string; summary: string; links?: HqLink[]; missionId?: string | null };
+/** The decision card an agent sends (ADR 0028). Everything is required; `summary` is the optional extra detail on top of `why`. */
+export type ApprovalInput = {
+  role: HqRole;
+  kind: ApprovalKind;
+  title: string;
+  why: string;
+  changes: string[];
+  onYes: string;
+  onNo: string;
+  effort: "small" | "medium" | "large";
+  risk: string;
+  recommendation: string;
+  previews: { fileId: string; label?: string | null }[];
+  summary?: string | null;
+  links?: HqLink[];
+  missionId?: string | null;
+};
+/** A new version of an existing ask: the full card again, plus what changed since the owner's note. */
+export type ReviseInput = Omit<ApprovalInput, "role" | "kind"> & Partial<Pick<ApprovalInput, "role" | "kind">> & { changedSinceNote: string };
 export type CheckinInput = {
   sessionId: string;
   /** The Chief of Staff reporting another chat's status: only status, summary and needs change, and only for a chat HQ already knows. */
@@ -162,14 +185,55 @@ const missionPatchSchema = z
     dueOn,
   })
   .partial();
-const approvalInputSchema = z.object({
-  role,
-  kind: z.enum(APPROVAL_KINDS),
+const cardFields = {
   title: line(1, 140),
-  summary: line(1, 2000),
+  why: line(1, 400),
+  changes: z.array(line(1, 200), "is required (1 to 5 short lines)").min(1, "needs at least 1 line").max(5, "has too many lines (max 5)"),
+  onYes: line(1, 600),
+  onNo: line(1, 400),
+  effort: z.enum(["small", "medium", "large"], "must be small, medium or large"),
+  risk: line(1, 300),
+  recommendation: line(1, 300),
+  previews: z
+    .array(z.object({ fileId: z.uuid("is not a stored picture id"), label: optLine(60) }), "is required: at least one picture")
+    .min(1, "is required: at least one picture")
+    .max(4, "has too many pictures (max 4)"),
+  summary: optText(2000),
   links: linksSchema.optional(),
   missionId: z.uuid().nullish(),
+};
+const approvalInputSchema = z.object({ role, kind: z.enum(APPROVAL_KINDS), ...cardFields });
+const reviseInputSchema = z.object({
+  ...cardFields,
+  role: role.optional(),
+  kind: z.enum(APPROVAL_KINDS).optional(),
+  changedSinceNote: line(1, 600),
 });
+/** Names the missing or wrong fields in plain words, so an agent can fix the request in one go. */
+const FIELD_NAMES: Record<string, string> = {
+  title: "title (the ask)",
+  why: "why",
+  changes: "changes (--change, 1 to 5 lines)",
+  onYes: "onYes (--on-yes: exact next steps, who and when)",
+  onNo: "onNo (--on-no)",
+  effort: "effort (small, medium or large)",
+  risk: "risk",
+  recommendation: "recommendation (--recommend)",
+  previews: "previews (--preview, at least one picture)",
+  changedSinceNote: "changedSinceNote (--changed: what is different since the owner's note)",
+};
+function parseCard<T extends z.ZodType>(schema: T, input: unknown): z.infer<T> {
+  const r = schema.safeParse(input);
+  if (r.success) return r.data;
+  const lines = r.error.issues.map((i) => {
+    const k = String(i.path[0] ?? "request");
+    const name = FIELD_NAMES[k] ?? k;
+    const v = (input as Record<string, unknown> | null)?.[k];
+    const missing = v === undefined || v === null || (typeof v === "string" && !cleanLine(v)) || (Array.isArray(v) && v.length === 0);
+    return `${name} ${missing ? "is missing" : i.message}`;
+  });
+  throw new HqError(`The request is not a full decision card: ${[...new Set(lines)].join("; ")}.`);
+}
 
 const clampPct = (n: number | null | undefined) => (n == null || !Number.isFinite(n) ? null : Math.min(100, Math.max(0, n)));
 
@@ -180,7 +244,7 @@ type ApprovalRow = typeof hqApprovals.$inferSelect;
 type ActivityRow = typeof hqActivity.$inferSelect;
 type ChatRow = typeof hqChats.$inferSelect;
 
-const toMission = (r: MissionRow): Mission => ({
+export const toMission = (r: MissionRow): Mission => ({
   id: r.id,
   role: r.role,
   title: r.title,
@@ -201,7 +265,11 @@ const toMission = (r: MissionRow): Mission => ({
   createdAt: r.createdAt,
   updatedAt: r.updatedAt,
 });
-const toApproval = (r: ApprovalRow): Approval => ({
+const toCard = (r: ApprovalRow): DecisionCardFields | null =>
+  r.why == null || !r.changes || !r.onYes || !r.onNo || !r.effort || !r.risk || !r.recommendation || !r.previews?.length
+    ? null
+    : { why: r.why, changes: r.changes, onYes: r.onYes, onNo: r.onNo, effort: r.effort, risk: r.risk, recommendation: r.recommendation, previews: r.previews };
+export const toApproval = (r: ApprovalRow): Approval => ({
   id: r.id,
   role: r.role,
   missionId: r.missionId,
@@ -214,6 +282,11 @@ const toApproval = (r: ApprovalRow): Approval => ({
   decidedAt: r.decidedAt,
   source: r.source,
   createdAt: r.createdAt,
+  card: toCard(r),
+  threadId: r.threadId,
+  version: r.version,
+  changedSinceNote: r.changedSinceNote,
+  supersededAt: r.supersededAt,
 });
 const toActivity = (r: ActivityRow): Activity => ({
   id: r.id,
@@ -240,6 +313,9 @@ const toChat = (r: ChatRow): Chat => ({
   lastCheckinAt: r.lastCheckinAt,
   url: chatUrl(r.id),
 });
+
+/** What counts as "needs your yes": a pending request in the decision-card format. Old requests wait to be rewritten and are not counted. */
+const NEEDS_YES = and(eq(hqApprovals.status, "pending"), isNotNull(hqApprovals.why));
 
 const ROUNDS_LINE = "Works in the Chief of Staff's rounds";
 
@@ -274,7 +350,7 @@ async function loadBase(tx: Tx, now: Date): Promise<Base> {
     .where(or(inArray(hqMissions.status, [...OPEN]), and(eq(hqMissions.status, "done"), gte(hqMissions.doneAt, weekAgo))))
     .orderBy(priorityRank, asc(hqMissions.createdAt))
     .limit(500);
-  const pending = await tx.select().from(hqApprovals).where(eq(hqApprovals.status, "pending")).orderBy(asc(hqApprovals.createdAt)).limit(500);
+  const pending = await tx.select().from(hqApprovals).where(NEEDS_YES).orderBy(asc(hqApprovals.createdAt)).limit(500);
   return { chats, missions: missions.map(toMission), pending: pending.map(toApproval) };
 }
 
@@ -464,7 +540,7 @@ export async function listApprovals(db: Database, filter: { status?: ApprovalSta
 
 export async function pendingApprovalCount(db: Database): Promise<number> {
   return timed(db, async (tx) => {
-    const [r] = await tx.select({ n: count() }).from(hqApprovals).where(eq(hqApprovals.status, "pending"));
+    const [r] = await tx.select({ n: count() }).from(hqApprovals).where(NEEDS_YES);
     return r?.n ?? 0;
   });
 }
@@ -510,7 +586,7 @@ export async function recordBrief(db: Database, actor: HqActor, input: { body: s
     input,
   );
   const brief = await db.transaction(async (tx) => {
-    const needsYou = d.needsYou ?? (await tx.select({ n: count() }).from(hqApprovals).where(eq(hqApprovals.status, "pending")))[0]?.n ?? 0;
+    const needsYou = d.needsYou ?? (await tx.select({ n: count() }).from(hqApprovals).where(NEEDS_YES))[0]?.n ?? 0;
     const [row] = await tx
       .insert(hqBriefs)
       .values({ body: d.body, needsYou, sessionId: actorSession(actor) })
@@ -689,7 +765,7 @@ export async function weeklySummary(db: Database, now: Date = new Date()): Promi
       .where(and(ne(hqApprovals.status, "pending"), gte(hqApprovals.decidedAt, from)))
       .orderBy(desc(hqApprovals.decidedAt))
       .limit(100);
-    const [pend] = await tx.select({ n: count() }).from(hqApprovals).where(eq(hqApprovals.status, "pending"));
+    const [pend] = await tx.select({ n: count() }).from(hqApprovals).where(NEEDS_YES);
     const overdue = await tx
       .select()
       .from(hqMissions)
@@ -877,38 +953,55 @@ async function notifyOwner(db: Database, p: { key: string; title: string; body: 
 }
 
 /** Sends the owner's phone the "needs your yes" push for an approval. Never throws. Call it after the transaction that made the approval has committed. */
-export const sendApprovalPush = (db: Database, a: Approval) =>
+export const sendApprovalPush = (db: Database, a: Approval, body?: string) =>
   notifyOwner(db, {
     key: `hq-approval:${a.id}`,
-    title: `${employee(a.role).title} needs your yes`,
-    body: a.title,
+    title: body ? `${employee(a.role).title}: new version` : `${employee(a.role).title} needs your yes`,
+    body: body ? `${body}: ${a.title}` : a.title,
     url: "/admin/work#approvals",
     tag: `hq-${a.id}`,
   });
 
+const cardValues = (d: z.output<typeof approvalInputSchema> | z.output<typeof reviseInputSchema>) => ({
+  title: d.title,
+  summary: d.summary ?? d.why,
+  why: d.why,
+  changes: d.changes,
+  onYes: d.onYes,
+  onNo: d.onNo,
+  effort: d.effort,
+  risk: d.risk,
+  recommendation: d.recommendation,
+  previews: d.previews.map((p): HqPreview => ({ fileId: p.fileId, label: p.label ?? null })),
+  links: d.links ?? [],
+});
+
+/** Every picture a card lists must be one HQ stored: a made-up id is refused, never shown as a broken image. */
+async function assertPreviewsExist(tx: Tx, previews: { fileId: string }[]): Promise<void> {
+  const ids = [...new Set(previews.map((p) => p.fileId))];
+  const rows = await tx.select({ id: hqFiles.id }).from(hqFiles).where(inArray(hqFiles.id, ids));
+  if (rows.length !== ids.length) throw new HqError("A picture in previews was not uploaded. Upload it first (--preview path.png).");
+}
+
 /**
- * Creates a request for the owner's yes. With `{ tx }` it joins the caller's transaction, and with `notify: false` it sends no push
- * (the caller sends it with sendApprovalPush after its own commit).
+ * Creates a request for the owner's yes, as a full decision card (ADR 0028): the ask, why, exact changes, what happens on
+ * yes and no, effort, risk, a recommendation and at least one picture. Anything missing is refused with a plain message
+ * naming it. With `{ tx }` it joins the caller's transaction, and with `notify: false` it sends no push (the caller sends
+ * it with sendApprovalPush after its own commit).
  */
 export async function createApproval(db: Database, actor: HqActor, input: ApprovalInput, opts: { tx?: Tx; notify?: boolean } = {}): Promise<Approval> {
-  const d = parse(approvalInputSchema, input);
+  const d = parseCard(approvalInputSchema, input);
   const run = <T>(fn: (tx: Tx) => Promise<T>): Promise<T> => (opts.tx ? fn(opts.tx) : db.transaction(fn));
   const approval = await run(async (tx) => {
     if (d.missionId) {
       const [m] = await tx.select({ id: hqMissions.id }).from(hqMissions).where(eq(hqMissions.id, d.missionId));
       if (!m) throw new HqError("That mission no longer exists.");
     }
+    await assertPreviewsExist(tx, d.previews);
+    const id = randomUUID();
     const [row] = await tx
       .insert(hqApprovals)
-      .values({
-        role: d.role,
-        kind: d.kind,
-        title: d.title,
-        summary: d.summary,
-        links: d.links ?? [],
-        missionId: d.missionId ?? null,
-        source: actorKind(actor),
-      })
+      .values({ id, threadId: id, version: 1, role: d.role, kind: d.kind, ...cardValues(d), missionId: d.missionId ?? null, source: actorKind(actor) })
       .returning();
     await logActivity(tx, {
       actor: actor.kind,
@@ -925,7 +1018,85 @@ export async function createApproval(db: Database, actor: HqActor, input: Approv
   return approval;
 }
 
-/** Records the owner's decision. HQ never carries it out; the employee acts on it at their next round. */
+/**
+ * Sends the next version of an ask the owner answered with "Changes". `target` is the thread id or any version's id.
+ * Creates version n+1 (the full card again plus what changed since the owner's note), marks the old one superseded and
+ * pushes the owner. Only the newest version, and only when it is waiting on changes, can be revised.
+ */
+export async function reviseApproval(db: Database, actor: HqActor, target: string, input: ReviseInput): Promise<Approval> {
+  if (!z.uuid().safeParse(target).success) throw new HqError("Unknown request. Use the thread id or the request id.");
+  const d = parseCard(reviseInputSchema, input);
+  const approval = await db.transaction(async (tx) => {
+    const [cur] = await tx
+      .select()
+      .from(hqApprovals)
+      .where(or(eq(hqApprovals.id, target), eq(hqApprovals.threadId, target)))
+      .orderBy(desc(hqApprovals.version))
+      .limit(1)
+      .for("update");
+    if (!cur) throw new HqError("That request no longer exists.");
+    if (!cur.threadId || cur.why == null) throw new HqError("That is an old request. Send a new request in the decision-card format instead.");
+    if (cur.supersededAt) throw new HqError("A newer version already exists. Revise the newest one.");
+    if (cur.status === "pending") throw new HqError("The owner hasn't answered this version yet. Wait for their answer before sending a new one.");
+    if (cur.status !== "changes")
+      throw new HqError(cur.status === "approved" ? "The owner already said yes to this." : "The owner already said no, so this ask is closed.");
+    if (d.role && d.role !== cur.role) throw new HqError("A revision stays with the same department.");
+    await assertPreviewsExist(tx, d.previews);
+    const now = new Date();
+    await tx.update(hqApprovals).set({ supersededAt: now, updatedAt: now }).where(eq(hqApprovals.id, cur.id));
+    const [row] = await tx
+      .insert(hqApprovals)
+      .values({
+        threadId: cur.threadId,
+        version: cur.version + 1,
+        role: cur.role,
+        kind: d.kind ?? cur.kind,
+        ...cardValues(d),
+        changedSinceNote: d.changedSinceNote,
+        missionId: d.missionId ?? cur.missionId,
+        source: actorKind(actor),
+      })
+      .returning();
+    await logActivity(tx, {
+      actor: actor.kind,
+      role: cur.role,
+      kind: "approval_revised",
+      text: `Sent version ${row.version} for your yes: ${row.title}`,
+      approvalId: row.id,
+      missionId: row.missionId,
+      sessionId: actorSession(actor),
+    });
+    return toApproval(row);
+  });
+  if (actor.kind === "agent") await sendApprovalPush(db, approval, "Version " + approval.version + " is ready for your yes");
+  return approval;
+}
+
+/** After a yes, the Chief of Staff links the mission that builds it; from then on the card reports that mission's progress. */
+export async function linkApprovalMission(db: Database, actor: HqActor, approvalId: string, missionId: string): Promise<Approval> {
+  if (!z.uuid().safeParse(approvalId).success || !z.uuid().safeParse(missionId).success) throw new HqError("Unknown request or mission.");
+  return db.transaction(async (tx) => {
+    const [cur] = await tx.select().from(hqApprovals).where(eq(hqApprovals.id, approvalId)).for("update");
+    if (!cur) throw new HqError("That request no longer exists.");
+    if (cur.status !== "approved") throw new HqError("Only a request the owner said yes to can be linked to a mission.");
+    if (cur.missionId && cur.missionId !== missionId) throw new HqError("That request already has a mission.");
+    const [m] = await tx.select({ id: hqMissions.id }).from(hqMissions).where(eq(hqMissions.id, missionId));
+    if (!m) throw new HqError("That mission no longer exists.");
+    const [row] = await tx.update(hqApprovals).set({ missionId, updatedAt: new Date() }).where(eq(hqApprovals.id, approvalId)).returning();
+    await logActivity(tx, {
+      actor: actor.kind,
+      role: row.role,
+      kind: "approval_linked",
+      text: `Started the work for: ${row.title}`,
+      approvalId: row.id,
+      missionId,
+      sessionId: actorSession(actor),
+    });
+    return toApproval(row);
+  });
+}
+
+/** Records the owner's decision. HQ never carries it out; the employee acts on it at their next round. "Changes" needs a note and keeps the thread open. */
 export async function decideApproval(
   db: Database,
   admin: Admin,
@@ -940,6 +1111,8 @@ export async function decideApproval(
     const [cur] = await tx.select().from(hqApprovals).where(eq(hqApprovals.id, id)).for("update");
     if (!cur) throw new HqError("That approval no longer exists.");
     if (cur.status !== "pending") throw new HqError("That one was already decided.");
+    if (cur.why == null) throw new HqError("This request is being rewritten by your Chief of Staff. Answer the new version when it arrives.");
+    if (decision === "changes" && !n) throw new HqError("Say what to change, so they know what to fix.");
     const now = new Date();
     const [row] = await tx
       .update(hqApprovals)
@@ -1184,6 +1357,12 @@ export async function agentInbox(
 ): Promise<{
   missions: Mission[];
   decisions: Approval[];
+  /** Asks the owner answered "Changes": the owner's note is in `decisionNote`. Send the next version with `approval --revise`. */
+  revisions: Approval[];
+  /** Old requests with no decision card. Rewrite each in the new format as a new request. */
+  needsRewrite: Approval[];
+  /** Asks the owner said yes to that no mission builds yet. Create or link one (`approval --link <id> --mission <missionId>`). */
+  approvedWithoutMission: Approval[];
   approvedContent: ContentItem[];
   controls: Omit<HqControls, "updatedByEmail" | "updatedAt">;
   chats: { id: string; title: string; role: HqRole }[];
@@ -1202,6 +1381,25 @@ export async function agentInbox(
       .where(and(ne(hqApprovals.status, "pending"), gte(hqApprovals.decidedAt, since), input.role ? eq(hqApprovals.role, input.role) : undefined))
       .orderBy(desc(hqApprovals.decidedAt))
       .limit(50);
+    const mine = input.role ? eq(hqApprovals.role, input.role) : undefined;
+    const revisions = await tx
+      .select()
+      .from(hqApprovals)
+      .where(and(eq(hqApprovals.status, "changes"), isNull(hqApprovals.supersededAt), isNotNull(hqApprovals.why), mine))
+      .orderBy(asc(hqApprovals.decidedAt))
+      .limit(50);
+    const needsRewrite = await tx
+      .select()
+      .from(hqApprovals)
+      .where(and(eq(hqApprovals.status, "pending"), isNull(hqApprovals.why), mine))
+      .orderBy(asc(hqApprovals.createdAt))
+      .limit(50);
+    const unlinked = await tx
+      .select()
+      .from(hqApprovals)
+      .where(and(eq(hqApprovals.status, "approved"), isNull(hqApprovals.missionId), isNotNull(hqApprovals.why), mine))
+      .orderBy(asc(hqApprovals.decidedAt))
+      .limit(50);
     const approvedContent = await approvedContentIn(tx);
     // The owner's email and edit time are for the owner's pages only; an agent gets the switches and nothing else.
     const { updatedByEmail: _email, updatedAt: _at, ...controls } = await controlsIn(tx);
@@ -1212,7 +1410,16 @@ export async function agentInbox(
       .orderBy(asc(hqChats.createdAt))
       .limit(100);
     const chats = mapped.flatMap((c) => (c.role ? [{ id: c.id, title: c.title, role: c.role }] : []));
-    return { missions: missions.map(toMission), decisions: decisions.map(toApproval), approvedContent, controls, chats };
+    return {
+      missions: missions.map(toMission),
+      decisions: decisions.map(toApproval),
+      revisions: revisions.map(toApproval),
+      needsRewrite: needsRewrite.map(toApproval),
+      approvedWithoutMission: unlinked.map(toApproval),
+      approvedContent,
+      controls,
+      chats,
+    };
   });
 }
 
@@ -1307,4 +1514,76 @@ export async function importSeedAsOwner(db: Database, admin: Admin, seed: unknow
   const out = await importSeed(db, { kind: "owner", email: admin.email }, seed);
   await db.insert(adminActions).values({ actorUserId: admin.id, actorEmail: admin.email, action: "hq.seed_imported", metadata: out });
   return out;
+}
+
+// --- decision threads and lifecycle (ADR 0028) ---------------------------------------------------------------------
+
+/**
+ * Where an approved card is, taken from its linked mission (nothing is stored twice):
+ * approved = the owner's yes; being built = mission doing (or blocked); ready for your look = mission waiting;
+ * live = mission done. With no mission yet, or a todo/dropped one, it stays at "approved".
+ */
+export function lifecycleOf(a: Approval, m: Mission | null): Lifecycle {
+  const stage: Lifecycle["stage"] = !m
+    ? "approved"
+    : m.status === "done"
+      ? "live"
+      : m.status === "waiting"
+        ? "look"
+        : m.status === "doing" || m.status === "blocked"
+          ? "built"
+          : "approved";
+  return {
+    stage,
+    dates: {
+      approved: a.decidedAt,
+      built: m && ["doing", "blocked", "waiting", "done"].includes(m.status) ? (m.startedAt ?? null) : null,
+      look: m?.status === "waiting" ? m.updatedAt : null,
+      live: m?.status === "done" ? m.doneAt : null,
+    },
+    mission: m ? { id: m.id, title: m.title, status: m.status, blockedReason: m.blockedReason, result: m.result, links: m.links } : null,
+  };
+}
+
+/** Every decision card grouped by thread (newest activity first, max 400 requests), and the old requests waiting to be rewritten. */
+export async function listDecisionThreads(db: Database): Promise<{ threads: DecisionThread[]; rewriting: Approval[] }> {
+  return timed(db, async (tx) => {
+    const rows = await tx.select().from(hqApprovals).where(isNotNull(hqApprovals.why)).orderBy(desc(hqApprovals.createdAt)).limit(400);
+    const legacy = await tx
+      .select()
+      .from(hqApprovals)
+      .where(and(eq(hqApprovals.status, "pending"), isNull(hqApprovals.why)))
+      .orderBy(asc(hqApprovals.createdAt))
+      .limit(50);
+    const byThread = new Map<string, Approval[]>();
+    for (const r of rows) {
+      const a = toApproval(r);
+      const k = a.threadId ?? a.id;
+      byThread.set(k, [...(byThread.get(k) ?? []), a]);
+    }
+    const missionIds = [...new Set([...byThread.values()].flatMap((v) => v.map((a) => a.missionId).filter((x): x is string => !!x)))];
+    const missions = missionIds.length ? await tx.select().from(hqMissions).where(inArray(hqMissions.id, missionIds)) : [];
+    const mById = new Map(missions.map((m) => [m.id, toMission(m)]));
+    const threads: DecisionThread[] = [...byThread.entries()].map(([threadId, desc_]) => {
+      const versions = [...desc_].sort((x, y) => x.version - y.version);
+      const latest = versions[versions.length - 1];
+      const state = latest.status === "pending" ? "waiting" : latest.status === "changes" ? "revising" : latest.status;
+      return {
+        threadId,
+        role: latest.role,
+        versions,
+        latest,
+        state,
+        lifecycle: state === "approved" ? lifecycleOf(latest, latest.missionId ? (mById.get(latest.missionId) ?? null) : null) : null,
+      };
+    });
+    return { threads, rewriting: legacy.map(toApproval) };
+  });
+}
+
+/** One thread by id (the thread id or any version's id), for the card's own page and tests. */
+export async function getDecisionThread(db: Database, id: string): Promise<DecisionThread | null> {
+  if (!z.uuid().safeParse(id).success) return null;
+  const { threads } = await listDecisionThreads(db);
+  return threads.find((t) => t.threadId === id || t.versions.some((v) => v.id === id)) ?? null;
 }

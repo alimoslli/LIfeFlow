@@ -21,3 +21,24 @@ export async function authenticateHq(req: Request): Promise<{ id: string; name: 
 }
 
 export { readLimitedBody } from "../http";
+
+/** Reads a request body as raw bytes with a hard limit (pictures). Refuses early on content-length. */
+export async function readLimitedBytes(req: Request, max: number): Promise<Uint8Array> {
+  const declared = Number(req.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > max) throw new HttpError(413, "The picture is too big (max 2 MB).");
+  const reader = req.body?.getReader();
+  if (!reader) return new Uint8Array();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel().catch(() => {});
+      throw new HttpError(413, "The picture is too big (max 2 MB).");
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks);
+}

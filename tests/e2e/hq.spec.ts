@@ -1,5 +1,6 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { pool } from "./helpers";
+import { PNG_BYTES } from "./hq-cards-helpers";
 
 const ADMIN_EMAIL = "admin-owner@example.com"; // matches ADMIN_EMAILS in playwright.config.ts
 
@@ -115,18 +116,35 @@ test("HQ: the office, work (missions, approvals, report) and keys work end to en
   await expect(op.getByTestId("hq-new-key")).toHaveCount(0);
   await expect(op.getByText("e2e rounds").first()).toBeVisible();
 
-  // An agent files an approval with the key; it appears in the inbox and the owner says yes.
+  // An agent uploads a picture and files an approval with the key; it appears on the desk and the owner says yes.
+  const up = await request.post("/api/hq/files", { headers: { Authorization: `Bearer ${token}`, "content-type": "image/png" }, data: PNG_BYTES });
+  expect(up.status()).toBe(200);
+  const picture = (await up.json()) as { id: string };
   const posted = await request.post("/api/hq/report", {
     headers: { Authorization: `Bearer ${token}` },
-    data: { type: "approval", role: "developer", kind: "deploy", title: "Ship the calendar fix", summary: "Tests pass. Ready to go live." },
+    data: {
+      type: "approval",
+      role: "developer",
+      kind: "deploy",
+      title: "Ship the calendar fix",
+      why: "Tests pass. Ready to go live.",
+      changes: ["Calendar duplicates stop"],
+      onYes: "Tonight Engineering goes live; tomorrow you see it in the app.",
+      onNo: "Nothing changes.",
+      effort: "small",
+      risk: "Low: one screen.",
+      recommendation: "Yes.",
+      previews: [{ fileId: picture.id, label: "Calendar" }],
+    },
   });
   expect(posted.status()).toBe(200);
   await op.goto("/admin/work");
   const card = op.locator("article", { hasText: "Ship the calendar fix" });
-  await expect(card.getByText("Go live", { exact: true })).toBeVisible();
+  await expect(card).toContainText("Go live");
+  await expect(card.getByRole("img", { name: /Calendar/ })).toBeVisible();
   await expect(card.getByText(/acts on it at their next round/)).toBeVisible();
-  await card.getByLabel("Note (optional)").fill("Go ahead");
-  await card.getByRole("button", { name: "Yes" }).click();
+  await card.getByRole("textbox").fill("Go ahead");
+  await card.getByRole("button", { name: "Yes, go" }).click();
   await expect(op.getByText("You said yes.")).toBeVisible();
   await op.goto("/admin");
   await expect(op.getByText(/You said yes/).first()).toBeVisible();
@@ -170,6 +188,6 @@ test("HQ: the office, work (missions, approvals, report) and keys work end to en
   // The old Founder Office URL lands on Work, with its three parts.
   await op.goto("/admin/hq/founder");
   await expect(op).toHaveURL(/\/admin\/work$/);
-  await expect(op.getByRole("heading", { name: "Work", level: 1 })).toBeVisible();
+  await expect(op.getByRole("heading", { name: "Your desk", level: 1 })).toBeVisible();
   for (const name of ["Needs your yes", "Missions", "This week"]) await expect(op.getByRole("heading", { name, level: 2 })).toBeVisible();
 });

@@ -63,7 +63,8 @@ HQ is a mirror, never a blocker. If `HQ_URL` isn't set or a command fails, carry
 4. **Show the work as it happens.**
    - After each step, run `checkin --status working --summary "<one line: what is happening now>"`.
    - A check-in older than 20 minutes reads as resting, so keep them coming during long steps.
-5. **Anything that needs the owner** becomes an approval: `approval --role <who> --kind <deploy|feature|design|publish|outbound|paid|subscription|destructive|security|v3_merge|other> --title "…" --summary "…" --link "Preview=https://…"`.
+5. **Anything that needs the owner** becomes a decision card (ADR 0028): `approval --role <who> --kind <deploy|feature|design|publish|outbound|paid|subscription|destructive|security|v3_merge|other> --title "…" --why "…" --change "…" (1 to 5) --on-yes "…" --on-no "…" --effort small|medium|large --risk "…" --recommend "…" --preview shot.png:Label (1 to 4)`. HQ refuses a card with anything missing, naming it.
+   - To answer a "Send changes": `approval --revise <threadId> --changed "what is different since the owner's note"` plus every field again. After a yes: `approval --start <approvalId> --mission <missionId>`; the card then follows the mission (doing = being built, waiting = ready for the owner's look, done = live).
    - This pushes the owner's phone.
    - Small fixes and bugs stay approved in advance (`docs/team.md`), so they don't need one.
 6. **Results.**
