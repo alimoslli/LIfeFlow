@@ -161,3 +161,11 @@ The owner: "make sure when i start a task it loads the correct chat with the cor
 - **The mission page of a desk file** starts and continues it exactly like the desk.
 - **A desk task's own chat** has no department of its own. The office shows the task title alone, not "(in Untitled chat)".
 - **Unchanged:** HQ only builds links. It never starts, reads or drives a chat, and never uses the owner's login. The COO's round prompts need no change: their progress relay no longer moves a task.
+
+## Addendum 3 (owner, 2026-11-07): the CEO looks like the owner
+The owner: "my character looks nothing like me." The CEO in `penthouse.webp` was drawn without the owner's photos (tan skin, brown eyes, round wire glasses, a slim face). It was redrawn from the two photos the owner sent on 2026-11-06:
+- **What it shows now:** fair skin with rosy cheeks, light blue-grey eyes, thick dark eyebrows, full dark brown curls over the forehead, a fuller face, and browline glasses (a black top bar, thin metal rims below).
+- **The same pose and outfit:** hands clasped, black shirt, gold watch.
+- **How:** one masked edit with `gpt-image-2` (medium quality; high quality timed out at the proxy). The inputs were the picture, a mask over the person only, the two photos for the likeness, and the Engineering room's picture as the style reference. Three versions were made, and the closest was kept (blue-grey eyes, fair skin).
+- **Only the person changed.** The generated person was put back on the original picture with a feathered edge, so the room, the pile of files under the "Your desk" button and the business card corner are the original pixels.
+- **Later pictures of the CEO** use the same two photos as the likeness reference.
