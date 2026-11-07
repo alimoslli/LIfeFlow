@@ -96,6 +96,21 @@ class BalancesReconcile(unittest.TestCase):
         chk = next(a for a in bank["accounts"] if a["id"] == "acc-checking")
         self.assertEqual(chk["available_balance_cents"], 4000)
 
+    def test_holdings_come_from_the_persona_and_stay_in_cents(self):
+        p, sc = load(LIBRARY / "cases" / "s0026-student-short-for-car-insurance-sell-fifty-of-vti")
+        bank = simulate.simulate(p, sc)["connections"]["bank"]
+        h = bank["holdings"][0]
+        self.assertEqual((h["id"], h["account_id"], h["value_cents"], h["cost_basis_cents"]), ("h-vti", "acc-brokerage", 81240, 60040))
+        self.assertEqual(h["value_cents"] - h["cost_basis_cents"], 21200)
+        self.assertEqual(next(a for a in bank["accounts"] if a["id"] == "acc-brokerage")["type"], "investment")
+        errors = []
+        validate.check_bank(bank, datetime.fromisoformat(sc["now"]), errors)
+        self.assertEqual(errors, [])
+        bad = copy.deepcopy(p)
+        bad["holdings"][0]["account"] = "acc-checking"
+        with self.assertRaises(simulate.SimError):
+            simulate.simulate(bad, sc)
+
     def test_signs_follow_cashflow_rules(self):
         rows = {t["id"]: t for t in run(STUDENT)[2]["connections"]["bank"]["transactions"]}
         self.assertEqual(rows["x-target"]["amount_cents"], -8517)

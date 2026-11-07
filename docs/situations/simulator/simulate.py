@@ -1884,7 +1884,25 @@ class Sim:
                               "account_id": b.get("account", self.primary_checking()), "status": "active", "source": "detected",
                               "last_charged_on": last.isoformat() if last else None})
         self.recurring_out = recurring
-        return {"provider": "plaid", "synced_at": self.iso(self.now), "accounts": out_accts, "transactions": rows, "recurring": recurring}
+        out = {"provider": "plaid", "synced_at": self.iso(self.now), "accounts": out_accts, "transactions": rows, "recurring": recurring}
+        if self.p.get("holdings"):
+            out["holdings"] = self.holdings_out()
+        return out
+
+    def holdings_out(self):
+        """Investments as the app stores them (holdings: value_cents, cost_basis_cents). Frozen at now; the persona states the values."""
+        accts = self.accounts()
+        out = []
+        for h in self.p["holdings"]:
+            if h["account"] not in accts or accts[h["account"]]["type"] != "investment":
+                raise SimError(f"holding {h['id']}: account {h['account']!r} must be a persona account with type investment")
+            for k in ("value_cents", "cost_basis_cents"):
+                if not isinstance(h.get(k), int) or h[k] < 0:
+                    raise SimError(f"holding {h['id']}: {k} must be a non-negative integer (cents)")
+            out.append({"id": self.claim(h["id"]), "account_id": h["account"], "symbol": h.get("symbol"), "name": h["name"], "security_type": h.get("security_type", "etf"),
+                        "quantity": h["quantity"], "value_cents": h["value_cents"], "cost_basis_cents": h["cost_basis_cents"], "expense_ratio_bps": h.get("expense_ratio_bps"),
+                        "acquired_on": h.get("acquired_on"), "source": "plaid", "as_of": self.iso(self.now)})
+        return out
 
     # ---------------------------------------------------------------- health
     def build_health(self):

@@ -1,0 +1,596 @@
+{
+  "id": "p0003-retired-pension-widow-lives-alone",
+  "summary": "Retired teacher, 71, lives alone in a senior apartment, monthly pension and Social Security, small savings and an index fund she added to for years",
+  "kinds": [
+    "retired"
+  ],
+  "time_zone": "America/New_York",
+  "pay": {
+    "type": "salary",
+    "period": "monthly"
+  },
+  "places": {
+    "home": "home",
+    "out": "town",
+    "gym": "the community pool",
+    "family": "her daughter's"
+  },
+  "commute_minutes": {
+    "home-out": 12,
+    "home-gym": 10,
+    "home-family": 25,
+    "home-airport": 45
+  },
+  "commute_mode": "car",
+  "ready_minutes": 35,
+  "wind_down_minutes": 30,
+  "accounts": [
+    {
+      "id": "acc-checking",
+      "name": "Checking",
+      "official_name": "Everyday Checking",
+      "type": "depository",
+      "subtype": "checking",
+      "institution_name": "Lakeside Credit Union",
+      "mask": "3308",
+      "opening_balance_cents": 148000
+    },
+    {
+      "id": "acc-savings",
+      "name": "Savings",
+      "official_name": "Share Savings",
+      "type": "depository",
+      "subtype": "savings",
+      "institution_name": "Lakeside Credit Union",
+      "mask": "3319",
+      "opening_balance_cents": 820000,
+      "apy_bps": 300,
+      "interest_description": "INTEREST PAID"
+    },
+    {
+      "id": "acc-brokerage",
+      "name": "Brokerage",
+      "official_name": "Individual Brokerage",
+      "type": "investment",
+      "subtype": "brokerage",
+      "institution_name": "Harborline Invest",
+      "mask": "6120",
+      "opening_balance_cents": 0
+    }
+  ],
+  "income": [
+    {
+      "id": "inc-pension",
+      "type": "salary",
+      "label": "Pension and Social Security",
+      "annual_cents": 2640000,
+      "pay_period": "monthly",
+      "pay_day": 3,
+      "tax_share": 0.05,
+      "account": "acc-checking",
+      "description": "STATE TEACHERS RETIREMENT PENSION PMT",
+      "merchant_name": null
+    }
+  ],
+  "bills": [
+    {
+      "id": "rent",
+      "name": "Rent",
+      "description": "MAPLE COURT SENIOR APTS RENT",
+      "merchant_name": null,
+      "pfc": "RENT_AND_UTILITIES_RENT",
+      "amount_cents": 98500,
+      "day": 1,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill"
+    },
+    {
+      "id": "electric",
+      "name": "Electric",
+      "description": "DUKE ENERGY BILL PAY",
+      "merchant_name": null,
+      "pfc": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY",
+      "amount_cents": 7400,
+      "day": 13,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill",
+      "varies_pct": 0.1
+    },
+    {
+      "id": "medigap",
+      "name": "Medicare supplement",
+      "description": "MEDICARE SUPPLEMENT PREMIUM",
+      "merchant_name": null,
+      "pfc": "MEDICAL_OTHER_MEDICAL",
+      "amount_cents": 16400,
+      "day": 5,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill"
+    },
+    {
+      "id": "phone",
+      "name": "Phone",
+      "description": "VERIZON WIRELESS PAYMENTS",
+      "merchant_name": null,
+      "pfc": "RENT_AND_UTILITIES_TELEPHONE",
+      "amount_cents": 4500,
+      "day": 12,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill"
+    },
+    {
+      "id": "internet",
+      "name": "Internet",
+      "description": "XFINITY INTERNET",
+      "merchant_name": null,
+      "pfc": "RENT_AND_UTILITIES_INTERNET_AND_CABLE",
+      "amount_cents": 5500,
+      "day": 24,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill"
+    },
+    {
+      "id": "netflix",
+      "name": "Netflix",
+      "description": "NETFLIX.COM",
+      "merchant_name": "Netflix",
+      "pfc": "ENTERTAINMENT_TV_AND_MOVIES",
+      "amount_cents": 1599,
+      "day": 9,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "subscription"
+    }
+  ],
+  "bank": {
+    "overdraft_fee_cents": 2500,
+    "low_balance_alert_cents": 5000,
+    "switch_to_card_below_cents": 2000
+  },
+  "spending": [
+    {
+      "id": "groceries",
+      "label": "Groceries",
+      "pfc": "FOOD_AND_DRINK_GROCERIES",
+      "per_week": 0.0,
+      "amount_cents": [
+        2322,
+        8385
+      ],
+      "merchants": [
+        {
+          "description": "ALDI 71449",
+          "merchant_name": "Aldi",
+          "weight": 2
+        },
+        {
+          "description": "KROGER #0625",
+          "merchant_name": "Kroger",
+          "weight": 2
+        },
+        {
+          "description": "TRADER JOE'S #722",
+          "merchant_name": "Trader Joe's",
+          "weight": 1
+        }
+      ],
+      "routine": "groceries",
+      "extra_per_week": 0.4,
+      "card_share": 0.4
+    },
+    {
+      "id": "eating-out",
+      "label": "Fast food and takeout",
+      "pfc": "FOOD_AND_DRINK_FAST_FOOD",
+      "per_week": 2.2,
+      "amount_cents": [
+        740,
+        1917
+      ],
+      "merchants": [
+        {
+          "description": "CHIPOTLE 2937",
+          "merchant_name": "Chipotle",
+          "weight": 2
+        },
+        {
+          "description": "MCDONALD'S F32598",
+          "merchant_name": "McDonald's",
+          "weight": 2
+        },
+        {
+          "description": "TACO BELL 015665",
+          "merchant_name": "Taco Bell",
+          "weight": 1
+        },
+        {
+          "description": "SQ *NOODLE BAR",
+          "merchant_name": null,
+          "weight": 1
+        }
+      ],
+      "time": [
+        "17:00",
+        "22:00"
+      ],
+      "card_share": 0.3
+    },
+    {
+      "id": "coffee",
+      "label": "Coffee",
+      "pfc": "FOOD_AND_DRINK_COFFEE",
+      "per_week": 4.0,
+      "amount_cents": [
+        327,
+        631
+      ],
+      "merchants": [
+        {
+          "description": "STARBUCKS STORE 15134",
+          "merchant_name": "Starbucks",
+          "weight": 2
+        },
+        {
+          "description": "SQ *CORNER CAFE",
+          "merchant_name": "Corner Cafe",
+          "weight": 2
+        },
+        {
+          "description": "DUNKIN #308643",
+          "merchant_name": "Dunkin'",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "07:00",
+        "15:00"
+      ],
+      "card_share": 0.2
+    },
+    {
+      "id": "gas",
+      "label": "Gas",
+      "pfc": "TRANSPORTATION_GAS",
+      "per_week": 0.9,
+      "amount_cents": [
+        3612,
+        6708
+      ],
+      "merchants": [
+        {
+          "description": "SHELL OIL 47737600908",
+          "merchant_name": "Shell",
+          "weight": 2
+        },
+        {
+          "description": "SPEEDWAY 06213",
+          "merchant_name": "Speedway",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "07:00",
+        "21:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "shopping",
+      "label": "Online orders",
+      "pfc": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES",
+      "per_week": 1.4,
+      "amount_cents": [
+        783,
+        4791
+      ],
+      "merchants": [
+        {
+          "description": "AMZN Mktp US*{A6}",
+          "merchant_name": "Amazon",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "09:00",
+        "23:30"
+      ],
+      "card_share": 0.6,
+      "refund_chance": 0.05,
+      "receipt_email": "orders-marketplace@example.com",
+      "month_scale": {
+        "11": 1.3,
+        "12": 1.6
+      }
+    },
+    {
+      "id": "target",
+      "label": "Target run",
+      "pfc": "GENERAL_MERCHANDISE_SUPERSTORES",
+      "per_week": 0.9,
+      "amount_cents": [
+        1307,
+        5227
+      ],
+      "merchants": [
+        {
+          "description": "TARGET 00002134",
+          "merchant_name": "Target",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "20:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "gifts",
+      "label": "Gifts",
+      "pfc": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES",
+      "per_week": 0.2,
+      "amount_cents": [
+        1935,
+        5805
+      ],
+      "merchants": [
+        {
+          "description": "SQ *GIFT SHOP",
+          "merchant_name": null,
+          "weight": 1
+        }
+      ],
+      "time": [
+        "11:00",
+        "20:00"
+      ],
+      "card_share": 0.5,
+      "month_scale": {
+        "12": 3
+      }
+    },
+    {
+      "id": "pharmacy",
+      "label": "Pharmacy",
+      "pfc": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS",
+      "per_week": 1.1,
+      "amount_cents": [
+        774,
+        3612
+      ],
+      "merchants": [
+        {
+          "description": "CVS/PHARMACY #04804",
+          "merchant_name": "CVS",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "20:00"
+      ],
+      "discretionary": false
+    }
+  ],
+  "health": {
+    "goals": {
+      "workouts_per_week": 3,
+      "sleep_hours": 7
+    },
+    "steps": {
+      "work": [
+        7000,
+        13000
+      ],
+      "class": [
+        6000,
+        9000
+      ],
+      "free": [
+        3000,
+        8000
+      ]
+    },
+    "resting_heart_rate": 63,
+    "nutrition": {
+      "enabled": false,
+      "log_rate": 0.5,
+      "base_kcal": 2000,
+      "sd_kcal": 220,
+      "goal_kcal": 2100
+    }
+  },
+  "routines": [
+    {
+      "id": "sleep",
+      "activity": "sleep",
+      "label": "Sleep",
+      "records_as": "health_sleep",
+      "variance_minutes": 30,
+      "late_night_rate": 0.05,
+      "early_before": "09:00",
+      "windows": [
+        {
+          "id": "before-early-day",
+          "day_type": "early_next_day",
+          "start": "22:00",
+          "end": "06:30",
+          "firmness": "usual"
+        },
+        {
+          "id": "before-free-day",
+          "day_type": "free_next_day",
+          "start": "22:30",
+          "end": "07:00",
+          "firmness": "usual"
+        }
+      ]
+    },
+    {
+      "id": "pool",
+      "activity": "workout",
+      "label": "Water aerobics",
+      "where": "gym",
+      "records_as": "health_workout",
+      "keep_rate": 0.85,
+      "duration_minutes": [
+        45,
+        60
+      ],
+      "ready_minutes": 15,
+      "windows": [
+        {
+          "id": "mwf-morning",
+          "days": [
+            "Mon",
+            "Wed",
+            "Fri"
+          ],
+          "start": "09:00",
+          "end": "10:30",
+          "firmness": "firm"
+        }
+      ],
+      "workout_types": {
+        "Swimming": 1,
+        "Functional Strength Training": 1
+      },
+      "source_memory": "m-pool"
+    },
+    {
+      "id": "groceries",
+      "activity": "groceries",
+      "label": "Weekly grocery run",
+      "where": "out",
+      "records_as": "bank",
+      "keep_rate": 0.9,
+      "duration_minutes": [
+        40,
+        70
+      ],
+      "timeline": "none",
+      "windows": [
+        {
+          "id": "thu-morning",
+          "days": [
+            "Thu"
+          ],
+          "start": "10:30",
+          "end": "12:00",
+          "firmness": "firm"
+        }
+      ]
+    },
+    {
+      "id": "daughter-call",
+      "activity": "call",
+      "label": "Call with Ellen",
+      "records_as": "calendar_recurring",
+      "calendar_title": "Call with Ellen",
+      "keep_rate": 0.95,
+      "windows": [
+        {
+          "id": "sun-afternoon",
+          "days": [
+            "Sun"
+          ],
+          "start": "16:00",
+          "end": "16:45",
+          "firmness": "firm"
+        }
+      ],
+      "source_memory": "m-call"
+    },
+    {
+      "id": "keep-free",
+      "activity": "keep free",
+      "label": "Quiet afternoons",
+      "records_as": "none",
+      "windows": [
+        {
+          "id": "daily",
+          "days": [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri"
+          ],
+          "start": "13:00",
+          "end": "16:00",
+          "firmness": "usual"
+        }
+      ],
+      "source_memory": "m-quiet"
+    }
+  ],
+  "real_life": {
+    "events": [],
+    "nights_out": null,
+    "trips": []
+  },
+  "email": {
+    "address": "ruth.a.home@example.com",
+    "per_day": {
+      "promotions": 2.8,
+      "newsletters": 1.2,
+      "social": 0.4,
+      "personal": 0.5,
+      "security": 0.05
+    },
+    "weekend_scale": 0.9
+  },
+  "memories": [
+    {
+      "id": "m-pool",
+      "content": "I do water aerobics Monday, Wednesday and Friday mornings at 9",
+      "category": "routine",
+      "via": "chat",
+      "told_at": "2026-08-10T10:00"
+    },
+    {
+      "id": "m-call",
+      "content": "I call my daughter Ellen every Sunday at 4",
+      "category": "routine",
+      "via": "chat",
+      "told_at": "2026-08-10T10:04"
+    },
+    {
+      "id": "m-quiet",
+      "content": "I like my quiet afternoons, 1 to 4. No appointments if I can help it",
+      "category": "preference",
+      "via": "chat",
+      "told_at": "2026-08-10T10:08"
+    },
+    {
+      "id": "m-fund",
+      "content": "My index fund is for my later years. I only take from it when I have to",
+      "category": "preference",
+      "via": "chat",
+      "told_at": "2026-08-12T11:20"
+    }
+  ],
+  "generated": {
+    "by": "hand",
+    "term": "Fall 2026"
+  },
+  "holdings": [
+    {
+      "id": "h-vti",
+      "account": "acc-brokerage",
+      "symbol": "VTI",
+      "name": "Vanguard Total Stock Market ETF",
+      "security_type": "etf",
+      "quantity": "18.40000000",
+      "value_cents": 515200,
+      "cost_basis_cents": 330000,
+      "expense_ratio_bps": 3,
+      "acquired_on": "2019-05-10"
+    }
+  ]
+}
