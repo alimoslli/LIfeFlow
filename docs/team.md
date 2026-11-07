@@ -64,6 +64,10 @@ The owner asked for the agents to keep running: audit the app (phone and web), f
 - Things to avoid become rules the same day.
 - Proposals are tagged `fix now`, `build now`, `needs the new surface` or `owner decision`.
 
+**Chain of command (owner, 2026-11-07):** every chat and agent reports to the COO first; the COO reports to the owner; the owner's answers go back to the team through the COO (`docs/hq/company.md`).
+
+**Standing order (owner, 2026-11-07, every chat and agent):** don't ask the owner for approvals or interrupt him at work. Work on plan; anything that needs him is built and held (never published, posted, deployed, merged to main or sent) until he agrees, reported once and briefly.
+
 **What needs the owner's approval (owner, 2026-11-05)**
 - **Approved in advance:** small fixes and bugs (wrong numbers, broken flows, errors, rule breaks, copy that's wrong, accessibility, security slips). Builders fix them and they ship once verified.
 - **Needs the owner's yes first:** every real change (a new feature, a change to how something works or looks, removing a feature, pricing, anything on the new surface). It goes on the yes or no list, with a picture when words aren't enough.

@@ -124,3 +124,25 @@ The owner: "I still don't think HQ is running well … I see myself ending up in
   - Rooms already showed these as door notes.
 
 **What it can't do:** HQ still can't read or type into a chat (Claude doesn't let a website do that). Replying happens in Claude, one tap away. Synced chats are up to an hour old; chats with their own hooks (desk tasks, tasks started from HQ, the COO) are live to within seconds.
+
+## Addendum (owner, 2026-11-07, night): the Office answers three questions
+
+The owner, with a photo of the bottom of the Office: "like what is this". It showed two raw logs ("Decided for you", "Recent activity") in the agents' own shorthand (file names, branches, error codes) beside a large empty space. The Office stacked about ten blocks, against the simple-concept rule (understood in 5 seconds, one next step, no jargon).
+
+**The Office now, top to bottom:**
+1. The greeting, with one line of counts and this week's Claude use.
+2. One card (`RightNow`) with two parts:
+   - **Needs you**: decision cards waiting for a yes (Decide, which opens the card on Work), then every chat that says it needs the owner, in its own words (Open).
+   - **Working now**: who is working on what, with Watch.
+3. The COO's brief.
+4. "Since you last looked".
+5. The building (or the workspace list).
+6. "The app today".
+
+**What moved:**
+- The number tiles are gone: what waits is listed in "Needs you", and the week's Claude use is in the greeting line.
+- The separate "Needs your yes" list is merged into "Needs you".
+- "Decided for you" and "Recent activity" stay on the COO's and each department's page, and the decisions in Work's weekly report.
+- "This week's missions" is gone, since Work has the board.
+
+**Plain words:** `.claude/agents/coo.md` now says everything the CEO sees (briefs, decisions, activity, mission titles and progress) is plain words, with no file names, branches, model names, error codes, tool names, ids or internal terms.
