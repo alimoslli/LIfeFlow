@@ -35,8 +35,8 @@ Owner's concept, 2026-11-07. The look is set by the owner's two GIFs (`owner-con
   - Spends show the amount ("$14.20").
   - Markers never overlap: they spread apart, and the hairline points to the real time.
   - Things that are over are faded.
-- **Steps (Apple Health):** one quiet line inside the face, above the 6 ("6,240 of 15,000 steps"). It is not a chip on the timeline (see section 4).
-- **Sleep (Apple Health):** the usual bedtime is a marker on the rim (🌙 11:00 PM). Sleep is a soft band on the timeline, not a chip.
+- **Steps (Apple Health):** one quiet line inside the face, above the 6 ("6,240 of 15,000 steps"). It is not a tile on the timeline (see section 4).
+- **Sleep (Apple Health):** the usual bedtime is a marker on the rim (🌙 11:00 PM). Sleep is a soft band on the timeline, not a tile.
 - **What appears on the clock:**
   - Only real things from connections: calendars, school, work, the bank, Apple Health.
   - A spend appears only after it happens; nothing is guessed onto the rim.
