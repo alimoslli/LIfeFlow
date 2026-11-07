@@ -21,7 +21,7 @@ LifeFlow is a personal assistant with one job: serve you and help you get the mo
 
 - **Name:** LifeFlow. **Site:** lifeflowweb.com. **Instagram:** @lifeflowweb.
 - **What it is:** a personal assistant app that brings your schedule, school, work, money and goals into one place, and helps on its own, even when you don't open it.
-- **Audience:** LifeFlow is for everyone. Ads target students first (college, 18 to 24).
+- **Audience:** LifeFlow is for everyone with a full life. Not just students (owner, 2026-11-07): students (college, 18 to 24) are one audience, alongside working people, parents, side hustlers and anyone juggling schedule, work and money. The marketer tests different audiences and leans into whichever the real numbers show growing.
 - **The assistant:** inside the app he's called Jarvis by default (users can rename him). In ads and on the landing page hero, say **"your personal assistant"**, not "Jarvis".
 - **Look:** deep green hero colour on cream, the green wave logo mark. Brand guide: https://claude.ai/artifact/Xngzg4E3JKBE6fEvVrTpA8
 - **Price:** free while in testing. At App Store launch it becomes paid through Apple in-app purchase. Don't show an App Store badge until the app is live there.
@@ -152,7 +152,7 @@ Update after every video. Newest at the top.
 - Final videos are made with Higgsfield using the one LifeFlow character (section 3b); the owner provides credits. Check the price first and ask before spending past the agreed budget.
 - **Growth push (owner, 2026-11-07):** "I will do anything to get those numbers up as long as we're working in the correct direction." Instagram @lifeflowweb is the connected account (Metricool).
   - **Posting:** one tap per post stays. Every post goes to Metricool for review, and the owner presses publish.
-  - **Format follows the evidence:** for each post, the marketer picks the format the research and real numbers say will reach students:
+  - **Format follows the evidence:** for each post, the marketer picks the audience and format the research and real numbers say will grow the account:
     - a reel the owner films from a shot list (`b-roll-shot-list`);
     - a Higgsfield reel with the LifeFlow character (credits only with a `paid` approval);
     - a carousel (`carousel-builder`, `viral-carousel`).

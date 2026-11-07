@@ -16,7 +16,7 @@ These skills were written for a generic creator. Wherever a skill disagrees with
 3. **No outside accounts or paid tools without a `paid` approval:** no Apify, Composio, Runway or Seedance. Remotion is a code render, so it's fine only inside the credit budget. A script is not a video; say so.
 4. **Real numbers only.** View counts, benchmarks and "our 100K reels" in the skills are Ootto's data, not ours. Never present them as LifeFlow's. Use only real Metricool readings, or say "no numbers yet".
 5. **Honest calls to action.** No "comment WORD and I'll DM you" unless the CEO approved a real deliverable and a person sends it. No FOMO or guilt hooks that break the playbook, and no invented urgency.
-6. **Students first.** Audience examples default to LifeFlow's audience (students who work), not generic small businesses.
+6. **LifeFlow's audience, not small businesses.** LifeFlow is for everyone with a full life: students, working people, parents, side hustlers. Each concept names its audience; the skills' "creator/small business" examples don't apply.
 7. **Last step on every script and caption:** run `humanizer`, then check the playbook's red lines.
 
 ## Which skill for which job
