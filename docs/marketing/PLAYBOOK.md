@@ -148,7 +148,7 @@ Update after every video. Newest at the top.
 
 Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playbook from that chat, with every owner reaction, is on branch `claude/lifeflow-ad-reel-higgsfield-s3r3v1` and still needs merging here.
 
-**The real numbers:** Instagram @lifeflowweb has **nothing posted yet**. Metricool shows 0 posts, 0 followers and 0 views, with nothing scheduled. Every attempt below was a draft the owner judged, not something the audience saw. **The biggest lesson: nothing grows until something is posted.**
+**The real numbers: unknown.** Metricool shows @lifeflowweb with 0 posts and 0 followers, but the owner doesn't use Metricool and the account was never properly connected (owner, 2026-11-07), so those zeros mean nothing. Until Instagram is connected for real, the marketer has no audience numbers. It says "no numbers yet" and never reads Metricool's zeros as results. The drafts below were judged by the owner, not the audience.
 
 **Tried (Nov 2 to 6, all unposted):**
 1. **App screen-recording set:** a "Too lazy to budget?" reel, four 15-second problem videos, a sign-up ad and a logo wall. The sign-up ad still contains "calm place"; fix it before posting.
@@ -181,7 +181,7 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
 **So the plan is:**
 - Post the drafts that already passed (v8, v13) first, fixed for the open items: "calm place", the Sienna voice, and the 15% code (it must exist in Stripe).
 - Then post steadily with free screen-recording reels and carousels. Use credits only for what the numbers show is working.
-- Learn from real views, not only from drafts.
+- Connect Instagram for real (Metricool), then learn from real views, not only from drafts.
 
 ## 6. Decisions and preferences (keep adding)
 
