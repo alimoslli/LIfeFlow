@@ -144,6 +144,45 @@ Update after every video. Newest at the top.
 
 ---
 
+## 5b. What we tried and what we learned (check this before every idea)
+
+Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playbook from that chat, with every owner reaction, is on branch `claude/lifeflow-ad-reel-higgsfield-s3r3v1` and still needs merging here.
+
+**The real numbers:** Instagram @lifeflowweb has **nothing posted yet**. Metricool shows 0 posts, 0 followers and 0 views, with nothing scheduled. Every attempt below was a draft the owner judged, not something the audience saw. **The biggest lesson: nothing grows until something is posted.**
+
+**Tried (Nov 2 to 6, all unposted):**
+1. **App screen-recording set:** a "Too lazy to budget?" reel, four 15-second problem videos, a sign-up ad and a logo wall. The sign-up ad still contains "calm place"; fix it before posting.
+2. **Character trailer:** Dev, a 3D character performance-captured from the owner, with an "I'm the real developer" reveal. About 84 credits. The owner loved the movement and the look. The dub was choppy and out of sync, the music was too loud, and there were no app previews.
+3. **"The Flow Room" podcast:**
+   - **Ep 01:** about 97 credits.
+   - **Ep 02, with Tyler:** about 123 to 140 credits. Rejected: missing clips, Tyler didn't look like himself, lips didn't match the words, wrong features.
+   - **Ep 03:** "not edited or produced enough". Credits ran out.
+4. **Screen-recording reels v5 to v13 (no credits):**
+   - Rejected for looking like old setup screens, reused captions, laggy replies, messy frames, or "no good hook".
+   - **v8 "One chat. My whole day."** and **v13 "My assistant caught this 3 days early"** passed.
+5. **v14 voiceover:** used the wrong voice (Mark). App videos use Sienna; Mark is only Dev. It's blocked on a top-up of 3 or more credits.
+
+**What didn't work (the owner's rules now):**
+- **Hook:** it must be in the very first frame.
+- **Cuts and pacing:** every cut must be visible (punch-in, flash or sound). No lag, and no turn that looks like a new clip.
+- **The screen:** no crowded frames, no walls of text, no small phone mockup.
+- **Real screens only:** no invented screens, charts or mock notifications. Motion graphics only decorate real screens.
+- **Fresh material:** no old setup screens and no reused captions.
+- **Show what you'd miss, days ahead:** clashes, double charges, trials about to charge, price rises, an overdraft. Don't show things people already do ("can I afford concert tickets?"), and don't show same-day warnings.
+- **Topics and wording:** no rent (many viewers live with parents). No spoken "link in bio" in the podcast. Never the owner's name in the podcast.
+- **People:** no real person's likeness without consent (Tyler consented).
+- **Credits:** never spend any without quoting the exact cost and getting the owner's okay. Podcast episodes are about 3 clips and 50 to 60 credits.
+
+**What looked promising:**
+- Real app screen recordings: free, and the only drafts that passed (v8, v13).
+- The "caught it days early" angle with a first-frame hook.
+- Dev's look and movement.
+
+**So the plan is:**
+- Post the drafts that already passed (v8, v13) first, fixed for the open items: "calm place", the Sienna voice, and the 15% code (it must exist in Stripe).
+- Then post steadily with free screen-recording reels and carousels. Use credits only for what the numbers show is working.
+- Learn from real views, not only from drafts.
+
 ## 6. Decisions and preferences (keep adding)
 
 - Owner wants short replies and quick recaps, especially during work hours.
