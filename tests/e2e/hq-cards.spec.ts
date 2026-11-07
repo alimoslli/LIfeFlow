@@ -55,13 +55,13 @@ test("Your desk: a full decision card, a version 2 thread, lifecycle cards and a
       `insert into hq_missions (role, title, status, source, started_at) values ('developer', 'Build search', 'doing', 'agent', now()) returning id`,
     )
   ).rows[0].id;
-  await insertCard({ role: "developer", kind: "feature", title: "Search as you type on Plan", status: "approved", missionId: building });
+  await insertCard({ role: "developer", kind: "feature", title: "Search as you type on Plan", status: "approved", buildMissionId: building });
   const done = (
     await pool.query(
       `insert into hq_missions (role, title, status, source, started_at, done_at, result) values ('support', 'Error groups into fixes', 'done', 'agent', now() - interval '2 days', now(), 'Live for everyone') returning id`,
     )
   ).rows[0].id;
-  await insertCard({ role: "support", kind: "feature", title: "Turn error groups into fixes", status: "approved", missionId: done });
+  await insertCard({ role: "support", kind: "feature", title: "Turn error groups into fixes", status: "approved", buildMissionId: done });
   // An old request without a card.
   await pool.query(`insert into hq_approvals (role, kind, title, summary, source) values ('qa', 'other', 'An old request', 'old', 'agent')`);
 
@@ -138,7 +138,7 @@ test("Office: Since you last looked lists what was fixed and found, then goes qu
   );
   const op = await ownerPhone(browser);
   await op.goto("/admin");
-  const since = op.locator("section", { has: op.getByRole("heading", { name: "Since you last looked", level: 2 }) });
+  const since = op.getByRole("region", { name: "Since you last looked" });
   await expect(since).toBeVisible();
   await expect(since.getByText("The last 7 days")).toBeVisible();
   await expect(since.getByRole("heading", { name: "Fixed for you" })).toBeVisible();

@@ -1546,7 +1546,8 @@ a.hq-room:focus-visible {
   --c: var(--info);
 }
 .hq-chip[data-state="offline"] {
-  --c: var(--muted);
+  /* --muted on its own tint is under 4.5:1 at chip size. */
+  --c: var(--text-2);
 }
 .hq-room .hq-chip[data-state="working"],
 .hq-room .hq-chip[data-state="done"] {

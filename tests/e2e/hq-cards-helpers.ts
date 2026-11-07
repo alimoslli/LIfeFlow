@@ -22,6 +22,8 @@ export type CardSeed = {
   decisionNote?: string;
   changedSinceNote?: string;
   missionId?: string | null;
+  /** The mission that builds an approved ask (`approval --start`); its status drives the lifecycle. */
+  buildMissionId?: string | null;
   superseded?: boolean;
   createdAt?: string;
   decidedAt?: string;
@@ -60,5 +62,6 @@ export async function insertCard(c: CardSeed): Promise<string> {
   );
   const id = r.rows[0].id as string;
   if (!c.threadId) await pool.query("update hq_approvals set thread_id = id where id = $1", [id]);
+  if (c.buildMissionId) await pool.query("update hq_approvals set build_mission_id = $2 where id = $1", [id, c.buildMissionId]);
   return id;
 }

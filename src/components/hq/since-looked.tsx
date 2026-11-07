@@ -72,7 +72,7 @@ export async function SinceLookedCard() {
     : "The last 7 days";
   return (
     <section aria-labelledby="since-title">
-      <Card className="p-4 sm:p-5">
+      <Card as="div" className="p-4 sm:p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3">
           <h2 id="since-title" className="font-display text-[1.25rem] font-medium text-text">
             Since you last looked
