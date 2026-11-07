@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { eq, like } from "drizzle-orm";
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as inboxGET } from "@/app/api/hq/inbox/route";
 import { POST as reportPOST } from "@/app/api/hq/report/route";
 import { closeDb, getDb } from "@/server/db/client";
@@ -307,12 +307,18 @@ describe("import seed", () => {
 });
 
 describe("office snapshot, detail, summary", () => {
+  // Pinned at night (Tuesday 2 AM Pacific), so rooms read asleep, not "ready" (on duty), whatever time the suite runs.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-10T10:00:00Z"));
+  });
+  afterEach(() => vi.useRealTimers());
   it("is honest with no data", async () => {
     const s = await officeSnapshot(db());
     expect(s.employees.map((e) => e.role)).toEqual(["assistant", "developer", "designer", "researcher", "marketing", "qa", "support"]);
     // Research, QA and Customer Success work in the COO's rounds (no chat of their own): asleep, never offline.
     expect(s.employees.map((e) => e.state)).toEqual(["offline", "offline", "offline", "sleeping", "offline", "sleeping", "sleeping"]);
-    expect(s.counts).toEqual({ working: 0, done: 0, asleep: 3, offline: 4 });
+    expect(s.counts).toEqual({ working: 0, done: 0, ready: 0, asleep: 3, offline: 4 });
     expect(s.employees.find((e) => e.role === "qa")?.line).toMatch(/^Wakes (Sun|Tue|Thu) 3:07 AM, night round$/);
     expect(s.employees.every((e) => e.note === null)).toBe(true);
     expect(s.budget).toMatchObject({ weekPct: null, roundsPct: null, target: 40, ceiling: 50 });
@@ -360,21 +366,21 @@ describe("office snapshot, detail, summary", () => {
     const m = await createMission(db(), owner, { role: "developer", title: "Forgiving transaction search" });
     await updateMission(db(), owner, m.id, { status: "doing", sessionId: AGENTS });
     let dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
-    expect(dev.state).toBe("offline"); // the agents chat hasn't checked in yet: no claim of work
+    expect(dev).toMatchObject({ state: "sleeping", note: "Hasn't checked in yet" }); // no chat has checked in: no claim of work
     await recordCheckin(db(), { sessionId: AGENTS, status: "working" });
     dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
     expect(dev).toMatchObject({ state: "working", line: "Forgiving transaction search (in LF V3 — Agents)" });
     expect(dev.asOf).not.toBeNull();
     await createApproval(db(), agent, await card({ role: "developer", kind: "deploy", title: "Ship it" }));
     dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
-    expect(dev).toMatchObject({ state: "working", note: "1 thing for your yes" });
+    expect(dev).toMatchObject({ state: "working", note: "Hasn't checked in yet · 1 thing for your yes" }); // its own chat still hasn't reported
     await db()
       .update(hqChats)
       .set({ lastCheckinAt: new Date(Date.now() - 60 * 60_000) })
       .where(eq(hqChats.id, AGENTS));
     await db().delete(hqApprovals);
     dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
-    expect(dev.state).toBe("offline"); // an hour-old check-in is not "working"
+    expect(dev.state).toBe("sleeping"); // an hour-old check-in is not "working"
   });
 
   it("measures the budget from real samples", async () => {

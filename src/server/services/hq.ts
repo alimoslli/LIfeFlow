@@ -2,7 +2,7 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lt, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import { adminEmails, type Admin } from "../auth/admin";
-import { addDaysStr, localDateOf } from "../../lib/dates";
+import { addDaysStr, formatIn, localDateOf } from "../../lib/dates";
 import type { Database } from "../db/client";
 import {
   adminActions,
@@ -25,7 +25,7 @@ import {
 import { withUser } from "../db/with-user";
 import { chatUrl, EMPLOYEES, employee, isHqRole, USAGE_PLAN } from "../hq/team";
 import { employeeState, WORKING_WINDOW_MS } from "../hq/state";
-import { nextWake, ROUND_MAX_MS, roundOf, wakeLine, type Round } from "../hq/rounds";
+import { nextWake, onDuty, ROUND_MAX_MS, roundOf, wakeLine, type Round } from "../hq/rounds";
 import type {
   Activity,
   Approval,
@@ -383,6 +383,25 @@ function sleepLine(role: HqRole, tz: string, now: Date): string {
   return `${wakeLine(w.at, tz)}${role === "assistant" ? "" : `, ${w.round.name.toLowerCase()}`}`;
 }
 
+/** The COO's main chat, when one is connected (not archived). */
+const cooChat = (chats: Chat[]) =>
+  chats.find((c) => c.role === "assistant" && c.isPrimary && c.status !== "archived") ??
+  chats.find((c) => c.role === "assistant" && c.status !== "archived") ??
+  null;
+
+const clip = (s: string, n = 70) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s);
+
+/** The "ready" line (on duty, owner 2026-11-07): when the COO next checks in and what he did last; for a department, its next round. */
+function readyLine(role: HqRole, base: Base, now: Date): string {
+  const w = nextWake(role, now);
+  if (!w) return "On call in its chat";
+  const sameDay = formatIn(w.at, base.tz, "yyyy-MM-dd") === formatIn(now, base.tz, "yyyy-MM-dd");
+  const when = formatIn(w.at, base.tz, sameDay ? "h:mm a" : "EEE h:mm a");
+  if (role !== "assistant") return `On call · next round ${when}`;
+  const last = cooChat(base.chats)?.summary?.trim();
+  return `Next check-in ${when}${last ? ` · Last: ${clip(last)}` : ""}`;
+}
+
 function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
   const e = employee(role);
   // A department with no chat of its own works in the COO's chat: chats once mapped to it (an old chat) don't count.
@@ -398,8 +417,10 @@ function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
       ? live.chat.summary?.trim() || `${live.round?.name ?? "Round"} running`
       : `${e.workingLine} · ${live.round!.name.toLowerCase()}`
     : null;
+  // Day in the owner's time zone and reachable (its own chat, or the COO's for a department with none): ready, not asleep.
+  const duty = onDuty(now, base.tz) && (e.ownChat || cooChat(base.chats) !== null);
   let result = employeeState(
-    { noOwnChat: !e.ownChat, chats, missions: stateMissions, pendingApprovals: myPending, round: roundLine ? { line: roundLine } : null },
+    { noOwnChat: !e.ownChat, chats, missions: stateMissions, pendingApprovals: myPending, round: roundLine ? { line: roundLine } : null, onDuty: duty },
     now,
   );
   // Work done for this employee in another chat (the night round fixing an Engineering mission in the COO's chat) is
@@ -416,7 +437,7 @@ function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
       }
     }
   }
-  const line = result.state === "sleeping" ? sleepLine(role, base.tz, now) : result.reason;
+  const line = result.state === "sleeping" ? sleepLine(role, base.tz, now) : result.state === "ready" ? readyLine(role, base, now) : result.reason;
   const open = mine.filter((m) => (OPEN as readonly string[]).includes(m.status)).sort(byPriorityThenOldest);
   const currentMission =
     open.find((m) => m.status === "doing") ??
@@ -449,10 +470,11 @@ export async function officeSnapshot(db: Database, now: Date = new Date()): Prom
   return timed(db, async (tx) => {
     const base = await loadBase(tx, now);
     const employees = EMPLOYEES.map((e) => buildCard(e.role, base, now));
-    const counts = { working: 0, done: 0, asleep: 0, offline: 0 };
+    const counts = { working: 0, done: 0, ready: 0, asleep: 0, offline: 0 };
     for (const c of employees) {
       if (c.state === "working") counts.working++;
       else if (c.state === "done") counts.done++;
+      else if (c.state === "ready") counts.ready++;
       else if (c.state === "sleeping") counts.asleep++;
       else counts.offline++;
     }

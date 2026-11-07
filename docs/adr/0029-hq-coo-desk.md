@@ -65,3 +65,24 @@ The owner's decisions:
 - The owner starts work from the desk in one click. The first click needs one more: pressing send in the new chat.
 - A new department or round means updating `ROUND_SCHEDULE` and the round prompts together; the test fails otherwise.
 - Changing the COO's scheduled tasks or chat title happens on the owner's account (`update_trigger`, `set_session_title`). The repo holds the source text in docs/hq/round-prompts.md.
+
+## Addendum (owner, 2026-11-07, later): the COO is always there
+
+The owner: "I want him always there doing something like a real COO, he's super intelligent and has the most skills." They chose:
+- a light check every 2 hours;
+- Opus;
+- "I want the animations to show that my agents are there ready or sleeping."
+
+1. **The COO runs on Opus** in a new "LF COO" chat (`session_01Mhcz6DL7P1jhw4V8cnh4pE`).
+   - Migration `0051_hq_coo_opus` (`when` 1795700000000) maps it as the COO's main chat and unmaps the old Sonnet chat.
+   - The old scheduled tasks are paused, and new ones fire into the new chat: the three rounds plus the pass.
+2. **The pass**: `CRON_TZ=America/Los_Angeles 13 8-22/2 * * *`, the COO alone, light.
+   - It is in `ROUND_SCHEDULE` with `hours`.
+   - A "working" check-in whose summary says "pass", or any unnamed one in the day, is a pass. In a pass only the COO shows Working.
+3. **Ready.**
+   - From 8 AM to 11 PM in the owner's time zone (`onDuty`), every room that can be reached is **Ready**: awake at the desk, lamp on, no typing. "Reached" means its own chat is connected and not silent for a week, or, for QA, Customer Success and Research, the COO's chat is connected.
+   - Other rooms are Asleep with when they wake.
+   - Ready is never a claim of work. Working still needs a running round or a fresh check-in on a mission.
+   - Order: working, offline, done, ready, asleep.
+   - The COO's Ready line: "Next check-in 2:13 PM · Last: <his last check-in summary>".
+   - A department's Ready line: "On call · next round Thu 3:07 AM".

@@ -19,12 +19,23 @@ const mission = (o: Partial<StateInput["missions"][number]> = {}) => ({
 const input = (o: Partial<StateInput> = {}): StateInput => ({ noOwnChat: false, chats: [chat()], missions: [], pendingApprovals: 0, ...o });
 
 describe("employeeState: the sleep rule (ADR 0029)", () => {
-  it("is offline with no chat, an archived chat, no check-in, or a stale one", () => {
+  it("is offline with no chat, an archived chat, or a stale one", () => {
     expect(employeeState(input({ chats: [] }), now).state).toBe("offline");
     expect(employeeState(input({ chats: [chat({ status: "archived" })] }), now).state).toBe("offline");
-    expect(employeeState(input({ chats: [chat({ lastCheckinAt: null })] }), now).state).toBe("offline");
     expect(employeeState(input({ chats: [chat({ lastCheckinAt: ago(7 * 24 * HOUR + 1) })] }), now).state).toBe("offline");
     expect(employeeState(input({ chats: [chat({ lastCheckinAt: ago(7 * 24 * HOUR) })] }), now).state).toBe("sleeping");
+  });
+  it("a connected chat that hasn't checked in yet is asleep with a note, not offline (the COO before its first round)", () => {
+    expect(employeeState(input({ chats: [chat({ lastCheckinAt: null })] }), now)).toEqual({
+      state: "sleeping",
+      reason: "Asleep",
+      note: "Hasn't checked in yet",
+    });
+    expect(employeeState(input({ chats: [chat({ lastCheckinAt: null })], pendingApprovals: 1 }), now).note).toBe(
+      "Hasn't checked in yet · 1 thing for your yes",
+    );
+    // A mission in progress without any check-in is still not work.
+    expect(employeeState(input({ chats: [chat({ lastCheckinAt: null })], missions: [mission({ status: "doing" })] }), now).state).toBe("sleeping");
   });
   it("never shows Blocked or Needs you: a blocked mission, a chat's question and a yes are notes on the door of a sleeping room", () => {
     const r = employeeState(

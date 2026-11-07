@@ -2,13 +2,14 @@
  * How an HQ employee looks right now, worked out only from real records (ADR 0024, 0029). Nothing here is invented: when
  * there's no data the answer is "asleep" or "offline", never "working".
  *
- * The sleep rule (owner, 2026-11-07): everyone is asleep unless real work is running. Working = a scheduled round they work in
+ * The sleep rule (owner, 2026-11-07): nobody is "working" unless real work is running; by day they are "ready" (awake at
+ * their desks, on call), by night asleep. Working = a scheduled round they work in
  * is running, or their chat checked in within WORKING_WINDOW_MS while a mission is in progress. Anything waiting on the owner
  * (a yes, a blocked mission, a chat's question) is a note on the door, never the room's state.
  *
- * Order: working in a round, offline (only for roles with their own chat), working, done, asleep.
+ * Order: working in a round, offline (only for roles with their own chat), working, done, ready (on duty), asleep.
  */
-export type EmployeeState = "offline" | "working" | "done" | "sleeping";
+export type EmployeeState = "offline" | "working" | "done" | "ready" | "sleeping";
 
 /** The chip tones: the four room states plus "needs_you" (gold), which other lists (content, the founder's door) reuse. */
 export type ChipState = EmployeeState | "needs_you";
@@ -32,6 +33,11 @@ export type StateInput = {
   pendingApprovals: number;
   /** A COO round this department works in is running now (from the COO's check-ins); `line` says what they're doing. */
   round?: { line: string } | null;
+  /**
+   * On duty (owner, 2026-11-07): it's day in the owner's time zone (DUTY in rounds.ts) and this department can be reached (its
+   * own chat is connected, or, for one with no chat of its own, the COO's is). Then it is "ready" instead of asleep.
+   */
+  onDuty?: boolean;
 };
 
 export type StateResult = { state: EmployeeState; reason: string; note: string | null };
@@ -58,7 +64,7 @@ export function doorNote(input: Pick<StateInput, "chats" | "missions" | "pending
 
 export function employeeState(input: StateInput, now: Date): StateResult {
   const t = now.getTime();
-  const note = doorNote(input);
+  let note = doorNote(input);
   if (input.round) return { state: "working", reason: input.round.line, note };
 
   const primary = input.chats.find((c) => c.isPrimary) ?? input.chats[0];
@@ -66,8 +72,9 @@ export function employeeState(input: StateInput, now: Date): StateResult {
   if (!input.noOwnChat) {
     if (!primary) return { state: "offline", reason: "No chat connected yet", note };
     if (primary.status === "archived") return { state: "offline", reason: "Their chat is archived", note };
-    if (lastCheckin === null) return { state: "offline", reason: "Hasn't checked in yet", note };
-    if (t - lastCheckin > OFFLINE_AFTER_MS) return { state: "offline", reason: "No check-in for over a week", note };
+    if (t - (lastCheckin ?? t) > OFFLINE_AFTER_MS) return { state: "offline", reason: "No check-in for over a week", note };
+    // A connected chat that hasn't reported yet is resting, not gone (the COO before its first round): say so on the door.
+    if (lastCheckin === null) note = note ? `Hasn't checked in yet · ${note}` : "Hasn't checked in yet";
   }
 
   const doing = input.missions.find((m) => m.status === "doing");
@@ -79,12 +86,14 @@ export function employeeState(input: StateInput, now: Date): StateResult {
     .sort((a, b) => b.doneAt!.getTime() - a.doneAt!.getTime())[0];
   if (freshDone) return { state: "done", reason: `Finished: ${freshDone.title}`, note };
 
+  if (input.onDuty) return { state: "ready", reason: "Ready", note };
   return { state: "sleeping", reason: "Asleep", note };
 }
 
 export const STATE_LABEL: Record<ChipState, string> = {
   offline: "Offline",
   needs_you: "Needs you",
+  ready: "Ready",
   working: "Working",
   done: "Done",
   sleeping: "Asleep",

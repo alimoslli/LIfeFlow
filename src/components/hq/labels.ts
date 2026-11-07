@@ -32,10 +32,11 @@ export function greeting(now: Date, tz: string): string {
 }
 
 /** The plain one-line counts: only non-zero ones. */
-export function countsLine(c: { working: number; done: number; asleep: number; offline: number }): string {
+export function countsLine(c: { working: number; done: number; ready?: number; asleep: number; offline: number }): string {
   const parts: [number, string][] = [
     [c.working, "working"],
     [c.done, "done"],
+    [c.ready ?? 0, "ready"],
     [c.asleep, "asleep"],
     [c.offline, "offline"],
   ];
