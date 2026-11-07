@@ -17,9 +17,9 @@ const RULE = [
 const DAYS = ["2027-03-01", "2027-03-02", "2027-03-03", "2027-03-04", "2027-03-05", "2027-03-06"];
 const sixShifts = (jobId: string) => DAYS.map((date) => ({ jobId, date, startTime: "08:00", endTime: "15:30" }));
 
-async function setup() {
+async function setup(now = NOW) {
   const u = await makeUser();
-  const ctx = { userId: u.user.id, tz: TZ, today: "2026-11-07", now: NOW, conversationId: "", userText: "", memorySuggestions: false, run: u.run };
+  const ctx = { userId: u.user.id, tz: TZ, today: "2026-11-07", now, conversationId: "", userText: "", memorySuggestions: false, run: u.run };
   const call = (name: string, args: Record<string, unknown>) => getTool(name)!.execute(args as never, ctx) as Promise<Row>;
   return { ...u, call };
 }
@@ -63,14 +63,15 @@ describe("unpaid breaks by shift length", () => {
     await call("record_shift_hours", { shiftId: rows[1].id, clockIn: "08:00", clockOut: "15:30" });
 
     const r = await call("update_job", { id: job.id, breakRules: RULE });
-    // the worked shift is no longer "upcoming scheduled", the hand-set one keeps its 15 minutes
-    expect(r.unpaidBreakRule.shiftsUpdated).toBe(4);
+    // the worked shift gets its break too; the hand-set one keeps its 15 minutes
+    expect(r.unpaidBreakRule.shiftsUpdated).toBe(5);
     const after = await run((s) => listShifts(s, TZ, DAYS[0], DAYS[5]));
-    expect(after.map((x) => x.breakMinutes)).toEqual([15, 0, 30, 30, 30, 30]);
+    expect(after.map((x) => x.breakMinutes)).toEqual([15, 30, 30, 30, 30, 30]);
 
-    // clearing the rule leaves existing shifts alone; new ones get no break
+    // clearing the rule takes back the breaks it gave (not the hand-set 15); new shifts get none
     const cleared = await call("update_job", { id: job.id, breakRules: [] });
     expect(cleared.unpaidBreakRule.breakRules).toEqual([]);
+    expect((await run((s) => listShifts(s, TZ, DAYS[0], DAYS[5]))).map((x) => x.breakMinutes)).toEqual([15, 0, 0, 0, 0, 0]);
     const added = await call("add_shifts", { shifts: [{ jobId: job.id, date: "2027-03-12", startTime: "08:00", endTime: "17:00" }] });
     expect(added.created[0].unpaidBreakMinutes).toBe(0);
   });
@@ -103,6 +104,79 @@ describe("unpaid breaks by shift length", () => {
   });
 });
 
+describe("a rule set mid-week fixes the whole week", () => {
+  // Wednesday afternoon: Mon, Tue, Wed 08:00 shifts are past, Thu-Sat are ahead.
+  const MIDWEEK = new Date("2026-11-04T20:00:00Z");
+  const WEEK = ["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05", "2026-11-06", "2026-11-07"];
+  const week = (jobId: string) => WEEK.map((date) => ({ jobId, date, startTime: "08:00", endTime: "15:30" }));
+
+  it("past and recorded shifts of this week get the break too: 42 paid hours this week", async () => {
+    const { run, call } = await setup(MIDWEEK);
+    const job = await run((s) => createEmployer(s, { name: "Library" }));
+    await call("add_shifts", { shifts: week(job.id) });
+    const rows = await run((s) => listShifts(s, TZ, WEEK[0], WEEK[5]));
+    await call("record_shift_hours", { shiftId: rows[0].id, clockIn: "08:00", clockOut: "15:30" });
+    const r = await call("update_job", { id: job.id, breakRules: RULE });
+    expect(r.unpaidBreakRule).toMatchObject({ shiftsUpdated: 6, weekPaidHours: 42 });
+    expect((await call("list_shifts", { from: WEEK[0], to: WEEK[5] })).total.paidHours).toBe(42);
+  });
+
+  it("when every shift is already past it is still 42", async () => {
+    const { run, call } = await setup(new Date("2026-11-08T12:00:00Z"));
+    const job = await run((s) => createEmployer(s, { name: "Library" }));
+    await call("add_shifts", { shifts: week(job.id) });
+    expect((await call("update_job", { id: job.id, breakRules: RULE })).unpaidBreakRule.weekPaidHours).toBe(42);
+  });
+
+  it("shifts from earlier weeks are left alone", async () => {
+    const { run, call } = await setup(MIDWEEK);
+    const job = await run((s) => createEmployer(s, { name: "Library" }));
+    await call("add_shifts", { shifts: [{ jobId: job.id, date: "2026-10-28", startTime: "08:00", endTime: "15:30" }] });
+    await call("update_job", { id: job.id, breakRules: RULE });
+    expect((await run((s) => listShifts(s, TZ, "2026-10-28", "2026-10-28")))[0].breakMinutes).toBe(0);
+  });
+});
+
+describe("rule-given breaks follow the rule, hand-set ones do not", () => {
+  it("a changed rule recomputes breaks it gave, not hand-set ones", async () => {
+    const { run, call } = await setup();
+    const job = await run((s) => createEmployer(s, { name: "Library" }));
+    await call("update_job", { id: job.id, breakRules: [{ minShiftMinutes: 360, unpaidMinutes: 30 }] });
+    await call("add_shifts", {
+      shifts: [
+        { jobId: job.id, date: "2027-03-01", startTime: "08:00", endTime: "17:00" }, // 9 h, rule gave 30
+        { jobId: job.id, date: "2027-03-02", startTime: "08:00", endTime: "17:00", breakMinutes: 45 }, // hand-set
+      ],
+    });
+    await call("update_job", { id: job.id, breakRules: RULE });
+    const rows = await run((s) => listShifts(s, TZ, "2027-03-01", "2027-03-02"));
+    expect(rows.map((x) => x.breakMinutes)).toEqual([60, 45]);
+  });
+
+  it("changing a shift's times recomputes a rule-given break (9 h to 4 h loses the break)", async () => {
+    const { run, call } = await setup();
+    const job = await run((s) => createEmployer(s, { name: "Library" }));
+    await call("update_job", { id: job.id, breakRules: RULE });
+    await call("add_shifts", {
+      shifts: [
+        { jobId: job.id, date: "2027-03-01", startTime: "08:00", endTime: "17:00" },
+        { jobId: job.id, date: "2027-03-02", startTime: "08:00", endTime: "17:00", breakMinutes: 45 },
+      ],
+    });
+    const [a, b] = await run((s) => listShifts(s, TZ, "2027-03-01", "2027-03-02"));
+    await call("update_shift", { shiftId: a.id, endTime: "12:00" });
+    await call("update_shift", { shiftId: b.id, endTime: "12:00" });
+    const rows = await run((s) => listShifts(s, TZ, "2027-03-01", "2027-03-02"));
+    expect(rows.map((x) => x.breakMinutes)).toEqual([0, 45]);
+  });
+
+  it("refuses a break as long as the shift length it applies to", async () => {
+    const { run, call } = await setup();
+    const job = await run((s) => createEmployer(s, { name: "Library" }));
+    await expect(call("update_job", { id: job.id, breakRules: [{ minShiftMinutes: 60, unpaidMinutes: 60 }] })).rejects.toThrow();
+  });
+});
+
 describe("no pay predictions for hourly work", () => {
   it("work_earnings, list_jobs and the shift tools return hours only", async () => {
     const { run, call } = await setup();
@@ -113,6 +187,7 @@ describe("no pay predictions for hourly work", () => {
       await call("list_jobs", {}),
       await call("list_shifts", { from: DAYS[0], to: DAYS[5] }),
       await call("add_shifts", { shifts: [{ jobId: job.id, date: "2027-04-01", startTime: "08:00", endTime: "12:00" }] }),
+      await call("update_job", { id: job.id, breakRules: RULE }),
     ];
     for (const o of outs) expect(JSON.stringify(o)).not.toMatch(/gross|hourlyRate|\$|"rate"/i);
   });

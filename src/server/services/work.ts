@@ -93,9 +93,10 @@ export function estimateEarnings(shifts: ShiftLike[], rates: EmployerRates, tz: 
 
 // ---------------------------------------------------------------- employers
 
-export const breakRulesSchema = z
-  .array(z.object({ minShiftMinutes: z.number().int().min(1).max(1440), unpaidMinutes: z.number().int().min(0).max(240) }))
-  .max(6);
+export const breakRuleSchema = z
+  .object({ minShiftMinutes: z.number().int().min(1).max(1440), unpaidMinutes: z.number().int().min(0).max(240) })
+  .refine((r) => r.unpaidMinutes < r.minShiftMinutes, "The unpaid break must be shorter than the shift length it applies to.");
+export const breakRulesSchema = z.array(breakRuleSchema).max(6);
 
 /** Unpaid break for a shift of this length: the largest rule it reaches, else none. */
 export function breakForLength(rules: BreakRule[] | null | undefined, shiftMinutes: number): number {
@@ -302,6 +303,17 @@ export async function updateShift(scope: UserScope, tz: string, id: string, inpu
   const end = d.endTime ?? localTimeOf(shift.endsAt, tz);
   const { startsAt, endsAt } = shiftInstants(date, start, end, tz);
   if (endsAt.getTime() - startsAt.getTime() > 24 * 3600_000) throw new ServiceError("Shifts cannot exceed 24 hours.");
+  // A break the job's rule gave follows the new length; a hand-set one stays.
+  let ruleBreak: number | undefined;
+  if (d.breakMinutes == null && !shift.breakPaid) {
+    const [job] = await scope.tx
+      .select({ schedule: employers.schedule })
+      .from(employers)
+      .where(and(eq(employers.id, d.employerId ?? shift.employerId), eq(employers.userId, scope.userId)));
+    const rules = job?.schedule?.breakRules;
+    if (rules?.length && shift.breakMinutes === breakForLength(rules, minutesBetween(shift.startsAt, shift.endsAt)))
+      ruleBreak = breakForLength(rules, minutesBetween(startsAt, endsAt));
+  }
   const [row] = await scope.tx
     .update(workShifts)
     .set({
@@ -309,6 +321,7 @@ export async function updateShift(scope: UserScope, tz: string, id: string, inpu
       endsAt,
       ...(d.employerId && { employerId: d.employerId }),
       ...(d.breakMinutes != null && { breakMinutes: d.breakMinutes }),
+      ...(ruleBreak !== undefined && { breakMinutes: ruleBreak }),
       ...(d.notes !== undefined && { notes: d.notes ?? null }),
     })
     .where(eq(workShifts.id, id))
@@ -457,44 +470,57 @@ export async function fillRegularShifts(scope: UserScope, tz: string, today: str
 // ---------------------------------------------------------------- break rule
 
 /**
- * Saves a job's unpaid-break rule (empty list = none) and gives it to the job's upcoming
- * scheduled shifts that have no break yet. Shifts with a break set, recorded or past stay.
- * Returns the real result: how many shifts changed and the paid hours of all upcoming shifts.
+ * Saves a job's unpaid-break rule (empty list = none) and brings the job's shifts from the start of
+ * this local week on (past and recorded ones too, so a rule set mid-week fixes the whole week) in line:
+ * a shift with no break, or whose break is what the old rule gave for its length, gets what the new rule
+ * gives. A break set by hand stays. Returns the real result: shifts changed and the paid hours.
  */
-export async function setBreakRules(scope: UserScope, id: string, rules: BreakRule[], now: Date = new Date()) {
+export async function setBreakRules(scope: UserScope, tz: string, id: string, rules: BreakRule[], now: Date = new Date()) {
   const parsed = breakRulesSchema.parse(rules);
   const [job] = await scope.tx
     .select()
     .from(employers)
     .where(and(eq(employers.id, id), eq(employers.userId, scope.userId)));
   if (!job) throw notFound("Employer");
-  const cur = job.schedule;
-  const { breakRules: _old, ...rest } = cur ?? { days: [], start: "00:00", end: "00:00" };
+  const { breakRules: oldRules, ...rest } = job.schedule ?? { days: [], start: "00:00", end: "00:00" };
   const next: WorkSchedule | null = parsed.length ? { ...rest, breakRules: parsed } : rest.days.length ? rest : null;
-  await scope.tx.update(employers).set({ schedule: next }).where(eq(employers.id, id));
-  const upcoming = await scope.tx
+  await scope.tx
+    .update(employers)
+    .set({ schedule: next })
+    .where(and(eq(employers.id, id), eq(employers.userId, scope.userId)));
+  const weekFrom = weekStart(localDateOf(now, tz));
+  const weekFromAt = startOfLocalDay(weekFrom, tz);
+  const weekToAt = startOfLocalDay(addDaysStr(weekFrom, 7), tz);
+  const shifts = await scope.tx
     .select()
     .from(workShifts)
-    .where(and(eq(workShifts.userId, scope.userId), eq(workShifts.employerId, id), eq(workShifts.status, "scheduled"), gt(workShifts.startsAt, now)));
+    .where(and(eq(workShifts.userId, scope.userId), eq(workShifts.employerId, id), ne(workShifts.status, "cancelled"), gte(workShifts.startsAt, weekFromAt)));
   let updated = 0;
-  const final = [];
-  for (const sh of upcoming) {
+  const final: (typeof shifts)[number][] = [];
+  for (const sh of shifts) {
     let row = sh;
-    if (sh.breakMinutes === 0 && !sh.breakPaid && !sh.recordedStart && parsed.length) {
-      const want = breakForLength(parsed, minutesBetween(sh.startsAt, sh.endsAt));
-      if (want > 0) {
-        [row] = await scope.tx.update(workShifts).set({ breakMinutes: want }).where(eq(workShifts.id, sh.id)).returning();
+    if (!sh.breakPaid) {
+      const len = sh.recordedStart && sh.recordedEnd ? minutesBetween(sh.recordedStart, sh.recordedEnd) : minutesBetween(sh.startsAt, sh.endsAt);
+      const want = breakForLength(parsed, len);
+      if (want !== sh.breakMinutes && (sh.breakMinutes === 0 || sh.breakMinutes === breakForLength(oldRules, len))) {
+        [row] = await scope.tx
+          .update(workShifts)
+          .set({ breakMinutes: want })
+          .where(and(eq(workShifts.id, sh.id), eq(workShifts.userId, scope.userId)))
+          .returning();
         updated++;
       }
     }
     final.push(row);
   }
-  const paid = final.reduce((a, x) => a + shiftPaidMinutes(x).minutes, 0);
+  const hours = (list: typeof final) => paidHoursOf(list).paidHours;
+  const upcoming = final.filter((x) => x.status === "scheduled" && x.startsAt.getTime() > now.getTime());
   return {
     breakRules: parsed,
     shiftsUpdated: updated,
-    upcomingShifts: final.length,
-    upcomingPaidHours: Math.round((paid / 60) * 100) / 100,
+    weekPaidHours: hours(final.filter((x) => x.startsAt < weekToAt)),
+    upcomingShifts: upcoming.length,
+    upcomingPaidHours: hours(upcoming),
   };
 }
 

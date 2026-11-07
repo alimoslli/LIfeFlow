@@ -41,7 +41,7 @@ export const FOLLOW_UPS: Record<string, string[]> = {
   add_shifts: ["How many paid hours is that?", "Do these clash with classes?"],
   set_regular_hours: ["Do my hours clash with any classes?", "How many paid hours is that a month?"],
   add_job: ["Set my regular hours", "Add this week's shifts"],
-  add_paycheck: ["Does it match my hours?", "Where should this paycheck go?"],
+  add_paycheck: ["When did I last get paid?", "Where should this paycheck go?"],
   add_account: ["What do I have available now?", "Set a savings goal"],
   delete_habit: ["Start a different habit", "Show my habits"],
   list_habits: ["Which habit is off track?", "Start a new habit"],
