@@ -298,6 +298,7 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
           varies: billVaries(s, (item.categoryId && categoryOf.get(item.categoryId)) || keywordCategory({ description: item.name })),
           frequency: item.frequency,
           date,
+          day: Number(item.nextDueDate!.slice(8, 10)),
           amountCents: item.amountCents,
         };
       }),

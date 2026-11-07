@@ -212,18 +212,16 @@ describe("Download my data", () => {
     const { run, user } = await makeUser("Cal Cancel");
     await run(async (s) => {
       const acct = await createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 100_000 });
-      await s.tx
-        .insert(transactions)
-        .values(
-          Array.from({ length: 300 }, (_, i) => ({
-            userId: s.userId,
-            accountId: acct.id,
-            date: "2026-10-01",
-            description: `T${i}`,
-            amountCents: -100,
-            kind: "expense" as const,
-          })),
-        );
+      await s.tx.insert(transactions).values(
+        Array.from({ length: 300 }, (_, i) => ({
+          userId: s.userId,
+          accountId: acct.id,
+          date: "2026-10-01",
+          description: `T${i}`,
+          amountCents: -100,
+          kind: "expense" as const,
+        })),
+      );
     });
     const pool = (globalThis as unknown as { __bfPool: Pool }).__bfPool;
     const inUse = () => pool.totalCount - pool.idleCount;

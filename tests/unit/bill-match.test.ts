@@ -247,7 +247,14 @@ describe("a bill that already posted is paid for that cycle (A3)", () => {
 });
 
 describe("a charge pays the due date it belongs to, never the next one (R2)", () => {
-  const netflix = (p: Partial<DueOccurrence>): DueOccurrence => ({ keys: ["netflix"], varies: false, frequency: "monthly", date: "2026-11-15", amountCents: -1_549, ...p });
+  const netflix = (p: Partial<DueOccurrence>): DueOccurrence => ({
+    keys: ["netflix"],
+    varies: false,
+    frequency: "monthly",
+    date: "2026-11-15",
+    amountCents: -1_549,
+    ...p,
+  });
   const nf = (date: string, p: Partial<PostedCharge> = {}): PostedCharge => ({
     date,
     amountCents: -1_549,
@@ -286,5 +293,44 @@ describe("a charge pays the due date it belongs to, never the next one (R2)", ()
     expect(paid([due1], [rent("2026-09-24"), rent("2026-10-24"), rent("2026-11-24")])).toEqual([0]);
     expect(paid([netflix({})], [nf("2026-10-15"), nf("2026-10-15"), nf("2026-11-15")])).toEqual([0]);
     expect(paid([netflix({})], [nf("2026-10-14"), nf("2026-10-15"), nf("2026-11-14")])).toEqual([0]);
+  });
+
+  it("a bill due the 31st is still itself in a short month: the cycle back is Jan 31, not Jan 28", () => {
+    const feb = netflix({ date: "2026-02-28", day: 31 });
+    // Another plan billed Jan 19; this plan Jan 29 and now Feb 26 (two days early both times).
+    expect(paid([feb], [nf("2026-01-19"), nf("2026-01-29"), nf("2026-02-26")])).toEqual([0]);
+  });
+
+  it("a charge is placed a cycle back by its days before the due date, not by its own date (months differ in length)", () => {
+    // Paid Jan 31 and Feb 26 for Feb 28; another plan billed Jan 24 and Feb 25 doesn't make Feb 26 "its next cycle".
+    expect(paid([netflix({ date: "2026-02-28", day: 31 })], [nf("2026-01-24"), nf("2026-01-31"), nf("2026-02-25"), nf("2026-02-26")])).toEqual([0]);
+  });
+
+  it("a second plan billed just after the due date can't be taken for the previous cycle's early payment", () => {
+    // Tracked Mar 25; the other plan billed Feb 26 (after the tracked plan's Feb 25 due date).
+    const mar = netflix({ date: "2026-03-25", day: 25 });
+    expect(paid([mar], [nf("2026-01-25"), nf("2026-02-23"), nf("2026-02-26"), nf("2026-03-25")])).toEqual([0]);
+  });
+
+  it("quarterly and yearly: the other plan's charge doesn't pay, the bill's own does", () => {
+    for (const [frequency, later] of [
+      ["quarterly", ["2026-01-15", "2026-04-15", "2026-07-15", "2026-10-15"]],
+      ["yearly", ["2023-07-15", "2024-07-15", "2025-07-15", "2026-07-15"]],
+    ] as const) {
+      const other = (d: string) => nf(`${d.slice(0, 8)}05`);
+      const history = later.slice(0, 3).flatMap((d) => [nf(d), other(d)]);
+      const due = netflix({ frequency, date: later[3] });
+      expect(paid([due], [...history, other(later[3])])).toEqual([]);
+      expect(paid([due], [...history, other(later[3]), nf(later[3])])).toEqual([0]);
+    }
+  });
+
+  it("a refund or a charge of the opposite direction never pays, and a bill whose amount moves is paid by its own merchant's charge", () => {
+    expect(paid([netflix({})], [nf("2026-11-14", { kind: "refund" }), nf("2026-11-14", { amountCents: 1_549 })])).toEqual([]);
+    const power = netflix({ keys: ["georgia power"], varies: true, amountCents: -10_000 });
+    const bill = (date: string, amountCents: number) => nf(date, { merchantName: "Georgia Power", description: "GEORGIA POWER", amountCents });
+    expect(paid([power], [bill("2026-11-12", -11_900)])).toEqual([0]);
+    expect(paid([power], [bill("2026-11-12", -13_000)])).toEqual([]);
+    expect(paid([power], [nf("2026-11-12", { amountCents: -10_000 })])).toEqual([]);
   });
 });

@@ -106,9 +106,10 @@ export function tracksSeries(
 /**
  * One due date of a tracked item. `keys` are the item's own keys plus those of bank series already matched
  * to it (`tracksSeries`), and `series` those series' `seriesKey`s; `varies` is true when its amount moves from bill
- * to bill (`billVaries`).
+ * to bill (`billVaries`). `day` is the schedule's day of the month when `date` was moved to a short month's last day
+ * (a bill due the 31st is due Feb 28), so the cycle before it is Jan 31, not Jan 28.
  */
-export type DueOccurrence = { keys: string[]; varies: boolean; frequency: Frequency; date: string; amountCents: number; series?: string[] };
+export type DueOccurrence = { keys: string[]; varies: boolean; frequency: Frequency; date: string; amountCents: number; series?: string[]; day?: number };
 /** A posted transaction; `series` is the found series it's a cycle of (its `seriesKey`), if any. */
 export type PostedCharge = {
   date: string;
@@ -150,16 +151,20 @@ export function paidOccurrences(due: DueOccurrence[], charges: PostedCharge[]): 
   };
   /**
    * The previous cycle was paid by one charge, and another one (more than a double charge's 2 days from it) sits nearer
-   * this charge's place a cycle back: this charge is that one's next cycle, a different bill from the same merchant.
+   * to this charge's place a cycle back (as many days before that due date): this charge is that one's next cycle, a different bill from the same merchant.
    */
   const repeatsOther = (d: DueOccurrence, c: number) => {
-    const [payment] = payers(d, nthOccurrence(d.date, d.frequency, -1));
+    const before = nthOccurrence(d.date, d.frequency, -1, d.day);
+    const [payment] = payers(d, before);
     if (payment === undefined) return false;
-    const back = nthOccurrence(charges[c].date, d.frequency, -1);
+    // The same number of days before the due date, a cycle back (not the charge's own date a month back: months differ in length).
+    const back = addDaysStr(before, -daysBetween(charges[c].date, d.date));
     const off = (u: number) => Math.abs(daysBetween(charges[u].date, back));
+    // Only a charge from before that cycle's due date counts: one after it can't be an early payment of that cycle.
     return charges.some(
       (u, i) =>
         i !== payment &&
+        u.date <= before &&
         off(i) <= SLACK_DAYS[d.frequency] &&
         off(i) < off(payment) &&
         Math.abs(daysBetween(u.date, charges[payment].date)) > DUPLICATE_DAYS &&

@@ -231,7 +231,8 @@ describe("two $15.49 Netflix plans, only one tracked (R2)", () => {
     const { run } = await makeUser();
     await run(async (s) => {
       const acct = await checking(s, 100_000);
-      for (const date of dates) await createTransaction(s, { accountId: acct.id, date, description: "NETFLIX.COM", merchantName: "Netflix", amountCents: -1_549 });
+      for (const date of dates)
+        await createTransaction(s, { accountId: acct.id, date, description: "NETFLIX.COM", merchantName: "Netflix", amountCents: -1_549 });
       await createRecurring(s, { name: "Netflix", amountCents: -1_549, frequency: "monthly", nextDueDate: "2026-11-15", kind: "subscription" });
     });
     return run;
@@ -246,7 +247,10 @@ describe("two $15.49 Netflix plans, only one tracked (R2)", () => {
   it("or with months of it, when the bank shows both plans: each charge belongs to its own plan", async () => {
     const run = await twoPlans(["2026-08-07", "2026-08-15", "2026-09-07", "2026-09-15", "2026-10-07", "2026-10-15", "2026-11-07"]);
     // The tracked plan is still due on the 15th; the other is found in the bank and comes again on Dec 7.
-    expect(show((await run((s) => billsAndPace(s, "2026-11-08", "2026-11-08", "2026-12-08"))).bills)).toEqual(["2026-11-15 Netflix", "2026-12-07 Netflix (found)"]);
+    expect(show((await run((s) => billsAndPace(s, "2026-11-08", "2026-11-08", "2026-12-08"))).bills)).toEqual([
+      "2026-11-15 Netflix",
+      "2026-12-07 Netflix (found)",
+    ]);
   });
 
   it("is paid once its own charge posts", async () => {
