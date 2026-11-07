@@ -3,6 +3,8 @@ import { signUp } from "./helpers";
 
 test("core pages fit a phone screen without horizontal scrolling", async ({ page }) => {
   await signUp(page, "Phone User", { onboarding: "stay" });
+  // The helper saves the name after /welcome loaded (sign-up asks only email and password); reload so the first screen has it.
+  await page.reload();
   // Every onboarding step fits: hello, your week, a class and job, make it yours, your day connected (animating and done).
   const fits = async (label: string) => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
