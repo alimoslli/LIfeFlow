@@ -18,6 +18,7 @@ import {
   listActivity,
   listApprovals,
   listChats,
+  listDecisionThreads,
   listHqKeys,
   listMissions,
   markMissionSeen,
@@ -38,6 +39,7 @@ import {
 import { withUser } from "@/server/db/with-user";
 import { saveSubscription } from "@/server/services/push";
 import { makeUser } from "../helpers";
+import { card, cardBody } from "../hq-fixtures";
 
 afterAll(async () => {
   setHqPushSender(null);
@@ -117,15 +119,15 @@ describe("missions", () => {
 
 describe("approvals", () => {
   it("creates, decides once, and writes activity and admin_actions", async () => {
-    const a = await createApproval(db(), agent, { role: "designer", kind: "design", title: "Goals A", summary: "One calm list" });
+    const a = await createApproval(db(), agent, await card({ role: "designer", kind: "design", title: "Goals A" }));
     expect(a.status).toBe("pending");
     expect(await pendingApprovalCount(db())).toBe(1);
     const y = await decideApproval(db(), admin, a.id, "approved", "  go ahead ");
     expect(y).toMatchObject({ status: "approved", decisionNote: "go ahead" });
     expect(y.decidedAt).not.toBeNull();
     await expect(decideApproval(db(), admin, a.id, "declined")).rejects.toThrow(HqError);
-    const b = await createApproval(db(), agent, { role: "developer", kind: "feature", title: "B", summary: "s" });
-    const c = await createApproval(db(), agent, { role: "developer", kind: "feature", title: "C", summary: "s" });
+    const b = await createApproval(db(), agent, await card({ role: "developer", kind: "feature", title: "B" }));
+    const c = await createApproval(db(), agent, await card({ role: "developer", kind: "feature", title: "C" }));
     await decideApproval(db(), admin, b.id, "declined");
     await decideApproval(db(), admin, c.id, "changes", "smaller");
     const t = await texts();
@@ -138,7 +140,7 @@ describe("approvals", () => {
 
   it("rejects an approval linked to a missing mission", async () => {
     await expect(
-      createApproval(db(), agent, { role: "developer", kind: "other", title: "x", summary: "s", missionId: "00000000-0000-4000-8000-000000000000" }),
+      createApproval(db(), agent, await card({ role: "developer", kind: "other", title: "x", missionId: "00000000-0000-4000-8000-000000000000" })),
     ).rejects.toThrow(HqError);
   });
 
@@ -157,15 +159,15 @@ describe("approvals", () => {
         sent.push(msg);
         return { ok: true, gone: false };
       });
-      await createApproval(db(), agent, { role: "designer", kind: "design", title: "Pick one", summary: "s" });
-      expect(sent).toEqual([expect.objectContaining({ title: "Product & Design needs your yes", body: "Pick one", url: "/admin/hq/approvals" })]);
-      await createApproval(db(), owner, { role: "designer", kind: "design", title: "Mine", summary: "s" });
+      await createApproval(db(), agent, await card({ role: "designer", kind: "design", title: "Pick one" }));
+      expect(sent).toEqual([expect.objectContaining({ title: "Product & Design needs your yes", body: "Pick one", url: "/admin/work#approvals" })]);
+      await createApproval(db(), owner, await card({ role: "designer", kind: "design", title: "Mine" }));
       expect(sent).toHaveLength(1);
       setHqPushSender(async () => {
         throw new Error("boom");
       });
       const err = vi.spyOn(console, "error").mockImplementation(() => undefined);
-      await expect(createApproval(db(), agent, { role: "designer", kind: "design", title: "Third", summary: "s" })).resolves.toMatchObject({ title: "Third" });
+      await expect(createApproval(db(), agent, await card({ role: "designer", kind: "design", title: "Third" }))).resolves.toMatchObject({ title: "Third" });
       err.mockRestore();
     } finally {
       if (prev === undefined) delete process.env.ADMIN_EMAILS;
@@ -296,7 +298,9 @@ describe("import seed", () => {
     expect(await importSeed(db(), owner, seed)).toEqual({ chats: 4, missions: 6, approvals: 6 });
     expect(await importSeed(db(), owner, seed)).toEqual({ chats: 0, missions: 0, approvals: 0 });
     expect((await listMissions(db(), { status: ["blocked"] }))[0]).toMatchObject({ role: "marketing", source: "import" });
-    expect(await pendingApprovalCount(db())).toBe(6);
+    // Old requests have no decision card: they wait to be rewritten and are not counted as needing a yes.
+    expect(await pendingApprovalCount(db())).toBe(0);
+    expect((await listDecisionThreads(db())).rewriting).toHaveLength(6);
     expect(await listChats(db())).toHaveLength(4);
     await expect(importSeed(db(), owner, { missions: [{ role: "x", title: "t" }] })).rejects.toThrow(HqError);
   });
@@ -317,7 +321,7 @@ describe("office snapshot, detail, summary", () => {
     const m = await createMission(db(), owner, { role: "developer", title: "Do the thing", priority: "high" });
     await updateMission(db(), owner, m.id, { status: "doing" });
     await createMission(db(), owner, { role: "developer", title: "Later", priority: "low" });
-    const a = await createApproval(db(), agent, { role: "designer", kind: "design", title: "Pick", summary: "s" });
+    const a = await createApproval(db(), agent, await card({ role: "designer", kind: "design", title: "Pick" }));
     const s = await officeSnapshot(db());
     const by = Object.fromEntries(s.employees.map((e) => [e.role, e]));
     expect(by.developer).toMatchObject({ state: "working", line: "Do the thing" });
@@ -358,7 +362,7 @@ describe("office snapshot, detail, summary", () => {
     dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
     expect(dev).toMatchObject({ state: "working", line: "Forgiving transaction search (in LF V3 — Agents)" });
     expect(dev.asOf).not.toBeNull();
-    await createApproval(db(), agent, { role: "developer", kind: "deploy", title: "Ship it", summary: "s" });
+    await createApproval(db(), agent, await card({ role: "developer", kind: "deploy", title: "Ship it" }));
     dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
     expect(dev.state).toBe("needs_you");
     await db()
@@ -389,7 +393,7 @@ describe("office snapshot, detail, summary", () => {
     const m3 = await createMission(db(), owner, { role: "marketing", title: "C", dueOn: new Date(Date.now() + 2 * 86400_000).toISOString().slice(0, 10) });
     await updateMission(db(), owner, m1.id, { status: "done" });
     await updateMission(db(), owner, m2.id, { status: "blocked", blockedReason: "x" });
-    await createApproval(db(), agent, { role: "developer", kind: "other", title: "P", summary: "s" });
+    await createApproval(db(), agent, await card({ role: "developer", kind: "other", title: "P" }));
     const w = await weeklySummary(db());
     expect(w).toMatchObject({ approvalsPending: 1, started: 0 });
     expect(w.done.map((x) => x.id)).toEqual([m1.id]);
@@ -406,7 +410,7 @@ describe("agent inbox", () => {
     await createMission(db(), owner, { role: "developer", title: "X" });
     const done = await createMission(db(), owner, { role: "designer", title: "Done" });
     await updateMission(db(), owner, done.id, { status: "done" });
-    const a = await createApproval(db(), agent, { role: "designer", kind: "design", title: "Q", summary: "s" });
+    const a = await createApproval(db(), agent, await card({ role: "designer", kind: "design", title: "Q" }));
     await decideApproval(db(), admin, a.id, "approved");
     const r = await agentInbox(db(), { role: "designer" });
     expect(r.missions.map((x) => x.id)).toEqual([m.id]);
@@ -461,10 +465,7 @@ describe("HQ API", () => {
     const { id } = await m.json();
     const u = await post({ type: "mission", id, status: "doing", progress: "Sketching" }, token);
     expect((await u.json()).id).toBe(id);
-    const ap = await post(
-      { type: "approval", role: "designer", kind: "design", title: "Pick", summary: "which?", links: [{ label: "x", url: "https://claude.ai/a" }] },
-      token,
-    );
+    const ap = await post({ ...(await cardBody({ title: "Pick" })), links: [{ label: "x", url: "https://claude.ai/a" }] }, token);
     expect(ap.status).toBe(200);
     expect((await ap.json()).id).toBeTruthy();
     expect((await post({ type: "checkin", sessionId: SID, status: "working", usage: { sevenDayPct: 12 } }, token)).status).toBe(200);

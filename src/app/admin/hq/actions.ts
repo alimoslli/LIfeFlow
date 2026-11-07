@@ -32,7 +32,7 @@ async function run(back: (msg: string, ok: boolean) => string, fn: () => Promise
   redirect(back(msg, ok));
 }
 
-const to = (path: string) => (msg: string, ok: boolean) => `${path}?${ok ? "done" : "error"}=${enc(msg)}`;
+const to = (path: string, hash?: string) => (msg: string, ok: boolean) => `${path}?${ok ? "done" : "error"}=${enc(msg)}${hash ? `#${hash}` : ""}`;
 const text = (fd: FormData, name: string, max = 200) =>
   String(fd.get(name) ?? "")
     .trim()
@@ -43,7 +43,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export async function createMissionAction(fd: FormData) {
   const admin = await requireAdmin();
-  await run(to("/admin/hq/missions"), async () => {
+  await run(to("/admin/work", "missions"), async () => {
     const role = text(fd, "role");
     if (!isHqRole(role)) throw new HqError("Pick who it is for.");
     const title = text(fd, "title", 160);
@@ -103,7 +103,7 @@ export async function updateMissionAction(fd: FormData) {
 export async function decideAction(fd: FormData) {
   const admin = await requireAdmin();
   const decision = text(fd, "decision");
-  await run(to("/admin/hq/approvals"), async () => {
+  await run(to("/admin/work", "approvals"), async () => {
     if (decision !== "approved" && decision !== "declined" && decision !== "changes") throw new HqError("Pick Yes, No or Changes.");
     await decideApproval(getDb(), admin, text(fd, "id", 64), decision, text(fd, "note", 500) || null);
     return decision === "approved" ? "You said yes." : decision === "declined" ? "You said no." : "You asked for changes.";

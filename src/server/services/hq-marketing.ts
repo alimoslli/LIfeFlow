@@ -21,7 +21,7 @@ import {
 } from "../db/schema";
 import type { Approval, ContentItem, HqControls, MarketingView, MarketingWeek, NetworkPerformance } from "../hq/types";
 import { HqError, line, linksSchema, logActivity, logAdmin, optLine, optText, parse, sessionIdField, timed, url, type Tx } from "../hq/validate";
-import { createApproval, ownerTimeZone, sendApprovalPush, type HqActor } from "./hq";
+import { createApproval, ownerTimeZone, sendApprovalPush, toApproval, type ApprovalInput, type HqActor } from "./hq";
 
 /**
  * LifeFlow HQ marketing and controls (ADR 0025). Content, research and real metrics arrive from the owner's chats
@@ -44,6 +44,8 @@ export type ContentInput = {
   sessionId?: string | null;
   /** Ask the owner: creates a "publish" approval for this item and sets it to "waiting". */
   ask?: boolean;
+  /** The decision card for that ask (ADR 0028): why, changes, onYes, onNo, effort, risk, recommendation and previews. All required with `ask`. */
+  request?: Partial<Pick<ApprovalInput, "why" | "changes" | "onYes" | "onNo" | "effort" | "risk" | "recommendation" | "previews">>;
 };
 export type ContentPatch = Partial<{
   title: string;
@@ -101,6 +103,7 @@ const contentInputSchema = z.object({
   links: linksSchema.optional(),
   sessionId: sessionIdField,
   ask: z.boolean().optional(),
+  request: z.record(z.string(), z.unknown()).optional(),
 });
 const contentPatchSchema = z
   .object({
@@ -151,20 +154,7 @@ const toContent = (r: ContentRow): ContentItem => ({
   createdAt: r.createdAt,
   updatedAt: r.updatedAt,
 });
-const toApprovalView = (r: typeof hqApprovals.$inferSelect): Approval => ({
-  id: r.id,
-  role: r.role,
-  missionId: r.missionId,
-  kind: r.kind,
-  title: r.title,
-  summary: r.summary,
-  links: r.links ?? [],
-  status: r.status,
-  decisionNote: r.decisionNote,
-  decidedAt: r.decidedAt,
-  source: r.source,
-  createdAt: r.createdAt,
-});
+const toApprovalView = (r: typeof hqApprovals.$inferSelect): Approval => toApproval(r);
 
 const actorSession = (a: HqActor) => (a.kind === "agent" ? (a.sessionId ?? null) : null);
 const quoted = (t: string) => `"${t.length > 80 ? `${t.slice(0, 77)}...` : t}"`;
@@ -309,6 +299,10 @@ function askSummary(c: { hook: string | null; title: string; platforms: HqNetwor
   );
 }
 
+const CARD_KEYS = ["why", "changes", "onYes", "onNo", "effort", "risk", "recommendation", "previews"] as const;
+/** Only the decision-card fields from a content request, so it can never override the title, role or kind. */
+const pickCard = (r: Record<string, unknown> | undefined) => Object.fromEntries(CARD_KEYS.filter((k) => r && k in r).map((k) => [k, r![k]]));
+
 export async function createContent(db: Database, actor: HqActor, input: ContentInput): Promise<ContentItem> {
   const d = parse(contentInputSchema, input);
   if (d.kind === "research" && !(d.links && d.links.length > 0)) throw new HqError("Research needs at least one source link.");
@@ -348,7 +342,8 @@ export async function createContent(db: Database, actor: HqActor, input: Content
         title: `Publish: ${row.title}`.slice(0, 140),
         summary: askSummary(row, await ownerTimeZone(tx)),
         links: row.links ?? [],
-      },
+        ...pickCard(d.request),
+      } as ApprovalInput,
       { tx, notify: false },
     );
     const [linked] = await tx

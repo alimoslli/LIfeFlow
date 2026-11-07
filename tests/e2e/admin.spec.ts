@@ -11,7 +11,7 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
   // A normal signed-in user gets a 404, and no Admin row in Settings.
   const normalEmail = await signUp(page, "Regular Rhea");
   expect((await page.goto("/admin"))?.status()).toBe(404);
-  expect((await page.goto("/admin/users"))?.status()).toBe(404);
+  expect((await page.goto("/admin/people"))?.status()).toBe(404);
   await page.goto("/settings");
   await expect(page.getByRole("link", { name: /^Admin/ })).toHaveCount(0);
 
@@ -33,25 +33,24 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
   await op.getByRole("button", { name: "Skip tour" }).click();
   await pool.query("update users set totp_enabled_at = now() where email = $1", [ADMIN_EMAIL]);
 
-  // Overview.
+  // Office.
   expect((await op.goto("/admin"))?.status()).toBe(200);
-  await expect(op.getByRole("heading", { name: "Overview", level: 1 })).toBeVisible();
-  await expect(op.getByText("Needs your attention")).toBeVisible();
-  await expect(op.getByText("Sign-ups, last 30 days")).toBeVisible();
+  await expect(op.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(op.getByRole("heading", { name: "The app today" })).toBeVisible();
 
   // Feedback a user sends lands in the owner's inbox, in full, with who sent it.
   await page.goto("/settings/feedback");
   await page.getByLabel("Your message").fill("The Plan tab should show my shifts in a different colour.");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByText(/Thanks|Sent|got it/i).first()).toBeVisible();
-  await op.goto("/admin/feedback");
+  await op.goto("/admin/people#feedback");
   await expect(op.getByText("The Plan tab should show my shifts in a different colour.")).toBeVisible();
   await expect(op.getByText(normalEmail.toLowerCase(), { exact: false }).first()).toBeVisible();
   await op.getByRole("button", { name: "Mark handled" }).first().click();
   await expect(op.getByText("Marked handled.")).toBeVisible();
 
   // An announcement shows to everyone in the app, and they can close it.
-  await op.goto("/admin/announcements");
+  await op.goto("/admin/people#announcements");
   await op.getByLabel("Message").fill("Maintenance tonight at 11 PM for about 10 minutes.");
   await op.getByRole("button", { name: "Show to everyone" }).click();
   await expect(op.getByText(/^Published/)).toBeVisible();
@@ -60,12 +59,12 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
   await page.getByRole("button", { name: "Close announcement" }).click();
   await page.reload();
   await expect(page.getByText("Maintenance tonight at 11 PM for about 10 minutes.")).toHaveCount(0);
-  await op.goto("/admin/announcements");
+  await op.goto("/admin/people#announcements");
   await op.getByRole("button", { name: "End now" }).click();
   await expect(op.getByText(/^Ended/)).toBeVisible();
 
   // Growth and the CSV export.
-  expect((await op.goto("/admin/growth"))?.status()).toBe(200);
+  expect((await op.goto("/admin/app#growth"))?.status()).toBe(200);
   await expect(op.getByText("Top inviters")).toBeVisible();
   const csv = await op.request.get("/admin/users/export");
   expect(csv.status()).toBe(200);
@@ -76,7 +75,7 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
   await expect(op.getByRole("link", { name: /^Admin/ })).toBeVisible();
 
   // Find the regular user and open them.
-  await op.goto("/admin/users");
+  await op.goto("/admin/people");
   await op.getByLabel("Search users").fill("rhea");
   await op.getByRole("button", { name: "Search" }).click();
   await op.getByRole("link", { name: /Regular Rhea/ }).click();
@@ -123,20 +122,20 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
   expect(gone.rowCount).toBe(0);
 
   // The owner's own account is untouchable, and every step above was logged.
-  await op.goto("/admin/users");
+  await op.goto("/admin/people");
   await op.getByLabel("Search users").fill("Owner Olu");
   await op.getByRole("button", { name: "Search" }).click();
   await op.getByRole("link", { name: /Owner Olu/ }).click();
   await expect(op.getByText("Admin accounts can't be changed here.")).toBeVisible();
-  await op.goto("/admin/activity");
+  await op.goto("/admin/app#activity");
   await expect(op.getByText("Suspended a user", { exact: true })).toBeVisible();
   await expect(op.getByText("Deleted a user", { exact: true })).toBeVisible();
 
   // Errors and health pages render.
-  expect((await op.goto("/admin/errors"))?.status()).toBe(200);
-  expect((await op.goto("/admin/health"))?.status()).toBe(200);
+  expect((await op.goto("/admin/app#errors"))?.status()).toBe(200);
+  expect((await op.goto("/admin/app#health"))?.status()).toBe(200);
   await expect(op.getByText("Integrations")).toBeVisible();
-  await op.goto("/admin/activity");
+  await op.goto("/admin/app#activity");
   await expect(op.getByText("Published an announcement", { exact: true })).toBeVisible();
   await expect(op.getByText("Exported the user list", { exact: true })).toBeVisible();
   await owner.close();

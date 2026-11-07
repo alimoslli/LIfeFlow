@@ -4,6 +4,7 @@ import { getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
+import { purgeUnusedPreviews } from "@/server/services/hq-files";
 import { purgeOldRateLimits } from "@/server/rate-limit";
 import { pushImportant, runDueSlot } from "@/server/services/proactive/engine";
 import { runNotifications, sendOnce, webPushSender } from "@/server/services/push";
@@ -42,6 +43,10 @@ export async function GET(req: Request) {
     }
     // Housekeeping that must not depend on sign-ins: old limit buckets, Stop and continuation marks.
     await purgeOldRateLimits(getDb()).catch(() => undefined);
+    // HQ housekeeping: pictures no decision card uses any more. Never blocks the run.
+    try {
+      await purgeUnusedPreviews(getDb());
+    } catch {}
     return NextResponse.json({ ok: true, users: all.length, messages, sent, push: send ? "on" : "VAPID keys not configured" });
   } catch (e) {
     return errorResponse(e);

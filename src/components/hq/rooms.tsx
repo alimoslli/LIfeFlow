@@ -342,7 +342,7 @@ export function ChiefRoomArt({ state }: { state: EmployeeState }) {
   const sleeping = state === "sleeping";
   const seated = !off && !sleeping;
   return (
-    <svg viewBox="0 0 480 200" role="presentation" aria-hidden="true" focusable="false" className="hq-art" preserveAspectRatio="xMidYMid slice">
+    <svg viewBox="0 0 480 200" role="presentation" aria-hidden="true" focusable="false" className="hq-art" preserveAspectRatio="xMaxYMid slice">
       <Shell w={480} h={200} floorY={150}>
         <Window x={18} y={24} w={58} h={54} />
         <rect x="88" y="62" width="40" height="5" rx="2" fill={v("wood-l")} />
@@ -415,7 +415,7 @@ export function FounderRoomArt({ pending }: { pending: number }) {
   return (
     <svg viewBox="0 0 480 190" role="presentation" aria-hidden="true" focusable="false" className="hq-art hq-art-wide" preserveAspectRatio="xMidYMax meet">
       <Shell w={480} h={190} floorY={140}>
-        <Window x={22} y={20} w={128} h={86} />
+        <Window x={22} y={20} w={128} h={86} city />
         <rect x="174" y="22" width="58" height="40" rx="3" fill={v("paper")} opacity=".9" />
         <use href="#hq-leaf" transform="translate(190 28) scale(.9)" />
         <rect x="244" y="20" width="62" height="28" rx="3" fill={v("wood-d")} />
@@ -475,7 +475,7 @@ export function FounderRoomArt({ pending }: { pending: number }) {
 /** The ground-floor lounge: sofas, a rug with the leaf, a coffee table. Decorative. 320 x 220. */
 export function LoungeArt() {
   return (
-    <svg viewBox="0 0 320 220" role="presentation" aria-hidden="true" focusable="false" className="hq-art" preserveAspectRatio="xMidYMid slice">
+    <svg viewBox="0 0 320 220" role="presentation" aria-hidden="true" focusable="false" className="hq-art" preserveAspectRatio="xMidYMax slice">
       <Shell>
         <Window x={118} y={26} w={84} h={58} />
         <use href="#hq-plant" transform="translate(40 150) scale(1.5)" />

@@ -340,3 +340,15 @@ export function SleepingHead({ who, x, y }: { who: Who; x: number; y: number }) 
     </g>
   );
 }
+
+/** A small round portrait (head and shoulders) of one of the team, for the brief and the decision rows. Same drawings as the rooms. */
+export function Portrait({ who, className = "" }: { who: Who; className?: string }) {
+  return (
+    <span className={`hq-portrait ${className}`} aria-hidden="true">
+      <svg viewBox="-30 -31 60 62" focusable="false">
+        <rect x="-30" y="-31" width="60" height="62" fill={v("wall")} />
+        <SeatedBody who={who} x={0} y={14} />
+      </svg>
+    </span>
+  );
+}

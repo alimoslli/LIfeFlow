@@ -62,6 +62,7 @@ const userRef = () =>
     .references(() => users.id, { onDelete: "cascade" });
 
 const tsvector = customType<{ data: string }>({ dataType: () => "tsvector" });
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
 
 // ---------------------------------------------------------------------------
 // identity (no RLS: needed before a user context exists, e.g. login)
@@ -1658,9 +1659,38 @@ export const hqApprovals = pgTable(
     source: text("source").$type<HqSource>().notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
+    // Decision card (ADR 0028). All null on old requests, which show as "being rewritten"; new ones always have every field.
+    why: text("why"),
+    changes: jsonb("changes").$type<string[]>(),
+    onYes: text("on_yes"),
+    onNo: text("on_no"),
+    effort: text("effort").$type<"small" | "medium" | "large">(),
+    risk: text("risk"),
+    recommendation: text("recommendation"),
+    previews: jsonb("previews").$type<HqPreview[]>(),
+    /** One thread per ask: every version shares it. The first version's threadId is its own id. */
+    threadId: uuid("thread_id"),
+    version: integer("version").notNull().default(1),
+    changedSinceNote: text("changed_since_note"),
+    /** Set when a newer version of the same thread replaced this one. */
+    supersededAt: tstz("superseded_at"),
+    /** The mission that builds an approved ask, set only by linkApprovalMission. `missionId` stays the mission that asked. */
+    buildMissionId: uuid("build_mission_id").references(() => hqMissions.id, { onDelete: "set null" }),
   },
-  (t) => [index("hq_approvals_status_idx").on(t.status, t.createdAt)],
+  (t) => [index("hq_approvals_status_idx").on(t.status, t.createdAt), index("hq_approvals_thread_idx").on(t.threadId, t.version)],
 );
+
+export type HqPreview = { fileId: string; label: string | null };
+
+/** Preview pictures for decision cards (ADR 0028). Owner-ops data like the other hq_* tables: no user_id, no RLS; served only to the admin. */
+export const hqFiles = pgTable("hq_files", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  contentType: text("content_type").notNull(),
+  size: integer("size").notNull(),
+  sha256: text("sha256").notNull(),
+  data: bytea("data").notNull(),
+  createdAt: createdAt(),
+});
 
 /** Append-only action log: every change in HQ, by the owner or an agent. */
 export const hqActivity = pgTable(
