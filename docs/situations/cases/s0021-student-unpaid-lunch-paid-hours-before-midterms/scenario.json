@@ -1,0 +1,68 @@
+{
+  "id": "s0021-student-unpaid-lunch-paid-hours-before-midterms",
+  "title": "Six 7.5 hour shifts are 42 paid hours, not 45: he tells the assistant his unpaid lunch rule the Sunday before two midterms",
+  "persona": "p2049-adult-learner-six-shifts-unpaid-lunch",
+  "now": "2026-11-08T18:30",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 2101,
+  "changes": [
+    { "id": "x-lunch-rule", "type": "memory", "content": "At work my lunch is unpaid: 30 minutes on 6 and 7.5 hour shifts, 60 minutes on 9 hour shifts. Remember that", "category": "instruction", "via": "chat", "told_at": "2026-11-08T18:20" }
+  ],
+
+  "dev_must_notice": [
+    { "id": "n-paid-hours", "check": "time",
+      "what": "He asked what his week of work comes to and told Dev his lunch is unpaid (30 minutes on 6 and 7.5 hour shifts, 60 on 9 hour shifts). This workweek, Sunday Nov 8 to Saturday Nov 14, has six 7.5 hour shifts (Sun, Mon, Tue, Wed, Fri, Sat): 45 hours on the clock, 42 paid hours after six 30 minute lunches. Dev reports the 42, which is 2 over 40. It shows no pay amount for those hours: his hourly pay is never predicted, and the next paycheck that exists (Friday Nov 13) covers the shifts of Oct 25 to Nov 7, not this week.",
+      "by_when": "2026-11-08T18:35",
+      "facts": ["x-lunch-rule", "shift-main-2026-11-08", "shift-main-2026-11-09", "shift-main-2026-11-10", "shift-main-2026-11-11", "shift-main-2026-11-13", "shift-main-2026-11-14", "m-work-days"] },
+    { "id": "n-midterms", "check": "heavy stretch",
+      "what": "The same 42 hour week holds two midterms in three days: ART 216 Midterm 2 on Tuesday Nov 10 at 6 PM, right after a 7 to 2:30 shift, and STAT 213 Midterm 2 on Thursday Nov 12 at 6 PM. His only study time is late at night after 9:30, and the next day starts at 7 AM on four of the five nights before the exams. He is a crammer and nothing is on his calendar for either exam yet.",
+      "by_when": "2026-11-08T18:35",
+      "facts": ["exam-art-216-midterm-2", "exam-stat-213-midterm-2", "shift-main-2026-11-10", "shift-main-2026-11-11", "m-01"] }
+  ],
+
+  "best_fix": [
+    { "for": "n-paid-hours", "action": "reminder", "needs_user": false,
+      "what": "Answer in the chat he is in: \"Saved: your lunch is unpaid, 30 minutes on 6 and 7.5 hour shifts and 60 on 9 hour shifts. This week is six shifts of 7.5 hours: 45 on the clock, 42 paid.\" Dev saves the rule as a memory because he said to remember it (Undo), and from then on shows paid hours on every shift (a 9 hour shift as 8 paid). Where the week is 40 or more paid hours it says the hours and nothing about money.",
+      "why": "He gave the rule and asked for it to be remembered, so it saves directly. Paid hours are a fact from his schedule and his rule, so Dev can state them. What those hours earn is a different matter: hourly pay is never predicted. The work page shows only the hours." },
+    { "for": "n-midterms", "action": "plan", "needs_user": true,
+      "what": "One line after the hours: \"Two midterms this week, ART on Tuesday and STAT on Thursday, both at 6 PM. Want me to put your late-night study on them?\" On his yes, four sessions labelled in his usual late-night window, each ending before 11:30 so the 7 AM shifts still get about 6 hours of sleep: Sunday ART review, Monday ART review, Tuesday STAT review after the midterm, Wednesday STAT review. Undo on each.",
+      "why": "It uses only his late-night study window, on days he already studies, and gives each exam the two or three nights he crams anyway. Dev plans the study time and never writes or checks his work.",
+      "placements": [
+        { "id": "pl-art-sun", "activity": "study", "label": "ART 216 Midterm 2 review", "start": "2026-11-08T21:35", "end": "2026-11-08T22:35" },
+        { "id": "pl-art-mon", "activity": "study", "label": "ART 216 Midterm 2 review", "start": "2026-11-09T21:35", "end": "2026-11-09T22:35" },
+        { "id": "pl-stat-tue", "activity": "study", "label": "STAT 213 Midterm 2 review", "start": "2026-11-10T21:35", "end": "2026-11-10T22:35" },
+        { "id": "pl-stat-wed", "activity": "study", "label": "STAT 213 Midterm 2 review", "start": "2026-11-11T21:35", "end": "2026-11-11T22:35" }
+      ] }
+  ],
+
+  "routine_fit": {
+    "placements": [
+      { "placement": "pl-art-sun", "routine": "study", "window": "late-night-1", "fits": true, "note": "Sunday, after 9:30 PM" },
+      { "placement": "pl-art-mon", "routine": "study", "window": "late-night-1", "fits": true, "note": "Monday, after the CHEM live session at 6 PM" },
+      { "placement": "pl-stat-tue", "routine": "study", "window": "late-night-1", "fits": true, "note": "Tuesday, after the ART midterm" },
+      { "placement": "pl-stat-wed", "routine": "study", "window": "late-night-1", "fits": true, "note": "Wednesday, the night before STAT" }
+    ],
+    "tempting": [
+      { "suggestion": "put study on his lunch break or before his 7 AM shifts", "routine": "study", "why_wrong": "he studies late at night after 9:30 and the lunch is a rest, not a study window", "facts": ["m-01"] }
+    ]
+  },
+
+  "must_not": [
+    "predict what the 42 hours will pay, or show an overtime amount (hourly pay is never predicted)",
+    "say 45 paid hours (the lunch is unpaid) or count the paid hours before the rule was told",
+    "save the lunch rule without it being asked (he said remember it) or save it without Undo",
+    "count the Nov 13 paycheck as covering this week or count any pay before it is deposited",
+    "put study on his lunch break or before his 7 AM shifts (he studies late at night)",
+    "write, solve or check any ART or STAT exam material",
+    "tell him to cut a shift to rest"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "The owner's real case of 2026-11-07, made up here as a different person: an hourly job with an unpaid lunch of 30 minutes on 6 and 7.5 hour shifts and 60 minutes on 9 hour shifts.",
+    "The employer pays by punched time less the unpaid lunch; the schedule shows the lunch as unpaid (break_paid false) from the posted shifts.",
+    "Workweek runs Sunday to Saturday; the biweekly pay period Oct 25 to Nov 7 pays Friday Nov 13 and the period Nov 8 to 21 pays later, neither amount known to Dev.",
+    "Sunday's shift is counted at its scheduled 7.5 hours; Sunday's punches ran 7:00 to 14:36 on the clock."
+  ],
+  "tags": ["student", "adult learner", "unpaid lunch", "paid hours", "never predict hourly pay", "usual work days", "week check", "heavy stretch", "crammer", "night classes", "canvas", "nearly full-time", "owner case"]
+}

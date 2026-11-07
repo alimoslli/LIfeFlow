@@ -1,0 +1,121 @@
+{
+  "id": "s0025-student-textbook-savings-goal-behind",
+  "title": "Her $500 textbook goal is $150 behind after three paydays with no savings transfer: Dev says it plainly and offers a $100 tap to get back on the $50 plan",
+  "persona": "p2040-university-roommates-campus-job",
+  "persona_overrides": {
+    "accounts": [
+      {
+        "id": "acc-savings",
+        "name": "Savings",
+        "official_name": "Share Savings",
+        "type": "depository",
+        "subtype": "savings",
+        "institution_name": "Lakeside Credit Union",
+        "mask": "6032",
+        "opening_balance_cents": 0,
+        "apy_bps": 100,
+        "interest_description": "DIVIDEND EARNED"
+      }
+    ],
+    "savings_plan": {
+      "from": "acc-checking",
+      "to": "acc-savings",
+      "amount_cents": 5000,
+      "on": "payday",
+      "skip_if_below_cents": 150000
+    },
+    "memories": [
+      {
+        "id": "m-goal",
+        "content": "I want $500 saved for spring textbooks by Jan 8. I put $50 in savings every payday",
+        "category": "goal",
+        "via": "chat",
+        "told_at": "2026-09-06T20:10"
+      }
+    ]
+  },
+  "now": "2026-11-13T19:30",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 2505,
+  "money": {
+    "available_now_cents": 76000
+  },
+  "changes": [],
+  "dev_must_notice": [
+    {
+      "id": "n-behind",
+      "check": "drift",
+      "what": "She told Dev on Sep 6 she wants $500 saved for spring textbooks by Jan 8 and puts $50 in savings every payday. Her transfers were made on Sep 18 and Oct 2 and not on the next three paydays: Oct 16, Oct 30 and today, Nov 13. Savings are $200.34. Three $50 transfers are missing, so she is $150 behind the plan, and at $50 a payday the four paydays left (Nov 27, Dec 11, Dec 24 and Jan 8) bring her to $400.34, $99.66 short of $500 on the goal date. Today's paycheck of $218.62 landed this morning, so it can be counted. The Nov 27 payday and the others are not counted.",
+      "by_when": "2026-11-13T21:00",
+      "facts": [
+        "m-goal",
+        "tx-2026-09-18-savings-in",
+        "tx-2026-10-02-savings-in",
+        "tx-2026-10-16-pay-campus",
+        "tx-2026-10-30-pay-campus",
+        "tx-2026-11-13-pay-campus",
+        "acc-savings",
+        "acc-checking"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-behind",
+      "action": "plan",
+      "needs_user": true,
+      "send_at": "2026-11-13T19:30",
+      "what": "One push, tonight after her shift: \"Your textbook goal is behind: $200 saved of $500, and three paydays went by without the $50. At $50 a payday you'd reach $400 by Jan 8. Want to put $100 in now from today's pay, then your usual $50 on the last four paydays?\" Two buttons: [Move $100 to savings] [Not now]. The card states the exact amount, the move runs only on her tap and has Undo. If she says not now, Dev offers the other ways back once, in the app: $75 on each of the four paydays left, or moving the goal date to Jan 22 (a fifth payday, $60 each); then it drops it until the next payday.",
+      "why": "The goal is hers and she asked Dev to hold it with her, so Dev says plainly where it stands and gives her a way back that returns her to the $50 she already does: $100 now and $50 on each of the last four paydays is $500.34 on Jan 8. Using today's landed pay and the $760.00 available keeps the next bills covered, and the $100 is one tap. It names no reason for the skipped paydays and has no guilt words."
+    }
+  ],
+  "must_not": [
+    "move money without her tap or move any amount other than the one shown on the card",
+    "count the Nov 27 payday, or any later pay, as money already saved or available",
+    "use guilt words (\"you missed\", \"you slipped\", \"you failed\") or ask why the transfers stopped",
+    "send the push on a study evening, Sunday, Monday, Tuesday or Thursday after 7 PM",
+    "tell her to cut coffee, takeout or any other spending to make up the $150",
+    "touch rent money: the Dec 1 share of $569.72 is covered by checking and stays out of the plan",
+    "change the goal amount or date without her saying so",
+    "say she is fine because the pace looks close to the plan (it is $150 behind)"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Paydays are every other Friday from Aug 21; the Dec 25 payday is paid on Dec 24 because of the holiday.",
+    "The $50 savings transfer was her own habit, done at her credit union on payday, not an automatic rule.",
+    "Spring textbook costs are about $500 for her five classes; the goal amount is hers.",
+    "Savings earn a few cents of dividend a month, included in the $200.34.",
+    "A money move such as contribute_goal runs only when she taps it, states the exact amount and has Undo."
+  ],
+  "tags": [
+    "student",
+    "off-track goal",
+    "say it plainly",
+    "a way back",
+    "no guilt words",
+    "money goal",
+    "savings",
+    "drift",
+    "notification",
+    "roommates",
+    "campus job",
+    "evening studier",
+    "steady",
+    "canvas",
+    "clinical"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "send the push on a study evening, Sunday, Monday, Tuesday or Thursday after 7 PM",
+        "routine": "study",
+        "why_wrong": "she studies from 7 to 9:45 PM on those evenings; Friday evening after her 7 PM shift has no study",
+        "facts": [
+          "m-01"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "id": "s0023-student-week-check-full-week-already-handled",
+  "title": "Her Sunday week check: six classes, a midterm window and ten deadlines, all inside her afternoon study routine: no push",
+  "persona": "p2047-university-dorm-none",
+  "now": "2026-11-08T12:50",
+  "history_days": 60,
+  "future_days": 45,
+  "seed": 2303,
+  "changes": [],
+  "dev_must_notice": [],
+  "best_fix": {
+    "action": "just so you know",
+    "needs_user": false,
+    "what": "No push. At 12:50 on Sunday, the week check is ready if she opens it (one card on Today): \"This week: 5 days of class, 10 deadlines, and the HIST 374 Midterm 2 window, Thursday 8 AM to Saturday 11:59 PM. Your study afternoons already cover it.\" It names nothing to do and moves nothing. The ten deadlines are Sunday Nov 8 HIST and PHYS discussion posts and SPAN homework (11:59 PM tonight), Monday ANTH and ECON quizzes and PHYS homework, Tuesday ECON homework, Wednesday BIO homework, Thursday ANTH discussion post and Friday HIST quiz. She opens the card or she doesn't.",
+    "why": "Looks heavy, is her ordinary week. Her study time is the afternoons: Sunday 1 PM to 3:30 PM (starting in 15 minutes) and a 2 PM block on Monday, Wednesday, Thursday and Friday, with Tuesday's lab ending at 3:50 PM. Her workouts are Monday, Wednesday and Friday at 7 AM, and Saturday morning is hers. The midterm is a three day window, not a single sitting, and has days of room before it closes. A push would repeat what she can already see, and an extra block would only land on time she keeps free."
+  },
+  "must_not": [
+    "add a Saturday morning study block for the HIST 374 midterm",
+    "send a Sunday evening push about the ten deadlines",
+    "call the week heavy or tell her to start the midterm early",
+    "bring up the two older missing items (HIST 374 Quiz 8 and BIO 418 Homework 9)",
+    "move her 7 AM workouts or her afternoon study to make room",
+    "write, solve or check any assignment or the midterm"
+  ],
+  "stay_quiet": true,
+  "assumptions": [
+    "Online exam windows in Moodle-style courses open at 8 AM and close at 11:59 PM two days later; HIST 374 Midterm 2 is one of those.",
+    "The week check is a card on Today, never a push by itself; a push is only for a catch.",
+    "Her two older missing items, from Oct 23 and Oct 28, are already past and are not a pattern to raise on a Sunday."
+  ],
+  "tags": [
+    "student",
+    "stay quiet",
+    "week check",
+    "routine fit",
+    "dorm",
+    "no job",
+    "afternoon studier",
+    "steady",
+    "moodle",
+    "online exams",
+    "looks heavy"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "add a Saturday morning study block for the HIST 374 midterm",
+        "routine": "keep-free",
+        "why_wrong": "Saturday mornings are hers, and the window leaves Thursday, Friday and Saturday afternoon",
+        "facts": [
+          "m-04",
+          "exam-hist-374-midterm-2"
+        ]
+      },
+      {
+        "suggestion": "send a Sunday evening push about the ten deadlines",
+        "routine": "call-family",
+        "why_wrong": "her Sunday evening is the call with her family at 8, and the card already shows the week",
+        "facts": [
+          "m-03"
+        ]
+      }
+    ]
+  }
+}
