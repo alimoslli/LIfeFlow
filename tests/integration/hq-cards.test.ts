@@ -352,7 +352,7 @@ describe("after a yes: the same card keeps reporting", () => {
 });
 
 describe("old requests", () => {
-  it("show as being rewritten, can't be answered, aren't counted, and are listed for the Chief of Staff", async () => {
+  it("show as being rewritten, can't be answered, aren't counted, and are listed for the COO", async () => {
     const [old] = await db()
       .insert(hqApprovals)
       .values({ role: "developer", kind: "deploy", title: "Ship the thing", summary: "ready", source: "agent" })

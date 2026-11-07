@@ -153,9 +153,9 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   expect(body.controls.autonomous).toBe(false);
   expect(body.controls.creditBudget).toBe(25);
 
-  // What the Chief of Staff can decide: turning posting times off saves, and the rounds see it.
+  // What the COO can decide: turning posting times off saves, and the rounds see it.
   await op.goto("/admin/hq/settings");
-  await expect(op.getByRole("heading", { name: "What your Chief of Staff can decide" })).toBeVisible();
+  await expect(op.getByRole("heading", { name: "What your COO can decide" })).toBeVisible();
   await expect(op.getByRole("heading", { name: "Never decided without you" })).toBeVisible();
   await expect(op.getByRole("switch", { name: "Posting times" })).toBeChecked();
   await op.getByRole("switch", { name: "Posting times" }).uncheck();

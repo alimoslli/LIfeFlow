@@ -56,7 +56,8 @@ test("HQ on a phone: no sideways scroll, big room targets, no serious accessibil
   expect(problems, problems.join("\n")).toEqual([]);
 
   await page.goto("/admin");
-  const rooms = page.locator("a.hq-room");
+  // The penthouse (not a link: desk, yes and Goodnight buttons) and the seven employee rooms.
+  const rooms = page.locator(".hq-room:not(.hq-room-lounge)");
   await expect(rooms).toHaveCount(8);
   for (let i = 0; i < 8; i++) {
     const box = await rooms.nth(i).boundingBox();

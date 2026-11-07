@@ -6,27 +6,30 @@ This is how the company runs. It sits on top of `docs/team.md` (cost rules, the 
 
 ## The org chart
 ```
-                      CEO (the owner)
+          CEO (the owner)  ·  CMO (partner, coming soon)
                             │  talks only to
-                    Chief of Staff  ── the "LF Chief of Staff" chat
+                    COO  ── the "LF COO" chat
                             │  runs, coordinates, reports
  ┌──────────────┬───────────┼───────────┬───────────────┬───────────────┐
  Engineering   Quality &   Product &   Research &     Marketing &     Customer
                Security    Design      Insights       Growth          Success
 ```
 
-- **CEO (the owner):** decides direction, answers the yes/no list and okays pictures. Talks only to the Chief of Staff. The other chats stay open for when the owner wants to dig in.
-- **Chief of Staff (head manager):** `.claude/agents/chief-of-staff.md`. Runs every scheduled round, decides the order of work, hands work between departments, makes the decisions it's allowed to make, and brings the CEO one short brief per round.
-- **Departments.** Each department is a lead agent: a role file the Chief of Staff starts inside a round, at most two at a time, Sonnet by default. Each has a room in HQ.
+- **CEO (the owner):** decides direction, answers the yes/no list and okays pictures. Talks only to the COO. The other chats stay open for when the owner wants to dig in.
+- **COO (head manager):** `.claude/agents/coo.md`. Runs every scheduled round, decides the order of work, hands work between departments, makes the decisions it's allowed to make, and brings the CEO one short brief per round.
+- **CMO (coming soon, owner 2026-11-07):** a real person, the owner's partner, over Marketing & Growth. HQ shows the seat as "Coming soon"; their own sign-in is a separate step with its own security review.
+- **Departments.** Each department is a lead agent: a role file the COO starts inside a round, at most two at a time, Sonnet by default. Each has a room in HQ.
 
 | Department | HQ room | Lead agent | When | Owns | Hands off to |
 |---|---|---|---|---|---|
-| Engineering | Developer | `engineer.md` | Night rounds (Sun, Tue, Thu) | Fixes, tests, speed, reliability, integrations | QA (review), Chief of Staff |
-| Quality & Security | QA | `qa-security.md` | Every night round (audit), every money, security or data change (review) | Audits on phone and web, e2e, security reviews | Engineering (fix now), Chief of Staff (needs the CEO) |
+| Engineering | Developer | `engineer.md` | Night rounds (Sun, Tue, Thu) | Fixes, tests, speed, reliability, integrations | QA (review), COO |
+| Quality & Security | QA | `qa-security.md` | Every night round (audit), every money, security or data change (review) | Audits on phone and web, e2e, security reviews | Engineering (fix now), COO (needs the CEO) |
 | Product & Design | Designer / V3 | `product-designer.md`, plus the LF V3 chat (the owner's) | Monday plan; when research or the CEO asks | Prototypes as pictures, UX proposals, V3 | CEO (design yes/no), Engineering (an approved build) |
-| Research & Insights | Researcher | `market-researcher.md`, `situation-writer.md` | Monday | Competitors, real needs, complaints, situations | Product (proposals), Engineering (fix now), Marketing (honest messages) |
+| Research & Insights | Researcher | `market-researcher.md`, `situation-writer.md` | Monday, plus situations in every night round | Competitors, real needs, complaints, situations | Product (proposals), Engineering (fix now), Marketing (honest messages) |
 | Marketing & Growth | Marketing | `marketer.md` | Wednesday | Concepts and drafts, scheduling approved posts, real metrics | CEO (publish yes/no), Research (what resonated) |
-| Customer Success | Support | `customer-success.md` | Every night round | Error reports, turned into fixes; patterns in what breaks for people | Engineering, Chief of Staff |
+| Customer Success | Support | `customer-success.md` | Every night round | Error reports, turned into fixes; patterns in what breaks for people | Engineering, COO |
+
+**Who is awake (owner, 2026-11-07, ADR 0029).** Everyone is asleep unless real work is running. A room shows Working only while a round it works in runs (from the COO's round_start and round_end check-ins), or while its own chat checks in on a mission in progress. QA, Customer Success and Research have no chat of their own: they work in the COO's rounds. Anything waiting on the CEO (a yes, a blocked mission, a chat's question) is a note on the door, never the room's state. Each sleeping room says when it next wakes.
 
 ## How the departments work together
 Work moves between departments only as **HQ records**, never as chat. Every handoff can be seen, has an owner, and a later round picks it up.
@@ -40,7 +43,7 @@ Examples:
 - Research finds people quitting apps over surprise charges. Product gets a proposal, and Marketing gets an honest message angle.
 - Marketing sees which hooks did well, so Research gets "dig into why" for next Monday.
 
-## The Chief of Staff's job
+## The COO's job
 1. **At the start of every round:**
    - `inbox`, for the CEO's decisions, open missions, approved posts and the controls.
    - Apply the CEO's decisions.
@@ -64,7 +67,7 @@ Short, plain words, no jargon, no em dashes, at most about 1,200 characters:
 5. **Next:** up to 3 suggestions. Anything that is a real change is already in Approvals.
 
 ## Decision rights
-The CEO raises or lowers the Chief of Staff's authority in **HQ › Settings › What your Chief of Staff can decide**. The Chief of Staff reads it every round through `inbox` (`controls.delegations`).
+The CEO raises or lowers the COO's authority in **HQ › Settings › What your COO can decide**. The COO reads it every round through `inbox` (`controls.delegations`).
 
 - **Level 0 (always on):** small fixes and bugs, approved in advance (`docs/team.md`).
 - **Level 1 (switched on by the CEO, 2026-11-06):**
@@ -80,7 +83,7 @@ The CEO raises or lowers the Chief of Staff's authority in **HQ › Settings ›
   - subscriptions; deleting anything; security changes;
   - anything on the owner's red lines.
 
-Every delegated decision is logged with `activity --role assistant --kind decision --text "Decided: …, because …"`. It shows under "Decided for you" in HQ and in the next brief. The CEO can reverse any of them by telling the Chief of Staff.
+Every delegated decision is logged with `activity --role assistant --kind decision --text "Decided: …, because …"`. It shows under "Decided for you" in HQ and in the next brief. The CEO can reverse any of them by telling the COO.
 
 ## Budget (owner's brief, section 9)
 Automated work aims for 35–40% of the weekly Claude allowance and never goes above 50%. Planning split:
@@ -92,7 +95,7 @@ Automated work aims for 35–40% of the weekly Claude allowance and never goes a
 | Marketing | 15% |
 | Reserve | 10% |
 
-The Chief of Staff's own planning and briefs fit inside these shares. Before every new agent, run the usage gate in `docs/hq/workflow.md`. Never turn on extra paid usage.
+The COO's own planning and briefs fit inside these shares. Before every new agent, run the usage gate in `docs/hq/workflow.md`. Never turn on extra paid usage.
 
 ## Requests to the CEO: the decision card (ADR 0028)
 The owner, 2026-11-07: "it has to be very easy for me to trust it and know exactly what's going to happen… Someone reports to me, I approve, I deny, I do my changes. He comes back a second time, third time, until I say go." So a request is a card the owner can decide from alone. **HQ refuses a request that is missing any of this, for every kind** (small fixes and bugs never need a request):
@@ -105,10 +108,10 @@ The owner, 2026-11-07: "it has to be very easy for me to trust it and know exact
 - **At least one picture** (up to 4): `--preview shot.png:Label` (png, jpeg or webp, max 2 MB, uploaded to HQ, never a URL). Product & Design makes the pictures (`product-designer`); other departments ask for them with a Product & Design mission first.
 
 **The loop.** The owner answers Yes, go / Send changes (with a note) / No.
-- **Yes:** the Chief of Staff creates or links a mission (`approval --start <approvalId> --mission <missionId>`). The same card keeps reporting from that mission: Approved (the owner's yes), Being built (mission `doing`), Ready for your look (mission `waiting`), Live (mission `done`, with its result and links), each with its date. Nothing goes silent.
+- **Yes:** the COO creates or links a mission (`approval --start <approvalId> --mission <missionId>`). The same card keeps reporting from that mission: Approved (the owner's yes), Being built (mission `doing`), Ready for your look (mission `waiting`), Live (mission `done`, with its result and links), each with its date. Nothing goes silent.
 - **Send changes:** the card goes back to its department with the owner's note (`inbox` lists it under `revisions`). The department sends `approval --revise <threadId|approvalId> --changed "what is different since the note"` with every field again. That makes version 2 (then 3, …) on the same thread, marks the old one superseded and pushes the owner.
 - **No:** the thread is closed.
-- **Old requests** (made before cards existed) show as "Being rewritten by your Chief of Staff", have no buttons and don't count as needing a yes. `inbox` lists them under `needsRewrite`; the Chief of Staff sends each again as a card.
+- **Old requests** (made before cards existed) show as "Being rewritten by your COO", have no buttons and don't count as needing a yes. `inbox` lists them under `needsRewrite`; the COO sends each again as a card.
 
 ## Where things live
 - This file: the company.

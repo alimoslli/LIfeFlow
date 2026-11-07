@@ -5,11 +5,11 @@ import type { Brief, EmployeeCard } from "@/server/hq/types";
 import { Portrait } from "./people";
 
 /**
- * "From your Chief of Staff": the newest brief, how many things wait for the owner, and the one button to talk to it.
+ * "From your COO": the newest brief, how many things wait for the owner, and the one button to talk to it.
  * Server-rendered; on phones the text is cut at six lines with a native "Read all".
  */
 export function BriefCard({ brief, chief, pending }: { brief: Brief | null; chief: EmployeeCard | undefined; pending: number }) {
-  const title = chief?.title ?? "Chief of Staff";
+  const title = chief?.title ?? "COO";
   const url = chief?.primaryChat?.url ?? null;
   return (
     <section aria-labelledby="hq-brief-title" data-testid="hq-brief" className="hq-brief p-4 sm:p-6">

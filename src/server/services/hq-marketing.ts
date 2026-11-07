@@ -386,7 +386,7 @@ export async function updateContent(db: Database, actor: HqActor, id: string, pa
       const settingTime = cur.status === "approved" && d.status === "scheduled" && !!d.externalId;
       const touched = CONTENT_FIELDS.filter((f) => d[f] !== undefined && !(f === "scheduledFor" && settingTime));
       if (touched.length) throw new HqError(`Can't change ${touched[0]} after it was sent for a yes. Make a new draft instead.`);
-      // A new time is the Chief of Staff's choice only while the owner allows it (ADR 0026); the time on the post is the one the owner saw.
+      // A new time is the COO's choice only while the owner allows it (ADR 0026); the time on the post is the one the owner saw.
       const newTime = settingTime && d.scheduledFor !== undefined && (d.scheduledFor?.getTime() ?? null) !== (cur.scheduledFor?.getTime() ?? null);
       if (newTime && !(await controlsIn(tx)).delegations.postingTimes)
         throw new HqError("Choosing posting times is switched off in HQ. Schedule it at the time on the post, or ask the owner for a time.");
@@ -502,7 +502,7 @@ export async function recordMetrics(db: Database, actor: HqActor, rows: MetricIn
 
 const DEFAULT_ROUNDS: HqRoundSwitches = { night: true, research: true, marketing: true };
 const DEFAULT_DELEGATIONS: HqDelegations = { fixOrder: true, researchTopics: true, postingTimes: true };
-/** What each switch lets the Chief of Staff decide, for the activity line. */
+/** What each switch lets the COO decide, for the activity line. */
 const DELEGATION_NAMES: Record<keyof HqDelegations, string> = {
   fixOrder: "decide the fix order",
   researchTopics: "pick the research topics",
@@ -568,7 +568,7 @@ export async function saveControls(db: Database, admin: Admin, patch: ControlsPa
       const v = d.delegations?.[k];
       if (v !== undefined && v !== cur.delegations[k]) {
         next.delegations[k] = v;
-        lines.push(`Your Chief of Staff may ${DELEGATION_NAMES[k]}: ${v ? "on" : "off"}`);
+        lines.push(`Your COO may ${DELEGATION_NAMES[k]}: ${v ? "on" : "off"}`);
       }
     }
     if (d.creditBudget !== undefined && d.creditBudget !== cur.creditBudget) {

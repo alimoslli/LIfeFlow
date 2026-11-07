@@ -1,7 +1,7 @@
 import type { HqRole } from "../db/schema";
 
 /**
- * LifeFlow HQ's seven employees (ADR 0024, 0026): the Chief of Staff and six departments. They are the face of the owner's real
+ * LifeFlow HQ's seven employees (ADR 0024, 0026): the COO and six departments. They are the face of the owner's real
  * Claude Code chats: none of them is an AI model of its own, and nothing here runs a model. The founder (the owner) has a room
  * too but is not an employee.
  */
@@ -18,8 +18,8 @@ export type Employee = {
   /** Their main chat, by title, so the page can explain an empty mapping. */
   chatTitle: string | null;
   /**
-   * Whether this department has its own Claude Code chat. QA and Customer Success don't: the Chief of Staff starts
-   * them inside its rounds, so "no chat" is normal and never means offline (ADR 0026).
+   * Whether this department has its own Claude Code chat. QA, Customer Success and Research don't: the COO starts
+   * them inside its rounds, so "no chat" is normal and never means offline (ADR 0026, 0029).
    */
   ownChat: boolean;
 };
@@ -27,8 +27,8 @@ export type Employee = {
 export const EMPLOYEES: readonly Employee[] = [
   {
     role: "assistant",
-    title: "Chief of Staff",
-    tagline: "Runs the team · Reports to you",
+    title: "COO",
+    tagline: "Runs the company · Reports to you",
     jobs: [
       "Runs every scheduled round and decides the order of work",
       "Hands work between departments",
@@ -36,8 +36,8 @@ export const EMPLOYEES: readonly Employee[] = [
       "Brings you one short brief per round",
       "Tells you what needs your yes and what to do next",
     ],
-    workingLine: "Running the team",
-    chatTitle: "LF Chief of Staff",
+    workingLine: "Running the round",
+    chatTitle: "LF COO",
     ownChat: true,
   },
   {
@@ -70,8 +70,8 @@ export const EMPLOYEES: readonly Employee[] = [
       "Keeps a backlog with sources",
     ],
     workingLine: "Reading with the magnifier",
-    chatTitle: "LF V3 — Agents",
-    ownChat: true,
+    chatTitle: null,
+    ownChat: false,
   },
   {
     role: "marketing",

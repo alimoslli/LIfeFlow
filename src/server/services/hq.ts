@@ -25,6 +25,7 @@ import {
 import { withUser } from "../db/with-user";
 import { chatUrl, EMPLOYEES, employee, isHqRole, USAGE_PLAN } from "../hq/team";
 import { employeeState, WORKING_WINDOW_MS } from "../hq/state";
+import { nextWake, ROUND_MAX_MS, roundOf, wakeLine, type Round } from "../hq/rounds";
 import type {
   Activity,
   Approval,
@@ -51,6 +52,7 @@ import type {
 import {
   cleanLine,
   cleanText,
+  deskPromptField,
   dueOn,
   HqError,
   isSafeLinkUrl,
@@ -91,6 +93,8 @@ export type MissionInput = {
   dueOn?: string | null;
   links?: HqLink[];
   sessionId?: string | null;
+  /** Set = a task file on the CEO's desk (ADR 0029). */
+  deskPrompt?: string | null;
 };
 export type MissionPatch = Partial<{
   role: HqRole;
@@ -105,6 +109,7 @@ export type MissionPatch = Partial<{
   sessionId: string | null;
   branch: string | null;
   dueOn: string | null;
+  deskPrompt: string | null;
 }>;
 /** The decision card an agent sends (ADR 0028). Everything is required; `summary` is the optional extra detail on top of `why`. */
 export type ApprovalInput = {
@@ -127,7 +132,7 @@ export type ApprovalInput = {
 export type ReviseInput = Omit<ApprovalInput, "role" | "kind"> & Partial<Pick<ApprovalInput, "role" | "kind">> & { changedSinceNote: string };
 export type CheckinInput = {
   sessionId: string;
-  /** The Chief of Staff reporting another chat's status: only status, summary and needs change, and only for a chat HQ already knows. */
+  /** The COO reporting another chat's status: only status, summary and needs change, and only for a chat HQ already knows. */
   relay?: boolean;
   /** With relay: when that chat was last really active (ISO). Never later than now, never older than what HQ already has. */
   activeAt?: string;
@@ -168,6 +173,7 @@ const missionInputSchema = z.object({
   priority: z.enum(PRIORITIES).optional(),
   dueOn,
   links: linksSchema.optional(),
+  deskPrompt: deskPromptField,
 });
 const missionPatchSchema = z
   .object({
@@ -183,6 +189,7 @@ const missionPatchSchema = z
     sessionId: sessionIdField,
     branch: optLine(200),
     dueOn,
+    deskPrompt: deskPromptField,
   })
   .partial();
 const cardFields = {
@@ -262,6 +269,7 @@ export const toMission = (r: MissionRow): Mission => ({
   startedAt: r.startedAt,
   doneAt: r.doneAt,
   seenAt: r.seenAt,
+  deskPrompt: r.deskPrompt,
   createdAt: r.createdAt,
   updatedAt: r.updatedAt,
 });
@@ -318,8 +326,6 @@ const toChat = (r: ChatRow): Chat => ({
 /** What counts as "needs your yes": a pending request in the decision-card format. Old requests wait to be rewritten and are not counted. */
 const NEEDS_YES = and(eq(hqApprovals.status, "pending"), isNotNull(hqApprovals.why));
 
-const ROUNDS_LINE = "Works in the Chief of Staff's rounds";
-
 const priorityRank = sql`case ${hqMissions.priority} when 'high' then 0 when 'normal' then 1 else 2 end`;
 const PRIORITY_ORDER: Record<string, number> = { high: 0, normal: 1, low: 2 };
 const byPriorityThenOldest = (a: Mission, b: Mission) =>
@@ -332,7 +338,10 @@ const actorSession = (a: HqActor) => (a.kind === "agent" ? (a.sessionId ?? null)
 
 // --- reads (pages) ------------------------------------------------------------------------------------------------
 
-type Base = { chats: Chat[]; missions: Mission[]; pending: Approval[] };
+type Base = { chats: Chat[]; missions: Mission[]; pending: Approval[]; tz: string; round: LiveRound | null };
+
+/** A COO round running now: its "working" check-in (round_start) within ROUND_MAX_MS, and which round it is. */
+type LiveRound = { round: Round | null; chat: Chat };
 
 /** Everything the cards need, in a few bounded queries run one after another. */
 /** Every mapped chat (max 100), then the unmapped ones newest first (max 50), so new sessions can't push mapped chats out. */
@@ -340,6 +349,17 @@ async function loadChats(tx: Tx): Promise<Chat[]> {
   const mapped = await tx.select().from(hqChats).where(isNotNull(hqChats.role)).orderBy(asc(hqChats.createdAt)).limit(100);
   const unmapped = await tx.select().from(hqChats).where(isNull(hqChats.role)).orderBy(desc(hqChats.createdAt)).limit(50);
   return [...mapped, ...unmapped].map(toChat);
+}
+
+/**
+ * The COO's round is running while its chat says "working" (the round_start check-in) and checked in within ROUND_MAX_MS;
+ * its round_end check-in sets it back to idle (ADR 0029). Only the COO's own check-ins count: a relayed status can't start one.
+ */
+export function liveRound(chats: Chat[], now: Date): LiveRound | null {
+  const chat = chats
+    .filter((c) => c.role === "assistant" && c.status === "working" && c.lastCheckinAt && now.getTime() - c.lastCheckinAt.getTime() <= ROUND_MAX_MS)
+    .sort((a, b) => b.lastCheckinAt!.getTime() - a.lastCheckinAt!.getTime())[0];
+  return chat ? { round: roundOf(chat.summary, chat.lastCheckinAt!), chat } : null;
 }
 
 async function loadBase(tx: Tx, now: Date): Promise<Base> {
@@ -352,47 +372,51 @@ async function loadBase(tx: Tx, now: Date): Promise<Base> {
     .orderBy(priorityRank, asc(hqMissions.createdAt))
     .limit(500);
   const pending = await tx.select().from(hqApprovals).where(NEEDS_YES).orderBy(asc(hqApprovals.createdAt)).limit(500);
-  return { chats, missions: missions.map(toMission), pending: pending.map(toApproval) };
+  const tz = await ownerTimeZone(tx);
+  return { chats, missions: missions.map(toMission), pending: pending.map(toApproval), tz, round: liveRound(chats, now) };
+}
+
+/** The asleep line: when the department next wakes, or where it works when it has no round. */
+function sleepLine(role: HqRole, tz: string, now: Date): string {
+  const w = nextWake(role, now);
+  if (!w) return "Works with you in its chat";
+  return `${wakeLine(w.at, tz)}${role === "assistant" ? "" : `, ${w.round.name.toLowerCase()}`}`;
 }
 
 function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
   const e = employee(role);
-  const chats = base.chats.filter((c) => c.role === role);
+  // A department with no chat of its own works in the COO's chat: chats once mapped to it (an old chat) don't count.
+  const chats = e.ownChat ? base.chats.filter((c) => c.role === role) : [];
   const mine = base.missions.filter((m) => m.role === role);
   const myPending = base.pending.filter((a) => a.role === role).length;
   const stateMissions = mine.filter((m) => m.status !== "done" || (m.doneAt && now.getTime() - m.doneAt.getTime() <= DAY));
-  // Every role's state comes from its chat and missions (ADR 0026). Roles with no chat of their own work in the Chief
-  // of Staff's rounds: they are asleep, never offline, until a mission in progress shows real work.
-  let result = employeeState({ noOwnChat: !e.ownChat, chats, missions: stateMissions, pendingApprovals: myPending }, now);
-  let line = result.state === "sleeping" && !e.ownChat ? ROUNDS_LINE : result.reason;
-  // Work done for this employee in another chat (the night round fixing a Developer mission in the agents chat) is
-  // real work: a mission in progress whose own chat checked in recently makes them "working". It never hides
-  // "blocked" or "needs you".
+  // The sleep rule (ADR 0029): working only while a round they work in runs, or while their chat checks in on a mission.
+  const live = base.round;
+  const inRound = live && (role === "assistant" || (live.round?.roles.includes(role) ?? false));
+  const roundLine = inRound
+    ? role === "assistant"
+      ? live.chat.summary?.trim() || `${live.round?.name ?? "Round"} running`
+      : `${e.workingLine} · ${live.round!.name.toLowerCase()}`
+    : null;
+  let result = employeeState(
+    { noOwnChat: !e.ownChat, chats, missions: stateMissions, pendingApprovals: myPending, round: roundLine ? { line: roundLine } : null },
+    now,
+  );
+  // Work done for this employee in another chat (the night round fixing an Engineering mission in the COO's chat) is
+  // real work: a mission in progress whose own chat checked in recently makes them "working".
   let viaChat: Chat | null = null;
-  if (result.state === "sleeping" || result.state === "offline" || result.state === "done") {
+  if (result.state !== "working") {
     for (const m of mine) {
       if (m.status !== "doing" || !m.sessionId) continue;
       const c = base.chats.find((x) => x.id === m.sessionId && x.lastCheckinAt && now.getTime() - x.lastCheckinAt.getTime() <= WORKING_WINDOW_MS);
       if (c) {
         viaChat = c;
-        result =
-          myPending > 0
-            ? { state: "needs_you", reason: myPending === 1 ? "1 thing needs your yes" : `${myPending} things need your yes` }
-            : { state: "working", reason: c.role === role ? m.title : `${m.title} (in ${c.title})` };
-        line = result.reason;
+        result = { ...result, state: "working", reason: c.role === role ? m.title : `${m.title} (in ${c.title})` };
         break;
       }
     }
   }
-  // The Chief of Staff's work is the round itself, not a mission: its own chat checking in "working" within the last
-  // 20 minutes is that real work, shown with the chat's own summary (ADR 0026). Blocked and needs-you still win.
-  if (role === "assistant" && (result.state === "sleeping" || result.state === "done")) {
-    const live = chats.find((c) => c.status === "working" && c.lastCheckinAt && now.getTime() - c.lastCheckinAt.getTime() <= WORKING_WINDOW_MS);
-    if (live) {
-      result = { state: "working", reason: live.summary?.trim() || e.workingLine };
-      line = result.reason;
-    }
-  }
+  const line = result.state === "sleeping" ? sleepLine(role, base.tz, now) : result.reason;
   const open = mine.filter((m) => (OPEN as readonly string[]).includes(m.status)).sort(byPriorityThenOldest);
   const currentMission =
     open.find((m) => m.status === "doing") ??
@@ -400,7 +424,12 @@ function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
     open.find((m) => m.status === "todo") ??
     null;
   let asOf: Date | null = null;
-  for (const d of [...chats.map((c) => c.lastCheckinAt), ...mine.map((m) => m.updatedAt), viaChat?.lastCheckinAt ?? null])
+  for (const d of [
+    ...chats.map((c) => c.lastCheckinAt),
+    ...mine.map((m) => m.updatedAt),
+    viaChat?.lastCheckinAt ?? null,
+    inRound ? live.chat.lastCheckinAt : null,
+  ])
     if (d && (!asOf || d > asOf)) asOf = d;
   return {
     role,
@@ -408,6 +437,7 @@ function buildCard(role: HqRole, base: Base, now: Date): EmployeeCard {
     tagline: e.tagline,
     state: result.state,
     line,
+    note: result.note,
     asOf,
     pendingApprovals: myPending,
     currentMission,
@@ -419,13 +449,11 @@ export async function officeSnapshot(db: Database, now: Date = new Date()): Prom
   return timed(db, async (tx) => {
     const base = await loadBase(tx, now);
     const employees = EMPLOYEES.map((e) => buildCard(e.role, base, now));
-    const counts = { working: 0, done: 0, waiting: 0, asleep: 0, blocked: 0, offline: 0 };
+    const counts = { working: 0, done: 0, asleep: 0, offline: 0 };
     for (const c of employees) {
       if (c.state === "working") counts.working++;
       else if (c.state === "done") counts.done++;
-      else if (c.state === "needs_you") counts.waiting++;
       else if (c.state === "sleeping") counts.asleep++;
-      else if (c.state === "blocked") counts.blocked++;
       else counts.offline++;
     }
     const activityRows = await tx.select().from(hqActivity).orderBy(desc(hqActivity.createdAt)).limit(12);
@@ -568,7 +596,7 @@ export async function listBriefs(db: Database, limit = 10): Promise<Brief[]> {
   const n = Math.min(20, Math.max(1, Math.floor(Number.isFinite(limit) ? limit : 10)));
   return timed(db, (tx) => listBriefsIn(tx, n));
 }
-/** The decisions the Chief of Staff made for the owner (activity kind "decision"), newest first, default 5, max 50. */
+/** The decisions the COO made for the owner (activity kind "decision"), newest first, default 5, max 50. */
 export async function listDecisions(db: Database, limit = 5): Promise<Activity[]> {
   const n = Math.min(50, Math.max(1, Math.floor(Number.isFinite(limit) ? limit : 5)));
   return timed(db, async (tx) => {
@@ -577,7 +605,7 @@ export async function listDecisions(db: Database, limit = 5): Promise<Activity[]
   });
 }
 
-/** The Chief of Staff's brief: plain text, 1–2000 characters. HQ stores it and pushes it; it never acts on it. */
+/** The COO's brief: plain text, 1–2000 characters. HQ stores it and pushes it; it never acts on it. */
 export async function recordBrief(db: Database, actor: HqActor, input: { body: string; needsYou?: number | null }): Promise<Brief> {
   const d = parse(
     z.object({
@@ -596,7 +624,7 @@ export async function recordBrief(db: Database, actor: HqActor, input: { body: s
       actor: actor.kind,
       role: "assistant",
       kind: "brief",
-      text: "Brief from your Chief of Staff",
+      text: "Brief from your COO",
       link: "/admin",
       sessionId: actorSession(actor),
     });
@@ -604,7 +632,7 @@ export async function recordBrief(db: Database, actor: HqActor, input: { body: s
   });
   await notifyOwner(db, {
     key: `hq-brief:${brief.id}`,
-    title: "Your Chief of Staff",
+    title: "Your COO",
     body: cleanLine(brief.body.split("\n").find((l) => l.trim()) ?? brief.body).slice(0, 140),
     url: "/admin",
     tag: `hq-brief-${brief.id}`,
@@ -846,6 +874,7 @@ export async function createMission(db: Database, actor: HqActor, input: Mission
         priority: d.priority ?? "normal",
         links: d.links ?? [],
         dueOn: d.dueOn ?? null,
+        deskPrompt: d.deskPrompt ?? null,
         source: actorKind(actor),
         sessionId: d.sessionId ?? (actor.kind === "agent" ? (actor.sessionId ?? null) : null),
       })
@@ -880,6 +909,7 @@ export async function updateMission(db: Database, actor: HqActor, id: string, pa
     if (p.sessionId !== undefined) next.sessionId = p.sessionId;
     if (p.branch !== undefined) next.branch = p.branch;
     if (p.dueOn !== undefined) next.dueOn = p.dueOn;
+    if (p.deskPrompt !== undefined) next.deskPrompt = p.deskPrompt;
 
     const status = p.status ?? cur.status;
     const changed = status !== cur.status;
@@ -1088,7 +1118,7 @@ export async function reviseApproval(db: Database, actor: HqActor, target: strin
   return approval;
 }
 
-/** After a yes, the Chief of Staff links the mission that builds it; from then on the card reports that mission's progress. */
+/** After a yes, the COO links the mission that builds it; from then on the card reports that mission's progress. */
 export async function linkApprovalMission(db: Database, actor: HqActor, approvalId: string, missionId: string): Promise<Approval> {
   if (!z.uuid().safeParse(approvalId).success || !z.uuid().safeParse(missionId).success) throw new HqError("Unknown request or mission.");
   return db.transaction(async (tx) => {
@@ -1131,7 +1161,7 @@ export async function decideApproval(
     const [cur] = await tx.select().from(hqApprovals).where(eq(hqApprovals.id, id)).for("update");
     if (!cur) throw new HqError("That approval no longer exists.");
     if (cur.status !== "pending") throw new HqError("That one was already decided.");
-    if (cur.why == null) throw new HqError("This request is being rewritten by your Chief of Staff. Answer the new version when it arrives.");
+    if (cur.why == null) throw new HqError("This request is being rewritten by your COO. Answer the new version when it arrives.");
     if (decision === "changes" && !n) throw new HqError("Say what to change, so they know what to fix.");
     const now = new Date();
     const [row] = await tx
@@ -1296,8 +1326,10 @@ export async function recordCheckin(db: Database, input: CheckinInput): Promise<
     const [cur] = await tx.select().from(hqChats).where(eq(hqChats.id, sessionId)).for("update");
     const set: Partial<typeof hqChats.$inferInsert> = { updatedAt: now };
     if (d.relay) {
-      // The Chief of Staff reporting another chat: it can't create a chat, rename one or touch its branch, and it can't make a chat look active.
+      // The COO reporting another chat: it can't create a chat, rename one or touch its branch, and it can't make a chat look active.
       if (!cur) throw new HqError("Unknown chat. A relayed status can only update a chat HQ already knows.");
+      // The COO's own chat says when a round runs (ADR 0029): only its own check-ins may change it.
+      if (cur.role === "assistant") throw new HqError("The COO's chat reports for itself. A relayed status can't change it.");
       const at = d.activeAt ? new Date(d.activeAt) : null;
       if (at && !Number.isNaN(at.getTime())) {
         const clamped = at.getTime() > now.getTime() ? now : at;
@@ -1356,8 +1388,8 @@ export async function recordAgentActivity(
   input: { role: HqRole; text: string; link?: string | null; sessionId?: string | null; kind?: "note" | "decision" },
 ): Promise<void> {
   const d = parse(z.object({ role, text: line(1, 400), link: url.nullish(), kind: z.enum(["note", "decision"]).optional() }), input);
-  // Only the Chief of Staff makes (delegated) decisions; HQ just logs them. No API lets an agent decide an approval.
-  if (d.kind === "decision" && d.role !== "assistant") throw new HqError("Only your Chief of Staff logs decisions.");
+  // Only the COO makes (delegated) decisions; HQ just logs them. No API lets an agent decide an approval.
+  if (d.kind === "decision" && d.role !== "assistant") throw new HqError("Only your COO logs decisions.");
   await db.transaction(async (tx) => {
     await logActivity(tx, {
       actor: actor.kind,

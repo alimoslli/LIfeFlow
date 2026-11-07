@@ -12,6 +12,7 @@ import type { MissionPriority, MissionStatus } from "@/server/hq/types";
 import { fromLocalInput } from "@/components/hq/marketing-labels";
 import { getSessionUser } from "@/server/auth/current-user";
 import { getContent, saveControls, updateContent } from "@/server/services/hq-marketing";
+import { addDeskTask, lightsOn, sayGoodnight } from "@/server/services/hq-desk";
 import { HqError, createHqKey, createMission, decideApproval, importSeedAsOwner, removeChat, revokeHqKey, saveChat, updateMission } from "@/server/services/hq";
 
 /* Every action re-checks the admin first (a layout is not enough), runs, refreshes and comes back with ?done= or ?error=. */
@@ -236,7 +237,7 @@ export async function saveControlsAction(fd: FormData) {
   });
 }
 
-/** What the Chief of Staff may decide: three switches. Unchecked switches arrive as missing, so each is read explicitly. */
+/** What the COO may decide: three switches. Unchecked switches arrive as missing, so each is read explicitly. */
 export async function saveDelegationsAction(fd: FormData) {
   const admin = await requireAdmin();
   await run(to("/admin/hq/settings"), async () => {
@@ -245,5 +246,33 @@ export async function saveDelegationsAction(fd: FormData) {
       delegations: { fixOrder: on("fixOrder"), researchTopics: on("researchTopics"), postingTimes: on("postingTimes") },
     });
     return "Saved";
+  });
+}
+
+/* The CEO's desk and Goodnight (ADR 0029). Goodnight records the sign-off and dims the office; it starts nothing. */
+
+export async function addDeskTaskAction(fd: FormData) {
+  const admin = await requireAdmin();
+  await run(to("/admin", "desk"), async () => {
+    const role = text(fd, "role");
+    if (!isHqRole(role)) throw new HqError("Pick who it is for.");
+    const m = await addDeskTask(getDb(), admin, { role, title: text(fd, "title", 160), prompt: text(fd, "prompt", 1600) });
+    return `On your desk: ${m.title}`;
+  });
+}
+
+export async function goodnightAction() {
+  const admin = await requireAdmin();
+  await run(to("/admin"), async () => {
+    await sayGoodnight(getDb(), admin);
+    return "Goodnight. The office is dimmed until 5 AM. Rounds still run on their schedule.";
+  });
+}
+
+export async function lightsOnAction() {
+  const admin = await requireAdmin();
+  await run(to("/admin"), async () => {
+    await lightsOn(getDb(), admin);
+    return "Lights on.";
   });
 }

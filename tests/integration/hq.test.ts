@@ -220,9 +220,9 @@ describe("check-ins", () => {
     const [m] = await listMissions(db(), { role: "developer" });
     await updateMission(db(), owner, m.id, { status: "doing" });
 
-    await recordCheckin(db(), { sessionId: SID, relay: true, title: "Hijacked", branch: "evil", status: "working", summary: "Reported by the Chief of Staff" });
+    await recordCheckin(db(), { sessionId: SID, relay: true, title: "Hijacked", branch: "evil", status: "working", summary: "Reported by the COO" });
     const [chat] = await listChats(db());
-    expect(chat).toMatchObject({ title: "LF Dev", branch: "feature/x", status: "working", summary: "Reported by the Chief of Staff" });
+    expect(chat).toMatchObject({ title: "LF Dev", branch: "feature/x", status: "working", summary: "Reported by the COO" });
     expect(chat.lastCheckinAt?.getTime()).toBe(old.getTime());
     const dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer");
     expect(dev?.state).not.toBe("working");
@@ -310,12 +310,15 @@ describe("office snapshot, detail, summary", () => {
   it("is honest with no data", async () => {
     const s = await officeSnapshot(db());
     expect(s.employees.map((e) => e.role)).toEqual(["assistant", "developer", "designer", "researcher", "marketing", "qa", "support"]);
-    expect(s.employees.map((e) => e.state)).toEqual(["offline", "offline", "offline", "offline", "offline", "sleeping", "sleeping"]);
-    expect(s.counts).toEqual({ working: 0, done: 0, waiting: 0, asleep: 2, blocked: 0, offline: 5 });
+    // Research, QA and Customer Success work in the COO's rounds (no chat of their own): asleep, never offline.
+    expect(s.employees.map((e) => e.state)).toEqual(["offline", "offline", "offline", "sleeping", "offline", "sleeping", "sleeping"]);
+    expect(s.counts).toEqual({ working: 0, done: 0, asleep: 3, offline: 4 });
+    expect(s.employees.find((e) => e.role === "qa")?.line).toMatch(/^Wakes (Sun|Tue|Thu) 3:07 AM, night round$/);
+    expect(s.employees.every((e) => e.note === null)).toBe(true);
     expect(s.budget).toMatchObject({ weekPct: null, roundsPct: null, target: 40, ceiling: 50 });
   });
 
-  it("builds cards from real rows; the Chief of Staff's state comes from its chat", async () => {
+  it("builds cards from real rows; the COO's state comes from its chat", async () => {
     await saveChat(db(), admin, { id: SID, role: "developer", title: "LF Main", isPrimary: true });
     await recordCheckin(db(), { sessionId: SID, status: "working" });
     const m = await createMission(db(), owner, { role: "developer", title: "Do the thing", priority: "high" });
@@ -350,10 +353,10 @@ describe("office snapshot, detail, summary", () => {
     await expect(employeeDetail(db(), "ceo" as never)).rejects.toThrow(HqError);
   });
 
-  it("counts work done for an employee in another chat (the night round) as working, but never hides needs-you", async () => {
+  it("counts work done for an employee in another chat as working; a pending yes is a door note, never the state", async () => {
     const AGENTS = "session_01Mhcz6BYyF8TLLXwBiWcWyk";
     await saveChat(db(), admin, { id: SID, role: "developer", title: "LF Main", isPrimary: true }); // never checked in
-    await saveChat(db(), admin, { id: AGENTS, role: "researcher", title: "LF V3 — Agents", isPrimary: true });
+    await saveChat(db(), admin, { id: AGENTS, role: "designer", title: "LF V3 — Agents", isPrimary: true });
     const m = await createMission(db(), owner, { role: "developer", title: "Forgiving transaction search" });
     await updateMission(db(), owner, m.id, { status: "doing", sessionId: AGENTS });
     let dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
@@ -364,7 +367,7 @@ describe("office snapshot, detail, summary", () => {
     expect(dev.asOf).not.toBeNull();
     await createApproval(db(), agent, await card({ role: "developer", kind: "deploy", title: "Ship it" }));
     dev = (await officeSnapshot(db())).employees.find((e) => e.role === "developer")!;
-    expect(dev.state).toBe("needs_you");
+    expect(dev).toMatchObject({ state: "working", note: "1 thing for your yes" });
     await db()
       .update(hqChats)
       .set({ lastCheckinAt: new Date(Date.now() - 60 * 60_000) })

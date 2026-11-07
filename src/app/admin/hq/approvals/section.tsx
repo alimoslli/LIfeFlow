@@ -57,7 +57,7 @@ export async function ApprovalsSection() {
       {rewriting.length > 0 && (
         <Section
           title="Being rewritten"
-          sub="Old requests. Your Chief of Staff rewrites each one with a picture and clear steps. They don't need your answer yet."
+          sub="Old requests. Your COO rewrites each one with a picture and clear steps. They don't need your answer yet."
           as="h3"
         >
           <ul className="divide-y divide-border/60">

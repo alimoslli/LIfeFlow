@@ -91,9 +91,9 @@ beforeEach(async () => {
 const by = async (role: string) => (await officeSnapshot(db())).employees.find((e) => e.role === role)!;
 
 describe("the team", () => {
-  it("has the Chief of Staff and six departments, in order", () => {
+  it("has the COO and six departments, in order", () => {
     expect(EMPLOYEES.map((e) => [e.role, e.title])).toEqual([
-      ["assistant", "Chief of Staff"],
+      ["assistant", "COO"],
       ["developer", "Engineering"],
       ["designer", "Product & Design"],
       ["researcher", "Research & Insights"],
@@ -101,50 +101,94 @@ describe("the team", () => {
       ["qa", "Quality & Security"],
       ["support", "Customer Success"],
     ]);
-    expect(EMPLOYEES.filter((e) => !e.ownChat).map((e) => e.role)).toEqual(["qa", "support"]);
-    expect(EMPLOYEES.find((e) => e.role === "assistant")?.chatTitle).toBe("LF Chief of Staff");
+    expect(EMPLOYEES.filter((e) => !e.ownChat).map((e) => e.role)).toEqual(["researcher", "qa", "support"]);
+    expect(EMPLOYEES.find((e) => e.role === "assistant")?.chatTitle).toBe("LF COO");
   });
 
-  it("qa and support are asleep (never offline) and work via a chat that checked in", async () => {
+  it("qa and support are asleep (never offline), say when they wake, and work via a chat that checked in", async () => {
     let qa = await by("qa");
-    expect(qa).toMatchObject({ state: "sleeping", line: "Works in the Chief of Staff's rounds" });
+    expect(qa).toMatchObject({ state: "sleeping", note: null });
+    expect(qa.line).toMatch(/^Wakes (Sun|Tue|Thu) 3:07 AM, night round$/);
     expect((await by("support")).state).toBe("sleeping");
-    await saveChat(db(), admin, { id: COS, role: "assistant", title: "LF Chief of Staff", isPrimary: true });
-    await recordCheckin(db(), { sessionId: COS, status: "working" });
+    await saveChat(db(), admin, { id: COS, role: "assistant", title: "LF COO", isPrimary: true });
+    await recordCheckin(db(), { sessionId: COS, status: "idle" });
     const m = await createMission(db(), owner, { role: "qa", title: "Audit Plan on phone" });
     await updateMission(db(), owner, m.id, { status: "doing", sessionId: COS });
     qa = await by("qa");
-    expect(qa).toMatchObject({ state: "working", line: "Audit Plan on phone (in LF Chief of Staff)" });
+    expect(qa).toMatchObject({ state: "working", line: "Audit Plan on phone (in LF COO)" });
+    // A yes waiting and a blocked mission are notes on the door, never the room's state.
     await createApproval(db(), agent, await card({ role: "qa", kind: "other", title: "Need a yes" }));
-    expect((await by("qa")).state).toBe("needs_you");
+    expect(await by("qa")).toMatchObject({ state: "working", note: "1 thing for your yes" });
     await db().delete(hqApprovals);
     const b = await createMission(db(), owner, { role: "support", title: "Blocked thing" });
     await updateMission(db(), owner, b.id, { status: "blocked", blockedReason: "No access" });
-    expect(await by("support")).toMatchObject({ state: "blocked", line: "No access" });
+    expect(await by("support")).toMatchObject({ state: "sleeping", note: "Waiting: No access" });
   });
 
-  it("the Chief of Staff's state comes from its chat, not app logic", async () => {
+  it("a chat once mapped to a department with no chat of its own (the old agents chat on Research) is ignored", async () => {
+    const OLD = "session_01Mhcz6BYyF8TLLXwBiWcWyk";
+    await saveChat(db(), admin, { id: OLD, role: "researcher", title: "LF V3 — Agents", isPrimary: true });
+    await recordCheckin(db(), { sessionId: OLD, status: "blocked", needsAction: "Should goodnight start a round?" });
+    expect(await by("researcher")).toMatchObject({ state: "sleeping", note: null, primaryChat: null });
+  });
+
+  it("while a COO round runs, the departments in it are working; round_end puts them back to sleep", async () => {
+    await saveChat(db(), admin, { id: COS, role: "assistant", title: "LF COO", isPrimary: true });
+    await recordCheckin(db(), { sessionId: COS, status: "working", summary: "Night round started", usage: { sevenDayPct: 10, phase: "round_start" } });
+    let s = await officeSnapshot(db());
+    const state = (r: string) => s.employees.find((e) => e.role === r)!;
+    expect(state("assistant")).toMatchObject({ state: "working", line: "Night round started" });
+    expect(state("qa")).toMatchObject({ state: "working", line: "Testing every screen · night round" });
+    for (const r of ["developer", "support", "researcher"]) expect(state(r).state, r).toBe("working");
+    expect(state("marketing").state).toBe("offline");
+    expect(state("designer").state).toBe("offline");
+    expect(s.counts.working).toBe(5);
+
+    await recordCheckin(db(), { sessionId: COS, status: "working", summary: "Marketing round started" });
+    s = await officeSnapshot(db());
+    expect(state("marketing")).toMatchObject({ state: "working", line: "Filming at the ring light · marketing round" });
+    expect(state("qa").state).toBe("sleeping");
+
+    await recordCheckin(db(), { sessionId: COS, status: "idle", summary: "Marketing round done: 3 drafts", usage: { sevenDayPct: 12, phase: "round_end" } });
+    s = await officeSnapshot(db());
+    expect(state("marketing").state).toBe("offline");
+    expect(state("assistant").state).toBe("sleeping");
+    expect(state("assistant").line).toMatch(/^Wakes (Sun|Mon|Tue|Wed|Thu) 3:\d\d AM$/);
+
+    // A round that never sent round_end stops counting after 3 hours.
+    await recordCheckin(db(), { sessionId: COS, status: "working", summary: "Night round started" });
+    await db()
+      .update(hqChats)
+      .set({ lastCheckinAt: new Date(Date.now() - 3 * 3_600_000 - 60_000) })
+      .where(eq(hqChats.id, COS));
+    s = await officeSnapshot(db());
+    expect(state("qa").state).toBe("sleeping");
+    expect(state("assistant").state).toBe("sleeping");
+  });
+
+  it("a relayed status can't change the COO's own chat, so it can't fake a round", async () => {
+    await saveChat(db(), admin, { id: COS, role: "assistant", title: "LF COO", isPrimary: true });
+    await recordCheckin(db(), { sessionId: COS, status: "idle" });
+    await expect(recordCheckin(db(), { sessionId: COS, relay: true, status: "working", summary: "Night round started" })).rejects.toThrow(HqError);
+    expect((await by("qa")).state).toBe("sleeping");
+  });
+
+  it("the COO's state comes from its chat, not app logic", async () => {
     expect((await by("assistant")).state).toBe("offline");
     await createApproval(db(), agent, await card({ role: "developer", kind: "other", title: "x" }));
-    expect((await by("assistant")).state).toBe("offline"); // pending approvals no longer make it "working"
+    expect((await by("assistant")).state).toBe("offline"); // pending approvals never make it "working"
     await db().delete(hqApprovals);
-    await saveChat(db(), admin, { id: COS, role: "assistant", title: "LF Chief of Staff", isPrimary: true });
+    await saveChat(db(), admin, { id: COS, role: "assistant", title: "LF COO", isPrimary: true });
     await recordCheckin(db(), { sessionId: COS, status: "idle" });
     expect((await by("assistant")).state).toBe("sleeping");
     // Running a round is its work: its own "working" check-in shows it, with its own summary.
     await recordCheckin(db(), { sessionId: COS, status: "working", summary: "Night round: Engineering is on fix 2 of 3" });
     expect(await by("assistant")).toMatchObject({ state: "working", line: "Night round: Engineering is on fix 2 of 3" });
     await recordCheckin(db(), { sessionId: COS, status: "working", summary: null });
-    expect(await by("assistant")).toMatchObject({ state: "working", line: "Running the team" });
-    // Twenty minutes without a check-in reads as resting, and needs-you still wins.
-    await db()
-      .update(hqChats)
-      .set({ lastCheckinAt: new Date(Date.now() - 21 * 60_000) })
-      .where(eq(hqChats.id, COS));
-    expect((await by("assistant")).state).toBe("sleeping");
-    await recordCheckin(db(), { sessionId: COS, status: "working" });
+    expect((await by("assistant")).line).toMatch(/running$/);
+    // A yes for the COO is a note while it works.
     await createApproval(db(), agent, await card({ role: "assistant", kind: "other", title: "Need a yes" }));
-    expect((await by("assistant")).state).toBe("needs_you");
+    expect(await by("assistant")).toMatchObject({ state: "working", note: "1 thing for your yes" });
     await db().delete(hqApprovals);
     await recordCheckin(db(), { sessionId: COS, status: "idle" });
     expect((await by("assistant")).state).toBe("sleeping");
@@ -174,7 +218,7 @@ describe("briefs", () => {
     expect((await employeeDetail(db(), "assistant")).briefs).toHaveLength(2);
     expect((await employeeDetail(db(), "developer")).briefs).toBeUndefined();
     const acts = await listActivity(db(), { limit: 50 });
-    expect(acts.filter((a) => a.text === "Brief from your Chief of Staff" && a.role === "assistant" && a.link === "/admin")).toHaveLength(2);
+    expect(acts.filter((a) => a.text === "Brief from your COO" && a.role === "assistant" && a.link === "/admin")).toHaveLength(2);
   });
 
   it("pushes the owner the first line, trimmed to 140 characters", async () => {
@@ -194,7 +238,7 @@ describe("briefs", () => {
       });
       await recordBrief(db(), agent, { body: `${"A".repeat(300)}\nsecond line` });
       expect(sent).toHaveLength(1);
-      expect(sent[0]).toMatchObject({ title: "Your Chief of Staff", url: "/admin" });
+      expect(sent[0]).toMatchObject({ title: "Your COO", url: "/admin" });
       expect(sent[0].body).toBe("A".repeat(140));
     } finally {
       if (prev === undefined) delete process.env.ADMIN_EMAILS;
@@ -204,8 +248,8 @@ describe("briefs", () => {
 });
 
 describe("decisions", () => {
-  it("only the Chief of Staff logs one; they appear newest first, max 5, in the snapshot", async () => {
-    await expect(recordAgentActivity(db(), agent, { role: "developer", text: "Decided: x", kind: "decision" })).rejects.toThrow(/Chief of Staff/);
+  it("only the COO logs one; they appear newest first, max 5, in the snapshot", async () => {
+    await expect(recordAgentActivity(db(), agent, { role: "developer", text: "Decided: x", kind: "decision" })).rejects.toThrow(/COO/);
     await recordAgentActivity(db(), agent, { role: "developer", text: "just a note" });
     for (let i = 1; i <= 6; i++)
       await recordAgentActivity(db(), agent, { role: "assistant", text: `Decided: fix ${i} first, because it is small`, kind: "decision" });
@@ -226,9 +270,9 @@ describe("controls: delegations", () => {
     await expect(saveControls(db(), admin, { delegations: { deploy: true } as never })).rejects.toThrow(HqError);
     const c = await saveControls(db(), admin, { delegations: { fixOrder: false } });
     expect(c.delegations).toEqual({ fixOrder: false, researchTopics: true, postingTimes: true });
-    expect((await listActivity(db(), { limit: 10 })).map((a) => a.text)).toContain("Your Chief of Staff may decide the fix order: off");
+    expect((await listActivity(db(), { limit: 10 })).map((a) => a.text)).toContain("Your COO may decide the fix order: off");
     const [act] = await db().select().from(adminActions).where(eq(adminActions.action, "hq.controls_saved"));
-    expect(act.metadata).toMatchObject({ changes: ["Your Chief of Staff may decide the fix order: off"] });
+    expect(act.metadata).toMatchObject({ changes: ["Your COO may decide the fix order: off"] });
     expect((await agentInbox(db())).controls.delegations.fixOrder).toBe(false);
     await saveControls(db(), admin, { delegations: { fixOrder: true } });
   });
@@ -246,14 +290,14 @@ describe("inbox chats and API", () => {
   const auth = (key?: string): RequestInit => ({ headers: key ? { authorization: `Bearer ${key}` } : {} });
 
   it("the inbox returns the mapped chats only", async () => {
-    await saveChat(db(), admin, { id: COS, role: "assistant", title: "LF Chief of Staff", isPrimary: true });
+    await saveChat(db(), admin, { id: COS, role: "assistant", title: "LF COO", isPrimary: true });
     await saveChat(db(), admin, { id: MAIN, role: "developer", title: "LF Main", isPrimary: true });
     await recordCheckin(db(), { sessionId: "session_01Mhcz6CCCCCCCCCCCCCCCCC", title: "Unmapped" });
     const { token } = await createHqKey(db(), admin, "k");
     const res = await inboxGET(new Request("https://lifeflow.test/api/hq/inbox", auth(token)));
     const j = await res.json();
     expect(j.chats).toEqual([
-      { id: COS, title: "LF Chief of Staff", role: "assistant" },
+      { id: COS, title: "LF COO", role: "assistant" },
       { id: MAIN, title: "LF Main", role: "developer" },
     ]);
     expect(j.controls.delegations).toBeDefined();

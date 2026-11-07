@@ -1,7 +1,10 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Moon, Sun } from "lucide-react";
 import type { OfficeSnapshot, EmployeeCard } from "@/server/hq/types";
 import { BrandMark } from "@/components/brand/brand-mark";
+import { goodnightAction, lightsOnAction } from "@/app/admin/hq/actions";
+import { Desk, OpenDeskButton, type DeskFileView } from "./desk";
 import { SceneDefs } from "./parts";
 import { EmployeeRoomArt, FounderRoomArt, LoungeArt } from "./rooms";
 import { StateChip } from "./status-chip";
@@ -60,14 +63,24 @@ function Plate({ title, tagline, chip }: { title: string; tagline: string; chip?
   );
 }
 
+/** The CMO's seat over Marketing: a real partner joining later (owner, 2026-11-07). Not an employee, so no state. */
+function CmoSeat() {
+  return (
+    <p className="hq-cmo" data-testid="hq-cmo">
+      <b>CMO</b> · Your partner · <span>Coming soon</span>
+    </p>
+  );
+}
+
 function EmployeeRoom({ e }: { e: EmployeeCard }) {
-  // DOM order gives the accessible name "Title, State: line, tagline"; the grid areas lay it out the way it reads on screen.
+  // DOM order gives the accessible name "Title, State: line, note, tagline"; the grid areas lay it out the way it reads on screen.
   return (
     <Link href={`/admin/hq/${e.role}`} className="hq-room" data-state={e.state}>
       <div className={e.role === "assistant" ? "hq-stage hq-stage-chief" : "hq-stage"}>
         <EmployeeRoomArt role={e.role} state={e.state} />
       </div>
       <div className="hq-meta">
+        {e.role === "marketing" && <CmoSeat />}
         <p className="hq-plate-title">
           {e.title}
           <span className="sr-only">, </span>
@@ -75,9 +88,58 @@ function EmployeeRoom({ e }: { e: EmployeeCard }) {
         <StateChip state={e.state} />
         <span className="sr-only">: </span>
         <p className="hq-line">{e.line}</p>
+        {e.note && (
+          <p className="hq-note">
+            <span className="sr-only">. Note: </span>
+            {e.note}
+          </p>
+        )}
         <p className="hq-plate-tag">{e.tagline}</p>
       </div>
     </Link>
+  );
+}
+
+export type OfficeDesk = { files: DeskFileView[]; roles: { role: string; title: string }[]; night: { on: boolean; endsAt: Date | null } };
+
+/** The penthouse: the CEO at the desk with the pile of task files and the closed MacBook, three plain buttons, the business card. */
+function Penthouse({ pending, desk }: { pending: number; desk: OfficeDesk }) {
+  const n = desk.files.length;
+  return (
+    <div className="hq-room hq-room-founder" data-state={pending > 0 ? "needs_you" : "sleeping"} id="desk">
+      <div className="hq-stage hq-stage-wide">
+        <div className="hq-founder-art">
+          <FounderRoomArt files={n} />
+          <Desk files={desk.files} roles={desk.roles} />
+        </div>
+      </div>
+      <div className="hq-plate">
+        <div className="min-w-0">
+          <p className="hq-plate-title">Founder Office</p>
+          <p className="hq-plate-tag">CEO · {n === 0 ? "Nothing on your desk" : `${n} ${n === 1 ? "file" : "files"} on your desk`}</p>
+        </div>
+        <BusinessCard />
+      </div>
+      <div className="hq-founder-actions">
+        <OpenDeskButton count={n} className="hq-fbtn hq-fbtn-desk" />
+        <Link href="/admin/work#approvals" className={pending > 0 ? "hq-fbtn hq-fbtn-gold" : "hq-fbtn"}>
+          {pending > 0 ? `${pending} ${pending === 1 ? "needs" : "need"} your yes` : "Nothing needs your yes"}
+        </Link>
+        {desk.night.on ? (
+          <form action={lightsOnAction}>
+            <button className="hq-fbtn">
+              <Sun className="h-4 w-4" aria-hidden /> Lights on
+            </button>
+          </form>
+        ) : (
+          <form action={goodnightAction}>
+            <button className="hq-fbtn">
+              <Moon className="h-4 w-4" aria-hidden /> Goodnight
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -86,28 +148,17 @@ function EmployeeRoom({ e }: { e: EmployeeCard }) {
  * DOM order; the grid groups them two to a floor on a phone and three to a floor on a wide screen (floor labels switch with it).
  * Server-rendered, no client JS.
  */
-export function OfficeScene({ snapshot }: { snapshot: OfficeSnapshot }) {
+export function OfficeScene({ snapshot, desk }: { snapshot: OfficeSnapshot; desk: OfficeDesk }) {
   const n = snapshot.founder.pendingApprovals;
   const e = Object.fromEntries(snapshot.employees.map((x) => [x.role, x])) as Record<string, EmployeeCard | undefined>;
   const room = (role: string) => (e[role] ? <EmployeeRoom e={e[role]!} /> : null);
   return (
-    <div className="hq-tower">
+    <div className="hq-tower" data-night={desk.night.on ? "on" : undefined}>
       <SceneDefs />
       <Crest />
       <div className="hq-floors">
         <Slab>Penthouse</Slab>
-        <Link href="/admin/work" className="hq-room hq-room-founder" data-state={n > 0 ? "needs_you" : "sleeping"}>
-          <div className="hq-stage hq-stage-wide">
-            <FounderRoomArt pending={n} />
-          </div>
-          <div className="hq-plate">
-            <div className="min-w-0">
-              <p className="hq-plate-title">Founder Office</p>
-              <p className="hq-plate-tag">{n > 0 ? `${n} ${n === 1 ? "thing needs" : "things need"} your yes` : "Nothing waiting for you"}</p>
-            </div>
-          </div>
-          <BusinessCard />
-        </Link>
+        <Penthouse pending={n} desk={desk} />
         <Slab only="p">Floor 4</Slab>
         {room("assistant")}
         <Slab only="d">Floor 2</Slab>
