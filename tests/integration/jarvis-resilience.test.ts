@@ -1,14 +1,14 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { desc, eq } from "drizzle-orm";
 import { closeDb } from "@/server/db/client";
-import { jarvisRuns, messages } from "@/server/db/schema";
+import { jarvisRuns, messages, tasks as tasksTable } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { runJarvisTurn, TOOK_TOO_LONG, type JarvisEvent } from "@/server/jarvis/agent";
 import { snapshotForSend } from "@/server/jarvis/conversation-ui";
 import { listMessages } from "@/server/jarvis/conversations";
 import { ScriptedProvider, type Responder } from "@/server/jarvis/providers/scripted";
 import { requestStop, stopRequested } from "@/server/jarvis/stop";
-import { turnStateOf } from "@/server/jarvis/turn-state";
+import { claimContinuation, turnStateOf } from "@/server/jarvis/turn-state";
 import { listTasks } from "@/server/services/tasks";
 import type { SessionUser } from "@/server/auth/sessions";
 import { makeUser, TZ } from "../helpers";
@@ -96,6 +96,41 @@ describe("the same send never runs twice", () => {
     expect((await withUser(me.id, (s) => turnStateOf(s, id))).state).toBe("finished");
   });
 
+  async function deadSend(me: SessionUser) {
+    const id = crypto.randomUUID();
+    const first = await send(me, "add a task", id, addTask);
+    await withUser(me.id, async (s) => {
+      await s.tx.delete(jarvisRuns).where(eq(jarvisRuns.conversationId, first.conversationId));
+      await s.tx.delete(tasksTable).where(eq(tasksTable.userId, me.id));
+      await s.tx
+        .update(messages)
+        .set({ createdAt: new Date(Date.now() - 20 * 60_000) })
+        .where(eq(messages.conversationId, first.conversationId));
+    });
+    return { id, conversationId: first.conversationId };
+  }
+
+  it("two requests continuing the same dead send start exactly one continuation", async () => {
+    const me = await person("Double Cont");
+    const { id, conversationId } = await deadSend(me);
+    const [a, b] = await Promise.all([send(me, "add a task", id, addTask), send(me, "add a task", id, addTask)]);
+    expect([a, b].filter((r) => r.events.some((e) => e.type === "already"))).toHaveLength(1);
+    expect(await withUser(me.id, (s) => listTasks(s))).toHaveLength(1);
+    expect(await runsOf(me.id, conversationId)).toHaveLength(1);
+  });
+
+  it("while a continuation runs the send reads as running, so Try again does not start another", async () => {
+    const me = await person("Cont Running");
+    const { id } = await deadSend(me);
+    expect((await withUser(me.id, (s) => turnStateOf(s, id))).state).toBe("stalled");
+    expect(await claimContinuation(me.id, id)).toBe(true);
+    expect(await claimContinuation(me.id, id)).toBe(false);
+    expect((await withUser(me.id, (s) => turnStateOf(s, id))).state).toBe("running");
+    const again = await send(me, "add a task", id, addTask);
+    expect(again.events.at(-1)).toMatchObject({ type: "already", state: "running" });
+    expect(await withUser(me.id, (s) => listTasks(s))).toHaveLength(0);
+  });
+
   it("someone else's send id is unknown to you", async () => {
     const owner = await person("Own Er");
     const other = await person("Not Owner");
@@ -155,5 +190,37 @@ describe("a turn that runs out of time", () => {
     } finally {
       spy.mockRestore();
     }
+  });
+});
+
+describe("housekeeping", () => {
+  it("old Stop and continuation marks are purged, fresh ones stay", async () => {
+    const { getDb } = await import("@/server/db/client");
+    const { purgeOldRateLimits } = await import("@/server/rate-limit");
+    const { rateLimitBuckets } = await import("@/server/db/schema");
+    const { like } = await import("drizzle-orm");
+    const db = getDb();
+    const tag = crypto.randomUUID();
+    const old = new Date(Date.now() - 30 * 60_000);
+    await db.insert(rateLimitBuckets).values([
+      { key: `jarvis:stop:${tag}:old`, windowStart: old, count: 1 },
+      { key: `jarvis:stop:${tag}:new`, windowStart: new Date(), count: 1 },
+      { key: `jarvis:cont:${tag}:old:1`, windowStart: new Date(0), count: Math.floor(old.getTime() / 1000) },
+      { key: `jarvis:cont:${tag}:new:1`, windowStart: new Date(0), count: Math.floor(Date.now() / 1000) },
+    ]);
+    await purgeOldRateLimits(db);
+    const left = (
+      await db
+        .select()
+        .from(rateLimitBuckets)
+        .where(like(rateLimitBuckets.key, `%:${tag}:%`))
+    ).map((r) =>
+      r.key
+        .split(":")
+        .slice(1, 5)
+        .join(":")
+        .replace(tag + ":", ""),
+    );
+    expect(left.sort()).toEqual(["cont:new:1", "stop:new"]);
   });
 });

@@ -101,3 +101,19 @@ test("a reply that points to a place shows a link that opens it", async ({ page 
   await link.click();
   await expect(page).toHaveURL(/\/tasks$/);
 });
+
+test("Stop really stops the work: the held-back answer never changes anything", async ({ page }) => {
+  const email = await signUp(page, "Stop Real");
+  await page.goto("/jarvis");
+  const box = page.getByLabel(COMPOSER);
+  await box.fill(`/slow 4000\n/tool create_tasks {"tasks":[{"title":"Must not exist"}]}`);
+  await box.press("Enter");
+  await page.getByRole("button", { name: "Stop" }).click();
+  await expect(page.getByText("Stopped.")).toBeVisible();
+  // The server was still waiting on the model; once it answers it sees the Stop and does nothing.
+  await expect
+    .poll(async () => (await queryAsUser<{ outcome: string }>(email, "select outcome from jarvis_runs"))[0]?.outcome, { timeout: 30_000 })
+    .toBe("cancelled");
+  const tasks = await queryAsUser<{ n: number }>(email, "select count(*)::int as n from tasks");
+  expect(tasks[0].n).toBe(0);
+});

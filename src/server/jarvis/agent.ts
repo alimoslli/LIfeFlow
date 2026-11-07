@@ -9,7 +9,7 @@ import type { SessionUser } from "../auth/sessions";
 import { listActiveMemories, touchMemories } from "../services/memory";
 import { createConversation, getConversation, loadHistory } from "./conversations";
 import { stopRequested } from "./stop";
-import { turnStateOf, TURN_DEADLINE_MS } from "./turn-state";
+import { claimContinuation, turnStateOf, TURN_DEADLINE_MS } from "./turn-state";
 import { executeToolCall, serializeResult } from "./executor";
 import { selectMemories } from "./memory-retrieval";
 import { addUsage, errorKindOf, estimateCostMicros, recordRun, type ModelPrices } from "./metrics";
@@ -68,6 +68,8 @@ export type TurnInput = {
    * is not saved twice). Stop is keyed by it too. Without one (older callers) the server makes its own.
    */
   clientMessageId?: string | null;
+  /** How long this turn may run before it is closed with a calm line (default: a little under the platform's own limit). Tests shorten it. */
+  deadlineMs?: number;
   /** Model prices for cost estimates; omitted ⇒ cost recorded as unknown. */
   prices?: ModelPrices;
   /** Money is behind the Face ID lock right now (see auth/money-lock). */
@@ -97,7 +99,8 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   const { user, provider } = input;
   const now = input.now ?? new Date();
   const started = performance.now();
-  const deadline = Date.now() + TURN_DEADLINE_MS;
+  const deadlineMs = input.deadlineMs ?? TURN_DEADLINE_MS;
+  const deadline = Date.now() + deadlineMs;
   let firstTokenMs: number | null = null;
   const emit = (e: JarvisEvent) => {
     if (e.type === "text" && firstTokenMs == null) firstTokenMs = performance.now() - started;
@@ -120,6 +123,8 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   };
   if (prior && prior.conversationId && (prior.state === "running" || prior.state === "finished")) return alreadyHandled(prior.state, prior.conversationId);
   const continuing = prior && prior.state === "stalled" ? prior.conversationId : null;
+  // Only one request may continue a dead send; the others are told it is already running.
+  if (continuing && !(await claimContinuation(user.id, clientMessageId))) return alreadyHandled("running", continuing);
 
   // 1–2. Conversation, user message and context in one transaction (fewer round trips before the first word).
   let opened;
@@ -213,7 +218,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
     tools: toolSpecsFor(groups),
     cacheKey: promptCacheKey(user.id),
     effort,
-    signal: AbortSignal.timeout(TURN_DEADLINE_MS),
+    signal: AbortSignal.timeout(deadlineMs),
   });
   let nextTools: ToolSpec[] | undefined;
   let toolResults: { callId: string; output: string }[] | undefined;
@@ -223,6 +228,15 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
   let errorKind: string | null = null;
   // Only the Stop button ends a turn early. A dropped connection (a phone locking, a network blip) never does:
   // the turn runs to the end and is saved whether or not anyone is still listening.
+  // A tool that hangs cannot hold the turn past its deadline (the tool itself can't be cancelled, but the turn is closed and recorded).
+  const beforeDeadline = <T>(work: Promise<T>): Promise<T> => {
+    const left = deadline - Date.now();
+    if (left <= 0) return Promise.reject(new TimedOutError());
+    let timer: ReturnType<typeof setTimeout>;
+    const late = new Promise<never>((_, reject) => (timer = setTimeout(() => reject(new TimedOutError()), left)));
+    work.catch(() => undefined);
+    return Promise.race([work, late]).finally(() => clearTimeout(timer));
+  };
   const stopIfAsked = async () => {
     if (Date.now() >= deadline) throw new TimedOutError();
     if (await stopRequested(user.id, clientMessageId)) throw new StoppedError();
@@ -254,7 +268,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       for (const call of calls) {
         await stopIfAsked();
         emit({ type: "tool_start", callId: call.callId, name: call.name, label: describeToolCall(call.name) });
-        const outcome = await executeToolCall(call.name, call.arguments, ctx, call.callId);
+        const outcome = await beforeDeadline(executeToolCall(call.name, call.arguments, ctx, call.callId));
         tally.toolCalls++;
         tally.toolNames.push(call.name);
         if (outcome.kind === "confirmation") tally.confirmations++;

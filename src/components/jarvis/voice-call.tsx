@@ -1,5 +1,5 @@
 "use client";
-import { plainMessage } from "@/lib/plain-error";
+import { jsonOf, PlainError, serverWords } from "@/lib/plain-error";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AudioLines, Check, Mic, MicOff } from "lucide-react";
@@ -223,16 +223,17 @@ export function LiveVoice({
 
     (async () => {
       try {
-        if (!navigator.mediaDevices?.getUserMedia) throw new Error("This browser can't use the microphone.");
+        if (!navigator.mediaDevices?.getUserMedia) throw new PlainError("This browser can't use the microphone.");
         const mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).catch(() => {
-          throw new Error("Microphone access was blocked. Allow it in your browser settings to talk.");
+          throw new PlainError("Microphone access was blocked. Allow it in your browser settings to talk.");
         });
         if (cancelled) return mic.getTracks().forEach((t) => t.stop());
         l.mic = mic;
 
         const res = await post("/api/jarvis/voice/session", { module, conversationId: startConversation });
-        const s = await res.json();
-        if (!res.ok) throw new Error(s.error ?? "Couldn't start the call.");
+        if (!res.ok) throw new PlainError(await serverWords(res, "Couldn't start the call. Try again in a moment."));
+        const s = await jsonOf<{ conversationId: string; clientSecret: string; maxSeconds: number } & Record<string, never>>(res);
+        if (!s) throw new Error("bad reply");
         if (cancelled) return;
         l.conversationId = s.conversationId;
         cb.current.onConversation(s.conversationId);
@@ -274,11 +275,11 @@ export function LiveVoice({
           body: offer.sdp,
           headers: { Authorization: `Bearer ${s.clientSecret}`, "Content-Type": "application/sdp" },
         });
-        if (!answer.ok) throw new Error("The voice service didn't accept the call. Try again in a moment.");
+        if (!answer.ok) throw new PlainError("The voice service didn't accept the call. Try again in a moment.");
         await pc.setRemoteDescription({ type: "answer", sdp: await answer.text() });
       } catch (e) {
         if (cancelled) return;
-        hangUp(plainMessage((e as Error).message, "Couldn't start the call. Try again in a moment."));
+        hangUp(e instanceof PlainError ? e.message : "Couldn't start the call. Try again in a moment.");
       }
     })();
 

@@ -25,7 +25,7 @@ import {
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
 import { isAppPath, viewAtName } from "@/lib/app-routes";
-import { plainMessage } from "@/lib/plain-error";
+import { jsonOf, PlainError, serverWords } from "@/lib/plain-error";
 import { knowsLine, nameAtStart } from "@/lib/assistant";
 import { greetingIn } from "@/lib/dates";
 import { BrandMark } from "@/components/brand/brand-mark";
@@ -56,9 +56,6 @@ const POLL_MS = 2000;
 const RECOVER_MS = 330_000;
 /** If the message never reached the server, there is no point waiting the full time. */
 const UNSAVED_MS = 20_000;
-
-/** A message the server told people in plain words (sign-in, limits, not available); shown as is. */
-class PlainError extends Error {}
 
 type Attempt = { id: string; text: string; attachments: (UiAttachment & { uploading?: boolean; error?: string })[] };
 
@@ -182,7 +179,7 @@ export function JarvisChat({
   async function snapshotOf(id: string) {
     const res = await fetch(`/api/jarvis/chat/messages?clientMessageId=${id}`, { cache: "no-store" });
     if (!res.ok) return null;
-    return (await res.json()) as { state: "unknown" | "running" | "finished" | "stalled"; conversationId: string | null; title: string; messages: UiMessage[] };
+    return jsonOf<{ state: "unknown" | "running" | "finished" | "stalled"; conversationId: string | null; title: string; messages: UiMessage[] }>(res);
   }
 
   /** Shows the saved conversation (the truth on the server) and refreshes the page's data if the turn changed anything. */
@@ -302,9 +299,11 @@ export function JarvisChat({
       });
       if (!res.ok || !res.body) {
         // Only messages the server wrote for people are shown; anything else is treated as a dropped connection.
-        const err = (await res.json().catch(() => null)) as { error?: string } | null;
         if (res.status === 401) plain = "Please sign in again to keep going.";
-        else if ([402, 403, 429, 503].includes(res.status) && typeof err?.error === "string") plain = err.error;
+        else if ([402, 403, 429, 503].includes(res.status)) {
+          const words = await serverWords(res, "");
+          if (words) plain = words;
+        }
         if (plain) throw new PlainError(plain);
         throw new Error("dropped");
       }
@@ -323,7 +322,6 @@ export function JarvisChat({
           const ev = JSON.parse(line) as ServerEvent;
           switch (ev.type) {
             case "conversation":
-              turnConvRef.current = ev.id;
               if (!conversationId) {
                 setConversationId(ev.id);
                 onConversation?.(ev.id, ev.title);
@@ -399,13 +397,14 @@ export function JarvisChat({
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ decision }),
     }).catch(() => null);
-    let data: Outcome = post ? ((await post.json().catch(() => ({}))) as Outcome) : {};
+    let data: Outcome = (await jsonOf<Outcome>(post)) ?? {};
+    const refusal = post && !post.ok ? await serverWords(post, "") : "";
     if (!post) {
       // The answer was lost on the way back, but the action may well have run: look at where it stands.
       for (let i = 0; i < 5 && !data.status; i++) {
         await new Promise((r) => setTimeout(r, 1500));
         const now = await fetch(`/api/jarvis/actions/${actionId}`, { cache: "no-store" }).catch(() => null);
-        const seen = now?.ok ? ((await now.json().catch(() => null)) as Outcome | null) : null;
+        const seen = now?.ok ? await jsonOf<Outcome>(now) : null;
         if (seen?.status && seen.status !== "pending" && seen.status !== "running") data = seen;
         else if (seen?.status === "pending") {
           // It did not run: the buttons come back.
@@ -431,7 +430,7 @@ export function JarvisChat({
                   ? {
                       ...c,
                       status: data.status === "pending" || data.status === "running" || !data.status ? "failed" : data.status,
-                      resultText: plainMessage(data.message ?? data.error, fallback ?? "That didn't go through. Try again."),
+                      resultText: refusal || (post?.ok ? data.message : undefined) || fallback || "That didn't go through. Try again.",
                     }
                   : c,
               ),
@@ -458,8 +457,8 @@ export function JarvisChat({
       body: JSON.stringify({ decision }),
     }).catch(() => null);
     if (!res?.ok) {
-      const data = (await res?.json().catch(() => ({}))) as { error?: string } | undefined;
-      patch((x) => ({ ...x, status: "proposed", error: plainMessage(data?.error, "Couldn't save your choice. Try again.") }));
+      const words = await serverWords(res, "Couldn't save your choice. Try again.");
+      patch((x) => ({ ...x, status: "proposed", error: words }));
     }
   }
 
@@ -472,8 +471,9 @@ export function JarvisChat({
       fd.append("file", file);
       try {
         const res = await fetch("/api/attachments", { method: "POST", body: fd });
-        const data = await res.json();
-        if (!res.ok) throw Object.assign(new Error(plainMessage(data.error, "Couldn't upload that file. Try again.")), { name: "UploadError" });
+        if (!res.ok) throw new PlainError(await serverWords(res, "Couldn't upload that file. Try again."));
+        const data = await jsonOf<{ id: string; filename: string; mimeType: string }>(res);
+        if (!data) throw new Error("bad reply");
         setPending((p) => p.map((x) => (x.id === tempId ? { id: data.id, filename: data.filename, mimeType: data.mimeType } : x)));
       } catch (e) {
         setPending((p) =>
@@ -482,10 +482,7 @@ export function JarvisChat({
               ? {
                   ...x,
                   uploading: false,
-                  error:
-                    e instanceof PlainError || (e instanceof Error && e.name === "UploadError")
-                      ? e.message
-                      : "Couldn't upload. Check your connection and try again.",
+                  error: e instanceof PlainError ? e.message : "Couldn't upload. Check your connection and try again.",
                 }
               : x,
           ),
