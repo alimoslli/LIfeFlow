@@ -18,5 +18,9 @@
   {
     "prompt": "Move my Saturday shift to Sunday",
     "expect": "routes to shift-manager"
+  },
+  {
+    "prompt": "Lunch is unpaid on my 9 hour shifts, so I get paid 8 hours",
+    "expect": "routes to shift-manager"
   }
 ]

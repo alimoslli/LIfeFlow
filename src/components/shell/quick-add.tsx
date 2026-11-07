@@ -47,11 +47,12 @@ const offlineTodo = async (fd: FormData) => {
 const offlineShift = async (fd: FormData) => {
   const [employerId, date, startTime, endTime] = ["employerId", "date", "startTime", "endTime"].map((k) => str(fd, k));
   if (!employerId || !date || !startTime || !endTime) throw new Error("Pick the job, date, start and end time.");
-  const breakMinutes = Number(str(fd, "breakMinutes") ?? 0);
+  const rawBreak = str(fd, "breakMinutes");
+  const breakMinutes = rawBreak ? Number(rawBreak) : undefined;
   await enqueue({
     kind: "shift.create",
     id: crypto.randomUUID(),
-    data: { employerId, date, startTime, endTime, breakMinutes: Number.isFinite(breakMinutes) ? breakMinutes : 0 },
+    data: { employerId, date, startTime, endTime, breakMinutes: breakMinutes !== undefined && Number.isFinite(breakMinutes) ? breakMinutes : undefined },
   });
   return SAVED;
 };

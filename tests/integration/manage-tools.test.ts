@@ -28,7 +28,9 @@ describe("Jarvis edit and delete tools", () => {
     expect(await call("update_project", { id: project.id, status: "completed" })).toMatchObject({ updated: { status: "completed" } });
 
     const job = await run((s) => createEmployer(s, { name: "Campus Library", hourlyRateCents: 1500 }));
-    expect(await call("update_job", { id: job.id, hourlyRate: 16.25 })).toMatchObject({ updated: { hourlyRate: 16.25 } });
+    expect(await call("update_job", { id: job.id, hourlyRate: 16.25 })).toMatchObject({ updated: { id: job.id, name: "Campus Library" } });
+    // The rate is saved (the tool just doesn't hand it back next to hours).
+    expect((await run((s) => listEmployers(s)))[0].hourlyRateCents).toBe(1625);
     await call("remove_job", { id: job.id });
     expect(await run((s) => listEmployers(s))).toHaveLength(0);
 

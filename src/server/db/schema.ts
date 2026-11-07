@@ -578,7 +578,13 @@ export const syncJobs = pgTable(
 export type DataSource = "manual" | "jarvis" | "import" | "demo" | "plaid" | "canvas" | "ukg" | "google" | "outlook" | "apple_health" | "schedule";
 
 /** Regular hours for a job (e.g. full-time Mon–Fri 08:00–17:00). Days are 0 = Sunday … 6 = Saturday. */
-export type WorkSchedule = { days: number[]; start: string; end: string; breakMinutes?: number };
+export type WorkSchedule = { days: number[]; start: string; end: string; breakMinutes?: number; breakRules?: BreakRule[] };
+
+/**
+ * Unpaid lunch by shift length: a shift of at least `minShiftMinutes` gets `unpaidMinutes` unpaid (the largest matching rule wins).
+ * Lives in the job's `schedule` jsonb. A job with a break rule but no regular hours stores `days: []`.
+ */
+export type BreakRule = { minShiftMinutes: number; unpaidMinutes: number };
 
 export type AccountType = "depository" | "credit" | "loan" | "investment" | "cash" | "other";
 
