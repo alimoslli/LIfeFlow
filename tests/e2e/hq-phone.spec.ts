@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { pool } from "./helpers";
+import { insertCard } from "./hq-cards-helpers";
 
 test.use({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true });
 
@@ -37,23 +38,12 @@ test("HQ on a phone: no sideways scroll, big room targets, no serious accessibil
     [long],
   );
   await pool.query("update hq_missions set blocked_reason = 'Out of Higgsfield credits (0.37 left on 2026-11-06). Needs 3 or more.' where status = 'blocked'");
-  await pool.query(`insert into hq_approvals (role, kind, title, summary, source) values ('designer', 'design', $1, $1, 'owner')`, [long]);
+  await insertCard({ title: long });
   await pool.query(
     `insert into hq_chats (id, role, title, is_primary, status, needs_action, last_checkin_at) values
        ('session_01Mhcz6Ao4XdmNh3eAPYd3QN', 'designer', 'LF V3', true, 'blocked', 'Reply yes to commit the unfinished work and push fix-gmail-items and fix-search', now())`,
   );
-  const paths = [
-    "/admin/hq",
-    "/admin/hq?view=workspace",
-    "/admin/hq/missions",
-    "/admin/hq/approvals",
-    "/admin/hq/reports",
-    "/admin/hq/settings",
-    "/admin/hq/developer",
-    "/admin/hq/assistant",
-    "/admin/hq/qa",
-    "/admin/hq/founder",
-  ];
+  const paths = ["/admin", "/admin?view=workspace", "/admin/work", "/admin/hq/settings", "/admin/hq/developer", "/admin/hq/assistant", "/admin/hq/qa"];
   const problems: string[] = [];
   for (const path of paths) {
     await page.goto(path);
@@ -65,21 +55,27 @@ test("HQ on a phone: no sideways scroll, big room targets, no serious accessibil
   }
   expect(problems, problems.join("\n")).toEqual([]);
 
-  await page.goto("/admin/hq");
+  await page.goto("/admin");
   const rooms = page.locator("a.hq-room");
   await expect(rooms).toHaveCount(8);
   for (let i = 0; i < 8; i++) {
     const box = await rooms.nth(i).boundingBox();
     expect(box?.height ?? 0, `room ${i}`).toBeGreaterThanOrEqual(44);
   }
-  // The founder and the Chief of Staff take the full width, then two columns.
+  // The penthouse takes the full width, then two rooms to a floor.
   const founder = await rooms.first().boundingBox();
   const chief = await rooms.nth(1).boundingBox();
   const third = await rooms.nth(2).boundingBox();
-  const fourth = await rooms.nth(3).boundingBox();
-  expect(chief!.width).toBeGreaterThan(third!.width * 1.8);
-  expect(Math.abs(founder!.width - chief!.width)).toBeLessThan(2);
-  expect(Math.abs(third!.y - fourth!.y)).toBeLessThan(2);
+  const fifth = await rooms.nth(4).boundingBox();
+  expect(founder!.width).toBeGreaterThan(chief!.width * 1.8);
+  expect(Math.abs(chief!.y - third!.y)).toBeLessThan(2);
+  expect(Math.abs(chief!.width - third!.width)).toBeLessThan(2);
+  expect(fifth!.y).toBeGreaterThan(third!.y);
+  for (const label of ["Penthouse", "Floor 4", "Floor 3", "Floor 2", "Ground"])
+    await expect(page.locator(".hq-slab:visible", { hasText: label })).toHaveCount(1);
+  // The business card stays inside the penthouse on a phone.
+  const card = await page.getByRole("img", { name: /^Business card/ }).boundingBox();
+  expect(card!.x + card!.width).toBeLessThanOrEqual(founder!.x + founder!.width + 4);
 
   // Bigger text still fits.
   await page.evaluate(() => (document.documentElement.style.fontSize = "125%"));

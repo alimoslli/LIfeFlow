@@ -4,6 +4,7 @@ import { getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
+import { purgeUnusedPreviews } from "@/server/services/hq-files";
 import { pushImportant, runDueSlot } from "@/server/services/proactive/engine";
 import { runNotifications, sendOnce, webPushSender } from "@/server/services/push";
 
@@ -39,6 +40,10 @@ export async function GET(req: Request) {
         sent += await withUser(u.id, (s) => pushImportant(s, u.tz, u.prefs, (key, msg) => sendOnce(s, key, msg, send)));
       } catch {}
     }
+    // HQ housekeeping: pictures no decision card uses any more. Never blocks the run.
+    try {
+      await purgeUnusedPreviews(getDb());
+    } catch {}
     return NextResponse.json({ ok: true, users: all.length, messages, sent, push: send ? "on" : "VAPID keys not configured" });
   } catch (e) {
     return errorResponse(e);

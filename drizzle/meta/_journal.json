@@ -330,6 +330,13 @@
       "when": 1794800000000,
       "tag": "0046_inbox_dedupe",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1795000000000,
+      "tag": "0048_decision_cards",
+      "breakpoints": true
     }
   ]
 }

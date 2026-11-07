@@ -1,5 +1,6 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import { pool } from "./helpers";
+import { PNG_BYTES } from "./hq-cards-helpers";
 
 const ADMIN_EMAIL = "admin-owner@example.com"; // matches ADMIN_EMAILS in playwright.config.ts
 
@@ -56,6 +57,9 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   expect(token).toMatch(/^lfq_/);
   const headers = { Authorization: `Bearer ${token}` };
   const when = new Date(Date.now() + 2 * 86_400_000).toISOString();
+  const up = await request.post("/api/hq/files", { headers: { ...headers, "content-type": "image/png" }, data: PNG_BYTES });
+  expect(up.status()).toBe(200);
+  const picture = (await up.json()) as { id: string };
   const posted = await request.post("/api/hq/report", {
     headers,
     data: {
@@ -68,6 +72,16 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
       scheduledFor: when,
       status: "draft",
       ask: true,
+      request: {
+        why: "Students who plan on Sunday are our best first week.",
+        changes: ["Posts a 20-second reel to Instagram and TikTok"],
+        onYes: "The next marketing round puts it into Metricool; you tap the final button there.",
+        onNo: "Nothing is posted.",
+        effort: "small",
+        risk: "Low: nothing posts without your final tap.",
+        recommendation: "Yes.",
+        previews: [{ fileId: picture.id, label: "The reel" }],
+      },
     },
   });
   expect(posted.status(), await posted.text()).toBe(200);
@@ -85,7 +99,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await expect(card.getByText("Instagram, TikTok")).toBeVisible();
   await card.getByText("Read the script").click();
   await expect(card.getByText("Scene 2: the assistant sorts the week.")).toBeVisible();
-  await expect(card.getByText(/acts on it at their next round/)).toBeVisible();
+  await expect(card.getByRole("link", { name: "Review and answer" })).toHaveAttribute("href", /\/admin\/work#/);
   await expect(op.getByText("1 draft waiting for you")).toBeVisible();
   const perf = op.locator("section", { has: op.getByRole("heading", { name: "Performance", level: 2 }) });
   await expect(perf.getByText("1,234")).toBeVisible();
@@ -93,17 +107,17 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await expect(op.getByText("No numbers yet", { exact: true })).toHaveCount(4);
 
   // The Office counts it, then the owner says yes.
-  await op.goto("/admin/hq");
-  const tile = op.getByRole("link", { name: /Needs your yes/ }).first();
+  await op.goto("/admin");
+  const tile = op.getByRole("link", { name: /Waiting for you/ }).first();
   await expect(tile).toContainText("1");
-  await op.goto("/admin/hq/marketing");
-  await op.locator("article", { hasText: "The Sunday reset reel" }).getByRole("button", { name: "Yes" }).click();
+  await op.goto("/admin/work");
+  await op.locator("article", { hasText: "The Sunday reset reel" }).getByRole("button", { name: "Yes, go" }).click();
   await expect(op.getByText("You said yes.")).toBeVisible();
   await expect(op.getByText("No drafts yet. The marketing round adds them on Wednesdays.")).toBeVisible();
   const week = op.locator("section", { has: op.getByRole("heading", { name: "This week", level: 2 }) });
   await expect(week.getByText("Approved", { exact: true })).toBeVisible();
-  await op.goto("/admin/hq");
-  await expect(op.getByRole("link", { name: /Needs your yes/ }).first()).toContainText("0");
+  await op.goto("/admin");
+  await expect(op.getByRole("link", { name: /Waiting for you/ }).first()).toContainText("0");
 
   // The detail page: change the title, then drop it.
   await op.goto("/admin/hq/marketing");
@@ -118,7 +132,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await expect(op.getByText("Dropped", { exact: true }).first()).toBeVisible();
 
   // Reports carry a marketing section.
-  await op.goto("/admin/hq/reports");
+  await op.goto("/admin/work");
   await expect(op.getByRole("heading", { name: "Marketing this week", level: 2 })).toBeVisible();
 
   // The controls: Autonomous mode off shows on the Office and in the inbox the rounds read.
@@ -130,7 +144,7 @@ test("Marketing: empty states, an agent's concept, the owner's yes, and the cont
   await expect(op.getByText("Saved", { exact: true })).toBeVisible();
   await expect(op.getByText(/Last changed .* by admin-owner@example.com/)).toBeVisible();
   await expect(op.getByRole("switch", { name: "Autonomous mode" })).not.toBeChecked();
-  await op.goto("/admin/hq");
+  await op.goto("/admin");
   await expect(op.locator("header p", { hasText: "Autonomous mode off" })).toBeVisible();
   const inbox = await request.get("/api/hq/inbox", { headers });
   expect(inbox.status()).toBe(200);

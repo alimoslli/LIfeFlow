@@ -17,6 +17,7 @@ import {
   updateContent,
 } from "@/server/services/hq-marketing";
 import { makeUser } from "../helpers";
+import { reqCard } from "../hq-fixtures";
 
 afterAll(async () => {
   setHqPushSender(null);
@@ -67,7 +68,15 @@ describe("content lifecycle", () => {
     const c = await createContent(
       db(),
       { ...agent, sessionId: SID },
-      { kind: "post", title: "  Two   subscriptions ", hook: "You paid twice", platforms: ["instagram"], scheduledFor: when, ask: true },
+      {
+        kind: "post",
+        title: "  Two   subscriptions ",
+        hook: "You paid twice",
+        platforms: ["instagram"],
+        scheduledFor: when,
+        ask: true,
+        request: await reqCard(),
+      },
     );
     expect(c).toMatchObject({ title: "Two subscriptions", status: "waiting", source: "agent", sessionId: SID, platforms: ["instagram"] });
     expect(c.approvalId).toBeTruthy();
@@ -102,7 +111,7 @@ describe("content lifecycle", () => {
   });
 
   it("an agent schedules an approved post and sets its time in the same update", async () => {
-    const c = await createContent(db(), agent, { kind: "post", title: "Time me", ask: true });
+    const c = await createContent(db(), agent, { kind: "post", title: "Time me", ask: true, request: await reqCard() });
     await decideApproval(db(), admin, c.approvalId!, "approved");
     expect((await agentInbox(db(), {})).approvedContent.map((x) => x.id)).toEqual([c.id]);
     const when = day(2).toISOString();
@@ -119,7 +128,7 @@ describe("content lifecycle", () => {
   it("with posting times switched off, an agent schedules only at the time on the post", async () => {
     await saveControls(db(), admin, { delegations: { postingTimes: false } });
     const planned = day(2).toISOString();
-    const c = await createContent(db(), agent, { kind: "post", title: "Owner's time", ask: true, scheduledFor: planned });
+    const c = await createContent(db(), agent, { kind: "post", title: "Owner's time", ask: true, request: await reqCard(), scheduledFor: planned });
     await decideApproval(db(), admin, c.approvalId!, "approved");
     // A time of its own choosing is refused, and nothing changes.
     await expect(updateContent(db(), agent, c.id, { status: "scheduled", externalId: "mc_1", scheduledFor: day(3).toISOString() })).rejects.toThrow(
@@ -130,12 +139,12 @@ describe("content lifecycle", () => {
     // The time the owner saw on the request is fine, sent again or left out.
     const same = await updateContent(db(), agent, c.id, { status: "scheduled", externalId: "mc_1", scheduledFor: planned });
     expect(same.scheduledFor?.toISOString()).toBe(planned);
-    const d = await createContent(db(), agent, { kind: "post", title: "No time given", ask: true, scheduledFor: planned });
+    const d = await createContent(db(), agent, { kind: "post", title: "No time given", ask: true, request: await reqCard(), scheduledFor: planned });
     await decideApproval(db(), admin, d.approvalId!, "approved");
     expect(await updateContent(db(), agent, d.id, { status: "scheduled", externalId: "mc_2" })).toMatchObject({ status: "scheduled" });
     // Switched back on, the Chief of Staff may pick the time.
     await saveControls(db(), admin, { delegations: { postingTimes: true } });
-    const e = await createContent(db(), agent, { kind: "post", title: "Picked time", ask: true, scheduledFor: planned });
+    const e = await createContent(db(), agent, { kind: "post", title: "Picked time", ask: true, request: await reqCard(), scheduledFor: planned });
     await decideApproval(db(), admin, e.approvalId!, "approved");
     const chosen = day(4).toISOString();
     const picked = await updateContent(db(), agent, e.id, { status: "scheduled", externalId: "mc_3", scheduledFor: chosen });
@@ -144,7 +153,7 @@ describe("content lifecycle", () => {
 
   it("queued lists approved or scheduled posts that have no place in the week", async () => {
     const mk = async (title: string, scheduledFor?: string) => {
-      const c = await createContent(db(), agent, { kind: "post", title, ask: true, ...(scheduledFor ? { scheduledFor } : {}) });
+      const c = await createContent(db(), agent, { kind: "post", title, ask: true, request: await reqCard(), ...(scheduledFor ? { scheduledFor } : {}) });
       await decideApproval(db(), admin, c.approvalId!, "approved");
       return c;
     };
@@ -175,7 +184,7 @@ describe("content lifecycle", () => {
         if (fail) throw new Error("push service down");
         return { ok: true, gone: false };
       });
-      const c = await createContent(db(), agent, { kind: "post", title: "Atomic", ask: true });
+      const c = await createContent(db(), agent, { kind: "post", title: "Atomic", ask: true, request: await reqCard() });
       expect(c).toMatchObject({ status: "waiting" });
       expect(c.approvalId).toBeTruthy();
       const [ap] = await db().select().from(hqApprovals).where(eq(hqApprovals.id, c.approvalId!));
@@ -184,7 +193,7 @@ describe("content lifecycle", () => {
 
       fail = true;
       const err = vi.spyOn(console, "error").mockImplementation(() => undefined);
-      const c2 = await createContent(db(), agent, { kind: "post", title: "Atomic two", ask: true });
+      const c2 = await createContent(db(), agent, { kind: "post", title: "Atomic two", ask: true, request: await reqCard() });
       err.mockRestore();
       expect(sent).toBe(2);
       expect(await getContent(db(), c2.id)).toMatchObject({ status: "waiting", approvalId: c2.approvalId });
@@ -198,7 +207,7 @@ describe("content lifecycle", () => {
   it("a failure while asking leaves no half-made post", async () => {
     // A publish request can't be made for research, and nothing is saved when it is refused.
     await expect(
-      createContent(db(), agent, { kind: "research", title: "R", links: [{ label: "s", url: "https://a.example/x" }], ask: true }),
+      createContent(db(), agent, { kind: "research", title: "R", links: [{ label: "s", url: "https://a.example/x" }], ask: true, request: await reqCard() }),
     ).rejects.toThrow();
     expect(await db().select().from(hqContent)).toHaveLength(0);
     expect(await db().select().from(hqApprovals)).toHaveLength(0);
@@ -220,7 +229,7 @@ describe("content lifecycle", () => {
         sent.push(msg);
         return { ok: true, gone: false };
       });
-      await createContent(db(), agent, { kind: "post", title: "Push me", ask: true });
+      await createContent(db(), agent, { kind: "post", title: "Push me", ask: true, request: await reqCard() });
       expect(sent).toEqual([expect.objectContaining({ body: "Publish: Push me" })]);
     } finally {
       if (prev === undefined) delete process.env.ADMIN_EMAILS;
@@ -229,8 +238,8 @@ describe("content lifecycle", () => {
   });
 
   it("no = dropped, changes = draft with the note in the activity", async () => {
-    const a = await createContent(db(), agent, { kind: "script", title: "A", ask: true });
-    const b = await createContent(db(), agent, { kind: "script", title: "B", ask: true });
+    const a = await createContent(db(), agent, { kind: "script", title: "A", ask: true, request: await reqCard() });
+    const b = await createContent(db(), agent, { kind: "script", title: "B", ask: true, request: await reqCard() });
     await decideApproval(db(), admin, a.approvalId!, "declined");
     await decideApproval(db(), admin, b.approvalId!, "changes", "Shorter hook");
     expect((await getContent(db(), a.id))?.status).toBe("dropped");
@@ -242,7 +251,7 @@ describe("content lifecycle", () => {
   });
 
   it("an approval for something else leaves content alone; a decided one can't move content later", async () => {
-    const c = await createContent(db(), agent, { kind: "post", title: "C", ask: true });
+    const c = await createContent(db(), agent, { kind: "post", title: "C", ask: true, request: await reqCard() });
     await updateContent(db(), owner, c.id, { status: "dropped" });
     // Dropping closes the pending request, so it can't be answered later.
     await expect(decideApproval(db(), admin, c.approvalId!, "approved")).rejects.toThrow(/already decided/);
@@ -335,11 +344,11 @@ describe("marketing view", () => {
   });
 
   it("groups items into the lists", async () => {
-    const soon = await createContent(db(), agent, { kind: "post", title: "Soon", scheduledFor: day(2).toISOString(), ask: true });
+    const soon = await createContent(db(), agent, { kind: "post", title: "Soon", scheduledFor: day(2).toISOString(), ask: true, request: await reqCard() });
     await createContent(db(), agent, { kind: "post", title: "Far", scheduledFor: day(30).toISOString() });
     await createContent(db(), agent, { kind: "concept", title: "Loose" });
     await createContent(db(), agent, { kind: "research", title: "Finding", links: [{ label: "s", url: "https://example.com" }] });
-    const done = await createContent(db(), agent, { kind: "post", title: "Done", ask: true });
+    const done = await createContent(db(), agent, { kind: "post", title: "Done", ask: true, request: await reqCard() });
     await decideApproval(db(), admin, done.approvalId!, "approved");
     await updateContent(db(), agent, done.id, { status: "published", publishedUrl: "https://instagram.com/p/z" });
     const v = await marketingView(db());
@@ -397,7 +406,7 @@ describe("weekly numbers", () => {
     const empty = await weeklySummary(db());
     expect(empty.marketing).toEqual({ drafted: 0, approved: 0, scheduled: 0, published: 0 });
     expect(empty.headline.some((h) => h.startsWith("Marketing"))).toBe(false);
-    const a = await createContent(db(), agent, { kind: "post", title: "A", ask: true });
+    const a = await createContent(db(), agent, { kind: "post", title: "A", ask: true, request: await reqCard() });
     await createContent(db(), agent, { kind: "post", title: "B" });
     await createContent(db(), agent, { kind: "post", title: "C" });
     await createContent(db(), agent, { kind: "research", title: "R", links: [{ label: "s", url: "https://example.com" }] });
@@ -427,7 +436,10 @@ describe("HQ API: content and metrics", () => {
     expect((await post({ type: "metrics", rows: [] }, "lfq_wrong")).status).toBe(401);
     const { token } = await createHqKey(db(), admin, "LF Marketing");
 
-    const created = await post({ type: "content", kind: "post", title: "Hello", platforms: ["instagram"], sessionId: SID, ask: true }, token);
+    const created = await post(
+      { type: "content", kind: "post", title: "Hello", platforms: ["instagram"], sessionId: SID, ask: true, request: await reqCard() },
+      token,
+    );
     expect(created.status).toBe(200);
     const { id } = await created.json();
     expect(await getContent(db(), id)).toMatchObject({ status: "waiting", sessionId: SID, source: "agent" });

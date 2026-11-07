@@ -70,7 +70,7 @@ export async function deleteAction(fd: FormData) {
   const id = field(fd, "id");
   const email = field(fd, "confirmEmail");
   await run(
-    (msg, ok) => (ok ? `/admin/users?done=${enc(msg)}` : `/admin/users/${id}?error=${enc(msg)}`),
+    (msg, ok) => (ok ? `/admin/people?done=${enc(msg)}#people` : `/admin/users/${id}?error=${enc(msg)}`),
     async () => {
       await deleteUser(getDb(), admin, id, email);
       return "User deleted.";
@@ -91,7 +91,7 @@ export async function clearErrorAction(fd: FormData) {
   const admin = await requireAdmin();
   const fp = field(fd, "fingerprint");
   await run(
-    (msg, ok) => `/admin/errors?${ok ? "done" : "error"}=${enc(msg)}`,
+    (msg, ok) => `/admin/app?${ok ? "done" : "error"}=${enc(msg)}#errors`,
     async () => {
       await clearError(getDb(), admin, fp);
       return "Cleared.";
@@ -104,9 +104,9 @@ export async function inboxHandledAction(fd: FormData) {
   const id = field(fd, "id");
   const handled = field(fd, "handled") === "1";
   const raw = field(fd, "back");
-  const back = /^\/admin\/feedback(\?[\w=&-]*)?$/.test(raw) ? raw : "/admin/feedback";
+  const back = /^\/admin\/people(\?[\w=&-]*)?$/.test(raw) ? raw : "/admin/people";
   await run(
-    (msg, ok) => `${back}${back.includes("?") ? "&" : "?"}${ok ? "done" : "error"}=${enc(msg)}`,
+    (msg, ok) => `${back}${back.includes("?") ? "&" : "?"}${ok ? "done" : "error"}=${enc(msg)}#feedback`,
     async () => {
       await setInboxHandled(getDb(), admin, id, handled);
       return handled ? "Marked handled." : "Moved back to open.";
@@ -117,7 +117,7 @@ export async function inboxHandledAction(fd: FormData) {
 export async function createAnnouncementAction(fd: FormData) {
   const admin = await requireAdmin();
   await run(
-    (msg, ok) => `/admin/announcements?${ok ? "done" : "error"}=${enc(msg)}`,
+    (msg, ok) => `/admin/people?${ok ? "done" : "error"}=${enc(msg)}#announcements`,
     async () => {
       const days = Number(field(fd, "days")) || undefined;
       await createAnnouncement(getDb(), admin, {
@@ -135,7 +135,7 @@ export async function endAnnouncementAction(fd: FormData) {
   const admin = await requireAdmin();
   const id = field(fd, "id");
   await run(
-    (msg, ok) => `/admin/announcements?${ok ? "done" : "error"}=${enc(msg)}`,
+    (msg, ok) => `/admin/people?${ok ? "done" : "error"}=${enc(msg)}#announcements`,
     async () => {
       await endAnnouncement(getDb(), admin, id);
       return "Ended. The banner is gone.";

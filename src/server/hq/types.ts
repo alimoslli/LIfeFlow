@@ -49,6 +49,56 @@ export type Approval = {
   decidedAt: Date | null;
   source: "owner" | "agent" | "import";
   createdAt: Date;
+  /** The decision card (ADR 0028). `card` is null on an old request, which shows as "being rewritten". */
+  card: DecisionCardFields | null;
+  threadId: string | null;
+  version: number;
+  changedSinceNote: string | null;
+  supersededAt: Date | null;
+  /** The mission that builds an approved ask (set when the Chief of Staff links it). */
+  buildMissionId: string | null;
+};
+
+export type ApprovalEffort = "small" | "medium" | "large";
+export type DecisionCardFields = {
+  why: string;
+  changes: string[];
+  onYes: string;
+  onNo: string;
+  effort: ApprovalEffort;
+  risk: string;
+  recommendation: string;
+  previews: { fileId: string; label: string | null }[];
+};
+
+/** Where an approved card is, taken from its linked mission (never stored twice). */
+export type LifecycleStage = "approved" | "built" | "look" | "live";
+export type Lifecycle = {
+  stage: LifecycleStage;
+  /** The date each step happened; null when HQ has no record of it. */
+  dates: Record<LifecycleStage, Date | null>;
+  /** Why the build mission was dropped, when it was; the card shows "Stopped: ...". */
+  stopped: string | null;
+  mission: { id: string; title: string; status: MissionStatus; blockedReason: string | null; result: string | null; links: HqLink[] } | null;
+};
+
+/** One ask over time: every version, the owner's notes between them, and where it is now. */
+export type DecisionThread = {
+  threadId: string;
+  role: HqRole;
+  versions: Approval[];
+  /** The newest version. */
+  latest: Approval;
+  state: "waiting" | "revising" | "approved" | "declined";
+  lifecycle: Lifecycle | null;
+};
+
+export type SinceLine = { text: string; at: Date; href: string | null; commitUrl: string | null; role: HqRole | null };
+export type SinceLooked = {
+  since: Date;
+  fixed: SinceLine[];
+  found: SinceLine[];
+  changed: SinceLine[];
 };
 
 export type Activity = {

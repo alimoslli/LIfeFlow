@@ -31,7 +31,7 @@ This is how the company runs. It sits on top of `docs/team.md` (cost rules, the 
 ## How the departments work together
 Work moves between departments only as **HQ records**, never as chat. Every handoff can be seen, has an owner, and a later round picks it up.
 - **A finding for another department:** a mission for it, with `mission add --role <department> --title … --detail "<why, the evidence, the link>"`.
-- **A real change:** an approval for the CEO, with the Chief of Staff's recommendation in the summary ("I suggest yes, because …").
+- **A real change:** a decision card for the CEO (below), with the department's recommendation on it.
 - **Research:** a research item in Marketing (`content add --kind research`) or a report in `docs/research/`.
 
 Examples:
@@ -94,9 +94,25 @@ Automated work aims for 35–40% of the weekly Claude allowance and never goes a
 
 The Chief of Staff's own planning and briefs fit inside these shares. Before every new agent, run the usage gate in `docs/hq/workflow.md`. Never turn on extra paid usage.
 
+## Requests to the CEO: the decision card (ADR 0028)
+The owner, 2026-11-07: "it has to be very easy for me to trust it and know exactly what's going to happen… Someone reports to me, I approve, I deny, I do my changes. He comes back a second time, third time, until I say go." So a request is a card the owner can decide from alone. **HQ refuses a request that is missing any of this, for every kind** (small fixes and bugs never need a request):
+- **The ask:** `--title`, one line.
+- **Why:** `--why`, 1 to 2 lines, with a real fact.
+- **Exactly what changes:** `--change`, 1 to 5 short lines (repeat the flag).
+- **If yes / if no:** `--on-yes` (the exact next steps: who and when) and `--on-no`.
+- **Effort and risk:** `--effort small|medium|large` and `--risk`, one plain line.
+- **A recommendation:** `--recommend`.
+- **At least one picture** (up to 4): `--preview shot.png:Label` (png, jpeg or webp, max 2 MB, uploaded to HQ, never a URL). Product & Design makes the pictures (`product-designer`); other departments ask for them with a Product & Design mission first.
+
+**The loop.** The owner answers Yes, go / Send changes (with a note) / No.
+- **Yes:** the Chief of Staff creates or links a mission (`approval --start <approvalId> --mission <missionId>`). The same card keeps reporting from that mission: Approved (the owner's yes), Being built (mission `doing`), Ready for your look (mission `waiting`), Live (mission `done`, with its result and links), each with its date. Nothing goes silent.
+- **Send changes:** the card goes back to its department with the owner's note (`inbox` lists it under `revisions`). The department sends `approval --revise <threadId|approvalId> --changed "what is different since the note"` with every field again. That makes version 2 (then 3, …) on the same thread, marks the old one superseded and pushes the owner.
+- **No:** the thread is closed.
+- **Old requests** (made before cards existed) show as "Being rewritten by your Chief of Staff", have no buttons and don't count as needing a yes. `inbox` lists them under `needsRewrite`; the Chief of Staff sends each again as a card.
+
 ## Where things live
 - This file: the company.
 - `.claude/agents/*.md`: each department's lead agent.
 - `docs/hq/workflow.md`: the steps every round follows.
 - `docs/hq/round-prompts.md`: the scheduled rounds' wording.
-- HQ (`/admin/hq`): missions, approvals, briefs, decisions, controls.
+- HQ (`/admin/hq`): missions, decision cards (Work, "Your desk"), briefs, decisions, controls. The Office shows "Since you last looked": what was fixed and found without needing a yes.

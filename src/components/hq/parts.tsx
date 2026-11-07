@@ -78,7 +78,25 @@ export function Shell({ w = 320, h = 220, floorY = 150, children }: { w?: number
   );
 }
 
-export function Window({ x, y, w, h }: { x: number; y: number; w: number; h: number }) {
+/** A skyline for the penthouse window: a few towers (the mock-up's city) behind the hills. */
+function Skyline({ x, y, w, h }: { x: number; y: number; w: number; h: number }) {
+  const towers: [number, number, number][] = [
+    [0.08, 0.14, 0.42],
+    [0.26, 0.12, 0.3],
+    [0.43, 0.14, 0.55],
+    [0.62, 0.12, 0.38],
+    [0.78, 0.15, 0.48],
+  ];
+  return (
+    <g fill={v("city")} opacity=".85">
+      {towers.map(([tx, tw, th]) => (
+        <rect key={tx} x={x + w * tx} y={y + h - h * th} width={w * tw} height={h * th} />
+      ))}
+    </g>
+  );
+}
+
+export function Window({ x, y, w, h, city = false }: { x: number; y: number; w: number; h: number; city?: boolean }) {
   return (
     <g>
       <rect x={x - 3} y={y - 3} width={w + 6} height={h + 6} rx="4" fill={v("win-frame")} />
@@ -91,6 +109,7 @@ export function Window({ x, y, w, h }: { x: number; y: number; w: number; h: num
         <circle cx={x + w * 0.25} cy={y + h * 0.2} r="1.2" fill="#fff" />
         <circle cx={x + w * 0.45} cy={y + h * 0.1} r="1" fill="#fff" />
       </g>
+      {city && <Skyline x={x} y={y} w={w} h={h} />}
       <path
         d={`M${x} ${y + h}V${y + h * 0.82}l${w * 0.12}-${h * 0.1}l${w * 0.1} ${h * 0.06}l${w * 0.14}-${h * 0.16}l${w * 0.12} ${h * 0.12}l${w * 0.14}-${h * 0.08}l${w * 0.14} ${h * 0.1}l${w * 0.14}-${h * 0.06}V${y + h}Z`}
         fill={v("hill")}

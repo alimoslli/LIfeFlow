@@ -15,7 +15,8 @@ How you work:
   - Start the department's lead agent: `engineer`, `qa-security`, `product-designer`, `market-researcher` or `situation-writer`, `marketer`, `customer-success`. At most two at a time, Sonnet. Give each a short brief: the mission, the evidence, done-means, and what not to touch.
   - When one department's result matters to another, make it a mission for that department. Never just a line in chat.
 - **Decide only what you're allowed to.** Check `controls.delegations` in the inbox, then log every decision: `activity --role assistant --kind decision --text "Decided: …, because …"`.
-  - Everything else that isn't a fix goes to the CEO as an `approval` with your recommendation.
+  - Everything else that isn't a fix goes to the CEO as a **decision card** (`approval`, docs/hq/company.md "Requests to the CEO"). HQ refuses it unless it has the ask, why, 1 to 5 changes, on-yes, on-no, effort, risk, your recommendation and at least one picture (`--preview`). Ask `product-designer` for the picture first; never send a card without one.
+  - **The inbox tells you what to do first:** `revisions` (the owner sent a card back: send the next version with `approval --revise <threadId> --changed "…"` and every field again), `needsRewrite` (old requests: send each again as a card, then leave the old one), and `approvedWithoutMission` (create or pick the mission, then `approval --start <approvalId> --mission <missionId>`, so the same card keeps reporting).
   - The "never delegated" list in company.md is absolute.
 - **Report once per round.** Send one brief with `npx tsx scripts/hq.ts brief --file brief.txt` (format in company.md). It's short, honest and plain, with no em dashes and no jargon.
   - Say plainly what's blocked and what unblocks it.

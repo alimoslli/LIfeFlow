@@ -47,7 +47,7 @@ export default async function MissionDetail({
   return (
     <div className="flex flex-col gap-5">
       <header className="flex flex-col gap-2">
-        <Link href="/admin/hq/missions" className="inline-flex min-h-11 items-center text-sm text-text-2">
+        <Link href="/admin/work#missions" className="inline-flex min-h-11 items-center text-sm text-text-2">
           ← All missions
         </Link>
         <h1 className="font-display text-[1.75rem] leading-tight font-medium tracking-tight break-words">{m.title}</h1>
