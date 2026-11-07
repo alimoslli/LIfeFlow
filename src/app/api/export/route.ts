@@ -3,7 +3,7 @@ import { moneyLocked } from "@/server/auth/money-lock";
 import { withUser } from "@/server/db/with-user";
 import { enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { audit } from "@/server/services/audit";
-import { exportStream } from "@/server/services/data-export";
+import { exportBusy, exportStream } from "@/server/services/data-export";
 import { queryTransactions, toCsv } from "@/server/services/finance/transactions";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +38,7 @@ export async function GET(req: Request) {
         headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="lifeflow-transactions-${stamp}.csv"` },
       });
     }
+    if (exportBusy(user.id)) throw new HttpError(429, "A download of your data is already running. Wait for it to finish, then try again.");
     await withUser(user.id, (s) => audit(s, "user", "data.export.json"));
     return new Response(exportStream(user.id, user), {
       headers: {

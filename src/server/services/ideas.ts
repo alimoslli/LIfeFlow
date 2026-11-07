@@ -5,7 +5,7 @@ import { series } from "../db/series";
 import type { UserScope } from "../db/with-user";
 import { listGoals, listRecurring } from "./finance/planning";
 import { listAssignments, listCourses } from "./school";
-import { listEmployers, listShifts } from "./work";
+import { regularHoursOf, listEmployers, listShifts } from "./work";
 
 /** Up to three ideas from the user's own records (facts only), shown above the catalog. */
 export async function personalIdeas(scope: UserScope, tz: string, today: string, areas: LifeAreas): Promise<Idea[]> {
@@ -36,7 +36,7 @@ export async function personalIdeas(scope: UserScope, tz: string, today: string,
       detail: "I'll add every due date and exam.",
       prompt: `Here's the syllabus for ${bare.name}. Add every due date and exam.`,
     });
-  const job = jobs.find((j) => !j.schedule && !shifts.some((s) => s.employerId === j.id));
+  const job = jobs.find((j) => !regularHoursOf(j.schedule) && !shifts.some((s) => s.employerId === j.id));
   if (job)
     out.push({
       emoji: "📸",

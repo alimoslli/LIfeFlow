@@ -18,7 +18,7 @@ describe("Apple Health ingest", () => {
     expect(token).toMatch(/^lfh_/);
     const [row] = await getDb().select().from(healthTokens).where(eq(healthTokens.id, id));
     expect(row.tokenHash).not.toContain(token);
-    expect(await resolveHealthToken(getDb(), token)).toEqual({ userId: user.id, timezone: TZ });
+    expect(await resolveHealthToken(getDb(), token)).toEqual({ tokenId: id, userId: user.id, timezone: TZ });
     expect(await resolveHealthToken(getDb(), "lfh_wrong")).toBeNull();
     expect(await resolveHealthToken(getDb(), "not-a-key")).toBeNull();
     expect((await run(listHealthTokens))[0].lastUsedAt).not.toBeNull();

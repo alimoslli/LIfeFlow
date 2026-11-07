@@ -175,9 +175,12 @@ export async function changePassword(db: Database, userId: string, current: stri
   if (!parsed.success) throw new AuthError(parsed.error.issues[0].message);
   const strength = checkPassword(next, [user.name, user.email]);
   if (!strength.ok) throw new AuthError(`Choose a stronger password. ${strength.message}`);
+  // A first password on a two-step account turns email codes off until a strong sign-in, so a stolen session plus the
+  // inbox can't set a password and then reset two-step with an emailed code (security review, 2026-11-06).
+  const firstPasswordOn2fa = !hasPassword(user.passwordHash) && !!user.totpEnabledAt;
   await db
     .update(users)
-    .set({ passwordHash: await hashPassword(next) })
+    .set({ passwordHash: await hashPassword(next), ...(firstPasswordOn2fa ? { emailCodesBlockedAt: new Date() } : {}) })
     .where(eq(users.id, userId));
 }
 

@@ -47,7 +47,11 @@ export async function executeToolCall(name: string, rawArgs: string, ctx: ToolCo
   if (ctx.moneyLocked && MONEY_TOOLS.has(name))
     return {
       kind: "result",
-      result: { ok: false, error: "Money is locked with Face ID on this device. Tell the user to open the Money tab and unlock it, then ask again." },
+      result: {
+        ok: false,
+        error:
+          "Money is locked with Face ID on this device, so nothing was searched. Tell the user plainly that Money is locked and to open the Money tab and unlock it, then ask again. Never say you found nothing.",
+      },
     };
   let args: unknown;
   try {

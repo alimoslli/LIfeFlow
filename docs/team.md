@@ -12,6 +12,7 @@ Set by the owner on 2026-11-05. Every Claude Code session on this repo reads thi
 | **Auditor** (Opus, fresh eyes) | Audits each prototype or build with no context from the conversation, so nothing gets a pass because we're used to it. | `docs/design/*-audit.md` |
 | **Situation writer** | Keeps writing realistic life situations for Dev's exam and later training: real life as the timeline, digital life attached, the clashes, the fix, the stay-quiet cases. | `.claude/agents/situation-writer.md`, `docs/situations/` |
 | **Market researcher** | Finds what people need from online research, reviews of similar apps and our surveys, and proposes what to build and what to avoid. | `.claude/agents/market-researcher.md`, `docs/research/` |
+| **LifeFlow HQ** (`/admin/hq`, set up 2026-11-06; the company since ADR 0026) | The owner's office and the company: the owner (CEO), one **COO** (its own chat, "LF COO", the only one that reports to the owner, one brief per round) and six departments: Engineering (LF Main), Product & Design (LF V3), Research & Insights (LF V3 — Agents), Marketing & Growth (LF Marketing), Quality & Security and Customer Success (both work inside the COO's rounds). Missions, the approval inbox, briefs, delegated decisions and the weekly summary live there; chats report in through `scripts/hq.ts`. | `docs/hq/company.md`, ADR 0024 to 0026 |
 
 ## Fresh made-up data in every picture (owner, 2026-11-07)
 Prototypes and demo screens never reuse the same made-up day. These are retired: the 2 to 9 shift, BIO 101, gym at 6:15, "$10 short", Ali's Wednesday. Use the owner's example day when one is given. Otherwise make each day genuinely different and realistic (hours, spending, people), and vary every day in a week view.
@@ -34,7 +35,8 @@ The owner asked for the agents to keep running: audit the app (phone and web), f
 **Light in the day, heavy at night (owner, 2026-11-05).** The owner's Claude usage has a 5-hour limit. During the day, agents do only light work: answering the owner, small fixes, short checks. Audits, builders, reviewers, situation batches, research, full test runs and e2e run in the night round, so the limit resets by morning.
 
 **No background agents while the owner is awake (owner, 2026-11-06).** The owner may open Claude Code at any time, so agents never run in the background while the owner is using it. Agents run only after a start phrase from the owner, or during the 3 AM night rounds.
-- **"Goodnight"** (or "good night", "gn") in any chat starts the night's work: that chat's own carry-over and a night round in the audits chat. Only one round runs per night; the 3 AM round skips if one already ran since the goodnight.
+- **The COO's light pass (owner, 2026-11-07, later).** The COO (Opus) does a short pass every 2 hours from 8 AM to 10 PM Pacific: alone, no audits or builders, about 10% of the 5-hour window at most, no agents at all on a usage warning. This is the one exception to "no background agents while the owner is awake"; heavy work stays in the night rounds.
+- **Rounds run on their schedule only (owner, 2026-11-07).** "Goodnight" (or "good night", "gn", or the Goodnight button in HQ) no longer starts any work: it only signs the owner off, and HQ dims the office until 5 AM. The COO's rounds start from their scheduled tasks (`docs/hq/round-prompts.md`), one per night at most. Saying goodnight in a chat still lets that chat finish its own carry-over.
 - **"I'm at work", "start the agents" or "go"** in the audits chat starts a round while the owner is away for hours.
 - **"Good morning", "stop the agents", or the owner simply messaging the chat** means stop. Running agents finish their current step, save the carry-over and stop. No new agents start.
 - **In the product chat:** while the owner is talking, only light work that answers them. Builders and reviewers wait for the start phrase.
@@ -65,6 +67,10 @@ The owner asked for the agents to keep running: audit the app (phone and web), f
 - Things to avoid become rules the same day.
 - Proposals are tagged `fix now`, `build now`, `needs the new surface` or `owner decision`.
 
+**Chain of command (owner, 2026-11-07):** every chat and agent reports to the COO first; the COO reports to the owner; the owner's answers go back to the team through the COO (`docs/hq/company.md`).
+
+**Standing order (owner, 2026-11-07, every chat and agent):** don't ask the owner for approvals or interrupt him at work. Work on plan; anything that needs him is built and held (never published, posted, deployed, merged to main or sent) until he agrees, reported once and briefly.
+
 **What needs the owner's approval (owner, 2026-11-05)**
 - **Approved in advance:** small fixes and bugs (wrong numbers, broken flows, errors, rule breaks, copy that's wrong, accessibility, security slips). Builders fix them and they ship once verified.
 - **Needs the owner's yes first:** every real change (a new feature, a change to how something works or looks, removing a feature, pricing, anything on the new surface). It goes on the yes or no list, with a picture when words aren't enough.
@@ -76,5 +82,7 @@ The owner asked for the agents to keep running: audit the app (phone and web), f
 - Verified fixes go to `main` (owner, 2026-11-05) once the full check, build and e2e pass on the merged branch. Product and design work waits for the owner's go.
 
 **Everything is checked twice:** once by the tests and once by someone who didn't write it. Research claims are re-checked in the next round.
+
+**Rounds report into HQ (owner, 2026-11-06).** Every scheduled round runs in the LF COO chat and follows `docs/hq/round-prompts.md` and `docs/hq/workflow.md`: it reads the owner's controls, missions and decisions from HQ, makes each piece of work a mission, sends real changes as approvals (with a push), logs delegated decisions, and ends with a check-in and the brief. HQ is a mirror, never a blocker.
 
 **The owner gets one short report per round:** what was fixed, what was found, the yes or no list, and anything blocked.

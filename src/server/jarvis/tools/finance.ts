@@ -19,7 +19,7 @@ import {
   upcomingRecurring,
   updateRecurring,
 } from "../../services/finance/planning";
-import { TRANSACTION_KINDS, createTransaction, queryTransactions } from "../../services/finance/transactions";
+import { TRANSACTION_KINDS, createTransaction, findTransactions, queryTransactions } from "../../services/finance/transactions";
 import { scanTransactions } from "../../services/finance/findings";
 import { addDaysStr } from "@/lib/dates";
 import { holdings } from "../../db/schema";
@@ -186,7 +186,7 @@ export const financeTools = [
   defineTool({
     name: "spending_summary",
     description:
-      "Income, spending, refunds, transfers and top categories/merchants for a date range, optionally filtered by category (includes subcategories, e.g. 'Food & Dining') or a merchant/description search. Use for 'how much did I spend on X' and 'how much did I earn'.",
+      "Income, spending, refunds, transfers and top categories/merchants for a date range, optionally filtered by category (includes subcategories, e.g. 'Food & Dining') or a merchant/description search. Use for 'how much did I spend on X' and 'how much did I earn'. With a name in search, totals count only rows that match the full name; unconfirmed {count, amount} is extra money in lines that matched only a shortened name or an initial: always mention it (\"plus $85 that may be him\") and never add it into the total.",
     schema: z.object({
       ...range,
       category: z.string().max(80).optional().describe("Category name; call list_categories if unsure"),
@@ -211,20 +211,21 @@ export const financeTools = [
   }),
   defineTool({
     name: "query_transactions",
-    description: "Look up individual transactions. Amounts in dollars: negative = money out.",
+    description:
+      "Look up individual transactions. Amounts in dollars: negative = money out. Also use it for 'when did I last pay, Zelle, Venmo or Cash App someone' (search the person's name, plus the app if they said one, e.g. search \"Zelle Omar Mousselli\"; newest first. Rows run both ways: for 'paid/sent/Zelled' the last time is the newest row with a negative amount, for 'received' the newest positive one; never assume the first row). search is forgiving: every word must appear somewhere in the bank line, merchant or notes, in any order, truncated names and payment-app words are fine, and you do not need to add 'Zelle' or 'to'. If nothing matches, the result has matchType 'none' and closestPayments (recent person-to-person payments): say plainly what you didn't find, and if closestPayments has rows ask whether one is who they meant. matchType 'similar' means the spelling differs: confirm with the user. A row with sure:false matched only through a shortened name, a bare initial or a typo: never state it as fact, ask the user to confirm it is who they meant.",
     schema: z.object({
       from: dateArg().optional(),
       to: dateArg().optional(),
       category: z.string().max(80).optional(),
-      search: z.string().max(100).optional(),
+      search: z.string().max(100).optional().describe("Person, merchant or description words, e.g. 'Omar Mousselli' or 'Starbucks'"),
       kinds: z.array(z.enum(TRANSACTION_KINDS)).optional(),
       minAmount: z.number().min(0).optional().describe("Minimum absolute amount in dollars"),
       limit: z.number().int().min(1).max(100).optional(),
     }),
     mutates: false,
     async execute(a, ctx) {
-      const rows = await ctx.run((s) =>
-        queryTransactions(s, {
+      const found = await ctx.run((s) =>
+        findTransactions(s, {
           from: a.from,
           to: a.to,
           categoryName: a.category,
@@ -234,20 +235,34 @@ export const financeTools = [
           limit: a.limit ?? 40,
         }),
       );
+      const shape = (t: (typeof found.rows)[number]) => ({
+        id: t.id,
+        date: t.date,
+        description: t.description,
+        merchant: t.merchantName,
+        amountCents: t.amountCents,
+        kind: t.kind,
+        category: t.categoryName,
+        account: t.accountName,
+        pending: t.pending,
+        source: t.source,
+        sure: t.sure,
+      });
       return centsToDollarsDeep({
-        count: rows.length,
-        transactions: rows.map((t) => ({
-          id: t.id,
-          date: t.date,
-          description: t.description,
-          merchant: t.merchantName,
-          amountCents: t.amountCents,
-          kind: t.kind,
-          category: t.categoryName,
-          account: t.accountName,
-          pending: t.pending,
-          source: t.source,
-        })),
+        count: found.rows.length,
+        matchType: found.match,
+        ...(found.match === "exact" && !found.rows.length && { note: "No transactions match those filters. Say so plainly, naming what you looked for." }),
+        ...(found.match === "exact" &&
+          found.rows.some((r) => !r.sure) && {
+            note: "Rows with sure:false matched only through a shortened name, a bare initial or a typo. Do not state them as fact: confirm with the user that it is who they meant.",
+          }),
+        ...(found.match === "similar" && { note: "No exact match for that spelling. These look similar: confirm with the user that it is who they meant." }),
+        ...(found.match === "none" &&
+          a.search && {
+            note: `Nothing matches "${a.search}". Say so plainly, naming what you looked for. If closestPayments has rows, ask whether one of them is who they meant; never invent a match.`,
+            closestPayments: found.closest.map(shape),
+          }),
+        transactions: found.rows.map(shape),
       });
     },
   }),

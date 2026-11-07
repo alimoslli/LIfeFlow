@@ -43,6 +43,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     });
     const rows = await queryTransactions(s, {
       search: sp.q?.slice(0, 100),
+      phrase: true, // the page's search box is a plain substring filter
       from: period.from,
       to: period.to,
       categoryIds:

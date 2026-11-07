@@ -2,7 +2,7 @@
 import { useState, useTransition } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { TextSize, Theme } from "@/lib/theme";
+import { rememberOnDevice, TEXT_COOKIE, THEME_COOKIE, type TextSize, type Theme } from "@/lib/theme";
 import { setTextSizeAction, setThemeAction } from "@/app/theme-actions";
 
 /** System is the default: the app follows the phone's own light or dark setting until you pick one. */
@@ -24,6 +24,7 @@ export function ThemePicker({ initial }: { initial: Theme }) {
     else root.setAttribute("data-theme", t);
     const dark = t === "dark" || (t === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
     document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", dark ? BAR.dark : BAR.light));
+    rememberOnDevice(THEME_COOKIE, t);
     start(() => setThemeAction(t));
   };
   return (
@@ -62,6 +63,7 @@ export function TextSizePicker({ initial }: { initial: TextSize }) {
     setSize(t);
     if (t === "default") document.documentElement.removeAttribute("data-text");
     else document.documentElement.setAttribute("data-text", t);
+    rememberOnDevice(TEXT_COOKIE, t);
     start(() => setTextSizeAction(t));
   };
   return (

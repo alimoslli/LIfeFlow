@@ -1,0 +1,122 @@
+import Link from "next/link";
+import { NetworkBlock } from "@/components/hq/marketing";
+import { BudgetBody, DecisionLine, Empty, MissionLine, Section } from "@/components/hq/cards";
+import { getDb } from "@/server/db/client";
+import type { MarketingWeek } from "@/server/hq/types";
+import { weeklySummary } from "@/server/services/hq";
+import { marketingView } from "@/server/services/hq-marketing";
+import { safe } from "@/server/services/admin";
+import { Failed, adminTz, fmt } from "../../format";
+import { PageSection } from "../../ui";
+
+/** The weekly report, assembled from records by plain logic. No AI. A part of the Work page. */
+export async function ReportSection() {
+  const r = await safe("hq-weekly", () => weeklySummary(getDb()));
+  const perf = await safe("hq-weekly-perf", async () => (await marketingView(getDb())).performance);
+  const tz = await adminTz();
+  if (!r.ok)
+    return (
+      <PageSection id="report" title="This week">
+        <p className="rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">{Failed()}</p>
+      </PageSection>
+    );
+  const w = r.data;
+  const mk = (w as { marketing?: MarketingWeek }).marketing;
+  const withNumbers = perf.ok ? perf.data.filter((p) => p.latest.length) : [];
+  const day = (d: Date) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: tz }).format(d);
+  return (
+    <PageSection id="report" title="This week" sub={`${day(w.from)} to ${day(w.to)}`}>
+      <Section as="h3" title="The headline">
+        {w.headline.length ? (
+          <ul className="flex flex-col gap-1.5">
+            {w.headline.map((h) => (
+              <li key={h} className="text-[0.9375rem] text-text">
+                {h}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <Empty>Nothing to report yet.</Empty>
+        )}
+      </Section>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Section as="h3" title="Done" sub={`${w.done.length} finished · ${w.started} started`}>
+          {w.done.length ? w.done.map((m) => <MissionLine key={m.id} m={m} />) : <Empty>Nothing finished this week.</Empty>}
+        </Section>
+        <Section as="h3" title="Blocked">
+          {w.blocked.length ? w.blocked.map((m) => <MissionLine key={m.id} m={m} />) : <Empty>Nothing is blocked.</Empty>}
+        </Section>
+        <Section as="h3" title="Due soon and overdue">
+          {w.overdue.length || w.dueSoon.length ? (
+            <>
+              {w.overdue.length > 0 && <p className="px-2 pb-1 text-xs font-medium text-danger">Overdue</p>}
+              {w.overdue.map((m) => (
+                <MissionLine key={m.id} m={m} />
+              ))}
+              {w.dueSoon.length > 0 && <p className="px-2 pt-2 pb-1 text-xs font-medium text-muted">Due in the next 7 days</p>}
+              {w.dueSoon.map((m) => (
+                <MissionLine key={m.id} m={m} />
+              ))}
+            </>
+          ) : (
+            <Empty>Nothing due soon.</Empty>
+          )}
+        </Section>
+        <Section
+          as="h3"
+          title="Decisions"
+          sub={w.approvalsPending ? `${w.approvalsPending} still waiting` : undefined}
+          action={
+            w.approvalsPending ? (
+              <Link href="/admin/work#approvals" className="inline-flex min-h-11 items-center text-sm text-accent">
+                Open the inbox
+              </Link>
+            ) : undefined
+          }
+        >
+          {w.approvalsDecided.length ? (
+            <ul className="flex flex-col divide-y divide-border/60">
+              {w.approvalsDecided.map((a) => (
+                <li key={a.id} className="py-2.5">
+                  <p className="text-sm font-medium text-text">{a.title}</p>
+                  <DecisionLine a={a} />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Empty>No decisions this week.</Empty>
+          )}
+        </Section>
+      </div>
+      <Section
+        as="h3"
+        title="Marketing this week"
+        action={
+          <Link href="/admin/hq/marketing" className="inline-flex min-h-11 items-center text-sm text-accent">
+            Open Marketing
+          </Link>
+        }
+      >
+        {mk ? (
+          <p className="text-sm text-text">
+            {mk.drafted} drafted · {mk.approved} approved · {mk.scheduled} scheduled · {mk.published} published
+          </p>
+        ) : (
+          <Empty>No marketing activity yet.</Empty>
+        )}
+        {withNumbers.length > 0 ? (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {withNumbers.map((p) => (
+              <NetworkBlock key={p.network} p={p} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-muted">No numbers yet. They come with the weekly marketing round from the networks connected in Metricool.</p>
+        )}
+      </Section>
+      <Section as="h3" title="Weekly Claude use" sub={w.budget.asOf ? `As of ${fmt(w.budget.asOf, tz)}` : undefined}>
+        <BudgetBody b={w.budget} />
+      </Section>
+    </PageSection>
+  );
+}

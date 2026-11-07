@@ -4,10 +4,10 @@ import type { UserScope } from "../db/with-user";
 import { notFound } from "../services/errors";
 import type { ChatItem } from "./providers/types";
 
-export async function createConversation(scope: UserScope, module?: JarvisModule | null, title = "New conversation") {
+export async function createConversation(scope: UserScope, module?: JarvisModule | null, title = "New conversation", id?: string) {
   const [row] = await scope.tx
     .insert(conversations)
-    .values({ userId: scope.userId, contextModule: module ?? null, title })
+    .values({ ...(id ? { id } : {}), userId: scope.userId, contextModule: module ?? null, title })
     .returning();
   return row;
 }

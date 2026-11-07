@@ -1,0 +1,91 @@
+# How the team works with HQ (Phases 2 to 5)
+
+Owner, 2026-11-06: "the best digital HQ ever with the best agent loadout and workflow", and HQ must show real progress and change. This is the loadout and the steps every automated round follows. It sits on top of `docs/team.md` (cost rules, the owner's hours, approvals), which still decides.
+
+## The loadout: the smallest team that does the job
+| HQ employee | What runs | AI? |
+|---|---|---|
+| **Researcher / Agent Ops** | The only automation runner: the LF V3 — Agents chat, which runs every scheduled round. | Yes, only in rounds |
+| **Developer** | Night-round fixes, made by Sonnet builders the runner starts, plus LF Main when the owner works there. | Only in rounds |
+| **Designer / V3** | LF V3, the owner's product chat. No automation. | Only when the owner works there |
+| **Marketing** | LF Marketing. A weekly marketing round (after the owner's yes) turns approved posts into Metricool "for review" posts and records real numbers. Never publishes; the owner presses the last button. | Only in its round |
+| **HQ Assistant** | App logic: approvals, deadlines, the weekly summary. | Never |
+
+**Specialists, started inside a round only, at most two at a time, Sonnet by default:**
+- **auditor**
+- **builder:** in its own worktree, with its own test database
+- **reviewer:** Opus only when the change touches money, security or a data migration
+- **situation writer**
+- **market researcher**
+
+No permanent extra agents. No new paid services.
+
+## The week (the owner's brief, section 6, on the existing schedule)
+| When (3 AM Pacific) | Round | Focus |
+|---|---|---|
+| Sunday | Night round | A targeted audit and regression tests, then fixes |
+| Monday | Research | Competitors, real complaints, new integrations; reuse past findings |
+| Tuesday | Night round | Fix the highest-priority confirmed problems |
+| Thursday | Night round | Integration health and selected improvements |
+
+**Priority order for fixes:**
+1. Security and data integrity.
+2. Crashes and broken flows.
+3. Money accuracy and Plaid.
+4. The assistant's reliability.
+5. Integrations.
+6. Speed.
+7. How it feels to use.
+8. Small UI.
+
+One meaningful fix beats several small ones. Deterministic tests come before AI reviews.
+
+## Every round, step by step
+HQ is a mirror, never a blocker. If `HQ_URL` isn't set or a command fails, carry on and say so in the report. The commands are `npx tsx scripts/hq.ts …`, run from the LifeFlow repo after merging `origin/main` (that's where the script and hook live).
+
+1. **Start.**
+   - Run `checkin --status working --phase round_start --summary "<round> started"`.
+   - Then run `inbox`. It returns the owner's open missions and the decisions made since the last round:
+     - **Controls first:** if `controls.autonomous` is false or this round's switch (`controls.rounds.night|research|marketing`) is false, reply "Skipped: turned off in HQ" and stop;
+   - a **yes** means do it;
+     - a **no** means drop it and mark the mission `dropped`;
+     - **changes** means follow the owner's note.
+2. **Usage gate** (before every new agent). Read this session's `get_session` → `external_metadata.rate_limit_info`:
+   - if `isUsingOverage` is true, stop now;
+   - if `status` is `allowed_warning`, finish the current step, save the carry-over and stop;
+   - otherwise apply `docs/team.md`: stop at about 40% of the 5-hour window.
+
+   Never turn on extra usage.
+3. **Every piece of work is a mission.**
+   - Create it: `mission add --role developer --title "…" --priority high`. Or reuse the owner's mission from the inbox.
+   - When you start: `mission update <id> --status doing --progress "…"`. Starting a mission (not a desk file) makes your chat its chat.
+   - A desk task (one with a desk prompt) is taken only with `--claim` (the desk's first prompt sends `--status doing --claim`). Relaying its progress from another chat never moves it (ADR 0029, addendum 2).
+   - Fixes belong to the Developer, audits and research to the Researcher, situations to the Researcher.
+4. **Show the work as it happens.**
+   - After each step, run `checkin --status working --summary "<one line: what is happening now>"`.
+   - A check-in older than 20 minutes reads as resting, so keep them coming during long steps.
+5. **Anything that needs the owner** becomes a decision card (ADR 0028): `approval --role <who> --kind <deploy|feature|design|publish|outbound|paid|subscription|destructive|security|v3_merge|other> --title "…" --why "…" --change "…" (1 to 5) --on-yes "…" --on-no "…" --effort small|medium|large --risk "…" --recommend "…" --preview shot.png:Label (1 to 4)`. HQ refuses a card with anything missing, naming it.
+   - To answer a "Send changes": `approval --revise <threadId> --changed "what is different since the owner's note"` plus every field again. After a yes: `approval --start <approvalId> --mission <missionId>`; the card then follows the mission (doing = being built, waiting = ready for the owner's look, done = live).
+   - This pushes the owner's phone.
+   - Small fixes and bugs stay approved in advance (`docs/team.md`), so they don't need one.
+6. **Results.**
+   - Finished: `mission update <id> --status done --result "<what changed, plainly>" --link "Commit=https://github.com/alimoslli/LIfeFlow/commit/<sha>"`.
+   - Stuck: `--status blocked --blocked "<why>"`.
+7. **End.**
+   - Run `checkin --status idle --phase round_end --summary "<N fixed, M found, K waiting for you>"`.
+   - Then `activity --role researcher --text "Morning report: …" --link <the report's GitHub link>`.
+
+## What the owner sees
+- **During a round:** the Researcher at the desk, and the Developer working on the mission being fixed, shown as "in LF V3 — Agents".
+- **Afterwards:** missions moving to Done with results and commit links; approvals waiting in the inbox, with a push; the activity feed; the weekly summary.
+- **Between rounds:** everyone asleep, which is the truth.
+
+## Turning it on (status)
+- [x] HQ merged to main (2026-11-06, `df6a462`). Vercel deploys lifeflowweb.com; the owner's first look confirms it.
+- [x] HQ Settings: "Import the starting list", then create a key named "cloud environment".
+- [x] `HQ_URL` and the key are saved on the "LifeFlow" cloud environment (2026-11-06). The key is a network secret for lifeflowweb.com, added by the proxy. The first real check-in was accepted. `scripts/hq.ts` turns on Node's proxy support by itself (`NODE_USE_ENV_PROXY=1`), because Node's fetch ignores the cloud proxy otherwise.
+- [x] Night round and research tasks point at this file (2026-11-06; blocks in `docs/hq/round-prompts.md`, applied by the LF V3 — Agents chat, checked with get_trigger).
+- [ ] LF Main's environment gets the same two settings.
+- [x] Migrations `0044_hq_marketing` and `0045_hq_company` deployed (2026-11-06, main `9171c03`). Every round now runs in the LF COO chat with the v2 prompts (`round-prompts.md`); the old tasks are paused.
+- [x] The COO's first start (2026-11-06): check-in, relays, error triage and the first brief went through. It stopped at the usage gate (weekly allowance at its warning level), as the rules say.
+- [ ] Phase 3: a weekly marketing round, after the owner's yes. It reads `approvedContent` from `inbox`, puts each post into Metricool with `createScheduledPostForReview`, then reports `content update <id> --status scheduled --external-id <id>` (and `--status published --published-url <link>` after the owner presses the final button). New ideas and scripts: `content add ... --ask`. Real numbers: `metrics --network instagram --date <day> --metric followers=<n>`. No comments, no DMs, no paid generation without a `paid` approval within the credit budget.

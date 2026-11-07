@@ -194,5 +194,7 @@ export async function finishPasskeyAuthentication(
     .update(passkeys)
     .set({ counter: result.authenticationInfo.newCounter, lastUsedAt: new Date(), backedUp: result.authenticationInfo.credentialBackedUp })
     .where(eq(passkeys.id, pk.id));
+  // A passkey sign-in proves a strong factor: email sign-in codes may be used again after a password reset.
+  await db.update(users).set({ emailCodesBlockedAt: null }).where(eq(users.id, pk.userId));
   return { userId: pk.userId, passkeyId: pk.id, name: pk.name };
 }
