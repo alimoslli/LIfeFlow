@@ -401,6 +401,12 @@ now ends on Ali's line "So the time you get back goes to everything you were nev
 now running marketing: in every work shot with Ali (planning, building, arguing, the breakthrough) and the one asking the questions
 in the talk. The guy who says "Bro, but what the fuck IS this?" is **not** Tyler: he is a stranger in the crowd who saw Ali's posts online,
 confused at first, then hooked ("Wait... how do I get this?"), played by a friend. The crowd is confused with a few quiet giggles, no big laughs.
+**Footage workflow (Ali, 2026-11-08):** Ali and Tyler keep filming and upload everything to one shared Google Drive folder
+("Anyone with the link: Viewer"; link in the doc's Footage log tab). When Ali says "added", Claude downloads only the new clips
+(`gdown --folder`; drive.google.com and drive.usercontent.google.com are allowed in the LifeFlow environment), writes out every usable
+line with its time (speech to text runs in the Higgsfield sandbox, since huggingface.co is blocked here), checks the sound, judges the
+picture, and logs each clip in the Footage log tab plus a voice pool in story order. Never treat the footage so far as everything:
+they keep filming. First batch: Ali on camera in his own voice showing the app; most of the picture is black, so the voice is the asset.
 The doc now opens with "What you do": a one-page checklist for tonight plus an Ali-and-Tyler table for the work shots. Ali wants the plan
 that simple ("just tell me what I have to do"); the detail stays below it. Send plans as PDF links too (the doc link didn't open in his browser).
 
