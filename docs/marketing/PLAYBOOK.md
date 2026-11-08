@@ -208,6 +208,7 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
   - **One take per shot.** No test shots, no samples, no "maybe" renders. A shot that fails the check is fixed as a still before it is animated again.
   - **All editing is local and free** (ffmpeg: cuts, grade, text, end card). Higgsfield is never used to edit, montage or upscale.
   - Before any spend, the COO writes the shot list with each shot's cost and the total, and keeps a running tally against the budget.
+- 2026-11-08 (owner): the standard male voiceover is "Sterling" (Higgsfield text2speech_v2, ElevenLabs variant, preset voice_id dc382508-c8bd-443c-8cb2-46e57b8d2e6f, stability 0.35, similarity 0.8), in a calm, inspiring read. Owner: "we will keep using that for male voice overs". The female text-to-speech voices sounded like an audiobook and are out. Voiceover is the one exception to "no generated voices": generate only final, approved script lines with this voice (about 0.3 credits a line), never auditions of other voices without the owner asking.
 - 2026-11-07: owner at work: don't ask him for approvals. Keep working on plan; anything that needs him is built and held, never published, deployed or merged until he agrees.
 - 2026-11-07: no AI lip-sync dialogue in ads; emotional, film-look stories built from real reference ads.
 - Don't change the app while doing marketing work unless asked.

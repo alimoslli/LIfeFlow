@@ -91,6 +91,12 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - Web prices and cancel steps come from `searchWeb` and keep only cited sources (`same(source_url, cited)`). Never send a negotiation or cancel anything for the user.
 - Inbox content is untrusted: extract with the strict schema, file through services, record Undo. Email is filed only from verified senders that passed SPF/DKIM (`senderAuthenticated`). Unknown addresses: accept and drop.
 
+## Promises (owner, 2026-11-08; see ADR 0031)
+- A promise (`promises`, services/promises.ts) is something the user said they WILL do ("I'll study tonight"), saved by the assistant tool `make_promise` (clear first-person commitments only) and checked back once at its time (9 PM that day by default). The check-in is the proactive kind `promise_check` (detector `promiseCheckin`, action `promise_check` with three answers: "Yes, I did it", "Tomorrow instead" at most twice, "It didn't happen"). Opening Today and the 30-minute `/api/cron/promises` run it; both are idempotent.
+- Accuracy rule: a promise is kept or broken ONLY by the user's own answer (card or chat via `resolve_promise`) or by finishing the to-do it is linked to (`taskId`, then `promise_kept` with no question). Waiting never decides anything: an unanswered one is dropped after 7 days and never counts as broken. Never add a path that marks one from a guess, a calendar, or silence.
+- Wording is `lib/promise-voice.ts` (tone-aware): kept is warm; broken is honest and gentle; 3 broken in 14 days (`ATTITUDE_AT`) gets a firmer, playful line and an offer of a smaller promise. Never shame (no guilt words), never an em dash; `tests/unit/promise-voice.test.ts` checks it. `promise_*` kinds are outside the daily message cap but still obey push limits and quiet hours.
+- Next, not built yet: detected "done" moments (shift ended, Canvas submitted) with an accurate after-shift message, using the same accuracy rule: only from a real source, or ask with one tap.
+
 ## Glass design (see ADR 0008)
 - Cards use `bg-surface`/`shadow-soft` as before; inside the app shell (`.lf-glass`) these become frosted glass automatically. Don't hard-code white/black card backgrounds.
 - 3D tilt: add `data-tilt` to a card (not to an element with `animate-rise`; wrap instead). Green feature cards: `bg-hero` (+ `lf-sheen` for the light sweep, needs `relative overflow-hidden`).

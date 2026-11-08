@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { requireUser, withCurrentUser } from "@/server/auth/current-user";
 import { moneyLocked } from "@/server/auth/money-lock";
 import { withUser } from "@/server/db/with-user";
-import { runDueSlot, unreadCount } from "@/server/services/proactive/engine";
+import { runDueSlot, runProactive, unreadCount } from "@/server/services/proactive/engine";
 import { listProposedMemories } from "@/server/services/memory";
 import { getBriefing } from "@/server/briefing";
 import { series } from "@/server/db/series";
@@ -43,6 +43,11 @@ export default async function TodayPage() {
   if (me.accountKind !== "demo")
     await withUser(me.id, (scope) => runDueSlot(scope, me.timezone, me.preferences)).catch((e) =>
       console.error("proactive slot failed", e instanceof Error ? e.name : e),
+    );
+  // Promises whose time has come get their one "Did you?" as soon as the app opens (the 30-minute cron does it when it's closed).
+  if (me.accountKind !== "demo")
+    await withUser(me.id, (scope) => runProactive({ scope, tz: me.timezone, prefs: me.preferences, trigger: "promise" })).catch((e) =>
+      console.error("promise check failed", e instanceof Error ? e.name : e),
     );
   const {
     briefing: b,

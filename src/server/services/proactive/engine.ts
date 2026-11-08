@@ -20,7 +20,7 @@ const DAILY_CAP = { low: 2, normal: 4, high: 7 } as const;
 /** Kinds that summarize the day/week; they don't count toward the daily cap. */
 const REVIEW_KINDS = new Set(["morning_brief", "evening_wrap", "weekly_review", "monthly_review", "weekly_learned"]);
 /** Outside the cap too: reviews, and the one-time consent question. */
-const uncapped = (kind: string) => REVIEW_KINDS.has(kind) || kind === "consent";
+const uncapped = (kind: string) => REVIEW_KINDS.has(kind) || kind === "consent" || kind.startsWith("promise_");
 
 export function jarvisSettings(prefs: UserPreferences | undefined) {
   const j: JarvisSettings = prefs?.jarvis ?? {};
@@ -101,7 +101,13 @@ export async function learnedStats(scope: UserScope, now = new Date(), resetAt: 
 
 // ------------------------------------------------------------------ running
 
-type RunInput = { scope: UserScope; tz: string; prefs: UserPreferences | undefined; trigger: Slot | "transaction" | "shift" | "goal" | "task"; now?: Date };
+type RunInput = {
+  scope: UserScope;
+  tz: string;
+  prefs: UserPreferences | undefined;
+  trigger: Slot | "transaction" | "shift" | "goal" | "task" | "promise";
+  now?: Date;
+};
 
 /** Runs the detectors for a slot or event and saves what's worth saying. Returns the new messages. */
 export async function runProactive({ scope, tz, prefs, trigger, now = new Date() }: RunInput): Promise<JarvisMessage[]> {
