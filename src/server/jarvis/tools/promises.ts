@@ -15,7 +15,7 @@ export const promiseTools = [
   defineTool({
     name: "make_promise",
     description:
-      'Save something the user just said they WILL do, in their words ("I\'ll study tonight", "I promise to go to the gym"). Use it only for a clear first-person commitment about one concrete thing, never for wishes, questions or things you suggest. The assistant checks back once at the check-in time (9 PM that day if no time is given). Optionally tie it to a to-do (taskId): finishing the to-do then keeps the promise.',
+      'Save a promise: something the user just said they WILL do (or hold back from) where keeping their word is the point, usually today or tonight ("I\'m not eating out tonight", "I\'ll hit the gym tonight"). NOT an errand with a finish line (that is a to-do: create_tasks) and NOT a weeks-long outcome (that is a goal). Only a clear first-person commitment, never wishes, questions or things you suggest. The assistant checks back once at the check-in time (9 PM that day if no time is given). Optionally tie it to a to-do (taskId): finishing the to-do then keeps the promise.',
     schema: z.object({
       text: z.string().min(2).max(200).describe("What they said they'd do, short, in their words"),
       date: dateArg("Local date to check back (default today)").optional(),
