@@ -150,7 +150,7 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
 ## 7. In the app (branch `v3-day-clock`, owner 2026-11-08: "start building this concept into a branch of a duplicate of the current live app")
 - **Where:** the Today tab is the clock (`src/app/(app)/page.tsx`).
   - **The tabs** are now Today, Assistant, Money, School. Plan is gone as a tab.
-  - **The old Plan pages** (Calendar, To-dos, Milestones, Health, Work) are pills on each of those pages, and a quiet row of pills below the fold on Today, so every page stays two taps away.
+  - **The old Plan pages** (Calendar, To-dos, Goals, Milestones, Health, Work) are pills on each of those pages, so every page stays two taps away. Below the fold, Today keeps only Health and Work as pills. Calendar, to-dos, goals and milestones are on the timeline itself (owner, 2026-11-08: "All the to-dos, all the goals, and the milestones are going to be in the timeline").
   - **The floating ask button** is off Today, because the home has its own ask bar.
 - **One screen on a phone:** the clock, and at its foot the assistant's one line (the top insight that needs attention, with its action). The line steps aside while the timeline is open and comes back on the wrap. The ask bar and the pills are below the fold.
 - **Data:** one read, `dayClockData` (`services/day-clock.ts`). It covers the week around today from the one agenda (calendars, work shifts, class deadlines and exams, to-dos with a time) plus today's steps, in wall-clock minutes in the person's time zone.
@@ -164,10 +164,23 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
   - **Spend pins:** the bank feed gives a date but no time, so spends aren't pinned on the rim; the face shows today's total instead. Adding the time Plaid sometimes sends needs a database change, which is held for the owner.
   - **Sleep:** Apple Health sends hours per night but no bedtime, so there's no bedtime marker.
   - **A step goal:** none is stored, so the face shows the step count with no goal.
+- **The timeline is the whole life (owner, 2026-11-08):** one line from the first milestone to the furthest plan.
+  - **The week:** shown day by day, as before.
+  - **Plans out to 60 days:** flights, trips, exams and shifts.
+  - **Goals ahead:** at their target day.
+  - **Behind:** every dated milestone and every goal reached (a birth date pinned as a milestone sits at the start).
+  - **Long empty stretches stay short:** outside the week, a month mark ("NOV", "APR 2027") or a year ("2006") sits before the first thing in it, so no gap is wider than a short step. The further a thing is from today, the quieter it looks, down to half strength.
+  - **Someday:** to-dos and goals with no day wait in a row at the very end, under "Someday". They carry no time, and you can't pin into that stretch.
+  - **Done on the card:** a to-do's or an assignment's card has **Done** beside Open. It is the same action as To-dos and School; the line refreshes in place.
+  - **Milestone cards** say how long ago ("2 years ago"). Goal cards say "Your goal, by the end of this day". "Due" is only ever said of to-dos, assignments and bills.
+  - **On the clock:** milestones (things that happened) never sit on the rim. A goal whose day falls in the next 24 hours shows as "goal day".
+- **Pin anything (owner, 2026-11-08):** "Pin something" under the open line, or a tap on an empty spot of the line, opens one sheet. It takes the day and time from where you are, an emoji, a name, and what it is: a to-do, a plan (one hour), a goal (by that day) or a milestone (past days only).
+  - **The emoji** is kept as the title's first character, so no database change is needed. It becomes the node's icon everywhere.
+  - **Saving** shows it on the line at once.
 - **Tests:**
   - `tests/unit/day-clock.test.ts` (icons, tiles, sources, wall-clock minutes across daylight saving);
   - `tests/integration/day-clock.test.ts` (the real read);
-  - `tests/e2e/clock-phone.spec.ts` (open, the card and its Open link, the now pill wrap, the pull-down wrap);
+  - `tests/e2e/clock-phone.spec.ts` (open, the card and its Open link, the now pill wrap, the pull-down wrap, pinning a ✈️ plan, Done on a to-do);
   - the layout, touch-target and core tests, updated for the four tabs.
 - **For screenshots:** `scripts/dev/seed-clock-look.ts` gives a local account a made-up week. It refuses any database that isn't on localhost.
 

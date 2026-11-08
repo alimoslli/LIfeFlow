@@ -533,6 +533,18 @@
   color: var(--muted);
   white-space: nowrap;
 }
+/* further out: a month or a year, marked once; and the Someday stretch at the end */
+.dc-mid.dc-era {
+  background: var(--border-strong);
+}
+.dc-mid.dc-era span {
+  color: var(--text-2);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.dc-someday .dc-n-dot {
+  border-color: var(--muted);
+}
 /* tonight's midnight on the line: where tomorrow starts, said the same way as on the clock */
 .dc-mid.dc-next {
   width: 2px;
@@ -716,9 +728,22 @@
 .dc-d-s:empty {
   display: none;
 }
+.dc-d-acts {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.dc .dc-d-done {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
 .dc .dc-d-open {
   position: relative;
-  margin-top: 8px;
   height: 44px;
   padding: 0 14px;
   border-radius: 18px;

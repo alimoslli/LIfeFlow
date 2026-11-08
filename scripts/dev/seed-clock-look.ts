@@ -13,6 +13,8 @@ import { withUser } from "@/server/db/with-user";
 import { createEvent } from "@/server/services/calendar";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { createTransaction } from "@/server/services/finance/transactions";
+import { createMilestone } from "@/server/services/milestones";
+import { createPersonalGoal } from "@/server/services/personal-goals";
 import { logHealth } from "@/server/services/health";
 import { createAssignment, createCourse } from "@/server/services/school";
 import { createTask } from "@/server/services/tasks";
@@ -55,6 +57,13 @@ async function main() {
     await createAssignment(s, TZ, { courseId: chem.id, title: "Exam 2", kind: "exam", dueDate: d(2), dueTime: "10:00" });
     await createAssignment(s, TZ, { courseId: chem.id, title: "Lab report", dueDate: d(3), dueTime: "23:59" });
     await createTask(s, TZ, { title: "Pay phone bill", dueDate: d(3), dueTime: "09:00", priority: "high" });
+    // the long line: a life behind, plans and goals ahead, and something with no day yet
+    await createMilestone(s, { title: "🎂 Born", when: "2006-03-14" });
+    await createMilestone(s, { title: "🎓 Started college", when: "2024-08-26" });
+    await createMilestone(s, { title: "💼 First job at Campus Coffee", when: "2025-09-02" });
+    await createEvent(s, TZ, { title: "✈️ Flight home for winter break", date: d(21), startTime: "07:10", endTime: "10:05", kind: "personal" });
+    await createPersonalGoal(s, { title: "🏃 Run a half marathon", targetDate: d(150) });
+    await createTask(s, TZ, { title: "📞 Call the bank about the card", priority: "medium" });
     await logHealth(s, TZ, { metric: "steps", value: 6240, date: today });
     await logHealth(s, TZ, { metric: "sleep_hours", value: 7.3, date: today });
     const bank = await createManualAccount(s, {

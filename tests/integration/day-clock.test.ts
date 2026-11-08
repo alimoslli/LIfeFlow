@@ -7,6 +7,7 @@ import { createTransaction } from "@/server/services/finance/transactions";
 import { logHealth } from "@/server/services/health";
 import { createMilestone } from "@/server/services/milestones";
 import { createPersonalGoal } from "@/server/services/personal-goals";
+import { createTask } from "@/server/services/tasks";
 import { createAssignment, createCourse } from "@/server/services/school";
 import { createEmployer, createShift } from "@/server/services/work";
 import { makeUser, TZ } from "../helpers";
@@ -38,7 +39,9 @@ describe("day clock data", () => {
     expect(data.base).toBe(new Date("2026-11-07T05:00:00Z").getTime());
 
     const byTitle = Object.fromEntries(data.items.map((i) => [i.title, i]));
-    expect(Object.keys(byTitle).sort()).toEqual(["Class", "Exam 2", "Run with Sam", "Work"]);
+    // The week in full, and plans further out too (the line keeps going): "Too far out" is 13 days ahead.
+    expect(Object.keys(byTitle).sort()).toEqual(["Class", "Exam 2", "Run with Sam", "Too far out", "Work"]);
+    expect(byTitle["Too far out"]).toMatchObject({ start: 13 * 1440 + 480 });
     expect(byTitle.Work).toMatchObject({
       kind: "block",
       cat: "work",
@@ -100,8 +103,21 @@ describe("day clock data", () => {
     expect(goal).toMatchObject({ icon: "🎯", allDay: true, kind: "due", start: 2 * 1440, href: "/goals" });
     const story = data.items.find((i) => i.title === "Turned 20");
     expect(story).toMatchObject({ icon: "🎂", allDay: true, start: -2 * 1440, href: "/milestones", source: "From your milestones" });
-    // Only the days on the line: a goal months away isn't on it yet.
-    expect(data.items.some((i) => i.title === "Far-off goal")).toBe(false);
+    // The line is the whole timeline: a goal months away is on it, at its day.
+    expect(data.items.find((i) => i.title === "Far-off goal")).toMatchObject({ start: 206 * 1440, origin: "goal" });
+  });
+
+  it("keeps undated to-dos and goals under Someday, and older milestones at their day", async () => {
+    const { run } = await makeUser("Someday Owner");
+    const data = await run(async (s) => {
+      await createTask(s, TZ, { title: "📞 Call the bank", priority: "medium" });
+      await createPersonalGoal(s, { title: "Learn to swim" });
+      await createMilestone(s, { title: "🎓 Started college", when: "2024-08-26" });
+      return dayClockData(s, TZ, NOW);
+    });
+    expect(data.items.find((i) => i.title === "Call the bank")).toMatchObject({ someday: true, icon: "📞", origin: "task" });
+    expect(data.items.find((i) => i.title === "Learn to swim")).toMatchObject({ someday: true, origin: "goal" });
+    expect(data.items.find((i) => i.title === "Started college")).toMatchObject({ icon: "🎓", start: -803 * 1440 });
   });
 
   it("is empty for someone with nothing connected or added, and never makes up steps", async () => {

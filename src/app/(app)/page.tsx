@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Briefcase, CalendarDays, CheckSquare, HeartPulse, Link2, Trophy } from "lucide-react";
+import { ArrowRight, Briefcase, HeartPulse, Link2 } from "lucide-react";
 import { DayClock } from "@/components/day-clock/day-clock";
 import { assistantProfile } from "@/lib/assistant";
 import { greetingIn } from "@/lib/dates";
@@ -32,13 +32,9 @@ export default async function TodayPage() {
       console.error("proactive slot failed", e instanceof Error ? e.name : e),
     );
   const work = lifeAreas(me.preferences?.lifeStage).work;
-  const more = [
-    { href: "/plan", label: "Calendar", icon: CalendarDays },
-    { href: "/tasks", label: "To-dos", icon: CheckSquare },
-    { href: "/milestones", label: "Milestones", icon: Trophy },
-    { href: "/habits", label: "Health", icon: HeartPulse },
-    ...(work ? [{ href: "/work", label: "Work", icon: Briefcase }] : []),
-  ];
+  // Calendar, to-dos, goals and milestones are all on the timeline now (owner, 2026-11-08); what stays one tap away
+  // is what isn't a thing in time.
+  const more = [{ href: "/habits", label: "Health", icon: HeartPulse }, ...(work ? [{ href: "/work", label: "Work", icon: Briefcase }] : [])];
   const { clock, note, assistantName, setup, hello } = await withCurrentUser(async (scope, user) => {
     const tz = user.timezone ?? "UTC";
     // Money (bills due, spent today) joins the clock only while the Money lock is open.

@@ -82,4 +82,12 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   await expect(clock).toHaveAttribute("data-state", "timeline");
   const rows = await queryAsUser<{ title: string }>(email, "select title from calendar_events where title like '%Flight to NYC'");
   expect(rows).toEqual([{ title: "✈️ Flight to NYC" }]);
+
+  // Done right on the card: tap a to-do, Done; it's saved as done and leaves the line.
+  await page.locator(".dc-node", { hasText: "Pay phone bill" }).click();
+  await page.locator("[data-dc=detail]").getByRole("button", { name: "Done" }).click();
+  await expect(page.locator(".dc-node", { hasText: "Pay phone bill" })).toHaveCount(0);
+  await expect
+    .poll(async () => (await queryAsUser<{ status: string }>(email, "select status from tasks where title = 'Pay phone bill'"))[0]?.status)
+    .toBe("done");
 });

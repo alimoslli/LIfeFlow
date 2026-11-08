@@ -9,9 +9,12 @@ import { queryTransactions } from "./finance/transactions";
 import { healthSummary } from "./health";
 import { lifeTimeline } from "./milestones";
 import { listPersonalGoals } from "./personal-goals";
+import { listTasks } from "./tasks";
 
-/** Days either side of today on the line (the day picker shows them all). */
+/** Days either side of today in the day picker (and the dense part of the line). */
 export const CLOCK_SPAN = 3;
+/** How far ahead the line reaches for plans (flights, trips, exams); goals and milestones go any distance. */
+export const AHEAD_DAYS = 60;
 
 /** Wall-clock minutes of an instant from the start of `today` in tz (tomorrow 8:00 AM = 1440 + 480). */
 export function wallMinutes(instant: Date, tz: string, today: string): number {
@@ -40,6 +43,8 @@ export function toClockItem(a: AgendaItem, tz: string, today: string): ClockItem
     href: a.href,
     source: sourceFor(a.origin, a.sources),
     subtitle: subtitle ?? a.subtitle,
+    origin: a.origin,
+    ref: a.id,
   };
 }
 
@@ -53,17 +58,19 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
   const today = todayIn(tz, now);
   const from = addDaysStr(today, -CLOCK_SPAN);
   const to = addDaysStr(today, CLOCK_SPAN);
-  const [agenda, health, story, goals] = await series(
+  // The line is the person's whole timeline: the week in full, plans out to AHEAD_DAYS, every dated milestone and goal
+  // reached behind, goals ahead by their day, and undated to-dos and goals waiting under "Someday" (owner, 2026-11-08).
+  const [agenda, ahead, health, story, goals, open] = await series(
     () => getAgenda(scope, tz, from, to, { now }),
+    () => getAgenda(scope, tz, addDaysStr(to, 1), addDaysStr(today, AHEAD_DAYS), { now, include: ["event", "shift", "assignment"] }),
     () => healthSummary(scope, tz, 1, now),
     () => lifeTimeline(scope, { includeMoney: false, tz }),
     () => listPersonalGoals(scope),
+    () => listTasks(scope, { status: "open", topLevelOnly: true, limit: 40 }),
   );
-  const items = agenda.map((a) => toClockItem(a, tz, today));
-  // Milestones and goals reached in these days, and goals due in them, sit on the line by their day.
-  const inRange = (d: string | null | undefined): d is string => !!d && d >= from && d <= to;
+  const items = [...agenda, ...ahead].map((a) => toClockItem(a, tz, today));
   for (const m of story) {
-    if (!inRange(m.date) || m.precision !== "day") continue;
+    if (!m.date) continue;
     const { emoji, rest } = splitEmoji(m.title);
     items.push({
       id: `story:${m.kind}:${m.id}`,
@@ -77,10 +84,11 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
       href: "/milestones",
       source: m.kind === "milestone" ? "From your milestones" : "A goal you reached",
       subtitle: null,
+      origin: "milestone",
     });
   }
   for (const g of goals) {
-    if (g.doneAt || !inRange(g.targetDate)) continue;
+    if (g.doneAt) continue;
     const { emoji, rest } = splitEmoji(g.title);
     items.push({
       id: `goal:${g.id}`,
@@ -88,12 +96,35 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
       cat: "other",
       icon: emoji ?? "🎯",
       title: rest,
-      start: daysBetween(today, g.targetDate) * 1440,
+      start: g.targetDate ? daysBetween(today, g.targetDate) * 1440 : 0,
       end: null,
       allDay: true,
       href: "/goals",
-      source: "Your goal, by this day",
+      source: "From your goals",
       subtitle: null,
+      origin: "goal",
+      ref: g.id,
+      someday: !g.targetDate,
+    });
+  }
+  for (const t of open) {
+    if (t.dueAt) continue;
+    const { emoji, rest } = splitEmoji(t.title);
+    items.push({
+      id: `task:${t.id}`,
+      kind: "due",
+      cat: "other",
+      icon: emoji ?? iconFor(t.title, "task", "task"),
+      title: rest,
+      start: 0,
+      end: null,
+      allDay: true,
+      href: `/tasks/${t.id}`,
+      source: "From your to-dos",
+      subtitle: null,
+      origin: "task",
+      ref: t.id,
+      someday: true,
     });
   }
   let spentTodayCents: number | null = null;
@@ -117,6 +148,7 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
         source: b.found ? "Found in your bank activity" : "From your bills",
         subtitle: null,
         amountCents: Math.abs(b.amountCents),
+        origin: "bill",
       });
     }
     const spent = summarizeCashflow(todays).netSpendingCents;

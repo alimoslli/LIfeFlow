@@ -29,6 +29,11 @@ export type ClockItem = {
   subtitle: string | null;
   /** A bill's amount, positive (only when money is shown). */
   amountCents?: number;
+  /** Where it lives, and its id there: a to-do or an assignment can be marked done right on its card. */
+  origin?: "event" | "shift" | "assignment" | "task" | "goal" | "milestone" | "bill";
+  ref?: string;
+  /** No date yet: it waits at the far end of the line, under "Someday". */
+  someday?: boolean;
 };
 
 export type ClockDay = { offset: number; date: string; short: string; long: string };

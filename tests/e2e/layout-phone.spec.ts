@@ -7,8 +7,8 @@ const SHOTS = process.env.SHOTS;
 
 // Each tab's landing page and every page that must be one more tap from it.
 const TABS: [string, string, string[]][] = [
-  // Today is the day clock; its other pages are a row of pills under it (and pills on each of those pages).
-  ["Today", "/", ["/plan", "/tasks", "/milestones", "/habits", "/work"]],
+  // Today is the day clock and the timeline, which hold calendar, to-dos, goals and milestones; Health and Work are pills under it.
+  ["Today", "/", ["/habits", "/work"]],
   ["Assistant", "/jarvis", ["/jarvis/says", "/jarvis/ideas", "/jarvis/profile"]],
   ["Money", "/money", ["/finances/accounts", "/wealth", "/finances/budgets", "/finances/transactions", "/finances/subscriptions", "/finances/bills"]],
   ["School", "/school", ["/school/due", "/notes"]],

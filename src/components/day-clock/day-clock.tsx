@@ -7,6 +7,9 @@ import { prefersReducedMotion } from "@/components/motion/gsap";
 import type { ClockData } from "@/lib/day-clock";
 import { createDayClock, type DayClockHandle } from "./engine";
 import { PinSheet } from "./pin-sheet";
+import { toast } from "@/components/ui/toaster";
+import { toggleTaskAction } from "@/app/(app)/tasks/actions";
+import { toggleAssignmentAction } from "@/app/(app)/school/actions";
 import "./day-clock.css";
 
 /**
@@ -31,6 +34,14 @@ export function DayClock({ data, children }: { data: ClockData; children?: React
       onOpen: (href) => router.push(href),
       onNewDay: () => router.refresh(),
       onPin: ({ start }) => setPinAt(start),
+      // Done right on the card: the same actions as To-dos and School; the line refreshes in place.
+      onDone: async (it) => {
+        if (!it.ref) return;
+        const r = it.origin === "assignment" ? await toggleAssignmentAction(it.ref) : await toggleTaskAction(it.ref);
+        if (r?.ok) toast(r.message ?? `Done: ${it.title}.`, { tone: "success" });
+        else toast(r?.error ?? "That didn't save. Try again.", { tone: "danger" });
+        router.refresh();
+      },
       reducedMotion: prefersReducedMotion(),
     });
     return () => {
