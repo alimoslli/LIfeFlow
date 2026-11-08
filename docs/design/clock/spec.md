@@ -1,6 +1,11 @@
 # The day clock that turns into a timeline: spec (v3 home)
 
-Owner's concept, 2026-11-07. The look is set by the owner's two GIFs (`owner-concept-1.gif`, `owner-concept-2.gif`); their frames are in `storyboard-1.png` and `storyboard-2.png`. Where this spec and the pictures disagree, the pictures win. The prototype that implements this spec is `prototype.html` (published for the owner as https://claude.ai/artifact/UgiwwCiRsyigsHhvn1LoND). Its motion code is the reference for the real build.
+Owner's concept, 2026-11-07. The look is set by the owner's two GIFs (`owner-concept-1.gif`, `owner-concept-2.gif`); their frames are in `storyboard-1.png` and `storyboard-2.png`. Where this spec and the pictures disagree, the pictures win. The first prototype is `prototype.html`; its motion code was the reference for the real build.
+
+**The owner's artifact** (https://claude.ai/artifact/UgiwwCiRsyigsHhvn1LoND, "LifeFlow Day Clock") now shows the concept as built on the branch (owner, 2026-11-08: "go into the concept using the artifacts until we build it into the main page").
+- **What it is:** `concept.html`, which runs the app's own `engine.ts` and `day-clock.css` on the app's theme tokens, with a made-up student's week placed on the viewer's real clock.
+- **What works in it:** a "see it at" time picker; pinning, Done and Open work in the page only.
+- **Keeping it current:** after any clock change, run `npx tsx scripts/dev/build-clock-artifact.ts` and republish `docs/design/clock/concept.html` to that URL, so the artifact never drifts from the branch.
 
 ## 1. What it is
 - The home screen. It is your time, today, shown as a clock. Tap it (or pull it) and it turns into a timeline you scroll through, day by day.
