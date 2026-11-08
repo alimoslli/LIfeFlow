@@ -389,6 +389,10 @@ until the premiere; turn it off once the film is posted. The first outline is ke
 conversation questions; the Marketing chat owns the film and the COO forwards footage here. Numbers in Ali's lines are checked against
 the code (385 commits on main Nov 1 to 8, about 1,100 tests: say "hundreds of changes in one week", "more than a thousand automated tests").
 Premiere proposed for Nov 29 (after the birthday film and the student spot, once the app redesign is live), waiting on Ali's yes.
+**Decided 2026-11-08:** the cinema scene is filmed on a couch in front of a TV (lights off, the TV the only light) and turned into a cinema
+with AI (Higgsfield stills first, then one 5-second take each, about 31 credits after a top-up); faces and voices stay real. Every spoken
+line, clip by clip, is in the doc's "Lines, clip by clip" tab (https://claude.ai/artifact/J4Qmes1s6mVYjLgxy3xBiY#aac74a43-8f54); the film
+now ends on Ali's line "So the time you get back goes to everything you were never going to give up."
 
 One cinematic film, posted once, made to look like it belongs in a cinema. Goal: a launch moment for the LifeFlow shift, with a
 waiting list behind it (owner's target: 10,000 sign-ups on day one). The owner and the LifeFlow team are on camera, with their
