@@ -5,6 +5,8 @@ import { errorReports, integrations, users } from "@/server/db/schema";
 import { encryptSecret } from "@/server/crypto";
 import { deleteAccount } from "@/server/services/accounts";
 import { saveGoogleConnection } from "@/server/integrations/google";
+import { adminFor } from "@/server/auth/admin";
+import { deleteUser } from "@/server/services/admin";
 import { makeUser } from "../helpers";
 
 afterAll(closeDb);
@@ -28,13 +30,22 @@ function withoutStripe() {
 }
 
 /** Records every outside call; `failHosts` answer 500. */
-function fakeWorld(opts: { failHosts?: string[]; subs?: { id: string; status: string }[] } = {}) {
+function fakeWorld(
+  opts: { failHosts?: string[]; hangHosts?: string[]; subs?: { id: string; status: string }[]; pages?: { id: string; status: string }[][] } = {},
+) {
   const calls: { url: string; method: string; body: string }[] = [];
   const f = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     calls.push({ url, method: init?.method ?? "GET", body: String(init?.body ?? "") });
+    if (opts.hangHosts?.some((h) => url.includes(h))) return new Promise<Response>(() => {});
     if (opts.failHosts?.some((h) => url.includes(h))) return new Response("{}", { status: 500 });
-    if (url.includes("api.stripe.com/v1/subscriptions?")) return Response.json({ data: opts.subs ?? [] });
+    if (url.includes("api.stripe.com/v1/subscriptions?")) {
+      if (opts.pages) {
+        const i = url.includes("starting_after=") ? 1 : 0;
+        return Response.json({ data: opts.pages[i], has_more: i < opts.pages.length - 1 });
+      }
+      return Response.json({ data: opts.subs ?? [] });
+    }
     return Response.json({ ok: true });
   }) as typeof fetch;
   return { f, calls };
@@ -102,10 +113,9 @@ describe("deleting an account closes what lives outside our database", () => {
   });
 
   it("a provider failure never stops the deletion and is recorded without ids or tokens", async () => {
-    const u = await setup({ plaid: ["tok-secret-9"], google: true, stripeCustomer: `cus_${crypto.randomUUID().slice(0, 8)}` });
-    withStripe();
+    const u = await setup({ plaid: ["tok-secret-9"], google: true });
     try {
-      const w = fakeWorld({ failHosts: ["plaid.com", "googleapis.com", "stripe.com"] });
+      const w = fakeWorld({ failHosts: ["plaid.com", "googleapis.com"] });
       await deleteAccount(getDb(), u.user.id, PASSWORD, { fetch: w.f });
       expect(await gone(u.user.id)).toBe(true);
       const reports = (await getDb().select().from(errorReports)).filter((r) => r.route === "account.delete");
@@ -150,5 +160,72 @@ describe("deleting an account closes what lives outside our database", () => {
     await expect(deleteAccount(getDb(), u.user.id, "wrong password!!", { fetch: w.f })).rejects.toThrow(/incorrect/);
     expect(w.calls).toHaveLength(0);
     expect(await gone(u.user.id)).toBe(false);
+  });
+
+  it("a Stripe failure refuses the deletion, revokes nothing else and keeps the account", async () => {
+    const u = await setup({ plaid: ["tok-s"], google: true, stripeCustomer: `cus_${crypto.randomUUID().slice(0, 8)}` });
+    withStripe();
+    try {
+      const w = fakeWorld({ subs: [{ id: "sub_live", status: "active" }], failHosts: ["subscriptions/sub_live"] });
+      await expect(deleteAccount(getDb(), u.user.id, PASSWORD, { fetch: w.f })).rejects.toThrow(/couldn't cancel your plan/);
+      expect(w.calls.some((c) => c.url.includes("plaid.com") || c.url.includes("googleapis.com"))).toBe(false);
+      expect(await gone(u.user.id)).toBe(false);
+    } finally {
+      withoutStripe();
+    }
+  });
+
+  it("follows Stripe's paging and cancels subscriptions on every page", async () => {
+    const u = await setup({ stripeCustomer: `cus_${crypto.randomUUID().slice(0, 8)}` });
+    withStripe();
+    try {
+      const w = fakeWorld({ pages: [[{ id: "sub_a", status: "active" }], [{ id: "sub_b", status: "trialing" }]] });
+      await deleteAccount(getDb(), u.user.id, PASSWORD, { fetch: w.f });
+      expect(w.calls.filter((c) => c.method === "DELETE").map((c) => c.url.split("/").pop())).toEqual(["sub_a", "sub_b"]);
+    } finally {
+      withoutStripe();
+    }
+  });
+
+  it("never sends another user's connections to a provider", async () => {
+    const mine = await setup({ plaid: ["tok-mine"] });
+    await setup({ plaid: ["tok-theirs"], google: true });
+    const w = fakeWorld();
+    await deleteAccount(getDb(), mine.user.id, PASSWORD, { fetch: w.f });
+    expect(w.calls).toHaveLength(1);
+    expect(JSON.parse(w.calls[0].body).access_token).toBe("tok-mine");
+  });
+
+  it("a hanging provider stops at the deadline and deletion still completes", async () => {
+    const u = await setup({ plaid: ["tok-h"], google: true });
+    const w = fakeWorld({ hangHosts: ["plaid.com"] });
+    const started = Date.now();
+    await deleteAccount(getDb(), u.user.id, PASSWORD, { fetch: w.f, deadlineMs: 300 });
+    expect(Date.now() - started).toBeLessThan(3000);
+    expect(w.calls.some((c) => c.url.includes("googleapis.com"))).toBe(true); // ran in parallel
+    expect(await gone(u.user.id)).toBe(true);
+  });
+
+  it("the admin delete runs the same cleanup, and refuses on a Stripe failure", async () => {
+    const owner = await makeUser("Owner");
+    await getDb().update(users).set({ totpEnabledAt: new Date() }).where(eq(users.id, owner.user.id));
+    process.env.ADMIN_EMAILS = [process.env.ADMIN_EMAILS, owner.user.email].filter(Boolean).join(",");
+    const admin = (await adminFor(getDb(), owner.user.id, { ADMIN_EMAILS: owner.user.email }))!;
+
+    const u = await setup({ plaid: ["tok-admin"] });
+    const w = fakeWorld();
+    await deleteUser(getDb(), admin, u.user.id, u.user.email, { fetch: w.f });
+    expect(w.calls.filter((c) => c.url.endsWith("/item/remove"))).toHaveLength(1);
+    expect(await gone(u.user.id)).toBe(true);
+
+    const v = await setup({ stripeCustomer: `cus_${crypto.randomUUID().slice(0, 8)}` });
+    withStripe();
+    try {
+      const bad = fakeWorld({ failHosts: ["api.stripe.com"] });
+      await expect(deleteUser(getDb(), admin, v.user.id, v.user.email, { fetch: bad.f })).rejects.toThrow(/couldn't cancel your plan/);
+      expect(await gone(v.user.id)).toBe(false);
+    } finally {
+      withoutStripe();
+    }
   });
 });

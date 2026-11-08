@@ -85,19 +85,26 @@ async function stripe(cfg: BillingConfig, path: string, params: Record<string, s
   return json.url;
 }
 
-/** Cancels every live subscription of a Stripe customer right away (used when an account is deleted). Returns how many were cancelled. Throws on failure. */
+/** Cancels every live subscription of a Stripe customer right away (used when an account is deleted), following Stripe's paging. Returns how many were cancelled. Throws on any failure. */
 export async function cancelSubscriptionsNow(cfg: BillingConfig, customerId: string, fetchImpl: typeof fetch = fetch) {
   const headers = { authorization: `Bearer ${cfg.secretKey}` };
-  const list = await fetchImpl(`https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=all&limit=20`, { headers });
-  const body = (await list.json().catch(() => ({}))) as { data?: { id?: string; status?: string }[] };
-  if (!list.ok || !Array.isArray(body.data)) throw new Error("Stripe subscription list failed");
-  const live = body.data.filter((s) => typeof s.id === "string" && s.status !== "canceled" && s.status !== "incomplete_expired");
-  let failed = false;
-  for (const s of live) {
-    const res = await fetchImpl(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(s.id!)}`, { method: "DELETE", headers });
-    if (!res.ok) failed = true;
+  const live: string[] = [];
+  let after: string | null = null;
+  for (let page = 0; page < 20; page++) {
+    const url: string = `https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=all&limit=100${after ? `&starting_after=${encodeURIComponent(after)}` : ""}`;
+    const list = await fetchImpl(url, { headers });
+    const body = (await list.json().catch(() => ({}))) as { data?: { id?: string; status?: string }[]; has_more?: boolean };
+    if (!list.ok || !Array.isArray(body.data)) throw new Error("Stripe subscription list failed");
+    for (const s of body.data) if (typeof s.id === "string" && s.status !== "canceled" && s.status !== "incomplete_expired") live.push(s.id);
+    if (!body.has_more) break;
+    const last: string | undefined = body.data[body.data.length - 1]?.id;
+    if (!last) throw new Error("Stripe paging failed");
+    after = last;
   }
-  if (failed) throw new Error("Stripe cancel failed");
+  for (const id of live) {
+    const res = await fetchImpl(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(id)}`, { method: "DELETE", headers });
+    if (!res.ok) throw new Error("Stripe cancel failed");
+  }
   return live.length;
 }
 

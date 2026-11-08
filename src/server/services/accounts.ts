@@ -7,7 +7,7 @@ import { users, type UserPreferences } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { seedDefaultCategories } from "./finance/categories";
 import { audit } from "./audit";
-import { revokeOutsideAccess, type CleanupDeps } from "./account-cleanup";
+import { DeletionBlockedError, revokeOutsideAccess, type CleanupDeps } from "./account-cleanup";
 
 export const signupSchema = z.object({
   name: z.string().trim().min(1, "Enter your name").max(80),
@@ -191,6 +191,11 @@ export async function deleteAccount(db: Database, userId: string, password: stri
   if (!user) throw new AuthError("Account not found.");
   if (hasPassword(user.passwordHash) && !(await verifyPassword(password, user.passwordHash))) throw new AuthError("Password is incorrect.");
   // Close what lives outside our database first (best effort, never blocks): the stored tokens go with the rows.
-  await revokeOutsideAccess(db, user, deps);
+  try {
+    await revokeOutsideAccess(db, user, deps);
+  } catch (e) {
+    if (e instanceof DeletionBlockedError) throw new AuthError(e.message);
+    throw e;
+  }
   await db.delete(users).where(eq(users.id, userId));
 }
