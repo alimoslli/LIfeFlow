@@ -85,6 +85,22 @@ async function stripe(cfg: BillingConfig, path: string, params: Record<string, s
   return json.url;
 }
 
+/** Cancels every live subscription of a Stripe customer right away (used when an account is deleted). Returns how many were cancelled. Throws on failure. */
+export async function cancelSubscriptionsNow(cfg: BillingConfig, customerId: string, fetchImpl: typeof fetch = fetch) {
+  const headers = { authorization: `Bearer ${cfg.secretKey}` };
+  const list = await fetchImpl(`https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=all&limit=20`, { headers });
+  const body = (await list.json().catch(() => ({}))) as { data?: { id?: string; status?: string }[] };
+  if (!list.ok || !Array.isArray(body.data)) throw new Error("Stripe subscription list failed");
+  const live = body.data.filter((s) => typeof s.id === "string" && s.status !== "canceled" && s.status !== "incomplete_expired");
+  let failed = false;
+  for (const s of live) {
+    const res = await fetchImpl(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(s.id!)}`, { method: "DELETE", headers });
+    if (!res.ok) failed = true;
+  }
+  if (failed) throw new Error("Stripe cancel failed");
+  return live.length;
+}
+
 /** A Stripe Checkout page for Pro. The webhook (not this redirect) turns Pro on. */
 export function checkoutUrl(cfg: BillingConfig, user: { id: string; email: string; stripeCustomerId: string | null }, fetchImpl?: typeof fetch) {
   return stripe(
