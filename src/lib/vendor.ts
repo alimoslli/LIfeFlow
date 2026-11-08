@@ -167,10 +167,15 @@ export function cleanVendorName(raw: string | null | undefined): string {
   const brand = brandName(original);
   if (brand) return brand;
 
-  let s = original
+  // A number that opens the name belongs to it when a word follows (7-Eleven, 99 Ranch, 76 Gas, 24 Hour Fitness); store numbers,
+  // card digits and references come after the name or are longer (1103, 0231), and dates have a slash.
+  const opened = original
     .replace(/\s+/g, " ")
     .replace(LEAD, "")
     .replace(PROCESSOR, "")
+    .replace(/^(?:(?:purchase )?authorized on )?\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\s+/i, ""); // a date in front
+  const owned = /^(\d{1,2})([- ])(?=[a-z]{3})/i.exec(opened);
+  let s = (owned ? opened.slice(owned[0].length) : opened)
     .replace(/\b(?:purchase )?authorized on \d{1,2}\/\d{1,2}\b/gi, " ")
     .replace(/\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g, " ") // dates
     .replace(/\(?\b\d{3}\)?[-. ]?\d{3}[-. ]\d{4}\b/g, " ") // phone numbers
@@ -181,6 +186,7 @@ export function cleanVendorName(raw: string | null | undefined): string {
     .replace(/\b[a-z0-9]*\d[a-z0-9]*\b/gi, (w) => (/^\d{1,2}(?:st|nd|rd|th)$/i.test(w) || /^[a-z]+\d$/i.test(w) ? w : " ")) // ids and store numbers (words with digits)
     .replace(/\s+/g, " ")
     .trim();
+  if (owned && s) s = owned[1] + owned[2] + s;
 
   // Statement words anywhere in the line ("... ACH", "RENT PAYMENT ..."): dropped when a name is left.
   const drop = new Set(["ach", "ppd", "pmt", "pymt", "autopay", "web", "debit", "recurring", "online", "payment"]);
