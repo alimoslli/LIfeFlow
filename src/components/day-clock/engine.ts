@@ -59,6 +59,8 @@ export type DayClockOptions = {
   onOpen: (href: string) => void;
   /** "Done" on a to-do's or an assignment's card. */
   onDone: (it: ClockItem) => void;
+  /** "Edit" on an event's, a shift's or an assignment's card: its editor, in place. */
+  onEdit: (it: ClockItem) => void;
   /** The day turned over while the page was open: fetch fresh data. */
   onNewDay: () => void;
   /** A tap on an empty spot of the open line: pin something at that time (minutes from the start of today). */
@@ -441,6 +443,17 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     });
     const arc = (a: number, b: number) => arcs.push({ a, b, past: false, lap: 0, els: [] });
     for (const it of DATED) {
+      // a to-do or an assignment still open after its time belongs to now: one "overdue" marker at the hand
+      if ((it.origin === "task" || it.origin === "assignment") && t0(it) + (it.allDay ? 1439 : 0) < now) {
+        marks.push(mark(it, now + 1, "overdue"));
+        continue;
+      }
+      if (it.allDay && it.origin === "event") {
+        // an all-day plan (a birthday, a trip): at the hand while it's today, at midnight when it's tomorrow
+        if (dayOf(it.start) < dayOf(now) || it.start > we) continue;
+        marks.push(mark(it, Math.max(it.start, now + 1), dayOf(it.start) === dayOf(now) ? "today" : "all day"));
+        continue;
+      }
       if (it.allDay) {
         // an all-day deadline or bill is due by the end of its day (a milestone already happened: it lives on the line)
         if (it.kind !== "due" || it.origin === "milestone") continue;
@@ -473,7 +486,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     marks.sort((a, b) => a.t - b.t);
     marks = marks.reduce<Mark[]>((out, m) => {
       const last = out[out.length - 1];
-      if (!last || ringOf(m.t) !== ringOf(last.t) || m.t - last.t >= 30) out.push(m);
+      if (!last || ringOf(m.t) !== ringOf(last.t) || m.t - last.t >= 30 || (m.label === "overdue") !== (last.label === "overdue")) out.push(m);
       else {
         last.more += 1;
         if (weight(m.it) > weight(last.it)) Object.assign(last, { it: m.it, label: m.label });
@@ -566,6 +579,18 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const other = soon.filter((it) => it.cat === "other").length;
       if (other) parts.push(`${other} more`);
       if (parts.length) lines.push(`Next 3 days: ${parts.join(" · ")}`);
+      else {
+        // nothing in the next days either: what the line holds, so the face still speaks for the person's life
+        const c = (f: (it: ClockItem) => boolean) => ITEMS.filter(f).length;
+        const on = [
+          [c((it) => it.origin === "task"), "to-do", "to-dos"],
+          [c((it) => it.origin === "goal" || it.origin === "money_goal"), "goal", "goals"],
+          [c((it) => it.origin === "milestone"), "milestone", "milestones"],
+        ]
+          .filter(([k]) => (k as number) > 0)
+          .map(([k, one, many]) => `${k} ${k === 1 ? one : many}`);
+        if (on.length) lines.push(`On your line: ${on.join(" · ")}`);
+      }
     }
     return lines;
   }
@@ -1131,10 +1156,14 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
                     : `Due ${fmt(it.start)}`;
     const sub = [it.subtitle, it.source].filter(Boolean).join(" · ");
     const canDo = (it.origin === "task" || it.origin === "reminder" || it.origin === "assignment") && !!it.ref;
+    const inPlace = it.origin === "event" || it.origin === "shift" || it.origin === "assignment";
+    const onPage = it.origin === "task" || it.origin === "reminder" || it.origin === "goal" || it.origin === "milestone";
+    const acts = `${canDo ? '<button type="button" class="dc-d-done">Done</button>' : ""}${inPlace ? '<button type="button" class="dc-d-edit">Edit</button>' : ""}<button type="button" class="dc-d-open">${esc(onPage ? "Edit" : openLabel(it.href))}</button>`;
     detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${esc(it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-t">${esc(
       it.title,
-    )}</div><div class="dc-d-w">${esc(when)}</div><div class="dc-d-s">${esc(sub)}</div><div class="dc-d-acts">${canDo ? '<button type="button" class="dc-d-done">Done</button>' : ""}<button type="button" class="dc-d-open">${esc(openLabel(it.href))}</button></div></div>`;
+    )}</div><div class="dc-d-w">${esc(when)}</div><div class="dc-d-s">${esc(sub)}</div><div class="dc-d-acts">${acts}</div></div>`;
     detail.querySelector(".dc-d-open")?.addEventListener("click", () => opts.onOpen(it.href));
+    detail.querySelector(".dc-d-edit")?.addEventListener("click", () => opts.onEdit(it));
     detail.querySelector(".dc-d-done")?.addEventListener("click", () => {
       S.sel = null;
       showDetail();

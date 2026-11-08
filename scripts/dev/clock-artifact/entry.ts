@@ -287,6 +287,7 @@ function start() {
   root.querySelector("[data-dc=hap] input")?.setAttribute("switch", "");
   clock = createDayClock(root, data, {
     onOpen: (href) => toast(`In the app, this opens ${whereOf(href)}.`),
+    onEdit: (it) => toast(`In the app, this opens the editor for ${it.title}, right here.`),
     onNewDay: () => {
       data = exampleLife(todayStr());
       clock?.update(data);

@@ -59,6 +59,7 @@ async function main() {
     await createAssignment(s, TZ, { courseId: chem.id, title: "Exam 2", kind: "exam", dueDate: d(2), dueTime: "10:00" });
     await createAssignment(s, TZ, { courseId: chem.id, title: "Lab report", dueDate: d(3), dueTime: "23:59" });
     await createTask(s, TZ, { title: "Pay phone bill", dueDate: d(3), dueTime: "09:00", priority: "high" });
+    await createTask(s, TZ, { title: "Return library book", dueDate: d(-5), priority: "medium" });
     // the long line: a life behind, plans and goals ahead, and something with no day yet
     await createMilestone(s, { title: "🎂 Born", when: "2006-03-14" });
     await createMilestone(s, { title: "🎓 Started college", when: "2024-08-26" });

@@ -177,8 +177,16 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
   - **Long empty stretches stay short:** outside the week, a month mark ("NOV", "APR 2027") or a year ("2006") sits before the first thing in it, so no gap is wider than a short step. The further a thing is from today, the quieter it looks, down to half strength.
   - **Someday:** to-dos and goals with no day wait in a row at the very end, under "Someday". They carry no time, and you can't pin into that stretch.
   - **Done on the card:** a to-do's or an assignment's card has **Done** beside Open. It is the same action as To-dos and School; the line refreshes in place.
+  - **Edit on the card (owner, 2026-11-08: "I can't edit anything on the timeline"):**
+    - events, shifts and assignments open Plan's own editor (`BlockSheet` in `plan/block-editor.tsx`) right there, with delete inside it; saving refreshes the line;
+    - the editor's data loads only when Edit is tapped (`blockForEditAction`), so Today stays one read;
+    - to-dos, reminders, goals and milestones say **Edit** and open their own page.
   - **Milestone cards** say how long ago ("2 years ago"). Goal cards say "Your goal, by the end of this day". "Due" is only ever said of to-dos, assignments and bills.
   - **On the clock:** milestones (things that happened) never sit on the rim. A goal whose day falls in the next 24 hours shows as "goal day".
+  - **Never an empty clock (owner, 2026-11-08: "the clock is empty"):**
+    - a to-do or an assignment still open after its time belongs to now: one **overdue** marker at the hand (with "+N");
+    - an all-day plan (a birthday, a trip) reads "today" at the hand or "all day" at midnight, never "due";
+    - a face with nothing measured and nothing in the next days counts what the line holds ("On your line: 12 to-dos · 3 goals · 5 milestones").
 - **Everything with a time flows in (owner, 2026-11-08: "every piece of data that qualifies… perfectly flowing in there"):** one read, `dayClockData`, from the person's own data only.
   - **Calendars:** Google, Outlook and LifeFlow events, merged across sources. Further out than the week, only one-off plans (a flight, an appointment, a birthday). An event that repeats three or more times in the next 60 days (a weekly class, a daily event) shows in the week only.
   - **Work:** shifts, in the week.

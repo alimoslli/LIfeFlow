@@ -788,6 +788,7 @@
 }
 .dc-d-acts {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
 }
@@ -800,6 +801,7 @@
   font-size: 0.85rem;
   font-weight: 600;
 }
+.dc .dc-d-edit,
 .dc .dc-d-open {
   position: relative;
   height: 44px;

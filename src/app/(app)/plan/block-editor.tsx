@@ -42,18 +42,24 @@ export function EditableBlock({ block, className, children }: { block: Block | n
         {children}
       </Link>
     );
-  const close = () => setOpen(false);
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className={`${className} w-full text-left`}>
         {children}
       </button>
-      <Sheet open={open} onClose={close} title={block.origin === "event" ? "Event" : block.origin === "shift" ? "Shift" : "Assignment"}>
-        {open && block.origin === "event" && <EventForm b={block} done={close} />}
-        {open && block.origin === "shift" && <ShiftForm b={block} done={close} />}
-        {open && block.origin === "assignment" && <AssignmentForm b={block} done={close} />}
-      </Sheet>
+      <BlockSheet block={open ? block : null} onClose={() => setOpen(false)} />
     </>
+  );
+}
+
+/** The editor for one event, shift or assignment, in a sheet (Plan's rows and the Today timeline's cards). */
+export function BlockSheet({ block, onClose }: { block: Exclude<Block, { origin: "task" }> | null; onClose: () => void }) {
+  return (
+    <Sheet open={!!block} onClose={onClose} title={block?.origin === "shift" ? "Shift" : block?.origin === "assignment" ? "Assignment" : "Event"}>
+      {block?.origin === "event" && <EventForm key={block.id} b={block} done={onClose} />}
+      {block?.origin === "shift" && <ShiftForm key={block.id} b={block} done={onClose} />}
+      {block?.origin === "assignment" && <AssignmentForm key={block.id} b={block} done={onClose} />}
+    </Sheet>
   );
 }
 

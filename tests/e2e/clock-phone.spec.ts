@@ -18,6 +18,8 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   const clock = page.getByTestId("day-clock");
   await expect(clock).toHaveAttribute("data-ready", "true");
   await expect(clock).toHaveAttribute("data-state", "clock");
+  // Something still open after its day belongs to now: one "overdue" marker at the hand.
+  await expect(clock.locator(".dc-co", { hasText: "overdue" })).toHaveCount(1);
   // Closed, the timeline's controls aren't reachable (hidden, not just transparent).
   await expect(page.getByRole("navigation", { name: "Days" })).toBeHidden();
 
@@ -90,6 +92,20 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   await expect
     .poll(async () => (await queryAsUser<{ status: string }>(email, "select status from tasks where title = 'Pay phone bill'"))[0]?.status)
     .toBe("done");
+
+  // Edit right on the card: a calendar event opens Plan's editor in place, and saving updates the line.
+  await page.locator(".dc-node", { hasText: "Brunch with Jordan" }).click();
+  await page.locator("[data-dc=detail]").getByRole("button", { name: "Edit" }).click();
+  const editor = page.getByRole("dialog", { name: "Event" });
+  await expect(editor).toBeVisible();
+  await editor.getByLabel("Title").fill("Brunch with Jordan and Sam");
+  await editor.getByRole("button", { name: "Save" }).click();
+  await expect(editor).toBeHidden();
+  await expect(page.locator(".dc-node", { hasText: "Brunch with Jordan and Sam" })).toBeAttached();
+  // A shift opens its own editor the same way.
+  await page.locator(".dc-node", { hasText: "Work" }).first().click();
+  await page.locator("[data-dc=detail]").getByRole("button", { name: "Edit" }).click();
+  await expect(page.getByRole("dialog", { name: "Shift" })).toBeVisible();
 });
 
 // A full life stays calm (owner, 2026-11-08): three deadlines at 11:59 PM are one marker on the clock ("+2") and one stop
