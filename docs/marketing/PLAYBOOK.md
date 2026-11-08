@@ -391,6 +391,8 @@ the code (385 commits on main Nov 1 to 8, about 1,100 tests: say "hundreds of ch
 Premiere decided: Monday, Nov 30, 2026, 10 AM Pacific (Ali chose Nov 29 or 30; Metricool's best-time data rates Monday about twice Sunday, general Instagram patterns until the account has its own history). Teaser Sunday, Nov 29, around 6 PM Pacific. Ali's answers (2026-11-08, via the COO): the dub is in **Arabic** (captions, end card and ticket right to left); the AI cinema
 is only the hook's first seconds, so it is perfected last and gets **no credits until Ali says so**: raw footage of Ali and his friend comes
 first; the waiting list lives on lifeflowweb.com but is **not built yet** (an app change, sent to Ali through the COO as a decision card).
+Waiting-list mechanic **decided** (Ali): the more friends you invite who join, the higher your rank, the closer to the front. Real counter
+and real rank only. When it's built, reuse the app's existing invite links (`/?invite=<code>`, `services/invites.ts`, credits the inviter once).
 **Decided 2026-11-08:** the cinema scene is filmed on a couch in front of a TV (lights off, the TV the only light) and turned into a cinema
 with AI (Higgsfield stills first, then one 5-second take each, about 31 credits after a top-up); faces and voices stay real. Every spoken
 line, clip by clip, is in the doc's "Lines, clip by clip" tab (https://claude.ai/artifact/J4Qmes1s6mVYjLgxy3xBiY#aac74a43-8f54); the film
