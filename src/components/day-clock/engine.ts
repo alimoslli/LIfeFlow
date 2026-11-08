@@ -243,6 +243,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   let TM: TrackModel = { nodes: [], stops: [], total: 0, nowX: 0, nowEl: null };
   let MAP: Morph[] = [];
   const COL = { accent: [0.5, 0.88, 0.68], grey: [0.23, 0.24, 0.23], fill: [0.07, 0.08, 0.08] };
+  // Listeners on long-lived elements and the document; ones on elements the engine redraws go away with them.
   const cleanups: (() => void)[] = [];
   const on = <K extends keyof HTMLElementEventMap>(
     el: EventTarget,
@@ -610,7 +611,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const time = timeOf(it);
       b.innerHTML = `<span class="dc-n-ic" aria-hidden="true">${esc(it.icon)}</span><span class="dc-n-dot"></span><span class="dc-n-t">${esc(time)}</span><span class="dc-n-n">${esc(name)}</span>`;
       b.setAttribute("aria-label", `${name}, ${dayLong(dayOf(n.t))}, ${time}`);
-      on(b, "click", () => select(it.id));
+      b.addEventListener("click", () => select(it.id));
       n.el = b;
     }
     const np = html("button", "dc-now", track);
@@ -620,7 +621,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const hDeg = (((S.now / 60) % 12) / 12) * 360;
     np.innerHTML = `<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" transform="rotate(${mDeg.toFixed(1)} 7 7)"/><path d="M7 7V4.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" transform="rotate(${hDeg.toFixed(1)} 7 7)"/></svg><span>${fmt(S.now)}</span><i></i>`;
     np.setAttribute("aria-label", `Now, ${fmt(S.now)}. Back to the clock`);
-    on(np, "click", () => close());
+    np.addEventListener("click", () => close());
     TM.nowEl = np;
   }
 
@@ -676,7 +677,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       b.type = "button";
       b.setAttribute("aria-label", label);
       b.innerHTML = `<svg width="9" height="15" viewBox="0 0 9 15" aria-hidden="true"><path d="${path}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-      on(b, "click", () => goDay(S.day + d));
+      b.addEventListener("click", () => goDay(S.day + d));
     };
     arrow("Previous day", "M7.5 1.5 1.5 7.5l6 6", -1);
     for (const day of data.days) {
@@ -686,7 +687,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       b.textContent = day.short;
       b.dataset.d = String(d);
       b.setAttribute("aria-label", d === 0 ? "Today" : day.long);
-      on(b, "click", () => {
+      b.addEventListener("click", () => {
         if (d === 0 && S.day === 0 && Math.abs(trackWrap.scrollLeft - homeScroll()) < 30) close();
         else goDay(d);
       });
@@ -768,7 +769,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       b.dataset.id = c.it.id;
       b.innerHTML = `${TILE_ICONS[c.icon]}<span class="dc-tx"><span class="dc-tn">${esc(c.name)}</span><span class="dc-tt">${esc(c.time)}</span></span>`;
       b.setAttribute("aria-label", c.label);
-      on(b, "click", () => {
+      b.addEventListener("click", () => {
         select(c.it.id);
         // same day: bring its node into view; a later day's deadline just opens its card
         const n = TM.nodes.find((x) => x.it.id === c.it.id);
