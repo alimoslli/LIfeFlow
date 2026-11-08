@@ -71,11 +71,25 @@ describe("promises", () => {
     expect((await a.run((s) => promiseStats(s, new Date(now.getTime() + 15 * 86_400_000)))).brokenRecent).toBe(0);
 
     const m = (await a.run((s) => createPromise(s, TZ, { text: "Move me", dueDate: "2026-11-10" }, now))).promise;
-    await a.run((s) => movePromise(s, m.id));
-    await a.run((s) => movePromise(s, m.id));
-    await expect(a.run((s) => movePromise(s, m.id))).rejects.toThrow(/twice/);
+    await a.run((s) => movePromise(s, m.id, TZ, now));
+    await a.run((s) => movePromise(s, m.id, TZ, now));
+    await expect(a.run((s) => movePromise(s, m.id, TZ, now))).rejects.toThrow(/twice/);
 
     expect(await b.run((s) => listPromises(s, "all"))).toEqual([]);
     await expect(b.run((s) => resolvePromise(s, m.id, "kept", "you"))).rejects.toThrow(/not found/);
+  });
+
+  it("'Tomorrow instead' after a late answer lands tomorrow (from now) at the same time, not already in the past", async () => {
+    const { run } = await makeUser();
+    const made = new Date("2026-11-07T15:00:00Z");
+    const p = (await run((s) => createPromise(s, TZ, { text: "Late answer", dueDate: "2026-11-07" }, made))).promise; // 9 PM EST Nov 7
+    const answered = new Date("2026-11-10T15:00:00Z"); // the card sat for days
+    const moved = await run((s) => movePromise(s, p.id, TZ, answered));
+    expect(moved.dueAt.toISOString()).toBe("2026-11-12T02:00:00.000Z"); // 9 PM EST on Nov 11
+    expect(await run((s) => promisesDue(s, answered))).toEqual([]); // no instant re-ask
+    // Answered the same evening: simply the next day.
+    const q = (await run((s) => createPromise(s, TZ, { text: "Same night", dueDate: "2026-11-08" }, made))).promise;
+    const m2 = await run((s) => movePromise(s, q.id, TZ, new Date("2026-11-09T02:05:00Z")));
+    expect(m2.dueAt.toISOString()).toBe("2026-11-10T02:00:00.000Z");
   });
 });
