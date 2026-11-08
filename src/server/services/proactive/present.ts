@@ -18,7 +18,7 @@ export function toCard(m: JarvisMessage, tz: string): CardMessage {
           label: a.label,
           href: a.type === "open" ? a.href : undefined,
           prompt: a.type === "ask" ? a.prompt : undefined,
-          choices: a.type === "answer" ? a.choices : undefined,
+          choices: a.type === "answer" || a.type === "promise_check" ? a.choices : undefined,
         }
       : null,
     money: isMoneyAction(a),

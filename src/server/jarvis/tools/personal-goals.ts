@@ -102,7 +102,7 @@ export const personalGoalTools = [
   defineTool({
     name: "create_personal_goal",
     description:
-      "Create a goal that isn't about money. Optional: a number to reach with its unit (12 books) and a date. For saving or paying off money, use create_goal.",
+      'Create a goal that isn\'t about money: an outcome worked toward over weeks or months ("run a 5K", "read 12 books"), not a one-off errand (to-do) or tonight\'s commitment (promise). Optional: a number to reach with its unit (12 books) and a date. For saving or paying off money, use create_goal.',
     schema: z.object({
       title: z.string().min(1).max(200),
       target: z.number().int().min(1).optional(),

@@ -17,7 +17,8 @@ This is how the company runs. It sits on top of `docs/team.md` (cost rules, the 
 
 - **CEO (the owner):** decides direction, answers the yes/no list and okays pictures. Talks only to the COO. The other chats stay open for when the owner wants to dig in.
 - **COO (head manager):** `.claude/agents/coo.md`, on Opus in the "LF COO" chat (owner, 2026-11-07: "always there, like a real COO"). A light pass every 2 hours from 8 AM to 10 PM, plus the night rounds. Runs every scheduled round, decides the order of work, hands work between departments, makes the decisions it's allowed to make, and brings the CEO one short brief per round.
-- **CMO (coming soon, owner 2026-11-07):** a real person, the owner's partner, over Marketing & Growth. HQ shows the seat as "Coming soon"; their own sign-in is a separate step with its own security review.
+- **CMO (owner 2026-11-07, 2026-11-08):** a real person, the owner's partner, not on Claude Code. Reports to the CEO and leads Marketing & Growth with the CEO; the Marketing chat and the COO take the CMO's direction like the CEO's and write it into the playbook. HQ shows the seat as "Coming soon"; their own sign-in is a separate step with its own security review.
+- **Which chat is which department:** `docs/PLAN.md` section 1 (one chat per department; merged chats listed there).
 - **Departments.** Each department is a lead agent: a role file the COO starts inside a round, at most two at a time, Sonnet by default. Each has a room in HQ.
 
 | Department | HQ room | Lead agent | When | Owns | Hands off to |

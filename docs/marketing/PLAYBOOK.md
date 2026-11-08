@@ -21,6 +21,7 @@ LifeFlow is a personal assistant with one job: serve you and help you get the mo
 
 - **Name:** LifeFlow. **Site:** lifeflowweb.com. **Instagram:** @lifeflowweb.
 - **What it is:** a personal assistant app that brings your schedule, school, work, money and goals into one place, and helps on its own, even when you don't open it.
+- **Words:** read `docs/marketing/WORDS.md` first (the one idea, everyone who earns, words we use, retired words).
 - **Audience:** LifeFlow is for everyone with a full life. Not just students (owner, 2026-11-07): students (college, 18 to 24) are one audience, alongside working people, parents, side hustlers and anyone juggling schedule, work and money. The marketer tests different audiences and leans into whichever the real numbers show growing.
 - **The assistant:** it has no fixed name. Each person names it, and until they do the app says "your assistant". In ads, captions, scripts and on the landing page, always say **"your personal assistant"**. Never "Jarvis": that's only an internal code name and never appears to anyone outside the team (owner's rule, CLAUDE.md).
 - **Look:** deep green hero colour on cream, the green wave logo mark. Brand guide: https://claude.ai/artifact/Xngzg4E3JKBE6fEvVrTpA8
@@ -186,6 +187,15 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
 ## 6. Decisions and preferences (keep adding)
 
 - Owner wants short replies and quick recaps, especially during work hours.
+- 2026-11-08 (owner): cut Higgsfield costs. Credits go only to raw AI footage, never to music, voices or finished edits.
+  - **No generated music or voice.** The owner adds the music himself; videos are delivered silent (with sound effects only if made locally for free) plus a note of where the beats should land.
+  - **Stills first, then motion.** Every shot starts as a still (about 0.25 credits). Only stills that pass the quality check get animated (Kling 3.0 pro 5 s, 7.5 credits; never Seedance, never 15 s takes, never sound on).
+  - **One take per shot.** No test shots, no samples, no "maybe" renders. A shot that fails the check is fixed as a still before it is animated again.
+  - **All editing is local and free** (ffmpeg: cuts, grade, text, end card). Higgsfield is never used to edit, montage or upscale.
+  - Before any spend, the COO writes the shot list with each shot's cost and the total, and keeps a running tally against the budget.
+- 2026-11-08 (owner): the standard male voiceover is "Sterling" (Higgsfield text2speech_v2, ElevenLabs variant, preset voice_id dc382508-c8bd-443c-8cb2-46e57b8d2e6f, stability 0.35, similarity 0.8), in a calm, inspiring read. Owner: "we will keep using that for male voice overs". The female text-to-speech voices sounded like an audiobook and are out. Voiceover is the one exception to "no generated voices": generate only final, approved script lines with this voice (about 0.3 credits a line), never auditions of other voices without the owner asking.
+- 2026-11-08 (owner, later): Sterling did NOT work on the test-drive voiceover (the read sounded too street and tough, not calm and inspiring). Sterling is approved only for the student spot read the owner liked. For any other piece, show the owner a short voice sample before using any voice, and spend no more credits on voice until he picks.
+- 2026-11-08 (owner, after the student spot v2): (1) the spot is not final: the last shot (end card) and the app shots are replaced with the redesigned LifeFlow; (2) LifeFlow is a flow for all: never write or cast as if work means one kind of job (shifts, salaried, clients and projects, gigs, your own thing); the spot read as only for retail workers, which is wrong; (3) the old words are retired and new ones come from the new design, kept in `docs/marketing/WORDS.md` (draft until the owner says yes); (4) the meaning is the message: LifeFlow gives you your time back for your life. The line "So the time you get back... goes to everything you were never going to give up" is the model; every script lands on where the time goes.
 - Don't change the app while doing marketing work unless asked.
 - The owner's clips are direction, not a template: the final video doesn't have to copy their exact movements.
 - Final videos are made with Higgsfield using the one LifeFlow character (section 3b); the owner provides credits. Check the price first and ask before spending past the agreed budget.
