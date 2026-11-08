@@ -44,6 +44,21 @@ describe("cleanVendorName", () => {
     expect(cleanVendorName("AT&T WIRELESS")).toBe("AT&T");
   });
 
+  it("keeps a number that is part of a store's name, and still drops store numbers, card digits, dates and references", () => {
+    const names: [string, string][] = [
+      ["7-ELEVEN #32145", "7-Eleven"],
+      ["7-Eleven", "7-Eleven"],
+      ["POS DEBIT 7-ELEVEN 32145", "7-Eleven"],
+      ["99 RANCH MARKET #0123 SAN JOSE CA", "99 Ranch Market"],
+      ["76 GAS STATION 4411", "76 Gas Station"],
+      ["24 HOUR FITNESS USA INC 8800123", "24 Hour Fitness Usa Inc"],
+      ["PURCHASE AUTHORIZED ON 11/02 7-ELEVEN 32145 S3021", "7-Eleven"],
+      ["CHECKCARD 1103 CAMPUS COFFEE", "Campus Coffee"],
+      ["04/17 PIZZA PLACE 5521", "Pizza Place"],
+    ];
+    for (const [raw, want] of names) expect(cleanVendorName(raw), raw).toBe(want);
+  });
+
   it("flags names that still look like statement noise", () => {
     expect(looksMessy("KJSDF*2234 LLC")).toBe(true);
     expect(looksMessy("Blue Bottle Coffee")).toBe(false);
