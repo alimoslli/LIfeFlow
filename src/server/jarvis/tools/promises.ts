@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createPromise, listPromises, promiseStats, resolvePromise } from "../../services/promises";
+import { cancelPromise, createPromise, listPromises, promiseStats, resolvePromise } from "../../services/promises";
 import { localDateOf, localTimeOf } from "@/lib/dates";
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
 
@@ -39,6 +39,17 @@ export const promiseTools = [
     async execute(_a, ctx) {
       const [open, stats] = await ctx.run(async (s) => [await listPromises(s), await promiseStats(s, ctx.now)] as const);
       return { promises: open.map((p) => present(p, ctx)), ...stats };
+    },
+  }),
+  defineTool({
+    name: "cancel_promise",
+    description:
+      "Remove an open promise that should not exist: you saved it as a promise but it was really a to-do or a goal, or the user says to forget it. It is deleted, never counted as kept or broken, and no check-in comes. Use it when switching a promise to the right kind (save the right kind first). Not for how a promise went: that is resolve_promise.",
+    schema: z.object({ id: idArg("Promise") }),
+    mutates: true,
+    async execute(a, ctx) {
+      const r = await ctx.run((s) => cancelPromise(s, a.id));
+      return { removed: true, id: r.id, viewAt: "/" };
     },
   }),
   defineTool({

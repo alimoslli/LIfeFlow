@@ -46,7 +46,15 @@ const txn = (id: string, amount: number, extra: Record<string, unknown> = {}) =>
 
 /** A small stand-in for Plaid's API. `pages` are successive /transactions/sync responses. */
 function fakePlaid(
-  opts: { pages?: unknown[]; loginRequired?: boolean; noInvestments?: boolean; only?: string[]; failLiabilities?: boolean; noLiveBalance?: boolean } = {},
+  opts: {
+    pages?: unknown[];
+    loginRequired?: boolean;
+    noInvestments?: boolean;
+    only?: string[];
+    failLiabilities?: boolean;
+    noLiveBalance?: boolean;
+    emptyHoldings?: boolean;
+  } = {},
 ) {
   const calls: { path: string; body: Record<string, unknown> }[] = [];
   let page = 0;
@@ -110,6 +118,7 @@ function fakePlaid(
       }
       case "/investments/holdings/get":
         if (opts.noInvestments) return json({ error_code: "PRODUCTS_NOT_SUPPORTED" }, 400);
+        if (opts.emptyHoldings) return json({ holdings: [], securities: [] });
         return json({
           holdings: [{ account_id: "acc-ira", security_id: "sec-vti", quantity: 10, institution_value: 2500, cost_basis: 2000 }],
           securities: [{ security_id: "sec-vti", name: "Vanguard Total Stock Market ETF", ticker_symbol: "VTI", type: "etf" }],
@@ -305,6 +314,32 @@ describe("Plaid", () => {
     const noLive = fakePlaid({ noLiveBalance: true });
     expect(await syncConnection(user.id, item.id, TZ, noLive.f, { live: true })).toMatchObject({ accounts: 3 });
     expect(noLive.calls.map((c) => c.path)).toContain("/accounts/get");
+  });
+
+  it("an account the bank shares again gets its history back (the cursor starts over)", async () => {
+    const { user, run, item, fake } = await connected();
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    await syncConnection(user.id, item.id, TZ, fakePlaid({ only: ["acc-card"] }).f);
+    expect(await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)))).toHaveLength(0);
+    const again = fakePlaid();
+    await syncConnection(user.id, item.id, TZ, again.f);
+    expect((await run((s) => listAccounts(s))).map((a) => a.name).sort()).toEqual(["Plaid Checking", "Plaid Credit Card", "Plaid IRA"]);
+    expect(again.calls.filter((c) => c.path === "/transactions/sync")[0].body.cursor).toBeUndefined();
+    expect(await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)))).toHaveLength(2);
+  });
+
+  it("holdings the bank no longer reports (everything sold) are removed", async () => {
+    const { user, run, item, fake } = await connected();
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    expect(await run((s) => s.tx.select().from(holdings).where(eq(holdings.userId, user.id)))).toHaveLength(1);
+    await syncConnection(user.id, item.id, TZ, fakePlaid({ emptyHoldings: true }).f);
+    expect(await run((s) => s.tx.select().from(holdings).where(eq(holdings.userId, user.id)))).toHaveLength(0);
+  });
+
+  it("a problem with the investments product never throws away the sync", async () => {
+    const { user, item } = await connected();
+    const stats = await syncConnection(user.id, item.id, TZ, fakePlaid({ noInvestments: true }).f);
+    expect(stats).toMatchObject({ accounts: 3, added: 2, holdings: 0 });
   });
 
   it("disconnecting removes the item at Plaid and its synced data here", async () => {

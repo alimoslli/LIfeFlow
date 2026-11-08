@@ -39,6 +39,7 @@ export const GROUP_TOOLS: Record<ToolGroup, string[]> = {
     "make_promise",
     "list_promises",
     "resolve_promise",
+    "cancel_promise",
     "save_memory",
     "update_memory",
     "integration_status",

@@ -160,4 +160,44 @@ describe("Microsoft Teams and Outlook", () => {
     );
     expect(conn[0].status).toBe("connected");
   });
+  it("when Microsoft says the person must sign in again, the connection shows Reconnect", async () => {
+    for (const error of ["invalid_grant", "interaction_required", "consent_required"]) {
+      const u = await makeUser();
+      await u.run((s) => saveMicrosoftConnection(s, { ...creds, expiresAt: Date.now() - 1000 }, null));
+      const f = (async () => json({ error, error_description: "AADSTS50173" }, 400)) as typeof fetch;
+      await expect(u.run((s) => syncMicrosoftCalendar(s, TZ, new Date(), f))).rejects.toMatchObject({
+        reauth: true,
+        message: expect.stringMatching(/Reconnect/),
+      });
+      const [conn] = await u.run(({ tx, userId }) =>
+        tx
+          .select()
+          .from(integrations)
+          .where(and(eq(integrations.userId, userId), eq(integrations.provider, "outlook"))),
+      );
+      expect(conn).toMatchObject({ status: "error", lastError: expect.stringMatching(/Reconnect/) });
+    }
+  });
+
+  it("a temporary Microsoft problem on refresh does not ask the person to reconnect", async () => {
+    const u = await makeUser();
+    await u.run((s) => saveMicrosoftConnection(s, { ...creds, expiresAt: Date.now() - 1000 }, null));
+    const f = (async () => json({ error: "temporarily_unavailable" }, 503)) as typeof fetch;
+    await expect(u.run((s) => syncMicrosoftCalendar(s, TZ, new Date(), f))).rejects.toMatchObject({ reauth: false });
+  });
+
+  it("retries once with a fresh token when Graph answers 401", async () => {
+    const u = await makeUser();
+    await u.run((s) => saveMicrosoftConnection(s, creds, null));
+    let graphCalls = 0;
+    const calls: string[] = [];
+    const f = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/oauth2/v2.0/token")) return json({ access_token: "at-fresh", refresh_token: "rt-3", expires_in: 3600, scope: "Calendars.Read" });
+      calls.push(new Headers(init?.headers).get("authorization") ?? "");
+      return graphCalls++ === 0 ? json({ error: { code: "InvalidAuthenticationToken" } }, 401) : json({ value: [] });
+    }) as typeof fetch;
+    await u.run((s) => syncMicrosoftCalendar(s, TZ, new Date(), f));
+    expect(calls).toEqual(["Bearer at-1", "Bearer at-fresh"]);
+  });
 });
