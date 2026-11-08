@@ -27,13 +27,15 @@ export type ClockItem = {
   /** Where it came from, in plain words ("From Google Calendar"). */
   source: string;
   subtitle: string | null;
-  /** A bill's amount, positive (only when money is shown). */
+  /** A money amount, positive (only when money is shown): a bill or a trial's first charge, a money goal, expected pay. */
   amountCents?: number;
-  /** Where it lives, and its id there: a to-do or an assignment can be marked done right on its card. */
-  origin?: "event" | "shift" | "assignment" | "task" | "goal" | "milestone" | "bill";
+  /** Where it lives, and its id there: a to-do (or its reminder) or an assignment can be marked done right on its card. */
+  origin?: "event" | "shift" | "assignment" | "task" | "reminder" | "goal" | "milestone" | "bill" | "trial" | "money_goal" | "pay";
   ref?: string;
   /** No date yet: it waits at the far end of the line, under "Someday". */
   someday?: boolean;
+  /** The date in words when only the month or the year is known ("Mar 2019", "2019"); the day is then a place only. */
+  when?: string;
 };
 
 export type ClockDay = { offset: number; date: string; short: string; long: string };

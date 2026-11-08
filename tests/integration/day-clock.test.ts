@@ -3,6 +3,8 @@ import { closeDb } from "@/server/db/client";
 import { createEvent } from "@/server/services/calendar";
 import { dayClockData } from "@/server/services/day-clock";
 import { createManualAccount } from "@/server/services/finance/accounts";
+import { createGoal, createRecurring } from "@/server/services/finance/planning";
+import { updateSubscription } from "@/server/services/finance/subscriptions";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { logHealth } from "@/server/services/health";
 import { createMilestone } from "@/server/services/milestones";
@@ -118,6 +120,68 @@ describe("day clock data", () => {
     expect(data.items.find((i) => i.title === "Call the bank")).toMatchObject({ someday: true, icon: "📞", origin: "task" });
     expect(data.items.find((i) => i.title === "Learn to swim")).toMatchObject({ someday: true, origin: "goal" });
     expect(data.items.find((i) => i.title === "Started college")).toMatchObject({ icon: "🎓", start: -803 * 1440 });
+  });
+
+  it("brings in every to-do at its due time, and a reminder that rings well before as its own moment", async () => {
+    const { run } = await makeUser("Todo Owner");
+    const data = await run(async (s) => {
+      await createTask(s, TZ, { title: "Renew passport", dueDate: "2026-12-20", priority: "medium" });
+      await createTask(s, TZ, { title: "Return library books", dueDate: "2026-10-30", priority: "high" });
+      await createTask(s, TZ, { title: "Lab write-up", dueDate: "2026-11-10", dueTime: "17:00", reminder: "1d", priority: "medium" });
+      await createTask(s, TZ, { title: "Quick call", dueDate: "2026-11-08", dueTime: "10:00", reminder: "15m", priority: "medium" });
+      return dayClockData(s, TZ, NOW);
+    });
+    const find = (id: string) => data.items.filter((i) => i.id.startsWith(id));
+    // Weeks out and long overdue: still on the line, where they're due.
+    expect(data.items.find((i) => i.title === "Renew passport")).toMatchObject({ start: 43 * 1440, allDay: true, origin: "task" });
+    expect(data.items.find((i) => i.title === "Return library books")).toMatchObject({ start: -8 * 1440, origin: "task" });
+    // A day-before reminder is a moment of its own (Done works on it); a 15-minute one is just the to-do.
+    const reminders = find("remind:");
+    expect(reminders).toHaveLength(1);
+    expect(reminders[0]).toMatchObject({ title: "Lab write-up", icon: "🔔", origin: "reminder", start: 2 * 1440 + 1020, allDay: false });
+    expect(reminders[0].subtitle).toBe("Due Tue, Nov 10 at 5:00 PM");
+    expect(reminders[0].ref).toBe(data.items.find((i) => i.id.startsWith("task:") && i.title === "Lab write-up")?.ref);
+  });
+
+  it("keeps routine off the far line: a weekly class shows in the week, a one-off trip months out still shows", async () => {
+    const { run } = await makeUser("Routine Owner");
+    const data = await run(async (s) => {
+      await createEvent(s, TZ, {
+        title: "Chem lecture",
+        date: "2026-11-02",
+        startTime: "10:00",
+        endTime: "11:00",
+        kind: "class",
+        recurrence: { freq: "weekly", byDay: [1, 3] },
+      });
+      await createEvent(s, TZ, { title: "Flight home", date: "2026-12-19", startTime: "07:00", endTime: "10:00", kind: "personal" });
+      return dayClockData(s, TZ, NOW);
+    });
+    const lectures = data.items.filter((i) => i.title === "Chem lecture").map((i) => Math.floor(i.start / 1440));
+    // Wed Nov 4 and Mon Nov 9 are in the week; the 16 more in the next two months are routine, so they stay off.
+    expect(lectures).toEqual([-3, 2]);
+    expect(data.items.find((i) => i.title === "Flight home")).toMatchObject({ icon: "✈️", start: 42 * 1440 + 420 });
+  });
+
+  it("with money shown: trial ends and money goals by their day, a month-only milestone said as its month", async () => {
+    const { run } = await makeUser("Plans Owner");
+    const [shown, hidden] = await run(async (s) => {
+      const sub = await createRecurring(s, { name: "Streamly", amountCents: -1599, frequency: "monthly", nextDueDate: "2026-11-21", kind: "subscription" });
+      await updateSubscription(s, sub.id, { trialEndsOn: "2026-11-20" });
+      await createGoal(s, { name: "Spring break trip", targetCents: 80000, savedCents: 20000, targetDate: "2027-03-01" });
+      await createMilestone(s, { title: "Moved to Boston", when: "2019-09" });
+      return [await dayClockData(s, TZ, NOW, { money: true }), await dayClockData(s, TZ, NOW)];
+    });
+    expect(shown.items.find((i) => i.origin === "trial")).toMatchObject({ title: "Streamly trial ends", start: 13 * 1440, amountCents: 1599, cat: "other" });
+    expect(shown.items.find((i) => i.origin === "money_goal")).toMatchObject({
+      title: "Spring break trip",
+      start: 114 * 1440,
+      amountCents: 80000,
+      subtitle: "$200 saved so far",
+    });
+    expect(shown.items.find((i) => i.title === "Moved to Boston")).toMatchObject({ when: "Sep 2019", origin: "milestone" });
+    // Behind the Money lock: none of it.
+    expect(hidden.items.some((i) => i.origin === "trial" || i.origin === "money_goal" || i.origin === "bill" || i.origin === "pay")).toBe(false);
   });
 
   it("is empty for someone with nothing connected or added, and never makes up steps", async () => {

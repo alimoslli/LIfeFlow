@@ -728,8 +728,67 @@
 .dc-d-s:empty {
   display: none;
 }
+/* a stack's card: one row per thing, each a full-width 44 px tap */
+.dc-d-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 200px;
+  margin: 6px -8px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.dc .dc-d-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 8px;
+  border-radius: 12px;
+  text-align: left;
+  color: var(--text);
+}
+.dc .dc-d-row:active {
+  background: var(--surface-2);
+}
+.dc-r-ic {
+  font-size: 1.1rem;
+}
+.dc-r-n {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dc-r-t {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+/* "+2" on a stack's icon (placed against the icon, which is already positioned) and on a merged marker */
+.dc-n-more {
+  position: absolute;
+  top: -4px;
+  right: -12px;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+.dc-more {
+  margin-left: 4px;
+  color: var(--accent);
+  font-weight: 700;
+}
 .dc-d-acts {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
 }
@@ -742,6 +801,7 @@
   font-size: 0.85rem;
   font-weight: 600;
 }
+.dc .dc-d-edit,
 .dc .dc-d-open {
   position: relative;
   height: 44px;

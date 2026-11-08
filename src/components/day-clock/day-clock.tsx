@@ -10,6 +10,8 @@ import { PinSheet } from "./pin-sheet";
 import { toast } from "@/components/ui/toaster";
 import { toggleTaskAction } from "@/app/(app)/tasks/actions";
 import { toggleAssignmentAction } from "@/app/(app)/school/actions";
+import { blockForEditAction } from "@/app/(app)/_today/actions";
+import { BlockSheet, type Block } from "@/app/(app)/plan/block-editor";
 import "./day-clock.css";
 
 /**
@@ -24,6 +26,8 @@ export function DayClock({ data, children }: { data: ClockData; children?: React
   const first = useRef(data);
   // Where a new pin goes (minutes from the start of today), while its sheet is open.
   const [pinAt, setPinAt] = useState<number | null>(null);
+  // The thing being edited from its card (an event, a shift or an assignment), in the same sheet as Plan.
+  const [editing, setEditing] = useState<Exclude<Block, { origin: "task" }> | null>(null);
 
   useEffect(() => {
     const root = ref.current;
@@ -41,6 +45,11 @@ export function DayClock({ data, children }: { data: ClockData; children?: React
         if (r?.ok) toast(r.message ?? `Done: ${it.title}.`, { tone: "success" });
         else toast(r?.error ?? "That didn't save. Try again.", { tone: "danger" });
         router.refresh();
+      },
+      onEdit: async (it) => {
+        const b = await blockForEditAction(it.id);
+        if (b) setEditing(b);
+        else router.push(it.href);
       },
       reducedMotion: prefersReducedMotion(),
     });
@@ -130,7 +139,14 @@ export function DayClock({ data, children }: { data: ClockData; children?: React
         </label>
         <span data-dc="probe" className="dc-probe" aria-hidden="true" />
       </div>
-      {/* Outside the clock: its no-select gesture area mustn't reach the sheet's inputs (iOS Safari). */}
+      {/* Outside the clock: its no-select gesture area mustn't reach the sheets' inputs (iOS Safari). */}
+      <BlockSheet
+        block={editing}
+        onClose={() => {
+          setEditing(null);
+          router.refresh();
+        }}
+      />
       <PinSheet
         at={pinAt}
         today={data.today}

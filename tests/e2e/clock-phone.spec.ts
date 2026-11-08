@@ -18,6 +18,8 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   const clock = page.getByTestId("day-clock");
   await expect(clock).toHaveAttribute("data-ready", "true");
   await expect(clock).toHaveAttribute("data-state", "clock");
+  // Something still open after its day belongs to now: one "overdue" marker at the hand.
+  await expect(clock.locator(".dc-co", { hasText: "overdue" })).toHaveCount(1);
   // Closed, the timeline's controls aren't reachable (hidden, not just transparent).
   await expect(page.getByRole("navigation", { name: "Days" })).toBeHidden();
 
@@ -90,4 +92,41 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   await expect
     .poll(async () => (await queryAsUser<{ status: string }>(email, "select status from tasks where title = 'Pay phone bill'"))[0]?.status)
     .toBe("done");
+
+  // Edit right on the card: a calendar event opens Plan's editor in place, and saving updates the line.
+  await page.locator(".dc-node", { hasText: "Brunch with Jordan" }).click();
+  await page.locator("[data-dc=detail]").getByRole("button", { name: "Edit" }).click();
+  const editor = page.getByRole("dialog", { name: "Event" });
+  await expect(editor).toBeVisible();
+  await editor.getByLabel("Title").fill("Brunch with Jordan and Sam");
+  await editor.getByRole("button", { name: "Save" }).click();
+  await expect(editor).toBeHidden();
+  await expect(page.locator(".dc-node", { hasText: "Brunch with Jordan and Sam" })).toBeAttached();
+  // A shift opens its own editor the same way.
+  await page.locator(".dc-node", { hasText: "Work" }).first().click();
+  await page.locator("[data-dc=detail]").getByRole("button", { name: "Edit" }).click();
+  await expect(page.getByRole("dialog", { name: "Shift" })).toBeVisible();
+});
+
+// A full life stays calm (owner, 2026-11-08): three deadlines at 11:59 PM are one marker on the clock ("+2") and one stop
+// on the line, whose card lists them; a row opens that one thing's own card, with Done.
+test("things at the same moment stack into one stop that lists them", async ({ page }) => {
+  const email = await signUp(page, "Busy Tester");
+  execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/dev/seed-clock-look.ts", email, "--busy"], {
+    env: { ...process.env, DATABASE_URL: E2E_DB },
+  });
+  await page.goto("/");
+  const clock = page.getByTestId("day-clock");
+  await expect(clock).toHaveAttribute("data-ready", "true");
+  await expect(clock.locator(".dc-co .dc-more").first()).toHaveText("+2");
+  await page.getByRole("button", { name: /^Today\. Now / }).click();
+  await expect(clock).toHaveAttribute("data-state", "timeline");
+  const stack = page.getByRole("button", { name: /due and 2 more, .*11:59 PM$/ }).first();
+  await stack.click();
+  const card = page.locator("[data-dc=detail]");
+  await expect(card).toContainText("3 things");
+  await expect(card.locator(".dc-d-row")).toHaveCount(3);
+  await card.getByRole("button", { name: /Essay draft/ }).click();
+  await expect(card.locator(".dc-d-t")).toHaveText("Essay draft");
+  await expect(card.getByRole("button", { name: "Done" })).toBeVisible();
 });

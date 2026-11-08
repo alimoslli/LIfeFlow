@@ -1,10 +1,12 @@
-import { addDaysStr, daysBetween, formatDateStr, formatIn, startOfLocalDay, todayIn } from "@/lib/dates";
+import { addDaysStr, daysBetween, formatDateStr, formatIn, localDateOf, startOfLocalDay, todayIn } from "@/lib/dates";
 import { categoryFor, iconFor, sourceFor, splitEmoji, titleFor, type ClockData, type ClockDay, type ClockItem } from "@/lib/day-clock";
 import type { UserScope } from "@/server/db/with-user";
 import { series } from "@/server/db/series";
 import { getAgenda, type AgendaItem } from "./calendar";
 import { summarizeCashflow } from "./finance/cashflow";
-import { billsAndPace } from "./finance/forecast";
+import { expectedPay, upcomingBills } from "./finance/forecast";
+import { bankSeries, listGoals } from "./finance/planning";
+import { upcomingTrials } from "./finance/subscriptions";
 import { queryTransactions } from "./finance/transactions";
 import { healthSummary } from "./health";
 import { lifeTimeline } from "./milestones";
@@ -48,43 +50,55 @@ export function toClockItem(a: AgendaItem, tz: string, today: string): ClockItem
   };
 }
 
+/** Dollars for a card line ("$1,850"). */
+const usd = (cents: number) => `$${Math.round(Math.abs(cents) / 100).toLocaleString("en-US")}`;
+
 /**
- * Everything the day clock shows, in one read: the week around today from the one agenda (calendars,
- * work shifts, class deadlines and exams, to-dos with a time), today's steps and last night's sleep, and,
- * when money is shown (`money`: the Money lock is open), bills due in the next days and what was spent today.
- * Only real things from the person's own data; nothing is guessed or filled in.
+ * Everything the clock and the timeline show, in one read (owner, 2026-11-08: every piece of data that has a time
+ * flows in). From the person's own data only, nothing guessed:
+ * - the week in full from the one agenda (calendars, shifts, class deadlines and exams);
+ * - further out, to AHEAD_DAYS: one-off plans (a flight, an appointment, a birthday) and class deadlines, but not
+ *   routine (an event that repeats three or more times in that stretch, or shifts), so the far line stays clear;
+ * - every open to-do at its due time, and its reminder when it rings well before (an hour or more);
+ * - milestones and goals reached behind, goals ahead by their day; undated to-dos and goals under "Someday";
+ * - with the Money lock open (`money`): bills and trial ends in the next 30 days, money goals by their day,
+ *   salaried pay as expected (never counted), and what was spent today.
  */
 export async function dayClockData(scope: UserScope, tz: string, now = new Date(), opts: { money?: boolean } = {}): Promise<ClockData> {
   const today = todayIn(tz, now);
   const from = addDaysStr(today, -CLOCK_SPAN);
   const to = addDaysStr(today, CLOCK_SPAN);
-  // The line is the person's whole timeline: the week in full, plans out to AHEAD_DAYS, every dated milestone and goal
-  // reached behind, goals ahead by their day, and undated to-dos and goals waiting under "Someday" (owner, 2026-11-08).
   const [agenda, ahead, health, story, goals, open] = await series(
-    () => getAgenda(scope, tz, from, to, { now }),
-    () => getAgenda(scope, tz, addDaysStr(to, 1), addDaysStr(today, AHEAD_DAYS), { now, include: ["event", "shift", "assignment"] }),
+    () => getAgenda(scope, tz, from, to, { now, include: ["event", "shift", "assignment"] }),
+    () => getAgenda(scope, tz, addDaysStr(to, 1), addDaysStr(today, AHEAD_DAYS), { now, include: ["event", "assignment"] }),
     () => healthSummary(scope, tz, 1, now),
-    () => lifeTimeline(scope, { includeMoney: false, tz }),
+    () => lifeTimeline(scope, { includeMoney: !!opts.money, tz }),
     () => listPersonalGoals(scope),
-    () => listTasks(scope, { status: "open", topLevelOnly: true, limit: 40 }),
+    () => listTasks(scope, { status: "open", limit: 300 }),
   );
-  const items = [...agenda, ...ahead].map((a) => toClockItem(a, tz, today));
+  // Far out, routine is noise: a class every week or a daily event shows in the week only.
+  const times = new Map<string, number>();
+  for (const a of ahead) if (a.repeats) times.set(a.id, (times.get(a.id) ?? 0) + 1);
+  const items = [...agenda, ...ahead.filter((a) => !a.repeats || (times.get(a.id) ?? 0) < 3)].map((a) => toClockItem(a, tz, today));
+  const dayAt = (date: string) => daysBetween(today, date) * 1440;
   for (const m of story) {
     if (!m.date) continue;
     const { emoji, rest } = splitEmoji(m.title);
+    const reached = m.kind !== "milestone";
     items.push({
       id: `story:${m.kind}:${m.id}`,
       kind: "due",
       cat: "other",
-      icon: emoji ?? (m.kind === "milestone" ? "🏁" : "🎯"),
-      title: m.kind === "milestone" ? rest : `${rest} · reached`,
-      start: daysBetween(today, m.date) * 1440,
+      icon: emoji ?? (reached ? "🎯" : "🏁"),
+      title: reached ? `${rest} · reached` : rest,
+      start: dayAt(m.date),
       end: null,
       allDay: true,
-      href: "/milestones",
-      source: m.kind === "milestone" ? "From your milestones" : "A goal you reached",
+      href: m.kind === "money_goal" ? "/money" : "/milestones",
+      source: reached ? "A goal you reached" : "From your milestones",
       subtitle: null,
       origin: "milestone",
+      when: m.precision === "year" ? m.date.slice(0, 4) : m.precision === "month" ? formatDateStr(m.date, "MMM yyyy") : undefined,
     });
   }
   for (const g of goals) {
@@ -96,61 +110,119 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
       cat: "other",
       icon: emoji ?? "🎯",
       title: rest,
-      start: g.targetDate ? daysBetween(today, g.targetDate) * 1440 : 0,
+      start: g.targetDate ? dayAt(g.targetDate) : 0,
       end: null,
       allDay: true,
       href: "/goals",
       source: "From your goals",
-      subtitle: null,
+      subtitle: g.unit && g.target ? `${g.progress ?? 0} of ${g.target} ${g.unit}` : null,
       origin: "goal",
       ref: g.id,
       someday: !g.targetDate,
     });
   }
+  // To-dos: every open one, at its due time (overdue ones stay where they were due); undated top-level ones wait under
+  // Someday. A reminder that rings an hour or more before its to-do is due is its own moment on the clock and the line.
   for (const t of open) {
-    if (t.dueAt) continue;
     const { emoji, rest } = splitEmoji(t.title);
+    const icon = emoji ?? iconFor(t.title, "task", "task");
+    const base = { kind: "due" as const, cat: "other" as const, icon, title: rest, end: null, href: `/tasks/${t.id}`, origin: "task" as const, ref: t.id };
+    if (!t.dueAt) {
+      if (!t.parentId) items.push({ ...base, id: `task:${t.id}`, start: 0, allDay: true, source: "From your to-dos", subtitle: null, someday: true });
+      continue;
+    }
+    const at = wallMinutes(t.dueAt, tz, today);
     items.push({
+      ...base,
       id: `task:${t.id}`,
-      kind: "due",
-      cat: "other",
-      icon: emoji ?? iconFor(t.title, "task", "task"),
-      title: rest,
-      start: 0,
-      end: null,
-      allDay: true,
-      href: `/tasks/${t.id}`,
+      cat: "due",
+      start: t.dueAllDay ? Math.floor(at / 1440) * 1440 : at,
+      allDay: t.dueAllDay,
       source: "From your to-dos",
-      subtitle: null,
-      origin: "task",
-      ref: t.id,
-      someday: true,
+      subtitle: t.priority === "urgent" || t.priority === "high" ? `${t.priority} priority` : null,
     });
+    const r = t.remindAt;
+    if (r && !t.remindedAt && r > now && t.dueAt.getTime() - r.getTime() >= 3_600_000 && localDateOf(r, tz) <= addDaysStr(today, AHEAD_DAYS)) {
+      items.push({
+        ...base,
+        id: `remind:${t.id}`,
+        icon: "🔔",
+        start: wallMinutes(r, tz, today),
+        allDay: false,
+        source: "Your reminder",
+        subtitle: `Due ${formatIn(t.dueAt, tz, t.dueAllDay ? "EEE, MMM d" : "EEE, MMM d 'at' h:mm a")}`,
+        origin: "reminder",
+      });
+    }
   }
   let spentTodayCents: number | null = null;
   if (opts.money) {
-    const [bills, todays] = await series(
-      () => billsAndPace(scope, today, today, addDaysStr(today, CLOCK_SPAN)),
+    const until = addDaysStr(today, 30);
+    const bank = await bankSeries(scope, today);
+    const [bills, pay, saving, trials, todays] = await series(
+      () => upcomingBills(scope, today, today, until, bank),
+      () => expectedPay(scope, today, until, bank),
+      () => listGoals(scope),
+      () => upcomingTrials(scope, today, until),
       () => queryTransactions(scope, { from: today, to: today, limit: 1000 }),
     );
-    for (const b of bills.bills) {
-      const offset = daysBetween(today, b.date);
+    const money = { kind: "due" as const, cat: "due" as const, end: null, allDay: true, subtitle: null };
+    for (const b of bills)
       items.push({
+        ...money,
         id: `bill:${b.key}`,
-        kind: "due",
-        cat: "due",
         icon: "💳",
         title: b.name,
-        start: offset * 1440,
-        end: null,
-        allDay: true,
+        start: dayAt(b.date),
         href: "/finances/bills",
         source: b.found ? "Found in your bank activity" : "From your bills",
-        subtitle: null,
         amountCents: Math.abs(b.amountCents),
         origin: "bill",
       });
-    }
+    for (const t of trials)
+      if (t.trialEndsOn)
+        items.push({
+          ...money,
+          id: `trial:${t.id}`,
+          cat: "other",
+          icon: "⏳",
+          title: `${t.name} trial ends`,
+          start: dayAt(t.trialEndsOn),
+          href: "/finances/subscriptions",
+          source: "From your subscriptions",
+          subtitle: "The first charge comes after this day",
+          amountCents: Math.abs(t.amountCents),
+          origin: "trial",
+        });
+    for (const p of pay)
+      items.push({
+        ...money,
+        id: `pay:${p.date}`,
+        cat: "other",
+        icon: "💵",
+        title: "Payday",
+        start: dayAt(p.date),
+        href: "/money",
+        source: "Expected from your past paychecks; not counted until it lands",
+        subtitle: p.name,
+        amountCents: Math.abs(p.amountCents),
+        origin: "pay",
+      });
+    for (const g of saving)
+      if (g.targetDate && g.status === "active" && g.savedCents < g.targetCents)
+        items.push({
+          ...money,
+          id: `saving:${g.id}`,
+          cat: "other",
+          icon: "💰",
+          title: g.name,
+          start: dayAt(g.targetDate),
+          href: "/money",
+          source: "Your money goal",
+          subtitle: `${usd(g.savedCents)} saved so far`,
+          amountCents: g.targetCents,
+          origin: "money_goal",
+        });
     const spent = summarizeCashflow(todays).netSpendingCents;
     spentTodayCents = spent > 0 ? spent : null;
   }

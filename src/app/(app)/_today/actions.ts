@@ -6,6 +6,72 @@ import { createMilestone } from "@/server/services/milestones";
 import { createPersonalGoal } from "@/server/services/personal-goals";
 import { createTask } from "@/server/services/tasks";
 import { ServiceError } from "@/server/services/errors";
+import { localDateOf, localTimeOf } from "@/lib/dates";
+import { withCurrentUser } from "@/server/auth/current-user";
+import { getEvent } from "@/server/services/calendar";
+import { getAssignment } from "@/server/services/school";
+import { getShift } from "@/server/services/work";
+import type { Block } from "@/app/(app)/plan/block-editor";
+
+const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+
+/**
+ * What the editor needs for one thing on the timeline, loaded only when its card's Edit is tapped (the Today page
+ * stays one read). The id is the clock item's: "event:<id>:<occurrence start>", "shift:<id>" or "assignment:<id>".
+ * Anything else (or a thing that's gone) is null, and the card opens its page instead.
+ */
+export async function blockForEditAction(itemId: string): Promise<Exclude<Block, { origin: "task" }> | null> {
+  const ev = itemId.match(new RegExp(`^event:(${UUID}):(.+)$`));
+  const sh = itemId.match(new RegExp(`^shift:(${UUID})$`));
+  const as = itemId.match(new RegExp(`^assignment:(${UUID})$`));
+  if (!ev && !sh && !as) return null;
+  return withCurrentUser(async (s, u): Promise<Exclude<Block, { origin: "task" }>> => {
+    const tz = u.timezone;
+    if (ev) {
+      const e = await getEvent(s, ev[1]);
+      const at = new Date(ev[2]);
+      const start = Number.isNaN(at.getTime()) ? e.startsAt : at;
+      const end = new Date(start.getTime() + (e.endsAt.getTime() - e.startsAt.getTime()));
+      return {
+        origin: "event",
+        id: e.id,
+        title: e.title,
+        date: localDateOf(start, tz),
+        startTime: e.allDay ? null : localTimeOf(start, tz),
+        endTime: e.allDay ? null : localTimeOf(end, tz),
+        allDay: e.allDay,
+        kind: e.kind,
+        location: e.location,
+        description: e.description,
+        repeats: !!e.recurrence,
+      };
+    }
+    if (sh) {
+      const x = await getShift(s, sh[1]);
+      return {
+        origin: "shift",
+        id: x.id,
+        employerId: x.employerId,
+        date: localDateOf(x.startsAt, tz),
+        startTime: localTimeOf(x.startsAt, tz),
+        endTime: localTimeOf(x.endsAt, tz),
+        breakMinutes: x.breakMinutes,
+        notes: x.notes,
+      };
+    }
+    const a = await getAssignment(s, as![1]);
+    return {
+      origin: "assignment",
+      id: a.id,
+      title: a.title,
+      kind: a.kind,
+      dueDate: a.dueAt ? localDateOf(a.dueAt, tz) : null,
+      dueTime: a.dueAt && !a.dueAllDay ? localTimeOf(a.dueAt, tz) : null,
+      description: a.description,
+      done: a.status === "done",
+    };
+  }).catch(() => null);
+}
 
 const KINDS = ["todo", "plan", "goal", "milestone"] as const;
 type PinKind = (typeof KINDS)[number];

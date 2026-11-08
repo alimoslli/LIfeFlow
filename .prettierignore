@@ -19,3 +19,4 @@ docs/situations/**/*.json
 docs/situations/eval/
 # Design prototypes, kept exactly as published
 docs/design/**/*.html
+scripts/dev/clock-artifact/shell.html
