@@ -373,6 +373,10 @@ this?" and laughs, and only Ali smiles ("Mhm"); show off the headquarters and, b
 then dubbed into a second language with ElevenLabs in everyone's own voice (one mic per speaker, clean stems, consent).
 A scheduled task (`trig_01PNeH8oKywJ3PBwGew2RdPf`, every other day at 19:23 UTC) researches new ideas into the doc's log
 until the premiere; turn it off once the film is posted. The first outline is kept below.
+**Merged 2026-11-08 (owner: "talk about it here"):** the COO's shoot sheet is now in the doc as "Tonight's call sheet" and the seven
+conversation questions; the Marketing chat owns the film and the COO forwards footage here. Numbers in Ali's lines are checked against
+the code (385 commits on main Nov 1 to 8, about 1,100 tests: say "hundreds of changes in one week", "more than a thousand automated tests").
+Premiere proposed for Nov 29 (after the birthday film and the student spot, once the app redesign is live), waiting on Ali's yes.
 
 One cinematic film, posted once, made to look like it belongs in a cinema. Goal: a launch moment for the LifeFlow shift, with a
 waiting list behind it (owner's target: 10,000 sign-ups on day one). The owner and the LifeFlow team are on camera, with their
