@@ -82,6 +82,19 @@ export async function resolvePromise(scope: UserScope, id: string, outcome: "kep
 }
 
 /**
+ * Removes an open promise that was saved by mistake (for example it was really a to-do). It is deleted, not marked: no check-in
+ * ever fires for it and it never counts as kept or broken. Answered promises are history and stay.
+ */
+export async function cancelPromise(scope: UserScope, id: string) {
+  const [row] = await scope.tx
+    .delete(promises)
+    .where(and(eq(promises.id, id), eq(promises.userId, scope.userId), eq(promises.status, "open")))
+    .returning({ id: promises.id });
+  if (!row) throw notFound("Promise");
+  return { id: row.id };
+}
+
+/**
  * "Not yet": check again tomorrow (counted from now, in the user's time zone) at the same time of day, even if the card sat for days.
  * At most twice, so a promise can't be postponed forever.
  */

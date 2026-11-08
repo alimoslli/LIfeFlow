@@ -5,6 +5,7 @@ import {
   createPromise,
   dropStalePromises,
   keepFinishedTaskPromises,
+  cancelPromise,
   listPromises,
   movePromise,
   promisesDue,
@@ -77,6 +78,23 @@ describe("promises", () => {
 
     expect(await b.run((s) => listPromises(s, "all"))).toEqual([]);
     await expect(b.run((s) => resolvePromise(s, m.id, "kept", "you"))).rejects.toThrow(/not found/);
+  });
+
+  it("cancelling removes a mis-sorted promise: no check-in, never broken, private", async () => {
+    const a = await makeUser();
+    const b = await makeUser();
+    const now = new Date("2026-11-08T15:00:00Z");
+    const p = (await a.run((s) => createPromise(s, TZ, { text: "Wrong kind", dueDate: "2026-11-08", dueTime: "18:00" }, now))).promise;
+    await expect(b.run((s) => cancelPromise(s, p.id))).rejects.toThrow(/not found/);
+    expect(await a.run((s) => cancelPromise(s, p.id))).toEqual({ id: p.id });
+    const later = new Date(p.dueAt.getTime() + 2 * H);
+    expect(await a.run((s) => promisesDue(s, later))).toEqual([]);
+    expect(await a.run((s) => listPromises(s, "all"))).toEqual([]);
+    expect((await a.run((s) => promiseStats(s, later))).brokenRecent).toBe(0);
+    // An answered promise is history, not removable.
+    const k = (await a.run((s) => createPromise(s, TZ, { text: "Done one", dueDate: "2026-11-09" }, now))).promise;
+    await a.run((s) => resolvePromise(s, k.id, "kept", "you", now));
+    await expect(a.run((s) => cancelPromise(s, k.id))).rejects.toThrow(/not found/);
   });
 
   it("'Tomorrow instead' after a late answer lands tomorrow (from now) at the same time, not already in the past", async () => {

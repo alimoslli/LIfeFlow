@@ -9,6 +9,7 @@ const LABELS: Record<string, string> = {
   make_promise: "Saving your promise",
   list_promises: "Checking your promises",
   resolve_promise: "Updating your promise",
+  cancel_promise: "Removing your promise",
   delete_task: "Preparing to delete task",
   list_projects: "Checking projects",
   create_project: "Creating project",
