@@ -97,6 +97,7 @@ Full check and phone e2e passed on 2026-11-08. To see it:
   - overdue items show as one marker at the hand;
   - all-day plans read "today" or "all day";
   - a quiet face counts what the timeline holds.
+- 11-08: main merged into `v3-day-clock` (ca873df). It brought promises, this plan and the HQ test fix. The promise check now runs on open, before the clock. The check is green (1158 tests), and so are the clock, core and promises e2e.
 
 **Next:**
 - **Bring `v3-day-clock-north-star` up to date.** It was cut from `v3-day-clock` at 26299b6, so it lacks 34e2eb3, 39f7794 and 46842e8. The owner's sign-in link points at it, so either merge `v3-day-clock` into it (LF Main owns that branch) or point the owner at the `v3-day-clock` preview.
