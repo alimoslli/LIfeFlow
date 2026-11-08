@@ -269,6 +269,7 @@ Full check and phone e2e passed on 2026-11-08. To see it:
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-08 afternoon, LF COO: on main, the 4 Promises fixes (Tomorrow instead, cancel a mis-sorted promise, to-dos done before, cron errors) and 3 Plaid/Microsoft fixes (Opus-reviewed); the Vercel setup sheet (docs/audits/2026-11-08-vercel-setup.md) and the Plaid/Microsoft check (docs/audits/2026-11-08-plaid-microsoft-check.md).
 - 2026-11-08, LF COO: the owner declined H3; the paycheck form stays.
 - 2026-11-08 night, LF COO: 2 fixes on main (7-Eleven name, Same bill? Undo window), the night audit, the App Store readiness report, situations batch 5.
 - 2026-11-08, LF HQ: checked section 5. Added commit links; confirmed the hourly sync and the desk starter's state; made the building item specific; added upkeep for the sync chat to Next.
