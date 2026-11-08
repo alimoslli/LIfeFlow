@@ -407,6 +407,9 @@ confused at first, then hooked ("Wait... how do I get this?"), played by a frien
 line with its time (speech to text runs in the Higgsfield sandbox, since huggingface.co is blocked here), checks the sound, judges the
 picture, and logs each clip in the Footage log tab plus a voice pool in story order. Never treat the footage so far as everything:
 they keep filming. First batch: Ali on camera in his own voice showing the app; most of the picture is black, so the voice is the asset.
+First check (Nov 8): IMG_1791 (8:52, car interview, Tyler asks) and IMG_1783 (1:42, Ali sketching the new design); lines, times and
+cuts are in the doc's Footage log tab. Never use IMG_1791 2:13 to 2:20 (names a real person, n-word) or "I don't want any profit".
+**Decided (Ali, Nov 8):** the waiting list is announced just before December, with the film on Nov 30; the clip's spoken dates are not used.
 The doc now opens with "What you do": a one-page checklist for tonight plus an Ali-and-Tyler table for the work shots. Ali wants the plan
 that simple ("just tell me what I have to do"); the detail stays below it. Send plans as PDF links too (the doc link didn't open in his browser).
 
