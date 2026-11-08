@@ -262,13 +262,14 @@ Full check and phone e2e passed on 2026-11-08. To see it:
 ## 11. Waiting for the owner's yes (one list; details in HQ › Work)
 - **V3:** confirm the North Star (ADR 0032), pick a timeline concept, and give the go to merge V3.
 - **LF Main's held branches:** phone sign-in, the "Still in the testing phase" note, and the tonight tool.
-- **HQ cards:** H3 (remove the typed-paycheck form) and H4 (a 404 for signed-out visitors to /admin).
+- **HQ cards:** H4 (a 404 for signed-out visitors to /admin). H3 was declined on 2026-11-08: the "Record a paycheck" form on Work stays.
 - **Older cards being rewritten** (Goals redesign A, Connected accounts, the timeline concepts, Gmail abilities, search bolding, the agent workload, "Same bill?" outside the inbox).
 - **Marketing:** voice samples and credit spending.
 - **Promises (night audit 2026-11-08):** read the six firmer check-in lines once (some lean on pressure); decide whether a promise's text may show in a notification on the lock screen.
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-08, LF COO: the owner declined H3; the paycheck form stays.
 - 2026-11-08 night, LF COO: 2 fixes on main (7-Eleven name, Same bill? Undo window), the night audit, the App Store readiness report, situations batch 5.
 - 2026-11-08, LF HQ: checked section 5. Added commit links; confirmed the hourly sync and the desk starter's state; made the building item specific; added upkeep for the sync chat to Next.
 - 2026-11-08, LF COO: section 10 is the one owner list (docs/hq/owner-list.md now points here); added the Vercel plan, payments and Gmail verification. The COO ends every report with the top 3.
