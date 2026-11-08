@@ -20,7 +20,7 @@ How to start a desk task: HQ Office → the task → "Start it" (one tap). The C
 | What | Status |
 |---|---|
 | School Project premiere date | Decided: Nov 29 or 30 (owner, 2026-11-08); Marketing picks the day |
-| Second language for the dubbed version | Waiting |
-| Cinema route (about 31 Higgsfield credits) or couch-and-TV route | Waiting |
-| Test-drive voiceover redone in Sterling (about 3 credits) | Waiting |
-| Waiting-list page: on lifeflowweb.com or a tool | Waiting |
+| Second language for the dubbed version | Decided: Arabic |
+| Cinema route (about 31 Higgsfield credits) | Not yet: the cinema is the hook, perfected last; raw footage first |
+| Test-drive voiceover redone in Sterling (about 3 credits) | Yes |
+| Waiting-list page | On lifeflowweb.com, later (still early) |
