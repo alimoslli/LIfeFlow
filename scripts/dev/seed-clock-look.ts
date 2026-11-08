@@ -29,6 +29,17 @@ async function main() {
   if (!u) throw new Error(`No account ${email}`);
   const today = todayIn(TZ);
   const d = (n: number) => addDaysStr(today, n);
+  if (process.argv.includes("--sparse")) {
+    // A quiet evening: a class earlier today, a deadline tomorrow, an exam in two days; nothing measured, no bank.
+    await withUser(u.id, async (s) => {
+      const psy = await createCourse(s, { name: "Intro to Psychology", code: "PSY 101" });
+      await createEvent(s, TZ, { title: "PSY 101", date: d(0), startTime: "13:00", endTime: "14:15", kind: "class", courseId: psy.id });
+      await createAssignment(s, TZ, { courseId: psy.id, title: "Reading response", dueDate: d(1), dueTime: "23:59" });
+      await createAssignment(s, TZ, { courseId: psy.id, title: "Midterm", kind: "exam", dueDate: d(2), dueTime: "10:00" });
+    });
+    console.log(`Seeded a quiet week around ${today} for ${email}`);
+    return;
+  }
   await withUser(u.id, async (s) => {
     const job = await createEmployer(s, { name: "Campus Coffee", position: "Barista", hourlyRateCents: 1500 });
     await createShift(s, TZ, { employerId: job.id, date: d(-2), startTime: "11:00", endTime: "17:30" });

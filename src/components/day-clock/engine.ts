@@ -355,19 +355,28 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   }
 
   /* ---------- the clock: the 12 hours around now (or, when busy, the 12 hours ahead) ---------- */
+  // Busy: drop the faded past. Quiet (fewer than 3 things): show more of today so far, faded, back to the
+  // morning or noon, so a calm evening still shows the day you had (owner, 2026-11-08: "why is my clock so empty?").
   function pickClock(now: number) {
-    const full = clockModel(now, false);
-    return full.marks.length > BUSY ? clockModel(now, true) : full;
+    const full = clockModel(now, "recent");
+    if (full.marks.length > BUSY) return clockModel(now, "none");
+    if (full.marks.length < 3) {
+      const wide = clockModel(now, "today");
+      if (wide.marks.length > full.marks.length) return wide;
+    }
+    return full;
   }
   // The rim is always the next 12 hours, starting at the hand. Today's part rides the clock's own ring; after 12 at
   // night it's tomorrow, on a second ring just outside it that runs from the 12 round to the hand (owner, 2026-11-08).
   // The last 2 hours stay on, faded, wherever tomorrow's ring frees that part of the clock (so nothing ever overlaps).
-  function clockModel(now: number, dropPast: boolean): ClockModel {
+  function clockModel(now: number, past: "none" | "recent" | "today"): ClockModel {
+    const dropPast = past === "none";
     const ws = now;
     const we = now + 720;
     const mid = (dayOf(now) + 1) * 1440;
     const hasMid = mid > ws && mid < we;
-    const pastFrom = dropPast ? now : Math.min(now, Math.max(now - 120, mid - 720));
+    // The past can only use the part of the clock that tomorrow's ring frees (from noon on), so it never overlaps.
+    const pastFrom = dropPast ? now : Math.min(now, Math.max(past === "today" ? mid - 720 : now - 120, mid - 720));
     const arcs: Arc[] = [];
     const marks: Mark[] = [];
     const mark = (it: ClockItem, t: number, label: string, past: boolean): Mark => ({
@@ -463,7 +472,15 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     }
     const next = ITEMS.filter((it) => !it.allDay && it.start > now && it.start <= we).sort((a, b) => a.start - b.start)[0];
     if (next) return { tag: dayOf(next.start) > dayOf(now) ? "Tomorrow" : "Next", text: `${next.title} ${fmtShort(next.start)}`, it: next };
-    return null;
+    // Nothing in the next 12 hours: the next thing on the calendar, whenever it is (a deadline counts by its day).
+    const later = ITEMS.filter((it) => (it.allDay ? (dayOf(it.start) + 1) * 1440 : it.start) > now).sort((a, b) => a.start - b.start)[0];
+    if (later) {
+      const d = dayOf(later.start);
+      const when = later.allDay ? (later.amountCents != null ? `${money(later.amountCents)} due` : "due") : fmtShort(later.start);
+      return { tag: d === dayOf(now) ? "Later" : d === dayOf(now) + 1 ? "Tomorrow" : `Next · ${dayName(d)}`, text: `${later.title} ${when}`, it: later };
+    }
+    // Truly nothing ahead this week: say so, plainly, instead of an empty face.
+    return { tag: "Next 3 days", text: "Nothing planned yet", it: null };
   }
   function faceStats() {
     const first: string[] = [];
@@ -471,6 +488,21 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     if (data.sleepHours != null) first.push(`${Math.floor(data.sleepHours)}h ${String(Math.round((data.sleepHours % 1) * 60)).padStart(2, "0")}m sleep`);
     const lines = first.length ? [first.join(" · ")] : [];
     if (data.spentTodayCents != null) lines.push(`${money(data.spentTodayCents)} spent today`);
+    if (!lines.length) {
+      // Nothing measured today: the next three days, counted from the calendar ("3 classes · 2 shifts · 4 due").
+      const soon = ITEMS.filter((it) => it.start >= S.now - (S.now % 1440) && it.start < (dayOf(S.now) + 3) * 1440 && (it.end ?? it.start + 1) > S.now);
+      const n = (cat: string) => soon.filter((it) => it.cat === cat).length;
+      const parts = [
+        [n("class"), "class", "classes"],
+        [n("work"), "shift", "shifts"],
+        [n("due"), "due", "due"],
+      ]
+        .filter(([c]) => (c as number) > 0)
+        .map(([c, one, many]) => `${c} ${c === 1 ? one : many}`);
+      const other = soon.filter((it) => it.cat === "other").length;
+      if (other) parts.push(`${other} more`);
+      if (parts.length) lines.push(`Next 3 days: ${parts.join(" · ")}`);
+    }
     return lines;
   }
 
