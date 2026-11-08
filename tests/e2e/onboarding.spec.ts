@@ -5,6 +5,8 @@ test("a new user sees their day connected, names their assistant, then a skippab
   const email = await signUp(page, "Maya Chen", { onboarding: "stay" });
   // Sign-up took only email and password, so the first screen asks what to call them.
   await expect(page.getByRole("heading", { name: /^Hi/ })).toBeVisible();
+  // Text boxes meet the 44 px touch size.
+  expect((await page.getByLabel("What should I call you?").boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await page.getByLabel("What should I call you?").fill("Maya");
   await expect(page.getByRole("heading", { name: "Hi Maya." })).toBeVisible();
   await expect(page.getByText("LifeFlow is free while we're testing.")).toBeVisible();
@@ -18,6 +20,7 @@ test("a new user sees their day connected, names their assistant, then a skippab
   await page.getByLabel("Where you work").fill("Target");
   await page.getByRole("button", { name: "Continue" }).click();
 
+  expect((await page.getByLabel("Assistant name").boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await page.getByLabel("Assistant name").fill("Nova");
   await page.getByRole("radio", { name: /Coach/ }).click();
   await expect(page.getByText("Nova:", { exact: false })).toBeVisible();
@@ -31,6 +34,8 @@ test("a new user sees their day connected, names their assistant, then a skippab
   await expect(cards).toHaveCount(3);
   await expect(cards.filter({ hasText: "PSY 101" })).not.toHaveCount(0);
   await expect(cards.filter({ hasText: "Target" })).not.toHaveCount(0);
+  // Every card with invented numbers carries its own "example" tag.
+  for (const card of await cards.all()) await expect(card.getByText("example", { exact: true })).toBeVisible();
   await expect(page.getByText("Example numbers. Connect your accounts and these become real.")).toBeVisible();
   await cards.first().getByRole("button").click();
   await expect(cards.first().getByRole("status")).toContainText("In the app,");
