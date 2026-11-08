@@ -11,7 +11,7 @@ import { formatIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
-import { inboxAddress, listInbox, listSenders } from "@/server/services/inbox";
+import { canUndoAnswer, inboxAddress, listInbox, listSenders } from "@/server/services/inbox";
 import { extractionClient } from "@/server/services/inbox/extract";
 import { addSenderAction, removeSenderAction, fileSuggestionAction, answerQuestionAction, undoInboxAction, verifySenderAction } from "./actions";
 import { CopyAddress, InboxUpload } from "./upload";
@@ -119,6 +119,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                 kind?: "bill" | "exam";
                 verified?: boolean;
                 answered?: string;
+                answeredAt?: string;
                 sameAs?: string;
                 twin?: string;
                 seriesKey?: string;
@@ -189,13 +190,15 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                   </ActionButton>
                 </div>
               )}
-              {(i.status === "filed" || (i.status !== "undone" && ask?.answered)) && !i.filed.some((f) => f.stale) && (
-                <div className="mt-2 flex justify-end">
-                  <ActionButton action={undoInboxAction.bind(null, i.id)} className="flex items-center gap-1 rounded-full px-3 text-sm text-text-2">
-                    <Undo2 className="h-4 w-4" /> Undo
-                  </ActionButton>
-                </div>
-              )}
+              {(i.status === "filed" || (i.status !== "undone" && ask?.answered)) &&
+                (!ask?.answered || canUndoAnswer(ask)) &&
+                !i.filed.some((f) => f.stale) && (
+                  <div className="mt-2 flex justify-end">
+                    <ActionButton action={undoInboxAction.bind(null, i.id)} className="flex items-center gap-1 rounded-full px-3 text-sm text-text-2">
+                      <Undo2 className="h-4 w-4" /> Undo
+                    </ActionButton>
+                  </div>
+                )}
             </Card>
           );
         })}

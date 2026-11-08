@@ -179,6 +179,18 @@ export type Ask = {
   /** Yes means: this is a copy of the email filed in this inbox item. */
   twin?: string;
   answered?: "same" | "different";
+  /** When it was answered (ISO). Undo is offered for `UNDO_ANSWER_MS` after this; an answer without it can't be undone. */
+  answeredAt?: string;
+  /** Set when a "No" was undone: the question is open again, but the same pair is not asked a second time while it is. */
+  declined?: true;
+};
+
+/** How long after answering a question Undo still works. After it the answer stands. */
+export const UNDO_ANSWER_MS = 24 * 60 * 60 * 1000;
+/** Whether an answered question can still be undone (an answer with no time kept is too old to be sure). */
+export const canUndoAnswer = (ask: Pick<Ask, "answeredAt"> | null | undefined, now = Date.now()) => {
+  const at = ask?.answeredAt ? Date.parse(ask.answeredAt) : NaN;
+  return Number.isFinite(at) && now - at <= UNDO_ANSWER_MS;
 };
 
 /** Puts what was read where it belongs. Returns what was created (for Undo) and anything that needs the user. */
@@ -258,7 +270,10 @@ export async function fileExtraction(
         } else if (decision?.sameAs) await applyTo(await getRecurring(scope, decision.sameAs), true);
         else {
           const match = await findTrackedBill(scope, facts, today);
-          if (match?.kind === "ask" && !auth) note = `Same bill as ${match.names.join(" or ")}? ${needsSenderCheck}`;
+          if (match?.kind === "ask" && auth && (await openDeclined(scope, match.ids))) {
+            note = "You already told me this isn't the same bill, and that question is open again in your inbox. Answer it there.";
+            reminder = false;
+          } else if (match?.kind === "ask" && !auth) note = `Same bill as ${match.names.join(" or ")}? ${needsSenderCheck}`;
           else if (match?.kind === "ask") {
             const text = `Same bill? ${b.payee} $${(amount / 100).toFixed(2)} on ${fmtDay(due)} from your email, and ${match.names.join(" or ")}${match.seriesKey ? "" : " in your bills"}.`;
             ask = {
@@ -714,6 +729,9 @@ export async function undoInboxItem(scope: UserScope, id: string) {
   // Something the cleanup merged away: Undo brings back what it removed (whatever the item's status), before anything else.
   const restored = await restoreMerged(scope, id);
   if (restored) return restored;
+  // An answer can be taken back for a day; after that it stands.
+  const answeredAsk = askOf(row.extracted);
+  if (answeredAsk?.answered && !canUndoAnswer(answeredAsk)) throw new ServiceError("It's too late to undo that answer.");
   // An answered question: Undo puts back whatever the answer changed and asks it again.
   if (row.status !== "filed" && askOf(row.extracted)?.answered) {
     await reopenQuestion(scope, row);
@@ -790,7 +808,7 @@ export async function answerQuestion(scope: UserScope, tz: string, today: string
   // Several bills it could be: the person taps the one it is, and it has to be one of those that were offered.
   if (pick && (!same || !ask.candidates?.includes(pick))) throw new ServiceError("That isn't one of the bills I asked about.");
   const sameAs = pick ?? ask.sameAs;
-  const answered: Ask = { ...ask, answered: same ? "same" : "different", ...(pick && { picked: pick, sameAs: pick }) };
+  const answered: Ask = { ...ask, answered: same ? "same" : "different", answeredAt: new Date().toISOString(), ...(pick && { picked: pick, sameAs: pick }) };
   const extracted = { ...row.extracted, ask: answered };
   if (same && ask.twin) return markDuplicate(scope, id, ask.twin, { extracted });
   if (same && !sameAs && !ask.seriesKey) throw new ServiceError("Tap the bill it is, or say it is a new bill.");
@@ -828,7 +846,8 @@ async function wasAnsweredNo(scope: UserScope, examId: string, newDate: string) 
       and(
         eq(inboxItems.userId, scope.userId),
         sql`${inboxItems.extracted} #>> '{ask,kind}' = 'exam'`,
-        sql`${inboxItems.extracted} #>> '{ask,answered}' = 'different'`,
+        // A "no" that was undone and is open again still counts: the person said it once.
+        sql`(${inboxItems.extracted} #>> '{ask,answered}' = 'different' or ${inboxItems.extracted} #>> '{ask,declined}' = 'true')`,
         sql`${inboxItems.extracted} #>> '{ask,sameAs}' = ${examId}`,
         sql`${inboxItems.extracted} #>> '{ask,newDate}' = ${newDate}`,
       ),
@@ -837,10 +856,29 @@ async function wasAnsweredNo(scope: UserScope, examId: string, newDate: string) 
   return rows.length > 0;
 }
 
+/** Whether an open question about exactly these bills had its "no" undone: it is waiting, so the pair is not asked again. */
+async function openDeclined(scope: UserScope, ids: string[]) {
+  const rows = await scope.tx
+    .select({ extracted: inboxItems.extracted })
+    .from(inboxItems)
+    .where(
+      and(
+        eq(inboxItems.userId, scope.userId),
+        eq(inboxItems.status, "needs_review"),
+        sql`${inboxItems.extracted} #>> '{ask,kind}' = 'bill'`,
+        sql`${inboxItems.extracted} #>> '{ask,declined}' = 'true'`,
+      ),
+    );
+  const key = (a: string[]) => [...a].sort().join("|");
+  return rows.some((r) => key(askOf(r.extracted)?.candidates ?? []) === key(ids));
+}
+
 /** Undo of an answered question: back to the question, nothing added or changed. */
 async function reopenQuestion(scope: UserScope, row: typeof inboxItems.$inferSelect) {
   const ask = askOf(row.extracted)!;
-  const { answered: _a, ...open } = ask;
+  const { answered: _a, answeredAt: _t, ...rest } = ask;
+  // Undoing a "no" keeps the no on the open question, so the same pair is not raised again meanwhile.
+  const open: Ask = ask.answered === "different" ? { ...rest, declined: true } : rest;
   await scope.tx
     .update(inboxItems)
     .set({ status: "needs_review", filed: [], reason: ask.text, duplicateOf: ask.twin ?? null, extracted: { ...row.extracted, ask: open } })
