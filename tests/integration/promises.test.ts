@@ -97,6 +97,17 @@ describe("promises", () => {
     await expect(a.run((s) => cancelPromise(s, k.id))).rejects.toThrow(/not found/);
   });
 
+  it("a to-do finished before the promise was made does not keep it", async () => {
+    const { run } = await makeUser();
+    const now = new Date("2026-11-08T15:00:00Z");
+    const t = await run((s) => createTask(s, TZ, { title: "Already done" }));
+    await run((s) => updateTask(s, TZ, t.id, { status: "done" }));
+    await new Promise((r) => setTimeout(r, 20));
+    const p = (await run((s) => createPromise(s, TZ, { text: "Do it again tonight", taskId: t.id }, now))).promise;
+    expect(await run((s) => keepFinishedTaskPromises(s, now))).toEqual([]);
+    expect((await run((s) => listPromises(s)))[0]).toMatchObject({ id: p.id, status: "open" });
+  });
+
   it("'Tomorrow instead' after a late answer lands tomorrow (from now) at the same time, not already in the past", async () => {
     const { run } = await makeUser();
     const made = new Date("2026-11-07T15:00:00Z");

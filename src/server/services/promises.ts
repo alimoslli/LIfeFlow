@@ -128,7 +128,7 @@ export async function keepFinishedTaskPromises(scope: UserScope, now = new Date(
     .select({ id: promises.id, text: promises.text })
     .from(promises)
     .innerJoin(tasks, eq(tasks.id, promises.taskId))
-    .where(and(eq(promises.userId, scope.userId), eq(promises.status, "open"), eq(tasks.status, "done")));
+    .where(and(eq(promises.userId, scope.userId), eq(promises.status, "open"), eq(tasks.status, "done"), gte(tasks.completedAt, promises.createdAt)));
   for (const r of rows) await resolvePromise(scope, r.id, "kept", "task", now);
   return rows;
 }
