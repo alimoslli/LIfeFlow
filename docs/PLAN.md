@@ -81,15 +81,26 @@ All times are Pacific. The wording is in `docs/hq/round-prompts.md`.
 - everything with a time flowing onto both (calendars, shifts, deadlines, reminders, and money behind the lock);
 - "Pin something".
 
-Full check and phone e2e passed on 2026-11-08. The artifact "LifeFlow Day Clock" shows it on a made-up student week. Nothing reaches main without the owner's yes on a picture.
+Full check and phone e2e passed on 2026-11-08. To see it:
+- the artifact "LifeFlow Day Clock" (https://claude.ai/artifact/UgiwwCiRsyigsHhvn1LoND) shows it on a made-up student week;
+- the owner's pitch page "LifeFlow v3" (https://claude.ai/artifact/YM14ETMVXCKV85Gg4MeSbh) has the North Star story, a live phone demo and sign-in.
+
+ Nothing reaches main without the owner's yes on a picture.
 
 **Done:**
 - 11-07: the V3 home spec and prototype, from the owner's storyboard.
-- 11-07 and 11-08: the clock rim shows the 12 hours around now.
+- 11-08: the owner moved the clock to the next 24 hours from the hand, on two rings: the inner ring is the next 12 hours, the outer ring the 12 after.
 - 11-08: the clock, the timeline and all time-bound data were built on `v3-day-clock`.
+- 11-08: the timeline cards became editable and the clock is never empty (46842e8), after the owner's 6:04 AM report:
+  - events, shifts and assignments open Plan's editor in place, with delete inside it;
+  - to-dos, goals and milestones open their own page;
+  - overdue items show as one marker at the hand;
+  - all-day plans read "today" or "all day";
+  - a quiet face counts what the timeline holds.
+- 11-08: main merged into `v3-day-clock` (ca873df). It brought promises, this plan and the HQ test fix. The promise check now runs on open, before the clock. The check is green (1158 tests), and so are the clock, core and promises e2e.
 
 **Next:**
-- Fix the clock looking empty and the timeline not being editable. The owner reported both on 11-08 at 6:04 AM and approved anything needed to fix them. This was moved here from the Day clock chat.
+- **Bring `v3-day-clock-north-star` up to date.** It was cut from `v3-day-clock` at 26299b6, so it lacks 34e2eb3, 39f7794 and 46842e8. The owner's sign-in link points at it, so either merge `v3-day-clock` into it (LF Main owns that branch) or point the owner at the `v3-day-clock` preview.
 - Rebuild the Day Clock artifact after clock changes.
 - The ADR 0032 proposals ("Tonight", "What this costs", timeline connection lines, a widget or watch) are not built and need the owner's yes.
 
@@ -152,15 +163,33 @@ Full check and phone e2e passed on 2026-11-08. The artifact "LifeFlow Day Clock"
 
 **Status:** live at `/admin`, with five places (Office, Work, Marketing, People, App) and the settings gear. It includes the desk, live HQ (what each chat is doing right now), the hourly sync, decision cards and the building pictures. The night round on 11-07 audited it: the founder-only locks, the API key checks and the card rules all hold.
 
+**Checked 11-08:**
+- The hourly sync runs: its last three runs were all accepted, 9 chats each.
+- The desk task starter exists but has no API token yet, so the desk opens a link.
+
 **Done:**
 - 11-06: the HQ build.
-- 11-07: the desk start fix, live HQ, HQ sync, the simplified Office and the building pictures, all on main.
+- 11-07, all on main:
+  - the CEO in the penthouse redrawn from the owner's photos ([e4fa73c](https://github.com/alimoslli/LIfeFlow/commit/e4fa73c));
+  - live HQ and starting a desk task from HQ ([4919160](https://github.com/alimoslli/LIfeFlow/commit/4919160));
+  - the HQ sync ([c7f4b4e](https://github.com/alimoslli/LIfeFlow/commit/c7f4b4e));
+  - the simpler Office: "Needs you" and "Working now" first, logs moved to the department pages, the COO in plain words ([e8ad461](https://github.com/alimoslli/LIfeFlow/commit/e8ad461)).
 
-**Next:** the open ADR 0030 questions (per-chat keys, live-line wording).
+**Next:**
+- The open ADR 0030 questions: per-chat keys and live-line wording.
+- Keep the HQ sync chat light:
+  - **Why:** it rereads its whole history every hour, and that history grows each run, which uses the owner's Claude allowance.
+  - **What:** when it gets long, start a fresh sync chat and point the hourly scheduled task at it.
+  - **Then update:** the chat's id in `CLAUDE.md` and in section 1's table.
 
 **Waiting on the owner:**
-- **The desk task starter:** in Claude's scheduled tasks, set "LifeFlow desk task starter" to the LIfeFlow repo only and add an API trigger and token. Then add `HQ_DESK_FIRE_URL` and `HQ_DESK_FIRE_TOKEN` in Vercel and redeploy. Until then the desk opens a link instead.
-- **Feedback on the building screenshots** (moved here from the merged chat).
+- **The desk task starter:**
+  1. In Claude's scheduled tasks, set "LifeFlow desk task starter" to the LIfeFlow repo only.
+  2. Add an API trigger and generate its token.
+  3. In Vercel, add `HQ_DESK_FIRE_URL` (the trigger's fire address) and `HQ_DESK_FIRE_TOKEN`, then redeploy.
+
+  The token goes only into Vercel, never into a chat. Until then the desk opens a link, which already starts the right chat with the right first prompt.
+- **A look at the building as it is live now**, with the CEO redrawn from the owner's photos on 11-07. If anything looks off, send LF HQ a photo of it. This item moved here from the merged building-pictures chat.
 
 ## 6. Quality & Security. Owner: the COO (agent `qa-security`)
 **Where the details live:** `docs/audits/`, `docs/playbook.md` (red lines, definition of done) and `tests/e2e/`.
@@ -235,6 +264,7 @@ Full check and phone e2e passed on 2026-11-08. The artifact "LifeFlow Day Clock"
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-08, LF HQ: checked section 5. Added commit links; confirmed the hourly sync and the desk starter's state; made the building item specific; added upkeep for the sync chat to Next.
 - 2026-11-08, LF COO: section 10 is the one owner list (docs/hq/owner-list.md now points here); added the Vercel plan, payments and Gmail verification. The COO ends every report with the top 3.
 - 2026-11-08, LF Managing Agents: wrote this plan; merged 4 chats (section 1); renamed the remaining chats to one-per-department names.
 - 2026-11-07, LF Managing Agents: round on "go". 3 fixes shipped to main (plain form errors, failed saves keep input, onboarding name hint), 5 situations, an HQ audit, 2 cards for the owner. The content skills were added for Marketing (`docs/marketing/skills/`).
