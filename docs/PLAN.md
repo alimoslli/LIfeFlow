@@ -265,10 +265,12 @@ Full check and phone e2e passed on 2026-11-08. To see it:
 - **HQ cards:** H4 (a 404 for signed-out visitors to /admin). H3 was declined on 2026-11-08: the "Record a paycheck" form on Work stays.
 - **Older cards being rewritten** (Goals redesign A, Connected accounts, the timeline concepts, Gmail abilities, search bolding, the agent workload, "Same bill?" outside the inbox).
 - **Marketing:** voice samples and credit spending.
+- **Onboarding and Today (phone check 2026-11-08):** the Today quick chips wrap to two rows instead of scrolling sideways (built, held on fix/welcome-phone-2026-11-08, 4cc3e71); 'Skip setup' and 'Skip' sit close together while the day connects.
 - **Promises (night audit 2026-11-08):** read the six firmer check-in lines once (some lean on pressure); decide whether a promise's text may show in a notification on the lock screen.
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-08 evening, LF COO: on main (ac6212a) after Opus reviews: Plaid follow-ups (hand-archived accounts stay archived, broken connections skipped until reconnect, LOGIN_REPAIRED and NEW_ACCOUNTS_AVAILABLE, holdings safety, pending expiration keeps syncing); account deletion cancels the plan (or refuses), removes bank links and revokes Google, for users and admins; onboarding phone fixes (44 px fields, names wrap, example tags on every card, no guessed Jdoe1234). Report: docs/audits/2026-11-08-welcome-phone.md.
 - 2026-11-08 afternoon, LF COO: on main, the 4 Promises fixes (Tomorrow instead, cancel a mis-sorted promise, to-dos done before, cron errors) and 3 Plaid/Microsoft fixes (Opus-reviewed); the Vercel setup sheet (docs/audits/2026-11-08-vercel-setup.md) and the Plaid/Microsoft check (docs/audits/2026-11-08-plaid-microsoft-check.md).
 - 2026-11-08, LF COO: the owner declined H3; the paycheck form stays.
 - 2026-11-08 night, LF COO: 2 fixes on main (7-Eleven name, Same bill? Undo window), the night audit, the App Store readiness report, situations batch 5.
