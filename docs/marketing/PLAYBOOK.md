@@ -410,6 +410,10 @@ they keep filming. First batch: Ali on camera in his own voice showing the app; 
 First check (Nov 8): IMG_1791 (8:52, car interview, Tyler asks) and IMG_1783 (1:42, Ali sketching the new design); lines, times and
 cuts are in the doc's Footage log tab. Never use IMG_1791 2:13 to 2:20 (names a real person, n-word) or "I don't want any profit".
 **Decided (Ali, Nov 8):** the waiting list is announced just before December, with the film on Nov 30; the clip's spoken dates are not used.
+**Plan format (Ali, Nov 8):** the long plan confused him on set ("we just balled it"). The doc's first tab is now "Next shoot": one
+page per shoot, in order, tick boxes, the exact lines, times per block; everything else sits in "Full plan (background)". Always send
+the shoot sheet as a PDF link too. Next shoot (seated, podcast/office, with mics): confession, five podcast questions with Ali's own
+answers from the car, Tyler's turn, work shots, the last line. The couch scene is a separate day.
 The doc now opens with "What you do": a one-page checklist for tonight plus an Ali-and-Tyler table for the work shots. Ali wants the plan
 that simple ("just tell me what I have to do"); the detail stays below it. Send plans as PDF links too (the doc link didn't open in his browser).
 
