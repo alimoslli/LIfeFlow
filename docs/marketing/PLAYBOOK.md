@@ -388,7 +388,7 @@ until the premiere; turn it off once the film is posted. The first outline is ke
 **Merged 2026-11-08 (owner: "talk about it here"):** the COO's shoot sheet is now in the doc as "Tonight's call sheet" and the seven
 conversation questions; the Marketing chat owns the film and the COO forwards footage here. Numbers in Ali's lines are checked against
 the code (385 commits on main Nov 1 to 8, about 1,100 tests: say "hundreds of changes in one week", "more than a thousand automated tests").
-Premiere proposed for Nov 29 (after the birthday film and the student spot, once the app redesign is live), waiting on Ali's yes.
+Premiere decided: Monday, Nov 30, 2026, 10 AM Pacific (Ali chose Nov 29 or 30; Metricool's best-time data rates Monday about twice Sunday, general Instagram patterns until the account has its own history). Teaser Sunday, Nov 29, around 6 PM Pacific.
 **Decided 2026-11-08:** the cinema scene is filmed on a couch in front of a TV (lights off, the TV the only light) and turned into a cinema
 with AI (Higgsfield stills first, then one 5-second take each, about 31 credits after a top-up); faces and voices stay real. Every spoken
 line, clip by clip, is in the doc's "Lines, clip by clip" tab (https://claude.ai/artifact/J4Qmes1s6mVYjLgxy3xBiY#aac74a43-8f54); the film
