@@ -131,7 +131,7 @@ export async function respondToMessage(scope: UserScope, user: User, id: string,
         const now = new Date();
         let text: string;
         if (outcome === "moved") {
-          await movePromise(scope, m.action.promiseId);
+          await movePromise(scope, m.action.promiseId, user.timezone, now);
           text = promiseReply("moved", toneOf(user.preferences), { text: String(m.facts.text ?? ""), brokenRecent: 0, keptWeek: 0 }, m.dedupeKey.length);
         } else {
           const r = await resolvePromise(scope, m.action.promiseId, outcome, "you", now);

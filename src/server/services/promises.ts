@@ -1,6 +1,6 @@
 import { and, asc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { z } from "zod";
-import { DATE_RE, TIME_RE, addDaysStr, localDateOf, localToInstant } from "@/lib/dates";
+import { DATE_RE, TIME_RE, addDaysStr, localDateOf, localTimeOf, localToInstant } from "@/lib/dates";
 import { promises, tasks } from "../db/schema";
 import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound, ServiceError } from "./errors";
@@ -81,8 +81,24 @@ export async function resolvePromise(scope: UserScope, id: string, outcome: "kep
   return { promise: p, changed: true as const };
 }
 
-/** "Not yet": check again tomorrow at the same time. At most twice, so a promise can't be postponed forever. */
-export async function movePromise(scope: UserScope, id: string) {
+/**
+ * Removes an open promise that was saved by mistake (for example it was really a to-do). It is deleted, not marked: no check-in
+ * ever fires for it and it never counts as kept or broken. Answered promises are history and stay.
+ */
+export async function cancelPromise(scope: UserScope, id: string) {
+  const [row] = await scope.tx
+    .delete(promises)
+    .where(and(eq(promises.id, id), eq(promises.userId, scope.userId), eq(promises.status, "open")))
+    .returning({ id: promises.id });
+  if (!row) throw notFound("Promise");
+  return { id: row.id };
+}
+
+/**
+ * "Not yet": check again tomorrow (counted from now, in the user's time zone) at the same time of day, even if the card sat for days.
+ * At most twice, so a promise can't be postponed forever.
+ */
+export async function movePromise(scope: UserScope, id: string, tz: string, now = new Date()) {
   const [p] = await scope.tx
     .select()
     .from(promises)
@@ -91,7 +107,7 @@ export async function movePromise(scope: UserScope, id: string) {
   if (p.moves >= MAX_MOVES) throw new ServiceError("It's been moved twice already. Mark it done or let it go.");
   const [row] = await scope.tx
     .update(promises)
-    .set({ dueAt: new Date(p.dueAt.getTime() + 86_400_000), moves: p.moves + 1 })
+    .set({ dueAt: localToInstant(addDaysStr(localDateOf(now, tz), 1), localTimeOf(p.dueAt, tz), tz), moves: p.moves + 1 })
     .where(eq(promises.id, id))
     .returning();
   return row;
@@ -112,7 +128,7 @@ export async function keepFinishedTaskPromises(scope: UserScope, now = new Date(
     .select({ id: promises.id, text: promises.text })
     .from(promises)
     .innerJoin(tasks, eq(tasks.id, promises.taskId))
-    .where(and(eq(promises.userId, scope.userId), eq(promises.status, "open"), eq(tasks.status, "done")));
+    .where(and(eq(promises.userId, scope.userId), eq(promises.status, "open"), eq(tasks.status, "done"), gte(tasks.completedAt, promises.createdAt)));
   for (const r of rows) await resolvePromise(scope, r.id, "kept", "task", now);
   return rows;
 }

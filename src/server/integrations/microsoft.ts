@@ -162,7 +162,7 @@ async function accessToken(scope: UserScope, f: Fetch, force = false): Promise<s
   if (!force && creds.expiresAt - Date.now() > 60_000) return creds.accessToken;
   const { ok, t } = await tokenRequest({ refresh_token: creds.refreshToken, grant_type: "refresh_token" }, f);
   if (!ok || !t.access_token) {
-    const revoked = t.error === "invalid_grant";
+    const revoked = ["invalid_grant", "interaction_required", "consent_required"].includes(String(t.error));
     // Recorded in its own transaction: the caller's transaction rolls back when we throw.
     await withUser(scope.userId, (s2) =>
       s2.tx

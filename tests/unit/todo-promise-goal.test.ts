@@ -27,5 +27,8 @@ describe("to-do, promise or goal", () => {
     expect(getTool("make_promise")?.description).toMatch(/not eating out tonight/);
     expect(getTool("make_promise")?.description).toMatch(/to-do/);
     expect(getTool("create_personal_goal")?.description).toMatch(/weeks or months/);
+    // A wrong sort can be undone: the prompt names a tool that really exists for removing a promise.
+    expect(INSTRUCTIONS).toMatch(/cancel_promise/);
+    expect(getTool("cancel_promise")?.mutates).toBe(true);
   });
 });

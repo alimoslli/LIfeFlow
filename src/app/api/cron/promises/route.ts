@@ -5,6 +5,7 @@ import { users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
 import { pushImportant, runProactive } from "@/server/services/proactive/engine";
+import { recordError } from "@/server/services/error-reports";
 import { sendOnce, webPushSender } from "@/server/services/push";
 
 export const dynamic = "force-dynamic";
@@ -25,15 +26,24 @@ export async function GET(req: Request) {
     const all = await getDb().select({ id: users.id, tz: users.timezone, prefs: users.preferences, kind: users.accountKind }).from(users);
     let messages = 0;
     let sent = 0;
+    let failed = 0;
     for (const u of all) {
       if (u.kind === "demo") continue;
       try {
         const made = await withUser(u.id, (s) => runProactive({ scope: s, tz: u.tz, prefs: u.prefs, trigger: "promise" }));
         messages += made.length;
         if (made.length && send) sent += await withUser(u.id, (s) => pushImportant(s, u.tz, u.prefs, (key, msg) => sendOnce(s, key, msg, send)));
-      } catch {}
+      } catch (e) {
+        // One person's failure must not stop the rest. Record the kind of error only: no ids, no text from the error.
+        failed++;
+        await recordError(getDb(), {
+          source: "server",
+          route: "/api/cron/promises",
+          message: `promise check-in failed for a user: ${e instanceof Error ? e.name : "Error"}`,
+        }).catch(() => {});
+      }
     }
-    return NextResponse.json({ ok: true, users: all.length, messages, sent });
+    return NextResponse.json({ ok: true, users: all.length, messages, sent, failed });
   } catch (e) {
     return errorResponse(e);
   }

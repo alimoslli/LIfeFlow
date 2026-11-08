@@ -403,6 +403,23 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
   // Only accounts the user keeps on get transactions and holdings.
   const idByPlaid = new Map<string, string>();
   const seen: string[] = [];
+  // Accounts the bank had stopped sharing: if one comes back, its history was removed here, so the cursor starts over.
+  const wasUnshared = new Set(
+    (
+      await scope.tx
+        .select({ id: financialAccounts.id })
+        .from(financialAccounts)
+        .where(
+          and(
+            eq(financialAccounts.userId, scope.userId),
+            eq(financialAccounts.integrationId, integrationId),
+            eq(financialAccounts.source, "plaid"),
+            sql`${financialAccounts.archivedAt} is not null and ${financialAccounts.excludedAt} is null`,
+          ),
+        )
+    ).map((r) => r.id),
+  );
+  let restart = false;
   for (const a of acc.accounts) {
     const m = mapAccount(a);
     const [row] = await scope.tx
@@ -417,6 +434,7 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
       .returning({ id: financialAccounts.id, excludedAt: financialAccounts.excludedAt });
     seen.push(row.id);
     if (row.excludedAt) continue;
+    if (wasUnshared.has(row.id)) restart = true;
     idByPlaid.set(a.account_id, row.id);
     stats.accounts++;
   }
@@ -442,7 +460,7 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
   }
 
   // 2. Transactions (cursor-based: only what changed since last time)
-  let cursor = creds.cursor;
+  let cursor = restart ? null : creds.cursor;
   for (let page = 0; page < 50; page++) {
     const r = await call<{ added: PlaidTxn[]; modified: PlaidTxn[]; removed: { transaction_id: string }[]; next_cursor: string; has_more: boolean }>(
       "/transactions/sync",
@@ -540,7 +558,8 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
         securities: { security_id: string; name: string | null; ticker_symbol: string | null; type: string | null }[];
       }>("/investments/holdings/get", { access_token: token }, f);
       const sec = new Map(inv.securities.map((s) => [s.security_id, s]));
-      const accountIds = [...new Set(inv.holdings.map((h) => idByPlaid.get(h.account_id)).filter(Boolean))] as string[];
+      // Every investment account the bank shares, so an account with nothing left in it is emptied too.
+      const accountIds = acc.accounts.filter((a) => TYPE[a.type] === "investment").flatMap((a) => idByPlaid.get(a.account_id) ?? []);
       if (accountIds.length)
         await scope.tx.delete(holdings).where(and(eq(holdings.userId, scope.userId), eq(holdings.source, "plaid"), inArray(holdings.accountId, accountIds)));
       for (const h of inv.holdings) {
