@@ -9,6 +9,7 @@ import {
   CalendarCheck,
   CalendarDays,
   CheckSquare,
+  Clock3,
   HeartPulse,
   Landmark,
   Lightbulb,
@@ -27,11 +28,13 @@ import { useLifeAreas } from "./life-areas";
 type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean; /** Other pages that belong to this pill. */ also?: string[]; except?: string[] };
 export type Section = "plan" | "money" | "jarvis" | "personal";
 
-const SECTION_NAMES: Record<Section, string> = { plan: "Plan", jarvis: "Assistant", money: "Money", personal: "School" };
+const SECTION_NAMES: Record<Section, string> = { plan: "Today", jarvis: "Assistant", money: "Money", personal: "School" };
 
 /** Second level: each tab's pages as pills. Every page belongs to exactly one pill. */
 export const SECTIONS: Record<Section, Item[]> = {
+  // Today's pages. The clock itself ("/") shows no pills: the day picker is its own navigation.
   plan: [
+    { href: "/", label: "Day", icon: Clock3, exact: true },
     { href: "/plan", label: "Calendar", icon: CalendarDays, exact: true, also: ["/calendar"] },
     { href: "/tasks", label: "To-dos", icon: CheckSquare },
     { href: "/milestones", label: "Milestones", icon: Trophy, also: ["/goals"] },
@@ -86,7 +89,7 @@ export function SectionNav({ inline = false, children }: { inline?: boolean; chi
     if (!section) return;
     return whenIdle(() => SECTIONS[section].forEach((i) => router.prefetch(i.href)));
   }, [section, pathname, router]);
-  if (!section) return null;
+  if (!section || pathname === "/") return null;
   return (
     <nav
       aria-label={`${SECTION_NAMES[section]} sections`}

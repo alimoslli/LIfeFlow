@@ -95,8 +95,8 @@ test("a new user who never names the assistant never sees 'Jarvis'", async ({ pa
 
   // Phone: the tab says "Assistant", sentences say "your assistant".
   const tabs = page.getByRole("navigation", { name: "Main" }).last().getByRole("link");
-  expect(await tabs.allInnerTexts()).toEqual(["Today", "Plan", "Assistant", "Money", "School"]);
-  await expect(page.getByRole("link", { name: /^Your assistant · / })).toBeVisible();
+  expect(await tabs.allInnerTexts()).toEqual(["Today", "Assistant", "Money", "School"]);
+  await expect(page.getByRole("button", { name: "Message your assistant…" })).toBeVisible();
   for (const path of PAGES) {
     await visit(page, path);
     await expectNoJarvis(page, `phone ${path}`);

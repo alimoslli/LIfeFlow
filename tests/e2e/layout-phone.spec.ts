@@ -7,8 +7,8 @@ const SHOTS = process.env.SHOTS;
 
 // Each tab's landing page and every page that must be one more tap from it.
 const TABS: [string, string, string[]][] = [
-  ["Today", "/", []],
-  ["Plan", "/plan", ["/calendar", "/tasks", "/milestones", "/habits", "/work"]],
+  // Today is the day clock; its other pages are a row of pills under it (and pills on each of those pages).
+  ["Today", "/", ["/plan", "/tasks", "/milestones", "/habits", "/work"]],
   ["Assistant", "/jarvis", ["/jarvis/says", "/jarvis/ideas", "/jarvis/profile"]],
   ["Money", "/money", ["/finances/accounts", "/wealth", "/finances/budgets", "/finances/transactions", "/finances/subscriptions", "/finances/bills"]],
   ["School", "/school", ["/school/due", "/notes"]],
@@ -22,10 +22,10 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
   });
   const problems: string[] = [];
 
-  // Tab bar: exactly five tabs, short labels, nothing truncated; no Settings tab.
+  // Tab bar: exactly four tabs, short labels, nothing truncated; no Settings tab.
   await page.goto("/");
   const tabs = page.getByRole("navigation", { name: "Main" }).last().getByRole("link");
-  expect(await tabs.allInnerTexts()).toEqual(["Today", "Plan", "Assistant", "Money", "School"]);
+  expect(await tabs.allInnerTexts()).toEqual(["Today", "Assistant", "Money", "School"]);
   for (const t of await tabs.all()) {
     const cut = await t.evaluate((el) => [...el.querySelectorAll("span.truncate")].some((s) => s.scrollWidth > s.clientWidth + 1));
     if (cut) problems.push(`tab label clipped: ${await t.innerText()}`);
@@ -66,7 +66,7 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
 
   // Each pill href belongs to one group only (no duplicated features in the sub-tabs).
   const pillOwners = new Map<string, string>();
-  for (const [label, landing] of TABS.slice(1)) {
+  for (const [label, landing] of [["Today", "/plan"] as const, ...TABS.slice(1)]) {
     await page.goto(landing);
     for (const href of await page.locator('nav[aria-label$="sections"] a').evaluateAll((as) => as.map((a) => a.getAttribute("href")!)))
       if (pillOwners.has(href) && pillOwners.get(href) !== label) problems.push(`pill ${href} in ${pillOwners.get(href)} and ${label}`);

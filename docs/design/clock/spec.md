@@ -141,12 +141,35 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
 
   The other days are fresh made-up days, each different (docs/team.md).
 
-## 7. Out of scope for this step
-- Building it in the app (Batch 1 replaces Today, Plan and To-dos after the owner's yes on the prototype).
+## 7. In the app (branch `v3-day-clock`, owner 2026-11-08: "start building this concept into a branch of a duplicate of the current live app")
+- **Where:** the Today tab is the clock (`src/app/(app)/page.tsx`).
+  - **The tabs** are now Today, Assistant, Money, School. Plan is gone as a tab.
+  - **The old Plan pages** (Calendar, To-dos, Milestones, Health, Work) are pills on each of those pages, and a quiet row of pills below the fold on Today, so every page stays two taps away.
+  - **The floating ask button** is off Today, because the home has its own ask bar.
+- **One screen on a phone:** the clock, and at its foot the assistant's one line (the top insight that needs attention, with its action). The line steps aside while the timeline is open and comes back on the wrap. The ask bar and the pills are below the fold.
+- **Data:** one read, `dayClockData` (`services/day-clock.ts`). It covers the week around today from the one agenda (calendars, work shifts, class deadlines and exams, to-dos with a time) plus today's steps, in wall-clock minutes in the person's time zone.
+  - **Icons** come from the title's words first, then the kind.
+  - **Tiles:** work shifts feed the work tile, classes the class tile, and exams, deadlines and timed to-dos the deadline tile.
+  - **Cards** say where each thing came from, and "Open" goes to the page that already owns it (calendar, work, the class, to-dos).
+- **Drawing:** `components/day-clock/engine.ts` is the prototype's motion code, typed. React renders the skeleton once. Colours are the theme tokens, so it reads right in light and dark.
+  - **Live time:** the clock follows the real time, redrawn each minute but never while the timeline is open or moving, and it fetches again when the day turns.
+  - **State:** `data-state` (clock, moving, timeline) tells tests and assistive tech what it's doing.
+- **Not shown yet, honestly:**
+  - **Spends:** the bank feed gives a date but no time, so spends aren't pinned on the rim. Adding the time Plaid sometimes sends needs a database change, which is held for the owner.
+  - **Sleep:** Apple Health sends hours per night but no bedtime, so there's no bedtime marker.
+  - **A step goal:** none is stored, so the face shows the step count with no goal.
+- **Tests:**
+  - `tests/unit/day-clock.test.ts` (icons, tiles, sources, wall-clock minutes across daylight saving);
+  - `tests/integration/day-clock.test.ts` (the real read);
+  - `tests/e2e/clock-phone.spec.ts` (open, the card and its Open link, the now pill wrap, the pull-down wrap);
+  - the layout, touch-target and core tests, updated for the four tabs.
+- **For screenshots:** `scripts/dev/seed-clock-look.ts` gives a local account a made-up week. It refuses any database that isn't on localhost.
+
+## 8. Out of scope for this step
 - Editing from the timeline beyond opening the existing editor.
 - The week view.
 
-## 8. Open for the owner
+## 9. Open for the owner
 1. ~~The rim~~ **Decided (2026-11-07): B, the 12 hours around now, as built.** The owner saw both in `rim-options.png` (A: the whole day on one face; B: the 12 hours around now; same day and data at 8:45 PM). He couldn't see a difference, so the COO chose B on the recommendation. He can still switch to A.
 2. Should a pull also turn it into the timeline, or only a tap? (Still open; the prototype does both.)
 3. ~~Should the three chips be spent, steps and sleep, or spent, tasks and focus?~~ Answered (owner, 2026-11-07, through the COO): neither. The chips show time-bound commitments: shifts, classes and deadlines (section 4).

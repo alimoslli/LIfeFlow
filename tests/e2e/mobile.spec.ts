@@ -35,8 +35,8 @@ test("core pages fit a phone screen without horizontal scrolling", async ({ page
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow, `${path} overflows by ${overflow}px`).toBeLessThanOrEqual(1);
   }
-  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Plan" }).click();
-  await expect(page).toHaveURL(/\/plan/);
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Today" }).click();
+  await expect(page).toHaveURL(/\/$/);
 });
 
 test("Extra large text still fits a phone screen", async ({ page, context, baseURL }) => {

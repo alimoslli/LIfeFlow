@@ -269,7 +269,8 @@ export function AppShell({
         <Suspense fallback={null}>
           <QuickAdd />
         </Suspense>
-        {!onJarvisPage && !assistantPage && (
+        {/* Not on Today: the clock has its own ask bar right under it. */}
+        {!onJarvisPage && !assistantPage && pathname !== "/" && (
           <button
             type="button"
             onClick={() => openJarvis()}
