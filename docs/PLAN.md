@@ -194,9 +194,12 @@ Full check and phone e2e passed on 2026-11-08. To see it:
 ## 6. Quality & Security. Owner: the COO (agent `qa-security`)
 **Where the details live:** `docs/audits/`, `docs/playbook.md` (red lines, definition of done) and `tests/e2e/`.
 
-**Status:** the newest audit is `docs/audits/2026-11-07-hq-audit.md`. It found 2 fixes, both shipped, and 2 items for the owner (H3, H4). Every night round audits what changed plus one area not yet covered.
+**Status:**
+- Newest audit: `docs/audits/2026-11-08-night-audit.md` (Promises and the /welcome flow). No high-severity findings. 4 small Promises bugs became Engineering missions (2 high: "Tomorrow instead" re-asks at once after a late answer; a mis-sorted promise can't be removed). 2 items for the owner (section 11).
+- Shipped on 2026-11-08 night: "7-Eleven" kept as a name (19523d3) and the "Same bill?" Undo window (85fdbb7), each with tests; full check, build and the inbox phone e2e passed.
+- App Store readiness: `docs/audits/2026-11-08-app-store-readiness.md` (biggest risks: Apple's "just a website" rule and missing in-app purchase; 13 owner steps, 14 engineering steps).
 
-**Next:** in the next night round, audit V3 on its branch before it's proposed for main.
+**Next:** fix the 2 high Promises bugs; audit V3 on its branch before it's proposed for main; a rendered phone pass of /welcome.
 
 ## 7. Research & Insights, and Customer Success. Owner: the COO (agents `market-researcher`, `situation-writer`, `customer-success`)
 **Where the details live:** `docs/research/`; things to avoid become rules at once (CLAUDE.md).
@@ -204,7 +207,8 @@ Full check and phone e2e passed on 2026-11-08. To see it:
 **Status:**
 - Research runs weekly on Monday.
 - The newest report is about notifications that bring people back. Its 15 things to avoid are rules for every push.
-- Customer Success turns new error groups into Engineering missions every night round.
+- Customer Success turns new error groups into Engineering missions every night round. On 2026-11-08 the only group was one old hydration mismatch (Nov 4), not growing.
+- Situations: 35 cases. Batch 5 (s0031 to s0035) adds non-hourly earners (photographer, tutor, reseller, delivery driver) and Promise cases. Students are 66% of the library against the 70% target, so the next batches lean student.
 
 ## 8. Marketing & Growth. Owners: the CMO and the CEO, with the LF Marketing chat
 **Where the details live:**
@@ -261,9 +265,11 @@ Full check and phone e2e passed on 2026-11-08. To see it:
 - **HQ cards:** H3 (remove the typed-paycheck form) and H4 (a 404 for signed-out visitors to /admin).
 - **Older cards being rewritten** (Goals redesign A, Connected accounts, the timeline concepts, Gmail abilities, search bolding, the agent workload, "Same bill?" outside the inbox).
 - **Marketing:** voice samples and credit spending.
+- **Promises (night audit 2026-11-08):** read the six firmer check-in lines once (some lean on pressure); decide whether a promise's text may show in a notification on the lock screen.
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-08 night, LF COO: 2 fixes on main (7-Eleven name, Same bill? Undo window), the night audit, the App Store readiness report, situations batch 5.
 - 2026-11-08, LF HQ: checked section 5. Added commit links; confirmed the hourly sync and the desk starter's state; made the building item specific; added upkeep for the sync chat to Next.
 - 2026-11-08, LF COO: section 10 is the one owner list (docs/hq/owner-list.md now points here); added the Vercel plan, payments and Gmail verification. The COO ends every report with the top 3.
 - 2026-11-08, LF Managing Agents: wrote this plan; merged 4 chats (section 1); renamed the remaining chats to one-per-department names.

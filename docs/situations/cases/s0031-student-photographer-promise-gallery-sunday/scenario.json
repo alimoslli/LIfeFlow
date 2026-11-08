@@ -1,0 +1,101 @@
+{
+  "id": "s0031-student-photographer-promise-gallery-sunday",
+  "title": "Photographer student promised Dev the wedding gallery by Sunday night; at the 9 PM check-in nothing in her data shows whether she sent it, so Dev asks and only her answer decides",
+  "persona": "p0004-university-dorm-freelance-photographer",
+  "now": "2026-11-15T21:00",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 3101,
+  "money": {
+    "available_now_cents": 82000
+  },
+  "changes": [
+    {
+      "id": "m-promise",
+      "type": "memory",
+      "content": "I'll edit and send the Nov 7 wedding gallery to Brightside by Sunday night",
+      "category": "temporary",
+      "via": "chat",
+      "told_at": "2026-11-10T21:30",
+      "expires_at": "2026-11-16T09:00"
+    },
+    {
+      "id": "c-email",
+      "type": "email",
+      "at": "2026-11-13T10:12",
+      "sender_type": "personal",
+      "sender_name": "Brightside Weddings",
+      "from_address": "hello-brightside@example.com",
+      "subject": "Can't wait to see the Nov 7 photos"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-promise",
+      "check": "time",
+      "what": "On Tue Nov 10 at 9:30 PM she told Dev she would edit and send the Nov 7 wedding gallery to Brightside Weddings by Sunday night. It is Sunday 9 PM, the check-in time. Dev has no record of the outcome: her calendar shows the Nov 7 wedding shoot and a Sunday study block for HIST 374 but no editing block, mail shows only Brightside's note on Friday (\"Can't wait to see the Nov 7 photos\") and no sent-mail record, and the Brightside invoice for $572.94 is open until Nov 23. None of these says kept or broken, so Dev asks once and waits for her answer.",
+      "by_when": "2026-11-15T21:00",
+      "facts": [
+        "m-promise",
+        "ev-wedding-2026-11-07",
+        "c-email",
+        "study-2026-11-15",
+        "inv-brightside-weddings-004"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-promise",
+      "action": "ask",
+      "needs_user": true,
+      "send_at": "2026-11-15T21:00",
+      "what": "One check-in at 9 PM, after her Sunday call home: \"You said you'd send the Brightside gallery by tonight. Did it happen?\" with three answers: [Yes, I did it] [Tomorrow instead] [It didn't happen]. Yes records it as kept, warmly. Tomorrow instead moves the check to 9 PM Monday (allowed at most twice) and offers a short note to Brightside as a draft she can send herself, never sent by Dev. It didn't happen is recorded as broken, honestly and gently, with an offer to choose a smaller promise (for example, send 20 favorites first). If she doesn't answer, nothing is recorded: the promise is dropped after 7 days and is never counted as broken.",
+      "why": "The promise is hers and the only thing that settles it is her own answer or a finished to-do linked to it (there is none here). Her data can't show it: the gallery could have gone by a download link, a text, or a shared album. Asking once, with three taps, is cheap and accurate; guessing from an empty calendar would be wrong either way."
+    }
+  ],
+  "must_not": [
+    "mark the promise broken because there is no editing block on her calendar, no sent-mail record or no Brightside payment",
+    "mark the promise kept because Brightside's Friday email, the open invoice, or her Sunday study session exists",
+    "mention the Brightside email, the invoice or the calendar as evidence of what she did, or say \"I see you didn't...\"",
+    "send, edit or review the gallery or message Brightside for her (a draft only, and only if she asks)",
+    "count the open $572.94 invoice, due Nov 23, or the $155.84 Hartley invoice as money she has",
+    "use guilt words (\"you missed\", \"you failed\", \"you slipped\") or ask why",
+    "ask a second time after she answers, or ask again tonight if she doesn't answer",
+    "offer a time for editing inside her Monday 2:00 to 4:45 PM study window, which is for coursework"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "The photographer invoices at the start of a job with 14 day terms and sends the photos within a week of the shoot (told Dev in m-photo); the simulator issues one Brightside invoice every 28 days.",
+    "Dev's calendar and mail connections show metadata only (no content, and sent mail is not read), so delivery by link or text leaves no trace.",
+    "The default promise check-in time is 9 PM on the day (ADR 0031); Sunday's call home is 8 to 8:45 PM, so 9 PM follows it.",
+    "Brightside's note was Friday Nov 13, shown only as metadata from a client sender.",
+    "Freelance payments are never predicted, only counted when they land."
+  ],
+  "tags": [
+    "student",
+    "freelance photographer",
+    "promise",
+    "only her answer decides",
+    "no guessing from silence",
+    "draft only",
+    "dorm",
+    "afternoon studier",
+    "moodle",
+    "per project income",
+    "stay out of the study window"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "offer a time for editing inside her Monday 2:00 to 4:45 PM study window",
+        "routine": "study",
+        "why_wrong": "that window is her firm afternoon study time for coursework",
+        "facts": [
+          "m-01"
+        ]
+      }
+    ]
+  }
+}

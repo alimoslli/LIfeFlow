@@ -2,11 +2,27 @@
 
 Updated by the situation writer after every batch. Run `python3 docs/situations/validate.py` for live counts.
 
-**Cases:** 30 (s0001 to s0015 batch 1, s0016 to s0020 batch 2, s0021 to s0025 batch 3, s0026 to s0030 batch 4, 2026-11-07) · **Stay-quiet share:** 7 of 30 (23%) · **Student share:** 19 of 30 (63%; batch 4 is 4 of 5, the last three batches are 14 of 15) · **Routine-fit share:** 22 of 30 (73%) · **Targets:** 30 before Dev's brain is built (reached), 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
+**Cases:** 35 (s0001 to s0015 batch 1, s0016 to s0020 batch 2, s0021 to s0025 batch 3, s0026 to s0030 batch 4, s0031 to s0035 batch 5, 2026-11-08) · **Stay-quiet share:** 9 of 35 (26%) · **Student share:** 23 of 35 (66%; batch 5 is 4 of 5, the last four batches are 18 of 20) · **Routine-fit share:** 27 of 35 (77%) · **Targets:** 30 before Dev's brain is built (reached), 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
 
 Worked examples (full cases with generated connections, not counted above): `examples/e0001-student-aunt-away-short-before-payday` (community college student who works) and `examples/e0002-night-nurse-school-closure`.
 
 Stay-quiet cases: s0010 (pay $18.40 lower after daylight saving), s0012 (cancelled tutorial, essay already handled by her morning routine), s0013 (sick day covered by paid sick leave), s0014 (food spending spike from hosting Thanksgiving), s0023 (full week already handled), s0020, s0030 (retired, covered, index fund up but not needed).
+
+## Batch 5 (s0031 to s0035, 2026-11-08): income that isn't hourly shifts, and promises
+
+Owner, 2026-11-08: "a flow for all", every way of earning. Four new student personas earn per project, per session, per sale or per gig (freelance income in the simulator: invoices and payouts, with calendar events for shoots, sessions and deliveries). Promises (ADR 0031): kept or broken only by the person's own answer or a finished linked to-do; charges, calendars, mail and silence never decide.
+
+| Case | Person | Covers |
+|---|---|---|
+| s0031 | university, dorm, 6 classes, Moodle, afternoon steady, freelance photographer (weddings and real estate, paid per project) | promise "gallery to the client by Sunday night"; nothing in her data shows the outcome; Dev asks once at 9 PM with three answers; open invoice $572.94 not counted; editing not offered in her study window |
+| s0032 | community college, with family, 5 classes, Canvas, afternoon steady, private tutor (3 families, paid per session) | stay quiet: one family skips Thursday ($42 not earned); bills covered; no income prediction, no refilling the hour |
+| s0033 | part-time community college nursing, roommates, Moodle, resells thrifted clothes (eBay and Poshmark payouts) | promise "no takeout this week"; two fast-food charges in the bank do not break it; check-in never cites them; payouts never predicted |
+| s0034 | university, dorm, 5 classes, Canvas, evening crammer, delivery driver (weekly QuickDrop payouts that vary) | $412.60 brake repair, $310.00 left against $1,003.18 of bills before Dec 8; tuition date moved first (draft), savings lines ($1,000 and $1,500) respected, no payout counted or predicted |
+| s0035 | retired, lives alone, pension (not a student) | stay quiet: she told Dev herself the flu shot is done, so the 9 PM promise check-in is cancelled |
+
+New personas: p0004 (photographer), p0005 (tutor), p0006 (marketplace seller), p0007 (delivery driver). Promise cases: s0031, s0033, s0035 (three of five); stay-quiet: s0032, s0035. Kinds added: freelancer students (3), student gig worker, per-session and per-sale income. Simulator notes: `freelance` payments take one description for all clients (Poshmark shows "EBAY COMM PAYOUT"); an invoice appears on its issue date even if the work isn't done; no to-do records exist, so "a linked to-do finished" can only be described, not planted; pinning checking needed smaller aid and family amounts in p0004.
+
+Gaps still open: a paid content creator, a first-hand follow-up a week later, a promise kept by a finished linked to-do (needs a to-do connection in the simulator), "Tomorrow instead" used twice.
 
 ## Batch 4 (s0026 to s0030, 2026-11-07): the owner's short-on-money rule (vision section 15, item 14)
 

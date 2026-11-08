@@ -1,0 +1,103 @@
+{
+  "id": "s0033-student-reseller-no-takeout-promise-week",
+  "title": "Nursing student who resells thrifted clothes promised 'no takeout this week'; two fast-food charges sit in her bank by Sunday night, but a charge can't break a promise, so Dev asks and only her answer decides",
+  "persona": "p0006-cc-roommates-nursing-marketplace-seller",
+  "now": "2026-11-15T21:00",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 3301,
+  "money": {
+    "available_now_cents": 98000,
+    "savings_cents": 63000
+  },
+  "changes": [
+    {
+      "id": "m-promise",
+      "type": "memory",
+      "content": "I'm not getting any takeout this week, only cooking at home",
+      "category": "temporary",
+      "via": "chat",
+      "told_at": "2026-11-09T20:05",
+      "expires_at": "2026-11-16T09:00"
+    },
+    {
+      "id": "c-chipotle",
+      "type": "purchase",
+      "at": "2026-11-11T19:10",
+      "account": "acc-checking",
+      "description": "CHIPOTLE 2210",
+      "merchant_name": "Chipotle",
+      "amount_cents": -1460,
+      "pfc": "FOOD_AND_DRINK_FAST_FOOD"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-promise",
+      "check": "pattern",
+      "what": "On Mon Nov 9 at 8:05 PM she told Dev she wouldn't get any takeout this week. It is Sunday Nov 15, 9 PM, the check-in time. Her bank shows a Chipotle charge of $14.60 on Wed Nov 11 and a pending McDonald's charge of $17.69 on Sat Nov 14, so it looks like a broken promise, but a charge doesn't say who ate it or why: it could be for a roommate she was paying back, a gift, a group order, or a charge she is counting as not hers. Nothing in her data is her answer, and no to-do is linked to this promise. Dev asks once and waits for her answer.",
+      "by_when": "2026-11-15T21:00",
+      "facts": [
+        "m-promise",
+        "c-chipotle",
+        "tx-2026-11-14-eating-out"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-promise",
+      "action": "ask",
+      "needs_user": true,
+      "send_at": "2026-11-15T21:00",
+      "what": "One check-in at 9 PM, after her Sunday call home, in plain words: \"You said no takeout this week. How did it go?\" with three answers: [Yes, I did it] [Tomorrow instead] [It didn't happen]. The message never mentions the Chipotle or McDonald's charges. Yes is recorded as kept, warmly. Tomorrow instead moves the check to 9 PM Monday (at most twice). It didn't happen is recorded as broken, honestly and gently, and offers a smaller promise for next week (for example, two takeout-free dinners). If she doesn't answer, nothing is recorded; after 7 days the promise is dropped and never counted as broken.",
+      "why": "The promise is hers. Only her own answer settles it, and a bank charge is not her answer: what looks like takeout in the data may not be what she meant. Asking without citing the charges keeps the check-in kind and accurate, and avoids a message that reads like being watched."
+    }
+  ],
+  "must_not": [
+    "mark the promise broken because of the Chipotle or McDonald's charges (a charge is never her answer)",
+    "mark it kept because the grocery run, her Sunday call or the week's quiet days exist, or because she didn't reply",
+    "quote the Chipotle or McDonald's charges in the check-in or say \"I saw you ordered...\"",
+    "use guilt words (\"you slipped\", \"you broke it\", \"you failed\") or ask why she ordered",
+    "send the check-in before 9 PM Sunday or ask again tonight if she doesn't reply",
+    "count the open payouts or any future eBay or Poshmark sale as money she has, or predict next week's payout",
+    "comment on her spending in other categories (thrift sourcing, shipping and coffee are part of her resale business and routines)",
+    "send the check-in during her Sunday 8:00 to 8:45 PM call home"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "'No takeout this week' is a promise (keeping her word is the point) and not a to-do or goal; Dev saved it when she said it, with check-in time Sunday 9 PM.",
+    "The pending McDonald's charge posts Monday; pending charges are shown but are not a reason to decide anything.",
+    "The Poshmark payout line shows the same 'EBAY COMM PAYOUT' text as eBay's in the simulator; both are marketplace payouts of $40.60 and $49.42 on Nov 9.",
+    "Her Sunday call home is 8 to 8:45 PM; 9 PM follows it.",
+    "Marketplace payouts vary week to week; Dev never predicts them. December rent share is $775.10 on Dec 1 and checking holds $980.00 available, so money is not the issue in this case."
+  ],
+  "tags": [
+    "student",
+    "marketplace seller",
+    "reseller income",
+    "promise",
+    "only her answer decides",
+    "charges are not answers",
+    "no predicting variable pay",
+    "community college",
+    "nursing",
+    "roommates",
+    "afternoon studier",
+    "moodle",
+    "gentle wording"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "send the check-in during her Sunday 8:00 to 8:45 PM call home",
+        "routine": "call-family",
+        "why_wrong": "Sunday evening call home is a firm routine; the check-in waits until 9 PM, after it",
+        "facts": [
+          "m-02"
+        ]
+      }
+    ]
+  }
+}

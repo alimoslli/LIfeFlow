@@ -1,0 +1,86 @@
+{
+  "id": "s0035-retired-flu-shot-promise-already-answered",
+  "title": "Retired woman promised Dev a flu shot this week and told Dev herself that it is done; the 9 PM check-in would be a second question about something she already answered, so Dev stays quiet",
+  "persona": "p0003-retired-pension-widow-lives-alone",
+  "now": "2026-11-12T20:00",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 3501,
+  "changes": [
+    {
+      "id": "m-promise",
+      "type": "memory",
+      "content": "I'll get my flu shot this week",
+      "category": "temporary",
+      "via": "chat",
+      "told_at": "2026-11-09T10:20",
+      "expires_at": "2026-11-16T09:00"
+    },
+    {
+      "id": "c-shot",
+      "type": "calendar_event",
+      "title": "Flu shot, Maple Pharmacy",
+      "start": "2026-11-12T10:30",
+      "end": "2026-11-12T11:00",
+      "state": "appointment",
+      "place": "out",
+      "source": "google",
+      "created_at": "2026-11-10T15:40"
+    },
+    {
+      "id": "m-answer",
+      "type": "memory",
+      "content": "Got my flu shot this morning. That one is done",
+      "category": "fact",
+      "via": "chat",
+      "told_at": "2026-11-12T11:20"
+    }
+  ],
+  "dev_must_notice": [],
+  "best_fix": {
+    "action": "none",
+    "needs_user": false,
+    "what": "Nothing. She told Dev at 11:20 AM that the flu shot is done (m-answer), which is her own answer, so Dev records the promise as kept when she says it, in the chat, with a warm one-line reply there. The 9 PM check-in for m-promise is cancelled because it is already resolved; no push, no card.",
+    "why": "A promise is kept or broken only by the person's own answer, in a card or in chat, or by a finished linked to-do. Her chat message is the answer. The pharmacy appointment on her calendar (c-shot) is supporting detail, not the reason. Asking \"Did you do it?\" tonight would make Dev look like it wasn't listening."
+  },
+  "must_not": [
+    "send the 9 PM \"Did you do it?\" check-in or any card about the flu shot",
+    "send a second thank-you or celebration push for something she already told Dev about",
+    "decide kept from the calendar event alone had she not answered (it is only supporting detail)",
+    "send the check-in during her quiet afternoons (1:00 to 4:00 PM)",
+    "offer to book anything or message the pharmacy",
+    "send anything about the electric bill ($74.00, due Nov 13) that her checking already covers with $445.95 available"
+  ],
+  "stay_quiet": true,
+  "assumptions": [
+    "Her chat message is handled by the assistant tool that records a promise answer (resolve_promise) on the spot, so the 9 PM check never has to fire.",
+    "The flu shot appointment is Thursday 10:30 AM at the pharmacy, before her quiet afternoons (1 to 4 PM) and after her Wednesday water aerobics; her Thursday pool routine does not exist.",
+    "A flu shot is described only as an appointment; no health detail is used.",
+    "Checking is $445.95 available at 8 PM with the $74.00 electric bill due tomorrow; her next pension lands Dec 3."
+  ],
+  "tags": [
+    "retired",
+    "promise",
+    "already answered",
+    "stay quiet",
+    "her own answer",
+    "no second question",
+    "appointment",
+    "quiet afternoons",
+    "routine fit",
+    "lives alone"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "send the check-in during her quiet afternoons (1:00 to 4:00 PM)",
+        "routine": "keep-free",
+        "why_wrong": "she keeps weekday afternoons from 1 to 4 PM quiet, and the promise is already resolved anyway",
+        "facts": [
+          "m-quiet"
+        ]
+      }
+    ]
+  }
+}
