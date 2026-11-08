@@ -396,7 +396,8 @@ describe("review fixes: the cleanup", () => {
 });
 
 describe("questions the person answers (Same bill? / Did it move?)", () => {
-  const asked = (item: { extracted: unknown }) => (item.extracted as { ask?: { sameAs?: string; twin?: string; answered?: string; text: string } }).ask!;
+  const asked = (item: { extracted: unknown }) =>
+    (item.extracted as { ask?: { sameAs?: string; twin?: string; answered?: string; answeredAt?: string; text: string } }).ask!;
 
   it("a possible duplicate bill is counted once while it waits; yes updates, no adds, and Undo asks again", async () => {
     const { run, file } = await setup();
@@ -431,6 +432,60 @@ describe("questions the person answers (Same bill? / Did it move?)", () => {
     // Answering twice is refused.
     await run((s) => answerQuestion(s, TZ, today, q.id, true));
     await expect(run((s) => answerQuestion(s, TZ, today, q.id, false))).rejects.toThrow();
+  });
+
+  it("Undo of an answer lasts a day; undoing a No keeps the question open and the same pair is not asked a second time", async () => {
+    const { run, file } = await setup();
+    await run((s) => createRecurring(s, { name: "Verizon", amountCents: -4500, frequency: "monthly", nextDueDate: "2026-11-12", kind: "bill" }));
+    const bills = async () => (await run((s) => s.tx.select().from(recurringItems))).length;
+    const ask = async (id: string) => asked((await run((s) => s.tx.select().from(inboxItems).where(eq(inboxItems.id, id))))[0]);
+    const openQuestions = async () =>
+      (await run((s) => s.tx.select().from(inboxItems).where(eq(inboxItems.status, "needs_review")))).filter((i) => asked(i)).length;
+    const age = (id: string, hours: number) =>
+      run((s) =>
+        s.tx.execute(
+          sql`update inbox_items set extracted = jsonb_set(extracted, '{ask,answeredAt}', to_jsonb(${new Date(Date.now() - hours * 3_600_000).toISOString()}::text)) where id = ${id}`,
+        ),
+      );
+
+    const q = await file(billEx("Verizon", 50, "2026-11-12"), { messageId: "undo1@vz.com" });
+    await run((s) => answerQuestion(s, TZ, today, q.id, false));
+    expect((await ask(q.id)).answeredAt).toBeTruthy();
+    expect(await bills()).toBe(2);
+
+    // Within the day Undo works, and the No is not forgotten: the same pair is not asked again by the next copy of the email.
+    await age(q.id, 23);
+    await run((s) => undoInboxItem(s, q.id));
+    expect(await bills()).toBe(1);
+    expect((await ask(q.id)).answered).toBeUndefined();
+    const copy = await file(billEx("Verizon", 51, "2026-11-12"), { messageId: "undo2@vz.com" });
+    expect((copy.extracted as { ask?: unknown } | null)?.ask).toBeUndefined();
+    expect(await openQuestions()).toBe(1);
+    expect(await bills()).toBe(1);
+
+    // After a day the answer stays: Undo is refused and nothing changes.
+    await run((s) => answerQuestion(s, TZ, today, q.id, false));
+    await age(q.id, 25);
+    await expect(run((s) => undoInboxItem(s, q.id))).rejects.toThrow(/too late/i);
+    expect(await bills()).toBe(2);
+    expect((await ask(q.id)).answered).toBe("different");
+
+    // An answer saved before the time was kept can't be undone either.
+    await run((s) => s.tx.execute(sql`update inbox_items set extracted = extracted #- '{ask,answeredAt}' where id = ${q.id}`));
+    await expect(run((s) => undoInboxItem(s, q.id))).rejects.toThrow(/too late/i);
+  });
+
+  it("an exam kept on its old date stays kept when that No is undone and another copy arrives", async () => {
+    const { run, file } = await setup();
+    await run(async (s) => {
+      const c = await createCourse(s, { name: "Calculus II", code: "MATH 152" });
+      await createAssignment(s, TZ, { courseId: c.id, title: "Exam 1", kind: "exam", dueDate: "2026-11-03" });
+    });
+    const q = await file(examEx("MATH 152", "Exam 1", "2026-11-19", { moved: true }), { messageId: "ex-u1@s.edu" });
+    await run((s) => answerQuestion(s, TZ, today, q.id, false));
+    await run((s) => undoInboxItem(s, q.id));
+    const again = await file(examEx("MATH 152", "Exam 1", "2026-11-19", { moved: true }), { messageId: "ex-u2@s.edu" });
+    expect((again.extracted as { ask?: unknown } | null)?.ask).toBeUndefined();
   });
 
   it("two emails for one bill with no account number: yes marks the second a copy, Undo asks again", async () => {
