@@ -10,7 +10,9 @@ import { contributeToGoal, deleteContribution } from "../finance/goals";
 import { createMemory, deleteMemory } from "../memory";
 import { budgetStatus, setBudget } from "../finance/planning";
 import { createTask, deleteTask, updateTask } from "../tasks";
-import { getMessage, jarvisSettings, tomorrowMorning } from "./engine";
+import { promiseReply, PROMISE_CHOICES } from "@/lib/promise-voice";
+import { movePromise, promiseStats, resolvePromise } from "../promises";
+import { getMessage, jarvisSettings, toneOf, tomorrowMorning } from "./engine";
 import { questionByKey } from "./questions";
 
 export type Response = "do" | "snooze" | "dismiss" | "mute" | "up" | "down" | "undo" | "answer";
@@ -78,6 +80,7 @@ export async function performAction(
     case "consent":
       return { text: "Thanks. I'll learn from how you respond, and you can turn it off in Settings." };
     case "answer":
+    case "promise_check":
       throw new ServiceError("Pick one of the answers.");
   }
 }
@@ -121,6 +124,26 @@ export async function respondToMessage(scope: UserScope, user: User, id: string,
       return { text: "Undone." };
     }
     case "answer": {
+      if (m.action?.type === "promise_check") {
+        if (m.status === "done") return { text: m.result?.text ?? "Already answered." };
+        if (!value || !m.action.choices.includes(value)) throw new ServiceError("Pick one of the answers.");
+        const outcome = value === PROMISE_CHOICES.kept ? "kept" : value === PROMISE_CHOICES.moved ? "moved" : "broken";
+        const now = new Date();
+        let text: string;
+        if (outcome === "moved") {
+          await movePromise(scope, m.action.promiseId);
+          text = promiseReply("moved", toneOf(user.preferences), { text: String(m.facts.text ?? ""), brokenRecent: 0, keptWeek: 0 }, m.dedupeKey.length);
+        } else {
+          const r = await resolvePromise(scope, m.action.promiseId, outcome, "you", now);
+          const stats = await promiseStats(scope, now);
+          // Already settled (for example by finishing the linked to-do): say so, don't flip it.
+          text = r.changed
+            ? promiseReply(outcome, toneOf(user.preferences), { text: r.promise.text, ...stats }, m.dedupeKey.length)
+            : `That one is already ${r.promise.status}.`;
+        }
+        await set({ status: "done", actedAt: now, result: { text } });
+        return { text };
+      }
       const q = m.action?.type === "answer" ? questionByKey(m.action.key) : undefined;
       const choices = m.action?.type === "answer" ? m.action.choices : [];
       if (!q || !value || !choices.includes(value)) throw new ServiceError("Pick one of the answers.");

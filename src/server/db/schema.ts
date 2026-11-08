@@ -146,7 +146,8 @@ export type ProactiveAction =
   | { type: "open"; label: string; href: string }
   | { type: "ask"; label: string; prompt: string }
   | { type: "consent"; label: string }
-  | { type: "answer"; label: string; key: string; choices: string[] };
+  | { type: "answer"; label: string; key: string; choices: string[] }
+  | { type: "promise_check"; label: string; promiseId: string; choices: string[] };
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -455,6 +456,32 @@ export const goalCheckins = pgTable(
     createdAt: createdAt(),
   },
   (t) => [ownerPolicy(), index("goal_checkins_goal_idx").on(t.userId, t.goalId, t.date)],
+);
+
+/**
+ * Things the user said they would do ("I'll study tonight"). The assistant checks back once, at the due time.
+ * A promise is only ever kept or broken by the user's own answer, or by a to-do they really finished (taskId);
+ * an unanswered one is dropped after a week and never counts as broken.
+ */
+export const promises = pgTable(
+  "promises",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    text: text("text").notNull(),
+    /** When the assistant checks back. */
+    dueAt: tstz("due_at").notNull(),
+    status: text("status").$type<"open" | "kept" | "broken" | "dropped">().notNull().default("open"),
+    /** A to-do this promise is about: finishing it keeps the promise without asking. */
+    taskId: uuid("task_id").references(() => tasks.id, { onDelete: "set null" }),
+    /** How many times it was moved to a later day (at most 2). */
+    moves: integer("moves").notNull().default(0),
+    resolvedAt: tstz("resolved_at"),
+    resolvedBy: text("resolved_by").$type<"you" | "task" | "timeout">(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("promises_user_status_idx").on(t.userId, t.status, t.dueAt), ownerPolicy()],
 );
 
 export const auditEvents = pgTable(
