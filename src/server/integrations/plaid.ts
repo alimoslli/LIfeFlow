@@ -680,6 +680,11 @@ function securityType(t: string | null | undefined) {
   }
 }
 
+/** Tells Plaid to forget an item (used when an account is deleted, where the rows go with the user). Throws on any failure. */
+export async function removeAtPlaid(encryptedCredentials: string | null, f?: Fetch) {
+  await call("/item/remove", { access_token: readCreds({ encryptedCredentials }).accessToken }, f);
+}
+
 /** Disconnects at Plaid and removes the synced accounts (and their transactions and holdings). */
 export async function removeItem(scope: UserScope, integrationId: string, f?: Fetch) {
   const item = await getItem(scope, integrationId);

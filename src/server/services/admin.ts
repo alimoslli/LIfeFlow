@@ -9,6 +9,7 @@ import { googleConfig } from "../integrations/google";
 import { plaidConfig } from "../integrations/plaid";
 import { smsConfig } from "../integrations/twilio";
 import { rateLimit } from "../rate-limit";
+import { DeletionBlockedError, revokeOutsideAccess, type CleanupDeps } from "./account-cleanup";
 
 /**
  * Owner admin page (ADR 0022). Accounts and operations only: per-user content is protected by row-level security
@@ -254,13 +255,25 @@ export async function setPlan(db: Database, actor: Admin, userId: string, plan: 
 }
 
 /** Permanent. The admin must type the user's exact email, and a user still on an active Pro plan is refused (they'd keep paying). */
-export async function deleteUser(db: Database, actor: Admin, userId: string, confirmEmail: string) {
+export async function deleteUser(db: Database, actor: Admin, userId: string, confirmEmail: string, deps: CleanupDeps = {}) {
   await limited(db, actor);
-  await db.transaction(async (tx) => {
+  const found = await db.transaction(async (tx) => {
     const u = await target(tx, actor, userId);
     if (confirmEmail.trim().toLowerCase() !== u.email) throw new AdminError("The email you typed doesn't match. Nothing was deleted.");
     if (u.plan === "pro")
       throw new AdminError("This user is on Pro. Cancel their subscription in Stripe and set their plan to Free first, so they aren't charged after deletion.");
+    return u;
+  });
+  // Close Plaid, Google and Stripe access outside the transaction (network calls), then delete.
+  try {
+    await revokeOutsideAccess(db, found, deps);
+  } catch (e) {
+    if (e instanceof DeletionBlockedError)
+      throw new AdminError("Their plan couldn't be cancelled just now, so the account wasn't deleted. Try again in a minute.");
+    throw e;
+  }
+  await db.transaction(async (tx) => {
+    const u = await target(tx, actor, userId);
     await log(tx, actor, "user.delete", u, { createdAt: u.createdAt.toISOString() });
     await tx.delete(users).where(eq(users.id, u.id));
   });

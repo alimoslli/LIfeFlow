@@ -7,6 +7,7 @@ import { users, type UserPreferences } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { seedDefaultCategories } from "./finance/categories";
 import { audit } from "./audit";
+import { DeletionBlockedError, revokeOutsideAccess, type CleanupDeps } from "./account-cleanup";
 
 export const signupSchema = z.object({
   name: z.string().trim().min(1, "Enter your name").max(80),
@@ -185,9 +186,16 @@ export async function changePassword(db: Database, userId: string, current: stri
 }
 
 /** Permanently deletes the user and (via ON DELETE CASCADE) every row they own. */
-export async function deleteAccount(db: Database, userId: string, password: string) {
+export async function deleteAccount(db: Database, userId: string, password: string, deps: CleanupDeps = {}) {
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   if (!user) throw new AuthError("Account not found.");
   if (hasPassword(user.passwordHash) && !(await verifyPassword(password, user.passwordHash))) throw new AuthError("Password is incorrect.");
+  // Close what lives outside our database first: a plan that can't be cancelled stops the deletion; bank and Google revocation are best effort. The stored tokens go with the rows.
+  try {
+    await revokeOutsideAccess(db, user, deps);
+  } catch (e) {
+    if (e instanceof DeletionBlockedError) throw new AuthError(e.message);
+    throw e;
+  }
   await db.delete(users).where(eq(users.id, userId));
 }

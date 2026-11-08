@@ -567,6 +567,14 @@ export async function addGoogleEvent(
   return { googleEventId: created.id, htmlLink: created.htmlLink ?? null };
 }
 
+/** Revokes a stored Google grant at Google. Throws on failure (the caller decides if that matters). */
+export async function revokeGoogleGrant(encryptedCredentials: string | null, f: Fetch = fetch) {
+  if (!encryptedCredentials) return;
+  const creds = JSON.parse(decryptSecret(encryptedCredentials)) as Creds;
+  const res = await f(`${REVOKE_URL}?token=${encodeURIComponent(creds.refreshToken)}`, { method: "POST" });
+  if (!res.ok) throw new GoogleError("Google didn't revoke the grant.");
+}
+
 /** Disconnects: revokes Google's grant, removes stored tokens and mirrored events. */
 export async function disconnectGoogle(scope: UserScope, f: Fetch = fetch) {
   const conn = await getGoogleConnection(scope);
