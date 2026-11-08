@@ -362,6 +362,33 @@ Runner-up ideas kept for later: "The overdraft that didn't happen" (one money st
 
 ---
 
+## 4b. Ideas bank (saved for later)
+
+### Hero film: "The School Project" (owner's idea, 2026-11-08, not started)
+
+One cinematic film, posted once, made to look like it belongs in a cinema. Goal: a launch moment for the LifeFlow shift, with a
+waiting list behind it (owner's target: 10,000 sign-ups on day one). The owner and the LifeFlow team are on camera, with their
+own voices and a natural delivery. Claude plans it with them and does the whole edit: picture, the app on screen, sound and titles.
+
+**The story (owner's outline):**
+1. **The confession.** The owner, to camera: when we soft-launched LifeFlow, people thought it was a school project. Nobody took it
+   seriously; nobody even looked. And they had a point. That is exactly what the soft launch was for: it showed us what had to change.
+2. **The cinema.** Cut to a cinema. The old LifeFlow plays on the big screen and the room laughs. The camera finds the team in the
+   seats, laughing too.
+3. **The work.** Back to now: the team working behind the scenes (late nights, whiteboards, laptops, arguments, small wins) and every
+   change in the app, old screens turning into the new ones.
+4. **The reveal** (to develop). The same cinema, the new LifeFlow on the big screen. Nobody laughs this time. A last line from the
+   owner, then the waiting list.
+
+**Notes for when we make it:**
+- Film for real wherever possible, shot like a film: 4K at 24 fps, steady camera, lit on purpose. Claude adds the cinema look
+  (grade, letterbox, grain, sound) and puts the real app footage on the screen in the edit (film the screen plain, replace it later).
+- Cinema: rent a small screening room or an indie cinema off hours; backup is a lecture hall with a projector (it fits the
+  "school project" joke). Audience: friends as extras.
+- The old app on screen comes from a real recording of the soft-launch version; the new app from the real `main` build.
+- Needed before posting: a working waiting-list page with a real counter (no made-up numbers) and a way to share it.
+- The story is a dramatisation; no fake reviews, quotes or sign-up numbers. The owner's real voice, not an AI voice.
+
 ## 5. Video log
 
 Update after every video. Newest at the top.
@@ -397,6 +424,7 @@ Update after every video. Newest at the top.
 - 2026-11-03: open conflicts to settle before posting: (1) price: this file says free while in testing, but the poster and the LinkedIn draft offer 15% off with code LifeFlowLaspo (the code must exist in Stripe); (2) the sign-up and onboarding ad briefly shows the app's intro line that contains "calm place", which the owner dislikes: re-cut the ad or change the app copy; (3) the Microsoft/Outlook connection exists on `main` but is not on the connectors images: add it once it is deployed and working.
 - 2026-11-04: no real celebrities or lookalikes in any ad (see Video 2). Every character video uses long, continuous takes for each spoken thought instead of many short clips, at the trailer's finish or better.
 - 2026-11-05: features that need a connected service the sample account can't have (Gmail) are filmed on the local filming server with a stand-in for that service, so the app's own flow runs for real; never on production, and never claim a real message reached a real person. Sending always shows the approval step (preview, then Confirm). Owner confirmed: in ads the sample account should look fully connected (Gmail included); he does not want to screen-record his own accounts.
+- 2026-11-08: new direction during the LifeFlow rebrand: ads with an AI character as the face are out. Real people (the owner and the team) go on camera with their own voices; AI is used behind the scenes (planning, editing, effects, the app on screen). See the hero film idea in section 4b.
 - 2026-11-06: voices: app and feature videos are narrated by **Sienna** (woman, Higgsfield preset `41023a48-71ab-478a-bea7-c7b5a78f6b36`, `elevenlabs_v4` with stability 0.55 and similarity 0.8, or `text2speech_v2` variant elevenlabs; lines sped up about 8%). **Mark** is only Dev, the AI character in the podcast and character videos. Never swap them.
 - 2026-11-05: always the current logo: the molecule mark (`public/brand/lifeflow-mark-transparent-512.png`) and, where an app icon shows (home screen, notifications), `public/brand/lifeflow-apple-touch.png`. Never the old wave icon in `public/icons/`.
 - 2026-11-05: replies must stream smoothly (film with `marketing/launch/recorder/rec_chat.cjs`). A cut is fine only when it is clearly seen: mark every new clip (punch-in, flash or sound, new caption). No hidden jumps inside a clip.
