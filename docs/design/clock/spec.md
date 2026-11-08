@@ -30,6 +30,13 @@ Owner's concept, 2026-11-07. The look is set by the owner's two GIFs (`owner-con
   - the next 10 hours, bright.
 
   As the day goes on, the arcs and icons turn with it. The whole day, and every other day, is one tap away on the timeline. *(Decided 2026-11-07: B, the 12 hours around now. The COO chose it on the owner's behalf, following the recommendation; the owner can still switch to A, the whole day on one face.)*
+- **After 12 it's tomorrow, and the rim shows it** (owner, 2026-11-08: "it has to be obvious that that's tomorrow, because after that 12 it's tomorrow and it starts"). From about 2 PM, the 10 hours ahead reach past midnight:
+  - **A step at the 12:** a short mint step and a dot carry the rim outward, 7 px, onto tomorrow's lap. Today's part of the rim stays on the inner lap, so the rim reads as one turn of a spiral.
+  - **The word:** "TOMORROW" in small mint capitals runs along tomorrow's lap from the 12, when that lap is long enough to hold it (about an hour or more). Markers keep clear of it.
+  - **Tomorrow's arcs and pins** sit on the outer lap. A block that crosses midnight (bedtime) steps out at the 12 with the rim.
+  - **Tomorrow's markers** carry a small mint "TOMORROW" under their time ("8:00 AM / TOMORROW").
+  - **The screen reader** says "Next: Run with Sam at 8:00 AM tomorrow".
+  - **On the open timeline**, tonight's midnight is a mint tick labelled "TOMORROW", with a little more room around it. Later midnights keep the day's name.
 - **The markers:** one icon plus one line of text around the rim, joined to the rim by a hairline (frame 1).
   - Blocks show their start time ("6:00 PM"). A block already running shows "till 4:30 PM".
   - Spends show the amount ("$14.20").
@@ -84,7 +91,7 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
 - **The header:** the logo and bell stay. "Today ⌄" becomes a day picker, "‹ Wed Thu Fri [Today] Sun Mon Tue ›", with today in a mint pill and the day centred. The line sits right under it.
 - **Up to three tiles under the line** (where the owner's frame 6 puts them) round up the day in view with what's tied to the clock: its time-bound commitments. *(Owner, 2026-11-07, through the COO: "work shifts, deadlines, classes and the like", not spent, steps or sleep, and not tasks or focus.)*
   - **Work shift:** "Work till / 4:30" while it runs, "Work / 1 PM" before it starts, and the hours it took ("Worked / 7h 30m") once it's over. The hours come from the schedule; the tile never shows pay.
-  - **Class:** the class running ("Class / till 8") or the next one that day ("Class / 6 PM"), otherwise the day's first.
+  - **Class:** the class running ("Class / till 8") or the next one that day ("Class / 6 PM"). Once today's classes are over, it says "Class / done"; on other days, the day's first.
   - **Deadline:** that day's exam, assignment or bill ("Exam / 10 AM", "Phone bill / $45 due"). On today and later days with no deadline of their own, the next deadline ahead with its day ("Exam / Mon").
 
   The tiles:
@@ -101,7 +108,7 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
   - a block's duration is a soft mint band along the line, from its start to its end.
 - **Spacing:** nodes are almost evenly spaced, as in the frames, so the line reads at a glance. Long empty gaps get a little more room. The "now" pill sits between its neighbours at its real time.
 - **Scrolling:** the line scrolls sideways through time and keeps going into the next and previous days.
-  - Midnight is a small tick with the day's name.
+  - Midnight is a small tick with the day's name. Tonight's midnight is mint and says "TOMORROW" (section 2).
   - The day picker and tiles follow the day in the middle of the screen. Tapping a day scrolls to it.
 - **No card until you ask.** Like frame 6, the open timeline shows the line and the tiles only. **Tapping a node** (or a tile) opens one quiet card under the tiles; tapping it again, or changing the day, puts it away. The card: the icon, name, time, where it came from ("from your work calendar", "from Chase", "from Apple Health") and one action.
 - **Back to the clock (the wrap, section 3):** pull the line down or pinch it. Or tap the "now" pill (with its tiny clock) or "Today", or use the back gesture.

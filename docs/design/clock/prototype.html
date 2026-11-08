@@ -61,7 +61,8 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .hint { position: absolute; left: 0; right: 0; text-align: center; font-size: 0.8rem; color: var(--fg3); z-index: 3; pointer-events: none; }
 #hintWrap { z-index: 6; opacity: 0; }
 
-.co { position: absolute; left: 0; top: 0; font-size: 0.8rem; color: var(--fg); white-space: nowrap; transform-origin: 0 0; font-variant-numeric: tabular-nums; }
+.co { position: absolute; left: 0; top: 0; font-size: 0.8rem; color: var(--fg); white-space: nowrap; transform-origin: 0 0; font-variant-numeric: tabular-nums; text-align: center; }
+.co .tm { display: block; margin-top: 1px; font-size: 0.6rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mint); }
 .mi { position: absolute; left: 0; top: 0; width: 30px; height: 30px; display: grid; place-items: center; font-size: 26px; line-height: 1; will-change: transform; }
 
 #trackWrap { position: absolute; left: 0; right: 0; height: 156px; overflow-x: auto; overflow-y: hidden; z-index: 5; touch-action: pan-x; scrollbar-width: none; -webkit-overflow-scrolling: touch; pointer-events: none; clip-path: inset(0 50% 0 50%); overscroll-behavior-x: contain; }
@@ -72,6 +73,9 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .band.sleep { background: rgba(126,224,174,.10); }
 .mid { position: absolute; top: 56px; width: 1px; height: 28px; background: var(--hair); opacity: var(--tlab, 1); }
 .mid span { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--fg3); white-space: nowrap; }
+/* tonight's midnight on the line: where tomorrow starts, said the same way as on the clock */
+.mid.next { width: 2px; margin-left: -0.5px; background: var(--mint); }
+.mid.next span { color: var(--mint); font-weight: 600; letter-spacing: .12em; }
 .node { position: absolute; top: 0; width: 92px; height: 156px; margin-left: -46px; display: block; }
 .node .n-ic { position: absolute; left: 50%; top: 21px; width: 30px; height: 30px; margin-left: -15px; display: grid; place-items: center; font-size: 27px; line-height: 1; }
 .node .n-dot { position: absolute; left: 50%; top: 64px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; border: 2px solid var(--mint); background: var(--screen); }
@@ -145,9 +149,10 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
             <circle id="pressDisc" fill="url(#pressGrad)"/>
             <circle id="pressRing" fill="none" stroke="#7ee0ae" stroke-opacity=".55" stroke-width="1.5"/>
           </g>
-          <circle id="rimC" fill="none" stroke="#3a3f3c" stroke-width="2"/>
+          <path id="rimC" fill="none" stroke="#3a3f3c" stroke-width="2" stroke-linecap="round"/>
           <g id="arcsG"></g>
           <g id="ticksG"></g>
+          <g id="dayG"></g>
           <g id="handsG">
             <line id="hourH" stroke="#f3f5f4" stroke-width="5" stroke-linecap="round"/>
             <line id="minH" stroke="#f3f5f4" stroke-width="3.2" stroke-linecap="round"/>
@@ -199,7 +204,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
       <button class="btn" id="play">Play open and close</button>
       <label class="check"><input type="checkbox" id="slow"> Slow motion</label>
     </div>
-    <p class="note">The face is 12 hours, so the rim shows the 12 hours around now: the last 2 faded, the next 10 bright. Spends appear on the rim once your bank has them. Haptics play on phones that allow them.</p>
+    <p class="note">The face is 12 hours, so the rim shows the 12 hours around now: the last 2 faded, the next 10 bright. In the evening the rim steps out at the 12: past it is tomorrow (drag the time to 10:30 PM). Spends appear on the rim once your bank has them. Haptics play on phones that allow them.</p>
   </aside>
 </div>
 <label id="hap" aria-hidden="true"><input type="checkbox" switch tabindex="-1"></label>
@@ -246,6 +251,7 @@ const ITEMS = [
   { id: 's4', kind: 'block', icon: '🎓', name: 'Class', cat: 'class', start: T(0, 18), end: T(0, 20), src: 'From your school calendar' },
   { id: 's5', kind: 'block', icon: '📚', name: 'Study for exam', start: T(0, 20, 30), end: T(0, 22), src: 'Your plan. The exam is Monday at 10:00 AM.' },
   { id: 's6', kind: 'sleep', icon: '🌙', name: 'Bedtime', usual: true, start: T(0, 23), end: T(1, 7), src: 'Your usual bedtime, from Apple Health' },
+  { id: 'u0', kind: 'block', icon: '🏃', name: 'Run with Sam', start: T(1, 8), end: T(1, 8, 45), src: 'From Google Calendar' },
   { id: 'u1', kind: 'block', icon: '🥞', name: 'Brunch with Jordan', start: T(1, 11, 30), end: T(1, 13), src: 'From Google Calendar' },
   { id: 'u2', kind: 'block', icon: '📖', name: 'Study group', cat: 'class', start: T(1, 15), end: T(1, 17), src: 'From Google Calendar' },
   { id: 'u3', kind: 'sleep', icon: '🌙', name: 'Bedtime', usual: true, start: T(1, 23), end: T(2, 7), src: 'Your usual bedtime, from Apple Health' },
@@ -334,7 +340,6 @@ function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); f
 
 function buildStatic() {
   const R = G.R;
-  $('#rimC').setAttribute('r', R);
   $('#haloC').setAttribute('r', R);
   $('#pressDisc').setAttribute('r', R * 0.56);
   $('#pressRing').setAttribute('r', R * 0.56);
@@ -378,8 +383,13 @@ function clockModel(now) {
       marks.push({ it, t: it.at, label: 'due ' + fmt(it.at), past: it.at <= now });
     }
   }
-  // spread markers so they never overlap; the hairline still points at the real time
+  // "Tomorrow" is written along tomorrow's lap from the 12 when the lap is long enough to hold it (about an hour)
+  const midT = (dayOf(now) + 1) * 1440;
+  const lapRad = midT > ws && midT < we ? (we - midT) / 720 * Math.PI * 2 : 0;
+  const word = lapRad > 0.62 ? 0.52 : 0;
+  // spread markers so they never overlap; the hairline still points at the real time. The word holds its place.
   marks.forEach((m) => { m.a0 = ang(m.t); m.a = m.a0; });
+  if (word) marks.push({ room: true, fixed: true, a0: 0.07 + word / 2, a: 0.07 + word / 2 });
   marks.sort((x, y) => x.a - y.a);
   const MIN = 0.46;
   for (let k = 0; k < 60 && marks.length > 1; k++) {
@@ -387,11 +397,29 @@ function clockModel(now) {
     for (let i = 0; i < marks.length; i++) {
       const A = marks[i], B = marks[(i + 1) % marks.length];
       let d = B.a - A.a; if (i === marks.length - 1) d += Math.PI * 2;
-      if (d < MIN) { const push = (MIN - d) / 2 * 0.6; A.a -= push; B.a += push; moved = true; }
+      const need = A.room || B.room ? 0.58 : MIN;
+      if (d < need) {
+        const push = (need - d) / 2 * 0.6;
+        if (A.fixed) B.a += push * 2; else if (B.fixed) A.a -= push * 2; else { A.a -= push; B.a += push; }
+        moved = true;
+      }
     }
     if (!moved) break;
   }
-  return { arcs, pins, marks, ws, we };
+  marks.splice(0, marks.length, ...marks.filter((m) => !m.room));
+  // After 12 at night it's tomorrow: arcs split at midnight, and what's past it rides on tomorrow's lap.
+  const mid = (dayOf(now) + 1) * 1440;
+  const hasMid = mid > ws && mid < we;
+  if (hasMid) {
+    for (const a of arcs.splice(0)) {
+      if (a.a < mid && a.b > mid) arcs.push({ ...a, b: mid }, { ...a, a: mid });
+      else arcs.push(a);
+    }
+  }
+  for (const a of arcs) a.lap = hasMid && a.a >= mid ? 1 : 0;
+  for (const p of pins) p.lap = hasMid && p.t >= mid ? 1 : 0;
+  for (const m of marks) m.lap = hasMid && m.t >= mid ? 1 : 0;
+  return { arcs, pins, marks, ws, we, mid: hasMid ? mid : null, word };
 }
 
 function rebuildClock() {
@@ -402,17 +430,42 @@ function rebuildClock() {
   const [hx, hy] = pol(ha, R * 0.47), [mx, my] = pol(ma, R * 0.8), [tx, ty] = pol(ma + Math.PI, R * 0.09);
   Object.entries({ x1: 0, y1: 0, x2: hx, y2: hy }).forEach(([k, v]) => $('#hourH').setAttribute(k, v));
   Object.entries({ x1: tx, y1: ty, x2: mx, y2: my }).forEach(([k, v]) => $('#minH').setAttribute(k, v));
+  // the rim: a full circle, or (when tonight's midnight is on it) today's lap that steps out at the 12 into tomorrow's
+  const LAP = G.LAP = 7;
+  const dayG = $('#dayG'); dayG.textContent = '';
+  if (CM.mid != null) {
+    const a0 = ang(CM.ws), am = ang(CM.mid);
+    const a1 = ang(CM.we);
+    const today = arcPath(a0, am, R);
+    const [sx, sy] = pol(am, R + LAP);
+    const tmrw = arcPath(am, a1, R + LAP).replace(/^M[^A]*/, '');
+    $('#rimC').setAttribute('d', `${today}L${sx.toFixed(2)} ${sy.toFixed(2)}${tmrw}`);
+    // the step at midnight, and "Tomorrow" written along tomorrow's lap from the 12
+    const [ix, iy] = pol(am, R);
+    el('line', { x1: ix, y1: iy, x2: sx, y2: sy, stroke: '#7ee0ae', 'stroke-width': 2.4, 'stroke-linecap': 'round' }, dayG);
+    el('circle', { cx: sx, cy: sy, r: 2.6, fill: '#7ee0ae' }, dayG);
+    if (CM.word) {
+    const rt = R + LAP + 7;
+    const [px, py] = pol(am + 0.07, rt), [qx, qy] = pol(am + 0.07 + CM.word, rt);
+    el('path', { id: 'tmrwPath', d: `M${px.toFixed(2)} ${py.toFixed(2)}A${rt} ${rt} 0 0 1 ${qx.toFixed(2)} ${qy.toFixed(2)}`, fill: 'none' }, dayG);
+    const t = el('text', { 'font-size': 9.5, 'font-weight': 700, 'letter-spacing': '1.6', fill: '#7ee0ae', 'font-family': 'inherit' }, dayG);
+    const tp = el('textPath', { href: '#tmrwPath' }, t);
+    tp.textContent = 'TOMORROW';
+    }
+  } else {
+    $('#rimC').setAttribute('d', `M0 ${-R}A${R} ${R} 0 1 1 0 ${R}A${R} ${R} 0 1 1 0 ${-R}`);
+  }
   // arcs + pins
   arcsG.textContent = '';
   for (const a of CM.arcs) {
-    const d = arcPath(ang(a.a), ang(a.b), R);
+    const d = arcPath(ang(a.a), ang(a.b), R + a.lap * LAP);
     const op = a.past ? 0.32 : (a.sleep ? 0.55 : 1);
     a.els = [];
     if (!a.past) a.els.push(el('path', { d, fill: 'none', stroke: '#7ee0ae', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: op * 0.55, filter: 'url(#soft)' }, arcsG));
     a.els.push(el('path', { d, fill: 'none', stroke: '#7ee0ae', 'stroke-width': 3, 'stroke-linecap': 'round', opacity: op }, arcsG));
   }
   for (const p of CM.pins) {
-    const [x, y] = pol(ang(p.t), R);
+    const [x, y] = pol(ang(p.t), R + p.lap * LAP);
     p.el = el('circle', { cx: x, cy: y, r: 4.2, fill: '#7ee0ae', stroke: '#000', 'stroke-width': 2 }, arcsG);
   }
   G.rimFill = 1;
@@ -431,14 +484,15 @@ function rebuildClock() {
     const u = [Math.sin(m.a), -Math.cos(m.a)];
     const bw = 66, bh = 50;
     const sup = Math.abs(u[0]) * bw / 2 + Math.abs(u[1]) * bh / 2;
-    const rc = R + 14 + sup;
+    const rc = R + 14 + sup + m.lap * LAP;
     const lab = document.createElement('div');
     lab.className = 'co'; lab.textContent = m.label;
+    if (m.lap) { const tm = document.createElement('span'); tm.className = 'tm'; tm.textContent = 'Tomorrow'; lab.appendChild(tm); }
     callouts.appendChild(lab);
     const w = lab.offsetWidth;
     m.cx = clamp(G.cx + u[0] * rc, w / 2 + 8, G.W - w / 2 - 8); m.cy = G.cy + u[1] * rc;
     m.ix = m.cx; m.iy = m.cy - 9;
-    const [lx1, ly1] = pol(m.a0, R + 5);
+    const [lx1, ly1] = pol(m.a0, R + 5 + m.lap * LAP);
     const dx0 = m.cx - G.cx, dy0 = m.cy - G.cy, dl = Math.hypot(dx0, dy0) || 1;
     const ex = m.cx - dx0 / dl * (sup + 3), ey = m.cy - dy0 / dl * (sup + 3);
     m.line = el('line', { x1: G.cx + lx1, y1: G.cy + ly1, x2: ex, y2: ey, stroke: '#6b716e', 'stroke-width': 1 }, leaders);
@@ -446,7 +500,7 @@ function rebuildClock() {
     m.lab = lab;
   }
   const next = ITEMS.filter((it) => t0(it) > now && it.kind !== 'spend').sort((a, b) => t0(a) - t0(b))[0];
-  hit.setAttribute('aria-label', `Today. Now ${fmt(now)}.${next ? ` Next: ${next.name} at ${fmt(t0(next))}.` : ''} ${steps.toLocaleString('en-US')} of 15,000 steps. Open your day as a timeline.`);
+  hit.setAttribute('aria-label', `Today. Now ${fmt(now)}.${next ? ` Next: ${next.name} at ${fmt(t0(next))}${dayOf(t0(next)) > dayOf(now) ? ' tomorrow' : ''}.` : ''} ${steps.toLocaleString('en-US')} of 15,000 steps. Open your day as a timeline.`);
   $('#sbTime').textContent = fmt(now).replace(/ [AP]M/, '');
 }
 
@@ -464,7 +518,8 @@ function trackModel(now) {
   stops.sort((a, b) => a.t - b.t || ord[a.kind] - ord[b.kind]);
   const gap = (a, b) => {
     const dt = b.t - a.t;
-    if (a.kind === 'mid' || b.kind === 'mid') return 44 + clamp((dt - 120) / 60 * 4, 0, 26);
+    // tonight's midnight carries the word "Tomorrow", so it gets room for it either side
+    if (a.kind === 'mid' || b.kind === 'mid') return ((a.kind === 'mid' ? a : b).d === dayOf(now) + 1 ? 66 : 44) + clamp((dt - 120) / 60 * 4, 0, 26);
     if (a.kind === 'now' || b.kind === 'now') return 66 + clamp((dt - 60) / 60 * 5, 0, 24);
     return 96 + clamp((dt - 180) / 60 * 6, 0, 30);
   };
@@ -522,9 +577,9 @@ function rebuildTrack() {
   for (const s of TM.stops) {
     if (s.kind !== 'mid' || s.d < DAYS[0] + 0) continue;
     const m = document.createElement('div');
-    m.className = 'mid'; m.style.left = s.x + 'px';
+    m.className = 'mid' + (s.d === dayOf(S.now) + 1 ? ' next' : ''); m.style.left = s.x + 'px';
     const x = dateOf(s.d);
-    m.innerHTML = `<span>${s.d === 0 ? 'Today' : WD[x.getDay()] + ' ' + x.getDate()}</span>`;
+    m.innerHTML = `<span>${s.d === 0 ? 'Today' : s.d === dayOf(S.now) + 1 ? 'Tomorrow' : WD[x.getDay()] + ' ' + x.getDate()}</span>`;
     track.appendChild(m);
   }
   for (const n of TM.nodes) {
@@ -648,7 +703,7 @@ function dayChips(d) {
   const cls = ITEMS.filter((it) => it.cat === 'class' && inDay(it)).sort(byTime);
   if (cls.length) {
     const c = pick(cls);
-    out.push({ it: c, icon: 'class', name: c.name, time: live(c) ? `till ${endsAt(c.end)}` : fmtShort(c.start), label: `${c.name}, ${fmt(c.start)} to ${fmt(c.end)}` });
+    out.push({ it: c, icon: 'class', name: c.name, time: live(c) ? `till ${endsAt(c.end)}` : d === dayOf(now) && c.end <= now ? 'done' : fmtShort(c.start), label: `${c.name}, ${fmt(c.start)} to ${fmt(c.end)}` });
   }
   let due = ITEMS.filter((it) => isDue(it) && inDay(it)).sort(byTime)[0], ahead = false;
   if (!due && d >= 0) { due = ITEMS.filter((it) => isDue(it) && t0(it) >= (d + 1) * 1440).sort(byTime)[0]; ahead = true; }
@@ -796,7 +851,7 @@ function fillRim(f) {
   const rt = CM.ws + f * (CM.we - CM.ws);
   for (const a of CM.arcs) {
     const e = Math.min(a.b, rt), on = e > a.a + 1;
-    const d = on ? arcPath(ang(a.a), ang(e), G.R) : '';
+    const d = on ? arcPath(ang(a.a), ang(e), G.R + a.lap * G.LAP) : '';
     for (const x of a.els) { x.style.visibility = on ? 'visible' : 'hidden'; if (on) x.setAttribute('d', d); }
   }
   for (const p of CM.pins) p.el.style.visibility = p.t <= rt ? 'visible' : 'hidden';
@@ -830,6 +885,7 @@ function render() {
   const lab = 1 - seg(P, 0, 0.12);
   for (const m of CM.marks) { const o = lab * (m.past ? 0.5 : 1); m.lab.style.opacity = o; m.line.setAttribute('opacity', o); }
   hint.style.opacity = 1 - seg(P, 0, 0.1);
+  $('#dayG').style.opacity = lab;
   // icons, bubbles, necks
   const ta = eIO(seg(P, 0.06, 0.44)), tb = eIO(seg(P, 0.38, 0.88));
   const rOrb = R + 50;
@@ -891,6 +947,7 @@ function renderReduced(P) {
   $('#face').style.opacity = 1 - P; callouts.style.opacity = 1 - P; hint.style.opacity = 1 - P;
   for (const k of MAP) { k.el.style.transform = `translate3d(${k.p0[0] - 15}px, ${k.p0[1] - 15}px, 0)`; k.el.style.opacity = (1 - P) * (k.dim ? 0.5 : 1); }
   for (const m of CM.marks) m.lab.style.opacity = m.past ? 0.5 : 1;
+  $('#dayG').style.opacity = 1 - P;
   drawGoo(null);
   trackWrap.style.clipPath = 'none'; trackWrap.style.opacity = P; trackWrap.style.setProperty('--tlab', 1);
   TM.nodes.forEach((n) => n.el.classList.remove('mapped'));
