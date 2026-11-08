@@ -166,6 +166,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
                 onChange={(e) => setYourName(e.target.value)}
                 maxLength={80}
                 autoComplete="given-name"
+                className="min-h-11"
               />
             </label>
             <p data-anim className="mt-6 rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem] leading-snug text-text-2">
@@ -224,6 +225,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
                     placeholder="BIO 110"
                     aria-label="A class you're taking"
                     autoComplete="off"
+                    className="min-h-11"
                   />
                 </Group>
               )}
@@ -236,6 +238,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
                     placeholder="Campus Coffee"
                     aria-label="Where you work"
                     autoComplete="off"
+                    className="min-h-11"
                   />
                 </Group>
               )}
@@ -266,7 +269,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
                   aria-label="Assistant name"
                   autoCapitalize="words"
                   autoComplete="off"
-                  className="text-[1rem]"
+                  className="min-h-11 text-[1rem]"
                 />
                 <div className="mt-2 flex flex-wrap gap-2">
                   {NAMES.map((n) => (
@@ -295,7 +298,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
                       aria-checked={style === k}
                       onClick={() => setStyle(k)}
                       className={cn(
-                        "flex min-h-12 items-center justify-between rounded-2xl px-4 py-3 text-left transition-all",
+                        "flex min-h-12 flex-wrap items-center justify-between gap-x-3 gap-y-0.5 rounded-2xl px-4 py-3 text-left transition-all",
                         style === k ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft",
                       )}
                     >

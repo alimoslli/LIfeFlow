@@ -155,6 +155,11 @@ export async function listPlaidConnections(scope: UserScope) {
 /** Link token for an existing connection: sign in again, or choose which accounts it shares. */
 export async function reconnectLinkToken(scope: UserScope, integrationId: string, f?: Fetch, opts: { accountSelection?: boolean } = {}) {
   const row = await getItem(scope, integrationId);
+  if (opts.accountSelection)
+    await scope.tx
+      .update(integrations)
+      .set({ metadata: sql`${integrations.metadata} - 'newAccountsAvailableAt'` })
+      .where(eq(integrations.id, row.id));
   return createLinkToken(scope.userId, { accessToken: readCreds(row).accessToken, accountSelection: opts.accountSelection }, f);
 }
 
@@ -353,7 +358,13 @@ export async function syncItem(scope: UserScope, integrationId: string, tz: stri
   const result = await runSync(scope, item.id, creds, f, opts);
   await scope.tx
     .update(integrations)
-    .set({ status: "connected", lastError: null, lastSyncedAt: new Date(), encryptedCredentials: encryptSecret(JSON.stringify(result.creds)) })
+    .set({
+      status: "connected",
+      lastError: null,
+      metadata: sql`${integrations.metadata} - 'pendingExpiration'`,
+      lastSyncedAt: new Date(),
+      encryptedCredentials: encryptSecret(JSON.stringify(result.creds)),
+    })
     .where(eq(integrations.id, item.id));
   await scope.tx
     .insert(syncJobs)
@@ -377,7 +388,10 @@ export async function syncConnection(userId: string, integrationId: string, tz: 
     await withUser(userId, async (s) => {
       await s.tx
         .update(integrations)
-        .set({ ...(e instanceof PlaidError && e.reauth && { status: "error" as const }), lastError: msg })
+        .set({
+          ...(e instanceof PlaidError && e.reauth && { status: "error" as const, metadata: sql`${integrations.metadata} - 'pendingExpiration'` }),
+          lastError: msg,
+        })
         .where(and(eq(integrations.id, integrationId), eq(integrations.userId, userId)));
       await s.tx.insert(syncJobs).values({ userId, integrationId, kind: "plaid.sync", status: "failed", finishedAt: new Date(), error: msg });
     }).catch(() => undefined);
@@ -554,12 +568,18 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
   if (kinds.has("investment"))
     try {
       const inv = await call<{
+        accounts?: { account_id: string }[];
         holdings: { account_id: string; security_id: string; quantity: number; institution_value: number; cost_basis: number | null }[];
         securities: { security_id: string; name: string | null; ticker_symbol: string | null; type: string | null }[];
       }>("/investments/holdings/get", { access_token: token }, f);
       const sec = new Map(inv.securities.map((s) => [s.security_id, s]));
-      // Every investment account the bank shares, so an account with nothing left in it is emptied too.
-      const accountIds = acc.accounts.filter((a) => TYPE[a.type] === "investment").flatMap((a) => idByPlaid.get(a.account_id) ?? []);
+      // Every investment account Plaid reports on in this answer, so an account with nothing left in it is emptied too.
+      // An account it didn't report on is never emptied.
+      // (and any account that has holdings, in case the optional `accounts` list is missing: those rows are inserted below, so they must be cleared first)
+      const reported = new Set([...(inv.accounts ?? []).map((a) => a.account_id), ...inv.holdings.map((h) => h.account_id)]);
+      const accountIds = acc.accounts
+        .filter((a) => TYPE[a.type] === "investment" && reported.has(a.account_id))
+        .flatMap((a) => idByPlaid.get(a.account_id) ?? []);
       if (accountIds.length)
         await scope.tx.delete(holdings).where(and(eq(holdings.userId, scope.userId), eq(holdings.source, "plaid"), inArray(holdings.accountId, accountIds)));
       for (const h of inv.holdings) {
@@ -660,6 +680,11 @@ function securityType(t: string | null | undefined) {
   }
 }
 
+/** Tells Plaid to forget an item (used when an account is deleted, where the rows go with the user). Throws on any failure. */
+export async function removeAtPlaid(encryptedCredentials: string | null, f?: Fetch) {
+  await call("/item/remove", { access_token: readCreds({ encryptedCredentials }).accessToken }, f);
+}
+
 /** Disconnects at Plaid and removes the synced accounts (and their transactions and holdings). */
 export async function removeItem(scope: UserScope, integrationId: string, f?: Fetch) {
   const item = await getItem(scope, integrationId);
@@ -728,10 +753,46 @@ export async function ownerOfItem(db: Database, itemId: string) {
   return row ?? null;
 }
 
-/** Marks a connection as needing the user to sign in again (from an ITEM ERROR webhook). */
-export async function markNeedsReauth(scope: UserScope, integrationId: string, message: string) {
+/** True while a connection is waiting for the user to sign in again (the 30-minute cron skips it until Reconnect). */
+export async function plaidNeedsReauth(userId: string, integrationId: string) {
+  return withUser(userId, async (s) => {
+    const [row] = await s.tx
+      .select({ status: integrations.status, metadata: integrations.metadata })
+      .from(integrations)
+      .where(and(eq(integrations.id, integrationId), eq(integrations.userId, userId)));
+    return row?.status === "error" && !row.metadata?.pendingExpiration;
+  });
+}
+
+/** The bank fixed the sign-in itself (LOGIN_REPAIRED webhook): clear the error so a sync can run. */
+export async function markLoginRepaired(scope: UserScope, integrationId: string) {
   await scope.tx
     .update(integrations)
-    .set({ status: "error", lastError: message.slice(0, 300) })
+    .set({ status: "connected", lastError: null })
+    .where(and(eq(integrations.id, integrationId), eq(integrations.userId, scope.userId), eq(integrations.status, "error")));
+}
+
+/**
+ * The bank has accounts the user hasn't shared yet (NEW_ACCOUNTS_AVAILABLE webhook). Kept in the connection's
+ * metadata as `newAccountsAvailableAt` (an ISO time; `listPlaidConnections` returns it) so the app can offer
+ * "Choose accounts". It's cleared when the user opens the Choose accounts flow.
+ */
+export async function recordNewAccountsAvailable(scope: UserScope, integrationId: string) {
+  await scope.tx
+    .update(integrations)
+    .set({ metadata: sql`${integrations.metadata} || ${JSON.stringify({ newAccountsAvailableAt: new Date().toISOString() })}::jsonb` })
+    .where(and(eq(integrations.id, integrationId), eq(integrations.userId, scope.userId)));
+}
+
+/** Marks a connection as needing the user to sign in again (from an ITEM ERROR webhook). */
+export async function markNeedsReauth(scope: UserScope, integrationId: string, message: string, opts: { stillWorking?: boolean } = {}) {
+  await scope.tx
+    .update(integrations)
+    .set({
+      status: "error",
+      lastError: message.slice(0, 300),
+      // PENDING_EXPIRATION: the connection still works for days, so the cron keeps syncing it (`plaidNeedsReauth`).
+      metadata: opts.stillWorking ? sql`${integrations.metadata} || '{"pendingExpiration": true}'::jsonb` : sql`${integrations.metadata} - 'pendingExpiration'`,
+    })
     .where(and(eq(integrations.id, integrationId), eq(integrations.userId, scope.userId)));
 }

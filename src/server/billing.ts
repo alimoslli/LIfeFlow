@@ -85,6 +85,29 @@ async function stripe(cfg: BillingConfig, path: string, params: Record<string, s
   return json.url;
 }
 
+/** Cancels every live subscription of a Stripe customer right away (used when an account is deleted), following Stripe's paging. Returns how many were cancelled. Throws on any failure. */
+export async function cancelSubscriptionsNow(cfg: BillingConfig, customerId: string, fetchImpl: typeof fetch = fetch) {
+  const headers = { authorization: `Bearer ${cfg.secretKey}` };
+  const live: string[] = [];
+  let after: string | null = null;
+  for (let page = 0; page < 20; page++) {
+    const url: string = `https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=all&limit=100${after ? `&starting_after=${encodeURIComponent(after)}` : ""}`;
+    const list = await fetchImpl(url, { headers });
+    const body = (await list.json().catch(() => ({}))) as { data?: { id?: string; status?: string }[]; has_more?: boolean };
+    if (!list.ok || !Array.isArray(body.data)) throw new Error("Stripe subscription list failed");
+    for (const s of body.data) if (typeof s.id === "string" && s.status !== "canceled" && s.status !== "incomplete_expired") live.push(s.id);
+    if (!body.has_more) break;
+    const last: string | undefined = body.data[body.data.length - 1]?.id;
+    if (!last) throw new Error("Stripe paging failed");
+    after = last;
+  }
+  for (const id of live) {
+    const res = await fetchImpl(`https://api.stripe.com/v1/subscriptions/${encodeURIComponent(id)}`, { method: "DELETE", headers });
+    if (!res.ok) throw new Error("Stripe cancel failed");
+  }
+  return live.length;
+}
+
 /** A Stripe Checkout page for Pro. The webhook (not this redirect) turns Pro on. */
 export function checkoutUrl(cfg: BillingConfig, user: { id: string; email: string; stripeCustomerId: string | null }, fetchImpl?: typeof fetch) {
   return stripe(

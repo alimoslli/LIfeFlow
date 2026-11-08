@@ -16,7 +16,7 @@ import {
   verifyWebhook,
 } from "@/server/integrations/plaid";
 import { moneyOverview } from "@/server/services/finance/overview";
-import { listAccounts, listTurnedOffAccounts } from "@/server/services/finance/accounts";
+import { archiveAccount, listAccounts, listTurnedOffAccounts } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
 import { getTool } from "@/server/jarvis/registry";
 import { makeUser, TZ } from "../helpers";
@@ -54,6 +54,9 @@ function fakePlaid(
     failLiabilities?: boolean;
     noLiveBalance?: boolean;
     emptyHoldings?: boolean;
+    investmentsError?: string;
+    noReport?: boolean;
+    holdingsWithoutAccounts?: boolean;
   } = {},
 ) {
   const calls: { path: string; body: Record<string, unknown> }[] = [];
@@ -118,8 +121,11 @@ function fakePlaid(
       }
       case "/investments/holdings/get":
         if (opts.noInvestments) return json({ error_code: "PRODUCTS_NOT_SUPPORTED" }, 400);
-        if (opts.emptyHoldings) return json({ holdings: [], securities: [] });
+        if (opts.investmentsError) return json({ error_code: opts.investmentsError, error_type: "ITEM_ERROR" }, 400);
+        // Like the real API, the response names the investment accounts it reports on.
+        if (opts.emptyHoldings) return json({ accounts: opts.noReport ? [] : [{ account_id: "acc-ira" }], holdings: [], securities: [] });
         return json({
+          ...(!opts.holdingsWithoutAccounts && { accounts: [{ account_id: "acc-ira" }] }),
           holdings: [{ account_id: "acc-ira", security_id: "sec-vti", quantity: 10, institution_value: 2500, cost_basis: 2000 }],
           securities: [{ security_id: "sec-vti", name: "Vanguard Total Stock Market ETF", ticker_symbol: "VTI", type: "etf" }],
         });
@@ -334,6 +340,65 @@ describe("Plaid", () => {
     expect(await run((s) => s.tx.select().from(holdings).where(eq(holdings.userId, user.id)))).toHaveLength(1);
     await syncConnection(user.id, item.id, TZ, fakePlaid({ emptyHoldings: true }).f);
     expect(await run((s) => s.tx.select().from(holdings).where(eq(holdings.userId, user.id)))).toHaveLength(0);
+  });
+
+  it("an account the user archived by hand stays archived through every sync, while one the bank stopped sharing still comes back", async () => {
+    const { user, run, item, fake } = await connected();
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    const rows = await run((s) => s.tx.select().from(financialAccounts).where(eq(financialAccounts.userId, user.id)));
+    const checking = rows.find((a) => a.providerAccountId === "acc-checking")!;
+    const ira = rows.find((a) => a.providerAccountId === "acc-ira")!;
+    await run((s) => archiveAccount(s, checking.id));
+    // The bank stops sharing the IRA (it shares only the card), then shares everything again.
+    await syncConnection(user.id, item.id, TZ, fakePlaid({ only: ["acc-card", "acc-checking"] }).f);
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    const names = (await run((s) => listAccounts(s))).map((a) => a.name).sort();
+    expect(names).toEqual(["Plaid Credit Card", "Plaid IRA"]);
+    // What it already had is kept (not deleted by archiving, not re-added).
+    expect(await run((s) => s.tx.select().from(transactions).where(eq(transactions.accountId, checking.id)))).toHaveLength(2);
+    expect(ira.id).toBeTruthy();
+    // The user can still bring it back from the turned-off list.
+    expect((await run(listTurnedOffAccounts)).map((a) => a.name)).toEqual(["Plaid Checking"]);
+  });
+
+  it("an account the user turned off, which the bank stops and then resumes sharing, stays off: no transactions, no cursor reset", async () => {
+    const { user, run, item, fake } = await connected();
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    const checking = (await run((s) => s.tx.select().from(financialAccounts).where(eq(financialAccounts.userId, user.id)))).find(
+      (a) => a.providerAccountId === "acc-checking",
+    )!;
+    await run((s) => setPlaidAccountIncluded(s, checking.id, false));
+    await syncConnection(user.id, item.id, TZ, fakePlaid({ only: ["acc-card", "acc-ira"] }).f);
+    const resumed = fakePlaid();
+    await syncConnection(user.id, item.id, TZ, resumed.f);
+    expect((await run((s) => listAccounts(s))).map((a) => a.name).sort()).toEqual(["Plaid Credit Card", "Plaid IRA"]);
+    expect(await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)))).toHaveLength(0);
+    expect(resumed.calls.filter((c) => c.path === "/transactions/sync")[0].body.cursor).toBe("c1");
+  });
+
+  it("existing holdings survive an investments error such as PRODUCT_NOT_READY", async () => {
+    const { user, run, item, fake } = await connected();
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    expect(await run((s) => s.tx.select().from(holdings).where(eq(holdings.userId, user.id)))).toHaveLength(1);
+    await syncConnection(user.id, item.id, TZ, fakePlaid({ investmentsError: "PRODUCT_NOT_READY" }).f);
+    expect(await run((s) => s.tx.select().from(holdings).where(eq(holdings.userId, user.id)))).toHaveLength(1);
+  });
+
+  it("an investment account Plaid didn't report on is never emptied", async () => {
+    const { user, run, item, fake } = await connected();
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    const f = fakePlaid({ emptyHoldings: true, noReport: true });
+    await syncConnection(user.id, item.id, TZ, f.f);
+    expect(await run((s) => s.tx.select().from(holdings).where(eq(holdings.userId, user.id)))).toHaveLength(1);
+  });
+
+  it("a holding whose account is missing from the response's accounts doesn't duplicate across syncs", async () => {
+    const { user, run, item } = await connected();
+    const f = fakePlaid({ holdingsWithoutAccounts: true });
+    await syncConnection(user.id, item.id, TZ, f.f);
+    await syncConnection(user.id, item.id, TZ, f.f);
+    expect(await run((s) => s.tx.select().from(holdings).where(eq(holdings.userId, user.id)))).toHaveLength(1);
   });
 
   it("a problem with the investments product never throws away the sync", async () => {

@@ -7,7 +7,7 @@ import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
 import { syncGoogleCalendar, syncGoogleEmail } from "@/server/integrations/google";
 import { syncMicrosoftCalendar } from "@/server/integrations/microsoft";
-import { syncConnection } from "@/server/integrations/plaid";
+import { plaidNeedsReauth, syncConnection } from "@/server/integrations/plaid";
 import { markCanvasError, syncCanvas } from "@/server/integrations/canvas";
 
 export const dynamic = "force-dynamic";
@@ -31,10 +31,17 @@ export async function GET(req: Request) {
       .innerJoin(users, eq(users.id, connectionRegistry.userId));
     let ok = 0;
     let failed = 0;
+    let skipped = 0;
     for (const r of rows) {
       try {
-        if (r.provider === "plaid") await syncConnection(r.userId, r.integrationId, r.tz);
-        else if (r.provider === "google")
+        if (r.provider === "plaid") {
+          // A connection waiting for the user to sign in again can't sync; skip it (no failed record every run) until Reconnect.
+          if (await plaidNeedsReauth(r.userId, r.integrationId)) {
+            skipped++;
+            continue;
+          }
+          await syncConnection(r.userId, r.integrationId, r.tz);
+        } else if (r.provider === "google")
           await withUser(r.userId, async (s) => {
             await syncGoogleCalendar(s, r.tz);
             await syncGoogleEmail(s);
@@ -50,7 +57,7 @@ export async function GET(req: Request) {
         failed++; // the error is recorded on the connection for the user to see
       }
     }
-    return NextResponse.json({ ok: true, synced: ok, failed });
+    return NextResponse.json({ ok: true, synced: ok, failed, skipped });
   } catch (e) {
     return errorResponse(e);
   }

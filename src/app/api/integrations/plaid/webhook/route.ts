@@ -4,7 +4,7 @@ import { getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
-import { markNeedsReauth, ownerOfItem, syncConnection, verifyWebhook } from "@/server/integrations/plaid";
+import { markLoginRepaired, markNeedsReauth, ownerOfItem, recordNewAccountsAvailable, syncConnection, verifyWebhook } from "@/server/integrations/plaid";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -30,8 +30,15 @@ export async function POST(req: Request) {
     const code = event.webhook_code ?? "";
     if (type === "ITEM" && (code === "ERROR" || code === "PENDING_EXPIRATION" || code === "USER_PERMISSION_REVOKED")) {
       await withUser(owner.userId, (s) =>
-        markNeedsReauth(s, owner.integrationId, event.error?.display_message || "Your bank needs you to sign in again. Use Reconnect."),
+        markNeedsReauth(s, owner.integrationId, event.error?.display_message || "Your bank needs you to sign in again. Use Reconnect.", {
+          stillWorking: code === "PENDING_EXPIRATION",
+        }),
       );
+    } else if (type === "ITEM" && code === "LOGIN_REPAIRED") {
+      await withUser(owner.userId, (s) => markLoginRepaired(s, owner.integrationId));
+      await syncConnection(owner.userId, owner.integrationId, u?.tz ?? "UTC").catch(() => undefined);
+    } else if (type === "ITEM" && code === "NEW_ACCOUNTS_AVAILABLE") {
+      await withUser(owner.userId, (s) => recordNewAccountsAvailable(s, owner.integrationId));
     } else if ((type === "TRANSACTIONS" || type === "HOLDINGS" || type === "LIABILITIES") && SYNC.has(code)) {
       await syncConnection(owner.userId, owner.integrationId, u?.tz ?? "UTC").catch(() => undefined); // errors are recorded on the connection
     }
