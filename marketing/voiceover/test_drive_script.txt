@@ -1,4 +1,4 @@
-Voice: Mark (Higgsfield preset 27c04473-84a9-4b60-a41f-c8e8458bd4f1, ElevenLabs engine), the same voice as Dev.
+Voice: Sterling (Higgsfield preset dc382508-c8bd-443c-8cb2-46e57b8d2e6f, ElevenLabs engine), the standard voiceover. One take, sped up 10%, each line placed on its beat.
 
 0.1   Thirty seconds from now... your week's handled.
 3.1   Tell it one class. That's the whole setup.
