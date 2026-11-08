@@ -155,6 +155,11 @@ export async function listPlaidConnections(scope: UserScope) {
 /** Link token for an existing connection: sign in again, or choose which accounts it shares. */
 export async function reconnectLinkToken(scope: UserScope, integrationId: string, f?: Fetch, opts: { accountSelection?: boolean } = {}) {
   const row = await getItem(scope, integrationId);
+  if (opts.accountSelection)
+    await scope.tx
+      .update(integrations)
+      .set({ metadata: sql`${integrations.metadata} - 'newAccountsAvailableAt'` })
+      .where(eq(integrations.id, row.id));
   return createLinkToken(scope.userId, { accessToken: readCreds(row).accessToken, accountSelection: opts.accountSelection }, f);
 }
 
@@ -731,6 +736,37 @@ export async function ownerOfItem(db: Database, itemId: string) {
     .from(connectionRegistry)
     .where(and(eq(connectionRegistry.provider, "plaid"), eq(connectionRegistry.externalId, itemId)));
   return row ?? null;
+}
+
+/** True while a connection is waiting for the user to sign in again (the 30-minute cron skips it until Reconnect). */
+export async function plaidNeedsReauth(userId: string, integrationId: string) {
+  return withUser(userId, async (s) => {
+    const [row] = await s.tx
+      .select({ status: integrations.status })
+      .from(integrations)
+      .where(and(eq(integrations.id, integrationId), eq(integrations.userId, userId)));
+    return row?.status === "error";
+  });
+}
+
+/** The bank fixed the sign-in itself (LOGIN_REPAIRED webhook): clear the error so a sync can run. */
+export async function markLoginRepaired(scope: UserScope, integrationId: string) {
+  await scope.tx
+    .update(integrations)
+    .set({ status: "connected", lastError: null })
+    .where(and(eq(integrations.id, integrationId), eq(integrations.userId, scope.userId), eq(integrations.status, "error")));
+}
+
+/**
+ * The bank has accounts the user hasn't shared yet (NEW_ACCOUNTS_AVAILABLE webhook). Kept in the connection's
+ * metadata as `newAccountsAvailableAt` (an ISO time; `listPlaidConnections` returns it) so the app can offer
+ * "Choose accounts". It's cleared when the user opens the Choose accounts flow.
+ */
+export async function recordNewAccountsAvailable(scope: UserScope, integrationId: string) {
+  await scope.tx
+    .update(integrations)
+    .set({ metadata: sql`${integrations.metadata} || ${JSON.stringify({ newAccountsAvailableAt: new Date().toISOString() })}::jsonb` })
+    .where(and(eq(integrations.id, integrationId), eq(integrations.userId, scope.userId)));
 }
 
 /** Marks a connection as needing the user to sign in again (from an ITEM ERROR webhook). */
