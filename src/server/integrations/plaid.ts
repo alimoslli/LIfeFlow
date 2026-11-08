@@ -554,12 +554,17 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
   if (kinds.has("investment"))
     try {
       const inv = await call<{
+        accounts?: { account_id: string }[];
         holdings: { account_id: string; security_id: string; quantity: number; institution_value: number; cost_basis: number | null }[];
         securities: { security_id: string; name: string | null; ticker_symbol: string | null; type: string | null }[];
       }>("/investments/holdings/get", { access_token: token }, f);
       const sec = new Map(inv.securities.map((s) => [s.security_id, s]));
-      // Every investment account the bank shares, so an account with nothing left in it is emptied too.
-      const accountIds = acc.accounts.filter((a) => TYPE[a.type] === "investment").flatMap((a) => idByPlaid.get(a.account_id) ?? []);
+      // Every investment account Plaid reports on in this answer, so an account with nothing left in it is emptied too.
+      // An account it didn't report on is never emptied.
+      const reported = new Set((inv.accounts ?? []).map((a) => a.account_id));
+      const accountIds = acc.accounts
+        .filter((a) => TYPE[a.type] === "investment" && reported.has(a.account_id))
+        .flatMap((a) => idByPlaid.get(a.account_id) ?? []);
       if (accountIds.length)
         await scope.tx.delete(holdings).where(and(eq(holdings.userId, scope.userId), eq(holdings.source, "plaid"), inArray(holdings.accountId, accountIds)));
       for (const h of inv.holdings) {
