@@ -8,10 +8,22 @@ The single source of truth for LifeFlow's social media and ads. Any Claude chat,
 
 ## 1. The brand
 
-- **Name:** _not picked yet_. Decided 2026-11-03: it is NOT the owner's name (not Ali) and must not be the assistant's name. Until picked, scripts say "the face of LifeFlow" and use no name.
+**The vision (use it in every script, caption and answer):**
+LifeFlow is a personal assistant with one job: serve you and help you get the most out of your time.
+- **Built by someone living the problem.** The founder carries seven classes a semester, working 30 hours a week at a retail job, side projects and transfer applications, all at once. No app connected any of it, so he built the one he needed, and now builds it for everyone with a full life. He keeps asking users what they need.
+- **One job.** Not research, not websites, not "anything". Every feature helps you run your life.
+- **Always connected.** Classes, shifts, money, calendar and health are connected at the same time, so it finds the dots, connects them and acts: a shift that clashes with an exam, a bill before payday.
+- **Helps without being asked.** It notices first, a few quiet messages a day, with the numbers behind each one.
+- **Why not a big AI assistant?** Big assistants try to do everything for everyone. LifeFlow does one thing: it's your personal assistant, connected to your classes, shifts, money and calendar all the time, so it sees how your whole week fits together and helps before you ask. And it's built by a student who works 30 hours a week and carries a full course load, who uses it every day and builds what people like him actually need.
+- **Short line:** "Built by a student solving his own problem, for everyone with a full life."
+- Stay honest: never claim other assistants *can't* connect to things; say LifeFlow is built around it. No em dashes in public copy.
+
+
+- **Name:** LifeFlow. **Site:** lifeflowweb.com. **Instagram:** @lifeflowweb.
 - **What it is:** a personal assistant app that brings your schedule, school, work, money and goals into one place, and helps on its own, even when you don't open it.
-- **Audience:** LifeFlow is for everyone. Ads target students first (college, 18 to 24).
-- **The assistant:** inside the app he's called Jarvis by default (users can rename him). In ads and on the landing page hero, say **"your personal assistant"**, not "Jarvis".
+- **Words:** read `docs/marketing/WORDS.md` first (the one idea, everyone who earns, words we use, retired words).
+- **Audience:** LifeFlow is for everyone with a full life. Not just students (owner, 2026-11-07): students (college, 18 to 24) are one audience, alongside working people, parents, side hustlers and anyone juggling schedule, work and money. The marketer tests different audiences and leans into whichever the real numbers show growing.
+- **The assistant:** it has no fixed name. Each person names it, and until they do the app says "your assistant". In ads, captions, scripts and on the landing page, always say **"your personal assistant"**. Never "Jarvis": that's only an internal code name and never appears to anyone outside the team (owner's rule, CLAUDE.md).
 - **Look:** deep green hero colour on cream, the green wave logo mark. Brand guide: https://claude.ai/artifact/Xngzg4E3JKBE6fEvVrTpA8
 - **Price:** free while in testing. At App Store launch it becomes paid through Apple in-app purchase. Don't show an App Store badge until the app is live there.
 
@@ -408,7 +420,9 @@ Update after every video. Newest at the top.
 | # | Video | Status | Notes |
 |---|---|---|---|
 | 0 | Marketing set made with the app's own screen recordings (not the character) | Delivered 2026-11-02 | 6 videos + 2 images: "Too lazy to budget?" reel; four 15-second problem videos (quiz and shift clash, forgotten subscriptions, how much can I spare, live chat with the assistant); the sign-up and onboarding ad; the "connects and uses" logo wall and story. Download: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/087f2269-b8d3-479a-b561-24b9035886a6.zip . Plans, recordings and render code are in `marketing/launch/` on branch `claude/lifeflow-ad-reel-higgsfield-s3r3v1`. The live-chat video used the app's real chat screen and real calendar actions, but the assistant's wording was written by a local stand-in because no OpenAI key was available; say so if asked. |
-| 14 | "Test-drive your assistant" with a voiceover (video 6 + voice) | Wrong voice: redo in Sienna (needs 1.35 credits) | 34.1 s, 1.5 credits (balance 0.22 after). Owner: give it a voice, a simple creative script with a strong hook, same voice as our videos. Made in Mark by mistake; the owner said the app videos use the woman's voice (Sienna) and Mark is only Dev in the podcast. Script: "Thirty seconds from now... your week's handled." / "Tell it one class. That's the whole setup." / "Name it. Go wild." / "It reads your whole week... classes, work, money... and finds what you'd miss." / "Then it tells you the plan." / "Exam Friday? Two hours today. One tap." / "Netflix charged you twice? Caught it. Message already written." / "Quiz tomorrow? It quizzes you tonight." / "Tap for another day. It keeps going." / "Thirty seconds. Told you. Link's in bio." (the ending calls back to the hook). One take, split on real silences, placed on each beat, music ducked, -10.7 LUFS. Zip with script and voice-only/music-only tracks: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/1e6fd776-889e-44a5-897f-12242f067598.zip . Method: `marketing/voiceover/`. |
+| 16 | Student spot v2 (from the COO, 16:9 and 9:16) | Not final: posting next week | Sterling voiceover (7 lines in `sterling-voice/`). The app shots and the end card get replaced with the redesigned LifeFlow. Owner notes: for every way of earning, not only shift work; land on "the time you get back... goes to everything you were never going to give up". Files and build script: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/66ae044b-7566-4093-b959-3dbeed2fe342.zip |
+| 15 | Birthday film "It didn't forget" v4 (from the COO) | Approved, held: the FIRST post, waiting for Ali's "post it" | 28 s, 9:16, no voiceover. Hook "she forgot her best friend's birthday." over the hug, Ali's v2 captions, slower pacing. Owner: "this is amazing". Lesson: when he likes the words, enhance them, never rewrite. Same zip as row 16. |
+| 14 | "Test-drive your assistant" with a voiceover (video 6 + voice) | Wrong voice: redo in Sterling, the standard voiceover (about 0.3 credits a line; balance 0.22) | 34.1 s, 1.5 credits (balance 0.22 after). Owner: give it a voice, a simple creative script with a strong hook, same voice as our videos. Made in Mark by mistake; the owner said the app videos use the woman's voice (Sienna) and Mark is only Dev in the podcast. Script: "Thirty seconds from now... your week's handled." / "Tell it one class. That's the whole setup." / "Name it. Go wild." / "It reads your whole week... classes, work, money... and finds what you'd miss." / "Then it tells you the plan." / "Exam Friday? Two hours today. One tap." / "Netflix charged you twice? Caught it. Message already written." / "Quiz tomorrow? It quizzes you tonight." / "Tap for another day. It keeps going." / "Thirty seconds. Told you. Link's in bio." (the ending calls back to the hook). One take, split on real silences, placed on each beat, music ducked, -10.7 LUFS. Zip with script and voice-only/music-only tracks: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/1e6fd776-889e-44a5-897f-12242f067598.zip . Method: `marketing/voiceover/`. |
 | 13 | "My assistant caught this 3 days early" v3 (email to the manager) | Delivered 2026-11-05 | 25 s at 60 fps, no Higgsfield credits. Owner: make the manager part a more formal email to his manager Scott that it drafts, previews, and sends only after approval; same design as the other clips. New take: the formal draft to Scott shown first ("not sent"), "Looks good, send it." brings up the real Confirm card, a tap, "Done". Other clips: study time booked (today 9 to 10:30, tomorrow 8 to 9:30), move $100 from savings for the car insurance, reminder for tomorrow at 9. Gmail is a local stand-in on the sample account (the approval flow is the app's own). Replies now land without the chat snapping (recorder scroll fix). Zip: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/0e6f21e1-fc40-47e1-b483-9aaf8f88b9cf.zip |
 | 12 | "My assistant caught this 3 days early" (short reel) | Replaced by 13 | 20 s at 60 fps, no Higgsfield credits. Owner on 11: very poor quality, no good hook, messy; if there's a new clip, make sure it's seen. Rebuilt from the same real take: the first frame is the real warning notification full screen (midterm Thursday vs. Wednesday shift) with the hook caption; then the car insurance warning lands; tap; four short clips, each one thing the assistant did (study time booked, the $100 fix for the car insurance, the text to the boss, the reminder), each cut marked with a punch-in, flash and sound; sticker captions (setup, then payoff); one highlight per clip; no phone mockup; end card with the current logo and "Link in bio". Zip: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/9b405cca-aab4-4be0-a7e4-a3e375be2645.zip |
 | 11 | "Monday morning", smooth chat (replaces 10) | Replaced by 12 | 40.7 s at 60 fps, no Higgsfield credits. Owner on 10: it used the old logo, and the replies lagged and each turn looked like a new clip. Fixes: the current logo everywhere (the app icon on the lock-screen notifications, the molecule mark on the end card); the lock screen is live HTML and a tap opens the app out of the notification (no flash); the chat is one continuous take played at 1x with no cuts or speed jumps, filmed with `rec_chat.cjs` so the real replies stream smoothly; one steady camera framing; highlights follow the real scroll. New take with the real assistant: the week (Wednesday overloaded, Friday's shift vs. Spanish 2 to 2:50), three midterm study sessions booked, covering the car insurance (move $100 from savings; it also caught the bill tracked twice), a text for the manager, a reminder for tomorrow at 9. Zip: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/41861d93-da44-4c98-af95-8c29737424a5.zip |
@@ -425,8 +439,64 @@ Update after every video. Newest at the top.
 
 ---
 
+## 5b. What we tried and what we learned (check this before every idea)
+
+Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playbook from that chat, with every owner reaction, is on branch `claude/lifeflow-ad-reel-higgsfield-s3r3v1` and still needs merging here.
+
+**The real numbers: unknown.** Metricool shows @lifeflowweb with 0 posts and 0 followers, but the owner doesn't use Metricool and the account was never properly connected (owner, 2026-11-07), so those zeros mean nothing. Until Instagram is connected for real, the marketer has no audience numbers. It says "no numbers yet" and never reads Metricool's zeros as results. **Posted (owner, 2026-11-07):** the owner posted several of the videos below straight to Instagram (not all of them; which ones isn't recorded yet). Their real views, likes, saves and followers are the first audience data LifeFlow has. Read them as soon as Instagram is connected, then update this section with which videos were posted and how each did.
+
+**Tried (Nov 2 to 6, all unposted):**
+1. **App screen-recording set:** a "Too lazy to budget?" reel, four 15-second problem videos, a sign-up ad and a logo wall. The sign-up ad still contains "calm place"; fix it before posting.
+2. **Character trailer:** Dev, a 3D character performance-captured from the owner, with an "I'm the real developer" reveal. About 84 credits. The owner loved the movement and the look. The dub was choppy and out of sync, the music was too loud, and there were no app previews.
+3. **"The Flow Room" podcast:**
+   - **Ep 01:** about 97 credits.
+   - **Ep 02, with Tyler:** about 123 to 140 credits. Rejected: missing clips, Tyler didn't look like himself, lips didn't match the words, wrong features.
+   - **Ep 03:** "not edited or produced enough". Credits ran out.
+4. **Screen-recording reels v5 to v13 (no credits):**
+   - Rejected for looking like old setup screens, reused captions, laggy replies, messy frames, or "no good hook".
+   - **v8 "One chat. My whole day."** and **v13 "My assistant caught this 3 days early"** passed.
+5. **v14 voiceover:** used the wrong voice (Mark). App videos use Sienna; Mark is only Dev. It's blocked on a top-up of 3 or more credits.
+
+**What didn't work (the owner's rules now):**
+- **Hook:** it must be in the very first frame.
+- **Cuts and pacing:** every cut must be visible (punch-in, flash or sound). No lag, and no turn that looks like a new clip.
+- **The screen:** no crowded frames, no walls of text, no small phone mockup.
+- **Real screens only:** no invented screens, charts or mock notifications. Motion graphics only decorate real screens.
+- **Fresh material:** no old setup screens and no reused captions.
+- **Show what you'd miss, days ahead:** clashes, double charges, trials about to charge, price rises, an overdraft. Don't show things people already do ("can I afford concert tickets?"), and don't show same-day warnings.
+- **Topics and wording:** no rent (many viewers live with parents). No spoken "link in bio" in the podcast. Never the owner's name in the podcast.
+- **People:** no real person's likeness without consent (Tyler consented).
+- **Credits:** never spend any without quoting the exact cost and getting the owner's okay. Podcast episodes are about 3 clips and 50 to 60 credits.
+
+**What looked promising:**
+- Real app screen recordings: free, and the only drafts that passed (v8, v13).
+- The "caught it days early" angle with a first-frame hook.
+- Dev's look and movement.
+
+**So the plan is:**
+- Post the drafts that already passed (v8, v13) first, fixed for the open items: "calm place", the Sienna voice, and the 15% code (it must exist in Stripe).
+- Then post steadily with free screen-recording reels and carousels. Use credits only for what the numbers show is working.
+- Connect Instagram for real (Metricool), then learn from real views, not only from drafts.
+
 ## 6. Decisions and preferences (keep adding)
 
+- 2026-11-08: the COO handed all marketing to the Marketing chat. This file now merges the COO's playbook from `main` (brand section, section 5b, the decisions below) with the full history from this branch. Where they disagree, the newest owner decision wins: positioning "not another AI assistant" (below) refines the brand section's "personal assistant" wording; Sterling is the voiceover and the female voices are out (this replaces "app videos are narrated by Sienna").
+- 2026-11-08 (owner): cut Higgsfield costs. Credits go only to raw AI footage, never to music, voices or finished edits.
+  - **No generated music or voice.** The owner adds the music himself; videos are delivered silent (with sound effects only if made locally for free) plus a note of where the beats should land.
+  - **Stills first, then motion.** Every shot starts as a still (about 0.25 credits). Only stills that pass the quality check get animated (Kling 3.0 pro 5 s, 7.5 credits; never Seedance, never 15 s takes, never sound on).
+  - **One take per shot.** No test shots, no samples, no "maybe" renders. A shot that fails the check is fixed as a still before it is animated again.
+  - **All editing is local and free** (ffmpeg: cuts, grade, text, end card). Higgsfield is never used to edit, montage or upscale.
+  - Before any spend, the COO writes the shot list with each shot's cost and the total, and keeps a running tally against the budget.
+- 2026-11-08 (owner): the standard male voiceover is "Sterling" (Higgsfield text2speech_v2, ElevenLabs variant, preset voice_id dc382508-c8bd-443c-8cb2-46e57b8d2e6f, stability 0.35, similarity 0.8), in a calm, inspiring read. Owner: "we will keep using that for male voice overs". The female text-to-speech voices sounded like an audiobook and are out. Voiceover is the one exception to "no generated voices": generate only final, approved script lines with this voice (about 0.3 credits a line), never auditions of other voices without the owner asking.
+- 2026-11-08 (owner, after the student spot v2): (1) the spot is not final: the last shot (end card) and the app shots are replaced with the redesigned LifeFlow; (2) LifeFlow is a flow for all: never write or cast as if work means one kind of job (shifts, salaried, clients and projects, gigs, your own thing); the spot read as only for retail workers, which is wrong; (3) the old words are retired and new ones come from the new design, kept in `docs/marketing/WORDS.md` (draft until the owner says yes); (4) the meaning is the message: LifeFlow gives you your time back for your life. The line "So the time you get back... goes to everything you were never going to give up" is the model; every script lands on where the time goes.
+- **Growth push (owner, 2026-11-07):** "I will do anything to get those numbers up as long as we're working in the correct direction." Instagram @lifeflowweb is the connected account (Metricool).
+  - **Posting:** one tap per post stays. Every post goes to Metricool for review, and the owner presses publish.
+  - **Format follows the evidence:** for each post, the marketer picks the audience and format the research and real numbers say will grow the account:
+    - a reel the owner films from a shot list (`b-roll-shot-list`);
+    - a Higgsfield reel with the LifeFlow character (credits only with a `paid` approval);
+    - a carousel (`carousel-builder`, `viral-carousel`).
+  - **Says why:** each draft states why that format, with the source or the metric. Every few weeks it checks what actually grew (`analytics-readout`, `content-audit`) and shifts the mix.
+  - **Content skills:** they live in `docs/marketing/skills/` (see its README).
 - Owner wants short replies and quick recaps, especially during work hours.
 - Don't change the app while doing marketing work unless asked.
 - The owner's clips are direction, not a template: the final video doesn't have to copy their exact movements.
