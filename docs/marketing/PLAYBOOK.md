@@ -201,6 +201,12 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
 ## 6. Decisions and preferences (keep adding)
 
 - Owner wants short replies and quick recaps, especially during work hours.
+- 2026-11-08 (owner): cut Higgsfield costs. Credits go only to raw AI footage, never to music, voices or finished edits.
+  - **No generated music or voice.** The owner adds the music himself; videos are delivered silent (with sound effects only if made locally for free) plus a note of where the beats should land.
+  - **Stills first, then motion.** Every shot starts as a still (about 0.25 credits). Only stills that pass the quality check get animated (Kling 3.0 pro 5 s, 7.5 credits; never Seedance, never 15 s takes, never sound on).
+  - **One take per shot.** No test shots, no samples, no "maybe" renders. A shot that fails the check is fixed as a still before it is animated again.
+  - **All editing is local and free** (ffmpeg: cuts, grade, text, end card). Higgsfield is never used to edit, montage or upscale.
+  - Before any spend, the COO writes the shot list with each shot's cost and the total, and keeps a running tally against the budget.
 - 2026-11-07: owner at work: don't ask him for approvals. Keep working on plan; anything that needs him is built and held, never published, deployed or merged until he agrees.
 - 2026-11-07: no AI lip-sync dialogue in ads; emotional, film-look stories built from real reference ads.
 - Don't change the app while doing marketing work unless asked.

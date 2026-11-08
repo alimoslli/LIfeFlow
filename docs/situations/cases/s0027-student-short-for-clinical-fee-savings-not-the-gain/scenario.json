@@ -1,0 +1,131 @@
+{
+  "id": "s0027-student-short-for-clinical-fee-savings-not-the-gain",
+  "title": "$40 in checking and an $85 clinical fee due Tue before payday: she has $180 of free savings and a small stock gain, and Dev picks the savings because the gain is short-term",
+  "persona": "p4012-cc-roommates-nursing-part-time-savings",
+  "persona_overrides": {
+    "spending": [
+      {
+        "id": "shopping",
+        "per_week": 2.6
+      },
+      {
+        "id": "eating-out",
+        "per_week": 3.0
+      }
+    ],
+    "income": [
+      {
+        "id": "inc-family",
+        "amount_cents": [
+          5000,
+          15000
+        ]
+      }
+    ]
+  },
+  "now": "2026-11-20T17:30",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 2701,
+  "money": {
+    "available_now_cents": 4000,
+    "savings_cents": 48000
+  },
+  "known": [
+    {
+      "id": "k-fee",
+      "fact": "The $85 clinical compliance fee for NURS 186 is due Tue Nov 24 by bursar draft, and the school adds a $25 late fee after that",
+      "source": "email",
+      "at": "2026-11-09T09:00"
+    }
+  ],
+  "changes": [
+    {
+      "id": "c-fee-email",
+      "type": "email",
+      "at": "2026-11-09T09:00",
+      "sender_type": "school",
+      "sender_name": "Lakeside Community College Bursar",
+      "from_address": "bursar@example.com",
+      "subject": "NURS 186 clinical compliance fee, $85.00 due Nov 24, late fee $25.00 after"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-fee",
+      "check": "afford",
+      "what": "Checking is $40.00 available. The bursar's email says the $85.00 NURS 186 clinical compliance fee is due Tue Nov 24, with a $25.00 late fee after that, and her next paycheck is Fri Nov 27. Without a move she is $45.00 short on the 24th, and the late fee makes waiting cost money. Her savings are $480.00 and she told Dev the first $300 is her emergency fund and the rest is free, so $180.00 is free. The brokerage account holds $0.00 in cash. Her VOO position is worth $540.00 against $400.00 paid, up $140.00, but she bought it Jun 19, 2026, under a year ago, so a sale would be a short-term gain.",
+      "by_when": "2026-11-21T12:00",
+      "facts": [
+        "c-fee-email",
+        "k-fee",
+        "acc-checking",
+        "acc-savings",
+        "m-floor",
+        "acc-brokerage",
+        "h-voo"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-fee",
+      "action": "plan",
+      "needs_user": true,
+      "send_at": "2026-11-20T17:35",
+      "what": "One push now: \"Checking is $40.00 and the $85.00 clinical fee is due Tuesday, before your Nov 27 paycheck. A late fee of $25.00 follows if it waits. You have $180.00 of savings above your $300 emergency fund. Moving $85.00 from savings to checking covers it, leaves $395.00 in savings (the $300 untouched), and costs about 28 cents of interest a month.\" Buttons: [Show me the steps] [Not now]. The steps: open the Lakeside app, transfer $85.00 from Savings to Checking (same credit union, same day). Dev lays out the steps and links to the app. It never moves the money and has nothing to undo, since the person does it. Dev also tells her once, as a fact, that her VOO gain is short-term, so a sale would be taxed as ordinary income, and that she doesn't need it for this.",
+      "why": "The order is bill move, savings, brokerage cash, a sale. The bill can't move without a $25 fee, so savings is next. The $85 comes from the free $180, so the emergency fund stays whole. A sale of $85 of VOO would carry about $22 of short-term gain, a tax cost that savings avoids for about 28 cents of interest. Facts only, and no pay counted before it lands."
+    }
+  ],
+  "must_not": [
+    "predict the market or say VOO may go up or down",
+    "move money for her: Dev lays out the steps, she does the transfer",
+    "touch the emergency fund for a non-emergency: the first $300 of savings stays untouched",
+    "suggest selling VOO when savings can cover it (a short-term gain would add a tax cost)",
+    "suggest the credit card, a cash advance or any loan",
+    "count the Nov 27 paycheck as money she already has",
+    "tell her to let the fee go late, or call it cheaper to pay the $25",
+    "send the push on Sunday at 8 PM, during her weekly call with her family"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "A transfer between her own savings and checking at the same credit union is instant and free.",
+    "Savings pays 4.00% a year; $85 is about $0.28 a month. VOO sales gain at average cost: 85 x 140 / 540 is about $22.04 of gain, taxed as a short-term gain.",
+    "The bursar fee posts the day it is due, Nov 24. The fee is a bursar draft, not a bill she can reschedule without the $25 late fee.",
+    "Dev checks the Dec 1 rent share ($775.10) once the Nov 27 paycheck lands; it is not counted now.",
+    "The $40.00 available includes four small pending charges ($18.98 in all) from Nov 20. The Nov 23 iCloud charge goes on her card, not checking.",
+    "Not tax advice: Dev states holding period and gain size only."
+  ],
+  "tags": [
+    "student",
+    "community college",
+    "roommates",
+    "part-time job",
+    "nursing",
+    "afford",
+    "savings",
+    "short-term gain",
+    "emergency fund respected",
+    "money rule 14",
+    "facts not advice",
+    "moodle",
+    "afternoon studier",
+    "steady",
+    "notification",
+    "hybrid",
+    "selling would be wrong"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "send the push on Sunday at 8 PM, during her weekly call with her family",
+        "routine": "call-family",
+        "why_wrong": "she calls her family every Sunday from 8 to 8:45 PM",
+        "facts": [
+          "m-02"
+        ]
+      }
+    ]
+  }
+}

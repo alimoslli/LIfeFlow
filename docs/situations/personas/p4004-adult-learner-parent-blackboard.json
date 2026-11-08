@@ -1,0 +1,1157 @@
+{
+  "id": "p4004-adult-learner-parent-blackboard",
+  "summary": "Part-time adult learner and single parent, 3 classes (10 credits), nearly full-time barista job, own place, night owl studier, steady, Blackboard",
+  "kinds": [
+    "student who works",
+    "single parent"
+  ],
+  "student": {
+    "level": "adult learner",
+    "classes": 3,
+    "credits": 10,
+    "lms": "blackboard",
+    "formats": [
+      "hybrid",
+      "night",
+      "online"
+    ],
+    "work": "nearly full-time",
+    "living": "own place",
+    "flags": [
+      "student parent"
+    ],
+    "study_style": "late night",
+    "pace": "steady",
+    "aid": true,
+    "loans": false,
+    "scholarship": false,
+    "family_support": false
+  },
+  "time_zone": "America/New_York",
+  "pay": {
+    "type": "hourly",
+    "period": "biweekly"
+  },
+  "places": {
+    "home": "home",
+    "campus": "campus",
+    "work": "work",
+    "gym": "the gym",
+    "out": "town",
+    "clinical": "the clinical site",
+    "field": "the practice field"
+  },
+  "commute_minutes": {
+    "home-campus": 35,
+    "home-work": 10,
+    "campus-work": 15,
+    "home-gym": 10,
+    "gym-campus": 5,
+    "home-out": 15,
+    "home-clinical": 30,
+    "campus-clinical": 25,
+    "home-field": 35,
+    "field-campus": 5,
+    "home-airport": 40
+  },
+  "commute_mode": "car",
+  "ready_minutes": 40,
+  "wind_down_minutes": 30,
+  "accounts": [
+    {
+      "id": "acc-checking",
+      "name": "Checking",
+      "official_name": "Everyday Checking",
+      "type": "depository",
+      "subtype": "checking",
+      "institution_name": "Lakeside Credit Union",
+      "mask": "4998",
+      "opening_balance_cents": 220214
+    }
+  ],
+  "income": [
+    {
+      "id": "inc-main",
+      "type": "hourly",
+      "job": "job-main",
+      "rate_cents": 1803,
+      "pay_period": "biweekly",
+      "period_anchor": "2026-08-02",
+      "days_after_period_end": 6,
+      "tax_share": 0.121,
+      "account": "acc-checking",
+      "description": "PINECREST MALL OUTFITT PAYROLL PPD ID: 1423788676",
+      "merchant_name": null
+    },
+    {
+      "id": "inc-aid",
+      "type": "student_aid",
+      "disbursements": [
+        {
+          "date": "2026-09-02",
+          "amount_cents": 175067,
+          "description": "FINANCIAL AID REFUND STUDENT ACCT"
+        }
+      ],
+      "account": "acc-checking"
+    }
+  ],
+  "bills": [
+    {
+      "id": "rent",
+      "name": "Rent",
+      "description": "RIVERSIDE APTS RENT WEB",
+      "merchant_name": null,
+      "pfc": "RENT_AND_UTILITIES_RENT",
+      "amount_cents": 115677,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill",
+      "day": 1
+    },
+    {
+      "id": "electric",
+      "name": "Electric",
+      "description": "CITY POWER AND LIGHT",
+      "merchant_name": null,
+      "pfc": "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY",
+      "amount_cents": 11253,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill",
+      "day": 13,
+      "varies_pct": 0.2
+    },
+    {
+      "id": "car-insurance",
+      "name": "Car insurance",
+      "description": "SAFEROUTE AUTO INS PREM",
+      "merchant_name": "SafeRoute Insurance",
+      "pfc": "GENERAL_SERVICES_INSURANCE",
+      "amount_cents": 15822,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill",
+      "day": 5
+    },
+    {
+      "id": "textbooks",
+      "name": "Textbooks and access codes",
+      "description": "CAMPUS BOOKSTORE {n4}",
+      "merchant_name": null,
+      "pfc": "GENERAL_MERCHANDISE_BOOKSTORES_AND_NEWSSTANDS",
+      "amount_cents": 37864,
+      "via": "card",
+      "account": "acc-checking",
+      "kind": "other",
+      "frequency": "dates",
+      "dates": [
+        "2026-08-30"
+      ],
+      "recurring": false
+    },
+    {
+      "id": "course-fee",
+      "name": "Online course access code",
+      "description": "PEARSON *ACCESS CODE",
+      "merchant_name": null,
+      "pfc": "GENERAL_MERCHANDISE_BOOKSTORES_AND_NEWSSTANDS",
+      "amount_cents": 9348,
+      "via": "card",
+      "account": "acc-checking",
+      "kind": "other",
+      "frequency": "dates",
+      "dates": [
+        "2026-09-09"
+      ],
+      "recurring": false
+    },
+    {
+      "id": "phone",
+      "name": "Phone",
+      "description": "MINT MOBILE",
+      "merchant_name": null,
+      "pfc": "RENT_AND_UTILITIES_TELEPHONE",
+      "amount_cents": 4500,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill",
+      "day": 3,
+      "email": {
+        "name": "Phone company",
+        "address": "billing-phone@example.com",
+        "subject": "Your bill is ready",
+        "days_before": 5
+      }
+    },
+    {
+      "id": "hulu",
+      "name": "Hulu",
+      "description": "HULU 877-555-0142",
+      "merchant_name": "Hulu",
+      "pfc": "ENTERTAINMENT_TV_AND_MOVIES",
+      "amount_cents": 999,
+      "via": "card",
+      "account": "acc-checking",
+      "kind": "subscription",
+      "day": 19
+    }
+  ],
+  "bank": {
+    "overdraft_fee_cents": 2500,
+    "low_balance_alert_cents": 5000,
+    "switch_to_card_below_cents": 2000
+  },
+  "spending": [
+    {
+      "id": "groceries",
+      "label": "Groceries",
+      "pfc": "FOOD_AND_DRINK_GROCERIES",
+      "per_week": 0.0,
+      "amount_cents": [
+        1320,
+        4767
+      ],
+      "merchants": [
+        {
+          "description": "ALDI 78735",
+          "merchant_name": "Aldi",
+          "weight": 2
+        },
+        {
+          "description": "KROGER #0928",
+          "merchant_name": "Kroger",
+          "weight": 2
+        },
+        {
+          "description": "TRADER JOE'S #126",
+          "merchant_name": "Trader Joe's",
+          "weight": 1
+        }
+      ],
+      "routine": "groceries",
+      "extra_per_week": 0.4,
+      "card_share": 0.4
+    },
+    {
+      "id": "campus-food",
+      "label": "Campus dining",
+      "pfc": "FOOD_AND_DRINK_RESTAURANT",
+      "per_week": 1.3,
+      "amount_cents": [
+        477,
+        1063
+      ],
+      "merchants": [
+        {
+          "description": "ARAMARK UNIV DINING 8918",
+          "merchant_name": "Aramark",
+          "weight": 2
+        },
+        {
+          "description": "SQ *CAMPUS GRILL 6391",
+          "merchant_name": "Campus Grill",
+          "weight": 2
+        }
+      ],
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ],
+      "when": "class_days",
+      "time": [
+        "11:15",
+        "14:00"
+      ],
+      "card_share": 0.2
+    },
+    {
+      "id": "eating-out",
+      "label": "Fast food and takeout",
+      "pfc": "FOOD_AND_DRINK_FAST_FOOD",
+      "per_week": 2.18,
+      "amount_cents": [
+        486,
+        1258
+      ],
+      "merchants": [
+        {
+          "description": "CHIPOTLE 2858",
+          "merchant_name": "Chipotle",
+          "weight": 2
+        },
+        {
+          "description": "MCDONALD'S F30029",
+          "merchant_name": "McDonald's",
+          "weight": 2
+        },
+        {
+          "description": "TACO BELL 014122",
+          "merchant_name": "Taco Bell",
+          "weight": 1
+        },
+        {
+          "description": "SQ *NOODLE BAR",
+          "merchant_name": null,
+          "weight": 1
+        }
+      ],
+      "time": [
+        "17:00",
+        "22:00"
+      ],
+      "card_share": 0.3
+    },
+    {
+      "id": "coffee",
+      "label": "Coffee",
+      "pfc": "FOOD_AND_DRINK_COFFEE",
+      "per_week": 4.1,
+      "amount_cents": [
+        214,
+        415
+      ],
+      "merchants": [
+        {
+          "description": "STARBUCKS STORE 28470",
+          "merchant_name": "Starbucks",
+          "weight": 2
+        },
+        {
+          "description": "SQ *CORNER CAFE",
+          "merchant_name": "Corner Cafe",
+          "weight": 2
+        },
+        {
+          "description": "DUNKIN #349659",
+          "merchant_name": "Dunkin'",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "07:00",
+        "15:00"
+      ],
+      "card_share": 0.2
+    },
+    {
+      "id": "gas",
+      "label": "Gas",
+      "pfc": "TRANSPORTATION_GAS",
+      "per_week": 0.9,
+      "amount_cents": [
+        2053,
+        3813
+      ],
+      "merchants": [
+        {
+          "description": "SHELL OIL 48938134948",
+          "merchant_name": "Shell",
+          "weight": 2
+        },
+        {
+          "description": "SPEEDWAY 04551",
+          "merchant_name": "Speedway",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "07:00",
+        "21:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "shopping",
+      "label": "Online orders",
+      "pfc": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES",
+      "per_week": 1.54,
+      "amount_cents": [
+        514,
+        3145
+      ],
+      "merchants": [
+        {
+          "description": "AMZN Mktp US*{A6}",
+          "merchant_name": "Amazon",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "09:00",
+        "23:30"
+      ],
+      "card_share": 0.6,
+      "refund_chance": 0.05,
+      "receipt_email": "orders-marketplace@example.com",
+      "month_scale": {
+        "11": 1.3,
+        "12": 1.6
+      }
+    },
+    {
+      "id": "target",
+      "label": "Target run",
+      "pfc": "GENERAL_MERCHANDISE_SUPERSTORES",
+      "per_week": 0.64,
+      "amount_cents": [
+        858,
+        3431
+      ],
+      "merchants": [
+        {
+          "description": "TARGET 00000571",
+          "merchant_name": "Target",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "20:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "entertainment",
+      "label": "Movies and going out",
+      "pfc": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS",
+      "per_week": 0.3,
+      "amount_cents": [
+        880,
+        2567
+      ],
+      "merchants": [
+        {
+          "description": "AMC 2290 ONLINE",
+          "merchant_name": "AMC Theatres",
+          "weight": 1
+        },
+        {
+          "description": "EVENTBRITE *TICKETS",
+          "merchant_name": "Eventbrite",
+          "weight": 1
+        }
+      ],
+      "days": [
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "time": [
+        "15:00",
+        "22:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "venmo",
+      "label": "Splitting with friends",
+      "pfc": "TRANSFER_OUT_ACCOUNT_TRANSFER",
+      "per_week": 0.51,
+      "amount_cents": [
+        343,
+        1716
+      ],
+      "merchants": [
+        {
+          "description": "VENMO PAYMENT {n10}",
+          "merchant_name": "Venmo",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "11:00",
+        "23:30"
+      ]
+    },
+    {
+      "id": "gifts",
+      "label": "Gifts",
+      "pfc": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES",
+      "per_week": 0.1,
+      "amount_cents": [
+        1100,
+        3300
+      ],
+      "merchants": [
+        {
+          "description": "SQ *GIFT SHOP",
+          "merchant_name": null,
+          "weight": 1
+        }
+      ],
+      "time": [
+        "11:00",
+        "20:00"
+      ],
+      "card_share": 0.5,
+      "month_scale": {
+        "12": 3
+      }
+    },
+    {
+      "id": "pharmacy",
+      "label": "Pharmacy",
+      "pfc": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS",
+      "per_week": 0.15,
+      "amount_cents": [
+        440,
+        2053
+      ],
+      "merchants": [
+        {
+          "description": "CVS/PHARMACY #05458",
+          "merchant_name": "CVS",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "20:00"
+      ],
+      "discretionary": false
+    },
+    {
+      "id": "personal-care",
+      "label": "Haircuts and care",
+      "pfc": "PERSONAL_CARE_HAIR_AND_BEAUTY",
+      "per_week": 0.1,
+      "amount_cents": [
+        1100,
+        3300
+      ],
+      "merchants": [
+        {
+          "description": "GREAT CLIPS #2544",
+          "merchant_name": "Great Clips",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "18:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "convenience",
+      "label": "Snacks and convenience store",
+      "pfc": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK",
+      "per_week": 1.28,
+      "amount_cents": [
+        150,
+        686
+      ],
+      "merchants": [
+        {
+          "description": "7-ELEVEN 22163",
+          "merchant_name": "7-Eleven",
+          "weight": 2
+        },
+        {
+          "description": "CAMPUS C-STORE 1370",
+          "merchant_name": null,
+          "weight": 2
+        }
+      ],
+      "time": [
+        "10:00",
+        "23:30"
+      ],
+      "card_share": 0.1
+    },
+    {
+      "id": "app-store",
+      "label": "Apps and in-app purchases",
+      "pfc": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE",
+      "per_week": 0.64,
+      "amount_cents": [
+        150,
+        857
+      ],
+      "merchants": [
+        {
+          "description": "APPLE.COM/BILL",
+          "merchant_name": "Apple",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "12:00",
+        "23:59"
+      ],
+      "card_share": 0.5
+    }
+  ],
+  "school": {
+    "institution": "Eastfield Community College evening program",
+    "lms": "blackboard",
+    "term": {
+      "name": "Fall 2026",
+      "start": "2026-08-24",
+      "end": "2026-12-18",
+      "breaks": [
+        {
+          "start": "2026-11-25",
+          "end": "2026-11-29",
+          "label": "Thanksgiving break"
+        },
+        {
+          "start": "2026-12-14",
+          "end": "2026-12-18",
+          "label": "Finals week, no regular classes"
+        }
+      ],
+      "no_class_days": [
+        {
+          "date": "2026-09-07",
+          "label": "Labor Day"
+        }
+      ]
+    },
+    "courses": [
+      {
+        "code": "NURS 157",
+        "name": "Nursing Fundamentals",
+        "format": "hybrid",
+        "credits": 4,
+        "instructor": "Prof. Nakamura",
+        "grade_pct": [
+          85,
+          88
+        ],
+        "meetings": [
+          {
+            "days": [
+              "Tue"
+            ],
+            "start": "11:00",
+            "end": "12:15",
+            "location": "Main Hall 135"
+          },
+          {
+            "days": [
+              "Thu"
+            ],
+            "start": "06:30",
+            "end": "15:00",
+            "location": "Clinical site",
+            "place": "clinical",
+            "label": "clinical"
+          }
+        ],
+        "announcements_per_month": 3,
+        "instructor_email": "nakamura-nurs@example.com",
+        "assignments": [
+          {
+            "title": "Discussion post {n}",
+            "kind": "discussion",
+            "weekday": "Wed",
+            "due": "23:59",
+            "points": 5,
+            "start": "2026-08-27",
+            "end": "2026-12-11"
+          },
+          {
+            "title": "Clinical log {n}",
+            "weekday": "Sun",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-08-27",
+            "end": "2026-12-11"
+          }
+        ],
+        "items": [],
+        "exams": [
+          {
+            "title": "Midterm",
+            "mode": "online",
+            "opens": "2026-10-15T08:00",
+            "closes": "2026-10-18T23:59",
+            "minutes": 90
+          },
+          {
+            "title": "Final exam",
+            "mode": "in_person",
+            "date": "2026-12-14",
+            "start": "08:00",
+            "end": "10:00",
+            "location": "Exam hall"
+          }
+        ]
+      },
+      {
+        "code": "PSY 169",
+        "name": "Introduction to Psychology",
+        "format": "night",
+        "credits": 3,
+        "instructor": "Prof. Okafor",
+        "grade_pct": [
+          72,
+          86
+        ],
+        "meetings": [
+          {
+            "days": [
+              "Wed"
+            ],
+            "start": "18:00",
+            "end": "20:45",
+            "location": "Main Hall 323"
+          }
+        ],
+        "announcements_per_month": 1,
+        "instructor_email": "okafor-psy@example.com",
+        "assignments": [
+          {
+            "title": "Homework {n}",
+            "weekday": "Fri",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-08-27",
+            "end": "2026-12-11"
+          }
+        ],
+        "items": [],
+        "exams": [
+          {
+            "title": "Midterm 1",
+            "mode": "in_person",
+            "date": "2026-10-07",
+            "start": "18:00",
+            "end": "20:45"
+          },
+          {
+            "title": "Midterm 2",
+            "mode": "in_person",
+            "date": "2026-11-11",
+            "start": "18:00",
+            "end": "20:45"
+          },
+          {
+            "title": "Final exam",
+            "mode": "in_person",
+            "date": "2026-12-15",
+            "start": "13:00",
+            "end": "15:00",
+            "location": "Exam hall"
+          }
+        ]
+      },
+      {
+        "code": "BUS 201",
+        "name": "Introduction to Business",
+        "format": "online",
+        "credits": 3,
+        "instructor": "Prof. Varga",
+        "grade_pct": [
+          76,
+          96
+        ],
+        "meetings": [],
+        "announcements_per_month": 2,
+        "instructor_email": "varga-bus@example.com",
+        "assignments": [
+          {
+            "title": "Discussion post {n}",
+            "kind": "discussion",
+            "weekday": "Thu",
+            "due": "23:59",
+            "points": 5,
+            "start": "2026-08-27",
+            "end": "2026-12-11"
+          },
+          {
+            "title": "Quiz {n}",
+            "kind": "quiz",
+            "weekday": "Fri",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-09-03",
+            "end": "2026-12-11",
+            "every_weeks": 1
+          }
+        ],
+        "items": [
+          {
+            "title": "Group project proposal",
+            "kind": "project",
+            "due": "2026-09-24T23:59",
+            "points": 50
+          },
+          {
+            "title": "Group project draft",
+            "kind": "project",
+            "due": "2026-10-29T23:59",
+            "points": 50
+          },
+          {
+            "title": "Group project final",
+            "kind": "project",
+            "due": "2026-12-03T23:59",
+            "points": 150
+          }
+        ],
+        "exams": [
+          {
+            "title": "Midterm",
+            "mode": "online",
+            "opens": "2026-10-15T08:00",
+            "closes": "2026-10-18T23:59",
+            "minutes": 75
+          }
+        ]
+      }
+    ]
+  },
+  "work": {
+    "jobs": [
+      {
+        "id": "job-main",
+        "employer": "Pinecrest Mall Outfitters",
+        "position": "Barista",
+        "place": "work",
+        "timeline_label": "Shift, Pinecrest Mall Outfitters",
+        "source": "schedule",
+        "overtime_threshold_hours": 40,
+        "overtime_multiplier": 1.5,
+        "workweek_starts": "Sun",
+        "ready_minutes": 30,
+        "pattern": {
+          "type": "weekly",
+          "slots": [
+            {
+              "days": [
+                "Sat"
+              ],
+              "start": "08:00",
+              "end": "16:00",
+              "chance": 0.95,
+              "break_minutes": 30
+            },
+            {
+              "days": [
+                "Mon"
+              ],
+              "start": "06:00",
+              "end": "14:00",
+              "chance": 0.95,
+              "break_minutes": 30
+            },
+            {
+              "days": [
+                "Tue"
+              ],
+              "start": "14:00",
+              "end": "22:00",
+              "chance": 0.95,
+              "break_minutes": 30
+            },
+            {
+              "days": [
+                "Wed"
+              ],
+              "start": "08:00",
+              "end": "16:00",
+              "chance": 0.95,
+              "break_minutes": 30
+            }
+          ]
+        },
+        "closed_on": [],
+        "posting": {
+          "block_days": 7,
+          "anchor": "2026-08-02",
+          "posted_days_ahead": 14,
+          "time": "15:00",
+          "jitter_days": [
+            0,
+            0,
+            1
+          ]
+        },
+        "cancel_rate": 0.02,
+        "sick_rate": 0.01,
+        "sent_home_rate": 0.03,
+        "stay_late_rate": 0.1
+      }
+    ]
+  },
+  "health": {
+    "goals": {
+      "workouts_per_week": 3,
+      "sleep_hours": 8
+    },
+    "steps": {
+      "work": [
+        8000,
+        13000
+      ],
+      "class": [
+        6000,
+        10000
+      ],
+      "free": [
+        2500,
+        7000
+      ]
+    },
+    "resting_heart_rate": 61,
+    "nutrition": {
+      "enabled": false,
+      "log_rate": 0.5,
+      "base_kcal": 1900,
+      "sd_kcal": 220,
+      "goal_kcal": 2000
+    }
+  },
+  "routines": [
+    {
+      "id": "sleep",
+      "activity": "sleep",
+      "label": "Sleep",
+      "records_as": "health_sleep",
+      "variance_minutes": 34,
+      "late_night_rate": 0.09,
+      "early_before": "10:30",
+      "windows": [
+        {
+          "id": "before-early-day",
+          "day_type": "early_next_day",
+          "start": "01:15",
+          "end": "08:00",
+          "firmness": "usual"
+        },
+        {
+          "id": "before-free-day",
+          "day_type": "free_next_day",
+          "start": "02:30",
+          "end": "10:30",
+          "firmness": "loose"
+        }
+      ]
+    },
+    {
+      "id": "study",
+      "activity": "study",
+      "label": "Study",
+      "where": "home",
+      "records_as": "none",
+      "per_week": 3.6,
+      "keep_rate": 0.79,
+      "duration_minutes": [
+        50,
+        110
+      ],
+      "ready_minutes": 20,
+      "windows": [
+        {
+          "id": "late-night-1",
+          "days": [
+            "Sun",
+            "Mon",
+            "Wed",
+            "Thu"
+          ],
+          "start": "21:30",
+          "end": "23:59",
+          "firmness": "firm"
+        }
+      ],
+      "source_memory": "m-01",
+      "exceptions": [
+        {
+          "type": "after_closing_shift",
+          "label": "Skips studying the morning after a closing shift"
+        }
+      ]
+    },
+    {
+      "id": "gym",
+      "activity": "workout",
+      "label": "Workout",
+      "where": "gym",
+      "records_as": "health_workout",
+      "keep_rate": 0.85,
+      "duration_minutes": [
+        45,
+        60
+      ],
+      "ready_minutes": 15,
+      "windows": [
+        {
+          "id": "usual",
+          "days": [
+            "Mon",
+            "Thu"
+          ],
+          "start": "18:00",
+          "end": "19:15",
+          "firmness": "usual"
+        }
+      ],
+      "workout_types": {
+        "Traditional Strength Training": 2,
+        "Running": 1,
+        "Elliptical": 1
+      },
+      "source_memory": "m-02"
+    },
+    {
+      "id": "groceries",
+      "activity": "groceries",
+      "label": "Weekly grocery run",
+      "where": "out",
+      "records_as": "bank",
+      "keep_rate": 0.79,
+      "duration_minutes": [
+        35,
+        70
+      ],
+      "timeline": "none",
+      "windows": [
+        {
+          "id": "usual",
+          "days": [
+            "Sun"
+          ],
+          "start": "10:30",
+          "end": "12:00",
+          "firmness": "usual"
+        }
+      ]
+    }
+  ],
+  "real_life": {
+    "events": [
+      {
+        "id": "ev-group-bus-3",
+        "title": "Group project meeting, BUS 201",
+        "start": "2026-09-15T16:00",
+        "end": "2026-09-15T17:15",
+        "state": "with people",
+        "place": "campus",
+        "source": "google",
+        "created_days_before": 6
+      },
+      {
+        "id": "ev-group-bus-8",
+        "title": "Group project meeting, BUS 201",
+        "start": "2026-10-22T16:00",
+        "end": "2026-10-22T17:15",
+        "state": "with people",
+        "place": "campus",
+        "source": "google",
+        "created_days_before": 6
+      },
+      {
+        "id": "ev-group-bus-13",
+        "title": "Group project meeting, BUS 201",
+        "start": "2026-11-24T19:00",
+        "end": "2026-11-24T20:15",
+        "state": "with people",
+        "place": "campus",
+        "source": "google",
+        "created_days_before": 6
+      }
+    ],
+    "nights_out": null,
+    "trips": []
+  },
+  "email": {
+    "address": "tariq.3004@example.com",
+    "per_day": {
+      "promotions": 3.0,
+      "newsletters": 0.5,
+      "social": 0.7,
+      "personal": 0.15,
+      "security": 0.05,
+      "school_other": 0.4,
+      "kid_school": 0.3
+    },
+    "weekend_scale": 0.8
+  },
+  "memories": [
+    {
+      "id": "m-01",
+      "content": "I'm a night owl. I study late, after 9:30",
+      "category": "preference",
+      "via": "chat",
+      "told_at": "2026-07-31T20:07"
+    },
+    {
+      "id": "m-02",
+      "content": "I work out Mon and Thu around 6 PM",
+      "category": "routine",
+      "via": "chat",
+      "told_at": "2026-07-31T21:14"
+    },
+    {
+      "id": "m-03",
+      "content": "Home is about 35 minutes from campus",
+      "category": "fact",
+      "via": "get-to-know answer",
+      "told_at": "2026-07-31T22:21"
+    },
+    {
+      "id": "m-mom",
+      "content": "My mom keeps Jonah Wednesday evenings while I'm in my night class. She works the evening shift at the hospital on Thursdays and can't help then",
+      "category": "routine",
+      "via": "chat",
+      "told_at": "2026-09-05T20:10"
+    },
+    {
+      "id": "m-nosit",
+      "content": "I don't have a sitter for Thursday evenings. My sister Tasha is my backup, she's free most Thursdays",
+      "category": "fact",
+      "via": "chat",
+      "told_at": "2026-09-19T21:30"
+    }
+  ],
+  "generated": {
+    "by": "personas.py",
+    "seed": 3004,
+    "term": "Fall 2026"
+  },
+  "dependents": [
+    {
+      "id": "jonah",
+      "name": "Jonah",
+      "grade": "fourth grade",
+      "school": {
+        "days": [
+          "Mon",
+          "Tue",
+          "Wed",
+          "Thu",
+          "Fri"
+        ],
+        "start": "08:30",
+        "end": "15:15",
+        "no_school": [
+          {
+            "date": "2026-11-11",
+            "label": "No school: Veterans Day"
+          },
+          {
+            "from": "2026-11-25",
+            "to": "2026-11-27",
+            "label": "No school: Thanksgiving break"
+          },
+          {
+            "from": "2026-12-21",
+            "to": "2027-01-01",
+            "label": "No school: winter break"
+          }
+        ],
+        "calendar_source": "google",
+        "calendar_name": "Maplewood Schools calendar",
+        "calendar_added": "2026-08-20"
+      }
+    }
+  ]
+}

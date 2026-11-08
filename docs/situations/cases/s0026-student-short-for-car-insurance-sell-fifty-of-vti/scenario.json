@@ -1,0 +1,131 @@
+{
+  "id": "s0026-student-short-for-car-insurance-sell-fifty-of-vti",
+  "title": "$31 in checking, a $48 car insurance debit on Nov 23 and payday after it: her savings is her emergency fund, so Dev lays out selling $50 of a VTI position that is up $212",
+  "persona": "p4006-cc-family-grocer-car-insurance",
+  "now": "2026-11-17T18:00",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 2601,
+  "money": {
+    "available_now_cents": 3100,
+    "savings_cents": 24000
+  },
+  "changes": [
+    {
+      "id": "c-tires",
+      "type": "purchase",
+      "at": "2026-11-14T11:20",
+      "account": "acc-checking",
+      "description": "DISCOUNT TIRE #{n4}",
+      "merchant_name": "Discount Tire",
+      "amount_cents": -14200,
+      "pfc": "TRANSPORTATION_OTHER_TRANSPORTATION"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-short",
+      "check": "afford",
+      "what": "Checking is $31.00 available after the $142.00 Discount Tire charge on Nov 14. The $48.00 SafeRoute car insurance (due Sat Nov 21, it posts Mon Nov 23) would leave her $17.00 below zero, and her next paycheck comes Nov 27, after it. Moving the date costs a $10 late fee she told Dev about. Her $240.00 savings is the emergency fund she said is only for real emergencies, and the brokerage account holds $0.00 in cash. Her VTI position is worth $812.40 against $600.40 paid, up $212.00, bought Mar 14, 2025 (held over a year).",
+      "by_when": "2026-11-18T09:00",
+      "facts": [
+        "c-tires",
+        "acc-checking",
+        "rec-car-insurance",
+        "k-late",
+        "m-ef",
+        "acc-savings",
+        "acc-brokerage",
+        "h-vti"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-short",
+      "action": "plan",
+      "needs_user": true,
+      "send_at": "2026-11-17T18:05",
+      "what": "One push tonight before dinner: \"Checking is $31.00 and the $48.00 car insurance comes out Monday Nov 23, before your Nov 27 paycheck. Moving the date costs a $10 late fee, your savings is your emergency fund, and the brokerage has no cash. Your VTI is up $212.00 since you bought it. Selling $50 of it covers the insurance and leaves $33.00 in checking until payday. About $13 of that $50 is gain, held over a year, so it counts as long-term.\" Buttons: [Show me the steps] [Not now]. The steps are numbered: open the brokerage, sell $50 of VTI before Wed Nov 18 so it settles, send the $50 to Lakeside checking, which usually takes a few business days (assumption). Dev links to the brokerage and never sells or moves anything. Dev also states what it costs her: a small taxable gain, and that Dev can't say what the price will do. If she says not now, one reminder Thu Nov 19 morning that the transfer window is closing.",
+      "why": "It follows the owner's order. A bill move has a $10 fee, savings is her emergency fund and this isn't an emergency, the brokerage has no cash, so the last option is a small sale from an investment that is up. $50 covers the $48 debit with a $2 margin and keeps checking positive through Nov 27. Only facts: what it is worth, what she paid, how long she held it. No prediction, no card balance, no pay counted before it lands."
+    }
+  ],
+  "must_not": [
+    "predict the market or say VTI will rise, fall or is a good time to sell",
+    "move money for her, place a sale or start the transfer: Dev lays out the steps and she does them",
+    "touch the emergency fund for a non-emergency: the $240.00 savings stays out",
+    "suggest the credit card, a cash advance or any loan to cover the $17.00",
+    "count the Nov 27 paycheck as money she already has",
+    "say selling is the right choice or give tax advice beyond the facts of how long she held it and the size of the gain",
+    "suggest selling more than the $50 shown, or the whole position",
+    "send the push during family dinner, Mon to Fri 6:30 to 7:45 PM"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Payday is every other Friday; the Nov 27 paycheck is not counted. Hourly pay is not predicted.",
+    "A VTI sale settles the next business day and a transfer to checking takes 1 to 3 more business days, so selling by Wed Nov 18 lands before the Nov 23 debit.",
+    "The brokerage holds only the VTI position and no uninvested cash. The sale amount is an even $50 for simplicity. About $13.05 of $50 is gain at her average cost.",
+    "The ACH insurance debit authorizes Sat Nov 21 and posts Mon Nov 23.",
+    "The $31.00 available includes a $6.02 App Store charge still pending (tx-2026-11-16-app-store). The tire charge was authorized Nov 14 and posted Nov 16.",
+    "Not legal or tax advice: Dev shows holding period and gain and says a tax may apply; a legal check on suggestions about selling securities is open (vision, section 15, item 14)."
+  ],
+  "tags": [
+    "student",
+    "community college",
+    "lives with family",
+    "commuter",
+    "part-time job",
+    "afford",
+    "brokerage gain",
+    "long-term gain",
+    "emergency fund respected",
+    "money rule 14",
+    "facts not advice",
+    "car insurance",
+    "afternoon studier",
+    "canvas",
+    "notification"
+  ],
+  "persona_overrides": {
+    "income": [
+      {
+        "id": "inc-family",
+        "amount_cents": [
+          5000,
+          12000
+        ]
+      }
+    ],
+    "spending": [
+      {
+        "id": "shopping",
+        "per_week": 2.5
+      },
+      {
+        "id": "eating-out",
+        "per_week": 2.4
+      }
+    ]
+  },
+  "known": [
+    {
+      "id": "k-late",
+      "fact": "SafeRoute adds a $10 late fee if the car insurance isn't paid by the 21st, so the date can't slide",
+      "source": "told Dev",
+      "at": "2026-09-22T19:00"
+    }
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "send the push during family dinner, Mon to Fri 6:30 to 7:45 PM",
+        "routine": "dinner-home",
+        "why_wrong": "she eats dinner with her family at home most nights between 6:30 and 7:45 PM",
+        "facts": [
+          "m-03"
+        ]
+      }
+    ]
+  }
+}

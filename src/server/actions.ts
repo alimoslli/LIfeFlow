@@ -8,6 +8,7 @@ import { withCurrentUser } from "./auth/current-user";
 import type { UserScope } from "./db/with-user";
 import { audit } from "./services/audit";
 import { ServiceError } from "./services/errors";
+import { plainValidation } from "@/lib/validation-message";
 
 /** `undo` is a trash id: the toast's Undo button restores it. */
 export type ActionState = { ok: boolean; error?: string; message?: string; undo?: string; at: number } | null;
@@ -30,8 +31,7 @@ export const formCents = (v: string | undefined) => {
 
 function messageOf(e: unknown) {
   if (e instanceof ZodError) {
-    const i = e.issues[0];
-    return `${i.path.length ? `${String(i.path.at(-1))}: ` : ""}${i.message}`;
+    return plainValidation(e.issues);
   }
   if (e instanceof ServiceError) return e.message;
   console.error("[action]", e);

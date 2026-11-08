@@ -2,11 +2,27 @@
 
 Updated by the situation writer after every batch. Run `python3 docs/situations/validate.py` for live counts.
 
-**Cases:** 25 (s0001 to s0015 batch 1, s0016 to s0020 batch 2, s0021 to s0025 batch 3, 2026-11-07) · **Stay-quiet share:** 6 of 25 (24%) · **Student share:** 15 of 25 (60%, the last two batches are 10 of 10) · **Routine-fit share:** 17 of 25 (68%) · **Targets:** 30 before Dev's brain is built, 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
+**Cases:** 30 (s0001 to s0015 batch 1, s0016 to s0020 batch 2, s0021 to s0025 batch 3, s0026 to s0030 batch 4, 2026-11-07) · **Stay-quiet share:** 7 of 30 (23%) · **Student share:** 19 of 30 (63%; batch 4 is 4 of 5, the last three batches are 14 of 15) · **Routine-fit share:** 22 of 30 (73%) · **Targets:** 30 before Dev's brain is built (reached), 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
 
 Worked examples (full cases with generated connections, not counted above): `examples/e0001-student-aunt-away-short-before-payday` (community college student who works) and `examples/e0002-night-nurse-school-closure`.
 
-Stay-quiet cases: s0010 (pay $18.40 lower after daylight saving), s0012 (cancelled tutorial, essay already handled by her morning routine), s0013 (sick day covered by paid sick leave), s0014 (food spending spike from hosting Thanksgiving).
+Stay-quiet cases: s0010 (pay $18.40 lower after daylight saving), s0012 (cancelled tutorial, essay already handled by her morning routine), s0013 (sick day covered by paid sick leave), s0014 (food spending spike from hosting Thanksgiving), s0023 (full week already handled), s0020, s0030 (retired, covered, index fund up but not needed).
+
+## Batch 4 (s0026 to s0030, 2026-11-07): the owner's short-on-money rule (vision section 15, item 14)
+
+The order Dev follows when someone is short: move a bill a few days (no fee), savings, uninvested brokerage cash, a small sale of an investment that is up. Facts only, goals and the emergency fund respected, Dev never moves money or trades.
+
+| Case | Person | Covers |
+|---|---|---|
+| s0026 | community college, with family, part-time grocery, car, afternoon steady, Canvas | $31 in checking, $48 insurance before payday: bill move has a $10 fee, savings is her emergency fund, brokerage cash is $0, so Dev lays out selling $50 of VTI (up $212, held over a year, long-term) |
+| s0027 | part-time community college nursing, roommates, part-time job, Moodle, hybrid | $85 clinical fee due Tue, $25 late fee: uses the $180 of savings above her $300 emergency fund; selling VOO would be wrong (a short-term gain, held 5 months) |
+| s0028 | university, dorm, care home job, evening crammer, Canvas, night class | $857.19 tuition installment $247.19 over checking: the school lets her move the date free through Dec 14, so Dev starts there; savings are $1,000 emergency fund and a $1,500 housing deposit goal; VTI untouched |
+| s0029 | adult learner and single parent, nearly full-time barista, Blackboard, night owl | midterm moved to Thursday 6 PM, the night her mother works and Jonah's pickup is 5:30: drafts for her sister and the instructor's make-up, study in her late window |
+| s0030 | retired, lives alone, pension, savings, VTI up $1,852 | stay quiet: a $210 dental copay is covered to the Dec 3 pension, and Dev must not pitch selling a gain she doesn't need |
+
+**Holdings in the simulator (new):** personas can carry an `investment` account (balance is its uninvested cash) and `holdings` with `value_cents`, `cost_basis_cents`, `acquired_on` (see `persona.schema.md`); they appear in `bank.json` as `holdings`. Values are frozen at `now` (no price history, no lots, no tax calculation). Gaps: no brokerage transactions (a sale or deposit leaves no row), no short-term versus long-term flag beyond `acquired_on`, and no cash holding.
+
+New kinds: student parent and Blackboard (s0029), first retired case (s0030), first money cases with savings, a brokerage and goals (s0026 to s0028). Gaps still open: athlete (s0018 only), gig work, a student with a brokerage cash balance (option 3 of the rule has no case), a bill that can't move and no savings (so a sale is the only way), a refund, a first-hand follow-up a week later.
 
 ## Batch 3 (s0021 to s0025, 2026-11-07): all students
 

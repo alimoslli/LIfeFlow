@@ -20,7 +20,7 @@ Conventions: times are local `HH:MM` in the persona's time zone, dates `YYYY-MM-
 | `commute_minutes` | `{"home-campus": 10, "campus-work": 15}`; either order works; unknown pairs take `default_commute_minutes` (20). `commute_mode`: car, transit, walk or bike. |
 | `ready_minutes`, `wind_down_minutes` | Time from waking to leaving, and from getting home to sleep. Sleep is fitted around both. |
 | `accounts` | See Money. |
-| `income`, `bills`, `savings_plan`, `bank`, `spending` | See Money. |
+| `income`, `bills`, `savings_plan`, `bank`, `spending`, `holdings` | See Money. |
 | `school` | See School. |
 | `work` | See Work. |
 | `dependents` | Children and their school calendars (see Real life). |
@@ -32,7 +32,9 @@ Conventions: times are local `HH:MM` in the persona's time zone, dates `YYYY-MM-
 
 ## Money
 
-**accounts**: `{ id, name, official_name, type: depository | credit, subtype: checking | savings | credit card, institution_name, mask (4 digits), opening_balance_cents }`. The opening balance is at the window's first day; `scenario.money` can pin the balance at `now` instead, and the simulator then solves the opening. Savings: `apy_bps` and `interest_description` for monthly interest. Credit cards: `credit_limit_cents`, `opening_balance_cents` is what's owed, `last_statement_cents`, `statement_day`, `due_days` (25), `apr_bps`, `autopay` (statement, minimum or fixed), `autopay_from`, `payment_description`, `payment_received`.
+**accounts**: `{ id, name, official_name, type: depository | credit | investment, subtype: checking | savings | credit card | brokerage, institution_name, mask (4 digits), opening_balance_cents }`. The opening balance is at the window's first day; `scenario.money` can pin the balance at `now` instead, and the simulator then solves the opening. Savings: `apy_bps` and `interest_description` for monthly interest. Credit cards: `credit_limit_cents`, `opening_balance_cents` is what's owed, `last_statement_cents`, `statement_day`, `due_days` (25), `apr_bps`, `autopay` (statement, minimum or fixed), `autopay_from`, `payment_description`, `payment_received`.
+
+**holdings** (optional, frozen at `now`): `{ id, account, symbol, name, security_type (etf, equity, mutual_fund...), quantity (string), value_cents, cost_basis_cents, expense_ratio_bps, acquired_on }`. `account` must be a persona account with `type: investment` (subtype `brokerage`); that account's balance is its uninvested cash (`opening_balance_cents`, 0 for none). Holdings go into `bank.json` under `holdings` with the app's `holdings` fields (`value_cents`, `cost_basis_cents`) plus `acquired_on` so a case can tell a short-term gain from a long-term one. Gain is value minus cost basis. A scenario can change a holding with `persona_overrides.holdings` (merged by `id`). Values do not move with time; the persona states them at `now`.
 
 **income** (each has `id`, `type`, `account`, `description` as the bank shows it, optional `merchant_name` and Plaid `pfc`):
 

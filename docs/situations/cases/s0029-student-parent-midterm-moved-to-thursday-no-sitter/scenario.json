@@ -1,0 +1,189 @@
+{
+  "id": "s0029-student-parent-midterm-moved-to-thursday-no-sitter",
+  "title": "Her psychology midterm moves from a free Wednesday to Thursday 6 PM, the night her mother works and Jonah's after-school care ends at 5:30: Dev drafts the ask to her sister and keeps the make-up as a backup",
+  "persona": "p4004-adult-learner-parent-blackboard",
+  "now": "2026-11-04T12:00",
+  "history_days": 90,
+  "future_days": 60,
+  "seed": 2901,
+  "known": [
+    {
+      "id": "k-after",
+      "fact": "Jonah is in after-school care until 5:30 on school days and I pick him up",
+      "source": "told Dev",
+      "at": "2026-09-05T20:20"
+    }
+  ],
+  "changes": [
+    {
+      "id": "c-midterm",
+      "type": "exam_move",
+      "course": "PSY 169",
+      "exam": "Midterm 2",
+      "date": "2026-11-12",
+      "start": "18:00",
+      "end": "20:45",
+      "announced_at": "2026-11-04T11:30",
+      "title": "Midterm 2 moved to Thursday Nov 12",
+      "announcement": "Wednesday Nov 11 is Veterans Day, so there is no class that night, and Midterm 2 moves to Thursday Nov 12, 6:00 to 8:45 PM, same room. If Thursday evening is impossible for you, email me by Friday Nov 6 and I will give you the Friday Nov 13 make-up, 10:00 AM to 12:45 PM."
+    },
+    {
+      "id": "c-vday",
+      "type": "class_cancel",
+      "course": "PSY 169",
+      "date": "2026-11-11",
+      "announced_at": "2026-11-04T11:30",
+      "title": "No class Wednesday Nov 11 (Veterans Day)"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-thu",
+      "check": "collision",
+      "what": "At 11:30 today the PSY 169 instructor moved Midterm 2 from the Wednesday Nov 11 class night to Thursday Nov 12, 6:00 to 8:45 PM (Wednesday is Veterans Day, no class). Thursday is her clinical day, 6:30 AM to 3:00 PM, she leaves home at 5:25 PM for campus, and Jonah's after-school care ends at 5:30 with her as the pickup. Her mother keeps Jonah on Wednesdays and works the Thursday evening shift, and she has no sitter on Thursdays. Her sister Tasha is the backup and is free most Thursdays. The announcement also offers a Friday Nov 13 make-up, 10:00 AM to 12:45 PM, if the instructor is emailed by Friday Nov 6.",
+      "by_when": "2026-11-05T12:00",
+      "facts": [
+        "c-midterm.announcement",
+        "exam-psy-169-midterm-2",
+        "c-vday",
+        "k-after",
+        "m-mom",
+        "m-nosit"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-thu",
+      "action": "draft for them",
+      "needs_user": true,
+      "send_at": "2026-11-04T16:30",
+      "what": "One push after her shift: \"Midterm 2 moved to Thursday Nov 12, 6 to 8:45 PM, and Jonah's pickup is at 5:30 that day. Tasha is free most Thursdays. Want me to draft the ask?\" Draft for Tasha, for her to send: \"Hi Tasha, my psychology midterm moved to Thursday Nov 12, 6 to 8:45. Could you pick Jonah up from after-school at 5:30 and stay with him until I'm home around 9:30? I'll have dinner for you.\" If Tasha hasn't answered by Friday Nov 6 morning, Dev reminds her once and shows the second draft below. Dev sends nothing.",
+      "why": "Tasha is the backup she already named, and asking two days ahead leaves time for a plan B. Staying in the regular slot keeps her midterm where the whole class takes it."
+    },
+    {
+      "for": "n-thu",
+      "action": "draft for them",
+      "needs_user": true,
+      "send_at": "2026-11-06T08:30",
+      "what": "Backup, Friday Nov 6 morning, only if Tasha can't: a draft email to the instructor, for her to send before the deadline that day: \"Hello Professor, I can't be at Thursday's 6 PM midterm because I have no childcare that evening. May I take the Friday Nov 13 make-up, 10 to 12:45?\" Friday Nov 13 is a day off for her with Jonah at school.",
+      "why": "The instructor named this option and set a Friday Nov 6 email deadline, so Dev needs the answer from Tasha before it, while the choice stays hers."
+    },
+    {
+      "for": "n-thu",
+      "action": "plan",
+      "needs_user": true,
+      "what": "Study planning, not graded work: two late-night review sessions in her usual window, Mon Nov 9 and Wed Nov 11 (the class night that was cancelled), 9:30 to 11:30 PM.",
+      "why": "She studies late and steady, and these are the two evenings before the exam with the usual window open.",
+      "placements": [
+        {
+          "id": "pl-study-mon",
+          "activity": "study",
+          "label": "Review for Midterm 2",
+          "start": "2026-11-09T21:30",
+          "end": "2026-11-09T23:30"
+        },
+        {
+          "id": "pl-study-wed",
+          "activity": "study",
+          "label": "Review for Midterm 2",
+          "start": "2026-11-11T21:30",
+          "end": "2026-11-11T23:30"
+        }
+      ]
+    }
+  ],
+  "must_not": [
+    "send anything to Tasha or the instructor for her",
+    "suggest she skip the midterm, or ask the instructor for a different grade",
+    "assume her mother can change her Thursday shift",
+    "write, solve or check any midterm answers (study planning only)",
+    "put the review sessions in daytime hours (she studies after 9:30 PM)",
+    "suggest the 6 PM Thursday gym session that day",
+    "tell her to pay for a sitter without asking whether Tasha can first"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Jonah's after-school program is until 5:30 on school days; the pickup is hers (told Dev).",
+    "Tasha is free most Thursdays (told Dev); her answer is not known yet.",
+    "The make-up exam is offered by email before Fri Nov 6, as the announcement says. The drafts are text, not graded work.",
+    "Nov 11 is Veterans Day: no class, no school for Jonah (on the calendar).",
+    "Her Wednesday shift ends at 4 PM and class is at 6, so the push comes at 4:30, between them."
+  ],
+  "tags": [
+    "student",
+    "student parent",
+    "adult learner",
+    "single parent",
+    "night owl",
+    "blackboard",
+    "hybrid",
+    "night classes",
+    "nearly full-time job",
+    "collision",
+    "late fact",
+    "moved exam",
+    "childcare",
+    "draft for them",
+    "own place",
+    "routine fit"
+  ],
+  "routine_fit": {
+    "placements": [
+      {
+        "placement": "pl-study-mon",
+        "routine": "study",
+        "window": "late-night-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-study-wed",
+        "routine": "study",
+        "window": "late-night-1",
+        "fits": true
+      }
+    ],
+    "tempting": [
+      {
+        "suggestion": "put the review sessions in daytime hours (she studies after 9:30 PM)",
+        "routine": "study",
+        "why_wrong": "she's a night owl who studies late, after 9:30",
+        "facts": [
+          "m-01"
+        ]
+      },
+      {
+        "suggestion": "suggest the 6 PM Thursday gym session that day",
+        "routine": "gym",
+        "why_wrong": "the midterm starts at 6 PM Thursday, and she's in class, then home at 9:30",
+        "facts": [
+          "m-02"
+        ]
+      }
+    ]
+  },
+  "persona_overrides": {
+    "spending": [
+      {
+        "id": "eating-out",
+        "per_week": 4.5
+      },
+      {
+        "id": "convenience",
+        "per_week": 5.5
+      },
+      {
+        "id": "coffee",
+        "per_week": 6
+      },
+      {
+        "id": "target",
+        "per_week": 1.6
+      },
+      {
+        "id": "shopping",
+        "per_week": 2.5
+      }
+    ]
+  }
+}
