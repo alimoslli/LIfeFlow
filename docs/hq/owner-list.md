@@ -19,7 +19,6 @@ How to start a desk task: HQ Office → the task → "Start it" (one tap). The C
 
 | What | Status |
 |---|---|
-| "Post it" for the birthday film v4 (first post) | Waiting |
 | School Project premiere date (proposed Nov 29) | Waiting |
 | Second language for the dubbed version | Waiting |
 | Cinema route (about 31 Higgsfield credits) or couch-and-TV route | Waiting |
