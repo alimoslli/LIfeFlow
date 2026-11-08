@@ -187,6 +187,7 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
 
 - Owner wants short replies and quick recaps, especially during work hours.
 - 2026-11-08 (owner): cut Higgsfield costs. Credits go only to raw AI footage, never to music, voices or finished edits.
+- 2026-11-08 (owner): the standard male voiceover is "Sterling" (Higgsfield text2speech_v2, ElevenLabs variant, preset voice_id dc382508-c8bd-443c-8cb2-46e57b8d2e6f, stability 0.35, similarity 0.8), in a calm, inspiring read. Owner: "we will keep using that for male voice overs". The female text-to-speech voices sounded like an audiobook and are out. Voiceover is the one exception to "no generated voices": generate only final, approved script lines with this voice (about 0.3 credits a line), never auditions of other voices without the owner asking.
   - **No generated music or voice.** The owner adds the music himself; videos are delivered silent (with sound effects only if made locally for free) plus a note of where the beats should land.
   - **Stills first, then motion.** Every shot starts as a still (about 0.25 credits). Only stills that pass the quality check get animated (Kling 3.0 pro 5 s, 7.5 credits; never Seedance, never 15 s takes, never sound on).
   - **One take per shot.** No test shots, no samples, no "maybe" renders. A shot that fails the check is fixed as a still before it is animated again.
