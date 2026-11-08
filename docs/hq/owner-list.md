@@ -23,4 +23,4 @@ How to start a desk task: HQ Office → the task → "Start it" (one tap). The C
 | Second language for the dubbed version | Decided: Arabic |
 | Cinema route (about 31 Higgsfield credits) | Not yet: the cinema is the hook, perfected last; raw footage first |
 | Test-drive voiceover redone in Sterling (about 3 credits) | Yes |
-| Waiting-list page | On lifeflowweb.com, later (still early) |
+| Waiting-list page | On lifeflowweb.com, later (still early). Rule (owner): the more friends you invite who join, the higher your rank in line. Reuse the app's invite links |
