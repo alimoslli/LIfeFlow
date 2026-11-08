@@ -364,7 +364,15 @@ Runner-up ideas kept for later: "The overdraft that didn't happen" (one money st
 
 ## 4b. Ideas bank (saved for later)
 
-### Hero film: "The School Project" (owner's idea, 2026-11-08, not started)
+### Hero film: "The School Project" (owner's idea, 2026-11-08; in planning, premiere target Nov 22)
+
+**The living plan is the Claude Doc https://claude.ai/artifact/J4Qmes1s6mVYjLgxy3xBiY** (goal, story, shot list, locations and cast,
+look and sound, the dubbed version, launch and waiting list, two-week schedule, checklist, open questions, ideas log). Updates
+from the owner (2026-11-08): it is an ad for both Ali and LifeFlow; in the cinema the crowd is confused, a guy says "Bro... wtf is
+this?" and laughs, and only Ali smiles ("Mhm"); show off the headquarters and, briefly, the AI workflow; two versions: as filmed,
+then dubbed into a second language with ElevenLabs in everyone's own voice (one mic per speaker, clean stems, consent).
+A scheduled task (`trig_01PNeH8oKywJ3PBwGew2RdPf`, every other day at 19:23 UTC) researches new ideas into the doc's log
+until the premiere; turn it off once the film is posted. The first outline is kept below.
 
 One cinematic film, posted once, made to look like it belongs in a cinema. Goal: a launch moment for the LifeFlow shift, with a
 waiting list behind it (owner's target: 10,000 sign-ups on day one). The owner and the LifeFlow team are on camera, with their
