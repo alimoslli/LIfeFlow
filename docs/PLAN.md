@@ -222,6 +222,9 @@ Full check and phone e2e passed on 2026-11-08. The artifact "LifeFlow Day Clock"
 4. Connect the Twilio number (blocks texting the assistant, phone sign-in and the after-shift message).
 5. Set up the desk task starter: a scheduled task API trigger and token, plus two Vercel variables (section 5).
 6. Connect Instagram in Metricool as a professional account with all permissions (section 8).
+7. Decide the Vercel plan: stay on Hobby (scheduled jobs once a day, so reminders and the nightly bank sync run daily) or move to Pro.
+8. Pro payments: Stripe keys for the web (go-live 9c); on iPhone, Apple in-app purchase comes with the App Store.
+9. Google verification of the app, so people outside the test list can connect Gmail.
 
 ## 11. Waiting for the owner's yes (one list; details in HQ › Work)
 - **V3:** confirm the North Star (ADR 0032), pick a timeline concept, and give the go to merge V3.
@@ -232,6 +235,7 @@ Full check and phone e2e passed on 2026-11-08. The artifact "LifeFlow Day Clock"
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-08, LF COO: section 10 is the one owner list (docs/hq/owner-list.md now points here); added the Vercel plan, payments and Gmail verification. The COO ends every report with the top 3.
 - 2026-11-08, LF Managing Agents: wrote this plan; merged 4 chats (section 1); renamed the remaining chats to one-per-department names.
 - 2026-11-07, LF Managing Agents: round on "go". 3 fixes shipped to main (plain form errors, failed saves keep input, onboarding name hint), 5 situations, an HQ audit, 2 cards for the owner. The content skills were added for Marketing (`docs/marketing/skills/`).
 - 2026-11-07 and 11-08, LF Main: Promises on main; phone sign-in, the testing-phase note and the tonight tool built and held.
