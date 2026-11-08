@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { and, eq } from "drizzle-orm";
 import { GET as cron } from "@/app/api/cron/sync/route";
 import { POST as webhook } from "@/app/api/integrations/plaid/webhook/route";
-import { closeDb, getDb } from "@/server/db/client";
+import { closeDb } from "@/server/db/client";
 import { integrations, syncJobs } from "@/server/db/schema";
 import { exchangePublicToken, markNeedsReauth, reconnectLinkToken } from "@/server/integrations/plaid";
 import { makeUser } from "../helpers";
@@ -63,6 +63,21 @@ describe("Plaid cron and item webhooks", () => {
     );
     expect(jobs).toHaveLength(0);
     expect((await row(run, item.id)).status).toBe("error");
+  });
+
+  it("a connection with a pending expiration (still working) is still synced by the cron; a real sign-in failure after it is not", async () => {
+    const { user, run, item } = await connected();
+    mocks.owner = { userId: user.id, integrationId: item.id };
+    expect((await hook("PENDING_EXPIRATION")).status).toBe(200);
+    const runCron = () => cron(new Request("https://lifeflow.test/api/cron/sync", { headers: { authorization: "Bearer cron-test-secret" } }));
+    mocks.sync.mockClear();
+    await runCron();
+    expect(mocks.sync.mock.calls.some((c) => (c as unknown[])[1] === item.id)).toBe(true);
+    expect((await row(run, item.id)).status).toBe("error"); // the app still offers Reconnect
+    expect((await hook("USER_PERMISSION_REVOKED")).status).toBe(200);
+    mocks.sync.mockClear();
+    await runCron();
+    expect(mocks.sync.mock.calls.some((c) => (c as unknown[])[1] === item.id)).toBe(false);
   });
 
   it("LOGIN_REPAIRED clears the error and syncs", async () => {

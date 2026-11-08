@@ -30,7 +30,9 @@ export async function POST(req: Request) {
     const code = event.webhook_code ?? "";
     if (type === "ITEM" && (code === "ERROR" || code === "PENDING_EXPIRATION" || code === "USER_PERMISSION_REVOKED")) {
       await withUser(owner.userId, (s) =>
-        markNeedsReauth(s, owner.integrationId, event.error?.display_message || "Your bank needs you to sign in again. Use Reconnect."),
+        markNeedsReauth(s, owner.integrationId, event.error?.display_message || "Your bank needs you to sign in again. Use Reconnect.", {
+          stillWorking: code === "PENDING_EXPIRATION",
+        }),
       );
     } else if (type === "ITEM" && code === "LOGIN_REPAIRED") {
       await withUser(owner.userId, (s) => markLoginRepaired(s, owner.integrationId));

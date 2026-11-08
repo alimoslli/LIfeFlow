@@ -358,7 +358,13 @@ export async function syncItem(scope: UserScope, integrationId: string, tz: stri
   const result = await runSync(scope, item.id, creds, f, opts);
   await scope.tx
     .update(integrations)
-    .set({ status: "connected", lastError: null, lastSyncedAt: new Date(), encryptedCredentials: encryptSecret(JSON.stringify(result.creds)) })
+    .set({
+      status: "connected",
+      lastError: null,
+      metadata: sql`${integrations.metadata} - 'pendingExpiration'`,
+      lastSyncedAt: new Date(),
+      encryptedCredentials: encryptSecret(JSON.stringify(result.creds)),
+    })
     .where(eq(integrations.id, item.id));
   await scope.tx
     .insert(syncJobs)
@@ -382,7 +388,10 @@ export async function syncConnection(userId: string, integrationId: string, tz: 
     await withUser(userId, async (s) => {
       await s.tx
         .update(integrations)
-        .set({ ...(e instanceof PlaidError && e.reauth && { status: "error" as const }), lastError: msg })
+        .set({
+          ...(e instanceof PlaidError && e.reauth && { status: "error" as const, metadata: sql`${integrations.metadata} - 'pendingExpiration'` }),
+          lastError: msg,
+        })
         .where(and(eq(integrations.id, integrationId), eq(integrations.userId, userId)));
       await s.tx.insert(syncJobs).values({ userId, integrationId, kind: "plaid.sync", status: "failed", finishedAt: new Date(), error: msg });
     }).catch(() => undefined);
@@ -566,7 +575,8 @@ async function runSync(scope: UserScope, integrationId: string, creds: Creds, f?
       const sec = new Map(inv.securities.map((s) => [s.security_id, s]));
       // Every investment account Plaid reports on in this answer, so an account with nothing left in it is emptied too.
       // An account it didn't report on is never emptied.
-      const reported = new Set((inv.accounts ?? []).map((a) => a.account_id));
+      // (and any account that has holdings, in case the optional `accounts` list is missing: those rows are inserted below, so they must be cleared first)
+      const reported = new Set([...(inv.accounts ?? []).map((a) => a.account_id), ...inv.holdings.map((h) => h.account_id)]);
       const accountIds = acc.accounts
         .filter((a) => TYPE[a.type] === "investment" && reported.has(a.account_id))
         .flatMap((a) => idByPlaid.get(a.account_id) ?? []);
@@ -742,10 +752,10 @@ export async function ownerOfItem(db: Database, itemId: string) {
 export async function plaidNeedsReauth(userId: string, integrationId: string) {
   return withUser(userId, async (s) => {
     const [row] = await s.tx
-      .select({ status: integrations.status })
+      .select({ status: integrations.status, metadata: integrations.metadata })
       .from(integrations)
       .where(and(eq(integrations.id, integrationId), eq(integrations.userId, userId)));
-    return row?.status === "error";
+    return row?.status === "error" && !row.metadata?.pendingExpiration;
   });
 }
 
@@ -770,9 +780,14 @@ export async function recordNewAccountsAvailable(scope: UserScope, integrationId
 }
 
 /** Marks a connection as needing the user to sign in again (from an ITEM ERROR webhook). */
-export async function markNeedsReauth(scope: UserScope, integrationId: string, message: string) {
+export async function markNeedsReauth(scope: UserScope, integrationId: string, message: string, opts: { stillWorking?: boolean } = {}) {
   await scope.tx
     .update(integrations)
-    .set({ status: "error", lastError: message.slice(0, 300) })
+    .set({
+      status: "error",
+      lastError: message.slice(0, 300),
+      // PENDING_EXPIRATION: the connection still works for days, so the cron keeps syncing it (`plaidNeedsReauth`).
+      metadata: opts.stillWorking ? sql`${integrations.metadata} || '{"pendingExpiration": true}'::jsonb` : sql`${integrations.metadata} - 'pendingExpiration'`,
+    })
     .where(and(eq(integrations.id, integrationId), eq(integrations.userId, scope.userId)));
 }
