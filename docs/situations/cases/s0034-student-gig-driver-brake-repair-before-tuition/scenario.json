@@ -1,0 +1,107 @@
+{
+  "id": "s0034-student-gig-driver-brake-repair-before-tuition",
+  "title": "Delivery-driver student: a $412.60 brake repair leaves $310.00 against $1,003.18 of bills before Dec 8, and his weekly payouts vary; Dev moves the tuition date first and never counts or predicts a payout",
+  "persona": "p0007-university-dorm-delivery-driver",
+  "now": "2026-11-16T12:30",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 3401,
+  "money": {
+    "available_now_cents": 31000,
+    "savings_cents": 355000
+  },
+  "changes": [
+    {
+      "id": "c-brakes",
+      "type": "purchase",
+      "at": "2026-11-16T10:40",
+      "account": "acc-checking",
+      "description": "FIRESTONE COMPLETE AUTO 4417",
+      "merchant_name": "Firestone",
+      "amount_cents": -41260,
+      "pfc": "TRANSPORTATION_OTHER_TRANSPORTATION"
+    },
+    {
+      "id": "m-plan",
+      "type": "memory",
+      "content": "My tuition plan lets me push an installment up to 10 days with no fee if I ask before the due date",
+      "category": "fact",
+      "via": "chat",
+      "told_at": "2026-11-02T20:40"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-short",
+      "check": "afford",
+      "what": "The $412.60 brake repair at Firestone (pending) today leaves $310.00 available in checking. Four bills come before Dec 9: phone $25.00 on Nov 25, iCloud $2.99 on Nov 26, the tuition installment of $857.19 on Dec 5 and car insurance $118.00 on Dec 8, $1,003.18 in all, $693.18 more than he has. His QuickDrop payouts are weekly and vary ($108.48, $142.80, $119.56 and $128.58 over the last four that landed), so none of the payouts that will land before then is counted. The open payout line of $97.93 due Nov 19 is not counted until it lands.",
+      "by_when": "2026-11-16T14:00",
+      "facts": [
+        "c-brakes",
+        "acc-checking",
+        "rec-tuition-plan",
+        "rec-car-insurance",
+        "rec-phone",
+        "m-gig",
+        "m-plan",
+        "inv-quickdrop-weekly-payout-013"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-short",
+      "action": "draft for them",
+      "needs_user": true,
+      "send_at": "2026-11-16T12:30",
+      "what": "One push now, while his Monday is free: \"The brake repair leaves $310.00, and your Dec 5 tuition installment of $857.19 comes before enough payouts can be counted. Your plan lets you push it up to 10 days at no cost. Want me to draft the note asking to move it to Dec 15?\" [Draft the note] [Not now]. The draft is for him to send; Dev does not contact the school. After that, Dev checks again on Wed Dec 2 with what has actually landed: if checking still falls short of the $857.19 + $118.00, it lays out the next step in the owner's order, which is savings above his own lines: of $3,550.00, $1,000.00 is his emergency fund and $1,500.00 is his housing deposit (due Jan 15), so $1,050.00 is free to use, and it offers one tap for the exact amount needed, with Undo. Dev does not move money on its own and does not touch the brokerage account.",
+      "why": "Moving a bill a few days costs nothing and keeps his savings lines whole, so it comes first. The gap is real today even though payouts will probably help, and Dev doesn't know how much they will be. Checking again on Dec 2 uses real deposits, not a guess."
+    }
+  ],
+  "must_not": [
+    "count any QuickDrop payout (landed after today or open), or an average of past payouts, as money he will have",
+    "predict next week's payout or say \"you'll make about $120 a week\"",
+    "move money, contact the school or send the note himself for him (a draft only, sent by him)",
+    "start with his savings: $1,000.00 is his emergency fund and $1,500.00 is his housing deposit",
+    "sell or touch the index fund",
+    "tell him to add a Tuesday or Wednesday evening delivery block",
+    "suggest Saturday morning deliveries (kept free) or skipping his Friday clinical day",
+    "use guilt words about the repair or his spending"
+  ],
+  "stay_quiet": false,
+  "assumptions": [
+    "Gig payouts arrive weekly, three days after the week closes, and vary from about $95 to $143 on his Friday and Saturday evening hours.",
+    "The brake repair is a pending card-style charge on his debit card; checking is $722.60 current and $310.00 available.",
+    "Tuition plan installments are the fifth of the month; his plan allows a free 10 day move if he asks first (told Dev as m-plan).",
+    "The simulator shows the Nov 16 payout line as an open record due Nov 19; it is the week's statement, not money in the bank.",
+    "Savings floors come from his memories: $1,000 emergency fund, $1,500 housing deposit (due Jan 15)."
+  ],
+  "tags": [
+    "student",
+    "gig driver",
+    "variable income",
+    "afford",
+    "bill move first",
+    "savings lines respected",
+    "draft only",
+    "never predict gig pay",
+    "dorm",
+    "crammer",
+    "evening studier",
+    "canvas",
+    "clinical"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "tell him to add a Tuesday or Wednesday evening delivery block",
+        "routine": "study",
+        "why_wrong": "Tuesday and Wednesday evenings from 7:00 to 9:45 PM are his firm study windows, and he crams the last days before exams",
+        "facts": [
+          "m-01"
+        ]
+      }
+    ]
+  }
+}

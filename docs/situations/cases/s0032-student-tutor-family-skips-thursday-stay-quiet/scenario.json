@@ -1,0 +1,82 @@
+{
+  "id": "s0032-student-tutor-family-skips-thursday-stay-quiet",
+  "title": "Tutor student: the Nguyen family skips Thursday's session ($42 she won't earn this week); bills are covered and the free hour changes nothing, so Dev stays quiet",
+  "persona": "p0005-cc-family-private-tutor",
+  "persona_overrides": {
+    "real_life": {
+      "events": [
+        {
+          "id": "ev-tut-nguyen-2026-11-12",
+          "remove": true
+        }
+      ]
+    }
+  },
+  "now": "2026-11-11T20:00",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 3201,
+  "money": {
+    "available_now_cents": 61000,
+    "savings_cents": 24300
+  },
+  "changes": [
+    {
+      "id": "c-skip",
+      "type": "email",
+      "at": "2026-11-10T19:05",
+      "sender_type": "personal",
+      "sender_name": "Nguyen family",
+      "from_address": "nguyen-family@example.com",
+      "subject": "Can we skip this Thursday? Mia has a recital"
+    }
+  ],
+  "dev_must_notice": [],
+  "best_fix": {
+    "action": "none",
+    "needs_user": false,
+    "what": "Nothing. If she opens Today, the Thursday 4:30 to 5:30 PM tutoring block is simply gone from her calendar (removed with the family's email on Tuesday night). Dev does not send a push, does not offer to refill the hour, and does not predict next week's tutoring income.",
+    "why": "Tutoring is paid per session, so a skipped session is $42 not earned, not a bill missed. Her checking shows $610.00 available against $98.00 of bills in the next 10 days (phone $30 Nov 14, AI app $20 Nov 16, car insurance $48 Nov 21); Alvarez paid $45 on Nov 10 and Brandt's $40 for this week is open and not yet due (Nov 13). Nothing collides and nothing is at risk."
+  },
+  "must_not": [
+    "send a push or card about the skipped session or the $42",
+    "warn that her income is down or predict what next week's tutoring will pay",
+    "count the open $40 Brandt invoice (due Nov 13) as money she has",
+    "offer to fill the freed Thursday 4:30 PM hour with a study block",
+    "suggest she message the Nguyen family to reschedule, or write to them",
+    "touch her savings ($243.00 is her emergency fund)"
+  ],
+  "stay_quiet": true,
+  "assumptions": [
+    "Families pay by Zelle at about the time of each session, $45, $40 and $42 a session; the simulator invoices on the session day.",
+    "One skipped session is common for a tutor (recitals, sick kids); a pattern of three or more skips in a month would be a different case.",
+    "Her checking balance at 8 PM Wednesday is $610.00 available with 4 small card charges pending.",
+    "The Nguyen family's email is shown as metadata only: sender and subject."
+  ],
+  "tags": [
+    "student",
+    "tutor",
+    "per session income",
+    "stay quiet",
+    "skipped session",
+    "lives with family",
+    "community college",
+    "afternoon studier",
+    "canvas",
+    "routine fit",
+    "no prediction"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "offer to fill the freed Thursday 4:30 PM hour with a study block",
+        "routine": "study",
+        "why_wrong": "her study windows are Monday, Wednesday and Friday afternoons (2:00 to 4:45 PM); Thursday is not a study day",
+        "facts": [
+          "m-01"
+        ]
+      }
+    ]
+  }
+}
