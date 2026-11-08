@@ -26,13 +26,13 @@ function Chip({ chip, tone, real, small }: { chip: PreviewChip; tone: number; re
     <span
       data-chip
       className={cn(
-        "inline-flex max-w-full items-center gap-1.5 rounded-full font-medium tabular-nums",
+        "inline-flex max-w-full items-center gap-1.5 rounded-2xl font-medium tabular-nums",
         small ? "px-2.5 py-1 text-[0.75rem]" : "px-3 py-1.5 text-[0.8125rem]",
         real ? "bg-surface ring-1 ring-border" : t.chip,
       )}
     >
       <i className={cn("shrink-0 rounded-full", small ? "h-1.5 w-1.5" : "h-2 w-2", real ? "bg-text-2" : t.dot)} aria-hidden />
-      <span className="truncate">{chip.label}</span>
+      <span className="min-w-0 break-words">{chip.label}</span>
       {chip.example && <em className="text-[0.625rem] tracking-wider text-muted uppercase not-italic">example</em>}
     </span>
   );
@@ -201,7 +201,12 @@ export function DayPreview({
           <article key={s.id} data-card className="flex flex-col gap-2 rounded-3xl bg-surface p-4 shadow-soft">
             <h2 className="flex items-start gap-2.5 text-[0.9375rem] leading-snug font-semibold">
               <i className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", TONES[g].dot)} aria-hidden />
-              {s.title}
+              <span>
+                {s.title}
+                {s.chips.some((c) => c.example) && (
+                  <em className="ml-1.5 align-middle text-[0.625rem] font-medium tracking-wider text-muted uppercase not-italic">example</em>
+                )}
+              </span>
             </h2>
             <p className="pl-[1.125rem] text-sm text-text-2">{s.why}</p>
             <div className="flex flex-wrap items-center gap-1.5 pl-[1.125rem]">
