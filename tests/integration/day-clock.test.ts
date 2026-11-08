@@ -5,6 +5,8 @@ import { dayClockData } from "@/server/services/day-clock";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { logHealth } from "@/server/services/health";
+import { createMilestone } from "@/server/services/milestones";
+import { createPersonalGoal } from "@/server/services/personal-goals";
 import { createAssignment, createCourse } from "@/server/services/school";
 import { createEmployer, createShift } from "@/server/services/work";
 import { makeUser, TZ } from "../helpers";
@@ -84,6 +86,22 @@ describe("day clock data", () => {
     // The Money lock is on (or money isn't asked for): nothing about money, not even a zero.
     expect(hidden.spentTodayCents).toBeNull();
     expect(hidden.items.some((i) => i.amountCents != null)).toBe(false);
+  });
+
+  it("puts pinned goals and milestones on the line by their day, with the emoji they were pinned with", async () => {
+    const { run } = await makeUser("Pin Owner");
+    const data = await run(async (s) => {
+      await createPersonalGoal(s, { title: "🎯 Run a 10k", targetDate: "2026-11-09" });
+      await createPersonalGoal(s, { title: "Far-off goal", targetDate: "2027-06-01" });
+      await createMilestone(s, { title: "🎂 Turned 20", when: "2026-11-05" });
+      return dayClockData(s, TZ, NOW);
+    });
+    const goal = data.items.find((i) => i.title === "Run a 10k");
+    expect(goal).toMatchObject({ icon: "🎯", allDay: true, kind: "due", start: 2 * 1440, href: "/goals" });
+    const story = data.items.find((i) => i.title === "Turned 20");
+    expect(story).toMatchObject({ icon: "🎂", allDay: true, start: -2 * 1440, href: "/milestones", source: "From your milestones" });
+    // Only the days on the line: a goal months away isn't on it yet.
+    expect(data.items.some((i) => i.title === "Far-off goal")).toBe(false);
   });
 
   it("is empty for someone with nothing connected or added, and never makes up steps", async () => {

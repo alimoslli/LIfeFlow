@@ -91,6 +91,13 @@ const KIND_ICONS: Record<AgendaKind, string> = {
   task: "☑️",
 };
 
+/** A title that starts with an emoji ("✈️ Flight to NYC") picked it as its icon: the emoji and the rest. */
+export function splitEmoji(title: string): { emoji: string | null; rest: string } {
+  const m = title.match(/^\s*(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s*/u);
+  if (!m || m[0].length >= title.length) return { emoji: null, rest: title };
+  return { emoji: m[1], rest: title.slice(m[0].length) };
+}
+
 /** The emoji for a thing: its title's words first (a "Gym" event is 🏋️), then its kind. A shift is always 💼. */
 export function iconFor(title: string, kind: AgendaKind, origin: AgendaOrigin): string {
   if (origin === "shift") return "💼";

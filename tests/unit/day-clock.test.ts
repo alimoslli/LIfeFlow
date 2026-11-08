@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryFor, iconFor, sourceFor, titleFor } from "@/lib/day-clock";
+import { categoryFor, iconFor, sourceFor, splitEmoji, titleFor } from "@/lib/day-clock";
 import { toClockItem, wallMinutes } from "@/server/services/day-clock";
 import type { AgendaItem } from "@/server/services/calendar";
 
@@ -58,6 +58,23 @@ describe("day clock: what each thing is", () => {
   it("shows a shift as Work, keeping the employer for the card", () => {
     expect(titleFor("Work · Campus Coffee", "shift")).toEqual({ title: "Work", subtitle: "Campus Coffee" });
     expect(titleFor("BIO 110", "event")).toEqual({ title: "BIO 110", subtitle: null });
+  });
+});
+
+describe("day clock: a pin's emoji", () => {
+  it("takes an emoji at the start of the title as the icon, and keeps the rest as the name", () => {
+    expect(splitEmoji("✈️ Flight to NYC")).toEqual({ emoji: "✈️", rest: "Flight to NYC" });
+    expect(splitEmoji("🏋️‍♀️Gym")).toEqual({ emoji: "🏋️‍♀️", rest: "Gym" });
+    expect(splitEmoji("👍🏽 Done")).toEqual({ emoji: "👍🏽", rest: "Done" });
+    expect(splitEmoji("Flight ✈️")).toEqual({ emoji: null, rest: "Flight ✈️" });
+    expect(splitEmoji("Plain title")).toEqual({ emoji: null, rest: "Plain title" });
+    // An emoji alone stays as the name (nothing else to call it).
+    expect(splitEmoji("🎂")).toEqual({ emoji: null, rest: "🎂" });
+  });
+
+  it("shows a pinned event with its emoji as the icon", () => {
+    const pinned = toClockItem(item({ title: "✈️ Flight to NYC" }), TZ, "2026-11-07");
+    expect(pinned).toMatchObject({ icon: "✈️", title: "Flight to NYC" });
   });
 });
 

@@ -52,10 +52,17 @@ export type DayClockOptions = {
   onOpen: (href: string) => void;
   /** The day turned over while the page was open: fetch fresh data. */
   onNewDay: () => void;
+  /** A tap on an empty spot of the open line: pin something at that time (minutes from the start of today). */
+  onPin: (at: { start: number }) => void;
   reducedMotion: boolean;
 };
 
-export type DayClockHandle = { update: (data: ClockData) => void; destroy: () => void };
+export type DayClockHandle = {
+  update: (data: ClockData) => void;
+  destroy: () => void;
+  /** Where "Pin something" pins: the time in the middle of the line in view (never earlier than now, today). */
+  pinTime: () => number;
+};
 
 const NS = "http://www.w3.org/2000/svg";
 // More than this many markers on the rim and it drops the faded past, keeping only what's ahead (owner, 2026-11-08).
@@ -199,6 +206,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   const hint = $("[data-dc=hint]");
   const foot = $("[data-dc=foot]");
   const hintWrap = $("[data-dc=hintWrap]");
+  const pinbar = $("[data-dc=pinbar]");
   const sub = $("[data-dc=sub]");
   const todayBtn = $<HTMLButtonElement>("[data-dc=today]");
   const daysNav = $("[data-dc=days]");
@@ -319,7 +327,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     chips.style.top = `${G.chipY}px`;
     trackWrap.style.top = `${G.wrapTop}px`;
     detail.style.top = `${G.detailY}px`;
-    hintWrap.style.top = `${G.detailY + 6}px`;
+    pinbar.style.top = `${G.detailY}px`;
+    hintWrap.style.top = `${G.detailY + 62}px`;
     // "Tap the clock" sits under the face, above the foot; with no room between the markers and the foot it steps out.
     const hintTop = Math.min(G.cy + G.R + 66, H - footH - 18);
     hint.style.top = `${hintTop}px`;
@@ -1288,6 +1297,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   }
   // Wrapping the timeline back into the clock: the exact path of the open, run backwards as one motion.
   function beginWrap() {
+    setState("moving");
     S.open = false;
     S.sel = null;
     showDetail();
@@ -1477,6 +1487,14 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     },
     true,
   );
+  /* a tap on an empty spot of the open line pins something there, at the nearest quarter hour */
+  const quarter = (t: number) => Math.round(t / 15) * 15;
+  on(track, "click", (e: MouseEvent) => {
+    if (!S.open) return;
+    if ((e.target as HTMLElement).closest(".dc-node, .dc-now")) return;
+    const r = trackWrap.getBoundingClientRect();
+    opts.onPin({ start: quarter(tAt(trackWrap.scrollLeft + (e.clientX - r.left))) });
+  });
   /* the day under the middle of the line drives the picker and the tiles */
   let scrollRaf = 0;
   on(
@@ -1561,13 +1579,33 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   if (!S.open) setState("clock");
   root.dataset.ready = "true";
 
+  // New data while the line is open (a pin was just added): redraw it where it is, without closing or jumping.
+  function refreshOpen() {
+    const sl = trackWrap.scrollLeft;
+    rebuildClock();
+    rebuildTrack();
+    buildDays();
+    for (const n of TM.nodes) n.el?.classList.remove("dc-mapped");
+    trackWrap.scrollLeft = sl;
+    markDay();
+    buildChips();
+    showDetail();
+    S.p = 1;
+    render();
+  }
+
   return {
     update(next: ClockData) {
       data = next;
       ITEMS = next.items;
       S.now = nowMinutes(next.tz, next.today);
-      if (S.open || S.anim) S.dirty = true;
+      if (S.anim || drag || wrap) S.dirty = true;
+      else if (S.open) refreshOpen();
       else rebuild();
+    },
+    pinTime() {
+      const t = S.open ? tAt(trackWrap.scrollLeft + G.W / 2) : S.now;
+      return dayOf(t) === dayOf(S.now) && t < S.now ? Math.ceil(S.now / 15) * 15 : quarter(t);
     },
     destroy() {
       if (S.anim) cancelAnimationFrame(S.anim.id);

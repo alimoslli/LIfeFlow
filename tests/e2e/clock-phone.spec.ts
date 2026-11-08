@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
-import { signUp } from "./helpers";
+import { queryAsUser, signUp } from "./helpers";
 
 test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
@@ -64,4 +64,22 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   await page.waitForTimeout(150);
   await page.mouse.up();
   await expect(clock).toHaveAttribute("data-state", "clock");
+
+  // Pin something: open, "Pin something", pick an emoji, name it, pin it; it's on the line at once, with its emoji.
+  await page.getByRole("button", { name: /^Today\. Now / }).click();
+  await expect(clock).toHaveAttribute("data-state", "timeline");
+  await page.getByRole("button", { name: "Pin something" }).click();
+  const sheet = page.getByRole("dialog", { name: "Pin to your timeline" });
+  await expect(sheet).toBeVisible();
+  await sheet.getByRole("radio", { name: "✈️" }).click();
+  await sheet.getByLabel("Name").fill("Flight to NYC");
+  await sheet.getByRole("radio", { name: /^Plan/ }).click();
+  await sheet.getByRole("button", { name: "Pin it" }).click();
+  await expect(sheet).toBeHidden();
+  const pinned = page.locator(".dc-node", { hasText: "Flight to NYC" });
+  await expect(pinned).toBeAttached();
+  await expect(pinned.locator(".dc-n-ic")).toHaveText("✈️");
+  await expect(clock).toHaveAttribute("data-state", "timeline");
+  const rows = await queryAsUser<{ title: string }>(email, "select title from calendar_events where title like '%Flight to NYC'");
+  expect(rows).toEqual([{ title: "✈️ Flight to NYC" }]);
 });

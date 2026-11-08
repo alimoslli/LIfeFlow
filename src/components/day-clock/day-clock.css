@@ -253,6 +253,34 @@
 .dc-foot:empty {
   display: none;
 }
+/* "Pin something": under the tiles while the timeline is open and no card is showing */
+.dc-pinbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 8;
+  display: flex;
+  justify-content: center;
+  visibility: hidden;
+}
+.dc[data-state="timeline"] .dc-pinbar {
+  visibility: visible;
+}
+.dc-detail:not(:empty) ~ .dc-pinbar {
+  display: none;
+}
+.dc-pinbar button {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
 .dc-hint-wrap {
   z-index: 6;
   opacity: 0;
@@ -435,6 +463,13 @@
 .dc-track {
   position: relative;
   height: 100%;
+}
+.dc[data-state="timeline"] .dc-track {
+  cursor: copy;
+}
+.dc[data-state="timeline"] .dc-track .dc-node,
+.dc[data-state="timeline"] .dc-track .dc-now {
+  cursor: pointer;
 }
 .dc-line {
   position: absolute;
