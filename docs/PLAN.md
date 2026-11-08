@@ -81,15 +81,25 @@ All times are Pacific. The wording is in `docs/hq/round-prompts.md`.
 - everything with a time flowing onto both (calendars, shifts, deadlines, reminders, and money behind the lock);
 - "Pin something".
 
-Full check and phone e2e passed on 2026-11-08. The artifact "LifeFlow Day Clock" shows it on a made-up student week. Nothing reaches main without the owner's yes on a picture.
+Full check and phone e2e passed on 2026-11-08. To see it:
+- the artifact "LifeFlow Day Clock" (https://claude.ai/artifact/UgiwwCiRsyigsHhvn1LoND) shows it on a made-up student week;
+- the owner's pitch page "LifeFlow v3" (https://claude.ai/artifact/YM14ETMVXCKV85Gg4MeSbh) has the North Star story, a live phone demo and sign-in.
+
+ Nothing reaches main without the owner's yes on a picture.
 
 **Done:**
 - 11-07: the V3 home spec and prototype, from the owner's storyboard.
-- 11-07 and 11-08: the clock rim shows the 12 hours around now.
+- 11-08: the owner moved the clock to the next 24 hours from the hand, on two rings: the inner ring is the next 12 hours, the outer ring the 12 after.
 - 11-08: the clock, the timeline and all time-bound data were built on `v3-day-clock`.
+- 11-08: the timeline cards became editable and the clock is never empty (46842e8), after the owner's 6:04 AM report:
+  - events, shifts and assignments open Plan's editor in place, with delete inside it;
+  - to-dos, goals and milestones open their own page;
+  - overdue items show as one marker at the hand;
+  - all-day plans read "today" or "all day";
+  - a quiet face counts what the timeline holds.
 
 **Next:**
-- Fix the clock looking empty and the timeline not being editable. The owner reported both on 11-08 at 6:04 AM and approved anything needed to fix them. This was moved here from the Day clock chat.
+- **Bring `v3-day-clock-north-star` up to date.** It was cut from `v3-day-clock` at 26299b6, so it lacks 34e2eb3, 39f7794 and 46842e8. The owner's sign-in link points at it, so either merge `v3-day-clock` into it (LF Main owns that branch) or point the owner at the `v3-day-clock` preview.
 - Rebuild the Day Clock artifact after clock changes.
 - The ADR 0032 proposals ("Tonight", "What this costs", timeline connection lines, a widget or watch) are not built and need the owner's yes.
 
