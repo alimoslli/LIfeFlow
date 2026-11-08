@@ -14,3 +14,14 @@ The owner asked (2026-11-08): "always remind me because I keep on forgetting". T
 | 8 | Gmail for other people | Gmail works only for test users until verified | Google verification of the app (go-live 2) | none | Not confirmed |
 
 How to start a desk task: HQ Office → the task → "Start it" (one tap). The COO may also put them first in the night round's fix order.
+
+## Marketing yeses (owner handles these in the Marketing chat; listed so none is forgotten)
+
+| What | Status |
+|---|---|
+| "Post it" for the birthday film v4 (first post) | Waiting |
+| School Project premiere date (proposed Nov 29) | Waiting |
+| Second language for the dubbed version | Waiting |
+| Cinema route (about 31 Higgsfield credits) or couch-and-TV route | Waiting |
+| Test-drive voiceover redone in Sterling (about 3 credits) | Waiting |
+| Waiting-list page: on lifeflowweb.com or a tool | Waiting |
