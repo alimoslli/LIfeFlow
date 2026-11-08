@@ -68,6 +68,7 @@ export const NOT_EXPORTED: Record<string, string> = {
   oauth_identities: "Apple and Google sign-in links (provider account ids)",
   password_resets: "password reset links (hashes)",
   login_challenges: "two-step sign-in in progress",
+  phone_codes: "single-use phone sign-in codes (hashes), gone in 10 minutes; the number itself is exported with the account",
   health_tokens: "Apple Health keys (hashes)",
   push_subscriptions: "this device's push keys",
   connection_registry: "internal routing for connections; the connections themselves are exported as integrations",

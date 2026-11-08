@@ -157,7 +157,7 @@ export async function regenerateRecoveryCodes(db: Database, userId: string, code
 // ---------------------------------------------------------------------------
 // Sign-in challenge (between the password and the code)
 
-export async function createLoginChallenge(db: Database, userId: string, firstFactor: "password" | "oauth", now = Date.now()) {
+export async function createLoginChallenge(db: Database, userId: string, firstFactor: "password" | "oauth" | "phone", now = Date.now()) {
   const token = randomBytes(32).toString("base64url");
   await db.delete(loginChallenges).where(lt(loginChallenges.expiresAt, new Date(now)));
   await db.insert(loginChallenges).values({ id: sha256(token), userId, firstFactor, expiresAt: new Date(now + CHALLENGE_TTL_MS) });

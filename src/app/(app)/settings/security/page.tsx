@@ -9,7 +9,7 @@ import { Card, CardHeader } from "@/components/ui/surface";
 import { formatIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
-import { sessions } from "@/server/db/schema";
+import { sessions, users } from "@/server/db/schema";
 import { twoFactorStatus } from "@/server/auth/two-factor";
 import { appleConfig, appleIdentityFor } from "@/server/auth/apple";
 import { googleIdentityFor, googleSignInConfig } from "@/server/auth/google-signin";
@@ -19,6 +19,8 @@ import { accountHasPassword } from "@/server/services/accounts";
 import { changePasswordAction, signOutOthersAction } from "../actions";
 import { setMoneyLockAction, unlinkAppleAction, unlinkGoogleAction } from "./passkey-actions";
 import type { ActionState } from "@/server/actions";
+import { codeChannel, maskPhone } from "@/server/auth/phone-login";
+import { PhoneCard } from "./phone-card";
 import { PasskeysCard } from "./passkeys-card";
 import { TwoFactorCard } from "./two-factor-card";
 import { SettingsHeader } from "../settings-header";
@@ -38,6 +40,7 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
     const apple = await appleIdentityFor(getDb(), u.id);
     const google = await googleIdentityFor(getDb(), u.id);
     const withPassword = await accountHasPassword(getDb(), u.id);
+    const [phoneRow] = await getDb().select({ p: users.loginPhone }).from(users).where(eq(users.id, u.id));
     return {
       active,
       tz: u.timezone,
@@ -47,6 +50,7 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
       apple,
       google,
       withPassword,
+      loginPhone: phoneRow?.p ? maskPhone(phoneRow.p) : null,
       lock: moneyLockSettings(u.preferences),
       demo: u.accountKind === "demo",
     };
@@ -70,6 +74,7 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
           synced: p.backedUp,
         }))}
       />
+      <PhoneCard masked={d.loginPhone} available={!!codeChannel()} demo={d.demo} />
       <Card className="p-5">
         <h2 className="font-medium">Lock Money with Face ID</h2>
         <p className="mt-0.5 text-sm text-text-2">Ask for Face ID before showing your balances.</p>

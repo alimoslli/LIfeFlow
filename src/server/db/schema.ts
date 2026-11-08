@@ -169,6 +169,10 @@ export const users = pgTable("users", {
   inboxToken: text("inbox_token").unique(),
   /** Verified phone (E.164) the user texts Jarvis from. Unique: one account per number. */
   smsPhone: text("sms_phone").unique(),
+  /** Phone number (E.164) the person signs in with. Separate from smsPhone: a number proven only by an emailed code must never receive or send texts for the account. */
+  loginPhone: text("login_phone").unique(),
+  /** How loginPhone was proven: a text to that phone, or (until texting is set up) a code emailed to the account. */
+  loginPhoneVia: text("login_phone_via").$type<"text" | "email">(),
   /** "pro" while a paid subscription is active (Stripe webhook keeps it in sync). */
   plan: text("plan").$type<"free" | "pro">().notNull().default("free"),
   stripeCustomerId: text("stripe_customer_id").unique(),
@@ -296,10 +300,28 @@ export const loginChallenges = pgTable(
     emailCodeExpiresAt: tstz("email_code_expires_at"),
     emailSends: integer("email_sends").notNull().default(0),
     /** How the first step was passed. Email codes are offered only after the password ("oauth" = Google or Apple). */
-    firstFactor: text("first_factor").$type<"password" | "oauth">(),
+    firstFactor: text("first_factor").$type<"password" | "oauth" | "phone">(),
     createdAt: createdAt(),
   },
   (t) => [index("login_challenges_user_idx").on(t.userId)],
+);
+
+/** One-time codes for phone numbers: adding a sign-in number ("link") and signing in with it ("login"). Like login_challenges, needed before a session exists, so no row-level security; only the code's hash is stored. */
+export const phoneCodes = pgTable(
+  "phone_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    phone: text("phone").notNull(),
+    purpose: text("purpose").$type<"link" | "login">().notNull(),
+    codeHash: text("code_hash").notNull(),
+    expiresAt: tstz("expires_at").notNull(),
+    attempts: integer("attempts").notNull().default(0),
+    /** "text" or "email": how the code was delivered. */
+    via: text("via").$type<"text" | "email">().notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("phone_codes_phone_idx").on(t.phone, t.purpose, t.createdAt), index("phone_codes_user_idx").on(t.userId)],
 );
 
 export const rateLimitBuckets = pgTable(

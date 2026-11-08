@@ -26,6 +26,7 @@ const LOOKED_UP_BEFORE_SIGN_IN = new Set([
   "oauth_identities",
   "password_resets",
   "login_challenges",
+  "phone_codes",
   "connection_registry",
   "health_tokens",
 ]);

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { appleConfig } from "@/server/auth/apple";
 import { getSessionUser } from "@/server/auth/current-user";
 import { googleSignInConfig } from "@/server/auth/google-signin";
+import { codeChannel } from "@/server/auth/phone-login";
 import { AuthForm } from "../auth-form";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -41,6 +42,7 @@ export default async function LoginPage({
       next={next}
       apple={!!appleConfig()}
       google={!!googleSignInConfig()}
+      phone={!!codeChannel()}
       notice={notice}
       email={link === "apple" || link === "google" ? email?.slice(0, 254) : undefined}
     />
