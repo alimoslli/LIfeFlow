@@ -85,9 +85,9 @@ test("a new user who never names the assistant never sees 'Jarvis'", async ({ pa
 
   // The tour, every step.
   await expect(page.getByRole("dialog", { name: "Welcome to LifeFlow" })).toBeVisible();
-  for (let i = 0; i < 12 && (await page.getByRole("button", { name: "Next" }).isVisible()); i++) {
+  for (let i = 0; i < 12 && (await page.getByRole("button", { name: "Next", exact: true }).isVisible()); i++) {
     await expectNoJarvis(page, `tour step ${i + 1}`);
-    await page.getByRole("button", { name: "Next" }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
   }
   await expectNoJarvis(page, "tour: last step");
   await page.getByRole("button", { name: "Start using LifeFlow" }).click();

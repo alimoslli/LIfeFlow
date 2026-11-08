@@ -44,9 +44,9 @@ test("a new user sees their day connected, names their assistant, then a skippab
   await page.waitForURL((u) => u.pathname === "/");
   const tour = page.getByRole("dialog", { name: "Welcome to LifeFlow" });
   await expect(tour).toBeVisible();
-  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Your day as a clock" })).toBeVisible();
-  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Nova" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Nova" })).toHaveCount(0);
