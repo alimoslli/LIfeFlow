@@ -25,30 +25,32 @@ Owner's concept, 2026-11-07. The look is set by the owner's two GIFs (`owner-con
   - a thin grey circle;
   - busy blocks are mint arcs on it, with a soft glow;
   - spends are small mint pins on the rim at the minute they happened.
-- **What the rim covers (owner, 2026-11-08): always the next 12 hours, starting at the hand.**
-  > "There will be another line under the word tomorrow, exactly over the clock, showing tomorrow's line with tomorrow's events, ending where we are at today."
-  - **Today's part** rides the clock's own ring.
-  - **Tomorrow's ring:** after 12 at night it's tomorrow, on a second ring just outside the clock (11 px out).
-    - It runs from the 12 round to the hand, so it ends at the same place on the clock as now, with a small dot there.
-    - A mint step and dot at the 12 carry the line out.
-    - "TOMORROW" is written along it from the 12 whenever it's there, however short. Markers keep clear of the word.
-    - It appears from noon, short at first, and by late evening runs nearly all the way round.
-  - **The faded past:** the last 2 hours stay on, faded, only where tomorrow's ring frees that part of the clock, so the two never overlap. Before noon there's no faded past; a block already running still shows "till 4:30".
-  - **All-day deadlines and bills** show as due by the end of their day, when that falls in the 12 hours ("due tonight", "$45 due").
-  - **Tomorrow's markers** carry a small mint "TOMORROW" under their time ("8:00 AM / TOMORROW"). The screen reader says "Tomorrow: Run with Sam 8 AM".
-  - **On the open timeline**, tonight's midnight is a mint tick labelled "TOMORROW", with more room around it. Later midnights keep the day's name.
-  - **When the rim is busy** (more than 6 markers) it drops the faded past and keeps only what's ahead (owner: "when it's full of data… it shows what's after only, but it takes the whole circle so it's not crowded"). The past stays on the timeline.
-  - *(This replaces the earlier "last 2, next 10" window, decided 2026-11-07.)*
+- **What the rim covers (owner, 2026-11-08): the next 24 hours, from the hand, on two rings.**
+  > "It shows the 24 hours after… as he completes 1:00, it goes to showing 1:00 am, but it's obvious."
+  - **The inner ring** (the clock's own) is the next 12 hours. **The outer ring**, just outside it, is the 12 after.
+  - **Every spot holds two times:** the next time the hand reaches it (inside) and the time after that (outside).
+  - **It rolls:** once 1 PM is done, the 1 o'clock spot inside holds 1 AM, and 1 PM tomorrow sits outside.
+  - **One spiral:** a short step at the hand joins the two rings. Start at the hand, go round inside, step out, go round again.
+  - **Tomorrow is obvious:**
+    - from tonight's midnight on, the rings are tinted in the accent;
+    - a tick and the word TOMORROW mark where tomorrow starts, on whichever ring midnight falls (the outer ring by day, the inner ring by night);
+    - anything after midnight carries "TOMORROW" under its time.
+  - **The outer ring is quieter:** thinner arcs at about 60% and smaller labels, because it's later.
+  - **It starts wherever the hand is** when the person opens it (or wakes up). What's done falls off; a block already running shows "till 4:30".
+  - **A very full day:** the soonest 10 things keep their markers, and every busy stretch still shows as an arc.
+  - **All-day deadlines and bills** show as due by the end of their day ("due tonight", "$45 due").
+  - **On the open timeline,** tonight's midnight is a mint tick labelled "TOMORROW".
+  - *(This replaces the 12-hour windows decided earlier on 2026-11-07 and 2026-11-08.)*
 - **The markers:** one icon plus one line of text around the rim, joined to the rim by a hairline (frame 1).
   - Blocks show their start time ("6:00 PM"). A block already running shows "till 4:30 PM".
   - Spends show the amount ("$14.20").
   - Markers never overlap: they spread apart, and the hairline points to the real time.
   - Things that are over are faded.
 - **Inside the face: the important data** (owner, 2026-11-08: "we should have the important data on there and not just focus on simplicity… as much as you want it to be functional and productive"):
-  - **Top (between the 12 and the hub):**
-    - what's happening now ("NOW · Work till 4:30");
-    - if nothing is, what's next ("NEXT · Class 6 PM");
-    - late in the day, tomorrow's first thing ("TOMORROW · Run with Sam 8 AM").
+  - **Top (between the 12 and the hub):** a small line says when and a bigger line names it.
+    - What's happening now: "NOW · TILL 4:30 / Work".
+    - If nothing is, what's next: "NEXT · 6 PM / Class", or "TOMORROW · 8 AM / Run with Sam".
+    - With nothing in the 24 hours, the next real thing whenever it is ("MON · 10 AM / Exam 2"), or "Nothing planned yet".
   - **Bottom:** today's numbers, only the real ones:
     - steps and last night's sleep ("6,240 steps · 7h 18m sleep");
     - what was spent today ("$69.20 spent today"), only while the Money lock is open.

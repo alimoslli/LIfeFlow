@@ -14,7 +14,10 @@ type Mark = {
   t: number;
   label: string;
   past: boolean;
+  /** 0: the inner ring (the next 12 hours); 1: the outer ring (the 12 after). */
   lap: number;
+  /** After tonight's midnight. */
+  tmrw: boolean;
   a0: number;
   a: number;
   cx: number;
@@ -65,8 +68,6 @@ export type DayClockHandle = {
 };
 
 const NS = "http://www.w3.org/2000/svg";
-// More than this many markers on the rim and it drops the faded past, keeping only what's ahead (owner, 2026-11-08).
-const BUSY = 6;
 // How far tomorrow's ring sits outside the clock's own ring.
 const LAP = 11;
 
@@ -363,37 +364,30 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     }
   }
 
-  /* ---------- the clock: the 12 hours around now (or, when busy, the 12 hours ahead) ---------- */
-  // Busy: drop the faded past. Quiet (fewer than 3 things): show more of today so far, faded, back to the
-  // morning or noon, so a calm evening still shows the day you had (owner, 2026-11-08: "why is my clock so empty?").
+  /* ---------- the clock: the next 24 hours, from the hand ---------- */
+  // Inner ring: the next 12 hours. Outer ring: the 12 after. Every spot on the face holds the next time the hand reaches
+  // it (inside) and the time after that (outside), so the clock rolls as the day goes: once 1 PM is done, the 1 o'clock
+  // spot holds 1 AM, tinted and marked as tomorrow (owner, 2026-11-08: "it shows the 24 hours after... as he completes
+  // 1:00, it goes to showing 1:00 am, but it's obvious"). It starts wherever the hand is when the person opens it.
+  const MAX_MARKS = 10;
   function pickClock(now: number) {
-    const full = clockModel(now, "recent");
-    if (full.marks.length > BUSY) return clockModel(now, "none");
-    if (full.marks.length < 3) {
-      const wide = clockModel(now, "today");
-      if (wide.marks.length > full.marks.length) return wide;
-    }
-    return full;
+    return clockModel(now);
   }
-  // The rim is always the next 12 hours, starting at the hand. Today's part rides the clock's own ring; after 12 at
-  // night it's tomorrow, on a second ring just outside it that runs from the 12 round to the hand (owner, 2026-11-08).
-  // The last 2 hours stay on, faded, wherever tomorrow's ring frees that part of the clock (so nothing ever overlaps).
-  function clockModel(now: number, past: "none" | "recent" | "today"): ClockModel {
-    const dropPast = past === "none";
+  function clockModel(now: number): ClockModel {
     const ws = now;
-    const we = now + 720;
+    const we = now + 1440;
+    const half = now + 720;
     const mid = (dayOf(now) + 1) * 1440;
-    const hasMid = mid > ws && mid < we;
-    // The past can only use the part of the clock that tomorrow's ring frees (from noon on), so it never overlaps.
-    const pastFrom = dropPast ? now : Math.min(now, Math.max(past === "today" ? mid - 720 : now - 120, mid - 720));
+    const ringOf = (t: number) => (t < half ? 0 : 1);
     const arcs: Arc[] = [];
-    const marks: Mark[] = [];
-    const mark = (it: ClockItem, t: number, label: string, past: boolean): Mark => ({
+    let marks: Mark[] = [];
+    const mark = (it: ClockItem, t: number, label: string): Mark => ({
       it,
       t,
       label,
-      past,
+      past: false,
       lap: 0,
+      tmrw: false,
       a0: 0,
       a: 0,
       cx: 0,
@@ -403,32 +397,41 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       line: null,
       lab: null,
     });
+    const arc = (a: number, b: number) => arcs.push({ a, b, past: false, lap: 0, els: [] });
     for (const it of ITEMS) {
       if (it.allDay) {
         // an all-day deadline or bill is due by the end of its day
         if (it.kind !== "due") continue;
         const t = dayOf(it.start) * 1440 + 1439;
         if (t < now || t > we) continue;
-        marks.push(mark(it, t, it.amountCents != null ? `${money(it.amountCents)} due` : dayOf(t) === dayOf(now) ? "due tonight" : "due", false));
+        marks.push(mark(it, t, it.amountCents != null ? `${money(it.amountCents)} due` : dayOf(t) === dayOf(now) ? "due tonight" : "due"));
         continue;
       }
       if (it.end != null) {
-        if (it.end <= pastFrom || it.start >= we) continue;
-        const s = Math.max(it.start, pastFrom);
+        if (it.end <= now || it.start >= we) continue;
+        const s = Math.max(it.start, now);
         const e = Math.min(it.end, we);
-        if (s < now) arcs.push({ a: s, b: Math.min(e, now), past: true, lap: 0, els: [] });
-        if (e > now) arcs.push({ a: Math.max(s, now), b: e, past: false, lap: 0, els: [] });
-        if (it.start >= pastFrom) marks.push(mark(it, it.start, fmt(it.start), it.end <= now));
-        else if (it.end > now) marks.push(mark(it, (now + e) / 2, `till ${fmt(it.end)}`, false));
-        else marks.push(mark(it, (pastFrom + it.end) / 2, `till ${fmt(it.end)}`, true));
+        // one piece per ring: a block that runs past the 12-hour seam continues on the outer ring
+        if (s < half && e > half) {
+          arc(s, half);
+          arc(half, e);
+        } else arc(s, e);
+        if (it.start >= now) marks.push(mark(it, it.start, fmt(it.start)));
+        else marks.push(mark(it, (now + Math.min(e, half)) / 2, `till ${fmt(it.end)}`));
       } else {
-        if (it.start < pastFrom || it.start > we) continue;
-        const label = it.amountCents != null ? `${money(it.amountCents)} due` : `${isExam(it) ? "" : "due "}${fmt(it.start)}`;
-        marks.push(mark(it, it.start, label, it.start <= now));
+        if (it.start < now || it.start > we) continue;
+        marks.push(mark(it, it.start, it.amountCents != null ? `${money(it.amountCents)} due` : `${isExam(it) ? "" : "due "}${fmt(it.start)}`));
       }
     }
-    // "TOMORROW" is written along tomorrow's ring from the 12 whenever there is one, however short (owner, 2026-11-08).
-    const word = hasMid ? 0.8 : 0;
+    // A very full day: the soonest ten keep their markers (every busy stretch still shows as an arc).
+    if (marks.length > MAX_MARKS) marks = marks.sort((a, b) => a.t - b.t).slice(0, MAX_MARKS);
+    for (const m of marks) {
+      m.lap = ringOf(m.t);
+      m.tmrw = m.t >= mid;
+    }
+    // "TOMORROW" is written outside the rings from midnight on; markers keep clear of it.
+    const word = 0.8;
+    const am = ang(mid);
     // Spread markers so they never overlap; the hairline still points at the real time. The word holds its place.
     type Slot = { a: number; fixed: boolean; room: boolean; m?: Mark };
     marks.forEach((m) => {
@@ -436,7 +439,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       m.a = m.a0;
     });
     const slots: Slot[] = marks.map((m) => ({ a: m.a, fixed: false, room: false, m }));
-    if (word) slots.push({ a: 0.07 + word / 2, fixed: true, room: true });
+    slots.push({ a: (am + 0.07 + word / 2) % (Math.PI * 2), fixed: true, room: true });
     slots.sort((x, y) => x.a - y.a);
     for (let k = 0; k < 60 && slots.length > 1; k++) {
       let moved = false;
@@ -460,33 +463,28 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       if (!moved) break;
     }
     for (const s of slots) if (s.m) s.m.a = s.a;
-    if (hasMid) {
-      for (const a of arcs.splice(0)) {
-        if (a.a < mid && a.b > mid) arcs.push({ ...a, b: mid }, { ...a, a: mid, els: [] });
-        else arcs.push(a);
-      }
-    }
-    for (const a of arcs) a.lap = hasMid && a.a >= mid ? 1 : 0;
-    for (const m of marks) m.lap = hasMid && m.t >= mid ? 1 : 0;
-    return { arcs, marks, ps: pastFrom, ws, we, mid: hasMid ? mid : null, word, ahead: dropPast };
+    for (const a of arcs) a.lap = ringOf(a.a);
+    return { arcs, marks, ps: now, ws, we, mid, word, ahead: false };
   }
 
   // Inside the face: what's happening now (or next), and today's numbers. Only what the person's data says.
+  // The small line says when ("NOW · TILL 10", "NEXT · 9 AM", "TOMORROW · 8 AM"); the big line is just the name.
   function faceNow(now: number, we: number) {
     const live = ITEMS.find((it) => !it.allDay && it.end != null && it.start <= now && it.end > now);
     if (live) {
       const e = live.end ?? now;
       const end = fmt(e).slice(-2) === fmt(now).slice(-2) ? fmtShort(e).slice(0, -3) : fmtShort(e);
-      return { tag: "Now", text: `${live.title} till ${end}`, it: live };
+      return { tag: `Now · till ${end}`, text: live.title, it: live };
     }
     const next = ITEMS.filter((it) => !it.allDay && it.start > now && it.start <= we).sort((a, b) => a.start - b.start)[0];
-    if (next) return { tag: dayOf(next.start) > dayOf(now) ? "Tomorrow" : "Next", text: `${next.title} ${fmtShort(next.start)}`, it: next };
-    // Nothing in the next 12 hours: the next thing on the calendar, whenever it is (a deadline counts by its day).
+    if (next) return { tag: `${dayOf(next.start) > dayOf(now) ? "Tomorrow" : "Next"} · ${fmtShort(next.start)}`, text: next.title, it: next };
+    // Nothing in the next 24 hours: the next thing on the calendar, whenever it is (a deadline counts by its day).
     const later = ITEMS.filter((it) => (it.allDay ? (dayOf(it.start) + 1) * 1440 : it.start) > now).sort((a, b) => a.start - b.start)[0];
     if (later) {
       const d = dayOf(later.start);
       const when = later.allDay ? (later.amountCents != null ? `${money(later.amountCents)} due` : "due") : fmtShort(later.start);
-      return { tag: d === dayOf(now) ? "Later" : d === dayOf(now) + 1 ? "Tomorrow" : `Next · ${dayName(d)}`, text: `${later.title} ${when}`, it: later };
+      const day = d === dayOf(now) ? "Later" : d === dayOf(now) + 1 ? "Tomorrow" : dayLong(d).split(",")[0];
+      return { tag: `${day} · ${when}`, text: later.title, it: later };
     }
     // Truly nothing ahead this week: say so, plainly, instead of an empty face.
     return { tag: "Next 3 days", text: "Nothing planned yet", it: null };
@@ -526,36 +524,46 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const [tx, ty] = pol(ma + Math.PI, R * 0.09);
     for (const [k, v] of Object.entries({ x1: 0, y1: 0, x2: hx, y2: hy })) hourH.setAttribute(k, String(v));
     for (const [k, v] of Object.entries({ x1: tx, y1: ty, x2: mx, y2: my })) minH.setAttribute(k, String(v));
-    // The rim is the clock's own ring. After 12 at night, tomorrow's ring runs just outside it, from the 12 round to the hand.
-    rimC.setAttribute("d", `M0 ${-R}A${R} ${R} 0 1 1 0 ${R}A${R} ${R} 0 1 1 0 ${-R}`);
+    // Two rings: the clock's own (the next 12 hours) and, just outside it, the 12 after. A short step at the hand joins
+    // them (round once inside, step out, round again). Tomorrow's stretch is tinted from midnight on, with a tick and
+    // the word TOMORROW where it starts, on whichever ring midnight falls.
+    const circle = (r: number) => `M0 ${-r}A${r} ${r} 0 1 1 0 ${r}A${r} ${r} 0 1 1 0 ${-r}`;
+    const r2 = R + LAP;
+    rimC.setAttribute("d", circle(R));
     dayG.textContent = "";
+    svg("path", { d: circle(r2), class: "dc-outer-ring" }, dayG);
+    const ah = ang(now);
     if (CM.mid != null) {
       const am = ang(CM.mid);
-      const end = ang(CM.we);
-      const r2 = R + LAP;
-      svg("path", { d: arcPath(am, end, r2), class: "dc-tmrw-ring" }, dayG);
-      const [ix, iy] = pol(am, R);
-      const [sx, sy] = pol(am, r2);
-      svg("line", { x1: ix, y1: iy, x2: sx, y2: sy, class: "dc-step" }, dayG);
-      svg("circle", { cx: sx, cy: sy, r: 2.6, class: "dc-accent-fill" }, dayG);
-      // where tomorrow's line ends: the same place on the clock as now
-      const [ex, ey] = pol(end, r2);
-      svg("circle", { cx: ex, cy: ey, r: 2.2, class: "dc-tmrw-end" }, dayG);
-      if (CM.word) {
-        const rt = r2 + 8;
-        const [px, py] = pol(am + 0.07, rt);
-        const [qx, qy] = pol(am + 0.07 + CM.word, rt);
-        svg("path", { id: "dc-tmrw", d: `M${px.toFixed(2)} ${py.toFixed(2)}A${rt} ${rt} 0 0 1 ${qx.toFixed(2)} ${qy.toFixed(2)}`, fill: "none" }, dayG);
-        const t = svg("text", { class: "dc-word" }, dayG);
-        svg("textPath", { href: "#dc-tmrw" }, t).textContent = "TOMORROW";
-      }
+      const onInner = CM.mid < now + 720;
+      // tomorrow's part of the rings, faintly in the accent: midnight to the seam inside and all of the outer ring, or
+      // midnight to the seam on the outer ring only
+      if (onInner) {
+        svg("path", { d: arcPath(am, ah, R), class: "dc-tmrw-track" }, dayG);
+        svg("path", { d: circle(r2), class: "dc-tmrw-track" }, dayG);
+      } else svg("path", { d: arcPath(am, ah, r2), class: "dc-tmrw-track" }, dayG);
+      const rm = onInner ? R : r2;
+      const [tx1, ty1] = pol(am, rm - 5);
+      const [tx2, ty2] = pol(am, rm + 5);
+      svg("line", { x1: tx1, y1: ty1, x2: tx2, y2: ty2, class: "dc-step" }, dayG);
+      const rt = r2 + 8;
+      const [px, py] = pol(am + 0.07, rt);
+      const [qx, qy] = pol(am + 0.07 + CM.word, rt);
+      svg("path", { id: "dc-tmrw", d: `M${px.toFixed(2)} ${py.toFixed(2)}A${rt} ${rt} 0 0 1 ${qx.toFixed(2)} ${qy.toFixed(2)}`, fill: "none" }, dayG);
+      const t = svg("text", { class: "dc-word" }, dayG);
+      svg("textPath", { href: "#dc-tmrw" }, t).textContent = "TOMORROW";
     }
+    // the seam at the hand: where the next 12 hours end and the 12 after begin
+    const [h1x, h1y] = pol(ah, R);
+    const [h2x, h2y] = pol(ah, r2);
+    svg("line", { x1: h1x, y1: h1y, x2: h2x, y2: h2y, class: "dc-seam" }, dayG);
     arcsG.textContent = "";
     for (const a of CM.arcs) {
       const d = arcPath(ang(a.a), ang(a.b), R + a.lap * LAP);
-      const op = a.past ? 0.32 : 1;
+      // the 12 after (outer ring) is quieter than the 12 coming
+      const op = a.past ? 0.32 : a.lap ? 0.62 : 1;
       a.els = [];
-      if (!a.past) a.els.push(svg("path", { d, class: "dc-arc-glow", opacity: op * 0.55, filter: "url(#dc-soft)" }, arcsG));
+      if (!a.past && !a.lap) a.els.push(svg("path", { d, class: "dc-arc-glow", opacity: op * 0.55, filter: "url(#dc-soft)" }, arcsG));
       a.els.push(svg("path", { d, class: "dc-arc", opacity: op }, arcsG));
     }
     G.rimFill = 1;
@@ -581,9 +589,9 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const u: Pt = [Math.sin(m.a), -Math.cos(m.a)];
       const sup = (Math.abs(u[0]) * 66) / 2 + (Math.abs(u[1]) * 50) / 2;
       const rc = R + 14 + sup + m.lap * LAP;
-      const lab = html("div", "dc-co", callouts);
+      const lab = html("div", m.lap ? "dc-co dc-later" : "dc-co", callouts);
       lab.textContent = m.label;
-      if (m.lap) html("span", "dc-tm", lab).textContent = "Tomorrow";
+      if (m.tmrw) html("span", "dc-tm", lab).textContent = "Tomorrow";
       const w = lab.offsetWidth;
       m.cx = clamp(G.cx + u[0] * rc, w / 2 + 8, G.W - w / 2 - 8);
       m.cy = G.cy + u[1] * rc;

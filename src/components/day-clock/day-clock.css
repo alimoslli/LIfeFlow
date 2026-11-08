@@ -95,6 +95,28 @@
   stroke-width: 2;
   stroke-linecap: round;
 }
+/* the outer ring (the 12 hours after the next 12), the seam at the hand, and tomorrow's tint */
+.dc-outer-ring {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text) 13%, transparent);
+  stroke-width: 2;
+}
+.dc-tmrw-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 30%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.dc-seam {
+  stroke: color-mix(in srgb, var(--text) 45%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+/* markers on the outer ring: later, so a little quieter */
+.dc-co.dc-later {
+  font-size: 0.74rem;
+  color: var(--text-2);
+}
 /* tomorrow's ring: just outside the clock, from the 12 round to the hand */
 .dc-tmrw-ring {
   fill: none;
