@@ -120,11 +120,7 @@ describe("deleting an account closes what lives outside our database", () => {
       expect(await gone(u.user.id)).toBe(true);
       const reports = (await getDb().select().from(errorReports)).filter((r) => r.route === "account.delete");
       expect(reports.map((r) => r.message)).toEqual(
-        expect.arrayContaining([
-          "Account deletion: Google revoke failed",
-          "Account deletion: bank link removal failed",
-          "Account deletion: subscription cancel failed",
-        ]),
+        expect.arrayContaining(["Account deletion: Google revoke failed", "Account deletion: bank link removal failed"]),
       );
       for (const r of reports) expect(r.message).not.toMatch(/tok-secret|cus_|g-refresh|@/);
     } finally {
@@ -209,7 +205,8 @@ describe("deleting an account closes what lives outside our database", () => {
   it("the admin delete runs the same cleanup, and refuses on a Stripe failure", async () => {
     const owner = await makeUser("Owner");
     await getDb().update(users).set({ totpEnabledAt: new Date() }).where(eq(users.id, owner.user.id));
-    process.env.ADMIN_EMAILS = [process.env.ADMIN_EMAILS, owner.user.email].filter(Boolean).join(",");
+    const savedAdmins = process.env.ADMIN_EMAILS;
+    process.env.ADMIN_EMAILS = [savedAdmins, owner.user.email].filter(Boolean).join(",");
     const admin = (await adminFor(getDb(), owner.user.id, { ADMIN_EMAILS: owner.user.email }))!;
 
     const u = await setup({ plaid: ["tok-admin"] });
@@ -222,10 +219,11 @@ describe("deleting an account closes what lives outside our database", () => {
     withStripe();
     try {
       const bad = fakeWorld({ failHosts: ["api.stripe.com"] });
-      await expect(deleteUser(getDb(), admin, v.user.id, v.user.email, { fetch: bad.f })).rejects.toThrow(/couldn't cancel your plan/);
+      await expect(deleteUser(getDb(), admin, v.user.id, v.user.email, { fetch: bad.f })).rejects.toThrow(/plan couldn.t be cancelled/);
       expect(await gone(v.user.id)).toBe(false);
     } finally {
       withoutStripe();
+      process.env.ADMIN_EMAILS = savedAdmins;
     }
   });
 });

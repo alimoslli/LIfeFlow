@@ -268,7 +268,8 @@ export async function deleteUser(db: Database, actor: Admin, userId: string, con
   try {
     await revokeOutsideAccess(db, found, deps);
   } catch (e) {
-    if (e instanceof DeletionBlockedError) throw new AdminError(e.message);
+    if (e instanceof DeletionBlockedError)
+      throw new AdminError("Their plan couldn't be cancelled just now, so the account wasn't deleted. Try again in a minute.");
     throw e;
   }
   await db.transaction(async (tx) => {

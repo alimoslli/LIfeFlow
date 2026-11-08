@@ -190,7 +190,7 @@ export async function deleteAccount(db: Database, userId: string, password: stri
   const [user] = await db.select().from(users).where(eq(users.id, userId));
   if (!user) throw new AuthError("Account not found.");
   if (hasPassword(user.passwordHash) && !(await verifyPassword(password, user.passwordHash))) throw new AuthError("Password is incorrect.");
-  // Close what lives outside our database first (best effort, never blocks): the stored tokens go with the rows.
+  // Close what lives outside our database first: a plan that can't be cancelled stops the deletion; bank and Google revocation are best effort. The stored tokens go with the rows.
   try {
     await revokeOutsideAccess(db, user, deps);
   } catch (e) {
