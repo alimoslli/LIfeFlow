@@ -29,7 +29,7 @@ Owner's concept, 2026-11-07. The look is set by the owner's two GIFs (`owner-con
   - the last 2 hours, faded;
   - the next 10 hours, bright.
 
-  As the day goes on, the arcs and icons turn with it. The whole day, and every other day, is one tap away on the timeline. *(Engineering decision; the owner can change it.)*
+  As the day goes on, the arcs and icons turn with it. The whole day, and every other day, is one tap away on the timeline. *(Decided 2026-11-07: B, the 12 hours around now. The COO chose it on the owner's behalf, following the recommendation; the owner can still switch to A, the whole day on one face.)*
 - **The markers:** one icon plus one line of text around the rim, joined to the rim by a hairline (frame 1).
   - Blocks show their start time ("6:00 PM"). A block already running shows "till 4:30 PM".
   - Spends show the amount ("$14.20").
@@ -134,8 +134,6 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
 - The week view.
 
 ## 8. Open for the owner
-1. **The rim, waiting for the owner's pick.** He asked to see both: `rim-options.png` shows them side by side, with the same day and data at 8:45 PM.
-   - **A:** the whole day on one face, like his frames. 9 AM and 9 PM share the same spot, so the arcs overlap.
-   - **B:** the 12 hours around now (last 2, next 10). This is what the prototype does; it's my pick.
+1. ~~The rim~~ **Decided (2026-11-07): B, the 12 hours around now, as built.** The owner saw both in `rim-options.png` (A: the whole day on one face; B: the 12 hours around now; same day and data at 8:45 PM). He couldn't see a difference, so the COO chose B on the recommendation. He can still switch to A.
 2. Should a pull also turn it into the timeline, or only a tap? (Still open; the prototype does both.)
 3. ~~Should the three chips be spent, steps and sleep, or spent, tasks and focus?~~ Answered (owner, 2026-11-07, through the COO): neither. The chips show time-bound commitments: shifts, classes and deadlines (section 4).
