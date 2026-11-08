@@ -26,10 +26,13 @@ type Mark = {
   iy: number;
   line: SVGLineElement | null;
   lab: HTMLElement | null;
+  /** How many more things share this marker (within half an hour on the same ring). */
+  more: number;
 };
 /** ws..we: the 12 hours ahead (from the hand); ps: where the faded past starts (ps <= ws). */
 type ClockModel = { arcs: Arc[]; marks: Mark[]; ps: number; ws: number; we: number; mid: number | null; word: number; ahead: boolean };
-type Node = { it: ClockItem; t: number; past: boolean; x: number; el: HTMLButtonElement | null };
+/** A stop on the line: one thing, or a stack of things at the same moment (`group`, led by `it`). */
+type Node = { id: string; it: ClockItem; group: ClockItem[] | null; t: number; past: boolean; x: number; el: HTMLButtonElement | null };
 /** item: a thing; mid: a midnight in the week; mark: a month, a year or "Someday" further out; now: the now pill. */
 type Stop = { t: number; kind: "item" | "mid" | "mark" | "now"; n?: Node; d?: number; label?: string; x: number };
 type TrackModel = { nodes: Node[]; stops: Stop[]; total: number; nowX: number; nowEl: HTMLButtonElement | null; somedayX: number };
@@ -287,7 +290,28 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   const minDay = () => data.days[0]?.offset ?? 0;
   const maxDay = () => data.days[data.days.length - 1]?.offset ?? 0;
   const timeOf = (it: ClockItem) => (it.allDay ? (it.kind === "due" ? "Due" : "All day") : fmt(it.start));
-  const billOf = (it: ClockItem) => (it.amountCents != null ? `${money(it.amountCents)} due` : null);
+  // what a money thing says beside its name: a bill due, a trial's first charge, pay expected (never counted), a money goal
+  const billOf = (it: ClockItem) => {
+    if (it.amountCents == null) return null;
+    const m = money(it.amountCents);
+    return it.origin === "pay" ? `${m} expected` : it.origin === "trial" ? `then ${m}` : it.origin === "money_goal" ? `${m} goal` : `${m} due`;
+  };
+  // a day in words from anywhere on the line: "today", "tomorrow", "Wed", "Nov 29", "Apr 7, 2027"
+  const dayShort = (d: number) => (dayInfo(d) ? dayName(d) : dayLongOf(d));
+  const dayWord = (d: number) => (d === dayOf(S.now) ? "today" : d === dayOf(S.now) + 1 ? "tomorrow" : dayShort(d));
+  // when things pile up, the one that leads: a block of time, an exam, a deadline, a reminder or a plan, money, the rest
+  const weight = (it: ClockItem) =>
+    it.end != null
+      ? 5
+      : isExam(it)
+        ? 4
+        : it.origin === "assignment" || it.origin === "task"
+          ? 3
+          : it.origin === "reminder" || it.origin === "event"
+            ? 2
+            : it.amountCents != null
+              ? 1
+              : 0;
   const isExam = (it: ClockItem) => /\b(exam|midterm|final|quiz|test)\b/i.test(it.title);
   const nodeName = (it: ClockItem) =>
     it.amountCents != null
@@ -413,6 +437,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       iy: 0,
       line: null,
       lab: null,
+      more: 0,
     });
     const arc = (a: number, b: number) => arcs.push({ a, b, past: false, lap: 0, els: [] });
     for (const it of DATED) {
@@ -421,7 +446,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
         if (it.kind !== "due" || it.origin === "milestone") continue;
         const t = dayOf(it.start) * 1440 + 1439;
         if (t < now || t > we) continue;
-        const what = it.amountCents != null ? `${money(it.amountCents)} due` : it.origin === "goal" ? "goal day" : "due";
+        const what = it.origin === "trial" ? "trial ends" : it.origin === "goal" || it.origin === "money_goal" ? "goal day" : (billOf(it) ?? "due");
         marks.push(mark(it, t, what === "due" && dayOf(t) === dayOf(now) ? "due tonight" : what));
         continue;
       }
@@ -438,9 +463,23 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
         else marks.push(mark(it, (now + Math.min(e, half)) / 2, `till ${fmt(it.end)}`));
       } else {
         if (it.start < now || it.start > we) continue;
-        marks.push(mark(it, it.start, it.amountCents != null ? `${money(it.amountCents)} due` : `${isExam(it) ? "" : "due "}${fmt(it.start)}`));
+        marks.push(
+          mark(it, it.start, billOf(it) ?? (isExam(it) || it.origin === "reminder" || it.origin === "event" ? fmt(it.start) : `due ${fmt(it.start)}`)),
+        );
       }
     }
+    // Things within half an hour of each other on the same ring are one marker: the one that matters most leads and
+    // "+2" says the rest (five deadlines at 11:59 PM read as one), so the rim never fills with leader lines.
+    marks.sort((a, b) => a.t - b.t);
+    marks = marks.reduce<Mark[]>((out, m) => {
+      const last = out[out.length - 1];
+      if (!last || ringOf(m.t) !== ringOf(last.t) || m.t - last.t >= 30) out.push(m);
+      else {
+        last.more += 1;
+        if (weight(m.it) > weight(last.it)) Object.assign(last, { it: m.it, label: m.label });
+      }
+      return out;
+    }, []);
     // A very full day: the soonest ten keep their markers (every busy stretch still shows as an arc).
     if (marks.length > MAX_MARKS) marks = marks.sort((a, b) => a.t - b.t).slice(0, MAX_MARKS);
     for (const m of marks) {
@@ -500,13 +539,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const later = DATED.filter((it) => (it.allDay ? (dayOf(it.start) + 1) * 1440 : it.start) > now).sort((a, b) => a.start - b.start)[0];
     if (later) {
       const d = dayOf(later.start);
-      const when = later.allDay
-        ? later.amountCents != null
-          ? `${money(later.amountCents)} due`
-          : later.origin === "goal"
-            ? "goal"
-            : "due"
-        : fmtShort(later.start);
+      const when = later.allDay ? (billOf(later) ?? (later.origin === "goal" ? "goal" : "due")) : fmtShort(later.start);
       const day = d === dayOf(now) ? "Later" : d === dayOf(now) + 1 ? "Tomorrow" : dayLong(d).split(",")[0];
       return { tag: `${day} · ${when}`, text: later.title, it: later };
     }
@@ -615,6 +648,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const rc = R + 14 + sup + m.lap * LAP;
       const lab = html("div", m.lap ? "dc-co dc-later" : "dc-co", callouts);
       lab.textContent = m.label;
+      if (m.more) html("b", "dc-more", lab).textContent = `+${m.more}`;
       if (m.tmrw) html("span", "dc-tm", lab).textContent = "Tomorrow";
       const w = lab.offsetWidth;
       m.cx = clamp(G.cx + u[0] * rc, w / 2 + 8, G.W - w / 2 - 8);
@@ -656,16 +690,36 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     if (Math.abs(yr - y) > 1) return String(yr);
     return yr === y ? MO[at.getUTCMonth()] : `${MO[at.getUTCMonth()]} ${yr}`;
   }
+  // Things at the same moment in the week, or on the same day further out, are one stop: the one that matters most
+  // leads with "+2", and its card lists them all. However full a life gets, the line stays one calm row.
+  const nodeFor = (group: ClockItem[], t: number, now: number): Node => {
+    const it = group.reduce((a, b) => (weight(b) > weight(a) ? b : a));
+    const past = group.every((g) => (g.end ?? g.start) <= now && t0(g) <= now) && !it.someday;
+    return { id: group.length > 1 ? `stack:${group[0].id}` : it.id, it, group: group.length > 1 ? group : null, t, past, x: 0, el: null };
+  };
+  /** The day "in view" while Someday is: no day is lit and there are no tiles. */
+  const SOMEDAY = 1e6;
+  const nodeOf = (id: string | null) => (id ? TM.nodes.find((n) => n.id === id || n.it.id === id || n.group?.some((g) => g.id === id)) : undefined);
   function trackModel(now: number): TrackModel {
-    const dated = ITEMS.filter((it) => !it.someday);
-    const nodes: Node[] = dated.map((it) => ({ it, t: t0(it), past: (it.end ?? it.start) <= now && t0(it) <= now, x: 0, el: null }));
+    const inWeek = (d: number) => d >= minDay() && d <= maxDay();
+    const slot = (it: ClockItem) => (inWeek(dayOf(t0(it))) ? `t${t0(it)}` : `d${dayOf(t0(it))}`);
+    const nodes: Node[] = [];
+    let group: ClockItem[] = [];
+    for (const it of ITEMS.filter((x) => !x.someday).sort((x, y) => t0(x) - t0(y))) {
+      if (group.length && slot(group[0]) !== slot(it)) {
+        nodes.push(nodeFor(group, t0(group[0]), now));
+        group = [];
+      }
+      group.push(it);
+    }
+    if (group.length) nodes.push(nodeFor(group, t0(group[0]), now));
     const stops: Stop[] = nodes.map((n) => ({ t: n.t, kind: "item" as const, n, x: 0 }));
     for (let d = minDay(); d <= maxDay() + 1; d++) stops.push({ t: d * 1440, kind: "mid", d, x: 0 });
     // a month (or year) mark before the first thing in it, outside the week
     let era = "";
-    for (const n of [...nodes].sort((a, b) => a.t - b.t)) {
+    for (const n of nodes) {
       const d = dayOf(n.t);
-      if (d >= minDay() && d <= maxDay()) {
+      if (inWeek(d)) {
         era = "";
         continue;
       }
@@ -694,7 +748,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       if (i) x += gap(stops[i - 1], st);
       st.x = x;
     });
-    // Someday: the undated, in a row at the very end (their times are only places on the line, never shown)
+    // Someday: the undated, in a row at the very end (their times are only places on the line, never shown); past the
+    // first seven, the rest wait in one stack
     const later = ITEMS.filter((it) => it.someday);
     let somedayX = Infinity;
     if (later.length) {
@@ -702,10 +757,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       x += 70;
       somedayX = x;
       stops.push({ t, kind: "mark", label: "Someday", x });
-      for (const it of later) {
+      const rows = later.length > 8 ? [...later.slice(0, 7).map((it) => [it]), later.slice(7)] : later.map((it) => [it]);
+      for (const g of rows) {
         t += 1;
         x += 96;
-        const n: Node = { it, t, past: false, x, el: null };
+        const n = { ...nodeFor(g, t, now), x };
         nodes.push(n);
         stops.push({ t, kind: "item", n, x });
       }
@@ -753,14 +809,15 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const line = html("div", "dc-line", track);
     line.style.width = `${TM.total}px`;
     line.style.setProperty("--now-x", `${TM.nowX}px`);
-    for (const n of TM.nodes) {
-      if (n.it.end == null) continue;
-      const b = html("div", "dc-band", track);
-      const x1 = xAt(n.it.start);
-      const x2 = xAt(n.it.end);
-      b.style.left = `${x1}px`;
-      b.style.width = `${Math.max(6, x2 - x1)}px`;
-    }
+    for (const n of TM.nodes)
+      for (const it of n.group ?? [n.it]) {
+        if (it.end == null) continue;
+        const b = html("div", "dc-band", track);
+        const x1 = xAt(it.start);
+        const x2 = xAt(it.end);
+        b.style.left = `${x1}px`;
+        b.style.width = `${Math.max(6, x2 - x1)}px`;
+      }
     for (const s of TM.stops) {
       if (s.kind === "mark") {
         const m = html("div", "dc-mid dc-era", track);
@@ -784,15 +841,17 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       // further from now, quieter: the week is full strength, months away fade to half
       const far = Math.abs(dayOf(n.t)) - 7;
       if (!it.someday && far > 0) b.style.opacity = String(Math.max(0.5, 1 - far / 90));
-      b.dataset.id = it.id;
+      b.dataset.id = n.id;
+      const more = n.group ? n.group.length - 1 : 0;
       const name = nodeName(it);
-      const time = it.someday ? "No day yet" : Math.abs(dayOf(n.t)) > 6 ? `${dayLongOf(dayOf(n.t))}` : timeOf(it);
-      b.innerHTML = `<span class="dc-n-ic" aria-hidden="true">${esc(it.icon)}</span><span class="dc-n-dot"></span><span class="dc-n-t">${esc(time)}</span><span class="dc-n-n">${esc(name)}</span>`;
+      const time = it.someday ? "No day yet" : (it.when ?? (Math.abs(dayOf(n.t)) > 6 ? dayLongOf(dayOf(n.t)) : timeOf(it)));
+      b.innerHTML = `<span class="dc-n-ic" aria-hidden="true">${esc(it.icon)}${more ? `<b class="dc-n-more">+${more}</b>` : ""}</span><span class="dc-n-dot"></span><span class="dc-n-t">${esc(time)}</span><span class="dc-n-n">${esc(name)}</span>`;
+      const said = more ? `${name} and ${more} more` : name;
       b.setAttribute(
         "aria-label",
-        it.someday ? `${name}, no day yet` : time === dayLongOf(dayOf(n.t)) ? `${name}, ${time}` : `${name}, ${dayLong(dayOf(n.t))}, ${time}`,
+        it.someday ? `${said}, no day yet` : time === dayLongOf(dayOf(n.t)) || it.when ? `${said}, ${time}` : `${said}, ${dayLong(dayOf(n.t))}, ${time}`,
       );
-      b.addEventListener("click", () => select(it.id));
+      b.addEventListener("click", () => select(n.id));
       n.el = b;
     }
     const np = html("button", "dc-now", track);
@@ -823,7 +882,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     turn = ((((turn + Math.PI) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) - Math.PI;
     G.turn = turn;
     MAP = CM.marks.map((m) => {
-      const node = TM.nodes.find((n) => n.it.id === m.it.id);
+      const node = nodeOf(m.it.id);
       // a marker whose place on the line is off screen slides just past the edge and fades, instead of stretching out to it
       const xr = node ? node.x - sl : m.ix < G.cx ? -40 : G.W + 40;
       const off = xr < 12 || xr > G.W - 12;
@@ -905,6 +964,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   // The tiles round up the day in view with what's tied to the clock: its shift, its class, its deadline.
   // Only real items; a kind the day doesn't have gets no tile. Today and later days also show the next deadline ahead.
   function dayTiles(d: number): Tile[] {
+    if (d === SOMEDAY) return [];
     const now = S.now;
     const inDay = (it: ClockItem) => dayOf(t0(it)) === d;
     const live = (it: ClockItem) => it.end != null && it.start <= now && it.end > now;
@@ -936,7 +996,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     }
     if (due) {
       const t = t0(due);
-      const time = ahead ? dayName(dayOf(t)) : (billOf(due) ?? (due.allDay ? "today" : fmtShort(t)));
+      const time = ahead ? dayShort(dayOf(t)) : (billOf(due) ?? (due.allDay ? "today" : fmtShort(t)));
       out.push({ it: due, icon: "due", name: due.title, time, label: `${due.title}, due ${dayLong(dayOf(t))}${due.allDay ? "" : ` at ${fmt(t)}`}`, ahead });
     }
     // in the order they happen; a deadline on a later day goes last
@@ -953,7 +1013,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       b.addEventListener("click", () => {
         select(c.it.id);
         // same day: bring its node into view; a later day's deadline just opens its card
-        const n = TM.nodes.find((x) => x.it.id === c.it.id);
+        const n = nodeOf(c.it.id);
         if (n && dayOf(n.t) === S.day) {
           const v = n.x - trackWrap.scrollLeft;
           if (v < 50 || v > G.W - 50) trackWrap.scrollTo({ left: clamp(n.x - G.W / 2, 0, TM.total - G.W), behavior: reduce ? "auto" : "smooth" });
@@ -976,7 +1036,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     }
   }
   function markSel() {
-    for (const n of TM.nodes) n.el?.classList.toggle("dc-sel", n.it.id === S.sel);
+    const sel = nodeOf(S.sel);
+    for (const n of TM.nodes) n.el?.classList.toggle("dc-sel", n === sel);
     for (const c of chips.querySelectorAll<HTMLElement>(".dc-tile")) c.setAttribute("aria-pressed", String(c.dataset.id === S.sel));
   }
   // One quiet card, only when you ask for it: tap a node or a tile; tap it again to put it away.
@@ -1015,7 +1076,29 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
           : d < 730
             ? `${Math.round(d / 30.44)} months ago`
             : `${Math.floor(d / 365.25)} years ago`;
+  // A stack's card: what's there, one row each; a row opens that thing's own card (tap the stop again for the list).
+  function showStack(n: Node, g: ClockItem[]) {
+    const d = dayOf(n.t);
+    const sameTime = g.every((x) => t0(x) === t0(g[0]) && !x.allDay);
+    const kick = `${g.length} things · ${n.it.someday ? "Someday" : `${dayLong(d)}${sameTime ? ` · ${fmt(t0(g[0]))}` : ""}`}`;
+    const rows = g
+      .map(
+        (x) =>
+          `<button type="button" class="dc-d-row" data-id="${esc(x.id)}"><span class="dc-r-ic" aria-hidden="true">${esc(x.icon)}</span><span class="dc-r-n">${esc(
+            nodeName(x),
+          )}</span>${sameTime || x.someday ? "" : `<span class="dc-r-t">${esc(timeOf(x))}</span>`}</button>`,
+      )
+      .join("");
+    detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${esc(n.it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-list">${rows}</div></div>`;
+    for (const r of detail.querySelectorAll<HTMLElement>(".dc-d-row")) r.addEventListener("click", () => select(r.dataset.id ?? ""));
+    const list = detail.querySelector<HTMLElement>(".dc-d-list");
+    const over = detail.offsetHeight - (G.H - G.detailY - 12);
+    if (list && over > 0) list.style.maxHeight = `${Math.max(66, Math.floor((list.offsetHeight - over - 22) / 44) * 44 + 22)}px`;
+    wrapHint(S.open ? 1 : S.p);
+  }
   function showDetail() {
+    const stack = S.sel?.startsWith("stack:") ? TM.nodes.find((n) => n.id === S.sel) : undefined;
+    if (stack?.group) return showStack(stack, stack.group);
     const it = S.sel ? ITEMS.find((x) => x.id === S.sel) : undefined;
     if (!it) {
       detail.innerHTML = "";
@@ -1023,27 +1106,31 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       return;
     }
     const t = t0(it);
-    let kick = dayLong(dayOf(t));
+    let kick = it.when ?? dayLong(dayOf(t));
     if (it.someday) kick = "Someday";
-    else if (dayOf(t) === 0) kick = it.end != null && t <= S.now && it.end > S.now ? "Now" : t > S.now ? "Up next" : "Earlier today";
+    else if (dayOf(t) === 0 && !it.allDay) kick = it.end != null && t <= S.now && it.end > S.now ? "Now" : t > S.now ? "Up next" : "Earlier today";
     else if (dayOf(t) > 0 && S.day === 0) kick += dayOf(t) === 1 ? " · tomorrow" : ` · in ${dayOf(t)} days`;
     const when = it.someday
       ? "No day yet. Pin it to a day when you know."
       : it.origin === "milestone"
         ? agoOf(-dayOf(t))
-        : it.origin === "goal"
-          ? "Your goal, by the end of this day"
-          : billOf(it)
-            ? `${billOf(it)} ${dayOf(t) === dayOf(S.now) ? "today" : dayName(dayOf(t))}`
-            : it.allDay
-              ? it.kind === "due"
-                ? "Due by the end of the day"
-                : "All day"
-              : it.end != null
-                ? `${fmt(it.start)} – ${fmt(it.end)}`
-                : `Due ${fmt(it.start)}`;
+        : it.origin === "goal" || it.origin === "money_goal"
+          ? `${it.amountCents != null ? `${money(it.amountCents)}, y` : "Y"}our goal by the end of this day`
+          : it.origin === "reminder"
+            ? `Reminder at ${fmt(it.start)}`
+            : it.origin === "trial"
+              ? `Trial ends ${dayWord(dayOf(t))}, then ${money(it.amountCents ?? 0)}`
+              : billOf(it)
+                ? `${billOf(it)} ${dayWord(dayOf(t))}`
+                : it.allDay
+                  ? it.kind === "due"
+                    ? "Due by the end of the day"
+                    : "All day"
+                  : it.end != null
+                    ? `${fmt(it.start)} – ${fmt(it.end)}`
+                    : `Due ${fmt(it.start)}`;
     const sub = [it.subtitle, it.source].filter(Boolean).join(" · ");
-    const canDo = (it.origin === "task" || it.origin === "assignment") && !!it.ref;
+    const canDo = (it.origin === "task" || it.origin === "reminder" || it.origin === "assignment") && !!it.ref;
     detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${esc(it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-t">${esc(
       it.title,
     )}</div><div class="dc-d-w">${esc(when)}</div><div class="dc-d-s">${esc(sub)}</div><div class="dc-d-acts">${canDo ? '<button type="button" class="dc-d-done">Done</button>' : ""}<button type="button" class="dc-d-open">${esc(openLabel(it.href))}</button></div></div>`;
@@ -1614,10 +1701,10 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       scrollRaf = requestAnimationFrame(() => {
         scrollRaf = 0;
         const x = trackWrap.scrollLeft + G.W / 2;
-        const d = x >= TM.somedayX ? maxDay() + 1 : dayOf(tAt(x));
+        const d = x >= TM.somedayX ? SOMEDAY : dayOf(tAt(x));
         if (d !== S.day) {
           // the card stays while its node is still on screen (a tap near the edge scrolls it in)
-          const sel = S.sel ? TM.nodes.find((n) => n.it.id === S.sel) : undefined;
+          const sel = nodeOf(S.sel);
           if (!sel || sel.x < trackWrap.scrollLeft || sel.x > trackWrap.scrollLeft + G.W) S.sel = null;
           setDay(d);
           markSel();

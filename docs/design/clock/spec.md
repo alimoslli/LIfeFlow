@@ -174,15 +174,28 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
   - **Done on the card:** a to-do's or an assignment's card has **Done** beside Open. It is the same action as To-dos and School; the line refreshes in place.
   - **Milestone cards** say how long ago ("2 years ago"). Goal cards say "Your goal, by the end of this day". "Due" is only ever said of to-dos, assignments and bills.
   - **On the clock:** milestones (things that happened) never sit on the rim. A goal whose day falls in the next 24 hours shows as "goal day".
+- **Everything with a time flows in (owner, 2026-11-08: "every piece of data that qualifies… perfectly flowing in there"):** one read, `dayClockData`, from the person's own data only.
+  - **Calendars:** Google, Outlook and LifeFlow events, merged across sources. Further out than the week, only one-off plans (a flight, an appointment, a birthday). An event that repeats three or more times in the next 60 days (a weekly class, a daily event) shows in the week only.
+  - **Work:** shifts, in the week.
+  - **Classes:** Canvas and added deadlines and exams, out to 60 days.
+  - **To-dos:** every open one, at its due time, any distance away. Overdue ones stay where they were due. Undated ones wait under Someday.
+  - **Reminders:** a to-do's reminder that rings an hour or more before it's due is its own moment (🔔), on the clock and the line. Done works on it.
+  - **Goals and milestones:** goals at their day; milestones and goals reached behind. A milestone known only by month or year says "Sep 2019" or "2019".
+  - **Money, only with the Money lock open:** bills and trial ends in the next 30 days ("then $15.99"); money goals by their day; salaried pay as "Payday, $X expected" (shown, never counted, never hourly); and what was spent today.
+  - **Not on it, on purpose:** habits and health have no time of day (steps and sleep are on the face). Spends have no time (the face shows today's total). Past paychecks belong to Money.
+- **It never gets crowded:**
+  - **On the clock:** things within half an hour of each other on the same ring are one marker. The one that matters most leads (a block of time, then an exam, a deadline, a reminder or plan, money), and "+2" says the rest. At most ten markers; every busy stretch still shows as its arc.
+  - **On the line:** things at the same minute in the week, or on the same day further out, are one stop with "+2" on its icon. Its card lists them ("3 things · Sun, Nov 8 · 11:59 PM"), one 44 px row each, and a row opens that thing's own card. On a short screen the list stops halfway through a row, so it's plain it scrolls.
+  - **Someday:** the first seven stand alone; the rest share one stop. Someday is a place, not a day: no day is lit and there are no tiles.
 - **Pin anything (owner, 2026-11-08):** "Pin something" under the open line, or a tap on an empty spot of the line, opens one sheet. It takes the day and time from where you are, an emoji, a name, and what it is: a to-do, a plan (one hour), a goal (by that day) or a milestone (past days only).
   - **The emoji** is kept as the title's first character, so no database change is needed. It becomes the node's icon everywhere.
   - **Saving** shows it on the line at once.
 - **Tests:**
   - `tests/unit/day-clock.test.ts` (icons, tiles, sources, wall-clock minutes across daylight saving);
   - `tests/integration/day-clock.test.ts` (the real read);
-  - `tests/e2e/clock-phone.spec.ts` (open, the card and its Open link, the now pill wrap, the pull-down wrap, pinning a ✈️ plan, Done on a to-do);
+  - `tests/e2e/clock-phone.spec.ts` (open, the card and its Open link, the now pill wrap, the pull-down wrap, pinning a ✈️ plan, Done on a to-do, three deadlines stacking into one stop and one "+2" marker);
   - the layout, touch-target and core tests, updated for the four tabs.
-- **For screenshots:** `scripts/dev/seed-clock-look.ts` gives a local account a made-up week. It refuses any database that isn't on localhost.
+- **For screenshots:** `scripts/dev/seed-clock-look.ts` gives a local account a made-up week (`--busy` adds a full life on top: a pile of deadlines tonight, a reminder, a weekly lecture, a trial, rent, a money goal and ten undated to-dos). It refuses any database that isn't on localhost.
 
 ## 8. Out of scope for this step
 - Editing from the timeline beyond opening the existing editor.
