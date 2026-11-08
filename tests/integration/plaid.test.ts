@@ -16,7 +16,7 @@ import {
   verifyWebhook,
 } from "@/server/integrations/plaid";
 import { moneyOverview } from "@/server/services/finance/overview";
-import { listAccounts, listTurnedOffAccounts } from "@/server/services/finance/accounts";
+import { archiveAccount, listAccounts, listTurnedOffAccounts } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
 import { getTool } from "@/server/jarvis/registry";
 import { makeUser, TZ } from "../helpers";
@@ -334,6 +334,24 @@ describe("Plaid", () => {
     expect(await run((s) => s.tx.select().from(holdings).where(eq(holdings.userId, user.id)))).toHaveLength(1);
     await syncConnection(user.id, item.id, TZ, fakePlaid({ emptyHoldings: true }).f);
     expect(await run((s) => s.tx.select().from(holdings).where(eq(holdings.userId, user.id)))).toHaveLength(0);
+  });
+
+  it("an account the user archived by hand stays archived through every sync, while one the bank stopped sharing still comes back", async () => {
+    const { user, run, item, fake } = await connected();
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    const rows = await run((s) => s.tx.select().from(financialAccounts).where(eq(financialAccounts.userId, user.id)));
+    const card = rows.find((a) => a.providerAccountId === "acc-card")!;
+    const ira = rows.find((a) => a.providerAccountId === "acc-ira")!;
+    await run((s) => archiveAccount(s, card.id));
+    // The bank stops sharing the IRA (it shares only the card), then shares everything again.
+    await syncConnection(user.id, item.id, TZ, fakePlaid({ only: ["acc-card", "acc-checking"] }).f);
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    await syncConnection(user.id, item.id, TZ, fake.f);
+    const names = (await run((s) => listAccounts(s))).map((a) => a.name).sort();
+    expect(names).toEqual(["Plaid Checking", "Plaid IRA"]);
+    expect(ira.id).toBeTruthy();
+    // The user can still bring it back from the turned-off list.
+    expect((await run(listTurnedOffAccounts)).map((a) => a.name)).toEqual(["Plaid Credit Card"]);
   });
 
   it("a problem with the investments product never throws away the sync", async () => {

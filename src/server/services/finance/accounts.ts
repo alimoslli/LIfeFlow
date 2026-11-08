@@ -1,4 +1,4 @@
-import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { financialAccounts, type AccountType } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
@@ -72,9 +72,15 @@ export async function updateAccountDetails(scope: UserScope, id: string, input: 
 }
 
 export async function archiveAccount(scope: UserScope, id: string) {
+  const now = new Date();
   const [row] = await scope.tx
     .update(financialAccounts)
-    .set({ archivedAt: new Date() })
+    // A bank account the user archives is also marked turned off (`excludedAt`), so a later sync can tell it from one the
+    // bank stopped sharing (which comes back when reshared) and keeps it archived. It can be turned on again from the list.
+    .set({
+      archivedAt: now,
+      excludedAt: sql`case when ${financialAccounts.source} = 'plaid' then coalesce(${financialAccounts.excludedAt}, ${now}) else ${financialAccounts.excludedAt} end`,
+    })
     .where(and(eq(financialAccounts.id, id), eq(financialAccounts.userId, scope.userId)))
     .returning();
   if (!row) throw notFound("Account");
