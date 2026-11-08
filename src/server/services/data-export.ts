@@ -23,6 +23,7 @@ export const EXPORT_TABLES = {
   holdings: schema.holdings,
   savingsOpportunities: schema.savingsOpportunities,
   personalGoals: schema.personalGoals,
+  promises: schema.promises,
   goalCheckins: schema.goalCheckins,
   milestones: schema.lifeMilestones,
   habits: schema.habits,

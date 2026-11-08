@@ -4,6 +4,19 @@ Drafted 2026-10-29 from the owner's decisions. Nothing in this plan is built yet
 
 > **2026-11-04:** the owner set a new direction in `docs/vision.md` (connect the dots, solve instead of warn, a new surface). Where the two disagree, the vision wins. The app structure in section 3 will be revised from it.
 
+## North star (owner, 2026-11-08; ADR 0033)
+
+> LifeFlow is not another AI assistant, and nobody should be able to ask "why not just use ChatGPT?"
+
+1. **It creates its own category: your life, connected, on one screen.** Classes, shifts, money, health and plans shown together, so a person sees how each choice affects the rest.
+2. **The core job is the tiny everyday decisions, before they happen.** Example: at work, one tap (later a watch) shows "two assignments due tonight", so you skip the food run with friends. Going out costs money, calories and the time to study. The app makes that trade-off visible in the moment.
+3. **It proves this by how it works, not by words:** the connections are real, visible and glanceable (Today, notifications, a widget, a watch glance later).
+4. **It must be useful with no AI at all.** The facts are shown so clearly that a smart person catches the problem alone. The assistant stays, because it is what makes this new, but as a layer on top: it explains the trade-off and, when the person wants, acts (block study time, set a reminder).
+5. **It feels like a friend, not a robot:** short, warm, never preachy.
+6. **It is an app in the end.** Every screen earns its place.
+
+Built from this (small first): the assistant's purpose and the read-only `tonight` tool (the next 24 hours from the person's own records, with what a plan costs). Held for the owner's okay on a picture: a "Tonight" card on Today, a pre-decision notification, a widget.
+
 ## 0. Versus Muse from Meta
 
 This section is based on the App Store page, Meta's announcements, and the owner's screenshots and screen recording of the app (Ideas, agent profile, Import memory, Connectors, Appearance).

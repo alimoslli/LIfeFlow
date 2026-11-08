@@ -31,11 +31,15 @@ export type LoadableGroup = Exclude<ToolGroup, "core">;
 export const GROUP_TOOLS: Record<ToolGroup, string[]> = {
   core: [
     "get_daily_briefing",
+    "tonight",
     "list_tasks",
     "create_tasks",
     "update_task",
     "get_task",
     "delete_task",
+    "make_promise",
+    "list_promises",
+    "resolve_promise",
     "save_memory",
     "update_memory",
     "integration_status",

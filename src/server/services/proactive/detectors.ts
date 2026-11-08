@@ -1,4 +1,6 @@
 import { usd } from "@/lib/jarvis-voice";
+import { PROMISE_CHOICES } from "@/lib/promise-voice";
+import { dropStalePromises, keepFinishedTaskPromises, MAX_MOVES, promisesDue, promiseStats } from "../promises";
 import { senderLabel, subjectLabel } from "../../../lib/untrusted";
 import { checkedInOn, openGoals } from "../goal-checkins";
 import { and, desc, eq, gte, inArray, isNotNull, lt, ne } from "drizzle-orm";
@@ -298,6 +300,33 @@ const paydaySplit: Detector = async ({ scope, today }) => {
   ];
 };
 
+/**
+ * Promises the user made. A promise tied to a to-do they finished is kept (a real source, no question). One whose time has come
+ * gets a single "Did you?" with three answers. Nothing is ever kept or broken by waiting: an unanswered one is dropped after a week.
+ */
+const promiseCheckin: Detector = async ({ scope, now }) => {
+  await dropStalePromises(scope, now);
+  const out: Candidate[] = [];
+  const kept = await keepFinishedTaskPromises(scope, now);
+  if (kept.length) {
+    const { keptWeek } = await promiseStats(scope, now);
+    for (const k of kept)
+      out.push({ kind: "promise_kept", topic: "habits", dedupeKey: `promise_kept:${k.id}`, facts: { text: k.text, keptWeek }, priority: 76 });
+  }
+  for (const p of await promisesDue(scope, now)) {
+    const choices = [PROMISE_CHOICES.kept, ...(p.moves < MAX_MOVES ? [PROMISE_CHOICES.moved] : []), PROMISE_CHOICES.broken];
+    out.push({
+      kind: "promise_check",
+      topic: "habits",
+      dedupeKey: `promise_check:${p.id}:${p.moves}`,
+      facts: { text: p.text },
+      action: { type: "promise_check", label: "Answer", promiseId: p.id, choices },
+      priority: 76,
+    });
+  }
+  return out;
+};
+
 /** Consecutive days with every due to-do finished (3+). */
 const taskStreak: Detector = async ({ scope, tz, today }) => {
   const since = addDaysStr(today, -60);
@@ -585,6 +614,7 @@ export const DETECTORS = {
   billsDue,
   paydaySplit,
   taskStreak,
+  promiseCheckin,
   savedMore,
   overdueTasks,
   unusualSpend,
@@ -623,5 +653,7 @@ export const RUNS: Record<string, DetectorName[]> = {
   transaction: ["spendingPace", "unusualSpend", "billsDue", "goalMilestones", "moneyFinds"],
   shift: ["deadlineConflicts"],
   goal: ["goalMilestones"],
-  task: ["taskStreak"],
+  task: ["taskStreak", "promiseCheckin"],
+  // Every 30 minutes (cron): only promises whose time has come.
+  promise: ["promiseCheckin"],
 };

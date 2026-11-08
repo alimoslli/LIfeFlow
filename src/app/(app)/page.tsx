@@ -8,7 +8,7 @@ import { requireUser, withCurrentUser } from "@/server/auth/current-user";
 import { moneyLocked } from "@/server/auth/money-lock";
 import { withUser } from "@/server/db/with-user";
 import { series } from "@/server/db/series";
-import { runDueSlot } from "@/server/services/proactive/engine";
+import { runDueSlot, runProactive } from "@/server/services/proactive/engine";
 import { getBriefing } from "@/server/briefing";
 import { googleConfig } from "@/server/integrations/google";
 import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
@@ -30,6 +30,11 @@ export default async function TodayPage() {
   if (me.accountKind !== "demo")
     await withUser(me.id, (scope) => runDueSlot(scope, me.timezone, me.preferences)).catch((e) =>
       console.error("proactive slot failed", e instanceof Error ? e.name : e),
+    );
+  // Promises whose time has come get their one "Did you?" as soon as the app opens (the 30-minute cron does it when it's closed).
+  if (me.accountKind !== "demo")
+    await withUser(me.id, (scope) => runProactive({ scope, tz: me.timezone, prefs: me.preferences, trigger: "promise" })).catch((e) =>
+      console.error("promise check failed", e instanceof Error ? e.name : e),
     );
   const work = lifeAreas(me.preferences?.lifeStage).work;
   // Calendar, to-dos, goals and milestones are all on the timeline now (owner, 2026-11-08); what stays one tap away
