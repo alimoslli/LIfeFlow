@@ -2,7 +2,7 @@ import { Hammer } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** The little lines for anything that isn't built yet. Picked by `line`, never random, so the server and the browser agree. */
-const LINES = ["Still being built.", "Ali hasn't gotten here yet."] as const;
+const LINES = ["Still being built.", "Still in the testing phase."] as const;
 
 /**
  * Anything not built yet says so with a small tapping hammer and a friendly line, instead of a flat error.
