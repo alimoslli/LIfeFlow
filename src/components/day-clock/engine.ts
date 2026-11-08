@@ -241,6 +241,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     home: 0,
     wrapSl: null as number | null,
     rimFill: 1,
+    hintHidden: false,
   };
   let CM: ClockModel = { arcs: [], marks: [], ps: 0, ws: 0, we: 720, mid: null, word: 0, ahead: false };
   let TM: TrackModel = { nodes: [], stops: [], total: 0, nowX: 0, nowEl: null };
@@ -323,6 +324,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const hintTop = Math.min(G.cy + G.R + 66, H - footH - 18);
     hint.style.top = `${hintTop}px`;
     hint.hidden = hintTop < G.cy + G.R + 50;
+    G.hintHidden = hint.hidden;
     const hr = G.R + 54;
     Object.assign(hit.style, { left: `${G.cx - hr}px`, top: `${G.cy - hr}px`, width: `${hr * 2}px`, height: `${hr * 2}px` });
     faceSvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -407,8 +409,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
         marks.push(mark(it, it.start, label, it.start <= now));
       }
     }
-    // "TOMORROW" is written along tomorrow's ring from the 12 when the ring is long enough to hold it (about 1¾ hours).
-    const word = hasMid && ((we - mid) / 720) * Math.PI * 2 > 0.9 ? 0.8 : 0;
+    // "TOMORROW" is written along tomorrow's ring from the 12 whenever there is one, however short (owner, 2026-11-08).
+    const word = hasMid ? 0.8 : 0;
     // Spread markers so they never overlap; the hairline still points at the real time. The word holds its place.
     type Slot = { a: number; fixed: boolean; room: boolean; m?: Mark };
     marks.forEach((m) => {
@@ -454,7 +456,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   // Inside the face: what's happening now (or next), and today's numbers. Only what the person's data says.
   function faceNow(now: number, we: number) {
     const live = ITEMS.find((it) => !it.allDay && it.end != null && it.start <= now && it.end > now);
-    if (live) return { tag: "Now", text: `${live.title} till ${fmtShort(live.end ?? now)}`, it: live };
+    if (live) {
+      const e = live.end ?? now;
+      const end = fmt(e).slice(-2) === fmt(now).slice(-2) ? fmtShort(e).slice(0, -3) : fmtShort(e);
+      return { tag: "Now", text: `${live.title} till ${end}`, it: live };
+    }
     const next = ITEMS.filter((it) => !it.allDay && it.start > now && it.start <= we).sort((a, b) => a.start - b.start)[0];
     if (next) return { tag: dayOf(next.start) > dayOf(now) ? "Tomorrow" : "Next", text: `${next.title} ${fmtShort(next.start)}`, it: next };
     return null;
@@ -515,16 +521,17 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     // Inside the face: what's happening now (or next) at the top, today's numbers at the bottom. Never a made-up number.
     stepsG.textContent = "";
     const fn = faceNow(now, CM.we);
-    const maxChars = Math.max(10, Math.floor(R * 0.17));
+    const maxChars = Math.max(11, Math.floor(R * 0.2));
     const cut = (x: string) => (x.length > maxChars ? `${x.slice(0, maxChars - 1).trimEnd()}…` : x);
     if (fn) {
-      const y = -R * 0.34;
-      svg("text", { x: 0, y: y - 15, "text-anchor": "middle", class: "dc-face-tag" }, stepsG).textContent = fn.tag;
+      // between the 12 and the hub, clear of both
+      const y = -R * 0.27;
+      svg("text", { x: 0, y: y - 14, "text-anchor": "middle", class: "dc-face-tag" }, stepsG).textContent = fn.tag;
       svg("text", { x: 0, y, "text-anchor": "middle", class: "dc-face-now" }, stepsG).textContent = cut(fn.text);
     }
     const stats = faceStats();
     stats.forEach((line, i) => {
-      svg("text", { x: 0, y: R * 0.34 + i * 15, "text-anchor": "middle", class: "dc-steps" }, stepsG).textContent = line;
+      svg("text", { x: 0, y: R * 0.3 + i * 14, "text-anchor": "middle", class: "dc-steps" }, stepsG).textContent = line;
     });
     // markers: a hairline and one line of text (icons live in the morph layer)
     leaders.textContent = "";
@@ -551,6 +558,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       lab.style.transform = `translate(${(m.cx - w / 2).toFixed(1)}px, ${(m.cy + 9).toFixed(1)}px)`;
       m.lab = lab;
     }
+    // "Tap the clock" steps out when a marker's label sits where it would go
+    const hintTop = parseFloat(hint.style.top) || 0;
+    const hw = hint.textContent ? hint.textContent.length * 3.4 : 0;
+    hint.hidden =
+      G.hintHidden || CM.marks.some((m) => m.lab && m.cy + 9 + m.lab.offsetHeight + 4 > hintTop && Math.abs(m.cx - G.cx) < hw + m.lab.offsetWidth / 2);
     const next = ITEMS.filter((it) => !it.allDay && t0(it) > now).sort((a, b) => t0(a) - t0(b))[0];
     hit.setAttribute(
       "aria-label",
@@ -663,7 +675,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     np.style.left = `${TM.nowX}px`;
     const mDeg = ((S.now % 60) / 60) * 360;
     const hDeg = (((S.now / 60) % 12) / 12) * 360;
-    np.innerHTML = `<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" transform="rotate(${mDeg.toFixed(1)} 7 7)"/><path d="M7 7V4.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" transform="rotate(${hDeg.toFixed(1)} 7 7)"/></svg><span>${fmt(S.now)}</span><i></i>`;
+    np.innerHTML = `<span class="dc-now-pill"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" transform="rotate(${mDeg.toFixed(1)} 7 7)"/><path d="M7 7V4.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" transform="rotate(${hDeg.toFixed(1)} 7 7)"/></svg><span>${fmt(S.now)}</span></span><i></i>`;
     np.setAttribute("aria-label", `Now, ${fmt(S.now)}. Back to the clock`);
     np.addEventListener("click", () => close());
     TM.nowEl = np;

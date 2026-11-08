@@ -25,31 +25,35 @@ Owner's concept, 2026-11-07. The look is set by the owner's two GIFs (`owner-con
   - a thin grey circle;
   - busy blocks are mint arcs on it, with a soft glow;
   - spends are small mint pins on the rim at the minute they happened.
-- **What the rim covers.** A 12-hour face can't show 9 AM and 9 PM apart, so it shows the 12 hours around now:
-  - the last 2 hours, faded;
-  - the next 10 hours, bright.
-
-  As the day goes on, the arcs and icons turn with it. The whole day, and every other day, is one tap away on the timeline. *(Decided 2026-11-07: B, the 12 hours around now. The COO chose it on the owner's behalf, following the recommendation; the owner can still switch to A, the whole day on one face.)*
-- **When the rim is busy, it shows only what's ahead** (owner, 2026-11-08: "when it's full of data… it shows what's after only, but it takes the whole circle so it's not crowded"):
-  - **The rule:** more than 5 markers in the 12 hours around now switches the rim to ahead only. The past 2 hours drop off, and the next 12 hours take the whole circle.
-  - **The circle** starts at the hour hand and runs clockwise to the same hour tomorrow morning or tonight.
-  - **What disappears** is only the faded past (finished blocks, spends already made). It stays on the timeline, one tap away.
-  - **The switch is automatic.** It switches back when the rim calms down.
-  - The prototype's "A busier day" switch adds made-up extras to today to show this; the owner's own day stays as it is.
-- **After 12 it's tomorrow, and the rim shows it** (owner, 2026-11-08: "it has to be obvious that that's tomorrow, because after that 12 it's tomorrow and it starts"). From about 2 PM, the 10 hours ahead reach past midnight:
-  - **A step at the 12:** a short mint step and a dot carry the rim outward, 7 px, onto tomorrow's lap. Today's part of the rim stays on the inner lap, so the rim reads as one turn of a spiral.
-  - **The word:** "TOMORROW" in small mint capitals runs along tomorrow's lap from the 12, when that lap is long enough to hold it (about an hour or more). Markers keep clear of it.
-  - **Tomorrow's arcs and pins** sit on the outer lap. A block that crosses midnight (bedtime) steps out at the 12 with the rim.
-  - **Tomorrow's markers** carry a small mint "TOMORROW" under their time ("8:00 AM / TOMORROW").
-  - **The screen reader** says "Next: Run with Sam at 8:00 AM tomorrow".
-  - **On the open timeline**, tonight's midnight is a mint tick labelled "TOMORROW", with a little more room around it. Later midnights keep the day's name.
+- **What the rim covers (owner, 2026-11-08): always the next 12 hours, starting at the hand.**
+  > "There will be another line under the word tomorrow, exactly over the clock, showing tomorrow's line with tomorrow's events, ending where we are at today."
+  - **Today's part** rides the clock's own ring.
+  - **Tomorrow's ring:** after 12 at night it's tomorrow, on a second ring just outside the clock (11 px out).
+    - It runs from the 12 round to the hand, so it ends at the same place on the clock as now, with a small dot there.
+    - A mint step and dot at the 12 carry the line out.
+    - "TOMORROW" is written along it from the 12 whenever it's there, however short. Markers keep clear of the word.
+    - It appears from noon, short at first, and by late evening runs nearly all the way round.
+  - **The faded past:** the last 2 hours stay on, faded, only where tomorrow's ring frees that part of the clock, so the two never overlap. Before noon there's no faded past; a block already running still shows "till 4:30".
+  - **All-day deadlines and bills** show as due by the end of their day, when that falls in the 12 hours ("due tonight", "$45 due").
+  - **Tomorrow's markers** carry a small mint "TOMORROW" under their time ("8:00 AM / TOMORROW"). The screen reader says "Tomorrow: Run with Sam 8 AM".
+  - **On the open timeline**, tonight's midnight is a mint tick labelled "TOMORROW", with more room around it. Later midnights keep the day's name.
+  - **When the rim is busy** (more than 6 markers) it drops the faded past and keeps only what's ahead (owner: "when it's full of data… it shows what's after only, but it takes the whole circle so it's not crowded"). The past stays on the timeline.
+  - *(This replaces the earlier "last 2, next 10" window, decided 2026-11-07.)*
 - **The markers:** one icon plus one line of text around the rim, joined to the rim by a hairline (frame 1).
   - Blocks show their start time ("6:00 PM"). A block already running shows "till 4:30 PM".
   - Spends show the amount ("$14.20").
   - Markers never overlap: they spread apart, and the hairline points to the real time.
   - Things that are over are faded.
-- **Steps (Apple Health):** one quiet line inside the face, above the 6 ("6,240 of 15,000 steps"). It is not a tile on the timeline (see section 4).
-- **Sleep (Apple Health):** the usual bedtime is a marker on the rim (🌙 11:00 PM). Sleep is a soft band on the timeline, not a tile.
+- **Inside the face: the important data** (owner, 2026-11-08: "we should have the important data on there and not just focus on simplicity… as much as you want it to be functional and productive"):
+  - **Top (between the 12 and the hub):**
+    - what's happening now ("NOW · Work till 4:30");
+    - if nothing is, what's next ("NEXT · Class 6 PM");
+    - late in the day, tomorrow's first thing ("TOMORROW · Run with Sam 8 AM").
+  - **Bottom:** today's numbers, only the real ones:
+    - steps and last night's sleep ("6,240 steps · 7h 18m sleep");
+    - what was spent today ("$69.20 spent today"), only while the Money lock is open.
+  - No step goal is shown until one is stored, and no bedtime until Apple Health sends times.
+  - The steps and sleep are not tiles on the timeline (see section 4).
 - **What appears on the clock:**
   - Only real things from connections: calendars, school, work, the bank, Apple Health.
   - A spend appears only after it happens; nothing is guessed onto the rim.
@@ -155,7 +159,7 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
   - **Live time:** the clock follows the real time, redrawn each minute but never while the timeline is open or moving, and it fetches again when the day turns.
   - **State:** `data-state` (clock, moving, timeline) tells tests and assistive tech what it's doing.
 - **Not shown yet, honestly:**
-  - **Spends:** the bank feed gives a date but no time, so spends aren't pinned on the rim. Adding the time Plaid sometimes sends needs a database change, which is held for the owner.
+  - **Spend pins:** the bank feed gives a date but no time, so spends aren't pinned on the rim; the face shows today's total instead. Adding the time Plaid sometimes sends needs a database change, which is held for the owner.
   - **Sleep:** Apple Health sends hours per night but no bedtime, so there's no bedtime marker.
   - **A step goal:** none is stored, so the face shows the step count with no goal.
 - **Tests:**

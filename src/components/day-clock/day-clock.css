@@ -286,12 +286,16 @@
   opacity: 0;
   pointer-events: none;
 }
+/* Every button is a real 44 px box; the pill you see is the middle 36 px (transparent borders above and below). */
 .dc-days button {
   position: relative;
-  height: 36px;
-  min-width: 0;
+  height: 44px;
+  min-width: 44px;
   padding: 0 6px;
-  border-radius: 18px;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  background-clip: padding-box;
+  border-radius: 22px;
   font-size: 0.95rem;
   display: grid;
   place-items: center;
@@ -299,28 +303,9 @@
 }
 .dc-days .dc-arrow {
   color: var(--muted);
-  min-width: 30px;
+  min-width: 44px;
   padding: 0;
   flex: none;
-}
-/* 44 px to tap, whatever the pill looks like */
-.dc-days button::before,
-.dc-now::before,
-.dc .dc-d-open::before {
-  content: "";
-  position: absolute;
-  top: -4px;
-  bottom: -4px;
-  left: 0;
-  right: 0;
-}
-.dc-days .dc-arrow::before {
-  left: -7px;
-  right: -7px;
-}
-.dc-now::before {
-  top: -9px;
-  bottom: -9px;
 }
 .dc-days .dc-on {
   background: var(--accent);
@@ -393,12 +378,21 @@
 .dc-tile[aria-pressed="true"] {
   box-shadow: inset 0 0 0 1.5px var(--accent);
 }
-@media (max-width: 380px) {
+/* Phones: seven days fit as 44 px targets without the arrows (tap a day, or scroll the line). */
+@media (max-width: 520px) {
   .dc-days .dc-arrow {
     display: none;
   }
+}
+@media (max-width: 380px) {
+  .dc-days {
+    inset: 0 6px;
+  }
   .dc-days button {
     font-size: 0.9rem;
+  }
+  .dc-days .dc-on {
+    padding: 0 10px;
   }
   .dc-tiles {
     gap: 6px;
@@ -559,9 +553,16 @@
 .dc-mapped .dc-n-ic {
   visibility: hidden;
 }
+/* the now pill: a 44 px button around the 26 px pill you see */
 .dc-now {
   position: absolute;
-  top: 24px;
+  top: 15px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  transform: translateX(-50%);
+}
+.dc-now-pill {
   height: 26px;
   padding: 0 10px 0 7px;
   border-radius: 13px;
@@ -573,14 +574,13 @@
   align-items: center;
   gap: 5px;
   white-space: nowrap;
-  transform: translateX(-50%);
   font-variant-numeric: tabular-nums;
 }
 .dc-now::after {
   content: "";
   position: absolute;
   left: 50%;
-  top: 26px;
+  top: 35px;
   width: 2px;
   height: 20px;
   margin-left: -1px;
@@ -589,7 +589,7 @@
 .dc-now i {
   position: absolute;
   left: 50%;
-  top: 40px;
+  top: 49px;
   width: 12px;
   height: 12px;
   margin-left: -6px;
@@ -661,8 +661,8 @@
 }
 .dc .dc-d-open {
   position: relative;
-  margin-top: 10px;
-  height: 36px;
+  margin-top: 8px;
+  height: 44px;
   padding: 0 14px;
   border-radius: 18px;
   background: var(--accent-soft);
