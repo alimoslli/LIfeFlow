@@ -69,7 +69,8 @@ export const taskTools = [
   }),
   defineTool({
     name: "create_tasks",
-    description: "Create one or more tasks (with optional subtasks). Returns the saved records with ids.",
+    description:
+      'Create one or more to-dos (with optional subtasks): one-off errands and tasks with a clear finish line ("pick up my meds", "email my professor"). A commitment about their own follow-through ("I\'m not eating out tonight") is a promise (make_promise) and a weeks-long outcome is a goal. Returns the saved records with ids.',
     schema: z.object({ tasks: z.array(newTask).min(1).max(50) }),
     mutates: true,
     async execute(a, ctx) {
