@@ -27,6 +27,8 @@ export type ClockItem = {
   /** Where it came from, in plain words ("From Google Calendar"). */
   source: string;
   subtitle: string | null;
+  /** A bill's amount, positive (only when money is shown). */
+  amountCents?: number;
 };
 
 export type ClockDay = { offset: number; date: string; short: string; long: string };
@@ -40,6 +42,10 @@ export type ClockData = {
   items: ClockItem[];
   /** Today's steps from Apple Health, when it sends them. Null means nothing to show (never a made-up number). */
   steps: number | null;
+  /** Last night's sleep in hours, from Apple Health or what the person logged. */
+  sleepHours: number | null;
+  /** What was spent today, from the bank (null while the Money lock is on, with no bank, or nothing spent yet). */
+  spentTodayCents: number | null;
   /** True when nothing is connected or added yet: the clock shows its hands and one way to start. */
   empty: boolean;
 };

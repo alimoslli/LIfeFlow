@@ -2,6 +2,8 @@ import { afterAll, describe, expect, it } from "vitest";
 import { closeDb } from "@/server/db/client";
 import { createEvent } from "@/server/services/calendar";
 import { dayClockData } from "@/server/services/day-clock";
+import { createManualAccount } from "@/server/services/finance/accounts";
+import { createTransaction } from "@/server/services/finance/transactions";
 import { logHealth } from "@/server/services/health";
 import { createAssignment, createCourse } from "@/server/services/school";
 import { createEmployer, createShift } from "@/server/services/work";
@@ -49,11 +51,48 @@ describe("day clock data", () => {
     expect(byTitle["Exam 2"]).toMatchObject({ kind: "due", cat: "due", start: 2880 + 600, source: "From your classes" });
   });
 
+  it("adds last night's sleep, and today's spending only while money is shown", async () => {
+    const { run } = await makeUser("Money Owner");
+    const [shown, hidden] = await run(async (s) => {
+      await logHealth(s, TZ, { metric: "sleep_hours", value: 7.3, date: "2026-11-07" }, NOW);
+      const bank = await createManualAccount(s, {
+        name: "Checking",
+        type: "depository",
+        subtype: "checking",
+        institutionName: "Chase",
+        currentBalanceCents: 50000,
+      });
+      for (const [description, amountCents, date] of [
+        ["Lunch at work", -1420, "2026-11-07"],
+        ["Shell gas", -5500, "2026-11-07"],
+        ["Yesterday's coffee", -540, "2026-11-06"],
+      ] as const)
+        await createTransaction(s, {
+          accountId: bank.id,
+          date,
+          description,
+          merchantName: description,
+          amountCents,
+          kind: "expense",
+          categoryId: null,
+          pending: false,
+        });
+      return [await dayClockData(s, TZ, NOW, { money: true }), await dayClockData(s, TZ, NOW)];
+    });
+    expect(shown.sleepHours).toBeCloseTo(7.3);
+    expect(shown.spentTodayCents).toBe(6920);
+    // The Money lock is on (or money isn't asked for): nothing about money, not even a zero.
+    expect(hidden.spentTodayCents).toBeNull();
+    expect(hidden.items.some((i) => i.amountCents != null)).toBe(false);
+  });
+
   it("is empty for someone with nothing connected or added, and never makes up steps", async () => {
     const { run } = await makeUser("New Person");
     const data = await run((s) => dayClockData(s, TZ, NOW));
     expect(data.items).toEqual([]);
     expect(data.steps).toBeNull();
+    expect(data.sleepHours).toBeNull();
+    expect(data.spentTodayCents).toBeNull();
     expect(data.empty).toBe(true);
   });
 });

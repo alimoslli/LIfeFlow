@@ -11,6 +11,8 @@ import { closeDb, getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { createEvent } from "@/server/services/calendar";
+import { createManualAccount } from "@/server/services/finance/accounts";
+import { createTransaction } from "@/server/services/finance/transactions";
 import { logHealth } from "@/server/services/health";
 import { createAssignment, createCourse } from "@/server/services/school";
 import { createTask } from "@/server/services/tasks";
@@ -43,6 +45,28 @@ async function main() {
     await createAssignment(s, TZ, { courseId: chem.id, title: "Lab report", dueDate: d(3), dueTime: "23:59" });
     await createTask(s, TZ, { title: "Pay phone bill", dueDate: d(3), dueTime: "09:00", priority: "high" });
     await logHealth(s, TZ, { metric: "steps", value: 6240, date: today });
+    await logHealth(s, TZ, { metric: "sleep_hours", value: 7.3, date: today });
+    const bank = await createManualAccount(s, {
+      name: "Everyday Checking",
+      type: "depository",
+      subtype: "checking",
+      institutionName: "Chase",
+      currentBalanceCents: 84217,
+    });
+    for (const [description, amountCents] of [
+      ["Lunch at work", -1420],
+      ["Shell gas", -5500],
+    ] as const)
+      await createTransaction(s, {
+        accountId: bank.id,
+        date: today,
+        description,
+        merchantName: description,
+        amountCents,
+        kind: "expense",
+        categoryId: null,
+        pending: false,
+      });
   });
   console.log(`Seeded a week around ${today} for ${email}`);
 }

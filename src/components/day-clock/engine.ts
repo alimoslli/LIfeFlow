@@ -24,7 +24,8 @@ type Mark = {
   line: SVGLineElement | null;
   lab: HTMLElement | null;
 };
-type ClockModel = { arcs: Arc[]; marks: Mark[]; ws: number; we: number; mid: number | null; word: number; ahead: boolean };
+/** ws..we: the 12 hours ahead (from the hand); ps: where the faded past starts (ps <= ws). */
+type ClockModel = { arcs: Arc[]; marks: Mark[]; ps: number; ws: number; we: number; mid: number | null; word: number; ahead: boolean };
 type Node = { it: ClockItem; t: number; past: boolean; x: number; el: HTMLButtonElement | null };
 type Stop = { t: number; kind: "item" | "mid" | "now"; n?: Node; d?: number; x: number };
 type TrackModel = { nodes: Node[]; stops: Stop[]; total: number; nowX: number; nowEl: HTMLButtonElement | null };
@@ -57,10 +58,10 @@ export type DayClockOptions = {
 export type DayClockHandle = { update: (data: ClockData) => void; destroy: () => void };
 
 const NS = "http://www.w3.org/2000/svg";
-// More than this many markers in the 12 hours around now and the rim drops the past: it shows only what's ahead,
-// and the next 12 hours take the whole circle (owner, 2026-11-08).
-const BUSY = 5;
-const LAP = 7;
+// More than this many markers on the rim and it drops the faded past, keeping only what's ahead (owner, 2026-11-08).
+const BUSY = 6;
+// How far tomorrow's ring sits outside the clock's own ring.
+const LAP = 11;
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -85,6 +86,8 @@ function fmt(min: number) {
   return `${h}:${String(mm).padStart(2, "0")} ${ap}`;
 }
 const fmtShort = (min: number) => fmt(min).replace(":00", "");
+/** "$45", "$14.20". */
+const money = (cents: number) => `$${(Math.abs(cents) / 100).toFixed(2).replace(/\.00$/, "")}`;
 const ang = (min: number) => (((((min / 60) % 12) + 12) % 12) / 12) * Math.PI * 2;
 const pol = (a: number, r: number): Pt => [r * Math.sin(a), -r * Math.cos(a)];
 function arcPath(a1: number, a2: number, r: number) {
@@ -239,7 +242,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     wrapSl: null as number | null,
     rimFill: 1,
   };
-  let CM: ClockModel = { arcs: [], marks: [], ws: 0, we: 720, mid: null, word: 0, ahead: false };
+  let CM: ClockModel = { arcs: [], marks: [], ps: 0, ws: 0, we: 720, mid: null, word: 0, ahead: false };
   let TM: TrackModel = { nodes: [], stops: [], total: 0, nowX: 0, nowEl: null };
   let MAP: Morph[] = [];
   const COL = { accent: [0.5, 0.88, 0.68], grey: [0.23, 0.24, 0.23], fill: [0.07, 0.08, 0.08] };
@@ -261,8 +264,10 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   const minDay = () => data.days[0]?.offset ?? 0;
   const maxDay = () => data.days[data.days.length - 1]?.offset ?? 0;
   const timeOf = (it: ClockItem) => (it.allDay ? (it.kind === "due" ? "Due" : "All day") : fmt(it.start));
+  const billOf = (it: ClockItem) => (it.amountCents != null ? `${money(it.amountCents)} due` : null);
   const isExam = (it: ClockItem) => /\b(exam|midterm|final|quiz|test)\b/i.test(it.title);
-  const nodeName = (it: ClockItem) => (it.kind === "due" && !isExam(it) ? `${it.title} due` : it.title);
+  const nodeName = (it: ClockItem) =>
+    it.amountCents != null ? `${it.title} · ${billOf(it)}` : it.kind === "due" && !isExam(it) ? `${it.title} due` : it.title;
 
   /* ---------- haptics: native vibration where it exists, the iOS 18 switch tap where it doesn't ---------- */
   function haptic(ms: number) {
@@ -349,12 +354,18 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
 
   /* ---------- the clock: the 12 hours around now (or, when busy, the 12 hours ahead) ---------- */
   function pickClock(now: number) {
-    const around = clockModel(now, false);
-    return around.marks.length > BUSY ? clockModel(now, true) : around;
+    const full = clockModel(now, false);
+    return full.marks.length > BUSY ? clockModel(now, true) : full;
   }
-  function clockModel(now: number, ahead: boolean): ClockModel {
-    const ws = ahead ? now : now - 120;
-    const we = ahead ? now + 720 : now + 600;
+  // The rim is always the next 12 hours, starting at the hand. Today's part rides the clock's own ring; after 12 at
+  // night it's tomorrow, on a second ring just outside it that runs from the 12 round to the hand (owner, 2026-11-08).
+  // The last 2 hours stay on, faded, wherever tomorrow's ring frees that part of the clock (so nothing ever overlaps).
+  function clockModel(now: number, dropPast: boolean): ClockModel {
+    const ws = now;
+    const we = now + 720;
+    const mid = (dayOf(now) + 1) * 1440;
+    const hasMid = mid > ws && mid < we;
+    const pastFrom = dropPast ? now : Math.min(now, Math.max(now - 120, mid - 720));
     const arcs: Arc[] = [];
     const marks: Mark[] = [];
     const mark = (it: ClockItem, t: number, label: string, past: boolean): Mark => ({
@@ -373,23 +384,30 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       lab: null,
     });
     for (const it of ITEMS) {
-      if (it.allDay) continue;
+      if (it.allDay) {
+        // an all-day deadline or bill is due by the end of its day
+        if (it.kind !== "due") continue;
+        const t = dayOf(it.start) * 1440 + 1439;
+        if (t < now || t > we) continue;
+        marks.push(mark(it, t, it.amountCents != null ? `${money(it.amountCents)} due` : dayOf(t) === dayOf(now) ? "due tonight" : "due", false));
+        continue;
+      }
       if (it.end != null) {
-        if (it.end <= ws || it.start >= we) continue;
-        const s = Math.max(it.start, ws);
+        if (it.end <= pastFrom || it.start >= we) continue;
+        const s = Math.max(it.start, pastFrom);
         const e = Math.min(it.end, we);
         if (s < now) arcs.push({ a: s, b: Math.min(e, now), past: true, lap: 0, els: [] });
         if (e > now) arcs.push({ a: Math.max(s, now), b: e, past: false, lap: 0, els: [] });
-        if (it.start >= ws) marks.push(mark(it, it.start, fmt(it.start), it.end <= now));
-        else marks.push(mark(it, it.end > now ? (now + e) / 2 : (ws + it.end) / 2, `till ${fmt(it.end)}`, it.end <= now));
+        if (it.start >= pastFrom) marks.push(mark(it, it.start, fmt(it.start), it.end <= now));
+        else if (it.end > now) marks.push(mark(it, (now + e) / 2, `till ${fmt(it.end)}`, false));
+        else marks.push(mark(it, (pastFrom + it.end) / 2, `till ${fmt(it.end)}`, true));
       } else {
-        if (it.start < ws || it.start > we) continue;
-        marks.push(mark(it, it.start, `${isExam(it) ? "" : "due "}${fmt(it.start)}`, it.start <= now));
+        if (it.start < pastFrom || it.start > we) continue;
+        const label = it.amountCents != null ? `${money(it.amountCents)} due` : `${isExam(it) ? "" : "due "}${fmt(it.start)}`;
+        marks.push(mark(it, it.start, label, it.start <= now));
       }
     }
-    // "Tomorrow" is written along tomorrow's lap from the 12 when the lap is long enough to hold it (about an hour).
-    const mid = (dayOf(now) + 1) * 1440;
-    const hasMid = mid > ws && mid < we;
+    // "TOMORROW" is written along tomorrow's ring from the 12 when the ring is long enough to hold it (about 1¾ hours).
     const word = hasMid && ((we - mid) / 720) * Math.PI * 2 > 0.9 ? 0.8 : 0;
     // Spread markers so they never overlap; the hairline still points at the real time. The word holds its place.
     type Slot = { a: number; fixed: boolean; room: boolean; m?: Mark };
@@ -422,7 +440,6 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       if (!moved) break;
     }
     for (const s of slots) if (s.m) s.m.a = s.a;
-    // After 12 at night it's tomorrow: arcs split at midnight, and what's past it rides on tomorrow's lap.
     if (hasMid) {
       for (const a of arcs.splice(0)) {
         if (a.a < mid && a.b > mid) arcs.push({ ...a, b: mid }, { ...a, a: mid, els: [] });
@@ -431,7 +448,24 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     }
     for (const a of arcs) a.lap = hasMid && a.a >= mid ? 1 : 0;
     for (const m of marks) m.lap = hasMid && m.t >= mid ? 1 : 0;
-    return { arcs, marks, ws, we, mid: hasMid ? mid : null, word, ahead };
+    return { arcs, marks, ps: pastFrom, ws, we, mid: hasMid ? mid : null, word, ahead: dropPast };
+  }
+
+  // Inside the face: what's happening now (or next), and today's numbers. Only what the person's data says.
+  function faceNow(now: number, we: number) {
+    const live = ITEMS.find((it) => !it.allDay && it.end != null && it.start <= now && it.end > now);
+    if (live) return { tag: "Now", text: `${live.title} till ${fmtShort(live.end ?? now)}`, it: live };
+    const next = ITEMS.filter((it) => !it.allDay && it.start > now && it.start <= we).sort((a, b) => a.start - b.start)[0];
+    if (next) return { tag: dayOf(next.start) > dayOf(now) ? "Tomorrow" : "Next", text: `${next.title} ${fmtShort(next.start)}`, it: next };
+    return null;
+  }
+  function faceStats() {
+    const first: string[] = [];
+    if (data.steps != null) first.push(`${data.steps.toLocaleString("en-US")} steps`);
+    if (data.sleepHours != null) first.push(`${Math.floor(data.sleepHours)}h ${String(Math.round((data.sleepHours % 1) * 60)).padStart(2, "0")}m sleep`);
+    const lines = first.length ? [first.join(" · ")] : [];
+    if (data.spentTodayCents != null) lines.push(`${money(data.spentTodayCents)} spent today`);
+    return lines;
   }
 
   function rebuildClock() {
@@ -445,27 +479,29 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const [tx, ty] = pol(ma + Math.PI, R * 0.09);
     for (const [k, v] of Object.entries({ x1: 0, y1: 0, x2: hx, y2: hy })) hourH.setAttribute(k, String(v));
     for (const [k, v] of Object.entries({ x1: tx, y1: ty, x2: mx, y2: my })) minH.setAttribute(k, String(v));
-    // The rim: one circle, or (when tonight's midnight is on it) today's lap stepping out at the 12 onto tomorrow's.
+    // The rim is the clock's own ring. After 12 at night, tomorrow's ring runs just outside it, from the 12 round to the hand.
+    rimC.setAttribute("d", `M0 ${-R}A${R} ${R} 0 1 1 0 ${R}A${R} ${R} 0 1 1 0 ${-R}`);
     dayG.textContent = "";
     if (CM.mid != null) {
-      const a0 = ang(CM.ws);
       const am = ang(CM.mid);
-      const [sx, sy] = pol(am, R + LAP);
-      const tmrw = arcPath(am, ang(CM.we), R + LAP).replace(/^M[^A]*/, "");
-      rimC.setAttribute("d", `${arcPath(a0, am, R)}L${sx.toFixed(2)} ${sy.toFixed(2)}${tmrw}`);
+      const end = ang(CM.we);
+      const r2 = R + LAP;
+      svg("path", { d: arcPath(am, end, r2), class: "dc-tmrw-ring" }, dayG);
       const [ix, iy] = pol(am, R);
+      const [sx, sy] = pol(am, r2);
       svg("line", { x1: ix, y1: iy, x2: sx, y2: sy, class: "dc-step" }, dayG);
       svg("circle", { cx: sx, cy: sy, r: 2.6, class: "dc-accent-fill" }, dayG);
+      // where tomorrow's line ends: the same place on the clock as now
+      const [ex, ey] = pol(end, r2);
+      svg("circle", { cx: ex, cy: ey, r: 2.2, class: "dc-tmrw-end" }, dayG);
       if (CM.word) {
-        const rt = R + LAP + 7;
+        const rt = r2 + 8;
         const [px, py] = pol(am + 0.07, rt);
         const [qx, qy] = pol(am + 0.07 + CM.word, rt);
         svg("path", { id: "dc-tmrw", d: `M${px.toFixed(2)} ${py.toFixed(2)}A${rt} ${rt} 0 0 1 ${qx.toFixed(2)} ${qy.toFixed(2)}`, fill: "none" }, dayG);
         const t = svg("text", { class: "dc-word" }, dayG);
         svg("textPath", { href: "#dc-tmrw" }, t).textContent = "TOMORROW";
       }
-    } else {
-      rimC.setAttribute("d", `M0 ${-R}A${R} ${R} 0 1 1 0 ${R}A${R} ${R} 0 1 1 0 ${-R}`);
     }
     arcsG.textContent = "";
     for (const a of CM.arcs) {
@@ -476,12 +512,20 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       a.els.push(svg("path", { d, class: "dc-arc", opacity: op }, arcsG));
     }
     G.rimFill = 1;
-    // Steps (Apple Health), when it sends them: one quiet line inside the face. Never a made-up number.
+    // Inside the face: what's happening now (or next) at the top, today's numbers at the bottom. Never a made-up number.
     stepsG.textContent = "";
-    if (data.steps != null) {
-      const t = svg("text", { x: 0, y: R * 0.44, "text-anchor": "middle", class: "dc-steps" }, stepsG);
-      t.innerHTML = `<tspan class="dc-steps-n">${data.steps.toLocaleString("en-US")}</tspan> steps${R >= 104 ? " today" : ""}`;
+    const fn = faceNow(now, CM.we);
+    const maxChars = Math.max(10, Math.floor(R * 0.17));
+    const cut = (x: string) => (x.length > maxChars ? `${x.slice(0, maxChars - 1).trimEnd()}…` : x);
+    if (fn) {
+      const y = -R * 0.34;
+      svg("text", { x: 0, y: y - 15, "text-anchor": "middle", class: "dc-face-tag" }, stepsG).textContent = fn.tag;
+      svg("text", { x: 0, y, "text-anchor": "middle", class: "dc-face-now" }, stepsG).textContent = cut(fn.text);
     }
+    const stats = faceStats();
+    stats.forEach((line, i) => {
+      svg("text", { x: 0, y: R * 0.34 + i * 15, "text-anchor": "middle", class: "dc-steps" }, stepsG).textContent = line;
+    });
     // markers: a hairline and one line of text (icons live in the morph layer)
     leaders.textContent = "";
     callouts.textContent = "";
@@ -510,8 +554,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const next = ITEMS.filter((it) => !it.allDay && t0(it) > now).sort((a, b) => t0(a) - t0(b))[0];
     hit.setAttribute(
       "aria-label",
-      `Today. Now ${fmt(now)}.${next ? ` Next: ${next.title} at ${fmt(t0(next))}${dayOf(t0(next)) > dayOf(now) ? " tomorrow" : ""}.` : ""}${
-        data.steps != null ? ` ${data.steps.toLocaleString("en-US")} steps today.` : ""
+      `Today. Now ${fmt(now)}.${fn ? ` ${fn.tag}: ${fn.text}.` : next ? ` Next: ${next.title} at ${fmt(t0(next))}${dayOf(t0(next)) > dayOf(now) ? " tomorrow" : ""}.` : ""}${
+        stats.length ? ` ${stats.join(". ")}.` : ""
       } Open your day as a timeline.`,
     );
   }
@@ -638,7 +682,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     for (const n of TM.nodes) n.el?.classList.remove("dc-mapped");
     const capL = G.cx - G.capHW + 18;
     const capR = G.cx + G.capHW - 18;
-    let turn = Math.PI - ang(CM.ws);
+    let turn = Math.PI - ang(CM.ps);
     turn = ((((turn + Math.PI) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) - Math.PI;
     G.turn = turn;
     MAP = CM.marks.map((m) => {
@@ -650,7 +694,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const th0 = Math.atan2(m.ix - G.cx, -(m.iy - G.cy));
       const r0 = Math.hypot(m.ix - G.cx, m.iy - G.cy);
       // where this marker sits once the ring has turned (the window's seam at the bottom): earlier is left, later is right
-      const rel = ((((m.t - CM.ws) / 720) % 1) + 1) % 1;
+      const rel = clamp((m.t - CM.ps) / (CM.we - CM.ps), 0, 1);
       const e = html("div", "dc-mi", micons);
       e.textContent = m.it.icon;
       node?.el?.classList.add("dc-mapped");
@@ -755,7 +799,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     }
     if (due) {
       const t = t0(due);
-      const time = ahead ? dayName(dayOf(t)) : due.allDay ? "today" : fmtShort(t);
+      const time = ahead ? dayName(dayOf(t)) : (billOf(due) ?? (due.allDay ? "today" : fmtShort(t)));
       out.push({ it: due, icon: "due", name: due.title, time, label: `${due.title}, due ${dayLong(dayOf(t))}${due.allDay ? "" : ` at ${fmt(t)}`}`, ahead });
     }
     // in the order they happen; a deadline on a later day goes last
@@ -821,7 +865,9 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
           ? "Open the class"
           : href.startsWith("/tasks")
             ? "Open to-dos"
-            : "Open";
+            : href.startsWith("/finances")
+              ? "Open bills"
+              : "Open";
   function showDetail() {
     const it = S.sel ? ITEMS.find((x) => x.id === S.sel) : undefined;
     if (!it) {
@@ -833,7 +879,15 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     let kick = dayLong(dayOf(t));
     if (dayOf(t) === 0) kick = it.end != null && t <= S.now && it.end > S.now ? "Now" : t > S.now ? "Up next" : "Earlier today";
     else if (dayOf(t) > 0 && S.day === 0) kick += dayOf(t) === 1 ? " · tomorrow" : ` · in ${dayOf(t)} days`;
-    const when = it.allDay ? (it.kind === "due" ? "Due today" : "All day") : it.end != null ? `${fmt(it.start)} – ${fmt(it.end)}` : `Due ${fmt(it.start)}`;
+    const when = billOf(it)
+      ? `${billOf(it)} ${dayOf(t) === dayOf(S.now) ? "today" : dayName(dayOf(t))}`
+      : it.allDay
+        ? it.kind === "due"
+          ? "Due by the end of the day"
+          : "All day"
+        : it.end != null
+          ? `${fmt(it.start)} – ${fmt(it.end)}`
+          : `Due ${fmt(it.start)}`;
     const sub = [it.subtitle, it.source].filter(Boolean).join(" · ");
     detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${esc(it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-t">${esc(
       it.title,
@@ -934,7 +988,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   function fillRim(f: number) {
     if (G.rimFill === f) return;
     G.rimFill = f;
-    const rt = CM.ws + f * (CM.we - CM.ws);
+    const rt = CM.ps + f * (CM.we - CM.ps);
     for (const a of CM.arcs) {
       const e = Math.min(a.b, rt);
       const vis = e > a.a + 1;

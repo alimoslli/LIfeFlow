@@ -95,6 +95,36 @@
   stroke-width: 2;
   stroke-linecap: round;
 }
+/* tomorrow's ring: just outside the clock, from the 12 round to the hand */
+.dc-tmrw-ring {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 34%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.dc-tmrw-end {
+  fill: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.dc-face-tag {
+  fill: var(--accent);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  stroke: var(--bg);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+.dc-face-now {
+  fill: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  stroke: var(--bg);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
 .dc-step {
   stroke: var(--accent);
   stroke-width: 2.4;

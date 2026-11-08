@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
 import { signUp } from "./helpers";
 
-test("five tabs, and every section is one tap from its tab", async ({ page }) => {
+test("four tabs, and every section is one tap from its tab", async ({ page }) => {
   await signUp(page, "Nav Tester");
   const groups = [
     [
       "/plan",
-      "Plan sections",
+      "Today sections",
       [
         ["To-dos", /\/tasks/],
         ["Milestones", /\/milestones/],

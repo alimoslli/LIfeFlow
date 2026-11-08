@@ -25,15 +25,17 @@ export function AssistantLine({ name, note }: { name: string; note: AssistantNot
     </>
   );
   const cls = "flex w-full items-start gap-3 rounded-[24px] bg-surface px-4 py-3.5 text-left shadow-soft ring-1 ring-border/60 transition-colors";
-  if (note.href)
-    return (
-      <Link href={note.href} className={cls} data-testid="assistant-line">
-        {body}
-      </Link>
-    );
   return (
-    <button type="button" className={cls} data-testid="assistant-line" onClick={() => openJarvis(note.prompt ?? note.text, { send: !!note.prompt })}>
-      {body}
-    </button>
+    <section aria-label={note.tone === "attention" ? "Heads up" : "From your assistant"}>
+      {note.href ? (
+        <Link href={note.href} className={cls} data-testid="assistant-line">
+          {body}
+        </Link>
+      ) : (
+        <button type="button" className={cls} data-testid="assistant-line" onClick={() => openJarvis(note.prompt ?? note.text, { send: !!note.prompt })}>
+          {body}
+        </button>
+      )}
+    </section>
   );
 }

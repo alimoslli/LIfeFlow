@@ -41,7 +41,8 @@ export default async function TodayPage() {
   ];
   const { clock, note, assistantName, setup, hello } = await withCurrentUser(async (scope, user) => {
     const tz = user.timezone ?? "UTC";
-    const clock = await dayClockData(scope, tz);
+    // Money (bills due, spent today) joins the clock only while the Money lock is open.
+    const clock = await dayClockData(scope, tz, new Date(), { money: !locked });
     const { briefing } = await getBriefing(scope, user);
     const [integrationList, banks] = await series(
       () => integrationStatus(scope),
@@ -53,7 +54,9 @@ export default async function TodayPage() {
     ].filter((x): x is string => !!x);
     // The one thing worth saying: something that needs attention first, then a heads-up. Money stays quiet while locked.
     const insights = briefing.insights.filter((i) => !locked || (i.icon !== "money" && i.icon !== "trend" && i.icon !== "goal"));
-    const top = insights.find((i) => i.tone === "attention") ?? insights.find((i) => i.tone === "heads-up") ?? null;
+    // Late to-dos come last: the timeline and To-dos already carry them; a money or schedule warning comes first.
+    const ranked = [...insights.filter((i) => i.id !== "overdue"), ...insights.filter((i) => i.id === "overdue")];
+    const top = ranked.find((i) => i.tone === "attention") ?? ranked.find((i) => i.tone === "heads-up") ?? null;
     const note: AssistantNote | null = top
       ? { text: top.text, tone: top.tone, href: top.action?.href, prompt: top.action?.prompt, label: top.action?.label }
       : null;
