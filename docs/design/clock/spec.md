@@ -30,6 +30,12 @@ Owner's concept, 2026-11-07. The look is set by the owner's two GIFs (`owner-con
   - the next 10 hours, bright.
 
   As the day goes on, the arcs and icons turn with it. The whole day, and every other day, is one tap away on the timeline. *(Decided 2026-11-07: B, the 12 hours around now. The COO chose it on the owner's behalf, following the recommendation; the owner can still switch to A, the whole day on one face.)*
+- **When the rim is busy, it shows only what's ahead** (owner, 2026-11-08: "when it's full of data… it shows what's after only, but it takes the whole circle so it's not crowded"):
+  - **The rule:** more than 5 markers in the 12 hours around now switches the rim to ahead only. The past 2 hours drop off, and the next 12 hours take the whole circle.
+  - **The circle** starts at the hour hand and runs clockwise to the same hour tomorrow morning or tonight.
+  - **What disappears** is only the faded past (finished blocks, spends already made). It stays on the timeline, one tap away.
+  - **The switch is automatic.** It switches back when the rim calms down.
+  - The prototype's "A busier day" switch adds made-up extras to today to show this; the owner's own day stays as it is.
 - **After 12 it's tomorrow, and the rim shows it** (owner, 2026-11-08: "it has to be obvious that that's tomorrow, because after that 12 it's tomorrow and it starts"). From about 2 PM, the 10 hours ahead reach past midnight:
   - **A step at the 12:** a short mint step and a dot carry the rim outward, 7 px, onto tomorrow's lap. Today's part of the rim stays on the inner lap, so the rim reads as one turn of a spiral.
   - **The word:** "TOMORROW" in small mint capitals runs along tomorrow's lap from the 12, when that lap is long enough to hold it (about an hour or more). Markers keep clear of it.
@@ -59,7 +65,7 @@ One continuous, reversible motion driven by a single progress value `p` from 0 t
 |---|---|---|
 | press | The centre fills with a mint glow, the hands turn mint, and the face dips slightly (0.98). Haptic tick. | 2 |
 | 0 to 0.15 | The time labels and hairlines fade. Mint tendrils grow out of the rim toward each icon. | 2 to 3 |
-| 0.06 to 0.44 | Each icon becomes a dark round bubble, held to the clock by a liquid neck that thins as it stretches. The ring of bubbles turns as one piece until the day reads left to right (the earliest thing on the left, the latest on the right), the way the owner described the clock "turning around based on your day". The bubbles stay outside the rim and never pass over each other. The clock squashes a little (wider, shorter). Haptic at the snap. | 3 |
+| 0.06 to 0.44 | Each icon becomes a dark round bubble, held to the clock by a liquid neck that thins as it stretches. The ring of bubbles turns as one piece until the day reads left to right (the earliest thing on the left, the latest on the right), the way the owner described the clock "turning around based on your day". The bubbles stay outside the rim and never pass over each other. A bubble whose place on the line is off screen slides just past the screen edge and fades, and its neck lets go early, so no liquid stretches out to the edge. The clock squashes a little (wider, shorter). Haptic at the snap. | 3 |
 | 0.36 to 0.8 | The body melts from a circle into a wide glowing capsule, and the ends flop out to both sides. The face (numerals, ticks, hands, arcs) fades and shrinks. The necks are absorbed, and the bubbles settle in a row inside the capsule, in time order. The line draws from the centre outward, with a node under each icon. | 4 |
 | 0.8 to 1 | The capsule's outline lets go: it widens and fades. "Today ⌄" fades out (by 0.77) before the day picker fades in (from 0.78), so the two never overlap. The tiles rise in under the line one after another, labels appear under each node, and the "now" pill drops onto the line with a small bounce. Haptic at landing. | 5 to 6 |
 
@@ -117,7 +123,7 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
 - **First open of the day:** the clock.
 - **Nothing in the next 10 hours:** the clock with empty rim arcs and one line: "Nothing planned until 9:00 AM tomorrow".
 - **No connections yet:** the clock with hands only and one button, "Connect your calendar". Nothing invented.
-- **More than 7 markers in view:** the nearest 6 are shown, and the rest are behind "+2" at their place on the rim.
+- **A busy rim:** first the rim switches to ahead only (section 2). If it still has more than 7 markers, the nearest 6 are shown, and the rest are behind "+2" at their place on the rim.
 - **Text size up to Extra large:** the markers move outward and the face shrinks, and nothing overlaps (checked like `no-overlap-phone.spec.ts`).
 - **Screen readers:** the clock reads as "Today. Now 1:40 PM. Next: Class at 6:00 PM. 6,240 of 15,000 steps." Each node is a button.
 

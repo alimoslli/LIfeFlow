@@ -204,7 +204,8 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
       <button class="btn" id="play">Play open and close</button>
       <label class="check"><input type="checkbox" id="slow"> Slow motion</label>
     </div>
-    <p class="note">The face is 12 hours, so the rim shows the 12 hours around now: the last 2 faded, the next 10 bright. In the evening the rim steps out at the 12: past it is tomorrow (drag the time to 10:30 PM). Spends appear on the rim once your bank has them. Haptics play on phones that allow them.</p>
+    <label class="check"><input type="checkbox" id="busy"> A busier day (made-up extras)</label>
+    <p class="note">The face is 12 hours, so the rim shows the 12 hours around now: the last 2 faded, the next 10 bright. In the evening the rim steps out at the 12: past it is tomorrow (drag the time to 10:30 PM). When the rim gets busy (more than 5 things), it drops the past and the next 12 hours take the whole circle. Spends appear on the rim once your bank has them. Haptics play on phones that allow them.</p>
   </aside>
 </div>
 <label id="hap" aria-hidden="true"><input type="checkbox" switch tabindex="-1"></label>
@@ -228,6 +229,15 @@ const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const T = (d, h, m = 0) => d * 1440 + h * 60 + m;
 const BASE = new Date(2026, 10, 7); // Saturday, Nov 7
 const DAYS = [-3, -2, -1, 0, 1, 2, 3];
+// Extra made-up things for "A busier day" in the panel: only there to show how a crowded rim switches to ahead only.
+const BUSY_DAY = [
+  { id: 'x1', kind: 'spend', icon: '🥤', name: 'Smoothie', at: T(0, 8, 35), cents: 625, src: 'Jamba, from your bank' },
+  { id: 'x2', kind: 'block', icon: '👥', name: 'Team huddle', start: T(0, 12), end: T(0, 12, 20), src: 'From your work calendar' },
+  { id: 'x3', kind: 'spend', icon: '💸', name: 'Venmo to Jordan', at: T(0, 15, 10), cents: 1800, src: 'Venmo, from your bank' },
+  { id: 'x4', kind: 'block', icon: '🚗', name: 'Pick up Leo', start: T(0, 16, 45), end: T(0, 17, 5), src: 'From Google Calendar' },
+  { id: 'x5', kind: 'spend', icon: '🍜', name: 'Dinner', at: T(0, 17, 40), cents: 1140, src: 'Pho Hoa, from your bank' },
+  { id: 'x6', kind: 'block', icon: '📞', name: 'Call Mom', start: T(0, 22, 15), end: T(0, 22, 35), src: 'From Google Calendar' },
+];
 const ITEMS = [
   { id: 'w1', kind: 'block', icon: '🧪', name: 'Chem lab', cat: 'class', start: T(-3, 10), end: T(-3, 11, 50), src: 'From your school calendar' },
   { id: 'w2', kind: 'spend', icon: '☕', name: 'Coffee', at: T(-3, 12, 5), cents: 540, src: 'Blue Bottle, from your bank' },
@@ -358,8 +368,15 @@ function buildStatic() {
 }
 
 /* ---------- Clock model: the 12 hours around now ---------- */
-function clockModel(now) {
-  const ws = now - 120, we = now + 600;
+// More than this many markers in the 12 hours around now and the rim drops the past:
+// it shows only what's ahead, and the next 12 hours take the whole circle (owner, 2026-11-08).
+const BUSY = 5;
+function pickClock(now) {
+  const around = clockModel(now, false);
+  return around.marks.length > BUSY ? clockModel(now, true) : around;
+}
+function clockModel(now, ahead) {
+  const ws = ahead ? now : now - 120, we = ahead ? now + 720 : now + 600;
   const arcs = [], pins = [], marks = [];
   for (const it of ITEMS) {
     if (it.kind === 'block' || it.kind === 'sleep') {
@@ -419,12 +436,12 @@ function clockModel(now) {
   for (const a of arcs) a.lap = hasMid && a.a >= mid ? 1 : 0;
   for (const p of pins) p.lap = hasMid && p.t >= mid ? 1 : 0;
   for (const m of marks) m.lap = hasMid && m.t >= mid ? 1 : 0;
-  return { arcs, pins, marks, ws, we, mid: hasMid ? mid : null, word };
+  return { arcs, pins, marks, ws, we, mid: hasMid ? mid : null, word, ahead };
 }
 
 function rebuildClock() {
   const R = G.R, now = S.now;
-  CM = clockModel(now);
+  CM = pickClock(now);
   // hands
   const ha = ang(now), ma = (now % 60) / 60 * Math.PI * 2;
   const [hx, hy] = pol(ha, R * 0.47), [mx, my] = pol(ma, R * 0.8), [tx, ty] = pol(ma + Math.PI, R * 0.09);
@@ -615,22 +632,25 @@ function prepMorph(keepScroll) {
   micons.textContent = '';
   TM.nodes.forEach((n) => n.el.classList.remove('mapped'));
   const capL = G.cx - G.capHW + 18, capR = G.cx + G.capHW - 18;
-  let turn = Math.PI - ang(S.now - 120);
+  let turn = Math.PI - ang(CM.ws);
   turn = ((turn + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
   G.turn = turn;
   MAP = CM.marks.map((m) => {
     const node = TM.nodes.find((n) => n.it.id === m.it.id);
-    const x2 = node ? node.x - sl : (m.ix < G.cx ? -40 : G.W + 40);
+    // a marker whose place on the line is off screen slides just past the edge and fades, instead of stretching out to it
+    const xr = node ? node.x - sl : (m.ix < G.cx ? -40 : G.W + 40);
+    const off = xr < 12 || xr > G.W - 12;
+    const x2 = clamp(xr, -36, G.W + 36);
     const p0 = [m.ix, m.iy], p2 = [x2, G.iconY];
     const th0 = Math.atan2(m.ix - G.cx, -(m.iy - G.cy)), r0 = Math.hypot(m.ix - G.cx, m.iy - G.cy);
     // where this marker sits once the ring has turned (the window's seam at the bottom): earlier is left, later is right
-    const rel = (((m.t - (S.now - 120)) / 720) % 1 + 1) % 1;
+    const rel = (((m.t - CM.ws) / 720) % 1 + 1) % 1;
     const phiEnd = rel * Math.PI * 2 - Math.PI;
     const e = document.createElement('div');
     e.className = 'mi'; e.textContent = m.it.icon;
     micons.appendChild(e);
     if (node) node.el.classList.add('mapped');
-    return { m, node, p0, p2, th0, r0, phiEnd, el: e, dim: m.past, inCap: x2 > capL && x2 < capR };
+    return { m, node, p0, p2, th0, r0, phiEnd, el: e, dim: m.past, off, inCap: x2 > capL && x2 < capR };
   });
 }
 
@@ -906,14 +926,15 @@ function render() {
     const sc = lerp(lerp(1, 0.86, seg(P, 0.05, 0.25)), 1.04, seg(P, 0.6, 0.9));
     const op = lerp(k.dim ? 0.5 : 1, 1, seg(P, 0.05, 0.3));
     k.el.style.transform = `translate3d(${(x - 15).toFixed(2)}px, ${(y - 15).toFixed(2)}px, 0) scale(${sc.toFixed(3)})`;
-    k.el.style.opacity = op;
-    const r = 22 * eOut(seg(P, 0.08, 0.22)) * (1 - seg(P, 0.8, 0.94)) * (k.inCap ? 1 : 1 - seg(P, 0.5, 0.68));
+    const offF = k.off ? 1 - seg(P, 0.4, 0.56) : 1;
+    k.el.style.opacity = op * (k.off ? 1 - seg(P, 0.46, 0.66) : 1);
+    const r = 22 * eOut(seg(P, 0.08, 0.22)) * (1 - seg(P, 0.8, 0.94)) * (k.inCap ? 1 : 1 - seg(P, 0.5, 0.68)) * offF;
     const dx = x - G.cx, dy = y - by, len0 = Math.hypot(dx, dy) || 1;
     const ux = dx / len0, uy = dy / len0;
     const ra = 1 / Math.sqrt((ux / rx) ** 2 + (uy / ry) ** 2);
     const ax = G.cx + ux * (ra - 8), ay = by + uy * (ra - 8);
     const len = Math.hypot(x - ax, y - ay);
-    const nr = life * clamp(8 - len * 0.035, 2.2, 7.5);
+    const nr = life * clamp(8 - len * 0.035, 2.2, 7.5) * offF;
     items.push({ x, y, r, ax, ay, tx: lerp(ax, x, grow), ty: lerp(ay, y, grow), nr });
   }
   const rel = eOut(seg(P, 0.84, 1));
@@ -1172,6 +1193,12 @@ $('#frames').addEventListener('click', (e) => {
   scrubTo(p, pr);
 });
 $('#slow').addEventListener('change', (e) => { S.slow = e.target.checked; });
+$('#busy').addEventListener('change', (e) => {
+  for (const x of BUSY_DAY) { const i = ITEMS.findIndex((it) => it.id === x.id); if (i >= 0) ITEMS.splice(i, 1); }
+  if (e.target.checked) ITEMS.push(...BUSY_DAY);
+  const wasOpen = S.open; rebuild();
+  if (wasOpen) { S.p = 1; render(); }
+});
 $('#play').addEventListener('click', () => {
   if (S.anim) return;
   $('#frames').querySelectorAll('button').forEach((x) => x.classList.remove('on'));
