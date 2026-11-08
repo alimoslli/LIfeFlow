@@ -140,6 +140,7 @@ Update after every video. Newest at the top.
 
 | # | Video | Status | Notes |
 |---|---|---|---|
+| 15 | "It didn't forget" film (24 s) + teaser "She forgot. It didn't." (12 s) | Saved by the owner 2026-11-08, not posted | 35mm film look, one actress, no dialogue, no app screens. Package (film, silent version, teaser, 7 raw shots and start frames, the local edit script): https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/5114d05e-52e6-40e7-a040-58d35e1f4add.zip . Music is ElevenLabs via Higgsfield: confirm the license or use the silent version with the owner's music. |
 | 1 | "I didn't open LifeFlow for 7 days" | Script done, not filmed | Needs demo account loaded with matching data (bio exam, Wednesday shift, $45 bill, low balance, double Spotify charge). Check the morning brief arrives as a real lock-screen notification before filming. |
 
 ---
