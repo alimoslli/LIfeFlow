@@ -6,7 +6,7 @@ Set by the owner on 2026-11-05. Every Claude Code session on this repo reads thi
 |---|---|---|
 | **The owner** | Decides what LifeFlow is. Uses the app every day and reports what's wrong. Approves design choices and research proposals. | This repo's plan: `docs/vision.md` |
 | **The product chat** | Turns the owner's decisions into the plan, briefs the builders, reviews every build before the owner sees it, runs the other agents, keeps the plan up to date. | `docs/vision.md`, `docs/design/`, this file |
-| **The nightly audits chat** ("LifeFlow nightly audits", branch `claude/nightly-audits`) | Runs the always-on loop below while the owner sleeps: audit, fixes, reviews, one approved feature for the owner's okay, situations and research. It leaves a morning report. Set up by the owner on 2026-11-06 so the product chat stays on LifeFlow v3. | `docs/audits/`, `docs/research/`, `docs/situations/` |
+| **The nightly audits chat** ("LF Managing Agents", branch `claude/nightly-audits`) | Merged into the LF COO on 2026-11-08 (`docs/PLAN.md` section 1): the COO's scheduled rounds do its job. | `docs/audits/` |
 | **Builders** (Claude Code chats that write the app) | Build Dev's brain (the checks, the timeline, memory) and the surface, in small tested steps, following `CLAUDE.md` and `docs/playbook.md`. | `src/`, `tests/` |
 | **Prototype builder** (Fable) | Builds concept prototypes from a brief so the owner can see an idea before it is built. | Published artifacts; screenshots in the scratch folder |
 | **Auditor** (Opus, fresh eyes) | Audits each prototype or build with no context from the conversation, so nothing gets a pass because we're used to it. | `docs/design/*-audit.md` |
