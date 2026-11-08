@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Landmark, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { StillBuilding } from "@/components/still-building";
 
 type Handler = { open: () => void; destroy: () => void };
 type PlaidGlobal = {
@@ -127,7 +128,7 @@ export function PlaidLinkButton({
   className?: string;
 }) {
   const { busy, status, start } = useLink(reconnect, chooseAccounts);
-  if (!configured) return <p className="text-sm text-warning">Bank connections aren&apos;t available yet. You can add accounts by hand meanwhile.</p>;
+  if (!configured) return <StillBuilding detail="You can add accounts by hand meanwhile." />;
   return (
     <div className="flex flex-col gap-2">
       {!reconnect && (

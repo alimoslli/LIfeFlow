@@ -15,6 +15,7 @@ import { inboxAddress, listInbox, listSenders } from "@/server/services/inbox";
 import { extractionClient } from "@/server/services/inbox/extract";
 import { addSenderAction, removeSenderAction, fileSuggestionAction, answerQuestionAction, undoInboxAction, verifySenderAction } from "./actions";
 import { CopyAddress, InboxUpload } from "./upload";
+import { StillBuilding } from "@/components/still-building";
 
 export const metadata: Metadata = { title: "Filed" };
 
@@ -56,9 +57,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
       {shared === "0" && (
         <p className="rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">That share couldn&apos;t be read. Try adding it here instead.</p>
       )}
-      {!d.canRead && (
-        <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2">Reading documents isn&apos;t available yet. Items wait here until it is.</p>
-      )}
+      {!d.canRead && <StillBuilding className="rounded-2xl bg-surface-2 px-4 py-3" detail="Reading documents isn't ready yet. Items wait here until it is." />}
 
       <Card className="flex flex-col gap-4 p-5">
         <InboxUpload />
@@ -74,7 +73,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
               <CopyAddress address={d.address} />
             </div>
           ) : (
-            <p className="mt-1 text-sm text-text-2">Email forwarding is coming soon. Photo and PDF uploads work now.</p>
+            <StillBuilding className="mt-1" line={1} detail="Email forwarding is on its way. Photo and PDF uploads work now." />
           )}
         </div>
         <div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toaster";
+import { StillBuilding } from "@/components/still-building";
 
 type State = "loading" | "unsupported" | "needs-install" | "denied" | "off" | "on";
 
@@ -146,12 +147,7 @@ export function ThisDevice({ available }: { available: boolean }) {
     }
   };
 
-  if (!available)
-    return (
-      <p className="text-sm text-text-2" data-testid="push-state">
-        Notifications aren&apos;t available yet. Check back soon.
-      </p>
-    );
+  if (!available) return <StillBuilding data-testid="push-state" detail="Notifications are on their way. Check back soon." />;
 
   return (
     <div data-testid="push-state" data-state={state}>

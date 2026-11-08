@@ -3,6 +3,7 @@ import { Calendar, RefreshCw, Video } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { Badge, Card } from "@/components/ui/surface";
 import { disconnectMicrosoftAction, syncMicrosoftAction } from "./actions";
+import { StillBuilding } from "@/components/still-building";
 
 /** Connect / sync / disconnect Microsoft 365 (Outlook calendar with Teams meetings). */
 export function MicrosoftCard({
@@ -34,7 +35,7 @@ export function MicrosoftCard({
       </p>
 
       {!configured ? (
-        <p className="mt-3 text-sm text-warning">Microsoft isn&apos;t available yet. Check back soon.</p>
+        <StillBuilding className="mt-3" line={1} detail="Check back soon." />
       ) : connection ? (
         <div className="mt-4 flex flex-col gap-3">
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">

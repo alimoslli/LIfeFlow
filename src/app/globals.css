@@ -1751,3 +1751,47 @@ input[type="checkbox"].lf-switch:focus-visible {
   background-position: 66% 16%;
   box-shadow: 0 4px 12px rgb(0 0 0 / 0.35);
 }
+
+/* "Still being built": a hammer that taps now and then, and a spark that blinks with it (transform and opacity only). */
+@keyframes lf-tap {
+  0%,
+  55%,
+  100% {
+    transform: rotate(14deg);
+  }
+  68% {
+    transform: rotate(-30deg);
+  }
+  80% {
+    transform: rotate(6deg);
+  }
+}
+@keyframes lf-spark {
+  0%,
+  62%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+.lf-tap {
+  transform-origin: 80% 85%;
+  animation: lf-tap 1.8s ease-in-out infinite;
+}
+.lf-spark {
+  animation: lf-spark 1.8s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lf-tap {
+    animation: none;
+    transform: rotate(8deg);
+  }
+  .lf-spark {
+    animation: none;
+    opacity: 0;
+  }
+}

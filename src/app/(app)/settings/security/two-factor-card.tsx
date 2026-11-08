@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FormError, Input } from "@/components/ui/field";
 import { Badge, Card } from "@/components/ui/surface";
 import { confirmTwoFactorSetup, emailRestartCode, finishRestart, newRecoveryCodes, startTwoFactorSetup, turnOffTwoFactor } from "./two-factor-actions";
+import { StillBuilding } from "@/components/still-building";
 
 type Status = { enabled: boolean; enabledOn: string | null; recoveryCodesLeft: number; available: boolean };
 type Mode = "idle" | "setup" | "codes" | "disable" | "regenerate" | "restart";
@@ -46,7 +47,7 @@ export function TwoFactorCard({ status }: { status: Status }) {
       <div className="mt-4 flex flex-col gap-3">
         {error && <FormError message={error} />}
 
-        {!status.available && !status.enabled && <p className="text-sm text-warning">Two-step sign-in isn&apos;t available yet.</p>}
+        {!status.available && !status.enabled && <StillBuilding detail="Two-step sign-in is on its way." />}
 
         {mode === "idle" && !status.enabled && status.available && (
           <Button className="self-start" loading={pending} onClick={() => run(startTwoFactorSetup, (r) => (setSetup(r), setMode("setup")))}>

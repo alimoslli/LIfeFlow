@@ -9,6 +9,7 @@ import { requireUser } from "@/server/auth/current-user";
 import { billingConfig, FREE_JARVIS_PER_DAY, isPro } from "@/server/billing";
 import { SettingsHeader } from "../settings-header";
 import { manageBillingAction, upgradeAction } from "./actions";
+import { StillBuilding } from "@/components/still-building";
 
 export const metadata: Metadata = { title: "Plan" };
 
@@ -51,7 +52,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           </p>
         )}
         {inApp && !pro ? (
-          <p className="mt-5 text-sm text-text-2">Upgrading isn&apos;t available in the app yet.</p>
+          <StillBuilding className="mt-5" line={1} detail="Upgrading isn't in the app yet." />
         ) : (
           <form action={pro ? manageBillingAction : upgradeAction} className="mt-5">
             <Button type="submit" className="w-full">
