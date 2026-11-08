@@ -19,7 +19,7 @@ How to start a desk task: HQ Office → the task → "Start it" (one tap). The C
 
 | What | Status |
 |---|---|
-| School Project premiere date | Decided: Nov 29 or 30 (owner, 2026-11-08); Marketing picks the day |
+| School Project premiere date | Decided: teaser Sun Nov 29 about 6 PM, premiere Mon Nov 30 at 10 AM Pacific |
 | Second language for the dubbed version | Decided: Arabic |
 | Cinema route (about 31 Higgsfield credits) | Not yet: the cinema is the hook, perfected last; raw footage first |
 | Test-drive voiceover redone in Sterling (about 3 credits) | Yes |
