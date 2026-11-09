@@ -331,7 +331,9 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
                   <div className="mt-3 flex gap-2.5 rounded-2xl bg-surface-2 p-3.5" aria-live="polite">
                     <CompanionGlyph companion={companion} className="h-7 w-7" />
                     <p className="text-[0.875rem] leading-relaxed text-text-2">
-                      <span className="font-semibold text-text">{shown ?? "Your skyling"}:</span> {chosen ? chosen.sample : SAMPLE}
+                      <span className="font-semibold text-text">{shown ?? "Your skyling"}:</span> {chosen ? chosen.sample : SAMPLE}{" "}
+                      {/* the numbers in a sample line are made up (research 2026-11-09, rule 6) */}
+                      <span className="ml-1 rounded-full bg-surface px-2 py-0.5 text-[0.6875rem] font-medium text-muted">Example</span>
                     </p>
                   </div>
                 </Group>

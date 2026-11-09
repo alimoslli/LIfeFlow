@@ -128,3 +128,6 @@ Search summaries only, not opened (2026-11-09), treat as leads:
 ## What changed because of this report
 
 (For the product session to fill in, with commit links.)
+
+## What changed because of this report
+- LF Main, 2026-11-09 (2e7f8dc and the commit after it): the remade first run follows rules 3 and 6. The landing page, sign-up and welcome lead with the skylings and the connected day, never with "AI" (the FAQ and legal pages still say plainly that a skyling runs on AI). Every invented number on the landing page carries "Example", and the welcome's sample skyling line now does too. Proposals 1, 2, 4 and 5 change the flow or show the price, so they wait for the owner's yes.
