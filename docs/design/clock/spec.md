@@ -197,7 +197,12 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
   - **Money, only with the Money lock open:** bills and trial ends in the next 30 days ("then $15.99"); money goals by their day; salaried pay as "Payday, $X expected" (shown, never counted, never hourly); and what was spent today.
   - **Not on it, on purpose:** habits and health have no time of day (steps and sleep are on the face). Spends have no time (the face shows today's total). Past paychecks belong to Money.
 - **It never gets crowded:**
-  - **On the clock:** things within half an hour of each other on the same ring are one marker. The one that matters most leads (a block of time, then an exam, a deadline, a reminder or plan, money), and "+2" says the rest. At most ten markers; every busy stretch still shows as its arc.
+  - **On the clock (owner, 2026-11-09: "9 assignments due tonight… one emoji"; "less words… simple and easy to the eye"):**
+    - things within half an hour of each other on the same ring are one marker; the one that matters most leads (a block of time, an exam, a deadline, a reminder or plan, money);
+    - a pile of one kind names itself, "5 assignments" over "11:59 PM", with one emoji; a mixed pile says "+2";
+    - labels are only a time or an amount, because the emoji says what it is;
+    - tomorrow's markers are green like TOMORROW on the ring, with no caption;
+    - at most six markers, a mix of kinds (the soonest of each kind first, so one kind never fills the clock); every busy stretch still shows as its arc.
   - **On the line:** things at the same minute in the week, or on the same day further out, are one stop with "+2" on its icon. Its card lists them ("3 things · Sun, Nov 8 · 11:59 PM"), one 44 px row each, and a row opens that thing's own card. On a short screen the list stops halfway through a row, so it's plain it scrolls.
   - **Someday:** the first seven stand alone; the rest share one stop. Someday is a place, not a day: no day is lit and there are no tiles.
 - **Pin anything (owner, 2026-11-08):** "Pin something" under the open line, or a tap on an empty spot of the line, opens one sheet. It takes the day and time from where you are, an emoji, a name, and what it is: a to-do, a plan (one hour), a goal (by that day) or a milestone (past days only).

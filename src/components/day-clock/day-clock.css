@@ -781,6 +781,18 @@
   line-height: 16px;
   text-align: center;
 }
+/* tomorrow's markers: the same green as TOMORROW on the ring, instead of a caption under each */
+.dc-co.dc-tmrw,
+.dc-co.dc-tmrw .dc-co-sub {
+  color: var(--accent);
+}
+/* the time under a named pile on the clock ("11:59 PM" under "9 assignments due tonight") */
+.dc-co-sub {
+  display: block;
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
 .dc-more {
   margin-left: 4px;
   color: var(--accent);
