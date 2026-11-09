@@ -4,9 +4,10 @@ import { pool, signUp } from "./helpers";
 const ADMIN_EMAIL = "admin-owner@example.com"; // matches ADMIN_EMAILS in playwright.config.ts
 
 test("admin page: 404 for everyone but the owner, and the owner can manage users safely", async ({ page, browser, request }) => {
-  // Signed out: sent to sign in like any private page. The raw URL is never public.
-  const anon = await request.get("/admin", { maxRedirects: 0 });
-  expect([301, 302, 303, 307, 308]).toContain(anon.status());
+  // Signed out: the same "not found" as everyone else, so the admin area doesn't show it exists (ADR 0022).
+  for (const path of ["/admin", "/admin/hq/settings", "/admin/users/export"]) {
+    expect((await request.get(path, { maxRedirects: 0 })).status()).toBe(404);
+  }
 
   // A normal signed-in user gets a 404, and no Admin row in Settings.
   const normalEmail = await signUp(page, "Regular Rhea");
