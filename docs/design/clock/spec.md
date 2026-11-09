@@ -226,18 +226,17 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
 - **No clock hands.** `dome.ts` draws it; the engine (`face` option) hands it the day on every change and every frame of opening.
 - **Opening the timeline:** the dome flattens onto the line while the timeline fades in. Cards, Done, Edit, pins and stacks are unchanged.
 - **Sunrise and sunset** are worked out from the date and the time zone (`sunTimes` in `lib/day-clock.ts`: the zone's meridian, 38°N, equation of time, daylight saving). There's no location, so they're approximate: shown as "about", to 5 minutes (the wait to 10 minutes over an hour), never to the minute.
-- **The Morrow palette is the app's on v3:**
-  - tokens in `globals.css`: haze background, dusk violet accent, `--sun`, `--night`;
-  - violet glass and dusk feature cards;
-  - the mark in `brand-mark.tsx`: horizon, sun, moon.
-  So School, Money and every page match. The name stays LifeFlow until a new name is chosen (Morrow is out: "Tomorrow" is used everywhere in the app).
+- **The colours are the real sky's, not Morrow's purple (owner, 2026-11-09, through the COO: "A", real-sky colours):**
+  - the card's sky is the real sky of the minute (`skyAt` in `lib/sky.ts`): blue by day, gold before sunset, deep blue at night;
+  - tokens in `globals.css`, the glass, the mark in `brand-mark.tsx`, the time-of-day wash behind every page (`components/sky/sky-scene.tsx`) and the companion's colours come from the Day Sky look (07a46df).
+  So School, Money and every page match. The name stays LifeFlow until a new name is chosen.
 
 ## Names of the versions (owner, 2026-11-09)
 
 Until the real LifeFlow changes or moves to a new domain:
 
 - **LifeFlow V2**: the clock that turns into a timeline, the version where a pile of things due at the same minute is one marker ("9 assignments", commit 518d37a), with the north-star work (branch `v3-day-clock-north-star`, https://lifeflow-git-v3-day-clock-north-star-ali-b745.vercel.app).
-- **LifeFlow V3**: V2 plus Morrow, the dome and the Morrow palette (commit 4bba321; branch `v3-day-clock`, https://lifeflow-git-v3-day-clock-ali-b745.vercel.app).
+- **LifeFlow V3**: V2 plus the Morrow face (the day as the sky and the companion, from 4bba321), shown as the sky card the owner picked (B), in the real sky's colours, never purple (branch `v3-day-clock`, https://lifeflow-git-v3-day-clock-ali-b745.vercel.app).
 - **LifeFlow**: the live app (main, https://lifeflowweb.com).
 
 Day Sky (the time-of-day sky look) is not one of the versions; it stays in the `v3-day-clock` history at commit 07a46df.

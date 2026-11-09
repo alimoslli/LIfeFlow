@@ -1,6 +1,6 @@
 /**
- * Morrow's dome as the sky's path (owner, 2026-11-09: picked B, "especially when it looked like a widget"). Today is a
- * sky card: by day a half circle over the horizon from sunrise (left) to sunset (right), with the companion walking it
+ * Morrow's dome as the sky's path (owner, 2026-11-09: picked B, "especially when it looked like a widget"), in the real
+ * sky's colours (owner: no purple). Today is a sky card: by day a half circle over the horizon from sunrise (left) to sunset (right), with the companion walking it
  * at now; at night the same path is the night, sunset to sunrise, with what you finished today as stars. Nothing
  * flips: for 20 minutes either side of sunset (and sunrise) the half you're leaving slides out to the right as the next
  * one comes in from the left, and the companion rises at the left. Under the horizon the card always says when the sun
@@ -12,6 +12,7 @@
  * except the companion's step.
  */
 import { pileOf, sunTimes, type ClockData, type ClockItem } from "@/lib/day-clock";
+import { css, darkness, skyAt } from "@/lib/sky";
 import { COMPANIONS, drawCompanion, nightOf } from "./companion";
 
 export type DomeFace = { tag: string; text: string; stats: string[] };
@@ -117,27 +118,20 @@ export function createDome(root: HTMLElement, reduce: boolean) {
     svg.setAttribute("height", String(H));
     svg.textContent = "";
     svg.style.opacity = String(1 - seg(st.p, 0.45, 0.95));
-    root.dataset.sky = night ? "night" : "day";
 
-    // the card: the sky of the hour above the horizon, the ground under it; it fades as the timeline opens
-    const skyOf = (h: Half, t: number) => (h.night ? "night" : t < rise + 150 ? "dawn" : t < set - 150 ? "day" : "gold");
+    // the card: the real sky of this minute above the horizon (lib/sky.ts, no purple), the ground under it; it fades
+    // as the timeline opens
+    const [skyTop, skyMid, skyLow] = skyAt(m, rise, set);
+    root.dataset.sky = darkness(m, rise, set) > 0.5 ? "night" : "day";
     const defs = el("defs", {});
     const clip = el("clipPath", { id: `${id}-card` }, defs);
     el("rect", { x: pad, y: top, width: W - 2 * pad, height: bottom - top, rx: 28 }, clip);
+    const gr = el("linearGradient", { id: `${id}-sky`, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    el("stop", { offset: 0, "stop-color": css(skyTop) }, gr);
+    el("stop", { offset: 0.62, "stop-color": css(skyMid) }, gr);
+    el("stop", { offset: 1, "stop-color": css(skyLow) }, gr);
     const card = el("g", { "clip-path": `url(#${id}-card)`, opacity: 1 - seg(st.p, 0, 0.35) });
-    const skies: [string, number][] =
-      from === to
-        ? [[skyOf(cur, m), 1]]
-        : [
-            [skyOf(from, m), 1],
-            [skyOf(to, m), f],
-          ];
-    for (const [kind, op] of skies) {
-      const gr = el("linearGradient", { id: `${id}-${kind}`, x1: 0, y1: 0, x2: 0, y2: 1, class: `dc-g-${kind}` }, defs);
-      el("stop", { offset: 0 }, gr);
-      el("stop", { offset: 1 }, gr);
-      el("rect", { x: 0, y: top, width: W, height: hy - top, fill: `url(#${id}-${kind})`, opacity: op }, card);
-    }
+    el("rect", { x: 0, y: top, width: W, height: hy - top, fill: `url(#${id}-sky)` }, card);
     el("rect", { x: 0, y: hy, width: W, height: bottom - hy, class: "dc-card-ground" }, card);
     el("rect", { x: pad + 0.5, y: top + 0.5, width: W - 2 * pad - 1, height: bottom - top - 1, rx: 27.5, class: "dc-card", opacity: 1 - seg(st.p, 0, 0.35) });
 

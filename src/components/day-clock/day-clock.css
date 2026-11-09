@@ -847,37 +847,13 @@
   pointer-events: none;
   image-rendering: pixelated;
 }
-/* the sky card (a widget of the day): the sky of the hour above the horizon, the ground under it */
+/* the sky card (a widget of the day): the real sky above the horizon (dome.ts, lib/sky.ts), the ground under it */
 .dc-card {
   fill: none;
   stroke: var(--border);
 }
 .dc-card-ground {
   fill: var(--surface);
-}
-.dc-g-dawn stop:first-child {
-  stop-color: #c9c2f2;
-}
-.dc-g-dawn stop:last-child {
-  stop-color: #ffd7ad;
-}
-.dc-g-day stop:first-child {
-  stop-color: #a9c1f5;
-}
-.dc-g-day stop:last-child {
-  stop-color: #eceefd;
-}
-.dc-g-gold stop:first-child {
-  stop-color: #b5a3ea;
-}
-.dc-g-gold stop:last-child {
-  stop-color: #ffc98f;
-}
-.dc-g-night stop:first-child {
-  stop-color: #0f0c26;
-}
-.dc-g-night stop:last-child {
-  stop-color: #2e2780;
 }
 .dc-dome-fill {
   fill: rgb(255 255 255 / 0.22);
@@ -892,7 +868,7 @@
   stroke-linecap: round;
 }
 .dc-dome-track.dc-night {
-  stroke: color-mix(in srgb, #8f86e0 40%, var(--night));
+  stroke: rgb(255 255 255 / 0.26);
 }
 .dc-dome-block {
   fill: none;
@@ -901,7 +877,7 @@
   stroke-linecap: round;
 }
 .dc-dome-block.dc-night {
-  stroke: #9d92ff;
+  stroke: #9cc3ff;
 }
 .dc-dome-dot {
   fill: var(--sun);
@@ -919,13 +895,17 @@
 }
 /* labels in the sky read on the sky, whatever the app's theme */
 .dc-dome-t {
-  fill: #2a2552;
+  fill: #0f1a2a;
+  stroke: rgb(255 255 255 / 0.75);
+  stroke-width: 3px;
+  paint-order: stroke;
   font-size: 10.5px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .dc[data-sky="night"] .dc-dome-t {
-  fill: #e9e5ff;
+  fill: #eef3fb;
+  stroke: rgb(3 6 15 / 0.55);
 }
 .dc-dome-end {
   fill: var(--text-2);
@@ -943,7 +923,7 @@
   font-variant-numeric: tabular-nums;
 }
 .dc-dome-stars {
-  fill: #f1eeff;
+  fill: #eef3fb;
   font-size: 11px;
   font-weight: 600;
 }

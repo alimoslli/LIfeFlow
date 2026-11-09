@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 type BrandMarkProps = {
@@ -12,8 +13,10 @@ type BrandMarkProps = {
  * background tile. Keeping it in one component stops the logo drifting between pages.
  */
 export function BrandMark({ className, alt = "LifeFlow" }: BrandMarkProps) {
-  // v3 (owner, 2026-11-09): Morrow's mark. A circle cut by the horizon (your timeline): the sun above with a face (your
-  // companion, by day), the moon and two stars below (the night, and what you finished). Vector, so it's sharp anywhere.
+  // v3 Day Sky (owner, 2026-11-09): one circle cut by the horizon (your timeline). Above it the day: a clear sky and the
+  // sun rising with a face (your companion). Below it the night: a moon and two stars (what you finished). Vector, so
+  // it's sharp anywhere. Ids are per instance so several marks on a page don't share gradients.
+  const id = useId().replace(/:/g, "");
   return (
     <span
       className={cn("relative inline-flex aspect-square shrink-0", className)}
@@ -23,18 +26,33 @@ export function BrandMark({ className, alt = "LifeFlow" }: BrandMarkProps) {
     >
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <defs>
-          <clipPath id="bm-sky">
+          <linearGradient id={`${id}d`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#2a76d0" />
+            <stop offset="0.7" stopColor="#8cc0f0" />
+            <stop offset="1" stopColor="#ffd4a0" />
+          </linearGradient>
+          <linearGradient id={`${id}n`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#13284d" />
+            <stop offset="1" stopColor="#071226" />
+          </linearGradient>
+          <clipPath id={`${id}c`}>
+            <circle cx="50" cy="50" r="46" />
+          </clipPath>
+          <clipPath id={`${id}t`}>
             <rect x="0" y="0" width="100" height="52" />
           </clipPath>
         </defs>
-        <circle cx="50" cy="52" r="40" fill="none" stroke="#5b4bd6" strokeWidth="5" opacity="0.35" />
-        <circle cx="50" cy="58" r="26" fill="#f4a44a" clipPath="url(#bm-sky)" />
-        <circle cx="42" cy="44" r="3" fill="#1b1736" />
-        <circle cx="58" cy="44" r="3" fill="#1b1736" />
-        <rect x="4" y="50" width="92" height="5" rx="2.5" fill="#5b4bd6" />
-        <path d="M64 66 a9 9 0 1 0 6 15 a7 7 0 1 1 -6 -15 z" fill="#b3a8ff" />
-        <path d="M34 69.4 L34.8 71.2 L36.6 72 L34.8 72.8 L34 74.6 L33.2 72.8 L31.4 72 L33.2 71.2 Z" fill="#b3a8ff" />
-        <path d="M44 78.2 L44.5 79.5 L45.8 80 L44.5 80.5 L44 81.8 L43.5 80.5 L42.2 80 L43.5 79.5 Z" fill="#b3a8ff" />
+        <g clipPath={`url(#${id}c)`}>
+          <rect x="0" y="0" width="100" height="52" fill={`url(#${id}d)`} />
+          <rect x="0" y="52" width="100" height="48" fill={`url(#${id}n)`} />
+          <circle cx="50" cy="54" r="19" fill="#f5a524" clipPath={`url(#${id}t)`} />
+          <circle cx="43.5" cy="44" r="2.6" fill="#0f1a2a" />
+          <circle cx="56.5" cy="44" r="2.6" fill="#0f1a2a" />
+          <rect x="0" y="50.5" width="100" height="3" fill="#ffffff" />
+          <path d="M66 63 a8 8 0 1 0 5.5 13.6 a6.2 6.2 0 1 1 -5.5 -13.6 z" fill="#e6edf8" />
+          <path d="M33 66.4 L33.8 68.2 L35.6 69 L33.8 69.8 L33 71.6 L32.2 69.8 L30.4 69 L32.2 68.2 Z" fill="#ffd77a" />
+          <path d="M43 77.2 L43.5 78.5 L44.8 79 L43.5 79.5 L43 80.8 L42.5 79.5 L41.2 79 L42.5 78.5 Z" fill="#ffd77a" />
+        </g>
       </svg>
     </span>
   );

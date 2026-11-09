@@ -22,8 +22,8 @@ export const COMPANIONS: Companion[] = [
   { name: "Sol", body: "#f7b45e", dark: "#d08530", light: "#ffe0b0", trim: "#f4a44a", trim2: "#ffd38a", top: "ray" },
   { name: "Zenith", body: "#ffd66b", dark: "#d9aa36", light: "#fff1bf", trim: "#fff3c4", top: "halo" },
   { name: "Gloam", body: "#f39a6b", dark: "#c76c3f", light: "#ffd2b8", trim: "#ffd38a", trim2: "#ff7a2f", top: "flame" },
-  { name: "Dusk", body: "#8f7ff0", dark: "#6455c9", light: "#cfc7ff", trim: "#f4a44a", top: "crescent" },
-  { name: "Nox", body: "#4a4296", dark: "#2f2870", light: "#7a71cf", eye: "#ffd77a", trim: "#fff3c4", trim2: "#ffffff", top: "star" },
+  { name: "Dusk", body: "#6f9be0", dark: "#4a72b8", light: "#c7dcf7", trim: "#f4a44a", top: "crescent" },
+  { name: "Nox", body: "#26385f", dark: "#172540", light: "#4b6596", eye: "#ffd77a", trim: "#fff3c4", trim2: "#ffffff", top: "star" },
 ];
 
 function mix(a: string, b: string, t: number) {
@@ -33,20 +33,20 @@ function mix(a: string, b: string, t: number) {
   return `#${[16, 8, 0].map((s) => ch(s).toString(16).padStart(2, "0")).join("")}`;
 }
 
-/** The night form: the same companion under moonlight, wearing a little moon. */
+/** The night form: the same companion pale as the moon, wearing a little gold crescent (Day Sky: no purple). */
 export function nightOf(c: Companion): Companion {
   return {
     ...c,
-    body: mix(c.body, "#3b3486", 0.45),
-    dark: mix(c.dark, "#221d55", 0.5),
-    light: mix(c.light, "#8f86e0", 0.45),
+    body: mix(c.body, "#e6edf8", 0.82),
+    dark: mix(c.dark, "#b2c1da", 0.8),
+    light: "#ffffff",
     top: "crescent",
-    trim: "#e8e4ff",
+    trim: "#ffd77a",
   };
 }
 
 /** The pixels of a companion in a pose, at a step of its walk (alternate steps move the feet and bob the body). */
-function pixels(c: Companion, pose: Pose, step: number) {
+export function pixels(c: Companion, pose: Pose, step: number) {
   const px = new Map<number, string>();
   const put = (x: number, y: number, col: string) => {
     if (x >= 0 && x < 16 && y >= 0 && y < 16) px.set(y * 16 + x, col);
