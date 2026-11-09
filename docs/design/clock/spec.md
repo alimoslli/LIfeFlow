@@ -223,7 +223,7 @@ Until the real LifeFlow changes or moves to a new domain:
 - **LifeFlow V3**: V2 plus Morrow, the dome and the Morrow palette (commit 4bba321; branch `v3-day-clock`, https://lifeflow-git-v3-day-clock-ali-b745.vercel.app).
 - **LifeFlow**: the live app (main, https://lifeflowweb.com).
 
-Day Sky (the time-of-day sky look) is kept under the tag `lifeflow-day-sky` and is not one of the versions.
+Day Sky (the time-of-day sky look) is not one of the versions; it stays in the `v3-day-clock` history at commit 07a46df.
 
 ## 8. Out of scope for this step
 - Editing from the timeline beyond opening the existing editor.
