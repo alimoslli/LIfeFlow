@@ -255,7 +255,8 @@ export function paintStrip(g: Element, defs: Element, o: StripOpts) {
 
 /* ---------- Today (closed) and the pour ---------- */
 /** A tile on Today's path; the rest of a pile point at the tile that leads it (`of`). */
-type Tile = { it: ClockItem; x: number; y: number; w: number; h: number; ax: number; ay: number; lane: number; count: number; of?: Tile };
+/** `late`: the pile holds something late, so it keeps the red edge even when what leads it isn't. */
+type Tile = { it: ClockItem; x: number; y: number; w: number; h: number; ax: number; ay: number; lane: number; count: number; of?: Tile; late?: boolean };
 const overlaps = (a: Tile, x: number, y: number, w: number, h: number) => Math.abs(a.x - x) < (a.w + w) / 2 + 6 && Math.abs(a.y - y) < (a.h + h) / 2 + 6;
 
 export function createSky(root: HTMLElement, reduce: boolean) {
@@ -717,6 +718,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         : tiles.reduce<Tile | undefined>((b, q) => (!b || Math.hypot(q.x - px, q.y - py) < Math.hypot(b.x - px, b.y - py) ? q : b), undefined);
       if (near) {
         near.count += gp.length;
+        // something late with no room of its own joins the pile at now, and the pile says it's late (it used to vanish)
+        if (isLate(it, now)) near.late = true;
         if (it === nextIt) {
           tileOf.set(near.it.id, { ...near, of: near });
           near.it = it;
@@ -771,12 +774,13 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     for (const tl of tileOf.values()) {
       const head = tl.of ?? tl;
       const n = stopOf.get(tl.it.id);
-      let [x, y, w, hh, a] = [head.x, head.y, head.w, head.h, up(tl.it.start)];
+      // a late thing lives at now, so it shows as much as now does (its own day may be long out of view)
+      let [x, y, w, hh, a] = [head.x, head.y, head.w, head.h, up(placeOf(tl.it))];
       if (k && n) [x, y, w, hh] = [lerp(head.x, n.x, k), lerp(head.y, n.y, k), lerp(head.w, 30, k), lerp(head.h, 30, k)];
       else if (k) a *= 1 - k;
       if (a <= 0.01 || (tl.of && k < 0.5)) continue;
       const fin = isFinished(tl.it, now);
-      const late = isLate(tl.it, now);
+      const late = isLate(tl.it, now) || !!tl.late;
       if (!tl.of && tl.lane && kc > 0) {
         const stem = { x1: head.ax.toFixed(1), y1: head.ay.toFixed(1), x2: head.x.toFixed(1), y2: head.y.toFixed(1) };
         el("line", { ...stem, stroke: itemColor(tl.it), "stroke-width": 1.8, "stroke-opacity": (a * 0.8 * kc).toFixed(2) }, stemG);
