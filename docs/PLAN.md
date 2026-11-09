@@ -255,7 +255,6 @@ Full check and phone e2e passed on 2026-11-08. To see it:
 4. Connect the Twilio number (blocks texting the assistant, phone sign-in and the after-shift message).
 5. Set up the desk task starter: a scheduled task API trigger and token, plus two Vercel variables (section 5).
 6. Connect Instagram in Metricool as a professional account with all permissions (section 8).
-7. Decide the Vercel plan: stay on Hobby (scheduled jobs once a day, so reminders and the nightly bank sync run daily) or move to Pro.
 8. Pro payments: Stripe keys for the web (go-live 9c); on iPhone, Apple in-app purchase comes with the App Store.
 9. Google verification of the app, so people outside the test list can connect Gmail.
 
@@ -270,6 +269,7 @@ Full check and phone e2e passed on 2026-11-08. To see it:
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-09, LF COO: the owner is already on Vercel Pro (decision removed). New deploys had stopped reaching lifeflowweb.com because the Neon integration hit its preview branch limit (Deployment Checks: "Neon branching: Branch limit exceeded", custom domain skipped); after the owner cleared it, the evening fixes, the Today chips and the H4 404 are live. Rule: builders work on claude/chief-of-staff or a worktree branch that is NOT pushed; only main and the department branches are pushed, so each push doesn't cost a Neon branch.
 - 2026-11-09, LF COO: the owner approved H4; signed-out visitors to /admin get the same 404 as everyone else (7647a69).
 - 2026-11-08, LF COO: the owner said yes; Today quick chips wrap instead of running off the edge (817e57f).
 - 2026-11-08 evening, LF COO: on main (ac6212a) after Opus reviews: Plaid follow-ups (hand-archived accounts stay archived, broken connections skipped until reconnect, LOGIN_REPAIRED and NEW_ACCOUNTS_AVAILABLE, holdings safety, pending expiration keeps syncing); account deletion cancels the plan (or refuses), removes bank links and revokes Google, for users and admins; onboarding phone fixes (44 px fields, names wrap, example tags on every card, no guessed Jdoe1234). Report: docs/audits/2026-11-08-welcome-phone.md.
