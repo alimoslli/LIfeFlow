@@ -131,7 +131,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
   return (
     // the skylings' night from the landing and sign-up, with the steps on a sheet rising over it; your pick cheers up there
     <div className="lf-glass min-h-dvh bg-bg">
-      <div className="relative isolate h-[clamp(12rem,30svh,19rem)] overflow-hidden bg-[#081a33] md:h-[clamp(15rem,34vh,22rem)]">
+      <div className="relative isolate h-[clamp(12rem,30svh,19rem)] overflow-hidden bg-night-ground md:h-[clamp(15rem,34vh,22rem)]">
         <div className="absolute inset-x-0 top-0 bottom-8">
           <NightSky stage="strip" focus={companion} />
         </div>
@@ -215,14 +215,14 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
                     className={cn(
                       "flex items-center gap-4 rounded-2xl px-4 py-4 text-left transition-all active:scale-[0.99]",
                       stage === value
-                        ? "bg-[linear-gradient(180deg,#fff4cf,#fbb24a)] text-[#13213d] shadow-lift ring-2 ring-[#f59c35]"
+                        ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night shadow-lift ring-2 ring-dawn-3"
                         : "bg-surface shadow-soft hover:shadow-lift",
                     )}
                   >
                     <Icon className="h-5 w-5 shrink-0" strokeWidth={1.8} />
                     <span>
                       <span className="block text-[1rem] font-medium">{label}</span>
-                      <span className={cn("block text-sm", stage === value ? "text-[#13213d]/75" : "text-muted")}>{hint}</span>
+                      <span className={cn("block text-sm", stage === value ? "text-ink-night/75" : "text-muted")}>{hint}</span>
                     </span>
                   </button>
                 ))}
@@ -294,7 +294,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
                       className={cn(
                         "flex min-h-24 flex-col items-center justify-center gap-0.5 rounded-[1.25rem] px-1 py-2 transition-all duration-300 active:scale-95",
                         companion === c.key
-                          ? "-translate-y-0.5 bg-[linear-gradient(180deg,#fff4cf,#fbb24a)] text-[#13213d] shadow-lift ring-2 ring-[#f59c35]"
+                          ? "-translate-y-0.5 bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night shadow-lift ring-2 ring-dawn-3"
                           : "bg-surface shadow-soft hover:-translate-y-0.5",
                       )}
                     >
@@ -306,7 +306,7 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
                         className="h-12 w-12"
                       />
                       <span className="text-[0.9375rem] font-medium">{c.name}</span>
-                      <span className={cn("text-xs", companion === c.key ? "text-[#13213d]/75" : "text-muted")}>{c.moment}</span>
+                      <span className={cn("text-xs", companion === c.key ? "text-ink-night/75" : "text-muted")}>{c.moment}</span>
                     </button>
                   ))}
                 </div>

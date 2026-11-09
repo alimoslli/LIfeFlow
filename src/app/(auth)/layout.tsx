@@ -10,7 +10,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="grid min-h-dvh bg-bg lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
       {/* phone: a stretch of the night with the cast, the form rising over it */}
-      <div className="relative isolate h-[clamp(17rem,42svh,24rem)] overflow-hidden bg-[#081a33] lg:hidden">
+      <div className="relative isolate h-[clamp(17rem,42svh,24rem)] overflow-hidden bg-night-ground lg:hidden">
         {/* the sky ends where the form's sheet begins, so nobody walks behind it */}
         <div className="absolute inset-x-0 top-0 bottom-8">
           <NightSky stage="strip" />
@@ -43,7 +43,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <aside className="relative isolate hidden overflow-hidden lg:block" aria-hidden>
         <NightSky stage="aside" />
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 p-12">
-          <p className="text-[0.75rem] font-semibold tracking-[0.14em] text-[#ffd77a] uppercase">The skylings</p>
+          <p className="text-[0.75rem] font-semibold tracking-[0.14em] text-star-gold uppercase">The skylings</p>
           <p className="mt-3 max-w-[18ch] font-display text-[2.75rem] leading-[1.02] font-medium tracking-[-0.035em] text-balance text-white">
             Six little ones, keeping your sky in order.
           </p>

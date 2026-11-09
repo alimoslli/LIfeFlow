@@ -148,6 +148,25 @@
   --color-sun: var(--sun);
   --color-sun-ink: var(--sun-ink);
   --color-night: var(--night);
+  /* the skylings' night and its sunrise (landing, sign-up, welcome; fixed in light and dark) */
+  --color-night-0: #040a18;
+  --color-night-1: #07132c;
+  --color-night-2: #0b1d42;
+  --color-night-3: #123058;
+  --color-night-4: #245a86;
+  --color-night-ground: #081a33;
+  --color-night-link: #8fb6ff;
+  --color-star-gold: #ffd77a;
+  --color-ink-night: #13213d;
+  --color-dawn-cream: #fff1c2;
+  --color-dawn-1: #fff4cf;
+  --color-dawn-2: #fbb24a;
+  --color-dawn-3: #f59c35;
+  --color-dawn-glow: #e98a4f;
+  --color-dawn-sand: #fde3b5;
+  --color-ember: #c4542a;
+  --color-morning: #f6f8fb;
+  --color-morning-link: #1f63bd;
   --color-brass: var(--brass);
   --color-brass-l: var(--brass-l);
   --color-brass-xl: var(--brass-xl);

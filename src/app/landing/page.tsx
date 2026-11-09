@@ -106,7 +106,7 @@ function InstagramIcon({ className }: { className?: string }) {
 }
 
 /** Pixel hills for the sunrise, stepped like the skylings' world. */
-function PixelHills({ className, fill }: { className?: string; fill: string }) {
+function PixelHills({ className, fill }: { className?: string; /** a fill-* class */ fill: string }) {
   const steps = Array.from({ length: 61 }, (_, i) => {
     const x = i * 2;
     const y = Math.round(18 + 7 * Math.sin(i / 6.5) + 3 * Math.sin(i / 2.3 + 1));
@@ -114,7 +114,7 @@ function PixelHills({ className, fill }: { className?: string; fill: string }) {
   }).join(" ");
   return (
     <svg viewBox="0 0 120 40" preserveAspectRatio="none" shapeRendering="crispEdges" className={className} aria-hidden>
-      <polygon points={`0,40 ${steps} 122,40`} fill={fill} />
+      <polygon points={`0,40 ${steps} 122,40`} className={fill} />
     </svg>
   );
 }
@@ -126,14 +126,14 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
   const inviter = code ? await inviterFor(getDb(), code) : null;
   const signupHref = inviter ? `/signup?invite=${encodeURIComponent(code)}` : "/signup";
   return (
-    <div className="min-h-dvh overflow-x-clip bg-[#040a18] text-white">
+    <div className="min-h-dvh overflow-x-clip bg-night-0 text-white">
       {/* ---------- The night: all six skylings, together ---------- */}
       <section className="relative isolate flex flex-col lg:min-h-[max(100svh,720px)]">
         {/* laptop: the whole section is the sky; phone: still stars over the words, the live sky under them */}
         <NightSky stage="hero" className="max-lg:hidden" />
         <div className="lf-stars pointer-events-none absolute inset-0 lg:hidden" aria-hidden />
         <div
-          className="pointer-events-none absolute inset-y-0 left-0 hidden w-[62%] bg-gradient-to-r from-[#040a18]/85 via-[#040a18]/45 to-transparent lg:block"
+          className="pointer-events-none absolute inset-y-0 left-0 hidden w-[62%] bg-gradient-to-r from-night-0/85 via-night-0/45 to-transparent lg:block"
           aria-hidden
         />
         <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
@@ -155,18 +155,18 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
         </header>
 
         <div className="pointer-events-none relative z-10 mx-auto w-full max-w-6xl flex-1 px-5 pt-4 sm:px-8 lg:flex lg:items-center lg:pt-0 lg:pb-24">
-          <div className="pointer-events-auto flex max-w-[36rem] flex-col lg:max-w-[33rem]">
+          <div className="pointer-events-auto flex flex-col lg:max-w-[33rem]">
             {inviter && (
               <p className="animate-rise mb-5 inline-flex self-start rounded-full bg-white/10 px-4 py-2 text-sm font-medium ring-1 ring-white/20 backdrop-blur">
                 {inviter.firstName} invited you to LifeFlow.
               </p>
             )}
-            <p className={`animate-rise ${kicker} text-[#ffd77a]`}>Your whole life, on one sky</p>
+            <p className={`animate-rise ${kicker} text-star-gold`}>Your whole life, on one sky</p>
             <h1
               className="animate-rise mt-3 font-display text-[2.5rem] leading-[0.98] font-medium tracking-[-0.045em] text-balance sm:text-[4.25rem] lg:mt-4 lg:text-[4.6rem]"
               style={{ animationDelay: "60ms" }}
             >
-              Every app sees one slice. <em className="bg-gradient-to-r from-[#fff1c2] to-[#fbb24a] bg-clip-text text-transparent">LifeFlow sees all of it.</em>
+              Every app sees one slice. <em className="bg-gradient-to-r from-dawn-cream to-dawn-2 bg-clip-text text-transparent">LifeFlow sees all of it.</em>
             </h1>
             <p
               className="animate-rise mt-5 max-w-[44ch] text-[1.0625rem] leading-relaxed text-white/80 max-lg:order-5 sm:text-[1.125rem]"
@@ -202,7 +202,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
             >
               {["Set up in two minutes", "Never moves your money", "Made by a student"].map((t) => (
                 <li key={t} className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 bg-[#ffd77a]" aria-hidden />
+                  <span className="h-1.5 w-1.5 bg-star-gold" aria-hidden />
                   {t}
                 </li>
               ))}
@@ -218,10 +218,10 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
       </section>
 
       {/* ---------- Meet the cast ---------- */}
-      <section id="skylings" className="relative scroll-mt-4 bg-gradient-to-b from-[#245a86] via-[#123058] to-[#0b1d42] px-5 py-20 sm:px-8 lg:py-28">
+      <section id="skylings" className="relative scroll-mt-4 bg-gradient-to-b from-night-4 via-night-3 to-night-2 px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)] lg:gap-14">
           <div className="lg:sticky lg:top-16 lg:self-start">
-            <p className={`${kicker} text-[#ffd77a]`}>The skylings</p>
+            <p className={`${kicker} text-star-gold`}>The skylings</p>
             <h2 className={`mt-3 ${h2}`}>Six little ones. One of them is yours.</h2>
             <p className="mt-5 max-w-[40ch] text-[1.0625rem] leading-relaxed text-white/75">
               Each skyling is named for a moment of the sky and helps in its own way. Pick one, give it a name, and it lives on top of your day: awake with the
@@ -238,9 +238,9 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
       </section>
 
       {/* ---------- What a skyling does before you ask ---------- */}
-      <section id="moments" className="scroll-mt-4 bg-[#0b1d42] px-5 py-20 sm:px-8 lg:py-28">
+      <section id="moments" className="scroll-mt-4 bg-night-2 px-5 py-20 sm:px-8 lg:py-28">
         <div className="mx-auto max-w-6xl">
-          <p className={`${kicker} text-[#8fb6ff]`}>What it does before you ask</p>
+          <p className={`${kicker} text-night-link`}>What it does before you ask</p>
           <h2 className={`mt-3 max-w-[18ch] ${h2}`}>It notices the problem while there&apos;s still time to fix it.</h2>
           <p className="mt-5 max-w-[52ch] text-[1.0625rem] text-white/75">Three things skylings do on a normal week. Each one shows the numbers it used.</p>
           <ul className="mt-10 grid gap-4 md:grid-cols-3">
@@ -252,10 +252,10 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
                   </span>
                   <div>
                     <p className="font-display text-[1.1875rem] leading-none font-medium">{m.name}</p>
-                    <p className="mt-1 text-[0.6875rem] font-semibold tracking-[0.1em] text-[#ffd77a] uppercase">{m.tag}</p>
+                    <p className="mt-1 text-[0.6875rem] font-semibold tracking-[0.1em] text-star-gold uppercase">{m.tag}</p>
                   </div>
                 </div>
-                <p className="relative mt-4 rounded-2xl rounded-tl-md bg-white px-4 py-3.5 text-[1rem] leading-snug text-[#13213d]">{m.says}</p>
+                <p className="relative mt-4 rounded-2xl rounded-tl-md bg-white px-4 py-3.5 text-[1rem] leading-snug text-ink-night">{m.says}</p>
                 <div className="mt-4 flex flex-wrap gap-1.5">
                   {m.used.map((t) => (
                     <span key={t} className="rounded-full bg-white/10 px-2.5 py-1 text-[0.6875rem] font-medium text-white/85">
@@ -271,7 +271,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
       </section>
 
       {/* ---------- What it connects to ---------- */}
-      <div className="bg-[#0b1d42] px-5 pb-16 sm:px-8">
+      <div className="bg-night-2 px-5 pb-16 sm:px-8">
         <div className="mx-auto grid max-w-6xl items-center gap-4 rounded-[1.75rem] bg-white/[0.04] p-6 ring-1 ring-white/10 lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-10">
           <p className="max-w-[22ch] text-sm leading-snug text-white/60">Connects to what you already use</p>
           <ul className="flex flex-wrap items-center gap-x-7 gap-y-3.5 text-[0.9375rem] font-medium text-white/85">
@@ -301,22 +301,22 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
 
       {/* ---------- Sunrise: Ray comes up over the hills ---------- */}
       <div className="lf-sunrise relative h-56 overflow-hidden sm:h-72" aria-hidden>
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0b1d42] via-[#e98a4f] to-[#fde3b5]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-night-2 via-dawn-glow to-dawn-sand" />
         <div className="lf-sun-up absolute bottom-6 left-1/2 w-28 -translate-x-1/2 sm:w-36">
           <span className="absolute inset-[-60%] rounded-full bg-[radial-gradient(closest-side,rgb(255_236_170_/_0.9),transparent)]" />
           <CompanionGlyph companion="ray" pose="celebrate" frame={2} className="lf-pixel relative h-auto w-full" />
         </div>
-        <PixelHills className="absolute inset-x-0 bottom-0 h-20 w-full sm:h-24" fill="#f6f8fb" />
+        <PixelHills className="absolute inset-x-0 bottom-0 h-20 w-full sm:h-24" fill="fill-morning" />
       </div>
 
       {/* ---------- Morning: why, trust, questions ---------- */}
-      <div className="bg-[#f6f8fb] text-[#13213d]">
+      <div className="bg-morning text-ink-night">
         <section id="why" className="scroll-mt-4 px-5 pt-10 pb-16 sm:px-8 lg:pb-24">
           <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-12">
             <blockquote className="font-display text-[1.875rem] leading-[1.12] font-medium tracking-[-0.03em] text-balance sm:text-[2.625rem]">
-              Built by a student solving <em className="text-[#c4542a]">his own problem</em>, for everyone with a full life.
+              Built by a student solving <em className="text-ember">his own problem</em>, for everyone with a full life.
             </blockquote>
-            <div className="space-y-3 text-[1.0625rem] leading-relaxed text-[#13213d]/75">
+            <div className="space-y-3 text-[1.0625rem] leading-relaxed text-ink-night/75">
               <p>Seven classes. Working 30 hours a week. Side projects. Applications. Nothing connected any of it, so I built the one thing I needed.</p>
               <p>
                 It has one job: serve you. It isn&apos;t made for research or websites. It&apos;s made to find the dots across your whole week and help you make
@@ -326,47 +326,47 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
           </div>
           <ul className="mx-auto mt-10 grid max-w-6xl gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
             {TRUST.map(([b, t]) => (
-              <li key={b} className="flex items-start gap-2.5 text-sm leading-snug text-[#13213d]/75">
-                <span className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md bg-[#13213d] text-[#ffd77a]" aria-hidden>
+              <li key={b} className="flex items-start gap-2.5 text-sm leading-snug text-ink-night/75">
+                <span className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md bg-ink-night text-star-gold" aria-hidden>
                   <Check className="h-3 w-3" strokeWidth={3.2} />
                 </span>
                 <span>
-                  <b className="font-semibold text-[#13213d]">{b}</b> {t}
+                  <b className="font-semibold text-ink-night">{b}</b> {t}
                 </span>
               </li>
             ))}
           </ul>
           <ul className="mx-auto mt-12 grid max-w-6xl gap-7 md:grid-cols-3">
             {WHY.map(([t, b]) => (
-              <li key={t} className="border-t-2 border-[#f59c35] pt-3.5">
+              <li key={t} className="border-t-2 border-dawn-3 pt-3.5">
                 <h3 className="font-display text-[1.5rem] font-medium tracking-[-0.02em]">{t}</h3>
-                <p className="mt-1.5 text-[0.96875rem] text-[#13213d]/70">{b}</p>
+                <p className="mt-1.5 text-[0.96875rem] text-ink-night/70">{b}</p>
               </li>
             ))}
           </ul>
         </section>
 
-        <section id="faq" className="scroll-mt-4 border-t border-[#13213d]/10 px-5 py-16 sm:px-8 lg:py-24">
+        <section id="faq" className="scroll-mt-4 border-t border-ink-night/10 px-5 py-16 sm:px-8 lg:py-24">
           <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
             <div>
-              <p className={`${kicker} text-[#c4542a]`}>Questions</p>
+              <p className={`${kicker} text-ember`}>Questions</p>
               <h2 className={`mt-3 ${h2}`}>Straight answers.</h2>
-              <p className="mt-4 max-w-sm text-[1.0625rem] leading-relaxed text-[#13213d]/70">
+              <p className="mt-4 max-w-sm text-[1.0625rem] leading-relaxed text-ink-night/70">
                 Something else? Message us on{" "}
-                <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" className="font-medium text-[#1f63bd] underline underline-offset-4">
+                <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" className="font-medium text-morning-link underline underline-offset-4">
                   Instagram @lifeflowweb
                 </a>
                 .
               </p>
             </div>
-            <div className="divide-y divide-[#13213d]/10 border-y border-[#13213d]/10">
+            <div className="divide-y divide-ink-night/10 border-y border-ink-night/10">
               {FAQS.map((f) => (
                 <details key={f.q} className="group">
                   <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-6 py-4 text-[1.0625rem] font-medium [&::-webkit-details-marker]:hidden">
                     {f.q}
-                    <ChevronDown className="h-5 w-5 shrink-0 text-[#13213d]/45 transition-transform group-open:rotate-180" aria-hidden />
+                    <ChevronDown className="h-5 w-5 shrink-0 text-ink-night/45 transition-transform group-open:rotate-180" aria-hidden />
                   </summary>
-                  <p className="pb-5 text-[1rem] leading-relaxed text-[#13213d]/75">{f.a}</p>
+                  <p className="pb-5 text-[1rem] leading-relaxed text-ink-night/75">{f.a}</p>
                 </details>
               ))}
             </div>
@@ -389,30 +389,30 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               </div>
             </div>
           </div>
-          <p className="mx-auto mt-5 max-w-6xl text-xs leading-relaxed text-[#13213d]/55">
+          <p className="mx-auto mt-5 max-w-6xl text-xs leading-relaxed text-ink-night/55">
             Canvas is a trademark of Instructure, Inc. Google, Google Calendar and Gmail are trademarks of Google LLC. Microsoft, Outlook and Teams are
             trademarks of the Microsoft group of companies. Apple and Apple Health are trademarks of Apple Inc. Plaid is a trademark of Plaid Inc. LifeFlow
             works with these services and is not endorsed by them.
           </p>
         </section>
 
-        <footer className="border-t border-[#13213d]/10">
-          <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8 text-sm text-[#13213d]/60 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <footer className="border-t border-ink-night/10">
+          <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8 text-sm text-ink-night/60 sm:flex-row sm:items-center sm:justify-between sm:px-8">
             <BrandLockup markClassName="h-6 w-6" />
             <nav className="flex flex-wrap gap-x-6" aria-label="Footer">
-              <a href="#faq" className="inline-flex min-h-11 items-center hover:text-[#13213d]">
+              <a href="#faq" className="inline-flex min-h-11 items-center hover:text-ink-night">
                 FAQ
               </a>
-              <Link href="/privacy" className="inline-flex min-h-11 items-center hover:text-[#13213d]">
+              <Link href="/privacy" className="inline-flex min-h-11 items-center hover:text-ink-night">
                 Privacy
               </Link>
-              <Link href="/terms" className="inline-flex min-h-11 items-center hover:text-[#13213d]">
+              <Link href="/terms" className="inline-flex min-h-11 items-center hover:text-ink-night">
                 Terms
               </Link>
-              <Link href="/integrity" className="inline-flex min-h-11 items-center hover:text-[#13213d]">
+              <Link href="/integrity" className="inline-flex min-h-11 items-center hover:text-ink-night">
                 Academic integrity
               </Link>
-              <Link href="/login" className="inline-flex min-h-11 items-center hover:text-[#13213d]">
+              <Link href="/login" className="inline-flex min-h-11 items-center hover:text-ink-night">
                 Sign in
               </Link>
             </nav>
@@ -422,7 +422,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LifeFlow on Instagram (@lifeflowweb)"
-                className="inline-flex min-h-11 items-center gap-2 hover:text-[#13213d]"
+                className="inline-flex min-h-11 items-center gap-2 hover:text-ink-night"
               >
                 <InstagramIcon className="h-5 w-5" />
                 @lifeflowweb
