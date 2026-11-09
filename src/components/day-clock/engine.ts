@@ -965,7 +965,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   function prepMorph(keepScroll = false) {
     // the wheel opens at the time on top and wraps back at the time in the middle of the line, so nothing jumps
     if (domeMode && keepScroll) {
-      S.view = tAt(trackWrap.scrollLeft + G.W / 2);
+      S.view = clamp(tAt(trackWrap.scrollLeft + G.W / 2), minDay() * 1440, (maxDay() + 1) * 1440 - 1);
       S.follow = Math.abs(S.view - S.now) < 10;
     }
     const sl = domeMode && keepScroll ? trackWrap.scrollLeft : domeMode && !S.follow ? clamp(xAt(S.view) - G.W / 2, 0, TM.total - G.W) : homeScroll();
@@ -1609,6 +1609,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   }
   // Wrapping the timeline back into the clock: the exact path of the open, run backwards as one motion.
   function beginWrap() {
+    stopSpin();
     setState("moving");
     S.open = false;
     S.sel = null;
@@ -1659,17 +1660,24 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   const viewMax = () => (maxDay() + 1) * 1440 - 1;
   function setView(t: number) {
     S.view = clamp(t, viewMin(), viewMax());
-    S.follow = false;
+    S.follow = Math.abs(S.view - S.now) < 0.5;
     drawDome();
   }
   function stopSpin() {
     cancelAnimationFrame(S.spin);
     S.spin = 0;
   }
+  // a minute that turned over while the wheel was spinning is caught up once it stops
+  function afterSpin() {
+    if (S.dirty && !S.open && !S.anim && !drag) {
+      S.dirty = false;
+      rebuild();
+    }
+  }
   // back to now, smoothly: the farther away, the longer (never more than 1.4 s)
   function goNow() {
     stopSpin();
-    if (S.follow) return;
+    if (S.follow) return afterSpin();
     const from = S.view;
     const ms = reduce ? 0 : clamp(380 + Math.abs(S.now - from) * 0.3, 380, 1400);
     const start = performance.now();
@@ -1683,36 +1691,42 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
         S.follow = true;
         drawDome();
         haptic(10);
+        afterSpin();
       }
     };
     S.spin = requestAnimationFrame(step);
   }
   // let go while turning: it keeps going and slows down, and settles on now when it passes close to it
-  function fling(v: number) {
+  function fling(v0: number) {
     stopSpin();
+    // even the hardest flick coasts about half a day, never further
+    let v = clamp(v0, -2, 2);
     let last = performance.now();
     const step = (t: number) => {
       const dt = Math.min(48, t - last);
       last = t;
-      v *= Math.pow(0.94, dt / 16);
+      v *= Math.pow(0.93, dt / 16);
       setView(S.view + v * dt);
       if (Math.abs(v) > 0.004 && S.view > viewMin() && S.view < viewMax()) S.spin = requestAnimationFrame(step);
       else {
         S.spin = 0;
         if (Math.abs(S.view - S.now) < 12) goNow();
+        else afterSpin();
       }
     };
     if (!reduce) S.spin = requestAnimationFrame(step);
     else if (Math.abs(S.view - S.now) < 12) goNow();
+    else afterSpin();
   }
   if (backBtn) on(backBtn, "click", () => goNow());
 
   /* pull the clock sideways to open (the wheel: turn it); tap to open */
-  let drag: { x: number; y: number; id: number; moved: boolean; lastP: number; lastT: number; v: number; v0: number } | null = null;
+  let drag: { x: number; y: number; id: number; moved: boolean; lastP: number; lastT: number; v: number; v0: number; caught: boolean } | null = null;
   on(hit, "pointerdown", (e: PointerEvent) => {
     if (S.open || S.anim) return;
+    const caught = domeMode && S.spin !== 0;
     if (domeMode) stopSpin();
-    drag = { x: e.clientX, y: e.clientY, id: e.pointerId, moved: false, lastP: 0, lastT: performance.now(), v: 0, v0: S.follow ? S.now : S.view };
+    drag = { x: e.clientX, y: e.clientY, id: e.pointerId, moved: false, lastP: 0, lastT: performance.now(), v: 0, v0: S.follow ? S.now : S.view, caught };
     try {
       hit.setPointerCapture(e.pointerId);
     } catch {
@@ -1726,7 +1740,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const dx = e.clientX - drag.x;
     const dy = e.clientY - drag.y;
     if (domeMode) {
-      if (!drag.moved && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) drag.moved = true;
+      if (!drag.moved && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+        drag.moved = true;
+        drag.lastP = drag.v0;
+        drag.lastT = performance.now();
+      }
       if (!drag.moved) return;
       // finger to the right goes back in time; to the left, ahead
       const now = performance.now();
@@ -1762,13 +1780,14 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const d = drag;
     drag = null;
     if (!d.moved) {
-      if (cancelled) pressTo(0);
+      if (cancelled || d.caught) pressTo(0);
       else open();
+      if (d.caught) afterSpin();
       return;
     }
     if (domeMode) {
       pressTo(0, 220);
-      fling(performance.now() - d.lastT > 90 ? 0 : d.v);
+      fling(cancelled || performance.now() - d.lastT > 90 ? 0 : d.v);
       return;
     }
     const v = performance.now() - d.lastT > 90 ? 0 : d.v;
@@ -1785,11 +1804,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       open();
-    } else if (domeMode && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+    } else if (domeMode && !S.anim && !S.open && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
       // the keyboard turns the wheel an hour at a time; Home goes back to now
       e.preventDefault();
       setView((S.follow ? S.now : S.view) + (e.key === "ArrowLeft" ? -60 : 60));
-    } else if (domeMode && e.key === "Home") {
+    } else if (domeMode && !S.anim && !S.open && e.key === "Home") {
       e.preventDefault();
       goNow();
     }
@@ -1993,6 +2012,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
 
   return {
     update(next: ClockData) {
+      if (next.today !== data.today) S.follow = true;
       data = next;
       ITEMS = next.items;
       DATED = ITEMS.filter((it) => !it.someday);
