@@ -1,0 +1,1760 @@
+[
+ {
+  "tag": "phone",
+  "route": "/",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1062,
+  "small": [
+   {
+    "w": 13,
+    "h": 13,
+    "t": "INPUT"
+   }
+  ],
+  "smallCount": 1,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 2,
+  "h1": "Up late, Avery"
+ },
+ {
+  "tag": "phone",
+  "route": "/ (timeline open)",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1062,
+  "small": [
+   {
+    "w": 13,
+    "h": 13,
+    "t": "INPUT"
+   }
+  ],
+  "smallCount": 1,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 1,
+  "h1": "Up late, Avery"
+ },
+ {
+  "tag": "phone",
+  "route": "/plan",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1762,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 7,
+  "h1": "Calendar"
+ },
+ {
+  "tag": "phone",
+  "route": "/calendar",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1208,
+  "small": [
+   {
+    "w": 101,
+    "h": 40,
+    "t": "Event"
+   }
+  ],
+  "smallCount": 1,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 6,
+  "h1": "November 2026"
+ },
+ {
+  "tag": "phone",
+  "route": "/tasks",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 914,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 5,
+  "h1": "To-dos"
+ },
+ {
+  "tag": "phone",
+  "route": "/milestones",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 2088,
+  "small": [
+   {
+    "w": 273,
+    "h": 40,
+    "t": "Edit what happened"
+   },
+   {
+    "w": 124,
+    "h": 40,
+    "t": "Edit when"
+   },
+   {
+    "w": 142,
+    "h": 40,
+    "t": "Edit kind"
+   },
+   {
+    "w": 273,
+    "h": 40,
+    "t": "Edit note"
+   },
+   {
+    "w": 273,
+    "h": 32,
+    "t": "Save"
+   },
+   {
+    "w": 273,
+    "h": 40,
+    "t": "Edit what happened"
+   },
+   {
+    "w": 124,
+    "h": 40,
+    "t": "Edit when"
+   },
+   {
+    "w": 142,
+    "h": 40,
+    "t": "Edit kind"
+   },
+   {
+    "w": 273,
+    "h": 40,
+    "t": "Edit note"
+   },
+   {
+    "w": 273,
+    "h": 32,
+    "t": "Save"
+   },
+   {
+    "w": 273,
+    "h": 40,
+    "t": "Edit what happened"
+   },
+   {
+    "w": 124,
+    "h": 40,
+    "t": "Edit when"
+   },
+   {
+    "w": 142,
+    "h": 40,
+    "t": "Edit kind"
+   },
+   {
+    "w": 273,
+    "h": 40,
+    "t": "Edit note"
+   },
+   {
+    "w": 273,
+    "h": 32,
+    "t": "Save"
+   }
+  ],
+  "smallCount": 19,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 9,
+  "h1": "Milestones"
+ },
+ {
+  "tag": "phone",
+  "route": "/goals",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 2843,
+  "small": [
+   {
+    "w": 321,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 99,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 99,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 99,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 321,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 58,
+    "h": 32,
+    "t": "Save"
+   },
+   {
+    "w": 84,
+    "h": 32,
+    "t": "Delete 🏃 Run a half marathon"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 98,
+    "h": 40,
+    "t": "Add goal"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "Emergency fund\nTravel\nCar\nHome or apartm"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   }
+  ],
+  "smallCount": 20,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 7,
+  "h1": "Goals"
+ },
+ {
+  "tag": "phone",
+  "route": "/habits",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 852,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 3,
+  "h1": "Health"
+ },
+ {
+  "tag": "phone",
+  "route": "/work",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 2061,
+  "small": [
+   {
+    "w": 168,
+    "h": 40,
+    "t": "Import schedule"
+   },
+   {
+    "w": 99,
+    "h": 40,
+    "t": "Add shift"
+   },
+   {
+    "w": 113,
+    "h": 40,
+    "t": "Save hours"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "Hourly\nSalary"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 96,
+    "h": 40,
+    "t": "Save job"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "Job"
+   },
+   {
+    "w": 153,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 153,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 153,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 153,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 120,
+    "h": 32,
+    "t": "Save paycheck"
+   },
+   {
+    "w": 45,
+    "h": 18,
+    "t": "Details"
+   }
+  ],
+  "smallCount": 15,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 12,
+  "h1": "Work"
+ },
+ {
+  "tag": "phone",
+  "route": "/jarvis",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 852,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": null,
+  "shadowedBoxes": 5,
+  "h1": null
+ },
+ {
+  "tag": "phone",
+  "route": "/jarvis/says",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 852,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": null,
+  "shadowedBoxes": 2,
+  "h1": "Updates"
+ },
+ {
+  "tag": "phone",
+  "route": "/jarvis/ideas",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 2939,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": null,
+  "shadowedBoxes": 0,
+  "h1": "Ideas"
+ },
+ {
+  "tag": "phone",
+  "route": "/jarvis/profile",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 865,
+  "small": [
+   {
+    "w": 174,
+    "h": 16,
+    "t": "never does graded work for you"
+   }
+  ],
+  "smallCount": 1,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": null,
+  "shadowedBoxes": 3,
+  "h1": "Your assistant"
+ },
+ {
+  "tag": "phone",
+  "route": "/jarvis/memory",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1252,
+  "small": [
+   {
+    "w": 321,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 302,
+    "h": 40,
+    "t": "How your assistant should work\nPreferenc"
+   },
+   {
+    "w": 174,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 66,
+    "h": 40,
+    "t": "Add"
+   }
+  ],
+  "smallCount": 4,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": null,
+  "shadowedBoxes": 2,
+  "h1": "What your assistant knows"
+ },
+ {
+  "tag": "phone",
+  "route": "/inbox",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 852,
+  "small": [
+   {
+    "w": 1,
+    "h": 1,
+    "t": "Photo or PDF to file"
+   }
+  ],
+  "smallCount": 1,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": null,
+  "shadowedBoxes": 1,
+  "h1": "Updates"
+ },
+ {
+  "tag": "phone",
+  "route": "/money",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1272,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 4,
+  "h1": "Money"
+ },
+ {
+  "tag": "phone",
+  "route": "/finances/transactions",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 977,
+  "small": [
+   {
+    "w": 192,
+    "h": 40,
+    "t": "Import CSV"
+   },
+   {
+    "w": 90,
+    "h": 40,
+    "t": "Add"
+   },
+   {
+    "w": 228,
+    "h": 36,
+    "t": "Search"
+   },
+   {
+    "w": 71,
+    "h": 36,
+    "t": "Search"
+   },
+   {
+    "w": 169,
+    "h": 40,
+    "t": "From date"
+   },
+   {
+    "w": 169,
+    "h": 40,
+    "t": "To date"
+   },
+   {
+    "w": 169,
+    "h": 40,
+    "t": "Category"
+   },
+   {
+    "w": 169,
+    "h": 40,
+    "t": "Type"
+   }
+  ],
+  "smallCount": 8,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 5,
+  "h1": "Transactions"
+ },
+ {
+  "tag": "phone",
+  "route": "/finances/accounts",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1414,
+  "small": [
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 58,
+    "h": 32,
+    "t": "Save"
+   },
+   {
+    "w": 90,
+    "h": 32,
+    "t": "Archive Everyday Checking"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "Checking / savings\nCredit card\nInvestmen"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 123,
+    "h": 40,
+    "t": "Add account"
+   }
+  ],
+  "smallCount": 10,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 4,
+  "h1": "Accounts"
+ },
+ {
+  "tag": "phone",
+  "route": "/finances/budgets",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1156,
+  "small": [
+   {
+    "w": 313,
+    "h": 40,
+    "t": "Uncategorized\nActivities\nBills & Subscri"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 122,
+    "h": 40,
+    "t": "Save budget"
+   }
+  ],
+  "smallCount": 3,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 5,
+  "h1": "Budgets"
+ },
+ {
+  "tag": "phone",
+  "route": "/finances/bills",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1169,
+  "small": [
+   {
+    "w": 313,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "Bill\nSubscription\nIncome\nOther"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "Weekly\nEvery 2 weeks\nMonthly\nQuarterly\nY"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 66,
+    "h": 40,
+    "t": "Add"
+   }
+  ],
+  "smallCount": 6,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 3,
+  "h1": "Bills"
+ },
+ {
+  "tag": "phone",
+  "route": "/finances/subscriptions",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 852,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 4,
+  "h1": "Subscriptions"
+ },
+ {
+  "tag": "phone",
+  "route": "/finances/rules",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 852,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 1,
+  "h1": "Category rules"
+ },
+ {
+  "tag": "phone",
+  "route": "/wealth",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 2662,
+  "small": [
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 60,
+    "h": 18,
+    "t": "Accounts"
+   }
+  ],
+  "smallCount": 2,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 6,
+  "h1": "Investments"
+ },
+ {
+  "tag": "phone",
+  "route": "/school",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 870,
+  "small": [
+   {
+    "w": 146,
+    "h": 40,
+    "t": "Add assignment"
+   },
+   {
+    "w": 114,
+    "h": 40,
+    "t": "Add course"
+   }
+  ],
+  "smallCount": 2,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 3,
+  "h1": "Classes"
+ },
+ {
+  "tag": "phone",
+  "route": "/school/due",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 852,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 2,
+  "h1": "Due"
+ },
+ {
+  "tag": "phone",
+  "route": "/notes",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1014,
+  "small": [
+   {
+    "w": 103,
+    "h": 40,
+    "t": "New note"
+   },
+   {
+    "w": 333,
+    "h": 40,
+    "t": "Project name"
+   },
+   {
+    "w": 333,
+    "h": 40,
+    "t": "Project description"
+   },
+   {
+    "w": 333,
+    "h": 32,
+    "t": "Create"
+   },
+   {
+    "w": 353,
+    "h": 40,
+    "t": "Search notes"
+   }
+  ],
+  "smallCount": 5,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 3,
+  "h1": "Notes"
+ },
+ {
+  "tag": "phone",
+  "route": "/settings",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1235,
+  "small": [
+   {
+    "w": 154,
+    "h": 36,
+    "t": "Replay the tour"
+   },
+   {
+    "w": 76,
+    "h": 16,
+    "t": "Privacy Policy"
+   },
+   {
+    "w": 33,
+    "h": 16,
+    "t": "Terms"
+   },
+   {
+    "w": 103,
+    "h": 16,
+    "t": "Academic integrity"
+   }
+  ],
+  "smallCount": 4,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 6,
+  "h1": "Settings"
+ },
+ {
+  "tag": "phone",
+  "route": "/settings/profile",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1263,
+  "small": [
+   {
+    "w": 305,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 305,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 305,
+    "h": 40,
+    "t": "Africa/Abidjan\nAfrica/Accra\nAfrica/Addis"
+   },
+   {
+    "w": 305,
+    "h": 40,
+    "t": "Monday\nSunday"
+   },
+   {
+    "w": 305,
+    "h": 40,
+    "t": "Classes\nWork\nClasses and a job\nNeither"
+   },
+   {
+    "w": 305,
+    "h": 40,
+    "t": "No preference\nMorning\nAfternoon\nEvening\n"
+   },
+   {
+    "w": 72,
+    "h": 40,
+    "t": "Save"
+   }
+  ],
+  "smallCount": 7,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 2,
+  "h1": "Profile & appearance"
+ },
+ {
+  "tag": "phone",
+  "route": "/settings/text",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 852,
+  "small": [
+   {
+    "w": 92,
+    "h": 20,
+    "t": "Back to Home"
+   }
+  ],
+  "smallCount": 1,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 0,
+  "h1": "We couldn't find that page"
+ },
+ {
+  "tag": "phone",
+  "route": "/settings/jarvis",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 3224,
+  "small": [
+   {
+    "w": 313,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "Short\nBalanced\nDetailed"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 151,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 51,
+    "h": 31,
+    "t": "INPUT"
+   },
+   {
+    "w": 51,
+    "h": 31,
+    "t": "INPUT"
+   }
+  ],
+  "smallCount": 31,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 9,
+  "h1": "Your assistant"
+ },
+ {
+  "tag": "phone",
+  "route": "/settings/notifications",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1016,
+  "small": [
+   {
+    "w": 51,
+    "h": 31,
+    "t": "INPUT"
+   },
+   {
+    "w": 291,
+    "h": 38,
+    "t": "Change the limit or quiet hours"
+   },
+   {
+    "w": 72,
+    "h": 40,
+    "t": "Save"
+   }
+  ],
+  "smallCount": 3,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 3,
+  "h1": "Notifications"
+ },
+ {
+  "tag": "phone",
+  "route": "/settings/integrations",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 4050,
+  "small": [
+   {
+    "w": 313,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 147,
+    "h": 40,
+    "t": "Connect Canvas"
+   },
+   {
+    "w": 281,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 281,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 168,
+    "h": 40,
+    "t": "Connect with token"
+   },
+   {
+    "w": 183,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 122,
+    "h": 40,
+    "t": "Create a key"
+   }
+  ],
+  "smallCount": 7,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 11,
+  "h1": "Connected accounts"
+ },
+ {
+  "tag": "phone",
+  "route": "/settings/data",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1008,
+  "small": [
+   {
+    "w": 89,
+    "h": 18,
+    "t": "Privacy Policy"
+   },
+   {
+    "w": 38,
+    "h": 18,
+    "t": "Terms"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 163,
+    "h": 40,
+    "t": "Delete my account"
+   }
+  ],
+  "smallCount": 5,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 4,
+  "h1": "Privacy & data"
+ },
+ {
+  "tag": "phone",
+  "route": "/settings/security",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1536,
+  "small": [
+   {
+    "w": 51,
+    "h": 31,
+    "t": "INPUT"
+   },
+   {
+    "w": 72,
+    "h": 40,
+    "t": "Save"
+   },
+   {
+    "w": 88,
+    "h": 40,
+    "t": "Turn on"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 158,
+    "h": 40,
+    "t": "Change password"
+   }
+  ],
+  "smallCount": 6,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 7,
+  "h1": "Face ID & passwords"
+ },
+ {
+  "tag": "phone",
+  "route": "/settings/plan",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 852,
+  "small": [
+   {
+    "w": 92,
+    "h": 20,
+    "t": "Back to Home"
+   }
+  ],
+  "smallCount": 1,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 0,
+  "h1": "We couldn't find that page"
+ },
+ {
+  "tag": "phone",
+  "route": "/settings/invite",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 852,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 3,
+  "h1": "Invite friends"
+ },
+ {
+  "tag": "phone",
+  "route": "/settings/feedback",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 852,
+  "small": [
+   {
+    "w": 22,
+    "h": 22,
+    "t": "INPUT"
+   },
+   {
+    "w": 22,
+    "h": 22,
+    "t": "INPUT"
+   },
+   {
+    "w": 22,
+    "h": 22,
+    "t": "INPUT"
+   }
+  ],
+  "smallCount": 3,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 1,
+  "h1": "Send feedback"
+ },
+ {
+  "tag": "phone",
+  "route": "/settings/memory",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1252,
+  "small": [
+   {
+    "w": 321,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 302,
+    "h": 40,
+    "t": "How your assistant should work\nPreferenc"
+   },
+   {
+    "w": 174,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 66,
+    "h": 40,
+    "t": "Add"
+   }
+  ],
+  "smallCount": 4,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": null,
+  "shadowedBoxes": 2,
+  "h1": "What your assistant knows"
+ },
+ {
+  "tag": "phone",
+  "route": "/settings/trash",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 852,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 1,
+  "h1": "Recently deleted"
+ },
+ {
+  "tag": "phone",
+  "route": "/tasks/7e0cecd9-8dce-43c9-8d69-f702a4e214d7",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1589,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 3,
+  "h1": "Return library book"
+ },
+ {
+  "tag": "phone",
+  "route": "/school/courses/b8811639-a19a-42ae-9f74-1fbaa1d32afd",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1611,
+  "small": [
+   {
+    "w": 146,
+    "h": 40,
+    "t": "Add assignment"
+   },
+   {
+    "w": 52,
+    "h": 32,
+    "t": "Edit"
+   },
+   {
+    "w": 127,
+    "h": 40,
+    "t": "Save weights"
+   },
+   {
+    "w": 313,
+    "h": 40,
+    "t": "Material title"
+   },
+   {
+    "w": 253,
+    "h": 40,
+    "t": "Material link"
+   },
+   {
+    "w": 52,
+    "h": 32,
+    "t": "Add"
+   },
+   {
+    "w": 54,
+    "h": 16,
+    "t": "New note"
+   },
+   {
+    "w": 110,
+    "h": 24,
+    "t": "Delete course"
+   }
+  ],
+  "smallCount": 8,
+  "main": {
+   "x": 0,
+   "w": 393
+  },
+  "panel": {
+   "x": 20,
+   "w": 353,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  "shadowedBoxes": 8,
+  "h1": "General Chemistry"
+ },
+ {
+  "tag": "phone",
+  "pageErrors": []
+ }
+]

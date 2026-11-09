@@ -1,0 +1,114 @@
+{
+ "hitBox": {
+  "x": 252,
+  "y": 176,
+  "width": 1024,
+  "height": 384
+ },
+ "domeBox": {
+  "x": 252,
+  "y": 128,
+  "width": 1024,
+  "height": 620
+ },
+ "wheel": {
+  "dcW": 1024,
+  "dcH": 620,
+  "widestShapeW": 138,
+  "vw": 1440,
+  "vh": 900
+ },
+ "before": {
+  "dome": "Sunrise about 6:35 AMToday💼9 AM🌙 Sun rises in about 3h 20mNext · 9 AMWork6,240 steps · 7h 18m sleep$69.20 spent todayTomorrow · 💼 Work · 🎓 Class",
+  "label": "Today. Now 3:22 AM. Next · 9 AM: Work. 6,240 steps · 7h 18m sleep. $69.20 spent today. Open your day as a timeline.",
+  "foot": "your assistant CHEM 101 exam is Wednesday. Plan study time"
+ },
+ "afterHorizontalWheel600": {
+  "dome": "Sunrise about 6:35 AMToday💼9 AM🌙 Sun rises in about 3h 20mNext · 9 AMWork6,240 steps · 7h 18m sleep$69.20 spent todayTomorrow · 💼 Work · 🎓 Class",
+  "label": "Today. Now 3:22 AM. Next · 9 AM: Work. 6,240 steps · 7h 18m sleep. $69.20 spent today. Open your day as a timeline.",
+  "backVisible": false
+ },
+ "afterVerticalWheel600": {
+  "dome": "Sunrise about 6:35 AMToday💼9 AM🌙 Sun rises in about 3h 20mNext · 9 AMWork6,240 steps · 7h 18m sleep$69.20 spent todayTomorrow · 💼 Work · 🎓 Class",
+  "backVisible": false,
+  "scrollY": 140
+ },
+ "afterDrag100": {
+  "dome": "Sunrise about 6:35 AMNow💼9 AMToday · 6:08 AM💼 WorkNext, 9 AM",
+  "foot": "your assistant CHEM 101 exam is Wednesday. Plan study time",
+  "backVisible": true
+ },
+ "afterDrag300": {
+  "dome": "Sunrise about 6:35 AMSunset about 4:50 PM💼9 AMToday · 11:40 AM💼 WorkTill 4:30 PM",
+  "foot": "your assistant CHEM 101 exam is Wednesday. Plan study time",
+  "backVisible": true
+ },
+ "afterFlick240": {
+  "dome": "Sunset about 4:50 PM🎓6 PM📚8:30 PMToday · 5:05 PM🎓 ClassNext, 6 PM",
+  "foot": "your assistant CHEM 101 exam is Wednesday. Plan study time"
+ },
+ "openFramesWithScreens": {
+  "frames": 100,
+  "ms": 1683,
+  "median": 17,
+  "p95": 17,
+  "max": 33,
+  "over33": 2
+ },
+ "timelineBg": {
+  ".dc": "rgba(0, 0, 0, 0) | none",
+  "[data-dc=trackWrap]": "rgba(0, 0, 0, 0) | none",
+  ".lf-glass": "rgba(0, 0, 0, 0) | none",
+  "main": "rgba(0, 0, 0, 0) | none",
+  "body": "rgb(246, 248, 251) | none"
+ },
+ "timelineScroll": {
+  "scrollInfo0": {
+   "left": 971,
+   "w": 3512,
+   "cw": 1024,
+   "ox": "auto"
+  },
+  "afterVerticalWheel1000": {
+   "left": 971,
+   "y": 140
+  },
+  "afterHorizontalWheel1000": {
+   "left": 971,
+   "days": "FriSatSunTodayTueWedThu"
+  }
+ },
+ "dayWidths": [
+  -207,
+  -91,
+  25,
+  141,
+  269,
+  409
+ ],
+ "wrapFramesWithScreens": {
+  "frames": 92,
+  "ms": 1517,
+  "median": 17,
+  "p95": 17,
+  "max": 17,
+  "over33": 0
+ },
+ "openFramesClean": {
+  "frames": 200,
+  "ms": 1650,
+  "median": 0,
+  "p95": 17,
+  "max": 17,
+  "over33": 0
+ },
+ "wrapFramesClean": {
+  "frames": 294,
+  "ms": 1617,
+  "median": 0,
+  "p95": 17,
+  "max": 17,
+  "over33": 0
+ },
+ "pullWrapState": "clock"
+}

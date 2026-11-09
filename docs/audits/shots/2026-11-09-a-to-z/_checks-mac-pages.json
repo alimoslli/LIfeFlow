@@ -1,0 +1,2298 @@
+[
+ {
+  "tag": "mac",
+  "route": "/",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1040,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 13,
+    "h": 13,
+    "t": "INPUT"
+   }
+  ],
+  "smallCount": 4,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 4,
+  "h1": "Up late, Avery"
+ },
+ {
+  "tag": "mac",
+  "route": "/ (timeline open)",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1040,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 13,
+    "h": 13,
+    "t": "INPUT"
+   }
+  ],
+  "smallCount": 4,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 6,
+  "h1": "Up late, Avery"
+ },
+ {
+  "tag": "mac",
+  "route": "/plan",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1784,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   }
+  ],
+  "smallCount": 3,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 9,
+  "h1": "Calendar"
+ },
+ {
+  "tag": "mac",
+  "route": "/calendar",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1180,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 101,
+    "h": 40,
+    "t": "Event"
+   }
+  ],
+  "smallCount": 4,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 8,
+  "h1": "November 2026"
+ },
+ {
+  "tag": "mac",
+  "route": "/tasks",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 928,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 934,
+    "h": 35,
+    "t": "To-do title"
+   },
+   {
+    "w": 56,
+    "h": 36,
+    "t": "Add"
+   }
+  ],
+  "smallCount": 5,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 8,
+  "h1": "To-dos"
+ },
+ {
+  "tag": "mac",
+  "route": "/milestones",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1642,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 538,
+    "h": 40,
+    "t": "Edit what happened"
+   },
+   {
+    "w": 256,
+    "h": 40,
+    "t": "Edit when"
+   },
+   {
+    "w": 274,
+    "h": 40,
+    "t": "Edit kind"
+   },
+   {
+    "w": 538,
+    "h": 40,
+    "t": "Edit note"
+   },
+   {
+    "w": 538,
+    "h": 32,
+    "t": "Save"
+   },
+   {
+    "w": 538,
+    "h": 40,
+    "t": "Edit what happened"
+   },
+   {
+    "w": 256,
+    "h": 40,
+    "t": "Edit when"
+   },
+   {
+    "w": 274,
+    "h": 40,
+    "t": "Edit kind"
+   },
+   {
+    "w": 538,
+    "h": 40,
+    "t": "Edit note"
+   },
+   {
+    "w": 538,
+    "h": 32,
+    "t": "Save"
+   },
+   {
+    "w": 538,
+    "h": 40,
+    "t": "Edit what happened"
+   },
+   {
+    "w": 256,
+    "h": 40,
+    "t": "Edit when"
+   }
+  ],
+  "smallCount": 22,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 14,
+  "h1": "Milestones"
+ },
+ {
+  "tag": "mac",
+  "route": "/goals",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1849,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 586,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 187,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 187,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 187,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 586,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 58,
+    "h": 32,
+    "t": "Save"
+   },
+   {
+    "w": 84,
+    "h": 32,
+    "t": "Delete 🏃 Run a half marathon"
+   },
+   {
+    "w": 103,
+    "h": 40,
+    "t": "Add habit"
+   },
+   {
+    "w": 346,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 346,
+    "h": 40,
+    "t": "INPUT"
+   }
+  ],
+  "smallCount": 24,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 8,
+  "h1": "Goals"
+ },
+ {
+  "tag": "mac",
+  "route": "/habits",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   }
+  ],
+  "smallCount": 3,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 5,
+  "h1": "Health"
+ },
+ {
+  "tag": "mac",
+  "route": "/work",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1801,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 168,
+    "h": 40,
+    "t": "Import schedule"
+   },
+   {
+    "w": 99,
+    "h": 40,
+    "t": "Add shift"
+   },
+   {
+    "w": 113,
+    "h": 40,
+    "t": "Save hours"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "Hourly\nSalary"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 96,
+    "h": 40,
+    "t": "Save job"
+   },
+   {
+    "w": 346,
+    "h": 40,
+    "t": "Job"
+   },
+   {
+    "w": 169,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 169,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 169,
+    "h": 40,
+    "t": "INPUT"
+   }
+  ],
+  "smallCount": 18,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 14,
+  "h1": "Work"
+ },
+ {
+  "tag": "mac",
+  "route": "/jarvis",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 260,
+    "h": 40,
+    "t": "New chat"
+   }
+  ],
+  "smallCount": 2,
+  "main": {
+   "x": 88,
+   "w": 1352
+  },
+  "panel": null,
+  "shadowedBoxes": 6,
+  "h1": null
+ },
+ {
+  "tag": "mac",
+  "route": "/jarvis/says",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   }
+  ],
+  "smallCount": 1,
+  "main": {
+   "x": 380,
+   "w": 768
+  },
+  "panel": null,
+  "shadowedBoxes": 2,
+  "h1": "Updates"
+ },
+ {
+  "tag": "mac",
+  "route": "/jarvis/ideas",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 2357,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   }
+  ],
+  "smallCount": 1,
+  "main": {
+   "x": 380,
+   "w": 768
+  },
+  "panel": null,
+  "shadowedBoxes": 0,
+  "h1": "Ideas"
+ },
+ {
+  "tag": "mac",
+  "route": "/jarvis/profile",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 904,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 326,
+    "h": 32,
+    "t": "never does graded work for you"
+   }
+  ],
+  "smallCount": 2,
+  "main": {
+   "x": 380,
+   "w": 768
+  },
+  "panel": null,
+  "shadowedBoxes": 3,
+  "h1": "Your assistant"
+ },
+ {
+  "tag": "mac",
+  "route": "/jarvis/memory",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1016,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 680,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 273,
+    "h": 40,
+    "t": "How your assistant should work\nPreferenc"
+   },
+   {
+    "w": 157,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 66,
+    "h": 40,
+    "t": "Add"
+   }
+  ],
+  "smallCount": 5,
+  "main": {
+   "x": 380,
+   "w": 768
+  },
+  "panel": null,
+  "shadowedBoxes": 2,
+  "h1": "What your assistant knows"
+ },
+ {
+  "tag": "mac",
+  "route": "/inbox",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "Photo or PDF to file"
+   }
+  ],
+  "smallCount": 2,
+  "main": {
+   "x": 380,
+   "w": 768
+  },
+  "panel": null,
+  "shadowedBoxes": 1,
+  "h1": "Updates"
+ },
+ {
+  "tag": "mac",
+  "route": "/money",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1222,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   }
+  ],
+  "smallCount": 3,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 6,
+  "h1": "Money"
+ },
+ {
+  "tag": "mac",
+  "route": "/finances/transactions",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 955,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 192,
+    "h": 40,
+    "t": "Import CSV"
+   },
+   {
+    "w": 90,
+    "h": 40,
+    "t": "Add"
+   },
+   {
+    "w": 899,
+    "h": 35,
+    "t": "Search"
+   },
+   {
+    "w": 71,
+    "h": 36,
+    "t": "Search"
+   },
+   {
+    "w": 248,
+    "h": 40,
+    "t": "From date"
+   },
+   {
+    "w": 248,
+    "h": 40,
+    "t": "To date"
+   },
+   {
+    "w": 248,
+    "h": 40,
+    "t": "Category"
+   },
+   {
+    "w": 248,
+    "h": 40,
+    "t": "Type"
+   }
+  ],
+  "smallCount": 11,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 7,
+  "h1": "Transactions"
+ },
+ {
+  "tag": "mac",
+  "route": "/finances/accounts",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1098,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 185,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 58,
+    "h": 32,
+    "t": "Save"
+   },
+   {
+    "w": 90,
+    "h": 32,
+    "t": "Archive Everyday Checking"
+   },
+   {
+    "w": 346,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "Checking / savings\nCredit card\nInvestmen"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 346,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 123,
+    "h": 40,
+    "t": "Add account"
+   }
+  ],
+  "smallCount": 13,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 6,
+  "h1": "Accounts"
+ },
+ {
+  "tag": "mac",
+  "route": "/finances/budgets",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 931,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 346,
+    "h": 40,
+    "t": "Uncategorized\nActivities\nBills & Subscri"
+   },
+   {
+    "w": 346,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 122,
+    "h": 40,
+    "t": "Save budget"
+   }
+  ],
+  "smallCount": 6,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 7,
+  "h1": "Budgets"
+ },
+ {
+  "tag": "mac",
+  "route": "/finances/bills",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 945,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 346,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "Bill\nSubscription\nIncome\nOther"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "Weekly\nEvery 2 weeks\nMonthly\nQuarterly\nY"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 66,
+    "h": 40,
+    "t": "Add"
+   }
+  ],
+  "smallCount": 9,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 5,
+  "h1": "Bills"
+ },
+ {
+  "tag": "mac",
+  "route": "/finances/subscriptions",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   }
+  ],
+  "smallCount": 3,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 6,
+  "h1": "Subscriptions"
+ },
+ {
+  "tag": "mac",
+  "route": "/finances/rules",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 99,
+    "h": 20,
+    "t": "Transactions"
+   }
+  ],
+  "smallCount": 4,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 3,
+  "h1": "Category rules"
+ },
+ {
+  "tag": "mac",
+  "route": "/wealth",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1523,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 167,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 60,
+    "h": 18,
+    "t": "Accounts"
+   }
+  ],
+  "smallCount": 5,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 8,
+  "h1": "Investments"
+ },
+ {
+  "tag": "mac",
+  "route": "/school",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 146,
+    "h": 40,
+    "t": "Add assignment"
+   },
+   {
+    "w": 114,
+    "h": 40,
+    "t": "Add course"
+   }
+  ],
+  "smallCount": 5,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 5,
+  "h1": "Classes"
+ },
+ {
+  "tag": "mac",
+  "route": "/school/due",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 146,
+    "h": 40,
+    "t": "Add assignment"
+   }
+  ],
+  "smallCount": 4,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 5,
+  "h1": "Due"
+ },
+ {
+  "tag": "mac",
+  "route": "/notes",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 103,
+    "h": 40,
+    "t": "New note"
+   },
+   {
+    "w": 200,
+    "h": 40,
+    "t": "Project name"
+   },
+   {
+    "w": 200,
+    "h": 40,
+    "t": "Project description"
+   },
+   {
+    "w": 200,
+    "h": 32,
+    "t": "Create"
+   },
+   {
+    "w": 780,
+    "h": 40,
+    "t": "Search notes"
+   }
+  ],
+  "smallCount": 8,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 5,
+  "h1": "Notes"
+ },
+ {
+  "tag": "mac",
+  "route": "/settings",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1277,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 154,
+    "h": 36,
+    "t": "Replay the tour"
+   },
+   {
+    "w": 76,
+    "h": 16,
+    "t": "Privacy Policy"
+   },
+   {
+    "w": 33,
+    "h": 16,
+    "t": "Terms"
+   },
+   {
+    "w": 103,
+    "h": 16,
+    "t": "Academic integrity"
+   }
+  ],
+  "smallCount": 7,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 8,
+  "h1": "Settings"
+ },
+ {
+  "tag": "mac",
+  "route": "/settings/profile",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1108,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 304,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 304,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 304,
+    "h": 40,
+    "t": "Africa/Abidjan\nAfrica/Accra\nAfrica/Addis"
+   },
+   {
+    "w": 304,
+    "h": 40,
+    "t": "Monday\nSunday"
+   },
+   {
+    "w": 304,
+    "h": 40,
+    "t": "Classes\nWork\nClasses and a job\nNeither"
+   },
+   {
+    "w": 304,
+    "h": 40,
+    "t": "No preference\nMorning\nAfternoon\nEvening\n"
+   },
+   {
+    "w": 72,
+    "h": 40,
+    "t": "Save"
+   }
+  ],
+  "smallCount": 10,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 6,
+  "h1": "Profile & appearance"
+ },
+ {
+  "tag": "mac",
+  "route": "/settings/text",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 92,
+    "h": 20,
+    "t": "Back to Home"
+   }
+  ],
+  "smallCount": 4,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 2,
+  "h1": "We couldn't find that page"
+ },
+ {
+  "tag": "mac",
+  "route": "/settings/jarvis",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 2565,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 320,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 320,
+    "h": 40,
+    "t": "Short\nBalanced\nDetailed"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 186,
+    "h": 40,
+    "t": "INPUT"
+   }
+  ],
+  "smallCount": 35,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 10,
+  "h1": "Your assistant"
+ },
+ {
+  "tag": "mac",
+  "route": "/settings/notifications",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 966,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 51,
+    "h": 31,
+    "t": "INPUT"
+   },
+   {
+    "w": 202,
+    "h": 18,
+    "t": "Change the limit or quiet hours"
+   },
+   {
+    "w": 72,
+    "h": 40,
+    "t": "Save"
+   }
+  ],
+  "smallCount": 6,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 5,
+  "h1": "Notifications"
+ },
+ {
+  "tag": "mac",
+  "route": "/settings/integrations",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 3346,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 632,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 147,
+    "h": 40,
+    "t": "Connect Canvas"
+   },
+   {
+    "w": 600,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 600,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 168,
+    "h": 40,
+    "t": "Connect with token"
+   },
+   {
+    "w": 502,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 122,
+    "h": 40,
+    "t": "Create a key"
+   }
+  ],
+  "smallCount": 10,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 13,
+  "h1": "Connected accounts"
+ },
+ {
+  "tag": "mac",
+  "route": "/settings/data",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1006,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 627,
+    "h": 38,
+    "t": "Privacy Policy"
+   },
+   {
+    "w": 38,
+    "h": 18,
+    "t": "Terms"
+   },
+   {
+    "w": 384,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 384,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 163,
+    "h": 40,
+    "t": "Delete my account"
+   }
+  ],
+  "smallCount": 8,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 6,
+  "h1": "Privacy & data"
+ },
+ {
+  "tag": "mac",
+  "route": "/settings/security",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1560,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 51,
+    "h": 31,
+    "t": "INPUT"
+   },
+   {
+    "w": 72,
+    "h": 40,
+    "t": "Save"
+   },
+   {
+    "w": 88,
+    "h": 40,
+    "t": "Turn on"
+   },
+   {
+    "w": 384,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 384,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 158,
+    "h": 40,
+    "t": "Change password"
+   }
+  ],
+  "smallCount": 9,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 9,
+  "h1": "Face ID & passwords"
+ },
+ {
+  "tag": "mac",
+  "route": "/settings/plan",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 92,
+    "h": 20,
+    "t": "Back to Home"
+   }
+  ],
+  "smallCount": 4,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 2,
+  "h1": "We couldn't find that page"
+ },
+ {
+  "tag": "mac",
+  "route": "/settings/invite",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   }
+  ],
+  "smallCount": 3,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 5,
+  "h1": "Invite friends"
+ },
+ {
+  "tag": "mac",
+  "route": "/settings/feedback",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 1,
+    "h": 1,
+    "t": "INPUT"
+   },
+   {
+    "w": 74,
+    "h": 40,
+    "t": "Send"
+   }
+  ],
+  "smallCount": 7,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 3,
+  "h1": "Send feedback"
+ },
+ {
+  "tag": "mac",
+  "route": "/settings/memory",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1016,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 680,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 273,
+    "h": 40,
+    "t": "How your assistant should work\nPreferenc"
+   },
+   {
+    "w": 157,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 66,
+    "h": 40,
+    "t": "Add"
+   }
+  ],
+  "smallCount": 5,
+  "main": {
+   "x": 380,
+   "w": 768
+  },
+  "panel": null,
+  "shadowedBoxes": 2,
+  "h1": "What your assistant knows"
+ },
+ {
+  "tag": "mac",
+  "route": "/settings/trash",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 900,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   }
+  ],
+  "smallCount": 3,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 3,
+  "h1": "Recently deleted"
+ },
+ {
+  "tag": "mac",
+  "route": "/tasks/723a9f40-d5f2-41c2-9b6e-c5b84f189945",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1675,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 640,
+    "h": 20,
+    "t": "To-dos"
+   }
+  ],
+  "smallCount": 4,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 5,
+  "h1": "Return library book"
+ },
+ {
+  "tag": "mac",
+  "route": "/school/courses/947db6af-7853-43fe-a1dc-cab609ffe188",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1300,
+  "small": [
+   {
+    "w": 40,
+    "h": 47,
+    "t": "LifeFlow home"
+   },
+   {
+    "w": 448,
+    "h": 40,
+    "t": "Ask your assistant anything…\n⌘J"
+   },
+   {
+    "w": 40,
+    "h": 40,
+    "t": "Settings"
+   },
+   {
+    "w": 62,
+    "h": 20,
+    "t": "School"
+   },
+   {
+    "w": 146,
+    "h": 40,
+    "t": "Add assignment"
+   },
+   {
+    "w": 52,
+    "h": 32,
+    "t": "Edit"
+   },
+   {
+    "w": 127,
+    "h": 40,
+    "t": "Save weights"
+   },
+   {
+    "w": 346,
+    "h": 40,
+    "t": "Material title"
+   },
+   {
+    "w": 286,
+    "h": 40,
+    "t": "Material link"
+   },
+   {
+    "w": 52,
+    "h": 32,
+    "t": "Add"
+   },
+   {
+    "w": 54,
+    "h": 16,
+    "t": "New note"
+   },
+   {
+    "w": 110,
+    "h": 24,
+    "t": "Delete course"
+   }
+  ],
+  "smallCount": 12,
+  "main": {
+   "x": 188,
+   "w": 1152
+  },
+  "panel": {
+   "x": 212,
+   "w": 1104,
+   "bg": "rgba(255, 255, 255, 0.72)"
+  },
+  "shadowedBoxes": 10,
+  "h1": "General Chemistry"
+ },
+ {
+  "tag": "mac",
+  "pageErrors": []
+ }
+]
