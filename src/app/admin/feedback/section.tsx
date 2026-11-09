@@ -27,7 +27,7 @@ export async function FeedbackSection({ sp }: { sp: PeopleParams }) {
   // The feedback filter is fstatus / fkind so it can't clash with the user search on the same page.
   const href = (s: string, k?: string) => {
     const p = new URLSearchParams();
-    for (const key of ["q", "plan", "status", "page"] as const) if (sp[key]) p.set(key, sp[key]);
+    for (const key of ["q", "plan", "status", "seen", "page"] as const) if (sp[key]) p.set(key, sp[key]);
     p.set("fstatus", s);
     if (k) p.set("fkind", k);
     return `/admin/people?${p}`;

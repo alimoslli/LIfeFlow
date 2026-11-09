@@ -14,7 +14,7 @@ export async function GrowthSection() {
   return (
     <PageSection id="growth" title="Growth" sub="Who's using LifeFlow and how people find it.">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Tile label="Active today" value={g.ok ? g.data.active1d : "–"} />
+        <Tile label="Active today" value={g.ok ? g.data.active1d : "–"} href="/admin/people?seen=today#people" />
         <Tile label="Active this week" value={g.ok ? g.data.active7d : "–"} />
         <Tile label="Active this month" value={g.ok ? g.data.active30d : "–"} />
         <Tile

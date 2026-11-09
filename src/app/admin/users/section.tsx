@@ -8,18 +8,23 @@ import { getDb } from "@/server/db/client";
 import { listUsers, safe } from "@/server/services/admin";
 import { Failed, ago } from "../format";
 
-export type PeopleParams = { q?: string; plan?: string; status?: string; page?: string; fstatus?: string; fkind?: string };
+export type PeopleParams = { q?: string; plan?: string; status?: string; seen?: string; page?: string; fstatus?: string; fkind?: string };
 
-/** The users list with its search. A part of the People page; the feedback filter params (fstatus, fkind) ride along so both parts keep their state. */
+/**
+ * The users list with its search. A part of the People page; the feedback filter params (fstatus, fkind) ride along so both parts keep their state.
+ * `seen=today` is where the "Active today" tiles lead: only accounts seen in the last 24 hours, newest seen first.
+ */
 export async function UsersSection({ sp }: { sp: PeopleParams }) {
   const plan = sp.plan === "free" || sp.plan === "pro" ? sp.plan : undefined;
   const status = sp.status === "active" || sp.status === "suspended" ? sp.status : undefined;
-  const r = await safe("users", () => listUsers(getDb(), { q: sp.q, plan, status, page: Number(sp.page) || 1 }));
-  const link = (page: number) => {
+  const seen = sp.seen === "today" ? "today" : undefined;
+  const r = await safe("users", () => listUsers(getDb(), { q: sp.q, plan, status, seen, page: Number(sp.page) || 1 }));
+  const link = (page: number, keepSeen = true) => {
     const p = new URLSearchParams();
     if (sp.q) p.set("q", sp.q);
     if (plan) p.set("plan", plan);
     if (status) p.set("status", status);
+    if (seen && keepSeen) p.set("seen", seen);
     if (page > 1) p.set("page", String(page));
     if (sp.fstatus) p.set("fstatus", sp.fstatus);
     if (sp.fkind) p.set("fkind", sp.fkind);
@@ -51,17 +56,43 @@ export async function UsersSection({ sp }: { sp: PeopleParams }) {
           <option value="active">Active</option>
           <option value="suspended">Suspended</option>
         </Select>
+        <Select name="seen" defaultValue={seen ?? ""} aria-label="Last seen" className="sm:w-40 sm:flex-none">
+          <option value="">Any time</option>
+          <option value="today">Seen today</option>
+        </Select>
         <Button type="submit">Search</Button>
       </form>
       {!r.ok ? (
         <Card className="p-5 text-sm text-danger">{Failed()}</Card>
       ) : r.data.rows.length === 0 ? (
-        <EmptyState title="No users found">Try a different search.</EmptyState>
+        seen ? (
+          <EmptyState
+            title="No one has been seen in the last 24 hours"
+            action={
+              <Link href={link(1, false)} className="inline-flex min-h-11 items-center text-sm font-medium text-accent">
+                Show everyone
+              </Link>
+            }
+          />
+        ) : (
+          <EmptyState title="No users found">Try a different search.</EmptyState>
+        )
       ) : (
         <Card className="px-5 py-1">
-          <p className="pt-3 text-xs text-muted">
-            {r.data.total} user{r.data.total === 1 ? "" : "s"}
-          </p>
+          {seen ? (
+            <p className="flex flex-wrap items-center justify-between gap-x-3 pt-1 text-sm text-text-2">
+              <span>
+                {r.data.total} {r.data.total === 1 ? "person" : "people"} seen in the last 24 hours
+              </span>
+              <Link href={link(1, false)} className="inline-flex min-h-11 items-center font-medium text-accent">
+                Show everyone
+              </Link>
+            </p>
+          ) : (
+            <p className="pt-3 text-xs text-muted">
+              {r.data.total} user{r.data.total === 1 ? "" : "s"}
+            </p>
+          )}
           <ul className="divide-y divide-border">
             {r.data.rows.map((u) => (
               <li key={u.id}>

@@ -189,6 +189,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
   - **On a MacBook:** a wider page, two columns on the Office and bigger titles.
   - **Unchanged:** the pictures, and the phone layout.
   - **Audit fixes F2 to F4:** People no longer shows its title twice; the "how the app is running" line is short; every field and button is a full 44 px.
+- 11-09: who was active today (owner). Tapping "Active today" on the Office or on App → Growth opens People with only the accounts seen in the last 24 hours, newest first, with a "Seen today" menu and "Show everyone" ([COMMIT]). "Last seen" is now stamped every 10 minutes of use instead of once a day, so the list and "Seen 2 h ago" are right.
 
 **Next:**
 - The open ADR 0030 questions: per-chat keys and live-line wording.
@@ -302,6 +303,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-09, LF HQ: "Active today" opens the list of who was active (People, seen in the last 24 hours); "last seen" stamped every 10 minutes (section 5).
 - 2026-11-09, LF HQ: the Planning Room idea will replace the COO's brief card (owner); still waiting for his go.
 - 2026-11-09, LF HQ: the owner's Planning Room idea written into section 5 (an idea waiting for his go, not being built).
 - 2026-11-09 night, LF COO: on main: short assistant answers (fc7a45c: chips stop pasting lists, a 60-word reply shape, low verbosity; the owner's catch-up question went from 1,123 words to 52 on the real model), Apple token revoke on unlink and deletion (175bde4, migration 0056, Opus-reviewed), the A-to-Z audit (a0a3718), the promise test fixed for real dates (6ebc5c7). Phone sign-in must renumber its migration to 0058 before it merges; 0057 goes to the job lease (in review).
