@@ -176,7 +176,7 @@ Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.
   - live HQ and starting a desk task from HQ ([4919160](https://github.com/alimoslli/LIfeFlow/commit/4919160));
   - the HQ sync ([c7f4b4e](https://github.com/alimoslli/LIfeFlow/commit/c7f4b4e));
   - the simpler Office: "Needs you" and "Working now" first, logs moved to the department pages, the COO in plain words ([e8ad461](https://github.com/alimoslli/LIfeFlow/commit/e8ad461)).
-- 11-09: the admin area and HQ wear the app's new sky look, and fit a MacBook (ADR 0029, addendum 4; [COMMIT](https://github.com/alimoslli/LIfeFlow/commit/COMMIT)). The owner had said "nothing changed" there after V3.
+- 11-09: the admin area and HQ wear the app's new sky look, and fit a MacBook (ADR 0029, addendum 4; [d447953](https://github.com/alimoslli/LIfeFlow/commit/d447953)). The owner had said "nothing changed" there after V3.
   - **The look:**
     - the menu as frosted glass on the sky;
     - the COO's brief as a clear sky;
