@@ -1,0 +1,450 @@
+<title>Rebrand Directions II</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560&family=Unbounded:wght@600&family=Bricolage+Grotesque:opsz,wght@12..96,700&family=Comfortaa:wght@700&family=Rubik:wght@700&family=Silkscreen&display=swap">
+<style>
+/* Layout: five brand directions, one wide card each (stacked on a phone). Every card is one system: the name and its
+   meaning, a vector mark made from the companion idea, the app icon, a palette, six pixel companions, and one moment in
+   the app. The page chrome follows the viewer's theme; each card keeps its own colours (they are the proposal). */
+:root {
+  --bg: #f3f1ed;
+  --fg: #1c1b19;
+  --muted: #6a665f;
+  --line: #e0dcd4;
+  --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --pixel: "Silkscreen", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #0f0f0e; --fg: #f2f0eb; --muted: #a29e96; --line: #2c2b28; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #0f0f0e; --fg: #f2f0eb; --muted: #a29e96; --line: #2c2b28; color-scheme: dark; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; }
+.page {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 22px 48px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+h1 { margin: 0; font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 600; letter-spacing: -0.02em; text-wrap: balance; }
+.lede { margin: 4px 0 0; color: var(--muted); font-size: 0.92rem; }
+.dir {
+  --a: #000; --b: #000; --ink: #000; --paper: #fff; --soft: #eee; --wm: inherit;
+  background: var(--paper); color: var(--ink); border-radius: 30px; padding: clamp(16px, 3vw, 26px);
+  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(0, 1fr); gap: clamp(14px, 2.4vw, 26px);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 14px 30px -14px rgb(0 0 0 / 0.2);
+}
+@media (max-width: 900px) { .dir { grid-template-columns: 1fr; } }
+.col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.tag { font-family: var(--pixel); font-size: 0.66rem; letter-spacing: 0.08em; color: var(--a); }
+.lock { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.lock .mark { width: 76px; height: 76px; flex: none; }
+.word { font-family: var(--wm); font-size: clamp(2.1rem, 5vw, 2.8rem); line-height: 1; letter-spacing: -0.02em; display: inline-flex; align-items: center; }
+.word svg { width: 0.78em; height: 0.78em; margin: 0 0.02em; }
+.idea { margin: 0; font-size: 1rem; font-weight: 500; }
+.why { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.why li { display: grid; grid-template-columns: 82px 1fr; gap: 10px; font-size: 0.85rem; align-items: baseline; }
+.why b { font-weight: 600; color: var(--a); }
+.icons { display: flex; align-items: flex-end; gap: 14px; }
+.icons .tile { border-radius: 23%; display: grid; place-items: center; box-shadow: 0 6px 16px -8px rgb(0 0 0 / 0.35); }
+.icons .tile svg { width: 64%; height: 64%; }
+.icons small { display: block; text-align: center; font-size: 0.62rem; color: color-mix(in srgb, var(--ink) 60%, transparent); margin-top: 4px; }
+.sw { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.sw span { height: 40px; border-radius: 10px; display: flex; align-items: flex-end; padding: 4px 6px; font: 600 0.6rem/1 var(--font); box-shadow: inset 0 0 0 1px rgb(127 127 127 / 0.28); }
+.crew { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: var(--soft); border-radius: 20px; padding: 12px 8px; }
+.crew div { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.crew canvas { width: 46px; height: 46px; }
+.crew b { font-family: var(--pixel); font-weight: 400; font-size: 0.6rem; }
+.crew small { font-size: 0.66rem; color: color-mix(in srgb, var(--ink) 62%, transparent); line-height: 1.2; }
+.moment { background: var(--soft); border-radius: 22px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.moment svg.scene { width: 100%; aspect-ratio: 1; max-height: 260px; display: block; overflow: visible; }
+.moment .cap { font-size: 0.78rem; color: color-mix(in srgb, var(--ink) 70%, transparent); }
+.foot { color: var(--muted); font-size: 0.78rem; line-height: 1.5; border-top: 1px solid var(--line); padding-top: 14px; }
+.foot b { color: var(--fg); font-weight: 600; }
+</style>
+
+<div class="page">
+  <div>
+    <h1>Rebrand, round two</h1>
+    <p class="lede">Five systems. The companion is your assistant; the mark, the name and the colour all come from it.</p>
+  </div>
+  <div id="dirs" style="display:flex;flex-direction:column;gap:20px"></div>
+  <p class="foot"><b>Concepts only, nothing changed.</b> Every name needs a trademark and App Store check before it's chosen. Marks are vector; companions stay pixel. Round one: Daybit and LifeFlow evolved.</p>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const INK = "#262320";
+  const NS = "http://www.w3.org/2000/svg";
+  const now = (() => { const t = new Date(); return t.getHours() * 60 + t.getMinutes(); })();
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- pixel companions: three body shapes, many tops, a few poses ---------- */
+  const SHAPES = {
+    blob: { h: 8, inset: [2, 1, 0, 0, 0, 0, 1, 2], eye: 3 },
+    glass: { h: 9, inset: [0, 0, 1, 2, 3, 2, 1, 0, 0], eye: 1, sand: 5 },
+    wisp: { h: 9, inset: [4, 3, 2, 1, 0, 0, 0, 1, 2], eye: 4 },
+  };
+  function sprite(c, pose, step) {
+    const px = new Map();
+    const put = (x, y, col) => { if (x >= 0 && x < 16 && y >= 0 && y < 16) px.set(x + "," + y, col); };
+    const S = SHAPES[c.shape || "blob"];
+    const cheer = pose === "cheer", sleep = pose === "sleep";
+    const bob = pose === "walk" ? step % 2 : cheer ? (step % 2) * 2 : 0;
+    const top = (sleep ? 6 : 15 - S.h - 3) - bob;
+    for (let y = 0; y < S.h; y++) {
+      const ins = S.inset[y];
+      for (let x = 3 + ins; x <= 12 - ins; x++) {
+        // an outline wherever the shape ends: its sides, top and bottom, and any edge left open by a narrower row
+        const open = (r) => (S.inset[r] ?? 9) > ins && (S.inset[r] === undefined || x < 3 + S.inset[r] || x > 12 - S.inset[r]);
+        const edge = x === 3 + ins || x === 12 - ins || y === 0 || y === S.h - 1 || open(y - 1) || open(y + 1);
+        let col = y >= S.h - 3 ? c.dark : c.body;
+        if (S.sand && y >= S.sand) col = c.sand || c.dark;
+        put(x, top + y, edge ? c.line || INK : col);
+      }
+    }
+    put(5 + S.inset[1] - (S.inset[1] > 2 ? 1 : 0), top + 1, c.light);
+    const ey = top + S.eye + (sleep ? 1 : 0);
+    if (sleep) { put(6, ey, INK); put(7, ey, INK); put(9, ey, INK); put(10, ey, INK); put(13, top - 2, "#8fa0c4"); put(14, top - 2, "#8fa0c4"); put(14, top - 3, "#8fa0c4"); put(13, top - 4, "#8fa0c4"); put(14, top - 4, "#8fa0c4"); }
+    else if (c.face === "big") { for (const ex of [5, 9]) { put(ex, ey, "#fff"); put(ex + 1, ey, "#fff"); put(ex, ey + 1, "#fff"); put(ex + 1, ey + 1, INK); } put(7, ey + 2, "#f4a742"); put(8, ey + 2, "#f4a742"); }
+    else { put(6, ey, c.eye || INK); put(6, ey + 1, c.eye || INK); put(10, ey, c.eye || INK); put(10, ey + 1, c.eye || INK); put(5, ey + 2, "#f2a0a0"); put(11, ey + 2, "#f2a0a0"); }
+    if (c.muzzle) { put(7, ey + 2, "#fff"); put(8, ey + 2, "#fff"); put(8, ey + 3, "#fff"); put(7, ey + 3, INK); }
+    const t = top - 1, T = c.trim || "#ffd34d", T2 = c.trim2 || T;
+    const tops = {
+      ray: () => { for (const [x, y] of [[8, t - 1], [5, t], [11, t], [3, t + 2], [13, t + 2]]) put(x, y, T); put(8, t - 2, T2); },
+      cloud: () => { put(7, t, "#fff"); put(8, t, "#fff"); put(9, t, "#fff"); put(8, t - 1, "#fff"); put(9, t - 1, "#fff"); put(10, t, "#fff"); },
+      halo: () => { for (let x = 6; x <= 10; x++) put(x, t - 1, T); put(5, t, T); put(11, t, T); },
+      crescent: () => { put(9, t, T); put(10, t, T); put(8, t - 1, T); put(8, t - 2, T); put(9, t - 3, T); put(10, t - 3, T); },
+      star: () => { put(8, t - 2, T); put(7, t - 1, T); put(8, t - 1, T2); put(9, t - 1, T); put(8, t, T); },
+      spark: () => { put(4, t - 1, T); put(12, t - 2, T); put(13, t - 3, T2); put(8, t, T); put(8, t - 1, T2); },
+      leaf: () => { put(8, t, INK); put(8, t - 1, INK); put(9, t - 2, T); put(10, t - 2, T); put(10, t - 3, T); put(9, t - 1, T); put(7, t - 2, T2); },
+      flame: () => { put(8, t, T); put(7, t, T2); put(9, t, T2); put(8, t - 1, "#ffe08a"); put(9, t - 2, T); },
+      wave: () => { put(6, t, T); put(7, t - 1, T); put(8, t, T); put(9, t - 1, T); put(10, t, T); },
+      ears: () => { for (const ex of [4, 11]) { put(ex, t, INK); put(ex, t - 1, INK); put(ex + (ex < 8 ? 1 : -1), t, c.body); } },
+      fox: () => { for (const ex of [4, 10]) { put(ex, t, INK); put(ex + 1, t, c.body); put(ex + (ex < 8 ? 0 : 1), t - 1, INK); put(ex + (ex < 8 ? 0 : 1), t - 2, "#fff"); } },
+      tufts: () => { put(4, t, INK); put(4, t - 1, INK); put(11, t, INK); put(11, t - 1, INK); put(5, t, c.dark); put(10, t, c.dark); },
+      bear: () => { for (const ex of [4, 10]) { put(ex, t, INK); put(ex + 1, t, INK); put(ex, t - 1, INK); put(ex + 1, t - 1, c.dark); } },
+      frog: () => { for (const ex of [5, 9]) { put(ex, t, INK); put(ex + 1, t, INK); put(ex, t - 1, "#fff"); put(ex + 1, t - 1, INK); } },
+      flick: () => { put(8, t, T); put(8, t - 1 - (step % 2), T2); },
+      hand: () => { put(8, t, INK); put(8, t - 1, INK); put(9, t - 2, INK); put(10, t - 2, T); },
+      bell: () => { put(7, t, T); put(8, t, T); put(9, t, T); put(8, t - 1, T); put(8, t + 0, T2); },
+      pend: () => { put(8, t, INK); put(8, t - 1, INK); put(8 + (step % 2 ? 1 : -1), t - 2, T); },
+      dot: () => { put(8, t, T); put(8, t - 1, T2); },
+    };
+    tops[c.top]?.();
+    if (cheer) { put(2, top + 3, INK); put(1, top + 2, INK); put(13, top + 3, INK); put(14, top + 2, INK); put(1, top - 1, c.trim || "#ffd34d"); put(14, top - 2, c.trim2 || "#ff8a5b"); put(3, top - 3, "#7ad7c4"); }
+    if (pose === "read") { for (let x = 10; x <= 13; x++) for (let y = top + 5; y <= top + 7; y++) put(x, y, y === top + 5 ? "#fffaf0" : "#b0573a"); }
+    if (!sleep) {
+      const fy = top + S.h;
+      const legs = pose === "walk" ? (step % 2 ? [[6], [9]] : [[4], [10]]) : [[5], [10]];
+      for (const [x] of legs) { put(x, fy, INK); put(x + 1, fy, INK); }
+    }
+    return px;
+  }
+  function paint(cv, px) {
+    const g = cv.getContext("2d");
+    g.clearRect(0, 0, 16, 16);
+    for (const [k, col] of px) { const [x, y] = k.split(",").map(Number); g.fillStyle = col; g.fillRect(x, y, 1, 1); }
+  }
+  const pxCanvas = (size) => { const cv = document.createElement("canvas"); cv.width = 16; cv.height = 16; cv.className = "px"; cv.style.width = cv.style.height = size + "px"; cv.setAttribute("aria-hidden", "true"); return cv; };
+
+  /* ---------- vector marks, each made from its companion idea ---------- */
+  const svgEl = (tag, a, parent) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; };
+  const MARKS = {
+    // Morrow: a sun that is a face, rising over a line that is your timeline; its height is the real time of day
+    morrow(svg, d, opts = {}) {
+      svg.setAttribute("viewBox", "0 0 100 100");
+      if (opts.o) {
+        // in the wordmark the first "o" is the sun itself, face and all
+        svgEl("circle", { cx: 50, cy: 54, r: 38, fill: d.b }, svg);
+        svgEl("circle", { cx: 37, cy: 48, r: 5, fill: d.ink }, svg);
+        svgEl("circle", { cx: 63, cy: 48, r: 5, fill: d.ink }, svg);
+        svgEl("path", { d: "M40 66 q10 8 20 0", stroke: d.ink, "stroke-width": 5, fill: "none", "stroke-linecap": "round" }, svg);
+        return;
+      }
+      const day = now >= 360 && now < 1140;
+      const rise = day ? Math.sin(((now - 360) / 780) * Math.PI) : 0.7;
+      const cy = 66 - rise * 26;
+      const clip = "mc" + Math.random().toString(36).slice(2);
+      svgEl("clipPath", { id: clip }, svg).appendChild(svgEl("rect", { x: 0, y: 0, width: 100, height: 66 }));
+      const g = svgEl("g", { "clip-path": `url(#${clip})` }, svg);
+      svgEl("circle", { cx: 50, cy, r: 24, fill: day ? d.b : d.light }, g);
+      if (day) for (let i = 0; i < 7; i++) { const a = Math.PI + (i / 6) * Math.PI; svgEl("line", { x1: 50 + 31 * Math.cos(a), y1: cy + 31 * Math.sin(a), x2: 50 + 37 * Math.cos(a), y2: cy + 37 * Math.sin(a), stroke: d.b, "stroke-width": 4, "stroke-linecap": "round" }, g); }
+      if (!day) svgEl("circle", { cx: 60, cy: cy - 8, r: 20, fill: opts.bg || d.paper }, g);
+      const ey = cy - 4;
+      if (day) { svgEl("circle", { cx: 42, cy: ey, r: 2.6, fill: d.ink }, g); svgEl("circle", { cx: 58, cy: ey, r: 2.6, fill: d.ink }, g); }
+      else { svgEl("path", { d: `M36 ${ey} q3 3 6 0`, stroke: d.ink, "stroke-width": 2.4, fill: "none", "stroke-linecap": "round" }, g); }
+      svgEl("rect", { x: 8, y: 66, width: 84, height: 5, rx: 2.5, fill: opts.line || d.a }, svg);
+      for (const x of [22, 36, 64, 78]) svgEl("rect", { x: x - 1.25, y: 75, width: 2.5, height: 6, rx: 1.25, fill: opts.line || d.a, opacity: 0.55 }, svg);
+    },
+    // Circa: the clock's rim, left open at now, is the C; the companion sits in the gap
+    circa(svg, d, opts = {}) {
+      svg.setAttribute("viewBox", "0 0 100 100");
+      const r = 34, a0 = 0.62, a1 = Math.PI * 2 - 0.62;
+      const p = (a) => [50 + r * Math.cos(a), 50 + r * Math.sin(a)];
+      const [x0, y0] = p(a0), [x1, y1] = p(a1);
+      svgEl("path", { d: `M${x0} ${y0}A${r} ${r} 0 1 1 ${x1} ${y1}`, fill: "none", stroke: opts.line || d.a, "stroke-width": 12, "stroke-linecap": "round" }, svg);
+      svgEl("circle", { cx: 84, cy: 50, r: 9, fill: d.b }, svg);
+      svgEl("circle", { cx: 81.5, cy: 48.5, r: 1.6, fill: d.ink }, svg);
+      svgEl("circle", { cx: 87, cy: 48.5, r: 1.6, fill: d.ink }, svg);
+    },
+    // Hourlings: an hourglass whose top glass is a little face; the sand is the time it's keeping
+    hourlings(svg, d, opts = {}) {
+      svg.setAttribute("viewBox", "0 0 100 100");
+      const c = opts.line || d.ink;
+      svgEl("rect", { x: 24, y: 12, width: 52, height: 7, rx: 3.5, fill: c }, svg);
+      svgEl("rect", { x: 24, y: 81, width: 52, height: 7, rx: 3.5, fill: c }, svg);
+      svgEl("path", { d: "M31 19 C31 40 46 44 50 50 C54 44 69 40 69 19 Z", fill: d.b, stroke: c, "stroke-width": 4, "stroke-linejoin": "round" }, svg);
+      svgEl("path", { d: "M31 81 C31 60 46 56 50 50 C54 56 69 60 69 81 Z", fill: "none", stroke: c, "stroke-width": 4, "stroke-linejoin": "round" }, svg);
+      svgEl("path", { d: "M37 81 C40 70 46 67 50 66 C54 67 60 70 63 81 Z", fill: d.a }, svg);
+      svgEl("circle", { cx: 43.5, cy: 29, r: 2.6, fill: c }, svg);
+      svgEl("circle", { cx: 56.5, cy: 29, r: 2.6, fill: c }, svg);
+      svgEl("circle", { cx: 50, cy: 58, r: 1.8, fill: d.a }, svg);
+    },
+    // Wisp: a small flame of light with a face; it glows brighter at night
+    wisp(svg, d, opts = {}) {
+      svg.setAttribute("viewBox", "0 0 100 100");
+      const id = "wg" + Math.random().toString(36).slice(2);
+      const grad = svgEl("radialGradient", { id, cx: "50%", cy: "62%", r: "55%" }, svgEl("defs", {}, svg));
+      svgEl("stop", { offset: "0", "stop-color": d.b, "stop-opacity": 0.55 }, grad);
+      svgEl("stop", { offset: "1", "stop-color": d.b, "stop-opacity": 0 }, grad);
+      svgEl("circle", { cx: 50, cy: 58, r: 42, fill: `url(#${id})` }, svg);
+      svgEl("path", { d: "M50 12 C58 30 76 40 76 60 C76 76 64 86 50 86 C36 86 24 76 24 60 C24 46 34 40 40 28 C42 38 46 40 50 40 C48 30 47 22 50 12 Z", fill: opts.line || d.b }, svg);
+      svgEl("ellipse", { cx: 42, cy: 62, rx: 3, ry: 4, fill: d.ink }, svg);
+      svgEl("ellipse", { cx: 58, cy: 62, rx: 3, ry: 4, fill: d.ink }, svg);
+    },
+    // Kin: you and the one on your side, walking the same line
+    kin(svg, d, opts = {}) {
+      svg.setAttribute("viewBox", "0 0 100 100");
+      svgEl("rect", { x: 10, y: 74, width: 80, height: 6, rx: 3, fill: opts.line || d.ink }, svg);
+      svgEl("rect", { x: 22, y: 26, width: 30, height: 44, rx: 15, fill: opts.line || d.a }, svg);
+      svgEl("circle", { cx: 68, cy: 56, r: 14, fill: d.b }, svg);
+      svgEl("circle", { cx: 63.5, cy: 53, r: 2.2, fill: d.ink }, svg);
+      svgEl("circle", { cx: 72.5, cy: 53, r: 2.2, fill: d.ink }, svg);
+      svgEl("path", { d: "M52 52 Q57 47 56 54", stroke: opts.line || d.a, "stroke-width": 5, fill: "none", "stroke-linecap": "round" }, svg);
+    },
+  };
+
+  /* ---------- the five systems ---------- */
+  const DIRS = [
+    {
+      key: "morrow", tag: "A · MORROW, DEEPER", name: "Morrow", font: "'Fraunces', Georgia, serif",
+      idea: "Today, then tomorrow. Your Morrow rises with you.",
+      why: [["Line", "your timeline"], ["Sun", "your companion"], ["Height", "the real time now"], ["At night", "it's the moon, asleep"]],
+      paper: "#f5f2fb", soft: "#e8e2f7", ink: "#1b1736", a: "#5b4bd6", b: "#f4a44a", light: "#c9c1f5",
+      sw: [["#5b4bd6", "#fff", "Dusk"], ["#f4a44a", "#1b1736", "Sunrise"], ["#1b1736", "#fff", "Night"], ["#f5f2fb", "#1b1736", "Haze"]],
+      tile: "#1b1736", tileLine: "#c9c1f5",
+      wordO: true,
+      crew: [
+        { name: "Sol", say: "Early riser", body: "#f7b45e", dark: "#d08530", light: "#ffe0b0", trim: "#f4a44a", trim2: "#ffd38a", top: "ray" },
+        { name: "Dawn", say: "Mornings", body: "#f7b7a3", dark: "#d98b76", light: "#ffe2d8", top: "cloud" },
+        { name: "Noon", say: "Steady all day", body: "#ffd66b", dark: "#d9aa36", light: "#fff1bf", trim: "#fff3c4", top: "halo" },
+        { name: "Dusk", say: "Evening focus", body: "#8f7ff0", dark: "#6455c9", light: "#cfc7ff", trim: "#f4a44a", top: "crescent" },
+        { name: "Luna", say: "Night owl", body: "#b9b0f2", dark: "#8a7fd6", light: "#e6e1ff", trim: "#fff3c4", trim2: "#ffffff", top: "star" },
+        { name: "Nova", say: "Spontaneous", body: "#f0eefc", dark: "#c3bde8", light: "#ffffff", trim: "#5b4bd6", trim2: "#f4a44a", top: "spark" },
+      ],
+      moment: "sky", cap: "The clock's face follows the sky. Your Morrow walks the rim.",
+    },
+    {
+      key: "circa", tag: "B · CIRCA", name: "Circa", font: "'Unbounded', system-ui, sans-serif",
+      idea: "Around your day. The ring is the clock; the gap is now.",
+      why: [["The C", "the clock's rim"], ["The gap", "right now"], ["The dot", "your companion, at now"]],
+      paper: "#fff6f2", soft: "#ffe5da", ink: "#2a1622", a: "#7a2e64", b: "#ff9e6b",
+      sw: [["#7a2e64", "#fff", "Plum"], ["#ff9e6b", "#2a1622", "Peach"], ["#2a1622", "#fff", "Ink"], ["#fff6f2", "#2a1622", "Shell"]],
+      tile: "#7a2e64", tileLine: "#fff6f2",
+      crew: [
+        { name: "Tick", say: "Right on time", body: "#ff9e6b", dark: "#d9713f", light: "#ffd2b8", trim: "#7a2e64", top: "hand" },
+        { name: "Chime", say: "Reminds you", body: "#f6c453", dark: "#cf9a25", light: "#fff0c4", trim: "#7a2e64", trim2: "#fff", top: "bell" },
+        { name: "Pendle", say: "Finds the rhythm", body: "#c58cc0", dark: "#985f92", light: "#ecd0e9", trim: "#ff9e6b", top: "pend" },
+        { name: "Dial", say: "Plans ahead", body: "#8fc7b9", dark: "#5e9c8d", light: "#cdeee6", trim: "#7a2e64", top: "dot" },
+        { name: "Spring", say: "Bounces back", body: "#ffb5c8", dark: "#d98399", light: "#ffe2ea", trim: "#7a2e64", top: "wave" },
+        { name: "Bezel", say: "Keeps it calm", body: "#e7ddd6", dark: "#bfb2a8", light: "#fffaf6", trim: "#7a2e64", top: "halo" },
+      ],
+      moment: "gap", cap: "The ring stays open at now; the companion stands in the gap.",
+    },
+    {
+      key: "hourlings", tag: "C · HOURLINGS", name: "Hourlings", font: "'Bricolage Grotesque', system-ui, sans-serif",
+      idea: "Little ones that live in your hours. Adopt one.",
+      why: [["Hourglass", "your time, kept"], ["The face", "your companion"], ["The sand", "what's done today"]],
+      paper: "#fbf6ec", soft: "#f1e7d2", ink: "#2a2118", a: "#2f8f86", b: "#f0c46a",
+      sw: [["#2f8f86", "#fff", "Teal"], ["#f0c46a", "#2a2118", "Sand"], ["#2a2118", "#fff", "Walnut"], ["#fbf6ec", "#2a2118", "Linen"]],
+      tile: "#2f8f86", tileLine: "#fbf6ec",
+      crew: [
+        { name: "Grain", say: "Patient", shape: "glass", body: "#f6e2b0", dark: "#d7b770", light: "#fffaf0", sand: "#f0c46a" },
+        { name: "Pip", say: "Quick wins", shape: "glass", body: "#bfe6e0", dark: "#7fbdb3", light: "#effaf8", sand: "#2f8f86" },
+        { name: "Dune", say: "Long focus", shape: "glass", body: "#f2c9a6", dark: "#c9966b", light: "#fff0e2", sand: "#c9966b" },
+        { name: "Ember", say: "Late nights", shape: "glass", body: "#ffc7a8", dark: "#e08d63", light: "#ffe9dc", sand: "#e0623a" },
+        { name: "Mint", say: "Fresh starts", shape: "glass", body: "#d6f0d0", dark: "#9bc993", light: "#f4fff1", sand: "#5aa65a" },
+        { name: "Dusky", say: "Winds down", shape: "glass", body: "#d9d3f2", dark: "#a69cd6", light: "#f5f2ff", sand: "#6c5fc4" },
+      ],
+      moment: "hours", cap: "One Hourling lives at each hour. Yours wakes up at the hand.",
+    },
+    {
+      key: "wisp", tag: "D · WISP", name: "Wisp", font: "'Comfortaa', system-ui, sans-serif",
+      idea: "A small light that walks your day, brightest at night.",
+      why: [["The flame", "your companion"], ["The glow", "where you are now"], ["Night", "it lights the way"]],
+      paper: "#12162e", soft: "#1c2244", ink: "#e9f4f2", a: "#6ef0d2", b: "#6ef0d2",
+      sw: [["#12162e", "#e9f4f2", "Midnight"], ["#6ef0d2", "#12162e", "Glow"], ["#ff8a5b", "#12162e", "Ember"], ["#e9f4f2", "#12162e", "Mist"]],
+      tile: "#12162e", tileLine: "#6ef0d2",
+      crew: [
+        { name: "Glim", say: "Gentle nudges", shape: "wisp", body: "#6ef0d2", dark: "#2fbfa0", light: "#d4fff4", line: "#0c3b33", top: "flick", trim: "#d4fff4" },
+        { name: "Ash", say: "Burns steady", shape: "wisp", body: "#ff8a5b", dark: "#d8592c", light: "#ffd0bc", line: "#4a1a0a", top: "flick", trim: "#ffe08a" },
+        { name: "Vio", say: "Deep focus", shape: "wisp", body: "#a59bff", dark: "#7468e0", light: "#e2deff", line: "#221b5c", top: "flick", trim: "#e2deff" },
+        { name: "Sky", say: "Morning light", shape: "wisp", body: "#7cc8ff", dark: "#3f97d6", light: "#d6eeff", line: "#0e2f4a", top: "flick", trim: "#ffffff" },
+        { name: "Rose", say: "Warm check-ins", shape: "wisp", body: "#ff9ec4", dark: "#d86c97", light: "#ffe0ec", line: "#4d1530", top: "flick", trim: "#ffffff" },
+        { name: "Sol", say: "Bright days", shape: "wisp", body: "#ffd66b", dark: "#d9aa36", light: "#fff3c4", line: "#4a3507", top: "flick", trim: "#ffffff" },
+      ],
+      moment: "glow", cap: "Dark by design. The wisp lights the part of the rim you're in.",
+    },
+    {
+      key: "kin", tag: "E · KIN", name: "Kin", font: "'Rubik', system-ui, sans-serif",
+      idea: "Someone on your side. Your kin walks the line with you.",
+      why: [["Tall shape", "you"], ["Round one", "your kin"], ["One line", "the same day, together"]],
+      paper: "#f6f8ff", soft: "#e4eafc", ink: "#111a33", a: "#2f5bea", b: "#ffc93d",
+      sw: [["#2f5bea", "#fff", "Cobalt"], ["#ffc93d", "#111a33", "Sunny"], ["#111a33", "#fff", "Navy"], ["#f6f8ff", "#111a33", "Cloud"]],
+      tile: "#2f5bea", tileLine: "#ffffff",
+      crew: [
+        { name: "Fennel", say: "Clever fox", body: "#f39a4c", dark: "#c96d24", light: "#ffd2a8", top: "fox", muzzle: true },
+        { name: "Hoot", say: "Wise owl", body: "#a98a6c", dark: "#7c624a", light: "#d9c4ad", top: "tufts", face: "big" },
+        { name: "Bun", say: "Soft bear", body: "#c79a72", dark: "#9a7050", light: "#ecd2ba", top: "bear" },
+        { name: "Hop", say: "Calm frog", body: "#7fcf7a", dark: "#4f9e4b", light: "#c6f0c3", top: "frog" },
+        { name: "Mew", say: "Curious cat", body: "#e9e4f2", dark: "#bcb3cf", light: "#ffffff", top: "ears" },
+        { name: "Pup", say: "Loyal", body: "#e6c79a", dark: "#b8956a", light: "#fff0d6", top: "bear", muzzle: true },
+      ],
+      moment: "walk", cap: "On the timeline, you and your kin walk the same line.",
+    },
+  ];
+
+  /* ---------- moments: one small scene per system ---------- */
+  function scene(svg, d, lead) {
+    svg.setAttribute("viewBox", "0 0 240 240");
+    const el = (t, a) => svgEl(t, a, svg);
+    const C = 120, R = 78;
+    const ang = (m) => ((((m / 60) % 12) + 12) % 12) / 12 * Math.PI * 2;
+    const pol = (a, r) => [C + r * Math.sin(a), C - r * Math.cos(a)];
+    const arc = (m1, m2, r) => { const a1 = ang(m1); let a2 = ang(m2); if (a2 < a1) a2 += Math.PI * 2; const [x1, y1] = pol(a1, r), [x2, y2] = pol(a2, r); return `M${x1} ${y1}A${r} ${r} 0 ${a2 - a1 > Math.PI ? 1 : 0} 1 ${x2} ${y2}`; };
+    const hands = (col) => {
+      const [hx, hy] = pol(ang(now), R * 0.45), [mx, my] = pol(((now % 60) / 60) * Math.PI * 2, R * 0.68);
+      el("line", { x1: C, y1: C, x2: hx, y2: hy, stroke: col, "stroke-width": 5, "stroke-linecap": "round" });
+      el("line", { x1: C, y1: C, x2: mx, y2: my, stroke: col, "stroke-width": 3, "stroke-linecap": "round" });
+      el("circle", { cx: C, cy: C, r: 4, fill: col });
+    };
+    const onRim = (r, size = 30) => {
+      const a = ang(now), [cx, cy] = pol(a, r);
+      const fo = el("foreignObject", { x: cx - size / 2, y: cy - size / 2, width: size, height: size, transform: `rotate(${(a * 180) / Math.PI} ${cx} ${cy})` });
+      const cv = pxCanvas(size); fo.appendChild(cv); return cv;
+    };
+    const busy = [[now + 40, now + 120], [now + 250, now + 400]];
+    if (d.moment === "sky") {
+      // the face is the sky at this hour: dawn, day, dusk or night
+      const h = now / 60;
+      const sky = h < 5 || h >= 21 ? ["#1b1736", "#2d2766"] : h < 8 ? ["#f7b7a3", "#f4a44a"] : h < 17 ? ["#cfe3ff", "#f5f2fb"] : ["#8f7ff0", "#f4a44a"];
+      const id = "sky" + Math.random().toString(36).slice(2);
+      const lg = svgEl("linearGradient", { id, x1: 0, y1: 0, x2: 0, y2: 1 }, svgEl("defs", {}, svg));
+      svgEl("stop", { offset: 0, "stop-color": sky[0] }, lg); svgEl("stop", { offset: 1, "stop-color": sky[1] }, lg);
+      el("circle", { cx: C, cy: C, r: R, fill: `url(#${id})` });
+      el("circle", { cx: C, cy: C, r: R, fill: "none", stroke: d.a, "stroke-width": 3 });
+      el("circle", { cx: C, cy: C, r: R + 10, fill: "none", stroke: d.a, "stroke-opacity": 0.25, "stroke-width": 1.5 });
+      for (const [s, e] of busy) el("path", { d: arc(s, e, R), fill: "none", stroke: d.b, "stroke-width": 6, "stroke-linecap": "round" });
+      hands(h < 5 || h >= 21 ? "#f5f2fb" : d.ink);
+      return onRim(R + 22);
+    }
+    if (d.moment === "gap") {
+      // the ring is open at now: what's past is closed, the gap is where you stand
+      const a = ang(now);
+      const gap = 0.32;
+      const [x0, y0] = pol(a + gap, R), [x1, y1] = pol(a - gap + Math.PI * 2, R);
+      el("path", { d: `M${x0} ${y0}A${R} ${R} 0 1 1 ${x1} ${y1}`, fill: "none", stroke: d.a, "stroke-width": 10, "stroke-linecap": "round" });
+      for (const [s, e] of busy) el("path", { d: arc(s, e, R - 14), fill: "none", stroke: d.b, "stroke-width": 5, "stroke-linecap": "round" });
+      hands(d.ink);
+      return onRim(R, 34);
+    }
+    if (d.moment === "hours") {
+      el("circle", { cx: C, cy: C, r: R, fill: "none", stroke: d.ink, "stroke-opacity": 0.2, "stroke-width": 2 });
+      for (const [s, e] of busy) el("path", { d: arc(s, e, R), fill: "none", stroke: d.a, "stroke-width": 5, "stroke-linecap": "round" });
+      const here = Math.round(now / 60) % 12;
+      const out = [];
+      for (let k = 0; k < 12; k++) {
+        const a = (k / 12) * Math.PI * 2, [cx, cy] = pol(a, R + 22), s = k === here ? 30 : 16;
+        const fo = el("foreignObject", { x: cx - s / 2, y: cy - s / 2, width: s, height: s });
+        const cv = pxCanvas(s); cv.style.opacity = k === here ? "1" : "0.55"; fo.appendChild(cv);
+        out.push([cv, k === here]);
+      }
+      hands(d.ink);
+      return out;
+    }
+    if (d.moment === "glow") {
+      const id = "gl" + Math.random().toString(36).slice(2);
+      const f = svgEl("filter", { id, x: "-50%", y: "-50%", width: "200%", height: "200%" }, svgEl("defs", {}, svg));
+      svgEl("feGaussianBlur", { stdDeviation: 6 }, f);
+      el("circle", { cx: C, cy: C, r: R, fill: "none", stroke: d.ink, "stroke-opacity": 0.15, "stroke-width": 2 });
+      el("path", { d: arc(now - 50, now + 50, R), fill: "none", stroke: d.b, "stroke-width": 14, "stroke-linecap": "round", filter: `url(#${id})`, opacity: 0.8 });
+      el("path", { d: arc(now - 50, now + 50, R), fill: "none", stroke: d.b, "stroke-width": 3, "stroke-linecap": "round" });
+      for (const [s, e] of busy) el("path", { d: arc(s, e, R), fill: "none", stroke: "#ff8a5b", "stroke-width": 3, "stroke-linecap": "round", opacity: 0.8 });
+      hands(d.ink);
+      return onRim(R + 20);
+    }
+    // kin: the timeline, you and your kin on the same line
+    el("rect", { x: 10, y: 150, width: 220, height: 4, rx: 2, fill: d.ink, opacity: 0.25 });
+    el("rect", { x: 10, y: 150, width: 110, height: 4, rx: 2, fill: d.a });
+    for (const [x, icon] of [[40, "🎓"], [180, "💼"], [222, "📚"]]) { el("circle", { cx: x, cy: 152, r: 6, fill: d.paper, stroke: d.a, "stroke-width": 2.5 }); const t = el("text", { x, y: 128, "text-anchor": "middle", "font-size": 18 }); t.textContent = icon; }
+    const fo1 = el("foreignObject", { x: 82, y: 104, width: 40, height: 46 });
+    const you = document.createElement("div"); you.style.cssText = `width:22px;height:38px;margin:4px auto 0;border-radius:11px;background:${d.a}`; fo1.appendChild(you);
+    const fo2 = el("foreignObject", { x: 116, y: 116, width: 34, height: 34 });
+    const cv = pxCanvas(34); fo2.appendChild(cv);
+    const t = el("text", { x: 120, y: 182, "text-anchor": "middle", "font-size": 12, fill: d.ink, opacity: 0.7, "font-family": "Geist, system-ui" }); t.textContent = "now";
+    return cv;
+  }
+
+  /* ---------- build ---------- */
+  const animated = [];
+  const host = document.getElementById("dirs");
+  for (const d of DIRS) {
+    const card = document.createElement("section");
+    card.className = "dir";
+    card.setAttribute("aria-label", `${d.name}. ${d.idea}`);
+    card.style.cssText = `--a:${d.a};--b:${d.b};--ink:${d.ink};--paper:${d.paper};--soft:${d.soft};--wm:${d.font}`;
+    const word = d.wordO ? `M<svg class="o" aria-hidden="true"></svg>rrow` : d.name;
+    card.innerHTML = `
+      <div class="col">
+        <span class="tag">${d.tag}</span>
+        <div class="lock"><svg class="mark" aria-hidden="true"></svg><span class="word" aria-label="${d.name}">${word}</span></div>
+        <p class="idea">${d.idea}</p>
+        <ul class="why">${d.why.map(([k, v]) => `<li><b>${k}</b><span>${v}</span></li>`).join("")}</ul>
+        <div class="icons">
+          <div><div class="tile" style="width:76px;height:76px;background:${d.tile}"><svg aria-hidden="true"></svg></div><small>App icon</small></div>
+          <div><div class="tile" style="width:40px;height:40px;background:${d.tile}"><svg aria-hidden="true"></svg></div><small>Small</small></div>
+          <div><div class="tile" style="width:40px;height:40px;background:${d.paper};box-shadow:inset 0 0 0 1px rgb(0 0 0 / .08)"><svg aria-hidden="true"></svg></div><small>Light</small></div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="sw">${d.sw.map(([bg, fg, n]) => `<span style="background:${bg};color:${fg}">${n}</span>`).join("")}</div>
+        <div class="crew" role="list" aria-label="Six companions">${d.crew.map((c) => `<div role="listitem"><canvas class="px" width="16" height="16" aria-hidden="true"></canvas><b>${c.name}</b><small>${c.say}</small></div>`).join("")}</div>
+      </div>
+      <div class="col"><div class="moment"><svg class="scene" aria-hidden="true"></svg><span class="cap">${d.cap}</span></div></div>`;
+    host.appendChild(card);
+    MARKS[d.key](card.querySelector("svg.mark"), d);
+    const tiles = card.querySelectorAll(".tile svg");
+    MARKS[d.key](tiles[0], d, { line: d.tileLine, bg: d.tile });
+    MARKS[d.key](tiles[1], d, { line: d.tileLine, bg: d.tile });
+    MARKS[d.key](tiles[2], d);
+    const o = card.querySelector("svg.o");
+    if (o) MARKS[d.key](o, d, { o: true });
+    card.querySelectorAll(".crew canvas").forEach((cv, i) => animated.push({ cv, c: d.crew[i], pose: "walk" }));
+    const s = scene(card.querySelector("svg.scene"), d, d.crew[0]);
+    if (Array.isArray(s)) s.forEach(([cv, awake], i) => animated.push({ cv, c: d.crew[i % d.crew.length], pose: awake ? "cheer" : "sleep" }));
+    else animated.push({ cv: s, c: d.crew[0], pose: d.moment === "walk" ? "walk" : "walk" });
+  }
+  let last = -1;
+  function frame(t) {
+    const step = reduce ? 0 : Math.floor(t / 420);
+    if (step !== last) { last = step; for (const a of animated) paint(a.cv, sprite(a.c, reduce && a.pose !== "sleep" ? "stand" : a.pose, step)); }
+    if (!reduce) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
