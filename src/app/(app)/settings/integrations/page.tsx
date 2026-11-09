@@ -23,7 +23,7 @@ export const metadata: Metadata = { title: "Connected accounts" };
 const TONE = { success: "bg-success-soft text-success", danger: "bg-danger-soft text-danger", warning: "bg-warning-soft text-warning" } as const;
 
 const GOOGLE_RESULT: Record<string, { tone: "success" | "danger" | "warning"; text: string }> = {
-  connected: { tone: "success", text: "Google is connected. Your calendar is syncing and your assistant can now help with email." },
+  connected: { tone: "success", text: "Google is connected. Your calendar is syncing and your skyling can now help with email." },
   denied: { tone: "warning", text: "You didn't give Google access, so nothing was connected." },
   missing_scopes: { tone: "warning", text: "Some permissions were unchecked. Connect again and keep all boxes checked." },
   failed: { tone: "danger", text: "Couldn't connect Google. Please try again." },
@@ -37,7 +37,7 @@ const MICROSOFT_RESULT: Record<string, { tone: "success" | "danger" | "warning";
   missing_scopes: { tone: "warning", text: "Calendar access wasn't allowed. Connect again and allow it." },
   admin_consent: {
     tone: "warning",
-    text: "Your school or workplace needs to approve LifeFlow before you can connect. Ask your IT team, or send your assistant a screenshot of your schedule instead.",
+    text: "Your school or workplace needs to approve LifeFlow before you can connect. Ask your IT team, or send your skyling a screenshot of your schedule instead.",
   },
   failed: { tone: "danger", text: "Couldn't connect Microsoft. Please try again." },
   not_configured: { tone: "warning", text: "Microsoft isn't available yet." },
@@ -83,7 +83,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
       />
       <ManualSourceCard
         title="Another school platform?"
-        body="Not on Canvas? Send your assistant screenshots of your assignments, or upload your syllabus. You can also just tell it your classes. It adds them to School."
+        body="Not on Canvas? Send your skyling screenshots of your assignments, or upload your syllabus. You can also just tell it your classes. It adds them to School."
         tip="Try: send a screenshot of your assignment list, then say “add these”."
       />
       <Group title="Email & Calendar" />
@@ -139,13 +139,13 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
       </Card>
       <ManualSourceCard
         title="Bank not on Plaid?"
-        body="Send your assistant a screenshot or a PDF of a statement. It adds the account and the transactions it can read, so Money still shows what you spent and what came in."
+        body="Send your skyling a screenshot or a PDF of a statement. It adds the account and the transactions it can read, so Money still shows what you spent and what came in."
         tip="Plaid is faster when your bank supports it. Use screenshots for everything else."
       />
       <Group title="Work" />
       <ManualSourceCard
         title="Work schedule"
-        body="Send a picture of your schedule to your assistant, and it adds your shifts to Plan. Change one there any time."
+        body="Send a picture of your schedule to your skyling, and it adds your shifts to Plan. Change one there any time."
         tip="Try: send a photo of next week's schedule, then say “add my shifts”."
       />
       <Group title="Health" />

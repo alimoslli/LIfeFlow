@@ -7,7 +7,7 @@ import { useShell } from "@/components/shell/app-shell";
 export type AssistantNote = { text: string; tone: "attention" | "heads-up" | "good"; href?: string; prompt?: string; label?: string };
 
 /**
- * Under the clock: the one thing the assistant noticed by joining the dots (an exam and tonight's study,
+ * Under the clock: the one thing the skyling noticed by joining the dots (an exam and tonight's study,
  * a shift and a class too close), with its one next step. Nothing to say means nothing shown.
  */
 export function AssistantLine({ name, note }: { name: string; note: AssistantNote | null }) {
@@ -26,7 +26,7 @@ export function AssistantLine({ name, note }: { name: string; note: AssistantNot
   );
   const cls = "flex w-full items-start gap-3 rounded-[24px] bg-surface px-4 py-3.5 text-left shadow-soft ring-1 ring-border/60 transition-colors";
   return (
-    <section aria-label={note.tone === "attention" ? "Heads up" : "From your assistant"}>
+    <section aria-label={note.tone === "attention" ? "Heads up" : "From your skyling"}>
       {note.href ? (
         <Link href={note.href} className={cls} data-testid="assistant-line">
           {body}

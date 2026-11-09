@@ -230,7 +230,7 @@ const KINDS: Record<string, (f: F) => Parts> = {
   question: (f) => ({
     headline: s(f, "question"),
     fact: "A quick one so I can help you better.",
-    ask: "Your answer goes into What your assistant knows in Settings, where you can edit or delete it.",
+    ask: "Your answer goes into What your skyling knows in Settings, where you can edit or delete it.",
     mood: "info",
   }),
   consent: () => ({
@@ -267,7 +267,7 @@ export function pushText(kind: string, facts: F) {
 }
 
 /**
- * What the assistant's pushes are, for Settings → Notifications. It has to match `pushImportant` in
+ * What the skyling's pushes are, for Settings → Notifications. It has to match `pushImportant` in
  * services/proactive/engine.ts: reviews plus urgent or important messages, `pushLimit` in 24 hours, quiet hours.
  * `reminders` is the To-do reminders switch on the same page; they're mentioned only while it's on.
  */

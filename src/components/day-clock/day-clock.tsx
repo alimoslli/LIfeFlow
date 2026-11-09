@@ -61,7 +61,7 @@ export function DayClock({
         if (!it.ref) return;
         const r = it.origin === "assignment" ? await toggleAssignmentAction(it.ref) : await toggleTaskAction(it.ref);
         if (r?.ok) {
-          // the moment it's done: sparks from where it was done, and the companion on the line jumps for joy
+          // the moment it's done: sparks from where it was done, and the skyling on the line jumps for joy
           celebrate(at, "small");
           hop(root.querySelector(".dc-now-who"));
           sky.cheer();
@@ -136,7 +136,7 @@ export function DayClock({
           Pull down to fold it back into the sky
         </div>
         <div data-dc="hit" className="dc-hit" role="button" tabIndex={0} aria-label="Open your day as a timeline" />
-        {/* Under the sky: the assistant's one line. It steps aside while the timeline is open. */}
+        {/* Under the sky: the skyling's one line. It steps aside while the timeline is open. */}
         <div data-dc="foot" className="dc-foot">
           {children}
         </div>

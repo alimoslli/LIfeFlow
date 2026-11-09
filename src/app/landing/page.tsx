@@ -53,7 +53,7 @@ const TRUST = [
 ];
 
 const WHY = [
-  ["One job", "A personal assistant, and nothing else. Every feature exists to help you run your life."],
+  ["One job", "Your life, connected, and nothing else. Every feature exists to help you run your life."],
   ["Always connected", "Classes, shifts, money, calendar and health at the same time, so it sees how they affect each other."],
   ["Built by someone living it", "Made by a person with your schedule, who keeps asking what you need."],
 ];
@@ -63,11 +63,11 @@ const INSTAGRAM = "https://www.instagram.com/lifeflowweb";
 const FAQS: { q: string; a: string }[] = [
   {
     q: "Do I have to connect my bank or school?",
-    a: "No. Add everything yourself, or send your assistant a photo of a syllabus, a work schedule or a bank statement and it adds it for you. Connecting is optional.",
+    a: "No. Add everything yourself, or send your skyling a photo of a syllabus, a work schedule or a bank statement and it adds it for you. Connecting is optional.",
   },
   {
     q: "My school doesn't use Canvas. Can I still use it?",
-    a: "Yes. Send screenshots of your assignments, upload your syllabus, or tell your assistant your classes.",
+    a: "Yes. Send screenshots of your assignments, upload your syllabus, or tell your skyling your classes.",
   },
   {
     q: "Is my data private?",
@@ -78,7 +78,7 @@ const FAQS: { q: string; a: string }[] = [
     a: "No. Bank connections are read-only. LifeFlow shows what you spent and what's coming in, and it can't make payments or transfers.",
   },
   {
-    q: "Will the assistant do my homework?",
+    q: "Will the skyling do my homework?",
     a: "No. It helps you plan, study and understand, but it never writes or solves graded work for you.",
   },
   {
@@ -135,7 +135,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
                 {inviter.firstName} invited you to LifeFlow.
               </p>
             )}
-            <p className={`animate-rise ${eyebrow}`}>A personal assistant that sees your whole life</p>
+            <p className={`animate-rise ${eyebrow}`}>Your whole life, on one sky</p>
             <h1
               className="animate-rise mt-4 font-display text-[2.9rem] leading-[0.98] font-medium tracking-[-0.045em] text-balance sm:text-[4.5rem] lg:text-[4.9rem]"
               style={{ animationDelay: "60ms" }}
@@ -143,8 +143,8 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               Every app sees one slice. <em className="text-accent">LifeFlow sees all of it.</em>
             </h1>
             <p className="animate-rise mt-5 max-w-[46ch] text-[1.125rem] leading-relaxed text-text-2" style={{ animationDelay: "120ms" }}>
-              Your bank, your classes, your shifts and your calendar, connected at once. Your assistant finds what&apos;s about to clash and fixes it before you
-              feel it.
+              Your bank, your classes, your shifts and your calendar, connected at once. Your skyling, a little friend who lives on your sky, finds what&apos;s
+              about to clash and fixes it before you feel it.
             </p>
             <div className="animate-rise mt-8 flex flex-wrap items-center gap-x-4 gap-y-2" style={{ animationDelay: "180ms" }}>
               <Link href={signupHref} className={button}>
@@ -202,7 +202,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
             <p className={eyebrow}>What it does before you ask</p>
             <h2 className={`mt-3 max-w-[18ch] ${h2}`}>It notices the problem while there&apos;s still time to fix it.</h2>
             <p className="mt-4 max-w-[52ch] text-[1.0625rem] text-text-2">
-              Three things your assistant does on a normal week. Each one shows the numbers it used.
+              Three things your skyling does on a normal week. Each one shows the numbers it used.
             </p>
             <ul className="mt-9 grid gap-3.5 md:grid-cols-3">
               {MOMENTS.map((m) => (
@@ -230,7 +230,7 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
               Built by a student solving <em className="text-accent">his own problem</em>, for everyone with a full life.
             </blockquote>
             <div className="space-y-3 text-[1.0625rem] text-text-2">
-              <p>Seven classes. Working 30 hours a week. Side projects. Applications. Nothing connected any of it, so I built the assistant I needed.</p>
+              <p>Seven classes. Working 30 hours a week. Side projects. Applications. Nothing connected any of it, so I built the skyling I needed.</p>
               <p>
                 It has one job: serve you. It isn&apos;t made for research or websites. It&apos;s made to find the dots across your whole week and help you make
                 the most of your time.

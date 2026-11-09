@@ -2,7 +2,7 @@
  * Today as the sky and "the mechanism" (owner, 2026-11-09: the wheel that turns into the timeline).
  *
  * Closed: the timeline's own window holds the real sky at the time on top of a wheel. One turn of the wheel is one day,
- * so the half above the horizon shows six hours behind and six ahead. The companion runs in place on top; your things
+ * so the half above the horizon shows six hours behind and six ahead. The skyling runs in place on top; your things
  * ride the rim as tiles and roll back under it as the day goes by, rising on the right and setting on the left. Under the
  * horizon is the water (the same as the line's), with "Sun sets in about 2h 20m", or "Back to now" while it's turned away.
  * Under the window, in words: what's on at the time on top.
@@ -12,7 +12,7 @@
  * sky spreads into the sky of every hour. The engine (engine.ts) owns the line, the gestures and the time on top, and
  * paints the window with `paintStrip`, so the two meet exactly as the motion lands.
  *
- * Drawing only; no app state but the companion's step and which way it last ran. Reduced motion gets a calm crossfade.
+ * Drawing only; no app state but the skyling's step and which way it last ran. Reduced motion gets a calm crossfade.
  */
 import { isExam, pileOf, sunTimes, type ClockData, type ClockItem } from "@/lib/day-clock";
 import { css, darkness, mix, skyAt, type RGB } from "@/lib/sky";
@@ -351,14 +351,14 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   let lastTs = 0;
   let sizes: { W: number; H: number; foot: number } | null = null;
   let liftAt = { key: "", y: 0 };
-  // which way the companion runs (it turns round when the wheel goes back in time), and when it last stepped
+  // which way the skyling runs (it turns round when the wheel goes back in time), and when it last stepped
   let lastView: number | null = null;
   let dir = 1;
   let stepAt = 0;
   const back = root.querySelector<HTMLElement>("[data-dc=back]");
   const html = document.documentElement;
   let wordsH = { key: "", h: 110 };
-  // where the companion stands in the sky (for the visitors), and the visitors themselves
+  // where the skyling stands in the sky (for the visitors), and the visitors themselves
   let whoAt: { x: number; y: number } | null = null;
   const visitors = reduce
     ? null
@@ -388,7 +388,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   // the app's text size (Settings), read once and again on resize, never per frame
   let remK = parseFloat(getComputedStyle(html).fontSize) / 16 || 1;
 
-  // the companion (the person's pick, in its night form after sunset) on the wheel, and standing on the open line
+  // the skyling (the person's pick, in its night form after sunset) on the wheel, and standing on the open line
   const paintWho = () => {
     const c = companionOf(root.dataset.companion);
     const cheering = performance.now() < cheerUntil;
@@ -412,7 +412,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         } else if (!cheering) step++;
         paintWho();
       }, 180);
-  /** Something was done, or a visitor came: the companion cheers (arms up, a jump) for a moment. */
+  /** Something was done, or a visitor came: the skyling cheers (arms up, a jump) for a moment. */
   const cheer = (ms = 1200) => {
     if (reduce) return;
     cheerFrom = performance.now();
@@ -502,7 +502,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     // a laptop: the wheel on the left, the words and the foot on the right (CSS places their sides, this their height)
     const wide = full && W >= WIDE;
     if (wide !== (root.dataset.wide === "true")) root.dataset.wide = String(wide);
-    // a very short phone (an iPhone SE): the wheel keeps the space and the assistant's line steps aside (the chat bar
+    // a very short phone (an iPhone SE): the wheel keeps the space and the skyling's line steps aside (the chat bar
     // docked under the sky is right there)
     const short = full && !wide && H < 420;
     if (short !== (root.dataset.short === "true")) root.dataset.short = String(short);
@@ -624,7 +624,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       return out.filter((r) => r.length > 1);
     };
 
-    // the wheel's soft glow on the sky, the glow behind the companion (placed once it's known where it stands), the
+    // the wheel's soft glow on the sky, the glow behind the skyling (placed once it's known where it stands), the
     // horizon and a few ripples on the water
     if (kc > 0)
       for (const r of runs(h.a, h.b)) {
@@ -902,7 +902,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     words.style.transform = `translateY(${(24 * eOut(seg(P, 0, 0.45))).toFixed(1)}px)`;
     words.style.visibility = P > 0.4 || !wordsFit ? "hidden" : "visible";
 
-    // ---- the companion: running in place on top of the wheel (standing on the tile of what's on, if one is there),
+    // ---- the skyling: running in place on top of the wheel (standing on the tile of what's on, if one is there),
     // the sun by day and asleep on the moon late at night; it turns round when the wheel goes back in time and jogs
     // faster while it turns. Opening, it rides the rim down onto the line.
     const moved = lastView != null && Math.abs(view - lastView) > 0.2;
@@ -918,7 +918,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     let wy = py;
     for (const d of shown)
       if (!d.lane && Math.abs(wx - d.x) < d.w / 2 + 4 && wy > d.y - d.h / 2 - 6 && wy < d.y + d.h / 2 + 26) wy = Math.min(wy, d.y - d.h / 2 + 1);
-    // the companion's size: a good deal bigger than a tile, and bigger still on a big wheel; it shrinks onto the line.
+    // the skyling's size: a good deal bigger than a tile, and bigger still on a big wheel; it shrinks onto the line.
     // Whole multiples of its 24 px sprite, so its pixels stay crisp (4x on a phone, 6x on a laptop's wheel)
     const rest = Math.round(clamp(R * 0.62, 96, 144) / 24) * 24;
     const size = k ? Math.round(lerp(rest, 48, k)) : rest;

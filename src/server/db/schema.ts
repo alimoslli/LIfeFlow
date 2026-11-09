@@ -90,7 +90,7 @@ export type UserPreferences = {
   tour?: "pending" | "done";
   /** The user's assistant: its name, personality and live voice (see src/lib/assistant.ts). */
   assistantName?: string;
-  /** Who runs on top of Today and is the assistant (lib/companions; the cast). Unset = not picked yet. */
+  /** Who runs on top of Today and is the skyling (lib/companions; the cast). Unset = not picked yet. */
   companion?: "dawn" | "ray" | "noon" | "goldie" | "dusk" | "star";
   /** coach | friend | direct (older values are mapped in lib/assistant). */
   assistantStyle?: "coach" | "friend" | "direct" | "balanced" | "warm" | "playful" | "professional";
@@ -463,7 +463,7 @@ export const goalCheckins = pgTable(
 );
 
 /**
- * Things the user said they would do ("I'll study tonight"). The assistant checks back once, at the due time.
+ * Things the user said they would do ("I'll study tonight"). The skyling checks back once, at the due time.
  * A promise is only ever kept or broken by the user's own answer, or by a to-do they really finished (taskId);
  * an unanswered one is dropped after a week and never counts as broken.
  */
@@ -473,7 +473,7 @@ export const promises = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     userId: userRef(),
     text: text("text").notNull(),
-    /** When the assistant checks back. */
+    /** When the skyling checks back. */
     dueAt: tstz("due_at").notNull(),
     status: text("status").$type<"open" | "kept" | "broken" | "dropped">().notNull().default("open"),
     /** A to-do this promise is about: finishing it keeps the promise without asking. */
@@ -535,7 +535,7 @@ export const integrations = pgTable(
 );
 
 /**
- * Gmail metadata cached for the assistant's current context.  Message bodies
+ * Gmail metadata cached for the skyling's current context.  Message bodies
  * stay in Gmail and are fetched only when the user or assistant needs one.
  */
 export const gmailMessages = pgTable(

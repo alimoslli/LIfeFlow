@@ -18,7 +18,7 @@ const BENIGN = new Set(["input_audio_buffer_commit_empty", "conversation_already
 
 const REALTIME_URL = "https://api.openai.com/v1/realtime/calls";
 
-/** Mic button in the composer: starts talking with the assistant right in this chat. */
+/** Mic button in the composer: starts talking with the skyling right in this chat. */
 export function VoiceButton({
   assistantName,
   disabled,
@@ -52,7 +52,7 @@ export type LiveVoiceEvents = {
   onLine: (role: "user" | "assistant", text: string) => void;
   /** The conversation the call is saved in (the current chat, or a new one). */
   onConversation: (id: string) => void;
-  /** A tool started (its name) or the assistant went back to listening (null). */
+  /** A tool started (its name) or the skyling went back to listening (null). */
   onTool: (name: string | null) => void;
   /** Something needs the user's Confirm; shown as a card in the chat. */
   onConfirmation: (actionId: string, summary: string) => void;
@@ -61,7 +61,7 @@ export type LiveVoiceEvents = {
 };
 
 /**
- * Talking with the assistant inside the chat (OpenAI Realtime over WebRTC). Takes the
+ * Talking with the skyling inside the chat (OpenAI Realtime over WebRTC). Takes the
  * composer's place as one slim bar: the logo pulses with the voices, a word says what's
  * happening, plus mute and End. What you both say appears in the chat as messages and
  * is saved to the same conversation, so typing afterwards picks up where you left off.

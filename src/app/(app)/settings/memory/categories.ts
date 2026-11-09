@@ -2,7 +2,7 @@ import type { MemoryCategory } from "@/server/db/schema";
 
 /** Display order and labels for memory kinds. */
 export const CATEGORY_OPTIONS: [MemoryCategory, string][] = [
-  ["instruction", "How your assistant should work"],
+  ["instruction", "How your skyling should work"],
   ["preference", "Preference"],
   ["routine", "Routine"],
   ["goal", "Goal"],

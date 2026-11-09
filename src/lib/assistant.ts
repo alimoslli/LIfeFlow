@@ -1,13 +1,13 @@
 import type { UserPreferences } from "@/server/db/schema";
 
 /**
- * The user's personal assistant: they choose its name, personality and voice. It has no
- * name of its own: until they pick one, sentences say "your assistant".
+ * The user's skyling (owner, 2026-11-09: never "assistant", "AI assistant" or "AI companion" anywhere in the product): they choose
+ * its name, personality and voice. Until they pick a name, sentences say "your skyling".
  */
-export const UNNAMED_ASSISTANT = "your assistant";
+export const UNNAMED_ASSISTANT = "your skyling";
 
-/** The name at the start of a sentence or as a heading: "Your assistant" until they choose one. */
-export const nameAtStart = (name: string) => (name === UNNAMED_ASSISTANT ? "Your assistant" : name);
+/** The name at the start of a sentence or as a heading: "Your skyling" until they choose one. */
+export const nameAtStart = (name: string) => (name === UNNAMED_ASSISTANT ? "Your skyling" : name);
 
 /** The empty chat's line under "What can I take off your plate?": only what this account has (services/integrations `whatAssistantKnows`). */
 export function knowsLine(areas: string[] | undefined) {
@@ -16,8 +16,8 @@ export function knowsLine(areas: string[] | undefined) {
   return `I know your ${list}.`;
 }
 
-/** A short noun label (the tab, a list row): "Assistant" until they choose a name. */
-export const assistantLabel = (name: string) => (name === UNNAMED_ASSISTANT ? "Assistant" : name);
+/** A short noun label (the tab, a list row): "Skyling" until they choose a name. */
+export const assistantLabel = (name: string) => (name === UNNAMED_ASSISTANT ? "Skyling" : name);
 
 export const ASSISTANT_STYLES = {
   coach: {

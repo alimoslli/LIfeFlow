@@ -78,7 +78,7 @@ export function GoogleCard({
             )}
             <ActionButton
               action={disconnectGoogleAction}
-              confirm="Disconnect Google? Your assistant will lose access to Gmail and your Google Calendar events will be removed from LifeFlow."
+              confirm="Disconnect Google? Your skyling will lose access to Gmail and your Google Calendar events will be removed from LifeFlow."
               title="Disconnect Google"
               className="inline-flex h-9 items-center rounded-full px-4 text-sm text-muted hover:text-danger"
             >

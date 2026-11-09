@@ -6,8 +6,8 @@ import { assistantSchema } from "@/server/services/accounts";
 const base = { userName: "Ali", tz: "America/Chicago", now: new Date("2026-10-28T15:00:00Z"), accountKind: "standard" as const, memories: [] };
 
 describe("assistant profile", () => {
-  it("has no name until the user picks one: 'your assistant', friend, marin, and maps older styles", () => {
-    expect(assistantProfile(undefined)).toEqual({ name: "your assistant", named: false, style: "friend", notes: null, voice: "marin" });
+  it("has no name until the user picks one: 'your skyling', friend, marin, and maps older styles", () => {
+    expect(assistantProfile(undefined)).toEqual({ name: "your skyling", named: false, style: "friend", notes: null, voice: "marin" });
     expect(assistantProfile({ assistantName: "   " }).named).toBe(false);
     expect(assistantProfile({ assistantStyle: "professional" }).style).toBe("direct");
     // A name the user already saved stays theirs, "Jarvis" included.
@@ -16,9 +16,9 @@ describe("assistant profile", () => {
   });
 
   it("words the unnamed assistant for sentences and labels", () => {
-    expect(UNNAMED_ASSISTANT).toBe("your assistant");
-    expect(nameAtStart(UNNAMED_ASSISTANT)).toBe("Your assistant");
-    expect(assistantLabel(UNNAMED_ASSISTANT)).toBe("Assistant");
+    expect(UNNAMED_ASSISTANT).toBe("your skyling");
+    expect(nameAtStart(UNNAMED_ASSISTANT)).toBe("Your skyling");
+    expect(assistantLabel(UNNAMED_ASSISTANT)).toBe("Skyling");
     expect(nameAtStart("Nova")).toBe("Nova");
     expect(assistantLabel("nova")).toBe("nova");
   });

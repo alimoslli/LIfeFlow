@@ -20,12 +20,12 @@ test("a new user sees their day connected, names their assistant, then a skippab
   await page.getByLabel("Where you work").fill("Target");
   await page.getByRole("button", { name: "Continue" }).click();
 
-  expect((await page.getByLabel("Assistant name").boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  expect((await page.getByLabel("Skyling's name").boundingBox())!.height).toBeGreaterThanOrEqual(44);
   // The cast: picking one brings its name and its tone; a name of their own wins and keeps the look and tone.
   await page.getByRole("radio", { name: /^Ray/ }).click();
-  await expect(page.getByLabel("Assistant name")).toHaveValue("Ray");
+  await expect(page.getByLabel("Skyling's name")).toHaveValue("Ray");
   await expect(page.getByText("Talks like a coach.", { exact: false })).toBeVisible();
-  await page.getByLabel("Assistant name").fill("Nova");
+  await page.getByLabel("Skyling's name").fill("Nova");
   await expect(page.getByText("Nova:", { exact: false })).toBeVisible();
   await expect(page.getByRole("radio", { name: /^Ray/ })).toHaveAttribute("aria-checked", "true");
   await page.getByRole("button", { name: "Show me my day" }).click();
@@ -113,7 +113,7 @@ test("the app follows what fills your week: tabs and pills adapt", async ({ page
   await page.getByRole("button", { name: "Continue" }).click(); // where they work is optional
   await page.getByRole("button", { name: "Show me my day" }).click();
   await page.getByRole("button", { name: "Skip", exact: true }).click();
-  await page.getByRole("button", { name: "Meet your assistant first" }).click();
+  await page.getByRole("button", { name: "Meet your skyling first" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   await page.getByRole("button", { name: "Skip tour" }).click();
 

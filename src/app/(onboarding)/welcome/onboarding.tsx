@@ -23,7 +23,7 @@ type StepId = "hello" | "week" | "details" | "yours" | "day";
 const stepsFor = (stage: LifeStage | null): StepId[] => (stage === "life" ? ["hello", "week", "yours", "day"] : ["hello", "week", "details", "yours", "day"]);
 
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u;
-/** What it sounds like before a companion is picked (each companion has its own line, lib/companions). */
+/** What it sounds like before a skyling is picked (each companion has its own line, lib/companions). */
 const SAMPLE = "You've got 2 things due this week. The BIO lab is the big one, so let's start it Tuesday. You've got this.";
 
 /**
@@ -49,7 +49,7 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
   const [yourName, setYourName] = useState(firstName === "there" ? "" : firstName);
   const cleanYou = yourName.trim().replace(/\s+/g, " ");
   const [style, setStyle] = useState<AssistantStyle>("friend");
-  // The cast: nothing is picked until they tap one, so it stays "your assistant" unless they choose.
+  // The cast: nothing is picked until they tap one, so it stays "your skyling" unless they choose.
   const [companion, setCompanion] = useState<CompanionKey | null>(null);
   const chosen = companion ? companionOf(companion) : null;
   const STEPS = stepsFor(stage);
@@ -58,7 +58,7 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
   const school = stage === "student" || stage === "both";
   const work = stage === "working" || stage === "both";
   const cleanName = useMemo(() => name.trim().replace(/\s+/g, " "), [name]);
-  // Naming is optional; an empty name keeps "your assistant".
+  // Naming is optional; an empty name keeps "your skyling".
   const nameOk = cleanName.length === 0 || (cleanName.length <= 24 && NAME_RE.test(cleanName));
   const shown = cleanName && nameOk ? cleanName : null;
 
@@ -91,7 +91,7 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
     go(1);
   };
 
-  /** Picking a companion brings its name (unless they typed their own) and its tone. */
+  /** Picking a skyling brings its name (unless they typed their own) and its tone. */
   const pick = (k: CompanionKey) => {
     const c = companionOf(k);
     if (!cleanName || COMPANIONS.some((x) => x.name === cleanName)) setName(c.name);
@@ -172,7 +172,7 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
                 Hi{cleanYou ? ` ${cleanYou.split(" ")[0]}` : ""}.
               </h1>
               <p data-anim className="mt-4 text-[1.0625rem] leading-relaxed text-text-2">
-                LifeFlow is your classes, work, money and plans in one place, with a personal assistant who helps with all of it.
+                LifeFlow is your classes, work, money and plans in one place, with a skyling who helps with all of it.
               </p>
               <label data-anim className="mt-6 flex flex-col gap-1.5">
                 <span className="text-sm font-medium text-text-2">What should I call you?</span>
@@ -187,7 +187,7 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
               </label>
               <p data-anim className="mt-6 rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem] leading-snug text-text-2">
                 {plan.paid
-                  ? `Free plan: everything you add yourself, and ${plan.freeChatsPerDay} chats with your assistant a day. Pro adds ${listOf(plan.proFeatures)}.`
+                  ? `Free plan: everything you add yourself, and ${plan.freeChatsPerDay} chats with your skyling a day. Pro adds ${listOf(plan.proFeatures)}.`
                   : "LifeFlow is free while we're testing. Everything is open to you."}
               </p>
             </>
@@ -265,7 +265,7 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
           {step === "day" && stage && (
             <DayPreview
               firstName={cleanYou.split(" ")[0] || firstName}
-              assistant={shown ?? "Your assistant"}
+              assistant={shown ?? "Your skyling"}
               stage={stage}
               course={school ? course : undefined}
               job={work ? job : undefined}
@@ -276,10 +276,10 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
             <>
               <Title>Make it yours</Title>
               <p data-anim className="mt-2 text-[0.9375rem] leading-relaxed text-text-2">
-                Pick who runs on top of your day. It&apos;s your assistant.
+                Pick your skyling, a little one from the sky who keeps an eye on your day.
               </p>
               <div className="mt-6 flex flex-col gap-6">
-                <div data-anim role="radiogroup" aria-label="Your companion" className="grid grid-cols-3 gap-2">
+                <div data-anim role="radiogroup" aria-label="Your skyling" className="grid grid-cols-3 gap-2">
                   {COMPANIONS.map((c) => (
                     <button
                       key={c.key}
@@ -314,8 +314,8 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     maxLength={24}
-                    placeholder="your assistant"
-                    aria-label="Assistant name"
+                    placeholder="your skyling"
+                    aria-label="Skyling's name"
                     autoCapitalize="words"
                     autoComplete="off"
                     className="min-h-11 text-[1rem]"
@@ -324,7 +324,7 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
                   <div className="mt-3 flex gap-2.5 rounded-2xl bg-surface-2 p-3.5" aria-live="polite">
                     <CompanionGlyph companion={companion} className="h-7 w-7" />
                     <p className="text-[0.875rem] leading-relaxed text-text-2">
-                      <span className="font-semibold text-text">{shown ?? "Your assistant"}:</span> {chosen ? chosen.sample : SAMPLE}
+                      <span className="font-semibold text-text">{shown ?? "Your skyling"}:</span> {chosen ? chosen.sample : SAMPLE}
                     </p>
                   </div>
                 </Group>
@@ -344,7 +344,7 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
                 Connect my accounts
               </Button>
               <Button variant="ghost" onClick={() => finish("/")} disabled={pending || !nameOk} className="h-12 text-[0.9375rem]">
-                Meet {shown ?? "your assistant"} first
+                Meet {shown ?? "your skyling"} first
               </Button>
             </>
           ) : (

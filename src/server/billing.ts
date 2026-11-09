@@ -25,7 +25,7 @@ export const FREE_JARVIS_PER_DAY = 15;
 /**
  * While paid plans are off (testing), everyone gets every feature within these limits, so one
  * person costs at most a few dollars a month (target: $2 to $7).
- * - Messages: a dollar cap on the assistant's own measured cost (jarvis_runs.cost_micros, set when
+ * - Messages: a dollar cap on the skyling's own measured cost (jarvis_runs.cost_micros, set when
  *   model prices are configured), plus day and 30-day counts as a floor when they aren't.
  * - Voice: calls and call length, because a call streams straight between the phone and the
  *   voice service and its cost isn't measured: at most 10 calls x 3 minutes = 30 minutes a month.
@@ -55,7 +55,7 @@ export function testingLimitMessage(what: "messages" | "voice calls", limit: num
 
 /** Shown when the monthly assistant budget is used up. */
 export const TESTING_BUDGET_MESSAGE =
-  "You've reached this month's assistant limit while LifeFlow is in testing. It frees up again over the next few days as older use rolls off. Everything else in the app keeps working.";
+  "You've reached this month's skyling limit while LifeFlow is in testing. It frees up again over the next few days as older use rolls off. Everything else in the app keeps working.";
 export const PRO_FEATURES = {
   bank: "Bank sync",
   google: "Gmail and Google Calendar",

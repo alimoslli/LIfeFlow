@@ -59,7 +59,7 @@ export function AuthForm({
           <p className="mt-2 font-display text-[1.1875rem] leading-snug font-medium tracking-[-0.02em]">
             Your Thursday shift runs until 10. Your Bio exam is Friday at 9.
           </p>
-          <p className="mt-1 text-sm text-text-2">Your assistant moved your study block to Wednesday.</p>
+          <p className="mt-1 text-sm text-text-2">Your skyling moved your study block to Wednesday.</p>
         </div>
       )}
       <FormError message={state?.error} />

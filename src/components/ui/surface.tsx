@@ -69,7 +69,7 @@ export function SourceBadge({ source }: { source: string }) {
   const map: Record<string, { label: string; tone: Tone }> = {
     demo: { label: "Sample data", tone: "warning" },
     manual: { label: "Manual", tone: "neutral" },
-    jarvis: { label: "Added by your assistant", tone: "accent" },
+    jarvis: { label: "Added by your skyling", tone: "accent" },
     import: { label: "Imported", tone: "info" },
     plaid: { label: "Synced · Plaid", tone: "success" },
     canvas: { label: "Synced · Canvas", tone: "success" },

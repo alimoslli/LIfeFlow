@@ -595,7 +595,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       b.addEventListener("click", () => select(n.id));
       n.el = b;
     }
-    // now: the companion standing on the line (a tap folds it all back into the sky)
+    // now: the skyling standing on the line (a tap folds it all back into the sky)
     const np = html("button", "dc-now", track);
     np.type = "button";
     np.style.left = `${TM.nowX}px`;

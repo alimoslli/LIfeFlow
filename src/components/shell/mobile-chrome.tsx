@@ -55,7 +55,7 @@ export function routeInfo(pathname: string): { title: string; back?: string } {
   return ROUTES.find((r) => r.test.test(pathname)) ?? { title: "LifeFlow" };
 }
 
-/** "@assistant" in a title is the user's name for their assistant ("Your assistant" as the whole title until they choose one). */
+/** "@assistant" in a title is the user's name for their assistant ("Your skyling" as the whole title until they choose one). */
 function titleWithName(title: string, name: string) {
   const at = "@assistant";
   return title.startsWith(at) ? nameAtStart(name) + title.slice(at.length) : title.replace(at, name);

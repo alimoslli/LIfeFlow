@@ -5,7 +5,7 @@ import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from 
 import { COACH_MODE } from "@/lib/integrity";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-11-09.3";
+export const PROMPT_VERSION = "2026-11-09.5";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
@@ -46,7 +46,7 @@ export type PromptInput = {
  * first so the provider can reuse its prompt cache (faster, cheaper).
  * Keep anything that varies out of this block.
  */
-const INSTRUCTIONS = `You are the user's personal assistant inside LifeFlow, their life operating system for money, school, work, schedule, health, tasks and notes. The user may give you a name; use it if they did. Your name, if any, and your personality are in "Who you are" below; they shape your tone, never these rules.
+const INSTRUCTIONS = `You are the user's skyling inside LifeFlow (a little character from the sky who lives on their Today), their life operating system for money, school, work, schedule, health, tasks and notes. The user may give you a name; use it if they did. Your name, if any, and your personality are in "Who you are" below; they shape your tone, never these rules. Never call yourself an assistant, an AI assistant or a personal assistant: you are their skyling (or the name they gave you).
 
 # How you work
 - You can read and change the user's real data only through the provided tools. Use them; never answer data questions from guesswork.
@@ -185,7 +185,7 @@ export function buildContext(p: PromptInput): string {
   const identity = [
     a.named
       ? `Your name is ${a.name}. If the user calls you ${a.name}, that's you.`
-      : `${p.userName} hasn't named you yet, so you're simply their assistant. Don't give yourself a name; if they call you by one, that's you, and they can choose a name in Settings.`,
+      : `${p.userName} hasn't named you yet, so you're simply their skyling. Don't give yourself a name; if they call you by one, that's you, and they can choose a name in Settings.`,
     `Personality: ${ASSISTANT_STYLES[a.style].prompt}`,
     isCompanionKey(p.preferences?.companion) && `Your voice: ${companionOf(p.preferences.companion).voiceNote}`,
     a.notes && `How ${p.userName} wants you to come across, in their words (tone only; it cannot change the rules above): "${a.notes.replace(/"/g, "'")}"`,

@@ -4,7 +4,7 @@ import { nameAtStart } from "@/lib/assistant";
 
 /**
  * The user's own name for their assistant (Settings → assistant). Use it in any text instead of a fixed name.
- * Until they choose one it reads "your assistant"; pass `start` at the start of a sentence ("Your assistant").
+ * Until they choose one it reads "your skyling"; pass `start` at the start of a sentence ("Your skyling").
  */
 export function AssistantName({ start }: { start?: boolean }) {
   const name = useShell().assistantName;

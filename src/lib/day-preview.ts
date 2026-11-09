@@ -68,7 +68,7 @@ export function previewClock(now: Date, stage: PreviewStage): Clock {
   return { today: true, freeLabel: `${h}h${m ? ` ${m}m` : ""} free today`, slot: span(startH, startH + 2), slotDay: "today", startH };
 }
 
-/** 14 short stories. Each turns two or three numbers into one thing the assistant would do. */
+/** 14 short stories. Each turns two or three numbers into one thing the skyling would do. */
 const STORIES: Record<PreviewStory["kind"], ((c: Ctx) => PreviewStory)[]> = {
   school: [
     (c) => {

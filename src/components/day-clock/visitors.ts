@@ -3,7 +3,7 @@
  * sometimes it interrupts from space ... make it cool, make it creative, make it not always pop up randomly").
  *
  * Now and then something crosses the sky: at night a shooting star, a satellite blinking its way over, and once in a
- * long while a little craft that stops over the companion and beams it (it jumps); by day a flock of birds, a plane with
+ * long while a little craft that stops over the skyling and beams it (it jumps); by day a flock of birds, a plane with
  * its trail, and once in a while a balloon. Never more than one at a time, a minute or two apart at least, only while
  * Today is closed and on screen, and never with reduced motion. Pixel art, moved by the compositor (Web Animations).
  */
@@ -15,9 +15,9 @@ type Opts = {
   isNight: () => boolean;
   /** Today is closed, still and on screen: a visitor may come. */
   canVisit: () => boolean;
-  /** Where the companion stands, in the sky element's coordinates (the craft stops over it). */
+  /** Where the skyling stands, in the sky element's coordinates (the craft stops over it). */
   companionAt: () => { x: number; y: number } | null;
-  /** A visitor arrived where the companion can see it (it reacts). */
+  /** A visitor arrived where the skyling can see it (it reacts). */
   onSeen: (kind: VisitorKind, x: number) => void;
 };
 
@@ -183,7 +183,7 @@ export function createVisitors(o: Opts) {
           ],
           { duration: 6200 },
         ).then(() => undefined);
-        // the beam reaches down while it hovers, and the companion notices
+        // the beam reaches down while it hovers, and the skyling notices
         const beam = e.querySelector<HTMLElement>(".dc-beam");
         const reach = Math.max(40, (at?.y ?? H * 0.4) - hy - 30);
         window.setTimeout(() => {

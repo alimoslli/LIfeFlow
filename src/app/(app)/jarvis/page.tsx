@@ -4,7 +4,7 @@ import { listConversations } from "@/server/jarvis/conversations";
 import { missingConnections, whatAssistantKnows } from "@/server/services/integrations";
 import { JarvisPage } from "./jarvis-page";
 
-export const metadata: Metadata = { title: "Assistant" };
+export const metadata: Metadata = { title: "Skyling" };
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ ask?: string; voice?: string }> }) {
   const { ask, voice } = await searchParams;

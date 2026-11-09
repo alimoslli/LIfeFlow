@@ -22,13 +22,13 @@ import { EmptyNext } from "./_today/empty-next";
 
 /**
  * Today (v3): your time as a clock that opens into the timeline of your week (docs/design/clock/spec.md),
- * and under it the one thing your assistant noticed, plus a way to ask. Everything else lives one tab away.
+ * and under it the one thing your skyling noticed, plus a way to ask. Everything else lives one tab away.
  */
 export default async function TodayPage() {
   const me = await requireUser();
   // With the Face ID lock on, nothing about money is said here until Money is unlocked.
   const locked = await moneyLocked(me);
-  // The assistant takes its scheduled look (morning, midday, evening) the first time Today opens in each. Its own
+  // The skyling takes its scheduled look (morning, midday, evening) the first time Today opens in each. Its own
   // transaction, so a failure can't break Today.
   if (me.accountKind !== "demo")
     await withUser(me.id, (scope) => runDueSlot(scope, me.timezone, me.preferences)).catch((e) =>
@@ -75,7 +75,7 @@ export default async function TodayPage() {
       <section aria-label="Your day" data-tour="today-page" className="-mx-5 sm:-mx-8 md:mx-0">
         <DayClock data={clock} mode={mode} companion={me.preferences?.companion}>
           {note && <AssistantLine name={assistantName} note={note} />}
-          {/* nothing planned yet: one next step, on the first screen (connect what can be connected, else tell the assistant) */}
+          {/* nothing planned yet: one next step, on the first screen (connect what can be connected, else tell the skyling) */}
           {!note &&
             clock.empty &&
             (setup.length > 0 ? (
@@ -92,7 +92,7 @@ export default async function TodayPage() {
             ) : (
               <EmptyNext name={assistantName} />
             ))}
-          {/* a laptop's full sky has the ask bar beside the wheel, under the assistant's line (CSS shows one of the two) */}
+          {/* a laptop's full sky has the ask bar beside the wheel, under the skyling's line (CSS shows one of the two) */}
           {mode === "full" && (
             <div className="dc-ask">
               <AskBar name={assistantName} chips={false} />
@@ -100,8 +100,8 @@ export default async function TodayPage() {
           )}
         </DayClock>
       </section>
-      {/* a phone: the chat bar docked at the bottom of Today, just above the tabs, with the companion in it (owner,
-          2026-11-09: "the assistant chat bar at the bottom of the main page ... with the character there") */}
+      {/* a phone: the chat bar docked at the bottom of Today, just above the tabs, with the skyling in it (owner,
+          2026-11-09: "the skyling chat bar at the bottom of the main page ... with the character there") */}
       <div className="dc-dock md:hidden">
         <AskBar name={assistantName} chips={false} />
       </div>

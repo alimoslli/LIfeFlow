@@ -38,7 +38,7 @@ type ShellCtx = {
   aiConsent: boolean;
   /** The user's time zone (Settings), for anything that depends on their local time. */
   tz: string;
-  /** Their companion (lib/companions), drawn wherever the assistant is. */
+  /** Their skyling (lib/companions), drawn wherever the skyling is. */
   companion?: string | null;
 };
 const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: UNNAMED_ASSISTANT, firstName: "", aiConsent: false, tz: "UTC", companion: null });
@@ -61,9 +61,9 @@ export function AppShell({
   areas?: LifeAreas;
   /** New Jarvis messages: a dot on the Jarvis tab. */
   unread?: number;
-  /** The name the user gave their assistant ("your assistant" until they choose one). */
+  /** The name the user gave their assistant ("your skyling" until they choose one). */
   assistantName?: string;
-  /** Their companion (lib/companions), drawn on the assistant's tab and button. */
+  /** Their skyling (lib/companions), drawn on the skyling's tab and button. */
   companion?: string | null;
   /** The user allowed Jarvis to send their data to the AI provider. */
   aiConsent?: boolean;
@@ -148,7 +148,7 @@ export function AppShell({
   // The chat is full-screen; Updates, Profile and Memory are normal pages.
   const onJarvisPage =
     pathname.startsWith("/jarvis") && !["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"].some((p) => pathname.startsWith(p));
-  // The assistant's other pages (Updates, Ideas, Profile) keep the chat's own header and pill row,
+  // The skyling's other pages (Updates, Ideas, Profile) keep the chat's own header and pill row,
   // so moving between them never swaps the whole interface (UX review).
   const assistantPage = !onJarvisPage && (pathname.startsWith("/jarvis") || pathname.startsWith("/inbox"));
   const settingsActive = pathname.startsWith("/settings");
@@ -386,7 +386,7 @@ function useSlidingIndicator(ref: React.RefObject<HTMLElement | null>, pathname:
 }
 
 /** @deprecated Use BrandMark for new surfaces. Kept as the compatibility mark for existing LifeFlow pages. */
-/** The same top row the chat uses (title in the middle, Settings and the assistant's profile on the right). */
+/** The same top row the chat uses (title in the middle, Settings and the skyling's profile on the right). */
 function AssistantHeader({ name }: { name: string }) {
   return (
     <header className="flex items-center gap-0.5 px-2 pt-[max(0.5rem,env(safe-area-inset-top))] lg:px-4">
@@ -399,7 +399,7 @@ function AssistantHeader({ name }: { name: string }) {
       >
         <Settings className="h-5 w-5" />
       </Link>
-      <Link href="/jarvis/profile" aria-label="Assistant profile" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface-2">
+      <Link href="/jarvis/profile" aria-label="Skyling profile" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface-2">
         <BrandMark className="h-8 w-8" alt="" />
       </Link>
     </header>

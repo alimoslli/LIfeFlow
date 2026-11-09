@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     if (e instanceof HttpError) return EMPTY;
     throw e;
   }
-  // Carrier keywords come first and never reach the assistant.
+  // Carrier keywords come first and never reach the skyling.
   const keyword = smsKeyword(body);
   if (keyword === "stop") {
     // Twilio blocks further texts and sends its own confirmation; we forget the number too.
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     const text =
       keyword === "help"
         ? smsHelpText(legalDetails().email)
-        : "LifeFlow: texts are back on. To text your assistant, add this number in the app under Settings, Text your assistant.";
+        : "LifeFlow: texts are back on. To text your skyling, add this number in the app under Settings, Text your skyling.";
     after(() => sendSms(cfg, from, text).catch((e) => console.error("[sms] keyword reply failed", e instanceof Error ? e.name : e)));
     return EMPTY;
   }

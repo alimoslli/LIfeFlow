@@ -1,7 +1,7 @@
 ---
 name: transaction-review
 title: Transaction review
-description: Goes through transactions the assistant isn't sure about, together with the user, and categorizes them from their reply.
+description: Goes through transactions you aren't sure about, together with the user, and categorizes them from their reply.
 triggers: ["categorize", "categorise", "uncategorized", "review my transactions", "fix my categories", "wrong category", "transactions you're not sure about"]
 modules: ["finances"]
 tools: ["transactions_to_review", "categorize_transactions", "list_categories", "recategorize_transaction"]

@@ -494,14 +494,14 @@ export async function fileExtraction(
       return { filed };
     }
     case "class_schedule":
-      return { filed, review: "This looks like your class schedule, not a bill. Send the same photo to your assistant in chat to add your classes." };
+      return { filed, review: "This looks like your class schedule, not a bill. Send the same photo to your skyling in chat to add your classes." };
     case "work_schedule":
       // TODO(D12, when shift filing is built): key each shift by (employer, start time) with source "schedule". A newer
       // schedule email for the same employer and week REPLACES that week's schedule shifts (except ones the user edited),
       // and expected shifts from usual work days (`fillRegularShifts`) give way to the real ones. Record Undo with the
       // replaced shifts. Test: the Nov 9 to 15 email, then a corrected one, leaves the corrected shifts only.
       // See docs/audits/2026-11-06-gmail-audit.md, D12. Until then nothing is filed, so no shift can be duplicated.
-      return { filed, review: "This looks like a work schedule, not a bill. Send the same photo to your assistant in chat to add your shifts." };
+      return { filed, review: "This looks like a work schedule, not a bill. Send the same photo to your skyling in chat to add your shifts." };
     default:
       return { filed, review: "Nothing to file. It's saved here so you can find it." };
   }
@@ -573,7 +573,7 @@ export async function processDocument(
   let ex: Extraction;
   try {
     const [owner] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
-    if (!aiAllowed(owner?.preferences)) throw new Error("Saved. Allow your assistant to use AI (in Settings) to have it read and filed automatically.");
+    if (!aiAllowed(owner?.preferences)) throw new Error("Saved. Allow your skyling to use AI (in Settings) to have it read and filed automatically.");
     ex = await extract({ ...doc, today });
   } catch (e) {
     const [failed] = await scope.tx

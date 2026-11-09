@@ -6,7 +6,7 @@ import { suggestedMemoryIds, toUiMessages } from "@/server/jarvis/ui-messages";
 import { memoryStatuses } from "@/server/services/memory";
 import { JarvisPage } from "../jarvis-page";
 
-export const metadata: Metadata = { title: "Assistant" };
+export const metadata: Metadata = { title: "Skyling" };
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

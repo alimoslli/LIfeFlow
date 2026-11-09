@@ -21,11 +21,11 @@ const steps = (name: string): Step[] => [
     target: "today-page",
     eyebrow: "Today",
     title: "Your day as a wheel",
-    body: "The sky is now, and your day turns under your companion: things rise on the right and set on the left. Drag it, scroll it or use the arrow keys to move through time, and “Back to now” brings you home. Tap it and it opens into your timeline; pull the line down to fold it back.",
+    body: "The sky is now, and your day turns under your skyling: things rise on the right and set on the left. Drag it, scroll it or use the arrow keys to move through time, and “Back to now” brings you home. Tap it and it opens into your timeline; pull the line down to fold it back.",
   },
   {
-    target: "assistant",
-    eyebrow: name === UNNAMED_ASSISTANT ? "Assistant" : "Your assistant",
+    target: "skyling", // the tab's data-tour is its label in lowercase (app-shell)
+    eyebrow: name === UNNAMED_ASSISTANT ? "Ask anything" : "Your skyling",
     title: nameAtStart(name),
     body: "Ask in plain words, like “When can I study on Wednesday?”, or tell it what to do. It shows exactly what it changed, and it asks before it deletes or sends anything.",
   },
@@ -39,19 +39,19 @@ const steps = (name: string): Step[] => [
     target: "school",
     eyebrow: "School",
     title: "Courses and assignments",
-    body: "Bring in assignments from Canvas, or send a screenshot or syllabus from any other platform. See what's due, and get study time built around your free hours. Your assistant never does graded work.",
+    body: "Bring in assignments from Canvas, or send a screenshot or syllabus from any other platform. See what's due, and get study time built around your free hours. Your skyling never does graded work.",
   },
   {
     target: "ask",
     eyebrow: "Anywhere",
     title: "Ask anything",
-    body: "Tap here, or press ⌘J on a laptop, to ask your assistant: what's next, can I afford this, or what should I do first. It's on every screen.",
+    body: "Tap here, or press ⌘J on a laptop, to ask your skyling: what's next, can I afford this, or what should I do first. It's on every screen.",
   },
   {
     target: "settings",
     eyebrow: "Make it yours",
     title: "Settings",
-    body: "Name your assistant and choose its tone, pick light or dark, set quiet hours, and see what's connected. You can replay this tour from here.",
+    body: "Name your skyling and choose its tone, pick light or dark, set quiet hours, and see what's connected. You can replay this tour from here.",
   },
   {
     target: null,

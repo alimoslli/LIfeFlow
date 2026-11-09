@@ -55,7 +55,7 @@ export function providerCatalog(env: NodeJS.ProcessEnv = process.env): ProviderI
       provider: "google",
       name: "Google (Gmail + Calendar)",
       module: "Email · Calendar",
-      description: "Your assistant can search and read your email, draft replies in Gmail, send with your confirmation, and sync your Google Calendar.",
+      description: "Your skyling can search and read your email, draft replies in Gmail, send with your confirmation, and sync your Google Calendar.",
       requires: ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"],
       configured: has("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"),
       docsUrl: "https://developers.google.com/workspace/gmail/api",
@@ -90,7 +90,7 @@ export async function integrationStatus(scope: UserScope) {
   });
 }
 
-/** What the assistant can see for this account, for the empty chat's "I know your ..." line. Only areas with real rows. */
+/** What the skyling can see for this account, for the empty chat's "I know your ..." line. Only areas with real rows. */
 export async function whatAssistantKnows(scope: UserScope) {
   const [classes, shifts, money] = await series(
     () =>

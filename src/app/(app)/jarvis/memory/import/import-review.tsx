@@ -8,7 +8,7 @@ import { saveLifeImportAction } from "../../actions";
 
 const FACT_LABEL = { fact: "About you", preference: "Preference", routine: "Routine" } as const;
 const GROUPS: { kind: ImportItem["kind"]; title: string; hint: string }[] = [
-  { kind: "fact", title: "About you", hint: "Your assistant uses these to fit its help to you." },
+  { kind: "fact", title: "About you", hint: "Your skyling uses these to fit its help to you." },
   { kind: "milestone", title: "Milestones", hint: "Saved to your life milestones." },
   { kind: "goal", title: "Goals", hint: "Added to your goals." },
 ];

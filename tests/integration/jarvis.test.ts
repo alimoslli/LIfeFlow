@@ -297,16 +297,16 @@ describe("Jarvis tool loop", () => {
     // The details go to the server log only.
     expect(log).toHaveBeenCalledWith("[jarvis] turn failed", expect.objectContaining({ status: 401, message: "Unauthorized" }));
     log.mockRestore();
-    // People see plain words with their assistant's name ("your assistant" before they choose one).
+    // People see plain words with their assistant's name ("your skyling" before they choose one).
     const err = events.find((e) => e.type === "error");
-    expect(err).toEqual({ type: "error", message: "Your assistant isn't available right now. Try again later." });
+    expect(err).toEqual({ type: "error", message: "Your skyling isn't available right now. Try again later." });
     const msgs = await run((s) => listMessages(s, conversationId));
     expect(msgs.map((m) => [m.role, m.status])).toEqual([
       ["user", "complete"],
       ["assistant", "error"],
     ]);
     // The saved message is the same plain text, never the raw error.
-    expect(msgs[1].content).toBe("Your assistant isn't available right now. Try again later.");
+    expect(msgs[1].content).toBe("Your skyling isn't available right now. Try again later.");
     expect(msgs[1].content).not.toMatch(/unauthorized|openai|key|jarvis/i);
   });
 });

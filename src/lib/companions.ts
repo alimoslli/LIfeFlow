@@ -2,7 +2,7 @@ import type { AssistantStyle } from "@/lib/assistant";
 
 /**
  * The cast (owner, 2026-11-09; docs/design/companions/cast.md): six companions named for moments of the sky. The one the
- * person picks is their assistant: it takes the companion's name unless they type their own, and its tone sets how the
+ * person picks is their assistant: it takes the skyling's name unless they type their own, and its tone sets how the
  * assistant talks. Pure data, shared by the server (onboarding, the prompt) and the drawing engine
  * (components/day-clock/companion.ts). Words here are user-facing: plain, short, no em dashes.
  */
@@ -202,7 +202,7 @@ export const DEFAULT_COMPANION: CompanionKey = "ray";
 
 export const isCompanionKey = (k: unknown): k is CompanionKey => typeof k === "string" && (COMPANION_KEYS as readonly string[]).includes(k);
 
-/** The companion for a saved choice (or the default when none was made). */
+/** The skyling for a saved choice (or the default when none was made). */
 export function companionOf(key: string | null | undefined): CompanionInfo {
   return COMPANIONS.find((c) => c.key === key) ?? COMPANIONS.find((c) => c.key === DEFAULT_COMPANION)!;
 }

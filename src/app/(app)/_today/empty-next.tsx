@@ -3,7 +3,7 @@ import { ArrowRight, MessageCircle } from "lucide-react";
 import { useShell } from "@/components/shell/app-shell";
 
 /**
- * A new account's empty sky always has one next step (A-to-Z audit B17): tell the assistant the week in a sentence, and
+ * A new account's empty sky always has one next step (A-to-Z audit B17): tell the skyling the week in a sentence, and
  * the classes and shifts land on the sky. Shown only while nothing is planned.
  */
 export function EmptyNext({ name }: { name: string }) {

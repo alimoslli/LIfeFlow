@@ -1,7 +1,7 @@
 import type { CompanionInfo } from "@/lib/companions";
 
 /**
- * The companion engine (the cast, owner 2026-11-09; docs/design/companions/cast.md): every companion is drawn in code on
+ * The skyling engine (the cast, owner 2026-11-09; docs/design/companions/cast.md): every companion is drawn in code on
  * a 24 x 24 grid from its row in lib/companions.ts (one shape, one crown, one face), in four poses, by day and in its night
  * form. No image files and no state: a pose and a frame in, pixels out. Shown at whole multiples with
  * `image-rendering: pixelated`.
@@ -67,7 +67,7 @@ function mix(a: string, b: string, t: number) {
 }
 
 type Form = CompanionInfo["look"] & { key: CompanionInfo["key"]; pin: boolean; squint: boolean };
-/** By day a companion's own colours; at night washed in moonlight with a gold crescent pin. Star is the other way round. */
+/** By day a skyling's own colours; at night washed in moonlight with a gold crescent pin. Star is the other way round. */
 export function formOf(c: CompanionInfo, night: boolean): Form {
   const l = c.look;
   const moon = l.shy ? !night : night;
@@ -88,7 +88,7 @@ export function formOf(c: CompanionInfo, night: boolean): Form {
   };
 }
 
-/** The pixels of a companion in a pose at a frame (frames wrap), by day or at night. */
+/** The pixels of a skyling in a pose at a frame (frames wrap), by day or at night. */
 export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: boolean): Pixel[] {
   const c = formOf(info, night);
   const list = FRAMES[pose];
@@ -335,7 +335,7 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
 /** Each drawn frame is kept, so the wheel's 24 x 24 sprite is copied in one call instead of painted pixel by pixel. */
 const painted = new Map<string, ImageData>();
 
-/** Paint a companion onto a 24 x 24 canvas (facing right; `flip` faces it left). */
+/** Paint a skyling onto a 24 x 24 canvas (facing right; `flip` faces it left). */
 export function drawCompanion(canvas: HTMLCanvasElement, c: CompanionInfo, pose: Pose, frame: number, night: boolean, flip = false) {
   const g = canvas.getContext("2d");
   if (!g) return;

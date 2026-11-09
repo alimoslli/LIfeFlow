@@ -12,10 +12,10 @@ import { fetchWithTimeout, ProviderTimeout, readJson } from "./timeout";
  * Google (Gmail + Google Calendar) for one LifeFlow user.
  *
  * - OAuth 2.0 authorization-code flow with PKCE and a state check; offline
- *   access so the assistant can work later without the user re-signing in.
+ *   access so the skyling can work later without the user re-signing in.
  * - Tokens are stored AES-GCM encrypted in `integrations` (provider "google").
  * - Talks to Google's REST APIs with fetch (no SDK); `f` is injectable for tests.
- * - Email content returned to the assistant is wrapped as untrusted data.
+ * - Email content returned to the skyling is wrapped as untrusted data.
  */
 
 export type Fetch = typeof fetch;

@@ -21,7 +21,13 @@ export function InviteShare({ link, firstName }: { link: string; firstName: stri
     }
   };
   const share = () =>
-    navigator.share({ title: "LifeFlow", text: `${firstName} invited you to LifeFlow, a personal planner and AI assistant.`, url: link }).catch(() => {});
+    navigator
+      .share({
+        title: "LifeFlow",
+        text: `${firstName} invited you to LifeFlow, your whole week on one sky, with a little skyling who keeps an eye on it.`,
+        url: link,
+      })
+      .catch(() => {});
   return (
     <div className="mt-5 flex flex-col gap-3">
       <label htmlFor="invite-link" className="text-sm font-medium text-text-2">

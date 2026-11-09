@@ -433,9 +433,9 @@ export async function correctMemoryForUser(
   return { status: "proposed", memory: row, replaces };
 }
 
-/** The prompt the user runs in their other AI assistant; its answer is pasted into importMemories. */
+/** The prompt the user runs in their other AI app; its answer is pasted into importMemories. */
 export const IMPORT_PROMPT =
-  "List the lasting facts you know about me that would help a personal assistant: my school and classes, work, routines, goals, preferences and important people. One short fact per line. Leave out passwords, account numbers, health details and anything you're unsure about.";
+  "List the lasting facts you know about me that would help an app that plans my life with me: my school and classes, work, routines, goals, preferences and important people. One short fact per line. Leave out passwords, account numbers, health details and anything you're unsure about.";
 
 /**
  * Turns text pasted from another AI into suggestions, one per line or sentence.

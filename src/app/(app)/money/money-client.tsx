@@ -5,7 +5,7 @@ import { Confetti } from "@/components/motion/celebrate";
 import { useShell } from "@/components/shell/app-shell";
 import { celebrateMilestoneAction } from "./actions";
 
-/** Opens the assistant with a prompt already sent. */
+/** Opens the skyling with a prompt already sent. */
 export function AskJarvisButton({ prompt, children }: { prompt: string; children: ReactNode }) {
   const { openJarvis } = useShell();
   return (

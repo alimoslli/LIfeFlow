@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: "LifeFlow",
     short_name: "LifeFlow",
-    description: "A personal planner and AI assistant that brings your whole week into one calm place.",
+    description: "Your whole week on one calm sky, with a little skyling who keeps an eye on it.",
     start_url: "/",
     scope: "/",
     display: "standalone",
@@ -23,8 +23,8 @@ export default function manifest(): MetadataRoute.Manifest {
     // Long-press the home-screen icon (Android; iOS ignores shortcuts).
     shortcuts: [
       {
-        name: "Ask your assistant",
-        short_name: "Assistant",
+        name: "Ask your skyling",
+        short_name: "Skyling",
         url: "/jarvis",
         icons: [{ src: "/icons/shortcut-jarvis.png", sizes: "96x96", type: "image/png" }],
       },

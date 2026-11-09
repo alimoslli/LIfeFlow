@@ -36,7 +36,7 @@
   transform: translateY(14px);
   pointer-events: none;
 }
-/* the companion in the bar breathes */
+/* the skyling in the bar breathes */
 .lf-bob {
   animation: lf-bob 2.6s ease-in-out infinite;
 }
@@ -706,7 +706,7 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   background: #e6edf8;
   color: #0f1a2a;
 }
-/* now: the companion standing on the line (a tap folds it all back into the sky) */
+/* now: the skyling standing on the line (a tap folds it all back into the sky) */
 .dc-now {
   position: absolute;
   width: 48px;

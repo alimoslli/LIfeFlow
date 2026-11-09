@@ -117,7 +117,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <AskJarvisButton prompt="Add " className="tap flex items-center justify-center rounded-full bg-surface text-accent shadow-soft">
-            <Sparkles className="h-4 w-4" aria-label="Add with your assistant" />
+            <Sparkles className="h-4 w-4" aria-label="Add with your skyling" />
           </AskJarvisButton>
           <QuickAddButton className="flex min-h-11 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium text-accent-text shadow-soft">
             <Plus className="h-4 w-4" /> Add

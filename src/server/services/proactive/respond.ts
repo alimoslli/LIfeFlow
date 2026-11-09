@@ -67,7 +67,7 @@ export async function performAction(
       };
     }
     case "contribute_goal": {
-      const c = await contributeToGoal(scope, { goalId: a.goalId, amountCents: a.cents, date: today, note: "From your assistant" });
+      const c = await contributeToGoal(scope, { goalId: a.goalId, amountCents: a.cents, date: today, note: "From your skyling" });
       return {
         text: `Recorded ${usd(a.cents)} toward your goal. (LifeFlow doesn't move money; set it aside in your bank too.)`,
         undo: { contributionId: c.contribution.id },
@@ -76,7 +76,7 @@ export async function performAction(
     case "open":
       return { text: "Opened.", href: a.href };
     case "ask":
-      return { text: "Asked your assistant.", href: `/jarvis?ask=${encodeURIComponent(a.prompt)}` };
+      return { text: "Asked your skyling.", href: `/jarvis?ask=${encodeURIComponent(a.prompt)}` };
     case "consent":
       return { text: "Thanks. I'll learn from how you respond, and you can turn it off in Settings." };
     case "answer":
@@ -166,7 +166,7 @@ export async function respondToMessage(scope: UserScope, user: User, id: string,
       muted.add(m.kind);
       await setJarvis(user, { mutedKinds: [...muted] });
       await set({ status: "muted" });
-      return { text: "I won't suggest this again. You can bring it back in Settings, What your assistant knows." };
+      return { text: "I won't suggest this again. You can bring it back in Settings, What your skyling knows." };
     }
     case "up":
     case "down":

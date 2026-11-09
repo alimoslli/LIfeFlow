@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
 import { queryAsUser, signUp } from "./helpers";
 
-// The cast (docs/design/companions/cast.md): in Settings › your assistant, picking a companion saves at once, brings its
-// name (unless the assistant has a name of its own) and its tone, and it's the one on top of Today.
-test("picking a companion in Settings makes it the assistant and puts it on the wheel", async ({ page }) => {
+// The cast (docs/design/companions/cast.md): in Settings › your skyling, picking a skyling saves at once, brings its
+// name (unless the skyling has a name of its own) and its tone, and it's the one on top of Today.
+test("picking a skyling in Settings makes it the skyling and puts it on the wheel", async ({ page }) => {
   const email = await signUp(page, "Cast Tester");
   await page.goto("/settings/jarvis");
-  const six = page.getByRole("radiogroup", { name: "Your companion" });
+  const six = page.getByRole("radiogroup", { name: "Your skyling" });
   await expect(six.getByRole("radio")).toHaveCount(6);
   for (const r of await six.getByRole("radio").all()) expect((await r.boundingBox())!.height).toBeGreaterThanOrEqual(44);
 

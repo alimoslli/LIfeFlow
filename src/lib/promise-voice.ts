@@ -1,14 +1,14 @@
 import type { JarvisTone } from "./jarvis-voice";
 
 /**
- * What the assistant says when the user answers a promise check-in. Kept is warm; broken is honest and never
+ * What the skyling says when the user answers a promise check-in. Kept is warm; broken is honest and never
  * shaming; three broken in two weeks gets a firmer, playful line and an offer of a smaller promise.
  * Facts in, words out: counts come from the service, never guessed here.
  */
 export type PromiseOutcome = "kept" | "broken" | "moved";
 export type PromiseFacts = { text: string; brokenRecent: number; keptWeek: number };
 
-/** At this many broken promises in 14 days the assistant gets an attitude. */
+/** At this many broken promises in 14 days the skyling gets an attitude. */
 export const ATTITUDE_AT = 3;
 
 const pick = <T>(xs: T[], seed: number) => xs[Math.abs(seed) % xs.length];
@@ -48,7 +48,7 @@ export function promiseReply(outcome: PromiseOutcome, tone: JarvisTone, f: Promi
   }[tone][seed % (tone === "direct" ? 1 : 2)];
 }
 
-/** The check-in question, in the assistant's voice. The headline is the promise, in the user's own words. */
+/** The check-in question, in the skyling's voice. The headline is the promise, in the user's own words. */
 export const promiseAsk = (tone: JarvisTone) => (tone === "direct" ? "Did you do it?" : tone === "coach" ? "Did you follow through?" : "How did it go?");
 
 /** The three answers on a check-in card. The first keeps the promise, the second moves it a day, the third breaks it. */

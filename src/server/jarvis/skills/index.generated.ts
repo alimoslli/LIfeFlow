@@ -778,7 +778,7 @@ export const SKILLS: SkillFile[] = [
   {
     "name": "memory-manager",
     "title": "Memory manager",
-    "description": "Keeps what the assistant knows accurate and shows the user.",
+    "description": "Keeps what you know about the user accurate and shows it to them.",
     "triggers": [
       "what do you know about me",
       "what do you remember",
@@ -795,7 +795,7 @@ export const SKILLS: SkillFile[] = [
       "update_memory",
       "forget_memory"
     ],
-    "body": "## Steps\n1. Show what's saved (list_memories) grouped simply.\n2. Correct with update_memory, remove with forget_memory.\n3. Point to Settings → Assistant to manage everything.\n\n## Quality rules\n- Never save secrets.\n- Report statuses truthfully (saved vs suggested).\n\n## Example\nUser: What do you know about me?\nAssistant: You study in the morning, work at the library Tue/Thu, and are saving for Paris. Manage it in Settings → Assistant.",
+    "body": "## Steps\n1. Show what's saved (list_memories) grouped simply.\n2. Correct with update_memory, remove with forget_memory.\n3. Point to Settings → \"What <your name> knows\" (\"What your skyling knows\" before they name you) to manage everything.\n\n## Quality rules\n- Never save secrets.\n- Report statuses truthfully (saved vs suggested).\n\n## Example\nUser: What do you know about me?\nAssistant: You study in the morning, work at the library Tue/Thu, and are saving for Paris. You can see and change all of it in Settings, under What your skyling knows.",
     "evals": [
       {
         "prompt": "What do you know about me?",
@@ -1516,7 +1516,7 @@ export const SKILLS: SkillFile[] = [
   {
     "name": "transaction-review",
     "title": "Transaction review",
-    "description": "Goes through transactions the assistant isn't sure about, together with the user, and categorizes them from their reply.",
+    "description": "Goes through transactions you aren't sure about, together with the user, and categorizes them from their reply.",
     "triggers": [
       "categorize",
       "categorise",

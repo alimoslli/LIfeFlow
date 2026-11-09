@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || "https://lifeflowweb.com"),
   title: { default: "LifeFlow", template: "%s · LifeFlow" },
   description:
-    "LifeFlow is a personal planner and AI assistant that brings your calendar, tasks, schedules, money, goals, habits and health into one calm place.",
+    "LifeFlow puts your calendar, tasks, schedules, money, goals, habits and health on one calm sky, with a little skyling who keeps an eye on your day.",
   applicationName: "LifeFlow",
   appleWebApp: { capable: true, title: "LifeFlow", statusBarStyle: "default" },
   icons: {
@@ -29,13 +29,13 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "LifeFlow",
     title: "LifeFlow: Your whole life, in flow.",
-    description: "A personal planner and AI assistant that brings your whole week into one calm place.",
+    description: "Your whole week on one calm sky, with a little skyling who keeps an eye on it.",
     images: [{ url: "/brand/lifeflow-social.png", width: 1200, height: 630, alt: "LifeFlow" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "LifeFlow: Your whole life, in flow.",
-    description: "A personal planner and AI assistant that brings your whole week into one calm place.",
+    description: "Your whole week on one calm sky, with a little skyling who keeps an eye on it.",
     images: ["/brand/lifeflow-social.png"],
   },
   formatDetection: { telephone: false },

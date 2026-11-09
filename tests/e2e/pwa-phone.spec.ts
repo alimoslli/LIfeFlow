@@ -14,7 +14,7 @@ test("manifest: id, colors, shortcuts with icons, and screenshots that exist", a
   const m = await res.json();
   expect(m).toMatchObject({ id: "/", start_url: "/", display: "standalone", theme_color: "#285b45", background_color: "#f9f7f0" });
   expect(m.shortcuts.map((s: { name: string; url: string }) => [s.name, s.url])).toEqual([
-    ["Ask your assistant", "/jarvis"],
+    ["Ask your skyling", "/jarvis"],
     ["Add to-do", "/tasks?add=todo"],
     ["Log spending", "/money?add=spending"],
   ]);

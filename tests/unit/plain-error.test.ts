@@ -6,7 +6,7 @@ const json = (status: number, body: unknown) => new Response(JSON.stringify(body
 describe("only the app's own words reach people", () => {
   it("shows the API's own words for a deliberate error", async () => {
     expect(await serverWords(json(429, { error: "You've used today's 5 free messages." }), "Calm.")).toContain("free messages");
-    expect(await serverWords(json(503, { error: "Your assistant isn't available right now." }), "Calm.")).toContain("isn't available");
+    expect(await serverWords(json(503, { error: "Your skyling isn't available right now." }), "Calm.")).toContain("isn't available");
     expect(await serverWords(json(400, { error: "Message is empty" }), "Calm.")).toBe("Message is empty");
   });
   it("replaces a crash, a proxy page, a broken body and anything a browser wrote", async () => {

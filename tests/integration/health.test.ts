@@ -66,7 +66,7 @@ describe("Apple Health ingest", () => {
     expect(seen).toHaveLength(0);
   });
 
-  it("lets the assistant read the summary through get_health_summary", async () => {
+  it("lets the skyling read the summary through get_health_summary", async () => {
     const { user, run } = await makeUser();
     const tool = getTool("get_health_summary")!;
     const ctx = { userId: user.id, tz: TZ, today: "2026-10-28", now: NOW, conversationId: "", userText: "", memorySuggestions: false, run };

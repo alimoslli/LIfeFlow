@@ -54,7 +54,7 @@ export async function answerText(
     return note;
   }
   if (!aiAllowed(u.preferences)) {
-    const note = "To text your assistant, open LifeFlow and allow it to use AI (in Settings).";
+    const note = "To text your skyling, open LifeFlow and allow it to use AI (in Settings).";
     await deps.send(replyTo, note);
     return note;
   }

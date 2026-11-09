@@ -109,7 +109,7 @@ export async function updatePreferences(
 }
 
 export const assistantSchema = z.object({
-  // Empty means no name yet: it stays "your assistant" until they choose one.
+  // Empty means no name yet: it stays "your skyling" until they choose one.
   name: z
     .string()
     .trim()
@@ -121,7 +121,7 @@ export const assistantSchema = z.object({
   voice: z.enum(["alloy", "ash", "ballad", "cedar", "coral", "echo", "marin", "sage", "shimmer", "verse"]),
 });
 
-/** Saves the assistant's name, personality and voice. */
+/** Saves the skyling's name, personality and voice. */
 const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Pick a time like 22:00");
 export const jarvisSettingsSchema = z.object({
   frequency: z.enum(["low", "normal", "high"]),
@@ -135,8 +135,8 @@ export const jarvisSettingsSchema = z.object({
 });
 
 /**
- * Picks the companion (the cast). It brings its name unless the person gave the assistant their own (a name that is
- * another companion's counts as not their own), and its tone.
+ * Picks the skyling (the cast). It brings its name unless the person gave the skyling their own (a name that is
+ * another skyling's counts as not their own), and its tone.
  */
 export async function setCompanion(db: Database, userId: string, key: unknown) {
   if (!isCompanionKey(key)) throw new ServiceError("Pick one of the six.");
@@ -151,7 +151,7 @@ export async function setCompanion(db: Database, userId: string, key: unknown) {
   return c;
 }
 
-/** Name, tone, voice and how proactive the assistant is. */
+/** Name, tone, voice and how proactive the skyling is. */
 export async function updateAssistant(
   db: Database,
   userId: string,

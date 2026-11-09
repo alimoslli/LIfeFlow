@@ -8,7 +8,7 @@ import { series } from "@/server/db/series";
 import { listProposedMemories } from "@/server/services/memory";
 import { jarvisSettings, unreadCount } from "@/server/services/proactive/engine";
 
-export const metadata: Metadata = { title: "Assistant" };
+export const metadata: Metadata = { title: "Skyling" };
 
 /** Jarvis's profile: who he is, what's waiting on you, and the two things you shape (personality and memory). */
 export default async function JarvisProfilePage() {

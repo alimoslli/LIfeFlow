@@ -93,7 +93,7 @@ export function JarvisPage({
           >
             <Settings className="h-5 w-5" />
           </Link>
-          <Link href="/jarvis/profile" aria-label="Assistant profile" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface-2">
+          <Link href="/jarvis/profile" aria-label="Skyling profile" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface-2">
             <BrandMark className="h-8 w-8" alt="" />
           </Link>
         </header>

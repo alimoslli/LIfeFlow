@@ -3,8 +3,8 @@ import { companionOf } from "@/lib/companions";
 import { cn } from "@/lib/utils";
 
 /**
- * The companion as a crisp little picture (SVG pixels, so it renders on the server and at any size): the person's pick,
- * or the default until they choose, in its night form when `night`. Decorative; the label next to it names the assistant.
+ * The skyling as a crisp little picture (SVG pixels, so it renders on the server and at any size): the person's pick,
+ * or the default until they choose, in its night form when `night`. Decorative; the label next to it names the skyling.
  */
 export function CompanionGlyph({
   className,

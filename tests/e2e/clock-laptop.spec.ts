@@ -7,7 +7,7 @@ test.use({ viewport: { width: 1470, height: 830 } });
 const E2E_DB = process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e";
 
 // A MacBook (owner, 2026-11-09: "on the MacBook it looks so small", "no boxes"): one wide sky, the wheel on the left,
-// and on the right, in words on the sky, what's now and next with the assistant's line and the ask bar under them.
+// and on the right, in words on the sky, what's now and next with the skyling's line and the ask bar under them.
 test("on a laptop the wheel sits on the left and the day's words and the ask bar on the right", async ({ page }) => {
   const email = await signUp(page, "Laptop Tester");
   execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/dev/seed-clock-look.ts", email], {
@@ -21,7 +21,7 @@ test("on a laptop the wheel sits on the left and the day's words and the ask bar
   const wheel = await page.getByRole("button", { name: /^Today\. Now / }).boundingBox();
   const words = await clock.locator("[data-dc=words]").boundingBox();
   // one ask bar, beside the wheel (the one under the sky is for phones)
-  const ask = page.getByRole("button", { name: "Message your assistant…" });
+  const ask = page.getByRole("button", { name: "Message your skyling…" });
   await expect(ask).toHaveCount(1);
   const askBox = await ask.boundingBox();
   expect(wheel && words && askBox).toBeTruthy();

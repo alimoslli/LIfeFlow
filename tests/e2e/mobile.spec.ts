@@ -49,7 +49,7 @@ test("Extra large text still fits a phone screen", async ({ page, context, baseU
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow, `${path} overflows by ${overflow}px at Extra large text`).toBeLessThanOrEqual(1);
   }
-  // The assistant's Profile cards grow with the text instead of clipping their icons (audit A26), and their words stay
+  // The skyling's Profile cards grow with the text instead of clipping their icons (audit A26), and their words stay
   // inside the card's padding, on 360, 375 and 393 px phones.
   for (const width of [360, 375, 393]) {
     await page.setViewportSize({ width, height: 852 });

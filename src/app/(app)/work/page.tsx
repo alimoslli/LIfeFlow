@@ -214,7 +214,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
               <Card className="p-5 text-sm text-text-2">
                 <h2 className="mb-1 text-[0.8125rem] font-semibold tracking-wide uppercase">UKG Pro</h2>
                 Not connected. UKG API access is normally issued to employers, not personal logins, so LifeFlow uses manual entry and schedule photos your
-                assistant reads for now.{" "}
+                skyling reads for now.{" "}
                 <Link href="/settings/integrations" className="lf-hit text-accent hover:underline">
                   Details
                 </Link>
@@ -235,7 +235,7 @@ function EmployerForm() {
           <Input id="e-name" name="name" required placeholder="Campus Library" />
         </Field>
         <Field label="Position" htmlFor="e-pos">
-          <Input id="e-pos" name="position" placeholder="Student assistant" />
+          <Input id="e-pos" name="position" placeholder="Barista" />
         </Field>
         <Field label="Pay type" htmlFor="e-type">
           <Select id="e-type" name="payType" defaultValue="hourly">

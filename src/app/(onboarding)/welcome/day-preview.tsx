@@ -39,7 +39,7 @@ function Chip({ chip, tone, real, small }: { chip: PreviewChip; tone: number; re
 }
 
 /**
- * "Your day, connected" (sign-up): a day with everything connected, the numbers the assistant
+ * "Your day, connected" (sign-up): a day with everything connected, the numbers the skyling
  * would see, and what it does with them. About ten seconds, skippable, different every run.
  * Everything invented is tagged "example" (lib/day-preview.ts).
  */
@@ -70,7 +70,7 @@ export function DayPreview({
     setPhase("result");
   };
 
-  // The connecting sequence: sources switch on, the numbers appear, then fly into the assistant.
+  // The connecting sequence: sources switch on, the numbers appear, then fly into the skyling.
   useEffect(() => {
     if (phase !== "connecting" || !root.current) return;
     const el = root.current;

@@ -106,7 +106,7 @@ export function ListSkeleton({ label = "Loading" }: { label?: string }) {
   );
 }
 
-/** The assistant's chat: a few message bubbles above the composer. */
+/** The skyling's chat: a few message bubbles above the composer. */
 export function ChatSkeleton() {
   return (
     <div className="mx-auto flex h-dvh w-full max-w-3xl flex-col justify-end gap-4 px-4 pb-28" aria-busy="true" aria-label="Loading chat" data-app-loading>

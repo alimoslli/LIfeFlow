@@ -28,12 +28,12 @@ describe("chat error messages", () => {
     expect(m.length).toBeLessThan(120);
   });
 
-  it.each(BRANCHES)("%s: says 'your assistant' before they choose a name", (_branch, err) => {
+  it.each(BRANCHES)("%s: says 'your skyling' before they choose a name", (_branch, err) => {
     const m = friendlyProviderError(err, UNNAMED_ASSISTANT);
-    expect(m).toMatch(/your assistant/i);
+    expect(m).toMatch(/your skyling/i);
     expect(m).not.toMatch(/jarvis|openai|model|server|key/i);
     // A sentence never starts in lower case.
-    expect(m).not.toMatch(/(^|[.!?]\s+)your assistant/);
+    expect(m).not.toMatch(/(^|[.!?]\s+)your skyling/);
   });
 
   it("each kind of failure reads differently, and busy/unavailable tell them to try again", () => {
@@ -43,7 +43,7 @@ describe("chat error messages", () => {
   });
 
   it("is the user's name by default when none is passed", () => {
-    expect(friendlyProviderError(withStatus(401, RAW))).toMatch(/^Your assistant /);
+    expect(friendlyProviderError(withStatus(401, RAW))).toMatch(/^Your skyling /);
   });
 
   it("never logs from the wording function itself (the turn logs the details once)", () => {

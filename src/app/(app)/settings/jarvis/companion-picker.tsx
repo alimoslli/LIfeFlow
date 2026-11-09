@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils";
 import { setCompanionAction } from "../actions";
 
 /**
- * Settings › your assistant: who runs on top of your day (the cast, docs/design/companions/cast.md). Picking one saves
- * at once: it takes the companion's name unless you gave it your own, and the companion's tone (changeable below).
+ * Settings › your skyling: who runs on top of your day (the cast, docs/design/companions/cast.md). Picking one saves
+ * at once: it takes the skyling's name unless you gave it your own, and the skyling's tone (changeable below).
  */
 export function CompanionPicker({ current }: { current: CompanionKey | null }) {
   const [picked, setPicked] = useState<CompanionKey | null>(current);
@@ -33,16 +33,14 @@ export function CompanionPicker({ current }: { current: CompanionKey | null }) {
         <CompanionGlyph companion={picked} pose={pending ? "celebrate" : "idle"} frame={pending ? 1 : 0} className="h-16 w-16" />
         <div className="min-w-0">
           <h2 id="companion-h" className="font-medium">
-            {shown ? shown.name : "Your companion"}
+            {shown ? shown.name : "Your skyling"}
           </h2>
           <p className="mt-0.5 text-sm text-text-2" aria-live="polite">
-            {shown
-              ? `${shown.line} Talks like a ${ASSISTANT_STYLES[shown.tone].label.toLowerCase()}.`
-              : "Pick who runs on top of your day. It's your assistant."}
+            {shown ? `${shown.line} Talks like a ${ASSISTANT_STYLES[shown.tone].label.toLowerCase()}.` : "Pick who runs on top of your day. It's your skyling."}
           </p>
         </div>
       </div>
-      <div role="radiogroup" aria-label="Your companion" className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+      <div role="radiogroup" aria-label="Your skyling" className="grid grid-cols-3 gap-2 sm:grid-cols-6">
         {COMPANIONS.map((c) => (
           <button
             key={c.key}

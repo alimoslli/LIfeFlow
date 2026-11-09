@@ -18,7 +18,7 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   const clock = page.getByTestId("day-clock");
   await expect(clock).toHaveAttribute("data-ready", "true");
   await expect(clock).toHaveAttribute("data-state", "clock");
-  // Something still open after its day belongs to now: one late tile on the sky, at the companion.
+  // Something still open after its day belongs to now: one late tile on the sky, at the skyling.
   await expect(clock.locator("[data-dc=dome] [data-late]")).toHaveCount(1);
   // Closed, the timeline's controls aren't reachable (hidden, not just transparent).
   await expect(page.getByRole("navigation", { name: "Days" })).toBeHidden();
@@ -45,7 +45,7 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   await card.getByRole("button", { name: "Open work" }).click();
   await page.waitForURL("**/work");
 
-  // Back home, open, and fold back by tapping the companion (now).
+  // Back home, open, and fold back by tapping the skyling (now).
   await page.goto("/");
   await expect(clock).toHaveAttribute("data-ready", "true");
   await page.getByRole("button", { name: /^Today\. Now / }).click();

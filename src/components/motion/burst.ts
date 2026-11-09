@@ -94,7 +94,7 @@ export function celebrate(at?: { x: number; y: number } | DOMRect | null, size: 
   }
 }
 
-/** A little hop for an element (the companion), as if it jumped for joy. */
+/** A little hop for an element (the skyling), as if it jumped for joy. */
 export function hop(el: Element | null | undefined, times = 2) {
   if (!el || prefersReducedMotion()) return;
   el.animate(

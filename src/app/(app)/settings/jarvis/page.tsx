@@ -11,7 +11,7 @@ import { isCompanionKey } from "@/lib/companions";
 import { CompanionPicker } from "./companion-picker";
 import { SettingsHeader } from "../settings-header";
 
-export const metadata: Metadata = { title: "Assistant" };
+export const metadata: Metadata = { title: "Skyling" };
 
 export default async function JarvisSettings() {
   const u = await requireUser();

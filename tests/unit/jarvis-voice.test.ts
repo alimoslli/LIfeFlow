@@ -100,9 +100,9 @@ describe("push text (owner, 2026-11-05: one line, what was noticed and why, and 
 
 describe("Settings says what pushImportant does (audit A8)", () => {
   it("states the real limit, what counts, and the quiet hours", () => {
-    const text = pushSummary("Your assistant", jarvisSettings(undefined), true);
+    const text = pushSummary("Your skyling", jarvisSettings(undefined), true);
     expect(text).toBe(
-      "Your assistant sends up to 3 notifications a day: your morning brief, evening wrap-up and weekly and monthly reviews, plus anything urgent or important it notices, like a bill your checking can't cover. Each one says in one line what it noticed and why, with the next step. None from 10 PM to 7 AM. To-do reminders don't count toward the limit.",
+      "Your skyling sends up to 3 notifications a day: your morning brief, evening wrap-up and weekly and monthly reviews, plus anything urgent or important it notices, like a bill your checking can't cover. Each one says in one line what it noticed and why, with the next step. None from 10 PM to 7 AM. To-do reminders don't count toward the limit.",
     );
     expect(text).not.toMatch(/only .*urgent/i);
     const own = pushSummary("Nova", jarvisSettings({ jarvis: { pushLimit: 1, quietStart: "23:30", quietEnd: "06:00" } }), true);

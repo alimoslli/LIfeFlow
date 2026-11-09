@@ -149,7 +149,7 @@ describe("Gmail", () => {
     expect(await run((s) => sendEmail(s, { to: "prof@uni.edu", subject: "Hi", body: "Hello" }, g.f))).toMatchObject({ sent: true, gmailMessageId: "sent1" });
   });
 
-  it("the assistant can't send without the user's confirmation", async () => {
+  it("the skyling can't send without the user's confirmation", async () => {
     const { user } = await connectedUser();
     const realFetch = globalThis.fetch;
     const hits: string[] = [];

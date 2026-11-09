@@ -51,7 +51,7 @@ export function plaidConfig(env: Record<string, string | undefined> = process.en
   };
 }
 
-/** What the person (and the assistant) is told when a bank request fails for a reason they can't fix. */
+/** What the person (and the skyling) is told when a bank request fails for a reason they can't fix. */
 export const BANK_UNAVAILABLE = "The bank connection isn't available right now. Please try again later.";
 
 const REAUTH = new Set(["ITEM_LOGIN_REQUIRED", "PENDING_EXPIRATION", "ACCESS_NOT_GRANTED", "INVALID_ACCESS_TOKEN"]);
@@ -75,7 +75,7 @@ async function call<T>(path: string, body: Record<string, unknown>, f: Fetch = f
     // Plaid's own error details (never the request body, which holds the secret), so setup problems show in the server logs.
     console.error("[plaid]", path, res.status, json.error_type, code, json.error_message, json.request_id);
     // Plaid's display_message is written for the person; anything else (wrong keys, a bad field) is ours to fix, so the
-    // person and the assistant only hear that the connection isn't available. Never name settings or codes to them.
+    // person and the skyling only hear that the connection isn't available. Never name settings or codes to them.
     const displayMessage = typeof json.display_message === "string" ? json.display_message : "";
     const msg = displayMessage || BANK_UNAVAILABLE;
     throw new PlaidError(code && REAUTH.has(code) ? "Your bank needs you to sign in again. Use Reconnect." : msg, code, !!code && REAUTH.has(code));

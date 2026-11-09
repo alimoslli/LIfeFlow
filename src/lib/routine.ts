@@ -1,6 +1,6 @@
 /**
  * What the person's routine says about when a suggestion may go: class times typed as free text
- * (`courses.meetingInfo`) and the bedtime they told the assistant. Pure, so it's easy to test;
+ * (`courses.meetingInfo`) and the bedtime they told the skyling. Pure, so it's easy to test;
  * anything it can't read reliably comes back null and the caller offers nothing.
  */
 

@@ -25,7 +25,7 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
   // Tab bar: exactly four tabs, short labels, nothing truncated; no Settings tab.
   await page.goto("/");
   const tabs = page.getByRole("navigation", { name: "Main" }).last().getByRole("link");
-  expect(await tabs.allInnerTexts()).toEqual(["Today", "Assistant", "Money", "School"]);
+  expect(await tabs.allInnerTexts()).toEqual(["Today", "Skyling", "Money", "School"]);
   for (const t of await tabs.all()) {
     const cut = await t.evaluate((el) => [...el.querySelectorAll("span.truncate")].some((s) => s.scrollWidth > s.clientWidth + 1));
     if (cut) problems.push(`tab label clipped: ${await t.innerText()}`);

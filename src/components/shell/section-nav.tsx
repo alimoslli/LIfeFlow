@@ -28,7 +28,7 @@ import { useLifeAreas } from "./life-areas";
 type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean; /** Other pages that belong to this pill. */ also?: string[]; except?: string[] };
 export type Section = "plan" | "money" | "jarvis" | "personal";
 
-const SECTION_NAMES: Record<Section, string> = { plan: "Today", jarvis: "Assistant", money: "Money", personal: "School" };
+const SECTION_NAMES: Record<Section, string> = { plan: "Today", jarvis: "Skyling", money: "Money", personal: "School" };
 
 /** Second level: each tab's pages as pills. Every page belongs to exactly one pill. */
 export const SECTIONS: Record<Section, Item[]> = {

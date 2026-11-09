@@ -39,7 +39,7 @@ function Switch({ name, label, hint, defaultChecked }: { name: string; label: st
   );
 }
 
-/** Name, tone, avatar, voice and how proactive the assistant is, with a live preview of how it will sound. */
+/** Name, tone, avatar, voice and how proactive the skyling is, with a live preview of how it will sound. */
 export function AssistantCard({
   profile,
   settings,
@@ -49,7 +49,7 @@ export function AssistantCard({
   settings: PersonalitySettings;
   action: (p: ActionState, fd: FormData) => Promise<ActionState>;
 }) {
-  // Empty until they choose a name (it's "your assistant" until then); clearing it goes back to that.
+  // Empty until they choose a name (it's "your skyling" until then); clearing it goes back to that.
   const [name, setName] = useState(profile.named ? profile.name : "");
   const [style, setStyle] = useState<AssistantStyle>(profile.style);
   const [avatar, setAvatar] = useState(settings.avatar);
