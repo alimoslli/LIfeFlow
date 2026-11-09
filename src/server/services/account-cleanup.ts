@@ -2,9 +2,6 @@ import { and, eq, inArray } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { integrations } from "../db/schema";
 import { withUser } from "../db/with-user";
-import { billingConfig, cancelSubscriptionsNow } from "../billing";
-import { revokeGoogleGrant } from "../integrations/google";
-import { removeAtPlaid } from "../integrations/plaid";
 import { recordError } from "./error-reports";
 
 /**
@@ -50,6 +47,9 @@ export async function revokeOutsideAccess(db: Database, user: { id: string; stri
   };
 
   // Stripe first: if the plan can't be cancelled, refuse before anything else is revoked.
+  // Billing, Plaid and Google are loaded where they are used, not at the top: they pull in Next-only modules, and the deploy scripts
+  // (seed-demo) import this file through accounts.ts under plain tsx, where those modules crash the production build.
+  const { billingConfig, cancelSubscriptionsNow } = await import("../billing");
   const cfg = billingConfig();
   if (cfg && user.stripeCustomerId) {
     try {
@@ -78,8 +78,8 @@ export async function revokeOutsideAccess(db: Database, user: { id: string; stri
 
   const jobs = rows.map(async (row) => {
     try {
-      if (row.provider === "plaid") await removeAtPlaid(row.encryptedCredentials, f);
-      else await revokeGoogleGrant(row.encryptedCredentials, f);
+      if (row.provider === "plaid") await (await import("../integrations/plaid")).removeAtPlaid(row.encryptedCredentials, f);
+      else await (await import("../integrations/google")).revokeGoogleGrant(row.encryptedCredentials, f);
     } catch {
       await fail(row.provider === "plaid" ? "bank link removal" : "Google revoke");
     }
