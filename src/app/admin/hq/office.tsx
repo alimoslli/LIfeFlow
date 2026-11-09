@@ -99,13 +99,13 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
       </header>
 
       <LiveRefresh />
-      {/* Phones: one column in this order. A MacBook and wider: what you act on (left) beside the COO and what changed (right). */}
+      {/* Phones: one column in this order. A MacBook and wider: what you act on and the COO's brief (left) beside what changed (right). */}
       <div className="flex flex-col gap-5 xl:grid xl:grid-cols-[minmax(0,7fr)_minmax(0,6fr)] xl:items-start">
-        <RightNow items={s.live} waiting={s.waiting} approvals={s.approvals.slice(0, 3)} pending={n} now={s.now} nextRound={s.nextRound} />
         <div className="flex min-w-0 flex-col gap-5">
+          <RightNow items={s.live} waiting={s.waiting} approvals={s.approvals.slice(0, 3)} pending={n} now={s.now} nextRound={s.nextRound} />
           <BriefCard brief={s.brief} chief={s.employees.find((e) => e.role === "assistant")} pending={n} />
-          {children}
         </div>
+        <div className="min-w-0">{children}</div>
       </div>
 
       <div>

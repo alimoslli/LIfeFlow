@@ -1290,13 +1290,24 @@ input[type="checkbox"].lf-switch:focus-visible {
   margin: auto;
   padding: 1.25rem;
   border-radius: 1.5rem;
-  background: var(--surface);
+  /* A near-solid frosted panel: the glass surface of the admin area is too clear for a sheet over the building. */
+  background: rgb(255 255 255 / 0.95);
+  -webkit-backdrop-filter: blur(30px) saturate(1.6);
+  backdrop-filter: blur(30px) saturate(1.6);
   color: var(--text);
-  box-shadow: 0 30px 60px -20px rgb(0 0 0 / 0.5);
+  box-shadow: 0 30px 60px -20px rgb(7 16 31 / 0.5);
   overflow-y: auto;
 }
+:root[data-theme="dark"] .hq-desk-sheet {
+  background: rgb(15 26 46 / 0.96);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hq-desk-sheet {
+    background: rgb(15 26 46 / 0.96);
+  }
+}
 .hq-desk-sheet::backdrop {
-  background: rgb(10 30 22 / 0.55);
+  background: rgb(7 16 31 / 0.55);
 }
 .hq-desk-file {
   display: flex;

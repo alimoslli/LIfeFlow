@@ -182,7 +182,7 @@ After V3 (the real-sky "Day Sky" look) reached main, the owner said, through the
   - The walnut, the beams and every rendered picture stay. Redrawing them would be a rebuild.
 - **On a MacBook** (lg and xl):
   - the frame is wider: 84rem at 1280 px and up, with more padding;
-  - the Office has two columns: "Needs you" and "Working now" on the left, the COO's brief and "Since you last looked" on the right, and the building below;
+  - the Office has two columns: "Needs you", "Working now" and the COO's brief on the left, "Since you last looked" on the right, and the building below;
   - page titles go to 2.5rem, and the lines in "Right now" and the brief go up a step;
   - main cards get 28 px corners.
 
@@ -191,3 +191,4 @@ After V3 (the real-sky "Day Sky" look) reached main, the owner said, through the
   - **F2:** People showed its title twice. The list of accounts is now titled "Accounts".
   - **F3:** "How the app is running" counts the services that aren't set up when there are more than two ("9 services aren't set up yet"), with a link to App › Health. One or two are still named.
   - **F4:** admin fields are 44 px tall (`.hq-look input, select`). The feedback filters, the Handled buttons, Export and the page links are now 44 px too.
+- **The desk sheet** is a near-solid frosted panel. The admin glass alone was too clear over the building, and the room labels showed through.
