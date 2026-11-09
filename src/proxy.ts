@@ -37,6 +37,8 @@ export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
   if (!req.cookies.has("bf_session")) {
+    // Admin answers "not found" to everyone but the owner, signed out included (ADR 0022): requireAdmin() on each page does it.
+    if (pathname === "/admin" || pathname.startsWith("/admin/")) return NextResponse.next();
     if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
     if (pathname === "/") {
       // Signed-out visitors see the landing page at the same address. The header lets the root layout skip the app splash.
