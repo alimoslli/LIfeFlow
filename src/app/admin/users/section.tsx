@@ -40,13 +40,13 @@ export async function UsersSection({ sp }: { sp: PeopleParams }) {
       <form method="get" action="/admin/people#people" className="flex flex-col gap-2 sm:flex-row">
         {sp.fstatus && <input type="hidden" name="fstatus" value={sp.fstatus} />}
         {sp.fkind && <input type="hidden" name="fkind" value={sp.fkind} />}
-        <Input name="q" defaultValue={sp.q ?? ""} placeholder="Search name or email" aria-label="Search users" className="sm:flex-1" />
-        <Select name="plan" defaultValue={plan ?? ""} aria-label="Plan">
+        <Input name="q" defaultValue={sp.q ?? ""} placeholder="Search name or email" aria-label="Search users" className="min-w-0 sm:flex-1" />
+        <Select name="plan" defaultValue={plan ?? ""} aria-label="Plan" className="sm:w-40 sm:flex-none">
           <option value="">Any plan</option>
           <option value="free">Free</option>
           <option value="pro">Pro</option>
         </Select>
-        <Select name="status" defaultValue={status ?? ""} aria-label="Status">
+        <Select name="status" defaultValue={status ?? ""} aria-label="Status" className="sm:w-40 sm:flex-none">
           <option value="">Any status</option>
           <option value="active">Active</option>
           <option value="suspended">Suspended</option>
