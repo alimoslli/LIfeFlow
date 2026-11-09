@@ -98,8 +98,10 @@ export default async function MoneyPage() {
   const asOf = o.balances.asOf ? formatIn(o.balances.asOf, d.tz, "MMM d, h:mm a") : null;
 
   return (
-    <div className="mx-auto flex max-w-[640px] flex-col gap-9">
-      <div className="contents">
+    // a laptop gets two columns (A-to-Z audit C2): what you have and what needs you on the left, the month ahead and
+    // where it went on the right; a phone keeps one column in the same order
+    <div className="mx-auto flex max-w-[640px] flex-col gap-9 lg:grid lg:max-w-[1040px] lg:grid-cols-2 lg:items-start lg:gap-x-10">
+      <div className="contents lg:flex lg:flex-col lg:gap-9">
         <header className="animate-rise max-lg:order-[-3]">
           <p className="text-sm text-muted">{formatDateStr(d.today, "EEEE, MMMM d")}</p>
           <h1 className="mt-1 font-display text-[2.5rem] leading-none font-medium tracking-tight">Money</h1>
@@ -199,7 +201,8 @@ export default async function MoneyPage() {
             </ul>
           </section>
         )}
-
+      </div>
+      <div className="contents lg:flex lg:flex-col lg:gap-9 lg:pt-[7.5rem]">
         <section className="animate-rise" style={{ animationDelay: "180ms" }} aria-label="Next 30 days">
           <Title href="/finances/bills">Next 30 days</Title>
           <div data-tilt className="rounded-3xl bg-surface p-5 shadow-soft">

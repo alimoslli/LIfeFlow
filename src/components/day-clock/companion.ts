@@ -332,14 +332,22 @@ export function pixels(info: CompanionInfo, pose: Pose, frame: number, night: bo
   return out;
 }
 
+/** Each drawn frame is kept, so the wheel's 24 x 24 sprite is copied in one call instead of painted pixel by pixel. */
+const painted = new Map<string, ImageData>();
+
 /** Paint a companion onto a 24 x 24 canvas (facing right; `flip` faces it left). */
 export function drawCompanion(canvas: HTMLCanvasElement, c: CompanionInfo, pose: Pose, frame: number, night: boolean, flip = false) {
   const g = canvas.getContext("2d");
   if (!g) return;
   if (canvas.width !== GRID) canvas.width = canvas.height = GRID;
+  const n = FRAMES[pose].length;
+  const key = `${c.key}|${pose}|${((frame % n) + n) % n}|${night}|${flip}`;
+  const kept = painted.get(key);
+  if (kept) return g.putImageData(kept, 0, 0);
   g.clearRect(0, 0, GRID, GRID);
   for (const [x, y, col] of pixels(c, pose, frame, night)) {
     g.fillStyle = col;
     g.fillRect(flip ? GRID - 1 - x : x, y, 1, 1);
   }
+  painted.set(key, g.getImageData(0, 0, GRID, GRID));
 }

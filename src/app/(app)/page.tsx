@@ -100,9 +100,14 @@ export default async function TodayPage() {
           )}
         </DayClock>
       </section>
-      {/* on a phone this starts below the tab bar, so nothing peeks out half-hidden behind it (audit B16) */}
-      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4 max-md:mt-[var(--tabbar-space)]">
-        <div className={mode === "full" ? "dc-ask-below" : undefined}>
+      {/* a phone: the chat bar docked at the bottom of Today, just above the tabs, with the companion in it (owner,
+          2026-11-09: "the assistant chat bar at the bottom of the main page ... with the character there") */}
+      <div className="dc-dock md:hidden">
+        <AskBar name={assistantName} chips={false} />
+      </div>
+      {/* on a phone this starts below the docked chat bar and the tabs, so nothing peeks out behind them (audit B16) */}
+      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4 max-md:mt-[calc(var(--tabbar-space)+4.5rem)]">
+        <div className={mode === "full" ? "dc-ask-below max-md:hidden" : "max-md:hidden"}>
           <AskBar name={assistantName} chips={false} />
         </div>
         {/* The rest of the day, one tap away, below the fold so the clock stays the whole first screen. */}
