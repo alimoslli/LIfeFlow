@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { oauthIdentities, users } from "../db/schema";
 import { withUser } from "../db/with-user";
+import { encryptSecret } from "../crypto";
 import { audit } from "../services/audit";
 import { seedDefaultCategories } from "../services/finance/categories";
 import { saveChallenge, takeChallenge } from "./challenges";
@@ -43,6 +44,7 @@ export async function completeOAuthSignIn(
   state: { mode: "signin" | "link"; tz: string; userId: string | null },
   name: string | null,
   ErrorClass: new (m: string) => Error = OAuthSignInError,
+  refreshToken: string | null = null,
 ): Promise<OAuthOutcome> {
   const label = PROVIDER_LABEL[provider];
   const [known] = await db
@@ -54,14 +56,15 @@ export async function completeOAuthSignIn(
   if (state.mode === "link") {
     if (!state.userId) throw new ErrorClass(`Sign in first, then link ${label} from Settings.`);
     if (known && known.userId !== state.userId) throw new ErrorClass(`This ${label} account is already linked to another LifeFlow account.`);
-    if (!known) await linkIdentity(db, provider, state.userId, claims);
+    if (!known) await linkIdentity(db, provider, state.userId, claims, refreshToken ? encryptSecret(refreshToken) : null);
+    else if (refreshToken) await storeRefreshToken(db, provider, claims.sub, refreshToken);
     return { kind: "linked", userId: state.userId };
   }
 
   if (known) {
     await db
       .update(oauthIdentities)
-      .set({ lastUsedAt: new Date() })
+      .set({ lastUsedAt: new Date(), ...(refreshToken ? { encryptedRefreshToken: encryptSecret(refreshToken) } : {}) })
       .where(and(eq(oauthIdentities.provider, provider), eq(oauthIdentities.subject, claims.sub)));
     return { kind: "signed-in", userId: known.userId, totpEnabled: !!known.totp };
   }
@@ -69,7 +72,13 @@ export async function completeOAuthSignIn(
   if (!claims.email || !claims.emailVerified) throw new ErrorClass(`${label} didn't share a verified email address, so an account can't be created.`);
   const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, claims.email));
   if (existing) {
-    const { token, expiresAt } = await saveChallenge(db, "oauth-link", JSON.stringify({ provider, pendingLink: claims }), existing.id, 15 * 60_000);
+    const { token, expiresAt } = await saveChallenge(
+      db,
+      "oauth-link",
+      JSON.stringify({ provider, pendingLink: claims, sealedRefreshToken: refreshToken ? encryptSecret(refreshToken) : null }),
+      existing.id,
+      15 * 60_000,
+    );
     return { kind: "link-required", email: claims.email, pendingToken: token, expiresAt };
   }
 
@@ -92,14 +101,28 @@ export async function completeOAuthSignIn(
     },
     db,
   );
-  await linkIdentity(db, provider, user.id, claims);
+  await linkIdentity(db, provider, user.id, claims, refreshToken ? encryptSecret(refreshToken) : null);
   return { kind: "created", userId: user.id };
 }
 
-async function linkIdentity(db: Database, provider: OAuthProvider, userId: string, claims: OAuthClaims) {
+async function storeRefreshToken(db: Database, provider: OAuthProvider, subject: string, refreshToken: string) {
   await db
-    .insert(oauthIdentities)
-    .values({ userId, provider, subject: claims.sub, email: claims.email, isPrivateEmail: claims.isPrivateEmail, lastUsedAt: new Date() });
+    .update(oauthIdentities)
+    .set({ encryptedRefreshToken: encryptSecret(refreshToken) })
+    .where(and(eq(oauthIdentities.provider, provider), eq(oauthIdentities.subject, subject)));
+}
+
+/** `sealedRefreshToken` is Apple's, already encrypted, kept so deleting the account can revoke it. */
+async function linkIdentity(db: Database, provider: OAuthProvider, userId: string, claims: OAuthClaims, sealedRefreshToken: string | null = null) {
+  await db.insert(oauthIdentities).values({
+    userId,
+    provider,
+    subject: claims.sub,
+    email: claims.email,
+    isPrivateEmail: claims.isPrivateEmail,
+    lastUsedAt: new Date(),
+    encryptedRefreshToken: sealedRefreshToken,
+  });
   await withUser(userId, (s) => audit(s, "user", `auth.${provider}_linked`, undefined, { privateEmail: claims.isPrivateEmail }), db);
 }
 
@@ -116,14 +139,18 @@ export async function consumePendingOAuthLink(db: Database, userId: string) {
 export async function linkPendingOAuth(db: Database, userId: string, token: string) {
   const ch = await takeChallenge(db, "oauth-link", token);
   if (!ch || ch.userId !== userId) return false;
-  const { provider = "apple", pendingLink } = JSON.parse(ch.challenge) as { provider?: OAuthProvider; pendingLink?: OAuthClaims };
+  const {
+    provider = "apple",
+    pendingLink,
+    sealedRefreshToken,
+  } = JSON.parse(ch.challenge) as { provider?: OAuthProvider; pendingLink?: OAuthClaims; sealedRefreshToken?: string | null };
   if (!pendingLink) return false;
   const [taken] = await db
     .select({ id: oauthIdentities.id })
     .from(oauthIdentities)
     .where(and(eq(oauthIdentities.provider, provider), eq(oauthIdentities.subject, pendingLink.sub)));
   if (taken) return false;
-  await linkIdentity(db, provider, userId, pendingLink);
+  await linkIdentity(db, provider, userId, pendingLink, sealedRefreshToken ?? null);
   return true;
 }
 
@@ -136,10 +163,23 @@ export async function identityFor(db: Database, userId: string, provider: OAuthP
 }
 
 /** Unlinking needs a password or another linked provider, so the person can still sign in. */
-export async function unlinkIdentity(db: Database, userId: string, provider: OAuthProvider, ErrorClass: new (m: string) => Error = OAuthSignInError) {
+export async function unlinkIdentity(
+  db: Database,
+  userId: string,
+  provider: OAuthProvider,
+  ErrorClass: new (m: string) => Error = OAuthSignInError,
+  beforeDelete?: (encryptedRefreshToken: string | null) => Promise<void>,
+) {
   const [u] = await db.select({ hash: users.passwordHash }).from(users).where(eq(users.id, userId));
   const others = await db.select({ provider: oauthIdentities.provider }).from(oauthIdentities).where(eq(oauthIdentities.userId, userId));
   if (!u?.hash.startsWith("scrypt$") && !others.some((o) => o.provider !== provider))
     throw new ErrorClass(`Set a password first, so you can still sign in after unlinking ${PROVIDER_LABEL[provider]}.`);
+  if (beforeDelete) {
+    const [row] = await db
+      .select({ t: oauthIdentities.encryptedRefreshToken })
+      .from(oauthIdentities)
+      .where(and(eq(oauthIdentities.userId, userId), eq(oauthIdentities.provider, provider)));
+    await beforeDelete(row?.t ?? null);
+  }
   await db.delete(oauthIdentities).where(and(eq(oauthIdentities.userId, userId), eq(oauthIdentities.provider, provider)));
 }

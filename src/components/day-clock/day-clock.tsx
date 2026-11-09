@@ -23,7 +23,18 @@ import "./day-clock.css";
  * React renders the skeleton once; the engine draws and moves it. New data from the server (a refresh)
  * is handed to the running engine instead of rebuilding the page.
  */
-export function DayClock({ data, mode = "full", children }: { data: ClockData; mode?: TodayMode; children?: React.ReactNode }) {
+export function DayClock({
+  data,
+  mode = "full",
+  companion,
+  children,
+}: {
+  data: ClockData;
+  mode?: TodayMode;
+  /** The person's companion (lib/companions); the default until they pick. */
+  companion?: string | null;
+  children?: React.ReactNode;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const engine = useRef<DayClockHandle | null>(null);
   const router = useRouter();
@@ -53,6 +64,7 @@ export function DayClock({ data, mode = "full", children }: { data: ClockData; m
           // the moment it's done: sparks from where it was done, and the companion on the line jumps for joy
           celebrate(at, "small");
           hop(root.querySelector(".dc-now-who"));
+          sky.cheer();
           toast(r.message ?? `Done: ${it.title}.`, { tone: "success" });
         } else toast(r?.error ?? "That didn't save. Try again.", { tone: "danger" });
         router.refresh();
@@ -83,7 +95,7 @@ export function DayClock({ data, mode = "full", children }: { data: ClockData; m
 
   return (
     <>
-      <div ref={ref} className="dc" data-open="false" data-mode={mode} data-testid="day-clock">
+      <div ref={ref} className="dc" data-open="false" data-mode={mode} data-companion={companion ?? undefined} data-testid="day-clock">
         {/* The window's sky at the time on top of the wheel; the line's own sky takes over as it opens. */}
         <div data-dc="skybg" className="dc-skybg" aria-hidden="true">
           <svg data-dc="stars" className="dc-stars" />
@@ -91,7 +103,7 @@ export function DayClock({ data, mode = "full", children }: { data: ClockData; m
           <span data-dc="cloud" className="dc-cloud dc-cloud-b" style={{ left: "58%", top: "52%", width: 120, height: 36 }} />
         </div>
         <svg data-dc="dome" className="dc-dome" aria-hidden="true" />
-        <canvas data-dc="who" className="dc-who" width={16} height={16} aria-hidden="true" />
+        <canvas data-dc="who" className="dc-who" width={24} height={24} aria-hidden="true" />
         {/* The wheel's way home: shown only while it's turned away from now (sky.ts places it, the engine rolls it). */}
         <button type="button" data-dc="back" className="dc-back" hidden>
           <RotateCcw className="h-4 w-4" aria-hidden />

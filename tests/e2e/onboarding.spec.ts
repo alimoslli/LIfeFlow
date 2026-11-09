@@ -21,9 +21,13 @@ test("a new user sees their day connected, names their assistant, then a skippab
   await page.getByRole("button", { name: "Continue" }).click();
 
   expect((await page.getByLabel("Assistant name").boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  // The cast: picking one brings its name and its tone; a name of their own wins and keeps the look and tone.
+  await page.getByRole("radio", { name: /^Ray/ }).click();
+  await expect(page.getByLabel("Assistant name")).toHaveValue("Ray");
+  await expect(page.getByText("Talks like a coach.", { exact: false })).toBeVisible();
   await page.getByLabel("Assistant name").fill("Nova");
-  await page.getByRole("radio", { name: /Coach/ }).click();
   await expect(page.getByText("Nova:", { exact: false })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /^Ray/ })).toHaveAttribute("aria-checked", "true");
   await page.getByRole("button", { name: "Show me my day" }).click();
 
   // Your day, connected: the sources connect, then Nova shows what it would do, built from their answers.
@@ -57,12 +61,12 @@ test("a new user sees their day connected, names their assistant, then a skippab
   await expect(page.getByRole("dialog", { name: "Nova" })).toHaveCount(0);
 
   // Saved: what fills their week, their assistant, and the class and job they typed.
-  const [prefs] = await queryAsUser<{ p: { lifeStage?: string; assistantName?: string; assistantStyle?: string } }>(
+  const [prefs] = await queryAsUser<{ p: { lifeStage?: string; assistantName?: string; assistantStyle?: string; companion?: string } }>(
     email,
     "select preferences as p from users where email = $1",
     [email],
   );
-  expect(prefs.p).toMatchObject({ lifeStage: "both", assistantName: "Nova", assistantStyle: "coach" });
+  expect(prefs.p).toMatchObject({ lifeStage: "both", assistantName: "Nova", assistantStyle: "coach", companion: "ray" });
   expect(await queryAsUser(email, "select name from courses")).toEqual([{ name: "PSY 101" }]);
   expect(await queryAsUser(email, "select name from employers")).toEqual([{ name: "Target" }]);
   // The name typed on the first screen was saved (the test's sign-up had set "Maya Chen").

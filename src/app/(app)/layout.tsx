@@ -23,6 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       jarvis={{ available: status.available, reason: status.reason, model: status.model, provider: status.provider }}
       tour={user.preferences?.tour === "pending"}
       assistantName={assistantProfile(user.preferences).name}
+      companion={user.preferences?.companion}
       aiConsent={aiAllowed(user.preferences)}
       unread={unread}
       areas={lifeAreas(user.preferences?.lifeStage)}

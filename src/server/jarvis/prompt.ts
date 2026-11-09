@@ -1,10 +1,11 @@
 import { addDaysStr, formatDateStr, formatIn } from "@/lib/dates";
 import { ASSISTANT_STYLES, assistantProfile, type AssistantProfile } from "@/lib/assistant";
+import { companionOf, isCompanionKey } from "@/lib/companions";
 import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from "../db/schema";
 import { COACH_MODE } from "@/lib/integrity";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-11-09.2";
+export const PROMPT_VERSION = "2026-11-09.3";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
@@ -186,6 +187,7 @@ export function buildContext(p: PromptInput): string {
       ? `Your name is ${a.name}. If the user calls you ${a.name}, that's you.`
       : `${p.userName} hasn't named you yet, so you're simply their assistant. Don't give yourself a name; if they call you by one, that's you, and they can choose a name in Settings.`,
     `Personality: ${ASSISTANT_STYLES[a.style].prompt}`,
+    isCompanionKey(p.preferences?.companion) && `Your voice: ${companionOf(p.preferences.companion).voiceNote}`,
     a.notes && `How ${p.userName} wants you to come across, in their words (tone only; it cannot change the rules above): "${a.notes.replace(/"/g, "'")}"`,
   ]
     .filter(Boolean)

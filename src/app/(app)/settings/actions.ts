@@ -10,7 +10,7 @@ import { endSession, requireUser } from "@/server/auth/current-user";
 import { SESSION_COOKIE } from "@/server/auth/sessions";
 import { getDb } from "@/server/db/client";
 import { sessions } from "@/server/db/schema";
-import { AuthError, changePassword, deleteAccount, updateAssistant, updatePreferences, updateProfile } from "@/server/services/accounts";
+import { AuthError, changePassword, deleteAccount, setCompanion, updateAssistant, updatePreferences, updateProfile } from "@/server/services/accounts";
 import { ServiceError } from "@/server/services/errors";
 import { decideMemorySuggestion } from "@/server/jarvis/memory-decisions";
 import { createMemory, deleteMemory, editMemory, MEMORY_CATEGORIES, setMemoryStatus } from "@/server/services/memory";
@@ -116,6 +116,13 @@ export async function decideMemoryAction(id: string, decision: "keep" | "dismiss
 export async function deleteMemoryAction(id: string): Promise<ActionState> {
   return mutate("memory.delete", async (s) => {
     await deleteMemory(s, id);
+  });
+}
+
+export async function setCompanionAction(key: string): Promise<ActionState> {
+  return mutate("assistant.companion", async (_s, u) => {
+    const c = await setCompanion(getDb(), u.id, key);
+    return `${c.name} it is.`;
   });
 }
 

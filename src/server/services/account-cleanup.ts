@@ -12,10 +12,10 @@ import { recordError } from "./error-reports";
  * - Plaid (/item/remove per bank link) and Google (revoke the stored grant) run in parallel under one deadline. They are best
  *   effort: a failure is recorded (fixed text, no ids, no user content) and deletion goes on.
  * - Microsoft: no simple revoke endpoint; the tokens are deleted with the rows (the person can remove the app at account.microsoft.com).
- * - Sign in with Apple: we never store Apple's refresh token (only the id_token is read at sign-in), so there is nothing to revoke
- *   yet. Apple's /auth/revoke needs a stored refresh or access token.
+ * - Sign in with Apple: the refresh token stored (encrypted) at sign-in or linking is revoked at Apple's /auth/revoke, in the same
+ *   parallel, best-effort step. No stored token means no call.
  */
-export type CleanupDeps = { fetch?: typeof fetch; deadlineMs?: number };
+export type CleanupDeps = { fetch?: typeof fetch; deadlineMs?: number; apple?: import("../auth/apple").AppleConfig | null };
 
 /** Thrown when a live subscription could not be cancelled: the deletion must not go ahead (the person would keep paying). */
 export class DeletionBlockedError extends Error {
@@ -84,6 +84,33 @@ export async function revokeOutsideAccess(db: Database, user: { id: string; stri
       await fail(row.provider === "plaid" ? "bank link removal" : "Google revoke");
     }
   });
+  // Apple: oauth_identities is not user-RLS (sign-in reads it before a session exists), so filter by user id explicitly.
+  let appleTokens: string[] = [];
+  try {
+    const { oauthIdentities } = await import("../db/schema");
+    const found = await db
+      .select({ t: oauthIdentities.encryptedRefreshToken })
+      .from(oauthIdentities)
+      .where(and(eq(oauthIdentities.userId, user.id), eq(oauthIdentities.provider, "apple")));
+    appleTokens = found.map((r) => r.t).filter((t): t is string => !!t);
+  } catch {
+    await fail("reading Apple link");
+  }
+  if (appleTokens.length) {
+    const apple = await import("../auth/apple");
+    const cfg = deps.apple === undefined ? apple.appleConfig() : deps.apple;
+    for (const t of appleTokens)
+      jobs.push(
+        (async () => {
+          try {
+            if (!cfg) throw new Error("not configured");
+            await apple.revokeAppleToken(cfg, t, f);
+          } catch {
+            await fail("Apple revoke");
+          }
+        })(),
+      );
+  }
   try {
     await withDeadline(Promise.allSettled(jobs), deadlineMs);
   } catch {

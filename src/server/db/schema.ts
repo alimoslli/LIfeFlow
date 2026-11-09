@@ -90,6 +90,8 @@ export type UserPreferences = {
   tour?: "pending" | "done";
   /** The user's assistant: its name, personality and live voice (see src/lib/assistant.ts). */
   assistantName?: string;
+  /** Who runs on top of Today and is the assistant (lib/companions; the cast). Unset = not picked yet. */
+  companion?: "dawn" | "ray" | "noon" | "goldie" | "dusk" | "star";
   /** coach | friend | direct (older values are mapped in lib/assistant). */
   assistantStyle?: "coach" | "friend" | "direct" | "balanced" | "warm" | "playful" | "professional";
   /** Free-text personality notes, at most 300 characters. Changes tone only, never the rules. */
@@ -264,6 +266,8 @@ export const oauthIdentities = pgTable(
     email: text("email"),
     /** Apple "Hide My Email" relay address. */
     isPrivateEmail: boolean("is_private_email").notNull().default(false),
+    /** Apple's refresh token, AES-GCM encrypted (encryptSecret). Only used to revoke Apple access on delete or unlink. */
+    encryptedRefreshToken: text("encrypted_refresh_token"),
     createdAt: createdAt(),
     lastUsedAt: tstz("last_used_at"),
   },

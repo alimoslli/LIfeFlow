@@ -354,6 +354,74 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   display: none;
 }
 
+/* ---- a laptop (sky.ts WIDE, the same 1000 px): the wheel on the left; on the right, in words on the sky, what's now and
+   next, today's numbers, the assistant's line and the ask bar. sky.ts sets their height and their ink (data-ink). */
+.dc-today {
+  container: today / inline-size;
+}
+.dc-ask {
+  display: none;
+}
+@container today (min-width: 1000px) {
+  .dc-ask {
+    display: block;
+    margin-top: 12px;
+  }
+  .dc-ask-below {
+    display: none;
+  }
+  /* the first screen holds the sky and the links under it */
+  .dc[data-mode="full"] {
+    height: clamp(560px, calc(100svh - 196px), 860px);
+  }
+  .dc[data-mode="full"] .dc-words {
+    left: 58%;
+    right: 48px;
+    align-items: flex-start;
+    text-align: left;
+    color: var(--dc-ink);
+  }
+  .dc[data-mode="full"] .dc-foot {
+    left: 58%;
+    right: 48px;
+    bottom: auto;
+    max-width: none;
+    margin: 0;
+  }
+  .dc[data-mode="full"] .dc-w-tag,
+  .dc[data-mode="full"] .dc-w-then,
+  .dc[data-mode="full"] .dc-w-after {
+    color: inherit;
+    opacity: 0.86;
+  }
+  .dc[data-mode="full"] .dc-w-now {
+    font-size: 2.6rem;
+    margin-top: 8px;
+  }
+  .dc[data-mode="full"] .dc-w-then {
+    font-size: 1rem;
+    margin-top: 8px;
+  }
+  .dc[data-mode="full"] .dc-w-after {
+    font-size: 0.9rem;
+  }
+  .dc[data-mode="full"] .dc-w-pills {
+    justify-content: flex-start;
+  }
+  .dc[data-mode="full"] .dc-w-pills span {
+    color: var(--text);
+  }
+}
+.dc[data-ink="light"] {
+  --dc-ink: #f4f8ff;
+}
+.dc[data-ink="light"] .dc-words {
+  text-shadow: 0 1px 14px rgb(8 20 40 / 0.35);
+}
+.dc[data-ink="dark"] {
+  --dc-ink: #0f1a2a;
+}
+
 /* ---- "Today" on the sky, and the day picker once it's open ---- */
 .dc-sub {
   position: absolute;

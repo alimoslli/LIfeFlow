@@ -49,6 +49,7 @@ export function AppShell({
   jarvis,
   tour = false,
   assistantName = UNNAMED_ASSISTANT,
+  companion,
   aiConsent = false,
   unread = 0,
   areas = ALL_AREAS,
@@ -60,6 +61,8 @@ export function AppShell({
   unread?: number;
   /** The name the user gave their assistant ("your assistant" until they choose one). */
   assistantName?: string;
+  /** Their companion (lib/companions), drawn on the assistant's tab and button. */
+  companion?: string | null;
   /** The user allowed Jarvis to send their data to the AI provider. */
   aiConsent?: boolean;
   user: { name: string; email: string; accountKind: "standard" | "demo"; timezone?: string };
@@ -178,7 +181,7 @@ export function AppShell({
                       )}
                     >
                       {item.href === "/jarvis" ? (
-                        <CompanionGlyph className="h-6 w-6" />
+                        <CompanionGlyph companion={companion} className="h-6 w-6" />
                       ) : (
                         <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
                       )}
@@ -249,7 +252,7 @@ export function AppShell({
                     <span className="relative flex">
                       {item.href === "/jarvis" ? (
                         <span data-icon className="flex h-[22px] w-[22px] items-center justify-center">
-                          <CompanionGlyph className="h-6 w-6" />
+                          <CompanionGlyph companion={companion} className="h-6 w-6" />
                         </span>
                       ) : (
                         <Icon data-icon className={cn("h-[22px] w-[22px]", active && "text-accent")} strokeWidth={active ? 2 : 1.7} />
@@ -300,7 +303,7 @@ export function AppShell({
               fabAway && "pointer-events-none translate-y-6 opacity-0",
             )}
           >
-            <CompanionGlyph className="h-8 w-8" />
+            <CompanionGlyph companion={companion} className="h-8 w-8" />
           </button>
         )}
         <KeyboardWatcher />
