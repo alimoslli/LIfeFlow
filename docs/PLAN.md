@@ -302,10 +302,13 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 - **Older cards being rewritten** (Goals redesign A, Connected accounts, the timeline concepts, Gmail abilities, search bolding, the agent workload, "Same bill?" outside the inbox).
 - **Marketing:** voice samples and credit spending.
 - **Onboarding and Today (phone check 2026-11-08):** 'Skip setup' and 'Skip' sit close together while the day connects.
+- **First run and price (research 2026-11-09, docs/research/2026-11-09-first-run-that-converts.md):** (a) where the paywall goes; recommended: only after "Your day, connected", showing the person's own saved item and their skyling's name; (b) the landing still can't show the price ($5.99 students) while the welcome says "free while we're testing": which one is true now? (c) add five first-minute counts (welcome step, first item saved, paywall seen, paid) to Admin › App?
+- **Apple Health vs typed values (COO, 2026-11-09):** a value the person types now always wins over Apple Health for that day (it used to be silently overwritten). Side effect: 20 exercise minutes typed in the morning keep Apple's full-day 60 out. Keep it, or let Apple fill in a typed day once the day is over?
 - **Promises (night audit 2026-11-08):** read the six firmer check-in lines once (some lean on pressure); decide whether a promise's text may show in a notification on the lock screen.
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-09 early morning, LF COO: on main, Opus-reviewed: Stripe plans follow Stripe's live subscriptions (0b994ba); one card and one filing per email, typed health values win, one Canvas sync at a time (7379002); timeline Done removes the item at once (d15a9bb). Research on the first run (42387c1). Two owner questions added to section 11.
 - 2026-11-09, LF HQ: "Active today" opens the list of who was active (People, seen in the last 24 hours); "last seen" stamped every 10 minutes (section 5).
 - 2026-11-09 morning, LF COO: on main (da1e843, 3 Opus reviews), overlapping cron, webhook and Sync now runs no longer double-run: a lease per job (migration 0057_job_locks). A bank update that arrives during a sync gets one more round instead of waiting 30 minutes. Microsoft failures are recorded and say "Reconnect it in Settings". Plaid calls time out after 20 s. "Your companion" wording passed to LF Marketing.
 - 2026-11-09 morning, LF Main: the first run remade on the skylings' night (landing, sign-up, welcome, tour) with the new buttons (owner's top priority).
