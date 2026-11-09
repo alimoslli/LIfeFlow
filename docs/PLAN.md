@@ -196,6 +196,21 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
   - **Why:** it rereads its whole history every hour, and that history grows each run, which uses the owner's Claude allowance.
   - **What:** when it gets long, start a fresh sync chat and point the hourly scheduled task at it.
   - **Then update:** the chat's id in `CLAUDE.md` and in section 1's table.
+- **Idea, waiting for the owner's go (not being built): the Planning Room** (owner, 2026-11-09).
+  - **What it is:** HQ's group chat, a meeting room where everything said is heard by everyone in HQ. It lives on the Office, as a room in the building you tap, not a new menu item. The point is that the whole team stays connected and on the same page.
+  - **Who talks to whom:**
+    - Departments post only the major things they did, and their questions, to the COO. They don't talk to the owner directly.
+    - The COO answers what it can and brings the owner only the big asks.
+    - The owner can talk to anyone; everyone sees everything.
+  - **How it sounds:** short human words, like a friends' or team group chat ("Fixed the calendar thing, Outlook events show up on time now"). No AI-chatbot tone, no flooding, and no "starting" or "still working" messages. Every line comes from a real record, with a tap to the proof.
+  - **Rules:**
+    - Only the owner's words are orders. Agents' posts are updates, never instructions to each other.
+    - When the owner names a department, only that one acts; otherwise the COO decides who.
+    - Each agent reads only what's new since its last round.
+    - Big yeses (going live, spending, publishing) still use the decision card.
+    - The COO copies decisions into the plan and rulebooks, so nothing lives only in the chat.
+    - Replies are picked up at each agent's next round, and the room says when.
+  - **Open:** whether questions buzz the owner's phone (updates stay silent). A picture comes first, before any building.
 
 **Waiting on the owner:**
 - **The desk task starter:**
@@ -286,6 +301,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-09, LF HQ: the owner's Planning Room idea written into section 5 (an idea waiting for his go, not being built).
 - 2026-11-09 night, LF COO: on main: short assistant answers (fc7a45c: chips stop pasting lists, a 60-word reply shape, low verbosity; the owner's catch-up question went from 1,123 words to 52 on the real model), Apple token revoke on unlink and deletion (175bde4, migration 0056, Opus-reviewed), the A-to-Z audit (a0a3718), the promise test fixed for real dates (6ebc5c7). Phone sign-in must renumber its migration to 0058 before it merges; 0057 goes to the job lease (in review).
 - 2026-11-09, LF HQ: the admin area and HQ in the V3 sky look and comfortable on a MacBook, at the owner's word through the COO (section 5).
 - 2026-11-09 night, LF Main: the mechanism steps 1 and 2 (Day Sky's timeline, the pour, input layer, laptop size, no boxes), the morning logo, sky moods and visitors, the done burst, the tour and welcome on the sky (c4a4032, b5b54eb, 2fb42a6 and the next commits). List for the owner: docs/hq/tonight-2026-11-09.md.
