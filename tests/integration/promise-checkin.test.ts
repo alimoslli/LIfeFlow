@@ -6,6 +6,7 @@ import { respondToMessage } from "@/server/services/proactive/respond";
 import { createPromise, listPromises } from "@/server/services/promises";
 import { createTask, updateTask } from "@/server/services/tasks";
 import { toCard } from "@/server/services/proactive/present";
+import { addDaysStr, localToInstant, todayIn } from "@/lib/dates";
 import { makeUser, TZ } from "../helpers";
 
 afterAll(closeDb);
@@ -52,14 +53,16 @@ describe("promise check-ins", () => {
 
   it("'Tomorrow instead' moves it a day and is not a broken promise", async () => {
     const { user: u, run } = await makeUser();
-    const said = new Date("2026-11-08T15:00:00Z");
-    const p = (await run((s) => createPromise(s, TZ, { text: "Call Dad", dueDate: "2026-11-08", dueTime: "18:00" }, said))).promise;
+    // The answer is given now (the app moves it to tomorrow counted from the moment you answer), so the promise is due today.
+    const today = todayIn(TZ);
+    const said = new Date(Date.now() - 12 * H);
+    const p = (await run((s) => createPromise(s, TZ, { text: "Call Dad", dueDate: today, dueTime: "00:01" }, said))).promise;
     const now = new Date(p.dueAt.getTime() + 60_000);
     const [m] = await run((s) => runProactive({ scope: s, tz: TZ, prefs: u.preferences, trigger: "promise", now }));
-    await run((s) => respondToMessage(s, user(u.id), m.id, "answer", "2026-11-08", "Tomorrow instead"));
+    await run((s) => respondToMessage(s, user(u.id), m.id, "answer", today, "Tomorrow instead"));
     const [after] = await run((s) => listPromises(s));
     expect(after.status).toBe("open");
-    expect(after.dueAt.getTime()).toBe(p.dueAt.getTime() + 24 * H);
+    expect(after.dueAt.getTime()).toBe(localToInstant(addDaysStr(today, 1), "00:01", TZ).getTime());
     // Tomorrow it asks again.
     const next = new Date(after.dueAt.getTime() + 60_000);
     const [m2] = await run((s) => runProactive({ scope: s, tz: TZ, prefs: u.preferences, trigger: "promise", now: next }));
