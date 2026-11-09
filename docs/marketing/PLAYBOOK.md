@@ -420,6 +420,10 @@ the real rooftop shot (IMG_3935, reshoot planned), and only the top edge of the 
 "Before December." Ali's real lines from the sit-down (My Movie 6: 0:33, 6:03, 0:47, 5:56; clean audio, the mics worked). Made locally
 from the real brand files, no credits; Ali adds music. Plan in the doc's Teaser tab (first tab). Claude Fable 5.2 is a Claude model,
 not a video generator: it can run the edit in a session switched to it.
+Revised the same day (Ali): the teaser is built on the sit-down picture (Ali in the black t-shirt, Tyler beside him). The colourful
+blobs on their TV look like the old mark's drops, so the camera pushes into the TV, the blobs become the old mark and melt into the
+horizon; Ali on camera at 0:33, 6:03 and 5:56. My Movie 6 is an iMovie export (vertical video inside a 1920x1080 frame, about a third
+of the original sharpness): ask for the phone's original file before editing. The rooftop stays a spare.
 The doc now opens with "What you do": a one-page checklist for tonight plus an Ali-and-Tyler table for the work shots. Ali wants the plan
 that simple ("just tell me what I have to do"); the detail stays below it. Send plans as PDF links too (the doc link didn't open in his browser).
 
