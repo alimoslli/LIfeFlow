@@ -424,6 +424,11 @@ Revised the same day (Ali): the teaser is built on the sit-down picture (Ali in 
 blobs on their TV look like the old mark's drops, so the camera pushes into the TV, the blobs become the old mark and melt into the
 horizon; Ali on camera at 0:33, 6:03 and 5:56. My Movie 6 is an iMovie export (vertical video inside a 1920x1080 frame, about a third
 of the original sharpness): ask for the phone's original file before editing. The rooftop stays a spare.
+**Rebranding story teaser (Ali, 2026-11-09):** he wanted it cute, creative and to the point, saying outright that LifeFlow is
+rebranding, with no app screens. Made: a 23 s animated story with the app's real skyling pixel art and the new morning mark
+(the old logo breaks into stars; "Your days are in pieces"; "So we put your whole life on one sky"; "Meet the skylings"; the sun
+rises: "LifeFlow. Your whole life, on one sky."; Ali in a window: "Before December, something big is coming."; "Before December.
+Follow to see it first."), plus Story and feed posters. Source in `marketing/teaser/rebrand-story/`. Waiting for Ali's notes and "post it".
 The doc now opens with "What you do": a one-page checklist for tonight plus an Ali-and-Tyler table for the work shots. Ali wants the plan
 that simple ("just tell me what I have to do"); the detail stays below it. Send plans as PDF links too (the doc link didn't open in his browser).
 

@@ -1,0 +1,302 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>LifeFlow is rebranding</title>
+<style>
+@font-face { font-family: "Fraunces"; src: url("fraunces-latin-600-normal.woff2") format("woff2"); font-weight: 600; }
+html, body { margin: 0; background: #000; }
+canvas { display: block; }
+</style>
+<script src="skylings.js"></script>
+</head>
+<body><canvas id="c" width="1080" height="1920"></canvas>
+<script>
+// "LifeFlow is rebranding": a short story of the new idea. seek(t) draws the frame at t seconds; seek(-1) / seek(-2) draw the posters.
+const W = 1080, H = 1920, P = 6;                       // P: one pixel of the sky's pixel art
+const T = { hook: 2.6, pieces: 5.8, sky: 9.4, cast: 13.6, sun: 16.8, ali: 20.4, end: 23.4 };
+const SKY = ["#040a18", "#07132c", "#0b1d42", "#102c58", "#173f6e", "#245a86"];
+const HILLS = { far: "#0a1a35", farRim: "#13294c", mid: "#0c2140", midRim: "#18345c", near: "#0f2849", nearRim: "#24497a", front: "#081a33", frontRim: "#163258" };
+const MARK = { sunTop: "#ffc247", sun: "#f5a524", sunLow: "#f29a1c", ink: "#07101f", horizon: "#2f7cd2", glow: "#ffd7ad", glowDeep: "#ffb27a" };
+const GOLD = "#ffd77a", CREAM = "#fff3cf", INK = "#07132c";
+const c = document.getElementById("c"), g = c.getContext("2d");
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const ease = (k) => (k = clamp(k), k * k * (3 - 2 * k));
+const easeOut = (k) => (k = clamp(k), 1 - Math.pow(1 - k, 3));
+const easeIn = (k) => (k = clamp(k), k * k * k);
+const back = (k) => { k = clamp(k); const s = 1.9; return 1 + (s + 1) * Math.pow(k - 1, 3) + s * Math.pow(k - 1, 2); };
+function rng(seed) { let a = (seed * 2654435761) >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const snap = (v) => Math.round(v / P) * P;
+
+const imgs = {};
+const load = (src) => imgs[src] || (imgs[src] = new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }));
+
+// ---------- text ----------
+function text(str, x, y, size, col, alpha = 1, align = "center") {
+  if (alpha <= 0) return;
+  g.save(); g.globalAlpha = alpha; g.fillStyle = col; g.textAlign = align; g.textBaseline = "alphabetic";
+  g.font = `600 ${size}px Fraunces`; g.shadowColor = "rgba(0,0,0,0.35)"; g.shadowBlur = 18; g.fillText(str, x, y); g.restore();
+}
+// a line made of parts [[text, colour], ...], centred
+function line(parts, y, size, alpha = 1, rise = 0) {
+  if (alpha <= 0) return;
+  g.save(); g.font = `600 ${size}px Fraunces`;
+  const w = parts.reduce((s, [t]) => s + g.measureText(t).width, 0);
+  let x = W / 2 - w / 2; g.restore();
+  for (const [t, col] of parts) { text(t, x, y + rise, size, col, alpha, "left"); g.save(); g.font = `600 ${size}px Fraunces`; x += g.measureText(t).width; g.restore(); }
+}
+const inOut = (t, a, b, f = 0.35) => ease((t - a) / f) * (1 - ease((t - (b - f)) / f));
+
+// ---------- the sky ----------
+function skyBg(alpha = 1) {
+  g.save(); g.globalAlpha = alpha;
+  const s = g.createLinearGradient(0, 0, 0, H);
+  SKY.forEach((col, i) => s.addColorStop(i / (SKY.length - 1) * 0.78, col));
+  s.addColorStop(1, "#245a86");
+  g.fillStyle = s; g.fillRect(0, 0, W, H); g.restore();
+}
+// stars that were the old logo: built once from the logo's pixels
+let STARS = null;
+async function buildStars() {
+  const logo = await load("old_mark.png");
+  const cv = document.createElement("canvas"); cv.width = cv.height = 520; const cg = cv.getContext("2d");
+  cg.drawImage(logo, 0, 0, 520, 520); const d = cg.getImageData(0, 0, 520, 520).data;
+  const r = rng(11), out = [], step = 18;
+  for (let y = 0; y < 520; y += step) for (let x = 0; x < 520; x += step) {
+    const i = ((y + step / 2) * 520 + (x + step / 2)) * 4;
+    if (d[i + 3] < 140) continue;
+    const kind = r();
+    out.push({
+      sx: W / 2 - 260 + x + step / 2, sy: 1000 - 260 + y + step / 2, col: `rgb(${d[i]},${d[i + 1]},${d[i + 2]})`,
+      tx: snap(r() * W), ty: snap(40 + r() * 1120), delay: r() * 0.55, kind,
+      star: kind > 0.92 ? "plus" : kind > 0.75 ? "#cfe0ff" : kind > 0.66 ? GOLD : "#ffffff", ph: r() * 6.28, sp: 1.2 + r() * 2.4,
+    });
+  }
+  STARS = out;
+}
+function starfield(t, fly = 1) {      // fly: 0 = still on the logo, 1 = in the sky
+  for (const s of STARS) {
+    const k = easeOut(clamp((fly - s.delay * 0.6) / 0.75));
+    const x = lerp(s.sx, s.tx, k) + Math.sin(k * 3.14) * (s.tx - W / 2) * 0.15, y = lerp(s.sy, s.ty, k) - Math.sin(k * 3.14) * 160;
+    const sz = lerp(14, s.kind > 0.5 ? P : P * 0.7, k), tw = k < 1 ? 1 : 0.6 + 0.4 * Math.sin(t * s.sp + s.ph);
+    g.globalAlpha = tw;
+    if (k < 0.6) { g.fillStyle = s.col; g.fillRect(x - sz / 2, y - sz / 2, sz, sz); }
+    else if (s.star === "plus") { g.fillStyle = "#fff3c4"; const q = P; g.fillRect(x, y, q, q); g.fillRect(x - q, y, q, q); g.fillRect(x + q, y, q, q); g.fillRect(x, y - q, q, q); g.fillRect(x, y + q, q, q); }
+    else { g.fillStyle = s.star; g.fillRect(snap(x), snap(y), sz, sz); }
+  }
+  g.globalAlpha = 1;
+}
+// pixel hills rising from the bottom
+function hillY(x, layer) {
+  const f = [[0.004, 0.011, 70, 30], [0.003, 0.009, 90, 40], [0.0025, 0.007, 60, 35]][layer];
+  return Math.sin(x * f[0] + layer * 2) * f[2] + Math.sin(x * f[1] + layer) * f[3];
+}
+function hills(rise) {             // rise 0..1
+  const base = [1320, 1440, 1560], col = [[HILLS.far, HILLS.farRim], [HILLS.mid, HILLS.midRim], [HILLS.front, HILLS.frontRim]];
+  for (let L = 0; L < 3; L++) {
+    const off = (1 - easeOut(clamp(rise * 1.25 - L * 0.12))) * 700;
+    for (let x = 0; x < W; x += P) {
+      const top = snap(base[L] + hillY(x, L) + off);
+      g.fillStyle = col[L][1]; g.fillRect(x, top, P, P);
+      g.fillStyle = col[L][0]; g.fillRect(x, top + P, P, H - top);
+    }
+  }
+}
+const ridge = (x) => snap(1440 + hillY(x, 1));
+
+// ---------- skylings (the app's own pixel art) ----------
+const sprite = document.createElement("canvas");
+function skyling(key, x, yFeet, scale, pose = "idle", frame = 0, alpha = 1, flip = false) {
+  const info = window.LF.COMPANIONS.find((k) => k.key === key);
+  window.LF.drawCompanion(sprite, info, pose, frame, true, flip);
+  const s = 24 * scale;
+  if (alpha > 0) {   // a soft glow so every skyling reads against the night
+    g.save(); g.globalAlpha = alpha;
+    const hx = x, hy = yFeet - s * 0.45, hr = s * 0.75;
+    const halo = g.createRadialGradient(hx, hy, 0, hx, hy, hr);
+    halo.addColorStop(0, "rgba(207,224,255,0.30)"); halo.addColorStop(0.6, "rgba(207,224,255,0.10)"); halo.addColorStop(1, "rgba(207,224,255,0)");
+    g.fillStyle = halo; g.fillRect(hx - hr, hy - hr, hr * 2, hr * 2); g.restore();
+  }
+  g.save(); g.globalAlpha = alpha; g.imageSmoothingEnabled = false;
+  g.drawImage(sprite, Math.round(x - s / 2), Math.round(yFeet - s), s, s); g.restore();
+}
+const CAST = ["dawn", "ray", "noon", "goldie", "dusk", "star"];
+const NAMES = { dawn: "Dawn", ray: "Ray", noon: "Noon", goldie: "Goldie", dusk: "Dusk", star: "Star" };
+
+// ---------- the new mark: the sun on the horizon, with its face ----------
+function morning(cx, horizon, R, show, alpha = 1, glow = 1) {
+  // show: how much of the sun is above the horizon, 0..1 (1 = up to its centre, like the logo)
+  g.save(); g.globalAlpha = alpha;
+  const cy = horizon + R * (1 - show);
+  g.beginPath(); g.rect(0, 0, W, horizon - R * 0.075); g.clip();
+  const gl = g.createRadialGradient(cx, horizon, 0, cx, horizon, R * 1.9);
+  gl.addColorStop(0, `rgba(255,215,173,${0.9 * glow})`); gl.addColorStop(0.5, `rgba(255,178,122,${0.4 * glow})`); gl.addColorStop(1, "rgba(255,178,122,0)");
+  g.fillStyle = gl; g.fillRect(cx - R * 2, horizon - R * 2, R * 4, R * 2);
+  const sg = g.createLinearGradient(0, cy - R, 0, cy + R);
+  sg.addColorStop(0, MARK.sunTop); sg.addColorStop(0.55, MARK.sun); sg.addColorStop(1, MARK.sunLow);
+  g.fillStyle = sg; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
+  g.fillStyle = MARK.ink; const er = R * 3.4 / 36;
+  for (const dx of [-1, 1]) { g.beginPath(); g.arc(cx + dx * R * 10 / 36, cy - R * 15 / 36, er, 0, Math.PI * 2); g.fill(); }
+  g.restore();
+  g.save(); g.globalAlpha = alpha; g.fillStyle = MARK.horizon; const lw = R * 92 / 36 * 0.98, lh = R * 5.5 / 36;
+  g.shadowColor = "rgba(47,124,210,0.8)"; g.shadowBlur = 20;
+  g.beginPath(); g.roundRect(cx - lw / 2, horizon - lh / 2, lw, lh, lh / 2); g.fill(); g.restore();
+}
+
+// ---------- the pieces of a day ----------
+const PIECES = ["class 9:00", "shift 4pm", "bills", "gym", "exam Fri", "payday", "the shoot", "study"];
+function pill(str, x, y, rot, scale, alpha) {
+  g.save(); g.globalAlpha = alpha; g.translate(x, y); g.rotate(rot); g.scale(scale, scale);
+  g.font = "600 46px Fraunces"; const w = g.measureText(str).width + 60, h = 84;
+  g.fillStyle = "rgba(0,0,0,0.3)"; g.beginPath(); g.roundRect(-w / 2 + 6, -h / 2 + 8, w, h, 22); g.fill();
+  g.fillStyle = CREAM; g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, 22); g.fill();
+  g.fillStyle = INK; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(str, 0, 3);
+  g.restore();
+}
+function pieceState(i, t) {         // chaos (falling, tumbling), then they fly into one arc and become stars
+  const r = rng(100 + i * 7); const ax = 150 + ((i * 0.37 + r() * 0.3) % 1) * 780, ay = 640 + ((i * 0.61 + r() * 0.25) % 1) * 700, spin = (r() - 0.5) * 0.9, delay = i * 0.12;
+  const fall = easeOut((t - T.hook - delay) / 0.7);
+  const wob = Math.sin((t - T.hook) * (2 + r()) + i) * 18;
+  let x = ax + wob, y = lerp(-200, ay, fall) + Math.sin((t - T.hook) * 3 + i) * 10, rot = spin * (1 - fall * 0.4) + Math.sin(t * 2 + i) * 0.08;
+  // to the arc: one sky
+  const k = ease((t - (T.pieces + 0.3 + i * 0.06)) / 1.0);
+  const tx = 150 + i * (780 / (PIECES.length - 1)), ty = 760 - Math.sin((i / (PIECES.length - 1)) * Math.PI) * 200;
+  x = lerp(x, tx, k); y = lerp(y, ty, k); rot = lerp(rot, 0, k);
+  return { x, y, rot, scale: lerp(1, 0.12, easeIn(k)), k, tx, ty };
+}
+
+// ---------- the frame ----------
+async function seek(t) {
+  if (!STARS) await buildStars();
+  if (t === -1) return poster(1920);
+  if (t === -2) return poster(1350);
+  g.save(); g.fillStyle = "#000"; g.fillRect(0, 0, W, H); g.restore();
+  const logo = await load("old_mark.png");
+
+  // 1. the hook: the old LifeFlow; it breaks apart into the stars of the new sky, and the night wipes down over the cream
+  if (t < T.hook + 0.5) {
+    const wipe = H * easeIn((t - 1.45) / 0.85);
+    const tIn = ease((t - 0.15) / 0.35), tOut = 1 - ease((t - 2.1) / 0.4);
+    g.fillStyle = "#f3eee2"; g.fillRect(0, 0, W, H);
+    if (t < 1.55) g.drawImage(logo, W / 2 - 260, 1000 - 260 + Math.sin(t * 3) * 6, 520, 520);
+    line([["LifeFlow is ", "#1f3b2c"], ["rebranding.", "#2e6b47"]], 520, 82, tIn, (1 - tIn) * 30);
+    text("Bye, old look.", W / 2, 620, 48, "#1f3b2c", ease((t - 0.7) / 0.3));
+    if (wipe > 0) {
+      g.save(); g.beginPath();
+      // a stepped, pixel edge
+      g.moveTo(0, 0); g.lineTo(W, 0);
+      for (let x = W; x >= 0; x -= P * 4) g.lineTo(x, snap(wipe + Math.sin(x * 0.02 + t * 4) * 18));
+      g.closePath(); g.clip();
+      skyBg(1);
+      line([["LifeFlow is ", "#ffffff"], ["rebranding.", GOLD]], 520, 82, tIn * tOut);
+      g.restore();
+    }
+    if (t >= 1.55) starfield(t, (t - 1.55) / 1.3);
+  }
+  if (t >= T.hook + 0.5) { skyBg(1); starfield(t, 5); }
+
+  // 2. the problem: your days are in pieces
+  if (t >= T.hook && t < T.sky + 0.6) {
+    line([["Your days are ", "#ffffff"], ["in pieces.", GOLD]], 420, 84, inOut(t, T.hook + 0.1, T.pieces + 0.3));
+    line([["So we put your whole life", "#ffffff"]], 400, 76, inOut(t, T.pieces + 0.35, T.sky + 0.4));
+    line([["on ", "#ffffff"], ["one sky.", GOLD]], 490, 76, inOut(t, T.pieces + 0.55, T.sky + 0.4));
+    PIECES.forEach((p, i) => {
+      const s = pieceState(i, t);
+      if (s.k < 0.95) pill(p, s.x, s.y, s.rot, s.scale, 1 - ease((s.k - 0.8) / 0.15));
+      if (s.k > 0.75) {   // it lands as a gold star on the arc
+        const a = ease((s.k - 0.75) / 0.25), q = P * 1.5;
+        g.globalAlpha = a; g.fillStyle = GOLD;
+        g.fillRect(s.tx - q / 2, s.ty - q / 2, q, q); g.fillRect(s.tx - q * 1.5, s.ty - q / 2, q, q); g.fillRect(s.tx + q / 2, s.ty - q / 2, q, q);
+        g.fillRect(s.tx - q / 2, s.ty - q * 1.5, q, q); g.fillRect(s.tx - q / 2, s.ty + q / 2, q, q); g.globalAlpha = 1;
+      }
+    });
+  }
+  // the gold arc stays as the day's line
+  if (t >= T.sky && t < T.sun) {
+    const a = 1 - ease((t - (T.cast + 0.2)) / 0.5);
+    PIECES.forEach((_, i) => { const tx = 150 + i * (780 / (PIECES.length - 1)), ty = 760 - Math.sin((i / (PIECES.length - 1)) * Math.PI) * 200;
+      g.globalAlpha = a * (0.75 + 0.25 * Math.sin(t * 3 + i)); g.fillStyle = GOLD; const q = P * 1.5;
+      g.fillRect(tx - q / 2, ty - q / 2, q, q); g.fillRect(tx - q * 1.5, ty - q / 2, q, q); g.fillRect(tx + q / 2, ty - q / 2, q, q); g.fillRect(tx - q / 2, ty - q * 1.5, q, q); g.fillRect(tx - q / 2, ty + q / 2, q, q); });
+    g.globalAlpha = 1;
+  }
+
+  // 3. the hills and the cast
+  const hillRise = ease((t - (T.pieces + 1.2)) / 1.4);
+  if (t >= T.pieces && t < T.ali) {
+    // the sun comes up behind the hills in scene 5
+    if (t >= T.cast - 0.2) {
+      const k = easeOut((t - (T.cast - 0.2)) / 1.6);
+      morning(W / 2, 1300, 250, lerp(0, 1, k), 1, ease(k));
+    }
+    hills(hillRise);
+    if (t >= T.sky - 0.2) {
+      CAST.forEach((key, i) => {
+        const x = 110 + i * 172, born = T.sky + 0.25 + i * 0.32;
+        const k = (t - born) / 0.45; if (k <= 0) return;
+        const sc = 6 * back(k), y = ridge(x) + 6 + (k < 1 ? (1 - easeOut(k)) * 40 : 0);
+        const pose = t > T.cast + 0.5 ? "celebrate" : "idle", fr = Math.floor(t * (pose === "celebrate" ? 6 : 2));
+        skyling(key, x, y, sc, pose, fr + i, clamp(k * 3), i > 2);
+        text(NAMES[key], x, y + 52, 34, CREAM, ease((t - born - 0.25) / 0.3) * (1 - ease((t - T.cast) / 0.4)));
+        if (k < 1) { // a pop of sparkle
+          g.globalAlpha = 1 - k; g.fillStyle = GOLD; const q = P;
+          for (let a = 0; a < 6; a++) { const ang = a / 6 * 6.28, rr = 70 + k * 70; g.fillRect(snap(x + Math.cos(ang) * rr), snap(y - 80 + Math.sin(ang) * rr), q, q); }
+          g.globalAlpha = 1;
+        }
+      });
+      line([["Meet the ", "#ffffff"], ["skylings.", GOLD]], 420, 88, inOut(t, T.sky + 0.2, T.sky + 2.3));
+      line([["Six little ones.", "#ffffff"]], 400, 76, inOut(t, T.sky + 2.2, T.cast + 0.1));
+      line([["One of them is ", "#ffffff"], ["yours.", GOLD]], 490, 76, inOut(t, T.sky + 2.4, T.cast + 0.1));
+    }
+    // 4. the new LifeFlow
+    if (t >= T.cast) {
+      const a = inOut(t, T.cast + 0.5, T.sun + 0.1);
+      text("LifeFlow", W / 2, 470, 132, "#ffffff", a);
+      line([["Your whole life, on ", CREAM], ["one sky.", GOLD]], 560, 50, a);
+    }
+  }
+
+  // 5. Ali: "Before December, something big is coming."
+  if (t >= T.sun && t < T.ali + 0.4) {
+    const k = ease((t - T.sun) / 0.45), out = 1 - ease((t - T.ali) / 0.4);
+    hills(1);
+    const ww = 600, wh = 1066, wx = W / 2 - ww / 2, wy = 300 + (1 - k) * 80;
+    const im = await load(`s5/${String(clamp(Math.floor((t - T.sun) * 30) + 1, 1, 103)).padStart(4, "0")}.jpg`);
+    g.save(); g.globalAlpha = k * out;
+    g.fillStyle = CREAM; g.beginPath(); g.roundRect(wx - 10, wy - 10, ww + 20, wh + 20, 46); g.fill();
+    g.beginPath(); g.roundRect(wx, wy, ww, wh, 38); g.clip();
+    g.filter = "contrast(1.06) saturate(0.92)"; g.drawImage(im, wx, wy, ww, wh); g.filter = "none";
+    g.restore();
+    // two skylings sit on the window's top edge
+    skyling("ray", wx + 120, wy - 6, 5, "idle", Math.floor(t * 2), k * out);
+    skyling("star", wx + ww - 110, wy - 6, 5, "idle", Math.floor(t * 2) + 1, k * out, true);
+    text("Ali, founder of LifeFlow", W / 2, wy + wh + 80, 40, CREAM, k * out);
+  }
+
+  // 6. the call: Before December
+  if (t >= T.ali) {
+    const k = ease((t - T.ali) / 0.5);
+    hills(1);
+    morning(W / 2, 760, 120, 1, k, k);
+    line([["Before ", "#ffffff"], ["December.", GOLD]], 1000, 112, k, (1 - k) * 30);
+    text("Follow to see it first.", W / 2, 1090, 50, CREAM, ease((t - T.ali - 0.4) / 0.4));
+    CAST.forEach((key, i) => { const x = 110 + i * 172; skyling(key, x, ridge(x) + 6, 6, "celebrate", Math.floor(t * 6) + i, k, i > 2); });
+    const out = ease((t - (T.end - 0.45)) / 0.45);
+    if (out > 0) { g.fillStyle = `rgba(0,0,0,${out})`; g.fillRect(0, 0, W, H); }
+  }
+}
+
+// ---------- posters ----------
+async function poster(h) {
+  c.height = h; const dy = h === 1920 ? 0 : -380;
+  g.save(); g.translate(0, dy);
+  skyBg(1); starfield(9, 5);
+  morning(W / 2, 1300, 250, 1, 1, 1);
+  hills(1);
+  CAST.forEach((key, i) => { const x = 110 + i * 172; skyling(key, x, ridge(x) + 6, 6, i === 1 ? "celebrate" : "idle", i === 1 ? 2 : i, 1, i > 2); });
+  g.restore();
+  const top = h === 1920 ? 0 : -120;
+  line([["LifeFlow is ", "#ffffff"], ["rebranding.", GOLD]], 330 + top, 82, 1);
+  line([["Your whole life, on ", CREAM], ["one sky.", GOLD]], 420 + top, 50, 1);
+  line([["Before December.", GOLD]], h - (h === 1920 ? 180 : 120), 72, 1);
+}
+window.seek = seek;
+window.ready = document.fonts.load("600 104px Fraunces").then(() => true);
+</script></body></html>
