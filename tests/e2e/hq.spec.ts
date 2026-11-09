@@ -24,9 +24,9 @@ async function ownerPage(browser: Browser): Promise<Page> {
   return op;
 }
 
-test("HQ is owner-only: signed out is sent to sign in, everyone else gets a 404", async ({ page, request }) => {
-  const anon = await request.get("/admin/hq", { maxRedirects: 0 });
-  expect([301, 302, 303, 307, 308]).toContain(anon.status());
+test("HQ is owner-only: signed out or signed in, everyone else gets a 404", async ({ page, request }) => {
+  // Signed out: the same "not found" as everyone else (owner approved, card 50072c7a), so HQ doesn't show it exists.
+  expect((await request.get("/admin/hq", { maxRedirects: 0 })).status()).toBe(404);
 
   await pool.query("delete from rate_limit_buckets where key like 'signup:ip:%'");
   await page.goto("/signup");

@@ -92,7 +92,12 @@ export async function SinceLookedCard() {
           {running && (
             <div>
               <h3 className="text-[0.6875rem] font-semibold tracking-[0.12em] text-muted uppercase">How the app is running</h3>
-              <p className="mt-1.5 text-[0.9375rem] text-text-2">{running}</p>
+              <p className="mt-1.5 text-[0.9375rem] text-text-2">
+                {running}{" "}
+                <Link href="/admin/app#health" className="inline-flex min-h-11 items-center text-accent underline underline-offset-2">
+                  See the app&apos;s health
+                </Link>
+              </p>
             </div>
           )}
         </div>

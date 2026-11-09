@@ -88,7 +88,7 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
               href={href}
               aria-current={view === key ? "page" : undefined}
               className={cn(
-                "inline-flex min-h-10 items-center rounded-full px-4 text-sm",
+                "inline-flex min-h-11 items-center rounded-full px-4 text-sm",
                 view === key ? "bg-surface font-medium text-text shadow-soft" : "text-text-2",
               )}
             >

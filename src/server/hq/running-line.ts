@@ -16,6 +16,8 @@ export function runningLine(f: RunningFacts): string | null {
         : `${n(f.errors.hits, "error", "errors")} in the last 24 hours (${n(f.errors.kinds, "kind", "kinds")}).`,
     );
   if (f.signups) parts.push(`${n(f.signups.new24h, "sign-up", "sign-ups")} in the last 24 hours, ${f.signups.new7d} in 7 days.`);
-  if (f.notSetUp?.length) parts.push(`Not set up yet: ${f.notSetUp.join(", ")}.`);
+  // One or two are named; more is a count (the list is one tap deeper, on App › Health), so the line stays one line.
+  if (f.notSetUp?.length)
+    parts.push(f.notSetUp.length <= 2 ? `Not set up yet: ${f.notSetUp.join(" and ")}.` : `${f.notSetUp.length} services aren't set up yet.`);
   return parts.length ? parts.join(" ") : null;
 }

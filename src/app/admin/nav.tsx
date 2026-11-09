@@ -19,7 +19,7 @@ const ITEMS: Item[] = [
 ];
 const SETTINGS = { href: "/admin/hq/settings", label: "Settings" };
 const settingsOn = (path: string) => under(path, SETTINGS.href);
-/** Admin navigation: a night-sky rail on wide screens, a masthead with an underline row on phones. Dots show what's waiting. */
+/** Admin navigation: a frosted-glass rail on wide screens, a masthead with an underline row on phones. Dots show what's waiting. */
 export function AdminNav({ email, counts }: { email: string; counts: { feedback: number; errors: number; approvals: number } }) {
   const path = usePathname();
   const badge = (key?: Item["count"]) => {
@@ -102,7 +102,7 @@ export function AdminNav({ email, counts }: { email: string; counts: { feedback:
           </span>
           <span>
             <span className="block font-display text-[1.375rem] leading-none font-medium">LifeFlow</span>
-            <span className="text-[0.625rem] tracking-[0.2em] text-brass-xl uppercase">Headquarters</span>
+            <span className="text-[0.625rem] tracking-[0.2em] text-brass-ink uppercase">Headquarters</span>
           </span>
         </Link>
         <nav aria-label="Admin" className="mt-7 flex flex-col gap-1 overflow-y-auto">

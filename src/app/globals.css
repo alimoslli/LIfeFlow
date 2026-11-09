@@ -152,7 +152,6 @@
   --color-brass-l: var(--brass-l);
   --color-brass-xl: var(--brass-xl);
   --color-brass-ink: var(--brass-ink);
-  --color-deep: var(--fac1);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-warning: var(--warning);
@@ -963,31 +962,25 @@ input[type="checkbox"].lf-switch:focus-visible {
 }
 
 /* HQ palette, in the app's Day Sky look (owner, 2026-11-09, through the COO: the admin area "didn't change" with V3). The
-   old Atrium names stay so every use follows: "brass" is the sun, the rail (fac) is the night sky, the brief (hero1/2) is a
-   clear day sky (the night sky in dark). Registered in @theme (bg-brass, text-brass-ink ...). Used only by /admin and HQ. */
+   old Atrium names stay so every use follows: "brass" is the sun and the brief (hero1/2) is a clear day sky (the night sky
+   in dark). Registered in @theme (bg-brass, text-brass-ink ...). Used only by /admin and HQ. */
 :root {
   --brass: var(--sun);
   --brass-l: #fbc768;
   --brass-xl: #ffe3ad;
   --brass-ink: var(--sun-ink);
-  --fac1: #07101f;
-  --fac2: #13284d;
   --hero1: #17509f;
   --hero2: #2a6dbd;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --brass-l: #f9cd80;
-    --fac1: #050b17;
-    --fac2: #0f2140;
     --hero1: #0b1a3a;
     --hero2: #1b3765;
   }
 }
 :root[data-theme="dark"] {
   --brass-l: #f9cd80;
-  --fac1: #050b17;
-  --fac2: #0f2140;
   --hero1: #0b1a3a;
   --hero2: #1b3765;
 }
@@ -1444,6 +1437,11 @@ input[type="checkbox"].lf-switch:focus-visible {
 
 /* Cards, headings and the brief across the admin area share the app's look: frosted glass over today's sky (.lf-glass
    and SkyScene in admin/layout.tsx), no hard borders. */
+/* Admin fields are 44 px tall everywhere (the shared Input and Select are 40 px), so every target is a full fingertip. */
+.hq-look input:not([type="checkbox"], [type="radio"], [type="range"], [type="hidden"], [type="file"]),
+.hq-look select {
+  min-height: 2.75rem;
+}
 .hq-eyebrow {
   font-size: 0.6875rem;
   letter-spacing: 0.08em;
@@ -1491,24 +1489,28 @@ input[type="checkbox"].lf-switch:focus-visible {
   background: radial-gradient(#ffffff, #e3eefb);
 }
 .hq-rail-off {
-  color: #c8d3e4;
+  color: var(--text-2);
 }
 .hq-rail-off:hover {
-  color: #fff;
-  background: rgb(255 255 255 / 0.05);
+  color: var(--text);
+  background: var(--surface-3);
 }
 .hq-rail-on {
-  color: #fff;
-  background: rgb(255 255 255 / 0.1);
+  color: var(--text);
+  background: var(--accent-soft);
   box-shadow: inset 3px 0 0 var(--brass);
 }
 .hq-rail-mute {
-  color: #a9b8cd;
+  color: var(--muted);
 }
-/* The desktop menu: the night sky, a little lighter at the horizon, with the sun's edge on the place you're in. */
+/* The desktop menu: frosted glass on the sky, like the app's own menu, with the sun's edge on the place you're in. */
 .hq-shell-rail {
-  background: radial-gradient(120% 40% at 50% 100%, rgb(63 134 214 / 0.28), transparent 70%), linear-gradient(180deg, var(--fac2), var(--fac1));
-  color: #eef3fb;
+  background-color: var(--surface);
+  background-image: var(--glass-gloss);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  box-shadow: inset -1px 0 0 var(--border);
+  color: var(--text);
 }
 
 /* Little budget bar */

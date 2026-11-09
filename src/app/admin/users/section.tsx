@@ -28,12 +28,11 @@ export async function UsersSection({ sp }: { sp: PeopleParams }) {
   return (
     <PageSection
       id="people"
-      title="People"
-      sub="Accounts only. Their money, messages and tasks stay private."
+      title="Accounts"
       action={
         // A file download, so a plain link (client navigation can't download).
         // eslint-disable-next-line @next/next/no-html-link-for-pages
-        <a href="/admin/users/export" className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-surface px-4 text-sm font-medium shadow-soft">
+        <a href="/admin/users/export" className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-surface px-4 text-sm font-medium shadow-soft">
           <Download className="h-4 w-4" /> Export CSV
         </a>
       }
@@ -89,7 +88,7 @@ export async function UsersSection({ sp }: { sp: PeopleParams }) {
       {r.ok && r.data.pages > 1 && (
         <nav className="flex items-center justify-between text-sm" aria-label="Pages">
           {r.data.page > 1 ? (
-            <Link href={link(r.data.page - 1)} className="rounded-xl bg-surface-2 px-4 py-2">
+            <Link href={link(r.data.page - 1)} className="inline-flex min-h-11 items-center rounded-xl bg-surface-2 px-4">
               Previous
             </Link>
           ) : (
@@ -99,7 +98,7 @@ export async function UsersSection({ sp }: { sp: PeopleParams }) {
             Page {r.data.page} of {r.data.pages}
           </span>
           {r.data.page < r.data.pages ? (
-            <Link href={link(r.data.page + 1)} className="rounded-xl bg-surface-2 px-4 py-2">
+            <Link href={link(r.data.page + 1)} className="inline-flex min-h-11 items-center rounded-xl bg-surface-2 px-4">
               Next
             </Link>
           ) : (

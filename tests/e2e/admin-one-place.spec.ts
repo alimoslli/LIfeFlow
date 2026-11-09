@@ -83,7 +83,7 @@ test("One admin area: five places and a gear, old URLs land on their new page, a
 
   // People and App hold their sections; the gear opens settings and is the active place.
   await op.goto("/admin/people");
-  await expect(op.getByRole("heading", { level: 2 })).toHaveText(["People", "Feedback", "Announcements"]);
+  await expect(op.getByRole("heading", { level: 2 })).toHaveText(["Accounts", "Feedback", "Announcements"]);
   await op.goto("/admin/app");
   await expect(op.getByRole("heading", { name: "Growth", level: 2 })).toBeVisible();
   for (const name of ["Errors", "Health", "Activity log"]) await expect(op.getByRole("heading", { name, level: 2 })).toBeVisible();

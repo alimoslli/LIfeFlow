@@ -176,7 +176,7 @@ After V3 (the real-sky "Day Sky" look) reached main, the owner said, through the
 **Why it didn't change:** the admin area had its own palette, "Atrium", laid over the app's colours: a deep-green menu rail, a deep-green COO brief, brass gold, a green backdrop behind the building and a hard border on every card.
 
 **What changed:** a retouch, not a rebuild. No features or words changed.
-- **The palette** keeps its names and points at the app's Day Sky colours (`src/app/globals.css`, "HQ palette"). "Brass" is the sun (`--sun`, `--sun-ink`). The rail (`--fac1/2`) is the night sky, with a few stars and the sun's edge on the current place. The brief (`--hero1/2`) is a clear day sky, deep enough for white text, and the night sky in dark mode.
+- **The palette** keeps its names and points at the app's Day Sky colours (`src/app/globals.css`, "HQ palette"). "Brass" is the sun (`--sun`, `--sun-ink`). The brief (`--hero1/2`) is a clear day sky, deep enough for white text, and the night sky in dark mode. The menu rail is frosted glass on the sky like the app's own menu, with the sun's edge on the current place (the A-to-Z audit, F1). The old green `--fac1/2` are gone.
 - **The surface** is the app's (`admin/layout.tsx`): `.lf-glass` and `SkyScene`, so cards are frosted glass over the sky for this hour. The hard-border rule is gone.
 - **The building** (`components/hq/building.css`) stands in the sky like the app's Today: a clear day in light mode, the night sky with stars in dark mode. The sign glows sky blue with a warm "HQ", and the labels, notes and buttons are navy glass.
   - The walnut, the beams and every rendered picture stay. Redrawing them would be a rebuild.
@@ -187,3 +187,7 @@ After V3 (the real-sky "Day Sky" look) reached main, the owner said, through the
   - main cards get 28 px corners.
 
   Phones keep one column in the same order. Sizes stay in rem, so the Text size setting still applies.
+- **Small fixes from the A-to-Z audit** (`docs/audits/2026-11-09-a-to-z.md`):
+  - **F2:** People showed its title twice. The list of accounts is now titled "Accounts".
+  - **F3:** "How the app is running" counts the services that aren't set up when there are more than two ("9 services aren't set up yet"), with a link to App › Health. One or two are still named.
+  - **F4:** admin fields are 44 px tall (`.hq-look input, select`). The feedback filters, the Handled buttons, Export and the page links are now 44 px too.

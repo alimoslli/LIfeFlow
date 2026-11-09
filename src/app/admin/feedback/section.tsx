@@ -46,7 +46,7 @@ export async function FeedbackSection({ sp }: { sp: PeopleParams }) {
               key={s.key}
               href={`${href(s.key, kind)}#feedback`}
               aria-current={s.key === status ? "page" : undefined}
-              className={cn("min-h-9 rounded-full px-4 py-2 text-sm", s.key === status ? "bg-surface font-medium shadow-soft" : "text-text-2")}
+              className={cn("min-h-11 rounded-full px-4 py-2 text-sm", s.key === status ? "bg-surface font-medium shadow-soft" : "text-text-2")}
             >
               {s.label}
             </Link>
@@ -57,7 +57,7 @@ export async function FeedbackSection({ sp }: { sp: PeopleParams }) {
             key={k ?? "any"}
             href={`${href(status, k)}#feedback`}
             aria-current={k === kind ? "page" : undefined}
-            className={cn("min-h-9 rounded-full px-3 py-2 text-sm", k === kind ? "bg-accent-soft font-medium text-text" : "text-text-2 hover:text-text")}
+            className={cn("min-h-11 rounded-full px-3 py-2 text-sm", k === kind ? "bg-accent-soft font-medium text-text" : "text-text-2 hover:text-text")}
           >
             {k ? `${KIND[k].label}s` : "Every kind"}
           </Link>
@@ -105,7 +105,7 @@ export async function FeedbackSection({ sp }: { sp: PeopleParams }) {
                   </form>
                   <a
                     href={`mailto:${f.senderEmail}?subject=${encodeURIComponent("Re: your LifeFlow feedback")}`}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm text-text"
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm text-text"
                   >
                     <Mail className="h-4 w-4" /> Reply by email
                   </a>

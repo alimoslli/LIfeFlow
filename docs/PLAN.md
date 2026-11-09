@@ -178,13 +178,14 @@ Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.
   - the simpler Office: "Needs you" and "Working now" first, logs moved to the department pages, the COO in plain words ([e8ad461](https://github.com/alimoslli/LIfeFlow/commit/e8ad461)).
 - 11-09: the admin area and HQ wear the app's new sky look, and fit a MacBook (ADR 0029, addendum 4; [COMMIT](https://github.com/alimoslli/LIfeFlow/commit/COMMIT)). The owner had said "nothing changed" there after V3.
   - **The look:**
-    - the night-sky menu;
+    - the menu as frosted glass on the sky;
     - the COO's brief as a clear sky;
     - the sun's amber in place of gold;
     - frosted glass over the hour's sky, with no hard borders;
     - the building standing in the sky (day or night).
   - **On a MacBook:** a wider page, two columns on the Office and bigger titles.
   - **Unchanged:** the pictures, and the phone layout.
+  - **Audit fixes F2 to F4:** People no longer shows its title twice; the "how the app is running" line is short; every field and button is a full 44 px.
 
 **Next:**
 - The open ADR 0030 questions: per-chat keys and live-line wording.
