@@ -1,249 +1,249 @@
 [
- {
-  "tag": "phone",
-  "route": "/",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 5868,
-  "small": [
-   {
-    "w": 26,
-    "h": 20,
-    "t": "FAQ"
-   },
-   {
-    "w": 47,
-    "h": 20,
-    "t": "Privacy"
-   },
-   {
-    "w": 38,
-    "h": 20,
-    "t": "Terms"
-   },
-   {
-    "w": 120,
-    "h": 20,
-    "t": "Academic integrity"
-   },
-   {
-    "w": 44,
-    "h": 20,
-    "t": "Sign in"
-   }
-  ],
-  "smallCount": 5,
-  "main": {
-   "x": 0,
-   "w": 393
+  {
+    "tag": "phone",
+    "route": "/",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 5868,
+    "small": [
+      {
+        "w": 26,
+        "h": 20,
+        "t": "FAQ"
+      },
+      {
+        "w": 47,
+        "h": 20,
+        "t": "Privacy"
+      },
+      {
+        "w": 38,
+        "h": 20,
+        "t": "Terms"
+      },
+      {
+        "w": 120,
+        "h": 20,
+        "t": "Academic integrity"
+      },
+      {
+        "w": 44,
+        "h": 20,
+        "t": "Sign in"
+      }
+    ],
+    "smallCount": 5,
+    "main": {
+      "x": 0,
+      "w": 393
+    },
+    "panel": null,
+    "shadowedBoxes": 8,
+    "h1": "Every app sees one slice. LifeFlow sees all of it."
   },
-  "panel": null,
-  "shadowedBoxes": 8,
-  "h1": "Every app sees one slice. LifeFlow sees all of it."
- },
- {
-  "tag": "phone",
-  "route": "/signup",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 865,
-  "small": [
-   {
-    "w": 71,
-    "h": 16,
-    "t": "Terms of Use"
-   },
-   {
-    "w": 75,
-    "h": 16,
-    "t": "Privacy Policy"
-   },
-   {
-    "w": 45,
-    "h": 18,
-    "t": "Sign in"
-   },
-   {
-    "w": 40,
-    "h": 16,
-    "t": "Privacy"
-   },
-   {
-    "w": 33,
-    "h": 16,
-    "t": "Terms"
-   }
-  ],
-  "smallCount": 5,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "Start your week."
- },
- {
-  "tag": "phone",
-  "route": "/login",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 852,
-  "small": [
-   {
-    "w": 118,
-    "h": 36,
-    "t": "Forgot password?"
-   },
-   {
-    "w": 120,
-    "h": 18,
-    "t": "Create an account"
-   },
-   {
-    "w": 40,
-    "h": 16,
-    "t": "Privacy"
-   },
-   {
-    "w": 33,
-    "h": 16,
-    "t": "Terms"
-   }
-  ],
-  "smallCount": 4,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "Welcome back."
- },
- {
-  "tag": "phone",
-  "route": "/welcome#1",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 852,
-  "small": [],
-  "smallCount": 0,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "Hi."
- },
- {
-  "tag": "phone",
-  "route": "/welcome#2",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 852,
-  "small": [],
-  "smallCount": 0,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "What fills your week?"
- },
- {
-  "tag": "phone",
-  "route": "/welcome#3",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 852,
-  "small": [],
-  "smallCount": 0,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "A class and your job"
- },
- {
-  "tag": "phone",
-  "route": "/welcome#4",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 852,
-  "small": [],
-  "smallCount": 0,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "Make it yours"
- },
- {
-  "tag": "phone",
-  "route": "/welcome#6",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 1260,
-  "small": [],
-  "smallCount": 0,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "Here's what I'd do, Maya."
- },
- {
-  "tag": "phone",
-  "route": "/ (new, empty)",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 1062,
-  "small": [
-   {
-    "w": 13,
-    "h": 13,
-    "t": "INPUT"
-   }
-  ],
-  "smallCount": 1,
-  "main": {
-   "x": 0,
-   "w": 393
+  {
+    "tag": "phone",
+    "route": "/signup",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 865,
+    "small": [
+      {
+        "w": 71,
+        "h": 16,
+        "t": "Terms of Use"
+      },
+      {
+        "w": 75,
+        "h": 16,
+        "t": "Privacy Policy"
+      },
+      {
+        "w": 45,
+        "h": 18,
+        "t": "Sign in"
+      },
+      {
+        "w": 40,
+        "h": 16,
+        "t": "Privacy"
+      },
+      {
+        "w": 33,
+        "h": 16,
+        "t": "Terms"
+      }
+    ],
+    "smallCount": 5,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "Start your week."
   },
-  "panel": {
-   "x": 20,
-   "w": 353,
-   "bg": "rgba(0, 0, 0, 0)"
+  {
+    "tag": "phone",
+    "route": "/login",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 852,
+    "small": [
+      {
+        "w": 118,
+        "h": 36,
+        "t": "Forgot password?"
+      },
+      {
+        "w": 120,
+        "h": 18,
+        "t": "Create an account"
+      },
+      {
+        "w": 40,
+        "h": 16,
+        "t": "Privacy"
+      },
+      {
+        "w": 33,
+        "h": 16,
+        "t": "Terms"
+      }
+    ],
+    "smallCount": 4,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "Welcome back."
   },
-  "shadowedBoxes": 1,
-  "h1": "Good morning, Maya"
- },
- {
-  "tag": "phone",
-  "route": "/admin (normal user)",
-  "status": 404
- }
+  {
+    "tag": "phone",
+    "route": "/welcome#1",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 852,
+    "small": [],
+    "smallCount": 0,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "Hi."
+  },
+  {
+    "tag": "phone",
+    "route": "/welcome#2",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 852,
+    "small": [],
+    "smallCount": 0,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "What fills your week?"
+  },
+  {
+    "tag": "phone",
+    "route": "/welcome#3",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 852,
+    "small": [],
+    "smallCount": 0,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "A class and your job"
+  },
+  {
+    "tag": "phone",
+    "route": "/welcome#4",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 852,
+    "small": [],
+    "smallCount": 0,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "Make it yours"
+  },
+  {
+    "tag": "phone",
+    "route": "/welcome#6",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 1260,
+    "small": [],
+    "smallCount": 0,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "Here's what I'd do, Maya."
+  },
+  {
+    "tag": "phone",
+    "route": "/ (new, empty)",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 1062,
+    "small": [
+      {
+        "w": 13,
+        "h": 13,
+        "t": "INPUT"
+      }
+    ],
+    "smallCount": 1,
+    "main": {
+      "x": 0,
+      "w": 393
+    },
+    "panel": {
+      "x": 20,
+      "w": 353,
+      "bg": "rgba(0, 0, 0, 0)"
+    },
+    "shadowedBoxes": 1,
+    "h1": "Good morning, Maya"
+  },
+  {
+    "tag": "phone",
+    "route": "/admin (normal user)",
+    "status": 404
+  }
 ]

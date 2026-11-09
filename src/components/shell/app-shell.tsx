@@ -98,6 +98,20 @@ export function AppShell({
   useSlidingIndicator(bar, pathname, "x");
   const [drawer, setDrawer] = useState<Drawer>({ open: false, key: 0 });
   const [palette, setPalette] = useState(false);
+  // The ask button steps aside while you scroll down a page (so it never sits on what you're reading) and comes back
+  // when you scroll up (A-to-Z audit C1).
+  const [fabAway, setFabAway] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - last) < 8) return;
+      setFabAway(y > last && y > 80);
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const openJarvis = useCallback(
     (prompt?: string, opts?: { send?: boolean }) => setDrawer((d) => ({ open: true, prompt, send: opts?.send, key: prompt ? d.key + 1 : d.key })),
     [setDrawer],
@@ -132,12 +146,6 @@ export function AppShell({
   // The assistant's other pages (Updates, Ideas, Profile) keep the chat's own header and pill row,
   // so moving between them never swaps the whole interface (UX review).
   const assistantPage = !onJarvisPage && (pathname.startsWith("/jarvis") || pathname.startsWith("/inbox"));
-  const initials = user.name
-    .split(/\s+/)
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
   const settingsActive = pathname.startsWith("/settings");
 
   return (
@@ -193,9 +201,7 @@ export function AppShell({
                 )}
               >
                 {!onJarvisPage && !assistantPage && <MobileAppBar demo={user.accountKind === "demo"} onSearch={() => setPalette(true)} />}
-                {!onJarvisPage && !assistantPage && (
-                  <TopBar firstName={user.name.split(" ")[0]} initials={initials} demo={user.accountKind === "demo"} settingsActive={settingsActive} />
-                )}
+                {!onJarvisPage && !assistantPage && <TopBar demo={user.accountKind === "demo"} settingsActive={settingsActive} onToday={pathname === "/"} />}
                 {onJarvisPage ? (
                   <PageMotion>{children}</PageMotion>
                 ) : assistantPage ? (
@@ -207,8 +213,9 @@ export function AppShell({
                     </div>
                   </>
                 ) : (
-                  // Desktop: the page sits in one large frosted panel. Phones: no panel.
-                  <div className="md:rounded-[32px] md:bg-surface md:p-8 md:shadow-soft lg:p-10">
+                  // The page sits right on the sky, on a laptop too (owner, 2026-11-09: no more boxes); cards only where
+                  // there's something to tap.
+                  <div className="md:pt-2">
                     <SectionNav />
                     <PageMotion>{children}</PageMotion>
                   </div>
@@ -288,7 +295,10 @@ export function AppShell({
             onClick={() => openJarvis()}
             data-tour="ask"
             aria-label={`Ask ${assistantName}`}
-            className="lf-fab fixed right-4 bottom-[calc(var(--tabbar-space)-4px)] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-text shadow-lift active:scale-95 md:right-8 md:bottom-8"
+            className={cn(
+              "lf-fab fixed right-4 bottom-[calc(var(--tabbar-space)-4px)] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-text shadow-lift transition-[transform,opacity] duration-300 active:scale-95 md:hidden",
+              fabAway && "pointer-events-none translate-y-6 opacity-0",
+            )}
           >
             <CompanionGlyph className="h-8 w-8" />
           </button>
@@ -300,24 +310,27 @@ export function AppShell({
   );
 }
 
-/** Desktop only: a floating glass bar with a greeting, a Jarvis search field and the account. */
-function TopBar({ firstName, initials, demo, settingsActive }: { firstName: string; initials: string; demo: boolean; settingsActive: boolean }) {
+/**
+ * Laptops only: the ask field (⌘J) and Settings, on the sky. Today has its own ask bar, so there it's just Settings
+ * (owner, 2026-11-09: no greeting, no second ask bar).
+ */
+function TopBar({ demo, settingsActive, onToday }: { demo: boolean; settingsActive: boolean; onToday: boolean }) {
   const { openJarvis, assistantName } = useShell();
   return (
-    <div className="mb-4 hidden items-center gap-4 rounded-full bg-surface p-1.5 shadow-soft md:flex">
-      <span className="flex shrink-0 items-center gap-2.5 py-0.5 pr-3 pl-0.5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-3 text-xs font-semibold text-text-2">{initials}</span>
-        <span className="text-sm font-medium">Welcome, {firstName}</span>
-      </span>
-      <button
-        type="button"
-        onClick={() => openJarvis()}
-        className="mx-auto flex h-10 w-full max-w-md items-center gap-2.5 rounded-full bg-surface-2 px-4 text-sm text-muted transition-colors hover:text-text"
-      >
-        <Sparkles className="h-4 w-4 text-accent" />
-        Ask {assistantName} anything…
-        <kbd className="ml-auto rounded-md bg-surface-3 px-1.5 py-0.5 font-sans text-[0.6875rem] text-muted">⌘J</kbd>
-      </button>
+    <div className="mb-3 hidden items-center gap-3 md:flex">
+      {onToday ? (
+        <span className="flex-1" />
+      ) : (
+        <button
+          type="button"
+          onClick={() => openJarvis()}
+          className="mx-auto flex h-11 w-full max-w-md items-center gap-2.5 rounded-full bg-surface px-4 text-sm text-muted shadow-soft transition-colors hover:text-text"
+        >
+          <Sparkles className="h-4 w-4 text-accent" />
+          Ask {assistantName} anything…
+          <kbd className="ml-auto rounded-md bg-surface-3 px-1.5 py-0.5 font-sans text-[0.6875rem] text-muted">⌘J</kbd>
+        </button>
+      )}
       {demo && <span className="shrink-0 rounded-full bg-warning-soft px-3 py-1.5 text-xs text-warning">Sample data</span>}
       <Link
         href="/settings"
@@ -325,7 +338,10 @@ function TopBar({ firstName, initials, demo, settingsActive }: { firstName: stri
         aria-label="Settings"
         title="Settings"
         aria-current={settingsActive ? "page" : undefined}
-        className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-surface-2", settingsActive ? "text-accent" : "text-text-2")}
+        className={cn(
+          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface shadow-soft hover:bg-surface-2",
+          settingsActive ? "text-accent" : "text-text-2",
+        )}
       >
         <Settings className="h-5 w-5" />
       </Link>

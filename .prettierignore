@@ -20,5 +20,3 @@ docs/situations/eval/
 # Design prototypes, kept exactly as published
 docs/design/**/*.html
 scripts/dev/clock-artifact/shell.html
-# Audit measurements written by the audit scripts (docs/audits/shots/*/_*.json)
-docs/audits/shots/

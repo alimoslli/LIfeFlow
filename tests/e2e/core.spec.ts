@@ -45,7 +45,8 @@ test("a failed save keeps what was typed and explains the problem in plain words
   // Fixing it and saving works as before, and the form clears.
   await page.getByLabel("Net pay ($)").fill("150");
   await page.getByRole("button", { name: "Save paycheck" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Saved." })).toBeVisible();
+  // (the job's own "Saved." can still be showing, so look at the newest one)
+  await expect(page.getByRole("status").filter({ hasText: "Saved." }).last()).toBeVisible();
   await expect(page.getByLabel("Net pay ($)")).toHaveValue("");
 });
 

@@ -1,5 +1,6 @@
 import { useId } from "react";
 import { cn } from "@/lib/utils";
+import { MARK, MARK_COLORS } from "./morning-mark";
 
 type BrandMarkProps = {
   className?: string;
@@ -9,14 +10,16 @@ type BrandMarkProps = {
 };
 
 /**
- * The one visual mark used throughout LifeFlow: the transparent 3D icon, with no
- * background tile. Keeping it in one component stops the logo drifting between pages.
+ * The one visual mark used throughout LifeFlow: the morning (owner, 2026-11-09). The sun rising on the morning
+ * horizon, with its small face. Vector, so it's crisp at 16 px and clean at 512; the warm glow and the sky-blue
+ * horizon read on light and dark pages alike. Geometry and colours live in morning-mark.ts, shared with the app icons
+ * and the opening splash. Keeping it in one component stops the logo drifting between pages.
  */
 export function BrandMark({ className, alt = "LifeFlow" }: BrandMarkProps) {
-  // v3 Day Sky (owner, 2026-11-09): one circle cut by the horizon (your timeline). Above it the day: a clear sky and the
-  // sun rising with a face (your companion). Below it the night: a moon and two stars (what you finished). Vector, so
-  // it's sharp anywhere. Ids are per instance so several marks on a page don't share gradients.
+  // Ids are per instance so several marks on a page don't share gradients.
   const id = useId().replace(/:/g, "");
+  const { horizon, cx, sunR, eyeDx, eyeDy, eyeR, line, glowR } = MARK;
+  const lineTop = horizon - line.h / 2;
   return (
     <span
       className={cn("relative inline-flex aspect-square shrink-0", className)}
@@ -26,33 +29,27 @@ export function BrandMark({ className, alt = "LifeFlow" }: BrandMarkProps) {
     >
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <defs>
-          <linearGradient id={`${id}d`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#2a76d0" />
-            <stop offset="0.7" stopColor="#8cc0f0" />
-            <stop offset="1" stopColor="#ffd4a0" />
+          <linearGradient id={`${id}s`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={MARK_COLORS.sunTop} />
+            <stop offset="0.55" stopColor={MARK_COLORS.sun} />
+            <stop offset="1" stopColor={MARK_COLORS.sunLow} />
           </linearGradient>
-          <linearGradient id={`${id}n`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#13284d" />
-            <stop offset="1" stopColor="#071226" />
-          </linearGradient>
+          <radialGradient id={`${id}g`} cx={cx} cy={horizon} r={glowR} gradientUnits="userSpaceOnUse">
+            <stop offset="0" stopColor={MARK_COLORS.glow} stopOpacity="0.95" />
+            <stop offset="0.5" stopColor={MARK_COLORS.glowDeep} stopOpacity="0.45" />
+            <stop offset="1" stopColor={MARK_COLORS.glowDeep} stopOpacity="0" />
+          </radialGradient>
           <clipPath id={`${id}c`}>
-            <circle cx="50" cy="50" r="46" />
-          </clipPath>
-          <clipPath id={`${id}t`}>
-            <rect x="0" y="0" width="100" height="52" />
+            <rect x="0" y="0" width="100" height={lineTop} />
           </clipPath>
         </defs>
         <g clipPath={`url(#${id}c)`}>
-          <rect x="0" y="0" width="100" height="52" fill={`url(#${id}d)`} />
-          <rect x="0" y="52" width="100" height="48" fill={`url(#${id}n)`} />
-          <circle cx="50" cy="54" r="19" fill="#f5a524" clipPath={`url(#${id}t)`} />
-          <circle cx="43.5" cy="44" r="2.6" fill="#0f1a2a" />
-          <circle cx="56.5" cy="44" r="2.6" fill="#0f1a2a" />
-          <rect x="0" y="50.5" width="100" height="3" fill="#ffffff" />
-          <path d="M66 63 a8 8 0 1 0 5.5 13.6 a6.2 6.2 0 1 1 -5.5 -13.6 z" fill="#e6edf8" />
-          <path d="M33 66.4 L33.8 68.2 L35.6 69 L33.8 69.8 L33 71.6 L32.2 69.8 L30.4 69 L32.2 68.2 Z" fill="#ffd77a" />
-          <path d="M43 77.2 L43.5 78.5 L44.8 79 L43.5 79.5 L43 80.8 L42.5 79.5 L41.2 79 L42.5 78.5 Z" fill="#ffd77a" />
+          <circle cx={cx} cy={horizon} r={glowR} fill={`url(#${id}g)`} />
+          <circle cx={cx} cy={horizon} r={sunR} fill={`url(#${id}s)`} />
+          <circle cx={cx - eyeDx} cy={horizon - eyeDy} r={eyeR} fill={MARK_COLORS.ink} />
+          <circle cx={cx + eyeDx} cy={horizon - eyeDy} r={eyeR} fill={MARK_COLORS.ink} />
         </g>
+        <rect x={line.x} y={lineTop} width={line.w} height={line.h} rx={line.h / 2} fill={MARK_COLORS.horizon} />
       </svg>
     </span>
   );

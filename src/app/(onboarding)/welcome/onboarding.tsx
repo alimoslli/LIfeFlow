@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { SkyScene } from "@/components/sky/sky-scene";
 import { useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { ArrowLeft, BookOpen, Briefcase, Layers, Sun } from "lucide-react";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
@@ -37,7 +38,7 @@ const SAMPLE: Record<AssistantStyle, string> = {
 /** What's free. `paid` is false while LifeFlow is free for everyone (testing). */
 export type PlanInfo = { paid: boolean; freeChatsPerDay: number; proFeatures: string[] };
 
-export function Onboarding({ firstName, theme, plan }: { firstName: string; theme: Theme; plan: PlanInfo }) {
+export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; theme: Theme; plan: PlanInfo; tz: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -120,228 +121,236 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
     });
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-      <header className="flex h-10 items-center justify-between">
-        {index > 0 ? (
-          <button onClick={() => go(-1)} className="-ml-3 flex h-11 w-11 items-center justify-center rounded-full text-muted hover:text-text" aria-label="Back">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-        ) : (
-          <span />
-        )}
-        <div className="flex items-center gap-1.5" aria-label={`Step ${index + 1} of ${STEPS.length}`}>
-          {STEPS.map((s, i) => (
-            <span
-              key={s}
-              className={cn(
-                "h-1.5 rounded-full transition-all duration-300",
-                i === index ? "w-6 bg-accent" : i < index ? "w-1.5 bg-accent/60" : "w-1.5 bg-surface-3",
-              )}
-            />
-          ))}
-        </div>
-        <button onClick={skipAll} disabled={pending} className="-mr-2 flex min-h-11 items-center rounded-full px-2 text-sm text-muted hover:text-text">
-          Skip setup
-        </button>
-      </header>
-
-      <div ref={panel} className="flex flex-1 flex-col pt-10">
-        {step === "hello" && (
-          <>
-            <div data-anim className="relative h-16 w-16">
-              <span className="lf-orb-glow absolute -inset-1/3 rounded-full" aria-hidden />
-              <BrandMark className="lf-float relative h-full w-full" priority />
-            </div>
-            <h1 data-anim className="mt-8 font-display text-[2.75rem] leading-[1.05] font-medium tracking-tight">
-              Hi{cleanYou ? ` ${cleanYou.split(" ")[0]}` : ""}.
-            </h1>
-            <p data-anim className="mt-4 text-[1.0625rem] leading-relaxed text-text-2">
-              LifeFlow is your classes, work, money and plans in one place, with a personal assistant who helps with all of it.
-            </p>
-            <label data-anim className="mt-6 flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-text-2">What should I call you?</span>
-              <Input
-                aria-label="What should I call you?"
-                value={yourName}
-                onChange={(e) => setYourName(e.target.value)}
-                maxLength={80}
-                autoComplete="given-name"
-                className="min-h-11"
+    // the same sky for this hour and the same glass as the app, from the first screen (A-to-Z audit A3)
+    <div className="lf-glass">
+      <SkyScene tz={tz} />
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <header className="flex h-10 items-center justify-between">
+          {index > 0 ? (
+            <button
+              onClick={() => go(-1)}
+              className="-ml-3 flex h-11 w-11 items-center justify-center rounded-full text-muted hover:text-text"
+              aria-label="Back"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+          ) : (
+            <span />
+          )}
+          <div className="flex items-center gap-1.5" aria-label={`Step ${index + 1} of ${STEPS.length}`}>
+            {STEPS.map((s, i) => (
+              <span
+                key={s}
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-300",
+                  i === index ? "w-6 bg-accent" : i < index ? "w-1.5 bg-accent/60" : "w-1.5 bg-surface-3",
+                )}
               />
-            </label>
-            <p data-anim className="mt-6 rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem] leading-snug text-text-2">
-              {plan.paid
-                ? `Free plan: everything you add yourself, and ${plan.freeChatsPerDay} chats with your assistant a day. Pro adds ${listOf(plan.proFeatures)}.`
-                : "LifeFlow is free while we're testing. Everything is open to you."}
-            </p>
-          </>
-        )}
+            ))}
+          </div>
+          <button onClick={skipAll} disabled={pending} className="-mr-2 flex min-h-11 items-center rounded-full px-2 text-sm text-muted hover:text-text">
+            Skip setup
+          </button>
+        </header>
 
-        {step === "week" && (
-          <>
-            <Title sub="So LifeFlow shows what matters to you. You can change it anytime.">What fills your week?</Title>
-            <div data-anim className="mt-6 flex flex-col gap-2.5" role="radiogroup" aria-label="What fills your week">
-              {(
-                [
-                  ["student", "Classes", "I'm a student", BookOpen],
-                  ["working", "Work", "I have a job", Briefcase],
-                  ["both", "Both", "Classes and a job", Layers],
-                  ["life", "Neither", "Just my day and my money", Sun],
-                ] as const
-              ).map(([value, label, hint, Icon]) => (
-                <button
-                  key={value}
-                  role="radio"
-                  aria-checked={stage === value}
-                  onClick={() => setStage(value)}
-                  className={cn(
-                    "flex items-center gap-4 rounded-2xl px-4 py-4 text-left transition-all active:scale-[0.99]",
-                    stage === value ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft hover:shadow-lift",
-                  )}
-                >
-                  <Icon className="h-5 w-5 shrink-0" strokeWidth={1.8} />
-                  <span>
-                    <span className="block text-[1rem] font-medium">{label}</span>
-                    <span className={cn("block text-sm", stage === value ? "opacity-80" : "text-muted")}>{hint}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-
-        {step === "details" && (
-          <>
-            <Title sub="Optional. I'll use it to show you a day like yours, and it's saved for you.">
-              {school && work ? "A class and your job" : school ? "One class you're taking" : "Where do you work?"}
-            </Title>
-            <div className="mt-6 flex flex-col gap-4">
-              {school && (
-                <Group label="A class you're taking">
-                  <Input
-                    value={course}
-                    onChange={(e) => setCourse(e.target.value)}
-                    maxLength={60}
-                    placeholder="BIO 110"
-                    aria-label="A class you're taking"
-                    autoComplete="off"
-                    className="min-h-11"
-                  />
-                </Group>
-              )}
-              {work && (
-                <Group label="Where you work">
-                  <Input
-                    value={job}
-                    onChange={(e) => setJob(e.target.value)}
-                    maxLength={60}
-                    placeholder="Campus Coffee"
-                    aria-label="Where you work"
-                    autoComplete="off"
-                    className="min-h-11"
-                  />
-                </Group>
-              )}
-            </div>
-          </>
-        )}
-
-        {step === "day" && stage && (
-          <DayPreview
-            firstName={cleanYou.split(" ")[0] || firstName}
-            assistant={shown ?? "Your assistant"}
-            stage={stage}
-            course={school ? course : undefined}
-            job={work ? job : undefined}
-          />
-        )}
-
-        {step === "yours" && (
-          <>
-            <Title>Make it yours</Title>
-            <div className="mt-6 flex flex-col gap-6">
-              <Group label="Name your assistant">
+        <div ref={panel} className="flex flex-1 flex-col pt-10">
+          {step === "hello" && (
+            <>
+              <div data-anim className="relative h-16 w-16">
+                <span className="lf-orb-glow absolute -inset-1/3 rounded-full" aria-hidden />
+                <BrandMark className="lf-float relative h-full w-full" priority />
+              </div>
+              <h1 data-anim className="mt-8 font-display text-[2.75rem] leading-[1.05] font-medium tracking-tight">
+                Hi{cleanYou ? ` ${cleanYou.split(" ")[0]}` : ""}.
+              </h1>
+              <p data-anim className="mt-4 text-[1.0625rem] leading-relaxed text-text-2">
+                LifeFlow is your classes, work, money and plans in one place, with a personal assistant who helps with all of it.
+              </p>
+              <label data-anim className="mt-6 flex flex-col gap-1.5">
+                <span className="text-sm font-medium text-text-2">What should I call you?</span>
                 <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  maxLength={24}
-                  placeholder="your assistant"
-                  aria-label="Assistant name"
-                  autoCapitalize="words"
-                  autoComplete="off"
-                  className="min-h-11 text-[1rem]"
+                  aria-label="What should I call you?"
+                  value={yourName}
+                  onChange={(e) => setYourName(e.target.value)}
+                  maxLength={80}
+                  autoComplete="given-name"
+                  className="min-h-11"
                 />
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {NAMES.map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => setName(n)}
-                      aria-pressed={cleanName === n}
-                      className={cn(
-                        "min-h-11 rounded-full px-3.5 text-sm transition-all",
-                        cleanName === n ? "bg-hero text-hero-text shadow-soft" : "bg-surface text-text-2 shadow-soft hover:text-text",
-                      )}
-                    >
-                      {n}
-                    </button>
-                  ))}
-                </div>
-              </Group>
-              <Group label="Personality">
-                <div className="flex flex-col gap-2" role="radiogroup" aria-label="Personality">
-                  {(Object.keys(ASSISTANT_STYLES) as AssistantStyle[]).map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      role="radio"
-                      aria-checked={style === k}
-                      onClick={() => setStyle(k)}
-                      className={cn(
-                        "flex min-h-12 flex-wrap items-center justify-between gap-x-3 gap-y-0.5 rounded-2xl px-4 py-3 text-left transition-all",
-                        style === k ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft",
-                      )}
-                    >
-                      <span className="text-[0.9375rem] font-medium">{ASSISTANT_STYLES[k].label}</span>
-                      <span className={cn("text-sm", style === k ? "opacity-80" : "text-muted")}>{ASSISTANT_STYLES[k].hint}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-3 flex gap-2.5 rounded-2xl bg-surface-2 p-3.5" aria-live="polite">
-                  <BrandMark className="h-6 w-6" alt="" />
-                  <p className="text-[0.875rem] leading-relaxed text-text-2">
-                    <span className="font-semibold text-text">{shown ?? "Your assistant"}:</span> {SAMPLE[style]}
-                  </p>
-                </div>
-              </Group>
-              <Group label="Appearance">
-                <ThemePicker initial={theme} />
-              </Group>
-            </div>
-          </>
-        )}
-      </div>
+              </label>
+              <p data-anim className="mt-6 rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem] leading-snug text-text-2">
+                {plan.paid
+                  ? `Free plan: everything you add yourself, and ${plan.freeChatsPerDay} chats with your assistant a day. Pro adds ${listOf(plan.proFeatures)}.`
+                  : "LifeFlow is free while we're testing. Everything is open to you."}
+              </p>
+            </>
+          )}
 
-      <div className="flex flex-col gap-3 pt-8">
-        {error && <FormError message={error} />}
-        {last ? (
-          <>
-            <Button onClick={() => finish("/settings/integrations")} loading={pending} disabled={!nameOk} className="h-12 text-[0.9375rem]">
-              Connect my accounts
+          {step === "week" && (
+            <>
+              <Title sub="So LifeFlow shows what matters to you. You can change it anytime.">What fills your week?</Title>
+              <div data-anim className="mt-6 flex flex-col gap-2.5" role="radiogroup" aria-label="What fills your week">
+                {(
+                  [
+                    ["student", "Classes", "I'm a student", BookOpen],
+                    ["working", "Work", "I have a job", Briefcase],
+                    ["both", "Both", "Classes and a job", Layers],
+                    ["life", "Neither", "Just my day and my money", Sun],
+                  ] as const
+                ).map(([value, label, hint, Icon]) => (
+                  <button
+                    key={value}
+                    role="radio"
+                    aria-checked={stage === value}
+                    onClick={() => setStage(value)}
+                    className={cn(
+                      "flex items-center gap-4 rounded-2xl px-4 py-4 text-left transition-all active:scale-[0.99]",
+                      stage === value ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft hover:shadow-lift",
+                    )}
+                  >
+                    <Icon className="h-5 w-5 shrink-0" strokeWidth={1.8} />
+                    <span>
+                      <span className="block text-[1rem] font-medium">{label}</span>
+                      <span className={cn("block text-sm", stage === value ? "opacity-80" : "text-muted")}>{hint}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {step === "details" && (
+            <>
+              <Title sub="Optional. I'll use it to show you a day like yours, and it's saved for you.">
+                {school && work ? "A class and your job" : school ? "One class you're taking" : "Where do you work?"}
+              </Title>
+              <div className="mt-6 flex flex-col gap-4">
+                {school && (
+                  <Group label="A class you're taking">
+                    <Input
+                      value={course}
+                      onChange={(e) => setCourse(e.target.value)}
+                      maxLength={60}
+                      placeholder="BIO 110"
+                      aria-label="A class you're taking"
+                      autoComplete="off"
+                      className="min-h-11"
+                    />
+                  </Group>
+                )}
+                {work && (
+                  <Group label="Where you work">
+                    <Input
+                      value={job}
+                      onChange={(e) => setJob(e.target.value)}
+                      maxLength={60}
+                      placeholder="Campus Coffee"
+                      aria-label="Where you work"
+                      autoComplete="off"
+                      className="min-h-11"
+                    />
+                  </Group>
+                )}
+              </div>
+            </>
+          )}
+
+          {step === "day" && stage && (
+            <DayPreview
+              firstName={cleanYou.split(" ")[0] || firstName}
+              assistant={shown ?? "Your assistant"}
+              stage={stage}
+              course={school ? course : undefined}
+              job={work ? job : undefined}
+            />
+          )}
+
+          {step === "yours" && (
+            <>
+              <Title>Make it yours</Title>
+              <div className="mt-6 flex flex-col gap-6">
+                <Group label="Name your assistant">
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    maxLength={24}
+                    placeholder="your assistant"
+                    aria-label="Assistant name"
+                    autoCapitalize="words"
+                    autoComplete="off"
+                    className="min-h-11 text-[1rem]"
+                  />
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {NAMES.map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setName(n)}
+                        aria-pressed={cleanName === n}
+                        className={cn(
+                          "min-h-11 rounded-full px-3.5 text-sm transition-all",
+                          cleanName === n ? "bg-hero text-hero-text shadow-soft" : "bg-surface text-text-2 shadow-soft hover:text-text",
+                        )}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </Group>
+                <Group label="Personality">
+                  <div className="flex flex-col gap-2" role="radiogroup" aria-label="Personality">
+                    {(Object.keys(ASSISTANT_STYLES) as AssistantStyle[]).map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        role="radio"
+                        aria-checked={style === k}
+                        onClick={() => setStyle(k)}
+                        className={cn(
+                          "flex min-h-12 flex-wrap items-center justify-between gap-x-3 gap-y-0.5 rounded-2xl px-4 py-3 text-left transition-all",
+                          style === k ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft",
+                        )}
+                      >
+                        <span className="text-[0.9375rem] font-medium">{ASSISTANT_STYLES[k].label}</span>
+                        <span className={cn("text-sm", style === k ? "opacity-80" : "text-muted")}>{ASSISTANT_STYLES[k].hint}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex gap-2.5 rounded-2xl bg-surface-2 p-3.5" aria-live="polite">
+                    <BrandMark className="h-6 w-6" alt="" />
+                    <p className="text-[0.875rem] leading-relaxed text-text-2">
+                      <span className="font-semibold text-text">{shown ?? "Your assistant"}:</span> {SAMPLE[style]}
+                    </p>
+                  </div>
+                </Group>
+                <Group label="Appearance">
+                  <ThemePicker initial={theme} />
+                </Group>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-3 pt-8">
+          {error && <FormError message={error} />}
+          {last ? (
+            <>
+              <Button onClick={() => finish("/settings/integrations")} loading={pending} disabled={!nameOk} className="h-12 text-[0.9375rem]">
+                Connect my accounts
+              </Button>
+              <Button variant="ghost" onClick={() => finish("/")} disabled={pending || !nameOk} className="h-12 text-[0.9375rem]">
+                Meet {shown ?? "your assistant"} first
+              </Button>
+            </>
+          ) : (
+            <Button
+              onClick={next}
+              disabled={pending || (step === "hello" && !cleanYou) || (step === "week" && !stage) || (step === "yours" && !nameOk)}
+              className="h-12 text-[0.9375rem]"
+            >
+              {step === "hello" ? "Let's go" : step === "yours" ? "Show me my day" : "Continue"}
             </Button>
-            <Button variant="ghost" onClick={() => finish("/")} disabled={pending || !nameOk} className="h-12 text-[0.9375rem]">
-              Meet {shown ?? "your assistant"} first
-            </Button>
-          </>
-        ) : (
-          <Button
-            onClick={next}
-            disabled={pending || (step === "hello" && !cleanYou) || (step === "week" && !stage) || (step === "yours" && !nameOk)}
-            className="h-12 text-[0.9375rem]"
-          >
-            {step === "hello" ? "Let's go" : step === "yours" ? "Show me my day" : "Continue"}
-          </Button>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

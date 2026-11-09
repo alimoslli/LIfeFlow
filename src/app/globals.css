@@ -427,8 +427,7 @@ html.lf-splash .lf-splash-layer {
   z-index: 100;
   align-items: center;
   justify-content: center;
-  background:
-    radial-gradient(60% 40% at 50% 100%, rgb(255 190 130 / 0.55), transparent 70%), linear-gradient(180deg, #13284f 0%, #2e5791 45%, #7d9cc7 78%, #f3b98a 100%);
+  background: #0b1a3a;
   color: var(--hero-text);
   animation: lf-splash-failsafe 0.01s linear 9.5s forwards;
 }
@@ -436,10 +435,104 @@ html.lf-splash .lf-splash-layer {
 html.lf-splash .animate-rise {
   animation-play-state: paused;
 }
-.lf-splash-brand {
+/* The morning (components/brand/morning-mark.ts, big): the sky above the horizon, the sun rising along it, the calm
+   ground below with the greeting. CSS only; the inner layer is what the leave animation scales. */
+.lf-splash-inner {
+  --lf-horizon: 52%;
+  --lf-sun: clamp(120px, 38vw, 200px);
+  position: absolute;
+  inset: 0;
+}
+.lf-splash-sky {
+  position: absolute;
+  inset: 0 0 calc(100% - var(--lf-horizon));
+  overflow: hidden;
+  background: linear-gradient(180deg, #13284f 0%, #2e5791 42%, #7d9cc7 74%, #ffd7ad 93%, #ffb27a 100%);
+}
+.lf-splash-glow {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: calc(var(--lf-sun) * 2.6);
+  height: calc(var(--lf-sun) * 1.2);
+  transform: translateX(-50%);
+  background: radial-gradient(50% 100% at 50% 100%, rgb(255 215 173 / 0.95), rgb(255 178 122 / 0.35) 55%, rgb(255 178 122 / 0) 100%);
   opacity: 0;
-  transform: translateY(10px) scale(0.88);
-  animation: lf-brand-arrive 0.72s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s forwards;
+  animation: lf-dawn 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards;
+}
+.lf-splash-sun {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: var(--lf-sun);
+  height: var(--lf-sun);
+  margin-left: calc(var(--lf-sun) / -2);
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffc247 0%, #f5a524 55%, #f29a1c 100%);
+  transform: translate(-18%, 100%);
+  animation: lf-sunrise 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards;
+}
+/* The face: two eyes where the mark has them (10 across and 15 up, of the sun's 36). */
+.lf-splash-sun::before,
+.lf-splash-sun::after {
+  content: "";
+  position: absolute;
+  top: 24.4%;
+  width: 9.44%;
+  height: 9.44%;
+  border-radius: 50%;
+  background: #07101f;
+}
+.lf-splash-sun::before {
+  left: 31.4%;
+}
+.lf-splash-sun::after {
+  right: 31.4%;
+}
+.lf-splash-horizon {
+  position: absolute;
+  top: var(--lf-horizon);
+  left: 20px;
+  right: 20px;
+  height: 7px;
+  border-radius: 3.5px;
+  transform: translateY(-50%);
+  background: #2f7cd2;
+}
+.lf-splash-ground {
+  position: absolute;
+  inset: var(--lf-horizon) 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: clamp(28px, 7vh, 56px);
+  background: linear-gradient(180deg, #1b3263 0%, #0b1a3a 100%);
+}
+@keyframes lf-sunrise {
+  0% {
+    transform: translate(-18%, 100%);
+  }
+  55% {
+    transform: translate(-7%, 68%);
+  }
+  100% {
+    transform: translate(0, 50%);
+  }
+}
+@keyframes lf-dawn {
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lf-splash-sun {
+    animation: none;
+    transform: translate(0, 50%);
+  }
+  .lf-splash-glow {
+    animation: none;
+    opacity: 1;
+  }
 }
 .lf-letter {
   display: inline-block;
@@ -476,12 +569,6 @@ html.lf-splash .animate-rise {
 @keyframes lf-greet-line {
   to {
     transform: scaleX(1);
-  }
-}
-@keyframes lf-brand-arrive {
-  to {
-    opacity: 1;
-    transform: none;
   }
 }
 @keyframes lf-letter {

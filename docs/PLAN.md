@@ -80,13 +80,15 @@ All times are Pacific. The wording is in `docs/hq/round-prompts.md`.
 
 **Status:** the new surface is on main and live (the owner merged V3, PR #3, 2026-11-09; he has no users yet, so it went straight to main). It is the live app with:
 - four tabs: Today, Assistant, Money, School;
-- Today as a wheel of time in a sky card: the companion runs on top while the day's things roll back under it; the sky is the real sky at the time on top; drag or flick to turn through the week, "Back to now", and a tap unrolls it into the timeline at that time (spec section 7b);
+- Today as "the mechanism" (spec 7b, 7d): a wheel of time in the real sky (full screen by default, a widget card in Settings), the companion running on top while the day's things roll back under it; drag, flick, trackpad, mouse wheel or keys to turn through the week, "Back to now", and a tap pours it into Day Sky's timeline (a hill a day, a valley a night, the sky of every hour);
+- a sky with moods (clouds, rain, a December snow with lights) and rare visitors (shooting stars, birds, a little craft), and a burst of sparks when something gets done;
+- the morning logo (the sun rising on the horizon) on the icons, the top bar and the opening;
 - the real-sky colours everywhere, no purple (owner);
 - a timeline that holds the whole life: to-dos, goals, milestones, Someday and Done, with piles that name themselves ("9 assignments");
 - everything with a time flowing onto both (calendars, shifts, deadlines, reminders, and money behind the lock);
 - "Pin something".
 
-Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.webp`.
+Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What changed overnight, for the owner: `docs/hq/tonight-2026-11-09.md`.
 
 **Done:**
 - 11-07: the V3 home spec and prototype, from the owner's storyboard.
@@ -99,10 +101,11 @@ Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.
   - all-day plans read "today" or "all day";
   - a quiet face counts what the timeline holds.
 - 11-08: main merged into `v3-day-clock` (ca873df). It brought promises, this plan and the HQ test fix. The promise check now runs on open, before the clock. The check is green (1158 tests), and so are the clock, core and promises e2e.
+- 11-09 night (owner's go to work on main while he sleeps): the mechanism, step 1 (c4a4032: Day Sky's timeline back, the pour, full sky, bigger companion) and step 2 (b5b54eb: one input layer, momentum that lands, laptop size, no boxes on a laptop); the morning logo (2fb42a6); moods, visitors, the done burst, the tour, the welcome on the sky. Details and pictures: `docs/hq/tonight-2026-11-09.md`.
 - 11-09: the owner's names: V2 was the clock with self-naming piles (518d37a), V3 was V2 plus Morrow. Today became the sky card (owner picked B), then a wheel of time (5e11dbb, 5224c57, d988772) in the real-sky colours (2b002c8). A Fable review found 6 bugs, all fixed. Phone e2e 7/7 with a new wheel test; 1162/1162 unit and integration tests. The owner merged it all into main (PR #3).
 
 **Next:**
-- The owner's next round of changes to the new surface (he is about to give them, 2026-11-09).
+- From the owner's retouch list (relayed 2026-11-09) and the A-to-Z audit (`docs/audits/2026-11-09-a-to-z.md`): the welcome's "Your day, connected" on the wheel; the landing hero as the real sky and wheel; a time-true line and the uncurl morph (research P3/P4); the laptop two-column Today; the character cast (names from times of day, personalities); a setting for sky moods.
 - Rebuild the Day Clock artifact after clock changes.
 - The ADR 0032 proposals ("Tonight", "What this costs", timeline connection lines, a widget or watch) are not built and need the owner's yes.
 
@@ -282,6 +285,7 @@ Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
 - 2026-11-09, LF HQ: the admin area and HQ in the V3 sky look and comfortable on a MacBook, at the owner's word through the COO (section 5).
+- 2026-11-09 night, LF Main: the mechanism steps 1 and 2 (Day Sky's timeline, the pour, input layer, laptop size, no boxes), the morning logo, sky moods and visitors, the done burst, the tour and welcome on the sky (c4a4032, b5b54eb, 2fb42a6 and the next commits). List for the owner: docs/hq/tonight-2026-11-09.md.
 - 2026-11-09, LF Main (was LF V3): the owner merged V3 into main (PR #3): Today is a wheel of time in a sky card, the real-sky colours, no purple. Chats simplified on his word: the old LF Main joined this chat (archived), LF Managing Agents stays open, V2 and V3 branches retired.
 - 2026-11-09, LF COO: the owner is already on Vercel Pro (decision removed). New deploys had stopped reaching lifeflowweb.com because the Neon integration hit its preview branch limit (Deployment Checks: "Neon branching: Branch limit exceeded", custom domain skipped); after the owner cleared it, the evening fixes, the Today chips and the H4 404 are live. Rule: builders work on claude/chief-of-staff or a worktree branch that is NOT pushed; only main and the department branches are pushed, so each push doesn't cost a Neon branch.
 - 2026-11-09, LF COO: the owner approved H4; signed-out visitors to /admin get the same 404 as everyone else (7647a69).

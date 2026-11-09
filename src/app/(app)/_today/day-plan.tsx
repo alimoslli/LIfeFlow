@@ -35,6 +35,7 @@ export function AskBar({ name, chips = true }: { name: string; chips?: boolean }
     <div className="flex flex-col gap-3">
       <button
         type="button"
+        data-tour="ask"
         onClick={() => openJarvis()}
         className="flex min-h-14 items-center gap-3 rounded-[28px] bg-surface py-2 pr-2 pl-3 text-left shadow-lift ring-1 ring-border/70 transition-shadow hover:shadow-lift active:scale-[0.99]"
       >

@@ -17,6 +17,7 @@
 import { isExam, pileOf, sunTimes, type ClockData, type ClockItem } from "@/lib/day-clock";
 import { css, darkness, mix, skyAt, type RGB } from "@/lib/sky";
 import { COMPANIONS, drawCompanion, nightOf, type Pose } from "./companion";
+import { createVisitors, type VisitorKind } from "./visitors";
 
 export type SkyFace = { tag: string; text: string; stats: string[]; icon?: string };
 /** A stop on the open line, in the root's coordinates with the line at its home scroll. */
@@ -58,6 +59,24 @@ const hex = (h: string): RGB => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3
 /** Minutes from the top of the wheel to each end of its horizon (one turn is one day), and how flat it is. */
 const SPAN = DAY / 4;
 const HF = 0.78;
+/**
+ * The sky's mood for a day (owner, 2026-11-09: "add clouds, but not in all the settings, sometimes"; "sometimes we will
+ * add rain"; "a Christmas mode"). Decorative, never a forecast, and the same all day: most days clear, some with
+ * clouds, now and then an overcast day with rain; in December a festive sky that snows some days (always on the 24th
+ * and 25th), with lights along the horizon.
+ */
+export type Mood = { clouds: number; rain: boolean; snow: boolean; festive: boolean };
+export function moodOf(date: string): Mood {
+  let h = 2166136261;
+  for (const c of date) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  const r1 = ((h >>> 0) % 1000) / 1000;
+  const r2 = ((h >>> 11) % 1000) / 1000;
+  const [month, day] = [Number(date.slice(5, 7)), Number(date.slice(8, 10))];
+  const festive = month === 12 && day <= 26;
+  const clouds = r1 < 0.42 ? 0 : r1 < 0.78 ? 0.5 : 1;
+  return { clouds, rain: !festive && clouds === 1 && r2 < 0.4, snow: festive && (r2 < 0.55 || day === 24 || day === 25), festive };
+}
+
 /** The wheel's radius in a window this wide with this much sky above its horizon (the engine turns it by the same). */
 export const wheelR = (w: number, room: number) => Math.round(clamp(Math.min(w / 2 - 46, (room - 14) / HF - 40), 70, 240));
 function fmt(min: number) {
@@ -239,10 +258,29 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   const whoQ = root.querySelector<HTMLCanvasElement>("[data-dc=who]");
   const bgQ = root.querySelector<HTMLElement>("[data-dc=skybg]");
   const wordsQ = root.querySelector<HTMLElement>("[data-dc=words]");
-  if (!svgQ || !whoQ || !bgQ || !wordsQ) return { draw: () => {}, destroy: () => {} };
+  if (!svgQ || !whoQ || !bgQ || !wordsQ) return { draw: () => {}, visit: () => {}, destroy: () => {} };
   const [svg, who, bg, words]: [SVGSVGElement, HTMLCanvasElement, HTMLElement, HTMLElement] = [svgQ, whoQ, bgQ, wordsQ];
   const stars = bg.querySelector<SVGSVGElement>("[data-dc=stars]");
   const clouds = [...bg.querySelectorAll<HTMLElement>("[data-dc=cloud]")];
+  // the day's mood: up to six clouds (the skeleton has two), rain and snow layers, built once
+  for (const [l, t, w, hh] of [
+    [30, 20, 170, 50],
+    [78, 28, 130, 40],
+    [42, 44, 110, 34],
+    [4, 14, 120, 38],
+  ]) {
+    const c = document.createElement("span");
+    c.className = "dc-cloud dc-cloud-b";
+    Object.assign(c.style, { left: `${l}%`, top: `${t}%`, width: `${w}px`, height: `${hh}px`, opacity: "0" });
+    bg.appendChild(c);
+    clouds.push(c);
+  }
+  const rain = document.createElement("i");
+  rain.className = "dc-rain";
+  const snow = document.createElement("i");
+  snow.className = "dc-snow";
+  bg.append(rain, snow);
+  let mood: { date: string; m: Mood } | null = null;
 
   // what stays in the svg between frames: the liquid, a soft shadow, the sun's and the moon's glow, the warm spill
   const defs = el("defs", {}, svg);
@@ -276,9 +314,21 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   if (stars) {
     let s = 7;
     const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
-    for (let i = 0; i < 70; i++) {
-      const at = { cx: `${(rnd() * 100).toFixed(2)}%`, cy: `${(rnd() * 100).toFixed(2)}%`, r: rnd() < 0.18 ? 1.3 : 0.75 };
-      el("circle", { ...at, style: `animation-delay:${(-rnd() * 3.2).toFixed(2)}s` }, stars);
+    // pixel stars: squares, and now and then a bright one with four points
+    for (let i = 0; i < 80; i++) {
+      const [x, y] = [`${(rnd() * 100).toFixed(2)}%`, `${(rnd() * 100).toFixed(2)}%`];
+      const big = rnd() < 0.12;
+      const g = el("svg", { x, y, overflow: "visible", style: `animation-delay:${(-rnd() * 3.2).toFixed(2)}s`, class: "dc-px-star" }, stars);
+      if (big)
+        for (const [dx, dy] of [
+          [0, 0],
+          [-2, 0],
+          [2, 0],
+          [0, -2],
+          [0, 2],
+        ])
+          el("rect", { x: dx - 1, y: dy - 1, width: 2, height: 2 }, g);
+      else el("rect", { x: -1, y: -1, width: rnd() < 0.3 ? 2 : 1.5, height: rnd() < 0.3 ? 2 : 1.5 }, g);
     }
   }
 
@@ -295,6 +345,34 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   const back = root.querySelector<HTMLElement>("[data-dc=back]");
   const html = document.documentElement;
   let wordsH = { key: "", h: 110 };
+  // where the companion stands in the sky (for the visitors), and the visitors themselves
+  let whoAt: { x: number; y: number } | null = null;
+  const visitors = reduce
+    ? null
+    : createVisitors({
+        sky: bg,
+        isNight: () => night,
+        canVisit: () => !!last && last.p === 0 && root.dataset.state === "clock",
+        companionAt: () => whoAt,
+        // it notices: turns to look, and jumps (a craft gets a bigger jump)
+        onSeen: (kind: VisitorKind, x: number) => {
+          if (!whoAt) return;
+          dir = x < whoAt.x ? -1 : 1;
+          if (last) draw(last);
+          who.animate(
+            [
+              { transform: "translateY(0)" },
+              { transform: `translateY(${kind === "craft" ? -26 : -12}px)`, offset: 0.4 },
+              { transform: "translateY(0)", offset: 0.75 },
+              { transform: "translateY(-3px)", offset: 0.88 },
+              { transform: "translateY(0)" },
+            ],
+            { duration: 560, iterations: kind === "craft" ? 3 : 1, composite: "add" },
+          );
+        },
+      });
+  // the app's text size (Settings), read once and again on resize, never per frame
+  let remK = parseFloat(getComputedStyle(html).fontSize) / 16 || 1;
 
   // the companion (Sol by day, the moon at night) on the wheel, and standing on the open line
   const paintWho = () => {
@@ -395,6 +473,9 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const cx = W / 2;
     const R = wheelR(full ? W - 20 : win.w, full ? hyC - 36 : hyC - win.y);
     root.dataset.wheelR = String(R);
+    // the wheel's words grow with it (in rem, so the Text size setting still applies)
+    const ts = Math.round(clamp(R / 138, 1, 1.5) * 100) / 100;
+    root.style.setProperty("--dc-scale", String(ts));
     // everything on the wheel grows with it (a laptop gets a bigger wheel, tiles and companion than a phone)
     const sc = clamp(R / 140, 1, 1.45);
     const h = { a: view - SPAN, b: view + SPAN };
@@ -405,13 +486,30 @@ export function createSky(root: HTMLElement, reduce: boolean) {
 
     // ---- the window's sky: the real sky at the time on top, and the water under the horizon. It stays where it is and
     // hands over to the line's own sky (an hour's sky for every hour) as the line opens under it.
-    const [top, mid, bot] = skyAt(vm, rise, set);
+    if (mood?.date !== data.today) {
+      mood = { date: data.today, m: moodOf(data.today) };
+      // diagnostics (?debug=1&mood=clear|clouds|cloudy|rain|snow|festive): show a mood on any day
+      const q = new URLSearchParams(window.location.search);
+      const f = q.get("debug") === "1" ? q.get("mood") : null;
+      if (f)
+        mood.m = {
+          clouds: f === "clear" ? 0 : f === "clouds" ? 0.5 : f === "snow" || f === "festive" ? 0.5 : 1,
+          rain: f === "rain",
+          snow: f === "snow",
+          festive: f === "snow" || f === "festive",
+        };
+    }
+    const md = mood.m;
     const dk = darkness(vm, rise, set);
+    // an overcast day greys the sky a little by day (more when it rains)
+    const oc = (md.clouds >= 1 ? (md.rain ? 0.42 : 0.2) : 0) * (1 - dk);
+    const grey: RGB = [138, 150, 168];
+    const [top, mid, bot] = skyAt(vm, rise, set).map((c, i) => mix(c, grey, oc * (i === 2 ? 0.5 : 1))) as [RGB, RGB, RGB];
     root.dataset.sky = dk > 0.5 ? "night" : "day";
     // full: from the very top (up behind the top bar on a phone) to the water's edge, which fades into the page
     const lift = full && W < 768 ? Math.max(0, root.getBoundingClientRect().top + window.scrollY) : 0;
     const box = full
-      ? { l: lerp(0, win.x, k), r: lerp(0, win.x, k), t: lerp(-lift, win.y, k), b: lerp(hyC + 64, win.y + win.h, k), rad: lerp(0, win.r, k) }
+      ? { l: lerp(0, win.x, k), r: lerp(0, win.x, k), t: lerp(-lift, win.y, k), b: lerp(hyC + 64, win.y + win.h, k), rad: lerp(lift ? 0 : 24, win.r, k) }
       : { l: win.x, r: win.x, t: win.y, b: win.y + win.h, rad: win.r };
     const hp = clamp(((hy - box.t) / (box.b - box.t)) * 100, 0, 100);
     Object.assign(bg.style, {
@@ -419,7 +517,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       right: `${box.r}px`,
       top: `${box.t}px`,
       height: `${box.b - box.t}px`,
-      borderRadius: `${box.rad}px`,
+      borderRadius: full && !k ? `${box.rad}px ${box.rad}px 0 0` : `${box.rad}px`,
       boxShadow: full && k < 0.6 ? "none" : "",
       background: `linear-gradient(180deg, ${css(top)} 0%, ${css(mid)} ${(hp * 0.58).toFixed(2)}%, ${css(bot)} ${hp.toFixed(2)}%, ${css(mix(bot, DEEP, 0.22))} ${hp.toFixed(2)}%, ${css(mix(top, DEEP, 0.4), full ? k : 1)} 100%)`,
       opacity: String(reduce ? 1 - P : 1 - seg(P, 0.4, 0.85)),
@@ -431,7 +529,11 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     if (full && P < 0.5) root.style.setProperty("--sky-ink", skyDark ? "#eef3fb" : "#0f1a2a");
     else root.style.removeProperty("--sky-ink");
     if (stars) stars.style.opacity = String(dk * (1 - seg(P, 0, 0.5)));
-    for (const c of clouds) c.style.opacity = String((1 - dk) * 0.85 * (1 - seg(P, 0, 0.4)));
+    // clouds as the day's mood has them (faint at night), rain and snow, all gone as the line opens
+    const shown2 = Math.round(md.clouds * clouds.length);
+    clouds.forEach((c, i) => (c.style.opacity = String(i < shown2 ? (1 - 0.7 * dk) * 0.85 * (1 - seg(P, 0, 0.4)) : 0)));
+    rain.style.opacity = String(md.rain ? 0.6 * (1 - seg(P, 0, 0.4)) : 0);
+    snow.style.opacity = String(md.snow ? 0.9 * (1 - seg(P, 0, 0.4)) : 0);
 
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     svg.setAttribute("width", String(W));
@@ -486,6 +588,17 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       }
     const glowAt = el("g", {}, layer);
     el("rect", { x: box.l, y: (hy - 1).toFixed(1), width: W - box.l - box.r, height: 2, fill: "#ffffff", opacity: (0.6 * kc).toFixed(3) }, layer);
+    // December: a string of lights along the horizon
+    if (md.festive && kc > 0) {
+      const lights = el("g", { opacity: kc.toFixed(3), class: "dc-lights" }, layer);
+      const cols = ["#ff5a5a", "#ffd77a", "#5ad18a", "#7db3f2"];
+      for (let x = box.l + 14, i = 0; x < W - box.r - 10; x += 22, i++)
+        el(
+          "circle",
+          { cx: x.toFixed(1), cy: (hy - 4 + (i % 2) * 2).toFixed(1), r: 2.4, fill: cols[i % 4], style: `animation-delay:${(-(i % 7) * 0.31).toFixed(2)}s` },
+          lights,
+        );
+    }
     for (let i = 0; i < 5 && kc > 0; i++)
       for (let x = box.l + 18 + ((i * 53) % 70); x < W - box.r - 40; x += 96 + i * 18)
         el(
@@ -686,10 +799,16 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       const near5 = Math.max(5, ahead < 60 ? Math.round(ahead / 5) * 5 : Math.round(ahead / 10) * 10);
       const span = near5 < 60 ? `${near5} min` : `${Math.floor(near5 / 60)}h${near5 % 60 ? ` ${near5 % 60}m` : ""}`;
       const chip = sunUp ? `☀️ Sun sets in about ${span}` : `🌙 Sun rises in about ${span}`;
-      const cw = chip.length * 6.6 + 18;
+      // sized for its words at the wheel's scale and the app's text size
+      const k2 = ts * remK;
+      const cw = chip.length * 6.6 * k2 + 18;
       const cg = el("g", { opacity: kc.toFixed(3) }, layer);
-      el("rect", { x: (cx - cw / 2).toFixed(1), y: (waterY - 12).toFixed(1), width: cw.toFixed(1), height: 24, rx: 12, class: "dc-sunchip" }, cg);
-      txt(cg, cx, waterY + 4, chip, { class: "dc-sunchip-t" });
+      el(
+        "rect",
+        { x: (cx - cw / 2).toFixed(1), y: (waterY - 12 * k2).toFixed(1), width: cw.toFixed(1), height: (24 * k2).toFixed(1), rx: 12 * k2, class: "dc-sunchip" },
+        cg,
+      );
+      txt(cg, cx, waterY + 4 * k2, chip, { class: "dc-sunchip-t" });
     }
     if (back) {
       back.hidden = follow || P > 0.01;
@@ -729,7 +848,9 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     for (const d of shown)
       if (!d.lane && Math.abs(wx - d.x) < d.w / 2 + 4 && wy > d.y - d.h / 2 - 6 && wy < d.y + d.h / 2 + 26) wy = Math.min(wy, d.y - d.h / 2 + 1);
     // the companion's size: a good deal bigger than a tile, and bigger still on a big wheel; it shrinks onto the line
-    const size = Math.round(lerp(clamp(R * 0.46, 64, 104), 48, k));
+    // whole multiples of its 16 px sprite, so its pixels stay crisp (4x on a phone, 6x on a big laptop wheel)
+    const rest = Math.max(64, Math.round(clamp(R * 0.42, 64, 112) / 16) * 16);
+    const size = k ? Math.round(lerp(rest, 48, k)) : rest;
     const glow = `url(#${night ? "dc-glow-night" : "dc-glow-day"})`;
     el(
       "circle",
@@ -740,15 +861,22 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     who.style.width = who.style.height = `${size}px`;
     who.style.transformOrigin = `${size / 2}px ${size / 2}px`;
     who.style.transform = `translate(${(wx - size / 2).toFixed(1)}px, ${(wy - size * 0.86).toFixed(1)}px)${dir < 0 ? " scaleX(-1)" : ""}`;
+    whoAt = { x: wx - box.l, y: wy - box.t - size * 0.4 };
     who.style.opacity = String(fade);
     paintWho();
   }
 
-  const onResize = () => last && draw(last);
+  const onResize = () => {
+    remK = parseFloat(getComputedStyle(html).fontSize) / 16 || 1;
+    if (last) draw(last);
+  };
   window.addEventListener("resize", onResize);
   return {
     draw,
+    /** Diagnostics (?debug=1): a visitor now. */
+    visit: (kind?: VisitorKind) => visitors?.visit(kind),
     destroy() {
+      visitors?.destroy();
       window.clearInterval(timer);
       delete html.dataset.sky;
       window.removeEventListener("resize", onResize);

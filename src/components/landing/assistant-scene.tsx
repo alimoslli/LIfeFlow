@@ -220,10 +220,6 @@ export function AssistantScene({ tone = "paper", caption = true }: { tone?: "pap
               <i />
               Today
             </span>
-            <span>
-              <i />
-              Plan
-            </span>
             <span className="cur">
               <i />
               Assistant
