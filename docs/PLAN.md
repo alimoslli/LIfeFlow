@@ -201,6 +201,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
   - **Who talks to whom:**
     - Departments post only the major things they did, and their questions, to the COO. They don't talk to the owner directly.
     - The COO answers what it can and brings the owner only the big asks.
+    - **It replaces the COO's brief** (owner: the brief isn't that good). The Office's brief card goes away, and the COO says its round summary in the room in a few short lines, like everyone else.
     - The owner can talk to anyone; everyone sees everything.
   - **How it sounds:** short human words, like a friends' or team group chat ("Fixed the calendar thing, Outlook events show up on time now"). No AI-chatbot tone, no flooding, and no "starting" or "still working" messages. Every line comes from a real record, with a tap to the proof.
   - **Rules:**
@@ -301,6 +302,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-09, LF HQ: the Planning Room idea will replace the COO's brief card (owner); still waiting for his go.
 - 2026-11-09, LF HQ: the owner's Planning Room idea written into section 5 (an idea waiting for his go, not being built).
 - 2026-11-09 night, LF COO: on main: short assistant answers (fc7a45c: chips stop pasting lists, a 60-word reply shape, low verbosity; the owner's catch-up question went from 1,123 words to 52 on the real model), Apple token revoke on unlink and deletion (175bde4, migration 0056, Opus-reviewed), the A-to-Z audit (a0a3718), the promise test fixed for real dates (6ebc5c7). Phone sign-in must renumber its migration to 0058 before it merges; 0057 goes to the job lease (in review).
 - 2026-11-09, LF HQ: the admin area and HQ in the V3 sky look and comfortable on a MacBook, at the owner's word through the COO (section 5).
