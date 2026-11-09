@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { TODAY_COOKIE, parseTodayMode } from "@/lib/theme";
 import { ArrowRight, Briefcase, HeartPulse, Link2 } from "lucide-react";
 import { DayClock } from "@/components/day-clock/day-clock";
 import { assistantProfile } from "@/lib/assistant";
@@ -69,7 +71,9 @@ export default async function TodayPage() {
       {/* The clock is the page; the greeting is for screen readers. */}
       <h1 className="sr-only">{hello}</h1>
       <section aria-label="Your day" data-tour="today-page" className="-mx-5 sm:-mx-8 md:mx-0">
-        <DayClock data={clock}>{note && <AssistantLine name={assistantName} note={note} />}</DayClock>
+        <DayClock data={clock} mode={parseTodayMode((await cookies()).get(TODAY_COOKIE)?.value)}>
+          {note && <AssistantLine name={assistantName} note={note} />}
+        </DayClock>
       </section>
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4">
         {clock.empty && setup.length > 0 && (
