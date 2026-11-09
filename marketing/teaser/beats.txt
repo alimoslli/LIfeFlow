@@ -1,0 +1,21 @@
+LifeFlow teaser: "Before December" (first cut, Nov 9)
+
+Files
+- LifeFlow_Teaser_Before_December.mp4   the Reel, 22 s, 1080x1920, your real voice plus small sound effects (no music yet)
+- LifeFlow_Teaser_Poster_Story_1080x1920.png   poster for Stories
+- LifeFlow_Teaser_Poster_Post_1080x1350.png    poster for a feed post
+
+Where the music beats should land (add your track under it)
+- 1.0 s   the old logo glitches out, cut to Ali
+- 2.45 s  cut to both of you, the push into the TV starts
+- 5.05 s  inside the TV
+- 6.2 s   the old LifeFlow logo shows
+- 7.65 s  it melts into the horizon, night begins
+- 14.35 s back on Ali
+- 17.75 s the sunrise
+- 19.95 s "Before December."
+- 22.0 s  black (loops back to the old logo)
+
+Caption options: "We heard you. Before December." or "Something's changing."
+This cut uses the iMovie export, so the picture is softer than it will be. Upload the phone's original clip and the next cut will be sharp.
+Nothing is posted until you say "post it".

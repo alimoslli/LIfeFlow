@@ -1,0 +1,232 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Before December</title>
+<style>
+@font-face { font-family: "Fraunces"; src: url("fraunces-latin-600-normal.woff2") format("woff2"); font-weight: 600; }
+html, body { margin: 0; background: #000; }
+canvas { display: block; }
+</style></head>
+<body><canvas id="c" width="1080" height="1920"></canvas>
+<script>
+// "Before December": the rebrand teaser. seek(t) draws the frame at time t (seconds).
+const W = 1080, H = 1920, HOR = 1180;               // horizon height on the frame
+const T = { logo: 1.0, s1: 2.45, s2: 5.05, melt: 7.65, night: 14.35, s5: 17.75, sun: 19.95, end: 22.0 };
+const SKY = ["#040a18", "#07132c", "#0b1d42", "#102c58", "#173f6e", "#245a86"];
+const MARK = { sunTop: "#ffc247", sun: "#f5a524", sunLow: "#f29a1c", horizon: "#2f7cd2", glow: "#ffd7ad", glowDeep: "#ffb27a" };
+const c = document.getElementById("c"), g = c.getContext("2d");
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const ease = (k) => (k = clamp(k), k * k * (3 - 2 * k));
+const easeIn = (k) => (k = clamp(k), k * k * k);
+const easeOut = (k) => (k = clamp(k), 1 - Math.pow(1 - k, 3));
+function rng(seed) { return () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296; }
+
+const imgs = {};
+function load(src) {
+  if (!imgs[src]) imgs[src] = new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+  return imgs[src];
+}
+const pad = (n) => String(n).padStart(4, "0");
+const frameOf = (dir, t0, t, count) => `${dir}/${pad(clamp(Math.floor((t - t0) * 30) + 1, 1, count))}.jpg`;
+
+// film grain tile
+const grain = document.createElement("canvas"); grain.width = 256; grain.height = 256;
+{ const gg = grain.getContext("2d"), d = gg.createImageData(256, 256), r = rng(7);
+  for (let i = 0; i < d.data.length; i += 4) { const v = 128 + (r() - 0.5) * 120; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; }
+  gg.putImageData(d, 0, 0); }
+function addGrain(t, a) {
+  g.save(); g.globalAlpha = a; g.globalCompositeOperation = "overlay";
+  const ox = Math.floor((t * 977) % 256), oy = Math.floor((t * 613) % 256);
+  for (let y = -oy; y < H; y += 256) for (let x = -ox; x < W; x += 256) g.drawImage(grain, x, y);
+  g.restore();
+}
+function vignette(a) {
+  const v = g.createRadialGradient(W / 2, H / 2, H * 0.25, W / 2, H / 2, H * 0.72);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, `rgba(0,0,0,${a})`);
+  g.fillStyle = v; g.fillRect(0, 0, W, H);
+}
+
+// ---------- the night: sky gradient, ground, stars ----------
+function night(alpha, starsT) {
+  g.save(); g.globalAlpha = alpha;
+  const s = g.createLinearGradient(0, 0, 0, HOR);
+  SKY.forEach((col, i) => s.addColorStop(i / (SKY.length - 1), col));
+  g.fillStyle = s; g.fillRect(0, 0, W, HOR);
+  const gr = g.createLinearGradient(0, HOR, 0, H);
+  gr.addColorStop(0, "#0f2849"); gr.addColorStop(0.35, "#081a33"); gr.addColorStop(1, "#040a18");
+  g.fillStyle = gr; g.fillRect(0, HOR, W, H - HOR);
+  // stars: pixel squares, appearing one by one
+  const r = rng(42), P = 6;
+  for (let i = 0; i < 120; i++) {
+    const x = Math.floor(r() * (W / P)) * P, y = Math.floor(r() * ((HOR - 60) / P)) * P;
+    const born = i / 120 * 4.2 + r() * 0.3, kind = r();
+    const age = starsT - born;
+    if (age <= 0) continue;
+    const tw = 0.65 + 0.35 * Math.sin(starsT * (1.5 + r() * 2.5) + i);
+    const a = clamp(age / 0.35) * tw * alpha;
+    g.globalAlpha = a;
+    if (kind > 0.93) {           // a sparkle: a small plus
+      g.fillStyle = "#fff3c4";
+      g.fillRect(x, y, P, P); g.fillRect(x - P, y, P, P); g.fillRect(x + P, y, P, P); g.fillRect(x, y - P, P, P); g.fillRect(x, y + P, P, P);
+    } else {
+      g.fillStyle = kind > 0.75 ? "#cfe0ff" : kind > 0.68 ? "#ffd77a" : "#ffffff";
+      const sz = kind > 0.5 ? P : P * 0.67;
+      g.fillRect(x, y, sz, sz);
+    }
+  }
+  g.restore();
+}
+function horizonLine(alpha, w) {
+  if (alpha <= 0) return;
+  g.save(); g.globalAlpha = alpha;
+  g.shadowColor = "rgba(47,124,210,0.9)"; g.shadowBlur = 28;
+  g.fillStyle = MARK.horizon;
+  const h = 12, x = W / 2 - w / 2;
+  g.beginPath(); g.roundRect(x, HOR - h / 2, w, h, h / 2); g.fill();
+  g.restore();
+}
+function sunrise(k) {            // k 0..1: glow builds, the top edge of the sun peeks over
+  if (k <= 0) return;
+  const R = 330, show = 70 * easeOut(k), cy = HOR + R - show;
+  g.save();
+  const gl = g.createRadialGradient(W / 2, HOR, 0, W / 2, HOR, 520);
+  gl.addColorStop(0, `rgba(255,215,173,${0.85 * ease(k)})`); gl.addColorStop(0.45, `rgba(255,178,122,${0.38 * ease(k)})`); gl.addColorStop(1, "rgba(255,178,122,0)");
+  g.beginPath(); g.rect(0, 0, W, HOR - 6); g.clip();
+  g.fillStyle = gl; g.fillRect(0, HOR - 560, W, 560);
+  const sg = g.createLinearGradient(0, cy - R, 0, cy + R);
+  sg.addColorStop(0, MARK.sunTop); sg.addColorStop(0.55, MARK.sun); sg.addColorStop(1, MARK.sunLow);
+  g.fillStyle = sg; g.beginPath(); g.arc(W / 2, cy, R, 0, Math.PI * 2); g.fill();
+  g.restore();
+}
+
+// ---------- metaballs (TV blobs -> the old mark -> the melt) ----------
+const MB = document.createElement("canvas"); MB.width = 270; MB.height = 480;
+const mg = MB.getContext("2d"), mimg = mg.createImageData(270, 480);
+function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+function metaballs(balls, alpha) {     // balls: {x,y,sx,sy,col:[r,g,b]} in frame px
+  const d = mimg.data, s = 4;
+  for (let py = 0; py < 480; py++) for (let px = 0; px < 270; px++) {
+    const X = px * s + 2, Y = py * s + 2;
+    let f = 0, cr = 0, cg = 0, cb = 0;
+    for (const b of balls) {
+      const dx = (X - b.x) / b.sx, dy = (Y - b.y) / b.sy, v = 1 / (dx * dx + dy * dy + 1e-4);
+      f += v; cr += b.col[0] * v; cg += b.col[1] * v; cb += b.col[2] * v;
+    }
+    const i = (py * 270 + px) * 4, a = clamp((f - 0.9) / 0.35);
+    // glossy look: brighter toward the middle of each blob
+    const shine = clamp((f - 1.2) / 3) * 60;
+    d[i] = cr / f + shine; d[i + 1] = cg / f + shine; d[i + 2] = cb / f + shine; d[i + 3] = a * 255;
+  }
+  mg.putImageData(mimg, 0, 0);
+  g.save(); g.globalAlpha = alpha; g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+  g.filter = "blur(14px)"; g.globalAlpha = alpha * 0.55; g.drawImage(MB, 0, 0, W, H);   // glow
+  g.filter = "blur(2px)"; g.globalAlpha = alpha; g.drawImage(MB, 0, 0, W, H);
+  g.restore();
+}
+// the old mark's three drops (from the real 512 px logo), placed at the frame centre at 640 px wide
+const LOGO = { size: 640, cx: W / 2, cy: 860 };
+const DROPS = [[150, 330, 122], [356, 150, 84], [392, 398, 56]].map(([x, y, r]) => ({
+  x: LOGO.cx + (x / 512 - 0.5) * LOGO.size, y: LOGO.cy + (y / 512 - 0.5) * LOGO.size, r: r / 512 * LOGO.size }));
+const GREEN = [[46, 92, 66], [70, 120, 88], [96, 146, 110]];
+const TVBLOBS = [ // colours from the TV behind you
+  { x: 420, y: 520, r: 150, col: hexRgb("#b77cff") }, { x: 760, y: 360, r: 110, col: hexRgb("#7cf59a") },
+  { x: 300, y: 1260, r: 130, col: hexRgb("#ff6a3d") }, { x: 800, y: 1130, r: 95, col: hexRgb("#c38bff") } ];
+function meltBalls(t) {              // t from 0 (blobs) to 1 (a flat line)
+  // 0..0.35: TV blobs drift to the drops and turn green
+  // 0.35..0.55: the drops (the real logo shows on top)
+  // 0.55..1: they fall to the horizon and flatten into a line
+  const out = [];
+  for (let i = 0; i < 4; i++) {
+    const a = TVBLOBS[i], b = DROPS[Math.min(i, 2)];
+    const k1 = ease(t / 0.35), k3 = easeIn((t - 0.55) / 0.45);
+    const col = a.col.map((v, j) => lerp(v, GREEN[Math.min(i, 2)][j], k1));
+    let x = lerp(a.x, b.x, k1), y = lerp(a.y, b.y, k1), r = lerp(a.r, b.r, k1) * (i === 3 ? 1 - k1 : 1);
+    y = lerp(y, HOR, k3); x = lerp(x, W / 2 + (x - W / 2) * 0.6, k3);
+    const sx = r * lerp(1, 6.5, k3), sy = r * lerp(1, 0.05, k3);
+    const meltCol = col.map((v, j) => lerp(v, hexRgb(MARK.horizon)[j], k3));
+    out.push({ x, y, sx: Math.max(sx, 1), sy: Math.max(sy, 1), col: meltCol });
+  }
+  return out;
+}
+
+// ---------- the frame ----------
+async function poster() {
+  g.save(); g.fillStyle = "#000"; g.fillRect(0, 0, W, H); g.restore();
+  night(1, 12); sunrise(1); horizonLine(1, 920);
+  g.save(); g.fillStyle = "#ffd77a"; g.textAlign = "center"; g.font = "600 104px Fraunces"; g.fillText("Before December.", W / 2, 1460);
+  g.globalAlpha = 0.75; g.fillStyle = "#8fbbe6"; g.font = "600 46px Fraunces"; g.fillText("LifeFlow", W / 2, 1790); g.restore();
+  vignette(0.3); addGrain(3.3, 0.05);
+}
+async function seek(t) {
+  if (t < 0) return poster();
+  g.save(); g.fillStyle = "#000"; g.fillRect(0, 0, W, H); g.restore();
+  if (t < T.logo) {                                   // the old LifeFlow, as people knew it
+    const logo = await load("old_mark.png");
+    g.fillStyle = "#f3eee2"; g.fillRect(0, 0, W, H);
+    const k = clamp((t - 0.62) / 0.38);                // glitch on the way out
+    const s = LOGO.size, x = LOGO.cx - s / 2, y = LOGO.cy - s / 2;
+    if (k <= 0) g.drawImage(logo, x, y, s, s);
+    else {
+      const r = rng(Math.floor(t * 30) + 3);
+      for (let i = 0; i < 18; i++) {
+        const sy = (i / 18) * 512, sh = 512 / 18, off = (r() - 0.5) * 90 * k;
+        g.drawImage(logo, 0, sy, 512, sh, x + off, y + (i / 18) * s, s, s / 18 + 1);
+      }
+      g.globalAlpha = 0.35 * k; g.globalCompositeOperation = "multiply";
+      g.drawImage(logo, x + 14 * k, y, s, s); g.globalCompositeOperation = "source-over"; g.globalAlpha = 1;
+    }
+    addGrain(t, 0.05);
+  } else if (t < T.s1) {                              // Ali, close: "I realized what's wrong."
+    const im = await load(frameOf("s1", T.logo, t, 45));
+    g.filter = "contrast(1.06) saturate(0.92) brightness(0.98)"; g.drawImage(im, 0, 0, W, H); g.filter = "none";
+    vignette(0.45); addGrain(t, 0.1);
+  } else if (t < T.s2 + 0.45) {                       // both of you; push in, into the TV
+    const ts = Math.min(t, T.s2 - 1 / 30);
+    const im = await load(frameOf("s2", T.s1, ts, 79));
+    const k = easeIn((t - (T.s1 + 0.6)) / (T.s2 - T.s1 - 0.4));
+    // the square picture sits in the middle of the tall frame; the camera moves toward the purple blob
+    const cx = lerp(540, 420, k), cy = lerp(540, 405, k), size = lerp(1080, 250, k);
+    const win = lerp(1080, H, ease((t - (T.s2 - 0.5)) / 0.9));         // the window opens to the full frame at the end
+    g.filter = `contrast(1.06) saturate(${lerp(0.92, 1.3, k)}) blur(${lerp(0, 6, k * k)}px)`;
+    const dw = win, dh = win, dx = (W - dw) / 2, dy = (H - dh) / 2;
+    g.drawImage(im, cx - size / 2, cy - size / 2, size, size, dx, dy, dw, dh);
+    g.filter = "none";
+    if (t > T.s2 - 0.15) metaballs(meltBalls(0), ease((t - (T.s2 - 0.15)) / 0.6));
+    vignette(0.4); addGrain(t, 0.1);
+  } else if (t < T.night) {                           // blobs -> the old mark -> the melt -> the night
+    const m = clamp((t - T.s2) / (T.melt - T.s2));      // 0..1 across the melt
+    const nightIn = ease((t - (T.melt - 0.6)) / 1.0);
+    g.fillStyle = "#03060d"; g.fillRect(0, 0, W, H);
+    night(nightIn, t - T.melt + 0.2);
+    const logoK = clamp(1 - Math.abs((m - 0.45) / 0.12));             // the real logo shows for a moment
+    metaballs(meltBalls(m), 1 - ease((t - T.melt + 0.1) / 0.5) * 0.0);
+    if (logoK > 0) {
+      const logo = await load("old_mark.png");
+      g.globalAlpha = ease(logoK); g.drawImage(logo, LOGO.cx - LOGO.size / 2, LOGO.cy - LOGO.size / 2, LOGO.size, LOGO.size); g.globalAlpha = 1;
+    }
+    horizonLine(ease((t - (T.melt - 0.25)) / 0.5), lerp(300, 920, ease((t - (T.melt - 0.25)) / 1.2)));
+    vignette(0.35); addGrain(t, 0.06);
+  } else if (t < T.s5) {                              // back on Ali: "Before December, something big is coming."
+    const im = await load(frameOf("s5", T.night, t, 103));
+    g.filter = "contrast(1.07) saturate(0.9) brightness(0.96)"; g.drawImage(im, 0, 0, W, H); g.filter = "none";
+    const fadeIn = 1 - ease((t - T.night) / 0.25);
+    if (fadeIn > 0) { g.fillStyle = `rgba(3,6,13,${fadeIn})`; g.fillRect(0, 0, W, H); }
+    vignette(0.5); addGrain(t, 0.1);
+  } else {                                            // the sunrise, then the words
+    const k = (t - T.s5) / (T.sun - T.s5);
+    night(1, 6 + (t - T.s5));
+    sunrise(ease(k));
+    horizonLine(1, 920);
+    const tk = ease((t - T.sun) / 0.6);
+    if (tk > 0) {
+      g.save(); g.globalAlpha = tk; g.fillStyle = "#ffd77a"; g.textAlign = "center";
+      g.font = "600 104px Fraunces"; g.fillText("Before December.", W / 2, 1460);
+      g.restore();
+    }
+    const out = ease((t - (T.end - 0.7)) / 0.7);
+    if (out > 0) { g.fillStyle = `rgba(0,0,0,${out})`; g.fillRect(0, 0, W, H); }
+    vignette(0.3); addGrain(t, 0.05);
+  }
+}
+window.seek = seek;
+window.ready = document.fonts.load("600 104px Fraunces").then(() => true);
+</script></body></html>
