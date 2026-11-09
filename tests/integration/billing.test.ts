@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { POST } from "@/app/api/billing/webhook/route";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { applyStripeEvent, billingConfig, isPro, requirePro, validStripeEvent } from "@/server/billing";
 import { closeDb, getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
@@ -38,13 +38,17 @@ describe("LifeFlow Pro", () => {
     }) as unknown as typeof fetch;
   const down = (async () => new Response("{}", { status: 503 })) as unknown as typeof fetch;
   const ev = (type: string, customer: string, status?: string) => ({ type, data: { object: { customer, ...(status ? { status } : {}) } } });
-  const setup = async () => {
+  const setup = async (live: { id: string; status: string }[] = [{ id: "s0", status: "active" }]) => {
     const { user } = await makeUser();
     const db = getDb();
     const customer = `cus_${user.id}`;
     const plan = async () => (await db.select({ p: users.plan }).from(users).where(eq(users.id, user.id)))[0].p;
     expect(await plan()).toBe("free");
-    await applyStripeEvent(db, { type: "checkout.session.completed", data: { object: { client_reference_id: user.id, customer } } });
+    await applyStripeEvent(
+      db,
+      { type: "checkout.session.completed", data: { object: { client_reference_id: user.id, customer } } },
+      { cfg: CFG, fetchImpl: stripeWith(live) },
+    );
     return { db, customer, plan };
   };
 
@@ -118,5 +122,47 @@ describe("LifeFlow Pro", () => {
       vi.unstubAllGlobals();
       vi.unstubAllEnvs();
     }
+  });
+
+  it("a late checkout after the subscription ended stays free; an unpaid or incomplete one does too", async () => {
+    for (const live of [[{ id: "s", status: "canceled" }], [{ id: "s", status: "unpaid" }], [{ id: "s", status: "incomplete" }], []]) {
+      const { plan } = await setup(live);
+      expect(await plan()).toBe("free");
+    }
+  });
+
+  it("a request skipped under a held lease answers 503 and changes nothing", async () => {
+    const { db, customer, plan } = await setup();
+    await db.execute(
+      sql`insert into job_locks (name, holder, expires_at, skips, live_wanted) values (${"stripe:" + customer}, 'other', now() + interval '1 minute', 0, false)`,
+    );
+    try {
+      expect(await applyStripeEvent(db, ev("customer.subscription.deleted", customer), { cfg: CFG, fetchImpl: stripeWith([]) })).toBe("busy");
+      expect(await plan()).toBe("pro");
+      vi.stubEnv("STRIPE_SECRET_KEY", "sk_test");
+      vi.stubEnv("STRIPE_WEBHOOK_SECRET", "whsec");
+      vi.stubEnv("STRIPE_PRICE_ID", "price_1");
+      vi.stubEnv("APP_URL", "https://lifeflow.test");
+      const body = JSON.stringify(ev("customer.subscription.deleted", customer));
+      const t = Math.floor(Date.now() / 1000);
+      const sig = createHmac("sha256", "whsec").update(`${t}.${body}`).digest("hex");
+      const res = await POST(
+        new Request("https://lifeflow.test/api/billing/webhook", { method: "POST", body, headers: { "stripe-signature": `t=${t},v1=${sig}` } }),
+      );
+      expect(res.status).toBe(503);
+      expect(await plan()).toBe("pro");
+    } finally {
+      vi.unstubAllEnvs();
+      await db.execute(sql`delete from job_locks where name = ${"stripe:" + customer}`);
+    }
+  });
+
+  it("a Stripe timeout throws and changes nothing", async () => {
+    const { db, customer, plan } = await setup();
+    const timeout = (async () => {
+      throw new DOMException("timed out", "TimeoutError");
+    }) as unknown as typeof fetch;
+    await expect(applyStripeEvent(db, ev("customer.subscription.deleted", customer), { cfg: CFG, fetchImpl: timeout })).rejects.toThrow();
+    expect(await plan()).toBe("pro");
   });
 });
