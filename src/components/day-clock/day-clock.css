@@ -1191,7 +1191,7 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
 }
 .dc-skymode .dc-d-edit,
 .dc-skymode .dc-d-open {
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--text) 7%, transparent);
   color: var(--text);
   border-radius: 15px;
 }
