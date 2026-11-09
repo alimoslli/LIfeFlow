@@ -66,13 +66,20 @@ export default async function TodayPage() {
     return { clock, note, assistantName: assistantProfile(user.preferences).name, setup, hello: `${greetingIn(tz)}, ${user.name.split(" ")[0]}` };
   });
 
+  const mode = parseTodayMode((await cookies()).get(TODAY_COOKIE)?.value);
   return (
-    <div className="flex flex-col gap-5">
+    <div className="dc-today flex flex-col gap-5">
       {/* The clock is the page; the greeting is for screen readers. */}
       <h1 className="sr-only">{hello}</h1>
       <section aria-label="Your day" data-tour="today-page" className="-mx-5 sm:-mx-8 md:mx-0">
-        <DayClock data={clock} mode={parseTodayMode((await cookies()).get(TODAY_COOKIE)?.value)}>
+        <DayClock data={clock} mode={mode}>
           {note && <AssistantLine name={assistantName} note={note} />}
+          {/* a laptop's full sky has the ask bar beside the wheel, under the assistant's line (CSS shows one of the two) */}
+          {mode === "full" && (
+            <div className="dc-ask">
+              <AskBar name={assistantName} chips={false} />
+            </div>
+          )}
         </DayClock>
       </section>
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4">
@@ -88,7 +95,9 @@ export default async function TodayPage() {
             <ArrowRight className="h-4 w-4 shrink-0 text-muted" />
           </Link>
         )}
-        <AskBar name={assistantName} chips={false} />
+        <div className={mode === "full" ? "dc-ask-below" : undefined}>
+          <AskBar name={assistantName} chips={false} />
+        </div>
         {/* The rest of the day, one tap away, below the fold so the clock stays the whole first screen. */}
         <nav aria-label="More of your day" className="flex flex-wrap justify-center gap-2 pt-1">
           {more.map(({ href, label, icon: Icon }) => (

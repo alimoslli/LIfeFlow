@@ -78,7 +78,11 @@ export function moodOf(date: string): Mood {
 }
 
 /** The wheel's radius in a window this wide with this much sky above its horizon (the engine turns it by the same). */
-export const wheelR = (w: number, room: number) => Math.round(clamp(Math.min(w / 2 - 46, (room - 14) / HF - 40), 70, 240));
+export const wheelR = (w: number, room: number, max = 240) => Math.round(clamp(Math.min(w / 2 - 46, (room - 14) / HF - 40), 70, max));
+/** A laptop's full sky is wide enough for two sides: the wheel on the left, and on the right what's now, next and the
+ *  assistant, in words on the sky (owner, 2026-11-09: no boxes). The same width as the `today` container query in CSS. */
+export const WIDE = 1000;
+const WIDE_COL = 0.58;
 function fmt(min: number) {
   const m = mod(Math.round(min));
   const h = Math.floor(m / 60);
@@ -338,6 +342,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   let pose: Pose = "stand";
   let step = 0;
   let fit = "";
+  let shownH = 0;
   // which way the companion runs (it turns round when the wheel goes back in time), and when it last stepped
   let lastView: number | null = null;
   let dir = 1;
@@ -464,14 +469,18 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     // ---- closed, the sky is the whole top of the screen (full, the default) or the line's window (widget); either way
     // it ends up as the window. The words sit under it and the foot under them, so the horizon is placed to leave room.
     const full = root.dataset.mode !== "widget";
+    // a laptop: the wheel on the left, the words and the foot on the right (CSS places their sides, this their height)
+    const wide = full && W >= WIDE;
+    if (wide !== (root.dataset.wide === "true")) root.dataset.wide = String(wide);
+    const colL = wide ? Math.round(W * WIDE_COL) : W;
     const win = geo.win;
     const footEl = root.querySelector<HTMLElement>("[data-dc=foot]");
     const footH = footEl?.offsetHeight ? footEl.offsetHeight + 12 : 0;
     if (wordsH.key !== `${words.dataset.html}|${W}`) wordsH = { key: `${words.dataset.html}|${W}`, h: words.offsetHeight || 110 };
-    const hyC = full ? Math.round(clamp(H - footH - wordsH.h - 78, 200, Math.max(200, H * 0.62))) : geo.hor;
+    const hyC = full ? Math.round(wide ? H - 92 : clamp(H - footH - wordsH.h - 78, 200, Math.max(200, H * 0.62))) : geo.hor;
     const hy = lerp(hyC, geo.hor, k);
-    const cx = W / 2;
-    const R = wheelR(full ? W - 20 : win.w, full ? hyC - 36 : hyC - win.y);
+    const cx = wide ? Math.round(colL / 2 + 8) : W / 2;
+    const R = wheelR(full ? colL - 20 : win.w, full ? hyC - 36 : hyC - win.y, wide ? 270 : 240);
     root.dataset.wheelR = String(R);
     // the wheel's words grow with it (in rem, so the Text size setting still applies)
     const ts = Math.round(clamp(R / 138, 1, 1.5) * 100) / 100;
@@ -631,29 +640,6 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     // midnight turns over, and "Now" while the wheel is turned away. They read inward, away from the rim.
     const marks = el("g", { opacity: kc.toFixed(3) }, layer);
     const inward = (x: number) => (x > cx + 12 ? "end" : x < cx - 12 ? "start" : "middle");
-    for (let d = dayOf(h.a) - 1; d <= dayOf(h.b) + 1; d++) {
-      for (const [t, name] of [
-        [d * DAY + rise, "Sunrise"],
-        [d * DAY + set, "Sunset"],
-      ] as const) {
-        if (t < h.a || t > h.b) continue;
-        const [x, y] = wheelAt(t);
-        el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 4, class: "dc-rim-sun", opacity: up(t).toFixed(3) }, marks);
-        const [lx, ly] = wheelAt(t, -18);
-        txt(marks, lx, ly + 4, `${name} about ${fmt(Math.round(mod(t) / 5) * 5)}`, { class: "dc-rim-t", "text-anchor": inward(lx), opacity: up(t).toFixed(3) });
-      }
-      const t = d * DAY;
-      if (t > h.a + 20 && t < h.b - 20) {
-        const [x, y] = wheelAt(t, -18);
-        txt(marks, x, y + 4, dayWord(t, data), { class: "dc-rim-t", "text-anchor": inward(x), opacity: up(t).toFixed(3) });
-      }
-    }
-    if (!follow && inHalf(now)) {
-      const [x, y] = wheelAt(now);
-      el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 5.5, class: "dc-rim-now", opacity: up(now).toFixed(3) }, marks);
-      const [lx, ly] = wheelAt(now, -18);
-      txt(marks, lx, ly + 4, "Now", { class: "dc-rim-t", "text-anchor": inward(lx), opacity: up(now).toFixed(3) });
-    }
 
     // ---- tiles: one per moment on the rim (a pile when several share it, what's on now leading), late things at now,
     // the next two with their time. A tile that would sit on another moves just inside; failing that, it piles up.
@@ -705,6 +691,38 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       }
       const lead = (tile ?? near) as Tile;
       for (const o of gp) tileOf.set(o.id, o === lead.it ? lead : { ...lead, it: o, of: lead });
+    }
+    // the marks inside the rim, drawn now that the tiles are placed: a mark a tile would cover moves further in, or
+    // keeps quiet (the tile says the time)
+    const fontPx = 10.56 * ts * remK;
+    const mark = (t: number, s: string) => {
+      for (const lift of [-18, -18 - 46 * sc]) {
+        const [x, y] = wheelAt(t, lift);
+        const a = inward(x);
+        const w = s.length * fontPx * 0.56;
+        const l = a === "start" ? x : a === "end" ? x - w : x - w / 2;
+        if (tiles.some((q) => l < q.x + q.w / 2 + 4 && l + w > q.x - q.w / 2 - 4 && y + 4 - fontPx < q.y + q.h / 2 + 2 && y + 6 > q.y - q.h / 2 - 2)) continue;
+        txt(marks, x, y + 4, s, { class: "dc-rim-t", "text-anchor": a, opacity: up(t).toFixed(3) });
+        return;
+      }
+    };
+    for (let d = dayOf(h.a) - 1; d <= dayOf(h.b) + 1; d++) {
+      for (const [t, name] of [
+        [d * DAY + rise, "Sunrise"],
+        [d * DAY + set, "Sunset"],
+      ] as const) {
+        if (t < h.a || t > h.b) continue;
+        const [x, y] = wheelAt(t);
+        el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 4, class: "dc-rim-sun", opacity: up(t).toFixed(3) }, marks);
+        mark(t, `${name} about ${fmt(Math.round(mod(t) / 5) * 5)}`);
+      }
+      const t = d * DAY;
+      if (t > h.a + 20 && t < h.b - 20) mark(t, dayWord(t, data));
+    }
+    if (!follow && inHalf(now)) {
+      const [x, y] = wheelAt(now);
+      el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 5.5, class: "dc-rim-now", opacity: up(now).toFixed(3) }, marks);
+      mark(now, "Now");
     }
     // on the open line each goes to its stop
     const stopOf = new Map<string, SkyNode>();
@@ -816,17 +834,32 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       back.style.top = `${waterY - 18}px`;
     }
 
-    // ---- the words under the window; the parts that don't fit above the foot give way (after, then, the numbers)
-    const wordsTop = full ? hyC + 70 : win.y + win.h + 14;
+    // ---- the words under the window (on a laptop, beside the wheel with the foot under them, the two centred in the
+    // sky); the parts that don't fit give way (after, then, the numbers)
+    const below = wide && footH ? footH + 10 : 0;
+    const wordsTop = wide ? Math.round(Math.max(76, (hyC - wordsH.h - below) / 2)) : full ? hyC + 70 : win.y + win.h + 14;
     words.style.top = `${wordsTop}px`;
-    const room = H - footH - wordsTop;
+    const room = wide ? hyC - 28 - wordsTop - below : H - footH - wordsTop;
     const fitKey = `${words.dataset.html}|${room}`;
     if (fit !== fitKey) {
       const parts = [".dc-w-after", ".dc-w-then", ".dc-w-pills"].map((sel) => words.querySelector<HTMLElement>(sel)).filter((e) => e !== null);
       for (const e of parts) e.style.display = "";
       for (const e of parts) if (words.offsetHeight > room) e.style.display = "none";
+      shownH = words.offsetHeight;
       fit = fitKey;
     }
+    if (footEl) footEl.style.top = wide ? `${wordsTop + shownH + 22}px` : "";
+    if (wide) {
+      // their ink follows the sky behind them: light on a deep sky, dark on a pale one
+      const f = ((wordsTop + shownH / 2 - box.t) / (box.b - box.t)) * 100;
+      const a = hp * 0.58;
+      const c = f < a ? mix(top, mid, clamp(f / a, 0, 1)) : mix(mid, bot, clamp((f - a) / Math.max(1, hp - a), 0, 1));
+      const ink = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2] < 150 ? "light" : "dark";
+      if (root.dataset.ink !== ink) root.dataset.ink = ink;
+      // the whole wheel is the place to grab, not the words beside it
+      const hit = root.querySelector<HTMLElement>("[data-dc=hit]");
+      if (hit) Object.assign(hit.style, { left: "0px", top: "48px", width: `${colL}px`, height: `${hyC + 40 - 48}px` });
+    } else delete root.dataset.ink;
     words.style.opacity = String(reduce ? 1 - P : kc);
     words.style.transform = `translateY(${(24 * eOut(seg(P, 0, 0.45))).toFixed(1)}px)`;
     words.style.visibility = P > 0.4 ? "hidden" : "visible";
