@@ -115,6 +115,8 @@ export async function releaseJobLock(name: string, holder: string): Promise<numb
  * `run(live)` does the sync. `maxMs` is the calling route's own time limit (60 s for webhook, Sync now and connect;
  * 300 s for the cron and the assistant): the lease is just over it, so a run the platform kills frees within seconds of
  * its limit, and extra rounds only start in the first half of it.
+ * This assumes the platform stops a request at its `maxDuration` (Vercel does); self-hosted, a sync past the lease could
+ * overlap a newer one (the unique index on provider transaction ids still blocks duplicate rows).
  */
 export const withPlaidSyncLock = <T>(integrationId: string, run: (live: boolean) => Promise<T>, opts: { live?: boolean; maxMs?: number } = {}) => {
   const maxMs = opts.maxMs ?? PLAID_ROUTE_MS;
