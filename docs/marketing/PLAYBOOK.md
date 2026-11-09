@@ -9,21 +9,21 @@ The single source of truth for LifeFlow's social media and ads. Any Claude chat,
 ## 1. The brand
 
 **The vision (use it in every script, caption and answer):**
-LifeFlow is a personal assistant with one job: serve you and help you get the most out of your time.
+LifeFlow is your life companion with one job: serve you and help you get the most out of your time.
 - **Built by someone living the problem.** The founder carries seven classes a semester, working 30 hours a week at a retail job, side projects and transfer applications, all at once. No app connected any of it, so he built the one he needed, and now builds it for everyone with a full life. He keeps asking users what they need.
 - **One job.** Not research, not websites, not "anything". Every feature helps you run your life.
 - **Always connected.** Classes, shifts, money, calendar and health are connected at the same time, so it finds the dots, connects them and acts: a shift that clashes with an exam, a bill before payday.
 - **Helps without being asked.** It notices first, a few quiet messages a day, with the numbers behind each one.
-- **Why not a big AI assistant?** Big assistants try to do everything for everyone. LifeFlow does one thing: it's your personal assistant, connected to your classes, shifts, money and calendar all the time, so it sees how your whole week fits together and helps before you ask. And it's built by a student who works 30 hours a week and carries a full course load, who uses it every day and builds what people like him actually need.
+- **Why not a big AI assistant?** Big assistants try to do everything for everyone. LifeFlow does one thing: it's your companion, connected to your classes, shifts, money and calendar all the time, so it sees how your whole week fits together and helps before you ask. And it's built by a student who works 30 hours a week and carries a full course load, who uses it every day and builds what people like him actually need.
 - **Short line:** "Built by a student solving his own problem, for everyone with a full life."
 - Stay honest: never claim other assistants *can't* connect to things; say LifeFlow is built around it. No em dashes in public copy.
 
 
 - **Name:** LifeFlow. **Site:** lifeflowweb.com. **Instagram:** @lifeflowweb.
-- **What it is:** a personal assistant app that brings your schedule, school, work, money and goals into one place, and helps on its own, even when you don't open it.
+- **What it is:** a life companion app that brings your schedule, school, work, money and goals into one place, and helps on its own, even when you don't open it.
 - **Words:** read `docs/marketing/WORDS.md` first (the one idea, everyone who earns, words we use, retired words).
 - **Audience:** LifeFlow is for everyone with a full life. Not just students (owner, 2026-11-07): students (college, 18 to 24) are one audience, alongside working people, parents, side hustlers and anyone juggling schedule, work and money. The marketer tests different audiences and leans into whichever the real numbers show growing.
-- **The assistant:** it has no fixed name. Each person names it, and until they do the app says "your assistant". In ads, captions, scripts and on the landing page, always say **"your personal assistant"**. Never "Jarvis": that's only an internal code name and never appears to anyone outside the team (owner's rule, CLAUDE.md).
+- **The companion (owner, 2026-11-09, via the COO):** never say "personal assistant", "AI assistant" or "assistant" in any copy: scripts, captions, voiceover, ad text, store text and this playbook's drafts. It is **"your companion"** (a life companion; a name comes later). Example: "Customize your companion". Never "Jarvis": that's only an internal code name and never appears to anyone outside the team (owner's rule, CLAUDE.md). Older entries below that say "assistant" are history, not wording to reuse.
 - **Look:** deep green hero colour on cream, the green wave logo mark. Brand guide: https://claude.ai/artifact/Xngzg4E3JKBE6fEvVrTpA8
 - **Price:** free while in testing. At App Store launch it becomes paid through Apple in-app purchase. Don't show an App Store badge until the app is live there.
 
@@ -507,6 +507,7 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
 
 ## 6. Decisions and preferences (keep adding)
 
+- 2026-11-09 (owner, via the COO): never say "personal assistant", "AI assistant" or "assistant" in any copy (scripts, captions, voiceover, ad text, store text, the playbook). The character is "your companion", a life companion; a name comes later. Example: "Customize your companion". Applied the same day to the brand section, WORDS.md and the School Project doc (plan, lines, shoot sheet, footage log). Ali says "assistant" in a few car-interview lines; use them only with the word cut, and new takes say "your companion".
 - 2026-11-08: the COO handed all marketing to the Marketing chat. This file now merges the COO's playbook from `main` (brand section, section 5b, the decisions below) with the full history from this branch. Where they disagree, the newest owner decision wins: positioning "not another AI assistant" (below) refines the brand section's "personal assistant" wording; Sterling is the voiceover and the female voices are out (this replaces "app videos are narrated by Sienna").
 - 2026-11-08 (owner): cut Higgsfield costs. Credits go only to raw AI footage, never to music, voices or finished edits.
   - **No generated music or voice.** The owner adds the music himself; videos are delivered silent (with sound effects only if made locally for free) plus a note of where the beats should land.

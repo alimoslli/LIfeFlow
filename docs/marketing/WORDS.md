@@ -33,7 +33,7 @@ A script picks one person, but across a campaign the cast covers several of thes
 | makes room / gives you time back | what it does, said as the result |
 | your time back, your life back | the promise |
 | the way you earn | covers every kind of income |
-| your assistant (the name you give it) | it has no fixed name; never "Jarvis" |
+| your companion | a life companion; a name comes later (owner, 2026-11-09). Never "assistant" or "Jarvis" |
 | it noticed / it moved / you said yes | it acts first, you approve |
 | a flow for everyone | the owner's words; candidate end line |
 
@@ -45,6 +45,7 @@ A script picks one person, but across a campaign the cast covers several of thes
 - "found 2 hours", "blocked", "clash": app mechanics as the message
 - "planner", "productivity", "manage", "organize", "budget", "all in one place"
 - "calm place" (owner dislikes it)
+- "assistant", "personal assistant", "AI assistant" (owner, 2026-11-09: say "your companion")
 - em dashes anywhere a viewer sees
 
 ## Candidate end lines (owner picks one)
