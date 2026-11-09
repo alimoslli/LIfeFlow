@@ -123,7 +123,7 @@
   stroke-width: 2.5;
 }
 .dc-dome .dc-rim-t {
-  font-size: 10px;
+  font-size: calc(0.66rem * var(--dc-scale, 1));
   font-weight: 700;
   letter-spacing: 0.03em;
   fill: #0f1a2a;
@@ -140,7 +140,7 @@
   fill: rgb(255 255 255 / 0.9);
 }
 .dc-dome .dc-sunchip-t {
-  font-size: 12px;
+  font-size: calc(0.75rem * var(--dc-scale, 1));
   font-weight: 650;
   fill: #0f1a2a;
   font-variant-numeric: tabular-nums;
@@ -278,6 +278,19 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   border-radius: 28px;
   touch-action: pan-y;
   cursor: pointer;
+  /* a sideways trackpad swipe turns the day; it never goes back a page */
+  overscroll-behavior-x: contain;
+}
+/* with a mouse the sky and the open line can be grabbed and turned */
+@media (pointer: fine) {
+  .dc-hit,
+  .dc[data-open="true"] .dc-trackwrap {
+    cursor: grab;
+  }
+}
+.dc .dc-grabbing,
+.dc[data-open="true"] .dc-trackwrap.dc-grabbing {
+  cursor: grabbing;
 }
 .dc-hint {
   position: absolute;

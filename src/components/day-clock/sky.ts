@@ -295,6 +295,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   const back = root.querySelector<HTMLElement>("[data-dc=back]");
   const html = document.documentElement;
   let wordsH = { key: "", h: 110 };
+  // the app's text size (Settings), read once and again on resize, never per frame
+  let remK = parseFloat(getComputedStyle(html).fontSize) / 16 || 1;
 
   // the companion (Sol by day, the moon at night) on the wheel, and standing on the open line
   const paintWho = () => {
@@ -395,6 +397,9 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const cx = W / 2;
     const R = wheelR(full ? W - 20 : win.w, full ? hyC - 36 : hyC - win.y);
     root.dataset.wheelR = String(R);
+    // the wheel's words grow with it (in rem, so the Text size setting still applies)
+    const ts = Math.round(clamp(R / 138, 1, 1.5) * 100) / 100;
+    root.style.setProperty("--dc-scale", String(ts));
     // everything on the wheel grows with it (a laptop gets a bigger wheel, tiles and companion than a phone)
     const sc = clamp(R / 140, 1, 1.45);
     const h = { a: view - SPAN, b: view + SPAN };
@@ -411,7 +416,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     // full: from the very top (up behind the top bar on a phone) to the water's edge, which fades into the page
     const lift = full && W < 768 ? Math.max(0, root.getBoundingClientRect().top + window.scrollY) : 0;
     const box = full
-      ? { l: lerp(0, win.x, k), r: lerp(0, win.x, k), t: lerp(-lift, win.y, k), b: lerp(hyC + 64, win.y + win.h, k), rad: lerp(0, win.r, k) }
+      ? { l: lerp(0, win.x, k), r: lerp(0, win.x, k), t: lerp(-lift, win.y, k), b: lerp(hyC + 64, win.y + win.h, k), rad: lerp(lift ? 0 : 24, win.r, k) }
       : { l: win.x, r: win.x, t: win.y, b: win.y + win.h, rad: win.r };
     const hp = clamp(((hy - box.t) / (box.b - box.t)) * 100, 0, 100);
     Object.assign(bg.style, {
@@ -419,7 +424,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       right: `${box.r}px`,
       top: `${box.t}px`,
       height: `${box.b - box.t}px`,
-      borderRadius: `${box.rad}px`,
+      borderRadius: full && !k ? `${box.rad}px ${box.rad}px 0 0` : `${box.rad}px`,
       boxShadow: full && k < 0.6 ? "none" : "",
       background: `linear-gradient(180deg, ${css(top)} 0%, ${css(mid)} ${(hp * 0.58).toFixed(2)}%, ${css(bot)} ${hp.toFixed(2)}%, ${css(mix(bot, DEEP, 0.22))} ${hp.toFixed(2)}%, ${css(mix(top, DEEP, 0.4), full ? k : 1)} 100%)`,
       opacity: String(reduce ? 1 - P : 1 - seg(P, 0.4, 0.85)),
@@ -686,10 +691,16 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       const near5 = Math.max(5, ahead < 60 ? Math.round(ahead / 5) * 5 : Math.round(ahead / 10) * 10);
       const span = near5 < 60 ? `${near5} min` : `${Math.floor(near5 / 60)}h${near5 % 60 ? ` ${near5 % 60}m` : ""}`;
       const chip = sunUp ? `☀️ Sun sets in about ${span}` : `🌙 Sun rises in about ${span}`;
-      const cw = chip.length * 6.6 + 18;
+      // sized for its words at the wheel's scale and the app's text size
+      const k2 = ts * remK;
+      const cw = chip.length * 6.6 * k2 + 18;
       const cg = el("g", { opacity: kc.toFixed(3) }, layer);
-      el("rect", { x: (cx - cw / 2).toFixed(1), y: (waterY - 12).toFixed(1), width: cw.toFixed(1), height: 24, rx: 12, class: "dc-sunchip" }, cg);
-      txt(cg, cx, waterY + 4, chip, { class: "dc-sunchip-t" });
+      el(
+        "rect",
+        { x: (cx - cw / 2).toFixed(1), y: (waterY - 12 * k2).toFixed(1), width: cw.toFixed(1), height: (24 * k2).toFixed(1), rx: 12 * k2, class: "dc-sunchip" },
+        cg,
+      );
+      txt(cg, cx, waterY + 4 * k2, chip, { class: "dc-sunchip-t" });
     }
     if (back) {
       back.hidden = follow || P > 0.01;
@@ -729,7 +740,9 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     for (const d of shown)
       if (!d.lane && Math.abs(wx - d.x) < d.w / 2 + 4 && wy > d.y - d.h / 2 - 6 && wy < d.y + d.h / 2 + 26) wy = Math.min(wy, d.y - d.h / 2 + 1);
     // the companion's size: a good deal bigger than a tile, and bigger still on a big wheel; it shrinks onto the line
-    const size = Math.round(lerp(clamp(R * 0.46, 64, 104), 48, k));
+    // whole multiples of its 16 px sprite, so its pixels stay crisp (4x on a phone, 6x on a big laptop wheel)
+    const rest = Math.max(64, Math.round(clamp(R * 0.42, 64, 112) / 16) * 16);
+    const size = k ? Math.round(lerp(rest, 48, k)) : rest;
     const glow = `url(#${night ? "dc-glow-night" : "dc-glow-day"})`;
     el(
       "circle",
@@ -744,7 +757,10 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     paintWho();
   }
 
-  const onResize = () => last && draw(last);
+  const onResize = () => {
+    remK = parseFloat(getComputedStyle(html).fontSize) / 16 || 1;
+    if (last) draw(last);
+  };
   window.addEventListener("resize", onResize);
   return {
     draw,

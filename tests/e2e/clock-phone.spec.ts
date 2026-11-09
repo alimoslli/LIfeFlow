@@ -175,4 +175,14 @@ test("the wheel turns through time, rolls back to now, and opens where it was tu
   await expect(back).toBeVisible();
   await back.click();
   await expect(back).toBeHidden();
+
+  // Turned away again and opened: the now pill on the line folds it back to now, not to where the line was.
+  await face.focus();
+  for (let i = 0; i < 6; i++) await page.keyboard.press("ArrowRight");
+  await expect(back).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(clock).toHaveAttribute("data-state", "timeline");
+  await page.getByRole("button", { name: /^Now, .* Back to Today$/ }).click();
+  await expect(clock).toHaveAttribute("data-state", "clock");
+  await expect(back).toBeHidden();
 });

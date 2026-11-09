@@ -116,7 +116,8 @@ test("a new user who never names the assistant never sees 'Jarvis'", async ({ pa
     await visit(page, path);
     await expectNoJarvis(page, `desktop ${path}`);
   }
-  await visit(page, "/");
+  // (Today has its own ask bar, so the top bar's ask field is on the other pages)
+  await visit(page, "/settings");
   await page.getByRole("button", { name: "Ask your assistant anything…" }).click();
   await expect(page.getByRole("dialog", { name: "Your assistant" })).toBeVisible();
   await expectNoJarvis(page, "desktop: assistant drawer");

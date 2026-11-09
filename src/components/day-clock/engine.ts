@@ -6,6 +6,7 @@
  */
 import { isExam, pileOf, sunTimes, type ClockData, type ClockItem } from "@/lib/day-clock";
 import { isFinished, isLate, itemColor, paintStrip, stripDark, wheelR, type SkyFace, type SkyGeo, type SkyState } from "./sky";
+import { DECAY, NOTCH_MIN, minutesForPx, normalizeWheel, project, rubber, snapTarget, spring, velocity } from "./input";
 
 /** A stop on the line: one thing, or a stack of things at the same moment (`group`, led by `it`). */
 type Node = { id: string; it: ClockItem; group: ClockItem[] | null; t: number; past: boolean; x: number; el: HTMLButtonElement | null };
@@ -585,18 +586,21 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     np.style.top = `${waveY(S.now)}px`;
     np.innerHTML = `<canvas class="dc-now-who" width="16" height="16" aria-hidden="true"></canvas><span class="dc-now-t">${fmt(S.now)}</span>`;
     np.setAttribute("aria-label", `Now, ${fmt(S.now)}. Back to Today`);
-    np.addEventListener("click", () => close());
+    np.addEventListener("click", () => close(true));
     TM.nowEl = np;
     drawStrip();
   }
 
   /* ---------- before the motion: the line at home (now in the middle), its window painted there ---------- */
-  function prepMorph(keepScroll = false) {
-    if (keepScroll) {
+  // Folding back keeps the time in the middle of the line (a pull, a pinch, Escape); the now pill folds back to now,
+  // rewinding the line to now in the first part of the same motion.
+  function prepMorph(keepScroll = false, toNow = false) {
+    if (keepScroll && toNow) S.follow = true;
+    else if (keepScroll) {
       S.view = clamp(tAt(trackWrap.scrollLeft + VW() / 2), minDay() * 1440, (maxDay() + 1) * 1440 - 1);
       S.follow = Math.abs(S.view - S.now) < 10;
     }
-    const sl = keepScroll ? trackWrap.scrollLeft : !S.follow ? clamp(xAt(S.view) - VW() / 2, 0, Math.max(0, TM.total - VW())) : homeScroll();
+    const sl = keepScroll && !toNow ? trackWrap.scrollLeft : !S.follow ? clamp(xAt(S.view) - VW() / 2, 0, Math.max(0, TM.total - VW())) : homeScroll();
     G.home = sl;
     if (keepScroll && Math.abs(trackWrap.scrollLeft - sl) > 1) G.wrapSl = trackWrap.scrollLeft;
     else {
@@ -942,14 +946,14 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     animateTo(1, reduce ? 240 : 1250, reduce ? (t) => t : ePlay, finishOpen);
   }
   // Folding the timeline back into the sky: the exact path of the open, run backwards as one motion.
-  function beginWrap() {
+  function beginWrap(toNow = false) {
     stopSpin();
     setState("moving");
     S.open = false;
     S.sel = null;
     showDetail();
     markSel();
-    prepMorph(true);
+    prepMorph(true, toNow);
   }
   function finishClose() {
     setInteractive(false);
@@ -965,23 +969,28 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     render();
     setState("clock");
   }
-  function close() {
+  function close(toNow = false) {
     if (!S.open || S.anim) return;
     const dist = Math.abs(trackWrap.scrollLeft - homeScroll());
-    beginWrap();
+    beginWrap(toNow);
     setInteractive(false);
     animateTo(0, reduce ? 260 : 1050 + Math.min(300, dist * 0.08), reduce ? eIO : ePlay, finishClose);
   }
 
-  /* ---------- the wheel: turn it through time (a drag, a flick, a trackpad, a mouse wheel, the arrow keys); "Back to now"
-     rolls it home; a tap opens the line at the time on top ---------- */
-  // A finger moves the rim exactly as far as it moves; a mouse turns it twice as far (less travel on a laptop).
+  /* ---------- the wheel: turn it through time ("the mechanism"; docs/research/2026-11-09-the-mechanism.md). One scale:
+     12 hours across the card for a trackpad, a mouse wheel and a mouse drag; a finger moves the rim exactly as far as it
+     moves. A flick coasts like iOS and lands on now, a thing or a quarter hour; the ends of the week push back. ---------- */
   const minPerPx = () => 1440 / (2 * Math.PI * (Number(root.dataset.wheelR) || wheelR(VW(), G.wrapHor)));
   const viewMin = () => minDay() * 1440;
   const viewMax = () => (maxDay() + 1) * 1440 - 1;
+  const viewNow = () => (S.follow ? S.now : S.view);
+  const starts = () => DATED.filter((it) => !it.allDay).map((it) => it.start);
+  // past the first or last day the wheel gives a little and comes back (a rubber band, never a hard stop)
+  const elastic = (t: number) => (t < viewMin() ? viewMin() - rubber(viewMin() - t, 720) : t > viewMax() ? viewMax() + rubber(t - viewMax(), 720) : t);
   function setView(t: number) {
-    S.view = clamp(t, viewMin(), viewMax());
+    S.view = t;
     S.follow = Math.abs(S.view - S.now) < 0.5;
+    root.dataset.view = String(Math.round(viewNow()));
     drawSky();
   }
   function stopSpin() {
@@ -995,69 +1004,58 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       rebuild();
     }
   }
-  // back to now, smoothly: the farther away, the longer (never more than 1.4 s)
-  function goNow() {
+  // where quick keys and mouse notches are heading, so each one adds to the last instead of to the half-way point
+  let pendingTo: number | null = null;
+  /** Moves the time on top to `to`: a spring that starts at `v` (minutes per ms) and settles without overshoot. */
+  function glide(to: number, v = 0, ms = 380) {
     stopSpin();
-    if (S.follow) return afterSpin();
-    const from = S.view;
-    const ms = reduce ? 0 : clamp(380 + Math.abs(S.now - from) * 0.3, 380, 1400);
+    const from = viewNow();
+    to = clamp(to, viewMin(), viewMax());
+    if (reduce || Math.abs(to - from) < 0.5) {
+      setView(to);
+      if (Math.abs(to - S.now) < 0.5) S.follow = true;
+      return afterSpin();
+    }
     const start = performance.now();
     const step = (t: number) => {
-      const k = ms ? clamp((t - start) / ms, 0, 1) : 1;
-      S.view = from + (S.now - from) * eIO(k);
-      drawSky();
-      if (k < 1) S.spin = requestAnimationFrame(step);
+      const k = t - start;
+      const x = spring(from, to, v, k, ms);
+      setView(k >= ms * 1.25 ? to : x);
+      if (k < ms * 1.25) S.spin = requestAnimationFrame(step);
       else {
         S.spin = 0;
-        S.follow = true;
+        pendingTo = null;
+        if (Math.abs(to - S.now) < 0.5) {
+          S.follow = true;
+          haptic(10);
+        }
         drawSky();
-        haptic(10);
         afterSpin();
       }
     };
     S.spin = requestAnimationFrame(step);
   }
-  // let go while turning: it coasts and slows down (about half a day at most), and settles on now when it passes close
-  function fling(v0: number) {
-    stopSpin();
-    let v = clamp(v0, -2, 2);
-    let last = performance.now();
-    const settle = () => (Math.abs(S.view - S.now) < 12 ? goNow() : afterSpin());
-    const step = (t: number) => {
-      const dt = Math.min(48, t - last);
-      last = t;
-      v *= Math.pow(0.93, dt / 16);
-      setView(S.view + v * dt);
-      if (Math.abs(v) > 0.004 && S.view > viewMin() && S.view < viewMax()) S.spin = requestAnimationFrame(step);
-      else {
-        S.spin = 0;
-        settle();
-      }
-    };
-    if (!reduce && v) S.spin = requestAnimationFrame(step);
-    else settle();
+  // back to now: the farther away, the longer the glide (never more than 1.1 s)
+  const goNow = () => glide(S.now, 0, clamp(380 + Math.abs(S.now - viewNow()) * 0.25, 380, 1100));
+  // let go: project where the coast would rest (iOS's 0.998 per ms, at most a day), land on now, a thing or a quarter
+  // hour near it, and get there with a spring that starts at the release speed
+  function fling(v: number) {
+    const from = viewNow();
+    const rest = clamp(project(from, v, DECAY), from - 1440, from + 1440);
+    const to = clamp(snapTarget(rest, S.now, starts()), viewMin(), viewMax());
+    glide(to, v, clamp(380 + Math.abs(to - from) * 0.35, 380, 1100));
   }
   const backBtn = root.querySelector<HTMLButtonElement>("[data-dc=back]");
   if (backBtn) on(backBtn, "click", () => goNow());
 
-  let drag: { x: number; y: number; id: number; moved: boolean; lastP: number; lastT: number; v: number; v0: number; k: number; caught: boolean } | null = null;
+  type Drag = { x: number; y: number; id: number; moved: boolean; v0: number; mouse: boolean; caught: boolean; samples: { t: number; v: number }[] };
+  let drag: Drag | null = null;
   on(hit, "pointerdown", (e: PointerEvent) => {
     if (S.open || S.anim) return;
     const caught = S.spin !== 0;
     stopSpin();
-    const v0 = S.follow ? S.now : S.view;
-    drag = {
-      x: e.clientX,
-      y: e.clientY,
-      id: e.pointerId,
-      moved: false,
-      lastP: v0,
-      lastT: performance.now(),
-      v: 0,
-      v0,
-      k: e.pointerType === "mouse" ? 2 : 1,
-      caught,
-    };
+    pendingTo = null;
+    drag = { x: e.clientX, y: e.clientY, id: e.pointerId, moved: false, v0: viewNow(), mouse: e.pointerType === "mouse", caught, samples: [] };
     try {
       hit.setPointerCapture(e.pointerId);
     } catch {
@@ -1070,44 +1068,79 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const dy = e.clientY - drag.y;
     if (!drag.moved && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
       drag.moved = true;
-      drag.lastT = performance.now();
+      // start from here, so the first step doesn't jump by the slop
+      drag.x = e.clientX;
+      hit.classList.add("dc-grabbing");
       haptic(6);
     }
     if (!drag.moved) return;
-    // the finger to the right goes back in time; to the left, ahead
-    const now = performance.now();
-    const t = drag.v0 - dx * minPerPx() * drag.k;
-    drag.v = ((t - drag.lastP) / Math.max(1, now - drag.lastT)) * 0.6 + drag.v * 0.4;
-    drag.lastP = t;
-    drag.lastT = now;
-    setView(t);
+    // to the right goes back in time; a finger moves the rim with it, a mouse uses the card's scale
+    const ddx = e.clientX - drag.x;
+    const t = drag.v0 - (drag.mouse ? minutesForPx(ddx, VW()) : ddx * minPerPx());
+    drag.samples.push({ t: performance.now(), v: t });
+    if (drag.samples.length > 12) drag.samples.shift();
+    setView(elastic(t));
   });
   const endDrag = (e: PointerEvent, cancelled: boolean) => {
     if (!drag || e.pointerId !== drag.id) return;
     const d = drag;
     drag = null;
+    hit.classList.remove("dc-grabbing");
     if (!d.moved) {
       if (d.caught) afterSpin();
       else if (!cancelled) open();
       return;
     }
-    fling(cancelled || performance.now() - d.lastT > 90 ? 0 : d.v);
+    const last = d.samples[d.samples.length - 1];
+    const v = cancelled || !last || performance.now() - last.t > 90 ? 0 : clamp(velocity(d.samples), -4, 4);
+    fling(v);
   };
   on(hit, "pointerup", (e: PointerEvent) => endDrag(e, false));
   on(hit, "pointercancel", (e: PointerEvent) => endDrag(e, true));
-  // a trackpad or a mouse wheel over the wheel turns it; when it stops close to now it settles on now
+  // A trackpad moves time 1:1 at the card's scale (the OS adds its own momentum); a mouse notch is half an hour, eased,
+  // and notches add up. A scroll that began on the page keeps scrolling the page; a sideways swipe never goes back.
+  let lastWheel = 0;
+  let pageWheel = 0;
   let wheelIdle = 0;
+  on(
+    window,
+    "wheel",
+    (e: WheelEvent) => {
+      if (!(e.target instanceof Element && hit.contains(e.target))) pageWheel = performance.now();
+    },
+    { passive: true },
+  );
   on(
     hit,
     "wheel",
     (e: WheelEvent) => {
-      if (S.open || S.anim) return;
+      if (S.open || S.anim || e.ctrlKey) return;
+      const t = performance.now();
+      const w = normalizeWheel(e, t - lastWheel);
+      lastWheel = t;
+      if (w.axis === "y" && t - pageWheel < 300) {
+        pageWheel = t;
+        return;
+      }
       e.preventDefault();
-      stopSpin();
-      const px = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 400 : 1);
-      setView((S.follow ? S.now : S.view) + px * minPerPx() * 1.5);
+      if (w.kind === "notch") {
+        pendingTo = clamp((pendingTo ?? viewNow()) + Math.sign(w.px) * NOTCH_MIN, viewMin(), viewMax());
+        glide(pendingTo, 0, 160);
+      } else {
+        stopSpin();
+        pendingTo = null;
+        setView(clamp(viewNow() + minutesForPx(w.px, VW()), viewMin(), viewMax()));
+      }
+      // once it rests, it settles on now or on a thing close by
       window.clearTimeout(wheelIdle);
-      wheelIdle = window.setTimeout(() => (Math.abs(S.view - S.now) < 12 && !S.follow ? goNow() : afterSpin()), 220);
+      wheelIdle = window.setTimeout(() => {
+        pendingTo = null;
+        const v = viewNow();
+        const near = starts().find((s) => Math.abs(s - v) <= 10);
+        if (!S.follow && Math.abs(v - S.now) < 12) goNow();
+        else if (near != null && !S.spin) glide(near, 0, 180);
+        else afterSpin();
+      }, 160);
     },
     { passive: false },
   );
@@ -1116,12 +1149,19 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       open();
-    } else if (!S.anim && !S.open && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
-      // the keyboard turns the wheel an hour at a time; Home goes back to now
+      return;
+    }
+    if (S.anim || S.open) return;
+    // arrows: an hour (Shift: a quarter hour); Page Up and Down: six hours; Home: now
+    const step = { ArrowLeft: -60, ArrowRight: 60, PageUp: -360, PageDown: 360 }[e.key];
+    if (step != null) {
       e.preventDefault();
-      setView((S.follow ? S.now : S.view) + (e.key === "ArrowLeft" ? -60 : 60));
-    } else if (!S.anim && !S.open && e.key === "Home") {
+      const from = pendingTo ?? Math.round(viewNow() / 15) * 15;
+      pendingTo = clamp(from + (e.shiftKey && Math.abs(step) === 60 ? step / 4 : step), viewMin(), viewMax());
+      glide(pendingTo, 0, 200);
+    } else if (e.key === "Home") {
       e.preventDefault();
+      pendingTo = null;
       goNow();
     }
   });
@@ -1156,7 +1196,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     } else if (e.pointerId === wrap.id) {
       const dx = e.clientX - wrap.x;
       const dy = e.clientY - wrap.y;
-      if (!wrap.kind && dy > 10 && dy > Math.abs(dx) * 1.2) {
+      // a finger folds it with a pull down; a mouse needs a clear downward drag, so a sloppy pan never closes it
+      if (!wrap.kind && (e.pointerType === "mouse" ? dy > 40 && dy > Math.abs(dx) * 2 : dy > 10 && dy > Math.abs(dx) * 1.2)) {
         wrap.kind = "pull";
         try {
           trackWrap.setPointerCapture(e.pointerId);
@@ -1210,34 +1251,60 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     },
     true,
   );
-  /* the open line with a mouse: the wheel scrolls it sideways, and a drag pans it (touch scrolls it natively) */
+  /* the open line with a mouse: the wheel scrolls it sideways, and a drag pans it and coasts (touch and trackpads
+     scroll it natively, with the OS's own momentum) */
   on(
     trackWrap,
     "wheel",
     (e: WheelEvent) => {
-      if (!S.open || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+      if (!S.open || e.ctrlKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
       e.preventDefault();
-      trackWrap.scrollLeft += e.deltaY * (e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? 400 : 1);
+      trackWrap.scrollLeft += normalizeWheel(e, 100).px;
     },
     { passive: false },
   );
-  let pan: { x: number; sl: number; id: number; moved: boolean } | null = null;
+  let pan: { x: number; sl: number; id: number; moved: boolean; samples: { t: number; v: number }[] } | null = null;
+  let coast = 0;
   on(trackWrap, "pointerdown", (e: PointerEvent) => {
-    if (S.open && !S.anim && e.pointerType === "mouse" && e.button === 0) pan = { x: e.clientX, sl: trackWrap.scrollLeft, id: e.pointerId, moved: false };
+    cancelAnimationFrame(coast);
+    if (S.open && !S.anim && e.pointerType === "mouse" && e.button === 0)
+      pan = { x: e.clientX, sl: trackWrap.scrollLeft, id: e.pointerId, moved: false, samples: [] };
   });
   on(trackWrap, "pointermove", (e: PointerEvent) => {
     if (!pan || e.pointerId !== pan.id || wrap?.kind) return;
     const dx = e.clientX - pan.x;
-    if (!pan.moved && Math.abs(dx) > 6) pan.moved = true;
-    if (pan.moved) trackWrap.scrollLeft = pan.sl - dx;
+    if (!pan.moved && Math.abs(dx) > 6) {
+      pan.moved = true;
+      trackWrap.classList.add("dc-grabbing");
+    }
+    if (!pan.moved) return;
+    trackWrap.scrollLeft = pan.sl - dx;
+    pan.samples.push({ t: performance.now(), v: trackWrap.scrollLeft });
+    if (pan.samples.length > 12) pan.samples.shift();
   });
   const endPan = (e: PointerEvent) => {
     if (!pan || e.pointerId !== pan.id) return;
-    if (pan.moved) wrapSuppressClick = performance.now();
+    const p = pan;
     pan = null;
+    trackWrap.classList.remove("dc-grabbing");
+    if (!p.moved) return;
+    wrapSuppressClick = performance.now();
+    // it coasts like iOS (0.998 per ms) from the speed it was let go at
+    const last = p.samples[p.samples.length - 1];
+    let v = !last || performance.now() - last.t > 90 || reduce ? 0 : clamp(velocity(p.samples), -6, 6);
+    let prev = performance.now();
+    const step = (t: number) => {
+      const dt = Math.min(48, t - prev);
+      prev = t;
+      v *= Math.pow(DECAY, dt);
+      trackWrap.scrollLeft += v * dt;
+      if (Math.abs(v) > 0.02) coast = requestAnimationFrame(step);
+    };
+    if (v) coast = requestAnimationFrame(step);
   };
   on(trackWrap, "pointerup", endPan);
   on(trackWrap, "pointercancel", endPan);
+  cleanups.push(() => cancelAnimationFrame(coast));
   /* a tap on an empty spot of the open line pins something there, at the nearest quarter hour */
   const quarter = (t: number) => Math.round(t / 15) * 15;
   on(track, "click", (e: MouseEvent) => {
