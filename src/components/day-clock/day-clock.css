@@ -847,24 +847,47 @@
   pointer-events: none;
   image-rendering: pixelated;
 }
-.dc-sky {
-  stroke: none;
+/* the sky card (a widget of the day): the sky of the hour above the horizon, the ground under it */
+.dc-card {
+  fill: none;
+  stroke: var(--border);
 }
-.dc-sky-dawn {
-  fill: color-mix(in srgb, var(--sun) 26%, transparent);
+.dc-card-ground {
+  fill: var(--surface);
 }
-.dc-sky-day {
-  fill: color-mix(in srgb, #8fb6ff 22%, transparent);
+.dc-g-dawn stop:first-child {
+  stop-color: #c9c2f2;
 }
-.dc-sky-gold {
-  fill: color-mix(in srgb, var(--sun) 32%, transparent);
+.dc-g-dawn stop:last-child {
+  stop-color: #ffd7ad;
 }
-.dc-sky-night {
-  fill: var(--night);
+.dc-g-day stop:first-child {
+  stop-color: #a9c1f5;
+}
+.dc-g-day stop:last-child {
+  stop-color: #eceefd;
+}
+.dc-g-gold stop:first-child {
+  stop-color: #b5a3ea;
+}
+.dc-g-gold stop:last-child {
+  stop-color: #ffc98f;
+}
+.dc-g-night stop:first-child {
+  stop-color: #0f0c26;
+}
+.dc-g-night stop:last-child {
+  stop-color: #2e2780;
+}
+.dc-dome-fill {
+  fill: rgb(255 255 255 / 0.22);
+}
+.dc-dome-fill.dc-night {
+  fill: rgb(255 255 255 / 0.06);
 }
 .dc-dome-track {
   fill: none;
-  stroke: var(--accent-soft);
+  stroke: rgb(255 255 255 / 0.7);
   stroke-width: 12;
   stroke-linecap: round;
 }
@@ -882,7 +905,7 @@
 }
 .dc-dome-dot {
   fill: var(--sun);
-  stroke: var(--bg);
+  stroke: #ffffff;
   stroke-width: 2;
 }
 .dc-horizon {
@@ -891,13 +914,32 @@
 .dc-star {
   fill: #ffd77a;
 }
-.dc-dome-ic,
-.dc-dome-end {
+.dc-dome-ic {
   font-size: 17px;
 }
+/* labels in the sky read on the sky, whatever the app's theme */
 .dc-dome-t {
-  fill: var(--muted);
+  fill: #2a2552;
   font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.dc[data-sky="night"] .dc-dome-t {
+  fill: #e9e5ff;
+}
+.dc-dome-end {
+  fill: var(--text-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.dc-dome-chip {
+  fill: var(--surface-2);
+}
+.dc-dome-chiptext {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 .dc-dome-stars {
