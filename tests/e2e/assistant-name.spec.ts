@@ -49,17 +49,8 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   // No AI consent yet, so the first-chat consent card and its wording are checked too.
   const email = await signUp(page, "Riley Park", { onboarding: "stay", ai: false });
 
-  // Setup, every step, without typing a name.
-  await expectNoJarvis(page, "welcome: hello");
-  await page.getByLabel("What should I call you?").fill("Riley");
-  await page.getByRole("button", { name: "Let's go" }).click();
-  await expectNoJarvis(page, "welcome: week");
-  await page.getByRole("radio", { name: /Both/ }).click();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await expectNoJarvis(page, "welcome: details");
-  await page.getByRole("button", { name: "Continue" }).click();
-
-  // Make it yours: the name starts empty, no companion is picked, and "Jarvis" isn't offered.
+  // Setup, every step, without naming the skyling. First the skylings: the name starts empty, none is picked, and
+  // "Jarvis" isn't offered.
   const nameBox = page.getByLabel("Skyling's name");
   await expect(nameBox).toHaveValue("");
   await expect(nameBox).toHaveAttribute("placeholder", "your skyling");
@@ -67,7 +58,15 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   await expect(page.getByRole("button", { pressed: true })).toHaveCount(0);
   await expect(page.getByRole("radiogroup", { name: "Your skyling" }).getByRole("radio", { checked: true })).toHaveCount(0);
   await expect(page.getByText("Your skyling:", { exact: false })).toBeVisible();
-  await expectNoJarvis(page, "welcome: make it yours");
+  await expectNoJarvis(page, "welcome: the skylings");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expectNoJarvis(page, "welcome: hello");
+  await page.getByLabel("What should I call you?").fill("Riley");
+  await page.getByRole("button", { name: "Let's go" }).click();
+  await expectNoJarvis(page, "welcome: week");
+  await page.getByRole("radio", { name: /Both/ }).click();
+  await page.getByRole("button", { name: "Continue" }).click();
+  await expectNoJarvis(page, "welcome: details");
   await page.getByRole("button", { name: "Show me my day" }).click();
 
   await expect(page.getByText("Your skyling is thinking…")).toBeVisible({ timeout: 15_000 });

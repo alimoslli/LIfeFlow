@@ -247,6 +247,8 @@ for (const size of SIZES)
       const email = await signUp(page, "Olive Overlap", { onboarding: "stay" });
       await context.addCookies([{ name: "lf_text", value: text, url: baseURL! }]);
       await page.reload();
+      await check("welcome/yours");
+      await page.getByRole("button", { name: "Continue" }).click();
       await check("welcome/hello");
       await page.getByRole("button", { name: "Let's go" }).click();
       await page.getByRole("radio", { name: /Both/ }).click();
@@ -255,9 +257,6 @@ for (const size of SIZES)
       await page.getByLabel("A class you're taking").fill("Introduction to Organic Chemistry II");
       await page.getByLabel("Where you work").fill("Campus Coffee and Bakery Downtown");
       await check("welcome/details");
-      await page.getByRole("button", { name: "Continue" }).click();
-      await expect(page.getByRole("button", { name: "Show me my day" })).toBeVisible();
-      await check("welcome/yours");
       await page.getByRole("button", { name: "Show me my day" }).click();
       await page.getByRole("button", { name: "Skip", exact: true }).click();
       await expect(page.locator("article")).toHaveCount(3);

@@ -1,10 +1,24 @@
 import { expect, test } from "@playwright/test";
 import { queryAsUser, signUp } from "./helpers";
 
-test("a new user sees their day connected, names their assistant, then a skippable tour", async ({ page }) => {
+test("a new user picks and names their skyling first, sees their day connected, then a skippable tour", async ({ page }) => {
   const email = await signUp(page, "Maya Chen", { onboarding: "stay" });
-  // Sign-up took only email and password, so the first screen asks what to call them.
+  // The skylings come first (research 2026-11-09): picking one brings its name and its tone; a name of their own wins
+  // and keeps the look and tone. Each step says what it changes on Today.
+  await expect(page.getByRole("heading", { name: "Meet the skylings" })).toBeVisible();
+  await expect(page.getByText("Changes who sits on top of your sky")).toBeVisible();
+  expect((await page.getByLabel("Skyling's name").boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await page.getByRole("radio", { name: /^Ray/ }).click();
+  await expect(page.getByLabel("Skyling's name")).toHaveValue("Ray");
+  await expect(page.getByText("Talks like a coach.", { exact: false })).toBeVisible();
+  await page.getByLabel("Skyling's name").fill("Nova");
+  await expect(page.getByText("Nova:", { exact: false })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /^Ray/ })).toHaveAttribute("aria-checked", "true");
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  // Then Nova asks what to call them (sign-up took only email and password).
   await expect(page.getByRole("heading", { name: /^Hi/ })).toBeVisible();
+  await expect(page.getByText("I'm Nova.", { exact: false })).toBeVisible();
   // Text boxes meet the 44 px touch size.
   expect((await page.getByLabel("What should I call you?").boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await page.getByLabel("What should I call you?").fill("Maya");
@@ -18,16 +32,6 @@ test("a new user sees their day connected, names their assistant, then a skippab
   // One class and where they work: optional, and saved for real.
   await page.getByLabel("A class you're taking").fill("PSY 101");
   await page.getByLabel("Where you work").fill("Target");
-  await page.getByRole("button", { name: "Continue" }).click();
-
-  expect((await page.getByLabel("Skyling's name").boundingBox())!.height).toBeGreaterThanOrEqual(44);
-  // The cast: picking one brings its name and its tone; a name of their own wins and keeps the look and tone.
-  await page.getByRole("radio", { name: /^Ray/ }).click();
-  await expect(page.getByLabel("Skyling's name")).toHaveValue("Ray");
-  await expect(page.getByText("Talks like a coach.", { exact: false })).toBeVisible();
-  await page.getByLabel("Skyling's name").fill("Nova");
-  await expect(page.getByText("Nova:", { exact: false })).toBeVisible();
-  await expect(page.getByRole("radio", { name: /^Ray/ })).toHaveAttribute("aria-checked", "true");
   await page.getByRole("button", { name: "Show me my day" }).click();
 
   // Your day, connected: the sources connect, then Nova shows what it would do, built from their answers.
@@ -106,12 +110,12 @@ test("reduced motion: never a splash, even when requested", async ({ page }) => 
 
 test("the app follows what fills your week: tabs and pills adapt", async ({ page }) => {
   await signUp(page, "Sam Ortiz", { onboarding: "stay" });
+  await page.getByRole("button", { name: "Continue" }).click(); // picking a skyling is optional
   await page.getByLabel("What should I call you?").fill("Sam");
   await page.getByRole("button", { name: "Let's go" }).click();
   await page.getByRole("radio", { name: /^Work/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Continue" }).click(); // where they work is optional
-  await page.getByRole("button", { name: "Show me my day" }).click();
+  await page.getByRole("button", { name: "Show me my day" }).click(); // where they work is optional
   await page.getByRole("button", { name: "Skip", exact: true }).click();
   await page.getByRole("button", { name: "Meet your skyling first" }).click();
   await page.waitForURL((u) => u.pathname === "/");

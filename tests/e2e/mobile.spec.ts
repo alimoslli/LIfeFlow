@@ -5,11 +5,13 @@ test("core pages fit a phone screen without horizontal scrolling", async ({ page
   await signUp(page, "Phone User", { onboarding: "stay" });
   // The helper saves the name after /welcome loaded (sign-up asks only email and password); reload so the first screen has it.
   await page.reload();
-  // Every onboarding step fits: hello, your week, a class and job, make it yours, your day connected (animating and done).
+  // Every onboarding step fits: the skylings, hello, your week, a class and job, your day connected (animating and done).
   const fits = async (label: string) => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow, `/welcome (${label}) overflows by ${overflow}px`).toBeLessThanOrEqual(1);
   };
+  await fits("yours");
+  await page.getByRole("button", { name: "Continue" }).click();
   await fits("hello");
   await page.getByRole("button", { name: "Let's go" }).click();
   await page.getByRole("radio", { name: /Both/ }).click();
@@ -18,8 +20,6 @@ test("core pages fit a phone screen without horizontal scrolling", async ({ page
   await page.getByLabel("A class you're taking").fill("Introduction to Organic Chemistry II");
   await page.getByLabel("Where you work").fill("Campus Coffee and Bakery Downtown");
   await fits("details");
-  await page.getByRole("button", { name: "Continue" }).click();
-  await fits("yours");
   await page.getByRole("button", { name: "Show me my day" }).click();
   await page.waitForTimeout(3500);
   await fits("day, connecting");

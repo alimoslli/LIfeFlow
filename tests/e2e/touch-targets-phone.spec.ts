@@ -85,8 +85,10 @@ test("393px: every control on onboarding and the main screens is at least 44x44"
 
   // Onboarding, every step.
   const email = await signUp(page, "Tara Target", { onboarding: "stay" });
+  await check("welcome/yours");
+  await page.getByRole("button", { name: "Continue" }).click();
   await check("welcome/hello");
-  // Sign-up takes only email and password; the first screen asks what to call them.
+  // Sign-up takes only email and password; after the skyling, the welcome asks what to call them.
   await page.getByLabel("What should I call you?").fill("Tara");
   await page.getByRole("button", { name: "Let's go" }).click();
   await page.getByRole("radio", { name: /Both/ }).click();
@@ -95,9 +97,6 @@ test("393px: every control on onboarding and the main screens is at least 44x44"
   await page.getByLabel("A class you're taking").fill("Biology 101");
   await page.getByLabel("Where you work").fill("Campus Coffee");
   await check("welcome/details");
-  await page.getByRole("button", { name: "Continue" }).click();
-  await expect(page.getByRole("button", { name: "Show me my day" })).toBeVisible();
-  await check("welcome/yours");
   await page.getByRole("button", { name: "Show me my day" }).click();
   await page.getByRole("button", { name: "Skip", exact: true }).click();
   await expect(page.locator("article")).toHaveCount(3);

@@ -18,9 +18,21 @@ import type { LifeStage } from "@/lib/life";
 import { completeOnboardingAction, setNameAction, skipOnboardingAction } from "./actions";
 import { DayPreview } from "./day-preview";
 
-type StepId = "hello" | "week" | "details" | "yours" | "day";
-/** "details" (one class, where they work) is skipped when neither applies. "day" is Your day, connected. */
-const stepsFor = (stage: LifeStage | null): StepId[] => (stage === "life" ? ["hello", "week", "yours", "day"] : ["hello", "week", "details", "yours", "day"]);
+type StepId = "yours" | "hello" | "week" | "details" | "day";
+/**
+ * The skyling comes first (research 2026-11-09, proposal 1: choosing and naming it before anything else is asked), then
+ * it asks your name. "details" (one class, where they work) is skipped when neither applies. "day" is Your day, connected.
+ */
+const stepsFor = (stage: LifeStage | null): StepId[] => (stage === "life" ? ["yours", "hello", "week", "day"] : ["yours", "hello", "week", "details", "day"]);
+
+/** What each step changes on Today (research 2026-11-09, proposal 3: a step that changes nothing is cut). */
+const CHANGES: Record<StepId, string | null> = {
+  yours: "Changes who sits on top of your sky, and how it talks to you.",
+  hello: "Changes what your skyling calls you.",
+  week: "Changes which tabs you see and what fills your sky.",
+  details: "Puts your class and your shift on your sky from day one.",
+  day: null,
+};
 
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u;
 /** What it sounds like before a skyling is picked (each companion has its own line, lib/companions). */
@@ -169,12 +181,12 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
         <div ref={panel} className="flex flex-1 flex-col pt-6 md:flex-none md:pt-8">
           {step === "hello" && (
             <>
-              <h1 data-anim className="font-display text-[2.75rem] leading-[1.05] font-medium tracking-tight">
-                Hi{cleanYou ? ` ${cleanYou.split(" ")[0]}` : ""}.
-              </h1>
+              <div data-anim className="flex items-end gap-3">
+                <CompanionGlyph companion={companion} night={companion === "star"} pose="celebrate" frame={3} className="lf-breathe h-14 w-14" />
+                <h1 className="font-display text-[2.75rem] leading-[1.05] font-medium tracking-tight">Hi{cleanYou ? ` ${cleanYou.split(" ")[0]}` : ""}.</h1>
+              </div>
               <p data-anim className="mt-4 text-[1.0625rem] leading-relaxed text-text-2">
-                LifeFlow is your classes, work, money and plans in one place. Up there are the skylings: in a minute you&apos;ll pick the one who helps with all
-                of it.
+                I&apos;m {shown ?? "your skyling"}. LifeFlow is your classes, work, money and plans in one place, and I help with all of it.
               </p>
               <label data-anim className="mt-6 flex flex-col gap-1.5">
                 <span className="text-sm font-medium text-text-2">What should I call you?</span>
@@ -278,9 +290,9 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
 
           {step === "yours" && (
             <>
-              <Title>Make it yours</Title>
+              <Title>Meet the skylings</Title>
               <p data-anim className="mt-2 text-[0.9375rem] leading-relaxed text-text-2">
-                Pick your skyling, a little one from the sky who keeps an eye on your day.
+                Pick yours, a little one from the sky who keeps an eye on your day.
               </p>
               <div className="mt-6 flex flex-col gap-6">
                 <div data-anim role="radiogroup" aria-label="Your skyling" className="grid grid-cols-3 gap-2">
@@ -346,6 +358,12 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
         </div>
 
         <div className="flex flex-col gap-3 pt-8">
+          {CHANGES[step] && (
+            <p className="flex items-center gap-2 text-[0.8125rem] text-muted">
+              <span className="h-1.5 w-1.5 shrink-0 bg-dawn-2" aria-hidden />
+              {CHANGES[step]}
+            </p>
+          )}
           {error && <FormError message={error} />}
           {last ? (
             <>
@@ -367,10 +385,10 @@ export function Onboarding({ firstName, theme, plan }: { firstName: string; them
               onClick={next}
               disabled={pending || (step === "hello" && !cleanYou) || (step === "week" && !stage) || (step === "yours" && !nameOk)}
               skyling={companion ?? "dawn"}
-              cheer={step === "yours"}
+              cheer={step === "yours" && !!companion}
               className="w-full justify-between pl-6"
             >
-              {step === "hello" ? "Let's go" : step === "yours" ? "Show me my day" : "Continue"}
+              {STEPS[index + 1] === "day" ? "Show me my day" : step === "hello" ? "Let's go" : "Continue"}
             </SkyButton>
           )}
         </div>
