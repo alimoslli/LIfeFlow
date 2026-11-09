@@ -7,6 +7,8 @@ import { ActionButton } from "@/components/action-form";
 import { Card } from "@/components/ui/surface";
 import { aiAllowed } from "@/lib/ai-consent";
 import { AssistantCard } from "../memory/assistant-card";
+import { isCompanionKey } from "@/lib/companions";
+import { CompanionPicker } from "./companion-picker";
 import { SettingsHeader } from "../settings-header";
 
 export const metadata: Metadata = { title: "Assistant" };
@@ -35,7 +37,9 @@ export default async function JarvisSettings() {
           {aiAllowed(u.preferences) ? "Turn off" : "Allow"}
         </ActionButton>
       </Card>
+      <CompanionPicker current={isCompanionKey(u.preferences?.companion) ? u.preferences.companion : null} />
       <AssistantCard
+        key={`${profile.name}|${profile.style}`}
         profile={profile}
         settings={{
           frequency: s.frequency,

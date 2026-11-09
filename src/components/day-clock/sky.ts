@@ -16,7 +16,8 @@
  */
 import { isExam, pileOf, sunTimes, type ClockData, type ClockItem } from "@/lib/day-clock";
 import { css, darkness, mix, skyAt, type RGB } from "@/lib/sky";
-import { COMPANIONS, drawCompanion, nightOf, type Pose } from "./companion";
+import { companionOf } from "@/lib/companions";
+import { drawCompanion, FRAMES, type Pose } from "./companion";
 import { createVisitors, type VisitorKind } from "./visitors";
 
 export type SkyFace = { tag: string; text: string; stats: string[]; icon?: string };
@@ -262,7 +263,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   const whoQ = root.querySelector<HTMLCanvasElement>("[data-dc=who]");
   const bgQ = root.querySelector<HTMLElement>("[data-dc=skybg]");
   const wordsQ = root.querySelector<HTMLElement>("[data-dc=words]");
-  if (!svgQ || !whoQ || !bgQ || !wordsQ) return { draw: () => {}, visit: () => {}, destroy: () => {} };
+  if (!svgQ || !whoQ || !bgQ || !wordsQ) return { draw: () => {}, visit: () => {}, cheer: () => {}, destroy: () => {} };
   const [svg, who, bg, words]: [SVGSVGElement, HTMLCanvasElement, HTMLElement, HTMLElement] = [svgQ, whoQ, bgQ, wordsQ];
   const stars = bg.querySelector<SVGSVGElement>("[data-dc=stars]");
   const clouds = [...bg.querySelectorAll<HTMLElement>("[data-dc=cloud]")];
@@ -339,8 +340,11 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   let last: SkyState | null = null;
   let sun: { key: string; rise: number; set: number } | null = null;
   let night = false;
-  let pose: Pose = "stand";
+  let pose: Pose = "idle";
   let step = 0;
+  // a cheer (something done, a visitor) plays the celebrate frames over whatever it was doing
+  let cheerFrom = 0;
+  let cheerUntil = 0;
   let fit = "";
   let shownH = 0;
   // which way the companion runs (it turns round when the wheel goes back in time), and when it last stepped
@@ -364,6 +368,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
           if (!whoAt) return;
           dir = x < whoAt.x ? -1 : 1;
           if (last) draw(last);
+          cheer(kind === "craft" ? 1800 : 1200);
           who.animate(
             [
               { transform: "translateY(0)" },
@@ -379,19 +384,37 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   // the app's text size (Settings), read once and again on resize, never per frame
   let remK = parseFloat(getComputedStyle(html).fontSize) / 16 || 1;
 
-  // the companion (Sol by day, the moon at night) on the wheel, and standing on the open line
+  // the companion (the person's pick, in its night form after sunset) on the wheel, and standing on the open line
   const paintWho = () => {
-    const c = night ? nightOf(COMPANIONS[1]) : COMPANIONS[1];
-    for (const cv of [who, ...root.querySelectorAll<HTMLCanvasElement>(".dc-now-who")]) drawCompanion(cv, c, pose, step);
+    const c = companionOf(root.dataset.companion);
+    const cheering = performance.now() < cheerUntil;
+    for (const cv of [who, ...root.querySelectorAll<HTMLCanvasElement>(".dc-now-who")])
+      drawCompanion(cv, c, cheering ? "celebrate" : pose, cheering ? Math.floor((performance.now() - cheerFrom) / 150) : step, night);
   };
-  // it jogs in place: a step about every half second (never with reduced motion, never asleep); faster while it turns
+  // it jogs in place (a frame about every 180 ms, never with reduced motion); asleep it breathes slowly; at rest it blinks
+  let tick = 0;
   const timer = reduce
     ? 0
     : window.setInterval(() => {
-        if (document.hidden || pose !== "walk") return;
-        step++;
+        if (document.hidden) return;
+        tick++;
+        const cheering = performance.now() < cheerUntil;
+        if (!cheering && pose === "sleep" && tick % 6) return;
+        if (!cheering && pose === "idle") {
+          // a blink every few seconds
+          const blink = tick % 19 === 0;
+          if (blink === (step % 2 === 1)) return;
+          step = blink ? 1 : 0;
+        } else if (!cheering) step++;
         paintWho();
-      }, 460);
+      }, 180);
+  /** Something was done, or a visitor came: the companion cheers (arms up, a jump) for a moment. */
+  const cheer = (ms = 1200) => {
+    if (reduce) return;
+    cheerFrom = performance.now();
+    cheerUntil = cheerFrom + ms;
+    paintWho();
+  };
 
   const dayWord = (t: number, data: ClockData) => {
     const d = dayOf(t);
@@ -880,21 +903,23 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     let wy = py;
     for (const d of shown)
       if (!d.lane && Math.abs(wx - d.x) < d.w / 2 + 4 && wy > d.y - d.h / 2 - 6 && wy < d.y + d.h / 2 + 26) wy = Math.min(wy, d.y - d.h / 2 + 1);
-    // the companion's size: a good deal bigger than a tile, and bigger still on a big wheel; it shrinks onto the line
-    // whole multiples of its 16 px sprite, so its pixels stay crisp (4x on a phone, 6x on a big laptop wheel)
-    const rest = Math.max(64, Math.round(clamp(R * 0.42, 64, 112) / 16) * 16);
+    // the companion's size: a good deal bigger than a tile, and bigger still on a big wheel; it shrinks onto the line.
+    // Whole multiples of its 24 px sprite, so its pixels stay crisp (4x on a phone, 6x on a laptop's wheel)
+    const rest = Math.round(clamp(R * 0.62, 96, 144) / 24) * 24;
     const size = k ? Math.round(lerp(rest, 48, k)) : rest;
     const glow = `url(#${night ? "dc-glow-night" : "dc-glow-day"})`;
     el(
       "circle",
-      { cx: wx.toFixed(1), cy: (wy - size * 0.45).toFixed(1), r: (size * (night ? 1.1 : 1.5)).toFixed(1), fill: glow, opacity: fade.toFixed(3) },
+      { cx: wx.toFixed(1), cy: (wy - size * 0.42).toFixed(1), r: (size * (night ? 0.8 : 1.05)).toFixed(1), fill: glow, opacity: fade.toFixed(3) },
       glowAt,
     );
-    pose = follow && night && (mod(now) >= 23 * 60 || mod(now) < rise) ? "sleep" : reduce && !moved ? "stand" : "walk";
+    pose = follow && night && (mod(now) >= 23 * 60 || mod(now) < rise) ? "sleep" : reduce && !moved ? "idle" : "walk";
+    if (pose !== "walk" && step >= FRAMES[pose].length) step = 0;
     who.style.width = who.style.height = `${size}px`;
     who.style.transformOrigin = `${size / 2}px ${size / 2}px`;
-    who.style.transform = `translate(${(wx - size / 2).toFixed(1)}px, ${(wy - size * 0.86).toFixed(1)}px)${dir < 0 ? " scaleX(-1)" : ""}`;
-    whoAt = { x: wx - box.l, y: wy - box.t - size * 0.4 };
+    // its shadow (the sprite's last row) sits on the rim
+    who.style.transform = `translate(${(wx - size / 2).toFixed(1)}px, ${(wy - size * 0.97).toFixed(1)}px)${dir < 0 ? " scaleX(-1)" : ""}`;
+    whoAt = { x: wx - box.l, y: wy - box.t - size * 0.45 };
     who.style.opacity = String(fade);
     paintWho();
   }
@@ -908,6 +933,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     draw,
     /** Diagnostics (?debug=1): a visitor now. */
     visit: (kind?: VisitorKind) => visitors?.visit(kind),
+    cheer,
     destroy() {
       visitors?.destroy();
       window.clearInterval(timer);

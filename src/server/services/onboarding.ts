@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { COMPANION_KEYS } from "@/lib/companions";
 import { todayIn } from "@/lib/dates";
 import { users } from "../db/schema";
 import type { UserScope } from "../db/with-user";
@@ -37,7 +38,9 @@ export const onboardingSchema = z.object({
   /** Something the user wants Jarvis to know; saved as a confirmed memory. */
   aboutMe: z.string().trim().max(500).optional(),
   /** Their assistant's name and personality, chosen in "Make it yours". */
-  assistant: z.object({ name: assistantSchema.shape.name.optional(), style: z.enum(["coach", "friend", "direct"]) }).optional(),
+  assistant: z
+    .object({ name: assistantSchema.shape.name.optional(), style: z.enum(["coach", "friend", "direct"]), companion: z.enum(COMPANION_KEYS).optional() })
+    .optional(),
 });
 
 export type OnboardingInput = z.input<typeof onboardingSchema>;
@@ -78,6 +81,7 @@ export async function completeOnboarding(scope: UserScope, input: OnboardingInpu
     jarvisTone: d.jarvisTone,
     assistantName: d.assistant?.name,
     assistantStyle: d.assistant?.style,
+    companion: d.assistant?.companion,
   });
   return { courses, job: !!d.job, checking: !!d.checking, memory: !!d.aboutMe && d.aboutMe.length >= 3 };
 }
@@ -91,7 +95,7 @@ export async function setDisplayName(scope: UserScope, name: string) {
 /** Marks setup finished (also used by "Skip setup") and queues the guided tour. */
 export async function finishOnboarding(
   scope: UserScope,
-  prefs: Partial<Pick<typeof users.$inferSelect.preferences, "lifeStage" | "studyTime" | "jarvisTone" | "assistantName" | "assistantStyle">> = {},
+  prefs: Partial<Pick<typeof users.$inferSelect.preferences, "lifeStage" | "studyTime" | "jarvisTone" | "assistantName" | "assistantStyle" | "companion">> = {},
 ) {
   const [u] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
   const defined = Object.fromEntries(Object.entries(prefs).filter(([, v]) => v !== undefined));

@@ -1,6 +1,8 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { COMPANIONS, companionOf, isCompanionKey } from "@/lib/companions";
 import { checkPassword } from "@/lib/password-strength";
+import { ServiceError } from "./errors";
 import { hashPassword, verifyPassword } from "../auth/password";
 import type { Database } from "../db/client";
 import { users, type UserPreferences } from "../db/schema";
@@ -131,6 +133,23 @@ export const jarvisSettingsSchema = z.object({
   learning: z.boolean(),
   pushLimit: z.number().int().min(0).max(5),
 });
+
+/**
+ * Picks the companion (the cast). It brings its name unless the person gave the assistant their own (a name that is
+ * another companion's counts as not their own), and its tone.
+ */
+export async function setCompanion(db: Database, userId: string, key: unknown) {
+  if (!isCompanionKey(key)) throw new ServiceError("Pick one of the six.");
+  const c = companionOf(key);
+  const [current] = await db.select().from(users).where(eq(users.id, userId));
+  const name = current.preferences.assistantName?.trim();
+  const own = !!name && !COMPANIONS.some((x) => x.name === name);
+  await db
+    .update(users)
+    .set({ preferences: { ...current.preferences, companion: c.key, assistantName: own ? name : c.name, assistantStyle: c.tone } })
+    .where(eq(users.id, userId));
+  return c;
+}
 
 /** Name, tone, voice and how proactive the assistant is. */
 export async function updateAssistant(

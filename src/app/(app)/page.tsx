@@ -72,7 +72,7 @@ export default async function TodayPage() {
       {/* The clock is the page; the greeting is for screen readers. */}
       <h1 className="sr-only">{hello}</h1>
       <section aria-label="Your day" data-tour="today-page" className="-mx-5 sm:-mx-8 md:mx-0">
-        <DayClock data={clock} mode={mode}>
+        <DayClock data={clock} mode={mode} companion={me.preferences?.companion}>
           {note && <AssistantLine name={assistantName} note={note} />}
           {/* a laptop's full sky has the ask bar beside the wheel, under the assistant's line (CSS shows one of the two) */}
           {mode === "full" && (

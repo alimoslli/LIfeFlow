@@ -9,7 +9,9 @@ import { BrandMark } from "@/components/brand/brand-mark";
 import { ThemePicker } from "@/components/theme-picker";
 import { Button } from "@/components/ui/button";
 import { FormError, Input } from "@/components/ui/field";
+import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { ASSISTANT_STYLES, type AssistantStyle } from "@/lib/assistant";
+import { COMPANIONS, companionOf, type CompanionKey } from "@/lib/companions";
 import type { Theme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import type { LifeStage } from "@/lib/life";
@@ -20,15 +22,9 @@ type StepId = "hello" | "week" | "details" | "yours" | "day";
 /** "details" (one class, where they work) is skipped when neither applies. "day" is Your day, connected. */
 const stepsFor = (stage: LifeStage | null): StepId[] => (stage === "life" ? ["hello", "week", "yours", "day"] : ["hello", "week", "details", "yours", "day"]);
 
-/** Ideas only: the name starts empty and nothing is picked, so it stays "your assistant" unless they choose. */
-const NAMES = ["Nova", "Sage", "Atlas", "Max"];
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u;
-/** How each personality answers "What's due this week?" (shown live as they pick). */
-const SAMPLE: Record<AssistantStyle, string> = {
-  friend: "You've got 2 things due this week. The BIO lab is the big one, so let's start it Tuesday. You've got this.",
-  coach: "2 due this week. BIO lab first: block 90 minutes Tuesday and knock it out. Small wins add up.",
-  direct: "2 due: BIO lab (Thu), PSY quiz (Fri). Start the lab Tuesday.",
-};
+/** What it sounds like before a companion is picked (each companion has its own line, lib/companions). */
+const SAMPLE = "You've got 2 things due this week. The BIO lab is the big one, so let's start it Tuesday. You've got this.";
 
 /**
  * First run: hello, what fills their week, one class or job (optional, saved for real),
@@ -53,6 +49,9 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
   const [yourName, setYourName] = useState(firstName === "there" ? "" : firstName);
   const cleanYou = yourName.trim().replace(/\s+/g, " ");
   const [style, setStyle] = useState<AssistantStyle>("friend");
+  // The cast: nothing is picked until they tap one, so it stays "your assistant" unless they choose.
+  const [companion, setCompanion] = useState<CompanionKey | null>(null);
+  const chosen = companion ? companionOf(companion) : null;
   const STEPS = stepsFor(stage);
   const step = STEPS[Math.min(index, STEPS.length - 1)];
   const last = step === "day";
@@ -92,6 +91,14 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
     go(1);
   };
 
+  /** Picking a companion brings its name (unless they typed their own) and its tone. */
+  const pick = (k: CompanionKey) => {
+    const c = companionOf(k);
+    if (!cleanName || COMPANIONS.some((x) => x.name === cleanName)) setName(c.name);
+    setCompanion(k);
+    setStyle(c.tone);
+  };
+
   const go = (delta: number) => {
     dir.current = delta;
     setError(null);
@@ -105,7 +112,7 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
       if (!nameOk) return setError("Use letters, numbers, spaces or simple punctuation for the name (up to 24 characters).");
       const r = await completeOnboardingAction({
         lifeStage: stage ?? undefined,
-        assistant: { name: cleanName || undefined, style },
+        assistant: { name: cleanName || undefined, style, companion: companion ?? undefined },
         courses: school && course.trim() ? [course.trim()] : [],
         job: work && job.trim() ? { name: job.trim() } : undefined,
       });
@@ -267,8 +274,41 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
           {step === "yours" && (
             <>
               <Title>Make it yours</Title>
+              <p data-anim className="mt-2 text-[0.9375rem] leading-relaxed text-text-2">
+                Pick who runs on top of your day. It&apos;s your assistant.
+              </p>
               <div className="mt-6 flex flex-col gap-6">
-                <Group label="Name your assistant">
+                <div data-anim role="radiogroup" aria-label="Your companion" className="grid grid-cols-3 gap-2">
+                  {COMPANIONS.map((c) => (
+                    <button
+                      key={c.key}
+                      type="button"
+                      role="radio"
+                      aria-checked={companion === c.key}
+                      onClick={() => pick(c.key)}
+                      className={cn(
+                        "flex min-h-24 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-2 transition-all",
+                        companion === c.key ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft",
+                      )}
+                    >
+                      <CompanionGlyph
+                        companion={c.key}
+                        pose={companion === c.key ? "celebrate" : "idle"}
+                        frame={companion === c.key ? 1 : 0}
+                        className="h-12 w-12"
+                      />
+                      <span className="text-[0.9375rem] font-medium">{c.name}</span>
+                      <span className={cn("text-xs", companion === c.key ? "opacity-80" : "text-muted")}>{c.moment}</span>
+                    </button>
+                  ))}
+                </div>
+                {chosen && (
+                  <p className="-mt-2 text-sm leading-relaxed text-text-2" aria-live="polite">
+                    <span className="font-medium text-text">{chosen.line}</span> Best at {chosen.skill.charAt(0).toLowerCase() + chosen.skill.slice(1)} Talks
+                    like a {ASSISTANT_STYLES[chosen.tone].label.toLowerCase()}.
+                  </p>
+                )}
+                <Group label="Its name">
                   <Input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -279,46 +319,11 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
                     autoComplete="off"
                     className="min-h-11 text-[1rem]"
                   />
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {NAMES.map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setName(n)}
-                        aria-pressed={cleanName === n}
-                        className={cn(
-                          "min-h-11 rounded-full px-3.5 text-sm transition-all",
-                          cleanName === n ? "bg-hero text-hero-text shadow-soft" : "bg-surface text-text-2 shadow-soft hover:text-text",
-                        )}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                </Group>
-                <Group label="Personality">
-                  <div className="flex flex-col gap-2" role="radiogroup" aria-label="Personality">
-                    {(Object.keys(ASSISTANT_STYLES) as AssistantStyle[]).map((k) => (
-                      <button
-                        key={k}
-                        type="button"
-                        role="radio"
-                        aria-checked={style === k}
-                        onClick={() => setStyle(k)}
-                        className={cn(
-                          "flex min-h-12 flex-wrap items-center justify-between gap-x-3 gap-y-0.5 rounded-2xl px-4 py-3 text-left transition-all",
-                          style === k ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft",
-                        )}
-                      >
-                        <span className="text-[0.9375rem] font-medium">{ASSISTANT_STYLES[k].label}</span>
-                        <span className={cn("text-sm", style === k ? "opacity-80" : "text-muted")}>{ASSISTANT_STYLES[k].hint}</span>
-                      </button>
-                    ))}
-                  </div>
+                  <p className="mt-1.5 text-xs text-muted">{chosen ? "Keep the name or type your own." : "Optional. Pick one above, or type a name."}</p>
                   <div className="mt-3 flex gap-2.5 rounded-2xl bg-surface-2 p-3.5" aria-live="polite">
-                    <BrandMark className="h-6 w-6" alt="" />
+                    <CompanionGlyph companion={companion} className="h-7 w-7" />
                     <p className="text-[0.875rem] leading-relaxed text-text-2">
-                      <span className="font-semibold text-text">{shown ?? "Your assistant"}:</span> {SAMPLE[style]}
+                      <span className="font-semibold text-text">{shown ?? "Your assistant"}:</span> {chosen ? chosen.sample : SAMPLE}
                     </p>
                   </div>
                 </Group>

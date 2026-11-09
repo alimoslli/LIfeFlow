@@ -584,7 +584,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     np.type = "button";
     np.style.left = `${TM.nowX}px`;
     np.style.top = `${waveY(S.now)}px`;
-    np.innerHTML = `<canvas class="dc-now-who" width="16" height="16" aria-hidden="true"></canvas><span class="dc-now-t">${fmt(S.now)}</span>`;
+    np.innerHTML = `<canvas class="dc-now-who" width="24" height="24" aria-hidden="true"></canvas><span class="dc-now-t">${fmt(S.now)}</span>`;
     np.setAttribute("aria-label", `Now, ${fmt(S.now)}. Back to Today`);
     np.addEventListener("click", () => close(true));
     TM.nowEl = np;
