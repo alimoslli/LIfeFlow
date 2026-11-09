@@ -39,7 +39,8 @@ describe("short answers, short chips (owner, 2026-11-09)", () => {
     expect(p).toContain("belongs in the app");
     expect(p).toContain("show me the whole plan");
     expect(p).not.toContain("Use short lists or small tables");
-    expect(PROMPT_VERSION).toBe("2026-11-09.2");
+    // At or after the short-answers version (later prompt changes bump it further).
+    expect(PROMPT_VERSION >= "2026-11-09.2").toBe(true);
     // The reply-shape reminder is the very last thing before the conversation (measured: rule alone 835 words, with it 52).
     expect(p.endsWith(REPLY_SHAPE)).toBe(true);
   });
