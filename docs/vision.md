@@ -400,6 +400,16 @@ Decided by the owner (2026-11-05, research round 2):
    - **Goals and safety nets are respected.** Dev doesn't suggest the emergency fund for a non-emergency, or a goal's money (Montréal), without saying what it does to that goal.
    - **Dev never moves money or trades.** It lays out the steps, deep-links to the bank or brokerage where possible, and the person does it. This is an existing red line.
 
+15. **The home surface is a day clock that turns into a timeline (owner, 2026-11-07).** "I love the simplicity of showing your time today as a clock and how it haptically changes into a timeline that simply scrolls through time, and everything is marked simply." The owner's own pictures set the look:
+   - a dark, calm clock face (12-hour, with numerals and hands);
+   - busy time shown as green arcs on the rim;
+   - the day's things around the clock, each as one simple icon plus its time (meal 12:30 PM, work 2:00 PM, class 9:00 AM, home 9:00 PM);
+   - "Today" to pick a day, and a bell.
+
+   Two colours at most. Tap or pull and the clock turns into a timeline, with a haptic, springy motion. The timeline simply scrolls through time, day by day, with each day rounded up (its big blocks, what was spent, the key things).
+
+   This replaces the earlier concepts (the braid, the six concepts) as the direction for v3. Today, Plan and To-dos become this surface (Batch 1 in `docs/design/2026-11-06-page-inventory.md`). Prototypes use fresh made-up data (docs/team.md).
+
 13. **iPhone Shortcuts pack: yes. Android notification reading: not now (owner, 2026-11-06).** iPhones don't let apps read other apps' notifications. Instead, the person turns on a few ready-made Shortcuts automations once, each sending Dev one kind of event:
    - Apple Pay taps (merchant and amount in real time, matched later to the bank's copy so nothing counts twice);
    - arriving at and leaving work or campus (the real-life timeline fills itself);

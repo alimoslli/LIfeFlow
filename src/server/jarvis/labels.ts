@@ -6,6 +6,7 @@ const LABELS: Record<string, string> = {
   create_tasks: "Creating tasks",
   update_task: "Updating task",
   get_task: "Reading task",
+  tonight: "Looking at your night",
   make_promise: "Saving your promise",
   list_promises: "Checking your promises",
   resolve_promise: "Updating your promise",

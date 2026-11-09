@@ -197,7 +197,8 @@ function salaryPayOf(jobs: { name: string; payType: string }[]) {
  * amount on a regular schedule (or a pay item the user tracks for that job). Hourly pay is never predicted:
  * hours, tips, taxes and pay periods change every time. Shown as expected, never counted as available.
  */
-async function expectedPay(scope: UserScope, today: string, to: string, bank?: BankSeries): Promise<DatedAmount[]> {
+/** Salaried pay expected by `to` (never hourly; shown, never counted). */
+export async function expectedPay(scope: UserScope, today: string, to: string, bank?: BankSeries): Promise<DatedAmount[]> {
   const jobs = await listEmployers(scope);
   if (!jobs.some((j) => j.payType === "salary")) return [];
   const isSalaryPay = salaryPayOf(jobs);

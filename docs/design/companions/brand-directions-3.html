@@ -1,0 +1,507 @@
+<title>Rebrand Directions III</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560&family=Unbounded:wght@600&family=Cormorant+Garamond:wght@600&family=Baloo+2:wght@700&family=Silkscreen&display=swap">
+<style>
+/* Layout: no clock hands anywhere. Four "day rings": your day goes around you, marked simply by time, and turns as time
+   passes. One time control (and dragging any ring) drives all four. Page chrome follows the viewer's theme; each card
+   keeps its own colours (they are the proposal). */
+:root {
+  --bg: #f3f1ed;
+  --fg: #1c1b19;
+  --muted: #6a665f;
+  --line: #e0dcd4;
+  --chip: #e8e4dc;
+  --chip-on: #1c1b19;
+  --chip-on-fg: #f3f1ed;
+  --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --pixel: "Silkscreen", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #0f0f0e; --fg: #f2f0eb; --muted: #a29e96; --line: #2c2b28; --chip: #22211f; --chip-on: #f2f0eb; --chip-on-fg: #0f0f0e; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #0f0f0e; --fg: #f2f0eb; --muted: #a29e96; --line: #2c2b28; --chip: #22211f; --chip-on: #f2f0eb; --chip-on-fg: #0f0f0e; color-scheme: dark; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; }
+.page {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 22px 48px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+h1 { margin: 0; font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 600; letter-spacing: -0.02em; }
+.lede { margin: 4px 0 0; color: var(--muted); font-size: 0.92rem; }
+/* the one time control, sticky so every ring can be watched while it moves */
+.time {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+  padding-block: 8px; background: var(--bg);
+}
+.time button { min-height: 36px; padding: 0 12px; border-radius: 18px; background: var(--chip); font-size: 0.82rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.time button[aria-pressed="true"] { background: var(--chip-on); color: var(--chip-on-fg); }
+.time span { margin-left: auto; color: var(--muted); font-size: 0.8rem; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 18px; }
+.dir {
+  --a: #000; --b: #000; --ink: #000; --paper: #fff; --soft: #eee; --wm: inherit;
+  background: var(--paper); color: var(--ink); border-radius: 30px; padding: 18px;
+  display: flex; flex-direction: column; gap: 14px; min-width: 0;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 14px 30px -14px rgb(0 0 0 / 0.2);
+}
+.head { display: flex; align-items: center; gap: 12px; }
+.head svg { width: 52px; height: 52px; flex: none; }
+.word { font-family: var(--wm); font-size: 2.1rem; line-height: 1; letter-spacing: -0.02em; }
+.tag { font-family: var(--pixel); font-size: 0.62rem; letter-spacing: 0.08em; color: var(--a); display: block; margin-bottom: 4px; }
+.story { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; font-size: 0.86rem; line-height: 1.35; }
+.story li::before { content: "·"; color: var(--a); font-weight: 700; margin-right: 6px; }
+.dial { position: relative; background: var(--soft); border-radius: 24px; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.dial:active { cursor: grabbing; }
+.dial svg { display: block; width: 100%; height: auto; overflow: visible; }
+.dial .who { position: absolute; left: 0; top: 0; width: 40px; height: 40px; margin: -20px 0 0 -20px; pointer-events: none; }
+.read { display: flex; flex-direction: column; gap: 2px; font-size: 0.86rem; }
+.read b { font-weight: 600; font-size: 1rem; }
+.read span { color: color-mix(in srgb, var(--ink) 66%, transparent); }
+.crew { display: grid; grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); gap: 4px; }
+.crew div { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.crew canvas { width: 40px; height: 40px; }
+.crew small { font-family: var(--pixel); font-size: 0.55rem; }
+.sw { display: flex; gap: 6px; }
+.sw span { flex: 1; height: 26px; border-radius: 8px; box-shadow: inset 0 0 0 1px rgb(127 127 127 / 0.28); }
+.foot { color: var(--muted); font-size: 0.78rem; line-height: 1.5; border-top: 1px solid var(--line); padding-top: 14px; }
+.foot b { color: var(--fg); font-weight: 600; }
+</style>
+
+<div class="page">
+  <div>
+    <h1>Rebrand, round three: no clock hands</h1>
+    <p class="lede">Your day goes around you, marked by time, and turns as time passes. Drag any ring to spin it.</p>
+  </div>
+  <div class="time" role="group" aria-label="See it at a time of day" id="time">
+    <button type="button" data-at="" aria-pressed="true">Now</button>
+    <button type="button" data-at="07:00" aria-pressed="false">7 AM</button>
+    <button type="button" data-at="09:00" aria-pressed="false">9 AM</button>
+    <button type="button" data-at="13:00" aria-pressed="false">1 PM</button>
+    <button type="button" data-at="18:00" aria-pressed="false">6 PM</button>
+    <button type="button" data-at="22:30" aria-pressed="false">10:30 PM</button>
+    <span id="clockText"></span>
+  </div>
+  <div class="grid" id="dirs"></div>
+  <p class="foot"><b>Concepts only, nothing changed.</b> An example day (made up). Names need a trademark and App Store check. Round two had Hourlings, Wisp and Kin; round one Daybit and LifeFlow evolved.</p>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const INK = "#262320";
+  const NS = "http://www.w3.org/2000/svg";
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  /* ---------- pixel companions: three body shapes, many tops, a few poses ---------- */
+  const SHAPES = {
+    blob: { h: 8, inset: [2, 1, 0, 0, 0, 0, 1, 2], eye: 3 },
+    glass: { h: 9, inset: [0, 0, 1, 2, 3, 2, 1, 0, 0], eye: 1, sand: 5 },
+    wisp: { h: 9, inset: [4, 3, 2, 1, 0, 0, 0, 1, 2], eye: 4 },
+  };
+  function sprite(c, pose, step) {
+    const px = new Map();
+    const put = (x, y, col) => { if (x >= 0 && x < 16 && y >= 0 && y < 16) px.set(x + "," + y, col); };
+    const S = SHAPES[c.shape || "blob"];
+    const cheer = pose === "cheer", sleep = pose === "sleep";
+    const bob = pose === "walk" ? step % 2 : cheer ? (step % 2) * 2 : 0;
+    const top = (sleep ? 6 : 15 - S.h - 3) - bob;
+    for (let y = 0; y < S.h; y++) {
+      const ins = S.inset[y];
+      for (let x = 3 + ins; x <= 12 - ins; x++) {
+        // an outline wherever the shape ends: its sides, top and bottom, and any edge left open by a narrower row
+        const open = (r) => (S.inset[r] ?? 9) > ins && (S.inset[r] === undefined || x < 3 + S.inset[r] || x > 12 - S.inset[r]);
+        const edge = x === 3 + ins || x === 12 - ins || y === 0 || y === S.h - 1 || open(y - 1) || open(y + 1);
+        let col = y >= S.h - 3 ? c.dark : c.body;
+        if (S.sand && y >= S.sand) col = c.sand || c.dark;
+        put(x, top + y, edge ? c.line || INK : col);
+      }
+    }
+    // stripes (a bee) or spots (a ladybird) across the body
+    if (c.stripes) for (const r of [S.h - 4, S.h - 2]) for (let x = 4 + S.inset[r]; x <= 11 - S.inset[r]; x++) put(x, top + r, INK);
+    if (c.spots) for (const [x, r] of [[5, 5], [10, 4], [8, 6]]) put(x, top + r, INK);
+    put(5 + S.inset[1] - (S.inset[1] > 2 ? 1 : 0), top + 1, c.light);
+    const ey = top + S.eye + (sleep ? 1 : 0);
+    if (sleep) { put(6, ey, INK); put(7, ey, INK); put(9, ey, INK); put(10, ey, INK); put(13, top - 2, "#8fa0c4"); put(14, top - 2, "#8fa0c4"); put(14, top - 3, "#8fa0c4"); put(13, top - 4, "#8fa0c4"); put(14, top - 4, "#8fa0c4"); }
+    else if (c.face === "big") { for (const ex of [5, 9]) { put(ex, ey, "#fff"); put(ex + 1, ey, "#fff"); put(ex, ey + 1, "#fff"); put(ex + 1, ey + 1, INK); } put(7, ey + 2, "#f4a742"); put(8, ey + 2, "#f4a742"); }
+    else { put(6, ey, c.eye || INK); put(6, ey + 1, c.eye || INK); put(10, ey, c.eye || INK); put(10, ey + 1, c.eye || INK); put(5, ey + 2, "#f2a0a0"); put(11, ey + 2, "#f2a0a0"); }
+    if (c.muzzle) { put(7, ey + 2, "#fff"); put(8, ey + 2, "#fff"); put(8, ey + 3, "#fff"); put(7, ey + 3, INK); }
+    const t = top - 1, T = c.trim || "#ffd34d", T2 = c.trim2 || T;
+    const tops = {
+      ray: () => { for (const [x, y] of [[8, t - 1], [5, t], [11, t], [3, t + 2], [13, t + 2]]) put(x, y, T); put(8, t - 2, T2); },
+      cloud: () => { put(7, t, "#fff"); put(8, t, "#fff"); put(9, t, "#fff"); put(8, t - 1, "#fff"); put(9, t - 1, "#fff"); put(10, t, "#fff"); },
+      halo: () => { for (let x = 6; x <= 10; x++) put(x, t - 1, T); put(5, t, T); put(11, t, T); },
+      crescent: () => { put(9, t, T); put(10, t, T); put(8, t - 1, T); put(8, t - 2, T); put(9, t - 3, T); put(10, t - 3, T); },
+      star: () => { put(8, t - 2, T); put(7, t - 1, T); put(8, t - 1, T2); put(9, t - 1, T); put(8, t, T); },
+      spark: () => { put(4, t - 1, T); put(12, t - 2, T); put(13, t - 3, T2); put(8, t, T); put(8, t - 1, T2); },
+      leaf: () => { put(8, t, INK); put(8, t - 1, INK); put(9, t - 2, T); put(10, t - 2, T); put(10, t - 3, T); put(9, t - 1, T); put(7, t - 2, T2); },
+      flame: () => { put(8, t, T); put(7, t, T2); put(9, t, T2); put(8, t - 1, "#ffe08a"); put(9, t - 2, T); },
+      wave: () => { put(6, t, T); put(7, t - 1, T); put(8, t, T); put(9, t - 1, T); put(10, t, T); },
+      ears: () => { for (const ex of [4, 11]) { put(ex, t, INK); put(ex, t - 1, INK); put(ex + (ex < 8 ? 1 : -1), t, c.body); } },
+      fox: () => { for (const ex of [4, 10]) { put(ex, t, INK); put(ex + 1, t, c.body); put(ex + (ex < 8 ? 0 : 1), t - 1, INK); put(ex + (ex < 8 ? 0 : 1), t - 2, "#fff"); } },
+      tufts: () => { put(4, t, INK); put(4, t - 1, INK); put(11, t, INK); put(11, t - 1, INK); put(5, t, c.dark); put(10, t, c.dark); },
+      bear: () => { for (const ex of [4, 10]) { put(ex, t, INK); put(ex + 1, t, INK); put(ex, t - 1, INK); put(ex + 1, t - 1, c.dark); } },
+      frog: () => { for (const ex of [5, 9]) { put(ex, t, INK); put(ex + 1, t, INK); put(ex, t - 1, "#fff"); put(ex + 1, t - 1, INK); } },
+      flick: () => { put(8, t, T); put(8, t - 1 - (step % 2), T2); },
+      hand: () => { put(8, t, INK); put(8, t - 1, INK); put(9, t - 2, INK); put(10, t - 2, T); },
+      bell: () => { put(7, t, T); put(8, t, T); put(9, t, T); put(8, t - 1, T); put(8, t + 0, T2); },
+      pend: () => { put(8, t, INK); put(8, t - 1, INK); put(8 + (step % 2 ? 1 : -1), t - 2, T); },
+      dot: () => { put(8, t, T); put(8, t - 1, T2); },
+      wings: () => { for (const [x, y] of [[2, t + 2], [3, t + 1], [2, t + 1], [13, t + 1], [14, t + 1], [13, t + 2]]) put(x, y + (step % 2), T); put(7, t, INK); put(9, t, INK); put(6, t - 1, INK); put(10, t - 1, INK); },
+    };
+    tops[c.top]?.();
+    if (cheer) { put(2, top + 3, INK); put(1, top + 2, INK); put(13, top + 3, INK); put(14, top + 2, INK); put(1, top - 1, c.trim || "#ffd34d"); put(14, top - 2, c.trim2 || "#ff8a5b"); put(3, top - 3, "#7ad7c4"); }
+    if (pose === "read") { for (let x = 10; x <= 13; x++) for (let y = top + 5; y <= top + 7; y++) put(x, y, y === top + 5 ? "#fffaf0" : "#b0573a"); }
+    if (!sleep) {
+      const fy = top + S.h;
+      const legs = pose === "walk" ? (step % 2 ? [[6], [9]] : [[4], [10]]) : [[5], [10]];
+      for (const [x] of legs) { put(x, fy, INK); put(x + 1, fy, INK); }
+    }
+    return px;
+  }
+  function paint(cv, px) {
+    const g = cv.getContext("2d");
+    g.clearRect(0, 0, 16, 16);
+    for (const [k, col] of px) { const [x, y] = k.split(",").map(Number); g.fillStyle = col; g.fillRect(x, y, 1, 1); }
+  }
+  const pxCanvas = (size) => { const cv = document.createElement("canvas"); cv.width = 16; cv.height = 16; cv.className = "px"; cv.style.width = cv.style.height = size + "px"; cv.setAttribute("aria-hidden", "true"); return cv; };
+
+
+  const svgEl = (tag, a, parent) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; };
+
+  /* ---------- an example day (made up), today and tomorrow, in minutes from today's midnight ---------- */
+  const DAY = 1440;
+  const ITEMS = [
+    { s: 420, icon: "☀️", name: "Up" },
+    { s: 450, e: 495, icon: "🏋️", name: "Gym" },
+    { s: 570, e: 645, icon: "🎓", name: "Anatomy" },
+    { s: 750, icon: "🍽️", name: "Lunch with Priya" },
+    { s: 810, e: 900, icon: "📚", name: "Study" },
+    { s: 960, e: 1260, icon: "💼", name: "Work" },
+    { s: 1439, icon: "📄", name: "3 assignments due" },
+    { s: DAY + 450, e: DAY + 495, icon: "🏃", name: "Run" },
+    { s: DAY + 570, e: DAY + 645, icon: "🎓", name: "Anatomy" },
+    { s: DAY + 750, icon: "📝", name: "Quiz" },
+    { s: DAY + 960, e: DAY + 1260, icon: "💼", name: "Work" },
+  ];
+  const fmt = (m) => { const x = ((Math.round(m) % DAY) + DAY) % DAY; let h = Math.floor(x / 60); const mm = x % 60; const ap = h < 12 ? "AM" : "PM"; h = h % 12 || 12; return mm ? `${h}:${String(mm).padStart(2, "0")} ${ap}` : `${h} ${ap}`; };
+  const real = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+  const S = { t: real(), last: 0, dir: 1 };
+  const nowItem = () => ITEMS.find((i) => i.e && i.s <= S.t && i.e > S.t);
+  const nextItem = () => ITEMS.find((i) => i.s > S.t);
+  const until = (m) => { const d = Math.round(m - S.t); return d < 60 ? `${d} min` : `${Math.floor(d / 60)}h${d % 60 ? ` ${d % 60}m` : ""}`; };
+  const asleep = () => S.t % DAY >= 1410 || S.t % DAY < 420;
+  // what the day ring says inside, instead of hands: what's on now, and what's next
+  function reading() {
+    const n = nowItem(), x = nextItem();
+    const top = asleep() && !n ? "Asleep" : n ? `${n.name} · till ${fmt(n.e)}` : "Free";
+    return { top, next: x ? `Next: ${x.name} · in ${until(x.s)}` : "" };
+  }
+
+  /* ---------- one ring of the day: angle from the top, clockwise, for a time; 24 hours around ---------- */
+  const angOf = (m, span = DAY) => ((m - S.t) / span) * Math.PI * 2;
+  const P = (cx, cy, r, a) => [cx + r * Math.sin(a), cy - r * Math.cos(a)];
+  function arcD(cx, cy, r, a1, a2) {
+    const [x1, y1] = P(cx, cy, r, a1), [x2, y2] = P(cx, cy, r, a2);
+    return `M${x1.toFixed(2)} ${y1.toFixed(2)}A${r} ${r} 0 ${a2 - a1 > Math.PI ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+  }
+  const emoji = (g, x, y, icon, size, op = 1) => { const t = svgEl("text", { x, y: y + size * 0.36, "text-anchor": "middle", "font-size": size, opacity: op }, g); t.textContent = icon; return t; };
+  const label = (g, x, y, text, col, op = 1, size = 10) => { const t = svgEl("text", { x, y, "text-anchor": "middle", "font-size": size, fill: col, opacity: op, "font-family": "Geist, system-ui", "font-weight": 500 }, g); t.textContent = text; return t; };
+
+  /* ---------- the four systems ---------- */
+  const DIRS = [
+    {
+      key: "circa", tag: "CIRCA · MORE STORY", name: "Circa", font: "'Unbounded', system-ui, sans-serif",
+      story: ["Circa means around. Your day goes around you.", "The gap is now: the one open part, the part you can still shape.", "The ring turns, so what's next comes to you.", "Each night it comes full circle: the C closes into an O."],
+      paper: "#fff6f2", soft: "#ffe8de", ink: "#2a1622", a: "#7a2e64", b: "#ff9e6b", sw: ["#7a2e64", "#ff9e6b", "#2a1622", "#fff6f2"],
+      crew: [
+        { name: "Tick", body: "#ff9e6b", dark: "#d9713f", light: "#ffd2b8", trim: "#7a2e64", top: "hand" },
+        { name: "Chime", body: "#f6c453", dark: "#cf9a25", light: "#fff0c4", trim: "#7a2e64", trim2: "#fff", top: "bell" },
+        { name: "Pendle", body: "#c58cc0", dark: "#985f92", light: "#ecd0e9", trim: "#ff9e6b", top: "pend" },
+        { name: "Dial", body: "#8fc7b9", dark: "#5e9c8d", light: "#cdeee6", trim: "#7a2e64", top: "dot" },
+        { name: "Spring", body: "#ffb5c8", dark: "#d98399", light: "#ffe2ea", trim: "#7a2e64", top: "wave" },
+        { name: "Bezel", body: "#e7ddd6", dark: "#bfb2a8", light: "#fffaf6", trim: "#7a2e64", top: "halo" },
+      ],
+      mark(svg, d) {
+        svg.setAttribute("viewBox", "0 0 100 100");
+        const g = 0.6, r = 34;
+        svgEl("path", { d: arcD(50, 50, r, g / 2, Math.PI * 2 - g / 2), fill: "none", stroke: d.a, "stroke-width": 12, "stroke-linecap": "round" }, svg);
+        svgEl("circle", { cx: 50, cy: 16, r: 9, fill: d.b }, svg);
+        svgEl("circle", { cx: 47, cy: 15, r: 1.6, fill: d.ink }, svg);
+        svgEl("circle", { cx: 53, cy: 15, r: 1.6, fill: d.ink }, svg);
+      },
+      draw(svg, d) {
+        svg.setAttribute("viewBox", "0 0 300 300");
+        const C = 150, R = 104, gap = 0.42;
+        // full circle: today's progress closes the inner ring, from the gap round
+        const dayStart = 420, dayEnd = 1410, p = Math.max(0, Math.min(1, ((S.t % DAY) - dayStart) / (dayEnd - dayStart)));
+        svgEl("circle", { cx: C, cy: C, r: R - 22, fill: "none", stroke: d.a, "stroke-opacity": 0.1, "stroke-width": 4 }, svg);
+        if (p > 0.01) svgEl("path", { d: arcD(C, C, R - 22, 0, Math.max(0.02, p * Math.PI * 2 - 0.01)), fill: "none", stroke: d.a, "stroke-opacity": 0.45, "stroke-width": 4, "stroke-linecap": "round" }, svg);
+        // the ring: the next 24 hours, open at now
+        svgEl("path", { d: arcD(C, C, R, gap / 2, Math.PI * 2 - gap / 2), fill: "none", stroke: d.a, "stroke-opacity": 0.18, "stroke-width": 16, "stroke-linecap": "round" }, svg);
+        const g = svgEl("g", {}, svg);
+        for (const it of ITEMS) {
+          const a1 = angOf(it.s), a2 = it.e ? angOf(it.e) : a1;
+          if (a2 <= gap / 2 || a1 >= Math.PI * 2 - gap / 2) continue;
+          const s = Math.max(a1, gap / 2), e = Math.min(a2, Math.PI * 2 - gap / 2);
+          if (it.e) svgEl("path", { d: arcD(C, C, R, s, e), fill: "none", stroke: d.a, "stroke-width": 16, "stroke-linecap": "round" }, g);
+          else { const [x, y] = P(C, C, R, s); svgEl("circle", { cx: x, cy: y, r: 6, fill: d.b, stroke: d.paper, "stroke-width": 2 }, g); }
+          const [ix, iy] = P(C, C, R + 26, s);
+          emoji(g, ix, iy, it.icon, 17);
+          const [lx, ly] = P(C, C, R + 44, s);
+          label(g, lx, ly + 3, fmt(it.s), d.ink, 0.6, 9.5);
+        }
+        // the hand, reused: it points at what's next, not at the hour
+        const x = nextItem();
+        if (x) { const a = Math.max(gap / 2, angOf(x.s)); const [px, py] = P(C, C, R - 34, a); svgEl("line", { x1: C, y1: C, x2: px, y2: py, stroke: d.b, "stroke-width": 3, "stroke-linecap": "round", "stroke-dasharray": "1 7" }, svg); svgEl("circle", { cx: px, cy: py, r: 3.5, fill: d.b }, svg); }
+        const r = reading();
+        label(svg, C, C - 4, r.top, d.ink, 1, 13).setAttribute("font-weight", "600");
+        label(svg, C, C + 14, r.next, d.ink, 0.65, 10.5);
+        // where tomorrow starts on the ring: a small moon, no words
+        const mid = angOf(Math.ceil((S.t + 1) / DAY) * DAY);
+        if (mid > gap / 2 && mid < Math.PI * 2 - gap / 2) { const [mx, my] = P(C, C, R, mid); svgEl("circle", { cx: mx, cy: my, r: 3, fill: d.paper }, svg); const [tx, ty] = P(C, C, R + 26, mid); emoji(svg, tx, ty, "🌙", 13, 0.8); }
+        return { x: C, y: C - R + 30, rot: 0, pose: asleep() ? "sleep" : "walk" };
+      },
+    },
+    {
+      key: "morrow", tag: "MORROW · SKY WHEEL", name: "Morrow", font: "'Fraunces', Georgia, serif",
+      story: ["Your day is the sky; the line is your horizon.", "Things rise over it as they get close, and set once they're done.", "Your Morrow is the sun at the top: always now.", "At night it's the moon, asleep, until tomorrow rises."],
+      paper: "#f5f2fb", soft: "#ece7f9", ink: "#1b1736", a: "#5b4bd6", b: "#f4a44a", sw: ["#5b4bd6", "#f4a44a", "#1b1736", "#f5f2fb"],
+      crew: [
+        { name: "Sol", body: "#f7b45e", dark: "#d08530", light: "#ffe0b0", trim: "#f4a44a", trim2: "#ffd38a", top: "ray" },
+        { name: "Dawn", body: "#f7b7a3", dark: "#d98b76", light: "#ffe2d8", top: "cloud" },
+        { name: "Noon", body: "#ffd66b", dark: "#d9aa36", light: "#fff1bf", trim: "#fff3c4", top: "halo" },
+        { name: "Dusk", body: "#8f7ff0", dark: "#6455c9", light: "#cfc7ff", trim: "#f4a44a", top: "crescent" },
+        { name: "Luna", body: "#b9b0f2", dark: "#8a7fd6", light: "#e6e1ff", trim: "#fff3c4", trim2: "#ffffff", top: "star" },
+        { name: "Nova", body: "#f0eefc", dark: "#c3bde8", light: "#ffffff", trim: "#5b4bd6", trim2: "#f4a44a", top: "spark" },
+      ],
+      mark(svg, d) {
+        svg.setAttribute("viewBox", "0 0 100 100");
+        svgEl("path", { d: "M18 66 A32 32 0 0 1 82 66 Z", fill: d.b }, svg);
+        svgEl("circle", { cx: 42, cy: 52, r: 2.8, fill: d.ink }, svg);
+        svgEl("circle", { cx: 58, cy: 52, r: 2.8, fill: d.ink }, svg);
+        svgEl("rect", { x: 8, y: 66, width: 84, height: 5, rx: 2.5, fill: d.a }, svg);
+      },
+      draw(svg, d) {
+        svg.setAttribute("viewBox", "0 0 300 240");
+        const C = 150, H = 170, R = 112;
+        // the sky: one soft tint for the hour (dawn, day, dusk, night), fading to nothing at the horizon
+        const h = (S.t % DAY) / 60;
+        const tint = h < 5 || h >= 21 ? "#2d2766" : h < 8 ? "#f7b7a3" : h < 17 ? "#a9c8ff" : "#b8a8ff";
+        const id = "sky" + d.key;
+        const lg = svgEl("linearGradient", { id, x1: 0, y1: 0, x2: 0, y2: 1 }, svgEl("defs", {}, svg));
+        svgEl("stop", { offset: 0, "stop-color": tint, "stop-opacity": h < 5 || h >= 21 ? 0.55 : 0.35 }, lg);
+        svgEl("stop", { offset: 1, "stop-color": tint, "stop-opacity": 0 }, lg);
+        svgEl("path", { d: `M${C - R} ${H} A${R} ${R} 0 0 1 ${C + R} ${H} Z`, fill: `url(#${id})` }, svg);
+        // the wheel: now at the top; ±6 hours above the horizon, the rest below it
+        svgEl("path", { d: `M${C - R} ${H} A${R} ${R} 0 0 1 ${C + R} ${H}`, fill: "none", stroke: d.a, "stroke-opacity": 0.35, "stroke-width": 2 }, svg);
+        const g = svgEl("g", {}, svg);
+        for (const it of ITEMS) {
+          const a = angOf(it.s);
+          const k = ((a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; // -π..π, 0 = now
+          if (Math.abs(k) > Math.PI / 2 + 0.25) continue;
+          const [x, y] = P(C, H, R, k);
+          const up = y < H - 2;
+          const past = k < 0;
+          if (it.e) { const k2 = k + angOf(it.e) - a; if (k2 > -Math.PI / 2) svgEl("path", { d: arcD(C, H, R, Math.max(k, -Math.PI / 2), Math.min(k2, Math.PI / 2)), fill: "none", stroke: d.b, "stroke-width": 6, "stroke-linecap": "round", opacity: past ? 0.35 : 1 }, g); }
+          svgEl("circle", { cx: x, cy: y, r: 4, fill: past ? d.a : d.b, opacity: up ? (past ? 0.35 : 1) : 0.25 }, g);
+          const [ix, iy] = P(C, H, R + 24, k);
+          if (up && Math.abs(k) > 0.22) { emoji(g, ix, iy, it.icon, 16, past ? 0.4 : 1); if (y < H - 16) label(g, ix, iy + 22, fmt(it.s), d.ink, past ? 0.35 : 0.65, 9.5); }
+        }
+        svgEl("rect", { x: 14, y: H, width: 272, height: 4, rx: 2, fill: d.a }, svg);
+        // just below the horizon: what rises next
+        const below = ITEMS.find((i) => angOf(i.s) > Math.PI / 2);
+        const r = reading();
+        label(svg, C, H + 26, r.top, d.ink, 1, 13).setAttribute("font-weight", "600");
+        label(svg, C, H + 44, below ? `Rises next: ${below.icon} ${below.name} · ${fmt(below.s)}` : r.next, d.ink, 0.65, 10.5);
+        return { x: C, y: H - R - 4, rot: 0, pose: asleep() ? "sleep" : "walk", lead: asleep() ? 4 : 0 };
+      },
+    },
+    {
+      key: "lune", tag: "NEW · LUNE", name: "Lune", font: "'Cormorant Garamond', Georgia, serif",
+      story: ["You're the centre. Your Lune is a little moon that orbits your day.", "Its path is your day; your things are the stars on it.", "It waxes as you get things done: full moon, full day.", "At night it rests on its own side of the sky."],
+      paper: "#121633", soft: "#1b2048", ink: "#eef0ff", a: "#c9cff7", b: "#ffd77a", sw: ["#121633", "#c9cff7", "#ffd77a", "#eef0ff"],
+      crew: [
+        { name: "Crescent", body: "#e8ebff", dark: "#b6bde8", light: "#ffffff", trim: "#ffd77a", top: "crescent" },
+        { name: "Half", body: "#d7dcff", dark: "#a3abe0", light: "#f6f7ff", trim: "#ffd77a", top: "dot" },
+        { name: "Gibbous", body: "#fff1c9", dark: "#e3c98a", light: "#fffaf0", trim: "#c9cff7", top: "halo" },
+        { name: "Full", body: "#ffe39a", dark: "#d9b55a", light: "#fff6d6", trim: "#ffffff", top: "star" },
+      ],
+      mark(svg, d) {
+        svg.setAttribute("viewBox", "0 0 100 100");
+        svgEl("circle", { cx: 50, cy: 50, r: 34, fill: "none", stroke: d.a, "stroke-width": 3, "stroke-dasharray": "2 7", "stroke-linecap": "round" }, svg);
+        svgEl("circle", { cx: 50, cy: 50, r: 7, fill: d.a }, svg);
+        svgEl("circle", { cx: 74, cy: 26, r: 12, fill: d.b }, svg);
+        svgEl("circle", { cx: 79, cy: 22, r: 10, fill: d.paper }, svg);
+      },
+      draw(svg, d) {
+        svg.setAttribute("viewBox", "0 0 300 300");
+        const C = 150, R = 106;
+        svgEl("circle", { cx: C, cy: C, r: R, fill: "none", stroke: d.a, "stroke-opacity": 0.35, "stroke-width": 2, "stroke-dasharray": "2 8", "stroke-linecap": "round" }, svg);
+        // the orbit is fixed to the day (noon at the top, midnight at the bottom); the moon moves, the stars stay
+        const dayAng = (m) => (((m % DAY) - 720) / DAY) * Math.PI * 2;
+        for (const it of ITEMS.filter((i) => i.s < DAY)) {
+          const [x, y] = P(C, C, R, dayAng(it.s));
+          const done = it.s < S.t;
+          svgEl("path", { d: `M${x} ${y - 6} L${x + 1.6} ${y - 1.6} L${x + 6} ${y} L${x + 1.6} ${y + 1.6} L${x} ${y + 6} L${x - 1.6} ${y + 1.6} L${x - 6} ${y} L${x - 1.6} ${y - 1.6} Z`, fill: d.b, opacity: done ? 1 : 0.4 }, svg);
+          const [ix, iy] = P(C, C, R + 26, dayAng(it.s));
+          emoji(svg, ix, iy, it.icon, 15, done ? 0.6 : 1);
+        }
+        // you, in the middle, with what's on and what's next
+        svgEl("circle", { cx: C, cy: C - 30, r: 8, fill: d.a }, svg);
+        const r = reading();
+        label(svg, C, C + 2, r.top, d.ink, 1, 13).setAttribute("font-weight", "600");
+        label(svg, C, C + 20, r.next, d.ink, 0.65, 10.5);
+        // the moon's phase: how much of today is done
+        const doneN = ITEMS.filter((i) => i.s < DAY && i.s < S.t).length, all = ITEMS.filter((i) => i.s < DAY).length;
+        label(svg, C, C + 44, `${["🌑", "🌒", "🌓", "🌔", "🌕"][Math.min(4, Math.round((doneN / all) * 4))]} ${doneN} of ${all} done`, d.ink, 0.75, 11);
+        const [mx, my] = P(C, C, R, dayAng(S.t));
+        return { x: mx, y: my, rot: 0, pose: asleep() ? "sleep" : "walk" };
+      },
+    },
+    {
+      key: "petal", tag: "NEW · PETAL", name: "Petal", font: "'Baloo 2', system-ui, sans-serif",
+      story: ["Every day is a flower; each thing you'll do is a petal.", "A petal opens when its time comes and colours in when it's done.", "Your Petal companion visits the one that's open now.", "The flower turns so now is always on top."],
+      paper: "#fbf5ff", soft: "#f1e6fb", ink: "#2b1a3a", a: "#9a5bd6", b: "#ffb43d", sw: ["#9a5bd6", "#ffb43d", "#2b1a3a", "#fbf5ff"],
+      crew: [
+        { name: "Bumble", body: "#ffd04a", dark: "#d4a21e", light: "#fff2b8", trim: "#ffffff", top: "wings", stripes: true },
+        { name: "Dotty", body: "#ff6b5b", dark: "#c9402f", light: "#ffb8ad", trim: "#2b1a3a", top: "dot", spots: true },
+        { name: "Moth", body: "#e7dcf7", dark: "#b9a6d9", light: "#ffffff", trim: "#c9b6ef", top: "wings" },
+        { name: "Bud", body: "#9fe0a0", dark: "#63ad66", light: "#d9f7d9", trim: "#ff8fc4", trim2: "#ffd04a", top: "leaf" },
+      ],
+      mark(svg, d) {
+        svg.setAttribute("viewBox", "0 0 100 100");
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          const [x, y] = P(50, 52, 22, a);
+          svgEl("ellipse", { cx: x, cy: y, rx: 12, ry: 18, fill: i === 0 ? d.b : d.a, opacity: i === 0 ? 1 : 0.85, transform: `rotate(${(a * 180) / Math.PI} ${x} ${y})` }, svg);
+        }
+        svgEl("circle", { cx: 50, cy: 52, r: 11, fill: d.paper }, svg);
+        svgEl("circle", { cx: 46, cy: 50, r: 1.8, fill: d.ink }, svg);
+        svgEl("circle", { cx: 54, cy: 50, r: 1.8, fill: d.ink }, svg);
+      },
+      draw(svg, d) {
+        svg.setAttribute("viewBox", "0 0 300 300");
+        const C = 150, today = ITEMS.filter((i) => i.s < DAY), n = today.length;
+        // the current petal sits on top; the flower turns as the day moves on
+        const cur = Math.max(0, today.findIndex((i) => (i.e ?? i.s + 30) > S.t));
+        const spin = -(cur / n) * Math.PI * 2;
+        today.forEach((it, i) => {
+          const a = (i / n) * Math.PI * 2 + spin;
+          const [x, y] = P(C, C, 62, a);
+          const done = (it.e ?? it.s + 30) <= S.t, open = i === cur && !done;
+          svgEl("ellipse", { cx: x, cy: y, rx: open ? 24 : 20, ry: open ? 46 : 40, fill: done ? d.a : open ? d.b : d.paper, stroke: done ? d.a : d.a, "stroke-width": 2.5, opacity: done ? 0.9 : 1, transform: `rotate(${(a * 180) / Math.PI} ${x} ${y})` }, svg);
+          const [ix, iy] = P(C, C, 72, a);
+          emoji(svg, ix, iy, it.icon, open ? 20 : 15, done ? 0.75 : 1);
+          const [lx, ly] = P(C, C, 128, a);
+          label(svg, lx, ly + 3, fmt(it.s), d.ink, 0.6, 9.5);
+        });
+        svgEl("circle", { cx: C, cy: C, r: 26, fill: d.paper, stroke: d.a, "stroke-width": 2.5 }, svg);
+        const r = reading();
+        label(svg, C, C + 4, r.top.split(" · ")[0], d.ink, 1, 10).setAttribute("font-weight", "600");
+        return { x: C, y: C - 128, rot: 0, pose: asleep() ? "sleep" : "walk", caption: r.next };
+      },
+    },
+  ];
+
+  /* ---------- build the cards ---------- */
+  const host = document.getElementById("dirs");
+  const cards = [];
+  for (const d of DIRS) {
+    const card = document.createElement("section");
+    card.className = "dir";
+    card.setAttribute("aria-label", d.name);
+    card.style.cssText = `--a:${d.a};--b:${d.b};--ink:${d.ink};--paper:${d.paper};--soft:${d.soft};--wm:${d.font};--n:${d.crew.length}`;
+    card.innerHTML = `
+      <div class="head"><svg aria-hidden="true"></svg><div><span class="tag">${d.tag}</span><span class="word">${d.name}</span></div></div>
+      <ul class="story">${d.story.map((s) => `<li>${s}</li>`).join("")}</ul>
+      <div class="dial" role="img" aria-label="${d.name}'s day ring. Drag to spin time."><svg aria-hidden="true"></svg><canvas class="px who" width="16" height="16" aria-hidden="true"></canvas></div>
+      <div class="read" aria-live="polite"><b></b><span></span></div>
+      <div class="crew">${d.crew.map((c) => `<div><canvas class="px" width="16" height="16" aria-hidden="true"></canvas><small>${c.name}</small></div>`).join("")}</div>
+      <div class="sw">${d.sw.map((c) => `<span style="background:${c}"></span>`).join("")}</div>`;
+    host.appendChild(card);
+    d.mark(card.querySelector(".head svg"), d);
+    cards.push({ d, card, svg: card.querySelector(".dial svg"), who: card.querySelector(".who"), read: card.querySelector(".read"), crew: [...card.querySelectorAll(".crew canvas")] });
+  }
+
+  /* ---------- draw everything for the current time ---------- */
+  function render() {
+    for (const k of cards) {
+      k.svg.textContent = "";
+      const at = k.d.draw(k.svg, k.d);
+      const box = k.svg.getBoundingClientRect(), vb = k.svg.viewBox.baseVal;
+      const sx = box.width / vb.width, sy = box.height / vb.height;
+      k.who.style.transform = `translate(${at.x * sx}px, ${(at.y - 14 + (at.lead || 0)) * sy}px)`;
+      k.at = at;
+      const r = reading();
+      k.read.querySelector("b").textContent = r.top;
+      k.read.querySelector("span").textContent = at.caption ?? r.next;
+    }
+    document.getElementById("clockText").textContent = fmt(S.t);
+  }
+  let lastStep = -1;
+  function sprites(time) {
+    const moving = time - S.last < 180;
+    const step = reduce ? 0 : Math.floor(time / (moving ? 110 : 430));
+    if (step === lastStep && !moving) return;
+    lastStep = step;
+    for (const k of cards) {
+      const pose = k.at.pose === "sleep" && !moving ? "sleep" : moving ? "walk" : reduce ? "stand" : "stand";
+      paint(k.who, sprite(k.d.crew[0], pose, step));
+      k.crew.forEach((cv, i) => paint(cv, sprite(k.d.crew[i], reduce ? "stand" : "walk", step + i)));
+    }
+  }
+  function loop(time) { sprites(time); if (!reduce) requestAnimationFrame(loop); }
+
+  /* ---------- time: the chips, dragging a ring, and following the real clock ---------- */
+  function setTime(t, fromDrag) {
+    t = Math.max(0, Math.min(DAY + 600, t));
+    if (Math.round(t) === Math.round(S.t)) return;
+    S.t = t;
+    S.last = performance.now();
+    if (!fromDrag) {}
+    render();
+    sprites(performance.now());
+  }
+  const chips = [...document.querySelectorAll("#time [data-at]")];
+  for (const b of chips)
+    b.addEventListener("click", () => {
+      const v = b.dataset.at;
+      const to = v ? Number(v.split(":")[0]) * 60 + Number(v.split(":")[1]) : real();
+      for (const o of chips) o.setAttribute("aria-pressed", String(o === b));
+      if (reduce) return setTime(to);
+      const from = S.t, t0 = performance.now();
+      const go = (n) => { const p = Math.min(1, (n - t0) / 900); const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; setTime(from + (to - from) * e); if (p < 1) requestAnimationFrame(go); };
+      requestAnimationFrame(go);
+    });
+  for (const k of cards) {
+    const dial = k.card.querySelector(".dial");
+    let drag = null;
+    const angAt = (e) => { const r = dial.getBoundingClientRect(); return Math.atan2(e.clientX - r.left - r.width / 2, -(e.clientY - r.top - r.height / 2)); };
+    dial.addEventListener("pointerdown", (e) => { drag = { a: angAt(e) }; dial.setPointerCapture(e.pointerId); for (const o of chips) o.setAttribute("aria-pressed", "false"); });
+    dial.addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      let a = angAt(e), da = a - drag.a;
+      if (da > Math.PI) da -= Math.PI * 2;
+      if (da < -Math.PI) da += Math.PI * 2;
+      drag.a = a;
+      // spinning the ring backwards brings the future to now, like turning a dial
+      setTime(S.t - (da / (Math.PI * 2)) * DAY * (k.d.key === "petal" ? 0.6 : 1), true);
+    });
+    const end = () => (drag = null);
+    dial.addEventListener("pointerup", end);
+    dial.addEventListener("pointercancel", end);
+  }
+  setInterval(() => { if (chips[0].getAttribute("aria-pressed") === "true" && performance.now() - S.last > 30000) { S.t = real(); render(); } }, 20000);
+  addEventListener("resize", render);
+  render();
+  requestAnimationFrame(loop);
+})();
+</script>

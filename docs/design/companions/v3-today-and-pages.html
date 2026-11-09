@@ -1,0 +1,393 @@
+<title>V3 Today and Pages</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Geist:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: two decisions for LifeFlow V3, one under the other. 1) Today's face, A and B side by side on the same made-up
+   week, one time slider for both, then both at six moments. 2) The pages, before and after, with the recommendation.
+   V3's own Day Sky tokens. */
+:root {
+  --paper: #f6f8fb; --ink: #0f1a2a; --mute: #5f6b7d; --card: #ffffff; --line: #dfe5ee; --sky: #2468c4; --sun-ink: #b45309;
+  --gone: #b42318; --shadow: 0 1px 2px rgb(15 26 42 / 0.06), 0 14px 30px -16px rgb(15 26 42 / 0.35);
+  --display: "Fraunces", ui-serif, Georgia, serif;
+  --body: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #07101f; --ink: #eef3fb; --mute: #93a1b7; --card: #0f1a2e; --line: #1d2c47; --sky: #7db3f2; --sun-ink: #ffc56b; --gone: #ff9a8e; --shadow: 0 0 0 1px rgb(255 255 255 / 0.07), 0 18px 36px -18px rgb(0 0 0 / 0.8); color-scheme: dark; }
+}
+:root[data-theme="dark"] { --paper: #07101f; --ink: #eef3fb; --mute: #93a1b7; --card: #0f1a2e; --line: #1d2c47; --sky: #7db3f2; --sun-ink: #ffc56b; --gone: #ff9a8e; --shadow: 0 0 0 1px rgb(255 255 255 / 0.07), 0 18px 36px -18px rgb(0 0 0 / 0.8); color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1060px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 26px 64px; display: flex; flex-direction: column; gap: 44px; }
+.kick { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--sun-ink); }
+h1, h2 { font-family: var(--display); font-weight: 600; letter-spacing: -0.025em; text-wrap: balance; margin: 6px 0 6px; }
+h1 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); line-height: 1.08; }
+h2 { font-size: 1.55rem; }
+p { margin: 0; }
+.lead { color: var(--mute); max-width: 68ch; }
+section { display: flex; flex-direction: column; gap: 16px; }
+.ctl { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 10px 14px 10px 10px; border-radius: 22px; background: var(--card); box-shadow: var(--shadow); max-width: 640px; }
+.play { width: 44px; height: 44px; border-radius: 22px; border: 0; background: var(--ink); color: var(--paper); display: grid; place-items: center; cursor: pointer; }
+.play svg { width: 15px; height: 15px; }
+.ctl output { min-width: 74px; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 40px; background: transparent; margin: 0; cursor: pointer; }
+input[type="range"]::-webkit-slider-runnable-track { height: 12px; border-radius: 6px; background: var(--track); }
+input[type="range"]::-moz-range-track { height: 12px; border-radius: 6px; background: var(--track); }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; margin-top: -6px; border-radius: 50%; background: #ffd77a; border: 3px solid #fff; box-shadow: 0 3px 10px rgb(245 165 36 / 0.6); }
+input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #ffd77a; border: 3px solid #fff; }
+.moments { display: flex; flex-wrap: wrap; gap: 6px; }
+.moments button { font: inherit; font-size: 0.82rem; font-weight: 600; min-height: 36px; padding: 0 12px; border-radius: 18px; border: 0; background: var(--card); color: var(--mute); box-shadow: var(--shadow); cursor: pointer; }
+.moments button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--sky); outline-offset: 3px; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 24px; }
+.phone { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.phone h3 { margin: 0; font-size: 1.05rem; font-weight: 650; display: flex; gap: 8px; align-items: baseline; }
+.phone h3 b { font-family: var(--display); font-size: 1.3rem; }
+.phone p { color: var(--mute); font-size: 0.9rem; }
+.screen { width: 100%; max-width: 380px; aspect-ratio: 390 / 640; border-radius: 34px; overflow: hidden; box-shadow: 0 0 0 7px #0b0f17, 0 0 0 8px #283244, 0 30px 60px -28px rgb(10 20 40 / 0.6); background: #f6f8fb; }
+.screen svg { display: block; width: 100%; height: 100%; }
+.grid6 { display: grid; grid-template-columns: auto repeat(6, minmax(0, 1fr)); gap: 8px; align-items: center; overflow-x: auto; }
+.grid6 .h { font-size: 0.74rem; font-weight: 700; color: var(--mute); text-align: center; letter-spacing: 0.04em; }
+.grid6 .r { font-family: var(--display); font-weight: 600; font-size: 1.1rem; padding-right: 6px; }
+.grid6 svg { display: block; width: 100%; min-width: 92px; aspect-ratio: 390 / 470; border-radius: 14px; box-shadow: var(--shadow); }
+.rec { padding: 16px 18px; border-radius: 20px; background: var(--card); box-shadow: var(--shadow); max-width: 74ch; display: flex; flex-direction: column; gap: 8px; }
+.rec b { color: var(--ink); }
+.rec ol { margin: 0; padding-left: 1.2em; color: var(--mute); }
+.maps { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.map { padding: 18px; border-radius: 24px; background: var(--card); box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.map h3 { margin: 0; font-family: var(--display); font-size: 1.25rem; font-weight: 600; }
+.map .count { color: var(--mute); font-size: 0.85rem; }
+.tab { display: flex; flex-direction: column; gap: 6px; }
+.tab > span { font-weight: 650; font-size: 0.95rem; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pills i { font-style: normal; font-size: 0.8rem; padding: 4px 10px; border-radius: 12px; background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.pills i.go { color: var(--gone); text-decoration: line-through; background: color-mix(in srgb, var(--gone) 9%, transparent); }
+.pills i.new { color: var(--sky); background: color-mix(in srgb, var(--sky) 12%, transparent); font-weight: 600; }
+.moves { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.moves li { display: grid; grid-template-columns: minmax(0, 14em) auto minmax(0, 1fr); gap: 10px; align-items: baseline; font-size: 0.88rem; padding: 8px 0; border-top: 1px solid var(--line); }
+.moves li span:nth-child(2) { color: var(--mute); }
+.moves li span:first-child { font-weight: 600; }
+.foot { color: var(--mute); font-size: 0.82rem; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="kick">LifeFlow V3 · two choices for you</div>
+    <h1>Today's face, and which pages stay</h1>
+    <p class="lead">Both use the same made-up student's week and an example November day (sunrise 6:48 AM, sunset 5:02 PM). Drag the time or press play: both phones follow it.</p>
+  </header>
+
+  <section aria-labelledby="h1a">
+    <h2 id="h1a">1. Today's face</h2>
+    <p class="lead">You said the half dome turning over at sunset is confusing. Here are two ways to fix it. Pick one.</p>
+    <div class="ctl">
+      <button type="button" class="play" id="play" aria-label="Play the day"><svg viewBox="0 0 16 16" aria-hidden="true"><path id="playIcon" d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg></button>
+      <input type="range" id="time" min="300" max="1860" step="1" value="840" aria-label="Time of day">
+      <output id="timeOut" for="time"></output>
+    </div>
+    <div class="moments" id="moments" role="group" aria-label="Jump to a moment"></div>
+    <div class="pair">
+      <div class="phone">
+        <h3><b>A</b> One circle</h3>
+        <p>The day is the top half (sunrise on the left, sunset on the right), the night is the bottom half. Your companion keeps going around, so nothing ever flips.</p>
+        <div class="screen"><svg id="phoneA" viewBox="0 0 390 640" role="img" aria-label="Variant A, one circle"></svg></div>
+      </div>
+      <div class="phone">
+        <h3><b>B</b> The sky's path</h3>
+        <p>The dome stays a dome. The sun sets on the right while the moon rises on the left, and the same path becomes the night. It always says when the sun sets or rises.</p>
+        <div class="screen"><svg id="phoneB" viewBox="0 0 390 640" role="img" aria-label="Variant B, the sky's path"></svg></div>
+      </div>
+    </div>
+    <h3 style="margin:8px 0 0;font-size:1rem">Both at six moments</h3>
+    <div class="grid6" id="grid6"></div>
+    <div class="rec"><b>My recommendation: A, one circle.</b> It answers "when does the sun set?" without words: the horizon is the line, the left end is sunrise, the right end is sunset, and the companion just keeps walking. Nothing changes shape, so there's no moment to explain. B is closer to what you have now, but the path still swaps from sun to moon at sunset.</div>
+  </section>
+
+  <section aria-labelledby="h2a">
+    <h2 id="h2a">2. Pages: before and after</h2>
+    <p class="lead">From the page inventory (2026-11-06): the pages that should disappear or merge into others, now that Today's timeline holds your calendar and to-dos. Nothing is built until you say yes.</p>
+    <div class="maps">
+      <div class="map">
+        <h3>Now</h3><span class="count" data-count></span>
+        <div class="tab"><span>Today</span><div class="pills"><i>Day</i><i class="go">Calendar</i><i class="go">Month</i><i class="go">To-dos</i><i class="go">Milestones</i><i>Goals</i><i>Health</i><i>Work</i></div></div>
+        <div class="tab"><span>Assistant</span><div class="pills"><i>Chat</i><i>Updates</i><i class="go">Filed</i><i class="go">Ideas</i><i class="go">Profile</i><i>What it knows</i><i class="go">Import</i></div></div>
+        <div class="tab"><span>Money</span><div class="pills"><i>Overview</i><i>Activity</i><i class="go">Category rules</i><i class="go">Accounts</i><i class="go">Investments</i><i>Budget</i><i class="go">Bills</i><i class="go">Subscriptions</i></div></div>
+        <div class="tab"><span>School</span><div class="pills"><i>Classes</i><i class="go">Due</i><i>Notes</i></div></div>
+        <div class="tab"><span>Settings (the gear)</span><div class="pills"><i>Profile &amp; appearance</i><i class="go">Notifications</i><i class="go">Personality</i><i>Face ID &amp; passwords</i><i>Connected accounts</i><i>Privacy &amp; data</i><i>Recently deleted</i><i class="go">Plan</i><i class="go">Invite friends</i><i class="go">Send feedback</i></div></div>
+      </div>
+      <div class="map">
+        <h3>After</h3><span class="count" data-count></span>
+        <div class="tab"><span>Today</span><div class="pills"><i class="new">Day (the sky; the timeline holds the calendar and to-dos)</i><i class="new">Goals (with your story)</i><i>Health</i><i>Work</i></div></div>
+        <div class="tab"><span>Assistant</span><div class="pills"><i class="new">Chat (ideas as suggestions)</i><i class="new">Updates (one feed)</i><i class="new">What it knows (with import)</i></div></div>
+        <div class="tab"><span>Money</span><div class="pills"><i class="new">Overview (with what you have)</i><i>Activity</i><i>Budget</i><i class="new">Bills and subscriptions</i></div></div>
+        <div class="tab"><span>School</span><div class="pills"><i class="new">Classes (with what's due)</i><i>Notes</i></div></div>
+        <div class="tab"><span>Settings (the gear)</span><div class="pills"><i>Profile &amp; appearance</i><i class="new">How your assistant talks to you</i><i>Face ID &amp; passwords</i><i>Connected accounts</i><i>Privacy &amp; data</i><i>Recently deleted</i><i class="new">LifeFlow (plan, invite, feedback)</i></div></div>
+      </div>
+    </div>
+    <ul class="moves">
+      <li><span>Calendar, Month</span><span>→</span><span>the timeline, zoomed out</span></li>
+      <li><span>To-dos</span><span>→</span><span>the timeline and Today; "all to-dos" one tap deeper, each to-do still opens to edit</span></li>
+      <li><span>Milestones</span><span>→</span><span>"Your story" inside Goals</span></li>
+      <li><span>Due</span><span>→</span><span>School's main view is what's due</span></li>
+      <li><span>Bills, Subscriptions</span><span>→</span><span>one "Bills and subscriptions" page</span></li>
+      <li><span>Category rules</span><span>→</span><span>a one-tap "always file this as…?" when you fix a category</span></li>
+      <li><span>Accounts, Investments</span><span>→</span><span>"What you have" inside Money; bank links in Connected accounts</span></li>
+      <li><span>Filed, Updates</span><span>→</span><span>one Updates feed (today two pages are both called Updates)</span></li>
+      <li><span>Ideas</span><span>→</span><span>suggestions when you start a new chat</span></li>
+            <li><span>Profile, Import</span><span>→</span><span>Profile was only links; one "Bring what another AI knows about you" inside What it knows</span></li>
+      <li><span>Personality, Notifications</span><span>→</span><span>one "How your assistant talks to you"</span></li>
+      <li><span>Plan, Invite friends, Send feedback</span><span>→</span><span>one "LifeFlow" page</span></li>
+      <li><span>Forms</span><span>→</span><span>"Log health", "Record a paycheck" and "Add another job" go; your connections fill them in</span></li>
+    </ul>
+    <div class="rec">
+      <b>My recommendation: yes to all of it, in this order.</b>
+      <ol>
+        <li>Today: Calendar and To-dos into the timeline (it already holds both), Milestones into Goals.</li>
+        <li>Assistant: one Updates feed; Ideas and Profile go.</li>
+        <li>Money and School: Bills with Subscriptions, what you have inside Money, rules as one tap, Due inside Classes.</li>
+        <li>Settings: the two small merges, and the gear page stops looking like a phone's own settings list.</li>
+      </ol>
+      Nothing is lost: everything you can do today still has a place, just fewer pages to look through. One flag: Work's "estimated gross" tiles count hours times rate; if they include future shifts they predict hourly pay, which the app's rules don't allow yet. I'd show hours there until pay prediction is ready.
+    </div>
+  </section>
+  <p class="foot">Concept on made-up data. The faces are drawn in Day Sky colours; in V3 (V2 plus Morrow) they take Morrow's colours, and the shape works the same either way.</p>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const DAY = 1440, SR = 408, SS = 1022, DAYLEN = SS - SR, NIGHTLEN = DAY - DAYLEN;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const mod = (m) => ((m % DAY) + DAY) % DAY;
+  const smooth = (t) => t * t * (3 - 2 * t);
+  const fmt = (m) => { const x = mod(Math.round(m)); const h = Math.floor(x / 60), mm = x % 60; return `${h % 12 || 12}${mm ? `:${String(mm).padStart(2, "0")}` : ""} ${h < 12 ? "AM" : "PM"}`; };
+  const dur = (m) => { m = Math.max(0, Math.round(m)); return m < 60 ? `${m} min` : `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ""}`; };
+  const el = (tag, a, p) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); p.appendChild(e); return e; };
+  const txt = (p, x, y, s, a = {}) => { const e = el("text", { x, y, "text-anchor": "middle", "font-family": "Geist, system-ui, sans-serif", ...a }, p); e.textContent = s; return e; };
+  const poly = (pts) => pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join("");
+
+  /* the sky by the minute (the same colours as V3) */
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const mix = (a, b, t) => a.map((v, i) => lerp(v, b[i], t));
+  const rgb = (c) => `rgb(${c.map(Math.round).join(" ")})`;
+  const KEYS = [[SR - 100, "#03060f", "#071226", "#0e1f3d"], [SR - 55, "#06102a", "#13284d", "#2d4470"], [SR - 22, "#13284f", "#3f5d8c", "#d98a62"], [SR + 4, "#2e5791", "#7d9cc7", "#ffb27a"], [SR + 60, "#3f7fc8", "#9dc3e8", "#f8dcbc"], [SR + 150, "#2f7cd2", "#76b1e8", "#cfe6f8"], [(SR + SS) / 2, "#2a76d0", "#6aaae6", "#c8e3f8"], [SS - 110, "#3479c9", "#7fb2e2", "#d6e7f3"], [SS - 45, "#4a7fbf", "#a6bfd8", "#ffd391"], [SS - 5, "#36578f", "#c98f78", "#ff8a45"], [SS + 22, "#1b3263", "#6a5a7a", "#e2643f"], [SS + 50, "#0b1a3a", "#1f3155", "#4b4560"], [SS + 100, "#03060f", "#071226", "#0e1f3d"]].map(([m, ...c]) => [m, ...c.map(hex)]);
+  function sky(t) { const m = mod(t); if (m <= KEYS[0][0] || m >= KEYS[KEYS.length - 1][0]) return KEYS[0].slice(1); for (let i = 1; i < KEYS.length; i++) if (m <= KEYS[i][0]) { const A = KEYS[i - 1], B = KEYS[i], u = (m - A[0]) / (B[0] - A[0]); return [1, 2, 3].map((j) => mix(A[j], B[j], u)); } return KEYS[0].slice(1); }
+  const isDay = (t) => { const m = mod(t); return m >= SR && m < SS; };
+  const isDark = (t) => { const m = mod(t); return m < SR - 20 || m >= SS + 20; };
+
+  /* the companion as pixels: Sol by day, a pale moon at night */
+  const SOL = { body: "#f7b45e", dark: "#d08530", light: "#ffe0b0", trim: "#f4a44a", trim2: "#ffd38a" };
+  const MOON = { body: "#e6edf8", dark: "#b2c1da", light: "#ffffff", trim: "#ffd77a", moon: true };
+  function who(p, x, y, c, sleep, step, size = 48) {
+    const g = el("g", { transform: `translate(${(x - size / 2).toFixed(1)} ${(y - size * 0.85).toFixed(1)}) scale(${size / 16})`, "shape-rendering": "crispEdges" }, p);
+    const put = (px, py, col) => el("rect", { x: px, y: py, width: 1, height: 1, fill: col }, g);
+    const INK = "#262320", inset = [2, 1, 0, 0, 0, 0, 1, 2], top = (sleep ? 6 : 4) - (step % 2);
+    for (let yy = 0; yy < 8; yy++) for (let xx = 3 + inset[yy]; xx <= 12 - inset[yy]; xx++) { const edge = xx === 3 + inset[yy] || xx === 12 - inset[yy] || yy === 0 || yy === 7; put(xx, top + yy, edge ? INK : yy >= 5 ? c.dark : c.body); }
+    put(5, top + 1, c.light); put(6, top + 1, c.light); put(5, top + 2, c.light);
+    const ey = top + 3 + (sleep ? 1 : 0);
+    if (sleep) for (const xx of [6, 7, 9, 10]) put(xx, ey, INK); else { for (const xx of [6, 10]) { put(xx, ey, INK); put(xx, ey + 1, INK); } put(5, ey + 2, "#f2a0a0"); put(11, ey + 2, "#f2a0a0"); }
+    const t = top - 1;
+    if (c.moon) for (const [xx, yy] of [[9, t], [10, t], [8, t - 1], [8, t - 2], [9, t - 3], [10, t - 3]]) put(xx, yy, c.trim);
+    else for (const [xx, yy, col] of [[8, t - 1, c.trim], [5, t, c.trim], [11, t, c.trim], [3, t + 2, c.trim], [13, t + 2, c.trim], [8, t - 2, c.trim2]]) put(xx, yy, col);
+    if (!sleep) for (const xx of step % 2 ? [6, 9] : [4, 10]) { put(xx, top + 8, INK); put(xx + 1, top + 8, INK); }
+  }
+
+  /* a made-up student's week (minutes from today's midnight) */
+  const K = { class: "#2f80ed", study: "#06b0cc", work: "#f59e0b", body: "#22b866", social: "#f06292", money: "#0f8f80", due: "#ef4444", rest: "#8fa3bf" };
+  const at = (d, h, m = 0) => d * DAY + h * 60 + m;
+  const ITEMS = [
+    [at(-1, 19, 30), at(-1, 21, 30), "🎬", "Movie night", "social"], [at(0, 0, 20), at(0, 6, 40), "😴", "Sleep", "rest"],
+    [at(0, 7, 15), at(0, 8), "🏋️", "Gym", "body"], [at(0, 8, 20), 0, "🥯", "Breakfast with Priya", "social"], [at(0, 9, 30), at(0, 10, 45), "🎓", "Anatomy", "class"],
+    [at(0, 11), at(0, 12, 15), "📚", "Study block", "study"], [at(0, 12, 30), 0, "🍽️", "Lunch", "social"], [at(0, 13, 30), at(0, 15, 20), "🧪", "Chem lab", "class"],
+    [at(0, 15, 35), 0, "💳", "Phone bill", "money"], [at(0, 16), at(0, 21), "💼", "Work", "work"], [at(0, 21, 15), 0, "🍜", "Dinner", "social"],
+    [at(0, 21, 30), at(0, 22, 30), "📖", "Study for exam", "study"], [at(0, 23, 59), 0, "📄", "3 assignments due", "due"], [at(1, 0, 15), at(1, 6, 45), "😴", "Sleep", "rest"],
+    [at(1, 7, 30), at(1, 8, 15), "🏃", "Run with Priya", "body"], [at(1, 9), 0, "☕", "Coffee with Sam", "social"], [at(1, 11), at(1, 12, 15), "🎓", "Statistics", "class"],
+  ].map(([s, e, icon, name, k], id) => ({ id, s, e: e || null, icon, name, k }));
+  const done = (it, now) => (it.e ?? it.s + 1) <= now && it.k !== "due";
+
+  /* shared: the background sky, the words under it */
+  function backdrop(svg, now, hy, defs) {
+    const [top, mid, bot] = sky(now);
+    const g = el("linearGradient", { id: `${svg.id}-sky`, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    el("stop", { offset: 0, "stop-color": rgb(top) }, g); el("stop", { offset: 0.6, "stop-color": rgb(mid) }, g); el("stop", { offset: 1, "stop-color": rgb(bot) }, g);
+    el("rect", { x: 0, y: 0, width: 390, height: hy, fill: `url(#${svg.id}-sky)` }, svg);
+    if (isDark(now)) for (let i = 0; i < 40; i++) el("circle", { cx: (i * 151) % 390, cy: 20 + ((i * 97) % Math.max(40, hy - 30)), r: i % 4 ? 0.8 : 1.3, fill: "#fff", opacity: 0.7 }, svg);
+  }
+  function words(svg, now, y) {
+    const cur = ITEMS.find((i) => i.e && i.s <= now && i.e > now && i.k !== "rest");
+    const nx = ITEMS.filter((i) => i.s > now && i.k !== "rest").sort((a, b) => a.s - b.s)[0];
+    const asleep = ITEMS.find((i) => i.k === "rest" && i.s <= now && i.e > now);
+    const tag = asleep ? "SLEEP" : cur ? `NOW · TILL ${fmt(cur.e)}` : nx ? `NEXT · ${fmt(nx.s)}` : "FREE";
+    const big = asleep ? "🌙 Rest well" : cur ? `${cur.icon} ${cur.name}` : nx ? `${nx.icon} ${nx.name}` : "Nothing planned";
+    txt(svg, 195, y, tag, { "font-size": 11.5, "font-weight": 700, "letter-spacing": "2", fill: "#b45309" });
+    txt(svg, 195, y + 34, big, { "font-size": 28, "font-weight": 600, "font-family": "Fraunces, Georgia, serif", fill: "#0f1a2a" });
+    if (cur && nx) txt(svg, 195, y + 60, `Then ${nx.icon} ${nx.name} · ${fmt(nx.s)}`, { "font-size": 13.5, fill: "#5f6b7d" });
+  }
+  function tile(p, x, y, it, now, big, showTime) {
+    const h = big ? 38 : done(it, now) ? 26 : 32;
+    const w = showTime ? h + fmt(it.s).length * 6.6 + 12 : h;
+    const night = !isDay(it.s);
+    el("rect", { x: x - w / 2, y: y - h / 2, width: w, height: h, rx: h * 0.34, fill: night ? "#14223b" : "#fff", stroke: K[it.k], "stroke-width": big ? 2.6 : 2, opacity: done(it, now) ? 0.8 : 1 }, p);
+    txt(p, x - w / 2 + h / 2, y + h * 0.19, it.icon, { "font-size": (h * 0.52).toFixed(1) });
+    if (showTime) txt(p, x - w / 2 + h - 1, y + h * 0.15, fmt(it.s), { "text-anchor": "start", "font-size": (h * 0.31).toFixed(1), "font-weight": 650, fill: night ? "#eef3fb" : "#0f1a2a" });
+    if (done(it, now)) txt(p, x + w / 2 - 2, y - h / 2 + 5, "✦", { "font-size": 11, fill: "#ffd166" });
+  }
+  // the things on a stretch of time, one tile per moment (a pile for the same minute), placed by `pos`
+  function tiles(p, now, from, to, pos, opacity = 1) {
+    const g = el("g", { opacity }, p);
+    const list = ITEMS.filter((i) => i.s >= from && i.s < to && i.k !== "rest").sort((a, b) => a.s - b.s);
+    const next = list.filter((i) => i.s > now).slice(0, 2);
+    let lastX = -99, lastY = -99;
+    for (const it of list) {
+      const [x, y] = pos(it.s);
+      if (Math.hypot(x - lastX, y - lastY) < 30) continue;
+      tile(g, x, y, it, now, next[0] === it, next.includes(it));
+      [lastX, lastY] = [x, y];
+    }
+  }
+  const sunEnd = (p, x, y, label, anchor, fill) => {
+    el("path", { d: `M${x - 5.5} ${y}A5.5 5.5 0 0 1 ${x + 5.5} ${y}Z`, fill: "#f5a524" }, p);
+    txt(p, anchor === "start" ? x + 10 : x - 10, y + 4, label, { "text-anchor": anchor, "font-size": 11.5, "font-weight": 600, fill });
+  };
+
+  /* A: one circle. Top half the day (sunrise left, over the top, sunset right), bottom half the night (back round
+     under). The companion keeps walking clockwise; it's the sun above the horizon and the moon below it. */
+  function drawA(svg, now, full = true) {
+    svg.textContent = "";
+    const defs = el("defs", {}, svg);
+    const cx = 195, cy = 270, R = 128;
+    backdrop(svg, now, cy, defs);
+    // the night half: always there under the horizon, with its stars
+    el("rect", { x: 0, y: cy, width: 390, height: cy + R + 40 - cy, fill: "#0b1630" }, svg);
+    const fadeG = el("linearGradient", { id: `${svg.id}-fade`, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    el("stop", { offset: 0, "stop-color": "#0b1630", "stop-opacity": 1 }, fadeG); el("stop", { offset: 1, "stop-color": "#f6f8fb", "stop-opacity": 1 }, fadeG);
+    el("rect", { x: 0, y: cy + R + 40, width: 390, height: 60, fill: `url(#${svg.id}-fade)` }, svg);
+    for (let i = 0; i < 26; i++) el("circle", { cx: 20 + ((i * 137) % 350), cy: cy + 14 + ((i * 53) % (R + 10)), r: i % 4 ? 0.8 : 1.3, fill: "#fff", opacity: 0.6 }, svg);
+    // where a moment sits: by its time of day (sunrise left, sunset right). The ring holds one turn from the start of
+    // the half you're in, so by day the night ahead shows tonight, and at night the top half shows the coming day.
+    const edge = isDay(now) ? SR : SS, start = Math.floor((now - edge) / DAY) * DAY + edge;
+    const ang = (t) => { const v = mod(t - SR); return v < DAYLEN ? Math.PI - Math.PI * (v / DAYLEN) : -Math.PI * ((v - DAYLEN) / NIGHTLEN); };
+    const pos = (t) => { const a = ang(t); return [cx + R * Math.cos(a), cy - R * Math.sin(a)]; };
+    const arc = (t0, t1) => { const pts = []; for (let t = t0; t <= t1; t += 6) pts.push(pos(t)); pts.push(pos(t1)); return pts; };
+    // the ring: what's behind you since sunrise glows; the rest is a dotted path
+    el("path", { d: poly(arc(start, start + DAY - 1)) + "Z", fill: "none", stroke: "#ffffff", "stroke-opacity": 0.55, "stroke-width": 4, "stroke-dasharray": "0.1 8.5", "stroke-linecap": "round" }, svg);
+    el("path", { d: poly(arc(start, now)), fill: "none", stroke: "#ffd77a", "stroke-opacity": 0.45, "stroke-width": 12, "stroke-linecap": "round" }, svg);
+    el("path", { d: poly(arc(start, now)), fill: "none", stroke: "#ffb648", "stroke-width": 4.5, "stroke-linecap": "round" }, svg);
+    for (const it of ITEMS) if (it.e && it.e > start && it.s < start + DAY && it.k !== "rest") el("path", { d: poly(arc(Math.max(it.s, start), Math.min(it.e, start + DAY - 1))), fill: "none", stroke: K[it.k], "stroke-width": 8, "stroke-linecap": "round", opacity: it.e <= now ? 0.5 : 0.95 }, svg);
+    // the horizon, sunrise and sunset at its ends, noon and midnight named where they fall
+    el("rect", { x: 0, y: cy - 1, width: 390, height: 2, fill: "#ffffff", opacity: 0.85 }, svg);
+    for (const [x, name, t] of [[cx - R - 30, "Sunrise", SR], [cx + R + 30, "Sunset", SS]]) {
+      txt(svg, x, cy + 20, name, { "font-size": 11, "font-weight": 700, fill: "#eef3fb" });
+      txt(svg, x, cy + 34, fmt(t), { "font-size": 11, fill: "#eef3fb", opacity: 0.8 });
+    }
+    const [nx, ny] = pos(720), [mx, my] = pos(0);
+    txt(svg, nx, ny - 26, "12 PM", { "font-size": 10, "font-weight": 600, fill: isDark(now) ? "#eef3fb" : "#0f1a2a", opacity: 0.6 });
+    txt(svg, mx, my + 34, "12 AM", { "font-size": 10, "font-weight": 600, fill: "#eef3fb", opacity: 0.6 });
+    tiles(svg, now, start, start + DAY, pos);
+    // the companion where it is now: the sun above the horizon, the moon below
+    const [wx, wy] = pos(now);
+    const glow = el("radialGradient", { id: `${svg.id}-glow` }, defs);
+    for (const [o, c, a] of isDay(now) ? [[0, "#fff8dc", 0.9], [1, "#ffd27a", 0]] : [[0, "#eef4ff", 0.5], [1, "#a9c1ec", 0]]) el("stop", { offset: o, "stop-color": c, "stop-opacity": a }, glow);
+    el("circle", { cx: wx, cy: wy - 18, r: 58, fill: `url(#${svg.id}-glow)` }, svg);
+    const m = mod(now);
+    who(svg, wx, wy, isDay(now) ? SOL : MOON, !isDay(now) && (m >= 1380 || m < SR), step);
+    if (full) words(svg, now, cy + R + 96);
+  }
+
+  /* B: the sky's path. A dome over the horizon. By day the sun walks it from sunrise to sunset; around sunset the sun
+     sinks on the right while the moon rises on the left, and the same path becomes the night (and back at sunrise).
+     A chip always says when the sun sets or rises next. */
+  function drawB(svg, now, full = true) {
+    svg.textContent = "";
+    const defs = el("defs", {}, svg);
+    const cx = 195, hy = 330, rx = 158, ry = 188;
+    backdrop(svg, now, hy, defs);
+    const m = mod(now);
+    // which half is on the path, and how far through the change at sunset/sunrise (40 minutes around it)
+    const nearSet = m >= SS - 20 && m < SS + 20, nearRise = m >= SR - 20 && m < SR + 20;
+    const f = nearSet ? smooth((m - (SS - 20)) / 40) : nearRise ? smooth((m - (SR - 20)) / 40) : 0;
+    const day0 = Math.floor(now / DAY) * DAY;
+    const dayHalf = { a: day0 + SR, b: day0 + SS, day: true };
+    const nightHalf = m >= SS ? { a: day0 + SS, b: day0 + DAY + SR, day: false } : { a: day0 - DAY + SS, b: day0 + SR, day: false };
+    const nextNight = { a: day0 + SS, b: day0 + DAY + SR, day: false }, nextDay = { a: day0 + DAY + SR, b: day0 + DAY + SS, day: true };
+    let from, to;
+    if (nearSet) [from, to] = [dayHalf, nextNight];
+    else if (nearRise) [from, to] = [nightHalf, m < SR ? dayHalf : nextDay];
+    else from = to = isDay(now) ? dayHalf : nightHalf;
+    const posIn = (h) => (t) => { const u = clamp((t - h.a) / (h.b - h.a), 0, 1), th = Math.PI * u; return [cx - rx * Math.cos(th), hy - ry * Math.sin(th)]; };
+    const path = (h, t0, t1) => { const p = posIn(h), pts = []; for (let t = t0; t <= t1; t += 5) pts.push(p(t)); pts.push(p(t1)); return pts; };
+    const drawHalf = (h, op, shift) => {
+      const g = el("g", { opacity: op, transform: `translate(${shift} 0)` }, svg);
+      el("path", { d: poly(path(h, h.a, h.b)) + "Z", fill: "#ffffff", opacity: h.day ? 0.18 : 0.08 }, g);
+      el("path", { d: poly(path(h, h.a, h.b)), fill: "none", stroke: "#ffffff", "stroke-opacity": h.day ? 1 : 0.6, "stroke-width": 4, "stroke-dasharray": "0.1 8.5", "stroke-linecap": "round" }, g);
+      if (now > h.a) { el("path", { d: poly(path(h, h.a, Math.min(now, h.b))), fill: "none", stroke: h.day ? "#ffd77a" : "#cfe0ff", "stroke-opacity": 0.45, "stroke-width": 12, "stroke-linecap": "round" }, g); el("path", { d: poly(path(h, h.a, Math.min(now, h.b))), fill: "none", stroke: h.day ? "#ffb648" : "#f2f6ff", "stroke-width": 4.5, "stroke-linecap": "round" }, g); }
+      for (const it of ITEMS) if (it.e && it.e > h.a && it.s < h.b && it.k !== "rest") el("path", { d: poly(path(h, Math.max(it.s, h.a), Math.min(it.e, h.b))), fill: "none", stroke: K[it.k], "stroke-width": 9, "stroke-linecap": "round", opacity: it.e <= now ? 0.5 : 0.95 }, g);
+      tiles(g, now, h.a, h.b, posIn(h));
+      sunEnd(g, cx - rx + 6, hy + 22, h.day ? `Sunrise ${fmt(SR)}` : `Sunset ${fmt(SS)}`, "start", "#0f1a2a");
+      sunEnd(g, cx + rx - 6, hy + 22, h.day ? `Sunset ${fmt(SS)}` : `Sunrise ${fmt(SR)}`, "end", "#0f1a2a");
+    };
+    if (from !== to) { drawHalf(from, 1 - f, 26 * f); drawHalf(to, f, -26 * (1 - f)); } else drawHalf(from, 1, 0);
+    el("rect", { x: 0, y: hy - 1, width: 390, height: 2, fill: "#ffffff", opacity: 0.9 }, svg);
+    // the companions: by day the sun on the path; around sunset it sinks on the right as the moon rises on the left
+    const clip = el("clipPath", { id: `${svg.id}-above` }, defs);
+    el("rect", { x: 0, y: 0, width: 390, height: hy + 2 }, clip);
+    const cg = el("g", { "clip-path": `url(#${svg.id}-above)` }, svg);
+    const glowAt = (x, y, day) => { const id = `${svg.id}-g${day ? "d" : "n"}`; if (!svg.querySelector(`#${id}`)) { const gr = el("radialGradient", { id }, defs); for (const [o, c, a] of day ? [[0, "#fff8dc", 0.9], [1, "#ffd27a", 0]] : [[0, "#eef4ff", 0.5], [1, "#a9c1ec", 0]]) el("stop", { offset: o, "stop-color": c, "stop-opacity": a }, gr); } el("circle", { cx: x, cy: y - 18, r: 58, fill: `url(#${id})` }, cg); };
+    const sleep = !isDay(now) && (m >= 1380 || m < SR - 20);
+    if (from === to) { const [x, y] = posIn(from)(now); glowAt(x, y, from.day); who(cg, x, y, from.day ? SOL : MOON, sleep, step); }
+    else {
+      const [ox, oy] = posIn(from)(from.b), [nx2, ny2] = posIn(to)(to.a);
+      glowAt(ox, oy + 40 * f, from.day); who(cg, ox, oy + 50 * f, from.day ? SOL : MOON, false, step);
+      glowAt(nx2, ny2 + 50 * (1 - f), to.day); who(cg, nx2, ny2 + 50 * (1 - f), to.day ? SOL : MOON, false, step);
+    }
+    // the chip: when the sun sets (or rises) next
+    const untilSet = mod(SS - m), untilRise = mod(SR - m);
+    const chip = isDay(now) ? `☀️ Sun sets in ${dur(untilSet)}` : `🌙 Sun rises in ${dur(untilRise)}`;
+    const w = chip.length * 6.6 + 24;
+    el("rect", { x: 195 - w / 2, y: hy + 40, width: w, height: 28, rx: 14, fill: "#ffffff", stroke: "#dfe5ee" }, svg);
+    txt(svg, 195, hy + 58, chip, { "font-size": 12.5, "font-weight": 650, fill: "#0f1a2a" });
+    if (full) words(svg, now, hy + 106);
+  }
+
+  /* driving it */
+  const A = document.getElementById("phoneA"), B = document.getElementById("phoneB");
+  const slider = document.getElementById("time"), out = document.getElementById("timeOut");
+  let step = 0;
+  slider.style.setProperty("--track", `linear-gradient(90deg, ${Array.from({ length: 27 }, (_, i) => `${rgb(sky(300 + i * 60)[1])} ${((i / 26) * 100).toFixed(1)}%`).join(", ")})`);
+  const MOMENTS = [["Morning", 510], ["Afternoon", 870], ["Before sunset", SS - 15], ["After sunset", SS + 18], ["Midnight", DAY], ["Before sunrise", DAY + SR - 15]];
+  const momentsEl = document.getElementById("moments");
+  for (const [name, t] of MOMENTS) { const b = document.createElement("button"); b.type = "button"; b.textContent = `${name} · ${fmt(t)}`; b.dataset.t = t; b.addEventListener("click", () => set(t)); momentsEl.appendChild(b); }
+  function set(t) { slider.value = String(Math.round(t)); render(); }
+  function render() {
+    const t = Number(slider.value);
+    out.textContent = fmt(t);
+    for (const b of momentsEl.children) b.setAttribute("aria-pressed", String(Math.abs(Number(b.dataset.t) - t) < 1));
+    drawA(A, t); drawB(B, t);
+  }
+  slider.addEventListener("input", render);
+  let playing = 0;
+  document.getElementById("play").addEventListener("click", () => {
+    const icon = document.getElementById("playIcon");
+    if (playing) { clearInterval(playing); playing = 0; icon.setAttribute("d", "M4 2.5v11l9-5.5z"); return; }
+    if (Number(slider.value) >= 1850) slider.value = "300";
+    icon.setAttribute("d", "M4 2.5h3v11H4zM9 2.5h3v11H9z");
+    playing = setInterval(() => { const v = Number(slider.value) + 4; if (v >= 1860) { clearInterval(playing); playing = 0; icon.setAttribute("d", "M4 2.5v11l9-5.5z"); } slider.value = String(Math.min(1860, v)); render(); }, 50);
+  });
+  if (!reduce) setInterval(() => { step++; render(); }, 600);
+
+  // both at six moments (the same drawings, smaller, without the words)
+  const grid = document.getElementById("grid6");
+  grid.appendChild(document.createElement("span"));
+  for (const [name, t] of MOMENTS) { const h = document.createElement("span"); h.className = "h"; h.textContent = `${name} ${fmt(t)}`; grid.appendChild(h); }
+  for (const [label, draw] of [["A", drawA], ["B", drawB]]) {
+    const r = document.createElement("span"); r.className = "r"; r.textContent = label; grid.appendChild(r);
+    for (const [name, t] of MOMENTS) { const s = document.createElementNS(NS, "svg"); s.id = `m${label}${t}`; s.setAttribute("viewBox", "0 0 390 470"); s.setAttribute("role", "img"); s.setAttribute("aria-label", `${label} at ${name}`); grid.appendChild(s); draw(s, t, false); }
+  }
+  for (const c of document.querySelectorAll("[data-count]")) c.textContent = `4 tabs and the gear, ${c.closest(".map").querySelectorAll(".pills i").length} pages`;
+  render();
+})();
+</script>

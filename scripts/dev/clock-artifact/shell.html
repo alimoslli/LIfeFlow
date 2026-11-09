@@ -1,0 +1,538 @@
+<title>LifeFlow Day Clock</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the app's Today screen in one phone-width column (top bar, the clock, the ask bar, the tab bar), on the
+   app's own tokens from src/app/globals.css, so it looks and reads exactly like LifeFlow in light and dark. */
+{{TOKENS}}
+:root {
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+[hidden] {
+  display: none !important;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.app {
+  max-width: 460px;
+  margin: 0 auto;
+  min-height: 100%;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 112px;
+}
+.top {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.top img {
+  width: 34px;
+  height: 34px;
+}
+.top-r {
+  display: flex;
+  margin-right: -10px;
+}
+.ib {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  border-radius: 22px;
+}
+.ib svg {
+  width: 22px;
+  height: 22px;
+}
+/* the concept bar: what this page is, and a time to see it at */
+.concept {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-block: 2px 10px;
+}
+.concept p {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.concept b {
+  color: var(--text-2);
+  font-weight: 600;
+}
+.times {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: -4px;
+  padding-inline: 4px;
+}
+.times::-webkit-scrollbar {
+  display: none;
+}
+.times button {
+  flex: none;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 17px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.times button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+/* the assistant's one line, in the clock's foot (as in the app) */
+.ast {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: left;
+  width: 100%;
+}
+.ast img {
+  width: 30px;
+  height: 30px;
+  flex: none;
+}
+.ast span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ast-k {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.ast-t {
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.ast-a {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 4px;
+}
+/* the ask bar and the tab bar, fixed at the bottom like the app shell */
+.dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+.tabs {
+  pointer-events: auto;
+  max-width: 436px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 6px;
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lift);
+  border: 1px solid var(--border);
+}
+.tab {
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 22px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.tab svg {
+  width: 22px;
+  height: 22px;
+}
+.tab[aria-current="page"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.ask {
+  margin-top: 14px;
+  width: 100%;
+  min-height: 48px;
+  border-radius: 24px;
+  padding: 0 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  text-align: left;
+  font-size: 0.95rem;
+}
+/* the pin sheet */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.sheet-back {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.35);
+}
+.sheet-card {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  max-height: 92%;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 26px 26px 0 0;
+  padding: 10px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--shadow-lift);
+  animation: rise 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes rise {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-card {
+    animation: none;
+  }
+}
+.grab {
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border-strong);
+  margin: 0 auto 2px;
+}
+.sheet h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.pin-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.pin-ic {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--surface-2);
+  font-size: 1.5rem;
+}
+.field {
+  min-height: 48px;
+  min-width: 0;
+  flex: 1;
+  border-radius: 16px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  color: var(--text);
+  padding: 0 14px;
+  font: inherit;
+  font-size: 1rem;
+}
+.emojis {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: -20px;
+  padding-inline: 20px;
+}
+.emojis::-webkit-scrollbar {
+  display: none;
+}
+.emojis button {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  font-size: 1.4rem;
+}
+.emojis button[aria-checked="true"] {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.kinds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.kinds button {
+  min-height: 56px;
+  padding: 8px 12px;
+  border-radius: 16px;
+  background: var(--surface-2);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.kinds b {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+.kinds small {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+.kinds button[aria-checked="true"] {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.when {
+  display: flex;
+  gap: 10px;
+}
+.when label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.acts {
+  display: flex;
+  gap: 10px;
+}
+.acts button {
+  flex: 1;
+  min-height: 48px;
+  border-radius: 24px;
+  font-weight: 600;
+  background: var(--surface-2);
+}
+.acts .primary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 50;
+  max-width: min(420px, calc(100% - 32px));
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.88rem;
+  line-height: 1.35;
+  box-shadow: var(--shadow-lift);
+}
+.vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+/* ---- the day clock: src/components/day-clock/day-clock.css, as the app ships it ---- */
+{{CLOCK_CSS}}
+/* in this page the concept bar sits above the clock, so the clock gives it that room */
+.dc {
+  height: clamp(500px, calc(100svh - 240px), 720px);
+}
+</style>
+
+<div class="app">
+  <header class="top">
+    <img src="{{MARK}}" alt="LifeFlow">
+    <div class="top-r">
+      <button class="ib" type="button" aria-label="Search and ask" data-says="In the app, this searches everything and asks your assistant.">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7.5" /><path d="m20.5 20.5-4.2-4.2" /></svg>
+      </button>
+      <button class="ib" type="button" aria-label="Settings" data-says="In the app, this opens Settings.">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
+      </button>
+    </div>
+  </header>
+  <h1 class="vh">LifeFlow v3: Today as a day clock</h1>
+  <div class="concept">
+    <p><b>v3 concept.</b> A made-up student's week on your own clock. Tap the clock, pin things. Nothing is saved.</p>
+    <div class="times" role="group" aria-label="See it at a time of day">
+      <button type="button" data-at="" aria-pressed="true">Now</button>
+      <button type="button" data-at="07:00" aria-pressed="false">7 AM</button>
+      <button type="button" data-at="09:00" aria-pressed="false">9 AM</button>
+      <button type="button" data-at="13:00" aria-pressed="false">1 PM</button>
+      <button type="button" data-at="18:00" aria-pressed="false">6 PM</button>
+      <button type="button" data-at="22:30" aria-pressed="false">10:30 PM</button>
+    </div>
+  </div>
+
+  <div class="dc" data-open="false">
+    <canvas data-dc="goo" aria-hidden="true"></canvas>
+    <svg data-dc="face" aria-hidden="true">
+      <defs>
+        <radialGradient id="dc-press">
+          <stop offset="0" class="dc-stop-a" />
+          <stop offset=".8" class="dc-stop-b" />
+          <stop offset="1" class="dc-stop-c" />
+        </radialGradient>
+        <filter id="dc-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" /></filter>
+        <filter id="dc-halo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12" /></filter>
+      </defs>
+      <g data-dc="leaders"></g>
+      <g data-dc="faceG">
+        <circle data-dc="halo" class="dc-halo" filter="url(#dc-halo)" opacity="0" />
+        <g data-dc="press" opacity="0">
+          <circle fill="url(#dc-press)" />
+          <circle class="dc-press-ring" />
+        </g>
+        <path data-dc="rim" class="dc-rim" />
+        <g data-dc="arcs"></g>
+        <g data-dc="ticks"></g>
+        <g data-dc="day"></g>
+        <g data-dc="hands">
+          <line data-dc="hour" class="dc-hour" />
+          <line data-dc="minute" class="dc-minute" />
+          <circle data-dc="hub" class="dc-hub" r="4.2" />
+        </g>
+        <g data-dc="steps"></g>
+      </g>
+    </svg>
+    <svg data-dc="dome" class="dc-dome" aria-hidden="true"></svg>
+    <canvas data-dc="who" class="dc-who" width="16" height="16" aria-hidden="true"></canvas>
+    <div data-dc="callouts" class="dc-callouts" aria-hidden="true"></div>
+    <div data-dc="micons" class="dc-micons" aria-hidden="true"></div>
+    <div data-dc="hint" class="dc-hint">Tap the clock to open your day</div>
+    <div data-dc="sub" class="dc-sub">
+      <button type="button" data-dc="today" class="dc-todaybtn" aria-label="Open today as a timeline">
+        Today
+        <svg width="12" height="8" viewBox="0 0 12 8" aria-hidden="true"><path d="M1.5 1.5 6 6l4.5-4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </button>
+      <nav data-dc="days" class="dc-days" aria-label="Days"></nav>
+    </div>
+    <div data-dc="chips" class="dc-tiles"></div>
+    <div data-dc="trackWrap" class="dc-trackwrap" role="region" aria-label="Timeline"><div data-dc="track" class="dc-track"></div></div>
+    <div data-dc="detail" class="dc-detail" aria-live="polite"></div>
+    <div data-dc="pinbar" class="dc-pinbar">
+      <button type="button" id="pinbtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14" /></svg>
+        Pin something
+      </button>
+    </div>
+    <div data-dc="hintWrap" class="dc-hint dc-hint-wrap">Pull down to wrap your day</div>
+    <div data-dc="hit" class="dc-hit" role="button" tabindex="0" aria-label="Open your day as a timeline"></div>
+    <div data-dc="foot" class="dc-foot">
+      <section aria-label="From your assistant">
+        <button type="button" class="ast" data-says="In the app, your assistant suggests study time on your free evening for you to approve.">
+          <img src="{{MARK}}" alt="">
+          <span><span class="ast-k">your assistant</span><span class="ast-t">Anatomy exam in 2 days, and five assignments due tonight.</span><span class="ast-a">Plan study time</span></span>
+        </button>
+      </section>
+    </div>
+    <label data-dc="hap" class="dc-hap" aria-hidden="true"><input type="checkbox" tabindex="-1"></label>
+    <span data-dc="probe" class="dc-probe" aria-hidden="true"></span>
+  </div>
+
+  <button type="button" class="ask" data-says="In the app, this opens a chat with your assistant.">Message your assistant…</button>
+</div>
+
+<nav class="dock" aria-label="Main">
+  <div class="tabs">
+    <button type="button" class="tab" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5" /><path d="M12 6.5V12h4.5" /></svg>Today
+    </button>
+    <button type="button" class="tab" data-says="In the app, this opens your assistant.">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M9.94 15.5a2 2 0 0 0-1.44-1.44l-6.13-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0l1.58 6.14a2 2 0 0 0 1.44 1.44l6.13 1.58a.5.5 0 0 1 0 .96l-6.13 1.58a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z" /></svg>Assistant
+    </button>
+    <button type="button" class="tab" data-says="In the app, this opens Money (behind the Money lock).">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" /><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" /></svg>Money
+    </button>
+    <button type="button" class="tab" data-says="In the app, this opens School.">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z" /><path d="M22 10v6" /><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" /></svg>School
+    </button>
+  </div>
+</nav>
+
+<div id="pin" class="sheet" hidden>
+  <div id="pin-back" class="sheet-back"></div>
+  <form id="pin-form" class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="pin-h">
+    <div class="grab" aria-hidden="true"></div>
+    <h2 id="pin-h">Pin to your timeline</h2>
+    <div class="pin-row">
+      <span id="pin-icon" class="pin-ic" aria-hidden="true">📌</span>
+      <input id="pin-name" class="field" aria-label="Name" placeholder="What is it?" maxlength="180" required autocomplete="off">
+    </div>
+    <div class="emojis" role="radiogroup" aria-label="Emoji">{{EMOJIS}}</div>
+    <div class="kinds" role="radiogroup" aria-label="What it is">
+      <button type="button" role="radio" data-kind="todo" aria-checked="true"><b>To-do</b><small>Something to do by then</small></button>
+      <button type="button" role="radio" data-kind="plan" aria-checked="false"><b>Plan</b><small>Somewhere to be, for an hour</small></button>
+      <button type="button" role="radio" data-kind="goal" aria-checked="false"><b>Goal</b><small>Something to reach by that day</small></button>
+      <button type="button" role="radio" data-kind="milestone" aria-checked="false"><b>Milestone</b><small>Something that happened</small></button>
+    </div>
+    <div class="when">
+      <label for="pin-date">Day<input id="pin-date" class="field" type="date" required></label>
+      <label id="pin-time-wrap" for="pin-time">Time<input id="pin-time" class="field" type="time"></label>
+    </div>
+    <div class="acts">
+      <button type="button" id="pin-cancel">Cancel</button>
+      <button type="submit" class="primary">Pin it</button>
+    </div>
+  </form>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+{{JS}}
+</script>

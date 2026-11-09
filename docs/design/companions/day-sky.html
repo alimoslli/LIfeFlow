@@ -1,0 +1,743 @@
+<title>Day Sky Concept</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Silkscreen&display=swap">
+<style>
+/* The page: a title, the controls (play the day, a slider whose track is the day's sky, Today or Timeline) and the
+   phone. Inside the phone everything is laid out at 390 x 844 and scaled to fit. The page follows the viewer's theme;
+   the phone follows the sky. */
+:root {
+  --bg: #f2f4f8; --fg: #0f1a2a; --muted: #5f6b7d; --card: #ffffff; --line: #dfe5ee;
+  --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: "Fraunces", Georgia, serif;
+  --pixel: "Silkscreen", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #070b14; --fg: #eef3fb; --muted: #93a1b7; --card: #0f1626; --line: #1c2638; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #070b14; --fg: #eef3fb; --muted: #93a1b7; --card: #0f1626; --line: #1c2638; color-scheme: dark; }
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible, input:focus-visible { outline: 2px solid #f4a44a; outline-offset: 2px; }
+.page { max-width: 460px; margin: 0 auto; padding: 20px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 12px; }
+.head h1 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 1.6rem; letter-spacing: -0.02em; }
+.head p { margin: 4px 0 0; color: var(--muted); font-size: 0.88rem; line-height: 1.45; }
+.ctl { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; background: var(--card); border-radius: 22px; padding: 10px 14px 10px 10px; box-shadow: inset 0 0 0 1px var(--line); }
+.play { width: 44px; height: 44px; border-radius: 22px; background: var(--fg); color: var(--bg); display: grid; place-items: center; }
+.play svg { width: 16px; height: 16px; }
+.ctl output { font-variant-numeric: tabular-nums; font-size: 0.9rem; font-weight: 600; min-width: 70px; text-align: right; }
+input[type="range"].dayslider { -webkit-appearance: none; appearance: none; width: 100%; height: 44px; background: transparent; margin: 0; cursor: pointer; }
+input[type="range"].dayslider::-webkit-slider-runnable-track { height: 14px; border-radius: 7px; background: var(--track); box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06); }
+input[type="range"].dayslider::-moz-range-track { height: 14px; border-radius: 7px; background: var(--track); }
+input[type="range"].dayslider::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; margin-top: -6px; border-radius: 50%; background: #ffd77a; border: 3px solid #fff; box-shadow: 0 0 0 1px rgb(0 0 0 / 0.08), 0 4px 10px rgb(244 164 74 / 0.6); }
+input[type="range"].dayslider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #ffd77a; border: 3px solid #fff; box-shadow: 0 4px 10px rgb(244 164 74 / 0.6); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 18px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+.seg button { min-height: 40px; border-radius: 14px; font-size: 0.9rem; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.frame { position: relative; width: 100%; aspect-ratio: 390 / 844; border-radius: 50px; overflow: hidden; box-shadow: 0 0 0 9px #0b0f17, 0 0 0 10px #283244, 0 40px 80px -30px rgb(10 20 40 / 0.55); background: #000; }
+.foot { color: var(--muted); font-size: 0.8rem; line-height: 1.5; margin: 6px 4px 0; }
+
+/* The phone. --paper, --ink, --mute and --chip follow the sky (set by the script every frame). */
+.screen { position: absolute; left: 0; top: 0; width: 390px; height: 844px; transform-origin: 0 0; overflow: hidden; background: var(--paper); color: var(--ink); font-family: var(--font); user-select: none; -webkit-user-select: none; }
+.sky { position: absolute; left: 0; right: 0; top: 0; overflow: hidden; }
+.sky .stars { position: absolute; left: 0; top: 0; width: 390px; height: 420px; }
+.sky .stars circle { animation: tw 3.2s ease-in-out infinite alternate; }
+@keyframes tw { from { opacity: 0.25; } to { opacity: 1; } }
+.cloud { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, rgb(255 255 255 / 0.85), rgb(255 255 255 / 0)); animation: drift 60s linear infinite alternate; }
+@keyframes drift { from { transform: translateX(-30px); } to { transform: translateX(40px); } }
+svg.scene { position: absolute; left: 0; top: 0; width: 390px; height: 844px; touch-action: none; }
+canvas.who { position: absolute; left: 0; top: 0; width: 48px; height: 48px; image-rendering: pixelated; pointer-events: none; }
+.status { position: absolute; left: 0; right: 0; top: 0; height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 4px 32px 0 36px; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--top-ink); pointer-events: none; }
+.status .island { width: 112px; height: 33px; border-radius: 17px; background: #050409; }
+.status .bat { width: 27px; height: 13px; border-radius: 4px; box-shadow: inset 0 0 0 1.2px currentColor; opacity: 0.9; position: relative; }
+.status .bat::after { content: ""; position: absolute; inset: 2.5px 6px 2.5px 2.5px; border-radius: 2px; background: currentColor; }
+.topbar { position: absolute; left: 22px; right: 22px; top: 54px; height: 42px; display: flex; align-items: center; justify-content: space-between; color: var(--top-ink); pointer-events: none; }
+.topbar .t { font-family: var(--display); font-size: 28px; font-weight: 600; letter-spacing: -0.025em; display: flex; align-items: center; gap: 9px; }
+.topbar .t svg { width: 30px; height: 30px; }
+.topbar .d { font-size: 13.5px; font-weight: 500; opacity: 0.72; }
+.days { position: absolute; left: 12px; right: 12px; top: 102px; display: flex; justify-content: space-between; }
+.days button { min-width: 46px; height: 36px; padding: 0 10px; border-radius: 18px; font-size: 13.5px; font-weight: 600; color: var(--mute); }
+.days button.on { background: var(--ink); color: var(--paper); }
+.words { position: absolute; left: 20px; right: 20px; display: flex; flex-direction: column; align-items: center; text-align: center; pointer-events: none; }
+.words .tag { font-size: 11.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--tag); }
+.words .now { margin-top: 6px; font-family: var(--display); font-size: 32px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.08; }
+.words .then { margin-top: 6px; font-size: 14.5px; color: var(--mute); }
+.pills { display: flex; gap: 8px; margin-top: 16px; }
+.pills span { height: 34px; padding: 0 13px; border-radius: 17px; background: var(--chip); box-shadow: 0 1px 2px rgb(10 20 40 / 0.06), 0 8px 18px -10px rgb(10 20 40 / 0.3); display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.after { margin-top: 14px; font-size: 13px; color: var(--mute); }
+.bubble { position: absolute; left: 16px; right: 16px; top: 668px; display: flex; gap: 12px; align-items: center; padding: 12px 16px 12px 12px; border-radius: 22px; background: var(--chip); box-shadow: 0 1px 2px rgb(10 20 40 / 0.05), 0 14px 30px -16px rgb(10 20 40 / 0.4); font-size: 14.5px; line-height: 1.35; pointer-events: none; }
+.bubble canvas { width: 36px; height: 36px; image-rendering: pixelated; flex: none; border-radius: 12px; background: var(--chip2); }
+.bubble small { display: block; font-family: var(--pixel); font-size: 9px; letter-spacing: 0.04em; color: var(--mute); margin-bottom: 1px; }
+.card { position: absolute; left: 16px; right: 16px; top: 474px; padding: 16px; border-radius: 26px; background: var(--chip); box-shadow: 0 1px 2px rgb(10 20 40 / 0.05), 0 18px 36px -18px rgb(10 20 40 / 0.45); }
+.card .row { display: flex; gap: 14px; align-items: center; }
+.card .ic { width: 52px; height: 52px; border-radius: 17px; display: grid; place-items: center; font-size: 26px; background: color-mix(in srgb, var(--c) 16%, var(--chip)); box-shadow: inset 0 0 0 2px var(--c); flex: none; }
+.card .k { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--tag); }
+.card .ti { font-family: var(--display); font-size: 23px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; margin-top: 2px; }
+.card .me { font-size: 13.5px; color: var(--mute); margin-top: 2px; }
+.card .acts { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 8px; margin-top: 14px; }
+.card .acts button { height: 44px; border-radius: 15px; font-size: 14px; font-weight: 600; background: var(--chip2); }
+.card .acts button.go { background: var(--ink); color: var(--paper); }
+.someday { position: absolute; left: 16px; right: 16px; top: 664px; display: flex; align-items: center; gap: 12px; padding: 0 6px; font-size: 13.5px; color: var(--mute); }
+.someday .stack { display: flex; }
+.someday .stack span { width: 30px; height: 30px; margin-right: -12px; border-radius: 10px; display: grid; place-items: center; font-size: 15px; background: var(--chip); box-shadow: 0 0 0 2px var(--paper), 0 4px 10px -6px rgb(10 20 40 / 0.4); }
+.someday b { color: var(--ink); font-weight: 600; margin-left: 14px; }
+.now-pill { position: absolute; top: 412px; height: 32px; padding: 0 14px; border-radius: 16px; background: var(--ink); color: var(--paper); font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; box-shadow: 0 8px 20px -8px rgb(10 20 40 / 0.5); }
+.tabs { position: absolute; left: 14px; right: 14px; bottom: 18px; display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px; border-radius: 30px; background: var(--chip); box-shadow: 0 1px 2px rgb(10 20 40 / 0.05), 0 16px 32px -14px rgb(10 20 40 / 0.45); pointer-events: none; }
+.tabs span { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 54px; border-radius: 24px; font-size: 11px; font-weight: 600; color: var(--mute); }
+.tabs span.on { color: var(--ink); background: var(--chip2); }
+.tabs svg { width: 22px; height: 22px; }
+.tabs canvas { width: 24px; height: 24px; image-rendering: pixelated; }
+.toast { position: absolute; left: 50%; bottom: 100px; transform: translateX(-50%); padding: 10px 16px; border-radius: 16px; background: var(--ink); color: var(--paper); font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .25s; pointer-events: none; white-space: nowrap; }
+.toast.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .sky .stars circle, .cloud { animation: none; } }
+</style>
+
+<div class="page">
+  <div class="head">
+    <h1>Your day is the sky</h1>
+    <p>By day, your things sit on the sun's path from sunrise to sunset. After sunset it turns over into the night. Tap it and it pours into your week: every day a hill, every night a valley.</p>
+  </div>
+  <div class="ctl">
+    <button type="button" class="play" id="play" aria-label="Play the day"><svg viewBox="0 0 16 16" aria-hidden="true"><path id="playIcon" d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg></button>
+    <input type="range" class="dayslider" id="time" min="300" max="1800" step="1" aria-label="Time of day">
+    <output id="timeOut" for="time"></output>
+  </div>
+  <div class="seg" role="group" aria-label="Today or your week"><button type="button" data-m="0" aria-pressed="true">Today</button><button type="button" data-m="1" aria-pressed="false">Timeline</button></div>
+  <div class="frame" id="frame">
+    <div class="screen" id="screen">
+      <div class="sky" id="sky">
+        <svg class="stars" id="stars" viewBox="0 0 390 420" aria-hidden="true"></svg>
+        <div class="cloud" id="c1" style="left:40px;top:150px;width:150px;height:46px"></div>
+        <div class="cloud" id="c2" style="left:230px;top:210px;width:120px;height:36px;animation-duration:80s;animation-direction:alternate-reverse"></div>
+      </div>
+      <svg class="scene" id="scene" viewBox="0 0 390 844" role="img" aria-label="Your day"></svg>
+      <canvas class="who" id="who" width="16" height="16" aria-hidden="true"></canvas>
+      <div class="words" id="words" aria-live="polite"></div>
+      <div class="bubble" id="bubble"><canvas width="16" height="16" id="bubbleWho" aria-hidden="true"></canvas><div><small>SOL</small><span id="say"></span></div></div>
+      <div class="card" id="card" hidden></div>
+      <div class="someday" id="someday" hidden><span class="stack"><span>🧾</span><span>📦</span><span>✉️</span></span><span><b>Someday</b> · 7 to-dos without a date</span></div>
+      <button type="button" class="now-pill" id="nowPill" hidden></button>
+      <div class="status"><span id="st">9:41</span><span class="island"></span><span class="bat"></span></div>
+      <div class="topbar"><span class="t"><svg id="mark" aria-hidden="true"></svg><span id="title">Today</span></span><span class="d" id="date"></span></div>
+      <div class="days" id="days" hidden></div>
+      <div class="tabs" aria-hidden="true">
+        <span class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3 17h18"/><path d="M6 17a6 6 0 0 1 12 0"/><path d="M12 6v2M5.6 9.6l1.4 1.4M18.4 9.6 17 11"/></svg>Today</span>
+        <span><canvas width="16" height="16" id="tabWho"></canvas>Sol</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>Money</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>School</span>
+      </div>
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+  <p class="foot">Concept with a made-up student's week. Sunrise 6:48 AM and sunset 5:02 PM are an example November day. Drag the slider or press play to live through the day; tap the sky (or a thing on it) to open the timeline, then drag the hills to walk through the week.</p>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const W = 390, DAY = 1440, SR = 408, SS = 1022;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const seg = (p, a, b) => clamp((p - a) / (b - a), 0, 1);
+  const E = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const eOut = (t) => 1 - Math.pow(1 - t, 3);
+  const mod = (m) => ((m % DAY) + DAY) % DAY;
+  const fmt = (m) => { const x = mod(Math.round(m)); let h = Math.floor(x / 60); const mm = x % 60; const ap = h < 12 ? "AM" : "PM"; h = h % 12 || 12; return mm ? `${h}:${String(mm).padStart(2, "0")} ${ap}` : `${h} ${ap}`; };
+  const fmtShort = (m) => fmt(m).replace(":00", "");
+  const lc = (s) => s[0].toLowerCase() + s.slice(1);
+  const el = (tag, a, p) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); p.appendChild(e); return e; };
+  const txt = (p, x, y, s, a = {}) => { const e = el("text", { x: x.toFixed(1), y: y.toFixed(1), "text-anchor": "middle", "font-family": "Geist, system-ui, sans-serif", ...a }, p); e.textContent = s; return e; };
+  const poly = (pts) => pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join("");
+
+  /* ---------- colour: the sky by the minute ---------- */
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const rgb = (c, a = 1) => `rgb(${c.map(Math.round).join(" ")}${a < 1 ? ` / ${a}` : ""})`;
+  const mixc = (a, b, t) => a.map((v, i) => lerp(v, b[i], t));
+  const lum = (c) => (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
+  // what a clear sky looks like at each moment: top, middle and horizon colours, from night through dawn, a blue day,
+  // golden hour and sunset, back to night. Blues and warm light only.
+  const SKY = [
+    [SR - 100, "#03060f", "#071226", "#0e1f3d"], // night
+    [SR - 55, "#06102a", "#13284d", "#2d4470"], // first light
+    [SR - 22, "#13284f", "#3f5d8c", "#d98a62"], // dawn
+    [SR + 4, "#2e5791", "#7d9cc7", "#ffb27a"], // sunrise
+    [SR + 60, "#3f7fc8", "#9dc3e8", "#f8dcbc"], // morning
+    [SR + 150, "#2f7cd2", "#76b1e8", "#cfe6f8"], // late morning
+    [(SR + SS) / 2, "#2a76d0", "#6aaae6", "#c8e3f8"], // midday
+    [SS - 110, "#3479c9", "#7fb2e2", "#d6e7f3"], // afternoon
+    [SS - 45, "#4a7fbf", "#a6bfd8", "#ffd391"], // golden hour
+    [SS - 5, "#36578f", "#c98f78", "#ff8a45"], // sunset
+    [SS + 22, "#1b3263", "#6a5a7a", "#e2643f"], // after sunset
+    [SS + 50, "#0b1a3a", "#1f3155", "#4b4560"], // dusk
+    [SS + 100, "#03060f", "#071226", "#0e1f3d"], // night
+  ].map(([m, a, b, c]) => [m, hex(a), hex(b), hex(c)]);
+  function sky(t) {
+    const m = mod(t), L = SKY.length;
+    if (m <= SKY[0][0] || m >= SKY[L - 1][0]) return SKY[0].slice(1);
+    for (let i = 1; i < L; i++) if (m <= SKY[i][0]) { const A = SKY[i - 1], B = SKY[i], u = (m - A[0]) / (B[0] - A[0]); return [1, 2, 3].map((j) => mixc(A[j], B[j], u)); }
+    return SKY[0].slice(1);
+  }
+  const skyMid = (t) => sky(t)[1];
+  // how dark it is: 0 in daylight, 1 at night, eased through dusk and dawn
+  function dark(t) { const m = mod(t); if (m >= SR + 15 && m <= SS - 15) return 0; if (m > SS + 70 || m < SR - 70) return 1; if (m > SS - 15) return seg(m, SS - 15, SS + 70); return 1 - seg(m, SR - 70, SR + 15); }
+  const PAPER = hex("#f6f8fb"), NIGHT = hex("#08101f"), INK = hex("#0f1a2a"), INK_N = hex("#eef3fb");
+
+  /* ---------- the companion, drawn in code (Sol: the sun by day, the moon at night) ---------- */
+  const OUT = "#262320";
+  const SOL = { body: "#f7b45e", dark: "#d08530", light: "#ffe0b0", trim: "#f4a44a", trim2: "#ffd38a" };
+  const hx = (c) => "#" + c.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
+  const NIGHT_SOL = { body: "#e6edf8", dark: "#b2c1da", light: "#ffffff", trim: "#ffd77a", moon: true };
+  function drawWho(cv, c, pose, step, flip) {
+    const g = cv.getContext("2d"); g.clearRect(0, 0, 16, 16);
+    const put = (x, y, col) => { if (x >= 0 && x < 16 && y >= 0 && y < 16) { g.fillStyle = col; g.fillRect(flip ? 15 - x : x, y, 1, 1); } };
+    const sleep = pose === "sleep", inset = [2, 1, 0, 0, 0, 0, 1, 2];
+    const top = (sleep ? 6 : 4) - (pose === "walk" ? step % 2 : 0);
+    for (let y = 0; y < 8; y++) for (let x = 3 + inset[y]; x <= 12 - inset[y]; x++) { const edge = x === 3 + inset[y] || x === 12 - inset[y] || y === 0 || y === 7; put(x, top + y, edge ? OUT : y >= 5 ? c.dark : c.body); }
+    put(5, top + 1, c.light); put(6, top + 1, c.light); put(5, top + 2, c.light);
+    const ey = top + 3 + (sleep ? 1 : 0);
+    if (sleep) { for (const x of [6, 7, 9, 10]) put(x, ey, OUT); for (const [x, y] of [[13, top - 2], [14, top - 2], [14, top - 3], [13, top - 4], [14, top - 4]]) put(x, y, "#c9c1f5"); }
+    else { for (const x of [6, 10]) { put(x, ey, OUT); put(x, ey + 1, OUT); } put(5, ey + 2, "#f2a0a0"); put(11, ey + 2, "#f2a0a0"); }
+    const t = top - 1, T = c.trim, T2 = c.trim2 || T;
+    if (c.moon) for (const [x, y] of [[9, t], [10, t], [8, t - 1], [8, t - 2], [9, t - 3], [10, t - 3]]) put(x, y, T);
+    else for (const [x, y, col] of [[8, t - 1, T], [5, t, T], [11, t, T], [3, t + 2, T], [13, t + 2, T], [8, t - 2, T2]]) put(x, y, col);
+    if (!sleep) { const legs = pose === "walk" ? (step % 2 ? [6, 9] : [4, 10]) : [5, 10]; for (const x of legs) { put(x, top + 8, OUT); put(x + 1, top + 8, OUT); } }
+  }
+
+  /* ---------- a made-up student's week (minutes from today's midnight; day 0 is today) ---------- */
+  const K = { class: "#2f80ed", study: "#06b0cc", work: "#f59e0b", body: "#22b866", social: "#f06292", money: "#0f8f80", due: "#ef4444", rest: "#8fa3bf" };
+  const at = (d, h, m = 0) => d * DAY + h * 60 + m;
+  const ITEMS = [
+    [at(-2, 10, 30), 0, "🧺", "Laundry", "body", "At home"],
+    [at(-2, 13), at(-2, 17), "💼", "Work", "work", "Target, Elm St"],
+    [at(-2, 19), at(-2, 22), "🎂", "Maya's birthday", "social", "Luca's Pizza"],
+    [at(-1, 0, 40), at(-1, 8, 10), "😴", "Sleep", "rest", "7h 30m"],
+    [at(-1, 11, 30), at(-1, 13), "🥞", "Brunch with Jordan", "social", "Sunny Side Cafe"],
+    [at(-1, 14), at(-1, 16), "📚", "Study", "study", "Library, 3rd floor"],
+    [at(-1, 17, 30), 0, "🛒", "Groceries", "money", "$38 at Aldi"],
+    [at(-1, 19, 30), at(-1, 21, 30), "🎬", "Movie night", "social", "Dorm lounge"],
+    [at(0, 0, 20), at(0, 6, 40), "😴", "Sleep", "rest", "7h 18m"],
+    [at(0, 7, 15), at(0, 8), "🏋️", "Gym", "body", "Rec center"],
+    [at(0, 8, 20), 0, "🥯", "Breakfast with Priya", "social", "Bagel Barn"],
+    [at(0, 9, 30), at(0, 10, 45), "🎓", "Anatomy", "class", "Hall B, room 112"],
+    [at(0, 11), at(0, 12, 15), "📚", "Study block", "study", "Library"],
+    [at(0, 12, 30), 0, "🍽️", "Lunch", "social", "Commons"],
+    [at(0, 13, 30), at(0, 15, 20), "🧪", "Chem lab", "class", "Science 204"],
+    [at(0, 15, 35), 0, "💳", "Phone bill", "money", "$45 from checking"],
+    [at(0, 16), at(0, 21), "💼", "Work", "work", "Target, Elm St"],
+    [at(0, 21, 15), 0, "🍜", "Dinner", "social", "At home"],
+    [at(0, 21, 30), at(0, 22, 30), "📖", "Study for exam", "study", "Anatomy, Wednesday"],
+    [at(0, 23, 59), 0, "📄", "3 assignments due", "due", "Canvas"],
+    [at(1, 0, 15), at(1, 6, 45), "😴", "Sleep", "rest", "Your usual"],
+    [at(1, 7, 30), at(1, 8, 15), "🏃", "Run with Priya", "body", "River loop"],
+    [at(1, 9), 0, "☕", "Coffee with Sam", "social", "Bean Co"],
+    [at(1, 11), at(1, 12, 15), "🎓", "Statistics", "class", "Hall A, room 20"],
+    [at(1, 12, 30), 0, "📝", "Stats quiz", "due", "Online"],
+    [at(1, 14), at(1, 14, 50), "🎓", "Spanish", "class", "Hall C, room 8"],
+    [at(1, 15, 30), 0, "🙋", "Office hours", "class", "Dr. Reyes"],
+    [at(1, 18, 30), at(1, 20), "🍝", "Dinner with Mom", "social", "Her place"],
+    [at(1, 23, 59), 0, "📄", "Lab report due", "due", "Canvas"],
+    [at(2, 0, 30), at(2, 6, 45), "😴", "Sleep", "rest", "Your usual"],
+    [at(2, 9), 0, "🏠", "Rent", "money", "$620 from checking"],
+    [at(2, 9, 30), at(2, 10, 45), "🎓", "Anatomy", "class", "Hall B, room 112"],
+    [at(2, 13), 0, "📝", "Anatomy exam", "due", "Hall B"],
+    [at(2, 16), at(2, 21), "💼", "Work", "work", "Target, Elm St"],
+    [at(3, 0, 15), at(3, 6, 45), "😴", "Sleep", "rest", "Your usual"],
+    [at(3, 8), at(3, 8, 45), "🏃", "Run", "body", "River loop"],
+    [at(3, 11), at(3, 12, 15), "🎓", "Statistics", "class", "Hall A, room 20"],
+    [at(3, 14), at(3, 14, 50), "🎓", "Spanish", "class", "Hall C, room 8"],
+    [at(3, 18), at(3, 22), "🎲", "Game night", "social", "Jordan's"],
+    [at(4, 0, 30), at(4, 7), "😴", "Sleep", "rest", "Your usual"],
+  ].map(([s, e, icon, name, k, place], id) => ({ id, s, e: e || null, icon, name, k, place, rest: k === "rest" }));
+  const end = (i) => i.e ?? i.s;
+
+  /* ---------- time and place ---------- */
+  const isDay = (t) => { const m = mod(t); return m >= SR && m < SS; };
+  // the half you're in: today's daylight, or the night from sunset to sunrise
+  function halfAt(t) {
+    const d = Math.floor(t / DAY), m = t - d * DAY;
+    if (m >= SR && m < SS) return { day: true, a: d * DAY + SR, b: d * DAY + SS, d };
+    return m >= SS ? { day: false, a: d * DAY + SS, b: (d + 1) * DAY + SR, d } : { day: false, a: (d - 1) * DAY + SS, b: d * DAY + SR, d: d - 1 };
+  }
+  // the timeline's x: daylight gets room, nights are tighter (you're mostly asleep)
+  const VD = 0.32, VN = 0.12, LD = SR * VN + (SS - SR) * VD + (DAY - SS) * VN;
+  function X(t) { const d = Math.floor(t / DAY), m = t - d * DAY; const r = m < SR ? m * VN : m < SS ? SR * VN + (m - SR) * VD : SR * VN + (SS - SR) * VD + (m - SS) * VN; return d * LD + r; }
+  function T(x) { const d = Math.floor(x / LD), r = x - d * LD, a = SR * VN, b = a + (SS - SR) * VD; return d * DAY + (r < a ? r / VN : r < b ? SR + (r - a) / VD : SS + (r - b) / VN); }
+  // how tall a day's hill is (busier days are taller) and how deep a night's valley
+  const ampCache = new Map();
+  function amp(h) {
+    const key = `${h.day}${h.d}`;
+    if (!ampCache.has(key)) { const n = ITEMS.filter((i) => !i.rest && i.s >= h.a && i.s < h.b).length; ampCache.set(key, h.day ? 66 + Math.min(n, 10) * 5 : -(56 + Math.min(n, 5) * 5)); }
+    return ampCache.get(key);
+  }
+  const YR = 300, BT = 150, BB = 452, CX = 10; // the timeline's horizon, and the top and bottom of its sky band
+  const GD = { hy: 382, ry: 206, rx: 162 }, GN = { hy: 250, ry: -134, rx: 162 }; // Today: the day's dome, the night's valley
+  const rangePt = (t, xv) => { const h = halfAt(t), u = (t - h.a) / (h.b - h.a); return [W / 2 + X(t) - xv, YR - amp(h) * Math.sin(Math.PI * u)]; };
+  const closedPt = (t, half, g) => { const th = Math.PI * clamp((t - half.a) / (half.b - half.a), 0, 1); return [W / 2 - g.rx * Math.cos(th), g.hy - g.ry * Math.sin(th)]; };
+
+  /* ---------- state ---------- */
+  const realNow = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+  const r0 = realNow();
+  const S = { t: r0 < 300 ? r0 + DAY : r0, m: 0, xv: 0, step: 0, back: false, sel: null, done: new Set(), flip: null, g: GD, follow: false };
+  S.g = halfAt(S.t).day ? GD : GN;
+  const finished = (i) => !i.rest && (S.done.has(i.id) || end(i) + (i.e ? 0 : 1) <= S.t);
+
+  const $ = (id) => document.getElementById(id);
+  const screen = $("screen"), scene = $("scene"), skyEl = $("sky"), who = $("who"), words = $("words");
+
+  /* ---------- the stars (built once; they twinkle on their own) ---------- */
+  (() => { let s = 7; const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280); const g = $("stars"); for (let i = 0; i < 70; i++) el("circle", { cx: (rnd() * 390).toFixed(1), cy: (rnd() * 400).toFixed(1), r: (rnd() < 0.18 ? 1.3 : 0.75).toFixed(2), fill: "#fff", style: `animation-delay:${(-rnd() * 3.2).toFixed(2)}s` }, g); })();
+
+  /* ---------- drawing ---------- */
+  const hit = (a, b) => a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3];
+  // Place each thing's tile on the inside of the path (toward the horizon), on a short stem from its time. If the spot is
+  // taken (another tile, or the companion), it tries the next lane in; if every lane is taken it joins the nearest tile
+  // as a pile (+n).
+  function layout(list, opt) {
+    const out = new Map(), placed = [];
+    for (const it of list) {
+      const p = opt.anchor(it); if (!p) continue;
+      const [w, h] = opt.dims(it), [ux, uy] = opt.dir(p);
+      let spot = null;
+      for (let L = 0; L < opt.lanes.length && !spot; L++) {
+        const x = p[0] + ux * opt.lanes[L], y = p[1] + uy * opt.lanes[L], r = [x - w / 2 - 3, y - h / 2 - 3, w + 6, h + 6];
+        if (x - w / 2 < 6 || x + w / 2 > W - 6) continue;
+        if (opt.block.some((b) => hit(b, r)) || placed.some((q) => hit(q.r, r))) continue;
+        spot = { x, y, r, lane: L };
+      }
+      if (!spot) {
+        let best = null, bd = Infinity;
+        for (const q of placed) { const d = Math.hypot(q.x - p[0], q.y - p[1]); if (d < bd) { bd = d; best = q; } }
+        if (best) {
+          best.count++;
+          if (opt.lead && opt.lead(it)) { out.set(best.id, { head: false, of: best, ax: best.ax, ay: best.ay }); best.id = it.id; out.set(it.id, best); }
+          else out.set(it.id, { head: false, of: best, ax: p[0], ay: p[1] });
+          continue;
+        }
+        spot = { x: p[0] + ux * opt.lanes[0], y: p[1] + uy * opt.lanes[0], r: [0, 0, 0, 0], lane: 0 };
+      }
+      const e = { id: it.id, ...spot, w, h, head: true, count: 0, ax: p[0], ay: p[1] };
+      out.set(it.id, e); placed.push(e);
+    }
+    return out;
+  }
+  const at2 = (e) => (e.head ? e : e.of); // where a tile (or the pile it joined) sits
+
+  function render() {
+    const now = S.t, m = S.m, half = halfAt(now), night = !half.day;
+    // the turn at sunset (or sunrise): the dome folds down into the valley, or back up
+    const target = night ? GN : GD;
+    let g = target;
+    let ui = night ? 1 : 0;
+    if (S.flip) { const f = E(clamp((performance.now() - S.flip.t0) / 950, 0, 1)); g = { hy: lerp(S.flip.g.hy, target.hy, f), ry: lerp(S.flip.g.ry, target.ry, f), rx: target.rx }; ui = lerp(S.flip.ui, ui, f); if (f >= 1) S.flip = null; }
+    S.g = g; S.ui = ui;
+    const k = E(seg(m, 0, 0.8)), kb = seg(m, 0.42, 0.9), kc = 1 - seg(m, 0, 0.35), ko = seg(m, 0.65, 1);
+    const hy = lerp(g.hy, YR, k);
+    const xv = S.xv, xOf = (t) => W / 2 + X(t) - xv;
+    const ax = xOf(half.a), bx = xOf(half.b);
+    const flat = 1 - Math.min(1, Math.abs(g.ry) / 70); // 1 while the dome is folding flat
+
+    // ---- colours: the sky's two ends now, the paper under it, and the ink on each
+    const [top, midc, bot] = sky(now), dk = m > 0.5 ? dark(now) : ui;
+    const paper = mixc(PAPER, NIGHT, dk), ink = dk > 0.5 ? INK_N : INK;
+    const skyInk = lum(top) < 0.56 ? INK_N : INK;
+    const st = screen.style;
+    st.setProperty("--paper", rgb(paper)); st.setProperty("--ink", rgb(ink)); st.setProperty("--top-ink", rgb(m < 0.5 ? skyInk : ink));
+    st.setProperty("--mute", dk > 0.5 ? "#9fb0c8" : "#5f6b7d"); st.setProperty("--chip", dk > 0.5 ? "#132036" : "#ffffff"); st.setProperty("--chip2", dk > 0.5 ? "#1c2b45" : "#edf1f6");
+    st.setProperty("--tag", dk > 0.5 ? "#ffc56b" : "#c8691a");
+
+    // ---- the sky (Today): full width, from the top of the phone down to the horizon
+    const skyTop = lerp(0, BT, k), inset = lerp(0, CX, k);
+    skyEl.style.top = `${skyTop}px`; skyEl.style.height = `${Math.max(0, lerp(hy, BB, k) - skyTop)}px`;
+    skyEl.style.left = skyEl.style.right = `${inset}px`; skyEl.style.borderRadius = `${lerp(0, 30, k)}px`;
+    skyEl.style.background = `linear-gradient(180deg, ${rgb(top)} 0%, ${rgb(midc)} 58%, ${rgb(bot)} 100%)`;
+    skyEl.style.opacity = String(1 - seg(m, 0.35, 0.85));
+    $("stars").style.opacity = String(dark(now) * (1 - seg(m, 0, 0.5)));
+    $("stars").style.transform = `translate(${-inset}px, ${-skyTop}px)`;
+    for (const c of ["c1", "c2"]) $(c).style.opacity = String((1 - dark(now)) * 0.85 * (1 - seg(m, 0, 0.4)));
+
+    scene.textContent = "";
+    const defs = el("defs", {}, scene);
+    // the timeline's window (everything on it is clipped to it once it starts opening)
+    const win = el("clipPath", { id: "win" }, defs);
+    const wX = lerp(-20, CX, k), wY = lerp(-20, BT, k), wB = lerp(Math.max(BB, (night ? g.hy - g.ry : g.hy) + 72), BB, k);
+    el("rect", { x: wX.toFixed(1), y: wY.toFixed(1), width: (W - 2 * wX).toFixed(1), height: (wB - wY).toFixed(1), rx: lerp(0, 30, k).toFixed(1) }, win);
+    const goo = el("filter", { id: "goo", x: "-10%", y: "-10%", width: "120%", height: "120%", "color-interpolation-filters": "sRGB" }, defs);
+    el("feGaussianBlur", { in: "SourceGraphic", stdDeviation: (7 * Math.sin(Math.PI * clamp(m, 0, 1))).toFixed(2), result: "b" }, goo);
+    el("feColorMatrix", { in: "b", mode: "matrix", values: "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -10", result: "g" }, goo);
+    el("feComposite", { in: "SourceGraphic", in2: "g", operator: "atop" }, goo);
+    const sh = el("filter", { id: "sh", x: "-40%", y: "-40%", width: "180%", height: "180%" }, defs);
+    el("feDropShadow", { dx: 0, dy: 2.5, stdDeviation: 2.6, "flood-color": "#0b1426", "flood-opacity": 0.22 }, sh);
+    const glowG = el("radialGradient", { id: "glow" }, defs);
+    for (const [o, c, a] of night ? [[0, "#eef4ff", 0.5], [0.45, "#a9c1ec", 0.16], [1, "#a9c1ec", 0]] : [[0, "#fff8dc", 0.95], [0.35, "#ffe2a0", 0.45], [1, "#ffd27a", 0]]) el("stop", { offset: o, "stop-color": c, "stop-opacity": a }, glowG);
+    // under the horizon by day, a little of the sky's warmth spills onto the ground
+    if (kc > 0 && !night) {
+      const sp = el("linearGradient", { id: "spill", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+      el("stop", { offset: 0, "stop-color": rgb(bot), "stop-opacity": 0.55 }, sp); el("stop", { offset: 1, "stop-color": rgb(bot), "stop-opacity": 0 }, sp);
+      el("rect", { x: 0, y: g.hy, width: W, height: 46, fill: "url(#spill)", opacity: (kc * (1 - flat)).toFixed(3) }, scene);
+    }
+
+    // ---- the timeline's band: every hour its own sky (top colour fading to its horizon colour), the ground under it
+    // light by day and deep at night, so days read as light and nights as dark at a glance
+    if (kb > 0) {
+      const gH = (id, f) => { const gr = el("linearGradient", { id, x1: 0, y1: 0, x2: W, y2: 0, gradientUnits: "userSpaceOnUse" }, defs); for (let x = -12; x <= W + 12; x += 6) { const t = T(xv + x - W / 2); el("stop", { offset: clamp(x / W, 0, 1).toFixed(3), "stop-color": rgb(f(t)) }, gr); } };
+      // colours are averaged over a little of the timeline so dusk and dawn blend instead of making hard edges
+      const soft = (f) => (t0) => { const x0 = X(t0); let acc = [0, 0, 0]; for (const dx of [-42, -28, -14, 0, 14, 28, 42]) acc = acc.map((v, i) => v + f(T(x0 + dx))[i] / 7); return acc; };
+      gH("bandT", soft((t) => sky(t)[0]));
+      gH("bandB", soft((t) => sky(t)[2]));
+      const deep = hex("#06101f");
+      gH("waterT", soft((t) => mixc(sky(t)[2], deep, 0.22)));
+      gH("waterB", soft((t) => mixc(sky(t)[0], deep, 0.38)));
+      const vm = el("linearGradient", { id: "vm", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+      el("stop", { offset: 0, "stop-color": "#fff", "stop-opacity": 0 }, vm); el("stop", { offset: 1, "stop-color": "#fff", "stop-opacity": 1 }, vm);
+      const mk = el("mask", { id: "mv", maskUnits: "userSpaceOnUse", x: 0, y: wY, width: W, height: YR - wY }, defs);
+      el("rect", { x: 0, y: wY, width: W, height: YR - wY, fill: "url(#vm)" }, mk);
+      const bg = el("g", { opacity: kb.toFixed(3), "clip-path": "url(#win)" }, scene);
+      scene.insertBefore(el("rect", { x: wX, y: wY, width: W - 2 * wX, height: wB - wY, rx: lerp(0, 30, k), fill: rgb(paper), opacity: kb.toFixed(3), filter: "url(#sh)" }, scene), bg);
+      el("rect", { x: 0, y: wY, width: W, height: YR - wY, fill: "url(#bandT)" }, bg);
+      el("rect", { x: 0, y: wY, width: W, height: YR - wY, fill: "url(#bandB)", mask: "url(#mv)" }, bg);
+      const wm = el("mask", { id: "mw", maskUnits: "userSpaceOnUse", x: 0, y: YR, width: W, height: wB - YR }, defs);
+      const wg = el("linearGradient", { id: "wg", x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+      el("stop", { offset: 0, "stop-color": "#fff", "stop-opacity": 0 }, wg); el("stop", { offset: 1, "stop-color": "#fff", "stop-opacity": 1 }, wg);
+      el("rect", { x: 0, y: YR, width: W, height: wB - YR, fill: "url(#wg)" }, wm);
+      el("rect", { x: 0, y: YR, width: W, height: wB - YR, fill: "url(#waterT)" }, bg);
+      el("rect", { x: 0, y: YR, width: W, height: wB - YR, fill: "url(#waterB)", mask: "url(#mw)" }, bg);
+      // a few soft ripples on the water
+      for (let i = 0; i < 7; i++) { const y = YR + 10 + i * i * 2.6, len = 26 + ((i * 47) % 40); for (let j = 0; j < 5; j++) { const x = ((j * 97 + i * 61 - (xv * (0.6 + i * 0.05)) % 390) % 390 + 390) % 390; el("rect", { x: x.toFixed(1), y: y.toFixed(1), width: len, height: 1.2, rx: 0.6, fill: "#ffffff", opacity: 0.1 + 0.03 * (7 - i) }, bg); } }
+      for (let d = Math.floor(T(xv - W) / DAY) - 1; d <= Math.floor(T(xv + W) / DAY) + 1; d++) {
+        let s = (d + 50) * 7919; const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+        for (let i = 0; i < 12; i++) { const t = d * DAY + SS + 50 + rnd() * (DAY - SS + SR - 100), x = xOf(t), y = BT + 12 + rnd() * (YR - BT - 30); if (x > -4 && x < W + 4) el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: rnd() < 0.2 ? 1.3 : 0.8, fill: "#fff", opacity: (0.9 * dark(t)).toFixed(2) }, bg); }
+      }
+    }
+
+    // ---- where everything sits: on Today's dome (or valley) when closed, on the range when open; in between, today's
+    // half flows from one to the other while the rest of the range pours out of its two ends
+    const reveal = (t) => { const xr = xOf(t), dist = t < half.a ? ax - xr : xr - bx, d = clamp(dist / 380, 0, 1); return { kk: E(seg(m, 0.12 + 0.46 * d, 0.5 + 0.46 * d)), vis: m > 0.1 + 0.46 * d }; };
+    const inHalf = (t) => t >= half.a && t <= half.b;
+    const P = (t) => {
+      if (inHalf(t)) { const [xc, yc] = closedPt(t, half, g); if (k === 0) return [xc, yc, 1]; const [xr, yr] = rangePt(t, xv); return [lerp(xc, xr, k), lerp(yc, yr, k), 1]; }
+      if (m === 0) return null;
+      const [xr, yr] = rangePt(t, xv), r = reveal(t); return r.vis ? [xr, lerp(hy, yr, r.kk), r.kk] : null;
+    };
+    const tL = m > 0 ? Math.min(half.a, T(xv - W / 2 - 30)) : half.a, tR = m > 0 ? Math.max(half.b, T(xv + W / 2 + 30)) : half.b;
+    const samples = [];
+    for (let t = tL; t <= tR; t += isDay(t) ? 5 : 10) samples.push(t);
+    for (let d = Math.floor(tL / DAY); d <= Math.floor(tR / DAY) + 1; d++) for (const b of [d * DAY + SR, d * DAY + SS]) if (b > tL && b < tR) samples.push(b);
+    samples.push(now); samples.sort((a, b) => a - b);
+    const pts = samples.map((t) => { const p = P(t); return p ? [p[0], p[1], t] : null; });
+    const runs = (from, to) => { const out = []; let cur = []; for (const p of pts) { if (p && p[2] >= from && p[2] <= to && p[0] > -60 && p[0] < W + 60) cur.push(p); else if (cur.length) { out.push(cur); cur = []; } } if (cur.length) out.push(cur); return out.filter((r) => r.length > 1); };
+
+    // each half's shape: the dome (or hill) a soft glow over the sky, the valley a deeper bowl in the ground
+    const clipA = m > 0 ? { "clip-path": "url(#win)" } : {};
+    const fillG = el("g", { opacity: (1 - flat).toFixed(3), ...clipA }, scene);
+    for (let d = Math.floor(tL / DAY) - 1; d <= Math.floor(tR / DAY) + 1; d++) {
+      for (const hf of [{ day: true, a: d * DAY + SR, b: d * DAY + SS }, { day: false, a: d * DAY + SS, b: (d + 1) * DAY + SR }]) {
+        for (const r of runs(hf.a, hf.b)) {
+          const yH = r[0][2] >= half.a && r[r.length - 1][2] <= half.b ? hy : hy;
+          el("path", { d: `${poly(r)}L${r[r.length - 1][0].toFixed(1)} ${yH.toFixed(1)}L${r[0][0].toFixed(1)} ${yH.toFixed(1)}Z`, fill: hf.day ? "#ffffff" : night && m < 0.5 ? "#1b2c4c" : "#040915", opacity: hf.day ? 0.22 : night && m < 0.5 ? 0.45 : 0.32 }, fillG);
+        }
+      }
+    }
+
+    // the sun (or moon) glow behind the companion (placed once the tiles are, since it stands on them)
+    const wp = P(now), wx = wp[0];
+    let wy = wp[1];
+    const glowAt = el("g", {}, scene);
+
+    // the horizon
+    el("rect", { x: 0, y: (hy - 1).toFixed(1), width: W, height: 2, fill: dk > 0.5 ? "#9fb4d8" : "#ffffff", opacity: dk > 0.5 ? 0.45 : 0.95 }, scene);
+
+    // ---- the path and your things on it (melted together while it turns)
+    const morphing = m > 0.02 && m < 0.98 && !reduce;
+    const pathW = el("g", clipA, scene);
+    const pathG = el("g", morphing ? { filter: "url(#goo)" } : {}, pathW);
+    const boost = morphing ? 8 * Math.sin(Math.PI * m) : 0;
+    const darkAt = (t) => (m > 0.5 ? dark(t) : dk);
+    const roadW = lerp(4, 4, k) + boost;
+    for (const r of runs(now, Infinity)) {
+      let part = [r[0]];
+      const flush = () => { if (part.length > 1) { const nt = darkAt(part[0][2]) > 0.5; el("path", { d: poly(part), fill: "none", stroke: "#ffffff", "stroke-opacity": nt ? 0.6 : 1, "stroke-width": roadW.toFixed(1), "stroke-linecap": "round", "stroke-linejoin": "round", "stroke-dasharray": morphing ? "none" : "0.1 8.5" }, pathG); } };
+      for (let i = 1; i < r.length; i++) { part.push(r[i]); if ((darkAt(r[i][2]) > 0.5) !== (darkAt(part[0][2]) > 0.5)) { flush(); part = [r[i]]; } }
+      flush();
+    }
+    for (const r of runs(-Infinity, now)) {
+      el("path", { d: poly(r), fill: "none", stroke: night ? "#cfe0ff" : "#ffd77a", "stroke-opacity": 0.4, "stroke-width": (roadW + 8).toFixed(1), "stroke-linecap": "round", "stroke-linejoin": "round" }, pathG);
+      el("path", { d: poly(r), fill: "none", stroke: night ? "#f2f6ff" : "#ffb648", "stroke-width": (roadW + 0.5).toFixed(1), "stroke-linecap": "round", "stroke-linejoin": "round" }, pathG);
+    }
+    // the hours, as small beads along what's still ahead on Today's dome
+    if (kc > 0) for (let h = Math.ceil(half.a / 60); h * 60 < half.b; h++) { const t = h * 60; if (t <= now) continue; const [x, y] = P(t); el("circle", { cx: x.toFixed(1), cy: y.toFixed(1), r: 2.6, fill: "#ffffff", opacity: (kc * (1 - flat)).toFixed(3) }, pathG); }
+    // blocks: how long each thing takes, along the path
+    const visItems = ITEMS.filter((i) => end(i) >= tL && i.s <= tR);
+    for (const it of visItems) {
+      if (!it.e) continue;
+      for (const r of runs(it.s, it.e)) el("path", { d: poly(r), fill: "none", stroke: K[it.k], "stroke-opacity": finished(it) ? 0.5 : it.rest ? 0.6 : 0.95, "stroke-width": (lerp(10, 7, k) + boost).toFixed(1), "stroke-linecap": "round", "stroke-linejoin": "round" }, pathG);
+    }
+
+    // ---- tiles: one per thing, inside the path on a short stem; the next few carry their time
+    const upcoming = ITEMS.filter((i) => !i.rest && !finished(i) && i.s >= now - 1).sort((a, b) => a.s - b.s);
+    const cur = ITEMS.find((i) => !i.rest && i.e && i.s <= now && i.e > now && !S.done.has(i.id));
+    const nextId = (cur || upcoming[0] || {}).id;
+    const timed = new Set(upcoming.filter((i) => i !== cur).slice(0, 2).map((i) => i.id));
+    const timedO = new Set(upcoming.filter((i) => i !== cur).slice(0, 3).map((i) => i.id));
+    const tw = (s, fs) => s.length * fs * 0.56;
+    const closedList = ITEMS.filter((i) => inHalf(i.s) && !(i.rest && !night)).sort((a, b) => a.s - b.s);
+    const C = layout(closedList, {
+      anchor: (it) => closedPt(Math.max(it.s, half.a), half, g),
+      dir: (p) => { const dx = W / 2 - p[0], dy = g.hy - p[1], len = Math.hypot(dx, dy) || 1; return [dx / len, dy / len]; },
+      lanes: [0, 44],
+      lead: (it) => it.id === nextId,
+      dims: (it) => { const h = it.id === nextId ? 40 : finished(it) ? 28 : 34; return timed.has(it.id) ? [h + tw(fmt(it.s), 12) + 12, h] : [h, h]; },
+      block: [],
+    });
+    const O = m > 0 ? layout(visItems.filter((i) => { const x = xOf(Math.max(i.s, tL)); return x > -20 && x < W + 20; }).sort((a, b) => a.s - b.s), {
+      anchor: (it) => rangePt(Math.max(it.s, tL), xv),
+      dir: (p) => [0, p[1] > YR + 2 ? -1 : 1],
+      lanes: [0, 32],
+      lead: (it) => it.id === nextId,
+      dims: (it) => { const h = it.id === nextId ? 28 : finished(it) ? 21 : 24; return timedO.has(it.id) ? [h + tw(fmtShort(it.s), 10.5) + 10, h] : [h, h]; },
+      block: [],
+    }) : new Map();
+    const stemG = el("g", { opacity: (morphing ? 0.3 : 1).toFixed(2), ...clipA }, scene);
+    scene.insertBefore(stemG, pathW);
+    const tileG = el("g", {}, pathG), topG = el("g", clipA, scene);
+    const placed = [];
+    for (const id of new Set([...C.keys(), ...O.keys()])) {
+      const it = ITEMS[id], c = C.get(id), o = O.get(id), cc = c && at2(c), oo = o && at2(o);
+      let x, y, w, h, a = 1, dom, sx, sy;
+      if (c && o) { x = lerp(cc.x, oo.x, k); y = lerp(cc.y, oo.y, k); w = lerp(cc.w, oo.w, k); h = lerp(cc.h, oo.h, k); dom = k < 0.5 ? c : o; sx = lerp(c.ax, o.ax, k); sy = lerp(c.ay, o.ay, k); }
+      else if (c) { if (k > 0.5) continue; x = cc.x; y = cc.y; w = cc.w; h = cc.h; a = 1 - k; dom = c; sx = c.ax; sy = c.ay; }
+      else { const r = reveal(Math.max(it.s, tL)); if (!r.vis) continue; x = oo.x; y = lerp(hy, oo.y, r.kk); w = oo.w * (0.3 + 0.7 * r.kk); h = oo.h * (0.3 + 0.7 * r.kk); a = r.kk; dom = o; sx = o.ax; sy = lerp(hy, o.ay, r.kk); }
+      if (m === 0) a *= 1 - flat;
+      if (a <= 0.01) continue;
+      const nt = darkAt(it.s) > 0.5, fin = finished(it);
+      if (Math.hypot(x - sx, y - sy) > 6) el("line", { x1: sx.toFixed(1), y1: sy.toFixed(1), x2: x.toFixed(1), y2: y.toFixed(1), stroke: K[it.k], "stroke-width": 1.8, "stroke-opacity": (a * 0.8).toFixed(2) }, stemG);
+      if (!dom.head) continue;
+      el("rect", { x: (x - w / 2).toFixed(1), y: (y - h / 2).toFixed(1), width: w.toFixed(1), height: h.toFixed(1), rx: (h * 0.34).toFixed(1), fill: nt ? "#14223b" : "#ffffff", stroke: K[it.k], "stroke-width": it.id === nextId ? 2.6 : 2, opacity: (a * (fin ? 0.78 : 1)).toFixed(3), filter: morphing ? "none" : "url(#sh)" }, tileG);
+      placed.push({ it, x, y, w, h, a, dom, nt, fin, timedNow: (k < 0.5 ? timed : timedO).has(it.id) });
+    }
+    for (const p of placed) if (!p.dom.lane && Math.abs(wx - p.x) < p.w / 2 + 4 && wy > p.y - p.h / 2 - 6 && wy < p.y + p.h / 2 + 26) wy = Math.min(wy, p.y - p.h / 2 + 1);
+    el("circle", { cx: wx.toFixed(1), cy: (wy - 22).toFixed(1), r: night ? 56 : lerp(100, 62, k), fill: "url(#glow)" }, glowAt);
+    function star(parent, x, y, r, op) { el("path", { d: `M${x} ${y - r}Q${x + r * 0.18} ${y - r * 0.18} ${x + r} ${y}Q${x + r * 0.18} ${y + r * 0.18} ${x} ${y + r}Q${x - r * 0.18} ${y + r * 0.18} ${x - r} ${y}Q${x - r * 0.18} ${y - r * 0.18} ${x} ${y - r}Z`, fill: "#ffd166", stroke: "#f2a93b", "stroke-width": 0.8, opacity: op }, parent); }
+    for (const p of placed) {
+      const { it, x, y, w, h, a, dom, nt, fin, timedNow } = p;
+      const eo = morphing ? 0.5 + 0.5 * Math.abs(1 - 2 * m) : 1;
+      const tg = el("g", { "data-id": it.id, opacity: (a * eo * (fin ? 0.8 : 1)).toFixed(3), style: "cursor:pointer" }, topG);
+      const ex = x - w / 2 + h / 2;
+      txt(tg, ex, y + h * 0.19, it.icon, { "font-size": (h * 0.52).toFixed(1) });
+      if (timedNow && w > h + 8) txt(tg, x - w / 2 + h - 1, y + h * 0.15, k < 0.5 ? fmt(it.s) : fmtShort(it.s), { "text-anchor": "start", "font-size": (h * (k < 0.5 ? 0.31 : 0.38)).toFixed(1), "font-weight": 650, fill: nt ? "#eef3fb" : "#0f1a2a", "font-variant-numeric": "tabular-nums" });
+      if (dom.count) { const bx = x + w / 2 - 2, by = y - h / 2 + 2; el("circle", { cx: bx.toFixed(1), cy: by.toFixed(1), r: 8.5, fill: nt ? "#e6edf8" : "#0f1a2a" }, tg); txt(tg, bx, by + 3.6, `+${dom.count}`, { "font-size": 10, "font-weight": 700, fill: nt ? "#0f1a2a" : "#fff" }); }
+      else if (fin) star(tg, x + w / 2 - 3, y - h / 2 + 3, 5.5, 1);
+    }
+
+    // sunrise and sunset where Today's dome meets the horizon
+    function sunGlyph(p, x, y, kind) {
+      const id = `cl${kind}${Math.round(x)}${Math.round(y)}`, cl = el("clipPath", { id }, defs); el("rect", { x: x - 9, y: y - 9, width: 18, height: 9 }, cl);
+      el("circle", { cx: x, cy: y, r: 5.5, fill: "#f4a44a", "clip-path": `url(#${id})` }, p);
+      el("rect", { x: x - 8, y: y - 0.8, width: 16, height: 1.6, rx: 0.8, fill: "#f4a44a" }, p);
+      el("path", { d: kind === "rise" ? `M${x - 2.6} ${y - 8.4}l2.6 -2.6l2.6 2.6` : `M${x - 2.6} ${y - 11}l2.6 2.6l2.6 -2.6`, fill: "none", stroke: "#f4a44a", "stroke-width": 1.5, "stroke-linecap": "round", "stroke-linejoin": "round" }, p);
+    }
+    if (kc > 0) {
+      const o = kc * (1 - flat), lc = rgb(night ? INK_N : ink);
+      const [lx] = closedPt(half.a, half, g), [rx] = closedPt(half.b, half, g);
+      const yL = night ? g.hy - 30 : g.hy + 24;
+      const end2 = (x, kind, s, anchor) => { const eg = el("g", { opacity: o.toFixed(3) }, scene); sunGlyph(eg, anchor === "start" ? x + 7 : x - 7, yL - 4, kind); txt(eg, anchor === "start" ? x + 19 : x - 19, yL, s, { "text-anchor": anchor, "font-size": 11.5, "font-weight": 600, fill: lc, opacity: 0.72 }); };
+      end2(lx - 8, night ? "set" : "rise", night ? `Sunset ${fmt(SS)}` : `Sunrise ${fmt(SR)}`, "start");
+      end2(rx + 8, night ? "rise" : "set", night ? `Sunrise ${fmt(SR)}` : `Sunset ${fmt(SS)}`, "end");
+    }
+
+    // the range: day names under their hills, a small sun where each day begins and a moon where it ends
+    if (ko > 0) {
+      const lg = el("g", { opacity: ko.toFixed(3), "clip-path": "url(#win)" }, scene);
+      for (let d = Math.floor(T(xv - W) / DAY) - 1; d <= Math.floor(T(xv + W) / DAY) + 1; d++) {
+        const mid = xOf(d * DAY + (SR + SS) / 2);
+        if (mid > -60 && mid < W + 60) txt(lg, mid, YR + 22, dayName(d).toUpperCase(), { "font-size": 11.5, "font-weight": 700, "letter-spacing": "0.12em", fill: "#ffffff", opacity: d === Math.floor(now / DAY) ? 1 : 0.7 });
+        const rx2 = xOf(d * DAY + SR), sx = xOf(d * DAY + SS);
+        if (rx2 > -10 && rx2 < W + 10) sunGlyph(lg, rx2, YR + 14, "rise");
+        if (sx > -10 && sx < W + 10) el("path", { d: `M${sx + 2} ${YR + 7}a5 5 0 1 0 0 10a6.5 6.5 0 1 1 0 -10z`, fill: "#e6edf8" }, lg);
+      }
+    }
+
+    // at night, what you finished today shines as stars in the sky; open the timeline and each flies home to its tile
+    if (night && m < 1) {
+      const fin = ITEMS.filter((i) => Math.floor(i.s / DAY) === half.d && finished(i));
+      const sg = el("g", {}, scene);
+      fin.forEach((it, i) => {
+        const n = fin.length, sx = 50 + ((i + 0.5) / n) * 290 + ((i * 37) % 23) - 11, sy = 146 + ((i * 53) % 52);
+        const o = O.get(it.id), oo = o && at2(o), tx = oo ? oo.x + oo.w / 2 - 3 : sx, ty = oo ? oo.y - oo.h / 2 + 3 : sy;
+        const kf = E(seg(m, 0.15, 0.85));
+        star(sg, lerp(sx, tx, kf), lerp(sy, ty, kf), lerp(8.5, 5.5, kf), (1 - flat) * (oo || m === 0 ? 1 : 1 - m));
+      });
+      if (fin.length) txt(sg, W / 2, 128, `${fin.length} stars ${Math.floor(now / DAY) > half.d ? "yesterday" : "today"}`, { "font-size": 12.5, "font-weight": 650, fill: "#eef3fb", opacity: (kc * (1 - flat) * 0.85).toFixed(3), "letter-spacing": "0.02em" });
+    }
+
+    // ---- the companion, on the path at now: the sun by day, the moon at night, asleep in the valley late at night
+    const late = night && (mod(now) >= 23 * 60 || mod(now) < SR);
+    who.style.transform = `translate(${(wx - 24).toFixed(1)}px, ${(wy - 41).toFixed(1)}px)`;
+    who.style.opacity = m > 0.5 && (wx < 14 || wx > W - 14) ? "0" : "1";
+    drawWho(who, night ? NIGHT_SOL : SOL, late ? "sleep" : reduce ? "stand" : "walk", S.step, S.back);
+    drawWho($("bubbleWho"), night ? NIGHT_SOL : SOL, late ? "sleep" : "stand", 0, false);
+    drawWho($("tabWho"), night ? NIGHT_SOL : SOL, "stand", 0, false);
+
+    // ---- words under Today's sky
+    const nx = upcoming.find((i) => i !== cur && i.s > now);
+    const until = (t) => { const d = Math.round(t - now); return d < 60 ? `${d} min` : `${Math.floor(d / 60)}h${d % 60 ? ` ${d % 60}m` : ""}`; };
+    const finToday = ITEMS.filter((i) => Math.floor(i.s / DAY) === (night ? half.d : Math.floor(now / DAY)) && finished(i)).length;
+    const after = ITEMS.filter((i) => !i.rest && i.s >= half.b && i.s < half.b + 420).slice(0, 2);
+    const steps = Math.round(clamp((mod(now) - 400) / 900, 0, 1) * 9400 + (mod(now) < 300 ? 9400 : 0));
+    const bottom = night ? g.hy - g.ry : g.hy;
+    words.style.top = `${bottom + (night ? 64 : 46)}px`;
+    words.style.opacity = String(kc);
+    words.style.transform = `translateY(${(36 * eOut(seg(m, 0, 0.45))).toFixed(1)}px)`;
+    const key = `${cur?.id}|${nx?.id}|${late}|${finToday}|${Math.floor(steps / 10)}|${night}|${nx ? Math.round(nx.s - now) : 0}`;
+    if (words.dataset.key !== key) {
+      words.dataset.key = key;
+      words.innerHTML = `<span class="tag">${cur ? `Now · till ${fmt(cur.e)}` : late ? "Sleep" : nx ? `Next · in ${until(nx.s)}` : "Free"}</span><span class="now">${cur ? `${cur.icon} ${cur.name}` : late ? "🌙 Rest well" : nx ? `${nx.icon} ${nx.name}` : "Nothing planned"}</span>${cur && nx ? `<span class="then">Then ${nx.icon} ${nx.name} · ${fmt(nx.s)}</span>` : nx && !late ? `<span class="then">${fmt(nx.s)} · ${nx.place}</span>` : ""}<span class="pills">${steps ? `<span>👟 ${steps.toLocaleString("en-US")}</span>` : ""}<span>😴 7h 18m</span>${finToday ? `<span>⭐ ${finToday}</span>` : ""}</span>${after.length ? `<span class="after">${night ? "After sunrise" : "After sunset"} · ${after.map((i) => `${i.icon} ${i.name}`).join(" · ")}</span>` : ""}`;
+      $("say").textContent = late ? `${finToday} stars ${Math.floor(now / DAY) > half.d ? "yesterday" : "today"}. Sleep well; ${after[0] ? `${lc(after[0].name)} at ${fmt(after[0].s)}.` : "nothing early tomorrow."}` : cur && nx ? `${cur.name} till ${fmt(cur.e)}. Then ${lc(nx.name)} at ${fmt(nx.s)}.` : nx ? `${nx.name} in ${until(nx.s)}. You're free till then.` : "Nothing else today. Enjoy it.";
+    }
+    const bub = $("bubble");
+    bub.style.opacity = String(kc);
+    bub.style.top = `${Math.min(672, bottom + (night ? 64 : 46) + words.offsetHeight + 28)}px`;
+    bub.style.transform = words.style.transform;
+
+    // ---- the timeline's card (the thing you tapped, or what's on now / next), and the way back to now
+    const card = $("card"), someday = $("someday"), pill = $("nowPill"), days = $("days");
+    card.hidden = someday.hidden = days.hidden = ko <= 0;
+    if (ko > 0) {
+      card.style.opacity = someday.style.opacity = days.style.opacity = String(ko);
+      card.style.transform = `translateY(${((1 - ko) * 24).toFixed(1)}px)`;
+      const sel = ITEMS[S.sel ?? cur?.id ?? nx?.id ?? 0];
+      const kick = finished(sel) ? "Done ✦" : sel.e && sel.s <= now && sel.e > now ? `Now · till ${fmt(sel.e)}` : sel.s > now ? `${dayName(Math.floor(sel.s / DAY))} · in ${until(sel.s)}` : dayName(Math.floor(sel.s / DAY));
+      const ck = `${sel.id}|${kick}|${S.done.has(sel.id)}`;
+      if (card.dataset.key !== ck) {
+        card.dataset.key = ck;
+        card.innerHTML = `<div class="row"><div class="ic" style="--c:${K[sel.k]}">${sel.icon}</div><div><div class="k">${kick}</div><div class="ti">${sel.name}</div><div class="me">${fmt(sel.s)}${sel.e ? ` to ${fmt(sel.e)}` : ""} · ${sel.place}</div></div></div><div class="acts"><button type="button" class="go" data-act="done">${finished(sel) ? "Undo" : "✓ Done"}</button><button type="button" data-act="edit">Edit</button><button type="button" data-act="open">Open</button></div>`;
+      }
+      const centre = Math.floor(T(xv) / DAY);
+      if (days.dataset.key !== `${centre}`) { days.dataset.key = `${centre}`; days.innerHTML = ""; for (let d = centre - 3; d <= centre + 3; d++) { const b = document.createElement("button"); b.type = "button"; b.textContent = d === 0 ? "Today" : shortDay(d); b.className = d === centre ? "on" : ""; b.dataset.day = String(d); days.appendChild(b); } }
+      const off = wx < -10 ? -1 : wx > W + 10 ? 1 : 0;
+      pill.hidden = !off || ko < 1;
+      if (off) { pill.textContent = off < 0 ? "‹ Back to now" : "Back to now ›"; pill.style.left = off < 0 ? "16px" : "auto"; pill.style.right = off > 0 ? "16px" : "auto"; }
+    } else pill.hidden = true;
+    $("title").textContent = m > 0.5 ? dayName(Math.floor(T(xv) / DAY)) : "Today";
+    $("date").textContent = m > 0.5 ? "" : new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+    const tm = mod(Math.floor(now));
+    $("st").textContent = `${Math.floor(tm / 60) % 12 || 12}:${String(tm % 60).padStart(2, "0")}`;
+    $("timeOut").textContent = fmt(now);
+    scene.setAttribute("aria-label", m > 0.5 ? "Your week as hills and valleys. Drag to move through the days." : `Your day from sunrise to sunset. ${cur ? `Now ${cur.name}.` : ""} ${nx ? `Next ${nx.name} at ${fmt(nx.s)}.` : ""} Tap to open the timeline.`);
+  }
+  const base = new Date(); base.setHours(12, 0, 0, 0);
+  const dayName = (d) => (d === 0 ? "Today" : d === 1 ? "Tomorrow" : d === -1 ? "Yesterday" : new Date(base.getTime() + d * 864e5).toLocaleDateString("en-US", { weekday: "long" }));
+  const shortDay = (d) => new Date(base.getTime() + d * 864e5).toLocaleDateString("en-US", { weekday: "short" });
+
+  /* ---------- the mark ---------- */
+  (function mark(svg) {
+    svg.setAttribute("viewBox", "0 0 100 100");
+    el("circle", { cx: 50, cy: 52, r: 40, fill: "none", stroke: "currentColor", "stroke-width": 5, opacity: 0.3 }, svg);
+    const cp = el("clipPath", { id: "mk" }, el("defs", {}, svg)); el("rect", { x: 0, y: 0, width: 100, height: 52 }, cp);
+    el("circle", { cx: 50, cy: 58, r: 26, fill: "#f4a44a", "clip-path": "url(#mk)" }, svg);
+    el("circle", { cx: 42, cy: 44, r: 3, fill: "#0f1a2a" }, svg); el("circle", { cx: 58, cy: 44, r: 3, fill: "#0f1a2a" }, svg);
+    el("rect", { x: 4, y: 50, width: 92, height: 5, rx: 2.5, fill: "currentColor" }, svg);
+    el("path", { d: "M64 66 a9 9 0 1 0 6 15 a7 7 0 1 1 -6 -15 z", fill: "#cfdcf2" }, svg);
+  })($("mark"));
+
+  /* ---------- the slider's track is the day's sky, 5 AM to 6 AM ---------- */
+  const slider = $("time");
+  slider.style.setProperty("--track", `linear-gradient(90deg, ${Array.from({ length: 26 }, (_, i) => { const t = 300 + i * 60; return `${rgb(skyMid(t))} ${((i / 25) * 100).toFixed(1)}%`; }).join(", ")})`);
+
+  /* ---------- fit the phone to the page ---------- */
+  const frame = $("frame");
+  const fit = () => { screen.style.transform = `scale(${frame.clientWidth / 390})`; };
+  addEventListener("resize", fit); fit();
+
+  /* ---------- the loop: render once per frame while anything moves ---------- */
+  const anims = new Set();
+  let raf = 0;
+  function frameLoop(n) { raf = 0; for (const a of [...anims]) if (a(n) === false) anims.delete(a); render(); if (anims.size || S.flip) raf = requestAnimationFrame(frameLoop); }
+  const kick = () => { if (!raf) raf = requestAnimationFrame(frameLoop); };
+  function setTime(t) {
+    const was = halfAt(S.t).day;
+    S.back = t < S.t; S.t = t;
+    if (halfAt(t).day !== was && !reduce) S.flip = { g: { ...S.g }, ui: S.ui ?? (was ? 0 : 1), t0: performance.now() };
+    if (!reduce && S.m >= 1 && S.follow) S.xv = lerp(S.xv, X(t), 0.12);
+  }
+  slider.value = String(S.t);
+  slider.addEventListener("input", () => { stopPlay(); setTime(Number(slider.value)); kick(); });
+
+  // play the day: 5 AM to 6 AM in about twenty seconds
+  let play = null;
+  function stopPlay() { if (play) { anims.delete(play); play = null; $("playIcon").setAttribute("d", "M4 2.5v11l9-5.5z"); } }
+  $("play").addEventListener("click", () => {
+    if (play) return stopPlay();
+    if (S.t >= 1790) setTime(300);
+    const t0 = performance.now(), from = S.t, dur = reduce ? 1 : ((1800 - from) / 1500) * 21000;
+    S.follow = true;
+    play = (n) => { const p = Math.min(1, (n - t0) / dur); setTime(from + p * (1800 - from)); slider.value = String(Math.round(S.t)); if (p >= 1) { stopPlay(); return false; } };
+    $("playIcon").setAttribute("d", "M4 2.5h3v11H4zM9 2.5h3v11H9z");
+    anims.add(play); kick();
+  });
+
+  // Today and the timeline: the dome pours itself out into the range of days, and back
+  let morph = null;
+  function setMode(to, sel) {
+    for (const b of document.querySelectorAll("[data-m]")) b.setAttribute("aria-pressed", String(Number(b.dataset.m) === to));
+    if (sel != null) S.sel = sel;
+    const half = halfAt(S.t), home = X((half.a + half.b) / 2);
+    if (to === 1 && S.m === 0) S.xv = home;
+    if (to === 0) S.sel = null;
+    if (morph) anims.delete(morph);
+    const from = S.m, x0 = S.xv, t0 = performance.now(), dur = reduce ? 1 : 1500 * Math.abs(to - from);
+    morph = (n) => { const p = dur ? Math.min(1, (n - t0) / dur) : 1; S.m = from + (to - from) * p; if (to === 0) S.xv = lerp(x0, home, E(Math.min(1, p * 1.6))); if (p >= 1) { morph = null; return false; } };
+    anims.add(morph); kick();
+  }
+  for (const b of document.querySelectorAll("[data-m]")) b.addEventListener("click", () => setMode(Number(b.dataset.m)));
+
+  // gestures: tap the sky to open (a thing on it opens with that thing picked); drag the range to move through the days
+  let drag = null, glide = null;
+  scene.addEventListener("pointerdown", (e) => { if (glide) { anims.delete(glide); glide = null; } drag = { x: e.clientX, x0: e.clientX, v: 0, t: performance.now(), moved: false }; scene.setPointerCapture(e.pointerId); });
+  scene.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    const k = frame.clientWidth / 390, dx = (e.clientX - drag.x) / k, n = performance.now();
+    if (Math.abs(e.clientX - drag.x0) / k > 6) drag.moved = true;
+    if (!drag.moved || S.m < 1) return;
+    drag.v = dx / Math.max(1, n - drag.t); drag.t = n; drag.x = e.clientX;
+    S.xv -= dx; S.back = dx > 0; S.follow = false; kick();
+  });
+  scene.addEventListener("pointerup", (e) => {
+    const d = drag; drag = null;
+    if (!d) return;
+    if (d.moved && S.m >= 1) { let v = d.v; if (!reduce && Math.abs(v) > 0.05) { glide = () => { v *= 0.94; S.xv -= v * 16; if (Math.abs(v) < 0.02) { glide = null; return false; } }; anims.add(glide); kick(); } return; }
+    if (d.moved) return;
+    const hit = document.elementFromPoint(e.clientX, e.clientY)?.closest?.("[data-id]");
+    const id = hit ? Number(hit.getAttribute("data-id")) : null;
+    if (S.m < 0.5) setMode(1, id);
+    else if (id != null) { S.sel = id; kick(); }
+  });
+  $("days").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-day]"); if (!b) return;
+    const to = X(Number(b.dataset.day) * DAY + (SR + SS) / 2), from = S.xv, t0 = performance.now();
+    S.follow = false;
+    const a = (n) => { const p = Math.min(1, (n - t0) / (reduce ? 1 : 520)); S.xv = lerp(from, to, E(p)); if (p >= 1) return false; };
+    anims.add(a); kick();
+  });
+  $("nowPill").addEventListener("click", () => {
+    const to = X(S.t), from = S.xv, t0 = performance.now();
+    const a = (n) => { const p = Math.min(1, (n - t0) / (reduce ? 1 : 600)); S.xv = lerp(from, to, E(p)); if (p >= 1) return false; };
+    anims.add(a); kick();
+  });
+  let toastT = 0;
+  const toast = (s) => { const t = $("toast"); t.textContent = s; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 1600); };
+  $("card").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const sel = ITEMS[S.sel ?? Number(($("card").dataset.key || "0").split("|")[0])];
+    if (b.dataset.act === "done") { if (S.done.has(sel.id)) S.done.delete(sel.id); else { S.done.add(sel.id); toast("Done. That's a star."); } kick(); }
+    else toast(b.dataset.act === "edit" ? "Opens the editor" : `Opens ${sel.name}`);
+  });
+
+  // the companion's steps, and the real minute while nobody is driving the clock
+  setInterval(() => { if (document.hidden) return; S.step++; kick(); }, 420);
+    window.daySky = { get xv() { return S.xv; }, get m() { return S.m; }, at(m, t) { if (t != null) setTime(t); S.m = m; S.flip = null; if (m > 0 && !S.xv) { const h = halfAt(S.t); S.xv = X((h.a + h.b) / 2); } render(); } };
+  render();
+})();
+</script>

@@ -28,6 +28,8 @@ import { Tour } from "../motion/tour";
 import { NAME_KEY, TZ_KEY } from "../motion/splash";
 import type { JarvisAvailability } from "../jarvis/types";
 import { BrandMark } from "@/components/brand/brand-mark";
+import { SkyScene } from "@/components/sky/sky-scene";
+import { CompanionGlyph } from "@/components/sky/companion-glyph";
 
 type ShellCtx = {
   openJarvis: (prompt?: string, opts?: { send?: boolean }) => void;
@@ -143,7 +145,7 @@ export function AppShell({
       <LifeAreasContext.Provider value={areas}>
         <div className="lf-glass">
           <TiltLayer />
-          <div className="lf-scene" aria-hidden />
+          <SkyScene tz={user.timezone ?? "UTC"} />
           <div className="flex min-h-dvh">
             {/* Desktop rail */}
             <aside className="sticky top-0 hidden h-dvh w-[88px] shrink-0 flex-col items-center py-6 md:flex">
@@ -167,7 +169,11 @@ export function AppShell({
                         active ? "text-text" : "text-muted hover:text-text",
                       )}
                     >
-                      <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
+                      {item.href === "/jarvis" ? (
+                        <CompanionGlyph className="h-6 w-6" />
+                      ) : (
+                        <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
+                      )}
                       {item.href === "/jarvis" ? assistantLabel(assistantName) : item.label}
                     </Link>
                   );
@@ -217,7 +223,7 @@ export function AppShell({
             aria-label="Main"
           >
             <div ref={bar} className="relative mx-auto flex max-w-md items-stretch justify-around px-2">
-              <span data-indicator className="pointer-events-none absolute top-[5px] left-0 h-8 w-14 rounded-full bg-accent-soft opacity-0" />
+              <span data-indicator className="pointer-events-none absolute top-[6px] left-0 h-[52px] w-[74px] rounded-[22px] bg-accent-soft opacity-0" />
               {tabs.map((item) => {
                 const active = isActive(pathname, item);
                 const Icon = item.icon;
@@ -229,12 +235,18 @@ export function AppShell({
                     data-tour={item.label.toLowerCase()}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "relative flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2.5 text-[0.6875rem] font-medium",
-                      active ? "text-accent" : "text-muted",
+                      "relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-3 text-[0.6875rem] font-semibold",
+                      active ? "text-text" : "text-muted",
                     )}
                   >
                     <span className="relative flex">
-                      <Icon data-icon className="h-[22px] w-[22px]" strokeWidth={active ? 2 : 1.6} />
+                      {item.href === "/jarvis" ? (
+                        <span data-icon className="flex h-[22px] w-[22px] items-center justify-center">
+                          <CompanionGlyph className="h-6 w-6" />
+                        </span>
+                      ) : (
+                        <Icon data-icon className={cn("h-[22px] w-[22px]", active && "text-accent")} strokeWidth={active ? 2 : 1.7} />
+                      )}
                       {item.href === "/jarvis" && unread > 0 && (
                         <span className="absolute -top-0.5 -right-1 h-2.5 w-2.5 rounded-full bg-danger ring-2 ring-surface" aria-label={`${unread} new`} />
                       )}
@@ -269,7 +281,8 @@ export function AppShell({
         <Suspense fallback={null}>
           <QuickAdd />
         </Suspense>
-        {!onJarvisPage && !assistantPage && (
+        {/* Not on Today: the clock has its own ask bar right under it. */}
+        {!onJarvisPage && !assistantPage && pathname !== "/" && (
           <button
             type="button"
             onClick={() => openJarvis()}
@@ -277,7 +290,7 @@ export function AppShell({
             aria-label={`Ask ${assistantName}`}
             className="lf-fab fixed right-4 bottom-[calc(var(--tabbar-space)-4px)] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-text shadow-lift active:scale-95 md:right-8 md:bottom-8"
           >
-            <Sparkles className="h-6 w-6" />
+            <CompanionGlyph className="h-8 w-8" />
           </button>
         )}
         <KeyboardWatcher />

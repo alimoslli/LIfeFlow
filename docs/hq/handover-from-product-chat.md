@@ -23,6 +23,15 @@ The owner is moving LifeFlow's four chats into one HQ that runs agents. This pag
 3. **Merged on `claude/pensive-mendel-r1yy4a` but not on main yet:** the calendar duplicate fixes and search-as-you-type. Run the full check, the build and e2e, then main.
 4. **The nightly audits chat's carry-over:** `docs/audits/2026-11-05-app-audit.md` (night audit, `fix-small` R2 and title-casing, situations s0021 to s0025, finishing research round 3).
 
+5. **Found by the model comparison (2026-11-07, `docs/research/2026-11-07-model-comparison.md`). These are approved bug fixes:**
+   - On "write my essay intro" the assistant refused correctly, but still called `import_assignments` and saved a duplicate assignment without asking, on both runs. It should never create anything the person didn't ask for.
+   - Em dashes appear in about half of its answers, which breaks the voice rule. Fix this in INSTRUCTIONS and with a post-check.
+   - Over-calling tools: 7 of the 18 questions went over budget.
+   - An arithmetic slip on bills.
+
+   Measured cost on the current model: about $49 per 1,000 messages.
+6. **Groq retest:** the key is on Groq's free tier (8,000 tokens a minute), and our requests are 8,000 to 19,000 tokens each, so Groq refused them. Once the owner moves to Groq's paid tier, run `scripts/compare-models.ts` again (one command per model). Sending fewer tokens per request (smaller tool groups) would also cut cost on any model.
+
 ## Waiting for the owner (yes or no)
 - **Goals redesign, option A:** https://claude.ai/artifact/EUmH35NgRB1pDvJHcqsFwB
 - **Connected accounts, "What Dev can see"** (plus the iPhone Shortcuts pack): https://claude.ai/artifact/MyHqEmJ5foFJvdCMm1GLG1

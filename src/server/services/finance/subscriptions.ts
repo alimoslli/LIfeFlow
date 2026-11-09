@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, between, eq, ne } from "drizzle-orm";
 import { addDaysStr, daysBetween } from "@/lib/dates";
 import { recurringItems } from "../../db/schema";
 import { series } from "../../db/series";
@@ -176,6 +176,14 @@ async function owned(scope: UserScope, id: string) {
     .where(and(eq(recurringItems.id, id), eq(recurringItems.userId, scope.userId)));
   if (!row) throw new ServiceError("Subscription not found", "not_found");
   return row;
+}
+
+/** Free trials that end between two dates (the first charge comes after), for the timeline. */
+export async function upcomingTrials(scope: UserScope, from: string, to: string) {
+  return scope.tx
+    .select({ id: recurringItems.id, name: recurringItems.name, amountCents: recurringItems.amountCents, trialEndsOn: recurringItems.trialEndsOn })
+    .from(recurringItems)
+    .where(and(eq(recurringItems.userId, scope.userId), ne(recurringItems.status, "cancelled"), between(recurringItems.trialEndsOn, from, to)));
 }
 
 export async function updateSubscription(scope: UserScope, id: string, patch: { usage?: "using" | "not_using"; trialEndsOn?: string | null; kept?: boolean }) {

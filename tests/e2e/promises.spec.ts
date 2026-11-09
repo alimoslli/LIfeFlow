@@ -9,7 +9,7 @@ test("a due promise asks once on Today and in Updates, and 'Yes, I did it' keeps
     "insert into promises (user_id, text, due_at) values (current_setting('app.user_id')::uuid, 'Study for Bio', now() - interval '10 minutes')",
   );
   await page.goto("/"); // opening Today is what asks
-  await expect(page.getByRole("link", { name: /new updates?/ })).toBeVisible();
+  // v3's Today is the clock (no updates link on it): the card below, there only because Today asked, is the proof.
   await page.goto("/jarvis/says");
   const card = page.getByTestId("jarvis-message").filter({ hasText: "Study for Bio" });
   await expect(card).toBeVisible();

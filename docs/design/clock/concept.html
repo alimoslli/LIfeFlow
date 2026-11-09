@@ -1,0 +1,1606 @@
+<title>LifeFlow Day Clock</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the app's Today screen in one phone-width column (top bar, the clock, the ask bar, the tab bar), on the
+   app's own tokens from src/app/globals.css, so it looks and reads exactly like LifeFlow in light and dark. */
+:root {
+  --bg: #f6f3fb;
+  --surface: #ffffff;
+  --surface-2: #efebf8;
+  --surface-3: #e6e0f4;
+  --border: #e6e0f4;
+  --border-strong: #d0c7ea;
+  --text: #1b1736;
+  --text-2: #433d66;
+  --muted: #6b6488;
+  /* Official mark palette: moss glass, soft sage highlights, and warm cream. */
+  --brand-moss: #285b45;
+  --brand-sage: #84a990;
+  --brand-mist: #dce9d9;
+  --brand-cream: #f8f2e7;
+  --accent: #5b4bd6;
+  --accent-hover: #4b3cc4;
+  --accent-soft: #ebe7fb;
+  --accent-text: #ffffff;
+  /* Deep-green feature cards ("Up next", Money). Stay deep green in both themes. */
+  --hero: #2e2780;
+  --hero-text: #ffffff;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --warning: #9a5806;
+  --warning-soft: #fdf1dc;
+  --success: #12704a;
+  --success-soft: #e3f3ea;
+  --info: #2d5a9e;
+  --info-soft: #e7eef9;
+  --ring: #5b4bd666;
+  --shadow: 0 1px 2px rgb(27 23 54 / 0.04), 0 8px 24px -6px rgb(27 23 54 / 0.1);
+  --shadow-lift: 0 2px 4px rgb(27 23 54 / 0.04), 0 18px 40px -12px rgb(27 23 54 / 0.22);
+  /* Chart series (validated pair: CVD ΔE 24.7, contrast >= 3:1) */
+  --series-income: #2a78d6;
+  --series-spend: #eb6834;
+  /* Morrow (owner, 2026-11-09): the sun and the night sky, for the dome */
+  --sun: #f4a44a;
+  --night: #1b1736;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e0c1d;
+    --surface: #17142e;
+    --surface-2: #1f1b3e;
+    --surface-3: #2a2552;
+    --border: #2a2550;
+    --border-strong: #3c3670;
+    --text: #f1eeff;
+    --text-2: #d6d1f0;
+    --muted: #a59fc6;
+    --accent: #b3a8ff;
+    --accent-hover: #c6bdff;
+    --accent-soft: #262052;
+    --accent-text: #120f29;
+    --hero: #2b2463;
+    --hero-text: #f1eeff;
+    --danger: #ff9a8e;
+    --danger-soft: #3d1c19;
+    --warning: #f0bb6c;
+    --warning-soft: #362817;
+    --success: #7fdcab;
+    --success-soft: #16322a;
+    --info: #9ec2f5;
+    --info-soft: #1a2739;
+    --ring: #b3a8ff66;
+    /* Shadows don't read on dark backgrounds; a hairline ring separates surfaces instead. */
+    --shadow: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-lift: 0 0 0 1px rgb(255 255 255 / 0.1), 0 18px 40px -12px rgb(0 0 0 / 0.7);
+    --series-income: #3987e5;
+    --series-spend: #d95926;
+    --night: #120f2b;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e0c1d;
+  --surface: #17142e;
+  --surface-2: #1f1b3e;
+  --surface-3: #2a2552;
+  --border: #2a2550;
+  --border-strong: #3c3670;
+  --text: #f1eeff;
+  --text-2: #d6d1f0;
+  --muted: #a59fc6;
+  --accent: #b3a8ff;
+  --accent-hover: #c6bdff;
+  --accent-soft: #262052;
+  --accent-text: #120f29;
+  --hero: #2b2463;
+  --hero-text: #f1eeff;
+  --danger: #ff9a8e;
+  --danger-soft: #3d1c19;
+  --warning: #f0bb6c;
+  --warning-soft: #362817;
+  --success: #7fdcab;
+  --success-soft: #16322a;
+  --info: #9ec2f5;
+  --info-soft: #1a2739;
+  --ring: #b3a8ff66;
+  /* Shadows don't read on dark backgrounds; a hairline ring separates surfaces instead. */
+  --shadow: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-lift: 0 0 0 1px rgb(255 255 255 / 0.1), 0 18px 40px -12px rgb(0 0 0 / 0.7);
+  --series-income: #3987e5;
+  --series-spend: #d95926;
+  --night: #120f2b;
+  color-scheme: dark;
+}
+:root {
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+[hidden] {
+  display: none !important;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.app {
+  max-width: 460px;
+  margin: 0 auto;
+  min-height: 100%;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 112px;
+}
+.top {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.top img {
+  width: 34px;
+  height: 34px;
+}
+.top-r {
+  display: flex;
+  margin-right: -10px;
+}
+.ib {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  border-radius: 22px;
+}
+.ib svg {
+  width: 22px;
+  height: 22px;
+}
+/* the concept bar: what this page is, and a time to see it at */
+.concept {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-block: 2px 10px;
+}
+.concept p {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.concept b {
+  color: var(--text-2);
+  font-weight: 600;
+}
+.times {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: -4px;
+  padding-inline: 4px;
+}
+.times::-webkit-scrollbar {
+  display: none;
+}
+.times button {
+  flex: none;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 17px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.times button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+/* the assistant's one line, in the clock's foot (as in the app) */
+.ast {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: left;
+  width: 100%;
+}
+.ast img {
+  width: 30px;
+  height: 30px;
+  flex: none;
+}
+.ast span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ast-k {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.ast-t {
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.ast-a {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 4px;
+}
+/* the ask bar and the tab bar, fixed at the bottom like the app shell */
+.dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  padding-left: max(12px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+.tabs {
+  pointer-events: auto;
+  max-width: 436px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 6px;
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lift);
+  border: 1px solid var(--border);
+}
+.tab {
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 22px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.tab svg {
+  width: 22px;
+  height: 22px;
+}
+.tab[aria-current="page"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.ask {
+  margin-top: 14px;
+  width: 100%;
+  min-height: 48px;
+  border-radius: 24px;
+  padding: 0 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  text-align: left;
+  font-size: 0.95rem;
+}
+/* the pin sheet */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.sheet-back {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.35);
+}
+.sheet-card {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  max-height: 92%;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 26px 26px 0 0;
+  padding: 10px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--shadow-lift);
+  animation: rise 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes rise {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-card {
+    animation: none;
+  }
+}
+.grab {
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border-strong);
+  margin: 0 auto 2px;
+}
+.sheet h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.pin-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.pin-ic {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--surface-2);
+  font-size: 1.5rem;
+}
+.field {
+  min-height: 48px;
+  min-width: 0;
+  flex: 1;
+  border-radius: 16px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  color: var(--text);
+  padding: 0 14px;
+  font: inherit;
+  font-size: 1rem;
+}
+.emojis {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: -20px;
+  padding-inline: 20px;
+}
+.emojis::-webkit-scrollbar {
+  display: none;
+}
+.emojis button {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  font-size: 1.4rem;
+}
+.emojis button[aria-checked="true"] {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.kinds {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.kinds button {
+  min-height: 56px;
+  padding: 8px 12px;
+  border-radius: 16px;
+  background: var(--surface-2);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.kinds b {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+.kinds small {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+.kinds button[aria-checked="true"] {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.when {
+  display: flex;
+  gap: 10px;
+}
+.when label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.acts {
+  display: flex;
+  gap: 10px;
+}
+.acts button {
+  flex: 1;
+  min-height: 48px;
+  border-radius: 24px;
+  font-weight: 600;
+  background: var(--surface-2);
+}
+.acts .primary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 50;
+  max-width: min(420px, calc(100% - 32px));
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.88rem;
+  line-height: 1.35;
+  box-shadow: var(--shadow-lift);
+}
+.vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+/* ---- the day clock: src/components/day-clock/day-clock.css, as the app ships it ---- */
+/* The day clock (v3 home). Colours are the app's theme tokens, so it reads the same in light and dark:
+   one accent (the moss/mint green) for everything busy, the text colour for the face. */
+.dc {
+  position: relative;
+  overflow: hidden;
+  /* Phones: the whole screen between the top bar and the tab bar (the assistant's line sits inside, at the foot). */
+  height: clamp(500px, calc(100svh - 168px), 720px);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  color: var(--text);
+}
+@media (min-width: 768px) {
+  .dc {
+    height: 620px;
+  }
+}
+/* Only the clock's own buttons are reset; anything placed in the foot keeps its own styles. */
+:where(.dc-sub, .dc-tiles, .dc-track, .dc-detail) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.dc button:focus-visible,
+.dc [role="button"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.dc canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+.dc > svg {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: visible;
+}
+.dc-callouts,
+.dc-micons {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.dc-callouts {
+  z-index: 3;
+}
+.dc-micons {
+  z-index: 4;
+}
+.dc-probe,
+.dc-hap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* the face */
+.dc-rim {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text) 22%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.dc-arc,
+.dc-arc-glow {
+  fill: none;
+  stroke: var(--accent);
+  stroke-linecap: round;
+}
+.dc-arc {
+  stroke-width: 3;
+}
+.dc-arc-glow {
+  stroke-width: 5;
+}
+.dc-num {
+  fill: var(--text);
+  font-size: 18px;
+  font-weight: 650;
+}
+.dc-tick {
+  stroke: color-mix(in srgb, var(--text) 70%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+/* the outer ring (the 12 hours after the next 12), the seam at the hand, and tomorrow's tint */
+.dc-outer-ring {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text) 13%, transparent);
+  stroke-width: 2;
+}
+.dc-tmrw-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 30%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.dc-seam {
+  stroke: color-mix(in srgb, var(--text) 45%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+/* markers on the outer ring: later, so a little quieter */
+.dc-co.dc-later {
+  font-size: 0.74rem;
+  color: var(--text-2);
+}
+/* tomorrow's ring: just outside the clock, from the 12 round to the hand */
+.dc-tmrw-ring {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 34%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.dc-tmrw-end {
+  fill: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.dc-face-tag {
+  fill: var(--accent);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  stroke: var(--bg);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+.dc-face-now {
+  fill: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  stroke: var(--bg);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+.dc-step {
+  stroke: var(--accent);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.dc-accent-fill {
+  fill: var(--accent);
+}
+.dc-word {
+  fill: var(--accent);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+}
+.dc-hour,
+.dc-minute {
+  stroke: var(--text);
+  stroke-linecap: round;
+}
+.dc-hour {
+  stroke-width: 5;
+}
+.dc-minute {
+  stroke-width: 3.2;
+}
+.dc-hub {
+  fill: var(--text);
+}
+.dc-leader {
+  stroke: color-mix(in srgb, var(--text) 38%, transparent);
+  stroke-width: 1;
+}
+.dc-steps {
+  fill: var(--muted);
+  font-size: 11.5px;
+  stroke: var(--bg);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+.dc-steps-n {
+  fill: var(--text);
+  font-weight: 600;
+}
+.dc-halo {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 10;
+}
+.dc-press-ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-opacity: 0.55;
+  stroke-width: 1.5;
+}
+.dc-stop-a {
+  stop-color: var(--accent);
+  stop-opacity: 0.34;
+}
+.dc-stop-b {
+  stop-color: var(--accent);
+  stop-opacity: 0.2;
+}
+.dc-stop-c {
+  stop-color: var(--accent);
+  stop-opacity: 0.1;
+}
+
+/* markers around the rim */
+.dc-co {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.dc-tm {
+  display: block;
+  margin-top: 1px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.dc-mi {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  line-height: 1;
+  will-change: transform;
+}
+.dc-hit {
+  position: absolute;
+  z-index: 7;
+  border-radius: 50%;
+  touch-action: pan-y;
+  cursor: pointer;
+}
+.dc-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  z-index: 3;
+  pointer-events: none;
+}
+.dc-foot {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 8px;
+  max-width: 560px;
+  margin: 0 auto;
+  z-index: 8;
+}
+.dc-foot:empty {
+  display: none;
+}
+/* "Pin something": under the tiles while the timeline is open and no card is showing */
+.dc-pinbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 8;
+  display: flex;
+  justify-content: center;
+  visibility: hidden;
+}
+.dc[data-state="timeline"] .dc-pinbar {
+  visibility: visible;
+}
+.dc-detail:not(:empty) ~ .dc-pinbar {
+  display: none;
+}
+.dc-pinbar button {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.dc-hint-wrap {
+  z-index: 6;
+  opacity: 0;
+}
+
+/* "Today ⌄" and the day picker */
+.dc-sub {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 44px;
+  z-index: 8;
+}
+.dc-todaybtn {
+  position: absolute;
+  left: 20px;
+  top: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.15rem;
+  font-weight: 500;
+}
+.dc-days {
+  position: absolute;
+  inset: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  opacity: 0;
+  pointer-events: none;
+}
+/* Every button is a real 44 px box; the pill you see is the middle 36 px (transparent borders above and below). */
+.dc-days button {
+  position: relative;
+  height: 44px;
+  min-width: 44px;
+  padding: 0 6px;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  background-clip: padding-box;
+  border-radius: 22px;
+  font-size: 0.95rem;
+  display: grid;
+  place-items: center;
+  white-space: nowrap;
+}
+.dc-days .dc-arrow {
+  color: var(--muted);
+  min-width: 44px;
+  padding: 0;
+  flex: none;
+}
+.dc-days .dc-on {
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+  padding: 0 13px;
+  flex: none;
+}
+@media (min-width: 768px) {
+  .dc-days {
+    justify-content: center;
+    gap: 14px;
+  }
+}
+
+/* the tiles: the day's shift, class and deadline */
+.dc-tiles {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 58px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  z-index: 8;
+  padding: 0 16px;
+  pointer-events: none;
+}
+.dc-tile {
+  flex: 1 1 0;
+  max-width: 160px;
+  height: 58px;
+  padding: 0 12px;
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  opacity: 0;
+}
+.dc-tile svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+.dc-tx {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.dc-tn {
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dc-tt {
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+.dc-tile[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+/* Phones: seven days fit as 44 px targets without the arrows (tap a day, or scroll the line). */
+@media (max-width: 520px) {
+  .dc-days .dc-arrow {
+    display: none;
+  }
+}
+@media (max-width: 380px) {
+  .dc-days {
+    inset: 0 6px;
+  }
+  .dc-days button {
+    font-size: 0.9rem;
+  }
+  .dc-days .dc-on {
+    padding: 0 10px;
+  }
+  .dc-tiles {
+    gap: 6px;
+    padding: 0 12px;
+  }
+  .dc-tile {
+    padding: 0 10px;
+    gap: 8px;
+  }
+  .dc-tile svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* the line */
+.dc-trackwrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 156px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  z-index: 5;
+  touch-action: pan-x;
+  scrollbar-width: none;
+  pointer-events: none;
+  clip-path: inset(0 50% 0 50%);
+  overscroll-behavior-x: contain;
+}
+.dc-trackwrap::-webkit-scrollbar {
+  display: none;
+}
+.dc[data-open="true"] .dc-trackwrap,
+.dc[data-open="true"] .dc-days,
+.dc[data-open="true"] .dc-tiles,
+.dc[data-open="true"] .dc-detail {
+  pointer-events: auto;
+}
+.dc-track {
+  position: relative;
+  height: 100%;
+}
+.dc[data-state="timeline"] .dc-track {
+  cursor: copy;
+}
+.dc[data-state="timeline"] .dc-track .dc-node,
+.dc[data-state="timeline"] .dc-track .dc-now {
+  cursor: pointer;
+}
+.dc-line {
+  position: absolute;
+  left: 0;
+  top: 69px;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--accent) 50%, transparent) 0,
+    color-mix(in srgb, var(--accent) 50%, transparent) var(--now-x),
+    var(--accent) var(--now-x)
+  );
+}
+.dc-band {
+  position: absolute;
+  top: 67px;
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  opacity: var(--tlab, 1);
+}
+.dc-mid {
+  position: absolute;
+  top: 56px;
+  width: 1px;
+  height: 28px;
+  background: var(--border-strong);
+  opacity: var(--tlab, 1);
+}
+.dc-mid span {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+/* further out: a month or a year, marked once; and the Someday stretch at the end */
+.dc-mid.dc-era {
+  background: var(--border-strong);
+}
+.dc-mid.dc-era span {
+  color: var(--text-2);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.dc-someday .dc-n-dot {
+  border-color: var(--muted);
+}
+/* tonight's midnight on the line: where tomorrow starts, said the same way as on the clock */
+.dc-mid.dc-next {
+  width: 2px;
+  margin-left: -0.5px;
+  background: var(--accent);
+}
+.dc-mid.dc-next span {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.dc-node {
+  position: absolute;
+  top: 0;
+  width: 92px;
+  height: 156px;
+  margin-left: -46px;
+  display: block;
+}
+.dc-n-ic {
+  position: absolute;
+  left: 50%;
+  top: 21px;
+  width: 30px;
+  height: 30px;
+  margin-left: -15px;
+  display: grid;
+  place-items: center;
+  font-size: 27px;
+  line-height: 1;
+}
+.dc-n-dot {
+  position: absolute;
+  left: 50%;
+  top: 64px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--bg);
+}
+.dc-past .dc-n-dot {
+  background: var(--accent);
+}
+.dc-sel .dc-n-dot {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.dc-n-t {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 86px;
+  font-size: 0.8rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  opacity: var(--tlab, 1);
+}
+.dc-n-n {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 104px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.25;
+  opacity: var(--tlab, 1);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding: 0 2px;
+}
+.dc-mapped .dc-n-ic {
+  visibility: hidden;
+}
+/* the now pill: a 44 px button around the 26 px pill you see */
+.dc-now {
+  position: absolute;
+  top: 15px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  transform: translateX(-50%);
+}
+.dc-now-pill {
+  height: 26px;
+  padding: 0 10px 0 7px;
+  border-radius: 13px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.dc-now::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 35px;
+  width: 2px;
+  height: 20px;
+  margin-left: -1px;
+  background: var(--accent);
+}
+.dc-now i {
+  position: absolute;
+  left: 50%;
+  top: 49px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* one quiet card, on a tap */
+.dc-detail:empty {
+  display: none;
+}
+.dc-detail {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  max-width: 520px;
+  margin: 0 auto;
+  z-index: 8;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 22px;
+  padding: 16px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  opacity: 0;
+  pointer-events: none;
+}
+.dc-d-ic {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  flex: none;
+}
+.dc-d-body {
+  min-width: 0;
+  flex: 1;
+}
+.dc-d-k {
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 3px;
+}
+.dc-d-t {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.dc-d-w {
+  font-size: 0.9rem;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.dc-d-s {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.35;
+}
+.dc-d-s:empty {
+  display: none;
+}
+/* a stack's card: one row per thing, each a full-width 44 px tap */
+.dc-d-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 200px;
+  margin: 6px -8px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.dc .dc-d-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 8px;
+  border-radius: 12px;
+  text-align: left;
+  color: var(--text);
+}
+.dc .dc-d-row:active {
+  background: var(--surface-2);
+}
+.dc-r-ic {
+  font-size: 1.1rem;
+}
+.dc-r-n {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dc-r-t {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+/* "+2" on a stack's icon (placed against the icon, which is already positioned) and on a merged marker */
+.dc-n-more {
+  position: absolute;
+  top: -4px;
+  right: -12px;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+/* tomorrow's markers: the same green as TOMORROW on the ring, instead of a caption under each */
+.dc-co.dc-tmrw,
+.dc-co.dc-tmrw .dc-co-sub {
+  color: var(--accent);
+}
+/* the time under a named pile on the clock ("11:59 PM" under "9 assignments due tonight") */
+.dc-co-sub {
+  display: block;
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.dc-more {
+  margin-left: 4px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.dc-d-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.dc .dc-d-done {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.dc .dc-d-edit,
+.dc .dc-d-open {
+  position: relative;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 18px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* ---- Morrow's dome (owner, 2026-11-09): the day as the sky; drawn by dome.ts ---- */
+.dc-dome {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  overflow: visible;
+}
+/* (.dc canvas stretches the clock's own canvas; the companion keeps its size) */
+.dc .dc-who {
+  position: absolute;
+  inset: auto;
+  left: 0;
+  top: 0;
+  width: 36px;
+  height: 36px;
+  z-index: 3;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+.dc-sky {
+  stroke: none;
+}
+.dc-sky-dawn {
+  fill: color-mix(in srgb, var(--sun) 26%, transparent);
+}
+.dc-sky-day {
+  fill: color-mix(in srgb, #8fb6ff 22%, transparent);
+}
+.dc-sky-gold {
+  fill: color-mix(in srgb, var(--sun) 32%, transparent);
+}
+.dc-sky-night {
+  fill: var(--night);
+}
+.dc-dome-track {
+  fill: none;
+  stroke: var(--accent-soft);
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+.dc-dome-track.dc-night {
+  stroke: color-mix(in srgb, #8f86e0 40%, var(--night));
+}
+.dc-dome-block {
+  fill: none;
+  stroke: var(--sun);
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+.dc-dome-block.dc-night {
+  stroke: #9d92ff;
+}
+.dc-dome-dot {
+  fill: var(--sun);
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+.dc-horizon {
+  fill: var(--accent);
+}
+.dc-star {
+  fill: #ffd77a;
+}
+.dc-dome-ic,
+.dc-dome-end {
+  font-size: 17px;
+}
+.dc-dome-t {
+  fill: var(--muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+.dc-dome-stars {
+  fill: #f1eeff;
+  font-size: 11px;
+  font-weight: 600;
+}
+.dc-dome-tag {
+  fill: var(--accent);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.dc-dome-now {
+  fill: var(--text);
+  font-size: 17px;
+  font-weight: 600;
+}
+.dc-dome-stat {
+  fill: var(--muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+.dc-dome-after {
+  fill: var(--text-2);
+  font-size: 12.5px;
+}
+
+/* in this page the concept bar sits above the clock, so the clock gives it that room */
+.dc {
+  height: clamp(500px, calc(100svh - 240px), 720px);
+}
+</style>
+
+<div class="app">
+  <header class="top">
+    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48Y2xpcFBhdGggaWQ9InMiPjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iNTIiLz48L2NsaXBQYXRoPjwvZGVmcz48Y2lyY2xlIGN4PSI1MCIgY3k9IjUyIiByPSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNWI0YmQ2IiBzdHJva2Utd2lkdGg9IjUiIG9wYWNpdHk9Ii4zNSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTgiIHI9IjI2IiBmaWxsPSIjZjRhNDRhIiBjbGlwLXBhdGg9InVybCgjcykiLz48Y2lyY2xlIGN4PSI0MiIgY3k9IjQ0IiByPSIzIiBmaWxsPSIjMWIxNzM2Ii8+PGNpcmNsZSBjeD0iNTgiIGN5PSI0NCIgcj0iMyIgZmlsbD0iIzFiMTczNiIvPjxyZWN0IHg9IjQiIHk9IjUwIiB3aWR0aD0iOTIiIGhlaWdodD0iNSIgcng9IjIuNSIgZmlsbD0iIzViNGJkNiIvPjxwYXRoIGQ9Ik02NCA2NiBhOSA5IDAgMSAwIDYgMTUgYTcgNyAwIDEgMSAtNiAtMTUgeiIgZmlsbD0iI2IzYThmZiIvPjwvc3ZnPg==" alt="LifeFlow">
+    <div class="top-r">
+      <button class="ib" type="button" aria-label="Search and ask" data-says="In the app, this searches everything and asks your assistant.">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7.5" /><path d="m20.5 20.5-4.2-4.2" /></svg>
+      </button>
+      <button class="ib" type="button" aria-label="Settings" data-says="In the app, this opens Settings.">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>
+      </button>
+    </div>
+  </header>
+  <h1 class="vh">LifeFlow v3: Today as a day clock</h1>
+  <div class="concept">
+    <p><b>v3 concept.</b> A made-up student's week on your own clock. Tap the clock, pin things. Nothing is saved.</p>
+    <div class="times" role="group" aria-label="See it at a time of day">
+      <button type="button" data-at="" aria-pressed="true">Now</button>
+      <button type="button" data-at="07:00" aria-pressed="false">7 AM</button>
+      <button type="button" data-at="09:00" aria-pressed="false">9 AM</button>
+      <button type="button" data-at="13:00" aria-pressed="false">1 PM</button>
+      <button type="button" data-at="18:00" aria-pressed="false">6 PM</button>
+      <button type="button" data-at="22:30" aria-pressed="false">10:30 PM</button>
+    </div>
+  </div>
+
+  <div class="dc" data-open="false">
+    <canvas data-dc="goo" aria-hidden="true"></canvas>
+    <svg data-dc="face" aria-hidden="true">
+      <defs>
+        <radialGradient id="dc-press">
+          <stop offset="0" class="dc-stop-a" />
+          <stop offset=".8" class="dc-stop-b" />
+          <stop offset="1" class="dc-stop-c" />
+        </radialGradient>
+        <filter id="dc-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" /></filter>
+        <filter id="dc-halo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12" /></filter>
+      </defs>
+      <g data-dc="leaders"></g>
+      <g data-dc="faceG">
+        <circle data-dc="halo" class="dc-halo" filter="url(#dc-halo)" opacity="0" />
+        <g data-dc="press" opacity="0">
+          <circle fill="url(#dc-press)" />
+          <circle class="dc-press-ring" />
+        </g>
+        <path data-dc="rim" class="dc-rim" />
+        <g data-dc="arcs"></g>
+        <g data-dc="ticks"></g>
+        <g data-dc="day"></g>
+        <g data-dc="hands">
+          <line data-dc="hour" class="dc-hour" />
+          <line data-dc="minute" class="dc-minute" />
+          <circle data-dc="hub" class="dc-hub" r="4.2" />
+        </g>
+        <g data-dc="steps"></g>
+      </g>
+    </svg>
+    <svg data-dc="dome" class="dc-dome" aria-hidden="true"></svg>
+    <canvas data-dc="who" class="dc-who" width="16" height="16" aria-hidden="true"></canvas>
+    <div data-dc="callouts" class="dc-callouts" aria-hidden="true"></div>
+    <div data-dc="micons" class="dc-micons" aria-hidden="true"></div>
+    <div data-dc="hint" class="dc-hint">Tap the clock to open your day</div>
+    <div data-dc="sub" class="dc-sub">
+      <button type="button" data-dc="today" class="dc-todaybtn" aria-label="Open today as a timeline">
+        Today
+        <svg width="12" height="8" viewBox="0 0 12 8" aria-hidden="true"><path d="M1.5 1.5 6 6l4.5-4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </button>
+      <nav data-dc="days" class="dc-days" aria-label="Days"></nav>
+    </div>
+    <div data-dc="chips" class="dc-tiles"></div>
+    <div data-dc="trackWrap" class="dc-trackwrap" role="region" aria-label="Timeline"><div data-dc="track" class="dc-track"></div></div>
+    <div data-dc="detail" class="dc-detail" aria-live="polite"></div>
+    <div data-dc="pinbar" class="dc-pinbar">
+      <button type="button" id="pinbtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14" /></svg>
+        Pin something
+      </button>
+    </div>
+    <div data-dc="hintWrap" class="dc-hint dc-hint-wrap">Pull down to wrap your day</div>
+    <div data-dc="hit" class="dc-hit" role="button" tabindex="0" aria-label="Open your day as a timeline"></div>
+    <div data-dc="foot" class="dc-foot">
+      <section aria-label="From your assistant">
+        <button type="button" class="ast" data-says="In the app, your assistant suggests study time on your free evening for you to approve.">
+          <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48ZGVmcz48Y2xpcFBhdGggaWQ9InMiPjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iNTIiLz48L2NsaXBQYXRoPjwvZGVmcz48Y2lyY2xlIGN4PSI1MCIgY3k9IjUyIiByPSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNWI0YmQ2IiBzdHJva2Utd2lkdGg9IjUiIG9wYWNpdHk9Ii4zNSIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTgiIHI9IjI2IiBmaWxsPSIjZjRhNDRhIiBjbGlwLXBhdGg9InVybCgjcykiLz48Y2lyY2xlIGN4PSI0MiIgY3k9IjQ0IiByPSIzIiBmaWxsPSIjMWIxNzM2Ii8+PGNpcmNsZSBjeD0iNTgiIGN5PSI0NCIgcj0iMyIgZmlsbD0iIzFiMTczNiIvPjxyZWN0IHg9IjQiIHk9IjUwIiB3aWR0aD0iOTIiIGhlaWdodD0iNSIgcng9IjIuNSIgZmlsbD0iIzViNGJkNiIvPjxwYXRoIGQ9Ik02NCA2NiBhOSA5IDAgMSAwIDYgMTUgYTcgNyAwIDEgMSAtNiAtMTUgeiIgZmlsbD0iI2IzYThmZiIvPjwvc3ZnPg==" alt="">
+          <span><span class="ast-k">your assistant</span><span class="ast-t">Anatomy exam in 2 days, and five assignments due tonight.</span><span class="ast-a">Plan study time</span></span>
+        </button>
+      </section>
+    </div>
+    <label data-dc="hap" class="dc-hap" aria-hidden="true"><input type="checkbox" tabindex="-1"></label>
+    <span data-dc="probe" class="dc-probe" aria-hidden="true"></span>
+  </div>
+
+  <button type="button" class="ask" data-says="In the app, this opens a chat with your assistant.">Message your assistant…</button>
+</div>
+
+<nav class="dock" aria-label="Main">
+  <div class="tabs">
+    <button type="button" class="tab" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5" /><path d="M12 6.5V12h4.5" /></svg>Today
+    </button>
+    <button type="button" class="tab" data-says="In the app, this opens your assistant.">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M9.94 15.5a2 2 0 0 0-1.44-1.44l-6.13-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0l1.58 6.14a2 2 0 0 0 1.44 1.44l6.13 1.58a.5.5 0 0 1 0 .96l-6.13 1.58a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z" /></svg>Assistant
+    </button>
+    <button type="button" class="tab" data-says="In the app, this opens Money (behind the Money lock).">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" /><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" /></svg>Money
+    </button>
+    <button type="button" class="tab" data-says="In the app, this opens School.">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z" /><path d="M22 10v6" /><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" /></svg>School
+    </button>
+  </div>
+</nav>
+
+<div id="pin" class="sheet" hidden>
+  <div id="pin-back" class="sheet-back"></div>
+  <form id="pin-form" class="sheet-card" role="dialog" aria-modal="true" aria-labelledby="pin-h">
+    <div class="grab" aria-hidden="true"></div>
+    <h2 id="pin-h">Pin to your timeline</h2>
+    <div class="pin-row">
+      <span id="pin-icon" class="pin-ic" aria-hidden="true">📌</span>
+      <input id="pin-name" class="field" aria-label="Name" placeholder="What is it?" maxlength="180" required autocomplete="off">
+    </div>
+    <div class="emojis" role="radiogroup" aria-label="Emoji"><button type="button" role="radio" aria-checked="false" aria-label="📌" data-emoji="📌">📌</button><button type="button" role="radio" aria-checked="false" aria-label="✈️" data-emoji="✈️">✈️</button><button type="button" role="radio" aria-checked="false" aria-label="🎂" data-emoji="🎂">🎂</button><button type="button" role="radio" aria-checked="false" aria-label="💼" data-emoji="💼">💼</button><button type="button" role="radio" aria-checked="false" aria-label="📚" data-emoji="📚">📚</button><button type="button" role="radio" aria-checked="false" aria-label="📝" data-emoji="📝">📝</button><button type="button" role="radio" aria-checked="false" aria-label="🏋️" data-emoji="🏋️">🏋️</button><button type="button" role="radio" aria-checked="false" aria-label="🏃" data-emoji="🏃">🏃</button><button type="button" role="radio" aria-checked="false" aria-label="🍽️" data-emoji="🍽️">🍽️</button><button type="button" role="radio" aria-checked="false" aria-label="☕" data-emoji="☕">☕</button><button type="button" role="radio" aria-checked="false" aria-label="🎉" data-emoji="🎉">🎉</button><button type="button" role="radio" aria-checked="false" aria-label="🩺" data-emoji="🩺">🩺</button><button type="button" role="radio" aria-checked="false" aria-label="💳" data-emoji="💳">💳</button><button type="button" role="radio" aria-checked="false" aria-label="🛒" data-emoji="🛒">🛒</button><button type="button" role="radio" aria-checked="false" aria-label="🏠" data-emoji="🏠">🏠</button><button type="button" role="radio" aria-checked="false" aria-label="🚗" data-emoji="🚗">🚗</button><button type="button" role="radio" aria-checked="false" aria-label="🎬" data-emoji="🎬">🎬</button><button type="button" role="radio" aria-checked="false" aria-label="🎓" data-emoji="🎓">🎓</button><button type="button" role="radio" aria-checked="false" aria-label="🏁" data-emoji="🏁">🏁</button><button type="button" role="radio" aria-checked="false" aria-label="🎯" data-emoji="🎯">🎯</button></div>
+    <div class="kinds" role="radiogroup" aria-label="What it is">
+      <button type="button" role="radio" data-kind="todo" aria-checked="true"><b>To-do</b><small>Something to do by then</small></button>
+      <button type="button" role="radio" data-kind="plan" aria-checked="false"><b>Plan</b><small>Somewhere to be, for an hour</small></button>
+      <button type="button" role="radio" data-kind="goal" aria-checked="false"><b>Goal</b><small>Something to reach by that day</small></button>
+      <button type="button" role="radio" data-kind="milestone" aria-checked="false"><b>Milestone</b><small>Something that happened</small></button>
+    </div>
+    <div class="when">
+      <label for="pin-date">Day<input id="pin-date" class="field" type="date" required></label>
+      <label id="pin-time-wrap" for="pin-time">Time<input id="pin-time" class="field" type="time"></label>
+    </div>
+    <div class="acts">
+      <button type="button" id="pin-cancel">Cancel</button>
+      <button type="submit" class="primary">Pin it</button>
+    </div>
+  </form>
+</div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+"use strict";(()=>{var Ge=o=>/\b(exam|midterm|final|quiz|test)\b/i.test(o.title);function Xt(o){if(o.length<2)return null;let d=u=>o.every(u),p=d(Ge)?"exams":d(u=>u.origin==="assignment")?"assignments":d(u=>u.origin==="task"||u.origin==="reminder")?"to-dos":d(u=>u.origin==="assignment"||u.origin==="task")?"deadlines":d(u=>u.origin==="bill")?"bills":null;return p?`${o.length} ${p}`:null}function Un(o,d){let[p,u,y]=o.split("-").map(Number),C=L=>{let T=new Intl.DateTimeFormat("en-US",{timeZone:d,hourCycle:"h23",year:"numeric",month:"numeric",day:"numeric",hour:"numeric",minute:"numeric"}).formatToParts(new Date(L)),B=ct=>Number(T.find(dt=>dt.type===ct)?.value??0);return(Date.UTC(B("year"),B("month")-1,B("day"),B("hour"),B("minute"))-L)/6e4},N=Date.UTC(p,u-1,y,12),w=C(N),D=Math.min(C(Date.UTC(p,0,15,12)),C(Date.UTC(p,6,15,12))),G=Math.round((Date.UTC(p,u-1,y)-Date.UTC(p,0,0))/864e5),M=2*Math.PI*(G-81)/364,Y=720-(9.87*Math.sin(2*M)-7.53*Math.cos(M)-1.5*Math.sin(M))+(w-D),K=Math.PI/180,v=23.44*Math.sin(2*Math.PI*(284+G)/365)*K,X=38*K,pt=(Math.sin(-.833*K)-Math.sin(X)*Math.sin(v))/(Math.cos(X)*Math.cos(v)),$=Math.acos(Math.max(-1,Math.min(1,pt)))/K*4;return{rise:Math.round(Y-$),set:Math.round(Y+$)}}var Do="http://www.w3.org/2000/svg",Se=11,rt=(o,d,p)=>Math.min(p,Math.max(d,o)),xt=(o,d,p)=>o+(d-o)*p,S=(o,d,p)=>rt((o-d)/(p-d),0,1),ee=o=>o<.5?4*o*o*o:1-Math.pow(-2*o+2,3)/2,Lt=o=>1-Math.pow(1-o,3),_n=o=>1+2.9*Math.pow(o-1,3)+1.9*Math.pow(o-1,2),jn=o=>o<.5?2*o*o:1-Math.pow(-2*o+2,2)/2,E=o=>Math.floor(o/1440),V=o=>o.start;function tt(o){let d=(o%1440+1440)%1440,p=Math.floor(d/60),u=d%60,y=p<12?"AM":"PM";return p=p%12||12,`${p}:${String(u).padStart(2,"0")} ${y}`}var qt=o=>tt(o).replace(":00",""),be=o=>`$${(Math.abs(o)/100).toFixed(2).replace(/\.00$/,"")}`,Ut=o=>(o/60%12+12)%12/12*Math.PI*2,Ft=(o,d)=>[d*Math.sin(o),-d*Math.cos(o)];function Ye(o,d,p){d<o&&(d+=Math.PI*2);let[u,y]=Ft(o,p),[C,N]=Ft(d,p),w=d-o>Math.PI?1:0;return`M${u.toFixed(2)} ${y.toFixed(2)}A${p} ${p} 0 ${w} 1 ${C.toFixed(2)} ${N.toFixed(2)}`}function kt(o,d,p){let u=document.createElementNS(Do,o);for(let y in d)u.setAttribute(y,String(d[y]));return p&&p.appendChild(u),u}function Dt(o,d,p){let u=document.createElement(o);return d&&(u.className=d),p&&p.appendChild(u),u}var wt=o=>o.replace(/[&<>"']/g,d=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[d]);function fn(o,d,p=new Date){let u=new Intl.DateTimeFormat("en-CA",{timeZone:o,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(p).reduce((G,M)=>(G[M.type]=M.value,G),{}),y=Date.UTC(+u.year,+u.month-1,+u.day),[C,N,w]=d.split("-").map(Number);return Math.round((y-Date.UTC(C,N-1,w))/864e5)*1440+ +u.hour%24*60+ +u.minute}function Be(o,d){return o.style.color=`var(${d})`,(getComputedStyle(o).color.match(/[\d.]+/g)??["0","0","0"]).slice(0,3).map(u=>+u/255)}var Fo={work:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="4.5" width="13" height="9.5" rx="2.2"/><path d="M5.5 4.5V3.3c0-.7.5-1.3 1.2-1.3h2.6c.7 0 1.2.6 1.2 1.3v1.2M1.5 8.6h13"/></svg>',class:'<svg viewBox="0 0 18 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M9 2 1.2 6 9 10l7.8-4L9 2z"/><path d="M4.6 8v3.4c1.7 1.6 7.1 1.6 8.8 0V8M16.8 6v4"/></svg>',due:'<svg viewBox="0 0 15 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M2.5 15V1.8M2.5 2.4h9.2L9.6 5.8l2.1 3.4H2.5"/></svg>'},Io=`precision highp float;
+uniform vec2 uSize; uniform float uDpr;
+uniform vec4 uBody; uniform vec2 uCap; uniform float uMorph;
+uniform vec4 uBub[8]; uniform vec4 uNeck[8]; uniform float uNeckR[8]; uniform float uN;
+uniform vec4 uStroke; uniform float uGlow; uniform float uFill; uniform vec3 uFillCol; uniform vec3 uGlowCol;
+float sdE(vec2 p, vec2 r){ float k0 = length(p/r); float k1 = length(p/(r*r)); return k0*(k0-1.0)/max(k1,1e-4); }
+float sdS(vec2 p, vec2 h){ float a = max(h.x-h.y,0.0); p.x = max(abs(p.x)-a,0.0); return length(p)-h.y; }
+float sdSeg(vec2 p, vec2 a, vec2 b, float r){ vec2 pa=p-a, ba=b-a; float h=clamp(dot(pa,ba)/max(dot(ba,ba),1e-4),0.0,1.0); return length(pa-ba*h)-r; }
+float smin(float a, float b, float k){ float h=max(k-abs(a-b),0.0)/k; return min(a,b)-h*h*k*0.25; }
+void main(){
+  vec2 p = vec2(gl_FragCoord.x, uSize.y*uDpr - gl_FragCoord.y)/uDpr;
+  vec2 q = p - uBody.xy;
+  float d = mix(sdE(q, uBody.zw), sdS(q, uCap), uMorph);
+  float db = 1e5;
+  for (int i = 0; i < 8; i++) {
+    if (float(i) >= uN) break;
+    float nr = uNeckR[i];
+    if (nr > 0.05) d = smin(d, sdSeg(p, uNeck[i].xy, uNeck[i].zw, nr), 16.0);
+    float r = uBub[i].z;
+    if (r > 0.05) { float bi = length(p-uBub[i].xy)-r; db = min(db, bi); d = smin(d, bi, 12.0); }
+  }
+  float aa = 0.8/uDpr + 0.35;
+  float line = 1.0 - smoothstep(1.0-aa, 1.0+aa, abs(d));
+  float glow = exp(-abs(d)/8.0) * uGlow;
+  float fill = (1.0 - smoothstep(-0.8, 0.8, db)) * uFill;
+  float la = line*uStroke.a;
+  vec3 col = uFillCol*fill*(1.0-la) + uStroke.rgb*la + uGlowCol*glow*(1.0-la);
+  float al = max(fill*(1.0-la) + la, glow);
+  gl_FragColor = vec4(col, al);
+}`;function zn(o,d,p){let u=p.reducedMotion,y=!!p.face,C={tag:"",text:"",stats:[]},N=()=>p.face?.({p:i.p,now:i.now,data:J,items:mt,face:C,lineY:c.lineY}),w=t=>o.querySelector(t),D=w("[data-dc=goo]"),G=w("[data-dc=face]"),M=w("[data-dc=faceG]"),I=w("[data-dc=rim]"),Y=w("[data-dc=arcs]"),K=w("[data-dc=ticks]"),v=w("[data-dc=day]"),X=w("[data-dc=hands]"),pt=w("[data-dc=hour]"),$=w("[data-dc=minute]"),L=w("[data-dc=hub]"),T=w("[data-dc=steps]"),B=w("[data-dc=press]"),ct=w("[data-dc=halo]"),dt=w("[data-dc=leaders]"),vt=w("[data-dc=callouts]"),Mt=w("[data-dc=micons]"),nt=w("[data-dc=hit]"),at=w("[data-dc=hint]"),ht=w("[data-dc=foot]"),Zt=w("[data-dc=hintWrap]"),ce=w("[data-dc=pinbar]"),Wt=w("[data-dc=sub]"),_t=w("[data-dc=today]"),ut=w("[data-dc=days]"),ot=w("[data-dc=chips]"),F=w("[data-dc=trackWrap]"),yt=w("[data-dc=track]"),j=w("[data-dc=detail]"),Le=w("[data-dc=hap]"),ne=w("[data-dc=probe]"),J=d,Rt=J.items,mt=Rt.filter(t=>!t.someday),i={now:fn(J.tz,J.today),p:0,press:0,open:!1,anim:null,day:0,sel:null,pressAnim:0,dirty:!1},c={W:0,H:0,R:0,cx:0,cy:0,subY:0,lineY:0,wrapTop:0,iconY:0,chipY:0,detailY:0,ycap:0,capHW:0,capHH:56,turn:0,home:0,wrapSl:null,rimFill:1,hintHidden:!1},Q={arcs:[],marks:[],ps:0,ws:0,we:720,mid:null,word:0,ahead:!1},R={nodes:[],stops:[],total:0,nowX:0,nowEl:null,somedayX:1/0},oe=[],$t={accent:[.5,.88,.68],grey:[.23,.24,.23],fill:[.07,.08,.08]},It=[],bt=(t,e,s,l)=>{t.addEventListener(e,s,l),It.push(()=>t.removeEventListener(e,s,l))},de=t=>J.days.find(e=>e.offset===t),je=t=>de(t)?.short??"",k=t=>W(t);function W(t){let e=de(t);if(e)return e.long;let[s,l,a]=J.today.split("-").map(Number),r=new Date(Date.UTC(s,l-1,a+t)),m=r.toLocaleDateString("en-US",{timeZone:"UTC",month:"short",day:"numeric"});return r.getUTCFullYear()===s?m:`${m}, ${r.getUTCFullYear()}`}let Z=()=>J.days[0]?.offset??0,Et=()=>J.days[J.days.length-1]?.offset??0,Ht=t=>t.allDay?t.kind==="due"?"Due":"All day":tt(t.start),et=t=>{if(t.amountCents==null)return null;let e=be(t.amountCents);return t.origin==="pay"?`${e} expected`:t.origin==="trial"?`then ${e}`:t.origin==="money_goal"?`${e} goal`:`${e} due`},Ct=t=>de(t)?je(t):W(t),gt=t=>t===E(i.now)?"today":t===E(i.now)+1?"tomorrow":Ct(t),we=t=>t.end!=null?5:Ge(t)?4:t.origin==="assignment"||t.origin==="task"?3:t.origin==="reminder"||t.origin==="event"?2:t.amountCents!=null?1:0,xn=t=>t.amountCents!=null?`${t.title} \xB7 ${et(t)}`:t.kind==="due"&&!t.someday&&(t.origin==="task"||t.origin==="assignment")&&!Ge(t)?`${t.title} due`:t.title;function De(t){try{if(navigator.vibrate&&navigator.vibrate(t))return}catch{}try{Le.click()}catch{}}function ze(){$t.accent=Be(ne,"--accent");let t=Be(ne,"--text"),e=Be(ne,"--bg");$t.grey=t.map((s,l)=>xt(e[l],s,.22)),$t.fill=Be(ne,"--surface")}function kn(){let t=o.clientWidth,e=o.clientHeight;if(!t||!e)return;c.W=t,c.H=e,c.subY=0,c.lineY=140,c.wrapTop=c.lineY-70,c.iconY=c.lineY-34,c.chipY=c.lineY+92,c.detailY=c.chipY+58+16;let s=ht.offsetHeight?ht.offsetHeight+16:0,l=e-50-s;c.R=Math.round(Math.max(70,Math.min(t*.28,120,(l-150)/2))),c.cx=t/2,c.cy=Math.round(50+l/2+2),c.ycap=c.lineY-12,c.capHW=Math.min(t/2-14,420),Wt.style.top=`${c.subY}px`,ot.style.top=`${c.chipY}px`,F.style.top=`${c.wrapTop}px`,j.style.top=`${c.detailY}px`,ce.style.top=`${c.detailY}px`,Zt.style.top=`${c.detailY+62}px`;let a=Math.min(c.cy+c.R+66,e-s-18);at.style.top=`${a}px`,at.hidden=a<c.cy+c.R+50,c.hintHidden=at.hidden;let r=c.R+54;if(Object.assign(nt.style,{left:`${c.cx-r}px`,top:`${c.cy-r}px`,width:`${r*2}px`,height:`${r*2}px`}),y){for(let m of[D,G,vt,Mt,at])m.style.display="none";Object.assign(nt.style,{left:"0px",top:"48px",width:`${t}px`,height:`${Math.round(e*.62)}px`,borderRadius:"28px"})}G.setAttribute("viewBox",`0 0 ${t} ${e}`),G.setAttribute("width",String(t)),G.setAttribute("height",String(e)),wo(),lo(),We()}function lo(){let t=c.R;ct.setAttribute("r",String(t));for(let e of B.querySelectorAll("circle"))e.setAttribute("r",String(t*.56));K.textContent="";for(let e=1;e<=12;e++){let s=e/12*Math.PI*2;if(e%3===0){let[l,a]=Ft(s,t-27),r=kt("text",{x:l.toFixed(1),y:(a+6).toFixed(1),"text-anchor":"middle",class:"dc-num"},K);r.textContent=String(e)}else{let[l,a]=Ft(s,t-12),[r,m]=Ft(s,t-19);kt("line",{x1:l,y1:a,x2:r,y2:m,class:"dc-tick"},K)}}}let Ve=6;function co(t){return uo(t)}function uo(t){let e=t,s=t+1440,l=t+720,a=(E(t)+1)*1440,r=n=>n<l?0:1,m=[],b=[],g=(n,f,x)=>({it:n,t:f,label:x,past:!1,lap:0,tmrw:!1,a0:0,a:0,cx:0,cy:0,ix:0,iy:0,line:null,lab:null,more:0,group:[n]}),A=(n,f)=>m.push({a:n,b:f,past:!1,lap:0,els:[]});for(let n of mt){if((n.origin==="task"||n.origin==="assignment")&&V(n)+(n.allDay?1439:0)<t){b.push(g(n,t+1,"overdue"));continue}if(n.allDay&&n.origin==="event"){if(E(n.start)<E(t)||n.start>s)continue;b.push(g(n,Math.max(n.start,t+1),"all day"));continue}if(n.allDay){if(n.kind!=="due"||n.origin==="milestone")continue;let f=E(n.start)*1440+1439;if(f<t||f>s)continue;let x=n.amountCents!=null?be(n.amountCents):n.origin==="goal"||n.origin==="money_goal"?"goal":null;b.push(g(n,f,x??(E(f)===E(t)?"tonight":"all day")));continue}if(n.end!=null){if(n.end<=t||n.start>=s)continue;let f=Math.max(n.start,t),x=Math.min(n.end,s);f<l&&x>l?(A(f,l),A(l,x)):A(f,x),n.start>=t?b.push(g(n,n.start,tt(n.start))):b.push(g(n,(t+Math.min(x,l))/2,`till ${qt(n.end)}`))}else{if(n.start<t||n.start>s)continue;b.push(g(n,n.start,n.amountCents!=null?be(n.amountCents):tt(n.start)))}}b.sort((n,f)=>n.t-f.t),b=b.reduce((n,f)=>{let x=n[n.length-1];return!x||r(f.t)!==r(x.t)||f.t-x.t>=30||f.label==="overdue"!=(x.label==="overdue")?n.push(f):(x.more+=1,x.group.push(f.it),we(f.it)>we(x.it)&&Object.assign(x,{it:f.it,label:f.label})),n},[]);for(let n of b){let f=Xt(n.group);if(!f)continue;let x=n.group[0],U=n.group.every(St=>St.start===x.start&&St.allDay===x.allDay);n.more=0;let _=E(x.start)===E(t)&&(x.allDay||x.start%1440>=1020);n.label==="overdue"?n.sub="overdue":U&&(n.sub=x.allDay?_?"tonight":"all day":tt(x.start)),n.label=f}if(b.length>Ve){let n=U=>we(U.it),f=new Map;for(let U of[...b].sort((_,St)=>_.t-St.t))f.set(n(U),[...f.get(n(U))??[],U]);let x=[];for(let U=0;x.length<Ve;U++){let _=!1;for(let St of f.values())St[U]&&x.length<Ve&&(x.push(St[U]),_=!0);if(!_)break}b=x}for(let n of b)n.lap=r(n.t),n.tmrw=n.t>=a;let P=.8,H=Ut(a);b.forEach(n=>{n.a0=Ut(n.t),n.a=n.a0});let O=b.map(n=>({a:n.a,fixed:!1,room:!1,m:n}));O.push({a:(H+.07+P/2)%(Math.PI*2),fixed:!0,room:!0}),O.sort((n,f)=>n.a-f.a);for(let n=0;n<60&&O.length>1;n++){let f=!1;for(let x=0;x<O.length;x++){let U=O[x],_=O[(x+1)%O.length],St=_.a-U.a;x===O.length-1&&(St+=Math.PI*2);let ae=U.room||_.room?.74:.46;if(St<ae){let Nt=(ae-St)/2*.6;U.fixed?_.a+=Nt*2:_.fixed?U.a-=Nt*2:(U.a-=Nt,_.a+=Nt),f=!0}}if(!f)break}for(let n of O)n.m&&(n.m.a=n.a);for(let n of m)n.lap=r(n.a);return{arcs:m,marks:b,ps:t,ws:e,we:s,mid:a,word:P,ahead:!1}}function mo(t,e){let s=mt.find(r=>!r.allDay&&r.end!=null&&r.start<=t&&r.end>t);if(s){let r=s.end??t;return{tag:`Now \xB7 till ${tt(r).slice(-2)===tt(t).slice(-2)?qt(r).slice(0,-3):qt(r)}`,text:s.title,it:s}}let l=mt.filter(r=>!r.allDay&&r.start>t&&r.start<=e).sort((r,m)=>r.start-m.start)[0];if(l){let r=Xt(mt.filter(m=>!m.allDay&&m.start===l.start));return{tag:`${E(l.start)>E(t)?"Tomorrow":"Next"} \xB7 ${qt(l.start)}`,text:r?`${r} due`:l.title,it:l}}let a=mt.filter(r=>(r.allDay?(E(r.start)+1)*1440:r.start)>t).sort((r,m)=>r.start-m.start)[0];if(a){let r=E(a.start),m=a.allDay?et(a)??(a.origin==="goal"?"goal":"due"):qt(a.start);return{tag:`${r===E(t)?"Later":r===E(t)+1?"Tomorrow":k(r).split(",")[0]} \xB7 ${m}`,text:a.title,it:a}}return{tag:"Next 3 days",text:"Nothing planned yet",it:null}}function fo(){let t=[];J.steps!=null&&t.push(`${J.steps.toLocaleString("en-US")} steps`),J.sleepHours!=null&&t.push(`${Math.floor(J.sleepHours)}h ${String(Math.round(J.sleepHours%1*60)).padStart(2,"0")}m sleep`);let e=t.length?[t.join(" \xB7 ")]:[];if(J.spentTodayCents!=null&&e.push(`${be(J.spentTodayCents)} spent today`),!e.length){let s=mt.filter(m=>m.start>=i.now-i.now%1440&&m.start<(E(i.now)+3)*1440&&(m.end??m.start+1)>i.now),l=m=>s.filter(b=>b.cat===m).length,a=[[l("class"),"class","classes"],[l("work"),"shift","shifts"],[l("due"),"due","due"]].filter(([m])=>m>0).map(([m,b,g])=>`${m} ${m===1?b:g}`),r=s.filter(m=>m.cat==="other").length;if(r&&a.push(`${r} more`),a.length)e.push(`Next 3 days: ${a.join(" \xB7 ")}`);else{let m=g=>Rt.filter(g).length,b=[[m(g=>g.origin==="task"),"to-do","to-dos"],[m(g=>g.origin==="goal"||g.origin==="money_goal"),"goal","goals"],[m(g=>g.origin==="milestone"),"milestone","milestones"]].filter(([g])=>g>0).map(([g,A,P])=>`${g} ${g===1?A:P}`);b.length&&e.push(`On your line: ${b.join(" \xB7 ")}`)}}return e}function wn(){let t=c.R,e=i.now;Q=co(e);let s=Ut(e),l=e%60/60*Math.PI*2,[a,r]=Ft(s,t*.47),[m,b]=Ft(l,t*.8),[g,A]=Ft(l+Math.PI,t*.09);for(let[h,st]of Object.entries({x1:0,y1:0,x2:a,y2:r}))pt.setAttribute(h,String(st));for(let[h,st]of Object.entries({x1:g,y1:A,x2:m,y2:b}))$.setAttribute(h,String(st));let P=h=>`M0 ${-h}A${h} ${h} 0 1 1 0 ${h}A${h} ${h} 0 1 1 0 ${-h}`,H=t+Se;I.setAttribute("d",P(t)),v.textContent="",kt("path",{d:P(H),class:"dc-outer-ring"},v);let O=Ut(e);if(Q.mid!=null){let h=Ut(Q.mid),st=Q.mid<e+720;st?(kt("path",{d:Ye(h,O,t),class:"dc-tmrw-track"},v),kt("path",{d:P(H),class:"dc-tmrw-track"},v)):kt("path",{d:Ye(h,O,H),class:"dc-tmrw-track"},v);let ft=st?t:H,[jt,z]=Ft(h,ft-5),[At,zt]=Ft(h,ft+5);kt("line",{x1:jt,y1:z,x2:At,y2:zt,class:"dc-step"},v);let Qt=H+8,[Bt,te]=Ft(h+.07,Qt),[Vt,he]=Ft(h+.07+Q.word,Qt);kt("path",{id:"dc-tmrw",d:`M${Bt.toFixed(2)} ${te.toFixed(2)}A${Qt} ${Qt} 0 0 1 ${Vt.toFixed(2)} ${he.toFixed(2)}`,fill:"none"},v);let ye=kt("text",{class:"dc-word"},v);kt("textPath",{href:"#dc-tmrw"},ye).textContent="TOMORROW"}let[n,f]=Ft(O,t),[x,U]=Ft(O,H);kt("line",{x1:n,y1:f,x2:x,y2:U,class:"dc-seam"},v),Y.textContent="";for(let h of Q.arcs){let st=Ye(Ut(h.a),Ut(h.b),t+h.lap*Se),ft=h.past?.32:h.lap?.62:1;h.els=[],!h.past&&!h.lap&&h.els.push(kt("path",{d:st,class:"dc-arc-glow",opacity:ft*.55,filter:"url(#dc-soft)"},Y)),h.els.push(kt("path",{d:st,class:"dc-arc",opacity:ft},Y))}c.rimFill=1,T.textContent="";let _=mo(e,Q.we),St=Math.max(11,Math.floor(t*.2)),ae=h=>h.length>St?`${h.slice(0,St-1).trimEnd()}\u2026`:h;if(_){let h=-t*.27;kt("text",{x:0,y:h-14,"text-anchor":"middle",class:"dc-face-tag"},T).textContent=_.tag,kt("text",{x:0,y:h,"text-anchor":"middle",class:"dc-face-now"},T).textContent=ae(_.text)}let Nt=fo();C={tag:_?.tag??"",text:_?.text??"",stats:Nt},Nt.forEach((h,st)=>{kt("text",{x:0,y:t*.3+st*14,"text-anchor":"middle",class:"dc-steps"},T).textContent=h}),dt.textContent="",vt.textContent="";for(let h of Q.marks){let st=[Math.sin(h.a),-Math.cos(h.a)],ft=Dt("div",h.lap?"dc-co dc-later":"dc-co",vt);ft.textContent=h.label,h.more&&(Dt("b","dc-more",ft).textContent=`+${h.more}`),h.sub&&(Dt("span","dc-co-sub",ft).textContent=h.sub),h.tmrw&&ft.classList.add("dc-tmrw");let jt=ft.offsetWidth,z=Math.abs(st[0])*Math.max(66,jt)/2+Math.abs(st[1])*Math.max(50,ft.offsetHeight+30)/2,At=t+14+z+h.lap*Se;h.cx=rt(c.cx+st[0]*At,jt/2+8,c.W-jt/2-8),h.cy=c.cy+st[1]*At,h.ix=h.cx,h.iy=h.cy-9;let[zt,Qt]=Ft(h.a0,t+5+h.lap*Se),Bt=h.cx-c.cx,te=h.cy-c.cy,Vt=Math.hypot(Bt,te)||1,he=h.cx-Bt/Vt*(z+3),ye=h.cy-te/Vt*(z+3);h.line=kt("line",{x1:c.cx+zt,y1:c.cy+Qt,x2:he,y2:ye,class:"dc-leader"},dt),ft.style.transform=`translate(${(h.cx-jt/2).toFixed(1)}px, ${(h.cy+9).toFixed(1)}px)`,h.lab=ft}let cn=parseFloat(at.style.top)||0,dn=at.textContent?at.textContent.length*3.4:0;at.hidden=c.hintHidden||Q.marks.some(h=>h.lab&&h.cy+9+h.lab.offsetHeight+4>cn&&Math.abs(h.cx-c.cx)<dn+h.lab.offsetWidth/2);let pe=mt.filter(h=>!h.allDay&&V(h)>e).sort((h,st)=>V(h)-V(st))[0];nt.setAttribute("aria-label",`Today. Now ${tt(e)}.${_?` ${_.tag}: ${_.text}.`:pe?` Next: ${pe.title} at ${tt(V(pe))}${E(V(pe))>E(e)?" tomorrow":""}.`:""}${Nt.length?` ${Nt.join(". ")}.`:""} Open your day as a timeline.`),N()}let vn=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];function po(t){let[e,s,l]=J.today.split("-").map(Number),a=new Date(Date.UTC(e,s-1,l+t)),r=a.getUTCFullYear();return Math.abs(r-e)>1?String(r):r===e?vn[a.getUTCMonth()]:`${vn[a.getUTCMonth()]} ${r}`}let Xe=(t,e,s)=>{let l=t.reduce((r,m)=>we(m)>we(r)?m:r),a=t.every(r=>(r.end??r.start)<=s&&V(r)<=s)&&!l.someday;return{id:t.length>1?`stack:${t[0].id}`:l.id,it:l,group:t.length>1?t:null,t:e,past:a,x:0,el:null}},Mn=1e6,Fe=t=>t?R.nodes.find(e=>e.id===t||e.it.id===t||e.group?.some(s=>s.id===t)):void 0;function ho(t){let e=n=>n>=Z()&&n<=Et(),s=n=>e(E(V(n)))?`t${V(n)}`:`d${E(V(n))}`,l=[],a=[];for(let n of Rt.filter(f=>!f.someday).sort((f,x)=>V(f)-V(x)))a.length&&s(a[0])!==s(n)&&(l.push(Xe(a,V(a[0]),t)),a=[]),a.push(n);a.length&&l.push(Xe(a,V(a[0]),t));let r=l.map(n=>({t:n.t,kind:"item",n,x:0}));for(let n=Z();n<=Et()+1;n++)r.push({t:n*1440,kind:"mid",d:n,x:0});let m="";for(let n of l){let f=E(n.t);if(e(f)){m="";continue}let x=po(f);x!==m&&r.push({t:n.t-.5,kind:"mark",label:x,x:0}),m=x}r.push({t,kind:"now",x:0});let b={mid:0,mark:0,item:1,now:2};r.sort((n,f)=>n.t-f.t||b[n.kind]-b[f.kind]);let g=(n,f)=>{let x=f.t-n.t;return n.kind==="mark"||f.kind==="mark"?58:n.kind==="mid"||f.kind==="mid"?((n.kind==="mid"?n:f).d===E(t)+1?n.kind==="now"||f.kind==="now"?108:66:44)+rt((x-120)/60*4,0,26):n.kind==="now"||f.kind==="now"?66+rt((x-60)/60*5,0,24):96+rt((x-180)/60*6,0,30)},A=c.W/2,P=A;r.forEach((n,f)=>{f&&(P+=g(r[f-1],n)),n.x=P});let H=Rt.filter(n=>n.someday),O=1/0;if(H.length){let n=r[r.length-1].t+1;P+=70,O=P,r.push({t:n,kind:"mark",label:"Someday",x:P});let f=H.length>8?[...H.slice(0,7).map(x=>[x]),H.slice(7)]:H.map(x=>[x]);for(let x of f){n+=1,P+=96;let U={...Xe(x,n,t),x:P};l.push(U),r.push({t:n,kind:"item",n:U,x:P})}}for(let n of r)n.n&&(n.n.x=n.x);return{nodes:l,stops:r,total:P+A,nowX:r.find(n=>n.kind==="now")?.x??A,nowEl:null,somedayX:O}}function Ke(t){let e=R.stops;if(t<=e[0].t)return e[0].x-(e[0].t-t)*.5;for(let l=0;l<e.length-1;l++){let a=e[l],r=e[l+1];if(t>=a.t&&t<=r.t)return r.t===a.t?a.x:a.x+(t-a.t)/(r.t-a.t)*(r.x-a.x)}let s=e[e.length-1];return s.x+(t-s.t)*.5}function Ze(t){let e=R.stops;if(t<=e[0].x)return e[0].t;for(let s=0;s<e.length-1;s++){let l=e[s],a=e[s+1];if(t>=l.x&&t<=a.x)return a.x===l.x?l.t:l.t+(t-l.x)/(a.x-l.x)*(a.t-l.t)}return e[e.length-1].t}function ve(){let t=R.nowX-c.W*.5;for(let e of R.nodes){let s=e.x-t;if(s>-46&&s<44){t=e.x-44;break}}return rt(t,0,R.total-c.W)}function $n(){R=ho(i.now),yt.textContent="",yt.style.width=`${R.total}px`;let t=Dt("div","dc-line",yt);t.style.width=`${R.total}px`,t.style.setProperty("--now-x",`${R.nowX}px`);for(let a of R.nodes)for(let r of a.group??[a.it]){if(r.end==null)continue;let m=Dt("div","dc-band",yt),b=Ke(r.start),g=Ke(r.end);m.style.left=`${b}px`,m.style.width=`${Math.max(6,g-b)}px`}for(let a of R.stops){if(a.kind==="mark"){let A=Dt("div","dc-mid dc-era",yt);A.style.left=`${a.x}px`,Dt("span","",A).textContent=a.label??"";continue}if(a.kind!=="mid"||a.d==null||a.d<Z())continue;let r=a.d===E(i.now)+1,m=Dt("div",`dc-mid${r?" dc-next":""}`,yt);m.style.left=`${a.x}px`;let b=de(a.d),g=a.d===0?"Today":r?"Tomorrow":b?`${b.short} ${Number(b.date.slice(8))}`:"";Dt("span","",m).textContent=g}for(let a of R.nodes){let r=a.it,m=Dt("button",`dc-node ${a.past?"dc-past":"dc-future"}${r.someday?" dc-someday":""}`,yt);m.type="button",m.style.left=`${a.x}px`;let b=Math.abs(E(a.t))-7;!r.someday&&b>0&&(m.style.opacity=String(Math.max(.5,1-b/90))),m.dataset.id=a.id;let g=a.group?Xt(a.group):null,A=a.group&&!g?a.group.length-1:0,P=g?`${g} due`:xn(r),H=r.someday?"No day yet":r.when??(Math.abs(E(a.t))>6?W(E(a.t)):Ht(r));m.innerHTML=`<span class="dc-n-ic" aria-hidden="true">${wt(r.icon)}${A?`<b class="dc-n-more">+${A}</b>`:""}</span><span class="dc-n-dot"></span><span class="dc-n-t">${wt(H)}</span><span class="dc-n-n">${wt(P)}</span>`;let O=A?`${P} and ${A} more`:P;g&&m.classList.add("dc-pile"),m.setAttribute("aria-label",r.someday?`${O}, no day yet`:H===W(E(a.t))||r.when?`${O}, ${H}`:`${O}, ${k(E(a.t))}, ${H}`),m.addEventListener("click",()=>Je(a.id)),a.el=m}let e=Dt("button","dc-now",yt);e.type="button",e.style.left=`${R.nowX}px`;let s=i.now%60/60*360,l=i.now/60%12/12*360;e.innerHTML=`<span class="dc-now-pill"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" transform="rotate(${s.toFixed(1)} 7 7)"/><path d="M7 7V4.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" transform="rotate(${l.toFixed(1)} 7 7)"/></svg><span>${tt(i.now)}</span></span><i></i>`,e.setAttribute("aria-label",`Now, ${tt(i.now)}. Back to the clock`),e.addEventListener("click",()=>rn()),R.nowEl=e}function Ie(t=!1){let e=ve();c.home=e,t&&Math.abs(F.scrollLeft-e)>1?c.wrapSl=F.scrollLeft:(c.wrapSl=null,F.scrollLeft=e),Mt.textContent="";for(let r of R.nodes)r.el?.classList.remove("dc-mapped");let s=c.cx-c.capHW+18,l=c.cx+c.capHW-18,a=Math.PI-Ut(Q.ps);if(a=((a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI,c.turn=a,y){oe=[];return}oe=Q.marks.map(r=>{let m=Fe(r.it.id),b=m?m.x-e:r.ix<c.cx?-40:c.W+40,g=b<12||b>c.W-12,A=rt(b,-36,c.W+36),P=Math.atan2(r.ix-c.cx,-(r.iy-c.cy)),H=Math.hypot(r.ix-c.cx,r.iy-c.cy),O=rt((r.t-Q.ps)/(Q.we-Q.ps),0,1),n=Dt("div","dc-mi",Mt);return n.textContent=r.it.icon,m?.el?.classList.add("dc-mapped"),{m:r,p0:[r.ix,r.iy],p2:[A,c.iconY],th0:P,r0:H,phiEnd:O*Math.PI*2-Math.PI,el:n,dim:r.past,off:g,inCap:A>s&&A<l}})}function Cn(){ut.innerHTML="";let t=(e,s,l)=>{let a=Dt("button","dc-arrow",ut);a.type="button",a.setAttribute("aria-label",e),a.innerHTML=`<svg width="9" height="15" viewBox="0 0 9 15" aria-hidden="true"><path d="${s}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,a.addEventListener("click",()=>Sn(i.day+l))};t("Previous day","M7.5 1.5 1.5 7.5l6 6",-1);for(let e of J.days){let s=e.offset,l=Dt("button","dc-day",ut);l.type="button",l.textContent=e.short,l.dataset.d=String(s),l.setAttribute("aria-label",s===0?"Today":e.long),l.addEventListener("click",()=>{s===0&&i.day===0&&Math.abs(F.scrollLeft-ve())<30?rn():Sn(s)})}t("Next day","M1.5 1.5l6 6-6 6",1)}function se(){for(let t of ut.querySelectorAll("button[data-d]")){let e=Number(t.dataset.d)===i.day;t.classList.toggle("dc-on",e),t.setAttribute("aria-current",e?"date":"false")}}function Sn(t){t=rt(t,Z(),Et());let e;if(t===0)e=ve();else{let s=R.nodes.find(l=>E(l.t)===t);e=(s?s.x:Ke(t*1440+480))-c.W*.22}i.sel=null,F.scrollTo({left:rt(e,0,R.total-c.W),behavior:u?"auto":"smooth"}),En(t)}function En(t){t===i.day&&ot.childElementCount||(i.day=t,se(),re(),Jt())}function yo(t){if(t===Mn)return[];let e=i.now,s=n=>E(V(n))===t,l=n=>n.end!=null&&n.start<=e&&n.end>e,a=n=>n.find(l)||t===0&&n.find(f=>V(f)>e)||n[0],r=(n,f)=>V(n)-V(f),m=n=>tt(n).slice(-2)===tt(e).slice(-2)?qt(n).slice(0,-3):qt(n),b=n=>`${Math.floor(n/60)}h${n%60?` ${n%60}m`:""}`,g=[],A=mt.filter(n=>n.cat==="work"&&!n.allDay&&n.end!=null&&s(n)).sort(r);if(A.length){let n=a(A),f=n.end??n.start,[x,U]=l(n)?["Work till",m(f)]:f<=e?["Worked",b(f-n.start)]:["Work",qt(n.start)];g.push({it:n,icon:"work",name:x,time:U,label:`Work, ${tt(n.start)} to ${tt(f)}`})}let P=mt.filter(n=>n.cat==="class"&&!n.allDay&&s(n)).sort(r);if(P.length){let n=a(P),f=n.end??n.start,x=l(n)?`till ${m(f)}`:t===E(e)&&f<=e?"done":qt(n.start);g.push({it:n,icon:"class",name:n.title,time:x,label:`${n.title}, ${tt(n.start)} to ${tt(f)}`})}let H=mt.filter(n=>n.cat==="due"&&s(n)).sort(r)[0],O=!1;if(!H&&t>=0&&(H=mt.filter(n=>n.cat==="due"&&V(n)>=(t+1)*1440).sort(r)[0],O=!0),H){let n=V(H),f=O?Ct(E(n)):et(H)??(H.allDay?"today":qt(n)),U=Xt(mt.filter(_=>_.cat==="due"&&_.start===H.start&&_.allDay===H.allDay))??H.title;g.push({it:H,icon:"due",name:U,time:f,label:`${U}, due ${k(E(n))}${H.allDay?"":` at ${tt(n)}`}`,ahead:O})}return g.sort((n,f)=>(n.ahead?1e9:V(n.it))-(f.ahead?1e9:V(f.it)))}function re(){ot.textContent="";for(let t of yo(i.day)){let e=Dt("button","dc-tile",ot);e.type="button",e.dataset.id=t.it.id,e.innerHTML=`${Fo[t.icon]}<span class="dc-tx"><span class="dc-tn">${wt(t.name)}</span><span class="dc-tt">${wt(t.time)}</span></span>`,e.setAttribute("aria-label",t.label),e.addEventListener("click",()=>{Je(t.it.id);let s=Fe(t.it.id);if(s&&E(s.t)===i.day){let l=s.x-F.scrollLeft;(l<50||l>c.W-50)&&F.scrollTo({left:rt(s.x-c.W/2,0,R.total-c.W),behavior:u?"auto":"smooth"})}})}if(i.open)for(let t of ot.querySelectorAll(".dc-tile"))t.style.opacity="1";bo(),ue()}function bo(){let t=[...ot.querySelectorAll(".dc-tile")];for(let s of t)s.style.minWidth="";let e=()=>ot.scrollWidth<=ot.clientWidth+.5;t.sort((s,l)=>l.offsetWidth-s.offsetWidth);for(let s of t){if(e())break;s.style.minWidth="0"}}function ue(){let t=Fe(i.sel);for(let e of R.nodes)e.el?.classList.toggle("dc-sel",e===t);for(let e of ot.querySelectorAll(".dc-tile"))e.setAttribute("aria-pressed",String(e.dataset.id===i.sel))}function Je(t){i.sel=i.sel===t?null:t,Jt(),ue(),i.sel&&!u&&j.animate&&j.animate([{opacity:0,transform:"translateY(8px)"},{opacity:1,transform:"translateY(0)"}],{duration:240,easing:"cubic-bezier(.2,.8,.2,1)"})}let go=t=>t.startsWith("/calendar")?"Open in calendar":t.startsWith("/work")?"Open work":t.startsWith("/school")?"Open the class":t.startsWith("/tasks")?"Open to-dos":t.startsWith("/finances")?"Open bills":"Open",xo=t=>t<=0?"Today":t===1?"Yesterday":t<60?`${t} days ago`:t<730?`${Math.round(t/30.44)} months ago`:`${Math.floor(t/365.25)} years ago`;function ko(t,e){let s=E(t.t),l=e.every(g=>V(g)===V(e[0])&&!g.allDay),a=`${Xt(e)??`${e.length} things`} \xB7 ${t.it.someday?"Someday":`${k(s)}${l?` \xB7 ${tt(V(e[0]))}`:""}`}`,r=e.map(g=>`<button type="button" class="dc-d-row" data-id="${wt(g.id)}"><span class="dc-r-ic" aria-hidden="true">${wt(g.icon)}</span><span class="dc-r-n">${wt(xn(g))}</span>${l||g.someday?"":`<span class="dc-r-t">${wt(Ht(g))}</span>`}</button>`).join("");j.innerHTML=`<div class="dc-d-ic" aria-hidden="true">${wt(t.it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${wt(a)}</div><div class="dc-d-list">${r}</div></div>`;for(let g of j.querySelectorAll(".dc-d-row"))g.addEventListener("click",()=>Je(g.dataset.id??""));let m=j.querySelector(".dc-d-list"),b=j.offsetHeight-(c.H-c.detailY-12);m&&b>0&&(m.style.maxHeight=`${Math.max(66,Math.floor((m.offsetHeight-b-22)/44)*44+22)}px`),Me(i.open?1:i.p)}function Jt(){let t=i.sel?.startsWith("stack:")?R.nodes.find(P=>P.id===i.sel):void 0;if(t?.group)return ko(t,t.group);let e=i.sel?Rt.find(P=>P.id===i.sel):void 0;if(!e){j.innerHTML="",Me(i.open?1:i.p);return}let s=V(e),l=e.when??k(E(s));e.someday?l="Someday":E(s)===0&&!e.allDay?l=e.end!=null&&s<=i.now&&e.end>i.now?"Now":s>i.now?"Up next":"Earlier today":E(s)>0&&i.day===0&&(l+=E(s)===1?" \xB7 tomorrow":` \xB7 in ${E(s)} days`);let a=e.someday?"No day yet. Pin it to a day when you know.":e.origin==="milestone"?xo(-E(s)):e.origin==="goal"||e.origin==="money_goal"?`${e.amountCents!=null?`${be(e.amountCents)}, y`:"Y"}our goal by the end of this day`:e.origin==="reminder"?`Reminder at ${tt(e.start)}`:e.origin==="trial"?`Trial ends ${gt(E(s))}, then ${be(e.amountCents??0)}`:et(e)?`${et(e)} ${gt(E(s))}`:e.allDay?e.kind==="due"?"Due by the end of the day":"All day":e.end!=null?`${tt(e.start)} \u2013 ${tt(e.end)}`:`Due ${tt(e.start)}`,r=[e.subtitle,e.source].filter(Boolean).join(" \xB7 "),m=(e.origin==="task"||e.origin==="reminder"||e.origin==="assignment")&&!!e.ref,b=e.origin==="event"||e.origin==="shift"||e.origin==="assignment",g=e.origin==="task"||e.origin==="reminder"||e.origin==="goal"||e.origin==="milestone",A=`${m?'<button type="button" class="dc-d-done">Done</button>':""}${b?'<button type="button" class="dc-d-edit">Edit</button>':""}<button type="button" class="dc-d-open">${wt(g?"Edit":go(e.href))}</button>`;j.innerHTML=`<div class="dc-d-ic" aria-hidden="true">${wt(e.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${wt(l)}</div><div class="dc-d-t">${wt(e.title)}</div><div class="dc-d-w">${wt(a)}</div><div class="dc-d-s">${wt(r)}</div><div class="dc-d-acts">${A}</div></div>`,j.querySelector(".dc-d-open")?.addEventListener("click",()=>p.onOpen(e.href)),j.querySelector(".dc-d-edit")?.addEventListener("click",()=>p.onEdit(e)),j.querySelector(".dc-d-done")?.addEventListener("click",()=>{i.sel=null,Jt(),ue(),p.onDone(e)}),Me(i.open?1:i.p)}let Gt=null,Tt={},He=1;(function(){try{Gt=D.getContext("webgl",{premultipliedAlpha:!0,alpha:!0,antialias:!1})}catch{Gt=null}if(!Gt)return;let e=Gt,s=(b,g)=>{let A=e.createShader(b);return A?(e.shaderSource(A,g),e.compileShader(A),e.getShaderParameter(A,e.COMPILE_STATUS)?A:null):null},l=s(e.VERTEX_SHADER,"attribute vec2 a; void main(){ gl_Position = vec4(a,0.,1.); }"),a=s(e.FRAGMENT_SHADER,Io),r=e.createProgram();if(!l||!a||!r){Gt=null;return}if(e.attachShader(r,l),e.attachShader(r,a),e.linkProgram(r),!e.getProgramParameter(r,e.LINK_STATUS)){Gt=null;return}e.useProgram(r),e.bindBuffer(e.ARRAY_BUFFER,e.createBuffer()),e.bufferData(e.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),e.STATIC_DRAW);let m=e.getAttribLocation(r,"a");e.enableVertexAttribArray(m),e.vertexAttribPointer(m,2,e.FLOAT,!1,0,0);for(let b of["uSize","uDpr","uBody","uCap","uMorph","uBub","uNeck","uNeckR","uN","uStroke","uGlow","uFill","uFillCol","uGlowCol"])Tt[b]=e.getUniformLocation(r,b)||e.getUniformLocation(r,`${b}[0]`);e.clearColor(0,0,0,0)})();function wo(){He=Math.min(window.devicePixelRatio||1,2),D.width=Math.round(c.W*He),D.height=Math.round(c.H*He),Gt?.viewport(0,0,D.width,D.height)}let Qe=new Float32Array(32),tn=new Float32Array(32),en=new Float32Array(8);function Pe(t){let e=Gt;if(e){if(e.clear(e.COLOR_BUFFER_BIT),!t){D.style.visibility="hidden";return}D.style.visibility="visible",e.uniform2f(Tt.uSize,c.W,c.H),e.uniform1f(Tt.uDpr,He),e.uniform4f(Tt.uBody,t.cx,t.cy,t.rx,t.ry),e.uniform2f(Tt.uCap,t.hw,t.hh),e.uniform1f(Tt.uMorph,t.s),Qe.fill(0),tn.fill(0),en.fill(0),t.items.slice(0,8).forEach((s,l)=>{Qe.set([s.x,s.y,s.r,0],l*4),tn.set([s.ax,s.ay,s.tx,s.ty],l*4),en[l]=s.nr}),e.uniform4fv(Tt.uBub,Qe),e.uniform4fv(Tt.uNeck,tn),e.uniform1fv(Tt.uNeckR,en),e.uniform1f(Tt.uN,Math.min(8,t.items.length)),e.uniform4f(Tt.uStroke,t.col[0]*t.a,t.col[1]*t.a,t.col[2]*t.a,t.a),e.uniform1f(Tt.uGlow,t.glow),e.uniform1f(Tt.uFill,t.fill),e.uniform3f(Tt.uFillCol,$t.fill[0],$t.fill[1],$t.fill[2]),e.uniform3f(Tt.uGlowCol,$t.accent[0],$t.accent[1],$t.accent[2]),e.drawArrays(e.TRIANGLES,0,3)}}function vo(t){if(c.rimFill===t)return;c.rimFill=t;let e=Q.ps+t*(Q.we-Q.ps);for(let s of Q.arcs){let l=Math.min(s.b,e),a=l>s.a+1,r=a?Ye(Ut(s.a),Ut(l),c.R+s.lap*Se):"";for(let m of s.els)m.style.visibility=a?"visible":"hidden",a&&m.setAttribute("d",r)}}function Me(t){Zt.style.opacity=String(j.innerHTML?0:S(t,.92,1))}function Yt(){let t=rt(i.p,0,1),e=i.press,s=rt(e,0,1),l=c.R;c.wrapSl!=null&&(F.scrollLeft=xt(c.home,c.wrapSl,ee(S(t,.78,1))));let a=c.wrapSl!=null?c.home-F.scrollLeft:0;if(u||y){Mo(t),N();return}let r=ee(S(t,.36,.78)),m=Lt(S(t,.05,.34))*(1-r),b=l*(1+.075*m),g=l*(1-.065*m),A=xt(c.cy,c.ycap,ee(S(t,.26,.7))),P=1-.14*S(t,.3,.56),H=1-.02*e*(1-S(t,0,.15));M.setAttribute("transform",`translate(${c.cx} ${A}) scale(${b/l*P*H} ${g/l*P*H})`),I.style.opacity=String(1-S(t,0,.05)),vo(Math.round(ee(1-S(t,.1,.34))*400)/400),Y.style.opacity=String(1-S(t,.3,.4)),K.style.opacity=X.style.opacity=String(1-S(t,.3,.5)),T.style.opacity=String((1-S(t,.02,.2))*(1-.6*s)),B.setAttribute("opacity",String(s*(1-S(t,.3,.5)))),ct.setAttribute("opacity",String(.35*s*(1-S(t,.05,.3))));let O=`color-mix(in srgb, var(--accent) ${Math.round(s*100)}%, var(--text))`;pt.style.stroke=O,$.style.stroke=O,L.style.fill=O;let n=1-S(t,0,.12);for(let z of Q.marks){let At=n*(z.past?.5:1);z.lab&&(z.lab.style.opacity=String(At)),z.line?.setAttribute("opacity",String(At))}at.style.opacity=String(1-S(t,0,.1)),ht.style.opacity=String(1-S(t,0,.18)),ht.style.transform=`translateY(${(14*Lt(S(t,0,.25))).toFixed(2)}px)`,ht.style.visibility=t>.25?"hidden":"visible",v.style.opacity=String(n);let f=ee(S(t,.06,.44)),x=ee(S(t,.38,.88)),U=l+50,_=Lt(S(t,.02,.15)),St=S(t,.005,.04)*(1-S(t,.48,.68)),ae=[];for(let z of oe){let At=z.th0+c.turn*f,zt=xt(z.r0,U,Lt(S(t,.04,.3))),Qt=z.phiEnd-c.turn*(1-f),Bt=xt(c.cx+Math.sin(At)*zt,c.cx+(c.W/2-30)*Math.sin(Qt/2),f),te=A-Math.cos(At)*zt*xt(1,.9,f),Vt=xt(Math.min(z.r0-l,44),44,Lt(S(t,.04,.3))),he=(Bt-c.cx)/(b+Vt),ye=(te-A)/(g+Vt),Re=Math.hypot(he,ye);Re<1&&Re>.001&&(Bt=c.cx+he/Re*(b+Vt),te=A+ye/Re*(g+Vt)),Bt=rt(Bt,24,c.W-24);let $e=xt(Bt,z.p2[0]+a,x),Ce=xt(te,z.p2[1],x),So=xt(xt(1,.86,S(t,.05,.25)),1.04,S(t,.6,.9)),Eo=xt(z.dim?.5:1,1,S(t,.05,.3));z.el.style.transform=`translate3d(${($e-15).toFixed(2)}px, ${(Ce-15).toFixed(2)}px, 0) scale(${So.toFixed(3)})`;let Nn=z.off?1-S(t,.4,.56):1;z.el.style.opacity=String(Eo*(z.off?1-S(t,.46,.66):1));let To=22*Lt(S(t,.08,.22))*(1-S(t,.8,.94))*(z.inCap?1:1-S(t,.5,.68))*Nn,Wn=$e-c.cx,Rn=Ce-A,Gn=Math.hypot(Wn,Rn)||1,Yn=Wn/Gn,Bn=Rn/Gn,qn=1/Math.sqrt((Yn/b)**2+(Bn/g)**2),un=c.cx+Yn*(qn-8),mn=A+Bn*(qn-8),Ao=Math.hypot($e-un,Ce-mn),Lo=St*rt(8-Ao*.035,2.2,7.5)*Nn;ae.push({x:$e,y:Ce,r:To,ax:un,ay:mn,tx:xt(un,$e,_),ty:xt(mn,Ce,_),nr:Lo})}let Nt=Lt(S(t,.84,1)),cn=S(t,.04,.22),dn=$t.grey.map((z,At)=>xt(z,$t.accent[At],.85*cn)),pe=S(t,0,.04)*(1-S(t,.84,.98));t>0&&t<1&&Gt?Pe({cx:c.cx,cy:A,rx:b,ry:g,hw:c.capHW+14*Nt,hh:c.capHH+18*Nt,s:r,items:ae,col:dn,a:pe,glow:.42*S(t,.03,.2)*(1-S(t,.84,.98)),fill:.95*(1-S(t,.8,.94))}):Pe(null);let h=50;t>=.52&&(h=t<.84?xt(50,7,ee(S(t,.52,.8))):xt(7,0,S(t,.84,.97))),F.style.clipPath=t>=1?"none":`inset(0 ${h.toFixed(2)}% 0 ${h.toFixed(2)}%)`,F.style.visibility=t>0?"visible":"hidden",F.style.setProperty("--tlab",S(t,.82,1).toFixed(3));let st=S(t,.88,1);R.nowEl&&(R.nowEl.style.opacity=String(st),R.nowEl.style.transform=`translateX(-50%) translateY(${(-16*(1-_n(st))).toFixed(2)}px)`),_t.style.opacity=String(1-S(t,.66,.77)),_t.style.visibility=t>.77?"hidden":"visible";let ft=S(t,.78,.94);ut.style.opacity=String(ft),ut.style.transform=`translateY(${(-8*(1-ft)).toFixed(2)}px)`,ut.style.visibility=ft>0?"visible":"hidden",ot.style.visibility=t>.78?"visible":"hidden",ot.querySelectorAll(".dc-tile").forEach((z,At)=>{let zt=S(t,.8+At*.03,.95+At*.02);z.style.opacity=String(zt),z.style.transform=`translateY(${(10*(1-Lt(zt))).toFixed(2)}px)`});let jt=S(t,.86,1);j.style.opacity=String(jt),j.style.transform=`translateY(${(12*(1-Lt(jt))).toFixed(2)}px)`,Me(t)}function Mo(t){M.setAttribute("transform",`translate(${c.cx} ${c.cy})`),G.style.opacity=String(1-t),vt.style.opacity=String(1-t),at.style.opacity=String(1-t),ht.style.opacity=String(1-t),ht.style.visibility=t>.5?"hidden":"visible";for(let e of oe)e.el.style.transform=`translate3d(${e.p0[0]-15}px, ${e.p0[1]-15}px, 0)`,e.el.style.opacity=String((1-t)*(e.dim?.5:1));for(let e of Q.marks)e.lab&&(e.lab.style.opacity=e.past?"0.5":"1");v.style.opacity=String(1-t),Pe(null),F.style.clipPath="none",F.style.opacity=String(t),F.style.visibility=t>0?"visible":"hidden",ut.style.visibility=t>0?"visible":"hidden",ot.style.visibility=t>0?"visible":"hidden",F.style.setProperty("--tlab","1");for(let e of R.nodes)e.el?.classList.remove("dc-mapped");R.nowEl&&(R.nowEl.style.opacity="1"),_t.style.opacity=String(1-t),_t.style.visibility=t>.5?"hidden":"visible",ut.style.opacity=String(t);for(let e of ot.querySelectorAll(".dc-tile"))e.style.opacity=String(t);j.style.opacity=String(t),Me(t)}function nn(t){o.dataset.open=t?"true":"false",nt.style.display=t?"none":"block"}let me=t=>{o.dataset.state=t};function Oe(){i.open=!0,me("timeline"),c.wrapSl=null;for(let t of R.nodes)t.el?.classList.remove("dc-mapped");Mt.style.visibility="hidden",Pe(null),nn(!0),ue()}function fe(t,e,s,l){let a=i.p,r=performance.now(),m=t>a?[[.18,7],[.97,12]]:[[.5,7],[.02,10]],b={id:0};i.anim=b,me("moving");let g=A=>{if(i.anim!==b)return;let P=rt((A-r)/e,0,1),H=i.p;i.p=a+(t-a)*s(P);for(let[O,n]of m)(H<O&&i.p>=O||H>O&&i.p<=O)&&De(n);Yt(),P<1?b.id=requestAnimationFrame(g):(i.anim=null,l?.())};b.id=requestAnimationFrame(g)}function Ne(t,e=140){let s=i.press,l=performance.now();cancelAnimationFrame(i.pressAnim);let a=r=>{let m=rt((r-l)/e,0,1);i.press=s+(t-s)*Lt(m),i.open||Yt(),m<1&&(i.pressAnim=requestAnimationFrame(a))};i.pressAnim=requestAnimationFrame(a)}function on(){i.open||i.anim||(Ie(),Mt.style.visibility="visible",i.day=0,i.sel=null,re(),se(),Jt(),i.press<1&&Ne(1,110),De(8),fe(1,u?240:y?760:1300,u?t=>t:jn,Oe))}function sn(){me("moving"),i.open=!1,i.sel=null,Jt(),ue(),i.press<1&&(i.press=1),Ie(!0),Mt.style.visibility="visible"}function Tn(){nn(!1),c.wrapSl=null,F.scrollLeft=c.home,i.day=0,se(),re(),i.dirty&&(i.dirty=!1,We()),Yt();let t=i.press,e=performance.now(),s=u?160:520;cancelAnimationFrame(i.pressAnim);let l=a=>{let r=rt((a-e)/s,0,1);i.press=t*(1-(u?Lt(r):_n(r))),i.open||Yt(),r<1&&(i.pressAnim=requestAnimationFrame(l))};i.pressAnim=requestAnimationFrame(l),me("clock")}function rn(){if(!i.open||i.anim)return;let t=Math.abs(F.scrollLeft-ve());sn(),nn(!1),fe(0,u?260:y?680:1150+Math.min(450,t*.12),u?ee:jn,Tn)}let it=null;bt(nt,"pointerdown",t=>{if(!(i.open||i.anim)){it={x:t.clientX,y:t.clientY,id:t.pointerId,moved:!1,lastP:0,lastT:performance.now(),v:0};try{nt.setPointerCapture(t.pointerId)}catch{}Ne(1),De(8)}}),bt(nt,"pointermove",t=>{if(!it||t.pointerId!==it.id)return;let e=t.clientX-it.x,s=t.clientY-it.y;if(!it.moved&&Math.abs(e)>10&&Math.abs(e)>Math.abs(s)&&(it.moved=!0,Ie(),Mt.style.visibility="visible",i.day=0,i.sel=null,re(),se(),Jt()),it.moved){let l=performance.now(),a=rt((Math.abs(e)-10)/210,0,1);it.v=(a-it.lastP)/Math.max(1,l-it.lastT)*1e3,it.lastP=a,it.lastT=l,i.p=a,Yt()}});let An=(t,e)=>{if(!it||t.pointerId!==it.id)return;let s=it;if(it=null,!s.moved){e?Ne(0):on();return}let l=performance.now()-s.lastT>90?0:s.v;!e&&(i.p>.35||l>1.6)?fe(1,700*(1-i.p)+250,Lt,Oe):fe(0,600*i.p+150,Lt,()=>{me("clock"),Ne(0,220)})};bt(nt,"pointerup",t=>An(t,!1)),bt(nt,"pointercancel",t=>An(t,!0)),bt(nt,"keydown",t=>{(t.key==="Enter"||t.key===" ")&&(t.preventDefault(),on())}),bt(_t,"click",()=>on()),bt(document,"keydown",t=>{t.key==="Escape"&&i.open&&rn()});let Ot=new Map,q=null,Ln=0;bt(F,"pointerdown",t=>{if(!(!i.open||i.anim)){if(Ot.set(t.pointerId,{x:t.clientX,y:t.clientY}),Ot.size===1)q={kind:null,x:t.clientX,y:t.clientY,id:t.pointerId,lastP:1,lastT:performance.now(),v:0,armed:!1,d0:0};else if(Ot.size===2&&q&&q.kind!=="pull"){let[e,s]=[...Ot.values()];q.kind="pinch",q.d0=Math.max(40,Math.hypot(e.x-s.x,e.y-s.y)),sn()}}}),bt(F,"pointermove",t=>{if(!Ot.has(t.pointerId)||!q)return;Ot.set(t.pointerId,{x:t.clientX,y:t.clientY});let e=null;if(q.kind==="pinch"&&Ot.size>=2){let[l,a]=[...Ot.values()];e=rt(1-(1-Math.hypot(l.x-a.x,l.y-a.y)/q.d0)*1.6,0,1)}else if(t.pointerId===q.id){let l=t.clientX-q.x,a=t.clientY-q.y;if(!q.kind&&a>10&&a>Math.abs(l)*1.2){q.kind="pull";try{F.setPointerCapture(t.pointerId)}catch{}sn()}q.kind==="pull"&&(e=rt(1-(a-10)/250,0,1))}if(e==null)return;let s=performance.now();q.v=(e-q.lastP)/Math.max(1,s-q.lastT)*1e3,q.lastP=e,q.lastT=s,!q.armed&&e<.7?(q.armed=!0,De(6)):q.armed&&e>.74&&(q.armed=!1),i.p=e,Yt()});let Dn=(t,e)=>{if(Ot.delete(t.pointerId),!q||q.kind!=="pinch"&&t.pointerId!==q.id||q.kind==="pinch"&&Ot.size){Ot.size||(q=null);return}let s=q;if(q=null,Ot.clear(),!s.kind)return;Ln=performance.now();let l=performance.now()-s.lastT>90?0:s.v;!e&&(i.p<.7||l<-2)?fe(0,760*i.p+260,Lt,Tn):fe(1,420*(1-i.p)+180,Lt,Oe)};bt(F,"pointerup",t=>Dn(t,!1)),bt(F,"pointercancel",t=>Dn(t,!0)),bt(F,"click",t=>{performance.now()-Ln<350&&(t.stopPropagation(),t.preventDefault())},!0);let Fn=t=>Math.round(t/15)*15;bt(yt,"click",t=>{if(!i.open||t.target.closest(".dc-node, .dc-now"))return;let e=F.getBoundingClientRect(),s=F.scrollLeft+(t.clientX-e.left);s>=R.somedayX-30||p.onPin({start:Fn(Ze(s))})});let an=0;bt(F,"scroll",()=>{!i.open||an||(an=requestAnimationFrame(()=>{an=0;let t=F.scrollLeft+c.W/2,e=t>=R.somedayX?Mn:E(Ze(t));if(e!==i.day){let s=Fe(i.sel);(!s||s.x<F.scrollLeft||s.x>F.scrollLeft+c.W)&&(i.sel=null),En(e),ue()}}))},{passive:!0});function We(){wn(),$n(),Cn(),se(),re(),Jt(),i.open?(i.p=1,Oe(),F.scrollLeft=ve(),i.day=0,se(),re()):Ie(),Yt()}let $o=window.setInterval(()=>{let t=fn(J.tz,J.today);if(t!==i.now){if(t>=1440){p.onNewDay();return}i.now=t,i.open||i.anim||it||q?i.dirty=!0:We()}},2e4);It.push(()=>window.clearInterval($o)),ze();let In=new MutationObserver(()=>{ze(),Yt()});In.observe(document.documentElement,{attributes:!0,attributeFilter:["data-theme","class"]});let Hn=window.matchMedia("(prefers-color-scheme: dark)"),Pn=()=>{ze(),Yt()};Hn.addEventListener("change",Pn),It.push(()=>{In.disconnect(),Hn.removeEventListener("change",Pn)});let On=ht.offsetHeight,ln=new ResizeObserver(()=>{(o.clientWidth!==c.W||o.clientHeight!==c.H||ht.offsetHeight!==On)&&(On=ht.offsetHeight,kn())});ln.observe(o),ln.observe(ht),It.push(()=>ln.disconnect()),kn(),i.open||me("clock"),o.dataset.ready="true";function Co(){let t=F.scrollLeft;wn(),$n(),Cn();for(let e of R.nodes)e.el?.classList.remove("dc-mapped");F.scrollLeft=t,se(),re(),Jt(),i.p=1,Yt()}return{update(t){J=t,Rt=t.items,mt=Rt.filter(e=>!e.someday),i.now=fn(t.tz,t.today),i.anim||it||q?i.dirty=!0:i.open?Co():We()},pinTime(){let t=i.open?Ze(F.scrollLeft+c.W/2):i.now;return E(t)===E(i.now)&&t<i.now?Math.ceil(i.now/15)*15:Fn(t)},destroy(){i.anim&&cancelAnimationFrame(i.anim.id),cancelAnimationFrame(i.pressAnim);for(let e of It.splice(0))e();Gt?.getExtension("WEBGL_lose_context")?.loseContext()}}}var ge="#262320",Vn=[{name:"Aurora",body:"#f7b7a3",dark:"#d98b76",light:"#ffe2d8",top:"cloud"},{name:"Sol",body:"#f7b45e",dark:"#d08530",light:"#ffe0b0",trim:"#f4a44a",trim2:"#ffd38a",top:"ray"},{name:"Zenith",body:"#ffd66b",dark:"#d9aa36",light:"#fff1bf",trim:"#fff3c4",top:"halo"},{name:"Gloam",body:"#f39a6b",dark:"#c76c3f",light:"#ffd2b8",trim:"#ffd38a",trim2:"#ff7a2f",top:"flame"},{name:"Dusk",body:"#8f7ff0",dark:"#6455c9",light:"#cfc7ff",trim:"#f4a44a",top:"crescent"},{name:"Nox",body:"#4a4296",dark:"#2f2870",light:"#7a71cf",eye:"#ffd77a",trim:"#fff3c4",trim2:"#ffffff",top:"star"}];function pn(o,d,p){let u=parseInt(o.slice(1),16),y=parseInt(d.slice(1),16),C=N=>Math.round((u>>N&255)+((y>>N&255)-(u>>N&255))*p);return`#${[16,8,0].map(N=>C(N).toString(16).padStart(2,"0")).join("")}`}function Xn(o){return{...o,body:pn(o.body,"#3b3486",.45),dark:pn(o.dark,"#221d55",.5),light:pn(o.light,"#8f86e0",.45),top:"crescent",trim:"#e8e4ff"}}function Ho(o,d,p){let u=new Map,y=(v,X,pt)=>{v>=0&&v<16&&X>=0&&X<16&&u.set(X*16+v,pt)},C=d==="sleep",N=8,w=[2,1,0,0,0,0,1,2],D=(C?6:4)-(d==="walk"?p%2:0);for(let v=0;v<N;v++)for(let X=3+w[v];X<=12-w[v];X++){let pt=X===3+w[v]||X===12-w[v]||v===0||v===N-1;y(X,D+v,pt?ge:v>=N-3?o.dark:o.body)}y(5,D+1,o.light),y(6,D+1,o.light),y(5,D+2,o.light);let G=D+3+(C?1:0);if(C){for(let v of[6,7,9,10])y(v,G,ge);for(let[v,X]of[[13,D-2],[14,D-2],[14,D-3],[13,D-4],[14,D-4]])y(v,X,"#8fa0c4")}else{for(let v of[6,10])y(v,G,o.eye??ge),y(v,G+1,o.eye??ge);y(5,G+2,"#f2a0a0"),y(11,G+2,"#f2a0a0")}let M=D-1,I=o.trim??"#ffd34d",Y=o.trim2??I,K={cloud:[[7,M,"#fff"],[8,M,"#fff"],[9,M,"#fff"],[10,M,"#fff"],[8,M-1,"#fff"],[9,M-1,"#fff"]],ray:[[8,M-1,I],[5,M,I],[11,M,I],[3,M+2,I],[13,M+2,I],[8,M-2,Y]],halo:[[6,M-1,I],[7,M-1,I],[8,M-1,I],[9,M-1,I],[10,M-1,I],[5,M,I],[11,M,I]],flame:[[8,M,I],[7,M,Y],[9,M,Y],[8,M-1,"#ffe08a"],[9,M-2,I]],crescent:[[9,M,I],[10,M,I],[8,M-1,I],[8,M-2,I],[9,M-3,I],[10,M-3,I]],star:[[8,M-2,I],[7,M-1,I],[8,M-1,Y],[9,M-1,I],[8,M,I]]};for(let[v,X,pt]of K[o.top])y(v,X,pt);if(!C){let v=D+N,X=d==="walk"?p%2?[6,9]:[4,10]:[5,10];for(let pt of X)y(pt,v,ge),y(pt+1,v,ge)}return u}function Kn(o,d,p,u,y=!1){let C=o.getContext("2d");if(C){C.clearRect(0,0,16,16);for(let[N,w]of Ho(d,p,u)){let D=N%16;C.fillStyle=w,C.fillRect(y?15-D:D,Math.floor(N/16),1,1)}}}var Po="http://www.w3.org/2000/svg",Kt=1440,Zn=(o,d,p)=>Math.min(p,Math.max(d,o)),qe=(o,d,p)=>o+(d-o)*p,ie=(o,d,p)=>Zn((o-d)/(p-d),0,1),Oo=o=>o<.5?4*o*o*o:1-Math.pow(-2*o+2,3)/2;function No(o){let d=(o%Kt+Kt)%Kt,p=Math.floor(d/60),u=d%60;return`${p%12||12}${u?`:${String(u).padStart(2,"0")}`:""} ${p<12?"AM":"PM"}`}function Jn(o,d){let p=o.querySelector("[data-dc=dome]"),u=o.querySelector("[data-dc=who]");if(!p||!u)return{draw:()=>{},destroy:()=>{}};let y=p,C=u,N=Vn[1],w=null,D=null,G=null,M=0,I="stand",Y=!1,K=(T,B,ct=y)=>{let dt=document.createElementNS(Po,T);for(let vt in B)dt.setAttribute(vt,String(B[vt]));return ct.appendChild(dt),dt},v=(T,B,ct,dt,vt="middle",Mt=y)=>{let nt=K("text",{x:T,y:B,"text-anchor":vt,class:dt},Mt);return nt.textContent=ct,nt},X=()=>Kn(C,Y?Xn(N):N,I,M),pt=d?0:window.setInterval(()=>{document.hidden||I==="stand"||(M++,X())},480);function $(T){D=T;let B=o.clientWidth,ct=o.clientHeight;if(!B||!ct)return;let{now:dt,data:vt}=T;(!G||G.key!==vt.today+vt.tz)&&(G={key:vt.today+vt.tz,...Un(vt.today,vt.tz)});let{rise:Mt,set:nt}=G,at=(dt%Kt+Kt)%Kt;Y=!(at>=Mt&&at<nt);let ht=Y?at>=nt?nt:nt-Kt:Mt,Zt=Y?at>=nt?Kt+Mt:Mt:nt,ce=k=>Math.PI*Zn((k-ht)/(Zt-ht),0,1),Wt=Math.min(B/2-44,156),_t=.86,ut=B/2,ot=82+Wt*_t,F=Oo(T.p),yt=(k,W=Wt)=>{let Z=ut-W*Math.cos(k)*qe(1,(B/2-8)/Wt,F),Et=qe(ot-W*_t*Math.sin(k),T.lineY,F);return[Z,Et]};y.setAttribute("viewBox",`0 0 ${B} ${ct}`),y.setAttribute("width",String(B)),y.setAttribute("height",String(ct)),y.textContent="",y.style.opacity=String(1-ie(T.p,.45,.95)),o.dataset.sky=Y?"night":"day";let j=K("g",{}),Le=[];for(let k=0;k<=48;k++)Le.push(yt(k/48*Math.PI));let ne=Le.map(([k,W],Z)=>`${Z?"L":"M"}${k.toFixed(1)} ${W.toFixed(1)}`).join(""),J=Y?"dc-sky-night":at<Mt+150?"dc-sky-dawn":at<nt-150?"dc-sky-day":"dc-sky-gold";K("path",{d:`${ne}Z`,class:`dc-sky ${J}`},j),K("path",{d:ne,class:Y?"dc-dome-track dc-night":"dc-dome-track"},j);let Rt=T.items.filter(k=>!k.allDay&&!k.someday),mt=[],i=new Map;for(let k of Rt){let W=k.start,Z=k.end??k.start;if(Z<ht||W>Zt)continue;let Et=Z<=dt;if(k.end!=null){let Ht=[];for(let et=Math.max(W,ht);et<=Math.min(Z,Zt);et+=5){let[Ct,gt]=yt(ce(et));Ht.push(`${Ht.length?"L":"M"}${Ct.toFixed(1)} ${gt.toFixed(1)}`)}Ht.length>1&&K("path",{d:Ht.join(""),class:`dc-dome-block${Y?" dc-night":""}`,opacity:Et?.35:1},j)}i.set(W,[...i.get(W)??[],k])}for(let[k,W]of i){let Z=W[0],Et=(Z.end??k)<=dt,Ht=Xt(W);if(mt.push({th:ce(Math.max(k,ht)),it:Z,past:Et,label:Ht??""}),Z.end==null){let[et,Ct]=yt(ce(k));K("circle",{cx:et,cy:Ct,r:4.5,class:"dc-dome-dot",opacity:Et?.4:1},j)}}let c=mt.filter(k=>!k.past).slice(0,3);for(let k of mt){let[W,Z]=yt(k.th,Wt+24);if(W<12||W>B-12)continue;if(v(W,Z+7,k.it.icon,"dc-dome-ic","middle",j).setAttribute("opacity",String((k.past?.4:1)*(1-ie(T.p,0,.4)))),k.label||c.includes(k)){let[Ht,et]=yt(k.th,Wt+44);v(Ht,et+3,k.label||No(k.it.start),"dc-dome-t","middle",j).setAttribute("opacity",String(1-ie(T.p,0,.3)))}}if(Y){let k=Rt.filter(W=>W.start>=0&&W.start<Kt&&(W.end??W.start)<=dt&&W.origin!=="milestone");k.forEach((W,Z)=>{let Et=Math.PI*((Z+.5)/Math.max(k.length,1)),Ht=Wt*(.42+.3*(Z*37%10/10)),[et,Ct]=yt(Et,Ht),gt=5;K("path",{d:`M${et} ${Ct-gt}L${et+gt*.28} ${Ct-gt*.28}L${et+gt} ${Ct}L${et+gt*.28} ${Ct+gt*.28}L${et} ${Ct+gt}L${et-gt*.28} ${Ct+gt*.28}L${et-gt} ${Ct}L${et-gt*.28} ${Ct-gt*.28}Z`,class:"dc-star"},j)}),k.length&&v(ut,ot-Wt*_t*.24,`${k.length} star${k.length===1?"":"s"} today`,"dc-dome-stars","middle",j)}let[Q,R]=[qe(16,0,F),qe(ot,T.lineY,F)];K("rect",{x:Q,y:R-1.5,width:B-2*Q,height:3,rx:1.5,class:"dc-horizon"},j);let oe=Y?["\u{1F307}","\u{1F305}"]:["\u{1F305}","\u{1F307}"];v(ut-Wt-26,ot+22,oe[0],"dc-dome-end","middle",j).setAttribute("opacity",String(1-ie(T.p,0,.3))),v(ut+Wt+26,ot+22,oe[1],"dc-dome-end","middle",j).setAttribute("opacity",String(1-ie(T.p,0,.3)));let $t=K("g",{opacity:1-ie(T.p,0,.25)}),It=ot+36;T.face.tag&&v(ut,It,T.face.tag,"dc-dome-tag","middle",$t),It+=24,T.face.text&&v(ut,It,T.face.text.length>30?`${T.face.text.slice(0,29).trimEnd()}\u2026`:T.face.text,"dc-dome-now","middle",$t);for(let k of T.face.stats.slice(0,2))It+=21,v(ut,It,k,"dc-dome-stat","middle",$t);let bt=Rt.filter(k=>k.start>=Zt&&k.start<Zt+720).sort((k,W)=>k.start-W.start).reduce((k,W)=>{let Z=k.find(Et=>Et[0].start===W.start);return Z?Z.push(W):k.push([W]),k},[]).slice(0,2).map(k=>`${k[0].icon} ${Xt(k)??k[0].title}`);bt.length&&(It+=24,v(ut,It,`${Y?"Tomorrow":"Tonight"} \xB7 ${bt.join(" \xB7 ")}`,"dc-dome-after","middle",$t));let[de,je]=yt(ce(dt));I=Y&&(at>=1380||at<Mt)?"sleep":d?"stand":"walk",C.style.transform=`translate(${(de-18).toFixed(1)}px, ${(je-33).toFixed(1)}px)`,C.style.opacity=String(1-ie(T.p,0,.35)),X(),w!==null&&w!==Y&&!d&&y.animate&&(y.style.transformOrigin=`50% ${ot}px`,y.animate([{transform:"scaleY(1)"},{transform:"scaleY(0.02)"},{transform:"scaleY(1)"}],{duration:720,easing:"cubic-bezier(.5,0,.3,1)"})),w=Y}let L=()=>D&&$(D);return window.addEventListener("resize",L),{draw:$,destroy(){window.clearInterval(pt),window.removeEventListener("resize",L)}}}var Te=Date,_e=0,hn=class extends Te{constructor(...d){d.length?super(...d):super(Te.now()+_e)}static now(){return Te.now()+_e}};globalThis.Date=hn;var eo=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC",lt=o=>document.querySelector(o),no=()=>new Intl.DateTimeFormat("en-CA",{timeZone:eo,year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date),yn=o=>o.split("-").map(Number),Ae=o=>{let[d,p,u]=yn(o);return Date.UTC(d,p-1,u)},bn=(o,d)=>new Date(Ae(o)+d*864e5).toISOString().slice(0,10),oo=(o,d)=>Math.round((Ae(d)-Ae(o))/864e5),gn=(o,d)=>new Date(Ae(o)).toLocaleDateString("en-US",{timeZone:"UTC",...d}),so=o=>{let[d,p]=o.split(":").map(Number);return d*60+p};function ro(o){let d=[],p=0,u=($,L)=>$*1440+so(L),y=$=>d.push({id:`ex${p++}`,kind:"due",cat:"other",end:null,allDay:!1,href:"/calendar",source:"From Google Calendar",subtitle:null,...$}),C=($,L,T,B,ct,dt={})=>y({kind:"block",title:B,icon:ct,start:u($,L),end:u($,T),origin:"event",...dt}),N=($,L,T,B,ct)=>C($,L,T,B,"\u{1F393}",{cat:"class",subtitle:ct,href:"/school/courses/x"}),w=($,L,T)=>C($,L,T,"Work","\u{1F4BC}",{cat:"work",subtitle:"Spoke & Wheel Bikes",href:"/work",source:"From your work schedule",origin:"shift"}),D=($,L,T,B,ct=!1)=>y({title:T,icon:ct?"\u{1F4DD}":"\u{1F4C4}",cat:"due",start:u($,L),href:"/school/courses/x",source:"From your classes",subtitle:B,origin:"assignment",ref:`a${p}`}),G=($,L,T,B)=>y({title:L,icon:T,start:$*1440,allDay:!0,...B}),M=($,L,T={})=>y({title:$,icon:L,start:0,allDay:!0,href:"/tasks/x",source:"From your to-dos",origin:"task",ref:`t${p}`,someday:!0,...T});for(let $=-3;$<=3;$++){let L=new Date(Ae(bn(o,$))).getUTCDay();(L===1||L===3||L===5)&&N($,"09:30","10:45","Anatomy","BIO 201 \xB7 Hall B"),(L===2||L===4)&&(N($,"11:00","12:15","Statistics","STAT 110"),N($,"14:00","14:50","Spanish","SPAN 102"),w($,"16:00","21:00")),(L===1||L===3)&&C($,"07:00","08:00","Gym","\u{1F3CB}\uFE0F"),L===6&&w($,"10:00","16:00"),L===0&&$!==0&&C($,"11:30","13:00","Brunch with Priya","\u{1F37D}\uFE0F"),L===5&&C($,"15:00","16:30","Study group","\u{1F4DA}")}C(0,"21:30","23:00","Study for Anatomy exam","\u{1F4DA}",{source:"Added in LifeFlow"}),D(0,"23:59","Lab report","BIO 201"),D(0,"23:59","Discussion post","SPAN 102"),D(0,"23:59","Problem set 6","STAT 110"),D(0,"23:59","Reading quiz","PSYC 101"),D(0,"23:59","Weekly reflection","NURS 120"),C(1,"07:30","08:15","Run with Priya","\u{1F3C3}"),D(1,"12:30","Stats quiz 3","STAT 110",!0),y({title:"Lab write-up",icon:"\u{1F9EA}",cat:"due",start:u(1,"17:00"),href:"/tasks/x",source:"From your to-dos",subtitle:"high priority",origin:"task",ref:"lab"}),y({title:"Lab write-up",icon:"\u{1F514}",start:u(1,"09:00"),href:"/tasks/x",source:"Your reminder",subtitle:"Due tomorrow at 5:00 PM",origin:"reminder",ref:"lab"}),D(2,"09:30","Anatomy exam","BIO 201",!0),G(1,"Phone","\u{1F4B3}",{cat:"due",href:"/finances/bills",source:"From your bills",amountCents:4500,origin:"bill"}),G(3,"Rent","\u{1F4B3}",{cat:"due",href:"/finances/bills",source:"From your bills",amountCents:78e3,origin:"bill"}),C(-1,"09:00","09:45","Dentist","\u{1F9B7}"),C(-2,"15:00","16:00","Coffee with Sam","\u2615"),y({title:"Return library book",icon:"\u{1F4DA}",cat:"due",start:-5*1440,allDay:!0,href:"/tasks/x",source:"From your to-dos",origin:"task",ref:"lib"}),G(9,"Streamly trial ends","\u23F3",{href:"/finances/subscriptions",source:"From your subscriptions",subtitle:"The first charge comes after this day",amountCents:1199,origin:"trial"}),C(16,"20:00","23:00","Concert with Ana","\u{1F389}"),C(24,"06:40","09:15","Flight home","\u2708\uFE0F"),G(24,"Mom's birthday","\u{1F382}",{kind:"due"}),D(38,"09:00","Anatomy final","BIO 201",!0),G(75,"Run a 10k","\u{1F3C3}",{href:"/goals",source:"From your goals",origin:"goal",ref:"g1"}),G(120,"Summer in Lisbon","\u{1F4B0}",{href:"/money",source:"Your money goal",subtitle:"$640 saved so far",amountCents:18e4,origin:"money_goal"});let[I]=yn(o),Y=($,L,T,B)=>G(oo(o,$),L,T,{href:"/milestones",source:"From your milestones",origin:"milestone",when:B});Y(`${I-20}-04-09`,"Born","\u{1F382}"),Y(`${I-3}-07-01`,"First trip abroad","\u2708\uFE0F",`Jul ${I-3}`),Y(`${I-2}-08-26`,"Started college","\u{1F393}"),Y(`${I-1}-03-04`,"First day at Spoke & Wheel","\u{1F6B2}"),G(-40,"Read 10 books \xB7 reached","\u{1F3AF}",{href:"/goals",source:"A goal you reached",origin:"milestone"});for(let[$,L]of[["Call grandma","\u{1F4DE}"],["Fix bike light","\u{1F6B2}"],["Book a haircut","\u{1F488}"],["Email advisor about summer classes","\u2709\uFE0F"],["Sell old textbooks","\u{1F4E6}"],["Back up phone photos","\u{1F4F1}"],["Ask about the RA job","\u2611\uFE0F"],["Cancel old gym","\u2611\uFE0F"]])M($,L);G(0,"Cook 10 new dinners","\u{1F373}",{href:"/goals",source:"From your goals",origin:"goal",ref:"g2",someday:!0});let K=[];for(let $=-3;$<=3;$++){let L=bn(o,$);K.push({offset:$,date:L,short:$===0?"Today":gn(L,{weekday:"short"}),long:gn(L,{weekday:"short",month:"short",day:"numeric"})})}let[v,X,pt]=yn(o);return{tz:eo,today:o,base:new Date(v,X-1,pt).getTime(),days:K,items:d.sort(($,L)=>$.start-L.start),steps:6812,sleepHours:7.2,spentTodayCents:2340,empty:!1}}var Qn=0;function xe(o){let d=lt("#toast");d.textContent=o,d.hidden=!1,clearTimeout(Qn),Qn=window.setTimeout(()=>d.hidden=!0,2600)}var Wo=[["/calendar","your calendar"],["/work","your work schedule"],["/school","the class"],["/tasks","the to-do"],["/finances/bills","your bills"],["/finances/subscriptions","your subscriptions"],["/goals","your goals"],["/milestones","your milestones"],["/money","Money"]],Ro=o=>Wo.find(([d])=>o.startsWith(d))?.[1]??"that page",Pt=ro(no()),Ee=null,ao=o=>{Pt={...Pt,items:o.sort((d,p)=>d.start-p.start)},Ee?.update(Pt)},le="todo",ke="",Go=o=>`${String(Math.floor((o%1440+1440)%1440/60)).padStart(2,"0")}:${String((o%1440+1440)%1440%60).padStart(2,"0")}`;function io(o){le=o;for(let d of document.querySelectorAll("[data-kind]"))d.setAttribute("aria-checked",String(d.dataset.kind===o));lt("#pin-time-wrap").hidden=!(o==="todo"||o==="plan")}function to(o){let d=bn(Pt.today,Math.floor(o/1440));lt("#pin-date").value=d,lt("#pin-time").value=Go(o),lt("#pin-name").value="",ke="";for(let p of document.querySelectorAll("[data-emoji]"))p.setAttribute("aria-checked","false");lt("#pin-icon").textContent="\u{1F4CC}",io(d<Pt.today?"milestone":"todo"),lt("#pin").hidden=!1,requestAnimationFrame(()=>lt("#pin-name").focus())}var Ue=()=>lt("#pin").hidden=!0;function Yo(o){o.preventDefault();let d=lt("#pin-name").value.trim(),p=lt("#pin-date").value;if(!d||!p)return;if(le==="milestone"&&p>Pt.today)return xe("A milestone is something that happened. Pick a past day.");let y=oo(Pt.today,p)*1440+(le==="todo"||le==="plan"?so(lt("#pin-time").value||"09:00"):0),C=`pin${Date.now()}`,N={id:C,title:d,icon:ke||"\u{1F4CC}",subtitle:null,someday:!1},w=le==="plan"?{...N,kind:"block",cat:"other",start:y,end:y+60,allDay:!1,href:"/calendar",source:"Added in LifeFlow",origin:"event"}:le==="goal"?{...N,kind:"due",cat:"other",start:y,end:null,allDay:!0,href:"/goals",source:"From your goals",origin:"goal",ref:C}:le==="milestone"?{...N,kind:"due",cat:"other",start:y,end:null,allDay:!0,href:"/milestones",source:"From your milestones",origin:"milestone"}:{...N,kind:"due",cat:"due",start:y,end:null,allDay:!1,href:"/tasks/x",source:"From your to-dos",origin:"task",ref:C};ao([...Pt.items,w]),Ue(),xe(`Pinned to ${gn(p,{weekday:"short",month:"short",day:"numeric"})}.`)}function Bo(){let o=lt(".dc");o.querySelector("[data-dc=hap] input")?.setAttribute("switch","");let d=matchMedia("(prefers-reduced-motion: reduce)").matches,p=Jn(o,d);Ee=zn(o,Pt,{face:p.draw,onOpen:u=>xe(`In the app, this opens ${Ro(u)}.`),onEdit:u=>xe(`In the app, this opens the editor for ${u.title}, right here.`),onNewDay:()=>{Pt=ro(no()),Ee?.update(Pt)},onPin:({start:u})=>to(u),onDone:u=>{ao(Pt.items.filter(y=>y.id!==u.id&&!(u.ref&&y.ref===u.ref&&(y.origin==="task"||y.origin==="reminder")))),xe(`Done: ${u.title}.`)},reducedMotion:d}),lt("#pinbtn").addEventListener("click",()=>to(Ee?.pinTime()??0)),lt("#pin-form").addEventListener("submit",Yo),lt("#pin-cancel").addEventListener("click",Ue),lt("#pin-back").addEventListener("click",Ue),document.addEventListener("keydown",u=>{u.key==="Escape"&&!lt("#pin").hidden&&Ue()});for(let u of document.querySelectorAll("[data-kind]"))u.addEventListener("click",()=>io(u.dataset.kind??"todo"));for(let u of document.querySelectorAll("[data-emoji]"))u.addEventListener("click",()=>{ke=ke===u.dataset.emoji?"":u.dataset.emoji??"";for(let y of document.querySelectorAll("[data-emoji]"))y.setAttribute("aria-checked",String(y.dataset.emoji===ke));lt("#pin-icon").textContent=ke||"\u{1F4CC}"});for(let u of document.querySelectorAll("[data-says]"))u.addEventListener("click",()=>xe(u.dataset.says??""));for(let u of document.querySelectorAll("[data-at]"))u.addEventListener("click",()=>{let y=u.dataset.at??"";if(y){let C=new Te;C.setHours(...y.split(":").map(Number),0,0),_e=C.getTime()-Te.now()}else _e=0;for(let C of document.querySelectorAll("[data-at]"))C.setAttribute("aria-pressed",String(C===u));Ee?.update(Pt)})}Bo();})();
+
+</script>

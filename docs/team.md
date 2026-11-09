@@ -14,6 +14,9 @@ Set by the owner on 2026-11-05. Every Claude Code session on this repo reads thi
 | **Market researcher** | Finds what people need from online research, reviews of similar apps and our surveys, and proposes what to build and what to avoid. | `.claude/agents/market-researcher.md`, `docs/research/` |
 | **LifeFlow HQ** (`/admin/hq`, set up 2026-11-06; the company since ADR 0026) | The owner's office and the company: the owner (CEO), one **COO** (its own chat, "LF COO", the only one that reports to the owner, one brief per round) and six departments: Engineering (LF Main), Product & Design (LF V3), Research & Insights (LF V3 — Agents), Marketing & Growth (LF Marketing), Quality & Security and Customer Success (both work inside the COO's rounds). Missions, the approval inbox, briefs, delegated decisions and the weekly summary live there; chats report in through `scripts/hq.ts`. | `docs/hq/company.md`, ADR 0024 to 0026 |
 
+## Fresh made-up data in every picture (owner, 2026-11-07)
+Prototypes and demo screens never reuse the same made-up day. These are retired: the 2 to 9 shift, BIO 101, gym at 6:15, "$10 short", Ali's Wednesday. Use the owner's example day when one is given. Otherwise make each day genuinely different and realistic (hours, spending, people), and vary every day in a week view.
+
 ## Research goes into the app fast
 
 1. The researcher writes a report with ranked proposals and things to avoid.
