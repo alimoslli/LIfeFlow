@@ -215,16 +215,16 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
   - the layout, touch-target and core tests, updated for the four tabs.
 - **For screenshots:** `scripts/dev/seed-clock-look.ts` gives a local account a made-up week (`--busy` adds a full life on top: a pile of deadlines tonight, a reminder, a weekly lecture, a trial, rent, a money goal and ten undated to-dos). It refuses any database that isn't on localhost.
 
-## 7b. The dome (owner, 2026-11-09: Morrow's sky, built into v3)
-- **Today is a half dome over a horizon.**
-  - By day: sunrise (left) to sunset (right), with the companion (Sol, a pixel character from `companion.ts`) walking it at now.
-  - At night the same path is the night, sunset to sunrise. The companion is in its night form (asleep after 11 PM), and today's finished things are stars ("3 stars today").
-  - **Nothing flips (owner picked B, 2026-11-09, "especially when it looked like a widget"):** for 20 minutes either side of sunset (and sunrise) the half you're leaving slides out to the right, then the next one slides in from the left; the sun reaches the right end at sunset and the moon rises at the left from under the horizon.
-  - **It is a sky card, like a widget:** the sky of the hour (dawn, day, gold, night) above the horizon, the ground under it with the path's two ends ("Sunrise about 6:35 AM" left, "Sunset about 4:50 PM" right; swapped at night) and one line, "Sun sets in about 2h 20m" or "Sun rises in about 9h 10m".
-  - Your things sit along the arch: blocks as arcs, moments as dots, each with its emoji. Piles name themselves; only the next three show a time.
-  - Under the horizon, in words: now or next, today's numbers, and "Tonight ·" or "Tomorrow ·" with the first things after this half.
+## 7b. Today is a wheel of time (owner, 2026-11-09: Morrow's sky, built into v3; B, "like a widget"; then "the character is running on the line that's moving back with the day")
+- **A sky card holds the top half of a wheel.** One turn is one day, so the half above the horizon shows six hours behind and six ahead. The companion (Sol, `companion.ts`) runs in place on top, at the time on top; your things ride the rim and roll back under it as the day goes by, rising on the right and setting on the left.
+  - The sky behind is the real sky at the time on top (`skyAt`, `lib/sky.ts`). The rim is bright in daylight and dim at night, with a gold dot and "Sunrise about 6:35 AM" / "Sunset about 4:50 PM" at each sunrise and sunset, and the day's name ("Tomorrow", "Wed") where midnight turns over.
+  - Blocks ride the rim as arcs, moments as dots, each with its emoji outside; piles name themselves ("3 assignments"); the next three ahead show their time. At night, what you finished today is the stars ("3 stars today").
+  - Under the horizon: "Sun sets in about 2h 20m" (or rises), and while the wheel is turned away, a "Back to now" button instead.
+  - Under the card, in words: now or next, today's numbers and "Tonight ·" / "Tomorrow ·"; turned away, the day and time on top and what was or will be happening then.
+- **Turning it:** a sideways drag turns the wheel (the rim moves exactly as far as the finger), a fling keeps it turning and slows down, across the loaded days; the companion turns round when it goes back in time. Arrow keys turn it an hour at a time; Home goes back to now. "Back to now" rolls it home smoothly (longer the farther away, at most 1.4 s).
+- **Opening:** a tap unrolls the rim onto the timeline at the time on top: every point slides to where the line puts that time, the companion lands on the line, and the line's stops fade in as it lands. Wrapping the line (pull down, the now pill, Escape) rolls it back up at the time in the middle of the line, so nothing jumps.
 - **No clock hands.** `dome.ts` draws it; the engine (`face` option) hands it the day on every change and every frame of opening.
-- **Opening the timeline:** the dome flattens onto the line while the timeline fades in. Cards, Done, Edit, pins and stacks are unchanged.
+- Cards, Done, Edit, pins and stacks on the line are unchanged.
 - **Sunrise and sunset** are worked out from the date and the time zone (`sunTimes` in `lib/day-clock.ts`: the zone's meridian, 38°N, equation of time, daylight saving). There's no location, so they're approximate: shown as "about", to 5 minutes (the wait to 10 minutes over an hour), never to the minute.
 - **The colours are the real sky's, not Morrow's purple (owner, 2026-11-09, through the COO: "A", real-sky colours):**
   - the card's sky is the real sky of the minute (`skyAt` in `lib/sky.ts`): blue by day, gold before sunset, deep blue at night;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { prefersReducedMotion } from "@/components/motion/gsap";
 import type { ClockData } from "@/lib/day-clock";
@@ -107,6 +107,11 @@ export function DayClock({ data, children }: { data: ClockData; children?: React
         </svg>
         <svg data-dc="dome" className="dc-dome" aria-hidden="true" />
         <canvas data-dc="who" className="dc-who" width={16} height={16} aria-hidden="true" />
+        {/* The wheel's way home: shown only while it's turned away from now (dome.ts places it, the engine rolls it). */}
+        <button type="button" data-dc="back" className="dc-back" hidden>
+          <RotateCcw className="h-4 w-4" aria-hidden />
+          Back to now
+        </button>
         <div data-dc="callouts" className="dc-callouts" aria-hidden="true" />
         <div data-dc="micons" className="dc-micons" aria-hidden="true" />
         <div data-dc="hint" className="dc-hint">

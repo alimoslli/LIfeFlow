@@ -130,3 +130,45 @@ test("things at the same moment stack into one stop that lists them", async ({ p
   await expect(card.locator(".dc-d-t")).toHaveText("Essay draft");
   await expect(card.getByRole("button", { name: "Done" })).toBeVisible();
 });
+
+// Today as a wheel of time (owner, 2026-11-09, V3): the companion runs on top while the rim turns. Turning it away from
+// now shows "Back to now", which rolls it home; a tap unrolls it onto the timeline at the time on top.
+test("the wheel turns through time, rolls back to now, and opens where it was turned", async ({ page }) => {
+  const email = await signUp(page, "Wheel Tester");
+  execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/dev/seed-clock-look.ts", email], {
+    env: { ...process.env, DATABASE_URL: E2E_DB },
+  });
+  await page.goto("/");
+  const clock = page.getByTestId("day-clock");
+  await expect(clock).toHaveAttribute("data-ready", "true");
+  const face = page.getByRole("button", { name: /^Today\. Now / });
+  const back = page.getByRole("button", { name: "Back to now" });
+  await expect(back).toBeHidden();
+
+  // A sideways drag turns the wheel back in time; the way home appears.
+  const box = await face.boundingBox();
+  if (!box) throw new Error("no face");
+  await page.mouse.move(box.x + 60, box.y + 120);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 260, box.y + 120, { steps: 10 });
+  await page.mouse.up();
+  await expect(back).toBeVisible();
+  await expect(clock).toHaveAttribute("data-state", "clock");
+  await back.click();
+  await expect(back).toBeHidden();
+
+  // The keyboard turns it an hour at a time: a day ahead, then a tap opens the line on tomorrow.
+  await face.focus();
+  for (let i = 0; i < 24; i++) await page.keyboard.press("ArrowRight");
+  await expect(back).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(clock).toHaveAttribute("data-state", "timeline");
+  const days = page.getByRole("navigation", { name: "Days" });
+  await expect(days.locator("button.dc-on")).not.toHaveText("Today");
+  // Wrapping the line back keeps the wheel where the line was; Back to now brings it home.
+  await page.keyboard.press("Escape");
+  await expect(clock).toHaveAttribute("data-state", "clock");
+  await expect(back).toBeVisible();
+  await back.click();
+  await expect(back).toBeHidden();
+});

@@ -6,7 +6,7 @@
  * Colours come from the app's theme tokens; only transform and opacity animate outside the shader.
  */
 import { isExam, pileOf, type ClockData, type ClockItem } from "@/lib/day-clock";
-import type { DomeFace, DomeState } from "./dome";
+import { wheelR, type DomeFace, type DomeState } from "./dome";
 
 type Pt = [number, number];
 type Arc = { a: number; b: number; past: boolean; lap: number; els: SVGPathElement[] };
@@ -205,7 +205,19 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   const reduce = opts.reducedMotion;
   const domeMode = !!opts.face;
   let FACE: DomeFace = { tag: "", text: "", stats: [] };
-  const drawDome = () => opts.face?.({ p: S.p, now: S.now, data, items: DATED, face: FACE, lineY: G.lineY });
+  // The wheel (dome mode): the time on top is now while it follows, or wherever it was turned to. The line's x for a
+  // time on the open timeline lets the wheel unroll exactly onto it.
+  const drawDome = () =>
+    opts.face?.({
+      p: S.p,
+      now: S.now,
+      view: S.follow ? S.now : S.view,
+      data,
+      items: DATED,
+      face: FACE,
+      lineY: G.lineY,
+      lineX: (t: number) => xAt(t) - G.home,
+    });
   const $ = <T extends Element = HTMLElement>(sel: string) => root.querySelector(sel) as T;
   const canvas = $<HTMLCanvasElement>("[data-dc=goo]");
   const faceSvg = $<SVGSVGElement>("[data-dc=face]");
@@ -231,6 +243,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   const pinbar = $("[data-dc=pinbar]");
   const sub = $("[data-dc=sub]");
   const todayBtn = $<HTMLButtonElement>("[data-dc=today]");
+  const backBtn = root.querySelector<HTMLButtonElement>("[data-dc=back]");
   const daysNav = $("[data-dc=days]");
   const chips = $("[data-dc=chips]");
   const trackWrap = $("[data-dc=trackWrap]");
@@ -253,6 +266,10 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     sel: null as string | null,
     pressAnim: 0,
     dirty: false,
+    // the wheel: the time on top (minutes from the start of today) and whether it follows now
+    view: 0,
+    follow: true,
+    spin: 0,
   };
   const G = {
     W: 0,
@@ -946,7 +963,12 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
 
   /* ---------- map clock markers onto line nodes for the morph ---------- */
   function prepMorph(keepScroll = false) {
-    const sl = homeScroll();
+    // the wheel opens at the time on top and wraps back at the time in the middle of the line, so nothing jumps
+    if (domeMode && keepScroll) {
+      S.view = tAt(trackWrap.scrollLeft + G.W / 2);
+      S.follow = Math.abs(S.view - S.now) < 10;
+    }
+    const sl = domeMode && keepScroll ? trackWrap.scrollLeft : domeMode && !S.follow ? clamp(xAt(S.view) - G.W / 2, 0, TM.total - G.W) : homeScroll();
     G.home = sl;
     if (keepScroll && Math.abs(trackWrap.scrollLeft - sl) > 1) G.wrapSl = trackWrap.scrollLeft;
     else {
@@ -1493,7 +1515,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     dayG.style.opacity = String(1 - P);
     drawGoo(null);
     trackWrap.style.clipPath = "none";
-    trackWrap.style.opacity = String(P);
+    // the wheel unrolls onto the line first; the line's own stops come in as it lands
+    trackWrap.style.opacity = String(domeMode && !reduce ? seg(P, 0.55, 1) : P);
     trackWrap.style.visibility = P > 0 ? "visible" : "hidden";
     daysNav.style.visibility = P > 0 ? "visible" : "hidden";
     chips.style.visibility = P > 0 ? "visible" : "hidden";
@@ -1572,16 +1595,17 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   }
   function open() {
     if (S.open || S.anim) return;
+    stopSpin();
     prepMorph();
     micons.style.visibility = "visible";
-    S.day = 0;
+    S.day = domeMode && !S.follow ? clamp(dayOf(S.view), minDay(), maxDay()) : 0;
     S.sel = null;
     buildChips();
     markDay();
     showDetail();
     if (S.press < 1) pressTo(1, 110);
     haptic(8);
-    animateTo(1, reduce ? 240 : domeMode ? 760 : 1300, reduce ? (t) => t : ePlay, finishOpen);
+    animateTo(1, reduce ? 240 : domeMode ? 900 : 1300, reduce ? (t) => t : ePlay, finishOpen);
   }
   // Wrapping the timeline back into the clock: the exact path of the open, run backwards as one motion.
   function beginWrap() {
@@ -1598,7 +1622,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     setInteractive(false);
     G.wrapSl = null;
     trackWrap.scrollLeft = G.home;
-    S.day = 0;
+    S.day = domeMode && !S.follow ? clamp(dayOf(S.view), minDay(), maxDay()) : 0;
     markDay();
     buildChips();
     if (S.dirty) {
@@ -1625,14 +1649,70 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const dist = Math.abs(trackWrap.scrollLeft - homeScroll());
     beginWrap();
     setInteractive(false);
-    animateTo(0, reduce ? 260 : domeMode ? 680 : 1150 + Math.min(450, dist * 0.12), reduce ? eIO : ePlay, finishClose);
+    animateTo(0, reduce ? 260 : domeMode ? 860 : 1150 + Math.min(450, dist * 0.12), reduce ? eIO : ePlay, finishClose);
   }
 
-  /* pull the clock sideways to open; tap to open */
-  let drag: { x: number; y: number; id: number; moved: boolean; lastP: number; lastT: number; v: number } | null = null;
+  /* ---------- the wheel (dome mode): turn it through time; one button rolls it back to now ---------- */
+  // A finger's move along the top of the wheel moves the rim the same distance: minutes per pixel.
+  const minPerPx = () => 1440 / (2 * Math.PI * wheelR(G.W));
+  const viewMin = () => minDay() * 1440;
+  const viewMax = () => (maxDay() + 1) * 1440 - 1;
+  function setView(t: number) {
+    S.view = clamp(t, viewMin(), viewMax());
+    S.follow = false;
+    drawDome();
+  }
+  function stopSpin() {
+    cancelAnimationFrame(S.spin);
+    S.spin = 0;
+  }
+  // back to now, smoothly: the farther away, the longer (never more than 1.4 s)
+  function goNow() {
+    stopSpin();
+    if (S.follow) return;
+    const from = S.view;
+    const ms = reduce ? 0 : clamp(380 + Math.abs(S.now - from) * 0.3, 380, 1400);
+    const start = performance.now();
+    const step = (t: number) => {
+      const k = ms ? clamp((t - start) / ms, 0, 1) : 1;
+      S.view = lerp(from, S.now, eIO(k));
+      drawDome();
+      if (k < 1) S.spin = requestAnimationFrame(step);
+      else {
+        S.spin = 0;
+        S.follow = true;
+        drawDome();
+        haptic(10);
+      }
+    };
+    S.spin = requestAnimationFrame(step);
+  }
+  // let go while turning: it keeps going and slows down, and settles on now when it passes close to it
+  function fling(v: number) {
+    stopSpin();
+    let last = performance.now();
+    const step = (t: number) => {
+      const dt = Math.min(48, t - last);
+      last = t;
+      v *= Math.pow(0.94, dt / 16);
+      setView(S.view + v * dt);
+      if (Math.abs(v) > 0.004 && S.view > viewMin() && S.view < viewMax()) S.spin = requestAnimationFrame(step);
+      else {
+        S.spin = 0;
+        if (Math.abs(S.view - S.now) < 12) goNow();
+      }
+    };
+    if (!reduce) S.spin = requestAnimationFrame(step);
+    else if (Math.abs(S.view - S.now) < 12) goNow();
+  }
+  if (backBtn) on(backBtn, "click", () => goNow());
+
+  /* pull the clock sideways to open (the wheel: turn it); tap to open */
+  let drag: { x: number; y: number; id: number; moved: boolean; lastP: number; lastT: number; v: number; v0: number } | null = null;
   on(hit, "pointerdown", (e: PointerEvent) => {
     if (S.open || S.anim) return;
-    drag = { x: e.clientX, y: e.clientY, id: e.pointerId, moved: false, lastP: 0, lastT: performance.now(), v: 0 };
+    if (domeMode) stopSpin();
+    drag = { x: e.clientX, y: e.clientY, id: e.pointerId, moved: false, lastP: 0, lastT: performance.now(), v: 0, v0: S.follow ? S.now : S.view };
     try {
       hit.setPointerCapture(e.pointerId);
     } catch {
@@ -1645,6 +1725,18 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     if (!drag || e.pointerId !== drag.id) return;
     const dx = e.clientX - drag.x;
     const dy = e.clientY - drag.y;
+    if (domeMode) {
+      if (!drag.moved && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) drag.moved = true;
+      if (!drag.moved) return;
+      // finger to the right goes back in time; to the left, ahead
+      const now = performance.now();
+      const t = drag.v0 - dx * minPerPx();
+      drag.v = ((t - drag.lastP) / Math.max(1, now - drag.lastT)) * 0.6 + drag.v * 0.4;
+      drag.lastP = t;
+      drag.lastT = now;
+      setView(t);
+      return;
+    }
     if (!drag.moved && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
       drag.moved = true;
       prepMorph();
@@ -1674,6 +1766,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       else open();
       return;
     }
+    if (domeMode) {
+      pressTo(0, 220);
+      fling(performance.now() - d.lastT > 90 ? 0 : d.v);
+      return;
+    }
     const v = performance.now() - d.lastT > 90 ? 0 : d.v;
     if (!cancelled && (S.p > 0.35 || v > 1.6)) animateTo(1, 700 * (1 - S.p) + 250, eOut, finishOpen);
     else
@@ -1688,6 +1785,13 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       open();
+    } else if (domeMode && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+      // the keyboard turns the wheel an hour at a time; Home goes back to now
+      e.preventDefault();
+      setView((S.follow ? S.now : S.view) + (e.key === "ArrowLeft" ? -60 : 60));
+    } else if (domeMode && e.key === "Home") {
+      e.preventDefault();
+      goNow();
     }
   });
   on(todayBtn, "click", () => open());
@@ -1837,10 +1941,10 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       return;
     }
     S.now = n;
-    if (S.open || S.anim || drag || wrap) S.dirty = true;
+    if (S.open || S.anim || drag || wrap || S.spin) S.dirty = true;
     else rebuild();
   }, 20_000);
-  cleanups.push(() => window.clearInterval(tick));
+  cleanups.push(() => window.clearInterval(tick), stopSpin);
 
   readTheme();
   const themeObs = new MutationObserver(() => {
