@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import type { SessionUser } from "./auth/sessions";
 import type { Database } from "./db/client";
 import { users } from "./db/schema";
+import { withJobLock } from "./db/job-lock";
 import { HttpError } from "./http";
 
 /**
@@ -145,17 +146,51 @@ export function validStripeEvent(secret: string, rawBody: string, header: string
 
 type StripeEvent = { type: string; data: { object: Record<string, unknown> } };
 
-/** Keeps users.plan in sync with Stripe. Unknown events are ignored. */
-export async function applyStripeEvent(db: Database, event: StripeEvent) {
+/** Pro if any of the customer's subscriptions is active or trialing, read live from Stripe (follows paging). Throws if Stripe can't be read. */
+export async function livePlanForCustomer(cfg: BillingConfig, customerId: string, fetchImpl: typeof fetch = fetch): Promise<"pro" | "free"> {
+  let after: string | null = null;
+  for (let page = 0; page < 20; page++) {
+    const url: string = `https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=all&limit=100${after ? `&starting_after=${encodeURIComponent(after)}` : ""}`;
+    const res = await fetchImpl(url, { headers: { authorization: `Bearer ${cfg.secretKey}` } });
+    const body = (await res.json().catch(() => ({}))) as { data?: { id?: string; status?: string }[]; has_more?: boolean };
+    if (!res.ok || !Array.isArray(body.data)) throw new Error("Stripe subscription list failed");
+    if (body.data.some((s) => s.status === "active" || s.status === "trialing")) return "pro";
+    if (!body.has_more) return "free";
+    const last: string | undefined = body.data[body.data.length - 1]?.id;
+    if (!last) throw new Error("Stripe paging failed");
+    after = last;
+  }
+  throw new Error("Stripe subscription list too long");
+}
+
+/**
+ * Keeps users.plan in sync with Stripe. Unknown events are ignored.
+ * Stripe doesn't promise order and retries for days, so a subscription event is only a nudge: the plan always comes from
+ * the customer's live subscriptions, under a per-customer lease (a request skipped meanwhile makes the holder read again).
+ * Throws if Stripe can't be read (the webhook then answers 500 and Stripe retries); the plan is never guessed.
+ */
+export async function applyStripeEvent(db: Database, event: StripeEvent, opts: { cfg?: BillingConfig | null; fetchImpl?: typeof fetch } = {}) {
   const o = event.data.object;
   if (event.type === "checkout.session.completed" && typeof o.client_reference_id === "string" && typeof o.customer === "string") {
     await db.update(users).set({ stripeCustomerId: o.customer, plan: "pro" }).where(eq(users.id, o.client_reference_id));
     return "pro";
   }
   if ((event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") && typeof o.customer === "string") {
-    const plan = event.type === "customer.subscription.updated" && (o.status === "active" || o.status === "trialing") ? "pro" : "free";
-    await db.update(users).set({ plan }).where(eq(users.stripeCustomerId, o.customer));
-    return plan;
+    const cfg = opts.cfg === undefined ? billingConfig() : opts.cfg;
+    if (!cfg) throw new Error("Stripe isn't configured");
+    const customer = o.customer;
+    const sync = async () => {
+      const plan = await livePlanForCustomer(cfg, customer, opts.fetchImpl);
+      await db.update(users).set({ plan }).where(eq(users.stripeCustomerId, customer));
+      return plan;
+    };
+    const ran = await withJobLock("stripe:" + customer, sync, {
+      ttlMs: 30_000,
+      route: "/api/billing/webhook",
+      // A request skipped meanwhile may carry a change the holder already read past: read once more before letting go.
+      rerun: () => sync().catch(() => console.error("[stripe] re-read after a skipped event failed")),
+    });
+    return ran.skipped ? null : ran.value;
   }
   return null;
 }
