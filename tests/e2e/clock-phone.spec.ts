@@ -108,8 +108,8 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   await expect(page.getByRole("dialog", { name: "Shift" })).toBeVisible();
 });
 
-// A full life stays calm (owner, 2026-11-08): three deadlines at 11:59 PM are one marker on the clock ("+2") and one stop
-// on the line, whose card lists them; a row opens that one thing's own card, with Done.
+// A full life stays calm (owner, 2026-11-08/09): three assignments due at 11:59 PM are one marker, "3 assignments" over
+// "11:59 PM" with one emoji, and one stop on the line whose card lists them; a row opens that one thing's own card, with Done.
 test("things at the same moment stack into one stop that lists them", async ({ page }) => {
   const email = await signUp(page, "Busy Tester");
   execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/dev/seed-clock-look.ts", email, "--busy"], {
@@ -118,13 +118,13 @@ test("things at the same moment stack into one stop that lists them", async ({ p
   await page.goto("/");
   const clock = page.getByTestId("day-clock");
   await expect(clock).toHaveAttribute("data-ready", "true");
-  await expect(clock.locator(".dc-co .dc-more").first()).toHaveText("+2");
+  await expect(clock.locator(".dc-co", { hasText: /^3 assignments/ })).toHaveCount(1);
   await page.getByRole("button", { name: /^Today\. Now / }).click();
   await expect(clock).toHaveAttribute("data-state", "timeline");
-  const stack = page.getByRole("button", { name: /due and 2 more, .*11:59 PM$/ }).first();
+  const stack = page.getByRole("button", { name: /^3 assignments due, .*11:59 PM$/ }).first();
   await stack.click();
   const card = page.locator("[data-dc=detail]");
-  await expect(card).toContainText("3 things");
+  await expect(card).toContainText("3 assignments");
   await expect(card.locator(".dc-d-row")).toHaveCount(3);
   await card.getByRole("button", { name: /Essay draft/ }).click();
   await expect(card.locator(".dc-d-t")).toHaveText("Essay draft");

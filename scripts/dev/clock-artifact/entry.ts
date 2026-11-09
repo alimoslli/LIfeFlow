@@ -92,11 +92,13 @@ function exampleLife(today: string): ClockData {
     if (wd === 0 && d !== 0) block(d, "11:30", "13:00", "Brunch with Priya", "🍽️");
     if (wd === 5) block(d, "15:00", "16:30", "Study group", "📚");
   }
-  // today: studying late, and three deadlines at 11:59 PM (one stop with "+2")
+  // today: studying late, and five assignments due at 11:59 PM (one marker: "5 assignments due tonight")
   block(0, "21:30", "23:00", "Study for Anatomy exam", "📚", { source: "Added in LifeFlow" });
   deadline(0, "23:59", "Lab report", "BIO 201");
   deadline(0, "23:59", "Discussion post", "SPAN 102");
   deadline(0, "23:59", "Problem set 6", "STAT 110");
+  deadline(0, "23:59", "Reading quiz", "PSYC 101");
+  deadline(0, "23:59", "Weekly reflection", "NURS 120");
   // tomorrow and the days after
   block(1, "07:30", "08:15", "Run with Priya", "🏃");
   deadline(1, "12:30", "Stats quiz 3", "STAT 110", true);

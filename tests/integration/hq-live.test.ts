@@ -154,7 +154,7 @@ describe("live HQ (ADR 0030)", () => {
   it("nobody busy: Right now is empty and says when the next round starts", async () => {
     const snap = await officeSnapshot(db());
     expect(snap.live).toEqual([]);
-    expect(snap.nextRound).toMatch(/at \d{1,2}:\d{2} [AP]M/);
+    expect(snap.nextRound).toMatch(/at (?:[A-Z][a-z]{2} )?\d{1,2}:\d{2} [AP]M/); // "at 3:07 AM", or "at Sun 3:07 AM" when the next round is another day
   });
 
   it("the report API takes a live check-in from a chat's hook", async () => {
