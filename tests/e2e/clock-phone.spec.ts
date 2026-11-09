@@ -6,8 +6,8 @@ test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true
 
 const E2E_DB = process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e";
 
-// The v3 home (docs/design/clock/spec.md): the clock opens into the timeline of the person's real week,
-// a node opens one quiet card that leads to the page that owns it, and the timeline wraps back into the clock.
+// The v3 home (docs/design/clock/spec.md, Day Sky): the sky pours into the timeline of the person's real week,
+// a stop opens one quiet card that leads to the page that owns it, and the timeline folds back into the sky.
 // Times are relative to the real "now", so nothing here depends on the hour the suite runs.
 test("the day clock opens into the real week and wraps back", async ({ page }) => {
   const email = await signUp(page, "Clock Tester");
@@ -18,8 +18,8 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   const clock = page.getByTestId("day-clock");
   await expect(clock).toHaveAttribute("data-ready", "true");
   await expect(clock).toHaveAttribute("data-state", "clock");
-  // Something still open after its day belongs to now: one "overdue" marker at the hand.
-  await expect(clock.locator(".dc-co", { hasText: "overdue" })).toHaveCount(1);
+  // Something still open after its day belongs to now: one late tile on the sky, at the companion.
+  await expect(clock.locator("[data-dc=dome] [data-late]")).toHaveCount(1);
   // Closed, the timeline's controls aren't reachable (hidden, not just transparent).
   await expect(page.getByRole("navigation", { name: "Days" })).toBeHidden();
 
@@ -45,15 +45,20 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   await card.getByRole("button", { name: "Open work" }).click();
   await page.waitForURL("**/work");
 
-  // Back home, open, and wrap back with the now pill.
+  // Back home, open, and fold back by tapping the companion (now).
   await page.goto("/");
   await expect(clock).toHaveAttribute("data-ready", "true");
   await page.getByRole("button", { name: /^Today\. Now / }).click();
   await expect(clock).toHaveAttribute("data-state", "timeline");
-  await page.getByRole("button", { name: /^Now, .* Back to the clock$/ }).click();
+  await page.getByRole("button", { name: /^Now, .* Back to Today$/ }).click();
+  await expect(clock).toHaveAttribute("data-state", "clock");
+  // The line knows what's late: the same to-do sits on it marked late.
+  await page.getByRole("button", { name: /^Today\. Now / }).click();
+  await expect(page.locator(".dc-node.dc-late")).toHaveCount(1);
+  await page.getByRole("button", { name: /^Now, .* Back to Today$/ }).click();
   await expect(clock).toHaveAttribute("data-state", "clock");
 
-  // Open again and pull the line down: it follows the finger and wraps into the clock.
+  // Open again and pull the line down: it follows the finger and folds back into the sky.
   await page.getByRole("button", { name: /^Today\. Now / }).click();
   await expect(clock).toHaveAttribute("data-state", "timeline");
   const line = await page.getByRole("region", { name: "Timeline" }).boundingBox();
@@ -108,8 +113,8 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   await expect(page.getByRole("dialog", { name: "Shift" })).toBeVisible();
 });
 
-// A full life stays calm (owner, 2026-11-08/09): three assignments due at 11:59 PM are one marker, "3 assignments" over
-// "11:59 PM" with one emoji, and one stop on the line whose card lists them; a row opens that one thing's own card, with Done.
+// A full life stays calm (owner, 2026-11-08/09): three assignments due at 11:59 PM are one stop on the line with one
+// emoji, whose card lists them; a row opens that one thing's own card, with Done.
 test("things at the same moment stack into one stop that lists them", async ({ page }) => {
   const email = await signUp(page, "Busy Tester");
   execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/dev/seed-clock-look.ts", email, "--busy"], {
@@ -118,7 +123,6 @@ test("things at the same moment stack into one stop that lists them", async ({ p
   await page.goto("/");
   const clock = page.getByTestId("day-clock");
   await expect(clock).toHaveAttribute("data-ready", "true");
-  await expect(clock.locator(".dc-co", { hasText: /^3 assignments/ })).toHaveCount(1);
   await page.getByRole("button", { name: /^Today\. Now / }).click();
   await expect(clock).toHaveAttribute("data-state", "timeline");
   const stack = page.getByRole("button", { name: /^3 assignments due, .*11:59 PM$/ }).first();

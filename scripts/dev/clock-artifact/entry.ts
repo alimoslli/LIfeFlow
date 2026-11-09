@@ -292,7 +292,7 @@ function start() {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const sky = createSky(root, reduced);
   clock = createDayClock(root, data, {
-    face: sky.draw,
+    sky: sky.draw,
     onOpen: (href) => toast(`In the app, this opens ${whereOf(href)}.`),
     onEdit: (it) => toast(`In the app, this opens the editor for ${it.title}, right here.`),
     onNewDay: () => {
