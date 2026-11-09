@@ -14,5 +14,5 @@ export default async function WelcomePage() {
   const theme = parseTheme((await cookies()).get(THEME_COOKIE)?.value);
   // Limits are shown only once paid plans are switched on; until then everything is free.
   const plan = { paid: !!billingConfig(), freeChatsPerDay: FREE_JARVIS_PER_DAY, proFeatures: Object.values(PRO_FEATURES) };
-  return <Onboarding firstName={user.name.split(" ")[0]} theme={theme} plan={plan} />;
+  return <Onboarding firstName={user.name.split(" ")[0]} theme={theme} plan={plan} tz={user.timezone ?? "UTC"} />;
 }

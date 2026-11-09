@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Plus, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { prefersReducedMotion } from "@/components/motion/gsap";
+import { celebrate, hop } from "@/components/motion/burst";
 import type { ClockData } from "@/lib/day-clock";
 import type { TodayMode } from "@/lib/theme";
 import { createDayClock, type DayClockHandle } from "./engine";
@@ -45,11 +46,15 @@ export function DayClock({ data, mode = "full", children }: { data: ClockData; m
       onNewDay: () => router.refresh(),
       onPin: ({ start }) => setPinAt(start),
       // Done right on the card: the same actions as To-dos and School; the line refreshes in place.
-      onDone: async (it) => {
+      onDone: async (it, at) => {
         if (!it.ref) return;
         const r = it.origin === "assignment" ? await toggleAssignmentAction(it.ref) : await toggleTaskAction(it.ref);
-        if (r?.ok) toast(r.message ?? `Done: ${it.title}.`, { tone: "success" });
-        else toast(r?.error ?? "That didn't save. Try again.", { tone: "danger" });
+        if (r?.ok) {
+          // the moment it's done: sparks from where it was done, and the companion on the line jumps for joy
+          celebrate(at, "small");
+          hop(root.querySelector(".dc-now-who"));
+          toast(r.message ?? `Done: ${it.title}.`, { tone: "success" });
+        } else toast(r?.error ?? "That didn't save. Try again.", { tone: "danger" });
         router.refresh();
       },
       onEdit: async (it) => {
@@ -61,7 +66,10 @@ export function DayClock({ data, mode = "full", children }: { data: ClockData; m
     });
     // Diagnostics only (?debug=1): hold the motion at any point, for looking at it frame by frame.
     if (new URLSearchParams(window.location.search).get("debug") === "1")
-      (window as unknown as { lfClock?: { seek: (p: number) => void } }).lfClock = { seek: (p) => engine.current?.seek(p) };
+      (window as unknown as { lfClock?: { seek: (p: number) => void; visit: typeof sky.visit } }).lfClock = {
+        seek: (p) => engine.current?.seek(p),
+        visit: sky.visit,
+      };
     return () => {
       sky.destroy();
       engine.current?.destroy();

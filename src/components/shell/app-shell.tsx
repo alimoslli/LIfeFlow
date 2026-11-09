@@ -98,6 +98,20 @@ export function AppShell({
   useSlidingIndicator(bar, pathname, "x");
   const [drawer, setDrawer] = useState<Drawer>({ open: false, key: 0 });
   const [palette, setPalette] = useState(false);
+  // The ask button steps aside while you scroll down a page (so it never sits on what you're reading) and comes back
+  // when you scroll up (A-to-Z audit C1).
+  const [fabAway, setFabAway] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - last) < 8) return;
+      setFabAway(y > last && y > 80);
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const openJarvis = useCallback(
     (prompt?: string, opts?: { send?: boolean }) => setDrawer((d) => ({ open: true, prompt, send: opts?.send, key: prompt ? d.key + 1 : d.key })),
     [setDrawer],
@@ -281,7 +295,10 @@ export function AppShell({
             onClick={() => openJarvis()}
             data-tour="ask"
             aria-label={`Ask ${assistantName}`}
-            className="lf-fab fixed right-4 bottom-[calc(var(--tabbar-space)-4px)] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-text shadow-lift active:scale-95 md:hidden"
+            className={cn(
+              "lf-fab fixed right-4 bottom-[calc(var(--tabbar-space)-4px)] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-text shadow-lift transition-[transform,opacity] duration-300 active:scale-95 md:hidden",
+              fabAway && "pointer-events-none translate-y-6 opacity-0",
+            )}
           >
             <CompanionGlyph className="h-8 w-8" />
           </button>

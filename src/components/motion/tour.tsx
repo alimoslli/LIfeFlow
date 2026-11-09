@@ -20,8 +20,8 @@ const steps = (name: string): Step[] => [
   {
     target: "today-page",
     eyebrow: "Today",
-    title: "Your day as a clock",
-    body: "Green on the rim is busy time; each icon is something coming up, at its time. Tap the clock and it opens into your timeline: scroll through the week, tap anything to see it. Pull the line down to wrap it back.",
+    title: "Your day as a wheel",
+    body: "The sky is now, and your day turns under your companion: things rise on the right and set on the left. Drag it, scroll it or use the arrow keys to move through time, and “Back to now” brings you home. Tap it and it opens into your timeline; pull the line down to fold it back.",
   },
   {
     target: "assistant",
@@ -44,8 +44,8 @@ const steps = (name: string): Step[] => [
   {
     target: "ask",
     eyebrow: "Anywhere",
-    title: "Ask from any screen",
-    body: "This button opens your assistant wherever you are, for when you're stuck: what's next, can I afford this, or what should I do first.",
+    title: "Ask anything",
+    body: "Tap here, or press ⌘J on a laptop, to ask your assistant: what's next, can I afford this, or what should I do first. It's on every screen.",
   },
   {
     target: "settings",

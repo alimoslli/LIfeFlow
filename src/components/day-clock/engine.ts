@@ -20,8 +20,8 @@ export type DayClockOptions = {
   sky: (state: SkyState) => void;
   /** "Open" on a card: go to the page that owns the item. */
   onOpen: (href: string) => void;
-  /** "Done" on a to-do's or an assignment's card. */
-  onDone: (it: ClockItem) => void;
+  /** "Done" on a to-do's or an assignment's card (`at`: where its button was, for the celebration). */
+  onDone: (it: ClockItem, at?: DOMRect) => void;
   /** "Edit" on an event's, a shift's or an assignment's card: its editor, in place. */
   onEdit: (it: ClockItem) => void;
   /** The day turned over while the page was open: fetch fresh data. */
@@ -842,11 +842,13 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     )}</div><div class="dc-d-w">${esc(when)}</div><div class="dc-d-s">${esc(sub)}</div><div class="dc-d-acts">${acts}</div></div>`;
     detail.querySelector(".dc-d-open")?.addEventListener("click", () => opts.onOpen(it.href));
     detail.querySelector(".dc-d-edit")?.addEventListener("click", () => opts.onEdit(it));
-    detail.querySelector(".dc-d-done")?.addEventListener("click", () => {
+    detail.querySelector(".dc-d-done")?.addEventListener("click", (e) => {
+      // where it was done, for the celebration (the card closes as it's tapped)
+      const at = (e.currentTarget as HTMLElement).getBoundingClientRect();
       S.sel = null;
       showDetail();
       markSel();
-      opts.onDone(it);
+      opts.onDone(it, at);
     });
     wrapHint(S.open ? 1 : S.p);
   }
@@ -935,6 +937,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   }
   function open() {
     if (S.open || S.anim) return;
+    // mid-glide (keys, a notch, a flick, Back to now): open where it's going
+    if (S.spin && glideTo != null) {
+      S.view = glideTo;
+      S.follow = Math.abs(glideTo - S.now) < 0.5;
+    }
     stopSpin();
     prepMorph();
     S.day = S.follow ? 0 : clamp(dayOf(S.view), minDay(), maxDay());
@@ -1004,8 +1011,10 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       rebuild();
     }
   }
-  // where quick keys and mouse notches are heading, so each one adds to the last instead of to the half-way point
+  // where quick keys and mouse notches are heading, so each one adds to the last instead of to the half-way point; and
+  // where the current glide will land (opening mid-glide opens there, not half way)
   let pendingTo: number | null = null;
+  let glideTo: number | null = null;
   /** Moves the time on top to `to`: a spring that starts at `v` (minutes per ms) and settles without overshoot. */
   function glide(to: number, v = 0, ms = 380) {
     stopSpin();
@@ -1017,6 +1026,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       return afterSpin();
     }
     const start = performance.now();
+    glideTo = to;
     const step = (t: number) => {
       const k = t - start;
       const x = spring(from, to, v, k, ms);
@@ -1025,6 +1035,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       else {
         S.spin = 0;
         pendingTo = null;
+        glideTo = null;
         if (Math.abs(to - S.now) < 0.5) {
           S.follow = true;
           haptic(10);
