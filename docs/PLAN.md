@@ -274,7 +274,9 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 9. Google verification of the app, so people outside the test list can connect Gmail.
 
 ## 11. Waiting for the owner's yes (one list; details in HQ › Work)
-- **V3:** confirm the North Star (ADR 0032), pick a timeline concept, and give the go to merge V3.
+- **The character cast (LF Main, 2026-11-09; docs/design/companions/cast.png):** (a) six companions named for the sky (Dawn, Ray, Noon, Goldie, Dusk, Star): right names and looks? (b) keep 3 tones, or add a 4th "Calm"? (c) before someone picks, the wheel shows Ray (the sun you know); the designer proposed Dawn. (d) retire the old avatar setting (spark, orb, initial)? Kept until you say yes.
+- **Apple sign-in on deleted accounts:** people who signed in with Apple before 2026-11-09 have no stored token, so deleting their account can't cancel Apple's access until they sign in with Apple once more. Recommended: one line on the delete screen ("also remove LifeFlow in your Apple ID settings").
+- **North Star:** confirm ADR 0032 (V3 itself is merged).
 - **LF Main's held branches:** phone sign-in, the "Still in the testing phase" note, and the tonight tool.
 - **HQ cards:** H4 approved and shipped (7647a69). H3 was declined on 2026-11-08: the "Record a paycheck" form on Work stays.
 - **Older cards being rewritten** (Goals redesign A, Connected accounts, the timeline concepts, Gmail abilities, search bolding, the agent workload, "Same bill?" outside the inbox).
@@ -284,6 +286,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-09 night, LF COO: on main: short assistant answers (fc7a45c: chips stop pasting lists, a 60-word reply shape, low verbosity; the owner's catch-up question went from 1,123 words to 52 on the real model), Apple token revoke on unlink and deletion (175bde4, migration 0056, Opus-reviewed), the A-to-Z audit (a0a3718), the promise test fixed for real dates (6ebc5c7). Phone sign-in must renumber its migration to 0058 before it merges; 0057 goes to the job lease (in review).
 - 2026-11-09, LF HQ: the admin area and HQ in the V3 sky look and comfortable on a MacBook, at the owner's word through the COO (section 5).
 - 2026-11-09 night, LF Main: the mechanism steps 1 and 2 (Day Sky's timeline, the pour, input layer, laptop size, no boxes), the morning logo, sky moods and visitors, the done burst, the tour and welcome on the sky (c4a4032, b5b54eb, 2fb42a6 and the next commits). List for the owner: docs/hq/tonight-2026-11-09.md.
 - 2026-11-09, LF Main (was LF V3): the owner merged V3 into main (PR #3): Today is a wheel of time in a sky card, the real-sky colours, no purple. Chats simplified on his word: the old LF Main joined this chat (archived), LF Managing Agents stays open, V2 and V3 branches retired.
