@@ -1,0 +1,429 @@
+<title>LifeFlow Companions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Silkscreen&display=swap">
+<style>
+/* Layout: one phone-width column. Pick a companion, then see it mark "now" on the clock (walking the rim) and on the
+   timeline (running at now). Both share one time: drag either and the other follows. LifeFlow's own tokens. */
+:root {
+  --bg: #f6f2e9;
+  --surface: #fffef9;
+  --surface-2: #f1ede3;
+  --border: #e4ddcf;
+  --text: #1b1a17;
+  --text-2: #4a4740;
+  --muted: #69655c;
+  --accent: #285b45;
+  --accent-soft: #e2eee3;
+  --accent-text: #ffffff;
+  --ring: #d2cabb;
+  --shadow: 0 1px 2px rgb(40 34 20 / 0.04), 0 8px 24px -6px rgb(40 34 20 / 0.08);
+  --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --pixel: "Silkscreen", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e0e0d;
+    --surface: #1a1a18;
+    --surface-2: #242421;
+    --border: #33322e;
+    --text: #f3f1ec;
+    --text-2: #d3cfc6;
+    --muted: #a8a49a;
+    --accent: #8ccbb4;
+    --accent-soft: #1d322b;
+    --accent-text: #0c1b16;
+    --ring: #4a4842;
+    --shadow: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e0e0d;
+  --surface: #1a1a18;
+  --surface-2: #242421;
+  --border: #33322e;
+  --text: #f3f1ec;
+  --text-2: #d3cfc6;
+  --muted: #a8a49a;
+  --accent: #8ccbb4;
+  --accent-soft: #1d322b;
+  --accent-text: #0c1b16;
+  --ring: #4a4842;
+  --shadow: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.4);
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+.app {
+  max-width: 460px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+h1 { margin: 0; font-family: var(--pixel); font-weight: 400; font-size: 1.35rem; letter-spacing: 0.02em; }
+.sub { margin: 2px 0 0; color: var(--muted); font-size: 0.85rem; }
+/* the picker */
+.pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.pick button {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 10px 4px 8px; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow);
+}
+.pick button[aria-pressed="true"] { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
+.pick canvas { width: 48px; height: 48px; }
+.pick span { font-family: var(--pixel); font-size: 0.72rem; }
+/* the stage */
+.card { background: var(--surface); border-radius: 26px; box-shadow: var(--shadow); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.state { font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+.state b { font-weight: 600; }
+.chips { display: flex; gap: 6px; }
+.chips button { min-height: 34px; padding: 0 12px; border-radius: 17px; background: var(--surface-2); font-size: 0.8rem; font-weight: 500; }
+.chips button[aria-pressed="true"] { background: var(--accent); color: var(--accent-text); }
+.clock { position: relative; width: 100%; max-width: 340px; aspect-ratio: 1; margin: 0 auto; touch-action: none; }
+.clock svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.clock .who { position: absolute; left: 0; top: 0; width: 42px; height: 42px; margin: -21px 0 0 -21px; pointer-events: none; }
+.line { position: relative; height: 150px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; border-radius: 18px; background: var(--surface-2); touch-action: pan-x; }
+.line::-webkit-scrollbar { display: none; }
+.track { position: relative; height: 100%; }
+.rail { position: absolute; left: 0; right: 0; top: 96px; height: 2px; background: var(--ring); }
+.node { position: absolute; top: 40px; width: 70px; margin-left: -35px; text-align: center; }
+.node i { display: block; font-style: normal; font-size: 22px; line-height: 30px; }
+.node u { display: block; text-decoration: none; width: 10px; height: 10px; margin: 21px auto 0; border-radius: 50%; border: 2px solid var(--accent); background: var(--surface-2); }
+.node small { display: block; margin-top: 4px; font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mid { position: absolute; top: 84px; width: 1px; height: 26px; background: var(--ring); }
+.mid span { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); font-family: var(--pixel); font-size: 0.62rem; color: var(--muted); white-space: nowrap; }
+/* the runner stays at the middle of the strip: the line moves under it */
+.runner { position: absolute; left: 50%; top: 71px; width: 48px; height: 48px; margin-left: -24px; pointer-events: none; z-index: 2; }
+.hint { color: var(--muted); font-size: 0.78rem; text-align: center; }
+.note { color: var(--muted); font-size: 0.75rem; line-height: 1.45; }
+@media (prefers-reduced-motion: reduce) { .line { scroll-behavior: auto; } }
+</style>
+
+<div class="app">
+  <div>
+    <h1>Companions</h1>
+    <p class="sub">Pick one. It walks your day with you.</p>
+  </div>
+  <div class="pick" role="group" aria-label="Pick a companion" id="pick"></div>
+
+  <section class="card" aria-label="On the clock">
+    <div class="row">
+      <span class="state" id="state" aria-live="polite"></span>
+      <div class="chips" role="group" aria-label="Where it walks">
+        <button type="button" data-on="rim" aria-pressed="true">Rim</button>
+        <button type="button" data-on="hand" aria-pressed="false">Hand</button>
+      </div>
+    </div>
+    <div class="clock" id="clock">
+      <svg id="face" viewBox="0 0 300 300" aria-hidden="true"></svg>
+      <canvas class="who" id="who" width="16" height="16" aria-hidden="true"></canvas>
+    </div>
+    <p class="hint">Drag around the clock</p>
+  </section>
+
+  <section class="card" aria-label="On the timeline">
+    <div class="line" id="line" role="region" aria-label="Timeline, scroll to move time">
+      <div class="track" id="track"><div class="rail"></div></div>
+    </div>
+    <canvas class="runner" id="runner" width="16" height="16" aria-hidden="true" hidden></canvas>
+    <div class="row">
+      <span class="hint">Scroll the line</span>
+      <div class="chips"><button type="button" id="now" aria-pressed="true">Now</button></div>
+    </div>
+  </section>
+
+  <p class="note">Concept. An example day (made up), starting at your real time. The companion shows what you're doing: a book in class, a bag at work, asleep at night.</p>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- pixel companions: one body, drawn in code; each has its own colours and top ---------- */
+  const CHARS = [
+    { id: "sprout", name: "Sprout", body: "#5fae6e", dark: "#3f7f4c", light: "#9fd8a5", top: "leaf" },
+    { id: "mochi", name: "Mochi", body: "#f3e3c7", dark: "#d4b98e", light: "#fffaf0", top: "ears" },
+    { id: "bit", name: "Bit", body: "#8fa7c8", dark: "#5f7699", light: "#c7d6ea", top: "antenna" },
+    { id: "ember", name: "Ember", body: "#f08a4b", dark: "#c0612c", light: "#ffc29a", top: "flame" },
+  ];
+  const INK = "#2b2620";
+  // A 16x16 sprite as a map of [x,y] -> colour, for a pose and a step of its stride.
+  function sprite(ch, pose, step) {
+    const px = new Map();
+    const put = (x, y, c) => { if (x >= 0 && x < 16 && y >= 0 && y < 16) px.set(x + "," + y, c); };
+    const asleep = pose === "sleep";
+    const bob = pose === "run" ? (step % 2) : pose === "walk" ? (step % 2) : 0;
+    const lean = pose === "run" ? 1 : 0;
+    const top = asleep ? 7 : 4 - bob;
+    const h = asleep ? 6 : 8;
+    // the body: a soft rounded block with an outline, a shade below and a highlight
+    for (let y = 0; y < h; y++) {
+      const inset = y === 0 || y === h - 1 ? 2 : y === 1 || y === h - 2 ? 1 : 0;
+      for (let x = 3 + inset; x <= 12 - inset; x++) {
+        const edge = x === 3 + inset || x === 12 - inset || y === 0 || y === h - 1;
+        const sx = x + (y < h / 2 ? lean : 0);
+        put(sx, top + y, edge ? INK : y >= h - 3 ? ch.dark : ch.body);
+      }
+    }
+    put(5 + lean, top + 1, ch.light); put(6 + lean, top + 1, ch.light); put(5 + lean, top + 2, ch.light);
+    // the face
+    const ey = top + (asleep ? 2 : 3);
+    if (asleep) { put(5, ey, INK); put(6, ey, INK); put(9, ey, INK); put(10, ey, INK); }
+    else { put(6 + lean, ey, INK); put(6 + lean, ey + 1, INK); put(10 + lean, ey, INK); put(10 + lean, ey + 1, INK); put(5 + lean, ey + 2, "#f2a0a0"); put(11 + lean, ey + 2, "#f2a0a0"); }
+    // the top: what makes each one itself
+    const t = top - 1, l = lean;
+    if (ch.top === "leaf") { put(8 + l, t, INK); put(8 + l, t - 1, INK); put(9 + l, t - 2, "#3f9a52"); put(10 + l, t - 2, "#3f9a52"); put(10 + l, t - 3, "#3f9a52"); put(9 + l, t - 1, "#3f9a52"); put(7 + l, t - 2, "#6cc37a"); }
+    if (ch.top === "ears") { for (const ex of [4, 11]) { put(ex + l, t, INK); put(ex + l, t - 1, INK); put(ex + (ex < 8 ? 1 : -1) + l, t, ch.body); } }
+    if (ch.top === "antenna") { put(8 + l, t, INK); put(8 + l, t - 1, INK); put(8 + l, t - 2, "#ffd34d"); put(7 + l, t - 2, "#ffd34d"); put(8 + l, t - 3, "#ffd34d"); }
+    if (ch.top === "flame") { put(8 + l, t, "#ffb347"); put(7 + l, t, "#ff7a2f"); put(9 + l, t, "#ff7a2f"); put(8 + l, t - 1, "#ffd34d"); put(9 + l, t - 2, "#ffb347"); }
+    // the feet: standing, walking or running strides
+    const fy = top + h;
+    if (!asleep) {
+      const strides = { stand: [[5, 0], [10, 0]], walk: [[[4, 0], [10, 0]], [[6, 0], [9, 0]]], run: [[[3, 0], [11, -1]], [[6, -1], [9, 0]]] };
+      const legs = pose === "walk" || pose === "run" ? strides[pose][step % 2] : strides.stand;
+      for (const [x, dy] of legs) { put(x, fy + dy, INK); put(x + 1, fy + dy, INK); }
+    }
+    return px;
+  }
+  // what it holds for what you're doing
+  function prop(px, kind, pose) {
+    const put = (x, y, c) => { if (x >= 0 && x < 16 && y >= 0 && y < 16) px.set(x + "," + y, c); };
+    if (kind === "class" || kind === "study") { for (let x = 11; x <= 14; x++) for (let y = 9; y <= 11; y++) put(x, y, y === 9 ? "#fffaf0" : "#b0573a"); put(12, 10, "#fffaf0"); }
+    if (kind === "work") { for (let x = 11; x <= 14; x++) for (let y = 10; y <= 12; y++) put(x, y, "#7a4e2d"); put(12, 9, INK); put(13, 9, INK); }
+    if (kind === "gym") { put(11, 10, INK); put(12, 10, INK); put(13, 10, INK); put(14, 10, INK); put(11, 9, "#555"); put(11, 11, "#555"); put(14, 9, "#555"); put(14, 11, "#555"); }
+    if (pose === "sleep") { put(12, 3, "#7a8aa6"); put(13, 3, "#7a8aa6"); put(13, 4, "#7a8aa6"); put(12, 5, "#7a8aa6"); put(13, 5, "#7a8aa6"); put(14, 1, "#9fb0cc"); put(15, 1, "#9fb0cc"); put(15, 2, "#9fb0cc"); put(14, 3, "#9fb0cc"); }
+    return px;
+  }
+  function paint(canvas, px, flip) {
+    const c = canvas.getContext("2d");
+    c.clearRect(0, 0, 16, 16);
+    for (const [k, col] of px) {
+      const [x, y] = k.split(",").map(Number);
+      c.fillStyle = col;
+      c.fillRect(flip ? 15 - x : x, y, 1, 1);
+    }
+  }
+
+  /* ---------- an example day around the real clock ---------- */
+  const DAY = 1440;
+  const realNow = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+  const wd0 = new Date().getDay();
+  function blocksOf(dayIdx) {
+    const wd = (wd0 + dayIdx + 7) % 7;
+    const at = (h, m) => dayIdx * DAY + h * 60 + m;
+    const b = [];
+    b.push({ kind: "sleep", icon: "🌙", name: "Sleep", s: dayIdx * DAY - 30, e: at(7, 0) });
+    if (wd === 1 || wd === 3 || wd === 5) { b.push({ kind: "gym", icon: "🏋️", name: "Gym", s: at(7, 15), e: at(8, 0) }); b.push({ kind: "class", icon: "🎓", name: "Anatomy", s: at(9, 30), e: at(10, 45) }); }
+    if (wd === 2 || wd === 4) { b.push({ kind: "class", icon: "🎓", name: "Statistics", s: at(11, 0), e: at(12, 15) }); b.push({ kind: "work", icon: "💼", name: "Work", s: at(16, 0), e: at(21, 0) }); }
+    if (wd === 6) b.push({ kind: "work", icon: "💼", name: "Work", s: at(10, 0), e: at(16, 0) });
+    if (wd === 0) b.push({ kind: "free", icon: "🍽️", name: "Brunch", s: at(11, 30), e: at(13, 0) });
+    if (wd !== 6) b.push({ kind: "study", icon: "📚", name: "Study", s: at(13, 30), e: at(15, 0) });
+    return b;
+  }
+  const BLOCKS = [-1, 0, 1, 2].flatMap(blocksOf).sort((a, c) => a.s - c.s);
+  const doing = (t) => BLOCKS.find((b) => b.s <= t && b.e > t) || null;
+  const fmt = (m) => { const x = ((m % DAY) + DAY) % DAY; let h = Math.floor(x / 60); const mm = x % 60; const ap = h < 12 ? "AM" : "PM"; h = h % 12 || 12; return `${h}:${String(mm).padStart(2, "0")} ${ap}`; };
+
+  /* ---------- state: one time, shared by the clock and the line ---------- */
+  const S = { t: realNow(), char: CHARS[0], on: "rim", moving: 0, dir: 1, step: 0, lastMove: 0 };
+  try { const saved = localStorage.getItem("lf-companion"); const c = CHARS.find((x) => x.id === saved); if (c) S.char = c; } catch (e) { /* storage blocked */ }
+
+  /* ---------- the picker ---------- */
+  const pick = $("#pick");
+  for (const ch of CHARS) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-pressed", String(ch === S.char));
+    b.setAttribute("aria-label", ch.name);
+    const cv = document.createElement("canvas"); cv.width = 16; cv.height = 16; cv.setAttribute("aria-hidden", "true");
+    const nm = document.createElement("span"); nm.textContent = ch.name;
+    b.append(cv, nm);
+    b.addEventListener("click", () => {
+      S.char = ch;
+      for (const o of pick.children) o.setAttribute("aria-pressed", String(o === b));
+      try { localStorage.setItem("lf-companion", ch.id); } catch (e) { /* storage blocked */ }
+      draw();
+    });
+    ch.cv = cv;
+    pick.append(b);
+  }
+
+  /* ---------- the clock: the hand, the day's blocks, and the companion walking the rim ---------- */
+  const NS = "http://www.w3.org/2000/svg";
+  const face = $("#face");
+  const R = 112, C = 150;
+  const el = (tag, a, p) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); (p || face).appendChild(e); return e; };
+  const ang = (m) => ((((m / 60) % 12) + 12) % 12) / 12 * Math.PI * 2;
+  const pol = (a, r) => [C + r * Math.sin(a), C - r * Math.cos(a)];
+  function arc(a1, a2, r) {
+    if (a2 < a1) a2 += Math.PI * 2;
+    const [x1, y1] = pol(a1, r), [x2, y2] = pol(a2, r);
+    return `M${x1} ${y1}A${r} ${r} 0 ${a2 - a1 > Math.PI ? 1 : 0} 1 ${x2} ${y2}`;
+  }
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  function drawClock() {
+    face.textContent = "";
+    const ink = css("--text"), ring = css("--ring"), acc = css("--accent"), mute = css("--muted");
+    el("circle", { cx: C, cy: C, r: R + 10, fill: "none", stroke: ring, "stroke-width": 1.5, opacity: 0.7 });
+    el("circle", { cx: C, cy: C, r: R, fill: "none", stroke: ring, "stroke-width": 2 });
+    for (let h = 1; h <= 12; h++) {
+      const a = (h / 12) * Math.PI * 2;
+      if (h % 3 === 0) { const [x, y] = pol(a, R - 24); const t = el("text", { x, y: y + 6, "text-anchor": "middle", "font-size": 17, "font-weight": 650, fill: ink, "font-family": "Geist, system-ui" }); t.textContent = String(h); }
+      else { const [x1, y1] = pol(a, R - 10), [x2, y2] = pol(a, R - 16); el("line", { x1, y1, x2, y2, stroke: mute, "stroke-width": 2, "stroke-linecap": "round" }); }
+    }
+    // the next 24 hours: the 12 coming on the clock's ring, the 12 after just outside it, quieter
+    for (const b of BLOCKS) {
+      if (b.kind === "sleep") continue;
+      for (const lap of [0, 1]) {
+        const w0 = S.t + lap * 720, w1 = w0 + 720;
+        const s = Math.max(b.s, w0), e = Math.min(b.e, w1);
+        if (e <= s) continue;
+        el("path", { d: arc(ang(s), ang(e), R + lap * 10), fill: "none", stroke: acc, "stroke-width": lap ? 3 : 4, "stroke-linecap": "round", opacity: lap ? 0.55 : 1 });
+      }
+    }
+    const [hx, hy] = pol(ang(S.t), R * 0.5), [mx, my] = pol(((S.t % 60) / 60) * Math.PI * 2, R * 0.78);
+    el("line", { x1: C, y1: C, x2: hx, y2: hy, stroke: ink, "stroke-width": 5, "stroke-linecap": "round" });
+    el("line", { x1: C, y1: C, x2: mx, y2: my, stroke: ink, "stroke-width": 3, "stroke-linecap": "round" });
+    el("circle", { cx: C, cy: C, r: 4, fill: ink });
+  }
+  // where the companion stands: just outside the rim at the hand (feet on the ring), or riding the hand's tip
+  function placeOnClock() {
+    const who = $("#who");
+    const box = $("#clock").getBoundingClientRect();
+    const k = box.width / 300;
+    const a = ang(S.t);
+    if (S.on === "rim") {
+      const [x, y] = pol(a, R + 30);
+      who.style.transform = `translate(${x * k}px, ${y * k}px) rotate(${a}rad)`;
+    } else {
+      const [x, y] = pol(a, R * 0.5 + 14);
+      who.style.transform = `translate(${x * k}px, ${y * k}px)`;
+    }
+  }
+
+  /* ---------- the timeline: three days on one line, the companion running at the middle ---------- */
+  const PX = 1.4; // px per minute
+  const T0 = -DAY, T1 = 3 * DAY;
+  const line = $("#line"), track = $("#track"), runner = $("#runner");
+  function buildLine() {
+    const pad = line.clientWidth / 2;
+    track.style.width = `${(T1 - T0) * PX + pad * 2}px`;
+    const xOf = (t) => pad + (t - T0) * PX;
+    for (let d = -1; d <= 3; d++) {
+      const m = document.createElement("div"); m.className = "mid"; m.style.left = `${xOf(d * DAY)}px`;
+      const s = document.createElement("span"); s.textContent = d === 0 ? "Today" : d === 1 ? "Tomorrow" : new Date(Date.now() + d * 86400000).toLocaleDateString("en-US", { weekday: "short" });
+      m.append(s); track.append(m);
+    }
+    for (const b of BLOCKS) {
+      if (b.kind === "sleep" || b.s < T0 || b.s > T1) continue;
+      const n = document.createElement("div"); n.className = "node"; n.style.left = `${xOf(b.s)}px`;
+      n.innerHTML = `<i aria-hidden="true">${b.icon}</i><u></u><small>${fmt(b.s)}</small>`;
+      n.title = b.name;
+      track.append(n);
+    }
+    runner.hidden = false;
+    line.parentElement.style.position = "relative";
+    return xOf;
+  }
+  let xOf = null;
+  let fromCode = false;
+  const scrollFor = (t) => xOf(t) - line.clientWidth / 2;
+  function syncLine() { fromCode = true; line.scrollLeft = scrollFor(S.t); requestAnimationFrame(() => (fromCode = false)); }
+  line.addEventListener("scroll", () => {
+    if (fromCode) return;
+    const t = Math.round(T0 + line.scrollLeft / PX);
+    moveTo(t, false);
+  }, { passive: true });
+
+  /* ---------- dragging around the clock moves time the same way ---------- */
+  const clock = $("#clock");
+  let drag = null;
+  clock.addEventListener("pointerdown", (e) => { drag = { a: angleAt(e), t: S.t }; clock.setPointerCapture(e.pointerId); });
+  clock.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    let a = angleAt(e), d = a - drag.a;
+    if (d > Math.PI) d -= Math.PI * 2;
+    if (d < -Math.PI) d += Math.PI * 2;
+    drag.a = a;
+    drag.t += (d / (Math.PI * 2)) * 720;
+    moveTo(Math.round(drag.t), true);
+  });
+  const endDrag = () => (drag = null);
+  clock.addEventListener("pointerup", endDrag);
+  clock.addEventListener("pointercancel", endDrag);
+  function angleAt(e) { const r = clock.getBoundingClientRect(); return Math.atan2(e.clientX - r.left - r.width / 2, -(e.clientY - r.top - r.height / 2)); }
+
+  /* ---------- moving time: the companion walks (clock) and runs (line) while it moves ---------- */
+  function moveTo(t, scrollLine) {
+    t = Math.max(T0, Math.min(T1, t));
+    if (t === S.t) return;
+    S.dir = t > S.t ? 1 : -1;
+    S.t = t;
+    S.lastMove = performance.now();
+    if (scrollLine) syncLine();
+    $("#now").setAttribute("aria-pressed", String(Math.abs(S.t - realNow()) < 2));
+    tick();
+  }
+  $("#now").addEventListener("click", () => {
+    const target = realNow();
+    if (reduce) { S.t = target; syncLine(); draw(); return; }
+    const from = S.t, t0 = performance.now();
+    const go = (now) => { const p = Math.min(1, (now - t0) / 700); const e = 1 - Math.pow(1 - p, 3); moveTo(Math.round(from + (target - from) * e), true); if (p < 1) requestAnimationFrame(go); };
+    requestAnimationFrame(go);
+  });
+  for (const b of document.querySelectorAll("[data-on]"))
+    b.addEventListener("click", () => {
+      S.on = b.dataset.on;
+      for (const o of document.querySelectorAll("[data-on]")) o.setAttribute("aria-pressed", String(o === b));
+      draw();
+    });
+
+  /* ---------- drawing: one small loop that only runs while something is moving or breathing ---------- */
+  const STATE = { class: "In class", study: "Studying", work: "At work", gym: "At the gym", free: "Out", sleep: "Asleep" };
+  function draw() {
+    const now = performance.now();
+    const moving = now - S.lastMove < 160;
+    const d = doing(S.t);
+    const kind = d ? d.kind : "free";
+    const pose = moving ? "run" : kind === "sleep" ? "sleep" : "stand";
+    const step = reduce ? 0 : Math.floor(now / (moving ? 90 : 420));
+    const flip = S.dir < 0;
+    paint($("#who"), prop(sprite(S.char, moving ? "walk" : pose, step), moving ? null : kind, pose), flip);
+    paint(runner, prop(sprite(S.char, pose, step), moving ? null : kind, pose), flip);
+    for (const ch of CHARS) paint(ch.cv, sprite(ch, ch === S.char && !reduce ? "walk" : "stand", Math.floor(now / 380)), false);
+    drawClock();
+    placeOnClock();
+    $("#state").innerHTML = `<b>${fmt(S.t)}</b> · ${d && d.kind !== "free" ? STATE[d.kind] : d ? d.name : "Free"}`;
+  }
+  let raf = 0;
+  function tick() { if (!raf) raf = requestAnimationFrame(loop); }
+  let lastDraw = 0;
+  function loop(now) {
+    raf = 0;
+    const moving = now - S.lastMove < 160;
+    // while time moves, every frame; at rest, a gentle step a few times a second (not at all with reduced motion)
+    if (moving || now - lastDraw > 120) { draw(); lastDraw = now; }
+    if (moving || !reduce) raf = requestAnimationFrame(loop);
+  }
+  // follow the real clock while nobody is moving time
+  setInterval(() => { if (performance.now() - S.lastMove > 60000 && $("#now").getAttribute("aria-pressed") === "true") { S.t = realNow(); syncLine(); } }, 20000);
+  addEventListener("resize", () => { placeOnClock(); syncLine(); });
+
+  xOf = buildLine();
+  syncLine();
+  draw();
+  tick();
+})();
+</script>

@@ -29,7 +29,7 @@ export function QuickChips() {
 }
 
 /** The one place to ask: tap to open Jarvis (type or talk), with three quick asks under it. */
-export function AskBar({ name }: { name: string }) {
+export function AskBar({ name, chips = true }: { name: string; chips?: boolean }) {
   const { openJarvis } = useShell();
   return (
     <div className="flex flex-col gap-3">
@@ -44,7 +44,7 @@ export function AskBar({ name }: { name: string }) {
           <AudioLines className="h-[18px] w-[18px]" />
         </span>
       </button>
-      <QuickChips />
+      {chips && <QuickChips />}
     </div>
   );
 }

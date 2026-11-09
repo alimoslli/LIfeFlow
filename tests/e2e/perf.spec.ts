@@ -12,7 +12,6 @@ const FIRST_MS = 3000;
 const SWITCH_MS = 600;
 const TABS = [
   { label: "Today", path: /\/$/ },
-  { label: "Plan", path: /\/plan$/ },
   { label: "Money", path: /\/money$/ },
   { label: "School", path: /\/school$/ },
 ];

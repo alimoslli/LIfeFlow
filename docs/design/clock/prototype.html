@@ -1,0 +1,1219 @@
+<title>LifeFlow Day Clock</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one phone screen (pure black, two colours: white and mint) beside a small panel of prototype controls. */
+:root {
+  color-scheme: dark;
+  --page: #0a0b0b;
+  --screen: #000;
+  --surface: #0e1110;
+  --chip: #141816;
+  --hair: #232826;
+  --rim: #3a3f3c;
+  --tick: #c7ccc9;
+  --fg: #f3f5f4;
+  --fg2: #9ba29e;
+  --fg3: #626965;
+  --mint: #7ee0ae;
+  --mint-ink: #03170c;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+html, body { height: 100%; }
+body { background: var(--page); color: var(--fg); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; }
+
+.page { min-height: 100%; display: flex; align-items: center; justify-content: center; gap: 40px; padding-block: 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.phone { position: relative; width: 390px; height: clamp(640px, calc(100vh - 48px), 844px); border-radius: 54px; background: var(--screen); box-shadow: 0 0 0 10px #1a1c1b, 0 0 0 11px #2c2f2d, 0 40px 80px rgba(0,0,0,.6); overflow: hidden; flex: none; }
+.statusbar { position: absolute; inset: 0 0 auto; height: 46px; display: flex; align-items: center; justify-content: space-between; padding: 6px 30px 0 36px; font-size: 0.95rem; font-weight: 600; z-index: 9; pointer-events: none; }
+.statusbar .sb-r { display: flex; gap: 6px; align-items: center; }
+.statusbar .island { position: absolute; left: 50%; top: 11px; width: 120px; height: 34px; margin-left: -60px; background: #000; border-radius: 20px; box-shadow: 0 0 0 1px #111; }
+
+.app { position: absolute; inset: 0; overflow: hidden; background: var(--screen); user-select: none; -webkit-user-select: none; }
+.layer { position: absolute; inset: 0; }
+#goo { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+#face { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: visible; }
+#callouts, #micons { position: absolute; inset: 0; pointer-events: none; }
+#callouts { z-index: 3; }
+#micons { z-index: 4; }
+
+.hdr { position: absolute; left: 0; right: 0; height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; z-index: 8; }
+.logo { display: flex; align-items: center; gap: 8px; font-size: 1.3rem; font-weight: 600; letter-spacing: -0.01em; }
+.bell { width: 44px; height: 44px; display: grid; place-items: center; margin-right: -10px; }
+.sub { position: absolute; left: 0; right: 0; height: 44px; z-index: 8; }
+.todaybtn { position: absolute; left: 22px; top: 0; height: 44px; display: flex; align-items: center; gap: 6px; font-size: 1.15rem; }
+.days { position: absolute; inset: 0 12px; display: flex; align-items: center; justify-content: space-between; opacity: 0; pointer-events: none; }
+.days button { height: 36px; min-width: 0; padding: 0 6px; border-radius: 18px; font-size: 0.95rem; color: var(--fg); display: grid; place-items: center; white-space: nowrap; }
+.days button.arrow { color: var(--fg2); min-width: 30px; padding: 0; flex: none; }
+.days button.on { background: var(--mint); color: var(--mint-ink); font-weight: 600; padding: 0 13px; flex: none; }
+.chips { position: absolute; left: 0; right: 0; height: 58px; display: flex; justify-content: center; gap: 8px; z-index: 8; padding: 0 16px; pointer-events: none; }
+/* Tiles under the line (owner's frame 6): a mint icon, a small label, the time. Equal widths when they fit;
+   if the row is too tight, only the widest tile gives way and ends in "…" (fitChips). */
+.chip { flex: 1 1 0; max-width: 150px; height: 58px; padding: 0 12px; border-radius: 18px; background: var(--chip); display: flex; align-items: center; gap: 10px; text-align: left; opacity: 0; }
+.chip svg { flex: none; width: 20px; height: 20px; }
+.chip .cx { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.chip .cn { font-size: 0.72rem; color: var(--fg2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip .ct { font-size: 0.95rem; font-weight: 600; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] { box-shadow: inset 0 0 0 1.5px var(--mint); }
+@media (max-width: 380px) { .days button.arrow { display: none; } .days button { font-size: 0.9rem; } .chips { gap: 6px; padding: 0 12px; } .chip { padding: 0 10px; gap: 8px; } .chip svg { width: 18px; height: 18px; } }
+
+#hit { position: absolute; z-index: 7; border-radius: 50%; touch-action: pan-y; cursor: pointer; }
+.hint { position: absolute; left: 0; right: 0; text-align: center; font-size: 0.8rem; color: var(--fg3); z-index: 3; pointer-events: none; }
+#hintWrap { z-index: 6; opacity: 0; }
+
+.co { position: absolute; left: 0; top: 0; font-size: 0.8rem; color: var(--fg); white-space: nowrap; transform-origin: 0 0; font-variant-numeric: tabular-nums; text-align: center; }
+.co .tm { display: block; margin-top: 1px; font-size: 0.6rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mint); }
+.mi { position: absolute; left: 0; top: 0; width: 30px; height: 30px; display: grid; place-items: center; font-size: 26px; line-height: 1; will-change: transform; }
+
+#trackWrap { position: absolute; left: 0; right: 0; height: 156px; overflow-x: auto; overflow-y: hidden; z-index: 5; touch-action: pan-x; scrollbar-width: none; -webkit-overflow-scrolling: touch; pointer-events: none; clip-path: inset(0 50% 0 50%); overscroll-behavior-x: contain; }
+#trackWrap::-webkit-scrollbar { display: none; }
+#track { position: relative; height: 100%; }
+.tl-line { position: absolute; left: 0; height: 2px; border-radius: 1px; top: 69px; }
+.band { position: absolute; top: 67px; height: 6px; border-radius: 3px; background: rgba(126,224,174,.22); opacity: var(--tlab, 1); }
+.band.sleep { background: rgba(126,224,174,.10); }
+.mid { position: absolute; top: 56px; width: 1px; height: 28px; background: var(--hair); opacity: var(--tlab, 1); }
+.mid span { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--fg3); white-space: nowrap; }
+/* tonight's midnight on the line: where tomorrow starts, said the same way as on the clock */
+.mid.next { width: 2px; margin-left: -0.5px; background: var(--mint); }
+.mid.next span { color: var(--mint); font-weight: 600; letter-spacing: .12em; }
+.node { position: absolute; top: 0; width: 92px; height: 156px; margin-left: -46px; display: block; }
+.node .n-ic { position: absolute; left: 50%; top: 21px; width: 30px; height: 30px; margin-left: -15px; display: grid; place-items: center; font-size: 27px; line-height: 1; }
+.node .n-dot { position: absolute; left: 50%; top: 64px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; border: 2px solid var(--mint); background: var(--screen); }
+.node.past .n-dot { background: var(--mint); }
+.node.sel .n-dot { box-shadow: 0 0 0 4px rgba(126,224,174,.25); }
+.node .n-t { position: absolute; left: 0; right: 0; top: 86px; font-size: 0.8rem; color: var(--fg); text-align: center; font-variant-numeric: tabular-nums; opacity: var(--tlab, 1); }
+.node .n-n { position: absolute; left: 0; right: 0; top: 104px; font-size: 0.75rem; color: var(--fg2); text-align: center; line-height: 1.25; opacity: var(--tlab, 1); }
+.node.later .n-ic { opacity: var(--tlab, 1); }
+.node.mapped .n-ic { visibility: hidden; }
+.nowpill { position: absolute; top: 24px; height: 26px; padding: 0 10px 0 7px; margin-left: 0; border-radius: 13px; background: var(--mint); color: var(--mint-ink); font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 5px; white-space: nowrap; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+.nowpill::after { content: ""; position: absolute; left: 50%; top: 26px; width: 2px; height: 20px; margin-left: -1px; background: var(--mint); }
+.nowpill i { position: absolute; left: 50%; top: 40px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 10px rgba(126,224,174,.7); }
+
+.detail:empty { display: none; }
+.detail { position: absolute; left: 18px; right: 18px; z-index: 8; background: var(--surface); border: 1px solid var(--hair); border-radius: 22px; padding: 16px; display: flex; gap: 14px; align-items: flex-start; opacity: 0; pointer-events: none; }
+.detail .d-ic { width: 46px; height: 46px; border-radius: 50%; background: var(--chip); display: grid; place-items: center; font-size: 24px; flex: none; }
+.detail .d-k { font-size: 0.7rem; letter-spacing: .09em; text-transform: uppercase; color: var(--mint); margin-bottom: 3px; }
+.detail .d-t { font-size: 1.05rem; font-weight: 600; }
+.detail .d-w { font-size: 0.9rem; color: var(--fg); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.detail .d-s { font-size: 0.8rem; color: var(--fg2); margin-top: 6px; line-height: 1.35; }
+
+#hap { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; }
+
+.panel { width: 300px; flex: none; display: flex; flex-direction: column; gap: 18px; }
+.panel h1 { font-size: 1.35rem; font-weight: 650; letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.panel p { margin: 0; color: var(--fg2); font-size: 0.9rem; line-height: 1.45; }
+.ctl { display: flex; flex-direction: column; gap: 8px; }
+.ctl label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--fg2); }
+.ctl output { color: var(--fg); font-variant-numeric: tabular-nums; }
+.ctl input[type="range"] { width: 100%; accent-color: var(--mint); }
+.frames { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.frames button { height: 34px; border-radius: 10px; background: var(--chip); border: 1px solid var(--hair); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.frames button.on { border-color: var(--mint); color: var(--mint); }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.btn { height: 40px; padding: 0 16px; border-radius: 20px; background: var(--mint); color: var(--mint-ink); font-weight: 600; font-size: 0.9rem; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 0.85rem; color: var(--fg2); }
+.check input { accent-color: var(--mint); width: 18px; height: 18px; }
+.note { font-size: 0.8rem; color: var(--fg3); line-height: 1.45; border-top: 1px solid var(--hair); padding-top: 14px; }
+
+@media (max-width: 760px) {
+  .page { flex-direction: column; padding: 0; gap: 0; align-items: stretch; }
+  .phone { width: 100%; height: 100vh; height: 100svh; min-height: 600px; max-height: 932px; border-radius: 0; box-shadow: none; }
+  .statusbar { display: none; }
+  .panel { width: auto; padding-block: 28px 40px; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+}
+</style>
+
+<div class="page">
+  <div class="phone" id="phone">
+    <div class="statusbar" aria-hidden="true"><span id="sbTime">1:40</span><span class="island"></span><span class="sb-r">
+      <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="7" width="3" height="4" rx="1" fill="#f3f5f4"/><rect x="5" y="5" width="3" height="6" rx="1" fill="#f3f5f4"/><rect x="10" y="2.5" width="3" height="8.5" rx="1" fill="#f3f5f4"/><rect x="15" y="0" width="3" height="11" rx="1" fill="#f3f5f4"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x=".5" y=".5" width="21" height="11" rx="3.5" fill="none" stroke="#8b918e"/><rect x="2" y="2" width="15" height="8" rx="2" fill="#f3f5f4"/><rect x="23" y="4" width="1.5" height="4" rx=".75" fill="#8b918e"/></svg>
+    </span></div>
+
+    <div class="app" id="app">
+      <canvas id="goo" aria-hidden="true"></canvas>
+      <svg id="face" aria-hidden="true">
+        <defs>
+          <radialGradient id="pressGrad">
+            <stop offset="0" stop-color="#7ee0ae" stop-opacity=".34"/>
+            <stop offset=".8" stop-color="#7ee0ae" stop-opacity=".2"/>
+            <stop offset="1" stop-color="#7ee0ae" stop-opacity=".1"/>
+          </radialGradient>
+          <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+          <filter id="halo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12"/></filter>
+        </defs>
+        <g id="leaders"></g>
+        <g id="faceG">
+          <circle id="haloC" fill="none" stroke="#7ee0ae" stroke-width="10" filter="url(#halo)" opacity="0"/>
+          <g id="pressG" opacity="0">
+            <circle id="pressDisc" fill="url(#pressGrad)"/>
+            <circle id="pressRing" fill="none" stroke="#7ee0ae" stroke-opacity=".55" stroke-width="1.5"/>
+          </g>
+          <path id="rimC" fill="none" stroke="#3a3f3c" stroke-width="2" stroke-linecap="round"/>
+          <g id="arcsG"></g>
+          <g id="ticksG"></g>
+          <g id="dayG"></g>
+          <g id="handsG">
+            <line id="hourH" stroke="#f3f5f4" stroke-width="5" stroke-linecap="round"/>
+            <line id="minH" stroke="#f3f5f4" stroke-width="3.2" stroke-linecap="round"/>
+            <circle id="hubC" r="4.2" fill="#f3f5f4"/>
+          </g>
+          <g id="stepsG"></g>
+        </g>
+      </svg>
+      <div id="callouts" aria-hidden="true"></div>
+      <div id="micons" aria-hidden="true"></div>
+      <div class="hint" id="hint">Tap the clock to open your day</div>
+
+      <header class="hdr" id="hdr">
+        <div class="logo"><svg width="28" height="14" viewBox="0 0 28 14" aria-hidden="true"><path d="M2 9.5c3-6 6.5-6 9.5-1.5S18 14 21 8.2 24.6 3 26 4.2" fill="none" stroke="#7ee0ae" stroke-width="2.4" stroke-linecap="round"/></svg>LifeFlow</div>
+        <button class="bell" aria-label="Notifications"><svg width="22" height="24" viewBox="0 0 22 24" fill="none" stroke="#f3f5f4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17V10a7 7 0 0 1 14 0v7l2 2H2z"/><path d="M8.5 21.5a2.6 2.6 0 0 0 5 0"/></svg></button>
+      </header>
+      <div class="sub" id="sub">
+        <button class="todaybtn" id="todayBtn" aria-label="Pick a day">Today <svg width="12" height="8" viewBox="0 0 12 8" aria-hidden="true"><path d="M1.5 1.5 6 6l4.5-4.5" fill="none" stroke="#f3f5f4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <nav class="days" id="days" aria-label="Days"></nav>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div id="trackWrap" aria-label="Timeline"><div id="track"></div></div>
+      <div class="detail" id="detail" aria-live="polite"></div>
+      <div class="hint" id="hintWrap">Pull down to wrap your day</div>
+      <div id="hit" role="button" tabindex="0" aria-label="Open your day"></div>
+    </div>
+  </div>
+
+  <aside class="panel" aria-label="Prototype controls">
+    <h1>Day clock</h1>
+    <p>Tap the clock, or pull it sideways. Tap the now pill or Today to fold it back. Today is your example day; the other days are made up.</p>
+    <div class="ctl">
+      <label for="timeR">Time of day <output id="timeO" for="timeR">1:40 PM</output></label>
+      <input type="range" id="timeR" min="510" max="1435" step="5" value="820">
+    </div>
+    <div class="ctl">
+      <label for="morphR">Motion, frame by frame <output id="morphO" for="morphR">0%</output></label>
+      <input type="range" id="morphR" min="0" max="1000" step="1" value="0">
+      <div class="frames" id="frames" aria-label="Jump to a frame of your storyboard">
+        <button data-f="1" aria-label="Frame 1, the clock">1</button>
+        <button data-f="2" aria-label="Frame 2, pressed">2</button>
+        <button data-f="3" aria-label="Frame 3, the stretch">3</button>
+        <button data-f="4" aria-label="Frame 4, the capsule">4</button>
+        <button data-f="5" aria-label="Frame 5, the timeline">5</button>
+        <button data-f="6" aria-label="Frame 6, with now">6</button>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn" id="play">Play open and close</button>
+      <label class="check"><input type="checkbox" id="slow"> Slow motion</label>
+    </div>
+    <label class="check"><input type="checkbox" id="busy"> A busier day (made-up extras)</label>
+    <p class="note">The face is 12 hours, so the rim shows the 12 hours around now: the last 2 faded, the next 10 bright. In the evening the rim steps out at the 12: past it is tomorrow (drag the time to 10:30 PM). When the rim gets busy (more than 5 things), it drops the past and the next 12 hours take the whole circle. Spends appear on the rim once your bank has them. Haptics play on phones that allow them.</p>
+  </aside>
+</div>
+<label id="hap" aria-hidden="true"><input type="checkbox" switch tabindex="-1"></label>
+
+<script>
+(() => {
+'use strict';
+const $ = (s) => document.querySelector(s);
+const NS = 'http://www.w3.org/2000/svg';
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const seg = (p, a, b) => clamp((p - a) / (b - a), 0, 1);
+const eIO = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const eOut = (t) => 1 - Math.pow(1 - t, 3);
+const eBack = (t) => { const c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+const ePlay = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+const MINT = [126 / 255, 224 / 255, 174 / 255];
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- Data: today is the owner's example day; the other days are made up and all different ---------- */
+const T = (d, h, m = 0) => d * 1440 + h * 60 + m;
+const BASE = new Date(2026, 10, 7); // Saturday, Nov 7
+const DAYS = [-3, -2, -1, 0, 1, 2, 3];
+// Extra made-up things for "A busier day" in the panel: only there to show how a crowded rim switches to ahead only.
+const BUSY_DAY = [
+  { id: 'x1', kind: 'spend', icon: '🥤', name: 'Smoothie', at: T(0, 8, 35), cents: 625, src: 'Jamba, from your bank' },
+  { id: 'x2', kind: 'block', icon: '👥', name: 'Team huddle', start: T(0, 12), end: T(0, 12, 20), src: 'From your work calendar' },
+  { id: 'x3', kind: 'spend', icon: '💸', name: 'Venmo to Jordan', at: T(0, 15, 10), cents: 1800, src: 'Venmo, from your bank' },
+  { id: 'x4', kind: 'block', icon: '🚗', name: 'Pick up Leo', start: T(0, 16, 45), end: T(0, 17, 5), src: 'From Google Calendar' },
+  { id: 'x5', kind: 'spend', icon: '🍜', name: 'Dinner', at: T(0, 17, 40), cents: 1140, src: 'Pho Hoa, from your bank' },
+  { id: 'x6', kind: 'block', icon: '📞', name: 'Call Mom', start: T(0, 22, 15), end: T(0, 22, 35), src: 'From Google Calendar' },
+];
+const ITEMS = [
+  { id: 'w1', kind: 'block', icon: '🧪', name: 'Chem lab', cat: 'class', start: T(-3, 10), end: T(-3, 11, 50), src: 'From your school calendar' },
+  { id: 'w2', kind: 'spend', icon: '☕', name: 'Coffee', at: T(-3, 12, 5), cents: 540, src: 'Blue Bottle, from your bank' },
+  { id: 'w3', kind: 'block', icon: '💼', name: 'Work', cat: 'work', start: T(-3, 13), end: T(-3, 18), src: 'From your work schedule' },
+  { id: 'w4', kind: 'spend', icon: '🛒', name: 'Groceries', at: T(-3, 18, 40), cents: 6318, src: "Trader Joe's, from your bank" },
+  { id: 'w5', kind: 'sleep', icon: '🌙', name: 'Sleep', start: T(-3, 23, 40), end: T(-2, 7, 5), src: 'From Apple Health' },
+  { id: 'h1', kind: 'block', icon: '🦷', name: 'Dentist', cat: 'appt', start: T(-2, 9, 30), end: T(-2, 10, 15), src: 'From Google Calendar' },
+  { id: 'h2', kind: 'block', icon: '💼', name: 'Work', cat: 'work', start: T(-2, 11), end: T(-2, 17, 30), src: 'From your work schedule' },
+  { id: 'h3', kind: 'spend', icon: '🏠', name: 'Rent to Maya', at: T(-2, 19, 15), cents: 64000, src: 'Zelle, from your bank' },
+  { id: 'h4', kind: 'block', icon: '🏀', name: 'Pickup game', start: T(-2, 20, 30), end: T(-2, 21, 45), src: 'From Google Calendar' },
+  { id: 'h6', kind: 'due', icon: '📄', name: 'Lab report', at: T(-2, 23, 59), src: 'Due on Canvas, from your school account' },
+  { id: 'h5', kind: 'sleep', icon: '🌙', name: 'Sleep', start: T(-1, 0, 20), end: T(-1, 7, 30), src: 'From Apple Health' },
+  { id: 'f1', kind: 'income', icon: '💵', name: 'Paycheck', at: T(-1, 6), cents: 61240, src: 'Deposit, from your bank' },
+  { id: 'f2', kind: 'block', icon: '💼', name: 'Work', cat: 'work', start: T(-1, 8), end: T(-1, 14, 30), src: 'From your work schedule' },
+  { id: 'f3', kind: 'spend', icon: '🌯', name: 'Lunch', at: T(-1, 14, 50), cents: 1160, src: 'Chipotle, from your bank' },
+  { id: 'f4', kind: 'spend', icon: '🎬', name: 'Movie with Sam', at: T(-1, 19, 52), cents: 1650, src: 'AMC, from your bank' },
+  { id: 'f5', kind: 'sleep', icon: '🌙', name: 'Sleep', start: T(0, 0, 45), end: T(0, 8, 5), src: 'From Apple Health' },
+  { id: 's1', kind: 'block', icon: '💼', name: 'Work', cat: 'work', start: T(0, 9), end: T(0, 16, 30), src: 'From your work schedule' },
+  { id: 's2', kind: 'spend', icon: '🍽️', name: 'Lunch', at: T(0, 13), cents: 1420, src: 'Lunch at work, from your bank' },
+  { id: 's3', kind: 'spend', icon: '⛽', name: 'Gas', at: T(0, 17, 15), cents: 5500, src: 'Shell, from your bank' },
+  { id: 's4', kind: 'block', icon: '🎓', name: 'Class', cat: 'class', start: T(0, 18), end: T(0, 20), src: 'From your school calendar' },
+  { id: 's5', kind: 'block', icon: '📚', name: 'Study for exam', start: T(0, 20, 30), end: T(0, 22), src: 'Your plan. The exam is Monday at 10:00 AM.' },
+  { id: 's6', kind: 'sleep', icon: '🌙', name: 'Bedtime', usual: true, start: T(0, 23), end: T(1, 7), src: 'Your usual bedtime, from Apple Health' },
+  { id: 'u0', kind: 'block', icon: '🏃', name: 'Run with Sam', start: T(1, 8), end: T(1, 8, 45), src: 'From Google Calendar' },
+  { id: 'u1', kind: 'block', icon: '🥞', name: 'Brunch with Jordan', start: T(1, 11, 30), end: T(1, 13), src: 'From Google Calendar' },
+  { id: 'u2', kind: 'block', icon: '📖', name: 'Study group', cat: 'class', start: T(1, 15), end: T(1, 17), src: 'From Google Calendar' },
+  { id: 'u3', kind: 'sleep', icon: '🌙', name: 'Bedtime', usual: true, start: T(1, 23), end: T(2, 7), src: 'Your usual bedtime, from Apple Health' },
+  { id: 'm1', kind: 'block', icon: '📝', name: 'Exam', cat: 'due', start: T(2, 10), end: T(2, 11, 30), src: 'From your school calendar' },
+  { id: 'm2', kind: 'block', icon: '💼', name: 'Work', cat: 'work', start: T(2, 13), end: T(2, 18), src: 'From your work schedule' },
+  { id: 'm3', kind: 'sleep', icon: '🌙', name: 'Bedtime', usual: true, start: T(2, 23), end: T(3, 7), src: 'Your usual bedtime, from Apple Health' },
+  { id: 't1', kind: 'bill', icon: '📱', name: 'Phone bill', at: T(3, 9), cents: 4500, src: 'Due Tuesday. Usually paid from checking.' },
+  { id: 't2', kind: 'block', icon: '🙋', name: 'Office hours', cat: 'class', start: T(3, 12, 30), end: T(3, 13, 15), src: 'From your school calendar' },
+  { id: 't3', kind: 'block', icon: '💼', name: 'Work', cat: 'work', start: T(3, 15), end: T(3, 20), src: 'From your work schedule' },
+  { id: 't4', kind: 'sleep', icon: '🌙', name: 'Bedtime', usual: true, start: T(3, 23), end: T(4, 7), src: 'Your usual bedtime, from Apple Health' },
+];
+const STEP_GOAL = 15000;
+const STEP_TOTAL_TODAY = 14600; // where the usual pace lands; shown only as "expected"
+const STEP_W = { 8: .05, 9: .07, 10: .05, 11: .05, 12: .06, 13: .10, 14: .05, 15: .05, 16: .08, 17: .12, 18: .06, 19: .06, 20: .08, 21: .07, 22: .05 };
+function stepFrac(min) {
+  let f = 0;
+  for (let h = 8; h <= 22; h++) { const a = h * 60, b = a + 60; if (min >= b) f += STEP_W[h]; else if (min > a) f += STEP_W[h] * (min - a) / 60; }
+  return f;
+}
+const stepsAt = (min) => Math.round(STEP_TOTAL_TODAY * stepFrac(min) / 10) * 10;
+
+const t0 = (it) => (it.start ?? it.at);
+const dayOf = (t) => Math.floor(t / 1440);
+function fmt(min) { const m = ((min % 1440) + 1440) % 1440; let h = Math.floor(m / 60); const mm = m % 60; const ap = h < 12 ? 'AM' : 'PM'; h = h % 12 || 12; return `${h}:${String(mm).padStart(2, '0')} ${ap}`; }
+const fmtShort = (min) => fmt(min).replace(':00', '');
+const money = (c) => '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const dur = (m) => `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`;
+const dateOf = (d) => new Date(BASE.getFullYear(), BASE.getMonth(), BASE.getDate() + d);
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const dayName = (d) => (d === 0 ? 'Today' : WD[dateOf(d).getDay()]);
+const dayLong = (d) => { const x = dateOf(d); return `${WD[x.getDay()]}, ${MO[x.getMonth()]} ${x.getDate()}`; };
+
+/* ---------- State ---------- */
+const S = { now: T(0, 13, 40), p: 0, press: 0, open: false, anim: null, day: 0, sel: null, slow: false, pressAnim: null };
+const G = {};
+const app = $('#app'), phone = $('#phone');
+const faceG = $('#faceG'), arcsG = $('#arcsG'), ticksG = $('#ticksG'), stepsG = $('#stepsG'), leaders = $('#leaders');
+const callouts = $('#callouts'), micons = $('#micons'), hit = $('#hit'), hint = $('#hint');
+const trackWrap = $('#trackWrap'), track = $('#track'), daysNav = $('#days'), chips = $('#chips'), detail = $('#detail');
+let CM = null, TM = null, MAP = [];
+
+/* ---------- Haptics ---------- */
+const hapInput = $('#hap input');
+function haptic(ms) {
+  try { if (navigator.vibrate && navigator.vibrate(ms)) return; } catch (e) { /* not supported */ }
+  try { $('#hap').click(); } catch (e) { /* iOS switch tap unavailable */ }
+}
+
+/* ---------- Geometry ---------- */
+function layout() {
+  const W = app.clientWidth, H = app.clientHeight;
+  const framed = getComputedStyle($('.statusbar')).display !== 'none';
+  const ti = framed ? 50 : 14;
+  Object.assign(G, { W, H, ti });
+  G.hdrY = ti; G.subY = ti + 46;
+  G.lineY = ti + 186; G.wrapTop = G.lineY - 70; G.iconY = G.lineY - 34;
+  G.chipY = G.lineY + 92; G.detailY = G.chipY + 58 + 16;
+  G.R = Math.round(Math.min(W * 0.3, 120, (H - ti - 120) * 0.24));
+  G.cx = W / 2; G.cy = Math.round(ti + 96 + (H - ti - 96) * 0.36);
+  G.ycap = G.lineY - 12; G.capHW = W / 2 - 14; G.capHH = 56;
+  $('#hdr').style.top = G.hdrY + 'px';
+  $('#sub').style.top = G.subY + 'px';
+  chips.style.top = G.chipY + 'px';
+  trackWrap.style.top = G.wrapTop + 'px';
+  detail.style.top = G.detailY + 'px';
+  $('#hintWrap').style.top = (G.detailY + 6) + 'px';
+  hint.style.top = (G.cy + G.R + 78) + 'px';
+  const hr = G.R + 54;
+  Object.assign(hit.style, { left: (G.cx - hr) + 'px', top: (G.cy - hr) + 'px', width: hr * 2 + 'px', height: hr * 2 + 'px' });
+  const svg = $('#face'); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('width', W); svg.setAttribute('height', H);
+  glResize();
+  buildStatic();
+  rebuild();
+}
+
+const ang = (min) => ((((min / 60) % 12) + 12) % 12) / 12 * Math.PI * 2;
+const pol = (a, r) => [r * Math.sin(a), -r * Math.cos(a)];
+function arcPath(a1, a2, r) {
+  if (a2 < a1) a2 += Math.PI * 2;
+  const [x1, y1] = pol(a1, r), [x2, y2] = pol(a2, r);
+  const large = a2 - a1 > Math.PI ? 1 : 0;
+  return `M${x1.toFixed(2)} ${y1.toFixed(2)}A${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+}
+function el(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+
+function buildStatic() {
+  const R = G.R;
+  $('#haloC').setAttribute('r', R);
+  $('#pressDisc').setAttribute('r', R * 0.56);
+  $('#pressRing').setAttribute('r', R * 0.56);
+  ticksG.textContent = '';
+  for (let h = 1; h <= 12; h++) {
+    const a = h / 12 * Math.PI * 2;
+    if (h % 3 === 0) {
+      const [x, y] = pol(a, R - 27);
+      const t = el('text', { x: x.toFixed(1), y: (y + 6).toFixed(1), 'text-anchor': 'middle', fill: '#f3f5f4', 'font-size': 18, 'font-weight': 650, 'font-family': 'inherit' }, ticksG);
+      t.textContent = String(h);
+    } else {
+      const [x1, y1] = pol(a, R - 12), [x2, y2] = pol(a, R - 19);
+      el('line', { x1, y1, x2, y2, stroke: '#c7ccc9', 'stroke-width': 2, 'stroke-linecap': 'round' }, ticksG);
+    }
+  }
+}
+
+/* ---------- Clock model: the 12 hours around now ---------- */
+// More than this many markers in the 12 hours around now and the rim drops the past:
+// it shows only what's ahead, and the next 12 hours take the whole circle (owner, 2026-11-08).
+const BUSY = 5;
+function pickClock(now) {
+  const around = clockModel(now, false);
+  return around.marks.length > BUSY ? clockModel(now, true) : around;
+}
+function clockModel(now, ahead) {
+  const ws = ahead ? now : now - 120, we = ahead ? now + 720 : now + 600;
+  const arcs = [], pins = [], marks = [];
+  for (const it of ITEMS) {
+    if (it.kind === 'block' || it.kind === 'sleep') {
+      if (it.end <= ws || it.start >= we) continue;
+      const s = Math.max(it.start, ws), e = Math.min(it.end, we);
+      if (s < now) arcs.push({ a: s, b: Math.min(e, now), past: true, sleep: it.kind === 'sleep' });
+      if (e > now) arcs.push({ a: Math.max(s, now), b: e, past: false, sleep: it.kind === 'sleep' });
+      let t, label;
+      if (it.start >= ws) { t = it.start; label = fmt(it.start); }
+      else { t = it.end > now ? (now + e) / 2 : (ws + it.end) / 2; label = 'till ' + fmt(it.end); }
+      marks.push({ it, t, label, past: it.end <= now });
+    } else if (it.kind === 'spend' || it.kind === 'income') {
+      if (it.at < ws || it.at > now) continue;
+      pins.push({ t: it.at });
+      marks.push({ it, t: it.at, label: (it.kind === 'income' ? '+' : '') + money(it.cents), past: true });
+    } else if (it.kind === 'bill') {
+      if (it.at < now || it.at > we) continue;
+      marks.push({ it, t: it.at, label: money(it.cents) + ' due', past: false });
+    } else if (it.kind === 'due') {
+      if (it.at < ws || it.at > we) continue;
+      marks.push({ it, t: it.at, label: 'due ' + fmt(it.at), past: it.at <= now });
+    }
+  }
+  // "Tomorrow" is written along tomorrow's lap from the 12 when the lap is long enough to hold it (about an hour)
+  const midT = (dayOf(now) + 1) * 1440;
+  const lapRad = midT > ws && midT < we ? (we - midT) / 720 * Math.PI * 2 : 0;
+  const word = lapRad > 0.62 ? 0.52 : 0;
+  // spread markers so they never overlap; the hairline still points at the real time. The word holds its place.
+  marks.forEach((m) => { m.a0 = ang(m.t); m.a = m.a0; });
+  if (word) marks.push({ room: true, fixed: true, a0: 0.07 + word / 2, a: 0.07 + word / 2 });
+  marks.sort((x, y) => x.a - y.a);
+  const MIN = 0.46;
+  for (let k = 0; k < 60 && marks.length > 1; k++) {
+    let moved = false;
+    for (let i = 0; i < marks.length; i++) {
+      const A = marks[i], B = marks[(i + 1) % marks.length];
+      let d = B.a - A.a; if (i === marks.length - 1) d += Math.PI * 2;
+      const need = A.room || B.room ? 0.58 : MIN;
+      if (d < need) {
+        const push = (need - d) / 2 * 0.6;
+        if (A.fixed) B.a += push * 2; else if (B.fixed) A.a -= push * 2; else { A.a -= push; B.a += push; }
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+  marks.splice(0, marks.length, ...marks.filter((m) => !m.room));
+  // After 12 at night it's tomorrow: arcs split at midnight, and what's past it rides on tomorrow's lap.
+  const mid = (dayOf(now) + 1) * 1440;
+  const hasMid = mid > ws && mid < we;
+  if (hasMid) {
+    for (const a of arcs.splice(0)) {
+      if (a.a < mid && a.b > mid) arcs.push({ ...a, b: mid }, { ...a, a: mid });
+      else arcs.push(a);
+    }
+  }
+  for (const a of arcs) a.lap = hasMid && a.a >= mid ? 1 : 0;
+  for (const p of pins) p.lap = hasMid && p.t >= mid ? 1 : 0;
+  for (const m of marks) m.lap = hasMid && m.t >= mid ? 1 : 0;
+  return { arcs, pins, marks, ws, we, mid: hasMid ? mid : null, word, ahead };
+}
+
+function rebuildClock() {
+  const R = G.R, now = S.now;
+  CM = pickClock(now);
+  // hands
+  const ha = ang(now), ma = (now % 60) / 60 * Math.PI * 2;
+  const [hx, hy] = pol(ha, R * 0.47), [mx, my] = pol(ma, R * 0.8), [tx, ty] = pol(ma + Math.PI, R * 0.09);
+  Object.entries({ x1: 0, y1: 0, x2: hx, y2: hy }).forEach(([k, v]) => $('#hourH').setAttribute(k, v));
+  Object.entries({ x1: tx, y1: ty, x2: mx, y2: my }).forEach(([k, v]) => $('#minH').setAttribute(k, v));
+  // the rim: a full circle, or (when tonight's midnight is on it) today's lap that steps out at the 12 into tomorrow's
+  const LAP = G.LAP = 7;
+  const dayG = $('#dayG'); dayG.textContent = '';
+  if (CM.mid != null) {
+    const a0 = ang(CM.ws), am = ang(CM.mid);
+    const a1 = ang(CM.we);
+    const today = arcPath(a0, am, R);
+    const [sx, sy] = pol(am, R + LAP);
+    const tmrw = arcPath(am, a1, R + LAP).replace(/^M[^A]*/, '');
+    $('#rimC').setAttribute('d', `${today}L${sx.toFixed(2)} ${sy.toFixed(2)}${tmrw}`);
+    // the step at midnight, and "Tomorrow" written along tomorrow's lap from the 12
+    const [ix, iy] = pol(am, R);
+    el('line', { x1: ix, y1: iy, x2: sx, y2: sy, stroke: '#7ee0ae', 'stroke-width': 2.4, 'stroke-linecap': 'round' }, dayG);
+    el('circle', { cx: sx, cy: sy, r: 2.6, fill: '#7ee0ae' }, dayG);
+    if (CM.word) {
+    const rt = R + LAP + 7;
+    const [px, py] = pol(am + 0.07, rt), [qx, qy] = pol(am + 0.07 + CM.word, rt);
+    el('path', { id: 'tmrwPath', d: `M${px.toFixed(2)} ${py.toFixed(2)}A${rt} ${rt} 0 0 1 ${qx.toFixed(2)} ${qy.toFixed(2)}`, fill: 'none' }, dayG);
+    const t = el('text', { 'font-size': 9.5, 'font-weight': 700, 'letter-spacing': '1.6', fill: '#7ee0ae', 'font-family': 'inherit' }, dayG);
+    const tp = el('textPath', { href: '#tmrwPath' }, t);
+    tp.textContent = 'TOMORROW';
+    }
+  } else {
+    $('#rimC').setAttribute('d', `M0 ${-R}A${R} ${R} 0 1 1 0 ${R}A${R} ${R} 0 1 1 0 ${-R}`);
+  }
+  // arcs + pins
+  arcsG.textContent = '';
+  for (const a of CM.arcs) {
+    const d = arcPath(ang(a.a), ang(a.b), R + a.lap * LAP);
+    const op = a.past ? 0.32 : (a.sleep ? 0.55 : 1);
+    a.els = [];
+    if (!a.past) a.els.push(el('path', { d, fill: 'none', stroke: '#7ee0ae', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: op * 0.55, filter: 'url(#soft)' }, arcsG));
+    a.els.push(el('path', { d, fill: 'none', stroke: '#7ee0ae', 'stroke-width': 3, 'stroke-linecap': 'round', opacity: op }, arcsG));
+  }
+  for (const p of CM.pins) {
+    const [x, y] = pol(ang(p.t), R + p.lap * LAP);
+    p.el = el('circle', { cx: x, cy: y, r: 4.2, fill: '#7ee0ae', stroke: '#000', 'stroke-width': 2 }, arcsG);
+  }
+  G.rimFill = 1;
+  // steps complication
+  stepsG.textContent = '';
+  const steps = stepsAt(now);
+  const ty0 = R * 0.42;
+  const t = el('text', { x: 0, y: ty0, 'text-anchor': 'middle', 'font-size': 11.5, fill: '#9ba29e', 'font-family': 'inherit', stroke: '#000', 'stroke-width': 4, 'stroke-linejoin': 'round', 'paint-order': 'stroke' }, stepsG);
+  t.innerHTML = `<tspan fill="#f3f5f4" font-weight="600">${steps.toLocaleString('en-US')}</tspan> of 15,000 steps`;
+  el('rect', { x: -34, y: ty0 + 5, width: 68, height: 6.5, rx: 3, fill: '#000' }, stepsG);
+  el('rect', { x: -32, y: ty0 + 7, width: 64, height: 2.5, rx: 1.25, fill: '#232826' }, stepsG);
+  el('rect', { x: -32, y: ty0 + 7, width: (64 * clamp(steps / STEP_GOAL, 0, 1)).toFixed(1), height: 2.5, rx: 1.25, fill: '#7ee0ae' }, stepsG);
+  // markers: hairline + label (icons live in the morph layer)
+  leaders.textContent = ''; callouts.textContent = '';
+  for (const m of CM.marks) {
+    const u = [Math.sin(m.a), -Math.cos(m.a)];
+    const bw = 66, bh = 50;
+    const sup = Math.abs(u[0]) * bw / 2 + Math.abs(u[1]) * bh / 2;
+    const rc = R + 14 + sup + m.lap * LAP;
+    const lab = document.createElement('div');
+    lab.className = 'co'; lab.textContent = m.label;
+    if (m.lap) { const tm = document.createElement('span'); tm.className = 'tm'; tm.textContent = 'Tomorrow'; lab.appendChild(tm); }
+    callouts.appendChild(lab);
+    const w = lab.offsetWidth;
+    m.cx = clamp(G.cx + u[0] * rc, w / 2 + 8, G.W - w / 2 - 8); m.cy = G.cy + u[1] * rc;
+    m.ix = m.cx; m.iy = m.cy - 9;
+    const [lx1, ly1] = pol(m.a0, R + 5 + m.lap * LAP);
+    const dx0 = m.cx - G.cx, dy0 = m.cy - G.cy, dl = Math.hypot(dx0, dy0) || 1;
+    const ex = m.cx - dx0 / dl * (sup + 3), ey = m.cy - dy0 / dl * (sup + 3);
+    m.line = el('line', { x1: G.cx + lx1, y1: G.cy + ly1, x2: ex, y2: ey, stroke: '#6b716e', 'stroke-width': 1 }, leaders);
+    lab.style.transform = `translate(${(m.cx - w / 2).toFixed(1)}px, ${(m.cy + 9).toFixed(1)}px)`;
+    m.lab = lab;
+  }
+  const next = ITEMS.filter((it) => t0(it) > now && it.kind !== 'spend').sort((a, b) => t0(a) - t0(b))[0];
+  hit.setAttribute('aria-label', `Today. Now ${fmt(now)}.${next ? ` Next: ${next.name} at ${fmt(t0(next))}${dayOf(t0(next)) > dayOf(now) ? ' tomorrow' : ''}.` : ''} ${steps.toLocaleString('en-US')} of 15,000 steps. Open your day as a timeline.`);
+  $('#sbTime').textContent = fmt(now).replace(/ [AP]M/, '');
+}
+
+/* ---------- Track model: the line through the week ---------- */
+function trackModel(now) {
+  const nodes = [];
+  for (const it of ITEMS) {
+    if ((it.kind === 'spend' || it.kind === 'income') && it.at > now) continue;
+    nodes.push({ it, t: t0(it), past: t0(it) <= now });
+  }
+  const stops = nodes.map((n) => ({ t: n.t, kind: 'item', n }));
+  for (let d = DAYS[0]; d <= DAYS[DAYS.length - 1] + 1; d++) stops.push({ t: d * 1440, kind: 'mid', d });
+  stops.push({ t: now, kind: 'now' });
+  const ord = { mid: 0, item: 1, now: 2 };
+  stops.sort((a, b) => a.t - b.t || ord[a.kind] - ord[b.kind]);
+  const gap = (a, b) => {
+    const dt = b.t - a.t;
+    // tonight's midnight carries the word "Tomorrow", so it gets room for it either side
+    if (a.kind === 'mid' || b.kind === 'mid') return ((a.kind === 'mid' ? a : b).d === dayOf(now) + 1 ? 66 : 44) + clamp((dt - 120) / 60 * 4, 0, 26);
+    if (a.kind === 'now' || b.kind === 'now') return 66 + clamp((dt - 60) / 60 * 5, 0, 24);
+    return 96 + clamp((dt - 180) / 60 * 6, 0, 30);
+  };
+  const pad = G.W / 2;
+  let x = pad;
+  stops.forEach((s, i) => { if (i) x += gap(stops[i - 1], s); s.x = x; });
+  const total = x + pad;
+  stops.forEach((s) => { if (s.kind === 'item') s.n.x = s.x; });
+  const nowX = stops.find((s) => s.kind === 'now').x;
+  return { nodes, stops, total, nowX };
+}
+function xAt(t) {
+  const st = TM.stops;
+  if (t <= st[0].t) return st[0].x - (st[0].t - t) * 0.5;
+  for (let i = 0; i < st.length - 1; i++) {
+    const a = st[i], b = st[i + 1];
+    if (t >= a.t && t <= b.t) return b.t === a.t ? a.x : a.x + (t - a.t) / (b.t - a.t) * (b.x - a.x);
+  }
+  const l = st[st.length - 1]; return l.x + (t - l.t) * 0.5;
+}
+function tAt(x) {
+  const st = TM.stops;
+  if (x <= st[0].x) return st[0].t;
+  for (let i = 0; i < st.length - 1; i++) {
+    const a = st[i], b = st[i + 1];
+    if (x >= a.x && x <= b.x) return b.x === a.x ? a.t : a.t + (x - a.x) / (b.x - a.x) * (b.t - a.t);
+  }
+  return st[st.length - 1].t;
+}
+function homeScroll() {
+  let x = TM.nowX - G.W * 0.5;
+  for (const n of TM.nodes) { const v = n.x - x; if (v > -46 && v < 44) { x = n.x - 44; break; } }
+  return clamp(x, 0, TM.total - G.W);
+}
+
+function rebuildTrack() {
+  TM = trackModel(S.now);
+  track.textContent = '';
+  track.style.width = TM.total + 'px';
+  const line = document.createElement('div');
+  line.className = 'tl-line';
+  line.style.width = TM.total + 'px';
+  line.style.background = `linear-gradient(to right, rgba(126,224,174,.5) 0, rgba(126,224,174,.5) ${TM.nowX}px, #7ee0ae ${TM.nowX}px)`;
+  track.appendChild(line);
+  for (const n of TM.nodes) {
+    const it = n.it;
+    if (it.end != null) {
+      const b = document.createElement('div');
+      b.className = 'band' + (it.kind === 'sleep' ? ' sleep' : '');
+      const x1 = xAt(it.start), x2 = xAt(it.end);
+      b.style.left = x1 + 'px'; b.style.width = Math.max(6, x2 - x1) + 'px';
+      track.appendChild(b);
+    }
+  }
+  for (const s of TM.stops) {
+    if (s.kind !== 'mid' || s.d < DAYS[0] + 0) continue;
+    const m = document.createElement('div');
+    m.className = 'mid' + (s.d === dayOf(S.now) + 1 ? ' next' : ''); m.style.left = s.x + 'px';
+    const x = dateOf(s.d);
+    m.innerHTML = `<span>${s.d === 0 ? 'Today' : s.d === dayOf(S.now) + 1 ? 'Tomorrow' : WD[x.getDay()] + ' ' + x.getDate()}</span>`;
+    track.appendChild(m);
+  }
+  for (const n of TM.nodes) {
+    const it = n.it;
+    const b = document.createElement('button');
+    b.className = 'node ' + (n.past ? 'past' : 'future');
+    b.style.left = n.x + 'px';
+    b.dataset.id = it.id;
+    const name = it.kind === 'spend' ? `${it.name} · ${money(it.cents)}` : it.kind === 'income' ? `${it.name} +${money(it.cents)}` : it.kind === 'bill' ? `${it.name} · ${money(it.cents)} due` : it.kind === 'due' ? `${it.name} due` : it.name;
+    const time = it.kind === 'bill' ? dayName(dayOf(it.at)) : (it.usual ? '~' : '') + fmt(n.t);
+    b.innerHTML = `<span class="n-ic">${it.icon}</span><span class="n-dot"></span><span class="n-t">${time}</span><span class="n-n">${name}</span>`;
+    b.setAttribute('aria-label', `${name}, ${time}`);
+    b.addEventListener('click', () => select(it.id));
+    n.el = b;
+    track.appendChild(b);
+  }
+  const np = document.createElement('button');
+  np.className = 'nowpill'; np.style.left = TM.nowX + 'px';
+  const ma = (S.now % 60) / 60 * 360, ha = ((S.now / 60) % 12) / 12 * 360;
+  np.innerHTML = `<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M7 7V3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" transform="rotate(${ma.toFixed(1)} 7 7)"/><path d="M7 7V4.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" transform="rotate(${ha.toFixed(1)} 7 7)"/></svg><span>${fmt(S.now)}</span><i></i>`;
+  np.setAttribute('aria-label', `Now, ${fmt(S.now)}. Back to the clock`);
+  np.addEventListener('click', () => close());
+  track.appendChild(np);
+  TM.nowEl = np;
+}
+
+/* ---------- Map clock markers onto line nodes for the morph ---------- */
+function prepMorph(keepScroll) {
+  const sl = homeScroll();
+  G.home = sl;
+  if (keepScroll && Math.abs(trackWrap.scrollLeft - sl) > 1) G.wrapSl = trackWrap.scrollLeft;
+  else { G.wrapSl = null; trackWrap.scrollLeft = sl; }
+  micons.textContent = '';
+  TM.nodes.forEach((n) => n.el.classList.remove('mapped'));
+  const capL = G.cx - G.capHW + 18, capR = G.cx + G.capHW - 18;
+  let turn = Math.PI - ang(CM.ws);
+  turn = ((turn + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+  G.turn = turn;
+  MAP = CM.marks.map((m) => {
+    const node = TM.nodes.find((n) => n.it.id === m.it.id);
+    // a marker whose place on the line is off screen slides just past the edge and fades, instead of stretching out to it
+    const xr = node ? node.x - sl : (m.ix < G.cx ? -40 : G.W + 40);
+    const off = xr < 12 || xr > G.W - 12;
+    const x2 = clamp(xr, -36, G.W + 36);
+    const p0 = [m.ix, m.iy], p2 = [x2, G.iconY];
+    const th0 = Math.atan2(m.ix - G.cx, -(m.iy - G.cy)), r0 = Math.hypot(m.ix - G.cx, m.iy - G.cy);
+    // where this marker sits once the ring has turned (the window's seam at the bottom): earlier is left, later is right
+    const rel = (((m.t - CM.ws) / 720) % 1 + 1) % 1;
+    const phiEnd = rel * Math.PI * 2 - Math.PI;
+    const e = document.createElement('div');
+    e.className = 'mi'; e.textContent = m.it.icon;
+    micons.appendChild(e);
+    if (node) node.el.classList.add('mapped');
+    return { m, node, p0, p2, th0, r0, phiEnd, el: e, dim: m.past, off, inCap: x2 > capL && x2 < capR };
+  });
+}
+
+/* ---------- Day picker, chips, detail ---------- */
+function buildDays() {
+  daysNav.innerHTML = '';
+  const prev = document.createElement('button');
+  prev.className = 'arrow'; prev.setAttribute('aria-label', 'Previous day');
+  prev.innerHTML = '<svg width="9" height="15" viewBox="0 0 9 15"><path d="M7.5 1.5 1.5 7.5l6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  prev.addEventListener('click', () => goDay(S.day - 1));
+  daysNav.appendChild(prev);
+  for (const d of DAYS) {
+    const b = document.createElement('button');
+    b.textContent = dayName(d); b.dataset.d = d;
+    b.setAttribute('aria-label', d === 0 ? 'Today' : dayLong(d));
+    b.addEventListener('click', () => { if (d === 0 && S.day === 0 && Math.abs(trackWrap.scrollLeft - homeScroll()) < 30) close(); else goDay(d); });
+    daysNav.appendChild(b);
+  }
+  const next = document.createElement('button');
+  next.className = 'arrow'; next.setAttribute('aria-label', 'Next day');
+  next.innerHTML = '<svg width="9" height="15" viewBox="0 0 9 15"><path d="M1.5 1.5l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  next.addEventListener('click', () => goDay(S.day + 1));
+  daysNav.appendChild(next);
+}
+function markDay() {
+  daysNav.querySelectorAll('button[data-d]').forEach((b) => { const on = +b.dataset.d === S.day; b.classList.toggle('on', on); b.setAttribute('aria-current', on ? 'date' : 'false'); });
+}
+function goDay(d) {
+  d = clamp(d, DAYS[0], DAYS[DAYS.length - 1]);
+  let x;
+  if (d === 0) x = homeScroll();
+  else { const first = TM.nodes.find((n) => dayOf(n.t) === d); x = (first ? first.x : xAt(d * 1440 + 480)) - G.W * 0.22; }
+  S.sel = null;
+  trackWrap.scrollTo({ left: clamp(x, 0, TM.total - G.W), behavior: reduce ? 'auto' : 'smooth' });
+  setDay(d);
+}
+function setDay(d) {
+  if (d === S.day && chips.childElementCount) return;
+  S.day = d; markDay(); buildChips(); showDetail();
+}
+const ICONS = {
+  work: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#7ee0ae" stroke-width="1.6" stroke-linejoin="round"><rect x="1.5" y="4.5" width="13" height="9.5" rx="2.2"/><path d="M5.5 4.5V3.3c0-.7.5-1.3 1.2-1.3h2.6c.7 0 1.2.6 1.2 1.3v1.2M1.5 8.6h13"/></svg>',
+  class: '<svg width="18" height="16" viewBox="0 0 18 16" fill="none" stroke="#7ee0ae" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M9 2 1.2 6 9 10l7.8-4L9 2z"/><path d="M4.6 8v3.4c1.7 1.6 7.1 1.6 8.8 0V8M16.8 6v4"/></svg>',
+  due: '<svg width="15" height="16" viewBox="0 0 15 16" fill="none" stroke="#7ee0ae" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M2.5 15V1.8M2.5 2.4h9.2L9.6 5.8l2.1 3.4H2.5"/></svg>',
+};
+// "9 AM–4:30 PM", "6–8 PM": the meridiem once when both ends share it
+function span(a, b) {
+  const fa = fmtShort(a), fb = fmtShort(b);
+  return fa.slice(-2) === fb.slice(-2) ? `${fa.slice(0, -3)}–${fb}` : `${fa}–${fb}`;
+}
+const isDue = (it) => it.kind === 'bill' || it.kind === 'due' || it.cat === 'due';
+// The chips round up the day in view with what's tied to the clock: its shift, its class, its deadline.
+// Only real items; a kind the day doesn't have gets no chip. Today and later days also show the next deadline ahead.
+function dayChips(d) {
+  const now = S.now, inDay = (it) => dayOf(t0(it)) === d;
+  const live = (it) => it.end != null && it.start <= now && it.end > now;
+  const pick = (list) => list.find(live) || (d === 0 && list.find((it) => t0(it) > now)) || list[0];
+  const byTime = (a, b) => t0(a) - t0(b);
+  // a running block's end needs no AM/PM when it's the same half of the day as now
+  const endsAt = (e) => (fmt(e).slice(-2) === fmt(now).slice(-2) ? fmtShort(e).slice(0, -3) : fmtShort(e));
+  const hrs = (m) => `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}`;
+  const out = [];
+  const work = ITEMS.filter((it) => it.cat === 'work' && inDay(it)).sort(byTime);
+  if (work.length) {
+    const w = pick(work);
+    // running: when it ends; over: the hours it took (from the schedule, never pay); later: when it starts
+    const [name, time] = live(w) ? ['Work till', endsAt(w.end)] : w.end <= now ? ['Worked', hrs(w.end - w.start)] : ['Work', fmtShort(w.start)];
+    out.push({ it: w, icon: 'work', name, time, label: `Work, ${fmt(w.start)} to ${fmt(w.end)}` });
+  }
+  const cls = ITEMS.filter((it) => it.cat === 'class' && inDay(it)).sort(byTime);
+  if (cls.length) {
+    const c = pick(cls);
+    out.push({ it: c, icon: 'class', name: c.name, time: live(c) ? `till ${endsAt(c.end)}` : d === dayOf(now) && c.end <= now ? 'done' : fmtShort(c.start), label: `${c.name}, ${fmt(c.start)} to ${fmt(c.end)}` });
+  }
+  let due = ITEMS.filter((it) => isDue(it) && inDay(it)).sort(byTime)[0], ahead = false;
+  if (!due && d >= 0) { due = ITEMS.filter((it) => isDue(it) && t0(it) >= (d + 1) * 1440).sort(byTime)[0]; ahead = true; }
+  if (due) {
+    const t = t0(due);
+    const whole = (c) => '$' + (c % 100 ? (c / 100).toFixed(2) : String(c / 100));
+    const time = ahead ? WD[dateOf(dayOf(t)).getDay()] : due.kind === 'bill' ? `${whole(due.cents)} due` : fmtShort(t);
+    out.push({ it: due, icon: 'due', name: due.name, time, label: `${due.name}, due ${dayLong(dayOf(t))}${due.kind === 'bill' ? '' : ` at ${fmt(t)}`}`, ahead });
+  }
+  // in the order they happen; a deadline on a later day goes last
+  return out.sort((a, b) => (a.ahead ? 1e9 : t0(a.it)) - (b.ahead ? 1e9 : t0(b.it)));
+}
+function buildChips() {
+  chips.textContent = '';
+  dayChips(S.day).forEach((c) => {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.dataset.id = c.it.id;
+    b.innerHTML = ICONS[c.icon] + `<span class="cx"><span class="cn">${c.name}</span><span class="ct">${c.time}</span></span>`;
+    b.setAttribute('aria-label', c.label);
+    b.addEventListener('click', () => {
+      select(c.it.id);
+      // same day: bring its node into view; a later day's deadline just opens its card
+      const n = TM.nodes.find((x) => x.it.id === c.it.id);
+      if (n && dayOf(n.t) === S.day) {
+        const v = n.x - trackWrap.scrollLeft;
+        if (v < 50 || v > G.W - 50) trackWrap.scrollTo({ left: clamp(n.x - G.W / 2, 0, TM.total - G.W), behavior: reduce ? 'auto' : 'smooth' });
+      }
+    });
+    chips.appendChild(b);
+  });
+  if (S.open) chips.querySelectorAll('.chip').forEach((c) => { c.style.opacity = 1; });
+  fitChips(); markSel();
+}
+// Too tight for the row: let the widest tile give way first ("…"), then the next widest.
+function fitChips() {
+  const list = [...chips.querySelectorAll('.chip')];
+  list.forEach((c) => { c.style.minWidth = ''; });
+  const fits = () => chips.scrollWidth <= chips.clientWidth + 0.5;
+  list.sort((a, b) => b.offsetWidth - a.offsetWidth);
+  for (const c of list) { if (fits()) break; c.style.minWidth = '0'; }
+}
+function markSel() {
+  const id = S.sel;
+  TM.nodes.forEach((n) => n.el.classList.toggle('sel', n.it.id === id));
+  chips.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.id === id)));
+}
+// One quiet card, only when you ask for it: tap a node or a tile; tap it again to put it away.
+function select(id) {
+  S.sel = S.sel === id ? null : id;
+  showDetail(); markSel();
+  if (S.sel && !reduce && detail.animate) detail.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
+}
+function showDetail() {
+  const id = S.sel;
+  let html = '';
+  if (id) {
+    const it = ITEMS.find((x) => x.id === id), t = t0(it);
+    let kick = dayLong(dayOf(t));
+    if (dayOf(t) === 0) kick = it.end != null && t <= S.now && it.end > S.now ? 'Now' : t > S.now ? 'Up next' : 'Earlier today';
+    else if (dayOf(t) > 0 && S.day === 0) kick += dayOf(t) === 1 ? ' · tomorrow' : ` · in ${dayOf(t)} days`;
+    const when = it.end != null ? `${fmt(it.start)} – ${fmt(it.end)}` : it.kind === 'bill' ? `${money(it.cents)} due ${dayName(dayOf(it.at))}` : it.kind === 'due' ? `Due ${fmt(it.at)}` : `${it.kind === 'income' ? '+' : ''}${money(it.cents)} at ${fmt(it.at)}`;
+    const title = it.kind === 'sleep' && it.usual ? 'Bedtime (usual)' : it.name;
+    html = card(it.icon, kick, title, when, it.src + '.');
+  }
+  detail.innerHTML = html;
+}
+function card(icon, kick, title, when, src) {
+  return `<div class="d-ic">${icon}</div><div><div class="d-k">${kick}</div><div class="d-t">${title}</div>${when ? `<div class="d-w">${when}</div>` : ''}<div class="d-s">${src.replace(/\.\.$/, '.')}</div></div>`;
+}
+
+/* ---------- WebGL: the liquid outline (signed-distance union of body, necks, bubbles) ---------- */
+const canvas = $('#goo');
+let gl = null, U = {}, dpr = 1;
+(function initGL() {
+  try { gl = canvas.getContext('webgl', { premultipliedAlpha: true, alpha: true, antialias: false }); } catch (e) { gl = null; }
+  if (!gl) return;
+  const vs = 'attribute vec2 a; void main(){ gl_Position = vec4(a,0.,1.); }';
+  const fs = `precision highp float;
+uniform vec2 uSize; uniform float uDpr;
+uniform vec4 uBody; uniform vec2 uCap; uniform float uMorph;
+uniform vec4 uBub[8]; uniform vec4 uNeck[8]; uniform float uNeckR[8]; uniform float uN;
+uniform vec4 uStroke; uniform float uGlow; uniform float uFill;
+float sdE(vec2 p, vec2 r){ float k0 = length(p/r); float k1 = length(p/(r*r)); return k0*(k0-1.0)/max(k1,1e-4); }
+float sdS(vec2 p, vec2 h){ float a = max(h.x-h.y,0.0); p.x = max(abs(p.x)-a,0.0); return length(p)-h.y; }
+float sdSeg(vec2 p, vec2 a, vec2 b, float r){ vec2 pa=p-a, ba=b-a; float h=clamp(dot(pa,ba)/max(dot(ba,ba),1e-4),0.0,1.0); return length(pa-ba*h)-r; }
+float smin(float a, float b, float k){ float h=max(k-abs(a-b),0.0)/k; return min(a,b)-h*h*k*0.25; }
+void main(){
+  vec2 p = vec2(gl_FragCoord.x, uSize.y*uDpr - gl_FragCoord.y)/uDpr;
+  vec2 q = p - uBody.xy;
+  float d = mix(sdE(q, uBody.zw), sdS(q, uCap), uMorph);
+  float db = 1e5;
+  for (int i = 0; i < 8; i++) {
+    if (float(i) >= uN) break;
+    float nr = uNeckR[i];
+    if (nr > 0.05) d = smin(d, sdSeg(p, uNeck[i].xy, uNeck[i].zw, nr), 16.0);
+    float r = uBub[i].z;
+    if (r > 0.05) { float bi = length(p-uBub[i].xy)-r; db = min(db, bi); d = smin(d, bi, 12.0); }
+  }
+  float aa = 0.8/uDpr + 0.35;
+  float line = 1.0 - smoothstep(1.0-aa, 1.0+aa, abs(d));
+  float glow = exp(-abs(d)/8.0) * uGlow;
+  float fill = (1.0 - smoothstep(-0.8, 0.8, db)) * uFill;
+  float la = line*uStroke.a;
+  vec3 col = vec3(0.075,0.085,0.08)*fill*(1.0-la) + uStroke.rgb*la + vec3(0.494,0.878,0.682)*glow*(1.0-la);
+  float al = max(fill*(1.0-la) + la, glow);
+  gl_FragColor = vec4(col, al);
+}`;
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.warn(gl.getShaderInfoLog(s)); return null; } return s; };
+  const v = sh(gl.VERTEX_SHADER, vs), f = sh(gl.FRAGMENT_SHADER, fs);
+  if (!v || !f) { gl = null; return; }
+  const prog = gl.createProgram(); gl.attachShader(prog, v); gl.attachShader(prog, f); gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { gl = null; return; }
+  gl.useProgram(prog);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const a = gl.getAttribLocation(prog, 'a'); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+  ['uSize', 'uDpr', 'uBody', 'uCap', 'uMorph', 'uBub', 'uNeck', 'uNeckR', 'uN', 'uStroke', 'uGlow', 'uFill'].forEach((n) => { U[n] = gl.getUniformLocation(prog, n) || gl.getUniformLocation(prog, n + '[0]'); });
+  gl.clearColor(0, 0, 0, 0);
+})();
+function glResize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(G.W * dpr); canvas.height = Math.round(G.H * dpr);
+  if (gl) gl.viewport(0, 0, canvas.width, canvas.height);
+}
+const bub = new Float32Array(32), neck = new Float32Array(32), neckR = new Float32Array(8);
+function drawGoo(u) {
+  if (!gl) return;
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  if (!u) { canvas.style.visibility = 'hidden'; return; }
+  canvas.style.visibility = 'visible';
+  gl.uniform2f(U.uSize, G.W, G.H); gl.uniform1f(U.uDpr, dpr);
+  gl.uniform4f(U.uBody, u.cx, u.cy, u.rx, u.ry); gl.uniform2f(U.uCap, u.hw, u.hh); gl.uniform1f(U.uMorph, u.s);
+  bub.fill(0); neck.fill(0); neckR.fill(0);
+  u.items.slice(0, 8).forEach((b, i) => { bub.set([b.x, b.y, b.r, 0], i * 4); neck.set([b.ax, b.ay, b.tx, b.ty], i * 4); neckR[i] = b.nr; });
+  gl.uniform4fv(U.uBub, bub); gl.uniform4fv(U.uNeck, neck); gl.uniform1fv(U.uNeckR, neckR); gl.uniform1f(U.uN, Math.min(8, u.items.length));
+  gl.uniform4f(U.uStroke, u.col[0] * u.a, u.col[1] * u.a, u.col[2] * u.a, u.a); gl.uniform1f(U.uGlow, u.glow); gl.uniform1f(U.uFill, u.fill);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+
+/* ---------- Render one frame of the motion, a pure function of p ---------- */
+// The rim's busy arcs and pins, drawn up to a share f of its 12-hour window (from 2 hours ago, clockwise).
+function fillRim(f) {
+  if (G.rimFill === f) return;
+  G.rimFill = f;
+  const rt = CM.ws + f * (CM.we - CM.ws);
+  for (const a of CM.arcs) {
+    const e = Math.min(a.b, rt), on = e > a.a + 1;
+    const d = on ? arcPath(ang(a.a), ang(e), G.R + a.lap * G.LAP) : '';
+    for (const x of a.els) { x.style.visibility = on ? 'visible' : 'hidden'; if (on) x.setAttribute('d', d); }
+  }
+  for (const p of CM.pins) p.el.style.visibility = p.t <= rt ? 'visible' : 'hidden';
+}
+function render() {
+  const P = clamp(S.p, 0, 1), pr = S.press, prC = clamp(pr, 0, 1);
+  const R = G.R;
+  // wrapping back from another part of the line: it rewinds to now in the first part of the same motion
+  if (G.wrapSl != null) trackWrap.scrollLeft = lerp(G.home, G.wrapSl, eIO(seg(P, 0.78, 1)));
+  const shift = G.wrapSl != null ? G.home - trackWrap.scrollLeft : 0;
+  if (reduce) return renderReduced(P);
+  // body
+  const s = eIO(seg(P, 0.36, 0.78));
+  const sq = eOut(seg(P, 0.05, 0.34)) * (1 - s);
+  const rx = R * (1 + 0.075 * sq), ry = R * (1 - 0.065 * sq);
+  const by = lerp(G.cy, G.ycap, eIO(seg(P, 0.26, 0.7)));
+  const fScale = 1 - 0.14 * seg(P, 0.3, 0.56);
+  const dip = 1 - 0.02 * pr * (1 - seg(P, 0, 0.15));
+  faceG.setAttribute('transform', `translate(${G.cx} ${by}) scale(${(rx / R) * fScale * dip} ${(ry / R) * fScale * dip})`);
+  $('#rimC').style.opacity = 1 - seg(P, 0.0, 0.05);
+  // the rim empties as the clock stretches open, and refills clockwise from 2 hours ago as the timeline wraps back in
+  fillRim(Math.round(eIO(1 - seg(P, 0.1, 0.34)) * 400) / 400);
+  arcsG.style.opacity = 1 - seg(P, 0.3, 0.4);
+  ticksG.style.opacity = stepsG.style.opacity = $('#handsG').style.opacity = 1 - seg(P, 0.3, 0.5);
+  stepsG.style.opacity = (1 - seg(P, 0.02, 0.2)) * (1 - 0.6 * prC);
+  $('#pressG').setAttribute('opacity', prC * (1 - seg(P, 0.3, 0.5)));
+  $('#haloC').setAttribute('opacity', 0.35 * prC * (1 - seg(P, 0.05, 0.3)));
+  const hc = `rgb(${Math.round(lerp(243, 126, prC))},${Math.round(lerp(245, 224, prC))},${Math.round(lerp(244, 174, prC))})`;
+  $('#hourH').setAttribute('stroke', hc); $('#minH').setAttribute('stroke', hc); $('#hubC').setAttribute('fill', hc);
+  // markers
+  const lab = 1 - seg(P, 0, 0.12);
+  for (const m of CM.marks) { const o = lab * (m.past ? 0.5 : 1); m.lab.style.opacity = o; m.line.setAttribute('opacity', o); }
+  hint.style.opacity = 1 - seg(P, 0, 0.1);
+  $('#dayG').style.opacity = lab;
+  // icons, bubbles, necks
+  const ta = eIO(seg(P, 0.06, 0.44)), tb = eIO(seg(P, 0.38, 0.88));
+  const rOrb = R + 50;
+  const grow = eOut(seg(P, 0.02, 0.15));
+  const life = seg(P, 0.005, 0.04) * (1 - seg(P, 0.48, 0.68));
+  const items = [];
+  for (const k of MAP) {
+    const th = k.th0 + G.turn * ta, rr = lerp(k.r0, rOrb, eOut(seg(P, 0.04, 0.3)));
+    const phi = k.phiEnd - G.turn * (1 - ta);
+    let ox = lerp(G.cx + Math.sin(th) * rr, G.cx + (G.W / 2 - 30) * Math.sin(phi / 2), ta);
+    let oy = by - Math.cos(th) * rr * lerp(1, 0.9, ta);
+    // keep every marker outside the rim while it travels
+    const gap = lerp(Math.min(k.r0 - R, 44), 44, eOut(seg(P, 0.04, 0.3)));
+    const ex = (ox - G.cx) / (rx + gap), ey = (oy - by) / (ry + gap), dd = Math.hypot(ex, ey);
+    if (dd < 1 && dd > 1e-3) { ox = G.cx + ex / dd * (rx + gap); oy = by + ey / dd * (ry + gap); }
+    ox = clamp(ox, 24, G.W - 24);
+    const x = lerp(ox, k.p2[0] + shift, tb), y = lerp(oy, k.p2[1], tb);
+    const sc = lerp(lerp(1, 0.86, seg(P, 0.05, 0.25)), 1.04, seg(P, 0.6, 0.9));
+    const op = lerp(k.dim ? 0.5 : 1, 1, seg(P, 0.05, 0.3));
+    k.el.style.transform = `translate3d(${(x - 15).toFixed(2)}px, ${(y - 15).toFixed(2)}px, 0) scale(${sc.toFixed(3)})`;
+    const offF = k.off ? 1 - seg(P, 0.4, 0.56) : 1;
+    k.el.style.opacity = op * (k.off ? 1 - seg(P, 0.46, 0.66) : 1);
+    const r = 22 * eOut(seg(P, 0.08, 0.22)) * (1 - seg(P, 0.8, 0.94)) * (k.inCap ? 1 : 1 - seg(P, 0.5, 0.68)) * offF;
+    const dx = x - G.cx, dy = y - by, len0 = Math.hypot(dx, dy) || 1;
+    const ux = dx / len0, uy = dy / len0;
+    const ra = 1 / Math.sqrt((ux / rx) ** 2 + (uy / ry) ** 2);
+    const ax = G.cx + ux * (ra - 8), ay = by + uy * (ra - 8);
+    const len = Math.hypot(x - ax, y - ay);
+    const nr = life * clamp(8 - len * 0.035, 2.2, 7.5) * offF;
+    items.push({ x, y, r, ax, ay, tx: lerp(ax, x, grow), ty: lerp(ay, y, grow), nr });
+  }
+  const rel = eOut(seg(P, 0.84, 1));
+  const g = seg(P, 0.04, 0.22);
+  const grey = [0.23, 0.245, 0.235];
+  const col = [lerp(grey[0], MINT[0], 0.8 * g), lerp(grey[1], MINT[1], 0.8 * g), lerp(grey[2], MINT[2], 0.8 * g)];
+  const a = seg(P, 0, 0.04) * (1 - seg(P, 0.84, 0.98));
+  if (P > 0 && P < 1 && gl) {
+    drawGoo({ cx: G.cx, cy: by, rx, ry, hw: G.capHW + 14 * rel, hh: G.capHH + 18 * rel, s, items, col, a, glow: 0.42 * seg(P, 0.03, 0.2) * (1 - seg(P, 0.84, 0.98)), fill: 0.95 * (1 - seg(P, 0.8, 0.94)) });
+  } else drawGoo(null);
+  // the line, labels and header
+  let X = 50;
+  if (P >= 0.52) X = P < 0.84 ? lerp(50, 7, eIO(seg(P, 0.52, 0.8))) : lerp(7, 0, seg(P, 0.84, 0.97));
+  trackWrap.style.clipPath = P >= 1 ? 'none' : `inset(0 ${X.toFixed(2)}% 0 ${X.toFixed(2)}%)`;
+  trackWrap.style.setProperty('--tlab', seg(P, 0.82, 1).toFixed(3));
+  const tN = seg(P, 0.88, 1);
+  if (TM.nowEl) { TM.nowEl.style.opacity = tN; TM.nowEl.style.transform = `translateX(-50%) translateY(${(-16 * (1 - eBack(tN))).toFixed(2)}px)`; }
+  // "Today ⌄" leaves before the day picker arrives, so the two never overlap
+  $('#todayBtn').style.opacity = 1 - seg(P, 0.66, 0.77);
+  $('#todayBtn').style.visibility = P > 0.77 ? 'hidden' : 'visible';
+  const pk = seg(P, 0.78, 0.94);
+  daysNav.style.opacity = pk; daysNav.style.transform = `translateY(${(-8 * (1 - pk)).toFixed(2)}px)`;
+  chips.querySelectorAll('.chip').forEach((c, i) => { const t = seg(P, 0.8 + i * 0.03, 0.95 + i * 0.02); c.style.opacity = t; c.style.transform = `translateY(${(10 * (1 - eOut(t))).toFixed(2)}px)`; });
+  const dt = seg(P, 0.86, 1);
+  detail.style.opacity = dt; detail.style.transform = `translateY(${(12 * (1 - eOut(dt))).toFixed(2)}px)`;
+  wrapHint(P);
+}
+function wrapHint(P) { $('#hintWrap').style.opacity = detail.innerHTML ? 0 : seg(P, 0.92, 1); }
+function renderReduced(P) {
+  faceG.setAttribute('transform', `translate(${G.cx} ${G.cy})`);
+  $('#face').style.opacity = 1 - P; callouts.style.opacity = 1 - P; hint.style.opacity = 1 - P;
+  for (const k of MAP) { k.el.style.transform = `translate3d(${k.p0[0] - 15}px, ${k.p0[1] - 15}px, 0)`; k.el.style.opacity = (1 - P) * (k.dim ? 0.5 : 1); }
+  for (const m of CM.marks) m.lab.style.opacity = m.past ? 0.5 : 1;
+  $('#dayG').style.opacity = 1 - P;
+  drawGoo(null);
+  trackWrap.style.clipPath = 'none'; trackWrap.style.opacity = P; trackWrap.style.setProperty('--tlab', 1);
+  TM.nodes.forEach((n) => n.el.classList.remove('mapped'));
+  if (TM.nowEl) TM.nowEl.style.opacity = 1;
+  $('#todayBtn').style.opacity = 1 - P; $('#todayBtn').style.visibility = P > 0.5 ? 'hidden' : 'visible';
+  daysNav.style.opacity = P; chips.querySelectorAll('.chip').forEach((c) => { c.style.opacity = P; });
+  detail.style.opacity = P;
+  wrapHint(P);
+}
+
+/* ---------- Driving the motion ---------- */
+function setInteractive(open) {
+  trackWrap.style.pointerEvents = open ? 'auto' : 'none';
+  daysNav.style.pointerEvents = open ? 'auto' : 'none';
+  chips.style.pointerEvents = open ? 'auto' : 'none';
+  detail.style.pointerEvents = open ? 'auto' : 'none';
+  hit.style.display = open ? 'none' : 'block';
+}
+function finishOpen() {
+  S.open = true;
+  TM.nodes.forEach((n) => n.el.classList.remove('mapped'));
+  micons.style.visibility = 'hidden';
+  drawGoo(null);
+  setInteractive(true);
+  markSel();
+}
+function animateTo(target, ms, ease, done) {
+  const from = S.p, start = performance.now(), dur = ms * (S.slow ? 4 : 1);
+  const marks = target > from ? [[0.18, 7], [0.97, 12]] : [[0.5, 7], [0.02, 10]];
+  S.anim = { id: 0 };
+  const a = S.anim;
+  const step = (now) => {
+    if (S.anim !== a) return;
+    const t = clamp((now - start) / dur, 0, 1);
+    const prev = S.p;
+    S.p = from + (target - from) * ease(t);
+    for (const [m, ms2] of marks) if ((prev < m && S.p >= m) || (prev > m && S.p <= m)) haptic(ms2);
+    render(); syncMorphSlider();
+    if (t < 1) a.id = requestAnimationFrame(step);
+    else { S.anim = null; if (done) done(); }
+  };
+  a.id = requestAnimationFrame(step);
+}
+function pressTo(v, ms = 140) {
+  const from = S.press, start = performance.now();
+  const step = (now) => {
+    const t = clamp((now - start) / ms, 0, 1);
+    S.press = from + (v - from) * eOut(t);
+    if (!S.open) render();
+    if (t < 1) S.pressAnim = requestAnimationFrame(step);
+  };
+  cancelAnimationFrame(S.pressAnim);
+  S.pressAnim = requestAnimationFrame(step);
+}
+function open() {
+  if (S.open || S.anim) return;
+  prepMorph(); micons.style.visibility = 'visible';
+  S.day = 0; S.sel = null; buildChips(); markDay(); showDetail();
+  if (S.press < 1) pressTo(1, 110);
+  haptic(8);
+  animateTo(1, reduce ? 240 : 1300, reduce ? (t) => t : ePlay, finishOpen);
+}
+// Wrapping the timeline back into the clock: the exact path of the open, run backwards as one motion.
+// From another day the line first rewinds to now; then the tiles and labels leave, the line gathers into the
+// capsule, the bubbles rise out of it and turn back around the rim, the rim refills clockwise, and the clock
+// lands with a small spring.
+function beginWrap() {
+  S.open = false; S.sel = null; showDetail(); markSel();
+  if (S.press < 1) S.press = 1;
+  prepMorph(true); micons.style.visibility = 'visible';
+}
+function finishClose() {
+  setInteractive(false);
+  G.wrapSl = null; trackWrap.scrollLeft = G.home;
+  S.day = 0; markDay(); buildChips();
+  render();
+  // the landing: the press lets go with a slight overshoot, so the clock settles instead of stopping
+  const from = S.press, start = performance.now(), ms = reduce ? 160 : 520;
+  cancelAnimationFrame(S.pressAnim);
+  const step = (now) => {
+    const t = clamp((now - start) / ms, 0, 1);
+    S.press = from * (1 - (reduce ? eOut(t) : eBack(t)));
+    if (!S.open) render();
+    if (t < 1) S.pressAnim = requestAnimationFrame(step);
+  };
+  S.pressAnim = requestAnimationFrame(step);
+}
+function close() {
+  if (!S.open || S.anim) return;
+  const dist = Math.abs(trackWrap.scrollLeft - homeScroll());
+  beginWrap();
+  setInteractive(false);
+  animateTo(0, reduce ? 260 : 1150 + Math.min(450, dist * 0.12), reduce ? eIO : ePlay, finishClose);
+}
+
+/* pull the line down, or pinch it, to wrap it back into the clock; it follows the finger and settles on release */
+const pts = new Map();
+let wrap = null, wrapSuppressClick = 0;
+trackWrap.addEventListener('pointerdown', (e) => {
+  if (!S.open || S.anim) return;
+  pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pts.size === 1) wrap = { kind: null, x: e.clientX, y: e.clientY, id: e.pointerId, lastP: 1, lastT: performance.now(), v: 0, armed: false };
+  else if (pts.size === 2 && wrap && wrap.kind !== 'pull') {
+    const [a, b] = [...pts.values()];
+    wrap.kind = 'pinch'; wrap.d0 = Math.max(40, Math.hypot(a.x - b.x, a.y - b.y));
+    beginWrap();
+  }
+});
+trackWrap.addEventListener('pointermove', (e) => {
+  if (!pts.has(e.pointerId) || !wrap) return;
+  pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  let p = null;
+  if (wrap.kind === 'pinch' && pts.size >= 2) {
+    const [a, b] = [...pts.values()];
+    p = clamp(1 - (1 - Math.hypot(a.x - b.x, a.y - b.y) / wrap.d0) * 1.6, 0, 1);
+  } else if (e.pointerId === wrap.id) {
+    const dx = e.clientX - wrap.x, dy = e.clientY - wrap.y;
+    if (!wrap.kind && dy > 10 && dy > Math.abs(dx) * 1.2) {
+      wrap.kind = 'pull';
+      try { trackWrap.setPointerCapture(e.pointerId); } catch (er) { /* ignore */ }
+      beginWrap();
+    }
+    if (wrap.kind === 'pull') p = clamp(1 - (dy - 10) / 250, 0, 1);
+  }
+  if (p == null) return;
+  const now = performance.now();
+  wrap.v = (p - wrap.lastP) / Math.max(1, now - wrap.lastT) * 1000; wrap.lastP = p; wrap.lastT = now;
+  // one tick when the pull has gone far enough to wrap on release
+  if (!wrap.armed && p < 0.7) { wrap.armed = true; haptic(6); } else if (wrap.armed && p > 0.74) wrap.armed = false;
+  S.p = p; render(); syncMorphSlider();
+});
+const endWrap = (e, cancelled) => {
+  pts.delete(e.pointerId);
+  if (!wrap || (wrap.kind !== 'pinch' && e.pointerId !== wrap.id) || (wrap.kind === 'pinch' && pts.size)) { if (!pts.size) wrap = null; return; }
+  const w = wrap; wrap = null; pts.clear();
+  if (!w.kind) return;
+  wrapSuppressClick = performance.now();
+  // a flick counts only if the finger was still moving when it let go
+  const v = performance.now() - w.lastT > 90 ? 0 : w.v;
+  if (!cancelled && (S.p < 0.7 || v < -2)) animateTo(0, 760 * S.p + 260, eOut, finishClose);
+  else animateTo(1, 420 * (1 - S.p) + 180, eOut, () => { G.wrapSl = null; finishOpen(); });
+};
+trackWrap.addEventListener('pointerup', (e) => endWrap(e, false));
+trackWrap.addEventListener('pointercancel', (e) => endWrap(e, true));
+// a pull that started on a node is not a tap on it
+trackWrap.addEventListener('click', (e) => { if (performance.now() - wrapSuppressClick < 350) { e.stopPropagation(); e.preventDefault(); } }, true);
+
+/* pull sideways to open; tap to open */
+let drag = null;
+hit.addEventListener('pointerdown', (e) => {
+  if (S.open || S.anim) return;
+  drag = { x: e.clientX, y: e.clientY, id: e.pointerId, moved: false, lastP: 0, lastT: performance.now(), v: 0 };
+  try { hit.setPointerCapture(e.pointerId); } catch (er) { /* ignore */ }
+  pressTo(1); haptic(8);
+});
+hit.addEventListener('pointermove', (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.moved && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) { drag.moved = true; prepMorph(); micons.style.visibility = 'visible'; buildChips(); markDay(); showDetail(); }
+  if (drag.moved) {
+    const now = performance.now();
+    const p = clamp((Math.abs(dx) - 10) / 210, 0, 1);
+    drag.v = (p - drag.lastP) / Math.max(1, now - drag.lastT) * 1000; drag.lastP = p; drag.lastT = now;
+    S.p = p; render(); syncMorphSlider();
+  }
+});
+const endDrag = (e, cancelled) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const d = drag; drag = null;
+  if (!d.moved) { if (cancelled) pressTo(0); else open(); return; }
+  const v = performance.now() - d.lastT > 90 ? 0 : d.v;
+  if (!cancelled && (S.p > 0.35 || v > 1.6)) animateTo(1, 700 * (1 - S.p) + 250, eOut, finishOpen);
+  else animateTo(0, 600 * S.p + 150, eOut, () => pressTo(0, 220));
+};
+hit.addEventListener('pointerup', (e) => endDrag(e, false));
+hit.addEventListener('pointercancel', (e) => endDrag(e, true));
+hit.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+$('#todayBtn').addEventListener('click', () => open());
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+
+/* the day under the middle of the line drives the picker and chips */
+let scrollRaf = 0;
+trackWrap.addEventListener('scroll', () => {
+  if (!S.open || scrollRaf) return;
+  scrollRaf = requestAnimationFrame(() => {
+    scrollRaf = 0;
+    const d = clamp(dayOf(tAt(trackWrap.scrollLeft + G.W / 2)), DAYS[0], DAYS[DAYS.length - 1]);
+    if (d !== S.day) { S.sel = null; setDay(d); markSel(); }
+  });
+}, { passive: true });
+
+/* ---------- Prototype controls ---------- */
+const timeR = $('#timeR'), morphR = $('#morphR');
+function syncMorphSlider() { morphR.value = Math.round(clamp(S.p, 0, 1) * 1000); $('#morphO').textContent = Math.round(clamp(S.p, 0, 1) * 100) + '%'; }
+function rebuild() {
+  G.wrapSl = null;
+  rebuildClock(); rebuildTrack(); buildDays(); markDay(); buildChips(); showDetail();
+  if (S.open) { finishOpen(); trackWrap.scrollLeft = homeScroll(); S.day = 0; markDay(); buildChips(); showDetail(); }
+  else { prepMorph(); }
+  render();
+}
+timeR.addEventListener('input', () => {
+  S.now = T(0, 0, +timeR.value); $('#timeO').textContent = fmt(S.now);
+  const wasOpen = S.open; rebuild();
+  if (wasOpen) { S.p = 1; render(); }
+});
+function scrubTo(p, press) {
+  if (S.anim) { cancelAnimationFrame(S.anim.id); S.anim = null; }
+  if (press != null) S.press = press;
+  if (S.open && p < 1) { S.open = false; setInteractive(false); G.wrapSl = null; trackWrap.scrollLeft = homeScroll(); }
+  if (!S.open) { prepMorph(); micons.style.visibility = 'visible'; S.day = 0; S.sel = null; buildChips(); markDay(); showDetail(); }
+  S.p = p;
+  if (p >= 1) { render(); finishOpen(); } else { if (press == null && p > 0) S.press = 1; render(); }
+  syncMorphSlider();
+}
+morphR.addEventListener('input', () => { scrubTo(+morphR.value / 1000); $('#frames').querySelectorAll('button').forEach((b) => b.classList.remove('on')); });
+const FRAMES = { 1: [0, 0], 2: [0, 1], 3: [0.27, 1], 4: [0.66, 1], 5: [0.9, 1], 6: [1, 1] };
+$('#frames').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return;
+  $('#frames').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+  const [p, pr] = FRAMES[b.dataset.f];
+  scrubTo(p, pr);
+});
+$('#slow').addEventListener('change', (e) => { S.slow = e.target.checked; });
+$('#busy').addEventListener('change', (e) => {
+  for (const x of BUSY_DAY) { const i = ITEMS.findIndex((it) => it.id === x.id); if (i >= 0) ITEMS.splice(i, 1); }
+  if (e.target.checked) ITEMS.push(...BUSY_DAY);
+  const wasOpen = S.open; rebuild();
+  if (wasOpen) { S.p = 1; render(); }
+});
+$('#play').addEventListener('click', () => {
+  if (S.anim) return;
+  $('#frames').querySelectorAll('button').forEach((x) => x.classList.remove('on'));
+  if (S.open) { close(); return; }
+  if (S.p > 0) { scrubTo(0, 0); }
+  open();
+  const wait = (S.slow ? 4 : 1) * 1300 + 1300;
+  setTimeout(() => close(), wait);
+});
+
+/* ---------- Boot ---------- */
+new ResizeObserver(() => layout()).observe(app);
+layout();
+const q = new URLSearchParams(location.search);
+if (q.has('p')) scrubTo(+q.get('p'), q.has('press') ? +q.get('press') : null);
+if (q.has('t')) { timeR.value = +q.get('t'); timeR.dispatchEvent(new Event('input')); }
+})();
+</script>

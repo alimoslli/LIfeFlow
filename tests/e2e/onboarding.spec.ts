@@ -49,12 +49,12 @@ test("a new user sees their day connected, names their assistant, then a skippab
   await page.waitForURL((u) => u.pathname === "/");
   const tour = page.getByRole("dialog", { name: "Welcome to LifeFlow" });
   await expect(tour).toBeVisible();
-  await page.getByRole("button", { name: "Next" }).click();
-  await expect(page.getByRole("dialog", { name: "Start each day here" })).toBeVisible();
-  await page.getByRole("button", { name: "Next" }).click();
-  await expect(page.getByRole("dialog", { name: "Your calendar and to-dos" })).toBeVisible();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Your day as a clock" })).toBeVisible();
+  await page.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Nova" })).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog", { name: "Your calendar and to-dos" })).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "Nova" })).toHaveCount(0);
 
   // Saved: what fills their week, their assistant, and the class and job they typed.
   const [prefs] = await queryAsUser<{ p: { lifeStage?: string; assistantName?: string; assistantStyle?: string } }>(
@@ -114,7 +114,7 @@ test("the app follows what fills your week: tabs and pills adapt", async ({ page
   await page.getByRole("button", { name: "Skip tour" }).click();
 
   const tab = (name: string) => page.getByRole("navigation", { name: "Main" }).getByRole("link", { name, exact: true }).filter({ visible: true });
-  const pill = (name: string) => page.getByRole("navigation", { name: "Plan sections" }).getByRole("link", { name });
+  const pill = (name: string) => page.getByRole("navigation", { name: "Today sections" }).getByRole("link", { name });
   const setWeek = async (choice: string) => {
     await page.goto("/settings/profile");
     await page.getByLabel("What fills your week").selectOption({ label: choice });

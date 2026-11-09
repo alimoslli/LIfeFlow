@@ -1,0 +1,253 @@
+<title>LifeFlow Rebrand Directions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Silkscreen:wght@400;700&family=Pixelify+Sans:wght@500;700&display=swap">
+<style>
+/* Layout: three brand directions, one card each, stacked on a phone and side by side when wide. In every card the
+   character is the assistant, the logo is made from the character, and the accent is the character's world.
+   The page chrome follows the viewer's theme; each card keeps its own colours (they are the proposal). */
+:root {
+  --bg: #f4f2ee;
+  --fg: #1d1c1a;
+  --muted: #6b6760;
+  --line: #e2ded6;
+  --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --pixel: "Silkscreen", ui-monospace, monospace;
+  --pixel-2: "Pixelify Sans", "Silkscreen", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #0f0f0e; --fg: #f2f0eb; --muted: #a29e96; --line: #2c2b28; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #0f0f0e; --fg: #f2f0eb; --muted: #a29e96; --line: #2c2b28; color-scheme: dark; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+.page {
+  max-width: 1180px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 22px 48px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+h1 { margin: 0; font-family: var(--pixel); font-weight: 400; font-size: clamp(1.3rem, 4vw, 1.9rem); text-wrap: balance; }
+.lede { margin: 4px 0 0; color: var(--muted); font-size: 0.92rem; }
+.dirs { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.dir {
+  --a: #000; --a2: #000; --ink: #000; --paper: #fff; --soft: #eee;
+  background: var(--paper); color: var(--ink); border-radius: 28px; padding: 18px;
+  display: flex; flex-direction: column; gap: 16px; min-width: 0;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 12px 28px -12px rgb(0 0 0 / 0.18);
+}
+.tag { font-family: var(--pixel); font-size: 0.68rem; letter-spacing: 0.08em; color: var(--a); }
+.mark { display: flex; align-items: center; gap: 14px; }
+.mark canvas { width: 72px; height: 72px; border-radius: 18px; flex: none; }
+.word { font-family: var(--pixel-2); font-weight: 700; font-size: 2rem; line-height: 1; letter-spacing: -0.01em; }
+.idea { margin: 4px 0 0; font-size: 0.88rem; color: color-mix(in srgb, var(--ink) 72%, transparent); }
+.sw { display: flex; gap: 8px; }
+.sw span { flex: 1; height: 34px; border-radius: 10px; display: flex; align-items: flex-end; padding: 4px 6px; font: 600 0.6rem/1 var(--font); letter-spacing: 0.04em; }
+.crew { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; background: var(--soft); border-radius: 18px; padding: 10px 6px; }
+.crew div { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.crew canvas { width: 44px; height: 44px; }
+.crew small { font-family: var(--pixel); font-size: 0.55rem; }
+.phone { position: relative; background: var(--soft); border-radius: 22px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.phone svg { width: 100%; aspect-ratio: 1; max-height: 250px; display: block; }
+.phone .now { font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.phone .now b { font-weight: 600; }
+.says { display: flex; gap: 10px; align-items: center; background: var(--paper); border-radius: 16px; padding: 10px 12px; font-size: 0.84rem; }
+.says canvas { width: 32px; height: 32px; flex: none; }
+.foot { color: var(--muted); font-size: 0.78rem; line-height: 1.5; border-top: 1px solid var(--line); padding-top: 14px; }
+.foot b { color: var(--fg); font-weight: 600; }
+</style>
+
+<div class="page">
+  <div>
+    <h1>Name · Logo · Colour · Companion</h1>
+    <p class="lede">One system. The companion is your assistant. The logo is the companion. The colour is its world.</p>
+  </div>
+  <div class="dirs" id="dirs"></div>
+  <p class="foot"><b>Concepts, nothing changed.</b> Each name needs a trademark and App Store check before it's picked. People name their own companion; the brand names the species. The old green stays until a direction is chosen.</p>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const INK = "#262320";
+  /* ---------- the companion body, drawn in code (one shape, each direction dresses it) ---------- */
+  function sprite(c, step, opts = {}) {
+    const px = new Map();
+    const put = (x, y, col) => { if (x >= 0 && x < 16 && y >= 0 && y < 16) px.set(x + "," + y, col); };
+    const bob = step % 2, top = 4 - bob, h = 8;
+    for (let y = 0; y < h; y++) {
+      const inset = y === 0 || y === h - 1 ? 2 : y === 1 || y === h - 2 ? 1 : 0;
+      for (let x = 3 + inset; x <= 12 - inset; x++) {
+        const edge = x === 3 + inset || x === 12 - inset || y === 0 || y === h - 1;
+        put(x, top + y, edge ? INK : y >= h - 3 ? c.dark : c.body);
+      }
+    }
+    put(5, top + 1, c.light); put(6, top + 1, c.light); put(5, top + 2, c.light);
+    const ey = top + 3;
+    if (c.face === "visor") { for (let x = 5; x <= 10; x++) put(x, ey, "#1f2a3a"); put(6, ey, c.eye || "#7ef0ff"); put(9, ey, c.eye || "#7ef0ff"); }
+    else { put(6, ey, INK); put(6, ey + 1, INK); put(10, ey, INK); put(10, ey + 1, INK); put(5, ey + 2, "#f2a0a0"); put(11, ey + 2, "#f2a0a0"); }
+    const t = top - 1;
+    const tops = {
+      leaf: () => { put(8, t, INK); put(8, t - 1, INK); put(9, t - 2, c.trim); put(10, t - 2, c.trim); put(10, t - 3, c.trim); put(9, t - 1, c.trim); put(7, t - 2, c.trim2); },
+      ears: () => { for (const ex of [4, 11]) { put(ex, t, INK); put(ex, t - 1, INK); put(ex + (ex < 8 ? 1 : -1), t, c.body); } },
+      antenna: () => { put(8, t, INK); put(8, t - 1, INK); put(8, t - 2, c.trim); put(7, t - 2, c.trim); put(8, t - 3, c.trim); },
+      flame: () => { put(8, t, c.trim); put(7, t, c.trim2); put(9, t, c.trim2); put(8, t - 1, "#ffd34d"); put(9, t - 2, c.trim); },
+      ray: () => { for (const [x, y] of [[8, t - 1], [5, t], [11, t], [3, t + 2], [13, t + 2]]) put(x, y, c.trim); put(8, t - 2, c.trim2); },
+      dot: () => { put(8, t, c.trim); put(8, t - 1, c.trim); put(9, t - 1, c.trim2); },
+      wave: () => { put(6, t, c.trim); put(7, t - 1, c.trim); put(8, t, c.trim); put(9, t - 1, c.trim); put(10, t, c.trim); },
+      crown: () => { put(5, t, c.trim); put(5, t - 1, c.trim); put(8, t, c.trim); put(8, t - 1, c.trim); put(8, t - 2, c.trim2); put(11, t, c.trim); put(11, t - 1, c.trim); put(6, t, c.trim); put(7, t, c.trim); put(9, t, c.trim); put(10, t, c.trim); },
+    };
+    tops[c.top]?.();
+    const fy = top + h;
+    const legs = opts.still ? [[5, 0], [10, 0]] : step % 2 ? [[6, 0], [9, 0]] : [[4, 0], [10, 0]];
+    for (const [x, dy] of legs) { put(x, fy + dy, INK); put(x + 1, fy + dy, INK); }
+    return px;
+  }
+  function paint(cv, px, size = 16, ox = 0, oy = 0, clear = true) {
+    const g = cv.getContext("2d");
+    if (clear) g.clearRect(0, 0, size, size);
+    for (const [k, col] of px) { const [x, y] = k.split(",").map(Number); g.fillStyle = col; g.fillRect(x + ox, y + oy, 1, 1); }
+  }
+
+  /* ---------- three directions: name, idea, colours, the crew, the logo built from the companion ---------- */
+  const DIRS = [
+    {
+      tag: "A · EVOLVE",
+      name: "LifeFlow",
+      idea: "Keep the name. Your Flowmate walks your day.",
+      species: "Flowmate",
+      paper: "#f3f8f2", soft: "#e2efe0", ink: "#14251b", a: "#1f7a4d", a2: "#9ad7a8",
+      swatches: [["#1f7a4d", "#fff", "Moss"], ["#9ad7a8", "#14251b", "Mint"], ["#f3f8f2", "#14251b", "Cream"]],
+      crew: [
+        { name: "Sprout", body: "#5fbf74", dark: "#3d8f52", light: "#a8e6b3", trim: "#2f9a4a", trim2: "#79d38a", top: "leaf" },
+        { name: "Mochi", body: "#f3e6cc", dark: "#d7bd92", light: "#fffaf0", top: "ears" },
+        { name: "Bit", body: "#95b7d6", dark: "#6688ad", light: "#cde0f1", trim: "#ffd34d", top: "antenna" },
+        { name: "Ember", body: "#f29358", dark: "#c46733", light: "#ffc8a3", trim: "#ffb347", trim2: "#ff7a2f", top: "flame" },
+      ],
+      logo: "app", says: "Lab report's due tonight. 30 minutes before work?",
+    },
+    {
+      tag: "B · PIXEL-NATIVE",
+      name: "Daybit",
+      idea: "Every day is made of bits. Yours walks the clock with you.",
+      species: "Bit",
+      paper: "#fff6f1", soft: "#ffe4d8", ink: "#251311", a: "#ff4f2e", a2: "#2b2d6e",
+      swatches: [["#ff4f2e", "#fff", "Signal"], ["#2b2d6e", "#fff", "Night"], ["#fff6f1", "#251311", "Paper"]],
+      crew: [
+        { name: "Dot", body: "#ff6a4a", dark: "#d4402a", light: "#ffb39f", trim: "#2b2d6e", trim2: "#ff9f87", top: "dot" },
+        { name: "Volt", body: "#ffd34d", dark: "#d9a521", light: "#fff0b8", trim: "#2b2d6e", top: "antenna" },
+        { name: "Nib", body: "#8b8ff0", dark: "#5d61c4", light: "#c9cbff", trim: "#ff4f2e", face: "visor", eye: "#ffd34d", top: "dot" },
+        { name: "Tock", body: "#6fd2b2", dark: "#3fa585", light: "#c4f1e2", top: "ears" },
+      ],
+      logo: "clock", says: "3 assignments at 11:59. Start the short one?",
+    },
+    {
+      tag: "C · CALM",
+      name: "Morrow",
+      idea: "Today, then tomorrow. Your Morrow rises with you.",
+      species: "Morrow",
+      paper: "#f4f1fb", soft: "#e6e0f6", ink: "#1c1838", a: "#5a46d6", a2: "#f5a64b",
+      swatches: [["#5a46d6", "#fff", "Dusk"], ["#f5a64b", "#1c1838", "Sunrise"], ["#f4f1fb", "#1c1838", "Haze"]],
+      crew: [
+        { name: "Sol", body: "#f7b45e", dark: "#d08530", light: "#ffe0b0", trim: "#f5a64b", trim2: "#ffd38a", top: "ray" },
+        { name: "Luna", body: "#b9b0f2", dark: "#8a7fd6", light: "#e6e1ff", trim: "#fff3c4", top: "crown" },
+        { name: "Tide", body: "#79c7e8", dark: "#4b9bc0", light: "#c9ecfa", trim: "#ffffff", top: "wave" },
+        { name: "Moss", body: "#86c98f", dark: "#5a9c63", light: "#cdeccf", trim: "#3f9a52", trim2: "#9fe0a8", top: "leaf" },
+      ],
+      logo: "sunrise", says: "Free after 6. Tomorrow's exam: one hour tonight?",
+    },
+  ];
+
+  // The logo, 24x24 pixels, made from the companion: an app tile with the companion (A), a pixel clock with the companion
+  // standing on the rim (B), a sunrise over the timeline whose sun is the companion (C).
+  function logo(cv, d) {
+    const g = cv.getContext("2d");
+    g.clearRect(0, 0, 24, 24);
+    const c = d.crew[0];
+    const fill = (x, y, col) => { g.fillStyle = col; g.fillRect(x, y, 1, 1); };
+    if (d.logo === "app") {
+      g.fillStyle = d.a; g.fillRect(0, 0, 24, 24);
+      paint(cv, sprite(c, 0, { still: true }), 24, 4, 5, false);
+    }
+    if (d.logo === "clock") {
+      g.fillStyle = d.paper; g.fillRect(0, 0, 24, 24);
+      for (let a = 0; a < 360; a += 4) { const r = 9, x = Math.round(12 + r * Math.sin((a * Math.PI) / 180)), y = Math.round(13 - r * Math.cos((a * Math.PI) / 180)); fill(x, y, d.a2); }
+      fill(12, 13, d.a2); fill(12, 12, d.a2); fill(12, 11, d.a2); fill(13, 13, d.a2); fill(14, 13, d.a2);
+      // the companion's head peeking over the rim at the 12
+      for (let x = 9; x <= 15; x++) for (let y = 0; y <= 4; y++) { const edge = x === 9 || x === 15 || y === 0; if ((x === 9 || x === 15) && y === 0) continue; fill(x, y, edge ? INK : d.a); }
+      fill(11, 2, INK); fill(13, 2, INK);
+    }
+    if (d.logo === "sunrise") {
+      g.fillStyle = d.a; g.fillRect(0, 0, 24, 24);
+      for (let x = 0; x < 24; x++) fill(x, 17, d.paper);
+      for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) { const dx = x - 11.5, dy = y - 17; if (dy < 0 && dx * dx + dy * dy < 44) fill(x, y, d.a2); }
+      fill(9, 13, INK); fill(14, 13, INK); fill(8, 15, "#f2a0a0"); fill(15, 15, "#f2a0a0");
+      for (const [x, y] of [[11, 6], [12, 6], [5, 9], [18, 9], [3, 13], [20, 13]]) fill(x, y, d.a2);
+    }
+  }
+
+  /* ---------- a small phone moment: the clock in that direction's colours, the companion on the rim ---------- */
+  const NS = "http://www.w3.org/2000/svg";
+  function clock(svg, d, now) {
+    const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); svg.appendChild(e); return e; };
+    const C = 120, R = 82;
+    const ang = (m) => ((((m / 60) % 12) + 12) % 12) / 12 * Math.PI * 2;
+    const pol = (a, r) => [C + r * Math.sin(a), C - r * Math.cos(a)];
+    const arc = (m1, m2, r) => { const a1 = ang(m1); let a2 = ang(m2); if (a2 < a1) a2 += Math.PI * 2; const [x1, y1] = pol(a1, r), [x2, y2] = pol(a2, r); return `M${x1} ${y1}A${r} ${r} 0 ${a2 - a1 > Math.PI ? 1 : 0} 1 ${x2} ${y2}`; };
+    svg.setAttribute("viewBox", "0 0 240 240");
+    el("circle", { cx: C, cy: C, r: R + 9, fill: "none", stroke: d.a, "stroke-opacity": 0.18, "stroke-width": 1.5 });
+    el("circle", { cx: C, cy: C, r: R, fill: d.paper, stroke: d.a, "stroke-opacity": 0.3, "stroke-width": 2 });
+    for (const [s, e] of [[now + 40, now + 115], [now + 260, now + 400]]) el("path", { d: arc(s, e, R), fill: "none", stroke: d.a, "stroke-width": 5, "stroke-linecap": "round" });
+    el("path", { d: arc(now + 760, now + 860, R + 9), fill: "none", stroke: d.a2, "stroke-width": 3, "stroke-linecap": "round" });
+    for (const h of [12, 3, 6, 9]) { const [x, y] = pol((h / 12) * Math.PI * 2, R - 18); const t = el("text", { x, y: y + 5, "text-anchor": "middle", "font-size": 14, "font-weight": 700, fill: d.ink, "font-family": "Pixelify Sans, Silkscreen, monospace" }); t.textContent = String(h); }
+    const [hx, hy] = pol(ang(now), R * 0.48), [mx, my] = pol(((now % 60) / 60) * Math.PI * 2, R * 0.72);
+    el("line", { x1: C, y1: C, x2: hx, y2: hy, stroke: d.ink, "stroke-width": 5, "stroke-linecap": "square" });
+    el("line", { x1: C, y1: C, x2: mx, y2: my, stroke: d.ink, "stroke-width": 3, "stroke-linecap": "square" });
+    el("rect", { x: C - 4, y: C - 4, width: 8, height: 8, fill: d.a });
+    // the companion on the rim at the hand, feet on the ring
+    const a = ang(now), [cx, cy] = pol(a, R + 20);
+    const fo = el("foreignObject", { x: cx - 16, y: cy - 16, width: 32, height: 32, transform: `rotate(${(a * 180) / Math.PI} ${cx} ${cy})` });
+    const cv = document.createElement("canvas"); cv.width = 16; cv.height = 16; cv.style.cssText = "width:32px;height:32px;image-rendering:pixelated";
+    fo.appendChild(cv);
+    return cv;
+  }
+
+  /* ---------- build the cards ---------- */
+  const now = (() => { const t = new Date(); return t.getHours() * 60 + t.getMinutes(); })();
+  const fmt = (m) => { let h = Math.floor(m / 60) % 24; const mm = m % 60; const ap = h < 12 ? "AM" : "PM"; h = h % 12 || 12; return `${h}:${String(mm).padStart(2, "0")} ${ap}`; };
+  const walkers = [];
+  const host = document.getElementById("dirs");
+  for (const d of DIRS) {
+    const card = document.createElement("section");
+    card.className = "dir";
+    card.setAttribute("aria-label", `${d.name}: ${d.idea}`);
+    card.style.cssText = `--a:${d.a};--a2:${d.a2};--ink:${d.ink};--paper:${d.paper};--soft:${d.soft}`;
+    card.innerHTML = `
+      <span class="tag">${d.tag}</span>
+      <div class="mark"><canvas width="24" height="24" aria-hidden="true"></canvas><div><div class="word">${d.name}</div><p class="idea">${d.idea}</p></div></div>
+      <div class="sw">${d.swatches.map(([bg, fg, n]) => `<span style="background:${bg};color:${fg};box-shadow:inset 0 0 0 1px rgb(0 0 0 / .06)">${n}</span>`).join("")}</div>
+      <div class="crew" role="list" aria-label="${d.species}s">${d.crew.map((c) => `<div role="listitem"><canvas width="16" height="16" aria-hidden="true"></canvas><small>${c.name}</small></div>`).join("")}</div>
+      <div class="phone"><span class="now"><b>${fmt(now)}</b> · your ${d.species}</span><svg aria-hidden="true"></svg>
+        <div class="says"><canvas width="16" height="16" aria-hidden="true"></canvas><span>${d.says}</span></div></div>`;
+    host.appendChild(card);
+    logo(card.querySelector(".mark canvas"), d);
+    const crew = [...card.querySelectorAll(".crew canvas")];
+    d.crew.forEach((c, i) => walkers.push([crew[i], c]));
+    const rim = clock(card.querySelector(".phone svg"), d, now);
+    walkers.push([rim, d.crew[0]]);
+    walkers.push([card.querySelector(".says canvas"), d.crew[0], true]);
+  }
+  // they breathe, gently (not at all with reduced motion)
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let last = -1;
+  function frame(t) {
+    const step = reduce ? 0 : Math.floor(t / 450);
+    if (step !== last) { last = step; for (const [cv, c, still] of walkers) paint(cv, sprite(c, still ? 0 : step, { still: !!still })); }
+    if (!reduce) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>

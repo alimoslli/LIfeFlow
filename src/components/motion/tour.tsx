@@ -20,14 +20,8 @@ const steps = (name: string): Step[] => [
   {
     target: "today-page",
     eyebrow: "Today",
-    title: "Start each day here",
-    body: "What's next, what needs your attention, your list and your money in one screen. Open it each morning and the day is already planned.",
-  },
-  {
-    target: "plan",
-    eyebrow: "Plan",
-    title: "Your calendar and to-dos",
-    body: "Classes, shifts, events, tasks, goals and habits all live here. Tap any block to change it. Send a photo of your work schedule and your assistant adds the shifts.",
+    title: "Your day as a clock",
+    body: "Green on the rim is busy time; each icon is something coming up, at its time. Tap the clock and it opens into your timeline: scroll through the week, tap anything to see it. Pull the line down to wrap it back.",
   },
   {
     target: "assistant",
@@ -89,14 +83,14 @@ export function Tour({ onDone, assistantName = UNNAMED_ASSISTANT }: { onDone: ()
   useEffect(() => (ready ? undefined : onSplashEnd(() => setReady(true))), [ready]);
 
   // Steps are chosen once the main screens have rendered, so each target can be measured.
-  // Waits for Today, Plan and Money (at most 3 seconds), then keeps only the steps whose screen is here.
+  // Waits for Today and Money (at most 3 seconds), then keeps only the steps whose screen is here.
   const [laid, setLaid] = useState(false);
   useEffect(() => {
     if (!ready) return;
     const began = performance.now();
     let frame = 0;
     const check = () => {
-      const settled = ["today-page", "plan", "money"].every((t) => findTarget(t));
+      const settled = ["today-page", "money"].every((t) => findTarget(t));
       if (settled || performance.now() - began > 3000) setLaid(true);
       else frame = requestAnimationFrame(check);
     };

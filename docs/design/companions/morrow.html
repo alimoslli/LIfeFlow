@@ -1,0 +1,599 @@
+<title>Morrow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Silkscreen&display=swap">
+<style>
+/* Layout: one app, Morrow. Left, the phone (sticky on wide screens) with the day dial you can drive; right, the system:
+   the mark and its meaning, a day in four moments, the companions by day and by night, and the brand pieces.
+   Page tokens follow the viewer's theme; the phone follows the sky (light by day, night after sunset). */
+:root {
+  --bg: #f4f1f8;
+  --fg: #1b1736;
+  --muted: #6b6488;
+  --card: #ffffff;
+  --line: #e4def3;
+  --dusk: #5b4bd6;
+  --sun: #f4a44a;
+  --night: #1b1736;
+  --haze: #f5f2fb;
+  --display: "Fraunces", Georgia, serif;
+  --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --pixel: "Silkscreen", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #0e0c1d; --fg: #f1eeff; --muted: #a59fc6; --card: #17142e; --line: #2a2550; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #0e0c1d; --fg: #f1eeff; --muted: #a59fc6; --card: #17142e; --line: #2a2550; color-scheme: dark; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
+canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; }
+.page {
+  max-width: 1160px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 56px;
+  display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 40px; align-items: start;
+}
+@media (max-width: 940px) { .page { grid-template-columns: 1fr; gap: 28px; } }
+/* ---------- the phone ---------- */
+.left { position: sticky; top: max(16px, env(safe-area-inset-top, 0px)); display: flex; flex-direction: column; gap: 12px; }
+@media (max-width: 940px) { .left { position: static; } }
+.controls { display: flex; flex-direction: column; gap: 8px; }
+.chips { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-inline: -2px; padding: 2px; }
+.chips::-webkit-scrollbar { display: none; }
+.chips button { flex: none; min-height: 36px; padding: 0 10px; border-radius: 18px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); font-size: 0.8rem; font-weight: 500; }
+.chips button[aria-pressed="true"] { background: var(--fg); color: var(--bg); box-shadow: none; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 16px; background: var(--card); box-shadow: inset 0 0 0 1px var(--line); }
+.seg button { min-height: 36px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }
+.seg button[aria-pressed="true"] { background: var(--dusk); color: #fff; }
+.phone {
+  --p-bg: #f6f3fb; --p-ink: #1b1736; --p-mute: #6b6488; --p-card: #ffffff; --p-line: #e6e0f7;
+  position: relative; width: 100%; max-width: 400px; margin: 0 auto; aspect-ratio: 390 / 820;
+  border-radius: 46px; background: var(--p-bg); color: var(--p-ink);
+  box-shadow: 0 0 0 9px #121022, 0 0 0 10px #2b2747, 0 34px 70px -24px rgb(20 14 60 / 0.55);
+  overflow: hidden; display: flex; flex-direction: column;
+  transition: background-color 0.8s ease, color 0.8s ease;
+}
+.phone.isnight { --p-bg: #14112b; --p-ink: #f1eeff; --p-mute: #a59fc6; --p-card: #1f1b3e; --p-line: #2c2756; }
+.status { height: 44px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; font-size: 0.82rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.island { width: 104px; height: 30px; border-radius: 16px; background: #0b0918; }
+.top { display: flex; align-items: center; justify-content: space-between; padding: 6px 20px 0; }
+.top .brand { display: flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 600; font-size: 1.3rem; letter-spacing: -0.02em; }
+.top .brand svg { width: 26px; height: 26px; }
+.top .day { font-size: 0.8rem; color: var(--p-mute); }
+.dialbox { position: relative; margin: 4px 10px 0; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.dialbox:active { cursor: grabbing; }
+.dialbox svg { display: block; width: 100%; height: auto; overflow: visible; }
+.dialbox .who { position: absolute; left: 0; top: 0; width: 40px; height: 40px; margin: -20px 0 0 -20px; pointer-events: none; transition: none; }
+.now { padding: 0 22px; display: grid; gap: 2px; }
+.now b { font-size: 1.08rem; font-weight: 600; }
+.now span { color: var(--p-mute); font-size: 0.86rem; }
+.says { margin: 12px 16px 0; display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 20px; background: var(--p-card); box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 20px -10px rgb(40 30 90 / 0.25); font-size: 0.88rem; line-height: 1.35; }
+.says canvas { width: 30px; height: 30px; flex: none; }
+.says small { display: block; font-family: var(--pixel); font-size: 0.56rem; color: var(--p-mute); margin-bottom: 2px; }
+.tabs { margin: auto 12px 14px; display: grid; grid-template-columns: repeat(4, 1fr); padding: 6px; border-radius: 26px; background: var(--p-card); box-shadow: 0 10px 24px -12px rgb(30 20 80 / 0.35); }
+.tabs span { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 48px; justify-content: center; border-radius: 20px; font-size: 0.66rem; font-weight: 500; color: var(--p-mute); }
+.tabs span.on { color: var(--p-ink); background: color-mix(in srgb, var(--sun) 22%, transparent); }
+.tabs svg { width: 20px; height: 20px; }
+.tabs canvas { width: 22px; height: 22px; }
+/* ---------- the right column ---------- */
+.right { display: flex; flex-direction: column; gap: 34px; min-width: 0; }
+.hero { display: flex; flex-direction: column; gap: 14px; }
+.lock { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.lock .mark { width: 92px; height: 92px; }
+.word { font-family: var(--display); font-weight: 600; font-size: clamp(3rem, 8vw, 4.4rem); line-height: 0.95; letter-spacing: -0.035em; display: inline-flex; align-items: center; }
+.word svg { width: 0.74em; height: 0.74em; margin: 0.04em 0.02em 0; }
+.tagline { margin: 0; font-family: var(--display); font-size: 1.3rem; font-weight: 500; color: var(--muted); }
+.meaning { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.meaning div { background: var(--card); border-radius: 18px; padding: 12px 14px; box-shadow: inset 0 0 0 1px var(--line); display: grid; gap: 2px; }
+.meaning b { font-size: 0.9rem; font-weight: 600; }
+.meaning span { font-size: 0.82rem; color: var(--muted); }
+h2 { margin: 0 0 12px; font-family: var(--pixel); font-weight: 400; font-size: 0.72rem; letter-spacing: 0.08em; color: var(--muted); }
+.moments { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 560px) { .moments { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.moment { border-radius: 22px; padding: 10px 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.moment .mini { position: relative; }
+.moment svg { display: block; width: 100%; height: auto; overflow: visible; }
+.moment .who { position: absolute; left: 0; top: 0; width: 26px; height: 26px; margin: -13px 0 0 -13px; pointer-events: none; }
+.moment b { font-size: 0.82rem; font-weight: 600; }
+.moment span { font-size: 0.74rem; opacity: 0.75; line-height: 1.3; }
+.crew { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 560px) { .crew { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.mate { background: var(--card); border-radius: 20px; padding: 12px; box-shadow: inset 0 0 0 1px var(--line); display: grid; gap: 6px; }
+.forms { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.forms div { border-radius: 14px; display: grid; place-items: center; padding: 6px 0 4px; }
+.forms canvas { width: 44px; height: 44px; }
+.forms small { font-size: 0.58rem; font-family: var(--pixel); opacity: 0.7; }
+.mate b { font-family: var(--pixel); font-weight: 400; font-size: 0.72rem; }
+.mate span { font-size: 0.78rem; color: var(--muted); line-height: 1.3; }
+.brandgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.tile { background: var(--card); border-radius: 22px; padding: 14px; box-shadow: inset 0 0 0 1px var(--line); display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.tile > small { font-size: 0.72rem; color: var(--muted); }
+.icons { display: flex; gap: 12px; align-items: flex-end; }
+.ico { border-radius: 23%; display: grid; place-items: center; box-shadow: 0 8px 18px -10px rgb(20 14 60 / 0.5); }
+.ico svg { width: 66%; height: 66%; }
+.sw { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.sw span { height: 46px; border-radius: 12px; display: flex; align-items: flex-end; padding: 5px 7px; font-size: 0.62rem; font-weight: 600; box-shadow: inset 0 0 0 1px rgb(127 127 127 / 0.25); }
+.type .d { font-family: var(--display); font-size: 1.6rem; font-weight: 600; letter-spacing: -0.02em; }
+.type .b { font-size: 0.86rem; color: var(--muted); }
+.lockscreen { border-radius: 20px; padding: 14px; background: linear-gradient(160deg, #2b2560, #4b3a8f 60%, #f4a44a 140%); color: #fff; display: grid; gap: 8px; }
+.lockscreen .t { font-size: 1.9rem; font-weight: 500; text-align: center; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.note { display: flex; gap: 10px; align-items: flex-start; background: rgb(255 255 255 / 0.18); backdrop-filter: blur(10px); border-radius: 16px; padding: 10px 12px; font-size: 0.8rem; line-height: 1.3; }
+.note .ico { width: 30px; height: 30px; flex: none; }
+.note small { display: block; opacity: 0.8; font-size: 0.68rem; }
+.splash { border-radius: 20px; height: 150px; background: #1b1736; position: relative; overflow: hidden; display: grid; place-items: center; }
+.splash .sunrise { position: absolute; left: 50%; bottom: 46px; width: 64px; height: 64px; margin-left: -32px; border-radius: 50%; background: var(--sun); animation: rise 3.2s cubic-bezier(.2,.7,.2,1) infinite; }
+.splash .sunrise::before, .splash .sunrise::after { content: ""; position: absolute; top: 24px; width: 7px; height: 7px; border-radius: 50%; background: #1b1736; }
+.splash .sunrise::before { left: 18px; } .splash .sunrise::after { right: 18px; }
+.splash .hz { position: absolute; left: 14px; right: 14px; bottom: 40px; height: 4px; border-radius: 2px; background: #c9c1f5; }
+.splash .cover { position: absolute; left: 0; right: 0; bottom: 0; height: 42px; background: #1b1736; }
+.splash .nm { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-family: var(--display); color: #f5f2fb; font-size: 1.05rem; font-weight: 600; }
+@keyframes rise { 0% { transform: translateY(46px); } 45%, 80% { transform: translateY(6px); } 100% { transform: translateY(46px); } }
+@media (prefers-reduced-motion: reduce) { .splash .sunrise { animation: none; transform: translateY(6px); } }
+.foot { color: var(--muted); font-size: 0.78rem; line-height: 1.5; border-top: 1px solid var(--line); padding-top: 14px; }
+.foot b { color: var(--fg); font-weight: 600; }
+</style>
+
+<div class="page">
+  <div class="left">
+    <div class="controls">
+      <div class="chips" role="group" aria-label="Time of day" id="chips">
+        <button type="button" data-at="" aria-pressed="true">Now</button>
+        <button type="button" data-at="06:50" aria-pressed="false">Sunrise</button>
+        <button type="button" data-at="10:00" aria-pressed="false">Morning</button>
+        <button type="button" data-at="14:00" aria-pressed="false">Afternoon</button>
+        <button type="button" data-at="17:20" aria-pressed="false">Sunset</button>
+        <button type="button" data-at="22:40" aria-pressed="false">Night</button>
+      </div>
+      <div class="seg" role="group" aria-label="Ring or timeline"><button type="button" data-m="0" aria-pressed="true">Ring</button><button type="button" data-m="1" aria-pressed="false">Timeline</button></div>
+    </div>
+    <div class="phone" id="phone" aria-label="The Morrow app, Today">
+      <div class="status"><span id="stTime">9:41</span><span class="island"></span><svg width="26" height="12" viewBox="0 0 26 12" aria-hidden="true"><rect x=".5" y=".5" width="21" height="11" rx="3.5" fill="none" stroke="currentColor" opacity=".45"/><rect x="2" y="2" width="16" height="8" rx="2" fill="currentColor"/><rect x="23" y="4" width="2" height="4" rx="1" fill="currentColor" opacity=".45"/></svg></div>
+      <div class="top"><span class="brand"><svg class="m-mark" aria-hidden="true"></svg>Morrow</span><span class="day" id="dayname"></span></div>
+      <div class="dialbox" id="dial" role="img" aria-label="Your day as the sky. Drag to move time."><svg viewBox="0 0 320 320" aria-hidden="true"></svg><canvas class="px who" width="16" height="16" aria-hidden="true"></canvas></div>
+      <div class="now" aria-live="polite"><b id="nowTop"></b><span id="nowNext"></span></div>
+      <div class="says"><canvas class="px" width="16" height="16" aria-hidden="true" id="sayIcon"></canvas><div><small id="sayName">SOL</small><span id="sayText"></span></div></div>
+      <div class="tabs" aria-hidden="true">
+        <span class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 15h18"/><path d="M7 15a5 5 0 0 1 10 0"/></svg>Today</span>
+        <span><canvas class="px" width="16" height="16" id="tabMate"></canvas><em style="font-style:normal" id="tabName">Sol</em></span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>Money</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>School</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <section class="hero" aria-label="The mark">
+      <div class="lock"><svg class="mark m-mark" aria-hidden="true"></svg><span class="word" aria-label="Morrow">M<svg class="m-o" aria-hidden="true"></svg>rrow</span></div>
+      <p class="tagline">Your day, from sunrise to tomorrow.</p>
+      <div class="meaning">
+        <div><b>The horizon</b><span>Your timeline. Day above, night below.</span></div>
+        <div><b>The sun</b><span>Your companion, crossing your day. Always now.</span></div>
+        <div><b>The moon</b><span>Your companion at night, resting until tomorrow.</span></div>
+        <div><b>The stars</b><span>Everything you finished today.</span></div>
+      </div>
+    </section>
+
+    <section aria-label="A day in four moments">
+      <h2>A DAY IN FOUR MOMENTS</h2>
+      <div class="moments" id="moments"></div>
+    </section>
+
+    <section aria-label="Companions">
+      <h2>COMPANIONS · TIMES OF THE SKY, BY DAY AND BY NIGHT</h2>
+      <div class="crew" id="crew"></div>
+    </section>
+
+    <section aria-label="Brand">
+      <h2>THE BRAND</h2>
+      <div class="brandgrid">
+        <div class="tile"><small>App icon · day and night</small><div class="icons" id="icons"></div></div>
+        <div class="tile"><small>Colours</small><div class="sw"><span style="background:#5b4bd6;color:#fff">Dusk</span><span style="background:#f4a44a;color:#1b1736">Sunrise</span><span style="background:#1b1736;color:#fff">Night</span><span style="background:#f5f2fb;color:#1b1736">Haze</span></div></div>
+        <div class="tile type"><small>Type</small><span class="d">Fraunces for the name</span><span class="b">Geist for everything you read. Pixel type only for companion names.</span></div>
+        <div class="tile"><small>Lock screen</small><div class="lockscreen"><div class="t" id="lockTime">4:10</div><div class="note"><span class="ico" style="background:#1b1736"><svg class="m-mark-n" aria-hidden="true"></svg></span><div><small>MORROW · now</small>Sol: Work starts in 20 min. 4 stars so far today.</div></div></div></div>
+        <div class="tile"><small>Opening the app</small><div class="splash" aria-hidden="true"><div class="sunrise"></div><div class="cover"></div><div class="hz"></div><div class="nm">Morrow</div></div></div>
+      </div>
+    </section>
+    <p class="foot"><b>Concept, nothing in the app changed.</b> An example day in November (sunrise 6:45 AM, sunset 5:10 PM; the real ones come from your location). The name needs a trademark and App Store check.</p>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const INK = "#262320";
+  const NS = "http://www.w3.org/2000/svg";
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  /* ---------- pixel companions: three body shapes, many tops, a few poses ---------- */
+  const SHAPES = {
+    blob: { h: 8, inset: [2, 1, 0, 0, 0, 0, 1, 2], eye: 3 },
+    glass: { h: 9, inset: [0, 0, 1, 2, 3, 2, 1, 0, 0], eye: 1, sand: 5 },
+    wisp: { h: 9, inset: [4, 3, 2, 1, 0, 0, 0, 1, 2], eye: 4 },
+  };
+  function sprite(c, pose, step) {
+    const px = new Map();
+    const put = (x, y, col) => { if (x >= 0 && x < 16 && y >= 0 && y < 16) px.set(x + "," + y, col); };
+    const S = SHAPES[c.shape || "blob"];
+    const cheer = pose === "cheer", sleep = pose === "sleep";
+    const bob = pose === "walk" ? step % 2 : cheer ? (step % 2) * 2 : 0;
+    const top = (sleep ? 6 : 15 - S.h - 3) - bob;
+    for (let y = 0; y < S.h; y++) {
+      const ins = S.inset[y];
+      for (let x = 3 + ins; x <= 12 - ins; x++) {
+        // an outline wherever the shape ends: its sides, top and bottom, and any edge left open by a narrower row
+        const open = (r) => (S.inset[r] ?? 9) > ins && (S.inset[r] === undefined || x < 3 + S.inset[r] || x > 12 - S.inset[r]);
+        const edge = x === 3 + ins || x === 12 - ins || y === 0 || y === S.h - 1 || open(y - 1) || open(y + 1);
+        let col = y >= S.h - 3 ? c.dark : c.body;
+        if (S.sand && y >= S.sand) col = c.sand || c.dark;
+        put(x, top + y, edge ? c.line || INK : col);
+      }
+    }
+    // stripes (a bee) or spots (a ladybird) across the body
+    if (c.stripes) for (const r of [S.h - 4, S.h - 2]) for (let x = 4 + S.inset[r]; x <= 11 - S.inset[r]; x++) put(x, top + r, INK);
+    if (c.spots) for (const [x, r] of [[5, 5], [10, 4], [8, 6]]) put(x, top + r, INK);
+    if (c.seeds) for (const [x, r] of [[5, 4], [9, 5], [7, 6], [10, 3]]) put(x, top + r, "#ffe9a8");
+    put(5 + S.inset[1] - (S.inset[1] > 2 ? 1 : 0), top + 1, c.light);
+    const ey = top + S.eye + (sleep ? 1 : 0);
+    if (sleep) { put(6, ey, INK); put(7, ey, INK); put(9, ey, INK); put(10, ey, INK); put(13, top - 2, "#8fa0c4"); put(14, top - 2, "#8fa0c4"); put(14, top - 3, "#8fa0c4"); put(13, top - 4, "#8fa0c4"); put(14, top - 4, "#8fa0c4"); }
+    else if (c.face === "big") { for (const ex of [5, 9]) { put(ex, ey, "#fff"); put(ex + 1, ey, "#fff"); put(ex, ey + 1, "#fff"); put(ex + 1, ey + 1, INK); } put(7, ey + 2, "#f4a742"); put(8, ey + 2, "#f4a742"); }
+    else { put(6, ey, c.eye || INK); put(6, ey + 1, c.eye || INK); put(10, ey, c.eye || INK); put(10, ey + 1, c.eye || INK); put(5, ey + 2, "#f2a0a0"); put(11, ey + 2, "#f2a0a0"); }
+    if (c.muzzle) { put(7, ey + 2, "#fff"); put(8, ey + 2, "#fff"); put(8, ey + 3, "#fff"); put(7, ey + 3, INK); }
+    const t = top - 1, T = c.trim || "#ffd34d", T2 = c.trim2 || T;
+    const tops = {
+      ray: () => { for (const [x, y] of [[8, t - 1], [5, t], [11, t], [3, t + 2], [13, t + 2]]) put(x, y, T); put(8, t - 2, T2); },
+      cloud: () => { put(7, t, "#fff"); put(8, t, "#fff"); put(9, t, "#fff"); put(8, t - 1, "#fff"); put(9, t - 1, "#fff"); put(10, t, "#fff"); },
+      halo: () => { for (let x = 6; x <= 10; x++) put(x, t - 1, T); put(5, t, T); put(11, t, T); },
+      crescent: () => { put(9, t, T); put(10, t, T); put(8, t - 1, T); put(8, t - 2, T); put(9, t - 3, T); put(10, t - 3, T); },
+      star: () => { put(8, t - 2, T); put(7, t - 1, T); put(8, t - 1, T2); put(9, t - 1, T); put(8, t, T); },
+      spark: () => { put(4, t - 1, T); put(12, t - 2, T); put(13, t - 3, T2); put(8, t, T); put(8, t - 1, T2); },
+      leaf: () => { put(8, t, INK); put(8, t - 1, INK); put(9, t - 2, T); put(10, t - 2, T); put(10, t - 3, T); put(9, t - 1, T); put(7, t - 2, T2); },
+      flame: () => { put(8, t, T); put(7, t, T2); put(9, t, T2); put(8, t - 1, "#ffe08a"); put(9, t - 2, T); },
+      wave: () => { put(6, t, T); put(7, t - 1, T); put(8, t, T); put(9, t - 1, T); put(10, t, T); },
+      ears: () => { for (const ex of [4, 11]) { put(ex, t, INK); put(ex, t - 1, INK); put(ex + (ex < 8 ? 1 : -1), t, c.body); } },
+      fox: () => { for (const ex of [4, 10]) { put(ex, t, INK); put(ex + 1, t, c.body); put(ex + (ex < 8 ? 0 : 1), t - 1, INK); put(ex + (ex < 8 ? 0 : 1), t - 2, "#fff"); } },
+      tufts: () => { put(4, t, INK); put(4, t - 1, INK); put(11, t, INK); put(11, t - 1, INK); put(5, t, c.dark); put(10, t, c.dark); },
+      bear: () => { for (const ex of [4, 10]) { put(ex, t, INK); put(ex + 1, t, INK); put(ex, t - 1, INK); put(ex + 1, t - 1, c.dark); } },
+      frog: () => { for (const ex of [5, 9]) { put(ex, t, INK); put(ex + 1, t, INK); put(ex, t - 1, "#fff"); put(ex + 1, t - 1, INK); } },
+      flick: () => { put(8, t, T); put(8, t - 1 - (step % 2), T2); },
+      hand: () => { put(8, t, INK); put(8, t - 1, INK); put(9, t - 2, INK); put(10, t - 2, T); },
+      bell: () => { put(7, t, T); put(8, t, T); put(9, t, T); put(8, t - 1, T); put(8, t + 0, T2); },
+      pend: () => { put(8, t, INK); put(8, t - 1, INK); put(8 + (step % 2 ? 1 : -1), t - 2, T); },
+      dot: () => { put(8, t, T); put(8, t - 1, T2); },
+      antlers: () => { for (const [x, y] of [[5, t], [4, t - 1], [3, t - 2], [5, t - 2], [10, t], [11, t - 1], [12, t - 2], [10, t - 2]]) put(x, y, T); },
+      snow: () => { for (const [x, y] of [[8, t - 2], [7, t - 1], [9, t - 1], [8, t - 1], [8, t]]) put(x, y, T); put(4, t + 1, T2); put(12, t, T2); },
+      seeds: () => { put(7, t, "#3f9a52"); put(8, t, "#3f9a52"); put(9, t, "#3f9a52"); put(8, t - 1, "#3f9a52"); },
+      wings: () => { for (const [x, y] of [[2, t + 2], [3, t + 1], [2, t + 1], [13, t + 1], [14, t + 1], [13, t + 2]]) put(x, y + (step % 2), T); put(7, t, INK); put(9, t, INK); put(6, t - 1, INK); put(10, t - 1, INK); },
+    };
+    tops[c.top]?.();
+    if (cheer) { put(2, top + 3, INK); put(1, top + 2, INK); put(13, top + 3, INK); put(14, top + 2, INK); put(1, top - 1, c.trim || "#ffd34d"); put(14, top - 2, c.trim2 || "#ff8a5b"); put(3, top - 3, "#7ad7c4"); }
+    if (pose === "read") { for (let x = 10; x <= 13; x++) for (let y = top + 5; y <= top + 7; y++) put(x, y, y === top + 5 ? "#fffaf0" : "#b0573a"); }
+    if (!sleep) {
+      const fy = top + S.h;
+      const legs = pose === "walk" ? (step % 2 ? [[6], [9]] : [[4], [10]]) : [[5], [10]];
+      for (const [x] of legs) { put(x, fy, INK); put(x + 1, fy, INK); }
+    }
+    return px;
+  }
+  function paint(cv, px) {
+    const g = cv.getContext("2d");
+    g.clearRect(0, 0, 16, 16);
+    for (const [k, col] of px) { const [x, y] = k.split(",").map(Number); g.fillStyle = col; g.fillRect(x, y, 1, 1); }
+  }
+  const pxCanvas = (size) => { const cv = document.createElement("canvas"); cv.width = 16; cv.height = 16; cv.className = "px"; cv.style.width = cv.style.height = size + "px"; cv.setAttribute("aria-hidden", "true"); return cv; };
+
+
+
+  const svgEl = (tag, a, parent) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; };
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const mix = (h1, h2, t) => { const a = parseInt(h1.slice(1), 16), b = parseInt(h2.slice(1), 16); const c = [16, 8, 0].map((s) => Math.round(lerp((a >> s) & 255, (b >> s) & 255, t))); return "#" + c.map((v) => v.toString(16).padStart(2, "0")).join(""); };
+
+  /* ---------- the sky: sunrise and sunset (an example November day) ---------- */
+  const DAY = 1440, SR = 405, SS = 1030;
+  const isNight = (t) => { const m = ((t % DAY) + DAY) % DAY; return m < SR || m >= SS; };
+  // where a moment sits on the ring: the top half runs sunrise (left) to sunset (right); the bottom half is the night
+  function theta(t) {
+    const m = ((t % DAY) + DAY) % DAY;
+    if (m >= SR && m < SS) return -Math.PI / 2 + ((m - SR) / (SS - SR)) * Math.PI;
+    const u = (((m - SS) % DAY) + DAY) % DAY / (DAY - (SS - SR));
+    return Math.PI / 2 + u * Math.PI;
+  }
+  const P = (cx, cy, r, a) => [cx + r * Math.sin(a), cy - r * Math.cos(a)];
+  const pathOf = (pts) => pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join("");
+
+  /* ---------- an example day (made up) ---------- */
+  const ITEMS = [
+    { s: 435, e: 480, icon: "🏋️", name: "Gym" },
+    { s: 570, e: 645, icon: "🎓", name: "Anatomy" },
+    { s: 750, e: 800, icon: "🍽️", name: "Lunch with Priya" },
+    { s: 810, e: 900, icon: "📚", name: "Study" },
+    { s: 960, e: 1260, icon: "💼", name: "Work" },
+    { s: 1439, icon: "📄", name: "3 assignments due" },
+    { s: DAY + 450, e: DAY + 495, icon: "🏃", name: "Run" },
+    { s: DAY + 570, e: DAY + 645, icon: "🎓", name: "Anatomy" },
+  ];
+  const TODAY = ITEMS.filter((i) => i.s < DAY);
+  const fmt = (m) => { const x = ((Math.round(m) % DAY) + DAY) % DAY; let h = Math.floor(x / 60); const mm = x % 60; const ap = h < 12 ? "AM" : "PM"; h = h % 12 || 12; return mm ? `${h}:${String(mm).padStart(2, "0")} ${ap}` : `${h} ${ap}`; };
+  const real = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+  const S = { t: real(), m: 0, last: 0, dir: 1 };
+  const until = (t, m) => { const d = Math.round(m - t); return d < 60 ? `${d} min` : `${Math.floor(d / 60)}h${d % 60 ? ` ${d % 60}m` : ""}`; };
+  const finished = (t) => TODAY.filter((i) => (i.e ?? i.s + 1) <= t);
+  function reading(t) {
+    const n = ITEMS.find((i) => i.e && i.s <= t && i.e > t), x = ITEMS.find((i) => i.s > t);
+    const asleep = isNight(t) && (t % DAY >= 1380 || t % DAY < SR) && !n;
+    return { top: asleep ? "Asleep" : n ? `${n.name} · till ${fmt(n.e)}` : "Free", next: x ? `Next: ${x.icon} ${x.name} · in ${until(t, x.s)}` : "" };
+  }
+
+  /* ---------- the companions: times of the sky, each with a night form ---------- */
+  const CREW = [
+    { name: "Aurora", say: "First light. The early riser", body: "#f7b7a3", dark: "#d98b76", light: "#ffe2d8", top: "cloud" },
+    { name: "Sol", say: "The sun. Steady all day", body: "#f7b45e", dark: "#d08530", light: "#ffe0b0", trim: "#f4a44a", trim2: "#ffd38a", top: "ray" },
+    { name: "Zenith", say: "The high point. Peaks at midday", body: "#ffd66b", dark: "#d9aa36", light: "#fff1bf", trim: "#fff3c4", top: "halo" },
+    { name: "Gloam", say: "Golden hour. Best in the evening", body: "#f39a6b", dark: "#c76c3f", light: "#ffd2b8", trim: "#ffd38a", trim2: "#ff7a2f", top: "flame" },
+    { name: "Dusk", say: "Sunset. Winds you down", body: "#8f7ff0", dark: "#6455c9", light: "#cfc7ff", trim: "#f4a44a", top: "crescent" },
+    { name: "Nox", say: "Night. The night owl", body: "#4a4296", dark: "#2f2870", light: "#7a71cf", eye: "#ffd77a", trim: "#fff3c4", trim2: "#ffffff", top: "star" },
+  ];
+  // the night form: the same companion under moonlight, wearing a little moon
+  const nightOf = (c) => ({ ...c, body: mix(c.body, "#3b3486", 0.45), dark: mix(c.dark, "#221d55", 0.5), light: mix(c.light, "#8f86e0", 0.45), top: "crescent", trim: "#e8e4ff" });
+  const LEAD = CREW[1];
+
+  /* ---------- the mark: one circle, the horizon through it; a sun above with a face, a moon and two stars below ---------- */
+  function mark(svg, o = {}) {
+    svg.setAttribute("viewBox", "0 0 100 100");
+    const ink = o.ink || "#1b1736", sun = o.sun || "#f4a44a", line = o.line || "#5b4bd6", moon = o.moon || "#c9c1f5";
+    const id = "mk" + Math.random().toString(36).slice(2);
+    const cp = svgEl("clipPath", { id }, svgEl("defs", {}, svg));
+    svgEl("rect", { x: 0, y: 0, width: 100, height: 52 }, cp);
+    svgEl("circle", { cx: 50, cy: 52, r: 40, fill: "none", stroke: line, "stroke-width": 5, opacity: 0.35 }, svg);
+    svgEl("circle", { cx: 50, cy: 58, r: 26, fill: sun, "clip-path": `url(#${id})` }, svg);
+    svgEl("circle", { cx: 42, cy: 44, r: 3, fill: ink }, svg);
+    svgEl("circle", { cx: 58, cy: 44, r: 3, fill: ink }, svg);
+    svgEl("rect", { x: 4, y: 50, width: 92, height: 5, rx: 2.5, fill: line }, svg);
+    if (!o.noNight) {
+      svgEl("path", { d: "M64 66 a9 9 0 1 0 6 15 a7 7 0 1 1 -6 -15 z", fill: moon }, svg);
+      for (const [x, y, r] of [[34, 72, 2.6], [44, 80, 1.8]]) svgEl("path", { d: `M${x} ${y - r}L${x + r * 0.3} ${y - r * 0.3}L${x + r} ${y}L${x + r * 0.3} ${y + r * 0.3}L${x} ${y + r}L${x - r * 0.3} ${y + r * 0.3}L${x - r} ${y}L${x - r * 0.3} ${y - r * 0.3}Z`, fill: moon }, svg);
+    }
+  }
+  function sunO(svg) {
+    svg.setAttribute("viewBox", "0 0 100 100");
+    svgEl("circle", { cx: 50, cy: 54, r: 40, fill: "#f4a44a" }, svg);
+    svgEl("circle", { cx: 37, cy: 48, r: 5, fill: "#1b1736" }, svg);
+    svgEl("circle", { cx: 63, cy: 48, r: 5, fill: "#1b1736" }, svg);
+    svgEl("path", { d: "M40 66 q10 8 20 0", stroke: "#1b1736", "stroke-width": 5, fill: "none", "stroke-linecap": "round" }, svg);
+  }
+
+  /* ---------- the dial: ring (m = 0) to timeline (m = 1) ---------- */
+  const W = 320, C = 160, CY = 160, R = 118, LINE_Y = 214, K = 0.8;
+  function place(t, now, m) {
+    const [rx, ry] = P(C, CY, R, theta(t));
+    return [lerp(rx, C + (t - now) * K, m), lerp(ry, LINE_Y, m)];
+  }
+  // the sky's colours for an hour: sunrise peach, day blue, golden afternoon, night indigo
+  function skyOf(t) {
+    const m = ((t % DAY) + DAY) % DAY;
+    if (isNight(t)) return { top: "#2b2560", glow: "#3b3486" };
+    if (m < SR + 120) return { top: "#ffd9c2", glow: "#ffe9dc" };
+    if (m < SS - 150) return { top: "#d6e6ff", glow: "#eaf2ff" };
+    return { top: "#ffd6a8", glow: "#ffe8cc" };
+  }
+  function drawDial(svg, now, m, opts = {}) {
+    svg.setAttribute("viewBox", `0 0 ${W} 320`);
+    svg.textContent = "";
+    const night = isNight(now);
+    const ink = night ? "#f1eeff" : "#1b1736", mute = night ? "#a59fc6" : "#6b6488";
+    const sky = skyOf(now);
+    const g = svgEl("g", {}, svg);
+    // the disc: the sky above the horizon, the night below; both quiet
+    const fade = 1 - m;
+    const id = "s" + Math.random().toString(36).slice(2);
+    const lg = svgEl("linearGradient", { id, x1: 0, y1: 0, x2: 0, y2: 1 }, svgEl("defs", {}, g));
+    svgEl("stop", { offset: 0, "stop-color": sky.top, "stop-opacity": night ? 0.9 : 0.75 }, lg);
+    svgEl("stop", { offset: 1, "stop-color": sky.glow, "stop-opacity": night ? 0.6 : 0.25 }, lg);
+    svgEl("path", { d: `M${C - R} ${CY} A${R} ${R} 0 0 1 ${C + R} ${CY} Z`, fill: `url(#${id})`, opacity: fade }, g);
+    svgEl("path", { d: `M${C - R} ${CY} A${R} ${R} 0 0 0 ${C + R} ${CY} Z`, fill: night ? "#221d4d" : "#e9e4f8", opacity: fade * (night ? 0.9 : 0.7) }, g);
+    // as a timeline, day and night become bands along the line
+    if (m > 0.01) {
+      for (let d = -1; d <= 1; d++) {
+        for (const [a, b, col] of [[d * DAY, d * DAY + SR, "#2b2560"], [d * DAY + SR, d * DAY + SS, "#d6e6ff"], [d * DAY + SS, (d + 1) * DAY, "#2b2560"]]) {
+          const x1 = C + (a - now) * K, x2 = C + (b - now) * K;
+          if (x2 < 0 || x1 > W) continue;
+          svgEl("rect", { x: Math.max(0, x1), y: LINE_Y - 124, width: Math.min(W, x2) - Math.max(0, x1), height: 124, fill: col, opacity: m * (col === "#2b2560" ? 0.85 : 0.45) }, g);
+        }
+        for (const [tt, ic] of [[d * DAY + SR, "🌅"], [d * DAY + SS, "🌇"]]) { const x = C + (tt - now) * K; if (x > 10 && x < W - 10) { const e = svgEl("text", { x, y: LINE_Y + 32, "text-anchor": "middle", "font-size": 13, opacity: m }, g); e.textContent = ic; } }
+      }
+    }
+    // the ring: a soft track, and the horizon through it
+    const ring = [];
+    for (let dt = -720; dt <= 720; dt += 6) ring.push(place(now + dt, now, m));
+    svgEl("path", { d: pathOf(ring), fill: "none", stroke: night ? "#3a3470" : "#e2dcf6", "stroke-width": lerp(14, 4, m), "stroke-linecap": "round" }, g);
+    svgEl("rect", { x: lerp(8, 0, m), y: lerp(CY - 2, LINE_Y - 2, m), width: lerp(W - 16, W, m), height: 4, rx: 2, fill: night ? "#c9c1f5" : "#5b4bd6" }, g);
+    if (m < 0.6 && !opts.mini) {
+      const [lx, ly] = [C - R - 4, CY], [rx, ry] = [C + R + 4, CY];
+      for (const [x, y, ic, t, anchor] of [[lx, ly, "🌅", SR, "end"], [rx, ry, "🌇", SS, "start"]]) {
+        const e = svgEl("text", { x: anchor === "end" ? x - 4 : x + 4, y: y + 5, "text-anchor": anchor, "font-size": 15, opacity: 1 - m }, g); e.textContent = ic;
+        const l = svgEl("text", { x: anchor === "end" ? x - 4 : x + 4, y: y + 22, "text-anchor": anchor, "font-size": 9, fill: mute, opacity: 1 - m, "font-family": "Geist, system-ui" }, g); l.textContent = fmt(t);
+      }
+    }
+    // at night, what you finished today is the stars
+    const stars = finished(now);
+    if (night && !opts.noStars) {
+      stars.forEach((it, i) => {
+        const a = -Math.PI / 2 + ((i + 0.6) / (stars.length + 0.2)) * Math.PI, rr = 46 + (i % 3) * 20;
+        const [sx, sy] = [C + rr * Math.sin(a) * 1.1, CY - 18 - Math.abs(rr * Math.cos(a)) * 0.9 - (i % 2) * 8];
+        const x = lerp(sx, 40 + i * 44, m), y = lerp(sy, LINE_Y - 64, m);
+        const r = 6;
+        svgEl("path", { d: `M${x} ${y - r}L${x + r * 0.28} ${y - r * 0.28}L${x + r} ${y}L${x + r * 0.28} ${y + r * 0.28}L${x} ${y + r}L${x - r * 0.28} ${y + r * 0.28}L${x - r} ${y}L${x - r * 0.28} ${y - r * 0.28}Z`, fill: "#ffd77a" }, g);
+      });
+    }
+    // your things on the ring (a day's worth: the last 6 hours and the next 18)
+    for (const it of ITEMS) {
+      const dt = it.s - now;
+      if (dt < -360 || dt > 1080) continue;
+      const past = (it.e ?? it.s + 1) <= now;
+      const col = isNight(it.s) ? "#9d92ff" : "#f4a44a";
+      if (it.e) {
+        const pts = [];
+        for (let u = it.s; u <= it.e; u += 6) pts.push(place(u, now, m));
+        svgEl("path", { d: pathOf(pts), fill: "none", stroke: col, "stroke-width": lerp(14, 6, m), "stroke-linecap": "round", opacity: past ? 0.35 : 1 }, g);
+      } else {
+        const [x, y] = place(it.s, now, m);
+        svgEl("circle", { cx: x, cy: y, r: 5, fill: col, stroke: night ? "#14112b" : "#f6f3fb", "stroke-width": 2, opacity: past ? 0.4 : 1 }, g);
+      }
+      if (opts.mini) continue;
+      const [x, y] = place(it.s, now, m);
+      const out = m > 0.5 ? [x, y - 30] : [C + (x - C) * 1.27, CY + (y - CY) * 1.27];
+      const near = Math.abs(dt) < 30 && m < 0.5;
+      if (!near && out[0] > 4 && out[0] < W - 4) {
+        const e = svgEl("text", { x: out[0], y: out[1] + 6, "text-anchor": "middle", "font-size": 16, opacity: past ? 0.4 : 1 }, g); e.textContent = it.icon;
+        if (m > 0.5) { const l = svgEl("text", { x, y: y + 22, "text-anchor": "middle", "font-size": 9.5, fill: mute, opacity: past ? 0.5 : 1, "font-family": "Geist, system-ui" }, g); l.textContent = fmt(it.s); }
+      }
+    }
+    // what the middle says: the stars by night, nothing by day (the reading sits under the dial)
+    if (night && !opts.mini && m < 0.5) { const l = svgEl("text", { x: C, y: CY - 26, "text-anchor": "middle", "font-size": 11, fill: "#f1eeff", opacity: (1 - m) * 0.85, "font-family": "Geist, system-ui", "font-weight": 600 }, g); l.textContent = `${stars.length} stars today`; }
+    const [wx, wy] = place(now, now, m);
+    return { x: wx, y: wy - lerp(16, 22, m), night };
+  }
+
+  /* ---------- the phone ---------- */
+  const phone = document.getElementById("phone");
+  const dial = document.getElementById("dial");
+  const dialSvg = dial.querySelector("svg"), who = dial.querySelector(".who");
+  const SAYS = (t) => {
+    const n = ITEMS.find((i) => i.e && i.s <= t && i.e > t), x = ITEMS.find((i) => i.s > t), f = finished(t).length;
+    if (isNight(t) && (t % DAY >= 1380 || t % DAY < SR)) return `${f} stars today. Sleep well; Run with Priya at 7:30.`;
+    if (n && x) return `${n.name} now. ${x.name} at ${fmt(x.s)}, so you're free in between.`;
+    if (x) return `${x.icon} ${x.name} in ${until(t, x.s)}. ${f} done so far.`;
+    return `${f} stars today.`;
+  };
+  function paintMate(cv, c, pose, step, flip) {
+    const g = cv.getContext("2d");
+    g.clearRect(0, 0, 16, 16);
+    for (const [k, col] of sprite(c, pose, step)) { const [x, y] = k.split(",").map(Number); g.fillStyle = col; g.fillRect(flip ? 15 - x : x, y, 1, 1); }
+  }
+  function render() {
+    const m = ease(S.m);
+    const at = drawDial(dialSvg, S.t, m);
+    const box = dialSvg.getBoundingClientRect(), vb = dialSvg.viewBox.baseVal;
+    who.style.transform = `translate(${(at.x * box.width) / vb.width}px, ${(at.y * box.height) / vb.height}px)`;
+    phone.classList.toggle("isnight", at.night);
+    const r = reading(S.t);
+    document.getElementById("nowTop").textContent = r.top;
+    document.getElementById("nowNext").textContent = r.next;
+    document.getElementById("sayText").textContent = SAYS(S.t);
+    const tm = ((Math.round(S.t) % DAY) + DAY) % DAY;
+    document.getElementById("stTime").textContent = `${Math.floor(tm / 60) % 12 || 12}:${String(tm % 60).padStart(2, "0")}`;
+    S.night = at.night;
+  }
+  let lastStep = -1;
+  function sprites(time) {
+    const moving = time - S.last < 180;
+    const step = reduce ? 0 : Math.floor(time / (moving ? 110 : 450));
+    if (step === lastStep) return;
+    lastStep = step;
+    const c = S.night ? nightOf(LEAD) : LEAD;
+    const asleep = S.night && (S.t % DAY >= 1380 || S.t % DAY < SR);
+    paintMate(who, c, moving ? "walk" : asleep ? "sleep" : "stand", step, moving && S.dir < 0);
+    paintMate(document.getElementById("sayIcon"), c, "stand", 0, false);
+    paintMate(document.getElementById("tabMate"), c, "stand", 0, false);
+    for (const k of crewCanvases) paintMate(k.cv, k.c, k.pose, k.pose === "sleep" ? step : reduce ? 0 : step + k.i, false);
+    for (const k of momentCanvases) paintMate(k.cv, k.c, k.pose, step, false);
+  }
+  function loop(time) { sprites(time); if (!reduce) requestAnimationFrame(loop); }
+
+  function setTime(t) {
+    t = Math.max(0, Math.min(DAY + 400, t));
+    if (Math.round(t) === Math.round(S.t)) return;
+    S.dir = t > S.t ? 1 : -1;
+    S.t = t;
+    S.last = performance.now();
+    render();
+  }
+  const chips = [...document.querySelectorAll("#chips [data-at]")];
+  for (const b of chips)
+    b.addEventListener("click", () => {
+      const v = b.dataset.at;
+      const to = v ? Number(v.slice(0, 2)) * 60 + Number(v.slice(3)) : real();
+      for (const o of chips) o.setAttribute("aria-pressed", String(o === b));
+      if (reduce) return setTime(to);
+      const from = S.t, t0 = performance.now();
+      const go = (n) => { const p = Math.min(1, (n - t0) / 1100); setTime(from + (to - from) * ease(p)); if (p < 1) requestAnimationFrame(go); };
+      requestAnimationFrame(go);
+    });
+  for (const b of document.querySelectorAll("[data-m]"))
+    b.addEventListener("click", () => {
+      const to = Number(b.dataset.m);
+      for (const o of document.querySelectorAll("[data-m]")) o.setAttribute("aria-pressed", String(o === b));
+      if (reduce) { S.m = to; return render(); }
+      const from = S.m, t0 = performance.now();
+      const go = (n) => { const p = Math.min(1, (n - t0) / 1100); S.m = from + (to - from) * p; S.last = n; render(); if (p < 1) requestAnimationFrame(go); };
+      requestAnimationFrame(go);
+    });
+  // drag the dial: around the ring (or along the line) to move through the day
+  let drag = null;
+  const angAt = (e) => { const r = dial.getBoundingClientRect(); const vb = dialSvg.viewBox.baseVal; return Math.atan2(e.clientX - r.left - (C * r.width) / vb.width, -(e.clientY - r.top - (CY * r.height) / vb.height)); };
+  dial.addEventListener("pointerdown", (e) => { drag = { a: angAt(e), x: e.clientX }; dial.setPointerCapture(e.pointerId); for (const o of chips) o.setAttribute("aria-pressed", "false"); });
+  dial.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    if (S.m > 0.5) { const dx = e.clientX - drag.x; drag.x = e.clientX; return setTime(S.t - dx * 1.6); }
+    let a = angAt(e), da = a - drag.a;
+    if (da > Math.PI) da -= Math.PI * 2;
+    if (da < -Math.PI) da += Math.PI * 2;
+    drag.a = a;
+    setTime(S.t + (da / (Math.PI * 2)) * DAY);
+  });
+  const end = () => (drag = null);
+  dial.addEventListener("pointerup", end);
+  dial.addEventListener("pointercancel", end);
+
+  /* ---------- the right column ---------- */
+  for (const svg of document.querySelectorAll("svg.m-mark")) mark(svg);
+  for (const svg of document.querySelectorAll("svg.m-mark-n")) mark(svg, { line: "#c9c1f5", ink: "#1b1736" });
+  for (const svg of document.querySelectorAll("svg.m-o")) sunO(svg);
+  document.getElementById("dayname").textContent = new Date().toLocaleDateString("en-US", { weekday: "long" });
+  // a day in four moments
+  const momentCanvases = [];
+  const host = document.getElementById("moments");
+  for (const [t, title, line] of [[SR + 25, "Sunrise", "Your Morrow comes up with you."], [740, "Midday", "High in the sky. Things rise as they near."], [SS + 10, "Sunset", "The sky turns. Work runs into the night."], [1395, "Night", "Asleep on the moon. 6 stars today."]]) {
+    const night = isNight(t);
+    const el = document.createElement("div");
+    el.className = "moment";
+    el.style.cssText = night ? "background:#14112b;color:#f1eeff" : "background:#f6f3fb;color:#1b1736;box-shadow:inset 0 0 0 1px #e6e0f7";
+    el.innerHTML = `<div class="mini"><svg aria-hidden="true"></svg><canvas class="px who" width="16" height="16" aria-hidden="true"></canvas></div><b>${title}</b><span>${line}</span>`;
+    host.appendChild(el);
+    const svg = el.querySelector("svg");
+    const at = drawDial(svg, t, 0, { mini: true });
+    const cv = el.querySelector(".who");
+    requestAnimationFrame(() => { const box = svg.getBoundingClientRect(); cv.style.transform = `translate(${(at.x * box.width) / 320}px, ${(at.y * box.height) / 320}px)`; });
+    momentCanvases.push({ cv, c: night ? nightOf(LEAD) : LEAD, pose: t === 1395 ? "sleep" : "stand", t, svg, at });
+  }
+  // companions: day and night forms
+  const crewCanvases = [];
+  const crewHost = document.getElementById("crew");
+  CREW.forEach((c, i) => {
+    const el = document.createElement("div");
+    el.className = "mate";
+    el.innerHTML = `<div class="forms"><div style="background:#f6f3fb"><canvas class="px" width="16" height="16" aria-hidden="true"></canvas><small style="color:#6b6488">DAY</small></div><div style="background:#1f1b3e"><canvas class="px" width="16" height="16" aria-hidden="true"></canvas><small style="color:#a59fc6">NIGHT</small></div></div><b>${c.name}</b><span>${c.say}</span>`;
+    crewHost.appendChild(el);
+    const [d, n] = el.querySelectorAll("canvas");
+    crewCanvases.push({ cv: d, c, pose: "walk", i }, { cv: n, c: nightOf(c), pose: "sleep", i });
+  });
+  // app icons: day and night
+  const icons = document.getElementById("icons");
+  for (const [size, bg, o] of [[84, "#5b4bd6", { line: "#f5f2fb", moon: "#f5f2fb" }], [84, "#1b1736", { line: "#c9c1f5" }], [46, "#5b4bd6", { line: "#f5f2fb", moon: "#f5f2fb" }]]) {
+    const t = document.createElement("div");
+    t.className = "ico"; t.style.cssText = `width:${size}px;height:${size}px;background:${bg}`;
+    const s = document.createElementNS(NS, "svg"); s.setAttribute("aria-hidden", "true"); t.appendChild(s); mark(s, o);
+    icons.appendChild(t);
+  }
+  document.getElementById("lockTime").textContent = "3:40";
+
+  addEventListener("resize", () => { render(); for (const k of momentCanvases) { const box = k.svg.getBoundingClientRect(); k.cv.style.transform = `translate(${(k.at.x * box.width) / 320}px, ${(k.at.y * box.height) / 320}px)`; } });
+  setInterval(() => { if (chips[0].getAttribute("aria-pressed") === "true" && performance.now() - S.last > 30000) { S.t = real(); render(); } }, 20000);
+  render();
+  requestAnimationFrame(loop);
+})();
+</script>

@@ -7,6 +7,17 @@ import type { UserScope } from "../db/with-user";
 import { assertOwned, notFound, ServiceError } from "./errors";
 import { parsePatch } from "./patch";
 
+/** One shift by id (the timeline's Edit). */
+export async function getShift(scope: UserScope, id: string) {
+  const [row] = await scope.tx
+    .select()
+    .from(workShifts)
+    .where(and(eq(workShifts.id, id), eq(workShifts.userId, scope.userId)))
+    .limit(1);
+  if (!row) throw new ServiceError("That shift isn't there anymore.");
+  return row;
+}
+
 // ---------------------------------------------------------------- pure calculations
 
 export type ShiftLike = {
