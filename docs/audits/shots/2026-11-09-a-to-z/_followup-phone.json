@@ -1,0 +1,40 @@
+{
+ "before": "Sunrise about 6:35 AMToday💼9 AM🌙 Sun rises in about 3h 10mNext · 9 AMWork6,240 steps · 7h 18m sleep$69.20 spent todayTomorrow · 💼 Work · 🎓 Class",
+ "nowPillCenterX": 233,
+ "trackCenterX": 197,
+ "afterNowPillWrap": {
+  "dome": "Sunrise about 6:35 AMTodayNowToday · 12:54 AM💼 WorkNext, 9 AM",
+  "backVisible": true
+ },
+ "timelineWheel": {
+  "start": 935,
+  "afterHorizontal500": 1435,
+  "afterVertical500": 1435,
+  "pageYAfterH": 0,
+  "pageYAfterV": 210
+ },
+ "timelineMouseDrag300": {
+  "before": 1435,
+  "after": 1435,
+  "state": "timeline"
+ },
+ "oneDayScroll": 0,
+ "days": [
+  "@0w0h0",
+  "Fri@12w44h44",
+  "Sat@63w44h44",
+  "Sun@115w44h44",
+  "Today@166w53h44",
+  "Tue@226w52h44",
+  "Wed@286w44h44",
+  "Thu@337w44h44",
+  "@0w0h0"
+ ],
+ "todayLabelVsPill": [
+  {
+   "x": -336,
+   "w": 39,
+   "y": 108
+  }
+ ]
+}
