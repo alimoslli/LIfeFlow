@@ -1,5 +1,4 @@
 "use client";
-import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { gsap, MOTION } from "./gsap";
 import { markHydrated, setSplashActive } from "./intro";
@@ -43,8 +42,9 @@ function pageReady() {
 }
 
 /**
- * Opening screen: the official LifeFlow mark appears, then "Good morning" and
- * the user's first name rise into focus (CSS, set before first paint from the
+ * Opening screen: the morning. The sun (the LifeFlow mark, face and all) rises
+ * along the horizon in CSS (globals.css, .lf-splash-scene), then "Good morning"
+ * and the user's first name rise into focus (CSS, set before first paint from the
  * hour in the user's time zone, so no flicker). It stays until the app has really loaded (the
  * page's data is in, no loading placeholder, fonts and images done), so people
  * don't land on a half-loaded screen; at least 1.5s, never more than 8s. A CSS
@@ -91,16 +91,13 @@ export function Splash() {
 
   return (
     <div ref={layer} className="lf-splash-layer" aria-hidden>
-      <div className="lf-splash-inner flex flex-col items-center gap-5">
-        <Image
-          src="/brand/lifeflow-mark-transparent-512.png"
-          alt=""
-          width={132}
-          height={132}
-          priority
-          className="lf-splash-brand h-[112px] w-[112px] drop-shadow-[0_10px_28px_rgba(0,0,0,0.28)]"
-        />
-        <div className="flex flex-col items-center text-center">
+      <div className="lf-splash-inner">
+        <div className="lf-splash-sky">
+          <span className="lf-splash-glow" />
+          <span className="lf-splash-sun" />
+        </div>
+        <span className="lf-splash-horizon" />
+        <div className="lf-splash-ground text-center">
           <p className="lf-greet lf-greet-1 text-[0.9375rem] tracking-[0.18em] uppercase opacity-80" />
           <p className="lf-greet lf-greet-2 mt-2 font-display text-[2.5rem] leading-none font-medium tracking-tight" />
           <span className="lf-greet-line mt-5 h-px w-16 bg-white/50" />
