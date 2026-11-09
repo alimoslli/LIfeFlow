@@ -40,13 +40,17 @@ Started 2026-11-08 at the owner's request: "make sure all is in writing and they
 | Chat | Department | Session | Branch | Owns these sections |
 |---|---|---|---|---|
 | **LF COO** | COO: rounds, briefs, this plan | `session_01Mhcz6DL7P1jhw4V8cnh4pE` | `claude/chief-of-staff` | 1, 6, 7, 10, 11 |
-| **LF Main** | Engineering: the app as it is today | `session_014H9m2SQ58sgx7ZG8Ntv7Zx` | `main`, plus held branches | 3, 4, 9 |
-| **LF V3** | Product & Design: the vision and the new surface | `session_01Mhcz6Ao4XdmNh3eAPYd3QN` | `v3-day-clock`, `claude/pensive-mendel-r1yy4a` | 2 |
+| **LF Main** | Product, design and engineering: the app on main | `session_01Mhcz6Ao4XdmNh3eAPYd3QN` | `main` | 2, 3, 4, 9 |
+| **LF Managing Agents** | Managing agents, beside the COO (the owner kept it, 2026-11-09) | `session_01Mhcz6BYyF8TLLXwBiWcWyk` | `claude/nightly-audits` | none |
 | **LF Marketing** | Marketing & Growth | `session_01Mhcz6CyarVMRum5SxqLMqM` | `claude/lifeflow-ad-reel-higgsfield-s3r3v1` | 8 |
 | **LF HQ** | HQ: the admin area and the company's tools | `session_01Mhcz6BtYDPTHBytp9oyjLZ` | `claude/sharp-lovelace-8fr6z5` (kept equal to main) | 5 |
 | HQ sync | A helper: copies every chat's status into HQ hourly. Never needs opening. | `session_01Mhcz6C2smYHWY1gvs4Jt75` | none | none |
 
 Quality & Security, Research & Insights and Customer Success have no chat of their own. They are lead agents (`.claude/agents/*.md`) that the COO runs in the night and Monday rounds.
+
+**Chats merged on 2026-11-09** (owner):
+- **The old "LF Main"** (`session_014H9m2SQ58sgx7ZG8Ntv7Zx`, archived) and **"LF V3"** are now one chat, LF Main (the former LF V3 session). The owner merged V3 into main (PR #3, e524c53) and said to keep working on main, so one chat pushes to main. The old LF Main had nothing in flight; its last work (the deploy-step fix) is live. `v3-day-clock` and `v3-day-clock-north-star` are no longer used.
+- **"LF Managing Agents"** stays open: the owner wants it, so it is no longer folded into LF COO.
 
 **Chats merged on 2026-11-08** (their open work moved into the sections below; archived chats can be reopened):
 - **"LF COO (old, Sonnet)"** went into LF COO. It was dormant and fully replaced, and its scheduled tasks were already off.
@@ -65,7 +69,7 @@ Quality & Security, Research & Insights and Customer Success have no chat of the
 
 All times are Pacific. The wording is in `docs/hq/round-prompts.md`.
 
-## 2. Product: the vision and the new surface (V3). Owner: LF V3
+## 2. Product: the vision and the new surface. Owner: LF Main
 **Where the details live:**
 - `docs/vision.md`, the vision; its section 15 holds the decisions and open questions;
 - `docs/design/clock/spec.md`, the clock spec; section 7 is what's built;
@@ -74,18 +78,15 @@ All times are Pacific. The wording is in `docs/hq/round-prompts.md`.
 - `docs/research/`;
 - `docs/hq/handover-from-product-chat.md`.
 
-**Status:** the new surface is being built on `v3-day-clock` (29 commits ahead of main, not merged). It is a copy of the live app with:
+**Status:** the new surface is on main and live (the owner merged V3, PR #3, 2026-11-09; he has no users yet, so it went straight to main). It is the live app with:
 - four tabs: Today, Assistant, Money, School;
-- a day clock showing the next 24 hours on two rings;
-- a timeline that holds the whole life: to-dos, goals, milestones, Someday and Done;
+- Today as a wheel of time in a sky card: the companion runs on top while the day's things roll back under it; the sky is the real sky at the time on top; drag or flick to turn through the week, "Back to now", and a tap unrolls it into the timeline at that time (spec section 7b);
+- the real-sky colours everywhere, no purple (owner);
+- a timeline that holds the whole life: to-dos, goals, milestones, Someday and Done, with piles that name themselves ("9 assignments");
 - everything with a time flowing onto both (calendars, shifts, deadlines, reminders, and money behind the lock);
 - "Pin something".
 
-Full check and phone e2e passed on 2026-11-08. To see it:
-- the artifact "LifeFlow Day Clock" (https://claude.ai/artifact/UgiwwCiRsyigsHhvn1LoND) shows it on a made-up student week;
-- the owner's pitch page "LifeFlow v3" (https://claude.ai/artifact/YM14ETMVXCKV85Gg4MeSbh) has the North Star story, a live phone demo and sign-in.
-
- Nothing reaches main without the owner's yes on a picture.
+Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.webp`.
 
 **Done:**
 - 11-07: the V3 home spec and prototype, from the owner's storyboard.
@@ -98,9 +99,10 @@ Full check and phone e2e passed on 2026-11-08. To see it:
   - all-day plans read "today" or "all day";
   - a quiet face counts what the timeline holds.
 - 11-08: main merged into `v3-day-clock` (ca873df). It brought promises, this plan and the HQ test fix. The promise check now runs on open, before the clock. The check is green (1158 tests), and so are the clock, core and promises e2e.
+- 11-09: the owner's names: V2 was the clock with self-naming piles (518d37a), V3 was V2 plus Morrow. Today became the sky card (owner picked B), then a wheel of time (5e11dbb, 5224c57, d988772) in the real-sky colours (2b002c8). A Fable review found 6 bugs, all fixed. Phone e2e 7/7 with a new wheel test; 1162/1162 unit and integration tests. The owner merged it all into main (PR #3).
 
 **Next:**
-- **Bring `v3-day-clock-north-star` up to date.** It was cut from `v3-day-clock` at 26299b6, so it lacks 34e2eb3, 39f7794 and 46842e8. The owner's sign-in link points at it, so either merge `v3-day-clock` into it (LF Main owns that branch) or point the owner at the `v3-day-clock` preview.
+- The owner's next round of changes to the new surface (he is about to give them, 2026-11-09).
 - Rebuild the Day Clock artifact after clock changes.
 - The ADR 0032 proposals ("Tonight", "What this costs", timeline connection lines, a widget or watch) are not built and need the owner's yes.
 
@@ -108,7 +110,7 @@ Full check and phone e2e passed on 2026-11-08. To see it:
 - confirm ADR 0032 (the North Star);
 - pick a timeline concept;
 - the Goals redesign A and Connected accounts cards (HQ lists them under "needs rewrite");
-- the go to merge V3 into main.
+- the 36-to-20 pages map (which pages merge or go): https://claude.ai/artifact/W4AKTMLrTML3tnqLBsTm4b, section 2.
 
 ## 3. The app today (Engineering). Owner: LF Main
 **Where the details live:** `CLAUDE.md` (all product and technical rules), `docs/architecture.md`, `docs/schema.md`, `docs/integrations.md` and `docs/adr/`.
@@ -269,6 +271,7 @@ Full check and phone e2e passed on 2026-11-08. To see it:
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-09, LF Main (was LF V3): the owner merged V3 into main (PR #3): Today is a wheel of time in a sky card, the real-sky colours, no purple. Chats simplified on his word: the old LF Main joined this chat (archived), LF Managing Agents stays open, V2 and V3 branches retired.
 - 2026-11-09, LF COO: the owner is already on Vercel Pro (decision removed). New deploys had stopped reaching lifeflowweb.com because the Neon integration hit its preview branch limit (Deployment Checks: "Neon branching: Branch limit exceeded", custom domain skipped); after the owner cleared it, the evening fixes, the Today chips and the H4 404 are live. Rule: builders work on claude/chief-of-staff or a worktree branch that is NOT pushed; only main and the department branches are pushed, so each push doesn't cost a Neon branch.
 - 2026-11-09, LF COO: the owner approved H4; signed-out visitors to /admin get the same 404 as everyone else (7647a69).
 - 2026-11-08, LF COO: the owner said yes; Today quick chips wrap instead of running off the edge (817e57f).

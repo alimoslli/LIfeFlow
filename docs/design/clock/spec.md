@@ -231,7 +231,9 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
   - tokens in `globals.css`, the glass, the mark in `brand-mark.tsx`, the time-of-day wash behind every page (`components/sky/sky-scene.tsx`) and the companion's colours come from the Day Sky look (07a46df).
   So School, Money and every page match. The name stays LifeFlow until a new name is chosen.
 
-## Names of the versions (owner, 2026-11-09)
+## Names of the versions (owner, 2026-11-09; retired the same day)
+
+The owner merged V3 into main (PR #3) and works on main from now on; the V2 and V3 preview links below are no longer kept up to date.
 
 Until the real LifeFlow changes or moves to a new domain:
 
