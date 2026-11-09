@@ -864,6 +864,13 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       // where it was done, for the celebration (the card closes as it's tapped)
       const at = (e.currentTarget as HTMLElement).getBoundingClientRect();
       S.sel = null;
+      // gone from the line at once (with its reminder); the refresh that follows confirms it, or brings it back if the save failed
+      const gone = (x: ClockItem) =>
+        x.id === it.id || (it.origin !== "assignment" && !!it.ref && x.ref === it.ref && (x.origin === "task" || x.origin === "reminder"));
+      ITEMS = ITEMS.filter((x) => !gone(x));
+      DATED = ITEMS.filter((x) => !x.someday);
+      if (S.open) refreshOpen();
+      else rebuild();
       showDetail();
       markSel();
       opts.onDone(it, at);
@@ -949,6 +956,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       else {
         S.anim = null;
         done?.();
+        // new data that came in during the move (a Done saved, a refresh) is shown once it settles open
+        if (S.dirty && S.open && !S.anim && !drag && !wrap) {
+          S.dirty = false;
+          refreshOpen();
+        }
       }
     };
     a.id = requestAnimationFrame(step);

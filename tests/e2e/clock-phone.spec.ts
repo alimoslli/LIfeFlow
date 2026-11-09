@@ -133,6 +133,13 @@ test("things at the same moment stack into one stop that lists them", async ({ p
   await card.getByRole("button", { name: /Essay draft/ }).click();
   await expect(card.locator(".dc-d-t")).toHaveText("Essay draft");
   await expect(card.getByRole("button", { name: "Done" })).toBeVisible();
+  // Done takes it off the line at once (owner, 2026-11-09: done assignments stayed), and it stays off after a reload.
+  await card.getByRole("button", { name: "Done" }).click();
+  await expect(page.getByRole("button", { name: /^2 assignments due, .*11:59 PM$/ }).first()).toBeVisible();
+  await page.reload();
+  await expect(clock).toHaveAttribute("data-ready", "true");
+  await page.getByRole("button", { name: /^Today\. Now / }).click();
+  await expect(page.getByRole("button", { name: /^2 assignments due, .*11:59 PM$/ }).first()).toBeVisible();
 });
 
 // "The mechanism" (owner, 2026-11-09): Today is a wheel of time in the sky. Turning it away from now shows "Back to now",
