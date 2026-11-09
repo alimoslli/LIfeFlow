@@ -414,6 +414,12 @@ cuts are in the doc's Footage log tab. Never use IMG_1791 2:13 to 2:20 (names a 
 page per shoot, in order, tick boxes, the exact lines, times per block; everything else sits in "Full plan (background)". Always send
 the shoot sheet as a PDF link too. Next shoot (seated, podcast/office, with mics): confession, five podcast questions with Ali's own
 answers from the car, Tyler's turn, work shots, the last line. The couch scene is a separate day.
+**Teaser "Before December" (Ali, 2026-11-09):** the first public step of the rebrand, posted before the film. It shows the brand
+changing, never the app's screens: the old mark (three green drops) melts into a horizon line, the night sky fills with pixel stars over
+the real rooftop shot (IMG_3935, reshoot planned), and only the top edge of the new morning mark (the sun on the horizon) peeks up; then
+"Before December." Ali's real lines from the sit-down (My Movie 6: 0:33, 6:03, 0:47, 5:56; clean audio, the mics worked). Made locally
+from the real brand files, no credits; Ali adds music. Plan in the doc's Teaser tab (first tab). Claude Fable 5.2 is a Claude model,
+not a video generator: it can run the edit in a session switched to it.
 The doc now opens with "What you do": a one-page checklist for tonight plus an Ali-and-Tyler table for the work shots. Ali wants the plan
 that simple ("just tell me what I have to do"); the detail stays below it. Send plans as PDF links too (the doc link didn't open in his browser).
 
