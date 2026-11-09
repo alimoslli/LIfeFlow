@@ -40,18 +40,22 @@ export function RightNow({
 }) {
   const needs = approvals.length + waiting.length;
   return (
-    <section aria-label="Right now" className="flex flex-col gap-4 rounded-3xl bg-surface p-4 shadow-soft sm:p-5" data-testid="hq-right-now">
+    <section
+      aria-label="Right now"
+      className="flex flex-col gap-4 rounded-3xl bg-surface p-4 shadow-soft sm:p-5 lg:rounded-[28px] lg:p-6"
+      data-testid="hq-right-now"
+    >
       <div data-testid="hq-waiting">
-        <h2 className="font-display text-[1.25rem] font-medium text-text">Needs you</h2>
+        <h2 className="font-display text-[1.25rem] font-medium text-text lg:text-[1.375rem]">Needs you</h2>
         {needs === 0 ? (
-          <p className="mt-1 text-[0.9375rem] text-text-2">Nothing needs you right now.</p>
+          <p className="mt-1 text-[0.9375rem] text-text-2 lg:text-base">Nothing needs you right now.</p>
         ) : (
           <ul className="mt-1 flex flex-col divide-y divide-border/60">
             {approvals.map((a) => (
               <li key={a.id} className="flex items-center gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold break-words text-text">{a.title}</p>
-                  <p className="text-sm text-text-2">{employee(a.role).title} asks for your yes</p>
+                  <p className="text-sm font-semibold break-words text-text lg:text-base">{a.title}</p>
+                  <p className="text-sm text-text-2 lg:text-[0.9375rem]">{employee(a.role).title} asks for your yes</p>
                 </div>
                 <Link href={`/admin/work#${a.id}`} className={`${button} bg-accent text-accent-text`} aria-label={`Decide: ${a.title}`}>
                   Decide <ArrowRight className="h-3.5 w-3.5" aria-hidden />
@@ -61,8 +65,8 @@ export function RightNow({
             {waiting.map((w) => (
               <li key={w.chatId} className="flex items-center gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold break-words text-text">{w.who}</p>
-                  <p className="text-sm break-words text-brass-ink">{w.needs}</p>
+                  <p className="text-sm font-semibold break-words text-text lg:text-base">{w.who}</p>
+                  <p className="text-sm break-words text-brass-ink lg:text-[0.9375rem]">{w.needs}</p>
                 </div>
                 <a
                   href={w.url}
@@ -90,7 +94,7 @@ export function RightNow({
             {items.length > 0 && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60 motion-reduce:hidden" />}
             <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${items.length > 0 ? "bg-accent" : "bg-border"}`} />
           </span>
-          <h2 className="font-display text-[1.25rem] font-medium text-text">Working now</h2>
+          <h2 className="font-display text-[1.25rem] font-medium text-text lg:text-[1.375rem]">Working now</h2>
           {items.length > 0 && <span className="text-xs text-muted">{items.length === 1 ? "1 chat working" : `${items.length} chats working`}</span>}
         </div>
         {items.length === 0 ? (
@@ -100,7 +104,7 @@ export function RightNow({
             {items.map((i) => (
               <li key={i.chatId} className="flex items-center gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm break-words text-text">
+                  <p className="text-sm break-words text-text lg:text-base">
                     <span className="font-semibold">{i.who}</span>
                     {i.missionTitle && (
                       <>
@@ -115,7 +119,7 @@ export function RightNow({
                       </>
                     )}
                   </p>
-                  <p className="text-sm break-words text-text-2">
+                  <p className="text-sm break-words text-text-2 lg:text-[0.9375rem]">
                     {i.line} <span className="text-muted">· {i.relayed ? `checked ${agoLine(i.at, now)}` : agoLine(i.at, now)}</span>
                   </p>
                 </div>

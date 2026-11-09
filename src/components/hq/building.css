@@ -1,7 +1,8 @@
 /* ===== The LifeFlow HQ building (owner, 2026-11-07; ADR 0029 addenda) ============================================
    One building cut open like the owner's concept (docs/hq/concept.webp): a rendered roof with the LifeFlow HQ sign, then the
-   rooms side by side between walnut walls and floor beams, the lobby and the steps. The colours come from the rendered art
-   (walnut, brass, eucalyptus green) and stay the same in light and dark mode. Imported only by office-scene.tsx; every class
+   rooms side by side between walnut walls and floor beams, the lobby and the steps. The walnut and the pictures come from the
+   rendered art; the sky behind the building, the glass labels and the sign wear the app's Day Sky look (owner, 2026-11-09):
+   a clear day in light, the night sky in dark. Imported only by office-scene.tsx; every class
    starts with hq- so nothing here touches the rest of the app. Transform and opacity animations only. */
 
 .hq-tower {
@@ -12,19 +13,34 @@
   overflow: hidden;
   isolation: isolate;
   color: #f3efe3;
-  background: radial-gradient(120% 55% at 50% 0%, rgb(126 220 160 / 0.13), transparent 62%), linear-gradient(180deg, #17372b 0%, #112b21 55%, #0d2119 100%);
+  /* The sky behind the building, like the app's Today: a clear day in light, the night sky in dark. */
+  background: radial-gradient(60% 40% at 82% 4%, rgb(255 205 130 / 0.45), transparent 70%), linear-gradient(180deg, #2a76d0 0%, #6aaae6 45%, #c8e3f8 100%);
   box-shadow:
-    0 24px 50px -22px rgb(10 40 28 / 0.55),
+    0 24px 50px -22px rgb(15 40 90 / 0.45),
+    inset 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+:root[data-theme="dark"] .hq-tower {
+  background: radial-gradient(120% 55% at 50% 0%, rgb(125 179 242 / 0.14), transparent 62%), linear-gradient(180deg, #13284d 0%, #0b1a3a 55%, #07101f 100%);
+  box-shadow:
+    0 24px 50px -22px rgb(0 0 0 / 0.6),
     inset 0 0 0 1px rgb(255 255 255 / 0.06);
 }
-/* A few quiet stars behind the roof. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hq-tower {
+    background: radial-gradient(120% 55% at 50% 0%, rgb(125 179 242 / 0.14), transparent 62%), linear-gradient(180deg, #13284d 0%, #0b1a3a 55%, #07101f 100%);
+    box-shadow:
+      0 24px 50px -22px rgb(0 0 0 / 0.6),
+      inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  }
+}
+/* A few quiet stars behind the roof, at night only (dark mode). */
 .hq-tower::before {
   content: "";
   position: absolute;
   inset: 0 0 auto;
   height: 16rem;
   z-index: -1;
-  opacity: 0.55;
+  opacity: 0;
   pointer-events: none;
   background:
     radial-gradient(1.5px 1.5px at 8% 18%, #fff, transparent), radial-gradient(1px 1px at 19% 42%, #fff, transparent),
@@ -35,6 +51,14 @@
 @media (min-width: 1024px) {
   .hq-tower {
     padding: 1.5rem 1.25rem 0;
+  }
+}
+:root[data-theme="dark"] .hq-tower::before {
+  opacity: 0.55;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hq-tower::before {
+    opacity: 0.55;
   }
 }
 
@@ -73,22 +97,22 @@
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.01em;
-  color: #effbea;
+  color: #eef6ff;
   text-shadow:
-    0 0 0.35em rgb(150 240 170 / 0.75),
-    0 0 0.9em rgb(80 200 120 / 0.45);
+    0 0 0.35em rgb(150 200 255 / 0.75),
+    0 0 0.9em rgb(70 140 230 / 0.45);
 }
 .hq-roof-sign b {
   font-weight: 600;
-  color: #f6e5ab;
+  color: #ffe3ad;
   text-shadow:
-    0 0 0.35em rgb(240 210 130 / 0.7),
-    0 0 0.9em rgb(240 200 110 / 0.35);
+    0 0 0.35em rgb(252 200 106 / 0.7),
+    0 0 0.9em rgb(245 165 36 / 0.35);
 }
 .hq-roof-mark {
   width: 6.5cqi;
   height: 6.5cqi;
-  filter: drop-shadow(0 0 0.6cqi rgb(150 240 170 / 0.8));
+  filter: drop-shadow(0 0 0.6cqi rgb(150 200 255 / 0.8));
 }
 
 /* ---- The body: walnut walls, floor beams, rooms side by side ---- */
@@ -129,7 +153,7 @@
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
-  background: #14221b;
+  background: #0b1626;
   color: #f3efe3;
   --c: #7fdcab;
 }
@@ -140,7 +164,7 @@
   aspect-ratio: var(--ar, 16 / 10);
   overflow: hidden;
   line-height: 0;
-  background: #14221b;
+  background: #0b1626;
 }
 .hq-photo {
   position: absolute;
@@ -157,7 +181,7 @@
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(180deg, rgb(0 0 0 / 0.38), transparent 24%, transparent 50%, rgb(6 14 10 / 0.85));
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.38), transparent 24%, transparent 50%, rgb(5 11 23 / 0.85));
 }
 .hq-room-founder .hq-stage::after,
 .hq-room-lounge .hq-stage::after {
@@ -261,7 +285,7 @@ a.hq-room:focus-visible {
 .hq-label-bg,
 .hq-label {
   border-radius: 0.75rem;
-  background: rgb(10 20 15 / 0.72);
+  background: rgb(7 16 31 / 0.72);
   border: 1px solid rgb(255 255 255 / 0.14);
   box-shadow: 0 6px 16px -6px rgb(0 0 0 / 0.6);
   -webkit-backdrop-filter: blur(6px);
@@ -297,9 +321,9 @@ a.hq-room:focus-visible {
   width: 1.875rem;
   height: 1.875rem;
   border-radius: 0.5rem;
-  background: rgb(231 207 143 / 0.14);
-  border: 1px solid rgb(231 207 143 / 0.32);
-  color: #e7cf8f;
+  background: rgb(245 165 36 / 0.16);
+  border: 1px solid rgb(252 200 106 / 0.36);
+  color: #fcc86a;
 }
 .hq-ico svg {
   width: 1rem;
@@ -326,7 +350,7 @@ a.hq-room:focus-visible {
   white-space: nowrap;
   font-size: 0.6875rem;
   line-height: 1.3;
-  color: #c5d6cb;
+  color: #c8d3e4;
 }
 .hq-meta > .hq-chip {
   grid-area: chip;
@@ -352,7 +376,7 @@ a.hq-room:focus-visible {
   margin-top: 0.3rem;
   padding: 0.2rem 0.5rem;
   border-radius: 0.375rem;
-  background: rgb(36 28 10 / 0.82);
+  background: rgb(7 16 31 / 0.82);
   border: 1px solid rgb(234 195 109 / 0.55);
   color: #ffe2a3;
   font-size: 0.75rem;
@@ -373,7 +397,7 @@ a.hq-room:focus-visible {
   padding: 0.15rem 0.5rem;
   border-radius: 0.375rem;
   border: 1px dashed rgb(234 195 109 / 0.7);
-  background: rgb(10 20 15 / 0.7);
+  background: rgb(7 16 31 / 0.7);
   color: #f6efdb;
   font-size: 0.6875rem;
   letter-spacing: 0.02em;
@@ -492,8 +516,8 @@ a.hq-room:focus-visible {
   height: 1.6rem;
   padding: 0 0.35rem;
   border-radius: 999px;
-  background: #1f4a3a;
-  border: 2px solid #e7cf8f;
+  background: #13284d;
+  border: 2px solid #fcc86a;
   color: #f6efdb;
   font:
     800 0.8125rem/1 system-ui,
@@ -543,7 +567,7 @@ a.hq-room:focus-visible {
   padding: 0 1rem;
   border-radius: 999px;
   border: 1px solid rgb(255 255 255 / 0.32);
-  background: rgb(10 20 15 / 0.62);
+  background: rgb(7 16 31 / 0.62);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   color: #f6efdb;
@@ -558,12 +582,12 @@ a.hq-room:focus-visible {
 }
 .hq-fbtn-desk {
   border: 0;
-  background: linear-gradient(180deg, #e7cf8f, #c9a24f);
-  color: #2a2008;
+  background: linear-gradient(180deg, #fcc86a, #f5a524);
+  color: #0f1a2a;
 }
 .hq-fbtn-gold {
-  border-color: #eac36d;
-  color: #ffe2a3;
+  border-color: #fcc86a;
+  color: #ffe3ad;
 }
 .hq-desk-count {
   display: inline-grid;
@@ -572,7 +596,7 @@ a.hq-room:focus-visible {
   height: 1.375rem;
   padding: 0 0.35rem;
   border-radius: 999px;
-  background: #1f4a3a;
+  background: #13284d;
   color: #f6efdb;
   font-size: 0.75rem;
   font-weight: 700;
@@ -592,7 +616,7 @@ a.hq-room:focus-visible {
   line-height: 1.2;
   border-radius: 3px;
   background: linear-gradient(160deg, #fffefa, #f6f1e4);
-  color: #1f4a3a;
+  color: #13284d;
   transform: rotate(-3deg);
   box-shadow:
     0 1px 0 rgb(255 255 255 / 0.9) inset,
@@ -615,7 +639,7 @@ a.hq-room:focus-visible {
   font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: -0.01em;
-  color: #1f4a3a;
+  color: #13284d;
 }
 .hq-bcard-l2 {
   font-size: 0.5625rem;
@@ -631,7 +655,7 @@ a.hq-room:focus-visible {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #1f4a3a;
+  color: #13284d;
 }
 .hq-bcard-l4 {
   font-size: 0.5rem;

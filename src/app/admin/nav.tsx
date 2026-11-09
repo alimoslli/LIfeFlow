@@ -19,13 +19,13 @@ const ITEMS: Item[] = [
 ];
 const SETTINGS = { href: "/admin/hq/settings", label: "Settings" };
 const settingsOn = (path: string) => under(path, SETTINGS.href);
-/** Admin navigation: a green rail on wide screens, a masthead with an underline row on phones. Dots show what's waiting. */
+/** Admin navigation: a night-sky rail on wide screens, a masthead with an underline row on phones. Dots show what's waiting. */
 export function AdminNav({ email, counts }: { email: string; counts: { feedback: number; errors: number; approvals: number } }) {
   const path = usePathname();
   const badge = (key?: Item["count"]) => {
     const n = key === "feedback" ? counts.feedback : key === "errors" ? counts.errors : key === "approvals" ? counts.approvals : 0;
     if (n <= 0) return null;
-    // Gold for what needs the owner's yes, green for the rest.
+    // The sun for what needs the owner's yes, the sky's blue for the rest.
     return (
       <span
         className={cn(

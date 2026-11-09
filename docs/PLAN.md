@@ -163,7 +163,7 @@ Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.
 - ADR 0022 and 0024 to 0030;
 - `CLAUDE.md`, "LifeFlow HQ".
 
-**Status:** live at `/admin`, with five places (Office, Work, Marketing, People, App) and the settings gear. It includes the desk, live HQ (what each chat is doing right now), the hourly sync, decision cards and the building pictures. The night round on 11-07 audited it: the founder-only locks, the API key checks and the card rules all hold.
+**Status:** live at `/admin`, in the app's Day Sky look since 11-09, with five places (Office, Work, Marketing, People, App) and the settings gear. It includes the desk, live HQ (what each chat is doing right now), the hourly sync, decision cards and the building pictures. The night round on 11-07 audited it: the founder-only locks, the API key checks and the card rules all hold.
 
 **Checked 11-08:**
 - The hourly sync runs: its last three runs were all accepted, 9 chats each.
@@ -176,6 +176,15 @@ Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.
   - live HQ and starting a desk task from HQ ([4919160](https://github.com/alimoslli/LIfeFlow/commit/4919160));
   - the HQ sync ([c7f4b4e](https://github.com/alimoslli/LIfeFlow/commit/c7f4b4e));
   - the simpler Office: "Needs you" and "Working now" first, logs moved to the department pages, the COO in plain words ([e8ad461](https://github.com/alimoslli/LIfeFlow/commit/e8ad461)).
+- 11-09: the admin area and HQ wear the app's new sky look, and fit a MacBook (ADR 0029, addendum 4; [COMMIT](https://github.com/alimoslli/LIfeFlow/commit/COMMIT)). The owner had said "nothing changed" there after V3.
+  - **The look:**
+    - the night-sky menu;
+    - the COO's brief as a clear sky;
+    - the sun's amber in place of gold;
+    - frosted glass over the hour's sky, with no hard borders;
+    - the building standing in the sky (day or night).
+  - **On a MacBook:** a wider page, two columns on the Office and bigger titles.
+  - **Unchanged:** the pictures, and the phone layout.
 
 **Next:**
 - The open ADR 0030 questions: per-chat keys and live-line wording.
@@ -271,6 +280,7 @@ Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-09, LF HQ: the admin area and HQ in the V3 sky look and comfortable on a MacBook, at the owner's word through the COO (section 5).
 - 2026-11-09, LF Main (was LF V3): the owner merged V3 into main (PR #3): Today is a wheel of time in a sky card, the real-sky colours, no purple. Chats simplified on his word: the old LF Main joined this chat (archived), LF Managing Agents stays open, V2 and V3 branches retired.
 - 2026-11-09, LF COO: the owner is already on Vercel Pro (decision removed). New deploys had stopped reaching lifeflowweb.com because the Neon integration hit its preview branch limit (Deployment Checks: "Neon branching: Branch limit exceeded", custom domain skipped); after the owner cleared it, the evening fixes, the Today chips and the H4 404 are live. Rule: builders work on claude/chief-of-staff or a worktree branch that is NOT pushed; only main and the department branches are pushed, so each push doesn't cost a Neon branch.
 - 2026-11-09, LF COO: the owner approved H4; signed-out visitors to /admin get the same 404 as everyone else (7647a69).
