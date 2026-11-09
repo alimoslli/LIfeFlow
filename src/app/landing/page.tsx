@@ -2,46 +2,46 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, ChevronDown } from "lucide-react";
 import { BrandLockup } from "@/components/brand/brand-mark";
-import { AssistantScene } from "@/components/landing/assistant-scene";
 import { CanvasLogo, GmailLogo, GoogleCalendarLogo, MicrosoftLogo } from "@/components/landing/logos";
+import { CompanionGlyph } from "@/components/sky/companion-glyph";
+import { CastCards } from "@/components/skylings/cast-cards";
+import { NightSky } from "@/components/skylings/night-sky";
+import { SkyLink } from "@/components/skylings/sky-button";
+import type { CompanionKey } from "@/lib/companions";
 import { getDb } from "@/server/db/client";
 import { inviterFor } from "@/server/services/invites";
 
-/** The front page for anyone who isn't signed in. Signed-in visitors never see it (see proxy.ts). */
+/**
+ * The front page for anyone who isn't signed in (signed-in visitors never see it, see proxy.ts). Remade 2026-11-09 at the
+ * owner's word: the page is one night turning into morning. It opens on the skylings' night (all six, together), meets the
+ * cast, shows what a skyling does before you ask, and the sun comes up over the trust and the questions.
+ */
 export const metadata: Metadata = {
   title: { absolute: "LifeFlow: Your whole life, in flow." },
 };
 
-const button =
-  "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-accent px-7 text-[0.9375rem] font-medium text-accent-text shadow-[0_10px_24px_-12px_rgb(31_72_56_/_0.7)] transition-[transform,background-color] hover:bg-accent-hover active:scale-[0.98]";
-
-const MOMENTS = [
+/** Three things a skyling does on a normal week, each said by the one whose gift it is. Every number is an example. */
+const MOMENTS: { who: CompanionKey; name: string; tag: string; says: string; used: string[] }[] = [
   {
+    who: "star",
+    name: "Star",
     tag: "Shift vs exam",
-    tone: "bg-warning-soft text-warning",
-    title: "Your Thursday shift runs until 10. Your Bio exam is Friday at 9.",
-    body: "It moves your study block to Wednesday and asks before touching anything.",
-    used: [
-      ["Exam · Fri 9 AM", "bg-warning-soft"],
-      ["Shift · Thu 5 to 10 PM", "bg-info-soft"],
-    ],
+    says: "Your Thursday shift runs until 10, and Bio is Friday at 9. I moved your study block to Wednesday. Okay?",
+    used: ["Exam · Fri 9 AM", "Shift · Thu 5 to 10 PM"],
   },
   {
+    who: "goldie",
+    name: "Goldie",
     tag: "Rent before payday",
-    tone: "bg-accent-soft text-accent",
-    title: "Checking could hit $0 on Friday.",
-    body: "Rent comes out before your next paycheck. It tells you the one thing that fixes it.",
-    used: [
-      ["$412 available", "bg-accent-soft"],
-      ["Rent $950 · Fri", "bg-surface-2"],
-    ],
+    says: "Rent comes out Friday, before your next paycheck, so checking could hit $0. One small move fixes it. Want to see it?",
+    used: ["$412 available", "Rent $950 · Fri"],
   },
   {
+    who: "ray",
+    name: "Ray",
     tag: "Double charge",
-    tone: "bg-info-soft text-info",
-    title: "You were charged twice for Spotify.",
-    body: "It wrote the message to get your $11.99 back. You send it, or you don't.",
-    used: [["Spotify × 2 · Monday", "bg-info-soft"]],
+    says: "Spotify charged you twice on Monday. I wrote the message to get your $11.99 back. You send it, or you don't.",
+    used: ["Spotify × 2 · Monday"],
   },
 ];
 
@@ -53,7 +53,7 @@ const TRUST = [
 ];
 
 const WHY = [
-  ["One job", "Your life, connected, and nothing else. Every feature exists to help you run your life."],
+  ["One job", "Your life, connected, and nothing else. Every feature exists to help you run your week."],
   ["Always connected", "Classes, shifts, money, calendar and health at the same time, so it sees how they affect each other."],
   ["Built by someone living it", "Made by a person with your schedule, who keeps asking what you need."],
 ];
@@ -82,13 +82,17 @@ const FAQS: { q: string; a: string }[] = [
     a: "No. It helps you plan, study and understand, but it never writes or solves graded work for you.",
   },
   {
+    q: "What is a skyling, exactly?",
+    a: "A little character that lives on top of your day. It reads what your connections show, notices what's about to clash and helps you fix it. It runs on AI, and it always asks before it changes anything.",
+  },
+  {
     q: "Is there an iPhone app?",
     a: "The App Store app is on the way. Today you can open LifeFlow in Safari and add it to your Home Screen, and it works like an app.",
   },
 ];
 
-const h2 = "font-display text-[2.25rem] leading-[1.02] font-medium tracking-[-0.03em] text-balance sm:text-[3.25rem]";
-const eyebrow = "text-xs font-medium tracking-[0.08em] text-muted uppercase";
+const h2 = "font-display text-[2.375rem] leading-[1.02] font-medium tracking-[-0.035em] text-balance sm:text-[3.5rem]";
+const kicker = "text-[0.75rem] font-semibold tracking-[0.14em] uppercase";
 
 /** Instagram's glyph (lucide no longer ships brand icons). */
 function InstagramIcon({ className }: { className?: string }) {
@@ -101,6 +105,20 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
+/** Pixel hills for the sunrise, stepped like the skylings' world. */
+function PixelHills({ className, fill }: { className?: string; fill: string }) {
+  const steps = Array.from({ length: 61 }, (_, i) => {
+    const x = i * 2;
+    const y = Math.round(18 + 7 * Math.sin(i / 6.5) + 3 * Math.sin(i / 2.3 + 1));
+    return `${x},${y} ${x + 2},${y}`;
+  }).join(" ");
+  return (
+    <svg viewBox="0 0 120 40" preserveAspectRatio="none" shapeRendering="crispEdges" className={className} aria-hidden>
+      <polygon points={`0,40 ${steps} 122,40`} fill={fill} />
+    </svg>
+  );
+}
+
 export default async function LandingPage({ searchParams }: { searchParams: Promise<{ invite?: string }> }) {
   // A friend's invite link (/?invite=<code>): say who sent it and carry the code to sign-up.
   const { invite } = await searchParams;
@@ -108,244 +126,312 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
   const inviter = code ? await inviterFor(getDb(), code) : null;
   const signupHref = inviter ? `/signup?invite=${encodeURIComponent(code)}` : "/signup";
   return (
-    <div className="min-h-dvh overflow-x-clip bg-bg text-text">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
-        <BrandLockup markClassName="h-8 w-8" priority />
-        <nav className="flex items-center gap-1" aria-label="Account">
-          <a
-            href="#why"
-            className="hidden min-h-11 items-center rounded-full px-4 text-[0.9375rem] text-text-2 transition-colors hover:text-text sm:inline-flex"
-          >
-            Why LifeFlow
-          </a>
-          <Link href="/login" className="inline-flex min-h-11 items-center rounded-full px-4 text-[0.9375rem] text-text-2 transition-colors hover:text-text">
-            Sign in
-          </Link>
-          <Link href={signupHref} className={`${button} min-h-11 px-5 text-sm`}>
-            Get started
-          </Link>
-        </nav>
-      </header>
+    <div className="min-h-dvh overflow-x-clip bg-[#040a18] text-white">
+      {/* ---------- The night: all six skylings, together ---------- */}
+      <section className="relative isolate flex flex-col lg:min-h-[max(100svh,720px)]">
+        {/* laptop: the whole section is the sky; phone: still stars over the words, the live sky under them */}
+        <NightSky stage="hero" className="max-lg:hidden" />
+        <div className="lf-stars pointer-events-none absolute inset-0 lg:hidden" aria-hidden />
+        <div
+          className="pointer-events-none absolute inset-y-0 left-0 hidden w-[62%] bg-gradient-to-r from-[#040a18]/85 via-[#040a18]/45 to-transparent lg:block"
+          aria-hidden
+        />
+        <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
+          <BrandLockup markClassName="h-8 w-8" priority light />
+          <nav className="flex items-center gap-1.5" aria-label="Account">
+            <a href="#skylings" className="lf-sb-link hidden px-3 text-[0.9375rem] text-white/75 hover:text-white lg:inline-flex">
+              Meet the skylings
+            </a>
+            <Link
+              href="/login"
+              className="inline-flex min-h-11 items-center rounded-full px-3 text-[0.9375rem] text-white/80 transition-colors hover:text-white"
+            >
+              Sign in
+            </Link>
+            <SkyLink href={signupHref} size="sm" chip={false} cheer>
+              Get started
+            </SkyLink>
+          </nav>
+        </header>
 
-      <main>
-        <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pt-6 pb-16 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-14 lg:pb-20">
-          <div>
+        <div className="pointer-events-none relative z-10 mx-auto w-full max-w-6xl flex-1 px-5 pt-4 sm:px-8 lg:flex lg:items-center lg:pt-0 lg:pb-24">
+          <div className="pointer-events-auto flex max-w-[36rem] flex-col lg:max-w-[33rem]">
             {inviter && (
-              <p className="animate-rise mb-5 inline-flex rounded-full bg-accent-soft px-4 py-2 text-sm font-medium text-text">
+              <p className="animate-rise mb-5 inline-flex self-start rounded-full bg-white/10 px-4 py-2 text-sm font-medium ring-1 ring-white/20 backdrop-blur">
                 {inviter.firstName} invited you to LifeFlow.
               </p>
             )}
-            <p className={`animate-rise ${eyebrow}`}>Your whole life, on one sky</p>
+            <p className={`animate-rise ${kicker} text-[#ffd77a]`}>Your whole life, on one sky</p>
             <h1
-              className="animate-rise mt-4 font-display text-[2.9rem] leading-[0.98] font-medium tracking-[-0.045em] text-balance sm:text-[4.5rem] lg:text-[4.9rem]"
+              className="animate-rise mt-3 font-display text-[2.5rem] leading-[0.98] font-medium tracking-[-0.045em] text-balance sm:text-[4.25rem] lg:mt-4 lg:text-[4.6rem]"
               style={{ animationDelay: "60ms" }}
             >
-              Every app sees one slice. <em className="text-accent">LifeFlow sees all of it.</em>
+              Every app sees one slice. <em className="bg-gradient-to-r from-[#fff1c2] to-[#fbb24a] bg-clip-text text-transparent">LifeFlow sees all of it.</em>
             </h1>
-            <p className="animate-rise mt-5 max-w-[46ch] text-[1.125rem] leading-relaxed text-text-2" style={{ animationDelay: "120ms" }}>
-              Your bank, your classes, your shifts and your calendar, connected at once. Your skyling, a little friend who lives on your sky, finds what&apos;s
-              about to clash and fixes it before you feel it.
+            <p
+              className="animate-rise mt-5 max-w-[44ch] text-[1.0625rem] leading-relaxed text-white/80 max-lg:order-5 sm:text-[1.125rem]"
+              style={{ animationDelay: "120ms" }}
+            >
+              Your classes, shifts, money and calendar, connected at last. And a little skyling who lives on your sky, spots what&apos;s about to clash and
+              fixes it before you feel it.
             </p>
-            <div className="animate-rise mt-8 flex flex-wrap items-center gap-x-4 gap-y-2" style={{ animationDelay: "180ms" }}>
-              <Link href={signupHref} className={button}>
-                Get started
-              </Link>
-              <a href="#moments" className="inline-flex min-h-12 items-center px-2 text-[0.9375rem] font-medium text-text-2 transition-colors hover:text-text">
+            <div className="animate-rise mt-6 flex flex-wrap items-center gap-3 max-lg:order-3 lg:mt-7" style={{ animationDelay: "180ms" }}>
+              <SkyLink href={signupHref} cheer>
+                Meet your skyling
+              </SkyLink>
+              <a href="#moments" className="lf-sb lf-sb-glass max-lg:hidden">
                 See what it does
               </a>
             </div>
-            <ul className="animate-rise mt-5 flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-muted" style={{ animationDelay: "240ms" }}>
-              {["Set up in two minutes", "Never moves your money", "Built by a student"].map((t) => (
+            {/* phone: the cast's own stretch of live sky, right under the button */}
+            <div className="relative -mx-5 mt-6 h-[max(22rem,50svh)] max-lg:order-4 sm:-mx-8 lg:hidden">
+              <NightSky stage="full" className="[mask-image:linear-gradient(to_bottom,transparent,black_18%,black_88%,transparent)]" />
+              <p
+                className="pointer-events-none absolute inset-x-0 bottom-3 text-center font-mono text-[0.6875rem] tracking-[0.2em] text-white/45 uppercase"
+                aria-hidden
+              >
+                ✦ Tap the sky ✦
+              </p>
+            </div>
+            <a href="#moments" className="lf-sb-link mt-4 self-start text-[0.9375rem] text-white/85 max-lg:order-6 lg:hidden">
+              See what it does
+            </a>
+            <ul
+              className="animate-rise mt-6 flex flex-wrap gap-x-4 gap-y-1.5 pb-10 text-sm text-white/65 max-lg:order-7 lg:pb-0"
+              style={{ animationDelay: "240ms" }}
+            >
+              {["Set up in two minutes", "Never moves your money", "Made by a student"].map((t) => (
                 <li key={t} className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />
+                  <span className="h-1.5 w-1.5 bg-[#ffd77a]" aria-hidden />
                   {t}
                 </li>
               ))}
             </ul>
           </div>
-          <div className="mx-auto w-full max-w-[320px] pb-8 lg:max-w-[330px]">
-            <AssistantScene />
-          </div>
-        </section>
-
-        {/* Real services it connects to */}
-        <div className="border-y border-border px-5 py-6 sm:px-8">
-          <div className="mx-auto grid max-w-6xl items-center gap-4 lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-10">
-            <p className="max-w-[22ch] text-sm leading-snug text-muted">Connects to what you already use</p>
-            <ul className="flex flex-wrap items-center gap-x-7 gap-y-3.5 text-[0.9375rem] font-medium text-text-2">
-              <li className="flex items-center gap-2.5">
-                <CanvasLogo className="h-[22px] w-[22px]" />
-                Canvas
-              </li>
-              <li className="flex items-center gap-2.5">
-                <GoogleCalendarLogo className="h-[22px] w-[22px]" />
-                Google Calendar
-              </li>
-              <li className="flex items-center gap-2.5">
-                <GmailLogo className="h-[22px] w-[22px]" />
-                Gmail
-              </li>
-              <li className="flex items-center gap-2.5">
-                <MicrosoftLogo className="h-[22px] w-[22px]" />
-                Outlook and Teams
-              </li>
-              <li>
-                <span className="font-semibold tracking-tight">Plaid</span> for your bank
-              </li>
-              <li>Apple Health</li>
-            </ul>
-          </div>
         </div>
+        <p
+          className="pointer-events-none relative z-10 hidden pb-5 text-center font-mono text-[0.6875rem] tracking-[0.2em] text-white/45 uppercase lg:block"
+          aria-hidden
+        >
+          ✦ Tap the sky ✦
+        </p>
+      </section>
 
-        <section id="moments" className="scroll-mt-4 px-5 py-16 sm:px-8 lg:py-20">
-          <div className="mx-auto max-w-6xl">
-            <p className={eyebrow}>What it does before you ask</p>
-            <h2 className={`mt-3 max-w-[18ch] ${h2}`}>It notices the problem while there&apos;s still time to fix it.</h2>
-            <p className="mt-4 max-w-[52ch] text-[1.0625rem] text-text-2">
-              Three things your skyling does on a normal week. Each one shows the numbers it used.
+      {/* ---------- Meet the cast ---------- */}
+      <section id="skylings" className="relative scroll-mt-4 bg-gradient-to-b from-[#245a86] via-[#123058] to-[#0b1d42] px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)] lg:gap-14">
+          <div className="lg:sticky lg:top-16 lg:self-start">
+            <p className={`${kicker} text-[#ffd77a]`}>The skylings</p>
+            <h2 className={`mt-3 ${h2}`}>Six little ones. One of them is yours.</h2>
+            <p className="mt-5 max-w-[40ch] text-[1.0625rem] leading-relaxed text-white/75">
+              Each skyling is named for a moment of the sky and helps in its own way. Pick one, give it a name, and it lives on top of your day: awake with the
+              sun, asleep with you.
             </p>
-            <ul className="mt-9 grid gap-3.5 md:grid-cols-3">
-              {MOMENTS.map((m) => (
-                <li key={m.tag} className="flex min-w-0 flex-col gap-2.5 rounded-[26px] bg-surface p-5 shadow-soft">
-                  <span className={`self-start rounded-full px-2.5 py-1 text-[0.6875rem] font-medium tracking-[0.06em] uppercase ${m.tone}`}>{m.tag}</span>
-                  <h3 className="font-display text-[1.4375rem] leading-[1.12] font-medium tracking-[-0.02em]">{m.title}</h3>
-                  <p className="text-[0.9375rem] text-text-2">{m.body}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {m.used.map(([t, bg]) => (
-                      <span key={t} className={`rounded-full px-2.5 py-1 text-[0.6875rem] font-medium ${bg}`}>
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                  <small className="mt-auto pt-2 text-xs text-muted">Example</small>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-7">
+              <SkyLink href={signupHref} skyling="dawn" cheer>
+                Pick yours
+              </SkyLink>
+            </div>
           </div>
-        </section>
+          <CastCards />
+        </div>
+      </section>
 
-        <section id="why" className="scroll-mt-4 border-t border-border px-5 py-16 sm:px-8 lg:py-20">
+      {/* ---------- What a skyling does before you ask ---------- */}
+      <section id="moments" className="scroll-mt-4 bg-[#0b1d42] px-5 py-20 sm:px-8 lg:py-28">
+        <div className="mx-auto max-w-6xl">
+          <p className={`${kicker} text-[#8fb6ff]`}>What it does before you ask</p>
+          <h2 className={`mt-3 max-w-[18ch] ${h2}`}>It notices the problem while there&apos;s still time to fix it.</h2>
+          <p className="mt-5 max-w-[52ch] text-[1.0625rem] text-white/75">Three things skylings do on a normal week. Each one shows the numbers it used.</p>
+          <ul className="mt-10 grid gap-4 md:grid-cols-3">
+            {MOMENTS.map((m) => (
+              <li key={m.tag} className="flex min-w-0 flex-col rounded-[1.75rem] bg-white/[0.06] p-5 ring-1 ring-white/12 sm:p-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/[0.07] ring-1 ring-white/10">
+                    <CompanionGlyph companion={m.who} night={m.who === "star"} className="lf-pixel h-12 w-12" />
+                  </span>
+                  <div>
+                    <p className="font-display text-[1.1875rem] leading-none font-medium">{m.name}</p>
+                    <p className="mt-1 text-[0.6875rem] font-semibold tracking-[0.1em] text-[#ffd77a] uppercase">{m.tag}</p>
+                  </div>
+                </div>
+                <p className="relative mt-4 rounded-2xl rounded-tl-md bg-white px-4 py-3.5 text-[1rem] leading-snug text-[#13213d]">{m.says}</p>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {m.used.map((t) => (
+                    <span key={t} className="rounded-full bg-white/10 px-2.5 py-1 text-[0.6875rem] font-medium text-white/85">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+                <small className="mt-auto pt-4 text-xs text-white/45">Example</small>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ---------- What it connects to ---------- */}
+      <div className="bg-[#0b1d42] px-5 pb-16 sm:px-8">
+        <div className="mx-auto grid max-w-6xl items-center gap-4 rounded-[1.75rem] bg-white/[0.04] p-6 ring-1 ring-white/10 lg:grid-cols-[auto_minmax(0,1fr)] lg:gap-10">
+          <p className="max-w-[22ch] text-sm leading-snug text-white/60">Connects to what you already use</p>
+          <ul className="flex flex-wrap items-center gap-x-7 gap-y-3.5 text-[0.9375rem] font-medium text-white/85">
+            <li className="flex items-center gap-2.5">
+              <CanvasLogo className="h-[22px] w-[22px]" />
+              Canvas
+            </li>
+            <li className="flex items-center gap-2.5">
+              <GoogleCalendarLogo className="h-[22px] w-[22px]" />
+              Google Calendar
+            </li>
+            <li className="flex items-center gap-2.5">
+              <GmailLogo className="h-[22px] w-[22px]" />
+              Gmail
+            </li>
+            <li className="flex items-center gap-2.5">
+              <MicrosoftLogo className="h-[22px] w-[22px]" />
+              Outlook and Teams
+            </li>
+            <li>
+              <span className="font-semibold tracking-tight">Plaid</span> for your bank
+            </li>
+            <li>Apple Health</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* ---------- Sunrise: Ray comes up over the hills ---------- */}
+      <div className="lf-sunrise relative h-56 overflow-hidden sm:h-72" aria-hidden>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0b1d42] via-[#e98a4f] to-[#fde3b5]" />
+        <div className="lf-sun-up absolute bottom-6 left-1/2 w-28 -translate-x-1/2 sm:w-36">
+          <span className="absolute inset-[-60%] rounded-full bg-[radial-gradient(closest-side,rgb(255_236_170_/_0.9),transparent)]" />
+          <CompanionGlyph companion="ray" pose="celebrate" frame={2} className="lf-pixel relative h-auto w-full" />
+        </div>
+        <PixelHills className="absolute inset-x-0 bottom-0 h-20 w-full sm:h-24" fill="#f6f8fb" />
+      </div>
+
+      {/* ---------- Morning: why, trust, questions ---------- */}
+      <div className="bg-[#f6f8fb] text-[#13213d]">
+        <section id="why" className="scroll-mt-4 px-5 pt-10 pb-16 sm:px-8 lg:pb-24">
           <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-12">
-            <blockquote className="font-display text-[1.75rem] leading-[1.15] font-medium tracking-[-0.03em] text-balance sm:text-[2.5rem]">
-              Built by a student solving <em className="text-accent">his own problem</em>, for everyone with a full life.
+            <blockquote className="font-display text-[1.875rem] leading-[1.12] font-medium tracking-[-0.03em] text-balance sm:text-[2.625rem]">
+              Built by a student solving <em className="text-[#c4542a]">his own problem</em>, for everyone with a full life.
             </blockquote>
-            <div className="space-y-3 text-[1.0625rem] text-text-2">
-              <p>Seven classes. Working 30 hours a week. Side projects. Applications. Nothing connected any of it, so I built the skyling I needed.</p>
+            <div className="space-y-3 text-[1.0625rem] leading-relaxed text-[#13213d]/75">
+              <p>Seven classes. Working 30 hours a week. Side projects. Applications. Nothing connected any of it, so I built the one thing I needed.</p>
               <p>
                 It has one job: serve you. It isn&apos;t made for research or websites. It&apos;s made to find the dots across your whole week and help you make
                 the most of your time.
               </p>
             </div>
           </div>
-          <ul className="mx-auto mt-9 grid max-w-6xl gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+          <ul className="mx-auto mt-10 grid max-w-6xl gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
             {TRUST.map(([b, t]) => (
-              <li key={b} className="flex items-start gap-2.5 text-sm leading-snug text-text-2">
-                <span className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent" aria-hidden>
+              <li key={b} className="flex items-start gap-2.5 text-sm leading-snug text-[#13213d]/75">
+                <span className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md bg-[#13213d] text-[#ffd77a]" aria-hidden>
                   <Check className="h-3 w-3" strokeWidth={3.2} />
                 </span>
                 <span>
-                  <b className="font-semibold text-text">{b}</b> {t}
+                  <b className="font-semibold text-[#13213d]">{b}</b> {t}
                 </span>
               </li>
             ))}
           </ul>
-          <ul className="mx-auto mt-10 grid max-w-6xl gap-7 md:grid-cols-3">
+          <ul className="mx-auto mt-12 grid max-w-6xl gap-7 md:grid-cols-3">
             {WHY.map(([t, b]) => (
-              <li key={t} className="border-t-2 border-accent pt-3.5">
+              <li key={t} className="border-t-2 border-[#f59c35] pt-3.5">
                 <h3 className="font-display text-[1.5rem] font-medium tracking-[-0.02em]">{t}</h3>
-                <p className="mt-1.5 text-[0.96875rem] text-text-2">{b}</p>
+                <p className="mt-1.5 text-[0.96875rem] text-[#13213d]/70">{b}</p>
               </li>
             ))}
           </ul>
         </section>
 
-        <section id="faq" className="scroll-mt-4 border-t border-border px-5 py-16 sm:px-8 lg:py-20">
+        <section id="faq" className="scroll-mt-4 border-t border-[#13213d]/10 px-5 py-16 sm:px-8 lg:py-24">
           <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
             <div>
-              <p className={eyebrow}>Questions</p>
+              <p className={`${kicker} text-[#c4542a]`}>Questions</p>
               <h2 className={`mt-3 ${h2}`}>Straight answers.</h2>
-              <p className="mt-4 max-w-sm text-[1.0625rem] leading-relaxed text-text-2">
+              <p className="mt-4 max-w-sm text-[1.0625rem] leading-relaxed text-[#13213d]/70">
                 Something else? Message us on{" "}
-                <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" className="font-medium text-accent underline underline-offset-4">
+                <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" className="font-medium text-[#1f63bd] underline underline-offset-4">
                   Instagram @lifeflowweb
                 </a>
                 .
               </p>
             </div>
-            <div className="divide-y divide-border border-y border-border">
+            <div className="divide-y divide-[#13213d]/10 border-y border-[#13213d]/10">
               {FAQS.map((f) => (
                 <details key={f.q} className="group">
                   <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-6 py-4 text-[1.0625rem] font-medium [&::-webkit-details-marker]:hidden">
                     {f.q}
-                    <ChevronDown className="h-5 w-5 shrink-0 text-muted transition-transform group-open:rotate-180" aria-hidden />
+                    <ChevronDown className="h-5 w-5 shrink-0 text-[#13213d]/45 transition-transform group-open:rotate-180" aria-hidden />
                   </summary>
-                  <p className="pb-5 text-[1rem] leading-relaxed text-text-2">{f.a}</p>
+                  <p className="pb-5 text-[1rem] leading-relaxed text-[#13213d]/75">{f.a}</p>
                 </details>
               ))}
             </div>
           </div>
         </section>
 
+        {/* ---------- The last ask: back to the night, where they're waiting ---------- */}
         <section className="px-5 pb-6 sm:px-8">
-          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[36px] bg-hero p-8 text-hero-text sm:p-14">
-            <span
-              className="pointer-events-none absolute -top-20 -right-20 h-72 w-72 rounded-full bg-[radial-gradient(closest-side,rgb(255_255_255_/_0.16),transparent)]"
-              aria-hidden
-            />
-            <h2 className="relative max-w-[16ch] font-display text-[2.25rem] leading-none font-medium tracking-[-0.035em] text-balance sm:text-[3.5rem]">
-              Start your week in order.
-            </h2>
-            <p className="relative mt-5 max-w-[44ch] opacity-85">Add everything yourself, or connect it later.</p>
-            <Link
-              href={signupHref}
-              className="relative mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-surface px-7 text-[0.9375rem] font-medium text-text transition-transform active:scale-[0.98]"
-            >
-              Get started
-            </Link>
+          <div className="relative isolate mx-auto min-h-[36rem] max-w-6xl overflow-hidden rounded-[2.25rem] text-white lg:min-h-[28rem]">
+            <NightSky stage="band" />
+            <div className="pointer-events-none relative z-10 p-8 sm:p-14">
+              <h2 className="max-w-[14ch] font-display text-[2.5rem] leading-none font-medium tracking-[-0.04em] text-balance sm:text-[3.75rem]">
+                They&apos;re ready when you are.
+              </h2>
+              <p className="mt-4 max-w-[40ch] text-white/80">Two minutes to set up. Add everything yourself, or connect it later.</p>
+              <div className="pointer-events-auto mt-7">
+                <SkyLink href={signupHref} skyling="goldie" cheer>
+                  Get started
+                </SkyLink>
+              </div>
+            </div>
           </div>
-          <p className="mx-auto mt-5 max-w-6xl text-xs leading-relaxed text-muted">
+          <p className="mx-auto mt-5 max-w-6xl text-xs leading-relaxed text-[#13213d]/55">
             Canvas is a trademark of Instructure, Inc. Google, Google Calendar and Gmail are trademarks of Google LLC. Microsoft, Outlook and Teams are
             trademarks of the Microsoft group of companies. Apple and Apple Health are trademarks of Apple Inc. Plaid is a trademark of Plaid Inc. LifeFlow
             works with these services and is not endorsed by them.
           </p>
         </section>
-      </main>
 
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <BrandLockup markClassName="h-6 w-6" />
-          <nav className="flex flex-wrap gap-x-6" aria-label="Footer">
-            <a href="#faq" className="inline-flex min-h-11 items-center hover:text-text">
-              FAQ
-            </a>
-            <Link href="/privacy" className="inline-flex min-h-11 items-center hover:text-text">
-              Privacy
-            </Link>
-            <Link href="/terms" className="inline-flex min-h-11 items-center hover:text-text">
-              Terms
-            </Link>
-            <Link href="/integrity" className="inline-flex min-h-11 items-center hover:text-text">
-              Academic integrity
-            </Link>
-            <Link href="/login" className="inline-flex min-h-11 items-center hover:text-text">
-              Sign in
-            </Link>
-          </nav>
-          <div className="flex items-center gap-4">
-            <a
-              href={INSTAGRAM}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="LifeFlow on Instagram (@lifeflowweb)"
-              className="inline-flex min-h-11 items-center gap-2 hover:text-text"
-            >
-              <InstagramIcon className="h-5 w-5" />
-              @lifeflowweb
-            </a>
-            <p>© 2026 LifeFlow</p>
+        <footer className="border-t border-[#13213d]/10">
+          <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8 text-sm text-[#13213d]/60 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+            <BrandLockup markClassName="h-6 w-6" />
+            <nav className="flex flex-wrap gap-x-6" aria-label="Footer">
+              <a href="#faq" className="inline-flex min-h-11 items-center hover:text-[#13213d]">
+                FAQ
+              </a>
+              <Link href="/privacy" className="inline-flex min-h-11 items-center hover:text-[#13213d]">
+                Privacy
+              </Link>
+              <Link href="/terms" className="inline-flex min-h-11 items-center hover:text-[#13213d]">
+                Terms
+              </Link>
+              <Link href="/integrity" className="inline-flex min-h-11 items-center hover:text-[#13213d]">
+                Academic integrity
+              </Link>
+              <Link href="/login" className="inline-flex min-h-11 items-center hover:text-[#13213d]">
+                Sign in
+              </Link>
+            </nav>
+            <div className="flex items-center gap-4">
+              <a
+                href={INSTAGRAM}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LifeFlow on Instagram (@lifeflowweb)"
+                className="inline-flex min-h-11 items-center gap-2 hover:text-[#13213d]"
+              >
+                <InstagramIcon className="h-5 w-5" />
+                @lifeflowweb
+              </a>
+              <p>© 2026 LifeFlow</p>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }

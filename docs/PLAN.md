@@ -102,6 +102,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
   - a quiet face counts what the timeline holds.
 - 11-08: main merged into `v3-day-clock` (ca873df). It brought promises, this plan and the HQ test fix. The promise check now runs on open, before the clock. The check is green (1158 tests), and so are the clock, core and promises e2e.
 - 11-09 night (owner's go to work on main while he sleeps): the mechanism, step 1 (c4a4032: Day Sky's timeline back, the pour, full sky, bigger companion) and step 2 (b5b54eb: one input layer, momentum that lands, laptop size, no boxes on a laptop); the morning logo (2fb42a6); moods, visitors, the done burst, the tour, the welcome on the sky. Details and pictures: `docs/hq/tonight-2026-11-09.md`.
+- 11-09 (owner's top priority): the first run remade on the skylings' night: landing page, sign-up and sign-in, welcome and tour, with all six skylings together in one living pixel sky (components/skylings) and new buttons tried on these four places only. Pictures: `docs/design/tonight/first-run-*.webp`. Next: the done star as a pixel character (#28).
 - 11-09 (owner): "assistant", "AI assistant" and "personal assistant" are gone from every screen, notification, email, the landing page and the legal pages; the character is a **skyling** (owner picked it from LF Main's honest take: companion, partner, sidekick and buddy are all taken in AI), "your skyling" until it's named; the pitch doesn't lead with AI, and two e2e tests fail on "assistant".
 - 11-09: the owner's names: V2 was the clock with self-naming piles (518d37a), V3 was V2 plus Morrow. Today became the sky card (owner picked B), then a wheel of time (5e11dbb, 5224c57, d988772) in the real-sky colours (2b002c8). A Fable review found 6 bugs, all fixed. Phone e2e 7/7 with a new wheel test; 1162/1162 unit and integration tests. The owner merged it all into main (PR #3).
 
@@ -293,6 +294,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 
 ## 11. Waiting for the owner's yes (one list; details in HQ › Work)
 - **The character cast (LF Main, 2026-11-09; docs/design/companions/cast.png):** (a) six companions named for the sky (Dawn, Ray, Noon, Goldie, Dusk, Star): right names and looks? (b) keep 3 tones, or add a 4th "Calm"? (c) before someone picks, the wheel shows Ray (the sun you know); the designer proposed Dawn. (d) retire the old avatar setting (spark, orb, initial)? Kept until you say yes.
+- **The new buttons (LF Main, 2026-11-09):** tried on the landing page, sign-up, welcome and tour (a sunrise button with a chip where a skyling hops in, pixel sparks on press). Move them into the whole app? Kept to those four until you say.
 - **Apple sign-in on deleted accounts:** people who signed in with Apple before 2026-11-09 have no stored token, so deleting their account can't cancel Apple's access until they sign in with Apple once more. Recommended: one line on the delete screen ("also remove LifeFlow in your Apple ID settings").
 - **North Star:** confirm ADR 0032 (V3 itself is merged).
 - **LF Main's held branches:** phone sign-in, the "Still in the testing phase" note, and the tonight tool.
@@ -306,6 +308,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 Newest first. One line per real change, by the chat that made it.
 - 2026-11-09, LF HQ: "Active today" opens the list of who was active (People, seen in the last 24 hours); "last seen" stamped every 10 minutes (section 5).
 - 2026-11-09 morning, LF COO: on main (da1e843, 3 Opus reviews), overlapping cron, webhook and Sync now runs no longer double-run: a lease per job (migration 0057_job_locks). A bank update that arrives during a sync gets one more round instead of waiting 30 minutes. Microsoft failures are recorded and say "Reconnect it in Settings". Plaid calls time out after 20 s. "Your companion" wording passed to LF Marketing.
+- 2026-11-09 morning, LF Main: the first run remade on the skylings' night (landing, sign-up, welcome, tour) with the new buttons (owner's top priority).
 - 2026-11-09 night, LF Main: "assistant" is gone from everything users see; the character is a skyling (owner).
 - 2026-11-09, LF HQ: the Planning Room idea will replace the COO's brief card (owner); still waiting for his go.
 - 2026-11-09, LF HQ: the owner's Planning Room idea written into section 5 (an idea waiting for his go, not being built).

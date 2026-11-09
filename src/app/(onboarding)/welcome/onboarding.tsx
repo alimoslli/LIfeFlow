@@ -1,13 +1,13 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { SkyScene } from "@/components/sky/sky-scene";
 import { useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { ArrowLeft, BookOpen, Briefcase, Layers, Sun } from "lucide-react";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
 import { isHydrated } from "@/components/motion/intro";
-import { BrandMark } from "@/components/brand/brand-mark";
 import { ThemePicker } from "@/components/theme-picker";
-import { Button } from "@/components/ui/button";
+import { NightSky } from "@/components/skylings/night-sky";
+import { cheerSkylings } from "@/components/skylings/night";
+import { SkyButton } from "@/components/skylings/sky-button";
 import { FormError, Input } from "@/components/ui/field";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { ASSISTANT_STYLES, type AssistantStyle } from "@/lib/assistant";
@@ -34,7 +34,7 @@ const SAMPLE = "You've got 2 things due this week. The BIO lab is the big one, s
 /** What's free. `paid` is false while LifeFlow is free for everyone (testing). */
 export type PlanInfo = { paid: boolean; freeChatsPerDay: number; proFeatures: string[] };
 
-export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; theme: Theme; plan: PlanInfo; tz: string }) {
+export function Onboarding({ firstName, theme, plan }: { firstName: string; theme: Theme; plan: PlanInfo; tz: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +97,7 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
     if (!cleanName || COMPANIONS.some((x) => x.name === cleanName)) setName(c.name);
     setCompanion(k);
     setStyle(c.tone);
+    cheerSkylings(); // the whole sky cheers your pick
   };
 
   const go = (delta: number) => {
@@ -128,10 +129,14 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
     });
 
   return (
-    // the same sky for this hour and the same glass as the app, from the first screen (A-to-Z audit A3)
-    <div className="lf-glass">
-      <SkyScene tz={tz} />
-      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+    // the skylings' night from the landing and sign-up, with the steps on a sheet rising over it; your pick cheers up there
+    <div className="lf-glass min-h-dvh bg-bg">
+      <div className="relative isolate h-[clamp(12rem,30svh,19rem)] overflow-hidden bg-[#081a33] md:h-[clamp(15rem,34vh,22rem)]">
+        <div className="absolute inset-x-0 top-0 bottom-8">
+          <NightSky stage="strip" focus={companion} />
+        </div>
+      </div>
+      <div className="relative z-10 mx-auto -mt-8 flex min-h-[calc(100dvh-clamp(12rem,30svh,19rem)+2rem)] w-full max-w-xl flex-col rounded-t-[2rem] bg-bg px-6 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-10 md:min-h-0 md:rounded-[2rem] md:pb-8 md:shadow-lift">
         <header className="flex h-10 items-center justify-between">
           {index > 0 ? (
             <button
@@ -161,18 +166,15 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
         </header>
 
         {/* a phone keeps the button at the bottom, under the thumb; a laptop puts it right under the step (audit A4) */}
-        <div ref={panel} className="flex flex-1 flex-col pt-10 md:flex-none md:pt-[10vh]">
+        <div ref={panel} className="flex flex-1 flex-col pt-6 md:flex-none md:pt-8">
           {step === "hello" && (
             <>
-              <div data-anim className="relative h-16 w-16">
-                <span className="lf-orb-glow absolute -inset-1/3 rounded-full" aria-hidden />
-                <BrandMark className="lf-float relative h-full w-full" priority />
-              </div>
-              <h1 data-anim className="mt-8 font-display text-[2.75rem] leading-[1.05] font-medium tracking-tight">
+              <h1 data-anim className="font-display text-[2.75rem] leading-[1.05] font-medium tracking-tight">
                 Hi{cleanYou ? ` ${cleanYou.split(" ")[0]}` : ""}.
               </h1>
               <p data-anim className="mt-4 text-[1.0625rem] leading-relaxed text-text-2">
-                LifeFlow is your classes, work, money and plans in one place, with a skyling who helps with all of it.
+                LifeFlow is your classes, work, money and plans in one place. Up there are the skylings: in a minute you&apos;ll pick the one who helps with all
+                of it.
               </p>
               <label data-anim className="mt-6 flex flex-col gap-1.5">
                 <span className="text-sm font-medium text-text-2">What should I call you?</span>
@@ -212,13 +214,15 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
                     onClick={() => setStage(value)}
                     className={cn(
                       "flex items-center gap-4 rounded-2xl px-4 py-4 text-left transition-all active:scale-[0.99]",
-                      stage === value ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft hover:shadow-lift",
+                      stage === value
+                        ? "bg-[linear-gradient(180deg,#fff4cf,#fbb24a)] text-[#13213d] shadow-lift ring-2 ring-[#f59c35]"
+                        : "bg-surface shadow-soft hover:shadow-lift",
                     )}
                   >
                     <Icon className="h-5 w-5 shrink-0" strokeWidth={1.8} />
                     <span>
                       <span className="block text-[1rem] font-medium">{label}</span>
-                      <span className={cn("block text-sm", stage === value ? "text-hero-text" : "text-muted")}>{hint}</span>
+                      <span className={cn("block text-sm", stage === value ? "text-[#13213d]/75" : "text-muted")}>{hint}</span>
                     </span>
                   </button>
                 ))}
@@ -288,18 +292,21 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
                       aria-checked={companion === c.key}
                       onClick={() => pick(c.key)}
                       className={cn(
-                        "flex min-h-24 flex-col items-center justify-center gap-0.5 rounded-2xl px-1 py-2 transition-all",
-                        companion === c.key ? "bg-hero text-hero-text shadow-lift" : "bg-surface shadow-soft",
+                        "flex min-h-24 flex-col items-center justify-center gap-0.5 rounded-[1.25rem] px-1 py-2 transition-all duration-300 active:scale-95",
+                        companion === c.key
+                          ? "-translate-y-0.5 bg-[linear-gradient(180deg,#fff4cf,#fbb24a)] text-[#13213d] shadow-lift ring-2 ring-[#f59c35]"
+                          : "bg-surface shadow-soft hover:-translate-y-0.5",
                       )}
                     >
                       <CompanionGlyph
                         companion={c.key}
+                        night={c.key === "star"}
                         pose={companion === c.key ? "celebrate" : "idle"}
                         frame={companion === c.key ? 1 : 0}
                         className="h-12 w-12"
                       />
                       <span className="text-[0.9375rem] font-medium">{c.name}</span>
-                      <span className={cn("text-xs", companion === c.key ? "text-hero-text" : "text-muted")}>{c.moment}</span>
+                      <span className={cn("text-xs", companion === c.key ? "text-[#13213d]/75" : "text-muted")}>{c.moment}</span>
                     </button>
                   ))}
                 </div>
@@ -340,21 +347,29 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
           {error && <FormError message={error} />}
           {last ? (
             <>
-              <Button onClick={() => finish("/settings/integrations")} loading={pending} disabled={!nameOk} className="h-12 text-[0.9375rem]">
+              <SkyButton
+                onClick={() => finish("/settings/integrations")}
+                loading={pending}
+                disabled={!nameOk}
+                skyling={companion ?? "ray"}
+                className="w-full justify-between pl-6"
+              >
                 Connect my accounts
-              </Button>
-              <Button variant="ghost" onClick={() => finish("/")} disabled={pending || !nameOk} className="h-12 text-[0.9375rem]">
+              </SkyButton>
+              <SkyButton variant="glass" day onClick={() => finish("/")} disabled={pending || !nameOk} className="w-full">
                 Meet {shown ?? "your skyling"} first
-              </Button>
+              </SkyButton>
             </>
           ) : (
-            <Button
+            <SkyButton
               onClick={next}
               disabled={pending || (step === "hello" && !cleanYou) || (step === "week" && !stage) || (step === "yours" && !nameOk)}
-              className="h-12 text-[0.9375rem]"
+              skyling={companion ?? "dawn"}
+              cheer={step === "yours"}
+              className="w-full justify-between pl-6"
             >
               {step === "hello" ? "Let's go" : step === "yours" ? "Show me my day" : "Continue"}
-            </Button>
+            </SkyButton>
           )}
         </div>
       </div>

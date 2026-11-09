@@ -271,7 +271,7 @@ export function AppShell({
             </div>
           </nav>
 
-          {tourOpen && pathname === "/" && <Tour onDone={endTour} assistantName={assistantName} />}
+          {tourOpen && pathname === "/" && <Tour onDone={endTour} assistantName={assistantName} companion={companion} />}
 
           {!onJarvisPage && (
             <JarvisDrawer

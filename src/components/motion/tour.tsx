@@ -1,7 +1,9 @@
 "use client";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { BrandMark } from "@/components/brand/brand-mark";
+import { ArrowLeft } from "lucide-react";
+import { CompanionGlyph } from "@/components/sky/companion-glyph";
+import { SkyButton } from "@/components/skylings/sky-button";
+import { COMPANIONS, companionOf } from "@/lib/companions";
 import { cn } from "@/lib/utils";
 import { nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
 import { gsap, MOTION, prefersReducedMotion } from "./gsap";
@@ -78,7 +80,15 @@ function findTarget(name: string): HTMLElement | null {
  * with a short caption for each. Steps whose screen isn't visible (School when it's off)
  * are skipped. Skip, Esc and the close are always available; arrow keys move between steps.
  */
-export function Tour({ onDone, assistantName = UNNAMED_ASSISTANT }: { onDone: () => void; assistantName?: string }) {
+export function Tour({ onDone, assistantName = UNNAMED_ASSISTANT, companion }: { onDone: () => void; assistantName?: string; companion?: string | null }) {
+  // the person's skyling shows them around (the six together say hi first); a slow beat drives their frames
+  const guide = companionOf(companion).key;
+  const [beat, setBeat] = useState(0);
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
+    const id = setInterval(() => setBeat((b) => b + 1), 170);
+    return () => clearInterval(id);
+  }, []);
   const [ready, setReady] = useState(!isSplashActive());
   useEffect(() => (ready ? undefined : onSplashEnd(() => setReady(true))), [ready]);
 
@@ -195,25 +205,47 @@ export function Tour({ onDone, assistantName = UNNAMED_ASSISTANT }: { onDone: ()
       {/* The spotlight: a rounded hole in a dim layer (the shadow is the dim). */}
       <div
         ref={spot}
-        className="pointer-events-none absolute top-0 left-0 rounded-2xl opacity-0 shadow-[0_0_0_9999px_rgba(14,14,13,0.6)] ring-2 ring-white/60"
+        className="pointer-events-none absolute top-0 left-0 rounded-2xl opacity-0 shadow-[0_0_0_9999px_rgba(4,10,24,0.66)] ring-2 ring-[#ffd77a]/80"
       />
       <div className="absolute inset-0" onClick={(e) => e.stopPropagation()} />
-      <div ref={card} className="absolute top-0 left-0 rounded-[28px] bg-surface p-6 opacity-0 shadow-lift ring-1 ring-border/70">
-        {welcome && (
-          <span data-anim className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-soft">
-            <BrandMark className="h-9 w-9" alt="" />
-          </span>
+      <div
+        ref={card}
+        className="absolute top-0 left-0 rounded-[1.75rem] bg-[linear-gradient(180deg,#123058,#0b1d42_45%,#07132c)] p-6 text-white opacity-0 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)] ring-1 ring-white/15"
+      >
+        {welcome ? (
+          // the six say hi, each on its own beat
+          <div data-anim className="-mt-14 mb-3 flex items-end justify-center gap-0.5" aria-hidden>
+            {COMPANIONS.map((c, n) => (
+              <CompanionGlyph
+                key={c.key}
+                companion={c.key}
+                night={c.key === "star"}
+                pose={(beat + n * 3) % 14 < 4 ? "celebrate" : "idle"}
+                frame={(beat + n * 3) % 14 < 4 ? (beat + n * 3) % 4 : 0}
+                className="lf-pixel h-12 w-12 drop-shadow-[0_6px_10px_rgba(0,0,0,0.35)]"
+              />
+            ))}
+          </div>
+        ) : (
+          // your skyling sits on the card's edge and shows you around
+          <CompanionGlyph
+            companion={guide}
+            night={guide === "star"}
+            pose={last ? "celebrate" : beat % 22 < 3 ? "celebrate" : "idle"}
+            frame={last ? beat % 4 : beat % 22 < 3 ? beat % 4 : beat % 30 === 0 ? 1 : 0}
+            className="lf-pixel absolute -top-11 right-6 h-14 w-14 drop-shadow-[0_6px_10px_rgba(0,0,0,0.35)]"
+          />
         )}
         <div data-anim className="flex items-center justify-between gap-3">
-          <p className="text-[0.6875rem] font-semibold tracking-[0.12em] text-accent uppercase">{step.eyebrow}</p>
-          <p className="text-xs text-muted">
+          <p className="text-[0.6875rem] font-semibold tracking-[0.14em] text-[#ffd77a] uppercase">{step.eyebrow}</p>
+          <p className="text-xs text-white/55">
             {i + 1} of {list.length}
           </p>
         </div>
         <h2 data-anim id="tour-title" className="mt-2 font-display text-[1.625rem] leading-tight font-medium tracking-[-0.02em]">
           {step.title}
         </h2>
-        <p data-anim className="mt-2.5 text-[0.9375rem] leading-relaxed text-text-2">
+        <p data-anim className="mt-2.5 text-[0.9375rem] leading-relaxed text-white/80">
           {step.body}
         </p>
 
@@ -223,34 +255,25 @@ export function Tour({ onDone, assistantName = UNNAMED_ASSISTANT }: { onDone: ()
               key={n}
               className={cn(
                 "h-1.5 rounded-full transition-all duration-300",
-                n === i ? "w-6 bg-accent" : n < i ? "w-1.5 bg-accent/50" : "w-1.5 bg-border-strong",
+                n === i ? "w-6 bg-[#ffd77a]" : n < i ? "w-1.5 bg-[#ffd77a]/50" : "w-1.5 bg-white/20",
               )}
             />
           ))}
         </div>
 
         <div className="mt-5 flex items-center justify-between gap-3">
-          <button onClick={onDone} className="min-h-11 rounded-full px-3 text-sm text-muted hover:text-text">
+          <button onClick={onDone} className="lf-sb-link px-1 text-sm text-white/60 hover:text-white">
             {last ? "Close" : "Skip tour"}
           </button>
           <div className="flex items-center gap-2">
             {i > 0 && (
-              <button
-                onClick={back}
-                aria-label="Previous step"
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-2 text-text-2 hover:text-text"
-              >
+              <SkyButton variant="glass" size="sm" onClick={back} aria-label="Previous step" className="w-11 px-0">
                 <ArrowLeft className="h-4 w-4" />
-              </button>
+              </SkyButton>
             )}
-            <button
-              ref={nextBtn}
-              onClick={next}
-              className="flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-accent-text shadow-soft hover:bg-accent-hover"
-            >
+            <SkyButton ref={nextBtn} size="sm" onClick={next} skyling={guide}>
               {last ? "Start using LifeFlow" : "Next"}
-              {!last && <ArrowRight className="h-4 w-4" />}
-            </button>
+            </SkyButton>
           </div>
         </div>
       </div>

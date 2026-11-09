@@ -1,14 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
-import { Loader2 } from "lucide-react";
 import { SignInOptions } from "@/components/auth/sign-in-options";
 import { NewPasswordField } from "@/components/password-field";
 import { FormError } from "@/components/ui/field";
+import { SkyButton } from "@/components/skylings/sky-button";
 import { login, signup, type AuthState } from "./actions";
 
 const input =
-  "h-12 w-full rounded-2xl bg-surface px-4 text-[0.9375rem] text-text shadow-soft placeholder:text-muted transition-shadow focus:shadow-lift focus:outline-none focus:ring-2 focus:ring-[var(--ring)]";
+  "h-[3.25rem] w-full rounded-[1.125rem] bg-surface px-4 ring-1 ring-border text-[0.9375rem] text-text shadow-soft placeholder:text-muted transition-shadow focus:shadow-lift focus:outline-none focus:ring-2 focus:ring-[var(--ring)]";
 
 export function AuthForm({
   mode,
@@ -38,9 +38,11 @@ export function AuthForm({
   return (
     <form action={action} className="flex flex-col gap-4">
       <div className="mb-3">
-        <h1 className="font-display text-[2.375rem] leading-[1.05] font-medium tracking-tight">{mode === "login" ? "Welcome back." : "Start your week."}</h1>
+        <h1 className="font-display text-[2.375rem] leading-[1.05] font-medium tracking-tight">
+          {mode === "login" ? "Welcome back." : "Your skyling is waiting."}
+        </h1>
         <p className="mt-2 text-[0.9375rem] text-muted">
-          {mode === "login" ? "Sign in to see your day." : "Just an email and a password. Everything else comes next."}
+          {mode === "login" ? "Sign in to see your day." : "Just an email and a password. You'll meet the skylings next."}
         </p>
       </div>
       {notice && !state?.error && (
@@ -52,15 +54,6 @@ export function AuthForm({
         >
           {notice.text}
         </p>
-      )}
-      {mode === "signup" && (
-        <div className="rounded-3xl bg-surface p-4 shadow-soft lg:hidden">
-          <span className="rounded-full bg-warning-soft px-2.5 py-1 text-[0.6875rem] font-medium tracking-[0.06em] text-warning uppercase">Example</span>
-          <p className="mt-2 font-display text-[1.1875rem] leading-snug font-medium tracking-[-0.02em]">
-            Your Thursday shift runs until 10. Your Bio exam is Friday at 9.
-          </p>
-          <p className="mt-1 text-sm text-text-2">Your skyling moved your study block to Wednesday.</p>
-        </div>
       )}
       <FormError message={state?.error} />
       <SignInOptions mode={mode} apple={apple} google={google} next={next} />
@@ -106,14 +99,9 @@ export function AuthForm({
       )}
       {next && <input type="hidden" name="next" value={next} />}
       {invite && <input type="hidden" name="invite" value={invite} />}
-      <button
-        type="submit"
-        disabled={pending}
-        className="mt-2 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[0.9375rem] font-medium text-accent-text shadow-soft transition-transform active:scale-[0.98] disabled:opacity-60"
-      >
-        {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+      <SkyButton type="submit" loading={pending} skyling={mode === "login" ? "dusk" : "dawn"} className="mt-2 w-full justify-between pl-6">
         {mode === "login" ? "Sign in" : "Create account"}
-      </button>
+      </SkyButton>
       <p className="mt-2 text-center text-sm text-muted">
         {mode === "login" ? "New here? " : "Already have an account? "}
         <Link href={mode === "login" ? "/signup" : "/login"} className="inline-flex min-h-11 items-center font-medium text-accent">

@@ -55,11 +55,22 @@ export function BrandMark({ className, alt = "LifeFlow" }: BrandMarkProps) {
   );
 }
 
-export function BrandLockup({ className, markClassName, priority = false }: { className?: string; markClassName?: string; priority?: boolean }) {
+export function BrandLockup({
+  className,
+  markClassName,
+  priority = false,
+  light = false,
+}: {
+  className?: string;
+  markClassName?: string;
+  priority?: boolean;
+  /** White words, for the night sky. */
+  light?: boolean;
+}) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <BrandMark className={cn("h-9 w-9", markClassName)} alt="" priority={priority} />
-      <span className="font-display text-[1.375rem] font-medium tracking-[-0.035em] text-text">LifeFlow</span>
+      <span className={cn("font-display text-[1.375rem] font-medium tracking-[-0.035em]", light ? "text-white" : "text-text")}>LifeFlow</span>
     </span>
   );
 }
