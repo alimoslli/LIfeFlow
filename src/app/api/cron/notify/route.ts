@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     const got = req.headers.get("authorization") ?? "";
     const want = `Bearer ${secret}`;
     if (!secret || got.length !== want.length || !timingSafeEqual(Buffer.from(got), Buffer.from(want))) throw new HttpError(401, "Unauthorized");
-    const locked = await withJobLock("cron:notify", runNotify, { alertAfterSkips: 3, route: "/api/cron/notify" });
+    const locked = await withJobLock("cron:notify", runNotify, { route: "/api/cron/notify" });
     if (locked.skipped) return NextResponse.json({ ok: true, skipped: true });
     return NextResponse.json({ ok: true, ...locked.value });
   } catch (e) {

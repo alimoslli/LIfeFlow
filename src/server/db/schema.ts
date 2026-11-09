@@ -1871,8 +1871,10 @@ export const jobLocks = pgTable("job_locks", {
   name: text("name").primaryKey(),
   holder: text("holder").notNull(),
   expiresAt: tstz("expires_at").notNull(),
-  /** Consecutive skipped runs; reset when a run claims the lease. */
+  /** Requests skipped while the lease was held; the holder runs once more if > 0. Reset on a claim. */
   skips: integer("skips").notNull().default(0),
+  /** A skipped request wanted live data (Plaid balances). Reset on a claim. */
+  liveWanted: boolean("live_wanted").notNull().default(false),
 });
 
 export type HqRoundSwitches = { night: boolean; research: boolean; marketing: boolean };

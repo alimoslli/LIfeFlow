@@ -3,7 +3,7 @@ import { z } from "zod";
 import { withPlaidSyncLock } from "@/server/db/job-lock";
 import { getSessionUser } from "@/server/auth/current-user";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
-import { PlaidError, syncConnection } from "@/server/integrations/plaid";
+import { ownsPlaidConnection, PlaidError, syncConnection } from "@/server/integrations/plaid";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -19,8 +19,11 @@ export async function POST(req: Request) {
     const parsed = body.safeParse(await req.json().catch(() => null));
     if (!parsed.success) throw new HttpError(400, "Invalid request");
     await enforceRateLimit(`plaid-sync:${user.id}`, 20, 600);
+    if (!(await ownsPlaidConnection(user.id, parsed.data.id))) throw new HttpError(404, "Bank connection not found");
     try {
-      const run = await withPlaidSyncLock(parsed.data.id, () => syncConnection(user.id, parsed.data.id, user.timezone, undefined, { live: true }));
+      const run = await withPlaidSyncLock(parsed.data.id, (live) => syncConnection(user.id, parsed.data.id, user.timezone, undefined, { live }), {
+        live: true,
+      });
       // Another sync of this bank (webhook or schedule) is running and will bring the data: not a failure.
       if (run.skipped) return NextResponse.json({ ok: true, synced: null, alreadySyncing: true });
       return NextResponse.json({ ok: true, synced: run.value });

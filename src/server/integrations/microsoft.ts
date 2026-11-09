@@ -334,7 +334,11 @@ export async function syncMicrosoftConnection(userId: string, tz: string, now = 
   } catch (e) {
     const reauth = e instanceof MicrosoftError && e.reauth;
     // Only our own fixed messages are stored; anything else becomes a generic line.
-    const msg = e instanceof MicrosoftError ? e.message : "Microsoft sync failed. Please try again.";
+    const msg = reauth
+      ? "Microsoft needs you to sign in again. Reconnect it in Settings, Connected accounts."
+      : e instanceof MicrosoftError
+        ? e.message
+        : "Microsoft sync failed. Please try again.";
     await withUser(userId, async (s) => {
       await s.tx
         .update(integrations)

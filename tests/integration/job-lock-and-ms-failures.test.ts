@@ -5,7 +5,7 @@ import { GET as cronPromises } from "@/app/api/cron/promises/route";
 import { GET as cronNotify } from "@/app/api/cron/notify/route";
 import { closeDb, getDb } from "@/server/db/client";
 import { jobLocks } from "@/server/db/schema";
-import { releaseJobLock, withJobLock } from "@/server/db/job-lock";
+import { MAX_EXTRA_ROUNDS, releaseJobLock, withJobLock } from "@/server/db/job-lock";
 import { errorReports } from "@/server/db/schema";
 import { getMicrosoftConnection, microsoftNeedsReauth, saveMicrosoftConnection, syncMicrosoftConnection } from "@/server/integrations/microsoft";
 import { makeUser } from "../helpers";
@@ -26,7 +26,17 @@ vi.mock("@/server/services/proactive/engine", async (orig) => ({
   }),
 }));
 
-afterAll(closeDb);
+const cleanup = () =>
+  getDb()
+    .delete(jobLocks)
+    .where(or(like(jobLocks.name, "test:%"), like(jobLocks.name, "cron:test-%")));
+afterAll(async () => {
+  await cleanup();
+  await closeDb();
+});
+const withPlaidSyncLockForTest = (name: string, run: (live: boolean) => Promise<unknown>) =>
+  withJobLock(name, () => run(false), { rerun: (live) => run(live) });
+const skippedRequest = (name: string, live: boolean) => withJobLock(name, async () => "never", { rerun: async () => undefined, live });
 beforeAll(async () => {
   await getDb()
     .delete(jobLocks)
@@ -91,20 +101,51 @@ describe("job lock", () => {
     expect(await getDb().select().from(jobLocks).where(eq(jobLocks.name, "test:live"))).toHaveLength(1);
   });
 
-  it("records one fixed error when a cron is skipped 3 runs in a row", async () => {
-    await getDb().delete(errorReports).where(eq(errorReports.route, "/api/cron/test-skips"));
+  it("taking over an expired lease records one fixed-text error; a fresh claim records none", async () => {
+    await getDb().delete(errorReports).where(eq(errorReports.route, "/api/cron/test-takeover"));
+    const route = "/api/cron/test-takeover";
+    await withJobLock("test:takeover-fresh", async () => 1, { route });
+    expect(await getDb().select().from(errorReports).where(eq(errorReports.route, route))).toHaveLength(0);
     await getDb()
       .insert(jobLocks)
-      .values({ name: "cron:test-skips", holder: "slow", expiresAt: new Date(Date.now() + 60_000) });
-    const run = () => withJobLock("cron:test-skips", async () => 1, { alertAfterSkips: 3, route: "/api/cron/test-skips" });
-    await run();
-    await run();
-    expect(await getDb().select().from(errorReports).where(eq(errorReports.route, "/api/cron/test-skips"))).toHaveLength(0);
-    await run();
-    await run();
-    const rows = await getDb().select().from(errorReports).where(eq(errorReports.route, "/api/cron/test-skips"));
+      .values({ name: "test:takeover", holder: "dead-run", expiresAt: new Date(Date.now() - 1000) });
+    expect(await withJobLock("test:takeover", async () => 1, { route })).toEqual({ skipped: false, value: 1 });
+    const rows = await getDb().select().from(errorReports).where(eq(errorReports.route, route));
     expect(rows).toHaveLength(1);
-    expect(rows[0].count).toBe(1);
+    expect(rows[0].message).toBe("Job lock: test:takeover taken over after an expired run");
+  });
+
+  it("ten concurrent claims on a fresh name, and on an expired row, let exactly one run", async () => {
+    const race = () => Promise.all(Array.from({ length: 10 }, () => withJobLock("test:race", async () => new Promise((r) => setTimeout(() => r(1), 150)))));
+    const fresh = await race();
+    expect(fresh.filter((r) => !r.skipped)).toHaveLength(1);
+    await getDb()
+      .insert(jobLocks)
+      .values({ name: "test:race", holder: "dead-run", expiresAt: new Date(Date.now() - 1000) });
+    const expired = await race();
+    expect(expired.filter((r) => !r.skipped)).toHaveLength(1);
+    expect(await getDb().select().from(jobLocks).where(eq(jobLocks.name, "test:race"))).toHaveLength(0);
+  });
+
+  it("a request skipped during a run makes the holder run once more (live if asked), bounded to two extra rounds", async () => {
+    const seen: boolean[] = [];
+    await withPlaidSyncLockForTest("test:rerun-a", async (live) => {
+      seen.push(live);
+      if (seen.length === 1) {
+        expect(await skippedRequest("test:rerun-a", false)).toEqual({ skipped: true });
+        expect(await skippedRequest("test:rerun-a", true)).toEqual({ skipped: true });
+      }
+    });
+    expect(seen).toEqual([false, true]); // two requests, one extra run, live because one wanted it
+    expect(await getDb().select().from(jobLocks).where(eq(jobLocks.name, "test:rerun-a"))).toHaveLength(0);
+
+    const always: boolean[] = [];
+    await withPlaidSyncLockForTest("test:rerun-b", async (live) => {
+      always.push(live);
+      await skippedRequest("test:rerun-b", false); // someone asks every time
+    });
+    expect(always).toHaveLength(1 + MAX_EXTRA_ROUNDS);
+    expect(await getDb().select().from(jobLocks).where(eq(jobLocks.name, "test:rerun-b"))).toHaveLength(0);
   });
 
   it("two overlapping promise check-in runs: one does the work, the other answers skipped", async () => {
@@ -198,6 +239,7 @@ describe("Microsoft sync failures are recorded", () => {
         : json({ error: "nope" }, 401)) as typeof fetch;
     await expect(syncMicrosoftConnection(u.user.id, "America/New_York", new Date(), refused)).rejects.toThrow();
     expect(await microsoftNeedsReauth(u.user.id)).toBe(true);
+    expect((await u.run((s) => getMicrosoftConnection(s)))?.lastError).toMatch(/Reconnect/);
     vi.stubGlobal("fetch", async () => json({ value: [] }));
     try {
       const body = await (await call(cronSync, "/api/cron/sync")).json();

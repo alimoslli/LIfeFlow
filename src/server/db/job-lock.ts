@@ -12,32 +12,75 @@ import { recordError } from "../services/error-reports";
  * never starve the pool, and a crashed or killed run just lets its lease expire after `ttlMs` (default just over the
  * 300 s route limit). Works the same behind a transaction-mode pooler (ADR 0003).
  *
- * `alertAfterSkips`: after that many skipped runs in a row, one fixed-text error report is recorded (cron jobs only).
+ * Taking over an expired row means an earlier run died or overran: one fixed-text error report is recorded.
+ *
+ * `rerun`: for work that must not be lost when a request is skipped (a Plaid webhook is sent once). A skipped request
+ * bumps `skips` (and `live_wanted` if it asked for live data). The holder only frees the lease when `skips = 0`;
+ * otherwise it resets the counter, extends the lease and runs `rerun(live)` once more, at most `MAX_EXTRA_ROUNDS` times.
  */
 export const DEFAULT_LEASE_MS = 310_000;
+export const MAX_EXTRA_ROUNDS = 2;
 
-export async function withJobLock<T>(
-  name: string,
-  fn: () => Promise<T>,
-  opts: { ttlMs?: number; alertAfterSkips?: number; route?: string } = {},
-): Promise<{ skipped: true } | { skipped: false; value: T }> {
+type Opts = {
+  ttlMs?: number;
+  route?: string;
+  /** Mark skipped requests on the row so the holder runs again before it lets go. */
+  rerun?: (live: boolean) => Promise<unknown>;
+  /** This request wants live data; recorded on the row if it is skipped. */
+  live?: boolean;
+};
+
+export async function withJobLock<T>(name: string, fn: () => Promise<T>, opts: Opts = {}): Promise<{ skipped: true } | { skipped: false; value: T }> {
   const db = getDb();
   const holder = randomUUID();
   const ttlMs = opts.ttlMs ?? DEFAULT_LEASE_MS;
-  const claimed = await db.execute<{ holder: string }>(sql`
-    insert into job_locks (name, holder, expires_at, skips)
-    values (${name}, ${holder}, now() + ${ttlMs} * interval '1 millisecond', 0)
-    on conflict (name) do update set holder = excluded.holder, expires_at = excluded.expires_at, skips = 0
-    where job_locks.expires_at < now()
-    returning holder`);
-  if (claimed.rows[0]?.holder !== holder) {
-    if (opts.alertAfterSkips) await noteSkip(name, opts.alertAfterSkips, opts.route ?? "/api/cron").catch(() => undefined);
-    return { skipped: true };
+  const claim = async () => {
+    const r = await db.execute<{ holder: string; took_over: boolean }>(sql`
+      insert into job_locks (name, holder, expires_at, skips, live_wanted)
+      values (${name}, ${holder}, now() + ${ttlMs} * interval '1 millisecond', 0, false)
+      on conflict (name) do update set holder = excluded.holder, expires_at = excluded.expires_at, skips = 0, live_wanted = false
+      where job_locks.expires_at < now()
+      returning holder, (xmax <> 0) as took_over`);
+    return r.rows[0]?.holder === holder ? r.rows[0] : null;
+  };
+  let claimed = await claim();
+  for (let i = 0; !claimed && opts.rerun && i < 2; i++) {
+    // Leave a mark for the holder. If the row vanished meanwhile (it just finished), try to claim again.
+    const marked = await db.execute(sql`
+      update job_locks set skips = skips + 1, live_wanted = live_wanted or ${!!opts.live} where name = ${name} and expires_at >= now()`);
+    if (marked.rowCount) break;
+    claimed = await claim();
+  }
+  if (!claimed) return { skipped: true };
+  if (claimed.took_over) {
+    const job = name.startsWith("plaid-sync:") ? "plaid-sync" : name;
+    await recordError(db, { source: "server", route: opts.route ?? "/api/cron", message: `Job lock: ${job} taken over after an expired run` }).catch(
+      () => undefined,
+    );
   }
   try {
-    return { skipped: false, value: await fn() };
+    const value = await fn();
+    if (opts.rerun) await rerunWhileAsked(name, holder, ttlMs, opts.rerun);
+    return { skipped: false, value };
   } finally {
-    await releaseJobLock(name, holder).catch(() => undefined); // a failed release just lets the lease expire
+    // A failed release just lets the lease expire.
+    await releaseJobLock(name, holder).catch(() => undefined);
+  }
+}
+
+async function rerunWhileAsked(name: string, holder: string, ttlMs: number, rerun: (live: boolean) => Promise<unknown>) {
+  const db = getDb();
+  for (let round = 0; round < MAX_EXTRA_ROUNDS; round++) {
+    const freed = await db.execute(sql`delete from job_locks where name = ${name} and holder = ${holder} and skips = 0 returning name`);
+    if (freed.rows.length) return;
+    // Someone asked while we were running: take the request, keep the lease, and go once more.
+    const asked = await db.execute<{ live: boolean }>(sql`
+      update job_locks j set skips = 0, live_wanted = false, expires_at = now() + ${ttlMs} * interval '1 millisecond'
+      from (select name, live_wanted from job_locks where name = ${name} and holder = ${holder} for update) o
+      where j.name = o.name
+      returning o.live_wanted as live`);
+    if (!asked.rows.length) return; // the lease is no longer ours
+    await rerun(!!asked.rows[0].live).catch(() => undefined);
   }
 }
 
@@ -46,16 +89,14 @@ export async function releaseJobLock(name: string, holder: string) {
   await getDb().execute(sql`delete from job_locks where name = ${name} and holder = ${holder}`);
 }
 
-/** One Plaid sync per connection at a time (cron, webhook and user-triggered runs share it). Fits the 60 s routes. */
-export const withPlaidSyncLock = <T>(integrationId: string, fn: () => Promise<T>) => withJobLock(`plaid-sync:${integrationId}`, fn, { ttlMs: 90_000 });
-
-async function noteSkip(name: string, after: number, route: string) {
-  const r = await getDb().execute<{ skips: number }>(sql`update job_locks set skips = skips + 1 where name = ${name} returning skips`);
-  if (r.rows[0]?.skips === after) {
-    await recordError(getDb(), {
-      source: "server",
-      route,
-      message: `A scheduled job was skipped ${after} runs in a row because the previous run is still working.`,
-    });
-  }
-}
+/**
+ * One Plaid sync per connection at a time (cron, webhook and user-triggered runs share it). A request skipped meanwhile
+ * makes the holder sync once more before letting go, with live balances if any skipped request wanted them.
+ * `run(live)` does the sync. Lease = the cron's, so a crashed run frees within about 5 minutes.
+ */
+export const withPlaidSyncLock = <T>(integrationId: string, run: (live: boolean) => Promise<T>, opts: { live?: boolean } = {}) =>
+  withJobLock(`plaid-sync:${integrationId}`, () => run(!!opts.live), {
+    ttlMs: DEFAULT_LEASE_MS,
+    live: opts.live,
+    rerun: (live) => run(live),
+  });

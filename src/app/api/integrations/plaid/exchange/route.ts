@@ -31,11 +31,11 @@ export async function POST(req: Request) {
       let synced = null;
       let note: string | null = null;
       try {
-        const run = await withPlaidSyncLock(item.id, () => syncConnection(user.id, item.id, user.timezone));
-        if (run.skipped) note = "Connected. Already syncing; your accounts will appear shortly.";
+        const run = await withPlaidSyncLock(item.id, (live) => syncConnection(user.id, item.id, user.timezone, undefined, { live }));
+        if (run.skipped) note = "Already syncing; your accounts will appear shortly.";
         else synced = run.value;
       } catch (e) {
-        note = e instanceof PlaidError ? e.message : "Connected. The first sync will finish shortly.";
+        note = e instanceof PlaidError ? e.message : "The first sync will finish shortly.";
       }
       return NextResponse.json({ ok: true, name: item.displayName, synced, note });
     } catch (e) {

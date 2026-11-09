@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     const got = req.headers.get("authorization") ?? "";
     const want = `Bearer ${secret}`;
     if (!secret || got.length !== want.length || !timingSafeEqual(Buffer.from(got), Buffer.from(want))) throw new HttpError(401, "Unauthorized");
-    const locked = await withJobLock("cron:sync", runSync, { alertAfterSkips: 3, route: "/api/cron/sync" });
+    const locked = await withJobLock("cron:sync", runSync, { route: "/api/cron/sync" });
     if (locked.skipped) return NextResponse.json({ ok: true, skipped: true });
     return NextResponse.json({ ok: true, ...locked.value });
   } catch (e) {
@@ -51,7 +51,7 @@ async function runSync() {
           continue;
         }
         // The same connection may be syncing from a webhook right now; that run does the work.
-        const done = await withPlaidSyncLock(r.integrationId, () => syncConnection(r.userId, r.integrationId, r.tz));
+        const done = await withPlaidSyncLock(r.integrationId, (live) => syncConnection(r.userId, r.integrationId, r.tz, undefined, { live }));
         if (done.skipped) {
           skipped++;
           continue;

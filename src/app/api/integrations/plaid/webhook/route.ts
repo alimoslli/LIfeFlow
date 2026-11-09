@@ -51,5 +51,5 @@ export async function POST(req: Request) {
 
 /** One sync per connection at a time: a repeated webhook (or the cron) arriving mid-sync is skipped, the running one has the data. */
 async function syncOnce(userId: string, integrationId: string, tz: string) {
-  await withPlaidSyncLock(integrationId, () => syncConnection(userId, integrationId, tz).catch(() => undefined));
+  await withPlaidSyncLock(integrationId, (live) => syncConnection(userId, integrationId, tz, undefined, { live }).catch(() => undefined));
 }
