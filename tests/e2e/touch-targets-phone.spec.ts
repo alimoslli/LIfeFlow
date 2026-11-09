@@ -85,22 +85,19 @@ test("393px: every control on onboarding and the main screens is at least 44x44"
 
   // Onboarding, every step.
   const email = await signUp(page, "Tara Target", { onboarding: "stay" });
-  await check("welcome/yours");
+  await check("welcome/skyling");
   await page.getByRole("button", { name: "Continue" }).click();
-  await check("welcome/hello");
-  // Sign-up takes only email and password; after the skyling, the welcome asks what to call them.
   await page.getByLabel("What should I call you?").fill("Tara");
-  await page.getByRole("button", { name: "Let's go" }).click();
   await page.getByRole("radio", { name: /Both/ }).click();
-  await check("welcome/week");
+  await check("welcome/you");
+  await page.getByRole("button", { name: "Build my sky" }).click();
+  await page.getByLabel("Class name").fill("Introduction to Organic Chemistry II");
+  await page.getByLabel("Where you work").fill("Campus Coffee and Bakery Downtown");
+  await check("welcome/build");
+  await page.getByRole("button", { name: "I'll add things later" }).click();
+  await check("welcome/learn");
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("A class you're taking").fill("Biology 101");
-  await page.getByLabel("Where you work").fill("Campus Coffee");
-  await check("welcome/details");
-  await page.getByRole("button", { name: "Show me my day" }).click();
-  await page.getByRole("button", { name: "Skip", exact: true }).click();
-  await expect(page.locator("article")).toHaveCount(3);
-  await check("welcome/day");
+  await check("welcome/connect");
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   await page.getByRole("button", { name: "Skip tour" }).click();

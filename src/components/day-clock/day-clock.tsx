@@ -27,9 +27,12 @@ export function DayClock({
   data,
   mode = "full",
   companion,
+  open,
   children,
 }: {
   data: ClockData;
+  /** Set to pour the sky into the week (true) or fold it back (false); left out, only the person opens it. */
+  open?: boolean;
   mode?: TodayMode;
   /** The person's companion (lib/companions); the default until they pick. */
   companion?: string | null;
@@ -92,6 +95,12 @@ export function DayClock({
   useEffect(() => {
     if (data !== first.current) engine.current?.update(data);
   }, [data]);
+  useEffect(() => {
+    if (open === undefined) return;
+    // a beat after the sky appears, so the pour reads as a moment
+    const t = setTimeout(() => engine.current?.setOpen(open), 500);
+    return () => clearTimeout(t);
+  }, [open]);
 
   return (
     <>

@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 import { queryAsUser, signUp } from "./helpers";
 
-test("a new user picks and names their skyling first, sees their day connected, then a skippable tour", async ({ page }) => {
+test("a new user meets the skylings, builds their real sky, learns it by doing, then a skippable tour", async ({ page }) => {
   const email = await signUp(page, "Maya Chen", { onboarding: "stay" });
-  // The skylings come first (research 2026-11-09): picking one brings its name and its tone; a name of their own wins
-  // and keeps the look and tone. Each step says what it changes on Today.
+  // 1. The skylings come first (research 2026-11-09): picking one brings its name and its tone; a name of their own wins
+  // and keeps the look and tone. Each step says what it changes.
   await expect(page.getByRole("heading", { name: "Meet the skylings" })).toBeVisible();
   await expect(page.getByText("Changes who sits on top of your sky")).toBeVisible();
   expect((await page.getByLabel("Skyling's name").boundingBox())!.height).toBeGreaterThanOrEqual(44);
@@ -16,42 +16,57 @@ test("a new user picks and names their skyling first, sees their day connected, 
   await expect(page.getByRole("radio", { name: /^Ray/ })).toHaveAttribute("aria-checked", "true");
   await page.getByRole("button", { name: "Continue" }).click();
 
-  // Then Nova asks what to call them (sign-up took only email and password).
+  // 2. Nova says hi and asks two things (sign-up took only email and password).
   await expect(page.getByRole("heading", { name: /^Hi/ })).toBeVisible();
   await expect(page.getByText("I'm Nova.", { exact: false })).toBeVisible();
-  // Text boxes meet the 44 px touch size.
   expect((await page.getByLabel("What should I call you?").boundingBox())!.height).toBeGreaterThanOrEqual(44);
   await page.getByLabel("What should I call you?").fill("Maya");
   await expect(page.getByRole("heading", { name: "Hi Maya." })).toBeVisible();
   await expect(page.getByText("LifeFlow is free while we're testing.")).toBeVisible();
-  await page.getByRole("button", { name: "Let's go" }).click();
+  await expect(page.getByRole("button", { name: "Build my sky" })).toBeDisabled();
+  await page.getByRole("radio", { name: /^Both/ }).click();
+  await page.getByRole("button", { name: "Build my sky" }).click();
 
-  await page.getByRole("radio", { name: /Both/ }).click();
+  // 3. Build your sky: their real sky opens into the week, and each thing they add is saved and lands on it.
+  await expect(page.getByRole("heading", { name: "Build your sky" })).toBeVisible();
+  const clock = page.getByTestId("day-clock");
+  await expect(clock).toHaveAttribute("data-state", "timeline");
+  await expect(page.getByRole("button", { name: "I'll add things later" })).toBeVisible();
+  const today = await page.evaluate(() => new Date().getDay());
+  const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][today];
+  await page.getByLabel("Class name").fill("PSY 101");
+  await page.getByRole("group", { name: "A class: days" }).getByRole("button", { name: weekday }).click();
+  await page.getByLabel("A class: starts").fill("23:00");
+  await page.getByLabel("A class: ends").fill("23:50");
+  await page.getByRole("region", { name: "A class" }).getByRole("button", { name: "Add" }).click();
+  await expect(page.getByRole("list", { name: "On your sky" })).toContainText("PSY 101");
+  await page.getByLabel("Where you work").fill("Target");
+  await page.getByRole("group", { name: "Your usual work hours: days" }).getByRole("button", { name: "Sat" }).click();
+  await page.getByLabel("Your usual work hours: starts").fill("10:00");
+  await page.getByLabel("Your usual work hours: ends").fill("16:00");
+  await page.getByRole("region", { name: "Your usual work hours" }).getByRole("button", { name: "Add" }).click();
+  await expect(page.getByRole("list", { name: "On your sky" })).toContainText("Target");
+  await page.getByLabel("What's due").fill("Lab report");
+  await page.getByRole("region", { name: "Something due soon" }).getByRole("button", { name: "Add" }).click();
+  await expect(page.getByRole("list", { name: "On your sky" })).toContainText("Lab report");
+  // the class is on the line already
+  await expect(clock.getByText("PSY 101").first()).toBeAttached();
+  await page.getByRole("button", { name: "That's my week" }).click();
+
+  // 4. Read your sky: folded back to the wheel, and opening it is ticked off when they do it.
+  await expect(page.getByRole("heading", { name: "Read your sky" })).toBeVisible();
+  await expect(clock).toHaveAttribute("data-state", "clock");
+  await page.getByRole("button", { name: /^Today\. Now / }).click();
+  await expect(clock).toHaveAttribute("data-state", "timeline");
+  await expect(page.getByText("Open it (done)")).toBeAttached();
+  await page.keyboard.press("Escape");
+  await expect(clock).toHaveAttribute("data-state", "clock");
+  await expect(page.getByText("Fold it back (done)")).toBeAttached();
   await page.getByRole("button", { name: "Continue" }).click();
 
-  // One class and where they work: optional, and saved for real.
-  await page.getByLabel("A class you're taking").fill("PSY 101");
-  await page.getByLabel("Where you work").fill("Target");
-  await page.getByRole("button", { name: "Show me my day" }).click();
-
-  // Your day, connected: the sources connect, then Nova shows what it would do, built from their answers.
-  await expect(page.getByRole("heading", { name: "Maya, here's a day with everything connected." })).toBeVisible();
-  await expect(page.getByText("Nova is thinking…")).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByRole("heading", { name: "Here's what I'd do, Maya." })).toBeVisible({ timeout: 15_000 });
-  const cards = page.locator("article");
-  await expect(cards).toHaveCount(3);
-  await expect(cards.filter({ hasText: "PSY 101" })).not.toHaveCount(0);
-  await expect(cards.filter({ hasText: "Target" })).not.toHaveCount(0);
-  // Every card with invented numbers carries its own "example" tag.
-  for (const card of await cards.all()) await expect(card.getByText("example", { exact: true })).toBeVisible();
-  await expect(page.getByText("Example numbers. Connect your accounts and these become real.")).toBeVisible();
-  await cards.first().getByRole("button").click();
-  await expect(cards.first().getByRole("status")).toContainText("In the app,");
-  // Another day: Skip goes straight to the answer.
-  await page.getByRole("button", { name: "Show me another day" }).click();
-  await page.getByRole("button", { name: "Skip", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Here's what I'd do, Maya." })).toBeVisible();
-  await page.getByRole("button", { name: "Meet Nova first" }).click();
+  // 5. Connect, or straight to the sky.
+  await expect(page.getByRole("heading", { name: "Let your sky fill itself" })).toBeVisible();
+  await page.getByRole("button", { name: "Go to my sky" }).click();
 
   // Today, with the tour running.
   await page.waitForURL((u) => u.pathname === "/");
@@ -64,7 +79,8 @@ test("a new user picks and names their skyling first, sees their day connected, 
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Nova" })).toHaveCount(0);
 
-  // Saved: what fills their week, their assistant, and the class and job they typed.
+  // Saved for real: their skyling, what fills their week, the class (with its weekly meeting), the job (with shifts
+  // filled ahead) and the due date.
   const [prefs] = await queryAsUser<{ p: { lifeStage?: string; assistantName?: string; assistantStyle?: string; companion?: string } }>(
     email,
     "select preferences as p from users where email = $1",
@@ -72,8 +88,11 @@ test("a new user picks and names their skyling first, sees their day connected, 
   );
   expect(prefs.p).toMatchObject({ lifeStage: "both", assistantName: "Nova", assistantStyle: "coach", companion: "ray" });
   expect(await queryAsUser(email, "select name from courses")).toEqual([{ name: "PSY 101" }]);
+  expect(await queryAsUser(email, "select title, kind from calendar_events")).toEqual([{ title: "PSY 101", kind: "class" }]);
   expect(await queryAsUser(email, "select name from employers")).toEqual([{ name: "Target" }]);
-  // The name typed on the first screen was saved (the test's sign-up had set "Maya Chen").
+  expect((await queryAsUser<{ n: number }>(email, "select count(*)::int as n from work_shifts"))[0].n).toBeGreaterThan(0);
+  expect(await queryAsUser(email, "select title from tasks")).toEqual([{ title: "Lab report" }]);
+  // The name typed in the welcome was saved (the test's sign-up had set "Maya Chen").
   expect(await queryAsUser(email, "select name from users where email = $1", [email])).toEqual([{ name: "Maya" }]);
 
   // The tour doesn't come back, and setup isn't shown again.
@@ -112,12 +131,11 @@ test("the app follows what fills your week: tabs and pills adapt", async ({ page
   await signUp(page, "Sam Ortiz", { onboarding: "stay" });
   await page.getByRole("button", { name: "Continue" }).click(); // picking a skyling is optional
   await page.getByLabel("What should I call you?").fill("Sam");
-  await page.getByRole("button", { name: "Let's go" }).click();
   await page.getByRole("radio", { name: /^Work/ }).click();
+  await page.getByRole("button", { name: "Build my sky" }).click();
+  await page.getByRole("button", { name: "I'll add things later" }).click(); // adding is optional
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("button", { name: "Show me my day" }).click(); // where they work is optional
-  await page.getByRole("button", { name: "Skip", exact: true }).click();
-  await page.getByRole("button", { name: "Meet your skyling first" }).click();
+  await page.getByRole("button", { name: "Go to my sky" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   await page.getByRole("button", { name: "Skip tour" }).click();
 

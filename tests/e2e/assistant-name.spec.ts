@@ -60,21 +60,16 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   await expect(page.getByText("Your skyling:", { exact: false })).toBeVisible();
   await expectNoJarvis(page, "welcome: the skylings");
   await page.getByRole("button", { name: "Continue" }).click();
-  await expectNoJarvis(page, "welcome: hello");
+  await expectNoJarvis(page, "welcome: you");
   await page.getByLabel("What should I call you?").fill("Riley");
-  await page.getByRole("button", { name: "Let's go" }).click();
-  await expectNoJarvis(page, "welcome: week");
   await page.getByRole("radio", { name: /Both/ }).click();
+  await page.getByRole("button", { name: "Build my sky" }).click();
+  await expectNoJarvis(page, "welcome: build your sky");
+  await page.getByRole("button", { name: "I'll add things later" }).click();
+  await expectNoJarvis(page, "welcome: read your sky");
   await page.getByRole("button", { name: "Continue" }).click();
-  await expectNoJarvis(page, "welcome: details");
-  await page.getByRole("button", { name: "Show me my day" }).click();
-
-  await expect(page.getByText("Your skyling is thinking…")).toBeVisible({ timeout: 15_000 });
-  await expectNoJarvis(page, "welcome: your day");
-  await page.getByRole("button", { name: "Skip", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Here's what I'd do, Riley." })).toBeVisible();
-  await expectNoJarvis(page, "welcome: your day, answered");
-  await page.getByRole("button", { name: "Meet your skyling first" }).click();
+  await expectNoJarvis(page, "welcome: connect");
+  await page.getByRole("button", { name: "Go to my sky" }).click();
   await page.waitForURL((u) => u.pathname === "/");
 
   // No name was saved: it stays "your skyling" until they choose one.

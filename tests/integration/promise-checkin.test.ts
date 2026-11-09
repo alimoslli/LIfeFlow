@@ -55,7 +55,8 @@ describe("promise check-ins", () => {
     const { user: u, run } = await makeUser();
     // The answer is given now (the app moves it to tomorrow counted from the moment you answer), so the promise is due today.
     const today = todayIn(TZ);
-    const said = new Date(Date.now() - 12 * H);
+    // said an hour before it's due (12 hours before now was after 00:01 whenever the suite ran past noon in TZ)
+    const said = new Date(localToInstant(today, "00:01", TZ).getTime() - H);
     const p = (await run((s) => createPromise(s, TZ, { text: "Call Dad", dueDate: today, dueTime: "00:01" }, said))).promise;
     const now = new Date(p.dueAt.getTime() + 60_000);
     const [m] = await run((s) => runProactive({ scope: s, tz: TZ, prefs: u.preferences, trigger: "promise", now }));

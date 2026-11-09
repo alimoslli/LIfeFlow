@@ -303,3 +303,8 @@
     radial-gradient(1.5px 1.5px at 6% 72%, #fff 60%, transparent 61%), radial-gradient(2px 2px at 86% 88%, #fff3c4 60%, transparent 61%);
   opacity: 0.55;
 }
+
+/* the welcome's "Build your sky": the person's real wheel, a little shorter than on Today so the step fits under it */
+.lf-welcome-sky .dc {
+  height: clamp(18rem, 46svh, 27rem);
+}

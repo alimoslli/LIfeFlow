@@ -38,6 +38,8 @@ export type DayClockHandle = {
   pinTime: () => number;
   /** Diagnostics (?debug=1 only): hold the motion at a point between Today (0) and the timeline (1). */
   seek: (p: number) => void;
+  /** Pour into the week or fold back to now, as a tap would (the welcome opens it while people add their week). */
+  setOpen: (open: boolean) => void;
 };
 
 const NS = "http://www.w3.org/2000/svg";
@@ -1463,6 +1465,10 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       if (!S.open && S.p === 0 && p > 0) prepMorph();
       S.p = clamp(p, 0, 1);
       render();
+    },
+    setOpen(o: boolean) {
+      if (o) open();
+      else close(true);
     },
     pinTime() {
       const t = S.open ? tAt(trackWrap.scrollLeft + VW() / 2) : S.now;

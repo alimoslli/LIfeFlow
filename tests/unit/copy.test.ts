@@ -16,9 +16,10 @@ describe("copy that claims only what's true (audit A20)", () => {
     expect(src("components/jarvis/chat.tsx")).not.toContain("I know your classes, shifts and money.");
   });
 
-  it("the onboarding preview never says it is connecting or reading anything real", () => {
-    const preview = src("app/(onboarding)/welcome/day-preview.tsx");
-    expect(preview).not.toMatch(/Connecting your|Reading your/);
+  it("the welcome never says it is connecting or reading anything it isn't", () => {
+    // the demo day is gone (owner, 2026-11-09); the welcome only shows what the person really added
+    const welcome = src("app/(onboarding)/welcome/onboarding.tsx");
+    expect(welcome).not.toMatch(/Connecting your|Reading your/);
   });
 });
 
