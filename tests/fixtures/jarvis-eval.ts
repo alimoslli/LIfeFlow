@@ -175,4 +175,18 @@ export const EVAL: EvalCase[] = [
     ],
     answer: "The last time was July 18: $40 to Omar Mousselli by Zelle. Before that, $25 on June 9. Want me to list everything you've sent him?",
   },
+  {
+    id: "catchup",
+    question: "I'm behind, help me catch up this week",
+    skill: "smart-scheduler",
+    plan: [
+      { tool: "get_agenda", args: { from: "2026-11-02", to: "2026-11-06" } },
+      { tool: "find_free_time", args: { from: "2026-11-02", to: "2026-11-04", minMinutes: 60 } },
+    ],
+    budget: 2,
+    facts: ['"title":"Argument essay draft"', "2026-11-04 23:59", '"title":"Exam 2"', "2026-11-05 10:00", '"start":"10:50","end":"16:00"'],
+    // Target shape (about 35 words, no schedule, no headings): the next step with a real time, then one offer to book it.
+    answer:
+      "Start with the ENG 102 essay draft in your open time from 10:50 to 4 today, it's due Wednesday night. Then BIO 110 Exam 2 prep before Thursday at 10. Want me to block both around your shifts?",
+  },
 ];

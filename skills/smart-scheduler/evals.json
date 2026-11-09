@@ -22,5 +22,13 @@
   {
     "prompt": "Which day this week is going to be the hardest?",
     "expect": "routes to smart-scheduler"
+  },
+  {
+    "prompt": "I'm behind, help me catch up this week",
+    "expect": "routes to smart-scheduler"
+  },
+  {
+    "prompt": "Help me catch up on what's overdue this week.",
+    "expect": "routes to smart-scheduler"
   }
 ]

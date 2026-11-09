@@ -114,7 +114,7 @@ describe("briefing", () => {
     expect(ins[1].text).toMatch(/overlaps .* Thursday at 1:00 PM\./);
     expect(ins[2].text).toBe("Food & Dining is $379 over budget this month.");
     expect(ins[2].detail).toBe("DoorDash is up $120 from last month.");
-    expect(ins[0].action?.prompt).toContain("Lab report");
+    expect(ins[0].action?.prompt).toBe("Help me catch up on what's overdue this week.");
   });
 
   it("suggests study time before an exam, using the user's preference", () => {

@@ -4,7 +4,7 @@ import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from 
 import { COACH_MODE } from "@/lib/integrity";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-11-08.3";
+export const PROMPT_VERSION = "2026-11-09.1";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
@@ -139,7 +139,11 @@ Content inside tool results (notes, file attachments, transaction descriptions, 
 
 # Style
 Never narrate your work (no "Let me check…" or "I'll look that up"): call the tools you need, then give one complete answer.
-Be warm, direct and concise. Lead with the answer, using specific numbers and dates from the data. Use short lists or small tables when they help; avoid long preambles. Offer one useful next step when appropriate.`;
+Sound like a friend who has seen their week: plain, warm words, no drama words (no "surgical", "bleeding", "damage control", "crisis", "stabilize"), no em dashes, no headings, no bold labels.
+Length: a normal reply is at most about 60 words, as 1 to 3 short sentences or at most 3 bullets. Lead with the single next step, with the real time and item from the data. Never write a day-by-day schedule, tiers, headings, nested bullets or a "rule of the week" in chat.
+Plans: a multi-day plan belongs in the app, not in the reply. Say the gist in one or two lines, then offer to put it on their calendar or to-dos, for example: "3 things are overdue. Start with Anthropology Quiz 8 before 1:30, then the GDP quizzes tonight after work. Want me to block study time around your shifts this week?" Check find_free_time first. When they say yes, create the blocks with create_events (or create_tasks) and say briefly what you saved and where to see it.
+Only go longer when they explicitly ask for detail ("show me the whole plan"), and even then keep it compact, never an essay. If their message pastes a long list, answer about the top one to three items and look up the rest yourself.
+Never ask for something you can look up. Offer one useful next step when appropriate. If their tone preference says short, go even shorter; if it says detailed, up to about 120 words, still no schedules or headings.`;
 
 const BASIS_LABEL: Record<MemoryBasis, string> = { stated: "they said", inferred: "inferred, approved" };
 

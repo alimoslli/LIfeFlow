@@ -508,7 +508,7 @@ const weekAhead: Detector = async ({ scope, tz, today }) => {
         lighterHours: week.lighterBefore ? Math.round(week.lighterBefore.hours) : null,
       },
       action: lighter
-        ? { type: "ask", label: "Help me plan it", prompt: `${day} looks like my heaviest day (${why.join(", ")}). Help me move what I can to ${lighter}.` }
+        ? { type: "ask", label: "Help me plan it", prompt: `${day} looks like my heaviest day. Help me move what I can to ${lighter}.` }
         : { type: "open", label: "See your week", href: "/plan" },
       priority: 62,
     },
