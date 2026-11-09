@@ -1,264 +1,264 @@
 [
- {
-  "tag": "mac",
-  "route": "/",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 3679,
-  "small": [
-   {
-    "w": 26,
-    "h": 20,
-    "t": "FAQ"
-   },
-   {
-    "w": 47,
-    "h": 20,
-    "t": "Privacy"
-   },
-   {
-    "w": 38,
-    "h": 20,
-    "t": "Terms"
-   },
-   {
-    "w": 120,
-    "h": 20,
-    "t": "Academic integrity"
-   },
-   {
-    "w": 44,
-    "h": 20,
-    "t": "Sign in"
-   }
-  ],
-  "smallCount": 5,
-  "main": {
-   "x": 0,
-   "w": 1440
+  {
+    "tag": "mac",
+    "route": "/",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 3679,
+    "small": [
+      {
+        "w": 26,
+        "h": 20,
+        "t": "FAQ"
+      },
+      {
+        "w": 47,
+        "h": 20,
+        "t": "Privacy"
+      },
+      {
+        "w": 38,
+        "h": 20,
+        "t": "Terms"
+      },
+      {
+        "w": 120,
+        "h": 20,
+        "t": "Academic integrity"
+      },
+      {
+        "w": 44,
+        "h": 20,
+        "t": "Sign in"
+      }
+    ],
+    "smallCount": 5,
+    "main": {
+      "x": 0,
+      "w": 1440
+    },
+    "panel": null,
+    "shadowedBoxes": 9,
+    "h1": "Every app sees one slice. LifeFlow sees all of it."
   },
-  "panel": null,
-  "shadowedBoxes": 9,
-  "h1": "Every app sees one slice. LifeFlow sees all of it."
- },
- {
-  "tag": "mac",
-  "route": "/signup",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 900,
-  "small": [
-   {
-    "w": 71,
-    "h": 16,
-    "t": "Terms of Use"
-   },
-   {
-    "w": 362,
-    "h": 32,
-    "t": "Privacy Policy"
-   },
-   {
-    "w": 45,
-    "h": 18,
-    "t": "Sign in"
-   },
-   {
-    "w": 40,
-    "h": 16,
-    "t": "Privacy"
-   },
-   {
-    "w": 33,
-    "h": 16,
-    "t": "Terms"
-   }
-  ],
-  "smallCount": 5,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "Start your week."
- },
- {
-  "tag": "mac",
-  "route": "/login",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 900,
-  "small": [
-   {
-    "w": 118,
-    "h": 36,
-    "t": "Forgot password?"
-   },
-   {
-    "w": 120,
-    "h": 18,
-    "t": "Create an account"
-   },
-   {
-    "w": 40,
-    "h": 16,
-    "t": "Privacy"
-   },
-   {
-    "w": 33,
-    "h": 16,
-    "t": "Terms"
-   }
-  ],
-  "smallCount": 4,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "Welcome back."
- },
- {
-  "tag": "mac",
-  "route": "/welcome#1",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 900,
-  "small": [],
-  "smallCount": 0,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "Hi."
- },
- {
-  "tag": "mac",
-  "route": "/welcome#2",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 900,
-  "small": [],
-  "smallCount": 0,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "What fills your week?"
- },
- {
-  "tag": "mac",
-  "route": "/welcome#3",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 900,
-  "small": [],
-  "smallCount": 0,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "A class and your job"
- },
- {
-  "tag": "mac",
-  "route": "/welcome#4",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 900,
-  "small": [],
-  "smallCount": 0,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "Make it yours"
- },
- {
-  "tag": "mac",
-  "route": "/welcome#6",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 1079,
-  "small": [],
-  "smallCount": 0,
-  "main": null,
-  "panel": null,
-  "shadowedBoxes": 0,
-  "h1": "Here's what I'd do, Maya."
- },
- {
-  "tag": "mac",
-  "route": "/ (new, empty)",
-  "status": 200,
-  "jarvis": false,
-  "emDash": 0,
-  "emDashCtx": null,
-  "bad": false,
-  "overflowX": false,
-  "scrollH": 1040,
-  "small": [
-   {
-    "w": 40,
-    "h": 47,
-    "t": "LifeFlow home"
-   },
-   {
-    "w": 448,
-    "h": 40,
-    "t": "Ask Nova anything…\n⌘J"
-   },
-   {
-    "w": 40,
-    "h": 40,
-    "t": "Settings"
-   },
-   {
-    "w": 13,
-    "h": 13,
-    "t": "INPUT"
-   }
-  ],
-  "smallCount": 4,
-  "main": {
-   "x": 188,
-   "w": 1152
+  {
+    "tag": "mac",
+    "route": "/signup",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 900,
+    "small": [
+      {
+        "w": 71,
+        "h": 16,
+        "t": "Terms of Use"
+      },
+      {
+        "w": 362,
+        "h": 32,
+        "t": "Privacy Policy"
+      },
+      {
+        "w": 45,
+        "h": 18,
+        "t": "Sign in"
+      },
+      {
+        "w": 40,
+        "h": 16,
+        "t": "Privacy"
+      },
+      {
+        "w": 33,
+        "h": 16,
+        "t": "Terms"
+      }
+    ],
+    "smallCount": 5,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "Start your week."
   },
-  "panel": {
-   "x": 212,
-   "w": 1104,
-   "bg": "rgba(255, 255, 255, 0.72)"
+  {
+    "tag": "mac",
+    "route": "/login",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 900,
+    "small": [
+      {
+        "w": 118,
+        "h": 36,
+        "t": "Forgot password?"
+      },
+      {
+        "w": 120,
+        "h": 18,
+        "t": "Create an account"
+      },
+      {
+        "w": 40,
+        "h": 16,
+        "t": "Privacy"
+      },
+      {
+        "w": 33,
+        "h": 16,
+        "t": "Terms"
+      }
+    ],
+    "smallCount": 4,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "Welcome back."
   },
-  "shadowedBoxes": 3,
-  "h1": "Good morning, Maya"
- },
- {
-  "tag": "mac",
-  "route": "/admin (normal user)",
-  "status": 404
- }
+  {
+    "tag": "mac",
+    "route": "/welcome#1",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 900,
+    "small": [],
+    "smallCount": 0,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "Hi."
+  },
+  {
+    "tag": "mac",
+    "route": "/welcome#2",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 900,
+    "small": [],
+    "smallCount": 0,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "What fills your week?"
+  },
+  {
+    "tag": "mac",
+    "route": "/welcome#3",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 900,
+    "small": [],
+    "smallCount": 0,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "A class and your job"
+  },
+  {
+    "tag": "mac",
+    "route": "/welcome#4",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 900,
+    "small": [],
+    "smallCount": 0,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "Make it yours"
+  },
+  {
+    "tag": "mac",
+    "route": "/welcome#6",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 1079,
+    "small": [],
+    "smallCount": 0,
+    "main": null,
+    "panel": null,
+    "shadowedBoxes": 0,
+    "h1": "Here's what I'd do, Maya."
+  },
+  {
+    "tag": "mac",
+    "route": "/ (new, empty)",
+    "status": 200,
+    "jarvis": false,
+    "emDash": 0,
+    "emDashCtx": null,
+    "bad": false,
+    "overflowX": false,
+    "scrollH": 1040,
+    "small": [
+      {
+        "w": 40,
+        "h": 47,
+        "t": "LifeFlow home"
+      },
+      {
+        "w": 448,
+        "h": 40,
+        "t": "Ask Nova anything…\n⌘J"
+      },
+      {
+        "w": 40,
+        "h": 40,
+        "t": "Settings"
+      },
+      {
+        "w": 13,
+        "h": 13,
+        "t": "INPUT"
+      }
+    ],
+    "smallCount": 4,
+    "main": {
+      "x": 188,
+      "w": 1152
+    },
+    "panel": {
+      "x": 212,
+      "w": 1104,
+      "bg": "rgba(255, 255, 255, 0.72)"
+    },
+    "shadowedBoxes": 3,
+    "h1": "Good morning, Maya"
+  },
+  {
+    "tag": "mac",
+    "route": "/admin (normal user)",
+    "status": 404
+  }
 ]
