@@ -249,7 +249,7 @@ Full check and phone e2e passed on 2026-11-08. To see it:
 **Price** (owner, 11-05): $9.99 a month, or $5.99 for students. Free while testing.
 
 ## 10. The owner's list (only the owner can do these)
-1. Join the Apple Developer Program (blocks the App Store).
+1. Join the Apple Developer Program (blocks the App Store). Tried 2026-11-08: the website says "unable to process your request" and the Mac Developer app says enrollment "is not available for this Apple Account". Next: try the iPhone Developer app; check the Apple Account (two-factor, legal name, 18+, country, phone); look for a pending enrollment; else call Apple Developer Support (Membership and Account, Program Enrollment).
 2. Register in Microsoft Entra (blocks Teams).
 3. Request Plaid Production access (blocks real banks).
 4. Connect the Twilio number (blocks texting the assistant, phone sign-in and the after-shift message).
