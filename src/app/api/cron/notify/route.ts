@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     const got = req.headers.get("authorization") ?? "";
     const want = `Bearer ${secret}`;
     if (!secret || got.length !== want.length || !timingSafeEqual(Buffer.from(got), Buffer.from(want))) throw new HttpError(401, "Unauthorized");
-    const locked = await withJobLock("cron:notify", runNotify);
+    const locked = await withJobLock("cron:notify", runNotify, { alertAfterSkips: 3, route: "/api/cron/notify" });
     if (locked.skipped) return NextResponse.json({ ok: true, skipped: true });
     return NextResponse.json({ ok: true, ...locked.value });
   } catch (e) {
@@ -35,29 +35,27 @@ export async function GET(req: Request) {
 }
 
 async function runNotify() {
-  {
-    const send = await webPushSender();
-    const all = await getDb().select({ id: users.id, tz: users.timezone, prefs: users.preferences, kind: users.accountKind }).from(users);
-    let messages = 0;
-    let sent = 0;
-    for (const u of all) {
-      if (u.kind === "demo") continue;
-      // Separate transactions: one user's (or one step's) failure never blocks the rest.
-      try {
-        messages += (await withUser(u.id, (s) => runDueSlot(s, u.tz, u.prefs))).length;
-      } catch {}
-      if (!send) continue;
-      try {
-        sent += (await withUser(u.id, (s) => runNotifications(s, u.tz, u.prefs, send))).sent;
-        sent += await withUser(u.id, (s) => pushImportant(s, u.tz, u.prefs, (key, msg) => sendOnce(s, key, msg, send)));
-      } catch {}
-    }
-    // Housekeeping that must not depend on sign-ins: old limit buckets, Stop and continuation marks.
-    await purgeOldRateLimits(getDb()).catch(() => undefined);
-    // HQ housekeeping: pictures no decision card uses any more. Never blocks the run.
+  const send = await webPushSender();
+  const all = await getDb().select({ id: users.id, tz: users.timezone, prefs: users.preferences, kind: users.accountKind }).from(users);
+  let messages = 0;
+  let sent = 0;
+  for (const u of all) {
+    if (u.kind === "demo") continue;
+    // Separate transactions: one user's (or one step's) failure never blocks the rest.
     try {
-      await purgeUnusedPreviews(getDb());
+      messages += (await withUser(u.id, (s) => runDueSlot(s, u.tz, u.prefs))).length;
     } catch {}
-    return { users: all.length, messages, sent, push: send ? "on" : "VAPID keys not configured" };
+    if (!send) continue;
+    try {
+      sent += (await withUser(u.id, (s) => runNotifications(s, u.tz, u.prefs, send))).sent;
+      sent += await withUser(u.id, (s) => pushImportant(s, u.tz, u.prefs, (key, msg) => sendOnce(s, key, msg, send)));
+    } catch {}
   }
+  // Housekeeping that must not depend on sign-ins: old limit buckets, Stop and continuation marks.
+  await purgeOldRateLimits(getDb()).catch(() => undefined);
+  // HQ housekeeping: pictures no decision card uses any more. Never blocks the run.
+  try {
+    await purgeUnusedPreviews(getDb());
+  } catch {}
+  return { users: all.length, messages, sent, push: send ? "on" : "VAPID keys not configured" };
 }

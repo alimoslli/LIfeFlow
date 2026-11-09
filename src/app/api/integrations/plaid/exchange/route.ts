@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getSessionUser } from "@/server/auth/current-user";
+import { withPlaidSyncLock } from "@/server/db/job-lock";
 import { withUser } from "@/server/db/with-user";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { exchangePublicToken, PlaidError, syncConnection } from "@/server/integrations/plaid";
@@ -30,7 +31,9 @@ export async function POST(req: Request) {
       let synced = null;
       let note: string | null = null;
       try {
-        synced = await syncConnection(user.id, item.id, user.timezone);
+        const run = await withPlaidSyncLock(item.id, () => syncConnection(user.id, item.id, user.timezone));
+        if (run.skipped) note = "Connected. Already syncing; your accounts will appear shortly.";
+        else synced = run.value;
       } catch (e) {
         note = e instanceof PlaidError ? e.message : "Connected. The first sync will finish shortly.";
       }

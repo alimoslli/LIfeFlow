@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/server/db/client";
-import { withJobLock } from "@/server/db/job-lock";
+import { withPlaidSyncLock } from "@/server/db/job-lock";
 import { users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
@@ -51,5 +51,5 @@ export async function POST(req: Request) {
 
 /** One sync per connection at a time: a repeated webhook (or the cron) arriving mid-sync is skipped, the running one has the data. */
 async function syncOnce(userId: string, integrationId: string, tz: string) {
-  await withJobLock(`plaid-sync:${integrationId}`, () => syncConnection(userId, integrationId, tz).catch(() => undefined));
+  await withPlaidSyncLock(integrationId, () => syncConnection(userId, integrationId, tz).catch(() => undefined));
 }

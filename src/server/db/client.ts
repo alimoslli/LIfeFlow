@@ -11,16 +11,10 @@ export function getDb(): Database {
   if (!globalForDb.__bfDb) {
     const url = process.env.DATABASE_URL;
     if (!url) throw new Error("DATABASE_URL is not set");
-    globalForDb.__bfPool = new Pool({ connectionString: url, max: 10 });
+    globalForDb.__bfPool = new Pool({ connectionString: url, max: 10, connectionTimeoutMillis: 10_000 });
     globalForDb.__bfDb = drizzle(globalForDb.__bfPool, { schema });
   }
   return globalForDb.__bfDb;
-}
-
-/** The shared pool, for features that need one dedicated connection (advisory locks). */
-export function getPool(): Pool {
-  getDb();
-  return globalForDb.__bfPool!;
 }
 
 export async function closeDb() {

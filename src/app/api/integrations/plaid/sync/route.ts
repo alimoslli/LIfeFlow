@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withPlaidSyncLock } from "@/server/db/job-lock";
 import { getSessionUser } from "@/server/auth/current-user";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { PlaidError, syncConnection } from "@/server/integrations/plaid";
@@ -19,7 +20,10 @@ export async function POST(req: Request) {
     if (!parsed.success) throw new HttpError(400, "Invalid request");
     await enforceRateLimit(`plaid-sync:${user.id}`, 20, 600);
     try {
-      return NextResponse.json({ ok: true, synced: await syncConnection(user.id, parsed.data.id, user.timezone, undefined, { live: true }) });
+      const run = await withPlaidSyncLock(parsed.data.id, () => syncConnection(user.id, parsed.data.id, user.timezone, undefined, { live: true }));
+      // Another sync of this bank (webhook or schedule) is running and will bring the data: not a failure.
+      if (run.skipped) return NextResponse.json({ ok: true, synced: null, alreadySyncing: true });
+      return NextResponse.json({ ok: true, synced: run.value });
     } catch (e) {
       if (e instanceof PlaidError) throw new HttpError(502, e.message);
       throw e;

@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { GET as cron } from "@/app/api/cron/sync/route";
 import { POST as webhook } from "@/app/api/integrations/plaid/webhook/route";
 import { closeDb } from "@/server/db/client";
+import { withPlaidSyncLock } from "@/server/db/job-lock";
 import { integrations, syncJobs } from "@/server/db/schema";
 import { exchangePublicToken, markNeedsReauth, reconnectLinkToken } from "@/server/integrations/plaid";
 import { makeUser } from "../helpers";
@@ -78,6 +79,25 @@ describe("Plaid cron and item webhooks", () => {
     mocks.sync.mockClear();
     await runCron();
     expect(mocks.sync.mock.calls.some((c) => (c as unknown[])[1] === item.id)).toBe(false);
+  });
+
+  it("a webhook arriving while the same connection is already syncing is skipped (answers 200, no second sync)", async () => {
+    const { user, item } = await connected();
+    mocks.owner = { userId: user.id, integrationId: item.id };
+    const hookTransactions = () =>
+      webhook(
+        new Request("https://lifeflow.test/api/integrations/plaid/webhook", {
+          method: "POST",
+          body: JSON.stringify({ webhook_type: "TRANSACTIONS", webhook_code: "SYNC_UPDATES_AVAILABLE", item_id: "i" }),
+        }),
+      );
+    mocks.sync.mockClear();
+    await withPlaidSyncLock(item.id, async () => {
+      expect((await hookTransactions()).status).toBe(200);
+      expect(mocks.sync).not.toHaveBeenCalled();
+    });
+    expect((await hookTransactions()).status).toBe(200); // lease released: it syncs
+    expect(mocks.sync).toHaveBeenCalledTimes(1);
   });
 
   it("LOGIN_REPAIRED clears the error and syncs", async () => {

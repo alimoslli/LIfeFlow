@@ -206,6 +206,8 @@ async function graph<T>(scope: UserScope, url: string, headers: Record<string, s
     const token = await accessToken(scope, f, attempt > 0);
     const res = await timed(f, url, { headers: { ...headers, authorization: `Bearer ${token}` } });
     if (res.status === 401 && attempt === 0) continue;
+    // Still refused with a freshly refreshed token: the person has to sign in again.
+    if (res.status === 401) throw new MicrosoftError("Microsoft rejected the request.", true);
     const body = await readJson(res, (m) => new MicrosoftError(m));
     if (!res.ok) throw new MicrosoftError(`Microsoft returned an error (${res.status}${body?.error?.code ? `: ${truncate(body.error.code, 80)}` : ""}).`);
     return body as T;

@@ -1,10 +1,11 @@
-import { eq } from "drizzle-orm";
+import { eq, like, or } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { GET as cronSync } from "@/app/api/cron/sync/route";
 import { GET as cronPromises } from "@/app/api/cron/promises/route";
 import { GET as cronNotify } from "@/app/api/cron/notify/route";
 import { closeDb, getDb } from "@/server/db/client";
-import { withJobLock } from "@/server/db/job-lock";
+import { jobLocks } from "@/server/db/schema";
+import { releaseJobLock, withJobLock } from "@/server/db/job-lock";
 import { errorReports } from "@/server/db/schema";
 import { getMicrosoftConnection, microsoftNeedsReauth, saveMicrosoftConnection, syncMicrosoftConnection } from "@/server/integrations/microsoft";
 import { makeUser } from "../helpers";
@@ -26,7 +27,10 @@ vi.mock("@/server/services/proactive/engine", async (orig) => ({
 }));
 
 afterAll(closeDb);
-beforeAll(() => {
+beforeAll(async () => {
+  await getDb()
+    .delete(jobLocks)
+    .where(or(like(jobLocks.name, "test:%"), like(jobLocks.name, "cron:test-%"))); // rows left by an earlier run
   process.env.CRON_SECRET = "cron-test-secret";
   process.env.MICROSOFT_CLIENT_ID = "ms-client";
   process.env.MICROSOFT_CLIENT_SECRET = "ms-secret";
@@ -47,6 +51,60 @@ describe("job lock", () => {
     expect(first).toMatchObject({ skipped: false, value: { second: { skipped: true }, other: { skipped: false, value: "ok" } } });
     await expect(withJobLock("test:a", async () => Promise.reject(new Error("x")))).rejects.toThrow("x");
     expect(await withJobLock("test:a", async () => 1)).toEqual({ skipped: false, value: 1 });
+  });
+
+  it("more concurrent locked jobs than the pool holds all finish (no deadlock)", async () => {
+    // Each job needs a database connection of its own while it runs; the lease holds none.
+    const jobs = Array.from({ length: 25 }, (_, i) =>
+      withJobLock(`test:burst-${i}`, async () => {
+        await new Promise((r) => setTimeout(r, 50));
+        await getDb().select().from(jobLocks);
+        return i;
+      }),
+    );
+    const done = await Promise.all(jobs);
+    expect(done.every((d) => !d.skipped)).toBe(true);
+    expect(await getDb().select().from(jobLocks).where(like(jobLocks.name, "test:burst-%"))).toHaveLength(0);
+  });
+
+  it("an expired lease can be taken over, and a finished old holder cannot free the new one", async () => {
+    await getDb()
+      .insert(jobLocks)
+      .values({ name: "test:expired", holder: "dead-run", expiresAt: new Date(Date.now() - 1000) });
+    const r = await withJobLock("test:expired", async () => {
+      const [row] = await getDb().select().from(jobLocks).where(eq(jobLocks.name, "test:expired"));
+      expect(row.holder).not.toBe("dead-run");
+      await releaseJobLock("test:expired", "dead-run"); // the old run waking up late
+      return (await getDb().select().from(jobLocks).where(eq(jobLocks.name, "test:expired"))).length;
+    });
+    expect(r).toEqual({ skipped: false, value: 1 }); // still held by the new run
+  });
+
+  it("a live lease is not taken over", async () => {
+    await getDb()
+      .insert(jobLocks)
+      .values({ name: "test:live", holder: "other", expiresAt: new Date(Date.now() + 60_000) });
+    expect(await withJobLock("test:live", async () => "no")).toEqual({ skipped: true });
+    const [row] = await getDb().select().from(jobLocks).where(eq(jobLocks.name, "test:live"));
+    expect(row.holder).toBe("other"); // release only deletes your own lease
+    await releaseJobLock("test:live", "someone-else");
+    expect(await getDb().select().from(jobLocks).where(eq(jobLocks.name, "test:live"))).toHaveLength(1);
+  });
+
+  it("records one fixed error when a cron is skipped 3 runs in a row", async () => {
+    await getDb().delete(errorReports).where(eq(errorReports.route, "/api/cron/test-skips"));
+    await getDb()
+      .insert(jobLocks)
+      .values({ name: "cron:test-skips", holder: "slow", expiresAt: new Date(Date.now() + 60_000) });
+    const run = () => withJobLock("cron:test-skips", async () => 1, { alertAfterSkips: 3, route: "/api/cron/test-skips" });
+    await run();
+    await run();
+    expect(await getDb().select().from(errorReports).where(eq(errorReports.route, "/api/cron/test-skips"))).toHaveLength(0);
+    await run();
+    await run();
+    const rows = await getDb().select().from(errorReports).where(eq(errorReports.route, "/api/cron/test-skips"));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].count).toBe(1);
   });
 
   it("two overlapping promise check-in runs: one does the work, the other answers skipped", async () => {
@@ -111,13 +169,40 @@ describe("Microsoft sync failures are recorded", () => {
   it("the sync cron keeps going past a failing Microsoft connection", async () => {
     const bad = await makeUser();
     await bad.run((s) => saveMicrosoftConnection(s, { ...creds, expiresAt: Date.now() + 3_600_000 }, null));
-    vi.stubGlobal("fetch", async () => json({ error: { code: "Boom" } }, 500));
+    const good = await makeUser();
+    await good.run((s) => saveMicrosoftConnection(s, { ...creds, accessToken: "at-good", expiresAt: Date.now() + 3_600_000 }, null));
+    // The bad account's calls fail; the healthy one gets an empty calendar.
+    vi.stubGlobal("fetch", async (_url: string, init?: { headers?: Record<string, string> }) =>
+      init?.headers?.authorization === "Bearer at-good" ? json({ value: [] }) : json({ error: { code: "Boom" } }, 500),
+    );
     try {
       const res = await call(cronSync, "/api/cron/sync");
       expect(res.status).toBe(200);
       const body = await res.json();
       expect(body.failed).toBeGreaterThanOrEqual(1);
+      expect(body.synced).toBeGreaterThanOrEqual(1);
       expect(body.ok).toBe(true);
+      expect((await good.run((s) => getMicrosoftConnection(s)))?.lastError).toBeNull();
+      expect((await bad.run((s) => getMicrosoftConnection(s)))?.lastError).toMatch(/Microsoft returned an error/);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("a 401 even after a forced token refresh needs a reconnect, and the cron then skips that connection", async () => {
+    const u = await makeUser();
+    await u.run((s) => saveMicrosoftConnection(s, { ...creds, expiresAt: Date.now() + 3_600_000 }, null));
+    const refused = (async (url: string) =>
+      String(url).includes("/token")
+        ? json({ access_token: "at-new", refresh_token: "rt-new", expires_in: 3600, scope: "Calendars.Read" })
+        : json({ error: "nope" }, 401)) as typeof fetch;
+    await expect(syncMicrosoftConnection(u.user.id, "America/New_York", new Date(), refused)).rejects.toThrow();
+    expect(await microsoftNeedsReauth(u.user.id)).toBe(true);
+    vi.stubGlobal("fetch", async () => json({ value: [] }));
+    try {
+      const body = await (await call(cronSync, "/api/cron/sync")).json();
+      expect(body.skipped).toBeGreaterThanOrEqual(1);
+      expect((await u.run((s) => getMicrosoftConnection(s)))?.status).toBe("error"); // untouched by the cron
     } finally {
       vi.unstubAllGlobals();
     }
