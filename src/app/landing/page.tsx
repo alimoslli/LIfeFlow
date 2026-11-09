@@ -314,20 +314,20 @@ export default async function LandingPage({ searchParams }: { searchParams: Prom
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <BrandLockup markClassName="h-6 w-6" />
-          <nav className="flex flex-wrap gap-x-6 gap-y-2" aria-label="Footer">
-            <a href="#faq" className="hover:text-text">
+          <nav className="flex flex-wrap gap-x-6" aria-label="Footer">
+            <a href="#faq" className="inline-flex min-h-11 items-center hover:text-text">
               FAQ
             </a>
-            <Link href="/privacy" className="hover:text-text">
+            <Link href="/privacy" className="inline-flex min-h-11 items-center hover:text-text">
               Privacy
             </Link>
-            <Link href="/terms" className="hover:text-text">
+            <Link href="/terms" className="inline-flex min-h-11 items-center hover:text-text">
               Terms
             </Link>
-            <Link href="/integrity" className="hover:text-text">
+            <Link href="/integrity" className="inline-flex min-h-11 items-center hover:text-text">
               Academic integrity
             </Link>
-            <Link href="/login" className="hover:text-text">
+            <Link href="/login" className="inline-flex min-h-11 items-center hover:text-text">
               Sign in
             </Link>
           </nav>

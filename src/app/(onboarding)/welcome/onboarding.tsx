@@ -160,7 +160,8 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
           </button>
         </header>
 
-        <div ref={panel} className="flex flex-1 flex-col pt-10">
+        {/* a phone keeps the button at the bottom, under the thumb; a laptop puts it right under the step (audit A4) */}
+        <div ref={panel} className="flex flex-1 flex-col pt-10 md:flex-none md:pt-[10vh]">
           {step === "hello" && (
             <>
               <div data-anim className="relative h-16 w-16">

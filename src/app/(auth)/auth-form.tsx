@@ -116,7 +116,7 @@ export function AuthForm({
       </button>
       <p className="mt-2 text-center text-sm text-muted">
         {mode === "login" ? "New here? " : "Already have an account? "}
-        <Link href={mode === "login" ? "/signup" : "/login"} className="font-medium text-accent">
+        <Link href={mode === "login" ? "/signup" : "/login"} className="inline-flex min-h-11 items-center font-medium text-accent">
           {mode === "login" ? "Create an account" : "Sign in"}
         </Link>
       </p>
