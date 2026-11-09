@@ -11,6 +11,7 @@ import { personalGoalTools } from "./tools/personal-goals";
 import { promiseTools } from "./tools/promises";
 import { schoolTools } from "./tools/school";
 import { taskTools } from "./tools/tasks";
+import { tonightTools } from "./tools/tonight";
 import { webTools } from "./tools/web";
 import { workTools } from "./tools/work";
 import type { ToolDefinition } from "./tool";
@@ -33,6 +34,7 @@ export const ALL_TOOLS: ToolDefinition[] = [
   ...manageTools,
   ...personalGoalTools,
   ...promiseTools,
+  ...tonightTools,
   loadToolsTool,
 ] as ToolDefinition[];
 
