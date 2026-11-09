@@ -56,7 +56,7 @@ export async function completeOAuthSignIn(
   if (state.mode === "link") {
     if (!state.userId) throw new ErrorClass(`Sign in first, then link ${label} from Settings.`);
     if (known && known.userId !== state.userId) throw new ErrorClass(`This ${label} account is already linked to another LifeFlow account.`);
-    if (!known) await linkIdentity(db, provider, state.userId, claims, refreshToken);
+    if (!known) await linkIdentity(db, provider, state.userId, claims, refreshToken ? encryptSecret(refreshToken) : null);
     else if (refreshToken) await storeRefreshToken(db, provider, claims.sub, refreshToken);
     return { kind: "linked", userId: state.userId };
   }
@@ -101,7 +101,7 @@ export async function completeOAuthSignIn(
     },
     db,
   );
-  await linkIdentity(db, provider, user.id, claims, refreshToken);
+  await linkIdentity(db, provider, user.id, claims, refreshToken ? encryptSecret(refreshToken) : null);
   return { kind: "created", userId: user.id };
 }
 
@@ -112,8 +112,8 @@ async function storeRefreshToken(db: Database, provider: OAuthProvider, subject:
     .where(and(eq(oauthIdentities.provider, provider), eq(oauthIdentities.subject, subject)));
 }
 
-/** `refreshToken` is Apple's, kept encrypted so deleting the account can revoke it. */
-async function linkIdentity(db: Database, provider: OAuthProvider, userId: string, claims: OAuthClaims, refreshToken: string | null = null) {
+/** `sealedRefreshToken` is Apple's, already encrypted, kept so deleting the account can revoke it. */
+async function linkIdentity(db: Database, provider: OAuthProvider, userId: string, claims: OAuthClaims, sealedRefreshToken: string | null = null) {
   await db.insert(oauthIdentities).values({
     userId,
     provider,
@@ -121,7 +121,7 @@ async function linkIdentity(db: Database, provider: OAuthProvider, userId: strin
     email: claims.email,
     isPrivateEmail: claims.isPrivateEmail,
     lastUsedAt: new Date(),
-    encryptedRefreshToken: refreshToken ? encryptSecret(refreshToken) : null,
+    encryptedRefreshToken: sealedRefreshToken,
   });
   await withUser(userId, (s) => audit(s, "user", `auth.${provider}_linked`, undefined, { privateEmail: claims.isPrivateEmail }), db);
 }
@@ -150,12 +150,7 @@ export async function linkPendingOAuth(db: Database, userId: string, token: stri
     .from(oauthIdentities)
     .where(and(eq(oauthIdentities.provider, provider), eq(oauthIdentities.subject, pendingLink.sub)));
   if (taken) return false;
-  await linkIdentity(db, provider, userId, pendingLink);
-  if (sealedRefreshToken)
-    await db
-      .update(oauthIdentities)
-      .set({ encryptedRefreshToken: sealedRefreshToken })
-      .where(and(eq(oauthIdentities.provider, provider), eq(oauthIdentities.subject, pendingLink.sub)));
+  await linkIdentity(db, provider, userId, pendingLink, sealedRefreshToken ?? null);
   return true;
 }
 

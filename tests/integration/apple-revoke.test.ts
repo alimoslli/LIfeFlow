@@ -1,9 +1,10 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { eq, sql } from "drizzle-orm";
 import { exportPKCS8, generateKeyPair } from "jose";
-import { completeAppleSignIn, unlinkApple } from "@/server/auth/apple";
+import { completeAppleSignIn, linkPendingApple, unlinkApple } from "@/server/auth/apple";
 import { closeDb, getDb } from "@/server/db/client";
 import { errorReports, oauthIdentities, users } from "@/server/db/schema";
+import { decryptSecret } from "@/server/crypto";
 import { deleteAccount } from "@/server/services/accounts";
 import { makeUser } from "../helpers";
 
@@ -71,11 +72,14 @@ describe("Sign in with Apple is revoked on delete and unlink", () => {
     // A failing Apple does not block deletion; the error record carries no token.
     const id2 = await make("r-token-2");
     const w2 = fakeWorld(true);
+    const total = async () =>
+      (await db.select().from(errorReports).where(eq(errorReports.message, "Account deletion: Apple revoke failed"))).reduce((n, r) => n + r.count, 0);
+    const errsBefore = await total();
     await deleteAccount(db, id2, "", { fetch: w2.f, apple: cfg });
     expect(w2.revokes()).toHaveLength(1);
     expect(await gone(id2)).toBe(true);
-    const errs = await db.select().from(errorReports).where(eq(errorReports.message, "Account deletion: Apple revoke failed"));
-    expect(errs.length).toBeGreaterThan(0);
+    expect(await total()).toBe(errsBefore + 1);
+    const errs = await db.select().from(errorReports);
     expect(JSON.stringify(errs)).not.toContain("r-token-2");
 
     // No stored token, no call.
@@ -100,5 +104,71 @@ describe("Sign in with Apple is revoked on delete and unlink", () => {
     expect(w.revokes()).toHaveLength(1);
     expect(new URLSearchParams(w.revokes()[0].body).get("token")).toBe("link-refresh");
     expect(await db.select().from(oauthIdentities).where(eq(oauthIdentities.userId, u.user.id))).toHaveLength(0);
+  });
+  const linked = async (token: string | null) => {
+    const db = getDb();
+    const u = await makeUser("Unlink Apple edge");
+    const claims = { sub: `001.${crypto.randomUUID()}`, email: "e@privaterelay.appleid.com", emailVerified: true, isPrivateEmail: true };
+    await completeAppleSignIn(db, claims, { mode: "link", tz: "UTC", userId: u.user.id }, null, token);
+    return u.user.id;
+  };
+  const identities = async (id: string) => getDb().select().from(oauthIdentities).where(eq(oauthIdentities.userId, id));
+  const unlinkErrors = async () =>
+    (await getDb().select().from(errorReports).where(eq(errorReports.message, "Unlink: Apple revoke failed"))).reduce((n, r) => n + r.count, 0);
+
+  it("unlink: Apple answering 500 still removes the link and records an error without the token", async () => {
+    const cfg = await config();
+    const id = await linked("tok-500");
+    const before = await unlinkErrors();
+    const w = fakeWorld(true);
+    await unlinkApple(getDb(), id, { fetch: w.f, config: cfg });
+    expect(w.revokes()).toHaveLength(1);
+    expect(await identities(id)).toHaveLength(0);
+    expect(await unlinkErrors()).toBe(before + 1);
+    expect(JSON.stringify(await getDb().select().from(errorReports))).not.toContain("tok-500");
+  });
+
+  it("unlink: no stored token, or no Apple config, makes no call; the row is still deleted", async () => {
+    const cfg = await config();
+    const noToken = await linked(null);
+    const w = fakeWorld();
+    await unlinkApple(getDb(), noToken, { fetch: w.f, config: cfg });
+    expect(w.revokes()).toHaveLength(0);
+    expect(await identities(noToken)).toHaveLength(0);
+
+    const noConfig = await linked("tok-nocfg");
+    const before = await unlinkErrors();
+    await unlinkApple(getDb(), noConfig, { fetch: w.f, config: null });
+    expect(w.revokes()).toHaveLength(0);
+    expect(await identities(noConfig)).toHaveLength(0);
+    expect(await unlinkErrors()).toBe(before + 1);
+  });
+
+  it("unlink: a fetch that never answers is cut off by the deadline and the row is still deleted", async () => {
+    const cfg = await config();
+    const id = await linked("tok-hang");
+    const real = AbortSignal.timeout.bind(AbortSignal);
+    const spy = vi.spyOn(AbortSignal, "timeout").mockImplementation(() => real(50));
+    const hang = ((_u: RequestInfo | URL, init?: RequestInit) =>
+      new Promise((_res, rej) => init?.signal?.addEventListener("abort", () => rej(init.signal?.reason ?? new Error("aborted"))))) as typeof fetch;
+    try {
+      await unlinkApple(getDb(), id, { fetch: hang, config: cfg });
+    } finally {
+      spy.mockRestore();
+    }
+    expect(await identities(id)).toHaveLength(0);
+  });
+
+  it("the link-required path keeps the sealed refresh token when the pending link is completed", async () => {
+    const db = getDb();
+    const u = await makeUser("Pending Apple");
+    const claims = { sub: `001.${crypto.randomUUID()}`, email: u.user.email, emailVerified: true, isPrivateEmail: false };
+    const r = await completeAppleSignIn(db, claims, { mode: "signin", tz: "UTC", userId: null }, null, "pending-refresh");
+    if (r.kind !== "link-required") throw new Error("expected link-required");
+    expect(await linkPendingApple(db, u.user.id, r.pendingToken)).toBe(true);
+    const [row] = await identities(u.user.id);
+    expect(row.encryptedRefreshToken).toMatch(/^v1\./);
+    expect(row.encryptedRefreshToken).not.toContain("pending-refresh");
+    expect(decryptSecret(row.encryptedRefreshToken!)).toBe("pending-refresh");
   });
 });

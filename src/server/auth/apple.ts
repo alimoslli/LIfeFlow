@@ -4,6 +4,7 @@ import { z } from "zod";
 import { decryptSecret } from "../crypto";
 import { isValidTimeZone } from "../services/accounts";
 import type { Database } from "../db/client";
+import { recordError } from "../services/error-reports";
 import { saveChallenge } from "./challenges";
 import {
   completeOAuthSignIn,
@@ -149,6 +150,7 @@ export async function revokeAppleToken(cfg: AppleConfig, encryptedRefreshToken: 
       token: decryptSecret(encryptedRefreshToken),
       token_type_hint: "refresh_token",
     }),
+    signal: AbortSignal.timeout(5_000),
   });
   if (!res.ok) throw new AppleSignInError("Apple didn't confirm the revoke.");
 }
@@ -188,11 +190,17 @@ export async function unlinkApple(db: Database, userId: string, deps: { fetch?: 
   // Rules first (a password or another provider must remain), then revoke at Apple (best effort), then clear the token with the row.
   return unlinkIdentity(db, userId, "apple", AppleSignInError, async (stored) => {
     const cfg = deps.config === undefined ? appleConfig() : deps.config;
-    if (!stored || !cfg) return;
+    if (!stored) return;
     try {
+      if (!cfg) throw new Error("not configured");
       await revokeAppleToken(cfg, stored, deps.fetch);
     } catch {
-      // Best effort: the link is removed either way.
+      // Best effort: the link is removed either way. Fixed text only, never the token.
+      try {
+        await recordError(db, { source: "server", route: "auth.unlink", message: "Unlink: Apple revoke failed" });
+      } catch {
+        // Recording must not stop the unlink.
+      }
     }
   });
 }
