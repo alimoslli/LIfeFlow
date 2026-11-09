@@ -267,9 +267,9 @@ export async function setBankAccountUsedAction(id: string, use: boolean): Promis
   });
   // Back on: import its transactions right away (the sync records its own errors on the connection).
   if (use && res?.ok && done.userId && done.integrationId)
-    await withPlaidSyncLock(done.integrationId, (live) => syncConnection(done.userId!, done.integrationId!, done.tz ?? "UTC", undefined, { live })).catch(
-      () => undefined,
-    );
+    await withPlaidSyncLock(done.integrationId, (live) => syncConnection(done.userId!, done.integrationId!, done.tz ?? "UTC", undefined, { live }), {
+      maxMs: 300_000,
+    }).catch(() => undefined);
   return res;
 }
 

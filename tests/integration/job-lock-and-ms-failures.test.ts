@@ -36,11 +36,19 @@ afterAll(async () => {
 });
 const withPlaidSyncLockForTest = (name: string, run: (live: boolean) => Promise<unknown>) =>
   withJobLock(name, () => run(false), { rerun: (live) => run(live) });
+const leftReports = async (job: string) =>
+  (
+    await getDb()
+      .select()
+      .from(errorReports)
+      .where(eq(errorReports.message, `Job lock: ${job} left a skipped request to the next run`))
+  ).reduce((n, r) => n + (r.count ?? 1), 0);
 const skippedRequest = (name: string, live: boolean) => withJobLock(name, async () => "never", { rerun: async () => undefined, live });
 beforeAll(async () => {
   await getDb()
     .delete(jobLocks)
     .where(or(like(jobLocks.name, "test:%"), like(jobLocks.name, "cron:test-%"))); // rows left by an earlier run
+  await getDb().delete(errorReports).where(like(errorReports.message, "Job lock: test:%"));
   process.env.CRON_SECRET = "cron-test-secret";
   process.env.MICROSOFT_CLIENT_ID = "ms-client";
   process.env.MICROSOFT_CLIENT_SECRET = "ms-secret";
@@ -146,6 +154,39 @@ describe("job lock", () => {
     });
     expect(always).toHaveLength(1 + MAX_EXTRA_ROUNDS);
     expect(await getDb().select().from(jobLocks).where(eq(jobLocks.name, "test:rerun-b"))).toHaveLength(0);
+    // the request that came in during the last round is reported, never silently dropped
+    expect(await leftReports("test:rerun-b")).toBe(1);
+  });
+
+  it("a failed run still syncs for a request skipped meanwhile, then reports the failure", async () => {
+    const seen: boolean[] = [];
+    await expect(
+      withPlaidSyncLockForTest("test:rerun-fail", async (live) => {
+        seen.push(live);
+        if (seen.length === 1) {
+          await skippedRequest("test:rerun-fail", true);
+          throw new Error("Plaid timed out");
+        }
+      }),
+    ).rejects.toThrow(/timed out/);
+    expect(seen).toEqual([false, true]);
+    expect(await getDb().select().from(jobLocks).where(eq(jobLocks.name, "test:rerun-fail"))).toHaveLength(0);
+    expect(await leftReports("test:rerun-fail")).toBe(0);
+  });
+
+  it("no extra round starts after the time window; the waiting request is reported and the lease is freed", async () => {
+    const seen: boolean[] = [];
+    await withJobLock(
+      "test:rerun-late",
+      async () => {
+        seen.push(false);
+        await skippedRequest("test:rerun-late", false);
+      },
+      { rerun: async (live) => void seen.push(live), roundsWithinMs: 0 },
+    );
+    expect(seen).toEqual([false]);
+    expect(await getDb().select().from(jobLocks).where(eq(jobLocks.name, "test:rerun-late"))).toHaveLength(0);
+    expect(await leftReports("test:rerun-late")).toBe(1);
   });
 
   it("two overlapping promise check-in runs: one does the work, the other answers skipped", async () => {

@@ -40,7 +40,7 @@ export const moneyCoachTools = [
       const results = [];
       for (const i of items) {
         try {
-          const run = await withPlaidSyncLock(i.id, (live) => syncConnection(ctx.userId, i.id, ctx.tz, undefined, { live }), { live: true });
+          const run = await withPlaidSyncLock(i.id, (live) => syncConnection(ctx.userId, i.id, ctx.tz, undefined, { live }), { live: true, maxMs: 300_000 });
           // Skipped = another sync of this bank is already running and brings the data; say so instead of failing.
           results.push(run.skipped ? { bank: i.displayName, ok: true, alreadySyncing: true } : { bank: i.displayName, ok: true, ...run.value });
         } catch (e) {

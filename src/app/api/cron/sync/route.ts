@@ -51,7 +51,9 @@ async function runSync() {
           continue;
         }
         // The same connection may be syncing from a webhook right now; that run does the work.
-        const done = await withPlaidSyncLock(r.integrationId, (live) => syncConnection(r.userId, r.integrationId, r.tz, undefined, { live }));
+        const done = await withPlaidSyncLock(r.integrationId, (live) => syncConnection(r.userId, r.integrationId, r.tz, undefined, { live }), {
+          maxMs: 300_000,
+        });
         if (done.skipped) {
           skipped++;
           continue;
