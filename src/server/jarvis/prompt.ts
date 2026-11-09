@@ -4,7 +4,7 @@ import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from 
 import { COACH_MODE } from "@/lib/integrity";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-11-09.1";
+export const PROMPT_VERSION = "2026-11-09.2";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
@@ -148,6 +148,13 @@ Never ask for something you can look up. Offer one useful next step when appropr
 const BASIS_LABEL: Record<MemoryBasis, string> = { stated: "they said", inferred: "inferred, approved" };
 
 /** Dynamic context for this user and request. Always after INSTRUCTIONS. */
+/**
+ * Repeated last, right before the conversation (owner, 2026-11-09). Measured on the real model: the length rule in
+ * INSTRUCTIONS alone still gave an 835-word week plan; with this reminder and low verbosity the same ask got 52 words.
+ */
+export const REPLY_SHAPE = `# Reply shape (this reply)
+At most about 60 words unless they asked for detail. Plain sentences, no headings, no bold, no list longer than 3, never a day-by-day schedule. Lead with the one next step and its real time; offer to put the rest on their calendar or to-dos.`;
+
 export function buildContext(p: PromptInput): string {
   const today = formatIn(p.now, p.tz, "yyyy-MM-dd");
   const calendar = Array.from({ length: 14 }, (_, i) => {
@@ -206,7 +213,7 @@ ${facts.length ? facts.map(line).join("\n") : "(nothing relevant saved)"}${more}
     p.skills?.length
       ? `\n\n# Skills for this request (follow their steps and rules; the rules above still win)\n${p.skills.map((k) => `## ${k.title}\n${k.body}`).join("\n\n")}`
       : ""
-  }`;
+  }\n\n${REPLY_SHAPE}`;
 }
 
 export function buildSystemPrompt(p: PromptInput): string {

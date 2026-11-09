@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { localToInstant } from "@/lib/dates";
 import { deriveInsights } from "@/server/briefing/rules";
-import { PROMPT_VERSION, buildSystemPrompt } from "@/server/jarvis/prompt";
+import { PROMPT_VERSION, REPLY_SHAPE, buildSystemPrompt } from "@/server/jarvis/prompt";
 import type { LifeSnapshot } from "@/server/briefing/types";
 
 const TZ = "America/New_York";
@@ -39,6 +39,8 @@ describe("short answers, short chips (owner, 2026-11-09)", () => {
     expect(p).toContain("belongs in the app");
     expect(p).toContain("show me the whole plan");
     expect(p).not.toContain("Use short lists or small tables");
-    expect(PROMPT_VERSION).toBe("2026-11-09.1");
+    expect(PROMPT_VERSION).toBe("2026-11-09.2");
+    // The reply-shape reminder is the very last thing before the conversation (measured: rule alone 835 words, with it 52).
+    expect(p.endsWith(REPLY_SHAPE)).toBe(true);
   });
 });
