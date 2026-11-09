@@ -262,7 +262,7 @@ Full check and phone e2e passed on 2026-11-08. To see it:
 ## 11. Waiting for the owner's yes (one list; details in HQ › Work)
 - **V3:** confirm the North Star (ADR 0032), pick a timeline concept, and give the go to merge V3.
 - **LF Main's held branches:** phone sign-in, the "Still in the testing phase" note, and the tonight tool.
-- **HQ cards:** H4 (a 404 for signed-out visitors to /admin). H3 was declined on 2026-11-08: the "Record a paycheck" form on Work stays.
+- **HQ cards:** H4 approved and shipped (7647a69). H3 was declined on 2026-11-08: the "Record a paycheck" form on Work stays.
 - **Older cards being rewritten** (Goals redesign A, Connected accounts, the timeline concepts, Gmail abilities, search bolding, the agent workload, "Same bill?" outside the inbox).
 - **Marketing:** voice samples and credit spending.
 - **Onboarding and Today (phone check 2026-11-08):** 'Skip setup' and 'Skip' sit close together while the day connects.
@@ -270,6 +270,7 @@ Full check and phone e2e passed on 2026-11-08. To see it:
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-09, LF COO: the owner approved H4; signed-out visitors to /admin get the same 404 as everyone else (7647a69).
 - 2026-11-08, LF COO: the owner said yes; Today quick chips wrap instead of running off the edge (817e57f).
 - 2026-11-08 evening, LF COO: on main (ac6212a) after Opus reviews: Plaid follow-ups (hand-archived accounts stay archived, broken connections skipped until reconnect, LOGIN_REPAIRED and NEW_ACCOUNTS_AVAILABLE, holdings safety, pending expiration keeps syncing); account deletion cancels the plan (or refuses), removes bank links and revokes Google, for users and admins; onboarding phone fixes (44 px fields, names wrap, example tags on every card, no guessed Jdoe1234). Report: docs/audits/2026-11-08-welcome-phone.md.
 - 2026-11-08 afternoon, LF COO: on main, the 4 Promises fixes (Tomorrow instead, cancel a mis-sorted promise, to-dos done before, cron errors) and 3 Plaid/Microsoft fixes (Opus-reviewed); the Vercel setup sheet (docs/audits/2026-11-08-vercel-setup.md) and the Plaid/Microsoft check (docs/audits/2026-11-08-plaid-microsoft-check.md).
