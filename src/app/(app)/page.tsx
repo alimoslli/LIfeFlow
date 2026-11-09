@@ -18,6 +18,7 @@ import { integrationStatus } from "@/server/services/integrations";
 import { dayClockData } from "@/server/services/day-clock";
 import { AskBar } from "./_today/day-plan";
 import { AssistantLine, type AssistantNote } from "./_today/assistant-line";
+import { EmptyNext } from "./_today/empty-next";
 
 /**
  * Today (v3): your time as a clock that opens into the timeline of your week (docs/design/clock/spec.md),
@@ -74,6 +75,23 @@ export default async function TodayPage() {
       <section aria-label="Your day" data-tour="today-page" className="-mx-5 sm:-mx-8 md:mx-0">
         <DayClock data={clock} mode={mode} companion={me.preferences?.companion}>
           {note && <AssistantLine name={assistantName} note={note} />}
+          {/* nothing planned yet: one next step, on the first screen (connect what can be connected, else tell the assistant) */}
+          {!note &&
+            clock.empty &&
+            (setup.length > 0 ? (
+              <Link href="/settings/integrations" className="flex min-h-16 items-center gap-3 rounded-3xl bg-surface px-5 py-3 shadow-soft">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+                  <Link2 className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[0.9375rem] font-medium">Fill your clock</span>
+                  <span className="block text-sm text-muted">Connect {setup.join(" and ")}, and your classes, shifts and plans appear on it.</span>
+                </span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-muted" />
+              </Link>
+            ) : (
+              <EmptyNext name={assistantName} />
+            ))}
           {/* a laptop's full sky has the ask bar beside the wheel, under the assistant's line (CSS shows one of the two) */}
           {mode === "full" && (
             <div className="dc-ask">
@@ -82,19 +100,8 @@ export default async function TodayPage() {
           )}
         </DayClock>
       </section>
-      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4">
-        {clock.empty && setup.length > 0 && (
-          <Link href="/settings/integrations" className="flex min-h-16 items-center gap-3 rounded-3xl bg-surface px-5 py-3 shadow-soft">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-              <Link2 className="h-5 w-5" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[0.9375rem] font-medium">Fill your clock</span>
-              <span className="block text-sm text-muted">Connect {setup.join(" and ")}, and your classes, shifts and plans appear on it.</span>
-            </span>
-            <ArrowRight className="h-4 w-4 shrink-0 text-muted" />
-          </Link>
-        )}
+      {/* on a phone this starts below the tab bar, so nothing peeks out half-hidden behind it (audit B16) */}
+      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4 max-md:mt-[var(--tabbar-space)]">
         <div className={mode === "full" ? "dc-ask-below" : undefined}>
           <AskBar name={assistantName} chips={false} />
         </div>

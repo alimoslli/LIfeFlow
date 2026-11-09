@@ -119,7 +119,7 @@ export function TodayModePicker({ initial }: { initial: TodayMode }) {
           )}
         >
           <span className="font-medium">{label}</span>
-          <span className={cn("text-xs", mode === value ? "opacity-85" : "text-muted")}>{hint}</span>
+          <span className={cn("text-xs", mode === value ? "text-hero-text" : "text-muted")}>{hint}</span>
         </button>
       ))}
     </div>

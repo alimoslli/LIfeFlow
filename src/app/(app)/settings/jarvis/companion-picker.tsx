@@ -58,7 +58,7 @@ export function CompanionPicker({ current }: { current: CompanionKey | null }) {
           >
             <CompanionGlyph companion={c.key} className="h-12 w-12" />
             <span className="text-sm font-medium">{c.name}</span>
-            <span className={cn("text-xs", picked === c.key ? "opacity-80" : "text-muted")}>{c.moment}</span>
+            <span className={cn("text-xs", picked === c.key ? "text-hero-text" : "text-muted")}>{c.moment}</span>
           </button>
         ))}
       </div>

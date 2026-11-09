@@ -347,6 +347,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   let cheerUntil = 0;
   let fit = "";
   let shownH = 0;
+  let lastTs = 0;
+  let liftAt = { key: "", y: 0 };
   // which way the companion runs (it turns round when the wheel goes back in time), and when it last stepped
   let lastView: number | null = null;
   let dir = 1;
@@ -504,10 +506,10 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const hy = lerp(hyC, geo.hor, k);
     const cx = wide ? Math.round(colL / 2 + 8) : W / 2;
     const R = wheelR(full ? colL - 20 : win.w, full ? hyC - 36 : hyC - win.y, wide ? 270 : 240);
-    root.dataset.wheelR = String(R);
+    if (root.dataset.wheelR !== String(R)) root.dataset.wheelR = String(R);
     // the wheel's words grow with it (in rem, so the Text size setting still applies)
     const ts = Math.round(clamp(R / 138, 1, 1.5) * 100) / 100;
-    root.style.setProperty("--dc-scale", String(ts));
+    if (ts !== lastTs) root.style.setProperty("--dc-scale", String((lastTs = ts)));
     // everything on the wheel grows with it (a laptop gets a bigger wheel, tiles and companion than a phone)
     const sc = clamp(R / 140, 1, 1.45);
     const h = { a: view - SPAN, b: view + SPAN };
@@ -539,7 +541,9 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const [top, mid, bot] = skyAt(vm, rise, set).map((c, i) => mix(c, grey, oc * (i === 2 ? 0.5 : 1))) as [RGB, RGB, RGB];
     root.dataset.sky = dk > 0.5 ? "night" : "day";
     // full: from the very top (up behind the top bar on a phone) to the water's edge, which fades into the page
-    const lift = full && W < 768 ? Math.max(0, root.getBoundingClientRect().top + window.scrollY) : 0;
+    // where Today starts on the page, measured once per size (not every frame)
+    if (liftAt.key !== `${W}|${H}`) liftAt = { key: `${W}|${H}`, y: Math.max(0, root.getBoundingClientRect().top + window.scrollY) };
+    const lift = full && W < 768 ? liftAt.y : 0;
     const box = full
       ? { l: lerp(0, win.x, k), r: lerp(0, win.x, k), t: lerp(-lift, win.y, k), b: lerp(hyC + 64, win.y + win.h, k), rad: lerp(lift ? 0 : 24, win.r, k) }
       : { l: win.x, r: win.x, t: win.y, b: win.y + win.h, rad: win.r };

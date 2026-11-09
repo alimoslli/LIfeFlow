@@ -246,9 +246,12 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   }
   const skyOpts = () => ({ inWeek, rise: SUN.rise, set: SUN.set });
   /** Where the open line is, for the sky's morph (at the line's current scroll, which is home while it moves). */
+  // The line's scroll, read only while the line is out (reading it right after a change makes the browser lay the page
+  // out again; on the closed wheel it can't have moved)
+  let geoSl = 0;
   function skyGeo(): SkyGeo | null {
     if (!TM.stops.length || !G.W) return null;
-    const sl = trackWrap.scrollLeft;
+    const sl = S.p > 0 || S.open ? (geoSl = trackWrap.scrollLeft) : geoSl;
     const vw = VW();
     return {
       win: { x: INSET, y: G.wrapTop, w: vw, h: G.winH, r: WIN_R },

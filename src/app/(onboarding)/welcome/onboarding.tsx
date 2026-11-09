@@ -217,7 +217,7 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
                     <Icon className="h-5 w-5 shrink-0" strokeWidth={1.8} />
                     <span>
                       <span className="block text-[1rem] font-medium">{label}</span>
-                      <span className={cn("block text-sm", stage === value ? "opacity-80" : "text-muted")}>{hint}</span>
+                      <span className={cn("block text-sm", stage === value ? "text-hero-text" : "text-muted")}>{hint}</span>
                     </span>
                   </button>
                 ))}
@@ -298,7 +298,7 @@ export function Onboarding({ firstName, theme, plan, tz }: { firstName: string; 
                         className="h-12 w-12"
                       />
                       <span className="text-[0.9375rem] font-medium">{c.name}</span>
-                      <span className={cn("text-xs", companion === c.key ? "opacity-80" : "text-muted")}>{c.moment}</span>
+                      <span className={cn("text-xs", companion === c.key ? "text-hero-text" : "text-muted")}>{c.moment}</span>
                     </button>
                   ))}
                 </div>
