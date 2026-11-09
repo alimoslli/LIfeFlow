@@ -163,8 +163,9 @@ export function AppShell({
               <Link href="/" aria-label="LifeFlow home" className="mb-8">
                 <Mark className="h-10 w-10" />
               </Link>
-              <nav ref={rail} className="relative flex flex-col gap-1 rounded-[28px] bg-surface p-1.5 shadow-soft" aria-label="Main">
-                <span data-indicator className="pointer-events-none absolute top-0 left-1.5 w-16 rounded-[22px] bg-surface-3 opacity-0" />
+              {/* on the sky, no white pill (A-to-Z audit E4): where you are is the accent glyph and a thin accent line */}
+              <nav ref={rail} className="relative flex flex-col gap-1 pl-2" aria-label="Main">
+                <span data-indicator className="pointer-events-none absolute top-0 left-0 w-[3px] rounded-full bg-accent opacity-0" />
                 {tabs.map((item) => {
                   const active = isActive(pathname, item);
                   const Icon = item.icon;

@@ -827,8 +827,9 @@ html[data-typing="true"] .lf-fab {
   right: min(0px, calc((100% - 44px) / 2));
 }
 
-/* Touch screens: 44px targets for the shared controls, and 16px text in fields so iOS doesn't zoom in on focus. */
-@media (pointer: coarse) {
+/* Touch screens and phone-sized windows: 44px targets for the shared controls, and 16px text in fields so iOS doesn't
+   zoom in on focus (by width too, so a phone that reports a fine pointer still gets them; A-to-Z audit C5/C10/D2). */
+@media (pointer: coarse), (max-width: 767px) {
   .lf-touch {
     min-height: 44px;
   }

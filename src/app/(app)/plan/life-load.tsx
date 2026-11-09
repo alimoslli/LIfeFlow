@@ -9,7 +9,7 @@ const FILL: Record<LoadLevel, string> = {
   light: "bg-accent/30",
   steady: "bg-accent/60",
   heavy: "bg-accent",
-  overloaded: "bg-warning",
+  overloaded: "bg-sun",
 };
 const WORD: Record<LoadLevel, string> = { light: "Light", steady: "Steady", heavy: "Full", overloaded: "Too much" };
 const roughly = (h: number) => (h < 0.5 ? "nothing planned" : `about ${Math.max(1, Math.round(h))} hour${Math.round(h) > 1 ? "s" : ""}`);

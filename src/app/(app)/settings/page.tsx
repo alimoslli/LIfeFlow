@@ -114,14 +114,14 @@ export default async function SettingsHome() {
       <div className="flex flex-col items-center gap-3 pt-2">
         <SignOutButton />
         <ReplayTour />
-        <p className="flex gap-4 text-xs text-muted">
-          <Link href="/privacy" className="hover:text-text">
+        <p className="flex flex-wrap justify-center gap-x-4 text-xs text-muted">
+          <Link href="/privacy" className="inline-flex min-h-11 items-center hover:text-text">
             Privacy Policy
           </Link>
-          <Link href="/terms" className="hover:text-text">
+          <Link href="/terms" className="inline-flex min-h-11 items-center hover:text-text">
             Terms
           </Link>
-          <Link href="/integrity" className="hover:text-text">
+          <Link href="/integrity" className="inline-flex min-h-11 items-center hover:text-text">
             Academic integrity
           </Link>
         </p>
