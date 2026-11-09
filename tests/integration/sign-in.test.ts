@@ -129,7 +129,7 @@ describe("Sign in with Apple", () => {
       sent = new URLSearchParams(String(init?.body));
       return new Response(JSON.stringify({ id_token: "id.token.here" }), { status: 200 });
     });
-    expect(token).toBe("id.token.here");
+    expect(token).toEqual({ idToken: "id.token.here", refreshToken: null });
     expect(sent!.get("code")).toBe("the-code");
     expect(sent!.get("client_id")).toBe("app.lifeflow.web");
     await expect(exchangeAppleCode(cfg, "bad", async () => new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 }))).rejects.toThrow(

@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { createRemoteJWKSet, importPKCS8, jwtVerify, SignJWT, type JWTVerifyGetKey } from "jose";
 import { z } from "zod";
+import { decryptSecret } from "../crypto";
 import { isValidTimeZone } from "../services/accounts";
 import type { Database } from "../db/client";
 import { saveChallenge } from "./challenges";
@@ -116,7 +117,7 @@ export async function verifyAppleIdToken(
   };
 }
 
-/** Swaps the authorization code for Apple's id_token. */
+/** Swaps the authorization code for Apple's id_token and refresh token (kept only so the account can be revoked at Apple later). */
 export async function exchangeAppleCode(cfg: AppleConfig, code: string, fetchImpl: typeof fetch = fetch) {
   const res = await fetchImpl(`${APPLE_ISSUER}/auth/token`, {
     method: "POST",
@@ -129,9 +130,27 @@ export async function exchangeAppleCode(cfg: AppleConfig, code: string, fetchImp
       client_secret: await appleClientSecret(cfg),
     }),
   });
-  const json = (await res.json().catch(() => ({}))) as { id_token?: string; error?: string };
+  const json = (await res.json().catch(() => ({}))) as { id_token?: string; refresh_token?: string; error?: string };
   if (!res.ok || !json.id_token) throw new AppleSignInError("Apple didn't accept the sign-in. Please try again.");
-  return json.id_token;
+  return { idToken: json.id_token, refreshToken: typeof json.refresh_token === "string" && json.refresh_token ? json.refresh_token : null };
+}
+
+/**
+ * Tells Apple to revoke a stored (encrypted) refresh token: required when an account is deleted (App Store) and sensible on unlink.
+ * Throws on any failure; callers treat it as best effort and never put the token in a message.
+ */
+export async function revokeAppleToken(cfg: AppleConfig, encryptedRefreshToken: string, fetchImpl: typeof fetch = fetch) {
+  const res = await fetchImpl(`${APPLE_ISSUER}/auth/revoke`, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: cfg.clientId,
+      client_secret: await appleClientSecret(cfg),
+      token: decryptSecret(encryptedRefreshToken),
+      token_type_hint: "refresh_token",
+    }),
+  });
+  if (!res.ok) throw new AppleSignInError("Apple didn't confirm the revoke.");
 }
 
 /** Apple sends the name once, as untrusted form data: {"name":{"firstName","lastName"}}. */
@@ -153,7 +172,8 @@ export const completeAppleSignIn = (
   claims: AppleClaims,
   state: { mode: "signin" | "link"; tz: string; userId: string | null },
   name: string | null,
-) => completeOAuthSignIn(db, "apple", claims, state, name, AppleSignInError);
+  refreshToken: string | null = null,
+) => completeOAuthSignIn(db, "apple", claims, state, name, AppleSignInError, refreshToken);
 
 /** After someone signs in to an existing account: link a pending Apple or Google sign-in for it. */
 export const consumePendingAppleLink = consumePendingOAuthLink;
@@ -164,4 +184,15 @@ export async function parseAppleState(raw: string) {
 }
 
 export const appleIdentityFor = (db: Database, userId: string) => identityFor(db, userId, "apple");
-export const unlinkApple = (db: Database, userId: string) => unlinkIdentity(db, userId, "apple", AppleSignInError);
+export async function unlinkApple(db: Database, userId: string, deps: { fetch?: typeof fetch; config?: AppleConfig | null } = {}) {
+  // Rules first (a password or another provider must remain), then revoke at Apple (best effort), then clear the token with the row.
+  return unlinkIdentity(db, userId, "apple", AppleSignInError, async (stored) => {
+    const cfg = deps.config === undefined ? appleConfig() : deps.config;
+    if (!stored || !cfg) return;
+    try {
+      await revokeAppleToken(cfg, stored, deps.fetch);
+    } catch {
+      // Best effort: the link is removed either way.
+    }
+  });
+}

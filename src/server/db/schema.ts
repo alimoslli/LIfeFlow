@@ -264,6 +264,8 @@ export const oauthIdentities = pgTable(
     email: text("email"),
     /** Apple "Hide My Email" relay address. */
     isPrivateEmail: boolean("is_private_email").notNull().default(false),
+    /** Apple's refresh token, AES-GCM encrypted (encryptSecret). Only used to revoke Apple access on delete or unlink. */
+    encryptedRefreshToken: text("encrypted_refresh_token"),
     createdAt: createdAt(),
     lastUsedAt: tstz("last_used_at"),
   },
