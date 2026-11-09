@@ -545,6 +545,26 @@ async function markDuplicate(scope: UserScope, id: string, of: string, extra: Pa
   return row;
 }
 
+/**
+ * Serialises deliveries of the same mail for one person (transaction-scoped, so it is safe behind the pooler and is freed
+ * at commit or rollback). The key never leaves the database.
+ */
+export async function lockMail(scope: UserScope, key: string | null | undefined) {
+  if (!key) return;
+  await scope.tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${scope.userId + ":" + key}, 0))`);
+}
+
+/** True when a delivery with this provider id was already recorded (a retry): checked before any attachment is saved. */
+export async function seenExternal(scope: UserScope, messageId: string | null, externalId: string) {
+  await lockMail(scope, messageId ?? externalId);
+  const [hit] = await scope.tx
+    .select({ id: inboxItems.id })
+    .from(inboxItems)
+    .where(and(eq(inboxItems.userId, scope.userId), eq(inboxItems.externalId, externalId)))
+    .limit(1);
+  return !!hit;
+}
+
 /** Reads and files one document. Always leaves an inbox row saying what happened. */
 export async function processDocument(
   scope: UserScope,
@@ -555,7 +575,9 @@ export async function processDocument(
   opts: { suggestOnly?: boolean } = {},
 ) {
   const messageId = normalizeMessageId(doc.messageId);
-  const [row] = await scope.tx
+  // One delivery at a time per mail: a second copy waits here, then sees the first one's committed row.
+  await lockMail(scope, messageId ?? doc.externalId);
+  const [inserted] = await scope.tx
     .insert(inboxItems)
     .values({
       userId: scope.userId,
@@ -566,7 +588,17 @@ export async function processDocument(
       externalId: doc.externalId ?? null,
       messageId,
     })
+    .onConflictDoNothing({ target: [inboxItems.userId, inboxItems.externalId], where: sql`external_id is not null` })
     .returning();
+  if (!inserted) {
+    // The provider's own id was already seen (a retry): nothing new is made.
+    const [existing] = await scope.tx
+      .select()
+      .from(inboxItems)
+      .where(and(eq(inboxItems.userId, scope.userId), eq(inboxItems.externalId, doc.externalId ?? "")));
+    return existing;
+  }
+  const row = inserted;
   // The same email seen twice (Gmail and a forward that kept its Message-ID) is filed once, before it's even read.
   const sameMail = await findFiledTwin(scope, { messageId }, row.id);
   if (sameMail) return markDuplicate(scope, row.id, sameMail.id);
@@ -702,6 +734,16 @@ export async function fileSuggestion(scope: UserScope, tz: string, today: string
     .for("update");
   if (!row) throw new ServiceError("Not found", "not_found");
   if (row.status !== "suggested" || !row.extracted) throw new ServiceError("There's nothing waiting to be filed here.");
+  if (row.messageId) {
+    // Another card for the same email may have been filed meanwhile (or at the same moment): never file it twice.
+    await lockMail(scope, row.messageId);
+    const [twin] = await scope.tx
+      .select({ id: inboxItems.id })
+      .from(inboxItems)
+      .where(and(eq(inboxItems.userId, scope.userId), eq(inboxItems.messageId, row.messageId), eq(inboxItems.status, "filed"), ne(inboxItems.id, row.id)))
+      .limit(1);
+    if (twin) return markDuplicate(scope, row.id, twin.id);
+  }
   // The person's tap is the approval, so this is the authenticated path (it may update what they already have).
   const { filed, review, ask } = await fileExtraction(scope, tz, row.extracted as unknown as Extraction, today, { from: row.fromAddress, authenticated: true });
   const [done] = await scope.tx

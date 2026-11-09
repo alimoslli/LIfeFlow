@@ -9,7 +9,7 @@ import { errorResponse, HttpError } from "@/server/http";
 import { syncGoogleCalendar, syncGoogleEmail } from "@/server/integrations/google";
 import { microsoftNeedsReauth, syncMicrosoftConnection } from "@/server/integrations/microsoft";
 import { plaidNeedsReauth, syncConnection } from "@/server/integrations/plaid";
-import { markCanvasError, syncCanvas } from "@/server/integrations/canvas";
+import { markCanvasError, syncCanvas, withCanvasLock } from "@/server/integrations/canvas";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -71,10 +71,17 @@ async function runSync() {
         }
         await syncMicrosoftConnection(r.userId, r.tz);
       } else if (r.provider === "canvas")
-        await withUser(r.userId, (s) => syncCanvas(s, fetch, r.tz)).catch(async (e) => {
+      // Another run (the person's Sync now) already has this connection: skip it, that run is the sync.
+      {
+        const x = await withCanvasLock(r.userId, () => withUser(r.userId, (s) => syncCanvas(s, fetch, r.tz))).catch(async (e) => {
           await withUser(r.userId, (s) => markCanvasError(s, e));
           throw e;
         });
+        if (x.skipped) {
+          skipped++;
+          continue;
+        }
+      }
       ok++;
     } catch {
       failed++; // the error is recorded on the connection for the user to see

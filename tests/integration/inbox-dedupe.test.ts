@@ -8,7 +8,7 @@ import { createManualAccount } from "@/server/services/finance/accounts";
 import { bankSeries, createRecurring } from "@/server/services/finance/planning";
 import { createTransaction } from "@/server/services/finance/transactions";
 import { createAssignment, createCourse } from "@/server/services/school";
-import { answerQuestion, processDocument, undoInboxItem } from "@/server/services/inbox";
+import { answerQuestion, fileSuggestion, processDocument, processForwardedEmail, undoInboxItem } from "@/server/services/inbox";
 import { attachWaitingReceipts, collapseInboxDuplicates, runInboxCleanupOnce } from "@/server/services/inbox/cleanup";
 import { contentSigFor, normalizeMessageId } from "@/server/services/inbox/dedupe";
 import type { Extraction } from "@/server/services/inbox/extract";
@@ -351,5 +351,49 @@ describe("collapse what was already filed twice", () => {
     expect(await run((s) => undoInboxItem(s, dup.id))).toBe(2);
     expect((await run((s) => s.tx.select().from(recurringItems))).length).toBe(2);
     expect((await run((s) => s.tx.select().from(inboxItems))).find((i) => i.id === dup.id)!.status).toBe("filed");
+  });
+});
+
+describe("two deliveries of the same mail at once", () => {
+  it("makes one card and files once (Message-ID), and a Postmark retry is a no-op", async () => {
+    const { run } = await setup();
+    const due = addDaysStr(today, 10);
+    const slow = async () => {
+      await new Promise((r) => setTimeout(r, 300)); // the read takes a while, as the AI does
+      return (await fixed(billEx("Spectrum", 80, due))()) as Extraction;
+    };
+    const send = (externalId: string | null) =>
+      run((s) =>
+        processDocument(s, TZ, today, { ...doc, authenticated: true, messageId: "<Same@spectrum.com>", externalId, from: "billing@spectrum.com" }, slow),
+      );
+    const [a, b] = await Promise.all([send(null), send(null)]);
+    expect([a.status, b.status].sort()).toEqual(["duplicate", "filed"]);
+    const items = await run((s) => s.tx.select().from(inboxItems).where(eq(inboxItems.messageId, "same@spectrum.com")));
+    expect(items).toHaveLength(2);
+    expect(items.filter((i) => i.status === "filed")).toHaveLength(1);
+    const bills = await run((s) => s.tx.select().from(recurringItems));
+    expect(bills.filter((r) => r.name.includes("Spectrum"))).toHaveLength(1);
+
+    // A retry with the same provider id makes no second row at all.
+    const [c, d] = await Promise.all([send("postmark:abc"), send("postmark:abc")]);
+    expect(c.id).toBe(d.id);
+    const pm = await run((s) => s.tx.select().from(inboxItems).where(eq(inboxItems.externalId, "postmark:abc")));
+    expect(pm).toHaveLength(1);
+  });
+
+  it("refuses to file a suggestion whose email is already filed", async () => {
+    const { run } = await setup();
+    const due = addDaysStr(today, 10);
+    const ex = fixed(billEx("Water Co", 40, due));
+    const sug = await run((s) => processForwardedEmail(s, TZ, today, { ...doc, messageId: "w1@water.com" }, ex));
+    expect(sug.status).toBe("suggested");
+    // The same email arrived by another route and was filed meanwhile.
+    const other = await run((s) =>
+      s.tx.insert(inboxItems).values({ userId: s.userId, channel: "email", messageId: "w1@water.com", status: "filed" }).returning(),
+    );
+    const r = await run((s) => fileSuggestion(s, TZ, today, sug.id));
+    expect(r.status).toBe("duplicate");
+    expect(r.duplicateOf).toBe(other[0].id);
+    expect(await run((s) => s.tx.select().from(recurringItems))).toHaveLength(0);
   });
 });

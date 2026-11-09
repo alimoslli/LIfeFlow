@@ -15,7 +15,7 @@ import {
   updateAssignment,
 } from "../../services/school";
 import { dateArg, defineTool, idArg, timeArg, type ToolContext } from "../tool";
-import { syncCanvas } from "../../integrations/canvas";
+import { CANVAS_BUSY, syncCanvas, withCanvasLock } from "../../integrations/canvas";
 
 export function presentAssignment(
   a: {
@@ -52,8 +52,9 @@ export const schoolTools = [
     schema: z.object({}),
     mutates: true,
     async execute(_a, ctx) {
-      const r = await ctx.run((s) => syncCanvas(s, fetch, ctx.tz));
-      return { ...r, viewAt: "/school/due" };
+      const locked = await withCanvasLock(ctx.userId, () => ctx.run((s) => syncCanvas(s, fetch, ctx.tz)));
+      if (locked.skipped) return { error: CANVAS_BUSY };
+      return { ...locked.value, viewAt: "/school/due" };
     },
   }),
   defineTool({
