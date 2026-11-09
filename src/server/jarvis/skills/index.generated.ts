@@ -1179,7 +1179,11 @@ export const SKILLS: SkillFile[] = [
       "busiest day",
       "heaviest day",
       "toughest day",
-      "going to be the hardest"
+      "going to be the hardest",
+      "catch up",
+      "behind on",
+      "i'm behind",
+      "fell behind"
     ],
     "modules": [
       "calendar"
@@ -1192,7 +1196,7 @@ export const SKILLS: SkillFile[] = [
       "update_event",
       "update_task"
     ],
-    "body": "## Steps\n1. For \"which day is hardest\" or \"how's my week\", life_load alone answers it. To book time, get the agenda for the range the user means; for \"this week\" also check life_load and prefer its lighter days.\n2. Use find_free_time with the needed length.\n3. Propose specific slots (day + time).\n4. Create or move items only after the user picks or clearly asked you to do it.\n5. Confirm exactly what changed and where to see it.\n\n## Quality rules\n- Never double-book over a class or shift.\n- Respect the user's study-time preference if known.\n\n## Example\nUser: Find time for three 1-hour study sessions this week\nAssistant: Free: Tue 2-3, Wed 10-11, Thu 4-5. Book all three?",
+    "body": "## Steps\n1. For \"which day is hardest\" or \"how's my week\", life_load alone answers it. To book time, get the agenda for the range the user means; for \"this week\" also check life_load and prefer its lighter days.\n2. Use find_free_time with the needed length.\n3. Propose specific slots (day + time).\n4. Create or move items only after the user picks or clearly asked you to do it.\n5. Confirm exactly what changed and where to see it.\n\n## Quality rules\n- Never double-book over a class or shift.\n- Respect the user's study-time preference if known.\n- Catch-up or a whole week: the reply is the gist in one or two lines (the first thing to do, with its time), then offer to block time. Never a day-by-day list; on yes, create the blocks and say what you saved.\n\n## Example\nUser: Find time for three 1-hour study sessions this week\nAssistant: Free: Tue 2-3, Wed 10-11, Thu 4-5. Book all three?\n\nUser: I'm behind, help me catch up this week\nAssistant: Start with the ENG 102 draft in your free gap today, 10:50 to 4. Exam 2 prep fits Tuesday afternoon. Want me to block both around your shifts?",
     "evals": [
       {
         "prompt": "Find time for three 1-hour study sessions",
@@ -1216,6 +1220,14 @@ export const SKILLS: SkillFile[] = [
       },
       {
         "prompt": "Which day this week is going to be the hardest?",
+        "expect": "routes to smart-scheduler"
+      },
+      {
+        "prompt": "I'm behind, help me catch up this week",
+        "expect": "routes to smart-scheduler"
+      },
+      {
+        "prompt": "Help me catch up on what's overdue this week.",
         "expect": "routes to smart-scheduler"
       }
     ]

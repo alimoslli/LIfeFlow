@@ -21,6 +21,8 @@ export interface ModelTurn {
 }
 
 /** How hard a reasoning model thinks on this turn (chosen per turn, see effort.ts). */
+export type ReplyVerbosity = "low" | "medium";
+
 export type TurnEffort = "low" | "medium" | "high";
 
 export interface ModelProvider {
@@ -28,7 +30,16 @@ export interface ModelProvider {
   /** The model id requests go to (recorded with every run). */
   readonly model: string;
   /** `cacheKey` keeps one user's requests on the same provider cache; `effort` is the per-turn thinking level. */
-  startTurn(input: { system: string; history: ChatItem[]; tools: ToolSpec[]; cacheKey?: string; effort?: TurnEffort; signal?: AbortSignal }): ModelTurn;
+  startTurn(input: {
+    system: string;
+    history: ChatItem[];
+    tools: ToolSpec[];
+    cacheKey?: string;
+    effort?: TurnEffort;
+    /** How long the visible answer should be (owner, 2026-11-09: short by default). Providers that can't set it ignore it. */
+    verbosity?: ReplyVerbosity;
+    signal?: AbortSignal;
+  }): ModelTurn;
 }
 
 export class ProviderUnavailableError extends Error {}
