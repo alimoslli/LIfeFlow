@@ -42,7 +42,13 @@ export async function UsersSection({ sp }: { sp: PeopleParams }) {
         </a>
       }
     >
-      <form method="get" action="/admin/people#people" className="flex flex-col gap-2 sm:flex-row">
+      {/* Keyed by the filters so the menus show the current ones after a link (e.g. "Show everyone") changes them without a reload. */}
+      <form
+        key={`${sp.q ?? ""}|${plan ?? ""}|${status ?? ""}|${seen ?? ""}`}
+        method="get"
+        action="/admin/people#people"
+        className="flex flex-col gap-2 sm:flex-row"
+      >
         {sp.fstatus && <input type="hidden" name="fstatus" value={sp.fstatus} />}
         {sp.fkind && <input type="hidden" name="fkind" value={sp.fkind} />}
         <Input name="q" defaultValue={sp.q ?? ""} placeholder="Search name or email" aria-label="Search users" className="min-w-0 sm:flex-1" />

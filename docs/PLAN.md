@@ -189,7 +189,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
   - **On a MacBook:** a wider page, two columns on the Office and bigger titles.
   - **Unchanged:** the pictures, and the phone layout.
   - **Audit fixes F2 to F4:** People no longer shows its title twice; the "how the app is running" line is short; every field and button is a full 44 px.
-- 11-09: who was active today (owner). Tapping "Active today" on the Office or on App → Growth opens People with only the accounts seen in the last 24 hours, newest first, with a "Seen today" menu and "Show everyone" ([COMMIT]). "Last seen" is now stamped every 10 minutes of use instead of once a day, so the list and "Seen 2 h ago" are right.
+- 11-09: who was active today (owner). Tapping "Active today" on the Office or on App → Growth opens People with only the accounts seen in the last 24 hours, newest first, with a "Seen today" menu and "Show everyone" ([da01e2f](https://github.com/alimoslli/LIfeFlow/commit/da01e2f)). "Last seen" is now stamped every 10 minutes of use instead of once a day, so the list and "Seen 2 h ago" are right.
 
 **Next:**
 - The open ADR 0030 questions: per-chat keys and live-line wording.
