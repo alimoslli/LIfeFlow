@@ -38,8 +38,10 @@ type ShellCtx = {
   aiConsent: boolean;
   /** The user's time zone (Settings), for anything that depends on their local time. */
   tz: string;
+  /** Their companion (lib/companions), drawn wherever the assistant is. */
+  companion?: string | null;
 };
-const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: UNNAMED_ASSISTANT, firstName: "", aiConsent: false, tz: "UTC" });
+const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: UNNAMED_ASSISTANT, firstName: "", aiConsent: false, tz: "UTC", companion: null });
 export const useShell = () => useContext(Ctx);
 
 type Drawer = { open: boolean; prompt?: string; send?: boolean; key: number };
@@ -152,7 +154,7 @@ export function AppShell({
   const settingsActive = pathname.startsWith("/settings");
 
   return (
-    <Ctx.Provider value={{ openJarvis, assistantName, firstName: user.name.split(" ")[0], aiConsent, tz: user.timezone ?? "UTC" }}>
+    <Ctx.Provider value={{ openJarvis, assistantName, firstName: user.name.split(" ")[0], aiConsent, tz: user.timezone ?? "UTC", companion }}>
       <LifeAreasContext.Provider value={areas}>
         <div className="lf-glass">
           <TiltLayer />

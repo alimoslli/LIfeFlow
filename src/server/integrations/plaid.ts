@@ -6,6 +6,7 @@ import { connectionRegistry, financialAccounts, holdings, integrations, syncJobs
 import type { Database } from "../db/client";
 import { withUser, type UserScope } from "../db/with-user";
 import { cleanVendorName } from "@/lib/vendor";
+import { fetchWithTimeout } from "./timeout";
 import { tidyForUser } from "../services/finance/tidy";
 import { categoryIdByName, keywordCategory, ruleFor } from "../services/finance/categorize";
 import { recordNetWorth } from "../services/finance/investing";
@@ -60,7 +61,7 @@ async function call<T>(path: string, body: Record<string, unknown>, f: Fetch = f
   if (!cfg) throw new PlaidError("Bank connections aren't available yet.", "NOT_CONFIGURED");
   let res: Response;
   try {
-    res = await f(`${cfg.baseUrl}${path}`, {
+    res = await fetchWithTimeout(f, `${cfg.baseUrl}${path}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ client_id: cfg.clientId, secret: cfg.secret, ...body }),
@@ -206,6 +207,16 @@ async function getItem(scope: UserScope, integrationId: string) {
     .where(and(eq(integrations.id, integrationId), eq(integrations.userId, scope.userId), eq(integrations.provider, "plaid")));
   if (!row) throw new PlaidError("Bank connection not found.", "NOT_FOUND");
   return row;
+}
+
+/** True when this user owns that Plaid connection (checked inside withUser, like syncConnection). */
+export async function ownsPlaidConnection(userId: string, integrationId: string) {
+  return withUser(userId, (s) =>
+    getItem(s, integrationId).then(
+      () => true,
+      (e) => (e instanceof PlaidError && e.code === "NOT_FOUND" ? false : Promise.reject(e)),
+    ),
+  );
 }
 
 // ------------------------------------------------------------ mapping (pure)

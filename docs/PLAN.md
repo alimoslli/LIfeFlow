@@ -304,6 +304,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
 - 2026-11-09, LF HQ: "Active today" opens the list of who was active (People, seen in the last 24 hours); "last seen" stamped every 10 minutes (section 5).
+- 2026-11-09 morning, LF COO: on main (da1e843, 3 Opus reviews), overlapping cron, webhook and Sync now runs no longer double-run: a lease per job (migration 0057_job_locks). A bank update that arrives during a sync gets one more round instead of waiting 30 minutes. Microsoft failures are recorded and say "Reconnect it in Settings". Plaid calls time out after 20 s. "Your companion" wording passed to LF Marketing.
 - 2026-11-09, LF HQ: the Planning Room idea will replace the COO's brief card (owner); still waiting for his go.
 - 2026-11-09, LF HQ: the owner's Planning Room idea written into section 5 (an idea waiting for his go, not being built).
 - 2026-11-09 night, LF COO: on main: short assistant answers (fc7a45c: chips stop pasting lists, a 60-word reply shape, low verbosity; the owner's catch-up question went from 1,123 words to 52 on the real model), Apple token revoke on unlink and deletion (175bde4, migration 0056, Opus-reviewed), the A-to-Z audit (a0a3718), the promise test fixed for real dates (6ebc5c7). Phone sign-in must renumber its migration to 0058 before it merges; 0057 goes to the job lease (in review).

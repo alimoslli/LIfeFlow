@@ -1866,6 +1866,17 @@ export const hqMetrics = pgTable(
   (t) => [uniqueIndex("hq_metrics_reading_uq").on(t.takenOn, t.network, t.metric, t.contentRef), index("hq_metrics_network_idx").on(t.network, t.takenOn)],
 );
 
+/** Job leases (migration 0057). Operations data with no user content and no RLS, like the hq_ tables; reached only through db/job-lock.ts. */
+export const jobLocks = pgTable("job_locks", {
+  name: text("name").primaryKey(),
+  holder: text("holder").notNull(),
+  expiresAt: tstz("expires_at").notNull(),
+  /** Requests skipped while the lease was held; the holder runs once more if > 0. Reset on a claim. */
+  skips: integer("skips").notNull().default(0),
+  /** A skipped request wanted live data (Plaid balances). Reset on a claim. */
+  liveWanted: boolean("live_wanted").notNull().default(false),
+});
+
 export type HqRoundSwitches = { night: boolean; research: boolean; marketing: boolean };
 
 /** One row (id "hq"): the owner's controls that every round reads through /api/hq/inbox. */

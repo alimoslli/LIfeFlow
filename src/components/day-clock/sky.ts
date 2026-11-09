@@ -347,7 +347,9 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   let cheerUntil = 0;
   let fit = "";
   let shownH = 0;
+  let wordsFit = true;
   let lastTs = 0;
+  let sizes: { W: number; H: number; foot: number } | null = null;
   let liftAt = { key: "", y: 0 };
   // which way the companion runs (it turns round when the wheel goes back in time), and when it last stepped
   let lastView: number | null = null;
@@ -475,8 +477,11 @@ export function createSky(root: HTMLElement, reduce: boolean) {
 
   function draw(st: SkyState) {
     last = st;
-    const W = root.clientWidth;
-    const H = root.clientHeight;
+    // measured at rest and kept through the fold: reading the page's sizes mid-fold, after the frame has changed it,
+    // makes the browser lay everything out again (the fold's lag, owner 2026-11-09)
+    const folding = st.p > 0 && st.p < 1;
+    if (!folding || !sizes) sizes = { W: root.clientWidth, H: root.clientHeight, foot: root.querySelector<HTMLElement>("[data-dc=foot]")?.offsetHeight ?? 0 };
+    const { W, H } = sizes;
     const { now, view, data, geo } = st;
     if (!W || !H || !geo) return;
     if (!sun || sun.key !== data.today + data.tz) sun = { key: data.today + data.tz, ...sunTimes(data.today, data.tz) };
@@ -497,10 +502,14 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     // a laptop: the wheel on the left, the words and the foot on the right (CSS places their sides, this their height)
     const wide = full && W >= WIDE;
     if (wide !== (root.dataset.wide === "true")) root.dataset.wide = String(wide);
+    // a very short phone (an iPhone SE): the wheel keeps the space and the assistant's line steps aside (the chat bar
+    // docked under the sky is right there)
+    const short = full && !wide && H < 420;
+    if (short !== (root.dataset.short === "true")) root.dataset.short = String(short);
     const colL = wide ? Math.round(W * WIDE_COL) : W;
     const win = geo.win;
     const footEl = root.querySelector<HTMLElement>("[data-dc=foot]");
-    const footH = footEl?.offsetHeight ? footEl.offsetHeight + 12 : 0;
+    const footH = sizes.foot ? sizes.foot + 12 : 0;
     if (wordsH.key !== `${words.dataset.html}|${W}`) wordsH = { key: `${words.dataset.html}|${W}`, h: words.offsetHeight || 110 };
     const hyC = full ? Math.round(wide ? H - 92 : clamp(H - footH - wordsH.h - 78, 200, Math.max(200, H * 0.62))) : geo.hor;
     const hy = lerp(hyC, geo.hor, k);
@@ -873,6 +882,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       for (const e of parts) e.style.display = "";
       for (const e of parts) if (words.offsetHeight > room) e.style.display = "none";
       shownH = words.offsetHeight;
+      // a short screen: with no room even for the title, the words keep quiet (the wheel shows what's on)
+      wordsFit = shownH <= room + 4;
       fit = fitKey;
     }
     if (footEl) footEl.style.top = wide ? `${wordsTop + shownH + 22}px` : "";
@@ -889,7 +900,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     } else delete root.dataset.ink;
     words.style.opacity = String(reduce ? 1 - P : kc);
     words.style.transform = `translateY(${(24 * eOut(seg(P, 0, 0.45))).toFixed(1)}px)`;
-    words.style.visibility = P > 0.4 ? "hidden" : "visible";
+    words.style.visibility = P > 0.4 || !wordsFit ? "hidden" : "visible";
 
     // ---- the companion: running in place on top of the wheel (standing on the tile of what's on, if one is there),
     // the sun by day and asleep on the moon late at night; it turns round when the wheel goes back in time and jogs

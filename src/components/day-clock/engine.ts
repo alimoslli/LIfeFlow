@@ -238,6 +238,13 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     }
     return v;
   }
+  // The line's scroll, mirrored here: every frame of the fold needs it, and reading it from the page right after the
+  // frame has changed something makes the browser lay the whole page out again mid-frame (the fold's lag, owner
+  // 2026-11-09). Written through setSl, and taken from the page only when the page scrolls itself.
+  let SLm = 0;
+  function setSl(v: number) {
+    trackWrap.scrollLeft = SLm = v;
+  }
   /** The line's height at a moment, from the window's top. */
   function waveY(t: number) {
     if (!inWeek(t)) return G.wrapHor;
@@ -246,12 +253,9 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   }
   const skyOpts = () => ({ inWeek, rise: SUN.rise, set: SUN.set });
   /** Where the open line is, for the sky's morph (at the line's current scroll, which is home while it moves). */
-  // The line's scroll, read only while the line is out (reading it right after a change makes the browser lay the page
-  // out again; on the closed wheel it can't have moved)
-  let geoSl = 0;
   function skyGeo(): SkyGeo | null {
     if (!TM.stops.length || !G.W) return null;
-    const sl = S.p > 0 || S.open ? (geoSl = trackWrap.scrollLeft) : geoSl;
+    const sl = SLm;
     const vw = VW();
     return {
       win: { x: INSET, y: G.wrapTop, w: vw, h: G.winH, r: WIN_R },
@@ -265,11 +269,19 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     };
   }
   // The window's sky and line are painted for the stretch around what's in view and repainted as it scrolls far.
-  let strip: { el: SVGSVGElement; x0: number; x1: number } | null = null;
+  // Painting it is the heaviest thing the line does, so it's painted only when what it shows changed (the line was
+  // rebuilt, the minute moved) or the view left the stretch it covers; the fold used to paint it twice (owner: laggy).
+  let strip: { el: SVGSVGElement; x0: number; x1: number; key: string } | null = null;
+  let stripGen = 0;
   function drawStrip() {
     if (!TM.stops.length) return;
     const vw = VW();
-    const sl = trackWrap.scrollLeft;
+    const sl = SLm;
+    const key = `${stripGen}|${S.now}|${G.winH}|${vw}`;
+    if (strip?.key === key && sl >= strip.x0 && sl + vw <= strip.x1) {
+      if (!strip.el.isConnected) track.prepend(strip.el);
+      return;
+    }
     const x0 = Math.max(-INSET, sl - vw);
     const x1 = Math.min(TM.total + INSET, sl + 2 * vw);
     const el = strip?.el ?? (svg("svg", { class: "dc-strip", "aria-hidden": "true" }) as SVGSVGElement);
@@ -296,7 +308,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       set: SUN.set,
       items: DATED,
     });
-    strip = { el, x0, x1 };
+    strip = { el, x0, x1, key };
   }
 
   /* ---------- haptics: native vibration where it exists, the iOS 18 switch tap where it doesn't ---------- */
@@ -533,6 +545,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     SUN = sunTimes(data.today, data.tz);
     ampCache.clear();
     TM = trackModel(S.now);
+    stripGen++;
     track.textContent = "";
     strip = null;
     track.style.width = `${TM.total}px`;
@@ -598,6 +611,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   // Folding back keeps the time in the middle of the line (a pull, a pinch, Escape); the now pill folds back to now,
   // rewinding the line to now in the first part of the same motion.
   function prepMorph(keepScroll = false, toNow = false) {
+    // once, before the motion (the page may have stopped a scroll at its end)
+    SLm = trackWrap.scrollLeft;
     if (keepScroll && toNow) S.follow = true;
     else if (keepScroll) {
       S.view = clamp(tAt(trackWrap.scrollLeft + VW() / 2), minDay() * 1440, (maxDay() + 1) * 1440 - 1);
@@ -608,7 +623,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     if (keepScroll && Math.abs(trackWrap.scrollLeft - sl) > 1) G.wrapSl = trackWrap.scrollLeft;
     else {
       G.wrapSl = null;
-      trackWrap.scrollLeft = sl;
+      setSl(sl);
     }
     drawStrip();
   }
@@ -864,7 +879,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   function render() {
     const P = clamp(S.p, 0, 1);
     // wrapping back from another part of the line: it rewinds to now in the first part of the same motion
-    if (G.wrapSl != null) trackWrap.scrollLeft = G.home + (G.wrapSl - G.home) * eIO(seg(P, 0.78, 1));
+    if (G.wrapSl != null) setSl(G.home + (G.wrapSl - G.home) * eIO(seg(P, 0.78, 1)));
     foot.style.opacity = String(1 - seg(P, 0, reduce ? 0.6 : 0.18));
     foot.style.transform = reduce ? "" : `translateY(${(14 * eOut(seg(P, 0, 0.25))).toFixed(2)}px)`;
     foot.style.visibility = P > (reduce ? 0.6 : 0.25) ? "hidden" : "visible";
@@ -968,7 +983,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   function finishClose() {
     setInteractive(false);
     G.wrapSl = null;
-    trackWrap.scrollLeft = G.home;
+    setSl(G.home);
     S.day = S.follow ? 0 : clamp(dayOf(S.view), minDay(), maxDay());
     markDay();
     buildChips();
@@ -1273,7 +1288,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     (e: WheelEvent) => {
       if (!S.open || e.ctrlKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
       e.preventDefault();
-      trackWrap.scrollLeft += normalizeWheel(e, 100).px;
+      setSl(SLm + normalizeWheel(e, 100).px);
     },
     { passive: false },
   );
@@ -1292,7 +1307,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       trackWrap.classList.add("dc-grabbing");
     }
     if (!pan.moved) return;
-    trackWrap.scrollLeft = pan.sl - dx;
+    setSl(pan.sl - dx);
     pan.samples.push({ t: performance.now(), v: trackWrap.scrollLeft });
     if (pan.samples.length > 12) pan.samples.shift();
   });
@@ -1311,7 +1326,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const dt = Math.min(48, t - prev);
       prev = t;
       v *= Math.pow(DECAY, dt);
-      trackWrap.scrollLeft += v * dt;
+      setSl(SLm + v * dt);
       if (Math.abs(v) > 0.02) coast = requestAnimationFrame(step);
     };
     if (v) coast = requestAnimationFrame(step);
@@ -1335,11 +1350,15 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     trackWrap,
     "scroll",
     () => {
+      SLm = trackWrap.scrollLeft;
       if (!S.open || scrollRaf) return;
       scrollRaf = requestAnimationFrame(() => {
         scrollRaf = 0;
-        const x = trackWrap.scrollLeft + VW() / 2;
-        if (strip && (trackWrap.scrollLeft < strip.x0 + VW() * 0.3 || trackWrap.scrollLeft + VW() > strip.x1 - VW() * 0.3)) drawStrip();
+        const x = SLm + VW() / 2;
+        if (strip && (SLm < strip.x0 + VW() * 0.3 || SLm + VW() > strip.x1 - VW() * 0.3)) {
+          strip.key = "";
+          drawStrip();
+        }
         const d = x >= TM.somedayX ? SOMEDAY : dayOf(tAt(x));
         if (d !== S.day) {
           // the card stays while its node is still on screen (a tap near the edge scrolls it in)
@@ -1364,7 +1383,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     if (S.open) {
       S.p = 1;
       finishOpen();
-      trackWrap.scrollLeft = homeScroll();
+      setSl(homeScroll());
       S.day = 0;
       markDay();
       buildChips();
@@ -1407,7 +1426,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     rebuildFace();
     rebuildTrack();
     buildDays();
-    trackWrap.scrollLeft = sl;
+    setSl(sl);
     drawStrip();
     markDay();
     buildChips();

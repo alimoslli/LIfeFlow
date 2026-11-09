@@ -12,6 +12,48 @@
   -webkit-tap-highlight-color: transparent;
   color: var(--text);
 }
+/* A phone: the chat bar is docked at the bottom of Today, just above the tabs, so the sky ends above it. */
+@media (max-width: 767px) {
+  .dc {
+    height: clamp(320px, calc(100svh - 232px), 720px);
+  }
+}
+.dc-dock {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--tabbar-space) - 16px);
+  z-index: 30;
+  max-width: 28rem;
+  margin: 0 auto;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+/* it steps aside while the day is open as a line (the line has its own controls at the bottom) */
+.dc-today:has(.dc:is([data-state="moving"], [data-state="timeline"])) .dc-dock {
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+}
+/* the companion in the bar breathes */
+.lf-bob {
+  animation: lf-bob 2.6s ease-in-out infinite;
+}
+@keyframes lf-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lf-bob {
+    animation: none;
+  }
+}
 /* A laptop: the sky gets the screen's height (owner: "on the MacBook it looks so small"); the wheel grows with it. */
 @media (min-width: 768px) {
   .dc {
@@ -350,7 +392,8 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   margin: 0 auto;
   z-index: 8;
 }
-.dc-foot:empty {
+.dc-foot:empty,
+.dc[data-short="true"] .dc-foot {
   display: none;
 }
 
