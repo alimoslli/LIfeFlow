@@ -196,6 +196,8 @@ export function createDome(root: HTMLElement, reduce: boolean) {
     const d1 = Math.floor(tB / DAY) + 1;
     for (let d = d0; d <= d1; d++) piece(Math.max(tA, d * DAY + rise), Math.min(tB, d * DAY + set), "dc-rim dc-rim-day");
     const marks = el("g", { opacity: 1 - seg(st.p, 0, 0.3) });
+    // a label inside the rim reads inward, away from the rim and the emoji outside it
+    const inward = (x: number) => (x > cx + 12 ? "end" : x < cx - 12 ? "start" : "middle");
     for (let d = d0; d <= d1; d++) {
       for (const [t, name] of [
         [d * DAY + rise, "Sunrise"],
@@ -204,22 +206,22 @@ export function createDome(root: HTMLElement, reduce: boolean) {
         if (t < tA || t > tB) continue;
         const [x, y] = at(t);
         el("circle", { cx: x, cy: y, r: 4, class: "dc-rim-sun", opacity: up(t) }, marks);
-        const [lx, ly] = at(t, -20);
-        text(lx, ly + 4, `${name} about ${fmtShort(Math.round(mod(t) / 5) * 5)}`, "dc-rim-day-t", "middle", marks).setAttribute("opacity", String(up(t)));
+        const [lx, ly] = at(t, -16);
+        text(lx, ly + 4, `${name} about ${fmtShort(Math.round(mod(t) / 5) * 5)}`, "dc-rim-day-t", inward(lx), marks).setAttribute("opacity", String(up(t)));
       }
       const t = d * DAY;
       if (t > tA + 20 && t < tB - 20) {
-        const [x, y] = at(t, -20);
+        const [x, y] = at(t, -16);
         const info = data.days.find((x2) => x2.offset === d);
         const name = d === 0 ? "Today" : d === 1 ? "Tomorrow" : d === -1 ? "Yesterday" : (info?.short ?? "");
-        text(x, y + 4, name, "dc-rim-day-t", "middle", marks).setAttribute("opacity", String(up(t)));
+        text(x, y + 4, name, "dc-rim-day-t", inward(x), marks).setAttribute("opacity", String(up(t)));
       }
     }
     if (!follow && now > tA && now < tB) {
       const [x, y] = at(now);
       el("circle", { cx: x, cy: y, r: 5.5, class: "dc-rim-now", opacity: up(now) }, marks);
-      const [lx, ly] = at(now, -18);
-      text(lx, ly + 4, "Now", "dc-rim-day-t", "middle", marks).setAttribute("opacity", String(up(now)));
+      const [lx, ly] = at(now, -16);
+      text(lx, ly + 4, "Now", "dc-rim-day-t", inward(lx), marks).setAttribute("opacity", String(up(now)));
     }
 
     // your things on the rim: blocks along it, moments as dots, each with its emoji outside; piles say what they are,
