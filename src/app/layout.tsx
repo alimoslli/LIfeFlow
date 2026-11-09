@@ -2,13 +2,14 @@ import { ErrorReporter } from "@/components/error-reporter";
 import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
 import { TEXT_COOKIE, THEME_COOKIE, parseTextSize, parseTheme } from "@/lib/theme";
-import { Geist, Geist_Mono, Newsreader } from "next/font/google";
+import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { Splash, SPLASH_SCRIPT } from "@/components/motion/splash";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-const newsreader = Newsreader({ variable: "--font-newsreader", subsets: ["latin"], style: ["normal", "italic"] });
+// Day Sky (v3): a soft, warm serif for titles.
+const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], style: ["normal", "italic"], axes: ["opsz"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || "https://lifeflowweb.com"),
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
 };
 
-const THEME_COLORS = { light: "#f4f2ec", dark: "#0e0e0d" };
+const THEME_COLORS = { light: "#f6f8fb", dark: "#07101f" };
 
 /** Browser chrome color follows the chosen theme (or the device setting). */
 export async function generateViewport(): Promise<Viewport> {
@@ -71,7 +72,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
       data-theme={theme === "system" ? undefined : theme}
       data-text={textSize === "default" ? undefined : textSize}
-      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         {!landing && <script dangerouslySetInnerHTML={{ __html: SPLASH_SCRIPT }} />}

@@ -5,8 +5,8 @@
  * played, pulled, scrubbed and reversed. The liquid outline is a signed-distance field in a WebGL shader.
  * Colours come from the app's theme tokens; only transform and opacity animate outside the shader.
  */
-import { isExam, pileOf, type ClockData, type ClockItem } from "@/lib/day-clock";
-import type { DomeFace, DomeState } from "./dome";
+import { isExam, pileOf, sunTimes, type ClockData, type ClockItem } from "@/lib/day-clock";
+import { isFinished, isLate, itemColor, paintStrip, stripDark, type DomeFace, type DomeState, type SkyGeo } from "./sky";
 
 type Pt = [number, number];
 type Arc = { a: number; b: number; past: boolean; lap: number; els: SVGPathElement[] };
@@ -67,8 +67,9 @@ export type DayClockOptions = {
   /** "Edit" on an event's, a shift's or an assignment's card: its editor, in place. */
   onEdit: (it: ClockItem) => void;
   /**
-   * Morrow's dome (owner, 2026-11-09): when given, Today's face is drawn by it instead of the clock, on every change
-   * and every frame of opening and closing (it flattens onto the line while the timeline fades in).
+   * Day Sky (owner, 2026-11-09): when given, Today is drawn by it instead of the clock (sky.ts), on every change and
+   * every frame of opening and closing (it pours into the line, which then takes over). The line itself becomes the
+   * sky window: a hill for every day, a valley for every night, its stops sitting on it.
    */
   face?: (state: DomeState) => void;
   /** The day turned over while the page was open: fetch fresh data. */
@@ -83,11 +84,16 @@ export type DayClockHandle = {
   destroy: () => void;
   /** Where "Pin something" pins: the time in the middle of the line in view (never earlier than now, today). */
   pinTime: () => number;
+  /** Diagnostics (?debug=1 only): hold the motion at a point between Today (0) and the timeline (1). */
+  seek: (p: number) => void;
 };
 
 const NS = "http://www.w3.org/2000/svg";
 // How far tomorrow's ring sits outside the clock's own ring.
 const LAP = 11;
+// Day Sky: the timeline's window sits this far in from each side, with these corners.
+const INSET = 10;
+const WIN_R = 28;
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -205,7 +211,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   const reduce = opts.reducedMotion;
   const domeMode = !!opts.face;
   let FACE: DomeFace = { tag: "", text: "", stats: [] };
-  const drawDome = () => opts.face?.({ p: S.p, now: S.now, data, items: DATED, face: FACE, lineY: G.lineY });
+  const drawDome = () => opts.face?.({ p: S.p, now: S.now, data, items: DATED, face: FACE, lineY: G.lineY, geo: skyGeo() });
   const $ = <T extends Element = HTMLElement>(sel: string) => root.querySelector(sel) as T;
   const canvas = $<HTMLCanvasElement>("[data-dc=goo]");
   const faceSvg = $<SVGSVGElement>("[data-dc=face]");
@@ -274,6 +280,9 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     wrapSl: null as number | null,
     rimFill: 1,
     hintHidden: false,
+    /** Day Sky: the window's height and its horizon (from the window's top). */
+    winH: 260,
+    wrapHor: 140,
   };
   let CM: ClockModel = { arcs: [], marks: [], ps: 0, ws: 0, we: 720, mid: null, word: 0, ahead: false };
   let TM: TrackModel = { nodes: [], stops: [], total: 0, nowX: 0, nowEl: null, somedayX: Infinity };
@@ -333,6 +342,95 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       : it.kind === "due" && !it.someday && (it.origin === "task" || it.origin === "assignment") && !isExam(it)
         ? `${it.title} due`
         : it.title;
+
+  /* ---------- Day Sky: the line's shape ---------- */
+  // The width of the line in view (the window is inset from the sides).
+  const VW = () => (domeMode ? G.W - 2 * INSET : G.W);
+  let SUN = sunTimes(data.today, data.tz);
+  type Half = { day: boolean; a: number; b: number };
+  const halfOf = (t: number): Half => {
+    const d = Math.floor(t / 1440);
+    const m = t - d * 1440;
+    if (m >= SUN.rise && m < SUN.set) return { day: true, a: d * 1440 + SUN.rise, b: d * 1440 + SUN.set };
+    return m >= SUN.set
+      ? { day: false, a: d * 1440 + SUN.set, b: (d + 1) * 1440 + SUN.rise }
+      : { day: false, a: (d - 1) * 1440 + SUN.set, b: d * 1440 + SUN.rise };
+  };
+  // the week rises and falls (a hill a day, a valley a night); before and after it, the line is flat
+  const inWeek = (t: number) => {
+    const h = halfOf(t);
+    const c = (h.a + h.b) / 2;
+    return c >= minDay() * 1440 && c < (maxDay() + 1) * 1440;
+  };
+  const ampCache = new Map<number, number>();
+  function amp(h: Half) {
+    let v = ampCache.get(h.a);
+    if (v == null) {
+      // busier days stand taller; nights dip deeper the more they hold
+      const n = DATED.filter((it) => !it.allDay && it.start >= h.a && it.start < h.b).length;
+      v = h.day ? clamp(42 + n * 7, 46, G.wrapHor - 34) : -clamp(30 + n * 6, 34, G.winH - G.wrapHor - 36);
+      ampCache.set(h.a, v);
+    }
+    return v;
+  }
+  /** The line's height at a moment, from the window's top. */
+  function waveY(t: number) {
+    if (!domeMode || !inWeek(t)) return G.wrapHor;
+    const h = halfOf(t);
+    return G.wrapHor - amp(h) * Math.sin(Math.PI * clamp((t - h.a) / (h.b - h.a), 0, 1));
+  }
+  const skyOpts = () => ({ inWeek, rise: SUN.rise, set: SUN.set });
+  /** Where the open line is, for the sky's morph (at the line's current scroll, which is home while it moves). */
+  function skyGeo(): SkyGeo | null {
+    if (!domeMode || !TM.stops.length || !G.W) return null;
+    const sl = trackWrap.scrollLeft;
+    const vw = VW();
+    return {
+      win: { x: INSET, y: G.wrapTop, w: vw, h: G.winH, r: WIN_R },
+      hor: G.wrapTop + G.wrapHor,
+      lineAt: (t) => [INSET + xAt(t) - sl, G.wrapTop + waveY(t)],
+      tAtX: (x) => tAt(x - INSET + sl),
+      nodes: TM.nodes
+        .filter((n) => !n.it.someday && n.x > sl - 40 && n.x < sl + vw + 40)
+        .map((n) => ({ ids: (n.group ?? [n.it]).map((g) => g.id), t: n.t, x: INSET + n.x - sl, y: G.wrapTop + waveY(n.t), icon: n.it.icon })),
+      inWeek,
+    };
+  }
+  // The window's sky and line are painted for the stretch around what's in view and repainted as it scrolls far.
+  let strip: { el: SVGSVGElement; x0: number; x1: number } | null = null;
+  function drawStrip() {
+    if (!domeMode || !TM.stops.length) return;
+    const vw = VW();
+    const sl = trackWrap.scrollLeft;
+    const x0 = Math.max(-INSET, sl - vw);
+    const x1 = Math.min(TM.total + INSET, sl + 2 * vw);
+    const el = strip?.el ?? (svg("svg", { class: "dc-strip", "aria-hidden": "true" }) as SVGSVGElement);
+    if (!el.isConnected) track.prepend(el);
+    el.textContent = "";
+    el.style.left = `${x0}px`;
+    el.setAttribute("width", String(x1 - x0));
+    el.setAttribute("height", String(G.winH));
+    el.setAttribute("viewBox", `0 0 ${x1 - x0} ${G.winH}`);
+    const defs = svg("defs", {}, el);
+    const g = svg("g", {}, el);
+    paintStrip(g, defs, {
+      x0: 0,
+      x1: x1 - x0,
+      tAt: (x) => tAt(x + x0),
+      xOf: (t) => xAt(t) - x0,
+      yOf: waveY,
+      top: 0,
+      hor: G.wrapHor,
+      bottom: G.winH,
+      inWeek,
+      now: S.now,
+      rise: SUN.rise,
+      set: SUN.set,
+      items: DATED,
+      id: "dc-st",
+    });
+    strip = { el, x0, x1 };
+  }
 
   /* ---------- haptics: native vibration where it exists, the iOS 18 switch tap where it doesn't ---------- */
   function haptic(ms: number) {
@@ -395,7 +493,20 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     // the dome draws Today itself: the clock's own layers step aside, and the whole sky is the place to tap
     if (domeMode) {
       for (const e of [canvas, faceSvg, callouts, micons, hint] as (HTMLElement | SVGSVGElement)[]) e.style.display = "none";
-      Object.assign(hit.style, { left: "0px", top: "48px", width: `${W}px`, height: `${Math.round(H * 0.62)}px`, borderRadius: "28px" });
+      Object.assign(hit.style, { left: "0px", top: "48px", width: `${W}px`, height: `${Math.round(H * 0.6)}px`, borderRadius: "28px" });
+      // the timeline is a window onto the sky under the day picker, then the tiles, then the card
+      G.wrapTop = 52;
+      G.winH = Math.round(clamp(H * 0.44, 236, 300));
+      G.wrapHor = Math.round(G.winH * 0.54);
+      G.lineY = G.wrapTop + G.wrapHor;
+      G.chipY = G.wrapTop + G.winH + 12;
+      G.detailY = G.chipY + 52;
+      chips.style.top = `${G.chipY}px`;
+      trackWrap.style.top = `${G.wrapTop}px`;
+      trackWrap.style.height = `${G.winH}px`;
+      detail.style.top = `${G.detailY}px`;
+      pinbar.style.top = `${G.detailY}px`;
+      hintWrap.style.top = `${G.detailY + 62}px`;
     }
     faceSvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     faceSvg.setAttribute("width", String(W));
@@ -709,7 +820,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       svg("text", { x: 0, y, "text-anchor": "middle", class: "dc-face-now" }, stepsG).textContent = cut(fn.text);
     }
     const stats = faceStats();
-    FACE = { tag: fn?.tag ?? "", text: fn?.text ?? "", stats };
+    FACE = { tag: fn?.tag ?? "", text: fn?.text ?? "", stats, icon: fn?.it?.icon };
     stats.forEach((line, i) => {
       svg("text", { x: 0, y: R * 0.3 + i * 14, "text-anchor": "middle", class: "dc-steps" }, stepsG).textContent = line;
     });
@@ -819,7 +930,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       if (a.kind === "now" || b.kind === "now") return 66 + clamp(((dt - 60) / 60) * 5, 0, 24);
       return 96 + clamp(((dt - 180) / 60) * 6, 0, 30);
     };
-    const pad = G.W / 2;
+    const pad = VW() / 2;
     let x = pad;
     stops.forEach((st, i) => {
       if (i) x += gap(stops[i - 1], st);
@@ -868,7 +979,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     return st[st.length - 1].t;
   }
   function homeScroll() {
-    let x = TM.nowX - G.W * 0.5;
+    let x = TM.nowX - VW() * 0.5;
     for (const n of TM.nodes) {
       const v = n.x - x;
       if (v > -46 && v < 44) {
@@ -876,12 +987,15 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
         break;
       }
     }
-    return clamp(x, 0, TM.total - G.W);
+    return clamp(x, 0, TM.total - VW());
   }
 
   function rebuildTrack() {
+    SUN = sunTimes(data.today, data.tz);
+    ampCache.clear();
     TM = trackModel(S.now);
     track.textContent = "";
+    strip = null;
     track.style.width = `${TM.total}px`;
     const line = html("div", "dc-line", track);
     line.style.width = `${TM.total}px`;
@@ -899,13 +1013,15 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       if (s.kind === "mark") {
         const m = html("div", "dc-mid dc-era", track);
         m.style.left = `${s.x}px`;
+        if (domeMode) m.style.top = `${G.wrapHor + 22}px`;
         html("span", "", m).textContent = s.label ?? "";
         continue;
       }
       if (s.kind !== "mid" || s.d == null || s.d < minDay()) continue;
       const tmrw = s.d === dayOf(S.now) + 1;
       const m = html("div", `dc-mid${tmrw ? " dc-next" : ""}`, track);
-      m.style.left = `${s.x}px`;
+      m.style.left = `${domeMode ? xAt(s.d * 1440 + (SUN.rise + SUN.set) / 2) : s.x}px`;
+      if (domeMode) m.style.top = `${G.wrapHor + 22}px`;
       const info = dayInfo(s.d);
       const label = s.d === 0 ? "Today" : tmrw ? "Tomorrow" : info ? `${info.short} ${Number(info.date.slice(8))}` : "";
       html("span", "", m).textContent = label;
@@ -919,6 +1035,14 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const far = Math.abs(dayOf(n.t)) - 7;
       if (!it.someday && far > 0) b.style.opacity = String(Math.max(0.5, 1 - far / 90));
       b.dataset.id = n.id;
+      if (domeMode) {
+        const g = n.group ?? [it];
+        b.style.top = `${waveY(n.t)}px`;
+        b.style.setProperty("--c", itemColor(it));
+        if (!it.someday && stripDark(n.t, skyOpts()) > 0.5) b.classList.add("dc-nt");
+        if (g.some((x) => isLate(x, S.now))) b.classList.add("dc-late");
+        else if (g.every((x) => isFinished(x, S.now))) b.classList.add("dc-fin");
+      }
       const pile = n.group ? pileOf(n.group) : null;
       const more = n.group && !pile ? n.group.length - 1 : 0;
       const name = pile ? `${pile} due` : nodeName(it);
@@ -942,6 +1066,12 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     np.setAttribute("aria-label", `Now, ${fmt(S.now)}. Back to the clock`);
     np.addEventListener("click", () => close());
     TM.nowEl = np;
+    if (domeMode) {
+      np.classList.add("dc-now-sky");
+      np.style.top = `${waveY(S.now)}px`;
+      np.innerHTML = `<canvas class="dc-now-who" width="16" height="16" aria-hidden="true"></canvas><span class="dc-now-t">${fmt(S.now)}</span>`;
+      drawStrip();
+    }
   }
 
   /* ---------- map clock markers onto line nodes for the morph ---------- */
@@ -960,9 +1090,10 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     let turn = Math.PI - ang(CM.ps);
     turn = ((((turn + Math.PI) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) - Math.PI;
     G.turn = turn;
-    // with the dome there are no flying markers: the dome flattens onto the line by itself
+    // with the sky there are no flying markers: the sky pours itself onto the line
     if (domeMode) {
       MAP = [];
+      drawStrip();
       return;
     }
     MAP = CM.marks.map((m) => {
@@ -1031,10 +1162,10 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     if (d === 0) x = homeScroll();
     else {
       const first = TM.nodes.find((n) => dayOf(n.t) === d);
-      x = (first ? first.x : xAt(d * 1440 + 480)) - G.W * 0.22;
+      x = (first ? first.x : xAt(d * 1440 + 480)) - VW() * 0.22;
     }
     S.sel = null;
-    trackWrap.scrollTo({ left: clamp(x, 0, TM.total - G.W), behavior: reduce ? "auto" : "smooth" });
+    trackWrap.scrollTo({ left: clamp(x, 0, TM.total - VW()), behavior: reduce ? "auto" : "smooth" });
     setDay(d);
   }
   function setDay(d: number) {
@@ -1102,7 +1233,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
         const n = nodeOf(c.it.id);
         if (n && dayOf(n.t) === S.day) {
           const v = n.x - trackWrap.scrollLeft;
-          if (v < 50 || v > G.W - 50) trackWrap.scrollTo({ left: clamp(n.x - G.W / 2, 0, TM.total - G.W), behavior: reduce ? "auto" : "smooth" });
+          if (v < 50 || v > VW() - 50) trackWrap.scrollTo({ left: clamp(n.x - VW() / 2, 0, TM.total - VW()), behavior: reduce ? "auto" : "smooth" });
         }
       });
     }
@@ -1347,9 +1478,13 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     // wrapping back from another part of the line: it rewinds to now in the first part of the same motion
     if (G.wrapSl != null) trackWrap.scrollLeft = lerp(G.home, G.wrapSl, eIO(seg(P, 0.78, 1)));
     const shift = G.wrapSl != null ? G.home - trackWrap.scrollLeft : 0;
-    if (reduce || domeMode) {
-      renderReduced(P);
+    if (domeMode) {
+      renderSky(P);
       drawDome();
+      return;
+    }
+    if (reduce) {
+      renderReduced(P);
       return;
     }
     const s = eIO(seg(P, 0.36, 0.78));
@@ -1477,6 +1612,36 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     detail.style.transform = `translateY(${(12 * (1 - eOut(dt))).toFixed(2)}px)`;
     wrapHint(P);
   }
+  // Day Sky: the sky (sky.ts) does the pouring; the line, its picker, tiles and card arrive as it lands, so the two
+  // never show at once. With reduced motion it's a calm crossfade.
+  function renderSky(P: number) {
+    foot.style.opacity = String(1 - seg(P, 0, reduce ? 0.6 : 0.18));
+    foot.style.transform = reduce ? "" : `translateY(${(14 * eOut(seg(P, 0, 0.25))).toFixed(2)}px)`;
+    foot.style.visibility = P > (reduce ? 0.6 : 0.25) ? "hidden" : "visible";
+    const tl = reduce ? P : seg(P, 0.84, 0.97);
+    trackWrap.style.clipPath = "none";
+    trackWrap.style.opacity = String(tl);
+    trackWrap.style.visibility = P > 0 ? "visible" : "hidden";
+    trackWrap.style.setProperty("--tlab", "1");
+    for (const n of TM.nodes) n.el?.classList.remove("dc-mapped");
+    if (TM.nowEl) TM.nowEl.style.opacity = "1";
+    todayBtn.style.opacity = String(1 - seg(P, 0, reduce ? 0.5 : 0.3));
+    todayBtn.style.visibility = P > (reduce ? 0.5 : 0.3) ? "hidden" : "visible";
+    const pk = reduce ? P : seg(P, 0.78, 0.94);
+    daysNav.style.opacity = String(pk);
+    daysNav.style.transform = reduce ? "" : `translateY(${(-8 * (1 - pk)).toFixed(2)}px)`;
+    daysNav.style.visibility = pk > 0 ? "visible" : "hidden";
+    chips.style.visibility = P > 0.78 ? "visible" : "hidden";
+    chips.querySelectorAll<HTMLElement>(".dc-tile").forEach((c, i) => {
+      const t = reduce ? P : seg(P, 0.82 + i * 0.03, 0.95 + i * 0.02);
+      c.style.opacity = String(t);
+      c.style.transform = reduce ? "" : `translateY(${(10 * (1 - eOut(t))).toFixed(2)}px)`;
+    });
+    const dt = reduce ? P : seg(P, 0.86, 1);
+    detail.style.opacity = String(dt);
+    detail.style.transform = reduce ? "" : `translateY(${(12 * (1 - eOut(dt))).toFixed(2)}px)`;
+    wrapHint(P);
+  }
   // Reduced motion: a calm crossfade between the two, no liquid.
   function renderReduced(P: number) {
     faceG.setAttribute("transform", `translate(${G.cx} ${G.cy})`);
@@ -1519,6 +1684,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   };
   function finishOpen() {
     S.open = true;
+    drawStrip();
     setState("timeline");
     G.wrapSl = null;
     for (const n of TM.nodes) n.el?.classList.remove("dc-mapped");
@@ -1581,7 +1747,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     showDetail();
     if (S.press < 1) pressTo(1, 110);
     haptic(8);
-    animateTo(1, reduce ? 240 : domeMode ? 760 : 1300, reduce ? (t) => t : ePlay, finishOpen);
+    animateTo(1, reduce ? 240 : domeMode ? 1250 : 1300, reduce ? (t) => t : ePlay, finishOpen);
   }
   // Wrapping the timeline back into the clock: the exact path of the open, run backwards as one motion.
   function beginWrap() {
@@ -1625,7 +1791,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const dist = Math.abs(trackWrap.scrollLeft - homeScroll());
     beginWrap();
     setInteractive(false);
-    animateTo(0, reduce ? 260 : domeMode ? 680 : 1150 + Math.min(450, dist * 0.12), reduce ? eIO : ePlay, finishClose);
+    animateTo(0, reduce ? 260 : domeMode ? 1050 + Math.min(300, dist * 0.08) : 1150 + Math.min(450, dist * 0.12), reduce ? eIO : ePlay, finishClose);
   }
 
   /* pull the clock sideways to open; tap to open */
@@ -1794,12 +1960,13 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       if (!S.open || scrollRaf) return;
       scrollRaf = requestAnimationFrame(() => {
         scrollRaf = 0;
-        const x = trackWrap.scrollLeft + G.W / 2;
+        const x = trackWrap.scrollLeft + VW() / 2;
+        if (strip && (trackWrap.scrollLeft < strip.x0 + VW() * 0.3 || trackWrap.scrollLeft + VW() > strip.x1 - VW() * 0.3)) drawStrip();
         const d = x >= TM.somedayX ? SOMEDAY : dayOf(tAt(x));
         if (d !== S.day) {
           // the card stays while its node is still on screen (a tap near the edge scrolls it in)
           const sel = nodeOf(S.sel);
-          if (!sel || sel.x < trackWrap.scrollLeft || sel.x > trackWrap.scrollLeft + G.W) S.sel = null;
+          if (!sel || sel.x < trackWrap.scrollLeft || sel.x > trackWrap.scrollLeft + VW()) S.sel = null;
           setDay(d);
           markSel();
         }
@@ -1897,8 +2064,14 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       else if (S.open) refreshOpen();
       else rebuild();
     },
+    seek(p: number) {
+      if (S.anim) return;
+      if (!S.open && S.p === 0 && p > 0) prepMorph();
+      S.p = clamp(p, 0, 1);
+      render();
+    },
     pinTime() {
-      const t = S.open ? tAt(trackWrap.scrollLeft + G.W / 2) : S.now;
+      const t = S.open ? tAt(trackWrap.scrollLeft + VW() / 2) : S.now;
       return dayOf(t) === dayOf(S.now) && t < S.now ? Math.ceil(S.now / 15) * 15 : quarter(t);
     },
     destroy() {

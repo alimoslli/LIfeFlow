@@ -11,7 +11,7 @@ const OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
 ];
-const BAR = { light: "#f4f2ec", dark: "#0e0e0d" };
+const BAR = { light: "#f6f8fb", dark: "#07101f" };
 
 /** System / Light / Dark. Applies instantly (page and the phone's status bar color), then saves the choice. */
 export function ThemePicker({ initial }: { initial: Theme }) {
