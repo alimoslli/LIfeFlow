@@ -1,0 +1,291 @@
+[
+ {
+  "tag": "phone",
+  "route": "/admin",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 3989,
+  "small": [
+   {
+    "w": 73,
+    "h": 40,
+    "t": "Office"
+   },
+   {
+    "w": 104,
+    "h": 40,
+    "t": "Workspace"
+   }
+  ],
+  "smallCount": 2,
+  "main": {
+   "x": 16,
+   "w": 361
+  },
+  "panel": null,
+  "shadowedBoxes": 10,
+  "h1": "Good morning, Owner."
+ },
+ {
+  "tag": "phone",
+  "route": "/admin/work",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 3003,
+  "small": [
+   {
+    "w": 327,
+    "h": 40,
+    "t": "COO\nEngineering\nProduct & Design\nResearc"
+   },
+   {
+    "w": 327,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 327,
+    "h": 40,
+    "t": "High\nNormal\nLow"
+   },
+   {
+    "w": 327,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 125,
+    "h": 40,
+    "t": "New mission"
+   }
+  ],
+  "smallCount": 5,
+  "main": {
+   "x": 16,
+   "w": 361
+  },
+  "panel": null,
+  "shadowedBoxes": 15,
+  "h1": "Your desk"
+ },
+ {
+  "tag": "phone",
+  "route": "/admin/hq/marketing",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 1744,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 16,
+   "w": 361
+  },
+  "panel": null,
+  "shadowedBoxes": 6,
+  "h1": "Marketing"
+ },
+ {
+  "tag": "phone",
+  "route": "/admin/people",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 2134,
+  "small": [
+   {
+    "w": 131,
+    "h": 40,
+    "t": "Export CSV"
+   },
+   {
+    "w": 361,
+    "h": 40,
+    "t": "Search users"
+   },
+   {
+    "w": 361,
+    "h": 40,
+    "t": "Plan"
+   },
+   {
+    "w": 361,
+    "h": 40,
+    "t": "Status"
+   },
+   {
+    "w": 361,
+    "h": 40,
+    "t": "Search"
+   },
+   {
+    "w": 69,
+    "h": 38,
+    "t": "Open"
+   },
+   {
+    "w": 85,
+    "h": 38,
+    "t": "Handled"
+   },
+   {
+    "w": 48,
+    "h": 38,
+    "t": "All"
+   },
+   {
+    "w": 92,
+    "h": 36,
+    "t": "Every kind"
+   },
+   {
+    "w": 57,
+    "h": 36,
+    "t": "Bugs"
+   },
+   {
+    "w": 59,
+    "h": 36,
+    "t": "Ideas"
+   },
+   {
+    "w": 94,
+    "h": 36,
+    "t": "Feedbacks"
+   },
+   {
+    "w": 319,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 319,
+    "h": 40,
+    "t": "News (green)\nHeads up (amber)"
+   },
+   {
+    "w": 319,
+    "h": 40,
+    "t": "1 day\n3 days\n1 week\n2 weeks\n30 days\nUnti"
+   }
+  ],
+  "smallCount": 17,
+  "main": {
+   "x": 16,
+   "w": 361
+  },
+  "panel": null,
+  "shadowedBoxes": 7,
+  "h1": "People"
+ },
+ {
+  "tag": "phone",
+  "route": "/admin/app",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 2781,
+  "small": [],
+  "smallCount": 0,
+  "main": {
+   "x": 16,
+   "w": 361
+  },
+  "panel": null,
+  "shadowedBoxes": 9,
+  "h1": "App"
+ },
+ {
+  "tag": "phone",
+  "route": "/admin/hq/settings",
+  "status": 200,
+  "jarvis": false,
+  "emDash": 0,
+  "emDashCtx": null,
+  "bad": false,
+  "overflowX": false,
+  "scrollH": 2968,
+  "small": [
+   {
+    "w": 74,
+    "h": 40,
+    "t": "Save"
+   },
+   {
+    "w": 128,
+    "h": 40,
+    "t": "Save choices"
+   },
+   {
+    "w": 166,
+    "h": 32,
+    "t": "Import the starting list"
+   },
+   {
+    "w": 327,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 327,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 327,
+    "h": 40,
+    "t": "No one yet\nCOO\nEngineering\nProduct & Des"
+   },
+   {
+    "w": 327,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 20,
+    "h": 20,
+    "t": "INPUT"
+   },
+   {
+    "w": 101,
+    "h": 40,
+    "t": "Add chat"
+   },
+   {
+    "w": 203,
+    "h": 40,
+    "t": "INPUT"
+   },
+   {
+    "w": 112,
+    "h": 40,
+    "t": "Create key"
+   }
+  ],
+  "smallCount": 11,
+  "main": {
+   "x": 16,
+   "w": 361
+  },
+  "panel": null,
+  "shadowedBoxes": 8,
+  "h1": "HQ settings"
+ }
+]
