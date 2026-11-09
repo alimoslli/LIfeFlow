@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { prefersReducedMotion } from "@/components/motion/gsap";
 import type { ClockData } from "@/lib/day-clock";
 import { createDayClock, type DayClockHandle } from "./engine";
-import { createSky } from "./sky";
+import { createDome } from "./dome";
 import { PinSheet } from "./pin-sheet";
 import { toast } from "@/components/ui/toaster";
 import { toggleTaskAction } from "@/app/(app)/tasks/actions";
@@ -16,8 +16,7 @@ import { BlockSheet, type Block } from "@/app/(app)/plan/block-editor";
 import "./day-clock.css";
 
 /**
- * The v3 home: your day as the sky (Day Sky, owner 2026-11-09), which pours into the timeline of your week
- * (docs/design/clock/spec.md section 8; concept docs/design/companions/day-sky.html).
+ * The v3 home: your time today as a clock that turns into a timeline (docs/design/clock/spec.md).
  * React renders the skeleton once; the engine draws and moves it. New data from the server (a refresh)
  * is handed to the running engine instead of rebuilding the page.
  */
@@ -37,9 +36,9 @@ export function DayClock({ data, children }: { data: ClockData; children?: React
     // The iOS 18 switch tap is the only web haptic on iPhone; React doesn't know the attribute, so it's set here.
     root.querySelector("[data-dc=hap] input")?.setAttribute("switch", "");
     const reduced = prefersReducedMotion();
-    const sky = createSky(root, reduced);
+    const dome = createDome(root, reduced);
     engine.current = createDayClock(root, first.current, {
-      sky: sky.draw,
+      face: dome.draw,
       onOpen: (href) => router.push(href),
       onNewDay: () => router.refresh(),
       onPin: ({ start }) => setPinAt(start),
@@ -58,11 +57,8 @@ export function DayClock({ data, children }: { data: ClockData; children?: React
       },
       reducedMotion: reduced,
     });
-    // Diagnostics only (?debug=1): hold the motion at any point, for looking at it frame by frame.
-    if (new URLSearchParams(window.location.search).get("debug") === "1")
-      (window as unknown as { lfClock?: { seek: (p: number) => void } }).lfClock = { seek: (p) => engine.current?.seek(p) };
     return () => {
-      sky.destroy();
+      dome.destroy();
       engine.current?.destroy();
       engine.current = null;
     };
@@ -75,16 +71,47 @@ export function DayClock({ data, children }: { data: ClockData; children?: React
   return (
     <>
       <div ref={ref} className="dc" data-open="false" data-testid="day-clock">
-        {/* The sky for this minute: full width, up behind the top bar; it folds into the timeline's window as it opens. */}
-        <div data-dc="skybg" className="dc-skybg" aria-hidden="true">
-          <svg data-dc="stars" className="dc-stars" />
-          <span data-dc="cloud" className="dc-cloud" style={{ left: "8%", top: "34%", width: 150, height: 46 }} />
-          <span data-dc="cloud" className="dc-cloud dc-cloud-b" style={{ left: "58%", top: "52%", width: 120, height: 36 }} />
-        </div>
+        <canvas data-dc="goo" aria-hidden="true" />
+        <svg data-dc="face" aria-hidden="true">
+          <defs>
+            <radialGradient id="dc-press">
+              <stop offset="0" className="dc-stop-a" />
+              <stop offset=".8" className="dc-stop-b" />
+              <stop offset="1" className="dc-stop-c" />
+            </radialGradient>
+            <filter id="dc-soft" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="4" />
+            </filter>
+            <filter id="dc-halo" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="12" />
+            </filter>
+          </defs>
+          <g data-dc="leaders" />
+          <g data-dc="faceG">
+            <circle data-dc="halo" className="dc-halo" filter="url(#dc-halo)" opacity="0" />
+            <g data-dc="press" opacity="0">
+              <circle fill="url(#dc-press)" />
+              <circle className="dc-press-ring" />
+            </g>
+            <path data-dc="rim" className="dc-rim" />
+            <g data-dc="arcs" />
+            <g data-dc="ticks" />
+            <g data-dc="day" />
+            <g data-dc="hands">
+              <line data-dc="hour" className="dc-hour" />
+              <line data-dc="minute" className="dc-minute" />
+              <circle data-dc="hub" className="dc-hub" r="4.2" />
+            </g>
+            <g data-dc="steps" />
+          </g>
+        </svg>
         <svg data-dc="dome" className="dc-dome" aria-hidden="true" />
         <canvas data-dc="who" className="dc-who" width={16} height={16} aria-hidden="true" />
-        {/* Under the horizon, in words (the hit area's label says the same for screen readers). */}
-        <div data-dc="words" className="dc-words" aria-hidden="true" />
+        <div data-dc="callouts" className="dc-callouts" aria-hidden="true" />
+        <div data-dc="micons" className="dc-micons" aria-hidden="true" />
+        <div data-dc="hint" className="dc-hint">
+          Tap the clock to open your day
+        </div>
         <div data-dc="sub" className="dc-sub">
           <button type="button" data-dc="today" className="dc-todaybtn" aria-label="Open today as a timeline">
             Today
@@ -106,19 +133,20 @@ export function DayClock({ data, children }: { data: ClockData; children?: React
             Pin something
           </button>
         </div>
-        <div data-dc="hintWrap" className="dc-hint">
-          Pull down to fold it back into the sky
+        <div data-dc="hintWrap" className="dc-hint dc-hint-wrap">
+          Pull down to wrap your day
         </div>
         <div data-dc="hit" className="dc-hit" role="button" tabIndex={0} aria-label="Open your day as a timeline" />
-        {/* Under the sky: the assistant's one line. It steps aside while the timeline is open. */}
+        {/* Under the closed clock: the assistant's one line. It steps aside while the timeline is open. */}
         <div data-dc="foot" className="dc-foot">
           {children}
         </div>
         <label data-dc="hap" className="dc-hap" aria-hidden="true">
           <input type="checkbox" tabIndex={-1} />
         </label>
+        <span data-dc="probe" className="dc-probe" aria-hidden="true" />
       </div>
-      {/* Outside Today: its no-select gesture area mustn't reach the sheets' inputs (iOS Safari). */}
+      {/* Outside the clock: its no-select gesture area mustn't reach the sheets' inputs (iOS Safari). */}
       <BlockSheet
         block={editing}
         onClose={() => {

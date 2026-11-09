@@ -5,9 +5,8 @@
  * in the page only; nothing is saved anywhere. Built by `scripts/dev/build-clock-artifact.ts`.
  */
 import { createDayClock, type DayClockHandle } from "@/components/day-clock/engine";
-import { createSky } from "@/components/day-clock/sky";
-import { css, skyAt } from "@/lib/sky";
-import { sunTimes, type ClockData, type ClockDay, type ClockItem } from "@/lib/day-clock";
+import { createDome } from "@/components/day-clock/dome";
+import type { ClockData, ClockDay, ClockItem } from "@/lib/day-clock";
 
 // "See it at 9 AM": the page's clock runs shifted, so the engine (untouched) draws any time of today.
 const RealDate = Date;
@@ -290,9 +289,9 @@ function start() {
   const root = $(".dc");
   root.querySelector("[data-dc=hap] input")?.setAttribute("switch", "");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const sky = createSky(root, reduced);
+  const dome = createDome(root, reduced);
   clock = createDayClock(root, data, {
-    sky: sky.draw,
+    face: dome.draw,
     onOpen: (href) => toast(`In the app, this opens ${whereOf(href)}.`),
     onEdit: (it) => toast(`In the app, this opens the editor for ${it.title}, right here.`),
     onNewDay: () => {
@@ -321,59 +320,17 @@ function start() {
       $("#pin-icon").textContent = emoji || "📌";
     });
   for (const b of document.querySelectorAll<HTMLElement>("[data-says]")) b.addEventListener("click", () => toast(b.dataset.says ?? ""));
-  // See it at any time of today: slide through the day (its track is the day's sky) or play it; the same example week,
-  // the sky and the line drawn as they'd be then.
-  const slider = $<HTMLInputElement>("[data-at-slider]");
-  const out = $<HTMLOutputElement>("[data-at-out]");
-  const minuteNow = () => {
-    const d = new Date();
-    return d.getHours() * 60 + d.getMinutes();
-  };
-  const fmtMin = (m: number) => `${Math.floor(m / 60) % 12 || 12}:${String(m % 60).padStart(2, "0")} ${m < 720 ? "AM" : "PM"}`;
-  const { rise, set } = sunTimes(todayStr(), tz);
-  slider.style.setProperty(
-    "--track",
-    `linear-gradient(90deg, ${Array.from({ length: 20 }, (_, i) => {
-      const m = 300 + i * 60;
-      const [, mid] = skyAt(m, rise, set);
-      return `${css(mid)} ${((i / 19) * 100).toFixed(1)}%`;
-    }).join(", ")})`,
-  );
-  let queued = 0;
-  const goTo = (m: number) => {
-    const t = new RealDate();
-    t.setHours(Math.floor(m / 60), m % 60, 0, 0);
-    shift = t.getTime() - RealDate.now();
-    slider.value = String(m);
-    out.textContent = fmtMin(m);
-    if (!queued)
-      queued = requestAnimationFrame(() => {
-        queued = 0;
-        clock?.update(data);
-      });
-  };
-  slider.value = String(Math.max(300, minuteNow()));
-  out.textContent = fmtMin(Math.max(300, minuteNow()));
-  let playing = 0;
-  const icon = document.querySelector("[data-play-icon]");
-  const stop = () => {
-    window.clearInterval(playing);
-    playing = 0;
-    icon?.setAttribute("d", "M4 2.5v11l9-5.5z");
-  };
-  slider.addEventListener("input", () => {
-    stop();
-    goTo(Number(slider.value));
-  });
-  $("[data-play]").addEventListener("click", () => {
-    if (playing) return stop();
-    let m = Number(slider.value) >= 1430 ? 300 : Number(slider.value);
-    icon?.setAttribute("d", "M4 2.5h3v11H4zM9 2.5h3v11H9z");
-    playing = window.setInterval(() => {
-      m = Math.min(1439, m + 5);
-      goTo(m);
-      if (m >= 1439) stop();
-    }, 90);
-  });
+  // See it at a time of today: the same example week, the clock and the line drawn as they'd be then.
+  for (const b of document.querySelectorAll<HTMLElement>("[data-at]"))
+    b.addEventListener("click", () => {
+      const hm = b.dataset.at ?? "";
+      if (hm) {
+        const t = new RealDate();
+        t.setHours(...(hm.split(":").map(Number) as [number, number]), 0, 0);
+        shift = t.getTime() - RealDate.now();
+      } else shift = 0;
+      for (const o of document.querySelectorAll<HTMLElement>("[data-at]")) o.setAttribute("aria-pressed", String(o === b));
+      clock?.update(data);
+    });
 }
 start();

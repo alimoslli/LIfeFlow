@@ -12,8 +12,8 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     orientation: "portrait",
     // theme_color tints the system bars; background_color is the launch screen behind the first paint (the app's page color).
-    theme_color: "#1f63bd",
-    background_color: "#f6f8fb",
+    theme_color: "#285b45",
+    background_color: "#f9f7f0",
     categories: ["productivity", "finance", "education"],
     icons: [
       { src: "/brand/lifeflow-mark-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

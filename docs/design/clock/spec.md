@@ -234,18 +234,11 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
 
 Until the real LifeFlow changes or moves to a new domain:
 
-- **LifeFlow V2**: the clock that turns into a timeline (branch `v3-day-clock-north-star`, https://lifeflow-git-v3-day-clock-north-star-ali-b745.vercel.app). Kept as it is.
-- **LifeFlow V3**: the same app built around Morrow, the Day Sky (branch `v3-day-clock`, https://lifeflow-git-v3-day-clock-ali-b745.vercel.app).
+- **LifeFlow V2**: the clock that turns into a timeline, the version where a pile of things due at the same minute is one marker ("9 assignments", commit 518d37a), with the north-star work (branch `v3-day-clock-north-star`, https://lifeflow-git-v3-day-clock-north-star-ali-b745.vercel.app).
+- **LifeFlow V3**: V2 plus Morrow, the dome and the Morrow palette (commit 4bba321; branch `v3-day-clock`, https://lifeflow-git-v3-day-clock-ali-b745.vercel.app).
 - **LifeFlow**: the live app (main, https://lifeflowweb.com).
 
-## 7c. Day Sky: the whole app (owner, 2026-11-09: "no purple ... a real looking sky"; "my complicated app lifeflow doesnt lose its features ... but looks fully like this")
-
-Concept: `docs/design/companions/day-sky.html`. Built on `v3-day-clock` only (never main).
-
-- **Today is the sky** (`components/day-clock/sky.ts`, which replaced the dome). The real sky for the minute (`lib/sky.ts`: night navy, dawn, a clear blue day, golden hour, sunset; blues and warm light only) runs full width and up behind the top bar. By day your things are tiles on the sun's path from sunrise (left) to sunset (right): the next two carry their time, things at the same minute are one pile (+n, what's on now leads), late to-dos sit at now with "!", finished things get a small gold star. Sol walks the path and stands on the tile of what you're doing. At sunset the dome turns over into a valley under the horizon (the ground goes dark with it); Sol is the moon and sleeps after 11; what you finished today shines as stars ("3 stars today"). Under the horizon, in words: now or next (with its emoji), then, today's numbers as pills (steps, sleep, spent, stars), what comes after this half. On a short screen the words give way first (after, then, pills), never the sky.
-- **Opening pours, like liquid** (1.25 s; reduced motion: a crossfade): today's half flows into its place on the line, the rest of the line runs out of its two ends and rises, the tiles fly to their stops, the stars fly home to their stops, and the sky folds into the timeline's window. The engine's own line fades in only as the pour lands, so the two never show at once. `?debug=1` exposes `lfClock.seek(p)` to hold the motion at any point.
-- **The timeline is a window onto the sky** (the engine, unchanged in what it does: stops, piles and their list cards, Done/Edit/Open, pins, Someday, months and years, the day picker, the tiles, pull down to wrap). Painted by `paintStrip`: each hour its own sky over water that reflects it, stars over the nights, a hill for every day (taller when busier) and a valley for every night inside the week, flat before and after it. Stops are tiles sitting on the line (category colour ring, dark at night, time under them, name on the card and for screen readers). Now is Sol standing on the line (tap: fold back into the sky). Day names sit under their hills.
-- **The rest of the app** wears the same brand through the tokens (`globals.css`: sky-blue accent, the sun's amber for "now" words, navy ink and nights, Fraunces for titles), a wash of this hour's sky at the top of every page (`components/sky/sky-scene.tsx`), the new mark (day above the horizon with the sun's face, night below with a moon and stars), Sol as the assistant's tab icon and on the ask button, the tab bar's soft chip, and the dawn splash. No page lost a feature; layouts are unchanged.
+Day Sky (the time-of-day sky look) is kept under the tag `lifeflow-day-sky` and is not one of the versions.
 
 ## 8. Out of scope for this step
 - Editing from the timeline beyond opening the existing editor.

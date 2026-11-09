@@ -1,10 +1,8 @@
-/* Today (v3 Day Sky): the sky (sky.ts) and the timeline it pours into (engine.ts). Page colours are the app's theme
-   tokens; the sky and the timeline's window have their own, the colours of the real sky. */
+/* The day clock (v3 home). Colours are the app's theme tokens, so it reads the same in light and dark:
+   one accent (the moss/mint green) for everything busy, the text colour for the face. */
 .dc {
   position: relative;
-  /* the sky reaches up behind the top bar, so Today only clips sideways */
-  overflow-x: clip;
-  overflow-y: visible;
+  overflow: hidden;
   /* Phones: the whole screen between the top bar and the tab bar (the assistant's line sits inside, at the foot). */
   height: clamp(500px, calc(100svh - 168px), 720px);
   user-select: none;
@@ -17,7 +15,7 @@
     height: 620px;
   }
 }
-/* Only Today's own buttons are reset; anything placed in the foot keeps its own styles. */
+/* Only the clock's own buttons are reset; anything placed in the foot keeps its own styles. */
 :where(.dc-sub, .dc-tiles, .dc-track, .dc-detail) button {
   font: inherit;
   color: inherit;
@@ -31,191 +29,227 @@
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
-.dc-hap {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* ---- the sky: full width, stars and clouds; it folds into the timeline's window as it opens ---- */
-.dc-skybg {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-.dc-stars {
+.dc canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  z-index: 1;
+  pointer-events: none;
 }
-.dc-stars circle {
-  fill: #ffffff;
-  animation: dc-tw 3.2s ease-in-out infinite alternate;
-}
-@keyframes dc-tw {
-  from {
-    opacity: 0.25;
-  }
-  to {
-    opacity: 1;
-  }
-}
-.dc-cloud {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgb(255 255 255 / 0.85), rgb(255 255 255 / 0));
-  animation: dc-drift 60s linear infinite alternate;
-}
-.dc-cloud-b {
-  animation-duration: 80s;
-  animation-direction: alternate-reverse;
-}
-@keyframes dc-drift {
-  from {
-    transform: translateX(-30px);
-  }
-  to {
-    transform: translateX(40px);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .dc-stars circle,
-  .dc-cloud {
-    animation: none;
-  }
-}
-/* Today's path, tiles and stars (sky.ts), above the timeline's window while it pours */
-.dc-dome {
+.dc > svg {
   position: absolute;
   inset: 0;
-  z-index: 6;
+  z-index: 2;
   pointer-events: none;
   overflow: visible;
 }
-.dc-dome .dc-pill-t {
-  font-weight: 650;
-  fill: #0f1a2a;
+.dc-callouts,
+.dc-micons {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
-.dc-dome .dc-badge {
-  fill: #0f1a2a;
+.dc-callouts {
+  z-index: 3;
 }
-.dc-dome .dc-badge-t,
-.dc-dome .dc-late-t {
-  font-size: 10px;
-  font-weight: 700;
-  fill: #ffffff;
+.dc-micons {
+  z-index: 4;
 }
-.dc-dome .dc-end {
-  font-size: 11.5px;
-  font-weight: 600;
+.dc-probe,
+.dc-hap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* the face */
+.dc-rim {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text) 22%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.dc-arc,
+.dc-arc-glow {
+  fill: none;
+  stroke: var(--accent);
+  stroke-linecap: round;
+}
+.dc-arc {
+  stroke-width: 3;
+}
+.dc-arc-glow {
+  stroke-width: 5;
+}
+.dc-num {
   fill: var(--text);
-  opacity: 0.72;
-}
-.dc-dome .dc-stars-t {
-  font-size: 12.5px;
+  font-size: 18px;
   font-weight: 650;
-  fill: #eef3fb;
 }
-.dc[data-sky="night"] .dc-dome .dc-pill-t,
-.dc[data-sky="night"] .dc-dome .dc-end {
-  fill: #eef3fb;
+.dc-tick {
+  stroke: color-mix(in srgb, var(--text) 70%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
 }
-.dc[data-sky="night"] .dc-dome .dc-badge {
-  fill: #e6edf8;
+/* the outer ring (the 12 hours after the next 12), the seam at the hand, and tomorrow's tint */
+.dc-outer-ring {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text) 13%, transparent);
+  stroke-width: 2;
 }
-.dc[data-sky="night"] .dc-dome .dc-badge-t {
-  fill: #0f1a2a;
+.dc-tmrw-track {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 30%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
 }
-.dc .dc-who {
+.dc-seam {
+  stroke: color-mix(in srgb, var(--text) 45%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+/* markers on the outer ring: later, so a little quieter */
+.dc-co.dc-later {
+  font-size: 0.74rem;
+  color: var(--text-2);
+}
+/* tomorrow's ring: just outside the clock, from the 12 round to the hand */
+.dc-tmrw-ring {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 34%, transparent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.dc-tmrw-end {
+  fill: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.dc-face-tag {
+  fill: var(--accent);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  stroke: var(--bg);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+.dc-face-now {
+  fill: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  stroke: var(--bg);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+.dc-step {
+  stroke: var(--accent);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.dc-accent-fill {
+  fill: var(--accent);
+}
+.dc-word {
+  fill: var(--accent);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+}
+.dc-hour,
+.dc-minute {
+  stroke: var(--text);
+  stroke-linecap: round;
+}
+.dc-hour {
+  stroke-width: 5;
+}
+.dc-minute {
+  stroke-width: 3.2;
+}
+.dc-hub {
+  fill: var(--text);
+}
+.dc-leader {
+  stroke: color-mix(in srgb, var(--text) 38%, transparent);
+  stroke-width: 1;
+}
+.dc-steps {
+  fill: var(--muted);
+  font-size: 11.5px;
+  stroke: var(--bg);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+.dc-steps-n {
+  fill: var(--text);
+  font-weight: 600;
+}
+.dc-halo {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 10;
+}
+.dc-press-ring {
+  fill: none;
+  stroke: var(--accent);
+  stroke-opacity: 0.55;
+  stroke-width: 1.5;
+}
+.dc-stop-a {
+  stop-color: var(--accent);
+  stop-opacity: 0.34;
+}
+.dc-stop-b {
+  stop-color: var(--accent);
+  stop-opacity: 0.2;
+}
+.dc-stop-c {
+  stop-color: var(--accent);
+  stop-opacity: 0.1;
+}
+
+/* markers around the rim */
+.dc-co {
   position: absolute;
   left: 0;
   top: 0;
-  width: 48px;
-  height: 48px;
-  z-index: 6;
-  pointer-events: none;
-  image-rendering: pixelated;
-}
-/* under the horizon, in words */
-.dc-words {
-  position: absolute;
-  left: 20px;
-  right: 20px;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  pointer-events: none;
-}
-.dc-w-tag {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--sun-ink);
-}
-.dc-w-now {
-  margin-top: 6px;
-  max-width: 100%;
-  font-family: var(--font-display);
-  font-size: 1.95rem;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  line-height: 1.1;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-wrap: balance;
-}
-.dc-w-then {
-  margin-top: 6px;
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-.dc-w-pills {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 14px;
-}
-.dc-w-pills span {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 16px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.84rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-.dc-w-after {
-  margin-top: 12px;
   font-size: 0.8rem;
-  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
-/* the top bar over the sky (Today, closed): light icons on a dark sky */
-html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled),
-html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
-  color: #eef3fb;
+.dc-tm {
+  display: block;
+  margin-top: 1px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
 }
-/* the whole sky is the place to tap */
+.dc-mi {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  line-height: 1;
+  will-change: transform;
+}
 .dc-hit {
   position: absolute;
   z-index: 7;
-  border-radius: 28px;
+  border-radius: 50%;
   touch-action: pan-y;
   cursor: pointer;
 }
@@ -223,12 +257,11 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   position: absolute;
   left: 0;
   right: 0;
-  z-index: 6;
   text-align: center;
   font-size: 0.8rem;
   color: var(--muted);
+  z-index: 3;
   pointer-events: none;
-  opacity: 0;
 }
 .dc-foot {
   position: absolute;
@@ -242,13 +275,44 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
 .dc-foot:empty {
   display: none;
 }
+/* "Pin something": under the tiles while the timeline is open and no card is showing */
+.dc-pinbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 8;
+  display: flex;
+  justify-content: center;
+  visibility: hidden;
+}
+.dc[data-state="timeline"] .dc-pinbar {
+  visibility: visible;
+}
+.dc-detail:not(:empty) ~ .dc-pinbar {
+  display: none;
+}
+.dc-pinbar button {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.dc-hint-wrap {
+  z-index: 6;
+  opacity: 0;
+}
 
-/* ---- "Today" on the sky, and the day picker once it's open ---- */
+/* "Today ⌄" and the day picker */
 .dc-sub {
   position: absolute;
   left: 0;
   right: 0;
-  top: 0;
   height: 44px;
   z-index: 8;
 }
@@ -260,11 +324,8 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--sky-ink, var(--text));
-  font-family: var(--font-display);
-  font-size: 1.65rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-size: 1.15rem;
+  font-weight: 500;
 }
 .dc-days {
   position: absolute;
@@ -297,8 +358,8 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   flex: none;
 }
 .dc-days .dc-on {
-  background: var(--text);
-  color: var(--bg);
+  background: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
   padding: 0 13px;
   flex: none;
@@ -310,214 +371,12 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   }
 }
 
-/* ---- the timeline: a window onto the sky, a hill for every day and a valley for every night ---- */
-.dc-trackwrap {
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  z-index: 5;
-  border-radius: 28px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  touch-action: pan-x;
-  scrollbar-width: none;
-  overscroll-behavior-x: contain;
-  pointer-events: none;
-  box-shadow:
-    0 1px 2px rgb(10 20 40 / 0.08),
-    0 18px 36px -18px rgb(10 20 40 / 0.45);
-}
-.dc-trackwrap::-webkit-scrollbar {
-  display: none;
-}
-.dc[data-open="true"] .dc-trackwrap,
-.dc[data-open="true"] .dc-days,
-.dc[data-open="true"] .dc-tiles,
-.dc[data-open="true"] .dc-detail {
-  pointer-events: auto;
-}
-.dc-track {
-  position: relative;
-  height: 100%;
-}
-.dc[data-state="timeline"] .dc-track {
-  cursor: copy;
-}
-.dc[data-state="timeline"] .dc-track :is(.dc-node, .dc-now) {
-  cursor: pointer;
-}
-.dc-strip {
-  position: absolute;
-  top: 0;
-  pointer-events: none;
-}
-/* the line and its stops arrive last as the window opens (--tline, set by the engine) */
-.dc-strip-line,
-.dc-mid,
-.dc-node,
-.dc-now {
-  opacity: var(--tline, 1);
-}
-/* a day's name under its hill; a month, a year or "Someday" further out */
-.dc-mid {
-  position: absolute;
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-.dc-mid span {
-  display: block;
-  color: #ffffff;
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  text-shadow: 0 1px 6px rgb(0 0 0 / 0.3);
-}
-/* a stop: a tile sitting on the line, its time under it, its name for screen readers (and on its card) */
-.dc-node {
-  position: absolute;
-  width: 44px;
-  height: 44px;
-  margin: -22px 0 0 -22px;
-  display: block;
-}
-.dc-n-ic {
-  position: absolute;
-  left: 7px;
-  top: 7px;
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: #ffffff;
-  box-shadow:
-    inset 0 0 0 2px var(--c, #06b0cc),
-    0 2px 6px rgb(10 20 40 / 0.22);
-  font-size: 16px;
-  line-height: 1;
-  transition: transform 0.18s ease;
-}
-.dc-nt .dc-n-ic {
-  background: #14223b;
-}
-.dc-fin .dc-n-ic {
-  opacity: 0.85;
-}
-.dc-fin .dc-n-ic::after {
-  content: "✦";
-  position: absolute;
-  right: -6px;
-  top: -9px;
-  color: #ffd166;
-  font-size: 13px;
-  text-shadow: 0 0 2px #f2a93b;
-}
-.dc-late .dc-n-ic {
-  box-shadow:
-    inset 0 0 0 2px #ef4444,
-    0 2px 6px rgb(10 20 40 / 0.22);
-}
-.dc-late .dc-n-ic::after {
-  content: "!";
-  position: absolute;
-  right: -7px;
-  top: -7px;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: #ef4444;
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 15px;
-  text-align: center;
-}
-.dc-sel .dc-n-ic {
-  transform: scale(1.14);
-  box-shadow:
-    inset 0 0 0 2.5px var(--c, #06b0cc),
-    0 0 0 4px rgb(255 255 255 / 0.8),
-    0 4px 12px rgb(10 20 40 / 0.3);
-}
-.dc-n-dot {
-  display: none;
-}
-.dc-n-t {
-  position: absolute;
-  top: 40px;
-  left: -24px;
-  right: -24px;
-  text-align: center;
-  font-size: 0.66rem;
-  font-weight: 650;
-  color: #ffffff;
-  text-shadow: 0 1px 4px rgb(0 0 0 / 0.4);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-.dc-n-n {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-/* "+2" on a stack's tile */
-.dc-n-more {
-  position: absolute;
-  top: -9px;
-  right: -11px;
-  min-width: 20px;
-  padding: 1px 5px;
-  border-radius: 10px;
-  background: #0f1a2a;
-  color: #ffffff;
-  font-size: 0.65rem;
-  font-weight: 700;
-  line-height: 16px;
-  text-align: center;
-}
-.dc-nt .dc-n-more {
-  background: #e6edf8;
-  color: #0f1a2a;
-}
-/* now: the companion standing on the line (a tap folds it all back into the sky) */
-.dc-now {
-  position: absolute;
-  width: 48px;
-  height: 48px;
-  transform: translate(-50%, -100%);
-}
-.dc-now-who {
-  display: block;
-  width: 48px;
-  height: 48px;
-  image-rendering: pixelated;
-}
-.dc-now-t {
-  position: absolute;
-  left: 50%;
-  top: calc(100% + 10px);
-  transform: translateX(-50%);
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: #0f1a2a;
-  color: #ffffff;
-  font-size: 0.66rem;
-  font-weight: 700;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---- the tiles: the day's shift, class and deadline ---- */
+/* the tiles: the day's shift, class and deadline */
 .dc-tiles {
   position: absolute;
   left: 0;
   right: 0;
-  height: 50px;
+  height: 58px;
   display: flex;
   justify-content: center;
   gap: 8px;
@@ -528,7 +387,7 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
 .dc-tile {
   flex: 1 1 0;
   max-width: 160px;
-  height: 50px;
+  height: 58px;
   padding: 0 12px;
   border-radius: 18px;
   background: var(--surface);
@@ -543,7 +402,7 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   flex: none;
   width: 20px;
   height: 20px;
-  color: var(--sun);
+  color: var(--accent);
 }
 .dc-tx {
   display: flex;
@@ -599,7 +458,216 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   }
 }
 
-/* ---- one quiet card, on a tap ---- */
+/* the line */
+.dc-trackwrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 156px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  z-index: 5;
+  touch-action: pan-x;
+  scrollbar-width: none;
+  pointer-events: none;
+  clip-path: inset(0 50% 0 50%);
+  overscroll-behavior-x: contain;
+}
+.dc-trackwrap::-webkit-scrollbar {
+  display: none;
+}
+.dc[data-open="true"] .dc-trackwrap,
+.dc[data-open="true"] .dc-days,
+.dc[data-open="true"] .dc-tiles,
+.dc[data-open="true"] .dc-detail {
+  pointer-events: auto;
+}
+.dc-track {
+  position: relative;
+  height: 100%;
+}
+.dc[data-state="timeline"] .dc-track {
+  cursor: copy;
+}
+.dc[data-state="timeline"] .dc-track .dc-node,
+.dc[data-state="timeline"] .dc-track .dc-now {
+  cursor: pointer;
+}
+.dc-line {
+  position: absolute;
+  left: 0;
+  top: 69px;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--accent) 50%, transparent) 0,
+    color-mix(in srgb, var(--accent) 50%, transparent) var(--now-x),
+    var(--accent) var(--now-x)
+  );
+}
+.dc-band {
+  position: absolute;
+  top: 67px;
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  opacity: var(--tlab, 1);
+}
+.dc-mid {
+  position: absolute;
+  top: 56px;
+  width: 1px;
+  height: 28px;
+  background: var(--border-strong);
+  opacity: var(--tlab, 1);
+}
+.dc-mid span {
+  position: absolute;
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+/* further out: a month or a year, marked once; and the Someday stretch at the end */
+.dc-mid.dc-era {
+  background: var(--border-strong);
+}
+.dc-mid.dc-era span {
+  color: var(--text-2);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.dc-someday .dc-n-dot {
+  border-color: var(--muted);
+}
+/* tonight's midnight on the line: where tomorrow starts, said the same way as on the clock */
+.dc-mid.dc-next {
+  width: 2px;
+  margin-left: -0.5px;
+  background: var(--accent);
+}
+.dc-mid.dc-next span {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.dc-node {
+  position: absolute;
+  top: 0;
+  width: 92px;
+  height: 156px;
+  margin-left: -46px;
+  display: block;
+}
+.dc-n-ic {
+  position: absolute;
+  left: 50%;
+  top: 21px;
+  width: 30px;
+  height: 30px;
+  margin-left: -15px;
+  display: grid;
+  place-items: center;
+  font-size: 27px;
+  line-height: 1;
+}
+.dc-n-dot {
+  position: absolute;
+  left: 50%;
+  top: 64px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--bg);
+}
+.dc-past .dc-n-dot {
+  background: var(--accent);
+}
+.dc-sel .dc-n-dot {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.dc-n-t {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 86px;
+  font-size: 0.8rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  opacity: var(--tlab, 1);
+}
+.dc-n-n {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 104px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.25;
+  opacity: var(--tlab, 1);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding: 0 2px;
+}
+.dc-mapped .dc-n-ic {
+  visibility: hidden;
+}
+/* the now pill: a 44 px button around the 26 px pill you see */
+.dc-now {
+  position: absolute;
+  top: 15px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  transform: translateX(-50%);
+}
+.dc-now-pill {
+  height: 26px;
+  padding: 0 10px 0 7px;
+  border-radius: 13px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.dc-now::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 35px;
+  width: 2px;
+  height: 20px;
+  margin-left: -1px;
+  background: var(--accent);
+}
+.dc-now i {
+  position: absolute;
+  left: 50%;
+  top: 49px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* one quiet card, on a tap */
 .dc-detail:empty {
   display: none;
 }
@@ -611,8 +679,9 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   margin: 0 auto;
   z-index: 8;
   background: var(--surface);
-  box-shadow: var(--shadow-lift);
-  border-radius: 26px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 22px;
   padding: 16px;
   display: flex;
   gap: 14px;
@@ -621,13 +690,13 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   pointer-events: none;
 }
 .dc-d-ic {
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
   background: var(--surface-2);
   display: grid;
   place-items: center;
-  font-size: 25px;
+  font-size: 24px;
   flex: none;
 }
 .dc-d-body {
@@ -636,18 +705,14 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
 }
 .dc-d-k {
   font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--sun-ink);
+  color: var(--accent);
   margin-bottom: 3px;
 }
 .dc-d-t {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
 }
 .dc-d-w {
   font-size: 0.9rem;
@@ -701,57 +766,163 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
 }
+/* "+2" on a stack's icon (placed against the icon, which is already positioned) and on a merged marker */
+.dc-n-more {
+  position: absolute;
+  top: -4px;
+  right: -12px;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+/* tomorrow's markers: the same green as TOMORROW on the ring, instead of a caption under each */
+.dc-co.dc-tmrw,
+.dc-co.dc-tmrw .dc-co-sub {
+  color: var(--accent);
+}
+/* the time under a named pile on the clock ("11:59 PM" under "9 assignments due tonight") */
+.dc-co-sub {
+  display: block;
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.dc-more {
+  margin-left: 4px;
+  color: var(--accent);
+  font-weight: 700;
+}
 .dc-d-acts {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
 }
-.dc .dc-d-done,
-.dc .dc-d-edit,
-.dc .dc-d-open {
+.dc .dc-d-done {
   height: 44px;
   padding: 0 16px;
-  border-radius: 15px;
+  border-radius: 22px;
+  background: var(--accent);
+  color: var(--accent-text);
   font-size: 0.85rem;
   font-weight: 600;
 }
-.dc .dc-d-done {
-  background: var(--text);
-  color: var(--bg);
-}
 .dc .dc-d-edit,
 .dc .dc-d-open {
-  background: color-mix(in srgb, var(--text) 7%, transparent);
-  color: var(--text);
+  position: relative;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 18px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
-/* ---- "Pin something": under the tiles while the timeline is open and no card is showing ---- */
-.dc-pinbar {
+/* ---- Morrow's dome (owner, 2026-11-09): the day as the sky; drawn by dome.ts ---- */
+.dc-dome {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  overflow: visible;
+}
+/* (.dc canvas stretches the clock's own canvas; the companion keeps its size) */
+.dc .dc-who {
+  position: absolute;
+  inset: auto;
   left: 0;
-  right: 0;
-  z-index: 8;
-  display: flex;
-  justify-content: center;
-  visibility: hidden;
+  top: 0;
+  width: 36px;
+  height: 36px;
+  z-index: 3;
+  pointer-events: none;
+  image-rendering: pixelated;
 }
-.dc[data-state="timeline"] .dc-pinbar {
-  visibility: visible;
+.dc-sky {
+  stroke: none;
 }
-.dc-detail:not(:empty) ~ .dc-pinbar {
-  display: none;
+.dc-sky-dawn {
+  fill: color-mix(in srgb, var(--sun) 26%, transparent);
 }
-.dc-pinbar button {
-  min-height: 44px;
-  padding: 0 18px;
-  border-radius: 22px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: var(--shadow);
-  font-size: 0.9rem;
+.dc-sky-day {
+  fill: color-mix(in srgb, #8fb6ff 22%, transparent);
+}
+.dc-sky-gold {
+  fill: color-mix(in srgb, var(--sun) 32%, transparent);
+}
+.dc-sky-night {
+  fill: var(--night);
+}
+.dc-dome-track {
+  fill: none;
+  stroke: var(--accent-soft);
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+.dc-dome-track.dc-night {
+  stroke: color-mix(in srgb, #8f86e0 40%, var(--night));
+}
+.dc-dome-block {
+  fill: none;
+  stroke: var(--sun);
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+.dc-dome-block.dc-night {
+  stroke: #9d92ff;
+}
+.dc-dome-dot {
+  fill: var(--sun);
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+.dc-horizon {
+  fill: var(--accent);
+}
+.dc-star {
+  fill: #ffd77a;
+}
+.dc-dome-ic,
+.dc-dome-end {
+  font-size: 17px;
+}
+.dc-dome-t {
+  fill: var(--muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+.dc-dome-stars {
+  fill: #f1eeff;
+  font-size: 11px;
   font-weight: 600;
+}
+.dc-dome-tag {
+  fill: var(--accent);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.dc-dome-now {
+  fill: var(--text);
+  font-size: 17px;
+  font-weight: 600;
+}
+.dc-dome-stat {
+  fill: var(--muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+.dc-dome-after {
+  fill: var(--text-2);
+  font-size: 12.5px;
 }

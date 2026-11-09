@@ -46,10 +46,6 @@ export function HealthWeek({ metrics, today }: { metrics: Metric[]; today: strin
               {fmt(m.average)} <span className="text-sm font-normal text-text-2">{m.unit}</span>
             </p>
             <div className="mt-3 flex h-8 items-end gap-1" aria-hidden>
-              {/* always a week of bars: days with nothing yet are faint stubs, so one day of data isn't one big bar */}
-              {Array.from({ length: Math.max(0, 7 - m.series.slice(-7).length) }, (_, i) => (
-                <span key={`empty-${i}`} className="h-[8%] flex-1 rounded-full bg-accent/10" />
-              ))}
               {m.series.slice(-7).map((x) => (
                 <span
                   key={x.day}

@@ -1,16 +1,14 @@
-<title>Day Sky in LifeFlow</title>
+<title>LifeFlow Day Clock</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: the app's Today screen in one phone-width column (top bar, the clock, the ask bar, the tab bar), on the
    app's own tokens from src/app/globals.css, so it looks and reads exactly like LifeFlow in light and dark. */
 {{TOKENS}}
 :root {
   --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-geist-sans: "Geist";
 }
 [hidden] {
   display: none !important;
@@ -91,65 +89,30 @@ input:focus-visible {
   font-weight: 600;
 }
 .times {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 10px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-inline: -4px;
+  padding-inline: 4px;
 }
-.times .play {
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  background: var(--text);
-  color: var(--bg);
-  display: grid;
-  place-items: center;
+.times::-webkit-scrollbar {
+  display: none;
 }
-.times .play svg {
-  width: 14px;
-  height: 14px;
-}
-.times output {
-  min-width: 64px;
-  text-align: right;
-  font-size: 0.85rem;
-  font-weight: 600;
+.times button {
+  flex: none;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 17px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 0.8rem;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
-input[type="range"].dayslider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 40px;
-  background: transparent;
-  margin: 0;
-}
-input[type="range"].dayslider::-webkit-slider-runnable-track {
-  height: 12px;
-  border-radius: 6px;
-  background: var(--track);
-}
-input[type="range"].dayslider::-moz-range-track {
-  height: 12px;
-  border-radius: 6px;
-  background: var(--track);
-}
-input[type="range"].dayslider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 24px;
-  height: 24px;
-  margin-top: -6px;
-  border-radius: 50%;
-  background: #ffd77a;
-  border: 3px solid #fff;
-  box-shadow: 0 3px 10px rgb(245 165 36 / 0.6);
-}
-input[type="range"].dayslider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #ffd77a;
-  border: 3px solid #fff;
+.times button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-text);
 }
 /* the assistant's one line, in the clock's foot (as in the app) */
 .ast {
@@ -423,7 +386,7 @@ input[type="range"].dayslider::-moz-range-thumb {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
-/* ---- Today: src/components/day-clock/day-clock.css, as the app ships it ---- */
+/* ---- the day clock: src/components/day-clock/day-clock.css, as the app ships it ---- */
 {{CLOCK_CSS}}
 /* in this page the concept bar sits above the clock, so the clock gives it that room */
 .dc {
@@ -443,25 +406,55 @@ input[type="range"].dayslider::-moz-range-thumb {
       </button>
     </div>
   </header>
-  <h1 class="vh">LifeFlow v3: Today as the sky</h1>
+  <h1 class="vh">LifeFlow v3: Today as a day clock</h1>
   <div class="concept">
-    <p><b>v3 concept.</b> A made-up student's week on your own sky. Slide or play the day, tap the sky, pin things. Nothing is saved.</p>
-    <div class="times">
-      <button type="button" class="play" data-play aria-label="Play the day"><svg viewBox="0 0 16 16" aria-hidden="true"><path data-play-icon d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg></button>
-      <input type="range" class="dayslider" data-at-slider min="300" max="1439" step="1" aria-label="Time of day">
-      <output data-at-out></output>
+    <p><b>v3 concept.</b> A made-up student's week on your own clock. Tap the clock, pin things. Nothing is saved.</p>
+    <div class="times" role="group" aria-label="See it at a time of day">
+      <button type="button" data-at="" aria-pressed="true">Now</button>
+      <button type="button" data-at="07:00" aria-pressed="false">7 AM</button>
+      <button type="button" data-at="09:00" aria-pressed="false">9 AM</button>
+      <button type="button" data-at="13:00" aria-pressed="false">1 PM</button>
+      <button type="button" data-at="18:00" aria-pressed="false">6 PM</button>
+      <button type="button" data-at="22:30" aria-pressed="false">10:30 PM</button>
     </div>
   </div>
 
-  <div class="dc" data-open="false" data-sky-top>
-    <div data-dc="skybg" class="dc-skybg" aria-hidden="true">
-      <svg data-dc="stars" class="dc-stars"></svg>
-      <span data-dc="cloud" class="dc-cloud" style="left:8%;top:34%;width:150px;height:46px"></span>
-      <span data-dc="cloud" class="dc-cloud dc-cloud-b" style="left:58%;top:52%;width:120px;height:36px"></span>
-    </div>
+  <div class="dc" data-open="false">
+    <canvas data-dc="goo" aria-hidden="true"></canvas>
+    <svg data-dc="face" aria-hidden="true">
+      <defs>
+        <radialGradient id="dc-press">
+          <stop offset="0" class="dc-stop-a" />
+          <stop offset=".8" class="dc-stop-b" />
+          <stop offset="1" class="dc-stop-c" />
+        </radialGradient>
+        <filter id="dc-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" /></filter>
+        <filter id="dc-halo" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="12" /></filter>
+      </defs>
+      <g data-dc="leaders"></g>
+      <g data-dc="faceG">
+        <circle data-dc="halo" class="dc-halo" filter="url(#dc-halo)" opacity="0" />
+        <g data-dc="press" opacity="0">
+          <circle fill="url(#dc-press)" />
+          <circle class="dc-press-ring" />
+        </g>
+        <path data-dc="rim" class="dc-rim" />
+        <g data-dc="arcs"></g>
+        <g data-dc="ticks"></g>
+        <g data-dc="day"></g>
+        <g data-dc="hands">
+          <line data-dc="hour" class="dc-hour" />
+          <line data-dc="minute" class="dc-minute" />
+          <circle data-dc="hub" class="dc-hub" r="4.2" />
+        </g>
+        <g data-dc="steps"></g>
+      </g>
+    </svg>
     <svg data-dc="dome" class="dc-dome" aria-hidden="true"></svg>
     <canvas data-dc="who" class="dc-who" width="16" height="16" aria-hidden="true"></canvas>
-    <div data-dc="words" class="dc-words" aria-hidden="true"></div>
+    <div data-dc="callouts" class="dc-callouts" aria-hidden="true"></div>
+    <div data-dc="micons" class="dc-micons" aria-hidden="true"></div>
+    <div data-dc="hint" class="dc-hint">Tap the clock to open your day</div>
     <div data-dc="sub" class="dc-sub">
       <button type="button" data-dc="today" class="dc-todaybtn" aria-label="Open today as a timeline">
         Today
@@ -478,7 +471,7 @@ input[type="range"].dayslider::-moz-range-thumb {
         Pin something
       </button>
     </div>
-    <div data-dc="hintWrap" class="dc-hint">Pull down to fold it back into the sky</div>
+    <div data-dc="hintWrap" class="dc-hint dc-hint-wrap">Pull down to wrap your day</div>
     <div data-dc="hit" class="dc-hit" role="button" tabindex="0" aria-label="Open your day as a timeline"></div>
     <div data-dc="foot" class="dc-foot">
       <section aria-label="From your assistant">
@@ -489,6 +482,7 @@ input[type="range"].dayslider::-moz-range-thumb {
       </section>
     </div>
     <label data-dc="hap" class="dc-hap" aria-hidden="true"><input type="checkbox" tabindex="-1"></label>
+    <span data-dc="probe" class="dc-probe" aria-hidden="true"></span>
   </div>
 
   <button type="button" class="ask" data-says="In the app, this opens a chat with your assistant.">Message your assistant…</button>
