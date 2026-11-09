@@ -17,6 +17,12 @@ export function getDb(): Database {
   return globalForDb.__bfDb;
 }
 
+/** The shared pool, for features that need one dedicated connection (advisory locks). */
+export function getPool(): Pool {
+  getDb();
+  return globalForDb.__bfPool!;
+}
+
 export async function closeDb() {
   await globalForDb.__bfPool?.end();
   globalForDb.__bfPool = undefined;

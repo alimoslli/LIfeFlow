@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/server/db/client";
+import { withJobLock } from "@/server/db/job-lock";
 import { connectionRegistry, users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
 import { syncGoogleCalendar, syncGoogleEmail } from "@/server/integrations/google";
-import { syncMicrosoftCalendar } from "@/server/integrations/microsoft";
+import { microsoftNeedsReauth, syncMicrosoftConnection } from "@/server/integrations/microsoft";
 import { plaidNeedsReauth, syncConnection } from "@/server/integrations/plaid";
 import { markCanvasError, syncCanvas } from "@/server/integrations/canvas";
 
@@ -25,6 +26,16 @@ export async function GET(req: Request) {
     const got = req.headers.get("authorization") ?? "";
     const want = `Bearer ${secret}`;
     if (!secret || got.length !== want.length || !timingSafeEqual(Buffer.from(got), Buffer.from(want))) throw new HttpError(401, "Unauthorized");
+    const locked = await withJobLock("cron:sync", runSync);
+    if (locked.skipped) return NextResponse.json({ ok: true, skipped: true });
+    return NextResponse.json({ ok: true, ...locked.value });
+  } catch (e) {
+    return errorResponse(e);
+  }
+}
+
+async function runSync() {
+  {
     const rows = await getDb()
       .select({ userId: connectionRegistry.userId, integrationId: connectionRegistry.integrationId, provider: connectionRegistry.provider, tz: users.timezone })
       .from(connectionRegistry)
@@ -40,14 +51,25 @@ export async function GET(req: Request) {
             skipped++;
             continue;
           }
-          await syncConnection(r.userId, r.integrationId, r.tz);
+          // The same connection may be syncing from a webhook right now; that run does the work.
+          const done = await withJobLock(`plaid-sync:${r.integrationId}`, () => syncConnection(r.userId, r.integrationId, r.tz));
+          if (done.skipped) {
+            skipped++;
+            continue;
+          }
         } else if (r.provider === "google")
           await withUser(r.userId, async (s) => {
             await syncGoogleCalendar(s, r.tz);
             await syncGoogleEmail(s);
           });
-        else if (r.provider === "outlook") await withUser(r.userId, (s) => syncMicrosoftCalendar(s, r.tz));
-        else if (r.provider === "canvas")
+        else if (r.provider === "outlook") {
+          // Like Plaid: a connection waiting for Reconnect is skipped, and a failure is recorded on it (never stops the others).
+          if (await microsoftNeedsReauth(r.userId)) {
+            skipped++;
+            continue;
+          }
+          await syncMicrosoftConnection(r.userId, r.tz);
+        } else if (r.provider === "canvas")
           await withUser(r.userId, (s) => syncCanvas(s, fetch, r.tz)).catch(async (e) => {
             await withUser(r.userId, (s) => markCanvasError(s, e));
             throw e;
@@ -57,8 +79,6 @@ export async function GET(req: Request) {
         failed++; // the error is recorded on the connection for the user to see
       }
     }
-    return NextResponse.json({ ok: true, synced: ok, failed, skipped });
-  } catch (e) {
-    return errorResponse(e);
+    return { synced: ok, failed, skipped };
   }
 }

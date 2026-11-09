@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/server/db/client";
+import { withJobLock } from "@/server/db/job-lock";
 import { users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
@@ -36,14 +37,19 @@ export async function POST(req: Request) {
       );
     } else if (type === "ITEM" && code === "LOGIN_REPAIRED") {
       await withUser(owner.userId, (s) => markLoginRepaired(s, owner.integrationId));
-      await syncConnection(owner.userId, owner.integrationId, u?.tz ?? "UTC").catch(() => undefined);
+      await syncOnce(owner.userId, owner.integrationId, u?.tz ?? "UTC");
     } else if (type === "ITEM" && code === "NEW_ACCOUNTS_AVAILABLE") {
       await withUser(owner.userId, (s) => recordNewAccountsAvailable(s, owner.integrationId));
     } else if ((type === "TRANSACTIONS" || type === "HOLDINGS" || type === "LIABILITIES") && SYNC.has(code)) {
-      await syncConnection(owner.userId, owner.integrationId, u?.tz ?? "UTC").catch(() => undefined); // errors are recorded on the connection
+      await syncOnce(owner.userId, owner.integrationId, u?.tz ?? "UTC"); // errors are recorded on the connection
     }
     return NextResponse.json({ ok: true });
   } catch (e) {
     return errorResponse(e);
   }
+}
+
+/** One sync per connection at a time: a repeated webhook (or the cron) arriving mid-sync is skipped, the running one has the data. */
+async function syncOnce(userId: string, integrationId: string, tz: string) {
+  await withJobLock(`plaid-sync:${integrationId}`, () => syncConnection(userId, integrationId, tz).catch(() => undefined));
 }

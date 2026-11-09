@@ -1,10 +1,12 @@
 import { createHash, randomBytes } from "node:crypto";
-import { and, eq, gte, lte, notInArray } from "drizzle-orm";
+import { and, eq, gte, lte, notInArray, sql } from "drizzle-orm";
 import { addDaysStr, localDateOf, startOfLocalDay } from "@/lib/dates";
 import { truncate } from "@/lib/utils";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { calendarEvents, connectionRegistry, integrations } from "../db/schema";
+import { getDb } from "../db/client";
 import { withUser, type UserScope } from "../db/with-user";
+import { recordError } from "../services/error-reports";
 import { upsertProviderEvent } from "./calendar-upsert";
 import { fetchWithTimeout, ProviderTimeout, readJson } from "./timeout";
 
@@ -142,7 +144,11 @@ export async function saveMicrosoftConnection(scope: UserScope, creds: Creds, em
     lastError: null,
   };
   const existing = await getMicrosoftConnection(scope);
-  if (existing) await scope.tx.update(integrations).set(values).where(eq(integrations.id, existing.id));
+  if (existing)
+    await scope.tx
+      .update(integrations)
+      .set({ ...values, metadata: sql`${integrations.metadata} - 'needsReauth'` })
+      .where(eq(integrations.id, existing.id));
   else {
     const [row] = await scope.tx
       .insert(integrations)
@@ -167,7 +173,12 @@ async function accessToken(scope: UserScope, f: Fetch, force = false): Promise<s
     await withUser(scope.userId, (s2) =>
       s2.tx
         .update(integrations)
-        .set({ status: "error", lastError: revoked ? "Microsoft access was removed. Reconnect Microsoft." : "Couldn't refresh Microsoft access." })
+        .set({
+          status: "error",
+          lastError: revoked ? "Microsoft access was removed. Reconnect Microsoft." : "Couldn't refresh Microsoft access.",
+          // An expired or revoked token can only be fixed by the user: the cron stops retrying until they reconnect.
+          metadata: revoked ? sql`${integrations.metadata} || '{"needsReauth": true}'::jsonb` : sql`${integrations.metadata} - 'needsReauth'`,
+        })
         .where(eq(integrations.id, conn.id)),
     );
     throw new MicrosoftError(
@@ -297,9 +308,47 @@ export async function syncMicrosoftCalendar(scope: UserScope, tz: string, now = 
     .returning({ id: calendarEvents.id });
   await scope.tx
     .update(integrations)
-    .set({ lastSyncedAt: now, lastError: null, status: "connected" })
+    .set({ lastSyncedAt: now, lastError: null, status: "connected", metadata: sql`${integrations.metadata} - 'needsReauth'` })
     .where(and(eq(integrations.userId, scope.userId), eq(integrations.provider, "outlook")));
   return { added, updated, removed: stale.length, total: ids.length };
+}
+
+/** True while the user must reconnect Microsoft (expired or revoked token); the cron skips the connection until then. */
+export async function microsoftNeedsReauth(userId: string) {
+  return withUser(userId, async (s) => {
+    const c = await getMicrosoftConnection(s);
+    return c?.status === "error" && c.metadata?.needsReauth === true;
+  });
+}
+
+/**
+ * Cron/background entry point: syncs in its own transaction. On failure the error is recorded in a separate transaction
+ * (the sync's own writes roll back): a readable message on the connection, "needs reconnect" for token errors, and one
+ * scrubbed error report with no tokens or calendar content. Rethrows so the caller can count it.
+ */
+export async function syncMicrosoftConnection(userId: string, tz: string, now = new Date(), f: Fetch = fetch) {
+  try {
+    return await withUser(userId, (s) => syncMicrosoftCalendar(s, tz, now, f));
+  } catch (e) {
+    const reauth = e instanceof MicrosoftError && e.reauth;
+    // Only our own fixed messages are stored; anything else becomes a generic line.
+    const msg = e instanceof MicrosoftError ? e.message : "Microsoft sync failed. Please try again.";
+    await withUser(userId, async (s) => {
+      await s.tx
+        .update(integrations)
+        .set({
+          lastError: msg,
+          ...(reauth && { status: "error" as const, metadata: sql`${integrations.metadata} || '{"needsReauth": true}'::jsonb` }),
+        })
+        .where(and(eq(integrations.userId, userId), eq(integrations.provider, "outlook")));
+    }).catch(() => undefined);
+    await recordError(getDb(), {
+      source: "server",
+      route: "/api/cron/sync",
+      message: `microsoft sync failed: ${reauth ? "needs reconnect" : e instanceof Error ? e.name : "Error"}`,
+    }).catch(() => undefined);
+    throw e;
+  }
 }
 
 /** Disconnects: removes stored tokens and mirrored events. (Microsoft has no token-revoke endpoint for this flow;

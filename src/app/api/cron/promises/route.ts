@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { getDb } from "@/server/db/client";
+import { withJobLock } from "@/server/db/job-lock";
 import { users } from "@/server/db/schema";
 import { withUser } from "@/server/db/with-user";
 import { errorResponse, HttpError } from "@/server/http";
@@ -22,6 +23,16 @@ export async function GET(req: Request) {
     const got = req.headers.get("authorization") ?? "";
     const want = `Bearer ${secret}`;
     if (!secret || got.length !== want.length || !timingSafeEqual(Buffer.from(got), Buffer.from(want))) throw new HttpError(401, "Unauthorized");
+    const locked = await withJobLock("cron:promises", runPromises);
+    if (locked.skipped) return NextResponse.json({ ok: true, skipped: true });
+    return NextResponse.json({ ok: true, ...locked.value });
+  } catch (e) {
+    return errorResponse(e);
+  }
+}
+
+async function runPromises() {
+  {
     const send = await webPushSender();
     const all = await getDb().select({ id: users.id, tz: users.timezone, prefs: users.preferences, kind: users.accountKind }).from(users);
     let messages = 0;
@@ -43,8 +54,6 @@ export async function GET(req: Request) {
         }).catch(() => {});
       }
     }
-    return NextResponse.json({ ok: true, users: all.length, messages, sent, failed });
-  } catch (e) {
-    return errorResponse(e);
+    return { users: all.length, messages, sent, failed };
   }
 }
