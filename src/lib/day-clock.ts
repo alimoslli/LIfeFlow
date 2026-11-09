@@ -145,3 +145,63 @@ export function titleFor(title: string, origin: AgendaOrigin): { title: string; 
   }
   return { title, subtitle: null };
 }
+
+/** An exam (or quiz, midterm, final, test), by its title. */
+export const isExam = (it: Pick<ClockItem, "title">) => /\b(exam|midterm|final|quiz|test)\b/i.test(it.title);
+
+/**
+ * A pile of one kind says what it is ("9 assignments", "3 to-dos", "2 bills"); a mixed pile is null and shows "+N"
+ * (owner, 2026-11-08: "just put one emoji and say 9 assignments due tonight at 11:59").
+ */
+export function pileOf(g: ClockItem[]): string | null {
+  if (g.length < 2) return null;
+  const all = (f: (x: ClockItem) => boolean) => g.every(f);
+  const noun = all(isExam)
+    ? "exams"
+    : all((x) => x.origin === "assignment")
+      ? "assignments"
+      : all((x) => x.origin === "task" || x.origin === "reminder")
+        ? "to-dos"
+        : all((x) => x.origin === "assignment" || x.origin === "task")
+          ? "deadlines"
+          : all((x) => x.origin === "bill")
+            ? "bills"
+            : null;
+  return noun ? `${g.length} ${noun}` : null;
+}
+
+/**
+ * About when the sun rises and sets on a day, in minutes from that day's local midnight (Morrow: the day is the sky).
+ * There's no location, so it uses the time zone: its standard meridian for longitude and 38°N for latitude, with the
+ * equation of time and daylight saving. Close enough to draw the sky (within about half an hour in most of a zone);
+ * never shown as an exact time.
+ */
+export function sunTimes(date: string, tz: string): { rise: number; set: number } {
+  const [y, m, d] = date.split("-").map(Number);
+  const offsetAt = (when: number) => {
+    const p = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+    }).formatToParts(new Date(when));
+    const v = (k: string) => Number(p.find((x) => x.type === k)?.value ?? 0);
+    return (Date.UTC(v("year"), v("month") - 1, v("day"), v("hour"), v("minute")) - when) / 60000;
+  };
+  const noonUtc = Date.UTC(y, m - 1, d, 12);
+  const off = offsetAt(noonUtc);
+  const std = Math.min(offsetAt(Date.UTC(y, 0, 15, 12)), offsetAt(Date.UTC(y, 6, 15, 12)));
+  const n = Math.round((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 0)) / 86400000);
+  const b = (2 * Math.PI * (n - 81)) / 364;
+  const eot = 9.87 * Math.sin(2 * b) - 7.53 * Math.cos(b) - 1.5 * Math.sin(b);
+  const noon = 720 - eot + (off - std);
+  const rad = Math.PI / 180;
+  const decl = 23.44 * Math.sin((2 * Math.PI * (284 + n)) / 365) * rad;
+  const lat = 38 * rad;
+  const cosH = (Math.sin(-0.833 * rad) - Math.sin(lat) * Math.sin(decl)) / (Math.cos(lat) * Math.cos(decl));
+  const half = (Math.acos(Math.max(-1, Math.min(1, cosH))) / rad) * 4;
+  return { rise: Math.round(noon - half), set: Math.round(noon + half) };
+}

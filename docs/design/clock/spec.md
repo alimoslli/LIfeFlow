@@ -215,6 +215,21 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
   - the layout, touch-target and core tests, updated for the four tabs.
 - **For screenshots:** `scripts/dev/seed-clock-look.ts` gives a local account a made-up week (`--busy` adds a full life on top: a pile of deadlines tonight, a reminder, a weekly lecture, a trial, rent, a money goal and ten undated to-dos). It refuses any database that isn't on localhost.
 
+## 7b. The dome (owner, 2026-11-09: Morrow's sky, built into v3)
+- **Today is a half dome over a horizon.**
+  - By day: sunrise (left) to sunset (right), with the companion (Sol, a pixel character from `companion.ts`) walking it at now.
+  - At sunset it flips and starts again as the night, sunset to sunrise. The companion is in its night form (asleep after 11 PM), and today's finished things are stars ("3 stars today").
+  - Your things sit along the arch: blocks as arcs, moments as dots, each with its emoji. Piles name themselves; only the next three show a time.
+  - Under the horizon, in words: now or next, today's numbers, and "Tonight ·" or "Tomorrow ·" with the first things after this half.
+- **No clock hands.** `dome.ts` draws it; the engine (`face` option) hands it the day on every change and every frame of opening.
+- **Opening the timeline:** the dome flattens onto the line while the timeline fades in. Cards, Done, Edit, pins and stacks are unchanged.
+- **Sunrise and sunset** are worked out from the date and the time zone (`sunTimes` in `lib/day-clock.ts`: the zone's meridian, 38°N, equation of time, daylight saving). There's no location, so they're approximate and shown only as 🌅 🌇, never as times.
+- **The Morrow palette is the app's on v3:**
+  - tokens in `globals.css`: haze background, dusk violet accent, `--sun`, `--night`;
+  - violet glass and dusk feature cards;
+  - the mark in `brand-mark.tsx`: horizon, sun, moon.
+  So School, Money and every page match. The name stays LifeFlow until a new name is chosen (Morrow is out: "Tomorrow" is used everywhere in the app).
+
 ## 8. Out of scope for this step
 - Editing from the timeline beyond opening the existing editor.
 - The week view.

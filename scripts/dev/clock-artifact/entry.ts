@@ -5,6 +5,7 @@
  * in the page only; nothing is saved anywhere. Built by `scripts/dev/build-clock-artifact.ts`.
  */
 import { createDayClock, type DayClockHandle } from "@/components/day-clock/engine";
+import { createDome } from "@/components/day-clock/dome";
 import type { ClockData, ClockDay, ClockItem } from "@/lib/day-clock";
 
 // "See it at 9 AM": the page's clock runs shifted, so the engine (untouched) draws any time of today.
@@ -287,7 +288,10 @@ function savePin(e: Event) {
 function start() {
   const root = $(".dc");
   root.querySelector("[data-dc=hap] input")?.setAttribute("switch", "");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const dome = createDome(root, reduced);
   clock = createDayClock(root, data, {
+    face: dome.draw,
     onOpen: (href) => toast(`In the app, this opens ${whereOf(href)}.`),
     onEdit: (it) => toast(`In the app, this opens the editor for ${it.title}, right here.`),
     onNewDay: () => {
@@ -299,7 +303,7 @@ function start() {
       refresh(data.items.filter((x) => x.id !== it.id && !(it.ref && x.ref === it.ref && (x.origin === "task" || x.origin === "reminder"))));
       toast(`Done: ${it.title}.`);
     },
-    reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
+    reducedMotion: reduced,
   });
   $("#pinbtn").addEventListener("click", () => openPin(clock?.pinTime() ?? 0));
   $("#pin-form").addEventListener("submit", savePin);

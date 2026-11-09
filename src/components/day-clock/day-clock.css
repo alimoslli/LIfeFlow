@@ -824,3 +824,105 @@
   font-size: 0.85rem;
   font-weight: 600;
 }
+
+/* ---- Morrow's dome (owner, 2026-11-09): the day as the sky; drawn by dome.ts ---- */
+.dc-dome {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+  overflow: visible;
+}
+/* (.dc canvas stretches the clock's own canvas; the companion keeps its size) */
+.dc .dc-who {
+  position: absolute;
+  inset: auto;
+  left: 0;
+  top: 0;
+  width: 36px;
+  height: 36px;
+  z-index: 3;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+.dc-sky {
+  stroke: none;
+}
+.dc-sky-dawn {
+  fill: color-mix(in srgb, var(--sun) 26%, transparent);
+}
+.dc-sky-day {
+  fill: color-mix(in srgb, #8fb6ff 22%, transparent);
+}
+.dc-sky-gold {
+  fill: color-mix(in srgb, var(--sun) 32%, transparent);
+}
+.dc-sky-night {
+  fill: var(--night);
+}
+.dc-dome-track {
+  fill: none;
+  stroke: var(--accent-soft);
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+.dc-dome-track.dc-night {
+  stroke: color-mix(in srgb, #8f86e0 40%, var(--night));
+}
+.dc-dome-block {
+  fill: none;
+  stroke: var(--sun);
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+.dc-dome-block.dc-night {
+  stroke: #9d92ff;
+}
+.dc-dome-dot {
+  fill: var(--sun);
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+.dc-horizon {
+  fill: var(--accent);
+}
+.dc-star {
+  fill: #ffd77a;
+}
+.dc-dome-ic,
+.dc-dome-end {
+  font-size: 17px;
+}
+.dc-dome-t {
+  fill: var(--muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+.dc-dome-stars {
+  fill: #f1eeff;
+  font-size: 11px;
+  font-weight: 600;
+}
+.dc-dome-tag {
+  fill: var(--accent);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.dc-dome-now {
+  fill: var(--text);
+  font-size: 17px;
+  font-weight: 600;
+}
+.dc-dome-stat {
+  fill: var(--muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+.dc-dome-after {
+  fill: var(--text-2);
+  font-size: 12.5px;
+}

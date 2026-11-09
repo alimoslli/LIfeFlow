@@ -5,7 +5,8 @@
  * played, pulled, scrubbed and reversed. The liquid outline is a signed-distance field in a WebGL shader.
  * Colours come from the app's theme tokens; only transform and opacity animate outside the shader.
  */
-import type { ClockData, ClockItem } from "@/lib/day-clock";
+import { isExam, pileOf, type ClockData, type ClockItem } from "@/lib/day-clock";
+import type { DomeFace, DomeState } from "./dome";
 
 type Pt = [number, number];
 type Arc = { a: number; b: number; past: boolean; lap: number; els: SVGPathElement[] };
@@ -65,6 +66,11 @@ export type DayClockOptions = {
   onDone: (it: ClockItem) => void;
   /** "Edit" on an event's, a shift's or an assignment's card: its editor, in place. */
   onEdit: (it: ClockItem) => void;
+  /**
+   * Morrow's dome (owner, 2026-11-09): when given, Today's face is drawn by it instead of the clock, on every change
+   * and every frame of opening and closing (it flattens onto the line while the timeline fades in).
+   */
+  face?: (state: DomeState) => void;
   /** The day turned over while the page was open: fetch fresh data. */
   onNewDay: () => void;
   /** A tap on an empty spot of the open line: pin something at that time (minutes from the start of today). */
@@ -197,6 +203,9 @@ void main(){
 
 export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayClockOptions): DayClockHandle {
   const reduce = opts.reducedMotion;
+  const domeMode = !!opts.face;
+  let FACE: DomeFace = { tag: "", text: "", stats: [] };
+  const drawDome = () => opts.face?.({ p: S.p, now: S.now, data, items: DATED, face: FACE, lineY: G.lineY });
   const $ = <T extends Element = HTMLElement>(sel: string) => root.querySelector(sel) as T;
   const canvas = $<HTMLCanvasElement>("[data-dc=goo]");
   const faceSvg = $<SVGSVGElement>("[data-dc=face]");
@@ -302,24 +311,6 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const m = money(it.amountCents);
     return it.origin === "pay" ? `${m} expected` : it.origin === "trial" ? `then ${m}` : it.origin === "money_goal" ? `${m} goal` : `${m} due`;
   };
-  // A pile of one kind says what it is ("9 assignments", "3 to-dos", "2 bills"); a mixed pile is "+N" (owner, 2026-11-08:
-  // "just put one emoji and say 9 assignments due tonight at 11:59").
-  function pileOf(g: ClockItem[]) {
-    if (g.length < 2) return null;
-    const all = (f: (x: ClockItem) => boolean) => g.every(f);
-    const noun = all(isExam)
-      ? "exams"
-      : all((x) => x.origin === "assignment")
-        ? "assignments"
-        : all((x) => x.origin === "task" || x.origin === "reminder")
-          ? "to-dos"
-          : all((x) => x.origin === "assignment" || x.origin === "task")
-            ? "deadlines"
-            : all((x) => x.origin === "bill")
-              ? "bills"
-              : null;
-    return noun ? `${g.length} ${noun}` : null;
-  }
   // a day in words from anywhere on the line: "today", "tomorrow", "Wed", "Nov 29", "Apr 7, 2027"
   const dayShort = (d: number) => (dayInfo(d) ? dayName(d) : dayLongOf(d));
   const dayWord = (d: number) => (d === dayOf(S.now) ? "today" : d === dayOf(S.now) + 1 ? "tomorrow" : dayShort(d));
@@ -336,7 +327,6 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
             : it.amountCents != null
               ? 1
               : 0;
-  const isExam = (it: ClockItem) => /\b(exam|midterm|final|quiz|test)\b/i.test(it.title);
   const nodeName = (it: ClockItem) =>
     it.amountCents != null
       ? `${it.title} · ${billOf(it)}`
@@ -402,6 +392,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     G.hintHidden = hint.hidden;
     const hr = G.R + 54;
     Object.assign(hit.style, { left: `${G.cx - hr}px`, top: `${G.cy - hr}px`, width: `${hr * 2}px`, height: `${hr * 2}px` });
+    // the dome draws Today itself: the clock's own layers step aside, and the whole sky is the place to tap
+    if (domeMode) {
+      for (const e of [canvas, faceSvg, callouts, micons, hint] as (HTMLElement | SVGSVGElement)[]) e.style.display = "none";
+      Object.assign(hit.style, { left: "0px", top: "48px", width: `${W}px`, height: `${Math.round(H * 0.62)}px`, borderRadius: "28px" });
+    }
     faceSvg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     faceSvg.setAttribute("width", String(W));
     faceSvg.setAttribute("height", String(H));
@@ -714,6 +709,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       svg("text", { x: 0, y, "text-anchor": "middle", class: "dc-face-now" }, stepsG).textContent = cut(fn.text);
     }
     const stats = faceStats();
+    FACE = { tag: fn?.tag ?? "", text: fn?.text ?? "", stats };
     stats.forEach((line, i) => {
       svg("text", { x: 0, y: R * 0.3 + i * 14, "text-anchor": "middle", class: "dc-steps" }, stepsG).textContent = line;
     });
@@ -757,6 +753,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
         stats.length ? ` ${stats.join(". ")}.` : ""
       } Open your day as a timeline.`,
     );
+    drawDome();
   }
 
   /* ---------- the line through the week ---------- */
@@ -963,6 +960,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     let turn = Math.PI - ang(CM.ps);
     turn = ((((turn + Math.PI) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) - Math.PI;
     G.turn = turn;
+    // with the dome there are no flying markers: the dome flattens onto the line by itself
+    if (domeMode) {
+      MAP = [];
+      return;
+    }
     MAP = CM.marks.map((m) => {
       const node = nodeOf(m.it.id);
       // a marker whose place on the line is off screen slides just past the edge and fades, instead of stretching out to it
@@ -1345,7 +1347,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     // wrapping back from another part of the line: it rewinds to now in the first part of the same motion
     if (G.wrapSl != null) trackWrap.scrollLeft = lerp(G.home, G.wrapSl, eIO(seg(P, 0.78, 1)));
     const shift = G.wrapSl != null ? G.home - trackWrap.scrollLeft : 0;
-    if (reduce) return renderReduced(P);
+    if (reduce || domeMode) {
+      renderReduced(P);
+      drawDome();
+      return;
+    }
     const s = eIO(seg(P, 0.36, 0.78));
     const sq = eOut(seg(P, 0.05, 0.34)) * (1 - s);
     const rx = R * (1 + 0.075 * sq);
@@ -1575,7 +1581,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     showDetail();
     if (S.press < 1) pressTo(1, 110);
     haptic(8);
-    animateTo(1, reduce ? 240 : 1300, reduce ? (t) => t : ePlay, finishOpen);
+    animateTo(1, reduce ? 240 : domeMode ? 760 : 1300, reduce ? (t) => t : ePlay, finishOpen);
   }
   // Wrapping the timeline back into the clock: the exact path of the open, run backwards as one motion.
   function beginWrap() {
@@ -1619,7 +1625,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const dist = Math.abs(trackWrap.scrollLeft - homeScroll());
     beginWrap();
     setInteractive(false);
-    animateTo(0, reduce ? 260 : 1150 + Math.min(450, dist * 0.12), reduce ? eIO : ePlay, finishClose);
+    animateTo(0, reduce ? 260 : domeMode ? 680 : 1150 + Math.min(450, dist * 0.12), reduce ? eIO : ePlay, finishClose);
   }
 
   /* pull the clock sideways to open; tap to open */

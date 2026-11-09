@@ -28,7 +28,9 @@ async function main() {
   const globals = readFileSync("src/app/globals.css", "utf8");
   const tokens = globals.slice(globals.indexOf(":root {"), globals.indexOf("/* Text size")).trim();
   const css = readFileSync("src/components/day-clock/day-clock.css", "utf8");
-  const mark = `data:image/png;base64,${readFileSync("public/brand/lifeflow-mark-192.png").toString("base64")}`;
+  // the v3 mark (components/brand/brand-mark.tsx): horizon, sun with a face, moon and two stars
+  const svgMark = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><clipPath id="s"><rect width="100" height="52"/></clipPath></defs><circle cx="50" cy="52" r="40" fill="none" stroke="#5b4bd6" stroke-width="5" opacity=".35"/><circle cx="50" cy="58" r="26" fill="#f4a44a" clip-path="url(#s)"/><circle cx="42" cy="44" r="3" fill="#1b1736"/><circle cx="58" cy="44" r="3" fill="#1b1736"/><rect x="4" y="50" width="92" height="5" rx="2.5" fill="#5b4bd6"/><path d="M64 66 a9 9 0 1 0 6 15 a7 7 0 1 1 -6 -15 z" fill="#b3a8ff"/></svg>`;
+  const mark = `data:image/svg+xml;base64,${Buffer.from(svgMark).toString("base64")}`;
   const emojis = EMOJIS.map((e) => `<button type="button" role="radio" aria-checked="false" aria-label="${e}" data-emoji="${e}">${e}</button>`).join("");
   // Function replacements: the bundle is full of "$" sequences a string replacement would read as patterns.
   const html = readFileSync("scripts/dev/clock-artifact/shell.html", "utf8")

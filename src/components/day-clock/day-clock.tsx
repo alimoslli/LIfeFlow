@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { prefersReducedMotion } from "@/components/motion/gsap";
 import type { ClockData } from "@/lib/day-clock";
 import { createDayClock, type DayClockHandle } from "./engine";
+import { createDome } from "./dome";
 import { PinSheet } from "./pin-sheet";
 import { toast } from "@/components/ui/toaster";
 import { toggleTaskAction } from "@/app/(app)/tasks/actions";
@@ -34,7 +35,10 @@ export function DayClock({ data, children }: { data: ClockData; children?: React
     if (!root) return;
     // The iOS 18 switch tap is the only web haptic on iPhone; React doesn't know the attribute, so it's set here.
     root.querySelector("[data-dc=hap] input")?.setAttribute("switch", "");
+    const reduced = prefersReducedMotion();
+    const dome = createDome(root, reduced);
     engine.current = createDayClock(root, first.current, {
+      face: dome.draw,
       onOpen: (href) => router.push(href),
       onNewDay: () => router.refresh(),
       onPin: ({ start }) => setPinAt(start),
@@ -51,9 +55,10 @@ export function DayClock({ data, children }: { data: ClockData; children?: React
         if (b) setEditing(b);
         else router.push(it.href);
       },
-      reducedMotion: prefersReducedMotion(),
+      reducedMotion: reduced,
     });
     return () => {
+      dome.destroy();
       engine.current?.destroy();
       engine.current = null;
     };
@@ -100,6 +105,8 @@ export function DayClock({ data, children }: { data: ClockData; children?: React
             <g data-dc="steps" />
           </g>
         </svg>
+        <svg data-dc="dome" className="dc-dome" aria-hidden="true" />
+        <canvas data-dc="who" className="dc-who" width={16} height={16} aria-hidden="true" />
         <div data-dc="callouts" className="dc-callouts" aria-hidden="true" />
         <div data-dc="micons" className="dc-micons" aria-hidden="true" />
         <div data-dc="hint" className="dc-hint">
