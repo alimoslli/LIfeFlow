@@ -230,6 +230,14 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
   - the mark in `brand-mark.tsx`: horizon, sun, moon.
   So School, Money and every page match. The name stays LifeFlow until a new name is chosen (Morrow is out: "Tomorrow" is used everywhere in the app).
 
+## Names of the versions (owner, 2026-11-09)
+
+Until the real LifeFlow changes or moves to a new domain:
+
+- **LifeFlow V2**: the clock that turns into a timeline (branch `v3-day-clock-north-star`, https://lifeflow-git-v3-day-clock-north-star-ali-b745.vercel.app). Kept as it is.
+- **LifeFlow V3**: the same app built around Morrow, the Day Sky (branch `v3-day-clock`, https://lifeflow-git-v3-day-clock-ali-b745.vercel.app).
+- **LifeFlow**: the live app (main, https://lifeflowweb.com).
+
 ## 7c. Day Sky: the whole app (owner, 2026-11-09: "no purple ... a real looking sky"; "my complicated app lifeflow doesnt lose its features ... but looks fully like this")
 
 Concept: `docs/design/companions/day-sky.html`. Built on `v3-day-clock` only (never main).
