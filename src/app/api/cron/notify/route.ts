@@ -16,8 +16,9 @@ export const maxDuration = 300;
 /**
  * Jarvis's scheduled looks (morning, midday, evening) for every user, then
  * pushes: to-do reminders, and Jarvis's urgent or important messages within the
- * user's daily limit and outside quiet hours. Safe to call often (every 5 to 15
- * minutes): each slot runs once a day and each push is sent at most once.
+ * user's daily limit and outside quiet hours. Runs every 10 minutes (vercel.json),
+ * so a reminder arrives within minutes of its time: each slot runs once a day, at
+ * its own time (`scheduledFrom`), and each push is sent at most once.
  * Called with `Authorization: Bearer <CRON_SECRET>` by Vercel Cron or any scheduler.
  */
 export async function GET(req: Request) {
@@ -43,7 +44,7 @@ async function runNotify() {
     if (u.kind === "demo") continue;
     // Separate transactions: one user's (or one step's) failure never blocks the rest.
     try {
-      messages += (await withUser(u.id, (s) => runDueSlot(s, u.tz, u.prefs))).length;
+      messages += (await withUser(u.id, (s) => runDueSlot(s, u.tz, u.prefs, new Date(), { scheduled: true }))).length;
     } catch {}
     if (!send) continue;
     try {
