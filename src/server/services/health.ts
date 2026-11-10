@@ -157,7 +157,7 @@ export async function healthSummary({ tx, userId }: UserScope, tz: string, days 
   const today = todayIn(tz, now);
   const from = addDaysStr(today, -(days - 1));
   const rows = await tx
-    .select({ metric: healthSamples.metric, day: healthSamples.day, value: healthSamples.value })
+    .select({ metric: healthSamples.metric, day: healthSamples.day, value: healthSamples.value, source: healthSamples.source })
     .from(healthSamples)
     .where(and(eq(healthSamples.userId, userId), gte(healthSamples.day, from)))
     .orderBy(asc(healthSamples.day));
@@ -175,7 +175,7 @@ export async function healthSummary({ tx, userId }: UserScope, tz: string, days 
     const latest = series[series.length - 1];
     return [{ metric, label: info.label, unit: info.unit, latest, average: Number(avg.toFixed(info.decimals)), daysWithData: series.length, series }];
   });
-  return { from, to: today, lastReceivedAt: last?.at ?? null, metrics };
+  return { from, to: today, lastReceivedAt: last?.at ?? null, fromAppleHealth: rows.some((r) => r.source === "apple_health"), metrics };
 }
 
 /** What people log by hand or tell Jarvis ("I slept 7 hours"). The same daily values Apple Health sends; a new value replaces that day's. */
