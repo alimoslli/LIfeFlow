@@ -3,7 +3,7 @@ import { series } from "@/server/db/series";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus, Repeat } from "lucide-react";
+import { Repeat } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionForm } from "@/components/action-form";
 import { SwipeRow } from "@/components/swipe-row";
@@ -175,7 +175,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
               aria-label="Add to-do"
               className="-ml-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-accent hover:bg-accent-soft"
             >
-              <Plus className="h-5 w-5" aria-hidden />
+              <PixelIcon name="plus" className="h-5 w-5" aria-hidden />
             </button>
             <CountedInput
               name="title"

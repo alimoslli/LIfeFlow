@@ -1,10 +1,11 @@
 "use client";
-import { Plus, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
 import type { ActionState } from "@/server/actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 type Action = (p: ActionState, fd: FormData) => Promise<ActionState>;
 type Opt = { id: string; name: string };
@@ -55,7 +56,7 @@ export function AddTransactionDialog({
     <Dialog
       trigger={
         <>
-          <Plus className="h-4 w-4" /> Add
+          <PixelIcon name="plus" className="h-4 w-4" /> Add
         </>
       }
       title="Add a transaction"

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { BellOff, Check, Clock, Loader2, MoreHorizontal, ThumbsDown, ThumbsUp, Undo2, X } from "lucide-react";
+import { BellOff, Check, Clock, Loader2, MoreHorizontal, ThumbsDown, ThumbsUp, Undo2 } from "lucide-react";
 import { respondAction } from "@/app/(app)/jarvis/proactive-actions";
 import { haptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { nameAtStart } from "@/lib/assistant";
 import { SkylingIcon } from "../skylings/sprite";
 import { useShell } from "../shell/app-shell";
 import { toast } from "../ui/toaster";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export type CardMessage = {
   id: string;
@@ -184,7 +185,7 @@ export function JarvisMessageCard({ m, name, compact }: { m: CardMessage; name: 
                       onClick={() => setMenu(false)}
                       className="flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm hover:bg-surface-2"
                     >
-                      <X className="h-4 w-4" /> Close
+                      <PixelIcon name="close" className="h-4 w-4" /> Close
                     </button>
                   </div>
                 )}

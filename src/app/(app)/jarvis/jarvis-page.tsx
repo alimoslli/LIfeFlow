@@ -2,7 +2,7 @@ import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { SettingsGear } from "@/components/settings/settings-sheet";
 import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
-import { PenLine, Plus, SquarePen } from "lucide-react";
+import { PenLine, SquarePen } from "lucide-react";
 import { MySkyling } from "@/components/skylings/sprite";
 import { SectionNav } from "@/components/shell/section-nav";
 import { QuickAddButton } from "@/components/shell/quick-add";
@@ -50,7 +50,7 @@ export function JarvisPage({
     <ChatViewport className="flex md:h-dvh">
       <aside className="hidden w-72 shrink-0 flex-col py-6 pr-2 pl-1 lg:flex">
         <Link href="/jarvis" className="lf-sb lf-sb-app lf-sb-sm mx-2 mb-4">
-          <Plus className="h-4 w-4" /> New chat
+          <PixelIcon name="plus" className="h-4 w-4" /> New chat
         </Link>
         <nav className="flex-1 overflow-y-auto px-2" aria-label="Conversations">
           {items.length === 0 && <p className="px-3 py-2 text-sm text-muted">Your conversations will appear here.</p>}

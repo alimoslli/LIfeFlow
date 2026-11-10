@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
-import { PartyPopper, X } from "lucide-react";
+import { PartyPopper } from "lucide-react";
 import { Confetti } from "@/components/motion/celebrate";
 import { useShell } from "@/components/shell/app-shell";
 import { celebrateMilestoneAction } from "./actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 /** Opens the skyling with a prompt already sent. */
 export function AskJarvisButton({ prompt, children }: { prompt: string; children: ReactNode }) {
@@ -60,7 +61,7 @@ export function CelebrateGoal({ goalId, name, percent }: { goalId: string; name:
             <p className="mt-0.5 text-sm text-text-2">{MESSAGES[percent]}</p>
           </div>
           <button type="button" onClick={close} aria-label="Close" className="tap -m-3 flex items-center justify-center text-muted hover:text-text">
-            <X className="h-4 w-4" />
+            <PixelIcon name="close" className="h-4 w-4" />
           </button>
         </div>
       </div>

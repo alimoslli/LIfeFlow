@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight, Info, TriangleAlert, X } from "lucide-react";
+import { ArrowRight, Info, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 const KEY = "lf-announcement-closed";
 
@@ -56,7 +57,7 @@ export function AnnouncementBanner({ a }: { a: { id: string; message: string; to
         aria-label="Close announcement"
         className="-m-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-2"
       >
-        <X className="h-4 w-4" />
+        <PixelIcon name="close" className="h-4 w-4" />
       </button>
     </div>
   );

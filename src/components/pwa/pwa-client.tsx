@@ -1,11 +1,12 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CloudOff, Download, Share, X } from "lucide-react";
+import { CloudOff, Download, Share } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/toaster";
 import { flush, pending } from "@/lib/offline-queue";
 import { AppUpdater } from "./app-updater";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 type InstallPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
 
@@ -145,7 +146,7 @@ export function PwaClient() {
               </div>
             </div>
             <button type="button" onClick={dismiss} aria-label="Close" className="tap -m-2 flex items-center justify-center text-muted">
-              <X className="h-4 w-4" />
+              <PixelIcon name="close" className="h-4 w-4" />
             </button>
           </div>
         </div>

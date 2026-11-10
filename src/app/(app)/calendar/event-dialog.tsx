@@ -1,11 +1,11 @@
 "use client";
 import { useState } from "react";
-import { Plus } from "lucide-react";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
 import type { ActionState } from "@/server/actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -24,7 +24,7 @@ export function EventDialog({
     <Dialog
       trigger={
         <>
-          <Plus className="h-4 w-4" /> Event
+          <PixelIcon name="plus" className="h-4 w-4" /> Event
         </>
       }
       title="New event"

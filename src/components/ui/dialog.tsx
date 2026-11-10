@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
-import { X } from "lucide-react";
 import { gsap, MOTION, prefersReducedMotion } from "../motion/gsap";
 import { Button, type ButtonProps } from "./button";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 const isPhone = () => window.matchMedia("(max-width: 639px)").matches;
 
@@ -82,7 +82,7 @@ export function Dialog({
                 {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
               </div>
               <Button variant="ghost" size="icon" onClick={close} aria-label="Close">
-                <X className="h-4 w-4" />
+                <PixelIcon name="close" className="h-4 w-4" />
               </Button>
             </div>
             {children(close)}

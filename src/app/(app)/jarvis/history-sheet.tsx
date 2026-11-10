@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { History, X } from "lucide-react";
+import { History } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 /** Bottom sheet listing past conversations (phones). */
 export function HistorySheet({ items, activeId }: { items: { id: string; title: string; when: string }[]; activeId: string | null }) {
@@ -24,7 +25,7 @@ export function HistorySheet({ items, activeId }: { items: { id: string; title: 
             <div className="mb-2 flex items-center justify-between px-2">
               <h2 className="text-[1.0625rem] font-semibold">Conversations</h2>
               <button onClick={() => setOpen(false)} aria-label="Close" className="rounded-full p-2 text-muted">
-                <X className="h-4 w-4" />
+                <PixelIcon name="close" className="h-4 w-4" />
               </button>
             </div>
             {items.length === 0 && <p className="px-2 py-4 text-sm text-muted">No conversations yet.</p>}

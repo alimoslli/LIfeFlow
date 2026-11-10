@@ -3,7 +3,7 @@ import { useAssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { openSettings } from "@/components/settings/settings-sheet";
 import { cn } from "@/lib/utils";
@@ -147,7 +147,7 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
                 } catch {}
               }}
             >
-              <X className="h-3.5 w-3.5" />
+              <PixelIcon name="close" className="h-3.5 w-3.5" />
             </button>
           </span>
         )}

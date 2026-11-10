@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, type ReactNode } from "react";
-import { X } from "lucide-react";
 import { gsap, MOTION, prefersReducedMotion } from "../motion/gsap";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 /**
  * A native-feeling bottom sheet on phones (drag the handle down to close)
@@ -83,7 +83,7 @@ export function Sheet({ open, onClose, title, children, label }: { open: boolean
                 aria-label="Close"
                 className="tap -mr-2 flex items-center justify-center rounded-full text-muted hover:text-text"
               >
-                <X className="h-5 w-5" />
+                <PixelIcon name="close" className="h-5 w-5" />
               </button>
             </div>
           )}

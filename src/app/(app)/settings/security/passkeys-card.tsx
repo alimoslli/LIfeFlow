@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
+import { KeyRound, Pencil, Trash2 } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { addPasskey, biometricName, PasskeyCancelled, passkeysSupported } from "@/components/auth/passkey-client";
@@ -83,7 +83,7 @@ export function PasskeysCard({ passkeys, demo }: { passkeys: PasskeyRow[]; demo:
         <p className="mt-4 text-sm text-muted">The shared test account can&apos;t add passkeys.</p>
       ) : (
         <Button onClick={add} loading={adding} className="mt-4 min-h-11">
-          <Plus className="h-4 w-4" /> {passkeys.length ? "Add another passkey" : "Add a passkey"}
+          <PixelIcon name="plus" className="h-4 w-4" /> {passkeys.length ? "Add another passkey" : "Add a passkey"}
         </Button>
       )}
 

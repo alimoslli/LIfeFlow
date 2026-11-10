@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus } from "lucide-react";
 import { QuickAddButton } from "@/components/shell/quick-add";
 import { CalendarViewToggle } from "../calendar/view-toggle";
 import { AskJarvisButton } from "@/components/shell/app-shell";
@@ -17,6 +16,7 @@ import { moneyLocked } from "@/server/auth/money-lock";
 import { LifeLoad } from "./life-load";
 import { EditableBlock, type Block } from "./block-editor";
 import { SkylingIcon } from "@/components/skylings/sprite";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export const metadata: Metadata = { title: "Plan" };
 
@@ -125,7 +125,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
             <SkylingIcon className="h-6 w-6" />
           </AskJarvisButton>
           <QuickAddButton className="lf-sb lf-sb-sun lf-sb-sm">
-            <Plus className="h-4 w-4" /> Add
+            <PixelIcon name="plus" className="h-4 w-4" /> Add
           </QuickAddButton>
         </div>
       </header>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { prefersReducedMotion } from "@/components/motion/gsap";
 import { celebrate, hop } from "@/components/motion/burst";
@@ -16,6 +16,7 @@ import { toggleAssignmentAction } from "@/app/(app)/school/actions";
 import { blockForEditAction } from "@/app/(app)/_today/actions";
 import { BlockSheet, type Block } from "@/app/(app)/plan/block-editor";
 import "./day-clock.css";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 /**
  * The v3 home: your day as the sky (Day Sky, owner 2026-11-09), which pours into the timeline of your week
@@ -137,7 +138,7 @@ export function DayClock({
         {/* Pin anything: here, or tap any empty spot on the line. Hidden while a card is open (CSS). */}
         <div data-dc="pinbar" className="dc-pinbar">
           <button type="button" onClick={() => setPinAt(engine.current?.pinTime() ?? 0)}>
-            <Plus className="h-4 w-4" aria-hidden />
+            <PixelIcon name="plus" className="h-4 w-4" aria-hidden />
             Pin something
           </button>
         </div>

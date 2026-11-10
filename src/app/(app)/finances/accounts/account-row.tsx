@@ -1,11 +1,12 @@
 "use client";
 import { useState } from "react";
-import { Archive, EyeOff, Plus } from "lucide-react";
+import { Archive, EyeOff } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Sheet } from "@/components/ui/sheet";
 import type { ActionState } from "@/server/actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 type Act = () => Promise<ActionState>;
 type FormAct = (p: ActionState, fd: FormData) => Promise<ActionState>;
@@ -133,7 +134,7 @@ export function AddAccount({ action }: { action: FormAct }) {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="lf-sb lf-sb-app lf-sb-sm self-start">
-        <Plus className="h-4 w-4" aria-hidden /> Add an account yourself
+        <PixelIcon name="plus" className="h-4 w-4" aria-hidden /> Add an account yourself
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title="Add an account">
         <ActionForm action={action} onSuccess={() => setOpen(false)}>

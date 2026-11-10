@@ -1,7 +1,7 @@
 import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Archive, Check, RotateCcw, Trash2, X } from "lucide-react";
+import { Archive, Check, RotateCcw, Trash2 } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -113,7 +113,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                   title="Dismiss"
                   className="tap flex items-center justify-center rounded-full bg-surface-2 text-muted hover:text-text"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <PixelIcon name="close" className="h-3.5 w-3.5" />
                 </ActionButton>
               </li>
             ))}

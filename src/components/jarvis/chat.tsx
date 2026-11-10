@@ -21,7 +21,6 @@ import {
   Square,
   ThumbsDown,
   ThumbsUp,
-  X,
 } from "lucide-react";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
@@ -657,7 +656,7 @@ export function JarvisChat({
                   <span className="max-w-40 truncate">{p.filename}</span>
                   {p.error && <span>· {p.error}</span>}
                   <button onClick={() => setPending((x) => x.filter((y) => y.id !== p.id))} aria-label={`Remove ${p.filename}`}>
-                    <X className="h-3 w-3" />
+                    <PixelIcon name="close" className="h-3 w-3" />
                   </button>
                 </span>
               ))}
