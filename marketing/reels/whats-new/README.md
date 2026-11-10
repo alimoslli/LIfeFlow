@@ -2,7 +2,12 @@
 
 Ali: "i want us to show more of the app and new features". 36 s, 1080 x 1920, the app full screen (no phone), no credits.
 Every shot is the real app (a production build of main 0ea6689 on a local test database with the demo seed and the film
-day), with sample data in a test account. Ray's reply is real (the environment's saved OpenAI key, a few cents).
+day), with sample data in a test account. Ray's reply is real (one chat turn through the environment's saved OpenAI key, a few
+cents, about 18:30 UTC on Nov 10).
+
+**No OpenAI from this environment until the owner says otherwise** (owner via the COO, 2026-11-10: the API bill jumped).
+`serve.sh` now leaves the key unset and the test account's AI consent is off, so a refilm can't call it: shots that need
+a real reply wait for the owner's yes.
 
 Order: the new opening screen ("We rebuilt LifeFlow. Here's what's new.") → your day as the sky → an idea cloud ("Tell Ray
 I'll study tonight at 8") sent, and Ray saves the promise → tick it off (the star) → tonight's stars ("6 stars today") →
