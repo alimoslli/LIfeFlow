@@ -8,6 +8,7 @@ import { createTask } from "@/server/services/tasks";
 import { ServiceError } from "@/server/services/errors";
 import { localDateOf, localTimeOf } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
+import { claimStars, type Star } from "@/server/services/stars";
 import { afterAgeLock, saveBirthday } from "@/server/services/onboarding";
 import { getDb } from "@/server/db/client";
 import { after } from "next/server";
@@ -145,4 +146,17 @@ export async function saveBirthdayAction(birthDate: string, confirmed = false): 
   // under 13 locks the account (owner, 2026-11-10): straight to the lock screen
   if (blocked) redirect("/welcome");
   return { ok: true, at: Date.now() };
+}
+
+/**
+ * Claims the stars for what the skyling passed while they were away (owner, 2026-11-10). A client action, called once
+ * Today is on screen, so a prefetch of the page never claims them unseen. Nothing to show on any failure.
+ */
+export async function claimStarsAction(): Promise<Star[]> {
+  try {
+    return await withCurrentUser((s, u) => claimStars(s, u.timezone || "UTC"));
+  } catch (e) {
+    unstable_rethrow(e);
+    return [];
+  }
 }

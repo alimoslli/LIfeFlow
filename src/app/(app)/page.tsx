@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ClaimStars } from "./_today/claim-stars";
 import { cookies } from "next/headers";
 import { TODAY_COOKIE, parseTodayMode } from "@/lib/theme";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
@@ -82,6 +83,8 @@ export default async function TodayPage() {
     <div className="dc-today flex flex-col gap-5">
       {/* The clock is the page; the greeting is for screen readers. */}
       <h1 className="sr-only">{hello}</h1>
+      {/* what the skyling passed while they were away: a star each, claimed once (owner, 2026-11-10) */}
+      <ClaimStars />
       <section aria-label="Your day" data-tour="today-page" className="-mx-5 sm:-mx-8 md:mx-0">
         <DayClock data={clock} mode={mode} companion={me.preferences?.companion}>
           {/* accounts made before the birthday was required are asked once, first (owner, 2026-11-10; not a lockout) */}
