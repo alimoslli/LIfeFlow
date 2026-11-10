@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { askJarvis, COMPOSER, queryAsUser, signUp } from "./helpers";
+import { askJarvis, queryAsUser, signUp } from "./helpers";
 
 const save = (content: string) => `/tool save_memory {"content":"${content}","category":"preference","basis":"stated"}`;
 

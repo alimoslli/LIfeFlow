@@ -340,7 +340,7 @@ export function TodayMiddle({
             type="button"
             data-testid="assistant-line"
             onClick={() => (note.href ? router.push(note.href) : note.prompt ? void askOnToday(note.prompt, refresh) : fillBar(note.fill ?? note.text))}
-            className="line-clamp-2 max-w-[22rem] text-center text-[0.9375rem] leading-snug font-medium text-text"
+            className="line-clamp-2 min-h-11 max-w-[22rem] text-center text-[0.9375rem] leading-snug font-medium text-text"
           >
             {note.text}
           </button>
