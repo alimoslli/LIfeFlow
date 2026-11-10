@@ -38,8 +38,8 @@ export default function PrivacyPolicy() {
         <li>
           <strong>Account details:</strong> your name, email address, time zone, and a password, which we store only as a salted, one-way hash. If you turn on
           two-step sign-in, we store an encrypted authenticator secret and hashed backup codes. When you set up LifeFlow we ask for your birthday, to confirm
-          you are 13 or older and to tailor your plans, and, if you give them, your school and where you work, to tailor your plans. Your birthday, school and
-          workplace are never sent to the AI model. You can change or remove your birthday in Settings.
+          you are 13 or older and to tailor your plans, and, if you give them, your school and where you work, to tailor your plans. Your birthday and school
+          are never sent to the AI model; where you work is saved as a job and used like any job you add. You can change or remove your birthday in Settings.
         </li>
         <li>
           <strong>Your content:</strong> anything you add, such as accounts and balances, transactions, budgets, goals, bills, classes, assignments, work shifts
@@ -248,9 +248,9 @@ export default function PrivacyPolicy() {
       <h2>9. Children</h2>
       <p>
         LifeFlow is not intended for children under 13, and we do not knowingly collect personal information from them. We ask for a birthday when an account is
-        set up. If it shows someone is under 13, setup can&apos;t be finished and the account stays locked: we keep only the email address and password it was
-        created with and a note that it is locked, not the birthday or anything else they entered. If you believe a child under 13 has created an account,
-        contact us and we will delete it.
+        set up. If it shows someone is under 13, setup can&apos;t be finished and the account stays locked: we keep only the email address, the sign-in it was
+        created with and a note that it is locked, not the birthday, the name or anything else they entered or connected. If you believe a child under 13 has
+        created an account, contact us and we will delete it.
       </p>
 
       <h2>10. International users</h2>

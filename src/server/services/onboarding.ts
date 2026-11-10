@@ -1,10 +1,12 @@
-import { eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { COMPANION_KEYS, SKY_CHOICE } from "@/lib/companions";
 import { AGE_LINE, BIRTHDAY_NEEDED, birthDateProblem, isUnderAge } from "@/lib/birthday";
 import { todayIn } from "@/lib/dates";
 import { ServiceError } from "./errors";
-import { users } from "../db/schema";
+import { integrations, users } from "../db/schema";
+import { revokeGoogleGrant } from "../integrations/google";
+import { provisionalName } from "@/lib/provisional-name";
 import type { UserScope } from "../db/with-user";
 import { assistantSchema } from "./accounts";
 import { createManualAccount } from "./finance/accounts";
@@ -118,21 +120,61 @@ export const welcomeProgressSchema = z.object({
 });
 
 type Prefs = typeof users.$inferSelect.preferences;
+/** A write that must never land over a lock (a parallel save can't clear the flag). */
+const notLocked = sql`not (${users.preferences} ? 'ageBlockedAt')`;
+/** Their preferences, read for update: a birthday save and a block can't cross each other (two tabs, two taps). */
 const prefsOf = async (scope: UserScope) =>
-  (await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId)))[0].preferences;
+  (await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId)).for("update"))[0].preferences;
+
+/** What an age-locked account keeps: the email (on the user row) and how they sign in, and the log of actions. */
+const KEEP_ON_LOCK = new Set([
+  "users",
+  "sessions",
+  "oauth_identities",
+  "passkeys",
+  "recovery_codes",
+  "login_challenges",
+  "auth_challenges",
+  "password_resets",
+  "audit_events",
+]);
 
 /**
- * Under 13 (owner, 2026-11-10): one calm line, and the welcome stays locked for this account. Only the flag is kept:
- * not the birthday, nor anything else they typed. Returned rather than thrown, so the flag is committed.
+ * Under 13 (owner, 2026-11-10): one calm line, and the account is locked. During setup nothing they gave is kept (the
+ * review of b3effa0): the name goes back to the stand-in from their email, the preferences keep only the lock, a Google
+ * connection is revoked, and every row they own is removed except how they sign in. Returned rather than thrown, so
+ * it's committed. An account that already finished setup is only flagged here: whether to lock it is the owner's call.
  */
 async function blockUnderAge(scope: UserScope, prefs: Prefs) {
-  const { birthDate: _birth, school: _school, welcomeJob: _job, ...rest } = prefs;
-  void _birth;
-  void _school;
-  void _job;
+  const at = new Date().toISOString();
+  if (prefs.onboarding !== "pending") {
+    const { birthDate: _birth, ...rest } = prefs;
+    void _birth;
+    await scope.tx
+      .update(users)
+      .set({ preferences: { ...rest, ageBlockedAt: at } })
+      .where(eq(users.id, scope.userId));
+    return { blocked: true as const };
+  }
+  const [me] = await scope.tx.select({ email: users.email }).from(users).where(eq(users.id, scope.userId));
+  // a Google grant they made in the welcome is revoked at Google too (best effort, a few seconds at most)
+  const google = await scope.tx
+    .select({ encryptedCredentials: integrations.encryptedCredentials })
+    .from(integrations)
+    .where(and(eq(integrations.userId, scope.userId), inArray(integrations.provider, ["google", "google_calendar", "gmail"])));
+  for (const g of google)
+    await revokeGoogleGrant(g.encryptedCredentials, (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(4000) })).catch(() => {});
+  // every table that holds their rows, found from the database so a new one can't be missed
+  const tables = await scope.tx.execute<{ table_name: string }>(
+    sql`select distinct table_name from information_schema.columns where column_name = 'user_id' and table_schema = current_schema()`,
+  );
+  for (const { table_name } of tables.rows) {
+    if (KEEP_ON_LOCK.has(table_name)) continue;
+    await scope.tx.execute(sql`delete from ${sql.identifier(table_name)} where user_id = ${scope.userId}`);
+  }
   await scope.tx
     .update(users)
-    .set({ preferences: { ...rest, ageBlockedAt: new Date().toISOString() } })
+    .set({ name: provisionalName(me.email), preferences: { onboarding: prefs.onboarding, ageBlockedAt: at } })
     .where(eq(users.id, scope.userId));
   return { blocked: true as const };
 }
@@ -157,7 +199,7 @@ export async function saveWelcomeProgress(scope: UserScope, tz: string, input: z
   await scope.tx
     .update(users)
     .set({ preferences: prefs, ...(d.name ? { name: d.name.replace(/\s+/g, " ") } : {}) })
-    .where(eq(users.id, scope.userId));
+    .where(and(eq(users.id, scope.userId), notLocked));
   return { blocked: false };
 }
 
@@ -172,7 +214,7 @@ export async function saveBirthday(scope: UserScope, tz: string, birthDate: stri
   await scope.tx
     .update(users)
     .set({ preferences: { ...current, birthDate: birth } })
-    .where(eq(users.id, scope.userId));
+    .where(and(eq(users.id, scope.userId), notLocked));
   return { blocked: false };
 }
 
@@ -188,7 +230,7 @@ export async function finishOnboarding(
   prefs: Partial<Pick<typeof users.$inferSelect.preferences, "lifeStage" | "studyTime" | "jarvisTone" | "assistantName" | "assistantStyle" | "companion">> = {},
   tz = "UTC",
 ) {
-  const [u] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
+  const [u] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId)).for("update");
   // setup finishes (or is skipped) only with a real birthday, 13 or older, checked here on the server (owner, 2026-11-10)
   if (u.preferences.ageBlockedAt) throw new ServiceError(AGE_LINE);
   if (!u.preferences.birthDate || birthDateProblem(u.preferences.birthDate, todayIn(tz))) throw new ServiceError(BIRTHDAY_NEEDED);

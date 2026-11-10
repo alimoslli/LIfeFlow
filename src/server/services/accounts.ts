@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { AGE_LINE, birthDateProblem } from "@/lib/birthday";
+import { AGE_LINE, birthDateProblem, isUnderAge } from "@/lib/birthday";
 import { COMPANIONS, companionOf, isCompanionKey, SKY_CHOICE, SKY_CHOICE_LABEL } from "@/lib/companions";
 import { todayIn } from "@/lib/dates";
 import { checkPassword } from "@/lib/password-strength";
@@ -82,12 +82,19 @@ export const profileSchema = z.object({
 
 export async function updateProfile(db: Database, userId: string, input: z.input<typeof profileSchema>) {
   const d = profileSchema.parse(input);
-  const problem = d.birthDate ? birthDateProblem(d.birthDate, todayIn(d.timezone)) : null;
+  const today = todayIn(d.timezone);
+  // under 13 goes through the same flag as the welcome and Today, so a second, older year here is refused too
+  if (d.birthDate && isUnderAge(d.birthDate, today)) {
+    const { saveBirthday } = await import("./onboarding");
+    await withUser(userId, (s) => saveBirthday(s, d.timezone, d.birthDate!));
+    throw new ServiceError(AGE_LINE);
+  }
+  const problem = d.birthDate ? birthDateProblem(d.birthDate, today) : null;
   if (problem) throw new ServiceError(problem);
   const [current] = await db.select().from(users).where(eq(users.id, userId));
   // a locked account (under 13, owner 2026-11-10) can't get past it by typing another year here
   if (d.birthDate && current.preferences.ageBlockedAt) throw new ServiceError(AGE_LINE);
-  await db
+  const saved = await db
     .update(users)
     .set({
       name: d.name,
@@ -101,7 +108,10 @@ export async function updateProfile(db: Database, userId: string, input: z.input
         birthDate: d.birthDate === undefined ? current.preferences.birthDate : d.birthDate || undefined,
       },
     })
-    .where(eq(users.id, userId));
+    // a birthday never lands over a lock that a parallel save just set
+    .where(and(eq(users.id, userId), d.birthDate ? sql`not (${users.preferences} ? 'ageBlockedAt')` : sql`true`))
+    .returning({ id: users.id });
+  if (!saved.length) throw new ServiceError(AGE_LINE);
 }
 
 /** Merges individual preference switches (e.g. memory suggestions) into the user's preferences. */

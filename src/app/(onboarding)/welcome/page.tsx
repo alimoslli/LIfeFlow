@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { isCompanionChoice } from "@/lib/companions";
-import { requireUser, withCurrentUser } from "@/server/auth/current-user";
+import { requireUserForWelcome, withCurrentUser } from "@/server/auth/current-user";
 import { billingConfig, FREE_JARVIS_PER_DAY, PRO_FEATURES } from "@/server/billing";
 import { series } from "@/server/db/series";
 import { canvasConnection } from "@/server/integrations/canvas";
@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Welcome" };
 const RESULTS = ["connected", "denied", "failed", "missing_scopes", "admin_consent", "not_configured", "use_main_site"] as const;
 
 export default async function WelcomePage({ searchParams }: { searchParams: Promise<{ connected?: string; result?: string }> }) {
-  const user = await requireUser();
+  const user = await requireUserForWelcome();
   if (user.preferences?.onboarding !== "pending") redirect("/");
   // under 13: locked for this account, whatever year is typed later (owner, 2026-11-10)
   if (user.preferences?.ageBlockedAt) return <AgeBlocked />;

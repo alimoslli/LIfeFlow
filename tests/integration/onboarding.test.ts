@@ -1,7 +1,12 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { closeDb, getDb } from "@/server/db/client";
-import { users } from "@/server/db/schema";
+import { calendarEvents, integrations, users } from "@/server/db/schema";
+import { sql } from "drizzle-orm";
+import { createTask } from "@/server/services/tasks";
+import { createCourse } from "@/server/services/school";
+import { createEmployer } from "@/server/services/work";
+import { provisionalName } from "@/lib/provisional-name";
 import { listAccounts } from "@/server/services/finance/accounts";
 import { listActiveMemories } from "@/server/services/memory";
 import { setCompanion, updateProfile } from "@/server/services/accounts";
@@ -162,6 +167,78 @@ describe("onboarding", () => {
     await expect(updateProfile(getDb(), user.id, { name: "Kai", timezone: "UTC", birthDate: "2000-01-01" })).rejects.toThrow("13 and older");
     p = await prefs(user.id);
     expect(p.onboarding).not.toBe("done");
+  });
+
+  it("under 13 during setup keeps nothing: not the name, the connections, the classes, the job or the to-dos", async () => {
+    const { user, run } = await makeUser("Real Name");
+    await getDb()
+      .update(users)
+      .set({ preferences: { onboarding: "pending" } })
+      .where(eq(users.id, user.id));
+    // they typed an adult year first, then connected things and filled in their week
+    await run((s) => saveWelcomeProgress(s, "UTC", { name: "Kai Real", birthDate: "1999-01-01", lifeStage: "both", school: "Maple", job: "Lemonade" }));
+    await run(async (s) => {
+      await s.tx.insert(integrations).values({ userId: user.id, provider: "canvas", status: "connected", displayName: "canvas.school.edu" });
+      const c = await createCourse(s, { name: "Grade 5 Science" });
+      await createTask(s, "UTC", { title: "Volcano model" });
+      await s.tx
+        .insert(calendarEvents)
+        .values({ userId: user.id, title: "Science", startsAt: new Date(), endsAt: new Date(Date.now() + 3600_000), kind: "class", courseId: c.id });
+      await createEmployer(s, { name: "Lemonade stand", payType: "hourly" });
+    });
+    // then they went back and gave their real birthday
+    expect(await run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${new Date().getFullYear() - 10}-02-02` }))).toEqual({ blocked: true });
+    const [u] = await getDb().select().from(users).where(eq(users.id, user.id));
+    expect(u.name).toBe(provisionalName(u.email));
+    expect(Object.keys(u.preferences).sort()).toEqual(["ageBlockedAt", "onboarding"]);
+    expect(u.preferences.onboarding).toBe("pending");
+    // every table that holds their rows is empty except how they sign in and the action log
+    const keep = new Set([
+      "users",
+      "sessions",
+      "oauth_identities",
+      "passkeys",
+      "recovery_codes",
+      "login_challenges",
+      "auth_challenges",
+      "password_resets",
+      "audit_events",
+    ]);
+    const tables = await getDb().execute<{ table_name: string }>(
+      sql`select distinct table_name from information_schema.columns where column_name = 'user_id' and table_schema = current_schema()`,
+    );
+    for (const { table_name } of tables.rows) {
+      if (keep.has(table_name)) continue;
+      const [{ n }] = (await getDb().execute<{ n: number }>(sql`select count(*)::int as n from ${sql.identifier(table_name)} where user_id = ${user.id}`)).rows;
+      expect(n, table_name).toBe(0);
+    }
+  });
+
+  it("two saves at once (13+ and under 13) can't clear the lock", async () => {
+    const { user, run } = await makeUser("Race Kid");
+    await getDb()
+      .update(users)
+      .set({ preferences: { onboarding: "pending" } })
+      .where(eq(users.id, user.id));
+    const young = `${new Date().getFullYear() - 9}-01-01`;
+    await Promise.all([
+      run((s) => saveWelcomeProgress(s, "UTC", { birthDate: young })),
+      run((s) => saveWelcomeProgress(s, "UTC", { birthDate: "1999-09-09" })),
+    ]);
+    const p = await prefs(user.id);
+    expect(p.ageBlockedAt).toBeTruthy();
+    expect(p.birthDate).toBeUndefined();
+  });
+
+  it("Settings: an under-13 year sets the same flag, so a second, older year is refused", async () => {
+    const { user } = await makeUser("Set Tings");
+    const base = { name: "Set Tings", timezone: "UTC" };
+    await expect(updateProfile(getDb(), user.id, { ...base, birthDate: "2015-05-05" })).rejects.toThrow("LifeFlow is for people 13 and older.");
+    expect((await prefs(user.id)).ageBlockedAt).toBeTruthy();
+    await expect(updateProfile(getDb(), user.id, { ...base, birthDate: "2000-05-05" })).rejects.toThrow("LifeFlow is for people 13 and older.");
+    expect((await prefs(user.id)).birthDate).toBeUndefined();
+    // the rest of the profile still saves
+    await updateProfile(getDb(), user.id, { ...base, name: "Set" });
   });
 
   it("an older account without a birthday is asked once: a real one saves; under 13 locks the same way", async () => {

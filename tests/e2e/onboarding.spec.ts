@@ -200,6 +200,20 @@ test("under 13: one calm line, the welcome stays locked, and an older year later
   expect(row.p.ageBlockedAt).toBeTruthy();
   expect(row.p.birthDate).toBeUndefined();
   expect(row.p.school).toBeUndefined();
+  expect(Object.keys(row.p).sort()).toEqual(["ageBlockedAt", "onboarding"]);
+  // the lock is the session's, not just the page's: chat, connecting and sharing are refused, and the app sends it back
+  const chat = await page.evaluate(
+    async () => (await fetch("/api/jarvis/chat", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).status,
+  );
+  expect(chat).toBe(401);
+  const start = await page.request.get("/api/integrations/google/start", { maxRedirects: 0 });
+  expect(start.status()).toBe(401);
+  const share = await page.request.post("/share-target", { multipart: { text: "hello" }, maxRedirects: 0 });
+  expect(share.status()).toBe(303);
+  expect(share.headers().location).toContain("/login");
+  await page.goto("/settings");
+  await page.waitForURL("**/welcome");
+  await expect(page.getByRole("heading", { name: "LifeFlow is for people 13 and older." })).toBeVisible();
   await page.getByRole("button", { name: "Sign out" }).click();
   await page.waitForURL("**/login");
 });
