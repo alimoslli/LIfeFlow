@@ -7,7 +7,7 @@ import { COINS, PixelArt, SkyWindow } from "@/components/skylings/sky-window";
 import { formatIn } from "@/lib/dates";
 import { formatCents } from "@/lib/money";
 import { withCurrentUser } from "@/server/auth/current-user";
-import { listAccounts, listTurnedOffAccounts, summarizeBalances } from "@/server/services/finance/accounts";
+import { listAccounts, listTurnedOffAccounts, spendableCents, summarizeBalances } from "@/server/services/finance/accounts";
 import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
 import { archiveAccountAction, createAccountAction, disconnectBankAction, setBankAccountUsedAction, updateAccountDetailsAction } from "../actions";
 import { AccountRow, AddAccount, type AccountView } from "./account-row";
@@ -44,8 +44,15 @@ export default async function AccountsPage() {
     name: a.name,
     mask: a.mask,
     institution: a.institutionName,
-    line: [a.institutionName, `updated ${formatIn(a.balanceUpdatedAt, d.tz, "MMM d, h:mm a")}`].filter(Boolean).join(" · "),
-    balance: formatCents(a.currentBalanceCents),
+    // available now, the same figure as the total above; what's still pending is named so the bank's own posted number makes sense
+    line: [
+      a.institutionName,
+      spendableCents(a) < a.currentBalanceCents ? `${formatCents(a.currentBalanceCents - spendableCents(a))} pending` : null,
+      `updated ${formatIn(a.balanceUpdatedAt, d.tz, "MMM d, h:mm a")}`,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+    balance: formatCents(spendableCents(a)),
     owed: a.type === "credit" || a.type === "loan",
     bank: a.source === "plaid",
     manual: a.source === "manual" || a.source === "demo",
@@ -95,7 +102,7 @@ export default async function AccountsPage() {
       {GROUPS.map(([label, types]) => {
         const items = d.accounts.filter((a) => types.includes(a.type));
         if (!items.length) return null;
-        const sum = items.reduce((s, a) => s + a.currentBalanceCents, 0);
+        const sum = items.reduce((s, a) => s + spendableCents(a), 0);
         return (
           <section key={label} aria-label={label} className="flex flex-col gap-2">
             <div className="flex items-baseline justify-between gap-3">

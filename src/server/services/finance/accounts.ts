@@ -125,8 +125,12 @@ type Held = { type: AccountType; source: string; currentBalanceCents: number; av
  * money. Manual and demo accounts have no pending charges, so their balance stands.
  */
 export function spendableCents(a: Held) {
-  if (a.type === "depository" && a.source === "plaid" && a.availableBalanceCents != null) return Math.min(a.currentBalanceCents, a.availableBalanceCents);
-  return a.currentBalanceCents;
+  return countsPending(a) ? Math.min(a.currentBalanceCents, a.availableBalanceCents!) : a.currentBalanceCents;
+}
+
+/** The account's cash figure already takes off its pending charges (`spendableCents`), so a pending charge there is spent. */
+export function countsPending(a: Pick<Held, "type" | "source" | "availableBalanceCents">) {
+  return a.type === "depository" && a.source === "plaid" && a.availableBalanceCents != null;
 }
 
 export type BalanceSummary = {

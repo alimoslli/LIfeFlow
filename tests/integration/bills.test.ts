@@ -372,6 +372,77 @@ describe("bill short only when checking really can't cover it (noticing grader, 
     expect(out).toEqual([expect.objectContaining({ kind: "bill_short", facts: expect.objectContaining({ shortCents: 4_500 }) })]);
   });
 
+  it("takes a pending rent charge off once: the bank's available balance has it, so the rent isn't still due", async () => {
+    const { user, run } = await makeUser();
+    const rentOn = async (source: "plaid" | "manual") =>
+      run(async (s) => {
+        // $1,000 posted; the $950 rent charged this morning is still pending, so $50 is available
+        const [acct] = await s.tx
+          .insert(financialAccounts)
+          .values({
+            userId: user.id,
+            name: `Checking ${source}`,
+            type: "depository",
+            subtype: "checking",
+            source,
+            currentBalanceCents: 100_000,
+            availableBalanceCents: 5_000,
+          })
+          .returning();
+        return acct.id;
+      });
+    const plaid = await rentOn("plaid");
+    await run(async (s) => {
+      const rent = (await getCategoryByName(s, "Rent"))!;
+      await createRecurring(s, {
+        name: "Parkview Apartments",
+        amountCents: -95_000,
+        frequency: "monthly",
+        nextDueDate: TODAY,
+        kind: "bill",
+        categoryId: rent.id,
+      });
+      await createTransaction(s, {
+        accountId: plaid,
+        date: TODAY,
+        description: "PARKVIEW APARTMENTS",
+        merchantName: "Parkview Apartments",
+        amountCents: -95_000,
+        categoryId: rent.id,
+        pending: true,
+      });
+    });
+    expect(await run((s) => upcomingRecurring(s, TODAY, "2026-11-10"))).toEqual([]);
+    expect((await billsDue(run)).map((m) => m.kind)).toEqual([]);
+    expect((await run((s) => cashForecast(s, TODAY, 3))).bills).toEqual([]);
+  });
+
+  it("still counts a pending charge as unpaid where the cash figure doesn't take it off", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await checking(s, 100_000);
+      const rent = (await getCategoryByName(s, "Rent"))!;
+      await createRecurring(s, {
+        name: "Parkview Apartments",
+        amountCents: -95_000,
+        frequency: "monthly",
+        nextDueDate: TODAY,
+        kind: "bill",
+        categoryId: rent.id,
+      });
+      await createTransaction(s, {
+        accountId: acct.id,
+        date: TODAY,
+        description: "PARKVIEW APARTMENTS",
+        merchantName: "Parkview Apartments",
+        amountCents: -95_000,
+        categoryId: rent.id,
+        pending: true,
+      });
+    });
+    expect((await run((s) => upcomingRecurring(s, TODAY, "2026-11-10"))).map((b) => b.name)).toEqual(["Parkview Apartments"]);
+  });
+
   it("never says checking is short for a bill charged to a credit card", async () => {
     const { run } = await makeUser();
     await run(async (s) => {

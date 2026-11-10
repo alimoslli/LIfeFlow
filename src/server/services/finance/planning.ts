@@ -21,6 +21,7 @@ import {
 } from "./bill-match";
 import { keywordCategory } from "./categorize";
 import { MIN_CONFIDENCE, detectRecurring, merchantKey, merchantKeys, nthOccurrence, occurrencesBetween, type RecurringCandidate } from "./recurring-detect";
+import { countsPending, spendableCents } from "./accounts";
 import { queryTransactions } from "./transactions";
 import { parsePatch } from "../patch";
 
@@ -274,10 +275,26 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
       addDaysStr(from, -early),
       ...payable.map(({ item: r }) => addDaysStr(nthOccurrence(from, r.frequency, -1), -PAID_EARLY_DAYS[r.frequency] - SLACK_DAYS[r.frequency])),
     ].sort()[0];
-    const [charges, named] = await series(
+    const [charges, named, accts] = await series(
       () => queryTransactions(scope, { from: back, to, limit: 5000 }),
       () => scope.tx.select({ id: categories.id, name: categories.name }).from(categories).where(eq(categories.userId, scope.userId)),
+      () =>
+        scope.tx
+          .select({
+            id: financialAccounts.id,
+            type: financialAccounts.type,
+            source: financialAccounts.source,
+            currentBalanceCents: financialAccounts.currentBalanceCents,
+            availableBalanceCents: financialAccounts.availableBalanceCents,
+          })
+          .from(financialAccounts)
+          .where(eq(financialAccounts.userId, scope.userId)),
     );
+    // A pending charge in an account whose cash figure already takes it off (the bank's available balance) has paid its
+    // bill: counting the bill as still due would take the same money off twice. Elsewhere pending still doesn't pay.
+    // Only where the bank did take something off (available below posted): one that leaves pending in its available figure
+    // hasn't spent it yet.
+    const settled = new Set(accts.filter((a) => countsPending(a) && spendableCents(a) < a.currentBalanceCents).map((a) => a.id));
     // A bill with no series yet varies by its category: the one picked, else the one its name reads as ("Verizon": Phone).
     const categoryOf = new Map(named.map((c) => [c.id, c.name]));
     // The found series each charge is a cycle of: a charge of another series is that bill's, never this one's.
@@ -302,7 +319,7 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
           amountCents: item.amountCents,
         };
       }),
-      charges.map((t) => ({ ...t, series: cycleOf(t) })),
+      charges.map((t) => ({ ...t, pending: t.pending && !(t.accountId && settled.has(t.accountId)), series: cycleOf(t) })),
     );
   }
   return due
