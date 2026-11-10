@@ -446,7 +446,7 @@ html.lf-splash .lf-splash-layer {
   z-index: 100;
   align-items: center;
   justify-content: center;
-  background: #0b1a3a;
+  background: #0b2468;
   color: var(--hero-text);
   animation: lf-splash-failsafe 0.01s linear 9.5s forwards;
 }
@@ -466,7 +466,8 @@ html.lf-splash .animate-rise {
   position: absolute;
   inset: 0 0 calc(100% - var(--lf-horizon));
   overflow: hidden;
-  background: linear-gradient(180deg, #13284f 0%, #2e5791 42%, #7d9cc7 74%, #ffd7ad 93%, #ffb27a 100%);
+  /* the logo's sky: a clear blue that warms just above the water */
+  background: linear-gradient(180deg, #1756d6 0%, #2f74ea 38%, #79aaf2 72%, #ffd9aa 94%, #ffbd80 100%);
 }
 .lf-splash-glow {
   position: absolute;
@@ -475,48 +476,40 @@ html.lf-splash .animate-rise {
   width: calc(var(--lf-sun) * 2.6);
   height: calc(var(--lf-sun) * 1.2);
   transform: translateX(-50%);
-  background: radial-gradient(50% 100% at 50% 100%, rgb(255 215 173 / 0.95), rgb(255 178 122 / 0.35) 55%, rgb(255 178 122 / 0) 100%);
+  background: radial-gradient(50% 100% at 50% 100%, rgb(255 224 170 / 0.95), rgb(255 190 128 / 0.4) 55%, rgb(255 190 128 / 0) 100%);
   opacity: 0;
   animation: lf-dawn 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s forwards;
 }
+/* The LifeFlow sun (components/motion/splash-sun.tsx, the owner's logo): pixels, rising from behind the water, then its
+   rays pop in one by one */
 .lf-splash-sun {
   position: absolute;
   left: 50%;
   bottom: 0;
-  width: var(--lf-sun);
-  height: var(--lf-sun);
-  margin-left: calc(var(--lf-sun) / -2);
-  border-radius: 50%;
-  background: linear-gradient(180deg, #ffc247 0%, #f5a524 55%, #f29a1c 100%);
-  transform: translate(-18%, 100%);
-  animation: lf-sunrise 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards;
+  width: calc(var(--lf-sun) * 1.45);
+  height: auto;
+  overflow: visible;
+  transform: translate(-62%, 100%);
+  animation: lf-sunrise 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards;
 }
-/* The face: two eyes where the mark has them (10 across and 15 up, of the sun's 36). */
-.lf-splash-sun::before,
-.lf-splash-sun::after {
-  content: "";
-  position: absolute;
-  top: 24.4%;
-  width: 9.44%;
-  height: 9.44%;
-  border-radius: 50%;
-  background: #07101f;
-}
-.lf-splash-sun::before {
-  left: 31.4%;
-}
-.lf-splash-sun::after {
-  right: 31.4%;
+.lf-splash-ray {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  animation: lf-ray 0.42s steps(3, end) calc(1.05s + var(--i) * 90ms) forwards;
 }
 .lf-splash-horizon {
   position: absolute;
   top: var(--lf-horizon);
-  left: 20px;
-  right: 20px;
-  height: 7px;
-  border-radius: 3.5px;
+  left: 18px;
+  right: 18px;
+  height: 10px;
+  border-radius: 5px;
   transform: translateY(-50%);
-  background: #2f7cd2;
+  background: radial-gradient(30% 140% at 50% 50%, #fff3d6, rgb(255 243 214 / 0) 70%), linear-gradient(90deg, #2f7cf0, #8ed2ff 50%, #2f7cf0);
+  box-shadow:
+    0 0 14px rgb(120 196 255 / 0.85),
+    0 0 36px rgb(80 160 255 / 0.45);
 }
 .lf-splash-ground {
   position: absolute;
@@ -525,17 +518,25 @@ html.lf-splash .animate-rise {
   flex-direction: column;
   align-items: center;
   padding-top: clamp(28px, 7vh, 56px);
-  background: linear-gradient(180deg, #1b3263 0%, #0b1a3a 100%);
+  /* the water: the sun's light on it, then deep blue with one slow swell */
+  background:
+    radial-gradient(28% 18% at 50% 0%, rgb(255 226 170 / 0.45), rgb(255 226 170 / 0) 100%),
+    radial-gradient(120% 40% at 30% 78%, rgb(70 120 230 / 0.45), rgb(70 120 230 / 0) 60%), linear-gradient(180deg, #1d4fbf 0%, #163f9e 45%, #0b2468 100%);
 }
 @keyframes lf-sunrise {
   0% {
-    transform: translate(-18%, 100%);
+    transform: translate(-62%, 100%);
   }
   55% {
-    transform: translate(-7%, 68%);
+    transform: translate(-54%, 30%);
   }
   100% {
-    transform: translate(0, 50%);
+    transform: translate(-50%, 0);
+  }
+}
+@keyframes lf-ray {
+  to {
+    transform: scale(1);
   }
 }
 @keyframes lf-dawn {
@@ -546,7 +547,11 @@ html.lf-splash .animate-rise {
 @media (prefers-reduced-motion: reduce) {
   .lf-splash-sun {
     animation: none;
-    transform: translate(0, 50%);
+    transform: translate(-50%, 0);
+  }
+  .lf-splash-ray {
+    animation: none;
+    transform: none;
   }
   .lf-splash-glow {
     animation: none;

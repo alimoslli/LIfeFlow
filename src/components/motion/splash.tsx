@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { gsap, MOTION } from "./gsap";
 import { markHydrated, setSplashActive } from "./intro";
+import { SplashSun } from "./splash-sun";
 
 const SESSION_KEY = "lf_splash_shown";
 /** The signed-in user's first name, remembered on this device for the greeting. */
@@ -42,8 +43,8 @@ function pageReady() {
 }
 
 /**
- * Opening screen: the morning. The sun (the LifeFlow mark, face and all) rises
- * along the horizon in CSS (globals.css, .lf-splash-scene), then "Good morning"
+ * Opening screen: the morning. The LifeFlow sun (the owner's pixel logo, face and all) rises
+ * out of the water in CSS and its rays pop in (globals.css, .lf-splash-*), then "Good morning"
  * and the user's first name rise into focus (CSS, set before first paint from the
  * hour in the user's time zone, so no flicker). It stays until the app has really loaded (the
  * page's data is in, no loading placeholder, fonts and images done), so people
@@ -94,7 +95,7 @@ export function Splash() {
       <div className="lf-splash-inner">
         <div className="lf-splash-sky">
           <span className="lf-splash-glow" />
-          <span className="lf-splash-sun" />
+          <SplashSun className="lf-splash-sun" />
         </div>
         <span className="lf-splash-horizon" />
         <div className="lf-splash-ground text-center">
