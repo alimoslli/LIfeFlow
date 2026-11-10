@@ -22,7 +22,7 @@ export async function personalIdeas(scope: UserScope, tz: string, today: string,
   if (exam?.dueAt) {
     const day = formatDateStr(localDateOf(exam.dueAt, tz), "EEE, MMM d");
     out.push({
-      emoji: "📚",
+      icon: "books",
       title: `${exam.title} is ${day}. Want a study plan?`,
       detail: `Study blocks for ${exam.course.name} in your free time before then.`,
       prompt: `Plan study time for ${exam.title} (${exam.course.name}) on ${day}, in my free time.`,
@@ -31,7 +31,7 @@ export async function personalIdeas(scope: UserScope, tz: string, today: string,
   const bare = courses.find((c) => !upcoming.some((a) => a.course.id === c.id));
   if (bare)
     out.push({
-      emoji: "📄",
+      icon: "note",
       title: `Nothing due in ${bare.name} yet. Send me the syllabus?`,
       detail: "I'll add every due date and exam.",
       prompt: `Here's the syllabus for ${bare.name}. Add every due date and exam.`,
@@ -39,14 +39,14 @@ export async function personalIdeas(scope: UserScope, tz: string, today: string,
   const job = jobs.find((j) => !regularHoursOf(j.schedule) && !shifts.some((s) => s.employerId === j.id));
   if (job)
     out.push({
-      emoji: "📸",
+      icon: "shift",
       title: `No shifts at ${job.name} this week. Add them?`,
       detail: "Send a screenshot of your schedule, or set regular hours.",
       prompt: `Add my shifts at ${job.name} for this week.`,
     });
   if (!goals.some((g) => g.status === "active"))
     out.push({
-      emoji: "💰",
+      icon: "money",
       title: "No savings goal yet. Set one?",
       detail: "Pick what you're saving for and a weekly amount.",
       prompt: "Help me set a savings goal and a weekly amount I can actually keep.",
@@ -54,7 +54,7 @@ export async function personalIdeas(scope: UserScope, tz: string, today: string,
   const subs = recurring.filter((r) => r.kind === "subscription");
   if (subs.length >= 3)
     out.push({
-      emoji: "🧾",
+      icon: "bill",
       title: `You pay for ${subs.length} subscriptions. Still use them all?`,
       detail: "I'll list them with prices so you can decide.",
       prompt: "List my subscriptions with prices and help me decide which to keep.",

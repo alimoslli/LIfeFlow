@@ -32,7 +32,7 @@ describe("personal ideas", () => {
   it("come only from the user's records", async () => {
     const { run } = await makeUser();
     const today = todayIn(TZ);
-    expect((await run((s) => personalIdeas(s, TZ, today, { school: true, work: true }))).map((i) => i.emoji)).toEqual(["💰"]); // no goal yet
+    expect((await run((s) => personalIdeas(s, TZ, today, { school: true, work: true }))).map((i) => i.icon)).toEqual(["money"]); // no goal yet
 
     const bio = await run((s) => createCourse(s, { name: "Biology II" }));
     await run((s) => createCourse(s, { name: "Statistics" }));

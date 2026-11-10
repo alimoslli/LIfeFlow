@@ -7,6 +7,7 @@ import { lifeAreas } from "@/lib/life";
 import { assistantProfile } from "@/lib/assistant";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { personalIdeas } from "@/server/services/ideas";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export const metadata: Metadata = { title: "Ideas" };
 
@@ -33,9 +34,7 @@ export default async function IdeasPage() {
                   <IdeaButton idea={i} />
                 ) : (
                   <Link href="/jarvis/memory/import" className="flex w-full gap-4 py-4">
-                    <span className="text-[1.625rem] leading-none" aria-hidden>
-                      {i.emoji}
-                    </span>
+                    <PixelIcon name={i.icon} className="h-7 w-7 shrink-0" />
                     <span className="min-w-0 flex-1">
                       <span className="block text-[1rem] leading-snug font-semibold">{i.title}</span>
                       <span className="mt-1 block text-sm text-text-2">{i.detail}</span>

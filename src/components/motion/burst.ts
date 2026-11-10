@@ -3,6 +3,7 @@
 import { STAR_FACES, STAR_LOOKS, SUN_SIZE, star, sun, type StarFace, type StarLook, type SunFrame } from "./celebration-art";
 import { prefersReducedMotion } from "./gsap";
 import { milestoneSound } from "./sound";
+import { vibrate } from "@/lib/haptics";
 
 const reduceMotion = () => prefersReducedMotion();
 const SPARK = ["#ffd77a", "#ffffff", "#ffb3c6", "#a8ecc0", "#a9d4ff", "#d2c2ff"];
@@ -137,11 +138,7 @@ export function celebrate(
   if (typeof document === "undefined") return;
   const x = at ? ("width" in at ? at.left + at.width / 2 : at.x) : window.innerWidth / 2;
   const y = at ? ("height" in at ? at.top + at.height / 2 : at.y) : window.innerHeight / 2;
-  try {
-    navigator.vibrate?.(size === "big" ? [12, 50, 12, 50, 24] : [10, 40, 16]);
-  } catch {
-    /* not supported */
-  }
+  vibrate(size === "big" ? [12, 50, 12, 50, 24] : [10, 40, 16]);
   if (size === "big") {
     bigSun(x, y, label ?? "Milestone!", opts);
     return;
