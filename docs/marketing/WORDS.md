@@ -34,6 +34,7 @@ A script picks one person, but across a campaign the cast covers several of thes
 | your time back, your life back | the promise |
 | the way you earn | covers every kind of income |
 | your skyling (or the name they gave it) | the character on top of your day (owner, 2026-11-09). Never "assistant", "companion" or "Jarvis" |
+| "Let's clear your sky." | the skyling's catchphrase (owner, 2026-11-10): the chat greeting in the app; approved to lead captions, end cards and the teaser |
 | it noticed / it moved / you said yes | it acts first, you approve |
 | a flow for everyone | the owner's words; candidate end line |
 
