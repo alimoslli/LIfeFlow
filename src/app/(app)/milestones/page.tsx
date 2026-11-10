@@ -1,8 +1,7 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Briefcase, Download, Flag, GraduationCap, Heart, HeartPulse, Plane, PiggyBank, Star, Trash2 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Download, Trash2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -16,18 +15,19 @@ import { lifeTimeline, whenLabel, type TimelineItem } from "@/server/services/mi
 import { AskJarvisButton } from "../money/money-client";
 import { createMilestoneAction, deleteMilestoneAction, updateMilestoneAction } from "./actions";
 import { SkylingIcon } from "@/components/skylings/sprite";
-import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { PixelIcon, pixel, type IconLike } from "@/components/pixel/pixel-icon";
 
 export const metadata: Metadata = { title: "Milestones" };
 
-const CATEGORY: Record<MilestoneCategory, { label: string; icon: LucideIcon }> = {
-  school: { label: "School", icon: GraduationCap },
-  work: { label: "Work", icon: Briefcase },
-  money: { label: "Money", icon: PiggyBank },
-  health: { label: "Health", icon: HeartPulse },
-  travel: { label: "Travel", icon: Plane },
-  family: { label: "Family", icon: Heart },
-  personal: { label: "Personal", icon: Star },
+// our pixel pictures for each kind of moment (owner: the icons were generic)
+const CATEGORY: Record<MilestoneCategory, { label: string; icon: IconLike }> = {
+  school: { label: "School", icon: pixel("class") },
+  work: { label: "Work", icon: pixel("shift") },
+  money: { label: "Money", icon: pixel("money") },
+  health: { label: "Health", icon: pixel("health") },
+  travel: { label: "Travel", icon: pixel("pin") },
+  family: { label: "Family", icon: pixel("person") },
+  personal: { label: "Personal", icon: pixel("star") },
 };
 
 const TELL_JARVIS =
@@ -103,13 +103,14 @@ export default async function MilestonesPage({ searchParams }: { searchParams: P
               <h2 className="mb-2 px-1 text-sm font-semibold text-muted">{year}</h2>
               <ol className="lf-tiles">
                 {items.map((i) => {
-                  const C = i.kind === "milestone" ? CATEGORY[i.category] : { label: "Goal reached", icon: i.kind === "money_goal" ? PiggyBank : Flag };
+                  const C =
+                    i.kind === "milestone" ? CATEGORY[i.category] : { label: "Goal reached", icon: i.kind === "money_goal" ? pixel("target") : pixel("goal") };
                   const when = whenLabel(i);
                   return (
                     <li key={`${i.kind}-${i.id}`} className="px-4 py-3">
                       <div className="flex items-start gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent">
-                          <C.icon className="h-[18px] w-[18px]" />
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center">
+                          <C.icon className="h-7 w-7" />
                         </span>
                         <div className="min-w-0 flex-1">
                           <p className="text-[0.9375rem] font-medium break-words">{i.title}</p>

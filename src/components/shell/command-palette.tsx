@@ -1,52 +1,45 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  ArrowRight,
-  BookOpen,
-  CalendarDays,
-  CheckSquare,
-  Flag,
-  Landmark,
-  NotebookPen,
-  Plus,
-  Receipt,
-  Search,
-  Settings,
-  Sun,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, Plus, Search, type LucideIcon } from "lucide-react";
+import { pixel, type IconLike } from "@/components/pixel/pixel-icon";
 import { cn } from "@/lib/utils";
 import type { SearchHit } from "@/server/services/search";
 import { useShell } from "./app-shell";
 import { SkylingIcon } from "../skylings/sprite";
 
-type Item = { key: string; title: string; subtitle?: string | null; icon: LucideIcon | typeof SkylingIcon; run: () => void };
+type Item = { key: string; title: string; subtitle?: string | null; icon: LucideIcon | IconLike | typeof SkylingIcon; run: () => void };
 
-const KIND_ICON: Record<SearchHit["kind"], LucideIcon> = {
-  task: CheckSquare,
-  note: NotebookPen,
-  event: CalendarDays,
-  assignment: BookOpen,
-  course: BookOpen,
-  transaction: Receipt,
-  goal: Flag,
+const KIND_ICON: Record<SearchHit["kind"], IconLike> = {
+  task: pixel("todo"),
+  note: pixel("note"),
+  event: pixel("calendar"),
+  assignment: pixel("pencil"),
+  course: pixel("class"),
+  transaction: pixel("bill"),
+  goal: pixel("goal"),
 };
 
-const PAGES: { title: string; href: string; icon: LucideIcon; words: string }[] = [
-  { title: "Today", href: "/", icon: Sun, words: "home brief" },
-  { title: "Plan", href: "/plan", icon: CalendarDays, words: "agenda schedule" },
-  { title: "To-dos", href: "/tasks", icon: CheckSquare, words: "tasks todo" },
-  { title: "Calendar", href: "/calendar", icon: CalendarDays, words: "events" },
-  { title: "Classes", href: "/school", icon: BookOpen, words: "school courses assignments" },
-  { title: "Notes", href: "/notes", icon: NotebookPen, words: "" },
-  { title: "Money", href: "/money", icon: Wallet, words: "available spent income balance" },
-  { title: "Transactions", href: "/finances/transactions", icon: Receipt, words: "spending" },
-  { title: "Goals", href: "/goals", icon: Flag, words: "savings dreams" },
-  { title: "Milestones", href: "/milestones", icon: Flag, words: "achievements life story import chatgpt" },
-  { title: "Accounts and banks", href: "/finances/accounts", icon: Landmark, words: "plaid connect bank" },
-  { title: "Settings", href: "/settings", icon: Settings, words: "profile security passkey" },
+// Every place in the app, findable by its name or the words people use for it (LF Main's sweep, 2026-11-10: "bills"
+// found nothing). One entry per place: the calendar's week and month are one.
+const PAGES: { title: string; href: string; icon: IconLike; words: string }[] = [
+  { title: "Today", href: "/", icon: pixel("today"), words: "home brief day sky" },
+  { title: "Calendar", href: "/plan", icon: pixel("calendar"), words: "plan agenda schedule events week month" },
+  { title: "To-dos", href: "/tasks", icon: pixel("todo"), words: "tasks todo reminders" },
+  { title: "Classes", href: "/school", icon: pixel("class"), words: "school courses" },
+  { title: "Due", href: "/school/due", icon: pixel("pencil"), words: "assignments exams homework deadlines" },
+  { title: "Notes", href: "/notes", icon: pixel("note"), words: "notes ideas projects lecture" },
+  { title: "Money", href: "/money", icon: pixel("money"), words: "available spent income balance" },
+  { title: "Activity", href: "/finances/transactions", icon: pixel("bill"), words: "transactions spending purchases" },
+  { title: "Bills and subscriptions", href: "/finances/bills", icon: pixel("calendar"), words: "bills subscriptions recurring rent" },
+  { title: "Accounts and savings", href: "/finances/accounts", icon: pixel("card"), words: "plaid connect bank savings cards" },
+  { title: "Goals", href: "/goals", icon: pixel("target"), words: "savings dreams habits" },
+  { title: "Milestones", href: "/milestones", icon: pixel("goal"), words: "achievements life story import chatgpt" },
+  { title: "Health", href: "/habits", icon: pixel("health"), words: "sleep steps workouts apple health" },
+  { title: "Work", href: "/work", icon: pixel("shift"), words: "shifts jobs pay hours" },
+  { title: "Updates", href: "/jarvis/says", icon: pixel("bell"), words: "messages noticed inbox filed" },
+  { title: "What your skyling knows", href: "/jarvis/memory", icon: pixel("idea"), words: "memory remembers forget" },
+  { title: "Settings", href: "/settings", icon: pixel("cog"), words: "profile security passkey notifications connected" },
 ];
 
 /**

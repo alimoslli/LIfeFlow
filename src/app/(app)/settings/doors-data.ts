@@ -38,7 +38,7 @@ export async function settingsDoors(): Promise<SettingsDoors> {
     ...(smsConfig() ? [{ href: "/settings/text", icon: "chat", label: `Text ${d.assistant}` } satisfies Door] : []),
     { href: "/settings/data", icon: "shield", label: "Privacy and your data", detail: "Download it or delete it" },
     { href: "/settings/trash", icon: "trash", label: "Recently deleted", detail: "Bring something back" },
-    { href: "/settings/invite", icon: "gift", label: "Invite friends" },
+    { href: "/settings/invite", icon: "gift", label: "Invite friends", detail: "Your own link to share" },
     { href: "/settings/feedback", icon: "health", label: "Send feedback", detail: "It goes straight to the team" },
     ...(isAdmin ? [{ href: "/admin", icon: "cog", label: "Admin", detail: "Owner only" } satisfies Door] : []),
   ];
