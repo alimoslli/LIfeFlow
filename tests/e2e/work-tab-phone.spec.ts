@@ -38,4 +38,10 @@ test("no classes: Work is a tab, and its page leads with the next shift", async 
   await expect(page.getByRole("region", { name: "This week" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Shift", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Paycheck", exact: true })).toBeVisible();
+
+  // More doesn't repeat the Work tab, and its Goals door goes straight to Goals
+  await page.getByRole("navigation", { name: "Main" }).last().getByRole("button", { name: "More" }).click();
+  const more = page.getByRole("dialog", { name: "Everything else" });
+  await expect(more.locator('a[href="/goals"]')).toBeVisible();
+  await expect(more.locator('a[href="/work"]')).toHaveCount(0);
 });

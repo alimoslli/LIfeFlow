@@ -61,12 +61,12 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
   // its doors can stream in just after the sheet opens: read them once the first is there (a full run once read none)
   await expect(everything.locator('a[href="/plan"]')).toBeVisible();
   const doors = await everything.locator("a[href]").evaluateAll((as) => as.map((a) => new URL((a as HTMLAnchorElement).href).pathname));
-  for (const m of ["/plan", "/tasks", "/milestones", "/habits", "/work", "/jarvis/says", "/jarvis/profile", "/settings"])
+  for (const m of ["/plan", "/tasks", "/goals", "/habits", "/work", "/jarvis/says", "/jarvis/profile", "/settings"])
     if (!doors.includes(m)) problems.push(`${m} not a door in More`);
   await everything.getByRole("link", { name: /To-dos/ }).click();
   await expect(page).toHaveURL(/\/tasks$/);
   await expect(everything).toBeHidden();
-  pages.push("/jarvis", "/jarvis/says", "/jarvis/profile", "/plan", "/tasks", "/milestones");
+  pages.push("/jarvis", "/jarvis/says", "/jarvis/profile", "/plan", "/tasks", "/goals");
 
   // Settings: the gear (tap 1), then its tabs (tap 2): Assistant (what Jarvis remembers), Integrations (Apple Health), etc.
   // The gear brings Settings up from below, over the page you were on (owner, 2026-11-10); its doors are one tap away.

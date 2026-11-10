@@ -19,7 +19,7 @@ export const SECTIONS: Record<Section, Item[]> = {
     { href: "/", label: "Day", icon: pixel("today"), exact: true },
     { href: "/plan", label: "Calendar", icon: pixel("calendar"), exact: true, also: ["/calendar"] },
     { href: "/tasks", label: "To-dos", icon: pixel("todo") },
-    { href: "/milestones", label: "Milestones", icon: pixel("goal"), also: ["/goals"] },
+    { href: "/goals", label: "Goals", icon: pixel("goal"), also: ["/milestones"] },
     { href: "/habits", label: "Health", icon: pixel("health") },
     { href: "/work", label: "Work", icon: pixel("shift") },
   ],

@@ -39,9 +39,10 @@ export async function everythingDoors(now = new Date()): Promise<EverythingDoors
     const doors: Door[] = [
       { href: "/plan", icon: "calendar", label: "Calendar", detail: "Your week and your month" },
       { href: "/tasks", icon: "todo", label: "To-dos", detail: todos ? `${todos} open` : "Nothing open" },
-      { href: "/milestones", icon: "goal", label: "Goals and milestones", detail: "What you've done, and what's next" },
-      { href: "/habits", icon: "health", label: "Health", detail: "Sleep, steps and workouts" },
-      ...(areas.work
+      { href: "/goals", icon: "goal", label: "Goals", detail: "What you're aiming for, and what's done" },
+      { href: "/habits", icon: "health", label: "Health", detail: "Sleep, steps and active days" },
+      // with no classes, Work is a tab of its own (tabsFor), so it isn't a door here too
+      ...(areas.work && areas.school
         ? [{ href: "/work", icon: "shift", label: "Work", detail: next ? nextShiftLine(next.startsAt, tz, today) : "Shifts and paid hours" } satisfies Door]
         : []),
       { href: "/jarvis/says", icon: "bell", label: "Updates", detail: unread ? `${unread} new` : `What ${name} noticed` },
