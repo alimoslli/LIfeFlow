@@ -69,9 +69,15 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   await expect(page.getByText("Fold it back (done)")).toBeAttached();
   await page.getByRole("button", { name: "Go to my sky" }).click();
 
-  // Today, with the tour running.
+  // Today, and no tour after the welcome (owner's program, item 7: the welcome taught what the tour did).
   await page.waitForURL((u) => u.pathname === "/");
   const tour = page.getByRole("dialog", { name: "Welcome to LifeFlow" });
+  await expect(page.getByTestId("day-clock")).toBeVisible();
+  await expect(tour).toHaveCount(0);
+  // Settings can still replay it.
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "Replay the tour" }).click();
+  await page.waitForURL((u) => u.pathname === "/");
   await expect(tour).toBeVisible();
   await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Your day as a wheel" })).toBeVisible();
@@ -142,7 +148,6 @@ test("the app follows what fills your week: tabs and pills adapt", async ({ page
   await page.getByRole("button", { name: "I'll connect later" }).click(); // connecting is optional
   await page.getByRole("button", { name: "Go to my sky" }).click();
   await page.waitForURL((u) => u.pathname === "/");
-  await page.getByRole("button", { name: "Skip tour" }).click();
 
   const tab = (name: string) => page.getByRole("navigation", { name: "Main" }).getByRole("link", { name, exact: true }).filter({ visible: true });
   const pill = (name: string) => page.getByRole("navigation", { name: "Today sections" }).getByRole("link", { name });

@@ -97,7 +97,6 @@ test("393px: every control on onboarding and the main screens is at least 44x44"
   await check("welcome/learn");
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
-  await page.getByRole("button", { name: "Skip tour" }).click();
 
   // The main screens, with real content (goals with "What if I added", a job, subscriptions).
   execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/seed-coach.ts", email], {

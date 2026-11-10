@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { aiAllowed } from "@/lib/ai-consent";
 import { redirect } from "next/navigation";
 import { isCompanionChoice } from "@/lib/companions";
 import { requireUserForWelcome, withCurrentUser } from "@/server/auth/current-user";
@@ -54,6 +55,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
   return (
     <Onboarding
       firstName={user.name.split(" ")[0]}
+      aiOk={aiAllowed(user.preferences)}
       plan={plan}
       clock={clock}
       saved={saved}

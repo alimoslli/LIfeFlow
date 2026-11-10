@@ -259,6 +259,11 @@ for (const size of SIZES)
       await check("welcome/learn");
       await page.getByRole("button", { name: "Skip setup" }).click();
       await page.waitForURL((u) => u.pathname === "/");
+      // no tour after the welcome (item 7); the replayed one is checked the same way
+      await page.goto("/settings");
+      await page.getByRole("button", { name: "Replay the tour" }).click();
+      await page.waitForURL((u) => u.pathname === "/");
+      await expect(page.getByRole("dialog", { name: "Welcome to LifeFlow" })).toBeVisible();
       await check("tour");
       await page.getByRole("button", { name: "Skip tour" }).click();
 

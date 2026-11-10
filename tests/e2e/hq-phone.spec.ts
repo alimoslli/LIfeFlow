@@ -19,7 +19,6 @@ async function owner(page: Page) {
   await pool.query(`update users set name = $1, preferences = preferences || '{"birthDate":"1990-06-15"}'::jsonb where email = $2`, ["Owner Olu", ADMIN_EMAIL]);
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
-  await page.getByRole("button", { name: "Skip tour" }).click();
   await pool.query("update users set totp_enabled_at = now() where email = $1", [ADMIN_EMAIL]);
 }
 

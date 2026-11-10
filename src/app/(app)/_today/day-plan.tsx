@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { SkylingSprite } from "@/components/skylings/sprite";
@@ -27,6 +27,34 @@ export function QuickChips() {
   );
 }
 
+// The first Today after the welcome says what the bar is for, in place of its usual words, once (owner's program, item 7:
+// what the tour taught that still matters, in place). Decided once per page load for every bar on the page; not under
+// automation unless the address asks (?hints=1), like the splash.
+const HINT_KEY = "lf_hint_bar";
+let barHint: boolean | null = null;
+function useFirstHint() {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (barHint === null) {
+      let show = false;
+      try {
+        const asked = new URLSearchParams(window.location.search).has("hints");
+        if ((asked || !navigator.webdriver) && !localStorage.getItem(HINT_KEY)) {
+          localStorage.setItem(HINT_KEY, "1");
+          show = true;
+        }
+      } catch {}
+      barHint = show;
+    }
+    const t = barHint ? setTimeout(() => setOn(true), 0) : undefined;
+    return () => {
+      clearTimeout(t);
+      barHint = false; // leaving Today ends it: coming back says the usual words
+    };
+  }, []);
+  return on;
+}
+
 /**
  * Today's chat bar: type here and it goes on in the chat, or tap the waves to talk. An idea cloud fills this box (owner,
  * 2026-11-10: "in the same chat, the same area", no side panel). Above it stands the skyling with its name, so it's clear
@@ -38,6 +66,7 @@ export function AskBar({ name, chips = true, clouds = [] }: { name: string; chip
   const [text, setText] = useState("");
   const box = useRef<HTMLInputElement>(null);
   const typed = text.trim();
+  const hint = useFirstHint();
   return (
     <div className="flex flex-col gap-3">
       <div className="@container relative pt-12">
@@ -77,7 +106,7 @@ export function AskBar({ name, chips = true, clouds = [] }: { name: string; chip
             maxLength={500}
             enterKeyHint="send"
             aria-label={`Message ${name}`}
-            placeholder={`Message ${name}…`}
+            placeholder={hint ? `Ask or tell ${name} anything` : `Message ${name}…`}
             className="min-w-0 flex-1 bg-transparent text-[1rem] outline-none placeholder:text-muted"
           />
           <button

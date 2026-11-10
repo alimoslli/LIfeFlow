@@ -10,7 +10,7 @@ import { cheerSkylings } from "@/components/skylings/night";
 import { SkyButton } from "@/components/skylings/sky-button";
 import { FormError, Input } from "@/components/ui/field";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
-import { ASSISTANT_STYLES, type AssistantStyle } from "@/lib/assistant";
+import { ASSISTANT_STYLES, nameAtStart, type AssistantStyle } from "@/lib/assistant";
 import { AGE_LINE, BIRTHDAY_NEEDED, birthDateProblem } from "@/lib/birthday";
 import { COMPANIONS, companionOf, SKY_CHOICE, SKY_CHOICE_LABEL, type CompanionChoice, type CompanionKey } from "@/lib/companions";
 import { useSkyling } from "@/components/skylings/use-skyling";
@@ -18,6 +18,7 @@ import type { ClockData } from "@/lib/day-clock";
 import type { LifeStage } from "@/lib/life";
 import { cn } from "@/lib/utils";
 import { connectCanvasFeedAction } from "@/app/(app)/settings/integrations/actions";
+import { setAiConsentAction } from "@/app/(app)/settings/actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import type { PixelName } from "@/components/pixel/art";
 import { NotifyAsk } from "@/components/jarvis/notify-ask";
@@ -81,6 +82,7 @@ const BACK_TEXT: Record<Back["result"], string> = {
 
 export function Onboarding({
   firstName,
+  aiOk,
   plan,
   clock: firstClock,
   saved,
@@ -88,6 +90,8 @@ export function Onboarding({
   sources,
 }: {
   firstName: string;
+  /** They already allowed the skyling to use AI (the chat's "Before we start"). */
+  aiOk: boolean;
   plan: PlanInfo;
   clock: ClockData;
   saved: Saved;
@@ -150,7 +154,9 @@ export function Onboarding({
     google: sources.google.connected || (back?.provider === "google" && back.result === "connected"),
     outlook: sources.outlook.connected || (back?.provider === "outlook" && back.result === "connected"),
   });
-  const anyLinked = linked.canvas || linked.google || linked.outlook;
+  // a week told in one message counts like a connection: something real is on the sky
+  const [told, setTold] = useState(false);
+  const anyLinked = linked.canvas || linked.google || linked.outlook || told;
 
   const panel = useRef<HTMLDivElement>(null);
   useGSAP(
@@ -216,6 +222,13 @@ export function Onboarding({
       celebrate(at, "big", "Connected");
       cheerSkylings();
     });
+
+  /** A week told in one message was saved: the sky comes back with it. */
+  const weekTold = async () => {
+    setTold(true);
+    const sky = await skyNowAction();
+    if (sky.ok) setClock(sky.clock);
+  };
 
   /** Finishes setup (their skyling, their week, where they work) and goes to their sky. */
   const finish = (to: string) =>
@@ -512,8 +525,9 @@ export function Onboarding({
                   </li>
                 ))}
               </ul>
+              <TellWeek who={shown ?? (chosen ? chosen.name : "your skyling")} aiOk={aiOk} onSaved={weekTold} />
               <p data-anim className="mt-3 text-[0.8125rem] text-muted">
-                No calendar? Tell your skyling your week in one sentence later. Your bank can come later too, from Money.
+                Your bank can come later, from Money.
               </p>
             </>
           )}
@@ -601,6 +615,110 @@ function LinkSource({
         <a href={href} className="lf-sb lf-sb-sun lf-sb-sm shrink-0" aria-label={`Connect ${title}`}>
           Connect
         </a>
+      )}
+    </div>
+  );
+}
+
+/**
+ * No calendar to connect: tell the skyling the week in one message, right here (owner's program, item 7: the first
+ * minute ends on a full sky). It goes through the same chat as everywhere else (its limits, its AI permission, the
+ * one-call set_up_schedule), and the sky above comes back with what was saved. Nothing is made up: only what they wrote.
+ */
+function TellWeek({ who, aiOk, onSaved }: { who: string; aiOk: boolean; onSaved: () => Promise<void> }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [allowed, setAllowed] = useState(aiOk);
+  const [said, setSaid] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  const fallback = `${nameAtStart(who)} couldn't save that just now. Try again, or connect a calendar above.`;
+  const send = async () => {
+    const message = text.trim();
+    if (!message || busy) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      if (!allowed) {
+        const r = await setAiConsentAction(true);
+        if (!r?.ok) throw new Error(r?.error || fallback);
+        setAllowed(true);
+      }
+      const res = await fetch("/api/jarvis/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ message, clientMessageId: crypto.randomUUID(), module: "calendar" }),
+      });
+      if (!res.ok || !res.body) {
+        // only words the server wrote for people (limits, permission); anything else is the calm fallback
+        const words = [402, 403, 429, 503].includes(res.status) ? ((await res.json().catch(() => null)) as { error?: string } | null)?.error : null;
+        throw new Error(words || fallback);
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      let reply = "";
+      let saved = false;
+      let failed = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buf.indexOf("\n")) >= 0) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line) continue;
+          const ev = JSON.parse(line) as { type: string; delta?: string; ok?: boolean; message?: string };
+          if (ev.type === "tool_start") reply = ""; // only the final answer, not "let me check…"
+          if (ev.type === "text") reply += ev.delta ?? "";
+          if (ev.type === "tool_end" && ev.ok) saved = true;
+          if (ev.type === "error") failed = ev.message ?? "";
+        }
+      }
+      if (failed && !saved) throw new Error(failed);
+      setSaid(reply.trim() || "Saved. It's on your sky.");
+      setText("");
+      if (saved) await onSaved();
+    } catch (e) {
+      setProblem(e instanceof Error && e.message ? e.message : fallback);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div data-anim className="mt-5 rounded-2xl bg-surface px-4 py-3.5 shadow-soft">
+      <label htmlFor="tell-week" className="block text-[0.9375rem] font-medium">
+        No calendar? Tell {who} your week
+      </label>
+      <p className="text-sm text-muted">One message is enough, in your own words.</p>
+      <textarea
+        id="tell-week"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={3}
+        maxLength={2000}
+        placeholder="Bio 101 Mon and Wed at 10, work at Target Tue and Thu 5 to 9"
+        className="mt-3 w-full resize-none rounded-xl bg-surface-2 px-3 py-2.5 text-[1rem] outline-none placeholder:text-muted focus:ring-2 focus:ring-accent"
+      />
+      {!allowed && (
+        <p className="mt-2 text-xs text-muted">
+          To save it, {who} sends your message to OpenAI, our AI provider. They don&apos;t use it to train their models. You can turn this off anytime in
+          Settings.
+        </p>
+      )}
+      <button type="button" onClick={send} disabled={!text.trim() || busy} className="lf-sb lf-sb-sun lf-sb-sm mt-3">
+        {busy ? "Saving your week…" : allowed ? "Send" : "Allow and send"}
+      </button>
+      {said && (
+        // the reply wraps anywhere: a long word or link must never widen the phone's page
+        <p role="status" className="mt-3 line-clamp-6 text-sm [overflow-wrap:anywhere] text-text-2">
+          {said}
+        </p>
+      )}
+      {problem && (
+        <p role="alert" className="mt-3 text-sm [overflow-wrap:anywhere] text-danger">
+          {problem}
+        </p>
       )}
     </div>
   );

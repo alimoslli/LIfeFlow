@@ -368,7 +368,10 @@ export async function setDisplayName(scope: UserScope, name: string) {
   await scope.tx.update(users).set({ name: clean }).where(eq(users.id, scope.userId));
 }
 
-/** Marks setup finished (also used by "Skip setup") and queues the guided tour. */
+/**
+ * Marks setup finished (also used by "Skip setup"). No tour follows (owner's program, item 7: the first minute ends on
+ * their own sky; the welcome teaches what the tour did). "Replay the tour" in Settings still sets it to pending.
+ */
 export async function finishOnboarding(
   scope: UserScope,
   prefs: Partial<Pick<typeof users.$inferSelect.preferences, "lifeStage" | "studyTime" | "jarvisTone" | "assistantName" | "assistantStyle" | "companion">> = {},
@@ -381,7 +384,7 @@ export async function finishOnboarding(
   const defined = Object.fromEntries(Object.entries(prefs).filter(([, v]) => v !== undefined));
   await scope.tx
     .update(users)
-    .set({ preferences: { ...u.preferences, ...defined, welcomeJob: undefined, onboarding: "done", tour: "pending" } })
+    .set({ preferences: { ...u.preferences, ...defined, welcomeJob: undefined, onboarding: "done", tour: "done" } })
     .where(eq(users.id, scope.userId));
 }
 

@@ -80,7 +80,11 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   expect(prefs.p.onboarding).toBe("done");
   expect(prefs.p.assistantName).toBeUndefined();
 
-  // The tour, every step.
+  // No tour after the welcome (item 7); replayed from Settings, every step still never says "Jarvis".
+  await expect(page.getByRole("dialog", { name: "Welcome to LifeFlow" })).toHaveCount(0);
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "Replay the tour" }).click();
+  await page.waitForURL((u) => u.pathname === "/");
   await expect(page.getByRole("dialog", { name: "Welcome to LifeFlow" })).toBeVisible();
   for (let i = 0; i < 12 && (await page.getByRole("button", { name: "Next", exact: true }).isVisible()); i++) {
     await expectNoJarvis(page, `tour step ${i + 1}`);

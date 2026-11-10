@@ -32,7 +32,6 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
   await op.goto("/welcome");
   await op.getByRole("button", { name: "Skip setup" }).click();
   await op.waitForURL((u) => u.pathname === "/");
-  await op.getByRole("button", { name: "Skip tour" }).click();
   await pool.query("update users set totp_enabled_at = now() where email = $1", [ADMIN_EMAIL]);
 
   // Office.

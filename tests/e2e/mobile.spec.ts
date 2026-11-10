@@ -24,7 +24,6 @@ test("core pages fit a phone screen without horizontal scrolling", async ({ page
   await fits("learn");
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
-  await page.getByRole("button", { name: "Skip tour" }).click();
   for (const path of ["/", "/plan", "/money", "/tasks", "/school", "/calendar", "/finances", "/work", "/notes", "/jarvis", "/settings"]) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");

@@ -18,12 +18,11 @@ export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding
   if (opts.ai !== false)
     await pool.query(`update users set preferences = preferences || '{"aiConsentAt":"2026-01-01T00:00:00.000Z"}'::jsonb where email = $1`, [email]);
   if (opts.onboarding === "stay") return email;
-  // New accounts start in first-run setup and then get a tour; most tests skip both. Setup can only be skipped with a
+  // New accounts start in first-run setup; most tests skip it (no tour follows it since item 7). Setup can only be skipped with a
   // birthday on the account (owner, 2026-11-10), so the test sets one the way it sets the name.
   await pool.query(`update users set preferences = preferences || '{"birthDate":"2000-01-15"}'::jsonb where email = $1`, [email]);
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
-  await page.getByRole("button", { name: "Skip tour" }).click();
   await expect(page.getByRole("dialog", { name: "Welcome to LifeFlow" })).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(name.split(" ")[0]);
   return email;

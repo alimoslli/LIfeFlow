@@ -118,7 +118,7 @@ describe("onboarding", () => {
     expect(acct).toMatchObject({ name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 125050 });
     const [mem] = await run((s) => listActiveMemories(s));
     expect(mem).toMatchObject({ content: "Saving for a car.", source: "user", status: "active" });
-    expect(await prefs(user.id)).toMatchObject({ lifeStage: "both", studyTime: "evening", jarvisTone: "concise", onboarding: "done", tour: "pending" });
+    expect(await prefs(user.id)).toMatchObject({ lifeStage: "both", studyTime: "evening", jarvisTone: "concise", onboarding: "done", tour: "done" });
   });
 
   it("finishing setup with no name leaves it going by its skyling's own (Ray by default), never 'Jarvis'", async () => {
@@ -137,16 +137,17 @@ describe("onboarding", () => {
     expect((await prefs(user.id)).onboarding).toBeUndefined();
   });
 
-  it("skipping finishes setup without creating anything, and the tour can be finished and replayed", async () => {
+  it("skipping finishes setup without creating anything or queuing a tour, and the tour can be replayed and finished", async () => {
     const { user, run } = await makeUser();
     await born(run);
     await run((s) => finishOnboarding(s));
-    expect(await prefs(user.id)).toMatchObject({ onboarding: "done", tour: "pending" });
+    // item 7: no tour after the welcome (it teaches what the tour did); Settings can still replay it
+    expect(await prefs(user.id)).toMatchObject({ onboarding: "done", tour: "done" });
     expect(await run((s) => listCourses(s))).toHaveLength(0);
-    await run((s) => setTourState(s, "done"));
-    expect((await prefs(user.id)).tour).toBe("done");
     await run((s) => setTourState(s, "pending"));
     expect((await prefs(user.id)).tour).toBe("pending");
+    await run((s) => setTourState(s, "done"));
+    expect((await prefs(user.id)).tour).toBe("done");
   });
 
   it("existing accounts have no onboarding flag, so they're never sent to setup", async () => {

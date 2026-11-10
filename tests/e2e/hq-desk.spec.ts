@@ -20,7 +20,6 @@ async function ownerPage(browser: Browser, opts: BrowserContextOptions = {}): Pr
   await pool.query(`update users set name = $1, preferences = preferences || '{"birthDate":"1990-06-15"}'::jsonb where email = $2`, ["Owner Olu", ADMIN_EMAIL]);
   await op.getByRole("button", { name: "Skip setup" }).click();
   await op.waitForURL((u) => u.pathname === "/");
-  await op.getByRole("button", { name: "Skip tour" }).click();
   await pool.query("update users set totp_enabled_at = now() where email = $1", [ADMIN_EMAIL]);
   // Claude Code is outside this test: answer its links with a plain page.
   await ctx.route("https://claude.ai/**", (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<title>Claude Code</title><p>Claude Code</p>" }));
