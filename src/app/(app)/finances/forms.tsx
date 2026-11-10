@@ -95,7 +95,7 @@ export function AddTransactionDialog({
               </Select>
             </Field>
           </div>
-          <Field label="Type" htmlFor="t-kind" hint="Leave on Automatic unless this is a transfer, refund or reimbursement.">
+          <Field label="Type" htmlFor="t-kind" hint="Automatic is right unless it's a transfer or refund.">
             <Select id="t-kind" name="kind" defaultValue="">
               <option value="">Automatic</option>
               {Object.entries(KIND_LABELS).map(([k, v]) => (
@@ -121,7 +121,7 @@ export function ImportCsvDialog({ action, accounts }: { action: Action; accounts
         </>
       }
       title="Import transactions"
-      description="Columns: date, description, amount (negative = money out). Optional: category, merchant. Re-importing the same file won't create duplicates."
+      description="Needs date, description and amount (negative = money out)."
       triggerProps={{ variant: "ghost", className: "h-9 w-full !justify-start rounded-xl px-3 font-normal text-text" }}
     >
       {() => (

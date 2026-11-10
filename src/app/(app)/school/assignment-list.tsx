@@ -75,7 +75,7 @@ export function AssignmentList({ items, tz, showCourse = true, today }: { items:
           );
         })}
       </ul>
-      <Sheet open={!!editing} onClose={() => setEditing(null)} title="Edit assignment">
+      <Sheet open={!!editing} onClose={() => setEditing(null)} title="Edit homework">
         {editing && (
           <div className="flex flex-col gap-4">
             <ActionForm action={updateAssignmentAction.bind(null, editing.id)} reset={false} onSuccess={() => setEditing(null)} className="gap-4">

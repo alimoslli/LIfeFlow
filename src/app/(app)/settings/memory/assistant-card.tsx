@@ -126,11 +126,7 @@ export function AssistantCard({
           </Field>
         </div>
 
-        <Field
-          label="Notifications a day (at most)"
-          htmlFor="as-pl"
-          hint="Your briefs and reviews, plus anything urgent or important. To-do reminders don't count. 0 keeps everything in the app."
-        >
+        <Field label="Notifications a day (at most)" htmlFor="as-pl" hint="Briefs, reviews and anything urgent. 0 keeps everything in the app.">
           <select
             id="as-pl"
             name="pushLimit"
@@ -158,13 +154,13 @@ export function AssistantCard({
           <legend className="mb-1 text-sm font-medium text-text-2">Allowed without asking</legend>
           <Switch name="auto_tasks" label="Add to-dos and reminders, move late to-dos" defaultChecked={settings.autonomy.tasks} />
           <Switch name="auto_calendar" label="Block time on my calendar" defaultChecked={settings.autonomy.calendar} />
-          <p className="text-xs text-muted">Anything with money, or contacting someone, always asks first. Everything it does on its own can be undone.</p>
+          <p className="text-xs text-muted">Money and messages always ask first. Anything else can be undone.</p>
         </fieldset>
 
         <Switch
           name="learning"
           label="Learn from how I respond"
-          hint="It speaks up less about what you skip and more about what helps. Your answers stay in your account."
+          hint="It says less about what you skip and more about what helps."
           defaultChecked={settings.learning}
         />
 

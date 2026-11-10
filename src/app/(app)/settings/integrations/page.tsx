@@ -37,7 +37,7 @@ const MICROSOFT_RESULT: Record<string, { tone: "success" | "danger" | "warning";
   missing_scopes: { tone: "warning", text: "Calendar access wasn't allowed. Connect again and allow it." },
   admin_consent: {
     tone: "warning",
-    text: "Your school or workplace needs to approve LifeFlow before you can connect. Ask your IT team, or send your skyling a screenshot of your schedule instead.",
+    text: "Your school or work has to approve this first. Ask your IT team, or send a screenshot instead.",
   },
   failed: { tone: "danger", text: "Couldn't connect Microsoft. Please try again." },
   not_configured: { tone: "warning", text: "Microsoft isn't available yet." },
@@ -83,7 +83,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
       />
       <ManualSourceCard
         title="Another school platform?"
-        body="Not on Canvas? Send your skyling screenshots of your assignments, or upload your syllabus. You can also just tell it your classes. It adds them to School."
+        body="Not on Canvas? Send your skyling a screenshot of your homework or syllabus."
         tip="Try: send a screenshot of your assignment list, then say “add these”."
       />
       <Group title="Email & Calendar" />
@@ -138,14 +138,14 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
         />
       </Card>
       <ManualSourceCard
-        title="Bank not on Plaid?"
-        body="Send your skyling a screenshot or a PDF of a statement. It adds the account and the transactions it can read, so Money still shows what you spent and what came in."
-        tip="Plaid is faster when your bank supports it. Use screenshots for everything else."
+        title="Bank not listed?"
+        body="Send your skyling a screenshot or PDF of a statement."
+        tip="Connecting your bank is faster when it works."
       />
       <Group title="Work" />
       <ManualSourceCard
         title="Work schedule"
-        body="Send a picture of your schedule to your skyling, and it adds your shifts to Plan. Change one there any time."
+        body="Send your skyling a picture of your schedule."
         tip="Try: send a photo of next week's schedule, then say “add my shifts”."
       />
       <Group title="Health" />

@@ -96,7 +96,7 @@ export default async function BillsPage() {
     <div className="mx-auto flex max-w-[640px] flex-col gap-7">
       <header>
         <h1 className="font-display text-[2.375rem] leading-none font-medium tracking-tight">Bills</h1>
-        <p className="mt-2 text-sm text-text-2">Everything that leaves your account on its own, subscriptions included.</p>
+        <p className="mt-2 text-sm text-text-2">Bills and subscriptions.</p>
       </header>
 
       {/* what it all costs, in the sky, with their skyling on its coins */}
@@ -173,9 +173,7 @@ export default async function BillsPage() {
               <PixelIcon name="repeat" className="h-4 w-4" />
             </span>
             <p className="text-[0.9375rem] text-text-2">
-              {d.subs.historyDays === 0
-                ? "Nothing yet. Connect your bank and your bills and subscriptions show up here by themselves."
-                : "Nothing tracked yet. Anything found in your bank is just below, one tap to track."}
+              {d.subs.historyDays === 0 ? "Nothing yet. Connect your bank and they show up." : "Nothing yet. Tap one below to add it."}
             </p>
           </div>
         ) : (
@@ -231,7 +229,7 @@ export default async function BillsPage() {
       )}
 
       <p className="text-xs text-muted">
-        <AssistantName start /> never cancels anything for you. Cancel help shows the steps; you decide.
+        <AssistantName start /> never cancels anything for you.
       </p>
     </div>
   );

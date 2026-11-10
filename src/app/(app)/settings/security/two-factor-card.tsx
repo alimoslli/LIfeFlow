@@ -35,10 +35,7 @@ export function TwoFactorCard({ status }: { status: Status }) {
           <h2 className="flex items-center gap-2 font-medium">
             <PixelIcon name="shield" className="h-4 w-4 text-accent" /> Two-step sign-in
           </h2>
-          <p className="mt-1 max-w-md text-sm text-text-2">
-            After your password, LifeFlow also asks for a 6-digit code from an authenticator app on your phone (Apple Passwords, Google Authenticator,
-            1Password…).
-          </p>
+          <p className="mt-1 max-w-md text-sm text-text-2">After your password, enter a 6-digit code from an authenticator app.</p>
         </div>
         <Badge tone={status.enabled ? "success" : "neutral"}>{status.enabled ? "On" : "Off"}</Badge>
       </div>
@@ -169,9 +166,7 @@ export function TwoFactorCard({ status }: { status: Status }) {
               );
             }}
           >
-            <p className="text-sm text-text-2">
-              We&apos;ll email you a code. With it, two-step sign-in resets and you set up your app again, with new backup codes.
-            </p>
+            <p className="text-sm text-text-2">We&apos;ll email you a code, then you set up your app again.</p>
             <Field label="Password" htmlFor="tf-restart-pw">
               <Input id="tf-restart-pw" name="password" type="password" autoComplete="current-password" required className="max-w-xs" />
             </Field>

@@ -28,10 +28,7 @@ export function MicrosoftCard({
           {connection ? (connection.status === "error" ? "Needs attention" : "Connected") : "Not connected"}
         </Badge>
       </div>
-      <p className="mt-3 text-sm text-text-2">
-        Your Outlook calendar and Teams meetings show in your plan, with the meeting link. Works with school, work and personal Microsoft accounts. LifeFlow
-        only reads your calendar.
-      </p>
+      <p className="mt-3 text-sm text-text-2">Your Outlook calendar and Teams meetings, in your plan. Read only.</p>
 
       {!configured ? (
         <p className="mt-3 text-sm text-warning">Microsoft isn&apos;t available yet. Check back soon.</p>
@@ -40,7 +37,7 @@ export function MicrosoftCard({
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
             <span className="text-text">{connection.email}</span>
             <span className="flex items-center gap-1">
-              <PixelIcon name="calendar" className="h-4 w-4" /> {connection.lastSynced ? `Synced ${connection.lastSynced}` : "Not synced yet"}
+              <PixelIcon name="calendar" className="h-4 w-4" /> {connection.lastSynced ? `Updated ${connection.lastSynced}` : "Not updated yet"}
             </span>
           </p>
           {connection.error && <p className="text-sm text-danger">{connection.error}</p>}

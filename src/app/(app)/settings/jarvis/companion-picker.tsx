@@ -89,7 +89,7 @@ export function CompanionPicker({ current, tz }: { current: CompanionChoice | nu
         </button>
       </div>
       {shown && <p className="text-sm text-text-2">Best at: {shown.skill}</p>}
-      {sky && <p className="text-sm text-text-2">Same name and the same way of talking all day. Only the look follows the time.</p>}
+      {sky && <p className="text-sm text-text-2">Same name and voice all day. Only the look changes.</p>}
       {error && (
         <p role="alert" className="text-sm text-danger">
           {error}

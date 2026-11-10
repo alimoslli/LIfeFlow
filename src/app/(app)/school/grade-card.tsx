@@ -45,7 +45,7 @@ export function GradeCard({
             <span className="text-lg font-medium text-text-2">{grade.letter}</span>
           </p>
           <p className="mt-1 text-xs text-muted">
-            From {grade.graded} graded item{grade.graded === 1 ? "" : "s"}
+            From {grade.graded} {grade.graded === 1 ? "grade" : "grades"}
             {grade.countedWeight != null && grade.countedWeight < 100 ? `, covering ${grade.countedWeight}% of the class` : ""}.
           </p>
           <div className="mt-4 rounded-2xl bg-surface-2 p-4">
@@ -78,7 +78,7 @@ export function GradeCard({
             {need !== null && (
               <p className="mt-3 text-[0.9375rem]" role="status">
                 {need > 100
-                  ? `You'd need ${need}% on the final, so that grade is out of reach. Aim one step lower or ask about extra credit.`
+                  ? `You'd need ${need}% on the final. That grade is out of reach.`
                   : need <= 0
                     ? "You already have it, even with a 0 on the final."
                     : `You need ${need}% on the final.`}
@@ -87,7 +87,7 @@ export function GradeCard({
           </div>
         </>
       ) : (
-        <p className="mt-2 text-sm text-text-2">Add grades to assignments (like 45/50 or 92%) and your grade shows here.</p>
+        <p className="mt-2 text-sm text-text-2">Add a grade to homework and yours shows here.</p>
       )}
       <details className="mt-4">
         <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium text-accent">How the class is weighted</summary>

@@ -92,7 +92,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
       {tasks.length === 0 ? (
         <Card>
           <EmptyState icon={<PixelIcon name="todo" />} title={view === "done" ? "Nothing completed yet" : "You're all caught up"}>
-            Tap + to add a to-do, or ask <AssistantName />: “Add all my assignments and organize them by deadline.”
+            Tap + to add a to-do, or ask <AssistantName />.
           </EmptyState>
         </Card>
       ) : (

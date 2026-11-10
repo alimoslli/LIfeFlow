@@ -147,7 +147,7 @@ export default async function AccountsPage() {
     <div className="mx-auto flex max-w-[640px] flex-col gap-7">
       <header>
         <h1 className="font-display text-[2.375rem] leading-none font-medium tracking-tight">Accounts</h1>
-        <p className="mt-2 text-sm text-text-2">Your banks, cards and cash, kept up to date by themselves.</p>
+        <p className="mt-2 text-sm text-text-2">Your banks, cards and cash.</p>
       </header>
 
       <SkyWindow tz={d.tz} className="rounded-[1.75rem]">
@@ -172,7 +172,7 @@ export default async function AccountsPage() {
           <span className="lf-chip-night h-10 w-10 shrink-0 rounded-[0.75rem]" aria-hidden>
             <PixelIcon name="card" className="h-4 w-4" />
           </span>
-          <p className="text-[0.9375rem] text-text-2">No accounts yet. Connect your bank below and they fill in by themselves.</p>
+          <p className="text-[0.9375rem] text-text-2">No accounts yet. Connect your bank below.</p>
         </div>
       )}
 
@@ -234,7 +234,7 @@ export default async function AccountsPage() {
       <section aria-label="Your banks" className="flex flex-col gap-2">
         <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Your banks</h2>
         <div className="rounded-[1.5rem] bg-surface p-5 shadow-soft">
-          <p className="mb-4 text-sm text-text-2">Balances, transactions, investments and cards sync every day, and whenever your bank has something new.</p>
+          <p className="mb-4 text-sm text-text-2">Updates every day.</p>
           <BankConnections
             configured={!!plaidConfig()}
             disconnect={disconnectBankAction}

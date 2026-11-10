@@ -110,7 +110,7 @@ export function AccountRow({ a, save, off }: { a: AccountView; save: FormAct; of
               // a bank account that's off stays off through every sync, and can be turned back on from the page
               <ActionButton
                 action={off}
-                confirm={`Stop using ${a.name} in LifeFlow? It's hidden and its bank transactions are removed. You can turn it back on any time.`}
+                confirm={`Hide ${a.name}? Its bank transactions are removed. You can turn it back on.`}
                 className="lf-sb-link text-sm text-text-2"
               >
                 <PixelIcon name="hide" className="h-4 w-4" aria-hidden /> Don&apos;t use in LifeFlow

@@ -88,18 +88,10 @@ export function ThisDevice({ available }: { available: boolean }) {
     <div data-testid="push-state" data-state={state}>
       {state === "loading" && <p className="text-sm text-muted">Checking…</p>}
       {state === "needs-install" && (
-        <p className="text-sm text-text-2">
-          On iPhone, notifications work from the home-screen app (iOS 16.4 or later). In Safari, tap Share, then &quot;Add to Home Screen&quot;, open LifeFlow
-          from the new icon and come back here.
-        </p>
+        <p className="text-sm text-text-2">On iPhone, tap Share, then &quot;Add to Home Screen&quot;, and open LifeFlow from there.</p>
       )}
-      {state === "unsupported" && <p className="text-sm text-text-2">This browser can&apos;t receive notifications. Try Chrome, Edge, Firefox or Safari.</p>}
-      {state === "denied" && (
-        <p className="text-sm text-text-2">
-          Notifications are blocked for LifeFlow. Allow them in your browser or phone settings (Settings, Notifications, LifeFlow on iPhone), then reload this
-          page.
-        </p>
-      )}
+      {state === "unsupported" && <p className="text-sm text-text-2">This browser can&apos;t show notifications.</p>}
+      {state === "denied" && <p className="text-sm text-text-2">Notifications are blocked. Allow them in your browser or phone settings, then reload.</p>}
       {state === "off" && (
         <>
           <p className="mb-3 text-sm text-text-2">Get reminders, bills, budget alerts and your morning brief on this device.</p>

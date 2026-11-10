@@ -119,7 +119,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
           {d.notes.length === 0 ? (
             <Card>
               <EmptyState icon={<PixelIcon name="note" />} title={sp.q ? "No notes match your search" : "No notes yet"}>
-                Capture ideas, lecture notes or plans. Ask <AssistantName /> to organize a brain-dump into a project.
+                Ideas, lecture notes and plans.
               </EmptyState>
             </Card>
           ) : (

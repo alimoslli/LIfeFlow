@@ -24,9 +24,7 @@ export default async function InvitePage() {
       <SettingsHeader title="Invite and feedback" />
       <Card className="p-6">
         <h2 className="font-display text-[1.625rem] leading-tight font-medium tracking-tight">Share LifeFlow with friends</h2>
-        <p className="mt-2 text-[0.9375rem] leading-relaxed text-text-2">
-          Send your link to anyone juggling school, work or a busy week. When they sign up with it, they show up here.
-        </p>
+        <p className="mt-2 text-[0.9375rem] leading-relaxed text-text-2">Send your link. Friends who sign up show here.</p>
         <InviteShare link={link} firstName={user.name.split(" ")[0]} />
       </Card>
       <Card className="flex items-center justify-between gap-4 p-5">

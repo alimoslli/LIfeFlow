@@ -63,7 +63,7 @@ export default async function MoneyPage() {
           <div className="relative min-h-[12rem] px-6 pt-6 pb-6">
             <PixelIcon name="money" className="h-8 w-8" />
             <p className="mt-3 max-w-[16rem] font-display text-[1.375rem] leading-snug font-medium">Connect a bank or add an account to see where you stand.</p>
-            <p className="mt-2 max-w-[60%] text-sm text-white/80">Then you&apos;ll see what you have, what you spent, and your bills.</p>
+            <p className="mt-2 max-w-[60%] text-sm text-white/80">Then you see what you have and what you spent.</p>
             <SkylingOnCoins />
           </div>
         </SkyWindow>

@@ -33,7 +33,7 @@ export function GoogleCard({
         </Badge>
       </div>
       <p className="mt-3 text-sm text-text-2">
-        <AssistantName start /> can read and draft email (sending always asks you first) and keeps your Google Calendar in your plan.
+        <AssistantName start /> reads and drafts email. Sending always asks you first.
       </p>
 
       {!configured ? (
@@ -43,7 +43,7 @@ export function GoogleCard({
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
             <span className="text-text">{connection.email}</span>
             <span className="flex items-center gap-1">
-              <PixelIcon name="calendar" className="h-4 w-4" /> {connection.lastSynced ? `Calendar synced ${connection.lastSynced}` : "Calendar not synced yet"}
+              <PixelIcon name="calendar" className="h-4 w-4" /> {connection.lastSynced ? `Updated ${connection.lastSynced}` : "Not updated yet"}
             </span>
           </p>
           {connection.error && <p className="text-sm text-danger">{connection.error}</p>}
@@ -71,7 +71,7 @@ export function GoogleCard({
             )}
             <ActionButton
               action={disconnectGoogleAction}
-              confirm="Disconnect Google? Your skyling will lose access to Gmail and your Google Calendar events will be removed from LifeFlow."
+              confirm="Disconnect Google? Your skyling loses Gmail and your Google events leave your plan."
               title="Disconnect Google"
               className="inline-flex h-9 items-center rounded-full px-4 text-sm text-muted hover:text-danger"
             >

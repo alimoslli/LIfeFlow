@@ -71,7 +71,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
         <DateField name="dueDate" label="Due" today={d.today} defaultValue={task.dueAt ? localDateOf(task.dueAt, tz) : ""} />
         <TimeField name="dueTime" label="Time" defaultValue={task.dueAt && !task.dueAllDay ? localTimeOf(task.dueAt, tz) : ""} />
         <PriorityField name="priority" defaultValue={task.priority} />
-        <Field label="Repeats" htmlFor="t-repeat" hint="Needs a due date. Completing it creates the next one.">
+        <Field label="Repeats" htmlFor="t-repeat" hint="Needs a due date.">
           <Select id="t-repeat" name="repeat" defaultValue={task.repeat ?? ""} className="h-12 text-[1rem]">
             {Object.entries(REPEAT_LABEL).map(([k, v]) => (
               <option key={k} value={k}>
@@ -80,7 +80,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
             ))}
           </Select>
         </Field>
-        <Field label="Reminder" htmlFor="t-remind" hint="Sent as a notification when they're turned on in Settings.">
+        <Field label="Reminder" htmlFor="t-remind" hint="A notification at this time.">
           <Select id="t-remind" name="reminder" defaultValue={reminderKeyOf(task, tz)} className="h-12 text-[1rem]">
             {Object.entries(REMINDER_LABEL).map(([k, v]) => (
               <option key={k} value={k}>

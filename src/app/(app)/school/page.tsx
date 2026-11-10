@@ -64,9 +64,7 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
 
       {hasDuplicates && (
         <Card className="mb-5 flex flex-wrap items-center justify-between gap-3 p-4">
-          <p className="min-w-0 flex-1 text-[0.9375rem]">
-            A class shows up twice. Merge them into one, keeping Canvas&apos;s dates and anything you marked done.
-          </p>
+          <p className="min-w-0 flex-1 text-[0.9375rem]">A class shows up twice. Merge them?</p>
           <ActionButton action={mergeDuplicateClassesAction} className="lf-sb lf-sb-sun lf-sb-sm">
             Merge duplicates
           </ActionButton>
@@ -184,7 +182,7 @@ export default async function SchoolPage({ searchParams }: { searchParams: Promi
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[0.9375rem] font-semibold">Connect Canvas</span>
-            <span className="block text-[0.8125rem] leading-snug text-text-2">Your classes and due dates fill in by themselves.</span>
+            <span className="block text-[0.8125rem] leading-snug text-text-2">Your classes and what is due.</span>
           </span>
         </Link>
       )}

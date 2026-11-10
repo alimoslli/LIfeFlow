@@ -15,10 +15,7 @@ const VIA = {
     "It's billed through Google Play.",
     "Open the Play Store app, tap your profile picture, Payments & subscriptions, Subscriptions, choose it, then Cancel.",
   ],
-  paypal: [
-    "It's paid through PayPal.",
-    "Cancel it on the service's own site first. In PayPal you can also stop it under Settings, Payments, Manage automatic payments.",
-  ],
+  paypal: ["It's paid through PayPal.", "Cancel on the service's own site. Or in PayPal: Settings, Payments, Automatic payments."],
 } as const;
 
 /** Step-by-step cancellation help. Jarvis never cancels anything himself. */
@@ -47,10 +44,7 @@ export function CancelHelp({ id, name, via, saved }: { id: string; name: string;
               <p className="mt-1 text-text-2">{VIA[via][1]}</p>
             </div>
           ) : (
-            <p className="text-text-2">
-              Most services cancel from your account page on their website: sign in, open Account or Subscription, then Cancel. If you signed up in an app,
-              cancel in the App Store or Google Play instead.
-            </p>
+            <p className="text-text-2">Sign in on their website, open Account, then Cancel. Signed up in an app? Cancel in the App Store or Google Play.</p>
           )}
           {help ? (
             <div className="rounded-2xl bg-surface-2 p-4">
@@ -84,7 +78,7 @@ export function CancelHelp({ id, name, via, saved }: { id: string; name: string;
             </p>
           )}
           <p className="text-xs text-muted">
-            <AssistantName start /> never cancels anything for you. After you cancel, tap &quot;I cancelled it&quot; so the totals stay right.
+            <AssistantName start /> never cancels anything for you. After you cancel, tap &quot;I cancelled it&quot;.
           </p>
         </div>
       </Sheet>

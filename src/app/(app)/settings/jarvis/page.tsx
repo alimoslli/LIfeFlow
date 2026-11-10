@@ -26,7 +26,7 @@ export default async function JarvisSettings() {
           <h2 className="font-medium">Use AI</h2>
           <p className="mt-1 text-sm text-text-2">
             {who} sends your messages and the LifeFlow data it needs to answer to OpenAI. They don&apos;t use it to train their models.{" "}
-            {aiAllowed(u.preferences) ? "Turn this off and nothing more is sent; the rest of LifeFlow keeps working." : "It's off, so nothing is sent."}
+            {aiAllowed(u.preferences) ? "Turn this off and nothing more is sent." : "It's off, so nothing is sent."}
           </p>
         </div>
         <ActionButton

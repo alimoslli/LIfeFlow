@@ -25,9 +25,7 @@ export default async function TextJarvisPage() {
   return (
     <div className="flex flex-col gap-5">
       <SettingsHeader title={`Text ${name}`} />
-      <p className="text-sm text-text-2">
-        Text {name} from your phone like a friend: add a to-do, ask what&apos;s due, log a shift. Anything important still asks you first.
-      </p>
+      <p className="text-sm text-text-2">Text {name} to add a to-do, ask what&apos;s due or log a shift.</p>
       {s.phone ? (
         <Card className="flex flex-col gap-4 p-5">
           <div>
