@@ -227,3 +227,42 @@ describe("deleting an account closes what lives outside our database", () => {
     }
   });
 });
+
+describe("closing a link the provider already forgot", () => {
+  const answer = (status: number, body: unknown) => (async () => Response.json(body, { status })) as unknown as typeof fetch;
+
+  it("counts as closed at Plaid (ITEM_NOT_FOUND, INVALID_ACCESS_TOKEN), so a retry never sticks; a real failure still throws", async () => {
+    const { removeAtPlaid } = await import("@/server/integrations/plaid");
+    const creds = encryptSecret(JSON.stringify({ accessToken: "tok-gone", cursor: null }));
+    await expect(removeAtPlaid(creds, answer(400, { error_code: "ITEM_NOT_FOUND", error_message: "gone" }))).resolves.toBeUndefined();
+    await expect(removeAtPlaid(creds, answer(400, { error_code: "INVALID_ACCESS_TOKEN" }))).resolves.toBeUndefined();
+    await expect(removeAtPlaid(creds, answer(500, { error_code: "INTERNAL_SERVER_ERROR" }))).rejects.toThrow();
+  });
+
+  it("counts as revoked at Google (400 invalid_token); any other refusal still throws", async () => {
+    const { revokeGoogleGrant } = await import("@/server/integrations/google");
+    const creds = encryptSecret(JSON.stringify({ refreshToken: "r-gone", accessToken: "a", expiresAt: 0 }));
+    await expect(revokeGoogleGrant(creds, answer(400, { error: "invalid_token" }))).resolves.toBeUndefined();
+    await expect(revokeGoogleGrant(creds, answer(500, {}))).rejects.toThrow();
+  });
+});
+
+describe("Delete my account on the under-13 lock screen", () => {
+  it("deletes a locked account after the typed DELETE and the password; refuses an unlocked one and a wrong word", async () => {
+    const { deleteLockedAccount } = await import("@/server/services/accounts");
+    const locked = await setup();
+    await getDb()
+      .update(users)
+      .set({ preferences: { onboarding: "pending", ageBlockedAt: new Date().toISOString() } })
+      .where(eq(users.id, locked.user.id));
+    await expect(deleteLockedAccount(getDb(), locked.user.id, "delete me", PASSWORD)).rejects.toThrow("Type DELETE to confirm.");
+    await expect(deleteLockedAccount(getDb(), locked.user.id, " DELETE ", "wrong password")).rejects.toThrow("Password is incorrect.");
+    expect(await gone(locked.user.id)).toBe(false);
+    await deleteLockedAccount(getDb(), locked.user.id, " DELETE ", PASSWORD);
+    expect(await gone(locked.user.id)).toBe(true);
+
+    const normal = await setup();
+    await expect(deleteLockedAccount(getDb(), normal.user.id, "DELETE", PASSWORD)).rejects.toThrow("This account isn't locked.");
+    expect(await gone(normal.user.id)).toBe(false);
+  });
+});

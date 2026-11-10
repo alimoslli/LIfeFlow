@@ -12,7 +12,16 @@ import { endSession, requireUser } from "@/server/auth/current-user";
 import { SESSION_COOKIE } from "@/server/auth/sessions";
 import { getDb } from "@/server/db/client";
 import { sessions } from "@/server/db/schema";
-import { AuthError, changePassword, deleteAccount, setCompanion, updateAssistant, updatePreferences, updateProfile } from "@/server/services/accounts";
+import {
+  AuthError,
+  changePassword,
+  deleteAccount,
+  typedDelete,
+  setCompanion,
+  updateAssistant,
+  updatePreferences,
+  updateProfile,
+} from "@/server/services/accounts";
 import { ServiceError } from "@/server/services/errors";
 import { decideMemorySuggestion } from "@/server/jarvis/memory-decisions";
 import { createMemory, deleteMemory, editMemory, MEMORY_CATEGORIES, setMemoryStatus } from "@/server/services/memory";
@@ -75,7 +84,7 @@ export async function signOutOthersAction(): Promise<ActionState> {
 
 export async function deleteAccountAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser();
-  if (String(fd.get("confirm") ?? "") !== "DELETE") return { ok: false, error: "Type DELETE to confirm.", at: Date.now() };
+  if (!typedDelete(fd.get("confirm"))) return { ok: false, error: "Type DELETE to confirm.", at: Date.now() };
   try {
     await deleteAccount(getDb(), user.id, String(fd.get("password") ?? ""));
   } catch (e) {

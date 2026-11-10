@@ -2,7 +2,7 @@
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import Link from "next/link";
 import { NotifyAsk } from "./notify-ask";
-import { ASK_EVENT, takeSend, type AskDetail } from "@/lib/ask-handoff";
+import { ASK_EVENT, takeHandoff, type AskDetail } from "@/lib/ask-handoff";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useAppBusy } from "@/lib/app-busy";
@@ -159,23 +159,33 @@ export function JarvisChat({
 
   const autoSent = useRef(false);
   useEffect(() => {
-    // sent at once only when a button in the app asked to send it (takeSend), never from a link alone
-    if (initialPrompt && availability.available && !autoSent.current && (autoSend || takeSend(initialPrompt))) {
-      autoSent.current = true;
-      void send(initialPrompt);
+    if (autoSent.current) return;
+    autoSent.current = true;
+    // a question a button in the app handed over (lib/ask-handoff): sent when it said so, otherwise typed in the box
+    const handed = takeHandoff();
+    if (handed) {
+      if (handed.send && availability.available) void send(handed.prompt);
+      else setInput(handed.prompt);
+      return;
     }
+    // a link's ?ask= only fills the box (initialPrompt); autoSend is for callers inside the app
+    if (autoSend && initialPrompt && availability.available) void send(initialPrompt);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // a question from elsewhere on this page (an idea, a heads-up) goes into this chat: typed in the box, or sent
   const sendRef = useRef(send);
+  // a reply still coming, or a file waiting in the box: a question from elsewhere waits in the box instead of being sent
+  // (sending then would drop it, or send the file along with it)
+  const occupied = useRef(false);
   useEffect(() => {
     sendRef.current = send;
+    occupied.current = busy || pending.length > 0;
   });
   useEffect(() => {
     const onAsk = (e: Event) => {
       const { prompt, send: now } = (e as CustomEvent<AskDetail>).detail ?? {};
-      if (prompt && now && availability.available) void sendRef.current(prompt);
+      if (prompt && now && availability.available && !occupied.current) void sendRef.current(prompt);
       else if (prompt) setInput(prompt);
       inputRef.current?.focus();
     };
@@ -205,9 +215,28 @@ export function JarvisChat({
     return jsonOf<{ state: "unknown" | "running" | "finished" | "stalled"; conversationId: string | null; title: string; messages: UiMessage[] }>(res);
   }
 
+  /**
+   * Keep or Not now on a memory suggestion, as tapped here: the saved conversation can arrive before the server has
+   * stored the choice, so the tap is laid over it until the server says the same (a person saw Keep come back).
+   */
+  const memoryChoices = useRef(new Map<string, "saved" | "dismissed">());
+  const withChoices = (list: UiMessage[]) =>
+    memoryChoices.current.size === 0
+      ? list
+      : list.map((m) =>
+          m.role === "assistant" && m.memories.some((x) => memoryChoices.current.has(x.memoryId) && x.status === "proposed")
+            ? {
+                ...m,
+                memories: m.memories.map((x) =>
+                  x.status === "proposed" && memoryChoices.current.has(x.memoryId) ? { ...x, status: memoryChoices.current.get(x.memoryId)! } : x,
+                ),
+              }
+            : m,
+        );
+
   /** Shows the saved conversation (the truth on the server) and refreshes the page's data if the turn changed anything. */
   function adoptSaved(snap: { conversationId: string | null; title: string; messages: UiMessage[] }) {
-    setMessages(snap.messages);
+    setMessages(withChoices(snap.messages));
     if (!conversationId && snap.conversationId) {
       setConversationId(snap.conversationId);
       onConversation?.(snap.conversationId, snap.title);
@@ -480,6 +509,7 @@ export function JarvisChat({
             : m,
         ),
       );
+    memoryChoices.current.set(memoryId, decision === "keep" ? "saved" : "dismissed");
     patch((x) => ({ ...x, status: decision === "keep" ? "saved" : "dismissed", error: undefined })); // optimistic
     const res = await fetch(`/api/jarvis/memories/${memoryId}`, {
       method: "POST",
@@ -487,6 +517,7 @@ export function JarvisChat({
       body: JSON.stringify({ decision }),
     }).catch(() => null);
     if (!res?.ok) {
+      memoryChoices.current.delete(memoryId);
       const words = await serverWords(res, "Couldn't save your choice. Try again.");
       patch((x) => ({ ...x, status: "proposed", error: words }));
     }

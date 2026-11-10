@@ -89,8 +89,10 @@ export async function updateProfile(db: Database, userId: string, input: z.input
     // locked or erased (the review of 0c77531). Today's birthday card is where a finished account can confirm it.
     const [row] = await db.select({ preferences: users.preferences }).from(users).where(eq(users.id, userId));
     if (row && !row.preferences.ageBlockedAt && row.preferences.onboarding !== "pending") throw new ServiceError(CHECK_YEAR);
-    const { saveBirthday } = await import("./onboarding");
-    await withUser(userId, (s) => saveBirthday(s, d.timezone, d.birthDate!));
+    const { afterAgeLock, saveBirthday } = await import("./onboarding");
+    const out = await withUser(userId, (s) => saveBirthday(s, d.timezone, d.birthDate!));
+    // the lock has committed: flag a paid plan and close the links where they live (the cron retries what fails)
+    if (out.blocked) await afterAgeLock(db, userId);
     throw new ServiceError(AGE_LINE);
   }
   const problem = d.birthDate ? birthDateProblem(d.birthDate, today) : null;
@@ -233,6 +235,20 @@ export async function changePassword(db: Database, userId: string, current: stri
     .update(users)
     .set({ passwordHash: await hashPassword(next), ...(firstPasswordOn2fa ? { emailCodesBlockedAt: new Date() } : {}) })
     .where(eq(users.id, userId));
+}
+
+/** The typed confirmation every account deletion asks for (Settings and the lock screen read it the same way). */
+export const typedDelete = (value: FormDataEntryValue | null) => String(value ?? "").trim() === "DELETE";
+
+/**
+ * "Delete my account" on the under-13 lock screen: only for an account that is locked, after the typed DELETE, then the
+ * same deletion as Settings (the password if they have one; a plan that can't be cancelled stops it).
+ */
+export async function deleteLockedAccount(db: Database, userId: string, confirm: FormDataEntryValue | null, password: string) {
+  const [u] = await db.select({ preferences: users.preferences }).from(users).where(eq(users.id, userId));
+  if (!u?.preferences?.ageBlockedAt) throw new AuthError("This account isn't locked.");
+  if (!typedDelete(confirm)) throw new AuthError("Type DELETE to confirm.");
+  await deleteAccount(db, userId, password);
 }
 
 /** Permanently deletes the user and (via ON DELETE CASCADE) every row they own. */

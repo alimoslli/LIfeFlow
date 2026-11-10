@@ -10,7 +10,7 @@ import { dayClockData } from "@/server/services/day-clock";
 import { ServiceError } from "@/server/services/errors";
 import { AGE_LINE } from "@/lib/birthday";
 import {
-  closeLockedConnections,
+  afterAgeLock,
   completeOnboarding,
   finishOnboarding,
   saveWelcomeProgress,
@@ -20,7 +20,7 @@ import {
 } from "@/server/services/onboarding";
 import { after } from "next/server";
 import { getDb } from "@/server/db/client";
-import { AuthError, deleteAccount } from "@/server/services/accounts";
+import { AuthError, deleteLockedAccount } from "@/server/services/accounts";
 
 /** The person's sky as it is now (no money on it), for "Connect your sky" after Canvas connects; or why it couldn't load. */
 export type SkyResult = { ok: true; clock: ClockData } | { ok: false; error: string };
@@ -57,7 +57,7 @@ export async function saveWelcomeAction(input: Parameters<typeof saveWelcomeProg
       return { ...out, userId: u.id };
     });
     // the lock is committed: now close their bank and Google links where they live (retried by the sync cron if this fails)
-    if (r.blocked) after(() => closeLockedConnections(getDb(), r.userId));
+    if (r.blocked) after(() => afterAgeLock(getDb(), r.userId));
     return r.blocked ? { ok: false, error: AGE_LINE, at: Date.now() } : { ok: true, at: Date.now() };
   } catch (e) {
     unstable_rethrow(e);
@@ -98,9 +98,8 @@ export async function setNameAction(name: string): Promise<ActionState> {
 export async function deleteLockedAccountAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUserForWelcome();
   if (!user.preferences?.ageBlockedAt) redirect("/settings/data");
-  if (String(fd.get("confirm") ?? "").trim() !== "DELETE") return { ok: false, error: "Type DELETE to confirm.", at: Date.now() };
   try {
-    await deleteAccount(getDb(), user.id, String(fd.get("password") ?? ""));
+    await deleteLockedAccount(getDb(), user.id, fd.get("confirm"), String(fd.get("password") ?? ""));
   } catch (e) {
     return { ok: false, error: e instanceof AuthError ? e.message : "Couldn't delete the account. Try again.", at: Date.now() };
   }

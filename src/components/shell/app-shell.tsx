@@ -9,7 +9,7 @@ import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { openSettings, SettingsSheet } from "@/components/settings/settings-sheet";
 import { EverythingSheet, openEverything } from "./everything-sheet";
 import { cn } from "@/lib/utils";
-import { ASK_EVENT, askUrl, markSend, type AskDetail } from "@/lib/ask-handoff";
+import { ASK_EVENT, handOff, type AskDetail } from "@/lib/ask-handoff";
 import { assistantLabel, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
 import { NAV, isActive } from "./nav-items";
 import { LifeAreasContext } from "./life-areas";
@@ -129,8 +129,8 @@ export function AppShell({
         window.dispatchEvent(new CustomEvent<AskDetail>(ASK_EVENT, { detail: { prompt: text, send: opts?.send } }));
         return;
       }
-      if (text && opts?.send) markSend(text);
-      router.push(askUrl(text));
+      if (text) handOff(text, !!opts?.send);
+      router.push("/jarvis");
     },
     [router],
   );

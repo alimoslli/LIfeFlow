@@ -8,7 +8,7 @@ import { createTask } from "@/server/services/tasks";
 import { ServiceError } from "@/server/services/errors";
 import { localDateOf, localTimeOf } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
-import { closeLockedConnections, saveBirthday } from "@/server/services/onboarding";
+import { afterAgeLock, saveBirthday } from "@/server/services/onboarding";
 import { getDb } from "@/server/db/client";
 import { after } from "next/server";
 import { audit } from "@/server/services/audit";
@@ -136,7 +136,7 @@ export async function saveBirthdayAction(birthDate: string, confirmed = false): 
     if (r.confirm) return { ok: false, confirm: r.confirm, at: Date.now() };
     blocked = r.blocked;
     // the lock is committed: now close their bank and Google links where they live (retried by the sync cron if this fails)
-    if (blocked) after(() => closeLockedConnections(getDb(), r.userId));
+    if (blocked) after(() => afterAgeLock(getDb(), r.userId));
     revalidatePath("/", "layout");
   } catch (e) {
     unstable_rethrow(e);

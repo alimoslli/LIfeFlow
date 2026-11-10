@@ -2,7 +2,17 @@ import { createHash, createPublicKey, verify as verifySig, type JsonWebKey } fro
 import { and, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
 import { todayIn } from "@/lib/dates";
 import { decryptSecret, encryptSecret } from "../crypto";
-import { connectionRegistry, financialAccounts, holdings, integrations, syncJobs, transactions, type AccountType, type TransactionKind } from "../db/schema";
+import {
+  connectionRegistry,
+  financialAccounts,
+  holdings,
+  integrations,
+  syncJobs,
+  transactions,
+  users,
+  type AccountType,
+  type TransactionKind,
+} from "../db/schema";
 import type { Database } from "../db/client";
 import { withUser, type UserScope } from "../db/with-user";
 import { cleanVendorName } from "@/lib/vendor";
@@ -363,6 +373,10 @@ export type SyncResult = { accounts: number; added: number; modified: number; re
 /** Pulls balances, new/changed/removed transactions, holdings and debt details for one connection. */
 /** `live`: ask the bank for current balances now (a "Sync now" tap), instead of Plaid's last saved copy. */
 export async function syncItem(scope: UserScope, integrationId: string, tz: string, f?: Fetch, opts: { live?: boolean } = {}): Promise<SyncResult> {
+  // an account locked under 13 keeps nothing (services/onboarding.ts): a sync never writes for it. Read FOR SHARE so a
+  // lock that starts meanwhile waits for this sync and then empties what it wrote, and one already made stops it here.
+  const [me] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId)).for("share");
+  if (me?.preferences.ageBlockedAt) throw new PlaidError("This account is locked.", "LOCKED");
   const item = await getItem(scope, integrationId);
   const creds = readCreds(item);
   const started = new Date();
@@ -395,6 +409,8 @@ export async function syncConnection(userId: string, integrationId: string, tz: 
   try {
     return await withUser(userId, (s) => syncItem(s, integrationId, tz, f, opts));
   } catch (e) {
+    // a locked account keeps nothing, not even a failed sync's note
+    if (e instanceof PlaidError && e.code === "LOCKED") return null;
     const msg = e instanceof PlaidError ? e.message : "Sync failed. Please try again.";
     await withUser(userId, async (s) => {
       await s.tx
@@ -692,8 +708,17 @@ function securityType(t: string | null | undefined) {
 }
 
 /** Tells Plaid to forget an item (used when an account is deleted, where the rows go with the user). Throws on any failure. */
+/** Plaid's answers for an item it no longer has: someone removed it already (or a first close worked). */
+const GONE_AT_PLAID = new Set(["ITEM_NOT_FOUND", "INVALID_ACCESS_TOKEN"]);
+
+/** Closes a bank link at Plaid. An item Plaid no longer has counts as closed, so a retry never sticks on it. */
 export async function removeAtPlaid(encryptedCredentials: string | null, f?: Fetch) {
-  await call("/item/remove", { access_token: readCreds({ encryptedCredentials }).accessToken }, f);
+  try {
+    await call("/item/remove", { access_token: readCreds({ encryptedCredentials }).accessToken }, f);
+  } catch (e) {
+    if (e instanceof PlaidError && e.code && GONE_AT_PLAID.has(e.code)) return;
+    throw e;
+  }
 }
 
 /** Disconnects at Plaid and removes the synced accounts (and their transactions and holdings). */

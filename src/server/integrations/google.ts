@@ -571,8 +571,13 @@ export async function addGoogleEvent(
 export async function revokeGoogleGrant(encryptedCredentials: string | null, f: Fetch = fetch) {
   if (!encryptedCredentials) return;
   const creds = JSON.parse(decryptSecret(encryptedCredentials)) as Creds;
+  if (!creds.refreshToken) return; // nothing was granted to revoke
   const res = await f(`${REVOKE_URL}?token=${encodeURIComponent(creds.refreshToken)}`, { method: "POST" });
-  if (!res.ok) throw new GoogleError("Google didn't revoke the grant.");
+  if (res.ok) return;
+  // a grant that's already gone (the person revoked it at Google, or a first revoke worked) counts as revoked
+  const body = (await res.json().catch(() => ({}))) as { error?: string };
+  if (res.status === 400 && body.error === "invalid_token") return;
+  throw new GoogleError("Google didn't revoke the grant.");
 }
 
 /** Disconnects: revokes Google's grant, removes stored tokens and mirrored events. */

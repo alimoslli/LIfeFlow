@@ -161,14 +161,8 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
     .from(users)
     .where(eq(users.id, scope.userId));
   if (me.kind === "demo") throw new ServiceError("The demo account keeps its birthday.");
-  // A paid plan is never cancelled from here (owner, 2026-11-10: flag only; he reviews and ends it himself). The flag is a
-  // fixed-text error report, which also emails him the first time.
-  if (me.stripeCustomerId) {
-    const [{ recordError }, { getDb }] = await Promise.all([import("./error-reports"), import("../db/client")]);
-    await recordError(getDb(), { source: "server", route: "age.lock", message: "Age lock: a locked account has a billing record. Review it in Stripe." }).catch(
-      () => {},
-    );
-  }
+  // A paid plan is never cancelled from here (owner, 2026-11-10: flag only; he reviews and ends it himself). The flag is
+  // raised by afterAgeLock once this commits (it can email him, so never inside this transaction).
   // a bank link or Google grant has to be closed where it lives (Plaid, Google), like deleting an account does. That's an
   // outside call, so it never runs in this transaction: the row stays as only its encrypted grant (no name, account or
   // metadata) until closeLockedConnections closes it after the commit
@@ -212,6 +206,9 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
  * Only ever for a locked account. A failure keeps the row and the `ageLockClosing` mark, records a fixed-text error and is
  * retried by the sync cron (`retryLockClosing`); the last one closed clears the mark. Never throws.
  */
+/** How many times the sync cron tries to close one link at its provider before keeping nothing of it. */
+const CLOSE_TRIES = 10;
+
 export async function closeLockedConnections(db: Database, userId: string, base: typeof fetch = fetch): Promise<{ closed: number; left: number }> {
   const f: typeof fetch = (input, init) => base(input, { ...init, signal: AbortSignal.timeout(8000) });
   try {
@@ -221,7 +218,12 @@ export async function closeLockedConnections(db: Database, userId: string, base:
         const [me] = await s.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, userId));
         if (!me?.preferences.ageBlockedAt) return [];
         return s.tx
-          .select({ id: integrations.id, provider: integrations.provider, encryptedCredentials: integrations.encryptedCredentials })
+          .select({
+            id: integrations.id,
+            provider: integrations.provider,
+            encryptedCredentials: integrations.encryptedCredentials,
+            metadata: integrations.metadata,
+          })
           .from(integrations)
           .where(and(eq(integrations.userId, userId), inArray(integrations.provider, OUTSIDE_PROVIDERS)));
       },
@@ -234,8 +236,29 @@ export async function closeLockedConnections(db: Database, userId: string, base:
         if (row.encryptedCredentials) await closeAtProvider(row, f);
         await withUser(userId, (s) => s.tx.delete(integrations).where(eq(integrations.id, row.id)), db);
       } catch {
-        left++;
+        // retried by the sync cron, but not forever: after CLOSE_TRIES the grant can't be closed from here (a grant that
+        // can't be read, a provider that keeps refusing), so nothing more is kept of it and the owner is told once
+        const tries = Number(row.metadata?.closeTries ?? 0) + 1;
         const { recordError } = await import("./error-reports");
+        if (tries >= CLOSE_TRIES) {
+          await withUser(userId, (s) => s.tx.delete(integrations).where(eq(integrations.id, row.id)), db);
+          await recordError(db, {
+            source: "server",
+            route: "age.lock",
+            message: "Age lock: a bank or Google link couldn't be closed at the provider after several tries. It was removed here.",
+          }).catch(() => {});
+          continue;
+        }
+        left++;
+        await withUser(
+          userId,
+          (s) =>
+            s.tx
+              .update(integrations)
+              .set({ metadata: { closeTries: tries } })
+              .where(eq(integrations.id, row.id)),
+          db,
+        );
         await recordError(db, { source: "server", route: "age.lock", message: "Age lock: closing a bank or Google link failed. It is retried." }).catch(
           () => {},
         );
@@ -257,12 +280,29 @@ export async function closeLockedConnections(db: Database, userId: string, base:
   }
 }
 
-/** The sync cron's retry: every locked account still marked as closing a link. */
+/**
+ * What runs once a lock has committed (the actions call it in after()): a paid plan is flagged for the owner (a
+ * fixed-text error report, which emails him the first time; never cancelled from here), and the bank and Google links
+ * are closed where they live. Never throws.
+ */
+export async function afterAgeLock(db: Database, userId: string, base: typeof fetch = fetch) {
+  try {
+    const [me] = await db.select({ customer: users.stripeCustomerId, preferences: users.preferences }).from(users).where(eq(users.id, userId));
+    if (me?.preferences.ageBlockedAt && me.customer) {
+      const { recordError } = await import("./error-reports");
+      await recordError(db, { source: "server", route: "age.lock", message: "Age lock: a locked account has a billing record. Review it in Stripe." });
+    }
+  } catch {}
+  return closeLockedConnections(db, userId, base);
+}
+
+/** The sync cron's retry: the locked accounts still marked as closing a link, oldest lock first. */
 export async function retryLockClosing(db: Database) {
   const due = await db
     .select({ id: users.id })
     .from(users)
     .where(sql`${users.preferences} ? 'ageLockClosing'`)
+    .orderBy(sql`${users.preferences} ->> 'ageBlockedAt'`)
     .limit(50);
   for (const u of due) await closeLockedConnections(db, u.id);
   return due.length;

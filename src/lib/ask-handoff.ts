@@ -1,29 +1,30 @@
 /**
  * Handing a question to the chat page (owner, 2026-11-10: no side panel; the chat page is where you talk). A button in the
- * app that should SEND its question marks it here first; the chat page sends `?ask=` only when the mark matches, so a link
- * from outside the app can fill the box but never send anything on its own.
+ * app leaves the question in this tab's sessionStorage and opens /jarvis; the chat takes it once on mount (typed in the box,
+ * or sent when the button said so). The words never ride in the address (no logs, no history), the hand-off expires in
+ * seconds, and a link from outside the app (`/jarvis?ask=`) can only fill the box, never send.
  */
-const KEY = "lf_ask_send";
+const KEY = "lf_ask";
+const FRESH_MS = 15_000;
 export const ASK_EVENT = "lf:ask";
 export type AskDetail = { prompt?: string; send?: boolean };
 
-export function markSend(prompt: string) {
+export function handOff(prompt: string, send: boolean) {
   try {
-    sessionStorage.setItem(KEY, prompt);
+    sessionStorage.setItem(KEY, JSON.stringify({ prompt, send, at: Date.now() }));
   } catch {}
 }
 
-/** True once, for the question the app itself marked. */
-export function takeSend(prompt: string) {
+/** The question a button just handed over, once (and only while it's fresh); always cleared. */
+export function takeHandoff(now = Date.now()): { prompt: string; send: boolean } | null {
   try {
-    const v = sessionStorage.getItem(KEY);
+    const raw = sessionStorage.getItem(KEY);
     sessionStorage.removeItem(KEY);
-    return v === prompt;
+    if (!raw) return null;
+    const v = JSON.parse(raw) as { prompt?: unknown; send?: unknown; at?: unknown };
+    if (typeof v.prompt !== "string" || !v.prompt || typeof v.at !== "number" || now - v.at > FRESH_MS) return null;
+    return { prompt: v.prompt.slice(0, 500), send: v.send === true };
   } catch {
-    return false;
+    return null;
   }
-}
-
-export function askUrl(prompt?: string) {
-  return prompt ? `/jarvis?ask=${encodeURIComponent(prompt)}` : "/jarvis";
 }

@@ -13,6 +13,7 @@ import { listAccounts } from "@/server/services/finance/accounts";
 import { listActiveMemories } from "@/server/services/memory";
 import { setCompanion, updateProfile } from "@/server/services/accounts";
 import {
+  afterAgeLock,
   closeLockedConnections,
   completeOnboarding,
   finishOnboarding,
@@ -316,6 +317,23 @@ describe("onboarding", () => {
     expect(await leftovers(user.id)).toEqual([]);
     expect((await prefs(user.id)).ageLockClosing).toBeUndefined();
     expect((await ageLocksToReview(getDb())).find((r) => r.id === user.id)).toMatchObject({ paid: true, closing: false });
+    // a link that never closes is not kept forever: after the tenth try nothing more is kept of it, and the owner is told
+    const stuck = await finishedWithData("Sid Stuck");
+    await stuck.run((s) => saveBirthday(s, "UTC", `${new Date().getFullYear() - 9}-03-03`, { confirmed: true }));
+    vi.mocked(closeAtProvider).mockRejectedValue(new Error("down"));
+    try {
+      for (let i = 1; i < 10; i++) expect(await closeLockedConnections(getDb(), stuck.user.id)).toEqual({ closed: 0, left: 1 });
+      expect(await closeLockedConnections(getDb(), stuck.user.id)).toEqual({ closed: 1, left: 0 });
+    } finally {
+      vi.mocked(closeAtProvider).mockReset();
+      vi.mocked(closeAtProvider).mockImplementation(async (row: { provider: string }) => void closed.push(row.provider));
+    }
+    expect(await leftovers(stuck.user.id)).toEqual([]);
+    expect((await prefs(stuck.user.id)).ageLockClosing).toBeUndefined();
+    const notes = await getDb().select().from(errorReports).where(eq(errorReports.route, "age.lock"));
+    expect(notes.map((n) => n.message)).toContain(
+      "Age lock: a bank or Google link couldn't be closed at the provider after several tries. It was removed here.",
+    );
     // and it never touches an account that isn't locked
     const other = await finishedWithData("Nora Normal");
     expect(await closeLockedConnections(getDb(), other.user.id)).toEqual({ closed: 0, left: 0 });
@@ -412,7 +430,9 @@ describe("onboarding", () => {
     expect(await run((s) => saveBirthday(s, "UTC", young, { confirmed: true }))).toEqual({ blocked: true });
     expect(closed).toEqual([]);
     expect(await leftovers(user.id)).toEqual(["integrations"]);
-    expect(await closeLockedConnections(getDb(), user.id)).toEqual({ closed: 1, left: 0 });
+    // nothing outside happens inside the lock, not even the owner's flag (it can send him an email)
+    expect(await getDb().select().from(errorReports).where(eq(errorReports.route, "age.lock"))).toEqual([]);
+    expect(await afterAgeLock(getDb(), user.id)).toEqual({ closed: 1, left: 0 });
     const [u] = await getDb().select().from(users).where(eq(users.id, user.id));
     expect(Object.keys(u.preferences).sort()).toEqual(["ageBlockedAt", "onboarding"]);
     expect(u.name).toBe(provisionalName(u.email));

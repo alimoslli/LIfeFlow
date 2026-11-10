@@ -2,7 +2,7 @@ import { createHash, generateKeyPairSync, sign } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { closeDb, getDb } from "@/server/db/client";
-import { connectionRegistry, financialAccounts, holdings, integrations, transactions } from "@/server/db/schema";
+import { connectionRegistry, financialAccounts, holdings, integrations, syncJobs, transactions, users } from "@/server/db/schema";
 import {
   createLinkToken,
   exchangePublicToken,
@@ -280,7 +280,7 @@ describe("Plaid", () => {
 
     // Syncs keep it off and skip its transactions.
     const stats = await syncConnection(user.id, item.id, TZ, fake.f);
-    expect(stats.accounts).toBe(2);
+    expect(stats!.accounts).toBe(2);
     expect(await visible()).toEqual(["Plaid Credit Card", "Plaid IRA"]);
     expect(await txCount()).toBe(0);
     expect((await run((s) => moneyOverview(s, "2026-10-28"))).balances.cashCents).toBe(0);
@@ -415,6 +415,19 @@ describe("Plaid", () => {
     expect(fake.calls.at(-1)?.path).toBe("/item/remove");
     expect(await run((s) => s.tx.select().from(transactions).where(eq(transactions.userId, user.id)))).toHaveLength(0);
     expect(await getDb().select().from(connectionRegistry).where(eq(connectionRegistry.integrationId, item.id))).toHaveLength(0);
+  });
+
+  it("an account locked under 13 never syncs: nothing written, not even a failed sync's note", async () => {
+    const { user, run, item, fake } = await connected();
+    await getDb()
+      .update(users)
+      .set({ preferences: { onboarding: "done", ageBlockedAt: new Date().toISOString() } })
+      .where(eq(users.id, user.id));
+    const calls = fake.calls.length;
+    expect(await syncConnection(user.id, item.id, TZ, fake.f)).toBeNull();
+    expect(fake.calls.length).toBe(calls); // Plaid isn't even asked
+    expect(await run((s) => s.tx.select().from(financialAccounts).where(eq(financialAccounts.userId, user.id)))).toHaveLength(0);
+    expect(await run((s) => s.tx.select().from(syncJobs).where(eq(syncJobs.userId, user.id)))).toHaveLength(0);
   });
 
   it("maps Plaid categories to LifeFlow categories and kinds", () => {
