@@ -517,7 +517,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     if (wide !== (root.dataset.wide === "true")) root.dataset.wide = String(wide);
     // a very short phone (an iPhone SE): the wheel keeps the space and the skyling's line steps aside (the chat bar
     // docked under the sky is right there)
-    const short = full && !wide && H < 420;
+    const short = full && !wide && H < 340;
     if (short !== (root.dataset.short === "true")) root.dataset.short = String(short);
     const colL = wide ? Math.round(W * WIDE_COL) : W;
     const win = geo.win;

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { BrandMark } from "@/components/brand/brand-mark";
+import { SkylingIcon } from "@/components/skylings/sprite";
 import { useShell } from "@/components/shell/app-shell";
 
 export type AssistantNote = { text: string; tone: "attention" | "heads-up" | "good"; href?: string; prompt?: string; label?: string };
@@ -15,7 +15,8 @@ export function AssistantLine({ name, note }: { name: string; note: AssistantNot
   if (!note) return null;
   const body = (
     <>
-      <BrandMark className="mt-0.5 h-8 w-8 shrink-0" alt="" />
+      {/* their own skyling says it, not the LifeFlow mark */}
+      <SkylingIcon className="mt-0.5 h-8 w-8 shrink-0" />
       <span className="min-w-0 flex-1">
         <span className="block text-xs font-medium text-muted">{name}</span>
         <span className="mt-0.5 block text-[0.9375rem] leading-snug">{note.text}</span>

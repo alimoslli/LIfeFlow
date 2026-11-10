@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppBusy } from "@/lib/app-busy";
 import { Check, Mic, MicOff } from "lucide-react";
-import { BrandMark } from "@/components/brand/brand-mark";
+import { SkylingIcon } from "@/components/skylings/sprite";
 import { cn } from "@/lib/utils";
 import { nameAtStart } from "@/lib/assistant";
 import { gsap, prefersReducedMotion } from "../motion/gsap";
@@ -360,7 +360,7 @@ export function LiveVoice({
     >
       <span ref={orb} className={cn("relative h-9 w-9 shrink-0", phase === "connecting" && "animate-pulse")}>
         <span className="lf-orb-glow absolute -inset-1/2 rounded-full" aria-hidden />
-        <BrandMark className="relative h-9 w-9" alt="" />
+        <SkylingIcon className="relative h-9 w-9" />
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[0.9375rem] font-medium" aria-live="polite">

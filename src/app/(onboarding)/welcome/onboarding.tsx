@@ -95,8 +95,9 @@ export function Onboarding({
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  // coming back from Google or Microsoft: straight to "Connect your sky"
-  const [index, setIndex] = useState(back ? 2 : 0);
+  // coming back from Google or Microsoft: straight to "Connect your sky". After a refresh: where they had got to, from
+  // what the account already keeps (about you saved means connecting is next; a skyling picked means about you is next)
+  const [index, setIndex] = useState(back || (saved.birthDate && saved.lifeStage) ? 2 : saved.companion ? 1 : 0);
   const dir = useRef(1);
   const step = STEPS[index];
 
@@ -191,7 +192,13 @@ export function Onboarding({
       go(1);
     });
 
-  const next = () => (step === "about" ? saveAbout() : go(1));
+  /** Leaving "meet the skylings": the pick is kept right away (a refresh used to lose it), without holding the next step up. */
+  const savePick = () => {
+    if (companion) void saveWelcomeAction({ assistant: { name: cleanName || undefined, style, companion } });
+    go(1);
+  };
+
+  const next = () => (step === "about" ? saveAbout() : step === "skyling" ? savePick() : go(1));
 
   /** Canvas connects right here (its Calendar Feed link), then the sky comes back with what it brought in. */
   const connectCanvas = (feed: string, at: DOMRect | undefined) =>
