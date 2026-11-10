@@ -9,6 +9,11 @@ import { formatCents } from "@/lib/money";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { listAccounts, listTurnedOffAccounts, spendableCents, summarizeBalances } from "@/server/services/finance/accounts";
 import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
+import { series } from "@/server/db/series";
+import { listHoldings } from "@/server/services/finance/wealth";
+import { GENERAL_INFO, investmentReport, LESSONS } from "@/server/services/finance/investing";
+import { addHoldingAction, deleteHoldingAction } from "./holding-actions";
+import { InvestmentSheets } from "./investment-sheets";
 import { archiveAccountAction, createAccountAction, disconnectBankAction, setBankAccountUsedAction, updateAccountDetailsAction } from "../actions";
 import { AccountRow, AddAccount, type AccountView } from "./account-row";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
@@ -31,12 +36,16 @@ const whole = (c: number) => formatCents(c).replace(/\.\d\d$/, "");
 export default async function AccountsPage() {
   const locked = await moneyGate();
   if (locked) return locked;
-  const d = await withCurrentUser(async (s, u) => ({
-    accounts: await listAccounts(s),
-    off: await listTurnedOffAccounts(s),
-    banks: await listPlaidConnections(s),
-    tz: u.timezone,
-  }));
+  const d = await withCurrentUser(async (s, u) => {
+    const [accounts, off, banks, holdings, report] = await series(
+      () => listAccounts(s),
+      () => listTurnedOffAccounts(s),
+      () => listPlaidConnections(s),
+      () => listHoldings(s),
+      () => investmentReport(s),
+    );
+    return { accounts, off, banks, holdings, report, tz: u.timezone, level: u.preferences?.moneyLevel ?? "new" };
+  });
   const totals = summarizeBalances(d.accounts);
   const owedTotal = totals.creditOwedCents + totals.loansOwedCents;
   const view = (a: (typeof d.accounts)[number]): AccountView => ({
@@ -65,6 +74,74 @@ export default async function AccountsPage() {
     minPayment: a.minPaymentCents != null ? (a.minPaymentCents / 100).toFixed(2) : "",
     dueDate: a.nextPaymentDueDate ?? "",
   });
+
+  // Investments (the old Investments page, owner's page map 2026-11-10): what each account holds, what stands out, and the
+  // rest one tap deeper (add a holding, what if I invest monthly, the basics).
+  const invested = d.accounts.filter((a) => a.type === "investment");
+  const lessons = LESSONS.filter((l) => ["compounding", "index_funds", "risk", "roth_ira", "fees", "emergency_first"].includes(l.id)).map((l) => ({
+    id: l.id,
+    title: l.title,
+    body: l.body,
+    open: d.level === "new" && l.id === "compounding",
+  }));
+  const sheets = (
+    <InvestmentSheets
+      accounts={invested.map((a) => ({ id: a.id, name: a.name }))}
+      startCents={totals.investmentsCents}
+      add={addHoldingAction}
+      lessons={lessons}
+      note={`${GENERAL_INFO} LifeFlow never trades or moves money.`}
+    />
+  );
+  const stands = [
+    d.report.yearlyFeesCents != null ? `Fund fees cost about ${whole(d.report.yearlyFeesCents)} a year.` : null,
+    d.report.topHoldingSharePercent != null ? `Your largest holding is ${d.report.topHoldingSharePercent}% of what you hold.` : null,
+    ...d.report.notes,
+  ].filter((x): x is string => !!x);
+  const investing = (
+    <div id="investments" className="flex scroll-mt-24 flex-col gap-2">
+      {d.holdings.length > 0 && (
+        <ul className="lf-tiles" aria-label="What you hold">
+          {d.holdings.map((h) => {
+            const gain = h.costBasisCents != null ? h.valueCents - h.costBasisCents : null;
+            return (
+              <li key={h.id} className="flex items-center gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[0.9375rem] font-medium">{h.symbol ?? h.name}</p>
+                  <p className="truncate text-xs text-muted">{h.symbol ? h.name : d.accounts.find((a) => a.id === h.accountId)?.name}</p>
+                </div>
+                <div className="text-right">
+                  <p className="tabular text-[0.9375rem]">{whole(h.valueCents)}</p>
+                  {gain != null && (
+                    <p className={`tabular text-xs ${gain < 0 ? "text-danger" : "text-text-2"}`}>
+                      {gain < 0 ? "−" : "+"}
+                      {whole(Math.abs(gain))}
+                    </p>
+                  )}
+                </div>
+                {h.source === "manual" && (
+                  <ActionButton
+                    action={deleteHoldingAction.bind(null, h.id)}
+                    confirm="Remove this holding?"
+                    title={`Remove ${h.symbol ?? h.name}`}
+                    className="flex h-11 w-11 items-center justify-center text-muted hover:text-danger"
+                  >
+                    <PixelIcon name="trash" className="h-4 w-4" />
+                  </ActionButton>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {stands.map((t) => (
+        <p key={t} className="text-sm text-text-2">
+          {t}
+        </p>
+      ))}
+      {sheets}
+    </div>
+  );
 
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-7">
@@ -123,6 +200,7 @@ export default async function AccountsPage() {
                 </li>
               ))}
             </ul>
+            {label === "Investments" && investing}
           </section>
         );
       })}
@@ -143,6 +221,13 @@ export default async function AccountsPage() {
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {invested.length === 0 && (
+        <section aria-label="Investing" id="investments" className="flex scroll-mt-24 flex-col gap-2">
+          <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Investing</h2>
+          {sheets}
         </section>
       )}
 

@@ -64,7 +64,6 @@ const SCREENS = [
   "/jarvis/profile",
   "/money",
   "/finances/accounts",
-  "/wealth",
   "/finances/transactions",
   "/finances/bills",
   "/school",

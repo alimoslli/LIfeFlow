@@ -463,7 +463,7 @@ export const moneyCoachTools = [
     schema: z.object({}),
     mutates: false,
     async execute(_a, ctx) {
-      return centsToDollarsDeep({ ...(await ctx.run((s) => investmentReport(s))), viewAt: "/wealth" });
+      return centsToDollarsDeep({ ...(await ctx.run((s) => investmentReport(s))), viewAt: "/finances/accounts#investments" });
     },
   }),
   defineTool({

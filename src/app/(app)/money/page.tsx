@@ -124,7 +124,9 @@ export default async function MoneyPage() {
       detail: `${o.accountCount} account${o.accountCount === 1 ? "" : "s"}`,
     },
     // investments get their own row only when there are some
-    ...(o.investments ? [{ href: "/wealth", icon: "money" as const, label: "Investments", detail: `${dollars(o.investments.valueCents)} invested` }] : []),
+    ...(o.investments
+      ? [{ href: "/finances/accounts#investments", icon: "money" as const, label: "Investments", detail: `${dollars(o.investments.valueCents)} invested` }]
+      : []),
   ];
   return (
     // a laptop gets two columns (A-to-Z audit C2): what you have and what needs you on the left, the month ahead and

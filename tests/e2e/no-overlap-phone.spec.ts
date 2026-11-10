@@ -43,7 +43,6 @@ const SCREENS = [
   "/finances/transactions",
   "/finances/bills",
   "/finances/rules",
-  "/wealth",
   "/school",
   "/school/due",
   "/notes",
