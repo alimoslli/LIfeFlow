@@ -8,6 +8,12 @@ import path from "node:path";
 import { addDaysStr, localDateOf, localToInstant } from "@/lib/dates";
 import type { Said } from "./replay";
 
+/** Today's clash line carries its pairs' ids in order (soonest first, then the one in its detail): [a, b, a2, b2]. */
+const pairsOf = (refs: string[] | undefined) => {
+  const r = refs ?? [];
+  return Array.from({ length: Math.floor(r.length / 2) }, (_, k) => [r[2 * k], r[2 * k + 1]] as const);
+};
+
 export type Shift = { id: string; start: Date; end: Date; knownAt: Date };
 export type Block = { id: string; title: string; kind: string; start: Date; end: Date; knownAt: Date };
 export type Asg = { id: string; title: string; kind: string; points: number; due: Date; knownAt: Date };
@@ -142,7 +148,7 @@ export function overlapEvents(life: Life, said: Said[]) {
         events.push(ev);
         continue;
       }
-      const hit = looksOn(said, (s) => s.surface === "today" && s.kind === "conflict" && !!s.refs?.includes(sh.id) && !!s.refs?.includes(b.id));
+      const hit = looksOn(said, (s) => s.surface === "today" && s.kind === "conflict" && pairsOf(s.refs).some(([x, y]) => (x === sh.id && y === b.id) || (x === b.id && y === sh.id)));
       const early = hit.filter((s) => s.date <= addDaysStr(x, -1));
       if (early.length) Object.assign(ev, { result: "caught", via: "Today line", leadDays: Math.round((Date.parse(x) - Date.parse(early[0].date)) / 86400000) });
       else if (hit.length) Object.assign(ev, { result: "late", via: "Today line, only on the day" });
@@ -365,8 +371,8 @@ export function gradeWorld(life: Life, said: Said[], quietWorld: boolean): Grade
   // false alarms: said, but the data shows nothing of the kind
   for (const s of said) {
     if (s.surface === "today" && s.kind === "conflict") {
-      const refs = s.refs ?? [];
-      if (refs.length >= 2 && !o.pairs.has(o.pair(refs[0], refs[1]))) fa.push({ rule: "overlap", day: s.date, what: s.text ?? "", why: "the two things don't overlap in the data" });
+      for (const [x, y] of pairsOf(s.refs))
+        if (!o.pairs.has(o.pair(x, y))) fa.push({ rule: "overlap", day: s.date, what: s.text ?? "", why: "the two things don't overlap in the data" });
     }
     if (s.surface === "message" && s.kind === "deadline_conflict") {
       const dueDay = String(s.facts.dueDay);
@@ -416,7 +422,7 @@ export function gradeWorld(life: Life, said: Said[], quietWorld: boolean): Grade
   for (let x = life.firstDay; x <= life.lastDay; x = addDaysStr(x, 1)) {
     if (busy.has(x)) continue;
     days++;
-    const loud = said.filter((s) => s.date === x && ((s.surface === "message" && (s.urgent || WARNING_KINDS.has(s.kind))) || (s.surface === "today" && ["conflict", "overdraft"].includes(s.kind) && !(s.kind === "conflict" && (s.refs ?? []).length >= 2 && o.pairs.has(o.pair(s.refs![0], s.refs![1]))))));
+    const loud = said.filter((s) => s.date === x && ((s.surface === "message" && (s.urgent || WARNING_KINDS.has(s.kind))) || (s.surface === "today" && ["conflict", "overdraft"].includes(s.kind) && !(s.kind === "conflict" && pairsOf(s.refs).length > 0 && pairsOf(s.refs).every(([x, y]) => o.pairs.has(o.pair(x, y)))))));
     if (loud.length) {
       noisy.push(`${x} ${describe(loud[0])}`);
       noisyKinds.push(...new Set(loud.map((l) => (l.surface === "today" ? "Today " : "") + l.kind + (l.urgent && l.surface === "message" ? " (marked urgent)" : ""))));

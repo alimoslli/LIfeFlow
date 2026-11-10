@@ -43,18 +43,34 @@ const overdueRule: Rule = (s) => {
   ];
 };
 
-/** Clashes still ahead (or happening now): items that already ended can't clash any more. */
-const conflictRule: Rule = (s) =>
-  findConflicts(s.week.filter((i) => !i.endsAt || i.endsAt.getTime() > s.now.getTime()))
-    .slice(0, 1)
-    .map(({ a, b }) => ({
-      id: `conflict-${a.key}-${b.key}`,
+/**
+ * Clashes still ahead (or happening now): items that already ended can't clash any more. One line names the soonest;
+ * its detail names the next one, so a second clash isn't hidden behind the first (the noticing grader found 13 missed
+ * that way), and counts any beyond that.
+ */
+const conflictRule: Rule = (s) => {
+  const all = findConflicts(s.week.filter((i) => !i.endsAt || i.endsAt.getTime() > s.now.getTime()));
+  if (!all.length) return [];
+  const [first, second] = all;
+  const when = (x: AgendaItem) => `${dayName(localDateOf(x.startsAt, s.tz), s.today)} at ${formatIn(x.startsAt, s.tz, "h:mm a")}`;
+  const more = all.length - 2;
+  const also = second ? `Also: ${second.a.title} overlaps ${second.b.title} ${when(second.b)}.${more > 0 ? ` And ${more} more this week.` : ""}` : undefined;
+  const ask = `${first.a.title} overlaps ${first.b.title} on ${formatIn(first.b.startsAt, s.tz, "EEEE")}${
+    second ? `, and ${second.a.title} overlaps ${second.b.title} on ${formatIn(second.b.startsAt, s.tz, "EEEE")}` : ""
+  }. What are my options?`;
+  return [
+    {
+      // both pairs' keys, soonest first: Today's list keys and the grader read the pairs from here
+      id: ["conflict", ...[first, second].filter(Boolean).map(({ a, b }) => `${a.key}-${b.key}`)].join("-"),
       tone: "attention" as const,
       icon: "conflict" as const,
-      text: `${a.title} overlaps ${b.title} ${dayName(localDateOf(b.startsAt, s.tz), s.today)} at ${formatIn(b.startsAt, s.tz, "h:mm a")}.`,
-      action: { label: "Help me sort it out", prompt: `${a.title} overlaps ${b.title} on ${formatIn(b.startsAt, s.tz, "EEEE")}. What are my options?` },
+      text: `${first.a.title} overlaps ${first.b.title} ${when(first.b)}.`,
+      detail: also,
+      action: { label: "Help me sort it out", prompt: ask },
       score: 90,
-    }));
+    },
+  ];
+};
 
 const examRule: Rule = (s) => {
   const exam = s.exams.find((e) => e.kind === "exam") ?? s.exams[0];

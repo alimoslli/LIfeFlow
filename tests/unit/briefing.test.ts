@@ -100,6 +100,22 @@ describe("briefing", () => {
     expect(after.some((i) => i.id.startsWith("conflict"))).toBe(false);
   });
 
+  it("names a second clash instead of hiding it behind the first (noticing grader)", () => {
+    const shift = (date: string, start: string, end: string) => item(`Work · Cafe ${date}`, date, start, end, { origin: "shift", kind: "work" });
+    const one = [item("MATH 152", "2026-10-28", "13:00", "14:15"), shift("2026-10-28", "12:30", "15:00")];
+    const two = [...one, item("Dentist", "2026-10-29", "16:00", "17:00", { kind: "appointment" }), shift("2026-10-29", "15:00", "19:00")];
+    const three = [...two, item("BIO 110", "2026-10-30", "10:00", "11:00"), shift("2026-10-30", "09:00", "13:00")];
+    const line = (week: AgendaItem[]) => deriveInsights(snapshot({ week })).find((i) => i.id.startsWith("conflict"))!;
+    expect(line(one).text).toBe("Work · Cafe 2026-10-28 overlaps MATH 152 tomorrow at 1:00 PM.");
+    expect(line(one).detail).toBeUndefined();
+    expect(line(two).detail).toBe("Also: Work · Cafe 2026-10-29 overlaps Dentist Thursday at 4:00 PM.");
+    expect(line(two).action?.prompt).toMatch(/MATH 152 on Wednesday, and Work · Cafe 2026-10-29 overlaps Dentist on Thursday/);
+    expect(line(three).detail).toMatch(/Dentist Thursday at 4:00 PM\. And 1 more this week\.$/);
+    // still one line on Today, keyed by both pairs
+    expect(deriveInsights(snapshot({ week: three })).filter((i) => i.id.startsWith("conflict"))).toHaveLength(1);
+    expect(line(two).id).toBe("conflict-Work · Cafe 2026-10-28-2026-10-28-MATH 152-2026-10-28-Work · Cafe 2026-10-29-2026-10-29-Dentist-2026-10-29");
+  });
+
   it("ranks overdue work and conflicts above everything else", () => {
     const s = snapshot({
       overdue: [{ id: "a", title: "Lab report", context: "BIO 210", dueAt: localToInstant("2026-10-26", "17:00", TZ), kind: "assignment", href: "/" }],
