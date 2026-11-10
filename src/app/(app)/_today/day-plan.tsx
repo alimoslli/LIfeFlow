@@ -80,7 +80,7 @@ export function AskBar({ name, chips = true, clouds = [] }: { name: string; chip
           <button
             type="submit"
             aria-label={typed ? "Send" : `Talk to ${name}`}
-            className="lf-send flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.875rem]"
+            className="lf-send flex h-11 w-11 shrink-0 items-center justify-center rounded-[0.875rem]"
           >
             {typed ? <PixelIcon name="send" className="h-[18px] w-[18px]" /> : <PixelIcon name="voice" className="h-[18px] w-[18px]" />}
           </button>
