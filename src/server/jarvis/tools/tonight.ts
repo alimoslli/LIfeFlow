@@ -6,7 +6,7 @@ export const tonightTools = [
   defineTool({
     name: "tonight",
     description:
-      "The next 24 hours on one page, from the user's own records: what is due, the shifts, classes and events, the free hours left before bed, and what money is left after this week's bills (left out when Money is locked). Call it BEFORE the user decides something small (going out, buying food, taking a shift, skipping a study block) and whenever they ask 'can I', 'should I', or 'what does tonight look like'. To show what a plan costs, pass `plan` with only numbers the user gave you or that are plainly in the request (never invent a price or a length of time; ask).",
+      "The next 24 hours on one page, from the user's own records: what is due, the shifts, classes and events, the free hours left before bed, and what money is left after this week's bills (left out when Money is locked). Call it BEFORE the user decides something small (going out, buying food, taking a shift, skipping a study block) and whenever they ask 'can I', 'should I', or 'what does tonight look like'. A plain 'can I afford $X' is check_affordability's job, not this one. To show what a plan costs, pass `plan` with only numbers the user gave you or that are plainly in the request (never invent a price or a length of time; ask).",
     schema: z.object({
       plan: z
         .object({

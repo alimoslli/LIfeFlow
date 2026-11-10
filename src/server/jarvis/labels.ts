@@ -47,6 +47,7 @@ const LABELS: Record<string, string> = {
   add_job: "Adding job",
   list_shifts: "Checking shifts",
   set_regular_hours: "Setting your regular hours",
+  set_up_schedule: "Saving your schedule",
   add_paycheck: "Recording your paycheck",
   delete_habit: "Preparing to delete the habit",
   add_account: "Adding the account",
