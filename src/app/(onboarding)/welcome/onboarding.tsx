@@ -1,7 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
-import { ArrowLeft, BookOpen, Briefcase, CalendarDays, Check, GraduationCap, Layers, Mail, Sun } from "lucide-react";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
 import { isHydrated } from "@/components/motion/intro";
 import { celebrate } from "@/components/motion/burst";
@@ -20,6 +19,7 @@ import type { LifeStage } from "@/lib/life";
 import { cn } from "@/lib/utils";
 import { connectCanvasFeedAction } from "@/app/(app)/settings/integrations/actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
+import type { PixelName } from "@/components/pixel/art";
 import { NotifyAsk } from "@/components/jarvis/notify-ask";
 import { completeOnboardingAction, saveWelcomeAction, skipOnboardingAction, skyNowAction } from "./actions";
 
@@ -274,7 +274,7 @@ export function Onboarding({
               className="-ml-3 flex h-11 w-11 items-center justify-center rounded-full text-muted hover:text-text"
               aria-label="Back"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <PixelIcon name="back" className="h-5 w-5" />
             </button>
           ) : (
             <span />
@@ -419,12 +419,12 @@ export function Onboarding({
                   <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="What fills your week">
                     {(
                       [
-                        ["student", "Classes", "I'm a student", BookOpen],
-                        ["working", "Work", "I have a job", Briefcase],
-                        ["both", "Both", "Classes and a job", Layers],
-                        ["life", "Neither", "My day and my money", Sun],
+                        ["student", "Classes", "I'm a student", "class"],
+                        ["working", "Work", "I have a job", "shift"],
+                        ["both", "Both", "Classes and a job", "calendar"],
+                        ["life", "Neither", "My day and my money", "today"],
                       ] as const
-                    ).map(([value, label, hint, Icon]) => (
+                    ).map(([value, label, hint, icon]) => (
                       <button
                         key={value}
                         role="radio"
@@ -435,7 +435,7 @@ export function Onboarding({
                           stage === value ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night shadow-lift ring-2 ring-dawn-3" : "bg-surface shadow-soft",
                         )}
                       >
-                        <Icon className="h-5 w-5" strokeWidth={1.8} />
+                        <PixelIcon name={icon} className="h-6 w-6" />
                         <span className="text-[1rem] font-medium">{label}</span>
                         <span className={cn("text-xs", stage === value ? "text-ink-night/75" : "text-muted")}>{hint}</span>
                       </button>
@@ -504,7 +504,7 @@ export function Onboarding({
                         source={k}
                         connected={linked[k]}
                         available={sources[k].available}
-                        icon={k === "google" ? CalendarDays : Mail}
+                        icon={k === "google" ? "calendar" : "chat"}
                         title={k === "google" ? "Google Calendar" : "Outlook and Teams"}
                         brings={k === "google" ? "Your classes, plans and shifts from your calendar" : "School or work calendar, and Teams meetings"}
                       />
@@ -564,14 +564,14 @@ function LinkSource({
   source,
   connected,
   available,
-  icon: Icon,
+  icon,
   title,
   brings,
 }: {
   source: "google" | "outlook";
   connected: boolean;
   available: boolean;
-  icon: typeof Sun;
+  icon: PixelName;
   title: string;
   brings: string;
 }) {
@@ -583,21 +583,25 @@ function LinkSource({
         connected ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night" : "bg-surface shadow-soft",
       )}
     >
-      <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", connected ? "bg-ink-night text-star-gold" : "bg-surface-2")}>
-        {connected ? <Check className="h-5 w-5" strokeWidth={3} aria-hidden /> : <Icon className="h-5 w-5 text-text-2" aria-hidden />}
+      <span
+        className={cn(
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl max-[359px]:hidden",
+          connected ? "bg-ink-night text-star-gold" : "bg-surface-2",
+        )}
+      >
+        <PixelIcon name={connected ? "todo" : icon} className="h-6 w-6" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-[0.9375rem] font-medium">{title}</span>
         <span className={cn("block text-sm", connected ? "text-ink-night/75" : "text-muted")}>{connected ? "Connected. It's on your sky." : brings}</span>
+        {/* under the words, not in a column beside them: on a small phone that squeezed them to two words a line */}
+        {!connected && !available && <span className="mt-1 block text-xs text-muted">Isn&apos;t available yet</span>}
       </span>
-      {!connected &&
-        (available ? (
-          <a href={href} className="lf-sb lf-sb-sun lf-sb-sm shrink-0" aria-label={`Connect ${title}`}>
-            Connect
-          </a>
-        ) : (
-          <span className="shrink-0 text-xs text-muted">Isn&apos;t available yet</span>
-        ))}
+      {!connected && available && (
+        <a href={href} className="lf-sb lf-sb-sun lf-sb-sm shrink-0" aria-label={`Connect ${title}`}>
+          Connect
+        </a>
+      )}
     </div>
   );
 }
@@ -618,8 +622,13 @@ function CanvasSource({
   return (
     <div className={cn("rounded-2xl px-4 py-3.5", connected ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night" : "bg-surface shadow-soft")}>
       <div className="flex items-center gap-3">
-        <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", connected ? "bg-ink-night text-star-gold" : "bg-surface-2")}>
-          {connected ? <Check className="h-5 w-5" strokeWidth={3} aria-hidden /> : <GraduationCap className="h-5 w-5 text-text-2" aria-hidden />}
+        <span
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl max-[359px]:hidden",
+            connected ? "bg-ink-night text-star-gold" : "bg-surface-2",
+          )}
+        >
+          <PixelIcon name={connected ? "todo" : "school"} className="h-6 w-6" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[0.9375rem] font-medium">Canvas</span>

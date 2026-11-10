@@ -77,8 +77,12 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   await expect(page.getByRole("dialog", { name: "Your day as a wheel" })).toBeVisible();
   await page.getByRole("button", { name: "Next", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Nova" })).toBeVisible();
+  // the tour's card sits over Today's bar, so the idea clouds step away while it runs, and come back after
+  const clouds = page.getByRole("list", { name: "Ideas to try" }).getByRole("button");
+  await expect(clouds.first()).toBeHidden();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Nova" })).toHaveCount(0);
+  await expect(clouds.first()).toBeVisible();
 
   // Saved: their skyling, about them (birthday, school) and where they work.
   const [prefs] = await queryAsUser<{

@@ -478,6 +478,10 @@
       lf-idea-drift 5.5s ease-in-out 0.5s infinite alternate;
     animation-delay: calc(var(--i, 0) * 0.12s), calc(0.5s + var(--i, 0) * 0.9s);
   }
+  /* the tour's card and spotlight sit over Today's bar: the clouds step away until it ends (nothing lies over anything) */
+  html:has([data-lf-tour]) .lf-idea {
+    visibility: hidden;
+  }
   @keyframes lf-idea-in {
     from {
       opacity: 0;

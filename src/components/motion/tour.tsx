@@ -195,7 +195,7 @@ export function Tour({ onDone, assistantName = UNNAMED_ASSISTANT, companion }: {
   if (!ready || !step) return null;
   const welcome = !step.target && i === 0;
   return (
-    <div className="fixed inset-0 z-[90]" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+    <div className="fixed inset-0 z-[90]" role="dialog" aria-modal="true" aria-labelledby="tour-title" data-lf-tour>
       {/* The spotlight: a rounded hole in a dim layer (the shadow is the dim). */}
       <div
         ref={spot}
