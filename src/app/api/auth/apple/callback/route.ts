@@ -46,9 +46,9 @@ export async function POST(req: Request) {
     const ch = await takeChallenge(db, "apple", stateToken);
     if (!ch) return go("/login?error=apple-expired");
     const state = await parseAppleState(ch.challenge);
-    const idToken = await exchangeAppleCode(cfg, field("code"));
+    const { idToken, refreshToken } = await exchangeAppleCode(cfg, field("code"));
     const claims = await verifyAppleIdToken(idToken, cfg, state.nonce);
-    const outcome = await completeAppleSignIn(db, claims, { mode: state.mode, tz: state.tz, userId: ch.userId }, nameFromApple(field("user")));
+    const outcome = await completeAppleSignIn(db, claims, { mode: state.mode, tz: state.tz, userId: ch.userId }, nameFromApple(field("user")), refreshToken);
 
     return finishOAuth(outcome, { provider: "apple", next: state.next, origin, ip });
   } catch (e) {

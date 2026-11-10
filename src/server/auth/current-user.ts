@@ -6,15 +6,34 @@ import { getDb } from "../db/client";
 import { withUser, type UserScope } from "../db/with-user";
 import { SESSION_COOKIE, SESSION_TTL_MS, createSession, deleteSession, validateSession, type SessionUser } from "./sessions";
 
-/** Current user for this request (memoized per render), or null. */
-export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
+const sessionUser = cache(async (): Promise<SessionUser | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
   return validateSession(getDb(), token);
 });
 
+/**
+ * Under 13, during setup or later (owner, 2026-11-10): the account is locked. Its session reaches only the welcome's lock screen
+ * and signing out, so every page, server action and API route that asks for the user gets none (APIs answer 401).
+ */
+export const ageLocked = (u: SessionUser | null | undefined) => !!u?.preferences?.ageBlockedAt;
+
+/** Current user for this request (memoized per render), or null (also for an age-locked account). */
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
+  const user = await sessionUser();
+  return ageLocked(user) ? null : user;
+});
+
 export async function requireUser(): Promise<SessionUser> {
-  const user = await getSessionUser();
+  const user = await sessionUser();
+  if (!user) redirect("/login");
+  if (ageLocked(user)) redirect("/welcome");
+  return user;
+}
+
+/** The welcome page only: the signed-in user even when the account is age-locked, so it can show the lock screen. */
+export async function requireUserForWelcome(): Promise<SessionUser> {
+  const user = await sessionUser();
   if (!user) redirect("/login");
   return user;
 }

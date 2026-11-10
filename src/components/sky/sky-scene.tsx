@@ -5,7 +5,7 @@ import { sunTimes } from "@/lib/day-clock";
 import { skyWash } from "@/lib/sky";
 
 /** Minutes into the day and the date there, in the user's time zone. */
-function localNow(tz: string) {
+export function localNow(tz: string) {
   const p = new Intl.DateTimeFormat("en-CA", {
     timeZone: tz,
     year: "numeric",

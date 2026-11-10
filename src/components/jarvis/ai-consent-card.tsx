@@ -41,7 +41,7 @@ export function AiConsentCard({ name }: { name: string }) {
               router.refresh();
             })
           }
-          className="flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 text-[0.9375rem] font-medium text-accent-text disabled:opacity-60"
+          className="lf-sb lf-sb-sun lf-sb-sm"
         >
           {pending && <Loader2 className="h-4 w-4 animate-spin" />} Allow
         </button>

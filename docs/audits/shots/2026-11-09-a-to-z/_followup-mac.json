@@ -1,40 +1,30 @@
 {
- "before": "Sunrise about 6:35 AMToday💼9 AM🌙 Sun rises in about 3h 10mNext · 9 AMWork6,240 steps · 7h 18m sleep$69.20 spent todayTomorrow · 💼 Work · 🎓 Class",
- "nowPillCenterX": 764,
- "trackCenterX": 764,
- "afterNowPillWrap": {
-  "dome": "Sunrise about 6:35 AMToday💼9 AM🌙 Sun rises in about 3h 10mNext · 9 AMWork6,240 steps · 7h 18m sleep$69.20 spent todayTomorrow · 💼 Work · 🎓 Class",
-  "backVisible": false
- },
- "timelineWheel": {
-  "start": 972,
-  "afterHorizontal500": 1472,
-  "afterVertical500": 1472,
-  "pageYAfterH": 0,
-  "pageYAfterV": 140
- },
- "timelineMouseDrag300": {
-  "before": 1472,
-  "after": 1472,
-  "state": "timeline"
- },
- "oneDayScroll": 0,
- "days": [
-  "@502w44h44",
-  "Fri@560w44h44",
-  "Sat@618w44h44",
-  "Sun@676w44h44",
-  "Today@734w53h44",
-  "Tue@800w52h44",
-  "Wed@866w44h44",
-  "Thu@924w44h44",
-  "@982w44h44"
- ],
- "todayLabelVsPill": [
-  {
-   "x": 195,
-   "w": 39,
-   "y": 108
-  }
- ]
+  "before": "Sunrise about 6:35 AMToday💼9 AM🌙 Sun rises in about 3h 10mNext · 9 AMWork6,240 steps · 7h 18m sleep$69.20 spent todayTomorrow · 💼 Work · 🎓 Class",
+  "nowPillCenterX": 764,
+  "trackCenterX": 764,
+  "afterNowPillWrap": {
+    "dome": "Sunrise about 6:35 AMToday💼9 AM🌙 Sun rises in about 3h 10mNext · 9 AMWork6,240 steps · 7h 18m sleep$69.20 spent todayTomorrow · 💼 Work · 🎓 Class",
+    "backVisible": false
+  },
+  "timelineWheel": {
+    "start": 972,
+    "afterHorizontal500": 1472,
+    "afterVertical500": 1472,
+    "pageYAfterH": 0,
+    "pageYAfterV": 140
+  },
+  "timelineMouseDrag300": {
+    "before": 1472,
+    "after": 1472,
+    "state": "timeline"
+  },
+  "oneDayScroll": 0,
+  "days": ["@502w44h44", "Fri@560w44h44", "Sat@618w44h44", "Sun@676w44h44", "Today@734w53h44", "Tue@800w52h44", "Wed@866w44h44", "Thu@924w44h44", "@982w44h44"],
+  "todayLabelVsPill": [
+    {
+      "x": 195,
+      "w": 39,
+      "y": 108
+    }
+  ]
 }

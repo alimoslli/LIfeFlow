@@ -40,7 +40,7 @@ export default async function RulesPage() {
                 <ActionButton
                   action={applyRuleAction.bind(null, r.id)}
                   title={`Apply ${r.label} rule to past transactions`}
-                  className="rounded-full bg-surface-2 px-3 py-1.5 text-sm"
+                  className="lf-sb lf-sb-app lf-sb-xs lf-touch"
                 >
                   Apply to past
                 </ActionButton>

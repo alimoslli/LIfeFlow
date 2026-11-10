@@ -5,7 +5,8 @@ import { sessions, users, type UserPreferences } from "../db/schema";
 
 export const SESSION_COOKIE = "bf_session";
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-const REFRESH_AFTER_MS = 24 * 60 * 60 * 1000;
+/** How stale "last seen" may get: the admin's "Active today" and "Seen 2 h ago" read it, so it's stamped every 10 minutes of use, not once a day. */
+export const SEEN_EVERY_MS = 10 * 60 * 1000;
 
 const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
 
@@ -27,7 +28,7 @@ export async function createSession(db: Database, userId: string, userAgent?: st
   return { token, expiresAt };
 }
 
-/** Validates a token; slides expiry forward at most once a day. */
+/** Validates a token; stamps "last seen" and slides expiry forward at most every 10 minutes. */
 export async function validateSession(db: Database, token: string): Promise<SessionUser | null> {
   if (!token || token.length > 100) return null;
   const id = hashToken(token);
@@ -50,7 +51,7 @@ export async function validateSession(db: Database, token: string): Promise<Sess
     // A suspended account (admin page, ADR 0022) has no valid session, even one created before it was suspended.
     .where(and(eq(sessions.id, id), gt(sessions.expiresAt, new Date()), isNull(users.suspendedAt)));
   if (!row) return null;
-  if (Date.now() - row.lastSeenAt.getTime() > REFRESH_AFTER_MS) {
+  if (Date.now() - row.lastSeenAt.getTime() > SEEN_EVERY_MS) {
     await db
       .update(sessions)
       .set({ lastSeenAt: new Date(), expiresAt: new Date(Date.now() + SESSION_TTL_MS) })

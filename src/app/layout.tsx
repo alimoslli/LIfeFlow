@@ -1,3 +1,4 @@
+import { liveBuild } from "@/lib/app-version";
 import { ErrorReporter } from "@/components/error-reporter";
 import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
@@ -5,6 +6,8 @@ import { TEXT_COOKIE, THEME_COOKIE, parseTextSize, parseTheme } from "@/lib/them
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { Splash, SPLASH_SCRIPT } from "@/components/motion/splash";
 import "./globals.css";
+// the sky buttons and skyling pieces are used on every page (owner, 2026-11-10)
+import "@/components/skylings/skylings.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -15,7 +18,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || "https://lifeflowweb.com"),
   title: { default: "LifeFlow", template: "%s · LifeFlow" },
   description:
-    "LifeFlow is a personal planner and AI assistant that brings your calendar, tasks, schedules, money, goals, habits and health into one calm place.",
+    "LifeFlow puts your calendar, tasks, schedules, money, goals, habits and health on one calm sky, with a little skyling who keeps an eye on your day.",
   applicationName: "LifeFlow",
   appleWebApp: { capable: true, title: "LifeFlow", statusBarStyle: "default" },
   icons: {
@@ -29,13 +32,13 @@ export const metadata: Metadata = {
     type: "website",
     siteName: "LifeFlow",
     title: "LifeFlow: Your whole life, in flow.",
-    description: "A personal planner and AI assistant that brings your whole week into one calm place.",
+    description: "Your whole week on one calm sky, with a little skyling who keeps an eye on it.",
     images: [{ url: "/brand/lifeflow-social.png", width: 1200, height: 630, alt: "LifeFlow" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "LifeFlow: Your whole life, in flow.",
-    description: "A personal planner and AI assistant that brings your whole week into one calm place.",
+    description: "Your whole week on one calm sky, with a little skyling who keeps an eye on it.",
     images: ["/brand/lifeflow-social.png"],
   },
   formatDetection: { telephone: false },
@@ -72,6 +75,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
       data-theme={theme === "system" ? undefined : theme}
       data-text={textSize === "default" ? undefined : textSize}
+      data-build={liveBuild() || undefined}
       className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full">

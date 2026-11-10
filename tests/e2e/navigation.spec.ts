@@ -26,7 +26,7 @@ test("four tabs, and every section is one tap from its tab", async ({ page }) =>
     ],
     [
       "/jarvis/says",
-      "Assistant sections",
+      "Skyling sections",
       [
         ["Profile", /\/jarvis\/profile/],
         ["Updates", /\/jarvis\/says/],

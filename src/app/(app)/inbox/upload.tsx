@@ -3,12 +3,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Camera, Copy, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
+import { useAppBusy } from "@/lib/app-busy";
 
 /** Upload a photo or PDF (or take a photo) and Jarvis files it. */
 export function InboxUpload() {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  // a photo on its way up: an app update waits (components/pwa/app-updater.tsx)
+  useAppBusy(busy);
   const send = async (files: FileList | null) => {
     if (!files?.length) return;
     setBusy(true);
@@ -48,12 +51,7 @@ export function InboxUpload() {
         aria-label="Photo or PDF to file"
         onChange={(e) => send(e.target.files)}
       />
-      <button
-        type="button"
-        onClick={() => input.current?.click()}
-        disabled={busy}
-        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent font-medium text-accent-text disabled:opacity-60"
-      >
+      <button type="button" onClick={() => input.current?.click()} disabled={busy} className="lf-sb lf-sb-sun w-full">
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />} {busy ? "Reading it…" : "Add a photo or PDF"}
       </button>
     </>
@@ -62,11 +60,7 @@ export function InboxUpload() {
 
 export function CopyAddress({ address }: { address: string }) {
   return (
-    <button
-      type="button"
-      onClick={() => navigator.clipboard?.writeText(address).then(() => toast("Address copied."))}
-      className="flex min-h-11 items-center gap-2 rounded-full bg-surface-2 px-4 text-sm font-medium"
-    >
+    <button type="button" onClick={() => navigator.clipboard?.writeText(address).then(() => toast("Address copied."))} className="lf-sb lf-sb-app lf-sb-sm">
       <Copy className="h-4 w-4" /> Copy
     </button>
   );

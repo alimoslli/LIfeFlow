@@ -1,21 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  Bell,
-  Brain,
-  ChevronRight,
-  Gift,
-  LayoutDashboard,
-  Link2,
-  Lock,
-  MessageCircleHeart,
-  MessageSquare,
-  Palette,
-  Shield,
-  Sparkles,
-  Star,
-  Trash2,
-} from "lucide-react";
+import { Bell, Brain, ChevronRight, Gift, LayoutDashboard, Link2, Lock, MessageCircleHeart, MessageSquare, Palette, Shield, Star, Trash2 } from "lucide-react";
 import { billingConfig } from "@/server/billing";
 import { smsConfig } from "@/server/integrations/twilio";
 import type { LucideIcon } from "lucide-react";
@@ -28,10 +13,11 @@ import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { listPlaidConnections } from "@/server/integrations/plaid";
 import { integrationStatus } from "@/server/services/integrations";
+import { SkylingIcon } from "@/components/skylings/sprite";
 
 export const metadata: Metadata = { title: "Settings" };
 
-type Row = { href: string; icon: LucideIcon; tint: string; label: string; detail?: string };
+type Row = { href: string; icon: LucideIcon | typeof SkylingIcon; tint: string; label: string; detail?: string };
 /** Every row's icon tile uses the one green theme (audit A23), readable in light and dark. */
 const TILE = "bg-accent-soft text-accent";
 
@@ -43,7 +29,7 @@ export default async function SettingsHome() {
       () => listPlaidConnections(s),
     );
     const google = list.find((i) => i.provider === "google")?.connections.length ?? 0;
-    return { id: u.id, name: u.name, email: u.email, assistant: assistantProfile(u.preferences).name, connected: google + banks.length };
+    return { id: u.id, name: u.name, email: u.email, assistant: assistantProfile(u.preferences, u.timezone).name, connected: google + banks.length };
   });
   // Only the owner sees this row (ADR 0022); for everyone else it doesn't exist.
   const isAdmin = !!(await adminFor(getDb(), d.id).catch(() => null));
@@ -60,7 +46,7 @@ export default async function SettingsHome() {
       { href: "/settings/security", icon: Lock, tint: TILE, label: "Face ID & passwords" },
     ],
     [
-      { href: "/settings/jarvis", icon: Sparkles, tint: TILE, label: nameAtStart(d.assistant), detail: "Personality" },
+      { href: "/settings/jarvis", icon: SkylingIcon, tint: TILE, label: nameAtStart(d.assistant), detail: "Personality" },
       ...(billingConfig() ? [{ href: "/settings/plan", icon: Star, tint: TILE, label: "Plan" }] : []),
       ...(smsConfig() ? [{ href: "/settings/text", icon: MessageSquare, tint: TILE, label: `Text ${d.assistant}` }] : []),
       { href: "/jarvis/memory", icon: Brain, tint: TILE, label: `What ${d.assistant} knows` },
@@ -114,14 +100,14 @@ export default async function SettingsHome() {
       <div className="flex flex-col items-center gap-3 pt-2">
         <SignOutButton />
         <ReplayTour />
-        <p className="flex gap-4 text-xs text-muted">
-          <Link href="/privacy" className="hover:text-text">
+        <p className="flex flex-wrap justify-center gap-x-4 text-xs text-muted">
+          <Link href="/privacy" className="inline-flex min-h-11 items-center hover:text-text">
             Privacy Policy
           </Link>
-          <Link href="/terms" className="hover:text-text">
+          <Link href="/terms" className="inline-flex min-h-11 items-center hover:text-text">
             Terms
           </Link>
-          <Link href="/integrity" className="hover:text-text">
+          <Link href="/integrity" className="inline-flex min-h-11 items-center hover:text-text">
             Academic integrity
           </Link>
         </p>

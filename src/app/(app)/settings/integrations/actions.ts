@@ -4,7 +4,7 @@ import { mutate, type ActionState } from "@/server/actions";
 import { disconnectGoogle, GoogleError, syncGoogleCalendar } from "@/server/integrations/google";
 import { disconnectMicrosoft, MicrosoftError, syncMicrosoftCalendar } from "@/server/integrations/microsoft";
 import { ServiceError } from "@/server/services/errors";
-import { connectCanvas, connectCanvasFeed, disconnectCanvas, markCanvasError, syncCanvas } from "@/server/integrations/canvas";
+import { connectCanvas, connectCanvasFeed, disconnectCanvas, CANVAS_BUSY, markCanvasError, syncCanvas, withCanvasLock } from "@/server/integrations/canvas";
 import { isPro } from "@/server/billing";
 import { requireUser } from "@/server/auth/current-user";
 import { withUser } from "@/server/db/with-user";
@@ -91,10 +91,15 @@ export async function connectCanvasFeedAction(_p: ActionState, fd: FormData): Pr
 const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? "" : w.endsWith("s") ? "es" : "s"}`;
 
 export async function syncCanvasAction(): Promise<ActionState> {
-  const r = await mutate("integration.canvas.synced", async (s, u) => {
-    const x = await syncCanvas(s, fetch, u.timezone);
-    return `Synced ${plural(x.courses, "class")} and ${plural(x.assignments, "assignment")}${x.events ? `, plus ${plural(x.events, "class event")}` : ""} from Canvas.${x.merged.courses || x.merged.assignments ? ` Merged ${x.merged.courses} class${x.merged.courses === 1 ? "" : "es"} and ${plural(x.merged.assignments, "assignment")} you'd added by hand into the Canvas ones.` : ""}`;
-  });
+  const me = await requireUser();
+  const locked = await withCanvasLock(me.id, () =>
+    mutate("integration.canvas.synced", async (s, u) => {
+      const x = await syncCanvas(s, fetch, u.timezone);
+      return `Synced ${plural(x.courses, "class")} and ${plural(x.assignments, "assignment")}${x.events ? `, plus ${plural(x.events, "class event")}` : ""} from Canvas.${x.merged.courses || x.merged.assignments ? ` Merged ${x.merged.courses} class${x.merged.courses === 1 ? "" : "es"} and ${plural(x.merged.assignments, "assignment")} you'd added by hand into the Canvas ones.` : ""}`;
+    }),
+  );
+  if (locked.skipped) return { ok: false, error: CANVAS_BUSY, at: Date.now() };
+  const r = locked.value;
   if (r && !r.ok) {
     const u = await requireUser();
     await withUser(u.id, (s) => markCanvasError(s, new ServiceError(r.error ?? "Canvas sync failed."))).catch(() => undefined);
@@ -112,7 +117,7 @@ export async function disconnectCanvasAction(): Promise<ActionState> {
 export async function setGmailFilingAction(on: boolean): Promise<ActionState> {
   return mutate("integration.gmail_filing", async (_s, u) => {
     await updatePreferences(getDb(), u.id, { gmailFiling: on });
-    const n = nameAtStart(assistantProfile(u.preferences).name);
+    const n = nameAtStart(assistantProfile(u.preferences, u.timezone).name);
     return on ? `${n} will file new school, bill and work emails each morning.` : `${n} won't read your inbox on its own.`;
   });
 }

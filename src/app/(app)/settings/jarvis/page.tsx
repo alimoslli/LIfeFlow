@@ -7,13 +7,15 @@ import { ActionButton } from "@/components/action-form";
 import { Card } from "@/components/ui/surface";
 import { aiAllowed } from "@/lib/ai-consent";
 import { AssistantCard } from "../memory/assistant-card";
+import { isCompanionChoice } from "@/lib/companions";
+import { CompanionPicker } from "./companion-picker";
 import { SettingsHeader } from "../settings-header";
 
-export const metadata: Metadata = { title: "Assistant" };
+export const metadata: Metadata = { title: "Skyling" };
 
 export default async function JarvisSettings() {
   const u = await requireUser();
-  const profile = assistantProfile(u.preferences);
+  const profile = assistantProfile(u.preferences, u.timezone);
   const who = nameAtStart(profile.name);
   const s = jarvisSettings(u.preferences);
   return (
@@ -35,7 +37,9 @@ export default async function JarvisSettings() {
           {aiAllowed(u.preferences) ? "Turn off" : "Allow"}
         </ActionButton>
       </Card>
+      <CompanionPicker current={isCompanionChoice(u.preferences?.companion) ? u.preferences.companion : null} tz={u.timezone ?? "UTC"} />
       <AssistantCard
+        key={`${profile.name}|${profile.style}`}
         profile={profile}
         settings={{
           frequency: s.frequency,
@@ -43,7 +47,6 @@ export default async function JarvisSettings() {
           quietEnd: s.quietEnd,
           topics: s.topics,
           autonomy: s.autonomy,
-          avatar: s.avatar,
           learning: s.learning === true,
           pushLimit: s.pushLimit,
           answerLength: u.preferences?.jarvisTone ?? "balanced",

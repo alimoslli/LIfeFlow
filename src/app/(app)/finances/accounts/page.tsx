@@ -1,28 +1,33 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
-import { Archive, EyeOff, Landmark } from "lucide-react";
-import { ActionButton, ActionForm } from "@/components/action-form";
-import { SubmitButton } from "@/components/ui/button";
-import { Field, Input, Select } from "@/components/ui/field";
-import { Badge, Card, CardHeader, EmptyState, Money, SourceBadge } from "@/components/ui/surface";
+import { Landmark } from "lucide-react";
+import { ActionButton } from "@/components/action-form";
+import { BankConnections } from "@/components/finance/bank-connections";
+import { MySkyling } from "@/components/skylings/sprite";
+import { COINS, PixelArt, SkyWindow } from "@/components/skylings/sky-window";
 import { formatIn } from "@/lib/dates";
+import { formatCents } from "@/lib/money";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { listAccounts, listTurnedOffAccounts, summarizeBalances } from "@/server/services/finance/accounts";
-import { BankConnections } from "@/components/finance/bank-connections";
 import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
 import { archiveAccountAction, createAccountAction, disconnectBankAction, setBankAccountUsedAction, updateAccountDetailsAction } from "../actions";
+import { AccountRow, AddAccount, type AccountView } from "./account-row";
 
 export const metadata: Metadata = { title: "Accounts" };
 
-const TYPE_LABEL: Record<string, string> = {
-  depository: "Cash accounts",
-  credit: "Credit cards",
-  loan: "Loans",
-  investment: "Investments",
-  cash: "Cash",
-  other: "Other",
-};
+const GROUPS: [string, string[]][] = [
+  ["Cash", ["depository", "cash"]],
+  ["Cards", ["credit"]],
+  ["Loans", ["loan"]],
+  ["Investments", ["investment"]],
+  ["Other", ["other"]],
+];
+const whole = (c: number) => formatCents(c).replace(/\.\d\d$/, "");
 
+/**
+ * Accounts (owner, 2026-11-10: "looks very under made"): what you're worth in the sky up top, then each account as one
+ * readable row by kind (a tap opens what you can correct), your bank connections, and adding one yourself a tap away.
+ */
 export default async function AccountsPage() {
   const locked = await moneyGate();
   if (locked) return locked;
@@ -33,203 +38,125 @@ export default async function AccountsPage() {
     tz: u.timezone,
   }));
   const totals = summarizeBalances(d.accounts);
-  const groups = Object.keys(TYPE_LABEL)
-    .map((t) => ({ type: t, items: d.accounts.filter((a) => a.type === t) }))
-    .filter((g) => g.items.length);
+  const owedTotal = totals.creditOwedCents + totals.loansOwedCents;
+  const view = (a: (typeof d.accounts)[number]): AccountView => ({
+    id: a.id,
+    name: a.name,
+    mask: a.mask,
+    institution: a.institutionName,
+    line: [a.institutionName, `updated ${formatIn(a.balanceUpdatedAt, d.tz, "MMM d, h:mm a")}`].filter(Boolean).join(" · "),
+    balance: formatCents(a.currentBalanceCents),
+    owed: a.type === "credit" || a.type === "loan",
+    bank: a.source === "plaid",
+    manual: a.source === "manual" || a.source === "demo",
+    credit: a.type === "credit",
+    loan: a.type === "loan",
+    notInNetWorth: !a.includeInNetWorth,
+    balanceDollars: (a.currentBalanceCents / 100).toFixed(2),
+    limit: a.creditLimitCents != null ? (a.creditLimitCents / 100).toFixed(0) : "",
+    apr: a.aprBps != null ? String(a.aprBps / 100) : "",
+    minPayment: a.minPaymentCents != null ? (a.minPaymentCents / 100).toFixed(2) : "",
+    dueDate: a.nextPaymentDueDate ?? "",
+  });
 
   return (
-    <>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <h1 className="font-display text-[1.75rem] font-medium tracking-tight">Accounts</h1>
-        {d.accounts.length > 0 && (
-          <p className="text-sm text-text-2">
-            Net worth <Money cents={totals.netWorthCents} className="font-semibold text-text" />
+    <div className="mx-auto flex max-w-[640px] flex-col gap-7">
+      <header>
+        <h1 className="font-display text-[2.375rem] leading-none font-medium tracking-tight">Accounts</h1>
+        <p className="mt-2 text-sm text-text-2">Your banks, cards and cash, kept up to date by themselves.</p>
+      </header>
+
+      <SkyWindow tz={d.tz} className="rounded-[1.75rem]">
+        <div className="relative min-h-[11rem] px-6 pt-6 pb-6">
+          <p className="text-sm text-white/80">Net worth</p>
+          <p className="lf-sw-num tabular mt-1 font-display text-[3rem] leading-none font-medium tracking-tight" data-testid="net-worth">
+            {whole(totals.netWorthCents)}
           </p>
-        )}
-      </div>
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.6fr_1fr]">
-        <div className="flex flex-col gap-5">
-          {groups.length === 0 && (
-            <Card>
-              <EmptyState icon={<Landmark />} title="No accounts yet">
-                Connect your bank to import accounts automatically, or add checking, savings, cards and investments yourself.
-              </EmptyState>
-            </Card>
-          )}
-          {groups.map((g) => (
-            <Card key={g.type}>
-              <CardHeader title={TYPE_LABEL[g.type]} />
-              <ul className="divide-y divide-border">
-                {g.items.map((a) => (
-                  <li key={a.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="flex items-center gap-2 text-sm font-medium">
-                        {a.name}
-                        {a.mask && <span className="text-xs font-normal text-muted">••{a.mask}</span>}
-                      </p>
-                      <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
-                        {a.institutionName && <span>{a.institutionName} ·</span>}
-                        <span>Balance as of {formatIn(a.balanceUpdatedAt, d.tz, "MMM d, h:mm a")}</span>
-                        <SourceBadge source={a.source} />
-                        {!a.includeInNetWorth && <Badge>Not in net worth</Badge>}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <Money cents={a.currentBalanceCents} className="font-semibold" />
-                      {(a.type === "credit" || a.type === "loan") && <p className="text-[0.6875rem] text-muted">owed</p>}
-                    </div>
-                    <details className="w-full">
-                      <summary className="cursor-pointer text-xs text-accent">Edit details</summary>
-                      <ActionForm action={updateAccountDetailsAction.bind(null, a.id)} reset={false} showSuccess className="mt-3 gap-3">
-                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                          {(a.source === "manual" || a.source === "demo") && (
-                            <Field label={a.type === "credit" || a.type === "loan" ? "Amount owed ($)" : "Balance ($)"} htmlFor={`bal-${a.id}`}>
-                              <Input id={`bal-${a.id}`} name="balance" inputMode="decimal" defaultValue={(a.currentBalanceCents / 100).toFixed(2)} required />
-                            </Field>
-                          )}
-                          {(a.type === "credit" || a.type === "loan") && (
-                            <>
-                              {a.type === "credit" && (
-                                <Field label="Credit limit ($)" htmlFor={`lim-${a.id}`}>
-                                  <Input
-                                    id={`lim-${a.id}`}
-                                    name="limit"
-                                    inputMode="decimal"
-                                    defaultValue={a.creditLimitCents != null ? (a.creditLimitCents / 100).toFixed(0) : ""}
-                                  />
-                                </Field>
-                              )}
-                              <Field label="Interest rate (APR %)" htmlFor={`apr-${a.id}`}>
-                                <Input
-                                  id={`apr-${a.id}`}
-                                  name="apr"
-                                  inputMode="decimal"
-                                  defaultValue={a.aprBps != null ? String(a.aprBps / 100) : ""}
-                                  placeholder="24.99"
-                                />
-                              </Field>
-                              <Field label="Minimum payment ($)" htmlFor={`min-${a.id}`}>
-                                <Input
-                                  id={`min-${a.id}`}
-                                  name="minPayment"
-                                  inputMode="decimal"
-                                  defaultValue={a.minPaymentCents != null ? (a.minPaymentCents / 100).toFixed(2) : ""}
-                                />
-                              </Field>
-                              <Field label="Next due date" htmlFor={`due-${a.id}`}>
-                                <Input id={`due-${a.id}`} name="dueDate" type="date" defaultValue={a.nextPaymentDueDate ?? ""} />
-                              </Field>
-                            </>
-                          )}
-                        </div>
-                        <SubmitButton size="sm" className="self-end">
-                          Save
-                        </SubmitButton>
-                      </ActionForm>
-                      <div className="mt-2">
-                        {a.source === "plaid" ? (
-                          // Bank accounts: off stays off through every sync, and can be turned back on below.
-                          <ActionButton
-                            action={setBankAccountUsedAction.bind(null, a.id, false)}
-                            confirm={`Stop using ${a.name} in LifeFlow? It's hidden and its bank transactions are removed. You can turn it back on any time.`}
-                            title={`Stop using ${a.name}`}
-                            className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-muted hover:text-text"
-                          >
-                            <EyeOff className="h-3.5 w-3.5" /> Don&apos;t use in LifeFlow
-                          </ActionButton>
-                        ) : (
-                          <ActionButton
-                            action={archiveAccountAction.bind(null, a.id)}
-                            confirm={`Archive ${a.name}? Its transactions are kept.`}
-                            title={`Archive ${a.name}`}
-                            className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-muted hover:text-text"
-                          >
-                            <Archive className="h-3.5 w-3.5" /> Archive
-                          </ActionButton>
-                        )}
-                      </div>
-                    </details>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ))}
-          {d.off.length > 0 && (
-            <Card>
-              <CardHeader title="Not used in LifeFlow" />
-              <ul className="divide-y divide-border">
-                {d.off.map((a) => (
-                  <li key={a.id} className="flex items-center gap-3 px-5 py-3">
-                    <p className="min-w-0 flex-1 text-sm text-text-2">
-                      {a.name}
-                      {a.mask && <span className="ml-1.5 text-xs text-muted">••{a.mask}</span>}
-                    </p>
-                    <ActionButton
-                      action={setBankAccountUsedAction.bind(null, a.id, true)}
-                      title={`Use ${a.name} again`}
-                      className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium"
-                    >
-                      Use again
-                    </ActionButton>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          )}
+          <p className="mt-2 max-w-[62%] text-sm text-white/80">
+            {whole(totals.cashCents)} available now{owedTotal > 0 ? ` · ${whole(owedTotal)} owed` : ""}
+            {totals.investmentsCents > 0 ? ` · ${whole(totals.investmentsCents)} invested` : ""}
+          </p>
+          <div className="absolute right-5 bottom-0 flex flex-col items-center">
+            <MySkyling className="relative z-10 -mb-1.5 h-16 w-16 cursor-pointer" />
+            <PixelArt art={COINS} className="w-12" />
+          </div>
         </div>
-        <div className="flex flex-col gap-5">
-          <Card className="p-5">
-            <h2 className="mb-1 text-[0.9375rem] font-semibold">Bank connections</h2>
-            <p className="mb-4 text-sm text-text-2">
-              Balances, transactions, investments and card details sync automatically every day, and whenever your bank has something new.
-            </p>
-            <BankConnections
-              configured={!!plaidConfig()}
-              disconnect={disconnectBankAction}
-              connections={d.banks.map((b) => ({
-                id: b.id,
-                name: b.displayName ?? "Bank",
-                status: b.status,
-                lastSynced: b.lastSyncedAt ? formatIn(b.lastSyncedAt, d.tz, "MMM d, h:mm a") : null,
-                error: b.lastError,
-              }))}
-            />
-          </Card>
-          <Card className="p-5">
-            <h2 className="mb-3 text-[0.8125rem] font-semibold tracking-wide text-text-2 uppercase">Add an account manually</h2>
-            <ActionForm action={createAccountAction} showSuccess>
-              <Field label="Name" htmlFor="a-name">
-                <Input id="a-name" name="name" required placeholder="Everyday Checking" />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Type" htmlFor="a-type">
-                  <Select id="a-type" name="type" defaultValue="depository">
-                    <option value="depository">Checking / savings</option>
-                    <option value="credit">Credit card</option>
-                    <option value="investment">Investment / retirement</option>
-                    <option value="loan">Loan</option>
-                    <option value="cash">Cash</option>
-                    <option value="other">Other</option>
-                  </Select>
-                </Field>
-                <Field label="Balance ($)" htmlFor="a-bal" hint="Amount owed for cards/loans">
-                  <Input id="a-bal" name="balance" inputMode="decimal" required placeholder="1250.00" />
-                </Field>
-                <Field label="Institution" htmlFor="a-inst">
-                  <Input id="a-inst" name="institutionName" placeholder="Chase" />
-                </Field>
-                <Field label="Last 4 digits" htmlFor="a-mask">
-                  <Input id="a-mask" name="mask" inputMode="numeric" maxLength={4} />
-                </Field>
-              </div>
-              <Field label="Subtype (optional)" htmlFor="a-sub" hint="e.g. Roth IRA, brokerage, crypto, savings">
-                <Input id="a-sub" name="subtype" />
-              </Field>
-              <SubmitButton className="self-end">Add account</SubmitButton>
-            </ActionForm>
-          </Card>
+      </SkyWindow>
+
+      {d.accounts.length === 0 && (
+        <div className="flex items-center gap-3 rounded-[1.5rem] bg-surface p-4 shadow-soft">
+          <span className="lf-chip-night h-10 w-10 shrink-0 rounded-[0.75rem]" aria-hidden>
+            <Landmark className="h-4 w-4" />
+          </span>
+          <p className="text-[0.9375rem] text-text-2">No accounts yet. Connect your bank below and they fill in by themselves.</p>
         </div>
-      </div>
-    </>
+      )}
+
+      {GROUPS.map(([label, types]) => {
+        const items = d.accounts.filter((a) => types.includes(a.type));
+        if (!items.length) return null;
+        const sum = items.reduce((s, a) => s + a.currentBalanceCents, 0);
+        return (
+          <section key={label} aria-label={label} className="flex flex-col gap-2">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">{label}</h2>
+              <p className="tabular text-sm text-text-2">
+                {whole(sum)}
+                {types.includes("credit") || types.includes("loan") ? " owed" : ""}
+              </p>
+            </div>
+            <ul className="flex flex-col gap-2">
+              {items.map((a) => (
+                <li key={a.id}>
+                  <AccountRow
+                    a={view(a)}
+                    save={updateAccountDetailsAction.bind(null, a.id)}
+                    off={a.source === "plaid" ? setBankAccountUsedAction.bind(null, a.id, false) : archiveAccountAction.bind(null, a.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
+
+      {d.off.length > 0 && (
+        <section aria-label="Not used in LifeFlow" className="flex flex-col gap-2">
+          <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Not used in LifeFlow</h2>
+          <ul className="flex flex-col divide-y divide-border/70 overflow-hidden rounded-[1.5rem] bg-surface shadow-soft">
+            {d.off.map((a) => (
+              <li key={a.id} className="flex items-center gap-3 px-4 py-3">
+                <p className="min-w-0 flex-1 truncate text-[0.9375rem] text-text-2">
+                  {a.name}
+                  {a.mask && <span className="ml-1.5 text-xs text-muted">••{a.mask}</span>}
+                </p>
+                <ActionButton action={setBankAccountUsedAction.bind(null, a.id, true)} title={`Use ${a.name} again`} className="lf-sb lf-sb-app lf-sb-sm">
+                  Use again
+                </ActionButton>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section aria-label="Your banks" className="flex flex-col gap-2">
+        <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Your banks</h2>
+        <div className="rounded-[1.5rem] bg-surface p-5 shadow-soft">
+          <p className="mb-4 text-sm text-text-2">Balances, transactions, investments and cards sync every day, and whenever your bank has something new.</p>
+          <BankConnections
+            configured={!!plaidConfig()}
+            disconnect={disconnectBankAction}
+            connections={d.banks.map((b) => ({
+              id: b.id,
+              name: b.displayName ?? "Bank",
+              status: b.status,
+              lastSynced: b.lastSyncedAt ? formatIn(b.lastSyncedAt, d.tz, "MMM d, h:mm a") : null,
+              error: b.lastError,
+            }))}
+          />
+        </div>
+        <AddAccount action={createAccountAction} />
+      </section>
+    </div>
   );
 }

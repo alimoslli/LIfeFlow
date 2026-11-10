@@ -148,10 +148,16 @@ describe("OpenAI Responses provider", () => {
       tools: [tool("list_tasks")],
       cacheKey: "lf-abc",
       effort: "medium",
+      verbosity: "low",
     });
     for await (const _ of turn.step()) void _;
     for await (const _ of turn.step([], [tool("list_tasks"), tool("log_health")])) void _;
-    expect(requests[0]).toMatchObject({ prompt_cache_key: "lf-abc", prompt_cache_retention: "24h", reasoning: { effort: "medium" } });
+    expect(requests[0]).toMatchObject({
+      prompt_cache_key: "lf-abc",
+      prompt_cache_retention: "24h",
+      reasoning: { effort: "medium" },
+      text: { verbosity: "low" },
+    });
     expect((requests[1].tools as { name: string }[]).map((t) => t.name)).toEqual(["list_tasks", "log_health"]);
 
     // A fixed level in settings wins over the turn's level.
@@ -159,6 +165,7 @@ describe("OpenAI Responses provider", () => {
     for await (const _ of fixed.startTurn({ system: "S", history: [{ type: "user", text: "hi" }], tools: [], effort: "high" }).step()) void _;
     expect(requests[2]).toMatchObject({ reasoning: { effort: "low" } });
     expect(requests[2]).not.toHaveProperty("prompt_cache_retention");
+    expect(requests[2]).not.toHaveProperty("text");
   });
 
   it("drops 24h retention once if the model refuses it, and keeps answering", async () => {

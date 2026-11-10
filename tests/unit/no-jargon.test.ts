@@ -8,7 +8,7 @@ const walk = (dir: string): string[] =>
     return statSync(p).isDirectory() ? walk(p) : [p];
   });
 
-describe("internal wording never reaches the assistant's words", () => {
+describe("internal wording never reaches the skyling's words", () => {
   it("no 'overload flag', thresholds or hourly pay estimates in skills, prompts, tools or detectors", () => {
     const files = [...walk("skills"), ...walk("src/server/jarvis"), ...walk("src/server/services/proactive"), "src/lib/jarvis-voice.ts"].filter((f) =>
       /\.(md|json|ts)$/.test(f),

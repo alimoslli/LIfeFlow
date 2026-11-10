@@ -1,6 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import type { Database } from "../db/client";
-import { integrations } from "../db/schema";
+import { integrations, type IntegrationProvider } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { recordError } from "./error-reports";
 
@@ -12,10 +12,10 @@ import { recordError } from "./error-reports";
  * - Plaid (/item/remove per bank link) and Google (revoke the stored grant) run in parallel under one deadline. They are best
  *   effort: a failure is recorded (fixed text, no ids, no user content) and deletion goes on.
  * - Microsoft: no simple revoke endpoint; the tokens are deleted with the rows (the person can remove the app at account.microsoft.com).
- * - Sign in with Apple: we never store Apple's refresh token (only the id_token is read at sign-in), so there is nothing to revoke
- *   yet. Apple's /auth/revoke needs a stored refresh or access token.
+ * - Sign in with Apple: the refresh token stored (encrypted) at sign-in or linking is revoked at Apple's /auth/revoke, in the same
+ *   parallel, best-effort step. No stored token means no call.
  */
-export type CleanupDeps = { fetch?: typeof fetch; deadlineMs?: number };
+export type CleanupDeps = { fetch?: typeof fetch; deadlineMs?: number; apple?: import("../auth/apple").AppleConfig | null };
 
 /** Thrown when a live subscription could not be cancelled: the deletion must not go ahead (the person would keep paying). */
 export class DeletionBlockedError extends Error {
@@ -25,6 +25,18 @@ export class DeletionBlockedError extends Error {
 }
 
 const DEADLINE_MS = 8_000;
+
+/** Connections whose access lives outside our database and is closed where it lives. */
+export const OUTSIDE_PROVIDERS: IntegrationProvider[] = ["plaid", "google", "google_calendar", "gmail"];
+
+/**
+ * Closes one stored connection at its provider: a bank link at Plaid (/item/remove), a Google grant at Google. Throws on
+ * failure; callers decide what a failure means. Also used by the under-13 lock (services/onboarding.ts).
+ */
+export async function closeAtProvider(row: { provider: string; encryptedCredentials: string | null }, f: typeof fetch) {
+  if (row.provider === "plaid") await (await import("../integrations/plaid")).removeAtPlaid(row.encryptedCredentials, f);
+  else await (await import("../integrations/google")).revokeGoogleGrant(row.encryptedCredentials, f);
+}
 
 function withDeadline<T>(p: Promise<T>, ms: number): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -69,7 +81,7 @@ export async function revokeOutsideAccess(db: Database, user: { id: string; stri
           .select({ provider: integrations.provider, encryptedCredentials: integrations.encryptedCredentials })
           .from(integrations)
           // RLS already limits this to the user; the explicit filter is a second lock.
-          .where(and(eq(integrations.userId, user.id), inArray(integrations.provider, ["plaid", "google", "google_calendar", "gmail"]))),
+          .where(and(eq(integrations.userId, user.id), inArray(integrations.provider, OUTSIDE_PROVIDERS))),
       db,
     );
   } catch {
@@ -78,12 +90,38 @@ export async function revokeOutsideAccess(db: Database, user: { id: string; stri
 
   const jobs = rows.map(async (row) => {
     try {
-      if (row.provider === "plaid") await (await import("../integrations/plaid")).removeAtPlaid(row.encryptedCredentials, f);
-      else await (await import("../integrations/google")).revokeGoogleGrant(row.encryptedCredentials, f);
+      await closeAtProvider(row, f);
     } catch {
       await fail(row.provider === "plaid" ? "bank link removal" : "Google revoke");
     }
   });
+  // Apple: oauth_identities is not user-RLS (sign-in reads it before a session exists), so filter by user id explicitly.
+  let appleTokens: string[] = [];
+  try {
+    const { oauthIdentities } = await import("../db/schema");
+    const found = await db
+      .select({ t: oauthIdentities.encryptedRefreshToken })
+      .from(oauthIdentities)
+      .where(and(eq(oauthIdentities.userId, user.id), eq(oauthIdentities.provider, "apple")));
+    appleTokens = found.map((r) => r.t).filter((t): t is string => !!t);
+  } catch {
+    await fail("reading Apple link");
+  }
+  if (appleTokens.length) {
+    const apple = await import("../auth/apple");
+    const cfg = deps.apple === undefined ? apple.appleConfig() : deps.apple;
+    for (const t of appleTokens)
+      jobs.push(
+        (async () => {
+          try {
+            if (!cfg) throw new Error("not configured");
+            await apple.revokeAppleToken(cfg, t, f);
+          } catch {
+            await fail("Apple revoke");
+          }
+        })(),
+      );
+  }
   try {
     await withDeadline(Promise.allSettled(jobs), deadlineMs);
   } catch {

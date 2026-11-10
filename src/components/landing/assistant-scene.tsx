@@ -5,7 +5,7 @@ import { BankIcon, CanvasLogo, GoogleCalendarLogo, WorkIcon } from "./logos";
 import "./scene.css";
 
 /**
- * The hero phone: four slices of a week join into one picture, then a short chat shows what the assistant does with it.
+ * The hero phone: four slices of a week join into one picture, then a short chat shows what the skyling does with it.
  * Same bubbles, colours and tab bar as the real app. Every number is invented, so the page labels it "Example conversation".
  * Reduced motion shows the finished chat, still.
  */
@@ -158,7 +158,7 @@ export function AssistantScene({ tone = "paper", caption = true }: { tone?: "pap
         <div className="phone">
           <div className="app-top">
             <BrandMark className="h-[26px] w-[26px]" alt="" />
-            <span className="name">Your assistant</span>
+            <span className="name">Your skyling</span>
             <span className="dots" />
           </div>
           <div className="stage">
@@ -210,7 +210,7 @@ export function AssistantScene({ tone = "paper", caption = true }: { tone?: "pap
             <div className="layer" data-layer="chat">
               <div className="chat" data-chat />
               <div className="composer">
-                <span>Message your assistant…</span>
+                <span>Message your skyling…</span>
                 <i />
               </div>
             </div>
@@ -220,13 +220,9 @@ export function AssistantScene({ tone = "paper", caption = true }: { tone?: "pap
               <i />
               Today
             </span>
-            <span>
-              <i />
-              Plan
-            </span>
             <span className="cur">
               <i />
-              Assistant
+              Companion
             </span>
             <span>
               <i />

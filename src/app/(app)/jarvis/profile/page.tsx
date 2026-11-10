@@ -6,9 +6,9 @@ import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { listProposedMemories } from "@/server/services/memory";
-import { jarvisSettings, unreadCount } from "@/server/services/proactive/engine";
+import { unreadCount } from "@/server/services/proactive/engine";
 
-export const metadata: Metadata = { title: "Assistant" };
+export const metadata: Metadata = { title: "Skyling" };
 
 /** Jarvis's profile: who he is, what's waiting on you, and the two things you shape (personality and memory). */
 export default async function JarvisProfilePage() {
@@ -17,7 +17,7 @@ export default async function JarvisProfilePage() {
       () => unreadCount(s),
       () => listProposedMemories(s),
     );
-    return { unread, proposed: proposed.length, profile: assistantProfile(u.preferences), avatar: jarvisSettings(u.preferences).avatar };
+    return { unread, proposed: proposed.length, profile: assistantProfile(u.preferences, u.timezone) };
   });
   const name = d.profile.name;
   const status = d.proposed
@@ -28,7 +28,7 @@ export default async function JarvisProfilePage() {
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <header className="flex flex-col items-center pt-2 text-center">
-        <JarvisAvatar style={d.avatar} name={name} className="h-24 w-24 [&_svg]:h-10 [&_svg]:w-10 [&>span]:text-3xl" />
+        <JarvisAvatar className="h-24 w-24" />
         <h1 className="mt-3 font-display text-[2.125rem] leading-tight font-medium tracking-tight">{nameAtStart(name)}</h1>
         {status.href ? (
           <Link href={status.href} className={`flex min-h-11 items-center text-sm font-medium ${status.tone}`}>

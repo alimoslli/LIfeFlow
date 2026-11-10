@@ -145,7 +145,9 @@ export async function ingestHealth({ tx, userId }: UserScope, input: unknown, tz
       .values(rows.map((r) => ({ ...r, userId, source: "apple_health" as const })))
       .onConflictDoUpdate({
         target: [healthSamples.userId, healthSamples.metric, healthSamples.day],
-        set: { value: sql`excluded.value`, updatedAt: new Date() },
+        set: { value: sql`excluded.value`, source: "apple_health", updatedAt: new Date() },
+        // The person's own entry wins: a re-sent day never overwrites a value they typed.
+        setWhere: sql`${healthSamples.source} <> 'manual'`,
       });
   return { saved: rows.length, days: new Set(rows.map((r) => r.day)).size, ignored: [...ignored] };
 }

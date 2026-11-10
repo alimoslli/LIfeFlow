@@ -1,15 +1,15 @@
 "use client";
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
 import { useShell } from "@/components/shell/app-shell";
 import type { DayLoad, LoadLevel, WeekLoad } from "@/lib/life-load";
 import { cn } from "@/lib/utils";
+import { SkylingIcon } from "@/components/skylings/sprite";
 
 const FILL: Record<LoadLevel, string> = {
   light: "bg-accent/30",
   steady: "bg-accent/60",
   heavy: "bg-accent",
-  overloaded: "bg-warning",
+  overloaded: "bg-sun",
 };
 const WORD: Record<LoadLevel, string> = { light: "Light", steady: "Steady", heavy: "Full", overloaded: "Too much" };
 const roughly = (h: number) => (h < 0.5 ? "nothing planned" : `about ${Math.max(1, Math.round(h))} hour${Math.round(h) > 1 ? "s" : ""}`);
@@ -80,9 +80,9 @@ export function LifeLoad({ week }: { week: WeekLoad }) {
                   `${picked.label} looks ${picked.level === "overloaded" ? "like too much" : "full"}: ${picked.reasons.join(", ")}. Help me move what I can to a lighter day before it.`,
                 )
               }
-              className="mt-3 flex min-h-11 items-center gap-2 rounded-full bg-accent px-4 text-sm font-medium text-accent-text"
+              className="lf-sb lf-sb-sun lf-sb-sm mt-3"
             >
-              <Sparkles className="h-4 w-4" /> Lighten this day with {assistantName}
+              <SkylingIcon className="h-5 w-5" /> Lighten this day with {assistantName}
             </button>
           )}
         </div>

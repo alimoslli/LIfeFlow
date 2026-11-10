@@ -30,7 +30,6 @@ export function jarvisSettings(prefs: UserPreferences | undefined) {
     quietEnd: j.quietEnd ?? "07:00",
     topics: { money: true, school: true, work: true, health: true, habits: true, ...j.topics },
     autonomy: { tasks: false, calendar: false, ...j.autonomy },
-    avatar: j.avatar ?? "spark",
     learning: j.learning,
     mutedKinds: j.mutedKinds ?? [],
     pushLimit: j.pushLimit ?? 3,
@@ -187,9 +186,24 @@ export async function saveMessage(scope: UserScope, c: Candidate, tone: JarvisTo
   return row ?? null;
 }
 
+/**
+ * When the scheduler may start a slot for someone who hasn't opened the app. The scheduler runs every few minutes, so
+ * without this the morning look would run at 12:01 AM (stale by breakfast) and the evening wrap at 5:00 PM. The morning
+ * waits for the end of their quiet hours (never later than 9), the midday look runs at noon, and the evening one at 8.
+ * Opening Today runs the current slot straight away, as it always has.
+ */
+export function scheduledFrom(slot: Slot, quietEnd: string): string {
+  if (slot === "midday") return "12:00";
+  if (slot === "evening") return "20:00";
+  return quietEnd >= "05:00" && quietEnd <= "09:00" ? quietEnd : "07:00";
+}
+
 /** Runs the current slot once per day (morning, midday, evening). Cheap when already done. */
-export async function runDueSlot(scope: UserScope, tz: string, prefs: UserPreferences | undefined, now = new Date()) {
-  const slot = slotOf(localTimeOf(now, tz));
+export async function runDueSlot(scope: UserScope, tz: string, prefs: UserPreferences | undefined, now = new Date(), opts: { scheduled?: boolean } = {}) {
+  const localTime = localTimeOf(now, tz);
+  const slot = slotOf(localTime);
+  // from the scheduler: not before the slot's time has come (nothing is logged, so the next run tries again)
+  if (opts.scheduled && localTime < scheduledFrom(slot, jarvisSettings(prefs).quietEnd)) return [];
   const [first] = await scope.tx
     .insert(notificationLog)
     .values({ userId: scope.userId, key: `slot:${todayIn(tz, now)}:${slot}`, title: slot })

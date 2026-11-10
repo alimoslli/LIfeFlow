@@ -45,13 +45,15 @@ test("legal pages have a close button that goes back to where you were", async (
   await expect(page.getByText(/agreement between you and LifeFlow, which is run by/)).toBeVisible();
 });
 
-// The assistant has no fixed name: public copy says "your personal assistant", never "Jarvis".
-test("the landing and legal pages never call the assistant Jarvis", async ({ page }) => {
+// The skyling has no fixed name: public copy says "your skyling", never "Jarvis", and never "assistant"
+// (owner, 2026-11-09: "AI assistant" is overused and it's not what LifeFlow is).
+test("the landing and legal pages never call the skyling Jarvis or an assistant", async ({ page }) => {
   for (const path of ["/", "/privacy", "/terms", "/integrity"]) {
     await page.goto(path);
     await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
     expect(await whatUsersSee(page), path).not.toMatch(/jarvis/i);
+    expect(await whatUsersSee(page), path).not.toMatch(/\bassistants?\b/i);
   }
   await page.goto("/");
-  await expect(page.getByText(/personal assistant/i).first()).toBeVisible();
+  await expect(page.getByText(/skyling/i).first()).toBeVisible();
 });

@@ -13,7 +13,6 @@ import {
   Receipt,
   Search,
   Settings,
-  Sparkles,
   Sun,
   Wallet,
   type LucideIcon,
@@ -21,8 +20,9 @@ import {
 import { cn } from "@/lib/utils";
 import type { SearchHit } from "@/server/services/search";
 import { useShell } from "./app-shell";
+import { SkylingIcon } from "../skylings/sprite";
 
-type Item = { key: string; title: string; subtitle?: string | null; icon: LucideIcon; run: () => void };
+type Item = { key: string; title: string; subtitle?: string | null; icon: LucideIcon | typeof SkylingIcon; run: () => void };
 
 const KIND_ICON: Record<SearchHit["kind"], LucideIcon> = {
   task: CheckSquare,
@@ -43,7 +43,6 @@ const PAGES: { title: string; href: string; icon: LucideIcon; words: string }[] 
   { title: "Notes", href: "/notes", icon: NotebookPen, words: "" },
   { title: "Money", href: "/money", icon: Wallet, words: "available spent income balance" },
   { title: "Transactions", href: "/finances/transactions", icon: Receipt, words: "spending" },
-  { title: "Budgets", href: "/finances/budgets", icon: Wallet, words: "" },
   { title: "Goals", href: "/goals", icon: Flag, words: "savings dreams" },
   { title: "Milestones", href: "/milestones", icon: Flag, words: "achievements life story import chatgpt" },
   { title: "Accounts and banks", href: "/finances/accounts", icon: Landmark, words: "plaid connect bank" },
@@ -111,7 +110,7 @@ export function CommandPalette({ open, onClose, onAsk }: { open: boolean; onClos
     const ask: Item = {
       key: "ask",
       title: term ? `Ask ${assistantName}: "${q.trim()}"` : `Ask ${assistantName}`,
-      icon: Sparkles,
+      icon: SkylingIcon,
       run: () => {
         onClose();
         setQ("");

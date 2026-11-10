@@ -18,7 +18,9 @@ export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding
   if (opts.ai !== false)
     await pool.query(`update users set preferences = preferences || '{"aiConsentAt":"2026-01-01T00:00:00.000Z"}'::jsonb where email = $1`, [email]);
   if (opts.onboarding === "stay") return email;
-  // New accounts start in first-run setup and then get a tour; most tests skip both.
+  // New accounts start in first-run setup and then get a tour; most tests skip both. Setup can only be skipped with a
+  // birthday on the account (owner, 2026-11-10), so the test sets one the way it sets the name.
+  await pool.query(`update users set preferences = preferences || '{"birthDate":"2000-01-15"}'::jsonb where email = $1`, [email]);
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   await page.getByRole("button", { name: "Skip tour" }).click();
@@ -27,10 +29,10 @@ export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding
   return email;
 }
 
-/** The chat's message box. Until the user names their assistant it's "Message your assistant". */
-export const COMPOSER = "Message your assistant";
+/** The chat's message box. Until the user names their skyling it goes by its own name, Ray by default (owner, 2026-11-10). */
+export const COMPOSER = "Message Ray";
 
-/** Sends a message in the assistant's composer and waits for the reply to finish streaming. */
+/** Sends a message in the skyling's composer and waits for the reply to finish streaming. */
 export async function askJarvis(page: Page, text: string) {
   const box = page.getByLabel(COMPOSER);
   await box.fill(text);

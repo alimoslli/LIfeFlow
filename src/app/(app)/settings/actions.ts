@@ -5,12 +5,13 @@ import { sendFeedback } from "@/server/services/feedback";
 import { and, eq, ne } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { AGE_LINE } from "@/lib/birthday";
 import { formObject, mutate, type ActionState } from "@/server/actions";
 import { endSession, requireUser } from "@/server/auth/current-user";
 import { SESSION_COOKIE } from "@/server/auth/sessions";
 import { getDb } from "@/server/db/client";
 import { sessions } from "@/server/db/schema";
-import { AuthError, changePassword, deleteAccount, updateAssistant, updatePreferences, updateProfile } from "@/server/services/accounts";
+import { AuthError, changePassword, deleteAccount, setCompanion, updateAssistant, updatePreferences, updateProfile } from "@/server/services/accounts";
 import { ServiceError } from "@/server/services/errors";
 import { decideMemorySuggestion } from "@/server/jarvis/memory-decisions";
 import { createMemory, deleteMemory, editMemory, MEMORY_CATEGORIES, setMemoryStatus } from "@/server/services/memory";
@@ -29,7 +30,7 @@ const asService = async (fn: () => Promise<void>) => {
 
 export async function updateProfileAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
-  return mutate("profile.update", async (_s, u) => {
+  const r = await mutate("profile.update", async (_s, u) => {
     await updateProfile(getDb(), u.id, {
       name: f.name ?? "",
       timezone: f.timezone ?? "UTC",
@@ -37,9 +38,14 @@ export async function updateProfileAction(_p: ActionState, fd: FormData): Promis
       weekStartsOn: f.weekStartsOn as unknown as 0,
       jarvisTone: f.jarvisTone as "balanced",
       lifeStage: f.lifeStage as "both",
+      // the field is on the form: empty means remove it
+      birthDate: fd.has("birthDate") ? (f.birthDate ?? "") : undefined,
     });
     return "Saved";
   });
+  // under 13 locks the account (owner, 2026-11-10): straight to the lock screen
+  if (r && !r.ok && r.error === AGE_LINE) redirect("/welcome");
+  return r;
 }
 
 export async function changePasswordAction(_p: ActionState, fd: FormData): Promise<ActionState> {
@@ -89,7 +95,7 @@ export async function addMemoryAction(_p: ActionState, fd: FormData): Promise<Ac
       { content: f.content ?? "", category: memoryCategory(f.category) ?? "preference", expiresAt: f.expiresAt ? new Date(f.expiresAt) : null },
       "user",
     );
-    return r.duplicate ? `${nameAtStart(assistantProfile(u.preferences).name)} already remembers that.` : "Saved";
+    return r.duplicate ? `${nameAtStart(assistantProfile(u.preferences, u.timezone).name)} already remembers that.` : "Saved";
   });
 }
 
@@ -119,6 +125,13 @@ export async function deleteMemoryAction(id: string): Promise<ActionState> {
   });
 }
 
+export async function setCompanionAction(key: string): Promise<ActionState> {
+  return mutate("assistant.companion", async (_s, u) => {
+    const c = await setCompanion(getDb(), u.id, key);
+    return key === "sky" ? "Your skyling changes with the sky now." : `${c.name} it is.`;
+  });
+}
+
 export async function updateAssistantAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
   const on = (k: string) => fd.get(k) === "on";
@@ -139,7 +152,6 @@ export async function updateAssistantAction(_p: ActionState, fd: FormData): Prom
           habits: on("topic_habits"),
         },
         autonomy: { tasks: on("auto_tasks"), calendar: on("auto_calendar") },
-        avatar: (f.avatar ?? "spark") as "spark",
         learning: on("learning"),
         pushLimit: Number(f.pushLimit ?? 3),
       },
@@ -183,7 +195,7 @@ export async function removeDeviceAction(id: string): Promise<ActionState> {
 export async function setJarvisLearningAction(on: boolean): Promise<ActionState> {
   return mutate("jarvis.learning", async (_s, u) => {
     await setJarvis(u, { learning: on });
-    const n = nameAtStart(assistantProfile(u.preferences).name);
+    const n = nameAtStart(assistantProfile(u.preferences, u.timezone).name);
     return on ? `${n} will learn from your responses.` : `Learning is off. ${n} treats every message the same.`;
   });
 }
@@ -198,7 +210,7 @@ export async function unmuteKindAction(kind: string): Promise<ActionState> {
 export async function resetLearningAction(): Promise<ActionState> {
   return mutate("jarvis.learning_reset", async (_s, u) => {
     await setJarvis(u, { learningResetAt: new Date().toISOString(), mutedKinds: [] });
-    return `${nameAtStart(assistantProfile(u.preferences).name)} forgot what it learned from your responses.`;
+    return `${nameAtStart(assistantProfile(u.preferences, u.timezone).name)} forgot what it learned from your responses.`;
   });
 }
 
@@ -206,7 +218,7 @@ export async function resetLearningAction(): Promise<ActionState> {
 export async function setAiConsentAction(on: boolean): Promise<ActionState> {
   return mutate("ai.consent", async (_s, u) => {
     await updatePreferences(getDb(), u.id, { aiConsentAt: on ? new Date().toISOString() : null });
-    const n = nameAtStart(assistantProfile(u.preferences).name);
+    const n = nameAtStart(assistantProfile(u.preferences, u.timezone).name);
     return on ? `${n} can use AI now.` : `${n}'s AI is off. Nothing is sent to OpenAI.`;
   });
 }

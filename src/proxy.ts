@@ -19,6 +19,7 @@ const PUBLIC = [
   "/api/billing/webhook",
   "/terms",
   "/api/health",
+  "/api/version",
   "/api/apple-health/ingest",
   "/api/hq/report",
   "/api/hq/inbox",

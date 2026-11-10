@@ -169,3 +169,26 @@ The owner: "my character looks nothing like me." The CEO in `penthouse.webp` was
 - **How:** one masked edit with `gpt-image-2` (medium quality; high quality timed out at the proxy). The inputs were the picture, a mask over the person only, the two photos for the likeness, and the Engineering room's picture as the style reference. Three versions were made, and the closest was kept (blue-grey eyes, fair skin).
 - **Only the person changed.** The generated person was put back on the original picture with a feathered edge, so the room, the pile of files under the "Your desk" button and the business card corner are the original pixels.
 - **Later pictures of the CEO** use the same two photos as the likeness reference.
+
+## Addendum 4: the admin area wears the app's look (owner, 2026-11-09)
+After V3 (the real-sky "Day Sky" look) reached main, the owner said, through the COO: "Not even mentioning the admin page and the headquarters, all of that: nothing changed." He also said the app feels too small and boxy on a MacBook.
+
+**Why it didn't change:** the admin area had its own palette, "Atrium", laid over the app's colours: a deep-green menu rail, a deep-green COO brief, brass gold, a green backdrop behind the building and a hard border on every card.
+
+**What changed:** a retouch, not a rebuild. No features or words changed.
+- **The palette** keeps its names and points at the app's Day Sky colours (`src/app/globals.css`, "HQ palette"). "Brass" is the sun (`--sun`, `--sun-ink`). The brief (`--hero1/2`) is a clear day sky, deep enough for white text, and the night sky in dark mode. The menu rail is frosted glass on the sky like the app's own menu, with the sun's edge on the current place (the A-to-Z audit, F1). The old green `--fac1/2` are gone.
+- **The surface** is the app's (`admin/layout.tsx`): `.lf-glass` and `SkyScene`, so cards are frosted glass over the sky for this hour. The hard-border rule is gone.
+- **The building** (`components/hq/building.css`) stands in the sky like the app's Today: a clear day in light mode, the night sky with stars in dark mode. The sign glows sky blue with a warm "HQ", and the labels, notes and buttons are navy glass.
+  - The walnut, the beams and every rendered picture stay. Redrawing them would be a rebuild.
+- **On a MacBook** (lg and xl):
+  - the frame is wider: 84rem at 1280 px and up, with more padding;
+  - the Office has two columns: "Needs you", "Working now" and the COO's brief on the left, "Since you last looked" on the right, and the building below;
+  - page titles go to 2.5rem, and the lines in "Right now" and the brief go up a step;
+  - main cards get 28 px corners.
+
+  Phones keep one column in the same order. Sizes stay in rem, so the Text size setting still applies.
+- **Small fixes from the A-to-Z audit** (`docs/audits/2026-11-09-a-to-z.md`):
+  - **F2:** People showed its title twice. The list of accounts is now titled "Accounts".
+  - **F3:** "How the app is running" counts the services that aren't set up when there are more than two ("9 services aren't set up yet"), with a link to App › Health. One or two are still named.
+  - **F4:** admin fields are 44 px tall (`.hq-look input, select`). The feedback filters, the Handled buttons, Export and the page links are now 44 px too.
+- **The desk sheet** is a near-solid frosted panel. The admin glass alone was too clear over the building, and the room labels showed through.

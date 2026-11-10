@@ -93,8 +93,8 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
       .toBe("direct");
   });
 
-  await test.step("Subscriptions: totals and flags", async () => {
-    await page.goto("/finances/subscriptions");
+  await test.step("Bills (subscriptions included, owner 2026-11-10): totals and flags", async () => {
+    await page.goto("/finances/bills");
     await expect(page.getByText(/Netflix\s*went up from \$15\.49 to \$17\.99/)).toBeVisible();
     await expect(page.getByText(/Paramount\+\s*'s free trial ends in 3 days/)).toBeVisible();
     await expect(page.getByText(/3 video streaming subscriptions \(Netflix, Paramount\+, Hulu\)/)).toBeVisible();
@@ -150,7 +150,7 @@ test("Jarvis coaches from real data on a phone, learns from the buttons, and fil
       "/goals",
       "/jarvis/says",
       "/jarvis/profile",
-      "/finances/subscriptions",
+      "/finances/bills",
       "/inbox",
       "/jarvis/memory",
       "/settings",

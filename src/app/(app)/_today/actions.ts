@@ -8,6 +8,10 @@ import { createTask } from "@/server/services/tasks";
 import { ServiceError } from "@/server/services/errors";
 import { localDateOf, localTimeOf } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
+import { saveBirthday } from "@/server/services/onboarding";
+import { audit } from "@/server/services/audit";
+import { revalidatePath } from "next/cache";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { getEvent } from "@/server/services/calendar";
 import { getAssignment } from "@/server/services/school";
 import { getShift } from "@/server/services/work";
@@ -115,4 +119,26 @@ export async function pinAction(_p: ActionState, fd: FormData): Promise<ActionSt
     await createMilestone(s, { title, when: date });
     return `Pinned "${name}" to your story.`;
   });
+}
+
+/** The birthday asked once on Today from accounts made before it was required (owner, 2026-11-10). */
+export async function saveBirthdayAction(birthDate: string, confirmed = false): Promise<ActionState | { ok: false; confirm: string; at: number }> {
+  let blocked = false;
+  try {
+    const r = await withCurrentUser(async (s, u) => {
+      const out = await saveBirthday(s, u.timezone || "UTC", birthDate, { confirmed });
+      if (!out.confirm) await audit(s, "user", out.blocked ? "profile.age_blocked" : "profile.birthday");
+      return out;
+    });
+    // a finished account sees the date read back before anything is locked or erased
+    if (r.confirm) return { ok: false, confirm: r.confirm, at: Date.now() };
+    blocked = r.blocked;
+    revalidatePath("/", "layout");
+  } catch (e) {
+    unstable_rethrow(e);
+    return { ok: false, error: e instanceof ServiceError ? e.message : "Couldn't save. Try again.", at: Date.now() };
+  }
+  // under 13 locks the account (owner, 2026-11-10): straight to the lock screen
+  if (blocked) redirect("/welcome");
+  return { ok: true, at: Date.now() };
 }

@@ -7,7 +7,7 @@ export function AdminTitle({ title, sub, action }: { title: string; sub?: ReactN
   return (
     <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div className="min-w-0">
-        <h1 className="font-display text-[2rem] leading-tight font-medium tracking-tight">{title}</h1>
+        <h1 className="font-display text-[2rem] leading-tight font-medium tracking-tight lg:text-[2.5rem]">{title}</h1>
         {sub && <p className="mt-1 text-sm text-text-2">{sub}</p>}
       </div>
       {action}

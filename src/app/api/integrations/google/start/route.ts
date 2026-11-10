@@ -20,13 +20,17 @@ export async function GET(req: NextRequest) {
     const { state, verifier, challenge } = newOAuthState();
     const redirectUri = redirectUriFor(req.nextUrl.origin, cfg.appUrl);
     const res = NextResponse.redirect(authUrl({ clientId: cfg.clientId, redirectUri, state, challenge, loginHint: user.email }));
-    res.cookies.set(OAUTH_COOKIE, Buffer.from(JSON.stringify({ state, verifier, uid: user.id })).toString("base64url"), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/api/integrations/google",
-      maxAge: 600,
-    });
+    res.cookies.set(
+      OAUTH_COOKIE,
+      Buffer.from(JSON.stringify({ state, verifier, uid: user.id, w: req.nextUrl.searchParams.get("from") === "welcome" })).toString("base64url"),
+      {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/api/integrations/google",
+        maxAge: 600,
+      },
+    );
     return res;
   } catch (e) {
     return errorResponse(e);

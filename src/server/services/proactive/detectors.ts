@@ -508,7 +508,7 @@ const weekAhead: Detector = async ({ scope, tz, today }) => {
         lighterHours: week.lighterBefore ? Math.round(week.lighterBefore.hours) : null,
       },
       action: lighter
-        ? { type: "ask", label: "Help me plan it", prompt: `${day} looks like my heaviest day (${why.join(", ")}). Help me move what I can to ${lighter}.` }
+        ? { type: "ask", label: "Help me plan it", prompt: `${day} looks like my heaviest day. Help me move what I can to ${lighter}.` }
         : { type: "open", label: "See your week", href: "/plan" },
       priority: 62,
     },
@@ -556,7 +556,7 @@ const subscriptionWatch: Detector = async ({ scope, today }) => {
         topic: "money",
         dedupeKey: `sub_price:${f.alertKey}`,
         facts: { name: f.name, fromCents: f.fromCents, toCents: f.toCents, yearlyExtraCents: f.yearlyExtraCents },
-        action: { type: "open", label: "Review it", href: "/finances/subscriptions" },
+        action: { type: "open", label: "Review it", href: "/finances/bills" },
         priority: 70,
       });
   for (const f of o.flags) {
@@ -566,7 +566,7 @@ const subscriptionWatch: Detector = async ({ scope, today }) => {
         topic: "money",
         dedupeKey: `trial:${f.id}:${today.slice(0, 7)}`,
         facts: { name: f.name, daysLeft: f.daysLeft, thenCents: f.thenCents },
-        action: { type: "open", label: "Keep or cancel", href: "/finances/subscriptions" },
+        action: { type: "open", label: "Keep or cancel", href: "/finances/bills" },
         priority: f.daysLeft <= 2 ? 90 : 70,
         urgent: f.daysLeft <= 2,
       });
@@ -577,7 +577,7 @@ const subscriptionWatch: Detector = async ({ scope, today }) => {
       topic: "money",
       dedupeKey: `sub_found:${c.seriesKey}`,
       facts: { name: c.name, amountCents: -c.latestAmountCents, count: c.occurrences },
-      action: { type: "open", label: "Take a look", href: "/finances/subscriptions" },
+      action: { type: "open", label: "Take a look", href: "/finances/bills" },
       priority: 50,
     });
   return out;
@@ -599,7 +599,7 @@ const savingsCheck: Detector = async ({ scope, today }) => {
       topic: "money",
       dedupeKey: `savings_found:${bill.id}:${today.slice(0, 7)}`,
       facts: { bill: bill.name, provider: best.provider, plan: best.plan, yearlyCents: best.yearlySavingsCents, source: best.sourceTitle },
-      action: { type: "open", label: "See it and the source", href: "/finances/subscriptions" },
+      action: { type: "open", label: "See it and the source", href: "/finances/bills" },
       priority: 65,
     },
   ];

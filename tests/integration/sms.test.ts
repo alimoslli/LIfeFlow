@@ -79,7 +79,7 @@ describe("texting Jarvis", () => {
     expect(await answerText(db, "+14045550134", "hi", deps)).toBeNull();
   });
 
-  it("when the assistant can't answer, says so plainly and logs the failure without the text", async () => {
+  it("when the skyling can't answer, says so plainly and logs the failure without the text", async () => {
     const db = getDb();
     const { user } = await makeUser("Kai");
     const t = twilio();

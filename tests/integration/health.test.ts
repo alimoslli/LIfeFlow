@@ -5,7 +5,7 @@ import { healthSamples, healthTokens } from "@/server/db/schema";
 import { runJarvisTurn, type JarvisEvent } from "@/server/jarvis/agent";
 import { getTool } from "@/server/jarvis/registry";
 import { ScriptedProvider } from "@/server/jarvis/providers/scripted";
-import { createHealthToken, healthSummary, ingestHealth, listHealthTokens, resolveHealthToken, revokeHealthToken } from "@/server/services/health";
+import { createHealthToken, healthSummary, ingestHealth, logHealth, listHealthTokens, resolveHealthToken, revokeHealthToken } from "@/server/services/health";
 import { makeUser, TZ } from "../helpers";
 
 afterAll(closeDb);
@@ -66,7 +66,7 @@ describe("Apple Health ingest", () => {
     expect(seen).toHaveLength(0);
   });
 
-  it("lets the assistant read the summary through get_health_summary", async () => {
+  it("lets the skyling read the summary through get_health_summary", async () => {
     const { user, run } = await makeUser();
     const tool = getTool("get_health_summary")!;
     const ctx = { userId: user.id, tz: TZ, today: "2026-10-28", now: NOW, conversationId: "", userText: "", memorySuggestions: false, run };
@@ -86,5 +86,21 @@ describe("Apple Health ingest", () => {
       ),
     });
     expect(events.find((e) => e.type === "tool_end")).toMatchObject({ name: "get_health_summary", ok: true });
+  });
+});
+
+describe("Apple Health never overwrites a typed value", () => {
+  it("keeps the person's own entry for a day, and still fills other days", async () => {
+    const { run } = await makeUser();
+    await run((s) => ingestHealth(s, { date: "2026-10-28", metrics: { steps: 1000 } }, TZ, NOW));
+    await run((s) => logHealth(s, TZ, { metric: "steps", value: 7000, date: "2026-10-28" }, NOW));
+    await run((s) => ingestHealth(s, { date: "2026-10-28", metrics: { steps: 9000 } }, TZ, NOW));
+    await run((s) => ingestHealth(s, { date: "2026-10-27", metrics: { steps: 4000 } }, TZ, NOW));
+    const rows = await run((s) => s.tx.select().from(healthSamples));
+    expect(rows.find((r) => r.day === "2026-10-28")).toMatchObject({ value: 7000, source: "manual" });
+    expect(rows.find((r) => r.day === "2026-10-27")).toMatchObject({ value: 4000, source: "apple_health" });
+    // An Apple row that is re-sent still updates.
+    await run((s) => ingestHealth(s, { date: "2026-10-27", metrics: { steps: 4500 } }, TZ, NOW));
+    expect((await run((s) => s.tx.select().from(healthSamples))).find((r) => r.day === "2026-10-27")).toMatchObject({ value: 4500, source: "apple_health" });
   });
 });

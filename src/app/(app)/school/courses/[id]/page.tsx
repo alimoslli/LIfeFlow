@@ -79,16 +79,10 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <AskJarvisButton
-            prompt={`Build a study plan for ${label} around my schedule.`}
-            className="flex min-h-11 items-center rounded-full bg-surface px-4 text-[0.8125rem] font-medium shadow-soft"
-          >
+          <AskJarvisButton prompt={`Build a study plan for ${label} around my schedule.`} className="lf-sb lf-sb-app lf-sb-xs lf-touch">
             Study plan with <AssistantName />
           </AskJarvisButton>
-          <AskJarvisButton
-            prompt={`About ${label}: `}
-            className="flex min-h-11 items-center rounded-full bg-surface px-4 text-[0.8125rem] font-medium shadow-soft"
-          >
+          <AskJarvisButton prompt={`About ${label}: `} className="lf-sb lf-sb-app lf-sb-xs lf-touch">
             Ask about this class
           </AskJarvisButton>
           <AssignmentDialog action={createAssignmentAction} courses={[c]} defaultCourseId={c.id} />

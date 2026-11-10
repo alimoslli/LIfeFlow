@@ -137,15 +137,20 @@ export function computeLifeLoad(i: LoadInput): WeekLoad {
   const totalHours = round1(days.reduce((s, d) => s + d.hours, 0));
   const nextHeavy = days.find((d) => d.date > heaviest.date && (d.level === "heavy" || d.level === "overloaded"));
 
+  // plain words on the main view (owner's rule: no decimals or jargon): whole hours, "about"
+  const about = (h: number) =>
+    h < 1 ? `${Math.max(5, Math.round((h * 60) / 5) * 5)} minutes` : `about ${Math.round(h)} hour${Math.round(h) === 1 ? "" : "s"}`;
   const summary =
     heaviest.hours < 4
       ? "A light week. A good time to get ahead on something big."
-      : `${heaviest.label} is your heaviest day (${fmtH(heaviest.hours)}${heaviest.level === "overloaded" ? `, ${fmtH(heaviest.hours - DAY_CAPACITY_HOURS)} more than fits` : ""}).` +
+      : (heaviest.level === "overloaded"
+          ? `${heaviest.label} is too full: ${about(heaviest.hours - DAY_CAPACITY_HOURS)} more than fits.`
+          : `${heaviest.label} is your fullest day, ${about(heaviest.hours)}.`) +
         (lighterBefore
-          ? ` ${lighterBefore.label} is lighter (${fmtH(lighterBefore.hours)}), so start early then.`
+          ? ` ${lighterBefore.label} is lighter, so start early then.`
           : heaviest.label === "Today"
             ? nextHeavy
-              ? ` ${nextHeavy.label} is heavy too (${fmtH(nextHeavy.hours)}).`
+              ? ` ${nextHeavy.label} is full too.`
               : " It gets lighter after today."
             : "");
 

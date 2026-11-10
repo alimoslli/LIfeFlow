@@ -231,6 +231,24 @@ The way back is as crafted as the way in. It is never a plain fade or cut: it is
   - tokens in `globals.css`, the glass, the mark in `brand-mark.tsx`, the time-of-day wash behind every page (`components/sky/sky-scene.tsx`) and the companion's colours come from the Day Sky look (07a46df).
   So School, Money and every page match. The name stays LifeFlow until a new name is chosen.
 
+## 7d. The mechanism, and what's next (owner, 2026-11-09)
+"The mechanism" is the owner's name for the wheel that turns into the timeline.
+
+**Built (on main):**
+- The timeline is Day Sky's again (owner: "what happened to the old timeline we had, where it was swiggly, going up and down, and the background was changing colors?"): a hill for every day and a valley for every night, in a window painted with the real sky of every hour, with the water under it.
+- The wheel pours into that line in place: the rim flows onto the wave, the rest of the line runs out of its two ends, the tiles fly to their stops, and the one sky spreads into the sky of every hour.
+- Today's sky fills the top of the screen by default (up behind the top bar on a phone); "Widget" (a card) is a choice in Settings › Profile & appearance › Today's sky (cookie `lf_today`).
+- The companion is bigger (about a third of the wheel, larger on a big wheel), and the wheel, its tiles and the sky grow on a laptop (Today takes the screen's height there).
+- Turning: a drag (the rim follows a finger; a mouse turns it twice as far), a flick, a trackpad or a mouse wheel over the sky, the arrow keys. On the open line a mouse wheel scrolls it sideways and a mouse can drag it.
+
+**Next, in this order:**
+1. **Sky moods.** Decorative only, never a forecast: clouds on some days, rain now and then, seasonal modes (a Christmas mode first). A setting to keep the sky always clear.
+2. **The night sky and its visitors.** Pixel stars and a pixel moon; rare visitors (a shooting star, a satellite, a little craft from space) on a schedule, never random spam; the companion notices them.
+3. **A celebration when something is done.** The companion reacts and a pixel burst marks the moment; a bigger one when the day's things are all done or a goal is reached.
+4. **The laptop layout** (beyond size): words beside the sky on wide screens, no old-app boxes.
+5. **The first run** in the new look: the launch page, the welcome, onboarding, the tour.
+6. **The cast.** The companions as characters with personalities, traits and skills, named for times of day; the one you pick is your assistant (or give it your own name). Pictures to the owner first.
+
 ## Names of the versions (owner, 2026-11-09; retired the same day)
 
 The owner merged V3 into main (PR #3) and works on main from now on; the V2 and V3 preview links below are no longer kept up to date.

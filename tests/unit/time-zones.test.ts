@@ -18,8 +18,8 @@ describe("the greeting follows the user's time zone, not the device or server cl
 
   it("the chat greeting doesn't read the device's hour", () => {
     const chat = readFileSync(path.resolve(import.meta.dirname, "../../src/components/jarvis/chat.tsx"), "utf8");
+    // the empty chat says the catchphrase now (owner, 2026-11-10), with no time-of-day greeting; none may read the device clock
     expect(chat).not.toMatch(/\.getHours\(\)/);
-    expect(chat).toMatch(/greetingIn\(tz/);
   });
 
   it("quick add's default date (offline too) is today in the user's zone, not the device's (review)", () => {

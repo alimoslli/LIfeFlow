@@ -2,6 +2,7 @@
 import { jsonOf, PlainError, serverWords } from "@/lib/plain-error";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAppBusy } from "@/lib/app-busy";
 import { AudioLines, Check, Mic, MicOff } from "lucide-react";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { cn } from "@/lib/utils";
@@ -18,7 +19,7 @@ const BENIGN = new Set(["input_audio_buffer_commit_empty", "conversation_already
 
 const REALTIME_URL = "https://api.openai.com/v1/realtime/calls";
 
-/** Mic button in the composer: starts talking with the assistant right in this chat. */
+/** Mic button in the composer: starts talking with the skyling right in this chat. */
 export function VoiceButton({
   assistantName,
   disabled,
@@ -52,7 +53,7 @@ export type LiveVoiceEvents = {
   onLine: (role: "user" | "assistant", text: string) => void;
   /** The conversation the call is saved in (the current chat, or a new one). */
   onConversation: (id: string) => void;
-  /** A tool started (its name) or the assistant went back to listening (null). */
+  /** A tool started (its name) or the skyling went back to listening (null). */
   onTool: (name: string | null) => void;
   /** Something needs the user's Confirm; shown as a card in the chat. */
   onConfirmation: (actionId: string, summary: string) => void;
@@ -61,7 +62,7 @@ export type LiveVoiceEvents = {
 };
 
 /**
- * Talking with the assistant inside the chat (OpenAI Realtime over WebRTC). Takes the
+ * Talking with the skyling inside the chat (OpenAI Realtime over WebRTC). Takes the
  * composer's place as one slim bar: the logo pulses with the voices, a word says what's
  * happening, plus mute and End. What you both say appears in the chat as messages and
  * is saved to the same conversation, so typing afterwards picks up where you left off.
@@ -78,6 +79,8 @@ export function LiveVoice({
   const [seconds, setSeconds] = useState(0);
   const [tool, setTool] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  // a call in progress: an app update waits until it's over (components/pwa/app-updater.tsx)
+  useAppBusy(true);
   const cb = useRef(events);
   // The latest callbacks, for event handlers that outlive a render.
   useEffect(() => {
@@ -365,12 +368,7 @@ export function LiveVoice({
         <p className="tabular truncate text-xs text-muted">{sub}</p>
       </div>
       {phase === "hearing" && !muted && (
-        <button
-          type="button"
-          onClick={finishTurn}
-          aria-label="Done talking"
-          className="flex h-11 items-center gap-1.5 rounded-full bg-accent px-3.5 text-sm font-medium text-accent-text"
-        >
+        <button type="button" onClick={finishTurn} aria-label="Done talking" className="lf-sb lf-sb-sun lf-sb-sm">
           <Check className="h-4 w-4" aria-hidden />
           Done
         </button>

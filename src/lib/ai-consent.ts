@@ -3,4 +3,4 @@ import type { UserPreferences } from "@/server/db/schema";
 /** The user allowed their data to go to the AI provider (asked once, revocable in Settings). */
 export const aiAllowed = (prefs: UserPreferences | undefined | null) => !!prefs?.aiConsentAt;
 
-export const AI_CONSENT_NEEDED = "Allow your assistant to use AI first (in Settings).";
+export const AI_CONSENT_NEEDED = "Allow your skyling to use AI first (in Settings).";

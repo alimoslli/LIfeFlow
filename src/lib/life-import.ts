@@ -1,5 +1,5 @@
 /**
- * Sorts text pasted from another AI assistant into what LifeFlow keeps: facts about the user
+ * Sorts text pasted from another AI app into what LifeFlow keeps: facts about the user
  * (memories), life milestones and goals. Pure, so the page can show it for review before
  * anything is saved; the server validates again when it saves.
  */
@@ -12,8 +12,8 @@ export type ImportItem =
   | { kind: "milestone"; text: string; when: string | null; category: ImportMilestoneCategory }
   | { kind: "goal"; text: string };
 
-/** The prompt the user runs in their other AI assistant. Its headings are what parseLifeImport reads. */
-export const LIFE_IMPORT_PROMPT = `Tell me everything you know about me that would help a personal assistant. Use exactly these headings, one short line per item:
+/** The prompt the user runs in their other AI app. Its headings are what parseLifeImport reads. */
+export const LIFE_IMPORT_PROMPT = `Tell me everything you know about me that would help an app that plans my life with me. Use exactly these headings, one short line per item:
 
 ABOUT ME: school, major, job, the city I live in, important people, interests.
 PREFERENCES: how I like to study, work, plan and be talked to.

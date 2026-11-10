@@ -22,7 +22,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       user={{ name: user.name, email: user.email, accountKind: user.accountKind, timezone: user.timezone }}
       jarvis={{ available: status.available, reason: status.reason, model: status.model, provider: status.provider }}
       tour={user.preferences?.tour === "pending"}
-      assistantName={assistantProfile(user.preferences).name}
+      assistantName={assistantProfile(user.preferences, user.timezone).name}
+      assistantNamed={assistantProfile(user.preferences, user.timezone).named}
+      companion={user.preferences?.companion}
       aiConsent={aiAllowed(user.preferences)}
       unread={unread}
       areas={lifeAreas(user.preferences?.lifeStage)}

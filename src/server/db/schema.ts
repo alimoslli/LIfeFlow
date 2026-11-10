@@ -70,6 +70,8 @@ const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () =>
 export type UserPreferences = {
   /** When the user allowed Jarvis to send their data to the AI provider (OpenAI). Unset or null: no AI features (App Store 5.1.2(i)). */
   aiConsentAt?: string | null;
+  /** Idea clouds tapped, a count per cloud (lib/idea-clouds), never the message text: a tapped one counts as used. */
+  ideaTaps?: Partial<Record<string, number>>;
   studyTime?: "morning" | "afternoon" | "evening" | "night";
   weekStartsOn?: 0 | 1;
   currency?: string;
@@ -84,12 +86,25 @@ export type UserPreferences = {
   inboxDedupeRetryAfter?: string;
   /** What fills the user's week (from onboarding); helps Jarvis and the briefing. */
   lifeStage?: "student" | "working" | "both" | "life";
+  /** Their birthday, "YYYY-MM-DD" (the welcome, owner 2026-11-09; Settings › Profile). Private to the account. */
+  birthDate?: string;
+  /** Their school's name, from the welcome (students). */
+  school?: string;
+  /**
+   * Set once when the birthday given makes them under 13 (owner, 2026-11-10): the welcome stays locked for the account,
+   * a later, older year doesn't get through, and nothing else about them is kept.
+   */
+  ageBlockedAt?: string;
+  /** Where they work, typed in the welcome; kept while they connect (they leave and come back) and made an employer when setup finishes. */
+  welcomeJob?: string;
   /** First-run setup: "pending" only for accounts created since onboarding launched. */
   onboarding?: "pending" | "done";
   /** Guided tour of the app, offered after onboarding or replayed from Settings. */
   tour?: "pending" | "done";
   /** The user's assistant: its name, personality and live voice (see src/lib/assistant.ts). */
   assistantName?: string;
+  /** Who runs on top of Today and is the skyling (lib/companions; the cast). Unset = not picked yet. */
+  companion?: "dawn" | "ray" | "noon" | "goldie" | "dusk" | "star" | "sky";
   /** coach | friend | direct (older values are mapped in lib/assistant). */
   assistantStyle?: "coach" | "friend" | "direct" | "balanced" | "warm" | "playful" | "professional";
   /** Free-text personality notes, at most 300 characters. Changes tone only, never the rules. */
@@ -126,7 +141,6 @@ export type JarvisSettings = {
   topics?: Partial<Record<JarvisTopic, boolean>>;
   /** What Jarvis may do without asking. Money and contacting people always ask. */
   autonomy?: { tasks?: boolean; calendar?: boolean };
-  avatar?: "spark" | "orb" | "initial";
   /** Consent to adapt from how the user responds (undefined = not asked yet). */
   learning?: boolean;
   /** Message kinds the user said never to suggest again. */
@@ -264,6 +278,8 @@ export const oauthIdentities = pgTable(
     email: text("email"),
     /** Apple "Hide My Email" relay address. */
     isPrivateEmail: boolean("is_private_email").notNull().default(false),
+    /** Apple's refresh token, AES-GCM encrypted (encryptSecret). Only used to revoke Apple access on delete or unlink. */
+    encryptedRefreshToken: text("encrypted_refresh_token"),
     createdAt: createdAt(),
     lastUsedAt: tstz("last_used_at"),
   },
@@ -459,7 +475,7 @@ export const goalCheckins = pgTable(
 );
 
 /**
- * Things the user said they would do ("I'll study tonight"). The assistant checks back once, at the due time.
+ * Things the user said they would do ("I'll study tonight"). The skyling checks back once, at the due time.
  * A promise is only ever kept or broken by the user's own answer, or by a to-do they really finished (taskId);
  * an unanswered one is dropped after a week and never counts as broken.
  */
@@ -469,7 +485,7 @@ export const promises = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     userId: userRef(),
     text: text("text").notNull(),
-    /** When the assistant checks back. */
+    /** When the skyling checks back. */
     dueAt: tstz("due_at").notNull(),
     status: text("status").$type<"open" | "kept" | "broken" | "dropped">().notNull().default("open"),
     /** A to-do this promise is about: finishing it keeps the promise without asking. */
@@ -531,7 +547,7 @@ export const integrations = pgTable(
 );
 
 /**
- * Gmail metadata cached for the assistant's current context.  Message bodies
+ * Gmail metadata cached for the skyling's current context.  Message bodies
  * stay in Gmail and are fetched only when the user or assistant needs one.
  */
 export const gmailMessages = pgTable(
@@ -1861,6 +1877,17 @@ export const hqMetrics = pgTable(
   },
   (t) => [uniqueIndex("hq_metrics_reading_uq").on(t.takenOn, t.network, t.metric, t.contentRef), index("hq_metrics_network_idx").on(t.network, t.takenOn)],
 );
+
+/** Job leases (migration 0057). Operations data with no user content and no RLS, like the hq_ tables; reached only through db/job-lock.ts. */
+export const jobLocks = pgTable("job_locks", {
+  name: text("name").primaryKey(),
+  holder: text("holder").notNull(),
+  expiresAt: tstz("expires_at").notNull(),
+  /** Requests skipped while the lease was held; the holder runs once more if > 0. Reset on a claim. */
+  skips: integer("skips").notNull().default(0),
+  /** A skipped request wanted live data (Plaid balances). Reset on a claim. */
+  liveWanted: boolean("live_wanted").notNull().default(false),
+});
 
 export type HqRoundSwitches = { night: boolean; research: boolean; marketing: boolean };
 

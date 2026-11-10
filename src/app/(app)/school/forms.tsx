@@ -25,7 +25,7 @@ export function CourseDialog({ action, course, trigger }: { action: Action; cour
     <Dialog
       trigger={trigger}
       title={course ? "Edit course" : "Add a course"}
-      triggerProps={{ variant: course ? "secondary" : "primary", size: course ? "sm" : "md" }}
+      triggerProps={{ variant: course ? "secondary" : "sun", size: course ? "sm" : "md" }}
     >
       {(close) => (
         <ActionForm action={action} onSuccess={close}>
@@ -69,8 +69,8 @@ export function AssignmentDialog({ action, courses, defaultCourseId }: { action:
     <Dialog
       trigger="Add assignment"
       title="Add an assignment"
-      description="Or paste details into your assistant to add many at once."
-      triggerProps={{ variant: "secondary" }}
+      description="Or paste details into your skyling to add many at once."
+      triggerProps={{ variant: "sky" }}
     >
       {(close) => (
         <ActionForm action={action} onSuccess={close}>

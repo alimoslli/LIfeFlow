@@ -113,7 +113,7 @@ export function smsKeyword(text: string): "stop" | "start" | "help" | null {
 }
 
 export function smsHelpText(contactEmail: string | null) {
-  return `LifeFlow: text your assistant about your plans, school, work and money. Manage texts in the app under Settings, Text your assistant.${
+  return `LifeFlow: text your skyling about your plans, school, work and money. Manage texts in the app under Settings, Text your skyling.${
     contactEmail ? ` Help: ${contactEmail}.` : ""
   } Msg & data rates may apply. Reply STOP to opt out.`;
 }

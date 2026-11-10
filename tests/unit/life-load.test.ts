@@ -29,7 +29,7 @@ describe("life load", () => {
     expect(wed.reasons[0]).toBe("Work 10 AM–7 PM (9h)");
     expect(w.heaviest.date).toBe("2026-11-04");
     expect(w.lighterBefore?.date).toBe("2026-11-02");
-    expect(w.summary).toMatch(/^Wednesday is your heaviest day \(12\.4h, 2\.4h more than fits\)\. Today is lighter/);
+    expect(w.summary).toMatch(/^Wednesday is too full: about 2 hours more than fits\. Today is lighter/);
   });
 
   it("puts overdue work on today and ignores prep that falls past this week", () => {
@@ -66,7 +66,7 @@ describe("life load", () => {
 
   it("says the week gets lighter when today is the heaviest day", () => {
     const w = computeLifeLoad({ today: TODAY, committed: [{ date: TODAY, minutes: 8 * 60, label: "Work" }], tasks: [], deadlines: [] });
-    expect(w.summary).toBe("Today is your heaviest day (8h). It gets lighter after today.");
+    expect(w.summary).toBe("Today is your fullest day, about 8 hours. It gets lighter after today.");
     expect(w.days.map((d) => d.short)).toEqual(["Today", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
   });
 
@@ -80,7 +80,7 @@ describe("life load", () => {
       tasks: [],
       deadlines: [],
     });
-    expect(w.summary).toBe("Today is your heaviest day (8h). Wednesday is heavy too (7h).");
+    expect(w.summary).toBe("Today is your fullest day, about 8 hours. Wednesday is full too.");
   });
 
   it("names levels plainly", () => {

@@ -5,7 +5,9 @@ import { JarvisAvatar } from "@/components/jarvis/message-card";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/field";
 import { Card } from "@/components/ui/surface";
-import { ASSISTANT_STYLES, ASSISTANT_VOICES, nameAtStart, UNNAMED_ASSISTANT, type AssistantProfile, type AssistantStyle } from "@/lib/assistant";
+import { ASSISTANT_STYLES, ASSISTANT_VOICES, type AssistantProfile, type AssistantStyle } from "@/lib/assistant";
+import { companionOf } from "@/lib/companions";
+import { useShell } from "@/components/shell/app-shell";
 import { composeMessage, PREVIEW_SAMPLES } from "@/lib/jarvis-voice";
 import type { ActionState } from "@/server/actions";
 
@@ -18,7 +20,6 @@ export type PersonalitySettings = {
   quietEnd: string;
   topics: Record<"money" | "school" | "work" | "health" | "habits", boolean>;
   autonomy: { tasks: boolean; calendar: boolean };
-  avatar: "spark" | "orb" | "initial";
   learning: boolean;
   pushLimit: number;
   answerLength: "concise" | "balanced" | "detailed";
@@ -39,7 +40,7 @@ function Switch({ name, label, hint, defaultChecked }: { name: string; label: st
   );
 }
 
-/** Name, tone, avatar, voice and how proactive the assistant is, with a live preview of how it will sound. */
+/** Name, tone, voice and how proactive the skyling is, with a live preview of how it will sound. Its picture is the skyling itself. */
 export function AssistantCard({
   profile,
   settings,
@@ -49,10 +50,10 @@ export function AssistantCard({
   settings: PersonalitySettings;
   action: (p: ActionState, fd: FormData) => Promise<ActionState>;
 }) {
-  // Empty until they choose a name (it's "your assistant" until then); clearing it goes back to that.
+  // Empty until they choose a name (it goes by its skyling's own until then); clearing it goes back to that.
   const [name, setName] = useState(profile.named ? profile.name : "");
   const [style, setStyle] = useState<AssistantStyle>(profile.style);
-  const [avatar, setAvatar] = useState(settings.avatar);
+  const own = companionOf(useShell().skyling).name;
   return (
     <Card className="p-5" as="section">
       <h2 id="personality" className="scroll-mt-24 font-medium">
@@ -66,9 +67,9 @@ export function AssistantCard({
           const m = composeMessage(p.kind, p.facts, style === "friend" ? "friend" : style, { seed: i });
           return (
             <div key={p.kind} className="flex items-start gap-3 rounded-2xl bg-surface p-3 shadow-soft">
-              <JarvisAvatar style={avatar} name={name || UNNAMED_ASSISTANT} className="h-8 w-8" />
+              <JarvisAvatar className="h-8 w-8" />
               <div className="min-w-0">
-                <p className="text-xs text-muted">{name || nameAtStart(UNNAMED_ASSISTANT)}</p>
+                <p className="text-xs text-muted">{name || own}</p>
                 <p className="text-sm font-semibold">{m.title}</p>
                 <p className="text-sm text-text-2">{m.body}</p>
               </div>
@@ -79,7 +80,7 @@ export function AssistantCard({
 
       <ActionForm action={action} reset={false} className="mt-5 gap-5">
         <Field label="Name" htmlFor="as-name">
-          <Input id="as-name" name="name" maxLength={24} value={name} placeholder="Optional" onChange={(e) => setName(e.target.value)} className="max-w-xs" />
+          <Input id="as-name" name="name" maxLength={24} value={name} placeholder={own} onChange={(e) => setName(e.target.value)} className="max-w-xs" />
         </Field>
 
         <fieldset>
@@ -102,19 +103,6 @@ export function AssistantCard({
             <option value="detailed">Detailed</option>
           </Select>
         </Field>
-
-        <fieldset>
-          <legend className="mb-2 text-sm font-medium text-text-2">Avatar</legend>
-          <div className="flex gap-2">
-            {(["spark", "orb", "initial"] as const).map((a) => (
-              <label key={a} className={`${chip} flex items-center gap-2`}>
-                <input type="radio" name="avatar" value={a} checked={avatar === a} onChange={() => setAvatar(a)} className="sr-only" />
-                <JarvisAvatar style={a} name={name || UNNAMED_ASSISTANT} className="h-7 w-7" />
-                <span className="text-sm capitalize">{a === "initial" ? "Letter" : a}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
 
         <fieldset>
           <legend className="mb-2 text-sm font-medium text-text-2">How often it checks in</legend>

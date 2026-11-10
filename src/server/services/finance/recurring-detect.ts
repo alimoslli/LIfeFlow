@@ -57,7 +57,7 @@ export type RecurringCandidate = {
   confidence: number;
 };
 
-/** The confidence a found series needs before it's offered as a bill or subscription, counted in totals or given to the assistant. */
+/** The confidence a found series needs before it's offered as a bill or subscription, counted in totals or given to the skyling. */
 export const MIN_CONFIDENCE = 0.6;
 
 const PERIODS: { freq: Frequency; days: number; tolerance: number }[] = [

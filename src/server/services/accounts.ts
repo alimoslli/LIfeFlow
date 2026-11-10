@@ -1,6 +1,10 @@
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
+import { AGE_LINE, CHECK_YEAR, birthDateProblem, isUnderAge } from "@/lib/birthday";
+import { COMPANIONS, companionOf, isCompanionKey, SKY_CHOICE, SKY_CHOICE_LABEL } from "@/lib/companions";
+import { todayIn } from "@/lib/dates";
 import { checkPassword } from "@/lib/password-strength";
+import { ServiceError } from "./errors";
 import { hashPassword, verifyPassword } from "../auth/password";
 import type { Database } from "../db/client";
 import { users, type UserPreferences } from "../db/schema";
@@ -72,12 +76,29 @@ export const profileSchema = z.object({
     .optional(),
   jarvisTone: z.enum(["concise", "balanced", "detailed"]).optional(),
   lifeStage: z.enum(["student", "working", "both", "life"]).optional(),
+  /** "YYYY-MM-DD"; "" removes it; left out keeps what's saved. Checked against today in their time zone in updateProfile. */
+  birthDate: z.string().trim().optional(),
 });
 
 export async function updateProfile(db: Database, userId: string, input: z.input<typeof profileSchema>) {
   const d = profileSchema.parse(input);
+  const today = todayIn(d.timezone);
+  // under 13 goes through the same flag as the welcome and Today, so a second, older year here is refused too
+  if (d.birthDate && isUnderAge(d.birthDate, today)) {
+    // Settings has no read-back step, so here an under-13 date on a finished account is treated as a slip: nothing is
+    // locked or erased (the review of 0c77531). Today's birthday card is where a finished account can confirm it.
+    const [row] = await db.select({ preferences: users.preferences }).from(users).where(eq(users.id, userId));
+    if (row && !row.preferences.ageBlockedAt && row.preferences.onboarding !== "pending") throw new ServiceError(CHECK_YEAR);
+    const { saveBirthday } = await import("./onboarding");
+    await withUser(userId, (s) => saveBirthday(s, d.timezone, d.birthDate!));
+    throw new ServiceError(AGE_LINE);
+  }
+  const problem = d.birthDate ? birthDateProblem(d.birthDate, today) : null;
+  if (problem) throw new ServiceError(problem);
   const [current] = await db.select().from(users).where(eq(users.id, userId));
-  await db
+  // a locked account (under 13, owner 2026-11-10) can't get past it by typing another year here
+  if (d.birthDate && current.preferences.ageBlockedAt) throw new ServiceError(AGE_LINE);
+  const saved = await db
     .update(users)
     .set({
       name: d.name,
@@ -88,9 +109,13 @@ export async function updateProfile(db: Database, userId: string, input: z.input
         weekStartsOn: d.weekStartsOn,
         jarvisTone: d.jarvisTone ?? current.preferences.jarvisTone,
         lifeStage: d.lifeStage ?? current.preferences.lifeStage,
+        birthDate: d.birthDate === undefined ? current.preferences.birthDate : d.birthDate || undefined,
       },
     })
-    .where(eq(users.id, userId));
+    // a birthday never lands over a lock that a parallel save just set
+    .where(and(eq(users.id, userId), d.birthDate ? sql`not (${users.preferences} ? 'ageBlockedAt')` : sql`true`))
+    .returning({ id: users.id });
+  if (!saved.length) throw new ServiceError(AGE_LINE);
 }
 
 /** Merges individual preference switches (e.g. memory suggestions) into the user's preferences. */
@@ -107,7 +132,7 @@ export async function updatePreferences(
 }
 
 export const assistantSchema = z.object({
-  // Empty means no name yet: it stays "your assistant" until they choose one.
+  // Empty means no name yet: it stays "your skyling" until they choose one.
   name: z
     .string()
     .trim()
@@ -119,7 +144,7 @@ export const assistantSchema = z.object({
   voice: z.enum(["alloy", "ash", "ballad", "cedar", "coral", "echo", "marin", "sage", "shimmer", "verse"]),
 });
 
-/** Saves the assistant's name, personality and voice. */
+/** Saves the skyling's name, personality and voice. */
 const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Pick a time like 22:00");
 export const jarvisSettingsSchema = z.object({
   frequency: z.enum(["low", "normal", "high"]),
@@ -127,12 +152,37 @@ export const jarvisSettingsSchema = z.object({
   quietEnd: hhmm,
   topics: z.object({ money: z.boolean(), school: z.boolean(), work: z.boolean(), health: z.boolean(), habits: z.boolean() }),
   autonomy: z.object({ tasks: z.boolean(), calendar: z.boolean() }),
-  avatar: z.enum(["spark", "orb", "initial"]),
   learning: z.boolean(),
   pushLimit: z.number().int().min(0).max(5),
 });
 
-/** Name, tone, voice and how proactive the assistant is. */
+/**
+ * Picks the skyling (the cast). It brings its name unless the person gave the skyling their own (a name that is
+ * another skyling's counts as not their own), and its tone.
+ */
+export async function setCompanion(db: Database, userId: string, key: unknown): Promise<{ name: string }> {
+  if (key === SKY_CHOICE) {
+    // "Changes with the sky": only the look follows the time; their name and talking style stay as they are
+    const [current] = await db.select().from(users).where(eq(users.id, userId));
+    await db
+      .update(users)
+      .set({ preferences: { ...current.preferences, companion: SKY_CHOICE } })
+      .where(eq(users.id, userId));
+    return { name: SKY_CHOICE_LABEL.name };
+  }
+  if (!isCompanionKey(key)) throw new ServiceError("Pick one of the six, or let the sky choose.");
+  const c = companionOf(key);
+  const [current] = await db.select().from(users).where(eq(users.id, userId));
+  const name = current.preferences.assistantName?.trim();
+  const own = !!name && !COMPANIONS.some((x) => x.name === name);
+  await db
+    .update(users)
+    .set({ preferences: { ...current.preferences, companion: c.key, assistantName: own ? name : c.name, assistantStyle: c.tone } })
+    .where(eq(users.id, userId));
+  return c;
+}
+
+/** Name, tone, voice and how proactive the skyling is. */
 export async function updateAssistant(
   db: Database,
   userId: string,

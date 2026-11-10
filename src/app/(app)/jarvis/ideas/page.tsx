@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Ideas" };
 export default async function IdeasPage() {
   const d = await withCurrentUser(async (s, u) => {
     const areas = lifeAreas(u.preferences?.lifeStage);
-    return { areas, mine: await personalIdeas(s, u.timezone, todayIn(u.timezone), areas), name: assistantProfile(u.preferences).name };
+    return { areas, mine: await personalIdeas(s, u.timezone, todayIn(u.timezone), areas), name: assistantProfile(u.preferences, u.timezone).name };
   });
   const groups = [...(d.mine.length ? [{ name: "For you", ideas: d.mine }] : []), ...ideaCatalog(d.areas)];
   return (

@@ -32,27 +32,27 @@ export default function TermsOfUse() {
 
       <h2>3. What LifeFlow does</h2>
       <p>
-        LifeFlow helps you organize your finances, school, work, schedule, health information and notes, and includes an AI assistant that can answer questions
-        and act on your records when you ask. Some features depend on services you choose to connect, such as Google or Apple Health. We may add, change or
-        remove features over time.
+        LifeFlow helps you organize your finances, school, work, schedule, health information and notes, and includes your skyling, an AI character that can
+        answer questions and act on your records when you ask. Some features depend on services you choose to connect, such as Google or Apple Health. We may
+        add, change or remove features over time.
       </p>
 
-      <h2>4. The AI assistant</h2>
+      <h2>4. Your skyling (the AI)</h2>
       <ul>
         <li>
-          The assistant uses artificial intelligence and <strong>can be wrong</strong>. Check important information, especially amounts, dates and anything you
+          The skyling uses artificial intelligence and <strong>can be wrong</strong>. Check important information, especially amounts, dates and anything you
           will rely on or send to someone else.
         </li>
         <li>
-          The assistant changes your data only through defined actions and shows what it changed. It asks for your confirmation before deleting records and
-          before sending anything outside LifeFlow, such as an email. You are responsible for reviewing and approving those actions.
+          The skyling changes your data only through defined actions and shows what it changed. It asks for your confirmation before deleting records and before
+          sending anything outside LifeFlow, such as an email. You are responsible for reviewing and approving those actions.
         </li>
-        <li>You may rename the assistant and choose its personality and voice. These settings change its style, not its safety rules.</li>
+        <li>You may rename the skyling and choose its personality and voice. These settings change its style, not its safety rules.</li>
       </ul>
 
       <h2>5. Not professional advice</h2>
       <p>
-        LifeFlow and its assistant provide general information and organization tools. They are{" "}
+        LifeFlow and its skyling provide general information and organization tools. They are{" "}
         <strong>not financial, investment, tax, legal, medical or mental health advice</strong>, and LifeFlow is not a medical device. LifeFlow does not move
         money or make trades. Talk to a qualified professional before making important financial or health decisions, and contact emergency services in an
         emergency.
@@ -67,9 +67,9 @@ export default function TermsOfUse() {
 
       <h3>Text messages</h3>
       <p>
-        If you add your mobile number in Settings, LifeFlow texts you a sign-up code and your assistant&apos;s replies to the messages you send. Message
-        frequency varies with how often you text. Message and data rates may apply. Reply HELP for help or STOP to opt out at any time; you can also remove your
-        number in Settings. Carriers are not liable for delayed or undelivered messages. Your number and consent are never shared for marketing.
+        If you add your mobile number in Settings, LifeFlow texts you a sign-up code and your skyling&apos;s replies to the messages you send. Message frequency
+        varies with how often you text. Message and data rates may apply. Reply HELP for help or STOP to opt out at any time; you can also remove your number in
+        Settings. Carriers are not liable for delayed or undelivered messages. Your number and consent are never shared for marketing.
       </p>
 
       <h2>7. Your content</h2>
@@ -85,7 +85,7 @@ export default function TermsOfUse() {
         <li>Use LifeFlow for anything illegal, harmful or fraudulent, or to harass anyone.</li>
         <li>Access another person&apos;s account or data, or connect accounts that are not yours.</li>
         <li>Probe, scan or test LifeFlow&apos;s security without permission, or interfere with its operation, including by automated or excessive requests.</li>
-        <li>Try to make the assistant produce harmful content or bypass its safety measures.</li>
+        <li>Try to make the skyling produce harmful content or bypass its safety measures.</li>
         <li>Copy, resell or reverse engineer LifeFlow, except as the law allows.</li>
       </ul>
 
@@ -106,8 +106,7 @@ export default function TermsOfUse() {
       <p>
         LifeFlow is provided &quot;as is&quot; and &quot;as available&quot;. To the fullest extent allowed by law, we disclaim all warranties, express or
         implied, including warranties of merchantability, fitness for a particular purpose, accuracy and non-infringement. We do not promise that LifeFlow will
-        be uninterrupted, error-free, or that information it shows, including information from connected services and the assistant, will be accurate or
-        complete.
+        be uninterrupted, error-free, or that information it shows, including information from connected services and the skyling, will be accurate or complete.
       </p>
 
       <h2>12. Limitation of liability</h2>

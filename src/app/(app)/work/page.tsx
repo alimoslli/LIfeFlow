@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Briefcase, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Briefcase, ChevronLeft, ChevronRight } from "lucide-react";
 import { ActionForm } from "@/components/action-form";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { SubmitButton } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { JobHoursForm, ShiftDialog, WorkHoursField } from "./forms";
 import { ShiftList } from "./shift-list";
 import { addPaycheckAction, createEmployerAction, createShiftAction, setJobHoursAction } from "./actions";
 import { scheduleLabel } from "@/lib/work-schedule";
+import { SkylingIcon } from "@/components/skylings/sprite";
 
 export const metadata: Metadata = { title: "Work" };
 
@@ -57,11 +58,8 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
         actions={
           d.employers.length > 0 ? (
             <>
-              <AskJarvisButton
-                prompt="Here's my work schedule, please add these shifts: "
-                className="flex h-10 items-center gap-1.5 rounded-full bg-surface px-5 text-sm font-medium shadow-soft"
-              >
-                <Sparkles className="h-4 w-4 text-accent" /> Import schedule
+              <AskJarvisButton prompt="Here's my work schedule, please add these shifts: " className="lf-sb lf-sb-app lf-sb-sm">
+                <SkylingIcon className="h-5 w-5" /> Import schedule
               </AskJarvisButton>
               <ShiftDialog action={createShiftAction} employers={d.employers.map((e) => ({ id: e.id, name: e.name }))} today={d.today} />
             </>
@@ -214,7 +212,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
               <Card className="p-5 text-sm text-text-2">
                 <h2 className="mb-1 text-[0.8125rem] font-semibold tracking-wide uppercase">UKG Pro</h2>
                 Not connected. UKG API access is normally issued to employers, not personal logins, so LifeFlow uses manual entry and schedule photos your
-                assistant reads for now.{" "}
+                skyling reads for now.{" "}
                 <Link href="/settings/integrations" className="lf-hit text-accent hover:underline">
                   Details
                 </Link>
@@ -235,7 +233,7 @@ function EmployerForm() {
           <Input id="e-name" name="name" required placeholder="Campus Library" />
         </Field>
         <Field label="Position" htmlFor="e-pos">
-          <Input id="e-pos" name="position" placeholder="Student assistant" />
+          <Input id="e-pos" name="position" placeholder="Barista" />
         </Field>
         <Field label="Pay type" htmlFor="e-type">
           <Select id="e-type" name="payType" defaultValue="hourly">

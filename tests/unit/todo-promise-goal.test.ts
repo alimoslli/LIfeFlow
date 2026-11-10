@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildSystemPrompt } from "@/server/jarvis/prompt";
 import { getTool } from "@/server/jarvis/registry";
 
-// "I'm going to do something": the assistant sorts it into a to-do, a promise or a goal, and asks only when it truly could be two.
+// "I'm going to do something": the skyling sorts it into a to-do, a promise or a goal, and asks only when it truly could be two.
 const INSTRUCTIONS = buildSystemPrompt({
   userName: "Ali",
   tz: "America/Chicago",

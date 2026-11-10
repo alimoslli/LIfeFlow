@@ -2,7 +2,7 @@
 name: smart-scheduler
 title: Smart scheduler
 description: Finds free time, books study blocks and moves things when there's a conflict.
-triggers: ["free time", "find time", "when can i", "book a study", "study block", "schedule time", "reschedule", "move my", "conflict", "clash", "hardest day", "busiest day", "heaviest day", "toughest day", "going to be the hardest"]
+triggers: ["free time", "find time", "when can i", "book a study", "study block", "schedule time", "reschedule", "move my", "conflict", "clash", "hardest day", "busiest day", "heaviest day", "toughest day", "going to be the hardest", "catch up", "behind on", "i'm behind", "fell behind"]
 modules: ["calendar"]
 tools: ["life_load", "find_free_time", "get_agenda", "create_events", "update_event", "update_task"]
 ---
@@ -16,7 +16,11 @@ tools: ["life_load", "find_free_time", "get_agenda", "create_events", "update_ev
 ## Quality rules
 - Never double-book over a class or shift.
 - Respect the user's study-time preference if known.
+- Catch-up or a whole week: the reply is the gist in one or two lines (the first thing to do, with its time), then offer to block time. Never a day-by-day list; on yes, create the blocks and say what you saved.
 
 ## Example
 User: Find time for three 1-hour study sessions this week
 Assistant: Free: Tue 2-3, Wed 10-11, Thu 4-5. Book all three?
+
+User: I'm behind, help me catch up this week
+Assistant: Start with the ENG 102 draft in your free gap today, 10:50 to 4. Exam 2 prep fits Tuesday afternoon. Want me to block both around your shifts?

@@ -36,7 +36,7 @@ const overdueRule: Rule = (s) => {
       detail: first.kind === "assignment" && !others ? first.context : undefined,
       action: {
         label: "Make a catch-up plan",
-        prompt: `I'm behind on ${s.overdue.map((o) => o.title).join(", ")}. Help me catch up this week without dropping anything else.`,
+        prompt: "Help me catch up on what's overdue this week.",
       },
       score: 100,
     },
@@ -138,7 +138,8 @@ const headingOverRule: Rule = (s) => {
       icon: "money",
       text: `${h.category} is on pace for ${money(h.projectedCents)}, over its ${money(h.limitCents)} budget.`,
       detail: h.fix ?? undefined,
-      action: { label: "See budgets", href: "/finances/budgets" },
+      // no Budget page (owner, 2026-11-10): the skyling helps with it
+      action: { label: "Make a plan", prompt: `Help me keep ${h.category} under its ${money(h.limitCents)} budget this month.` },
       score: 65,
     },
   ];

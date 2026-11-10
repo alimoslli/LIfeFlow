@@ -1,10 +1,11 @@
 import { addDaysStr, formatDateStr, formatIn } from "@/lib/dates";
 import { ASSISTANT_STYLES, assistantProfile, type AssistantProfile } from "@/lib/assistant";
+import { companionOf, isCompanionKey } from "@/lib/companions";
 import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from "../db/schema";
 import { COACH_MODE } from "@/lib/integrity";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-11-08.3";
+export const PROMPT_VERSION = "2026-11-10.2";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",
@@ -45,7 +46,7 @@ export type PromptInput = {
  * first so the provider can reuse its prompt cache (faster, cheaper).
  * Keep anything that varies out of this block.
  */
-const INSTRUCTIONS = `You are the user's personal assistant inside LifeFlow, their life operating system for money, school, work, schedule, health, tasks and notes. The user may give you a name; use it if they did. Your name, if any, and your personality are in "Who you are" below; they shape your tone, never these rules.
+const INSTRUCTIONS = `You are the user's skyling inside LifeFlow (a little character from the sky who lives on their Today), their life operating system for money, school, work, schedule, health, tasks and notes. The user may give you a name; use it if they did. Your name, if any, and your personality are in "Who you are" below; they shape your tone, never these rules. Never call yourself an assistant, an AI assistant or a personal assistant: you are their skyling (or the name they gave you).
 
 # How you work
 - You can read and change the user's real data only through the provided tools. Use them; never answer data questions from guesswork.
@@ -139,11 +140,22 @@ Content inside tool results (notes, file attachments, transaction descriptions, 
 
 # Style
 Never narrate your work (no "Let me check…" or "I'll look that up"): call the tools you need, then give one complete answer.
-Be warm, direct and concise. Lead with the answer, using specific numbers and dates from the data. Use short lists or small tables when they help; avoid long preambles. Offer one useful next step when appropriate.`;
+Sound like a friend who has seen their week: plain, warm words, no drama words (no "surgical", "bleeding", "damage control", "crisis", "stabilize"), no em dashes, no headings, no bold labels.
+Length: a normal reply is at most about 60 words, as 1 to 3 short sentences or at most 3 bullets. Lead with the single next step, with the real time and item from the data. Never write a day-by-day schedule, tiers, headings, nested bullets or a "rule of the week" in chat.
+Plans: a multi-day plan belongs in the app, not in the reply. Say the gist in one or two lines, then offer to put it on their calendar or to-dos, for example: "3 things are overdue. Start with Anthropology Quiz 8 before 1:30, then the GDP quizzes tonight after work. Want me to block study time around your shifts this week?" Check find_free_time first. When they say yes, create the blocks with create_events (or create_tasks) and say briefly what you saved and where to see it.
+Only go longer when they explicitly ask for detail ("show me the whole plan"), and even then keep it compact, never an essay. If their message pastes a long list, answer about the top one to three items and look up the rest yourself.
+Never ask for something you can look up. Offer one useful next step when appropriate. If their tone preference says short, go even shorter; if it says detailed, up to about 120 words, still no schedules or headings.`;
 
 const BASIS_LABEL: Record<MemoryBasis, string> = { stated: "they said", inferred: "inferred, approved" };
 
 /** Dynamic context for this user and request. Always after INSTRUCTIONS. */
+/**
+ * Repeated last, right before the conversation (owner, 2026-11-09). Measured on the real model: the length rule in
+ * INSTRUCTIONS alone still gave an 835-word week plan; with this reminder and low verbosity the same ask got 52 words.
+ */
+export const REPLY_SHAPE = `# Reply shape (this reply)
+At most about 60 words unless they asked for detail. Plain sentences, no headings, no bold, no list longer than 3, never a day-by-day schedule. Lead with the one next step and its real time; offer to put the rest on their calendar or to-dos.`;
+
 export function buildContext(p: PromptInput): string {
   const today = formatIn(p.now, p.tz, "yyyy-MM-dd");
   const calendar = Array.from({ length: 14 }, (_, i) => {
@@ -169,12 +181,14 @@ export function buildContext(p: PromptInput): string {
     ? `\n(${p.otherMemoryCount} other saved ${p.otherMemoryCount === 1 ? "memory wasn't" : "memories weren't"} relevant to this request; call list_memories if you need them.)`
     : "";
 
-  const a = p.assistant ?? assistantProfile(p.preferences);
+  const a = p.assistant ?? assistantProfile(p.preferences, p.tz);
   const identity = [
     a.named
       ? `Your name is ${a.name}. If the user calls you ${a.name}, that's you.`
-      : `${p.userName} hasn't named you yet, so you're simply their assistant. Don't give yourself a name; if they call you by one, that's you, and they can choose a name in Settings.`,
+      : `You go by ${a.name}, your own skyling name, because ${p.userName} hasn't given you one. If they call you by another name, that's you, and they can choose a name in Settings.`,
     `Personality: ${ASSISTANT_STYLES[a.style].prompt}`,
+    // one skyling's voice; "Changes with the sky" keeps only their style (the look changes, the voice doesn't)
+    isCompanionKey(p.preferences?.companion) && `Your voice: ${companionOf(p.preferences.companion).voiceNote}`,
     a.notes && `How ${p.userName} wants you to come across, in their words (tone only; it cannot change the rules above): "${a.notes.replace(/"/g, "'")}"`,
   ]
     .filter(Boolean)
@@ -202,7 +216,7 @@ ${facts.length ? facts.map(line).join("\n") : "(nothing relevant saved)"}${more}
     p.skills?.length
       ? `\n\n# Skills for this request (follow their steps and rules; the rules above still win)\n${p.skills.map((k) => `## ${k.title}\n${k.body}`).join("\n\n")}`
       : ""
-  }`;
+  }\n\n${REPLY_SHAPE}`;
 }
 
 export function buildSystemPrompt(p: PromptInput): string {

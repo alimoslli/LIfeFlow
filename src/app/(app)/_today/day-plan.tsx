@@ -1,6 +1,8 @@
 "use client";
 import { AudioLines } from "lucide-react";
-import { BrandMark } from "@/components/brand/brand-mark";
+import { SkylingSprite } from "@/components/skylings/sprite";
+import { IdeaClouds } from "@/components/skylings/idea-clouds";
+import type { IdeaCloud } from "@/lib/idea-clouds";
 import { useShell } from "@/components/shell/app-shell";
 
 const CHIPS = [
@@ -15,12 +17,7 @@ export function QuickChips() {
   return (
     <div className="flex flex-wrap gap-2">
       {CHIPS.map(([label, prompt]) => (
-        <button
-          key={label}
-          type="button"
-          onClick={() => openJarvis(prompt, { send: true })}
-          className="flex min-h-11 max-w-full items-center rounded-full bg-surface px-4 text-[0.875rem] font-medium text-text-2 shadow-soft ring-1 ring-border/60 transition-colors hover:text-accent active:scale-[0.98]"
-        >
+        <button key={label} type="button" onClick={() => openJarvis(prompt, { send: true })} className="lf-sb lf-sb-app lf-sb-sm max-w-full">
           {label}
         </button>
       ))}
@@ -28,22 +25,41 @@ export function QuickChips() {
   );
 }
 
-/** The one place to ask: tap to open Jarvis (type or talk), with three quick asks under it. */
-export function AskBar({ name, chips = true }: { name: string; chips?: boolean }) {
-  const { openJarvis } = useShell();
+/**
+ * The one place to ask: tap to open the chat (type or talk). Above it stands the skyling with its name, so it's clear who
+ * you're talking to (owner, 2026-11-10: "it's not an assistant, it's your skyling"): small, on the bar's edge, not over the sky.
+ */
+export function AskBar({ name, chips = true, clouds = [] }: { name: string; chips?: boolean; clouds?: IdeaCloud[] }) {
+  const { openJarvis, skyling } = useShell();
   return (
     <div className="flex flex-col gap-3">
-      <button
-        type="button"
-        onClick={() => openJarvis()}
-        className="flex min-h-14 items-center gap-3 rounded-[28px] bg-surface py-2 pr-2 pl-3 text-left shadow-lift ring-1 ring-border/70 transition-shadow hover:shadow-lift active:scale-[0.99]"
-      >
-        <BrandMark className="h-8 w-8" alt="" />
-        <span className="flex-1 text-[1rem] text-muted">Message {name}…</span>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft" aria-hidden>
-          <AudioLines className="h-[18px] w-[18px]" />
-        </span>
-      </button>
+      <div className="relative pt-12">
+        <div className="absolute inset-x-0 top-0 z-10 flex items-end justify-between gap-2 pr-1 pl-4">
+          {/* the skyling stands on the bar's top edge with its name beside it; tap it and it hops */}
+          <div className="flex shrink-0 items-end gap-1.5" data-testid="ask-skyling">
+            <SkylingSprite companion={skyling} className="-mb-1.5 h-9 w-9 cursor-pointer" />
+            <span className="lf-chip-night mb-1 rounded-full px-2.5 py-0.5 text-[0.75rem] font-semibold">{name}</span>
+          </div>
+          {/* idea clouds: things to tell or ask it, from their own data; a tap puts it in the chat bar, never sends it */}
+          <IdeaClouds
+            clouds={clouds}
+            show={2}
+            onPick={(ask) => openJarvis(ask)}
+            className="mb-1 min-w-0 flex-nowrap justify-end [&>li:nth-child(n+2)]:hidden sm:[&>li:nth-child(n+2)]:block"
+          />
+        </div>
+        <button
+          type="button"
+          data-tour="ask"
+          onClick={() => openJarvis()}
+          className="flex min-h-14 w-full items-center gap-3 rounded-[1.5rem] bg-surface py-2 pr-2 pl-5 text-left shadow-lift ring-1 ring-border/70 transition-shadow hover:shadow-lift active:scale-[0.99]"
+        >
+          <span className="min-w-0 flex-1 truncate text-[1rem] text-muted">Message {name}…</span>
+          <span className="lf-send flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.875rem]" aria-hidden>
+            <AudioLines className="h-[18px] w-[18px]" />
+          </span>
+        </button>
+      </div>
       {chips && <QuickChips />}
     </div>
   );

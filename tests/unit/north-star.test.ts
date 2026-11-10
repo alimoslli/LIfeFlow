@@ -6,8 +6,8 @@ import { groupOf } from "@/server/jarvis/tool-groups";
 const prompt = buildSystemPrompt({ userName: "Ali", tz: "America/Chicago", now: new Date("2026-10-28T15:00:00Z"), accountKind: "standard", memories: [] });
 
 // The north star (ADR 0033): not a general chatbot; the small everyday decisions, with the connected facts, before they happen.
-describe("the north star in the assistant", () => {
-  it("the prompt says what the assistant is for, how it sounds, and never to invent numbers", () => {
+describe("the north star in the skyling", () => {
+  it("the prompt says what the skyling is for, how it sounds, and never to invent numbers", () => {
     expect(prompt).toMatch(/not a general chatbot/);
     expect(prompt).toMatch(/before they make it/);
     expect(prompt).toMatch(/call `tonight` first/);

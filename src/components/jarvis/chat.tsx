@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useAppBusy } from "@/lib/app-busy";
 import {
   AlertTriangle,
   ChevronRight,
@@ -26,9 +27,12 @@ import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
 import { isAppPath, viewAtName } from "@/lib/app-routes";
 import { jsonOf, PlainError, serverWords } from "@/lib/plain-error";
-import { knowsLine, nameAtStart } from "@/lib/assistant";
-import { greetingIn } from "@/lib/dates";
-import { BrandMark } from "@/components/brand/brand-mark";
+import { nameAtStart } from "@/lib/assistant";
+import { SkylingSprite } from "@/components/skylings/sprite";
+import { IdeaClouds } from "@/components/skylings/idea-clouds";
+import type { IdeaCloud } from "@/lib/idea-clouds";
+import { CLOUD, PixelArt, SkyWindow } from "@/components/skylings/sky-window";
+import { cheerSkylings } from "@/components/skylings/night";
 import { JarvisStatus, statusWord } from "./status";
 import { useShell } from "../shell/app-shell";
 import { AiConsentCard } from "./ai-consent-card";
@@ -80,7 +84,7 @@ export function JarvisChat({
   autoSend,
   onConversation,
   connect,
-  knows,
+  ideas,
   startVoice,
 }: {
   conversationId?: string | null;
@@ -94,13 +98,13 @@ export function JarvisChat({
   onConversation?: (id: string, title: string) => void;
   /** Not connected yet; shown as one "connect me to do more" card on the empty screen. */
   connect?: string[];
-  /** What this account has (classes, shifts, money), for the empty screen's line; unknown means none is claimed. */
-  knows?: string[];
   /** Open with the voice bar already on. */
   startVoice?: boolean;
+  /** Idea clouds for the empty chat, in place of the starter cards (owner, 2026-11-10; lib/idea-clouds). */
+  ideas?: IdeaCloud[];
 }) {
   const router = useRouter();
-  const { assistantName, firstName, aiConsent, tz } = useShell();
+  const { assistantName, aiConsent, tz, skyling } = useShell();
   const canSend = availability.available && aiConsent;
   const [conversationId, setConversationId] = useState(initialId ?? null);
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
@@ -112,6 +116,8 @@ export function JarvisChat({
   const [refreshing, startRefresh] = useTransition();
   const [pending, setPending] = useState<(UiAttachment & { uploading?: boolean; error?: string })[]>([]);
   const [lastTool, setLastTool] = useState<string | null>(null);
+  // a reply streaming or a file attached but not sent: an app update waits (components/pwa/app-updater.tsx)
+  useAppBusy(busy || pending.length > 0);
   const [talking, setTalking] = useState(!!startVoice && canSend);
   const abortRef = useRef<AbortController | null>(null);
   const attemptRef = useRef<Attempt | null>(null);
@@ -379,7 +385,11 @@ export function JarvisChat({
       updateAssistant((a) => void (a.streaming = false));
       setBusy(false);
       abortRef.current = null;
-      if (mutated) startRefresh(() => router.refresh());
+      if (mutated) {
+        // their skyling hops: something got done
+        cheerSkylings();
+        startRefresh(() => router.refresh());
+      }
     }
   }
 
@@ -438,7 +448,10 @@ export function JarvisChat({
           : m,
       ),
     );
-    if (data.status === "executed") startRefresh(() => router.refresh());
+    if (data.status === "executed") {
+      cheerSkylings();
+      startRefresh(() => router.refresh());
+    }
   }
 
   async function decideMemory(memoryId: string, decision: "keep" | "dismiss") {
@@ -513,23 +526,42 @@ export function JarvisChat({
             </div>
           )}
           {empty && (
-            <div className={cn("animate-rise flex flex-col items-center text-center", compact ? "pt-2" : "pt-0")}>
-              <div className={cn("relative", compact ? "h-12 w-12" : "h-14 w-14")}>
-                <span className="lf-orb-glow absolute -inset-1/3 rounded-full" aria-hidden />
-                <BrandMark className="lf-float relative h-full w-full" alt="" priority />
-              </div>
-              <p className="mt-3 text-[0.75rem] font-semibold tracking-[0.18em] text-muted uppercase">
-                {greetingIn(tz)}
-                {firstName ? `, ${firstName}` : ""}
-              </p>
-              <h2
-                className={cn("mt-2 font-display leading-[1.08] font-medium tracking-tight", compact ? "text-[1.625rem]" : "text-[1.9375rem] sm:text-[2.5rem]")}
-              >
-                What can I take off your plate?
-              </h2>
-              <p className="mt-2 max-w-xs text-[0.9375rem] leading-snug text-text-2">{knowsLine(knows)}</p>
+            <div className="animate-rise flex flex-col items-center text-center">
+              {/* their skyling in its corner of the real sky, saying the catchphrase with its name beside it (owner, 2026-11-10:
+                  "Let's clear your sky."; never put into the prompt as a script). Tap it and it hops. */}
+              <SkyWindow tz={tz} className={cn("w-full rounded-[2rem] text-left", compact ? "h-36" : "h-44 sm:h-52")}>
+                <div className="absolute bottom-0 left-[4%] flex flex-col items-center sm:left-[10%]">
+                  <SkylingSprite
+                    companion={skyling}
+                    className={cn("relative z-10 -mb-2 cursor-pointer", compact ? "h-16 w-16" : "h-20 w-20 sm:h-24 sm:w-24")}
+                  />
+                  <PixelArt art={CLOUD} className={cn("-mb-1", compact ? "w-24" : "w-28 sm:w-40")} />
+                </div>
+                <div className="lf-speech absolute top-1/2 right-4 left-[38%] -translate-y-[38%] px-3.5 py-3 sm:right-[8%] sm:left-[40%] sm:px-5 sm:py-4">
+                  <p className="text-[0.6875rem] font-semibold tracking-[0.14em] text-dawn-3 uppercase">{assistantName}</p>
+                  <h2
+                    className={cn(
+                      "mt-0.5 font-display leading-[1.1] font-medium tracking-tight",
+                      compact ? "text-[1.25rem]" : "text-[1.4375rem] sm:text-[2rem]",
+                    )}
+                  >
+                    Let&apos;s clear your sky.
+                  </h2>
+                </div>
+              </SkyWindow>
               {!aiConsent ? (
                 <AiConsentCard name={assistantName} />
+              ) : ideas?.length ? (
+                // the skyling's speech bubble and these clouds are the whole surface: a tap fills the box, never sends
+                <IdeaClouds
+                  clouds={ideas}
+                  show={3}
+                  onPick={(ask) => {
+                    setInput(ask);
+                    inputRef.current?.focus();
+                  }}
+                  className="mt-5 justify-center"
+                />
               ) : (
                 <div className="-mx-4 mt-4 flex w-[calc(100%+2rem)] snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 pt-1 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:w-full sm:grid-cols-4 sm:overflow-visible sm:px-0">
                   {starterCards(module).map(({ icon: Icon, title, prompt }) => (
@@ -537,10 +569,10 @@ export function JarvisChat({
                       key={title}
                       onClick={() => (prompt.endsWith("…") ? (setInput(prompt.replace("…", "")), inputRef.current?.focus()) : send(prompt))}
                       disabled={!canSend}
-                      className="flex min-h-[86px] w-[42%] min-w-[150px] shrink-0 snap-start flex-col items-start justify-between gap-2.5 rounded-[22px] bg-surface p-3.5 text-left shadow-soft sm:w-auto sm:min-w-0 ring-1 ring-border/60 transition-all hover:-translate-y-0.5 hover:shadow-lift active:scale-[0.98] disabled:opacity-50"
+                      className="lf-hop flex min-h-[86px] w-[42%] min-w-[150px] shrink-0 snap-start flex-col items-start justify-between gap-2.5 rounded-[1.375rem] bg-surface p-3.5 text-left shadow-soft ring-1 ring-border/60 hover:shadow-lift disabled:opacity-50 sm:w-auto sm:min-w-0"
                     >
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-soft text-accent">
-                        <Icon className="h-4 w-4" />
+                      <span className="lf-chip-night h-9 w-9 rounded-[0.75rem]">
+                        <Icon className="h-4 w-4" strokeWidth={2.2} />
                       </span>
                       <span className="text-[0.9375rem] leading-snug font-medium text-text">{title}</span>
                     </button>
@@ -550,9 +582,11 @@ export function JarvisChat({
               {aiConsent && connect && connect.length > 0 && (
                 <Link
                   href="/settings/integrations"
-                  className="mt-3 flex w-full items-center gap-3 rounded-[20px] bg-surface-2/70 px-4 py-3 text-left transition-colors hover:bg-surface-2"
+                  className="lf-hop mt-3 flex w-full items-center gap-3 rounded-[1.25rem] bg-surface-2/70 px-4 py-3 text-left hover:bg-surface-2"
                 >
-                  <Plug className="h-[18px] w-[18px] shrink-0 text-accent" />
+                  <span className="lf-chip-night h-8 w-8 shrink-0 rounded-[0.625rem]">
+                    <Plug className="h-4 w-4" />
+                  </span>
                   <span className="min-w-0 flex-1 text-[0.875rem] leading-snug text-text-2">
                     <span className="font-medium text-text">Connect me to do more.</span> Add {listOf(connect)} so I can plan around your real life.
                   </span>
@@ -561,11 +595,11 @@ export function JarvisChat({
               )}
             </div>
           )}
-          {messages.map((m) =>
+          {messages.map((m, i) =>
             m.role === "user" ? (
               <UserBubble key={m.id} m={m} />
             ) : (
-              <AssistantBubble key={m.id} m={m} onDecide={decide} onMemory={decideMemory} onRetry={tryAgain} />
+              <AssistantBubble key={m.id} m={m} last={i === messages.length - 1} onDecide={decide} onMemory={decideMemory} onRetry={tryAgain} />
             ),
           )}
           {!aiConsent && !empty && <AiConsentCard name={assistantName} />}
@@ -575,7 +609,7 @@ export function JarvisChat({
                 <button
                   key={f}
                   onClick={() => send(f)}
-                  className="rounded-full bg-surface px-4 py-2 text-[0.875rem] font-medium text-text-2 shadow-soft ring-1 ring-border/60 transition-colors hover:text-accent active:scale-[0.98]"
+                  className="lf-hop min-h-11 rounded-[0.9375rem] bg-surface px-4 py-2 text-[0.875rem] font-medium text-text-2 shadow-soft ring-1 ring-border/60 hover:text-text"
                 >
                   {f}
                 </button>
@@ -651,7 +685,7 @@ export function JarvisChat({
                 e.preventDefault();
                 send(input);
               }}
-              className="lf-composer flex items-end gap-1 rounded-[28px] bg-surface p-2 shadow-lift ring-1 ring-border/70 transition-shadow focus-within:ring-2 focus-within:ring-accent/35"
+              className="lf-composer flex items-end gap-1 rounded-[1.5rem] bg-surface p-2 shadow-lift ring-1 ring-border/70 transition-shadow focus-within:ring-2 focus-within:ring-dawn-2/60"
             >
               <input ref={fileRef} type="file" accept={ACCEPT} multiple hidden onChange={(e) => upload(e.target.files)} />
               <button
@@ -696,19 +730,14 @@ export function JarvisChat({
               />
               {!busy && <VoiceButton assistantName={assistantName} disabled={!canSend || refreshing} onStart={() => setTalking(true)} />}
               {busy ? (
-                <button
-                  type="button"
-                  onClick={stop}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-text text-bg"
-                  aria-label="Stop"
-                >
+                <button type="button" onClick={stop} className="lf-chip-night h-11 w-11 shrink-0 rounded-[0.875rem]" aria-label="Stop">
                   <Square className="h-3.5 w-3.5" />
                 </button>
               ) : (
                 <button
                   type="submit"
                   disabled={!canSend || refreshing || (!input.trim() && !pending.some((p) => !p.uploading && !p.error))}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft transition-all active:scale-95 disabled:bg-surface-3 disabled:text-muted disabled:shadow-none"
+                  className="lf-send flex h-11 w-11 shrink-0 items-center justify-center rounded-[0.875rem]"
                   aria-label="Send"
                 >
                   <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.4} />
@@ -728,12 +757,12 @@ export function JarvisChat({
 function UserBubble({ m }: { m: Extract<UiMessage, { role: "user" }> }) {
   return (
     <div className="animate-fade-in flex justify-end">
-      <div className="max-w-[85%] rounded-[24px] rounded-br-[8px] bg-hero px-4 py-3 text-[1rem] leading-relaxed whitespace-pre-wrap text-hero-text shadow-soft">
+      <div className="lf-bubble-me max-w-[85%] rounded-[1.375rem] rounded-br-[0.375rem] px-4 py-3 text-[1rem] leading-relaxed whitespace-pre-wrap">
         {m.text}
         {m.attachments.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {m.attachments.map((a) => (
-              <span key={a.id} className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-xs">
+              <span key={a.id} className="inline-flex items-center gap-1 rounded-full bg-white/60 px-2 py-0.5 text-xs">
                 {a.mimeType.startsWith("image/") ? <ImageIcon className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
                 {a.filename}
               </span>
@@ -747,20 +776,27 @@ function UserBubble({ m }: { m: Extract<UiMessage, { role: "user" }> }) {
 
 function AssistantBubble({
   m,
+  last,
   onDecide,
   onMemory,
   onRetry,
 }: {
   m: Extract<UiMessage, { role: "assistant" }>;
+  /** The newest reply's skyling stays awake (blinks, hops when something gets done); older ones are still pictures. */
+  last?: boolean;
   onRetry: () => void;
   onDecide: (id: string, d: "confirm" | "cancel") => void;
   onMemory: (memoryId: string, d: "keep" | "dismiss") => void;
 }) {
+  const { skyling } = useShell();
   const working = m.streaming && !m.text;
   const runningTool = [...m.tools].reverse().find((t) => t.status === "running")?.name;
   return (
     <div className="animate-fade-in flex gap-3">
-      <BrandMark className="mt-0.5 h-7 w-7" alt="" />
+      {/* their skyling, walking while it works */}
+      <span className="lf-chip-night mt-0.5 h-9 w-9 shrink-0 overflow-hidden rounded-[0.75rem]">
+        <SkylingSprite companion={skyling} busy={!!m.streaming} still={!m.streaming && !last} className="h-8 w-8 translate-y-[3px]" />
+      </span>
       <div className="min-w-0 flex-1 space-y-2.5">
         {working && <JarvisStatus word={statusWord(runningTool)} />}
         {m.text && <Markdown text={m.text} />}
@@ -771,7 +807,7 @@ function AssistantBubble({
             {m.notice.kind === "recovering" && <Loader2 className="h-4 w-4 shrink-0 animate-spin" />}
             <span className="min-w-0 flex-1">{m.notice.text}</span>
             {m.notice.kind === "lost" && (
-              <button type="button" onClick={onRetry} className="min-h-11 rounded-full bg-accent px-4 text-sm font-medium text-accent-text">
+              <button type="button" onClick={onRetry} className="lf-sb lf-sb-sun lf-sb-sm">
                 Try again
               </button>
             )}
@@ -791,7 +827,7 @@ function AssistantBubble({
                 <button onClick={() => onDecide(c.actionId, "confirm")} className="rounded-full bg-danger px-4 py-2 text-sm font-medium text-white">
                   Confirm
                 </button>
-                <button onClick={() => onDecide(c.actionId, "cancel")} className="rounded-full bg-surface-2 px-4 py-2 text-sm">
+                <button onClick={() => onDecide(c.actionId, "cancel")} className="lf-sb lf-sb-app lf-sb-sm">
                   Cancel
                 </button>
               </div>
@@ -833,10 +869,10 @@ function MemoryCard({ s, onDecide }: { s: UiMemorySuggestion; onDecide: (memoryI
       {s.status === "proposed" ? (
         <>
           <div className="mt-3 flex gap-2">
-            <button onClick={() => onDecide(s.memoryId, "keep")} className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-text">
+            <button onClick={() => onDecide(s.memoryId, "keep")} className="lf-sb lf-sb-sun lf-sb-sm">
               Keep
             </button>
-            <button onClick={() => onDecide(s.memoryId, "dismiss")} className="rounded-full bg-surface-2 px-4 py-2 text-sm">
+            <button onClick={() => onDecide(s.memoryId, "dismiss")} className="lf-sb lf-sb-app lf-sb-sm">
               Not now
             </button>
           </div>
@@ -863,11 +899,7 @@ function OpenLinks({ tools }: { tools: UiTool[] }) {
   return (
     <div className="flex flex-wrap gap-2">
       {places.slice(0, 3).map((href) => (
-        <Link
-          key={href}
-          href={href}
-          className="inline-flex min-h-11 items-center gap-1 rounded-full bg-surface px-4 text-[0.875rem] font-medium text-accent shadow-soft ring-1 ring-border/60"
-        >
+        <Link key={href} href={href} className="lf-sb lf-sb-app lf-sb-sm">
           Open {viewAtName(href)}
           <ChevronRight className="h-4 w-4" />
         </Link>
@@ -896,7 +928,7 @@ function SourceList({ tools }: { tools: UiTool[] }) {
             target="_blank"
             rel="noopener noreferrer nofollow"
             title={s.title}
-            className="inline-flex min-h-8 max-w-[14rem] items-center truncate rounded-full bg-surface-2 px-3 text-xs text-text-2 hover:text-text"
+            className="lf-sb lf-sb-app lf-sb-xs max-w-[14rem] truncate lf-touch"
           >
             {host}
           </a>

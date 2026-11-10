@@ -43,15 +43,12 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
         actions={
           <>
             {project && (
-              <AskJarvisButton
-                prompt={`Help me turn the "${project.name}" project into a concrete plan with tasks.`}
-                className="h-11 rounded-full bg-surface px-5 text-sm font-medium shadow-soft"
-              >
+              <AskJarvisButton prompt={`Help me turn the "${project.name}" project into a concrete plan with tasks.`} className="lf-sb lf-sb-app lf-sb-sm">
                 Plan with <AssistantName />
               </AskJarvisButton>
             )}
             {!project && (
-              <Link href="/jarvis/memory" className="flex h-11 items-center rounded-full bg-surface px-4 text-sm font-medium shadow-soft">
+              <Link href="/jarvis/memory" className="lf-sb lf-sb-app lf-sb-sm">
                 What <AssistantName /> remembers
               </Link>
             )}

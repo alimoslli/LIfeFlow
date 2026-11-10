@@ -439,7 +439,7 @@ describe("Plaid", () => {
     expect(mapPfc({ primary: "RENT_AND_UTILITIES", detailed: "RENT_AND_UTILITIES_WATER" }, -3100)).toEqual({ category: "Utilities", kind: "expense" });
   });
 
-  it("the sync tool tells the assistant the bank connection isn't available, never Plaid's setup text", async () => {
+  it("the sync tool tells the skyling the bank connection isn't available, never Plaid's setup text", async () => {
     const { user, run } = await connected();
     const tool = getTool("sync_bank_accounts")!;
     const ctx = { userId: user.id, tz: TZ, today: "2026-10-28", now: new Date(), conversationId: "", userText: "", memorySuggestions: false, run };

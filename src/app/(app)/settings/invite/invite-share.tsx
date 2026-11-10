@@ -21,7 +21,13 @@ export function InviteShare({ link, firstName }: { link: string; firstName: stri
     }
   };
   const share = () =>
-    navigator.share({ title: "LifeFlow", text: `${firstName} invited you to LifeFlow, a personal planner and AI assistant.`, url: link }).catch(() => {});
+    navigator
+      .share({
+        title: "LifeFlow",
+        text: `${firstName} invited you to LifeFlow, your whole week on one sky, with a little skyling who keeps an eye on it.`,
+        url: link,
+      })
+      .catch(() => {});
   return (
     <div className="mt-5 flex flex-col gap-3">
       <label htmlFor="invite-link" className="text-sm font-medium text-text-2">
@@ -35,16 +41,12 @@ export function InviteShare({ link, firstName }: { link: string; firstName: stri
         className="h-12 w-full min-w-0 rounded-2xl bg-surface-2 px-4 text-[0.9375rem] text-text"
       />
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={copy}
-          className="flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-accent-text shadow-soft hover:bg-accent-hover"
-        >
+        <button type="button" onClick={copy} className="lf-sb lf-sb-sun lf-sb-sm">
           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
           {copied ? "Copied" : "Copy link"}
         </button>
         {canShare && (
-          <button type="button" onClick={share} className="flex min-h-11 items-center gap-2 rounded-full bg-surface-2 px-5 text-sm font-medium text-text">
+          <button type="button" onClick={share} className="lf-sb lf-sb-app lf-sb-sm">
             <Share className="h-4 w-4" />
             Share
           </button>

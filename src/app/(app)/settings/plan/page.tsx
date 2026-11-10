@@ -13,11 +13,11 @@ import { manageBillingAction, upgradeAction } from "./actions";
 export const metadata: Metadata = { title: "Plan" };
 
 const PRO = [
-  "Unlimited assistant messages",
+  "Unlimited messages with your skyling",
   "Bank and card sync",
   "Gmail and Google Calendar",
-  "Text your assistant from your phone",
-  "Talk to your assistant by voice",
+  "Text your skyling from your phone",
+  "Talk to your skyling by voice",
 ];
 
 /** Free vs Pro, with one button. Payments and cancelling happen on Stripe's pages. */

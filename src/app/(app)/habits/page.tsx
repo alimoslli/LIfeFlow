@@ -21,7 +21,7 @@ export default async function HealthPage() {
           <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Health</h1>
           <p className="mt-1 text-sm text-text-2">Your sleep, steps and workouts this week.</p>
         </div>
-        <Link href="/settings/integrations" className="flex min-h-11 shrink-0 items-center rounded-full bg-surface px-4 text-sm font-medium shadow-soft">
+        <Link href="/settings/integrations" className="lf-sb lf-sb-app lf-sb-sm shrink-0">
           Apple Health
         </Link>
       </header>

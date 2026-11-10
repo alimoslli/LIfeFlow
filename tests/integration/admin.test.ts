@@ -67,6 +67,62 @@ describe("overview and user list", () => {
     expect(all.rows).toEqual([]);
     expect(all.pages).toBeGreaterThanOrEqual(1);
   });
+  it("lists only the accounts seen in the last 24 hours, newest seen first, matching the Active today count", async () => {
+    const tag = `Seen ${Date.now()}`;
+    const early = await makeUser(`${tag} early`);
+    const late = await makeUser(`${tag} late`);
+    const away = await makeUser(`${tag} away`);
+    const none = await makeUser(`${tag} none`); // never signed in
+    await createSession(db(), early.user.id);
+    await createSession(db(), late.user.id);
+    await createSession(db(), away.user.id);
+    const ago = (h: number) => new Date(Date.now() - h * 3_600_000);
+    await db()
+      .update(sessions)
+      .set({ lastSeenAt: ago(5) })
+      .where(eq(sessions.userId, early.user.id));
+    await db()
+      .update(sessions)
+      .set({ lastSeenAt: ago(1) })
+      .where(eq(sessions.userId, late.user.id));
+    await db()
+      .update(sessions)
+      .set({ lastSeenAt: ago(48) })
+      .where(eq(sessions.userId, away.user.id));
+
+    const today = await listUsers(db(), { q: tag, seen: "today" });
+    expect(today.rows.map((r) => r.id)).toEqual([late.user.id, early.user.id]); // newest seen first; away and none left out
+    expect(today.total).toBe(2);
+    expect((await listUsers(db(), { q: tag })).total).toBe(4); // without the filter, everyone
+    expect(today.rows.map((r) => r.id)).not.toContain(none.user.id);
+
+    // The list and the "Active today" tile use the same rule.
+    const before = (await overview(db())).active24h;
+    await db()
+      .update(sessions)
+      .set({ lastSeenAt: ago(2) })
+      .where(eq(sessions.userId, away.user.id));
+    expect((await overview(db())).active24h).toBe(before + 1);
+    expect((await listUsers(db(), { q: tag, seen: "today" })).total).toBe(3);
+  });
+  it("stamps last seen every 10 minutes of use, not once a day", async () => {
+    const u = await makeUser("Seen Stamp");
+    const { token } = await createSession(db(), u.user.id);
+    const at = async () => (await db().select({ t: sessions.lastSeenAt }).from(sessions).where(eq(sessions.userId, u.user.id)))[0].t.getTime();
+    await db()
+      .update(sessions)
+      .set({ lastSeenAt: new Date(Date.now() - 2 * 60_000) })
+      .where(eq(sessions.userId, u.user.id));
+    const recent = await at();
+    await validateSession(db(), token);
+    expect(await at()).toBe(recent); // used 2 minutes ago: no write
+    await db()
+      .update(sessions)
+      .set({ lastSeenAt: new Date(Date.now() - 30 * 60_000) })
+      .where(eq(sessions.userId, u.user.id));
+    await validateSession(db(), token);
+    expect(Date.now() - (await at())).toBeLessThan(60_000); // 30 minutes stale: stamped now
+  });
   it("shows account facts and nothing private", async () => {
     const u = await makeUser("Detail Person");
     const d = await getUser(db(), u.user.id);

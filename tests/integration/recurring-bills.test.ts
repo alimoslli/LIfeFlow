@@ -393,7 +393,7 @@ describe("bills under the tidied vendor names (merge with the vendor tidy)", () 
 });
 
 describe("only real bills are offered (A16)", () => {
-  it("leaves a coffee shop and a doubtful series out of the suggestions the Bills page and the assistant read", async () => {
+  it("leaves a coffee shop and a doubtful series out of the suggestions the Bills page and the skyling read", async () => {
     const { run } = await makeUser();
     await run(async (s) => {
       const { checking } = await accounts(s);

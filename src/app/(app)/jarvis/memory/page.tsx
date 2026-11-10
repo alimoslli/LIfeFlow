@@ -28,7 +28,7 @@ import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { jarvisSettings, learnedStats } from "@/server/services/proactive/engine";
 import { LearnedCard } from "@/app/(app)/settings/memory/learned-card";
 
-export const metadata: Metadata = { title: "What your assistant knows" };
+export const metadata: Metadata = { title: "What your skyling knows" };
 
 const seconds = (ms: number | null) => (ms == null ? "None yet" : `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`);
 const compact = (n: number) => new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n);
@@ -53,7 +53,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
       stats,
       tz: u.timezone,
       suggestionsOn: u.preferences?.memorySuggestions !== false,
-      assistant: assistantProfile(u.preferences),
+      assistant: assistantProfile(u.preferences, u.timezone),
       learning: js.learning === true,
     };
   });
@@ -105,11 +105,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                     </span>
                   </p>
                 </div>
-                <ActionButton
-                  action={decideMemoryAction.bind(null, m.id, "keep")}
-                  title="Keep"
-                  className="flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-sm font-medium text-accent-text"
-                >
+                <ActionButton action={decideMemoryAction.bind(null, m.id, "keep")} title="Keep" className="lf-sb lf-sb-sun lf-sb-xs lf-touch">
                   <Check className="h-3.5 w-3.5" /> Keep
                 </ActionButton>
                 <ActionButton
@@ -293,7 +289,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
               </div>
               <Badge tone={status.available ? "success" : "warning"}>{status.available ? "Ready" : "Not configured"}</Badge>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Your assistant use in the last 30 days">
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-label="Your skyling use in the last 30 days">
               <Stat label="Requests (30 days)" value={String(st.runs)} />
               <Stat
                 label="Typical reply"

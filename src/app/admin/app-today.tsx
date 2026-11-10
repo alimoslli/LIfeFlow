@@ -57,7 +57,7 @@ export async function AppToday() {
             label="Active today"
             value={o.ok ? o.data.active24h : "–"}
             sub={o.ok ? `${o.data.sessions} signed-in devices` : undefined}
-            href="/admin/app#growth"
+            href="/admin/people?seen=today#people"
           />
           <Tile label="New today" value={o.ok ? o.data.new24h : "–"} sub={o.ok ? `${o.data.new30d} this month` : undefined} href="/admin/app#growth" />
           <Tile label="Errors (24 h)" value={e.ok ? e.data.hits : "–"} sub={e.ok ? `${e.data.kinds} kinds` : undefined} href="/admin/app#errors" />

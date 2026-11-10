@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { TextSizePicker, ThemePicker } from "@/components/theme-picker";
-import { TEXT_COOKIE, THEME_COOKIE, parseTextSize, parseTheme } from "@/lib/theme";
+import { TextSizePicker, ThemePicker, TodayModePicker } from "@/components/theme-picker";
+import { TEXT_COOKIE, THEME_COOKIE, TODAY_COOKIE, parseTextSize, parseTheme, parseTodayMode } from "@/lib/theme";
 import { eq } from "drizzle-orm";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -33,6 +33,8 @@ export default async function ProfileSettings() {
         <p className="mt-2 text-xs text-muted">System follows your phone&apos;s light or dark setting.</p>
         <h3 className="mt-5 mb-3 text-sm font-medium text-text-2">Text size</h3>
         <TextSizePicker initial={parseTextSize(jar.get(TEXT_COOKIE)?.value)} />
+        <h3 className="mt-5 mb-3 text-sm font-medium text-text-2">Today&apos;s sky</h3>
+        <TodayModePicker initial={parseTodayMode(jar.get(TODAY_COOKIE)?.value)} />
       </Card>
       <Card className="p-6">
         <h2 className="mb-4 text-[0.9375rem] font-semibold">Profile</h2>
@@ -58,6 +60,9 @@ export default async function ProfileSettings() {
                 <option value="1">Monday</option>
                 <option value="0">Sunday</option>
               </Select>
+            </Field>
+            <Field label="Birthday" htmlFor="p-birth">
+              <Input id="p-birth" name="birthDate" type="date" defaultValue={u.preferences.birthDate ?? ""} />
             </Field>
             <Field label="What fills your week" htmlFor="p-life">
               <Select id="p-life" name="lifeStage" defaultValue={u.preferences.lifeStage ?? "both"}>

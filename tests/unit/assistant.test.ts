@@ -1,13 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { assistantLabel, assistantProfile, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
+import { assistantLabel, assistantProfile, nameAtStart, skylingName, UNNAMED_ASSISTANT } from "@/lib/assistant";
 import { buildSystemPrompt } from "@/server/jarvis/prompt";
 import { assistantSchema } from "@/server/services/accounts";
 
 const base = { userName: "Ali", tz: "America/Chicago", now: new Date("2026-10-28T15:00:00Z"), accountKind: "standard" as const, memories: [] };
 
 describe("assistant profile", () => {
-  it("has no name until the user picks one: 'your assistant', friend, marin, and maps older styles", () => {
-    expect(assistantProfile(undefined)).toEqual({ name: "your assistant", named: false, style: "friend", notes: null, voice: "marin" });
+  it("without a name of their own it goes by its skyling's (Ray by default), friend, marin, and maps older styles", () => {
+    expect(assistantProfile(undefined)).toEqual({ name: "Ray", named: false, style: "friend", notes: null, voice: "marin" });
+    expect(assistantProfile({ companion: "star" })).toMatchObject({ name: "Star", named: false });
+    // "Changes with the sky": whoever is up where they are
+    expect(skylingName("sky", "America/Chicago", new Date("2026-06-21T05:00:00Z"))).toBe("Star"); // midnight in Chicago
+    expect(skylingName("sky", "America/Chicago", new Date("2026-06-21T19:00:00Z"))).toBe("Noon"); // 2 PM in Chicago
+    expect(assistantProfile({ companion: "sky" }, "America/Chicago").named).toBe(false);
+    // the old product name "Dev" is never shown as theirs (owner, 2026-11-10)
+    expect(assistantProfile({ assistantName: "Dev", companion: "goldie" })).toMatchObject({ name: "Goldie", named: false });
     expect(assistantProfile({ assistantName: "   " }).named).toBe(false);
     expect(assistantProfile({ assistantStyle: "professional" }).style).toBe("direct");
     // A name the user already saved stays theirs, "Jarvis" included.
@@ -16,19 +23,18 @@ describe("assistant profile", () => {
   });
 
   it("words the unnamed assistant for sentences and labels", () => {
-    expect(UNNAMED_ASSISTANT).toBe("your assistant");
-    expect(nameAtStart(UNNAMED_ASSISTANT)).toBe("Your assistant");
-    expect(assistantLabel(UNNAMED_ASSISTANT)).toBe("Assistant");
+    expect(UNNAMED_ASSISTANT).toBe("your skyling");
+    expect(nameAtStart(UNNAMED_ASSISTANT)).toBe("Your skyling");
+    expect(assistantLabel(UNNAMED_ASSISTANT)).toBe("Skyling");
     expect(nameAtStart("Nova")).toBe("Nova");
     expect(assistantLabel("nova")).toBe("nova");
   });
 
-  it("never gives itself a name in the prompt before the user picks one", () => {
+  it("goes by its own skyling name in the prompt until the user picks one", () => {
     const plain = buildSystemPrompt(base);
     const who = plain.slice(plain.indexOf("# Who you are"), plain.indexOf("# Right now"));
     expect(who).not.toMatch(/Your name is/);
-    expect(who).toMatch(/hasn't named you yet/);
-    expect(who).toMatch(/don't give yourself a name/i);
+    expect(who).toMatch(/You go by Ray, your own skyling name, because Ali hasn't given you one/);
     // The shared instructions don't assume a name was chosen either.
     const shared = plain.slice(0, plain.indexOf("# Who you are"));
     expect(shared).not.toMatch(/chose your name/);

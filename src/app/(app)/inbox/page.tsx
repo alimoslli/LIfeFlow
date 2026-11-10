@@ -158,7 +158,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
               </div>
               {i.status === "suggested" && (
                 <div className="mt-2 flex justify-end">
-                  <ActionButton action={fileSuggestionAction.bind(null, i.id)} className="min-h-11 rounded-full bg-accent px-4 text-sm font-medium text-white">
+                  <ActionButton action={fileSuggestionAction.bind(null, i.id)} className="lf-sb lf-sb-sun lf-sb-sm">
                     {i.reason ?? "File this?"}
                   </ActionButton>
                 </div>
@@ -175,17 +175,11 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                     </ActionButton>
                   ))}
                   {!ask.options && (ask.sameAs || ask.twin || ask.seriesKey) && (
-                    <ActionButton
-                      action={answerQuestionAction.bind(null, i.id, true, undefined)}
-                      className="min-h-11 rounded-full bg-accent px-4 text-sm font-medium text-white"
-                    >
+                    <ActionButton action={answerQuestionAction.bind(null, i.id, true, undefined)} className="lf-sb lf-sb-sun lf-sb-sm">
                       {ask.kind === "exam" ? "Yes, it moved" : "Yes, it\u2019s the same"}
                     </ActionButton>
                   )}
-                  <ActionButton
-                    action={answerQuestionAction.bind(null, i.id, false, undefined)}
-                    className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium text-text"
-                  >
+                  <ActionButton action={answerQuestionAction.bind(null, i.id, false, undefined)} className="lf-sb lf-sb-app lf-sb-sm">
                     {ask.kind === "exam" ? "No, keep the old date" : ask.options ? "It\u2019s a new bill" : "No, keep both"}
                   </ActionButton>
                 </div>

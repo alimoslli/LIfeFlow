@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { celebrate } from "./motion/burst";
 import { useRef, useState, type ReactNode } from "react";
 import { Check, Trash2, Undo2 } from "lucide-react";
 import { haptic } from "@/lib/haptics";
@@ -75,6 +76,8 @@ export function SwipeRow({
     }
     if (kind === "complete" && onComplete) {
       settle(0);
+      // finishing something gets its moment: sparks from the row (not when it's being un-done)
+      if (!done) celebrate(wrap.current?.getBoundingClientRect(), "small");
       const r = await onComplete();
       toast(r?.ok ? (r.message ?? "Done.") : (r?.error ?? "Couldn't update."), { tone: r?.ok ? "success" : "danger" });
       router.refresh();

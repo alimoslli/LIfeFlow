@@ -11,35 +11,35 @@ export function BriefCard({ brief, chief, pending }: { brief: Brief | null; chie
   const title = chief?.title ?? "COO";
   const url = chief?.primaryChat?.url ?? null;
   return (
-    <section aria-labelledby="hq-brief-title" data-testid="hq-brief" className="hq-brief p-4 sm:p-6">
+    <section aria-labelledby="hq-brief-title" data-testid="hq-brief" className="hq-brief p-4 sm:p-6 lg:rounded-[28px]">
       <div className="relative z-10 flex items-center gap-3">
         {/* The COO's face, cropped from his room picture (public/hq/office). */}
         <span className="hq-coo-face" aria-hidden="true" />
         <div className="min-w-0">
-          <h2 id="hq-brief-title" className="font-display text-[1.375rem] leading-tight font-medium">
+          <h2 id="hq-brief-title" className="font-display text-[1.375rem] leading-tight font-medium lg:text-[1.5rem]">
             From your {title}
           </h2>
-          {brief && <p className="text-[0.8125rem] text-[#d8e8df]">{ago(brief.createdAt)}</p>}
+          {brief && <p className="text-[0.8125rem] text-[#d6e4f7]">{ago(brief.createdAt)}</p>}
         </div>
       </div>
       <div className="relative z-10">
         {brief ? (
           <>
-            <p data-testid="hq-brief-body" className="mt-2 hidden text-[0.9375rem] leading-relaxed whitespace-pre-line text-[#eaf3ee] sm:block">
+            <p data-testid="hq-brief-body" className="mt-2 hidden text-[0.9375rem] leading-relaxed whitespace-pre-line text-[#eef3fb] sm:block lg:text-base">
               {brief.body}
             </p>
             <details className="group mt-2 sm:hidden">
               <summary className="flex min-h-11 cursor-pointer list-none flex-col justify-center [&::-webkit-details-marker]:hidden">
-                <span className="line-clamp-6 text-[0.9375rem] leading-relaxed whitespace-pre-line text-[#eaf3ee] group-open:hidden">{brief.body}</span>
+                <span className="line-clamp-6 text-[0.9375rem] leading-relaxed whitespace-pre-line text-[#eef3fb] group-open:hidden">{brief.body}</span>
                 <span className="mt-1 text-sm font-medium text-brass-xl group-open:hidden">Read all</span>
                 <span className="hidden text-sm font-medium text-brass-xl group-open:inline">Show less</span>
               </summary>
-              <p className="text-[0.9375rem] leading-relaxed whitespace-pre-line text-[#eaf3ee]">{brief.body}</p>
+              <p className="text-[0.9375rem] leading-relaxed whitespace-pre-line text-[#eef3fb]">{brief.body}</p>
             </details>
           </>
         ) : (
           <div className="mt-2">
-            <p className="text-sm text-[#d8e8df]">Your {title}&apos;s first brief arrives after the next round.</p>
+            <p className="text-sm text-[#d6e4f7]">Your {title}&apos;s first brief arrives after the next round.</p>
           </div>
         )}
 
@@ -60,13 +60,13 @@ export function BriefCard({ brief, chief, pending }: { brief: Brief | null; chie
               href={url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-white/35 px-5 text-sm font-semibold text-[#f4f8f5] max-sm:w-full"
+              className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-white/40 px-5 text-sm font-semibold text-[#f5f8fd] max-sm:w-full"
             >
               Talk to your {title} <ExternalLink className="h-4 w-4" aria-hidden />
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
           ) : (
-            <Link href="/admin/hq/settings" className="inline-flex min-h-11 items-center text-sm text-[#eaf3ee] underline underline-offset-2">
+            <Link href="/admin/hq/settings" className="inline-flex min-h-11 items-center text-sm text-[#eef3fb] underline underline-offset-2">
               Connect its chat in Settings
             </Link>
           )}

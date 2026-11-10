@@ -1,14 +1,31 @@
 import Link from "next/link";
 import { BrandLockup } from "@/components/brand/brand-mark";
-import { AssistantScene } from "@/components/landing/assistant-scene";
+import { NightSky } from "@/components/skylings/night-sky";
 
+/**
+ * Sign-up, sign-in and password pages (remade 2026-11-09 with the landing): the skylings' night beside the form on a
+ * laptop, above it on a phone, where the form rises over the sky like the morning.
+ */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-dvh lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-      <div className="flex flex-col px-6 pt-10 pb-8 sm:px-10">
-        <BrandLockup markClassName="h-10 w-10" priority />
+    <div className="grid min-h-dvh bg-bg lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+      {/* phone: a stretch of the night with the cast, the form rising over it */}
+      <div className="relative isolate h-[clamp(17rem,42svh,24rem)] overflow-hidden bg-night-ground lg:hidden">
+        {/* the sky ends where the form's sheet begins, so nobody walks behind it */}
+        <div className="absolute inset-x-0 top-0 bottom-8">
+          <NightSky stage="strip" />
+        </div>
+        <Link href="/" className="absolute top-4 left-5 z-10 rounded-full" aria-label="LifeFlow home">
+          <BrandLockup markClassName="h-8 w-8" priority light />
+        </Link>
+      </div>
+
+      <div className="relative z-10 -mt-8 flex flex-col rounded-t-[2rem] bg-bg px-6 pt-8 pb-8 sm:px-10 lg:mt-0 lg:rounded-none lg:pt-10">
+        <Link href="/" className="hidden self-start rounded-full lg:inline-flex" aria-label="LifeFlow home">
+          <BrandLockup markClassName="h-10 w-10" priority />
+        </Link>
         <div className="flex flex-1 items-center">
-          <div className="animate-rise mx-auto w-full max-w-sm py-10">{children}</div>
+          <div className="animate-rise mx-auto w-full max-w-sm py-4 lg:py-10">{children}</div>
         </div>
         <p className="text-center text-xs text-muted">
           Your data stays private to your account. ·{" "}
@@ -22,24 +39,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </p>
       </div>
 
-      {/* Product preview on larger screens */}
-      <aside className="relative hidden overflow-hidden bg-hero lg:block" aria-hidden>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_21%,rgb(197_231_209_/_0.28),transparent_30%),radial-gradient(circle_at_14%_90%,rgb(244_218_169_/_0.18),transparent_40%)]" />
-        <svg viewBox="0 0 600 800" preserveAspectRatio="none" className="absolute inset-0 h-full w-full opacity-[0.10]">
-          {Array.from({ length: 14 }, (_, i) => (
-            <path
-              key={i}
-              d={`M-20 ${520 - i * 22} C 160 ${300 + i * 14}, 360 ${700 - i * 18}, 640 ${260 + i * 16}`}
-              fill="none"
-              stroke="white"
-              strokeWidth="1.4"
-            />
-          ))}
-        </svg>
-        <div className="relative flex h-full items-center justify-center px-10 pt-10 pb-20">
-          <div className="w-full max-w-[340px]">
-            <AssistantScene tone="hero" />
-          </div>
+      {/* laptop: the whole night beside the form */}
+      <aside className="relative isolate hidden overflow-hidden lg:block" aria-hidden>
+        <NightSky stage="aside" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 p-12">
+          <p className="text-[0.75rem] font-semibold tracking-[0.14em] text-star-gold uppercase">The skylings</p>
+          <p className="mt-3 max-w-[18ch] font-display text-[2.75rem] leading-[1.02] font-medium tracking-[-0.035em] text-balance text-white">
+            Six little ones, keeping your sky in order.
+          </p>
+          <p className="mt-4 max-w-[38ch] text-[1.0625rem] leading-relaxed text-white/75">Tap the sky. They like visitors.</p>
         </div>
       </aside>
     </div>

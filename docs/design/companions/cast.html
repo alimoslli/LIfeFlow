@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Cast</title>
+<meta name="description" content="LifeFlow's six companions, named for moments of the sky: 24 by 24 pixel sprites by day and by night, their personalities, and how picking one makes it your assistant.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Geist:wght@400;500;600&display=swap">
+<style>
+/* Page tokens: paper by day, deep sky at night. Blues and warm light only (the real sky's colours, never purple). */
+:root {
+  --bg: #f3f6fa;
+  --fg: #16202e;
+  --muted: #5d6b7e;
+  --card: #ffffff;
+  --card-2: #eef3f9;
+  --line: #dbe3ee;
+  --accent: #2a76d0;
+  --accent-ink: #ffffff;
+  --sun: #f4a44a;
+  --gold: #ffd77a;
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #07101f; --fg: #eaf0f8; --muted: #9fb0c6; --card: #0f1b30; --card-2: #15243d; --line: #22334f; --accent: #76b1e8; --accent-ink: #07101f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #07101f; --fg: #eaf0f8; --muted: #9fb0c6; --card: #0f1b30; --card-2: #15243d; --line: #22334f; --accent: #76b1e8; --accent-ink: #07101f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+button, input { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--sun); outline-offset: 2px; }
+canvas.px { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+p { margin: 0; }
+.page {
+  max-width: 1120px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-top: 28px; padding-bottom: 72px;
+}
+.eyebrow { font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.05; margin-top: 6px; }
+.lede { max-width: 62ch; color: var(--muted); font-size: 1.05rem; margin-top: 14px; }
+section { margin-top: 56px; }
+section > h2 { font-size: clamp(1.5rem, 3vw, 2rem); }
+section > .sub { color: var(--muted); margin-top: 6px; max-width: 66ch; }
+
+/* ---------- the sky strip ---------- */
+.strip-wrap { margin-top: 28px; border-radius: 24px; overflow: hidden; box-shadow: 0 1px 0 var(--line), 0 24px 50px -30px rgb(10 30 60 / 0.45); background: #0e1f3d; }
+.strip-scroll { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.strip-scroll::-webkit-scrollbar { display: none; }
+.strip { position: relative; min-width: 760px; height: 230px; }
+.strip canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.strip .who { position: absolute; bottom: 10px; transform: translateX(-50%); color: #fff; text-align: center; font-size: 0.8rem; line-height: 1.2; text-shadow: 0 1px 2px rgb(0 0 0 / 0.5); pointer-events: none; }
+.strip .who b { display: block; font-weight: 600; font-size: 0.9rem; }
+.strip .hours { position: absolute; left: 0; right: 0; top: 10px; display: flex; justify-content: space-between; padding: 0 12px; color: rgb(255 255 255 / 0.7); font-size: 0.72rem; pointer-events: none; }
+.strip-note { padding: 12px 16px 14px; color: var(--muted); font-size: 0.85rem; background: var(--card); }
+.hint-scroll { display: none; }
+@media (max-width: 800px) { .hint-scroll { display: inline; } }
+
+/* ---------- the cast ---------- */
+.cast { display: grid; grid-template-columns: 1fr; gap: 18px; margin-top: 24px; }
+@media (min-width: 900px) { .cast { grid-template-columns: 1fr 1fr; } }
+.card { background: var(--card); border-radius: 24px; box-shadow: 0 1px 0 var(--line), 0 14px 34px -26px rgb(10 30 60 / 0.4); padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.card header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.card h3 { font-size: 1.75rem; }
+.card .moment { color: var(--muted); font-size: 0.9rem; }
+.portraits { display: flex; gap: 12px; }
+.portrait { flex: 1; border-radius: 18px; padding: 12px 10px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.portrait small { font-size: 0.75rem; opacity: 0.8; }
+.portrait.day { color: #163257; }
+.portrait.night { color: #eaf0f8; }
+.poses { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.pose { display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--card-2); border-radius: 14px; padding: 10px 4px 6px; }
+.pose small { font-size: 0.72rem; color: var(--muted); }
+.pose canvas { width: 72px; height: 72px; }
+@media (max-width: 480px) { .pose canvas { width: 48px; height: 48px; } .card { padding: 16px; } }
+.line { font-size: 1.05rem; }
+.traits { display: flex; flex-wrap: wrap; gap: 6px; }
+.traits span { background: var(--card-2); border-radius: 999px; padding: 4px 10px; font-size: 0.85rem; }
+.skill { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; font-size: 0.95rem; }
+.skill b { color: var(--muted); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; padding-top: 3px; }
+.bubbles { display: flex; flex-direction: column; gap: 8px; }
+.bubble { display: grid; grid-template-columns: 1fr; gap: 2px; }
+.bubble small { color: var(--muted); font-size: 0.75rem; }
+.bubble p { background: var(--card-2); border-radius: 16px 16px 16px 4px; padding: 9px 12px; font-size: 0.95rem; }
+.tone { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); }
+.tone b { color: var(--fg); background: var(--card-2); border-radius: 999px; padding: 3px 10px; font-weight: 600; }
+
+/* ---------- the pick step ---------- */
+.pick { display: grid; grid-template-columns: 1fr; gap: 24px; margin-top: 24px; align-items: start; }
+@media (min-width: 900px) { .pick { grid-template-columns: 400px minmax(0, 1fr); } }
+.phone {
+  --p-ink: #16202e; --p-mute: #5d6b7e; --p-card: #ffffff; --p-bg: #f6f8fb;
+  position: relative; width: 100%; max-width: 400px; margin: 0 auto; border-radius: 44px; overflow: hidden;
+  background: var(--p-bg); color: var(--p-ink);
+  box-shadow: 0 0 0 9px #121a28, 0 0 0 10px #2a3a55, 0 34px 70px -24px rgb(10 25 50 / 0.55);
+}
+.phone .skyhead { position: relative; height: 230px; background: linear-gradient(#3f7fc8, #9dc3e8 55%, #f8dcbc); }
+.phone .skyhead canvas { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); width: 120px; height: 120px; }
+.phone .skyhead .rim { position: absolute; left: 50%; bottom: -170px; width: 440px; height: 440px; border-radius: 50%; transform: translateX(-50%); border: 2px solid rgb(255 255 255 / 0.55); box-shadow: 0 0 60px rgb(255 255 255 / 0.25) inset; }
+.phone .skyhead .time { position: absolute; top: 14px; left: 0; right: 0; text-align: center; color: #fff; font-size: 0.8rem; opacity: 0.9; }
+.phone .body { padding: 18px 18px 22px; display: flex; flex-direction: column; gap: 16px; }
+.phone h2 { font-size: 1.6rem; }
+.phone .say { color: var(--p-mute); font-size: 0.92rem; margin-top: 2px; }
+.row6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.row6 button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px 6px; border-radius: 14px; background: var(--p-card); box-shadow: 0 1px 0 #dbe3ee; transition: transform 0.15s ease, box-shadow 0.15s ease; min-height: 44px; }
+.row6 button canvas { width: 48px; height: 48px; }
+.row6 button small { font-size: 0.68rem; color: var(--p-mute); }
+.row6 button[aria-checked="true"] { background: #e6f0fb; box-shadow: 0 0 0 2px #2a76d0; transform: translateY(-2px); }
+.row6 button[aria-checked="true"] small { color: #16202e; font-weight: 600; }
+.about { background: var(--p-card); border-radius: 18px; padding: 12px 14px; box-shadow: 0 1px 0 #dbe3ee; display: flex; flex-direction: column; gap: 6px; }
+.about .l1 { font-weight: 600; }
+.about .l2 { font-size: 0.9rem; color: var(--p-mute); }
+.about .l3 { font-size: 0.9rem; }
+.field label { display: block; font-size: 0.8rem; color: var(--p-mute); margin-bottom: 6px; font-weight: 500; }
+.field input { width: 100%; min-height: 44px; border-radius: 14px; border: 0; background: var(--p-card); box-shadow: 0 1px 0 #dbe3ee; padding: 0 14px; font-size: 1rem; }
+.field .or { font-size: 0.8rem; color: var(--p-mute); margin-top: 6px; }
+.tonebox { display: flex; gap: 10px; align-items: flex-start; background: #e9eef5; border-radius: 16px; padding: 12px; }
+.tonebox canvas { width: 48px; height: 48px; flex: none; margin-top: -4px; }
+.tonebox p { font-size: 0.9rem; }
+.tonebox p b { font-weight: 600; }
+.tonebox small { display: block; color: var(--p-mute); font-size: 0.75rem; margin-top: 4px; }
+.cta { min-height: 48px; border-radius: 999px; background: #16202e; color: #fff; font-weight: 600; font-size: 1rem; }
+.notes { display: flex; flex-direction: column; gap: 14px; }
+.note { background: var(--card); border-radius: 20px; padding: 16px 18px; box-shadow: 0 1px 0 var(--line); }
+.note h3 { font-size: 1.1rem; margin-bottom: 6px; }
+.note p, .note li { font-size: 0.95rem; color: var(--muted); }
+.note ul { margin: 6px 0 0; padding-left: 18px; }
+.settings-row { display: flex; align-items: center; gap: 12px; background: var(--card-2); border-radius: 16px; padding: 10px 12px; margin-top: 10px; }
+.settings-row canvas { width: 48px; height: 48px; flex: none; }
+.settings-row .t { flex: 1; min-width: 0; }
+.settings-row .t b { display: block; }
+.settings-row .t span { color: var(--muted); font-size: 0.85rem; }
+.settings-row .change { font-size: 0.9rem; font-weight: 600; color: var(--accent); min-height: 44px; display: inline-flex; align-items: center; padding: 0 6px; }
+
+/* ---------- the format ---------- */
+.format { display: grid; grid-template-columns: 1fr; gap: 18px; margin-top: 24px; }
+@media (min-width: 900px) { .format { grid-template-columns: 1fr 1fr; } }
+.grid-demo { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.grid-demo .zoom { position: relative; width: 192px; height: 192px; background: var(--card-2); border-radius: 12px; overflow: hidden; }
+.grid-demo .zoom canvas { width: 192px; height: 192px; }
+.grid-demo .zoom .lines { position: absolute; inset: 0; background-image: linear-gradient(to right, rgb(0 0 0 / 0.08) 1px, transparent 1px), linear-gradient(to bottom, rgb(0 0 0 / 0.08) 1px, transparent 1px); background-size: 8px 8px; pointer-events: none; }
+.swatches { display: flex; flex-direction: column; gap: 8px; }
+.swatch-row { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; font-size: 0.85rem; }
+.swatch-row .dots { display: flex; gap: 4px; flex-wrap: wrap; }
+.swatch-row .dots i { width: 22px; height: 22px; border-radius: 6px; display: inline-block; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12); }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 0.92rem; }
+.kv b { color: var(--muted); font-weight: 600; }
+footer { margin-top: 56px; color: var(--muted); font-size: 0.85rem; }
+@media (prefers-reduced-motion: reduce) { .row6 button { transition: none; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <p class="eyebrow">LifeFlow · companions · concept for the owner</p>
+  <h1>Six companions, named for the sky.</h1>
+  <p class="lede">The little one on top of your day is your assistant. Pick the one you like, and it takes that name unless you give it your own. Each comes from a moment of the sky, has a personality and one thing it's best at, and that sets how your assistant talks. Bigger now: 24 by 24 pixels, drawn in code, with a night form after sunset.</p>
+
+  <div class="strip-wrap">
+    <div class="strip-scroll">
+      <div class="strip" id="strip">
+        <canvas id="stripCanvas" aria-label="The six companions standing in the sky at the hour each is named for" role="img"></canvas>
+        <div class="hours" aria-hidden="true"><span>midnight</span><span>6 AM</span><span>noon</span><span>6 PM</span><span>midnight</span></div>
+        <div id="stripLabels"></div>
+      </div>
+    </div>
+    <p class="strip-note">One day of sky, left to right. Each companion stands where its name comes from. <span class="hint-scroll">Swipe the sky sideways. </span>Your pick stays with you all day and wears its night form after sunset.</p>
+  </div>
+
+  <section id="cast">
+    <h2>The cast</h2>
+    <p class="sub">Every one is drawn by the same engine (one shape, one crown, one face each), so a new companion is a few lines of data, not a sprite sheet. Poses: idle, walk, celebrate, sleep. The voice lines are examples of tone, not product copy.</p>
+    <div class="cast" id="castGrid"></div>
+  </section>
+
+  <section id="pick">
+    <h2>Pick your companion</h2>
+    <p class="sub">The "Make it yours" step of onboarding, remade. Tap one, and it becomes your assistant: its name is filled in (change it if you like), and its personality picks the tone. Nothing else to set.</p>
+    <div class="pick">
+      <div class="phone" id="phone">
+        <div class="skyhead" id="phoneSky">
+          <div class="rim"></div>
+          <div class="time">Today · 9:41</div>
+          <canvas class="px" id="pickBig" width="24" height="24" aria-hidden="true"></canvas>
+        </div>
+        <div class="body">
+          <div>
+            <h2>Make it yours</h2>
+            <p class="say">Pick who runs on top of your day. It's your assistant.</p>
+          </div>
+          <div class="row6" role="radiogroup" aria-label="Your companion" id="pickRow"></div>
+          <div class="about" id="pickAbout"></div>
+          <div class="field">
+            <label for="pickName">Its name</label>
+            <input id="pickName" maxlength="24" autocomplete="off" autocapitalize="words" aria-describedby="pickOr">
+            <p class="or" id="pickOr">Keep the name or type your own.</p>
+          </div>
+          <div class="tonebox" id="pickTone"></div>
+          <button class="cta" type="button">Continue</button>
+        </div>
+      </div>
+      <div class="notes">
+        <div class="note">
+          <h3>What changes for the person</h3>
+          <ul>
+            <li>One tap replaces today's three personality rows. The companion carries the tone (Friend, Coach or Straight to the point) and a short voice note.</li>
+            <li>The name field starts filled with the companion's name. A custom name keeps the companion's look and tone; the app keeps saying the name they chose.</li>
+            <li>Until they choose, nothing is picked and it stays "your assistant", as today.</li>
+          </ul>
+        </div>
+        <div class="note">
+          <h3>Settings › your assistant</h3>
+          <p>The same row at the top of the assistant settings, with "Change" opening the same six. Tone stays editable underneath for people who want Noon's look with a friendlier voice.</p>
+          <div class="settings-row">
+            <canvas class="px" id="settingsGlyph" width="24" height="24" aria-hidden="true"></canvas>
+            <div class="t"><b id="settingsName">Dawn</b><span id="settingsSub">Dawn · talks like a friend · night form after sunset</span></div>
+            <span class="change">Change</span>
+          </div>
+        </div>
+        <div class="note">
+          <h3>On Today</h3>
+          <p>The picked companion runs on top of the wheel at 4× on a phone (96 px, up from 64) and 6× on a laptop (144 px), always a whole multiple of 24 so the pixels stay crisp. It celebrates when something is done, sleeps after 11 PM, and notices the sky's visitors, as now.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="format">
+    <h2>The sprite format</h2>
+    <p class="sub">24 by 24 cells, transparent background, drawn by code from a few numbers per companion. No image files, so colours can follow the sky and a new companion costs nothing to ship.</p>
+    <div class="format">
+      <div class="card">
+        <div class="grid-demo">
+          <div class="zoom"><canvas class="px" id="zoomCanvas" width="24" height="24" aria-hidden="true"></canvas><div class="lines"></div></div>
+          <div class="kv">
+            <b>Grid</b><span>24 × 24, body on rows 7 to 20, feet on 21 to 22, shadow on 23, crown above</span>
+            <b>Scale</b><span>whole multiples only: 2× in lists, 3× on cards, 4× phone wheel, 5× portraits, 6× laptop wheel</span>
+            <b>Frames</b><span>idle 2 (the second is a blink) · walk 4 · celebrate 4 (crouch, jump, sparkle, land) · sleep 2</span>
+            <b>Forms</b><span>day and night: the night form is the same shape washed in moonlight with a gold crescent pin; Star is the other way round (shy by day, itself at night)</span>
+            <b>Outline</b><span>one ink colour, #262320, shared by all</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="font-size:1.1rem">Palettes (five colours each, plus ink)</h3>
+        <div class="swatches" id="swatches"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Design only. The engine here mirrors what <code>src/components/day-clock/companion.ts</code> would become; see <code>cast.md</code> next to this file.</footer>
+</main>
+
+<script>
+/* ======================= the sky (from src/lib/sky.ts) ======================= */
+const KEYS = [
+  [-100, "rise", "#03060f", "#071226", "#0e1f3d"],
+  [-55, "rise", "#06102a", "#13284d", "#2d4470"],
+  [-22, "rise", "#13284f", "#3f5d8c", "#d98a62"],
+  [4, "rise", "#2e5791", "#7d9cc7", "#ffb27a"],
+  [60, "rise", "#3f7fc8", "#9dc3e8", "#f8dcbc"],
+  [150, "rise", "#2f7cd2", "#76b1e8", "#cfe6f8"],
+  [0, "noon", "#2a76d0", "#6aaae6", "#c8e3f8"],
+  [-110, "set", "#3479c9", "#7fb2e2", "#d6e7f3"],
+  [-45, "set", "#4a7fbf", "#a6bfd8", "#ffd391"],
+  [-5, "set", "#36578f", "#c98f78", "#ff8a45"],
+  [22, "set", "#1b3263", "#6a5a7a", "#e2643f"],
+  [50, "set", "#0b1a3a", "#1f3155", "#4b4560"],
+  [100, "set", "#03060f", "#071226", "#0e1f3d"],
+];
+const RISE = 405, SET = 1010; // 6:45 and 16:50, a November day
+const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const mixRGB = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+const css = (c, alpha = 1) => `rgb(${c.map((v) => Math.round(v)).join(" ")}${alpha < 1 ? ` / ${alpha}` : ""})`;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const seg = (p, a, b) => clamp((p - a) / (b - a), 0, 1);
+function skyAt(minute) {
+  const m = ((minute % 1440) + 1440) % 1440;
+  const noon = (RISE + SET) / 2;
+  const keys = KEYS.map(([d, from, a, b, c]) => [(from === "rise" ? RISE : from === "set" ? SET : noon) + d, hex(a), hex(b), hex(c)]).sort((x, y) => x[0] - y[0]);
+  const first = keys[0], last = keys[keys.length - 1];
+  if (m <= first[0] || m >= last[0]) return [first[1], first[2], first[3]];
+  for (let i = 1; i < keys.length; i++) if (m <= keys[i][0]) {
+    const A = keys[i - 1], B = keys[i], u = (m - A[0]) / (B[0] - A[0] || 1);
+    return [mixRGB(A[1], B[1], u), mixRGB(A[2], B[2], u), mixRGB(A[3], B[3], u)];
+  }
+  return [first[1], first[2], first[3]];
+}
+function darkness(minute) {
+  const m = ((minute % 1440) + 1440) % 1440;
+  if (m >= RISE + 15 && m <= SET - 15) return 0;
+  if (m > SET + 70 || m < RISE - 70) return 1;
+  if (m > SET - 15) return seg(m, SET - 15, SET + 70);
+  return 1 - seg(m, RISE - 70, RISE + 15);
+}
+
+/* ======================= the companion engine (24 x 24) ======================= */
+const INK = "#262320";
+const MOON = { body: "#dde6f3", dark: "#9eb0cc", light: "#ffffff", pin: "#ffd77a" };
+const W = 24;
+function mixHex(a, b, t) {
+  const x = parseInt(a.slice(1), 16), y = parseInt(b.slice(1), 16);
+  const ch = (s) => Math.round(((x >> s) & 255) + (((y >> s) & 255) - ((x >> s) & 255)) * t);
+  return `#${[16, 8, 0].map((s) => ch(s).toString(16).padStart(2, "0")).join("")}`;
+}
+/* Body shapes: the inset of each row from the body's left and right columns (L..R). The bottom row sits on row 20. */
+const SHAPES = {
+  round: { L: 4, R: 19, inset: [5, 3, 2, 1, 1, 0, 0, 0, 0, 1, 1, 2, 3, 5] },
+  tall:  { L: 5, R: 18, inset: [5, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4] },
+  boxy:  { L: 4, R: 19, inset: [2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2] },
+  pear:  { L: 4, R: 19, inset: [6, 4, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 1, 3] },
+  drop:  { L: 4, R: 19, inset: [7, 6, 5, 4, 3, 2, 1, 1, 0, 0, 0, 0, 1, 3] },
+  hood:  { L: 4, R: 19, inset: [7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 1, 3] },
+};
+const BASE = 20;
+
+const CAST = [
+  {
+    key: "dawn", name: "Dawn", moment: "First light", hour: 6.5, shape: "round", crown: "wisp", eyes: "round", mouth: "smile",
+    body: "#f4b59c", dark: "#d4866c", light: "#ffe6da", trim: "#fff1e6", trim2: "#ffd27a", cheek: "#ee8e8e", eye: INK,
+    line: "Up before you, quietly glad you're here.",
+    traits: ["gentle", "patient", "hopeful"],
+    skill: "Getting the morning started: the first small thing, before the day piles up.",
+    tone: "friend",
+    voiceNote: "Soft and encouraging, starts small, never rushes.",
+    says: [
+      "Morning. Water first, then one small thing: the BIO reading. That's the whole plan for now.",
+      "Everything's done. The day is yours now, I'll be quiet.",
+      "The lab is due at 11 and there's about an hour. Let's do the write-up only and skip the extras.",
+    ],
+  },
+  {
+    key: "ray", name: "Ray", moment: "Morning sun", hour: 9, shape: "tall", crown: "rays", eyes: "round", mouth: "grin",
+    body: "#f6b357", dark: "#d4842c", light: "#ffe3ad", trim: "#f9a63a", trim2: "#ffe08a", cheek: "#f0937a", eye: INK,
+    line: "All go, and it rubs off on you.",
+    traits: ["energetic", "honest", "cheerful"],
+    skill: "Planning the week and keeping it moving: the big thing first, momentum after.",
+    tone: "coach",
+    voiceNote: "Upbeat and honest, names the big thing first, ends with the next step.",
+    says: [
+      "Up and at it. Two things today, the quiz prep is the big one. Let's open with that.",
+      "All of it, done. Nice work. Tomorrow starts easier because of today.",
+      "Essay in 2 hours. Outline the three points now, write for 60, read it once. Go.",
+    ],
+  },
+  {
+    key: "noon", name: "Noon", moment: "Midday", hour: 12.5, shape: "boxy", crown: "halo", eyes: "focused", mouth: "line",
+    body: "#ffdc6e", dark: "#dcae35", light: "#fff6d0", trim: "#fff6cf", trim2: "#ffe9a0", cheek: "#f3a88c", eye: INK,
+    line: "Few words. Clear light. Nothing wasted.",
+    traits: ["focused", "calm", "exact"],
+    skill: "Protecting focus blocks: the right task, the phone face down, the clock watched.",
+    tone: "direct",
+    voiceNote: "Brief. Leads with the task and the time. No filler.",
+    says: [
+      "Today: class at 10, then 90 free minutes. Use them for the lab.",
+      "Done. Nothing left on the list.",
+      "50 minutes until the quiz closes. Phone face down. Questions 1 to 8 first.",
+    ],
+  },
+  {
+    key: "goldie", name: "Goldie", moment: "Golden hour", hour: 16, shape: "pear", crown: "lowsun", eyes: "round", mouth: "smile",
+    body: "#f3a65a", dark: "#c97a33", light: "#ffd9ad", trim: "#ffcb63", trim2: "#fff0b8", band: "#c4542a", cheek: "#ea8d78", eye: INK,
+    line: "Warm, steady, and never in a hurry about money.",
+    traits: ["warm", "steady", "practical"],
+    skill: "Keeping money calm: what's available now, what's due this week, and no drama.",
+    tone: "friend",
+    voiceNote: "Warm and steady, says the number once, then what it means for the week.",
+    says: [
+      "Rent is set for Friday and there's $212 left after it. A slow morning is fine.",
+      "That's everything. Good day, well kept.",
+      "Two hours to the deadline. Enough for the part that's graded. The rest can wait.",
+    ],
+  },
+  {
+    key: "dusk", name: "Dusk", moment: "After sunset", hour: 17.75, shape: "drop", crown: "firststar", eyes: "lidded", mouth: "soft",
+    body: "#5f87c4", dark: "#3f5f99", light: "#bcd3f1", trim: "#ff8a45", trim2: "#ffc08a", band: "#ff8a45", cheek: "#c98b8b", eye: INK,
+    line: "Soft voice, slow breath, the day set down.",
+    traits: ["calm", "kind", "unhurried"],
+    skill: "Winding down: closing the day, a kind look at tomorrow, and off to sleep.",
+    tone: "friend",
+    toneNote: "could become a fourth tone, Calm",
+    voiceNote: "Quiet and kind, short sentences, one thing at a time.",
+    says: [
+      "Easy start. One thing before noon, the rest later.",
+      "All done. Dim the lights, you earned a quiet evening.",
+      "An hour left. One breath, then the first paragraph. Just that.",
+    ],
+  },
+  {
+    key: "star", name: "Star", moment: "Night", hour: 22.5, shape: "hood", crown: "antenna", eyes: "glow", mouth: "smirk", shy: true,
+    body: "#203556", dark: "#142339", light: "#3f5a86", trim: "#ffd77a", trim2: "#fff3c4", cheek: "#4d6690", eye: "#ffd77a",
+    line: "The night owl who sees far and says little.",
+    traits: ["far-sighted", "quiet", "dependable"],
+    skill: "Deadlines far ahead: counts back from the due date, so the last night is never the whole project.",
+    tone: "coach",
+    voiceNote: "Calm and precise, counts back from the deadline, keeps watch on the clock.",
+    says: [
+      "Morning. Three days to the project. Today's piece is the data table.",
+      "Everything's done. Bed by eleven and tomorrow is already lighter.",
+      "90 minutes. The order that fits: method, results, skip the intro. I'll watch the clock.",
+    ],
+  },
+];
+const TONES = { friend: "Friend", coach: "Coach", direct: "Straight to the point" };
+const TONE_HINT = { friend: "casual and warm", coach: "motivating, holds you to your goals", direct: "short, numbers only" };
+
+/* The colours of a form: by day a companion's own; at night washed in moonlight with a gold pin. Star is the other way round. */
+function formOf(c, night) {
+  const moon = c.shy ? !night : night;
+  if (!moon) return { ...c, pin: false };
+  return {
+    ...c,
+    body: mixHex(c.body, MOON.body, 0.72),
+    dark: mixHex(c.dark, MOON.dark, 0.7),
+    light: MOON.light,
+    trim: mixHex(c.trim, "#ffe6a8", 0.55),
+    trim2: mixHex(c.trim2, "#ffffff", 0.5),
+    band: c.band ? mixHex(c.band, MOON.dark, 0.6) : undefined,
+    cheek: mixHex(c.cheek, MOON.body, 0.5),
+    eye: c.shy ? INK : c.eye,
+    pin: !c.shy,
+    squint: !!c.shy,
+  };
+}
+
+/* A frame: how the body, feet, arms, face and extras sit. */
+const FRAMES = {
+  idle: [
+    { lift: 0, feet: [0, 0], arms: 0, eyes: "open" },
+    { lift: 0, feet: [0, 0], arms: 0, eyes: "closed" },
+  ],
+  walk: [
+    { lift: 0, feet: [2, -2], arms: 1, eyes: "open" },
+    { lift: -1, feet: [0, 0], arms: 0, eyes: "open" },
+    { lift: 0, feet: [-2, 2], arms: -1, eyes: "open" },
+    { lift: -1, feet: [0, 0], arms: 0, eyes: "open" },
+  ],
+  celebrate: [
+    { lift: 1, feet: [0, 0], arms: 0, eyes: "open", crouch: true },
+    { lift: -3, feet: [1, -1], arms: "up", eyes: "happy", mouth: "open", air: true },
+    { lift: -3, feet: [1, -1], arms: "up", eyes: "happy", mouth: "open", air: true, sparkle: true },
+    { lift: -1, feet: [0, 0], arms: 1, eyes: "happy", mouth: "open" },
+  ],
+  sleep: [
+    { lift: 1, feet: null, arms: 0, eyes: "closed", mouth: "tiny", zzz: 0 },
+    { lift: 1, feet: null, arms: 0, eyes: "closed", mouth: "tiny", zzz: 1 },
+  ],
+};
+
+/* The pixels of a companion in a pose at a frame: a list of [x, y, colour]. */
+function pixels(c0, pose, frame, night) {
+  const c = formOf(c0, night);
+  const f = FRAMES[pose][frame % FRAMES[pose].length];
+  const out = [];
+  const put = (x, y, col) => { if (x >= 0 && x < W && y >= 0 && y < W && col) out.push([x, y, col]); };
+  const S = SHAPES[c.shape];
+  const H = S.inset.length;
+  const lift = f.lift;
+  const base = BASE + lift;
+  const t = base - H + 1;
+  const inside = (x, y) => { const r = y - t; if (r < 0 || r >= H) return false; const i = S.inset[r]; return x >= S.L + i && x <= S.R - i; };
+
+  // shadow on the ground, narrower when the body is in the air
+  const sw = f.air ? 3 : 1;
+  for (let x = S.L + 3 + sw; x <= S.R - 3 - sw; x++) put(x, 23, "rgba(20,30,50,0.22)");
+
+  // feet (two little boots), on the ground unless in the air or asleep
+  if (f.feet) {
+    const fy = f.air ? base + 1 : BASE + 1;
+    const [dl, dr] = f.feet;
+    for (const x of [8 + dl, 14 + dr]) for (let i = 0; i < 2; i++) { put(x + i, fy, INK); put(x + i, fy + 1, INK); }
+  }
+
+  // body: ink edge, shaded lower rows and right side, a highlight top-left
+  for (let r = 0; r < H; r++) {
+    const y = t + r, i = S.inset[r];
+    for (let x = S.L + i; x <= S.R - i; x++) {
+      const edge = !inside(x - 1, y) || !inside(x + 1, y) || !inside(x, y - 1) || !inside(x, y + 1);
+      let col = c.body;
+      if (r >= H - 3) col = c.dark;
+      else if (r >= 3 && x === S.R - i - 1) col = c.dark;
+      put(x, y, edge ? INK : col);
+    }
+  }
+  if (c.band && !f.crouch) {
+    // a band across the body (Goldie's scarf, Dusk's sunset stripe)
+    const rows = c.key === "goldie" ? [9] : [8, 9];
+    for (const r of rows) {
+      const y = t + r, i = S.inset[r];
+      for (let x = S.L + i + 1; x <= S.R - i - 1; x++) put(x, y, c.key === "dusk" && r === 8 ? c.trim2 : c.band);
+    }
+    if (c.key === "goldie") { put(S.L + S.inset[10] + 1, t + 10, c.band); put(S.L + S.inset[11] + 1, t + 11, c.band); }
+  }
+  // highlight
+  put(S.L + S.inset[1] + 1, t + 1, c.light); put(S.L + S.inset[1] + 2, t + 1, c.light); put(S.L + S.inset[2] + 1, t + 2, c.light);
+  if (c.key === "dawn" && !c.pin) for (let r = 2; r <= 8; r++) put(S.R - S.inset[r] - 1, t + r, c.trim2); // first light on one side
+  if (c.key === "star" && !c.squint) { put(9, t + 9, c.trim2); put(12, t + 11, c.trim2); put(15, t + 8, c.trim2); put(7, t + 11, c.trim); }
+
+  // face
+  const ey = t + 5;
+  const eyesMode = f.eyes === "closed" || c.squint && f.eyes !== "happy" ? "closed" : f.eyes;
+  const eyeCols = [8, 13];
+  if (eyesMode === "happy") {
+    for (const x of eyeCols) { put(x, ey + 1, INK); put(x + 1, ey, INK); put(x + 2, ey + 1, INK); }
+  } else if (eyesMode === "closed") {
+    for (const x of eyeCols) { put(x, ey + 1, INK); put(x + 1, ey + 1, INK); }
+  } else if (c.eyes === "focused") {
+    for (const x of eyeCols) { put(x, ey - 1, INK); put(x + 1, ey - 1, INK); put(x, ey + 1, c.eye); put(x + 1, ey + 1, c.eye); }
+  } else if (c.eyes === "lidded") {
+    for (const x of eyeCols) { put(x, ey, c.dark); put(x + 1, ey, c.dark); put(x, ey + 1, c.eye); put(x + 1, ey + 1, c.eye); }
+  } else {
+    for (const x of eyeCols) { put(x, ey, c.eye); put(x + 1, ey, c.eye); put(x, ey + 1, c.eye); put(x + 1, ey + 1, c.eye); put(x + 1, ey, c.eyes === "glow" ? "#ffffff" : c.light); }
+  }
+  const mouth = f.mouth ?? c.mouth;
+  if (mouth === "smile") { put(10, ey + 3, INK); put(11, ey + 4, INK); put(12, ey + 4, INK); put(13, ey + 3, INK); }
+  else if (mouth === "grin") { put(9, ey + 3, INK); put(10, ey + 4, INK); put(11, ey + 4, INK); put(12, ey + 4, INK); put(13, ey + 4, INK); put(14, ey + 3, INK); }
+  else if (mouth === "line") { put(11, ey + 3, INK); put(12, ey + 3, INK); }
+  else if (mouth === "soft") { put(11, ey + 4, INK); put(12, ey + 4, INK); }
+  else if (mouth === "smirk") { put(11, ey + 3, INK); put(12, ey + 3, INK); put(13, ey + 2, INK); }
+  else if (mouth === "tiny") { put(12, ey + 3, INK); }
+  else if (mouth === "open") { put(11, ey + 3, INK); put(12, ey + 3, INK); put(11, ey + 4, "#e07a7a"); put(12, ey + 4, "#e07a7a"); }
+  // cheeks
+  if (eyesMode !== "closed" || pose === "idle") { const r = 7, i = S.inset[r]; put(S.L + i + 2, t + r, c.cheek); put(S.R - i - 2, t + r, c.cheek); }
+
+  // arms: little mittens outside the body
+  const armRow = (r) => { const i = S.inset[r]; return [S.L + i - 1, S.R - i + 1, t + r]; };
+  if (f.arms === "up") {
+    for (const [xl, xr, y] of [armRow(1), armRow(2)].map(([l, r, y]) => [l, r, y])) { put(xl, y, c.body); put(xl - 1, y, INK); put(xr, y, c.body); put(xr + 1, y, INK); }
+    const [l1, r1, y1] = armRow(1); put(l1 - 1, y1 - 1, INK); put(r1 + 1, y1 - 1, INK);
+  } else {
+    const dl = f.arms === 1 ? -1 : f.arms === -1 ? 1 : 0;
+    for (const [side, d] of [["l", dl], ["r", -dl]]) {
+      for (const r of [7, 8]) {
+        const i = S.inset[r];
+        const y = t + r + d;
+        if (side === "l") { put(S.L + i - 1, y, c.body); put(S.L + i - 2, y, INK); }
+        else { put(S.R - i + 1, y, c.body); put(S.R - i + 2, y, INK); }
+      }
+    }
+  }
+
+  // crown: what sits above each head
+  const T = c.trim, T2 = c.trim2;
+  if (c.crown === "wisp") { for (const x of [7, 8, 9, 10, 11]) put(x, t - 1, T); put(8, t - 2, T); put(9, t - 2, T); put(10, t - 2, T); put(12, t - 1, T); }
+  if (c.crown === "rays") {
+    put(11, t - 2, T); put(12, t - 2, T); put(11, t - 3, T2); put(12, t - 3, T2);
+    put(7, t - 2, T); put(6, t - 3, T2); put(16, t - 2, T); put(17, t - 3, T2);
+    put(3, t + 2, T); put(2, t + 2, T2); put(20, t + 2, T); put(21, t + 2, T2);
+  }
+  if (c.crown === "halo") { for (let x = 9; x <= 14; x++) put(x, t - 3, T); put(7, t - 2, T); put(8, t - 2, T); put(15, t - 2, T); put(16, t - 2, T); put(11, t - 3, T2); put(12, t - 3, T2); }
+  if (c.crown === "lowsun") { for (let x = 9; x <= 14; x++) put(x, t - 3, T); for (let x = 8; x <= 15; x++) put(x, t - 2, T); for (let x = 7; x <= 16; x++) put(x, t - 1, T); put(11, t - 3, T2); put(12, t - 3, T2); put(10, t - 2, T2); put(13, t - 2, T2); }
+  if (c.crown === "firststar") { put(17, t - 3, "#ffffff"); put(16, t - 3, c.light); put(18, t - 3, c.light); put(17, t - 4, c.light); put(17, t - 2, c.light); }
+  if (c.crown === "antenna") { put(12, t - 1, INK); put(12, t - 2, T); put(11, t - 3, T); put(13, t - 3, T); put(12, t - 3, T2); put(12, t - 4, T); }
+  // the night pin: a small gold crescent by the head
+  if (c.pin) { put(4, t - 1, MOON.pin); put(3, t, MOON.pin); put(3, t + 1, MOON.pin); put(4, t + 2, MOON.pin); put(5, t - 1, "#fff3c4"); }
+
+  // extras
+  if (f.sparkle) { put(2, t - 1, T2); put(21, t - 2, T2); put(1, t + 5, "#ffffff"); put(22, t + 6, T); put(20, t - 4, "#ffffff"); put(19, t - 4, T2); put(21, t - 4, T2); put(20, t - 5, T2); put(20, t - 3, T2); }
+  if (f.zzz != null) {
+    const z = "#9fb6d8";
+    const zy = t - 4 - f.zzz;
+    for (const x of [17, 18, 19]) put(x, zy, z); put(18, zy + 1, z); for (const x of [17, 18, 19]) put(x, zy + 2, z);
+    if (f.zzz) { put(21, zy - 3, z); put(22, zy - 3, z); put(21, zy - 2, z); put(22, zy - 2, z); put(21, zy - 2, "transparent"); }
+  }
+  return out;
+}
+
+function paint(canvas, c, pose, frame, night, flip = false) {
+  const g = canvas.getContext("2d");
+  g.clearRect(0, 0, W, W);
+  for (const [x, y, col] of pixels(c, pose, frame, night)) { if (col === "transparent") continue; g.fillStyle = col; g.fillRect(flip ? 23 - x : x, y, 1, 1); }
+}
+
+/* ======================= animation ======================= */
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const anims = [];
+/* which frame of a pose shows at time ms */
+function frameAt(pose, ms, seed = 0) {
+  const t = ms + seed * 337;
+  if (pose === "walk") return Math.floor(t / 130) % 4;
+  if (pose === "idle") return (t % 3400) < 140 ? 1 : 0;
+  if (pose === "sleep") return Math.floor(t / 700) % 2;
+  if (pose === "celebrate") { const u = t % 2200; return u < 220 ? 0 : u < 420 ? 1 : u < 760 ? 2 : u < 960 ? 3 : -1; }
+  return 0;
+}
+function live(canvas, c, pose, nightFn, seed = 0) {
+  canvas.width = W; canvas.height = W;
+  const night = typeof nightFn === "function" ? nightFn : () => nightFn;
+  const draw = (ms) => { const f = frameAt(pose, ms, seed); if (f < 0) paint(canvas, c, "idle", 0, night()); else paint(canvas, c, pose, f, night()); };
+  draw(0);
+  if (!reduce) anims.push(draw);
+  return draw;
+}
+if (!reduce) {
+  let lastFrame = 0;
+  const tick = (ms) => { if (ms - lastFrame > 60) { lastFrame = ms; for (const a of anims) a(ms); stripDraw(ms); } requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+}
+
+/* ======================= the sky strip ======================= */
+const strip = document.getElementById("strip");
+const stripCanvas = document.getElementById("stripCanvas");
+const stripLabels = document.getElementById("stripLabels");
+const off = document.createElement("canvas"); off.width = W; off.height = W;
+let stripBg = null;
+function stripLayout() {
+  const w = strip.clientWidth, h = strip.clientHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
+  stripCanvas.width = Math.round(w * dpr); stripCanvas.height = Math.round(h * dpr);
+  stripBg = document.createElement("canvas"); stripBg.width = stripCanvas.width; stripBg.height = stripCanvas.height;
+  const g = stripBg.getContext("2d");
+  const ground = Math.round(h * 0.82 * dpr);
+  for (let x = 0; x < stripBg.width; x++) {
+    const minute = (x / stripBg.width) * 1440;
+    const [top, mid, hor] = skyAt(minute);
+    const grad = g.createLinearGradient(0, 0, 0, ground);
+    grad.addColorStop(0, css(top)); grad.addColorStop(0.5, css(mid)); grad.addColorStop(1, css(hor));
+    g.fillStyle = grad; g.fillRect(x, 0, 1, ground);
+    g.fillStyle = css(mixRGB(hor, [20, 26, 40], 0.78)); g.fillRect(x, ground, 1, stripBg.height - ground);
+    g.fillStyle = css(mixRGB(hor, [255, 255, 255], 0.3), 0.6); g.fillRect(x, ground, 1, dpr);
+  }
+  // stars where it's dark (fixed positions)
+  let s = 7;
+  const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+  for (let i = 0; i < 160; i++) {
+    const x = rnd() * stripBg.width, y = rnd() * ground * 0.8;
+    const d = darkness((x / stripBg.width) * 1440);
+    if (d < 0.35) continue;
+    g.fillStyle = `rgba(255,255,255,${(0.35 + rnd() * 0.6) * d})`;
+    const k = rnd() < 0.15 ? 2 : 1;
+    g.fillRect(Math.round(x), Math.round(y), k * dpr, k * dpr);
+  }
+  // labels
+  stripLabels.innerHTML = "";
+  for (const c of CAST) {
+    const el = document.createElement("div"); el.className = "who"; el.style.left = `${(c.hour / 24) * 100}%`;
+    el.innerHTML = `<b>${c.name}</b>${c.moment}`;
+    stripLabels.appendChild(el);
+  }
+}
+function stripDraw(ms) {
+  if (!stripBg) return;
+  const g = stripCanvas.getContext("2d");
+  g.imageSmoothingEnabled = false;
+  g.drawImage(stripBg, 0, 0);
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const w = stripCanvas.width, h = stripCanvas.height;
+  const k = (w / dpr >= 900 ? 3 : 2) * dpr; // whole multiples only
+  const ground = Math.round(h * 0.82);
+  CAST.forEach((c, i) => {
+    const night = darkness(c.hour * 60) > 0.5;
+    const f = reduce ? 0 : frameAt("walk", ms, i);
+    paint(off, c, "walk", f, night);
+    const x = Math.round((c.hour / 24) * w - 12 * k), y = ground - 23 * k;
+    g.drawImage(off, x, y, 24 * k, 24 * k);
+  });
+}
+stripLayout(); stripDraw(0);
+addEventListener("resize", () => { stripLayout(); stripDraw(0); });
+
+/* ======================= the cast cards ======================= */
+const grid = document.getElementById("castGrid");
+// the day portrait sits in daylight (Dusk and Star are shown at golden hour and mid-morning), the night one at 11 PM
+const dayBg = (c) => { const [top, mid, hor] = skyAt(c.shy ? 10 * 60 : Math.min(c.hour, 16) * 60); return `linear-gradient(${css(mixRGB(mid, [255, 255, 255], 0.35))}, ${css(mixRGB(hor, [255, 255, 255], 0.2))})`; };
+const nightBg = () => { const [top, mid] = skyAt(23 * 60); return `linear-gradient(${css(top)}, ${css(mid)})`; };
+for (const c of CAST) {
+  const card = document.createElement("article"); card.className = "card";
+  card.innerHTML = `
+    <header><h3>${c.name}</h3><span class="moment">${c.moment} · ${c.hour % 1 ? `${Math.floor(c.hour)}:${String(Math.round((c.hour % 1) * 60)).padStart(2, "0")}` : `${c.hour}:00`}</span></header>
+    <div class="portraits">
+      <div class="portrait day" style="background:${dayBg(c)}"><canvas class="px day" style="width:120px;height:120px"></canvas><small>by day</small></div>
+      <div class="portrait night" style="background:${nightBg()}"><canvas class="px night" style="width:120px;height:120px"></canvas><small>at night</small></div>
+    </div>
+    <div class="poses">
+      ${["idle", "walk", "celebrate", "sleep"].map((p) => `<div class="pose"><canvas class="px" data-pose="${p}"></canvas><small>${p}</small></div>`).join("")}
+    </div>
+    <p class="line">${c.line}</p>
+    <div class="traits">${c.traits.map((t) => `<span>${t}</span>`).join("")}</div>
+    <div class="skill"><b>Best at</b><span>${c.skill}</span></div>
+    <div class="bubbles">
+      <div class="bubble"><small>A morning nudge</small><p>${c.says[0]}</p></div>
+      <div class="bubble"><small>You finished everything today</small><p>${c.says[1]}</p></div>
+      <div class="bubble"><small>Short on time before a deadline</small><p>${c.says[2]}</p></div>
+    </div>
+    <div class="tone">Picking ${c.name} sets the tone <b>${TONES[c.tone]}</b>${c.toneNote ? `<span>(${c.toneNote})</span>` : ""}</div>`;
+  grid.appendChild(card);
+  live(card.querySelector("canvas.day"), c, "idle", false, 1);
+  live(card.querySelector("canvas.night"), c, "idle", true, 2);
+  card.querySelectorAll("canvas[data-pose]").forEach((cv, i) => live(cv, c, cv.dataset.pose, c.key === "star", i + 3));
+}
+
+/* ======================= pick your companion ======================= */
+let picked = CAST[0];
+let customName = "";
+const pickRow = document.getElementById("pickRow");
+const pickBig = document.getElementById("pickBig");
+const pickAbout = document.getElementById("pickAbout");
+const pickName = document.getElementById("pickName");
+const pickTone = document.getElementById("pickTone");
+const phoneSky = document.getElementById("phoneSky");
+const settingsGlyph = document.getElementById("settingsGlyph");
+let bigDraw = null, toneDraw = null, settingsDraw = null;
+for (const c of CAST) {
+  const b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "radio"); b.dataset.key = c.key;
+  b.innerHTML = `<canvas class="px"></canvas><small>${c.name}</small>`;
+  b.addEventListener("click", () => { picked = c; renderPick(); });
+  pickRow.appendChild(b);
+  live(b.querySelector("canvas"), c, "idle", c.key === "star", CAST.indexOf(c) + 9);
+}
+function renderPick() {
+  const c = picked;
+  pickRow.querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.key === c.key)));
+  pickAbout.innerHTML = `<div class="l1">${c.name} · ${c.moment}</div><div class="l2">${c.line}</div><div class="l3"><b>Best at</b> ${c.skill}</div>`;
+  if (!customName) pickName.value = c.name;
+  const [top, mid, hor] = skyAt(c.shy ? 22 * 60 : c.hour * 60);
+  phoneSky.style.background = `linear-gradient(${css(top)}, ${css(mid)} 55%, ${css(hor)})`;
+  const night = c.shy || darkness(c.hour * 60) > 0.5;
+  const idx = anims.indexOf(bigDraw); if (idx >= 0) anims.splice(idx, 1);
+  bigDraw = live(pickBig, c, "celebrate", night, 5);
+  const shown = (customName || c.name);
+  pickTone.innerHTML = `<canvas class="px"></canvas><div><p><b>${shown}:</b> ${c.says[0]}</p><small>Talks like a ${TONES[c.tone].toLowerCase()}: ${TONE_HINT[c.tone]}. Change it any time in Settings.</small></div>`;
+  const j = anims.indexOf(toneDraw); if (j >= 0) anims.splice(j, 1);
+  toneDraw = live(pickTone.querySelector("canvas"), c, "idle", false, 6);
+  const k = anims.indexOf(settingsDraw); if (k >= 0) anims.splice(k, 1);
+  settingsDraw = live(settingsGlyph, c, "idle", false, 7);
+  document.getElementById("settingsName").textContent = shown;
+  document.getElementById("settingsSub").textContent = `${c.name} · talks like a ${TONES[c.tone].toLowerCase()} · night form after sunset`;
+}
+pickName.addEventListener("input", () => { customName = pickName.value.trim(); if (customName === picked.name) customName = ""; renderPick(); });
+renderPick();
+
+/* ======================= the format ======================= */
+live(document.getElementById("zoomCanvas"), CAST[1], "idle", false, 0);
+const sw = document.getElementById("swatches");
+for (const c of CAST) {
+  const row = document.createElement("div"); row.className = "swatch-row";
+  const cols = [c.body, c.dark, c.light, c.trim, c.trim2, c.band].filter(Boolean);
+  row.innerHTML = `<b>${c.name}</b><div class="dots">${cols.map((h) => `<i style="background:${h}" title="${h}"></i>`).join("")}<span style="color:var(--muted);align-self:center;margin-left:6px">${cols.join(" ")}</span></div>`;
+  sw.appendChild(row);
+}
+</script>
+</body>
+</html>

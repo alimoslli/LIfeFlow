@@ -16,7 +16,7 @@ import {
   MessageCircle,
   NotebookPen,
   Receipt,
-  Sparkles,
+  Bell,
   Trophy,
   UserRound,
   Wallet,
@@ -28,7 +28,7 @@ import { useLifeAreas } from "./life-areas";
 type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean; /** Other pages that belong to this pill. */ also?: string[]; except?: string[] };
 export type Section = "plan" | "money" | "jarvis" | "personal";
 
-const SECTION_NAMES: Record<Section, string> = { plan: "Today", jarvis: "Assistant", money: "Money", personal: "School" };
+const SECTION_NAMES: Record<Section, string> = { plan: "Today", jarvis: "Skyling", money: "Money", personal: "School" };
 
 /** Second level: each tab's pages as pills. Every page belongs to exactly one pill. */
 export const SECTIONS: Record<Section, Item[]> = {
@@ -43,7 +43,7 @@ export const SECTIONS: Record<Section, Item[]> = {
   ],
   jarvis: [
     { href: "/jarvis", label: "Chat", icon: MessageCircle, except: ["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"] },
-    { href: "/jarvis/says", label: "Updates", icon: Sparkles, also: ["/inbox"] },
+    { href: "/jarvis/says", label: "Updates", icon: Bell, also: ["/inbox"] },
     { href: "/jarvis/ideas", label: "Ideas", icon: Lightbulb },
     { href: "/jarvis/profile", label: "Profile", icon: UserRound, also: ["/jarvis/memory"] },
   ],
@@ -53,7 +53,7 @@ export const SECTIONS: Record<Section, Item[]> = {
       label: "Overview",
       icon: Wallet,
       exact: true,
-      also: ["/finances/budgets", "/finances/subscriptions", "/finances/bills"],
+      also: ["/finances/bills"],
     },
     { href: "/finances/transactions", label: "Activity", icon: Receipt, also: ["/finances/rules"] },
     { href: "/finances/accounts", label: "Accounts", icon: Landmark, also: ["/wealth"] },

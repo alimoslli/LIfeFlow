@@ -16,8 +16,14 @@ export const dynamic = "force-dynamic";
 
 /** Microsoft redirects back here. Checks state, exchanges the code, stores tokens encrypted, first calendar sync. */
 export async function GET(req: NextRequest) {
+  let saved: { state?: string; verifier?: string; uid?: string; w?: boolean } = {};
+  try {
+    saved = JSON.parse(Buffer.from(req.cookies.get(MS_OAUTH_COOKIE)?.value ?? "", "base64url").toString("utf8"));
+  } catch {}
+  // started from the welcome's "Connect your sky": back there, to the same step (a fixed path, never one from the request)
   const back = (result: string) => {
-    const res = NextResponse.redirect(new URL(`/settings/integrations?microsoft=${result}`, req.url));
+    const to = saved.w === true ? `/welcome?connected=outlook&result=${result}` : `/settings/integrations?microsoft=${result}`;
+    const res = NextResponse.redirect(new URL(to, req.url));
     res.cookies.delete({ name: MS_OAUTH_COOKIE, path: "/api/integrations/microsoft" });
     return res;
   };
@@ -33,10 +39,6 @@ export async function GET(req: NextRequest) {
       err === "access_denied" && !/AADSTS(65001|90094|90095)/.test(desc) ? "denied" : /AADSTS(65001|90094|90095)/.test(desc) ? "admin_consent" : "failed",
     );
   }
-  let saved: { state?: string; verifier?: string; uid?: string } = {};
-  try {
-    saved = JSON.parse(Buffer.from(req.cookies.get(MS_OAUTH_COOKIE)?.value ?? "", "base64url").toString("utf8"));
-  } catch {}
   const code = p.get("code");
   if (!code || !saved.state || saved.state !== p.get("state") || saved.uid !== user.id || !saved.verifier) {
     console.error("[microsoft] callback state check failed", { hasCode: !!code, hasCookie: !!saved.state });

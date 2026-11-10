@@ -5,7 +5,7 @@ import { whenIdle } from "@/lib/idle";
 import { Toaster } from "@/components/ui/toaster";
 import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { setTourAction } from "@/app/(onboarding)/welcome/actions";
-import { Settings, Sparkles } from "lucide-react";
+import { Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { assistantLabel, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
 import { NAV, isActive, moduleForPath } from "./nav-items";
@@ -30,6 +30,8 @@ import type { JarvisAvailability } from "../jarvis/types";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { SkyScene } from "@/components/sky/sky-scene";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
+import { useSkyling } from "@/components/skylings/use-skyling";
+import { companionOf, type CompanionKey } from "@/lib/companions";
 
 type ShellCtx = {
   openJarvis: (prompt?: string, opts?: { send?: boolean }) => void;
@@ -38,8 +40,20 @@ type ShellCtx = {
   aiConsent: boolean;
   /** The user's time zone (Settings), for anything that depends on their local time. */
   tz: string;
+  /** Their skyling choice (lib/companions): one of the six, or "sky". */
+  companion?: string | null;
+  /** The skyling to draw now: the one picked, or whoever's moment it is for "Changes with the sky". */
+  skyling?: CompanionKey | null;
 };
-const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: UNNAMED_ASSISTANT, firstName: "", aiConsent: false, tz: "UTC" });
+const Ctx = createContext<ShellCtx>({
+  openJarvis: () => {},
+  assistantName: UNNAMED_ASSISTANT,
+  firstName: "",
+  aiConsent: false,
+  tz: "UTC",
+  companion: null,
+  skyling: null,
+});
 export const useShell = () => useContext(Ctx);
 
 type Drawer = { open: boolean; prompt?: string; send?: boolean; key: number };
@@ -49,6 +63,8 @@ export function AppShell({
   jarvis,
   tour = false,
   assistantName = UNNAMED_ASSISTANT,
+  assistantNamed = false,
+  companion,
   aiConsent = false,
   unread = 0,
   areas = ALL_AREAS,
@@ -58,8 +74,12 @@ export function AppShell({
   areas?: LifeAreas;
   /** New Jarvis messages: a dot on the Jarvis tab. */
   unread?: number;
-  /** The name the user gave their assistant ("your assistant" until they choose one). */
+  /** The skyling's name: the one they gave it, or its own (lib/assistant `assistantProfile`). */
   assistantName?: string;
+  /** They gave it a name; otherwise it goes by its skyling's own, which for "Changes with the sky" follows whoever is up. */
+  assistantNamed?: boolean;
+  /** Their skyling (lib/companions), drawn on the skyling's tab and button. */
+  companion?: string | null;
   /** The user allowed Jarvis to send their data to the AI provider. */
   aiConsent?: boolean;
   user: { name: string; email: string; accountKind: "standard" | "demo"; timezone?: string };
@@ -98,6 +118,20 @@ export function AppShell({
   useSlidingIndicator(bar, pathname, "x");
   const [drawer, setDrawer] = useState<Drawer>({ open: false, key: 0 });
   const [palette, setPalette] = useState(false);
+  // The ask button steps aside while you scroll down a page (so it never sits on what you're reading) and comes back
+  // when you scroll up (A-to-Z audit C1).
+  const [fabAway, setFabAway] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - last) < 8) return;
+      setFabAway(y > last && y > 80);
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const openJarvis = useCallback(
     (prompt?: string, opts?: { send?: boolean }) => setDrawer((d) => ({ open: true, prompt, send: opts?.send, key: prompt ? d.key + 1 : d.key })),
     [setDrawer],
@@ -129,19 +163,17 @@ export function AppShell({
   // The chat is full-screen; Updates, Profile and Memory are normal pages.
   const onJarvisPage =
     pathname.startsWith("/jarvis") && !["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"].some((p) => pathname.startsWith(p));
-  // The assistant's other pages (Updates, Ideas, Profile) keep the chat's own header and pill row,
+  // The skyling's other pages (Updates, Ideas, Profile) keep the chat's own header and pill row,
   // so moving between them never swaps the whole interface (UX review).
   const assistantPage = !onJarvisPage && (pathname.startsWith("/jarvis") || pathname.startsWith("/inbox"));
-  const initials = user.name
-    .split(/\s+/)
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
   const settingsActive = pathname.startsWith("/settings");
 
+  // "Changes with the sky": whoever's moment it is, looked at again every minute
+  const skyling = useSkyling(companion, user.timezone ?? "UTC");
+  // without a name of their own it goes by its skyling's, so "Changes with the sky" is called whoever is up right now
+  if (!assistantNamed && skyling) assistantName = companionOf(skyling).name;
   return (
-    <Ctx.Provider value={{ openJarvis, assistantName, firstName: user.name.split(" ")[0], aiConsent, tz: user.timezone ?? "UTC" }}>
+    <Ctx.Provider value={{ openJarvis, assistantName, firstName: user.name.split(" ")[0], aiConsent, tz: user.timezone ?? "UTC", companion, skyling }}>
       <LifeAreasContext.Provider value={areas}>
         <div className="lf-glass">
           <TiltLayer />
@@ -152,8 +184,9 @@ export function AppShell({
               <Link href="/" aria-label="LifeFlow home" className="mb-8">
                 <Mark className="h-10 w-10" />
               </Link>
-              <nav ref={rail} className="relative flex flex-col gap-1 rounded-[28px] bg-surface p-1.5 shadow-soft" aria-label="Main">
-                <span data-indicator className="pointer-events-none absolute top-0 left-1.5 w-16 rounded-[22px] bg-surface-3 opacity-0" />
+              {/* on the sky, no white pill (A-to-Z audit E4): where you are is the accent glyph and a thin accent line */}
+              <nav ref={rail} className="relative flex flex-col gap-1 pl-2" aria-label="Main">
+                <span data-indicator className="pointer-events-none absolute top-0 left-0 w-[3px] rounded-full bg-accent opacity-0" />
                 {tabs.map((item) => {
                   const active = isActive(pathname, item);
                   const Icon = item.icon;
@@ -170,7 +203,7 @@ export function AppShell({
                       )}
                     >
                       {item.href === "/jarvis" ? (
-                        <CompanionGlyph className="h-6 w-6" />
+                        <CompanionGlyph companion={skyling} night={skyling === "star"} className="h-6 w-6" />
                       ) : (
                         <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
                       )}
@@ -193,22 +226,21 @@ export function AppShell({
                 )}
               >
                 {!onJarvisPage && !assistantPage && <MobileAppBar demo={user.accountKind === "demo"} onSearch={() => setPalette(true)} />}
-                {!onJarvisPage && !assistantPage && (
-                  <TopBar firstName={user.name.split(" ")[0]} initials={initials} demo={user.accountKind === "demo"} settingsActive={settingsActive} />
-                )}
+                {!onJarvisPage && !assistantPage && <TopBar demo={user.accountKind === "demo"} settingsActive={settingsActive} onToday={pathname === "/"} />}
                 {onJarvisPage ? (
                   <PageMotion>{children}</PageMotion>
                 ) : assistantPage ? (
                   <>
-                    <AssistantHeader name={nameAtStart(assistantName)} />
+                    <AssistantHeader name={nameAtStart(assistantName)} skyling={skyling} />
                     <SectionNav inline />
                     <div className="px-4 pt-4 md:px-6">
                       <PageMotion>{children}</PageMotion>
                     </div>
                   </>
                 ) : (
-                  // Desktop: the page sits in one large frosted panel. Phones: no panel.
-                  <div className="md:rounded-[32px] md:bg-surface md:p-8 md:shadow-soft lg:p-10">
+                  // The page sits right on the sky, on a laptop too (owner, 2026-11-09: no more boxes); cards only where
+                  // there's something to tap.
+                  <div className="md:pt-2">
                     <SectionNav />
                     <PageMotion>{children}</PageMotion>
                   </div>
@@ -242,7 +274,7 @@ export function AppShell({
                     <span className="relative flex">
                       {item.href === "/jarvis" ? (
                         <span data-icon className="flex h-[22px] w-[22px] items-center justify-center">
-                          <CompanionGlyph className="h-6 w-6" />
+                          <CompanionGlyph companion={skyling} night={skyling === "star"} className="h-6 w-6" />
                         </span>
                       ) : (
                         <Icon data-icon className={cn("h-[22px] w-[22px]", active && "text-accent")} strokeWidth={active ? 2 : 1.7} />
@@ -258,7 +290,7 @@ export function AppShell({
             </div>
           </nav>
 
-          {tourOpen && pathname === "/" && <Tour onDone={endTour} assistantName={assistantName} />}
+          {tourOpen && pathname === "/" && <Tour onDone={endTour} assistantName={assistantName} companion={skyling} />}
 
           {!onJarvisPage && (
             <JarvisDrawer
@@ -288,9 +320,12 @@ export function AppShell({
             onClick={() => openJarvis()}
             data-tour="ask"
             aria-label={`Ask ${assistantName}`}
-            className="lf-fab fixed right-4 bottom-[calc(var(--tabbar-space)-4px)] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-text shadow-lift active:scale-95 md:right-8 md:bottom-8"
+            className={cn(
+              "lf-fab fixed right-4 bottom-[calc(var(--tabbar-space)-4px)] z-30 lf-chip-night h-14 w-14 rounded-[1.25rem] shadow-lift transition-[transform,opacity] duration-300 active:scale-95 md:hidden",
+              fabAway && "pointer-events-none translate-y-6 opacity-0",
+            )}
           >
-            <CompanionGlyph className="h-8 w-8" />
+            <CompanionGlyph companion={skyling} night={skyling === "star"} className="h-8 w-8" />
           </button>
         )}
         <KeyboardWatcher />
@@ -300,24 +335,27 @@ export function AppShell({
   );
 }
 
-/** Desktop only: a floating glass bar with a greeting, a Jarvis search field and the account. */
-function TopBar({ firstName, initials, demo, settingsActive }: { firstName: string; initials: string; demo: boolean; settingsActive: boolean }) {
-  const { openJarvis, assistantName } = useShell();
+/**
+ * Laptops only: the ask field (⌘J) and Settings, on the sky. Today has its own ask bar, so there it's just Settings
+ * (owner, 2026-11-09: no greeting, no second ask bar).
+ */
+function TopBar({ demo, settingsActive, onToday }: { demo: boolean; settingsActive: boolean; onToday: boolean }) {
+  const { openJarvis, assistantName, skyling } = useShell();
   return (
-    <div className="mb-4 hidden items-center gap-4 rounded-full bg-surface p-1.5 shadow-soft md:flex">
-      <span className="flex shrink-0 items-center gap-2.5 py-0.5 pr-3 pl-0.5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-3 text-xs font-semibold text-text-2">{initials}</span>
-        <span className="text-sm font-medium">Welcome, {firstName}</span>
-      </span>
-      <button
-        type="button"
-        onClick={() => openJarvis()}
-        className="mx-auto flex h-10 w-full max-w-md items-center gap-2.5 rounded-full bg-surface-2 px-4 text-sm text-muted transition-colors hover:text-text"
-      >
-        <Sparkles className="h-4 w-4 text-accent" />
-        Ask {assistantName} anything…
-        <kbd className="ml-auto rounded-md bg-surface-3 px-1.5 py-0.5 font-sans text-[0.6875rem] text-muted">⌘J</kbd>
-      </button>
+    <div className="mb-3 hidden items-center gap-3 md:flex">
+      {onToday ? (
+        <span className="flex-1" />
+      ) : (
+        <button
+          type="button"
+          onClick={() => openJarvis()}
+          className="mx-auto flex h-11 w-full max-w-md items-center gap-2.5 rounded-full bg-surface px-4 text-sm text-muted shadow-soft transition-colors hover:text-text"
+        >
+          <CompanionGlyph companion={skyling} night={skyling === "star"} className="lf-pixel h-6 w-6" />
+          Ask {assistantName} anything…
+          <kbd className="ml-auto rounded-md bg-surface-3 px-1.5 py-0.5 font-sans text-[0.6875rem] text-muted">⌘J</kbd>
+        </button>
+      )}
       {demo && <span className="shrink-0 rounded-full bg-warning-soft px-3 py-1.5 text-xs text-warning">Sample data</span>}
       <Link
         href="/settings"
@@ -325,7 +363,10 @@ function TopBar({ firstName, initials, demo, settingsActive }: { firstName: stri
         aria-label="Settings"
         title="Settings"
         aria-current={settingsActive ? "page" : undefined}
-        className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-surface-2", settingsActive ? "text-accent" : "text-text-2")}
+        className={cn(
+          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface shadow-soft hover:bg-surface-2",
+          settingsActive ? "text-accent" : "text-text-2",
+        )}
       >
         <Settings className="h-5 w-5" />
       </Link>
@@ -364,8 +405,8 @@ function useSlidingIndicator(ref: React.RefObject<HTMLElement | null>, pathname:
 }
 
 /** @deprecated Use BrandMark for new surfaces. Kept as the compatibility mark for existing LifeFlow pages. */
-/** The same top row the chat uses (title in the middle, Settings and the assistant's profile on the right). */
-function AssistantHeader({ name }: { name: string }) {
+/** The same top row the chat uses (title in the middle, Settings and the skyling's profile on the right). */
+function AssistantHeader({ name, skyling }: { name: string; skyling: CompanionKey | null }) {
   return (
     <header className="flex items-center gap-0.5 px-2 pt-[max(0.5rem,env(safe-area-inset-top))] lg:px-4">
       <span className="h-11 w-11 shrink-0 lg:hidden" aria-hidden />
@@ -377,8 +418,10 @@ function AssistantHeader({ name }: { name: string }) {
       >
         <Settings className="h-5 w-5" />
       </Link>
-      <Link href="/jarvis/profile" aria-label="Assistant profile" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface-2">
-        <BrandMark className="h-8 w-8" alt="" />
+      <Link href="/jarvis/profile" aria-label="Skyling profile" className="lf-hop flex h-11 w-11 items-center justify-center">
+        <span className="lf-chip-night h-9 w-9 overflow-hidden rounded-[0.75rem]">
+          <CompanionGlyph companion={skyling} night={skyling === "star"} className="lf-pixel h-8 w-8 translate-y-[3px]" />
+        </span>
       </Link>
     </header>
   );

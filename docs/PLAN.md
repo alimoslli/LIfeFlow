@@ -80,13 +80,15 @@ All times are Pacific. The wording is in `docs/hq/round-prompts.md`.
 
 **Status:** the new surface is on main and live (the owner merged V3, PR #3, 2026-11-09; he has no users yet, so it went straight to main). It is the live app with:
 - four tabs: Today, Assistant, Money, School;
-- Today as a wheel of time in a sky card: the companion runs on top while the day's things roll back under it; the sky is the real sky at the time on top; drag or flick to turn through the week, "Back to now", and a tap unrolls it into the timeline at that time (spec section 7b);
+- Today as "the mechanism" (spec 7b, 7d): a wheel of time in the real sky (full screen by default, a widget card in Settings), the companion running on top while the day's things roll back under it; drag, flick, trackpad, mouse wheel or keys to turn through the week, "Back to now", and a tap pours it into Day Sky's timeline (a hill a day, a valley a night, the sky of every hour);
+- a sky with moods (clouds, rain, a December snow with lights) and rare visitors (shooting stars, birds, a little craft), and a burst of sparks when something gets done;
+- the morning logo (the sun rising on the horizon) on the icons, the top bar and the opening;
 - the real-sky colours everywhere, no purple (owner);
 - a timeline that holds the whole life: to-dos, goals, milestones, Someday and Done, with piles that name themselves ("9 assignments");
 - everything with a time flowing onto both (calendars, shifts, deadlines, reminders, and money behind the lock);
 - "Pin something".
 
-Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.webp`.
+Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What changed overnight, for the owner: `docs/hq/tonight-2026-11-09.md`.
 
 **Done:**
 - 11-07: the V3 home spec and prototype, from the owner's storyboard.
@@ -99,10 +101,17 @@ Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.
   - all-day plans read "today" or "all day";
   - a quiet face counts what the timeline holds.
 - 11-08: main merged into `v3-day-clock` (ca873df). It brought promises, this plan and the HQ test fix. The promise check now runs on open, before the clock. The check is green (1158 tests), and so are the clock, core and promises e2e.
+- 11-09 night (owner's go to work on main while he sleeps): the mechanism, step 1 (c4a4032: Day Sky's timeline back, the pour, full sky, bigger companion) and step 2 (b5b54eb: one input layer, momentum that lands, laptop size, no boxes on a laptop); the morning logo (2fb42a6); moods, visitors, the done burst, the tour, the welcome on the sky. Details and pictures: `docs/hq/tonight-2026-11-09.md`.
+- 11-10 (owner, decided with LF Marketing): "Changes with the sky", a seventh skyling choice: whoever's moment it is shows (Dawn first light, Ray morning, Noon midday, Goldie golden hour, Dusk after sunset, Star night) from the day's real sunrise and sunset (`skylingAt`, `resolveSkyling`); one name and one talking style all day. In the welcome and Settings; the wheel follows the time on show and hops the next one in. Picture: `docs/design/tonight/changes-with-the-sky.webp`.
+- 11-10 (owner's yes on both birthday items): the birthday is required to finish or skip setup (checked on the server); an under-13 answer locks the welcome for that account with one calm line, keeping only the flag; accounts from before are asked once on Today; the Privacy Policy says what birthday, school and work are for and that they never go to the AI.
+- 11-09 (owner: "catered to the new app"; classes come from syncing their school calendar, not typing): the welcome is meet the skylings, about you (name, birthday 13+, what fills your week, school or work), connect your sky (Canvas feed right there, Google and Microsoft come back to the step, what they bring lands on the opened wheel), read your sky (learn by doing). The made-up demo day and the typing forms are gone.
+- 11-09 (owner's top priority): the first run remade on the skylings' night: landing page, sign-up and sign-in, welcome and tour, with all six skylings together in one living pixel sky (components/skylings) and new buttons tried on these four places only. Pictures: `docs/design/tonight/first-run-*.webp`. Next: the done star as a pixel character (#28).
+- 11-09 (owner): "assistant", "AI assistant" and "personal assistant" are gone from every screen, notification, email, the landing page and the legal pages; the character is a **skyling** (owner picked it from LF Main's honest take: companion, partner, sidekick and buddy are all taken in AI), "your skyling" until it's named; the pitch doesn't lead with AI, and two e2e tests fail on "assistant".
 - 11-09: the owner's names: V2 was the clock with self-naming piles (518d37a), V3 was V2 plus Morrow. Today became the sky card (owner picked B), then a wheel of time (5e11dbb, 5224c57, d988772) in the real-sky colours (2b002c8). A Fable review found 6 bugs, all fixed. Phone e2e 7/7 with a new wheel test; 1162/1162 unit and integration tests. The owner merged it all into main (PR #3).
 
 **Next:**
-- The owner's next round of changes to the new surface (he is about to give them, 2026-11-09).
+- From the owner's retouch list (relayed 2026-11-09) and the A-to-Z audit (`docs/audits/2026-11-09-a-to-z.md`): the welcome's "Your day, connected" on the wheel; the landing hero as the real sky and wheel; a time-true line and the uncurl morph (research P3/P4); the laptop two-column Today; the character cast (names from times of day, personalities); a setting for sky moods.
+- The welcome's Canvas card connects through the Pro-only Canvas action: once paid plans are on, a free user would hit "part of LifeFlow Pro" mid-welcome. Decide before billing goes live: let Canvas connect free in the welcome, or show the plan there (pricing is the owner's call). (QA review of b9f7a21.)
 - Rebuild the Day Clock artifact after clock changes.
 - The ADR 0032 proposals ("Tonight", "What this costs", timeline connection lines, a widget or watch) are not built and need the owner's yes.
 
@@ -163,7 +172,10 @@ Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.
 - ADR 0022 and 0024 to 0030;
 - `CLAUDE.md`, "LifeFlow HQ".
 
-**Status:** live at `/admin`, with five places (Office, Work, Marketing, People, App) and the settings gear. It includes the desk, live HQ (what each chat is doing right now), the hourly sync, decision cards and the building pictures. The night round on 11-07 audited it: the founder-only locks, the API key checks and the card rules all hold.
+**Status:** live at `/admin`, in the app's Day Sky look since 11-09, with five places (Office, Work, Marketing, People, App) and the settings gear. It includes the desk, live HQ (what each chat is doing right now), the hourly sync, decision cards and the building pictures. The night round on 11-07 audited it: the founder-only locks, the API key checks and the card rules all hold.
+
+**Paused for new work** (owner, 11-10, through the COO) until the relaunch work is done. Nothing is removed or switched off: the Office, Work, People, App, the hourly sync, decision cards and rounds keep running. Only bugs that break something that exists get fixed, plus anything the owner asks LF HQ for directly (and LF HQ tells the COO).
+- **The one exception the owner asked for today:** a line on Admin › People for accounts "Locked under 13, has a paid plan: review". LF Main may build it, coordinated through the COO; LF HQ builds it only if the COO asks.
 
 **Checked 11-08:**
 - The hourly sync runs: its last three runs were all accepted, 9 chats each.
@@ -176,13 +188,42 @@ Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.
   - live HQ and starting a desk task from HQ ([4919160](https://github.com/alimoslli/LIfeFlow/commit/4919160));
   - the HQ sync ([c7f4b4e](https://github.com/alimoslli/LIfeFlow/commit/c7f4b4e));
   - the simpler Office: "Needs you" and "Working now" first, logs moved to the department pages, the COO in plain words ([e8ad461](https://github.com/alimoslli/LIfeFlow/commit/e8ad461)).
+- 11-09: the admin area and HQ wear the app's new sky look, and fit a MacBook (ADR 0029, addendum 4; [d447953](https://github.com/alimoslli/LIfeFlow/commit/d447953)). The owner had said "nothing changed" there after V3.
+  - **The look:**
+    - the menu as frosted glass on the sky;
+    - the COO's brief as a clear sky;
+    - the sun's amber in place of gold;
+    - frosted glass over the hour's sky, with no hard borders;
+    - the building standing in the sky (day or night).
+  - **On a MacBook:** a wider page, two columns on the Office and bigger titles.
+  - **Unchanged:** the pictures, and the phone layout.
+  - **Audit fixes F2 to F4:** People no longer shows its title twice; the "how the app is running" line is short; every field and button is a full 44 px.
+- 11-09: who was active today (owner). Tapping "Active today" on the Office or on App → Growth opens People with only the accounts seen in the last 24 hours, newest first, with a "Seen today" menu and "Show everyone" ([da01e2f](https://github.com/alimoslli/LIfeFlow/commit/da01e2f)). "Last seen" is now stamped every 10 minutes of use instead of once a day, so the list and "Seen 2 h ago" are right.
 
 **Next:**
-- The open ADR 0030 questions: per-chat keys and live-line wording.
-- Keep the HQ sync chat light:
+- Keep the HQ sync chat light (upkeep that protects the owner's Claude allowance, so it goes on during the pause):
   - **Why:** it rereads its whole history every hour, and that history grows each run, which uses the owner's Claude allowance.
   - **What:** when it gets long, start a fresh sync chat and point the hourly scheduled task at it.
   - **Then update:** the chat's id in `CLAUDE.md` and in section 1's table.
+
+**On hold until the pause ends:**
+- The open ADR 0030 questions: per-chat keys and live-line wording.
+- **Idea, waiting for the owner's go (not being built): the Planning Room** (owner, 2026-11-09).
+  - **What it is:** HQ's group chat, a meeting room where everything said is heard by everyone in HQ. It lives on the Office, as a room in the building you tap, not a new menu item. The point is that the whole team stays connected and on the same page.
+  - **Who talks to whom:**
+    - Departments post only the major things they did, and their questions, to the COO. They don't talk to the owner directly.
+    - The COO answers what it can and brings the owner only the big asks.
+    - **It replaces the COO's brief** (owner: the brief isn't that good). The Office's brief card goes away, and the COO says its round summary in the room in a few short lines, like everyone else.
+    - The owner can talk to anyone; everyone sees everything.
+  - **How it sounds:** short human words, like a friends' or team group chat ("Fixed the calendar thing, Outlook events show up on time now"). No AI-chatbot tone, no flooding, and no "starting" or "still working" messages. Every line comes from a real record, with a tap to the proof.
+  - **Rules:**
+    - Only the owner's words are orders. Agents' posts are updates, never instructions to each other.
+    - When the owner names a department, only that one acts; otherwise the COO decides who.
+    - Each agent reads only what's new since its last round.
+    - Big yeses (going live, spending, publishing) still use the decision card.
+    - The COO copies decisions into the plan and rulebooks, so nothing lives only in the chat.
+    - Replies are picked up at each agent's next round, and the room says when.
+  - **Open:** whether questions buzz the owner's phone (updates stay silent). A picture comes first, before any building.
 
 **Waiting on the owner:**
 - **The desk task starter:**
@@ -202,6 +243,26 @@ Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.
 - App Store readiness: `docs/audits/2026-11-08-app-store-readiness.md` (biggest risks: Apple's "just a website" rule and missing in-app purchase; 13 owner steps, 14 engineering steps).
 
 **Next:** fix the 2 high Promises bugs; audit V3 on its branch before it's proposed for main; a rendered phone pass of /welcome.
+
+### The product excellence program (owner-approved 2026-11-10; run by the COO on Fable, screens by LF Main)
+The owner approved 12 improvements after a fresh walk through the app ([baseline](audits/2026-11-10-product-baseline.md)). Order: reliability, notifications, onboarding and the AI first; design after. Small fixes ship after tests and an independent review. Major changes (4, 6, 7, 8, 9, 10) are built and held, with pictures, until the owner approves each. Admin and HQ development is paused (12); nothing there is removed.
+
+| # | What | Who | Status |
+|---|---|---|---|
+| 1 | Under-13 erase safety | COO, then LF Main | Server fix live (`4fbe0689`); LF Main has the rest |
+| 2 | Reminders on time (the notify job every 10 minutes) | COO | Built, reviewed, shipping |
+| 3 | Ask for notifications at the right moment | LF Main | Queued |
+| 4 | AI cost and speed, measured, no loss of quality | COO | Next |
+| 5 | Rough edges from the walk | LF Main | Queued |
+| 6 | One sky, fewer doors | COO concepts, LF Main build | Two concepts with the owner |
+| 7 | The first minute ends on a full sky | LF Main | Queued, held for approval |
+| 8 | One-tap fixes ("Do it" with Undo) | LF Main and COO | Queued, held for approval |
+| 9 | Daily rhythm (morning, evening, weekly) | COO and LF Main | After 2 and 3 |
+| 10 | Settings in our own form | LF Main | After 6 |
+| 11 | Laptop Today uses the screen | LF Main | After 6 |
+| 12 | Pause Admin and HQ development | LF HQ | Paused 2026-11-10 |
+
+Last: a real-world walk again and the before-and-after comparison, then a new marketing and relaunch plan for the owner's approval.
 
 ## 7. Research & Insights, and Customer Success. Owner: the COO (agents `market-researcher`, `situation-writer`, `customer-success`)
 **Where the details live:** `docs/research/`; things to avoid become rules at once (CLAUDE.md).
@@ -261,16 +322,48 @@ Video and pictures of the wheel: `docs/design/companions/v3-choices/today-wheel.
 9. Google verification of the app, so people outside the test list can connect Gmail.
 
 ## 11. Waiting for the owner's yes (one list; details in HQ › Work)
-- **V3:** confirm the North Star (ADR 0032), pick a timeline concept, and give the go to merge V3.
+- **The character cast (LF Main, 2026-11-09; docs/design/companions/cast.png):** (a) six companions named for the sky (Dawn, Ray, Noon, Goldie, Dusk, Star): right names and looks? (b) keep 3 tones, or add a 4th "Calm"? (c) before someone picks, the wheel shows Ray (the sun you know); the designer proposed Dawn. (d) retire the old avatar setting (spark, orb, initial)? Kept until you say yes.
+- **The new buttons (LF Main, 2026-11-09):** tried on the landing page, sign-up, welcome and tour (a sunrise button with a chip where a skyling hops in, pixel sparks on press). Move them into the whole app? Kept to those four until you say.
+- **Apple sign-in on deleted accounts:** people who signed in with Apple before 2026-11-09 have no stored token, so deleting their account can't cancel Apple's access until they sign in with Apple once more. Recommended: one line on the delete screen ("also remove LifeFlow in your Apple ID settings").
+- **North Star:** confirm ADR 0032 (V3 itself is merged).
 - **LF Main's held branches:** phone sign-in, the "Still in the testing phase" note, and the tonight tool.
 - **HQ cards:** H4 approved and shipped (7647a69). H3 was declined on 2026-11-08: the "Record a paycheck" form on Work stays.
 - **Older cards being rewritten** (Goals redesign A, Connected accounts, the timeline concepts, Gmail abilities, search bolding, the agent workload, "Same bill?" outside the inbox).
 - **Marketing:** voice samples and credit spending.
 - **Onboarding and Today (phone check 2026-11-08):** 'Skip setup' and 'Skip' sit close together while the day connects.
+- **First run and price (research 2026-11-09, docs/research/2026-11-09-first-run-that-converts.md):** (a) where the paywall goes; recommended: only after "Your day, connected", showing the person's own saved item and their skyling's name; (b) the landing still can't show the price ($5.99 students) while the welcome says "free while we're testing": which one is true now? (c) add five first-minute counts (welcome step, first item saved, paywall seen, paid) to Admin › App?
+- **Apple Health vs typed values (COO, 2026-11-09):** a value the person types now always wins over Apple Health for that day (it used to be silently overwritten). Side effect: 20 exercise minutes typed in the morning keep Apple's full-day 60 out. Keep it, or let Apple fill in a typed day once the day is over?
+- **Navigation, pick one (COO, 2026-11-10; pictures: https://claude.ai/artifact/VujYddzJmPmXCD8edq6WrB):** A, three places (Today, Money, School) with the skyling as a bar on every page, or B, one sky with no tab bar and live-number doors. Recommended: A now, with B's live-number doors on Today.
+- **Under 13 in Settings (COO, 2026-11-10):** Settings answers "Check the year." for a real age of 5 to 12 on a finished account and never locks; only Today's birthday card has the read-back step. Add the same step in Settings so it can lock there too, or leave it?
 - **Promises (night audit 2026-11-08):** read the six firmer check-in lines once (some lean on pressure); decide whether a promise's text may show in a notification on the lock screen.
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-10, LF COO: the owner approved the 12-item product excellence program (section 6, with the baseline). Live: a slip can no longer erase an account (`4fbe0689`: impossible ages refused, a finished account confirms the date first, Stripe flagged not cancelled). Reminders: the notify job runs every 10 minutes and each daily look starts at its own hour. Admin and HQ development paused. Two navigation concepts are with the owner (section 11).
+- 2026-11-10, LF HQ: Admin and HQ paused for new work until the relaunch (owner, through the COO). Everything keeps running; bugs only; the under-13 People line is the one exception, with LF Main (section 5).
+- 2026-11-09 early morning, LF COO: on main, Opus-reviewed: Stripe plans follow Stripe's live subscriptions (0b994ba); one card and one filing per email, typed health values win, one Canvas sync at a time (7379002); timeline Done removes the item at once (d15a9bb). Research on the first run (42387c1). Two owner questions added to section 11.
+- 2026-11-09, LF HQ: "Active today" opens the list of who was active (People, seen in the last 24 hours); "last seen" stamped every 10 minutes (section 5).
+- 2026-11-09 morning, LF COO: on main (da1e843, 3 Opus reviews), overlapping cron, webhook and Sync now runs no longer double-run: a lease per job (migration 0057_job_locks). A bank update that arrives during a sync gets one more round instead of waiting 30 minutes. Microsoft failures are recorded and say "Reconnect it in Settings". Plaid calls time out after 20 s. "Your companion" wording passed to LF Marketing.
+- 2026-11-10, LF Main: Money cleaned up (owner): no Budget or Subscriptions page (old links redirect; budget heads-ups open the skyling); Bills is the one calm list with a sheet per item and the form one tap deeper; Accounts rebuilt the same way; quiet buttons readable on cards.
+- 2026-11-10, LF Main: our own pixel icons on the wheel, timeline, cards and pin picker, floating with no boxes (owner); night labels no longer overlap.
+- 2026-11-10, LF Main: the timeline names every stop; done to-dos and assignments, promises (kept ones too, never broken) and a recap of each past day (sleep, steps, habits, money with the lock open) join the line; the wheel names its next things (owner: "show your life on it simply").
+- 2026-11-10, LF Main: idea clouds beside Today's chat bar and in the empty chat (owner, through the COO): short, from real data only, unused features first, no money with the lock on, a tap fills the box and sends nothing; every cloud maps to a real tool.
+- 2026-11-10, LF Main: "Let's clear your sky." in the empty chat; the skyling goes by its own name (Ray, Star, whoever is up) until named, "Dev" never shown; sparkle, "Home context" and the avatar setting removed; on Today the skyling stands on the chat bar with its name (owner, through the COO).
+- 2026-11-10, LF Main: under 13 after setup is locked and emptied like during setup (owner's call), a paid plan cancelled at Stripe, Privacy section 9 updated; sent to the COO for review.
+- 2026-11-10, LF Main: the sky buttons everywhere (owner's yes): the shared button and 65 hand-made ones; sunrise for the main action, glass for the quiet one, ember for destructive.
+- 2026-11-10, LF Main: under-13 lock, the COO's three follow-ups: Plaid links closed at Plaid, only real tables wiped (views skipped, new tables tested), time zone, forwarding address and texting number cleared; Privacy section 9 names the security log.
+- 2026-11-10, LF Main: the skyling chat, Money and School in the new look (owner): the skyling in a window of the real sky (on a cloud, on coins, on books), replies with its face, walks while it works and hops when something gets done; sunrise bubbles and send, sky buttons on these pages.
+- 2026-11-10, LF Main: the under-13 lock hardened after review (nothing kept during setup, enforced in the session, Settings and races closed, privacy wording corrected).
+- 2026-11-10, LF Main: "Changes with the sky" shipped, the seventh skyling choice (owner, with LF Marketing: "or let the sky choose").
+- 2026-11-10, LF Main: birthday required and checked on the server, under 13 locks the welcome for the account (only a flag is kept), older accounts asked once on Today; the Privacy Policy names birthday, school and work (owner's yes, through the COO).
+- 2026-11-10, LF Main: the welcome connects instead of typing (owner): about you with the birthday, connect your sky with Canvas, Google and Outlook; the demo day removed.
+- 2026-11-09 morning, LF Main: the first run remade on the skylings' night (landing, sign-up, welcome, tour) with the new buttons (owner's top priority).
+- 2026-11-09 night, LF Main: "assistant" is gone from everything users see; the character is a skyling (owner).
+- 2026-11-09, LF HQ: the Planning Room idea will replace the COO's brief card (owner); still waiting for his go.
+- 2026-11-09, LF HQ: the owner's Planning Room idea written into section 5 (an idea waiting for his go, not being built).
+- 2026-11-09 night, LF COO: on main: short assistant answers (fc7a45c: chips stop pasting lists, a 60-word reply shape, low verbosity; the owner's catch-up question went from 1,123 words to 52 on the real model), Apple token revoke on unlink and deletion (175bde4, migration 0056, Opus-reviewed), the A-to-Z audit (a0a3718), the promise test fixed for real dates (6ebc5c7). Phone sign-in must renumber its migration to 0058 before it merges; 0057 goes to the job lease (in review).
+- 2026-11-09, LF HQ: the admin area and HQ in the V3 sky look and comfortable on a MacBook, at the owner's word through the COO (section 5).
+- 2026-11-09 night, LF Main: the mechanism steps 1 and 2 (Day Sky's timeline, the pour, input layer, laptop size, no boxes), the morning logo, sky moods and visitors, the done burst, the tour and welcome on the sky (c4a4032, b5b54eb, 2fb42a6 and the next commits). List for the owner: docs/hq/tonight-2026-11-09.md.
 - 2026-11-09, LF Main (was LF V3): the owner merged V3 into main (PR #3): Today is a wheel of time in a sky card, the real-sky colours, no purple. Chats simplified on his word: the old LF Main joined this chat (archived), LF Managing Agents stays open, V2 and V3 branches retired.
 - 2026-11-09, LF COO: the owner is already on Vercel Pro (decision removed). New deploys had stopped reaching lifeflowweb.com because the Neon integration hit its preview branch limit (Deployment Checks: "Neon branching: Branch limit exceeded", custom domain skipped); after the owner cleared it, the evening fixes, the Today chips and the H4 404 are live. Rule: builders work on claude/chief-of-staff or a worktree branch that is NOT pushed; only main and the department branches are pushed, so each push doesn't cost a Neon branch.
 - 2026-11-09, LF COO: the owner approved H4; signed-out visitors to /admin get the same 404 as everyone else (7647a69).

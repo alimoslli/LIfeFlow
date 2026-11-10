@@ -10,6 +10,7 @@ import {
   connectCanvas,
   connectCanvasFeed,
   syncCanvas,
+  withCanvasLock,
 } from "@/server/integrations/canvas";
 import { getAgenda } from "@/server/services/calendar";
 import { createAssignment, createCourse, listAssignments, listCourses, updateAssignment } from "@/server/services/school";
@@ -216,5 +217,29 @@ describe("Canvas", () => {
     expect(after).toHaveLength(2);
     expect(after.find((a) => a.title === "Midterm Exam")!.dueAt!.toISOString()).toBe(`${addDaysStr(today, 8)}T03:59:00.000Z`);
     expect(await run((s) => canvasConnection(s))).toMatchObject({ via: "feed", status: "connected" });
+  });
+});
+
+describe("Canvas sync lock", () => {
+  it("lets one sync run per person at a time, so two at once can't create the class twice", async () => {
+    const { user, run } = await makeUser();
+    const c = fakeCanvas("2026-11-10T15:00:00Z");
+    await run((s) => connectCanvas(s, "canvas.state.edu", TOKEN, c.fetchImpl));
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const first = withCanvasLock(user.id, async () => {
+      await gate;
+      return run((s) => syncCanvas(s, c.fetchImpl, TZ));
+    });
+    // A second request while the first runs is turned away, not run beside it.
+    const second = await withCanvasLock(user.id, () => run((s) => syncCanvas(s, c.fetchImpl, TZ)));
+    expect(second).toEqual({ skipped: true });
+    release();
+    const done = await first;
+    expect(done.skipped).toBe(false);
+    expect(await run((s) => listCourses(s))).toHaveLength(1);
+    // Once it is over, the next one runs.
+    expect((await withCanvasLock(user.id, () => run((s) => syncCanvas(s, c.fetchImpl, TZ)))).skipped).toBe(false);
+    expect(await run((s) => listCourses(s))).toHaveLength(1);
   });
 });

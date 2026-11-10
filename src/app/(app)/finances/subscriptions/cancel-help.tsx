@@ -35,7 +35,7 @@ export function CancelHelp({ id, name, via, saved }: { id: string; name: string;
     });
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium">
+      <button type="button" onClick={() => setOpen(true)} className="lf-sb lf-sb-app lf-sb-sm">
         Cancel help
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title={`Cancel ${name}`}>
@@ -73,12 +73,7 @@ export function CancelHelp({ id, name, via, saved }: { id: string; name: string;
               )}
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={find}
-              disabled={pending}
-              className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-accent px-5 font-medium text-accent-text disabled:opacity-60"
-            >
+            <button type="button" onClick={find} disabled={pending} className="lf-sb lf-sb-sun lf-sb-sm">
               {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Find the official steps
             </button>
           )}

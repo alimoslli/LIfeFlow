@@ -5,15 +5,11 @@ import { Confetti } from "@/components/motion/celebrate";
 import { useShell } from "@/components/shell/app-shell";
 import { celebrateMilestoneAction } from "./actions";
 
-/** Opens the assistant with a prompt already sent. */
+/** Opens the skyling with a prompt already sent. */
 export function AskJarvisButton({ prompt, children }: { prompt: string; children: ReactNode }) {
   const { openJarvis } = useShell();
   return (
-    <button
-      type="button"
-      onClick={() => openJarvis(prompt, { send: true })}
-      className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm font-medium text-text hover:bg-surface-3"
-    >
+    <button type="button" onClick={() => openJarvis(prompt, { send: true })} className="lf-sb lf-sb-app lf-sb-sm">
       {children}
     </button>
   );

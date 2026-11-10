@@ -22,7 +22,7 @@ export function EditMemory({
     <Dialog
       trigger={<Pencil className="h-4 w-4" />}
       title="Edit memory"
-      description="Your wording becomes what your assistant uses."
+      description="Your wording becomes what your skyling uses."
       triggerProps={{ variant: "ghost", size: "icon", "aria-label": "Edit memory", title: "Edit memory" }}
     >
       {(close) => (

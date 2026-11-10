@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import type { ResponseCreateParamsStreaming, ResponseInputItem, ResponseOutputItem, Tool } from "openai/resources/responses/responses";
-import type { ChatItem, ModelProvider, ModelTurn, StepEvent, TokenUsage, ToolCall, TurnEffort } from "./types";
+import type { ChatItem, ModelProvider, ModelTurn, ReplyVerbosity, StepEvent, TokenUsage, ToolCall, TurnEffort } from "./types";
 import { ProviderUnavailableError } from "./types";
 import type { ToolSpec } from "../registry";
 
@@ -99,6 +99,7 @@ export class OpenAIProvider implements ModelProvider {
     tools,
     cacheKey,
     effort,
+    verbosity,
     signal,
   }: {
     system: string;
@@ -106,6 +107,7 @@ export class OpenAIProvider implements ModelProvider {
     tools: ToolSpec[];
     cacheKey?: string;
     effort?: TurnEffort;
+    verbosity?: ReplyVerbosity;
     signal?: AbortSignal;
   }): ModelTurn {
     const input: ResponseInputItem[] = toResponsesInput(history);
@@ -130,6 +132,8 @@ export class OpenAIProvider implements ModelProvider {
           ...(cacheKey && { prompt_cache_key: cacheKey }),
           ...(reasoning && { include: ["reasoning.encrypted_content"] }),
           ...(reasoning && reasoningEffort && { reasoning: { effort: reasoningEffort } }),
+          // GPT-5 family: the model's own answer-length setting. A prompt rule alone left week plans at 800+ words.
+          ...(reasoning && verbosity && { text: { verbosity } }),
         };
         const retention = config.cacheRetention && !noRetention.has(config.model) ? config.cacheRetention : undefined;
         let stream;

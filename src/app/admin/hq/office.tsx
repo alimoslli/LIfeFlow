@@ -67,10 +67,10 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0">
           <p className="hq-eyebrow">{dayPart}</p>
-          <h1 className="mt-1 font-display text-[2rem] leading-tight font-medium tracking-tight">
+          <h1 className="mt-1 font-display text-[2rem] leading-tight font-medium tracking-tight lg:text-[2.5rem]">
             {greeting(s.now, tz)}, {first}.
           </h1>
-          <p className="mt-1 text-sm text-text-2">
+          <p className="mt-1 text-sm text-text-2 lg:text-[0.9375rem]">
             {counts || "Everyone is quiet."}
             {b.weekPct !== null && ` · Claude use this week: ${Math.round(b.weekPct)}%`}
             {controls.ok && !controls.data.autonomous && " · Autonomous mode off"}
@@ -88,7 +88,7 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
               href={href}
               aria-current={view === key ? "page" : undefined}
               className={cn(
-                "inline-flex min-h-10 items-center rounded-full px-4 text-sm",
+                "inline-flex min-h-11 items-center rounded-full px-4 text-sm",
                 view === key ? "bg-surface font-medium text-text shadow-soft" : "text-text-2",
               )}
             >
@@ -99,9 +99,14 @@ export async function OfficeSection({ view, children }: { view: "office" | "work
       </header>
 
       <LiveRefresh />
-      <RightNow items={s.live} waiting={s.waiting} approvals={s.approvals.slice(0, 3)} pending={n} now={s.now} nextRound={s.nextRound} />
-      <BriefCard brief={s.brief} chief={s.employees.find((e) => e.role === "assistant")} pending={n} />
-      {children}
+      {/* Phones: one column in this order. A MacBook and wider: what you act on and the COO's brief (left) beside what changed (right). */}
+      <div className="flex flex-col gap-5 xl:grid xl:grid-cols-[minmax(0,7fr)_minmax(0,6fr)] xl:items-start">
+        <div className="flex min-w-0 flex-col gap-5">
+          <RightNow items={s.live} waiting={s.waiting} approvals={s.approvals.slice(0, 3)} pending={n} now={s.now} nextRound={s.nextRound} />
+          <BriefCard brief={s.brief} chief={s.employees.find((e) => e.role === "assistant")} pending={n} />
+        </div>
+        <div className="min-w-0">{children}</div>
+      </div>
 
       <div>
         <div className="min-w-0">

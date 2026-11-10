@@ -13,6 +13,7 @@ import { applyBudgetPlan, BUDGET_METHODS, suggestBudgets } from "../../services/
 import { TRANSACTION_KINDS, updateTransaction } from "../../services/finance/transactions";
 import { notFound, ServiceError } from "../../services/errors";
 import { moveToTrash } from "../../services/trash";
+import { withPlaidSyncLock } from "../../db/job-lock";
 import { BANK_UNAVAILABLE, listPlaidConnections, PlaidError, syncConnection } from "../../integrations/plaid";
 import { centsToDollarsDeep } from "./finance";
 import { dateArg, defineTool, idArg, moneyArg, toCents } from "../tool";
@@ -39,7 +40,9 @@ export const moneyCoachTools = [
       const results = [];
       for (const i of items) {
         try {
-          results.push({ bank: i.displayName, ok: true, ...(await syncConnection(ctx.userId, i.id, ctx.tz, undefined, { live: true })) });
+          const run = await withPlaidSyncLock(i.id, (live) => syncConnection(ctx.userId, i.id, ctx.tz, undefined, { live }), { live: true, maxMs: 300_000 });
+          // Skipped = another sync of this bank is already running and brings the data; say so instead of failing.
+          results.push(run.skipped ? { bank: i.displayName, ok: true, alreadySyncing: true } : { bank: i.displayName, ok: true, ...run.value });
         } catch (e) {
           // Plaid's messages are already plain words; anything else is logged here and never reaches the model.
           if (!(e instanceof PlaidError)) console.error("[sync_bank_accounts]", e);
@@ -76,7 +79,7 @@ export const moneyCoachTools = [
       const w = await ctx.run((s) => budgetWarnings(s, ctx.today));
       return centsToDollarsDeep({
         budgets: w.map(({ childIds: _c, color: _co, ...b }) => b),
-        viewAt: "/finances/budgets",
+        viewAt: "/money",
       });
     },
   }),
@@ -110,7 +113,7 @@ export const moneyCoachTools = [
           lines.push({ categoryId: c.category.id, limitCents: toCents(l.monthlyLimit) });
         }
         const r = await applyBudgetPlan(s, { month: a.month ?? ctx.today, lines });
-        return { saved: r.saved, viewAt: "/finances/budgets" };
+        return { saved: r.saved, viewAt: "/money" };
       });
     },
   }),

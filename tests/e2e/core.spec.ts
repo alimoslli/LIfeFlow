@@ -45,7 +45,8 @@ test("a failed save keeps what was typed and explains the problem in plain words
   // Fixing it and saving works as before, and the form clears.
   await page.getByLabel("Net pay ($)").fill("150");
   await page.getByRole("button", { name: "Save paycheck" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Saved." })).toBeVisible();
+  // (the job's own "Saved." can still be showing, so look at the newest one)
+  await expect(page.getByRole("status").filter({ hasText: "Saved." }).last()).toBeVisible();
   await expect(page.getByLabel("Net pay ($)")).toHaveValue("");
 });
 
@@ -148,7 +149,8 @@ test("Jarvis asks before anything goes to the AI, and works once allowed", async
   await expect(page.getByLabel(COMPOSER)).toBeDisabled();
   await page.getByRole("button", { name: "Allow" }).click();
   await expect(page.getByLabel(COMPOSER)).toBeEnabled();
-  await expect(page.getByRole("button", { name: "Plan my day" })).toBeVisible();
+  // once allowed, the idea clouds show under the skyling (owner, 2026-11-10: they replaced the starter cards)
+  await expect(page.getByRole("list", { name: "Ideas to try" }).getByRole("button").first()).toBeVisible();
 });
 
 test("testers can send feedback from Settings", async ({ page }) => {

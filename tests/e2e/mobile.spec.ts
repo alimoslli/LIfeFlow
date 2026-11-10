@@ -5,27 +5,23 @@ test("core pages fit a phone screen without horizontal scrolling", async ({ page
   await signUp(page, "Phone User", { onboarding: "stay" });
   // The helper saves the name after /welcome loaded (sign-up asks only email and password); reload so the first screen has it.
   await page.reload();
-  // Every onboarding step fits: hello, your week, a class and job, make it yours, your day connected (animating and done).
+  // Every onboarding step fits: the skylings, about you (with long names), connect your sky, read your sky.
   const fits = async (label: string) => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow, `/welcome (${label}) overflows by ${overflow}px`).toBeLessThanOrEqual(1);
   };
-  await fits("hello");
-  await page.getByRole("button", { name: "Let's go" }).click();
+  await fits("skyling");
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel("What should I call you?").fill("Tara");
+  await page.getByLabel("Your birthday").fill("2004-03-15");
   await page.getByRole("radio", { name: /Both/ }).click();
-  await fits("week");
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("A class you're taking").fill("Introduction to Organic Chemistry II");
+  await page.getByLabel("Your school").fill("Introduction to Organic Chemistry University");
   await page.getByLabel("Where you work").fill("Campus Coffee and Bakery Downtown");
-  await fits("details");
-  await page.getByRole("button", { name: "Continue" }).click();
-  await fits("yours");
-  await page.getByRole("button", { name: "Show me my day" }).click();
-  await page.waitForTimeout(3500);
-  await fits("day, connecting");
-  await page.getByRole("button", { name: "Skip", exact: true }).click();
-  await expect(page.locator("article")).toHaveCount(3);
-  await fits("day, result");
+  await fits("about");
+  await page.getByRole("button", { name: "Connect my sky" }).click();
+  await fits("connect");
+  await page.getByRole("button", { name: "I'll connect later" }).click();
+  await fits("learn");
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   await page.getByRole("button", { name: "Skip tour" }).click();
@@ -49,7 +45,7 @@ test("Extra large text still fits a phone screen", async ({ page, context, baseU
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow, `${path} overflows by ${overflow}px at Extra large text`).toBeLessThanOrEqual(1);
   }
-  // The assistant's Profile cards grow with the text instead of clipping their icons (audit A26), and their words stay
+  // The skyling's Profile cards grow with the text instead of clipping their icons (audit A26), and their words stay
   // inside the card's padding, on 360, 375 and 393 px phones.
   for (const width of [360, 375, 393]) {
     await page.setViewportSize({ width, height: 852 });

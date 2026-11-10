@@ -6,6 +6,7 @@ import { connectionRegistry, financialAccounts, holdings, integrations, syncJobs
 import type { Database } from "../db/client";
 import { withUser, type UserScope } from "../db/with-user";
 import { cleanVendorName } from "@/lib/vendor";
+import { fetchWithTimeout } from "./timeout";
 import { tidyForUser } from "../services/finance/tidy";
 import { categoryIdByName, keywordCategory, ruleFor } from "../services/finance/categorize";
 import { recordNetWorth } from "../services/finance/investing";
@@ -50,7 +51,7 @@ export function plaidConfig(env: Record<string, string | undefined> = process.en
   };
 }
 
-/** What the person (and the assistant) is told when a bank request fails for a reason they can't fix. */
+/** What the person (and the skyling) is told when a bank request fails for a reason they can't fix. */
 export const BANK_UNAVAILABLE = "The bank connection isn't available right now. Please try again later.";
 
 const REAUTH = new Set(["ITEM_LOGIN_REQUIRED", "PENDING_EXPIRATION", "ACCESS_NOT_GRANTED", "INVALID_ACCESS_TOKEN"]);
@@ -60,7 +61,7 @@ async function call<T>(path: string, body: Record<string, unknown>, f: Fetch = f
   if (!cfg) throw new PlaidError("Bank connections aren't available yet.", "NOT_CONFIGURED");
   let res: Response;
   try {
-    res = await f(`${cfg.baseUrl}${path}`, {
+    res = await fetchWithTimeout(f, `${cfg.baseUrl}${path}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ client_id: cfg.clientId, secret: cfg.secret, ...body }),
@@ -74,7 +75,7 @@ async function call<T>(path: string, body: Record<string, unknown>, f: Fetch = f
     // Plaid's own error details (never the request body, which holds the secret), so setup problems show in the server logs.
     console.error("[plaid]", path, res.status, json.error_type, code, json.error_message, json.request_id);
     // Plaid's display_message is written for the person; anything else (wrong keys, a bad field) is ours to fix, so the
-    // person and the assistant only hear that the connection isn't available. Never name settings or codes to them.
+    // person and the skyling only hear that the connection isn't available. Never name settings or codes to them.
     const displayMessage = typeof json.display_message === "string" ? json.display_message : "";
     const msg = displayMessage || BANK_UNAVAILABLE;
     throw new PlaidError(code && REAUTH.has(code) ? "Your bank needs you to sign in again. Use Reconnect." : msg, code, !!code && REAUTH.has(code));
@@ -206,6 +207,16 @@ async function getItem(scope: UserScope, integrationId: string) {
     .where(and(eq(integrations.id, integrationId), eq(integrations.userId, scope.userId), eq(integrations.provider, "plaid")));
   if (!row) throw new PlaidError("Bank connection not found.", "NOT_FOUND");
   return row;
+}
+
+/** True when this user owns that Plaid connection (checked inside withUser, like syncConnection). */
+export async function ownsPlaidConnection(userId: string, integrationId: string) {
+  return withUser(userId, (s) =>
+    getItem(s, integrationId).then(
+      () => true,
+      (e) => (e instanceof PlaidError && e.code === "NOT_FOUND" ? false : Promise.reject(e)),
+    ),
+  );
 }
 
 // ------------------------------------------------------------ mapping (pure)

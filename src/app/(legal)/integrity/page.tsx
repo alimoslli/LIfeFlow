@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Academic integrity",
-  description: "How LifeFlow's assistant helps students learn without doing their graded work.",
+  description: "How LifeFlow's skyling helps students learn without doing their graded work.",
 };
 
 /** Plain-language promise for students, parents and schools. Matches the rules in Jarvis's instructions (ADR 0016). */
@@ -12,11 +12,11 @@ export default function IntegrityPage() {
     <>
       <h1>Academic integrity</h1>
       <p>
-        LifeFlow helps students stay on top of school, work and money. Its assistant is a coach, not a ghostwriter. These rules are always on, in every class,
-        and students can&apos;t turn them off.
+        LifeFlow helps students stay on top of school, work and money. Its skyling is a coach, not a ghostwriter. These rules are always on, in every class, and
+        students can&apos;t turn them off.
       </p>
 
-      <h2>What the assistant does</h2>
+      <h2>What the skyling does</h2>
       <ul>
         <li>Tracks every assignment, exam and due date, and reminds you before it&apos;s late.</li>
         <li>Breaks big assignments into steps and puts study time into your real free time.</li>
@@ -35,9 +35,9 @@ export default function IntegrityPage() {
 
       <h2>How it&apos;s enforced</h2>
       <p>
-        The rules are part of the assistant&apos;s fixed instructions, which are the same for every student. When a request looks like graded work, the
-        assistant switches to coach mode for that request: it says so in one sentence and offers real help instead. Every update to LifeFlow is checked against
-        a test set of honest requests and attempts to get work done, and it must pass before it ships. LifeFlow never trains AI models on student data.
+        The rules are part of the skyling&apos;s fixed instructions, which are the same for every student. When a request looks like graded work, the skyling
+        switches to coach mode for that request: it says so in one sentence and offers real help instead. Every update to LifeFlow is checked against a test set
+        of honest requests and attempts to get work done, and it must pass before it ships. LifeFlow never trains AI models on student data.
       </p>
 
       <p>

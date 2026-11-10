@@ -1,7 +1,9 @@
 import { addDaysStr, daysBetween, formatDateStr, formatIn, localDateOf, startOfLocalDay, todayIn } from "@/lib/dates";
 import { categoryFor, iconFor, sourceFor, splitEmoji, titleFor, type ClockData, type ClockDay, type ClockItem } from "@/lib/day-clock";
+import { and, asc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 import type { UserScope } from "@/server/db/with-user";
 import { series } from "@/server/db/series";
+import { assignments, habitChecks, habits, healthSamples, promises, tasks } from "@/server/db/schema";
 import { getAgenda, type AgendaItem } from "./calendar";
 import { summarizeCashflow } from "./finance/cashflow";
 import { expectedPay, upcomingBills } from "./finance/forecast";
@@ -62,7 +64,11 @@ const usd = (cents: number) => `$${Math.round(Math.abs(cents) / 100).toLocaleStr
  * - every open to-do at its due time, and its reminder when it rings well before (an hour or more);
  * - milestones and goals reached behind, goals ahead by their day; undated to-dos and goals under "Someday";
  * - with the Money lock open (`money`): bills and trial ends in the next 30 days, money goals by their day,
- *   salaried pay as expected (never counted), and what was spent today.
+ *   salaried pay as expected (never counted), and what was spent today;
+ * - what happened (owner, 2026-11-10: "it's supposed to show your life on it"): to-dos and assignments ticked off where
+ *   they were done, promises at their time (and kept ones where they were kept; never the broken ones), and for each past
+ *   day of the week one short recap from real records: sleep, steps, active minutes, habits done, and with the Money lock
+ *   open what went out and came in.
  */
 export async function dayClockData(scope: UserScope, tz: string, now = new Date(), opts: { money?: boolean } = {}): Promise<ClockData> {
   const today = todayIn(tz, now);
@@ -155,7 +161,10 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
       });
     }
   }
+  items.push(...(await lifeSoFar(scope, tz, today, now)));
+
   let spentTodayCents: number | null = null;
+  let spentByDay = new Map<string, { out: number; in: number }>();
   if (opts.money) {
     const until = addDaysStr(today, 30);
     const bank = await bankSeries(scope, today);
@@ -164,7 +173,7 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
       () => expectedPay(scope, today, until, bank),
       () => listGoals(scope),
       () => upcomingTrials(scope, today, until),
-      () => queryTransactions(scope, { from: today, to: today, limit: 1000 }),
+      () => queryTransactions(scope, { from, to: today, limit: 3000 }),
     );
     const money = { kind: "due" as const, cat: "due" as const, end: null, allDay: true, subtitle: null };
     for (const b of bills)
@@ -188,7 +197,7 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
           icon: "⏳",
           title: `${t.name} trial ends`,
           start: dayAt(t.trialEndsOn),
-          href: "/finances/subscriptions",
+          href: "/finances/bills",
           source: "From your subscriptions",
           subtitle: "The first charge comes after this day",
           amountCents: Math.abs(t.amountCents),
@@ -223,9 +232,13 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
           amountCents: g.targetCents,
           origin: "money_goal",
         });
-    const spent = summarizeCashflow(todays).netSpendingCents;
+    const byDay = new Map<string, typeof todays>();
+    for (const t of todays) byDay.set(t.date, [...(byDay.get(t.date) ?? []), t]);
+    spentByDay = new Map([...byDay].map(([d, rows]) => [d, { out: summarizeCashflow(rows).netSpendingCents, in: summarizeCashflow(rows).incomeCents }]));
+    const spent = spentByDay.get(today)?.out ?? 0;
     spentTodayCents = spent > 0 ? spent : null;
   }
+  items.push(...(await dayRecaps(scope, today, from, spentByDay)));
   items.sort((a, b) => a.start - b.start);
   const steps = health.metrics.find((m) => m.metric === "steps");
   const sleep = health.metrics.find((m) => m.metric === "sleep_hours");
@@ -247,4 +260,169 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
     spentTodayCents,
     empty: items.length === 0 && todaySteps == null,
   };
+}
+
+/** Hours as "7h 10m". */
+const hm = (hours: number) => {
+  const m = Math.round(hours * 60);
+  return m % 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m / 60}h`;
+};
+
+/**
+ * What already happened and what they said they'd do, as the line shows it (dayClockData says why): to-dos and assignments
+ * done this week, where they were done; promises open or kept, at their time.
+ */
+async function lifeSoFar(scope: UserScope, tz: string, today: string, now: Date): Promise<ClockItem[]> {
+  const since = startOfLocalDay(addDaysStr(today, -CLOCK_SPAN), tz);
+  const until = startOfLocalDay(addDaysStr(today, AHEAD_DAYS + 1), tz);
+  const [doneTasks, doneWork, said] = await series(
+    () =>
+      scope.tx
+        .select({ id: tasks.id, title: tasks.title, at: tasks.completedAt })
+        .from(tasks)
+        .where(and(eq(tasks.userId, scope.userId), eq(tasks.status, "done"), isNull(tasks.parentId), gte(tasks.completedAt, since)))
+        .limit(80),
+    () =>
+      scope.tx
+        .select({ id: assignments.id, title: assignments.title, courseId: assignments.courseId, at: assignments.completedAt })
+        .from(assignments)
+        .where(and(eq(assignments.userId, scope.userId), eq(assignments.status, "done"), gte(assignments.completedAt, since)))
+        .limit(80),
+    () =>
+      scope.tx
+        .select({ id: promises.id, text: promises.text, dueAt: promises.dueAt, status: promises.status, resolvedAt: promises.resolvedAt })
+        .from(promises)
+        .where(and(eq(promises.userId, scope.userId), inArray(promises.status, ["open", "kept"]), gte(promises.dueAt, since), lte(promises.dueAt, until)))
+        .orderBy(asc(promises.dueAt))
+        .limit(80),
+  );
+  const out: ClockItem[] = [];
+  const doneAt = (at: Date) => Math.min(wallMinutes(at, tz, today), wallMinutes(now, tz, today));
+  for (const t of doneTasks) {
+    if (!t.at) continue;
+    const { emoji, rest } = splitEmoji(t.title);
+    out.push({
+      id: `done:task:${t.id}`,
+      kind: "due",
+      cat: "other",
+      icon: emoji ?? iconFor(t.title, "task", "task"),
+      title: rest,
+      start: doneAt(t.at),
+      end: null,
+      allDay: false,
+      href: `/tasks/${t.id}`,
+      source: "From your to-dos",
+      subtitle: "Done",
+      origin: "task",
+      ref: t.id,
+      done: true,
+    });
+  }
+  for (const a of doneWork) {
+    if (!a.at) continue;
+    out.push({
+      id: `done:assignment:${a.id}`,
+      kind: "due",
+      cat: "other",
+      icon: "📄",
+      title: a.title,
+      start: doneAt(a.at),
+      end: null,
+      allDay: false,
+      href: `/school/courses/${a.courseId}`,
+      source: "From your classes",
+      subtitle: "Done",
+      origin: "assignment",
+      ref: a.id,
+      done: true,
+    });
+  }
+  for (const p of said) {
+    const kept = p.status === "kept";
+    const text = p.text.charAt(0).toUpperCase() + p.text.slice(1);
+    out.push({
+      id: `promise:${p.id}`,
+      kind: "due",
+      cat: "other",
+      icon: "🤞",
+      title: text,
+      start: kept && p.resolvedAt ? doneAt(p.resolvedAt) : wallMinutes(p.dueAt, tz, today),
+      end: null,
+      allDay: false,
+      href: "/jarvis?ask=How%20are%20my%20promises%20going%3F",
+      source: "Your promise",
+      subtitle: kept ? "Kept" : null,
+      origin: "promise",
+      ref: p.id,
+      done: kept || undefined,
+    });
+  }
+  return out;
+}
+
+/**
+ * One short recap for each past day of the week, at the end of that day, from real records only: sleep, steps and active
+ * minutes (Apple Health or what they logged), habits done, and (Money lock open) what went out and came in. A day with
+ * none of these has no recap.
+ */
+async function dayRecaps(scope: UserScope, today: string, from: string, money: Map<string, { out: number; in: number }>): Promise<ClockItem[]> {
+  const yesterday = addDaysStr(today, -1);
+  const [health, checks] = await series(
+    () =>
+      scope.tx
+        .select({ metric: healthSamples.metric, day: healthSamples.day, value: healthSamples.value })
+        .from(healthSamples)
+        .where(
+          and(
+            eq(healthSamples.userId, scope.userId),
+            gte(healthSamples.day, from),
+            lte(healthSamples.day, yesterday),
+            inArray(healthSamples.metric, ["sleep_hours", "steps", "exercise_minutes"]),
+          ),
+        ),
+    () =>
+      scope.tx
+        .select({ day: habitChecks.day, title: habits.title })
+        .from(habitChecks)
+        .innerJoin(habits, eq(habits.id, habitChecks.habitId))
+        .where(and(eq(habitChecks.userId, scope.userId), eq(habitChecks.done, true), gte(habitChecks.day, from), lte(habitChecks.day, yesterday))),
+  );
+  const out: ClockItem[] = [];
+  for (let d = from; d <= yesterday; d = addDaysStr(d, 1)) {
+    const facts: [string, string][] = [];
+    const v = (m: string) => health.find((h) => h.day === d && h.metric === m)?.value;
+    const sleep = v("sleep_hours");
+    if (sleep) facts.push(["😴", `Slept ${hm(Number(sleep))}`]);
+    const steps = v("steps");
+    if (steps) facts.push(["👟", `${Math.round(Number(steps)).toLocaleString("en-US")} steps`]);
+    const active = v("exercise_minutes");
+    if (active) facts.push(["🏃", `${Math.round(Number(active))} min active`]);
+    const did = checks.filter((c) => c.day === d).map((c) => c.title);
+    if (did.length) facts.push(["✅", did.length === 1 ? did[0] : `${did.length} habits`]);
+    const m = money.get(d);
+    if (m && m.out > 0) facts.push(["💸", `Spent ${usd(m.out)}`]);
+    if (m && m.in > 0) facts.push(["💵", `${usd(m.in)} came in`]);
+    if (!facts.length) continue;
+    out.push({
+      id: `day:${d}`,
+      kind: "due",
+      cat: "other",
+      icon: facts[0][0],
+      title: facts
+        .slice(0, 2)
+        .map((f) => f[1])
+        .join(" · "),
+      // the end of that day, where its recap belongs
+      start: daysBetween(today, d) * 1440 + 1438,
+      end: null,
+      allDay: false,
+      href: "/habits",
+      source: "Your day",
+      subtitle: facts.map((f) => f[1]).join(" · "),
+      origin: "day",
+      when: formatDateStr(d, "EEEE"),
+      done: true,
+    });
+  }
+  return out;
 }

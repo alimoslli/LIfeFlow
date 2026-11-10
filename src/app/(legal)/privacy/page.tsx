@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LEGAL_EFFECTIVE_DATE, legalDetails } from "@/lib/legal";
+import { LEGAL_EFFECTIVE_DATE, legalDetails, PRIVACY_UPDATED_DATE } from "@/lib/legal";
 
 export const metadata: Metadata = { title: "Privacy Policy", description: "How LifeFlow collects, uses, protects and deletes your information." };
 
@@ -14,12 +14,14 @@ export default function PrivacyPolicy() {
   return (
     <>
       <h1>Privacy Policy</h1>
-      <p>Effective {LEGAL_EFFECTIVE_DATE}</p>
+      <p>
+        Effective {LEGAL_EFFECTIVE_DATE}. Last updated {PRIVACY_UPDATED_DATE}.
+      </p>
 
       <p>
-        LifeFlow is a personal organizer for your money, school, work, schedule, health and notes, with a built-in AI assistant. LifeFlow is run by {l.operator}
-        . Where this policy says &quot;we&quot; or &quot;us&quot;, it means LifeFlow. This policy explains what information we collect, why, who we share it
-        with, how long we keep it, and the choices you have. We wrote it to match how the app actually works.
+        LifeFlow is a personal organizer for your money, school, work, schedule, health and notes, with a built-in AI character, your skyling. LifeFlow is run
+        by {l.operator}. Where this policy says &quot;we&quot; or &quot;us&quot;, it means LifeFlow. This policy explains what information we collect, why, who
+        we share it with, how long we keep it, and the choices you have. We wrote it to match how the app actually works.
       </p>
 
       <h2>The short version</h2>
@@ -35,26 +37,28 @@ export default function PrivacyPolicy() {
       <ul>
         <li>
           <strong>Account details:</strong> your name, email address, time zone, and a password, which we store only as a salted, one-way hash. If you turn on
-          two-step sign-in, we store an encrypted authenticator secret and hashed backup codes.
+          two-step sign-in, we store an encrypted authenticator secret and hashed backup codes. When you set up LifeFlow we ask for your birthday, to confirm
+          you are 13 or older and to tailor your plans, and, if you give them, your school and where you work, to tailor your plans. Your birthday and school
+          are never sent to the AI model; where you work is saved as a job and used like any job you add. You can change or remove your birthday in Settings.
         </li>
         <li>
           <strong>Your content:</strong> anything you add, such as accounts and balances, transactions, budgets, goals, bills, classes, assignments, work shifts
-          and pay, calendar events, tasks, notes, files you attach, and settings such as your assistant&apos;s name, personality and voice.
+          and pay, calendar events, tasks, notes, files you attach, and settings such as your skyling&apos;s name, personality and voice.
         </li>
         <li>
-          <strong>Conversations with your assistant:</strong> the messages you type or speak, the assistant&apos;s replies, and the actions it took for you.
-          Voice is processed live and we keep a text transcript, not the audio recording.
+          <strong>Conversations with your skyling:</strong> the messages you type or speak, the skyling&apos;s replies, and the actions it took for you. Voice
+          is processed live and we keep a text transcript, not the audio recording.
         </li>
         <li>
-          <strong>Memories:</strong> facts and preferences you ask the assistant to remember or approve from its suggestions. You can see, edit and delete each
+          <strong>Memories:</strong> facts and preferences you ask the skyling to remember or approve from its suggestions. You can see, edit and delete each
           one in Settings.
         </li>
       </ul>
 
       <h3>Text messages</h3>
       <p>
-        If you choose to text your assistant, we store your mobile number and the messages you exchange, like any other conversation. We use your number only to
-        send you a sign-up code and the assistant&apos;s replies to your texts. We never sell your number or use it for marketing.{" "}
+        If you choose to text your skyling, we store your mobile number and the messages you exchange, like any other conversation. We use your number only to
+        send you a sign-up code and the skyling&apos;s replies to your texts. We never sell your number or use it for marketing.{" "}
         <strong>
           No mobile information will be shared with third parties or affiliates for marketing or promotional purposes. Text messaging opt-in data and consent
           are not shared with any third parties.
@@ -85,8 +89,8 @@ export default function PrivacyPolicy() {
           sensitive account actions you can view in Settings.
         </li>
         <li>
-          <strong>Assistant usage measurements:</strong> for each request, how long it took, how many steps and tools it used, whether it succeeded, and how
-          much AI processing it used. These records do not contain what you said.
+          <strong>Skyling usage measurements:</strong> for each request, how long it took, how many steps and tools it used, whether it succeeded, and how much
+          AI processing it used. These records do not contain what you said.
         </li>
         <li>
           <strong>Cookies:</strong> we use only essential cookies, to keep you signed in, to complete two-step sign-in, and to remember your light or dark
@@ -96,10 +100,10 @@ export default function PrivacyPolicy() {
 
       <h2>2. How we use information</h2>
       <ul>
-        <li>To provide LifeFlow: showing your day, plans and finances, and letting your assistant read and update your records when you ask.</li>
-        <li>To personalize your assistant with the memories and settings you approve.</li>
+        <li>To provide LifeFlow: showing your day, plans and finances, and letting your skyling read and update your records when you ask.</li>
+        <li>To personalize your skyling with the memories and settings you approve.</li>
         <li>To keep your account secure, prevent abuse, and fix problems.</li>
-        <li>To measure and improve the speed, reliability and cost of the assistant, using the usage measurements described above.</li>
+        <li>To measure and improve the speed, reliability and cost of the skyling, using the usage measurements described above.</li>
         <li>To communicate with you about your account or important changes to LifeFlow.</li>
       </ul>
       <p>
@@ -107,21 +111,21 @@ export default function PrivacyPolicy() {
         intelligence models. We only use your information in other ways with your consent.
       </p>
 
-      <h2 id="ai">3. The AI assistant</h2>
+      <h2 id="ai">3. Your skyling (the AI)</h2>
       <p>
-        Nothing is sent to our AI provider until you allow it. The first time you use the assistant, we ask; you can turn it off anytime in Settings, under your
-        assistant, and the rest of LifeFlow keeps working.
+        Nothing is sent to our AI provider until you allow it. The first time you use the skyling, we ask; you can turn it off anytime in Settings, under your
+        companion, and the rest of LifeFlow keeps working.
       </p>
       <p>
-        When you use the assistant, the parts of your information needed to answer your request (your message, relevant records, relevant approved memories,
-        and, if you ask about them, your email, calendar or health data) are sent to our AI provider, OpenAI, to generate the response. OpenAI processes this
-        under its API terms. Under those terms, OpenAI does not use data sent through its API to train its models by default, and it may retain data for a
-        limited period to detect abuse. We send requests with OpenAI&apos;s response storage turned off, and your conversation history is stored in your
-        LifeFlow account, not with OpenAI.
+        When you use the skyling, the parts of your information needed to answer your request (your message, relevant records, relevant approved memories, and,
+        if you ask about them, your email, calendar or health data) are sent to our AI provider, OpenAI, to generate the response. OpenAI processes this under
+        its API terms. Under those terms, OpenAI does not use data sent through its API to train its models by default, and it may retain data for a limited
+        period to detect abuse. We send requests with OpenAI&apos;s response storage turned off, and your conversation history is stored in your LifeFlow
+        account, not with OpenAI.
       </p>
       <p>
-        The assistant only changes your data through defined actions, shows you what it changed, and asks for your confirmation before deleting things or
-        sending anything outside LifeFlow, such as an email.
+        The skyling only changes your data through defined actions, shows you what it changed, and asks for your confirmation before deleting things or sending
+        anything outside LifeFlow, such as an email.
       </p>
 
       <h2>4. Google user data</h2>
@@ -140,7 +144,7 @@ export default function PrivacyPolicy() {
       <p>
         If you connect Canvas, LifeFlow reads your active classes and assignments (names, due dates, points and links) with an access token you create. The
         token is stored encrypted and you can disconnect at any time. LifeFlow never submits work, posts or changes anything in Canvas, and uses this data only
-        to show it to you and help you plan. It is not shared with your school or anyone else. Our assistant never does graded work for you; see{" "}
+        to show it to you and help you plan. It is not shared with your school or anyone else. Your skyling never does graded work for you; see{" "}
         <Link href="/integrity">Academic integrity</Link>.
       </p>
 
@@ -167,7 +171,7 @@ export default function PrivacyPolicy() {
           </tr>
           <tr>
             <td>OpenAI</td>
-            <td>Generating assistant responses, including live voice</td>
+            <td>Generating the skyling&apos;s responses, including live voice</td>
           </tr>
           <tr>
             <td>Google</td>
@@ -231,7 +235,7 @@ export default function PrivacyPolicy() {
           Google account settings.
         </li>
         <li>
-          <strong>Assistant memory:</strong> turn memory suggestions off, and review or delete what the assistant remembers.
+          <strong>Skyling memory:</strong> turn memory suggestions off, and review or delete what the skyling remembers.
         </li>
       </ul>
       <p>
@@ -243,8 +247,12 @@ export default function PrivacyPolicy() {
 
       <h2>9. Children</h2>
       <p>
-        LifeFlow is not intended for children under 13, and we do not knowingly collect personal information from them. If you believe a child under 13 has
-        created an account, contact us and we will delete it.
+        LifeFlow is not intended for children under 13, and we do not knowingly collect personal information from them. We ask for a birthday when an account is
+        set up, and once from accounts made before we asked. If it shows someone is under 13, at setup or later, the account is locked: it can&apos;t be used,
+        any bank or Google connection is closed, and we keep only the email address, the sign-in it was created with, its security log (when and from where it
+        signed in) and a note that it is locked, not the birthday, the name, the time zone or anything else they entered or connected. An account that has been
+        in use is locked only after the person confirms the date they entered. If a locked account had a paid plan, we review it and end it ourselves. If you
+        believe a child under 13 has created an account, contact us and we will delete it.
       </p>
 
       <h2>10. International users</h2>

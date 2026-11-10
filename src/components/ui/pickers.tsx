@@ -184,11 +184,7 @@ export function TimeField({
             className="h-12 w-full rounded-2xl border border-border bg-surface px-4 text-[1rem] text-text"
           />
         </label>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="mt-3 min-h-12 w-full rounded-full bg-accent text-[0.9375rem] font-medium text-accent-text"
-        >
+        <button type="button" onClick={() => setOpen(false)} className="lf-sb lf-sb-sun mt-3 w-full">
           Done
         </button>
       </Sheet>

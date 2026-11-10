@@ -85,12 +85,18 @@ function SyncButton({ id }: { id: string }) {
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ id }),
           });
-          const j = (await r.json().catch(() => ({}))) as { synced?: { added: number; modified: number }; error?: string };
+          const j = (await r.json().catch(() => ({}))) as { synced?: { added: number; modified: number } | null; alreadySyncing?: boolean; error?: string };
           setBusy(false);
-          setMsg(r.ok ? `Up to date${j.synced?.added ? `, ${j.synced.added} new` : ""}.` : (j.error ?? "Sync failed."));
+          setMsg(
+            r.ok
+              ? j.alreadySyncing
+                ? "Already syncing. New data will appear shortly."
+                : `Up to date${j.synced?.added ? `, ${j.synced.added} new` : ""}.`
+              : (j.error ?? "Sync failed."),
+          );
           router.refresh();
         }}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm disabled:opacity-60"
+        className="lf-sb lf-sb-app lf-sb-xs lf-touch"
       >
         {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Sync now
       </button>

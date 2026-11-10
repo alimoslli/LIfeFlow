@@ -8,8 +8,14 @@ export const dynamic = "force-dynamic";
 
 /** Google redirects back here. Checks state, exchanges the code, stores tokens encrypted, first calendar sync. */
 export async function GET(req: NextRequest) {
+  let saved: { state?: string; verifier?: string; uid?: string; w?: boolean } = {};
+  try {
+    saved = JSON.parse(Buffer.from(req.cookies.get(OAUTH_COOKIE)?.value ?? "", "base64url").toString("utf8"));
+  } catch {}
+  // started from the welcome's "Connect your sky": back there, to the same step (a fixed path, never one from the request)
   const back = (result: string) => {
-    const res = NextResponse.redirect(new URL(`/settings/integrations?google=${result}`, req.url));
+    const to = saved.w === true ? `/welcome?connected=google&result=${result}` : `/settings/integrations?google=${result}`;
+    const res = NextResponse.redirect(new URL(to, req.url));
     res.cookies.delete({ name: OAUTH_COOKIE, path: "/api/integrations/google" });
     return res;
   };
@@ -19,10 +25,6 @@ export async function GET(req: NextRequest) {
   if (!cfg) return back("not_configured");
   const p = req.nextUrl.searchParams;
   if (p.get("error")) return back(p.get("error") === "access_denied" ? "denied" : "failed");
-  let saved: { state?: string; verifier?: string; uid?: string } = {};
-  try {
-    saved = JSON.parse(Buffer.from(req.cookies.get(OAUTH_COOKIE)?.value ?? "", "base64url").toString("utf8"));
-  } catch {}
   const code = p.get("code");
   if (!code || !saved.state || saved.state !== p.get("state") || saved.uid !== user.id || !saved.verifier) {
     console.error("[google] callback state check failed", { hasCode: !!code, hasCookie: !!saved.state });

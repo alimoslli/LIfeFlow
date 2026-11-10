@@ -1,7 +1,7 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, MoreHorizontal, Receipt, Search, Sparkles, SlidersHorizontal, Trash2, Wand2 } from "lucide-react";
+import { Download, MoreHorizontal, Receipt, Search, SlidersHorizontal, Trash2, Wand2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { Button, SubmitButton } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
@@ -91,7 +91,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                 title="Simplify vendor names and fill in missing categories"
                 className="flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm hover:bg-surface-2"
               >
-                <Sparkles className="h-4 w-4 text-muted" /> Tidy up names
+                <Wand2 className="h-4 w-4 text-muted" /> Tidy up names
               </ActionButton>
               <Link href="/finances/rules" className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm hover:bg-surface-2">
                 <Wand2 className="h-4 w-4 text-muted" /> Category rules
@@ -290,11 +290,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             </section>
           ))}
           {show < d.rows.length && (
-            <Link
-              href={qs({ show: String(show + PAGE) })}
-              scroll={false}
-              className="mx-auto rounded-full bg-surface px-5 py-2.5 text-sm font-medium shadow-soft"
-            >
+            <Link href={qs({ show: String(show + PAGE) })} scroll={false} className="lf-sb lf-sb-app lf-sb-sm mx-auto">
               Show more
             </Link>
           )}

@@ -16,7 +16,7 @@ async function ownerPage(browser: Browser, phone = false): Promise<Page> {
   await op.getByRole("button", { name: "Create account" }).click();
   await op.waitForURL("**/welcome");
   // Sign-up takes only email and password; give the owner a name so greetings read "Good morning, Owner."
-  await pool.query("update users set name = $1 where email = $2", ["Owner Olu", ADMIN_EMAIL]);
+  await pool.query(`update users set name = $1, preferences = preferences || '{"birthDate":"1990-06-15"}'::jsonb where email = $2`, ["Owner Olu", ADMIN_EMAIL]);
   await op.getByRole("button", { name: "Skip setup" }).click();
   await op.waitForURL((u) => u.pathname === "/");
   await op.getByRole("button", { name: "Skip tour" }).click();
@@ -83,7 +83,28 @@ test("One admin area: five places and a gear, old URLs land on their new page, a
 
   // People and App hold their sections; the gear opens settings and is the active place.
   await op.goto("/admin/people");
-  await expect(op.getByRole("heading", { level: 2 })).toHaveText(["People", "Feedback", "Announcements"]);
+  await expect(op.getByRole("heading", { level: 2 })).toHaveText(["Accounts", "Feedback", "Announcements"]);
+
+  // "Active today" opens People with only the accounts seen in the last 24 hours (the owner is signed in, so listed); "Show everyone" clears it.
+  const away = `away-${Date.now()}@example.com`;
+  await pool.query(
+    `with u as (insert into users (email, password_hash, name, timezone) values ($1, 'x', 'Away Person', 'America/Chicago') returning id)
+     insert into sessions (id, user_id, expires_at, last_seen_at) select 'e2e-away-' || id, id, now() + interval '20 days', now() - interval '3 days' from u`,
+    [away],
+  );
+  await op.goto("/admin");
+  await op.getByRole("link", { name: /^Active today/ }).click();
+  await expect(op).toHaveURL(/\/admin\/people\?seen=today#people$/);
+  await expect(op.getByLabel("Last seen")).toHaveValue("today");
+  await expect(op.getByText(/seen in the last 24 hours$/)).toBeVisible();
+  await expect(op.getByText(ADMIN_EMAIL, { exact: true })).toBeVisible();
+  await expect(op.getByText(away, { exact: true })).toHaveCount(0);
+  await op.getByRole("link", { name: "Show everyone" }).click();
+  await expect(op.getByLabel("Last seen")).toHaveValue("");
+  await expect(op.getByText(away, { exact: true })).toBeVisible();
+  await pool.query("delete from users where email = $1", [away]);
+  await op.goto("/admin/users?seen=today");
+  expect(here(op).replace(/#.*$/, "")).toBe("/admin/people?seen=today");
   await op.goto("/admin/app");
   await expect(op.getByRole("heading", { name: "Growth", level: 2 })).toBeVisible();
   for (const name of ["Errors", "Health", "Activity log"]) await expect(op.getByRole("heading", { name, level: 2 })).toBeVisible();

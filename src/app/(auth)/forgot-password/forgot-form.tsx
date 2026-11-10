@@ -79,11 +79,7 @@ export function ForgotForm({ available, contact, sender }: { available: boolean;
         <span className="text-sm font-medium text-text-2">Email</span>
         <input name="email" type="email" autoComplete="email" required defaultValue={state?.email} className={input} disabled={!available} />
       </label>
-      <button
-        type="submit"
-        disabled={pending || !available}
-        className="mt-2 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[0.9375rem] font-medium text-accent-text shadow-soft active:scale-[0.98] disabled:opacity-60"
-      >
+      <button type="submit" disabled={pending || !available} className="lf-sb lf-sb-sun mt-2">
         {pending && <Loader2 className="h-4 w-4 animate-spin" />} Send reset link
       </button>
       <Link href="/login" className="mt-2 text-center text-sm font-medium text-accent">

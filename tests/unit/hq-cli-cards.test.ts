@@ -114,6 +114,9 @@ describe("hq decision-card helpers", () => {
       "No errors in the last 24 hours. 1 sign-up in the last 24 hours, 4 in 7 days. Not set up yet: Payments (Stripe).",
     );
     expect(runningLine({ errors: { kinds: 2, hits: 5 } })).toBe("5 errors in the last 24 hours (2 kinds).");
+    // Many services not set up: a count, never a long list (the list is on App › Health).
+    expect(runningLine({ notSetUp: ["Banks (Plaid)", "Payments (Stripe)"] })).toBe("Not set up yet: Banks (Plaid) and Payments (Stripe).");
+    expect(runningLine({ notSetUp: ["A", "B", "C", "D", "E", "F", "G", "H", "I"] })).toBe("9 services aren't set up yet.");
   });
   it("starts the window at the cookie, else 7 days, never in the future or before 30 days", () => {
     const now = new Date("2026-11-07T12:00:00Z");

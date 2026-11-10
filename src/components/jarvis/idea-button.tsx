@@ -22,11 +22,7 @@ export function IdeaButton({ idea }: { idea: Idea }) {
 
 export function CopyText({ text, label = "Copy" }: { text: string; label?: string }) {
   return (
-    <button
-      type="button"
-      onClick={() => navigator.clipboard?.writeText(text).then(() => toast("Copied."))}
-      className="flex min-h-11 items-center gap-2 self-start rounded-full bg-surface-2 px-4 text-sm font-medium"
-    >
+    <button type="button" onClick={() => navigator.clipboard?.writeText(text).then(() => toast("Copied."))} className="lf-sb lf-sb-app lf-sb-sm self-start">
       <Copy className="h-4 w-4" /> {label}
     </button>
   );

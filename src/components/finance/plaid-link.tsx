@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useAppBusy } from "@/lib/app-busy";
 import { Landmark, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,8 @@ function useLink(reconnect?: string, chooseAccounts?: boolean) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
+  // the bank's own screen is open, or the accounts are importing: an app update waits (components/pwa/app-updater.tsx)
+  useAppBusy(busy);
 
   const run = useCallback(
     async (token: string, receivedRedirectUri?: string) => {
@@ -136,15 +139,7 @@ export function PlaidLinkButton({
           disconnect any time.
         </p>
       )}
-      <button
-        type="button"
-        onClick={start}
-        disabled={busy}
-        className={cn(
-          "inline-flex h-10 items-center justify-center gap-2 self-start rounded-full bg-accent px-5 text-sm font-medium text-accent-text disabled:opacity-60",
-          className,
-        )}
-      >
+      <button type="button" onClick={start} disabled={busy} className={cn("lf-sb lf-sb-sun lf-sb-sm self-start", className)}>
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Landmark className="h-4 w-4" />}
         {children ?? (reconnect ? "Reconnect" : "Connect a bank")}
       </button>

@@ -1,5 +1,6 @@
 "use server";
 import { trashAction } from "../trash-actions";
+import { withPlaidSyncLock } from "@/server/db/job-lock";
 import { PlaidError, removeItem, setPlaidAccountIncluded, syncConnection } from "@/server/integrations/plaid";
 import { applyBudgetPlan } from "@/server/services/finance/smart-budgets";
 import { contributeToGoal } from "@/server/services/finance/goals";
@@ -265,7 +266,10 @@ export async function setBankAccountUsedAction(id: string, use: boolean): Promis
     }
   });
   // Back on: import its transactions right away (the sync records its own errors on the connection).
-  if (use && res?.ok && done.userId && done.integrationId) await syncConnection(done.userId, done.integrationId, done.tz ?? "UTC").catch(() => undefined);
+  if (use && res?.ok && done.userId && done.integrationId)
+    await withPlaidSyncLock(done.integrationId, (live) => syncConnection(done.userId!, done.integrationId!, done.tz ?? "UTC", undefined, { live }), {
+      maxMs: 300_000,
+    }).catch(() => undefined);
   return res;
 }
 

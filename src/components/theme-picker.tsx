@@ -2,8 +2,8 @@
 import { useState, useTransition } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { rememberOnDevice, TEXT_COOKIE, THEME_COOKIE, type TextSize, type Theme } from "@/lib/theme";
-import { setTextSizeAction, setThemeAction } from "@/app/theme-actions";
+import { rememberOnDevice, TEXT_COOKIE, THEME_COOKIE, TODAY_COOKIE, type TextSize, type Theme, type TodayMode } from "@/lib/theme";
+import { setTextSizeAction, setThemeAction, setTodayModeAction } from "@/app/theme-actions";
 
 /** System is the default: the app follows the phone's own light or dark setting until you pick one. */
 const OPTIONS: { value: Theme; label: string; icon: typeof Sun }[] = [
@@ -84,6 +84,42 @@ export function TextSizePicker({ initial }: { initial: TextSize }) {
             Aa
           </span>
           {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const MODES: { value: TodayMode; label: string; hint: string }[] = [
+  { value: "full", label: "Full sky", hint: "The sky fills the top of the screen" },
+  { value: "widget", label: "Widget", hint: "The sky sits in a card" },
+];
+
+/** How Today's sky is shown on this device. Saved on the device; Today uses it the next time it opens. */
+export function TodayModePicker({ initial }: { initial: TodayMode }) {
+  const [mode, setMode] = useState<TodayMode>(initial);
+  const [, start] = useTransition();
+  const choose = (m: TodayMode) => {
+    setMode(m);
+    rememberOnDevice(TODAY_COOKIE, m);
+    start(() => setTodayModeAction(m));
+  };
+  return (
+    <div role="radiogroup" aria-label="Today's sky" className="grid grid-cols-2 gap-2">
+      {MODES.map(({ value, label, hint }) => (
+        <button
+          key={value}
+          type="button"
+          role="radio"
+          aria-checked={mode === value}
+          onClick={() => choose(value)}
+          className={cn(
+            "flex flex-col items-start gap-0.5 rounded-2xl px-4 py-3 text-left text-sm transition-all",
+            mode === value ? "bg-hero text-hero-text shadow-lift" : "bg-surface-2 text-text-2 hover:text-text",
+          )}
+        >
+          <span className="font-medium">{label}</span>
+          <span className={cn("text-xs", mode === value ? "text-hero-text" : "text-muted")}>{hint}</span>
         </button>
       ))}
     </div>

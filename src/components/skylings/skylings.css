@@ -1,0 +1,604 @@
+/*
+ * The first-run look (owner, 2026-11-09): the skylings' night and the new buttons, tried first on the landing page,
+ * sign-up, the welcome and the tour. Night colours are the real sky's (no purple).
+ */
+
+@layer components {
+  .lf-night {
+    background: linear-gradient(180deg, #040a18 0%, #07132c 22%, #0b1d42 45%, #102c58 64%, #173f6e 82%, #245a86 100%);
+  }
+  .lf-pixel {
+    image-rendering: pixelated;
+  }
+
+  /* ---------- Sky buttons ----------
+ * sun: the main action, a warm slice of sunrise with a night chip on the right; on hover a skyling peeks into the
+ *      chip, on press the button squishes and throws pixel sparks.
+ * glass: the quiet one, frosted night glass.
+ * ink: the main action on a light page (night ink, sun chip).
+ */
+  .lf-sb {
+    --sb-h: 3.375rem;
+    --sb-chip: 2.375rem;
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    min-height: var(--sb-h);
+    align-items: center;
+    justify-content: center;
+    gap: 0.875rem;
+    border-radius: 1.125rem;
+    padding: 0 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    /* a long label wraps (centred) rather than sticking out on a phone; SkyButton's own label truncates instead */
+    max-width: 100%;
+    line-height: 1.2;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition:
+      transform 0.55s cubic-bezier(0.2, 1.7, 0.4, 1),
+      box-shadow 0.3s ease,
+      background-position 0.6s ease,
+      background-color 0.2s ease;
+  }
+  .lf-sb:has(.lf-sb-chip) {
+    padding-right: calc((var(--sb-h) - var(--sb-chip)) / 2);
+  }
+  .lf-sb:active {
+    transform: scale(0.95, 0.93);
+    transition-duration: 0.07s;
+  }
+  .lf-sb:focus-visible {
+    outline: 2.5px solid #8fb6ff;
+    outline-offset: 3px;
+  }
+  .lf-sb:disabled,
+  .lf-sb[aria-disabled="true"] {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .lf-sb-sm {
+    --sb-h: 2.75rem;
+    --sb-chip: 1.875rem;
+    gap: 0.625rem;
+    border-radius: 0.9375rem;
+    padding: 0 1.125rem;
+    font-size: 0.9375rem;
+  }
+
+  .lf-sb-xs {
+    --sb-h: 2.25rem;
+    --sb-chip: 1.5rem;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    padding: 0 0.875rem;
+    font-size: 0.8125rem;
+  }
+  /* a destructive action: ember, never the sunrise */
+  .lf-sb-danger {
+    color: #fff;
+    background: linear-gradient(180deg, #e2643f 0%, #c4542a 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.3),
+      0 0 0 1px rgb(120 40 15 / 0.3),
+      0 12px 26px -14px rgb(196 84 42 / 0.8);
+  }
+  .lf-sb-danger:hover {
+    background: linear-gradient(180deg, #e86e48 0%, #cc5a2e 100%);
+  }
+
+  .lf-sb-sun {
+    color: #13213d;
+    background: linear-gradient(180deg, #fff4cf 0%, #ffdc84 38%, #fbb24a 78%, #f59c35 100%) 0 0 / 100% 180%;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.85),
+      inset 0 -1px 0 rgb(170 95 20 / 0.35),
+      0 0 0 1px rgb(150 85 15 / 0.22),
+      0 14px 34px -14px rgb(255 176 70 / 0.85);
+  }
+  .lf-sb-sun:hover {
+    background-position: 0 45%;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.9),
+      inset 0 -1px 0 rgb(170 95 20 / 0.35),
+      0 0 0 1px rgb(150 85 15 / 0.22),
+      0 18px 44px -12px rgb(255 186 80 / 0.95);
+  }
+  /* a dithered pixel band along the bottom, like the sky in the skylings' world */
+  .lf-sb-sun::after,
+  .lf-sb-ink::after {
+    content: "";
+    position: absolute;
+    inset: auto 0.75rem 0.3125rem;
+    height: 4px;
+    z-index: -1;
+    background: conic-gradient(rgb(196 110 30 / 0.3) 25%, transparent 0 50%, rgb(196 110 30 / 0.3) 0 75%, transparent 0) 0 0 / 4px 4px;
+    opacity: 0.8;
+  }
+  .lf-sb-ink::after {
+    background: conic-gradient(rgb(143 182 255 / 0.22) 25%, transparent 0 50%, rgb(143 182 255 / 0.22) 0 75%, transparent 0) 0 0 / 4px 4px;
+  }
+
+  .lf-sb-ink {
+    color: #fff;
+    background: linear-gradient(180deg, #1d3460 0%, #13213d 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.16),
+      0 0 0 1px rgb(10 20 40 / 0.5),
+      0 14px 30px -14px rgb(19 33 61 / 0.8);
+  }
+  .lf-sb-ink:hover {
+    background-color: #182b50;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.22),
+      0 0 0 1px rgb(10 20 40 / 0.5),
+      0 18px 36px -12px rgb(19 33 61 / 0.85);
+  }
+
+  .lf-sb-glass {
+    color: #fff;
+    background: rgb(255 255 255 / 0.08);
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.22),
+      inset 0 1px 0 rgb(255 255 255 / 0.18);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .lf-sb-glass:hover {
+    background: rgb(255 255 255 / 0.15);
+  }
+  /* glass on a light page */
+  .lf-sb-glass.lf-sb-day {
+    color: #13213d;
+    background: rgb(255 255 255 / 0.6);
+    box-shadow:
+      inset 0 0 0 1px rgb(19 33 61 / 0.14),
+      0 8px 22px -14px rgb(19 33 61 / 0.4);
+  }
+
+  /* the chip: an arrow at rest; on hover the arrow leaves and a skyling hops in */
+  .lf-sb-chip {
+    position: relative;
+    display: grid;
+    height: var(--sb-chip);
+    width: var(--sb-chip);
+    flex-shrink: 0;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    background: #13213d;
+    color: #ffe9a6;
+  }
+  .lf-sb-sm .lf-sb-chip {
+    border-radius: 0.625rem;
+  }
+  .lf-sb-ink .lf-sb-chip {
+    background: linear-gradient(180deg, #ffe9a6, #fbb24a);
+    color: #13213d;
+  }
+  .lf-sb-chip > * {
+    grid-area: 1 / 1;
+    transition:
+      transform 0.45s cubic-bezier(0.2, 1.6, 0.4, 1),
+      opacity 0.2s ease;
+  }
+  .lf-sb-chip .lf-sb-arrow {
+    height: 45%;
+    width: 45%;
+  }
+  .lf-sb-chip .lf-sb-peek {
+    height: 92%;
+    width: 92%;
+    transform: translateY(110%);
+  }
+  .lf-sb:hover .lf-sb-arrow,
+  .lf-sb:focus-visible .lf-sb-arrow {
+    transform: translateX(160%);
+    opacity: 0;
+  }
+  .lf-sb:hover .lf-sb-peek,
+  .lf-sb:focus-visible .lf-sb-peek {
+    transform: translateY(8%);
+  }
+  @media (hover: none) {
+    .lf-sb:hover .lf-sb-arrow {
+      transform: none;
+      opacity: 1;
+    }
+    .lf-sb:hover .lf-sb-peek {
+      transform: translateY(110%);
+    }
+  }
+  .lf-sb-chip .lf-sb-wait {
+    height: 50%;
+    width: 50%;
+    animation: lf-sb-turn 0.9s steps(8) infinite;
+  }
+  @keyframes lf-sb-turn {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* pixel sparks thrown by a press */
+  .lf-sb-spark {
+    position: absolute;
+    z-index: 2;
+    left: var(--x);
+    top: var(--y);
+    height: 4px;
+    width: 4px;
+    pointer-events: none;
+    background: var(--c);
+    animation: lf-sb-spark 0.6s cubic-bezier(0.15, 0.7, 0.3, 1) forwards;
+  }
+  @keyframes lf-sb-spark {
+    from {
+      transform: translate(-50%, -50%);
+      opacity: 1;
+    }
+    to {
+      transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)));
+      opacity: 0;
+    }
+  }
+
+  /* a quiet text action with a pixel underline that marches on hover */
+  .lf-sb-link {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.375rem;
+    font-weight: 500;
+    background: linear-gradient(90deg, currentColor 50%, transparent 0) 0 calc(50% + 0.8em) / 6px 2px repeat-x;
+    transition: background-position 0.6s linear;
+  }
+  .lf-sb-link:hover {
+    background-position: 24px calc(50% + 0.8em);
+  }
+
+  /* a skyling that breathes (cards, the welcome) */
+  .lf-breathe {
+    animation: lf-breathe 2.8s ease-in-out infinite;
+    transform-origin: 50% 100%;
+  }
+  @keyframes lf-breathe {
+    50% {
+      transform: translateY(-3%) scale(1.02, 0.98);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lf-sb,
+    .lf-sb-chip > *,
+    .lf-sb-link {
+      transition: none;
+    }
+    .lf-sb:active {
+      transform: none;
+    }
+    .lf-sb:hover .lf-sb-arrow {
+      transform: none;
+      opacity: 1;
+    }
+    .lf-sb:hover .lf-sb-peek {
+      transform: translateY(110%);
+    }
+    .lf-sb-spark,
+    .lf-breathe,
+    .lf-sb-chip .lf-sb-wait {
+      animation: none;
+    }
+  }
+
+  /* ---------- The skyling pages (chat, Money, School, owner 2026-11-10) ---------- */
+
+  /* a quiet sky button for the app's pages: follows the light or dark theme */
+  /* a soft tile that reads on the page and inside a white card alike (owner, 2026-11-10: on a card it vanished) */
+  .lf-sb-app {
+    color: var(--text);
+    background: color-mix(in oklab, var(--surface-2) 88%, transparent);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--border-strong) 80%, transparent),
+      inset 0 1px 0 rgb(255 255 255 / 0.4),
+      0 6px 16px -12px rgb(19 33 61 / 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .lf-sb-app:hover {
+    background: var(--surface-3);
+  }
+
+  /* the sky window: the real sky of this minute (sky-window.tsx sets the colours) */
+  .lf-sw {
+    color: #fff;
+    background: linear-gradient(180deg, var(--sw-a, #0b1d42) 0%, var(--sw-b, #173f6e) 62%, var(--sw-c, #245a86) 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      inset 0 0 0 1px rgb(255 255 255 / 0.08),
+      0 22px 44px -26px rgb(7 19 44 / 0.75);
+  }
+  .lf-sw-puff {
+    position: absolute;
+    z-index: -1;
+    color: #fff;
+    /* clouds by day, gone by night (the stars and the moon take over) */
+    opacity: calc(0.7 - var(--sw-stars, 0) * 0.7);
+    animation: lf-sw-drift 34s ease-in-out infinite alternate;
+  }
+  .lf-sw-moon {
+    position: absolute;
+    z-index: -1;
+    opacity: var(--sw-stars, 1);
+  }
+  .lf-sw-puff-2 {
+    animation-duration: 46s;
+    animation-direction: alternate-reverse;
+  }
+  @keyframes lf-sw-drift {
+    to {
+      transform: translateX(2.25rem);
+    }
+  }
+  /* frosted ground and chips inside a sky window */
+  .lf-sw-glass {
+    background: rgb(7 19 44 / 0.28);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .lf-sw-num {
+    text-shadow: 0 2px 18px rgb(7 19 44 / 0.35);
+  }
+
+  /* what the skyling says (a speech bubble with a pixel tail) */
+  .lf-speech {
+    position: relative;
+    border-radius: 1rem 1rem 1rem 0.25rem;
+    background: #fff;
+    color: #13213d;
+    box-shadow: 0 10px 24px -12px rgb(7 19 44 / 0.6);
+  }
+  .lf-speech::after {
+    content: "";
+    position: absolute;
+    left: -6px;
+    bottom: 0;
+    height: 6px;
+    width: 6px;
+    background: #fff;
+    box-shadow: -3px 3px 0 -1px #fff;
+  }
+
+  /* a small night tile that holds an icon or a skyling, like the sky buttons' chip */
+  .lf-chip-night {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(180deg, #1d3460, #13213d);
+    color: #ffd77a;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.14),
+      0 0 0 1px rgb(10 20 40 / 0.3);
+    transition: transform 0.45s cubic-bezier(0.2, 1.6, 0.4, 1);
+  }
+  .lf-hop:hover .lf-chip-night,
+  .lf-hop:focus-visible .lf-chip-night {
+    transform: translateY(-3px) rotate(-6deg);
+  }
+  .lf-hop {
+    transition:
+      transform 0.45s cubic-bezier(0.2, 1.6, 0.4, 1),
+      box-shadow 0.3s ease;
+  }
+  .lf-hop:hover {
+    transform: translateY(-2px);
+  }
+  .lf-hop:active {
+    transform: scale(0.97);
+    transition-duration: 0.07s;
+  }
+
+  /* the chat: their words on a slice of sunrise, the send button a little sun */
+  .lf-bubble-me {
+    background: linear-gradient(180deg, #fff7dc 0%, #fde3b5 100%);
+    color: #13213d;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.85),
+      0 0 0 1px rgb(196 110 30 / 0.16),
+      0 12px 26px -18px rgb(196 110 30 / 0.7);
+  }
+  .lf-send {
+    color: #13213d;
+    background: linear-gradient(180deg, #fff4cf 0%, #ffdc84 40%, #fbb24a 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.85),
+      0 0 0 1px rgb(150 85 15 / 0.22),
+      0 8px 18px -10px rgb(255 176 70 / 0.9);
+    transition: transform 0.45s cubic-bezier(0.2, 1.6, 0.4, 1);
+  }
+  .lf-send:hover {
+    transform: translateY(-2px) rotate(-4deg);
+  }
+  .lf-send:active {
+    transform: scale(0.92);
+    transition-duration: 0.07s;
+  }
+  .lf-send:disabled {
+    opacity: 0.45;
+    box-shadow: none;
+    transform: none;
+  }
+  /* three pixel stars twinkling while the skyling works */
+  .lf-twinkle > i {
+    display: block;
+    height: 4px;
+    width: 4px;
+    background: currentColor;
+    animation: lf-twinkle 1.2s steps(2, jump-none) infinite;
+  }
+  .lf-twinkle > i:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .lf-twinkle > i:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+  @keyframes lf-twinkle {
+    50% {
+      transform: translateY(-3px);
+      opacity: 0.35;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lf-sw-puff,
+    .lf-twinkle > i {
+      animation: none;
+    }
+    .lf-chip-night,
+    .lf-hop,
+    .lf-send {
+      transition: none;
+    }
+    .lf-hop:hover,
+    .lf-hop:hover .lf-chip-night,
+    .lf-send:hover {
+      transform: none;
+    }
+  }
+
+  /* ---------- Idea clouds (owner, 2026-11-10; idea-clouds.tsx) ----------
+   a little white cloud with pixel puffs on top: pops in, drifts upward a touch, never over the bar */
+  .lf-idea {
+    animation:
+      lf-idea-in 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) both,
+      lf-idea-drift 5.5s ease-in-out 0.5s infinite alternate;
+    animation-delay: calc(var(--i, 0) * 0.12s), calc(0.5s + var(--i, 0) * 0.9s);
+  }
+  @keyframes lf-idea-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.85);
+    }
+  }
+  @keyframes lf-idea-drift {
+    to {
+      transform: translateY(-3px);
+    }
+  }
+  .lf-idea-cloud {
+    position: relative;
+    display: inline-flex;
+    max-width: 100%;
+    min-height: 2.75rem;
+    align-items: center;
+    border-radius: 1.375rem;
+    padding: 0.375rem 1rem;
+    background: #fff;
+    color: #13213d;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: left;
+    box-shadow:
+      0 0 0 1px rgb(19 33 61 / 0.08),
+      0 10px 22px -14px rgb(19 33 61 / 0.55);
+    transition: transform 0.45s cubic-bezier(0.2, 1.6, 0.4, 1);
+  }
+  /* two pixel puffs on the top edge make it a cloud */
+  .lf-idea-cloud::before,
+  .lf-idea-cloud::after {
+    content: "";
+    position: absolute;
+    top: -5px;
+    height: 8px;
+    background: #fff;
+    border-radius: 3px 3px 0 0;
+  }
+  .lf-idea-cloud::before {
+    left: 18%;
+    width: 18px;
+  }
+  .lf-idea-cloud::after {
+    left: calc(18% + 12px);
+    top: -8px;
+    width: 12px;
+  }
+  .lf-idea-cloud:hover {
+    transform: translateY(-2px);
+  }
+  .lf-idea-cloud:active {
+    transform: scale(0.96);
+    transition-duration: 0.07s;
+  }
+  .lf-idea-cloud:focus-visible {
+    outline: 2.5px solid #8fb6ff;
+    outline-offset: 3px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lf-idea {
+      animation: none;
+    }
+    .lf-idea-cloud {
+      transition: none;
+    }
+    .lf-idea-cloud:hover {
+      transform: none;
+    }
+  }
+
+  /* the landing's sunrise: Ray comes up over the hills as the band scrolls into view */
+  @supports (animation-timeline: view()) {
+    .lf-sun-up {
+      animation: lf-sun-up linear both;
+      animation-timeline: view();
+      animation-range: entry 5% cover 60%;
+    }
+    @keyframes lf-sun-up {
+      from {
+        transform: translateY(75%);
+      }
+      to {
+        transform: translateY(0);
+      }
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lf-sun-up {
+      animation: none;
+    }
+  }
+}
+
+/* a few still stars for night areas without the canvas (the phone's words above the scene) */
+.lf-stars {
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, #fff 60%, transparent 61%), radial-gradient(1.5px 1.5px at 78% 9%, #cfe0ff 60%, transparent 61%),
+    radial-gradient(2px 2px at 64% 34%, #fff 60%, transparent 61%), radial-gradient(1.5px 1.5px at 30% 52%, #ffe9b0 60%, transparent 61%),
+    radial-gradient(1.5px 1.5px at 90% 61%, #fff 60%, transparent 61%), radial-gradient(1.5px 1.5px at 48% 80%, #cfe0ff 60%, transparent 61%),
+    radial-gradient(1.5px 1.5px at 6% 72%, #fff 60%, transparent 61%), radial-gradient(2px 2px at 86% 88%, #fff3c4 60%, transparent 61%);
+  opacity: 0.55;
+}
+
+/* the sky window's stars: as many as the sky has (unlayered, after .lf-stars, so it wins) */
+.lf-sw-stars {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, #fff 60%, transparent 61%), radial-gradient(1.5px 1.5px at 78% 9%, #cfe0ff 60%, transparent 61%),
+    radial-gradient(2px 2px at 64% 34%, #fff 60%, transparent 61%), radial-gradient(1.5px 1.5px at 30% 52%, #ffe9b0 60%, transparent 61%),
+    radial-gradient(1.5px 1.5px at 90% 41%, #fff 60%, transparent 61%), radial-gradient(1.5px 1.5px at 46% 12%, #cfe0ff 60%, transparent 61%),
+    radial-gradient(1.5px 1.5px at 6% 62%, #fff 60%, transparent 61%), radial-gradient(2px 2px at 86% 22%, #fff3c4 60%, transparent 61%),
+    radial-gradient(1.5px 1.5px at 22% 36%, #fff 60%, transparent 61%), radial-gradient(1.5px 1.5px at 56% 58%, #fff 60%, transparent 61%);
+  opacity: calc(var(--sw-stars, 1) * 0.9);
+}
+
+/* the welcome's "Build your sky": the person's real wheel, a little shorter than on Today so the step fits under it */
+.lf-welcome-sky .dc {
+  height: clamp(18rem, 46svh, 27rem);
+}

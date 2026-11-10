@@ -14,7 +14,6 @@ const ROUTES = [
   "/notes",
   "/money",
   "/finances/transactions",
-  "/finances/budgets",
   "/goals",
   "/finances/bills",
   "/finances/accounts",

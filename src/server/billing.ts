@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import type { SessionUser } from "./auth/sessions";
 import type { Database } from "./db/client";
 import { users } from "./db/schema";
+import { withJobLock } from "./db/job-lock";
 import { HttpError } from "./http";
 
 /**
@@ -25,7 +26,7 @@ export const FREE_JARVIS_PER_DAY = 15;
 /**
  * While paid plans are off (testing), everyone gets every feature within these limits, so one
  * person costs at most a few dollars a month (target: $2 to $7).
- * - Messages: a dollar cap on the assistant's own measured cost (jarvis_runs.cost_micros, set when
+ * - Messages: a dollar cap on the skyling's own measured cost (jarvis_runs.cost_micros, set when
  *   model prices are configured), plus day and 30-day counts as a floor when they aren't.
  * - Voice: calls and call length, because a call streams straight between the phone and the
  *   voice service and its cost isn't measured: at most 10 calls x 3 minutes = 30 minutes a month.
@@ -55,7 +56,7 @@ export function testingLimitMessage(what: "messages" | "voice calls", limit: num
 
 /** Shown when the monthly assistant budget is used up. */
 export const TESTING_BUDGET_MESSAGE =
-  "You've reached this month's assistant limit while LifeFlow is in testing. It frees up again over the next few days as older use rolls off. Everything else in the app keeps working.";
+  "You've reached this month's skyling limit while LifeFlow is in testing. It frees up again over the next few days as older use rolls off. Everything else in the app keeps working.";
 export const PRO_FEATURES = {
   bank: "Bank sync",
   google: "Gmail and Google Calendar",
@@ -145,17 +146,61 @@ export function validStripeEvent(secret: string, rawBody: string, header: string
 
 type StripeEvent = { type: string; data: { object: Record<string, unknown> } };
 
-/** Keeps users.plan in sync with Stripe. Unknown events are ignored. */
-export async function applyStripeEvent(db: Database, event: StripeEvent) {
+/** Each Stripe read gives up after this long; the lease below is just over the webhook route's own limit (maxDuration 30 s). */
+export const STRIPE_READ_MS = 8_000;
+export const STRIPE_LEASE_MS = 40_000;
+const STRIPE_MAX_PAGES = 5;
+
+/** Pro if any of the customer's subscriptions is active or trialing, read live from Stripe (follows paging). Throws if Stripe can't be read. */
+export async function livePlanForCustomer(cfg: BillingConfig, customerId: string, fetchImpl: typeof fetch = fetch): Promise<"pro" | "free"> {
+  let after: string | null = null;
+  for (let page = 0; page < STRIPE_MAX_PAGES; page++) {
+    const url: string = `https://api.stripe.com/v1/subscriptions?customer=${encodeURIComponent(customerId)}&status=all&limit=100${after ? `&starting_after=${encodeURIComponent(after)}` : ""}`;
+    const res = await fetchImpl(url, { headers: { authorization: `Bearer ${cfg.secretKey}` }, signal: AbortSignal.timeout(STRIPE_READ_MS) });
+    const body = (await res.json().catch(() => ({}))) as { data?: { id?: string; status?: string }[]; has_more?: boolean };
+    if (!res.ok || !Array.isArray(body.data)) throw new Error("Stripe subscription list failed");
+    if (body.data.some((s) => s.status === "active" || s.status === "trialing")) return "pro";
+    if (!body.has_more) return "free";
+    const last: string | undefined = body.data[body.data.length - 1]?.id;
+    if (!last) throw new Error("Stripe paging failed");
+    after = last;
+  }
+  throw new Error("Stripe subscription list too long");
+}
+
+/**
+ * Keeps users.plan in sync with Stripe. Unknown events are ignored.
+ * Stripe doesn't promise order and retries for days, so an event is only a nudge: the plan always comes from the
+ * customer's live subscriptions (never from the event, never hard-coded), under a per-customer lease.
+ * Returns "busy" when another request holds the lease: the webhook answers 503 and Stripe retries (a retry is harmless
+ * because it reads live state). Throws if Stripe can't be read (the webhook answers 500); the plan is never guessed.
+ */
+export async function applyStripeEvent(
+  db: Database,
+  event: StripeEvent,
+  opts: { cfg?: BillingConfig | null; fetchImpl?: typeof fetch } = {},
+): Promise<"pro" | "free" | "busy" | null> {
   const o = event.data.object;
-  if (event.type === "checkout.session.completed" && typeof o.client_reference_id === "string" && typeof o.customer === "string") {
-    await db.update(users).set({ stripeCustomerId: o.customer, plan: "pro" }).where(eq(users.id, o.client_reference_id));
-    return "pro";
-  }
-  if ((event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") && typeof o.customer === "string") {
-    const plan = event.type === "customer.subscription.updated" && (o.status === "active" || o.status === "trialing") ? "pro" : "free";
-    await db.update(users).set({ plan }).where(eq(users.stripeCustomerId, o.customer));
-    return plan;
-  }
-  return null;
+  const checkout = event.type === "checkout.session.completed" && typeof o.client_reference_id === "string" && typeof o.customer === "string";
+  const subscription = (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") && typeof o.customer === "string";
+  if (!checkout && !subscription) return null;
+  const cfg = opts.cfg === undefined ? billingConfig() : opts.cfg;
+  if (!cfg) throw new Error("Stripe isn't configured");
+  const customer = o.customer as string;
+  // A checkout only links the customer to the account (from the signed event); the plan still comes from the live read.
+  if (checkout)
+    await db
+      .update(users)
+      .set({ stripeCustomerId: customer })
+      .where(eq(users.id, o.client_reference_id as string));
+  const ran = await withJobLock(
+    "stripe:" + customer,
+    async () => {
+      const plan = await livePlanForCustomer(cfg, customer, opts.fetchImpl);
+      await db.update(users).set({ plan }).where(eq(users.stripeCustomerId, customer));
+      return plan;
+    },
+    { ttlMs: STRIPE_LEASE_MS, route: "/api/billing/webhook" },
+  );
+  return ran.skipped ? "busy" : ran.value;
 }

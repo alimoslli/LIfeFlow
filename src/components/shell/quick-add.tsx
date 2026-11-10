@@ -231,7 +231,7 @@ export function QuickAdd() {
   );
 }
 
-/** Opens the quick-add sheet (a form first; the assistant stays one tap away). */
+/** Opens the quick-add sheet (a form first; the skyling stays one tap away). */
 export function QuickAddButton({ kind = "todo", className, children }: { kind?: Kind; className?: string; children: React.ReactNode }) {
   return (
     <button type="button" onClick={() => window.dispatchEvent(new CustomEvent("lf:quick-add", { detail: kind }))} className={className}>

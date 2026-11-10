@@ -210,9 +210,9 @@ describe("D1: two syncs at once keep one row per event", () => {
   });
 });
 
-describe("D2: an event the assistant adds while a sync runs is one row", () => {
+describe("D2: an event the skyling adds while a sync runs is one row", () => {
   it("add and sync at once leave one row for Google's id", async () => {
-    // The sync already sees the new event (gnew1) while the assistant's create call is still finishing.
+    // The sync already sees the new event (gnew1) while the skyling's create call is still finishing.
     const g = fakeGoogle({ events: () => [gEv("gnew1", "Advisor meeting", "2026-11-12T15:00:00Z", "2026-11-12T16:00:00Z")], delayMs: 5 });
     const { run } = await connectedUser(g);
     await Promise.all([
@@ -224,7 +224,7 @@ describe("D2: an event the assistant adds while a sync runs is one row", () => {
     expect(await rowsOf(run, "google")).toHaveLength(1);
   });
 
-  it("a sync that ran first and then the assistant's save also leaves one row, keeping the synced details", async () => {
+  it("a sync that ran first and then the skyling's save also leaves one row, keeping the synced details", async () => {
     const g = fakeGoogle({
       events: () => [gEv("gnew1", "Advisor meeting", "2026-11-12T15:00:00Z", "2026-11-12T16:00:00Z", { description: "Bring transcript" })],
     });

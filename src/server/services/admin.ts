@@ -111,7 +111,11 @@ export type UserRow = { id: string; email: string; name: string; plan: "free" | 
 /** Escapes % _ and \ so a search for "50%" matches that text and nothing else. */
 export const likePattern = (q: string) => `%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 
-export type UserFilter = { q?: string; plan?: "free" | "pro"; status?: "active" | "suspended"; page?: number };
+/** `seen: "today"` keeps only accounts with a sign-in seen in the last 24 hours (the same rule as the "Active today" tiles), newest seen first. */
+export type UserFilter = { q?: string; plan?: "free" | "pro"; status?: "active" | "suspended"; seen?: "today"; page?: number };
+
+const SEEN_TODAY = sql`exists (select 1 from sessions s where s.user_id = "users"."id" and s.last_seen_at > now() - interval '24 hours')`;
+const LAST_SEEN = sql<Date | null>`(select max(s.last_seen_at) from sessions s where s.user_id = "users"."id")`;
 
 export async function listUsers(db: Database, f: UserFilter = {}): Promise<{ rows: UserRow[]; total: number; page: number; pages: number }> {
   const page = Math.max(1, Math.floor(f.page ?? 1));
@@ -121,6 +125,7 @@ export async function listUsers(db: Database, f: UserFilter = {}): Promise<{ row
   if (f.plan) where.push(eq(users.plan, f.plan));
   if (f.status === "suspended") where.push(isNotNull(users.suspendedAt));
   if (f.status === "active") where.push(isNull(users.suspendedAt));
+  if (f.seen === "today") where.push(SEEN_TODAY);
   return timed(db, async (tx) => {
     const [{ n }] = await tx
       .select({ n: count() })
@@ -134,11 +139,11 @@ export async function listUsers(db: Database, f: UserFilter = {}): Promise<{ row
         plan: users.plan,
         createdAt: users.createdAt,
         suspendedAt: users.suspendedAt,
-        lastSeenAt: sql<Date | null>`(select max(s.last_seen_at) from sessions s where s.user_id = "users"."id")`,
+        lastSeenAt: LAST_SEEN,
       })
       .from(users)
       .where(and(...where))
-      .orderBy(desc(users.createdAt))
+      .orderBy(...(f.seen === "today" ? [sql`${LAST_SEEN} desc`, desc(users.createdAt)] : [desc(users.createdAt)]))
       .limit(PAGE_SIZE)
       .offset((page - 1) * PAGE_SIZE);
     return {

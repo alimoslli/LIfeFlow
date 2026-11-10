@@ -4,6 +4,7 @@ import { parseIcs, type IcsTime } from "@/lib/ics";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { assignments, calendarEvents, connectionRegistry, courseMaterials, courses, integrations, notes, tasks, type AssignmentKind } from "../db/schema";
 import type { UserScope } from "../db/with-user";
+import { withJobLock } from "../db/job-lock";
 import { upsertProviderEvent } from "./calendar-upsert";
 import { ServiceError } from "../services/errors";
 
@@ -154,6 +155,15 @@ export async function disconnectCanvas(scope: UserScope) {
 }
 
 /** Pulls classes and assignments. Canvas ids keep it idempotent: a changed due date updates, nothing duplicates. */
+/** What a person sees when a second sync is asked for while one is running. */
+export const CANVAS_BUSY = "Already syncing. Give it a moment, then check Canvas again.";
+
+/**
+ * One Canvas sync per person at a time (cron, Sync now and the assistant share it), so two runs can't both create the
+ * same class. Wrap the whole `withUser(...)` call, so the first run has committed before the lock is freed.
+ */
+export const withCanvasLock = <T>(userId: string, run: () => Promise<T>) => withJobLock(`canvas:${userId}`, run, { route: "/api/integrations/canvas" });
+
 export async function syncCanvas(scope: UserScope, f: Fetch = fetch, tz = "UTC") {
   const conn = await getConnection(scope);
   if (!conn?.encryptedCredentials) throw new ServiceError("Canvas isn't connected.");

@@ -97,7 +97,7 @@ export async function HabitsSection() {
               <input type="hidden" name="kind" value={i.kind} />
               <input type="hidden" name="cadence" value={i.cadence} />
               {i.target && <input type="hidden" name="target" value={i.kind === "save" ? i.target / 100 : i.target} />}
-              <button type="submit" className="min-h-11 rounded-full bg-surface-2 px-4 text-sm hover:bg-surface-3">
+              <button type="submit" className="lf-sb lf-sb-app lf-sb-sm">
                 + {i.title}
               </button>
             </ActionForm>

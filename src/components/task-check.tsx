@@ -6,6 +6,7 @@ import { isNetworkError, isOffline, offlineTaskDone, queueTaskStatus, subscribeQ
 import { cn } from "@/lib/utils";
 import type { ActionState } from "@/server/actions";
 import { toast } from "./ui/toaster";
+import { celebrate } from "./motion/burst";
 
 export const OFFLINE_SAVED = "Saved on this phone. It will sync when you're back online.";
 
@@ -36,10 +37,14 @@ export function TaskCheck({ done, action, label, taskId }: { done: boolean; acti
       role="checkbox"
       aria-checked={checked}
       aria-label={label}
-      onClick={() => {
+      onClick={(e) => {
         const next = !checked;
         setToggled(true);
-        if (next) haptic("success");
+        if (next) {
+          haptic("success");
+          // finishing something gets its moment: sparks from the box
+          celebrate(e.currentTarget.getBoundingClientRect(), "small");
+        }
         if (isOffline()) return void offline(next);
         start(async () => {
           setOptimistic(next);

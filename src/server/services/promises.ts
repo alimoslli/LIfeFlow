@@ -18,7 +18,7 @@ export const promiseInput = z.object({
 });
 export type PromiseInput = z.input<typeof promiseInput>;
 
-/** Saves what the user said they'd do, and when the assistant will check back (default: 9 PM that day, or tomorrow if that has passed). */
+/** Saves what the user said they'd do, and when the skyling will check back (default: 9 PM that day, or tomorrow if that has passed). */
 export async function createPromise(scope: UserScope, tz: string, input: PromiseInput, now = new Date()) {
   const d = promiseInput.parse(input);
   if (d.taskId) await assertOwned(scope, tasks, d.taskId, "To-do");

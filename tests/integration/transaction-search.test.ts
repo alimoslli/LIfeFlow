@@ -52,7 +52,7 @@ describe("forgiving transaction search", () => {
     expect(await u.run((s) => queryTransactions(s, { search: "omar", phrase: true }))).toHaveLength(6);
   });
 
-  it("through the assistant tool: the newest row is first", async () => {
+  it("through the skyling tool: the newest row is first", async () => {
     const u = await bank([
       { daysAgo: 40, description: "ZELLE TO MOUSSELLI OMAR 12345", cents: 2500 },
       { daysAgo: 12, description: "Zelle payment to OMAR M Conf# x7k2", cents: 4000 },
