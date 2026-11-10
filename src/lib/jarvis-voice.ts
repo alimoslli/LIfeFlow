@@ -55,7 +55,11 @@ const KINDS: Record<string, (f: F) => Parts> = {
   deadline_conflict: (f) => ({
     headline: `${s(f, "assignment")} vs. your shift`,
     fact: `${s(f, "assignment")} is due ${s(f, "dueDay")} and you work ${s(f, "shiftWhen")}.`,
-    ask: f.done ? `I blocked ${s(f, "blockWhen")} for it.` : `Want me to block ${s(f, "blockWhen")}?`,
+    ask: f.noFreeBlock
+      ? "There's no free 2-hour stretch before then. Want to look at your week together?"
+      : f.done
+        ? `I blocked ${s(f, "blockWhen")} for it.`
+        : `Want me to block ${s(f, "blockWhen")}?`,
     mood: "warn",
   }),
   bill_short: (f) => ({

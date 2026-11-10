@@ -173,7 +173,16 @@ const goalMilestones: Detector = async ({ scope, today }) => {
     });
 };
 
-/** An assignment due soon with a shift right before it: offer a study block in free time. */
+/**
+ * A shift that eats the evening before a deadline: 7 hours or more, or ending at 9 PM or later (or after midnight). A short
+ * daytime shift leaves the evening free, so it isn't worth a message (the noticing grader counted 49 such warnings).
+ */
+function takesTheEvening(s: { startsAt: Date; endsAt: Date }, tz: string) {
+  const hours = (s.endsAt.getTime() - s.startsAt.getTime()) / 3_600_000;
+  return hours >= 7 || localDateOf(s.endsAt, tz) > localDateOf(s.startsAt, tz) || localTimeOf(s.endsAt, tz) >= "21:00";
+}
+
+/** An assignment due soon with a long or late shift right before it: offer a study block in free time. */
 const deadlineConflicts: Detector = async ({ scope, tz, today, now }) => {
   const due = (await listAssignments(scope, tz, { view: "upcoming", now, limit: 20 })).filter(
     (a) => a.dueAt && localDateOf(a.dueAt, tz) <= addDaysStr(today, 7),
@@ -185,16 +194,33 @@ const deadlineConflicts: Detector = async ({ scope, tz, today, now }) => {
     const dueDate = localDateOf(a.dueAt!, tz);
     const shift = shifts
       .map((s) => ({ ...s, date: localDateOf(s.startsAt, tz), startTime: localTimeOf(s.startsAt, tz) }))
-      .find((s) => s.date < dueDate && daysBetween(s.date, dueDate) <= 1 && s.status !== "cancelled");
+      .find((s) => s.date < dueDate && daysBetween(s.date, dueDate) <= 1 && s.status !== "cancelled" && takesTheEvening(s, tz));
     if (!shift) continue;
     // Free time the day before the shift (or today), at least 2 hours.
     let block: { date: string; start: string; end: string } | null = null;
     for (let d = addDaysStr(shift.date, -1); d >= today && !block; d = addDaysStr(d, -1)) {
       const items = await getAgenda(scope, tz, d, d, { now });
-      const slot = freeSlots(items, d, tz, "09:00", "21:00", 120).find((x) => x.minutes >= 120 && x.startsAt.getTime() > now.getTime());
+      // from now on: a free day's one long stretch starts at 9 AM, so "starts after now" alone dropped it once the day began
+      const slot = freeSlots(items, d, tz, "09:00", "21:00", 120, now).find((x) => x.minutes >= 120);
       if (slot) block = { date: d, start: localTimeOf(slot.startsAt, tz), end: addMinutes(localTimeOf(slot.startsAt, tz), 120) };
     }
-    if (!block) continue;
+    if (!block) {
+      // No 2 free hours before it: that's when it matters most, so say so and point at the week instead of staying quiet.
+      out.push({
+        kind: "deadline_conflict",
+        topic: "school",
+        dedupeKey: `deadline_conflict:${a.id}:${shift.id}`,
+        facts: {
+          assignment: a.title,
+          dueDay: formatDateStr(dueDate, "EEEE"),
+          shiftWhen: `${formatDateStr(shift.date, "EEEE")} ${Number(shift.startTime.slice(0, 2)) >= 16 ? "night" : `at ${clockTime(shift.startTime)}`}`,
+          noFreeBlock: true,
+        },
+        action: { type: "open", label: "See my week", href: "/plan" },
+        priority: 75,
+      });
+      continue;
+    }
     out.push({
       kind: "deadline_conflict",
       topic: "school",

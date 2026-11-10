@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
-import { addDaysStr, monthStart, todayIn, weekStart } from "@/lib/dates";
+import { addDaysStr, localToInstant, monthStart, todayIn, weekStart } from "@/lib/dates";
 import { closeDb } from "@/server/db/client";
 import { calendarEvents, habits, jarvisMessages, memories, tasks, type UserPreferences } from "@/server/db/schema";
 import type { UserScope } from "@/server/db/with-user";
@@ -18,7 +18,7 @@ import { inQuietHours, learnedStats, listMessages, pushImportant, runProactive, 
 import { respondToMessage } from "@/server/services/proactive/respond";
 import { openQuestions } from "@/server/services/proactive/questions";
 import { createMemory, listActiveMemories as listActive } from "@/server/services/memory";
-import { composeMessage, KIND_LABELS } from "@/lib/jarvis-voice";
+import { composeMessage, KIND_LABELS, pushText } from "@/lib/jarvis-voice";
 import { DETECTORS, RUNS } from "@/server/services/proactive/detectors";
 import { makeUser, TZ } from "../helpers";
 
@@ -668,5 +668,42 @@ describe("reviews and coaching", () => {
     // Today not done yet doesn't break yesterday's streak.
     expect(streakOf("daily", [d(1), d(2)], today).current).toBe(2);
     expect(streakOf("weekly", [d(0), d(7), d(14)], today).current).toBe(3);
+  });
+});
+
+describe("deadline warnings only when the shift really takes the evening (noticing grader, 2026-11-10)", () => {
+  const TODAY = "2026-11-02"; // Monday
+  const setUp = async (start: string, end: string) => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const course = await createCourse(s, { name: "English 101", code: "ENG 101" });
+      await createAssignment(s, TZ, { courseId: course.id, title: "Essay draft", dueDate: "2026-11-04", dueTime: "23:59" });
+      const job = await createEmployer(s, { name: "Campus Cafe", hourlyRateCents: 1500 });
+      await createShift(s, TZ, { employerId: job.id, date: "2026-11-03", startTime: start, endTime: end });
+    });
+    return run;
+  };
+  const check = (run: Awaited<ReturnType<typeof setUp>>, at: string) =>
+    run((s) => DETECTORS.deadlineConflicts({ scope: s, tz: TZ, today: TODAY, now: localToInstant(TODAY, at, TZ) }));
+
+  it("stays quiet about a short daytime shift: the evening before is free", async () => {
+    expect(await check(await setUp("12:00", "17:00"), "09:00")).toEqual([]);
+  });
+
+  it("warns about a late shift and offers a study block", async () => {
+    const out = await check(await setUp("17:00", "22:00"), "09:00");
+    expect(out).toEqual([expect.objectContaining({ kind: "deadline_conflict", action: expect.objectContaining({ type: "block_time" }) })]);
+  });
+
+  it("warns about a long shift even with no free 2 hours left before it, pointing at the week", async () => {
+    const out = await check(await setUp("09:00", "17:00"), "20:00");
+    expect(out).toEqual([
+      expect.objectContaining({
+        kind: "deadline_conflict",
+        facts: expect.objectContaining({ assignment: "Essay draft", noFreeBlock: true }),
+        action: { type: "open", label: "See my week", href: "/plan" },
+      }),
+    ]);
+    expect(pushText("deadline_conflict", out[0].facts)?.body).toMatch(/no free 2-hour stretch before then/);
   });
 });
