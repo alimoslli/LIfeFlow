@@ -177,6 +177,8 @@ test("an open app that is behind reloads itself when it comes back to the front,
 test("a file attached in the chat makes an app update wait until it is sent or removed", async ({ page }) => {
   await signUp(page, "Busy Bea");
   await page.goto("/jarvis");
+  // the page's scripts are running (a person attaches through the button, which only works then)
+  await page.waitForLoadState("networkidle");
   await expect(page.locator("html")).not.toHaveAttribute("data-lf-busy", "1");
   await page
     .locator('input[type="file"]')
