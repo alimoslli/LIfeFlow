@@ -9,7 +9,7 @@ const SHOTS = process.env.SHOTS;
 const TABS: [string, string, string[]][] = [
   // Today is the day clock and the timeline, which hold calendar, to-dos, goals and milestones; Health and Work are pills under it.
   ["Today", "/", ["/habits", "/work"]],
-  ["Assistant", "/jarvis", ["/jarvis/says", "/jarvis/ideas", "/jarvis/profile"]],
+  ["Skyling", "/jarvis", ["/jarvis/says", "/jarvis/ideas", "/jarvis/profile"]],
   ["Money", "/money", ["/finances/accounts", "/wealth", "/finances/budgets", "/finances/transactions", "/finances/subscriptions", "/finances/bills"]],
   ["School", "/school", ["/school/due", "/notes"]],
 ];

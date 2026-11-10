@@ -30,7 +30,7 @@ export function QuickChips() {
 
 /** The one place to ask: tap to open Jarvis (type or talk), with three quick asks under it. */
 export function AskBar({ name, chips = true }: { name: string; chips?: boolean }) {
-  const { openJarvis, companion } = useShell();
+  const { openJarvis, skyling } = useShell();
   return (
     <div className="flex flex-col gap-3">
       <button
@@ -40,7 +40,7 @@ export function AskBar({ name, chips = true }: { name: string; chips?: boolean }
         className="flex min-h-14 items-center gap-3 rounded-[28px] bg-surface py-2 pr-2 pl-3 text-left shadow-lift ring-1 ring-border/70 transition-shadow hover:shadow-lift active:scale-[0.99]"
       >
         {/* the skyling, the one on top of the day: it's the skyling you're about to talk to */}
-        <CompanionGlyph companion={companion} className="lf-bob h-9 w-9" />
+        <CompanionGlyph companion={skyling} night={skyling === "star"} className="lf-bob h-9 w-9" />
         <span className="min-w-0 flex-1 truncate text-[1rem] text-muted">Message {name}…</span>
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft" aria-hidden>
           <AudioLines className="h-[18px] w-[18px]" />

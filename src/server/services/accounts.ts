@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { AGE_LINE, birthDateProblem } from "@/lib/birthday";
-import { COMPANIONS, companionOf, isCompanionKey } from "@/lib/companions";
+import { COMPANIONS, companionOf, isCompanionKey, SKY_CHOICE, SKY_CHOICE_LABEL } from "@/lib/companions";
 import { todayIn } from "@/lib/dates";
 import { checkPassword } from "@/lib/password-strength";
 import { ServiceError } from "./errors";
@@ -147,8 +147,17 @@ export const jarvisSettingsSchema = z.object({
  * Picks the skyling (the cast). It brings its name unless the person gave the skyling their own (a name that is
  * another skyling's counts as not their own), and its tone.
  */
-export async function setCompanion(db: Database, userId: string, key: unknown) {
-  if (!isCompanionKey(key)) throw new ServiceError("Pick one of the six.");
+export async function setCompanion(db: Database, userId: string, key: unknown): Promise<{ name: string }> {
+  if (key === SKY_CHOICE) {
+    // "Changes with the sky": only the look follows the time; their name and talking style stay as they are
+    const [current] = await db.select().from(users).where(eq(users.id, userId));
+    await db
+      .update(users)
+      .set({ preferences: { ...current.preferences, companion: SKY_CHOICE } })
+      .where(eq(users.id, userId));
+    return { name: SKY_CHOICE_LABEL.name };
+  }
+  if (!isCompanionKey(key)) throw new ServiceError("Pick one of the six, or let the sky choose.");
   const c = companionOf(key);
   const [current] = await db.select().from(users).where(eq(users.id, userId));
   const name = current.preferences.assistantName?.trim();

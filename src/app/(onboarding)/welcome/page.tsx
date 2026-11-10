@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { isCompanionKey } from "@/lib/companions";
+import { isCompanionChoice } from "@/lib/companions";
 import { requireUser, withCurrentUser } from "@/server/auth/current-user";
 import { billingConfig, FREE_JARVIS_PER_DAY, PRO_FEATURES } from "@/server/billing";
 import { series } from "@/server/db/series";
@@ -35,7 +35,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
   const on = (provider: string) => (list.find((i) => i.provider === provider)?.status ?? "not_connected") !== "not_connected";
   const p = user.preferences ?? {};
   const saved: Saved = {
-    companion: isCompanionKey(p.companion) ? p.companion : null,
+    companion: isCompanionChoice(p.companion) ? p.companion : null,
     name: p.assistantName ?? "",
     style: p.assistantStyle === "coach" || p.assistantStyle === "direct" ? p.assistantStyle : "friend",
     lifeStage: p.lifeStage ?? null,

@@ -30,6 +30,8 @@ import type { JarvisAvailability } from "../jarvis/types";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { SkyScene } from "@/components/sky/sky-scene";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
+import { useSkyling } from "@/components/skylings/use-skyling";
+import type { CompanionKey } from "@/lib/companions";
 
 type ShellCtx = {
   openJarvis: (prompt?: string, opts?: { send?: boolean }) => void;
@@ -38,10 +40,20 @@ type ShellCtx = {
   aiConsent: boolean;
   /** The user's time zone (Settings), for anything that depends on their local time. */
   tz: string;
-  /** Their skyling (lib/companions), drawn wherever the skyling is. */
+  /** Their skyling choice (lib/companions): one of the six, or "sky". */
   companion?: string | null;
+  /** The skyling to draw now: the one picked, or whoever's moment it is for "Changes with the sky". */
+  skyling?: CompanionKey | null;
 };
-const Ctx = createContext<ShellCtx>({ openJarvis: () => {}, assistantName: UNNAMED_ASSISTANT, firstName: "", aiConsent: false, tz: "UTC", companion: null });
+const Ctx = createContext<ShellCtx>({
+  openJarvis: () => {},
+  assistantName: UNNAMED_ASSISTANT,
+  firstName: "",
+  aiConsent: false,
+  tz: "UTC",
+  companion: null,
+  skyling: null,
+});
 export const useShell = () => useContext(Ctx);
 
 type Drawer = { open: boolean; prompt?: string; send?: boolean; key: number };
@@ -153,8 +165,10 @@ export function AppShell({
   const assistantPage = !onJarvisPage && (pathname.startsWith("/jarvis") || pathname.startsWith("/inbox"));
   const settingsActive = pathname.startsWith("/settings");
 
+  // "Changes with the sky": whoever's moment it is, looked at again every minute
+  const skyling = useSkyling(companion, user.timezone ?? "UTC");
   return (
-    <Ctx.Provider value={{ openJarvis, assistantName, firstName: user.name.split(" ")[0], aiConsent, tz: user.timezone ?? "UTC", companion }}>
+    <Ctx.Provider value={{ openJarvis, assistantName, firstName: user.name.split(" ")[0], aiConsent, tz: user.timezone ?? "UTC", companion, skyling }}>
       <LifeAreasContext.Provider value={areas}>
         <div className="lf-glass">
           <TiltLayer />
@@ -184,7 +198,7 @@ export function AppShell({
                       )}
                     >
                       {item.href === "/jarvis" ? (
-                        <CompanionGlyph companion={companion} className="h-6 w-6" />
+                        <CompanionGlyph companion={skyling} night={skyling === "star"} className="h-6 w-6" />
                       ) : (
                         <Icon className={cn("h-5 w-5", active && "text-accent")} strokeWidth={active ? 2 : 1.6} />
                       )}
@@ -255,7 +269,7 @@ export function AppShell({
                     <span className="relative flex">
                       {item.href === "/jarvis" ? (
                         <span data-icon className="flex h-[22px] w-[22px] items-center justify-center">
-                          <CompanionGlyph companion={companion} className="h-6 w-6" />
+                          <CompanionGlyph companion={skyling} night={skyling === "star"} className="h-6 w-6" />
                         </span>
                       ) : (
                         <Icon data-icon className={cn("h-[22px] w-[22px]", active && "text-accent")} strokeWidth={active ? 2 : 1.7} />
@@ -271,7 +285,7 @@ export function AppShell({
             </div>
           </nav>
 
-          {tourOpen && pathname === "/" && <Tour onDone={endTour} assistantName={assistantName} companion={companion} />}
+          {tourOpen && pathname === "/" && <Tour onDone={endTour} assistantName={assistantName} companion={skyling} />}
 
           {!onJarvisPage && (
             <JarvisDrawer
@@ -306,7 +320,7 @@ export function AppShell({
               fabAway && "pointer-events-none translate-y-6 opacity-0",
             )}
           >
-            <CompanionGlyph companion={companion} className="h-8 w-8" />
+            <CompanionGlyph companion={skyling} night={skyling === "star"} className="h-8 w-8" />
           </button>
         )}
         <KeyboardWatcher />

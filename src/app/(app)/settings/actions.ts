@@ -124,7 +124,7 @@ export async function deleteMemoryAction(id: string): Promise<ActionState> {
 export async function setCompanionAction(key: string): Promise<ActionState> {
   return mutate("assistant.companion", async (_s, u) => {
     const c = await setCompanion(getDb(), u.id, key);
-    return `${c.name} it is.`;
+    return key === "sky" ? "Your skyling changes with the sky now." : `${c.name} it is.`;
   });
 }
 

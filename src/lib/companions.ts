@@ -202,6 +202,35 @@ export const DEFAULT_COMPANION: CompanionKey = "ray";
 
 export const isCompanionKey = (k: unknown): k is CompanionKey => typeof k === "string" && (COMPANION_KEYS as readonly string[]).includes(k);
 
+/**
+ * "Changes with the sky" (owner, 2026-11-10): a seventh choice where only the look follows the time, whoever's moment
+ * it is. One name and one talking style all day (their own, or "your skyling" and friend). Stored as companion "sky".
+ */
+export const SKY_CHOICE = "sky" as const;
+export type CompanionChoice = CompanionKey | typeof SKY_CHOICE;
+export const isCompanionChoice = (k: unknown): k is CompanionChoice => k === SKY_CHOICE || isCompanionKey(k);
+export const SKY_CHOICE_LABEL = {
+  name: "Changes with the sky",
+  moment: "All six, by the time",
+  line: "Whoever's up: Dawn at first light, Ray in the morning, Star at night.",
+};
+
+/**
+ * Whose moment it is at a minute of the day (0 to 1440), from that day's sunrise and sunset in minutes. Midday is
+ * halfway between; the windows follow the sky's own light (lib/sky.ts darkness): first light from 70 minutes before
+ * sunrise, golden hour from 90 minutes before sunset, and night wraps past midnight.
+ */
+export function skylingAt(minute: number, rise: number, set: number): CompanionKey {
+  const m = ((minute % 1440) + 1440) % 1440;
+  const noon = (rise + set) / 2;
+  if (m >= rise - 70 && m < rise + 45) return "dawn";
+  if (m >= rise + 45 && m < noon - 60) return "ray";
+  if (m >= noon - 60 && m < set - 90) return "noon";
+  if (m >= set - 90 && m < set + 5) return "goldie";
+  if (m >= set + 5 && m < set + 70) return "dusk";
+  return "star";
+}
+
 /** The skyling for a saved choice (or the default when none was made). */
 export function companionOf(key: string | null | undefined): CompanionInfo {
   return COMPANIONS.find((c) => c.key === key) ?? COMPANIONS.find((c) => c.key === DEFAULT_COMPANION)!;

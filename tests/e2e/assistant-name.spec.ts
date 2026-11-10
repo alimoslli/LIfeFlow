@@ -3,7 +3,7 @@ import { COMPOSER, queryAsUser, signUp, whatUsersSee } from "./helpers";
 
 /**
  * The skyling has no fixed name. A new user who taps through setup without naming it
- * sees "your skyling" (or "Assistant" where a short label is needed) and never "Jarvis":
+ * sees "your skyling" (or "Skyling" where a short label is needed) and never "Jarvis":
  * not in text, aria labels, placeholders, titles or alt text, on phone or desktop. Nor is it
  * "he": a new account shows only our own copy, and none of it uses he, his or him.
  */
@@ -88,7 +88,7 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   await page.getByRole("button", { name: "Start using LifeFlow" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
-  // Phone: the tab says "Assistant", sentences say "your skyling".
+  // Phone: the tab says "Skyling", sentences say "your skyling".
   const tabs = page.getByRole("navigation", { name: "Main" }).last().getByRole("link");
   expect(await tabs.allInnerTexts()).toEqual(["Today", "Skyling", "Money", "School"]);
   await expect(page.getByRole("button", { name: "Message your skyling…" })).toBeVisible();

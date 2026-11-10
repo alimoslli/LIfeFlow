@@ -13,7 +13,8 @@ import { FormError, Input } from "@/components/ui/field";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { ASSISTANT_STYLES, type AssistantStyle } from "@/lib/assistant";
 import { AGE_LINE, BIRTHDAY_NEEDED, birthDateProblem } from "@/lib/birthday";
-import { COMPANIONS, companionOf, type CompanionKey } from "@/lib/companions";
+import { COMPANIONS, companionOf, SKY_CHOICE, SKY_CHOICE_LABEL, type CompanionChoice, type CompanionKey } from "@/lib/companions";
+import { useSkyling } from "@/components/skylings/use-skyling";
 import type { ClockData } from "@/lib/day-clock";
 import type { LifeStage } from "@/lib/life";
 import { cn } from "@/lib/utils";
@@ -51,7 +52,7 @@ const SAMPLE = "You've got 2 things due this week. The BIO lab is the big one, s
 export type PlanInfo = { paid: boolean; freeChatsPerDay: number; proFeatures: string[] };
 /** What the welcome kept on the account (it comes back here after connecting Google or Microsoft). */
 export type Saved = {
-  companion: CompanionKey | null;
+  companion: CompanionChoice | null;
   name: string;
   style: AssistantStyle;
   lifeStage: LifeStage | null;
@@ -100,10 +101,13 @@ export function Onboarding({
   const step = STEPS[index];
 
   // 1. the skyling
-  const [companion, setCompanion] = useState<CompanionKey | null>(saved.companion);
+  const [companion, setCompanion] = useState<CompanionChoice | null>(saved.companion);
+  // who to draw: the one picked, or whoever's moment it is for "Changes with the sky"
+  const drawn = useSkyling(companion, firstClock.tz);
+  const skyNow = useSkyling(SKY_CHOICE, firstClock.tz);
   const [name, setName] = useState(saved.name);
   const [style, setStyle] = useState<AssistantStyle>(saved.style);
-  const chosen = companion ? companionOf(companion) : null;
+  const chosen = companion && companion !== SKY_CHOICE ? companionOf(companion) : null;
   const cleanName = useMemo(() => name.trim().replace(/\s+/g, " "), [name]);
   const nameOk = cleanName.length === 0 || (cleanName.length <= 24 && NAME_RE.test(cleanName));
   const shown = cleanName && nameOk ? cleanName : null;
@@ -113,6 +117,13 @@ export function Onboarding({
     setCompanion(k);
     setStyle(c.tone);
     cheerSkylings(); // the whole sky cheers your pick
+  };
+  /** "Changes with the sky": only the look follows the time; one name (their own, else "your skyling") and one style. */
+  const pickSky = () => {
+    if (COMPANIONS.some((x) => x.name === cleanName)) setName("");
+    setCompanion(SKY_CHOICE);
+    setStyle("friend");
+    cheerSkylings();
   };
 
   // 2. about you
@@ -236,7 +247,7 @@ export function Onboarding({
       {night ? (
         <div className="relative isolate h-[clamp(12rem,30svh,19rem)] overflow-hidden bg-night-ground md:h-[clamp(15rem,34vh,22rem)]">
           <div className="absolute inset-x-0 top-0 bottom-8">
-            <NightSky stage="strip" focus={companion} />
+            <NightSky stage="strip" focus={drawn} />
           </div>
         </div>
       ) : (
@@ -306,7 +317,30 @@ export function Onboarding({
                       <span className={cn("text-xs", companion === c.key ? "text-ink-night/75" : "text-muted")}>{c.moment}</span>
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={companion === SKY_CHOICE}
+                    onClick={pickSky}
+                    className={cn(
+                      "col-span-3 flex min-h-16 items-center justify-center gap-3 rounded-[1.25rem] px-3 py-2 transition-all duration-300 active:scale-95",
+                      companion === SKY_CHOICE
+                        ? "-translate-y-0.5 bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night shadow-lift ring-2 ring-dawn-3"
+                        : "bg-surface shadow-soft hover:-translate-y-0.5",
+                    )}
+                  >
+                    <CompanionGlyph companion={skyNow} night={skyNow === "star"} className="h-10 w-10" />
+                    <span className="text-left">
+                      <span className="block text-[0.9375rem] font-medium">{SKY_CHOICE_LABEL.name}</span>
+                      <span className={cn("block text-xs", companion === SKY_CHOICE ? "text-ink-night/75" : "text-muted")}>{SKY_CHOICE_LABEL.moment}</span>
+                    </span>
+                  </button>
                 </div>
+                {companion === SKY_CHOICE && (
+                  <p className="-mt-2 text-sm leading-relaxed text-text-2" aria-live="polite">
+                    <span className="font-medium text-text">{SKY_CHOICE_LABEL.line}</span> Same name and the same way of talking all day.
+                  </p>
+                )}
                 {chosen && (
                   <p className="-mt-2 text-sm leading-relaxed text-text-2" aria-live="polite">
                     <span className="font-medium text-text">{chosen.line}</span> Best at {chosen.skill.charAt(0).toLowerCase() + chosen.skill.slice(1)} Talks
@@ -326,7 +360,7 @@ export function Onboarding({
                   />
                   <p className="mt-1.5 text-xs text-muted">{chosen ? "Keep the name or type your own." : "Optional. Pick one above, or type a name."}</p>
                   <div className="mt-3 flex gap-2.5 rounded-2xl bg-surface-2 p-3.5" aria-live="polite">
-                    <CompanionGlyph companion={companion} className="h-7 w-7" />
+                    <CompanionGlyph companion={drawn} className="h-7 w-7" />
                     <p className="text-[0.875rem] leading-relaxed text-text-2">
                       <span className="font-semibold text-text">{shown ?? "Your skyling"}:</span> {chosen ? chosen.sample : SAMPLE}{" "}
                       {/* the numbers in a sample line are made up (research 2026-11-09, rule 6) */}
@@ -341,7 +375,7 @@ export function Onboarding({
           {step === "about" && (
             <>
               <div data-anim className="flex items-end gap-3">
-                <CompanionGlyph companion={companion} night={companion === "star"} pose="celebrate" frame={3} className="lf-breathe h-14 w-14" />
+                <CompanionGlyph companion={drawn} night={drawn === "star"} pose="celebrate" frame={3} className="lf-breathe h-14 w-14" />
                 <h1 className="font-display text-[2.75rem] leading-[1.05] font-medium tracking-tight">Hi{cleanYou ? ` ${cleanYou.split(" ")[0]}` : ""}.</h1>
               </div>
               <p data-anim className="mt-3 text-[1.0625rem] leading-relaxed text-text-2">
@@ -485,14 +519,14 @@ export function Onboarding({
           </p>
           {error && <FormError message={error} />}
           {step === "learn" ? (
-            <SkyButton onClick={() => finish("/")} loading={pending} disabled={!nameOk} skyling={companion ?? "ray"} className="w-full justify-between pl-6">
+            <SkyButton onClick={() => finish("/")} loading={pending} disabled={!nameOk} skyling={drawn ?? "ray"} className="w-full justify-between pl-6">
               Go to my sky
             </SkyButton>
           ) : (
             <SkyButton
               onClick={next}
               disabled={pending || (step === "skyling" && !nameOk) || (step === "about" && (!cleanYou || !stage || !birthDate || !!birthProblem))}
-              skyling={companion ?? "dawn"}
+              skyling={drawn ?? "dawn"}
               cheer={step === "skyling" && !!companion}
               variant={step === "connect" && !anyLinked ? "glass" : "sun"}
               day={step === "connect" && !anyLinked}

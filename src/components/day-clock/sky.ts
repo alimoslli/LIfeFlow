@@ -16,7 +16,7 @@
  */
 import { isExam, pileOf, sunTimes, type ClockData, type ClockItem } from "@/lib/day-clock";
 import { css, darkness, mix, skyAt, type RGB } from "@/lib/sky";
-import { companionOf } from "@/lib/companions";
+import { companionOf, skylingAt, SKY_CHOICE, type CompanionKey } from "@/lib/companions";
 import { drawCompanion, FRAMES, type Pose } from "./companion";
 import { createVisitors, type VisitorKind } from "./visitors";
 
@@ -390,8 +390,12 @@ export function createSky(root: HTMLElement, reduce: boolean) {
   let remK = parseFloat(getComputedStyle(html).fontSize) / 16 || 1;
 
   // the skyling (the person's pick, in its night form after sunset) on the wheel, and standing on the open line
+  // "Changes with the sky": whoever's moment it is at the time on show (turn Today to tonight and Star is there)
+  let viewKey: CompanionKey = "ray";
   const paintWho = () => {
-    const c = companionOf(root.dataset.companion);
+    const choice = root.dataset.companion;
+    const c = companionOf(choice === SKY_CHOICE ? viewKey : choice);
+    if (root.dataset.skylingNow !== c.key) root.dataset.skylingNow = c.key;
     const cheering = performance.now() < cheerUntil;
     for (const cv of [who, ...root.querySelectorAll<HTMLCanvasElement>(".dc-now-who")])
       drawCompanion(cv, c, cheering ? "celebrate" : pose, cheering ? Math.floor((performance.now() - cheerFrom) / 150) : step, night);
@@ -490,6 +494,13 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const follow = Math.abs(view - now) < 0.5;
     const vm = mod(view);
     night = !(vm >= rise && vm < set);
+    const nextKey = skylingAt(vm, rise, set);
+    if (nextKey !== viewKey) {
+      // the next one hops in (a cheer is skipped under reduced motion)
+      const swapped = root.dataset.companion === SKY_CHOICE && root.dataset.skylingNow != null;
+      viewKey = nextKey;
+      if (swapped) cheer(700);
+    }
     const timed = st.items.filter((it) => !it.allDay && !it.someday);
     fillWords(st, follow, rise, set, timed);
 

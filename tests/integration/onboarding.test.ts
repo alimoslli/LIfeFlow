@@ -4,7 +4,7 @@ import { closeDb, getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { listAccounts } from "@/server/services/finance/accounts";
 import { listActiveMemories } from "@/server/services/memory";
-import { updateProfile } from "@/server/services/accounts";
+import { setCompanion, updateProfile } from "@/server/services/accounts";
 import { completeOnboarding, finishOnboarding, saveBirthday, saveWelcomeProgress, setTourState } from "@/server/services/onboarding";
 import { listCourses } from "@/server/services/school";
 import { listEmployers } from "@/server/services/work";
@@ -173,6 +173,17 @@ describe("onboarding", () => {
     expect(await b.run((s) => saveBirthday(s, "UTC", `${new Date().getFullYear() - 8}-05-05`))).toEqual({ blocked: true });
     expect(await b.run((s) => saveBirthday(s, "UTC", "1990-01-01"))).toEqual({ blocked: true });
     expect((await prefs(b.user.id)).birthDate).toBeUndefined();
+  });
+
+  it("'Changes with the sky' keeps their own name and their way of talking (only the look follows the time)", async () => {
+    const { user, run } = await makeUser("Sky Picker");
+    await run((s) => saveWelcomeProgress(s, "UTC", { assistant: { name: "Pip", style: "direct", companion: "noon" } }));
+    expect(await setCompanion(getDb(), user.id, "sky")).toEqual({ name: "Changes with the sky" });
+    expect(await prefs(user.id)).toMatchObject({ companion: "sky", assistantName: "Pip", assistantStyle: "direct" });
+    // the welcome accepts it too
+    await run((s) => saveWelcomeProgress(s, "UTC", { assistant: { style: "friend", companion: "sky" } }));
+    expect((await prefs(user.id)).companion).toBe("sky");
+    await expect(setCompanion(getDb(), user.id, "nova")).rejects.toThrow(/let the sky choose/);
   });
 
   it("only changes the signed-in user's preferences", async () => {

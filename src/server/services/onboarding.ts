@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { COMPANION_KEYS } from "@/lib/companions";
+import { COMPANION_KEYS, SKY_CHOICE } from "@/lib/companions";
 import { AGE_LINE, BIRTHDAY_NEEDED, birthDateProblem, isUnderAge } from "@/lib/birthday";
 import { todayIn } from "@/lib/dates";
 import { ServiceError } from "./errors";
@@ -41,7 +41,11 @@ export const onboardingSchema = z.object({
   aboutMe: z.string().trim().max(500).optional(),
   /** Their assistant's name and personality, chosen in "Make it yours". */
   assistant: z
-    .object({ name: assistantSchema.shape.name.optional(), style: z.enum(["coach", "friend", "direct"]), companion: z.enum(COMPANION_KEYS).optional() })
+    .object({
+      name: assistantSchema.shape.name.optional(),
+      style: z.enum(["coach", "friend", "direct"]),
+      companion: z.enum([...COMPANION_KEYS, SKY_CHOICE]).optional(),
+    })
     .optional(),
 });
 
@@ -99,7 +103,11 @@ export async function completeOnboarding(scope: UserScope, input: OnboardingInpu
  */
 export const welcomeProgressSchema = z.object({
   assistant: z
-    .object({ name: assistantSchema.shape.name.optional(), style: z.enum(["coach", "friend", "direct"]), companion: z.enum(COMPANION_KEYS).optional() })
+    .object({
+      name: assistantSchema.shape.name.optional(),
+      style: z.enum(["coach", "friend", "direct"]),
+      companion: z.enum([...COMPANION_KEYS, SKY_CHOICE]).optional(),
+    })
     .optional(),
   name: z.string().trim().min(1, "Tell your skyling what to call you").max(80).optional(),
   birthDate: z.string().trim().optional(),
