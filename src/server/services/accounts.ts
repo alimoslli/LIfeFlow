@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { birthDateProblem } from "@/lib/birthday";
+import { AGE_LINE, birthDateProblem } from "@/lib/birthday";
 import { COMPANIONS, companionOf, isCompanionKey } from "@/lib/companions";
 import { todayIn } from "@/lib/dates";
 import { checkPassword } from "@/lib/password-strength";
@@ -85,6 +85,8 @@ export async function updateProfile(db: Database, userId: string, input: z.input
   const problem = d.birthDate ? birthDateProblem(d.birthDate, todayIn(d.timezone)) : null;
   if (problem) throw new ServiceError(problem);
   const [current] = await db.select().from(users).where(eq(users.id, userId));
+  // a locked account (under 13, owner 2026-11-10) can't get past it by typing another year here
+  if (d.birthDate && current.preferences.ageBlockedAt) throw new ServiceError(AGE_LINE);
   await db
     .update(users)
     .set({

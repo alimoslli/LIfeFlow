@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LEGAL_EFFECTIVE_DATE, legalDetails } from "@/lib/legal";
+import { LEGAL_EFFECTIVE_DATE, legalDetails, PRIVACY_UPDATED_DATE } from "@/lib/legal";
 
 export const metadata: Metadata = { title: "Privacy Policy", description: "How LifeFlow collects, uses, protects and deletes your information." };
 
@@ -14,7 +14,9 @@ export default function PrivacyPolicy() {
   return (
     <>
       <h1>Privacy Policy</h1>
-      <p>Effective {LEGAL_EFFECTIVE_DATE}</p>
+      <p>
+        Effective {LEGAL_EFFECTIVE_DATE}. Last updated {PRIVACY_UPDATED_DATE}.
+      </p>
 
       <p>
         LifeFlow is a personal organizer for your money, school, work, schedule, health and notes, with a built-in AI character, your skyling. LifeFlow is run
@@ -35,7 +37,9 @@ export default function PrivacyPolicy() {
       <ul>
         <li>
           <strong>Account details:</strong> your name, email address, time zone, and a password, which we store only as a salted, one-way hash. If you turn on
-          two-step sign-in, we store an encrypted authenticator secret and hashed backup codes.
+          two-step sign-in, we store an encrypted authenticator secret and hashed backup codes. When you set up LifeFlow we ask for your birthday, to confirm
+          you are 13 or older and to tailor your plans, and, if you give them, your school and where you work, to tailor your plans. Your birthday, school and
+          workplace are never sent to the AI model. You can change or remove your birthday in Settings.
         </li>
         <li>
           <strong>Your content:</strong> anything you add, such as accounts and balances, transactions, budgets, goals, bills, classes, assignments, work shifts
@@ -243,8 +247,10 @@ export default function PrivacyPolicy() {
 
       <h2>9. Children</h2>
       <p>
-        LifeFlow is not intended for children under 13, and we do not knowingly collect personal information from them. If you believe a child under 13 has
-        created an account, contact us and we will delete it.
+        LifeFlow is not intended for children under 13, and we do not knowingly collect personal information from them. We ask for a birthday when an account is
+        set up. If it shows someone is under 13, setup can&apos;t be finished and the account stays locked: we keep only the email address and password it was
+        created with and a note that it is locked, not the birthday or anything else they entered. If you believe a child under 13 has created an account,
+        contact us and we will delete it.
       </p>
 
       <h2>10. International users</h2>

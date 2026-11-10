@@ -16,7 +16,7 @@ async function ownerPage(browser: Browser, opts: BrowserContextOptions = {}): Pr
   await op.getByLabel("Password").fill("correct horse battery");
   await op.getByRole("button", { name: "Create account" }).click();
   await op.waitForURL("**/welcome");
-  await pool.query("update users set name = $1 where email = $2", ["Owner Olu", ADMIN_EMAIL]);
+  await pool.query(`update users set name = $1, preferences = preferences || '{"birthDate":"1990-06-15"}'::jsonb where email = $2`, ["Owner Olu", ADMIN_EMAIL]);
   await op.getByRole("button", { name: "Skip setup" }).click();
   await op.waitForURL((u) => u.pathname === "/");
   await op.getByRole("button", { name: "Skip tour" }).click();

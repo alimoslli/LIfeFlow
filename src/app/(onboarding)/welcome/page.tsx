@@ -9,6 +9,7 @@ import { googleConfig } from "@/server/integrations/google";
 import { microsoftConfig } from "@/server/integrations/microsoft";
 import { dayClockData } from "@/server/services/day-clock";
 import { integrationStatus } from "@/server/services/integrations";
+import { AgeBlocked } from "./age-blocked";
 import { Onboarding, type Saved } from "./onboarding";
 
 export const metadata: Metadata = { title: "Welcome" };
@@ -18,6 +19,8 @@ const RESULTS = ["connected", "denied", "failed", "missing_scopes", "admin_conse
 export default async function WelcomePage({ searchParams }: { searchParams: Promise<{ connected?: string; result?: string }> }) {
   const user = await requireUser();
   if (user.preferences?.onboarding !== "pending") redirect("/");
+  // under 13: locked for this account, whatever year is typed later (owner, 2026-11-10)
+  if (user.preferences?.ageBlockedAt) return <AgeBlocked />;
   // Limits are shown only once paid plans are switched on; until then everything is free.
   const plan = { paid: !!billingConfig(), freeChatsPerDay: FREE_JARVIS_PER_DAY, proFeatures: Object.values(PRO_FEATURES) };
   // their own sky (no money on it), and what's connected already (coming back from Google or Microsoft)

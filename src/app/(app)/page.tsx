@@ -18,6 +18,7 @@ import { integrationStatus } from "@/server/services/integrations";
 import { dayClockData } from "@/server/services/day-clock";
 import { AskBar } from "./_today/day-plan";
 import { AssistantLine, type AssistantNote } from "./_today/assistant-line";
+import { BirthdayCard } from "./_today/birthday-card";
 import { EmptyNext } from "./_today/empty-next";
 
 /**
@@ -74,9 +75,12 @@ export default async function TodayPage() {
       <h1 className="sr-only">{hello}</h1>
       <section aria-label="Your day" data-tour="today-page" className="-mx-5 sm:-mx-8 md:mx-0">
         <DayClock data={clock} mode={mode} companion={me.preferences?.companion}>
-          {note && <AssistantLine name={assistantName} note={note} />}
+          {/* accounts made before the birthday was required are asked once, first (owner, 2026-11-10; not a lockout) */}
+          {!me.preferences?.birthDate && <BirthdayCard blocked={!!me.preferences?.ageBlockedAt} />}
+          {me.preferences?.birthDate && note && <AssistantLine name={assistantName} note={note} />}
           {/* nothing planned yet: one next step, on the first screen (connect what can be connected, else tell the skyling) */}
-          {!note &&
+          {me.preferences?.birthDate &&
+            !note &&
             clock.empty &&
             (setup.length > 0 ? (
               <Link href="/settings/integrations" className="flex min-h-16 items-center gap-3 rounded-3xl bg-surface px-5 py-3 shadow-soft">

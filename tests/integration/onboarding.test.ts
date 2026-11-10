@@ -5,7 +5,7 @@ import { users } from "@/server/db/schema";
 import { listAccounts } from "@/server/services/finance/accounts";
 import { listActiveMemories } from "@/server/services/memory";
 import { updateProfile } from "@/server/services/accounts";
-import { completeOnboarding, finishOnboarding, saveWelcomeProgress, setTourState } from "@/server/services/onboarding";
+import { completeOnboarding, finishOnboarding, saveBirthday, saveWelcomeProgress, setTourState } from "@/server/services/onboarding";
 import { listCourses } from "@/server/services/school";
 import { listEmployers } from "@/server/services/work";
 import { assistantProfile } from "@/lib/assistant";
@@ -13,11 +13,15 @@ import { makeUser } from "../helpers";
 
 afterAll(closeDb);
 
+/** Setup finishes (or is skipped) only with a birthday on the account (owner, 2026-11-10). */
+const born = (run: Awaited<ReturnType<typeof makeUser>>["run"]) => run((s) => saveWelcomeProgress(s, "UTC", { birthDate: "2001-03-04" }));
+
 const prefs = async (id: string) => (await getDb().select({ p: users.preferences }).from(users).where(eq(users.id, id)))[0].p;
 
 describe("onboarding", () => {
   it("saves everything through the regular services and queues the tour", async () => {
     const { user, run } = await makeUser("Nia Brooks");
+    await born(run);
     const r = await run((s) =>
       completeOnboarding(s, {
         lifeStage: "both",
@@ -42,6 +46,7 @@ describe("onboarding", () => {
 
   it("finishing setup with no assistant name leaves it 'your skyling', never 'Jarvis'", async () => {
     const { user, run } = await makeUser();
+    await born(run);
     await run((s) => completeOnboarding(s, { lifeStage: "both", assistant: { name: undefined, style: "friend" } }));
     const p = await prefs(user.id);
     expect(p.assistantName).toBeUndefined();
@@ -57,6 +62,7 @@ describe("onboarding", () => {
 
   it("skipping finishes setup without creating anything, and the tour can be finished and replayed", async () => {
     const { user, run } = await makeUser();
+    await born(run);
     await run((s) => finishOnboarding(s));
     expect(await prefs(user.id)).toMatchObject({ onboarding: "done", tour: "pending" });
     expect(await run((s) => listCourses(s))).toHaveLength(0);
@@ -94,11 +100,9 @@ describe("onboarding", () => {
     // still in setup: only finishing marks it done
     expect(p.onboarding).not.toBe("done");
     expect((await getDb().select({ name: users.name }).from(users).where(eq(users.id, user.id)))[0].name).toBe("Sammy");
-    // LifeFlow is for people 13 and older, and a birthday can't be in the future
-    const young = new Date();
-    const tooYoung = `${young.getFullYear() - 10}-01-01`;
-    await expect(run((s) => saveWelcomeProgress(s, "UTC", { birthDate: tooYoung }))).rejects.toThrow(/13 and older/);
-    await expect(run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${young.getFullYear() + 1}-01-01` }))).rejects.toThrow(/hasn't happened/);
+    // a birthday can't be in the future
+    const year = new Date().getFullYear();
+    await expect(run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${year + 1}-01-01` }))).rejects.toThrow(/hasn't happened/);
     expect((await prefs(user.id)).birthDate).toBe("2005-04-12");
   });
 
@@ -109,6 +113,7 @@ describe("onboarding", () => {
     expect(await run((s) => listEmployers(s))).toEqual([]);
     // back from Google: the welcome hands the kept name to finishing
     const kept = (await prefs(user.id)).welcomeJob!;
+    await born(run);
     await run((s) => completeOnboarding(s, { lifeStage: "working", job: { name: kept } }));
     expect((await run((s) => listEmployers(s))).map((e) => e.name)).toEqual(["Campus Coffee"]);
     expect((await prefs(user.id)).welcomeJob).toBeUndefined();
@@ -126,9 +131,54 @@ describe("onboarding", () => {
     await expect(updateProfile(getDb(), user.id, { ...base, birthDate: "2010-02-31" })).rejects.toThrow("Pick your birthday.");
   });
 
+  it("setup can't be finished or skipped without a birthday, checked on the server", async () => {
+    const { run } = await makeUser("Noa Lin");
+    await expect(run((s) => completeOnboarding(s, { lifeStage: "student" }))).rejects.toThrow("Add your birthday to finish setting up.");
+    await expect(run((s) => finishOnboarding(s))).rejects.toThrow("Add your birthday to finish setting up.");
+    await born(run);
+    await run((s) => finishOnboarding(s));
+  });
+
+  it("under 13 locks the welcome, keeps nothing else, and a later, older year doesn't get through", async () => {
+    const { user, run } = await makeUser("Kai Young");
+    const year = new Date().getFullYear();
+    const r = await run((s) =>
+      saveWelcomeProgress(s, "UTC", { name: "Kai", birthDate: `${year - 9}-03-03`, school: "Maple Elementary", lifeStage: "student", job: "Lemonade" }),
+    );
+    expect(r).toEqual({ blocked: true });
+    let p = await prefs(user.id);
+    expect(p.ageBlockedAt).toBeTruthy();
+    expect(p.birthDate).toBeUndefined();
+    expect(p.school).toBeUndefined();
+    expect(p.welcomeJob).toBeUndefined();
+    expect(p.lifeStage).toBeUndefined();
+    expect((await getDb().select({ name: users.name }).from(users).where(eq(users.id, user.id)))[0].name).toBe("Kai Young");
+    // retyping an older year: still locked, still nothing kept
+    expect(await run((s) => saveWelcomeProgress(s, "UTC", { birthDate: "2000-01-01" }))).toEqual({ blocked: true });
+    expect((await prefs(user.id)).birthDate).toBeUndefined();
+    await expect(run((s) => completeOnboarding(s, { lifeStage: "student" }))).rejects.toThrow("LifeFlow is for people 13 and older.");
+    await expect(run((s) => finishOnboarding(s))).rejects.toThrow("LifeFlow is for people 13 and older.");
+    expect(await run((s) => saveBirthday(s, "UTC", "2000-01-01"))).toEqual({ blocked: true });
+    await expect(updateProfile(getDb(), user.id, { name: "Kai", timezone: "UTC", birthDate: "2000-01-01" })).rejects.toThrow("13 and older");
+    p = await prefs(user.id);
+    expect(p.onboarding).not.toBe("done");
+  });
+
+  it("an older account without a birthday is asked once: a real one saves; under 13 locks the same way", async () => {
+    const a = await makeUser("Ola Old");
+    expect(await a.run((s) => saveBirthday(s, "America/Chicago", "1998-08-08"))).toEqual({ blocked: false });
+    expect((await prefs(a.user.id)).birthDate).toBe("1998-08-08");
+    await expect(a.run((s) => saveBirthday(s, "UTC", "2010-02-31"))).rejects.toThrow("Pick your birthday.");
+    const b = await makeUser("Bo Young");
+    expect(await b.run((s) => saveBirthday(s, "UTC", `${new Date().getFullYear() - 8}-05-05`))).toEqual({ blocked: true });
+    expect(await b.run((s) => saveBirthday(s, "UTC", "1990-01-01"))).toEqual({ blocked: true });
+    expect((await prefs(b.user.id)).birthDate).toBeUndefined();
+  });
+
   it("only changes the signed-in user's preferences", async () => {
     const a = await makeUser();
     const b = await makeUser();
+    await born(a.run);
     await a.run((s) => finishOnboarding(s, { studyTime: "morning" }));
     expect((await prefs(b.user.id)).onboarding).toBeUndefined();
   });

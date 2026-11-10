@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { COMPANION_KEYS } from "@/lib/companions";
-import { birthDateProblem } from "@/lib/birthday";
+import { AGE_LINE, BIRTHDAY_NEEDED, birthDateProblem, isUnderAge } from "@/lib/birthday";
 import { todayIn } from "@/lib/dates";
 import { ServiceError } from "./errors";
 import { users } from "../db/schema";
@@ -77,14 +77,18 @@ export async function completeOnboarding(scope: UserScope, input: OnboardingInpu
   if (d.aboutMe && d.aboutMe.length >= 3) {
     await createMemory(scope, { content: d.aboutMe, category: "fact" }, "user");
   }
-  await finishOnboarding(scope, {
-    lifeStage: d.lifeStage,
-    studyTime: d.studyTime,
-    jarvisTone: d.jarvisTone,
-    assistantName: d.assistant?.name,
-    assistantStyle: d.assistant?.style,
-    companion: d.assistant?.companion,
-  });
+  await finishOnboarding(
+    scope,
+    {
+      lifeStage: d.lifeStage,
+      studyTime: d.studyTime,
+      jarvisTone: d.jarvisTone,
+      assistantName: d.assistant?.name,
+      assistantStyle: d.assistant?.style,
+      companion: d.assistant?.companion,
+    },
+    tz,
+  );
   return { courses, job: !!d.job, checking: !!d.checking, memory: !!d.aboutMe && d.aboutMe.length >= 3 };
 }
 
@@ -105,15 +109,37 @@ export const welcomeProgressSchema = z.object({
   job: z.string().trim().max(200).optional(),
 });
 
-export async function saveWelcomeProgress(scope: UserScope, tz: string, input: z.input<typeof welcomeProgressSchema>) {
+type Prefs = typeof users.$inferSelect.preferences;
+const prefsOf = async (scope: UserScope) =>
+  (await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId)))[0].preferences;
+
+/**
+ * Under 13 (owner, 2026-11-10): one calm line, and the welcome stays locked for this account. Only the flag is kept:
+ * not the birthday, nor anything else they typed. Returned rather than thrown, so the flag is committed.
+ */
+async function blockUnderAge(scope: UserScope, prefs: Prefs) {
+  const { birthDate: _birth, school: _school, welcomeJob: _job, ...rest } = prefs;
+  void _birth;
+  void _school;
+  void _job;
+  await scope.tx
+    .update(users)
+    .set({ preferences: { ...rest, ageBlockedAt: new Date().toISOString() } })
+    .where(eq(users.id, scope.userId));
+  return { blocked: true as const };
+}
+
+export async function saveWelcomeProgress(scope: UserScope, tz: string, input: z.input<typeof welcomeProgressSchema>): Promise<{ blocked: boolean }> {
   const d = welcomeProgressSchema.parse(input);
+  const current = await prefsOf(scope);
+  if (current.ageBlockedAt) return { blocked: true };
+  if (d.birthDate && isUnderAge(d.birthDate, todayIn(tz))) return blockUnderAge(scope, current);
   if (d.birthDate) {
     const problem = birthDateProblem(d.birthDate, todayIn(tz));
     if (problem) throw new ServiceError(problem);
   }
-  const [u] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
   const prefs = {
-    ...u.preferences,
+    ...current,
     ...(d.assistant ? { assistantName: d.assistant.name, assistantStyle: d.assistant.style, companion: d.assistant.companion } : {}),
     ...(d.birthDate ? { birthDate: d.birthDate } : {}),
     ...(d.lifeStage ? { lifeStage: d.lifeStage } : {}),
@@ -124,6 +150,22 @@ export async function saveWelcomeProgress(scope: UserScope, tz: string, input: z
     .update(users)
     .set({ preferences: prefs, ...(d.name ? { name: d.name.replace(/\s+/g, " ") } : {}) })
     .where(eq(users.id, scope.userId));
+  return { blocked: false };
+}
+
+/** The birthday asked once on Today from accounts made before it was required (not a lockout). Same rules. */
+export async function saveBirthday(scope: UserScope, tz: string, birthDate: string): Promise<{ blocked: boolean }> {
+  const current = await prefsOf(scope);
+  if (current.ageBlockedAt) return { blocked: true };
+  const birth = z.string().trim().parse(birthDate);
+  if (isUnderAge(birth, todayIn(tz))) return blockUnderAge(scope, current);
+  const problem = birthDateProblem(birth, todayIn(tz));
+  if (problem) throw new ServiceError(problem);
+  await scope.tx
+    .update(users)
+    .set({ preferences: { ...current, birthDate: birth } })
+    .where(eq(users.id, scope.userId));
+  return { blocked: false };
 }
 
 /** The name they want to be called, asked on the first screen after sign-up. */
@@ -136,8 +178,12 @@ export async function setDisplayName(scope: UserScope, name: string) {
 export async function finishOnboarding(
   scope: UserScope,
   prefs: Partial<Pick<typeof users.$inferSelect.preferences, "lifeStage" | "studyTime" | "jarvisTone" | "assistantName" | "assistantStyle" | "companion">> = {},
+  tz = "UTC",
 ) {
   const [u] = await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId));
+  // setup finishes (or is skipped) only with a real birthday, 13 or older, checked here on the server (owner, 2026-11-10)
+  if (u.preferences.ageBlockedAt) throw new ServiceError(AGE_LINE);
+  if (!u.preferences.birthDate || birthDateProblem(u.preferences.birthDate, todayIn(tz))) throw new ServiceError(BIRTHDAY_NEEDED);
   const defined = Object.fromEntries(Object.entries(prefs).filter(([, v]) => v !== undefined));
   await scope.tx
     .update(users)

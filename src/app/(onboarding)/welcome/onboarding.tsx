@@ -12,13 +12,13 @@ import { SkyButton } from "@/components/skylings/sky-button";
 import { FormError, Input } from "@/components/ui/field";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { ASSISTANT_STYLES, type AssistantStyle } from "@/lib/assistant";
-import { birthDateProblem, MIN_AGE } from "@/lib/birthday";
+import { AGE_LINE, BIRTHDAY_NEEDED, birthDateProblem } from "@/lib/birthday";
 import { COMPANIONS, companionOf, type CompanionKey } from "@/lib/companions";
 import type { ClockData } from "@/lib/day-clock";
 import type { LifeStage } from "@/lib/life";
 import { cn } from "@/lib/utils";
 import { connectCanvasFeedAction } from "@/app/(app)/settings/integrations/actions";
-import { completeOnboardingAction, saveWelcomeAction, setNameAction, skipOnboardingAction, skyNowAction } from "./actions";
+import { completeOnboardingAction, saveWelcomeAction, skipOnboardingAction, skyNowAction } from "./actions";
 
 /**
  * First run (owner, 2026-11-09: "catered to the new app"; "they won't have to add their classes, syncing their school
@@ -124,7 +124,10 @@ export function Onboarding({
   const [job, setJob] = useState(saved.job);
   const isSchool = stage === "student" || stage === "both";
   const isWork = stage === "working" || stage === "both";
-  const birthProblem = birthDate ? birthDateProblem(birthDate, firstClock.today) : null;
+  // a neutral age question: the form only flags a day that can't be right (impossible, in the future); the age rule is the
+  // server's, so the form never hints at the cutoff (an under-13 date locks the welcome there)
+  const typed = birthDate ? birthDateProblem(birthDate, firstClock.today) : null;
+  const birthProblem = typed === AGE_LINE ? null : typed;
 
   // 3. connect
   const [clock, setClock] = useState(firstClock);
@@ -163,17 +166,16 @@ export function Onboarding({
   const saveAbout = () =>
     start(async () => {
       if (birthProblem) return setError(birthProblem);
-      if (cleanYou !== firstName) {
-        const r = await setNameAction(cleanYou);
-        if (!r?.ok) return setError(r?.error ?? "Couldn't save your name. Try again.");
-      }
       const r = await saveWelcomeAction({
         assistant: { name: cleanName || undefined, style, companion: companion ?? undefined },
+        name: cleanYou !== firstName ? cleanYou : undefined,
         birthDate,
         lifeStage: stage ?? undefined,
         school: isSchool ? school.trim() : undefined,
         job: isWork ? job.trim() : "",
       });
+      // under 13: the account's welcome is now locked, and the page says so (one calm line, nothing to retry)
+      if (r?.error === AGE_LINE) return router.refresh();
       if (!r?.ok) return setError(r?.error ?? "Couldn't save. Try again.");
       go(1);
     });
@@ -204,15 +206,25 @@ export function Onboarding({
         assistant: { name: cleanName || undefined, style, companion: companion ?? undefined },
         job: isWork && job.trim() ? { name: job.trim() } : undefined,
       });
-      if (r?.ok) router.replace(to);
-      else setError(r?.error ?? "Couldn't save. Try again.");
+      if (r?.ok) return router.replace(to);
+      if (r?.error === BIRTHDAY_NEEDED) return toAbout();
+      setError(r?.error ?? "Couldn't save. Try again.");
     });
 
+  // skipping still needs a birthday on the account (the server decides): without one, "About you" first
+  const toAbout = () => {
+    dir.current = 1;
+    setIndex(1);
+    setError(BIRTHDAY_NEEDED);
+    window.scrollTo({ top: 0 });
+  };
   const skipAll = () =>
     start(async () => {
       const r = await skipOnboardingAction();
-      if (r?.ok) router.replace("/");
-      else setError(r?.error ?? "Couldn't continue. Try again.");
+      if (r?.ok) return router.replace("/");
+      if (r?.error === BIRTHDAY_NEEDED) return toAbout();
+      if (r?.error === AGE_LINE) return router.refresh();
+      setError(r?.error ?? "Couldn't continue. Try again.");
     });
 
   const night = step === "skyling" || step === "about";
@@ -357,9 +369,7 @@ export function Onboarding({
                     className="min-h-11"
                     aria-invalid={!!birthProblem || undefined}
                   />
-                  <p className={cn("mt-1.5 text-xs", birthProblem ? "text-danger" : "text-muted")}>
-                    {birthProblem ?? `Private to your account. LifeFlow is for people ${MIN_AGE} and older.`}
-                  </p>
+                  <p className={cn("mt-1.5 text-xs", birthProblem ? "text-danger" : "text-muted")}>{birthProblem ?? "Private to your account."}</p>
                 </Group>
                 <div data-anim>
                   <p className="mb-2 text-sm font-medium text-text-2">What fills your week?</p>

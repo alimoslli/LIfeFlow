@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { queryAsUser, signUp } from "./helpers";
+import { pool, queryAsUser, signUp } from "./helpers";
 
 test("a new user meets the skylings, tells theirs about themselves, sees how to connect their sky, learns it by doing, then the tour", async ({ page }) => {
   const email = await signUp(page, "Maya Chen", { onboarding: "stay" });
@@ -25,11 +25,8 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   await expect(page.getByText("LifeFlow is free while we're testing.")).toBeVisible();
   const go = page.getByRole("button", { name: "Connect my sky" });
   await page.getByRole("radio", { name: /^Both/ }).click();
-  await expect(go).toBeDisabled(); // the birthday is asked for
-  // LifeFlow is for people 13 and older (Terms)
-  await page.getByLabel("Your birthday").fill(`${new Date().getFullYear() - 10}-06-01`);
-  await expect(page.getByText("LifeFlow is for people 13 and older.")).toBeVisible();
-  await expect(go).toBeDisabled();
+  await expect(go).toBeDisabled(); // the birthday is asked for, neutrally (the age rule is the server's)
+  await expect(page.getByText("Private to your account.", { exact: true })).toBeVisible();
   await page.getByLabel("Your birthday").fill("2005-04-12");
   await page.getByLabel("Your school").fill("State University");
   await page.getByLabel("Where you work").fill("Target");
@@ -165,4 +162,57 @@ test("the app follows what fills your week: tabs and pills adapt", async ({ page
   await expect(tab("School")).toHaveCount(0);
   await expect(pill("Work")).toHaveCount(0);
   await expect(tab("Money")).not.toHaveCount(0);
+});
+
+test("setup needs a birthday: Skip goes to About you first", async ({ page }) => {
+  await signUp(page, "Lee Park", { onboarding: "stay" });
+  await page.getByRole("button", { name: "Skip setup" }).click();
+  await expect(page.getByRole("heading", { name: /^Hi/ })).toBeVisible();
+  await expect(page.getByText("Add your birthday to finish setting up.")).toBeVisible();
+  await page.getByLabel("What should I call you?").fill("Lee");
+  await page.getByLabel("Your birthday").fill("2002-02-02");
+  await page.getByRole("radio", { name: /^Neither/ }).click();
+  await page.getByRole("button", { name: "Connect my sky" }).click();
+  await page.getByRole("button", { name: "Skip setup" }).click();
+  await page.waitForURL((u) => u.pathname === "/");
+});
+
+test("under 13: one calm line, the welcome stays locked, and an older year later doesn't get through", async ({ page }) => {
+  const email = await signUp(page, "Kai Young", { onboarding: "stay" });
+  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel("What should I call you?").fill("Kai");
+  await page.getByLabel("Your birthday").fill(`${new Date().getFullYear() - 9}-03-03`);
+  await page.getByRole("radio", { name: /^Classes/ }).click();
+  await page.getByLabel("Your school").fill("Maple Elementary");
+  await page.getByRole("button", { name: "Connect my sky" }).click();
+  await expect(page.getByRole("heading", { name: "LifeFlow is for people 13 and older." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
+  await expect(page.getByLabel("Your birthday")).toHaveCount(0);
+  // locked for the account: back to the app or the welcome, still the same line
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "LifeFlow is for people 13 and older." })).toBeVisible();
+  // nothing else kept: no birthday, no school, the flag only
+  const [row] = await queryAsUser<{ p: { ageBlockedAt?: string; birthDate?: string; school?: string } }>(
+    email,
+    "select preferences as p from users where email = $1",
+    [email],
+  );
+  expect(row.p.ageBlockedAt).toBeTruthy();
+  expect(row.p.birthDate).toBeUndefined();
+  expect(row.p.school).toBeUndefined();
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await page.waitForURL("**/login");
+});
+
+test("an account made before birthdays were asked gets one small card on Today, once", async ({ page }) => {
+  const email = await signUp(page, "Ola Old");
+  await pool.query(`update users set preferences = preferences - 'birthDate' where email = $1`, [email]);
+  await page.goto("/");
+  const card = page.getByRole("region", { name: "Your birthday" });
+  await expect(card.getByText("When's your birthday?")).toBeVisible();
+  await card.getByLabel("Your birthday").fill("1998-08-08");
+  await card.getByRole("button", { name: "Save" }).click();
+  await expect(card).toHaveCount(0);
+  const [row] = await queryAsUser<{ p: { birthDate?: string } }>(email, "select preferences as p from users where email = $1", [email]);
+  expect(row.p.birthDate).toBe("1998-08-08");
 });

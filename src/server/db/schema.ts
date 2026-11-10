@@ -88,6 +88,11 @@ export type UserPreferences = {
   birthDate?: string;
   /** Their school's name, from the welcome (students). */
   school?: string;
+  /**
+   * Set once when the birthday given makes them under 13 (owner, 2026-11-10): the welcome stays locked for the account,
+   * a later, older year doesn't get through, and nothing else about them is kept.
+   */
+  ageBlockedAt?: string;
   /** Where they work, typed in the welcome; kept while they connect (they leave and come back) and made an employer when setup finishes. */
   welcomeJob?: string;
   /** First-run setup: "pending" only for accounts created since onboarding launched. */
