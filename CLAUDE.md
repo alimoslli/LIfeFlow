@@ -114,6 +114,9 @@ If the plugins aren't loaded in a session, read the skills from github.com/addyo
 - The project enables the `everything-claude-code` plugin (`.claude/settings.json`). Its hooks run Prettier and `tsc` after edits; that's expected. Decision records still go in `docs/adr/` (the owner chose to keep them over the plugin's "no new .md files" hook).
 - The reformat commit is listed in `.git-blame-ignore-revs` (use `git blame --ignore-revs-file .git-blame-ignore-revs`).
 
+## AI spend (owner, 2026-11-10)
+- The owner pays for every real AI call, and the app has no users yet: quiet days cost under $2, while days we tested with the real model cost $12 to $16. Tests, walks and evals use the fake model (`tests/e2e/fake-openai.mjs`, ScriptedProvider). A run against the real model (OpenAI or any other paid AI) needs the owner's yes first, with the number of calls and an estimated cost. No chat keeps a real AI key in the cloud environment.
+
 ## Verify before finishing
 `npm run check` (typecheck, lint, format check, unit + integration tests), then `npm run build && npm run test:e2e` for UI/flow changes. If tests report "No test files found" with a `charCodeAt` startup error, Postgres isn't running (`service postgresql start`).
 
