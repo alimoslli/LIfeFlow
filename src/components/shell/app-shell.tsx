@@ -226,7 +226,7 @@ export function AppShell({
                   <PageMotion>{children}</PageMotion>
                 ) : assistantPage ? (
                   <>
-                    <AssistantHeader name={nameAtStart(assistantName)} />
+                    <AssistantHeader name={nameAtStart(assistantName)} skyling={skyling} />
                     <SectionNav inline />
                     <div className="px-4 pt-4 md:px-6">
                       <PageMotion>{children}</PageMotion>
@@ -401,7 +401,7 @@ function useSlidingIndicator(ref: React.RefObject<HTMLElement | null>, pathname:
 
 /** @deprecated Use BrandMark for new surfaces. Kept as the compatibility mark for existing LifeFlow pages. */
 /** The same top row the chat uses (title in the middle, Settings and the skyling's profile on the right). */
-function AssistantHeader({ name }: { name: string }) {
+function AssistantHeader({ name, skyling }: { name: string; skyling: CompanionKey | null }) {
   return (
     <header className="flex items-center gap-0.5 px-2 pt-[max(0.5rem,env(safe-area-inset-top))] lg:px-4">
       <span className="h-11 w-11 shrink-0 lg:hidden" aria-hidden />
@@ -413,8 +413,10 @@ function AssistantHeader({ name }: { name: string }) {
       >
         <Settings className="h-5 w-5" />
       </Link>
-      <Link href="/jarvis/profile" aria-label="Skyling profile" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface-2">
-        <BrandMark className="h-8 w-8" alt="" />
+      <Link href="/jarvis/profile" aria-label="Skyling profile" className="lf-hop flex h-11 w-11 items-center justify-center">
+        <span className="lf-chip-night h-9 w-9 overflow-hidden rounded-[0.75rem]">
+          <CompanionGlyph companion={skyling} night={skyling === "star"} className="lf-pixel h-8 w-8 translate-y-[3px]" />
+        </span>
       </Link>
     </header>
   );

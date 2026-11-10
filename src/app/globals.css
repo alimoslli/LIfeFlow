@@ -957,65 +957,14 @@ input[type="checkbox"].lf-switch:focus-visible {
   outline-offset: 2px;
 }
 
-/* Jarvis working: the logo's dots pulse one after another (ADR 0007: transform/opacity only). */
-.lf-dots circle {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: lf-dot 1.4s ease-in-out infinite;
-}
-.lf-dots circle:nth-of-type(2) {
-  animation-delay: 0.2s;
-}
-.lf-dots circle:nth-of-type(3) {
-  animation-delay: 0.4s;
-}
-.lf-dots-link {
-  opacity: 0.45;
-}
-@keyframes lf-dot {
-  0%,
-  100% {
-    transform: scale(0.82);
-    opacity: 0.55;
-  }
-  40% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lf-dots circle {
-    animation: none;
-    opacity: 0.85;
-  }
-}
-
 /* Jarvis composer: the field sits inside a pill that shows focus itself. */
 .lf-composer textarea:focus-visible {
   outline: none;
 }
-/* Jarvis home: a soft halo behind the mark, and a slow float. */
+/* The voice call: a soft halo behind the mark. */
 .lf-orb-glow {
   background: radial-gradient(closest-side, color-mix(in oklab, var(--accent) 22%, transparent), transparent);
 }
-.lf-float {
-  animation: lf-float 6s ease-in-out infinite;
-}
-@keyframes lf-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lf-float {
-    animation: none;
-  }
-}
-
 /* Jarvis on phones: the page stays still and only the message bar rides up with the keyboard (see chat-viewport.tsx). */
 @media (max-width: 767px) {
   html.lf-chat-lock,

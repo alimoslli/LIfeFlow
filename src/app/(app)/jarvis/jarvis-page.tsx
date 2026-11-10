@@ -1,7 +1,7 @@
 import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import { PenLine, Plus, Settings, SquarePen } from "lucide-react";
-import { BrandMark } from "@/components/brand/brand-mark";
+import { MySkyling } from "@/components/skylings/sprite";
 import { SectionNav } from "@/components/shell/section-nav";
 import { QuickAddButton } from "@/components/shell/quick-add";
 import { ActionButton } from "@/components/action-form";
@@ -46,16 +46,13 @@ export function JarvisPage({
     // Phones: pinned to the visible screen, above the tab bar or the keyboard (ChatViewport). Desktop: full height.
     <ChatViewport className="flex md:h-dvh">
       <aside className="hidden w-72 shrink-0 flex-col py-6 pr-2 pl-1 lg:flex">
-        <Link
-          href="/jarvis"
-          className="mx-2 mb-4 flex items-center justify-center gap-2 rounded-full bg-surface px-4 py-2.5 text-sm font-medium shadow-soft transition-shadow hover:shadow-lift"
-        >
+        <Link href="/jarvis" className="lf-sb lf-sb-app lf-sb-sm mx-2 mb-4">
           <Plus className="h-4 w-4" /> New chat
         </Link>
         <nav className="flex-1 overflow-y-auto px-2" aria-label="Conversations">
           {items.length === 0 && <p className="px-3 py-2 text-sm text-muted">Your conversations will appear here.</p>}
           {items.map((c) => (
-            <div key={c.id} className={cn("group flex items-center rounded-2xl", c.id === activeId ? "bg-surface shadow-soft" : "hover:bg-surface-2")}>
+            <div key={c.id} className={cn("group flex items-center rounded-[1rem]", c.id === activeId ? "bg-surface shadow-soft" : "hover:bg-surface-2")}>
               <Link href={`/jarvis/${c.id}`} className="min-w-0 flex-1 px-3.5 py-2.5">
                 <span className="line-clamp-2 break-words text-sm">{c.title}</span>
                 <span className="block text-xs text-muted">{c.when}</span>
@@ -93,8 +90,10 @@ export function JarvisPage({
           >
             <Settings className="h-5 w-5" />
           </Link>
-          <Link href="/jarvis/profile" aria-label="Skyling profile" className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface-2">
-            <BrandMark className="h-8 w-8" alt="" />
+          <Link href="/jarvis/profile" aria-label="Skyling profile" className="lf-hop flex h-11 w-11 items-center justify-center">
+            <span className="lf-chip-night h-9 w-9 overflow-hidden rounded-[0.75rem]">
+              <MySkyling still className="h-8 w-8 translate-y-[3px]" />
+            </span>
           </Link>
         </header>
         <SectionNav inline>
