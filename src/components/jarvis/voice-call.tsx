@@ -1,9 +1,10 @@
 "use client";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { jsonOf, PlainError, serverWords } from "@/lib/plain-error";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppBusy } from "@/lib/app-busy";
-import { AudioLines, Check, Mic, MicOff } from "lucide-react";
+import { Check, Mic, MicOff } from "lucide-react";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { cn } from "@/lib/utils";
 import { nameAtStart } from "@/lib/assistant";
@@ -43,7 +44,7 @@ export function VoiceButton({
         className,
       )}
     >
-      <AudioLines className="h-[18px] w-[18px]" />
+      <PixelIcon name="voice" className="h-[18px] w-[18px]" />
     </button>
   );
 }

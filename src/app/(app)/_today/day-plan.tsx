@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUp, AudioLines } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { SkylingSprite } from "@/components/skylings/sprite";
 import { IdeaClouds } from "@/components/skylings/idea-clouds";
 import type { IdeaCloud } from "@/lib/idea-clouds";
@@ -82,7 +82,7 @@ export function AskBar({ name, chips = true, clouds = [] }: { name: string; chip
             aria-label={typed ? "Send" : `Talk to ${name}`}
             className="lf-send flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.875rem]"
           >
-            {typed ? <ArrowUp className="h-[18px] w-[18px]" aria-hidden /> : <AudioLines className="h-[18px] w-[18px]" aria-hidden />}
+            {typed ? <PixelIcon name="send" className="h-[18px] w-[18px]" /> : <PixelIcon name="voice" className="h-[18px] w-[18px]" />}
           </button>
         </form>
       </div>

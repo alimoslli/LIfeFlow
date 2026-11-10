@@ -3,7 +3,8 @@ import { useAssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, Loader2, Search, Settings, X } from "lucide-react";
+import { ChevronLeft, Loader2, X } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { cn } from "@/lib/utils";
 import { nameAtStart } from "@/lib/assistant";
 import { haptic } from "@/lib/haptics";
@@ -149,7 +150,7 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
           </span>
         )}
         <button type="button" onClick={onSearch} aria-label="Search and ask" className="tap flex items-center justify-center rounded-full text-text-2">
-          <Search className="h-5 w-5" />
+          <PixelIcon name="find" className="h-6 w-6" />
         </button>
         <Link
           href="/settings"
@@ -158,7 +159,7 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
           aria-current={pathname.startsWith("/settings") ? "page" : undefined}
           className={cn("tap flex items-center justify-center rounded-full", pathname.startsWith("/settings") ? "text-accent" : "text-text-2")}
         >
-          <Settings className="h-5 w-5" />
+          <PixelIcon name="cog" className="h-6 w-6" />
         </Link>
       </div>
     </header>

@@ -1,4 +1,5 @@
 "use client";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import Link from "next/link";
 import { ASK_EVENT, takeSend, type AskDetail } from "@/lib/ask-handoff";
 import { useRouter } from "next/navigation";
@@ -12,7 +13,6 @@ import {
   GraduationCap,
   Repeat,
   Wallet,
-  ArrowUp,
   Brain,
   CircleAlert,
   FileText,
@@ -758,7 +758,7 @@ export function JarvisChat({
                   className="lf-send flex h-11 w-11 shrink-0 items-center justify-center rounded-[0.875rem]"
                   aria-label="Send"
                 >
-                  <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.4} />
+                  <PixelIcon name="send" className="h-[18px] w-[18px]" />
                 </button>
               )}
             </form>

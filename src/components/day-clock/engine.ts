@@ -494,7 +494,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
         const base = next ? (a.kind === "now" || b.kind === "now" ? 108 : 66) : 44;
         return base + clamp(((dt - 120) / 60) * 4, 0, 26);
       }
-      if (a.kind === "now" || b.kind === "now") return 66 + clamp(((dt - 60) / 60) * 5, 0, 24);
+      // the now pill and a stop's words are each up to 92 px wide: never closer than that (owner, 2026-11-10)
+      if (a.kind === "now" || b.kind === "now") return 96 + clamp(((dt - 60) / 60) * 5, 0, 24);
       // room for each stop's name under it (owner, 2026-11-10: the line shows what each thing is, not only its time)
       return 104 + clamp(((dt - 180) / 60) * 6, 0, 30);
     };
@@ -558,6 +559,19 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     return clamp(x, 0, TM.total - VW());
   }
 
+  /**
+   * A stop's words sit under it, unless there they would lie across the horizon line or run off the bottom of the
+   * window; then they sit above it, and if they fit nowhere they are left out (the stop still says what it is to a
+   * screen reader and on its card). Owner, 2026-11-10: "nothing like this can be in the app". `from` and `to` are how
+   * far under the line's point the words start and end; `up` is how far above it they would start.
+   */
+  function wordsPlace(y: number, from: number, to: number, up: number): "" | "dc-up" | "dc-nowords" {
+    const crosses = (lo: number, hi: number) => lo < G.wrapHor + 4 && hi > G.wrapHor - 4;
+    if (!crosses(y + from, y + to) && y + to <= G.winH - 4) return "";
+    const lo = y - up - (to - from);
+    return lo >= 4 && !crosses(lo, y - up) ? "dc-up" : "dc-nowords";
+  }
+
   function rebuildTrack() {
     SUN = sunTimes(data.today, data.tz);
     ampCache.clear();
@@ -566,22 +580,26 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     track.textContent = "";
     strip = null;
     track.style.width = `${TM.total}px`;
+    track.dataset.horizon = String(G.wrapHor);
+    // the day names and month marks: placed last, where nothing else is (see placeMarks)
+    const marks: { el: HTMLElement; x: number; w: number }[] = [];
+    const mark = (el: HTMLElement, x: number, label: string) => {
+      el.style.left = `${x}px`;
+      el.style.top = `${G.wrapHor + 22}px`;
+      html("span", "", el).textContent = label;
+      // capitals, bold and spaced out: about 8.4 px a letter
+      marks.push({ el, x, w: label.length * 8.4 + 6 });
+    };
     for (const s of TM.stops) {
       if (s.kind === "mark") {
-        const m = html("div", "dc-mid dc-era", track);
-        m.style.left = `${s.x}px`;
-        m.style.top = `${G.wrapHor + 22}px`;
-        html("span", "", m).textContent = s.label ?? "";
+        mark(html("div", "dc-mid dc-era", track), s.x, s.label ?? "");
         continue;
       }
       if (s.kind !== "mid" || s.d == null || s.d < minDay()) continue;
       const tmrw = s.d === dayOf(S.now) + 1;
-      const m = html("div", `dc-mid${tmrw ? " dc-next" : ""}`, track);
-      m.style.left = `${xAt(s.d * 1440 + (SUN.rise + SUN.set) / 2)}px`;
-      m.style.top = `${G.wrapHor + 22}px`;
       const info = dayInfo(s.d);
       const label = s.d === 0 ? "Today" : tmrw ? "Tomorrow" : info ? `${info.short} ${Number(info.date.slice(8))}` : "";
-      html("span", "", m).textContent = label;
+      mark(html("div", `dc-mid${tmrw ? " dc-next" : ""}`, track), xAt(s.d * 1440 + (SUN.rise + SUN.set) / 2), label);
     }
     for (const n of TM.nodes) {
       const it = n.it;
@@ -594,6 +612,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       b.dataset.id = n.id;
       const g = n.group ?? [it];
       b.style.top = `${waveY(n.t)}px`;
+      const words = wordsPlace(waveY(n.t), 18, 58, 18);
+      if (words) b.classList.add(words);
       b.style.setProperty("--c", itemColor(it));
       if (!it.someday && stripDark(n.t, skyOpts()) > 0.5) b.classList.add("dc-nt");
       if (g.some((x) => isLate(x, S.now))) b.classList.add("dc-late");
@@ -617,11 +637,45 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     np.type = "button";
     np.style.left = `${TM.nowX}px`;
     np.style.top = `${waveY(S.now)}px`;
+    // the time under the skyling's feet, or over its head when the horizon or the window's edge is in the way
+    const nowWords = wordsPlace(waveY(S.now), 8, 32, 52);
+    if (nowWords) np.classList.add(nowWords);
     np.innerHTML = `<canvas class="dc-now-who" width="24" height="24" aria-hidden="true"></canvas><span class="dc-now-t">${fmt(S.now)}</span>`;
     np.setAttribute("aria-label", `Now, ${fmt(S.now)}. Back to Today`);
     np.addEventListener("click", () => close(true));
     TM.nowEl = np;
+    placeMarks(marks, np.classList.contains("dc-up"));
     drawStrip();
+  }
+
+  /**
+   * A day's name or a month mark sits just under the horizon, unless a stop, its words or the now pill are there; then it
+   * takes the nearest free line above or below, and if there is none it stays out of the picture (the days row above
+   * already says the day). Nothing on the line may lie over anything else (owner, 2026-11-10).
+   */
+  function placeMarks(marks: { el: HTMLElement; x: number; w: number }[], nowUp: boolean) {
+    type Box = [l: number, r: number, t: number, b: number];
+    const taken: Box[] = [];
+    for (const n of TM.nodes) {
+      const y = waveY(n.t);
+      taken.push([n.x - 22, n.x + 30, y - 28, y + 20]); // the picture and its "+2"
+      if (!n.el?.classList.contains("dc-nowords"))
+        taken.push(n.el?.classList.contains("dc-up") ? [n.x - 46, n.x + 46, y - 60, y - 16] : [n.x - 46, n.x + 46, y + 16, y + 60]); // its words
+    }
+    const ny = waveY(S.now);
+    taken.push([TM.nowX - 26, TM.nowX + 26, ny - 50, ny + 2]);
+    taken.push(nowUp ? [TM.nowX - 32, TM.nowX + 32, ny - 80, ny - 50] : [TM.nowX - 32, TM.nowX + 32, ny + 6, ny + 34]);
+    const H = 13;
+    const free = (b: Box) => b[2] >= 6 && b[3] <= G.winH - 6 && !taken.some((o) => b[0] < o[1] + 4 && o[0] < b[1] + 4 && b[2] < o[3] + 3 && o[2] < b[3] + 3);
+    for (const m of marks) {
+      const top = [22, -20, 40, -38, 58, -56].map((d) => G.wrapHor + d).find((t) => free([m.x - m.w / 2, m.x + m.w / 2, t, t + H]));
+      if (top == null) {
+        m.el.style.visibility = "hidden";
+        continue;
+      }
+      m.el.style.top = `${top}px`;
+      taken.push([m.x - m.w / 2, m.x + m.w / 2, top, top + H]);
+    }
   }
 
   /* ---------- before the motion: the line at home (now in the middle), its window painted there ---------- */

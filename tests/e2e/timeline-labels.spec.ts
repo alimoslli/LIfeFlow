@@ -1,0 +1,127 @@
+import { execFileSync } from "node:child_process";
+import { expect, test, type Page } from "@playwright/test";
+import { signUp } from "./helpers";
+
+const E2E_DB = process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e";
+
+// The owner's screenshot (2026-11-10, 1:05 AM, a narrow laptop window): stops' words lay across the horizon line and
+// were cut off at the bottom of the window. "Nothing like this can be in the app." On a busy week, at every place the
+// line can be scrolled to, by day and at night, on a phone and in a narrow laptop window:
+//   - no words lie across the horizon line,
+//   - no words are cut off by the window,
+//   - no two things' words touch each other.
+
+async function problems(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    type Box = { who: string; text: string; l: number; r: number; t: number; b: number };
+    const wrap = document.querySelector<HTMLElement>(".dc-trackwrap")!;
+    const track = document.querySelector<HTMLElement>(".dc-track")!;
+    const w = wrap.getBoundingClientRect();
+    const horizon = w.top + Number(track.dataset.horizon);
+    const out: string[] = [];
+    const boxes: Box[] = [];
+    const add = (el: Element, who: string) => {
+      const text = (el.textContent ?? "").trim();
+      // a day name with no free place is left out of the picture; one that isn't shown can't be over anything
+      if (!text || getComputedStyle(el).visibility === "hidden") return;
+      // the words themselves, not the box they are centred in
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      for (const r of range.getClientRects()) {
+        if (r.width < 1 || r.right < w.left + 2 || r.left > w.right - 2) continue; // scrolled out of the window
+        boxes.push({ who, text, l: r.left, r: r.right, t: r.top, b: r.bottom });
+      }
+    };
+    document.querySelectorAll(".dc-node").forEach((n, i) => {
+      n.querySelectorAll(".dc-n-t, .dc-n-n").forEach((el) => add(el, `stop ${i}`));
+    });
+    document.querySelectorAll(".dc-now-t").forEach((el) => add(el, "now"));
+    document.querySelectorAll(".dc-mid span").forEach((el, i) => add(el, `day ${i}`));
+    for (const b of boxes) {
+      if (b.t < horizon - 1 && b.b > horizon + 1) out.push(`"${b.text}" lies across the horizon`);
+      if (b.b > w.bottom + 0.5 || b.t < w.top - 0.5) out.push(`"${b.text}" is cut off by the window`);
+    }
+    for (let i = 0; i < boxes.length; i++)
+      for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i];
+        const c = boxes[j];
+        if (a.who === c.who) continue;
+        if (a.l < c.r - 1 && c.l < a.r - 1 && a.t < c.b - 1 && c.t < a.b - 1) out.push(`"${a.text}" touches "${c.text}"`);
+      }
+    return [...new Set(out)];
+  });
+}
+
+async function walkTheLine(page: Page) {
+  const clock = page.getByTestId("day-clock");
+  await expect(clock).toHaveAttribute("data-ready", "true");
+  await page.getByRole("button", { name: /^Today\. Now / }).click();
+  await expect(clock).toHaveAttribute("data-state", "timeline");
+  await expect(page.locator(".dc-node").first()).toBeAttached();
+  await page.waitForTimeout(900); // the opening motion
+  const found: string[] = [];
+  const max = await page.evaluate(() => {
+    const el = document.querySelector<HTMLElement>(".dc-trackwrap")!;
+    return el.scrollWidth - el.clientWidth;
+  });
+  // where it opens, then the whole line a window's half at a time
+  found.push(...(await problems(page)));
+  const step = Math.max(120, Math.floor((page.viewportSize()?.width ?? 390) / 2));
+  for (let x = 0; x <= max; x += step) {
+    await page.evaluate((to) => (document.querySelector<HTMLElement>(".dc-trackwrap")!.scrollLeft = to), x);
+    await page.waitForTimeout(60);
+    found.push(...(await problems(page)));
+  }
+  return [...new Set(found)];
+}
+
+/** The same walk along a line that is already open. */
+async function walkTheLine2(page: Page) {
+  const found: string[] = [];
+  const max = await page.evaluate(() => {
+    const el = document.querySelector<HTMLElement>(".dc-trackwrap")!;
+    return el.scrollWidth - el.clientWidth;
+  });
+  const step = Math.max(120, Math.floor((page.viewportSize()?.width ?? 390) / 2));
+  for (let x = 0; x <= max; x += step) {
+    await page.evaluate((to) => (document.querySelector<HTMLElement>(".dc-trackwrap")!.scrollLeft = to), x);
+    await page.waitForTimeout(40);
+    found.push(...(await problems(page)));
+  }
+  return [...new Set(found)];
+}
+
+for (const size of [
+  { name: "phone", viewport: { width: 390, height: 844 } },
+  { name: "narrow laptop window", viewport: { width: 990, height: 1100 } },
+]) {
+  for (const when of ["now", "1:05 AM", "8:10 PM"] as const) {
+    test(`timeline words never lie across the horizon, get cut off or touch: ${size.name}, ${when}`, async ({ browser }) => {
+      const context = await browser.newContext({ viewport: size.viewport, isMobile: size.name === "phone", hasTouch: size.name === "phone" });
+      const page = await context.newPage();
+      const email = await signUp(page, "Label Lee");
+      execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/dev/seed-clock-look.ts", email, "--busy"], {
+        env: { ...process.env, DATABASE_URL: E2E_DB },
+      });
+      if (when !== "now") {
+        // the same day at another hour: the night's low line and the evening's line near the horizon
+        const d = new Date();
+        const [h, m] = when === "1:05 AM" ? [1, 5] : [20, 10];
+        d.setHours(h, m, 0, 0);
+        await page.clock.setFixedTime(d);
+      }
+      await page.goto("/");
+      expect(await walkTheLine(page)).toEqual([]);
+      // the check itself sees the old layout as broken: with every stop's words back under it, something is wrong
+      const moved = await page.evaluate(() => {
+        const up = document.querySelectorAll(".dc-up");
+        up.forEach((el) => el.classList.remove("dc-up"));
+        return up.length;
+      });
+      // at night the line runs low: some stop must have had its words moved, or this proves nothing
+      if (when === "1:05 AM") expect(moved).toBeGreaterThan(0);
+      if (moved) expect((await problems(page)).length + (await walkTheLine2(page)).length).toBeGreaterThan(0);
+      await context.close();
+    });
+  }
+}

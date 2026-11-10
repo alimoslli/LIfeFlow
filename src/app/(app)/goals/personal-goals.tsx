@@ -71,6 +71,7 @@ export function PersonalGoals({ goals, checkins }: { goals: Goal[]; checkins: Ch
                 <ActionButton
                   action={setPersonalGoalDoneAction.bind(null, g.id, !done)}
                   title={done ? `Mark "${g.title}" not done` : `Mark "${g.title}" done`}
+                  cheer={done ? undefined : { size: "big", label: "Goal reached!" }}
                   className={cn(
                     "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2",
                     done ? "border-accent bg-accent text-accent-text" : "border-border-strong text-transparent",
@@ -89,6 +90,7 @@ export function PersonalGoals({ goals, checkins }: { goals: Goal[]; checkins: Ch
                   <ActionButton
                     action={stepPersonalGoalAction.bind(null, g.id, g.progress + 1)}
                     title={`One more for "${g.title}"`}
+                    cheer={g.target != null && g.progress + 1 >= g.target ? { size: "big", label: "Goal reached!" } : { size: "small" }}
                     className="lf-sb lf-sb-app lf-sb-sm shrink-0"
                   >
                     +1

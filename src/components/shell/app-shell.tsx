@@ -5,7 +5,7 @@ import { whenIdle } from "@/lib/idle";
 import { Toaster } from "@/components/ui/toaster";
 import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { setTourAction } from "@/app/(onboarding)/welcome/actions";
-import { Settings } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { cn } from "@/lib/utils";
 import { ASK_EVENT, askUrl, markSend, type AskDetail } from "@/lib/ask-handoff";
 import { assistantLabel, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
@@ -362,7 +362,7 @@ function TopBar({ demo, settingsActive, onToday }: { demo: boolean; settingsActi
           settingsActive ? "text-accent" : "text-text-2",
         )}
       >
-        <Settings className="h-5 w-5" />
+        <PixelIcon name="cog" className="h-6 w-6" />
       </Link>
     </div>
   );
@@ -410,7 +410,7 @@ function AssistantHeader({ name, skyling }: { name: string; skyling: CompanionKe
         aria-label="Settings"
         className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text"
       >
-        <Settings className="h-5 w-5" />
+        <PixelIcon name="cog" className="h-6 w-6" />
       </Link>
       <Link href="/jarvis/profile" aria-label="Skyling profile" className="lf-hop flex h-11 w-11 items-center justify-center">
         <span className="lf-chip-night h-9 w-9 overflow-hidden rounded-[0.75rem]">
@@ -426,10 +426,23 @@ export function Mark({ className }: { className?: string }) {
 }
 
 /** Opens the Jarvis drawer. With `send`, the prompt is sent immediately. */
-export function AskJarvisButton({ prompt, send, children, className }: { prompt?: string; send?: boolean; children: ReactNode; className?: string }) {
+export function AskJarvisButton({
+  prompt,
+  send,
+  children,
+  className,
+  label,
+}: {
+  prompt?: string;
+  send?: boolean;
+  children: ReactNode;
+  className?: string;
+  /** What it does, for a button that shows only a picture. */
+  label?: string;
+}) {
   const { openJarvis } = useShell();
   return (
-    <button type="button" onClick={() => openJarvis(prompt, { send })} className={cn("lf-touch", className)}>
+    <button type="button" onClick={() => openJarvis(prompt, { send })} className={cn("lf-touch", className)} aria-label={label}>
       {children}
     </button>
   );

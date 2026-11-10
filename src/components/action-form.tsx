@@ -5,6 +5,11 @@ import { FormError } from "./ui/field";
 import { toast } from "./ui/toaster";
 import { isNetworkError, isOffline } from "@/lib/offline-queue";
 import { cn } from "@/lib/utils";
+import { celebrate } from "./motion/burst";
+import { primeSound } from "./motion/sound";
+
+/** A celebration when the action succeeds: a star (small) or the milestone sun (big), with its tag. Plain data, so a server page can ask for it. */
+export type Cheer = { size: "small" | "big"; label?: string };
 
 type Action = (prev: ActionState, fd: FormData) => Promise<ActionState>;
 
@@ -65,11 +70,13 @@ export function ActionForm({
   reset = true,
   showSuccess = false,
   offline,
+  cheer,
 }: {
   action: Action;
   children: ReactNode;
   className?: string;
   onSuccess?: () => void;
+  cheer?: Cheer;
   reset?: boolean;
   showSuccess?: boolean;
   /** Saves the form on this device when there's no connection (synced later). Returns the message to show. */
@@ -89,6 +96,7 @@ export function ActionForm({
     if (reset) ref.current?.reset();
     // Every save gives feedback: inline when the form asks for it, otherwise a toast.
     if (!showSuccess) toast(r.message ?? "Saved.", { undo: r.undo });
+    if (cheer) celebrate(null, cheer.size, cheer.label);
     onSuccess?.();
   });
   const [state, formAction] = useActionState(reported, null);
@@ -101,6 +109,7 @@ export function ActionForm({
       ref={ref}
       action={formAction}
       onSubmit={(e) => {
+        if (cheer?.size === "big") primeSound();
         if (!offline || !isOffline()) return;
         e.preventDefault();
         offline(new FormData(e.currentTarget))
@@ -128,19 +137,23 @@ export function ActionButton({
   title,
   confirm,
   onSuccess,
+  cheer,
 }: {
   action: Action;
   children: ReactNode;
   className?: string;
   title?: string;
   confirm?: string;
+  cheer?: Cheer;
   /** Runs after the action succeeds (e.g. close the sheet it lives in). */
   onSuccess?: () => void;
 }) {
+  const spot = useRef<HTMLButtonElement>(null);
   const reported = useReportedAction(action, (r) => {
     if (!r) return;
     if (r.ok && r.message) toast(r.message, { undo: r.undo });
     if (!r.ok) toast(r.error ?? "Something went wrong.", { tone: "danger" });
+    if (r.ok && cheer) celebrate(cheer.size === "big" ? null : (spot.current?.getBoundingClientRect() ?? null), cheer.size, cheer.label);
     if (r.ok) onSuccess?.();
   });
   const [, formAction, pending] = useActionState(reported, null);
@@ -149,10 +162,11 @@ export function ActionButton({
       action={formAction}
       onSubmit={(e) => {
         if (confirm && !window.confirm(confirm)) e.preventDefault();
+        else if (cheer?.size === "big") primeSound();
       }}
       className="contents"
     >
-      <button type="submit" title={title} aria-label={title} disabled={pending} className={cn("lf-touch disabled:opacity-50", className)}>
+      <button ref={spot} type="submit" title={title} aria-label={title} disabled={pending} className={cn("lf-touch disabled:opacity-50", className)}>
         {children}
       </button>
     </form>

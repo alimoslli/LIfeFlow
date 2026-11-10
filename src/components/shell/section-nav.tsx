@@ -3,29 +3,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { whenIdle } from "@/lib/idle";
 import { useEffect, useRef } from "react";
-import {
-  BookOpen,
-  Briefcase,
-  CalendarCheck,
-  CalendarDays,
-  CheckSquare,
-  Clock3,
-  HeartPulse,
-  Landmark,
-  Lightbulb,
-  MessageCircle,
-  NotebookPen,
-  Receipt,
-  Bell,
-  Trophy,
-  UserRound,
-  Wallet,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { pixel, type IconLike } from "@/components/pixel/pixel-icon";
 import { cn } from "@/lib/utils";
 import { useLifeAreas } from "./life-areas";
 
-type Item = { href: string; label: string; icon: LucideIcon; exact?: boolean; /** Other pages that belong to this pill. */ also?: string[]; except?: string[] };
+type Item = { href: string; label: string; icon: IconLike; exact?: boolean; /** Other pages that belong to this pill. */ also?: string[]; except?: string[] };
 export type Section = "plan" | "money" | "jarvis" | "personal";
 
 const SECTION_NAMES: Record<Section, string> = { plan: "Today", jarvis: "Skyling", money: "Money", personal: "School" };
@@ -34,34 +16,34 @@ const SECTION_NAMES: Record<Section, string> = { plan: "Today", jarvis: "Skyling
 export const SECTIONS: Record<Section, Item[]> = {
   // Today's pages. The clock itself ("/") shows no pills: the day picker is its own navigation.
   plan: [
-    { href: "/", label: "Day", icon: Clock3, exact: true },
-    { href: "/plan", label: "Calendar", icon: CalendarDays, exact: true, also: ["/calendar"] },
-    { href: "/tasks", label: "To-dos", icon: CheckSquare },
-    { href: "/milestones", label: "Milestones", icon: Trophy, also: ["/goals"] },
-    { href: "/habits", label: "Health", icon: HeartPulse },
-    { href: "/work", label: "Work", icon: Briefcase },
+    { href: "/", label: "Day", icon: pixel("today"), exact: true },
+    { href: "/plan", label: "Calendar", icon: pixel("calendar"), exact: true, also: ["/calendar"] },
+    { href: "/tasks", label: "To-dos", icon: pixel("todo") },
+    { href: "/milestones", label: "Milestones", icon: pixel("goal"), also: ["/goals"] },
+    { href: "/habits", label: "Health", icon: pixel("health") },
+    { href: "/work", label: "Work", icon: pixel("shift") },
   ],
   jarvis: [
-    { href: "/jarvis", label: "Chat", icon: MessageCircle, except: ["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"] },
-    { href: "/jarvis/says", label: "Updates", icon: Bell, also: ["/inbox"] },
-    { href: "/jarvis/ideas", label: "Ideas", icon: Lightbulb },
-    { href: "/jarvis/profile", label: "Profile", icon: UserRound, also: ["/jarvis/memory"] },
+    { href: "/jarvis", label: "Chat", icon: pixel("chat"), except: ["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"] },
+    { href: "/jarvis/says", label: "Updates", icon: pixel("bell"), also: ["/inbox"] },
+    { href: "/jarvis/ideas", label: "Ideas", icon: pixel("idea") },
+    { href: "/jarvis/profile", label: "Profile", icon: pixel("person"), also: ["/jarvis/memory"] },
   ],
   money: [
     {
       href: "/money",
       label: "Overview",
-      icon: Wallet,
+      icon: pixel("money"),
       exact: true,
       also: ["/finances/bills"],
     },
-    { href: "/finances/transactions", label: "Activity", icon: Receipt, also: ["/finances/rules"] },
-    { href: "/finances/accounts", label: "Accounts", icon: Landmark, also: ["/wealth"] },
+    { href: "/finances/transactions", label: "Activity", icon: pixel("bill"), also: ["/finances/rules"] },
+    { href: "/finances/accounts", label: "Accounts", icon: pixel("card"), also: ["/wealth"] },
   ],
   personal: [
-    { href: "/school", label: "Classes", icon: BookOpen, exact: true, also: ["/school/courses"] },
-    { href: "/school/due", label: "Due", icon: CalendarCheck },
-    { href: "/notes", label: "Notes", icon: NotebookPen },
+    { href: "/school", label: "Classes", icon: pixel("class"), exact: true, also: ["/school/courses"] },
+    { href: "/school/due", label: "Due", icon: pixel("pencil") },
+    { href: "/notes", label: "Notes", icon: pixel("note") },
   ],
 };
 

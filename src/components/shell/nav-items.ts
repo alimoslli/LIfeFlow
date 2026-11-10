@@ -1,5 +1,4 @@
-import { Clock3, GraduationCap, Sparkles, Wallet } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { pixel, type IconLike } from "@/components/pixel/pixel-icon";
 import type { JarvisModule } from "@/server/db/schema";
 
 /**
@@ -8,12 +7,18 @@ import type { JarvisModule } from "@/server/db/schema";
  * the gear in the top bar.
  */
 export const NAV = [
-  { href: "/", label: "Today", icon: Clock3, module: "home", match: ["/", "/plan", "/calendar", "/tasks", "/goals", "/milestones", "/habits", "/work"] },
+  {
+    href: "/",
+    label: "Today",
+    icon: pixel("today"),
+    module: "home",
+    match: ["/", "/plan", "/calendar", "/tasks", "/goals", "/milestones", "/habits", "/work"],
+  },
   // The tab shows the user's name for their skyling (app-shell); "Skyling" until they choose one.
-  { href: "/jarvis", label: "Skyling", icon: Sparkles, module: "home", match: ["/jarvis", "/inbox"] },
-  { href: "/money", label: "Money", icon: Wallet, module: "finances", match: ["/money", "/finances", "/wealth"] },
-  { href: "/school", label: "School", icon: GraduationCap, module: "school", match: ["/school", "/notes"] },
-] as const satisfies readonly { href: string; label: string; icon: LucideIcon; module: JarvisModule; match: readonly string[] }[];
+  { href: "/jarvis", label: "Skyling", icon: pixel("cloud"), module: "home", match: ["/jarvis", "/inbox"] },
+  { href: "/money", label: "Money", icon: pixel("money"), module: "finances", match: ["/money", "/finances", "/wealth"] },
+  { href: "/school", label: "School", icon: pixel("school"), module: "school", match: ["/school", "/notes"] },
+] as const satisfies readonly { href: string; label: string; icon: IconLike; module: JarvisModule; match: readonly string[] }[];
 
 const MODULE_BY_PREFIX: [string, JarvisModule][] = [
   ["/school", "school"],

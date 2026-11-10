@@ -171,7 +171,7 @@ export default async function MilestonesPage({ searchParams }: { searchParams: P
         <div className="flex flex-col gap-4 max-lg:order-1">
           <Card className="p-5">
             <h2 className="font-medium">Add a milestone</h2>
-            <ActionForm action={createMilestoneAction} className="mt-3 flex flex-col gap-3">
+            <ActionForm action={createMilestoneAction} cheer={{ size: "big", label: "Milestone!" }} className="mt-3 flex flex-col gap-3">
               <Field label="What happened" htmlFor="ms-title">
                 <Input id="ms-title" name="title" required maxLength={200} placeholder="Graduated from high school" />
               </Field>

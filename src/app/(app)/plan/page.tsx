@@ -117,7 +117,11 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <AskJarvisButton prompt="Add " className="tap flex items-center justify-center rounded-full bg-surface text-accent shadow-soft">
+          <AskJarvisButton
+            prompt="Add "
+            label="Add to your calendar"
+            className="tap flex items-center justify-center rounded-full bg-surface text-accent shadow-soft"
+          >
             <SkylingIcon className="h-6 w-6" />
           </AskJarvisButton>
           <QuickAddButton className="lf-sb lf-sb-sun lf-sb-sm">

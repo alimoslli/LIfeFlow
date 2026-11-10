@@ -4,12 +4,13 @@ import { tapIdeaCloudAction } from "@/app/(app)/jarvis/actions";
 import { prefersReducedMotion } from "@/components/motion/gsap";
 import type { IdeaCloud } from "@/lib/idea-clouds";
 import { cn } from "@/lib/utils";
+import { cloudStyle } from "./cloud-tile";
 import "./skylings.css";
 
 const SWAP_MS = 9_000;
 
 /**
- * Idea clouds (owner, 2026-11-10; lib/idea-clouds.ts picks them): a few little clouds near the chat bar, each one thing to
+ * Idea clouds (owner, 2026-11-10; lib/idea-clouds.ts picks them): a few little pixel clouds (cloud-tile.ts) near the chat bar, each one thing to
  * tell or ask the skyling. They pop in softly and drift, and now and then a new one takes one's place; still under
  * reduced motion. Tapping one puts its sentence in the chat bar (`onPick`), ready to send, never sent for them.
  */
@@ -46,7 +47,9 @@ export function IdeaClouds({
               onPick(c.ask);
             }}
           >
-            {c.say}
+            <span className="lf-idea-body" style={cloudStyle((first + i) % clouds.length) as CSSProperties}>
+              <b>{c.say}</b>
+            </span>
           </button>
         </li>
       ))}

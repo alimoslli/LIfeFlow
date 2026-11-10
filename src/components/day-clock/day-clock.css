@@ -716,6 +716,29 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   overflow-wrap: anywhere;
   pointer-events: none;
 }
+/* near the horizon or the window's bottom the words go above the stop instead (engine.ts wordsGoUp), the name on top */
+.dc-up .dc-n-t {
+  top: auto;
+  bottom: 40px;
+}
+.dc-up .dc-n-n {
+  top: auto;
+  bottom: 53px;
+}
+.dc-up .dc-n-more {
+  top: auto;
+  bottom: -9px;
+}
+/* no clean place for the words (a very short window): the picture stays, the words wait for the card */
+.dc-nowords .dc-n-t,
+.dc-nowords .dc-n-n,
+.dc-now.dc-nowords .dc-now-t {
+  visibility: hidden;
+}
+.dc-now.dc-up .dc-now-t {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
 /* "+2" on a stack's tile */
 .dc-n-more {
   position: absolute;
