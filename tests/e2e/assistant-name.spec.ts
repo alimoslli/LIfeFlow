@@ -21,7 +21,7 @@ const PAGES = [
   "/money",
   "/finances/bills",
   "/school",
-  "/school/due",
+  "/school?view=upcoming",
   "/settings",
   "/settings/jarvis",
   "/settings/notifications",

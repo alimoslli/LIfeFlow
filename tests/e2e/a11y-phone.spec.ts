@@ -21,7 +21,7 @@ const PAGES = [
   "/finances/transactions",
   "/finances/accounts",
   "/school",
-  "/school/due",
+  "/school?view=upcoming",
   "/notes",
   "/settings",
   "/settings/profile",
@@ -51,7 +51,7 @@ test("WCAG 2.1 AA with data, light and dark: no serious or critical issues", asy
   const problems: string[] = [];
   for (const scheme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: scheme });
-    for (const path of ["/", "/goals", "/work", "/tasks", "/jarvis", "/school/due", "/money", "/finances/bills", "/finances/transactions"]) {
+    for (const path of ["/", "/goals", "/work", "/tasks", "/jarvis", "/school?view=upcoming", "/money", "/finances/bills", "/finances/transactions"]) {
       await page.goto(path);
       await page.waitForLoadState("networkidle");
       const r = await new AxeBuilder({ page })

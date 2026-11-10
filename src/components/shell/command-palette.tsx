@@ -27,7 +27,7 @@ const PAGES: { title: string; href: string; icon: IconLike; words: string }[] = 
   { title: "Calendar", href: "/plan", icon: pixel("calendar"), words: "plan agenda schedule events week month" },
   { title: "To-dos", href: "/tasks", icon: pixel("todo"), words: "tasks todo reminders" },
   { title: "Classes", href: "/school", icon: pixel("class"), words: "school courses" },
-  { title: "Due", href: "/school/due", icon: pixel("pencil"), words: "assignments exams homework deadlines" },
+  { title: "Due", href: "/school#due", icon: pixel("pencil"), words: "assignments exams homework deadlines" },
   { title: "Notes", href: "/notes", icon: pixel("note"), words: "notes ideas projects lecture" },
   { title: "Money", href: "/money", icon: pixel("money"), words: "available spent income balance" },
   { title: "Activity", href: "/finances/transactions", icon: pixel("bill"), words: "transactions spending purchases" },

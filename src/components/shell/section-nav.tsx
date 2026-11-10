@@ -42,7 +42,6 @@ export const SECTIONS: Record<Section, Item[]> = {
   ],
   personal: [
     { href: "/school", label: "Classes", icon: pixel("class"), exact: true, also: ["/school/courses"] },
-    { href: "/school/due", label: "Due", icon: pixel("pencil") },
     { href: "/notes", label: "Notes", icon: pixel("note") },
   ],
 };

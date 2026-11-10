@@ -54,7 +54,7 @@ export const schoolTools = [
     async execute(_a, ctx) {
       const locked = await withCanvasLock(ctx.userId, () => ctx.run((s) => syncCanvas(s, fetch, ctx.tz)));
       if (locked.skipped) return { error: CANVAS_BUSY };
-      return { ...locked.value, viewAt: "/school/due" };
+      return { ...locked.value, viewAt: "/school?view=upcoming#due" };
     },
   }),
   defineTool({

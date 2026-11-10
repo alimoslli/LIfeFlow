@@ -67,7 +67,7 @@ const SCREENS = [
   "/finances/transactions",
   "/finances/bills",
   "/school",
-  "/school/due",
+  "/school?view=upcoming",
   "/notes",
   "/settings",
   "/settings/data",

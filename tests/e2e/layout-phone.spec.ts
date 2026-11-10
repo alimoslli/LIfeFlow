@@ -12,7 +12,8 @@ const TABS: [string, string, string[]][] = [
   ["Today", "/", []],
   // Money: three plain rows (Activity, Bills and subscriptions, Accounts and savings); investments live under Accounts.
   ["Money", "/money", ["/finances/accounts", "/finances/transactions", "/finances/bills"]],
-  ["School", "/school", ["/school/due", "/notes"]],
+  // Due is a side of School now ("Classes | Due" on the page, owner's page map 2026-11-10)
+  ["School", "/school", ["/notes"]],
 ];
 
 test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }) => {

@@ -76,7 +76,7 @@ test("Jarvis saves assignments and tasks that then appear in School and Tasks", 
   await expect(page.getByText(/Study for PSY quiz/).first()).toBeVisible();
 
   // The saved records are real and visible in their modules.
-  await page.goto("/school/due");
+  await page.goto("/school?view=upcoming");
   await expect(page.getByTestId("assignment-row").filter({ hasText: "Chapter 4 quiz" })).toBeVisible();
   await expect(page.getByText("Essay")).toHaveCount(0);
   await page.goto("/tasks");

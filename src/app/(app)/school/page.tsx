@@ -10,7 +10,8 @@ import { dueLabel } from "@/lib/dates";
 import { twelveHourRanges } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
-import { listAssignments, listCourses } from "@/server/services/school";
+import { listAssignments, listCourses, type AssignmentView } from "@/server/services/school";
+import { DUE_VIEWS, DueList } from "./due-list";
 import { ActionButton } from "@/components/action-form";
 import { createAssignmentAction, createCourseAction, mergeDuplicateClassesAction } from "./actions";
 import { AssignmentDialog, CourseDialog } from "./forms";
@@ -18,14 +19,18 @@ import { canvasConnection } from "@/server/integrations/canvas";
 
 export const metadata: Metadata = { title: "School" };
 
-export default async function SchoolPage() {
+export default async function SchoolPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
+  const sp = await searchParams;
+  // What's due is a section of this page (the Due page was folded in, owner's page map 2026-11-10): this week by default.
+  const view = (DUE_VIEWS.find((v) => v.key === sp.view)?.key ?? "week") as AssignmentView;
   const d = await withCurrentUser(async (s, u) => {
-    const [courses, all, canvas] = await series(
+    const [courses, all, canvas, due] = await series(
       () => listCourses(s),
       () => listAssignments(s, u.timezone, { view: "upcoming", limit: 300 }),
       () => canvasConnection(s),
+      () => listAssignments(s, u.timezone, { view }),
     );
-    return { courses, all, canvas, tz: u.timezone };
+    return { courses, all, canvas, due, tz: u.timezone };
   });
   const nextByCourse = new Map<string, (typeof d.all)[number]>();
   for (const a of d.all) if (!nextByCourse.has(a.course.id)) nextByCourse.set(a.course.id, a);
@@ -152,6 +157,10 @@ export default async function SchoolPage() {
               );
             })}
           </div>
+          <section id="due" aria-label="Due" className="scroll-mt-24">
+            <h2 className="mb-2 font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Due</h2>
+            <DueList view={view} list={d.due} tz={d.tz} hasCourses />
+          </section>
         </>
       )}
 
