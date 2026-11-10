@@ -83,7 +83,7 @@ export default async function MoneyPage() {
   const m = o.month;
   const net = m.incomeCents - m.netSpendingCents;
   const alerts = [
-    ...forecast.warnings.map((w) => ({ tone: "danger" as const, text: w, fix: null as string | null, href: "/finances/bills" })),
+    ...forecast.warnings.map((w) => ({ tone: "danger" as const, text: w, fix: null as string | null, href: "/finances/bills", label: "Review" })),
     ...warnings
       .filter((w) => w.status !== "on_track")
       .map((w) => ({
@@ -93,7 +93,9 @@ export default async function MoneyPage() {
             ? `${w.categoryName} is over budget: ${whole(w.spentCents)} of ${whole(w.limitCents)}.`
             : `${w.categoryName} is on pace for ${whole(w.projectedCents)}, over its ${whole(w.limitCents)} budget.`,
         fix: w.fix,
-        href: "/finances/budgets",
+        label: "Make a plan",
+        // no Budget page (owner, 2026-11-10): the skyling helps with it, the question already in the box
+        href: `/jarvis?ask=${encodeURIComponent(`Help me keep ${w.categoryName} under its ${whole(w.limitCents)} budget this month.`)}`,
       })),
   ].slice(0, 4);
   // Early in a month there's little to show yet: show last month instead.
@@ -118,8 +120,7 @@ export default async function MoneyPage() {
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {[
-              ["/finances/budgets", "Budget"],
-              ["/finances/subscriptions", "Subscriptions"],
+              ["/finances/bills", "Bills"],
               ["/wealth", "Investments"],
             ].map(([href, label]) => (
               <Link key={href} href={href} className="lf-sb lf-sb-app lf-sb-sm px-3.5 text-sm">
@@ -195,7 +196,7 @@ export default async function MoneyPage() {
                     <p className="text-[0.9375rem] leading-snug font-medium">{a.text}</p>
                     {a.fix && <p className="mt-0.5 text-[0.8125rem] leading-snug text-text-2">{a.fix}</p>}
                     <Link href={a.href} className="lf-sb-link -mb-2 text-[0.8125rem] font-semibold text-text">
-                      Review <ArrowRight className="h-3.5 w-3.5" />
+                      {a.label} <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   </div>
                 </li>

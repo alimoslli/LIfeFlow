@@ -53,7 +53,7 @@ export const SECTIONS: Record<Section, Item[]> = {
       label: "Overview",
       icon: Wallet,
       exact: true,
-      also: ["/finances/budgets", "/finances/subscriptions", "/finances/bills"],
+      also: ["/finances/bills"],
     },
     { href: "/finances/transactions", label: "Activity", icon: Receipt, also: ["/finances/rules"] },
     { href: "/finances/accounts", label: "Accounts", icon: Landmark, also: ["/wealth"] },

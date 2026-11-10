@@ -22,11 +22,6 @@ export function SegmentedNav({ label, items, active }: { label: string; items: {
   );
 }
 
-export const BILLS_SUBS = [
-  { key: "subs", href: "/finances/subscriptions", label: "Subscriptions" },
-  { key: "bills", href: "/finances/bills", label: "Bills" },
-];
-
 export const UPDATES = [
   { key: "jarvis", href: "/jarvis/says", label: "From your skyling" },
   { key: "filed", href: "/inbox", label: "Filed" },

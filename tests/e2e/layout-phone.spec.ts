@@ -10,7 +10,7 @@ const TABS: [string, string, string[]][] = [
   // Today is the day clock and the timeline, which hold calendar, to-dos, goals and milestones; Health and Work are pills under it.
   ["Today", "/", ["/habits", "/work"]],
   ["Ray", "/jarvis", ["/jarvis/says", "/jarvis/ideas", "/jarvis/profile"]], // the skyling's tab carries its name (Ray by default)
-  ["Money", "/money", ["/finances/accounts", "/wealth", "/finances/budgets", "/finances/transactions", "/finances/subscriptions", "/finances/bills"]],
+  ["Money", "/money", ["/finances/accounts", "/wealth", "/finances/transactions", "/finances/bills"]],
   ["School", "/school", ["/school/due", "/notes"]],
 ];
 

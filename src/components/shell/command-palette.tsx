@@ -43,7 +43,6 @@ const PAGES: { title: string; href: string; icon: LucideIcon; words: string }[] 
   { title: "Notes", href: "/notes", icon: NotebookPen, words: "" },
   { title: "Money", href: "/money", icon: Wallet, words: "available spent income balance" },
   { title: "Transactions", href: "/finances/transactions", icon: Receipt, words: "spending" },
-  { title: "Budgets", href: "/finances/budgets", icon: Wallet, words: "" },
   { title: "Goals", href: "/goals", icon: Flag, words: "savings dreams" },
   { title: "Milestones", href: "/milestones", icon: Flag, words: "achievements life story import chatgpt" },
   { title: "Accounts and banks", href: "/finances/accounts", icon: Landmark, words: "plaid connect bank" },

@@ -19,7 +19,7 @@ const PAGES = [
   "/jarvis/profile",
   "/jarvis/memory",
   "/money",
-  "/finances/subscriptions",
+  "/finances/bills",
   "/school",
   "/school/due",
   "/settings",

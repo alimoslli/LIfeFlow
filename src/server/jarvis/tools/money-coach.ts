@@ -79,7 +79,7 @@ export const moneyCoachTools = [
       const w = await ctx.run((s) => budgetWarnings(s, ctx.today));
       return centsToDollarsDeep({
         budgets: w.map(({ childIds: _c, color: _co, ...b }) => b),
-        viewAt: "/finances/budgets",
+        viewAt: "/money",
       });
     },
   }),
@@ -113,7 +113,7 @@ export const moneyCoachTools = [
           lines.push({ categoryId: c.category.id, limitCents: toCents(l.monthlyLimit) });
         }
         const r = await applyBudgetPlan(s, { month: a.month ?? ctx.today, lines });
-        return { saved: r.saved, viewAt: "/finances/budgets" };
+        return { saved: r.saved, viewAt: "/money" };
       });
     },
   }),

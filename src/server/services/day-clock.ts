@@ -197,7 +197,7 @@ export async function dayClockData(scope: UserScope, tz: string, now = new Date(
           icon: "⏳",
           title: `${t.name} trial ends`,
           start: dayAt(t.trialEndsOn),
-          href: "/finances/subscriptions",
+          href: "/finances/bills",
           source: "From your subscriptions",
           subtitle: "The first charge comes after this day",
           amountCents: Math.abs(t.amountCents),

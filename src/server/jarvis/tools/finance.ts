@@ -349,7 +349,7 @@ export const financeTools = [
         const b = await setBudget(s, { month: a.month ?? ctx.today, categoryId: cat.category.id, limitCents: toCents(a.monthlyLimit) });
         return centsToDollarsDeep({
           saved: { category: cat.category.name, month: b.month.slice(0, 7), limitCents: b.limitCents },
-          viewAt: "/finances/budgets",
+          viewAt: "/money",
         });
       });
     },

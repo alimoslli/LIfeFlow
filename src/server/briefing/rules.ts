@@ -138,7 +138,8 @@ const headingOverRule: Rule = (s) => {
       icon: "money",
       text: `${h.category} is on pace for ${money(h.projectedCents)}, over its ${money(h.limitCents)} budget.`,
       detail: h.fix ?? undefined,
-      action: { label: "See budgets", href: "/finances/budgets" },
+      // no Budget page (owner, 2026-11-10): the skyling helps with it
+      action: { label: "Make a plan", prompt: `Help me keep ${h.category} under its ${money(h.limitCents)} budget this month.` },
       score: 65,
     },
   ];
