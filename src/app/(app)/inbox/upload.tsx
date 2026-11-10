@@ -12,8 +12,16 @@ export function InboxUpload() {
   const [busy, setBusy] = useState(false);
   // a photo on its way up: an app update waits (components/pwa/app-updater.tsx)
   useAppBusy(busy);
+  // The same pick can arrive twice: a change the browser replays once the page has loaded, and the catch-up below for a
+  // file picked before that. It goes up once, so a receipt is never filed twice.
+  const sending = useRef<string | null>(null);
   const send = async (files: FileList | null) => {
     if (!files?.length) return;
+    const key = Array.from(files)
+      .map((f) => `${f.name}:${f.size}:${f.lastModified}`)
+      .join("|");
+    if (sending.current === key) return;
+    sending.current = key;
     setBusy(true);
     const fd = new FormData();
     for (const f of Array.from(files).slice(0, 5)) fd.append("files", f);
@@ -28,6 +36,7 @@ export function InboxUpload() {
     } finally {
       setBusy(false);
       if (input.current) input.current.value = "";
+      sending.current = null;
     }
   };
   // A file picked before the page finished loading (slow phone) never fired onChange: send it now.
