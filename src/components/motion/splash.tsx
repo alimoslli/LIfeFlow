@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import { gsap, MOTION } from "./gsap";
 import { markHydrated, setSplashActive } from "./intro";
-import { SplashSun } from "./splash-sun";
+import { SplashScene } from "./splash-scene";
 
 const SESSION_KEY = "lf_splash_shown";
 /** The signed-in user's first name, remembered on this device for the greeting. */
@@ -17,7 +17,7 @@ export const TZ_KEY = "lf_tz";
  * The greeting uses the hour in the user's time zone (TZ_KEY), or the device
  * clock until the app has saved it on this device.
  */
-export const SPLASH_SCRIPT = `try{var q=location.search,s=sessionStorage;if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&(/[?&]splash=1/.test(q)||(!s.getItem("${SESSION_KEY}")&&!navigator.webdriver&&!/[?&]nosplash/.test(q)))){var r=document.documentElement,h=new Date().getHours(),n="";try{n=(localStorage.getItem("${NAME_KEY}")||"").slice(0,24)}catch(e){}try{var z=localStorage.getItem("${TZ_KEY}");if(z)h=+new Intl.DateTimeFormat("en-US",{hour:"numeric",hourCycle:"h23",timeZone:z}).format(new Date())%24}catch(e){}r.style.setProperty("--lf-greet",JSON.stringify(h<5?"Up late":h<12?"Good morning":h<17?"Good afternoon":"Good evening"));r.style.setProperty("--lf-name",JSON.stringify(n||"Welcome back"));r.classList.add("lf-splash");s.setItem("${SESSION_KEY}","1")}}catch(e){}`;
+export const SPLASH_SCRIPT = `try{var q=location.search,s=sessionStorage;if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&(/[?&]splash=1/.test(q)||(!s.getItem("${SESSION_KEY}")&&!navigator.webdriver&&!/[?&]nosplash/.test(q)))){var r=document.documentElement,h=new Date().getHours(),n="";try{n=(localStorage.getItem("${NAME_KEY}")||"").slice(0,24)}catch(e){}try{var z=localStorage.getItem("${TZ_KEY}");if(z)h=+new Intl.DateTimeFormat("en-US",{hour:"numeric",hourCycle:"h23",timeZone:z}).format(new Date())%24}catch(e){}r.style.setProperty("--lf-greet",JSON.stringify(h<5?"Up late":h<12?"Good morning":h<17?"Good afternoon":"Good evening"));r.style.setProperty("--lf-name",JSON.stringify(n||"Welcome back"));r.setAttribute("data-lf-moment",h<5||h>=21?"star":h<7?"dawn":h<11?"ray":h<16?"noon":h<19?"goldie":"dusk");r.classList.add("lf-splash");s.setItem("${SESSION_KEY}","1")}}catch(e){}`;
 
 const MIN_VISIBLE_MS = 1500;
 /** Never longer than this, even on a very slow connection. */
@@ -93,11 +93,7 @@ export function Splash() {
   return (
     <div ref={layer} className="lf-splash-layer" aria-hidden>
       <div className="lf-splash-inner">
-        <div className="lf-splash-sky">
-          <span className="lf-splash-glow" />
-          <SplashSun className="lf-splash-sun" />
-        </div>
-        <span className="lf-splash-horizon" />
+        <SplashScene />
         <div className="lf-splash-ground text-center">
           <p className="lf-greet lf-greet-1 text-[0.9375rem] tracking-[0.18em] uppercase opacity-80" />
           <p className="lf-greet lf-greet-2 mt-2 font-display text-[2.5rem] leading-none font-medium tracking-tight" />
