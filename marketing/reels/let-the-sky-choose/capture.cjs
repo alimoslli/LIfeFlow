@@ -12,10 +12,14 @@ const R = __dirname;
     await page.goto("http://localhost:3100/settings/jarvis", { waitUntil: "networkidle", timeout: 240000 }).catch(() => {});
     await hideDev(page);
     const sec = page.locator('section[aria-labelledby="companion-h"]');
-    await sec.scrollIntoViewIfNeeded(); await page.evaluate(() => window.scrollBy(0, -80));
+    await sec.evaluate((el) => el.scrollIntoView({ block: "start" })); await page.evaluate(() => window.scrollBy(0, -24));
+    // hide everything pinned to the screen (the bottom bar, the floating skyling button, the dev badge) so nothing covers the picker
+    await page.evaluate(() => { for (const el of document.querySelectorAll("body *")) { const p = getComputedStyle(el).position; if ((p === "fixed" || p === "sticky") && !el.closest('section[aria-labelledby="companion-h"]')) el.style.visibility = "hidden"; } });
     await page.clock.pauseAt(new Date("2026-11-09T13:00:00Z")); await page.clock.runFor(1500);
     const bb = await sec.boundingBox();
-    const clip = { x: bb.x, y: bb.y, width: bb.width, height: 432 };
+    const tb = await page.getByRole("radio", { name: /Changes with the sky/ }).boundingBox();
+    const clip = { x: bb.x, y: bb.y, width: bb.width, height: Math.round(tb.y + tb.height - bb.y + 18) };
+    console.log("settings clip", JSON.stringify(clip));
     let n = 0; const shot = async () => { n++; await page.screenshot({ path: path.join(out, `${String(n).padStart(4, "0")}.jpg`), clip, type: "jpeg", quality: 93 }); };
     const tick = async (k) => { for (let i = 0; i < k; i++) { await page.clock.runFor(1000 / 30); await shot(); } };
     await tick(24);

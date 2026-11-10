@@ -8,3 +8,6 @@ A 17.6 s reel for the new "Changes with the sky" skyling choice, made with no cr
 - `reel.html` composes it (sky from `lib/sky.ts`, skylings from the app's sprite code via `../../logo/` `lf2.js`, the official
   logo frames from `../../logo/`), `render.cjs` renders 528 frames, `mix.py` makes the sound (effects only).
 - Download: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/6c5b2cdc-eb34-4999-9cd4-e7a13f02ecfd.zip
+
+v2 (Ali: the bottom of the picker was cut off, and the screen should be fuller): the Settings tap is refilmed with everything pinned
+to the screen hidden and the clip running to the bottom of the "Changes with the sky" tile, and every scene is shown 1000 px wide.

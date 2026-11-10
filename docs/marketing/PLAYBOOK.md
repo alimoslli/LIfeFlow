@@ -548,6 +548,7 @@ Compiled 2026-11-07 from the Marketing LF chat and Metricool. The fuller playboo
 
 ## 6. Decisions and preferences (keep adding)
 
+- 2026-11-10 (Ali): app captures fill the frame: show cards about 1000 px wide on a 1080 frame, and never cut a tile or card edge off (clip to the element's real bounds, hide anything pinned to the screen). Made the same night: the "Meet the skylings" carousel and the logo intro and ending (`marketing/carousel/meet-the-skylings/`, `marketing/logo/sting/`).
 - 2026-11-10: "Let the sky choose" reel made (no credits) from the real app: the Settings tap on "Changes with the sky" and Today at six times, ending on the official logo and "Let's clear your sky." (`marketing/reels/let-the-sky-choose/`). Hashtags never include retired words (no #productivity). Higgsfield's 3-day free trial isn't offered to this account (already on Ultra, 4.18 credits on Nov 10); credits are bought and priced per job, with Ali's yes.
 - 2026-11-10 (owner, via the COO): the skyling's catchphrase is **"Let's clear your sky."** It's the chat greeting in the app (replacing the retired "What can I take off your plate?") and can lead marketing copy: captions, end cards, the teaser. Publishing still needs the owner's "post it".
 - 2026-11-10 (owner): the official logo is "Whoever's up", animated with the matching sky (`marketing/logo/`). Retired the same day: Dev, the old blue sparkle logo, "What can I take off your plate?" (see WORDS.md).

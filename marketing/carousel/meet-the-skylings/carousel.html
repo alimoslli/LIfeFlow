@@ -1,0 +1,100 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: "Fraunces"; src: url("/official/fraunces-var.woff2") format("woff2"); font-weight: 100 900; }
+@font-face { font-family: "Geist"; src: url("/official/geist-latin.woff2") format("woff2"); font-weight: 100 900; }
+html,body{margin:0;background:#000}canvas{display:block}
+</style></head>
+<body><canvas id="c" width="1080" height="1350"></canvas>
+<script src="/official/lf2.js"></script>
+<script>
+// "Meet the skylings": a feed carousel. The skylings are drawn by the app's own code, the skies are the app's own colours
+// (lib/sky.ts) at each skyling's moment, and every word on a skyling's slide is the app's own (lib/companions.ts).
+const LF = window.LF;
+const W = 1080, H = 1350, g = document.getElementById("c").getContext("2d");
+const RISE = 400, SET = 1010, HY = 990, GOLD = "#ffd27a";
+const MIN = { dawn: 395, ray: 500, noon: 750, goldie: 960, dusk: 1040, star: 1380 };
+const rgb = (c, a = 1) => `rgba(${c.map(Math.round).join(",")},${a})`;
+const STARS = (() => { let s = 21; const r = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); const o = []; while (o.length < 46) { const x = r() * W, y = r() * (HY - 60); if (y < 340 && x > 260 && x < 820) continue; o.push([x, y, r() < 0.25 ? 3 : 2]); } return o; })();
+
+function scene(m, { glow = true } = {}) {
+  const [top, mid, low] = LF.skyAt(m, RISE, SET), dark = LF.darkness(m, RISE, SET);
+  const gr = g.createLinearGradient(0, 0, 0, HY); gr.addColorStop(0, rgb(top)); gr.addColorStop(0.58, rgb(mid)); gr.addColorStop(1, rgb(low));
+  g.fillStyle = gr; g.fillRect(0, 0, W, HY);
+  if (dark > 0.25) for (const [x, y, s] of STARS) { g.fillStyle = `rgba(255,248,225,${(dark - 0.25) / 0.75 * 0.85})`; g.fillRect(Math.round(x / 4) * 4, Math.round(y / 4) * 4, s * 4, s * 4); }
+  if (glow) {
+    const gc = [255, 215, 173].map((v, i) => v + ([134, 168, 222][i] - v) * dark);
+    const gw = g.createRadialGradient(W / 2, HY, 0, W / 2, HY, 560); gw.addColorStop(0, rgb(gc, 0.7 - 0.3 * dark)); gw.addColorStop(0.55, rgb(gc, 0.22)); gw.addColorStop(1, rgb(gc, 0));
+    g.fillStyle = gw; g.fillRect(0, 0, W, HY);
+  }
+  const gd = g.createLinearGradient(0, HY, 0, H); gd.addColorStop(0, "#1b3263"); gd.addColorStop(1, "#0b1a3a"); g.fillStyle = gd; g.fillRect(0, HY, W, H - HY);
+  g.fillStyle = "#2f7cd2"; g.beginPath(); g.roundRect(0.05 * W, HY - 9, 0.9 * W, 18, 9); g.fill();
+}
+const sprite = document.createElement("canvas");
+function skyling(key, x, feet, scale, pose = "idle", frame = 0, night = false) {
+  const info = LF.COMPANIONS.find((c) => c.key === key);
+  LF.drawCompanion(sprite, info, pose, frame, night, false);
+  const s = 24 * scale; g.save(); g.imageSmoothingEnabled = false; g.drawImage(sprite, Math.round(x - s / 2), Math.round(feet - s * (23 / 24)), s, s); g.restore();
+}
+function text(t, y, font, col = "#fff", { shadow = true, spacing = 0, maxW = 940, lh = 1.25 } = {}) {
+  g.save(); g.font = font; g.fillStyle = col; g.textAlign = "center"; g.textBaseline = "alphabetic";
+  if (spacing) g.letterSpacing = spacing + "px";
+  if (shadow) { g.shadowColor = "rgba(10,20,40,0.35)"; g.shadowBlur = 20; }
+  const wrap = (mw) => { const ls = []; let cur = ""; for (const w of t.split(" ")) { const n = cur ? cur + " " + w : w; if (g.measureText(n).width > mw && cur) { ls.push(cur); cur = w; } else cur = n; } ls.push(cur); return ls; };
+  let lines = wrap(maxW);
+  if (lines.length > 1) { let mw = maxW; while (mw > 300 && wrap(mw - 10).length === lines.length) mw -= 10; lines = wrap(mw); } // balanced lines, no lonely last word
+  const size = parseFloat(font.match(/(\d+)px/)[1]);
+  lines.forEach((l, i) => g.fillText(l, W / 2, y + i * size * lh));
+  g.restore(); return lines.length;
+}
+function rich(parts, y, font) {
+  g.save(); g.font = font; g.textBaseline = "alphabetic"; g.shadowColor = "rgba(10,20,40,0.35)"; g.shadowBlur = 22;
+  const w = parts.reduce((s, [t]) => s + g.measureText(t).width, 0); let x = W / 2 - w / 2;
+  for (const [t, c] of parts) { g.fillStyle = c; g.fillText(t, x, y); x += g.measureText(t).width; }
+  g.restore();
+}
+function pills(list, y) {
+  g.save(); g.font = "600 30px Geist"; const pad = 30, gap = 18, h = 62;
+  const ws = list.map((t) => g.measureText(t).width + pad * 2), total = ws.reduce((a, b) => a + b, 0) + gap * (list.length - 1);
+  let x = W / 2 - total / 2;
+  list.forEach((t, i) => { g.fillStyle = "rgba(255,255,255,0.14)"; g.beginPath(); g.roundRect(x, y - h / 2, ws[i], h, h / 2); g.fill();
+    g.fillStyle = "rgba(255,255,255,0.92)"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(t, x + ws[i] / 2, y + 2); x += ws[i] + gap; });
+  g.restore();
+}
+const ORDER = ["dawn", "ray", "noon", "goldie", "dusk", "star"];
+const imgs = {}; const load = (src) => imgs[src] || (imgs[src] = new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }));
+
+window.slide = async (i) => {
+  g.clearRect(0, 0, W, H);
+  if (i === 0) { // cover
+    scene(500);
+    rich([["Meet the", "#ffffff"]], 250, "600 96px Fraunces");
+    rich([["skylings", GOLD]], 400, "600 168px Fraunces");
+    ORDER.forEach((k, j) => skyling(k, 140 + j * 160, HY - 6, 8, j % 2 ? "celebrate" : "idle", j % 2 ? 2 : 0, false));
+    text("Six skylings. One of them is yours.", 1125, "500 50px Fraunces");
+    text("Swipe to meet them →", 1235, "600 32px Geist", "rgba(255,255,255,0.75)", { shadow: false });
+    return;
+  }
+  if (i === 7) { // the end
+    scene(985);
+    rich([["Which one is ", "#ffffff"], ["yours?", GOLD]], 250, "600 100px Fraunces");
+    rich([["Or let the sky choose.", "#ffffff"]], 370, "500 62px Fraunces");
+    ORDER.forEach((k, j) => skyling(k, 140 + j * 160, HY - 6, 8, "celebrate", (j + 1) % 4, false));
+    text("Let's clear your sky.", 1120, "600 58px Fraunces");
+    const logo = await load("/official/out/LifeFlow_Logo_2_Ray.png");
+    g.save(); g.font = "500 52px Fraunces"; const ww = g.measureText("LifeFlow").width; g.restore();
+    const S = 84, total = S + 22 + ww, x0 = W / 2 - total / 2, yy = 1230;
+    g.save(); g.beginPath(); g.roundRect(x0, yy - S / 2, S, S, S * 0.2237); g.clip(); g.drawImage(logo, x0, yy - S / 2, S, S); g.restore();
+    g.save(); g.font = "500 52px Fraunces"; g.fillStyle = "rgba(255,255,255,0.92)"; g.textBaseline = "middle"; g.fillText("LifeFlow", x0 + S + 22, yy + 2); g.restore();
+    return;
+  }
+  const key = ORDER[i - 1], c = LF.COMPANIONS.find((x) => x.key === key);
+  scene(MIN[key]);
+  text(c.moment.toUpperCase(), 150, "600 32px Geist", "rgba(255,255,255,0.9)", { spacing: 6 });
+  rich([[c.name, "#ffffff"]], 290, "600 140px Fraunces");
+  skyling(key, W / 2, HY - 6, 19, "idle", 0, key === "star");
+  const n = text(c.line, 1100, "500 50px Fraunces", "#ffffff", { maxW: 900 });
+  pills(c.traits, 1100 + (n - 1) * 62 + 118);
+};
+window.ready = Promise.all([document.fonts.load("600 80px Fraunces"), document.fonts.load("500 40px Fraunces"), document.fonts.load("600 30px Geist")]).then(() => true);
+</script></body></html>
