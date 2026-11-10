@@ -31,3 +31,20 @@ test("a plain question back is not an offer: no Do it", async ({ page }) => {
   await expect(page.getByText(/You said: Which class/).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Do it", exact: true })).toHaveCount(0);
 });
+
+test("Undo under an answer takes back the to-do it just created, and says so", async ({ page }) => {
+  const email = await signUp(page, "Take Back");
+  await page.goto("/jarvis");
+  await askJarvis(page, `/tool create_tasks {"tasks":[{"title":"Pack lunch"}]}`);
+  await expect.poll(async () => (await queryAsUser<{ n: number }>(email, "select count(*)::int as n from tasks where title = 'Pack lunch'"))[0]?.n).toBe(1);
+  const undo = page.getByRole("button", { name: "Undo", exact: true });
+  await expect(undo).toBeVisible();
+  expect((await undo.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await undo.click();
+  await expect(page.getByText('Took that back: removed "Pack lunch".').first()).toBeVisible();
+  await expect.poll(async () => (await queryAsUser<{ n: number }>(email, "select count(*)::int as n from tasks where title = 'Pack lunch'"))[0]?.n).toBe(0);
+  await expect(page.getByRole("button", { name: "Undo", exact: true })).toHaveCount(0);
+  // after a reload the note is part of the conversation
+  await page.reload();
+  await expect(page.getByText('Took that back: removed "Pack lunch".').first()).toBeVisible();
+});

@@ -7,6 +7,7 @@ import { importMemories } from "@/server/services/memory";
 import { saveLifeImport } from "@/server/services/life-import";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { recordCloudTap } from "@/server/services/idea-clouds";
+import { undoChatTools } from "@/server/jarvis/undo";
 
 export async function deleteConversationAction(id: string): Promise<ActionState> {
   const r = await mutate(
@@ -64,4 +65,12 @@ export async function saveLifeImportAction(_p: ActionState, fd: FormData): Promi
 export async function tapIdeaCloudAction(key: string): Promise<void> {
   if (typeof key !== "string" || key.length > 40) return;
   await withCurrentUser((s) => recordCloudTap(s, key));
+}
+
+/** Undo under the last answer: takes back exactly what that answer created (program item 8). */
+export async function undoChatToolsAction(conversationId: string, callIds: string[]): Promise<ActionState> {
+  if (typeof conversationId !== "string" || !Array.isArray(callIds)) return { ok: false, error: "There's nothing to undo here.", at: Date.now() };
+  return mutate("jarvis.chat.undo", async (s) => (await undoChatTools(s, conversationId, callIds.map(String))).text, {
+    revalidate: ["/", "/tasks", "/plan", "/calendar"],
+  });
 }

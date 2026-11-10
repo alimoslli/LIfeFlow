@@ -38,7 +38,9 @@ import { useShell } from "../shell/app-shell";
 import { AiConsentCard } from "./ai-consent-card";
 import { Markdown } from "./markdown";
 import { LiveVoice, VoiceButton } from "./voice-call";
-import { defaultFollowUps, FOLLOW_UPS, OFFER_REPLIES, offersToAct, STARTERS } from "./suggestions";
+import { defaultFollowUps, FOLLOW_UPS, OFFER_REPLIES, offersToAct, STARTERS, UNDOABLE_TOOLS } from "./suggestions";
+import { undoChatToolsAction } from "@/app/(app)/jarvis/actions";
+import { toast } from "@/components/ui/toaster";
 import type { JarvisAvailability, JarvisModule, UiAttachment, UiMemorySuggestion, UiMessage, UiTool } from "./types";
 
 type ServerEvent =
@@ -558,6 +560,21 @@ export function JarvisChat({
   const lastAnswer = messages.at(-1);
   // an answer that ends by offering to do something gets "Do it" (one tap, item 8); a pending confirm has its own buttons
   const offer = lastAnswer?.role === "assistant" && !lastAnswer.confirmations.some((c) => c.status === "pending") && offersToAct(lastAnswer.text);
+  // what the last answer created can be taken back in one tap (item 8)
+  const undoable =
+    !busy && !refreshing && lastAnswer?.role === "assistant"
+      ? lastAnswer.tools.filter((t) => t.status === "ok" && (UNDOABLE_TOOLS as readonly string[]).includes(t.name)).map((t) => t.callId)
+      : [];
+  const [undoing, setUndoing] = useState(false);
+  async function undoLast() {
+    if (!conversationId || !undoable.length || undoing) return;
+    setUndoing(true);
+    const r = await undoChatToolsAction(conversationId, undoable).catch(() => null);
+    setUndoing(false);
+    if (!r?.ok) return void toast(r?.error ?? "Couldn't undo that. Try again.", { tone: "danger" });
+    setMessages((m) => [...m, { id: `u-${Date.now()}`, role: "assistant", text: r.message ?? "Took that back.", tools: [], confirmations: [], memories: [] }]);
+    startRefresh(() => router.refresh());
+  }
   const followUps: readonly string[] | undefined =
     busy || refreshing || empty || lastAnswer?.role !== "assistant"
       ? undefined
@@ -660,6 +677,15 @@ export function JarvisChat({
           {!aiConsent && !empty && <AiConsentCard name={assistantName} />}
           {followUps && aiConsent && (
             <div className="flex flex-wrap gap-2">
+              {undoable.length > 0 && conversationId && (
+                <button
+                  onClick={undoLast}
+                  disabled={undoing}
+                  className="lf-hop inline-flex min-h-11 items-center gap-1.5 rounded-[0.9375rem] bg-surface px-4 py-2 text-[0.875rem] font-medium text-text-2 shadow-soft ring-1 ring-border/60 hover:text-text disabled:opacity-60"
+                >
+                  <PixelIcon name="undo" className="h-4 w-4" /> Undo
+                </button>
+              )}
               {followUps.map((f) => (
                 <button
                   key={f}

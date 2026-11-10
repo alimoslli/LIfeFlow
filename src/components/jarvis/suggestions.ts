@@ -71,3 +71,6 @@ export function offersToAct(text: string): boolean {
   if (!last.endsWith("?")) return false;
   return /\b(want me to|do you want me to|would you like me to|should i|shall i|ok(ay)? if i|want to do that|want that)\b/i.test(last);
 }
+
+/** Tools whose results the chat can take back with Undo (what a turn created); the server checks the same list. */
+export const UNDOABLE_TOOLS = ["create_tasks", "create_events"] as const;
