@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
-import { queryAsUser, signUp } from "./helpers";
+import { localInstant, queryAsUser, signUp } from "./helpers";
 
 test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
@@ -8,12 +8,14 @@ const E2E_DB = process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetfl
 
 // The v3 home (docs/design/clock/spec.md, Day Sky): the sky pours into the timeline of the person's real week,
 // a stop opens one quiet card that leads to the page that owns it, and the timeline folds back into the sky.
-// Times are relative to the real "now", so nothing here depends on the hour the suite runs.
+// The seed's days are relative to today; the phone's clock is held at noon in the seeded zone, because what the sky
+// draws follows the sun (a late tile lives at now and fades with it after dark), so the hour the suite runs never matters.
 test("the day clock opens into the real week and wraps back", async ({ page }) => {
   const email = await signUp(page, "Clock Tester");
   execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/dev/seed-clock-look.ts", email], {
     env: { ...process.env, DATABASE_URL: E2E_DB },
   });
+  await page.clock.setFixedTime(localInstant("America/New_York", 12, 0));
   await page.goto("/");
   const clock = page.getByTestId("day-clock");
   await expect(clock).toHaveAttribute("data-ready", "true");

@@ -80,3 +80,18 @@ export async function openQuickAdd(page: Page) {
     await expect(sheet).toBeVisible({ timeout: 1000 });
   }).toPass({ timeout: 15_000 });
 }
+
+/** A moment today at hour:minute on the clock in `tz` (for page.clock: tests that must not depend on the hour they run). */
+export function localInstant(tz: string, hour: number, minute: number) {
+  const parts = (d: Date) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).format(d);
+  const today = parts(new Date()).slice(0, 10);
+  const base = new Date();
+  base.setUTCMinutes(minute, 0, 0);
+  for (let i = -30; i <= 30; i++) {
+    const d = new Date(base.getTime() + i * 3_600_000);
+    const p = parts(d);
+    if (p.slice(0, 10) === today && Number(p.slice(-2)) === hour) return d;
+  }
+  throw new Error(`no ${hour}:${minute} today in ${tz}`);
+}

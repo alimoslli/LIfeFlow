@@ -187,13 +187,19 @@ test("a finished account answering under 13 on Today is locked the same way (own
   await pool.query(`update users set preferences = preferences - 'birthDate' where email = $1`, [email]);
   await page.goto("/");
   const card = page.getByRole("region", { name: "Your birthday" });
+  // a valid date always turns Save on (filled again if it landed before the card was ready, under a busy machine)
+  const answer = async (day: string) => {
+    await expect(async () => {
+      await card.getByLabel("Your birthday").fill(day);
+      await expect(card.getByRole("button", { name: "Save" })).toBeEnabled({ timeout: 2_000 });
+    }).toPass({ timeout: 30_000 });
+    await card.getByRole("button", { name: "Save" }).click();
+  };
   // today's date (a phone's picker opens on it) is a slip, not an answer: nothing is locked
-  await card.getByLabel("Your birthday").fill(new Date().toISOString().slice(0, 10));
-  await card.getByRole("button", { name: "Save" }).click();
+  await answer(new Date().toISOString().slice(0, 10));
   await expect(card.getByRole("alert")).toHaveText("Check the year.");
   // a real under-13 date is read back first; "Change the date" goes back with nothing locked
-  await card.getByLabel("Your birthday").fill(`${new Date().getFullYear() - 10}-04-04`);
-  await card.getByRole("button", { name: "Save" }).click();
+  await answer(`${new Date().getFullYear() - 10}-04-04`);
   await expect(card.getByText(/^You entered April 4, \d{4}\.$/)).toBeVisible();
   await expect(card.getByText(/will be locked and everything in it erased/)).toBeVisible();
   await card.getByRole("button", { name: "Change the date" }).click();

@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
-import { pool, signUp } from "./helpers";
+import { localInstant, pool, signUp } from "./helpers";
 
 const E2E_DB = process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e";
 
@@ -124,21 +124,6 @@ for (const size of [
       await context.close();
     });
   }
-}
-
-/** The instant that is hour:minute on today's date in a time zone. */
-function localInstant(tz: string, hour: number, minute: number) {
-  const parts = (d: Date) =>
-    new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).format(d);
-  const today = parts(new Date()).slice(0, 10);
-  const base = new Date();
-  base.setUTCMinutes(minute, 0, 0);
-  for (let i = -30; i <= 30; i++) {
-    const d = new Date(base.getTime() + i * 3_600_000);
-    const p = parts(d);
-    if (p.slice(0, 10) === today && Number(p.slice(-2)) === hour) return d;
-  }
-  throw new Error(`no ${hour}:${minute} today in ${tz}`);
 }
 
 // The owner's rule (2026-11-10): nothing lies over anything. At night the things you finished today shine as gold stars on
