@@ -244,6 +244,26 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 
 **Next:** fix the 2 high Promises bugs; audit V3 on its branch before it's proposed for main; a rendered phone pass of /welcome.
 
+### The product excellence program (owner-approved 2026-11-10; run by the COO on Fable, screens by LF Main)
+The owner approved 12 improvements after a fresh walk through the app ([baseline](audits/2026-11-10-product-baseline.md)). Order: reliability, notifications, onboarding and the AI first; design after. Small fixes ship after tests and an independent review. Major changes (4, 6, 7, 8, 9, 10) are built and held, with pictures, until the owner approves each. Admin and HQ development is paused (12); nothing there is removed.
+
+| # | What | Who | Status |
+|---|---|---|---|
+| 1 | Under-13 erase safety | COO, then LF Main | Server fix live (`4fbe0689`); LF Main has the rest |
+| 2 | Reminders on time (the notify job every 10 minutes) | COO | Built, reviewed, shipping |
+| 3 | Ask for notifications at the right moment | LF Main | Queued |
+| 4 | AI cost and speed, measured, no loss of quality | COO | Next |
+| 5 | Rough edges from the walk | LF Main | Queued |
+| 6 | One sky, fewer doors | COO concepts, LF Main build | Two concepts with the owner |
+| 7 | The first minute ends on a full sky | LF Main | Queued, held for approval |
+| 8 | One-tap fixes ("Do it" with Undo) | LF Main and COO | Queued, held for approval |
+| 9 | Daily rhythm (morning, evening, weekly) | COO and LF Main | After 2 and 3 |
+| 10 | Settings in our own form | LF Main | After 6 |
+| 11 | Laptop Today uses the screen | LF Main | After 6 |
+| 12 | Pause Admin and HQ development | LF HQ | Paused 2026-11-10 |
+
+Last: a real-world walk again and the before-and-after comparison, then a new marketing and relaunch plan for the owner's approval.
+
 ## 7. Research & Insights, and Customer Success. Owner: the COO (agents `market-researcher`, `situation-writer`, `customer-success`)
 **Where the details live:** `docs/research/`; things to avoid become rules at once (CLAUDE.md).
 
@@ -313,10 +333,13 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 - **Onboarding and Today (phone check 2026-11-08):** 'Skip setup' and 'Skip' sit close together while the day connects.
 - **First run and price (research 2026-11-09, docs/research/2026-11-09-first-run-that-converts.md):** (a) where the paywall goes; recommended: only after "Your day, connected", showing the person's own saved item and their skyling's name; (b) the landing still can't show the price ($5.99 students) while the welcome says "free while we're testing": which one is true now? (c) add five first-minute counts (welcome step, first item saved, paywall seen, paid) to Admin › App?
 - **Apple Health vs typed values (COO, 2026-11-09):** a value the person types now always wins over Apple Health for that day (it used to be silently overwritten). Side effect: 20 exercise minutes typed in the morning keep Apple's full-day 60 out. Keep it, or let Apple fill in a typed day once the day is over?
+- **Navigation, pick one (COO, 2026-11-10; pictures: https://claude.ai/artifact/VujYddzJmPmXCD8edq6WrB):** A, three places (Today, Money, School) with the skyling as a bar on every page, or B, one sky with no tab bar and live-number doors. Recommended: A now, with B's live-number doors on Today.
+- **Under 13 in Settings (COO, 2026-11-10):** Settings answers "Check the year." for a real age of 5 to 12 on a finished account and never locks; only Today's birthday card has the read-back step. Add the same step in Settings so it can lock there too, or leave it?
 - **Promises (night audit 2026-11-08):** read the six firmer check-in lines once (some lean on pressure); decide whether a promise's text may show in a notification on the lock screen.
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-10, LF COO: the owner approved the 12-item product excellence program (section 6, with the baseline). Live: a slip can no longer erase an account (`4fbe0689`: impossible ages refused, a finished account confirms the date first, Stripe flagged not cancelled). Reminders: the notify job runs every 10 minutes and each daily look starts at its own hour. Admin and HQ development paused. Two navigation concepts are with the owner (section 11).
 - 2026-11-10, LF HQ: Admin and HQ paused for new work until the relaunch (owner, through the COO). Everything keeps running; bugs only; the under-13 People line is the one exception, with LF Main (section 5).
 - 2026-11-09 early morning, LF COO: on main, Opus-reviewed: Stripe plans follow Stripe's live subscriptions (0b994ba); one card and one filing per email, typed health values win, one Canvas sync at a time (7379002); timeline Done removes the item at once (d15a9bb). Research on the first run (42387c1). Two owner questions added to section 11.
 - 2026-11-09, LF HQ: "Active today" opens the list of who was active (People, seen in the last 24 hours); "last seen" stamped every 10 minutes (section 5).
