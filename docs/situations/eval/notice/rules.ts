@@ -155,7 +155,7 @@ export function overlapEvents(life: Life, said: Said[]) {
       else ev.result = "missed";
       if (ev.result === "missed") {
         const other = said.find((s) => s.surface === "today" && s.kind === "conflict" && s.date <= addDaysStr(x, -1) && s.date >= addDaysStr(x, -7));
-        ev.via = other ? "Today showed a different clash instead (it shows one at a time)" : "Today showed no clash at all";
+        ev.via = other ? "Today named two other clashes first (it names two, then counts the rest)" : "Today showed no clash at all";
       }
       if (ev.result !== "caught") ev.instead = instead(said, addDaysStr(x, -2), x);
       events.push(ev);
