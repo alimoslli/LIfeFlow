@@ -14,3 +14,9 @@ understand it; the app full screen, no phone. 36 s, 1080 x 1920, no credits.
 - To refilm on a newer app: `node capture_full.cjs today`, reset the demo skyling to Ray, `node capture_full.cjs settings`,
   check the anchors in the log, render, mix, encode (crf 17, -14.5 LUFS, limiter at -2.6 dB).
 Download: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/47142692-4864-4468-84f2-f9d6eb506417.zip
+
+v2 (2026-11-10): refilmed on main e529273 (the new look: three tabs and More, pixel tab icons and clouds, the skyling bar on
+every page, Settings from below, the round pixel back button, the opened day's labels never cut off). Same edit, same anchors.
+Download: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/26b600c4-b1a6-4264-9c0e-4c8384502067.zip
+Note: Metricool's Instagram numbers stopped updating around Nov 5-6 (Ali caught it: Flow Room Ep 02 shows 3,782 views on
+Instagram, Metricool had 956). Check numbers against Instagram before quoting them; reconnect Instagram in Metricool.

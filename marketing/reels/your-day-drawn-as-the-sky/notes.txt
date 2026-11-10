@@ -1,4 +1,4 @@
-"Your day, drawn as the sky" (Nov 10): how LifeFlow shows your day, and the skylings. 36 s, 1080 x 1920, full-screen app (no phone).
+"Your day, drawn as the sky" v2 (Nov 10, the new look): how LifeFlow shows your day, and the skylings. 36 s, 1080 x 1920, full-screen app (no phone).
 
 0.0   "Your day, drawn as the sky."
 2.9   Labels on the real Today: the sun's path through your day; your skyling stands at right now; your things sit on it, at
@@ -11,8 +11,8 @@
       "Pick yours. Or let the sky choose."
 32.6  The logo ending: "Let's clear your sky."
 
-Filmed from the latest app on a test computer; the day shown is sample data in a test account. The bottom tab bar still has
-the old icons in the app itself; this gets refilmed once the app side swaps them. Sound effects only; add music if you want.
+Filmed from the newest app (the new look: pixel tabs, pixel clouds, round back button) on a test computer; the day shown
+is sample data in a test account. Sound effects only; add music if you want.
 Caption idea: Your day, drawn as the sky ☀️ Turn it to see what's coming, tap to open it, and let your skyling keep watch.
 Let's clear your sky. #lifeflow #studenttok #collegelife
 Nothing is posted until you say "post it".
