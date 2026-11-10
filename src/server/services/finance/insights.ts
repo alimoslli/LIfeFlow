@@ -1,5 +1,5 @@
 import { series } from "@/server/db/series";
-import { addDaysStr, daysBetween } from "@/lib/dates";
+import { addDaysStr, dayOfWeek, daysBetween, monthEnd } from "@/lib/dates";
 import type { UserScope } from "../../db/with-user";
 import { listAccounts, summarizeBalances } from "./accounts";
 import { listCategories } from "./categories";
@@ -73,6 +73,17 @@ export async function compareSpending(scope: UserScope, from: string, to: string
  * Facts for "can I afford $X by <date>?". Returns the inputs and a simple
  * projection; Jarvis explains it rather than issuing a verdict blindly.
  */
+/** When the money is needed, as people say it. Our code turns it into a date, so "this weekend" is always through Sunday. */
+export const AFFORD_WHEN = ["today", "this_weekend", "this_week", "this_month"] as const;
+export type AffordWhen = (typeof AFFORD_WHEN)[number];
+
+/** The last day a "when" covers: today; through this Sunday (the weekend and the week end there); the month's last day. */
+export function affordByDate(when: AffordWhen, today: string): string {
+  if (when === "today") return today;
+  if (when === "this_month") return monthEnd(today);
+  return addDaysStr(today, (7 - dayOfWeek(today)) % 7);
+}
+
 export async function affordability(scope: UserScope, amountCents: number, today: string, byDate?: string) {
   // a date already gone (or none) means the next two weeks, never a window with no bills in it
   const horizon = byDate && byDate >= today ? byDate : addDaysStr(today, 14);

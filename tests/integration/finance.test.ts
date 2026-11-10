@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { closeDb } from "@/server/db/client";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
-import { affordability, spendingSummary } from "@/server/services/finance/insights";
+import { affordByDate, affordability, spendingSummary } from "@/server/services/finance/insights";
 import { budgetStatus, createRecurring, setBudget, upcomingRecurring } from "@/server/services/finance/planning";
 import { createTransaction, importTransactionsCsv, queryTransactions } from "@/server/services/finance/transactions";
 import { makeUser } from "../helpers";
@@ -131,6 +131,16 @@ describe("finance", () => {
     expect((await ask(2000000)).verdict).toBe("no");
     // a date already gone still counts the next two weeks' bills
     expect((await run((s) => affordability(s, 5000, "2026-10-30", "2026-10-01"))).upcomingBillsCents).toBe(120000);
+  });
+
+  it("turns the words for when into dates in our code: this weekend is always through Sunday", () => {
+    // Tuesday Nov 10, 2026 (tonight a real model sent "this weekend" as Saturday once and Sunday once)
+    expect(affordByDate("this_weekend", "2026-11-10")).toBe("2026-11-15");
+    expect(affordByDate("this_weekend", "2026-11-14")).toBe("2026-11-15");
+    expect(affordByDate("this_weekend", "2026-11-15")).toBe("2026-11-15");
+    expect(affordByDate("this_week", "2026-11-10")).toBe("2026-11-15");
+    expect(affordByDate("today", "2026-11-10")).toBe("2026-11-10");
+    expect(affordByDate("this_month", "2026-11-10")).toBe("2026-11-30");
   });
 
   it("says unknown, not no, when there's no checking, cash or savings to start from", async () => {

@@ -7,7 +7,7 @@ import { moneyOverview } from "../../services/finance/overview";
 import { listCategories, resolveCategory } from "../../services/finance/categories";
 import { categoryIdByName, keywordCategory } from "../../services/finance/categorize";
 import type { UserScope } from "../../db/with-user";
-import { affordability, compareSpending, spendingSummary } from "../../services/finance/insights";
+import { AFFORD_WHEN, affordability, affordByDate, compareSpending, spendingSummary } from "../../services/finance/insights";
 import {
   budgetStatus,
   createRecurring,
@@ -433,10 +433,19 @@ export const financeTools = [
     description:
       "'Can I afford $X (by date)?': the verdict and the facts behind it. `verdict` is decided here from Available now (checking + cash, the number on Money) after the bills and usual spending to the date and the purchase: yes, only_with_savings (only by moving money from savings), no, or unknown (no accounts). " +
       "Say that verdict first, in plain words, with availableAfter; never recompute it, never turn a no into a yes, and never count savings, credit or future income as spendable. Then the one bill or number that makes it tight.",
-    schema: z.object({ amount: moneyArg("Purchase amount"), byDate: dateArg("Date the money is needed by").optional() }),
+    schema: z.object({
+      amount: moneyArg("Purchase amount"),
+      when: z
+        .enum(AFFORD_WHEN)
+        .optional()
+        .describe('When it is spent, as they said it: "tonight" or "today" = today, "this weekend" = this_weekend, "this week", "this month"'),
+      byDate: dateArg('Only for a specific date they named ("by the 20th"); otherwise use when').optional(),
+    }),
     mutates: false,
     async execute(a, ctx) {
-      return centsToDollarsDeep(await ctx.run((s) => affordability(s, toCents(a.amount), ctx.today, a.byDate)));
+      // a phrase like "this weekend" becomes a date here, so the same question always covers the same days
+      const by = a.when ? affordByDate(a.when, ctx.today) : a.byDate;
+      return centsToDollarsDeep(await ctx.run((s) => affordability(s, toCents(a.amount), ctx.today, by)));
     },
   }),
   defineTool({
