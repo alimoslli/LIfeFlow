@@ -24,13 +24,22 @@ function runs(rows: readonly string[], mono: boolean): Run[] {
   return out;
 }
 
-const cache = new Map<string, Run[]>();
-function runsOf(name: PixelName): Run[] {
+/** One path per colour (`M x y h w v1 h-w z` per run): the same pixels as a rect each, a tenth of the markup. */
+type Layer = { fill: string; d: string };
+function layers(rs: Run[]): Layer[] {
+  const by = new Map<string, string>();
+  for (const [x, y, w, fill] of rs) by.set(fill, (by.get(fill) ?? "") + `M${x} ${y}h${w}v1h-${w}z`);
+  return [...by].map(([fill, d]) => ({ fill, d }));
+}
+
+const cache = new Map<string, Layer[]>();
+function layersOf(name: PixelName): Layer[] {
   let r = cache.get(name);
   if (!r) {
     const mono = name in MONO;
     const rows = mono ? MONO[name as keyof typeof MONO] : COLOR[name as keyof typeof COLOR];
-    r = [...runs(rows, mono), ...runs(SOFT[name as keyof typeof COLOR] ?? [], false)];
+    // the soft pixels (rays, steam) go last so they sit on top, as before
+    r = [...layers(runs(rows, mono)), ...layers(runs(SOFT[name as keyof typeof COLOR] ?? [], false))];
     cache.set(name, r);
   }
   return r;
@@ -43,8 +52,8 @@ function runsOf(name: PixelName): Run[] {
 export function PixelIcon({ name, className, ...rest }: { name: PixelName; className?: string } & Omit<SVGProps<SVGSVGElement>, "name" | "className">) {
   return (
     <svg viewBox="0 0 16 16" className={cn("lf-pixel shrink-0", className)} shapeRendering="crispEdges" aria-hidden="true" {...rest}>
-      {runsOf(name).map(([x, y, w, fill], i) => (
-        <rect key={i} x={x} y={y} width={w} height="1" fill={fill} />
+      {layersOf(name).map((l, i) => (
+        <path key={i} d={l.d} fill={l.fill} />
       ))}
     </svg>
   );

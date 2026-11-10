@@ -263,7 +263,7 @@ The owner approved 12 improvements after a fresh walk through the app ([baseline
 | 11 | Laptop Today uses the screen | LF Main, checked by the COO | Live: at 1280 and 1440 wide the sky fills the width with the skyling's card and bar beside the wheel (was about half the screen in the baseline). The idea cloud and name tag no longer sit on the bar (`idea-clouds-phone.spec` checks it) |
 | 12 | Pause Admin and HQ development | LF HQ | Paused 2026-11-10 |
 
-Last: a real-world walk again and the before-and-after comparison, then a new marketing and relaunch plan for the owner's approval.
+Last: done 2026-11-10 evening ([the walk and the numbers](audits/2026-11-10-product-after.md)). Next: a new marketing and relaunch plan for the owner's approval, and the 10-student test.
 
 ## 7. Research & Insights, and Customer Success. Owner: the COO (agents `market-researcher`, `situation-writer`, `customer-success`)
 **Where the details live:** `docs/research/`; things to avoid become rules at once (CLAUDE.md).
@@ -338,6 +338,7 @@ Last: a real-world walk again and the before-and-after comparison, then a new ma
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-10, LF COO: the final walk and the before-and-after ([after](audits/2026-11-10-product-after.md), picture page for the owner). Sign-up to a usable Today is 4 steps with no tour, a week told in one message is 5.4 s, Today loads in 228 ms (was 439). Pixel pictures are now one path per colour (identical, 86 of 86 checked): later pages back to baseline weight or lighter (Money 400 KB to 191, Updates 373 to 234).
 - 2026-11-10, LF COO: item 11 checked live on laptops; the idea cloud and the skyling's name tag above Today's bar no longer overlap it on any width (their row now ends at the bar's top edge).
 - 2026-11-10, LF COO: item 8 live in the chat. "Do it" and "Not now" under an answer that offers to act, and Undo under an answer that created to-dos or events (removes exactly those, keeps anything changed since, once, within a day; independent review, findings fixed with tests).
 - 2026-11-10, LF COO: pixel glyphs replace the last generic line icons on app pages (delete, copy, download, check, arrows, undo, sync, edit, open link, search, mail, clock, link, repeat, alert, flame, flag, pause/play, upload, hide, archive, more, sign out, video); `look.test.ts` keeps them out (the skyling's pages and the inbox follow, LF Main). With the Money lock on, pushes show "Money heads-up" for money messages and drop amounts from the morning brief and weekly review, and the cards in the app drop them too (rule: nothing private on the lock screen; reviewed independently). Item 9 recorded as live. The sideways Today test waits for the sky to stream in.

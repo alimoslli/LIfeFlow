@@ -19,11 +19,16 @@ export function CompanionGlyph({
   pose?: Pose;
   frame?: number;
 }) {
-  const px = pixels(companionOf(companion), pose, frame, night);
+  // one path per colour (a rect per pixel was most of a page's markup); where two pixels share a spot the later one
+  // wins, as it did when it was painted over the other
+  const top = new Map<string, [number, number, string]>();
+  for (const [x, y, col] of pixels(companionOf(companion), pose, frame, night)) top.set(`${x},${y}`, [x, y, col]);
+  const byColour = new Map<string, string>();
+  for (const [x, y, col] of top.values()) byColour.set(col, (byColour.get(col) ?? "") + `M${x} ${y}h1v1h-1z`);
   return (
     <svg viewBox={`1 2 ${GRID - 2} ${GRID - 2}`} className={cn("shrink-0", className)} shapeRendering="crispEdges" aria-hidden="true">
-      {px.map(([x, y, col], i) => (
-        <rect key={i} x={x} y={y} width="1" height="1" fill={col} />
+      {[...byColour].map(([col, d]) => (
+        <path key={col} d={d} fill={col} />
       ))}
     </svg>
   );
