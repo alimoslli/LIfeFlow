@@ -13,7 +13,7 @@ export default function ImportMemoryPage() {
       <header>
         <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Import from another AI</h1>
         <p className="mt-1 text-sm text-text-2">
-          Already told ChatGPT or another assistant about your life? Bring it here so <AssistantName /> knows you from day one.
+          Already told ChatGPT or another AI about your life? Bring it here so <AssistantName /> knows you from day one.
         </p>
       </header>
       <ol className="flex flex-col gap-3">

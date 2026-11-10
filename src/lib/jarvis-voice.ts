@@ -118,8 +118,11 @@ const KINDS: Record<string, (f: F) => Parts> = {
   }),
   evening_wrap: (f) => ({
     headline: "Today's wrap-up",
-    fact: `You finished ${plural(n(f, "done"), "to-do")} today.${n(f, "left") ? ` ${plural(n(f, "left"), "to-do")} didn't happen.` : ""}`,
-    ask: n(f, "left") ? "Move the rest to tomorrow?" : undefined,
+    // never "you finished 0" and never "didn't happen" (no guilt words): what got done, then what's still open
+    fact: n(f, "done")
+      ? `You finished ${plural(n(f, "done"), "to-do")} today.${n(f, "left") ? ` ${n(f, "left") === 1 ? "1 is" : `${n(f, "left")} are`} still open.` : ""}`
+      : `${n(f, "left") === 1 ? "1 to-do is" : `${n(f, "left")} to-dos are`} still open.`,
+    ask: n(f, "left") ? (n(f, "done") ? "Move the rest to tomorrow?" : n(f, "left") === 1 ? "Move it to tomorrow?" : "Move them to tomorrow?") : undefined,
     mood: n(f, "left") ? "info" : "win",
   }),
   weekly_review: (f) => ({

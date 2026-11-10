@@ -457,7 +457,7 @@ describe("reviews and coaching", () => {
 
     const evening = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "evening" }));
     const wrap = evening.find((m) => m.kind === "evening_wrap")!;
-    expect(wrap.body).toContain("You finished 1 to-do today. 1 to-do didn't happen.");
+    expect(wrap.body).toContain("You finished 1 to-do today. 1 is still open.");
     expect(wrap.action).toMatchObject({ type: "move_tasks" });
 
     // A Sunday evening: the weekly review. On a Sunday, use next Sunday (tonight already had its evening message).

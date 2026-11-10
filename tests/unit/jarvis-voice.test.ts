@@ -64,7 +64,8 @@ describe("push text (owner, 2026-11-05: one line, what was noticed and why, and 
       "Essay is due Friday and you work Thursday night.",
     ],
     ["morning_brief", { count: 3, money: "$420 available now", oneThing: "Essay draft" }, "3 things on today's list, $420 available now."],
-    ["evening_wrap", { done: 2, left: 1 }, "You finished 2 to-dos today. 1 to-do didn't happen."],
+    ["evening_wrap", { done: 2, left: 1 }, "You finished 2 to-dos today. 1 is still open."],
+    ["evening_wrap", { done: 0, left: 3 }, "3 to-dos are still open."],
     [
       "spending_pace",
       { category: "Food", spentCents: 8600, overCents: 3000, fromCategory: null, moveCents: 3000 },
