@@ -46,7 +46,7 @@ export default async function JarvisSaysPage() {
           <section key={day} className="flex flex-col gap-3">
             <h2 className="text-sm font-medium text-muted">{day}</h2>
             {rows.map((m) => (
-              <JarvisMessageCard key={m.id} m={toCard(m, d.tz)} name={d.name} />
+              <JarvisMessageCard key={m.id} m={toCard(m, d.tz, { moneyLocked: d.locked })} name={d.name} />
             ))}
           </section>
         ))

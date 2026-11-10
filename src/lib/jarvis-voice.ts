@@ -264,7 +264,8 @@ export function composeMessage(kind: string, facts: F, tone: JarvisTone, opts: {
 export const LOCKED_MONEY_PUSH = { title: "Money heads-up", body: "Something in your money is worth a look. Tap to see it." };
 /** Fact keys that are money, and any text with a dollar amount, stay off the lock screen while the Money lock is on. */
 const MONEY_FACT_KEYS = new Set(["money", "spentCents", "budgetCents"]);
-export const hasAmount = (v: unknown) => typeof v === "string" && /\$\s?\d/.test(v);
+export const hasAmount = (v: unknown) =>
+  typeof v === "string" && /[$€£¥]\s?\d|\d\s?(?:dollars?|bucks|usd|euros?|eur|pounds?|gbp)\b|\b(?:usd|eur|gbp)\s?\d/i.test(v);
 
 /**
  * A push notification: the headline as the title and one line with what was noticed and why, then the fix or

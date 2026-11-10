@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { composeMessage, KIND_LABELS, LOCKED_MONEY_PUSH, pushSummary, pushText, type JarvisTone } from "@/lib/jarvis-voice";
+import { composeMessage, hasAmount, KIND_LABELS, LOCKED_MONEY_PUSH, pushSummary, pushText, type JarvisTone } from "@/lib/jarvis-voice";
 import { jarvisSettings } from "@/server/services/proactive/engine";
 
 const TONES: JarvisTone[] = ["coach", "friend", "direct"];
@@ -100,6 +100,9 @@ describe("push text (owner, 2026-11-05: one line, what was noticed and why, and 
       { moneyLocked: true, topic: "general" },
     )!;
     expect(week.body).toBe("9 to-dos done, 1 still open.");
+    // amounts written any common way count as money; plain counts don't
+    expect(["$5", "€50", "£3.20", "50 dollars", "20 bucks", "USD 40", "12 euros"].every(hasAmount)).toBe(true);
+    expect(["3 to-dos", "Essay draft", "2 hours on Wednesday", "Room 204"].some(hasAmount)).toBe(false);
     // unlocked, the same messages keep their numbers
     expect(pushText("morning_brief", { count: 3, money: "$420 available now", oneThing: "Essay draft" }, { topic: "general" })!.body).toContain("$420");
     expect(pushText("weekly_review", { done: 9, slipped: 1, spentCents: 21_000, budgetCents: 0, change: null })!.body).toContain("$210 spent");
