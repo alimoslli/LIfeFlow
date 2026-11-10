@@ -116,6 +116,19 @@ export function signedBalance(a: { type: AccountType; currentBalanceCents: numbe
   return a.type === "credit" || a.type === "loan" ? -a.currentBalanceCents : a.currentBalanceCents;
 }
 
+type Held = { type: AccountType; source: string; currentBalanceCents: number; availableBalanceCents?: number | null };
+
+/**
+ * What can be spent from an account right now. A bank-synced checking or savings account counts charges that are still
+ * pending: the bank's available balance when it is lower than the posted one (the noticing grader missed rent coming up
+ * short because the cash figure left pending charges out). Never more than the posted balance: an overdraft line isn't
+ * money. Manual and demo accounts have no pending charges, so their balance stands.
+ */
+export function spendableCents(a: Held) {
+  if (a.type === "depository" && a.source === "plaid" && a.availableBalanceCents != null) return Math.min(a.currentBalanceCents, a.availableBalanceCents);
+  return a.currentBalanceCents;
+}
+
 export type BalanceSummary = {
   cashCents: number;
   creditOwedCents: number;
@@ -126,9 +139,7 @@ export type BalanceSummary = {
   oldestBalanceUpdate: Date | null;
 };
 
-export function summarizeBalances(
-  accts: { type: AccountType; currentBalanceCents: number; includeInNetWorth: boolean; source: string; balanceUpdatedAt: Date }[],
-): BalanceSummary {
+export function summarizeBalances(accts: (Held & { includeInNetWorth: boolean; balanceUpdatedAt: Date })[]): BalanceSummary {
   const s: BalanceSummary = {
     cashCents: 0,
     creditOwedCents: 0,
@@ -139,7 +150,7 @@ export function summarizeBalances(
     oldestBalanceUpdate: null,
   };
   for (const a of accts) {
-    if (a.type === "depository" || a.type === "cash") s.cashCents += a.currentBalanceCents;
+    if (a.type === "depository" || a.type === "cash") s.cashCents += spendableCents(a);
     if (a.type === "credit") s.creditOwedCents += a.currentBalanceCents;
     if (a.type === "loan") s.loansOwedCents += a.currentBalanceCents;
     if (a.type === "investment") s.investmentsCents += a.currentBalanceCents;

@@ -52,6 +52,8 @@ export type RecurringCandidate = {
   duplicates: { dates: [string, string]; amountCents: number; label: string }[];
   /** Paid by transfer (a loan, rent by Zelle): the bank's line never carries the user's own name for the bill. */
   transfer: boolean;
+  /** Its latest charge was on a credit card: it never takes money out of checking on its own day. */
+  onCard: boolean;
   /** Keys its charges had in the format before the vendor tidy ("zelle" for Zelle rent), so alerts already sent under them stay sent. */
   formerKeys: string[];
   confidence: number;
@@ -568,6 +570,7 @@ function evaluate(cycles: Cycle[], ctx: Context): Found | null {
     charges: ts.map((t) => ({ date: t.date, amountCents: t.amountCents })),
     duplicates: duplicatesOf(cycles, ctx.refunds ?? []),
     transfer,
+    onCard: last.accountType === "credit",
     formerKeys: [...new Set(ts.map(previousMerchantKey))].filter((k) => k && k !== key && sameMerchant(k, key)),
     confidence,
     cycles,

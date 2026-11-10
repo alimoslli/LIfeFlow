@@ -307,12 +307,13 @@ export async function upcomingRecurring(scope: UserScope, from: string, to: stri
   }
   return due
     .filter((d, i) => d.date >= from && !paid.has(i))
-    .map(({ item, date }): { id: string; name: string; date: string; amountCents: number; kind: string } => ({
+    .map(({ item, date }): { id: string; name: string; date: string; amountCents: number; kind: string; accountId: string | null } => ({
       id: item.id,
       name: item.name,
       date,
       amountCents: item.amountCents,
       kind: item.kind,
+      accountId: item.accountId ?? null,
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 }

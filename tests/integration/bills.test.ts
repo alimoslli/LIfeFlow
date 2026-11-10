@@ -1,6 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { closeDb } from "@/server/db/client";
 import type { UserScope } from "@/server/db/with-user";
+import { financialAccounts } from "@/server/db/schema";
 import { createManualAccount } from "@/server/services/finance/accounts";
 import { getCategoryByName } from "@/server/services/finance/categories";
 import { billsAndPace, cashForecast } from "@/server/services/finance/forecast";
@@ -339,5 +340,46 @@ describe("review fixes: nothing else hides a bill or the money it costs", () => 
     expect(bills.map((b) => `${b.name}@${b.date} ${b.found}`)).toEqual([]);
     const next = await run((s) => billsAndPace(s, "2026-11-26", "2026-11-26", "2027-01-05"));
     expect(next.bills.map((b) => `${b.name}@${b.date} ${b.found}`)).toEqual(["Rent@2027-01-01 false"]);
+  });
+});
+
+describe("bill short only when checking really can't cover it (noticing grader, 2026-11-10)", () => {
+  const tmobile = async (s: UserScope, accountId: string) => {
+    for (const d of ["2026-08-07", "2026-09-07", "2026-10-07"])
+      await createTransaction(s, { accountId, date: d, description: "T-MOBILE AUTOPAY", merchantName: "T-Mobile", amountCents: -8_500 });
+  };
+  const billsDue = (run: (fn: (s: UserScope) => Promise<unknown>) => Promise<unknown>) =>
+    run((s) => DETECTORS.billsDue({ scope: s, tz: TZ, today: TODAY, now: new Date(`${TODAY}T14:00:00Z`) })) as ReturnType<typeof DETECTORS.billsDue>;
+
+  it("counts charges still pending at the bank: posted $2,000 but only $40 available is short", async () => {
+    const { user, run } = await makeUser();
+    await run(async (s) => {
+      const [acct] = await s.tx
+        .insert(financialAccounts)
+        .values({
+          userId: user.id,
+          name: "Checking",
+          type: "depository",
+          subtype: "checking",
+          source: "plaid",
+          currentBalanceCents: 200_000,
+          availableBalanceCents: 4_000,
+        })
+        .returning();
+      await tmobile(s, acct.id);
+    });
+    const out = await billsDue(run);
+    expect(out).toEqual([expect.objectContaining({ kind: "bill_short", facts: expect.objectContaining({ shortCents: 4_500 }) })]);
+  });
+
+  it("never says checking is short for a bill charged to a credit card", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      await checking(s, 4_000);
+      const card = await createManualAccount(s, { name: "Visa", type: "credit", currentBalanceCents: 30_000, creditLimitCents: 200_000 });
+      await tmobile(s, card.id);
+    });
+    const out = await billsDue(run);
+    expect(out.map((m) => m.kind)).toEqual(["bill_due"]);
   });
 });

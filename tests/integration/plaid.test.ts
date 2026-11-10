@@ -220,7 +220,8 @@ describe("Plaid", () => {
     expect(tx.find((t) => t.providerTransactionId === "t1")).toMatchObject({ amountCents: -2_550, kind: "expense" });
     expect(tx.find((t) => t.providerTransactionId === "t2")).toMatchObject({ amountCents: 120_000, kind: "income" });
     const o = await run((s) => moneyOverview(s, "2026-10-28"));
-    expect(o.balances).toMatchObject({ cashCents: 11_000, creditOwedCents: 41_000, investmentsCents: 500_000 });
+    // checking is $110 posted, $100 available: the $10 still pending is already spoken for (spendableCents)
+    expect(o.balances).toMatchObject({ cashCents: 10_000, creditOwedCents: 41_000, investmentsCents: 500_000 });
     const h = await run((s) => s.tx.select().from(holdings).where(eq(holdings.userId, user.id)));
     expect(h[0]).toMatchObject({ symbol: "VTI", valueCents: 250_000, costBasisCents: 200_000, securityType: "etf" });
     const [conn] = await run(listPlaidConnections);

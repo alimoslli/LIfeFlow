@@ -239,11 +239,15 @@ const billsDue: Detector = async ({ scope, today }) => {
   );
   const alerted = (kind: string, b: (typeof bills)[number]) => (b.sentAs ?? []).some((k) => sent.has(`${kind}:${k}`));
   let running = cash.cashCents;
+  // A bill charged to a credit card doesn't leave checking on its day, so it can't make checking short (the grader
+  // found "short" alerts for card-paid bills).
+  const cardIds = new Set(accounts.filter((a) => a.type === "credit").map((a) => a.id));
   return bills.flatMap((b) => {
-    running += b.amountCents;
+    const onCard = b.onCard || (b.accountId != null && cardIds.has(b.accountId));
+    if (!onCard) running += b.amountCents;
     const dueIn = relativeDayLabel(b.date, today).toLowerCase().replace(/^on /, "");
     const when = daysBetween(today, b.date) <= 1 ? dueIn : `in ${daysBetween(today, b.date)} days`;
-    if (running < 0) {
+    if (!onCard && running < 0) {
       // Only this bill's part of the gap (an earlier bill may already have used the cash).
       const short = Math.min(-running, -b.amountCents);
       const options = [cash.savingsCents >= short ? `move ${usd(short)} from savings` : null, `hold spending to essentials until it clears`].filter(Boolean);

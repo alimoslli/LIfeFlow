@@ -1,7 +1,7 @@
 import { series } from "@/server/db/series";
 import { addDaysStr, dayOfWeek, daysBetween, monthEnd } from "@/lib/dates";
 import type { UserScope } from "../../db/with-user";
-import { listAccounts, summarizeBalances } from "./accounts";
+import { listAccounts, spendableCents, summarizeBalances } from "./accounts";
 import { listCategories } from "./categories";
 import { rollupToParents, spendingByCategoryId, summarizeCashflow } from "./cashflow";
 import { billsAndPace } from "./forecast";
@@ -98,8 +98,8 @@ export async function affordability(scope: UserScope, amountCents: number, today
   // It starts from Available now, the number on Money (checking + cash; savings apart), takes off the bills and usual
   // spending to the date and the purchase, and says yes, only by moving savings, or no. Income never counts.
   const spendable = (a: (typeof accounts)[number]) => (a.type === "depository" || a.type === "cash") && !isSavingsAccount(a);
-  const availableNowCents = accounts.filter(spendable).reduce((n, a) => n + a.currentBalanceCents, 0);
-  const savingsCents = accounts.filter(isSavingsAccount).reduce((n, a) => n + a.currentBalanceCents, 0);
+  const availableNowCents = accounts.filter(spendable).reduce((n, a) => n + spendableCents(a), 0);
+  const savingsCents = accounts.filter(isSavingsAccount).reduce((n, a) => n + spendableCents(a), 0);
   const availableAfterCents = availableNowCents - upcomingBills - projectedDiscretionary - amountCents;
   const verdict: "yes" | "only_with_savings" | "no" | "unknown" = !accounts.some((a) => spendable(a) || isSavingsAccount(a))
     ? "unknown"

@@ -126,6 +126,9 @@ async function typicalDailySpend(scope: UserScope, today: string, billSeries: Re
 export type UpcomingBill = DatedAmount & {
   found: boolean;
   key: string;
+  /** Charged to a credit card (a found bill's latest charge was on one); a tracked bill carries its account instead. */
+  onCard?: boolean;
+  accountId?: string | null;
   /** The same cycle's key under the format before the vendor tidy: an alert sent under it isn't sent again. */
   sentAs?: string[];
 };
@@ -140,7 +143,7 @@ export async function upcomingBills(scope: UserScope, today: string, from: strin
   const tracked = await upcomingRecurring(scope, from, to, b);
   const bills: UpcomingBill[] = tracked
     .filter((u) => u.amountCents < 0)
-    .map((u) => ({ date: u.date, amountCents: u.amountCents, name: u.name, found: false, key: `${u.id}:${u.date}` }));
+    .map((u) => ({ date: u.date, amountCents: u.amountCents, name: u.name, found: false, key: `${u.id}:${u.date}`, accountId: u.accountId }));
   for (const c of foundBills(b)) {
     // Cycles counted from the next expected one, on the series' own day of the month (the 31st stays the 31st).
     const cycle = (n: number) => nthOccurrence(c.nextExpectedDate, c.frequency, n, c.dueDay);
@@ -155,6 +158,7 @@ export async function upcomingBills(scope: UserScope, today: string, from: strin
         amountCents: c.latestAmountCents,
         name: c.name,
         found: true,
+        onCard: c.onCard,
         key: `found:${c.seriesKey}:${cycle(n)}`,
         sentAs: c.formerKeys.map((k) => `found:${k}:${cycle(n)}`),
       });

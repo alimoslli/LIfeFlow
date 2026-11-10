@@ -1,7 +1,7 @@
 import { series } from "@/server/db/series";
 import { resolvePeriod, type Period } from "@/lib/periods";
 import type { UserScope } from "../../db/with-user";
-import { listAccounts, summarizeBalances } from "./accounts";
+import { listAccounts, spendableCents, summarizeBalances } from "./accounts";
 import { summarizeCashflow, type CashflowSummary } from "./cashflow";
 import { budgetStatus } from "./planning";
 import { queryTransactions } from "./transactions";
@@ -20,7 +20,8 @@ export const isSavingsAccount = (a: Pick<Account, "type" | "subtype" | "name">) 
 /** Balances from accounts, with the time the oldest one was last updated. */
 export function balancesOf(accounts: Account[]) {
   const totals = summarizeBalances(accounts);
-  const sum = (f: (a: Account) => boolean) => accounts.filter(f).reduce((s, a) => s + a.currentBalanceCents, 0);
+  // checking and savings count charges still pending at the bank (spendableCents)
+  const sum = (f: (a: Account) => boolean) => accounts.filter(f).reduce((s, a) => s + spendableCents(a), 0);
   const investmentAccounts = accounts.filter((a) => a.type === "investment");
   return {
     /** Checking + cash (spendable). Savings are separate. */
