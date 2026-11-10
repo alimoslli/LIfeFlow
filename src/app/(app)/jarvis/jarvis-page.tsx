@@ -1,4 +1,5 @@
 import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { SettingsGear } from "@/components/settings/settings-sheet";
 import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import { PenLine, Plus, SquarePen } from "lucide-react";
@@ -85,13 +86,9 @@ export function JarvisPage({
           >
             <SquarePen className="h-5 w-5" />
           </Link>
-          <Link
-            href="/settings"
-            aria-label="Settings"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text"
-          >
+          <SettingsGear className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text">
             <PixelIcon name="cog" className="h-6 w-6" />
-          </Link>
+          </SettingsGear>
           <Link href="/jarvis/profile" aria-label="Skyling profile" className="lf-hop flex h-11 w-11 items-center justify-center">
             <span className="lf-chip-night h-9 w-9 overflow-hidden rounded-[0.75rem]">
               <MySkyling still className="h-8 w-8 translate-y-[3px]" />

@@ -6,6 +6,7 @@ import { and, eq, ne } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AGE_LINE } from "@/lib/birthday";
+import { settingsDoors } from "./doors-data";
 import { formObject, mutate, type ActionState } from "@/server/actions";
 import { endSession, requireUser } from "@/server/auth/current-user";
 import { SESSION_COOKIE } from "@/server/auth/sessions";
@@ -229,4 +230,9 @@ export async function sendFeedbackAction(_p: ActionState, fd: FormData): Promise
     await sendFeedback(s, { name: u.name, email: u.email }, { kind: String(fd.get("kind") ?? "other") as "other", message: String(fd.get("message") ?? "") });
     return "Thanks! We read every message.";
   });
+}
+
+/** The doors for the Settings sheet (read only; the same list the page shows). */
+export async function settingsDoorsAction() {
+  return settingsDoors();
 }

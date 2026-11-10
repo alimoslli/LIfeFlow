@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { setTourAction } from "@/app/(onboarding)/welcome/actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { openSettings, SettingsSheet } from "@/components/settings/settings-sheet";
 import { cn } from "@/lib/utils";
 import { ASK_EVENT, askUrl, markSend, type AskDetail } from "@/lib/ask-handoff";
 import { assistantLabel, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
@@ -302,6 +303,7 @@ export function AppShell({
         <Toaster />
         <PullToRefresh />
         <PwaClient />
+        <SettingsSheet />
         <PasskeyOffer />
         <NavDirection />
         <Suspense fallback={null}>
@@ -356,6 +358,7 @@ function TopBar({ demo, settingsActive, onToday }: { demo: boolean; settingsActi
         data-tour="settings"
         aria-label="Settings"
         title="Settings"
+        onClick={openSettings}
         aria-current={settingsActive ? "page" : undefined}
         className={cn(
           "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface shadow-soft hover:bg-surface-2",
@@ -408,6 +411,7 @@ function AssistantHeader({ name, skyling }: { name: string; skyling: CompanionKe
       <Link
         href="/settings"
         aria-label="Settings"
+        onClick={openSettings}
         className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text"
       >
         <PixelIcon name="cog" className="h-6 w-6" />

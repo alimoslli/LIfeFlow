@@ -3,8 +3,9 @@ import { useAssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, Loader2, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { openSettings } from "@/components/settings/settings-sheet";
 import { cn } from "@/lib/utils";
 import { nameAtStart } from "@/lib/assistant";
 import { haptic } from "@/lib/haptics";
@@ -105,11 +106,11 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
               if (window.history.length > 1) router.back();
               else router.push(info.back!);
             }}
-            className="tap -ml-1 flex items-center gap-0.5 rounded-full pr-2 text-accent"
+            className="tap -ml-0.5 flex h-11 w-11 items-center justify-center rounded-full bg-surface text-text-2 shadow-soft"
             aria-label="Back"
           >
-            <ChevronLeft className="h-6 w-6" strokeWidth={2.2} />
-            <span className="text-[0.9375rem]">Back</span>
+            {/* our own way back: a soft round button with the pixel arrow, not a blue "< Back" (owner, 2026-11-10) */}
+            <PixelIcon name="back" className="h-[1.125rem] w-[1.125rem]" />
           </button>
         ) : (
           <Link href="/" aria-label="LifeFlow home" className="-ml-0.5 flex min-h-11 min-w-11 items-center justify-center rounded-[10px]">
@@ -156,6 +157,7 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
           href="/settings"
           data-tour="settings"
           aria-label="Settings"
+          onClick={openSettings}
           aria-current={pathname.startsWith("/settings") ? "page" : undefined}
           className={cn("tap flex items-center justify-center rounded-full", pathname.startsWith("/settings") ? "text-accent" : "text-text-2")}
         >

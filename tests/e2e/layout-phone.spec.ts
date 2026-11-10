@@ -46,11 +46,14 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
   }
 
   // Settings: the gear (tap 1), then its tabs (tap 2): Assistant (what Jarvis remembers), Integrations (Apple Health), etc.
+  // The gear brings Settings up from below, over the page you were on (owner, 2026-11-10); its doors are one tap away.
   await page.goto("/");
   await page.getByRole("link", { name: "Settings" }).first().click();
-  await page.waitForURL("**/settings");
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  const settingsLinks = await page.locator("a[href]").evaluateAll((as) => as.map((a) => new URL((a as HTMLAnchorElement).href).pathname));
+  const sheet = page.getByRole("dialog", { name: "Settings" });
+  await expect(sheet).toBeVisible();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(sheet.getByRole("link", { name: /Notifications/ })).toBeVisible();
+  const settingsLinks = await sheet.locator("a[href]").evaluateAll((as) => as.map((a) => new URL((a as HTMLAnchorElement).href).pathname));
   for (const m of [
     "/settings/profile",
     "/settings/jarvis",
