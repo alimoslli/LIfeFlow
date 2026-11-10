@@ -174,6 +174,9 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 
 **Status:** live at `/admin`, in the app's Day Sky look since 11-09, with five places (Office, Work, Marketing, People, App) and the settings gear. It includes the desk, live HQ (what each chat is doing right now), the hourly sync, decision cards and the building pictures. The night round on 11-07 audited it: the founder-only locks, the API key checks and the card rules all hold.
 
+**Paused for new work** (owner, 11-10, through the COO) until the relaunch work is done. Nothing is removed or switched off: the Office, Work, People, App, the hourly sync, decision cards and rounds keep running. Only bugs that break something that exists get fixed, plus anything the owner asks LF HQ for directly (and LF HQ tells the COO).
+- **The one exception the owner asked for today:** a line on Admin › People for accounts "Locked under 13, has a paid plan: review". LF Main may build it, coordinated through the COO; LF HQ builds it only if the COO asks.
+
 **Checked 11-08:**
 - The hourly sync runs: its last three runs were all accepted, 9 chats each.
 - The desk task starter exists but has no API token yet, so the desk opens a link.
@@ -198,11 +201,13 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 - 11-09: who was active today (owner). Tapping "Active today" on the Office or on App → Growth opens People with only the accounts seen in the last 24 hours, newest first, with a "Seen today" menu and "Show everyone" ([da01e2f](https://github.com/alimoslli/LIfeFlow/commit/da01e2f)). "Last seen" is now stamped every 10 minutes of use instead of once a day, so the list and "Seen 2 h ago" are right.
 
 **Next:**
-- The open ADR 0030 questions: per-chat keys and live-line wording.
-- Keep the HQ sync chat light:
+- Keep the HQ sync chat light (upkeep that protects the owner's Claude allowance, so it goes on during the pause):
   - **Why:** it rereads its whole history every hour, and that history grows each run, which uses the owner's Claude allowance.
   - **What:** when it gets long, start a fresh sync chat and point the hourly scheduled task at it.
   - **Then update:** the chat's id in `CLAUDE.md` and in section 1's table.
+
+**On hold until the pause ends:**
+- The open ADR 0030 questions: per-chat keys and live-line wording.
 - **Idea, waiting for the owner's go (not being built): the Planning Room** (owner, 2026-11-09).
   - **What it is:** HQ's group chat, a meeting room where everything said is heard by everyone in HQ. It lives on the Office, as a room in the building you tap, not a new menu item. The point is that the whole team stays connected and on the same page.
   - **Who talks to whom:**
@@ -312,6 +317,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-10, LF HQ: Admin and HQ paused for new work until the relaunch (owner, through the COO). Everything keeps running; bugs only; the under-13 People line is the one exception, with LF Main (section 5).
 - 2026-11-09 early morning, LF COO: on main, Opus-reviewed: Stripe plans follow Stripe's live subscriptions (0b994ba); one card and one filing per email, typed health values win, one Canvas sync at a time (7379002); timeline Done removes the item at once (d15a9bb). Research on the first run (42387c1). Two owner questions added to section 11.
 - 2026-11-09, LF HQ: "Active today" opens the list of who was active (People, seen in the last 24 hours); "last seen" stamped every 10 minutes (section 5).
 - 2026-11-09 morning, LF COO: on main (da1e843, 3 Opus reviews), overlapping cron, webhook and Sync now runs no longer double-run: a lease per job (migration 0057_job_locks). A bank update that arrives during a sync gets one more round instead of waiting 30 minutes. Microsoft failures are recorded and say "Reconnect it in Settings". Plaid calls time out after 20 s. "Your companion" wording passed to LF Marketing.
