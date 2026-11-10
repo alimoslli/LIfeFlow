@@ -7,9 +7,9 @@ const SHOTS = process.env.SHOTS;
 
 // Each tab's landing page and every page that must be one more tap from it.
 const TABS: [string, string, string[]][] = [
-  // Today is the day clock and the timeline, which hold calendar, to-dos, goals and milestones. The skyling is the bar on the
-  // dock, not a tab, and everything else is a door in the "More" sheet (navigation concept A, owner 2026-11-10).
-  ["Today", "/", ["/habits", "/work"]],
+  // Today is the day clock and the timeline, which hold calendar, to-dos, goals and milestones; Health and Work are doors in
+  // the "More" sheet with everything else (owner 2026-11-10: Today is one screen, nothing under it to scroll to).
+  ["Today", "/", []],
   // Money: three plain rows (Activity, Bills and subscriptions, Accounts and savings); investments live under Accounts.
   ["Money", "/money", ["/finances/accounts", "/finances/transactions", "/finances/bills"]],
   ["School", "/school", ["/school/due", "/notes"]],
@@ -23,12 +23,12 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
   });
   const problems: string[] = [];
 
-  // The dock: three places and More, short labels, nothing truncated; no Settings tab and no skyling tab.
+  // The dock: Today, the skyling's own tab (owner, 2026-11-10: "a small icon of him on all other pages"), Money, School and
+  // More, short labels, nothing truncated; no Settings tab, and no second message bar on the dock anywhere.
   await page.goto("/");
   const tabs = page.getByRole("navigation", { name: "Main" }).last().getByRole("link");
-  expect(await tabs.allInnerTexts()).toEqual(["Today", "Money", "School"]);
+  expect(await tabs.allInnerTexts()).toEqual(["Today", "Ray", "Money", "School"]);
   await expect(page.getByRole("navigation", { name: "Main" }).last().getByRole("button", { name: "More" })).toBeVisible();
-  // Today has its own message bar, so the dock doesn't add a second one there.
   await expect(page.getByTestId("skyling-bar")).toHaveCount(0);
   for (const t of await tabs.all()) {
     const cut = await t.evaluate((el) => [...el.querySelectorAll("span.truncate")].some((s) => s.scrollWidth > s.clientWidth + 1));
@@ -49,10 +49,10 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
     pages.push(landing, ...more);
   }
 
-  // The skyling's bar sits on the dock on the other pages: one tap to its chat.
+  // On the other pages the skyling is its tab: one tap to the one chat.
   await page.goto("/money");
-  const skylingBar = page.getByTestId("skyling-bar");
-  await expect(skylingBar.getByRole("link", { name: /Message Ray/ })).toHaveAttribute("href", "/jarvis");
+  await expect(page.getByRole("navigation", { name: "Main" }).last().getByRole("link", { name: "Ray" })).toHaveAttribute("href", "/jarvis");
+  await expect(page.getByTestId("skyling-bar")).toHaveCount(0);
   // More: everything else as doors, each one tap away, with a line about how it stands.
   await page.getByRole("navigation", { name: "Main" }).last().getByRole("button", { name: "More" }).click();
   const everything = page.getByRole("dialog", { name: "Everything else" });

@@ -12,13 +12,23 @@
   -webkit-tap-highlight-color: transparent;
   color: var(--text);
 }
-/* A phone: the chat bar is docked at the bottom of Today, just above the tabs, so the sky ends above it (and above the
-   skyling standing on the bar with its name and the idea clouds beside it, 3rem more; owner 2026-11-10: they never cover
-   the sky). */
+/* A phone's Today is one screen (owner, 2026-11-10): the sky, then the middle (the skyling's note and the idea clouds, or
+   its answer; --mid tall), then the chat bar docked above the tabs. The sky keeps what its horizon, water and "Sun sets
+   in…" need (260px); only a very small window scrolls. */
 @media (max-width: 767px) {
-  .dc {
-    height: clamp(320px, calc(100svh - 280px), 720px);
+  .dc-today {
+    --mid: clamp(6rem, calc(100svh - 600px), 12rem);
   }
+  .dc {
+    height: clamp(260px, calc(100svh - 300px - var(--mid)), 720px);
+  }
+}
+.dc-middle {
+  height: var(--mid);
+}
+/* while the day is open as a line, its tiles, "Pin something" and a stop's card use the middle */
+.dc-today:has(.dc:is([data-state="moving"], [data-state="timeline"])) .dc-middle {
+  visibility: hidden;
 }
 .dc-dock {
   position: fixed;
@@ -31,33 +41,6 @@
   transition:
     opacity 0.25s ease,
     transform 0.25s ease;
-}
-/* While the skyling's answer is open on an upright phone (today-chat.tsx), the sky gets shorter by the answer's height
-   (--lf-reply-h, the card and its gap), but never shorter than its horizon, the water and "Sun sets in…" need (260px).
-   A tall phone (the installed app) keeps the bar where it is, and a long answer scrolls inside the card; a shorter window
-   puts the bar and the answer in the page under the sky and scrolls to the answer. Nothing lies over the sky either way. */
-@media (max-width: 767px) and (min-height: 501px) {
-  .dc-today:has(.dc-dock .lf-reply) .dc {
-    height: clamp(260px, calc(100svh - 280px - var(--lf-reply-h, 0px)), 720px);
-  }
-}
-@media (max-width: 767px) and (min-height: 740px) {
-  .dc-dock .lf-reply {
-    max-height: calc(100svh - 552px);
-  }
-  .dc-dock .lf-reply-body {
-    overflow-y: auto;
-    overscroll-behavior: contain;
-  }
-}
-@media (max-width: 767px) and (min-height: 501px) and (max-height: 739px) {
-  .dc-today:has(.dc-dock .lf-reply) .dc-dock {
-    position: static;
-    width: 100%;
-  }
-  .dc-today:has(.dc-dock .lf-reply) .dc-after-dock {
-    margin-top: 0;
-  }
 }
 /* A phone turned sideways (only in the browser: the installed app stays upright) is too short for a bar floating over
    the sky: it sat on "Sun sets in…" and its cloud on "Sunrise…". There the bar joins the page under the sky and scrolls
@@ -72,12 +55,8 @@
     margin-top: 0;
   }
 }
-/* it steps aside while the day is open as a line (the line has its own controls at the bottom) */
-.dc-today:has(.dc:is([data-state="moving"], [data-state="timeline"])) .dc-dock {
-  opacity: 0;
-  transform: translateY(14px);
-  pointer-events: none;
-}
+/* the chat bar stays while the day is open as a line too (owner, 2026-11-10: "when it turns into a timeline theres no
+   chatbox") */
 /* the skyling in the bar breathes */
 .lf-bob {
   animation: lf-bob 2.6s ease-in-out infinite;

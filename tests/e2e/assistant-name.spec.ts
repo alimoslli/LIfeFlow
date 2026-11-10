@@ -94,9 +94,9 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   await page.getByRole("button", { name: "Start using LifeFlow" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
-  // Phone: three places on the dock; the skyling is the bar above them, by its own name.
+  // Phone: the skyling has its own tab on the dock, by its own name (owner, 2026-11-10).
   const tabs = page.getByRole("navigation", { name: "Main" }).last().getByRole("link");
-  expect(await tabs.allInnerTexts()).toEqual(["Today", "Money", "School"]);
+  expect(await tabs.allInnerTexts()).toEqual(["Today", "Ray", "Money", "School"]);
   await expect(page.getByRole("textbox", { name: "Message Ray" }).first()).toBeVisible();
   // Today: the skyling stands on the chat bar with its name, so it's clear who you're talking to (owner, 2026-11-10)
   await expect(page.locator('[data-testid="ask-skyling"]:visible').first()).toHaveText("Ray");
@@ -105,7 +105,7 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
     await expectNoJarvis(page, `phone ${path}`);
   }
   await visit(page, "/money");
-  await expect(page.getByTestId("skyling-bar")).toContainText("Message Ray");
+  await expect(page.getByRole("navigation", { name: "Main" }).last().getByRole("link", { name: "Ray" })).toBeVisible();
   await visit(page, "/jarvis");
   await expect(page.getByLabel(COMPOSER)).toBeDisabled(); // AI not allowed yet
   await expect(page.getByLabel(COMPOSER)).toHaveAttribute("placeholder", "Allow Ray to start");

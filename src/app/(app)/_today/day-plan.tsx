@@ -6,7 +6,7 @@ import { SkylingSprite } from "@/components/skylings/sprite";
 import { IdeaClouds } from "@/components/skylings/idea-clouds";
 import type { IdeaCloud } from "@/lib/idea-clouds";
 import { useShell } from "@/components/shell/app-shell";
-import { askOnToday, TodayReplyCard } from "./today-chat";
+import { askOnToday, FILL_BAR, TodayReplyCard } from "./today-chat";
 
 const CHIPS = [
   ["Plan my day", "Plan my day: look at my schedule, deadlines, to-dos and shifts for today and give me a simple order to do things in."],
@@ -61,11 +61,31 @@ function useFirstHint() {
  * 2026-11-10: "in the same chat, the same area", no side panel). Above it stands the skyling with its name, so it's clear
  * who you're talking to: small, on the bar's edge, not over the sky.
  */
-export function AskBar({ name, chips = true, clouds = [] }: { name: string; chips?: boolean; clouds?: IdeaCloud[] }) {
+export function AskBar({
+  name,
+  chips = true,
+  clouds = [],
+  answer = true,
+}: {
+  name: string;
+  chips?: boolean;
+  clouds?: IdeaCloud[];
+  /** The answer card under the bar (a laptop); a phone shows it in the middle of Today instead (today-chat.tsx). */
+  answer?: boolean;
+}) {
   const { skyling } = useShell();
   const router = useRouter();
   const [text, setText] = useState("");
   const box = useRef<HTMLInputElement>(null);
+  // a cloud in the middle of Today puts its words here, ready to send
+  useEffect(() => {
+    const fill = (e: Event) => {
+      setText((e as CustomEvent<string>).detail);
+      if (box.current?.getClientRects().length) box.current.focus();
+    };
+    window.addEventListener(FILL_BAR, fill);
+    return () => window.removeEventListener(FILL_BAR, fill);
+  }, []);
   const typed = text.trim();
   const hint = useFirstHint();
   return (
@@ -124,7 +144,7 @@ export function AskBar({ name, chips = true, clouds = [] }: { name: string; chip
           </button>
         </form>
       </div>
-      <TodayReplyCard name={name} refresh={() => router.refresh()} />
+      {answer && <TodayReplyCard name={name} refresh={() => router.refresh()} />}
       {chips && <QuickChips />}
     </div>
   );

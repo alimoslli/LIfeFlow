@@ -34,8 +34,8 @@ export function EverythingSheet() {
   return (
     <Sheet open={open} onClose={close} label="Everything else">
       <div className="overflow-y-auto overscroll-contain px-4 pt-1 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pt-5">
-        <h2 className="px-1 font-display text-[1.5rem] leading-tight font-medium">Everything else</h2>
-        <p className="mb-4 px-1 text-sm text-muted">Pull down to go back.</p>
+        <h2 className="mb-4 px-1 font-display text-[1.5rem] leading-tight font-medium">Everything else</h2>
+
         {data ? (
           <DoorGrid doors={data.doors} onPick={close} />
         ) : (

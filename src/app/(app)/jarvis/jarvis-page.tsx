@@ -43,14 +43,10 @@ export function JarvisPage({
 }) {
   const status = jarvisStatus();
   const items = conversations.map((c) => ({ id: c.id, title: c.title, when: formatIn(c.lastMessageAt, tz, "MMM d") }));
-  const active = conversations.find((c) => c.id === activeId);
   return (
     // Phones: pinned to the visible screen, above the tab bar or the keyboard (ChatViewport). Desktop: full height.
     <ChatViewport className="flex md:h-dvh">
       <aside className="hidden w-72 shrink-0 flex-col py-6 pr-2 pl-1 lg:flex">
-        <Link href="/jarvis" className="lf-sb lf-sb-app lf-sb-sm mx-2 mb-4">
-          <PixelIcon name="plus" className="h-4 w-4" /> New chat
-        </Link>
         <nav className="flex-1 overflow-y-auto px-2" aria-label="Conversations">
           {items.length === 0 && <p className="px-3 py-2 text-sm text-muted">Your conversations will appear here.</p>}
           {items.map((c) => (
@@ -72,19 +68,14 @@ export function JarvisPage({
         </nav>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* One light row: history, the chat's title, new chat, settings, and Jarvis's profile. */}
+        {/* One light row: earlier chats, the skyling's name, settings and its profile. One chat keeps going, so no new chat. */}
         <header className="flex items-center gap-0.5 px-2 pt-[max(0.5rem,env(safe-area-inset-top))] lg:px-4">
           <span className="lg:hidden">
             <HistorySheet items={items} activeId={activeId} />
           </span>
-          <p className="min-w-0 flex-1 truncate px-1 text-center text-[0.9375rem] font-semibold lg:text-left">{active?.title ?? <AssistantName start />}</p>
-          <Link
-            href="/jarvis"
-            aria-label="New chat"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text lg:hidden"
-          >
-            <PixelIcon name="edit" className="h-5 w-5" />
-          </Link>
+          <p className="min-w-0 flex-1 truncate px-1 text-center text-[0.9375rem] font-semibold lg:text-left">
+            <AssistantName start />
+          </p>
           <SettingsGear className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text">
             <PixelIcon name="cog" className="h-6 w-6" />
           </SettingsGear>

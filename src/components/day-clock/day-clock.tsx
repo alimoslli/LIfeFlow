@@ -141,9 +141,8 @@ export function DayClock({
             Pin something
           </button>
         </div>
-        <div data-dc="hintWrap" className="dc-hint">
-          Pull down to fold it back into the sky
-        </div>
+        {/* no words here: the skyling on the line and the days above already say how to go back */}
+        <div data-dc="hintWrap" className="dc-hint" />
         <div data-dc="hit" className="dc-hit" role="button" tabIndex={0} aria-label="Open your day as a timeline" />
         {/* Under the sky: the skyling's one line. It steps aside while the timeline is open. */}
         <div data-dc="foot" className="dc-foot">

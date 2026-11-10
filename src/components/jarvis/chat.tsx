@@ -1,13 +1,13 @@
 "use client";
-import { PixelIcon, pixel } from "@/components/pixel/pixel-icon";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { isNarration } from "@/lib/narration";
 import Link from "next/link";
 import { NotifyAsk } from "./notify-ask";
 import { ASK_EVENT, takeHandoff, type AskDetail } from "@/lib/ask-handoff";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
 import { useAppBusy } from "@/lib/app-busy";
-import { Plug, GraduationCap, Brain, CircleAlert, ImageIcon, Loader2, Paperclip, Square, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Plug, Brain, CircleAlert, ImageIcon, Loader2, Square, ThumbsDown, ThumbsUp } from "lucide-react";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
 import { isAppPath, viewAtName } from "@/lib/app-routes";
@@ -15,6 +15,7 @@ import { jsonOf, PlainError, serverWords } from "@/lib/plain-error";
 import { nameAtStart } from "@/lib/assistant";
 import { SkylingSprite } from "@/components/skylings/sprite";
 import { IdeaClouds } from "@/components/skylings/idea-clouds";
+import { cloudStyle } from "@/components/skylings/cloud-tile";
 import type { IdeaCloud } from "@/lib/idea-clouds";
 import { CLOUD, PixelArt, SkyWindow } from "@/components/skylings/sky-window";
 import { cheerSkylings } from "@/components/skylings/night";
@@ -23,7 +24,7 @@ import { useShell } from "../shell/app-shell";
 import { AiConsentCard } from "./ai-consent-card";
 import { Markdown } from "./markdown";
 import { LiveVoice, VoiceButton } from "./voice-call";
-import { defaultFollowUps, FOLLOW_UPS, OFFER_REPLIES, offersToAct, STARTERS, UNDOABLE_TOOLS } from "./suggestions";
+import { defaultFollowUps, FOLLOW_UPS, OFFER_REPLIES, offersToAct, UNDOABLE_TOOLS } from "./suggestions";
 import { undoChatToolsAction } from "@/app/(app)/jarvis/actions";
 import { toast } from "@/components/ui/toaster";
 import type { JarvisAvailability, JarvisModule, UiAttachment, UiMemorySuggestion, UiMessage, UiTool } from "./types";
@@ -589,7 +590,9 @@ export function JarvisChat({
               </div>
             </div>
           )}
-          {empty && (
+          {/* the skyling's page (owner, 2026-11-10: "where did the main page for the assistant go with the design and
+              catchphrase"): its window and catchphrase head the one chat that keeps going, always */}
+          {
             <div className="animate-rise flex flex-col items-center text-center">
               {/* their skyling in its corner of the real sky, saying the catchphrase with its name beside it (owner, 2026-11-10:
                   "Let's clear your sky."; never put into the prompt as a script). Tap it and it hops. */}
@@ -614,7 +617,7 @@ export function JarvisChat({
                   </h2>
                 </div>
               </SkyWindow>
-              {!aiConsent ? (
+              {!empty ? null : !aiConsent ? (
                 <AiConsentCard name={assistantName} />
               ) : ideas?.length ? (
                 // the skyling's speech bubble and these clouds are the whole surface: a tap fills the box, never sends
@@ -629,24 +632,8 @@ export function JarvisChat({
                   // phone in a browser cut it in half; owner, 2026-11-10: nothing lies over anything)
                   className="mt-5 justify-center [@media(max-height:760px)]:[&>li:nth-child(n+3)]:hidden"
                 />
-              ) : (
-                <div className="-mx-4 mt-4 flex w-[calc(100%+2rem)] snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 pt-1 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:w-full sm:grid-cols-4 sm:overflow-visible sm:px-0">
-                  {starterCards(module).map(({ icon: Icon, title, prompt }) => (
-                    <button
-                      key={title}
-                      onClick={() => (prompt.endsWith("…") ? (setInput(prompt.replace("…", "")), inputRef.current?.focus()) : send(prompt))}
-                      disabled={!canSend}
-                      className="lf-hop flex min-h-[86px] w-[42%] min-w-[150px] shrink-0 snap-start flex-col items-start justify-between gap-2.5 rounded-[1.375rem] bg-surface p-3.5 text-left shadow-soft ring-1 ring-border/60 hover:shadow-lift disabled:opacity-50 sm:w-auto sm:min-w-0"
-                    >
-                      <span className="lf-chip-night h-9 w-9 rounded-[0.75rem]">
-                        <Icon className="h-4 w-4" strokeWidth={2.2} />
-                      </span>
-                      <span className="text-[0.9375rem] leading-snug font-medium text-text">{title}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {aiConsent && connect && connect.length > 0 && (
+              ) : null}
+              {empty && aiConsent && connect && connect.length > 0 && (
                 <Link
                   href="/settings/integrations"
                   className="lf-hop mt-3 flex w-full items-center gap-3 rounded-[1.25rem] bg-surface-2/70 px-4 py-3 text-left hover:bg-surface-2"
@@ -660,7 +647,7 @@ export function JarvisChat({
                 </Link>
               )}
             </div>
-          )}
+          }
           {messages.map((m, i) =>
             m.role === "user" ? (
               <UserBubble key={m.id} m={m} />
@@ -680,18 +667,22 @@ export function JarvisChat({
                   <PixelIcon name="undo" className="h-4 w-4" /> Undo
                 </button>
               )}
-              {followUps.map((f) => (
-                <button
-                  key={f}
-                  onClick={() => send(f)}
-                  className={cn(
-                    "lf-hop min-h-11 rounded-[0.9375rem] px-4 py-2 text-[0.875rem] font-medium shadow-soft",
-                    offer && f === OFFER_REPLIES[0] ? "bg-accent text-accent-text" : "bg-surface text-text-2 ring-1 ring-border/60 hover:text-text",
-                  )}
-                >
-                  {f}
-                </button>
-              ))}
+              {followUps.map((f, i) =>
+                offer ? (
+                  <button key={f} onClick={() => send(f)} className={cn("lf-sb lf-sb-sm", f === OFFER_REPLIES[0] ? "lf-sb-sun" : "lf-sb-app")}>
+                    {f}
+                  </button>
+                ) : (
+                  // what to say next, as the skyling's clouds (owner, 2026-11-10: clouds instead of suggestion boxes)
+                  <span key={f} className="lf-idea" style={{ "--i": i } as CSSProperties}>
+                    <button type="button" onClick={() => send(f)} className="lf-idea-cloud">
+                      <span className="lf-idea-body" style={cloudStyle(i) as CSSProperties}>
+                        <b>{f}</b>
+                      </span>
+                    </button>
+                  </span>
+                ),
+              )}
             </div>
           )}
         </div>
@@ -774,7 +765,7 @@ export function JarvisChat({
                 title="Attach a screenshot, syllabus or text file"
                 disabled={!canSend}
               >
-                <Paperclip className="h-[18px] w-[18px]" />
+                <PixelIcon name="upload" className="h-4 w-4" />
               </button>
               <textarea
                 ref={inputRef}
@@ -1051,19 +1042,6 @@ function RateAnswer({ runId, initial }: { runId: string; initial: 1 | -1 | null 
       </button>
     </div>
   );
-}
-
-const ICONS = [pixel("calendar"), pixel("school"), pixel("money"), pixel("repeat")];
-/** Four starting points; the home screen gets ones that show what Jarvis can do across your life. */
-function starterCards(module: JarvisModule) {
-  if (module === "home")
-    return [
-      { icon: pixel("calendar"), title: "Plan my day", prompt: "What do I need to get done today? Plan it around my classes and shifts." },
-      { icon: GraduationCap, title: "What's due this week?", prompt: "What's due this week, and what should I start first?" },
-      { icon: pixel("money"), title: "Where's my money going?", prompt: "Where is my money going this month?" },
-      { icon: pixel("repeat"), title: "Find my subscriptions", prompt: "What subscriptions am I paying for?" },
-    ];
-  return STARTERS[module].slice(0, 4).map((prompt, i) => ({ icon: ICONS[i % ICONS.length], title: prompt, prompt }));
 }
 
 const listOf = (xs: string[]) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);

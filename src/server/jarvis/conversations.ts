@@ -64,19 +64,25 @@ export async function attachmentMeta(scope: UserScope, ids: string[]) {
     .where(and(eq(attachments.userId, scope.userId), inArray(attachments.id, ids)));
 }
 
-const HISTORY_LIMIT = 80;
+/**
+ * One chat keeps going (owner, 2026-11-10: "starting a new chat is annoying every time"), so a turn sees only its recent
+ * part: the last 12 hours, at most 40 messages. That keeps each message's cost where it was with short chats (CLAUDE.md
+ * "AI spend"); what matters for longer comes from memories.
+ */
+const HISTORY_LIMIT = 40;
+const HISTORY_WINDOW_MS = 12 * 60 * 60 * 1000;
 
 /**
  * Rebuilds provider-neutral history from stored messages. Only the most
  * recent user message carries image data; older images become placeholders.
  */
 export async function loadHistory(scope: UserScope, conversationId: string): Promise<ChatItem[]> {
-  let rows = await listMessages(scope, conversationId);
-  if (rows.length > HISTORY_LIMIT) {
-    rows = rows.slice(-HISTORY_LIMIT);
-    const firstUser = rows.findIndex((r) => r.role === "user");
-    rows = rows.slice(Math.max(0, firstUser)); // never start mid tool-exchange
-  }
+  const since = Date.now() - HISTORY_WINDOW_MS;
+  let rows = (await listMessages(scope, conversationId)).filter((r) => r.createdAt.getTime() >= since);
+  if (rows.length > HISTORY_LIMIT) rows = rows.slice(-HISTORY_LIMIT);
+  // never start mid tool-exchange
+  const firstUser = rows.findIndex((r) => r.role === "user");
+  rows = firstUser < 0 ? [] : rows.slice(firstUser);
   const lastUserIdx = rows.map((r) => r.role).lastIndexOf("user");
   const items: ChatItem[] = [];
   for (let i = 0; i < rows.length; i++) {

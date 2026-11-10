@@ -903,7 +903,10 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${iconHtml(n.it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-list">${rows}</div></div>`;
     for (const r of detail.querySelectorAll<HTMLElement>(".dc-d-row")) r.addEventListener("click", () => select(r.dataset.id ?? ""));
     const list = detail.querySelector<HTMLElement>(".dc-d-list");
-    const over = detail.offsetHeight - (G.H - G.detailY - 12);
+    // a stop's card ends above the chat bar docked under it on a phone (it stays while the line is open), else in the sky
+    const dock = document.querySelector<HTMLElement>(".dc-dock");
+    const floor = dock?.getClientRects().length ? dock.getBoundingClientRect().top - root.getBoundingClientRect().top : G.H;
+    const over = detail.offsetHeight - (floor - G.detailY - 12);
     if (list && over > 0) list.style.maxHeight = `${Math.max(66, Math.floor((list.offsetHeight - over - 22) / 44) * 44 + 22)}px`;
     wrapHint(S.open ? 1 : S.p);
   }

@@ -12,10 +12,11 @@ const ANY = new RegExp(`^(${FOR_ANYONE.map((s) => s.replace(/[?.]/g, "\\$&")).jo
 test("idea clouds: short, from real data, a tap fills the box and sends nothing", async ({ page }) => {
   const email = await signUp(page, "Cleo Cloud");
 
-  // Today: one cloud beside the skyling's name tag on a phone, not over the sky
+  // Today: the clouds fill the middle of a phone's Today, between the sky and the chat bar (owner, 2026-11-10)
   await page.goto("/");
   const today = page.locator('[aria-label="Ideas to try"]:visible').first();
-  await expect(today.getByRole("button")).toHaveCount(1);
+  await expect(today.getByRole("button").first()).toBeVisible();
+  expect(await today.getByRole("button").count()).toBeLessThanOrEqual(3);
   const say = await today.getByRole("button").first().innerText();
   expect(say.split(/\s+/).length).toBeLessThanOrEqual(8);
   expect(say).not.toMatch(/did you know|assistant/i);
@@ -60,7 +61,7 @@ test("idea clouds: short, from real data, a tap fills the box and sends nothing"
     .toBe(1);
 
   // Back on Today: a tap puts it in Today's own chat bar, right there (owner, 2026-11-10: the same chat, no side panel),
-  // and the answer comes on Today, under the bar (owner, 2026-11-10: "no different page ... type it below the timeline")
+  // and the answer comes on Today, in the middle where the clouds were (owner, 2026-11-10)
   await page.goto("/");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await today.getByRole("button").first().click();

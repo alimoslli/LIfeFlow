@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useSyncExternalStore } from "react";
 import { setAiConsentAction } from "@/app/(app)/settings/actions";
 import { undoChatToolsAction } from "@/app/(app)/jarvis/actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
@@ -8,6 +9,9 @@ import { cheerSkylings } from "@/components/skylings/night";
 import { OFFER_REPLIES, offersToAct, UNDOABLE_TOOLS } from "@/components/jarvis/suggestions";
 import { AI_CONSENT_NEEDED } from "@/lib/ai-consent";
 import { isNarration } from "@/lib/narration";
+import { cn } from "@/lib/utils";
+import { IdeaClouds } from "@/components/skylings/idea-clouds";
+import type { IdeaCloud } from "@/lib/idea-clouds";
 
 /**
  * The skyling answers right on Today (owner, 2026-11-10: "there's no different page for the assistant. You just type it
@@ -33,7 +37,6 @@ export type TodayReply = {
 };
 type State = { reply: TodayReply | null; conversationId: string | null; busy: boolean };
 
-const KEY = "lf_today_chat";
 let state: State = { reply: null, conversationId: null, busy: false };
 const listeners = new Set<() => void>();
 const set = (next: Partial<State>) => {
@@ -58,29 +61,14 @@ export const useTodayChat = () =>
     () => SERVER,
   );
 
-/** Today's conversation goes on for the day, so "Do it" and follow-ups are understood; a new day starts a new one. */
-function savedConversation(): string | null {
-  try {
-    const s = JSON.parse(sessionStorage.getItem(KEY) ?? "null") as { id: string; day: string } | null;
-    return s && s.day === new Date().toDateString() ? s.id : null;
-  } catch {
-    return null;
-  }
-}
-function keepConversation(id: string) {
-  try {
-    sessionStorage.setItem(KEY, JSON.stringify({ id, day: new Date().toDateString() }));
-  } catch {}
-}
-
 const plainWords = async (res: Response) => ((await res.json().catch(() => null)) as { error?: string } | null)?.error ?? "";
 
 /** Sends one message and streams the answer into the card. `refresh` redraws Today (the sky shows what was saved). */
 export async function askOnToday(message: string, refresh: () => void) {
   const text = message.trim();
   if (!text || state.busy) return;
-  const conversationId = state.conversationId ?? savedConversation();
-  set({ busy: true, conversationId, reply: { question: text, text: "", kept: false, tools: [], confirmations: [], streaming: true } });
+  const conversationId = state.conversationId;
+  set({ busy: true, reply: { question: text, text: "", kept: false, tools: [], confirmations: [], streaming: true } });
   let saved = false;
   try {
     const res = await fetch("/api/jarvis/chat", {
@@ -117,10 +105,8 @@ export async function askOnToday(message: string, refresh: () => void) {
           actionId?: string;
           message?: string;
         };
-        if (ev.type === "conversation" && ev.id) {
-          set({ conversationId: ev.id });
-          keepConversation(ev.id);
-        } else if (ev.type === "text")
+        if (ev.type === "conversation" && ev.id) set({ conversationId: ev.id });
+        else if (ev.type === "text")
           patch((r) => {
             if (r.kept) {
               r.text = `${r.text.trimEnd()}\n\n`;
@@ -190,48 +176,25 @@ async function undoLast(callIds: string[], refresh: () => void) {
 }
 
 /** Under the bar: the answer, what was saved, its buttons, and the way into the whole chat. */
-export function TodayReplyCard({ name, refresh }: { name: string; refresh: () => void }) {
+export function TodayReplyCard({ name, refresh, fill = false }: { name: string; refresh: () => void; fill?: boolean }) {
   const { reply, conversationId, busy } = useTodayChat();
-  const card = useRef<HTMLElement>(null);
-  const open = reply != null;
-  // on a phone the bar and the answer join the page under the sky, and the sky gets shorter by the card's height
-  // (day-clock.css)
-  useEffect(() => {
-    const el = card.current;
-    if (!el?.closest(".dc-dock")) return;
-    const root = document.documentElement;
-    const ro = new ResizeObserver(() => root.style.setProperty("--lf-reply-h", `${Math.ceil(el.getBoundingClientRect().height) + 12}px`));
-    ro.observe(el);
-    return () => {
-      ro.disconnect();
-      root.style.removeProperty("--lf-reply-h");
-    };
-  }, [open]);
-  // when an answer starts and when it's finished, the page brings the whole card into view (after the sky has made room)
-  useEffect(() => {
-    const el = card.current;
-    const dock = el?.closest<HTMLElement>(".dc-dock");
-    if (!el?.getClientRects().length || (dock && getComputedStyle(dock).position === "fixed")) return;
-    let id = requestAnimationFrame(() => {
-      id = requestAnimationFrame(() =>
-        el.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }),
-      );
-    });
-    return () => cancelAnimationFrame(id);
-  }, [reply?.question, reply?.streaming]);
   if (!reply) return null;
   const saved = reply.tools.filter((t) => t.status === "ok");
   const undoable = reply.settled ? [] : saved.filter((t) => (UNDOABLE_TOOLS as readonly string[]).includes(t.name)).map((t) => t.callId);
   const offer = !reply.streaming && !reply.settled && !reply.confirmations.some((c) => c.status === "pending") && offersToAct(reply.text);
   return (
     <section
-      ref={card}
       aria-label={`${name}'s answer`}
       data-testid="today-reply"
-      className="lf-reply flex flex-col rounded-[1.25rem] bg-surface px-4 py-3 shadow-soft ring-1 ring-border/60"
+      className={cn(
+        "lf-reply flex flex-col rounded-[1.25rem] bg-surface px-4 py-3 shadow-soft ring-1 ring-border/60",
+        // in the middle of a phone's Today the card keeps the middle's height and the answer scrolls inside it
+        fill && "h-full overflow-y-auto overscroll-contain py-2",
+      )}
     >
       <div className="flex items-center gap-3">
-        <p className="min-w-0 flex-1 truncate text-xs text-muted">You: {reply.question}</p>
+        {/* what you asked, unless it's in the middle of Today, where there's no room to say it twice */}
+        {fill ? <span className="flex-1" /> : <p className="min-w-0 flex-1 truncate text-xs text-muted">You: {reply.question}</p>}
         {conversationId && (
           <Link href={`/jarvis/${conversationId}`} className="shrink-0 text-sm font-medium text-accent">
             Open the chat
@@ -246,8 +209,7 @@ export function TodayReplyCard({ name, refresh }: { name: string; refresh: () =>
           <PixelIcon name="close" className="h-4 w-4" />
         </button>
       </div>
-      {/* a tall phone keeps the bar where it is and a long answer scrolls in here (day-clock.css) */}
-      <div className="lf-reply-body min-h-0">
+      <div className="min-h-0">
         {saved.length > 0 && (
           <ul className="mt-1.5 flex flex-col gap-1" aria-label="Saved">
             {saved.map((t) => (
@@ -332,5 +294,55 @@ export function TodayReplyCard({ name, refresh }: { name: string; refresh: () =>
         </div>
       )}
     </section>
+  );
+}
+
+/** A cloud (or the skyling's note) puts its words in the chat bar under it, ready to send (day-plan.tsx AskBar). */
+export const FILL_BAR = "lf:fill-bar";
+const fillBar = (ask: string) => window.dispatchEvent(new CustomEvent(FILL_BAR, { detail: ask }));
+
+/**
+ * The middle of a phone's Today, between the sky and the chat bar (owner, 2026-11-10: "the chat at the bottom and the
+ * extras with the clouds etc in the middle filling up the middle smoothly"): the skyling's one note and the idea clouds,
+ * or, once you've asked something, the answer in their place. It keeps one height (day-clock.css .dc-middle), so the sky
+ * never jumps. The one chat that keeps going starts from `conversationId`.
+ */
+export function TodayMiddle({
+  name,
+  clouds,
+  note,
+  conversationId,
+  children,
+}: {
+  name: string;
+  clouds: IdeaCloud[];
+  /** The skyling's one note: a link, a question it sends, or words it puts in the bar. */
+  note: { text: string; href?: string; prompt?: string; fill?: string } | null;
+  conversationId: string | null;
+  /** Something that must come first (the birthday question). */
+  children?: React.ReactNode;
+}) {
+  const router = useRouter();
+  const { reply } = useTodayChat();
+  useEffect(() => {
+    if (conversationId && !state.conversationId) set({ conversationId });
+  }, [conversationId]);
+  const refresh = () => router.refresh();
+  if (reply) return <TodayReplyCard name={name} refresh={refresh} fill />;
+  if (children) return <div className="h-full overflow-y-auto">{children}</div>;
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-3 overflow-hidden px-1">
+      {note && (
+        <button
+          type="button"
+          data-testid="assistant-line"
+          onClick={() => (note.href ? router.push(note.href) : note.prompt ? void askOnToday(note.prompt, refresh) : fillBar(note.fill ?? note.text))}
+          className="line-clamp-2 max-w-[22rem] text-center text-[0.9375rem] leading-snug font-medium text-text"
+        >
+          {note.text}
+        </button>
+      )}
+      <IdeaClouds clouds={clouds} show={note ? 2 : 3} onPick={fillBar} className="justify-center" />
+    </div>
   );
 }
