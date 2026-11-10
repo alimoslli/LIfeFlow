@@ -38,7 +38,8 @@ async function runPromises() {
   let sent = 0;
   let failed = 0;
   for (const u of all) {
-    if (u.kind === "demo") continue;
+    // the demo account, and an account locked under 13 (nothing of theirs is kept, and nothing is sent to them)
+    if (u.kind === "demo" || u.prefs?.ageBlockedAt) continue;
     try {
       const made = await withUser(u.id, (s) => runProactive({ scope: s, tz: u.tz, prefs: u.prefs, trigger: "promise" }));
       messages += made.length;

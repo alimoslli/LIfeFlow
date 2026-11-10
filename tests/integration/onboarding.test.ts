@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { closeDb, getDb } from "@/server/db/client";
 import { withUser } from "@/server/db/with-user";
-import { calendarEvents, errorReports, integrations, users } from "@/server/db/schema";
+import { calendarEvents, errorReports, integrations, ownerInbox, users } from "@/server/db/schema";
 import { sql } from "drizzle-orm";
 import { createTask } from "@/server/services/tasks";
 import { createCourse } from "@/server/services/school";
@@ -12,7 +12,16 @@ import { provisionalName } from "@/lib/provisional-name";
 import { listAccounts } from "@/server/services/finance/accounts";
 import { listActiveMemories } from "@/server/services/memory";
 import { setCompanion, updateProfile } from "@/server/services/accounts";
-import { completeOnboarding, finishOnboarding, saveBirthday, saveWelcomeProgress, setTourState } from "@/server/services/onboarding";
+import {
+  closeLockedConnections,
+  completeOnboarding,
+  finishOnboarding,
+  retryLockClosing,
+  saveBirthday,
+  saveWelcomeProgress,
+  setTourState,
+} from "@/server/services/onboarding";
+import { closeAtProvider } from "@/server/services/account-cleanup";
 import { listCourses } from "@/server/services/school";
 import { listEmployers } from "@/server/services/work";
 import { assistantProfile } from "@/lib/assistant";
@@ -71,7 +80,9 @@ async function finishedWithData(name: string) {
     .set({ preferences: { ...made.user.preferences, onboarding: "done", birthDate: undefined }, stripeCustomerId: `cus_${randomUUID().slice(0, 8)}` })
     .where(eq(users.id, made.user.id));
   await made.run(async (s) => {
-    await s.tx.insert(integrations).values({ userId: made.user.id, provider: "plaid", status: "connected", displayName: "Bank" });
+    await s.tx
+      .insert(integrations)
+      .values({ userId: made.user.id, provider: "plaid", status: "connected", displayName: "Bank", encryptedCredentials: "sealed" });
     await createCourse(s, { name: "Math 7" });
     await createTask(s, "UTC", { title: "Homework" });
   });
@@ -246,8 +257,8 @@ describe("onboarding", () => {
     await run(async (s) => {
       await s.tx.insert(integrations).values([
         { userId: user.id, provider: "canvas", status: "connected", displayName: "canvas.school.edu" },
-        { userId: user.id, provider: "plaid", status: "connected", displayName: "Bank" },
-        { userId: user.id, provider: "google", status: "connected", displayName: "kai@example.com" },
+        { userId: user.id, provider: "plaid", status: "connected", displayName: "Bank", encryptedCredentials: "sealed" },
+        { userId: user.id, provider: "google", status: "connected", displayName: "kai@example.com", encryptedCredentials: "sealed" },
       ]);
       const c = await createCourse(s, { name: "Grade 5 Science" });
       await createTask(s, "UTC", { title: "Volcano model" });
@@ -260,36 +271,67 @@ describe("onboarding", () => {
       .update(users)
       .set({ timezone: "America/Denver", inboxToken: `t${Date.now()}`, smsPhone: `+1555${String(Date.now()).slice(-7)}` })
       .where(eq(users.id, user.id));
+    // they also sent feedback, which the owner's inbox keeps a copy of
+    await getDb()
+      .insert(ownerInbox)
+      .values({ senderUserId: user.id, senderName: "Kai Real", senderEmail: user.email, kind: "idea", message: "more dinosaurs" });
     // then they went back and gave their real birthday
     closed.length = 0;
     expect(await run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${new Date().getFullYear() - 10}-02-02` }))).toEqual({ blocked: true });
-    // the bank link is removed at Plaid and the Google grant revoked, like deleting an account
+    expect(await getDb().select().from(ownerInbox).where(eq(ownerInbox.senderUserId, user.id))).toEqual([]);
+    // nothing outside is called inside the lock: the bank link and the Google grant wait, as only their sealed grant, for the commit
+    expect(closed).toEqual([]);
+    expect(await leftovers(user.id)).toEqual(["integrations"]);
+    const waiting = await run((s) => s.tx.select().from(integrations));
+    expect(waiting.map((w) => [w.provider, w.displayName, w.externalId, w.metadata]).sort()).toEqual([
+      ["google", null, null, {}],
+      ["plaid", null, null, {}],
+    ]);
+    expect((await prefs(user.id)).ageLockClosing).toBe(true);
+    // then the bank link is removed at Plaid and the Google grant revoked, like deleting an account, and nothing is left
+    expect(await closeLockedConnections(getDb(), user.id)).toEqual({ closed: 2, left: 0 });
     expect(closed.sort()).toEqual(["google", "plaid"]);
+    expect(await leftovers(user.id)).toEqual([]);
     const [u] = await getDb().select().from(users).where(eq(users.id, user.id));
     expect(u.name).toBe(provisionalName(u.email));
     expect([u.timezone, u.inboxToken, u.smsPhone]).toEqual(["UTC", null, null]);
     expect(Object.keys(u.preferences).sort()).toEqual(["ageBlockedAt", "onboarding"]);
     expect(u.preferences.onboarding).toBe("pending");
-    // every table that holds their rows is empty except how they sign in and the action log
-    const keep = new Set([
-      "users",
-      "sessions",
-      "oauth_identities",
-      "passkeys",
-      "recovery_codes",
-      "login_challenges",
-      "auth_challenges",
-      "password_resets",
-      "audit_events",
-    ]);
-    const tables = await getDb().execute<{ table_name: string }>(
-      sql`select distinct table_name from information_schema.columns where column_name = 'user_id' and table_schema = current_schema()`,
+  });
+
+  it("a link that doesn't close at the provider stays marked, is shown to the owner, and the sync cron's retry closes it", async () => {
+    const { user, run } = await finishedWithData("Rae Retry");
+    closed.length = 0;
+    expect(await run((s) => saveBirthday(s, "UTC", `${new Date().getFullYear() - 9}-03-03`, { confirmed: true }))).toEqual({ blocked: true });
+    // Plaid is down the first time
+    vi.mocked(closeAtProvider).mockRejectedValueOnce(new Error("down"));
+    expect(await closeLockedConnections(getDb(), user.id)).toEqual({ closed: 0, left: 1 });
+    expect((await prefs(user.id)).ageLockClosing).toBe(true);
+    expect(await leftovers(user.id)).toEqual(["integrations"]);
+    const { ageLocksToReview } = await import("@/server/services/admin");
+    expect((await ageLocksToReview(getDb())).find((r) => r.id === user.id)).toMatchObject({ paid: true, closing: true });
+    // the cron's next run closes it and clears the mark; the paid plan still waits for the owner
+    expect(await retryLockClosing(getDb())).toBeGreaterThanOrEqual(1);
+    expect(closed).toEqual(["plaid"]);
+    expect(await leftovers(user.id)).toEqual([]);
+    expect((await prefs(user.id)).ageLockClosing).toBeUndefined();
+    expect((await ageLocksToReview(getDb())).find((r) => r.id === user.id)).toMatchObject({ paid: true, closing: false });
+    // and it never touches an account that isn't locked
+    const other = await finishedWithData("Nora Normal");
+    expect(await closeLockedConnections(getDb(), other.user.id)).toEqual({ closed: 0, left: 0 });
+    expect(await leftovers(other.user.id)).toContain("integrations");
+  });
+
+  it("the demo account can't be locked", async () => {
+    const { user, run } = await makeUser("Demo Dee");
+    await getDb()
+      .update(users)
+      .set({ accountKind: "demo", preferences: { onboarding: "pending" } })
+      .where(eq(users.id, user.id));
+    await expect(run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${new Date().getFullYear() - 9}-03-03` }))).rejects.toThrow(
+      "The demo account keeps its birthday.",
     );
-    for (const { table_name } of tables.rows) {
-      if (keep.has(table_name)) continue;
-      const [{ n }] = (await getDb().execute<{ n: number }>(sql`select count(*)::int as n from ${sql.identifier(table_name)} where user_id = ${user.id}`)).rows;
-      expect(n, table_name).toBe(0);
-    }
+    expect((await prefs(user.id)).ageBlockedAt).toBeUndefined();
   });
 
   it("a new table with a user_id is emptied by the lock unless it's listed as kept, and a view can't break it", async () => {
@@ -365,9 +407,12 @@ describe("onboarding", () => {
     // the welcome's own save can't be used to lock a finished account either
     await expect(run((s) => saveWelcomeProgress(s, "UTC", { birthDate: young }))).rejects.toThrow("Check the year.");
     expect((await prefs(user.id)).ageBlockedAt).toBeUndefined();
-    // confirmed: locked and emptied like setup, the bank closed at Plaid, and Stripe left alone
+    // confirmed: locked and emptied like setup, the bank closed at Plaid after the commit, and Stripe left alone
     await getDb().delete(errorReports).where(eq(errorReports.route, "age.lock"));
     expect(await run((s) => saveBirthday(s, "UTC", young, { confirmed: true }))).toEqual({ blocked: true });
+    expect(closed).toEqual([]);
+    expect(await leftovers(user.id)).toEqual(["integrations"]);
+    expect(await closeLockedConnections(getDb(), user.id)).toEqual({ closed: 1, left: 0 });
     const [u] = await getDb().select().from(users).where(eq(users.id, user.id));
     expect(Object.keys(u.preferences).sort()).toEqual(["ageBlockedAt", "onboarding"]);
     expect(u.name).toBe(provisionalName(u.email));
@@ -389,6 +434,7 @@ describe("onboarding", () => {
     // Today's card on a finished account: under 13 locks it and empties it, like setup does, once they've confirmed the date
     const b = await finishedWithData("Bo Young");
     expect(await b.run((s) => saveBirthday(s, "UTC", `${new Date().getFullYear() - 8}-05-05`, { confirmed: true }))).toEqual({ blocked: true });
+    await closeLockedConnections(getDb(), b.user.id);
     expect(await leftovers(b.user.id)).toEqual([]);
     expect(Object.keys(await prefs(b.user.id)).sort()).toEqual(["ageBlockedAt", "onboarding"]);
     expect(await b.run((s) => saveBirthday(s, "UTC", "1990-01-01"))).toEqual({ blocked: true });

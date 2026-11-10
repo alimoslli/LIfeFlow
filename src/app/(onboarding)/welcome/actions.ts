@@ -1,15 +1,26 @@
 "use server";
 import { ZodError } from "zod";
-import { unstable_rethrow } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import type { ClockData } from "@/lib/day-clock";
 import { plainValidation } from "@/lib/validation-message";
 import { mutate, type ActionState } from "@/server/actions";
-import { withCurrentUser } from "@/server/auth/current-user";
+import { endSession, requireUserForWelcome, withCurrentUser } from "@/server/auth/current-user";
 import { audit } from "@/server/services/audit";
 import { dayClockData } from "@/server/services/day-clock";
 import { ServiceError } from "@/server/services/errors";
 import { AGE_LINE } from "@/lib/birthday";
-import { completeOnboarding, finishOnboarding, saveWelcomeProgress, setDisplayName, setTourState, type OnboardingInput } from "@/server/services/onboarding";
+import {
+  closeLockedConnections,
+  completeOnboarding,
+  finishOnboarding,
+  saveWelcomeProgress,
+  setDisplayName,
+  setTourState,
+  type OnboardingInput,
+} from "@/server/services/onboarding";
+import { after } from "next/server";
+import { getDb } from "@/server/db/client";
+import { AuthError, deleteAccount } from "@/server/services/accounts";
 
 /** The person's sky as it is now (no money on it), for "Connect your sky" after Canvas connects; or why it couldn't load. */
 export type SkyResult = { ok: true; clock: ClockData } | { ok: false; error: string };
@@ -43,8 +54,10 @@ export async function saveWelcomeAction(input: Parameters<typeof saveWelcomeProg
     const r = await withCurrentUser(async (s, u) => {
       const out = await saveWelcomeProgress(s, u.timezone || "UTC", input);
       await audit(s, "user", out.blocked ? "onboarding.age_blocked" : "onboarding.progress");
-      return out;
+      return { ...out, userId: u.id };
     });
+    // the lock is committed: now close their bank and Google links where they live (retried by the sync cron if this fails)
+    if (r.blocked) after(() => closeLockedConnections(getDb(), r.userId));
     return r.blocked ? { ok: false, error: AGE_LINE, at: Date.now() } : { ok: true, at: Date.now() };
   } catch (e) {
     unstable_rethrow(e);
@@ -76,4 +89,21 @@ export async function setNameAction(name: string): Promise<ActionState> {
   return mutate("onboarding.name", async (s) => {
     await setDisplayName(s, name);
   });
+}
+
+/**
+ * "Delete my account" on the lock screen (an account locked under 13): the same deletion as Settings, with its rules (the
+ * password if they have one, a plan that can't be cancelled stops it), after typing DELETE. Only for a locked account.
+ */
+export async function deleteLockedAccountAction(_p: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUserForWelcome();
+  if (!user.preferences?.ageBlockedAt) redirect("/settings/data");
+  if (String(fd.get("confirm") ?? "").trim() !== "DELETE") return { ok: false, error: "Type DELETE to confirm.", at: Date.now() };
+  try {
+    await deleteAccount(getDb(), user.id, String(fd.get("password") ?? ""));
+  } catch (e) {
+    return { ok: false, error: e instanceof AuthError ? e.message : "Couldn't delete the account. Try again.", at: Date.now() };
+  }
+  await endSession();
+  redirect("/");
 }

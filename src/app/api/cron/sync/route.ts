@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { getDb } from "@/server/db/client";
 import { withJobLock, withPlaidSyncLock } from "@/server/db/job-lock";
 import { connectionRegistry, users } from "@/server/db/schema";
@@ -10,6 +10,7 @@ import { syncGoogleCalendar, syncGoogleEmail } from "@/server/integrations/googl
 import { microsoftNeedsReauth, syncMicrosoftConnection } from "@/server/integrations/microsoft";
 import { plaidNeedsReauth, syncConnection } from "@/server/integrations/plaid";
 import { markCanvasError, syncCanvas, withCanvasLock } from "@/server/integrations/canvas";
+import { retryLockClosing } from "@/server/services/onboarding";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -38,7 +39,8 @@ async function runSync() {
   const rows = await getDb()
     .select({ userId: connectionRegistry.userId, integrationId: connectionRegistry.integrationId, provider: connectionRegistry.provider, tz: users.timezone })
     .from(connectionRegistry)
-    .innerJoin(users, eq(users.id, connectionRegistry.userId));
+    // an account locked under 13 never syncs (its connections are being closed, below)
+    .innerJoin(users, and(eq(users.id, connectionRegistry.userId), sql`not (${users.preferences} ? 'ageBlockedAt')`));
   let ok = 0;
   let failed = 0;
   let skipped = 0;
@@ -87,5 +89,7 @@ async function runSync() {
       failed++; // the error is recorded on the connection for the user to see
     }
   }
-  return { synced: ok, failed, skipped };
+  // bank and Google links of accounts locked under 13 that didn't close at the provider the first time
+  const closing = await retryLockClosing(getDb()).catch(() => 0);
+  return { synced: ok, failed, skipped, closing };
 }

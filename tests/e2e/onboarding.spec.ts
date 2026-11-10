@@ -207,6 +207,12 @@ test("a finished account answering under 13 on Today is locked the same way (own
   const [row] = await queryAsUser<{ p: Record<string, unknown>; name: string }>(email, "select preferences as p, name from users where email = $1", [email]);
   expect(Object.keys(row.p).sort()).toEqual(["ageBlockedAt", "onboarding"]);
   expect(row.name).not.toBe("Rio Late");
+  // the lock screen can delete the account too (one tap deeper), with the same rules as Settings
+  await page.locator("summary", { hasText: "Delete my account" }).click();
+  await page.getByLabel("Password").fill("correct horse battery");
+  await page.getByLabel('Type "DELETE" to confirm').fill("DELETE");
+  await page.locator("form button[type=submit]", { hasText: "Delete my account" }).click();
+  await expect.poll(async () => (await pool.query("select count(*)::int as n from users where email = $1", [email])).rows[0].n).toBe(0);
 });
 
 test("under 13: one calm line, the welcome stays locked, and an older year later doesn't get through", async ({ page }) => {

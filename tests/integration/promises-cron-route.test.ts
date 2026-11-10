@@ -2,7 +2,8 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/api/cron/promises/route";
 import { closeDb, getDb } from "@/server/db/client";
-import { errorReports } from "@/server/db/schema";
+import { errorReports, users } from "@/server/db/schema";
+import { runProactive } from "@/server/services/proactive/engine";
 import { makeUser } from "../helpers";
 
 vi.mock("@/server/services/proactive/engine", async (orig) => ({
@@ -41,5 +42,18 @@ describe("promise check-in cron", () => {
     expect(rows.length).toBe(1); // grouped by fingerprint
     expect(rows[0].count).toBe(body.failed);
     expect(rows[0].message).not.toMatch(/jane@example|4f1c0b9e|boom/);
+  });
+
+  it("skips an account locked under 13 (nothing of theirs is kept, and nothing is sent to them)", async () => {
+    const locked = await makeUser();
+    await getDb()
+      .update(users)
+      .set({ preferences: { onboarding: "done", ageBlockedAt: new Date().toISOString() } })
+      .where(eq(users.id, locked.user.id));
+    vi.mocked(runProactive).mockClear();
+    expect((await call("cron-test-secret")).status).toBe(200);
+    const seen = vi.mocked(runProactive).mock.calls.map((c) => c[0].scope.userId);
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen).not.toContain(locked.user.id);
   });
 });

@@ -41,7 +41,8 @@ async function runNotify() {
   let messages = 0;
   let sent = 0;
   for (const u of all) {
-    if (u.kind === "demo") continue;
+    // the demo account, and an account locked under 13 (nothing of theirs is kept, and nothing is sent to them)
+    if (u.kind === "demo" || u.prefs?.ageBlockedAt) continue;
     // Separate transactions: one user's (or one step's) failure never blocks the rest.
     try {
       messages += (await withUser(u.id, (s) => runDueSlot(s, u.tz, u.prefs, new Date(), { scheduled: true }))).length;

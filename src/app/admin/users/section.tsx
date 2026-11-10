@@ -5,7 +5,7 @@ import { PageSection } from "../ui";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
 import { getDb } from "@/server/db/client";
-import { listUsers, safe } from "@/server/services/admin";
+import { ageLocksToReview, listUsers, safe } from "@/server/services/admin";
 import { Failed, ago } from "../format";
 
 export type PeopleParams = { q?: string; plan?: string; status?: string; seen?: string; page?: string; fstatus?: string; fkind?: string };
@@ -19,6 +19,7 @@ export async function UsersSection({ sp }: { sp: PeopleParams }) {
   const status = sp.status === "active" || sp.status === "suspended" ? sp.status : undefined;
   const seen = sp.seen === "today" ? "today" : undefined;
   const r = await safe("users", () => listUsers(getDb(), { q: sp.q, plan, status, seen, page: Number(sp.page) || 1 }));
+  const locks = await safe("age locks", () => ageLocksToReview(getDb()));
   const link = (page: number, keepSeen = true) => {
     const p = new URLSearchParams();
     if (sp.q) p.set("q", sp.q);
@@ -68,6 +69,25 @@ export async function UsersSection({ sp }: { sp: PeopleParams }) {
         </Select>
         <Button type="submit">Search</Button>
       </form>
+      {locks.ok && locks.data.length > 0 && (
+        <Card className="px-5 py-3" data-testid="age-locks">
+          <p className="text-sm font-medium">Locked under 13</p>
+          <ul className="divide-y divide-border">
+            {locks.data.map((l) => (
+              <li key={l.id}>
+                <Link href={`/admin/users/${l.id}`} className="flex flex-col gap-0.5 py-2.5 text-sm">
+                  <span className="truncate font-medium">{l.email}</span>
+                  <span className="text-text-2">
+                    {[l.paid && "Locked under 13, has a paid plan: review", l.closing && "A bank or Google link is still closing (retried)"]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
       {!r.ok ? (
         <Card className="p-5 text-sm text-danger">{Failed()}</Card>
       ) : r.data.rows.length === 0 ? (

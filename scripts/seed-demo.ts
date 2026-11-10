@@ -67,6 +67,11 @@ async function main() {
     await db.delete(users).where(and(eq(users.id, existing.id), eq(users.accountKind, "demo")));
   }
   const user = await registerUser(db, { name: "Alex Demo", email: EMAIL, password: PASSWORD, timezone: TZ }, { accountKind: "demo" });
+  // a birthday, so the demo is never asked for one (and the lock refuses the demo account anyway)
+  await db
+    .update(users)
+    .set({ preferences: sql`${users.preferences} || '{"birthDate":"2004-04-04"}'::jsonb` })
+    .where(eq(users.id, user.id));
   const today = todayIn(TZ);
   await withUser(user.id, (s) => seedAll(s, today));
   console.log(`Test account ready: ${EMAIL}${fromEnv ? "" : ` / ${PASSWORD}`}`);

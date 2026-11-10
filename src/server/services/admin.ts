@@ -155,6 +155,35 @@ export async function listUsers(db: Database, f: UserFilter = {}): Promise<{ row
   });
 }
 
+export type AgeLockRow = { id: string; email: string; lockedAt: string; paid: boolean; closing: boolean };
+
+/**
+ * Accounts locked under 13 that need the owner: one with a billing record or Pro (a plan is never cancelled from the lock;
+ * owner, 2026-11-10: flag only, he reviews it in Stripe), or one whose bank or Google link is still being closed.
+ */
+export async function ageLocksToReview(db: Database): Promise<AgeLockRow[]> {
+  return timed(db, async (tx) => {
+    const rows = await tx
+      .select({ id: users.id, email: users.email, prefs: users.preferences, customer: users.stripeCustomerId, plan: users.plan })
+      .from(users)
+      .where(
+        and(
+          sql`${users.preferences} ? 'ageBlockedAt'`,
+          or(isNotNull(users.stripeCustomerId), eq(users.plan, "pro"), sql`${users.preferences} ? 'ageLockClosing'`),
+        ),
+      )
+      .orderBy(desc(users.createdAt))
+      .limit(50);
+    return rows.map((r) => ({
+      id: r.id,
+      email: r.email,
+      lockedAt: r.prefs.ageBlockedAt ?? "",
+      paid: !!r.customer || r.plan === "pro",
+      closing: !!r.prefs.ageLockClosing,
+    }));
+  });
+}
+
 export type UserDetail = UserRow & {
   timezone: string;
   twoFactor: boolean;

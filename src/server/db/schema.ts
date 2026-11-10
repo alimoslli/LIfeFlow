@@ -95,6 +95,8 @@ export type UserPreferences = {
    * a later, older year doesn't get through, and nothing else about them is kept.
    */
   ageBlockedAt?: string;
+  /** A locked account whose bank or Google link is still being closed at the provider (retried by the sync cron). */
+  ageLockClosing?: boolean;
   /** Where they work, typed in the welcome; kept while they connect (they leave and come back) and made an employer when setup finishes. */
   welcomeJob?: string;
   /** First-run setup: "pending" only for accounts created since onboarding launched. */

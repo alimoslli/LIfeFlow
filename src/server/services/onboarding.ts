@@ -4,10 +4,11 @@ import { COMPANION_KEYS, SKY_CHOICE } from "@/lib/companions";
 import { AGE_LINE, BIRTHDAY_NEEDED, CHECK_YEAR, birthDateProblem, isUnderAge } from "@/lib/birthday";
 import { todayIn } from "@/lib/dates";
 import { ServiceError } from "./errors";
-import { integrations, users } from "../db/schema";
+import { integrations, ownerInbox, users } from "../db/schema";
 import { closeAtProvider, OUTSIDE_PROVIDERS } from "./account-cleanup";
 import { provisionalName } from "@/lib/provisional-name";
-import type { UserScope } from "../db/with-user";
+import type { Database } from "../db/client";
+import { withUser, type UserScope } from "../db/with-user";
 import { assistantSchema } from "./accounts";
 import { createManualAccount } from "./finance/accounts";
 import { createMemory } from "./memory";
@@ -145,14 +146,21 @@ const KEEP_ON_LOCK = new Set([
 /**
  * Under 13 (owner, 2026-11-10): one calm line, and the account is locked, during setup or later (a finished account answering
  * on Today or in Settings gets the same, owner 2026-11-10). Nothing they gave is kept (the review of b3effa0): the name goes
- * back to the stand-in from their email, the preferences keep only the lock, Plaid and Google are closed at the provider,
- * and every row they own is removed except how they sign in. A paid plan is flagged for the owner, never cancelled here.
+ * back to the stand-in from their email, the preferences keep only the lock, every row they own is removed except how they
+ * sign in, and so are copies of their feedback in the owner's inbox. A bank or Google link is kept only as the encrypted
+ * grant until `closeLockedConnections` closes it at the provider after this commits (no outside call inside the
+ * transaction; `ageLockClosing` marks it, and the sync cron retries). A paid plan is flagged for the owner, never cancelled
+ * here. The demo account can't be locked.
  * A finished account is only ever locked after the person has seen the date read back and said yes (`saveBirthday`). Returned rather than thrown,
  * so it's committed. The session layer enforces the lock (`ageLocked`, auth/current-user.ts).
  */
 async function blockUnderAge(scope: UserScope, prefs: Prefs) {
   const at = new Date().toISOString();
-  const [me] = await scope.tx.select({ email: users.email, stripeCustomerId: users.stripeCustomerId }).from(users).where(eq(users.id, scope.userId));
+  const [me] = await scope.tx
+    .select({ email: users.email, stripeCustomerId: users.stripeCustomerId, kind: users.accountKind })
+    .from(users)
+    .where(eq(users.id, scope.userId));
+  if (me.kind === "demo") throw new ServiceError("The demo account keeps its birthday.");
   // A paid plan is never cancelled from here (owner, 2026-11-10: flag only; he reviews and ends it himself). The flag is a
   // fixed-text error report, which also emails him the first time.
   if (me.stripeCustomerId) {
@@ -161,14 +169,16 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
       () => {},
     );
   }
-  // what they connected in the welcome is closed where it lives too, the same way deleting an account does: a bank link at
-  // Plaid, a Google grant at Google (best effort, in parallel, a few seconds at most; no database work in these calls)
+  // a bank link or Google grant has to be closed where it lives (Plaid, Google), like deleting an account does. That's an
+  // outside call, so it never runs in this transaction: the row stays as only its encrypted grant (no name, account or
+  // metadata) until closeLockedConnections closes it after the commit
   const outside = await scope.tx
-    .select({ provider: integrations.provider, encryptedCredentials: integrations.encryptedCredentials })
-    .from(integrations)
-    .where(and(eq(integrations.userId, scope.userId), inArray(integrations.provider, OUTSIDE_PROVIDERS)));
-  const f: typeof fetch = (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(4000) });
-  await Promise.all(outside.map((row) => closeAtProvider(row, f).catch(() => {})));
+    .update(integrations)
+    .set({ displayName: null, externalId: null, metadata: {}, scopes: [], lastError: null, status: "disconnected" })
+    .where(and(eq(integrations.userId, scope.userId), inArray(integrations.provider, OUTSIDE_PROVIDERS)))
+    .returning({ id: integrations.id });
+  // copies of their feedback in the owner's inbox go too (that table has no user_id, so the sweep below can't see it)
+  await scope.tx.delete(ownerInbox).where(eq(ownerInbox.senderUserId, scope.userId));
   // every table that holds their rows, found from the database so a new one can't be missed: a new table with a user_id is
   // emptied unless it is listed in KEEP_ON_LOCK (tests/integration/onboarding.test.ts checks this). Only real tables: a view
   // can't be deleted from, and one must never make this save throw.
@@ -179,7 +189,9 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
   );
   for (const { table_name } of tables.rows) {
     if (KEEP_ON_LOCK.has(table_name)) continue;
-    await scope.tx.execute(sql`delete from ${sql.identifier(table_name)} where user_id = ${scope.userId}`);
+    if (table_name === "integrations")
+      await scope.tx.delete(integrations).where(and(eq(integrations.userId, scope.userId), sql`not (${inArray(integrations.provider, OUTSIDE_PROVIDERS)})`));
+    else await scope.tx.execute(sql`delete from ${sql.identifier(table_name)} where user_id = ${scope.userId}`);
   }
   await scope.tx
     .update(users)
@@ -189,10 +201,71 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
       timezone: "UTC",
       inboxToken: null,
       smsPhone: null,
-      preferences: { onboarding: prefs.onboarding, ageBlockedAt: at },
+      preferences: { onboarding: prefs.onboarding, ageBlockedAt: at, ...(outside.length ? { ageLockClosing: true } : {}) },
     })
     .where(eq(users.id, scope.userId));
   return { blocked: true as const };
+}
+
+/**
+ * After a lock commits: closes each bank link at Plaid and Google grant at Google that the lock kept, then removes its row.
+ * Only ever for a locked account. A failure keeps the row and the `ageLockClosing` mark, records a fixed-text error and is
+ * retried by the sync cron (`retryLockClosing`); the last one closed clears the mark. Never throws.
+ */
+export async function closeLockedConnections(db: Database, userId: string, base: typeof fetch = fetch): Promise<{ closed: number; left: number }> {
+  const f: typeof fetch = (input, init) => base(input, { ...init, signal: AbortSignal.timeout(8000) });
+  try {
+    const rows = await withUser(
+      userId,
+      async (s) => {
+        const [me] = await s.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, userId));
+        if (!me?.preferences.ageBlockedAt) return [];
+        return s.tx
+          .select({ id: integrations.id, provider: integrations.provider, encryptedCredentials: integrations.encryptedCredentials })
+          .from(integrations)
+          .where(and(eq(integrations.userId, userId), inArray(integrations.provider, OUTSIDE_PROVIDERS)));
+      },
+      db,
+    );
+    let left = 0;
+    for (const row of rows) {
+      try {
+        // a link that never finished connecting has no grant to close
+        if (row.encryptedCredentials) await closeAtProvider(row, f);
+        await withUser(userId, (s) => s.tx.delete(integrations).where(eq(integrations.id, row.id)), db);
+      } catch {
+        left++;
+        const { recordError } = await import("./error-reports");
+        await recordError(db, { source: "server", route: "age.lock", message: "Age lock: closing a bank or Google link failed. It is retried." }).catch(
+          () => {},
+        );
+      }
+    }
+    if (!left)
+      await withUser(
+        userId,
+        (s) =>
+          s.tx
+            .update(users)
+            .set({ preferences: sql`${users.preferences} - 'ageLockClosing'` })
+            .where(eq(users.id, userId)),
+        db,
+      );
+    return { closed: rows.length - left, left };
+  } catch {
+    return { closed: 0, left: -1 };
+  }
+}
+
+/** The sync cron's retry: every locked account still marked as closing a link. */
+export async function retryLockClosing(db: Database) {
+  const due = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(sql`${users.preferences} ? 'ageLockClosing'`)
+    .limit(50);
+  for (const u of due) await closeLockedConnections(db, u.id);
+  return due.length;
 }
 
 export async function saveWelcomeProgress(scope: UserScope, tz: string, input: z.input<typeof welcomeProgressSchema>): Promise<{ blocked: boolean }> {

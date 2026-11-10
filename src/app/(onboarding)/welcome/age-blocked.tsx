@@ -1,12 +1,13 @@
 import { NightSky } from "@/components/skylings/night-sky";
 import { AGE_LINE } from "@/lib/birthday";
 import { logout } from "@/app/(auth)/actions";
+import { DeleteLocked } from "./delete-locked";
 
 /**
  * Under 13 (owner, 2026-11-10): the welcome stays locked for this account. One calm line, nothing to retry, nothing
- * else kept about them; signing out is the only way on.
+ * else kept about them; signing out is the way on, and deleting the account (one tap deeper) removes the email and sign-in too.
  */
-export function AgeBlocked() {
+export function AgeBlocked({ withPassword }: { withPassword: boolean }) {
   return (
     <div className="min-h-dvh bg-bg">
       <div className="relative isolate h-[clamp(12rem,30svh,19rem)] overflow-hidden bg-night-ground">
@@ -22,6 +23,7 @@ export function AgeBlocked() {
             Sign out
           </button>
         </form>
+        <DeleteLocked withPassword={withPassword} />
       </div>
     </div>
   );

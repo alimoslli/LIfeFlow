@@ -251,8 +251,9 @@ export default function PrivacyPolicy() {
         set up, and once from accounts made before we asked. If it shows someone is under 13, at setup or later, the account is locked: it can&apos;t be used,
         any bank or Google connection is closed, and we keep only the email address, the sign-in it was created with, its security log (when and from where it
         signed in) and a note that it is locked, not the birthday, the name, the time zone or anything else they entered or connected. An account that has been
-        in use is locked only after the person confirms the date they entered. If a locked account had a paid plan, we review it and end it ourselves. If you
-        believe a child under 13 has created an account, contact us and we will delete it.
+        in use is locked only after the person confirms the date they entered. If a locked account had a paid plan, we review it and end it ourselves. A locked
+        account can be deleted from the lock screen, which removes the email and sign-in too. If you believe a child under 13 has created an account, contact us
+        and we will delete it.
       </p>
 
       <h2>10. International users</h2>

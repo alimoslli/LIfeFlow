@@ -8,7 +8,9 @@ import { createTask } from "@/server/services/tasks";
 import { ServiceError } from "@/server/services/errors";
 import { localDateOf, localTimeOf } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
-import { saveBirthday } from "@/server/services/onboarding";
+import { closeLockedConnections, saveBirthday } from "@/server/services/onboarding";
+import { getDb } from "@/server/db/client";
+import { after } from "next/server";
 import { audit } from "@/server/services/audit";
 import { revalidatePath } from "next/cache";
 import { redirect, unstable_rethrow } from "next/navigation";
@@ -128,11 +130,13 @@ export async function saveBirthdayAction(birthDate: string, confirmed = false): 
     const r = await withCurrentUser(async (s, u) => {
       const out = await saveBirthday(s, u.timezone || "UTC", birthDate, { confirmed });
       if (!out.confirm) await audit(s, "user", out.blocked ? "profile.age_blocked" : "profile.birthday");
-      return out;
+      return { ...out, userId: u.id };
     });
     // a finished account sees the date read back before anything is locked or erased
     if (r.confirm) return { ok: false, confirm: r.confirm, at: Date.now() };
     blocked = r.blocked;
+    // the lock is committed: now close their bank and Google links where they live (retried by the sync cron if this fails)
+    if (blocked) after(() => closeLockedConnections(getDb(), r.userId));
     revalidatePath("/", "layout");
   } catch (e) {
     unstable_rethrow(e);
