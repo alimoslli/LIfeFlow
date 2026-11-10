@@ -5,6 +5,7 @@ import { getDb } from "@/server/db/client";
 import { assertSameOrigin, errorResponse, HttpError } from "@/server/http";
 import { rateLimit } from "@/server/rate-limit";
 import { recordError } from "@/server/services/error-reports";
+import { isNoise } from "@/lib/error-noise";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export async function POST(req: Request) {
     assertSameOrigin(req);
     const parsed = body.safeParse(await req.json().catch(() => null));
     if (!parsed.success) throw new HttpError(400, "Invalid report");
+    if (isNoise(parsed.data.message)) return new NextResponse(null, { status: 204 });
     if (!(await rateLimit(getDb(), `errors:ip:${await clientIp()}`, 30, 3600)).allowed) return new NextResponse(null, { status: 204 });
     await recordError(getDb(), { source: "client", ...parsed.data });
     return new NextResponse(null, { status: 204 });

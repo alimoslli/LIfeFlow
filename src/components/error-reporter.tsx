@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { isNoise } from "@/lib/error-noise";
 
 /** Sends one report per distinct error per page load (no personal details; the server scrubs too). */
 const sent = new Set<string>();
@@ -20,8 +21,7 @@ export function reportError(message: string, digest?: string | null) {
 export function ErrorReporter() {
   useEffect(() => {
     const onError = (e: ErrorEvent) => {
-      // Browser extensions and cross-origin scripts only say "Script error."; nothing to act on.
-      if (!e.message || e.message === "Script error.") return;
+      if (isNoise(e.message)) return;
       reportError(`${e.error?.name ?? "Error"}: ${e.message}`);
     };
     const onRejection = (e: PromiseRejectionEvent) => {
