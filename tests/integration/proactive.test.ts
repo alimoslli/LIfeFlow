@@ -695,6 +695,27 @@ describe("deadline warnings only when the shift really takes the evening (notici
     expect(out).toEqual([expect.objectContaining({ kind: "deadline_conflict", action: expect.objectContaining({ type: "block_time" }) })]);
   });
 
+  it("chooses its two from the warnings not sent yet, so a sent one never holds back a new one", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const course = await createCourse(s, { name: "English 101", code: "ENG 101" });
+      const job = await createEmployer(s, { name: "Campus Cafe", hourlyRateCents: 1500 });
+      for (const [title, due, shift] of [
+        ["Essay draft", "2026-11-04", "2026-11-03"],
+        ["Quiz 5", "2026-11-05", "2026-11-04"],
+        ["Lab report", "2026-11-06", "2026-11-05"],
+      ]) {
+        await createAssignment(s, TZ, { courseId: course.id, title, dueDate: due, dueTime: "23:59" });
+        await createShift(s, TZ, { employerId: job.id, date: shift, startTime: "17:00", endTime: "23:00" });
+      }
+    });
+    const now = localToInstant(TODAY, "09:00", TZ);
+    const first = await run((s) => runProactive({ scope: s, tz: TZ, prefs: undefined, trigger: "shift", now }));
+    expect(first.map((m) => (m.facts as { assignment: string }).assignment)).toEqual(["Essay draft", "Quiz 5"]);
+    const next = await run((s) => DETECTORS.deadlineConflicts({ scope: s, tz: TZ, today: TODAY, now }));
+    expect(next.map((c) => c.facts.assignment)).toEqual(["Lab report"]);
+  });
+
   it("warns about a long shift even with no free 2 hours left before it, pointing at the week", async () => {
     const out = await check(await setUp("09:00", "17:00"), "20:00");
     expect(out).toEqual([

@@ -236,7 +236,26 @@ const deadlineConflicts: Detector = async ({ scope, tz, today, now }) => {
       priority: 75,
     });
   }
-  return out.slice(0, 2);
+  if (!out.length) return out;
+  // Only two a run, chosen from the ones not sent yet: an earlier warning that's still ahead kept taking a place and held
+  // back a new one until the day of the shift (the noticing grader counted 15 that came too late).
+  const sent = new Set(
+    (
+      await scope.tx
+        .select({ key: jarvisMessages.dedupeKey })
+        .from(jarvisMessages)
+        .where(
+          and(
+            eq(jarvisMessages.userId, scope.userId),
+            inArray(
+              jarvisMessages.dedupeKey,
+              out.map((c) => c.dedupeKey),
+            ),
+          ),
+        )
+    ).map((m) => m.key),
+  );
+  return out.filter((c) => !sent.has(c.dedupeKey)).slice(0, 2);
 };
 
 const addMinutes = (hhmm: string, mins: number) => {
