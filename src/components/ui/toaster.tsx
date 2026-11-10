@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { CheckCircle2, CircleAlert, Undo2 } from "lucide-react";
+import { CheckCircle2, CircleAlert } from "lucide-react";
 import { restoreAction } from "@/app/(app)/trash-actions";
 import { cn } from "@/lib/utils";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
@@ -94,7 +94,7 @@ function ToastItem({ t }: { t: Toast }) {
           }}
           className="flex items-center gap-1 rounded-full bg-bg/15 px-3 py-1 font-medium disabled:opacity-60"
         >
-          <Undo2 className="h-3.5 w-3.5" /> Undo
+          <PixelIcon name="undo" className="h-4 w-4" /> Undo
         </button>
       )}
       <button type="button" onClick={() => dismiss(t.id)} aria-label="Dismiss" className="opacity-70 hover:opacity-100">

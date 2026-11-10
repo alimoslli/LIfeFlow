@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Check, Copy, Share } from "lucide-react";
+import { Share } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 /** The invite link, with Copy and (where the phone supports it) Share. */
 export function InviteShare({ link, firstName }: { link: string; firstName: string }) {
@@ -42,7 +43,7 @@ export function InviteShare({ link, firstName }: { link: string; firstName: stri
       />
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={copy} className="lf-sb lf-sb-sun lf-sb-sm">
-          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          {copied ? <PixelIcon name="check" className="h-4 w-4" /> : <PixelIcon name="copy" className="h-4 w-4" />}
           {copied ? "Copied" : "Copy link"}
         </button>
         {canShare && (

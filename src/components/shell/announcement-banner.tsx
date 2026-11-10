@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight, Info, TriangleAlert } from "lucide-react";
+import { Info, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 
@@ -47,7 +47,7 @@ export function AnnouncementBanner({ a }: { a: { id: string; message: string; to
             {...(a.linkUrl.startsWith("https://") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
             className="mt-1 inline-flex min-h-9 items-center gap-1 text-sm font-medium text-accent"
           >
-            Open <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+            Open <PixelIcon name="arrow" className="h-4 w-4" aria-hidden />
           </Link>
         )}
       </div>

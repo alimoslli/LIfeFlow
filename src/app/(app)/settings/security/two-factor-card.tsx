@@ -1,10 +1,11 @@
 "use client";
 import { useState, useTransition } from "react";
-import { Copy, Download, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, FormError, Input } from "@/components/ui/field";
 import { Badge, Card } from "@/components/ui/surface";
 import { confirmTwoFactorSetup, emailRestartCode, finishRestart, newRecoveryCodes, startTwoFactorSetup, turnOffTwoFactor } from "./two-factor-actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 type Status = { enabled: boolean; enabledOn: string | null; recoveryCodesLeft: number; available: boolean };
 type Mode = "idle" | "setup" | "codes" | "disable" | "regenerate" | "restart";
@@ -118,14 +119,14 @@ export function TwoFactorCard({ status }: { status: Status }) {
             </ul>
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="secondary" size="sm" onClick={() => navigator.clipboard?.writeText(codesText)}>
-                <Copy className="h-3.5 w-3.5" /> Copy
+                <PixelIcon name="copy" className="h-4 w-4" /> Copy
               </Button>
               <a
                 href={`data:text/plain;charset=utf-8,${encodeURIComponent(`LifeFlow backup codes\n\n${codesText}\n`)}`}
                 download="lifeflow-backup-codes.txt"
                 className="lf-sb lf-sb-app lf-sb-xs lf-touch"
               >
-                <Download className="h-3.5 w-3.5" /> Download
+                <PixelIcon name="download" className="h-4 w-4" /> Download
               </a>
               <Button type="button" size="sm" onClick={() => (setCodes([]), setMode("idle"))}>
                 I&apos;ve saved them

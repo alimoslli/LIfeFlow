@@ -1,7 +1,6 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { BarList } from "@/components/charts/bar-list";
@@ -157,7 +156,7 @@ export default async function WealthPage() {
                               title="Remove holding"
                               className="text-muted hover:text-danger"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <PixelIcon name="trash" className="h-4 w-4" />
                             </ActionButton>
                           )}
                         </td>

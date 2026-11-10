@@ -30,6 +30,13 @@ describe("the look stays ours", () => {
     expect(SOURCES.filter((s) => /\bChevronRight\b/.test(s.text) && !allowed.includes(s.f)).map((s) => s.f)).toEqual([]);
   });
 
+  it("action glyphs are our pixel ones (delete, copy, download, check, arrow, undo, sync, edit, open, search)", () => {
+    // the skyling's own pages and the inbox are LF Main's; they move to the pixel glyphs next
+    const later = [/\/jarvis\//, /\/inbox\//, /\/skylings\//];
+    const generic = /import \{[^}]*\b(Trash2|Check|Copy|Download|ArrowRight|Search|Undo2|RefreshCw|Pencil|ExternalLink)\b[^}]*\} from "lucide-react"/;
+    expect(SOURCES.filter((s) => generic.test(s.text) && !later.some((l) => l.test(s.f))).map((s) => s.f)).toEqual([]);
+  });
+
   it("no sliding segmented control: closely related views use the horizon tabs", () => {
     const nav = readFileSync("src/components/ui/segmented-nav.tsx", "utf8");
     const tabs = readFileSync("src/components/ui/surface.tsx", "utf8");

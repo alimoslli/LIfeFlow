@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { SourceBadge } from "@/components/ui/surface";
@@ -12,6 +12,7 @@ import { getNote, listProjects } from "@/server/services/notes";
 import { listCourses } from "@/server/services/school";
 import { deleteNoteAction, saveNoteAction } from "../actions";
 import { NoteEditor } from "./editor";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export const metadata: Metadata = { title: "Note" };
 
@@ -49,7 +50,7 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
             title="Delete note"
             className="tap flex items-center justify-center text-muted hover:text-danger"
           >
-            <Trash2 className="h-4 w-4" />
+            <PixelIcon name="trash" className="h-4 w-4" />
           </ActionButton>
         </div>
       </div>

@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { KeyRound, Pencil, Trash2 } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { addPasskey, biometricName, PasskeyCancelled, passkeysSupported } from "@/components/auth/passkey-client";
@@ -65,7 +65,7 @@ export function PasskeysCard({ passkeys, demo }: { passkeys: PasskeyRow[]; demo:
                 aria-label={`Rename ${p.name}`}
                 className="tap flex items-center justify-center text-muted hover:text-text"
               >
-                <Pencil className="h-4 w-4" />
+                <PixelIcon name="edit" className="h-4 w-4" />
               </button>
               <ActionButton
                 action={removePasskeyAction.bind(null, p.id)}
@@ -73,7 +73,7 @@ export function PasskeysCard({ passkeys, demo }: { passkeys: PasskeyRow[]; demo:
                 title={`Remove ${p.name}`}
                 className="tap flex items-center justify-center text-muted hover:text-danger"
               >
-                <Trash2 className="h-4 w-4" />
+                <PixelIcon name="trash" className="h-4 w-4" />
               </ActionButton>
             </li>
           ))}

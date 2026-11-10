@@ -1,7 +1,6 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, Trash2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -124,7 +123,7 @@ export default async function MilestonesPage({ searchParams }: { searchParams: P
                             title={`Delete ${i.title}`}
                             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-surface-2"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <PixelIcon name="trash" className="h-4 w-4" />
                           </ActionButton>
                         ) : (
                           <Link
@@ -196,7 +195,7 @@ export default async function MilestonesPage({ searchParams }: { searchParams: P
           </Card>
           <Link href="/jarvis/memory/import" className="flex min-h-14 items-center gap-3 rounded-3xl bg-surface px-5 py-4 shadow-soft">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent">
-              <Download className="h-[18px] w-[18px]" />
+              <PixelIcon name="download" className="h-[18px] w-[18px]" />
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-[0.9375rem] font-medium">Import from ChatGPT or another AI</span>

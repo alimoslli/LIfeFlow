@@ -1,4 +1,4 @@
-import { Check, Flame, Pause, Play, Trash2 } from "lucide-react";
+import { Flame, Pause, Play } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { HABIT_IDEAS, listHabits } from "@/server/services/habits";
 import { archiveHabitAction, checkHabitAction, createHabitAction, deleteHabitAction, shrinkHabitAction } from "./actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 const CADENCE = { daily: "every day", weekly: "every week", weekends: "every weekend", payday: "every payday" } as const;
 const PERIOD = { daily: "today", weekly: "this week", weekends: "this weekend", payday: "this pay period" } as const;
@@ -36,7 +37,7 @@ export async function HabitsSection() {
                       h.doneThisPeriod ? "border-accent bg-accent text-accent-text" : "border-border-strong text-muted",
                     )}
                   >
-                    <Check className="h-5 w-5" strokeWidth={3} />
+                    <PixelIcon name="check" className="h-5 w-5" />
                   </ActionButton>
                   <div className="min-w-0 flex-1">
                     <p className="text-[0.9375rem] font-medium break-words">{h.title}</p>
@@ -83,7 +84,7 @@ export async function HabitsSection() {
                     title={`Delete ${h.title}`}
                     className="tap flex items-center justify-center text-muted hover:text-danger"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <PixelIcon name="trash" className="h-4 w-4" />
                   </ActionButton>
                 </div>
               </Card>

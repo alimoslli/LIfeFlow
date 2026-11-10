@@ -1,8 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Plus, Search, type LucideIcon } from "lucide-react";
-import { pixel, type IconLike } from "@/components/pixel/pixel-icon";
+import { Plus, type LucideIcon } from "lucide-react";
+import { PixelIcon, pixel, type IconLike } from "@/components/pixel/pixel-icon";
 import { cn } from "@/lib/utils";
 import type { SearchHit } from "@/server/services/search";
 import { useShell } from "./app-shell";
@@ -123,7 +123,7 @@ export function CommandPalette({ open, onClose, onAsk }: { open: boolean; onClos
       className="m-auto mt-[max(env(safe-area-inset-top),8vh)] w-[min(620px,calc(100vw-1.5rem))] rounded-[24px] bg-bg p-0 text-text shadow-2xl backdrop:bg-black/30 backdrop:backdrop-blur-[2px]"
     >
       <div className="flex items-center gap-2 border-b border-border px-4">
-        <Search className="h-4 w-4 shrink-0 text-muted" />
+        <PixelIcon name="find" className="h-4 w-4 shrink-0 text-muted" />
         <input
           ref={input}
           value={q}
@@ -169,7 +169,7 @@ export function CommandPalette({ open, onClose, onAsk }: { open: boolean; onClos
                 <span className="line-clamp-1 text-[0.9375rem]">{it.title}</span>
                 {it.subtitle && <span className="block text-xs text-muted">{it.subtitle}</span>}
               </span>
-              <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted" />
+              <PixelIcon name="arrow" className="h-4 w-4 shrink-0 text-muted" />
             </button>
           </li>
         ))}

@@ -2,11 +2,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { VoiceButton } from "@/components/jarvis/voice-call";
-import { ArrowRight, BookOpen, CalendarClock, Clock, Flag, Split, TrendingUp, Wallet } from "lucide-react";
+import { BookOpen, CalendarClock, Clock, Flag, Split, TrendingUp, Wallet } from "lucide-react";
 import { useShell } from "@/components/shell/app-shell";
 import { cn } from "@/lib/utils";
 import type { Insight } from "@/server/briefing/types";
 import { SkylingIcon } from "@/components/skylings/sprite";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 const ICONS = { clock: Clock, conflict: Split, book: BookOpen, money: Wallet, trend: TrendingUp, calendar: CalendarClock, goal: Flag, spark: SkylingIcon };
 const TONE = {
@@ -38,7 +39,7 @@ export function InsightList({ insights }: { insights: Insight[] }) {
                       href={action.href}
                       className="mt-1 -mb-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent transition-all hover:gap-2.5"
                     >
-                      {action.label} <ArrowRight className="h-3.5 w-3.5" />
+                      {action.label} <PixelIcon name="arrow" className="h-4 w-4" />
                     </Link>
                   ) : (
                     <button

@@ -1,7 +1,7 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FileText, FolderKanban, Pin, Search } from "lucide-react";
+import { FileText, FolderKanban, Pin } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionForm } from "@/components/action-form";
 import { AskJarvisButton } from "@/components/shell/app-shell";
@@ -103,7 +103,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
         </aside>
         <div>
           <form action="/notes" className="relative mb-4">
-            <Search className="absolute top-2.5 left-3 h-4 w-4 text-muted" />
+            <PixelIcon name="find" className="absolute top-2.5 left-3 h-4 w-4 text-muted" />
             {projectId && <input type="hidden" name="project" value={projectId} />}
             <LiveSearchInput name="q" defaultValue={sp.q ?? ""} placeholder="Search notes…" aria-label="Search notes" className={cn(control, "h-10 pl-9")} />
           </form>

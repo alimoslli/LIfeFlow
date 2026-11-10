@@ -1,10 +1,11 @@
 "use client";
 import { AssistantName } from "@/components/assistant-name";
 import { useState, useTransition } from "react";
-import { ExternalLink, Loader2, Search } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Markdown } from "@/components/jarvis/markdown";
 import { Sheet } from "@/components/ui/sheet";
 import { cancelHelpAction } from "./actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 type Help = { answer: string; sources: { title: string; url: string }[] } | null;
 
@@ -65,7 +66,7 @@ export function CancelHelp({ id, name, via, saved }: { id: string; name: string;
                         rel="noopener noreferrer nofollow"
                         className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent"
                       >
-                        <ExternalLink className="h-4 w-4" /> {s.title}
+                        <PixelIcon name="open" className="h-4 w-4" /> {s.title}
                       </a>
                     </li>
                   ))}
@@ -74,7 +75,7 @@ export function CancelHelp({ id, name, via, saved }: { id: string; name: string;
             </div>
           ) : (
             <button type="button" onClick={find} disabled={pending} className="lf-sb lf-sb-sun lf-sb-sm">
-              {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Find the official steps
+              {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <PixelIcon name="find" className="h-4 w-4" />} Find the official steps
             </button>
           )}
           {error && (

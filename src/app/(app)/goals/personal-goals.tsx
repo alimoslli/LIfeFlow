@@ -1,5 +1,4 @@
 import { AssistantName } from "@/components/assistant-name";
-import { Check, Trash2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
@@ -9,6 +8,7 @@ import { cn } from "@/lib/utils";
 import type { goalCheckins, personalGoals } from "@/server/db/schema";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { createPersonalGoalAction, deletePersonalGoalAction, setPersonalGoalDoneAction, stepPersonalGoalAction, updatePersonalGoalAction } from "./actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 type Goal = typeof personalGoals.$inferSelect;
 type Checkins = Map<string, (typeof goalCheckins.$inferSelect)[]>;
@@ -29,7 +29,7 @@ export function GoalCheckin({ goals, checkins, today }: { goals: { id: string; t
         <ul className="mt-3 flex flex-col gap-1.5 text-sm">
           {todays.map((t, i) => (
             <li key={i} className="flex gap-2">
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+              <PixelIcon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
               <span>
                 <span className="font-medium">{t.goal}:</span> {t.text}
               </span>
@@ -77,7 +77,7 @@ export function PersonalGoals({ goals, checkins }: { goals: Goal[]; checkins: Ch
                     done ? "border-accent bg-accent text-accent-text" : "border-border-strong text-transparent",
                   )}
                 >
-                  <Check className="h-5 w-5" />
+                  <PixelIcon name="check" className="h-5 w-5" />
                 </ActionButton>
                 <div className="min-w-0 flex-1">
                   <p className={cn("line-clamp-2 break-words text-[0.9375rem] font-medium", done && "text-muted line-through")}>{g.title}</p>
@@ -133,7 +133,7 @@ export function PersonalGoals({ goals, checkins }: { goals: Goal[]; checkins: Ch
                   title={`Delete ${g.title}`}
                   className="mt-2 flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-muted hover:text-danger"
                 >
-                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                  <PixelIcon name="trash" className="h-4 w-4" /> Delete
                 </ActionButton>
               </details>
             </Card>

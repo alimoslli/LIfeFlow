@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { TODAY_COOKIE, parseTodayMode } from "@/lib/theme";
-import { ArrowRight, Link2 } from "lucide-react";
+import { Link2 } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { DayClock } from "@/components/day-clock/day-clock";
 import { assistantProfile } from "@/lib/assistant";
@@ -101,7 +101,7 @@ export default async function TodayPage() {
                   <span className="block text-[0.9375rem] font-medium">Fill your clock</span>
                   <span className="block text-sm text-muted">Connect {setup.join(" and ")}, and your classes, shifts and plans appear on it.</span>
                 </span>
-                <ArrowRight className="h-4 w-4 shrink-0 text-muted" />
+                <PixelIcon name="arrow" className="h-4 w-4 shrink-0 text-muted" />
               </Link>
             ) : (
               <EmptyNext name={assistantName} />

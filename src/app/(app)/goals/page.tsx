@@ -1,6 +1,5 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
-import { Trash2 } from "lucide-react";
 import { PixelIcon, pixel, type IconLike } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -224,7 +223,7 @@ export default async function GoalsPage() {
                         title={`Delete ${g.name}`}
                         className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-danger hover:bg-danger-soft"
                       >
-                        <Trash2 className="h-3.5 w-3.5" /> Delete
+                        <PixelIcon name="trash" className="h-4 w-4" /> Delete
                       </ActionButton>
                     </div>
                   </details>

@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton } from "@/components/action-form";
 import { Badge } from "@/components/ui/surface";
@@ -99,7 +99,7 @@ function SyncButton({ id }: { id: string }) {
         }}
         className="lf-sb lf-sb-app lf-sb-xs lf-touch"
       >
-        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Sync now
+        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PixelIcon name="sync" className="h-4 w-4" />} Sync now
       </button>
       {msg && (
         <span role="status" className="text-xs text-muted">

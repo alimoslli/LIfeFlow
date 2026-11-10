@@ -3,7 +3,7 @@ import { twelveHourRanges } from "@/lib/utils";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink, FileText, Link2, Mail, MapPin, Clock, Trash2 } from "lucide-react";
+import { ArrowLeft, FileText, Link2, Mail, MapPin, Clock } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { SubmitButton } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { GradeCard } from "../../grade-card";
 import { addMaterialAction, createAssignmentAction, deleteCourseAction, deleteMaterialAction, setGradeWeightsAction, updateCourseAction } from "../../actions";
 import { AssignmentList } from "../../assignment-list";
 import { AssignmentDialog, CourseDialog } from "../../forms";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export const metadata: Metadata = { title: "Course" };
 
@@ -72,7 +73,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
               )}
               {c.url && (
                 <a href={c.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-accent hover:underline">
-                  <ExternalLink className="h-3.5 w-3.5" /> Course site
+                  <PixelIcon name="open" className="h-4 w-4" /> Course site
                 </a>
               )}
             </div>
@@ -124,7 +125,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
                   )}
                   {m.module && <span className="text-xs text-muted">{m.module}</span>}
                   <ActionButton action={deleteMaterialAction.bind(null, m.id)} title="Remove" className="hidden text-muted group-hover:block hover:text-danger">
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <PixelIcon name="trash" className="h-4 w-4" />
                   </ActionButton>
                 </li>
               ))}
@@ -169,7 +170,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
           <div className="flex items-center justify-between px-1 text-xs text-muted">
             <SourceBadge source={c.source} />
             <ActionButton action={deleteCourseAction.bind(null, c.id)} className="flex items-center gap-1 rounded px-2 py-1 text-danger hover:bg-danger-soft">
-              <Trash2 className="h-3.5 w-3.5" /> Delete course
+              <PixelIcon name="trash" className="h-4 w-4" /> Delete course
             </ActionButton>
           </div>
         </div>

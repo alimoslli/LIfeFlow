@@ -1,5 +1,4 @@
 "use client";
-import { RefreshCw } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -36,7 +35,7 @@ export function CanvasCard({ connection }: { connection: Connection | null }) {
           {connection.error && <p className="text-sm text-danger">{connection.error}</p>}
           <div className="flex flex-wrap gap-2">
             <ActionButton action={syncCanvasAction} title="Sync Canvas now" className="lf-sb lf-sb-app lf-sb-sm">
-              <RefreshCw className="h-3.5 w-3.5" /> Sync now
+              <PixelIcon name="sync" className="h-4 w-4" /> Sync now
             </ActionButton>
             <ActionButton
               action={disconnectCanvasAction}

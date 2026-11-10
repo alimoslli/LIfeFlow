@@ -1,11 +1,11 @@
 "use client";
-import { Pencil } from "lucide-react";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, Select } from "@/components/ui/field";
 import type { ActionState } from "@/server/actions";
 import { CATEGORY_OPTIONS } from "./categories";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export function EditMemory({
   action,
@@ -20,7 +20,7 @@ export function EditMemory({
 }) {
   return (
     <Dialog
-      trigger={<Pencil className="h-4 w-4" />}
+      trigger={<PixelIcon name="edit" className="h-4 w-4" />}
       title="Edit memory"
       description="Your wording becomes what your skyling uses."
       triggerProps={{ variant: "ghost", size: "icon", "aria-label": "Edit memory", title: "Edit memory" }}

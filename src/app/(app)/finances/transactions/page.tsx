@@ -1,7 +1,7 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, MoreHorizontal, Search, SlidersHorizontal, Trash2, Wand2 } from "lucide-react";
+import { MoreHorizontal, SlidersHorizontal, Wand2 } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { Button, SubmitButton } from "@/components/ui/button";
@@ -85,7 +85,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             <div className="absolute right-0 z-30 mt-2 flex w-52 flex-col gap-1 rounded-2xl bg-surface p-2 shadow-lift">
               {d.accounts.length > 0 && <ImportCsvDialog action={importCsvAction} accounts={d.accounts} />}
               <a href="/api/export?format=transactions.csv" className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm hover:bg-surface-2">
-                <Download className="h-4 w-4 text-muted" /> Export CSV
+                <PixelIcon name="download" className="h-4 w-4 text-muted" /> Export CSV
               </a>
               <ActionButton
                 action={tidyTransactionsAction}
@@ -118,7 +118,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       <form className="mb-5 flex flex-col gap-2" action="/finances/transactions">
         {d.period.key !== "month" && d.period.key !== "custom" && <input type="hidden" name="period" value={d.period.key} />}
         <div className="flex items-center gap-2 rounded-full bg-surface p-1.5 pl-4 shadow-soft focus-within:shadow-lift">
-          <Search className="h-4 w-4 shrink-0 text-muted" />
+          <PixelIcon name="find" className="h-4 w-4 shrink-0 text-muted" />
           <LiveSearchInput
             name="q"
             defaultValue={sp.q ?? ""}
@@ -274,7 +274,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                               title="Delete transaction"
                               className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-danger hover:bg-danger-soft"
                             >
-                              <Trash2 className="h-3.5 w-3.5" /> Delete
+                              <PixelIcon name="trash" className="h-4 w-4" /> Delete
                             </ActionButton>
                           )}
                         </div>

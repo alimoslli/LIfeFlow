@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { TaskCheck } from "@/components/task-check";
 import { SubmitButton } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { listProjects } from "@/server/services/notes";
 import { listCourses } from "@/server/services/school";
 import { getTask, reminderKeyOf } from "@/server/services/tasks";
 import { createTaskAction, deleteTaskAndLeaveAction, toggleTaskAction, updateTaskAction } from "../actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export const metadata: Metadata = { title: "To-do" };
 
@@ -149,7 +150,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
           title={`Delete ${task.title}`}
           className="flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm text-danger hover:bg-danger-soft"
         >
-          <Trash2 className="h-4 w-4" /> Delete to-do
+          <PixelIcon name="trash" className="h-4 w-4" /> Delete to-do
         </ActionButton>
       </div>
     </div>

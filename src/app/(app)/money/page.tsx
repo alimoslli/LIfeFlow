@@ -1,7 +1,7 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ArrowDownLeft, ArrowRight, ArrowUpRight, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
 import { CashOutlook } from "@/components/finance/cash-outlook";
 import { CountUp } from "@/components/motion/count-up";
 import { addDaysStr, formatDateStr, formatIn, monthStart, todayIn } from "@/lib/dates";
@@ -225,7 +225,7 @@ export default async function MoneyPage() {
                     <p className="text-[0.9375rem] leading-snug font-medium">{a.text}</p>
                     {a.fix && <p className="mt-0.5 text-[0.8125rem] leading-snug text-text-2">{a.fix}</p>}
                     <Link href={a.href} className="lf-sb-link -mb-2 text-[0.8125rem] font-semibold text-text">
-                      {a.label} <ArrowRight className="h-3.5 w-3.5" />
+                      {a.label} <PixelIcon name="arrow" className="h-4 w-4" />
                     </Link>
                   </div>
                 </li>
@@ -305,7 +305,7 @@ function Title({ children, href }: { children: React.ReactNode; href: string }) 
     <div className="mb-3 flex items-baseline justify-between gap-3">
       <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">{children}</h2>
       <Link href={href} className="-my-3 flex min-h-11 shrink-0 items-center gap-1 text-sm text-muted hover:text-text">
-        See all <ArrowRight className="h-3.5 w-3.5" />
+        See all <PixelIcon name="arrow" className="h-4 w-4" />
       </Link>
     </div>
   );

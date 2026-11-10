@@ -1,6 +1,7 @@
 "use client";
-import { ArrowRight, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { useShell } from "@/components/shell/app-shell";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 /**
  * A new account's empty sky always has one next step (A-to-Z audit B17): tell the skyling the week in a sentence, and
@@ -21,7 +22,7 @@ export function EmptyNext({ name }: { name: string }) {
         <span className="block text-[0.9375rem] font-medium">Fill your week</span>
         <span className="block text-sm text-muted">Tell {name} your classes and shifts in a sentence. They land on your sky.</span>
       </span>
-      <ArrowRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
+      <PixelIcon name="arrow" className="h-4 w-4 shrink-0 text-muted" aria-hidden />
     </button>
   );
 }

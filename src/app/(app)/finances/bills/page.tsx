@@ -1,6 +1,6 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
-import { Copy, Hourglass, Repeat, TrendingUp, ZapOff } from "lucide-react";
+import { Hourglass, Repeat, TrendingUp, ZapOff } from "lucide-react";
 import { AssistantName } from "@/components/assistant-name";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { subscriptionsOverview } from "@/server/services/finance/subscriptions";
 import { createRecurringAction, setRecurringStatusAction } from "../actions";
 import { keepSubscriptionAction, markCancelledAction, notUsingAction, remindRenewalAction, setTrialAction } from "../subscriptions/actions";
 import { AddBill, BillRow, type BillView } from "./bill-row";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export const metadata: Metadata = { title: "Bills" };
 
@@ -128,7 +129,7 @@ export default async function BillsPage() {
                   ) : f.kind === "trial" ? (
                     <Hourglass className="h-4 w-4" />
                   ) : f.kind === "duplicate" ? (
-                    <Copy className="h-4 w-4" />
+                    <PixelIcon name="copy" className="h-4 w-4" />
                   ) : (
                     <ZapOff className="h-4 w-4" />
                   )}

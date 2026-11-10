@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { SkylingIcon } from "@/components/skylings/sprite";
 import { useShell } from "@/components/shell/app-shell";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export type AssistantNote = { text: string; tone: "attention" | "heads-up" | "good"; href?: string; prompt?: string; label?: string };
 
@@ -22,7 +22,7 @@ export function AssistantLine({ name, note }: { name: string; note: AssistantNot
         <span className="mt-0.5 block text-[0.9375rem] leading-snug">{note.text}</span>
         {note.label && <span className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-accent">{note.label}</span>}
       </span>
-      <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted" aria-hidden />
+      <PixelIcon name="arrow" className="mt-1 h-4 w-4 shrink-0 text-muted" aria-hidden />
     </>
   );
   const cls = "flex w-full items-start gap-3 rounded-[24px] bg-surface px-4 py-3.5 text-left shadow-soft ring-1 ring-border/60 transition-colors";

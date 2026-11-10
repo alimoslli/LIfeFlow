@@ -1,9 +1,10 @@
 "use client";
 import { AssistantName } from "@/components/assistant-name";
-import { Calendar, Mail, RefreshCw } from "lucide-react";
+import { Calendar, Mail } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { Badge, Card } from "@/components/ui/surface";
 import { disconnectGoogleAction, setGmailFilingAction, syncGoogleAction } from "./actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 /** Connect / sync / disconnect Google (Gmail + Calendar). */
 export function GoogleCard({
@@ -66,7 +67,7 @@ export function GoogleCard({
               </a>
             ) : (
               <ActionButton action={syncGoogleAction} title="Sync calendar now" className="lf-sb lf-sb-app lf-sb-xs lf-touch">
-                <RefreshCw className="h-3.5 w-3.5" /> Sync calendar now
+                <PixelIcon name="sync" className="h-4 w-4" /> Sync calendar now
               </ActionButton>
             )}
             <ActionButton

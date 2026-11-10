@@ -2,7 +2,6 @@
 import { useRouter } from "next/navigation";
 import { celebrate } from "./motion/burst";
 import { useRef, useState, type ReactNode } from "react";
-import { Check, Trash2, Undo2 } from "lucide-react";
 import { haptic } from "@/lib/haptics";
 import { isOffline, offlineTaskDone, queueTaskStatus } from "@/lib/offline-queue";
 import { cn } from "@/lib/utils";
@@ -10,6 +9,7 @@ import type { ActionState } from "@/server/actions";
 import { OFFLINE_SAVED } from "./task-check";
 import { toast } from "./ui/toaster";
 import { gsap, MOTION, prefersReducedMotion } from "./motion/gsap";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 const THRESHOLD = 88;
 
@@ -91,12 +91,12 @@ export function SwipeRow({
         <div aria-hidden className="absolute inset-0 flex items-center justify-between">
           {dx > 0 && (
             <span className={cn("flex h-full items-center gap-2 pl-5 text-sm font-medium text-white", done ? "bg-info" : "bg-success")} style={{ width: dx }}>
-              {dx > 30 && (done ? <Undo2 className="h-5 w-5" /> : <Check className="h-5 w-5" />)}
+              {dx > 30 && (done ? <PixelIcon name="undo" className="h-5 w-5" /> : <PixelIcon name="check" className="h-5 w-5" />)}
             </span>
           )}
           {dx < 0 && (
             <span className="ml-auto flex h-full items-center justify-end gap-2 bg-danger pr-5 text-sm font-medium text-white" style={{ width: -dx }}>
-              {dx < -30 && <Trash2 className="h-5 w-5" />}
+              {dx < -30 && <PixelIcon name="trash" className="h-5 w-5" />}
             </span>
           )}
         </div>

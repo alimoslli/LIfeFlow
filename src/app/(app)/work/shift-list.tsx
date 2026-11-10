@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { AlertCircle, Trash2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SwipeRow } from "@/components/swipe-row";
 import { SubmitButton } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { formatIn, localDateOf, localTimeOf } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { cancelShiftAction, deleteShiftAction, markWorkedAction, recordHoursAction, updateShiftAction } from "./actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export type ShiftItem = {
   id: string;
@@ -190,7 +191,7 @@ export function ShiftList({
                 title="Delete shift"
                 className="flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm text-danger hover:bg-danger-soft"
               >
-                <Trash2 className="h-4 w-4" /> Delete shift
+                <PixelIcon name="trash" className="h-4 w-4" /> Delete shift
               </ActionButton>
             </div>
           </div>

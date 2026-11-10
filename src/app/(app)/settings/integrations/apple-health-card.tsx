@@ -1,7 +1,6 @@
 "use client";
 import { AssistantName } from "@/components/assistant-name";
 import { useActionState } from "react";
-import { Copy } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton } from "@/components/action-form";
 import { Button, SubmitButton } from "@/components/ui/button";
@@ -49,7 +48,7 @@ export function AppleHealthCard({ keys, lastReceived, url }: { keys: Key[]; last
           <p className="text-sm font-medium text-success">Your new key (shown only once)</p>
           <code className="break-all rounded-lg bg-surface px-3 py-2 text-xs">{state.token}</code>
           <Button type="button" variant="secondary" size="sm" className="self-start" onClick={() => copy(state.token!)}>
-            <Copy className="h-3.5 w-3.5" /> Copy key
+            <PixelIcon name="copy" className="h-4 w-4" /> Copy key
           </Button>
         </div>
       ) : (
@@ -109,7 +108,7 @@ export function AppleHealthCard({ keys, lastReceived, url }: { keys: Key[]; last
                 aria-label="Copy URL"
                 className="tap flex shrink-0 items-center justify-center text-accent"
               >
-                <Copy className="h-3.5 w-3.5" />
+                <PixelIcon name="copy" className="h-4 w-4" />
               </button>
             </span>
           </li>

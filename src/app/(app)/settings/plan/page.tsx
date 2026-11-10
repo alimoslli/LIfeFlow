@@ -2,13 +2,13 @@ import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/surface";
 import { requireUser } from "@/server/auth/current-user";
 import { billingConfig, FREE_JARVIS_PER_DAY, isPro } from "@/server/billing";
 import { SettingsHeader } from "../settings-header";
 import { manageBillingAction, upgradeAction } from "./actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export const metadata: Metadata = { title: "Plan" };
 
@@ -41,7 +41,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         <ul className="mt-4 flex flex-col gap-2 text-[0.9375rem]">
           {PRO.map((f) => (
             <li key={f} className="flex items-center gap-2">
-              <Check className={pro ? "h-4 w-4 text-success" : "h-4 w-4 text-muted"} /> {f}
+              <PixelIcon name="check" className={pro ? "h-4 w-4 text-success" : "h-4 w-4 text-muted"} /> {f}
             </li>
           ))}
         </ul>

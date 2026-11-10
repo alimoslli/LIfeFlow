@@ -1,8 +1,9 @@
 "use client";
-import { Calendar, RefreshCw, Video } from "lucide-react";
+import { Calendar, Video } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { Badge, Card } from "@/components/ui/surface";
 import { disconnectMicrosoftAction, syncMicrosoftAction } from "./actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 /** Connect / sync / disconnect Microsoft 365 (Outlook calendar with Teams meetings). */
 export function MicrosoftCard({
@@ -51,7 +52,7 @@ export function MicrosoftCard({
               </a>
             ) : (
               <ActionButton action={syncMicrosoftAction} title="Sync calendar now" className="lf-sb lf-sb-app lf-sb-xs lf-touch">
-                <RefreshCw className="h-3.5 w-3.5" /> Sync now
+                <PixelIcon name="sync" className="h-4 w-4" /> Sync now
               </ActionButton>
             )}
             <ActionButton

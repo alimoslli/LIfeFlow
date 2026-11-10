@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { addDaysStr, daysBetween, formatDateStr, formatIn, isValidDateStr, localDateOf, monthEnd, monthStart, todayIn, weekStart } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ import { createEventAction, deleteEventAction, skipOccurrenceAction } from "./ac
 import { DragItem, DropDay } from "./drag";
 import { CalendarViewToggle } from "./view-toggle";
 import { EventDialog } from "./event-dialog";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export const metadata: Metadata = { title: "Calendar" };
 
@@ -207,7 +208,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                       title="Delete event"
                       className="tap flex items-center justify-center rounded-full text-muted hover:text-danger"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <PixelIcon name="trash" className="h-4 w-4" />
                     </ActionButton>
                   )}
                 </DragItem>

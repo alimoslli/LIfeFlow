@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
-import { CalendarDays, Check, Clock, Flag } from "lucide-react";
+import { CalendarDays, Clock, Flag } from "lucide-react";
 import { addDaysStr, dayOfWeek, formatDateStr } from "@/lib/dates";
 import { haptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 import { Sheet } from "./sheet";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 /** A full-width row that shows the current value and opens a picker sheet. */
 function PickerRow({ icon, label, value, onOpen, id }: { icon: React.ReactNode; label: string; value: string; onOpen: () => void; id?: string }) {
@@ -40,7 +41,7 @@ function Option({ selected, onClick, children, hint }: { selected: boolean; onCl
     >
       <span className="flex-1">{children}</span>
       {hint && <span className="text-sm text-muted">{hint}</span>}
-      {selected && <Check className="h-4 w-4" />}
+      {selected && <PixelIcon name="check" className="h-4 w-4" />}
     </button>
   );
 }

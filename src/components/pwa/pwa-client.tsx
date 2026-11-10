@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CloudOff, Download, Share } from "lucide-react";
+import { CloudOff, Share } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/toaster";
 import { flush, pending } from "@/lib/offline-queue";
@@ -121,7 +121,7 @@ export function PwaClient() {
         <div className="fixed inset-x-3 bottom-[calc(var(--tabbar-space)+8px)] z-30 mx-auto max-w-md rounded-3xl bg-surface p-4 shadow-lift md:bottom-6">
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent">
-              <Download className="h-5 w-5" />
+              <PixelIcon name="download" className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
               <p className="font-medium">Add LifeFlow to your home screen</p>

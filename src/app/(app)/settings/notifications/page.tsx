@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -78,7 +77,7 @@ export default async function NotificationSettings() {
                   title={`Remove ${d.deviceLabel ?? "this device"}`}
                   className="tap text-muted hover:text-danger"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <PixelIcon name="trash" className="h-4 w-4" />
                 </ActionButton>
               </li>
             ))}

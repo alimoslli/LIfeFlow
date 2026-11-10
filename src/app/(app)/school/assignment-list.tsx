@@ -2,7 +2,6 @@
 import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import { useState } from "react";
-import { ExternalLink, Trash2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SwipeRow } from "@/components/swipe-row";
 import { TaskCheck } from "@/components/task-check";
@@ -15,6 +14,7 @@ import { dueLabel, localDateOf, localTimeOf } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import type { listAssignments } from "@/server/services/school";
 import { deleteAssignmentAction, toggleAssignmentAction, updateAssignmentAction } from "./actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 type A = Awaited<ReturnType<typeof listAssignments>>[number];
 
@@ -104,7 +104,7 @@ export function AssignmentList({ items, tz, showCourse = true, today }: { items:
             <div className="flex items-center justify-between gap-2">
               {editing.url ? (
                 <a href={editing.url} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center gap-1.5 text-sm text-accent">
-                  <ExternalLink className="h-4 w-4" /> Open link
+                  <PixelIcon name="open" className="h-4 w-4" /> Open link
                 </a>
               ) : (
                 <Link href={`/school/courses/${editing.course.id}`} className="flex min-h-11 items-center text-sm text-accent">
@@ -117,7 +117,7 @@ export function AssignmentList({ items, tz, showCourse = true, today }: { items:
                 title={`Delete ${editing.title}`}
                 className="flex min-h-11 items-center gap-1.5 rounded-full px-4 text-sm text-danger hover:bg-danger-soft"
               >
-                <Trash2 className="h-4 w-4" /> Delete
+                <PixelIcon name="trash" className="h-4 w-4" /> Delete
               </ActionButton>
             </div>
           </div>
