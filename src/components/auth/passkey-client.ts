@@ -27,12 +27,16 @@ const cancelled = (e: unknown) =>
   (e instanceof WebAuthnError && (e.code === "ERROR_CEREMONY_ABORTED" || e.code === "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY")) ||
   (e instanceof Error && (e.name === "NotAllowedError" || e.name === "AbortError"));
 
+/** What a person sees when the browser itself can't do it: plain words, never the browser's technical message. */
+export const PASSKEY_UNAVAILABLE = "Passkeys don't work in this browser yet. Sign in with your email instead.";
+
 async function run<T>(fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (e) {
     if (cancelled(e)) throw new PasskeyCancelled();
-    throw e;
+    // the browser's own errors (WebAuthnError, DOMException) carry technical text; ours from the server are already plain
+    throw new Error(PASSKEY_UNAVAILABLE, { cause: e });
   }
 }
 

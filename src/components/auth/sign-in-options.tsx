@@ -52,11 +52,10 @@ export function SignInOptions({ mode, apple, google = false, next }: { mode: "lo
     // Passkey suggestions in the email field's autofill (Safari, Chrome).
     void passkeyAutofillSupported().then((ok) => {
       if (!ok || !live) return;
+      // a quiet offer in the email field's suggestions: nothing was tapped, so a failure here is never shown
       signInWithPasskey(next ?? "/", true)
         .then((r) => router.replace(r.next))
-        .catch((e) => {
-          if (!(e instanceof PasskeyCancelled) && live) setError(e instanceof Error ? e.message : "Couldn't sign in with that passkey.");
-        });
+        .catch(() => {});
     });
     return () => {
       live = false;
