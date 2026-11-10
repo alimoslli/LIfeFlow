@@ -26,7 +26,7 @@ export const SECTIONS: Record<Section, Item[]> = {
   jarvis: [
     { href: "/jarvis", label: "Chat", icon: pixel("chat"), except: ["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"] },
     { href: "/jarvis/says", label: "Updates", icon: pixel("bell"), also: ["/inbox"] },
-    { href: "/jarvis/ideas", label: "Ideas", icon: pixel("idea") },
+    // Ideas is no longer a pill: the idea clouds on Today and in the chat replace it (navigation concept A); the page stays.
     { href: "/jarvis/profile", label: "Profile", icon: pixel("person"), also: ["/jarvis/memory"] },
   ],
   money: [
