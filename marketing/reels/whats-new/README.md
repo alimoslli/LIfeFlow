@@ -35,3 +35,18 @@ Storyboard (2026-11-10, Ali asked "show me"): `storyboard/` has the planned skyl
 5b4909d: the question typed under the sky, the answer card (marked as being built by the app team), the study block on
 the timeline (a stand-in row placed by hand, deleted after), ticking the assignment off at 3:50 PM, the star, tonight's
 stars. No AI was called. `sb.cjs ask|block|tick` takes the stills; `shot_sb.cjs` renders `storyboard.html`.
+
+## v2 (2026-11-10): the skyling scene, for real
+Ali: replace "I'll study tonight at 8" with something useful, typed under the timeline (no chat page), added to the
+timeline, then ticked off for the star. Filmed on main 87acda3 (the answer card on Today, built by LF Main for this).
+- `cap_ask.cjs`: type under the sky, send, Ray's real answer in the card ("You've got 9:00 to 11:00 PM open after your
+  Campus Library shift, and Chapter 6 is due at 11:59 PM"), "Do it", "Event added … 9:00 to 11:00 PM" with Undo.
+  `cap_follow.cjs see|tick|night`: the block on the opened day, the tick at 11:05 PM with its star, tonight's 8 stars.
+- Real AI: Ali approved up to 5 messages; 3 were used (a first take whose good answer added nothing, then the question
+  and its "Do it"). Rehearsals ran on the free stand-in (`serve_ai.sh <time> fake`, key `sk-e2e-test` on :4010).
+- The proxy's certificates start about an hour before real time, so a server on a faked clock more than an hour in the
+  past can't reach OpenAI (CERT_NOT_YET_VALID; nothing is sent). Real takes run `serve_ai.sh -3300 real` (55 minutes
+  behind) with the page on the same clock (`OFFSET_S=3300`); that's why this scene is at about 3:17 PM.
+- Filming pauses every animation and steps it; a finished star can come back as a still, so cut before it does.
+- After filming: the assignment back to "todo", the event Ray added deleted, the test account's AI consent removed.
+Download: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/359271f5-01e4-402f-a872-4b254f42db17.zip

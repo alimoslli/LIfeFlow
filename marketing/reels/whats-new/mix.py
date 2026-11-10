@@ -40,13 +40,18 @@ for s in TL["segs"]:
     for t in taps(s): click(t)
 # the sky turns
 put(sweep(1.6, 2600, 500, 0.24), seg["sky"]["start"] + 0.75)
-# the cloud: it fills the bar, the send, the answer lands
-c = seg["cloud"]; tc = taps(c)
-if len(tc) > 1: put(sweep(0.5, 900, 2800, 0.2), tc[1] + 0.03)
-put(tri(988, 0.3, 9, 0.06), c["start"] + (31 + 24 + 29) / 30); put(tri(1318, 0.4, 8, 0.06), c["start"] + (31 + 24 + 29) / 30 + 0.12)
-# tick it off: a pop and a little star chime, the skyling hops
-d = seg["done"]; td = taps(d)
-for t in td[-1:]:
+# the skyling on Today: typing, the send, the answer lands, Do it, the block is added
+a = seg["ask"]; fa = a["frames"]
+def at(frame):  # first time a capture frame shows in the segment
+    return a["start"] + fa.index(frame) / 30
+for k in range(0, 34, 2): put(sq(2200 + (k % 3) * 180, 0.018, 120, 0.018), at(26) + k / 30)
+put(sweep(0.45, 900, 2800, 0.18), at(72) + 0.03)
+put(tri(988, 0.3, 9, 0.06), at(143)); put(tri(1318, 0.4, 8, 0.06), at(143) + 0.12)
+for k, f in enumerate([784, 988, 1175, 1568]): put(tri(f, 0.3, 10, 0.055), at(163) + k * 0.06)
+# the block on the line
+put(sweep(1.2, 2200, 700, 0.16), seg["see"]["start"] + 1.05)
+# tick it off: a pop and a little star chime
+for t in taps(seg["tick"])[-1:]:
     put(tri(523, 0.16, 14, 0.09, 1.2), t + 0.02)
     for k, f in enumerate([1046, 1318, 1568, 2093]): put(sq(f, 0.09, 26, 0.03), t + 0.1 + k * 0.065)
     for k, f in enumerate([2637, 3136]): put(tri(f, 0.25, 12, 0.03), t + 0.42 + k * 0.08)
@@ -67,7 +72,7 @@ for i, f in enumerate([523, 587, 659, 784, 880, 988]): put(sq(f, 0.12, 20, 0.04,
 for t in taps(sk)[-1:]:
     for k, f in enumerate([784, 988, 1175, 1568, 2093]): put(tri(f, 0.3, 10, 0.06), t + 0.12 + k * 0.06)
 # a soft bed under the app, darker for the night shot
-pad(0.0, n0 + 0.3, (262, 330, 392), 0.011); pad(n0, 2.8, (220, 262, 330), 0.011); pad(seg["goal"]["start"] - 0.2, seg["end"]["start"] - seg["goal"]["start"] + 0.4, (262, 330, 392), 0.011)
+pad(0.0, seg["tick"]["start"] + 0.3, (262, 330, 392), 0.011); pad(seg["tick"]["start"], n0 + 2.8 - seg["tick"]["start"], (220, 262, 330), 0.011); pad(seg["goal"]["start"] - 0.2, seg["end"]["start"] - seg["goal"]["start"] + 0.4, (262, 330, 392), 0.011)
 # the ending (the logo's own sound)
 sr, end = wavfile.read("../sting/outro.wav"); put(end.astype(np.float32) / 32768.0, seg["end"]["start"])
 fx += sosfilt(butter(2, [200, 3000], "bandpass", fs=SR, output="sos"), rng.normal(0, 0.004, N)).astype(np.float32)

@@ -68,7 +68,7 @@ async function frame(t) {
   }
   for (const [a, b, l1, l2, y] of s.caps) {
     if (u < a - 0.05 || u > b + 0.3) continue;
-    text([l1, l2], y, 66, { alpha: Math.min(ease((u - a - 0.08) / 0.2), 1 - ease((u - b + 0.12) / 0.18)), scale: back((u - a - 0.08) / 0.38), box: true });
+    text([l1, l2].filter(Boolean), y, 66, { alpha: Math.min(ease((u - a - 0.08) / 0.2), 1 - ease((u - b + 0.12) / 0.18)), scale: back((u - a - 0.08) / 0.38), box: true });
   }
 }
 window.seek = (t) => frame(t);
