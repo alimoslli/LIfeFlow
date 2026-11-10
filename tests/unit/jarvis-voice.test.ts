@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { composeMessage, KIND_LABELS, pushSummary, pushText, type JarvisTone } from "@/lib/jarvis-voice";
+import { composeMessage, KIND_LABELS, LOCKED_MONEY_PUSH, pushSummary, pushText, type JarvisTone } from "@/lib/jarvis-voice";
 import { jarvisSettings } from "@/server/services/proactive/engine";
 
 const TONES: JarvisTone[] = ["coach", "friend", "direct"];
@@ -87,6 +87,22 @@ describe("push text (owner, 2026-11-05: one line, what was noticed and why, and 
     expect(p.body).not.toMatch(/\n/);
     // The message's own words minus the tone's opener ("Heads up:", "Hey!"), so the fact comes first.
     expect(composeMessage(kind, facts, "friend").body).toContain(p.body);
+  });
+
+  it("with the Money lock on, nothing about money reaches the lock screen (notifications rule 6)", () => {
+    const money = pushText("bill_due", { bill: "Phone", billCents: 4500, dueIn: "tomorrow", cashCents: 30_000 }, { moneyLocked: true, topic: "money" })!;
+    expect(money).toEqual(LOCKED_MONEY_PUSH);
+    const morning = pushText("morning_brief", { count: 3, money: "$420 available now", oneThing: "Essay draft" }, { moneyLocked: true, topic: "general" })!;
+    expect(morning.body).toBe("3 things on today's list. The one thing: Essay draft.");
+    const week = pushText(
+      "weekly_review",
+      { done: 9, slipped: 1, spentCents: 21_000, budgetCents: 30_000, change: "Keep Food under $50 next week." },
+      { moneyLocked: true, topic: "general" },
+    )!;
+    expect(week.body).toBe("9 to-dos done, 1 still open.");
+    // unlocked, the same messages keep their numbers
+    expect(pushText("morning_brief", { count: 3, money: "$420 available now", oneThing: "Essay draft" }, { topic: "general" })!.body).toContain("$420");
+    expect(pushText("weekly_review", { done: 9, slipped: 1, spentCents: 21_000, budgetCents: 0, change: null })!.body).toContain("$210 spent");
   });
 
   it("has nothing to say for an unknown kind (the engine falls back to the saved text)", () => {

@@ -127,7 +127,8 @@ const KINDS: Record<string, (f: F) => Parts> = {
   }),
   weekly_review: (f) => ({
     headline: "Your week in review",
-    fact: `${plural(n(f, "done"), "to-do")} done, ${n(f, "slipped")} still open, ${usd(n(f, "spentCents"))} spent${n(f, "budgetCents") ? ` of about ${usd(n(f, "budgetCents"))} budgeted` : ""}.`,
+    // no spending line when it was kept off the lock screen (the Money lock, `pushText`)
+    fact: `${plural(n(f, "done"), "to-do")} done, ${n(f, "slipped")} still open${f.spentCents === undefined ? "" : `, ${usd(n(f, "spentCents"))} spent${n(f, "budgetCents") ? ` of about ${usd(n(f, "budgetCents"))} budgeted` : ""}`}.`,
     ask: f.change ? `One change for next week: ${s(f, "change")}` : undefined,
     mood: "info",
   }),
@@ -259,12 +260,21 @@ export function composeMessage(kind: string, facts: F, tone: JarvisTone, opts: {
   return { title: p.headline, body: parts.filter(Boolean).join(" ") };
 }
 
+/** What a money push says on the lock screen while the Money lock is on: no amounts, no merchants (research rule 6). */
+export const LOCKED_MONEY_PUSH = { title: "Money heads-up", body: "Something in your money is worth a look. Tap to see it." };
+/** Fact keys that are money, and any text with a dollar amount, stay off the lock screen while the Money lock is on. */
+const MONEY_FACT_KEYS = new Set(["money", "spentCents", "budgetCents"]);
+export const hasAmount = (v: unknown) => typeof v === "string" && /\$\s?\d/.test(v);
+
 /**
  * A push notification: the headline as the title and one line with what was noticed and why, then the fix or
  * next step. No opener, so the fact is the first thing on a lock screen. Null for kinds with no wording here.
+ * With the Money lock on, a money message is only "Money heads-up", and other messages lose their money facts.
  */
-export function pushText(kind: string, facts: F) {
-  const p = KINDS[kind]?.(facts);
+export function pushText(kind: string, facts: F, opts: { moneyLocked?: boolean; topic?: string } = {}) {
+  if (opts.moneyLocked && opts.topic === "money") return LOCKED_MONEY_PUSH;
+  const safe = opts.moneyLocked ? Object.fromEntries(Object.entries(facts).filter(([k, v]) => !MONEY_FACT_KEYS.has(k) && !hasAmount(v))) : facts;
+  const p = KINDS[kind]?.(safe);
   if (!p) return null;
   return { title: p.headline, body: [p.fact, p.ask].filter(Boolean).join(" ").replace(/\s+/g, " ").trim() };
 }

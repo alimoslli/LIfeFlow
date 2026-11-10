@@ -199,6 +199,31 @@ describe("proactive Jarvis", () => {
     expect(sent.find((p) => p.key.includes("deadline_conflict"))!.body).toMatch(/^Essay draft is due .* and you work .*\. Want me to block/);
   });
 
+  it("with the Money lock on, pushes carry no amounts or bill names; the in-app cards keep them", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      await checking(s, 50_000);
+      await createRecurring(s, { name: "Rent", amountCents: -62_000, frequency: "monthly", nextDueDate: addDaysStr(today, 3), kind: "bill" });
+      await createTask(s, TZ, { title: "Email advisor", dueDate: today, priority: "high" });
+    });
+    await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "morning" }));
+    const sent: { key: string; title: string; body: string }[] = [];
+    const push = async (key: string, msg: { title: string; body: string }) => {
+      sent.push({ key, ...msg });
+      return true;
+    };
+    const prefs = { jarvis: { pushLimit: 5, quietStart: "00:00", quietEnd: "00:00" }, moneyLock: { enabled: true, idleMinutes: 5 } };
+    expect(await run((s) => pushImportant(s, TZ, prefs, push))).toBeGreaterThanOrEqual(2);
+    for (const p of sent) {
+      expect(`${p.title} ${p.body}`).not.toMatch(/\$\s?\d|Rent/);
+      expect(p.body.length).toBeGreaterThan(20);
+    }
+    expect(sent.find((p) => p.key.includes("bill_short"))).toMatchObject({ title: "Money heads-up" });
+    expect(sent.find((p) => p.key.includes("morning_brief"))!.body).toMatch(/on today's list\./);
+    // the card in the app (behind the app's own sign-in) still says it plainly
+    expect((await msgs(run)).find((m) => m.kind === "bill_short")!.body).toMatch(/Rent \(\$620\)/);
+  });
+
   it("only learns from responses after the user agrees", async () => {
     const { user: u, run } = await makeUser();
     const out = await run((s) => runProactive({ scope: s, tz: TZ, prefs: {}, trigger: "morning" }));

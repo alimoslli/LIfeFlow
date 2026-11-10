@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
 import { addDaysStr, localTimeOf, todayIn } from "@/lib/dates";
-import { composeMessage, KIND_LABELS, pushText, type JarvisTone } from "@/lib/jarvis-voice";
+import { composeMessage, hasAmount, KIND_LABELS, LOCKED_MONEY_PUSH, pushText, type JarvisTone } from "@/lib/jarvis-voice";
 import { assistantProfile } from "@/lib/assistant";
 import { jarvisMessages, notificationLog, type JarvisSettings, type UserPreferences } from "../../db/schema";
 import type { UserScope } from "../../db/with-user";
@@ -311,11 +311,16 @@ export async function pushImportant(scope: UserScope, tz: string, prefs: UserPre
     )
     .orderBy(desc(jarvisMessages.priority));
   let sent = 0;
+  const moneyLocked = prefs?.moneyLock?.enabled === true;
   for (const m of due) {
     if (left <= 0) break;
     if (!m.urgent && m.priority < 75 && !REVIEW_KINDS.has(m.kind)) continue;
-    const body = pushText(m.kind, m.facts)?.body || m.body;
-    if (await push(`jarvis:${m.dedupeKey}`, { title: m.title, body, url: `/?jarvis=${m.id}`, tag: `jarvis-${m.kind}` })) {
+    // the Money lock keeps amounts and merchants off the lock screen (CLAUDE.md, notifications rule)
+    const p = pushText(m.kind, m.facts, { moneyLocked, topic: m.topic });
+    let title = moneyLocked ? (p?.title ?? m.title) : m.title;
+    let body = p?.body || m.body;
+    if (moneyLocked && (hasAmount(title) || hasAmount(body))) ({ title, body } = LOCKED_MONEY_PUSH);
+    if (await push(`jarvis:${m.dedupeKey}`, { title, body, url: `/?jarvis=${m.id}`, tag: `jarvis-${m.kind}` })) {
       await scope.tx.update(jarvisMessages).set({ pushedAt: now }).where(eq(jarvisMessages.id, m.id));
       left--;
       sent++;
