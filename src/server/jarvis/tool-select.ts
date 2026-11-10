@@ -44,7 +44,15 @@ const WORDS: [ToolGroup, RegExp][] = [
     /\bhabits?\b|streak|daily routine|\bgoals?\b|run a|read \d+|books?\b|marathon|\b5k\b|milestone|achiev|accomplish|graduat|proud|promot|\bhired\b|got (a|the|my) job|first (job|car|apartment|time)|moved (out|to)|dean'?s list|my (life|past)/,
   ],
   ["projects", /\bprojects?\b/],
-  ["memory", /\bforget\b|memor|what do you (know|remember)|know about me/],
+  ["memory", /\bforget\b|memor|what do you (know|remember)|know about me|that's (wrong|not right)|actually i/],
+  ["tasks_more", /\bdelete\b|\bremove\b|get rid of|\bsubtasks?\b|\bdetails?\b/],
+  ["promises", /\bpromis|did it\b|didn'?t (do|happen|get)|\bkept\b|tomorrow instead|check[- ]?in/],
+  ["connect", /\bconnect|\bsync|canvas|google|gmail|outlook|\bteams\b|plaid|bank account|apple health|integration|linked/],
+  [
+    "web",
+    /\bsearch\b|look (it |that )?up|online|website|price of|how much (is|are|does)|costs? of|near me|open (now|today|late)|opening hours|weather|news|cheapest|\bdeals?\b|coupon|how (do|can) i cancel/,
+  ],
+  ["files", /attach|\bfiles?\b|\bpdf\b|photo|picture|screenshot|image|\bscan|receipt|syllabus|document/],
 ];
 
 /** A change, not a lookup: with money in play, the editing tools come too. */

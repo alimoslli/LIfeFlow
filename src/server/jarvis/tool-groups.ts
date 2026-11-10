@@ -23,31 +23,19 @@ export const TOOL_GROUPS = [
   "habits",
   "projects",
   "memory",
+  "tasks_more",
+  "promises",
+  "connect",
+  "web",
+  "files",
 ] as const;
 export type ToolGroup = (typeof TOOL_GROUPS)[number];
 export type LoadableGroup = Exclude<ToolGroup, "core">;
 
 /** Every tool is in exactly one group (a unit test checks this). Core is always sent. */
 export const GROUP_TOOLS: Record<ToolGroup, string[]> = {
-  core: [
-    "get_daily_briefing",
-    "tonight",
-    "list_tasks",
-    "create_tasks",
-    "update_task",
-    "get_task",
-    "delete_task",
-    "make_promise",
-    "list_promises",
-    "resolve_promise",
-    "cancel_promise",
-    "save_memory",
-    "update_memory",
-    "integration_status",
-    "read_attachment",
-    "web_search",
-    "load_tools",
-  ],
+  // sent with every message, so only what most messages need (owner, 2026-11-10: send only what the question needs)
+  core: ["get_daily_briefing", "tonight", "list_tasks", "create_tasks", "update_task", "make_promise", "save_memory", "load_tools"],
   school: [
     "sync_canvas",
     "grade_check",
@@ -145,7 +133,12 @@ export const GROUP_TOOLS: Record<ToolGroup, string[]> = {
     "log_goal_checkin",
   ],
   projects: ["list_projects", "create_project", "update_project", "delete_project"],
-  memory: ["list_memories", "forget_memory"],
+  memory: ["list_memories", "forget_memory", "update_memory"],
+  tasks_more: ["get_task", "delete_task"],
+  promises: ["list_promises", "resolve_promise", "cancel_promise"],
+  connect: ["integration_status"],
+  web: ["web_search"],
+  files: ["read_attachment"],
 };
 
 const GROUP_INFO: Record<LoadableGroup, string> = {
@@ -160,7 +153,12 @@ const GROUP_INFO: Record<LoadableGroup, string> = {
   health: "sleep, steps, workouts",
   habits: "habits, streaks, goals that aren't about money (fitness, reading, school) and life milestones",
   projects: "projects that group to-dos",
-  memory: "list or forget what you remember about the user",
+  memory: "list, correct or forget what you remember about the user",
+  tasks_more: "a to-do's details, or delete a to-do",
+  promises: "the user's promises: list them, mark one kept or not, cancel one",
+  connect: "which accounts are connected (Canvas, Google, bank, Outlook) and their sync status",
+  web: "search the web (prices, places, opening hours, how to cancel something)",
+  files: "read a file or photo the user attached earlier",
 };
 
 const groupOfTool = new Map(Object.entries(GROUP_TOOLS).flatMap(([g, names]) => names.map((n) => [n, g as ToolGroup] as const)));
