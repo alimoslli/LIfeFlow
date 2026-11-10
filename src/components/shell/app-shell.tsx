@@ -70,8 +70,11 @@ export function AppShell({
   aiConsent = false,
   unread = 0,
   areas = ALL_AREAS,
+  renderedAt,
   children,
 }: {
+  /** The server's time for this page, so "Changes with the sky" wakes up as the server drew it (use-skyling). */
+  renderedAt?: number;
   /** Which parts of the app the user sees (from "What fills your week"). */
   areas?: LifeAreas;
   /** New Jarvis messages: a dot on the Jarvis tab. */
@@ -168,7 +171,7 @@ export function AppShell({
   const showAsk = !onJarvisPage && pathname !== "/";
 
   // "Changes with the sky": whoever's moment it is, looked at again every minute
-  const skyling = useSkyling(companion, user.timezone ?? "UTC");
+  const skyling = useSkyling(companion, user.timezone ?? "UTC", renderedAt);
   // without a name of their own it goes by its skyling's, so "Changes with the sky" is called whoever is up right now
   if (!assistantNamed && skyling) assistantName = companionOf(skyling).name;
   return (

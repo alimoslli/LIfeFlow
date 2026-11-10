@@ -46,6 +46,9 @@ test.describe("changes with the sky", () => {
   // Owner, 2026-11-10: whoever's moment it is; one name and one way of talking all day.
   test("picked in Settings, Ray is up at 8 AM and Star at 11 PM, and the name stays", async ({ page }) => {
     const email = await signUp(page, "Sky Tester");
+    // the phone's clock and the server's disagree here: the page must still wake up cleanly (no React #418, no stuck copy)
+    const pageErrors: string[] = [];
+    page.on("pageerror", (e) => pageErrors.push(e.message));
     await page.goto("/settings/jarvis");
     const picker = page.getByRole("radiogroup", { name: "Your skyling" });
     await picker.getByRole("radio", { name: /^Changes with the sky/ }).click();
@@ -69,5 +72,6 @@ test.describe("changes with the sky", () => {
     }
     const [{ p }] = await queryAsUser<{ p: Record<string, string | undefined> }>(email, "select preferences as p from users where email = $1", [email]);
     expect(p.assistantName).toBeUndefined();
+    expect(pageErrors).toEqual([]);
   });
 });
