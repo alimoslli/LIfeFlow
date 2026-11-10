@@ -57,6 +57,8 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
   await page.getByRole("navigation", { name: "Main" }).last().getByRole("button", { name: "More" }).click();
   const everything = page.getByRole("dialog", { name: "Everything else" });
   await expect(everything).toBeVisible();
+  // its doors can stream in just after the sheet opens: read them once the first is there (a full run once read none)
+  await expect(everything.locator('a[href="/plan"]')).toBeVisible();
   const doors = await everything.locator("a[href]").evaluateAll((as) => as.map((a) => new URL((a as HTMLAnchorElement).href).pathname));
   for (const m of ["/plan", "/tasks", "/milestones", "/habits", "/work", "/jarvis/says", "/jarvis/profile", "/settings"])
     if (!doors.includes(m)) problems.push(`${m} not a door in More`);
