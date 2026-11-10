@@ -1,7 +1,7 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { COMPANION_KEYS, SKY_CHOICE } from "@/lib/companions";
-import { AGE_LINE, BIRTHDAY_NEEDED, birthDateProblem, isUnderAge } from "@/lib/birthday";
+import { AGE_LINE, BIRTHDAY_NEEDED, CHECK_YEAR, birthDateProblem, isUnderAge } from "@/lib/birthday";
 import { todayIn } from "@/lib/dates";
 import { ServiceError } from "./errors";
 import { integrations, users } from "../db/schema";
@@ -145,23 +145,21 @@ const KEEP_ON_LOCK = new Set([
 /**
  * Under 13 (owner, 2026-11-10): one calm line, and the account is locked, during setup or later (a finished account answering
  * on Today or in Settings gets the same, owner 2026-11-10). Nothing they gave is kept (the review of b3effa0): the name goes
- * back to the stand-in from their email, the preferences keep only the lock, Plaid and Google are closed at the provider, a
- * paid plan is cancelled at Stripe, and every row they own is removed except how they sign in. Returned rather than thrown,
+ * back to the stand-in from their email, the preferences keep only the lock, Plaid and Google are closed at the provider,
+ * and every row they own is removed except how they sign in. A paid plan is flagged for the owner, never cancelled here.
+ * A finished account is only ever locked after the person has seen the date read back and said yes (`saveBirthday`). Returned rather than thrown,
  * so it's committed. The session layer enforces the lock (`ageLocked`, auth/current-user.ts).
  */
 async function blockUnderAge(scope: UserScope, prefs: Prefs) {
   const at = new Date().toISOString();
   const [me] = await scope.tx.select({ email: users.email, stripeCustomerId: users.stripeCustomerId }).from(users).where(eq(users.id, scope.userId));
-  // a locked account must not keep paying: cancel a live plan (best effort; a failure is recorded with fixed text, and the
-  // lock still goes ahead, because keeping a child's data is the worse outcome)
+  // A paid plan is never cancelled from here (owner, 2026-11-10: flag only; he reviews and ends it himself). The flag is a
+  // fixed-text error report, which also emails him the first time.
   if (me.stripeCustomerId) {
-    const { billingConfig, cancelSubscriptionsNow } = await import("../billing");
-    const cfg = billingConfig();
-    if (cfg)
-      await cancelSubscriptionsNow(cfg, me.stripeCustomerId, (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(4000) })).catch(async () => {
-        const [{ recordError }, { getDb }] = await Promise.all([import("./error-reports"), import("../db/client")]);
-        await recordError(getDb(), { source: "server", route: "age.lock", message: "Age lock: subscription cancel failed" }).catch(() => {});
-      });
+    const [{ recordError }, { getDb }] = await Promise.all([import("./error-reports"), import("../db/client")]);
+    await recordError(getDb(), { source: "server", route: "age.lock", message: "Age lock: a locked account has a billing record. Review it in Stripe." }).catch(
+      () => {},
+    );
   }
   // what they connected in the welcome is closed where it lives too, the same way deleting an account does: a bank link at
   // Plaid, a Google grant at Google (best effort, in parallel, a few seconds at most; no database work in these calls)
@@ -201,7 +199,12 @@ export async function saveWelcomeProgress(scope: UserScope, tz: string, input: z
   const d = welcomeProgressSchema.parse(input);
   const current = await prefsOf(scope);
   if (current.ageBlockedAt) return { blocked: true };
-  if (d.birthDate && isUnderAge(d.birthDate, todayIn(tz))) return blockUnderAge(scope, current);
+  if (d.birthDate && isUnderAge(d.birthDate, todayIn(tz))) {
+    // the welcome's own save only ever locks an account that is still being set up; a finished one goes through Today's
+    // read-back step, never through a stray call to this action
+    if (current.onboarding !== "pending") throw new ServiceError(CHECK_YEAR);
+    return blockUnderAge(scope, current);
+  }
   if (d.birthDate) {
     const problem = birthDateProblem(d.birthDate, todayIn(tz));
     if (problem) throw new ServiceError(problem);
@@ -222,11 +225,21 @@ export async function saveWelcomeProgress(scope: UserScope, tz: string, input: z
 }
 
 /** The birthday asked once on Today from accounts made before it was required (not a lockout). Same rules. */
-export async function saveBirthday(scope: UserScope, tz: string, birthDate: string): Promise<{ blocked: boolean }> {
+export async function saveBirthday(
+  scope: UserScope,
+  tz: string,
+  birthDate: string,
+  opts: { confirmed?: boolean } = {},
+): Promise<{ blocked: boolean; confirm?: string }> {
   const current = await prefsOf(scope);
   if (current.ageBlockedAt) return { blocked: true };
   const birth = z.string().trim().parse(birthDate);
-  if (isUnderAge(birth, todayIn(tz))) return blockUnderAge(scope, current);
+  if (isUnderAge(birth, todayIn(tz))) {
+    // A finished account holds a whole life, and the lock empties it for good: nothing happens until the person has seen
+    // the date read back and said yes (owner, 2026-11-10: confirm, then erase). Setup has nothing to lose and locks at once.
+    if (current.onboarding !== "pending" && !opts.confirmed) return { blocked: false, confirm: birth };
+    return blockUnderAge(scope, current);
+  }
   const problem = birthDateProblem(birth, todayIn(tz));
   if (problem) throw new ServiceError(problem);
   await scope.tx

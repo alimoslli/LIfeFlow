@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ageOn, birthDateProblem, MIN_AGE } from "@/lib/birthday";
+import { ageOn, birthDateProblem, isUnderAge, MIN_AGE } from "@/lib/birthday";
 
 describe("birthday (the welcome, Settings › Profile)", () => {
   it("counts whole years, the day of the birthday included", () => {
@@ -19,5 +19,15 @@ describe("birthday (the welcome, Settings › Profile)", () => {
     expect(birthDateProblem("2010-02-31", "2026-11-10")).toBe("Pick your birthday.");
     expect(birthDateProblem("2009-02-29", "2026-11-10")).toBe("Pick your birthday.");
     expect(birthDateProblem("2008-02-29", "2026-11-10")).toBeNull();
+  });
+
+  it("treats an impossible age as a slip, never as an answer: today's date from a phone's picker can't lock anyone", () => {
+    for (const slip of ["2026-11-10", "2025-06-01", "2022-11-11"]) {
+      expect(birthDateProblem(slip, "2026-11-10")).toBe("Check the year.");
+      expect(isUnderAge(slip, "2026-11-10")).toBe(false);
+    }
+    // five and up is a real answer
+    expect(isUnderAge("2021-11-10", "2026-11-10")).toBe(true);
+    expect(isUnderAge("2015-03-03", "2026-11-10")).toBe(true);
   });
 });

@@ -183,8 +183,21 @@ test("a finished account answering under 13 on Today is locked the same way (own
   await pool.query(`update users set preferences = preferences - 'birthDate' where email = $1`, [email]);
   await page.goto("/");
   const card = page.getByRole("region", { name: "Your birthday" });
+  // today's date (a phone's picker opens on it) is a slip, not an answer: nothing is locked
+  await card.getByLabel("Your birthday").fill(new Date().toISOString().slice(0, 10));
+  await card.getByRole("button", { name: "Save" }).click();
+  await expect(card.getByRole("alert")).toHaveText("Check the year.");
+  // a real under-13 date is read back first; "Change the date" goes back with nothing locked
   await card.getByLabel("Your birthday").fill(`${new Date().getFullYear() - 10}-04-04`);
   await card.getByRole("button", { name: "Save" }).click();
+  await expect(card.getByText(/^You entered April 4, \d{4}\.$/)).toBeVisible();
+  await expect(card.getByText(/will be locked and everything in it erased/)).toBeVisible();
+  await card.getByRole("button", { name: "Change the date" }).click();
+  expect(
+    (await queryAsUser<{ p: Record<string, unknown> }>(email, "select preferences as p from users where email = $1", [email]))[0].p.ageBlockedAt,
+  ).toBeUndefined();
+  await card.getByRole("button", { name: "Save" }).click();
+  await card.getByRole("button", { name: "Yes, that's right" }).click();
   await page.waitForURL("**/welcome");
   await expect(page.getByRole("heading", { name: "LifeFlow is for people 13 and older." })).toBeVisible();
   // every page leads back to the lock, and nothing of theirs is kept

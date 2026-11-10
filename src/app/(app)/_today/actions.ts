@@ -122,14 +122,16 @@ export async function pinAction(_p: ActionState, fd: FormData): Promise<ActionSt
 }
 
 /** The birthday asked once on Today from accounts made before it was required (owner, 2026-11-10). */
-export async function saveBirthdayAction(birthDate: string): Promise<ActionState> {
+export async function saveBirthdayAction(birthDate: string, confirmed = false): Promise<ActionState | { ok: false; confirm: string; at: number }> {
   let blocked = false;
   try {
     const r = await withCurrentUser(async (s, u) => {
-      const out = await saveBirthday(s, u.timezone || "UTC", birthDate);
-      await audit(s, "user", out.blocked ? "profile.age_blocked" : "profile.birthday");
+      const out = await saveBirthday(s, u.timezone || "UTC", birthDate, { confirmed });
+      if (!out.confirm) await audit(s, "user", out.blocked ? "profile.age_blocked" : "profile.birthday");
       return out;
     });
+    // a finished account sees the date read back before anything is locked or erased
+    if (r.confirm) return { ok: false, confirm: r.confirm, at: Date.now() };
     blocked = r.blocked;
     revalidatePath("/", "layout");
   } catch (e) {

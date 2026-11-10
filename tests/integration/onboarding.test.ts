@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { closeDb, getDb } from "@/server/db/client";
-import { calendarEvents, integrations, users } from "@/server/db/schema";
+import { withUser } from "@/server/db/with-user";
+import { calendarEvents, errorReports, integrations, users } from "@/server/db/schema";
 import { sql } from "drizzle-orm";
 import { createTask } from "@/server/services/tasks";
 import { createCourse } from "@/server/services/school";
@@ -49,13 +50,17 @@ async function leftovers(userId: string) {
   const tables = await getDb().execute<{ table_name: string }>(
     sql`select distinct c.table_name from information_schema.columns c join information_schema.tables t on t.table_schema = c.table_schema and t.table_name = c.table_name and t.table_type = 'BASE TABLE' where c.column_name = 'user_id' and c.table_schema = current_schema()`,
   );
-  const left: string[] = [];
-  for (const { table_name } of tables.rows) {
-    if (keep.has(table_name)) continue;
-    const [{ n }] = (await getDb().execute<{ n: number }>(sql`select count(*)::int as n from ${sql.identifier(table_name)} where user_id = ${userId}`)).rows;
-    if (n) left.push(table_name);
-  }
-  return left;
+  // Counted as the user: their tables are behind row-level security, so a count from outside always reads 0 and would
+  // make every "nothing is left" check pass whether or not anything was removed.
+  return withUser(userId, async (scope) => {
+    const left: string[] = [];
+    for (const { table_name } of tables.rows) {
+      if (keep.has(table_name)) continue;
+      const [{ n }] = (await scope.tx.execute<{ n: number }>(sql`select count(*)::int as n from ${sql.identifier(table_name)} where user_id = ${userId}`)).rows;
+      if (n) left.push(table_name);
+    }
+    return left.sort();
+  });
 }
 
 /** A finished account with things in it: a to-do, a class, a bank link and a paid plan. */
@@ -201,6 +206,11 @@ describe("onboarding", () => {
 
   it("under 13 locks the welcome, keeps nothing else, and a later, older year doesn't get through", async () => {
     const { user, run } = await makeUser("Kai Young");
+    // a real new account is in setup; only setup locks at once (a finished account confirms the date first)
+    await getDb()
+      .update(users)
+      .set({ preferences: { onboarding: "pending" } })
+      .where(eq(users.id, user.id));
     const year = new Date().getFullYear();
     const r = await run((s) =>
       saveWelcomeProgress(s, "UTC", { name: "Kai", birthDate: `${year - 9}-03-03`, school: "Maple Elementary", lifeStage: "student", job: "Lemonade" }),
@@ -319,21 +329,56 @@ describe("onboarding", () => {
     expect(p.birthDate).toBeUndefined();
   });
 
-  it("Settings: a finished account answering under 13 is locked and emptied the same way, and an older year is refused", async () => {
+  it("Settings never locks or empties a finished account: an under-13 date there is a slip (the review of 0c77531)", async () => {
     const { user } = await finishedWithData("Set Tings");
     const base = { name: "Set Tings", timezone: "UTC" };
+    const before = await leftovers(user.id);
     closed.length = 0;
     cancelled.length = 0;
-    await expect(updateProfile(getDb(), user.id, { ...base, birthDate: "2015-05-05" })).rejects.toThrow("LifeFlow is for people 13 and older.");
+    await expect(updateProfile(getDb(), user.id, { ...base, birthDate: "2015-05-05" })).rejects.toThrow("Check the year.");
+    const [u] = await getDb().select().from(users).where(eq(users.id, user.id));
+    expect(u.preferences.ageBlockedAt).toBeUndefined();
+    expect(u.name).toBe("Set Tings");
+    expect(await leftovers(user.id)).toEqual(before);
+    expect(before.length).toBeGreaterThan(0);
+    expect(closed).toEqual([]);
+    expect(cancelled).toEqual([]);
+    // the right year then saves
+    await updateProfile(getDb(), user.id, { ...base, birthDate: "2000-05-05" });
+    expect((await prefs(user.id)).birthDate).toBe("2000-05-05");
+  });
+
+  it("a finished account is locked and emptied only after the date is read back and confirmed; a paid plan is flagged, never cancelled", async () => {
+    const { user, run } = await finishedWithData("Con Firm");
+    const before = await leftovers(user.id);
+    const young = `${new Date().getFullYear() - 8}-05-05`;
+    closed.length = 0;
+    cancelled.length = 0;
+    // today's date (a phone's picker opens on it) is a slip: refused, nothing touched
+    const today = new Date().toISOString().slice(0, 10);
+    await expect(run((s) => saveBirthday(s, "UTC", today))).rejects.toThrow("Check the year.");
+    await expect(run((s) => saveBirthday(s, "UTC", today, { confirmed: true }))).rejects.toThrow("Check the year.");
+    // a plausible under-13 date: read back first, nothing touched
+    expect(await run((s) => saveBirthday(s, "UTC", young))).toEqual({ blocked: false, confirm: young });
+    expect((await prefs(user.id)).ageBlockedAt).toBeUndefined();
+    expect(await leftovers(user.id)).toEqual(before);
+    // the welcome's own save can't be used to lock a finished account either
+    await expect(run((s) => saveWelcomeProgress(s, "UTC", { birthDate: young }))).rejects.toThrow("Check the year.");
+    expect((await prefs(user.id)).ageBlockedAt).toBeUndefined();
+    // confirmed: locked and emptied like setup, the bank closed at Plaid, and Stripe left alone
+    await getDb().delete(errorReports).where(eq(errorReports.route, "age.lock"));
+    expect(await run((s) => saveBirthday(s, "UTC", young, { confirmed: true }))).toEqual({ blocked: true });
     const [u] = await getDb().select().from(users).where(eq(users.id, user.id));
     expect(Object.keys(u.preferences).sort()).toEqual(["ageBlockedAt", "onboarding"]);
     expect(u.name).toBe(provisionalName(u.email));
     expect(await leftovers(user.id)).toEqual([]);
-    // the bank link is closed at Plaid and the paid plan cancelled at Stripe
     expect(closed).toEqual(["plaid"]);
-    expect(cancelled).toEqual([u.stripeCustomerId]);
-    await expect(updateProfile(getDb(), user.id, { ...base, birthDate: "2000-05-05" })).rejects.toThrow("LifeFlow is for people 13 and older.");
-    expect((await prefs(user.id)).birthDate).toBeUndefined();
+    expect(cancelled).toEqual([]);
+    const flags = await getDb().select().from(errorReports).where(eq(errorReports.route, "age.lock"));
+    expect(flags.map((f) => f.message)).toEqual(["Age lock: a locked account has a billing record. Review it in Stripe."]);
+    await expect(updateProfile(getDb(), user.id, { name: "Con Firm", timezone: "UTC", birthDate: "2000-05-05" })).rejects.toThrow(
+      "LifeFlow is for people 13 and older.",
+    );
   });
 
   it("an older account without a birthday is asked once: a real one saves; under 13 locks the same way", async () => {
@@ -341,9 +386,9 @@ describe("onboarding", () => {
     expect(await a.run((s) => saveBirthday(s, "America/Chicago", "1998-08-08"))).toEqual({ blocked: false });
     expect((await prefs(a.user.id)).birthDate).toBe("1998-08-08");
     await expect(a.run((s) => saveBirthday(s, "UTC", "2010-02-31"))).rejects.toThrow("Pick your birthday.");
-    // Today's card on a finished account: under 13 locks it and empties it, like setup does (owner, 2026-11-10)
+    // Today's card on a finished account: under 13 locks it and empties it, like setup does, once they've confirmed the date
     const b = await finishedWithData("Bo Young");
-    expect(await b.run((s) => saveBirthday(s, "UTC", `${new Date().getFullYear() - 8}-05-05`))).toEqual({ blocked: true });
+    expect(await b.run((s) => saveBirthday(s, "UTC", `${new Date().getFullYear() - 8}-05-05`, { confirmed: true }))).toEqual({ blocked: true });
     expect(await leftovers(b.user.id)).toEqual([]);
     expect(Object.keys(await prefs(b.user.id)).sort()).toEqual(["ageBlockedAt", "onboarding"]);
     expect(await b.run((s) => saveBirthday(s, "UTC", "1990-01-01"))).toEqual({ blocked: true });

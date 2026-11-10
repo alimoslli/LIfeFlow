@@ -1,6 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { AGE_LINE, birthDateProblem, isUnderAge } from "@/lib/birthday";
+import { AGE_LINE, CHECK_YEAR, birthDateProblem, isUnderAge } from "@/lib/birthday";
 import { COMPANIONS, companionOf, isCompanionKey, SKY_CHOICE, SKY_CHOICE_LABEL } from "@/lib/companions";
 import { todayIn } from "@/lib/dates";
 import { checkPassword } from "@/lib/password-strength";
@@ -85,6 +85,10 @@ export async function updateProfile(db: Database, userId: string, input: z.input
   const today = todayIn(d.timezone);
   // under 13 goes through the same flag as the welcome and Today, so a second, older year here is refused too
   if (d.birthDate && isUnderAge(d.birthDate, today)) {
+    // Settings has no read-back step, so here an under-13 date on a finished account is treated as a slip: nothing is
+    // locked or erased (the review of 0c77531). Today's birthday card is where a finished account can confirm it.
+    const [row] = await db.select({ preferences: users.preferences }).from(users).where(eq(users.id, userId));
+    if (row && !row.preferences.ageBlockedAt && row.preferences.onboarding !== "pending") throw new ServiceError(CHECK_YEAR);
     const { saveBirthday } = await import("./onboarding");
     await withUser(userId, (s) => saveBirthday(s, d.timezone, d.birthDate!));
     throw new ServiceError(AGE_LINE);
