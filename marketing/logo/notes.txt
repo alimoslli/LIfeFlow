@@ -1,0 +1,15 @@
+The official LifeFlow logo: "Whoever's up" (Ali, Nov 10)
+
+The logo is whichever skyling's time it is, peeking over the horizon, with the real sky of that moment behind it.
+Everything is drawn by the app's own code: the skylings (with Star's moonlit rim at night), the sky colours,
+who's up when (the same rule as "Changes with the sky"), and the blue horizon line and ground from the app icon.
+
+LifeFlow_Logo_Animated.mp4   1080 x 1080, 12 s loop, 30 fps (each skyling pops up for 2 s as the sky moves
+                             through a day: Dawn, Ray, Noon, Goldie, Dusk, Star). Silent. Loops cleanly.
+LifeFlow_Logo_Animated.gif   540 x 540 version of the same loop, for places that only take GIFs.
+LifeFlow_Logo_1_Dawn.png ... LifeFlow_Logo_6_Star.png   the six stills, 1080 x 1080, square (Instagram and TikTok
+                             crop profile pictures to a circle; the skyling sits inside it).
+LifeFlow_Logo_Overview.png   all six on one page.
+
+Profile pictures can't move on Instagram or TikTok, so use a still there (for example Ray, or change it with the
+season). The animated version is for video intros and outros, the website and the opening of the app.

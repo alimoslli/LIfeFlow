@@ -446,6 +446,10 @@ here" or "coming soon" instead. Sound only (`mix5.py`). Download: https://d2ol7o
 say "or let the sky choose". Logo explorations the same night: 5 finishes of the morning sun (As it is, Flat, Pixel, Morning rays,
 Blush) and 5 non-sun marks (Your skyling, Little cloud, Sleepy moon, The day's path, Whoever's up); waiting for Ali's pick. Source in
 `marketing/logo-ideas/`.
+**Official logo decided (Ali, 2026-11-10): "Whoever's up", animated, with the matching sky.** Whichever skyling's time it is peeks over
+the blue horizon with the real sky of that moment; the animated loop moves through a day. Built from the app's own code; source and
+download in `marketing/logo/`. Use stills for profile pictures (they can't move); the loop is for video intros/outros, the website and
+the app's opening. The app still shows the morning sun until Ali says to swap it.
 The doc now opens with "What you do": a one-page checklist for tonight plus an Ali-and-Tyler table for the work shots. Ali wants the plan
 that simple ("just tell me what I have to do"); the detail stays below it. Send plans as PDF links too (the doc link didn't open in his browser).
 
