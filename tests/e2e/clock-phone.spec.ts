@@ -85,7 +85,8 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   await expect(sheet).toBeHidden();
   const pinned = page.locator(".dc-node", { hasText: "Flight to NYC" });
   await expect(pinned).toBeAttached();
-  await expect(pinned.locator(".dc-n-ic")).toHaveText("✈️");
+  // the pinned emoji shows as our own pixel plane (owner, 2026-11-10: no system emoji, no box)
+  await expect(pinned.locator(".dc-n-ic svg")).toHaveAttribute("data-icon", "plane");
   await expect(clock).toHaveAttribute("data-state", "timeline");
   const rows = await queryAsUser<{ title: string }>(email, "select title from calendar_events where title like '%Flight to NYC'");
   expect(rows).toEqual([{ title: "✈️ Flight to NYC" }]);

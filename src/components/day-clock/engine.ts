@@ -7,6 +7,7 @@
 import { isExam, pileOf, sunTimes, type ClockData, type ClockItem } from "@/lib/day-clock";
 import { isFinished, isLate, itemColor, paintStrip, stripDark, wheelR, type SkyFace, type SkyGeo, type SkyState } from "./sky";
 import { DECAY, NOTCH_MIN, minutesForPx, normalizeWheel, project, rubber, snapTarget, spring, velocity } from "./input";
+import { iconHtml } from "./pixel-icons";
 
 /** A stop on the line: one thing, or a stack of things at the same moment (`group`, led by `it`). */
 type Node = { id: string; it: ClockItem; group: ClockItem[] | null; t: number; past: boolean; x: number; el: HTMLButtonElement | null };
@@ -601,7 +602,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
       const more = n.group && !pile ? n.group.length - 1 : 0;
       const name = pile ? `${pile} due` : nodeName(it);
       const time = it.someday ? "No day yet" : (it.when ?? (Math.abs(dayOf(n.t)) > 6 ? dayLongOf(dayOf(n.t)) : timeOf(it)));
-      b.innerHTML = `<span class="dc-n-ic" aria-hidden="true">${esc(it.icon)}${more ? `<b class="dc-n-more">+${more}</b>` : ""}</span><span class="dc-n-dot"></span><span class="dc-n-t">${esc(time)}</span><span class="dc-n-n">${esc(name)}</span>`;
+      b.innerHTML = `<span class="dc-n-ic" aria-hidden="true">${iconHtml(it.icon)}${more ? `<b class="dc-n-more">+${more}</b>` : ""}</span><span class="dc-n-dot"></span><span class="dc-n-t">${esc(time)}</span><span class="dc-n-n">${esc(name)}</span>`;
       const said = more ? `${name} and ${more} more` : name;
       if (pile) b.classList.add("dc-pile");
       b.setAttribute(
@@ -825,12 +826,12 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const rows = g
       .map(
         (x) =>
-          `<button type="button" class="dc-d-row" data-id="${esc(x.id)}"><span class="dc-r-ic" aria-hidden="true">${esc(x.icon)}</span><span class="dc-r-n">${esc(
+          `<button type="button" class="dc-d-row" data-id="${esc(x.id)}"><span class="dc-r-ic" aria-hidden="true">${iconHtml(x.icon)}</span><span class="dc-r-n">${esc(
             nodeName(x),
           )}</span>${sameTime || x.someday ? "" : `<span class="dc-r-t">${esc(timeOf(x))}</span>`}</button>`,
       )
       .join("");
-    detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${esc(n.it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-list">${rows}</div></div>`;
+    detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${iconHtml(n.it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-list">${rows}</div></div>`;
     for (const r of detail.querySelectorAll<HTMLElement>(".dc-d-row")) r.addEventListener("click", () => select(r.dataset.id ?? ""));
     const list = detail.querySelector<HTMLElement>(".dc-d-list");
     const over = detail.offsetHeight - (G.H - G.detailY - 12);
@@ -883,7 +884,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     const inPlace = it.origin === "event" || it.origin === "shift" || it.origin === "assignment";
     const onPage = it.origin === "task" || it.origin === "reminder" || it.origin === "goal" || it.origin === "milestone";
     const acts = `${canDo ? '<button type="button" class="dc-d-done">Done</button>' : ""}${inPlace ? '<button type="button" class="dc-d-edit">Edit</button>' : ""}<button type="button" class="dc-d-open">${esc(onPage ? "Edit" : openLabel(it.href))}</button>`;
-    detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${esc(it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-t">${esc(
+    detail.innerHTML = `<div class="dc-d-ic" aria-hidden="true">${iconHtml(it.icon)}</div><div class="dc-d-body"><div class="dc-d-k">${esc(kick)}</div><div class="dc-d-t">${esc(
       it.title,
     )}</div><div class="dc-d-w">${esc(when)}</div><div class="dc-d-s">${esc(sub)}</div><div class="dc-d-acts">${acts}</div></div>`;
     detail.querySelector(".dc-d-open")?.addEventListener("click", () => opts.onOpen(it.href));

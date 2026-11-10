@@ -19,6 +19,7 @@ import { css, darkness, mix, skyAt, type RGB } from "@/lib/sky";
 import { companionOf, skylingAt, SKY_CHOICE, type CompanionKey } from "@/lib/companions";
 import { drawCompanion, FRAMES, type Pose } from "./companion";
 import { createVisitors, type VisitorKind } from "./visitors";
+import { iconSvgInto, pixelize } from "./pixel-icons";
 
 export type SkyFace = { tag: string; text: string; stats: string[]; icon?: string };
 /** A stop on the open line, in the root's coordinates with the line at its home scroll. */
@@ -476,7 +477,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     }
     if (words.dataset.html !== out) {
       words.dataset.html = out;
-      words.innerHTML = out;
+      words.innerHTML = pixelize(out);
     }
   }
 
@@ -748,13 +749,19 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     // the marks inside the rim, drawn now that the tiles are placed: a mark a tile would cover moves further in, or
     // keeps quiet (the tile says the time)
     const fontPx = 10.56 * ts * remK;
+    // at night the "N stars today" line sits in the middle of the wheel, so a mark keeps clear of it too
+    const starsToday =
+      night && follow && P < 1 ? timed.filter((it) => dayOf(it.start) === dayOf(now - (mod(now) < rise ? DAY : 0)) && isFinished(it, now)) : [];
+    const keepClear: { x: number; y: number; w: number; h: number }[] = [...tiles];
+    if (starsToday.length) keepClear.push({ x: cx, y: hyC - R * HF * 0.2 - fontPx * 0.4, w: fontPx * 9, h: fontPx * 2 });
     const mark = (t: number, s: string) => {
       for (const lift of [-18, -18 - 46 * sc]) {
         const [x, y] = wheelAt(t, lift);
         const a = inward(x);
         const w = s.length * fontPx * 0.56;
         const l = a === "start" ? x : a === "end" ? x - w : x - w / 2;
-        if (tiles.some((q) => l < q.x + q.w / 2 + 4 && l + w > q.x - q.w / 2 - 4 && y + 4 - fontPx < q.y + q.h / 2 + 2 && y + 6 > q.y - q.h / 2 - 2)) continue;
+        if (keepClear.some((q) => l < q.x + q.w / 2 + 4 && l + w > q.x - q.w / 2 - 4 && y + 4 - fontPx < q.y + q.h / 2 + 2 && y + 6 > q.y - q.h / 2 - 2))
+          continue;
         txt(marks, x, y + 4, s, { class: "dc-rim-t", "text-anchor": a, opacity: up(t).toFixed(3) });
         return;
       }
@@ -782,7 +789,6 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     for (const n of geo.nodes) for (const id of n.ids) stopOf.set(id, n);
     const stemG = el("g", { opacity: morphing ? 0.3 : 1 }, layer);
     layer.insertBefore(stemG, pathG);
-    const tileG = el("g", {}, pathG);
     const topG = el("g", {}, layer);
     const shown: Tile[] = [];
     for (const tl of tileOf.values()) {
@@ -800,19 +806,17 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         el("line", { ...stem, stroke: itemColor(tl.it), "stroke-width": 1.8, "stroke-opacity": (a * 0.8 * kc).toFixed(2) }, stemG);
       }
       const dark = stripDark(tl.it.start, { inWeek: geo.inWeek, rise, set }) > 0.5;
-      const box = { x: (x - w / 2).toFixed(1), y: (y - hh / 2).toFixed(1), width: w.toFixed(1), height: hh.toFixed(1), rx: (hh * 0.34).toFixed(1) };
-      const look = { fill: dark ? "#14223b" : "#ffffff", stroke: late ? "#ef4444" : itemColor(tl.it), "stroke-width": tl.it === nextIt ? 2.6 : 2 };
-      el("rect", { ...box, ...look, opacity: (a * (fin ? 0.8 : 1)).toFixed(3), filter: morphing ? "none" : "url(#dc-sh)" }, tileG);
       if (tl.of) continue;
       shown.push({ ...tl, x, y, w, h: hh });
       const eo = morphing ? 0.5 + 0.5 * Math.abs(1 - 2 * P) : 1;
       const tg = el("g", { opacity: (a * eo * (fin ? 0.82 : 1)).toFixed(3), "data-n": tl.count + 1, ...(late ? { "data-late": "" } : {}) }, topG);
-      txt(tg, x - w / 2 + hh / 2, y + hh * 0.19, tl.it.icon, { "font-size": (hh * 0.52).toFixed(1) });
+      // our own pixel icon, floating where it is: no box around it (owner, 2026-11-10)
+      iconSvgInto(tg, tl.it.icon, x - w / 2 + hh / 2, y, hh * (tl.it === nextIt ? 0.86 : 0.78), { class: dark ? "dc-px-svg dc-px-dark" : "dc-px-svg" });
       if (withTime.has(tl.it) && w > hh + 8 && k < 0.5)
         txt(tg, x - w / 2 + hh - 1, y + hh * 0.15, tag(tl.it), {
           "text-anchor": "start",
           "font-size": (hh * 0.31).toFixed(1),
-          class: dark ? "dc-pill-t dc-on-dark" : "dc-pill-t",
+          class: dark ? "dc-pill-t dc-tag-t dc-on-dark" : "dc-pill-t dc-tag-t",
         });
       const [bx, by] = [x + w / 2 - 2, y - hh / 2 + 2];
       if (tl.count) {
@@ -829,26 +833,13 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         const r = pour(n.t);
         if (n.ids.some((id) => tileOf.has(id)) || !r.vis || r.kk <= 0.02) continue;
         const [y, s2] = [lerp(hy, n.y, r.kk), 30 * (0.3 + 0.7 * r.kk)];
-        const fill = stripDark(n.t, { inWeek: geo.inWeek, rise, set }) > 0.5 ? "#14223b" : "#ffffff";
-        el(
-          "rect",
-          {
-            x: (n.x - s2 / 2).toFixed(1),
-            y: (y - s2 / 2).toFixed(1),
-            width: s2.toFixed(1),
-            height: s2.toFixed(1),
-            rx: (s2 * 0.34).toFixed(1),
-            fill,
-            opacity: r.kk.toFixed(3),
-          },
-          tileG,
-        );
-        txt(topG, n.x, y + s2 * 0.19, n.icon, { "font-size": (s2 * 0.52).toFixed(1), opacity: r.kk.toFixed(3) });
+        const darkN = stripDark(n.t, { inWeek: geo.inWeek, rise, set }) > 0.5;
+        iconSvgInto(topG, n.icon, n.x, y, s2 * 0.8, { opacity: r.kk.toFixed(3), class: darkN ? "dc-px-svg dc-px-dark" : "dc-px-svg" });
       }
 
     // ---- at night (on now), what you finished today shines as stars; opening, each flies home to its stop
     if (night && follow && P < 1) {
-      const fin = timed.filter((it) => dayOf(it.start) === dayOf(now - (mod(now) < rise ? DAY : 0)) && isFinished(it, now));
+      const fin = starsToday;
       const sg = el("g", {}, layer);
       const kf = reduce ? 0 : E(seg(P, 0.15, 0.85));
       fin.forEach((it, i) => {
@@ -870,17 +861,18 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       const ahead = sunUp ? set - m : mod(rise - m);
       const near5 = Math.max(5, ahead < 60 ? Math.round(ahead / 5) * 5 : Math.round(ahead / 10) * 10);
       const span = near5 < 60 ? `${near5} min` : `${Math.floor(near5 / 60)}h${near5 % 60 ? ` ${near5 % 60}m` : ""}`;
-      const chip = sunUp ? `☀️ Sun sets in about ${span}` : `🌙 Sun rises in about ${span}`;
+      const chip = sunUp ? `Sun sets in about ${span}` : `Sun rises in about ${span}`;
       // sized for its words at the wheel's scale and the app's text size
       const k2 = ts * remK;
-      const cw = chip.length * 6.6 * k2 + 18;
+      const cw = chip.length * 6.6 * k2 + 18 + 20 * k2;
       const cg = el("g", { opacity: kc.toFixed(3) }, layer);
       el(
         "rect",
         { x: (cx - cw / 2).toFixed(1), y: (waterY - 12 * k2).toFixed(1), width: cw.toFixed(1), height: (24 * k2).toFixed(1), rx: 12 * k2, class: "dc-sunchip" },
         cg,
       );
-      txt(cg, cx, waterY + 4 * k2, chip, { class: "dc-sunchip-t" });
+      iconSvgInto(cg, sunUp ? "☀️" : "🌙", cx - cw / 2 + 17 * k2, waterY, 15 * k2);
+      txt(cg, cx + 10 * k2, waterY + 4 * k2, chip, { class: "dc-sunchip-t" });
     }
     if (back) {
       back.hidden = follow || P > 0.01;

@@ -5,6 +5,7 @@ import { ActionForm } from "@/components/action-form";
 import { Sheet } from "@/components/ui/sheet";
 import { pinAction } from "@/app/(app)/_today/actions";
 import { cn } from "@/lib/utils";
+import { pixelPaths } from "./pixel-icons";
 
 const KINDS = [
   { key: "todo", label: "To-do", hint: "Something to do by then" },
@@ -13,6 +14,19 @@ const KINDS = [
   { key: "milestone", label: "Milestone", hint: "Something that happened" },
 ] as const;
 type Kind = (typeof KINDS)[number]["key"];
+
+/** One of our pixel icons (pixel-icons.ts), with no box around it; an emoji we haven't drawn shows as itself. */
+function Px({ e, className }: { e: string; className: string }) {
+  const paths = pixelPaths(e);
+  if (!paths) return <>{e}</>;
+  return (
+    <svg viewBox="0 0 12 12" shapeRendering="crispEdges" className={className} aria-hidden>
+      {paths.map((p) => (
+        <path key={p.fill} d={p.d} fill={p.fill} />
+      ))}
+    </svg>
+  );
+}
 
 // The emojis people pin most; any other one can be typed at the start of the name.
 const EMOJIS = ["📌", "✈️", "🎂", "💼", "📚", "📝", "🏋️", "🏃", "🍽️", "☕", "🎉", "🩺", "💳", "🛒", "🏠", "🚗", "🎬", "🎓", "🏁", "🎯"];
@@ -52,8 +66,8 @@ function PinForm({ at, today, onSaved, onCancel }: { at: number; today: string; 
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="emoji" value={emoji} />
       <div className="flex items-center gap-3">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-surface-2 text-2xl" aria-hidden>
-          {emoji || "📌"}
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center text-2xl" aria-hidden>
+          <Px e={emoji || "📌"} className="h-10 w-10 drop-shadow-sm" />
         </span>
         <input
           name="title"
@@ -83,7 +97,7 @@ function PinForm({ at, today, onSaved, onCancel }: { at: number; today: string; 
               emoji === e ? "bg-accent-soft ring-2 ring-accent" : "hover:bg-surface-2",
             )}
           >
-            {e}
+            <Px e={e} className="h-7 w-7" />
           </button>
         ))}
       </div>
