@@ -18,9 +18,10 @@ const RESULTS = ["connected", "denied", "failed", "missing_scopes", "admin_conse
 
 export default async function WelcomePage({ searchParams }: { searchParams: Promise<{ connected?: string; result?: string }> }) {
   const user = await requireUserForWelcome();
-  if (user.preferences?.onboarding !== "pending") redirect("/");
-  // under 13: locked for this account, whatever year is typed later (owner, 2026-11-10)
+  // under 13: locked for this account, whatever year is typed later, also after setup (owner, 2026-11-10); the lock screen
+  // comes before "setup is done", or a locked finished account would bounce between / and here
   if (user.preferences?.ageBlockedAt) return <AgeBlocked />;
+  if (user.preferences?.onboarding !== "pending") redirect("/");
   // Limits are shown only once paid plans are switched on; until then everything is free.
   const plan = { paid: !!billingConfig(), freeChatsPerDay: FREE_JARVIS_PER_DAY, proFeatures: Object.values(PRO_FEATURES) };
   // their own sky (no money on it), and what's connected already (coming back from Google or Microsoft)

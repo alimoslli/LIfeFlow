@@ -143,23 +143,26 @@ const KEEP_ON_LOCK = new Set([
 ]);
 
 /**
- * Under 13 (owner, 2026-11-10): one calm line, and the account is locked. During setup nothing they gave is kept (the
- * review of b3effa0): the name goes back to the stand-in from their email, the preferences keep only the lock, a Google
- * connection is revoked, and every row they own is removed except how they sign in. Returned rather than thrown, so
- * it's committed. An account that already finished setup is only flagged here: whether to lock it is the owner's call.
+ * Under 13 (owner, 2026-11-10): one calm line, and the account is locked, during setup or later (a finished account answering
+ * on Today or in Settings gets the same, owner 2026-11-10). Nothing they gave is kept (the review of b3effa0): the name goes
+ * back to the stand-in from their email, the preferences keep only the lock, Plaid and Google are closed at the provider, a
+ * paid plan is cancelled at Stripe, and every row they own is removed except how they sign in. Returned rather than thrown,
+ * so it's committed. The session layer enforces the lock (`ageLocked`, auth/current-user.ts).
  */
 async function blockUnderAge(scope: UserScope, prefs: Prefs) {
   const at = new Date().toISOString();
-  if (prefs.onboarding !== "pending") {
-    const { birthDate: _birth, ...rest } = prefs;
-    void _birth;
-    await scope.tx
-      .update(users)
-      .set({ preferences: { ...rest, ageBlockedAt: at } })
-      .where(eq(users.id, scope.userId));
-    return { blocked: true as const };
+  const [me] = await scope.tx.select({ email: users.email, stripeCustomerId: users.stripeCustomerId }).from(users).where(eq(users.id, scope.userId));
+  // a locked account must not keep paying: cancel a live plan (best effort; a failure is recorded with fixed text, and the
+  // lock still goes ahead, because keeping a child's data is the worse outcome)
+  if (me.stripeCustomerId) {
+    const { billingConfig, cancelSubscriptionsNow } = await import("../billing");
+    const cfg = billingConfig();
+    if (cfg)
+      await cancelSubscriptionsNow(cfg, me.stripeCustomerId, (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(4000) })).catch(async () => {
+        const [{ recordError }, { getDb }] = await Promise.all([import("./error-reports"), import("../db/client")]);
+        await recordError(getDb(), { source: "server", route: "age.lock", message: "Age lock: subscription cancel failed" }).catch(() => {});
+      });
   }
-  const [me] = await scope.tx.select({ email: users.email }).from(users).where(eq(users.id, scope.userId));
   // what they connected in the welcome is closed where it lives too, the same way deleting an account does: a bank link at
   // Plaid, a Google grant at Google (best effort, in parallel, a few seconds at most; no database work in these calls)
   const outside = await scope.tx

@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { closeDb, getDb } from "@/server/db/client";
@@ -24,6 +25,53 @@ vi.mock("@/server/services/account-cleanup", async (load) => ({
   ...(await load<typeof import("@/server/services/account-cleanup")>()),
   closeAtProvider: vi.fn(async (row: { provider: string }) => void closed.push(row.provider)),
 }));
+// and a paid plan is cancelled at Stripe: record which customer instead of calling out
+const cancelled = vi.hoisted(() => [] as string[]);
+vi.mock("@/server/billing", async (load) => ({
+  ...(await load<typeof import("@/server/billing")>()),
+  billingConfig: () => ({ secretKey: "sk_test_x", priceId: "price_x", webhookSecret: "whsec_x", appUrl: "http://localhost" }),
+  cancelSubscriptionsNow: vi.fn(async (_cfg: unknown, customer: string) => (cancelled.push(customer), 1)),
+}));
+
+/** Every table with a user_id that still holds their rows, other than how they sign in and the security log. */
+async function leftovers(userId: string) {
+  const keep = new Set([
+    "users",
+    "sessions",
+    "oauth_identities",
+    "passkeys",
+    "recovery_codes",
+    "login_challenges",
+    "auth_challenges",
+    "password_resets",
+    "audit_events",
+  ]);
+  const tables = await getDb().execute<{ table_name: string }>(
+    sql`select distinct c.table_name from information_schema.columns c join information_schema.tables t on t.table_schema = c.table_schema and t.table_name = c.table_name and t.table_type = 'BASE TABLE' where c.column_name = 'user_id' and c.table_schema = current_schema()`,
+  );
+  const left: string[] = [];
+  for (const { table_name } of tables.rows) {
+    if (keep.has(table_name)) continue;
+    const [{ n }] = (await getDb().execute<{ n: number }>(sql`select count(*)::int as n from ${sql.identifier(table_name)} where user_id = ${userId}`)).rows;
+    if (n) left.push(table_name);
+  }
+  return left;
+}
+
+/** A finished account with things in it: a to-do, a class, a bank link and a paid plan. */
+async function finishedWithData(name: string) {
+  const made = await makeUser(name);
+  await getDb()
+    .update(users)
+    .set({ preferences: { ...made.user.preferences, onboarding: "done", birthDate: undefined }, stripeCustomerId: `cus_${randomUUID().slice(0, 8)}` })
+    .where(eq(users.id, made.user.id));
+  await made.run(async (s) => {
+    await s.tx.insert(integrations).values({ userId: made.user.id, provider: "plaid", status: "connected", displayName: "Bank" });
+    await createCourse(s, { name: "Math 7" });
+    await createTask(s, "UTC", { title: "Homework" });
+  });
+  return made;
+}
 
 /** Setup finishes (or is skipped) only with a birthday on the account (owner, 2026-11-10). */
 const born = (run: Awaited<ReturnType<typeof makeUser>>["run"]) => run((s) => saveWelcomeProgress(s, "UTC", { birthDate: "2001-03-04" }));
@@ -164,7 +212,8 @@ describe("onboarding", () => {
     expect(p.school).toBeUndefined();
     expect(p.welcomeJob).toBeUndefined();
     expect(p.lifeStage).toBeUndefined();
-    expect((await getDb().select({ name: users.name }).from(users).where(eq(users.id, user.id)))[0].name).toBe("Kai Young");
+    // the name they gave goes too (only the stand-in from the email is left), whatever stage the account was at
+    expect((await getDb().select({ name: users.name }).from(users).where(eq(users.id, user.id)))[0].name).toBe(provisionalName(user.email));
     // retyping an older year: still locked, still nothing kept
     expect(await run((s) => saveWelcomeProgress(s, "UTC", { birthDate: "2000-01-01" }))).toEqual({ blocked: true });
     expect((await prefs(user.id)).birthDate).toBeUndefined();
@@ -270,15 +319,21 @@ describe("onboarding", () => {
     expect(p.birthDate).toBeUndefined();
   });
 
-  it("Settings: an under-13 year sets the same flag, so a second, older year is refused", async () => {
-    const { user } = await makeUser("Set Tings");
+  it("Settings: a finished account answering under 13 is locked and emptied the same way, and an older year is refused", async () => {
+    const { user } = await finishedWithData("Set Tings");
     const base = { name: "Set Tings", timezone: "UTC" };
+    closed.length = 0;
+    cancelled.length = 0;
     await expect(updateProfile(getDb(), user.id, { ...base, birthDate: "2015-05-05" })).rejects.toThrow("LifeFlow is for people 13 and older.");
-    expect((await prefs(user.id)).ageBlockedAt).toBeTruthy();
+    const [u] = await getDb().select().from(users).where(eq(users.id, user.id));
+    expect(Object.keys(u.preferences).sort()).toEqual(["ageBlockedAt", "onboarding"]);
+    expect(u.name).toBe(provisionalName(u.email));
+    expect(await leftovers(user.id)).toEqual([]);
+    // the bank link is closed at Plaid and the paid plan cancelled at Stripe
+    expect(closed).toEqual(["plaid"]);
+    expect(cancelled).toEqual([u.stripeCustomerId]);
     await expect(updateProfile(getDb(), user.id, { ...base, birthDate: "2000-05-05" })).rejects.toThrow("LifeFlow is for people 13 and older.");
     expect((await prefs(user.id)).birthDate).toBeUndefined();
-    // the rest of the profile still saves
-    await updateProfile(getDb(), user.id, { ...base, name: "Set" });
   });
 
   it("an older account without a birthday is asked once: a real one saves; under 13 locks the same way", async () => {
@@ -286,8 +341,11 @@ describe("onboarding", () => {
     expect(await a.run((s) => saveBirthday(s, "America/Chicago", "1998-08-08"))).toEqual({ blocked: false });
     expect((await prefs(a.user.id)).birthDate).toBe("1998-08-08");
     await expect(a.run((s) => saveBirthday(s, "UTC", "2010-02-31"))).rejects.toThrow("Pick your birthday.");
-    const b = await makeUser("Bo Young");
+    // Today's card on a finished account: under 13 locks it and empties it, like setup does (owner, 2026-11-10)
+    const b = await finishedWithData("Bo Young");
     expect(await b.run((s) => saveBirthday(s, "UTC", `${new Date().getFullYear() - 8}-05-05`))).toEqual({ blocked: true });
+    expect(await leftovers(b.user.id)).toEqual([]);
+    expect(Object.keys(await prefs(b.user.id)).sort()).toEqual(["ageBlockedAt", "onboarding"]);
     expect(await b.run((s) => saveBirthday(s, "UTC", "1990-01-01"))).toEqual({ blocked: true });
     expect((await prefs(b.user.id)).birthDate).toBeUndefined();
   });

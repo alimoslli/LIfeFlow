@@ -5,6 +5,7 @@ import { sendFeedback } from "@/server/services/feedback";
 import { and, eq, ne } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { AGE_LINE } from "@/lib/birthday";
 import { formObject, mutate, type ActionState } from "@/server/actions";
 import { endSession, requireUser } from "@/server/auth/current-user";
 import { SESSION_COOKIE } from "@/server/auth/sessions";
@@ -29,7 +30,7 @@ const asService = async (fn: () => Promise<void>) => {
 
 export async function updateProfileAction(_p: ActionState, fd: FormData): Promise<ActionState> {
   const f = formObject(fd);
-  return mutate("profile.update", async (_s, u) => {
+  const r = await mutate("profile.update", async (_s, u) => {
     await updateProfile(getDb(), u.id, {
       name: f.name ?? "",
       timezone: f.timezone ?? "UTC",
@@ -42,6 +43,9 @@ export async function updateProfileAction(_p: ActionState, fd: FormData): Promis
     });
     return "Saved";
   });
+  // under 13 locks the account (owner, 2026-11-10): straight to the lock screen
+  if (r && !r.ok && r.error === AGE_LINE) redirect("/welcome");
+  return r;
 }
 
 export async function changePasswordAction(_p: ActionState, fd: FormData): Promise<ActionState> {

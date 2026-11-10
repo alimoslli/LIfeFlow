@@ -13,10 +13,10 @@ const sessionUser = cache(async (): Promise<SessionUser | null> => {
 });
 
 /**
- * Under 13 during setup (owner, 2026-11-10): the account is locked. Its session reaches only the welcome's lock screen
+ * Under 13, during setup or later (owner, 2026-11-10): the account is locked. Its session reaches only the welcome's lock screen
  * and signing out, so every page, server action and API route that asks for the user gets none (APIs answer 401).
  */
-export const ageLocked = (u: SessionUser | null | undefined) => !!u?.preferences?.ageBlockedAt && u.preferences?.onboarding === "pending";
+export const ageLocked = (u: SessionUser | null | undefined) => !!u?.preferences?.ageBlockedAt;
 
 /** Current user for this request (memoized per render), or null (also for an age-locked account). */
 export const getSessionUser = cache(async (): Promise<SessionUser | null> => {

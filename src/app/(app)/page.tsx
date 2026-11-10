@@ -76,7 +76,7 @@ export default async function TodayPage() {
       <section aria-label="Your day" data-tour="today-page" className="-mx-5 sm:-mx-8 md:mx-0">
         <DayClock data={clock} mode={mode} companion={me.preferences?.companion}>
           {/* accounts made before the birthday was required are asked once, first (owner, 2026-11-10; not a lockout) */}
-          {!me.preferences?.birthDate && <BirthdayCard blocked={!!me.preferences?.ageBlockedAt} />}
+          {!me.preferences?.birthDate && <BirthdayCard />}
           {me.preferences?.birthDate && note && <AssistantLine name={assistantName} note={note} />}
           {/* nothing planned yet: one next step, on the first screen (connect what can be connected, else tell the skyling) */}
           {me.preferences?.birthDate &&

@@ -177,6 +177,25 @@ test("setup needs a birthday: Skip goes to About you first", async ({ page }) =>
   await page.waitForURL((u) => u.pathname === "/");
 });
 
+test("a finished account answering under 13 on Today is locked the same way (owner, 2026-11-10)", async ({ page }) => {
+  const email = await signUp(page, "Rio Late");
+  // an account from before the birthday was asked: Today asks once
+  await pool.query(`update users set preferences = preferences - 'birthDate' where email = $1`, [email]);
+  await page.goto("/");
+  const card = page.getByRole("region", { name: "Your birthday" });
+  await card.getByLabel("Your birthday").fill(`${new Date().getFullYear() - 10}-04-04`);
+  await card.getByRole("button", { name: "Save" }).click();
+  await page.waitForURL("**/welcome");
+  await expect(page.getByRole("heading", { name: "LifeFlow is for people 13 and older." })).toBeVisible();
+  // every page leads back to the lock, and nothing of theirs is kept
+  await page.goto("/money");
+  await page.waitForURL("**/welcome");
+  await expect(page.getByRole("heading", { name: "LifeFlow is for people 13 and older." })).toBeVisible();
+  const [row] = await queryAsUser<{ p: Record<string, unknown>; name: string }>(email, "select preferences as p, name from users where email = $1", [email]);
+  expect(Object.keys(row.p).sort()).toEqual(["ageBlockedAt", "onboarding"]);
+  expect(row.name).not.toBe("Rio Late");
+});
+
 test("under 13: one calm line, the welcome stays locked, and an older year later doesn't get through", async ({ page }) => {
   const email = await signUp(page, "Kai Young", { onboarding: "stay" });
   await page.getByRole("button", { name: "Continue" }).click();

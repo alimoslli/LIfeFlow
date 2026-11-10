@@ -248,9 +248,10 @@ export default function PrivacyPolicy() {
       <h2>9. Children</h2>
       <p>
         LifeFlow is not intended for children under 13, and we do not knowingly collect personal information from them. We ask for a birthday when an account is
-        set up. If it shows someone is under 13, setup can&apos;t be finished and the account stays locked: we keep only the email address, the sign-in it was
-        created with, its security log (when and from where it signed in) and a note that it is locked, not the birthday, the name, the time zone or anything
-        else they entered or connected. If you believe a child under 13 has created an account, contact us and we will delete it.
+        set up, and once from accounts made before we asked. If it shows someone is under 13, at setup or later, the account is locked: it can&apos;t be used,
+        any bank or Google connection is closed, any paid plan is cancelled, and we keep only the email address, the sign-in it was created with, its security
+        log (when and from where it signed in) and a note that it is locked, not the birthday, the name, the time zone or anything else they entered or
+        connected. If you believe a child under 13 has created an account, contact us and we will delete it.
       </p>
 
       <h2>10. International users</h2>
