@@ -20,13 +20,17 @@ export async function GET(req: NextRequest) {
     const { state, verifier, challenge } = newMsOAuthState();
     const redirectUri = msRedirectUriFor(req.nextUrl.origin, cfg.appUrl);
     const res = NextResponse.redirect(msAuthUrl({ clientId: cfg.clientId, tenant: cfg.tenant, redirectUri, state, challenge, loginHint: user.email }));
-    res.cookies.set(MS_OAUTH_COOKIE, Buffer.from(JSON.stringify({ state, verifier, uid: user.id })).toString("base64url"), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/api/integrations/microsoft",
-      maxAge: 600,
-    });
+    res.cookies.set(
+      MS_OAUTH_COOKIE,
+      Buffer.from(JSON.stringify({ state, verifier, uid: user.id, w: req.nextUrl.searchParams.get("from") === "welcome" })).toString("base64url"),
+      {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/api/integrations/microsoft",
+        maxAge: 600,
+      },
+    );
     return res;
   } catch (e) {
     return errorResponse(e);

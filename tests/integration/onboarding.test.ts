@@ -4,7 +4,7 @@ import { closeDb, getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { listAccounts } from "@/server/services/finance/accounts";
 import { listActiveMemories } from "@/server/services/memory";
-import { completeOnboarding, finishOnboarding, setTourState } from "@/server/services/onboarding";
+import { completeOnboarding, finishOnboarding, saveWelcomeProgress, setTourState } from "@/server/services/onboarding";
 import { listCourses } from "@/server/services/school";
 import { listEmployers } from "@/server/services/work";
 import { assistantProfile } from "@/lib/assistant";
@@ -68,6 +68,37 @@ describe("onboarding", () => {
   it("existing accounts have no onboarding flag, so they're never sent to setup", async () => {
     const { user } = await makeUser();
     expect((await prefs(user.id)).onboarding).toBeUndefined();
+  });
+
+  it("the welcome keeps the skyling and 'about you' before connecting (it leaves the page and comes back)", async () => {
+    const { user, run } = await makeUser("Sam Ortiz");
+    await run((s) =>
+      saveWelcomeProgress(s, "America/Chicago", {
+        assistant: { name: "Nova", style: "coach", companion: "ray" },
+        name: "Sammy",
+        birthDate: "2005-04-12",
+        lifeStage: "student",
+        school: "State University",
+      }),
+    );
+    const p = await prefs(user.id);
+    expect(p).toMatchObject({
+      assistantName: "Nova",
+      assistantStyle: "coach",
+      companion: "ray",
+      birthDate: "2005-04-12",
+      lifeStage: "student",
+      school: "State University",
+    });
+    // still in setup: only finishing marks it done
+    expect(p.onboarding).not.toBe("done");
+    expect((await getDb().select({ name: users.name }).from(users).where(eq(users.id, user.id)))[0].name).toBe("Sammy");
+    // LifeFlow is for people 13 and older, and a birthday can't be in the future
+    const young = new Date();
+    const tooYoung = `${young.getFullYear() - 10}-01-01`;
+    await expect(run((s) => saveWelcomeProgress(s, "UTC", { birthDate: tooYoung }))).rejects.toThrow(/13 and older/);
+    await expect(run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${young.getFullYear() + 1}-01-01` }))).rejects.toThrow(/hasn't happened/);
+    expect((await prefs(user.id)).birthDate).toBe("2005-04-12");
   });
 
   it("only changes the signed-in user's preferences", async () => {

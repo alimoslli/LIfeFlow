@@ -61,6 +61,9 @@ export default async function ProfileSettings() {
                 <option value="0">Sunday</option>
               </Select>
             </Field>
+            <Field label="Birthday" htmlFor="p-birth">
+              <Input id="p-birth" name="birthDate" type="date" defaultValue={u.preferences.birthDate ?? ""} />
+            </Field>
             <Field label="What fills your week" htmlFor="p-life">
               <Select id="p-life" name="lifeStage" defaultValue={u.preferences.lifeStage ?? "both"}>
                 <option value="student">Classes</option>

@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
-import { ArrowLeft, BookOpen, Briefcase, CalendarDays, Check, GraduationCap, Layers, Sun } from "lucide-react";
+import { ArrowLeft, BookOpen, Briefcase, CalendarDays, Check, GraduationCap, Layers, Mail, Sun } from "lucide-react";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "@/components/motion/gsap";
 import { isHydrated } from "@/components/motion/intro";
 import { celebrate } from "@/components/motion/burst";
@@ -12,58 +12,92 @@ import { SkyButton } from "@/components/skylings/sky-button";
 import { FormError, Input } from "@/components/ui/field";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { ASSISTANT_STYLES, type AssistantStyle } from "@/lib/assistant";
+import { birthDateProblem, MIN_AGE } from "@/lib/birthday";
 import { COMPANIONS, companionOf, type CompanionKey } from "@/lib/companions";
 import type { ClockData } from "@/lib/day-clock";
 import type { LifeStage } from "@/lib/life";
-import { addDaysStr } from "@/lib/dates";
 import { cn } from "@/lib/utils";
-import { addClassAction, addDueAction, addWorkAction, completeOnboardingAction, setNameAction, skipOnboardingAction, type SkyResult } from "./actions";
+import { connectCanvasFeedAction } from "@/app/(app)/settings/integrations/actions";
+import { completeOnboardingAction, saveWelcomeAction, setNameAction, skipOnboardingAction, skyNowAction } from "./actions";
 
 /**
- * First run (owner, 2026-11-09: "catered to the new app ... make sure any user will understand the app and the new way
- * they will see their life"; "we want the users to actually sign up"): it's about building their real sky.
+ * First run (owner, 2026-11-09: "catered to the new app"; "they won't have to add their classes, syncing their school
+ * calendar does that, we want to show them how easy it is to sync and connect, and get some info on them like their
+ * birth date"):
  *   1. skyling: meet the six on the night sky, pick one and name it (research 2026-11-09: the character comes first);
- *   2. you: it says hi and asks what to call you and what fills your week;
- *   3. build: the sky comes up, their real wheel, and every class, shift and due date they add is saved at once and
- *      lands on it while they watch;
- *   4. learn: they turn it, open it into the week and fold it back themselves, each one ticked off;
- *   5. connect: their calendar and Canvas can fill it from now on, or straight to their sky.
- * No made-up demo day: everything on screen is theirs.
+ *   2. about: it says hi and gets to know them: what to call them, their birthday, what fills their week, their school
+ *      or work;
+ *   3. connect: their real sky, opened into the week, and one tap each for Canvas, Google Calendar and Outlook; what a
+ *      connection brings in lands on the sky (Google and Microsoft come back here, to this step);
+ *   4. learn: they turn the wheel, open it into the week and fold it back themselves, each one ticked off.
+ * No made-up demo day: everything on screen is theirs. The bank waits for Money (research: never in the first minute).
  */
-type StepId = "skyling" | "you" | "build" | "learn" | "connect";
-const STEPS: StepId[] = ["skyling", "you", "build", "learn", "connect"];
+type StepId = "skyling" | "about" | "connect" | "learn";
+const STEPS: StepId[] = ["skyling", "about", "connect", "learn"];
 
 /** What each step changes (research 2026-11-09, proposal 3: a step that changes nothing is cut). */
 const CHANGES: Record<StepId, string> = {
   skyling: "Changes who sits on top of your sky, and how it talks to you.",
-  you: "Changes what your skyling calls you and what fills your sky.",
-  build: "Everything you add is saved, and it's on your sky right away.",
+  about: "Helps your skyling plan around you. Private to your account.",
+  connect: "What you connect lands on your sky and stays up to date. You approve what it changes.",
   learn: "Nothing to save here. Just try it.",
-  connect: "Connected things come in on their own. You can disconnect anytime.",
 };
 
 const NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u;
-const WEEK = ["S", "M", "T", "W", "T", "F", "S"];
-const WEEK_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 /** What it sounds like before a skyling is picked (each one has its own line, lib/companions). */
 const SAMPLE = "You've got 2 things due this week. The BIO lab is the big one, so let's start it Tuesday. You've got this.";
 
 /** What's free. `paid` is false while LifeFlow is free for everyone (testing). */
 export type PlanInfo = { paid: boolean; freeChatsPerDay: number; proFeatures: string[] };
-type Added = { kind: "class" | "work" | "due"; label: string };
+/** What the welcome kept on the account (it comes back here after connecting Google or Microsoft). */
+export type Saved = {
+  companion: CompanionKey | null;
+  name: string;
+  style: AssistantStyle;
+  lifeStage: LifeStage | null;
+  birthDate: string;
+  school: string;
+};
+type Source = { available: boolean; connected: boolean };
+type SourceKey = "canvas" | "google" | "outlook";
+type Back = { provider: "google" | "outlook"; result: "connected" | "denied" | "failed" | "admin_consent" | "not_configured" | "use_main_site" };
 
-export function Onboarding({ firstName, plan, clock: firstClock }: { firstName: string; plan: PlanInfo; clock: ClockData }) {
+const BACK_TEXT: Record<Back["result"], string> = {
+  connected: "is connected. Look up: it's on your sky.",
+  denied: "wasn't connected. No problem, you can connect it anytime.",
+  failed: "couldn't connect. Try again.",
+  admin_consent: "needs your school or workplace to approve LifeFlow first.",
+  not_configured: "isn't available yet.",
+  use_main_site: "connects from the main site. Tap Connect again.",
+};
+
+export function Onboarding({
+  firstName,
+  plan,
+  clock: firstClock,
+  saved,
+  back,
+  sources,
+}: {
+  firstName: string;
+  plan: PlanInfo;
+  clock: ClockData;
+  saved: Saved;
+  back: Back | null;
+  sources: Record<SourceKey, Source>;
+}) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [index, setIndex] = useState(0);
+  // coming back from Google or Microsoft: straight to "Connect your sky"
+  const [index, setIndex] = useState(back ? 2 : 0);
   const dir = useRef(1);
   const step = STEPS[index];
 
   // 1. the skyling
-  const [companion, setCompanion] = useState<CompanionKey | null>(null);
-  const [name, setName] = useState("");
-  const [style, setStyle] = useState<AssistantStyle>("friend");
+  const [companion, setCompanion] = useState<CompanionKey | null>(saved.companion);
+  const [name, setName] = useState(saved.name);
+  const [style, setStyle] = useState<AssistantStyle>(saved.style);
   const chosen = companion ? companionOf(companion) : null;
   const cleanName = useMemo(() => name.trim().replace(/\s+/g, " "), [name]);
   const nameOk = cleanName.length === 0 || (cleanName.length <= 24 && NAME_RE.test(cleanName));
@@ -76,16 +110,25 @@ export function Onboarding({ firstName, plan, clock: firstClock }: { firstName: 
     cheerSkylings(); // the whole sky cheers your pick
   };
 
-  // 2. you
+  // 2. about you
   const [yourName, setYourName] = useState(firstName === "there" ? "" : firstName);
   const cleanYou = yourName.trim().replace(/\s+/g, " ");
-  const [stage, setStage] = useState<LifeStage | null>(null);
-  const school = stage === "student" || stage === "both";
-  const work = stage === "working" || stage === "both";
+  const [birthDate, setBirthDate] = useState(saved.birthDate);
+  const [stage, setStage] = useState<LifeStage | null>(saved.lifeStage);
+  const [school, setSchool] = useState(saved.school);
+  const [job, setJob] = useState("");
+  const isSchool = stage === "student" || stage === "both";
+  const isWork = stage === "working" || stage === "both";
+  const birthProblem = birthDate ? birthDateProblem(birthDate, firstClock.today) : null;
 
-  // 3. the sky they build
+  // 3. connect
   const [clock, setClock] = useState(firstClock);
-  const [added, setAdded] = useState<Added[]>([]);
+  const [linked, setLinked] = useState<Record<SourceKey, boolean>>({
+    canvas: sources.canvas.connected,
+    google: sources.google.connected || (back?.provider === "google" && back.result === "connected"),
+    outlook: sources.outlook.connected || (back?.provider === "outlook" && back.result === "connected"),
+  });
+  const anyLinked = linked.canvas || linked.google || linked.outlook;
 
   const panel = useRef<HTMLDivElement>(null);
   useGSAP(
@@ -111,38 +154,49 @@ export function Onboarding({ firstName, plan, clock: firstClock }: { firstName: 
     window.scrollTo({ top: 0 });
   };
 
-  const next = () => {
-    if (step === "you" && cleanYou !== firstName) {
-      start(async () => {
+  /** Leaving "about you": everything so far is kept on the account, so connecting can leave the page and come back. */
+  const saveAbout = () =>
+    start(async () => {
+      if (birthProblem) return setError(birthProblem);
+      if (cleanYou !== firstName) {
         const r = await setNameAction(cleanYou);
         if (!r?.ok) return setError(r?.error ?? "Couldn't save your name. Try again.");
-        go(1);
+      }
+      const r = await saveWelcomeAction({
+        assistant: { name: cleanName || undefined, style, companion: companion ?? undefined },
+        birthDate,
+        lifeStage: stage ?? undefined,
+        school: isSchool ? school.trim() : undefined,
       });
-      return;
-    }
-    go(1);
-  };
-
-  /** Saves one thing for real and puts the sky it comes back with on screen, with a star where it was added. */
-  const add = (kind: Added["kind"], label: string, save: () => Promise<SkyResult>, at: DOMRect | undefined, after: () => void) =>
-    start(async () => {
-      setError(null);
-      const r = await save();
-      if (!r.ok) return setError(r.error);
-      setClock(r.clock);
-      setAdded((a) => [...a, { kind, label }]);
-      celebrate(at, "small", "On your sky");
-      cheerSkylings();
-      after();
+      if (!r?.ok) return setError(r?.error ?? "Couldn't save. Try again.");
+      go(1);
     });
 
-  /** Finishes setup (their skyling and what fills their week; everything else is already saved) and goes on. */
+  const next = () => (step === "about" ? saveAbout() : go(1));
+
+  /** Canvas connects right here (its Calendar Feed link), then the sky comes back with what it brought in. */
+  const connectCanvas = (feed: string, at: DOMRect | undefined) =>
+    start(async () => {
+      setError(null);
+      const fd = new FormData();
+      fd.set("feed", feed);
+      const r = await connectCanvasFeedAction(null, fd);
+      if (!r?.ok) return setError(r?.error ?? "Couldn't connect Canvas. Check the link and try again.");
+      setLinked((l) => ({ ...l, canvas: true }));
+      const sky = await skyNowAction();
+      if (sky.ok) setClock(sky.clock);
+      celebrate(at, "big", "Connected");
+      cheerSkylings();
+    });
+
+  /** Finishes setup (their skyling, their week, where they work) and goes to their sky. */
   const finish = (to: string) =>
     start(async () => {
       if (!nameOk) return setError("Use letters, numbers, spaces or simple punctuation for the name (up to 24 characters).");
       const r = await completeOnboardingAction({
         lifeStage: stage ?? undefined,
         assistant: { name: cleanName || undefined, style, companion: companion ?? undefined },
+        job: isWork && job.trim() ? { name: job.trim() } : undefined,
       });
       if (r?.ok) router.replace(to);
       else setError(r?.error ?? "Couldn't save. Try again.");
@@ -155,7 +209,9 @@ export function Onboarding({ firstName, plan, clock: firstClock }: { firstName: 
       else setError(r?.error ?? "Couldn't continue. Try again.");
     });
 
-  const night = step === "skyling" || step === "you";
+  const night = step === "skyling" || step === "about";
+  // the sources in the order that matters to them: students start with Canvas
+  const order: SourceKey[] = isSchool || !stage ? ["canvas", "google", "outlook"] : ["google", "outlook", "canvas"];
   return (
     <div className="lf-glass min-h-dvh bg-bg">
       {/* the top: the skylings' night while you meet them; then the sun comes up on your own sky */}
@@ -167,9 +223,8 @@ export function Onboarding({ firstName, plan, clock: firstClock }: { firstName: 
         </div>
       ) : (
         <div className="lf-welcome-sky relative mx-auto w-full max-w-3xl pb-8 md:pt-4">
-          {/* building: the sky pours into the week, so every class, shift and due date lands on its day; learning: folded
-              back, for them to turn and open themselves */}
-          <DayClock data={clock} mode="full" companion={companion} open={step === "build" ? true : step === "learn" ? false : undefined} />
+          {/* connecting: opened into the week, so what comes in lands on its day; learning: folded back to turn and open */}
+          <DayClock data={clock} mode="full" companion={companion} open={step === "connect" ? true : step === "learn" ? false : undefined} />
         </div>
       )}
 
@@ -265,152 +320,146 @@ export function Onboarding({ firstName, plan, clock: firstClock }: { firstName: 
             </>
           )}
 
-          {step === "you" && (
+          {step === "about" && (
             <>
               <div data-anim className="flex items-end gap-3">
                 <CompanionGlyph companion={companion} night={companion === "star"} pose="celebrate" frame={3} className="lf-breathe h-14 w-14" />
                 <h1 className="font-display text-[2.75rem] leading-[1.05] font-medium tracking-tight">Hi{cleanYou ? ` ${cleanYou.split(" ")[0]}` : ""}.</h1>
               </div>
               <p data-anim className="mt-3 text-[1.0625rem] leading-relaxed text-text-2">
-                I&apos;m {shown ?? "your skyling"}. Two quick things, and then we build your sky together.
+                I&apos;m {shown ?? "your skyling"}. Tell me a little about you, and then we&apos;ll connect your sky.
               </p>
-              <label data-anim className="mt-6 flex flex-col gap-1.5">
-                <span className="text-sm font-medium text-text-2">What should I call you?</span>
-                <Input
-                  aria-label="What should I call you?"
-                  value={yourName}
-                  onChange={(e) => setYourName(e.target.value)}
-                  maxLength={80}
-                  autoComplete="given-name"
-                  className="min-h-11"
-                />
-              </label>
-              <p data-anim className="mt-6 mb-2 text-sm font-medium text-text-2">
-                What fills your week?
-              </p>
-              <div data-anim className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="What fills your week">
-                {(
-                  [
-                    ["student", "Classes", "I'm a student", BookOpen],
-                    ["working", "Work", "I have a job", Briefcase],
-                    ["both", "Both", "Classes and a job", Layers],
-                    ["life", "Neither", "My day and my money", Sun],
-                  ] as const
-                ).map(([value, label, hint, Icon]) => (
-                  <button
-                    key={value}
-                    role="radio"
-                    aria-checked={stage === value}
-                    onClick={() => setStage(value)}
-                    className={cn(
-                      "flex flex-col items-start gap-1 rounded-2xl px-4 py-3.5 text-left transition-all active:scale-[0.98]",
-                      stage === value ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night shadow-lift ring-2 ring-dawn-3" : "bg-surface shadow-soft",
-                    )}
-                  >
-                    <Icon className="h-5 w-5" strokeWidth={1.8} />
-                    <span className="text-[1rem] font-medium">{label}</span>
-                    <span className={cn("text-xs", stage === value ? "text-ink-night/75" : "text-muted")}>{hint}</span>
-                  </button>
-                ))}
-              </div>
-              <p data-anim className="mt-5 rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem] leading-snug text-text-2">
-                {plan.paid
-                  ? `Free plan: everything you add yourself, and ${plan.freeChatsPerDay} chats with your skyling a day. Pro adds ${listOf(plan.proFeatures)}.`
-                  : "LifeFlow is free while we're testing. Everything is open to you."}
-              </p>
-            </>
-          )}
-
-          {step === "build" && (
-            <>
-              <Title sub="Here's your sky, opened into your week. Add what fills it and watch each one land on its day.">Build your sky</Title>
-              <div className="mt-5 flex flex-col gap-3">
-                {school && (
-                  <WeeklyAdder
-                    icon={GraduationCap}
-                    title="A class"
-                    namePlaceholder="BIO 110"
-                    nameLabel="Class name"
-                    disabled={pending}
-                    onAdd={(v, at, done) =>
-                      add("class", `${v.name} · ${v.days.map((d) => WEEK_NAMES[d]).join("/")} ${v.start}`, () => addClassAction(v), at, done)
-                    }
+              <div className="mt-6 flex flex-col gap-5">
+                <Group label="What should I call you?">
+                  <Input
+                    aria-label="What should I call you?"
+                    value={yourName}
+                    onChange={(e) => setYourName(e.target.value)}
+                    maxLength={80}
+                    autoComplete="given-name"
+                    className="min-h-11"
                   />
-                )}
-                {work && (
-                  <WeeklyAdder
-                    icon={Briefcase}
-                    title="Your usual work hours"
-                    namePlaceholder="Campus Coffee"
-                    nameLabel="Where you work"
-                    disabled={pending}
-                    onAdd={(v, at, done) =>
-                      add("work", `${v.name} · ${v.days.map((d) => WEEK_NAMES[d]).join("/")} ${v.start}`, () => addWorkAction(v), at, done)
-                    }
+                </Group>
+                <Group label="Your birthday">
+                  <Input
+                    type="date"
+                    aria-label="Your birthday"
+                    value={birthDate}
+                    max={firstClock.today}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    autoComplete="bday"
+                    className="min-h-11"
+                    aria-invalid={!!birthProblem || undefined}
                   />
-                )}
-                <DueAdder
-                  today={clock.today}
-                  disabled={pending}
-                  onAdd={(v, at, done) => add("due", `${v.title} · ${v.date.slice(5).replace("-", "/")}`, () => addDueAction(v), at, done)}
-                />
-                {added.length > 0 && (
-                  <ul data-anim className="flex flex-col gap-1.5 rounded-2xl bg-surface-2 p-3.5" aria-label="On your sky">
-                    {added.map((a, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-text-2">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-ink-night text-star-gold" aria-hidden>
-                          <Check className="h-3 w-3" strokeWidth={3.2} />
-                        </span>
-                        {a.label}
-                      </li>
+                  <p className={cn("mt-1.5 text-xs", birthProblem ? "text-danger" : "text-muted")}>
+                    {birthProblem ?? `Private to your account. LifeFlow is for people ${MIN_AGE} and older.`}
+                  </p>
+                </Group>
+                <div data-anim>
+                  <p className="mb-2 text-sm font-medium text-text-2">What fills your week?</p>
+                  <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="What fills your week">
+                    {(
+                      [
+                        ["student", "Classes", "I'm a student", BookOpen],
+                        ["working", "Work", "I have a job", Briefcase],
+                        ["both", "Both", "Classes and a job", Layers],
+                        ["life", "Neither", "My day and my money", Sun],
+                      ] as const
+                    ).map(([value, label, hint, Icon]) => (
+                      <button
+                        key={value}
+                        role="radio"
+                        aria-checked={stage === value}
+                        onClick={() => setStage(value)}
+                        className={cn(
+                          "flex flex-col items-start gap-1 rounded-2xl px-4 py-3.5 text-left transition-all active:scale-[0.98]",
+                          stage === value ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night shadow-lift ring-2 ring-dawn-3" : "bg-surface shadow-soft",
+                        )}
+                      >
+                        <Icon className="h-5 w-5" strokeWidth={1.8} />
+                        <span className="text-[1rem] font-medium">{label}</span>
+                        <span className={cn("text-xs", stage === value ? "text-ink-night/75" : "text-muted")}>{hint}</span>
+                      </button>
                     ))}
-                  </ul>
+                  </div>
+                </div>
+                {isSchool && (
+                  <Group label="Your school">
+                    <Input
+                      aria-label="Your school"
+                      value={school}
+                      onChange={(e) => setSchool(e.target.value)}
+                      maxLength={120}
+                      placeholder="State University"
+                      autoComplete="organization"
+                      className="min-h-11"
+                    />
+                  </Group>
                 )}
-                <p data-anim className="text-[0.8125rem] leading-relaxed text-muted">
-                  <CalendarDays className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden />
-                  Got a calendar or Canvas? You can connect it in a minute and your sky fills itself.
+                {isWork && (
+                  <Group label="Where you work">
+                    <Input
+                      aria-label="Where you work"
+                      value={job}
+                      onChange={(e) => setJob(e.target.value)}
+                      maxLength={120}
+                      placeholder="Campus Coffee"
+                      autoComplete="off"
+                      className="min-h-11"
+                    />
+                  </Group>
+                )}
+                <p data-anim className="rounded-2xl bg-surface-2 px-4 py-3 text-[0.9375rem] leading-snug text-text-2">
+                  {plan.paid
+                    ? `Free plan: everything you add yourself, and ${plan.freeChatsPerDay} chats with your skyling a day. Pro adds ${listOf(plan.proFeatures)}.`
+                    : "LifeFlow is free while we're testing. Everything is open to you."}
                 </p>
               </div>
             </>
           )}
 
-          {step === "learn" && <Learn />}
-
           {step === "connect" && (
             <>
-              <Title sub="Connect once and new classes, shifts and due dates come in on their own. You approve what they change.">
-                Let your sky fill itself
+              <Title sub="Your classes, shifts and due dates already live somewhere. Connect it once and they land on your sky by themselves, and stay up to date.">
+                Connect your sky
               </Title>
+              {back && (
+                <p
+                  data-anim
+                  role="status"
+                  className={cn(
+                    "mt-4 rounded-2xl px-4 py-3 text-sm",
+                    back.result === "connected" ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night" : "bg-surface-2 text-text-2",
+                  )}
+                >
+                  {back.provider === "google" ? "Google Calendar" : "Outlook"} {BACK_TEXT[back.result]}
+                </p>
+              )}
               <ul data-anim className="mt-5 flex flex-col gap-2.5">
-                {[
-                  ["Google Calendar", "Your plans, classes and shifts from your calendar"],
-                  ["Outlook and Teams", "School or work calendar, and Teams meetings"],
-                  ["Canvas", "Assignments and due dates, counted back so nothing's a surprise"],
-                ].map(([t, d]) => (
-                  <li key={t}>
-                    <button
-                      type="button"
-                      onClick={() => finish("/settings/integrations")}
-                      disabled={pending}
-                      className="flex w-full items-center gap-3 rounded-2xl bg-surface px-4 py-3.5 text-left shadow-soft transition-transform active:scale-[0.99]"
-                    >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-2">
-                        <CalendarDays className="h-5 w-5 text-text-2" aria-hidden />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[0.9375rem] font-medium">{t}</span>
-                        <span className="block text-sm text-muted">{d}</span>
-                      </span>
-                      <span className="text-sm font-medium text-morning-link">Connect</span>
-                    </button>
+                {order.map((k) => (
+                  <li key={k}>
+                    {k === "canvas" ? (
+                      <CanvasSource connected={linked.canvas} disabled={pending} onConnect={connectCanvas} />
+                    ) : (
+                      <LinkSource
+                        source={k}
+                        connected={linked[k]}
+                        available={sources[k].available}
+                        icon={k === "google" ? CalendarDays : Mail}
+                        title={k === "google" ? "Google Calendar" : "Outlook and Teams"}
+                        brings={k === "google" ? "Your classes, plans and shifts from your calendar" : "School or work calendar, and Teams meetings"}
+                      />
+                    )}
                   </li>
                 ))}
               </ul>
               <p data-anim className="mt-3 text-[0.8125rem] text-muted">
-                Your bank can come later, from Money, when you want it.
+                No calendar? Tell your skyling your week in one sentence later. Your bank can come later too, from Money.
               </p>
             </>
           )}
+
+          {step === "learn" && <Learn />}
         </div>
 
         <div className="flex flex-col gap-3 pt-8">
@@ -419,21 +468,21 @@ export function Onboarding({ firstName, plan, clock: firstClock }: { firstName: 
             {CHANGES[step]}
           </p>
           {error && <FormError message={error} />}
-          {step === "connect" ? (
+          {step === "learn" ? (
             <SkyButton onClick={() => finish("/")} loading={pending} disabled={!nameOk} skyling={companion ?? "ray"} className="w-full justify-between pl-6">
               Go to my sky
             </SkyButton>
           ) : (
             <SkyButton
               onClick={next}
-              disabled={pending || (step === "skyling" && !nameOk) || (step === "you" && (!cleanYou || !stage))}
+              disabled={pending || (step === "skyling" && !nameOk) || (step === "about" && (!cleanYou || !stage || !birthDate || !!birthProblem))}
               skyling={companion ?? "dawn"}
               cheer={step === "skyling" && !!companion}
-              variant={step === "build" && added.length === 0 ? "glass" : "sun"}
-              day={step === "build" && added.length === 0}
+              variant={step === "connect" && !anyLinked ? "glass" : "sun"}
+              day={step === "connect" && !anyLinked}
               className="w-full justify-between pl-6"
             >
-              {step === "you" ? "Build my sky" : step === "build" ? (added.length ? "That's my week" : "I'll add things later") : "Continue"}
+              {step === "about" ? "Connect my sky" : step === "connect" ? (anyLinked ? "Show me how to read it" : "I'll connect later") : "Continue"}
             </SkyButton>
           )}
         </div>
@@ -442,135 +491,113 @@ export function Onboarding({ firstName, plan, clock: firstClock }: { firstName: 
   );
 }
 
-/** A thing that happens every week: a name, the days, from and to. Saved on Add. */
-function WeeklyAdder({
+/** Google or Microsoft: one tap away and back (the start route remembers it came from here). */
+function LinkSource({
+  source,
+  connected,
+  available,
   icon: Icon,
   title,
-  nameLabel,
-  namePlaceholder,
-  disabled,
-  onAdd,
+  brings,
 }: {
+  source: "google" | "outlook";
+  connected: boolean;
+  available: boolean;
   icon: typeof Sun;
   title: string;
-  nameLabel: string;
-  namePlaceholder: string;
-  disabled: boolean;
-  onAdd: (v: { name: string; days: number[]; start: string; end: string }, at: DOMRect | undefined, done: () => void) => void;
+  brings: string;
 }) {
-  const [name, setName] = useState("");
-  const [days, setDays] = useState<number[]>([]);
-  const [startT, setStart] = useState("");
-  const [endT, setEnd] = useState("");
-  const btn = useRef<HTMLButtonElement>(null);
-  const ready = name.trim() && days.length && startT && endT;
+  const href = source === "google" ? "/api/integrations/google/start?from=welcome" : "/api/integrations/microsoft/start?from=welcome";
   return (
-    <section data-anim className="rounded-[1.5rem] bg-surface p-3.5 shadow-soft sm:p-4" aria-label={title}>
-      <p className="flex items-center gap-2 text-[0.9375rem] font-medium">
-        <Icon className="h-4.5 w-4.5 text-text-2" strokeWidth={1.8} aria-hidden />
-        {title}
-      </p>
-      <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder={namePlaceholder}
-        aria-label={nameLabel}
-        maxLength={120}
-        className="mt-3 min-h-11"
-      />
-      {/* seven days at 44 px each on a 393 px phone */}
-      <div className="mt-2.5 flex justify-between gap-0.5" role="group" aria-label={`${title}: days`}>
-        {WEEK.map((d, i) => (
-          <button
-            key={i}
-            type="button"
-            aria-pressed={days.includes(i)}
-            aria-label={WEEK_NAMES[i]}
-            onClick={() => setDays((x) => (x.includes(i) ? x.filter((y) => y !== i) : [...x, i]))}
-            className={cn(
-              "flex h-11 min-w-0 flex-1 items-center justify-center rounded-xl text-sm font-semibold transition-colors",
-              days.includes(i) ? "bg-ink-night text-star-gold" : "bg-surface-2 text-text-2",
-            )}
-          >
-            {d}
-          </button>
+    <div
+      className={cn(
+        "flex items-center gap-3 rounded-2xl px-4 py-3.5",
+        connected ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night" : "bg-surface shadow-soft",
+      )}
+    >
+      <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", connected ? "bg-ink-night text-star-gold" : "bg-surface-2")}>
+        {connected ? <Check className="h-5 w-5" strokeWidth={3} aria-hidden /> : <Icon className="h-5 w-5 text-text-2" aria-hidden />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[0.9375rem] font-medium">{title}</span>
+        <span className={cn("block text-sm", connected ? "text-ink-night/75" : "text-muted")}>{connected ? "Connected. It's on your sky." : brings}</span>
+      </span>
+      {!connected &&
+        (available ? (
+          <a href={href} className="lf-sb lf-sb-sun lf-sb-sm shrink-0" aria-label={`Connect ${title}`}>
+            Connect
+          </a>
+        ) : (
+          <span className="shrink-0 text-xs text-muted">Isn&apos;t available yet</span>
         ))}
-      </div>
-      <div className="mt-2.5 flex items-center gap-2">
-        <Input type="time" value={startT} onChange={(e) => setStart(e.target.value)} aria-label={`${title}: starts`} className="min-h-11 min-w-0 flex-1" />
-        <span className="text-sm text-muted">to</span>
-        <Input type="time" value={endT} onChange={(e) => setEnd(e.target.value)} aria-label={`${title}: ends`} className="min-h-11 min-w-0 flex-1" />
-        <SkyButton
-          ref={btn}
-          type="button"
-          size="sm"
-          chip={false}
-          variant="sun"
-          disabled={disabled || !ready}
-          onClick={() =>
-            onAdd({ name: name.trim(), days: [...days].sort(), start: startT, end: endT }, btn.current?.getBoundingClientRect(), () => {
-              setName("");
-              setDays([]);
-              setStart("");
-              setEnd("");
-            })
-          }
-        >
-          Add
-        </SkyButton>
-      </div>
-    </section>
+    </div>
   );
 }
 
-/** Something due soon: a name and the day (a time if it has one). */
-function DueAdder({
-  today,
+/** Canvas: the Calendar Feed link works for every student, pasted right here. */
+function CanvasSource({
+  connected,
   disabled,
-  onAdd,
+  onConnect,
 }: {
-  today: string;
+  connected: boolean;
   disabled: boolean;
-  onAdd: (v: { title: string; date: string; time?: string }, at: DOMRect | undefined, done: () => void) => void;
+  onConnect: (feed: string, at: DOMRect | undefined) => void;
 }) {
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState(() => addDaysStr(today, 1));
-  const [time, setTime] = useState("");
+  const [open, setOpen] = useState(false);
+  const [feed, setFeed] = useState("");
   const btn = useRef<HTMLButtonElement>(null);
   return (
-    <section data-anim className="rounded-[1.5rem] bg-surface p-4 shadow-soft" aria-label="Something due soon">
-      <p className="flex items-center gap-2 text-[0.9375rem] font-medium">
-        <CalendarDays className="h-4.5 w-4.5 text-text-2" strokeWidth={1.8} aria-hidden />
-        Something due soon
-      </p>
-      <Input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="Lab report, rent, dentist…"
-        aria-label="What's due"
-        maxLength={200}
-        className="mt-3 min-h-11"
-      />
-      <div className="mt-2.5 flex items-center gap-2">
-        <Input type="date" value={date} min={today} onChange={(e) => setDate(e.target.value)} aria-label="Due day" className="min-h-11 min-w-0 flex-1" />
-        <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Due time (optional)" className="min-h-11 min-w-0 flex-1" />
-        <SkyButton
-          ref={btn}
-          type="button"
-          size="sm"
-          chip={false}
-          disabled={disabled || !title.trim() || !date}
-          onClick={() =>
-            onAdd({ title: title.trim(), date, time: time || undefined }, btn.current?.getBoundingClientRect(), () => {
-              setTitle("");
-              setTime("");
-            })
-          }
-        >
-          Add
-        </SkyButton>
+    <div className={cn("rounded-2xl px-4 py-3.5", connected ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night" : "bg-surface shadow-soft")}>
+      <div className="flex items-center gap-3">
+        <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", connected ? "bg-ink-night text-star-gold" : "bg-surface-2")}>
+          {connected ? <Check className="h-5 w-5" strokeWidth={3} aria-hidden /> : <GraduationCap className="h-5 w-5 text-text-2" aria-hidden />}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[0.9375rem] font-medium">Canvas</span>
+          <span className={cn("block text-sm", connected ? "text-ink-night/75" : "text-muted")}>
+            {connected ? "Connected. Your due dates are on your sky." : "Every assignment and due date, from all your classes"}
+          </span>
+        </span>
+        {!connected && !open && (
+          <button type="button" onClick={() => setOpen(true)} className="lf-sb lf-sb-sun lf-sb-sm shrink-0" aria-label="Connect Canvas">
+            Connect
+          </button>
+        )}
       </div>
-    </section>
+      {!connected && open && (
+        <div className="mt-3.5 flex flex-col gap-3 border-t border-border pt-3.5">
+          <ol className="flex list-decimal flex-col gap-1 pl-5 text-sm text-text-2">
+            <li>Open Canvas in a browser and go to Calendar.</li>
+            <li>Tap Calendar Feed (bottom right) and copy the link.</li>
+            <li>Paste it here. LifeFlow only reads due dates and class events.</li>
+          </ol>
+          <div className="flex items-center gap-2">
+            <Input
+              type="url"
+              inputMode="url"
+              value={feed}
+              onChange={(e) => setFeed(e.target.value)}
+              placeholder="https://…/feeds/calendars/user_….ics"
+              aria-label="Calendar Feed link"
+              autoCapitalize="none"
+              autoCorrect="off"
+              className="min-h-11 min-w-0 flex-1"
+            />
+            <SkyButton
+              ref={btn}
+              type="button"
+              size="sm"
+              chip={false}
+              disabled={disabled || !feed.trim()}
+              onClick={() => onConnect(feed.trim(), btn.current?.getBoundingClientRect())}
+            >
+              Connect
+            </SkyButton>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

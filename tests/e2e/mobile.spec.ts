@@ -5,23 +5,23 @@ test("core pages fit a phone screen without horizontal scrolling", async ({ page
   await signUp(page, "Phone User", { onboarding: "stay" });
   // The helper saves the name after /welcome loaded (sign-up asks only email and password); reload so the first screen has it.
   await page.reload();
-  // Every onboarding step fits: the skylings, you, build your sky (with long names), read your sky, connect.
+  // Every onboarding step fits: the skylings, about you (with long names), connect your sky, read your sky.
   const fits = async (label: string) => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow, `/welcome (${label}) overflows by ${overflow}px`).toBeLessThanOrEqual(1);
   };
   await fits("skyling");
   await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel("What should I call you?").fill("Tara");
+  await page.getByLabel("Your birthday").fill("2004-03-15");
   await page.getByRole("radio", { name: /Both/ }).click();
-  await fits("you");
-  await page.getByRole("button", { name: "Build my sky" }).click();
-  await page.getByLabel("Class name").fill("Introduction to Organic Chemistry II");
+  await page.getByLabel("Your school").fill("Introduction to Organic Chemistry University");
   await page.getByLabel("Where you work").fill("Campus Coffee and Bakery Downtown");
-  await fits("build");
-  await page.getByRole("button", { name: "I'll add things later" }).click();
-  await fits("learn");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await fits("about");
+  await page.getByRole("button", { name: "Connect my sky" }).click();
   await fits("connect");
+  await page.getByRole("button", { name: "I'll connect later" }).click();
+  await fits("learn");
   await page.getByRole("button", { name: "Skip setup" }).click();
   await page.waitForURL((u) => u.pathname === "/");
   await page.getByRole("button", { name: "Skip tour" }).click();

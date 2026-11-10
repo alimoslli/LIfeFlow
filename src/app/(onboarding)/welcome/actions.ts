@@ -8,17 +8,7 @@ import { withCurrentUser } from "@/server/auth/current-user";
 import { audit } from "@/server/services/audit";
 import { dayClockData } from "@/server/services/day-clock";
 import { ServiceError } from "@/server/services/errors";
-import {
-  addDueSoon,
-  addRegularWork,
-  addWeeklyClass,
-  completeOnboarding,
-  finishOnboarding,
-  setDisplayName,
-  setTourState,
-  type OnboardingInput,
-  type WeeklyInput,
-} from "@/server/services/onboarding";
+import { completeOnboarding, finishOnboarding, saveWelcomeProgress, setDisplayName, setTourState, type OnboardingInput } from "@/server/services/onboarding";
 
 /** What "Build your sky" gets back: the person's sky as it is now (no money on it), or why it didn't save. */
 export type SkyResult = { ok: true; clock: ClockData } | { ok: false; error: string };
@@ -43,14 +33,11 @@ async function onSky(name: string, save?: (s: Parameters<Parameters<typeof withC
 export async function skyNowAction(): Promise<SkyResult> {
   return onSky("onboarding.sky");
 }
-export async function addClassAction(input: WeeklyInput): Promise<SkyResult> {
-  return onSky("onboarding.class", (s, tz) => addWeeklyClass(s, tz, input));
-}
-export async function addWorkAction(input: WeeklyInput): Promise<SkyResult> {
-  return onSky("onboarding.work", (s, tz) => addRegularWork(s, tz, input));
-}
-export async function addDueAction(input: { title: string; date: string; time?: string }): Promise<SkyResult> {
-  return onSky("onboarding.due", (s, tz) => addDueSoon(s, tz, input));
+/** Keeps the skyling and "about you" on the account, so connecting (which leaves the page) can come back to them. */
+export async function saveWelcomeAction(input: Parameters<typeof saveWelcomeProgress>[2]): Promise<ActionState> {
+  return mutate("onboarding.progress", async (s, u) => {
+    await saveWelcomeProgress(s, u.timezone || "UTC", input);
+  });
 }
 
 export async function completeOnboardingAction(input: OnboardingInput): Promise<ActionState> {

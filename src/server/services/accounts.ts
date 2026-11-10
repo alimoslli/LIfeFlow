@@ -1,6 +1,8 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { birthDateProblem } from "@/lib/birthday";
 import { COMPANIONS, companionOf, isCompanionKey } from "@/lib/companions";
+import { todayIn } from "@/lib/dates";
 import { checkPassword } from "@/lib/password-strength";
 import { ServiceError } from "./errors";
 import { hashPassword, verifyPassword } from "../auth/password";
@@ -74,10 +76,18 @@ export const profileSchema = z.object({
     .optional(),
   jarvisTone: z.enum(["concise", "balanced", "detailed"]).optional(),
   lifeStage: z.enum(["student", "working", "both", "life"]).optional(),
+  /** "YYYY-MM-DD"; empty keeps what's saved. Checked against today in their time zone in updateProfile. */
+  birthDate: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => v || undefined),
 });
 
 export async function updateProfile(db: Database, userId: string, input: z.input<typeof profileSchema>) {
   const d = profileSchema.parse(input);
+  const problem = d.birthDate ? birthDateProblem(d.birthDate, todayIn(d.timezone)) : null;
+  if (problem) throw new ServiceError(problem);
   const [current] = await db.select().from(users).where(eq(users.id, userId));
   await db
     .update(users)
@@ -90,6 +100,7 @@ export async function updateProfile(db: Database, userId: string, input: z.input
         weekStartsOn: d.weekStartsOn,
         jarvisTone: d.jarvisTone ?? current.preferences.jarvisTone,
         lifeStage: d.lifeStage ?? current.preferences.lifeStage,
+        birthDate: d.birthDate ?? current.preferences.birthDate,
       },
     })
     .where(eq(users.id, userId));

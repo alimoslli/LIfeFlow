@@ -84,6 +84,10 @@ export type UserPreferences = {
   inboxDedupeRetryAfter?: string;
   /** What fills the user's week (from onboarding); helps Jarvis and the briefing. */
   lifeStage?: "student" | "working" | "both" | "life";
+  /** Their birthday, "YYYY-MM-DD" (the welcome, owner 2026-11-09; Settings › Profile). Private to the account. */
+  birthDate?: string;
+  /** Their school's name, from the welcome (students). */
+  school?: string;
   /** First-run setup: "pending" only for accounts created since onboarding launched. */
   onboarding?: "pending" | "done";
   /** Guided tour of the app, offered after onboarding or replayed from Settings. */

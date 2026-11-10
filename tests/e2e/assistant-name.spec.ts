@@ -60,15 +60,14 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   await expect(page.getByText("Your skyling:", { exact: false })).toBeVisible();
   await expectNoJarvis(page, "welcome: the skylings");
   await page.getByRole("button", { name: "Continue" }).click();
-  await expectNoJarvis(page, "welcome: you");
+  await expectNoJarvis(page, "welcome: about you");
   await page.getByLabel("What should I call you?").fill("Riley");
+  await page.getByLabel("Your birthday").fill("2003-07-21");
   await page.getByRole("radio", { name: /Both/ }).click();
-  await page.getByRole("button", { name: "Build my sky" }).click();
-  await expectNoJarvis(page, "welcome: build your sky");
-  await page.getByRole("button", { name: "I'll add things later" }).click();
+  await page.getByRole("button", { name: "Connect my sky" }).click();
+  await expectNoJarvis(page, "welcome: connect your sky");
+  await page.getByRole("button", { name: "I'll connect later" }).click();
   await expectNoJarvis(page, "welcome: read your sky");
-  await page.getByRole("button", { name: "Continue" }).click();
-  await expectNoJarvis(page, "welcome: connect");
   await page.getByRole("button", { name: "Go to my sky" }).click();
   await page.waitForURL((u) => u.pathname === "/");
 

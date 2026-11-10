@@ -37,6 +37,7 @@ export async function updateProfileAction(_p: ActionState, fd: FormData): Promis
       weekStartsOn: f.weekStartsOn as unknown as 0,
       jarvisTone: f.jarvisTone as "balanced",
       lifeStage: f.lifeStage as "both",
+      birthDate: f.birthDate,
     });
     return "Saved";
   });
