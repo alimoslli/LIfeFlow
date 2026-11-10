@@ -90,6 +90,9 @@ The owner films on their phone and sends the clips into the chat. There are two 
 
 ## 3b. The LifeFlow character (same in every video)
 
+> **Retired (owner, 2026-11-10):** Dev, the AI character, and the old blue sparkle logo are gone with the old version. Sections 3b, 3c and every
+> Dev entry below are history, not plans or wording to reuse. The face of LifeFlow is "your skyling" and its name, and real people (Ali, Tyler).
+
 - **Who:** a stylized 3D animated version of the owner himself (decided 2026-11-03, replacing the generic guy in sheets A and B): a smart, friendly college-age guy in feature-animation style, not photoreal. It is a flattering likeness made from the owner's own photos with his approval, not an exact copy. The photos were uploaded to Higgsfield as references (media ids below) and are not stored in this repo.
 - **Look (face, hair, glasses and build never change unless the owner asks):** messy textured curly brown hair with volume on top, soft curls over the forehead and a short taper on the sides; light blue-gray eyes; thick natural dark brows; fair skin with a slight warm flush; black browline (clubmaster-style) glasses in every shot; sturdy strong build; mature jaw, not a babyface. **Clothing changes from video to video, even from clip to clip (owner's decision).** Starter outfit on the sheet: deep forest green (#1F4D3A) quarter-zip sweater, cream tee, light-wash straight jeans, white low-top sneakers with a thin green stripe, slim black smartwatch on the left wrist. Every video brief names that video's outfit; new outfits are made by editing the chosen sheet, keeping the face fixed.
 - **Character sheet:** Higgsfield, model `gpt_image_2_5` (high quality, 2k, 16:9), turnaround (front, 3/4, side, back) plus 4 expressions on cream (#F4F0E8). Two versions made 2026-11-03:
@@ -450,6 +453,8 @@ Blush) and 5 non-sun marks (Your skyling, Little cloud, Sleepy moon, The day's p
 the blue horizon with the real sky of that moment; the animated loop moves through a day. Built from the app's own code; source and
 download in `marketing/logo/`. Use stills for profile pictures (they can't move); the loop is for video intros/outros, the website and
 the app's opening. The app still shows the morning sun until Ali says to swap it.
+**Visuals match the app's new sky buttons (owner via the COO, 2026-11-10):** they are going app-wide (`src/components/ui/button.tsx` on main),
+so any button in an ad, poster or mockup uses the sky-button look, never the old flat ones.
 The doc now opens with "What you do": a one-page checklist for tonight plus an Ali-and-Tyler table for the work shots. Ali wants the plan
 that simple ("just tell me what I have to do"); the detail stays below it. Send plans as PDF links too (the doc link didn't open in his browser).
 

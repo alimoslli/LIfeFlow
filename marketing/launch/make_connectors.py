@@ -57,7 +57,7 @@ def icon(kind, size):
         for x in (22, 42, 62):
             d.rounded_rectangle((x * u, 42 * u, (x + 14) * u, 72 * u), radius=3 * u, fill=CR)
         d.rounded_rectangle((12 * u, 76 * u, 88 * u, 86 * u), radius=4 * u, fill=CR)
-    elif kind == "ai":  # sparkle
+    elif kind == "ai":  # sparkle: RETIRED (owner, 2026-11-10, the old blue sparkle logo); don't use in new graphics
         def star(cx, cy, r):
             pts = []
             for i in range(8):

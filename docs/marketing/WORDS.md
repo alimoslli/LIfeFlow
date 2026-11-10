@@ -48,6 +48,9 @@ A script picks one person, but across a campaign the cast covers several of thes
 - "assistant", "personal assistant", "AI assistant", "companion" (owner, 2026-11-09: say "your skyling")
 - leading with "AI" (only the legal pages disclose it)
 - em dashes anywhere a viewer sees
+- "Dev", the old AI character, by name or as a character (owner, 2026-11-10, retired with the old version): it's just "your skyling" and its name
+- the old blue sparkle logo, anywhere, including the sparkle "ai" icon in `marketing/launch/make_connectors.py` (owner, 2026-11-10)
+- "What can I take off your plate?" (owner, 2026-11-10, via the COO; note: the app's chat still asks it on main 4a439c0, flagged to the COO)
 
 ## Candidate end lines (owner picks one)
 
