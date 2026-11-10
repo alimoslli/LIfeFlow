@@ -26,7 +26,7 @@ export default async function IdeasPage() {
       {groups.map((g) => (
         <section key={g.name} aria-label={g.name}>
           <h2 className="text-[1.375rem] font-medium tracking-tight">{g.name}</h2>
-          <ul className="divide-y divide-border">
+          <ul className="lf-rows">
             {g.ideas.map((i) => (
               <li key={i.title}>
                 {i.prompt ? (

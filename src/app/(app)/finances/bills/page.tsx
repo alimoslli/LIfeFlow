@@ -119,7 +119,7 @@ export default async function BillsPage() {
       {d.subs.flags.length > 0 && (
         <section aria-label="Worth a look" className="flex flex-col gap-2">
           <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Worth a look</h2>
-          <ul className="flex flex-col divide-y divide-border/70 overflow-hidden rounded-[1.5rem] bg-surface shadow-soft">
+          <ul className="lf-tiles">
             {d.subs.flags.slice(0, 3).map((f, i) => (
               <li key={i} className="flex items-start gap-3 px-4 py-3.5">
                 <span className={`lf-chip-night mt-0.5 h-9 w-9 shrink-0 rounded-[0.75rem] ${f.kind === "price_up" ? "text-dawn-glow" : ""}`} aria-hidden>
@@ -206,7 +206,7 @@ export default async function BillsPage() {
         <section aria-label="Found in your bank" className="flex flex-col gap-2">
           <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Found in your bank</h2>
           <p className="-mt-1 text-sm text-text-2">Regular charges you aren&apos;t tracking yet.</p>
-          <ul className="flex flex-col divide-y divide-border/70 overflow-hidden rounded-[1.5rem] bg-surface shadow-soft">
+          <ul className="lf-tiles">
             {found.map((c) => (
               <li key={c.seriesKey} className="flex items-center gap-3 px-4 py-3">
                 <div className="min-w-0 flex-1">

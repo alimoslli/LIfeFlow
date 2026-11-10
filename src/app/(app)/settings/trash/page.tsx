@@ -33,7 +33,7 @@ export default async function TrashPage() {
         {d.items.length === 0 ? (
           <EmptyState icon={<Trash2 />} title="Nothing here" />
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="lf-rows px-2 pb-2">
             {d.items.map((t) => (
               <li key={t.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
                 <div className="min-w-0 flex-1">

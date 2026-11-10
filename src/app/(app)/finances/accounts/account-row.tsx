@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Archive, ChevronRight, EyeOff, Plus } from "lucide-react";
+import { Archive, EyeOff, Plus } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -62,7 +62,6 @@ export function AccountRow({ a, save, off }: { a: AccountView; save: FormAct; of
           <span className="tabular block text-[0.9375rem] font-semibold">{a.balance}</span>
           {a.owed && <span className="block text-[0.6875rem] text-muted">owed</span>}
         </span>
-        <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title={a.name}>
         <div className="flex flex-col gap-5">

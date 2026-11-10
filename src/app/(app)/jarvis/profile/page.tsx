@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bell, Brain, ChevronRight, Heart, Link2, Lock } from "lucide-react";
+import { Brain, Heart } from "lucide-react";
 import { JarvisAvatar } from "@/components/jarvis/message-card";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
@@ -64,17 +65,16 @@ export default async function JarvisProfilePage() {
         </Link>
       </div>
 
-      <ul className="divide-y divide-border overflow-hidden rounded-3xl bg-surface shadow-soft">
+      <ul className="lf-tiles">
         {[
-          { href: "/settings/integrations", label: "Connected accounts", icon: Link2 },
-          { href: "/settings/notifications", label: "Notifications", icon: Bell },
-          { href: "/settings/data", label: "Privacy & data", icon: Lock },
-        ].map(({ href, label, icon: Icon }) => (
+          { href: "/settings/integrations", label: "Connected accounts", icon: "plug" as const },
+          { href: "/settings/notifications", label: "Notifications", icon: "bell" as const },
+          { href: "/settings/data", label: "Privacy & data", icon: "shield" as const },
+        ].map(({ href, label, icon }) => (
           <li key={href}>
             <Link href={href} className="flex min-h-14 items-center gap-3 px-4 text-[0.9375rem]">
-              <Icon className="h-5 w-5 text-text-2" strokeWidth={1.8} />
+              <PixelIcon name={icon} className="h-6 w-6" />
               <span className="flex-1">{label}</span>
-              <ChevronRight className="h-4 w-4 text-muted" />
             </Link>
           </li>
         ))}

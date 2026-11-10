@@ -7,7 +7,6 @@ import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui/surface";
 import { formatIn } from "@/lib/dates";
-import { cn } from "@/lib/utils";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { jarvisStats, skillStats } from "@/server/jarvis/metrics";
@@ -84,7 +83,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
       {pending.length > 0 && (
         <Card>
           <CardHeader title={`Waiting for your OK (${pending.length})`} subtitle="Nothing here is used until you keep it." />
-          <ul className="divide-y divide-border">
+          <ul className="lf-rows px-2 pb-2">
             {pending.map((m) => (
               <li key={m.id} className="flex items-start gap-3 px-5 py-3">
                 <div className="min-w-0 flex-1">
@@ -137,9 +136,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
             title={d.suggestionsOn ? "Turn memory suggestions off" : "Turn memory suggestions on"}
             className="tap flex shrink-0 items-center justify-center"
           >
-            <span className={cn("relative h-7 w-12 rounded-full transition-colors", d.suggestionsOn ? "bg-accent" : "bg-surface-3")}>
-              <span className={cn("absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-[left]", d.suggestionsOn ? "left-6" : "left-1")} />
-            </span>
+            <span className="lf-switch-view" data-on={d.suggestionsOn} />
             <span className="sr-only">{d.suggestionsOn ? "On" : "Off"}</span>
           </ActionButton>
         </div>
@@ -152,7 +149,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
           groups.map((g) => (
             <section key={g.cat} aria-label={g.label}>
               <h3 className="px-5 pt-4 pb-1 text-xs font-medium tracking-wide text-muted uppercase">{g.label}</h3>
-              <ul className="divide-y divide-border">
+              <ul className="lf-rows px-2 pb-2">
                 {g.items.map((m) => (
                   <li key={m.id} className="flex items-start gap-2 px-5 py-3">
                     <div className="min-w-0 flex-1">
@@ -236,7 +233,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                 · not used by <AssistantName />
               </span>
             </summary>
-            <ul className="divide-y divide-border border-t border-border">
+            <ul className="lf-rows px-2 pt-1 pb-2">
               {history.map((m) => {
                 const newer = replacedBy.get(m.id);
                 const expired = m.status === "active";
@@ -321,7 +318,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
               <p className="mt-2 text-sm text-muted">
                 <AssistantName start /> picks the right skill for each request. Rate answers with 👍 👎 in the chat; skills rated down often are flagged.
               </p>
-              <ul className="mt-3 divide-y divide-border">
+              <ul className="lf-rows mt-3 *:px-3">
                 {d.skills.length === 0 && <li className="py-2 text-sm text-muted">No requests yet.</li>}
                 {d.skills.map((k) => (
                   <li key={k.skill} className="flex items-center justify-between gap-3 py-2 text-sm">

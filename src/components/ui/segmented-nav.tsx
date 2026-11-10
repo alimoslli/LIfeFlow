@@ -1,20 +1,14 @@
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
-/** iOS-style segmented control made of links: switch between closely related views. */
+/**
+ * Switch between closely related views. Our own control (owner, 2026-11-10: nothing may look like a phone's own controls):
+ * plain words on a horizon line, and a little pixel sun rises under the one you're on (.lf-horizon in globals.css).
+ */
 export function SegmentedNav({ label, items, active }: { label: string; items: { key: string; href: string; label: string }[]; active: string }) {
   return (
-    <nav aria-label={label} className="inline-flex max-w-full overflow-x-auto rounded-full bg-surface-2 p-1 [scrollbar-width:none]">
+    <nav aria-label={label} className="lf-horizon">
       {items.map((i) => (
-        <Link
-          key={i.key}
-          href={i.href}
-          aria-current={active === i.key ? "page" : undefined}
-          className={cn(
-            "flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-medium whitespace-nowrap transition-colors",
-            active === i.key ? "bg-surface text-text shadow-soft" : "text-text-2",
-          )}
-        >
+        <Link key={i.key} href={i.href} aria-current={active === i.key ? "page" : undefined}>
           {i.label}
         </Link>
       ))}

@@ -1069,7 +1069,9 @@ html[data-typing="true"] .lf-tabbar {
 /* The sky switch, on a plain checkbox (keeps native form and keyboard behaviour): off is a little night with the moon,
    on is day with the sun (owner, 2026-11-10: nothing may look like a phone's own controls). The pictures are our pixel
    sun and moon (components/pixel/art.ts: today, sleep). */
-input[type="checkbox"].lf-switch {
+input[type="checkbox"].lf-switch,
+.lf-switch-view {
+  display: inline-block;
   appearance: none;
   position: relative;
   flex-shrink: 0;
@@ -1083,7 +1085,8 @@ input[type="checkbox"].lf-switch {
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
-input[type="checkbox"].lf-switch::after {
+input[type="checkbox"].lf-switch::after,
+.lf-switch-view::after {
   content: "";
   position: absolute;
   top: 0.1875rem;
@@ -1095,11 +1098,13 @@ input[type="checkbox"].lf-switch::after {
   image-rendering: pixelated;
   transition: transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1);
 }
-input[type="checkbox"].lf-switch:checked {
+input[type="checkbox"].lf-switch:checked,
+.lf-switch-view[data-on="true"] {
   background: linear-gradient(180deg, #7fb6f2, #ffd9a0);
   box-shadow: inset 0 0 0 2px #2b4470;
 }
-input[type="checkbox"].lf-switch:checked::after {
+input[type="checkbox"].lf-switch:checked::after,
+.lf-switch-view[data-on="true"]::after {
   background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='16' height='16' shape-rendering='crispEdges'><rect x='6' y='3' width='4' height='1' fill='%23262320'/><rect x='5' y='4' width='1' height='1' fill='%23262320'/><rect x='6' y='4' width='4' height='1' fill='%23ffdc6e'/><rect x='10' y='4' width='1' height='1' fill='%23262320'/><rect x='4' y='5' width='1' height='1' fill='%23262320'/><rect x='5' y='5' width='1' height='1' fill='%23ffdc6e'/><rect x='6' y='5' width='1' height='1' fill='%23ffffff'/><rect x='7' y='5' width='3' height='1' fill='%23ffdc6e'/><rect x='10' y='5' width='1' height='1' fill='%23dcae35'/><rect x='11' y='5' width='1' height='1' fill='%23262320'/><rect x='3' y='6' width='1' height='1' fill='%23262320'/><rect x='4' y='6' width='1' height='1' fill='%23ffdc6e'/><rect x='5' y='6' width='2' height='1' fill='%23ffffff'/><rect x='7' y='6' width='4' height='1' fill='%23ffdc6e'/><rect x='11' y='6' width='1' height='1' fill='%23dcae35'/><rect x='12' y='6' width='1' height='1' fill='%23262320'/><rect x='3' y='7' width='1' height='1' fill='%23262320'/><rect x='4' y='7' width='1' height='1' fill='%23ffdc6e'/><rect x='5' y='7' width='1' height='1' fill='%23ffffff'/><rect x='6' y='7' width='5' height='1' fill='%23ffdc6e'/><rect x='11' y='7' width='1' height='1' fill='%23dcae35'/><rect x='12' y='7' width='1' height='1' fill='%23262320'/><rect x='3' y='8' width='1' height='1' fill='%23262320'/><rect x='4' y='8' width='7' height='1' fill='%23ffdc6e'/><rect x='11' y='8' width='1' height='1' fill='%23dcae35'/><rect x='12' y='8' width='1' height='1' fill='%23262320'/><rect x='3' y='9' width='1' height='1' fill='%23262320'/><rect x='4' y='9' width='6' height='1' fill='%23ffdc6e'/><rect x='10' y='9' width='2' height='1' fill='%23dcae35'/><rect x='12' y='9' width='1' height='1' fill='%23262320'/><rect x='4' y='10' width='1' height='1' fill='%23262320'/><rect x='5' y='10' width='4' height='1' fill='%23ffdc6e'/><rect x='9' y='10' width='2' height='1' fill='%23dcae35'/><rect x='11' y='10' width='1' height='1' fill='%23262320'/><rect x='5' y='11' width='1' height='1' fill='%23262320'/><rect x='6' y='11' width='4' height='1' fill='%23dcae35'/><rect x='10' y='11' width='1' height='1' fill='%23262320'/><rect x='6' y='12' width='4' height='1' fill='%23262320'/><rect x='7' y='0' width='2' height='1' fill='%23f9a63a'/><rect x='7' y='1' width='2' height='1' fill='%23f9a63a'/><rect x='2' y='2' width='1' height='1' fill='%23f9a63a'/><rect x='13' y='2' width='1' height='1' fill='%23f9a63a'/><rect x='3' y='3' width='1' height='1' fill='%23f9a63a'/><rect x='12' y='3' width='1' height='1' fill='%23f9a63a'/><rect x='0' y='7' width='2' height='1' fill='%23f9a63a'/><rect x='14' y='7' width='2' height='1' fill='%23f9a63a'/><rect x='0' y='8' width='2' height='1' fill='%23f9a63a'/><rect x='14' y='8' width='2' height='1' fill='%23f9a63a'/><rect x='3' y='12' width='1' height='1' fill='%23f9a63a'/><rect x='12' y='12' width='1' height='1' fill='%23f9a63a'/><rect x='2' y='13' width='1' height='1' fill='%23f9a63a'/><rect x='13' y='13' width='1' height='1' fill='%23f9a63a'/><rect x='7' y='14' width='2' height='1' fill='%23f9a63a'/><rect x='7' y='15' width='2' height='1' fill='%23f9a63a'/></svg>");
   transform: translateX(1.375rem);
 }
@@ -1108,9 +1113,109 @@ input[type="checkbox"].lf-switch:focus-visible {
   outline-offset: 2px;
 }
 @media (prefers-reduced-motion: reduce) {
-  input[type="checkbox"].lf-switch::after {
+  input[type="checkbox"].lf-switch::after,
+  .lf-switch-view::after {
     transition: none;
   }
+}
+
+/* Horizon tabs (owner, 2026-11-10: nothing may look like a phone's own controls): closely related views are plain words
+   on a horizon line, and a little pixel sun rises under the one you're on. Used by SegmentedNav and Tabs. */
+.lf-horizon {
+  display: flex;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  box-shadow: inset 0 -2px 0 color-mix(in oklab, var(--text) 14%, transparent);
+}
+.lf-horizon::-webkit-scrollbar {
+  display: none;
+}
+.lf-horizon > a,
+.lf-horizon > button {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 3.25rem;
+  padding: 0.5rem 0.875rem 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  white-space: nowrap;
+  color: var(--text-2);
+  transition: color 0.15s ease;
+}
+.lf-horizon > a:hover,
+.lf-horizon > button:hover {
+  color: var(--text);
+}
+.lf-horizon > [aria-current="page"],
+.lf-horizon > [aria-selected="true"],
+.lf-horizon > [aria-checked="true"] {
+  font-weight: 650;
+  color: var(--text);
+}
+.lf-horizon > [aria-current="page"]::after,
+.lf-horizon > [aria-selected="true"]::after,
+.lf-horizon > [aria-checked="true"]::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 2rem;
+  height: 1rem;
+  margin-left: -1rem;
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 8' width='16' height='8' shape-rendering='crispEdges'><rect x='7' y='0' width='2' height='1' fill='%23f9a63a'/><rect x='2' y='1' width='1' height='1' fill='%23f9a63a'/><rect x='7' y='1' width='2' height='1' fill='%23f9a63a'/><rect x='13' y='1' width='1' height='1' fill='%23f9a63a'/><rect x='3' y='2' width='1' height='1' fill='%23f9a63a'/><rect x='5' y='2' width='6' height='1' fill='%23262320'/><rect x='12' y='2' width='1' height='1' fill='%23f9a63a'/><rect x='4' y='3' width='1' height='1' fill='%23262320'/><rect x='5' y='3' width='6' height='1' fill='%23ffdc6e'/><rect x='11' y='3' width='1' height='1' fill='%23262320'/><rect x='3' y='4' width='1' height='1' fill='%23262320'/><rect x='4' y='4' width='1' height='1' fill='%23ffdc6e'/><rect x='5' y='4' width='1' height='1' fill='%23ffffff'/><rect x='6' y='4' width='6' height='1' fill='%23ffdc6e'/><rect x='12' y='4' width='1' height='1' fill='%23262320'/><rect x='0' y='5' width='2' height='1' fill='%23f9a63a'/><rect x='3' y='5' width='1' height='1' fill='%23262320'/><rect x='4' y='5' width='1' height='1' fill='%23ffdc6e'/><rect x='5' y='5' width='1' height='1' fill='%23ffffff'/><rect x='6' y='5' width='5' height='1' fill='%23ffdc6e'/><rect x='11' y='5' width='1' height='1' fill='%23dcae35'/><rect x='12' y='5' width='1' height='1' fill='%23262320'/><rect x='14' y='5' width='2' height='1' fill='%23f9a63a'/><rect x='3' y='6' width='1' height='1' fill='%23262320'/><rect x='4' y='6' width='7' height='1' fill='%23ffdc6e'/><rect x='11' y='6' width='1' height='1' fill='%23dcae35'/><rect x='12' y='6' width='1' height='1' fill='%23262320'/><rect x='3' y='7' width='1' height='1' fill='%23262320'/><rect x='4' y='7' width='6' height='1' fill='%23ffdc6e'/><rect x='10' y='7' width='2' height='1' fill='%23dcae35'/><rect x='12' y='7' width='1' height='1' fill='%23262320'/></svg>")
+    center / contain no-repeat;
+  image-rendering: pixelated;
+  animation: lf-sunrise 0.35s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+@keyframes lf-sunrise {
+  from {
+    clip-path: inset(100% 0 0 0);
+    transform: translateY(0.5rem);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lf-horizon > [aria-current="page"]::after,
+  .lf-horizon > [aria-selected="true"]::after,
+  .lf-horizon > [aria-checked="true"]::after {
+    animation: none;
+  }
+}
+
+/* Tiles and rows (owner, 2026-11-10): a list is never a phone's settings table. No hairlines and no arrows: on its own
+   (.lf-tiles) every item is a soft tile; inside a card (.lf-rows) every item is a quiet inset tile. */
+.lf-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.lf-tiles > * {
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background-color: var(--surface);
+  box-shadow: var(--shadow);
+}
+.lf-glass .lf-tiles > * {
+  background-image: var(--glass-gloss);
+}
+.lf-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem 0.5rem;
+}
+.lf-rows > * {
+  overflow: hidden;
+  border-radius: 1rem;
+  background-color: color-mix(in oklab, var(--text) 4.5%, transparent);
 }
 
 /* Jarvis composer: the field sits inside a pill that shows focus itself. */

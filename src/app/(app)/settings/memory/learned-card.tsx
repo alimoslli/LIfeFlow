@@ -2,7 +2,6 @@ import { RotateCcw } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { Badge, Card, CardHeader } from "@/components/ui/surface";
 import { KIND_LABELS } from "@/lib/jarvis-voice";
-import { cn } from "@/lib/utils";
 import type { learnedStats } from "@/server/services/proactive/engine";
 import { resetLearningAction, setJarvisLearningAction, unmuteKindAction } from "../actions";
 
@@ -37,14 +36,12 @@ export function LearnedCard({
           title={learning ? "Turn learning off" : "Turn learning on"}
           className="tap flex shrink-0 items-center justify-center"
         >
-          <span className={cn("relative h-7 w-12 rounded-full transition-colors", learning ? "bg-accent" : "bg-surface-3")}>
-            <span className={cn("absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-[left]", learning ? "left-6" : "left-1")} />
-          </span>
+          <span className="lf-switch-view" data-on={learning} />
           <span className="sr-only">{learning ? "On" : "Off"}</span>
         </ActionButton>
       </div>
       {learning && (
-        <ul className="divide-y divide-border">
+        <ul className="lf-rows px-2 pb-2">
           {stats.brief && <li className="px-5 py-3 text-sm">You prefer short messages, so {name} skips the small talk.</li>}
           {kinds.length === 0 && <li className="px-5 py-3 text-sm text-muted">Nothing yet. Respond to a few messages and it shows up here.</li>}
           {kinds.map((k) => (

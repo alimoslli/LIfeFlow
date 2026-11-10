@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { AlertCircle, ChevronRight, Trash2 } from "lucide-react";
+import { AlertCircle, Trash2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SwipeRow } from "@/components/swipe-row";
 import { SubmitButton } from "@/components/ui/button";
@@ -42,7 +42,7 @@ export function ShiftList({
   const name = new Map(employers.map((e) => [e.id, e.name]));
   return (
     <>
-      <ul className="divide-y divide-border">
+      <ul className="lf-rows px-2 pb-2">
         {shifts.map((s) => {
           const cancelled = s.status === "cancelled";
           const needsHours = s.status === "scheduled" && s.endsAt.getTime() < now;
@@ -93,7 +93,6 @@ export function ShiftList({
                       {cancelled ? "Cancelled" : s.status === "worked" ? "Worked" : needsHours ? "Needs hours" : "Scheduled"}
                     </span>
                   </span>
-                  <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted" />
                 </button>
               </SwipeRow>
             </li>

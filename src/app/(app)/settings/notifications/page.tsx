@@ -61,7 +61,7 @@ export default async function NotificationSettings() {
         {devices.length === 0 ? (
           <p className="text-sm text-muted">No devices yet.</p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="lf-rows *:px-3">
             {devices.map((d) => (
               <li key={d.id} className="flex min-h-14 items-center gap-3 py-2">
                 <Smartphone className="h-5 w-5 shrink-0 text-muted" />

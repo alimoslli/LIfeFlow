@@ -186,7 +186,7 @@ export default async function MoneyPage() {
         {alerts.length > 0 && (
           <section className="animate-rise max-lg:order-[-2]" style={{ animationDelay: "140ms" }} aria-label="Heads up">
             <h2 className="mb-3 font-display text-[1.3125rem] leading-none font-medium tracking-tight">Heads up</h2>
-            <ul data-tilt className="divide-y divide-border/70 overflow-hidden rounded-[1.75rem] bg-surface shadow-soft">
+            <ul className="lf-tiles">
               {alerts.map((a, i) => (
                 <li key={i} className="flex gap-3 px-4 py-3.5">
                   <span className={cn("lf-chip-night mt-0.5 h-9 w-9 shrink-0 rounded-[0.75rem]", a.tone === "danger" && "text-dawn-glow")}>

@@ -63,7 +63,7 @@ export function AppleHealthCard({ keys, lastReceived, url }: { keys: Key[]; last
       )}
 
       {keys.length > 0 && (
-        <ul className="mt-4 flex flex-col divide-y divide-border text-sm">
+        <ul className="lf-rows mt-4 text-sm *:px-3">
           {keys.map((k) => (
             <li key={k.id} className="flex items-center justify-between gap-3 py-2">
               <span className="min-w-0">

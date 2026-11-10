@@ -54,7 +54,7 @@ export function ImportReview() {
               {g.title} <span className="text-sm font-normal text-muted">({rows.length})</span>
             </h2>
             <p className="text-xs text-muted">{g.hint}</p>
-            <ul className="mt-2 divide-y divide-border">
+            <ul className="lf-rows mt-2 *:px-3">
               {rows.map(({ it, idx }) => (
                 <li key={idx}>
                   <label className="flex min-h-12 cursor-pointer items-start gap-3 py-2.5">

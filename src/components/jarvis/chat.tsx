@@ -7,7 +7,6 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useAppBusy } from "@/lib/app-busy";
 import {
   AlertTriangle,
-  ChevronRight,
   Plug,
   CalendarDays,
   GraduationCap,
@@ -608,7 +607,6 @@ export function JarvisChat({
                   <span className="min-w-0 flex-1 text-[0.875rem] leading-snug text-text-2">
                     <span className="font-medium text-text">Connect me to do more.</span> Add {listOf(connect)} so I can plan around your real life.
                   </span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
                 </Link>
               )}
             </div>
@@ -919,7 +917,6 @@ function OpenLinks({ tools }: { tools: UiTool[] }) {
       {places.slice(0, 3).map((href) => (
         <Link key={href} href={href} className="lf-sb lf-sb-app lf-sb-sm">
           Open {viewAtName(href)}
-          <ChevronRight className="h-4 w-4" />
         </Link>
       ))}
     </div>

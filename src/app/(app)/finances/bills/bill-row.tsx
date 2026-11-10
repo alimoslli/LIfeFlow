@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ChevronRight, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -79,7 +79,6 @@ export function BillRow({
           </span>
         )}
         <span className="tabular shrink-0 text-[0.9375rem] font-semibold">{b.amount}</span>
-        <ChevronRight className="h-4 w-4 shrink-0 text-muted" aria-hidden />
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title={b.name}>
         <div className="flex flex-col gap-5">

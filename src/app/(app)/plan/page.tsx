@@ -165,7 +165,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
               {items.length === 0 ? (
                 <p className="py-2 text-[0.9375rem] text-muted">Nothing planned.</p>
               ) : (
-                <ul className="divide-y divide-border/70 overflow-hidden rounded-3xl bg-surface shadow-soft">
+                <ul className="lf-tiles">
                   {items.map((i) => (
                     <li key={i.key}>
                       <EditableBlock
@@ -222,7 +222,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
       {d.undated.length > 0 && filter !== "work" && (
         <section>
           <h2 className="mb-2 text-[0.9375rem] font-semibold">Whenever you can</h2>
-          <ul className="divide-y divide-border/70 overflow-hidden rounded-3xl bg-surface shadow-soft">
+          <ul className="lf-tiles">
             {d.undated.map((t) => (
               <li key={t.id} className="px-4 py-3 text-[0.9375rem]">
                 {t.title}

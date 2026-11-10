@@ -2,7 +2,7 @@
 import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronRight, ExternalLink, Trash2 } from "lucide-react";
+import { ExternalLink, Trash2 } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SwipeRow } from "@/components/swipe-row";
 import { TaskCheck } from "@/components/task-check";
@@ -26,7 +26,7 @@ export function AssignmentList({ items, tz, showCourse = true, today }: { items:
   const [editing, setEditing] = useState<A | null>(null);
   return (
     <>
-      <ul className="divide-y divide-border">
+      <ul className="lf-rows px-2 pb-2">
         {items.map((a) => {
           const due = dueLabel(a.dueAt, a.dueAllDay, tz);
           const done = a.status === "done";
@@ -71,7 +71,6 @@ export function AssignmentList({ items, tz, showCourse = true, today }: { items:
                     >
                       {due.text || "No date"}
                     </span>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
                   </button>
                 </div>
               </SwipeRow>

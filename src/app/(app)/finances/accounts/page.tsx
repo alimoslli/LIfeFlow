@@ -123,7 +123,7 @@ export default async function AccountsPage() {
       {d.off.length > 0 && (
         <section aria-label="Not used in LifeFlow" className="flex flex-col gap-2">
           <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Not used in LifeFlow</h2>
-          <ul className="flex flex-col divide-y divide-border/70 overflow-hidden rounded-[1.5rem] bg-surface shadow-soft">
+          <ul className="lf-tiles">
             {d.off.map((a) => (
               <li key={a.id} className="flex items-center gap-3 px-4 py-3">
                 <p className="min-w-0 flex-1 truncate text-[0.9375rem] text-text-2">

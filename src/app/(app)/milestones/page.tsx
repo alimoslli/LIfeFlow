@@ -1,7 +1,7 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Briefcase, ChevronRight, Download, Flag, GraduationCap, Heart, HeartPulse, Plane, PiggyBank, Star, Trash2, Trophy } from "lucide-react";
+import { Briefcase, Download, Flag, GraduationCap, Heart, HeartPulse, Plane, PiggyBank, Star, Trash2, Trophy } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { lifeTimeline, whenLabel, type TimelineItem } from "@/server/services/mi
 import { AskJarvisButton } from "../money/money-client";
 import { createMilestoneAction, deleteMilestoneAction, updateMilestoneAction } from "./actions";
 import { SkylingIcon } from "@/components/skylings/sprite";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export const metadata: Metadata = { title: "Milestones" };
 
@@ -100,7 +101,7 @@ export default async function MilestonesPage({ searchParams }: { searchParams: P
           {[...groups.entries()].map(([year, items]) => (
             <section key={year} aria-label={year}>
               <h2 className="mb-2 px-1 text-sm font-semibold text-muted">{year}</h2>
-              <ol className="divide-y divide-border overflow-hidden rounded-3xl bg-surface shadow-soft">
+              <ol className="lf-tiles">
                 {items.map((i) => {
                   const C = i.kind === "milestone" ? CATEGORY[i.category] : { label: "Goal reached", icon: i.kind === "money_goal" ? PiggyBank : Flag };
                   const when = whenLabel(i);
@@ -130,7 +131,7 @@ export default async function MilestonesPage({ searchParams }: { searchParams: P
                             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted hover:bg-surface-2"
                             aria-label="See goals"
                           >
-                            <ChevronRight className="h-4 w-4" />
+                            <PixelIcon name="goal" className="h-5 w-5" />
                           </Link>
                         )}
                       </div>
@@ -200,7 +201,6 @@ export default async function MilestonesPage({ searchParams }: { searchParams: P
               <span className="block text-[0.9375rem] font-medium">Import from ChatGPT or another AI</span>
               <span className="block text-xs text-muted">Bring your story, milestones and goals in one paste.</span>
             </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
           </Link>
         </div>
       </div>

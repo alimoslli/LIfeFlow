@@ -119,21 +119,10 @@ export function Stat({ label, value, sub, className }: { label: string; value: R
 
 export function Tabs({ items, current }: { items: { href: string; label: string; key: string }[]; current: string }) {
   return (
-    // One segmented control: a soft track with the current view raised in white.
-    <nav
-      className="lf-hscroll mb-6 flex gap-1 overflow-x-auto rounded-full bg-surface-2 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      aria-label="Sections"
-    >
+    // Horizon tabs: plain words on a horizon line, with a little sun under the current view (globals.css).
+    <nav className="lf-horizon lf-hscroll mb-6" aria-label="Sections">
       {items.map((i) => (
-        <Link
-          key={i.key}
-          href={i.href}
-          aria-current={i.key === current ? "page" : undefined}
-          className={cn(
-            "flex min-h-11 flex-1 shrink-0 items-center justify-center rounded-full px-3.5 text-sm whitespace-nowrap transition-all",
-            i.key === current ? "bg-surface font-medium text-text shadow-soft" : "text-text-2 hover:text-text",
-          )}
-        >
+        <Link key={i.key} href={i.href} aria-current={i.key === current ? "page" : undefined}>
           {i.label}
         </Link>
       ))}

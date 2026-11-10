@@ -27,7 +27,7 @@ export default async function RulesPage() {
             Change a transaction&apos;s category and a rule appears here.
           </EmptyState>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="lf-rows px-2 pb-2">
             {rules.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center gap-3 px-5 py-3">
                 <div className="min-w-0 flex-1">

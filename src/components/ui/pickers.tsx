@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { CalendarDays, Check, ChevronRight, Clock, Flag } from "lucide-react";
+import { CalendarDays, Check, Clock, Flag } from "lucide-react";
 import { addDaysStr, dayOfWeek, formatDateStr } from "@/lib/dates";
 import { haptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,6 @@ function PickerRow({ icon, label, value, onOpen, id }: { icon: React.ReactNode; 
         <span className="block text-xs text-muted">{label}</span>
         <span className="block">{value}</span>
       </span>
-      <ChevronRight className="h-4 w-4 text-muted" />
     </button>
   );
 }

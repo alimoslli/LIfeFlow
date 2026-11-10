@@ -73,7 +73,7 @@ export function CashOutlook(p: {
       )}
 
       {p.bills.length > 0 && (
-        <ul className="mt-4 divide-y divide-border/70 border-t border-border/70">
+        <ul className="lf-rows mt-4 *:px-3">
           {p.bills.slice(0, 6).map((b) => (
             <li key={`${b.name}${b.date}`} className="flex items-center gap-3 py-3">
               <span className="tabular w-12 shrink-0 text-[0.8125rem] text-muted">{formatDateStr(b.date, "MMM d")}</span>

@@ -72,7 +72,7 @@ export default async function DuePage({ searchParams }: { searchParams: Promise<
         ) : (
           <div className="flex flex-col">
             {byClass(d.list).map((g) => (
-              <section key={g.key} aria-label={g.name} className="border-b border-border last:border-0">
+              <section key={g.key} aria-label={g.name}>
                 <header className="flex items-center gap-2.5 px-4 pt-4 pb-1 sm:px-5">
                   <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: g.color }} />
                   <h2 className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold">{g.name}</h2>

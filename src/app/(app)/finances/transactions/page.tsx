@@ -200,93 +200,91 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           {[...groups.entries()].map(([date, rows]) => (
             <section key={date}>
               <h2 className="mb-2 px-1 text-sm font-medium text-text-2">{dayHeading(date, d.today)}</h2>
-              <Card>
-                <ul className="divide-y divide-border/70">
-                  {rows.map((t) => (
-                    <li key={t.id} className={cn(t.excluded && "opacity-50")}>
-                      <Link
-                        href={sp.edit === t.id ? qs({ edit: undefined }) : qs({ edit: t.id })}
-                        className="flex items-center gap-3.5 px-4 py-3.5 transition-colors hover:bg-surface-2/50 sm:px-5"
+              <ul className="lf-tiles">
+                {rows.map((t) => (
+                  <li key={t.id} className={cn(t.excluded && "opacity-50")}>
+                    <Link
+                      href={sp.edit === t.id ? qs({ edit: undefined }) : qs({ edit: t.id })}
+                      className="flex items-center gap-3.5 px-4 py-3.5 transition-colors hover:bg-surface-2/50 sm:px-5"
+                    >
+                      <span
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
+                        style={{ background: t.categoryColor ?? "var(--muted)" }}
                       >
-                        <span
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
-                          style={{ background: t.categoryColor ?? "var(--muted)" }}
-                        >
-                          {(t.merchantName ?? t.description).trim().charAt(0).toUpperCase()}
+                        {(t.merchantName ?? t.description).trim().charAt(0).toUpperCase()}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="line-clamp-2 break-words text-[0.9375rem]">{t.merchantName ?? t.description}</span>
+                        <span className="line-clamp-2 break-words text-xs text-muted">
+                          {t.categoryName ?? "Uncategorized"}
+                          {t.kind !== "expense" && t.kind !== "income" && KIND_LABELS[t.kind] ? ` · ${KIND_LABELS[t.kind]}` : ""}
+                          {t.pending ? " · Pending" : ""}
+                          {t.excluded ? " · Hidden" : ""}
                         </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="line-clamp-2 break-words text-[0.9375rem]">{t.merchantName ?? t.description}</span>
-                          <span className="line-clamp-2 break-words text-xs text-muted">
-                            {t.categoryName ?? "Uncategorized"}
-                            {t.kind !== "expense" && t.kind !== "income" && KIND_LABELS[t.kind] ? ` · ${KIND_LABELS[t.kind]}` : ""}
-                            {t.pending ? " · Pending" : ""}
-                            {t.excluded ? " · Hidden" : ""}
-                          </span>
-                        </span>
-                        <span className="text-right">
-                          <Money
-                            cents={t.amountCents}
-                            signed
-                            className={cn("block text-[0.9375rem]", t.amountCents < 0 && "text-text", t.kind === "transfer" && "text-muted")}
-                          />
-                          <span className="block text-xs text-muted">{t.accountName}</span>
-                        </span>
-                      </Link>
-                      {sp.edit === t.id && (
-                        <div className="animate-fade-in bg-surface-2/60 px-4 py-4 sm:px-5">
-                          <ActionForm action={updateTransactionAction.bind(null, t.id)} reset={false} showSuccess className="gap-3">
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                              <label className="flex flex-col gap-1 text-xs text-text-2">
-                                Type
-                                <Select name="kind" defaultValue={t.kind}>
-                                  {TRANSACTION_KINDS.map((k) => (
-                                    <option key={k} value={k}>
-                                      {KIND_LABELS[k]}
-                                    </option>
-                                  ))}
-                                </Select>
-                              </label>
-                              <label className="flex flex-col gap-1 text-xs text-text-2">
-                                Category
-                                <Select name="categoryId" defaultValue={t.categoryId ?? ""}>
-                                  <CategoryOptions categories={d.categories} />
-                                </Select>
-                              </label>
-                            </div>
-                            <label className="flex items-center gap-1.5 text-sm text-text-2">
-                              <input type="checkbox" name="applyToPast" className="accent-[var(--accent)]" /> If I change the category, also update past
-                              transactions from {t.merchantName ?? t.description}
+                      </span>
+                      <span className="text-right">
+                        <Money
+                          cents={t.amountCents}
+                          signed
+                          className={cn("block text-[0.9375rem]", t.amountCents < 0 && "text-text", t.kind === "transfer" && "text-muted")}
+                        />
+                        <span className="block text-xs text-muted">{t.accountName}</span>
+                      </span>
+                    </Link>
+                    {sp.edit === t.id && (
+                      <div className="animate-fade-in bg-surface-2/60 px-4 py-4 sm:px-5">
+                        <ActionForm action={updateTransactionAction.bind(null, t.id)} reset={false} showSuccess className="gap-3">
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <label className="flex flex-col gap-1 text-xs text-text-2">
+                              Type
+                              <Select name="kind" defaultValue={t.kind}>
+                                {TRANSACTION_KINDS.map((k) => (
+                                  <option key={k} value={k}>
+                                    {KIND_LABELS[k]}
+                                  </option>
+                                ))}
+                              </Select>
                             </label>
                             <label className="flex flex-col gap-1 text-xs text-text-2">
-                              Note
-                              <Input name="notes" defaultValue={t.notes ?? ""} />
+                              Category
+                              <Select name="categoryId" defaultValue={t.categoryId ?? ""}>
+                                <CategoryOptions categories={d.categories} />
+                              </Select>
                             </label>
-                            <div className="flex flex-wrap items-center gap-3">
-                              <label className="flex items-center gap-1.5 text-sm text-text-2">
-                                <input type="checkbox" name="excluded" defaultChecked={t.excluded} className="accent-[var(--accent)]" /> Hide from totals
-                              </label>
-                              {t.source !== "manual" && <SourceBadge source={t.source} />}
-                              <span className="flex-1" />
-                              <SubmitButton size="sm">Save</SubmitButton>
-                            </div>
-                          </ActionForm>
-                          <div className="mt-2">
-                            {["manual", "import", "jarvis"].includes(t.source) && (
-                              <ActionButton
-                                action={deleteTransactionAction.bind(null, t.id)}
-                                title="Delete transaction"
-                                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-danger hover:bg-danger-soft"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" /> Delete
-                              </ActionButton>
-                            )}
                           </div>
+                          <label className="flex items-center gap-1.5 text-sm text-text-2">
+                            <input type="checkbox" name="applyToPast" className="accent-[var(--accent)]" /> If I change the category, also update past
+                            transactions from {t.merchantName ?? t.description}
+                          </label>
+                          <label className="flex flex-col gap-1 text-xs text-text-2">
+                            Note
+                            <Input name="notes" defaultValue={t.notes ?? ""} />
+                          </label>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <label className="flex items-center gap-1.5 text-sm text-text-2">
+                              <input type="checkbox" name="excluded" defaultChecked={t.excluded} className="accent-[var(--accent)]" /> Hide from totals
+                            </label>
+                            {t.source !== "manual" && <SourceBadge source={t.source} />}
+                            <span className="flex-1" />
+                            <SubmitButton size="sm">Save</SubmitButton>
+                          </div>
+                        </ActionForm>
+                        <div className="mt-2">
+                          {["manual", "import", "jarvis"].includes(t.source) && (
+                            <ActionButton
+                              action={deleteTransactionAction.bind(null, t.id)}
+                              title="Delete transaction"
+                              className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-danger hover:bg-danger-soft"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" /> Delete
+                            </ActionButton>
+                          )}
                         </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </Card>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </section>
           ))}
           {show < d.rows.length && (

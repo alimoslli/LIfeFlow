@@ -47,7 +47,7 @@ export function PasskeysCard({ passkeys, demo }: { passkeys: PasskeyRow[]; demo:
         </div>
       </div>
       {passkeys.length > 0 && (
-        <ul className="mt-4 divide-y divide-border">
+        <ul className="lf-rows mt-4 *:px-3">
           {passkeys.map((p) => (
             <li key={p.id} className="flex min-h-14 items-center gap-3 py-2">
               <KeyRound className="h-4 w-4 shrink-0 text-muted" />

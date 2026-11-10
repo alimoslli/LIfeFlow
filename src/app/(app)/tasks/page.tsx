@@ -3,7 +3,7 @@ import { series } from "@/server/db/series";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckSquare, ChevronRight, Plus, Repeat } from "lucide-react";
+import { CheckSquare, Plus, Repeat } from "lucide-react";
 import { ActionForm } from "@/components/action-form";
 import { SwipeRow } from "@/components/swipe-row";
 import { TaskCheck } from "@/components/task-check";
@@ -107,7 +107,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                     {g.label} <span className="font-normal text-muted">{g.items.length}</span>
                   </h2>
                 )}
-                <Card as="div" className="divide-y divide-border overflow-hidden">
+                <div className="lf-tiles">
                   {g.items.map((t) => {
                     const due = dueLabel(t.dueAt, t.dueAllDay, tz);
                     const c = data.counts.get(t.id);
@@ -154,13 +154,12 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                                 className={cn("h-2 w-2 shrink-0 rounded-full", t.priority === "urgent" ? "bg-danger" : "bg-warning")}
                               />
                             )}
-                            <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
                           </Link>
                         </div>
                       </SwipeRow>
                     );
                   })}
-                </Card>
+                </div>
               </section>
             ))}
         </div>

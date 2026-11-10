@@ -1,7 +1,7 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowUp, ChevronRight, GraduationCap } from "lucide-react";
+import { ArrowUp, GraduationCap } from "lucide-react";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { MySkyling } from "@/components/skylings/sprite";
 import { BOOKS, PixelArt, SkyWindow } from "@/components/skylings/sky-window";
@@ -173,7 +173,6 @@ export default async function SchoolPage() {
             <span className="block text-[0.9375rem] font-semibold">Connect Canvas</span>
             <span className="block text-[0.8125rem] leading-snug text-text-2">Your classes and due dates fill in by themselves.</span>
           </span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
         </Link>
       )}
     </>

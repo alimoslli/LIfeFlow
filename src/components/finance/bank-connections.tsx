@@ -22,7 +22,7 @@ export function BankConnections({
   return (
     <div className="flex flex-col gap-4">
       {connections.length > 0 && (
-        <ul className="flex flex-col divide-y divide-border">
+        <ul className="lf-rows *:px-3">
           {connections.map((c) => (
             <li key={c.id} className="flex flex-col gap-2 py-3">
               <div className="flex items-center justify-between gap-3">
