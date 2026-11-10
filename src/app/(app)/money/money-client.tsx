@@ -27,12 +27,13 @@ const MESSAGES: Record<number, string> = {
 export function CelebrateGoal({ goalId, name, percent }: { goalId: string; name: string; percent: number }) {
   const [open, setOpen] = useState(true);
   const [, start] = useTransition();
-  const close = () => {
-    setOpen(false);
+  // seen the moment it shows: leaving the page within its few seconds used to bring it back on every visit
+  useEffect(() => {
     start(async () => {
       await celebrateMilestoneAction(goalId, percent);
     });
-  };
+  }, [goalId, percent]);
+  const close = () => setOpen(false);
   // A celebration, not a blocker: it steps aside on its own after a few seconds.
   const closeRef = useRef(close);
   useEffect(() => {

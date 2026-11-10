@@ -31,7 +31,12 @@ test("idea clouds: short, from real data, a tap fills the box and sends nothing"
   ).toBe("none");
   await expect(page.getByRole("heading", { name: "Let's clear your sky." })).toBeVisible();
   const clouds = page.getByRole("list", { name: "Ideas to try" }).getByRole("button");
-  await expect(clouds).toHaveCount(3);
+  // three on a tall screen; a phone in a browser (664 px) shows two, so none is cut in half by the message box
+  await expect(clouds).toHaveCount(2);
+  for (const c of await clouds.all()) {
+    const [cloud, box] = [await c.boundingBox(), await page.getByLabel(COMPOSER).boundingBox()];
+    expect(cloud!.y + cloud!.height).toBeLessThanOrEqual(box!.y);
+  }
   await clouds.first().click();
   const box = page.getByLabel(COMPOSER);
   await expect(box).toHaveValue(ANY);

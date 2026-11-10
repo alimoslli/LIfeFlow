@@ -577,7 +577,9 @@ export function JarvisChat({
                     setInput(ask);
                     inputRef.current?.focus();
                   }}
-                  className="mt-5 justify-center"
+                  // a third cloud only when the screen is tall enough to show it whole above the message box (a
+                  // phone in a browser cut it in half; owner, 2026-11-10: nothing lies over anything)
+                  className="mt-5 justify-center [@media(max-height:760px)]:[&>li:nth-child(n+3)]:hidden"
                 />
               ) : (
                 <div className="-mx-4 mt-4 flex w-[calc(100%+2rem)] snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 pt-1 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:w-full sm:grid-cols-4 sm:overflow-visible sm:px-0">
