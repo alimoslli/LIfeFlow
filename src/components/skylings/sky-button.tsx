@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { forwardRef, type ButtonHTMLAttributes, type PointerEvent, type ReactNode } from "react";
-import { ArrowRight, Sparkle } from "lucide-react";
 import { prefersReducedMotion } from "@/components/motion/gsap";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import type { CompanionKey } from "@/lib/companions";
@@ -58,10 +58,10 @@ function Inner({ chip = true, skyling = "ray", loading, variant = "sun", childre
       {(showChip || loading) && (
         <span className="lf-sb-chip" aria-hidden>
           {loading ? (
-            <Sparkle className="lf-sb-wait" strokeWidth={2.4} />
+            <PixelIcon name="sync" className="lf-sb-wait" />
           ) : (
             <>
-              <ArrowRight className="lf-sb-arrow" strokeWidth={2.6} />
+              <PixelIcon name="arrow" className="lf-sb-arrow" />
               <CompanionGlyph companion={skyling} pose="celebrate" frame={2} className="lf-sb-peek" />
             </>
           )}

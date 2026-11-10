@@ -1,5 +1,4 @@
 "use client";
-import { Copy } from "lucide-react";
 import { useShell } from "@/components/shell/app-shell";
 import { toast } from "@/components/ui/toaster";
 import type { Idea } from "@/lib/ideas";
@@ -22,7 +21,7 @@ export function IdeaButton({ idea }: { idea: Idea }) {
 export function CopyText({ text, label = "Copy" }: { text: string; label?: string }) {
   return (
     <button type="button" onClick={() => navigator.clipboard?.writeText(text).then(() => toast("Copied."))} className="lf-sb lf-sb-app lf-sb-sm self-start">
-      <Copy className="h-4 w-4" /> {label}
+      <PixelIcon name="copy" className="h-4 w-4" /> {label}
     </button>
   );
 }

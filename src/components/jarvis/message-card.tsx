@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { BellOff, Check, Clock, Loader2, MoreHorizontal, ThumbsDown, ThumbsUp, Undo2 } from "lucide-react";
+import { BellOff, Clock, Loader2, MoreHorizontal, ThumbsDown, ThumbsUp } from "lucide-react";
 import { respondAction } from "@/app/(app)/jarvis/proactive-actions";
 import { haptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
@@ -89,7 +89,7 @@ export function JarvisMessageCard({ m, name, compact }: { m: CardMessage; name: 
           )}
           {m.resultText && (
             <p className="mt-2 flex items-start gap-1.5 text-sm text-success">
-              <Check className="mt-0.5 h-4 w-4 shrink-0" /> {m.resultText}
+              <PixelIcon name="check" className="mt-0.5 h-4 w-4 shrink-0" /> {m.resultText}
             </p>
           )}
           {open && m.action?.choices && (
@@ -154,7 +154,7 @@ export function JarvisMessageCard({ m, name, compact }: { m: CardMessage; name: 
                 onClick={() => act("undo")}
                 className="ml-1 flex min-h-11 items-center gap-1 rounded-full px-3 text-sm text-text-2"
               >
-                <Undo2 className="h-4 w-4" /> Undo
+                <PixelIcon name="undo" className="h-4 w-4" /> Undo
               </button>
             )}
             {open && (

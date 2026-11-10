@@ -1,7 +1,7 @@
 import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Archive, Check, RotateCcw, Trash2 } from "lucide-react";
+import { Archive, RotateCcw } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -106,7 +106,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                   </p>
                 </div>
                 <ActionButton action={decideMemoryAction.bind(null, m.id, "keep")} title="Keep" className="lf-sb lf-sb-sun lf-sb-xs lf-touch">
-                  <Check className="h-3.5 w-3.5" /> Keep
+                  <PixelIcon name="check" className="h-3.5 w-3.5" /> Keep
                 </ActionButton>
                 <ActionButton
                   action={decideMemoryAction.bind(null, m.id, "dismiss")}
@@ -192,7 +192,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                       title="Delete memory"
                       className="tap flex items-center justify-center rounded-full text-muted hover:text-danger"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <PixelIcon name="trash" className="h-4 w-4" />
                     </ActionButton>
                   </li>
                 ))}
@@ -267,7 +267,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                       title="Delete permanently"
                       className="tap flex items-center justify-center rounded-full text-muted hover:text-danger"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <PixelIcon name="trash" className="h-4 w-4" />
                     </ActionButton>
                   </li>
                 );

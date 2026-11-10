@@ -4,7 +4,7 @@ import { jsonOf, PlainError, serverWords } from "@/lib/plain-error";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppBusy } from "@/lib/app-busy";
-import { Check, Mic, MicOff } from "lucide-react";
+import { Mic, MicOff } from "lucide-react";
 import { SkylingIcon } from "@/components/skylings/sprite";
 import { cn } from "@/lib/utils";
 import { nameAtStart } from "@/lib/assistant";
@@ -370,7 +370,7 @@ export function LiveVoice({
       </div>
       {phase === "hearing" && !muted && (
         <button type="button" onClick={finishTurn} aria-label="Done talking" className="lf-sb lf-sb-sun lf-sb-sm">
-          <Check className="h-4 w-4" aria-hidden />
+          <PixelIcon name="check" className="h-4 w-4" />
           Done
         </button>
       )}

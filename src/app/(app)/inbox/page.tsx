@@ -1,7 +1,8 @@
 import { AssistantName } from "@/components/assistant-name";
+import { PixelIcon, pixel } from "@/components/pixel/pixel-icon";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertCircle, CheckCircle2, CircleSlash, FileText, Mail, Undo2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, CircleSlash, FileText, Mail } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
@@ -24,7 +25,7 @@ const STATUS = {
   needs_review: { icon: AlertCircle, tone: "text-warning", label: "Needs you" },
   ignored: { icon: CircleSlash, tone: "text-muted", label: "Ignored" },
   failed: { icon: AlertCircle, tone: "text-danger", label: "Couldn't read" },
-  undone: { icon: Undo2, tone: "text-muted", label: "Undone" },
+  undone: { icon: pixel("undo"), tone: "text-muted", label: "Undone" },
   duplicate: { icon: CircleSlash, tone: "text-muted", label: "Already filed" },
   processing: { icon: FileText, tone: "text-muted", label: "Reading" },
 } as const;
@@ -189,7 +190,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                 !i.filed.some((f) => f.stale) && (
                   <div className="mt-2 flex justify-end">
                     <ActionButton action={undoInboxAction.bind(null, i.id)} className="flex items-center gap-1 rounded-full px-3 text-sm text-text-2">
-                      <Undo2 className="h-4 w-4" /> Undo
+                      <PixelIcon name="undo" className="h-4 w-4" /> Undo
                     </ActionButton>
                   </div>
                 )}

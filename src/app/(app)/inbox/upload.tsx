@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Copy, Loader2 } from "lucide-react";
+import { Camera, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
 import { useAppBusy } from "@/lib/app-busy";
 
@@ -70,7 +71,7 @@ export function InboxUpload() {
 export function CopyAddress({ address }: { address: string }) {
   return (
     <button type="button" onClick={() => navigator.clipboard?.writeText(address).then(() => toast("Address copied."))} className="lf-sb lf-sb-app lf-sb-sm">
-      <Copy className="h-4 w-4" /> Copy
+      <PixelIcon name="copy" className="h-4 w-4" /> Copy
     </button>
   );
 }
