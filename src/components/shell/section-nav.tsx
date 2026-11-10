@@ -75,9 +75,12 @@ export function SectionNav({ inline = false, children }: { inline?: boolean; chi
   return (
     <nav
       aria-label={`${SECTION_NAMES[section]} sections`}
-      // On a phone, Today's other pages (calendar, to-dos, goals, health, work) are doors in "Everything else" (the dock),
-      // so their row of pills shows on laptops only.
-      className={cn(inline ? "py-2" : "lf-sectionnav sticky z-20 -mx-5 mb-6 py-2.5 backdrop-blur-xl sm:-mx-8 md:top-0", section === "plan" && "max-md:hidden")}
+      // On a phone, Today's other pages are doors in "Everything else" (the dock) and Money's are three rows on Money, so
+      // those rows of pills show on laptops only (navigation concept A); a phone gets the round back button instead.
+      className={cn(
+        inline ? "py-2" : "lf-sectionnav sticky z-20 -mx-5 mb-6 py-2.5 backdrop-blur-xl sm:-mx-8 md:top-0",
+        (section === "plan" || section === "money") && "max-md:hidden",
+      )}
     >
       <div
         className={cn(

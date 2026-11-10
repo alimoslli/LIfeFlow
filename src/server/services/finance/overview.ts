@@ -67,6 +67,7 @@ export async function moneyOverview(scope: UserScope, today: string) {
   const budgetedSpent = budgets.reduce((s, b) => s + b.spentCents, 0);
   return {
     hasAccounts: accounts.length > 0,
+    accountCount: accounts.length,
     balances,
     month,
     budgets: {

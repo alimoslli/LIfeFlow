@@ -10,7 +10,8 @@ const TABS: [string, string, string[]][] = [
   // Today is the day clock and the timeline, which hold calendar, to-dos, goals and milestones. The skyling is the bar on the
   // dock, not a tab, and everything else is a door in the "More" sheet (navigation concept A, owner 2026-11-10).
   ["Today", "/", ["/habits", "/work"]],
-  ["Money", "/money", ["/finances/accounts", "/wealth", "/finances/transactions", "/finances/bills"]],
+  // Money: three plain rows (Activity, Bills and subscriptions, Accounts and savings); investments live under Accounts.
+  ["Money", "/money", ["/finances/accounts", "/finances/transactions", "/finances/bills"]],
   ["School", "/school", ["/school/due", "/notes"]],
 ];
 
@@ -62,7 +63,7 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
   await everything.getByRole("link", { name: /To-dos/ }).click();
   await expect(page).toHaveURL(/\/tasks$/);
   await expect(everything).toBeHidden();
-  pages.push("/jarvis", "/jarvis/says", "/jarvis/ideas", "/jarvis/profile", "/plan", "/tasks", "/milestones");
+  pages.push("/jarvis", "/jarvis/says", "/jarvis/ideas", "/jarvis/profile", "/plan", "/tasks", "/milestones", "/wealth");
 
   // Settings: the gear (tap 1), then its tabs (tap 2): Assistant (what Jarvis remembers), Integrations (Apple Health), etc.
   // The gear brings Settings up from below, over the page you were on (owner, 2026-11-10); its doors are one tap away.

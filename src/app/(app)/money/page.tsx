@@ -16,6 +16,7 @@ import { spendingSummary } from "@/server/services/finance/insights";
 import { spendingByCategory } from "@/server/services/finance/planning";
 import { PlaidLinkButton } from "@/components/finance/plaid-link";
 import { MySkyling } from "@/components/skylings/sprite";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { COINS, PixelArt, SkyWindow } from "@/components/skylings/sky-window";
 import { plaidConfig } from "@/server/integrations/plaid";
 
@@ -106,6 +107,27 @@ export default async function MoneyPage() {
   const lastShort = d.lastLabel.slice(0, 3);
   const asOf = o.balances.asOf ? formatIn(o.balances.asOf, d.tz, "MMM d, h:mm a") : null;
 
+  const nextBill = [...d.forecast.bills].sort((a, b) => a.date.localeCompare(b.date))[0];
+  const billDay = (date: string) => (date === d.today ? "today" : date === addDaysStr(d.today, 1) ? "tomorrow" : formatDateStr(date, "EEEE"));
+  const places: { href: string; icon: "bill" | "calendar" | "card" | "money"; label: string; detail: string }[] = [
+    { href: "/finances/transactions", icon: "bill", label: "Activity", detail: `${formatCents(o.month.netSpendingCents, { compact: true })} spent this month` },
+    {
+      href: "/finances/bills",
+      icon: "calendar",
+      label: "Bills and subscriptions",
+      detail: nextBill ? `${nextBill.name} ${billDay(nextBill.date)}` : "Nothing due in the next 30 days",
+    },
+    {
+      href: "/finances/accounts",
+      icon: "card",
+      label: "Accounts and savings",
+      detail: `${o.accountCount} account${o.accountCount === 1 ? "" : "s"}`,
+    },
+    // investments get their own row only when there are some
+    ...(o.investments
+      ? [{ href: "/wealth", icon: "money" as const, label: "Investments", detail: `${formatCents(o.investments.valueCents, { compact: true })} invested` }]
+      : []),
+  ];
   return (
     // a laptop gets two columns (A-to-Z audit C2): what you have and what needs you on the left, the month ahead and
     // where it went on the right; a phone keeps one column in the same order
@@ -118,16 +140,6 @@ export default async function MoneyPage() {
             Balances as of {asOf ?? "unknown"}
             {o.balances.hasDemoData ? " · Sample data" : ""}
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {[
-              ["/finances/bills", "Bills"],
-              ["/wealth", "Investments"],
-            ].map(([href, label]) => (
-              <Link key={href} href={href} className="lf-sb lf-sb-app lf-sb-sm px-3.5 text-sm">
-                {label}
-              </Link>
-            ))}
-          </div>
         </header>
 
         {/* Available now: money in checking and cash that can be spent today */}
@@ -182,6 +194,24 @@ export default async function MoneyPage() {
             </p>
           </SkyWindow>
         </section>
+
+        {/* Money's other places as three plain rows, each with a line about how it stands (navigation concept A, owner
+            2026-11-10), in place of a row of pills */}
+        <nav aria-label="Money places" className="animate-rise max-lg:order-[-3]" style={{ animationDelay: "90ms" }}>
+          <ul className="lf-tiles">
+            {places.map((p) => (
+              <li key={p.href}>
+                <Link href={p.href} className="flex min-h-16 items-center gap-3.5 px-4 py-3 transition-transform active:scale-[0.98]">
+                  <PixelIcon name={p.icon} className="h-8 w-8" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[0.9375rem] font-semibold">{p.label}</span>
+                    <span className="block truncate text-[0.8125rem] text-muted">{p.detail}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
         {alerts.length > 0 && (
           <section className="animate-rise max-lg:order-[-2]" style={{ animationDelay: "140ms" }} aria-label="Heads up">
