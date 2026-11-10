@@ -74,20 +74,20 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
         <h2 className="font-medium">Lock Money with Face ID</h2>
         <p className="mt-0.5 text-sm text-text-2">Ask for Face ID before showing your balances.</p>
         <ActionForm action={setMoneyLockAction} reset={false} className="mt-3 gap-0">
-          <label className="flex min-h-14 cursor-pointer items-center gap-3 border-b border-border py-2">
+          <label className="flex min-h-14 cursor-pointer items-center gap-3 py-2">
             <span className="flex-1 text-[0.9375rem]">Require Face ID / Touch ID for Money</span>
             <input type="checkbox" name="enabled" defaultChecked={d.lock.enabled} disabled={!d.passkeys.length} className="lf-switch" />
           </label>
           <label className="flex min-h-14 items-center gap-3 py-2">
-            <span className="min-w-0 flex-1 text-[0.9375rem]">Lock after</span>
+            <span className="min-w-0 flex-1 text-[0.9375rem]">Lock after it sits unused for</span>
             <select
               name="idleMinutes"
               defaultValue={String(d.lock.idleMinutes)}
-              className="h-11 min-w-0 max-w-[60%] rounded-xl border border-border bg-surface px-3 text-[1rem]"
+              className="h-11 shrink-0 rounded-xl border border-border bg-surface px-3 text-[1rem]"
             >
               {MONEY_LOCK_IDLE_CHOICES.map((m) => (
                 <option key={m} value={m}>
-                  {m} minute{m === 1 ? "" : "s"} without use
+                  {m} minute{m === 1 ? "" : "s"}
                 </option>
               ))}
             </select>
