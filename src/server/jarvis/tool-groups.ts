@@ -61,7 +61,7 @@ export const GROUP_TOOLS: Record<ToolGroup, string[]> = {
     "delete_assignment",
     "course_materials",
   ],
-  calendar: ["life_load", "get_agenda", "find_free_time", "create_events", "update_event", "delete_event"],
+  calendar: ["life_load", "get_agenda", "find_free_time", "create_events", "update_event", "delete_event", "set_up_schedule"],
   // Looking things up. Changes are in money_edit, sent only when the user asks to change something.
   money: [
     "money_overview",

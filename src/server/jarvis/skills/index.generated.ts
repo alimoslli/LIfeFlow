@@ -973,7 +973,7 @@ export const SKILLS: SkillFile[] = [
       "money_overview",
       "recurring_payments"
     ],
-    "body": "## Steps\n1. Run check_affordability with the amount and date.\n2. Explain the result with the bills and cash it used.\n3. Give a clear yes, wait until X, or no, with the reason.\n\n## Quality rules\n- Never count future income.\n\n## Example\nUser: Can I afford $120 concert tickets?\nAssistant: Yes, but tight: after rent on the 1st you'd have $64 left until payday.",
+    "body": "## Steps\n1. Run check_affordability once, with the amount and the date. It already has the cash, the bills and their usual spending, so it is the only money lookup this question needs: don't also call tonight or money_overview for the same question.\n2. Give one verdict, first: yes, wait until X, or no. The tool's projected number decides it.\n3. Then the one or two numbers behind it (the cash now, the bill or spending that makes it tight).\n\n## Quality rules\n- Never count future income.\n- One verdict per answer. Never follow a \"wait\" with a second forecast that sounds like a yes, or the other way round.\n\n## Example\nUser: Can I afford $120 concert tickets?\nAssistant: Yes, but tight: after rent on the 1st you'd have $64 left until payday.",
     "evals": [
       {
         "prompt": "Can I afford a $120 concert ticket?",

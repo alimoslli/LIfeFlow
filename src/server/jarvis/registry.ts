@@ -10,6 +10,7 @@ import { overviewTools } from "./tools/overview";
 import { personalGoalTools } from "./tools/personal-goals";
 import { promiseTools } from "./tools/promises";
 import { schoolTools } from "./tools/school";
+import { setupTools } from "./tools/setup";
 import { taskTools } from "./tools/tasks";
 import { tonightTools } from "./tools/tonight";
 import { webTools } from "./tools/web";
@@ -35,6 +36,7 @@ export const ALL_TOOLS: ToolDefinition[] = [
   ...personalGoalTools,
   ...promiseTools,
   ...tonightTools,
+  ...setupTools,
   loadToolsTool,
 ] as ToolDefinition[];
 

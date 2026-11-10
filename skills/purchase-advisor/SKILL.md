@@ -7,12 +7,13 @@ modules: ["finances"]
 tools: ["check_affordability", "money_overview", "recurring_payments"]
 ---
 ## Steps
-1. Run check_affordability with the amount and date.
-2. Explain the result with the bills and cash it used.
-3. Give a clear yes, wait until X, or no, with the reason.
+1. Run check_affordability once, with the amount and the date. It already has the cash, the bills and their usual spending, so it is the only money lookup this question needs: don't also call tonight or money_overview for the same question.
+2. Give one verdict, first: yes, wait until X, or no. The tool's projected number decides it.
+3. Then the one or two numbers behind it (the cash now, the bill or spending that makes it tight).
 
 ## Quality rules
 - Never count future income.
+- One verdict per answer. Never follow a "wait" with a second forecast that sounds like a yes, or the other way round.
 
 ## Example
 User: Can I afford $120 concert tickets?
