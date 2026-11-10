@@ -6,8 +6,9 @@ import { getDb } from "@/server/db/client";
 import { inviteCodeFor, invitedCount } from "@/server/services/invites";
 import { SettingsHeader } from "../settings-header";
 import { InviteShare } from "./invite-share";
+import { FeedbackCard } from "./feedback-card";
 
-export const metadata: Metadata = { title: "Invite friends" };
+export const metadata: Metadata = { title: "Invite and feedback" };
 
 export default async function InvitePage() {
   const user = await requireUser();
@@ -20,7 +21,7 @@ export default async function InvitePage() {
   const link = `${origin}/?invite=${code}`;
   return (
     <div className="flex flex-col gap-5">
-      <SettingsHeader title="Invite friends" />
+      <SettingsHeader title="Invite and feedback" />
       <Card className="p-6">
         <h2 className="font-display text-[1.625rem] leading-tight font-medium tracking-tight">Share LifeFlow with friends</h2>
         <p className="mt-2 text-[0.9375rem] leading-relaxed text-text-2">
@@ -32,6 +33,7 @@ export default async function InvitePage() {
         <span className="text-[0.9375rem] text-text-2">Friends who joined</span>
         <span className="tabular font-display text-[1.75rem] leading-none font-medium">{joined}</span>
       </Card>
+      <FeedbackCard />
     </div>
   );
 }

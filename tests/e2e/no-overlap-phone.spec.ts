@@ -55,7 +55,6 @@ const SCREENS = [
   "/settings/data",
   "/settings/text",
   "/settings/invite",
-  "/settings/feedback",
   "/settings/plan",
 ];
 

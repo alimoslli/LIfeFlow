@@ -156,7 +156,7 @@ test("Jarvis asks before anything goes to the AI, and works once allowed", async
 test("testers can send feedback from Settings", async ({ page }) => {
   const email = await signUp(page, "Beta Tester");
   await page.goto("/settings");
-  await page.getByRole("link", { name: "Send feedback" }).click();
+  await page.getByRole("link", { name: /Invite and feedback/ }).click();
   await page.getByText("An idea").click();
   await page.getByLabel("Your message").fill("Let me pick the color of each class.");
   await page.getByRole("button", { name: "Send" }).click();
