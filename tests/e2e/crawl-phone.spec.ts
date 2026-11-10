@@ -27,7 +27,6 @@ const ROUTES = [
   "/settings/integrations",
   "/settings/data",
   "/settings/security",
-  "/settings/trash",
 ];
 
 test("every screen on a new account: no undefined/null/NaN, no sideways scroll, no crash, no script errors", async ({ page }) => {

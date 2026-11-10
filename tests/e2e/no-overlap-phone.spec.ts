@@ -54,7 +54,6 @@ const SCREENS = [
   "/settings/notifications",
   "/settings/security",
   "/settings/data",
-  "/settings/trash",
   "/settings/text",
   "/settings/invite",
   "/settings/feedback",

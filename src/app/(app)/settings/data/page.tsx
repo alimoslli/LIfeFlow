@@ -3,7 +3,9 @@ import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
 import { Card } from "@/components/ui/surface";
-import { requireUser } from "@/server/auth/current-user";
+import { requireUser, withCurrentUser } from "@/server/auth/current-user";
+import { listTrash } from "@/server/services/trash";
+import { DeletedSection } from "./deleted-section";
 import { getDb } from "@/server/db/client";
 import { accountHasPassword } from "@/server/services/accounts";
 import { deleteAccountAction } from "../actions";
@@ -15,6 +17,8 @@ export const metadata: Metadata = { title: "Privacy and your data" };
 export default async function DataSettings() {
   const user = await requireUser();
   const withPassword = await accountHasPassword(getDb(), user.id);
+  // Recently deleted lives here now (it was its own page; owner's page map 2026-11-10).
+  const trash = await withCurrentUser(async (s, u) => ({ items: await listTrash(s), tz: u.timezone }));
   return (
     <div className="flex flex-col gap-5">
       <SettingsHeader title="Privacy and your data" />
@@ -30,6 +34,7 @@ export default async function DataSettings() {
           </a>
         </div>
       </Card>
+      <DeletedSection items={trash.items} tz={trash.tz} />
       <Card className="p-5">
         <h2 className="font-medium">Your privacy</h2>
         <p className="mt-1 text-sm text-text-2">

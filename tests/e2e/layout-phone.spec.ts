@@ -85,7 +85,6 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
     "/settings/notifications",
     "/settings/security",
     "/settings/data",
-    "/settings/trash",
   ])
     if (!settingsLinks.includes(m)) problems.push(`${m} not reachable from the gear in one tap`);
   pages.push("/settings", "/settings/jarvis", "/jarvis/memory", "/settings/integrations");
