@@ -62,7 +62,7 @@ export function TaskCheck({ done, action, label, taskId }: { done: boolean; acti
     >
       {/* our own tick box: the pixel to-do icon, empty until it's done */}
       <span className={cn("flex h-6 w-6 items-center justify-center", toggled && checked && "lf-pop")}>
-        <PixelIcon name={checked ? "todo" : "box"} className="h-6 w-6" />
+        <PixelIcon name={checked ? "todo" : "box"} className={cn("h-6 w-6", !checked && "lf-box")} />
       </span>
     </button>
   );

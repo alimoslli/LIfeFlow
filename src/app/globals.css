@@ -1219,6 +1219,16 @@ input[type="checkbox"].lf-switch:focus-visible {
   }
 }
 
+/* The empty tick box at night: its ink outline would vanish on the dark sky, so it turns into a light outline on a dark box. */
+:root[data-theme="dark"] .lf-box {
+  filter: invert(0.88);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lf-box {
+    filter: invert(0.88);
+  }
+}
+
 /* Tiles and rows (owner, 2026-11-10): a list is never a phone's settings table. No hairlines and no arrows: on its own
    (.lf-tiles) every item is a soft tile; inside a card (.lf-rows) every item is a quiet inset tile. */
 .lf-tiles {
