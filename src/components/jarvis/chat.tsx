@@ -1,6 +1,7 @@
 "use client";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import Link from "next/link";
+import { NotifyAsk } from "./notify-ask";
 import { ASK_EVENT, takeSend, type AskDetail } from "@/lib/ask-handoff";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
@@ -817,6 +818,12 @@ function AssistantBubble({
         {m.text && <Markdown text={m.text} />}
         <SourceList tools={m.tools} />
         <OpenLinks tools={m.tools} />
+        {/* the first promise or reminder: a calm ask to get the check-in as a notification (at most twice, per device) */}
+        {last &&
+          !m.streaming &&
+          m.tools.some((t) => t.status === "ok" && (t.name === "make_promise" || (t.name === "create_tasks" && t.summary?.includes("reminder on")))) && (
+            <NotifyAsk title="Want the check-in as a notification?" line="One line on your phone at the time we said, so you see it. Quiet at night." />
+          )}
         {m.notice && (
           <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2" role="status">
             {m.notice.kind === "recovering" && <Loader2 className="h-4 w-4 shrink-0 animate-spin" />}

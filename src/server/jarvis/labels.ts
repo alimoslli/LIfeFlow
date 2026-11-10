@@ -138,8 +138,11 @@ export function describeToolResult(name: string, r: ToolResultRecord): { summary
       const sources = Array.isArray(d.sources) ? (d.sources as { title: string; url: string }[]) : [];
       return { summary: sources.length ? `Read ${plural(sources.length, "source")}` : "No sources found", sources };
     }
-    case "create_tasks":
-      return { summary: `Created ${plural(n("created"), "task")}`, viewAt };
+    case "create_tasks": {
+      // "reminder on" also lets the chat offer notifications the first time (components/jarvis/notify-ask.tsx)
+      const reminders = Array.isArray(d.created) ? (d.created as { reminder?: boolean }[]).filter((t) => t.reminder).length : 0;
+      return { summary: `Created ${plural(n("created"), "task")}${reminders ? " · reminder on" : ""}`, viewAt };
+    }
     case "import_assignments": {
       const parts = [`Saved ${plural(Number(d.savedCount ?? 0), "assignment")}`];
       if (n("skippedDuplicates")) parts.push(`${n("skippedDuplicates")} already existed`);

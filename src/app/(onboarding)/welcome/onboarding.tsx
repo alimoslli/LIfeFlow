@@ -19,6 +19,7 @@ import type { ClockData } from "@/lib/day-clock";
 import type { LifeStage } from "@/lib/life";
 import { cn } from "@/lib/utils";
 import { connectCanvasFeedAction } from "@/app/(app)/settings/integrations/actions";
+import { NotifyAsk } from "@/components/jarvis/notify-ask";
 import { completeOnboardingAction, saveWelcomeAction, skipOnboardingAction, skyNowAction } from "./actions";
 
 /**
@@ -517,6 +518,15 @@ export function Onboarding({
           )}
 
           {step === "learn" && <Learn />}
+          {/* the welcome's last beat: a calm ask for notifications (owner's program, item 3); nothing if they can't come */}
+          {step === "learn" && (
+            <div className="mt-5">
+              <NotifyAsk
+                title={`Want ${shown ?? (chosen ? chosen.name : "your skyling")}'s check-ins as notifications?`}
+                line="One line when something needs you, like a bill your checking can't cover or a promise to check on. Quiet at night."
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-3 pt-8">

@@ -81,7 +81,7 @@ export const taskTools = [
           const subs = [];
           for (const title of t.subtasks ?? [])
             subs.push(await createTask(s, ctx.tz, { title, parentId: task.id, courseId: t.courseId, projectId: t.projectId }, "jarvis"));
-          out.push({ ...presentTask(task, ctx), subtasks: subs.map((x) => ({ id: x.id, title: x.title })) });
+          out.push({ ...presentTask(task, ctx), subtasks: subs.map((x) => ({ id: x.id, title: x.title })), reminder: !!task.remindAt });
         }
         return out;
       });
