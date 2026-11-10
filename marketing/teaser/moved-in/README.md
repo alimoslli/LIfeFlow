@@ -29,3 +29,10 @@ ones. One of them is yours." / "Your day turns like the sky." / "Spin ahead. See
   Outlook events, Canvas assignments due tonight and two done to-dos. Captured with `cap_app2.cjs` (Today, turn, back) and
   `cap_open.cjs` (open, slide back and hold on the morning, slide ahead, flick to the week).
 - `today.html` composes v2 (25.8 s), `render4.cjs` renders it, `mix4.py` makes the sound.
+
+## v3 (2026-11-10, Ali: "dont use my voice in the end, use different wordings, make it exciting")
+
+- No voice anywhere and no dates. The ending (from 21.6 s in `today.html`): a rising build and a hit, the new morning sun bursts up,
+  "The new LifeFlow" / "is almost here." pop in one after the other, a sparkle burst, all six skylings jump and cheer, then
+  "Follow so you don't miss it."
+- `render4.cjs` renders it (774 frames), `mix5.py` makes the sound (pixel sound effects only), notes and beats in `story-notes-v3.txt`.

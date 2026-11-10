@@ -437,6 +437,10 @@ the real Today sky as a card, no phone). Posters wait for Ali's wording.
 **Ali on it (2026-11-10): "this is the perfect idea".** v2: the real sky follows a real day as the skylings take over (each one at
 its moment), never "wheel" or "timeline" in copy (say Today, "open your day"), and a fuller synced sample week on the opened day
 so it reads at once: slide back for what already happened, slide ahead for what's next.
+**v3 (Ali, 2026-11-10): no Ali voice at the end, no dates, make it exciting.** The ending is a rising build and a hit, the new
+morning sun bursts up, "The new LifeFlow" / "is almost here." pop in, a sparkle burst, all six skylings jump and cheer, then "Follow so
+you don't miss it." Rule for teasers: no spoken or written dates ("Before December", "end of December") unless Ali asks; say "almost
+here" or "coming soon" instead. Sound only (`mix5.py`). Download: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/b90dd5c1-99aa-4244-9074-2a48d0d81e16.zip
 The doc now opens with "What you do": a one-page checklist for tonight plus an Ali-and-Tyler table for the work shots. Ali wants the plan
 that simple ("just tell me what I have to do"); the detail stays below it. Send plans as PDF links too (the doc link didn't open in his browser).
 

@@ -277,16 +277,29 @@ async function seek(t) {
     words([["Synced from your calendar, classes, work and bank.", "#ffffff"]], 1660, 38, syncK);
   }
 
-  // 4. the end: the new mark rises, "A new LifeFlow.", "Before December."
+  // 4. the end: the new mark bursts up, "The new LifeFlow is almost here.", everyone cheers
   if (t >= T.end) {
-    const k = ease((t - T.end) / 0.6);
+    const u = t - T.end, k = ease(u / 0.5);
     g.save(); g.globalAlpha = k; skyBg(1350, t, 0.25); g.restore();
-    const rise = easeOut((t - T.end - 0.15) / 0.9);
-    morning(W / 2, 820, 150 * rise + 1, k);
-    words([["A new ", "#ffffff"], ["LifeFlow.", GOLD]], 1040, 92, ease((t - T.end - 0.5) / 0.5), (1 - ease((t - T.end - 0.5) / 0.5)) * 24);
-    words([["Before December.", "#ffffff"]], 1140, 60, ease((t - T.end - 1.2) / 0.5));
-    ["dawn", "ray", "noon", "goldie", "dusk", "star"].forEach((key, i) => { const [rx, ry] = ROW(i); skyling(key, rx, ry, 7, "celebrate", Math.floor(t * 8) + i, true, ease((t - T.end - 0.8 - i * 0.08) / 0.3)); });
-    const out = ease((t - (T.fin - 0.4)) / 0.4);
+    // a bloom of light as the sun comes up fast
+    const rise = back(clamp((u - 0.1) / 0.7));
+    const bloom = Math.max(0, 1 - Math.abs(u - 0.75) / 0.45);
+    if (bloom > 0) { const gl = g.createRadialGradient(W / 2, 820, 0, W / 2, 820, 900); gl.addColorStop(0, `rgba(255,226,170,${0.4 * bloom})`); gl.addColorStop(1, "rgba(255,226,170,0)"); g.fillStyle = gl; g.fillRect(0, 0, W, H); }
+    morning(W / 2, 820, 160 * clamp(rise, 0, 1.2) + 1, k);
+    const p1 = clamp(back((u - 0.7) / 0.35), 0, 1.2), p2 = clamp(back((u - 1.25) / 0.35), 0, 1.2);
+    const pulse = (p, y) => { g.save(); g.translate(W / 2, y); g.scale(p, p); g.translate(-W / 2, -y); };
+    if (p1 > 0) { pulse(lerp(0.6, 1, Math.min(p1, 1)) + (p1 > 1 ? (p1 - 1) * 0.3 : 0), 1020); words([["The new ", "#ffffff"], ["LifeFlow", GOLD]], 1050, 100, Math.min(1, p1 * 1.5)); g.restore(); }
+    if (p2 > 0) { pulse(lerp(0.6, 1, Math.min(p2, 1)) + (p2 > 1 ? (p2 - 1) * 0.3 : 0), 1135); words([["is almost here.", "#ffffff"]], 1160, 84, Math.min(1, p2 * 1.5)); g.restore(); }
+    words([["Follow so you don't miss it.", "#fff3cf"]], 1290, 44, ease((u - 2.0) / 0.4));
+    // the six jump and cheer, with sparkles
+    ["dawn", "ray", "noon", "goldie", "dusk", "star"].forEach((key, i) => {
+      const [rx, ry] = ROW(i), born = 1.0 + i * 0.07, a = ease((u - born) / 0.25);
+      const hop = Math.abs(Math.sin((u - born) * 7 + i)) * 60 * a;
+      skyling(key, rx, ry - hop, 7, "celebrate", Math.floor(t * 8) + i, true, a);
+    });
+    if (u > 1.0 && u < 2.2) { const q = (u - 1.0) / 1.2, r = rng(77); g.fillStyle = GOLD;
+      for (let n = 0; n < 40; n++) { const ang = r() * 6.283, sp = 300 + r() * 700, x = W / 2 + Math.cos(ang) * sp * q, y = 820 + Math.sin(ang) * sp * q + 500 * q * q; g.globalAlpha = 1 - q; g.fillRect(Math.round(x / 6) * 6, Math.round(y / 6) * 6, 10, 10); } g.globalAlpha = 1; }
+    const out = ease((t - (T.fin - 0.35)) / 0.35);
     if (out > 0) { g.fillStyle = `rgba(0,0,0,${out})`; g.fillRect(0, 0, W, H); }
   }
 }
