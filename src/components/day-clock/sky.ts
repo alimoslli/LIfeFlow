@@ -134,13 +134,13 @@ export function itemColor(it: Pick<ClockItem, "cat" | "origin">): string {
 }
 /** A to-do or an assignment still open after its time (or after its day, with no time): it's late, and sits at now. */
 export const isLate = (it: ClockItem, now: number) =>
-  (it.origin === "task" || it.origin === "assignment") && !it.someday && (it.allDay ? dayOf(it.start) < dayOf(now) : (it.end ?? it.start) < now);
+  (it.origin === "task" || it.origin === "assignment") && !it.done && !it.someday && (it.allDay ? dayOf(it.start) < dayOf(now) : (it.end ?? it.start) < now);
 // Milestones and goals live on the timeline, not on Today's path; to-dos and assignments are done only when you say so.
 const OFF_PATH = ["milestone", "goal", "money_goal"];
 const STILL_TO_DO = ["task", "assignment", ...OFF_PATH];
 /** Its time has passed and it isn't something still to do: it counts as done (a star). */
 export const isFinished = (it: ClockItem, now: number) =>
-  !it.someday && !it.allDay && (it.end ?? it.start + 1) <= now && !STILL_TO_DO.includes(it.origin ?? "");
+  !!it.done || (!it.someday && !it.allDay && (it.end ?? it.start + 1) <= now && !STILL_TO_DO.includes(it.origin ?? ""));
 
 /* ---------- the timeline's window (painted by the engine) ---------- */
 export type StripOpts = {
@@ -708,13 +708,16 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         .slice(0, 2)
         .map((gp) => gp[0]),
     );
+    // the next two say when and what ("5 PM Work"), so the wheel reads at a glance (owner, 2026-11-10)
+    const clip = (t: string) => (t.length > 14 ? `${t.slice(0, 13).trimEnd()}…` : t);
+    const tag = (it: ClockItem) => `${fmt(it.start)} ${clip(it.title)}`;
     const tiles: Tile[] = [];
     const tileOf = new Map<string, Tile>();
     for (const gp of list) {
       const it = gp[0];
       const [px, py] = wheelAt(isLate(it, now) ? clamp(now + 1, h.a, h.b) : it.start);
       const th = (it === nextIt ? 38 : isFinished(it, now) ? 28 : 32) * sc;
-      const tw = withTime.has(it) ? th + fmt(it.start).length * 6.7 + 12 : th;
+      const tw = withTime.has(it) ? th + tag(it).length * 6.4 * sc + 12 : th;
       const len = Math.hypot(cx - px, hyC - py) || 1;
       let tile: Tile | undefined;
       for (const lane of [0, 1]) {
@@ -806,7 +809,7 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       const tg = el("g", { opacity: (a * eo * (fin ? 0.82 : 1)).toFixed(3), "data-n": tl.count + 1, ...(late ? { "data-late": "" } : {}) }, topG);
       txt(tg, x - w / 2 + hh / 2, y + hh * 0.19, tl.it.icon, { "font-size": (hh * 0.52).toFixed(1) });
       if (withTime.has(tl.it) && w > hh + 8 && k < 0.5)
-        txt(tg, x - w / 2 + hh - 1, y + hh * 0.15, fmt(tl.it.start), {
+        txt(tg, x - w / 2 + hh - 1, y + hh * 0.15, tag(tl.it), {
           "text-anchor": "start",
           "font-size": (hh * 0.31).toFixed(1),
           class: dark ? "dc-pill-t dc-on-dark" : "dc-pill-t",

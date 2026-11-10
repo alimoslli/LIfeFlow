@@ -681,13 +681,24 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+/* what it is, under its time: two short lines at most (owner, 2026-11-10: the line shows your life, not only times) */
 .dc-n-n {
   position: absolute;
-  width: 1px;
-  height: 1px;
+  top: 53px;
+  left: -24px;
+  right: -24px;
+  display: -webkit-box;
   overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: rgb(255 255 255 / 0.92);
+  text-shadow: 0 1px 4px rgb(0 0 0 / 0.45);
+  overflow-wrap: anywhere;
+  pointer-events: none;
 }
 /* "+2" on a stack's tile */
 .dc-n-more {

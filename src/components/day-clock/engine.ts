@@ -204,11 +204,13 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
               ? 1
               : 0;
   const nodeName = (it: ClockItem) =>
-    it.amountCents != null
-      ? `${it.title} · ${billOf(it)}`
-      : it.kind === "due" && !it.someday && (it.origin === "task" || it.origin === "assignment") && !isExam(it)
-        ? `${it.title} due`
-        : it.title;
+    it.done
+      ? it.title
+      : it.amountCents != null
+        ? `${it.title} · ${billOf(it)}`
+        : it.kind === "due" && !it.allDay && !it.someday && (it.origin === "task" || it.origin === "assignment") && !isExam(it)
+          ? `${it.title} due`
+          : it.title;
 
   /* ---------- Day Sky: the line's shape ---------- */
   // The width of the line in view (the window is inset from the sides).
@@ -374,45 +376,56 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     // Truly nothing ahead this week: say so, plainly, instead of an empty face.
     return { tag: "Next 3 days", text: "Nothing planned yet", it: null };
   }
-  function faceStats() {
+  // what comes after the face's own thing, by name (owner, 2026-11-10: show your life, not counts): "Then 💼 Work 5 PM ·
+  // 📄 Argument essay tomorrow"
+  function thenLine(skip: ClockItem | null) {
+    const today = dayOf(S.now);
+    const until = (today + 3) * 1440;
+    const clip = (t: string) => (t.length > 18 ? `${t.slice(0, 17).trimEnd()}…` : t);
+    const when = (it: ClockItem) => {
+      const d = dayOf(it.start);
+      return d === today ? (it.allDay ? "today" : fmtShort(it.start)) : d === today + 1 ? "tomorrow" : dayName(d);
+    };
+    const next = DATED.filter(
+      (it) =>
+        it !== skip &&
+        !it.done &&
+        it.origin !== "day" &&
+        it.origin !== "goal" &&
+        it.origin !== "milestone" &&
+        (it.allDay ? (dayOf(it.start) + 1) * 1440 > S.now : it.start > S.now) &&
+        it.start < until,
+    )
+      .sort((a, b) => a.start - b.start)
+      .slice(0, 2);
+    return next.length ? `Then ${next.map((it) => `${it.icon} ${clip(it.title)} ${when(it)}`).join(" · ")}` : null;
+  }
+  function faceStats(skip: ClockItem | null = null) {
     const first: string[] = [];
     if (data.steps != null) first.push(`${data.steps.toLocaleString("en-US")} steps`);
     if (data.sleepHours != null) first.push(`${Math.floor(data.sleepHours)}h ${String(Math.round((data.sleepHours % 1) * 60)).padStart(2, "0")}m sleep`);
     const lines = first.length ? [first.join(" · ")] : [];
     if (data.spentTodayCents != null) lines.push(`${money(data.spentTodayCents)} spent today`);
+    const then = thenLine(skip);
+    if (then) lines.push(then);
     if (!lines.length) {
-      // Nothing measured today: the next three days, counted from the calendar ("3 classes · 2 shifts · 4 due").
-      const soon = DATED.filter((it) => it.start >= S.now - (S.now % 1440) && it.start < (dayOf(S.now) + 3) * 1440 && (it.end ?? it.start + 1) > S.now);
-      const n = (cat: string) => soon.filter((it) => it.cat === cat).length;
-      const parts = [
-        [n("class"), "class", "classes"],
-        [n("work"), "shift", "shifts"],
-        [n("due"), "due", "due"],
+      // nothing measured and nothing in the next days: what the line holds, so the face still speaks for the person's life
+      const c = (f: (it: ClockItem) => boolean) => ITEMS.filter(f).length;
+      const on = [
+        [c((it) => it.origin === "task"), "to-do", "to-dos"],
+        [c((it) => it.origin === "goal" || it.origin === "money_goal"), "goal", "goals"],
+        [c((it) => it.origin === "milestone"), "milestone", "milestones"],
       ]
-        .filter(([c]) => (c as number) > 0)
-        .map(([c, one, many]) => `${c} ${c === 1 ? one : many}`);
-      const other = soon.filter((it) => it.cat === "other").length;
-      if (other) parts.push(`${other} more`);
-      if (parts.length) lines.push(`Next 3 days: ${parts.join(" · ")}`);
-      else {
-        // nothing in the next days either: what the line holds, so the face still speaks for the person's life
-        const c = (f: (it: ClockItem) => boolean) => ITEMS.filter(f).length;
-        const on = [
-          [c((it) => it.origin === "task"), "to-do", "to-dos"],
-          [c((it) => it.origin === "goal" || it.origin === "money_goal"), "goal", "goals"],
-          [c((it) => it.origin === "milestone"), "milestone", "milestones"],
-        ]
-          .filter(([k]) => (k as number) > 0)
-          .map(([k, one, many]) => `${k} ${k === 1 ? one : many}`);
-        if (on.length) lines.push(`On your line: ${on.join(" · ")}`);
-      }
+        .filter(([k]) => (k as number) > 0)
+        .map(([k, one, many]) => `${k} ${k === 1 ? one : many}`);
+      if (on.length) lines.push(`On your line: ${on.join(" · ")}`);
     }
     return lines;
   }
 
   function rebuildFace() {
     const fn = faceNow(S.now);
-    const stats = faceStats();
+    const stats = faceStats(fn.it);
     FACE = { tag: fn.tag, text: fn.text, stats, icon: fn.it?.icon };
     hit.setAttribute(
       "aria-label",
@@ -481,7 +494,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
         return base + clamp(((dt - 120) / 60) * 4, 0, 26);
       }
       if (a.kind === "now" || b.kind === "now") return 66 + clamp(((dt - 60) / 60) * 5, 0, 24);
-      return 96 + clamp(((dt - 180) / 60) * 6, 0, 30);
+      // room for each stop's name under it (owner, 2026-11-10: the line shows what each thing is, not only its time)
+      return 104 + clamp(((dt - 180) / 60) * 6, 0, 30);
     };
     const pad = VW() / 2;
     let x = pad;
@@ -788,7 +802,11 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
             ? "Open to-dos"
             : href.startsWith("/finances")
               ? "Open bills"
-              : "Open";
+              : href.startsWith("/jarvis")
+                ? "Ask about it"
+                : href.startsWith("/habits")
+                  ? "Open Health"
+                  : "Open";
   const agoOf = (d: number) =>
     d <= 0
       ? "Today"
@@ -835,25 +853,33 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     else if (dayOf(t) > 0 && S.day === 0) kick += dayOf(t) === 1 ? " · tomorrow" : ` · in ${dayOf(t)} days`;
     const when = it.someday
       ? "No day yet. Pin it to a day when you know."
-      : it.origin === "milestone"
-        ? agoOf(-dayOf(t))
-        : it.origin === "goal" || it.origin === "money_goal"
-          ? `${it.amountCents != null ? `${money(it.amountCents)}, y` : "Y"}our goal by the end of this day`
-          : it.origin === "reminder"
-            ? `Reminder at ${fmt(it.start)}`
-            : it.origin === "trial"
-              ? `Trial ends ${dayWord(dayOf(t))}, then ${money(it.amountCents ?? 0)}`
-              : billOf(it)
-                ? `${billOf(it)} ${dayWord(dayOf(t))}`
-                : it.allDay
-                  ? it.kind === "due"
-                    ? "Due by the end of the day"
-                    : "All day"
-                  : it.end != null
-                    ? `${fmt(it.start)} – ${fmt(it.end)}`
-                    : `Due ${fmt(it.start)}`;
+      : it.origin === "day"
+        ? "How the day went"
+        : it.origin === "promise"
+          ? it.done
+            ? "You kept it"
+            : `You said you'd do it by ${fmt(it.start)}`
+          : it.done
+            ? `Done at ${fmt(it.start)}`
+            : it.origin === "milestone"
+              ? agoOf(-dayOf(t))
+              : it.origin === "goal" || it.origin === "money_goal"
+                ? `${it.amountCents != null ? `${money(it.amountCents)}, y` : "Y"}our goal by the end of this day`
+                : it.origin === "reminder"
+                  ? `Reminder at ${fmt(it.start)}`
+                  : it.origin === "trial"
+                    ? `Trial ends ${dayWord(dayOf(t))}, then ${money(it.amountCents ?? 0)}`
+                    : billOf(it)
+                      ? `${billOf(it)} ${dayWord(dayOf(t))}`
+                      : it.allDay
+                        ? it.kind === "due"
+                          ? "Due by the end of the day"
+                          : "All day"
+                        : it.end != null
+                          ? `${fmt(it.start)} – ${fmt(it.end)}`
+                          : `Due ${fmt(it.start)}`;
     const sub = [it.subtitle, it.source].filter(Boolean).join(" · ");
-    const canDo = (it.origin === "task" || it.origin === "reminder" || it.origin === "assignment") && !!it.ref;
+    const canDo = (it.origin === "task" || it.origin === "reminder" || it.origin === "assignment") && !!it.ref && !it.done;
     const inPlace = it.origin === "event" || it.origin === "shift" || it.origin === "assignment";
     const onPage = it.origin === "task" || it.origin === "reminder" || it.origin === "goal" || it.origin === "milestone";
     const acts = `${canDo ? '<button type="button" class="dc-d-done">Done</button>' : ""}${inPlace ? '<button type="button" class="dc-d-edit">Edit</button>' : ""}<button type="button" class="dc-d-open">${esc(onPage ? "Edit" : openLabel(it.href))}</button>`;

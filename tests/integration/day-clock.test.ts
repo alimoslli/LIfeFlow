@@ -13,11 +13,17 @@ import { createTask } from "@/server/services/tasks";
 import { createAssignment, createCourse } from "@/server/services/school";
 import { createEmployer, createShift } from "@/server/services/work";
 import { makeUser, TZ } from "../helpers";
+import { eq } from "drizzle-orm";
+import { promises, tasks } from "@/server/db/schema";
+import { checkHabit, createHabit } from "@/server/services/habits";
+import { createPromise } from "@/server/services/promises";
 
 afterAll(closeDb);
 
 // Saturday, Nov 7 2026, 1:40 PM in New York.
 const NOW = new Date("2026-11-07T18:40:00Z");
+// when the earlier promises were made
+const EARLIER = new Date("2026-11-04T12:00:00Z");
 
 describe("day clock data", () => {
   it("reads the week around today from the person's own calendar, shifts, classes and health", async () => {
@@ -91,6 +97,59 @@ describe("day clock data", () => {
     // The Money lock is on (or money isn't asked for): nothing about money, not even a zero.
     expect(hidden.spentTodayCents).toBeNull();
     expect(hidden.items.some((i) => i.amountCents != null)).toBe(false);
+  });
+
+  it("shows your life: done things where they were done, promises (never a broken one), and a short recap of each past day", async () => {
+    const { run } = await makeUser("Life Owner");
+    const [data, locked] = await run(async (s) => {
+      const t = await createTask(s, TZ, { title: "Return library books" });
+      await s.tx
+        .update(tasks)
+        .set({ status: "done", completedAt: new Date("2026-11-06T15:00:00Z") })
+        .where(eq(tasks.id, t.id));
+      await createPromise(s, TZ, { text: "study for the bio quiz", dueDate: "2026-11-07", dueTime: "20:00" }, NOW);
+      const kept = await createPromise(s, TZ, { text: "not eat out", dueDate: "2026-11-06", dueTime: "21:00" }, EARLIER);
+      await s.tx
+        .update(promises)
+        .set({ status: "kept", resolvedAt: new Date("2026-11-07T02:30:00Z") })
+        .where(eq(promises.id, kept.promise.id));
+      const broken = await createPromise(s, TZ, { text: "go to the gym", dueDate: "2026-11-05", dueTime: "18:00" }, EARLIER);
+      await s.tx
+        .update(promises)
+        .set({ status: "broken", resolvedAt: new Date("2026-11-06T01:00:00Z") })
+        .where(eq(promises.id, broken.promise.id));
+      await logHealth(s, TZ, { metric: "sleep_hours", value: 7.5, date: "2026-11-06" }, NOW);
+      await logHealth(s, TZ, { metric: "steps", value: 8214, date: "2026-11-06" }, NOW);
+      const run = await createHabit(s, { title: "Morning run" });
+      await checkHabit(s, run.id, "2026-11-06");
+      const bank = await createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 50000 });
+      await createTransaction(s, {
+        accountId: bank.id,
+        date: "2026-11-06",
+        description: "Groceries",
+        merchantName: "Groceries",
+        amountCents: -4200,
+        kind: "expense",
+        categoryId: null,
+        pending: false,
+      });
+      return [await dayClockData(s, TZ, NOW, { money: true }), await dayClockData(s, TZ, NOW)];
+    });
+    const by = Object.fromEntries(data.items.map((i) => [i.title, i]));
+    // done where it was done (Friday 10 AM), never late
+    expect(by["Return library books"]).toMatchObject({ done: true, start: -1440 + 600, origin: "task", subtitle: "Done" });
+    // a promise at its time, a kept one where it was kept; the broken one never shows
+    expect(by["Study for the bio quiz"]).toMatchObject({ origin: "promise", icon: "🤞", start: 1200 });
+    expect(by["Not eat out"]).toMatchObject({ origin: "promise", done: true, subtitle: "Kept", start: -1440 + 21 * 60 + 30 });
+    expect(data.items.some((i) => /gym/i.test(i.title))).toBe(false);
+    // Friday's recap, at the end of Friday, from real records only
+    const friday = data.items.find((i) => i.id === "day:2026-11-06");
+    expect(friday).toMatchObject({ origin: "day", when: "Friday", icon: "😴", title: "Slept 7h 30m · 8,214 steps", start: -1440 + 1438 });
+    expect(friday?.subtitle).toBe("Slept 7h 30m · 8,214 steps · Morning run · Spent $42");
+    // no recap for a day with nothing in it, and none for today (it isn't over)
+    expect(data.items.some((i) => i.id === "day:2026-11-05" || i.id === "day:2026-11-07")).toBe(false);
+    // with the Money lock on, the recap says nothing about money
+    expect(locked.items.find((i) => i.id === "day:2026-11-06")?.subtitle).toBe("Slept 7h 30m · 8,214 steps · Morning run");
   });
 
   it("puts pinned goals and milestones on the line by their day, with the emoji they were pinned with", async () => {
