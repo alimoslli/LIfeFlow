@@ -6,7 +6,7 @@ import { ScriptedProvider, type Responder } from "@/server/jarvis/providers/scri
 import { undoChatTools } from "@/server/jarvis/undo";
 import type { SessionUser } from "@/server/auth/sessions";
 import { getEvent } from "@/server/services/calendar";
-import { deleteTask, getTask, listTasks } from "@/server/services/tasks";
+import { createTask, deleteTask, getTask, listTasks, updateTask } from "@/server/services/tasks";
 import { makeUser, TZ } from "../helpers";
 
 afterAll(closeDb);
@@ -69,6 +69,25 @@ describe("Undo in the chat takes back exactly what the last answer created (prog
     const made = (await run((s) => listTasks(s))).find((x) => x.title === "Water plants")!;
     await run((s) => deleteTask(s, made.id));
     expect((await run((s) => undoChatTools(s, t2.conversationId, t2.callIds, NOW))).text).toBe("Took that back. It was already gone, so nothing else changed.");
+  });
+
+  it("keeps what the person changed since, and names it (review: edited, ticked, given a new subtask)", async () => {
+    const { session, run } = await chatUser("Changed Since");
+    const t = await turn(session, "plan my week", PLAN);
+    const advisor = (await run((s) => listTasks(s))).find((x) => x.title === "Email advisor")!;
+    await new Promise((r) => setTimeout(r, 1100));
+    await run((s) => updateTask(s, TZ, advisor.id, { title: "Email advisor about BIO" }));
+    const r = await run((s) => undoChatTools(s, t.conversationId, t.callIds, NOW));
+    expect(r.text).toBe('Took that back: removed "BIO study". Kept "Email advisor" because you changed it since.');
+    expect((await run((s) => listTasks(s))).map((x) => x.title).sort()).toEqual(["Draft questions", "Email advisor about BIO"]);
+
+    const t2 = await turn(session, "add one", [{ name: "create_tasks", args: { tasks: [{ title: "Pack lunch" }] } }]);
+    const lunch = (await run((s) => listTasks(s))).find((x) => x.title === "Pack lunch")!;
+    await run((s) => createTask(s, TZ, { title: "Buy bread", parentId: lunch.id }));
+    expect((await run((s) => undoChatTools(s, t2.conversationId, t2.callIds, NOW))).text).toBe(
+      'Nothing taken back: you changed "Pack lunch" since, so it stays.',
+    );
+    expect((await run((s) => listTasks(s))).map((x) => x.title)).toEqual(expect.arrayContaining(["Pack lunch", "Buy bread"]));
   });
 
   it("refuses someone else's conversation, reading tools, and anything older than a day", async () => {
