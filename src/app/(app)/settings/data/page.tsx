@@ -10,14 +10,14 @@ import { accountHasPassword } from "@/server/services/accounts";
 import { deleteAccountAction } from "../actions";
 import { SettingsHeader } from "../settings-header";
 
-export const metadata: Metadata = { title: "Privacy & data" };
+export const metadata: Metadata = { title: "Privacy and your data" };
 
 export default async function DataSettings() {
   const user = await requireUser();
   const withPassword = await accountHasPassword(getDb(), user.id);
   return (
     <div className="flex flex-col gap-5">
-      <SettingsHeader title="Privacy & data" />
+      <SettingsHeader title="Privacy and your data" />
       <Card className="p-5">
         <h2 className="font-medium">Export your data</h2>
         <p className="mt-1 text-sm text-text-2">A copy of everything LifeFlow keeps about you.</p>

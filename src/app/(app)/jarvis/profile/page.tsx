@@ -67,9 +67,9 @@ export default async function JarvisProfilePage() {
 
       <ul className="lf-tiles">
         {[
-          { href: "/settings/integrations", label: "Connected accounts", icon: "plug" as const },
+          { href: "/settings/integrations", label: "Connected", icon: "plug" as const },
           { href: "/settings/notifications", label: "Notifications", icon: "bell" as const },
-          { href: "/settings/data", label: "Privacy & data", icon: "shield" as const },
+          { href: "/settings/data", label: "Privacy and your data", icon: "shield" as const },
         ].map(({ href, label, icon }) => (
           <li key={href}>
             <Link href={href} className="flex min-h-14 items-center gap-3 px-4 text-[0.9375rem]">

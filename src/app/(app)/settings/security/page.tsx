@@ -23,7 +23,7 @@ import { PasskeysCard } from "./passkeys-card";
 import { TwoFactorCard } from "./two-factor-card";
 import { SettingsHeader } from "../settings-header";
 
-export const metadata: Metadata = { title: "Security" };
+export const metadata: Metadata = { title: "Sign-in and locks" };
 
 export default async function SecuritySettings({ searchParams }: { searchParams: Promise<{ apple?: string; google?: string }> }) {
   const { apple: appleResult, google: googleResult } = await searchParams;
@@ -54,7 +54,7 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
   const day = (x: Date) => formatIn(x, d.tz, "MMM d, yyyy");
   return (
     <div className="flex flex-col gap-5">
-      <SettingsHeader title="Face ID & passwords" />
+      <SettingsHeader title="Sign-in and locks" />
       {(appleResult === "linked" || googleResult === "linked") && (
         <p role="status" className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
           Sign in with {appleResult === "linked" ? "Apple" : "Google"} is linked. You can use it next time you sign in.

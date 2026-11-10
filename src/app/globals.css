@@ -1194,6 +1194,27 @@ input[type="checkbox"].lf-switch:focus-visible {
   }
 }
 
+/* Dropdowns are ours too (owner, 2026-11-10): no phone arrow, a little pixel chevron instead. Still a real <select>, so
+   the phone's own picker opens on a tap (a platform basic people rely on). */
+.lf-glass select:not([multiple]) {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='16' height='16' shape-rendering='crispEdges'><rect x='3' y='6' width='1' height='1' fill='%2359606f'/><rect x='4' y='6' width='1' height='1' fill='%2359606f'/><rect x='11' y='6' width='1' height='1' fill='%2359606f'/><rect x='12' y='6' width='1' height='1' fill='%2359606f'/><rect x='4' y='7' width='1' height='1' fill='%2359606f'/><rect x='5' y='7' width='1' height='1' fill='%2359606f'/><rect x='10' y='7' width='1' height='1' fill='%2359606f'/><rect x='11' y='7' width='1' height='1' fill='%2359606f'/><rect x='5' y='8' width='1' height='1' fill='%2359606f'/><rect x='6' y='8' width='1' height='1' fill='%2359606f'/><rect x='9' y='8' width='1' height='1' fill='%2359606f'/><rect x='10' y='8' width='1' height='1' fill='%2359606f'/><rect x='6' y='9' width='1' height='1' fill='%2359606f'/><rect x='7' y='9' width='1' height='1' fill='%2359606f'/><rect x='8' y='9' width='1' height='1' fill='%2359606f'/><rect x='9' y='9' width='1' height='1' fill='%2359606f'/><rect x='7' y='10' width='1' height='1' fill='%2359606f'/><rect x='8' y='10' width='1' height='1' fill='%2359606f'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem 1rem;
+  image-rendering: pixelated;
+}
+:root[data-theme="dark"] .lf-glass select:not([multiple]) {
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='16' height='16' shape-rendering='crispEdges'><rect x='3' y='6' width='1' height='1' fill='%23c8d3e6'/><rect x='4' y='6' width='1' height='1' fill='%23c8d3e6'/><rect x='11' y='6' width='1' height='1' fill='%23c8d3e6'/><rect x='12' y='6' width='1' height='1' fill='%23c8d3e6'/><rect x='4' y='7' width='1' height='1' fill='%23c8d3e6'/><rect x='5' y='7' width='1' height='1' fill='%23c8d3e6'/><rect x='10' y='7' width='1' height='1' fill='%23c8d3e6'/><rect x='11' y='7' width='1' height='1' fill='%23c8d3e6'/><rect x='5' y='8' width='1' height='1' fill='%23c8d3e6'/><rect x='6' y='8' width='1' height='1' fill='%23c8d3e6'/><rect x='9' y='8' width='1' height='1' fill='%23c8d3e6'/><rect x='10' y='8' width='1' height='1' fill='%23c8d3e6'/><rect x='6' y='9' width='1' height='1' fill='%23c8d3e6'/><rect x='7' y='9' width='1' height='1' fill='%23c8d3e6'/><rect x='8' y='9' width='1' height='1' fill='%23c8d3e6'/><rect x='9' y='9' width='1' height='1' fill='%23c8d3e6'/><rect x='7' y='10' width='1' height='1' fill='%23c8d3e6'/><rect x='8' y='10' width='1' height='1' fill='%23c8d3e6'/></svg>");
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lf-glass select:not([multiple]) {
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='16' height='16' shape-rendering='crispEdges'><rect x='3' y='6' width='1' height='1' fill='%23c8d3e6'/><rect x='4' y='6' width='1' height='1' fill='%23c8d3e6'/><rect x='11' y='6' width='1' height='1' fill='%23c8d3e6'/><rect x='12' y='6' width='1' height='1' fill='%23c8d3e6'/><rect x='4' y='7' width='1' height='1' fill='%23c8d3e6'/><rect x='5' y='7' width='1' height='1' fill='%23c8d3e6'/><rect x='10' y='7' width='1' height='1' fill='%23c8d3e6'/><rect x='11' y='7' width='1' height='1' fill='%23c8d3e6'/><rect x='5' y='8' width='1' height='1' fill='%23c8d3e6'/><rect x='6' y='8' width='1' height='1' fill='%23c8d3e6'/><rect x='9' y='8' width='1' height='1' fill='%23c8d3e6'/><rect x='10' y='8' width='1' height='1' fill='%23c8d3e6'/><rect x='6' y='9' width='1' height='1' fill='%23c8d3e6'/><rect x='7' y='9' width='1' height='1' fill='%23c8d3e6'/><rect x='8' y='9' width='1' height='1' fill='%23c8d3e6'/><rect x='9' y='9' width='1' height='1' fill='%23c8d3e6'/><rect x='7' y='10' width='1' height='1' fill='%23c8d3e6'/><rect x='8' y='10' width='1' height='1' fill='%23c8d3e6'/></svg>");
+  }
+}
+
 /* Tiles and rows (owner, 2026-11-10): a list is never a phone's settings table. No hairlines and no arrows: on its own
    (.lf-tiles) every item is a soft tile; inside a card (.lf-rows) every item is a quiet inset tile. */
 .lf-tiles {

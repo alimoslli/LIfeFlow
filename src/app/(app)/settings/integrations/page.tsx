@@ -18,7 +18,7 @@ import { canvasConnection } from "@/server/integrations/canvas";
 import { CanvasCard } from "./canvas-card";
 import { ManualSourceCard } from "./manual-source-card";
 
-export const metadata: Metadata = { title: "Connected accounts" };
+export const metadata: Metadata = { title: "Connected" };
 
 const TONE = { success: "bg-success-soft text-success", danger: "bg-danger-soft text-danger", warning: "bg-warning-soft text-warning" } as const;
 
@@ -65,7 +65,7 @@ export default async function IntegrationsSettings({ searchParams }: { searchPar
   const microsoft = d.list.find((i) => i.provider === "outlook");
   return (
     <div className="flex flex-col gap-3">
-      <SettingsHeader title="Connected accounts" />
+      <SettingsHeader title="Connected" />
       {banner && <p className={`rounded-2xl px-4 py-3 text-sm ${TONE[banner.tone]}`}>{banner.text}</p>}
       <Group title="School" />
       <CanvasCard

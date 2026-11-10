@@ -13,7 +13,7 @@ import { users } from "@/server/db/schema";
 import { updateProfileAction } from "../actions";
 import { SettingsHeader } from "../settings-header";
 
-export const metadata: Metadata = { title: "Profile" };
+export const metadata: Metadata = { title: "You and the look" };
 
 export default async function ProfileSettings() {
   const session = await requireUser();
@@ -26,7 +26,7 @@ export default async function ProfileSettings() {
   const theme = parseTheme(jar.get(THEME_COOKIE)?.value);
   return (
     <div className="flex flex-col gap-5">
-      <SettingsHeader title="Profile & appearance" />
+      <SettingsHeader title="You and the look" />
       <Card className="p-6">
         <h2 className="mb-4 text-[0.9375rem] font-semibold">Appearance</h2>
         <ThemePicker initial={theme} />

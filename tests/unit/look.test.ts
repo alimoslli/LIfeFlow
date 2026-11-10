@@ -47,5 +47,7 @@ describe("the look stays ours", () => {
     expect(css).toContain(".lf-horizon");
     expect(css).toContain(".lf-tiles");
     expect(css).toContain(".lf-rows");
+    // dropdowns keep the phone's picker but not its arrow
+    expect(css).toMatch(/\.lf-glass select:not\(\[multiple\]\) \{\s*appearance: none;/);
   });
 });
