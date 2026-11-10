@@ -65,7 +65,13 @@ export default async function TodayPage() {
     const note: AssistantNote | null = top
       ? { text: top.text, tone: top.tone, href: top.action?.href, prompt: top.action?.prompt, label: top.action?.label }
       : null;
-    return { clock, note, assistantName: assistantProfile(user.preferences).name, setup, hello: `${greetingIn(tz)}, ${user.name.split(" ")[0]}` };
+    return {
+      clock,
+      note,
+      assistantName: assistantProfile(user.preferences, user.timezone).name,
+      setup,
+      hello: `${greetingIn(tz)}, ${user.name.split(" ")[0]}`,
+    };
   });
 
   const mode = parseTodayMode((await cookies()).get(TODAY_COOKIE)?.value);
@@ -110,7 +116,7 @@ export default async function TodayPage() {
         <AskBar name={assistantName} chips={false} />
       </div>
       {/* on a phone this starts below the docked chat bar and the tabs, so nothing peeks out behind them (audit B16) */}
-      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4 max-md:mt-[calc(var(--tabbar-space)+4.5rem)]">
+      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4 max-md:mt-[calc(var(--tabbar-space)+6.25rem)]">
         <div className={mode === "full" ? "dc-ask-below max-md:hidden" : "max-md:hidden"}>
           <AskBar name={assistantName} chips={false} />
         </div>

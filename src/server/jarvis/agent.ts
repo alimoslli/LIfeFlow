@@ -326,7 +326,7 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
       const timedOut = e instanceof TimedOutError || Date.now() >= deadline;
       outcome = "error";
       errorKind = timedOut ? "timeout" : errorKindOf(e, false);
-      const message = timedOut ? TOOK_TOO_LONG : friendlyProviderError(e, assistantProfile(user.preferences).name);
+      const message = timedOut ? TOOK_TOO_LONG : friendlyProviderError(e, assistantProfile(user.preferences, user.timezone).name);
       await run((s) =>
         s.tx.insert(messages).values({ userId: s.userId, conversationId: conversation.id, role: "assistant", content: message, status: "error" }),
       );

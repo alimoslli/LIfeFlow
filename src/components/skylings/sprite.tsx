@@ -75,3 +75,12 @@ export function MySkyling(props: Omit<Parameters<typeof SkylingSprite>[0], "comp
   const { skyling } = useShell();
   return <SkylingSprite companion={skyling} night={skyling === "star"} {...props} />;
 }
+
+/**
+ * The person's skyling as a small icon, where the old sparkle stood for the skyling (owner, 2026-11-10: the sparkle is out).
+ * Takes an icon's className (h-4 w-4 ...); a still picture, no timer.
+ */
+export function SkylingIcon({ className }: { className?: string }) {
+  const { skyling } = useShell();
+  return <CompanionGlyph companion={skyling} night={skyling === "star"} className={cn("lf-pixel", className)} />;
+}

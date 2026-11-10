@@ -5,7 +5,7 @@ import { whenIdle } from "@/lib/idle";
 import { Toaster } from "@/components/ui/toaster";
 import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { setTourAction } from "@/app/(onboarding)/welcome/actions";
-import { Settings, Sparkles } from "lucide-react";
+import { Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { assistantLabel, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
 import { NAV, isActive, moduleForPath } from "./nav-items";
@@ -31,7 +31,7 @@ import { BrandMark } from "@/components/brand/brand-mark";
 import { SkyScene } from "@/components/sky/sky-scene";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { useSkyling } from "@/components/skylings/use-skyling";
-import type { CompanionKey } from "@/lib/companions";
+import { companionOf, type CompanionKey } from "@/lib/companions";
 
 type ShellCtx = {
   openJarvis: (prompt?: string, opts?: { send?: boolean }) => void;
@@ -63,6 +63,7 @@ export function AppShell({
   jarvis,
   tour = false,
   assistantName = UNNAMED_ASSISTANT,
+  assistantNamed = false,
   companion,
   aiConsent = false,
   unread = 0,
@@ -73,8 +74,10 @@ export function AppShell({
   areas?: LifeAreas;
   /** New Jarvis messages: a dot on the Jarvis tab. */
   unread?: number;
-  /** The name the user gave their assistant ("your skyling" until they choose one). */
+  /** The skyling's name: the one they gave it, or its own (lib/assistant `assistantProfile`). */
   assistantName?: string;
+  /** They gave it a name; otherwise it goes by its skyling's own, which for "Changes with the sky" follows whoever is up. */
+  assistantNamed?: boolean;
   /** Their skyling (lib/companions), drawn on the skyling's tab and button. */
   companion?: string | null;
   /** The user allowed Jarvis to send their data to the AI provider. */
@@ -167,6 +170,8 @@ export function AppShell({
 
   // "Changes with the sky": whoever's moment it is, looked at again every minute
   const skyling = useSkyling(companion, user.timezone ?? "UTC");
+  // without a name of their own it goes by its skyling's, so "Changes with the sky" is called whoever is up right now
+  if (!assistantNamed && skyling) assistantName = companionOf(skyling).name;
   return (
     <Ctx.Provider value={{ openJarvis, assistantName, firstName: user.name.split(" ")[0], aiConsent, tz: user.timezone ?? "UTC", companion, skyling }}>
       <LifeAreasContext.Provider value={areas}>
@@ -335,7 +340,7 @@ export function AppShell({
  * (owner, 2026-11-09: no greeting, no second ask bar).
  */
 function TopBar({ demo, settingsActive, onToday }: { demo: boolean; settingsActive: boolean; onToday: boolean }) {
-  const { openJarvis, assistantName } = useShell();
+  const { openJarvis, assistantName, skyling } = useShell();
   return (
     <div className="mb-3 hidden items-center gap-3 md:flex">
       {onToday ? (
@@ -346,7 +351,7 @@ function TopBar({ demo, settingsActive, onToday }: { demo: boolean; settingsActi
           onClick={() => openJarvis()}
           className="mx-auto flex h-11 w-full max-w-md items-center gap-2.5 rounded-full bg-surface px-4 text-sm text-muted shadow-soft transition-colors hover:text-text"
         >
-          <Sparkles className="h-4 w-4 text-accent" />
+          <CompanionGlyph companion={skyling} night={skyling === "star"} className="lf-pixel h-6 w-6" />
           Ask {assistantName} anything…
           <kbd className="ml-auto rounded-md bg-surface-3 px-1.5 py-0.5 font-sans text-[0.6875rem] text-muted">⌘J</kbd>
         </button>

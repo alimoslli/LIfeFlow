@@ -1,6 +1,6 @@
 "use client";
 import { AudioLines } from "lucide-react";
-import { CompanionGlyph } from "@/components/sky/companion-glyph";
+import { SkylingSprite } from "@/components/skylings/sprite";
 import { useShell } from "@/components/shell/app-shell";
 
 const CHIPS = [
@@ -23,24 +23,32 @@ export function QuickChips() {
   );
 }
 
-/** The one place to ask: tap to open Jarvis (type or talk), with three quick asks under it. */
+/**
+ * The one place to ask: tap to open the chat (type or talk). Above it stands the skyling with its name, so it's clear who
+ * you're talking to (owner, 2026-11-10: "it's not an assistant, it's your skyling"): small, on the bar's edge, not over the sky.
+ */
 export function AskBar({ name, chips = true }: { name: string; chips?: boolean }) {
   const { openJarvis, skyling } = useShell();
   return (
     <div className="flex flex-col gap-3">
-      <button
-        type="button"
-        data-tour="ask"
-        onClick={() => openJarvis()}
-        className="flex min-h-14 items-center gap-3 rounded-[28px] bg-surface py-2 pr-2 pl-3 text-left shadow-lift ring-1 ring-border/70 transition-shadow hover:shadow-lift active:scale-[0.99]"
-      >
-        {/* the skyling, the one on top of the day: it's the skyling you're about to talk to */}
-        <CompanionGlyph companion={skyling} night={skyling === "star"} className="lf-bob h-9 w-9" />
-        <span className="min-w-0 flex-1 truncate text-[1rem] text-muted">Message {name}…</span>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-text shadow-soft" aria-hidden>
-          <AudioLines className="h-[18px] w-[18px]" />
-        </span>
-      </button>
+      <div className="relative pt-7">
+        {/* the skyling stands on the bar's top edge with its name beside it; tap it and it hops */}
+        <div className="absolute top-0 left-4 z-10 flex items-end gap-1.5" data-testid="ask-skyling">
+          <SkylingSprite companion={skyling} className="-mb-1.5 h-9 w-9 cursor-pointer" />
+          <span className="lf-chip-night mb-1 rounded-full px-2.5 py-0.5 text-[0.75rem] font-semibold">{name}</span>
+        </div>
+        <button
+          type="button"
+          data-tour="ask"
+          onClick={() => openJarvis()}
+          className="flex min-h-14 w-full items-center gap-3 rounded-[1.5rem] bg-surface py-2 pr-2 pl-5 text-left shadow-lift ring-1 ring-border/70 transition-shadow hover:shadow-lift active:scale-[0.99]"
+        >
+          <span className="min-w-0 flex-1 truncate text-[1rem] text-muted">Message {name}…</span>
+          <span className="lf-send flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.875rem]" aria-hidden>
+            <AudioLines className="h-[18px] w-[18px]" />
+          </span>
+        </button>
+      </div>
       {chips && <QuickChips />}
     </div>
   );

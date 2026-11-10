@@ -29,8 +29,8 @@ export async function signUp(page: Page, name = "Jordan Lee", opts: { onboarding
   return email;
 }
 
-/** The chat's message box. Until the user names their assistant it's "Message your skyling". */
-export const COMPOSER = "Message your skyling";
+/** The chat's message box. Until the user names their skyling it goes by its own name, Ray by default (owner, 2026-11-10). */
+export const COMPOSER = "Message Ray";
 
 /** Sends a message in the skyling's composer and waits for the reply to finish streaming. */
 export async function askJarvis(page: Page, text: string) {

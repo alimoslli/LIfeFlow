@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Briefcase, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Briefcase, ChevronLeft, ChevronRight } from "lucide-react";
 import { ActionForm } from "@/components/action-form";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { SubmitButton } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { JobHoursForm, ShiftDialog, WorkHoursField } from "./forms";
 import { ShiftList } from "./shift-list";
 import { addPaycheckAction, createEmployerAction, createShiftAction, setJobHoursAction } from "./actions";
 import { scheduleLabel } from "@/lib/work-schedule";
+import { SkylingIcon } from "@/components/skylings/sprite";
 
 export const metadata: Metadata = { title: "Work" };
 
@@ -58,7 +59,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
           d.employers.length > 0 ? (
             <>
               <AskJarvisButton prompt="Here's my work schedule, please add these shifts: " className="lf-sb lf-sb-app lf-sb-sm">
-                <Sparkles className="h-4 w-4 text-accent" /> Import schedule
+                <SkylingIcon className="h-5 w-5" /> Import schedule
               </AskJarvisButton>
               <ShiftDialog action={createShiftAction} employers={d.employers.map((e) => ({ id: e.id, name: e.name }))} today={d.today} />
             </>

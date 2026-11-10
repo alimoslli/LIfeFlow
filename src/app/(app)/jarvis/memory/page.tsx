@@ -53,7 +53,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
       stats,
       tz: u.timezone,
       suggestionsOn: u.preferences?.memorySuggestions !== false,
-      assistant: assistantProfile(u.preferences),
+      assistant: assistantProfile(u.preferences, u.timezone),
       learning: js.learning === true,
     };
   });

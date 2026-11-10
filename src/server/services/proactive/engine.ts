@@ -30,7 +30,6 @@ export function jarvisSettings(prefs: UserPreferences | undefined) {
     quietEnd: j.quietEnd ?? "07:00",
     topics: { money: true, school: true, work: true, health: true, habits: true, ...j.topics },
     autonomy: { tasks: false, calendar: false, ...j.autonomy },
-    avatar: j.avatar ?? "spark",
     learning: j.learning,
     mutedKinds: j.mutedKinds ?? [],
     pushLimit: j.pushLimit ?? 3,

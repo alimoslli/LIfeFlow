@@ -117,7 +117,7 @@ export async function disconnectCanvasAction(): Promise<ActionState> {
 export async function setGmailFilingAction(on: boolean): Promise<ActionState> {
   return mutate("integration.gmail_filing", async (_s, u) => {
     await updatePreferences(getDb(), u.id, { gmailFiling: on });
-    const n = nameAtStart(assistantProfile(u.preferences).name);
+    const n = nameAtStart(assistantProfile(u.preferences, u.timezone).name);
     return on ? `${n} will file new school, bill and work emails each morning.` : `${n} won't read your inbox on its own.`;
   });
 }

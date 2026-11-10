@@ -20,7 +20,7 @@ export default async function TextJarvisPage() {
   const cfg = smsConfig();
   if (!cfg) notFound();
   const u = await requireUser();
-  const name = assistantProfile(u.preferences).name;
+  const name = assistantProfile(u.preferences, u.timezone).name;
   const s = await smsStatus(getDb(), u.id);
   return (
     <div className="flex flex-col gap-5">

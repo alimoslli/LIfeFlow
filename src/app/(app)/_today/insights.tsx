@@ -2,12 +2,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { VoiceButton } from "@/components/jarvis/voice-call";
-import { ArrowRight, BookOpen, CalendarClock, Clock, Flag, Sparkles, Split, TrendingUp, Wallet } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarClock, Clock, Flag, Split, TrendingUp, Wallet } from "lucide-react";
 import { useShell } from "@/components/shell/app-shell";
 import { cn } from "@/lib/utils";
 import type { Insight } from "@/server/briefing/types";
+import { SkylingIcon } from "@/components/skylings/sprite";
 
-const ICONS = { clock: Clock, conflict: Split, book: BookOpen, money: Wallet, trend: TrendingUp, calendar: CalendarClock, goal: Flag, spark: Sparkles };
+const ICONS = { clock: Clock, conflict: Split, book: BookOpen, money: Wallet, trend: TrendingUp, calendar: CalendarClock, goal: Flag, spark: SkylingIcon };
 const TONE = {
   attention: "bg-danger-soft text-danger",
   "heads-up": "bg-warning-soft text-warning",
@@ -44,7 +45,7 @@ export function InsightList({ insights }: { insights: Insight[] }) {
                       onClick={() => openJarvis(action.prompt, { send: true })}
                       className="mt-1 -mb-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-accent transition-all hover:gap-2.5"
                     >
-                      <Sparkles className="h-3.5 w-3.5" /> {action.label}
+                      <SkylingIcon className="h-5 w-5" /> {action.label}
                     </button>
                   ))}
               </div>
@@ -71,7 +72,7 @@ export function AskBar({ name }: { name: string }) {
       }}
       className="flex items-center gap-3 rounded-full bg-surface py-1.5 pr-1.5 pl-5 shadow-soft focus-within:shadow-lift transition-shadow"
     >
-      <Sparkles className="h-4 w-4 shrink-0 text-accent" />
+      <SkylingIcon className="h-5 w-5 shrink-0" />
       <input
         name="q"
         placeholder={`What's on your mind, ${name}?`}

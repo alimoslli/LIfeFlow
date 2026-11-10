@@ -1,6 +1,6 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
-import { Car, GraduationCap, Home, LineChart, Plane, PiggyBank, ShieldCheck, ShoppingBag, Sparkles, Trash2, Wallet } from "lucide-react";
+import { Car, GraduationCap, Home, LineChart, Plane, PiggyBank, ShieldCheck, Shapes, ShoppingBag, Trash2, Wallet } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -23,6 +23,7 @@ import { AskJarvisButton, CelebrateGoal } from "../money/money-client";
 import { archiveGoalAction, contributeGoalAction, createGoalAction, deleteGoalAction, updateGoalAction } from "../finances/actions";
 import { GoalTradeoff } from "./tradeoff";
 import { LIFE, SegmentedNav } from "@/components/ui/segmented-nav";
+import { SkylingIcon } from "@/components/skylings/sprite";
 
 export const metadata: Metadata = { title: "Goals" };
 
@@ -38,7 +39,7 @@ const PURPOSE: Record<GoalPurpose, { label: string; icon: typeof PiggyBank }> = 
   investing: { label: "Investing", icon: LineChart },
   education: { label: "Education", icon: GraduationCap },
   big_purchase: { label: "Big purchase", icon: ShoppingBag },
-  other: { label: "Something else", icon: Sparkles },
+  other: { label: "Something else", icon: Shapes },
 };
 
 export default async function GoalsPage() {
@@ -69,7 +70,7 @@ export default async function GoalsPage() {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-[1.75rem] font-medium tracking-tight">Goals</h1>
         <AskJarvisButton prompt="Help me set a goal. Ask me one question at a time about what I want to reach, then create it.">
-          <Sparkles className="h-3.5 w-3.5" /> Plan a goal with <AssistantName />
+          <SkylingIcon className="h-5 w-5" /> Plan a goal with <AssistantName />
         </AskJarvisButton>
       </div>
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.6fr_1fr]">

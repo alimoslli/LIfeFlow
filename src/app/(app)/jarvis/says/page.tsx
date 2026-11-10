@@ -7,7 +7,7 @@ import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { formatIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { moneyLocked } from "@/server/auth/money-lock";
-import { jarvisSettings, listMessages } from "@/server/services/proactive/engine";
+import { listMessages } from "@/server/services/proactive/engine";
 import { toCard } from "@/server/services/proactive/present";
 
 export const metadata: Metadata = { title: "Updates" };
@@ -17,7 +17,7 @@ export default async function JarvisSaysPage() {
   const d = await withCurrentUser(async (s, u) => {
     const locked = await moneyLocked(u);
     const rows = (await listMessages(s, 150)).filter((m) => !(locked && m.topic === "money"));
-    return { rows, tz: u.timezone, name: assistantProfile(u.preferences).name, avatar: jarvisSettings(u.preferences).avatar, locked };
+    return { rows, tz: u.timezone, name: assistantProfile(u.preferences, u.timezone).name, locked };
   });
   const days = new Map<string, typeof d.rows>();
   for (const m of d.rows) {
@@ -46,7 +46,7 @@ export default async function JarvisSaysPage() {
           <section key={day} className="flex flex-col gap-3">
             <h2 className="text-sm font-medium text-muted">{day}</h2>
             {rows.map((m) => (
-              <JarvisMessageCard key={m.id} m={toCard(m, d.tz)} name={d.name} avatar={d.avatar} />
+              <JarvisMessageCard key={m.id} m={toCard(m, d.tz)} name={d.name} />
             ))}
           </section>
         ))

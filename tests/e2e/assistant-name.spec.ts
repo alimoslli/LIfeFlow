@@ -2,10 +2,10 @@ import { expect, test, type Page } from "@playwright/test";
 import { COMPOSER, queryAsUser, signUp, whatUsersSee } from "./helpers";
 
 /**
- * The skyling has no fixed name. A new user who taps through setup without naming it
- * sees "your skyling" (or "Skyling" where a short label is needed) and never "Jarvis":
- * not in text, aria labels, placeholders, titles or alt text, on phone or desktop. Nor is it
- * "he": a new account shows only our own copy, and none of it uses he, his or him.
+ * The skyling has no fixed name. A new user who taps through setup without naming it (or picking one) meets Ray, the
+ * default skyling, by Ray's own name (owner, 2026-11-10), and never "Jarvis" or the old "Dev": not in text, aria labels,
+ * placeholders, titles or alt text, on phone or desktop. Nor is it "he": a new account shows only our own copy, and none
+ * of it uses he, his or him.
  */
 const PAGES = [
   "/",
@@ -32,6 +32,8 @@ const PAGES = [
 async function expectNoJarvis(page: Page, where: string) {
   const seen = await whatUsersSee(page);
   expect(seen, where).not.toMatch(/jarvis/i);
+  // owner, 2026-11-10: the old identity is gone (the name "Dev", the "Home context" label)
+  expect(seen, `${where}: no old name`).not.toMatch(/\bDev\b|context\b/);
   // owner, 2026-11-09: it's your skyling, never an assistant or an AI assistant
   expect(seen, `${where}: a skyling, never an assistant`).not.toMatch(/\bassistants?\b/i);
   expect(seen, `${where}: the skyling is "it", not "he"`).not.toMatch(/\b(he|his|him|himself)\b/i);
@@ -71,7 +73,7 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   await page.getByRole("button", { name: "Go to my sky" }).click();
   await page.waitForURL((u) => u.pathname === "/");
 
-  // No name was saved: it stays "your skyling" until they choose one.
+  // No name was saved: it goes by its skyling's own name (Ray, the default) until they choose one.
   const [prefs] = await queryAsUser<{ p: { assistantName?: string; onboarding?: string } }>(email, "select preferences as p from users where email = $1", [
     email,
   ]);
@@ -88,22 +90,25 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   await page.getByRole("button", { name: "Start using LifeFlow" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
-  // Phone: the tab says "Skyling", sentences say "your skyling".
+  // Phone: the tab and sentences use its own name.
   const tabs = page.getByRole("navigation", { name: "Main" }).last().getByRole("link");
-  expect(await tabs.allInnerTexts()).toEqual(["Today", "Skyling", "Money", "School"]);
-  await expect(page.getByRole("button", { name: "Message your skyling…" })).toBeVisible();
+  expect(await tabs.allInnerTexts()).toEqual(["Today", "Ray", "Money", "School"]);
+  await expect(page.getByRole("button", { name: "Message Ray…" })).toBeVisible();
+  // Today: the skyling stands on the chat bar with its name, so it's clear who you're talking to (owner, 2026-11-10)
+  await expect(page.locator('[data-testid="ask-skyling"]:visible').first()).toHaveText("Ray");
   for (const path of PAGES) {
     await visit(page, path);
     await expectNoJarvis(page, `phone ${path}`);
   }
   await visit(page, "/jarvis");
   await expect(page.getByLabel(COMPOSER)).toBeDisabled(); // AI not allowed yet
-  await expect(page.getByLabel(COMPOSER)).toHaveAttribute("placeholder", "Allow your skyling to start");
-  await expect(page.getByRole("region", { name: "Allow AI" })).toContainText("your skyling sends your message");
+  await expect(page.getByLabel(COMPOSER)).toHaveAttribute("placeholder", "Allow Ray to start");
+  await expect(page.getByRole("region", { name: "Allow AI" })).toContainText("Ray sends your message");
 
-  // Settings: the name field is empty, not prefilled with a made-up name.
+  // Settings: the name field is empty (its own name is the hint), not prefilled with a made-up name.
   await visit(page, "/settings/jarvis");
   await expect(page.locator("#as-name")).toHaveValue("");
+  await expect(page.locator("#as-name")).toHaveAttribute("placeholder", "Ray");
 
   // Desktop: the rail, the top bar's ask field and the skyling drawer.
   await page.setViewportSize({ width: 1280, height: 860 });
@@ -113,7 +118,7 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   }
   // (Today has its own ask bar, so the top bar's ask field is on the other pages)
   await visit(page, "/settings");
-  await page.getByRole("button", { name: "Ask your skyling anything…" }).click();
-  await expect(page.getByRole("dialog", { name: "Your skyling" })).toBeVisible();
+  await page.getByRole("button", { name: "Ask Ray anything…" }).click();
+  await expect(page.getByRole("dialog", { name: "Ray" })).toBeVisible();
   await expectNoJarvis(page, "desktop: assistant drawer");
 });

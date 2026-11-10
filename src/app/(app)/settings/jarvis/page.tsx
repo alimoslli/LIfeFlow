@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: "Skyling" };
 
 export default async function JarvisSettings() {
   const u = await requireUser();
-  const profile = assistantProfile(u.preferences);
+  const profile = assistantProfile(u.preferences, u.timezone);
   const who = nameAtStart(profile.name);
   const s = jarvisSettings(u.preferences);
   return (
@@ -47,7 +47,6 @@ export default async function JarvisSettings() {
           quietEnd: s.quietEnd,
           topics: s.topics,
           autonomy: s.autonomy,
-          avatar: s.avatar,
           learning: s.learning === true,
           pushLimit: s.pushLimit,
           answerLength: u.preferences?.jarvisTone ?? "balanced",

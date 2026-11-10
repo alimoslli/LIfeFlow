@@ -58,7 +58,7 @@ export async function POST(req: Request) {
     } catch (e) {
       if (e instanceof ProviderUnavailableError) {
         console.error("[jarvis] provider unavailable:", e.message);
-        throw new HttpError(503, `${nameAtStart(assistantProfile(user.preferences).name)} isn't available right now. Try again in a minute.`);
+        throw new HttpError(503, `${nameAtStart(assistantProfile(user.preferences, user.timezone).name)} isn't available right now. Try again in a minute.`);
       }
       throw e;
     }

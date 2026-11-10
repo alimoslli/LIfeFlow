@@ -26,8 +26,7 @@ import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
 import { isAppPath, viewAtName } from "@/lib/app-routes";
 import { jsonOf, PlainError, serverWords } from "@/lib/plain-error";
-import { knowsLine, nameAtStart } from "@/lib/assistant";
-import { greetingIn } from "@/lib/dates";
+import { nameAtStart } from "@/lib/assistant";
 import { SkylingSprite } from "@/components/skylings/sprite";
 import { CLOUD, PixelArt, SkyWindow } from "@/components/skylings/sky-window";
 import { cheerSkylings } from "@/components/skylings/night";
@@ -82,7 +81,6 @@ export function JarvisChat({
   autoSend,
   onConversation,
   connect,
-  knows,
   startVoice,
 }: {
   conversationId?: string | null;
@@ -96,13 +94,11 @@ export function JarvisChat({
   onConversation?: (id: string, title: string) => void;
   /** Not connected yet; shown as one "connect me to do more" card on the empty screen. */
   connect?: string[];
-  /** What this account has (classes, shifts, money), for the empty screen's line; unknown means none is claimed. */
-  knows?: string[];
   /** Open with the voice bar already on. */
   startVoice?: boolean;
 }) {
   const router = useRouter();
-  const { assistantName, firstName, aiConsent, tz, skyling } = useShell();
+  const { assistantName, aiConsent, tz, skyling } = useShell();
   const canSend = availability.available && aiConsent;
   const [conversationId, setConversationId] = useState(initialId ?? null);
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
@@ -523,12 +519,9 @@ export function JarvisChat({
           )}
           {empty && (
             <div className="animate-rise flex flex-col items-center text-center">
-              {/* their skyling in its corner of the real sky, asking (tap it and it hops) */}
-              <SkyWindow tz={tz} className={cn("w-full rounded-[2rem] text-left", compact ? "h-40" : "h-48 sm:h-56")}>
-                <p className="absolute top-4 left-5 text-[0.6875rem] font-semibold tracking-[0.16em] text-star-gold uppercase">
-                  {greetingIn(tz)}
-                  {firstName ? `, ${firstName}` : ""}
-                </p>
+              {/* their skyling in its corner of the real sky, saying the catchphrase with its name beside it (owner, 2026-11-10:
+                  "Let's clear your sky."; never put into the prompt as a script). Tap it and it hops. */}
+              <SkyWindow tz={tz} className={cn("w-full rounded-[2rem] text-left", compact ? "h-36" : "h-44 sm:h-52")}>
                 <div className="absolute bottom-0 left-[4%] flex flex-col items-center sm:left-[10%]">
                   <SkylingSprite
                     companion={skyling}
@@ -536,16 +529,16 @@ export function JarvisChat({
                   />
                   <PixelArt art={CLOUD} className={cn("-mb-1", compact ? "w-24" : "w-28 sm:w-40")} />
                 </div>
-                <div className="lf-speech absolute top-1/2 right-4 left-[38%] -translate-y-[40%] px-3.5 py-3 sm:right-[8%] sm:left-[40%] sm:px-5 sm:py-4">
+                <div className="lf-speech absolute top-1/2 right-4 left-[38%] -translate-y-[38%] px-3.5 py-3 sm:right-[8%] sm:left-[40%] sm:px-5 sm:py-4">
+                  <p className="text-[0.6875rem] font-semibold tracking-[0.14em] text-dawn-3 uppercase">{assistantName}</p>
                   <h2
                     className={cn(
-                      "font-display leading-[1.12] font-medium tracking-tight",
-                      compact ? "text-[1.0625rem]" : "text-[1.1875rem] sm:text-[1.75rem]",
+                      "mt-0.5 font-display leading-[1.1] font-medium tracking-tight",
+                      compact ? "text-[1.25rem]" : "text-[1.4375rem] sm:text-[2rem]",
                     )}
                   >
-                    What can I take off your plate?
+                    Let&apos;s clear your sky.
                   </h2>
-                  <p className="mt-1 text-[0.8125rem] leading-snug text-ink-night/70 sm:text-[0.9375rem]">{knowsLine(knows)}</p>
                 </div>
               </SkyWindow>
               {!aiConsent ? (

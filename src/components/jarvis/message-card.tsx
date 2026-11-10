@@ -2,11 +2,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { BellOff, Check, Clock, Loader2, MoreHorizontal, Sparkles, ThumbsDown, ThumbsUp, Undo2, X } from "lucide-react";
+import { BellOff, Check, Clock, Loader2, MoreHorizontal, ThumbsDown, ThumbsUp, Undo2, X } from "lucide-react";
 import { respondAction } from "@/app/(app)/jarvis/proactive-actions";
 import { haptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
-import { assistantLabel, nameAtStart } from "@/lib/assistant";
+import { nameAtStart } from "@/lib/assistant";
+import { SkylingIcon } from "../skylings/sprite";
 import { useShell } from "../shell/app-shell";
 import { toast } from "../ui/toaster";
 
@@ -27,27 +28,17 @@ export type CardMessage = {
   sections?: { heading: string; lines: string[] }[];
 };
 
-export function JarvisAvatar({ style, name, className }: { style: "spark" | "orb" | "initial"; name: string; className?: string }) {
+/** The skyling's picture in a small night tile (owner, 2026-11-10: the old spark, orb and letter avatars are gone). */
+export function JarvisAvatar({ className }: { className?: string }) {
   return (
-    <span
-      aria-hidden
-      className={cn(
-        "flex shrink-0 items-center justify-center rounded-full text-accent-text",
-        style === "orb" ? "bg-[radial-gradient(circle_at_30%_30%,color-mix(in_srgb,var(--accent)_45%,white),var(--hero)_70%)]" : "bg-accent",
-        className ?? "h-9 w-9",
-      )}
-    >
-      {style === "initial" ? (
-        <span className="text-sm font-semibold">{assistantLabel(name).slice(0, 1).toUpperCase()}</span>
-      ) : style === "spark" ? (
-        <Sparkles className="h-4 w-4" />
-      ) : null}
+    <span aria-hidden className={cn("lf-chip-night shrink-0 overflow-hidden rounded-[30%]", className ?? "h-9 w-9")}>
+      <SkylingIcon className="h-[88%] w-[88%] translate-y-[8%]" />
     </span>
   );
 }
 
 /** One thing Jarvis said on his own, with Do it / Snooze / Not now / Don't suggest again and 👍 👎. */
-export function JarvisMessageCard({ m, name, avatar, compact }: { m: CardMessage; name: string; avatar: "spark" | "orb" | "initial"; compact?: boolean }) {
+export function JarvisMessageCard({ m, name, compact }: { m: CardMessage; name: string; compact?: boolean }) {
   const router = useRouter();
   const { openJarvis } = useShell();
   const [pending, start] = useTransition();
@@ -71,7 +62,7 @@ export function JarvisMessageCard({ m, name, avatar, compact }: { m: CardMessage
       className={cn("relative rounded-3xl bg-surface p-4 shadow-soft sm:p-5", m.urgent && open && "ring-1 ring-warning/50", !open && "opacity-90")}
     >
       <div className="flex items-start gap-3">
-        <JarvisAvatar style={avatar} name={name} />
+        <JarvisAvatar />
         <div className="min-w-0 flex-1">
           <p className="text-xs text-muted">
             {nameAtStart(name)} · {m.when}

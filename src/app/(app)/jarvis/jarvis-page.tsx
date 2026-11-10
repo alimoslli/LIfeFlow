@@ -23,7 +23,6 @@ export function JarvisPage({
   tz,
   ask,
   connect,
-  knows,
   voice,
 }: {
   conversations: Conv[];
@@ -34,8 +33,6 @@ export function JarvisPage({
   ask?: string;
   /** Not connected yet (bank, Canvas, calendar): Jarvis suggests them on his home screen. */
   connect?: string[];
-  /** What this account has (classes, shifts, money), for the empty chat's line. */
-  knows?: string[];
   /** Start talking right away (the mic on Today). */
   voice?: boolean;
 }) {
@@ -108,7 +105,6 @@ export function JarvisPage({
             initialMessages={messages}
             initialPrompt={ask}
             connect={connect}
-            knows={knows}
             startVoice={voice}
             module="home"
             availability={{ available: status.available, reason: status.reason, model: status.model }}

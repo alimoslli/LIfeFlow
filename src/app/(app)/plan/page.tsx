@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Plus, Sparkles } from "lucide-react";
+import { Plus } from "lucide-react";
 import { QuickAddButton } from "@/components/shell/quick-add";
 import { CalendarViewToggle } from "../calendar/view-toggle";
 import { AskJarvisButton } from "@/components/shell/app-shell";
@@ -16,6 +16,7 @@ import { lifeLoad } from "@/server/services/life-load";
 import { moneyLocked } from "@/server/auth/money-lock";
 import { LifeLoad } from "./life-load";
 import { EditableBlock, type Block } from "./block-editor";
+import { SkylingIcon } from "@/components/skylings/sprite";
 
 export const metadata: Metadata = { title: "Plan" };
 
@@ -117,7 +118,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <AskJarvisButton prompt="Add " className="tap flex items-center justify-center rounded-full bg-surface text-accent shadow-soft">
-            <Sparkles className="h-4 w-4" aria-label="Add with your skyling" />
+            <SkylingIcon className="h-6 w-6" />
           </AskJarvisButton>
           <QuickAddButton className="lf-sb lf-sb-sun lf-sb-sm">
             <Plus className="h-4 w-4" /> Add

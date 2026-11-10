@@ -1,7 +1,7 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Briefcase, ChevronRight, Download, Flag, GraduationCap, Heart, HeartPulse, Plane, PiggyBank, Sparkles, Trash2, Trophy } from "lucide-react";
+import { Briefcase, ChevronRight, Download, Flag, GraduationCap, Heart, HeartPulse, Plane, PiggyBank, Star, Trash2, Trophy } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { MILESTONE_CATEGORIES, type MilestoneCategory } from "@/server/db/schema
 import { lifeTimeline, whenLabel, type TimelineItem } from "@/server/services/milestones";
 import { AskJarvisButton } from "../money/money-client";
 import { createMilestoneAction, deleteMilestoneAction, updateMilestoneAction } from "./actions";
+import { SkylingIcon } from "@/components/skylings/sprite";
 
 export const metadata: Metadata = { title: "Milestones" };
 
@@ -25,7 +26,7 @@ const CATEGORY: Record<MilestoneCategory, { label: string; icon: LucideIcon }> =
   health: { label: "Health", icon: HeartPulse },
   travel: { label: "Travel", icon: Plane },
   family: { label: "Family", icon: Heart },
-  personal: { label: "Personal", icon: Sparkles },
+  personal: { label: "Personal", icon: Star },
 };
 
 const TELL_JARVIS =
@@ -59,7 +60,7 @@ export default async function MilestonesPage({ searchParams }: { searchParams: P
           <p className="text-sm text-text-2">Everything you&apos;ve done, and every goal you reach.</p>
         </div>
         <AskJarvisButton prompt={TELL_JARVIS}>
-          <Sparkles className="h-3.5 w-3.5" /> Tell <AssistantName /> your story
+          <SkylingIcon className="h-5 w-5" /> Tell <AssistantName /> your story
         </AskJarvisButton>
       </div>
 

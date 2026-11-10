@@ -13,7 +13,6 @@ import {
   Receipt,
   Search,
   Settings,
-  Sparkles,
   Sun,
   Wallet,
   type LucideIcon,
@@ -21,8 +20,9 @@ import {
 import { cn } from "@/lib/utils";
 import type { SearchHit } from "@/server/services/search";
 import { useShell } from "./app-shell";
+import { SkylingIcon } from "../skylings/sprite";
 
-type Item = { key: string; title: string; subtitle?: string | null; icon: LucideIcon; run: () => void };
+type Item = { key: string; title: string; subtitle?: string | null; icon: LucideIcon | typeof SkylingIcon; run: () => void };
 
 const KIND_ICON: Record<SearchHit["kind"], LucideIcon> = {
   task: CheckSquare,
@@ -111,7 +111,7 @@ export function CommandPalette({ open, onClose, onAsk }: { open: boolean; onClos
     const ask: Item = {
       key: "ask",
       title: term ? `Ask ${assistantName}: "${q.trim()}"` : `Ask ${assistantName}`,
-      icon: Sparkles,
+      icon: SkylingIcon,
       run: () => {
         onClose();
         setQ("");

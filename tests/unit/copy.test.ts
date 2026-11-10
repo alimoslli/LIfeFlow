@@ -1,19 +1,15 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { knowsLine } from "@/lib/assistant";
 
 const src = (p: string) => readFileSync(path.resolve(import.meta.dirname, "../../src", p), "utf8");
 const EM_DASH = "—";
 
 describe("copy that claims only what's true (audit A20)", () => {
-  it("the empty chat says only what this account has", () => {
-    expect(knowsLine([])).not.toMatch(/I know/);
-    expect(knowsLine(undefined)).not.toMatch(/I know/);
-    expect(knowsLine(["classes"])).toBe("I know your classes.");
-    expect(knowsLine(["classes", "money"])).toBe("I know your classes and money.");
-    expect(knowsLine(["classes", "shifts", "money"])).toBe("I know your classes, shifts and money.");
-    expect(src("components/jarvis/chat.tsx")).not.toContain("I know your classes, shifts and money.");
+  it("the empty chat is the skyling's catchphrase only, no stock assistant line (owner, 2026-11-10)", () => {
+    const chat = src("components/jarvis/chat.tsx");
+    expect(chat).toContain("Let&apos;s clear your sky.");
+    expect(chat).not.toMatch(/take off your plate|I know your/);
   });
 
   it("the welcome never says it is connecting or reading anything it isn't", () => {

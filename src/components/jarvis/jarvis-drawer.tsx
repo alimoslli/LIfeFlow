@@ -1,23 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Maximize2, Plus, Sparkles, X } from "lucide-react";
+import { Maximize2, Plus, X } from "lucide-react";
+import { SkylingIcon } from "../skylings/sprite";
 import { nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
 import { gsap, MOTION, prefersReducedMotion, useGSAP } from "../motion/gsap";
 import { JarvisChat } from "./chat";
 import type { JarvisAvailability, JarvisModule } from "./types";
-
-const LABEL: Record<JarvisModule, string> = {
-  home: "Home",
-  finances: "Finances",
-  wealth: "Wealth",
-  school: "School",
-  work: "Work",
-  calendar: "Calendar",
-  tasks: "Tasks",
-  notes: "Notes",
-  settings: "Settings",
-};
 
 /** Slide-over Jarvis available from every page; scoped to the current module's context. */
 export function JarvisDrawer({
@@ -86,9 +75,11 @@ export function JarvisDrawer({
         className="relative flex h-full w-full max-w-[460px] flex-col border-l border-border bg-bg shadow-2xl md:bg-surface md:backdrop-blur-2xl"
       >
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
-          <Sparkles className="h-4 w-4 text-accent" />
+          {/* who you're talking to: the skyling's picture and its name (owner, 2026-11-10: no sparkle, no "context" label) */}
+          <span className="lf-chip-night h-8 w-8 shrink-0 overflow-hidden rounded-[0.625rem]" aria-hidden>
+            <SkylingIcon className="h-7 w-7 translate-y-[3px]" />
+          </span>
           <span className="font-medium">{nameAtStart(assistantName)}</span>
-          <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-[0.6875rem] text-muted">{LABEL[module]} context</span>
           <div className="ml-auto flex items-center gap-1">
             <button
               onClick={() => {

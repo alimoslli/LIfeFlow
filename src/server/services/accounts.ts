@@ -148,7 +148,6 @@ export const jarvisSettingsSchema = z.object({
   quietEnd: hhmm,
   topics: z.object({ money: z.boolean(), school: z.boolean(), work: z.boolean(), health: z.boolean(), habits: z.boolean() }),
   autonomy: z.object({ tasks: z.boolean(), calendar: z.boolean() }),
-  avatar: z.enum(["spark", "orb", "initial"]),
   learning: z.boolean(),
   pushLimit: z.number().int().min(0).max(5),
 });

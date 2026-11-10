@@ -139,7 +139,6 @@ export type JarvisSettings = {
   topics?: Partial<Record<JarvisTopic, boolean>>;
   /** What Jarvis may do without asking. Money and contacting people always ask. */
   autonomy?: { tasks?: boolean; calendar?: boolean };
-  avatar?: "spark" | "orb" | "initial";
   /** Consent to adapt from how the user responds (undefined = not asked yet). */
   learning?: boolean;
   /** Message kinds the user said never to suggest again. */

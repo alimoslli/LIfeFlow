@@ -104,13 +104,13 @@ describe("onboarding", () => {
     expect(await prefs(user.id)).toMatchObject({ lifeStage: "both", studyTime: "evening", jarvisTone: "concise", onboarding: "done", tour: "pending" });
   });
 
-  it("finishing setup with no assistant name leaves it 'your skyling', never 'Jarvis'", async () => {
+  it("finishing setup with no name leaves it going by its skyling's own (Ray by default), never 'Jarvis'", async () => {
     const { user, run } = await makeUser();
     await born(run);
     await run((s) => completeOnboarding(s, { lifeStage: "both", assistant: { name: undefined, style: "friend" } }));
     const p = await prefs(user.id);
     expect(p.assistantName).toBeUndefined();
-    expect(assistantProfile(p)).toMatchObject({ name: "your skyling", named: false });
+    expect(assistantProfile(p)).toMatchObject({ name: "Ray", named: false });
   });
 
   it("is all-or-nothing: a refused step saves nothing", async () => {

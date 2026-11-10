@@ -12,10 +12,11 @@
   -webkit-tap-highlight-color: transparent;
   color: var(--text);
 }
-/* A phone: the chat bar is docked at the bottom of Today, just above the tabs, so the sky ends above it. */
+/* A phone: the chat bar is docked at the bottom of Today, just above the tabs, so the sky ends above it (and above the
+   skyling standing on the bar with its name, 1.75rem more; owner 2026-11-10: it never covers the sky). */
 @media (max-width: 767px) {
   .dc {
-    height: clamp(320px, calc(100svh - 232px), 720px);
+    height: clamp(320px, calc(100svh - 260px), 720px);
   }
 }
 .dc-dock {

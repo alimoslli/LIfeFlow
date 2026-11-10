@@ -56,7 +56,7 @@ export async function buildVoiceSession(user: SessionUser, module: JarvisModule 
   const approved = await withUser(user.id, (s) => listActiveMemories(s, now));
   // No spoken request yet: standing instructions only; the model can call list_memories for more.
   const memories = selectMemories(approved, { text: "", module });
-  const profile = assistantProfile(user.preferences);
+  const profile = assistantProfile(user.preferences, user.timezone);
   const instructions =
     buildSystemPrompt({
       userName: user.name.split(" ")[0],

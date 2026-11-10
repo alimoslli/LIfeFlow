@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
 import { useShell } from "@/components/shell/app-shell";
 import type { DayLoad, LoadLevel, WeekLoad } from "@/lib/life-load";
 import { cn } from "@/lib/utils";
+import { SkylingIcon } from "@/components/skylings/sprite";
 
 const FILL: Record<LoadLevel, string> = {
   light: "bg-accent/30",
@@ -82,7 +82,7 @@ export function LifeLoad({ week }: { week: WeekLoad }) {
               }
               className="lf-sb lf-sb-sun lf-sb-sm mt-3"
             >
-              <Sparkles className="h-4 w-4" /> Lighten this day with {assistantName}
+              <SkylingIcon className="h-5 w-5" /> Lighten this day with {assistantName}
             </button>
           )}
         </div>

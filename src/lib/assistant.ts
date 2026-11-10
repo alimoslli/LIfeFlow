@@ -1,20 +1,19 @@
 import type { UserPreferences } from "@/server/db/schema";
+import { companionOf } from "./companions";
+import { resolveSkyling } from "./skyling-now";
 
 /**
  * The user's skyling (owner, 2026-11-09: never "assistant", "AI assistant" or "AI companion" anywhere in the product): they choose
- * its name, personality and voice. Until they pick a name, sentences say "your skyling".
+ * its name, personality and voice. Without a name of their own it goes by its own (Ray, Star, ...; for "Changes with the sky",
+ * whoever is up), owner 2026-11-10. "your skyling" is only for places with no account (the landing page).
  */
 export const UNNAMED_ASSISTANT = "your skyling";
 
-/** The name at the start of a sentence or as a heading: "Your skyling" until they choose one. */
-export const nameAtStart = (name: string) => (name === UNNAMED_ASSISTANT ? "Your skyling" : name);
+/** Old product names that were saved as a name and are never shown as the skyling's (owner, 2026-11-10: "Dev" is out). */
+const OLD_NAMES = new Set(["Dev"]);
 
-/** The empty chat's line under "What can I take off your plate?": only what this account has (services/integrations `whatAssistantKnows`). */
-export function knowsLine(areas: string[] | undefined) {
-  if (!areas?.length) return "Tell me about your week and I'll help you plan it.";
-  const list = areas.length < 2 ? areas[0] : `${areas.slice(0, -1).join(", ")} and ${areas[areas.length - 1]}`;
-  return `I know your ${list}.`;
-}
+/** The name at the start of a sentence or as a heading. */
+export const nameAtStart = (name: string) => (name === UNNAMED_ASSISTANT ? "Your skyling" : name);
 
 /** A short noun label (the tab, a list row): "Skyling" until they choose a name. */
 export const assistantLabel = (name: string) => (name === UNNAMED_ASSISTANT ? "Skyling" : name);
@@ -54,13 +53,17 @@ export const ASSISTANT_VOICES = {
 } as const;
 export type AssistantVoice = keyof typeof ASSISTANT_VOICES;
 
-/** `name` is what to call it in a sentence; `named` is false until the user has chosen a name. */
+/** `name` is what to call it in a sentence; `named` is false until the user has chosen a name (it then goes by its own). */
 export type AssistantProfile = { name: string; named: boolean; style: AssistantStyle; notes: string | null; voice: AssistantVoice };
 
-export function assistantProfile(p: UserPreferences | undefined | null): AssistantProfile {
-  const chosen = p?.assistantName?.trim();
+/** The skyling's own name for a saved choice: Ray by default, whoever is up for "Changes with the sky". */
+export const skylingName = (choice: string | null | undefined, tz = "UTC", now?: Date) => companionOf(resolveSkyling(choice, tz, now)).name;
+
+export function assistantProfile(p: UserPreferences | undefined | null, tz = "UTC"): AssistantProfile {
+  const saved = p?.assistantName?.trim();
+  const chosen = saved && !OLD_NAMES.has(saved) ? saved : undefined;
   return {
-    name: chosen || UNNAMED_ASSISTANT,
+    name: chosen || skylingName(p?.companion, tz),
     named: !!chosen,
     style: styleOf(p?.assistantStyle),
     notes: p?.assistantNotes?.trim() || null,

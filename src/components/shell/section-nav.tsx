@@ -16,7 +16,7 @@ import {
   MessageCircle,
   NotebookPen,
   Receipt,
-  Sparkles,
+  Bell,
   Trophy,
   UserRound,
   Wallet,
@@ -43,7 +43,7 @@ export const SECTIONS: Record<Section, Item[]> = {
   ],
   jarvis: [
     { href: "/jarvis", label: "Chat", icon: MessageCircle, except: ["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"] },
-    { href: "/jarvis/says", label: "Updates", icon: Sparkles, also: ["/inbox"] },
+    { href: "/jarvis/says", label: "Updates", icon: Bell, also: ["/inbox"] },
     { href: "/jarvis/ideas", label: "Ideas", icon: Lightbulb },
     { href: "/jarvis/profile", label: "Profile", icon: UserRound, also: ["/jarvis/memory"] },
   ],
