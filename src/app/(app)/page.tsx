@@ -120,7 +120,7 @@ export default async function TodayPage() {
         <AskBar name={assistantName} chips={false} clouds={clouds} />
       </div>
       {/* on a phone this starts below the docked chat bar and the tabs, so nothing peeks out behind them (audit B16) */}
-      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4 max-md:mt-[calc(var(--tabbar-space)+7.5rem)]">
+      <div className="dc-after-dock mx-auto flex w-full max-w-[640px] flex-col gap-4 max-md:mt-[calc(var(--tabbar-space)+7.5rem)]">
         <div className={mode === "full" ? "dc-ask-below max-md:hidden" : "max-md:hidden"}>
           <AskBar name={assistantName} chips={false} clouds={clouds} />
         </div>

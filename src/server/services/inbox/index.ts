@@ -114,8 +114,8 @@ export async function addSender(scope: UserScope, db: Database, rawEmail: string
   await sendEmail(cfg, {
     to: email,
     subject: `Your LifeFlow code: ${code}`,
-    text: `Enter ${code} in LifeFlow to let this address forward emails to your Smart inbox. It works for 15 minutes. If you didn't ask for this, ignore this email.`,
-    html: `<p>Enter <b>${code}</b> in LifeFlow to let this address forward emails to your Smart inbox. It works for 15 minutes.</p><p>If you didn't ask for this, ignore this email.</p>`,
+    text: `Enter ${code} in LifeFlow to let this address forward emails to LifeFlow, where your skyling files them. It works for 15 minutes. If you didn't ask for this, ignore this email.`,
+    html: `<p>Enter <b>${code}</b> in LifeFlow to let this address forward emails to LifeFlow, where your skyling files them. It works for 15 minutes.</p><p>If you didn't ask for this, ignore this email.</p>`,
   });
   return { verified: false };
 }
