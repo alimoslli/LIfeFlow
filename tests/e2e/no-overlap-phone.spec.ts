@@ -42,9 +42,9 @@ const SCREENS = [
   "/finances/accounts",
   "/finances/transactions",
   "/finances/bills",
-  "/finances/rules",
+  "/finances/transactions?rules=1",
   "/school",
-  "/school/due",
+  "/school?view=upcoming",
   "/notes",
   "/settings",
   "/settings/profile",
@@ -293,7 +293,7 @@ for (const size of SIZES)
         await settle(page);
         await check(path);
         await checkOpeners(path);
-        if (["/plan", "/calendar", "/work", "/school/due"].includes(path)) await checkRows(path);
+        if (["/plan", "/calendar", "/work", "/school?view=upcoming"].includes(path)) await checkRows(path);
       }
 
       // The memory form, and the edit dialog of a memory that was just added.

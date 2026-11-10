@@ -16,12 +16,33 @@ import { listAccounts } from "@/server/services/finance/accounts";
 import { listCategories } from "@/server/services/finance/categories";
 import { summarizeCashflow } from "@/server/services/finance/cashflow";
 import { TRANSACTION_KINDS, queryTransactions } from "@/server/services/finance/transactions";
-import { createTransactionAction, deleteTransactionAction, importCsvAction, tidyTransactionsAction, updateTransactionAction } from "../actions";
+import {
+  applyRuleAction,
+  createTransactionAction,
+  deleteRuleAction,
+  deleteTransactionAction,
+  importCsvAction,
+  tidyTransactionsAction,
+  updateTransactionAction,
+} from "../actions";
+import { listCategoryRules } from "@/server/services/finance/categorize";
+import { RulesSheet } from "./rules-sheet";
 import { AddTransactionDialog, CategoryOptions, ImportCsvDialog, KIND_LABELS } from "../forms";
 
 export const metadata: Metadata = { title: "Transactions" };
 
-type SP = { q?: string; period?: string; from?: string; to?: string; category?: string; kind?: string; account?: string; edit?: string; show?: string };
+type SP = {
+  q?: string;
+  period?: string;
+  from?: string;
+  to?: string;
+  category?: string;
+  kind?: string;
+  account?: string;
+  edit?: string;
+  show?: string;
+  rules?: string;
+};
 
 const PAGE = 50;
 
@@ -55,7 +76,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       includeExcluded: true,
       limit: 5000,
     });
-    return { accounts, categories, rows, today, period };
+    // Category rules open over this page (the Rules page was folded in, owner's page map 2026-11-10); only read when asked.
+    const rules = sp.rules ? await listCategoryRules(s) : [];
+    return { accounts, categories, rows, today, period, rules };
   });
   const summary = summarizeCashflow(d.rows);
   const filtered = Boolean(sp.q || sp.category || sp.kind || sp.account);
@@ -71,6 +94,12 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
 
   return (
     <>
+      <RulesSheet
+        open={!!sp.rules}
+        rules={d.rules.map((r) => ({ id: r.id, label: r.label, categoryName: r.categoryName, hits: r.hits }))}
+        apply={applyRuleAction}
+        remove={deleteRuleAction}
+      />
       <div className="mb-5 flex items-center justify-between gap-3">
         <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Transactions</h1>
         <div className="flex items-center gap-2">
@@ -93,7 +122,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
               >
                 <PixelIcon name="wand" className="h-4 w-4 text-muted" /> Tidy up names
               </ActionButton>
-              <Link href="/finances/rules" className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm hover:bg-surface-2">
+              <Link href={qs({ rules: "1" })} scroll={false} className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm hover:bg-surface-2">
                 <PixelIcon name="wand" className="h-4 w-4 text-muted" /> Category rules
               </Link>
             </div>

@@ -17,7 +17,7 @@ const ROUTES = [
   "/goals",
   "/finances/bills",
   "/finances/accounts",
-  "/finances/rules",
+  "/finances/transactions?rules=1",
   "/jarvis",
   "/settings",
   "/jarvis/memory",
