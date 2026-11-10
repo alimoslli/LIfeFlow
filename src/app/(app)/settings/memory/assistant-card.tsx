@@ -90,7 +90,7 @@ export function AssistantCard({
               <label key={key} className={chip}>
                 <input type="radio" name="style" value={key} checked={style === key} onChange={() => setStyle(key as AssistantStyle)} className="sr-only" />
                 <span className="block text-sm font-medium">{s.label}</span>
-                <span className="block text-xs opacity-75">{s.hint}</span>
+                <span className="block text-xs opacity-90">{s.hint}</span>
               </label>
             ))}
           </div>
@@ -111,7 +111,7 @@ export function AssistantCard({
               <label key={f} className={chip}>
                 <input type="radio" name="frequency" value={f} defaultChecked={settings.frequency === f} className="sr-only" />
                 <span className="block text-sm font-medium capitalize">{f}</span>
-                <span className="block text-xs opacity-75">{FREQ[f].split(": ")[1]}</span>
+                <span className="block text-xs opacity-90">{FREQ[f].split(": ")[1]}</span>
               </label>
             ))}
           </div>
@@ -183,7 +183,7 @@ export function AssistantCard({
               <label key={key} className={chip}>
                 <input type="radio" name="voice" value={key} defaultChecked={profile.voice === key} className="sr-only" />
                 <span className="block text-sm font-medium capitalize">{key}</span>
-                <span className="block text-xs opacity-75">{desc}</span>
+                <span className="block text-xs opacity-90">{desc}</span>
               </label>
             ))}
           </div>
