@@ -60,7 +60,6 @@ const SCREENS = [
   "/work",
   "/jarvis",
   "/jarvis/says",
-  "/jarvis/ideas",
   "/jarvis/profile",
   "/money",
   "/finances/accounts",

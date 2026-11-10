@@ -15,7 +15,6 @@ const PAGES = [
   "/habits",
   "/work",
   "/jarvis/says",
-  "/jarvis/ideas",
   "/jarvis/profile",
   "/money",
   "/finances/transactions",

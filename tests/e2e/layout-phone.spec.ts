@@ -66,7 +66,7 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
   await everything.getByRole("link", { name: /To-dos/ }).click();
   await expect(page).toHaveURL(/\/tasks$/);
   await expect(everything).toBeHidden();
-  pages.push("/jarvis", "/jarvis/says", "/jarvis/ideas", "/jarvis/profile", "/plan", "/tasks", "/milestones");
+  pages.push("/jarvis", "/jarvis/says", "/jarvis/profile", "/plan", "/tasks", "/milestones");
 
   // Settings: the gear (tap 1), then its tabs (tap 2): Assistant (what Jarvis remembers), Integrations (Apple Health), etc.
   // The gear brings Settings up from below, over the page you were on (owner, 2026-11-10); its doors are one tap away.

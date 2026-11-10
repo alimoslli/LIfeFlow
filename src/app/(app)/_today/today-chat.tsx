@@ -198,7 +198,7 @@ export function TodayReplyCard({ name, refresh, fill = false }: { name: string; 
         {/* what you asked, unless it's in the middle of Today, where there's no room to say it twice */}
         {fill ? <span className="flex-1" /> : <p className="min-w-0 flex-1 truncate text-xs text-muted">You: {reply.question}</p>}
         {conversationId && (
-          <Link href={`/jarvis/${conversationId}`} className="shrink-0 text-sm font-medium text-accent">
+          <Link href="/jarvis" className="shrink-0 text-sm font-medium text-accent">
             Open the chat
           </Link>
         )}
@@ -319,7 +319,7 @@ export function TodayMiddle({
   name: string;
   clouds: IdeaCloud[];
   /** The skyling's one note: a link, a question it sends, or words it puts in the bar. */
-  note: { text: string; href?: string; prompt?: string; fill?: string } | null;
+  note: { text: string; href?: string; prompt?: string; fill?: string; attention?: boolean } | null;
   conversationId: string | null;
   /** Something that must come first (the birthday question). */
   children?: React.ReactNode;
@@ -335,14 +335,16 @@ export function TodayMiddle({
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 overflow-hidden px-1">
       {note && (
-        <button
-          type="button"
-          data-testid="assistant-line"
-          onClick={() => (note.href ? router.push(note.href) : note.prompt ? void askOnToday(note.prompt, refresh) : fillBar(note.fill ?? note.text))}
-          className="line-clamp-2 max-w-[22rem] text-center text-[0.9375rem] leading-snug font-medium text-text"
-        >
-          {note.text}
-        </button>
+        <section aria-label={note.attention ? "Heads up" : "From your skyling"} className="contents">
+          <button
+            type="button"
+            data-testid="assistant-line"
+            onClick={() => (note.href ? router.push(note.href) : note.prompt ? void askOnToday(note.prompt, refresh) : fillBar(note.fill ?? note.text))}
+            className="line-clamp-2 max-w-[22rem] text-center text-[0.9375rem] leading-snug font-medium text-text"
+          >
+            {note.text}
+          </button>
+        </section>
       )}
       <IdeaClouds clouds={clouds} show={note ? 2 : 3} onPick={fillBar} className="justify-center" />
     </div>

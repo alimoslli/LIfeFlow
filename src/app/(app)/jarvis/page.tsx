@@ -11,13 +11,14 @@ import { JarvisPage } from "./jarvis-page";
 
 export const metadata: Metadata = { title: "Skyling" };
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ ask?: string; voice?: string }> }) {
-  const { ask, voice } = await searchParams;
-  const { conversations, tz, connect, ideas, messages } = await withCurrentUser(async (s, u) => {
+export default async function Page({ searchParams }: { searchParams: Promise<{ ask?: string; voice?: string; c?: string }> }) {
+  const { ask, voice, c } = await searchParams;
+  const { conversations, tz, connect, ideas, messages, activeId } = await withCurrentUser(async (s, u) => {
     const conversations = await listConversations(s);
     // one chat that keeps going (owner, 2026-11-10: "starting a new chat is annoying every time"): the skyling's page
     // opens the latest one, the same one Today's bar carries on
-    const latest = conversations[0];
+    // an earlier conversation, when one is asked for (old links, the list of earlier chats), stays readable here
+    const latest = (c && conversations.find((x) => x.id === c)) || conversations[0];
     let messages: UiMessage[] = [];
     if (latest) {
       const rows = await listMessages(s, latest.id);
@@ -27,6 +28,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
     }
     return {
       conversations,
+      activeId: latest?.id ?? null,
       messages,
       connect: await missingConnections(s),
       // idea clouds under the skyling: what they can tell or ask it, from their own data (lib/idea-clouds)
@@ -37,7 +39,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ a
   return (
     <JarvisPage
       conversations={conversations}
-      activeId={conversations[0]?.id ?? null}
+      activeId={activeId}
       messages={messages}
       tz={tz}
       ask={ask?.slice(0, 500)}

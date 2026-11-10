@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Brain, Heart } from "lucide-react";
+import { MemorySection } from "../memory/section";
 import { JarvisAvatar } from "@/components/jarvis/message-card";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { assistantProfile, nameAtStart } from "@/lib/assistant";
@@ -11,8 +11,9 @@ import { unreadCount } from "@/server/services/proactive/engine";
 
 export const metadata: Metadata = { title: "Skyling" };
 
-/** Jarvis's profile: who he is, what's waiting on you, and the two things you shape (personality and memory). */
-export default async function JarvisProfilePage() {
+/** The skyling's one page: who it is, what's waiting on you, its personality and what it knows (merge 4). */
+export default async function JarvisProfilePage({ searchParams }: { searchParams: Promise<{ debug?: string; imported?: string }> }) {
+  const sp = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
     const [unread, proposed] = await series(
       () => unreadCount(s),
@@ -22,7 +23,7 @@ export default async function JarvisProfilePage() {
   });
   const name = d.profile.name;
   const status = d.proposed
-    ? { text: `${d.proposed} memor${d.proposed === 1 ? "y needs" : "ies need"} your OK`, href: "/jarvis/memory", tone: "text-accent" }
+    ? { text: `${d.proposed} memor${d.proposed === 1 ? "y needs" : "ies need"} your OK`, href: "#memory", tone: "text-accent" }
     : d.unread
       ? { text: `${d.unread} new update${d.unread === 1 ? "" : "s"}`, href: "/jarvis/says", tone: "text-accent" }
       : { text: "All caught up", href: null, tone: "text-text-2" };
@@ -40,33 +41,9 @@ export default async function JarvisProfilePage() {
         )}
       </header>
 
-      {/* 4:3 cards that grow with large text: no clipping, icons that never shrink away, and a title that never runs past
-          the padding on a narrow phone at Extra large text (capped by the card's width, 18cqw; audit A26). */}
-      <div className="grid grid-cols-2 gap-3">
-        <Link
-          href="/settings/jarvis"
-          className="@container relative flex aspect-[4/3] min-w-0 flex-col justify-between rounded-3xl bg-hero p-4 text-hero-text shadow-soft"
-        >
-          <span>
-            <span className="block text-[min(1.25rem,18cqw)] leading-[1.4] font-semibold tracking-tight">Personality</span>
-            <span className="text-xs opacity-80">Tone, voice, when it speaks up</span>
-          </span>
-          <Heart className="h-6 w-6 shrink-0 self-end opacity-80" />
-        </Link>
-        <Link
-          href="/jarvis/memory"
-          className="@container relative flex aspect-[4/3] min-w-0 flex-col justify-between rounded-3xl bg-hero p-4 text-hero-text shadow-soft"
-        >
-          <span>
-            <span className="block text-[min(1.25rem,18cqw)] leading-[1.4] font-semibold tracking-tight">Memory</span>
-            <span className="text-xs opacity-80">What {name} knows about you</span>
-          </span>
-          <Brain className="h-6 w-6 shrink-0 self-end opacity-80" />
-        </Link>
-      </div>
-
       <ul className="lf-tiles">
         {[
+          { href: "/settings/jarvis", label: "Personality", icon: "health" as const },
           { href: "/settings/integrations", label: "Connected", icon: "plug" as const },
           { href: "/settings/notifications", label: "Notifications", icon: "bell" as const },
           { href: "/settings/data", label: "Privacy and your data", icon: "shield" as const },
@@ -86,6 +63,7 @@ export default async function JarvisProfilePage() {
         </Link>
         .
       </p>
+      <MemorySection sp={sp} />
     </div>
   );
 }

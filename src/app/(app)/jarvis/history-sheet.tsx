@@ -33,7 +33,7 @@ export function HistorySheet({ items, activeId }: { items: { id: string; title: 
               {items.map((c) => (
                 <li key={c.id}>
                   <Link
-                    href={`/jarvis/${c.id}`}
+                    href={`/jarvis?c=${c.id}`}
                     onClick={() => setOpen(false)}
                     className={cn("block rounded-2xl px-3 py-3", c.id === activeId ? "bg-surface shadow-soft" : "active:bg-surface-2")}
                   >

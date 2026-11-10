@@ -129,7 +129,7 @@ export default async function TodayPage() {
             !me.preferences?.birthDate
               ? null
               : note
-                ? { text: note.text, href: note.href, prompt: note.prompt }
+                ? { text: note.text, href: note.href, prompt: note.prompt, attention: note.tone === "attention" }
                 : clock.empty
                   ? setup.length > 0
                     ? { text: `Connect ${setup.join(" and ")} to fill your sky`, href: "/settings/integrations" }

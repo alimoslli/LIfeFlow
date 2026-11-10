@@ -51,7 +51,7 @@ export function JarvisPage({
           {items.length === 0 && <p className="px-3 py-2 text-sm text-muted">Your conversations will appear here.</p>}
           {items.map((c) => (
             <div key={c.id} className={cn("group flex items-center rounded-[1rem]", c.id === activeId ? "bg-surface shadow-soft" : "hover:bg-surface-2")}>
-              <Link href={`/jarvis/${c.id}`} className="min-w-0 flex-1 px-3.5 py-2.5">
+              <Link href={`/jarvis?c=${c.id}`} className="min-w-0 flex-1 px-3.5 py-2.5">
                 <span className="line-clamp-2 break-words text-sm">{c.title}</span>
                 <span className="block text-xs text-muted">{c.when}</span>
               </Link>

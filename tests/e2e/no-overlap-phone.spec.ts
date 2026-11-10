@@ -33,7 +33,6 @@ const SCREENS = [
   "/inbox",
   "/jarvis",
   "/jarvis/says",
-  "/jarvis/ideas",
   "/jarvis/profile",
   "/jarvis/memory",
   "/jarvis/memory/import",

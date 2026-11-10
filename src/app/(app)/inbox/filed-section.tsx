@@ -1,12 +1,10 @@
 import { AssistantName } from "@/components/assistant-name";
 import { PixelIcon, pixel } from "@/components/pixel/pixel-icon";
-import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2, CircleSlash } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
-import { SegmentedNav, UPDATES } from "@/components/ui/segmented-nav";
 import { Card } from "@/components/ui/surface";
 import { formatIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -16,8 +14,6 @@ import { canUndoAnswer, inboxAddress, listInbox, listSenders } from "@/server/se
 import { extractionClient } from "@/server/services/inbox/extract";
 import { addSenderAction, removeSenderAction, fileSuggestionAction, answerQuestionAction, undoInboxAction, verifySenderAction } from "./actions";
 import { CopyAddress, InboxUpload } from "./upload";
-
-export const metadata: Metadata = { title: "Filed" };
 
 const STATUS = {
   filed: { icon: CheckCircle2, tone: "text-success", label: "Filed" },
@@ -30,8 +26,11 @@ const STATUS = {
   processing: { icon: pixel("note"), tone: "text-muted", label: "Reading" },
 } as const;
 
-export default async function InboxPage({ searchParams }: { searchParams: Promise<{ shared?: string }> }) {
-  const { shared } = await searchParams;
+/**
+ * What was sent to the skyling to file (bills, receipts, school emails), as a section of the one Updates page (owner's
+ * reset, 2026-11-10, page map merge 3: Updates and Filed are one). `/inbox` redirects there.
+ */
+export async function FiledSection({ shared }: { shared?: string }) {
   const d = await withCurrentUser(async (s, u) => ({
     address: await inboxAddress(getDb(), u.id),
     senders: await listSenders(s),
@@ -41,14 +40,13 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   }));
   const pending = d.senders.filter((x) => !x.verifiedAt);
   return (
-    <div className="mx-auto flex max-w-[640px] flex-col gap-6">
+    <section id="filed" aria-label="Filed for you" className="flex scroll-mt-20 flex-col gap-6">
       <header>
-        <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Updates</h1>
+        <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">Filed for you</h2>
         <p className="mt-1 text-sm text-text-2">
           Send bills, receipts and school emails. <AssistantName start /> files them.
         </p>
       </header>
-      <SegmentedNav label="Updates" items={UPDATES} active="filed" />
       {shared === "1" && (
         <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
           Got it. <AssistantName start /> filed what you shared; see it below.
@@ -198,6 +196,6 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
           );
         })}
       </section>
-    </div>
+    </section>
   );
 }

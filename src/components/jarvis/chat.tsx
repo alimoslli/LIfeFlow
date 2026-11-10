@@ -228,7 +228,7 @@ export function JarvisChat({
     if (!conversationId && snap.conversationId) {
       setConversationId(snap.conversationId);
       onConversation?.(snap.conversationId, snap.title);
-      if (!compact) window.history.replaceState(null, "", `/jarvis/${snap.conversationId}`);
+      if (!compact) window.history.replaceState(null, "", `/jarvis?c=${snap.conversationId}`);
     }
     const last = snap.messages.at(-1);
     if (last?.role === "assistant" && last.tools.some((t) => t.status === "ok")) startRefresh(() => router.refresh());
@@ -365,7 +365,7 @@ export function JarvisChat({
               if (!conversationId) {
                 setConversationId(ev.id);
                 onConversation?.(ev.id, ev.title);
-                if (!compact) window.history.replaceState(null, "", `/jarvis/${ev.id}`);
+                if (!compact) window.history.replaceState(null, "", `/jarvis?c=${ev.id}`);
               }
               break;
             case "already":
@@ -725,7 +725,7 @@ export function JarvisChat({
                 if (conversationId) return;
                 setConversationId(id);
                 onConversation?.(id, `Talking with ${assistantName}`);
-                if (!compact) window.history.replaceState(null, "", `/jarvis/${id}`);
+                if (!compact) window.history.replaceState(null, "", `/jarvis?c=${id}`);
               }}
               onLine={(role, text) =>
                 setMessages((m) => [

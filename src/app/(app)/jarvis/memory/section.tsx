@@ -1,6 +1,5 @@
 import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
-import type { Metadata } from "next";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -23,17 +22,18 @@ import {
 } from "@/app/(app)/settings/actions";
 import { CATEGORY_LABEL, CATEGORY_OPTIONS } from "@/app/(app)/settings/memory/categories";
 import { EditMemory } from "@/app/(app)/settings/memory/edit-memory";
-import { assistantProfile, nameAtStart } from "@/lib/assistant";
+import { assistantProfile } from "@/lib/assistant";
 import { jarvisSettings, learnedStats } from "@/server/services/proactive/engine";
 import { LearnedCard } from "@/app/(app)/settings/memory/learned-card";
-
-export const metadata: Metadata = { title: "What your skyling knows" };
 
 const seconds = (ms: number | null) => (ms == null ? "None yet" : `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`);
 const compact = (n: number) => new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n);
 
-export default async function JarvisMemory({ searchParams }: { searchParams: Promise<{ debug?: string; imported?: string }> }) {
-  const sp = await searchParams;
+/**
+ * What the skyling knows, as a section of its one page (owner's reset, 2026-11-10, page map merge 4: Profile and Memory
+ * are one). `/jarvis/memory` redirects there.
+ */
+export async function MemorySection({ sp }: { sp: { debug?: string; imported?: string } }) {
   const debug = sp.debug === "1";
   const imported = Number(sp.imported) || 0;
   const d = await withCurrentUser(async (s, u) => {
@@ -69,8 +69,8 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
   const toolRate = st.toolCalls ? Math.round(((st.toolCalls - st.toolErrors) / st.toolCalls) * 100) : null;
 
   return (
-    <div className="flex flex-col gap-5">
-      <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">What {d.assistant.name} knows</h1>
+    <section id="memory" aria-label={`What ${d.assistant.name} knows`} className="flex scroll-mt-20 flex-col gap-5">
+      <h2 className="font-display text-[1.3125rem] leading-tight font-medium tracking-tight">What {d.assistant.name} knows</h2>
       {imported > 0 && (
         <p className="rounded-2xl bg-success-soft px-4 py-3 text-sm text-success">
           {imported} suggestion{imported === 1 ? "" : "s"} added below. Keep the ones that are right.
@@ -334,11 +334,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
           </Card>
         </>
       )}
-
-      <p className="px-1 text-xs text-muted">
-        {nameAtStart(d.assistant.name)} never trains AI models on your data. Memories are encrypted and only used to help you.
-      </p>
-    </div>
+    </section>
   );
 }
 

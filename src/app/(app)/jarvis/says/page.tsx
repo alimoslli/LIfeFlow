@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Settings2 } from "lucide-react";
-import { SegmentedNav, UPDATES } from "@/components/ui/segmented-nav";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { FiledSection } from "@/app/(app)/inbox/filed-section";
 import { JarvisMessageCard } from "@/components/jarvis/message-card";
 import { assistantProfile, nameAtStart } from "@/lib/assistant";
 import { formatIn } from "@/lib/dates";
@@ -12,8 +12,9 @@ import { toCard } from "@/server/services/proactive/present";
 
 export const metadata: Metadata = { title: "Updates" };
 
-/** Everything Jarvis said on his own, newest first, with what was done about it. */
-export default async function JarvisSaysPage() {
+/** Updates: what the skyling said on its own, newest first, and below it what it filed for you (one page, merge 3). */
+export default async function JarvisSaysPage({ searchParams }: { searchParams: Promise<{ shared?: string }> }) {
+  const { shared } = await searchParams;
   const d = await withCurrentUser(async (s, u) => {
     const locked = await moneyLocked(u);
     const rows = (await listMessages(s, 150)).filter((m) => !(locked && m.topic === "money"));
@@ -29,18 +30,15 @@ export default async function JarvisSaysPage() {
       <header className="flex items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-[2.125rem] leading-tight font-medium tracking-tight">Updates</h1>
-          <p className="mt-1 text-sm text-text-2">What {d.name} noticed and did, newest first.</p>
+          <p className="mt-1 text-sm text-text-2">What {d.name} noticed, and what it filed for you.</p>
         </div>
         <Link href="/settings/jarvis" className="tap flex items-center justify-center text-muted" aria-label="Personality settings">
-          <Settings2 className="h-5 w-5" />
+          <PixelIcon name="cog" className="h-5 w-5" />
         </Link>
       </header>
-      <SegmentedNav label="Updates" items={UPDATES} active="jarvis" />
       {d.locked && <p className="rounded-2xl bg-surface-2 px-4 py-3 text-sm text-text-2">Money messages are hidden while Money is locked.</p>}
       {d.rows.length === 0 ? (
-        <p className="rounded-3xl bg-surface p-6 text-[0.9375rem] text-text-2 shadow-soft">
-          Nothing yet. {nameAtStart(d.name)} looks at your day every morning, midday and evening, and speaks up only when something is worth your attention.
-        </p>
+        <p className="px-1 text-[0.9375rem] text-text-2">Nothing new. {nameAtStart(d.name)} speaks up when something needs you.</p>
       ) : (
         [...days.entries()].map(([day, rows]) => (
           <section key={day} className="flex flex-col gap-3">
@@ -51,6 +49,7 @@ export default async function JarvisSaysPage() {
           </section>
         ))
       )}
+      <FiledSection shared={shared} />
     </div>
   );
 }

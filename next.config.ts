@@ -31,6 +31,20 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // Pages merged in the owner's reset (2026-11-10, the page map): old addresses keep working. Done here rather than in the
+  // page, because a page under a streamed loading screen can't redirect before it starts sending. The query string goes along.
+  async redirects() {
+    return [
+      // merge 9: an old chat opens inside the one chat
+      { source: "/jarvis/:id([0-9a-fA-F-]{36})", destination: "/jarvis?c=:id", permanent: false },
+      // merge 13: the clouds do what Ideas did
+      { source: "/jarvis/ideas", destination: "/jarvis", permanent: false },
+      // merge 4: what the skyling knows is part of its one page
+      { source: "/jarvis/memory", destination: "/jarvis/profile#memory", permanent: false },
+      // merge 3: Filed is part of the one Updates page
+      { source: "/inbox", destination: "/jarvis/says#filed", permanent: false },
+    ];
+  },
 };
 
 export default nextConfig;

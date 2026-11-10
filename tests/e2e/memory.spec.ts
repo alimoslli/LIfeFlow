@@ -52,18 +52,12 @@ test("an explicit request saves directly; dismissed suggestions are not used", a
   await expect(page.getByRole("button", { name: "Turn memory suggestions on" })).toBeVisible();
 });
 
-test("Ideas open Jarvis ready to send, and an import from another AI saves only what's ticked", async ({ page }) => {
+test("an import from another AI saves only what's ticked", async ({ page }) => {
   const email = await signUp(page, "Idea Tester");
+  // the Ideas page is gone (the clouds do it; owner's reset, 2026-11-10) and its address opens the chat
   await page.goto("/jarvis/ideas");
-  await expect(page.getByRole("region", { name: "For you" })).toContainText("No savings goal yet");
-  await page.getByRole("button", { name: /Quiz me before a test/ }).click();
-  // the chat page, with the idea typed in and nothing sent (no side panel, owner 2026-11-10)
   await page.waitForURL((u) => u.pathname === "/jarvis");
-  await expect(page.getByLabel(COMPOSER)).toHaveValue("Quiz me on my next exam's topics, one question at a time.");
-  await expect(page.locator(".lf-bubble-me")).toHaveCount(0);
-  await page.goto("/jarvis/ideas");
-
-  await page.getByRole("link", { name: /Bring what your other AI knows/ }).click();
+  await page.goto("/jarvis/memory/import");
   await page
     .getByLabel("Paste the answer here")
     .fill(

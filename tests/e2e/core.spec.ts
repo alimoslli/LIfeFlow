@@ -69,7 +69,7 @@ test("Jarvis saves assignments and tasks that then appear in School and Tasks", 
   // One final reply per turn; no tool chatter in the chat.
   await expect(page.getByText(/^Done:/)).toHaveCount(1);
   await expect(page.getByText("Saved 1 assignment · 1 need a course")).toHaveCount(0);
-  await expect(page).toHaveURL(/\/jarvis\/[0-9a-f-]{36}$/);
+  await expect(page).toHaveURL(/\/jarvis\?c=[0-9a-f-]{36}$/);
   const conversationUrl = page.url();
 
   await askJarvis(page, `/tool create_tasks {"tasks":[{"title":"Study for PSY quiz","priority":"high","dueDate":"${due}","subtasks":["Re-read chapter 4"]}]}`);
@@ -115,16 +115,16 @@ test("users cannot see each other's data", async ({ browser }) => {
   await expect(a.getByRole("link", { name: /Avery's private task/ })).toBeVisible();
   await a.goto("/jarvis");
   await askJarvis(a, "hello there");
-  await expect(a).toHaveURL(/\/jarvis\/[0-9a-f-]{36}$/);
+  await expect(a).toHaveURL(/\/jarvis\?c=[0-9a-f-]{36}$/);
   const convUrl = a.url();
 
   const b = await browser.newPage();
   await signUp(b, "Blake Two");
   await b.goto("/tasks");
   await expect(b.getByText("Avery's private task")).toHaveCount(0);
-  // The page streams, so the status is 200, but no data from the other account is rendered.
+  // Another person's chat address opens your own one chat (owner's reset, 2026-11-10): nothing of theirs is rendered.
   await b.goto(convUrl);
-  await expect(b.getByText("We couldn't find that page")).toBeVisible();
+  await expect(b.getByRole("heading", { name: "Let's clear your sky." })).toBeVisible();
   await expect(b.getByText("hello there")).toHaveCount(0);
 });
 
