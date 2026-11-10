@@ -1,7 +1,6 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FileText, FolderKanban, Pin } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionForm } from "@/components/action-form";
 import { AskJarvisButton } from "@/components/shell/app-shell";
@@ -71,7 +70,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
               !projectId && !courseId ? "bg-surface font-medium shadow-soft" : "text-text-2 hover:bg-surface-2",
             )}
           >
-            <FileText className="h-4 w-4 text-muted" /> All notes
+            <PixelIcon name="note" className="h-4 w-4 text-muted" /> All notes
           </Link>
           <p className="mt-4 mb-1 px-2.5 text-xs font-semibold tracking-wide text-muted uppercase">Projects</p>
           {d.projects
@@ -85,7 +84,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
                   p.id === projectId ? "bg-surface font-medium shadow-soft" : "text-text-2 hover:bg-surface-2",
                 )}
               >
-                <FolderKanban className="h-4 w-4 text-muted" />
+                <PixelIcon name="books" className="h-4 w-4 text-muted" />
                 <span className="flex-1 line-clamp-2 break-words">{p.name}</span>
                 {p.status !== "active" && <span className="text-[0.625rem] text-muted">{p.status}</span>}
               </Link>
@@ -103,7 +102,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
         </aside>
         <div>
           <form action="/notes" className="relative mb-4">
-            <PixelIcon name="find" className="absolute top-2.5 left-3 h-4 w-4 text-muted" />
+            <PixelIcon name="find" className="pointer-events-none absolute top-3 left-3 z-10 h-4 w-4" />
             {projectId && <input type="hidden" name="project" value={projectId} />}
             <LiveSearchInput name="q" defaultValue={sp.q ?? ""} placeholder="Search notes…" aria-label="Search notes" className={cn(control, "h-10 pl-9")} />
           </form>
@@ -133,7 +132,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
                 >
                   <div className="flex items-start gap-2">
                     <h3 className="flex-1 line-clamp-2 break-words font-medium group-hover:text-accent">{n.title}</h3>
-                    {n.pinned && <Pin className="h-3.5 w-3.5 text-muted" />}
+                    {n.pinned && <PixelIcon name="pin" className="h-4 w-4 text-muted" />}
                   </div>
                   <p className="mt-1 line-clamp-3 min-h-[3.75em] text-sm text-text-2">
                     {truncate(n.body.replace(/[#*_>`-]/g, ""), 220) || <span className="text-muted">Empty note</span>}

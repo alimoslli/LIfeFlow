@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { prefersReducedMotion } from "@/components/motion/gsap";
 import { celebrate, hop } from "@/components/motion/burst";
@@ -116,7 +115,7 @@ export function DayClock({
         <canvas data-dc="who" className="dc-who" width={24} height={24} aria-hidden="true" />
         {/* The wheel's way home: shown only while it's turned away from now (sky.ts places it, the engine rolls it). */}
         <button type="button" data-dc="back" className="dc-back" hidden>
-          <RotateCcw className="h-4 w-4" aria-hidden />
+          <PixelIcon name="undo" className="h-4 w-4" />
           Back to now
         </button>
         {/* Under the horizon, in words (the hit area's label says the same for screen readers). */}

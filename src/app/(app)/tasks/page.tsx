@@ -3,7 +3,6 @@ import { series } from "@/server/db/series";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Repeat } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionForm } from "@/components/action-form";
 import { SwipeRow } from "@/components/swipe-row";
@@ -143,7 +142,11 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                                     due.overdue && t.status !== "done" ? "text-danger" : "text-muted",
                                   )}
                                 >
-                                  {t.repeat && <Repeat className="h-3 w-3" aria-label="Repeats" />}
+                                  {t.repeat && (
+                                    <span role="img" aria-label="Repeats">
+                                      <PixelIcon name="repeat" className="h-4 w-4" />
+                                    </span>
+                                  )}
                                   {meta.join(" · ")}
                                 </span>
                               )}

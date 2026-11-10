@@ -1,7 +1,6 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowUp } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { MySkyling } from "@/components/skylings/sprite";
@@ -166,7 +165,7 @@ export default async function SchoolPage() {
           Have a syllabus or a screenshot? Send it to <AssistantName /> and it&apos;ll add everything.
         </span>
         <span className="lf-send relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.75rem]" aria-hidden>
-          <ArrowUp className="h-[18px] w-[18px]" strokeWidth={2.4} />
+          <PixelIcon name="send" className="h-[18px] w-[18px]" />
         </span>
       </AskJarvisButton>
       {!d.canvas && (

@@ -1,7 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { KeyRound } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { addPasskey, biometricName, PasskeyCancelled, passkeysSupported } from "@/components/auth/passkey-client";
@@ -51,7 +50,7 @@ export function PasskeysCard({ passkeys, demo }: { passkeys: PasskeyRow[]; demo:
         <ul className="lf-rows mt-4 *:px-3">
           {passkeys.map((p) => (
             <li key={p.id} className="flex min-h-14 items-center gap-3 py-2">
-              <KeyRound className="h-4 w-4 shrink-0 text-muted" />
+              <PixelIcon name="lock" className="h-4 w-4 shrink-0 text-muted" />
               <span className="min-w-0 flex-1">
                 <span className="block text-[0.9375rem] break-words">{p.name}</span>
                 <span className="block text-xs text-muted">

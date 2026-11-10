@@ -1,4 +1,3 @@
-import { Flame, Pause, Play } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -57,7 +56,7 @@ export async function HabitsSection() {
                   </div>
                   <div className="text-right">
                     <p className="flex items-center justify-end gap-1 text-lg font-semibold">
-                      <Flame className={cn("h-4 w-4", h.current ? "text-warning" : "text-muted")} /> {h.current}
+                      <PixelIcon name="flame" className={cn("h-4 w-4", !h.current && "opacity-40 grayscale")} /> {h.current}
                     </p>
                     <p className="text-xs text-muted">best {h.best}</p>
                   </div>
@@ -76,7 +75,7 @@ export async function HabitsSection() {
                     title={`Pause ${h.title}`}
                     className="tap flex items-center justify-center text-muted"
                   >
-                    <Pause className="h-4 w-4" />
+                    <PixelIcon name="pause" className="h-4 w-4" />
                   </ActionButton>
                   <ActionButton
                     action={deleteHabitAction.bind(null, h.id)}
@@ -149,7 +148,7 @@ export async function HabitsSection() {
                   title={`Resume ${h.title}`}
                   className="tap flex items-center justify-center text-accent"
                 >
-                  <Play className="h-4 w-4" />
+                  <PixelIcon name="play" className="h-4 w-4" />
                 </ActionButton>
               </li>
             ))}

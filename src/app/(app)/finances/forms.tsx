@@ -1,5 +1,4 @@
 "use client";
-import { Upload } from "lucide-react";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -118,7 +117,7 @@ export function ImportCsvDialog({ action, accounts }: { action: Action; accounts
     <Dialog
       trigger={
         <>
-          <Upload className="h-4 w-4 text-muted" /> Import CSV
+          <PixelIcon name="upload" className="h-4 w-4 text-muted" /> Import CSV
         </>
       }
       title="Import transactions"

@@ -1,11 +1,11 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toaster";
 // the same push code as the calm ask in the chat (lib/push-client.ts), so a fix lands once
 import { pushRegistration, pushState, turnOnPush } from "@/lib/push-client";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 type State = "loading" | "unsupported" | "needs-install" | "denied" | "off" | "on";
 
@@ -104,7 +104,7 @@ export function ThisDevice({ available }: { available: boolean }) {
         <>
           <p className="mb-3 text-sm text-text-2">Get reminders, bills, budget alerts and your morning brief on this device.</p>
           <Button onClick={turnOn} loading={busy} className="min-h-11">
-            <Bell className="h-4 w-4" /> Turn on notifications
+            <PixelIcon name="bell" className="h-4 w-4" /> Turn on notifications
           </Button>
         </>
       )}
@@ -116,7 +116,7 @@ export function ThisDevice({ available }: { available: boolean }) {
               Send a test
             </Button>
             <Button onClick={turnOff} disabled={busy} variant="ghost" className="min-h-11">
-              <BellOff className="h-4 w-4" /> Turn off here
+              <PixelIcon name="bell" className="h-4 w-4" /> Turn off here
             </Button>
           </div>
         </>

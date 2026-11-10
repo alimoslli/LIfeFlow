@@ -1,5 +1,4 @@
 "use client";
-import { MessageCircle } from "lucide-react";
 import { useShell } from "@/components/shell/app-shell";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 
@@ -16,7 +15,7 @@ export function EmptyNext({ name }: { name: string }) {
       className="flex min-h-16 w-full items-center gap-3 rounded-3xl bg-surface px-5 py-3 text-left shadow-soft ring-1 ring-border/60"
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-        <MessageCircle className="h-5 w-5" aria-hidden />
+        <PixelIcon name="chat" className="h-5 w-5" aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-[0.9375rem] font-medium">Fill your week</span>

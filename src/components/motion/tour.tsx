@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
 import { SkyButton } from "@/components/skylings/sky-button";
 import { COMPANIONS, companionOf } from "@/lib/companions";
@@ -262,7 +262,7 @@ export function Tour({ onDone, assistantName = UNNAMED_ASSISTANT, companion }: {
           <div className="flex items-center gap-2">
             {i > 0 && (
               <SkyButton variant="glass" size="sm" onClick={back} aria-label="Previous step" className="w-11 px-0">
-                <ArrowLeft className="h-4 w-4" />
+                <PixelIcon name="back" className="h-4 w-4" />
               </SkyButton>
             )}
             <SkyButton ref={nextBtn} size="sm" onClick={next} skyling={guide}>

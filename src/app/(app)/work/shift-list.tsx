@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { AlertCircle } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SwipeRow } from "@/components/swipe-row";
 import { SubmitButton } from "@/components/ui/button";
@@ -80,7 +79,7 @@ export function ShiftList({
                     )}
                     {needsHours && (
                       <span className="mt-1 flex items-center gap-1 text-sm text-warning">
-                        <AlertCircle className="h-3.5 w-3.5" /> Did you work it? Tap to record hours.
+                        <PixelIcon name="alert" className="h-4 w-4" /> Did you work it? Tap to record hours.
                       </span>
                     )}
                   </span>

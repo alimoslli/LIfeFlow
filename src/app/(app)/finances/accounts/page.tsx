@@ -1,6 +1,5 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
-import { Landmark } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { BankConnections } from "@/components/finance/bank-connections";
 import { MySkyling } from "@/components/skylings/sprite";
@@ -12,6 +11,7 @@ import { listAccounts, listTurnedOffAccounts, summarizeBalances } from "@/server
 import { listPlaidConnections, plaidConfig } from "@/server/integrations/plaid";
 import { archiveAccountAction, createAccountAction, disconnectBankAction, setBankAccountUsedAction, updateAccountDetailsAction } from "../actions";
 import { AccountRow, AddAccount, type AccountView } from "./account-row";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 export const metadata: Metadata = { title: "Accounts" };
 
@@ -86,7 +86,7 @@ export default async function AccountsPage() {
       {d.accounts.length === 0 && (
         <div className="flex items-center gap-3 rounded-[1.5rem] bg-surface p-4 shadow-soft">
           <span className="lf-chip-night h-10 w-10 shrink-0 rounded-[0.75rem]" aria-hidden>
-            <Landmark className="h-4 w-4" />
+            <PixelIcon name="card" className="h-4 w-4" />
           </span>
           <p className="text-[0.9375rem] text-text-2">No accounts yet. Connect your bank below and they fill in by themselves.</p>
         </div>

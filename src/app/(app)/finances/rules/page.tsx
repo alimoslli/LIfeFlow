@@ -1,7 +1,6 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton } from "@/components/action-form";
 import { Card, EmptyState } from "@/components/ui/surface";
@@ -18,7 +17,7 @@ export default async function RulesPage() {
   return (
     <div className="mx-auto max-w-[680px]">
       <Link href="/finances/transactions" className="hidden items-center gap-1 text-sm text-muted hover:text-text md:inline-flex">
-        <ArrowLeft className="h-3.5 w-3.5" /> Transactions
+        <PixelIcon name="back" className="h-4 w-4" /> Transactions
       </Link>
       <h1 className="mt-2 font-display text-[1.75rem] font-medium tracking-tight">Category rules</h1>
       <p className="mt-1 mb-5 text-sm text-text-2">New transactions from these merchants get these categories.</p>

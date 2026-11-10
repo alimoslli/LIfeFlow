@@ -1,5 +1,4 @@
 "use client";
-import { Calendar, Video } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { Badge, Card } from "@/components/ui/surface";
 import { disconnectMicrosoftAction, syncMicrosoftAction } from "./actions";
@@ -18,7 +17,7 @@ export function MicrosoftCard({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-2">
-            <Video className="h-5 w-5 text-accent" />
+            <PixelIcon name="video" className="h-5 w-5 text-accent" />
           </span>
           <div>
             <h2 className="font-medium">Microsoft Teams and Outlook</h2>
@@ -41,7 +40,7 @@ export function MicrosoftCard({
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
             <span className="text-text">{connection.email}</span>
             <span className="flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5" /> {connection.lastSynced ? `Synced ${connection.lastSynced}` : "Not synced yet"}
+              <PixelIcon name="calendar" className="h-4 w-4" /> {connection.lastSynced ? `Synced ${connection.lastSynced}` : "Not synced yet"}
             </span>
           </p>
           {connection.error && <p className="text-sm text-danger">{connection.error}</p>}

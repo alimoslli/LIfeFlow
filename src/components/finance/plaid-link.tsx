@@ -2,8 +2,9 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useAppBusy } from "@/lib/app-busy";
-import { Landmark, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 type Handler = { open: () => void; destroy: () => void };
 type PlaidGlobal = {
@@ -140,7 +141,7 @@ export function PlaidLinkButton({
         </p>
       )}
       <button type="button" onClick={start} disabled={busy} className={cn("lf-sb lf-sb-sun lf-sb-sm self-start", className)}>
-        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Landmark className="h-4 w-4" />}
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PixelIcon name="card" className="h-4 w-4" />}
         {children ?? (reconnect ? "Reconnect" : "Connect a bank")}
       </button>
       {status && (

@@ -1,6 +1,5 @@
 "use client";
 import { AssistantName } from "@/components/assistant-name";
-import { Calendar, Mail } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { Badge, Card } from "@/components/ui/surface";
 import { disconnectGoogleAction, setGmailFilingAction, syncGoogleAction } from "./actions";
@@ -22,7 +21,7 @@ export function GoogleCard({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-2">
-            <Mail className="h-5 w-5 text-accent" />
+            <PixelIcon name="mail" className="h-5 w-5 text-accent" />
           </span>
           <div>
             <h2 className="font-medium">Google: Gmail and Calendar</h2>
@@ -44,7 +43,7 @@ export function GoogleCard({
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
             <span className="text-text">{connection.email}</span>
             <span className="flex items-center gap-1">
-              <Calendar className="h-3.5 w-3.5" /> {connection.lastSynced ? `Calendar synced ${connection.lastSynced}` : "Calendar not synced yet"}
+              <PixelIcon name="calendar" className="h-4 w-4" /> {connection.lastSynced ? `Calendar synced ${connection.lastSynced}` : "Calendar not synced yet"}
             </span>
           </p>
           {connection.error && <p className="text-sm text-danger">{connection.error}</p>}

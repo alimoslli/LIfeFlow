@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { addDaysStr, daysBetween, formatDateStr, formatIn, isValidDateStr, localDateOf, monthEnd, monthStart, todayIn, weekStart } from "@/lib/dates";
 import { cn } from "@/lib/utils";
@@ -157,7 +157,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
           {conflicts.length > 0 && (
             <p className="flex items-start gap-2 rounded-2xl bg-warning-soft px-4 py-3 text-sm text-warning">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <PixelIcon name="alert" className="mt-0.5 h-4 w-4 shrink-0" />
               <span>
                 <strong className="font-medium">{conflicts[0].a.title}</strong> overlaps <strong className="font-medium">{conflicts[0].b.title}</strong>.
               </span>

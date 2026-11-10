@@ -3,7 +3,6 @@ import { twelveHourRanges } from "@/lib/utils";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, FileText, Link2, Mail, MapPin, Clock } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { SubmitButton } from "@/components/ui/button";
@@ -46,7 +45,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
   return (
     <>
       <Link href="/school" className="mb-4 hidden items-center gap-1 text-sm text-muted hover:text-text md:inline-flex">
-        <ArrowLeft className="h-3.5 w-3.5" /> School
+        <PixelIcon name="back" className="h-4 w-4" /> School
       </Link>
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-4">
@@ -58,17 +57,17 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
               {c.instructorName && <span>{c.instructorName}</span>}
               {c.instructorEmail && (
                 <a href={`mailto:${c.instructorEmail}`} className="flex items-center gap-1 hover:text-accent">
-                  <Mail className="h-3.5 w-3.5" /> {c.instructorEmail}
+                  <PixelIcon name="mail" className="h-4 w-4" /> {c.instructorEmail}
                 </a>
               )}
               {c.meetingInfo && (
                 <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" /> {twelveHourRanges(c.meetingInfo)}
+                  <PixelIcon name="clock" className="h-4 w-4" /> {twelveHourRanges(c.meetingInfo)}
                 </span>
               )}
               {c.location && (
                 <span className="flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5" /> {c.location}
+                  <PixelIcon name="pin" className="h-4 w-4" /> {c.location}
                 </span>
               )}
               {c.url && (
@@ -115,7 +114,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
             <ul className="px-5">
               {d.materials.map((m) => (
                 <li key={m.id} className="group flex items-center gap-2 py-1.5 text-sm">
-                  <Link2 className="h-3.5 w-3.5 shrink-0 text-muted" />
+                  <PixelIcon name="link" className="h-4 w-4 shrink-0 text-muted" />
                   {m.url ? (
                     <a href={m.url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 line-clamp-2 break-words hover:text-accent">
                       {m.title}
@@ -158,7 +157,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
                 {d.notes.map((n) => (
                   <li key={n.id}>
                     <Link href={`/notes/${n.id}`} className="flex items-center gap-2 py-1.5 text-sm hover:text-accent">
-                      <FileText className="h-3.5 w-3.5 text-muted" />
+                      <PixelIcon name="note" className="h-4 w-4 text-muted" />
                       <span className="flex-1 line-clamp-2 break-words">{n.title}</span>
                       <span className="text-xs text-muted">{formatIn(n.updatedAt, d.tz, "MMM d")}</span>
                     </Link>

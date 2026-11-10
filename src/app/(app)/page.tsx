@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { TODAY_COOKIE, parseTodayMode } from "@/lib/theme";
-import { Link2 } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { DayClock } from "@/components/day-clock/day-clock";
 import { assistantProfile } from "@/lib/assistant";
@@ -95,7 +94,7 @@ export default async function TodayPage() {
             (setup.length > 0 ? (
               <Link href="/settings/integrations" className="flex min-h-16 items-center gap-3 rounded-3xl bg-surface px-5 py-3 shadow-soft">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-                  <Link2 className="h-5 w-5" />
+                  <PixelIcon name="plug" className="h-5 w-5" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[0.9375rem] font-medium">Fill your clock</span>

@@ -1,7 +1,6 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MoreHorizontal, SlidersHorizontal, Wand2 } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { Button, SubmitButton } from "@/components/ui/button";
@@ -80,7 +79,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
               className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-full bg-surface shadow-soft [&::-webkit-details-marker]:hidden"
               aria-label="More options"
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <PixelIcon name="dots" className="h-4 w-4" />
             </summary>
             <div className="absolute right-0 z-30 mt-2 flex w-52 flex-col gap-1 rounded-2xl bg-surface p-2 shadow-lift">
               {d.accounts.length > 0 && <ImportCsvDialog action={importCsvAction} accounts={d.accounts} />}
@@ -92,10 +91,10 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                 title="Simplify vendor names and fill in missing categories"
                 className="flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm hover:bg-surface-2"
               >
-                <Wand2 className="h-4 w-4 text-muted" /> Tidy up names
+                <PixelIcon name="wand" className="h-4 w-4 text-muted" /> Tidy up names
               </ActionButton>
               <Link href="/finances/rules" className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm hover:bg-surface-2">
-                <Wand2 className="h-4 w-4 text-muted" /> Category rules
+                <PixelIcon name="wand" className="h-4 w-4 text-muted" /> Category rules
               </Link>
             </div>
           </details>
@@ -132,7 +131,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         </div>
         <details className="group px-1" open={activeFilters > 0}>
           <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-sm text-muted [&::-webkit-details-marker]:hidden">
-            <SlidersHorizontal className="h-3.5 w-3.5" /> Filters{activeFilters ? ` · ${activeFilters}` : ""}
+            <PixelIcon name="sliders" className="h-4 w-4" /> Filters{activeFilters ? ` · ${activeFilters}` : ""}
             {filtered && (
               <Link href="/finances/transactions" className="ml-auto text-accent">
                 Clear

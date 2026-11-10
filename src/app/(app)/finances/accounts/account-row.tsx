@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { Archive, EyeOff } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -114,11 +113,11 @@ export function AccountRow({ a, save, off }: { a: AccountView; save: FormAct; of
                 confirm={`Stop using ${a.name} in LifeFlow? It's hidden and its bank transactions are removed. You can turn it back on any time.`}
                 className="lf-sb-link text-sm text-text-2"
               >
-                <EyeOff className="h-3.5 w-3.5" aria-hidden /> Don&apos;t use in LifeFlow
+                <PixelIcon name="hide" className="h-4 w-4" aria-hidden /> Don&apos;t use in LifeFlow
               </ActionButton>
             ) : (
               <ActionButton action={off} confirm={`Archive ${a.name}? Its transactions are kept.`} className="lf-sb-link text-sm text-text-2">
-                <Archive className="h-3.5 w-3.5" aria-hidden /> Archive
+                <PixelIcon name="archive" className="h-4 w-4" aria-hidden /> Archive
               </ActionButton>
             )}
           </div>

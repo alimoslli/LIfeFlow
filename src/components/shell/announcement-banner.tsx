@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Info, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 
@@ -35,9 +34,9 @@ export function AnnouncementBanner({ a }: { a: { id: string; message: string; to
   return (
     <div role="status" className={cn("mb-4 flex items-start gap-3 rounded-3xl px-4 py-3 shadow-soft", warn ? "bg-warning-soft" : "bg-accent-soft")}>
       {warn ? (
-        <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0 text-warning" aria-hidden />
+        <PixelIcon name="alert" className="mt-0.5 h-5 w-5 shrink-0 text-warning" aria-hidden />
       ) : (
-        <Info className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />
+        <PixelIcon name="idea" className="mt-0.5 h-5 w-5 shrink-0 text-accent" aria-hidden />
       )}
       <div className="min-w-0 flex-1 text-[0.9375rem] leading-snug">
         <p className="break-words">{a.message}</p>

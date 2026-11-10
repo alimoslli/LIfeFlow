@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { TaskCheck } from "@/components/task-check";
 import { SubmitButton } from "@/components/ui/button";
@@ -49,7 +48,7 @@ export default async function TaskPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-6">
       <Link href="/tasks" className="hidden items-center gap-1 text-sm text-muted hover:text-text md:inline-flex">
-        <ArrowLeft className="h-3.5 w-3.5" /> To-dos
+        <PixelIcon name="back" className="h-4 w-4" /> To-dos
       </Link>
       <div className="flex items-start gap-3">
         <div className="pt-2">

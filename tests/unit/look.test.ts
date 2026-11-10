@@ -30,10 +30,11 @@ describe("the look stays ours", () => {
     expect(SOURCES.filter((s) => /\bChevronRight\b/.test(s.text) && !allowed.includes(s.f)).map((s) => s.f)).toEqual([]);
   });
 
-  it("action glyphs are our pixel ones (delete, copy, download, check, arrow, undo, sync, edit, open, search)", () => {
+  it("action and label glyphs are our pixel ones (spinners and Safari's own Share sign excepted)", () => {
     // the skyling's own pages and the inbox are LF Main's; they move to the pixel glyphs next
     const later = [/\/jarvis\//, /\/inbox\//, /\/skylings\//];
-    const generic = /import \{[^}]*\b(Trash2|Check|Copy|Download|ArrowRight|Search|Undo2|RefreshCw|Pencil|ExternalLink)\b[^}]*\} from "lucide-react"/;
+    const generic =
+      /import \{[^}]*\b(Trash2|Check|Copy|Download|ArrowRight|Search|Undo2|RefreshCw|Pencil|ExternalLink|ArrowLeft|ArrowUp|ArrowUpRight|ArrowDownLeft|Mail|Clock|MapPin|Link2|FileText|Repeat|AlertTriangle|TriangleAlert|AlertCircle|FolderKanban|Pin|MessageCircle|Cake|Bell|BellOff|Video|Calendar|CalendarDays|CalendarArrowUp|ShieldCheck|KeyRound|RotateCcw|TrendingUp|Hourglass|ZapOff|MoreHorizontal|Wand2|SlidersHorizontal|Upload|EyeOff|Archive|Landmark|Flame|Pause|Play|Flag|Info|CloudOff|LogOut|Wallet)\b[^}]*\} from "lucide-react"/;
     expect(SOURCES.filter((s) => generic.test(s.text) && !later.some((l) => l.test(s.f))).map((s) => s.f)).toEqual([]);
   });
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bug, Lightbulb, MessageCircle } from "lucide-react";
+import { pixel } from "@/components/pixel/pixel-icon";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Card } from "@/components/ui/surface";
@@ -9,9 +9,9 @@ import { SettingsHeader } from "../settings-header";
 export const metadata: Metadata = { title: "Send feedback" };
 
 const KINDS = [
-  ["bug", "Something's broken", Bug],
-  ["idea", "An idea", Lightbulb],
-  ["other", "Something else", MessageCircle],
+  ["bug", "Something's broken", pixel("alert")],
+  ["idea", "An idea", pixel("idea")],
+  ["other", "Something else", pixel("chat")],
 ] as const;
 
 /** Beta testers tell the owner what's broken or missing; a reply comes by email. */

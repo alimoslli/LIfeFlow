@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { CalendarDays, Clock, Flag } from "lucide-react";
 import { addDaysStr, dayOfWeek, formatDateStr } from "@/lib/dates";
 import { haptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
@@ -88,7 +87,7 @@ export function DateField({
   return (
     <>
       <input type="hidden" name={name} value={value} required={required} />
-      <PickerRow icon={<CalendarDays className="h-5 w-5" />} label={label} value={pretty} onOpen={() => setOpen(true)} />
+      <PickerRow icon={<PixelIcon name="calendar" className="h-5 w-5" />} label={label} value={pretty} onOpen={() => setOpen(true)} />
       <Sheet open={open} onClose={() => setOpen(false)} title={label}>
         <div className="flex flex-col gap-1">
           {quick.map((q) => (
@@ -146,7 +145,7 @@ export function TimeField({
     <>
       <input type="hidden" name={name} value={value} required={required} />
       <PickerRow
-        icon={<Clock className="h-5 w-5" />}
+        icon={<PixelIcon name="clock" className="h-5 w-5" />}
         label={label}
         value={value ? t12(value) : allowNone ? "No time" : "Choose a time"}
         onOpen={() => setOpen(true)}
@@ -205,7 +204,7 @@ export function PriorityField({ name, defaultValue = "medium" }: { name: string;
   return (
     <fieldset>
       <legend className="mb-1.5 flex items-center gap-1.5 text-xs text-muted">
-        <Flag className="h-3.5 w-3.5" /> Priority
+        <PixelIcon name="flag" className="h-4 w-4" /> Priority
       </legend>
       <input type="hidden" name={name} value={value} />
       <div className="grid grid-cols-4 gap-1 rounded-2xl bg-surface-2 p-1">

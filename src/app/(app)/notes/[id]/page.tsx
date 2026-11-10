@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { SourceBadge } from "@/components/ui/surface";
@@ -37,7 +36,7 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
           href={d.note.projectId ? `/notes?project=${d.note.projectId}` : "/notes"}
           className="hidden items-center gap-1 text-sm text-muted hover:text-text md:inline-flex"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Notes
+          <PixelIcon name="back" className="h-4 w-4" /> Notes
         </Link>
         <div className="flex flex-1 items-center justify-end gap-3 text-xs text-muted max-md:justify-between">
           <SourceBadge source={d.note.source} />

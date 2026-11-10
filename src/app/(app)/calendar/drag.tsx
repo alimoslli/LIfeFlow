@@ -2,10 +2,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition, type ReactNode } from "react";
-import { CalendarArrowUp } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { moveItemAction } from "./actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 type Movable = "event" | "task" | "assignment";
 const MIME = "application/x-lifeflow-item";
@@ -87,7 +87,7 @@ function MoveTo({ origin, id }: { origin: Movable; id: string }) {
   const [pending, start] = useTransition();
   return (
     <label className="tap relative flex shrink-0 items-center justify-center rounded-full text-muted hover:text-text" title="Move to another day">
-      <CalendarArrowUp className={cn("h-4 w-4", pending && "animate-pulse")} />
+      <PixelIcon name="calendar" className={cn("h-4 w-4", pending && "animate-pulse")} />
       <span className="sr-only">Move to another day</span>
       <input
         ref={input}

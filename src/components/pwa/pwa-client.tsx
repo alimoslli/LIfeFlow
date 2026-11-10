@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CloudOff, Share } from "lucide-react";
+import { Share } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/toaster";
 import { flush, pending } from "@/lib/offline-queue";
@@ -110,7 +110,7 @@ export function PwaClient() {
       {(offline || queued > 0) && (
         <div role="status" className="fixed inset-x-0 top-[calc(env(safe-area-inset-top)+52px)] z-40 flex justify-center px-4 md:top-4">
           <span className="flex items-center gap-2 rounded-full bg-text px-4 py-2 text-sm text-bg shadow-lift">
-            <CloudOff className="h-4 w-4" />
+            <PixelIcon name="cloud" className="h-4 w-4" />
             {offline ? "You're offline. Changes save on this phone." : `Syncing ${queued} change${queued === 1 ? "" : "s"}…`}
             {offline && queued > 0 && <span className="opacity-75">· {queued} waiting</span>}
           </span>

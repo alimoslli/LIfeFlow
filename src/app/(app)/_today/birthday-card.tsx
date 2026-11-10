@@ -1,10 +1,10 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Cake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { saveBirthdayAction } from "./actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 /**
  * Asked once on Today from accounts made before the birthday was required (owner, 2026-11-10): small, on the first
@@ -54,7 +54,7 @@ export function BirthdayCard() {
     <section aria-label="Your birthday" className="flex flex-col gap-3 rounded-3xl bg-surface px-5 py-4 shadow-soft">
       <p className="flex items-center gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-          <Cake className="h-5 w-5" aria-hidden />
+          <PixelIcon name="gift" className="h-5 w-5" aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[0.9375rem] font-medium">When&apos;s your birthday?</span>

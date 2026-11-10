@@ -2,14 +2,22 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { VoiceButton } from "@/components/jarvis/voice-call";
-import { BookOpen, CalendarClock, Clock, Flag, Split, TrendingUp, Wallet } from "lucide-react";
 import { useShell } from "@/components/shell/app-shell";
 import { cn } from "@/lib/utils";
 import type { Insight } from "@/server/briefing/types";
 import { SkylingIcon } from "@/components/skylings/sprite";
-import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { PixelIcon, pixel } from "@/components/pixel/pixel-icon";
 
-const ICONS = { clock: Clock, conflict: Split, book: BookOpen, money: Wallet, trend: TrendingUp, calendar: CalendarClock, goal: Flag, spark: SkylingIcon };
+const ICONS = {
+  clock: pixel("clock"),
+  conflict: pixel("alert"),
+  book: pixel("books"),
+  money: pixel("money"),
+  trend: pixel("up"),
+  calendar: pixel("calendar"),
+  goal: pixel("flag"),
+  spark: SkylingIcon,
+};
 const TONE = {
   attention: "bg-danger-soft text-danger",
   "heads-up": "bg-warning-soft text-warning",

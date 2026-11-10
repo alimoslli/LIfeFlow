@@ -1,9 +1,9 @@
-import { RotateCcw } from "lucide-react";
 import { ActionButton } from "@/components/action-form";
 import { Badge, Card, CardHeader } from "@/components/ui/surface";
 import { KIND_LABELS } from "@/lib/jarvis-voice";
 import type { learnedStats } from "@/server/services/proactive/engine";
 import { resetLearningAction, setJarvisLearningAction, unmuteKindAction } from "../actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 const label = (k: string) => KIND_LABELS[k] ?? k.replace(/_/g, " ");
 /** Kinds that are no longer sent (e.g. the removed "log spending" reminder) aren't listed or offered back. */
@@ -85,7 +85,7 @@ export function LearnedCard({
             confirm="Forget what your skyling learned from your responses and bring back everything you muted? Your memories stay."
             className="flex min-h-11 items-center gap-1.5 text-sm font-medium text-text-2 hover:text-danger"
           >
-            <RotateCcw className="h-4 w-4" /> Reset what {name} learned
+            <PixelIcon name="undo" className="h-4 w-4" /> Reset what {name} learned
           </ActionButton>
         </div>
       )}

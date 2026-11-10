@@ -1,7 +1,6 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
 import { CashOutlook } from "@/components/finance/cash-outlook";
 import { CountUp } from "@/components/motion/count-up";
 import { addDaysStr, formatDateStr, formatIn, monthStart, todayIn } from "@/lib/dates";
@@ -146,7 +145,7 @@ export default async function MoneyPage() {
           <SkyWindow tz={d.tz} data-tilt className="rounded-[1.75rem]">
             <div className="relative min-h-[12.5rem] px-6 pt-6 pb-5">
               <p className="flex items-center gap-1.5 text-sm text-white/80">
-                <Wallet className="h-3.5 w-3.5" /> Available now
+                <PixelIcon name="money" className="h-4 w-4" /> Available now
               </p>
               <p className="lf-sw-num tabular mt-1 font-display text-[3.375rem] leading-none font-medium tracking-tight">
                 <CountUp cents={o.balances.cashCents} />
@@ -172,7 +171,7 @@ export default async function MoneyPage() {
               <Stat
                 label={
                   <>
-                    <ArrowUpRight className="h-3 w-3" /> Spent
+                    <PixelIcon name="up" className="h-4 w-4" /> Spent
                   </>
                 }
                 cents={m.netSpendingCents}
@@ -181,7 +180,7 @@ export default async function MoneyPage() {
               <Stat
                 label={
                   <>
-                    <ArrowDownLeft className="h-3 w-3" /> Came in
+                    <PixelIcon name="down" className="h-4 w-4" /> Came in
                   </>
                 }
                 cents={m.incomeCents}
@@ -219,7 +218,7 @@ export default async function MoneyPage() {
               {alerts.map((a, i) => (
                 <li key={i} className="flex gap-3 px-4 py-3.5">
                   <span className={cn("lf-chip-night mt-0.5 h-9 w-9 shrink-0 rounded-[0.75rem]", a.tone === "danger" && "text-dawn-glow")}>
-                    <AlertTriangle className="h-4 w-4" strokeWidth={2.1} />
+                    <PixelIcon name="alert" className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-[0.9375rem] leading-snug font-medium">{a.text}</p>

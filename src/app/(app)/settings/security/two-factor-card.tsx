@@ -1,6 +1,5 @@
 "use client";
 import { useState, useTransition } from "react";
-import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field, FormError, Input } from "@/components/ui/field";
 import { Badge, Card } from "@/components/ui/surface";
@@ -34,7 +33,7 @@ export function TwoFactorCard({ status }: { status: Status }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 font-medium">
-            <ShieldCheck className="h-4 w-4 text-accent" /> Two-step sign-in
+            <PixelIcon name="shield" className="h-4 w-4 text-accent" /> Two-step sign-in
           </h2>
           <p className="mt-1 max-w-md text-sm text-text-2">
             After your password, LifeFlow also asks for a 6-digit code from an authenticator app on your phone (Apple Passwords, Google Authenticator,

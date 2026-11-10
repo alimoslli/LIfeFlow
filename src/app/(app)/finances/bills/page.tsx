@@ -1,6 +1,5 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
-import { Hourglass, Repeat, TrendingUp, ZapOff } from "lucide-react";
 import { AssistantName } from "@/components/assistant-name";
 import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -125,13 +124,13 @@ export default async function BillsPage() {
               <li key={i} className="flex items-start gap-3 px-4 py-3.5">
                 <span className={`lf-chip-night mt-0.5 h-9 w-9 shrink-0 rounded-[0.75rem] ${f.kind === "price_up" ? "text-dawn-glow" : ""}`} aria-hidden>
                   {f.kind === "price_up" ? (
-                    <TrendingUp className="h-4 w-4" />
+                    <PixelIcon name="up" className="h-4 w-4" />
                   ) : f.kind === "trial" ? (
-                    <Hourglass className="h-4 w-4" />
+                    <PixelIcon name="hourglass" className="h-4 w-4" />
                   ) : f.kind === "duplicate" ? (
                     <PixelIcon name="copy" className="h-4 w-4" />
                   ) : (
-                    <ZapOff className="h-4 w-4" />
+                    <PixelIcon name="sleep" className="h-4 w-4" />
                   )}
                 </span>
                 <p className="text-[0.9375rem] leading-snug">
@@ -171,7 +170,7 @@ export default async function BillsPage() {
         {out.length === 0 ? (
           <div className="flex items-center gap-3 rounded-[1.5rem] bg-surface p-4 shadow-soft">
             <span className="lf-chip-night h-10 w-10 shrink-0 rounded-[0.75rem]" aria-hidden>
-              <Repeat className="h-4 w-4" />
+              <PixelIcon name="repeat" className="h-4 w-4" />
             </span>
             <p className="text-[0.9375rem] text-text-2">
               {d.subs.historyDays === 0
