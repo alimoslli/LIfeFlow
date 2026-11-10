@@ -1055,18 +1055,22 @@ html[data-typing="true"] .lf-tabbar {
   summary:not([class*="min-h"], [class*="list-none"], [class*="h-1"], [class*="h-9"])::-webkit-details-marker {
     display: none;
   }
+  /* our pixel caret (owner, 2026-11-10: no phone disclosure chevrons), in the text's own colour */
   summary:not([class*="min-h"], [class*="list-none"], [class*="h-1"], [class*="h-9"])::before {
     content: "";
-    width: 0.42em;
-    height: 0.42em;
+    width: 0.625em;
+    height: 0.625em;
     flex-shrink: 0;
-    border-right: 1.5px solid currentColor;
-    border-bottom: 1.5px solid currentColor;
-    transform: rotate(-45deg);
+    background-color: currentColor;
+    -webkit-mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' width='8' height='8' shape-rendering='crispEdges'><rect x='1' y='0' width='1' height='1'/><rect x='2' y='0' width='1' height='1'/><rect x='2' y='1' width='1' height='1'/><rect x='3' y='1' width='1' height='1'/><rect x='3' y='2' width='1' height='1'/><rect x='4' y='2' width='1' height='1'/><rect x='4' y='3' width='1' height='1'/><rect x='5' y='3' width='1' height='1'/><rect x='3' y='4' width='1' height='1'/><rect x='4' y='4' width='1' height='1'/><rect x='2' y='5' width='1' height='1'/><rect x='3' y='5' width='1' height='1'/><rect x='1' y='6' width='1' height='1'/><rect x='2' y='6' width='1' height='1'/></svg>")
+      center / contain no-repeat;
+    mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' width='8' height='8' shape-rendering='crispEdges'><rect x='1' y='0' width='1' height='1'/><rect x='2' y='0' width='1' height='1'/><rect x='2' y='1' width='1' height='1'/><rect x='3' y='1' width='1' height='1'/><rect x='3' y='2' width='1' height='1'/><rect x='4' y='2' width='1' height='1'/><rect x='4' y='3' width='1' height='1'/><rect x='5' y='3' width='1' height='1'/><rect x='3' y='4' width='1' height='1'/><rect x='4' y='4' width='1' height='1'/><rect x='2' y='5' width='1' height='1'/><rect x='3' y='5' width='1' height='1'/><rect x='1' y='6' width='1' height='1'/><rect x='2' y='6' width='1' height='1'/></svg>")
+      center / contain no-repeat;
+    image-rendering: pixelated;
     transition: transform 0.2s;
   }
   details[open] > summary:not([class*="min-h"], [class*="list-none"], [class*="h-1"], [class*="h-9"])::before {
-    transform: rotate(45deg);
+    transform: rotate(90deg);
   }
 }
 
