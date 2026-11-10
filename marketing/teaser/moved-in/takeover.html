@@ -1,0 +1,241 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>The skylings moved in</title>
+<style>
+@font-face { font-family: "Fraunces"; src: url("fraunces-latin-600-normal.woff2") format("woff2"); font-weight: 600; }
+html, body { margin: 0; background: #000; }
+canvas { display: block; }
+</style>
+<script src="lf.js"></script>
+</head>
+<body><canvas id="c" width="1080" height="1920"></canvas>
+<script>
+// "Something just moved into LifeFlow": the skylings take over the old app, then show their new home and the new day.
+// seek(t) draws the frame at t seconds. Real art only: the old app's own cards, the app's skyling sprites (lf.js, from
+// the app's code), the landing page's night (captured frames in nt/) and the real Today sky (captured frames in app/).
+const W = 1080, H = 1920;
+const T = { take: 6.0, meet: 9.6, day: 16.4, end: 20.6 };
+const CREAM = "#f3eee2", INKG = "#1f3b2c", GOLD = "#ffd77a";
+const MARK = { sunTop: "#ffc247", sun: "#f5a524", sunLow: "#f29a1c", ink: "#07101f", horizon: "#2f7cd2" };
+const c = document.getElementById("c"), g = c.getContext("2d");
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const ease = (k) => (k = clamp(k), k * k * (3 - 2 * k));
+const easeOut = (k) => (k = clamp(k), 1 - Math.pow(1 - k, 3));
+const easeIn = (k) => (k = clamp(k), k * k * k);
+const back = (k) => { k = clamp(k); const s = 1.8; return 1 + (s + 1) * Math.pow(k - 1, 3) + s * Math.pow(k - 1, 2); };
+function rng(seed) { let a = (seed * 2654435761) >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const imgs = {};
+const load = (src) => imgs[src] || (imgs[src] = new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }));
+const pad = (n) => String(n).padStart(4, "0");
+
+// ---------- words ----------
+function words(parts, y, size, alpha = 1, rise = 0, shadow = true) {
+  if (alpha <= 0) return;
+  g.save(); g.font = `600 ${size}px Fraunces`; g.textBaseline = "alphabetic";
+  const w = parts.reduce((s, [t]) => s + g.measureText(t).width, 0);
+  let x = W / 2 - w / 2;
+  g.globalAlpha = alpha;
+  if (shadow) { g.shadowColor = "rgba(0,0,0,0.35)"; g.shadowBlur = 22; }
+  for (const [t, col] of parts) { g.fillStyle = col; g.fillText(t, x, y + rise); x += g.measureText(t).width; }
+  g.restore();
+}
+const inOut = (t, a, b, f = 0.3) => ease((t - a) / f) * (1 - ease((t - (b - f)) / f));
+const pop = (t, a) => (t < a ? 0 : back((t - a) / 0.35));
+
+// ---------- the old app's cards ----------
+const CARDS = [ // file, centre x, centre y, width, tilt (deg), drift phase, who lands, when
+  { f: "available", x: 300, y: 720, w: 470, r: -3, who: "goldie", at: 3.05 },
+  { f: "next", x: 790, y: 590, w: 450, r: 2.5, who: "ray", at: 1.85 },
+  { f: "week", x: 790, y: 910, w: 470, r: -2, who: "ray", at: 2.4 },
+  { f: "sleep", x: 230, y: 1230, w: 300, r: 3, who: "noon", at: 2.75 },
+  { f: "steps", x: 560, y: 1270, w: 300, r: -4, who: "ray", at: 2.95 },
+  { f: "lunch", x: 760, y: 1570, w: 470, r: 2, who: "dusk", at: 3.4 },
+  { f: "habits", x: 300, y: 1650, w: 470, r: -2, who: "dawn", at: 3.6 },
+];
+const PARTS = {};               // each card's pixels as flying blocks, built once
+async function buildParts() {
+  for (const cd of CARDS) {
+    const im = await load(`cards/${cd.f}.png`); cd.im = im; cd.h = cd.w * im.height / im.width;
+    const cv = document.createElement("canvas"); cv.width = Math.round(cd.w); cv.height = Math.round(cd.h);
+    const cg = cv.getContext("2d"); cg.drawImage(im, 0, 0, cv.width, cv.height);
+    const d = cg.getImageData(0, 0, cv.width, cv.height).data, step = 26, r = rng(cd.x + cd.y), out = [];
+    for (let y = 0; y < cv.height; y += step) for (let x = 0; x < cv.width; x += step) {
+      const i = ((Math.min(cv.height - 1, y + step / 2)) * cv.width + Math.min(cv.width - 1, x + step / 2)) * 4;
+      if (d[i + 3] < 100) continue;
+      const lx = x + step / 2 - cv.width / 2, ly = y + step / 2 - cv.height / 2, a = Math.atan2(ly, lx);
+      out.push({ lx, ly, col: `rgb(${d[i]},${d[i + 1]},${d[i + 2]})`, vx: Math.cos(a) * (250 + r() * 500) + (r() - 0.5) * 200, vy: Math.sin(a) * (250 + r() * 400) - 400 - r() * 300, spin: (r() - 0.5) * 8, s: step });
+    }
+    PARTS[cd.f] = out;
+  }
+}
+function card(cd, t) {
+  const fl = Math.sin(t * 1.4 + cd.x * 0.01) * 8, rot = (cd.r + Math.sin(t * 1.1 + cd.y) * 0.6) * Math.PI / 180;
+  const burstAt = cd.at + 0.02;
+  if (t < burstAt) {
+    const squash = t > cd.at - 0.06 ? 1 - 0.04 * Math.sin(clamp((t - cd.at + 0.06) / 0.08) * Math.PI) : 1;
+    g.save(); g.translate(cd.x, cd.y + fl); g.rotate(rot); g.scale(1, squash);
+    g.shadowColor = "rgba(40,60,45,0.22)"; g.shadowBlur = 36; g.shadowOffsetY = 14;
+    g.drawImage(cd.im, -cd.w / 2, -cd.h / 2, cd.w, cd.h); g.restore();
+    return;
+  }
+  const k = t - burstAt;            // it bursts into pixels
+  if (k > 1.4) return;
+  g.save();
+  for (const p of PARTS[cd.f]) {
+    const x = cd.x + p.lx + p.vx * k, y = cd.y + fl + p.ly + p.vy * k + 900 * k * k;
+    const s = p.s * (1 - k * 0.55);
+    g.globalAlpha = clamp(1 - k / 1.3);
+    g.fillStyle = p.col; g.fillRect(x - s / 2, y - s / 2, s, s);
+  }
+  // a little gold sparkle ring
+  g.globalAlpha = clamp(1 - k / 0.5); g.fillStyle = GOLD;
+  for (let a = 0; a < 8; a++) { const ang = a / 8 * 6.283, rr = 60 + k * 260; g.fillRect(cd.x + Math.cos(ang) * rr - 7, cd.y + Math.sin(ang) * rr - 7, 14, 14); }
+  g.restore();
+}
+
+// ---------- the skylings (the app's own sprites) ----------
+const sprite = document.createElement("canvas");
+function skyling(key, x, yFeet, scale, pose, frame, night, alpha = 1, flip = false, sx = 1, sy = 1) {
+  if (alpha <= 0) return;
+  const info = window.LF.COMPANIONS.find((k) => k.key === key);
+  window.LF.drawCompanion(sprite, info, pose, frame, night, flip);
+  const s = 24 * scale;
+  g.save(); g.globalAlpha = alpha; g.imageSmoothingEnabled = false;
+  g.translate(x, yFeet); g.scale(sx, sy);
+  g.drawImage(sprite, Math.round(-s / 2), Math.round(-s), s, s); g.restore();
+}
+// each skyling's path: [time, x, yFeet] stops; between stops it hops (a parabola)
+const topOf = (cd) => [cd.x, cd.y - cards(cd.f).h / 2 + 6];
+const cards = (f) => CARDS.find((c) => c.f === f);
+let PATHS = null;
+function buildPaths() {
+  const P = (f) => topOf(cards(f));
+  const row = (i) => [150 + i * 156, 1790];
+  PATHS = {
+    ray:    [[0.85, 300, P("available")[1] + 120, "peek"], [1.25, ...P("available")], [1.85, ...P("next")], [2.4, ...P("week")], [2.95, ...P("steps")]],
+    noon:   [[2.2, 230, 2100], [2.75, ...P("sleep")]],
+    goldie: [[2.5, 120, 2100], [3.05, ...P("available")]],
+    dusk:   [[2.85, 1000, 2100], [3.4, ...P("lunch")]],
+    dawn:   [[3.05, 80, 2100], [3.6, ...P("habits")]],
+    star:   [[3.55, 540, -200], [4.1, 540, 980]],
+  };
+}
+function posOf(key, t) {
+  const p = PATHS[key];
+  if (t < p[0][0]) return null;
+  for (let i = 0; i < p.length - 1; i++) {
+    const [t0, x0, y0, tag] = p[i], [t1, x1, y1] = p[i + 1];
+    const hop = Math.min(0.5, t1 - t0);
+    if (t < t1 - hop) return { x: x0, y: y0, air: false, peek: tag === "peek" ? clamp((t - t0) / 0.3) : 1, land: t - t0 };
+    if (t < t1) { const k = (t - (t1 - hop)) / hop, h = Math.max(110, Math.min(220, Math.abs(y1 - y0) * 0.35 + 100)); return { x: lerp(x0, x1, k), y: lerp(y0, y1, k) - Math.sin(k * Math.PI) * h, air: true, k, flip: x1 < x0 }; }
+  }
+  const last = p[p.length - 1]; return { x: last[1], y: last[2], air: false, peek: 1, land: t - last[0] };
+}
+
+// ---------- the new mark ----------
+function morning(cx, horizon, R, alpha) {
+  g.save(); g.globalAlpha = alpha;
+  g.beginPath(); g.rect(0, 0, W, horizon - R * 0.075); g.clip();
+  const gl = g.createRadialGradient(cx, horizon, 0, cx, horizon, R * 1.9);
+  gl.addColorStop(0, "rgba(255,215,173,0.9)"); gl.addColorStop(0.5, "rgba(255,178,122,0.4)"); gl.addColorStop(1, "rgba(255,178,122,0)");
+  g.fillStyle = gl; g.fillRect(cx - R * 2, horizon - R * 2, R * 4, R * 2);
+  const sg = g.createLinearGradient(0, horizon - R, 0, horizon + R);
+  sg.addColorStop(0, MARK.sunTop); sg.addColorStop(0.55, MARK.sun); sg.addColorStop(1, MARK.sunLow);
+  g.fillStyle = sg; g.beginPath(); g.arc(cx, horizon, R, 0, Math.PI * 2); g.fill();
+  g.fillStyle = MARK.ink; for (const dx of [-1, 1]) { g.beginPath(); g.arc(cx + dx * R * 10 / 36, horizon - R * 15 / 36, R * 3.4 / 36, 0, Math.PI * 2); g.fill(); }
+  g.restore();
+  g.save(); g.globalAlpha = alpha; g.fillStyle = MARK.horizon; const lw = R * 92 / 36, lh = R * 5.5 / 36;
+  g.beginPath(); g.roundRect(cx - lw / 2, horizon - lh / 2, lw, lh, lh / 2); g.fill(); g.restore();
+}
+
+// ---------- the frame ----------
+async function nightAt(t0, t) { return load(`nt/${pad(clamp(Math.floor((t - t0) * 30) + 1, 1, 510))}.jpg`); }
+async function seek(t) {
+  if (!PATHS) { await buildParts(); buildPaths(); }
+  g.save(); g.fillStyle = "#000"; g.fillRect(0, 0, W, H); g.restore();
+
+  // 1. the takeover (0 to 6 s)
+  if (t < T.take + 0.35) {
+    g.fillStyle = CREAM; g.fillRect(0, 0, W, H);
+    // the night comes down over the cream when Star lands
+    const wipe = H * easeIn((t - 4.1) / 0.9);
+    for (const cd of CARDS) card(cd, t);
+    if (wipe > 0) {
+      const nim = await nightAt(4.1 - 0.0, t);
+      g.save(); g.beginPath(); g.moveTo(0, 0); g.lineTo(W, 0);
+      for (let x = W; x >= 0; x -= 24) g.lineTo(x, Math.round((wipe + Math.sin(x * 0.02 + t * 5) * 22) / 6) * 6);
+      g.closePath(); g.clip(); g.drawImage(nim, 0, 0, W, H); g.restore();
+    }
+    // words
+    const nightNow = t > 4.6;
+    words([["Something just moved", nightNow ? "#ffffff" : INKG]], 175, 76, inOut(t, 0.05, 2.0, 0.25), (1 - ease(t / 0.3)) * 20, nightNow);
+    words([["into ", nightNow ? "#ffffff" : INKG], ["LifeFlow.", nightNow ? GOLD : "#2e6b47"]], 262, 76, inOut(t, 0.05, 2.0, 0.25), (1 - ease(t / 0.3)) * 20, nightNow);
+    words([["They're ", INKG], ["redecorating.", "#2e6b47"]], 215, 76, inOut(t, 2.05, 4.3, 0.25), 0, false);
+    words([["Lights out.", GOLD]], 640, 84, inOut(t, 4.85, 6.05, 0.25));
+    // the skylings
+    for (const key of ["ray", "noon", "goldie", "dusk", "dawn", "star"]) {
+      let p = posOf(key, t); if (!p) continue;
+      const night = p.y < wipe;
+      let pose = p.air ? "walk" : (t > 5.15 ? "celebrate" : "idle"), fr = Math.floor(t * (pose === "celebrate" ? 8 : 4));
+      let sy = 1, sx = 1;
+      if (!p.air && p.land < 0.12) { const q = Math.sin(clamp(p.land / 0.12) * Math.PI); sy = 1 - 0.18 * q; sx = 1 + 0.12 * q; }
+      let y = p.y, a = 1;
+      if (p.peek !== undefined && p.peek < 1) { y = p.y; a = p.peek; }
+      // at the end they all jump up and out of the frame
+      const j0 = 4.2 + ["ray", "noon", "goldie", "dusk", "dawn", "star"].indexOf(key) * 0.07;
+      if (t > j0) { const k = easeIn((t - j0) / 0.5); y = lerp(p.y, -300, k); pose = "walk"; sx = 1 - 0.1 * k; sy = 1 + 0.15 * k; }
+      skyling(key, p.x, y, 7, pose, fr, night, a, p.flip, sx, sy);
+    }
+    if (t > T.take - 0.1) { g.fillStyle = `rgba(0,0,0,${ease((t - (T.take - 0.1)) / 0.2) * 0.0})`; g.fillRect(0, 0, W, H); }
+  }
+
+  // 2. their new home: the night from the landing page (6 to 9.6 s, continuing behind the day)
+  if (t >= T.take && t < T.end + 1) {
+    const nim = await nightAt(T.take - 1.9, t);                    // the night keeps running from where the wipe started
+    const inK = ease((t - T.take) / 0.35);
+    g.save(); g.globalAlpha = inK;
+    if (t >= T.meet) { g.filter = `blur(${lerp(0, 10, ease((t - T.meet) / 0.6) * (1 - ease((t - (T.day - 0.2)) / 0.6)))}px) brightness(${lerp(1, 0.55, ease((t - T.meet) / 0.6) * (1 - ease((t - (T.day - 0.2)) / 0.6)))})`; }
+    g.drawImage(nim, -20, -20, W + 40, H + 40); g.filter = "none"; g.restore();
+    words([["Meet the ", "#ffffff"], ["skylings.", GOLD]], 660, 88, inOut(t, T.take + 0.2, T.take + 1.9));
+    words([["Six little ones.", "#ffffff"]], 620, 76, inOut(t, T.take + 1.85, T.meet + 0.1));
+    words([["One of them is ", "#ffffff"], ["yours.", GOLD]], 710, 76, inOut(t, T.take + 2.0, T.meet + 0.1));
+  }
+
+  // 3. the new day: the real Today sky (9.6 to 16.4 s)
+  if (t >= T.meet - 0.1 && t < T.day + 0.4) {
+    // which captured frame: day sky, the turn into night (faster), back to now, then the tap that rolls it out
+    const u = t - T.meet;
+    let f;
+    if (u < 1.6) f = 1 + Math.floor(u * 30);                                  // 1..48 idle
+    else if (u < 3.8) f = 61 + Math.floor((u - 1.6) / 2.2 * 100);             // 61..160 turn, coast, night
+    else if (u < 4.6) f = 176 + Math.floor((u - 3.8) / 0.8 * 40);             // back to now
+    else f = 216 + Math.floor(Math.min(1, (u - 4.6) / 1.9) * 54);             // the unroll
+    const list = window.APPFRAMES; const im = await load(`app/${list[clamp(f, 1, list.length) - 1]}`);
+    const inK = back((t - (T.meet - 0.1)) / 0.55), outK = ease((t - (T.day - 0.15)) / 0.45);
+    const size = 900 * lerp(0.6, 1, clamp(inK, 0, 1.2)) * (1 - outK * 0.15), x = W / 2 - size / 2, y = 560 + (1 - ease((t - T.meet) / 0.5)) * 120 - size / 2 + 450;
+    g.save(); g.globalAlpha = clamp((t - (T.meet - 0.1)) / 0.25) * (1 - outK);
+    g.shadowColor = "rgba(0,0,0,0.55)"; g.shadowBlur = 60; g.shadowOffsetY = 24;
+    g.fillStyle = "#0b1d42"; g.beginPath(); g.roundRect(x, y, size, size, 56); g.fill(); g.shadowColor = "transparent";
+    g.beginPath(); g.roundRect(x, y, size, size, 56); g.clip();
+    g.drawImage(im, x, y, size, size);
+    g.restore();
+    words([["Your day turns ", "#ffffff"], ["like the sky.", GOLD]], 330, 72, inOut(t, T.meet + 0.2, T.meet + 1.75));
+    words([["Spin ahead. ", "#ffffff"], ["See it coming.", GOLD]], 330, 72, inOut(t, T.meet + 1.75, T.meet + 4.45));
+    words([["Tap. ", "#ffffff"], ["Your week rolls out.", GOLD]], 330, 72, inOut(t, T.meet + 4.5, T.day + 0.1));
+  }
+
+  // 4. the end: the new mark rises, "A new LifeFlow", "Before December." (16.4 to 20.6 s)
+  if (t >= T.day) {
+    const k = ease((t - T.day) / 0.6);
+    g.fillStyle = `rgba(4,10,24,${0.45 * k})`; g.fillRect(0, 0, W, H);
+    const rise = easeOut((t - T.day - 0.15) / 0.9);
+    morning(W / 2, 820, 150 * rise + 1, k);
+    words([["A new ", "#ffffff"], ["LifeFlow.", GOLD]], 1040, 92, ease((t - T.day - 0.5) / 0.5), (1 - ease((t - T.day - 0.5) / 0.5)) * 24);
+    words([["Before December.", "#ffffff"]], 1140, 60, ease((t - T.day - 1.2) / 0.5));
+    const out = ease((t - (T.end - 0.4)) / 0.4);
+    if (out > 0) { g.fillStyle = `rgba(0,0,0,${out})`; g.fillRect(0, 0, W, H); }
+  }
+}
+window.seek = seek;
+window.ready = Promise.all([document.fonts.load("600 80px Fraunces"), fetch("app/index.json").then((r) => r.json()).then((l) => (window.APPFRAMES = l))]).then(() => true);
+</script></body></html>

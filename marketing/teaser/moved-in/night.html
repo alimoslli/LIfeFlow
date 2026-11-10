@@ -1,0 +1,8 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:#040a18;overflow:hidden}
+#host{position:relative;width:1080px;height:1920px;overflow:hidden;background:#07132c}
+canvas{position:absolute;top:0;left:0;display:block;image-rendering:pixelated}
+</style><script src="lf.js"></script></head><body><div id="host"><canvas id="c"></canvas></div>
+<script>
+window.scene = LF.mountNight(document.getElementById("c"), { box: { wide: [0, 1, 0.06, 1], narrow: [0, 1, 0.06, 1] }, reduced: false });
+</script></body></html>

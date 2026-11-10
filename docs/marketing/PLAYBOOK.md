@@ -429,6 +429,11 @@ rebranding, with no app screens. Made: a 23 s animated story with the app's real
 (the old logo breaks into stars; "Your days are in pieces"; "So we put your whole life on one sky"; "Meet the skylings"; the sun
 rises: "LifeFlow. Your whole life, on one sky."; Ali in a window: "Before December, something big is coming."; "Before December.
 Follow to see it first."), plus Story and feed posters. Source in `marketing/teaser/rebrand-story/`. Waiting for Ali's notes and "post it".
+**Rejected (Ali, 2026-11-10):** those posters and that wording ("so bad"), and the skylings didn't look like the app's. Never use "your
+whole life, on one sky" in our copy; say what the app really is (a day that turns like a wheel of sky, a skyling on top, a tap rolls out
+the week). Rule: draw skylings only with the app's own code or capture them from the real app (`marketing/teaser/moved-in/`), never a
+redraw. Next version made: "Something just moved into LifeFlow" (old app cards taken over by the skylings, the landing's real night,
+the real Today sky as a card, no phone). Posters wait for Ali's wording.
 The doc now opens with "What you do": a one-page checklist for tonight plus an Ali-and-Tyler table for the work shots. Ali wants the plan
 that simple ("just tell me what I have to do"); the detail stays below it. Send plans as PDF links too (the doc link didn't open in his browser).
 
