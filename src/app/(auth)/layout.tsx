@@ -8,7 +8,9 @@ import { NightSky } from "@/components/skylings/night-sky";
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-dvh bg-bg lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+    // on a phone the sky's row is just the sky and the sheet takes the rest: with stretched rows a short page (a bad reset
+    // link) left a gap, and the sheet's rounded top no longer rose over the sky
+    <div className="grid min-h-dvh grid-rows-[auto_1fr] bg-bg lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-rows-none">
       {/* phone: a stretch of the night with the cast, the form rising over it */}
       <div className="relative isolate h-[clamp(17rem,42svh,24rem)] overflow-hidden bg-night-ground lg:hidden">
         {/* the sky ends where the form's sheet begins, so nobody walks behind it */}

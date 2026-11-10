@@ -1,5 +1,5 @@
 /* LifeFlow service worker: app-shell caching, offline reading, push notifications. */
-const VERSION = "lf-v3";
+const VERSION = "lf-v4"; // v4: the offline page in our pixel look (cached at install, so a new version brings it)
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const STATIC = `${VERSION}-static`;
