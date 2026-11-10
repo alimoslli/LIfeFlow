@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
-import { signUp } from "./helpers";
+import { pool, signUp } from "./helpers";
 
 const E2E_DB = process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetflow_dev@localhost:5432/budgetflow_e2e";
 
@@ -126,6 +126,21 @@ for (const size of [
   }
 }
 
+/** The instant that is hour:minute on today's date in a time zone. */
+function localInstant(tz: string, hour: number, minute: number) {
+  const parts = (d: Date) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", hourCycle: "h23" }).format(d);
+  const today = parts(new Date()).slice(0, 10);
+  const base = new Date();
+  base.setUTCMinutes(minute, 0, 0);
+  for (let i = -30; i <= 30; i++) {
+    const d = new Date(base.getTime() + i * 3_600_000);
+    const p = parts(d);
+    if (p.slice(0, 10) === today && Number(p.slice(-2)) === hour) return d;
+  }
+  throw new Error(`no ${hour}:${minute} today in ${tz}`);
+}
+
 // The owner's rule (2026-11-10): nothing lies over anything. At night the things you finished today shine as gold stars on
 // the wheel; a star must never sit on a stop's words or on the "N stars today" line.
 for (const size of [
@@ -139,11 +154,12 @@ for (const size of [
     execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/dev/seed-clock-look.ts", email, "--busy"], {
       env: { ...process.env, DATABASE_URL: E2E_DB },
     });
-    const d = new Date();
-    d.setHours(21, 30, 0, 0);
-    await page.clock.setFixedTime(d);
+    // 9:30 PM on the person's own today, in their time zone (the wheel follows their zone, not the browser's)
+    const { rows } = await pool.query<{ timezone: string }>("select timezone from users where email = $1", [email.toLowerCase()]);
+    await page.clock.setFixedTime(localInstant(rows[0].timezone, 21, 30));
     await page.goto("/");
     await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
+    await expect(page.getByRole("button", { name: /^Today\. Now 9:30 PM/ })).toBeVisible();
     await page.waitForTimeout(600);
     const r = await page.evaluate(() => {
       const dome = document.querySelector("[data-dc=dome]")!;
