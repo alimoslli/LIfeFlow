@@ -9,6 +9,7 @@ import { AGE_LINE } from "@/lib/birthday";
 import { settingsDoors } from "./doors-data";
 import { formObject, mutate, type ActionState } from "@/server/actions";
 import { endSession, requireUser } from "@/server/auth/current-user";
+import { revokeRememberedDevices } from "@/server/auth/remembered-devices";
 import { SESSION_COOKIE } from "@/server/auth/sessions";
 import { getDb } from "@/server/db/client";
 import { sessions } from "@/server/db/schema";
@@ -68,6 +69,7 @@ export async function changePasswordAction(_p: ActionState, fd: FormData): Promi
     await getDb()
       .delete(sessions)
       .where(and(eq(sessions.userId, u.id), ne(sessions.id, createHash("sha256").update(token).digest("hex"))));
+    await revokeRememberedDevices(getDb(), u.id);
     return "Password changed. Other devices were signed out.";
   });
 }
@@ -78,7 +80,15 @@ export async function signOutOthersAction(): Promise<ActionState> {
     await getDb()
       .delete(sessions)
       .where(and(eq(sessions.userId, u.id), ne(sessions.id, createHash("sha256").update(token).digest("hex"))));
+    await revokeRememberedDevices(getDb(), u.id);
     return "Signed out of all other sessions.";
+  });
+}
+
+export async function forgetDevicesAction(): Promise<ActionState> {
+  return mutate("auth.devices_forgotten", async (_s, u) => {
+    await revokeRememberedDevices(getDb(), u.id);
+    return "Forgot all remembered phones and computers. Next sign-in asks for a code.";
   });
 }
 

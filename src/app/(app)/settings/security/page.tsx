@@ -16,7 +16,7 @@ import { googleIdentityFor, googleSignInConfig } from "@/server/auth/google-sign
 import { MONEY_LOCK_IDLE_CHOICES, moneyLockSettings } from "@/server/auth/money-lock";
 import { listPasskeys } from "@/server/auth/passkeys";
 import { accountHasPassword } from "@/server/services/accounts";
-import { changePasswordAction, signOutOthersAction } from "../actions";
+import { changePasswordAction, forgetDevicesAction, signOutOthersAction } from "../actions";
 import { setMoneyLockAction, unlinkAppleAction, unlinkGoogleAction } from "./passkey-actions";
 import type { ActionState } from "@/server/actions";
 import { PasskeysCard } from "./passkeys-card";
@@ -168,6 +168,14 @@ export default async function SecuritySettings({ searchParams }: { searchParams:
             </li>
           ))}
         </ul>
+        {d.tf.enabled && (
+          <div className="px-5 pb-4">
+            <p className="text-xs text-muted">Phones and computers you chose to remember skip the code for 30 days.</p>
+            <ActionButton action={forgetDevicesAction} className="mt-1 text-xs font-medium text-accent hover:underline">
+              Forget remembered devices
+            </ActionButton>
+          </div>
+        )}
       </Card>
     </div>
   );

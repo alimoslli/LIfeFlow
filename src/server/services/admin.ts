@@ -1,7 +1,7 @@
 import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
 import { microsoftConfig } from "../integrations/microsoft";
 import type { Database } from "../db/client";
-import { adminActions, announcements, errorReports, ownerInbox, passkeys, rateLimitBuckets, sessions, users } from "../db/schema";
+import { adminActions, announcements, errorReports, ownerInbox, passkeys, rateLimitBuckets, rememberedDevices, sessions, users } from "../db/schema";
 import { isAdminEmail, type Admin } from "../auth/admin";
 import { billingConfig, inTestingPhase, LIMIT_MONTH_SECONDS, TESTING_LIMITS } from "../billing";
 import { emailConfig } from "../integrations/email";
@@ -261,6 +261,7 @@ export async function signOutEverywhere(db: Database, actor: Admin, userId: stri
   await db.transaction(async (tx) => {
     const u = await target(tx, actor, userId);
     await tx.delete(sessions).where(eq(sessions.userId, u.id));
+    await tx.delete(rememberedDevices).where(eq(rememberedDevices.userId, u.id));
     await log(tx, actor, "user.sign_out_everywhere", u);
   });
 }
@@ -273,7 +274,10 @@ export async function setSuspended(db: Database, actor: Admin, userId: string, s
       .update(users)
       .set({ suspendedAt: suspend ? new Date() : null })
       .where(eq(users.id, u.id));
-    if (suspend) await tx.delete(sessions).where(eq(sessions.userId, u.id));
+    if (suspend) {
+      await tx.delete(sessions).where(eq(sessions.userId, u.id));
+      await tx.delete(rememberedDevices).where(eq(rememberedDevices.userId, u.id));
+    }
     await log(tx, actor, suspend ? "user.suspend" : "user.unsuspend", u);
   });
 }

@@ -6,6 +6,7 @@ import { withUser } from "../db/with-user";
 import { encryptSecret } from "../crypto";
 import { audit } from "../services/audit";
 import { seedDefaultCategories } from "../services/finance/categories";
+import { adminFor } from "./admin";
 import { saveChallenge, takeChallenge } from "./challenges";
 
 /**
@@ -26,6 +27,14 @@ export type OAuthOutcome =
   | { kind: "created"; userId: string }
   | { kind: "linked"; userId: string }
   | { kind: "link-required"; email: string; pendingToken: string; expiresAt: Date };
+
+/**
+ * Google already verified the person (owner, 2026-11-10), so a Google sign-in with two-step on starts the session without
+ * a code of ours. Apple keeps the second step, and so does the admin account (the admin area never trusts this shortcut).
+ */
+export async function skipsSecondStep(db: Database, provider: OAuthProvider, userId: string, totpEnabled: boolean) {
+  return totpEnabled && provider === "google" && !(await adminFor(db, userId));
+}
 
 /** Holds the pending-link token while the person signs in to their existing account. */
 export const OAUTH_LINK_COOKIE = "lf_apple_link";

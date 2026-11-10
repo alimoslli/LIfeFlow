@@ -3,6 +3,8 @@ import { provisionalName } from "@/lib/provisional-name";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
+import { DEVICE_COOKIE, DEVICE_TTL_MS, isRememberedDevice, rememberDevice } from "@/server/auth/remembered-devices";
+import { adminFor } from "@/server/auth/admin";
 import { CHALLENGE_COOKIE, completeLoginChallenge, createLoginChallenge, issueLoginEmailCode } from "@/server/auth/two-factor";
 import { emailConfig, sendEmail } from "@/server/integrations/email";
 import { ZodError } from "zod";
@@ -40,7 +42,10 @@ export async function login(_prev: AuthState, fd: FormData): Promise<AuthState> 
   const user = await authenticate(db, email, password);
   if (!user) return { error: "That email and password don't match.", email };
   if (user.suspendedAt) return { error: "This account has been suspended. Please contact support.", email };
-  if (user.totpEnabledAt) {
+  // Only after a correct password: a remembered phone (30 days) skips the second step. Never for the admin account.
+  const remembered =
+    !!user.totpEnabledAt && (await isRememberedDevice(db, user.id, (await cookies()).get(DEVICE_COOKIE)?.value)) && !(await adminFor(db, user.id));
+  if (user.totpEnabledAt && !remembered) {
     // Password is right; the session only starts after the authenticator code.
     const { token, expiresAt } = await createLoginChallenge(db, user.id, "password");
     (await cookies()).set(CHALLENGE_COOKIE, token, {
@@ -53,9 +58,11 @@ export async function login(_prev: AuthState, fd: FormData): Promise<AuthState> 
     const next = safeNext(fd.get("next"));
     redirect(next === "/" ? "/login/verify" : `/login/verify?next=${encodeURIComponent(next)}`);
   }
-  await startSession(user.id);
+  await startSession(user.id, { secondStepSkipped: remembered });
   const appleLinked = await consumePendingAppleLink(db, user.id);
-  await withUser(user.id, (s) => audit(s, "user", "auth.login", undefined, { ip, ...(appleLinked && { appleLinked }) }));
+  await withUser(user.id, (s) =>
+    audit(s, "user", "auth.login", undefined, { ip, ...(remembered && { method: "remembered_device" }), ...(appleLinked && { appleLinked }) }),
+  );
   // Offer Face ID / Touch ID next time (the app shows the prompt once if this device supports it).
   (await cookies()).set("lf_offer_passkey", "1", { path: "/", maxAge: 600, sameSite: "lax", secure: process.env.NODE_ENV === "production" });
   // Cheap housekeeping without a cron job: occasionally purge expired rows.
@@ -84,6 +91,18 @@ export async function verifyLogin(_prev: VerifyState, fd: FormData): Promise<Ver
   }
   jar.delete(CHALLENGE_COOKIE);
   await startSession(r.userId);
+  // "Remember this phone for 30 days" (checked by default). Never for the admin account.
+  if (fd.get("remember") === "on" && !(await adminFor(db, r.userId))) {
+    const d = await rememberDevice(db, r.userId, (await headers()).get("user-agent"));
+    jar.set(DEVICE_COOKIE, d.value, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      expires: d.expiresAt,
+      maxAge: DEVICE_TTL_MS / 1000,
+    });
+  }
   await consumePendingAppleLink(db, r.userId);
   await withUser(r.userId, (s) => audit(s, "user", "auth.login", undefined, { ip, secondFactor: r.method }));
   if (r.method === "email") after(() => noticeEmailSignIn(r.userId));

@@ -5,7 +5,7 @@ import { CHALLENGE_COOKIE, createLoginChallenge } from "./two-factor";
 import { getDb } from "../db/client";
 import { withUser } from "../db/with-user";
 import { audit } from "../services/audit";
-import { OAUTH_LINK_COOKIE, type OAuthOutcome, type OAuthProvider } from "./oauth";
+import { OAUTH_LINK_COOKIE, skipsSecondStep, type OAuthOutcome, type OAuthProvider } from "./oauth";
 
 const secure = () => process.env.NODE_ENV === "production";
 
@@ -23,6 +23,14 @@ export async function finishOAuth(outcome: OAuthOutcome, o: { provider: OAuthPro
       await startSession(outcome.userId);
       return go("/welcome");
     case "signed-in": {
+      // Google already verified the person (owner, 2026-11-10), so no code of ours; Apple keeps the second step.
+      // A Google session is marked as having skipped it, and the admin account keeps the code.
+      const googleSkips = await skipsSecondStep(getDb(), o.provider, outcome.userId, outcome.totpEnabled);
+      if (googleSkips) {
+        await startSession(outcome.userId, { secondStepSkipped: true });
+        await withUser(outcome.userId, (s) => audit(s, "user", "auth.login", undefined, { ip: o.ip, method: o.provider }));
+        return go(o.next);
+      }
       if (outcome.totpEnabled) {
         const { token, expiresAt } = await createLoginChallenge(getDb(), outcome.userId, "oauth");
         jar.set(CHALLENGE_COOKIE, token, { httpOnly: true, secure: secure(), sameSite: "lax", path: "/", expires: expiresAt });

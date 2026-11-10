@@ -5,6 +5,7 @@ import type { Database } from "../db/client";
 import { loginChallenges, recoveryCodes, sessions, users } from "../db/schema";
 import { decryptSecret, encryptSecret } from "../crypto";
 import { verifyPassword } from "./password";
+import { revokeRememberedDevices } from "./remembered-devices";
 
 /**
  * Two-step sign-in with an authenticator app (TOTP, RFC 6238) plus one-time
@@ -147,6 +148,7 @@ export async function disableTwoFactor(db: Database, userId: string, password: s
   if (!(await verifySecondFactor(db, userId, code, now))) throw new TwoFactorError("That code didn't match.");
   await db.update(users).set({ totpSecret: null, totpEnabledAt: null, totpLastStep: null }).where(eq(users.id, userId));
   await db.delete(recoveryCodes).where(eq(recoveryCodes.userId, userId));
+  await revokeRememberedDevices(db, userId);
 }
 
 export async function regenerateRecoveryCodes(db: Database, userId: string, code: string, now = Date.now()) {
@@ -285,6 +287,7 @@ export async function finishTwoFactorRestart(db: Database, userId: string, token
   if (r.userId !== userId) throw new TwoFactorError("That code isn't for this account.");
   await db.update(users).set({ totpSecret: null, totpEnabledAt: null, totpLastStep: null }).where(eq(users.id, userId));
   await db.delete(recoveryCodes).where(eq(recoveryCodes.userId, userId));
+  await revokeRememberedDevices(db, userId);
   // A lost phone that was still signed in shouldn't stay signed in.
   await db.delete(sessions).where(keepSessionId ? and(eq(sessions.userId, userId), ne(sessions.id, keepSessionId)) : eq(sessions.userId, userId));
 }

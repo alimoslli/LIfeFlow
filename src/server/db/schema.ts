@@ -213,8 +213,25 @@ export const sessions = pgTable(
     userAgent: text("user_agent"),
     /** Last Face ID / Touch ID unlock of Money in this session (sliding while Money is in use). */
     moneyUnlockedAt: tstz("money_unlocked_at"),
+    /** Started without a second step (a remembered phone, or Google): never enough for /admin (ADR 0009 addendum, 2026-11-10). */
+    secondStepSkipped: boolean("second_step_skipped").notNull().default(false),
   },
   (t) => [index("sessions_user_idx").on(t.userId)],
+);
+
+/** "Remember this phone for 30 days": only the SHA-256 of the cookie's token is stored. Read before a session exists, so no RLS (like sessions). */
+export const rememberedDevices = pgTable(
+  "remembered_devices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: userRef(),
+    tokenHash: text("token_hash").notNull(),
+    userAgent: text("user_agent"),
+    createdAt: createdAt(),
+    expiresAt: tstz("expires_at").notNull(),
+    lastUsedAt: tstz("last_used_at").notNull().defaultNow(),
+  },
+  (t) => [index("remembered_devices_user_idx").on(t.userId)],
 );
 
 /** One-time backup codes for two-step sign-in. Only SHA-256 hashes are stored. Used before a session exists, so no RLS (like sessions). */

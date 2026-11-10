@@ -6,6 +6,7 @@ import { todayIn } from "@/lib/dates";
 import { checkPassword } from "@/lib/password-strength";
 import { ServiceError } from "./errors";
 import { hashPassword, verifyPassword } from "../auth/password";
+import { revokeRememberedDevices } from "../auth/remembered-devices";
 import type { Database } from "../db/client";
 import { users, type UserPreferences } from "../db/schema";
 import { withUser } from "../db/with-user";
@@ -235,6 +236,7 @@ export async function changePassword(db: Database, userId: string, current: stri
     .update(users)
     .set({ passwordHash: await hashPassword(next), ...(firstPasswordOn2fa ? { emailCodesBlockedAt: new Date() } : {}) })
     .where(eq(users.id, userId));
+  await revokeRememberedDevices(db, userId);
 }
 
 /** The typed confirmation every account deletion asks for (Settings and the lock screen read it the same way). */

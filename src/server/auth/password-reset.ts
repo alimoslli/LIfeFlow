@@ -9,6 +9,7 @@ import { audit } from "../services/audit";
 import { signupSchema } from "../services/accounts";
 import { hashPassword } from "./password";
 import { deleteUserSessions } from "./sessions";
+import { revokeRememberedDevices } from "./remembered-devices";
 
 /**
  * "Forgot password": a one-time link, valid for an hour, sent by email. Only
@@ -77,6 +78,7 @@ export async function resetPassword(db: Database, token: string, password: strin
     .set({ usedAt: new Date() })
     .where(and(eq(passwordResets.userId, r.userId), isNull(passwordResets.usedAt)));
   await deleteUserSessions(db, r.userId);
+  await revokeRememberedDevices(db, r.userId);
   await withUser(r.userId, (s) => audit(s, "user", "auth.password_reset"), db);
   return r.userId;
 }

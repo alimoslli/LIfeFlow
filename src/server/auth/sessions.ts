@@ -21,10 +21,12 @@ export type SessionUser = {
 };
 
 /** Creates a session and returns the raw token for the cookie. Only its hash is stored. */
-export async function createSession(db: Database, userId: string, userAgent?: string | null) {
+export async function createSession(db: Database, userId: string, userAgent?: string | null, opts: { secondStepSkipped?: boolean } = {}) {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
-  await db.insert(sessions).values({ id: hashToken(token), userId, expiresAt, userAgent: userAgent?.slice(0, 300) });
+  await db
+    .insert(sessions)
+    .values({ id: hashToken(token), userId, expiresAt, userAgent: userAgent?.slice(0, 300), secondStepSkipped: !!opts.secondStepSkipped });
   return { token, expiresAt };
 }
 
@@ -58,6 +60,16 @@ export async function validateSession(db: Database, token: string): Promise<Sess
       .where(eq(sessions.id, id));
   }
   return row.user;
+}
+
+/** True when this session started without a second step (a remembered phone, or Google). Such a session never opens /admin. */
+export async function sessionSkippedSecondStep(db: Database, token: string) {
+  if (!token || token.length > 100) return true;
+  const [row] = await db
+    .select({ skipped: sessions.secondStepSkipped })
+    .from(sessions)
+    .where(eq(sessions.id, hashToken(token)));
+  return row ? row.skipped : true;
 }
 
 export async function deleteSession(db: Database, token: string) {

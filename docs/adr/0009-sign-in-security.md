@@ -59,3 +59,13 @@ The owner was locked out: their account had two-step sign-in on, they couldn't f
 - **After a third review:**
   - **First passwords.** Setting a first password on a two-step account (one made with Google or Apple) also sets `email_codes_blocked_at`, so a stolen session plus the inbox can't set a password and then reset two-step.
   - **Other devices.** The restart signs out every other session; the one doing the reset stays signed in.
+
+### Remember this phone, and Google skips our code (owner, 2026-11-10)
+- **Decision:** the owner asked "why do I have to put the 6 digit code every time". Two changes:
+  1. **Remember this phone for 30 days.** The second step page has a checkbox, checked by default ("Remember this phone for 30 days"). After a correct code (authenticator, backup or emailed), the browser gets cookie `lf_device` ("<id>.<token>", httpOnly, Secure in production, SameSite=Lax, 30 days). Only the SHA-256 of the token is stored (`remembered_devices`, migration 0059: user, created, expires, last used), compared in constant time. At sign-in the cookie is looked at only after the password is correct (`login`), so it can never start a session by itself. A new phone or computer asks for the code once. Rate limits are unchanged.
+  2. **Google skips our code.** A Google sign-in on an account with two-step on starts the session directly (`skipsSecondStep`, oauth.ts), because Google already verified the person. Apple is unchanged. Every other rule in oauth.ts stands (never link on email alone, single-use `auth_challenges`).
+- **Revoked** (all of the person's remembered devices): password change or reset, turning two-step off, "Lost your app? Start over", "Sign out others", the admin's sign out everywhere and suspend, and account deletion (cascade). Settings > Security has "Forget remembered devices".
+- **Risks and mitigations:**
+  - A stolen phone with a live cookie plus the password gets in without a code. Mitigation: the password is still required, 30 days at most, one tap to forget, and a password change or a lost-app restart ends it.
+  - A Google account takeover now opens LifeFlow without a second step. Mitigation: that is Google's protection to keep strong; the admin account is excluded.
+  - **Admin:** `requireAdmin()` decides by the account's two-step setup, which a skipped step would not prove. Sessions started via a remembered phone or Google are marked (`sessions.second_step_skipped`) and `requireAdmin()` refuses them (404). Admin accounts are also never remembered and never skip on Google, so the owner always types the code or uses a passkey.

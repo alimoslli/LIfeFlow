@@ -44,9 +44,9 @@ export async function withCurrentUser<T>(fn: (scope: UserScope, user: SessionUse
   return withUser(user.id, (scope) => fn(scope, user));
 }
 
-export async function startSession(userId: string) {
+export async function startSession(userId: string, opts: { secondStepSkipped?: boolean } = {}) {
   const ua = (await headers()).get("user-agent");
-  const { token, expiresAt } = await createSession(getDb(), userId, ua);
+  const { token, expiresAt } = await createSession(getDb(), userId, ua, opts);
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

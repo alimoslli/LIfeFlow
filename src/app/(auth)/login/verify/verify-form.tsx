@@ -66,6 +66,10 @@ export function VerifyForm({ next, emailAvailable = false }: { next?: string; em
                 />
               )}
             </label>
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 text-[0.9375rem] text-text-2">
+              <input type="checkbox" name="remember" defaultChecked className="h-5 w-5 accent-[var(--accent)]" />
+              Remember this phone for 30 days
+            </label>
             {next && <input type="hidden" name="next" value={next} />}
             <button type="submit" disabled={pending} className="lf-sb lf-sb-sun mt-1">
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
