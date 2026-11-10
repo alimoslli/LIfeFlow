@@ -441,6 +441,11 @@ so it reads at once: slide back for what already happened, slide ahead for what'
 morning sun bursts up, "The new LifeFlow" / "is almost here." pop in, a sparkle burst, all six skylings jump and cheer, then "Follow so
 you don't miss it." Rule for teasers: no spoken or written dates ("Before December", "end of December") unless Ali asks; say "almost
 here" or "coming soon" instead. Sound only (`mix5.py`). Download: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/b90dd5c1-99aa-4244-9074-2a48d0d81e16.zip
+**"Changes with the sky" (Ali, 2026-11-10; live on main d41d77b):** a seventh skyling choice where whoever's moment it is shows
+(Dawn at first light ... Star at night, by the person's real sunrise and sunset); one name and one way of talking all day. Copy may now
+say "or let the sky choose". Logo explorations the same night: 5 finishes of the morning sun (As it is, Flat, Pixel, Morning rays,
+Blush) and 5 non-sun marks (Your skyling, Little cloud, Sleepy moon, The day's path, Whoever's up); waiting for Ali's pick. Source in
+`marketing/logo-ideas/`.
 The doc now opens with "What you do": a one-page checklist for tonight plus an Ali-and-Tyler table for the work shots. Ali wants the plan
 that simple ("just tell me what I have to do"); the detail stays below it. Send plans as PDF links too (the doc link didn't open in his browser).
 

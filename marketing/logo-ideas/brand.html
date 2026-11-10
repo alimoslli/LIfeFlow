@@ -1,0 +1,191 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: "Fraunces"; src: url("fraunces-var.woff2") format("woff2"); font-weight: 100 900; font-style: normal; }
+@font-face { font-family: "Geist"; src: url("geist-latin.woff2") format("woff2"); font-weight: 100 900; }
+:root { --cream: #f8f2e7; --card: #fffaf1; --line: #eadfcd; --text: #1d1a16; --muted: #8a7f70; --night: #07101f; --hero: #1f63bd; }
+html, body { margin: 0; background: var(--cream); }
+.sheet { width: 1080px; position: relative; background: var(--cream); font-family: Geist, sans-serif; color: var(--text); padding: 64px 70px 70px; box-sizing: border-box; }
+.kicker { font-size: 24px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.name { font: 600 72px Fraunces; letter-spacing: -0.03em; margin-top: 6px; }
+.line { font-size: 29px; line-height: 1.35; color: #4a4339; margin-top: 8px; max-width: 920px; }
+.grid { display: grid; gap: 22px; margin-top: 34px; }
+.g2 { grid-template-columns: 1fr 1fr; }
+.g3 { grid-template-columns: 1fr 1fr 1fr; }
+.t { position: relative; border-radius: 32px; display: grid; place-items: center; background: var(--card); box-shadow: inset 0 0 0 2px var(--line); }
+.t.dark { background: var(--night); box-shadow: none; }
+.t.blue { background: var(--hero); box-shadow: none; }
+.t.sq { aspect-ratio: 1; }
+.t.bar { height: 150px; }
+.cap { text-align: center; font-size: 19px; color: var(--muted); margin-top: 10px; }
+.lockup { display: inline-flex; align-items: center; }
+.word { font-family: Fraunces; font-weight: 500; letter-spacing: -0.035em; }
+.stack { display: inline-flex; flex-direction: column; align-items: center; }
+.fav { display: flex; gap: 26px; align-items: center; }
+/* overview */
+.ov { width: 1080px; height: 1350px; padding: 56px; }
+.ovg { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 24px; height: 100%; }
+.oc { background: var(--card); border-radius: 32px; box-shadow: inset 0 0 0 2px var(--line); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+.oc .n { position: absolute; left: 26px; top: 20px; font-size: 18px; letter-spacing: .14em; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+.head { padding: 30px; justify-content: center; align-items: flex-start; }
+.head h1 { margin: 0; font: 600 54px Fraunces; letter-spacing: -0.03em; line-height: 1.05; }
+.head p { margin: 0; font-size: 22px; color: #4a4339; line-height: 1.35; }
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+// Geometry and colours from src/components/brand/morning-mark.ts (main), unchanged.
+const MARK = { horizon: 66, cx: 50, sunR: 36, eyeDx: 10, eyeDy: 15, eyeR: 3.4, line: { x: 4, w: 92, h: 5.5 }, glowR: 50 };
+const C = { sunTop: "#ffc247", sun: "#f5a524", sunLow: "#f29a1c", ink: "#07101f", horizon: "#2f7cd2", glow: "#ffd7ad", glowDeep: "#ffb27a" };
+const SKY = { top: "#3f7fc8", mid: "#8fbbe6", low: "#ffd7ad", horizon: "#ffb27a", groundTop: "#1b3263", groundBottom: "#0b1a3a", horizonAt: 0.64 };
+let uid = 0;
+const { horizon: H, cx: CX, sunR: R, eyeDx: EX, eyeDy: EY, eyeR: ER, line: L, glowR: GR } = MARK;
+const lineTop = H - L.h / 2;
+
+function defsSun(id) {
+  return `<linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.sunTop}"/><stop offset=".55" stop-color="${C.sun}"/><stop offset="1" stop-color="${C.sunLow}"/></linearGradient>
+  <radialGradient id="${id}g" cx="${CX}" cy="${H}" r="${GR}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${C.glow}" stop-opacity=".95"/><stop offset=".5" stop-color="${C.glowDeep}" stop-opacity=".45"/><stop offset="1" stop-color="${C.glowDeep}" stop-opacity="0"/></radialGradient>
+  <clipPath id="${id}c"><rect x="0" y="0" width="100" height="${lineTop}"/></clipPath>`;
+}
+// One-colour version of the smooth marks: the sun with its eyes (and extras) cut out, plus the horizon.
+function monoSmooth(id, col, { gap = 0, extra = "", cut = "", eyeR = ER, eyeDy = EY, sunR = R, lineH = L.h, lineX = L.x, lineW = L.w } = {}) {
+  const lt = H - lineH / 2;
+  return `<defs><mask id="${id}m" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><rect width="100" height="100" fill="#000"/>
+    <g><clipPath id="${id}mc"><rect x="0" y="0" width="100" height="${lt - gap}"/></clipPath><circle cx="${CX}" cy="${H}" r="${sunR}" fill="#fff" clip-path="url(#${id}mc)"/></g>
+    <circle cx="${CX - EX}" cy="${H - eyeDy}" r="${eyeR}" fill="#000"/><circle cx="${CX + EX}" cy="${H - eyeDy}" r="${eyeR}" fill="#000"/>${cut}</mask></defs>
+    <rect width="100" height="100" fill="${col}" mask="url(#${id}m)"/>${extra}
+    <rect x="${lineX}" y="${lt}" width="${lineW}" height="${lineH}" rx="${lineH / 2}" fill="${col}"/>`;
+}
+
+const OPTIONS = [
+  {
+    name: "As it is",
+    line: "The logo in the app today, untouched: the morning sun rising with its little face. Just finished in every form.",
+    mark(id, o = {}) {
+      if (o.mono) return monoSmooth(id, o.mono);
+      return `<defs>${defsSun(id)}</defs><g clip-path="url(#${id}c)"><circle cx="${CX}" cy="${H}" r="${GR}" fill="url(#${id}g)"/>
+        <circle cx="${CX}" cy="${H}" r="${R}" fill="url(#${id}s)"/><circle cx="${CX - EX}" cy="${H - EY}" r="${ER}" fill="${C.ink}"/><circle cx="${CX + EX}" cy="${H - EY}" r="${ER}" fill="${C.ink}"/></g>
+        <rect x="${L.x}" y="${lineTop}" width="${L.w}" height="${L.h}" rx="${L.h / 2}" fill="${C.horizon}"/>`;
+    },
+  },
+  {
+    name: "Flat",
+    line: "The same sun, flat colour, no glow, a small gap above the horizon and a bolder line. Sharpest when tiny and prints in one colour.",
+    mark(id, o = {}) {
+      const gap = 3.2, lh = 7, eyeR = 4, eyeDy = 14.5;
+      if (o.mono) return monoSmooth(id, o.mono, { gap, eyeR, eyeDy, lineH: lh, lineX: 6, lineW: 88 });
+      return `<defs><clipPath id="${id}c"><rect x="0" y="0" width="100" height="${H - lh / 2 - gap}"/></clipPath></defs>
+        <g clip-path="url(#${id}c)"><circle cx="${CX}" cy="${H}" r="${R}" fill="${C.sun}"/>
+        <circle cx="${CX - EX}" cy="${H - eyeDy}" r="${eyeR}" fill="${C.ink}"/><circle cx="${CX + EX}" cy="${H - eyeDy}" r="${eyeR}" fill="${C.ink}"/></g>
+        <rect x="6" y="${H - lh / 2}" width="88" height="${lh}" rx="${lh / 2}" fill="${C.horizon}"/>`;
+    },
+  },
+  {
+    name: "Pixel",
+    line: "The same sun and face on the skylings' pixel grid, with their dark outline, so the logo looks like one of the family.",
+    pixel: true,
+    mark(id, o = {}) {
+      const N = 20, p = 100 / N, cx = 10, hy = 13, Rp = 7.3;
+      let r = "";
+      const cell = (x, y, col, op = 1) => (r += `<rect x="${x * p}" y="${y * p}" width="${p + 0.04}" height="${p + 0.04}" fill="${col}"${op < 1 ? ` opacity="${op}"` : ""}/>`);
+      const eyes = new Set(["7,9", "7,10", "12,9", "12,10"]);
+      if (!o.mono && !o.night && !o.onSky) for (let y = 0; y < hy; y++) for (let x = 0; x < N; x++) { const d = Math.hypot(x + 0.5 - cx, y + 0.5 - hy); if (d > Rp && d <= Rp + 1.3) cell(x, y, C.glow, 0.5); }
+      for (let y = 0; y < hy; y++) for (let x = 0; x < N; x++) {
+        const d = Math.hypot(x + 0.5 - cx, y + 0.5 - hy);
+        if (d > Rp) continue;
+        if (o.mono) { if (!eyes.has(`${x},${y}`)) cell(x, y, o.mono); continue; }
+        const rim = d > Rp - 1;
+        cell(x, y, rim ? "#262320" : eyes.has(`${x},${y}`) ? "#262320" : y < hy - 5 ? C.sunTop : y < hy - 2 ? C.sun : C.sunLow);
+      }
+      if (!o.mono) { cell(6, 8, "#ffe3a0"); cell(7, 7, "#ffe3a0"); }
+      for (let x = 1; x < N - 1; x++) cell(x, hy, o.mono || C.horizon);
+      return `<g shape-rendering="crispEdges" transform="translate(0 -1.5)">${r}</g>`;
+    },
+  },
+  {
+    name: "Morning rays",
+    line: "The logo in the app today with short rays of morning light around it. More energy for posts, stickers and the launch.",
+    mark(id, o = {}) {
+      const rays = [-180, -150, -120, -90, -60, -30, 0].map((a) => {
+        const t = (a * Math.PI) / 180, r1 = R + 6, r2 = R + 13;
+        if (a === -180 || a === 0) return ""; // keep the horizon clean
+        return `<line x1="${(CX + r1 * Math.cos(t)).toFixed(2)}" y1="${(H + r1 * Math.sin(t)).toFixed(2)}" x2="${(CX + r2 * Math.cos(t)).toFixed(2)}" y2="${(H + r2 * Math.sin(t)).toFixed(2)}" stroke="${o.mono || C.sun}" stroke-width="5" stroke-linecap="round"/>`;
+      }).join("");
+      const sR = 31;
+      if (o.mono) return monoSmooth(id, o.mono, { sunR: sR, extra: rays, eyeDy: 13 });
+      return `<defs>${defsSun(id)}</defs><g clip-path="url(#${id}c)"><circle cx="${CX}" cy="${H}" r="${GR}" fill="url(#${id}g)"/>${rays}
+        <circle cx="${CX}" cy="${H}" r="${sR}" fill="url(#${id}s)"/><circle cx="${CX - EX}" cy="${H - 13}" r="${ER}" fill="${C.ink}"/><circle cx="${CX + EX}" cy="${H - 13}" r="${ER}" fill="${C.ink}"/></g>
+        <rect x="${L.x}" y="${lineTop}" width="${L.w}" height="${L.h}" rx="${L.h / 2}" fill="${C.horizon}"/>`;
+    },
+  },
+  {
+    name: "Blush",
+    line: "The logo in the app today with the skylings' pink cheeks and a tiny smile. The friendliest of the five.",
+    mark(id, o = {}) {
+      const smile = `M${CX - 4.2} ${H - 9.4} Q${CX} ${H - 5.6} ${CX + 4.2} ${H - 9.4}`;
+      if (o.mono) return monoSmooth(id, o.mono, { cut: `<path d="${smile}" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="round"/>` });
+      return `<defs>${defsSun(id)}</defs><g clip-path="url(#${id}c)"><circle cx="${CX}" cy="${H}" r="${GR}" fill="url(#${id}g)"/>
+        <circle cx="${CX}" cy="${H}" r="${R}" fill="url(#${id}s)"/><circle cx="${CX - EX}" cy="${H - EY}" r="${ER}" fill="${C.ink}"/><circle cx="${CX + EX}" cy="${H - EY}" r="${ER}" fill="${C.ink}"/>
+        <ellipse cx="${CX - 17}" cy="${H - 8.5}" rx="4.6" ry="3" fill="#f0937a" opacity=".85"/><ellipse cx="${CX + 17}" cy="${H - 8.5}" rx="4.6" ry="3" fill="#f0937a" opacity=".85"/>
+        <path d="${smile}" fill="none" stroke="${C.ink}" stroke-width="2" stroke-linecap="round"/></g>
+        <rect x="${L.x}" y="${lineTop}" width="${L.w}" height="${L.h}" rx="${L.h / 2}" fill="${C.horizon}"/>`;
+    },
+  },
+];
+
+const svg = (inner, size) => `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">${inner}</svg>`;
+const mark = (op, size, o = {}) => svg(op.mark("m" + uid++, o), size);
+// The app icon, built like morningIconSvg: the morning sky tile, the mark's horizon on the tile's horizon.
+function icon(op, size, { corner = 0.2237, circle = false } = {}) {
+  const id = "i" + uid++, hy = SKY.horizonAt * 100;
+  const clip = circle ? `<circle cx="50" cy="50" r="50"/>` : `<rect x="0" y="0" width="100" height="100" rx="${corner * 100}"/>`;
+  return svg(`<defs><linearGradient id="${id}sky" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="${SKY.top}"/><stop offset="${(hy / 100) * 0.55}" stop-color="${SKY.mid}"/><stop offset="${(hy / 100) * 0.86}" stop-color="${SKY.low}"/><stop offset="${hy / 100}" stop-color="${SKY.horizon}"/>
+    <stop offset="${hy / 100 + 0.001}" stop-color="${SKY.groundTop}"/><stop offset="1" stop-color="${SKY.groundBottom}"/></linearGradient>
+    <clipPath id="${id}t">${clip}</clipPath></defs>
+    <g clip-path="url(#${id}t)"><rect width="100" height="100" fill="url(#${id}sky)"/><g transform="translate(0 ${hy - H})">${op.mark(id + "k", { onSky: true })}</g></g>`, size);
+}
+// The lockup, built like BrandLockup: the mark (h-9) + gap-2.5 + "LifeFlow" in Fraunces 500 at 1.375rem, tracking -0.035em, scaled.
+function lockup(op, k, { light = false, mono = null } = {}) {
+  const ms = 36 * k, fs = 22 * k, gap = 10 * k;
+  const col = mono || (light ? "#ffffff" : "#1d1a16");
+  return `<span class="lockup" style="gap:${gap}px">${mark(op, ms, mono ? { mono } : { night: light })}<span class="word" style="font-size:${fs}px;color:${col}">LifeFlow</span></span>`;
+}
+function stacked(op, k, { light = false, mono = null } = {}) {
+  const col = mono || (light ? "#ffffff" : "#1d1a16");
+  const ms = 120 * k;
+  return `<span class="stack"><span style="display:block;height:${ms * 0.74}px;margin-top:${-ms * 0.08}px">${mark(op, ms, mono ? { mono } : { night: light })}</span><span class="word" style="font-size:${31 * k}px;color:${col};margin-top:${6 * k}px">LifeFlow</span></span>`;
+}
+
+window.sheet = (i) => {
+  const op = OPTIONS[i];
+  document.getElementById("root").innerHTML = `<div class="sheet" id="s">
+    <div class="kicker">Logo option ${i + 1} of 5</div><div class="name">${op.name}</div><div class="line">${op.line}</div>
+    <div class="grid g2">
+      <div><div class="t sq"><div style="transform:translateY(8%)">${mark(op, 330)}</div></div><div class="cap">The mark</div></div>
+      <div><div class="t sq dark"><div style="transform:translateY(8%)">${mark(op, 330, { night: true })}</div></div><div class="cap">On the night sky</div></div>
+    </div>
+    <div class="grid g3" style="margin-top:26px">
+      <div><div class="t sq">${icon(op, 230)}</div><div class="cap">App icon</div></div>
+      <div><div class="t sq">${icon(op, 230, { circle: true })}</div><div class="cap">Profile picture</div></div>
+      <div><div class="t sq"><div class="fav" style="transform:translateY(8%)">${mark(op, 96)}${mark(op, 48)}${mark(op, 32)}${mark(op, 16)}</div></div><div class="cap">Small: 96, 48, 32, 16 px</div></div>
+    </div>
+    <div class="grid g2" style="margin-top:26px">
+      <div><div class="t bar">${lockup(op, 2.3)}</div><div class="cap">Logo with the name</div></div>
+      <div><div class="t bar dark">${lockup(op, 2.3, { light: true })}</div><div class="cap">With the name, at night</div></div>
+    </div>
+    <div class="grid g3" style="margin-top:26px">
+      <div><div class="t sq">${stacked(op, 1.55)}</div><div class="cap">Stacked</div></div>
+      <div><div class="t sq">${stacked(op, 1.55, { mono: "#1d1a16" })}</div><div class="cap">One colour</div></div>
+      <div><div class="t sq blue">${stacked(op, 1.55, { mono: "#ffffff" })}</div><div class="cap">One colour, white</div></div>
+    </div>
+  </div>`;
+};
+window.overview = () => {
+  document.getElementById("root").innerHTML = `<div class="sheet ov" id="s"><div class="ovg">
+    <div class="oc head"><h1>The LifeFlow logo, 5 ways to finish it</h1><p>All five are the morning sun the app uses now. Each page after this shows one in every form.</p></div>
+    ${OPTIONS.map((op, i) => `<div class="oc"><div class="n">${i + 1} · ${op.name}</div><div style="display:flex;gap:26px;align-items:center;margin-top:26px">${icon(op, 150)}${mark(op, 150)}</div>${lockup(op, 1.35)}</div>`).join("")}
+  </div></div>`;
+};
+window.ready = document.fonts.load("500 40px Fraunces").then(() => document.fonts.load("600 40px Fraunces")).then(() => document.fonts.load("400 20px Geist")).then(() => true);
+</script></body></html>

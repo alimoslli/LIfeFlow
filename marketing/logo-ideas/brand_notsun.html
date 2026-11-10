@@ -1,0 +1,210 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: "Fraunces"; src: url("fraunces-var.woff2") format("woff2"); font-weight: 100 900; font-style: normal; }
+@font-face { font-family: "Geist"; src: url("geist-latin.woff2") format("woff2"); font-weight: 100 900; }
+:root { --cream: #f8f2e7; --card: #fffaf1; --line: #eadfcd; --text: #1d1a16; --muted: #8a7f70; --night: #07101f; --hero: #1f63bd; }
+html, body { margin: 0; background: var(--cream); }
+.sheet { width: 1080px; position: relative; background: var(--cream); font-family: Geist, sans-serif; color: var(--text); padding: 64px 70px 70px; box-sizing: border-box; }
+.kicker { font-size: 24px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.name { font: 600 72px Fraunces; letter-spacing: -0.03em; margin-top: 6px; }
+.line { font-size: 29px; line-height: 1.35; color: #4a4339; margin-top: 8px; max-width: 920px; }
+.grid { display: grid; gap: 22px; margin-top: 34px; }
+.g2 { grid-template-columns: 1fr 1fr; }
+.g3 { grid-template-columns: 1fr 1fr 1fr; }
+.t { position: relative; border-radius: 32px; display: grid; place-items: center; background: var(--card); box-shadow: inset 0 0 0 2px var(--line); }
+.t.dark { background: var(--night); box-shadow: none; }
+.t.blue { background: var(--hero); box-shadow: none; }
+.t.sq { aspect-ratio: 1; }
+.t.bar { height: 150px; }
+.cap { text-align: center; font-size: 19px; color: var(--muted); margin-top: 10px; }
+.lockup { display: inline-flex; align-items: center; }
+.word { font-family: Fraunces; font-weight: 500; letter-spacing: -0.035em; }
+.stack { display: inline-flex; flex-direction: column; align-items: center; }
+.fav { display: flex; gap: 26px; align-items: center; }
+/* overview */
+.ov { width: 1080px; height: 1350px; padding: 56px; }
+.ovg { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 24px; height: 100%; }
+.oc { background: var(--card); border-radius: 32px; box-shadow: inset 0 0 0 2px var(--line); position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+.oc .n { position: absolute; left: 26px; top: 20px; font-size: 18px; letter-spacing: .14em; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+.head { padding: 30px; justify-content: center; align-items: flex-start; }
+.head h1 { margin: 0; font: 600 54px Fraunces; letter-spacing: -0.03em; line-height: 1.05; }
+.head p { margin: 0; font-size: 22px; color: #4a4339; line-height: 1.35; }
+</style></head>
+<body>
+<div id="root"></div>
+<script src="lf.js"></script>
+<script>
+// Geometry and colours from src/components/brand/morning-mark.ts (main), unchanged.
+const MARK = { horizon: 66, cx: 50, sunR: 36, eyeDx: 10, eyeDy: 15, eyeR: 3.4, line: { x: 4, w: 92, h: 5.5 }, glowR: 50 };
+const C = { sunTop: "#ffc247", sun: "#f5a524", sunLow: "#f29a1c", ink: "#07101f", horizon: "#2f7cd2", glow: "#ffd7ad", glowDeep: "#ffb27a" };
+const SKY0 = window.SKY0 = { top: "#3f7fc8", mid: "#8fbbe6", low: "#ffd7ad", horizon: "#ffb27a", groundTop: "#1b3263", groundBottom: "#0b1a3a", horizonAt: 0.64 };
+let uid = 0;
+const { horizon: H, cx: CX, sunR: R, eyeDx: EX, eyeDy: EY, eyeR: ER, line: L, glowR: GR } = MARK;
+const lineTop = H - L.h / 2;
+
+function defsSun(id) {
+  return `<linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.sunTop}"/><stop offset=".55" stop-color="${C.sun}"/><stop offset="1" stop-color="${C.sunLow}"/></linearGradient>
+  <radialGradient id="${id}g" cx="${CX}" cy="${H}" r="${GR}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${C.glow}" stop-opacity=".95"/><stop offset=".5" stop-color="${C.glowDeep}" stop-opacity=".45"/><stop offset="1" stop-color="${C.glowDeep}" stop-opacity="0"/></radialGradient>
+  <clipPath id="${id}c"><rect x="0" y="0" width="100" height="${lineTop}"/></clipPath>`;
+}
+// One-colour version of the smooth marks: the sun with its eyes (and extras) cut out, plus the horizon.
+function monoSmooth(id, col, { gap = 0, extra = "", cut = "", eyeR = ER, eyeDy = EY, sunR = R, lineH = L.h, lineX = L.x, lineW = L.w } = {}) {
+  const lt = H - lineH / 2;
+  return `<defs><mask id="${id}m" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><rect width="100" height="100" fill="#000"/>
+    <g><clipPath id="${id}mc"><rect x="0" y="0" width="100" height="${lt - gap}"/></clipPath><circle cx="${CX}" cy="${H}" r="${sunR}" fill="#fff" clip-path="url(#${id}mc)"/></g>
+    <circle cx="${CX - EX}" cy="${H - eyeDy}" r="${eyeR}" fill="#000"/><circle cx="${CX + EX}" cy="${H - eyeDy}" r="${eyeR}" fill="#000"/>${cut}</mask></defs>
+    <rect width="100" height="100" fill="${col}" mask="url(#${id}m)"/>${extra}
+    <rect x="${lineX}" y="${lt}" width="${lineW}" height="${lineH}" rx="${lineH / 2}" fill="${col}"/>`;
+}
+
+// Not the sun: five other marks, all on the same morning horizon so the app's look stays.
+const LF = window.LF;
+const hexOf = (c) => "#" + c.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
+const shade = (c, k) => hexOf(c.map((v) => v * k));
+const skyFor = (minute) => { const [t, m, l] = LF.skyAt(minute, 405, 1010); return { top: hexOf(t), mid: hexOf(m), low: hexOf(l), horizon: hexOf(l), groundTop: shade(t, 0.55), groundBottom: shade(t, 0.3), horizonAt: 0.64 }; };
+// A real skyling from the app's sprite code, peeking over the horizon (rows above `cut`).
+function peek(key, id, o = {}) {
+  const info = LF.COMPANIONS.find((c) => c.key === key);
+  const px = LF.pixels(info, "idle", 0, !!o.night && !o.mono);
+  const p = 4.1, cut = 15, ox = 50 - 12 * p, oy = H - cut * p;
+  const has = new Set(px.filter(([, , c]) => !c.startsWith("rgba")).map(([x, y]) => `${x},${y}`));
+  const inner = (x, y) => [[1, 0], [-1, 0], [0, 1], [0, -1]].every(([dx, dy]) => has.has(`${x + dx},${y + dy}`));
+  const rects = px.filter(([x, y, col]) => y < cut && !col.startsWith("rgba")).map(([x, y, col]) => {
+    if (o.mono && col === "#262320" && inner(x, y)) return "";
+    return `<rect x="${(ox + x * p).toFixed(2)}" y="${(oy + y * p).toFixed(2)}" width="${p + 0.05}" height="${p + 0.05}" fill="${o.mono || col}"/>`;
+  }).join("");
+  const glow = o.mono || o.onSky ? "" : `<circle cx="50" cy="${H}" r="50" fill="url(#${id}g)"/>`;
+  return `<defs><radialGradient id="${id}g" cx="50" cy="${H}" r="50" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${C.glow}" stop-opacity=".9"/><stop offset=".5" stop-color="${C.glowDeep}" stop-opacity=".38"/><stop offset="1" stop-color="${C.glowDeep}" stop-opacity="0"/></radialGradient>
+    <clipPath id="${id}c"><rect x="0" y="0" width="100" height="${lineTop}"/></clipPath></defs>
+    <g clip-path="url(#${id}c)">${glow}<g shape-rendering="crispEdges">${rects}</g></g>
+    <rect x="${L.x}" y="${lineTop}" width="${L.w}" height="${L.h}" rx="${L.h / 2}" fill="${o.mono || C.horizon}"/>`;
+}
+const NIGHT_SKY = { top: "#03060f", mid: "#071226", low: "#13284d", horizon: "#2d4470", groundTop: "#0b1a3a", groundBottom: "#03060f", horizonAt: 0.64 };
+const TIMES = { dawn: 390, ray: 540, noon: 750, goldie: 960, dusk: 1065, star: 1350 };
+
+const OPTIONS = [
+  {
+    name: "Your skyling",
+    line: "Ray, a real skyling from the app, peeking over the morning horizon. The characters become the brand, like the teaser.",
+    mark: (id, o = {}) => peek("ray", id, o),
+  },
+  {
+    name: "Little cloud",
+    line: "A soft cloud with the skylings' face resting on the horizon. Calm, cute, and it means sky without being the sun.",
+    mark(id, o = {}) {
+      const blobs = [[33, 54, 13], [52, 45, 18.5], [69, 53, 12.5]];
+      const shape = (r0, fill) => blobs.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r + r0}" fill="${fill}"/>`).join("") + `<rect x="${20 - r0}" y="${50 - r0}" width="${62 + 2 * r0}" height="${30}" rx="${10 + r0}" fill="${fill}"/>`;
+      const face = o.mono ? "" : `<circle cx="45" cy="54" r="3.1" fill="${C.ink}"/><circle cx="59" cy="54" r="3.1" fill="${C.ink}"/><ellipse cx="38.5" cy="59.5" rx="3.6" ry="2.3" fill="#f0937a" opacity=".8"/><ellipse cx="65.5" cy="59.5" rx="3.6" ry="2.3" fill="#f0937a" opacity=".8"/>`;
+      const cut = o.mono ? `<circle cx="45" cy="54" r="3.1" fill="#000"/><circle cx="59" cy="54" r="3.1" fill="#000"/>` : "";
+      if (o.mono) return `<defs><clipPath id="${id}c"><rect width="100" height="${lineTop - 2.2}"/></clipPath><mask id="${id}m" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><rect width="100" height="100" fill="#000"/><g clip-path="url(#${id}c)">${shape(0, "#fff")}</g>${cut}</mask></defs>
+        <rect width="100" height="100" fill="${o.mono}" mask="url(#${id}m)"/><rect x="${L.x}" y="${lineTop}" width="${L.w}" height="${L.h}" rx="${L.h / 2}" fill="${o.mono}"/>`;
+      return `<defs><linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d4e6f8"/></linearGradient>
+        <clipPath id="${id}c"><rect width="100" height="${lineTop}"/></clipPath></defs>
+        <g clip-path="url(#${id}c)">${o.night || o.onSky ? "" : shape(1.6, "#9dc3e8")}${shape(0, `url(#${id}f)`)}${face}</g>
+        <rect x="${L.x}" y="${lineTop}" width="${L.w}" height="${L.h}" rx="${L.h / 2}" fill="${C.horizon}"/>`;
+    },
+  },
+  {
+    name: "Sleepy moon",
+    line: "A crescent moon with a sleepy face and a little star, for the planner that also watches your nights.",
+    sky: NIGHT_SKY,
+    mark(id, o = {}) {
+      const body = o.mono || "#e8eef8", edge = "#9eb0cc";
+      const cres = `<mask id="${id}cm" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100"><rect width="100" height="100" fill="#000"/><circle cx="47" cy="40" r="25" fill="#fff"/><circle cx="60" cy="31" r="21" fill="#000"/>
+        ${o.mono ? `<path d="M30.5 41.5 q4 3.2 8 0" stroke="#000" stroke-width="2.4" fill="none" stroke-linecap="round"/>` : ""}</mask>`;
+      const star = (x, y, s, f) => `<path d="M${x} ${y - s} L${x + s * 0.28} ${y - s * 0.28} L${x + s} ${y} L${x + s * 0.28} ${y + s * 0.28} L${x} ${y + s} L${x - s * 0.28} ${y + s * 0.28} L${x - s} ${y} L${x - s * 0.28} ${y - s * 0.28} Z" fill="${f}"/>`;
+      return `<defs>${cres}</defs>
+        ${o.mono ? "" : `<g mask="url(#${id}cm)"><circle cx="47" cy="40" r="26.4" fill="${edge}"/></g>`}
+        <g mask="url(#${id}cm)"><circle cx="47" cy="40" r="25" fill="${body}" transform="${o.mono ? "" : "translate(0.6 0.6) scale(.985)"}" transform-origin="47 40"/></g>
+        ${o.mono ? "" : `<path d="M30.5 41.5 q4 3.2 8 0" stroke="${C.ink}" stroke-width="2.2" fill="none" stroke-linecap="round"/><ellipse cx="33" cy="48" rx="3.2" ry="2" fill="#f0937a" opacity=".75"/>`}
+        ${star(70, 50, 6.5, o.mono || "#ffd77a")}${star(80, 34, 3.4, o.mono || "#ffd77a")}
+        <rect x="${L.x}" y="${lineTop}" width="${L.w}" height="${L.h}" rx="${L.h / 2}" fill="${o.mono || C.horizon}"/>`;
+    },
+  },
+  {
+    name: "The day's path",
+    line: "No character: the path the sky takes across your day, from morning to night, and a gold dot that is now. Simple and grown-up.",
+    mark(id, o = {}) {
+      let dots = "";
+      const n = 13, R0 = 38;
+      for (let i = 0; i < n; i++) {
+        const t = Math.PI + (i / (n - 1)) * Math.PI;
+        const minute = 405 + (i / (n - 1)) * (1010 - 405);
+        const [, mid, low] = LF.skyAt(minute, 405, 1010);
+        const col = o.mono || (o.onSky ? "#ffffff" : i < 2 ? hexOf(low) : i > n - 3 ? hexOf(low) : hexOf(mid));
+        dots += `<circle cx="${(50 + R0 * Math.cos(t)).toFixed(2)}" cy="${(H - 3 + R0 * Math.sin(t)).toFixed(2)}" r="2.7" fill="${col}"/>`;
+      }
+      const tn = Math.PI + (3.4 / (n - 1)) * Math.PI;
+      const nx = 50 + R0 * Math.cos(tn), ny = H - 3 + R0 * Math.sin(tn);
+      return `${dots}${o.mono ? "" : `<circle cx="${nx}" cy="${ny}" r="13" fill="${C.glow}" opacity=".55"/>`}
+        <circle cx="${nx}" cy="${ny}" r="8.6" fill="${o.mono ? "none" : "#ffffff"}"/><circle cx="${nx}" cy="${ny}" r="6.6" fill="${o.mono || C.sun}"/>
+        <rect x="${L.x}" y="${lineTop}" width="${L.w}" height="${L.h}" rx="${L.h / 2}" fill="${o.mono || C.horizon}"/>`;
+    },
+  },
+  {
+    name: "Whoever's up",
+    line: "The logo is whichever skyling's time it is: Dawn at first light, Ray in the morning, Star at night. On the website and socials it follows the clock; the app icon stays Ray.",
+    six: true,
+    mark: (id, o = {}) => peek(o.key || "ray", id, o),
+  },
+];
+
+
+const svg = (inner, size) => `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">${inner}</svg>`;
+const mark = (op, size, o = {}) => svg(op.mark("m" + uid++, o), size);
+// The app icon, built like morningIconSvg: the morning sky tile, the mark's horizon on the tile's horizon.
+function icon(op, size, { corner = 0.2237, circle = false, sky = null, key = null } = {}) {
+  const SKY = sky || op.sky || window.SKY0;
+  const id = "i" + uid++, hy = SKY.horizonAt * 100;
+  const clip = circle ? `<circle cx="50" cy="50" r="50"/>` : `<rect x="0" y="0" width="100" height="100" rx="${corner * 100}"/>`;
+  return svg(`<defs><linearGradient id="${id}sky" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="${SKY.top}"/><stop offset="${(hy / 100) * 0.55}" stop-color="${SKY.mid}"/><stop offset="${(hy / 100) * 0.86}" stop-color="${SKY.low}"/><stop offset="${hy / 100}" stop-color="${SKY.horizon}"/>
+    <stop offset="${hy / 100 + 0.001}" stop-color="${SKY.groundTop}"/><stop offset="1" stop-color="${SKY.groundBottom}"/></linearGradient>
+    <clipPath id="${id}t">${clip}</clipPath></defs>
+    <g clip-path="url(#${id}t)"><rect width="100" height="100" fill="url(#${id}sky)"/><g transform="translate(0 ${hy - H})">${op.mark(id + "k", { onSky: true, key, night: (SKY === NIGHT_SKY && key !== 'star') || key === 'dusk' })}</g></g>`, size);
+}
+// The lockup, built like BrandLockup: the mark (h-9) + gap-2.5 + "LifeFlow" in Fraunces 500 at 1.375rem, tracking -0.035em, scaled.
+function lockup(op, k, { light = false, mono = null } = {}) {
+  const ms = 36 * k, fs = 22 * k, gap = 10 * k;
+  const col = mono || (light ? "#ffffff" : "#1d1a16");
+  return `<span class="lockup" style="gap:${gap}px">${mark(op, ms, mono ? { mono } : { night: light })}<span class="word" style="font-size:${fs}px;color:${col}">LifeFlow</span></span>`;
+}
+function stacked(op, k, { light = false, mono = null } = {}) {
+  const col = mono || (light ? "#ffffff" : "#1d1a16");
+  const ms = 120 * k;
+  return `<span class="stack"><span style="display:block;height:${ms * 0.74}px;margin-top:${-ms * 0.08}px">${mark(op, ms, mono ? { mono } : { night: light })}</span><span class="word" style="font-size:${31 * k}px;color:${col};margin-top:${6 * k}px">LifeFlow</span></span>`;
+}
+
+window.sheet = (i) => {
+  const op = OPTIONS[i];
+  document.getElementById("root").innerHTML = `<div class="sheet" id="s">
+    <div class="kicker">Not the sun: idea ${i + 1} of 5</div><div class="name">${op.name}</div><div class="line">${op.line}</div>
+    <div class="grid g2">
+      <div><div class="t sq"><div style="transform:translateY(8%)">${mark(op, 330)}</div></div><div class="cap">The mark</div></div>
+      <div><div class="t sq dark"><div style="transform:translateY(8%)">${mark(op, 330, { night: true })}</div></div><div class="cap">On the night sky</div></div>
+    </div>
+    <div class="grid g3" style="margin-top:26px">
+      <div><div class="t sq">${icon(op, 230)}</div><div class="cap">App icon</div></div>
+      ${op.six ? `<div><div class="t sq" style="grid-template-columns:repeat(3,auto);gap:8px;align-content:center;justify-content:center">${Object.keys(TIMES).map((k) => icon(op, 72, { key: k, sky: k === 'star' ? NIGHT_SKY : skyFor(TIMES[k]) })).join('')}</div><div class="cap">Through the day</div></div>` : `<div><div class="t sq">${icon(op, 230, { circle: true })}</div><div class="cap">Profile picture</div></div>`}
+      <div><div class="t sq"><div class="fav" style="transform:translateY(8%)">${mark(op, 96)}${mark(op, 48)}${mark(op, 32)}${mark(op, 16)}</div></div><div class="cap">Small: 96, 48, 32, 16 px</div></div>
+    </div>
+    <div class="grid g2" style="margin-top:26px">
+      <div><div class="t bar">${lockup(op, 2.3)}</div><div class="cap">Logo with the name</div></div>
+      <div><div class="t bar dark">${lockup(op, 2.3, { light: true })}</div><div class="cap">With the name, at night</div></div>
+    </div>
+    <div class="grid g3" style="margin-top:26px">
+      <div><div class="t sq">${stacked(op, 1.55)}</div><div class="cap">Stacked</div></div>
+      <div><div class="t sq">${stacked(op, 1.55, { mono: "#1d1a16" })}</div><div class="cap">One colour</div></div>
+      <div><div class="t sq blue">${stacked(op, 1.55, { mono: "#ffffff" })}</div><div class="cap">One colour, white</div></div>
+    </div>
+  </div>`;
+};
+window.overview = () => {
+  document.getElementById("root").innerHTML = `<div class="sheet ov" id="s"><div class="ovg">
+    <div class="oc head"><h1>What if it's not the sun?</h1><p>Five other marks. All keep the app's morning horizon line, so it still feels like LifeFlow.</p></div>
+    ${OPTIONS.map((op, i) => `<div class="oc"><div class="n">${i + 1} · ${op.name}</div>${op.six ? `<div style="display:grid;grid-template-columns:repeat(3,auto);gap:12px;margin-top:30px">${Object.keys(TIMES).map((k) => icon(op, 92, { key: k, sky: k === 'star' ? NIGHT_SKY : skyFor(TIMES[k]) })).join('')}</div>` : `<div style="display:flex;gap:26px;align-items:center;margin-top:26px">${icon(op, 150)}${mark(op, 150)}</div>${lockup(op, 1.35)}`}</div>`).join("")}
+  </div></div>`;
+};
+window.ready = document.fonts.load("500 40px Fraunces").then(() => document.fonts.load("600 40px Fraunces")).then(() => document.fonts.load("400 20px Geist")).then(() => true);
+</script></body></html>
