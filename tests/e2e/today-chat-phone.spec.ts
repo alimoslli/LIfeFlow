@@ -52,6 +52,43 @@ test("Today: the answer comes in the middle, what it saves lands on the sky, Und
   expect(await queryAsUser(email, "select id from conversations")).toHaveLength(1);
 });
 
+// COO, 2026-11-10 (seen while filming, 432x768): a lookup showed "✓ Done" as if it had saved something, and Today jumped
+// while the answer streamed (it redrew after every tool). A lookup gets no ✓ line and Today doesn't redraw for it; the bar
+// stays put the whole time.
+test("a lookup answer: no ✓ line, no redraw, and the bar stays still while it streams", async ({ page }) => {
+  await page.setViewportSize({ width: 432, height: 768 });
+  await signUp(page, "Lou Lookup");
+  await page.goto("/");
+  await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
+  const form = page.locator(".dc-dock form");
+  const box = form.getByRole("textbox", { name: "Message Ray" });
+  // every redraw of Today asks the server for it again
+  let redraws = 0;
+  page.on("request", (r) => {
+    if (r.headers()["rsc"] === "1" && new URL(r.url()).pathname === "/") redraws++;
+  });
+  // where the bar sits, every frame, from the send until the answer is done
+  await page.evaluate(() => {
+    const el = document.querySelector(".dc-dock form")!;
+    const tops: number[] = ((window as unknown as { tops: number[] }).tops = []);
+    const tick = () => {
+      tops.push(Math.round(el.getBoundingClientRect().top));
+      if (tops.length < 400) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await box.fill("/tool tonight {}");
+  await box.press("Enter");
+  const reply = page.locator('[data-testid="today-reply"]:visible');
+  // the test model words its answer from the tool's result ("Done: {…}")
+  await expect(reply).toContainText("Done:", { timeout: 15_000 });
+  await expect(reply.getByRole("list", { name: "Saved" })).toHaveCount(0);
+  await page.waitForTimeout(800);
+  expect(redraws).toBe(0);
+  const tops = await page.evaluate(() => [...new Set((window as unknown as { tops: number[] }).tops)]);
+  expect(tops).toHaveLength(1);
+});
+
 // A long answer stays in the middle, between the sky and the bar, and scrolls inside it: on a small and a tall phone.
 for (const [label, size] of [
   ["a small phone", { width: 375, height: 667 }],

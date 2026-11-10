@@ -9,6 +9,7 @@ import { cheerSkylings } from "@/components/skylings/night";
 import { OFFER_REPLIES, offersToAct, UNDOABLE_TOOLS } from "@/components/jarvis/suggestions";
 import { AI_CONSENT_NEEDED } from "@/lib/ai-consent";
 import { isNarration } from "@/lib/narration";
+import { savesSomething } from "@/lib/tool-saves";
 import { cn } from "@/lib/utils";
 import { IdeaClouds } from "@/components/skylings/idea-clouds";
 import type { IdeaCloud } from "@/lib/idea-clouds";
@@ -125,11 +126,9 @@ export async function askOnToday(message: string, refresh: () => void) {
             const i = r.tools.findIndex((t) => t.callId === ev.callId);
             if (i >= 0) r.tools[i] = { ...r.tools[i], status: ev.ok ? "ok" : "error", summary: ev.summary };
           });
-          // what was saved lands on the sky at once
-          if (ev.ok) {
-            saved = true;
-            refresh();
-          }
+          // only what saves something counts; Today redraws once, at the end, so nothing jumps while it streams (COO,
+          // 2026-11-10: lookups showed "✓ Done" and a refresh after each made Today jump)
+          if (ev.ok && savesSomething(ev.name ?? "")) saved = true;
         } else if (ev.type === "confirmation")
           patch((r) => {
             r.tools = r.tools.filter((t) => t.callId !== ev.callId);
@@ -143,7 +142,10 @@ export async function askOnToday(message: string, refresh: () => void) {
   } finally {
     patch((r) => void (r.streaming = false));
     set({ busy: false });
-    if (saved) cheerSkylings();
+    if (saved) {
+      refresh();
+      cheerSkylings();
+    }
   }
 }
 
@@ -179,7 +181,7 @@ async function undoLast(callIds: string[], refresh: () => void) {
 export function TodayReplyCard({ name, refresh, fill = false }: { name: string; refresh: () => void; fill?: boolean }) {
   const { reply, conversationId, busy } = useTodayChat();
   if (!reply) return null;
-  const saved = reply.tools.filter((t) => t.status === "ok");
+  const saved = reply.tools.filter((t) => t.status === "ok" && savesSomething(t.name));
   const undoable = reply.settled ? [] : saved.filter((t) => (UNDOABLE_TOOLS as readonly string[]).includes(t.name)).map((t) => t.callId);
   const offer = !reply.streaming && !reply.settled && !reply.confirmations.some((c) => c.status === "pending") && offersToAct(reply.text);
   return (

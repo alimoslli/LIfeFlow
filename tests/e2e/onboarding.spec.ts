@@ -192,12 +192,13 @@ test("a finished account answering under 13 on Today is locked the same way (own
   await pool.query(`update users set preferences = preferences - 'birthDate' where email = $1`, [email]);
   await page.goto("/");
   const card = page.getByRole("region", { name: "Your birthday" });
-  // a valid date always turns Save on (filled again if it landed before the card was ready, under a busy machine)
+  // a valid date turns Save on once the card is live: wait for React to have taken over the field (a busy machine can
+  // show the page well before that, and a date typed earlier is lost), then type it once
+  const field = card.getByLabel("Your birthday");
+  await expect.poll(() => field.evaluate((el) => Object.keys(el).some((k) => k.startsWith("__reactProps"))), { timeout: 60_000 }).toBe(true);
   const answer = async (day: string) => {
-    await expect(async () => {
-      await card.getByLabel("Your birthday").fill(day);
-      await expect(card.getByRole("button", { name: "Save" })).toBeEnabled({ timeout: 2_000 });
-    }).toPass({ timeout: 30_000 });
+    await field.fill(day);
+    await expect(card.getByRole("button", { name: "Save" })).toBeEnabled();
     await card.getByRole("button", { name: "Save" }).click();
   };
   // today's date (a phone's picker opens on it) is a slip, not an answer: nothing is locked
