@@ -17,6 +17,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Marketing scripts and renders are not app code.
+    "marketing/**",
   ]),
 ]);
 
