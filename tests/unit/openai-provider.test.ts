@@ -195,6 +195,30 @@ describe("OpenAI Responses provider", () => {
     expect(requests.at(-1)!.model).toBe("gpt-5.5");
   });
 
+  it("if the small model refuses our request, the main model answers, and the small one is set aside", async () => {
+    const models: string[] = [];
+    const fakeFetch = (async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      models.push(body.model);
+      if (body.model === "tiny-refuses")
+        return new Response(JSON.stringify({ error: { message: "Unsupported parameter: 'text.verbosity'", type: "invalid_request_error" } }), {
+          status: 400,
+          headers: { "content-type": "application/json" },
+        });
+      return sse([
+        completed([{ type: "message", id: "m", role: "assistant", status: "completed", content: [{ type: "output_text", text: "ok", annotations: [] }] }]),
+      ]);
+    }) as unknown as typeof fetch;
+    const provider = new OpenAIProvider({ apiKey: "sk-test", model: "gpt-5.5", smallModel: "tiny-refuses", reasoningEffort: "auto", fetch: fakeFetch });
+    const turn = provider.startTurn({ system: "S", history: [{ type: "user", text: "hi" }], tools: [], effort: "low", verbosity: "low" });
+    for await (const _ of turn.step()) void _;
+    expect(turn.model).toBe("gpt-5.5");
+    // the next small turn doesn't try it again
+    const next = provider.startTurn({ system: "S", history: [{ type: "user", text: "hi" }], tools: [], effort: "low" });
+    for await (const _ of next.step()) void _;
+    expect(models).toEqual(["tiny-refuses", "gpt-5.5", "gpt-5.5"]);
+  });
+
   it("drops 24h retention once if the model refuses it, and keeps answering", async () => {
     const requests: Record<string, unknown>[] = [];
     const fakeFetch = (async (_url: string, init: RequestInit) => {

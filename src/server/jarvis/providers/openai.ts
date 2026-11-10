@@ -20,6 +20,8 @@ export type OpenAIConfig = {
 
 /** Models that refused prompt_cache_retention: asked once, then left out. */
 const noRetention = new Set<string>();
+/** Small models that refused our request this run: their turns go to the main model (see startTurn). */
+const smallRefused = new Set<string>();
 const refusedRetention = (e: unknown) => e instanceof OpenAI.APIError && e.status === 400 && /prompt_cache_retention/.test(e.message);
 
 const toToolDefs = (tools: ToolSpec[]): Tool[] =>
@@ -115,40 +117,62 @@ export class OpenAIProvider implements ModelProvider {
     const input: ResponseInputItem[] = toResponsesInput(history);
     let toolDefs = toToolDefs(tools);
     const { client, config } = this;
-    // small things on the small model (owner, 2026-11-10); one model for the whole turn, so its cache holds
-    const model = effort === "low" && config.smallModel ? config.smallModel : config.model;
-    const reasoning = isReasoningModel(model);
+    // small things on the small model (owner, 2026-11-10); one model for the whole turn, so its cache holds. A small
+    // model that refuses our request (unknown model, a setting it doesn't take) is set aside and the main one answers.
+    const small = effort === "low" && config.smallModel && !smallRefused.has(config.smallModel) ? config.smallModel : undefined;
+    let model = small ?? config.model;
     const fixed = config.reasoningEffort && config.reasoningEffort !== "auto" ? config.reasoningEffort : undefined;
     const reasoningEffort = fixed ?? effort;
+    let first = true;
+
+    const bodyFor = (model: string): ResponseCreateParamsStreaming => {
+      const reasoning = isReasoningModel(model);
+      return {
+        model,
+        instructions: system,
+        input,
+        tools: toolDefs,
+        parallel_tool_calls: true,
+        store: false,
+        stream: true,
+        ...(cacheKey && { prompt_cache_key: cacheKey }),
+        ...(reasoning && { include: ["reasoning.encrypted_content"] }),
+        ...(reasoning && reasoningEffort && { reasoning: { effort: reasoningEffort } }),
+        // GPT-5 family: the model's own answer-length setting. A prompt rule alone left week plans at 800+ words.
+        ...(reasoning && verbosity && { text: { verbosity } }),
+      };
+    };
+    const send = async (model: string) => {
+      const body = bodyFor(model);
+      const retention = config.cacheRetention && !noRetention.has(model) ? config.cacheRetention : undefined;
+      try {
+        return await client.responses.create(retention ? { ...body, prompt_cache_retention: retention } : body, { signal });
+      } catch (e) {
+        if (!retention || !refusedRetention(e)) throw e;
+        noRetention.add(model);
+        return client.responses.create(body, { signal });
+      }
+    };
 
     return {
-      model,
+      get model() {
+        return model;
+      },
       async *step(toolResults, nextTools) {
         for (const r of toolResults ?? []) input.push({ type: "function_call_output", call_id: r.callId, output: r.output });
         if (nextTools) toolDefs = toToolDefs(nextTools);
-        const body: ResponseCreateParamsStreaming = {
-          model,
-          instructions: system,
-          input,
-          tools: toolDefs,
-          parallel_tool_calls: true,
-          store: false,
-          stream: true,
-          ...(cacheKey && { prompt_cache_key: cacheKey }),
-          ...(reasoning && { include: ["reasoning.encrypted_content"] }),
-          ...(reasoning && reasoningEffort && { reasoning: { effort: reasoningEffort } }),
-          // GPT-5 family: the model's own answer-length setting. A prompt rule alone left week plans at 800+ words.
-          ...(reasoning && verbosity && { text: { verbosity } }),
-        };
-        const retention = config.cacheRetention && !noRetention.has(model) ? config.cacheRetention : undefined;
         let stream;
         try {
-          stream = await client.responses.create(retention ? { ...body, prompt_cache_retention: retention } : body, { signal });
+          stream = await send(model);
         } catch (e) {
-          if (!retention || !refusedRetention(e)) throw e;
-          noRetention.add(model);
-          stream = await client.responses.create(body, { signal });
+          // only before the small model has said anything in this turn: later steps carry its own reasoning items
+          const status = (e as { status?: number })?.status;
+          if (!(first && small && model === small && (status === 400 || status === 404))) throw e;
+          smallRefused.add(small);
+          model = config.model;
+          stream = await send(model);
         }
+        first = false;
         let text = "";
         let output: ResponseOutputItem[] | null = null;
         let usage: TokenUsage | undefined;
