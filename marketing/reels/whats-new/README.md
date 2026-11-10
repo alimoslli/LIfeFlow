@@ -6,8 +6,9 @@ day), with sample data in a test account. Ray's reply is real (one chat turn thr
 cents, about 18:30 UTC on Nov 10).
 
 **No OpenAI from this environment until the owner says otherwise** (owner via the COO, 2026-11-10: the API bill jumped).
-`serve.sh` now leaves the key unset and the test account's AI consent is off, so a refilm can't call it: shots that need
-a real reply wait for the owner's yes.
+`serve.sh` now leaves the key unset and the test account's AI consent is off, so a refilm can't call it. A refilm of the
+cloud shot reuses these frames, or runs on the fake model (`tests/e2e/fake-openai.mjs`); a real reply needs the owner's yes
+with the number of messages and the cost (CLAUDE.md "AI spend").
 
 Order: the new opening screen ("We rebuilt LifeFlow. Here's what's new.") → your day as the sky → an idea cloud ("Tell Ray
 I'll study tonight at 8") sent, and Ray saves the promise → tick it off (the star) → tonight's stars ("6 stars today") →
