@@ -99,3 +99,91 @@ test("install prompt with iPhone steps, and notification settings", async ({ pag
   await page.reload();
   await expect(page.getByRole("checkbox", { name: /To-do reminders/ })).not.toBeChecked();
 });
+
+// An app left open (an installed app stays in memory for days) can run an old copy long after a fix has shipped
+// (owner's phone, 2026-11-10). When it comes back to the front and a newer build is live, it reloads itself: once,
+// and never over something the person is in the middle of.
+test("an open app that is behind reloads itself when it comes back to the front, once, and never over a draft", async ({ page, request }) => {
+  await signUp(page, "Stale Sam");
+  expect((await (await request.get("/api/version")).json()).v).toBe("e2e-build");
+  await expect(page.locator("html")).toHaveAttribute("data-build", "e2e-build");
+  const mark = () => page.evaluate(() => ((window as unknown as { __mark?: number }).__mark = 1));
+  const marked = () => page.evaluate(() => (window as unknown as { __mark?: number }).__mark === 1);
+  const comeBack = () => page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+
+  // the live build is the one running: nothing happens
+  await mark();
+  await comeBack();
+  await page.waitForTimeout(600);
+  expect(await marked()).toBe(true);
+
+  // a newer build is live, but there's a draft on the page: not now
+  await page.route("**/api/version", (r) => r.fulfill({ json: { v: "newer-build" } }));
+  await page.reload();
+  // if the app was ready before the page finished loading it has already checked and reloaded itself once: let that
+  // settle and start from a clean slate either way
+  await page.waitForTimeout(1000);
+  await page.waitForLoadState("load");
+  await page.evaluate(() => sessionStorage.removeItem("lf-reloaded-for"));
+  await mark();
+  await page.evaluate(() => {
+    const t = document.createElement("textarea");
+    t.id = "draft";
+    t.value = "half a thought";
+    document.body.append(t);
+  });
+  await comeBack();
+  await page.waitForTimeout(600);
+  expect(await marked()).toBe(true);
+
+  // the draft is gone, but a call, a streaming reply or an upload is in flight: not now
+  await page.evaluate(() => {
+    document.getElementById("draft")?.remove();
+    document.documentElement.dataset.lfBusy = "1";
+  });
+  await comeBack();
+  await page.waitForTimeout(600);
+  expect(await marked()).toBe(true);
+
+  // nothing in flight, but they typed in a field on this page and haven't sent it: not now
+  await page.evaluate(() => {
+    delete document.documentElement.dataset.lfBusy;
+    const i = document.createElement("input");
+    i.id = "half-form";
+    document.body.append(i);
+    i.value = "Ma";
+    i.dispatchEvent(new Event("input", { bubbles: true }));
+    i.blur();
+  });
+  await comeBack();
+  await page.waitForTimeout(600);
+  expect(await marked()).toBe(true);
+
+  // they sent it (the form is gone): the next time the app comes back to the front, it reloads
+  await page.evaluate(() => document.getElementById("half-form")?.remove());
+  await Promise.all([page.waitForEvent("load"), comeBack()]);
+  expect(await marked()).toBe(false);
+  expect(await page.evaluate(() => sessionStorage.getItem("lf-reloaded-for"))).toBe("newer-build");
+
+  // still behind after the reload (this test's server never changes): it leaves the person alone, no loop
+  await mark();
+  await comeBack();
+  await page.waitForTimeout(800);
+  expect(await marked()).toBe(true);
+});
+
+// The mark the update waits on is set by the real screens, not only by the test above: a file attached in the chat
+// and not sent yet marks the app busy, and taking it off clears the mark.
+test("a file attached in the chat makes an app update wait until it is sent or removed", async ({ page }) => {
+  await signUp(page, "Busy Bea");
+  await page.goto("/jarvis");
+  await expect(page.locator("html")).not.toHaveAttribute("data-lf-busy", "1");
+  await page
+    .locator('input[type="file"]')
+    .first()
+    .setInputFiles({ name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("BIO 110 exam Thursday 10am") });
+  await expect(page.getByRole("button", { name: "Remove notes.txt" })).toBeVisible();
+  await expect(page.locator("html")).toHaveAttribute("data-lf-busy", "1");
+  await page.getByRole("button", { name: "Remove notes.txt" }).click();
+  await expect(page.locator("html")).not.toHaveAttribute("data-lf-busy", "1");
+});

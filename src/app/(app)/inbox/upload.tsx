@@ -3,12 +3,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Camera, Copy, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/toaster";
+import { useAppBusy } from "@/lib/app-busy";
 
 /** Upload a photo or PDF (or take a photo) and Jarvis files it. */
 export function InboxUpload() {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  // a photo on its way up: an app update waits (components/pwa/app-updater.tsx)
+  useAppBusy(busy);
   const send = async (files: FileList | null) => {
     if (!files?.length) return;
     setBusy(true);

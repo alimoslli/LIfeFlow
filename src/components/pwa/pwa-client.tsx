@@ -5,6 +5,7 @@ import { CloudOff, Download, Share, X } from "lucide-react";
 import { Sheet } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/toaster";
 import { flush, pending } from "@/lib/offline-queue";
+import { AppUpdater } from "./app-updater";
 
 type InstallPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
 
@@ -104,6 +105,7 @@ export function PwaClient() {
 
   return (
     <>
+      <AppUpdater />
       {(offline || queued > 0) && (
         <div role="status" className="fixed inset-x-0 top-[calc(env(safe-area-inset-top)+52px)] z-40 flex justify-center px-4 md:top-4">
           <span className="flex items-center gap-2 rounded-full bg-text px-4 py-2 text-sm text-bg shadow-lift">

@@ -46,6 +46,8 @@ export default defineConfig({
         INBOX_DOMAIN: "in.example.com",
         INBOX_WEBHOOK_SECRET: "e2e-inbox-secret",
         ADMIN_EMAILS: "admin-owner@example.com",
+        // a build id, so the "a new version is live" check can be exercised (pwa-phone.spec.ts)
+        VERCEL_GIT_COMMIT_SHA: "e2e-build",
       },
     },
   ],

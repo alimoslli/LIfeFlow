@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useAppBusy } from "@/lib/app-busy";
 import {
   AlertTriangle,
   ChevronRight,
@@ -115,6 +116,8 @@ export function JarvisChat({
   const [refreshing, startRefresh] = useTransition();
   const [pending, setPending] = useState<(UiAttachment & { uploading?: boolean; error?: string })[]>([]);
   const [lastTool, setLastTool] = useState<string | null>(null);
+  // a reply streaming or a file attached but not sent: an app update waits (components/pwa/app-updater.tsx)
+  useAppBusy(busy || pending.length > 0);
   const [talking, setTalking] = useState(!!startVoice && canSend);
   const abortRef = useRef<AbortController | null>(null);
   const attemptRef = useRef<Attempt | null>(null);

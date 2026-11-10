@@ -1,3 +1,4 @@
+import { liveBuild } from "@/lib/app-version";
 import { ErrorReporter } from "@/components/error-reporter";
 import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
@@ -74,6 +75,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
       data-theme={theme === "system" ? undefined : theme}
       data-text={textSize === "default" ? undefined : textSize}
+      data-build={liveBuild() || undefined}
       className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full">

@@ -2,6 +2,7 @@
 import { jsonOf, PlainError, serverWords } from "@/lib/plain-error";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAppBusy } from "@/lib/app-busy";
 import { AudioLines, Check, Mic, MicOff } from "lucide-react";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { cn } from "@/lib/utils";
@@ -78,6 +79,8 @@ export function LiveVoice({
   const [seconds, setSeconds] = useState(0);
   const [tool, setTool] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  // a call in progress: an app update waits until it's over (components/pwa/app-updater.tsx)
+  useAppBusy(true);
   const cb = useRef(events);
   // The latest callbacks, for event handlers that outlive a render.
   useEffect(() => {

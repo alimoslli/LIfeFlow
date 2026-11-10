@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useAppBusy } from "@/lib/app-busy";
 import { Landmark, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,8 @@ function useLink(reconnect?: string, chooseAccounts?: boolean) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
+  // the bank's own screen is open, or the accounts are importing: an app update waits (components/pwa/app-updater.tsx)
+  useAppBusy(busy);
 
   const run = useCallback(
     async (token: string, receivedRedirectUri?: string) => {
