@@ -19,6 +19,7 @@ import type { ClockData } from "@/lib/day-clock";
 import type { LifeStage } from "@/lib/life";
 import { cn } from "@/lib/utils";
 import { connectCanvasFeedAction } from "@/app/(app)/settings/integrations/actions";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { NotifyAsk } from "@/components/jarvis/notify-ask";
 import { completeOnboardingAction, saveWelcomeAction, skipOnboardingAction, skyNowAction } from "./actions";
 
@@ -728,15 +729,8 @@ function Learn() {
               done[k] ? "bg-gradient-to-b from-dawn-1 to-dawn-2 text-ink-night" : "bg-surface shadow-soft",
             )}
           >
-            <span
-              className={cn(
-                "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg",
-                done[k] ? "bg-ink-night text-star-gold" : "bg-surface-2 text-muted",
-              )}
-              aria-hidden
-            >
-              <Check className="h-3.5 w-3.5" strokeWidth={3} />
-            </span>
+            {/* the app's own tick box (task-check.tsx): empty, then ticked when the wheel does it */}
+            <PixelIcon name={done[k] ? "todo" : "box"} className="mt-0.5 h-6 w-6 shrink-0" />
             <span>
               <span className="block text-[0.9375rem] font-medium">
                 {t}
