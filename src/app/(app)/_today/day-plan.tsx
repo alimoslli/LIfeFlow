@@ -41,8 +41,9 @@ export function AskBar({ name, chips = true, clouds = [] }: { name: string; chip
   return (
     <div className="flex flex-col gap-3">
       <div className="@container relative pt-12">
-        <div className="absolute inset-x-0 top-0 z-10 flex items-end justify-between gap-2 pr-1 pl-4">
-          {/* the skyling stands on the bar's top edge with its name beside it; tap it and it hops */}
+        <div className="absolute inset-x-0 top-12 z-10 flex -translate-y-full items-end justify-between gap-2 pr-1 pl-4">
+          {/* the skyling stands on the bar's top edge with its name beside it; tap it and it hops. The row's bottom is the
+              bar's top edge whatever is in it, so a taller cloud grows upward, never onto the bar */}
           <div className="flex shrink-0 items-end gap-1.5" data-testid="ask-skyling">
             <SkylingSprite companion={skyling} className="-mb-1.5 h-9 w-9 cursor-pointer" />
             <span className="lf-chip-night mb-1 rounded-full px-2.5 py-0.5 text-[0.75rem] font-semibold">{name}</span>

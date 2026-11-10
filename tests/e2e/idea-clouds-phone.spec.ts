@@ -19,6 +19,15 @@ test("idea clouds: short, from real data, a tap fills the box and sends nothing"
   const say = await today.getByRole("button").first().innerText();
   expect(say.split(/\s+/).length).toBeLessThanOrEqual(8);
   expect(say).not.toMatch(/did you know|assistant/i);
+  // the cloud and the name tag sit above Today's bar, never on it (nothing lies over anything)
+  const todayBar = page.locator('form[data-tour="skyling"]:visible').first();
+  await expect(todayBar).toBeVisible();
+  const barTop = (await todayBar.boundingBox())!.y;
+  for (const above of [today.getByRole("button").first(), page.locator('[data-testid="ask-skyling"]:visible span.lf-chip-night').first()]) {
+    await expect(above).toBeVisible();
+    const box = (await above.boundingBox())!;
+    expect(box.y + box.height).toBeLessThanOrEqual(barTop + 0.5);
+  }
   // The empty chat: the catchphrase and three clouds; a tap fills the box and sends nothing. With reduced motion the
   // clouds stand still (and a test can only click a still element).
   await page.emulateMedia({ reducedMotion: "reduce" });

@@ -260,7 +260,7 @@ The owner approved 12 improvements after a fresh walk through the app ([baseline
 | 8 | One-tap fixes ("Do it" with Undo) | COO (chat side), LF Main | Live in the chat: an answer that offers to do something gets "Do it" and "Not now"; an answer that created to-dos or calendar events gets Undo, which takes back exactly those (anything changed since is kept and named), once, within a day (`do-it-phone.spec`, `chat-undo.test`, reviewed twice). Update cards already had Do it and Undo |
 | 9 | Daily rhythm (morning, evening, weekly) | COO | Live: already built (morning brief with "Plan my day", evening wrap-up with one-tap "Move to tomorrow", Sunday review), and since item 2 they arrive at each person's own time without opening the app. With the Money lock on, pushes and cards no longer show amounts (`e05251d0`, `1b968e49`, reviewed) |
 | 10 | Settings in our own form | COO | Live: Settings comes up from below as doors with pixel pictures, pages named as their doors, sky switches |
-| 11 | Laptop Today uses the screen | LF Main | After 6 |
+| 11 | Laptop Today uses the screen | LF Main, checked by the COO | Live: at 1280 and 1440 wide the sky fills the width with the skyling's card and bar beside the wheel (was about half the screen in the baseline). The idea cloud and name tag no longer sit on the bar (`idea-clouds-phone.spec` checks it) |
 | 12 | Pause Admin and HQ development | LF HQ | Paused 2026-11-10 |
 
 Last: a real-world walk again and the before-and-after comparison, then a new marketing and relaunch plan for the owner's approval.
@@ -338,6 +338,7 @@ Last: a real-world walk again and the before-and-after comparison, then a new ma
 
 ## 12. Change log
 Newest first. One line per real change, by the chat that made it.
+- 2026-11-10, LF COO: item 11 checked live on laptops; the idea cloud and the skyling's name tag above Today's bar no longer overlap it on any width (their row now ends at the bar's top edge).
 - 2026-11-10, LF COO: item 8 live in the chat. "Do it" and "Not now" under an answer that offers to act, and Undo under an answer that created to-dos or events (removes exactly those, keeps anything changed since, once, within a day; independent review, findings fixed with tests).
 - 2026-11-10, LF COO: pixel glyphs replace the last generic line icons on app pages (delete, copy, download, check, arrows, undo, sync, edit, open link, search, mail, clock, link, repeat, alert, flame, flag, pause/play, upload, hide, archive, more, sign out, video); `look.test.ts` keeps them out (the skyling's pages and the inbox follow, LF Main). With the Money lock on, pushes show "Money heads-up" for money messages and drop amounts from the morning brief and weekly review, and the cards in the app drop them too (rule: nothing private on the lock screen; reviewed independently). Item 9 recorded as live. The sideways Today test waits for the sky to stream in.
 - 2026-11-10, LF COO: item 4 live. A whole week told in one message is saved in one step (`set_up_schedule`), and "can I afford" gets one verdict decided by our code from Available now, the same when asked twice (it used to say wait once and yes once). Measured: the eleven questions 66 s → 44 s. Also fixed tonight: a file picked as the inbox loads was filed twice.
