@@ -345,7 +345,28 @@ export function drawCompanion(canvas: HTMLCanvasElement, c: CompanionInfo, pose:
   const kept = painted.get(key);
   if (kept) return g.putImageData(kept, 0, 0);
   g.clearRect(0, 0, GRID, GRID);
-  for (const [x, y, col] of pixels(c, pose, frame, night)) {
+  const px = pixels(c, pose, frame, night);
+  if (c.key === "star" && night) {
+    // Star is the night's own colour: on the night sky a pale moonlit rim keeps it from disappearing (LF Marketing,
+    // 2026-11-10: with "Changes with the sky" it's in front of everyone every night)
+    const filled = new Set(px.filter(([, y]) => y < 23).map(([x, y]) => `${x},${y}`));
+    g.fillStyle = "#86a8de";
+    for (const key of filled) {
+      const [x, y] = key.split(",").map(Number);
+      for (const [dx, dy] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ] as const) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= GRID || ny >= 23 || filled.has(`${nx},${ny}`)) continue;
+        g.fillRect(flip ? GRID - 1 - nx : nx, ny, 1, 1);
+      }
+    }
+  }
+  for (const [x, y, col] of px) {
     g.fillStyle = col;
     g.fillRect(flip ? GRID - 1 - x : x, y, 1, 1);
   }
