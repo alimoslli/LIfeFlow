@@ -71,7 +71,7 @@ test("an import from another AI saves only what's ticked", async ({ page }) => {
     .getByLabel(/Learned to drive/)
     .uncheck();
   await page.getByRole("button", { name: "Save 5 items" }).click();
-  await expect(page).toHaveURL(/\/milestones\?imported=2\.1\.1/);
+  await expect(page).toHaveURL(/\/goals\?view=done&imported=2\.1\.1/);
   await expect(page.getByRole("status")).toContainText("Imported 2 about you, 1 milestone, 1 goal");
   await expect(page.getByRole("region", { name: "2022" })).toContainText("Graduated from Lincoln High");
   await expect(page.getByText("Learned to drive")).toHaveCount(0);
@@ -81,12 +81,14 @@ test("an import from another AI saves only what's ticked", async ({ page }) => {
   ]);
 
   // Add one by hand.
+  await page.getByRole("button", { name: "Milestone", exact: true }).click();
   await page.getByLabel("What happened", { exact: true }).fill("Moved to Atlanta");
   await page.getByLabel("When", { exact: true }).fill("May 2023");
   await page.getByLabel("Kind", { exact: true }).selectOption("travel");
   await page.getByRole("button", { name: "Add milestone" }).click();
-  await expect(page.getByRole("region", { name: "2023" })).toContainText("May 2023 · Travel");
-  await page.getByRole("navigation", { name: "Milestones and goals" }).getByRole("link", { name: "Goals" }).click();
+  await expect(page.getByRole("region", { name: "May 2023" })).toContainText("Moved to Atlanta");
+  await expect(page.getByRole("region", { name: "May 2023" })).toContainText("Travel");
+  await page.getByRole("navigation", { name: "Goals" }).getByRole("link", { name: "Aiming for" }).click();
   await expect(page).toHaveURL(/\/goals$/);
-  await expect(page.getByText("Get a 3.5 GPA")).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Get a 3.5 GPA/ })).toBeVisible();
 });

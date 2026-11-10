@@ -11,6 +11,7 @@ test("reaching a goal brings the milestone sun, one more toward a goal brings a 
   page.on("pageerror", (e) => errors.push(String(e)));
   await signUp(page, "Goal Gia");
   await page.goto("/goals");
+  await page.getByRole("button", { name: "Goal", exact: true }).click();
   await page.getByLabel("Goal", { exact: true }).fill("Read 2 books");
   await page.getByLabel("Number (optional)").fill("2");
   await page.getByLabel("Of what").fill("books");
@@ -38,6 +39,7 @@ test("with reduced motion the celebration is a still picture that fades, not a d
   const page = await context.newPage();
   await signUp(page, "Calm Cam");
   await page.goto("/goals");
+  await page.getByRole("button", { name: "Goal", exact: true }).click();
   await page.getByLabel("Goal", { exact: true }).fill("Finish the essay");
   await page.getByRole("button", { name: "Add goal" }).click();
   await page.getByRole("button", { name: 'Mark "Finish the essay" done' }).click();

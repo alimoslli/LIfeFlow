@@ -57,7 +57,7 @@ export async function saveLifeImportAction(_p: ActionState, fd: FormData): Promi
     },
     { revalidate: ["/jarvis", "/milestones", "/goals"] },
   );
-  if (res?.ok && (r.facts || r.milestones || r.goals)) redirect(`/milestones?imported=${r.facts}.${r.milestones}.${r.goals}`);
+  if (res?.ok && (r.facts || r.milestones || r.goals)) redirect(`/goals?view=done&imported=${r.facts}.${r.milestones}.${r.goals}`);
   return res;
 }
 

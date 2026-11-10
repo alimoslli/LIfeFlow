@@ -2162,3 +2162,16 @@ input[type="checkbox"].lf-switch:focus-visible {
   background-position: 66% 16%;
   box-shadow: 0 4px 12px rgb(0 0 0 / 0.35);
 }
+
+/* Two small tiles side by side (Goals: Every day). */
+.lf-tiles.lf-tiles-2 {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+.lf-tiles.lf-tiles-2 > li {
+  flex: 1 1 calc(50% - 0.25rem);
+  min-width: 0;
+}
+.lf-tiles.lf-tiles-2 > li.basis-full {
+  flex-basis: 100%;
+}

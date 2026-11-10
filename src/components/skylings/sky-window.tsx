@@ -123,3 +123,21 @@ export const BOOKS: Art = {
   ],
   colors: { R: "#f07a52", r: "#c4542a", B: "#5b8fe0", b: "#3a64a8", G: "#ffcf5c", g: "#d89a24", P: "#fff4dc" },
 };
+
+/** A star to stand on (Goals: Done). */
+export const STAR: Art = {
+  rows: [
+    ".....GG.....",
+    "....GYYG....",
+    "....GYWG....",
+    "GGGGGYWYGGGG",
+    "GYYYYWYYYYYG",
+    ".GYYYYYYYYG.",
+    "..GYYYYYYG..",
+    "..GYYYYYYG..",
+    ".GYYYGGYYYG.",
+    ".GYYG..GYYG.",
+    ".GGG....GGG.",
+  ],
+  colors: { Y: "#ffcf5c", W: "#fff4dc", G: "#d89a24" },
+};
