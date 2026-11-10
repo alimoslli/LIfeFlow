@@ -1,0 +1,30 @@
+// Local filming only (never committed, never production): a coherent film day for the demo account, today.
+import "dotenv/config";
+import { and, eq } from "drizzle-orm";
+import { todayIn } from "../../src/lib/dates";
+import { closeDb, getDb } from "../../src/server/db/client";
+import { users } from "../../src/server/db/schema";
+import { withUser } from "../../src/server/db/with-user";
+import { createEvent } from "../../src/server/services/calendar";
+import { createTask, updateTask } from "../../src/server/services/tasks";
+
+const TZ = "America/New_York";
+async function main() {
+  if (process.env.NODE_ENV === "production") throw new Error("local only");
+  const db = getDb();
+  const [u] = await db.select().from(users).where(and(eq(users.email, "demo@budgetflow.local"), eq(users.accountKind, "demo")));
+  if (!u) throw new Error("run the demo seed first");
+  const today = process.env.FILM_TODAY ?? todayIn(TZ);
+  await withUser(u.id, async (s) => {
+    const ev = (title: string, start: string, end: string, location?: string) =>
+      createEvent(s, TZ, { title, kind: "personal", date: today, startTime: start, endTime: end, location }, "google");
+    await ev("Gym", "07:00", "07:45", "Rec Center");
+    await ev("Lunch with Sam", "12:00", "12:45");
+    const t = await createTask(s, TZ, { title: "Pay phone bill", priority: "medium", dueDate: today, dueTime: "11:00" }, "manual");
+    await updateTask(s, TZ, t.id, { status: "done" });
+    await createTask(s, TZ, { title: "Groceries", priority: "medium", dueDate: today, dueTime: "21:30" }, "manual");
+  });
+  console.log("film day added for", today);
+  await closeDb();
+}
+main().catch((e) => { console.error(e); process.exit(1); });

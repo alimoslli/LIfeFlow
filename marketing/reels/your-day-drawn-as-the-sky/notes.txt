@@ -1,0 +1,18 @@
+"Your day, drawn as the sky" (Nov 10): how LifeFlow shows your day, and the skylings. 36 s, 1080 x 1920, full-screen app (no phone).
+
+0.0   "Your day, drawn as the sky."
+2.9   Labels on the real Today: the sun's path through your day; your skyling stands at right now; your things sit on it, at
+      their time; it follows the real sunrise and sunset; what's next, at a glance.
+10.8  "Turn it to see what's coming." (the sky turns to 9:30 PM, Star is up)  "One tap back to now."
+15.5  "Tap to open your day."  "Slide back: what already happened."  "Slide ahead: what's next."
+      "Synced from your calendar, classes, work and bank."
+24.1  "And it notices what you'd miss." (the real card: Work overlaps MATH 152 on Thursday)
+27.0  Settings › Your skyling: "Six skylings, one for each moment of the sky."  Tap "Changes with the sky":
+      "Pick yours. Or let the sky choose."
+32.6  The logo ending: "Let's clear your sky."
+
+Filmed from the latest app on a test computer; the day shown is sample data in a test account. The bottom tab bar still has
+the old icons in the app itself; this gets refilmed once the app side swaps them. Sound effects only; add music if you want.
+Caption idea: Your day, drawn as the sky ☀️ Turn it to see what's coming, tap to open it, and let your skyling keep watch.
+Let's clear your sky. #lifeflow #studenttok #collegelife
+Nothing is posted until you say "post it".

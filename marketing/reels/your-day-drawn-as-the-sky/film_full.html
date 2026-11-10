@@ -1,0 +1,122 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: "Fraunces"; src: url("/official/fraunces-var.woff2") format("woff2"); font-weight: 100 900; }
+@font-face { font-family: "Geist"; src: url("/official/geist-latin.woff2") format("woff2"); font-weight: 100 900; }
+html,body{margin:0;background:#000}canvas{display:block}
+</style></head>
+<body><canvas id="c" width="1080" height="1920"></canvas>
+<script>
+// "Your day, drawn as the sky" (full screen): the real app filling the frame, no phone. Local build of main, a sample day in a
+// test account (Nov 10, 2:30 PM New York). Labels point at each part; captions name each move.
+const W = 1080, H = 1920, g = document.getElementById("c").getContext("2d"), GOLD = "#ffd27a", K = 2.5;
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const ease = (k) => (k = clamp(k), k * k * (3 - 2 * k));
+const back = (k) => { k = clamp(k); const s = 1.6; return 1 + (s + 1) * Math.pow(k - 1, 3) + s * Math.pow(k - 1, 2); };
+const imgs = {}; const load = (src) => imgs[src] || (imgs[src] = new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error(src)); i.src = src; }));
+const pad = (n) => String(n).padStart(4, "0");
+let LOG = null, SLOG = null;
+
+const S = { explain: 2.6, turn: 10.8, open: 15.5, notice: 24.1, settings: 27.0, tap: 29.5, outro: 32.6, end: 36.1 };
+const CALLOUTS = [ // [start, text, anchor (css px), radius (video px), label centre (video px)]
+  [2.9, "The sun's path through your day", [330, 185], 150, [560, 760]],
+  [4.5, "Your skyling stands at right now", [216, 76], 140, [540, 440]],
+  [6.1, "Your things sit on it, at their time", [168, 152], 165, [540, 640]],
+  [7.7, "It follows the real sunrise and sunset", [227, 288], 150, [540, 1010]],
+  [9.3, "What's next, at a glance", [216, 355], 150, [540, 1110]],
+];
+const CAPTIONS = [ // [from, to, line 1, line 2, y]
+  [S.turn, 14.25, "Turn it to see", "what's coming.", 1490],
+  [14.25, S.open, "One tap", "back to now.", 1490],
+  [S.open, 17.2, "Tap to open", "your day.", 1490],
+  [17.2, 20.1, "Slide back:", "what already happened.", 1490],
+  [20.1, 22.4, "Slide ahead:", "what's next.", 1490],
+  [22.4, S.notice, "Synced from your calendar,", "classes, work and bank.", 1490],
+  [S.notice, S.settings, "And it notices", "what you'd miss.", 330],
+  [S.settings, S.tap, "Six skylings, one for", "each moment of the sky.", 1520],
+  [S.tap, S.outro, "Pick yours.", "Or let the sky choose.", 1520],
+];
+function capFrame(t) { // Today footage: the explain plays forward then back; later it plays straight on
+  if (t < S.turn) { const f = t * 30; return f <= 240 ? Math.max(1, Math.floor(f) + 1) : Math.max(1, Math.floor(480 - f)); }
+  if (t < S.notice) return clamp(241 + Math.floor((t - S.turn) * 30), 241, 640);
+  const f = (t - S.notice) * 30; return Math.max(1, Math.floor(f) + 1); // the closed day again, for the clash card
+}
+function text(lines, y, size, { alpha = 1, scale = 1, box = false } = {}) {
+  if (alpha <= 0) return;
+  g.save(); g.font = `600 ${size}px Fraunces`;
+  let sz = size; for (const l of lines) { const w = g.measureText(l).width; if (w > 940) sz = Math.min(sz, size * 940 / w); }
+  g.font = `600 ${sz}px Fraunces`; const lh = sz * 1.12, h = lh * lines.length;
+  g.translate(W / 2, y); g.scale(scale, scale); g.globalAlpha = alpha;
+  if (box) { const bw = Math.max(...lines.map((l) => g.measureText(l).width)) + 90, bh = h + 60;
+    g.shadowColor = "rgba(0,0,0,0.35)"; g.shadowBlur = 40; g.fillStyle = "rgba(11,26,58,0.94)"; g.beginPath(); g.roundRect(-bw / 2, -bh / 2, bw, bh, 44); g.fill(); g.shadowColor = "transparent"; }
+  else { g.shadowColor = "rgba(0,0,0,0.45)"; g.shadowBlur = 26; }
+  g.textBaseline = "middle";
+  lines.forEach((l, i) => { const parts = l.split(/(sky)/); let x = -g.measureText(l).width / 2; const yy = -h / 2 + lh * (i + 0.5);
+    for (const p of parts) { g.fillStyle = p === "sky" ? GOLD : "#ffffff"; g.fillText(p, x, yy); x += g.measureText(p).width; } });
+  g.restore();
+}
+function dim(alpha, holes) { // darken the screen except around the holes ([x, y, r] circles or [x, y, w, h, r] boxes)
+  if (alpha <= 0) return;
+  g.save(); g.beginPath(); g.rect(0, 0, W, H);
+  for (const h of holes) { if (h.length === 3) { g.moveTo(h[0] + h[2], h[1]); g.arc(h[0], h[1], h[2], 0, 6.283, true); } else g.roundRect(h[0], h[1], h[2], h[3], h[4]); }
+  g.fillStyle = `rgba(6,12,28,${alpha})`; g.fill("evenodd"); g.restore();
+}
+function label(textS, [lx, ly], k, t0, t) {
+  g.save(); g.font = "600 40px Geist"; const tw = g.measureText(textS).width + 70, th = 88, sc = back((t - t0) / 0.35);
+  g.translate(lx, ly); g.scale(sc, sc); g.globalAlpha = k; g.shadowColor = "rgba(0,0,0,0.35)"; g.shadowBlur = 26;
+  g.fillStyle = "#fff"; g.beginPath(); g.roundRect(-tw / 2, -th / 2, tw, th, th / 2); g.fill(); g.shadowColor = "transparent";
+  g.fillStyle = "#1d1a16"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(textS, 0, 2); g.restore();
+}
+function callouts(t) {
+  for (const [start, txt, [ax, ay], r, lab] of CALLOUTS) {
+    const k = ease((t - start) / 0.3) * (1 - ease((t - (start + 1.4)) / 0.25)); if (k <= 0) continue;
+    const x = ax * K, y = ay * K; dim(0.55 * k, [[x, y, r]]);
+    g.save(); g.globalAlpha = k; g.strokeStyle = "#fff"; g.lineWidth = 7; const pr = r + 8 * Math.sin((t - start) * 6);
+    g.beginPath(); g.arc(x, y, pr, 0, 6.283); g.stroke();
+    const dir = Math.atan2(lab[1] - y, lab[0] - x); g.lineWidth = 5; g.beginPath(); g.moveTo(x + Math.cos(dir) * pr, y + Math.sin(dir) * pr); g.lineTo(lab[0], lab[1] - Math.sign(lab[1] - y) * 44); g.stroke(); g.restore();
+    label(txt, lab, k, start, t);
+  }
+}
+function finger(t, log, f) {
+  const e = log.frames[f - 1]; if (!e || !e.finger) return;
+  const [x, y] = [e.finger[0] * K, e.finger[1] * K], tap = e.tag === "tap" || e.tag === "tapback";
+  g.save(); g.fillStyle = "rgba(255,255,255,0.45)"; g.strokeStyle = "#fff"; g.lineWidth = 7; g.shadowColor = "rgba(0,0,0,0.3)"; g.shadowBlur = 18;
+  g.beginPath(); g.arc(x, y, tap ? 62 : 52, 0, 6.283); g.fill(); g.stroke(); g.restore();
+}
+function tapRing(t, t0, x, y) { const u = t - t0; if (u < 0 || u > 0.6) return; g.save(); g.globalAlpha = 1 - u / 0.6; g.strokeStyle = "#fff"; g.lineWidth = 9; g.beginPath(); g.arc(x, y, 60 + u * 300, 0, 6.283); g.stroke(); g.restore(); }
+
+async function frame(t) {
+  if (!LOG) { LOG = await (await fetch("/appfilm/full/log.json")).json(); SLOG = await (await fetch("/appfilm/full_settings/log.json")).json(); }
+  if (t >= S.outro) { const f = clamp(Math.floor((t - S.outro) * 30) + 1, 1, 105); g.drawImage(await load(`/sting/f_outro/${pad(f)}.jpg`), 0, 0, W, H); return; }
+  if (t < S.settings) {
+    const f = capFrame(t); g.drawImage(await load(`/appfilm/full/${pad(f)}.jpg`), 0, 0, W, H);
+    // the open day folds away into the closed day for the clash card: a soft cross-fade
+    if (t >= S.notice && t < S.notice + 0.35) { g.save(); g.globalAlpha = 1 - ease((t - S.notice) / 0.35); g.drawImage(await load(`/appfilm/full/0640.jpg`), 0, 0, W, H); g.restore(); }
+    // the hook
+    if (t < S.explain + 0.4) { const k = 1 - ease((t - (S.explain - 0.2)) / 0.5); dim(0.6 * k, []);
+      text(["Your day,"], 820, 132, { alpha: clamp((t - 0.1) / 0.2) * k, scale: back((t - 0.1) / 0.45) });
+      text(["drawn as the sky."], 975, 120, { alpha: clamp((t - 0.4) / 0.2) * k, scale: back((t - 0.4) / 0.45) }); }
+    callouts(t);
+    if (t >= S.turn && t < S.notice) { finger(t, LOG, f);
+      for (const tag of ["tapback", "tap"]) { const i = LOG.frames.findIndex((e) => e.tag === tag); if (i >= 0 && LOG.frames[i].finger) tapRing(t, S.turn + (i + 1 - 241) / 30, LOG.frames[i].finger[0] * K, LOG.frames[i].finger[1] * K); } }
+    if (t >= S.notice) { const [x, y, w, h] = LOG.anchors.clash, k = ease((t - (S.notice + 0.3)) / 0.35);
+      dim(0.6 * k, [[x * K - 14, y * K - 14, w * K + 28, h * K + 28, 60]]);
+      g.save(); g.globalAlpha = k * (0.6 + 0.4 * Math.sin((t - S.notice) * 5)); g.strokeStyle = GOLD; g.lineWidth = 8; g.beginPath(); g.roundRect(x * K - 18, y * K - 18, w * K + 36, h * K + 36, 64); g.stroke(); g.restore(); }
+  } else {
+    const f = clamp(1 + Math.floor((t - S.settings) * 30), 1, 151);
+    if (t < S.settings + 0.35) { g.drawImage(await load(`/appfilm/full/0001.jpg`), 0, 0, W, H); g.save(); g.globalAlpha = ease((t - S.settings) / 0.35); g.drawImage(await load(`/appfilm/full_settings/${pad(f)}.jpg`), 0, 0, W, H); g.restore(); }
+    else g.drawImage(await load(`/appfilm/full_settings/${pad(f)}.jpg`), 0, 0, W, H);
+    const [gx, gy, gw] = SLOG.anchors.grid, [sx, sy, sw, sh] = SLOG.anchors.sky;
+    if (t < S.tap) { const k = ease((t - (S.settings + 0.3)) / 0.35) * (1 - ease((t - (S.tap - 0.25)) / 0.25)); dim(0.55 * k, [[gx * K - 10, gy * K - 10, gw * K + 20, (sy - gy) * K + 6, 50]]); }
+    else { const k = ease((t - S.tap) / 0.3); dim(0.5 * k, [[sx * K - 12, sy * K - 12, sw * K + 24, sh * K + 24, 56]]); }
+    finger(t, SLOG, f); tapRing(t, S.tap, (sx + sw / 2) * K, (sy + sh / 2) * K);
+  }
+  for (const [a, b, l1, l2, y] of CAPTIONS) {
+    if (t < a - 0.05 || t > b + 0.3) continue;
+    text([l1, l2], y, 66, { alpha: Math.min(ease((t - a - 0.12) / 0.22), 1 - ease((t - b + 0.1) / 0.2)), scale: back((t - a - 0.12) / 0.38), box: true });
+  }
+}
+window.seek = (t) => frame(t);
+window.S = S;
+window.ready = Promise.all([document.fonts.load("600 80px Fraunces"), document.fonts.load("600 40px Geist")]).then(() => true);
+</script></body></html>
