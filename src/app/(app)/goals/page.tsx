@@ -1,7 +1,7 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
-import { Car, GraduationCap, Home, LineChart, Plane, PiggyBank, ShieldCheck, Shapes, ShoppingBag, Trash2, Wallet } from "lucide-react";
-import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { Trash2 } from "lucide-react";
+import { PixelIcon, pixel, type IconLike } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -30,16 +30,17 @@ export const metadata: Metadata = { title: "Goals" };
 const whole = (c: number) => formatCents(c).replace(/\.\d\d$/, "");
 const dollars = (c: number | null | undefined) => (c == null ? "" : (c / 100).toFixed(2).replace(/\.00$/, ""));
 
-const PURPOSE: Record<GoalPurpose, { label: string; icon: typeof PiggyBank }> = {
-  emergency: { label: "Emergency fund", icon: ShieldCheck },
-  travel: { label: "Travel", icon: Plane },
-  car: { label: "Car", icon: Car },
-  home: { label: "Home or apartment", icon: Home },
-  debt: { label: "Pay off debt", icon: Wallet },
-  investing: { label: "Investing", icon: LineChart },
-  education: { label: "Education", icon: GraduationCap },
-  big_purchase: { label: "Big purchase", icon: ShoppingBag },
-  other: { label: "Something else", icon: Shapes },
+// our pixel pictures for each kind of money goal (owner: the icons were generic)
+const PURPOSE: Record<GoalPurpose, { label: string; icon: IconLike }> = {
+  emergency: { label: "Emergency fund", icon: pixel("shield") },
+  travel: { label: "Travel", icon: pixel("plane") },
+  car: { label: "Car", icon: pixel("car") },
+  home: { label: "Home or apartment", icon: pixel("home") },
+  debt: { label: "Pay off debt", icon: pixel("card") },
+  investing: { label: "Investing", icon: pixel("money") },
+  education: { label: "Education", icon: pixel("class") },
+  big_purchase: { label: "Big purchase", icon: pixel("bag") },
+  other: { label: "Something else", icon: pixel("star") },
 };
 
 export default async function GoalsPage() {
@@ -102,8 +103,8 @@ export default async function GoalsPage() {
               <Card key={g.id} className="p-5">
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent">
-                      <P.icon className="h-5 w-5" />
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center">
+                      <P.icon className="h-8 w-8" />
                     </span>
                     <div className="min-w-0">
                       <h2 className="line-clamp-2 break-words font-medium">{g.name}</h2>
