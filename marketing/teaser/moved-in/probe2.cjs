@@ -1,0 +1,20 @@
+const { chromium } = require("playwright"); const path = require("path");
+(async () => {
+  const out = process.argv[2];
+  const browser = await chromium.launch();
+  const ctx = await browser.newContext({ viewport: { width: 430, height: 932 }, deviceScaleFactor: 2, storageState: path.join(__dirname, "probe/state.json") });
+  const page = await ctx.newPage();
+  await page.clock.install({ time: new Date("2026-11-09T19:29:00Z") });
+  await page.goto("http://localhost:3100/", { waitUntil: "networkidle", timeout: 240000 }).catch(() => {});
+  console.log("url", page.url());
+  await page.waitForSelector('[data-testid="day-clock"]', { timeout: 120000 });
+  await page.clock.pauseAt(new Date("2026-11-09T19:30:00Z")); await page.clock.runFor(2000);
+  await page.screenshot({ path: out + "/p_today.png" });
+  await page.locator('[data-dc="hit"]').click({ noWaitAfter: true });
+  for (let i = 0; i < 60; i++) await page.clock.runFor(33);
+  await page.screenshot({ path: out + "/p_open.png" });
+  const nodes = await page.$$eval('[data-dc="track"] button', (bs) => bs.map((b) => { const r = b.getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y), Math.round(r.width), (b.getAttribute("aria-label") || b.textContent || "").trim().slice(0, 60)]; }));
+  console.log(JSON.stringify(nodes.slice(0, 40)));
+  const tw = await page.locator('[data-dc="trackWrap"]').boundingBox(); console.log("trackWrap", JSON.stringify(tw));
+  await browser.close();
+})();

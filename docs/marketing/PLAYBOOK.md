@@ -434,6 +434,9 @@ whole life, on one sky" in our copy; say what the app really is (a day that turn
 the week). Rule: draw skylings only with the app's own code or capture them from the real app (`marketing/teaser/moved-in/`), never a
 redraw. Next version made: "Something just moved into LifeFlow" (old app cards taken over by the skylings, the landing's real night,
 the real Today sky as a card, no phone). Posters wait for Ali's wording.
+**Ali on it (2026-11-10): "this is the perfect idea".** v2: the real sky follows a real day as the skylings take over (each one at
+its moment), never "wheel" or "timeline" in copy (say Today, "open your day"), and a fuller synced sample week on the opened day
+so it reads at once: slide back for what already happened, slide ahead for what's next.
 The doc now opens with "What you do": a one-page checklist for tonight plus an Ali-and-Tyler table for the work shots. Ali wants the plan
 that simple ("just tell me what I have to do"); the detail stays below it. Send plans as PDF links too (the doc link didn't open in his browser).
 

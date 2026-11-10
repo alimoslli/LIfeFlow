@@ -1,0 +1,48 @@
+// Local filming only: fills the demo account's week so the day looks like a real, synced life. Never run in production.
+import "dotenv/config";
+import { and, eq } from "drizzle-orm";
+import { addDaysStr, todayIn } from "../../src/lib/dates";
+import { closeDb, getDb } from "../../src/server/db/client";
+import { courses, users } from "../../src/server/db/schema";
+import { withUser } from "../../src/server/db/with-user";
+import { createEvent } from "../../src/server/services/calendar";
+import { createTask, updateTask } from "../../src/server/services/tasks";
+import { createAssignment } from "../../src/server/services/school";
+
+const TZ = "America/New_York";
+async function main() {
+  if (process.env.NODE_ENV === "production") throw new Error("local only");
+  const db = getDb();
+  const [u] = await db.select().from(users).where(and(eq(users.email, "demo@budgetflow.local"), eq(users.accountKind, "demo")));
+  if (!u) throw new Error("run the demo seed first");
+  const today = process.env.FILM_TODAY ?? todayIn(TZ);
+  await withUser(u.id, async (s) => {
+    const course = async (code: string) => (await s.tx.select().from(courses).where(eq(courses.code, code)))[0].id;
+    const ev = (days: number, title: string, start: string, end: string, source: "google" | "outlook" | "canvas", location?: string) =>
+      createEvent(s, TZ, { title, kind: "personal", date: addDaysStr(today, days), startTime: start, endTime: end, location }, source);
+    // what already happened today (from Google Calendar), and the to-dos that are done
+    await ev(0, "Gym", "07:00", "07:45", "google", "Rec Center");
+    await ev(0, "Coffee with Maya", "08:30", "09:10", "google", "Bean Scene");
+    await ev(0, "Lunch with Sam", "12:00", "12:45", "google");
+    for (const [title, time] of [["Return library book", "09:30"], ["Pay phone bill", "11:00"]] as const) {
+      const t = await createTask(s, TZ, { title, priority: "medium", dueDate: today, dueTime: time }, "manual");
+      await updateTask(s, TZ, t.id, { status: "done" });
+    }
+    // what's still coming today
+    await ev(0, "Study group: MATH 152", "16:00", "17:00", "google", "Library 3F");
+    await createTask(s, TZ, { title: "Groceries", priority: "medium", dueDate: today, dueTime: "18:00" }, "manual");
+    await ev(0, "Movie night with Sam", "19:30", "21:30", "google");
+    const bio = await course("BIO 210");
+    await createAssignment(s, TZ, { courseId: bio, title: "Discussion post: Week 11", dueDate: today, dueTime: "23:59", kind: "assignment", sourceRef: "film" }, "canvas");
+    await createAssignment(s, TZ, { courseId: bio, title: "Lab prep quiz", dueDate: today, dueTime: "23:59", kind: "quiz", sourceRef: "film" }, "canvas");
+    // the rest of the week
+    await ev(1, "Dentist", "09:00", "09:45", "google", "Smile Dental");
+    await ev(2, "Club meeting", "18:00", "19:00", "outlook", "Student Center");
+    await ev(3, "Flight to Chicago", "17:40", "19:55", "google", "Gate B12");
+    await ev(-1, "Brunch with family", "11:00", "12:30", "google");
+    await ev(-2, "Basketball", "16:00", "17:30", "google", "Rec Center");
+  });
+  console.log("fuller week added for", today);
+  await closeDb();
+}
+main().catch((e) => { console.error(e); process.exit(1); });
