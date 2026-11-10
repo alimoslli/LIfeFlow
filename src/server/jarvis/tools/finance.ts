@@ -21,21 +21,24 @@ import {
 } from "../../services/finance/planning";
 import { TRANSACTION_KINDS, createTransaction, findTransactions, queryTransactions } from "../../services/finance/transactions";
 import { scanTransactions } from "../../services/finance/findings";
-import { addDaysStr } from "@/lib/dates";
+import { addDaysStr, formatIn } from "@/lib/dates";
 import { holdings } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import { dateArg, defineTool, idArg, moneyArg, toCents, toDollars } from "../tool";
 
-/** Converts every *Cents field in a result to dollars for the model. */
-export function centsToDollarsDeep(v: unknown): unknown {
-  if (Array.isArray(v)) return v.map(centsToDollarsDeep);
-  if (v instanceof Date) return v.toISOString();
+/**
+ * Converts every *Cents field in a result to dollars for the model. With the person's time zone, timestamps become
+ * their own clock time ("Tue Nov 10, 3:53 AM"); a UTC timestamp once came back as "as of 7:53 PM" for 3:53 AM.
+ */
+export function centsToDollarsDeep(v: unknown, tz?: string): unknown {
+  if (Array.isArray(v)) return v.map((x) => centsToDollarsDeep(x, tz));
+  if (v instanceof Date) return tz ? formatIn(v, tz, "EEE MMM d, h:mm a") : v.toISOString();
   if (v && typeof v === "object") {
     const out: Record<string, unknown> = {};
     for (const [k, val] of Object.entries(v)) {
       if (k.endsWith("Cents") && typeof val === "number") out[k.replace(/Cents$/, "")] = toDollars(val);
       else if (k === "cents" && typeof val === "number") out.amount = toDollars(val);
-      else out[k] = centsToDollarsDeep(val);
+      else out[k] = centsToDollarsDeep(val, tz);
     }
     return out;
   }
@@ -137,26 +140,29 @@ export const financeTools = [
       const o = await ctx.run((s) => moneyOverview(s, ctx.today));
       if (!o.hasAccounts) return { hasAccounts: false, note: "No accounts yet. The user can add one on Money, Accounts, or connect a bank." };
       const { investmentAccounts: _i, ...balances } = o.balances;
-      return centsToDollarsDeep({
-        balances,
-        thisMonth: {
-          range: o.month.period.label,
-          from: o.month.period.from,
-          to: o.month.period.to,
-          spentCents: o.month.netSpendingCents,
-          incomeCents: o.month.incomeCents,
-          netCents: o.month.netCashflowCents,
-          pendingCount: o.month.pendingCount,
+      return centsToDollarsDeep(
+        {
+          balances,
+          thisMonth: {
+            range: o.month.period.label,
+            from: o.month.period.from,
+            to: o.month.period.to,
+            spentCents: o.month.netSpendingCents,
+            incomeCents: o.month.incomeCents,
+            netCents: o.month.netCashflowCents,
+            pendingCount: o.month.pendingCount,
+          },
+          budgets: {
+            limitCents: o.budgets.limitCents,
+            spentInBudgetsCents: o.budgets.budgetedSpentCents,
+            spentWithoutBudgetCents: o.budgets.unbudgetedSpentCents,
+            count: o.budgets.count,
+          },
+          investments: o.investments,
+          viewAt: "/money",
         },
-        budgets: {
-          limitCents: o.budgets.limitCents,
-          spentInBudgetsCents: o.budgets.budgetedSpentCents,
-          spentWithoutBudgetCents: o.budgets.unbudgetedSpentCents,
-          count: o.budgets.count,
-        },
-        investments: o.investments,
-        viewAt: "/money",
-      });
+        ctx.tz,
+      );
     },
   }),
   defineTool({
@@ -167,20 +173,23 @@ export const financeTools = [
     mutates: false,
     async execute(_a, ctx) {
       const accts = await ctx.run((s) => listAccounts(s));
-      return centsToDollarsDeep({
-        accounts: accts.map((a) => ({
-          id: a.id,
-          name: a.name,
-          type: a.type,
-          subtype: a.subtype,
-          institution: a.institutionName,
-          mask: a.mask,
-          currentBalanceCents: a.currentBalanceCents,
-          source: a.source,
-          balanceAsOf: a.balanceUpdatedAt,
-        })),
-        totals: summarizeBalances(accts),
-      });
+      return centsToDollarsDeep(
+        {
+          accounts: accts.map((a) => ({
+            id: a.id,
+            name: a.name,
+            type: a.type,
+            subtype: a.subtype,
+            institution: a.institutionName,
+            mask: a.mask,
+            currentBalanceCents: a.currentBalanceCents,
+            source: a.source,
+            balanceAsOf: a.balanceUpdatedAt,
+          })),
+          totals: summarizeBalances(accts),
+        },
+        ctx.tz,
+      );
     },
   }),
   defineTool({
@@ -458,26 +467,29 @@ export const financeTools = [
       return ctx.run(async (s) => {
         const accts = await listAccounts(s, { types: ["investment"] });
         const h = await s.tx.select().from(holdings).where(eq(holdings.userId, s.userId));
-        return centsToDollarsDeep({
-          accounts: accts.map((a) => ({
-            id: a.id,
-            name: a.name,
-            subtype: a.subtype,
-            balanceCents: a.currentBalanceCents,
-            source: a.source,
-            asOf: a.balanceUpdatedAt,
-          })),
-          holdings: h.map((x) => ({
-            accountId: x.accountId,
-            symbol: x.symbol,
-            name: x.name,
-            quantity: Number(x.quantity),
-            valueCents: x.valueCents,
-            source: x.source,
-            asOf: x.asOf,
-          })),
-          note: h.length ? undefined : "No holdings on record. Balances only.",
-        });
+        return centsToDollarsDeep(
+          {
+            accounts: accts.map((a) => ({
+              id: a.id,
+              name: a.name,
+              subtype: a.subtype,
+              balanceCents: a.currentBalanceCents,
+              source: a.source,
+              asOf: a.balanceUpdatedAt,
+            })),
+            holdings: h.map((x) => ({
+              accountId: x.accountId,
+              symbol: x.symbol,
+              name: x.name,
+              quantity: Number(x.quantity),
+              valueCents: x.valueCents,
+              source: x.source,
+              asOf: x.asOf,
+            })),
+            note: h.length ? undefined : "No holdings on record. Balances only.",
+          },
+          ctx.tz,
+        );
       });
     },
   }),
