@@ -109,6 +109,15 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 - 11-09 (owner): "assistant", "AI assistant" and "personal assistant" are gone from every screen, notification, email, the landing page and the legal pages; the character is a **skyling** (owner picked it from LF Main's honest take: companion, partner, sidekick and buddy are all taken in AI), "your skyling" until it's named; the pitch doesn't lead with AI, and two e2e tests fail on "assistant".
 - 11-09: the owner's names: V2 was the clock with self-naming piles (518d37a), V3 was V2 plus Morrow. Today became the sky card (owner picked B), then a wheel of time (5e11dbb, 5224c57, d988772) in the real-sky colours (2b002c8). A Fable review found 6 bugs, all fixed. Phone e2e 7/7 with a new wheel test; 1162/1162 unit and integration tests. The owner merged it all into main (PR #3).
 
+**The owner's reset (2026-11-10 evening, his words: "we went off track with the layout"; he answered four questions). In order:**
+1. Today, one screen, no blank scroll: the sky on top, the idea clouds filling the middle, the chat bar at the bottom. The answer shows in the middle, in place of the clouds (owner picked). No Health/Work buttons on Today. The chat bar stays when the day opens into a timeline, and the space under the line gets room. LF Main.
+2. The skyling's tab is back in the bottom bar on every page; the skyling bar on other pages goes. The tab opens the skyling's page with its design and catchphrase, clouds instead of suggestion boxes, and attaching files with our own icon. LF Main, with the COO (shell).
+3. One chat that keeps going, from Today or the skyling's page; no "new chat" every time (owner picked). LF Main.
+4. Sign-in: a phone is remembered for 30 days after one code, and Google sign-in skips our code (owner picked both). LF Main, reviewed by QA & Security.
+5. Plain words everywhere: short, no big text boxes, and nothing behind-the-scenes on screen (hints, internal labels). Today and the line first, then every page. LF Main and the COO.
+6. Fewer pages: nothing opens another page for no reason; merge where it helps; easy navigation. Picture first. The COO.
+7. People with no classes get a Work tab instead of School; Work, Health, Goals and Milestones redone to look as good as Money and School. Pictures first. The COO, then LF Main builds.
+
 **Next:**
 - From the owner's retouch list (relayed 2026-11-09) and the A-to-Z audit (`docs/audits/2026-11-09-a-to-z.md`): the welcome's "Your day, connected" on the wheel; the landing hero as the real sky and wheel; a time-true line and the uncurl morph (research P3/P4); the laptop two-column Today; the character cast (names from times of day, personalities); a setting for sky moods.
 - The welcome's Canvas card connects through the Pro-only Canvas action: once paid plans are on, a free user would hit "part of LifeFlow Pro" mid-welcome. Decide before billing goes live: let Canvas connect free in the welcome, or show the plan there (pricing is the owner's call). (QA review of b9f7a21.)
