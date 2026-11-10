@@ -61,18 +61,11 @@ export function GoogleCard({
           </ActionButton>
           <div className="flex flex-wrap gap-2">
             {connection.status === "error" ? (
-              <a
-                href="/api/integrations/google/start"
-                className="inline-flex h-9 items-center rounded-full bg-accent px-4 text-sm font-medium text-accent-text"
-              >
+              <a href="/api/integrations/google/start" className="lf-sb lf-sb-sun lf-sb-xs lf-touch">
                 Reconnect Google
               </a>
             ) : (
-              <ActionButton
-                action={syncGoogleAction}
-                title="Sync calendar now"
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm"
-              >
+              <ActionButton action={syncGoogleAction} title="Sync calendar now" className="lf-sb lf-sb-app lf-sb-xs lf-touch">
                 <RefreshCw className="h-3.5 w-3.5" /> Sync calendar now
               </ActionButton>
             )}
@@ -87,10 +80,7 @@ export function GoogleCard({
           </div>
         </div>
       ) : (
-        <a
-          href="/api/integrations/google/start"
-          className="mt-4 inline-flex h-10 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-accent-text"
-        >
+        <a href="/api/integrations/google/start" className="lf-sb lf-sb-sun lf-sb-sm mt-4">
           Connect Google
         </a>
       )}

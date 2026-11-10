@@ -34,11 +34,7 @@ export function CanvasCard({ connection }: { connection: Connection | null }) {
           </p>
           {connection.error && <p className="text-sm text-danger">{connection.error}</p>}
           <div className="flex flex-wrap gap-2">
-            <ActionButton
-              action={syncCanvasAction}
-              title="Sync Canvas now"
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm"
-            >
+            <ActionButton action={syncCanvasAction} title="Sync Canvas now" className="lf-sb lf-sb-app lf-sb-sm">
               <RefreshCw className="h-3.5 w-3.5" /> Sync now
             </ActionButton>
             <ActionButton

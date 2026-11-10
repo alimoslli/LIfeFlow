@@ -17,7 +17,7 @@ export function SignOutButton() {
           await logout();
         })
       }
-      className="flex min-h-11 items-center gap-1.5 rounded-full bg-surface px-4 text-sm text-text-2 shadow-soft hover:text-text disabled:opacity-60"
+      className="lf-sb lf-sb-app lf-sb-sm"
     >
       {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />} Sign out
     </button>

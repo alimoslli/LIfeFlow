@@ -9,11 +9,7 @@ import { celebrateMilestoneAction } from "./actions";
 export function AskJarvisButton({ prompt, children }: { prompt: string; children: ReactNode }) {
   const { openJarvis } = useShell();
   return (
-    <button
-      type="button"
-      onClick={() => openJarvis(prompt, { send: true })}
-      className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm font-medium text-text hover:bg-surface-3"
-    >
+    <button type="button" onClick={() => openJarvis(prompt, { send: true })} className="lf-sb lf-sb-app lf-sb-sm">
       {children}
     </button>
   );

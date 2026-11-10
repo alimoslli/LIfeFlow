@@ -37,10 +37,7 @@ export function GoalCheckin({ goals, checkins, today }: { goals: { id: string; t
           ))}
         </ul>
       )}
-      <AskJarvisButton
-        prompt={CHECKIN_PROMPT}
-        className="mt-3 inline-flex min-h-11 items-center rounded-full bg-accent px-5 text-sm font-medium text-accent-text"
-      >
+      <AskJarvisButton prompt={CHECKIN_PROMPT} className="lf-sb lf-sb-sun lf-sb-sm mt-3">
         {todays.length ? (
           "Add more"
         ) : (
@@ -92,7 +89,7 @@ export function PersonalGoals({ goals, checkins }: { goals: Goal[]; checkins: Ch
                   <ActionButton
                     action={stepPersonalGoalAction.bind(null, g.id, g.progress + 1)}
                     title={`One more for "${g.title}"`}
-                    className="min-h-11 shrink-0 rounded-full bg-surface-2 px-4 text-sm font-semibold"
+                    className="lf-sb lf-sb-app lf-sb-sm shrink-0"
                   >
                     +1
                   </ActionButton>

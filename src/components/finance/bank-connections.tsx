@@ -96,7 +96,7 @@ function SyncButton({ id }: { id: string }) {
           );
           router.refresh();
         }}
-        className="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm disabled:opacity-60"
+        className="lf-sb lf-sb-app lf-sb-xs lf-touch"
       >
         {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />} Sync now
       </button>

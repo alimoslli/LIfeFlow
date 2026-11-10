@@ -105,11 +105,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                     </span>
                   </p>
                 </div>
-                <ActionButton
-                  action={decideMemoryAction.bind(null, m.id, "keep")}
-                  title="Keep"
-                  className="flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-sm font-medium text-accent-text"
-                >
+                <ActionButton action={decideMemoryAction.bind(null, m.id, "keep")} title="Keep" className="lf-sb lf-sb-sun lf-sb-xs lf-touch">
                   <Check className="h-3.5 w-3.5" /> Keep
                 </ActionButton>
                 <ActionButton

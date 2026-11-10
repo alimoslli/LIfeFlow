@@ -22,13 +22,10 @@ export default async function DataSettings() {
         <h2 className="font-medium">Export your data</h2>
         <p className="mt-1 text-sm text-text-2">A copy of everything LifeFlow keeps about you.</p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <a href="/api/export" className="inline-flex h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-accent-text">
+          <a href="/api/export" className="lf-sb lf-sb-sun lf-sb-sm">
             <Download className="h-4 w-4" /> Download my data
           </a>
-          <a
-            href="/api/export?format=transactions.csv"
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-surface px-5 text-sm font-medium shadow-soft"
-          >
+          <a href="/api/export?format=transactions.csv" className="lf-sb lf-sb-app lf-sb-sm">
             Transactions (CSV)
           </a>
         </div>

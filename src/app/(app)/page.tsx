@@ -117,11 +117,7 @@ export default async function TodayPage() {
         {/* The rest of the day, one tap away, below the fold so the clock stays the whole first screen. */}
         <nav aria-label="More of your day" className="flex flex-wrap justify-center gap-2 pt-1">
           {more.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex min-h-11 items-center gap-1.5 rounded-full bg-surface px-4 text-sm text-text-2 shadow-soft hover:text-text"
-            >
+            <Link key={href} href={href} className="lf-sb lf-sb-app lf-sb-sm">
               <Icon className="h-4 w-4" strokeWidth={1.8} aria-hidden />
               {label}
             </Link>

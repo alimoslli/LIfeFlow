@@ -15,12 +15,7 @@ export function QuickChips() {
   return (
     <div className="flex flex-wrap gap-2">
       {CHIPS.map(([label, prompt]) => (
-        <button
-          key={label}
-          type="button"
-          onClick={() => openJarvis(prompt, { send: true })}
-          className="flex min-h-11 max-w-full items-center rounded-full bg-surface px-4 text-[0.875rem] font-medium text-text-2 shadow-soft ring-1 ring-border/60 transition-colors hover:text-accent active:scale-[0.98]"
-        >
+        <button key={label} type="button" onClick={() => openJarvis(prompt, { send: true })} className="lf-sb lf-sb-app lf-sb-sm max-w-full">
           {label}
         </button>
       ))}

@@ -126,7 +126,7 @@ export function PwaClient() {
               <div className="mt-3 flex gap-2">
                 <button
                   type="button"
-                  className="min-h-11 rounded-full bg-accent px-4 text-sm font-medium text-accent-text"
+                  className="lf-sb lf-sb-sun lf-sb-sm"
                   onClick={async () => {
                     if (install) {
                       await install.prompt();

@@ -43,11 +43,7 @@ export function ResetForm() {
         <span className="text-sm font-medium text-text-2">New password</span>
         <NewPasswordField id="password" name="password" required minLength={10} maxLength={200} className={input} />
       </label>
-      <button
-        type="submit"
-        disabled={pending || !token}
-        className="mt-2 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[0.9375rem] font-medium text-accent-text shadow-soft active:scale-[0.98] disabled:opacity-60"
-      >
+      <button type="submit" disabled={pending || !token} className="lf-sb lf-sb-sun mt-2">
         {pending && <Loader2 className="h-4 w-4 animate-spin" />} Save new password
       </button>
       {state?.error && (

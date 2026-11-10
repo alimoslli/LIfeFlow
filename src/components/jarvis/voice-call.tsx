@@ -365,12 +365,7 @@ export function LiveVoice({
         <p className="tabular truncate text-xs text-muted">{sub}</p>
       </div>
       {phase === "hearing" && !muted && (
-        <button
-          type="button"
-          onClick={finishTurn}
-          aria-label="Done talking"
-          className="flex h-11 items-center gap-1.5 rounded-full bg-accent px-3.5 text-sm font-medium text-accent-text"
-        >
+        <button type="button" onClick={finishTurn} aria-label="Done talking" className="lf-sb lf-sb-sun lf-sb-sm">
           <Check className="h-4 w-4" aria-hidden />
           Done
         </button>

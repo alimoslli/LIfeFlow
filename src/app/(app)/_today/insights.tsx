@@ -79,7 +79,7 @@ export function AskBar({ name }: { name: string }) {
         className="min-w-0 flex-1 bg-transparent py-2 text-[0.9375rem] placeholder:text-muted focus:outline-none"
       />
       <VoiceButton assistantName={assistantName} onStart={() => router.push("/jarvis?voice=1")} />
-      <button className="min-h-11 rounded-full bg-accent px-5 text-sm font-medium text-accent-text">Ask</button>
+      <button className="lf-sb lf-sb-sun lf-sb-sm">Ask</button>
     </form>
   );
 }

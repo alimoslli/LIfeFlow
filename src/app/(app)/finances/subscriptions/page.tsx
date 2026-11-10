@@ -117,7 +117,7 @@ export default async function SubscriptionsPage() {
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              <ActionButton action={keepSubscriptionAction.bind(null, s.id)} className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium">
+              <ActionButton action={keepSubscriptionAction.bind(null, s.id)} className="lf-sb lf-sb-app lf-sb-sm">
                 Keep
               </ActionButton>
               <CancelHelp
@@ -126,7 +126,7 @@ export default async function SubscriptionsPage() {
                 via={s.via === "apple" || s.via === "google_play" || s.via === "paypal" ? s.via : null}
                 saved={s.cancelHelp ? { answer: s.cancelHelp.answer, sources: s.cancelHelp.sources } : null}
               />
-              <ActionButton action={remindRenewalAction.bind(null, s.id)} className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium">
+              <ActionButton action={remindRenewalAction.bind(null, s.id)} className="lf-sb lf-sb-app lf-sb-sm">
                 Remind me before renewal
               </ActionButton>
             </div>
@@ -177,7 +177,7 @@ export default async function SubscriptionsPage() {
                   {usd(c.latestAmountCents)} every {FREQ[c.frequency]} · {c.occurrences} charges · next around {formatDateStr(c.nextExpectedDate, "MMM d")}
                 </p>
               </div>
-              <ActionButton action={trackFoundAction.bind(null, c.seriesKey)} className="rounded-full bg-accent px-4 text-sm font-medium text-accent-text">
+              <ActionButton action={trackFoundAction.bind(null, c.seriesKey)} className="lf-sb lf-sb-sun lf-sb-sm">
                 Track
               </ActionButton>
             </Card>

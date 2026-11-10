@@ -290,11 +290,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             </section>
           ))}
           {show < d.rows.length && (
-            <Link
-              href={qs({ show: String(show + PAGE) })}
-              scroll={false}
-              className="mx-auto rounded-full bg-surface px-5 py-2.5 text-sm font-medium shadow-soft"
-            >
+            <Link href={qs({ show: String(show + PAGE) })} scroll={false} className="lf-sb lf-sb-app lf-sb-sm mx-auto">
               Show more
             </Link>
           )}

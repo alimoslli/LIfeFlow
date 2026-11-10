@@ -119,7 +119,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           <AskJarvisButton prompt="Add " className="tap flex items-center justify-center rounded-full bg-surface text-accent shadow-soft">
             <Sparkles className="h-4 w-4" aria-label="Add with your skyling" />
           </AskJarvisButton>
-          <QuickAddButton className="flex min-h-11 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium text-accent-text shadow-soft">
+          <QuickAddButton className="lf-sb lf-sb-sun lf-sb-sm">
             <Plus className="h-4 w-4" /> Add
           </QuickAddButton>
         </div>
@@ -199,7 +199,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         {d.from > d.today ? (
           <Link
             href={`/plan?${new URLSearchParams({ ...(filter !== "all" && { f: filter }), ...(addDaysStr(d.from, -7) > d.today && { date: addDaysStr(d.from, -7) }) })}`}
-            className="flex min-h-11 items-center rounded-full bg-surface px-4 shadow-soft"
+            className="lf-sb lf-sb-app lf-sb-sm"
           >
             ← Earlier
           </Link>
@@ -208,7 +208,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
         )}
         <Link
           href={`/plan?${new URLSearchParams({ ...(filter !== "all" && { f: filter }), date: addDaysStr(d.from, 7) })}`}
-          className="flex min-h-11 items-center rounded-full bg-surface px-4 shadow-soft"
+          className="lf-sb lf-sb-app lf-sb-sm"
         >
           Next week →
         </Link>

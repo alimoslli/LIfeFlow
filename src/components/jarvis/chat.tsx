@@ -795,7 +795,7 @@ function AssistantBubble({
             {m.notice.kind === "recovering" && <Loader2 className="h-4 w-4 shrink-0 animate-spin" />}
             <span className="min-w-0 flex-1">{m.notice.text}</span>
             {m.notice.kind === "lost" && (
-              <button type="button" onClick={onRetry} className="min-h-11 rounded-full bg-accent px-4 text-sm font-medium text-accent-text">
+              <button type="button" onClick={onRetry} className="lf-sb lf-sb-sun lf-sb-sm">
                 Try again
               </button>
             )}
@@ -815,7 +815,7 @@ function AssistantBubble({
                 <button onClick={() => onDecide(c.actionId, "confirm")} className="rounded-full bg-danger px-4 py-2 text-sm font-medium text-white">
                   Confirm
                 </button>
-                <button onClick={() => onDecide(c.actionId, "cancel")} className="rounded-full bg-surface-2 px-4 py-2 text-sm">
+                <button onClick={() => onDecide(c.actionId, "cancel")} className="lf-sb lf-sb-app lf-sb-sm">
                   Cancel
                 </button>
               </div>
@@ -857,10 +857,10 @@ function MemoryCard({ s, onDecide }: { s: UiMemorySuggestion; onDecide: (memoryI
       {s.status === "proposed" ? (
         <>
           <div className="mt-3 flex gap-2">
-            <button onClick={() => onDecide(s.memoryId, "keep")} className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-text">
+            <button onClick={() => onDecide(s.memoryId, "keep")} className="lf-sb lf-sb-sun lf-sb-sm">
               Keep
             </button>
-            <button onClick={() => onDecide(s.memoryId, "dismiss")} className="rounded-full bg-surface-2 px-4 py-2 text-sm">
+            <button onClick={() => onDecide(s.memoryId, "dismiss")} className="lf-sb lf-sb-app lf-sb-sm">
               Not now
             </button>
           </div>
@@ -887,11 +887,7 @@ function OpenLinks({ tools }: { tools: UiTool[] }) {
   return (
     <div className="flex flex-wrap gap-2">
       {places.slice(0, 3).map((href) => (
-        <Link
-          key={href}
-          href={href}
-          className="inline-flex min-h-11 items-center gap-1 rounded-full bg-surface px-4 text-[0.875rem] font-medium text-accent shadow-soft ring-1 ring-border/60"
-        >
+        <Link key={href} href={href} className="lf-sb lf-sb-app lf-sb-sm">
           Open {viewAtName(href)}
           <ChevronRight className="h-4 w-4" />
         </Link>
@@ -920,7 +916,7 @@ function SourceList({ tools }: { tools: UiTool[] }) {
             target="_blank"
             rel="noopener noreferrer nofollow"
             title={s.title}
-            className="inline-flex min-h-8 max-w-[14rem] items-center truncate rounded-full bg-surface-2 px-3 text-xs text-text-2 hover:text-text"
+            className="lf-sb lf-sb-app lf-sb-xs max-w-[14rem] truncate lf-touch"
           >
             {host}
           </a>

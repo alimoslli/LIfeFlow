@@ -17,8 +17,19 @@ const variants: Record<Variant, string> = {
   sun: "",
   sky: "",
 };
-/** The new sky buttons (skylings.css), on the pages already in the new look: the main action and the quiet one. */
-const SKY: Partial<Record<Variant, string>> = { sun: "lf-sb lf-sb-sun lf-sb-sm", sky: "lf-sb lf-sb-app lf-sb-sm" };
+/**
+ * The sky buttons everywhere (owner, 2026-11-10; skylings.css): the main action is a slice of sunrise, the quiet one frosted
+ * glass, a destructive one ember. Ghost (icon and text buttons) keeps its plain look.
+ */
+const SKY: Partial<Record<Variant, string>> = {
+  primary: "lf-sb-sun",
+  sun: "lf-sb-sun",
+  secondary: "lf-sb-app",
+  subtle: "lf-sb-app",
+  sky: "lf-sb-app",
+  danger: "lf-sb-danger",
+};
+const SKY_SIZE: Record<Size, string> = { md: "lf-sb-sm", sm: "lf-sb-xs lf-touch", icon: "lf-sb-xs lf-touch lf-touch-icon px-0 w-9" };
 // lf-touch / lf-touch-icon grow to 44px on touch screens (see globals.css).
 const sizes: Record<Size, string> = {
   sm: "lf-touch h-8 px-3.5 text-[0.8125rem] gap-1.5",
@@ -36,7 +47,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     <button
       ref={ref}
       className={cn(
-        SKY[variant] ??
+        (SKY[variant] && cn("lf-sb", SKY[variant], SKY_SIZE[size])) ||
           cn(
             "inline-flex shrink-0 items-center justify-center rounded-full font-medium transition-all duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
             variants[variant],

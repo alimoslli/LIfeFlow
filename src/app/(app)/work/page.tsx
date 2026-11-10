@@ -57,10 +57,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
         actions={
           d.employers.length > 0 ? (
             <>
-              <AskJarvisButton
-                prompt="Here's my work schedule, please add these shifts: "
-                className="flex h-10 items-center gap-1.5 rounded-full bg-surface px-5 text-sm font-medium shadow-soft"
-              >
+              <AskJarvisButton prompt="Here's my work schedule, please add these shifts: " className="lf-sb lf-sb-app lf-sb-sm">
                 <Sparkles className="h-4 w-4 text-accent" /> Import schedule
               </AskJarvisButton>
               <ShiftDialog action={createShiftAction} employers={d.employers.map((e) => ({ id: e.id, name: e.name }))} today={d.today} />

@@ -42,7 +42,7 @@ export default async function TrashPage() {
                     {KIND[t.kind] ?? t.kind} · deleted {formatIn(t.deletedAt, d.tz, "MMM d, h:mm a")}
                   </p>
                 </div>
-                <ActionButton action={restoreAction.bind(null, t.id)} title={`Restore ${t.label}`} className="rounded-full bg-surface-2 px-3 py-1.5 text-sm">
+                <ActionButton action={restoreAction.bind(null, t.id)} title={`Restore ${t.label}`} className="lf-sb lf-sb-app lf-sb-xs lf-touch">
                   Restore
                 </ActionButton>
                 <ActionButton

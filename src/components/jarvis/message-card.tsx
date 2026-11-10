@@ -103,13 +103,7 @@ export function JarvisMessageCard({ m, name, avatar, compact }: { m: CardMessage
           {open && m.action?.choices && (
             <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Answers">
               {m.action.choices.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  disabled={pending}
-                  onClick={() => act("answer", c)}
-                  className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium hover:bg-surface-3 disabled:opacity-60"
-                >
+                <button key={c} type="button" disabled={pending} onClick={() => act("answer", c)} className="lf-sb lf-sb-app lf-sb-sm">
                   {c}
                 </button>
               ))}
@@ -118,12 +112,7 @@ export function JarvisMessageCard({ m, name, avatar, compact }: { m: CardMessage
           {open && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {!m.action?.choices && (
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => act("do")}
-                  className="flex min-h-11 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium text-accent-text disabled:opacity-60"
-                >
+                <button type="button" disabled={pending} onClick={() => act("do")} className="lf-sb lf-sb-sun lf-sb-sm">
                   {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   {m.action ? m.action.label : "Got it"}
                   {m.money && <span className="sr-only">(changes money; this confirms it)</span>}

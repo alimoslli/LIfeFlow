@@ -108,18 +108,10 @@ export function ShiftList({
               <div className="rounded-2xl bg-warning-soft p-4">
                 <p className="text-sm font-medium text-warning">This shift is over. Did you work it?</p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <ActionButton
-                    action={markWorkedAction.bind(null, editing.id)}
-                    onSuccess={() => setEditing(null)}
-                    className="min-h-11 rounded-full bg-accent px-4 text-sm font-medium text-accent-text"
-                  >
+                  <ActionButton action={markWorkedAction.bind(null, editing.id)} onSuccess={() => setEditing(null)} className="lf-sb lf-sb-sun lf-sb-sm">
                     Yes, as scheduled
                   </ActionButton>
-                  <ActionButton
-                    action={cancelShiftAction.bind(null, editing.id)}
-                    onSuccess={() => setEditing(null)}
-                    className="min-h-11 rounded-full bg-surface px-4 text-sm"
-                  >
+                  <ActionButton action={cancelShiftAction.bind(null, editing.id)} onSuccess={() => setEditing(null)} className="lf-sb lf-sb-app lf-sb-sm">
                     No, it was cancelled
                   </ActionButton>
                 </div>

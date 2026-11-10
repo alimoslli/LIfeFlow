@@ -32,7 +32,7 @@ export function VerifyForm({ next, emailAvailable = false }: { next?: string; em
         </div>
         <FormError message={state?.error ?? emailState?.error} />
         {expired ? (
-          <Link href="/login" className="flex h-12 items-center justify-center rounded-full bg-accent text-[0.9375rem] font-medium text-accent-text">
+          <Link href="/login" className="lf-sb lf-sb-sun">
             Sign in again
           </Link>
         ) : (
@@ -67,11 +67,7 @@ export function VerifyForm({ next, emailAvailable = false }: { next?: string; em
               )}
             </label>
             {next && <input type="hidden" name="next" value={next} />}
-            <button
-              type="submit"
-              disabled={pending}
-              className="mt-1 flex h-12 items-center justify-center gap-2 rounded-full bg-accent text-[0.9375rem] font-medium text-accent-text shadow-soft transition-transform active:scale-[0.98] disabled:opacity-60"
-            >
+            <button type="submit" disabled={pending} className="lf-sb lf-sb-sun mt-1">
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
               Verify
             </button>

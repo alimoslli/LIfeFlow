@@ -5,6 +5,8 @@ import { TEXT_COOKIE, THEME_COOKIE, parseTextSize, parseTheme } from "@/lib/them
 import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import { Splash, SPLASH_SCRIPT } from "@/components/motion/splash";
 import "./globals.css";
+// the sky buttons and skyling pieces are used on every page (owner, 2026-11-10)
+import "@/components/skylings/skylings.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });

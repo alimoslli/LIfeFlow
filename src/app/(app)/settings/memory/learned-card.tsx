@@ -73,7 +73,7 @@ export function LearnedCard({
             {shownMuted.map((k) => (
               <li key={k} className="flex min-h-11 items-center justify-between gap-3">
                 <span className="text-[0.9375rem]">{label(k)}</span>
-                <ActionButton action={unmuteKindAction.bind(null, k)} className="rounded-full bg-surface-2 px-3 py-1.5 text-sm font-medium">
+                <ActionButton action={unmuteKindAction.bind(null, k)} className="lf-sb lf-sb-app lf-sb-xs lf-touch">
                   Bring back
                 </ActionButton>
               </li>

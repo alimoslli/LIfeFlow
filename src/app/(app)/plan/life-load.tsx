@@ -80,7 +80,7 @@ export function LifeLoad({ week }: { week: WeekLoad }) {
                   `${picked.label} looks ${picked.level === "overloaded" ? "like too much" : "full"}: ${picked.reasons.join(", ")}. Help me move what I can to a lighter day before it.`,
                 )
               }
-              className="mt-3 flex min-h-11 items-center gap-2 rounded-full bg-accent px-4 text-sm font-medium text-accent-text"
+              className="lf-sb lf-sb-sun lf-sb-sm mt-3"
             >
               <Sparkles className="h-4 w-4" /> Lighten this day with {assistantName}
             </button>

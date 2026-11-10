@@ -136,7 +136,7 @@ function PinForm({ at, today, onSaved, onCancel }: { at: number; today: string; 
         <button type="button" onClick={onCancel} className="min-h-12 flex-1 rounded-full bg-surface text-[0.9375rem] font-medium text-text-2 shadow-soft">
           Cancel
         </button>
-        <button type="submit" className="min-h-12 flex-[2] rounded-full bg-accent text-[0.9375rem] font-semibold text-accent-text shadow-soft">
+        <button type="submit" className="lf-sb lf-sb-sun flex-[2]">
           Pin it
         </button>
       </div>

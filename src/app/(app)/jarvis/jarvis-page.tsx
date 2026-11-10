@@ -97,7 +97,7 @@ export function JarvisPage({
           </Link>
         </header>
         <SectionNav inline>
-          <QuickAddButton className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-surface px-4 text-sm font-medium whitespace-nowrap text-text-2 shadow-soft ring-1 ring-border/60">
+          <QuickAddButton className="lf-sb lf-sb-app lf-sb-sm shrink-0">
             <PenLine className="h-4 w-4" /> Capture
           </QuickAddButton>
         </SectionNav>

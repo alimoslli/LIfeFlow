@@ -164,11 +164,7 @@ export default async function AccountsPage() {
                       {a.name}
                       {a.mask && <span className="ml-1.5 text-xs text-muted">••{a.mask}</span>}
                     </p>
-                    <ActionButton
-                      action={setBankAccountUsedAction.bind(null, a.id, true)}
-                      title={`Use ${a.name} again`}
-                      className="min-h-11 rounded-full bg-surface-2 px-4 text-sm font-medium"
-                    >
+                    <ActionButton action={setBankAccountUsedAction.bind(null, a.id, true)} title={`Use ${a.name} again`} className="lf-sb lf-sb-app lf-sb-sm">
                       Use again
                     </ActionButton>
                   </li>

@@ -46,18 +46,11 @@ export function MicrosoftCard({
           {connection.error && <p className="text-sm text-danger">{connection.error}</p>}
           <div className="flex flex-wrap gap-2">
             {connection.status === "error" ? (
-              <a
-                href="/api/integrations/microsoft/start"
-                className="inline-flex h-9 items-center rounded-full bg-accent px-4 text-sm font-medium text-accent-text"
-              >
+              <a href="/api/integrations/microsoft/start" className="lf-sb lf-sb-sun lf-sb-xs lf-touch">
                 Reconnect Microsoft
               </a>
             ) : (
-              <ActionButton
-                action={syncMicrosoftAction}
-                title="Sync calendar now"
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-2 px-4 text-sm"
-              >
+              <ActionButton action={syncMicrosoftAction} title="Sync calendar now" className="lf-sb lf-sb-app lf-sb-xs lf-touch">
                 <RefreshCw className="h-3.5 w-3.5" /> Sync now
               </ActionButton>
             )}
@@ -72,10 +65,7 @@ export function MicrosoftCard({
           </div>
         </div>
       ) : (
-        <a
-          href="/api/integrations/microsoft/start"
-          className="mt-4 inline-flex h-10 items-center gap-2 rounded-full bg-accent px-5 text-sm font-medium text-accent-text"
-        >
+        <a href="/api/integrations/microsoft/start" className="lf-sb lf-sb-sun lf-sb-sm mt-4">
           Connect Microsoft
         </a>
       )}

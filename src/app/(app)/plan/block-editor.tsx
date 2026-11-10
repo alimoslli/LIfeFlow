@@ -136,7 +136,7 @@ function EventForm({ b, done }: { b: Extract<Block, { origin: "event" }>; done: 
           <ActionButton
             action={skipOccurrenceAction.bind(null, b.id, b.date)}
             title="Remove just this day"
-            className="min-h-11 rounded-full bg-surface-2 px-4 text-sm"
+            className="lf-sb lf-sb-app lf-sb-sm"
             onSuccess={done}
           >
             Remove this day
@@ -228,7 +228,7 @@ function AssignmentForm({ b, done }: { b: Extract<Block, { origin: "assignment" 
         <ActionButton
           action={toggleAssignmentAction.bind(null, b.id)}
           title={b.done ? "Mark not done" : "Mark done"}
-          className="min-h-11 rounded-full bg-surface-2 px-4 text-sm"
+          className="lf-sb lf-sb-app lf-sb-sm"
           onSuccess={done}
         >
           {b.done ? "Mark not done" : "Mark done"}
