@@ -5,7 +5,7 @@ import { AGE_LINE, BIRTHDAY_NEEDED, birthDateProblem, isUnderAge } from "@/lib/b
 import { todayIn } from "@/lib/dates";
 import { ServiceError } from "./errors";
 import { integrations, users } from "../db/schema";
-import { revokeGoogleGrant } from "../integrations/google";
+import { closeAtProvider, OUTSIDE_PROVIDERS } from "./account-cleanup";
 import { provisionalName } from "@/lib/provisional-name";
 import type { UserScope } from "../db/with-user";
 import { assistantSchema } from "./accounts";
@@ -126,7 +126,10 @@ const notLocked = sql`not (${users.preferences} ? 'ageBlockedAt')`;
 const prefsOf = async (scope: UserScope) =>
   (await scope.tx.select({ preferences: users.preferences }).from(users).where(eq(users.id, scope.userId)).for("update"))[0].preferences;
 
-/** What an age-locked account keeps: the email (on the user row) and how they sign in, and the log of actions. */
+/**
+ * What an age-locked account keeps: the email (on the user row), how they sign in, and the security log (sign-ins and account
+ * actions, `audit_events`), as the Privacy Policy's section 9 says. Every other table with a user_id is emptied.
+ */
 const KEEP_ON_LOCK = new Set([
   "users",
   "sessions",
@@ -157,16 +160,21 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
     return { blocked: true as const };
   }
   const [me] = await scope.tx.select({ email: users.email }).from(users).where(eq(users.id, scope.userId));
-  // a Google grant they made in the welcome is revoked at Google too (best effort, a few seconds at most)
-  const google = await scope.tx
-    .select({ encryptedCredentials: integrations.encryptedCredentials })
+  // what they connected in the welcome is closed where it lives too, the same way deleting an account does: a bank link at
+  // Plaid, a Google grant at Google (best effort, in parallel, a few seconds at most; no database work in these calls)
+  const outside = await scope.tx
+    .select({ provider: integrations.provider, encryptedCredentials: integrations.encryptedCredentials })
     .from(integrations)
-    .where(and(eq(integrations.userId, scope.userId), inArray(integrations.provider, ["google", "google_calendar", "gmail"])));
-  for (const g of google)
-    await revokeGoogleGrant(g.encryptedCredentials, (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(4000) })).catch(() => {});
-  // every table that holds their rows, found from the database so a new one can't be missed
+    .where(and(eq(integrations.userId, scope.userId), inArray(integrations.provider, OUTSIDE_PROVIDERS)));
+  const f: typeof fetch = (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(4000) });
+  await Promise.all(outside.map((row) => closeAtProvider(row, f).catch(() => {})));
+  // every table that holds their rows, found from the database so a new one can't be missed: a new table with a user_id is
+  // emptied unless it is listed in KEEP_ON_LOCK (tests/integration/onboarding.test.ts checks this). Only real tables: a view
+  // can't be deleted from, and one must never make this save throw.
   const tables = await scope.tx.execute<{ table_name: string }>(
-    sql`select distinct table_name from information_schema.columns where column_name = 'user_id' and table_schema = current_schema()`,
+    sql`select distinct c.table_name from information_schema.columns c
+        join information_schema.tables t on t.table_schema = c.table_schema and t.table_name = c.table_name and t.table_type = 'BASE TABLE'
+        where c.column_name = 'user_id' and c.table_schema = current_schema()`,
   );
   for (const { table_name } of tables.rows) {
     if (KEEP_ON_LOCK.has(table_name)) continue;
@@ -174,7 +182,14 @@ async function blockUnderAge(scope: UserScope, prefs: Prefs) {
   }
   await scope.tx
     .update(users)
-    .set({ name: provisionalName(me.email), preferences: { onboarding: prefs.onboarding, ageBlockedAt: at } })
+    // nothing of theirs on the account row either: their time zone, forwarding address and texting number go too
+    .set({
+      name: provisionalName(me.email),
+      timezone: "UTC",
+      inboxToken: null,
+      smsPhone: null,
+      preferences: { onboarding: prefs.onboarding, ageBlockedAt: at },
+    })
     .where(eq(users.id, scope.userId));
   return { blocked: true as const };
 }

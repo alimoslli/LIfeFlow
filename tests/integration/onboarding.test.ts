@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { closeDb, getDb } from "@/server/db/client";
 import { calendarEvents, integrations, users } from "@/server/db/schema";
@@ -17,6 +17,13 @@ import { assistantProfile } from "@/lib/assistant";
 import { makeUser } from "../helpers";
 
 afterAll(closeDb);
+
+// The lock closes connections at their provider (Plaid, Google); record which instead of calling out.
+const closed = vi.hoisted(() => [] as string[]);
+vi.mock("@/server/services/account-cleanup", async (load) => ({
+  ...(await load<typeof import("@/server/services/account-cleanup")>()),
+  closeAtProvider: vi.fn(async (row: { provider: string }) => void closed.push(row.provider)),
+}));
 
 /** Setup finishes (or is skipped) only with a birthday on the account (owner, 2026-11-10). */
 const born = (run: Awaited<ReturnType<typeof makeUser>>["run"]) => run((s) => saveWelcomeProgress(s, "UTC", { birthDate: "2001-03-04" }));
@@ -178,7 +185,11 @@ describe("onboarding", () => {
     // they typed an adult year first, then connected things and filled in their week
     await run((s) => saveWelcomeProgress(s, "UTC", { name: "Kai Real", birthDate: "1999-01-01", lifeStage: "both", school: "Maple", job: "Lemonade" }));
     await run(async (s) => {
-      await s.tx.insert(integrations).values({ userId: user.id, provider: "canvas", status: "connected", displayName: "canvas.school.edu" });
+      await s.tx.insert(integrations).values([
+        { userId: user.id, provider: "canvas", status: "connected", displayName: "canvas.school.edu" },
+        { userId: user.id, provider: "plaid", status: "connected", displayName: "Bank" },
+        { userId: user.id, provider: "google", status: "connected", displayName: "kai@example.com" },
+      ]);
       const c = await createCourse(s, { name: "Grade 5 Science" });
       await createTask(s, "UTC", { title: "Volcano model" });
       await s.tx
@@ -186,10 +197,18 @@ describe("onboarding", () => {
         .values({ userId: user.id, title: "Science", startsAt: new Date(), endsAt: new Date(Date.now() + 3600_000), kind: "class", courseId: c.id });
       await createEmployer(s, { name: "Lemonade stand", payType: "hourly" });
     });
+    await getDb()
+      .update(users)
+      .set({ timezone: "America/Denver", inboxToken: `t${Date.now()}`, smsPhone: `+1555${String(Date.now()).slice(-7)}` })
+      .where(eq(users.id, user.id));
     // then they went back and gave their real birthday
+    closed.length = 0;
     expect(await run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${new Date().getFullYear() - 10}-02-02` }))).toEqual({ blocked: true });
+    // the bank link is removed at Plaid and the Google grant revoked, like deleting an account
+    expect(closed.sort()).toEqual(["google", "plaid"]);
     const [u] = await getDb().select().from(users).where(eq(users.id, user.id));
     expect(u.name).toBe(provisionalName(u.email));
+    expect([u.timezone, u.inboxToken, u.smsPhone]).toEqual(["UTC", null, null]);
     expect(Object.keys(u.preferences).sort()).toEqual(["ageBlockedAt", "onboarding"]);
     expect(u.preferences.onboarding).toBe("pending");
     // every table that holds their rows is empty except how they sign in and the action log
@@ -211,6 +230,27 @@ describe("onboarding", () => {
       if (keep.has(table_name)) continue;
       const [{ n }] = (await getDb().execute<{ n: number }>(sql`select count(*)::int as n from ${sql.identifier(table_name)} where user_id = ${user.id}`)).rows;
       expect(n, table_name).toBe(0);
+    }
+  });
+
+  it("a new table with a user_id is emptied by the lock unless it's listed as kept, and a view can't break it", async () => {
+    const t = `lock_probe_${Date.now()}`;
+    await getDb().execute(sql`create table ${sql.identifier(t)} (user_id uuid not null)`);
+    // a view that can't be deleted from (distinct), with a user_id column
+    await getDb().execute(sql`create view ${sql.identifier(`${t}_v`)} as select distinct user_id from ${sql.identifier(t)}`);
+    try {
+      const { user, run } = await makeUser("Probe");
+      await getDb()
+        .update(users)
+        .set({ preferences: { onboarding: "pending" } })
+        .where(eq(users.id, user.id));
+      await getDb().execute(sql`insert into ${sql.identifier(t)} values (${user.id})`);
+      expect(await run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${new Date().getFullYear() - 9}-01-01` }))).toEqual({ blocked: true });
+      const [{ n }] = (await getDb().execute<{ n: number }>(sql`select count(*)::int as n from ${sql.identifier(t)} where user_id = ${user.id}`)).rows;
+      expect(n).toBe(0);
+    } finally {
+      await getDb().execute(sql`drop view if exists ${sql.identifier(`${t}_v`)}`);
+      await getDb().execute(sql`drop table if exists ${sql.identifier(t)}`);
     }
   });
 

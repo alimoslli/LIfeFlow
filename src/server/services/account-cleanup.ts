@@ -1,6 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 import type { Database } from "../db/client";
-import { integrations } from "../db/schema";
+import { integrations, type IntegrationProvider } from "../db/schema";
 import { withUser } from "../db/with-user";
 import { recordError } from "./error-reports";
 
@@ -25,6 +25,18 @@ export class DeletionBlockedError extends Error {
 }
 
 const DEADLINE_MS = 8_000;
+
+/** Connections whose access lives outside our database and is closed where it lives. */
+export const OUTSIDE_PROVIDERS: IntegrationProvider[] = ["plaid", "google", "google_calendar", "gmail"];
+
+/**
+ * Closes one stored connection at its provider: a bank link at Plaid (/item/remove), a Google grant at Google. Throws on
+ * failure; callers decide what a failure means. Also used by the under-13 lock (services/onboarding.ts).
+ */
+export async function closeAtProvider(row: { provider: string; encryptedCredentials: string | null }, f: typeof fetch) {
+  if (row.provider === "plaid") await (await import("../integrations/plaid")).removeAtPlaid(row.encryptedCredentials, f);
+  else await (await import("../integrations/google")).revokeGoogleGrant(row.encryptedCredentials, f);
+}
 
 function withDeadline<T>(p: Promise<T>, ms: number): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -69,7 +81,7 @@ export async function revokeOutsideAccess(db: Database, user: { id: string; stri
           .select({ provider: integrations.provider, encryptedCredentials: integrations.encryptedCredentials })
           .from(integrations)
           // RLS already limits this to the user; the explicit filter is a second lock.
-          .where(and(eq(integrations.userId, user.id), inArray(integrations.provider, ["plaid", "google", "google_calendar", "gmail"]))),
+          .where(and(eq(integrations.userId, user.id), inArray(integrations.provider, OUTSIDE_PROVIDERS))),
       db,
     );
   } catch {
@@ -78,8 +90,7 @@ export async function revokeOutsideAccess(db: Database, user: { id: string; stri
 
   const jobs = rows.map(async (row) => {
     try {
-      if (row.provider === "plaid") await (await import("../integrations/plaid")).removeAtPlaid(row.encryptedCredentials, f);
-      else await (await import("../integrations/google")).revokeGoogleGrant(row.encryptedCredentials, f);
+      await closeAtProvider(row, f);
     } catch {
       await fail(row.provider === "plaid" ? "bank link removal" : "Google revoke");
     }
