@@ -1,28 +1,12 @@
 "use client";
-import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { PixelIcon, pixel } from "@/components/pixel/pixel-icon";
 import Link from "next/link";
 import { NotifyAsk } from "./notify-ask";
 import { ASK_EVENT, takeHandoff, type AskDetail } from "@/lib/ask-handoff";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useAppBusy } from "@/lib/app-busy";
-import {
-  AlertTriangle,
-  Plug,
-  CalendarDays,
-  GraduationCap,
-  Repeat,
-  Wallet,
-  Brain,
-  CircleAlert,
-  FileText,
-  ImageIcon,
-  Loader2,
-  Paperclip,
-  Square,
-  ThumbsDown,
-  ThumbsUp,
-} from "lucide-react";
+import { Plug, GraduationCap, Brain, CircleAlert, ImageIcon, Loader2, Paperclip, Square, ThumbsDown, ThumbsUp } from "lucide-react";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
 import { isAppPath, viewAtName } from "@/lib/app-routes";
@@ -588,7 +572,7 @@ export function JarvisChat({
         <div className={cn("mx-auto flex w-full flex-col gap-5 py-6", !compact && "max-w-3xl")}>
           {!availability.available && (
             <div className="flex gap-3 rounded-2xl bg-warning-soft p-4 text-sm text-warning">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <PixelIcon name="alert" className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
                 <p className="font-medium">{nameAtStart(assistantName)} isn&apos;t available right now.</p>
                 <p className="mt-1 opacity-90">Everything else in LifeFlow works as usual.</p>
@@ -718,9 +702,9 @@ export function JarvisChat({
                   {p.uploading ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
                   ) : p.mimeType.startsWith("image/") ? (
-                    <ImageIcon className="h-3 w-3" />
+                    <ImageIcon className="h-4 w-4" />
                   ) : (
-                    <FileText className="h-3 w-3" />
+                    <PixelIcon name="note" className="h-4 w-4" />
                   )}
                   <span className="max-w-40 truncate">{p.filename}</span>
                   {p.error && <span>· {p.error}</span>}
@@ -847,7 +831,7 @@ function UserBubble({ m }: { m: Extract<UiMessage, { role: "user" }> }) {
           <div className="mt-2 flex flex-wrap gap-1.5">
             {m.attachments.map((a) => (
               <span key={a.id} className="inline-flex items-center gap-1 rounded-full bg-white/60 px-2 py-0.5 text-xs">
-                {a.mimeType.startsWith("image/") ? <ImageIcon className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                {a.mimeType.startsWith("image/") ? <ImageIcon className="h-4 w-4" /> : <PixelIcon name="note" className="h-4 w-4" />}
                 {a.filename}
               </span>
             ))}
@@ -1059,15 +1043,15 @@ function RateAnswer({ runId, initial }: { runId: string; initial: 1 | -1 | null 
   );
 }
 
-const ICONS = [CalendarDays, GraduationCap, Wallet, Repeat];
+const ICONS = [pixel("calendar"), pixel("school"), pixel("money"), pixel("repeat")];
 /** Four starting points; the home screen gets ones that show what Jarvis can do across your life. */
 function starterCards(module: JarvisModule) {
   if (module === "home")
     return [
-      { icon: CalendarDays, title: "Plan my day", prompt: "What do I need to get done today? Plan it around my classes and shifts." },
+      { icon: pixel("calendar"), title: "Plan my day", prompt: "What do I need to get done today? Plan it around my classes and shifts." },
       { icon: GraduationCap, title: "What's due this week?", prompt: "What's due this week, and what should I start first?" },
-      { icon: Wallet, title: "Where's my money going?", prompt: "Where is my money going this month?" },
-      { icon: Repeat, title: "Find my subscriptions", prompt: "What subscriptions am I paying for?" },
+      { icon: pixel("money"), title: "Where's my money going?", prompt: "Where is my money going this month?" },
+      { icon: pixel("repeat"), title: "Find my subscriptions", prompt: "What subscriptions am I paying for?" },
     ];
   return STARTERS[module].slice(0, 4).map((prompt, i) => ({ icon: ICONS[i % ICONS.length], title: prompt, prompt }));
 }

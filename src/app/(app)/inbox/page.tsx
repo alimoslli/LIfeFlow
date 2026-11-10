@@ -2,7 +2,7 @@ import { AssistantName } from "@/components/assistant-name";
 import { PixelIcon, pixel } from "@/components/pixel/pixel-icon";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertCircle, CheckCircle2, CircleSlash, FileText, Mail } from "lucide-react";
+import { CheckCircle2, CircleSlash } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
@@ -21,13 +21,13 @@ export const metadata: Metadata = { title: "Filed" };
 
 const STATUS = {
   filed: { icon: CheckCircle2, tone: "text-success", label: "Filed" },
-  suggested: { icon: Mail, tone: "text-accent", label: "Waiting for you" },
-  needs_review: { icon: AlertCircle, tone: "text-warning", label: "Needs you" },
+  suggested: { icon: pixel("mail"), tone: "text-accent", label: "Waiting for you" },
+  needs_review: { icon: pixel("alert"), tone: "text-warning", label: "Needs you" },
   ignored: { icon: CircleSlash, tone: "text-muted", label: "Ignored" },
-  failed: { icon: AlertCircle, tone: "text-danger", label: "Couldn't read" },
+  failed: { icon: pixel("alert"), tone: "text-danger", label: "Couldn't read" },
   undone: { icon: pixel("undo"), tone: "text-muted", label: "Undone" },
   duplicate: { icon: CircleSlash, tone: "text-muted", label: "Already filed" },
-  processing: { icon: FileText, tone: "text-muted", label: "Reading" },
+  processing: { icon: pixel("note"), tone: "text-muted", label: "Reading" },
 } as const;
 
 export default async function InboxPage({ searchParams }: { searchParams: Promise<{ shared?: string }> }) {
@@ -65,7 +65,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
         <InboxUpload />
         <div>
           <h2 className="flex items-center gap-2 font-medium">
-            <Mail className="h-4 w-4" /> Your forwarding address
+            <PixelIcon name="mail" className="h-4 w-4" /> Your forwarding address
           </h2>
           {d.address ? (
             <div className="mt-2 flex flex-wrap items-center gap-2">

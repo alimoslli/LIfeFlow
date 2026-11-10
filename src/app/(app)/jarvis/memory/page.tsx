@@ -1,7 +1,6 @@
 import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Archive, RotateCcw } from "lucide-react";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -184,7 +183,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                       title="Archive (stops being used)"
                       className="tap flex items-center justify-center rounded-full text-muted hover:text-text"
                     >
-                      <Archive className="h-4 w-4" />
+                      <PixelIcon name="archive" className="h-4 w-4" />
                     </ActionButton>
                     <ActionButton
                       action={deleteMemoryAction.bind(null, m.id)}
@@ -258,7 +257,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
                         title="Restore"
                         className="tap flex items-center justify-center rounded-full text-muted hover:text-text"
                       >
-                        <RotateCcw className="h-4 w-4" />
+                        <PixelIcon name="undo" className="h-4 w-4" />
                       </ActionButton>
                     )}
                     <ActionButton

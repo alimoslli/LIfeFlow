@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { BellOff, Clock, Loader2, MoreHorizontal, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Loader2, ThumbsDown, ThumbsUp } from "lucide-react";
 import { respondAction } from "@/app/(app)/jarvis/proactive-actions";
 import { haptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
@@ -116,7 +116,7 @@ export function JarvisMessageCard({ m, name, compact }: { m: CardMessage; name: 
                 onClick={() => act("snooze")}
                 className="flex min-h-11 items-center gap-1 rounded-full px-3 text-sm text-text-2"
               >
-                <Clock className="h-4 w-4" /> Snooze
+                <PixelIcon name="clock" className="h-4 w-4" /> Snooze
               </button>
               <button
                 type="button"
@@ -166,7 +166,7 @@ export function JarvisMessageCard({ m, name, compact }: { m: CardMessage; name: 
                   onClick={() => setMenu((v) => !v)}
                   className="tap flex items-center justify-center text-muted"
                 >
-                  <MoreHorizontal className="h-5 w-5" />
+                  <PixelIcon name="dots" className="h-4 w-4" />
                 </button>
                 {menu && (
                   <div className="absolute right-0 bottom-full z-10 mb-1 w-64 rounded-2xl bg-surface p-1 shadow-lift">
@@ -178,7 +178,7 @@ export function JarvisMessageCard({ m, name, compact }: { m: CardMessage; name: 
                       }}
                       className="flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm hover:bg-surface-2"
                     >
-                      <BellOff className="h-4 w-4" /> Don&apos;t suggest this again
+                      <PixelIcon name="hide" className="h-4 w-4" /> Don&apos;t suggest this again
                     </button>
                     <button
                       type="button"

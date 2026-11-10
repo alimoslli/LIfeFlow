@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useTransition } from "react";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { setAiConsentAction } from "@/app/(app)/settings/actions";
 
 /** Asked once, before anything goes to the AI provider (App Store 5.1.2(i)). Turn it off anytime in Settings. */
@@ -22,7 +23,7 @@ export function AiConsentCard({ name }: { name: string }) {
     <div className="mt-6 w-full rounded-[24px] bg-surface p-5 text-left shadow-soft ring-1 ring-border/60" role="region" aria-label="Allow AI">
       <div className="flex items-center gap-2.5">
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-accent">
-          <ShieldCheck className="h-[18px] w-[18px]" />
+          <PixelIcon name="shield" className="h-4 w-4" />
         </span>
         <p className="text-[1rem] font-semibold">Before we start</p>
       </div>
