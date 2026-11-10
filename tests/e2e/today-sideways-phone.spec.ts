@@ -8,6 +8,8 @@ test.use({ viewport: { width: 667, height: 375 }, isMobile: true, hasTouch: true
 test("sideways, Today's chat bar sits under the sky, not over it", async ({ page }) => {
   await signUp(page, "Sid Sideways");
   await page.goto("/");
+  // the sky streams in: wait until it is on the page, not still in the hidden part of the stream
+  await expect(page.getByTestId("day-clock")).toBeVisible();
   const sky = (await page.getByTestId("day-clock").boundingBox())!;
   const bar = page.locator(".dc-dock");
   await expect(bar).toBeVisible();
