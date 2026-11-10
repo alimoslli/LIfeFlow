@@ -27,27 +27,27 @@ test("a failed save keeps what was typed and explains the problem in plain words
   await page.getByLabel("Employer").fill("Campus Library");
   await page.getByLabel("Hourly rate ($)").fill("16.5");
   await page.getByRole("button", { name: "Save job" }).click();
-  await page.getByText("Record a paycheck").click();
+  // Record a paycheck is one tap deeper, behind "+ Paycheck" (owner's reset, 2026-11-10)
+  await page.getByRole("button", { name: "Paycheck", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Record a paycheck" });
 
-  // A net pay that can't be saved (negative) fails on the server.
-  await page.getByLabel("Hours", { exact: true }).fill("12.5");
-  await page.getByLabel("Net pay ($)").fill("-5");
-  await page.getByLabel("Gross pay ($)").fill("200");
-  await page.getByRole("button", { name: "Save paycheck" }).click();
+  // A take-home pay that can't be saved (negative) fails on the server.
+  await dialog.getByLabel("Hours", { exact: true }).fill("12.5");
+  await dialog.getByLabel("Take-home pay ($)").fill("-5");
+  await dialog.getByLabel("Before taxes ($)").fill("200");
+  await dialog.getByRole("button", { name: "Save paycheck" }).click();
 
-  const form = page.locator("form").filter({ has: page.getByRole("button", { name: "Save paycheck" }) });
-  await expect(form.getByRole("alert")).toContainText("Enter an amount of $0 or more");
-  await expect(form.getByRole("alert")).not.toContainText(/netCents|expected/);
-  await expect(page.getByLabel("Hours", { exact: true })).toHaveValue("12.5");
-  await expect(page.getByLabel("Net pay ($)")).toHaveValue("-5");
-  await expect(page.getByLabel("Gross pay ($)")).toHaveValue("200");
+  await expect(dialog.getByRole("alert")).toContainText("Enter an amount of $0 or more");
+  await expect(dialog.getByRole("alert")).not.toContainText(/netCents|expected/);
+  await expect(dialog.getByLabel("Hours", { exact: true })).toHaveValue("12.5");
+  await expect(dialog.getByLabel("Take-home pay ($)")).toHaveValue("-5");
+  await expect(dialog.getByLabel("Before taxes ($)")).toHaveValue("200");
 
-  // Fixing it and saving works as before, and the form clears.
-  await page.getByLabel("Net pay ($)").fill("150");
-  await page.getByRole("button", { name: "Save paycheck" }).click();
-  // (the job's own "Saved." can still be showing, so look at the newest one)
-  await expect(page.getByRole("status").filter({ hasText: "Saved." }).last()).toBeVisible();
-  await expect(page.getByLabel("Net pay ($)")).toHaveValue("");
+  // Fixing it and saving works as before: the dialog closes and the paycheck is in "Pay that came in".
+  await dialog.getByLabel("Take-home pay ($)").fill("150");
+  await dialog.getByRole("button", { name: "Save paycheck" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("region", { name: "Pay that came in" })).toContainText("$150.00");
 });
 
 test("Jarvis saves assignments and tasks that then appear in School and Tasks", async ({ page }) => {

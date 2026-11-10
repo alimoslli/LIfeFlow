@@ -104,7 +104,7 @@ test("shifts: blank form can't create a shift, edit and delete work, past shifts
   await page.goto("/work");
   await page.getByLabel("Employer").or(page.getByLabel("Job name")).first().fill("Campus Library");
   await page.getByRole("button", { name: "Save job" }).click();
-  await expect(page.getByRole("button", { name: "Add shift" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Shift", exact: true })).toBeVisible();
   // An untouched quick-add submit must not create a 9 to 5 shift.
   await openQuickAdd(page);
   const sheet = page.getByRole("dialog", { name: "Quick add" });
@@ -124,7 +124,9 @@ test("shifts: blank form can't create a shift, edit and delete work, past shifts
   await sheet.getByRole("button", { name: "Add shift" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Shift added." })).toBeVisible();
 
-  // Edit it: move the end to 1 PM.
+  // Edit it: move the end to 1 PM (the week's shifts are one tap deeper, under "Change a shift").
+  const change = page.locator("details", { has: page.getByText("Change a shift") });
+  if ((await change.getAttribute("open")) === null) await page.getByText("Change a shift").click();
   await page.getByRole("button", { name: /^Edit shift on/ }).click();
   const edit = page.getByRole("dialog", { name: "Shift" });
   await edit.getByRole("button", { name: /^Ends/ }).click();

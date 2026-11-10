@@ -11,7 +11,7 @@ import { EverythingSheet, openEverything } from "./everything-sheet";
 import { cn } from "@/lib/utils";
 import { ASK_EVENT, handOff, type AskDetail } from "@/lib/ask-handoff";
 import { assistantLabel, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
-import { NAV, isActive } from "./nav-items";
+import { isActive, tabsFor } from "./nav-items";
 import { LifeAreasContext } from "./life-areas";
 import type { LifeAreas } from "@/lib/life";
 
@@ -93,7 +93,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  const tabs = NAV.filter((t) => t.module !== "school" || areas.school);
+  const tabs = tabsFor(areas);
   const router = useRouter();
   // Keep every tab warm: after each move (and after a save clears the cache) prefetch the tabs again when idle,
   // so switching tabs opens a ready page instead of a skeleton.

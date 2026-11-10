@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { WorkHours } from "@/components/work-hours";
 import type { WorkSchedule } from "@/server/db/schema";
 import { addDaysStr } from "@/lib/dates";
@@ -13,13 +14,15 @@ export function ShiftDialog({
   action,
   employers,
   today,
+  label = "Add shift",
 }: {
   action: (p: ActionState, fd: FormData) => Promise<ActionState>;
   employers: { id: string; name: string }[];
   today: string;
+  label?: ReactNode;
 }) {
   return (
-    <Dialog trigger="Add shift" title="Add a shift">
+    <Dialog trigger={label} title="Add a shift">
       {(close) => (
         <ActionForm action={action} onSuccess={close}>
           <Field label="Job" htmlFor="s-emp">
@@ -74,5 +77,57 @@ export function JobHoursForm({
       <WorkHoursField initial={initial} />
       <SubmitButton className="self-end">Save hours</SubmitButton>
     </ActionForm>
+  );
+}
+
+/** Record a paycheck, one tap deeper behind "+" (owner, 2026-11-08: pay is recorded, never predicted). */
+export function PaycheckDialog({
+  action,
+  employers,
+  today,
+}: {
+  action: (p: ActionState, fd: FormData) => Promise<ActionState>;
+  employers: { id: string; name: string }[];
+  today: string;
+}) {
+  return (
+    <Dialog
+      trigger={
+        <>
+          <PixelIcon name="plus" className="h-4 w-4" /> Paycheck
+        </>
+      }
+      triggerProps={{ variant: "secondary", size: "sm" }}
+      title="Record a paycheck"
+    >
+      {(close) => (
+        <ActionForm action={action} onSuccess={close}>
+          <Field label="Job" htmlFor="p-emp">
+            <Select id="p-emp" name="employerId" required>
+              {employers.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Pay date" htmlFor="p-date">
+              <Input id="p-date" name="payDate" type="date" required defaultValue={today} />
+            </Field>
+            <Field label="Hours" htmlFor="p-h">
+              <Input id="p-h" name="hours" inputMode="decimal" />
+            </Field>
+            <Field label="Take-home pay ($)" htmlFor="p-net">
+              <Input id="p-net" name="net" inputMode="decimal" required />
+            </Field>
+            <Field label="Before taxes ($)" htmlFor="p-gross">
+              <Input id="p-gross" name="gross" inputMode="decimal" />
+            </Field>
+          </div>
+          <SubmitButton className="self-end">Save paycheck</SubmitButton>
+        </ActionForm>
+      )}
+    </Dialog>
   );
 }
