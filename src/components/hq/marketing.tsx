@@ -191,6 +191,10 @@ export function NetworkBlock({ p }: { p: NetworkPerformance }) {
   );
 }
 
+/**
+ * On/off in HQ is the app's sky switch (moon for off, sun for on), never a phone-style toggle. The whole row is the
+ * checkbox (a 44 px target); the picture follows it (`.peer:checked ~ .lf-switch-view`).
+ */
 export function Switch({ name, label, hint, on }: { name: string; label: string; hint?: string; on: boolean }) {
   return (
     <label className="relative flex min-h-11 cursor-pointer items-center justify-between gap-4 rounded-2xl px-1 py-1.5">
@@ -205,10 +209,7 @@ export function Switch({ name, label, hint, on }: { name: string; label: string;
         <span className="block text-[0.9375rem] text-text">{label}</span>
         {hint && <span className="block text-xs text-muted">{hint}</span>}
       </span>
-      <span
-        aria-hidden
-        className="relative h-7 w-12 shrink-0 rounded-full bg-surface-3 transition-colors peer-checked:bg-accent peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--ring)] after:absolute after:top-1 after:left-1 after:h-5 after:w-5 after:rounded-full after:bg-surface after:shadow-soft after:transition-transform after:content-[''] peer-checked:after:translate-x-5"
-      />
+      <span aria-hidden className="lf-switch-view peer-focus-visible:outline-3 peer-focus-visible:outline-[#8fb6ff]" />
     </label>
   );
 }
