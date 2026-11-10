@@ -37,3 +37,19 @@ export function spokenStars(titles: string[]): string {
   const list = titles.length > 3 ? `${titles.slice(0, 3).join(", ")} and ${titles.length - 3} more` : titles.join(", ");
   return `${titles.length} done while you were away: ${list}.`;
 }
+
+/** What ended, for a push: "Your Target shift", "Bio 101". */
+const ended = (s: { title: string; kind: string }) => (s.kind === "work" ? `Your ${s.title} shift` : s.title);
+
+/**
+ * The note when something ends (owner, 2026-11-10: "a small dopamine effect"): what ended and that its star is waiting,
+ * one line; the tap is the claim (it opens Today, where the stars come out). Things ending together are one note.
+ */
+export function starPush(name: string, ends: { title: string; kind: string }[]): { title: string; body: string } {
+  const n = ends.length;
+  const title = n === 1 ? `${name} has a star for you` : `${name} has ${n} stars for you`;
+  if (n === 1) return { title, body: `${ended(ends[0])} is over. Tap to claim your star on your sky.` };
+  const names = ends.map((e) => (e.kind === "work" ? `your ${e.title} shift` : e.title));
+  const list = n === 2 ? `${names[0]} and ${names[1]}` : `${names[0]}, ${names[1]} and ${n - 2} more`;
+  return { title, body: `${list.charAt(0).toUpperCase()}${list.slice(1)} are over. Tap to claim them on your sky.` };
+}

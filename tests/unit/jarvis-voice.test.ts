@@ -139,5 +139,8 @@ describe("Settings says what pushImportant does (audit A8)", () => {
     expect(off).toBe("Nova keeps everything in the app and sends no notifications of its own.");
     expect(pushSummary("Nova", jarvisSettings(undefined), false)).not.toMatch(/reminder/i);
     expect(pushSummary("Nova", jarvisSettings(undefined), true)).toMatch(/To-do reminders don't count toward the limit\.$/);
+    // star notes (when a class or shift ends) are outside the limit too
+    expect(pushSummary("Nova", jarvisSettings(undefined), true, true)).toMatch(/To-do reminders and star notes don't count toward the limit\.$/);
+    expect(pushSummary("Nova", jarvisSettings(undefined), false, true)).toMatch(/Star notes don't count toward the limit\.$/);
   });
 });

@@ -130,7 +130,8 @@ export type UserPreferences = {
     pendingActionId?: string;
   };
   /** Which push notifications the user wants, and when the morning brief arrives (local HH:mm). */
-  notifications?: { reminders?: boolean; bills?: boolean; morningBrief?: boolean; briefTime?: string; budgetAlerts?: boolean };
+  /** `stars`: a one-line note when a class, shift or plan ends that a star is waiting (services/stars.ts `pushStars`). */
+  notifications?: { reminders?: boolean; bills?: boolean; morningBrief?: boolean; briefTime?: string; budgetAlerts?: boolean; stars?: boolean };
   assistantVoice?: "alloy" | "ash" | "ballad" | "cedar" | "coral" | "echo" | "marin" | "sage" | "shimmer" | "verse";
 };
 

@@ -285,14 +285,20 @@ export function pushText(kind: string, facts: F, opts: { moneyLocked?: boolean; 
  * services/proactive/engine.ts: reviews plus urgent or important messages, `pushLimit` in 24 hours, quiet hours.
  * `reminders` is the To-do reminders switch on the same page; they're mentioned only while it's on.
  */
-export function pushSummary(name: string, s: { pushLimit: number; quietStart: string; quietEnd: string }, reminders: boolean) {
+export function pushSummary(name: string, s: { pushLimit: number; quietStart: string; quietEnd: string }, reminders: boolean, stars = false) {
   if (s.pushLimit <= 0) return `${name} keeps everything in the app and sends no notifications of its own.${reminders ? " To-do reminders still come." : ""}`;
   const quiet = s.quietStart === s.quietEnd ? "No quiet hours." : `None from ${clock(s.quietStart)} to ${clock(s.quietEnd)}.`;
   return [
     `${name} sends up to ${plural(s.pushLimit, "notification")} a day: your morning brief, evening wrap-up and weekly and monthly reviews, plus anything urgent or important it notices, like a bill your checking can't cover.`,
     "Each one says in one line what it noticed and why, with the next step.",
     quiet,
-    reminders ? "To-do reminders don't count toward the limit." : null,
+    reminders && stars
+      ? "To-do reminders and star notes don't count toward the limit."
+      : reminders
+        ? "To-do reminders don't count toward the limit."
+        : stars
+          ? "Star notes don't count toward the limit."
+          : null,
   ]
     .filter(Boolean)
     .join(" ");

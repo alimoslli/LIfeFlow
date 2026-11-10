@@ -25,6 +25,7 @@ export default async function NotificationSettings() {
       nameAtStart(assistantProfile(u.preferences, u.timezone).name),
       jarvisSettings(u.preferences),
       notificationPrefs(u.preferences).reminders,
+      notificationPrefs(u.preferences).stars,
     ),
   }));
   const available = !!pushConfig();
@@ -45,6 +46,15 @@ export default async function NotificationSettings() {
               <span className="block text-xs text-muted">At the reminder time you pick on a to-do.</span>
             </span>
             <input type="checkbox" name="reminders" defaultChecked={prefs.reminders} className="lf-switch" />
+          </label>
+          <label className="flex min-h-14 cursor-pointer items-center gap-3 border-b border-border py-2">
+            <span className="min-w-0 flex-1">
+              <span className="block text-[0.9375rem]">Stars when something ends</span>
+              <span className="block text-xs text-muted">
+                When a class, shift or plan ends, a short note that a star is waiting on your sky. Never at night.
+              </span>
+            </span>
+            <input type="checkbox" name="stars" defaultChecked={prefs.stars} className="lf-switch" />
           </label>
           <p className="py-3 text-sm text-text-2">
             {pushes}{" "}

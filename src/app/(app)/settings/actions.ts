@@ -182,7 +182,7 @@ export async function saveNotificationPrefsAction(_p: ActionState, fd: FormData)
   return mutate(
     "notifications.preferences",
     async (_s, u) => {
-      const notifications = notificationPrefsSchema.parse({ ...notificationPrefs(u.preferences), reminders: on("reminders") });
+      const notifications = notificationPrefsSchema.parse({ ...notificationPrefs(u.preferences), reminders: on("reminders"), stars: on("stars") });
       await updatePreferences(getDb(), u.id, { notifications });
       return "Notification settings saved.";
     },

@@ -29,6 +29,7 @@ const PUBLIC = [
   "/api/cron/sync",
   "/api/cron/notify",
   "/api/cron/promises",
+  "/api/cron/stars",
   "/api/inbox/email",
   "/offline",
   "/sw.js",

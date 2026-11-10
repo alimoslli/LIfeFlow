@@ -43,7 +43,7 @@ export async function removeSubscriptionById(scope: UserScope, id: string) {
   await scope.tx.delete(pushSubscriptions).where(and(eq(pushSubscriptions.userId, scope.userId), eq(pushSubscriptions.id, id)));
 }
 
-export const NOTIFICATION_DEFAULTS = { reminders: true, bills: true, morningBrief: true, briefTime: "08:00", budgetAlerts: true };
+export const NOTIFICATION_DEFAULTS = { reminders: true, bills: true, morningBrief: true, briefTime: "08:00", budgetAlerts: true, stars: true };
 export const notificationPrefs = (prefs: UserPreferences | undefined) => ({ ...NOTIFICATION_DEFAULTS, ...prefs?.notifications });
 
 export const notificationPrefsSchema = z.object({
@@ -52,6 +52,7 @@ export const notificationPrefsSchema = z.object({
   morningBrief: z.boolean(),
   briefTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Pick a time like 08:00"),
   budgetAlerts: z.boolean(),
+  stars: z.boolean(),
 });
 
 export async function listSubscriptions(scope: UserScope) {
