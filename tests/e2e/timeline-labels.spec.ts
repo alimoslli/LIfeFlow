@@ -125,3 +125,42 @@ for (const size of [
     });
   }
 }
+
+// The owner's rule (2026-11-10): nothing lies over anything. At night the things you finished today shine as gold stars on
+// the wheel; a star must never sit on a stop's words or on the "N stars today" line.
+for (const size of [
+  { name: "phone", viewport: { width: 390, height: 844 } },
+  { name: "narrow laptop window", viewport: { width: 990, height: 1100 } },
+]) {
+  test(`the stars you earned never sit on words: ${size.name}, 9:30 PM`, async ({ browser }) => {
+    const context = await browser.newContext({ viewport: size.viewport, isMobile: size.name === "phone", hasTouch: size.name === "phone" });
+    const page = await context.newPage();
+    const email = await signUp(page, "Star Sky");
+    execFileSync("npx", ["tsx", "--conditions=react-server", "scripts/dev/seed-clock-look.ts", email, "--busy"], {
+      env: { ...process.env, DATABASE_URL: E2E_DB },
+    });
+    const d = new Date();
+    d.setHours(21, 30, 0, 0);
+    await page.clock.setFixedTime(d);
+    await page.goto("/");
+    await expect(page.getByTestId("day-clock")).toHaveAttribute("data-ready", "true");
+    await page.waitForTimeout(600);
+    const r = await page.evaluate(() => {
+      const dome = document.querySelector("[data-dc=dome]")!;
+      const stars = [...dome.querySelectorAll<SVGPathElement>('path[fill="#ffd166"]')].map((e) => e.getBoundingClientRect()).filter((b) => b.width > 0);
+      const words = [...dome.querySelectorAll<SVGTextElement>("text")]
+        .filter((e) => (e.textContent ?? "").trim() && Number(e.getAttribute("opacity") ?? 1) > 0.05)
+        .map((e) => ({ text: (e.textContent ?? "").trim(), b: e.getBoundingClientRect() }));
+      const out: string[] = [];
+      for (const s of stars)
+        for (const w of words)
+          if (s.left < w.b.right - 1 && w.b.left < s.right - 1 && s.top < w.b.bottom - 1 && w.b.top < s.bottom - 1) out.push(`a star sits on "${w.text}"`);
+      return { stars: stars.length, line: words.some((w) => / stars? today$/.test(w.text)), out: [...new Set(out)] };
+    });
+    // the seeded day has finished things, so there are stars to check (otherwise this proves nothing)
+    expect(r.line).toBe(true);
+    expect(r.stars).toBeGreaterThan(0);
+    expect(r.out).toEqual([]);
+    await context.close();
+  });
+}

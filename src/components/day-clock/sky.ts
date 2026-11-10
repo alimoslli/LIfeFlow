@@ -753,7 +753,10 @@ export function createSky(root: HTMLElement, reduce: boolean) {
     const starsToday =
       night && follow && P < 1 ? timed.filter((it) => dayOf(it.start) === dayOf(now - (mod(now) < rise ? DAY : 0)) && isFinished(it, now)) : [];
     const keepClear: { x: number; y: number; w: number; h: number }[] = [...tiles];
-    if (starsToday.length) keepClear.push({ x: cx, y: hyC - R * HF * 0.2 - fontPx * 0.4, w: fontPx * 9, h: fontPx * 2 });
+    // the "N stars today" line: 12.5px words (day-clock.css .dc-stars-t), centred, its baseline a fifth of the way up
+    const starsLine = `${starsToday.length} star${starsToday.length === 1 ? "" : "s"} today`;
+    const starsBox = { x: cx, y: hyC - R * HF * 0.2 - 12.5 * 0.35, w: starsLine.length * 12.5 * 0.58 + 6, h: 12.5 * 1.5 };
+    if (starsToday.length) keepClear.push(starsBox);
     const mark = (t: number, s: string) => {
       for (const lift of [-18, -18 - 46 * sc]) {
         const [x, y] = wheelAt(t, lift);
@@ -842,15 +845,37 @@ export function createSky(root: HTMLElement, reduce: boolean) {
       const fin = starsToday;
       const sg = el("g", {}, layer);
       const kf = reduce ? 0 : E(seg(P, 0.15, 0.85));
+      // nothing over anything (owner, 2026-11-10): each star takes the first spot near its own that keeps clear of the
+      // labels, the "N stars today" line and the other stars; with no free sky it keeps quiet (the line counts it)
+      const taken: { x: number; y: number; w: number; h: number }[] = [];
+      const free = (x: number, y: number) =>
+        y < hyC - 14 &&
+        x > box.l + 10 &&
+        x < W - box.r - 10 &&
+        ![...keepClear, ...taken].some((q) => Math.abs(q.x - x) < q.w / 2 + 12 && Math.abs(q.y - y) < q.h / 2 + 12);
       fin.forEach((it, i) => {
-        const r0 = R * (0.3 + 0.32 * (((i * 37) % 10) / 10));
+        const base = 0.3 + 0.32 * (((i * 37) % 10) / 10);
         const a0 = Math.PI * ((i + 0.5) / fin.length);
-        const [sx, sy] = [cx - r0 * Math.cos(a0), hyC - r0 * HF * Math.sin(a0)];
+        let spot: [number, number] | null = null;
+        for (const dr of [0, 0.1, -0.1, 0.2, -0.18, 0.3]) {
+          for (const da of [0, 0.15, -0.15, 0.3, -0.3]) {
+            const r0 = R * clamp(base + dr, 0.16, 0.86);
+            const a1 = clamp(a0 + da, 0.12, Math.PI - 0.12);
+            const at: [number, number] = [cx - r0 * Math.cos(a1), hyC - r0 * HF * Math.sin(a1)];
+            if (free(...at)) {
+              spot = at;
+              break;
+            }
+          }
+          if (spot) break;
+        }
+        if (!spot) return;
+        taken.push({ x: spot[0], y: spot[1], w: 15, h: 15 });
+        const [sx, sy] = spot;
         const stop = stopOf.get(it.id);
         star(sg, lerp(sx, stop ? stop.x + 12 : sx, kf), lerp(sy, stop ? stop.y - 12 : sy, kf), lerp(7.5, 5.5, kf), stop || !P ? 1 : 1 - P);
       });
-      if (fin.length)
-        txt(sg, cx, hyC - R * HF * 0.2, `${fin.length} star${fin.length === 1 ? "" : "s"} today`, { class: "dc-stars-t", opacity: (kc * 0.85).toFixed(3) });
+      if (fin.length) txt(sg, cx, hyC - R * HF * 0.2, starsLine, { class: "dc-stars-t", opacity: (kc * 0.85).toFixed(3) });
     }
 
     // ---- on the water: how long until the sun sets (or rises); while turned away, "Back to now" (the engine's button)
