@@ -168,6 +168,33 @@ describe("OpenAI Responses provider", () => {
     expect(requests[2]).not.toHaveProperty("text");
   });
 
+  it("small things go to the small model; plans, money and files stay on the big one (owner, 2026-11-10)", async () => {
+    const requests: Record<string, unknown>[] = [];
+    const fakeFetch = (async (_url: string, init: RequestInit) => {
+      requests.push(JSON.parse(String(init.body)));
+      return sse([
+        completed([{ type: "message", id: "m", role: "assistant", status: "completed", content: [{ type: "output_text", text: "ok", annotations: [] }] }]),
+      ]);
+    }) as unknown as typeof fetch;
+    const provider = new OpenAIProvider({ apiKey: "sk-test", model: "gpt-5.5", smallModel: "gpt-5.4-mini", reasoningEffort: "auto", fetch: fakeFetch });
+    const run = async (effort: "low" | "medium" | "high") => {
+      const turn = provider.startTurn({ system: "S", history: [{ type: "user", text: "hi" }], tools: [], effort });
+      for await (const _ of turn.step()) void _;
+      for await (const _ of turn.step([])) void _; // the second step of the same turn keeps the same model
+      return turn.model;
+    };
+    expect(await run("low")).toBe("gpt-5.4-mini");
+    expect(await run("medium")).toBe("gpt-5.5");
+    expect(await run("high")).toBe("gpt-5.5");
+    expect(requests.map((r) => r.model)).toEqual(["gpt-5.4-mini", "gpt-5.4-mini", "gpt-5.5", "gpt-5.5", "gpt-5.5", "gpt-5.5"]);
+    // without a small model set, every turn uses the main one
+    const one = new OpenAIProvider({ apiKey: "sk-test", model: "gpt-5.5", reasoningEffort: "auto", fetch: fakeFetch });
+    const t = one.startTurn({ system: "S", history: [{ type: "user", text: "hi" }], tools: [], effort: "low" });
+    for await (const _ of t.step()) void _;
+    expect(t.model).toBe("gpt-5.5");
+    expect(requests.at(-1)!.model).toBe("gpt-5.5");
+  });
+
   it("drops 24h retention once if the model refuses it, and keeps answering", async () => {
     const requests: Record<string, unknown>[] = [];
     const fakeFetch = (async (_url: string, init: RequestInit) => {

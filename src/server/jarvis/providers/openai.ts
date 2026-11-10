@@ -7,6 +7,8 @@ import type { ToolSpec } from "../registry";
 export type OpenAIConfig = {
   apiKey: string;
   model: string;
+  /** A cheaper model for "low" turns (lookups and adds); everything else stays on `model`. */
+  smallModel?: string;
   /** A fixed level, or "auto" (the default): each turn picks low, medium or high (effort.ts). */
   reasoningEffort?: "auto" | "none" | "minimal" | "low" | "medium" | "high";
   /** How long OpenAI keeps the cached prompt start. "24h" where the model supports it. */
@@ -113,16 +115,19 @@ export class OpenAIProvider implements ModelProvider {
     const input: ResponseInputItem[] = toResponsesInput(history);
     let toolDefs = toToolDefs(tools);
     const { client, config } = this;
-    const reasoning = isReasoningModel(config.model);
+    // small things on the small model (owner, 2026-11-10); one model for the whole turn, so its cache holds
+    const model = effort === "low" && config.smallModel ? config.smallModel : config.model;
+    const reasoning = isReasoningModel(model);
     const fixed = config.reasoningEffort && config.reasoningEffort !== "auto" ? config.reasoningEffort : undefined;
     const reasoningEffort = fixed ?? effort;
 
     return {
+      model,
       async *step(toolResults, nextTools) {
         for (const r of toolResults ?? []) input.push({ type: "function_call_output", call_id: r.callId, output: r.output });
         if (nextTools) toolDefs = toToolDefs(nextTools);
         const body: ResponseCreateParamsStreaming = {
-          model: config.model,
+          model,
           instructions: system,
           input,
           tools: toolDefs,
@@ -135,13 +140,13 @@ export class OpenAIProvider implements ModelProvider {
           // GPT-5 family: the model's own answer-length setting. A prompt rule alone left week plans at 800+ words.
           ...(reasoning && verbosity && { text: { verbosity } }),
         };
-        const retention = config.cacheRetention && !noRetention.has(config.model) ? config.cacheRetention : undefined;
+        const retention = config.cacheRetention && !noRetention.has(model) ? config.cacheRetention : undefined;
         let stream;
         try {
           stream = await client.responses.create(retention ? { ...body, prompt_cache_retention: retention } : body, { signal });
         } catch (e) {
           if (!retention || !refusedRetention(e)) throw e;
-          noRetention.add(config.model);
+          noRetention.add(model);
           stream = await client.responses.create(body, { signal });
         }
         let text = "";

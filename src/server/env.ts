@@ -16,6 +16,11 @@ const schema = z.object({
   ENCRYPTION_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().default("gpt-5.5"),
+  /**
+   * The cheaper model for small things (owner, 2026-11-10): turns whose thinking level is "low" (lookups and adds,
+   * effort.ts). Planning, money decisions, clashes, files and anything unclear stay on OPENAI_MODEL. Empty turns it off.
+   */
+  OPENAI_MODEL_SMALL: z.string().default("gpt-5.4-mini"),
   /** Model for live web searches (Jarvis web_search, savings finder). Defaults to OPENAI_MODEL. */
   OPENAI_SEARCH_MODEL: z
     .string()
@@ -47,6 +52,10 @@ const schema = z.object({
   JARVIS_PRICE_INPUT_PER_MTOK: optionalNumber,
   JARVIS_PRICE_CACHED_INPUT_PER_MTOK: optionalNumber,
   JARVIS_PRICE_OUTPUT_PER_MTOK: optionalNumber,
+  /** Prices of OPENAI_MODEL_SMALL, so its turns are priced too (unknown ⇒ null, never invented). */
+  JARVIS_PRICE_SMALL_INPUT_PER_MTOK: optionalNumber,
+  JARVIS_PRICE_SMALL_CACHED_INPUT_PER_MTOK: optionalNumber,
+  JARVIS_PRICE_SMALL_OUTPUT_PER_MTOK: optionalNumber,
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 

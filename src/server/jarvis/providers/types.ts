@@ -16,6 +16,8 @@ export type StepEvent = { type: "text_delta"; delta: string } | { type: "step_do
 
 /** One user turn: the agent calls step() until no tool calls remain. */
 export interface ModelTurn {
+  /** The model answering this turn, when the provider picked a different one than its default (a small model). */
+  readonly model?: string;
   /** `tools` replaces the tool list from this step on (after load_tools added a group). */
   step(toolResults?: { callId: string; output: string }[], tools?: ToolSpec[]): AsyncGenerator<StepEvent>;
 }

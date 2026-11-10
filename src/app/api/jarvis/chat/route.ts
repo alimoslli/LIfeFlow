@@ -4,7 +4,7 @@ import { getSessionUser } from "@/server/auth/current-user";
 import { moneyLocked } from "@/server/auth/money-lock";
 import { assertSameOrigin, enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { runJarvisTurn, type JarvisEvent } from "@/server/jarvis/agent";
-import { getProvider, modelPrices } from "@/server/jarvis/providers";
+import { getProvider, modelPrices, smallModelPrices } from "@/server/jarvis/providers";
 import { ProviderUnavailableError } from "@/server/jarvis/providers/types";
 import { FREE_JARVIS_PER_DAY, inTestingPhase, isPro, LIMIT_MONTH_SECONDS, TESTING_BUDGET_MESSAGE, TESTING_LIMITS, testingLimitMessage } from "@/server/billing";
 import { withUser } from "@/server/db/with-user";
@@ -90,6 +90,7 @@ export async function POST(req: Request) {
             clientMessageId: parsed.data.clientMessageId,
             // Deliberately no req.signal: a dropped connection must not cancel the turn (Stop is its own request).
             prices: modelPrices(),
+            smallPrices: smallModelPrices(),
             moneyLocked: locked,
           });
         } catch (e) {

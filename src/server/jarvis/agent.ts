@@ -72,6 +72,8 @@ export type TurnInput = {
   deadlineMs?: number;
   /** Model prices for cost estimates; omitted ⇒ cost recorded as unknown. */
   prices?: ModelPrices;
+  /** Prices of the small model, for turns it answered (the provider's `turn.model`). */
+  smallPrices?: ModelPrices;
   /** Money is behind the Face ID lock right now (see auth/money-lock). */
   moneyLocked?: boolean;
 };
@@ -343,14 +345,14 @@ export async function runJarvisTurn(input: TurnInput): Promise<{ conversationId:
         conversationId: conversation.id,
         messageId: finalMessageId,
         provider: provider.name,
-        model: provider.model,
+        model: turn.model ?? provider.model,
         promptVersion: PROMPT_VERSION,
         outcome,
         errorKind,
         latencyMs: performance.now() - started,
         firstTokenMs,
         ...tally,
-        costMicros: estimateCostMicros(tally.usage, input.prices ?? {}),
+        costMicros: estimateCostMicros(tally.usage, (turn.model && turn.model !== provider.model ? input.smallPrices : input.prices) ?? {}),
         memoryIds: memories.map((x) => x.id),
         skills: skills.map((k) => k.name),
       }),

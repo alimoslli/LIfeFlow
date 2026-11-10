@@ -20,6 +20,16 @@ export function modelPrices(): ModelPrices {
   };
 }
 
+/** Prices of the small model (OPENAI_MODEL_SMALL), for turns it answered. */
+export function smallModelPrices(): ModelPrices {
+  const e = env();
+  return {
+    inputPerMTok: e.JARVIS_PRICE_SMALL_INPUT_PER_MTOK,
+    cachedInputPerMTok: e.JARVIS_PRICE_SMALL_CACHED_INPUT_PER_MTOK,
+    outputPerMTok: e.JARVIS_PRICE_SMALL_OUTPUT_PER_MTOK,
+  };
+}
+
 export function getProvider(): ModelProvider {
   const e = env();
   // For the server log only; people see "isn't available right now" (chat route).
@@ -27,6 +37,7 @@ export function getProvider(): ModelProvider {
   return new OpenAIProvider({
     apiKey: e.OPENAI_API_KEY,
     model: e.OPENAI_MODEL,
+    smallModel: e.OPENAI_MODEL_SMALL || undefined,
     reasoningEffort: e.OPENAI_REASONING_EFFORT ?? "auto",
     cacheRetention: e.OPENAI_PROMPT_CACHE_RETENTION ?? "24h",
     baseURL: e.OPENAI_BASE_URL,
