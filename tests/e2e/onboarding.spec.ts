@@ -50,6 +50,15 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   }
   const google = page.getByRole("link", { name: "Connect Google Calendar" });
   if (await google.count()) await expect(google).toHaveAttribute("href", "/api/integrations/google/start?from=welcome");
+  // Coming back from Google (its callback lands here): the same step, a plain line about what happened, and
+  // everything chosen before is still there (the skyling, and where they work, which is saved when setup finishes).
+  await page.goto("/welcome?connected=google&result=missing_scopes");
+  await expect(page.getByRole("heading", { name: "Connect your sky" })).toBeVisible();
+  await expect(page.getByText("Google Calendar needs calendar access to fill your sky.", { exact: false })).toBeVisible();
+  await page.getByRole("button", { name: "Back" }).click();
+  await expect(page.getByLabel("Where you work")).toHaveValue("Target");
+  await expect(page.getByLabel("Your birthday")).toHaveValue("2005-04-12");
+  await page.getByRole("button", { name: "Connect my sky" }).click();
   await page.getByRole("button", { name: "I'll connect later" }).click();
 
   // 4. Read your sky: folded back to the wheel, and opening it is ticked off when they do it.

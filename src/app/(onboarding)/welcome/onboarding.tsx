@@ -57,15 +57,20 @@ export type Saved = {
   lifeStage: LifeStage | null;
   birthDate: string;
   school: string;
+  job: string;
 };
 type Source = { available: boolean; connected: boolean };
 type SourceKey = "canvas" | "google" | "outlook";
-type Back = { provider: "google" | "outlook"; result: "connected" | "denied" | "failed" | "admin_consent" | "not_configured" | "use_main_site" };
+type Back = {
+  provider: "google" | "outlook";
+  result: "connected" | "denied" | "failed" | "missing_scopes" | "admin_consent" | "not_configured" | "use_main_site";
+};
 
 const BACK_TEXT: Record<Back["result"], string> = {
   connected: "is connected. Look up: it's on your sky.",
   denied: "wasn't connected. No problem, you can connect it anytime.",
   failed: "couldn't connect. Try again.",
+  missing_scopes: "needs calendar access to fill your sky. Connect again and leave the calendar box ticked.",
   admin_consent: "needs your school or workplace to approve LifeFlow first.",
   not_configured: "isn't available yet.",
   use_main_site: "connects from the main site. Tap Connect again.",
@@ -116,7 +121,7 @@ export function Onboarding({
   const [birthDate, setBirthDate] = useState(saved.birthDate);
   const [stage, setStage] = useState<LifeStage | null>(saved.lifeStage);
   const [school, setSchool] = useState(saved.school);
-  const [job, setJob] = useState("");
+  const [job, setJob] = useState(saved.job);
   const isSchool = stage === "student" || stage === "both";
   const isWork = stage === "working" || stage === "both";
   const birthProblem = birthDate ? birthDateProblem(birthDate, firstClock.today) : null;
@@ -167,6 +172,7 @@ export function Onboarding({
         birthDate,
         lifeStage: stage ?? undefined,
         school: isSchool ? school.trim() : undefined,
+        job: isWork ? job.trim() : "",
       });
       if (!r?.ok) return setError(r?.error ?? "Couldn't save. Try again.");
       go(1);

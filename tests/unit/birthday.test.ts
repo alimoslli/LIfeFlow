@@ -15,5 +15,9 @@ describe("birthday (the welcome, Settings › Profile)", () => {
     expect(birthDateProblem("2027-01-01", "2026-11-10")).toBe("That day hasn't happened yet.");
     expect(birthDateProblem("1890-01-01", "2026-11-10")).toBe("Check the year.");
     expect(birthDateProblem("not a date", "2026-11-10")).toBe("Pick your birthday.");
+    // a real day only (it used to roll "2010-02-31" over to March 3)
+    expect(birthDateProblem("2010-02-31", "2026-11-10")).toBe("Pick your birthday.");
+    expect(birthDateProblem("2009-02-29", "2026-11-10")).toBe("Pick your birthday.");
+    expect(birthDateProblem("2008-02-29", "2026-11-10")).toBeNull();
   });
 });

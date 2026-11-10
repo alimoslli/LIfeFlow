@@ -101,6 +101,8 @@ export const welcomeProgressSchema = z.object({
   birthDate: z.string().trim().optional(),
   lifeStage: z.enum(["student", "working", "both", "life"]).optional(),
   school: z.string().trim().max(120).optional(),
+  /** Where they work: kept until setup finishes, which makes it an employer (connecting leaves the page and comes back). */
+  job: z.string().trim().max(200).optional(),
 });
 
 export async function saveWelcomeProgress(scope: UserScope, tz: string, input: z.input<typeof welcomeProgressSchema>) {
@@ -116,6 +118,7 @@ export async function saveWelcomeProgress(scope: UserScope, tz: string, input: z
     ...(d.birthDate ? { birthDate: d.birthDate } : {}),
     ...(d.lifeStage ? { lifeStage: d.lifeStage } : {}),
     ...(d.school !== undefined ? { school: d.school || undefined } : {}),
+    ...(d.job !== undefined ? { welcomeJob: d.job || undefined } : {}),
   };
   await scope.tx
     .update(users)
@@ -138,7 +141,7 @@ export async function finishOnboarding(
   const defined = Object.fromEntries(Object.entries(prefs).filter(([, v]) => v !== undefined));
   await scope.tx
     .update(users)
-    .set({ preferences: { ...u.preferences, ...defined, onboarding: "done", tour: "pending" } })
+    .set({ preferences: { ...u.preferences, ...defined, welcomeJob: undefined, onboarding: "done", tour: "pending" } })
     .where(eq(users.id, scope.userId));
 }
 

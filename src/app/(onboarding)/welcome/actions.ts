@@ -10,7 +10,7 @@ import { dayClockData } from "@/server/services/day-clock";
 import { ServiceError } from "@/server/services/errors";
 import { completeOnboarding, finishOnboarding, saveWelcomeProgress, setDisplayName, setTourState, type OnboardingInput } from "@/server/services/onboarding";
 
-/** What "Build your sky" gets back: the person's sky as it is now (no money on it), or why it didn't save. */
+/** The person's sky as it is now (no money on it), for "Connect your sky" after Canvas connects; or why it couldn't load. */
 export type SkyResult = { ok: true; clock: ClockData } | { ok: false; error: string };
 
 async function onSky(name: string, save?: (s: Parameters<Parameters<typeof withCurrentUser>[0]>[0], tz: string) => Promise<unknown>): Promise<SkyResult> {

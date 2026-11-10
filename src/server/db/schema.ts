@@ -88,6 +88,8 @@ export type UserPreferences = {
   birthDate?: string;
   /** Their school's name, from the welcome (students). */
   school?: string;
+  /** Where they work, typed in the welcome; kept while they connect (they leave and come back) and made an employer when setup finishes. */
+  welcomeJob?: string;
   /** First-run setup: "pending" only for accounts created since onboarding launched. */
   onboarding?: "pending" | "done";
   /** Guided tour of the app, offered after onboarding or replayed from Settings. */

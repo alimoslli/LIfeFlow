@@ -4,6 +4,7 @@ import { closeDb, getDb } from "@/server/db/client";
 import { users } from "@/server/db/schema";
 import { listAccounts } from "@/server/services/finance/accounts";
 import { listActiveMemories } from "@/server/services/memory";
+import { updateProfile } from "@/server/services/accounts";
 import { completeOnboarding, finishOnboarding, saveWelcomeProgress, setTourState } from "@/server/services/onboarding";
 import { listCourses } from "@/server/services/school";
 import { listEmployers } from "@/server/services/work";
@@ -99,6 +100,30 @@ describe("onboarding", () => {
     await expect(run((s) => saveWelcomeProgress(s, "UTC", { birthDate: tooYoung }))).rejects.toThrow(/13 and older/);
     await expect(run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${young.getFullYear() + 1}-01-01` }))).rejects.toThrow(/hasn't happened/);
     expect((await prefs(user.id)).birthDate).toBe("2005-04-12");
+  });
+
+  it("keeps 'where you work' while they connect, and makes it an employer only when setup finishes", async () => {
+    const { user, run } = await makeUser("Ren Ito");
+    await run((s) => saveWelcomeProgress(s, "UTC", { lifeStage: "working", job: "Campus Coffee" }));
+    expect((await prefs(user.id)).welcomeJob).toBe("Campus Coffee");
+    expect(await run((s) => listEmployers(s))).toEqual([]);
+    // back from Google: the welcome hands the kept name to finishing
+    const kept = (await prefs(user.id)).welcomeJob!;
+    await run((s) => completeOnboarding(s, { lifeStage: "working", job: { name: kept } }));
+    expect((await run((s) => listEmployers(s))).map((e) => e.name)).toEqual(["Campus Coffee"]);
+    expect((await prefs(user.id)).welcomeJob).toBeUndefined();
+  });
+
+  it("a birthday can be changed and removed in Settings, and left as it is", async () => {
+    const { user } = await makeUser("Ada Moss");
+    const base = { name: "Ada Moss", timezone: "UTC" };
+    await updateProfile(getDb(), user.id, { ...base, birthDate: "2001-05-02" });
+    expect((await prefs(user.id)).birthDate).toBe("2001-05-02");
+    await updateProfile(getDb(), user.id, base); // not on the form: kept
+    expect((await prefs(user.id)).birthDate).toBe("2001-05-02");
+    await updateProfile(getDb(), user.id, { ...base, birthDate: "" }); // cleared on the form: removed
+    expect((await prefs(user.id)).birthDate).toBeUndefined();
+    await expect(updateProfile(getDb(), user.id, { ...base, birthDate: "2010-02-31" })).rejects.toThrow("Pick your birthday.");
   });
 
   it("only changes the signed-in user's preferences", async () => {

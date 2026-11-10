@@ -109,6 +109,7 @@ Pictures: `docs/design/tonight/` and `docs/design/brand/morning-mark.png`. What 
 
 **Next:**
 - From the owner's retouch list (relayed 2026-11-09) and the A-to-Z audit (`docs/audits/2026-11-09-a-to-z.md`): the welcome's "Your day, connected" on the wheel; the landing hero as the real sky and wheel; a time-true line and the uncurl morph (research P3/P4); the laptop two-column Today; the character cast (names from times of day, personalities); a setting for sky moods.
+- The welcome's Canvas card connects through the Pro-only Canvas action: once paid plans are on, a free user would hit "part of LifeFlow Pro" mid-welcome. Decide before billing goes live: let Canvas connect free in the welcome, or show the plan there (pricing is the owner's call). (QA review of b9f7a21.)
 - Rebuild the Day Clock artifact after clock changes.
 - The ADR 0032 proposals ("Tonight", "What this costs", timeline connection lines, a widget or watch) are not built and need the owner's yes.
 

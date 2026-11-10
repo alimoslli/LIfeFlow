@@ -13,7 +13,7 @@ import { Onboarding, type Saved } from "./onboarding";
 
 export const metadata: Metadata = { title: "Welcome" };
 
-const RESULTS = ["connected", "denied", "failed", "admin_consent", "not_configured", "use_main_site"] as const;
+const RESULTS = ["connected", "denied", "failed", "missing_scopes", "admin_consent", "not_configured", "use_main_site"] as const;
 
 export default async function WelcomePage({ searchParams }: { searchParams: Promise<{ connected?: string; result?: string }> }) {
   const user = await requireUser();
@@ -38,6 +38,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
     lifeStage: p.lifeStage ?? null,
     birthDate: p.birthDate ?? "",
     school: p.school ?? "",
+    job: p.welcomeJob ?? "",
   };
   const { connected, result } = await searchParams;
   const back =

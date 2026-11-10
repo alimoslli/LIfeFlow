@@ -76,12 +76,8 @@ export const profileSchema = z.object({
     .optional(),
   jarvisTone: z.enum(["concise", "balanced", "detailed"]).optional(),
   lifeStage: z.enum(["student", "working", "both", "life"]).optional(),
-  /** "YYYY-MM-DD"; empty keeps what's saved. Checked against today in their time zone in updateProfile. */
-  birthDate: z
-    .string()
-    .trim()
-    .optional()
-    .transform((v) => v || undefined),
+  /** "YYYY-MM-DD"; "" removes it; left out keeps what's saved. Checked against today in their time zone in updateProfile. */
+  birthDate: z.string().trim().optional(),
 });
 
 export async function updateProfile(db: Database, userId: string, input: z.input<typeof profileSchema>) {
@@ -100,7 +96,7 @@ export async function updateProfile(db: Database, userId: string, input: z.input
         weekStartsOn: d.weekStartsOn,
         jarvisTone: d.jarvisTone ?? current.preferences.jarvisTone,
         lifeStage: d.lifeStage ?? current.preferences.lifeStage,
-        birthDate: d.birthDate ?? current.preferences.birthDate,
+        birthDate: d.birthDate === undefined ? current.preferences.birthDate : d.birthDate || undefined,
       },
     })
     .where(eq(users.id, userId));

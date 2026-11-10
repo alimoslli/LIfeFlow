@@ -37,7 +37,8 @@ export async function updateProfileAction(_p: ActionState, fd: FormData): Promis
       weekStartsOn: f.weekStartsOn as unknown as 0,
       jarvisTone: f.jarvisTone as "balanced",
       lifeStage: f.lifeStage as "both",
-      birthDate: f.birthDate,
+      // the field is on the form: empty means remove it
+      birthDate: fd.has("birthDate") ? (f.birthDate ?? "") : undefined,
     });
     return "Saved";
   });

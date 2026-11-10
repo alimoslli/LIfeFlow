@@ -12,7 +12,9 @@ export function ageOn(birth: string, day: string): number {
 
 /** Why a birthday can't be saved, in plain words, or null when it's fine. */
 export function birthDateProblem(birth: string, today: string): string | null {
-  if (!DATE_RE.test(birth) || Number.isNaN(new Date(`${birth}T12:00:00Z`).getTime())) return "Pick your birthday.";
+  // a real day only: "2010-02-31" would roll over to March 3
+  const parsed = new Date(`${birth}T00:00:00Z`);
+  if (!DATE_RE.test(birth) || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== birth) return "Pick your birthday.";
   if (birth > today) return "That day hasn't happened yet.";
   if (ageOn(birth, today) > 120) return "Check the year.";
   if (ageOn(birth, today) < MIN_AGE) return `LifeFlow is for people ${MIN_AGE} and older.`;
