@@ -1,0 +1,164 @@
+{
+  "id": "s0036-student-whole-week-in-one-message-two-stats",
+  "title": "First-gen dorm student tells her whole week in one message (six classes, two tutoring shifts, a stats exam and a business draft 'on Friday'); Dev saves it in one step without adding anything twice, asks which Stats and which Friday, and names the heavy Monday and Friday",
+  "persona": "p0008-university-dorm-tutor-two-stats-classes",
+  "now": "2026-11-14T10:00",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 3601,
+  "money": {
+    "available_now_cents": 52000
+  },
+  "changes": [
+    {
+      "id": "m-week",
+      "type": "memory",
+      "content": "Here is my whole week. Spanish Mon Wed Fri at 1. Stats Mon Wed Fri at 11. Psych Tuesday and Thursday 9:30. Chem Tuesday and Thursday 12:30, and the chem lab Tuesday at 2. Nursing Tuesday and Thursday at 11. I tutor Monday 6 to 9 and Thursday 4 to 7, $15 an hour, but I heard it might go up. My stats exam is Friday and my business project draft is due Friday too.",
+      "category": "project",
+      "via": "chat",
+      "told_at": "2026-11-14T09:58"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-saved",
+      "check": "late fact",
+      "what": "Her message m-week is a whole week at once. Nearly all of it is already in her data: the Mon/Wed/Fri Statistics 11:00 (STAT 239) and Spanish 1:00 (SPAN 285) classes, Tue/Thu Psych 9:30, Nursing 11:00 and Chem 12:30 with the Tuesday 2:00 lab, and the tutoring shifts on Mon Nov 16 6:00 to 9:00 PM (shift-campus-2026-11-16) and Thu Nov 19 4:00 to 7:00 PM (shift-campus-2026-11-19) at $15.00 an hour (paid biweekly, last on Nov 13: pay-campus-2026-11-13). Only the exam and the business draft are new. Dev saves the new items in one go and reports what was already there as already there.",
+      "by_when": "2026-11-14T10:30",
+      "facts": [
+        "m-week",
+        "pay-campus-2026-11-13",
+        "shift-campus-2026-11-16",
+        "shift-campus-2026-11-19"
+      ]
+    },
+    {
+      "id": "n-which",
+      "check": "late fact",
+      "what": "'My stats exam' fits two classes she has: Statistics (STAT 239, which meets Mon/Wed/Fri at 11:00) and Business Statistics (BUS 256, online). 'Friday' is not a date: she wrote on Saturday Nov 14, and Friday could be Nov 20, or Nov 27 inside Thanksgiving break. 'My business project draft' has no matching item in BUS 256 (the draft was Oct 29, the final is Dec 3). Dev must ask which class and which Friday before saving a date.",
+      "by_when": "2026-11-14T10:30",
+      "facts": [
+        "m-week",
+        "asg-stat-239-homework-11",
+        "asg-bus-256-discussion-post-12"
+      ]
+    },
+    {
+      "id": "n-week",
+      "check": "heavy stretch",
+      "what": "The week of Nov 16 is the heavy one. Monday Nov 16 has three homework sets due 11:59 PM (Psych, Spanish, Statistics) with classes from 11:00 to 1:50 and the tutoring shift 6:00 to 9:00 PM, and her only study time that day is the morning window. Friday Nov 20 (if that is the Friday) holds the stats exam at 11:00 plus Chem lab report 6 and Chem quiz 12 due 11:59 PM, and the business draft if it is also that day. Thursday Nov 19 has the 4:00 to 7:00 PM shift.",
+      "by_when": "2026-11-14T10:30",
+      "facts": [
+        "asg-psy-141-homework-11",
+        "asg-span-285-homework-11",
+        "asg-stat-239-homework-11",
+        "shift-campus-2026-11-16",
+        "shift-campus-2026-11-19",
+        "asg-chem-331-lab-report-6",
+        "asg-chem-331-quiz-12",
+        "class-stat-239-2026-11-20"
+      ]
+    }
+  ],
+  "best_fix": [
+    {
+      "for": "n-saved",
+      "action": "plan",
+      "needs_user": true,
+      "what": "One step, one message back: 'Got your week. Already saved, so I added nothing twice: Statistics, Spanish, Psych, Nursing, Chem and its lab, and your Mon and Thu tutoring shifts at $15.00 an hour. Two things are new and I need one answer each.' The new items are saved in the same step once she answers (exam and draft, with Undo for the whole step).",
+      "why": "One message should be one confirmed setup, not six forms; saving what is already there again would double her calendar and her work hours."
+    },
+    {
+      "for": "n-which",
+      "action": "ask",
+      "needs_user": true,
+      "what": "Two short taps in the same reply: 'Which Stats: Statistics (Mon/Wed/Fri 11:00) or Business Statistics?' and 'Which Friday: Nov 20 or Nov 27?' with Nov 20 first (the only Friday with class, Thanksgiving break starts Nov 25). Nothing is saved with a date until she taps. For the business draft Dev asks which Business project it belongs to rather than adding a new one.",
+      "why": "The class name fits two classes and 'Friday' is not a date; a wrong guess puts an exam on the wrong day. A tap takes five seconds."
+    },
+    {
+      "for": "n-week",
+      "action": "plan",
+      "needs_user": true,
+      "send_at": "2026-11-14T10:00",
+      "what": "Right after the answers: 'Monday is the heavy day (three homework sets due at midnight and your 6:00 to 9:00 PM shift) and Friday has the exam plus the Chem report and quiz. Want study blocks in your mornings: Monday 7:35 to 9:00 for the homework and Friday 8:35 to 9:40 before the exam?' She says yes or edits; Dev saves them with Undo. Pay is left as $15.00 an hour: 'might go up' is not a new rate.",
+      "why": "She studies mornings before class and crams in the days before an exam; Monday morning and Friday morning are the windows that already exist.",
+      "placements": [
+        {
+          "id": "pl-mon-study",
+          "activity": "study",
+          "label": "Homework sets before class",
+          "start": "2026-11-16T07:35",
+          "end": "2026-11-16T09:00"
+        },
+        {
+          "id": "pl-fri-study",
+          "activity": "study",
+          "label": "Statistics review before the exam",
+          "start": "2026-11-20T08:35",
+          "end": "2026-11-20T09:40"
+        }
+      ]
+    }
+  ],
+  "must_not": [
+    "guess a date for 'Friday' (or pick Nov 20 and save it without her answer)",
+    "pick one of the two Stats classes for the exam without asking",
+    "add the classes or the Mon and Thu shifts a second time (they are already in her data)",
+    "change her tutoring pay rate: 'I heard it might go up' is not a rate, and Dev never edits pay",
+    "save the message piece by piece in six separate confirmations",
+    "write, solve or check any graded work (study planning only)",
+    "put study blocks on Tuesday or Thursday evenings after the shift",
+    "count the hours or predict a paycheck from the shifts"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "first-generation",
+    "dorm",
+    "campus job",
+    "canvas",
+    "morning crammer",
+    "week setup",
+    "one message",
+    "ambiguous name",
+    "ambiguous date",
+    "heavy stretch",
+    "never change pay",
+    "nothing twice",
+    "6 classes",
+    "19 credits"
+  ],
+  "routine_fit": {
+    "placements": [
+      {
+        "placement": "pl-mon-study",
+        "routine": "study",
+        "window": "morning-1",
+        "fits": true
+      },
+      {
+        "placement": "pl-fri-study",
+        "routine": "study",
+        "window": "morning-1",
+        "fits": true
+      }
+    ],
+    "tempting": [
+      {
+        "suggestion": "put study blocks on Tuesday or Thursday evenings after the shift",
+        "routine": "study",
+        "why_wrong": "she studies mornings before class and says she can't focus at night",
+        "facts": [
+          "m-01"
+        ]
+      }
+    ]
+  },
+  "assumptions": [
+    "The new one-step week setup shows what is already saved, saves the rest in one go with a single Undo, and asks only about what it cannot tell.",
+    "The persona's classes and Mon/Thu shifts are the ones synced from Canvas and typed earlier; her message restates them.",
+    "Thanksgiving break is Nov 25 to Nov 29, so Friday Nov 27 has no class: Nov 20 is the likely Friday but is confirmed by a tap.",
+    "Pay is $15.00 an hour, biweekly, as in the persona; the rumour of a raise is not saved as a fact.",
+    "Her checking balance is pinned to $520.00 and is not part of this case."
+  ]
+}

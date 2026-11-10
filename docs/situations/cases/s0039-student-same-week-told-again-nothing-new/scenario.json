@@ -1,0 +1,71 @@
+{
+  "id": "s0039-student-same-week-told-again-nothing-new",
+  "title": "Overnight-warehouse student tells her whole week again, the day before a Bio midterm; everything is already saved, so Dev says so in one line, adds nothing twice, asks nothing and does not pile on",
+  "persona": "p1027-cc-overnight-warehouse-four-nights",
+  "now": "2026-11-08T15:00",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 3901,
+  "changes": [
+    {
+      "id": "m-week",
+      "type": "memory",
+      "content": "My week, same as always. Mondays I have Bio at 10 and English at 12. Tuesdays Bio at 10 and the Bio lab at 11:30. Psych is online. I work Wednesday, Thursday, Friday and Saturday nights, 10 PM to 6:30 AM. My Bio midterm is tomorrow at 10.",
+      "category": "project",
+      "via": "chat",
+      "told_at": "2026-11-08T14:58"
+    }
+  ],
+  "dev_must_notice": [],
+  "best_fix": {
+    "action": "just so you know",
+    "needs_user": false,
+    "send_at": "2026-11-08T15:00",
+    "what": "One line in the chat, no questions: 'That's already all saved: Bio Mon and Tue at 10 and the Tuesday lab at 11:30, English Mon at 12, Psych online, your Wed to Sat night shifts, and the Bio midterm tomorrow at 10. Nothing new to add.' Nothing is created, so there is no Undo to offer. No push, no card, no study block. Her Sunday study window (3:30 to 6:00 PM) is already free and hers, the midterm is exam-bio-105-midterm-2 at 10:00 tomorrow, and her next night shift is Wed Nov 11 (shift-warehouse-2026-11-11).",
+    "why": "Her message repeats what Dev already has. The right setup step here is to recognise that and save nothing, not to re-ask or to re-add. She is awake after her night shift, studying is in her Sunday afternoon routine, and the week has no clash: the shifts start Wednesday."
+  },
+  "must_not": [
+    "add the classes, the lab, the midterm or the Wed to Sat shifts a second time",
+    "ask which Bio, which Monday or any other question (every item matches exactly one saved record)",
+    "call the week heavy or the midterm a problem, or send a push about it",
+    "put a study block on Sunday morning before the midterm",
+    "change her shifts, hours or pay, or predict a paycheck from them",
+    "write, solve or check anything for the midterm"
+  ],
+  "stay_quiet": true,
+  "tags": [
+    "student",
+    "community college",
+    "with family",
+    "overnight warehouse",
+    "nearly full-time",
+    "canvas",
+    "afternoon steady",
+    "3 classes",
+    "10 credits",
+    "week setup",
+    "nothing twice",
+    "stay quiet",
+    "midterm",
+    "routine already handles it"
+  ],
+  "routine_fit": {
+    "placements": [],
+    "tempting": [
+      {
+        "suggestion": "put a study block on Sunday morning before the midterm",
+        "routine": "sleep",
+        "why_wrong": "after a night shift she sleeps from about 7:15 AM to 2:15 PM, a firm window",
+        "facts": [
+          "m-day-sleep"
+        ]
+      }
+    ]
+  },
+  "assumptions": [
+    "The one-step week setup compares each item of the message with what is already saved; when every item matches exactly one record, it saves nothing and says so in one line.",
+    "Her Sunday afternoon study window is 3:30 to 6:00 PM; Monday's midterm is at 10:00 AM and she wakes at 7:00 AM.",
+    "Her last shift ended Sunday 6:30 AM; the next is Wednesday night, so the week before it has no work in the way.",
+    "Her checking and savings are the persona's own and are not part of this case."
+  ]
+}

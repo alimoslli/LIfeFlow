@@ -1,0 +1,105 @@
+{
+  "id": "s0040-student-extra-shift-lands-on-evening-study-night",
+  "title": "Roommate student's supervisor adds a Tuesday 6 to 9 PM shift on top of her 2 to 5 PM one; it eats her firm Tuesday evening study window the night Calculus homework is due, so Dev moves the homework to Monday evening, inside her window",
+  "persona": "p2040-university-roommates-campus-job",
+  "now": "2026-11-13T20:30",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 4001,
+  "changes": [
+    {
+      "id": "c-extra",
+      "type": "shift_add",
+      "job": "job-campus",
+      "start": "2026-11-17T18:00",
+      "end": "2026-11-17T21:00",
+      "break_minutes": 0,
+      "posted_at": "2026-11-13T15:10",
+      "notes": "Cover for a tutor who is out; added by the supervisor"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-collide",
+      "check": "collision",
+      "what": "The shift c-extra (Tue Nov 17, 6:00 to 9:00 PM, added by her supervisor today at 3:10 PM) comes after her usual 2:00 to 5:00 PM tutoring shift that day (shift-campus-2026-11-17) and her 8:00 AM History class, and it sits inside her firm evening study window (7:00 to 9:45 PM, m-01). Calculus Homework 12 is due Tuesday 11:59 PM (asg-math-108-homework-12), and she would be home at 9:08 PM with about 40 minutes of the window left.",
+      "by_when": "2026-11-13T21:00",
+      "facts": [
+        "c-extra",
+        "shift-campus-2026-11-17",
+        "asg-math-108-homework-12",
+        "m-01",
+        "class-hist-317-2026-11-17"
+      ]
+    }
+  ],
+  "best_fix": {
+    "for": "n-collide",
+    "action": "move block",
+    "needs_user": true,
+    "send_at": "2026-11-13T20:30",
+    "what": "One message tonight, while there is still a weekend: 'The new Tuesday 6 to 9 shift takes your study evening, and Calculus homework is due that night. If you take it, I can put the homework in Monday evening, 8:15 to 9:45, after your Spanish homework. Want me to add that block?' [Add the block] [I'll turn the shift down]. If she turns the shift down, Dev offers a short note for her to send to her supervisor (a draft only, she sends it). Dev does not accept or decline the shift for her.",
+    "why": "Monday 7:00 to 9:45 PM is a firm study window she already keeps, Spanish homework (due Monday night) takes the first hour, and the second hour is free. Doing the Calculus homework a day early turns a 12-hour Tuesday into one with no deadline at its end.",
+    "placements": [
+      {
+        "id": "pl-calc",
+        "activity": "study",
+        "label": "Calculus Homework 12",
+        "start": "2026-11-16T20:15",
+        "end": "2026-11-16T21:45"
+      }
+    ]
+  },
+  "must_not": [
+    "do the Calculus homework in the one-hour break between the two Tuesday shifts",
+    "accept, decline or reply to the extra shift for her",
+    "tell her to skip the Wednesday Spanish class or her 7 AM Monday workout to make room",
+    "suggest studying after 9:45 PM on Tuesday after a 12-hour day",
+    "solve or check the Calculus homework (planning only)",
+    "use guilt words about taking extra hours, or predict the pay for the shift"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "university",
+    "roommates",
+    "campus job",
+    "canvas",
+    "evening studier",
+    "steady",
+    "5 classes",
+    "16 credits",
+    "collision",
+    "extra shift",
+    "routine fit",
+    "move block",
+    "study window",
+    "time"
+  ],
+  "routine_fit": {
+    "placements": [
+      {
+        "placement": "pl-calc",
+        "routine": "study",
+        "window": "evening-1",
+        "fits": true
+      }
+    ],
+    "tempting": [
+      {
+        "suggestion": "do the Calculus homework in the one-hour break between the two Tuesday shifts",
+        "routine": "study",
+        "why_wrong": "she studies in the evening after dinner and her break is 5:00 to 6:00 PM on campus, between two shifts",
+        "facts": [
+          "m-01"
+        ]
+      }
+    ]
+  },
+  "assumptions": [
+    "The supervisor posts extra shifts by message; the shift is visible in her work data from Friday 3:10 PM.",
+    "She can say no to an extra shift; Dev never decides for her.",
+    "Monday's Spanish homework (due 11:59 PM) already fills 7:05 to 8:08 PM in her usual Monday study, so the new block starts at 8:15.",
+    "Her 7 AM Monday workout is untouched; the new block is in the evening."
+  ]
+}

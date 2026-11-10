@@ -2,11 +2,25 @@
 
 Updated by the situation writer after every batch. Run `python3 docs/situations/validate.py` for live counts.
 
-**Cases:** 35 (s0001 to s0015 batch 1, s0016 to s0020 batch 2, s0021 to s0025 batch 3, s0026 to s0030 batch 4, s0031 to s0035 batch 5, 2026-11-08) · **Stay-quiet share:** 9 of 35 (26%) · **Student share:** 23 of 35 (66%; batch 5 is 4 of 5, the last four batches are 18 of 20) · **Routine-fit share:** 27 of 35 (77%) · **Targets:** 30 before Dev's brain is built (reached), 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
+**Cases:** 40 (s0001 to s0015 batch 1, s0016 to s0020 batch 2, s0021 to s0025 batch 3, s0026 to s0030 batch 4, s0031 to s0035 batch 5, s0036 to s0040 batch 6, 2026-11-10) · **Stay-quiet share:** 10 of 40 (25%) · **Student share:** 28 of 40 (70%; batch 6 is 5 of 5) · **Routine-fit share:** 30 of 40 (75%) · **Targets:** 30 before Dev's brain is built (reached), 300 before the 10-student test, about a quarter stay-quiet, **at least 70% students** (owner, 2026-11-05), at least one in five testing routine fit.
 
 Worked examples (full cases with generated connections, not counted above): `examples/e0001-student-aunt-away-short-before-payday` (community college student who works) and `examples/e0002-night-nurse-school-closure`.
 
-Stay-quiet cases: s0010 (pay $18.40 lower after daylight saving), s0012 (cancelled tutorial, essay already handled by her morning routine), s0013 (sick day covered by paid sick leave), s0014 (food spending spike from hosting Thanksgiving), s0023 (full week already handled), s0020, s0030 (retired, covered, index fund up but not needed).
+Stay-quiet cases: s0039 (the week told again, all already saved), s0010 (pay $18.40 lower after daylight saving), s0012 (cancelled tutorial, essay already handled by her morning routine), s0013 (sick day covered by paid sick leave), s0014 (food spending spike from hosting Thanksgiving), s0023 (full week already handled), s0020, s0030 (retired, covered, index fund up but not needed).
+
+## Batch 6 (s0036 to s0040, 2026-11-10): the new one-step week setup, "can I afford", and a receipt filed once
+
+Built on what changed in the product on 2026-11-10. All five are students.
+
+| Case | Person | Covers |
+|---|---|---|
+| s0036 | first-gen university, dorm, 6 classes (19 credits), campus tutor, Canvas, morning crammer (new persona p0008: two classes with "stats" in the name) | one message with the whole week: classes and Mon/Thu shifts already saved are reported, not re-added; "stats exam" fits two classes and "Friday" is not a date, so Dev asks; "might get a raise" never changes the $15.00 rate; heavy Monday and Friday named; study in her morning window |
+| s0037 | community college nursing, roommates, part-time grocery, Moodle (p4012) | "Can I afford the $85 concert Saturday?": Available now $815.00, rent $775.10 due Sunday, $45.10 short; "only if you move $50 from savings" (floor $300 kept), same answer every time, Friday's paycheck and the card not counted |
+| s0038 | university, dorm, no job, 6 classes, Moodle (p2047) | a receipt photo picked as the page loads arrives twice; filed once, matched to the $47.83 bookstore charge, no second expense, one line back |
+| s0039 | community college, with family, overnight warehouse, Canvas (p1027) | stay quiet: she tells her whole week again the day before a Bio midterm; every item is already saved, so one line, nothing added, no Sunday-morning study (she sleeps after nights) |
+| s0040 | university, roommates, campus tutor, evening studier, Canvas (p2040) | supervisor adds a Tue 6 to 9 PM shift after a 2 to 5 PM one, on the night Calculus homework is due; Dev moves the homework to Monday evening inside her firm window, never the 5 to 6 PM break |
+
+Routine-fit cases: s0036, s0039, s0040. Simulator notes: the persona's classes and shifts already exist in the generated data, so "tells her whole week" is planted as a `memory` change with the message text and "already saved" is checked against the generated ids; a receipt photo is planted as a `memory` (via photo) plus the matching bank `purchase`, and the double arrival is only described in the case (the simulator has no duplicate-input change); p0008 needed smaller aid and family amounts to pin checking; personas without a savings account cannot use `money.savings_cents`. Gaps still open: a real duplicate-input change type, Google Classroom, a commuter, a student with two jobs, a first-hand follow-up a week later.
 
 ## Batch 5 (s0031 to s0035, 2026-11-08): income that isn't hourly shifts, and promises
 

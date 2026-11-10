@@ -1,0 +1,89 @@
+{
+  "id": "s0037-student-afford-concert-weekend-savings-only",
+  "title": "Nursing student asks 'can I afford the $85 concert Saturday?': Available now is $815.00, rent of $775.10 is due Sunday, so checking alone is $45.10 short; the answer is 'only if you move $50 from savings', never counting Friday's paycheck, and the same every time she asks",
+  "persona": "p4012-cc-roommates-nursing-part-time-savings",
+  "now": "2026-10-29T19:00",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 3701,
+  "money": {
+    "available_now_cents": 81500,
+    "savings_cents": 54000
+  },
+  "changes": [
+    {
+      "id": "c-concert",
+      "type": "calendar_event",
+      "title": "Concert with Maya (tickets $85 each at the door)",
+      "start": "2026-10-31T20:00",
+      "end": "2026-10-31T23:00",
+      "state": "with people",
+      "place": "out",
+      "source": "calendar",
+      "created_at": "2026-10-27T12:00"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-afford",
+      "check": "afford",
+      "what": "Her question is answerable from three numbers. Available now (checking plus cash) is $815.00 (acc-checking). The rent share of $775.10 is due Sunday Nov 1 (rec-rent-share), which leaves $39.90 through Sunday, and nothing else is due before Monday (phone and transit are Nov 3). The $85.00 ticket for Saturday's concert (c-concert) is $45.10 more than that. Her savings are $540.00 (acc-savings), of which $300.00 is her own emergency floor (m-floor), so $240.00 is free to use. The answer is: only if you move money from savings, about $50. Friday's paycheck (the biweekly payday Oct 30) has not landed and is not counted, and the amount is not guessed because the pay is hourly.",
+      "by_when": "2026-10-29T19:05",
+      "facts": [
+        "k-ask",
+        "c-concert",
+        "acc-checking",
+        "rec-rent-share",
+        "acc-savings",
+        "m-floor"
+      ]
+    }
+  ],
+  "best_fix": {
+    "for": "n-afford",
+    "action": "plan",
+    "needs_user": true,
+    "send_at": "2026-10-29T19:00",
+    "what": "Answer in her chat, in the same words every time she asks with these balances: 'Only if you move money from savings. You have $815.00 now, rent of $775.10 is due Sunday, which leaves $39.90, and the ticket is $85.00, so you are $45.10 short. Moving $50.00 from savings covers it and leaves $490.00, above your $300.00 floor. Your paycheck isn't counted until it lands.' Offer [Move $50.00 from savings] as one tap with Undo, and [No thanks]. Dev does not move the money on its own. If Friday's paycheck lands before she buys and Available now changes, the answer is recomputed from the new balance and says so ('your paycheck landed, so now yes: $X after rent').",
+    "why": "One rule gives one answer: Available now (checking plus cash) minus what is due through Sunday. Savings are a way to cover a gap, offered as a tap, never part of the balance she can spend. The floor she set is respected."
+  },
+  "must_not": [
+    "say yes because savings or the credit card could cover it (savings are not Available now, and the card's $1,401.70 is not money)",
+    "count Friday's paycheck, or an amount for it, as money she has (it has not landed, and hourly pay is never predicted)",
+    "say 'yes' one time and 'only if you move money' the next time she asks with the same balances",
+    "move the money on its own, or move more than the gap and her $300.00 floor allow",
+    "cut the answer off at today: bills run through Sunday, so the rent counts",
+    "guilt her for wanting to go or tell her to skip it, or tell her to pick up the Sunday shift for it"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "community college",
+    "nursing",
+    "roommates",
+    "moodle",
+    "afternoon steady",
+    "afford",
+    "weekend",
+    "savings floor",
+    "same answer every time",
+    "paycheck not landed",
+    "part-time job",
+    "question"
+  ],
+  "known": [
+    {
+      "id": "k-ask",
+      "fact": "She asked Dev: 'Can I afford the concert tickets, $85, this Saturday?'",
+      "source": "told Dev",
+      "at": "2026-10-29T19:00"
+    }
+  ],
+  "assumptions": [
+    "Rent share is the 1st (Sunday Nov 1) and counts as due through Sunday even though the bank posts it the next business day.",
+    "Her paycheck lands Friday Oct 30 (biweekly, six days after the period ends) but at 7:00 PM Thursday it has not, and the pay is hourly so no amount is predicted.",
+    "The owner's rule: Available now is checking plus cash only; savings and the card are never counted.",
+    "The $85 is one ticket; she did not ask about food or rides, so none are added.",
+    "Available now is $815.00 after three pending charges, pinned by the scenario."
+  ]
+}

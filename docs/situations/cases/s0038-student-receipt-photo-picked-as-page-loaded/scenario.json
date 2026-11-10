@@ -1,0 +1,82 @@
+{
+  "id": "s0038-student-receipt-photo-picked-as-page-loaded",
+  "title": "Dorm student's receipt photo is picked as the Money page loads and arrives twice; Dev files it once, matched to the $47.83 bookstore charge already in her bank, with no second expense and one line back",
+  "persona": "p2047-university-dorm-none",
+  "now": "2026-11-09T16:05",
+  "history_days": 90,
+  "future_days": 45,
+  "seed": 3801,
+  "changes": [
+    {
+      "id": "c-lab",
+      "type": "purchase",
+      "at": "2026-11-09T13:12",
+      "account": "acc-checking",
+      "description": "UNIV BOOKSTORE #2216 DEBIT",
+      "merchant_name": "University Bookstore",
+      "amount_cents": -4783,
+      "pfc": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE",
+      "pending": true
+    },
+    {
+      "id": "m-receipt",
+      "type": "memory",
+      "content": "Photo of a receipt: University Bookstore, Mon Nov 9, 1:12 PM, lab goggles $14.99, lab notebook $9.50, a calculator $23.34, total $47.83. Picked from the camera roll on the Money page.",
+      "category": "fact",
+      "via": "photo",
+      "told_at": "2026-11-09T16:03"
+    }
+  ],
+  "dev_must_notice": [
+    {
+      "id": "n-receipt",
+      "check": "late fact",
+      "what": "The photo m-receipt (University Bookstore, Mon Nov 9, 1:12 PM, three items, total $47.83) is the same purchase as the pending $47.83 debit charge c-lab at University Bookstore from 1:12 PM today. The photo can reach Dev twice: it was picked as the page loaded and the page's load repeated the pick. It is one receipt and one purchase, so it is filed once, as the details of c-lab, not as a new expense.",
+      "by_when": "2026-11-09T16:10",
+      "facts": [
+        "m-receipt",
+        "c-lab",
+        "acc-checking"
+      ]
+    }
+  ],
+  "best_fix": {
+    "for": "n-receipt",
+    "action": "just so you know",
+    "needs_user": false,
+    "send_at": "2026-11-09T16:05",
+    "what": "File it in one step and say so in one line: 'Filed: University Bookstore $47.83 (lab goggles $14.99, lab notebook $9.50, calculator $23.34), matched to today's charge. [Undo]'. The same photo arriving again within seconds, or again later, is recognised as already filed and does nothing: no second record, no second message. If she wants to recategorise it she taps the line.",
+    "why": "A receipt is the detail of a charge her bank already shows. Filing it twice, or as new spending, would show $95.66 where she spent $47.83 and break her month's totals; she should not have to check or retype anything."
+  },
+  "must_not": [
+    "file the receipt twice because the photo arrived twice",
+    "add a second $47.83 expense, or an expense on top of the pending bank charge",
+    "change Available now or this month's spent because of the photo (the charge is already counted)",
+    "ask her to retype the items or the total",
+    "send a second confirmation or a notification for the repeat",
+    "comment on the calculator or the lab supplies as a spending problem"
+  ],
+  "stay_quiet": false,
+  "tags": [
+    "student",
+    "university",
+    "dorm",
+    "no job",
+    "moodle",
+    "afternoon steady",
+    "6 classes",
+    "19 credits",
+    "receipt photo",
+    "file once",
+    "idempotent",
+    "page load",
+    "duplicate input",
+    "just so you know"
+  ],
+  "assumptions": [
+    "The photo is read to the merchant, date and total; the bank charge is matched on amount and the same day, so the receipt attaches to it.",
+    "A repeat of the same photo is recognised by its content and by the match to c-lab, so the second arrival does nothing.",
+    "Her checking balance is the persona's own (aid and loan refunds); it is not part of this case.",
+    "The bank charge is still pending at 4:05 PM; a pending charge counts in Available now and the receipt adds nothing to it."
+  ]
+}

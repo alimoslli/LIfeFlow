@@ -1,0 +1,1028 @@
+{
+  "id": "p1027-cc-overnight-warehouse-four-nights",
+  "summary": "Part-time community college student, 3 classes (10 credits) on Mondays and Tuesdays, works four overnight shifts a week at a fulfillment center, lives with her mom and two younger brothers, studies in the afternoons",
+  "kinds": [
+    "student who works",
+    "night shift",
+    "shift worker",
+    "lives with family"
+  ],
+  "student": {
+    "level": "community college",
+    "classes": 3,
+    "credits": 10,
+    "lms": "canvas",
+    "formats": [
+      "hybrid",
+      "in person",
+      "online"
+    ],
+    "work": "nearly full-time",
+    "living": "with family",
+    "flags": [],
+    "study_style": "afternoon",
+    "pace": "steady",
+    "aid": true,
+    "loans": false,
+    "scholarship": false,
+    "family_support": false
+  },
+  "time_zone": "America/Los_Angeles",
+  "pay": {
+    "type": "hourly",
+    "period": "weekly"
+  },
+  "places": {
+    "home": "home",
+    "campus": "campus",
+    "work": "the warehouse",
+    "out": "town"
+  },
+  "commute_minutes": {
+    "home-campus": 20,
+    "home-work": 25,
+    "campus-work": 30,
+    "home-out": 15,
+    "campus-out": 15
+  },
+  "commute_mode": "car",
+  "ready_minutes": 40,
+  "wind_down_minutes": 30,
+  "accounts": [
+    {
+      "id": "acc-checking",
+      "name": "Checking",
+      "official_name": "Everyday Checking",
+      "type": "depository",
+      "subtype": "checking",
+      "institution_name": "Valley Federal Credit Union",
+      "mask": "9447",
+      "opening_balance_cents": 62000
+    },
+    {
+      "id": "acc-savings",
+      "name": "Savings",
+      "official_name": "Share Savings",
+      "type": "depository",
+      "subtype": "savings",
+      "institution_name": "Valley Federal Credit Union",
+      "mask": "5188",
+      "opening_balance_cents": 81000,
+      "apy_bps": 150,
+      "interest_description": "DIVIDEND EARNED"
+    }
+  ],
+  "income": [
+    {
+      "id": "inc-warehouse",
+      "type": "hourly",
+      "job": "job-warehouse",
+      "rate_cents": 2075,
+      "pay_period": "weekly",
+      "period_anchor": "2026-08-02",
+      "days_after_period_end": 6,
+      "tax_share": 0.1,
+      "account": "acc-checking",
+      "description": "VALLEY FULFILLMENT PAYROLL PPD ID: 1400213813",
+      "merchant_name": null
+    },
+    {
+      "id": "inc-aid",
+      "type": "student_aid",
+      "account": "acc-checking",
+      "disbursements": [
+        {
+          "date": "2026-09-02",
+          "amount_cents": 145000,
+          "description": "FINANCIAL AID REFUND STUDENT ACCT"
+        }
+      ]
+    }
+  ],
+  "bills": [
+    {
+      "id": "household",
+      "name": "Share for the household",
+      "description": "ZELLE TO MOM CONF# {A8}",
+      "merchant_name": null,
+      "pfc": "TRANSFER_OUT_ACCOUNT_TRANSFER",
+      "amount_cents": 40000,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill",
+      "day": 1
+    },
+    {
+      "id": "car-insurance",
+      "name": "Car insurance",
+      "description": "SAFEROUTE AUTO INS PREM",
+      "merchant_name": "SafeRoute Insurance",
+      "pfc": "GENERAL_SERVICES_INSURANCE",
+      "amount_cents": 15400,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill",
+      "day": 4
+    },
+    {
+      "id": "phone",
+      "name": "Phone",
+      "description": "VERIZON WIRELESS PAYMENTS",
+      "merchant_name": "Verizon",
+      "pfc": "RENT_AND_UTILITIES_TELEPHONE",
+      "amount_cents": 4500,
+      "via": "ach",
+      "account": "acc-checking",
+      "kind": "bill",
+      "day": 9,
+      "email": {
+        "name": "Phone company",
+        "address": "billing-phone@example.com",
+        "subject": "Your bill is ready",
+        "days_before": 5
+      }
+    },
+    {
+      "id": "netflix",
+      "name": "Netflix",
+      "description": "NETFLIX.COM",
+      "merchant_name": "Netflix",
+      "pfc": "ENTERTAINMENT_TV_AND_MOVIES",
+      "amount_cents": 799,
+      "via": "card",
+      "account": "acc-checking",
+      "kind": "subscription",
+      "day": 23
+    },
+    {
+      "id": "textbooks",
+      "name": "Textbooks and access codes",
+      "description": "CAMPUS BOOKSTORE {n4}",
+      "merchant_name": null,
+      "pfc": "GENERAL_MERCHANDISE_BOOKSTORES_AND_NEWSSTANDS",
+      "amount_cents": 21460,
+      "via": "card",
+      "account": "acc-checking",
+      "kind": "other",
+      "frequency": "dates",
+      "dates": [
+        "2026-08-25"
+      ],
+      "recurring": false
+    }
+  ],
+  "savings_plan": {
+    "from": "acc-checking",
+    "to": "acc-savings",
+    "amount_cents": 5000,
+    "on": "payday",
+    "skip_if_below_cents": 50000
+  },
+  "bank": {
+    "overdraft_fee_cents": 0,
+    "low_balance_alert_cents": 5000,
+    "switch_to_card_below_cents": 2000
+  },
+  "spending": [
+    {
+      "id": "campus-food",
+      "label": "Campus dining",
+      "pfc": "FOOD_AND_DRINK_RESTAURANT",
+      "per_week": 1.3,
+      "amount_cents": [
+        910,
+        2030
+      ],
+      "merchants": [
+        {
+          "description": "ARAMARK UNIV DINING 6521",
+          "merchant_name": "Aramark",
+          "weight": 2
+        },
+        {
+          "description": "SQ *CAMPUS GRILL 1442",
+          "merchant_name": "Campus Grill",
+          "weight": 2
+        }
+      ],
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ],
+      "when": "class_days",
+      "time": [
+        "11:15",
+        "14:00"
+      ],
+      "card_share": 0.2
+    },
+    {
+      "id": "eating-out",
+      "label": "Fast food and takeout",
+      "pfc": "FOOD_AND_DRINK_FAST_FOOD",
+      "per_week": 2.18,
+      "amount_cents": [
+        928,
+        2402
+      ],
+      "merchants": [
+        {
+          "description": "CHIPOTLE 3923",
+          "merchant_name": "Chipotle",
+          "weight": 2
+        },
+        {
+          "description": "MCDONALD'S F25015",
+          "merchant_name": "McDonald's",
+          "weight": 2
+        },
+        {
+          "description": "TACO BELL 034409",
+          "merchant_name": "Taco Bell",
+          "weight": 1
+        },
+        {
+          "description": "SQ *NOODLE BAR",
+          "merchant_name": null,
+          "weight": 1
+        }
+      ],
+      "time": [
+        "17:00",
+        "22:00"
+      ],
+      "card_share": 0.3
+    },
+    {
+      "id": "coffee",
+      "label": "Coffee",
+      "pfc": "FOOD_AND_DRINK_COFFEE",
+      "per_week": 4.1,
+      "amount_cents": [
+        409,
+        792
+      ],
+      "merchants": [
+        {
+          "description": "STARBUCKS STORE 17417",
+          "merchant_name": "Starbucks",
+          "weight": 2
+        },
+        {
+          "description": "SQ *CORNER CAFE",
+          "merchant_name": "Corner Cafe",
+          "weight": 2
+        },
+        {
+          "description": "DUNKIN #343521",
+          "merchant_name": "Dunkin'",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "07:00",
+        "15:00"
+      ],
+      "card_share": 0.2
+    },
+    {
+      "id": "gas",
+      "label": "Gas",
+      "pfc": "TRANSPORTATION_GAS",
+      "per_week": 0.9,
+      "amount_cents": [
+        3920,
+        7280
+      ],
+      "merchants": [
+        {
+          "description": "SHELL OIL 17229927565",
+          "merchant_name": "Shell",
+          "weight": 2
+        },
+        {
+          "description": "SPEEDWAY 09986",
+          "merchant_name": "Speedway",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "07:00",
+        "21:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "shopping",
+      "label": "Online orders",
+      "pfc": "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES",
+      "per_week": 1.54,
+      "amount_cents": [
+        982,
+        6004
+      ],
+      "merchants": [
+        {
+          "description": "AMZN Mktp US*{A6}",
+          "merchant_name": "Amazon",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "09:00",
+        "23:30"
+      ],
+      "card_share": 0.6,
+      "refund_chance": 0.05,
+      "receipt_email": "orders-marketplace@example.com",
+      "month_scale": {
+        "11": 1.3,
+        "12": 1.6
+      }
+    },
+    {
+      "id": "target",
+      "label": "Target run",
+      "pfc": "GENERAL_MERCHANDISE_SUPERSTORES",
+      "per_week": 0.64,
+      "amount_cents": [
+        1638,
+        6550
+      ],
+      "merchants": [
+        {
+          "description": "TARGET 00000184",
+          "merchant_name": "Target",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "20:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "entertainment",
+      "label": "Movies and going out",
+      "pfc": "ENTERTAINMENT_SPORTING_EVENTS_AMUSEMENT_PARKS_AND_MUSEUMS",
+      "per_week": 0.3,
+      "amount_cents": [
+        1680,
+        4900
+      ],
+      "merchants": [
+        {
+          "description": "AMC 9371 ONLINE",
+          "merchant_name": "AMC Theatres",
+          "weight": 1
+        },
+        {
+          "description": "EVENTBRITE *TICKETS",
+          "merchant_name": "Eventbrite",
+          "weight": 1
+        }
+      ],
+      "days": [
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      ],
+      "time": [
+        "15:00",
+        "22:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "venmo",
+      "label": "Splitting with friends",
+      "pfc": "TRANSFER_OUT_ACCOUNT_TRANSFER",
+      "per_week": 0.51,
+      "amount_cents": [
+        655,
+        3275
+      ],
+      "merchants": [
+        {
+          "description": "VENMO PAYMENT {n10}",
+          "merchant_name": "Venmo",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "11:00",
+        "23:30"
+      ]
+    },
+    {
+      "id": "gifts",
+      "label": "Gifts",
+      "pfc": "GENERAL_MERCHANDISE_GIFTS_AND_NOVELTIES",
+      "per_week": 0.1,
+      "amount_cents": [
+        2100,
+        6300
+      ],
+      "merchants": [
+        {
+          "description": "SQ *GIFT SHOP",
+          "merchant_name": null,
+          "weight": 1
+        }
+      ],
+      "time": [
+        "11:00",
+        "20:00"
+      ],
+      "card_share": 0.5,
+      "month_scale": {
+        "12": 3
+      }
+    },
+    {
+      "id": "pharmacy",
+      "label": "Pharmacy",
+      "pfc": "MEDICAL_PHARMACIES_AND_SUPPLEMENTS",
+      "per_week": 0.15,
+      "amount_cents": [
+        840,
+        3920
+      ],
+      "merchants": [
+        {
+          "description": "CVS/PHARMACY #03899",
+          "merchant_name": "CVS",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "20:00"
+      ],
+      "discretionary": false
+    },
+    {
+      "id": "personal-care",
+      "label": "Haircuts and care",
+      "pfc": "PERSONAL_CARE_HAIR_AND_BEAUTY",
+      "per_week": 0.1,
+      "amount_cents": [
+        2100,
+        6300
+      ],
+      "merchants": [
+        {
+          "description": "GREAT CLIPS #4556",
+          "merchant_name": "Great Clips",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "10:00",
+        "18:00"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "convenience",
+      "label": "Snacks and convenience store",
+      "pfc": "FOOD_AND_DRINK_OTHER_FOOD_AND_DRINK",
+      "per_week": 1.28,
+      "amount_cents": [
+        273,
+        1310
+      ],
+      "merchants": [
+        {
+          "description": "7-ELEVEN 23698",
+          "merchant_name": "7-Eleven",
+          "weight": 2
+        },
+        {
+          "description": "CAMPUS C-STORE 4352",
+          "merchant_name": null,
+          "weight": 2
+        }
+      ],
+      "time": [
+        "10:00",
+        "23:30"
+      ],
+      "card_share": 0.1
+    },
+    {
+      "id": "app-store",
+      "label": "Apps and in-app purchases",
+      "pfc": "GENERAL_MERCHANDISE_OTHER_GENERAL_MERCHANDISE",
+      "per_week": 0.64,
+      "amount_cents": [
+        150,
+        1637
+      ],
+      "merchants": [
+        {
+          "description": "APPLE.COM/BILL",
+          "merchant_name": "Apple",
+          "weight": 1
+        }
+      ],
+      "time": [
+        "12:00",
+        "23:59"
+      ],
+      "card_share": 0.5
+    },
+    {
+      "id": "groceries",
+      "label": "Groceries for the house",
+      "pfc": "FOOD_AND_DRINK_GROCERIES",
+      "per_week": 0.6,
+      "amount_cents": [
+        1800,
+        6500
+      ],
+      "merchants": [
+        {
+          "description": "STATER BROS #142",
+          "merchant_name": "Stater Bros",
+          "weight": 2
+        },
+        {
+          "description": "ALDI 71450",
+          "merchant_name": "Aldi",
+          "weight": 1
+        }
+      ],
+      "card_share": 0.0
+    }
+  ],
+  "school": {
+    "institution": "Mesa Ridge Community College",
+    "lms": "canvas",
+    "lms_url": "https://canvas.example.com",
+    "term": {
+      "name": "Fall 2026",
+      "start": "2026-08-24",
+      "end": "2026-12-18",
+      "breaks": [
+        {
+          "start": "2026-11-25",
+          "end": "2026-11-29",
+          "label": "Thanksgiving break"
+        },
+        {
+          "start": "2026-12-14",
+          "end": "2026-12-18",
+          "label": "Finals week, no regular classes"
+        }
+      ],
+      "no_class_days": [
+        {
+          "date": "2026-09-07",
+          "label": "Labor Day"
+        }
+      ]
+    },
+    "courses": [
+      {
+        "code": "BIO 105",
+        "name": "Human Anatomy",
+        "format": "in person",
+        "credits": 4,
+        "instructor": "Prof. Okafor",
+        "instructor_email": "okafor-bio@example.com",
+        "grade_weights": {
+          "exam": 55,
+          "lab": 25,
+          "quiz": 20
+        },
+        "grade_pct": [
+          76,
+          91
+        ],
+        "announcements_per_month": 3,
+        "meetings": [
+          {
+            "days": [
+              "Mon",
+              "Tue"
+            ],
+            "start": "10:00",
+            "end": "11:15",
+            "location": "Science Hall 210"
+          },
+          {
+            "days": [
+              "Tue"
+            ],
+            "start": "11:30",
+            "end": "14:20",
+            "location": "Lab 14",
+            "label": "lab"
+          }
+        ],
+        "assignments": [
+          {
+            "title": "Chapter quiz {n}",
+            "kind": "quiz",
+            "weekday": "Sun",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-08-30",
+            "end": "2026-12-06"
+          },
+          {
+            "title": "Lab worksheet {n}",
+            "kind": "lab",
+            "weekday": "Tue",
+            "due": "23:59",
+            "points": 15,
+            "start": "2026-09-01",
+            "end": "2026-12-08"
+          }
+        ],
+        "exams": [
+          {
+            "title": "Midterm 1",
+            "mode": "in_person",
+            "date": "2026-10-05",
+            "start": "10:00",
+            "end": "11:15"
+          },
+          {
+            "title": "Midterm 2",
+            "mode": "in_person",
+            "date": "2026-11-09",
+            "start": "10:00",
+            "end": "11:15"
+          },
+          {
+            "title": "Final exam",
+            "mode": "in_person",
+            "date": "2026-12-14",
+            "start": "09:00",
+            "end": "11:00",
+            "location": "Exam hall"
+          }
+        ]
+      },
+      {
+        "code": "ENG 101",
+        "name": "College Composition",
+        "format": "hybrid",
+        "credits": 3,
+        "instructor": "Prof. Haddad",
+        "instructor_email": "haddad-eng@example.com",
+        "grade_weights": {
+          "assignment": 75,
+          "discussion": 10,
+          "exam": 15
+        },
+        "grade_pct": [
+          80,
+          94
+        ],
+        "announcements_per_month": 2,
+        "meetings": [
+          {
+            "days": [
+              "Mon"
+            ],
+            "start": "12:00",
+            "end": "13:15",
+            "location": "Arts Building 120"
+          }
+        ],
+        "assignments": [
+          {
+            "title": "Discussion post {n}",
+            "kind": "discussion",
+            "weekday": "Sun",
+            "due": "23:59",
+            "points": 5,
+            "start": "2026-08-30",
+            "end": "2026-12-06"
+          }
+        ],
+        "items": [
+          {
+            "title": "Essay 1",
+            "due": "2026-09-27T23:59",
+            "points": 100
+          },
+          {
+            "title": "Essay 2",
+            "due": "2026-10-25T23:59",
+            "points": 100
+          },
+          {
+            "title": "Essay 3",
+            "due": "2026-12-06T23:59",
+            "points": 100
+          }
+        ],
+        "exams": [
+          {
+            "title": "Final exam",
+            "mode": "in_person",
+            "date": "2026-12-16",
+            "start": "10:00",
+            "end": "12:00",
+            "location": "Exam hall"
+          }
+        ]
+      },
+      {
+        "code": "PSY 101",
+        "name": "Introduction to Psychology",
+        "format": "online",
+        "credits": 3,
+        "instructor": "Prof. Nakamura",
+        "instructor_email": "nakamura-psy@example.com",
+        "grade_weights": {
+          "exam": 50,
+          "quiz": 50
+        },
+        "grade_pct": [
+          82,
+          95
+        ],
+        "announcements_per_month": 2,
+        "meetings": [],
+        "assignments": [
+          {
+            "title": "Module quiz {n}",
+            "kind": "quiz",
+            "weekday": "Mon",
+            "due": "23:59",
+            "points": 10,
+            "start": "2026-08-31",
+            "end": "2026-12-07"
+          }
+        ],
+        "exams": [
+          {
+            "title": "Midterm",
+            "mode": "online",
+            "opens": "2026-10-19T08:00",
+            "closes": "2026-10-21T23:59",
+            "minutes": 60
+          },
+          {
+            "title": "Final exam",
+            "mode": "online",
+            "opens": "2026-12-14T08:00",
+            "closes": "2026-12-17T23:59",
+            "minutes": 90
+          }
+        ]
+      }
+    ]
+  },
+  "work": {
+    "jobs": [
+      {
+        "id": "job-warehouse",
+        "employer": "Valley Fulfillment",
+        "position": "Fulfillment associate",
+        "place": "work",
+        "timeline_label": "Night shift at the warehouse",
+        "source": "schedule",
+        "overtime_threshold_hours": 40,
+        "overtime_multiplier": 1.5,
+        "workweek_starts": "Sun",
+        "ready_minutes": 30,
+        "pattern": {
+          "type": "weekly",
+          "slots": [
+            {
+              "days": [
+                "Wed",
+                "Thu",
+                "Fri",
+                "Sat"
+              ],
+              "start": "22:00",
+              "end": "06:30",
+              "break_minutes": 30,
+              "chance": 0.96
+            }
+          ]
+        },
+        "closed_on": [
+          "2026-12-24"
+        ],
+        "posting": {
+          "block_days": 7,
+          "anchor": "2026-08-02",
+          "posted_days_ahead": 7,
+          "time": "12:00",
+          "jitter_days": [
+            0
+          ]
+        },
+        "cancel_rate": 0.01,
+        "sick_rate": 0.01,
+        "sent_home_rate": 0.02,
+        "stay_late_rate": 0.06
+      }
+    ]
+  },
+  "health": {
+    "goals": {
+      "workouts_per_week": 0,
+      "sleep_hours": 7
+    },
+    "steps": {
+      "work": [
+        14000,
+        20000
+      ],
+      "class": [
+        5000,
+        8000
+      ],
+      "free": [
+        2000,
+        6000
+      ]
+    },
+    "resting_heart_rate": 66,
+    "nutrition": {
+      "enabled": false,
+      "log_rate": 0.5,
+      "base_kcal": 2000,
+      "sd_kcal": 220,
+      "goal_kcal": 2100
+    }
+  },
+  "routines": [
+    {
+      "id": "sleep",
+      "activity": "sleep",
+      "label": "Sleep",
+      "records_as": "health_sleep",
+      "variance_minutes": 30,
+      "late_night_rate": 0.06,
+      "early_before": "10:30",
+      "windows": [
+        {
+          "id": "before-early-day",
+          "day_type": "early_next_day",
+          "start": "23:00",
+          "end": "07:00",
+          "firmness": "usual"
+        },
+        {
+          "id": "before-free-day",
+          "day_type": "free_next_day",
+          "start": "00:30",
+          "end": "10:00",
+          "firmness": "loose"
+        },
+        {
+          "id": "after-nights",
+          "day_type": "after_night_shift",
+          "start": "07:15",
+          "end": "14:15",
+          "firmness": "firm"
+        }
+      ]
+    },
+    {
+      "id": "study",
+      "activity": "study",
+      "label": "Study",
+      "where": "home",
+      "records_as": "calendar",
+      "per_week": 2.6,
+      "keep_rate": 0.8,
+      "duration_minutes": [
+        60,
+        120
+      ],
+      "ready_minutes": 15,
+      "not_after": "18:30",
+      "windows": [
+        {
+          "id": "after-class",
+          "days": [
+            "Mon",
+            "Tue"
+          ],
+          "start": "15:00",
+          "end": "17:30",
+          "firmness": "firm"
+        },
+        {
+          "id": "sun-afternoon",
+          "days": [
+            "Sun"
+          ],
+          "start": "15:30",
+          "end": "18:00",
+          "firmness": "usual"
+        }
+      ],
+      "source_memory": "m-study"
+    },
+    {
+      "id": "family-dinner",
+      "activity": "meal",
+      "label": "Sunday dinner with her mom and brothers",
+      "where": "home",
+      "records_as": "none",
+      "timeline": "routine",
+      "keep_rate": 0.9,
+      "duration_minutes": [
+        50,
+        65
+      ],
+      "windows": [
+        {
+          "id": "sun-evening",
+          "days": [
+            "Sun"
+          ],
+          "start": "18:30",
+          "end": "19:45",
+          "firmness": "firm"
+        }
+      ],
+      "source_memory": "m-family"
+    }
+  ],
+  "real_life": {
+    "events": [],
+    "nights_out": null,
+    "trips": []
+  },
+  "email": {
+    "address": "luisa.ortega.student@example.com",
+    "per_day": {
+      "promotions": 3.0,
+      "newsletters": 0.5,
+      "social": 0.7,
+      "personal": 0.2,
+      "security": 0.05,
+      "school_other": 0.4,
+      "work_other": 0.3
+    },
+    "weekend_scale": 0.8
+  },
+  "memories": [
+    {
+      "id": "m-availability",
+      "content": "I work Wednesday to Saturday nights, 10 PM to 6:30 AM. Sunday night is my one real night of sleep before Monday class",
+      "category": "routine",
+      "via": "get-to-know answer (when do you usually work?)",
+      "told_at": "2026-08-23T15:20"
+    },
+    {
+      "id": "m-day-sleep",
+      "content": "After a night shift I sleep from about 7:15 to 2",
+      "category": "routine",
+      "via": "chat",
+      "told_at": "2026-08-23T15:24"
+    },
+    {
+      "id": "m-study",
+      "content": "I study in the afternoons after class, and on Sunday once I'm up",
+      "category": "preference",
+      "via": "chat",
+      "told_at": "2026-08-30T16:02"
+    },
+    {
+      "id": "m-family",
+      "content": "I live with my mom and my two little brothers. Sunday dinner together is our thing",
+      "category": "routine",
+      "via": "get-to-know answer",
+      "told_at": "2026-08-23T15:30"
+    },
+    {
+      "id": "m-upt",
+      "content": "We get unpaid time off hours at the warehouse. I have about 20 saved",
+      "category": "fact",
+      "via": "chat",
+      "told_at": "2026-10-11T15:12"
+    },
+    {
+      "id": "m-home-campus",
+      "content": "Home is about 20 minutes from campus and 25 from the warehouse",
+      "category": "fact",
+      "via": "get-to-know answer",
+      "told_at": "2026-08-23T15:33"
+    }
+  ],
+  "generated": {
+    "by": "personas.py",
+    "seed": 27,
+    "term": "Fall 2026",
+    "edited": "s0019: overnight warehouse job Wednesday to Saturday, classes Monday and Tuesday, weekly pay, Pacific time"
+  }
+}
