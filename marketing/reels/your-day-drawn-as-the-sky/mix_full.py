@@ -1,8 +1,8 @@
-# Sound for "Your day, drawn as the sky" (full screen): pixel sound effects and a soft bed; no voice, no music.
+# Sound for "Your day, drawn as the sky" v3 (full screen): pixel sound effects and a soft bed; no voice, no music.
 import numpy as np
 from scipy.io import wavfile
 from scipy.signal import butter, sosfilt
-SR = 48000; DUR = 36.1; N = int(DUR * SR); rng = np.random.default_rng(8)
+SR = 48000; DUR = 40.5; N = int(DUR * SR); rng = np.random.default_rng(8)
 fx = np.zeros(N, np.float32)
 def put(x, t, a=1.0):
     i = int(t * SR); j = min(N, i + len(x))
@@ -34,16 +34,26 @@ put(sweep(1.4, 2200, 700, 0.18), 17.25); put(sweep(1.0, 700, 2200, 0.18), 20.1);
 for k, f in enumerate([1046, 1175, 1318]): put(sq(f, 0.05, 50, 0.025), 22.4 + k * 0.06)
 # captions
 for t in [10.8, 14.25, 15.5, 17.2, 20.1, 22.4]: put(tri(1318, 0.08, 40, 0.035), t)
+# tick it off (v3): in, slide ahead to tonight, open Groceries, Done (a pop and a little star chime), the skyling hops
+D0, DG, DT = 24.1, 24.1 + 49 / 30, 24.1 + 80 / 30
+put(sweep(0.35, 3200, 1200, 0.2), D0 - 0.05); put(tri(1318, 0.08, 40, 0.035), D0)
+put(sweep(1.2, 700, 2000, 0.16), D0 + 0.05)
+click(DG); put(sweep(0.3, 900, 2600, 0.15), DG + 0.03)
+click(DT); put(tri(523, 0.16, 14, 0.09, 1.2), DT + 0.02); put(tri(1318, 0.08, 40, 0.035), DT)
+for k, f in enumerate([1046, 1318, 1568, 2093]): put(sq(f, 0.09, 26, 0.03), DT + 0.1 + k * 0.065)
+for k, f in enumerate([2637, 3136]): put(tri(f, 0.25, 12, 0.03), DT + 0.42 + k * 0.08)
+put(tri(392, 0.12, 22, 0.05, 0.6), DT + 0.2); put(tri(392, 0.12, 22, 0.04, 0.6), DT + 0.72)
 # it notices
-put(sweep(0.4, 3000, 900, 0.2), 24.1); put(tri(988, 0.35, 8, 0.07), 24.45); put(tri(1318, 0.45, 7, 0.07), 24.6)
+SH = 4.4
+put(sweep(0.4, 3000, 900, 0.2), 24.1 + SH); put(tri(988, 0.35, 8, 0.07), 24.45 + SH); put(tri(1318, 0.45, 7, 0.07), 24.6 + SH)
 # the skylings and the pick
-put(sweep(0.5, 900, 3000, 0.22), 26.85)
-for i, f in enumerate([523, 587, 659, 784, 880, 988]): put(sq(f, 0.12, 20, 0.04, 0.5), 27.4 + i * 0.12)
-click(29.5)
-for k, f in enumerate([784, 988, 1175, 1568, 2093]): put(tri(f, 0.3, 10, 0.06), 29.62 + k * 0.06)
+put(sweep(0.5, 900, 3000, 0.22), 26.85 + SH)
+for i, f in enumerate([523, 587, 659, 784, 880, 988]): put(sq(f, 0.12, 20, 0.04, 0.5), 27.4 + SH + i * 0.12)
+click(29.5 + SH)
+for k, f in enumerate([784, 988, 1175, 1568, 2093]): put(tri(f, 0.3, 10, 0.06), 29.62 + SH + k * 0.06)
 # bed under the day (darker while it's night)
-pad(0.0, 11.4, (262, 330, 392), 0.011); pad(11.0, 3.6, (220, 262, 330), 0.011); pad(14.2, 18.6, (262, 330, 392), 0.011)
+pad(0.0, 11.4, (262, 330, 392), 0.011); pad(11.0, 3.6, (220, 262, 330), 0.011); pad(14.2, 23.0, (262, 330, 392), 0.011)
 # the ending (the logo's own sound)
-sr, end = wavfile.read("../sting/outro.wav"); put(end.astype(np.float32) / 32768.0, 32.6)
+sr, end = wavfile.read("../sting/outro.wav"); put(end.astype(np.float32) / 32768.0, 37.0)
 fx += sosfilt(butter(2, [200, 3000], "bandpass", fs=SR, output="sos"), rng.normal(0, 0.004, N)).astype(np.float32)
 wavfile.write("mix_full.wav", SR, (np.clip(fx, -1, 1) * 32767).astype(np.int16)); print("ok", float(np.abs(fx).max()))

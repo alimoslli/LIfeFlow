@@ -7,7 +7,7 @@ html,body{margin:0;background:#000}canvas{display:block}
 </style></head>
 <body><canvas id="c" width="1080" height="1920"></canvas>
 <script>
-// "Your day, drawn as the sky" (full screen): the real app filling the frame, no phone. Local build of main, a sample day in a
+// "Your day, drawn as the sky" v3 (full screen): the real app filling the frame, no phone. Local build of main, a sample day in a
 // test account (Nov 10, 2:30 PM New York). Labels point at each part; captions name each move.
 const W = 1080, H = 1920, g = document.getElementById("c").getContext("2d"), GOLD = "#ffd27a", K = 2.5;
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -15,9 +15,12 @@ const ease = (k) => (k = clamp(k), k * k * (3 - 2 * k));
 const back = (k) => { k = clamp(k); const s = 1.6; return 1 + (s + 1) * Math.pow(k - 1, 3) + s * Math.pow(k - 1, 2); };
 const imgs = {}; const load = (src) => imgs[src] || (imgs[src] = new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error(src)); i.src = src; }));
 const pad = (n) => String(n).padStart(4, "0");
-let LOG = null, SLOG = null;
+let LOG = null, SLOG = null, DLOG = null;
+// The tick-off (full_done): the opened day, slide ahead to tonight's Groceries, its card, Done. Frames played in order, with
+// still stretches trimmed (part of the hold after the slide, the end of the card's wait).
+const DONE = [[41, 81], [86, 94], [95, 124], [135, 185]].flatMap(([a, b]) => Array.from({ length: b - a + 1 }, (_, i) => a + i));
 
-const S = { explain: 2.6, turn: 10.8, open: 15.5, notice: 24.1, settings: 27.0, tap: 29.5, outro: 32.6, end: 36.1 };
+const S = { explain: 2.6, turn: 10.8, open: 15.5, done: 24.1, doneGroc: 24.1 + 49 / 30, doneTap: 24.1 + 80 / 30, notice: 28.5, settings: 31.4, tap: 33.9, outro: 37.0, end: 40.5 };
 const CALLOUTS = [ // [start, text, anchor (css px), radius (video px), label centre (video px)]
   [2.9, "The sun's path through your day", [330, 185], 150, [560, 760]],
   [4.5, "Your skyling stands at right now", [216, 76], 140, [540, 440]],
@@ -31,14 +34,16 @@ const CAPTIONS = [ // [from, to, line 1, line 2, y]
   [S.open, 17.2, "Tap to open", "your day.", 1490],
   [17.2, 20.1, "Slide back:", "what already happened.", 1490],
   [20.1, 22.4, "Slide ahead:", "what's next.", 1490],
-  [22.4, S.notice, "Synced from your calendar,", "classes, work and bank.", 1490],
+  [22.4, S.done, "Synced from your calendar,", "classes, work and bank.", 1490],
+  [S.done, S.doneTap, "Done with something?", "Tick it off right there.", 190],
+  [S.doneTap, S.notice, "Your skyling", "cheers you on.", 190],
   [S.notice, S.settings, "And it notices", "what you'd miss.", 330],
   [S.settings, S.tap, "Six skylings, one for", "each moment of the sky.", 1520],
   [S.tap, S.outro, "Pick yours.", "Or let the sky choose.", 1520],
 ];
 function capFrame(t) { // Today footage: the explain plays forward then back; later it plays straight on
   if (t < S.turn) { const f = t * 30; return f <= 240 ? Math.max(1, Math.floor(f) + 1) : Math.max(1, Math.floor(480 - f)); }
-  if (t < S.notice) return clamp(241 + Math.floor((t - S.turn) * 30), 241, 640);
+  if (t < S.done) return clamp(241 + Math.floor((t - S.turn) * 30), 241, 640);
   const f = (t - S.notice) * 30; return Math.max(1, Math.floor(f) + 1); // the closed day again, for the clash card
 }
 function text(lines, y, size, { alpha = 1, scale = 1, box = false } = {}) {
@@ -79,25 +84,32 @@ function callouts(t) {
 }
 function finger(t, log, f) {
   const e = log.frames[f - 1]; if (!e || !e.finger) return;
-  const [x, y] = [e.finger[0] * K, e.finger[1] * K], tap = e.tag === "tap" || e.tag === "tapback";
+  const [x, y] = [e.finger[0] * K, e.finger[1] * K], tap = /^tap/.test(e.tag);
   g.save(); g.fillStyle = "rgba(255,255,255,0.45)"; g.strokeStyle = "#fff"; g.lineWidth = 7; g.shadowColor = "rgba(0,0,0,0.3)"; g.shadowBlur = 18;
   g.beginPath(); g.arc(x, y, tap ? 62 : 52, 0, 6.283); g.fill(); g.stroke(); g.restore();
 }
 function tapRing(t, t0, x, y) { const u = t - t0; if (u < 0 || u > 0.6) return; g.save(); g.globalAlpha = 1 - u / 0.6; g.strokeStyle = "#fff"; g.lineWidth = 9; g.beginPath(); g.arc(x, y, 60 + u * 300, 0, 6.283); g.stroke(); g.restore(); }
 
 async function frame(t) {
-  if (!LOG) { LOG = await (await fetch("/appfilm/full/log.json")).json(); SLOG = await (await fetch("/appfilm/full_settings/log.json")).json(); }
+  if (!LOG) { LOG = await (await fetch("/appfilm/full/log.json")).json(); SLOG = await (await fetch("/appfilm/full_settings/log.json")).json(); DLOG = await (await fetch("/appfilm/full_done/log.json")).json(); }
   if (t >= S.outro) { const f = clamp(Math.floor((t - S.outro) * 30) + 1, 1, 105); g.drawImage(await load(`/sting/f_outro/${pad(f)}.jpg`), 0, 0, W, H); return; }
-  if (t < S.settings) {
+  if (t >= S.done && t < S.notice) {
+    const f = DONE[clamp(Math.floor((t - S.done) * 30), 0, DONE.length - 1)];
+    g.drawImage(await load(`/appfilm/full_done/${pad(f)}.jpg`), 0, 0, W, H);
+    // in from the day ahead (Wed) with a soft cross-fade
+    if (t < S.done + 0.35) { g.save(); g.globalAlpha = 1 - ease((t - S.done) / 0.35); g.drawImage(await load(`/appfilm/full/0640.jpg`), 0, 0, W, H); g.restore(); }
+    finger(t, DLOG, f);
+    for (const [tag, t0] of [["tapgroc", S.doneGroc], ["tapdone", S.doneTap]]) { const e = DLOG.frames.find((x) => x.tag === tag); if (e && e.finger) tapRing(t, t0, e.finger[0] * K, e.finger[1] * K); }
+  } else if (t < S.settings) {
     const f = capFrame(t); g.drawImage(await load(`/appfilm/full/${pad(f)}.jpg`), 0, 0, W, H);
     // the open day folds away into the closed day for the clash card: a soft cross-fade
-    if (t >= S.notice && t < S.notice + 0.35) { g.save(); g.globalAlpha = 1 - ease((t - S.notice) / 0.35); g.drawImage(await load(`/appfilm/full/0640.jpg`), 0, 0, W, H); g.restore(); }
+    if (t >= S.notice && t < S.notice + 0.35) { g.save(); g.globalAlpha = 1 - ease((t - S.notice) / 0.35); g.drawImage(await load(`/appfilm/full_done/0185.jpg`), 0, 0, W, H); g.restore(); }
     // the hook
     if (t < S.explain + 0.4) { const k = 1 - ease((t - (S.explain - 0.2)) / 0.5); dim(0.6 * k, []);
       text(["Your day,"], 820, 132, { alpha: clamp((t - 0.1) / 0.2) * k, scale: back((t - 0.1) / 0.45) });
       text(["drawn as the sky."], 975, 120, { alpha: clamp((t - 0.4) / 0.2) * k, scale: back((t - 0.4) / 0.45) }); }
     callouts(t);
-    if (t >= S.turn && t < S.notice) { finger(t, LOG, f);
+    if (t >= S.turn && t < S.done) { finger(t, LOG, f);
       for (const tag of ["tapback", "tap"]) { const i = LOG.frames.findIndex((e) => e.tag === tag); if (i >= 0 && LOG.frames[i].finger) tapRing(t, S.turn + (i + 1 - 241) / 30, LOG.frames[i].finger[0] * K, LOG.frames[i].finger[1] * K); } }
     if (t >= S.notice) { const [x, y, w, h] = LOG.anchors.clash, k = ease((t - (S.notice + 0.3)) / 0.35);
       dim(0.6 * k, [[x * K - 14, y * K - 14, w * K + 28, h * K + 28, 60]]);
