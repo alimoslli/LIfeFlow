@@ -70,6 +70,8 @@ const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () =>
 export type UserPreferences = {
   /** When the user allowed Jarvis to send their data to the AI provider (OpenAI). Unset or null: no AI features (App Store 5.1.2(i)). */
   aiConsentAt?: string | null;
+  /** Idea clouds tapped, a count per cloud (lib/idea-clouds), never the message text: a tapped one counts as used. */
+  ideaTaps?: Partial<Record<string, number>>;
   studyTime?: "morning" | "afternoon" | "evening" | "night";
   weekStartsOn?: 0 | 1;
   currency?: string;

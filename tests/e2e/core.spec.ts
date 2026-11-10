@@ -149,7 +149,8 @@ test("Jarvis asks before anything goes to the AI, and works once allowed", async
   await expect(page.getByLabel(COMPOSER)).toBeDisabled();
   await page.getByRole("button", { name: "Allow" }).click();
   await expect(page.getByLabel(COMPOSER)).toBeEnabled();
-  await expect(page.getByRole("button", { name: "Plan my day" })).toBeVisible();
+  // once allowed, the idea clouds show under the skyling (owner, 2026-11-10: they replaced the starter cards)
+  await expect(page.getByRole("list", { name: "Ideas to try" }).getByRole("button").first()).toBeVisible();
 });
 
 test("testers can send feedback from Settings", async ({ page }) => {

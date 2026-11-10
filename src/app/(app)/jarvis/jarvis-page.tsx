@@ -7,6 +7,7 @@ import { QuickAddButton } from "@/components/shell/quick-add";
 import { ActionButton } from "@/components/action-form";
 import { JarvisChat } from "@/components/jarvis/chat";
 import type { UiMessage } from "@/components/jarvis/types";
+import type { IdeaCloud } from "@/lib/idea-clouds";
 import { formatIn } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { jarvisStatus } from "@/server/jarvis/providers";
@@ -23,6 +24,7 @@ export function JarvisPage({
   tz,
   ask,
   connect,
+  ideas,
   voice,
 }: {
   conversations: Conv[];
@@ -33,6 +35,8 @@ export function JarvisPage({
   ask?: string;
   /** Not connected yet (bank, Canvas, calendar): Jarvis suggests them on his home screen. */
   connect?: string[];
+  /** Idea clouds for the empty chat (lib/idea-clouds). */
+  ideas?: IdeaCloud[];
   /** Start talking right away (the mic on Today). */
   voice?: boolean;
 }) {
@@ -105,6 +109,7 @@ export function JarvisPage({
             initialMessages={messages}
             initialPrompt={ask}
             connect={connect}
+            ideas={ideas}
             startVoice={voice}
             module="home"
             availability={{ available: status.available, reason: status.reason, model: status.model }}

@@ -5,6 +5,8 @@ import { deleteConversation } from "@/server/jarvis/conversations";
 import { rateRun } from "@/server/jarvis/metrics";
 import { importMemories } from "@/server/services/memory";
 import { saveLifeImport } from "@/server/services/life-import";
+import { withCurrentUser } from "@/server/auth/current-user";
+import { recordCloudTap } from "@/server/services/idea-clouds";
 
 export async function deleteConversationAction(id: string): Promise<ActionState> {
   const r = await mutate(
@@ -56,4 +58,10 @@ export async function saveLifeImportAction(_p: ActionState, fd: FormData): Promi
   );
   if (res?.ok && (r.facts || r.milestones || r.goals)) redirect(`/milestones?imported=${r.facts}.${r.milestones}.${r.goals}`);
   return res;
+}
+
+/** An idea cloud was tapped: counts it (which cloud, never the message), so a feature they've tried shows less. */
+export async function tapIdeaCloudAction(key: string): Promise<void> {
+  if (typeof key !== "string" || key.length > 40) return;
+  await withCurrentUser((s) => recordCloudTap(s, key));
 }

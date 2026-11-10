@@ -28,6 +28,8 @@ import { isAppPath, viewAtName } from "@/lib/app-routes";
 import { jsonOf, PlainError, serverWords } from "@/lib/plain-error";
 import { nameAtStart } from "@/lib/assistant";
 import { SkylingSprite } from "@/components/skylings/sprite";
+import { IdeaClouds } from "@/components/skylings/idea-clouds";
+import type { IdeaCloud } from "@/lib/idea-clouds";
 import { CLOUD, PixelArt, SkyWindow } from "@/components/skylings/sky-window";
 import { cheerSkylings } from "@/components/skylings/night";
 import { JarvisStatus, statusWord } from "./status";
@@ -81,6 +83,7 @@ export function JarvisChat({
   autoSend,
   onConversation,
   connect,
+  ideas,
   startVoice,
 }: {
   conversationId?: string | null;
@@ -96,6 +99,8 @@ export function JarvisChat({
   connect?: string[];
   /** Open with the voice bar already on. */
   startVoice?: boolean;
+  /** Idea clouds for the empty chat, in place of the starter cards (owner, 2026-11-10; lib/idea-clouds). */
+  ideas?: IdeaCloud[];
 }) {
   const router = useRouter();
   const { assistantName, aiConsent, tz, skyling } = useShell();
@@ -543,6 +548,17 @@ export function JarvisChat({
               </SkyWindow>
               {!aiConsent ? (
                 <AiConsentCard name={assistantName} />
+              ) : ideas?.length ? (
+                // the skyling's speech bubble and these clouds are the whole surface: a tap fills the box, never sends
+                <IdeaClouds
+                  clouds={ideas}
+                  show={3}
+                  onPick={(ask) => {
+                    setInput(ask);
+                    inputRef.current?.focus();
+                  }}
+                  className="mt-5 justify-center"
+                />
               ) : (
                 <div className="-mx-4 mt-4 flex w-[calc(100%+2rem)] snap-x scroll-px-4 gap-2.5 overflow-x-auto px-4 pt-1 pb-2 [scrollbar-width:none] sm:mx-0 sm:grid sm:w-full sm:grid-cols-4 sm:overflow-visible sm:px-0">
                   {starterCards(module).map(({ icon: Icon, title, prompt }) => (

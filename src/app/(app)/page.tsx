@@ -20,6 +20,7 @@ import { AskBar } from "./_today/day-plan";
 import { AssistantLine, type AssistantNote } from "./_today/assistant-line";
 import { BirthdayCard } from "./_today/birthday-card";
 import { EmptyNext } from "./_today/empty-next";
+import { ideaClouds } from "@/server/services/idea-clouds";
 
 /**
  * Today (v3): your time as a clock that opens into the timeline of your week (docs/design/clock/spec.md),
@@ -44,7 +45,7 @@ export default async function TodayPage() {
   // Calendar, to-dos, goals and milestones are all on the timeline now (owner, 2026-11-08); what stays one tap away
   // is what isn't a thing in time.
   const more = [{ href: "/habits", label: "Health", icon: HeartPulse }, ...(work ? [{ href: "/work", label: "Work", icon: Briefcase }] : [])];
-  const { clock, note, assistantName, setup, hello } = await withCurrentUser(async (scope, user) => {
+  const { clock, note, assistantName, setup, hello, clouds } = await withCurrentUser(async (scope, user) => {
     const tz = user.timezone ?? "UTC";
     // Money (bills due, spent today) joins the clock only while the Money lock is open.
     const clock = await dayClockData(scope, tz, new Date(), { money: !locked });
@@ -69,6 +70,8 @@ export default async function TodayPage() {
       clock,
       note,
       assistantName: assistantProfile(user.preferences, user.timezone).name,
+      // idea clouds beside the chat bar, from their own data (lib/idea-clouds)
+      clouds: await ideaClouds(scope, tz, user.preferences, assistantProfile(user.preferences, user.timezone).name),
       setup,
       hello: `${greetingIn(tz)}, ${user.name.split(" ")[0]}`,
     };
@@ -105,7 +108,7 @@ export default async function TodayPage() {
           {/* a laptop's full sky has the ask bar beside the wheel, under the skyling's line (CSS shows one of the two) */}
           {mode === "full" && (
             <div className="dc-ask">
-              <AskBar name={assistantName} chips={false} />
+              <AskBar name={assistantName} chips={false} clouds={clouds} />
             </div>
           )}
         </DayClock>
@@ -113,12 +116,12 @@ export default async function TodayPage() {
       {/* a phone: the chat bar docked at the bottom of Today, just above the tabs, with the skyling in it (owner,
           2026-11-09: "the skyling chat bar at the bottom of the main page ... with the character there") */}
       <div className="dc-dock md:hidden">
-        <AskBar name={assistantName} chips={false} />
+        <AskBar name={assistantName} chips={false} clouds={clouds} />
       </div>
       {/* on a phone this starts below the docked chat bar and the tabs, so nothing peeks out behind them (audit B16) */}
-      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4 max-md:mt-[calc(var(--tabbar-space)+6.25rem)]">
+      <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4 max-md:mt-[calc(var(--tabbar-space)+7.5rem)]">
         <div className={mode === "full" ? "dc-ask-below max-md:hidden" : "max-md:hidden"}>
-          <AskBar name={assistantName} chips={false} />
+          <AskBar name={assistantName} chips={false} clouds={clouds} />
         </div>
         {/* The rest of the day, one tap away, below the fold so the clock stays the whole first screen. */}
         <nav aria-label="More of your day" className="flex flex-wrap justify-center gap-2 pt-1">

@@ -469,6 +469,86 @@
     }
   }
 
+  /* ---------- Idea clouds (owner, 2026-11-10; idea-clouds.tsx) ----------
+   a little white cloud with pixel puffs on top: pops in, drifts upward a touch, never over the bar */
+  .lf-idea {
+    animation:
+      lf-idea-in 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) both,
+      lf-idea-drift 5.5s ease-in-out 0.5s infinite alternate;
+    animation-delay: calc(var(--i, 0) * 0.12s), calc(0.5s + var(--i, 0) * 0.9s);
+  }
+  @keyframes lf-idea-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px) scale(0.85);
+    }
+  }
+  @keyframes lf-idea-drift {
+    to {
+      transform: translateY(-3px);
+    }
+  }
+  .lf-idea-cloud {
+    position: relative;
+    display: inline-flex;
+    max-width: 100%;
+    min-height: 2.75rem;
+    align-items: center;
+    border-radius: 1.375rem;
+    padding: 0.375rem 1rem;
+    background: #fff;
+    color: #13213d;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: left;
+    box-shadow:
+      0 0 0 1px rgb(19 33 61 / 0.08),
+      0 10px 22px -14px rgb(19 33 61 / 0.55);
+    transition: transform 0.45s cubic-bezier(0.2, 1.6, 0.4, 1);
+  }
+  /* two pixel puffs on the top edge make it a cloud */
+  .lf-idea-cloud::before,
+  .lf-idea-cloud::after {
+    content: "";
+    position: absolute;
+    top: -5px;
+    height: 8px;
+    background: #fff;
+    border-radius: 3px 3px 0 0;
+  }
+  .lf-idea-cloud::before {
+    left: 18%;
+    width: 18px;
+  }
+  .lf-idea-cloud::after {
+    left: calc(18% + 12px);
+    top: -8px;
+    width: 12px;
+  }
+  .lf-idea-cloud:hover {
+    transform: translateY(-2px);
+  }
+  .lf-idea-cloud:active {
+    transform: scale(0.96);
+    transition-duration: 0.07s;
+  }
+  .lf-idea-cloud:focus-visible {
+    outline: 2.5px solid #8fb6ff;
+    outline-offset: 3px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lf-idea {
+      animation: none;
+    }
+    .lf-idea-cloud {
+      transition: none;
+    }
+    .lf-idea-cloud:hover {
+      transform: none;
+    }
+  }
+
   /* the landing's sunrise: Ray comes up over the hills as the band scrolls into view */
   @supports (animation-timeline: view()) {
     .lf-sun-up {
