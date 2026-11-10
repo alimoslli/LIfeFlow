@@ -49,3 +49,6 @@ export async function isRememberedDevice(db: Database, userId: string, cookie: s
 export async function revokeRememberedDevices(db: Database, userId: string) {
   await db.delete(rememberedDevices).where(eq(rememberedDevices.userId, userId));
 }
+
+/** Only the authenticator or a backup code earns the 30 days; an emailed code never does (QA review, 2026-11-10). */
+export const earnsRememberedDevice = (method: "totp" | "recovery" | "email") => method !== "email";

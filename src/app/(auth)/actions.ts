@@ -3,7 +3,7 @@ import { provisionalName } from "@/lib/provisional-name";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { DEVICE_COOKIE, DEVICE_TTL_MS, isRememberedDevice, rememberDevice } from "@/server/auth/remembered-devices";
+import { DEVICE_COOKIE, DEVICE_TTL_MS, earnsRememberedDevice, isRememberedDevice, rememberDevice } from "@/server/auth/remembered-devices";
 import { adminFor } from "@/server/auth/admin";
 import { CHALLENGE_COOKIE, completeLoginChallenge, createLoginChallenge, issueLoginEmailCode } from "@/server/auth/two-factor";
 import { emailConfig, sendEmail } from "@/server/integrations/email";
@@ -91,8 +91,8 @@ export async function verifyLogin(_prev: VerifyState, fd: FormData): Promise<Ver
   }
   jar.delete(CHALLENGE_COOKIE);
   await startSession(r.userId);
-  // "Remember this phone for 30 days" (checked by default). Never for the admin account.
-  if (fd.get("remember") === "on" && !(await adminFor(db, r.userId))) {
+  // "Remember this phone for 30 days" (checked by default). Only the authenticator or a backup code earns it, never an emailed code, and never the admin account.
+  if (fd.get("remember") === "on" && earnsRememberedDevice(r.method) && !(await adminFor(db, r.userId))) {
     const d = await rememberDevice(db, r.userId, (await headers()).get("user-agent"));
     jar.set(DEVICE_COOKIE, d.value, {
       httpOnly: true,
