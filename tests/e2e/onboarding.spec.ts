@@ -7,7 +7,7 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   // and keeps the look and tone. Each step says what it changes.
   await expect(page.getByRole("heading", { name: "Meet the skylings" })).toBeVisible();
   await expect(page.getByText("Changes who sits on top of your sky")).toBeVisible();
-  expect((await page.getByLabel("Skyling's name").boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  expect(Math.round((await page.getByLabel("Skyling's name").boundingBox())!.height)).toBeGreaterThanOrEqual(44);
   await page.getByRole("radio", { name: /^Ray/ }).click();
   await expect(page.getByLabel("Skyling's name")).toHaveValue("Ray");
   await expect(page.getByText("Talks like a coach.", { exact: false })).toBeVisible();
@@ -19,7 +19,7 @@ test("a new user meets the skylings, tells theirs about themselves, sees how to 
   // 2. About you: Nova says hi and gets to know them (sign-up took only email and password).
   await expect(page.getByRole("heading", { name: /^Hi/ })).toBeVisible();
   await expect(page.getByText("I'm Nova.", { exact: false })).toBeVisible();
-  expect((await page.getByLabel("What should I call you?").boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  expect(Math.round((await page.getByLabel("What should I call you?").boundingBox())!.height)).toBeGreaterThanOrEqual(44); // 43.99997 is 44 px
   await page.getByLabel("What should I call you?").fill("Maya");
   await expect(page.getByRole("heading", { name: "Hi Maya." })).toBeVisible();
   await expect(page.getByText("LifeFlow is free while we're testing.")).toBeVisible();

@@ -37,6 +37,11 @@ import { billsToReview, findSavings, listSavings } from "../finance/savings-find
 import { webSearchClient } from "../../integrations/web-search";
 import { eveningWrap, goalForecast, habitCoach, monthlyReview, morningBrief, weeklyLearned, weeklyReview } from "./reviews";
 
+/** "09:00" -> "9 AM", "15:30" -> "3:30 PM". */
+const clockTime = (hm: string) => {
+  const [h, m] = hm.split(":").map(Number);
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, "0")}` : ""} ${h < 12 ? "AM" : "PM"}`;
+};
 /** Something worth saying, with the facts behind it. Wording happens later (lib/jarvis-voice). */
 export type Candidate = {
   kind: string;
@@ -197,8 +202,9 @@ const deadlineConflicts: Detector = async ({ scope, tz, today, now }) => {
       facts: {
         assignment: a.title,
         dueDay: formatDateStr(dueDate, "EEEE"),
-        shiftWhen: `${formatDateStr(shift.date, "EEEE")} ${Number(shift.startTime.slice(0, 2)) >= 16 ? "night" : `at ${shift.startTime}`}`,
-        blockWhen: `2 hours on ${formatDateStr(block.date, "EEEE")} at ${block.start}`,
+        // times as people say them ("9 AM", "3:30 PM"), never "09:00"
+        shiftWhen: `${formatDateStr(shift.date, "EEEE")} ${Number(shift.startTime.slice(0, 2)) >= 16 ? "night" : `at ${clockTime(shift.startTime)}`}`,
+        blockWhen: `2 hours on ${formatDateStr(block.date, "EEEE")} at ${clockTime(block.start)}`,
       },
       action: { type: "block_time", label: "Block it", date: block.date, start: block.start, end: block.end, title: `Work on ${a.title}` },
       priority: 75,
