@@ -490,13 +490,13 @@ html.lf-splash .animate-rise {
   height: auto;
   overflow: visible;
   transform: translate(-62%, 100%);
-  animation: lf-sunrise 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s forwards;
+  animation: lf-sunrise 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s forwards;
 }
 .lf-splash-ray {
   transform-box: fill-box;
   transform-origin: center;
   transform: scale(0);
-  animation: lf-ray 0.42s steps(3, end) calc(1.05s + var(--i) * 90ms) forwards;
+  animation: lf-ray 0.3s steps(3, end) calc(0.7s + var(--i) * 70ms) forwards;
 }
 .lf-splash-horizon {
   position: absolute;
