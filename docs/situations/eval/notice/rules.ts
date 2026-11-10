@@ -367,6 +367,12 @@ export function gradeWorld(life: Life, said: Said[], quietWorld: boolean): Grade
   const u = unusualEvents(life, said);
   const events = [...o.events, ...d.events, ...b.events, ...p.events, ...dup, ...u.events];
   const fa: FalseAlarm[] = [];
+  /** An unusual-charge message the data backs: a real unusual charge or a real big first charge (rule 5a or 5b). */
+  const backedUnusual = (s: Said) => {
+    const A = Number(s.facts.amountCents);
+    const t = life.txns.find((x) => -x.amount === A && x.day <= s.date && x.day >= addDaysStr(s.date, -3));
+    return !!t && u.real.has(t.id);
+  };
 
   // false alarms: said, but the data shows nothing of the kind
   for (const s of said) {
@@ -403,11 +409,8 @@ export function gradeWorld(life: Life, said: Said[], quietWorld: boolean): Grade
       const to = Number(s.facts.toCents);
       if (!p.real.some((r) => r.to === to && s.date >= r.x)) fa.push({ rule: "price", day: s.date, what: String(s.text ?? "").slice(0, 90), why: "no subscription charge rose by a dollar and 5%" });
     }
-    if (s.surface === "message" && s.kind === "unusual_spend") {
-      const A = Number(s.facts.amountCents);
-      const t = life.txns.find((x) => -x.amount === A && x.day <= s.date && x.day >= addDaysStr(s.date, -3));
-      if (!t || !u.real.has(t.id)) fa.push({ rule: "unusual", day: s.date, what: String(s.text ?? "").slice(0, 90), why: "not 3x the usual at that merchant, or under $50" });
-    }
+    if (s.surface === "message" && s.kind === "unusual_spend" && !backedUnusual(s))
+      fa.push({ rule: "unusual", day: s.date, what: String(s.text ?? "").slice(0, 90), why: "not 3x the usual at that merchant (or under $50), and not $250+ somewhere new" });
   }
 
   // quiet days: a replayed day with nothing real going on for any rule; any warning then is noise
@@ -422,7 +425,7 @@ export function gradeWorld(life: Life, said: Said[], quietWorld: boolean): Grade
   for (let x = life.firstDay; x <= life.lastDay; x = addDaysStr(x, 1)) {
     if (busy.has(x)) continue;
     days++;
-    const loud = said.filter((s) => s.date === x && ((s.surface === "message" && (s.urgent || WARNING_KINDS.has(s.kind))) || (s.surface === "today" && ["conflict", "overdraft"].includes(s.kind) && !(s.kind === "conflict" && pairsOf(s.refs).length > 0 && pairsOf(s.refs).every(([x, y]) => o.pairs.has(o.pair(x, y)))))));
+    const loud = said.filter((s) => s.date === x && ((s.surface === "message" && (s.urgent || WARNING_KINDS.has(s.kind)) && !(s.kind === "unusual_spend" && backedUnusual(s))) || (s.surface === "today" && ["conflict", "overdraft"].includes(s.kind) && !(s.kind === "conflict" && pairsOf(s.refs).length > 0 && pairsOf(s.refs).every(([x, y]) => o.pairs.has(o.pair(x, y)))))));
     if (loud.length) {
       noisy.push(`${x} ${describe(loud[0])}`);
       noisyKinds.push(...new Set(loud.map((l) => (l.surface === "today" ? "Today " : "") + l.kind + (l.urgent && l.surface === "message" ? " (marked urgent)" : ""))));

@@ -23,7 +23,7 @@ import { balancesOf } from "../finance/overview";
 import { cashForecast, upcomingBills } from "../finance/forecast";
 import { goalsWithPlans } from "../finance/goals";
 import { budgetStatus } from "../finance/planning";
-import { planPaycheck } from "../finance/coach";
+import { planPaycheck, subscriptionReport } from "../finance/coach";
 import { firstSpendDates, queryTransactions } from "../finance/transactions";
 import { merchantKey } from "../finance/recurring-detect";
 import { listAssignments } from "../school";
@@ -465,6 +465,12 @@ const overdueTasks: Detector = async ({ scope, tz, today }) => {
 };
 
 /** A recent charge far above what the user usually pays that merchant. */
+/** "Netflix and Hulu", "Netflix, Hulu and Max". */
+const listOf = (xs: string[]) => (xs.length <= 1 ? (xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
+
+/** A first charge at a merchant this big is said out loud. */
+export const FIRST_TIME_CENTS = 25_000;
+
 const unusualSpend: Detector = async ({ scope, today }) => {
   const txns = await queryTransactions(scope, { from: addDaysStr(today, -120), to: today, kinds: ["expense"], limit: 5000 });
   const recent = txns.filter((t) => t.date >= addDaysStr(today, -2) && spendOf(t) >= 5000);
@@ -472,6 +478,19 @@ const unusualSpend: Detector = async ({ scope, today }) => {
   for (const t of recent) {
     const key = merchantKey(t);
     const history = txns.filter((x) => x.id !== t.id && merchantKey(x) === key).map(spendOf);
+    // A big charge somewhere new: nothing to compare it with, but $250 at a place never paid before is worth a look
+    // (the noticing grader's one-offs at a new merchant went unsaid).
+    if (key && !history.length && spendOf(t) >= FIRST_TIME_CENTS) {
+      out.push({
+        kind: "unusual_spend",
+        topic: "money",
+        dedupeKey: `unusual_spend:${t.id}`,
+        facts: { merchant: t.merchantName ?? t.description, amountCents: spendOf(t), firstTime: true },
+        action: { type: "open", label: "Review it", href: `/finances/transactions?q=${encodeURIComponent(t.merchantName ?? t.description)}` },
+        priority: 65,
+      });
+      continue;
+    }
     if (history.length < 3) continue;
     const median = history.sort((a, b) => a - b)[Math.floor(history.length / 2)];
     if (median <= 0 || spendOf(t) < median * 3) continue;
@@ -626,6 +645,19 @@ const subscriptionWatch: Detector = async ({ scope, today }) => {
         urgent: f.daysLeft <= 2,
       });
   }
+  // Two paid services doing the same job (Netflix and Hulu): said once for that set, not only on the Subscriptions page.
+  for (const g of (await subscriptionReport(scope, today)).overlaps.slice(0, 1))
+    out.push({
+      kind: "subscription_overlap",
+      topic: "money",
+      dedupeKey: `sub_overlap:${g.group}:${[...g.names]
+        .map((x) => x.toLowerCase())
+        .sort()
+        .join("+")}`,
+      facts: { job: g.group === "Music" ? "music" : "video", names: listOf(g.names), count: g.names.length, yearlyCents: g.yearlyCents },
+      action: { type: "open", label: "Take a look", href: "/finances/bills" },
+      priority: 45,
+    });
   for (const c of o.found.slice(0, 1))
     out.push({
       kind: "new_subscription",

@@ -728,3 +728,51 @@ describe("deadline warnings only when the shift really takes the evening (notici
     expect(pushText("deadline_conflict", out[0].facts)?.body).toMatch(/no free 2-hour stretch before then/);
   });
 });
+
+describe("said out loud: same-job subscriptions and a big first charge somewhere new (noticing grader, 2026-11-10)", () => {
+  const TODAY = "2026-11-05";
+  const now = new Date(`${TODAY}T17:00:00Z`);
+
+  it("names two video services paid at once, once for that pair", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 200_000 });
+      for (const d of ["2026-08-03", "2026-09-03", "2026-10-03"]) {
+        await createTransaction(s, { accountId: acct.id, date: d, description: "NETFLIX.COM", merchantName: "Netflix", amountCents: -1_549 });
+        await createTransaction(s, {
+          accountId: acct.id,
+          date: d.replace("-03", "-12"),
+          description: "HULU 877-8244858",
+          merchantName: "Hulu",
+          amountCents: -999,
+        });
+      }
+    });
+    const out = await run((s) => DETECTORS.subscriptionWatch({ scope: s, tz: TZ, today: TODAY, now }));
+    const overlap = out.find((c) => c.kind === "subscription_overlap")!;
+    expect(overlap).toMatchObject({ dedupeKey: "sub_overlap:Video streaming:hulu+netflix", facts: { job: "video", count: 2 } });
+    expect(composeMessage(overlap.kind, overlap.facts, "friend").body).toMatch(
+      /You pay for (Netflix and Hulu|Hulu and Netflix), about \$\d+ a year together\./,
+    );
+  });
+
+  it("says a $250+ charge at a merchant never paid before, and stays quiet under it", async () => {
+    const { run } = await makeUser();
+    await run(async (s) => {
+      const acct = await createManualAccount(s, { name: "Checking", type: "depository", subtype: "checking", currentBalanceCents: 200_000 });
+      await createTransaction(s, {
+        accountId: acct.id,
+        date: TODAY,
+        description: "DELTA AIR LINES 0062",
+        merchantName: "Delta Air Lines",
+        amountCents: -36_656,
+      });
+      await createTransaction(s, { accountId: acct.id, date: TODAY, description: "NEW BOOKSTORE", merchantName: "New Bookstore", amountCents: -4_200 });
+    });
+    const out = await run((s) => DETECTORS.unusualSpend({ scope: s, tz: TZ, today: TODAY, now }));
+    expect(out).toEqual([expect.objectContaining({ kind: "unusual_spend", facts: { merchant: "Delta", amountCents: 36_656, firstTime: true } })]);
+    expect(composeMessage("unusual_spend", out[0].facts, "friend").body).toMatch(
+      /\$367 at Delta, the first charge from them in 4 months\. Was that you\?/,
+    );
+  });
+});

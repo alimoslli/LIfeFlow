@@ -108,11 +108,26 @@ const KINDS: Record<string, (f: F) => Parts> = {
     ask: f.done ? "I moved them to tomorrow." : "Move them to tomorrow?",
     mood: "info",
   }),
-  unusual_spend: (f) => ({
-    headline: `Unusual charge: ${s(f, "merchant")}`,
-    fact: `${usd(n(f, "amountCents"))} at ${s(f, "merchant")} is about ${n(f, "times")}x what you usually spend there.`,
-    ask: "Was that expected?",
-    mood: "warn",
+  unusual_spend: (f) =>
+    f.firstTime
+      ? {
+          // a big charge somewhere new (no charge there in the last 4 months): named plainly, with the way out if it isn't theirs
+          headline: `New charge: ${s(f, "merchant")}`,
+          fact: `${usd(n(f, "amountCents"))} at ${s(f, "merchant")}, the first charge from them in 4 months.`,
+          ask: "Was that you? If not, your bank can stop it.",
+          mood: "warn",
+        }
+      : {
+          headline: `Unusual charge: ${s(f, "merchant")}`,
+          fact: `${usd(n(f, "amountCents"))} at ${s(f, "merchant")} is about ${n(f, "times")}x what you usually spend there.`,
+          ask: "Was that expected?",
+          mood: "warn",
+        },
+  subscription_overlap: (f) => ({
+    headline: `${n(f, "count")} ${s(f, "job")} services at once`,
+    fact: `You pay for ${s(f, "names")}, about ${usd(n(f, "yearlyCents"))} a year together.`,
+    ask: "Keep them all, or pause the one you use least?",
+    mood: "info",
   }),
   morning_brief: (f) => ({
     headline: "Your morning brief",
@@ -333,6 +348,7 @@ export const KIND_LABELS: Record<string, string> = {
   subscription_price_up: "Subscription price increases",
   trial_ending: "Free trials ending",
   new_subscription: "New subscriptions",
+  subscription_overlap: "Subscriptions that do the same job",
   double_charge: "Possible double charges",
   review_transactions: "Transactions to categorize",
   week_ahead: "Sunday week ahead",
