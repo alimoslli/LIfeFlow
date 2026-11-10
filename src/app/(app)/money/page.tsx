@@ -1,7 +1,7 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, ArrowDownLeft, ArrowRight, ArrowUpRight, Landmark, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowDownLeft, ArrowRight, ArrowUpRight, Wallet } from "lucide-react";
 import { CashOutlook } from "@/components/finance/cash-outlook";
 import { CountUp } from "@/components/motion/count-up";
 import { addDaysStr, formatDateStr, formatIn, monthStart, todayIn } from "@/lib/dates";
@@ -62,7 +62,7 @@ export default async function MoneyPage() {
         <h1 className="font-display text-[2.5rem] leading-none font-medium tracking-tight">Money</h1>
         <SkyWindow tz={d.tz} className="mt-8 rounded-[1.75rem]">
           <div className="relative min-h-[12rem] px-6 pt-6 pb-6">
-            <Landmark className="h-6 w-6 text-star-gold" />
+            <PixelIcon name="money" className="h-8 w-8" />
             <p className="mt-3 max-w-[16rem] font-display text-[1.375rem] leading-snug font-medium">Connect a bank or add an account to see where you stand.</p>
             <p className="mt-2 max-w-[60%] text-sm text-white/80">Then you&apos;ll see what you have, what you spent, and your bills.</p>
             <SkylingOnCoins />

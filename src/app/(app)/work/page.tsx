@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Briefcase, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionForm } from "@/components/action-form";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { SubmitButton } from "@/components/ui/button";
@@ -69,7 +70,7 @@ export default async function WorkPage({ searchParams }: { searchParams: Promise
 
       {d.employers.length === 0 ? (
         <Card className="p-6">
-          <EmptyState icon={<Briefcase />} title="Add your job to start tracking shifts and pay" />
+          <EmptyState icon={<PixelIcon name="shift" />} title="Add your job to start tracking shifts and pay" />
           <EmployerForm />
         </Card>
       ) : (

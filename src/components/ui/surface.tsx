@@ -34,7 +34,7 @@ export function PageHeader({ title, description, actions, eyebrow }: { title: Re
 export function EmptyState({ icon, title, children, action }: { icon?: ReactNode; title: string; children?: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
-      {icon && <div className="mb-3 text-muted [&_svg]:h-6 [&_svg]:w-6">{icon}</div>}
+      {icon && <div className="mb-3 text-muted [&_svg]:h-9 [&_svg]:w-9">{icon}</div>}
       <p className="text-sm font-medium text-text">{title}</p>
       {children && <div className="mt-1 max-w-sm text-sm text-muted">{children}</div>}
       {action && <div className="mt-4">{action}</div>}

@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { biometricName, PasskeyCancelled, unlockWithPasskey } from "@/components/auth/passkey-client";
 import { haptic } from "@/lib/haptics";
 
@@ -27,7 +28,7 @@ export function MoneyLockScreen() {
   return (
     <div className="mx-auto flex min-h-[60dvh] max-w-sm flex-col items-center justify-center gap-4 px-4 text-center" data-testid="money-locked">
       <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-accent-soft text-accent">
-        <Lock className="h-7 w-7" />
+        <PixelIcon name="lock" className="h-9 w-9" />
       </span>
       <h1 className="font-display text-[1.875rem] leading-tight font-medium">Money is locked</h1>
       <p className="text-[0.9375rem] text-text-2">Your balances and investments are hidden until you confirm it&apos;s you.</p>

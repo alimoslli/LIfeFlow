@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Smartphone, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Card } from "@/components/ui/surface";
@@ -64,7 +65,7 @@ export default async function NotificationSettings() {
           <ul className="lf-rows *:px-3">
             {devices.map((d) => (
               <li key={d.id} className="flex min-h-14 items-center gap-3 py-2">
-                <Smartphone className="h-5 w-5 shrink-0 text-muted" />
+                <PixelIcon name="bell" className="h-6 w-6" />
                 <span className="min-w-0 flex-1">
                   <span className="block text-[0.9375rem]">{d.deviceLabel ?? "Browser"}</span>
                   <span className="block text-xs text-muted">

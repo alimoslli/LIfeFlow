@@ -1,7 +1,8 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowUp, GraduationCap } from "lucide-react";
+import { ArrowUp } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { MySkyling } from "@/components/skylings/sprite";
 import { BOOKS, PixelArt, SkyWindow } from "@/components/skylings/sky-window";
@@ -70,7 +71,11 @@ export default async function SchoolPage() {
 
       {d.courses.length === 0 ? (
         <Card className="mb-8">
-          <EmptyState icon={<GraduationCap />} title="Add your first course" action={<CourseDialog action={createCourseAction} trigger="Add course" />}>
+          <EmptyState
+            icon={<PixelIcon name="class" />}
+            title="Add your first course"
+            action={<CourseDialog action={createCourseAction} trigger="Add course" />}
+          >
             Or tell <AssistantName />: “I&apos;m taking PSY 101, BIO 110 and MATH 152 this semester.”
           </EmptyState>
         </Card>
@@ -167,7 +172,7 @@ export default async function SchoolPage() {
       {!d.canvas && (
         <Link href="/settings/integrations" className="lf-hop mb-6 flex items-center gap-3 rounded-[1.5rem] bg-surface px-5 py-4 shadow-soft hover:shadow-lift">
           <span className="lf-chip-night h-10 w-10 shrink-0 rounded-[0.75rem]">
-            <GraduationCap className="h-5 w-5" />
+            <PixelIcon name="class" className="h-6 w-6" />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[0.9375rem] font-semibold">Connect Canvas</span>

@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Landmark, Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton } from "@/components/action-form";
 import { Badge } from "@/components/ui/surface";
 import type { ActionState } from "@/server/actions";
@@ -28,7 +29,7 @@ export function BankConnections({
               <div className="flex items-center justify-between gap-3">
                 <span className="flex min-w-0 items-center gap-2.5">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2">
-                    <Landmark className="h-4 w-4 text-accent" />
+                    <PixelIcon name="card" className="h-6 w-6" />
                   </span>
                   <span className="min-w-0">
                     <span className="line-clamp-2 break-words text-sm font-medium">{c.name}</span>

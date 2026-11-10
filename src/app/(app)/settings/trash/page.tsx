@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Trash2 } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton } from "@/components/action-form";
 import { Card, EmptyState } from "@/components/ui/surface";
 import { formatIn } from "@/lib/dates";
@@ -31,7 +31,7 @@ export default async function TrashPage() {
       <p className="text-sm text-text-2">Items are removed for good after {TRASH_DAYS} days.</p>
       <Card>
         {d.items.length === 0 ? (
-          <EmptyState icon={<Trash2 />} title="Nothing here" />
+          <EmptyState icon={<PixelIcon name="trash" />} title="Nothing here" />
         ) : (
           <ul className="lf-rows px-2 pb-2">
             {d.items.map((t) => (

@@ -1,7 +1,8 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Wand2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton } from "@/components/action-form";
 import { Card, EmptyState } from "@/components/ui/surface";
 import { withCurrentUser } from "@/server/auth/current-user";
@@ -23,7 +24,7 @@ export default async function RulesPage() {
       <p className="mt-1 mb-5 text-sm text-text-2">New transactions from these merchants get these categories.</p>
       <Card>
         {rules.length === 0 ? (
-          <EmptyState icon={<Wand2 />} title="No rules yet">
+          <EmptyState icon={<PixelIcon name="sliders" />} title="No rules yet">
             Change a transaction&apos;s category and a rule appears here.
           </EmptyState>
         ) : (

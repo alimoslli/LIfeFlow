@@ -1,7 +1,7 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Briefcase, Download, Flag, GraduationCap, Heart, HeartPulse, Plane, PiggyBank, Star, Trash2, Trophy } from "lucide-react";
+import { Briefcase, Download, Flag, GraduationCap, Heart, HeartPulse, Plane, PiggyBank, Star, Trash2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
@@ -93,7 +93,7 @@ export default async function MilestonesPage({ searchParams }: { searchParams: P
           )}
           {d.items.length === 0 && (
             <Card>
-              <EmptyState icon={<Trophy />} title="Your story starts here">
+              <EmptyState icon={<PixelIcon name="goal" />} title="Your story starts here">
                 Add the things you&apos;ve done: graduating, a first job, moving out, a race you finished. Every goal you reach lands here too.
               </EmptyState>
             </Card>

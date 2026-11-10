@@ -1,5 +1,6 @@
 "use client";
-import { GraduationCap, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
@@ -15,7 +16,7 @@ export function CanvasCard({ connection }: { connection: Connection | null }) {
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-2">
-            <GraduationCap className="h-5 w-5 text-accent" />
+            <PixelIcon name="class" className="h-6 w-6" />
           </span>
           <div>
             <h2 className="font-medium">Canvas</h2>

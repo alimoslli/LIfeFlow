@@ -1,6 +1,7 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import { Car, GraduationCap, Home, LineChart, Plane, PiggyBank, ShieldCheck, Shapes, ShoppingBag, Trash2, Wallet } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -14,7 +15,6 @@ import { recentCheckins } from "@/server/services/goal-checkins";
 import { HabitsSection } from "../habits/habits-section";
 import { GoalCheckin, NewPersonalGoal, PersonalGoals } from "./personal-goals";
 import Link from "next/link";
-import { Lock } from "lucide-react";
 import { series } from "@/server/db/series";
 import type { GoalPurpose } from "@/server/db/schema";
 import { listAccounts } from "@/server/services/finance/accounts";
@@ -84,13 +84,13 @@ export default async function GoalsPage() {
           <h2 className="mt-3 text-[1.375rem] font-medium tracking-tight">Money goals</h2>
           {locked && (
             <Link href="/money" className="flex min-h-14 items-center gap-3 rounded-3xl bg-surface px-5 shadow-soft">
-              <Lock className="h-5 w-5 text-accent" />
+              <PixelIcon name="lock" className="h-6 w-6" />
               <span className="flex-1 text-[0.9375rem]">Money is locked. Unlock it to see money goals.</span>
             </Link>
           )}
           {!locked && d.goals.length === 0 && (
             <Card>
-              <EmptyState icon={<PiggyBank />} title="What are you saving for?">
+              <EmptyState icon={<PixelIcon name="target" />} title="What are you saving for?">
                 An emergency fund, a trip, a car, an apartment, paying off a card. Give it a target and a date, and LifeFlow shows the monthly amount and when
                 you&apos;ll get there.
               </EmptyState>

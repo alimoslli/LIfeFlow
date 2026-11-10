@@ -1,6 +1,6 @@
 import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
-import { BookOpen } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { Card, EmptyState, PageHeader, Tabs } from "@/components/ui/surface";
 import { todayIn } from "@/lib/dates";
 import { withCurrentUser } from "@/server/auth/current-user";
@@ -56,7 +56,7 @@ export default async function DuePage({ searchParams }: { searchParams: Promise<
       <Tabs current={view} items={VIEWS.map((v) => ({ key: v.key, label: v.label, href: `/school/due?view=${v.key}` }))} />
       <Card className="mb-10">
         {d.list.length === 0 ? (
-          <EmptyState icon={<BookOpen />} title={view === "overdue" ? "Nothing overdue. Nice." : "Nothing here"}>
+          <EmptyState icon={<PixelIcon name="books" />} title={view === "overdue" ? "Nothing overdue. Nice." : "Nothing here"}>
             {view === "completed" ? (
               "Completed assignments will collect here."
             ) : d.courses.length ? (

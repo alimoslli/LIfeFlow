@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Fingerprint, KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
+import { KeyRound, Pencil, Plus, Trash2 } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { addPasskey, biometricName, PasskeyCancelled, passkeysSupported } from "@/components/auth/passkey-client";
 import { Button, SubmitButton } from "@/components/ui/button";
@@ -37,7 +38,7 @@ export function PasskeysCard({ passkeys, demo }: { passkeys: PasskeyRow[]; demo:
     <Card className="p-5">
       <div className="flex items-start gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-accent">
-          <Fingerprint className="h-5 w-5" />
+          <PixelIcon name="lock" className="h-6 w-6" />
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="font-medium">Passkeys (Face ID, Touch ID)</h2>

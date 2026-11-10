@@ -1,7 +1,8 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Download, MoreHorizontal, Receipt, Search, SlidersHorizontal, Trash2, Wand2 } from "lucide-react";
+import { Download, MoreHorizontal, Search, SlidersHorizontal, Trash2, Wand2 } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { Button, SubmitButton } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
@@ -185,7 +186,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
 
       {d.rows.length === 0 ? (
         <Card>
-          <EmptyState icon={<Receipt />} title={filtered ? "No transactions match these filters" : "No transactions yet"}>
+          <EmptyState icon={<PixelIcon name="bill" />} title={filtered ? "No transactions match these filters" : "No transactions yet"}>
             {d.accounts.length ? (
               "Add one manually or import a CSV from your bank."
             ) : (

@@ -2,6 +2,7 @@ import { AssistantName } from "@/components/assistant-name";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FileText, FolderKanban, Pin, Search } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionForm } from "@/components/action-form";
 import { AskJarvisButton } from "@/components/shell/app-shell";
 import { SubmitButton } from "@/components/ui/button";
@@ -118,7 +119,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
           )}
           {d.notes.length === 0 ? (
             <Card>
-              <EmptyState icon={<FileText />} title={sp.q ? "No notes match your search" : "No notes yet"}>
+              <EmptyState icon={<PixelIcon name="note" />} title={sp.q ? "No notes match your search" : "No notes yet"}>
                 Capture ideas, lecture notes or plans. Ask <AssistantName /> to organize a brain-dump into a project.
               </EmptyState>
             </Card>

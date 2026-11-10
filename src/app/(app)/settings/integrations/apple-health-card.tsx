@@ -1,7 +1,8 @@
 "use client";
 import { AssistantName } from "@/components/assistant-name";
 import { useActionState } from "react";
-import { Copy, HeartPulse } from "lucide-react";
+import { Copy } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton } from "@/components/action-form";
 import { Button, SubmitButton } from "@/components/ui/button";
 import { FormError, Input } from "@/components/ui/field";
@@ -29,7 +30,7 @@ export function AppleHealthCard({ keys, lastReceived, url }: { keys: Key[]; last
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-2">
-            <HeartPulse className="h-5 w-5 text-accent" />
+            <PixelIcon name="health" className="h-6 w-6" />
           </span>
           <div>
             <h2 className="font-medium">Apple Health</h2>

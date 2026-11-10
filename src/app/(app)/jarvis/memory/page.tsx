@@ -1,7 +1,8 @@
 import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Archive, Brain, Check, RotateCcw, Trash2, X } from "lucide-react";
+import { Archive, Check, RotateCcw, Trash2, X } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -142,7 +143,7 @@ export default async function JarvisMemory({ searchParams }: { searchParams: Pro
         </div>
 
         {active.length === 0 ? (
-          <EmptyState icon={<Brain />} title="Nothing remembered yet">
+          <EmptyState icon={<PixelIcon name="idea" />} title="Nothing remembered yet">
             Tell <AssistantName /> “Remember that I prefer studying in the morning”, or add one below.
           </EmptyState>
         ) : (

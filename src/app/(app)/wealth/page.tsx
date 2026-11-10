@@ -1,7 +1,8 @@
 import { moneyGate } from "@/app/(app)/money-gate";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LineChart, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionButton, ActionForm } from "@/components/action-form";
 import { BarList } from "@/components/charts/bar-list";
 import { SubmitButton } from "@/components/ui/button";
@@ -74,7 +75,7 @@ export default async function WealthPage() {
               }
             />
             {investments.length === 0 ? (
-              <EmptyState icon={<LineChart />} title="No investment accounts">
+              <EmptyState icon={<PixelIcon name="money" />} title="No investment accounts">
                 Add brokerage, Roth IRA or crypto accounts on the Accounts page (type “Investment”). Synced balances and holdings will need Plaid Investments
                 access.
               </EmptyState>

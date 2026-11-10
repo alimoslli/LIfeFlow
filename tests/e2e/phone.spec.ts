@@ -78,13 +78,13 @@ test("phone shell: tab bar never covers content, tap targets are 44px, search fi
     await page.waitForLoadState("networkidle");
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     const covered = await page.evaluate(() => {
-      const navTop = document.querySelector("nav.lf-tabbar")!.getBoundingClientRect().top;
+      const navTop = document.querySelector(".lf-tabbar")!.getBoundingClientRect().top;
       const els = [...document.querySelectorAll("main a[href], main button")].filter((e) => e.getBoundingClientRect().height > 0);
       return els.length ? els[els.length - 1].getBoundingClientRect().bottom > navTop : false;
     });
     expect(covered, `${path}: last control is under the tab bar`).toBe(false);
     const small = await page.evaluate(() =>
-      [...document.querySelectorAll("main button, main [role=checkbox], nav.lf-tabbar a, header button, header a")]
+      [...document.querySelectorAll("main button, main [role=checkbox], .lf-tabbar a, header button, header a")]
         .map((e) => ({ e, r: e.getBoundingClientRect() }))
         .filter(({ r }) => r.width > 0 && (r.width < 43.5 || r.height < 43.5))
         .map(({ e, r }) => `${(e.getAttribute("aria-label") || e.textContent || "").trim().slice(0, 30)} ${Math.round(r.width)}x${Math.round(r.height)}`),

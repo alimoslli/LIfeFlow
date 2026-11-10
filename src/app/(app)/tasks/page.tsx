@@ -3,7 +3,8 @@ import { series } from "@/server/db/series";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckSquare, Plus, Repeat } from "lucide-react";
+import { Plus, Repeat } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { ActionForm } from "@/components/action-form";
 import { SwipeRow } from "@/components/swipe-row";
 import { TaskCheck } from "@/components/task-check";
@@ -91,7 +92,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
 
       {tasks.length === 0 ? (
         <Card>
-          <EmptyState icon={<CheckSquare />} title={view === "done" ? "Nothing completed yet" : "You're all caught up"}>
+          <EmptyState icon={<PixelIcon name="todo" />} title={view === "done" ? "Nothing completed yet" : "You're all caught up"}>
             Tap + to add a to-do, or ask <AssistantName />: “Add all my assignments and organize them by deadline.”
           </EmptyState>
         </Card>
