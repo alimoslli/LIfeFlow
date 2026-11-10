@@ -147,7 +147,7 @@ for (const size of [
   { name: "phone", viewport: { width: 390, height: 844 } },
   { name: "narrow laptop window", viewport: { width: 990, height: 1100 } },
 ]) {
-  test(`the stars you earned never sit on words: ${size.name}, 9:30 PM`, async ({ browser }) => {
+  test(`the stars you earned and the lines to the wheel never sit on words: ${size.name}, 9:30 PM`, async ({ browser }) => {
     const context = await browser.newContext({ viewport: size.viewport, isMobile: size.name === "phone", hasTouch: size.name === "phone" });
     const page = await context.newPage();
     const email = await signUp(page, "Star Sky");
@@ -171,6 +171,33 @@ for (const size of [
       for (const s of stars)
         for (const w of words)
           if (s.left < w.b.right - 1 && w.b.left < s.right - 1 && s.top < w.b.bottom - 1 && w.b.top < s.bottom - 1) out.push(`a star sits on "${w.text}"`);
+      // nor does the thin line from a stop's words to the wheel cross any words ("Tomorrow" was struck through)
+      const ctm = (dome as SVGSVGElement).getScreenCTM()!;
+      const at = (x: number, y: number) => new DOMPoint(x, y).matrixTransform(ctm);
+      const cross = (ax: number, ay: number, bx: number, by: number, cx: number, cy: number, dx: number, dy: number) => {
+        const d = (bx - ax) * (dy - cy) - (by - ay) * (dx - cx);
+        if (d === 0) return false;
+        const u = ((cx - ax) * (dy - cy) - (cy - ay) * (dx - cx)) / d;
+        const v = ((cx - ax) * (by - ay) - (cy - ay) * (bx - ax)) / d;
+        return u > 0.02 && u < 0.98 && v >= 0 && v <= 1;
+      };
+      for (const line of dome.querySelectorAll<SVGLineElement>("line")) {
+        if (Number(line.getAttribute("stroke-opacity") ?? 1) < 0.05) continue;
+        const p1 = at(Number(line.getAttribute("x1")), Number(line.getAttribute("y1")));
+        const p2 = at(Number(line.getAttribute("x2")), Number(line.getAttribute("y2")));
+        for (const w of words) {
+          const { left: l, right: r, top: t, bottom: b } = w.b;
+          // a line ends at its own stop's words; only someone else's words count
+          const near = (q: DOMPoint) => q.x > l - 28 && q.x < r + 28 && q.y > t - 28 && q.y < b + 28;
+          if (near(p1) || near(p2)) continue;
+          const hit =
+            cross(p1.x, p1.y, p2.x, p2.y, l, t, r, t) ||
+            cross(p1.x, p1.y, p2.x, p2.y, r, t, r, b) ||
+            cross(p1.x, p1.y, p2.x, p2.y, l, b, r, b) ||
+            cross(p1.x, p1.y, p2.x, p2.y, l, t, l, b);
+          if (hit) out.push(`a line crosses "${w.text}"`);
+        }
+      }
       return { stars: stars.length, line: words.some((w) => / stars? today$/.test(w.text)), out: [...new Set(out)] };
     });
     // the seeded day has finished things, so there are stars to check (otherwise this proves nothing)

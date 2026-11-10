@@ -258,6 +258,19 @@ export function paintStrip(g: Element, defs: Element, o: StripOpts) {
 /** A tile on Today's path; the rest of a pile point at the tile that leads it (`of`). */
 /** `late`: the pile holds something late, so it keeps the red edge even when what leads it isn't. */
 type Tile = { it: ClockItem; x: number; y: number; w: number; h: number; ax: number; ay: number; lane: number; count: number; of?: Tile; late?: boolean };
+/** Whether the line from (x1,y1) to (x2,y2) passes through the box (l, t, r, b): a stem must never cross words. */
+function lineHitsBox(x1: number, y1: number, x2: number, y2: number, l: number, t: number, r: number, b: number) {
+  const inside = (x: number, y: number) => x >= l && x <= r && y >= t && y <= b;
+  if (inside(x1, y1) || inside(x2, y2)) return true;
+  const cross = (ax: number, ay: number, bx: number, by: number, cx: number, cy: number, dx: number, dy: number) => {
+    const d = (bx - ax) * (dy - cy) - (by - ay) * (dx - cx);
+    if (d === 0) return false;
+    const u = ((cx - ax) * (dy - cy) - (cy - ay) * (dx - cx)) / d;
+    const v = ((cx - ax) * (by - ay) - (cy - ay) * (bx - ax)) / d;
+    return u >= 0 && u <= 1 && v >= 0 && v <= 1;
+  };
+  return cross(x1, y1, x2, y2, l, t, r, t) || cross(x1, y1, x2, y2, r, t, r, b) || cross(x1, y1, x2, y2, l, b, r, b) || cross(x1, y1, x2, y2, l, t, l, b);
+}
 const overlaps = (a: Tile, x: number, y: number, w: number, h: number) => Math.abs(a.x - x) < (a.w + w) / 2 + 6 && Math.abs(a.y - y) < (a.h + h) / 2 + 6;
 
 export function createSky(root: HTMLElement, reduce: boolean) {
@@ -765,6 +778,8 @@ export function createSky(root: HTMLElement, reduce: boolean) {
         const l = a === "start" ? x : a === "end" ? x - w : x - w / 2;
         if (keepClear.some((q) => l < q.x + q.w / 2 + 4 && l + w > q.x - q.w / 2 - 4 && y + 4 - fontPx < q.y + q.h / 2 + 2 && y + 6 > q.y - q.h / 2 - 2))
           continue;
+        // nor across the thin line from a stop's words to its place on the wheel ("Tomorrow" was struck through)
+        if (tiles.some((q) => q.lane && lineHitsBox(q.ax, q.ay, q.x, q.y, l - 3, y + 4 - fontPx - 2, l + w + 3, y + 8))) continue;
         txt(marks, x, y + 4, s, { class: "dc-rim-t", "text-anchor": a, opacity: up(t).toFixed(3) });
         return;
       }
