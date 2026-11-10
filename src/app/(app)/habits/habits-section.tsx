@@ -44,7 +44,11 @@ export async function HabitsSection() {
                       {CADENCE[h.cadence]}
                       {h.target ? ` · ${h.kind === "save" ? usd(h.target) : h.kind === "study" ? `${h.target} min` : h.target}` : ""}
                     </p>
-                    <div className="mt-2 flex items-center gap-1" aria-label={`Last 8 periods, newest first`}>
+                    <div
+                      className="mt-2 flex items-center gap-1"
+                      role="img"
+                      aria-label={`Last ${h.recent.length} times, newest first: ${h.recent.filter(Boolean).length} done`}
+                    >
                       {h.recent.map((d, i) => (
                         <span key={i} className={cn("h-2.5 w-2.5 rounded-full", d ? "bg-accent" : "bg-surface-3")} />
                       ))}

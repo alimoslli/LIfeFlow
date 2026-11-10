@@ -279,7 +279,7 @@ export function Onboarding({
           ) : (
             <span />
           )}
-          <div className="flex items-center gap-1.5" aria-label={`Step ${index + 1} of ${STEPS.length}`}>
+          <div className="flex items-center gap-1.5" role="img" aria-label={`Step ${index + 1} of ${STEPS.length}`}>
             {STEPS.map((s, i) => (
               <span
                 key={s}

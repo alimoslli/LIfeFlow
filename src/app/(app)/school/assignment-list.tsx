@@ -35,12 +35,9 @@ export function AssignmentList({ items, tz, showCourse = true, today }: { items:
               <SwipeRow done={done} onComplete={toggleAssignmentAction.bind(null, a.id)} onDelete={deleteAssignmentAction.bind(null, a.id)}>
                 <div className="flex items-center gap-3 px-4 py-1.5 sm:px-5">
                   <TaskCheck done={done} action={toggleAssignmentAction.bind(null, a.id)} label={`Mark ${a.title} ${done ? "not done" : "done"}`} />
-                  <button
-                    type="button"
-                    onClick={() => setEditing(a)}
-                    className="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 text-left"
-                    aria-label={`Edit ${a.title}`}
-                  >
+                  <button type="button" onClick={() => setEditing(a)} className="flex min-h-14 min-w-0 flex-1 items-center gap-3 py-2 text-left">
+                    {/* the name includes what's on screen, so voice control can say what it sees (WCAG 2.5.3) */}
+                    <span className="sr-only">Edit </span>
                     <span className="min-w-0 flex-1">
                       <span className={cn("line-clamp-2 text-[0.9375rem] leading-snug", done && "text-muted line-through")}>{a.title}</span>
                       <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-muted">

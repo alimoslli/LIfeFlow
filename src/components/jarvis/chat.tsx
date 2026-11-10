@@ -586,7 +586,8 @@ export function JarvisChat({
                   <PixelArt art={CLOUD} className={cn("-mb-1", compact ? "w-24" : "w-28 sm:w-40")} />
                 </div>
                 <div className="lf-speech absolute top-1/2 right-4 left-[38%] -translate-y-[38%] px-3.5 py-3 sm:right-[8%] sm:left-[40%] sm:px-5 sm:py-4">
-                  <p className="text-[0.6875rem] font-semibold tracking-[0.14em] text-dawn-3 uppercase">{assistantName}</p>
+                  {/* sun ink on the bubble, which is white in both themes (dawn-3 was 2.2:1, too faint for 11 px) */}
+                  <p className="text-[0.6875rem] font-semibold tracking-[0.14em] text-[#b45309] uppercase">{assistantName}</p>
                   <h2
                     className={cn(
                       "mt-0.5 font-display leading-[1.1] font-medium tracking-tight",
@@ -794,7 +795,7 @@ export function JarvisChat({
               )}
             </form>
           )}
-          <p className="lf-chat-note mt-2 text-center text-[0.6875rem] text-muted/80">
+          <p className="lf-chat-note mt-2 text-center text-[0.6875rem] text-muted">
             {nameAtStart(assistantName)} tells you everything it changes. Deletions always ask first.
           </p>
         </div>

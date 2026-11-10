@@ -57,8 +57,9 @@ export function ShiftList({
                   type="button"
                   onClick={() => setEditing(s)}
                   className={cn("flex w-full items-start gap-4 px-5 py-4 text-left", cancelled && "opacity-50")}
-                  aria-label={`Edit shift on ${formatIn(s.startsAt, tz, "EEEE, MMM d")}`}
                 >
+                  {/* read aloud first, then what's on screen, so a voice control user can say what they see (WCAG 2.5.3) */}
+                  <span className="sr-only">Edit shift on {formatIn(s.startsAt, tz, "EEEE, MMM d")}: </span>
                   <span className="w-11 shrink-0 text-center">
                     <span className="block text-[0.6875rem] font-medium text-muted uppercase">{formatIn(s.startsAt, tz, "EEE")}</span>
                     <span className="block font-display text-2xl leading-tight">{formatIn(s.startsAt, tz, "d")}</span>
