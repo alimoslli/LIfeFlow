@@ -59,7 +59,7 @@ export function AskBar({ name, chips = true, clouds = [] }: { name: string; chip
           />
         </div>
         <form
-          data-tour="ask"
+          data-tour="skyling"
           onSubmit={(e) => {
             e.preventDefault();
             if (typed) openJarvis(typed, { send: true });

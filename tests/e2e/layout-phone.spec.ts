@@ -7,9 +7,9 @@ const SHOTS = process.env.SHOTS;
 
 // Each tab's landing page and every page that must be one more tap from it.
 const TABS: [string, string, string[]][] = [
-  // Today is the day clock and the timeline, which hold calendar, to-dos, goals and milestones; Health and Work are pills under it.
+  // Today is the day clock and the timeline, which hold calendar, to-dos, goals and milestones. The skyling is the bar on the
+  // dock, not a tab, and everything else is a door in the "More" sheet (navigation concept A, owner 2026-11-10).
   ["Today", "/", ["/habits", "/work"]],
-  ["Ray", "/jarvis", ["/jarvis/says", "/jarvis/ideas", "/jarvis/profile"]], // the skyling's tab carries its name (Ray by default)
   ["Money", "/money", ["/finances/accounts", "/wealth", "/finances/transactions", "/finances/bills"]],
   ["School", "/school", ["/school/due", "/notes"]],
 ];
@@ -22,10 +22,13 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
   });
   const problems: string[] = [];
 
-  // Tab bar: exactly four tabs, short labels, nothing truncated; no Settings tab.
+  // The dock: three places and More, short labels, nothing truncated; no Settings tab and no skyling tab.
   await page.goto("/");
   const tabs = page.getByRole("navigation", { name: "Main" }).last().getByRole("link");
-  expect(await tabs.allInnerTexts()).toEqual(["Today", "Ray", "Money", "School"]);
+  expect(await tabs.allInnerTexts()).toEqual(["Today", "Money", "School"]);
+  await expect(page.getByRole("navigation", { name: "Main" }).last().getByRole("button", { name: "More" })).toBeVisible();
+  // Today has its own message bar, so the dock doesn't add a second one there.
+  await expect(page.getByTestId("skyling-bar")).toHaveCount(0);
   for (const t of await tabs.all()) {
     const cut = await t.evaluate((el) => [...el.querySelectorAll("span.truncate")].some((s) => s.scrollWidth > s.clientWidth + 1));
     if (cut) problems.push(`tab label clipped: ${await t.innerText()}`);
@@ -44,6 +47,22 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
     if (!(await page.getByRole("link", { name: "Settings" }).first().isVisible())) problems.push(`no gear on ${label}`);
     pages.push(landing, ...more);
   }
+
+  // The skyling's bar sits on the dock on the other pages: one tap to its chat.
+  await page.goto("/money");
+  const skylingBar = page.getByTestId("skyling-bar");
+  await expect(skylingBar.getByRole("link", { name: /Message Ray/ })).toHaveAttribute("href", "/jarvis");
+  // More: everything else as doors, each one tap away, with a line about how it stands.
+  await page.getByRole("navigation", { name: "Main" }).last().getByRole("button", { name: "More" }).click();
+  const everything = page.getByRole("dialog", { name: "Everything else" });
+  await expect(everything).toBeVisible();
+  const doors = await everything.locator("a[href]").evaluateAll((as) => as.map((a) => new URL((a as HTMLAnchorElement).href).pathname));
+  for (const m of ["/plan", "/tasks", "/milestones", "/habits", "/work", "/jarvis/says", "/jarvis/profile", "/settings"])
+    if (!doors.includes(m)) problems.push(`${m} not a door in More`);
+  await everything.getByRole("link", { name: /To-dos/ }).click();
+  await expect(page).toHaveURL(/\/tasks$/);
+  await expect(everything).toBeHidden();
+  pages.push("/jarvis", "/jarvis/says", "/jarvis/ideas", "/jarvis/profile", "/plan", "/tasks", "/milestones");
 
   // Settings: the gear (tap 1), then its tabs (tap 2): Assistant (what Jarvis remembers), Integrations (Apple Health), etc.
   // The gear brings Settings up from below, over the page you were on (owner, 2026-11-10); its doors are one tap away.

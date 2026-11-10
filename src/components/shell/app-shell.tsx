@@ -7,6 +7,7 @@ import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutE
 import { setTourAction } from "@/app/(onboarding)/welcome/actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { openSettings, SettingsSheet } from "@/components/settings/settings-sheet";
+import { EverythingSheet, openEverything } from "./everything-sheet";
 import { cn } from "@/lib/utils";
 import { ASK_EVENT, askUrl, markSend, type AskDetail } from "@/lib/ask-handoff";
 import { assistantLabel, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
@@ -90,6 +91,8 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const tabs = NAV.filter((t) => t.module !== "school" || areas.school);
+  // On a phone the skyling is the bar above the tabs, not a tab (navigation concept A).
+  const phoneTabs = tabs.filter((t) => t.href !== "/jarvis");
   const router = useRouter();
   // Keep every tab warm: after each move (and after a save clears the cache) prefetch the tabs again when idle,
   // so switching tabs opens a ready page instead of a skeleton.
@@ -161,6 +164,8 @@ export function AppShell({
   // so moving between them never swaps the whole interface (UX review).
   const assistantPage = !onJarvisPage && (pathname.startsWith("/jarvis") || pathname.startsWith("/inbox"));
   const settingsActive = pathname.startsWith("/settings");
+  // The skyling's bar sits on the dock everywhere except where the page has its own (Today, the chat).
+  const showAsk = !onJarvisPage && pathname !== "/";
 
   // "Changes with the sky": whoever's moment it is, looked at again every minute
   const skyling = useSkyling(companion, user.timezone ?? "UTC");
@@ -215,7 +220,7 @@ export function AppShell({
                   onJarvisPage
                     ? "max-w-none"
                     : assistantPage
-                      ? "max-w-3xl pb-32 md:pb-16"
+                      ? "max-w-3xl pb-48 md:pb-16"
                       : "lf-main-pad max-w-5xl px-5 sm:px-8 md:max-w-6xl md:px-6 md:pt-5 md:pb-28",
                 )}
               >
@@ -243,46 +248,68 @@ export function AppShell({
             </div>
           </div>
 
-          {/* Mobile tab bar */}
-          <nav
-            className="lf-tabbar fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] lf-bar z-40 rounded-[28px] bg-surface shadow-lift md:hidden"
-            aria-label="Main"
-          >
-            <div ref={bar} className="relative mx-auto flex max-w-md items-stretch justify-around px-2">
-              <span data-indicator className="pointer-events-none absolute top-[6px] left-0 h-[52px] w-[74px] rounded-[22px] bg-accent-soft opacity-0" />
-              {tabs.map((item) => {
-                const active = isActive(pathname, item);
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    prefetch
-                    data-tour={item.label.toLowerCase()}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-3 text-[0.6875rem] font-semibold",
-                      active ? "text-text" : "text-muted",
-                    )}
-                  >
-                    <span className="relative flex">
-                      {item.href === "/jarvis" ? (
-                        <span data-icon className="flex h-[22px] w-[22px] items-center justify-center">
-                          <CompanionGlyph companion={skyling} night={skyling === "star"} className="h-6 w-6" />
-                        </span>
-                      ) : (
-                        <Icon data-icon className={cn("h-[22px] w-[22px]", active && "text-accent")} strokeWidth={active ? 2 : 1.7} />
+          {/* Phone dock (owner, 2026-11-10, navigation concept A): three places, the skyling as a bar above them on every
+              page, and one door to everything else. Today and the chat have their own message bar, so there the dock is
+              the tabs alone. */}
+          <div className="lf-tabbar fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] lf-bar z-40 rounded-[28px] bg-surface shadow-lift md:hidden">
+            {showAsk && (
+              <div className="mx-auto flex max-w-md items-center gap-1 px-2 pt-2" data-testid="skyling-bar">
+                <Link
+                  href={unread > 0 ? "/jarvis/says" : "/jarvis/profile"}
+                  aria-label={unread > 0 ? `${unread} new from ${assistantName}` : `About ${assistantName}`}
+                  className="tap relative flex shrink-0 items-center justify-center"
+                >
+                  <CompanionGlyph companion={skyling} night={skyling === "star"} className="h-7 w-7" />
+                  {unread > 0 && <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-danger ring-2 ring-surface" />}
+                </Link>
+                <Link href="/jarvis" className="flex h-11 min-w-0 flex-1 items-center rounded-full bg-surface-2 px-4 text-[0.9375rem] text-text-2">
+                  <span className="truncate">Message {assistantName}…</span>
+                </Link>
+                <Link
+                  href="/jarvis?voice=1"
+                  aria-label={`Talk to ${assistantName}`}
+                  className="lf-send flex h-11 w-11 shrink-0 items-center justify-center rounded-[0.875rem]"
+                >
+                  <PixelIcon name="voice" className="h-[18px] w-[18px]" />
+                </Link>
+              </div>
+            )}
+            <nav aria-label="Main">
+              <div ref={bar} className="relative mx-auto flex max-w-md items-stretch justify-around px-2">
+                <span data-indicator className="pointer-events-none absolute top-[6px] left-0 h-[52px] w-[74px] rounded-[22px] bg-accent-soft opacity-0" />
+                {phoneTabs.map((item) => {
+                  const active = isActive(pathname, item);
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      prefetch
+                      data-tour={item.label.toLowerCase()}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-3 text-[0.6875rem] font-semibold",
+                        active ? "text-text" : "text-muted",
                       )}
-                      {item.href === "/jarvis" && unread > 0 && (
-                        <span className="absolute -top-0.5 -right-1 h-2.5 w-2.5 rounded-full bg-danger ring-2 ring-surface" aria-label={`${unread} new`} />
-                      )}
-                    </span>
-                    <span className="max-w-full truncate px-0.5">{item.href === "/jarvis" ? assistantLabel(assistantName) : item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </nav>
+                    >
+                      <Icon data-icon className={cn("h-[22px] w-[22px]", active && "text-accent")} strokeWidth={active ? 2 : 1.7} />
+                      <span className="max-w-full truncate px-0.5">{item.label}</span>
+                    </Link>
+                  );
+                })}
+                {/* everything that isn't one of the three places, as doors in a sheet from below */}
+                <button
+                  type="button"
+                  onClick={openEverything}
+                  aria-haspopup="dialog"
+                  className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-3 text-[0.6875rem] font-semibold text-muted"
+                >
+                  <PixelIcon name="more" className="h-[22px] w-[22px]" />
+                  <span className="max-w-full truncate px-0.5">More</span>
+                </button>
+              </div>
+            </nav>
+          </div>
 
           {tourOpen && pathname === "/" && <Tour onDone={endTour} assistantName={assistantName} companion={skyling} />}
         </div>
@@ -290,6 +317,7 @@ export function AppShell({
         <PullToRefresh />
         <PwaClient />
         <SettingsSheet />
+        <EverythingSheet />
         <PasskeyOffer />
         <NavDirection />
         <Suspense fallback={null}>

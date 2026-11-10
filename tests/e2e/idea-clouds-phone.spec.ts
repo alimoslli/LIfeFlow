@@ -55,7 +55,7 @@ test("idea clouds: short, from real data, a tap fills the box and sends nothing"
   const typed = await bar.inputValue();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page).toHaveURL(/\/$/);
-  await page.locator('form[data-tour="ask"]:visible').getByRole("button", { name: "Send" }).click();
+  await page.locator('form[data-tour="skyling"]:visible').getByRole("button", { name: "Send" }).click();
   await page.waitForURL("**/jarvis?ask=*");
   await expect(page.locator(".lf-bubble-me").first()).toContainText(typed);
 });

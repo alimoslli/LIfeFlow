@@ -166,6 +166,25 @@ export const COLOR = {
     "................",
     "................",
   ],
+  /** Everything else: four little doors. */
+  more: [
+    "................",
+    ".kkkkkk..kkkkkk.",
+    ".kyyyyk..kbbbbk.",
+    ".kywyyk..kbwbbk.",
+    ".kyyyyk..kbbbbk.",
+    ".kyyYYk..kbbBBk.",
+    ".kkkkkk..kkkkkk.",
+    "................",
+    "................",
+    ".kkkkkk..kkkkkk.",
+    ".kggggk..krrrrk.",
+    ".kgwggk..krwrrk.",
+    ".kggggk..krrrrk.",
+    ".kggGGk..krrRRk.",
+    ".kkkkkk..kkkkkk.",
+    "................",
+  ],
   /** An empty tick box: the to-do icon before it's done. */
   box: [
     "................",

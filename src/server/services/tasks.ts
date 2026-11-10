@@ -219,6 +219,15 @@ export async function listTasks(scope: UserScope, filter: TaskFilter = {}) {
     .limit(filter.limit ?? 200);
 }
 
+/** How many to-dos are still open (top level only), for a door that says how things stand. */
+export async function openTaskCount(scope: UserScope) {
+  const [r] = await scope.tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(tasks)
+    .where(and(eq(tasks.userId, scope.userId), ne(tasks.status, "done"), isNull(tasks.parentId)));
+  return r?.n ?? 0;
+}
+
 /** Subtask counts per parent, for list views. */
 export async function subtaskCounts(scope: UserScope, parentIds: string[]) {
   if (!parentIds.length) return new Map<string, { total: number; done: number }>();

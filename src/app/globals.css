@@ -914,6 +914,10 @@ html[data-lf-moment="star"] .lf-splash-moon {
   --tabbar-space: calc(max(0.75rem, env(safe-area-inset-bottom)) + 3.875rem + 1.75rem);
   --kb: 0px;
 }
+/* The dock carries the skyling's bar on most pages (navigation concept A): leave room for it too. */
+:root:has([data-testid="skyling-bar"]) {
+  --tabbar-space: calc(max(0.75rem, env(safe-area-inset-bottom)) + 3.875rem + 3.25rem + 1.75rem);
+}
 html {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
