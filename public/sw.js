@@ -1,5 +1,5 @@
 /* LifeFlow service worker: app-shell caching, offline reading, push notifications. */
-const VERSION = "lf-v2";
+const VERSION = "lf-v3";
 const SHELL = `${VERSION}-shell`;
 const PAGES = `${VERSION}-pages`;
 const STATIC = `${VERSION}-static`;
