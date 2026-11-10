@@ -771,8 +771,6 @@ describe("said out loud: same-job subscriptions and a big first charge somewhere
     });
     const out = await run((s) => DETECTORS.unusualSpend({ scope: s, tz: TZ, today: TODAY, now }));
     expect(out).toEqual([expect.objectContaining({ kind: "unusual_spend", facts: { merchant: "Delta", amountCents: 36_656, firstTime: true } })]);
-    expect(composeMessage("unusual_spend", out[0].facts, "friend").body).toMatch(
-      /\$367 at Delta, the first charge from them in 4 months\. Was that you\?/,
-    );
+    expect(composeMessage("unusual_spend", out[0].facts, "friend").body).toMatch(/\$367 at Delta, the first charge from them in 4 months\. Was that you\?/);
   });
 });
