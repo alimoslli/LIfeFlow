@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { TODAY_COOKIE, parseTodayMode } from "@/lib/theme";
-import { ArrowRight, Briefcase, HeartPulse, Link2 } from "lucide-react";
+import { ArrowRight, Link2 } from "lucide-react";
+import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { DayClock } from "@/components/day-clock/day-clock";
 import { assistantProfile } from "@/lib/assistant";
 import { greetingIn } from "@/lib/dates";
@@ -44,7 +45,7 @@ export default async function TodayPage() {
   const work = lifeAreas(me.preferences?.lifeStage).work;
   // Calendar, to-dos, goals and milestones are all on the timeline now (owner, 2026-11-08); what stays one tap away
   // is what isn't a thing in time.
-  const more = [{ href: "/habits", label: "Health", icon: HeartPulse }, ...(work ? [{ href: "/work", label: "Work", icon: Briefcase }] : [])];
+  const more = [{ href: "/habits", label: "Health", icon: "health" as const }, ...(work ? [{ href: "/work", label: "Work", icon: "shift" as const }] : [])];
   const { clock, note, assistantName, setup, hello, clouds } = await withCurrentUser(async (scope, user) => {
     const tz = user.timezone ?? "UTC";
     // Money (bills due, spent today) joins the clock only while the Money lock is open.
@@ -125,9 +126,9 @@ export default async function TodayPage() {
         </div>
         {/* The rest of the day, one tap away, below the fold so the clock stays the whole first screen. */}
         <nav aria-label="More of your day" className="flex flex-wrap justify-center gap-2 pt-1">
-          {more.map(({ href, label, icon: Icon }) => (
+          {more.map(({ href, label, icon }) => (
             <Link key={href} href={href} className="lf-sb lf-sb-app lf-sb-sm">
-              <Icon className="h-4 w-4" strokeWidth={1.8} aria-hidden />
+              <PixelIcon name={icon} className="h-4 w-4" />
               {label}
             </Link>
           ))}
