@@ -44,12 +44,6 @@ const steps = (name: string): Step[] => [
     body: "Bring in assignments from Canvas, or send a screenshot or syllabus from any other platform. See what's due, and get study time built around your free hours. Your skyling never does graded work.",
   },
   {
-    target: "ask",
-    eyebrow: "Anywhere",
-    title: "Ask anything",
-    body: "Tap here, or press ⌘J on a laptop, to ask your skyling: what's next, can I afford this, or what should I do first. It's on every screen.",
-  },
-  {
     target: "settings",
     eyebrow: "Make it yours",
     title: "Settings",

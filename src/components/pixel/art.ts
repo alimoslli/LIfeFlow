@@ -36,7 +36,7 @@ export const PIXEL_PALETTE: Record<string, string> = {
   e: "#4b9a72",
   E: "#34745a",
   t: "#59606f",
-  T: "#3b4150"
+  T: "#3b4150",
 };
 
 export const COLOR = {

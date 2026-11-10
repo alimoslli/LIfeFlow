@@ -117,20 +117,6 @@ export function AppShell({
   useSlidingIndicator(rail, pathname, "y");
   useSlidingIndicator(bar, pathname, "x");
   const [palette, setPalette] = useState(false);
-  // The ask button steps aside while you scroll down a page (so it never sits on what you're reading) and comes back
-  // when you scroll up (A-to-Z audit C1).
-  const [fabAway, setFabAway] = useState(false);
-  useEffect(() => {
-    let last = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (Math.abs(y - last) < 8) return;
-      setFabAway(y > last && y > 80);
-      last = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
   // Talking to the skyling happens in one chat (owner, 2026-11-10: no side panel). On the chat page a question goes into
   // the open conversation; anywhere else it opens the chat page with it, sent only when the app itself asked to send.
   const openJarvis = useCallback(
@@ -309,21 +295,6 @@ export function AppShell({
         <Suspense fallback={null}>
           <QuickAdd />
         </Suspense>
-        {/* Not on Today: the clock has its own ask bar right under it. */}
-        {!onJarvisPage && !assistantPage && pathname !== "/" && (
-          <button
-            type="button"
-            onClick={() => openJarvis()}
-            data-tour="ask"
-            aria-label={`Ask ${assistantName}`}
-            className={cn(
-              "lf-fab fixed right-4 bottom-[calc(var(--tabbar-space)-4px)] z-30 lf-chip-night h-14 w-14 rounded-[1.25rem] shadow-lift transition-[transform,opacity] duration-300 active:scale-95 md:hidden",
-              fabAway && "pointer-events-none translate-y-6 opacity-0",
-            )}
-          >
-            <CompanionGlyph companion={skyling} night={skyling === "star"} className="h-8 w-8" />
-          </button>
-        )}
         <KeyboardWatcher />
         <CommandPalette open={palette} onClose={() => setPalette(false)} onAsk={(q) => openJarvis(q, { send: !!q })} />
       </LifeAreasContext.Provider>

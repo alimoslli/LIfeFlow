@@ -39,7 +39,7 @@ export async function settingsDoors(): Promise<SettingsDoors> {
     { href: "/settings/data", icon: "shield", label: "Privacy and your data", detail: "Download it or delete it" },
     { href: "/settings/trash", icon: "trash", label: "Recently deleted", detail: "Bring something back" },
     { href: "/settings/invite", icon: "gift", label: "Invite friends" },
-    { href: "/settings/feedback", icon: "health", label: "Tell us something", detail: "It goes straight to the team" },
+    { href: "/settings/feedback", icon: "health", label: "Send feedback", detail: "It goes straight to the team" },
     ...(isAdmin ? [{ href: "/admin", icon: "cog", label: "Admin", detail: "Owner only" } satisfies Door] : []),
   ];
   return { name: d.name, email: d.email, doors };

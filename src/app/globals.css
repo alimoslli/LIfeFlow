@@ -960,15 +960,13 @@ label {
   backdrop-filter: blur(20px) saturate(1.4);
   box-shadow: 0 1px 0 color-mix(in oklab, var(--text) 8%, transparent);
 }
-/* While typing on a phone the tab bar and floating button step aside for the keyboard. */
-html[data-typing="true"] .lf-tabbar,
-html[data-typing="true"] .lf-fab {
+/* While typing on a phone the tab bar steps aside for the keyboard. */
+html[data-typing="true"] .lf-tabbar {
   transform: translateY(160%);
   opacity: 0;
   pointer-events: none;
 }
-.lf-tabbar,
-.lf-fab {
+.lf-tabbar {
   transition:
     transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
     opacity 0.2s;
@@ -1068,39 +1066,51 @@ html[data-typing="true"] .lf-fab {
   }
 }
 
-/* iOS-style switch on a plain checkbox (keeps native form + keyboard behaviour). */
+/* The sky switch, on a plain checkbox (keeps native form and keyboard behaviour): off is a little night with the moon,
+   on is day with the sun (owner, 2026-11-10: nothing may look like a phone's own controls). The pictures are our pixel
+   sun and moon (components/pixel/art.ts: today, sleep). */
 input[type="checkbox"].lf-switch {
   appearance: none;
   position: relative;
   flex-shrink: 0;
-  width: 51px;
-  height: 31px;
-  border-radius: 999px;
-  background: var(--border-strong);
+  width: 3.5rem;
+  height: 2rem;
+  border-radius: 0.75rem;
+  background:
+    radial-gradient(circle at 70% 30%, #ffffff 0 1px, transparent 1.5px), radial-gradient(circle at 84% 62%, #cfe0ff 0 1px, transparent 1.5px),
+    linear-gradient(180deg, #0b1d42, #1b3a6b);
+  box-shadow: inset 0 0 0 2px #0a1630;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 input[type="checkbox"].lf-switch::after {
   content: "";
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 27px;
-  height: 27px;
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 0.2);
-  transition: transform 0.2s ease;
+  top: 0.1875rem;
+  left: 0.25rem;
+  width: 1.625rem;
+  height: 1.625rem;
+  background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='16' height='16' shape-rendering='crispEdges'><rect x='6' y='1' width='1' height='1' fill='%23262320'/><rect x='4' y='2' width='2' height='1' fill='%23262320'/><rect x='6' y='2' width='1' height='1' fill='%23e6edf7'/><rect x='7' y='2' width='1' height='1' fill='%23262320'/><rect x='3' y='3' width='1' height='1' fill='%23262320'/><rect x='4' y='3' width='2' height='1' fill='%23e6edf7'/><rect x='6' y='3' width='1' height='1' fill='%23262320'/><rect x='2' y='4' width='1' height='1' fill='%23262320'/><rect x='3' y='4' width='3' height='1' fill='%23e6edf7'/><rect x='6' y='4' width='1' height='1' fill='%23262320'/><rect x='12' y='4' width='1' height='1' fill='%23262320'/><rect x='1' y='5' width='1' height='1' fill='%23262320'/><rect x='2' y='5' width='4' height='1' fill='%23e6edf7'/><rect x='6' y='5' width='1' height='1' fill='%23262320'/><rect x='11' y='5' width='1' height='1' fill='%23262320'/><rect x='12' y='5' width='1' height='1' fill='%23ffdc6e'/><rect x='13' y='5' width='1' height='1' fill='%23262320'/><rect x='1' y='6' width='1' height='1' fill='%23262320'/><rect x='2' y='6' width='4' height='1' fill='%23e6edf7'/><rect x='6' y='6' width='1' height='1' fill='%23262320'/><rect x='10' y='6' width='1' height='1' fill='%23262320'/><rect x='11' y='6' width='1' height='1' fill='%23ffdc6e'/><rect x='12' y='6' width='1' height='1' fill='%23ffffff'/><rect x='13' y='6' width='1' height='1' fill='%23ffdc6e'/><rect x='14' y='6' width='1' height='1' fill='%23262320'/><rect x='0' y='7' width='1' height='1' fill='%23262320'/><rect x='1' y='7' width='1' height='1' fill='%23e6edf7'/><rect x='2' y='7' width='1' height='1' fill='%23ffffff'/><rect x='3' y='7' width='3' height='1' fill='%23e6edf7'/><rect x='6' y='7' width='1' height='1' fill='%23262320'/><rect x='11' y='7' width='1' height='1' fill='%23262320'/><rect x='12' y='7' width='1' height='1' fill='%23ffdc6e'/><rect x='13' y='7' width='1' height='1' fill='%23262320'/><rect x='0' y='8' width='1' height='1' fill='%23262320'/><rect x='1' y='8' width='1' height='1' fill='%23e6edf7'/><rect x='2' y='8' width='1' height='1' fill='%23ffffff'/><rect x='3' y='8' width='3' height='1' fill='%23e6edf7'/><rect x='6' y='8' width='1' height='1' fill='%23262320'/><rect x='12' y='8' width='1' height='1' fill='%23262320'/><rect x='0' y='9' width='1' height='1' fill='%23262320'/><rect x='1' y='9' width='2' height='1' fill='%23e6edf7'/><rect x='3' y='9' width='1' height='1' fill='%23ffffff'/><rect x='4' y='9' width='3' height='1' fill='%23e6edf7'/><rect x='7' y='9' width='1' height='1' fill='%23262320'/><rect x='1' y='10' width='1' height='1' fill='%23262320'/><rect x='2' y='10' width='6' height='1' fill='%23e6edf7'/><rect x='8' y='10' width='5' height='1' fill='%23262320'/><rect x='1' y='11' width='1' height='1' fill='%23262320'/><rect x='2' y='11' width='5' height='1' fill='%23e6edf7'/><rect x='7' y='11' width='6' height='1' fill='%23a9b9d3'/><rect x='13' y='11' width='1' height='1' fill='%23262320'/><rect x='2' y='12' width='1' height='1' fill='%23262320'/><rect x='3' y='12' width='9' height='1' fill='%23a9b9d3'/><rect x='12' y='12' width='1' height='1' fill='%23262320'/><rect x='3' y='13' width='1' height='1' fill='%23262320'/><rect x='4' y='13' width='7' height='1' fill='%23a9b9d3'/><rect x='11' y='13' width='1' height='1' fill='%23262320'/><rect x='4' y='14' width='2' height='1' fill='%23262320'/><rect x='6' y='14' width='3' height='1' fill='%23a9b9d3'/><rect x='9' y='14' width='2' height='1' fill='%23262320'/><rect x='6' y='15' width='3' height='1' fill='%23262320'/></svg>")
+    center / contain no-repeat;
+  image-rendering: pixelated;
+  transition: transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1);
 }
 input[type="checkbox"].lf-switch:checked {
-  background: var(--accent);
+  background: linear-gradient(180deg, #7fb6f2, #ffd9a0);
+  box-shadow: inset 0 0 0 2px #2b4470;
 }
 input[type="checkbox"].lf-switch:checked::after {
-  transform: translateX(20px);
+  background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' width='16' height='16' shape-rendering='crispEdges'><rect x='6' y='3' width='4' height='1' fill='%23262320'/><rect x='5' y='4' width='1' height='1' fill='%23262320'/><rect x='6' y='4' width='4' height='1' fill='%23ffdc6e'/><rect x='10' y='4' width='1' height='1' fill='%23262320'/><rect x='4' y='5' width='1' height='1' fill='%23262320'/><rect x='5' y='5' width='1' height='1' fill='%23ffdc6e'/><rect x='6' y='5' width='1' height='1' fill='%23ffffff'/><rect x='7' y='5' width='3' height='1' fill='%23ffdc6e'/><rect x='10' y='5' width='1' height='1' fill='%23dcae35'/><rect x='11' y='5' width='1' height='1' fill='%23262320'/><rect x='3' y='6' width='1' height='1' fill='%23262320'/><rect x='4' y='6' width='1' height='1' fill='%23ffdc6e'/><rect x='5' y='6' width='2' height='1' fill='%23ffffff'/><rect x='7' y='6' width='4' height='1' fill='%23ffdc6e'/><rect x='11' y='6' width='1' height='1' fill='%23dcae35'/><rect x='12' y='6' width='1' height='1' fill='%23262320'/><rect x='3' y='7' width='1' height='1' fill='%23262320'/><rect x='4' y='7' width='1' height='1' fill='%23ffdc6e'/><rect x='5' y='7' width='1' height='1' fill='%23ffffff'/><rect x='6' y='7' width='5' height='1' fill='%23ffdc6e'/><rect x='11' y='7' width='1' height='1' fill='%23dcae35'/><rect x='12' y='7' width='1' height='1' fill='%23262320'/><rect x='3' y='8' width='1' height='1' fill='%23262320'/><rect x='4' y='8' width='7' height='1' fill='%23ffdc6e'/><rect x='11' y='8' width='1' height='1' fill='%23dcae35'/><rect x='12' y='8' width='1' height='1' fill='%23262320'/><rect x='3' y='9' width='1' height='1' fill='%23262320'/><rect x='4' y='9' width='6' height='1' fill='%23ffdc6e'/><rect x='10' y='9' width='2' height='1' fill='%23dcae35'/><rect x='12' y='9' width='1' height='1' fill='%23262320'/><rect x='4' y='10' width='1' height='1' fill='%23262320'/><rect x='5' y='10' width='4' height='1' fill='%23ffdc6e'/><rect x='9' y='10' width='2' height='1' fill='%23dcae35'/><rect x='11' y='10' width='1' height='1' fill='%23262320'/><rect x='5' y='11' width='1' height='1' fill='%23262320'/><rect x='6' y='11' width='4' height='1' fill='%23dcae35'/><rect x='10' y='11' width='1' height='1' fill='%23262320'/><rect x='6' y='12' width='4' height='1' fill='%23262320'/><rect x='7' y='0' width='2' height='1' fill='%23f9a63a'/><rect x='7' y='1' width='2' height='1' fill='%23f9a63a'/><rect x='2' y='2' width='1' height='1' fill='%23f9a63a'/><rect x='13' y='2' width='1' height='1' fill='%23f9a63a'/><rect x='3' y='3' width='1' height='1' fill='%23f9a63a'/><rect x='12' y='3' width='1' height='1' fill='%23f9a63a'/><rect x='0' y='7' width='2' height='1' fill='%23f9a63a'/><rect x='14' y='7' width='2' height='1' fill='%23f9a63a'/><rect x='0' y='8' width='2' height='1' fill='%23f9a63a'/><rect x='14' y='8' width='2' height='1' fill='%23f9a63a'/><rect x='3' y='12' width='1' height='1' fill='%23f9a63a'/><rect x='12' y='12' width='1' height='1' fill='%23f9a63a'/><rect x='2' y='13' width='1' height='1' fill='%23f9a63a'/><rect x='13' y='13' width='1' height='1' fill='%23f9a63a'/><rect x='7' y='14' width='2' height='1' fill='%23f9a63a'/><rect x='7' y='15' width='2' height='1' fill='%23f9a63a'/></svg>");
+  transform: translateX(1.375rem);
 }
 input[type="checkbox"].lf-switch:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 3px solid #8fb6ff;
   outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  input[type="checkbox"].lf-switch::after {
+    transition: none;
+  }
 }
 
 /* Jarvis composer: the field sits inside a pill that shows focus itself. */
