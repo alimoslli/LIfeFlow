@@ -30,3 +30,8 @@ How it's made
   makes the sound from the same timeline; encode at crf 17, loudnorm -14.5, limiter at -2.6 dB (came out at -16.0 LUFS).
 - After filming, put the film rows back: the goal to 11 of 12, the promise deleted.
 Download: https://d2ol7oe51mr4n9.cloudfront.net/user_303ATRwxPrvQJdn5jZHtWxZlmBa/cd6a6aa4-289e-4e67-bd4d-dff9306911aa.zip
+
+Storyboard (2026-11-10, Ali asked "show me"): `storyboard/` has the planned skyling scene as six real screens from main
+5b4909d: the question typed under the sky, the answer card (marked as being built by the app team), the study block on
+the timeline (a stand-in row placed by hand, deleted after), ticking the assignment off at 3:50 PM, the star, tonight's
+stars. No AI was called. `sb.cjs ask|block|tick` takes the stills; `shot_sb.cjs` renders `storyboard.html`.
