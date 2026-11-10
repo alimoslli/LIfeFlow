@@ -4,28 +4,89 @@ Everything below is already built in the code. These are the settings to add so 
 Never paste these values into code, chat, or GitHub. They go only in Vercel.
 
 ## 1. Vercel environment variables
-Vercel → project → Settings → Environment Variables, then Deployments → ⋯ → Redeploy.
+Vercel → project → Settings → Environment Variables. Set each for **Production** (Preview only needs `DATABASE_URL`). Then Deployments → ⋯ → Redeploy.
+Every name the app reads is below (checked against the code on 2026-11-10). Anything left blank stays off and the app says so (no fake buttons).
+
+**A. Required: the app doesn't run properly without these**
 
 | Variable | What to put | Turns on |
 |---|---|---|
-| `APP_URL` | Your site, e.g. `https://yoursite.vercel.app` (no trailing slash) | Required for Google, Apple, passkeys, reset links |
-| `ENCRYPTION_KEY` | Run `openssl rand -base64 32` in Terminal, paste the result | Google, Plaid, two-step sign-in |
-| `OPENAI_API_KEY` | Your OpenAI key | Chat and voice |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | From step 2 | Gmail + Google Calendar |
-| `PLAID_CLIENT_ID` / `PLAID_SECRET` / `PLAID_ENV` | dashboard.plaid.com → Developers → Keys. Start with `sandbox` | Bank sync |
-| `CRON_SECRET` | `openssl rand -hex 32` | Nightly bank sync and notifications |
-| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Run `npx web-push generate-vapid-keys` once | Push notifications |
-| `VAPID_SUBJECT` | `mailto:you@example.com` | Push notifications |
-| `APPLE_CLIENT_ID` / `APPLE_TEAM_ID` / `APPLE_KEY_ID` / `APPLE_PRIVATE_KEY` | From step 3 | Sign in with Apple |
-| `RESEND_API_KEY` / `EMAIL_FROM` | From step 4 | "Forgot password" emails |
-| `WEBAUTHN_RP_ID` | Optional. Only if passkeys should work on a parent domain | Passkeys |
-| `LEGAL_OPERATOR_NAME` / `LEGAL_CONTACT_EMAIL` / `LEGAL_STATE` | Your name, contact email, US state | /privacy and /terms |
-| `OPENAI_REALTIME_MODEL` | Optional, default `gpt-realtime` | Voice |
-| `OPENAI_SEARCH_MODEL` | Optional. A model that supports web search (default: `OPENAI_MODEL`) | Savings finder, cancel help, Jarvis web search |
-| `INBOX_DOMAIN` | The domain your inbound mail provider receives for, e.g. `in.yourdomain.com` (step 9) | Forwarding addresses for the Inbox |
-| `INBOX_WEBHOOK_SECRET` | `openssl rand -hex 24` | Protects the inbound email webhook |
+| `DATABASE_URL` | The pooled connection string for the `budgetflow_app` role (section 11), not the owner role | Everything; production deploys also run the migrations with it |
+| `APP_URL` | `https://lifeflowweb.com` (no slash at the end) | Reset and email links, Google, Apple, passkeys, Plaid on phones, Twilio |
+| `ENCRYPTION_KEY` | Run `openssl rand -base64 32` once and paste it. **Never change it later**: saved connections and memories become unreadable | Connections, memories, two-step sign-in |
+| `CRON_SECRET` | `openssl rand -hex 32` | The four scheduled jobs (bank sync and promises every 30 min, reminders every 10, stars every 5); without it they return 401 |
+| `ADMIN_EMAILS` | Your sign-in email (several: separate with commas) | /admin and HQ (empty means a 404 for everyone) |
 
-Database migrations run automatically on deploy. Anything left blank stays off and the app says so (no fake buttons).
+**B. The assistant (OpenAI)**
+
+| Variable | What to put | Turns on |
+|---|---|---|
+| `OPENAI_API_KEY` | Your OpenAI key | Chat, voice, the inbox reader, tidying, web search |
+| `OPENAI_MODEL` | Optional. Leave blank for `gpt-5.5` | The model for planning, money decisions and anything unclear |
+| `OPENAI_MODEL_SMALL` | Optional. Leave blank for `gpt-5.4-mini` | The cheaper model for small things (lookups, adds) |
+| `JARVIS_PRICE_INPUT_PER_MTOK` | `5` | The cost per question in Admin › App (blank shows "not measured") |
+| `JARVIS_PRICE_CACHED_INPUT_PER_MTOK` | `0.5` | Same |
+| `JARVIS_PRICE_OUTPUT_PER_MTOK` | `30` | Same |
+| `JARVIS_PRICE_SMALL_INPUT_PER_MTOK` | `0.75` | Same, for the small model |
+| `JARVIS_PRICE_SMALL_CACHED_INPUT_PER_MTOK` | `0.075` | Same |
+| `JARVIS_PRICE_SMALL_OUTPUT_PER_MTOK` | `4.5` | Same |
+| `OPENAI_REALTIME_MODEL` | Optional, blank for `gpt-realtime` | Voice |
+| `OPENAI_SEARCH_MODEL` | Optional, blank for the main model | Web search (prices, cancel steps) |
+| `OPENAI_REASONING_EFFORT` | Optional, blank for `auto`. Only `auto`, `none`, `minimal`, `low`, `medium` or `high` | How hard it thinks |
+| `OPENAI_PROMPT_CACHE_RETENTION` | Optional, blank for `24h`. Only `24h` or `in_memory` | Cheaper repeated questions |
+| `OPENAI_BASE_URL` | Leave blank (only for a gateway) | — |
+
+Prices are US dollars per million tokens, numbers only (no `$`, no commas). Check them against openai.com/api/pricing once.
+
+**C. Sign-in**
+
+| Variable | What to put | Turns on |
+|---|---|---|
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | From step 2 | Sign in with Google, Gmail, Google Calendar |
+| `APPLE_CLIENT_ID` / `APPLE_TEAM_ID` / `APPLE_KEY_ID` / `APPLE_PRIVATE_KEY` | From step 3. The key can be pasted with real line breaks or with `\n` | Sign in with Apple |
+| `WEBAUTHN_RP_ID` | Leave blank (only for passkeys across a parent domain) | Passkeys |
+
+**D. Email**
+
+| Variable | What to put | Turns on |
+|---|---|---|
+| `RESEND_API_KEY` / `EMAIL_FROM` | From step 4. `EMAIL_FROM` like `LifeFlow <hello@lifeflowweb.com>`, on a domain verified in Resend | Password reset, sign-in codes, notices |
+| `ALERT_EMAIL` | Your email | Error alerts (falls back to `LEGAL_CONTACT_EMAIL`) |
+| `FEEDBACK_EMAIL` | Your email, optional | A copy of feedback by email |
+| `LEGAL_OPERATOR_NAME` / `LEGAL_CONTACT_EMAIL` / `LEGAL_STATE` | Your name, contact email, US state | /privacy and /terms |
+
+**E. Connections**
+
+| Variable | What to put | Turns on |
+|---|---|---|
+| `PLAID_CLIENT_ID` / `PLAID_SECRET` | dashboard.plaid.com → Developers → Keys (the secret must match the environment) | Banks |
+| `PLAID_ENV` | `sandbox` now; `production` once Plaid approves. Anything else counts as sandbox | Banks |
+| `PLAID_REDIRECT_URI` | Optional, `https://lifeflowweb.com/plaid-oauth`, also added in Plaid's dashboard | Banks that sign in on their own site, on phones |
+| `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` | From step 2b (after Entra) | Teams and Outlook calendar |
+| `MICROSOFT_TENANT` | Leave blank (`common`) | — |
+| `CANVAS_BASE_URL` | Optional, your school's Canvas address | The Canvas card |
+
+**F. Notifications, inbox, texting, payments**
+
+| Variable | What to put | Turns on |
+|---|---|---|
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Run `npx web-push generate-vapid-keys` once. **Don't change them later**: everyone's notifications stop | Push notifications |
+| `VAPID_SUBJECT` | `mailto:` plus your email | Push notifications |
+| `INBOX_DOMAIN` / `INBOX_WEBHOOK_SECRET` | Step 9; the secret from `openssl rand -hex 24` | Forward-a-bill inbox |
+| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_PHONE_NUMBER` | Step 9b | Texting the assistant, phone sign-in |
+| `TWILIO_WHATSAPP_NUMBER` | Optional | WhatsApp |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `STRIPE_PRICE_ID` | Step 9c. Until all three are set, everything stays unlocked | Pro payments |
+
+**G. Owner tools (optional)**
+
+| Variable | What to put | Turns on |
+|---|---|---|
+| `HQ_DESK_FIRE_URL` / `HQ_DESK_FIRE_TOKEN` | From the "LifeFlow desk task starter" scheduled task's API trigger | The "Start it" button on HQ's desk |
+| `SEED_TEST_ACCOUNT` / `DEMO_EMAIL` / `DEMO_PASSWORD` | `keep` or `refresh`, an email, a password of 10+ characters. Leave all three blank to skip. A short or missing password with the seed on fails the deploy | The demo account |
+
+**Don't add:** `VERCEL_ENV`, `VERCEL_GIT_COMMIT_SHA`, `NODE_ENV`, `NEXT_RUNTIME` (Vercel sets them); `HQ_URL`, `HQ_KEY` (Claude Code chats, not the app); `CAP_SERVER_URL` (the iPhone build on a Mac); `TEST_DATABASE_URL`, `E2E_DATABASE_URL`, `PROVIDER_TIMEOUT_MS`, `ACTION_RUN_LIMIT_MS` (tests only).
+
+**Mistakes that break things quietly:** a `$` or comma in a price (the assistant stops with "Invalid server environment"); a model setting that isn't one of the listed values; a slash at the end of `APP_URL`; a new `ENCRYPTION_KEY` or VAPID pair after people use the app; a Plaid secret from the other environment; `DATABASE_URL` with the owner role (the deploy log then says "Row-level security will NOT be enforced"). The scheduled jobs run every 5 to 30 minutes, which needs Vercel Pro.
 
 ## 2. Google Cloud (console.cloud.google.com)
 1. New project → APIs & Services → Library → enable **Gmail API** and **Google Calendar API**.
