@@ -107,10 +107,11 @@ export default async function MoneyPage() {
   const lastShort = d.lastLabel.slice(0, 3);
   const asOf = o.balances.asOf ? formatIn(o.balances.asOf, d.tz, "MMM d, h:mm a") : null;
 
+  const dollars = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(cents / 100);
   const nextBill = [...d.forecast.bills].sort((a, b) => a.date.localeCompare(b.date))[0];
   const billDay = (date: string) => (date === d.today ? "today" : date === addDaysStr(d.today, 1) ? "tomorrow" : formatDateStr(date, "EEEE"));
   const places: { href: string; icon: "bill" | "calendar" | "card" | "money"; label: string; detail: string }[] = [
-    { href: "/finances/transactions", icon: "bill", label: "Activity", detail: `${formatCents(o.month.netSpendingCents, { compact: true })} spent this month` },
+    { href: "/finances/transactions", icon: "bill", label: "Activity", detail: `${dollars(o.month.netSpendingCents)} spent this month` },
     {
       href: "/finances/bills",
       icon: "calendar",
@@ -124,9 +125,7 @@ export default async function MoneyPage() {
       detail: `${o.accountCount} account${o.accountCount === 1 ? "" : "s"}`,
     },
     // investments get their own row only when there are some
-    ...(o.investments
-      ? [{ href: "/wealth", icon: "money" as const, label: "Investments", detail: `${formatCents(o.investments.valueCents, { compact: true })} invested` }]
-      : []),
+    ...(o.investments ? [{ href: "/wealth", icon: "money" as const, label: "Investments", detail: `${dollars(o.investments.valueCents)} invested` }] : []),
   ];
   return (
     // a laptop gets two columns (A-to-Z audit C2): what you have and what needs you on the left, the month ahead and
