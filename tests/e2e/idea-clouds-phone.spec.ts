@@ -7,6 +7,7 @@ import { COMPOSER, queryAsUser, signUp } from "./helpers";
  * anyone show. A tap puts the sentence in the chat box, never sends it, and counts the tap (never the text).
  */
 const FOR_ANYONE = ["What should I do first today?", "Find me 2 free hours this week.", "My goal: read 12 books this year."];
+const ANY = new RegExp(`^(${FOR_ANYONE.map((s) => s.replace(/[?.]/g, "\\$&")).join("|")})$`);
 
 test("idea clouds: short, from real data, a tap fills the box and sends nothing", async ({ page }) => {
   const email = await signUp(page, "Cleo Cloud");
@@ -18,7 +19,6 @@ test("idea clouds: short, from real data, a tap fills the box and sends nothing"
   const say = await today.getByRole("button").first().innerText();
   expect(say.split(/\s+/).length).toBeLessThanOrEqual(8);
   expect(say).not.toMatch(/did you know|assistant/i);
-
   // The empty chat: the catchphrase and three clouds; a tap fills the box and sends nothing. With reduced motion the
   // clouds stand still (and a test can only click a still element).
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -34,7 +34,7 @@ test("idea clouds: short, from real data, a tap fills the box and sends nothing"
   await expect(clouds).toHaveCount(3);
   await clouds.first().click();
   const box = page.getByLabel(COMPOSER);
-  await expect(box).toHaveValue(new RegExp(`^(${FOR_ANYONE.map((s) => s.replace(/[?.]/g, "\\$&")).join("|")})$`));
+  await expect(box).toHaveValue(ANY);
   await expect(page.locator(".lf-bubble-me")).toHaveCount(0);
 
   // the tap is counted by which cloud it was, never the words
@@ -44,4 +44,18 @@ test("idea clouds: short, from real data, a tap fills the box and sends nothing"
       return Object.values(row.p.ideaTaps ?? {}).reduce((a, b) => a + b, 0);
     })
     .toBe(1);
+
+  // Back on Today: a tap puts it in Today's own chat bar, right there (owner, 2026-11-10: the same chat, no side panel),
+  // and sending it goes on in the chat page
+  await page.goto("/");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await today.getByRole("button").first().click();
+  const bar = page.locator('input[aria-label="Message Ray"]:visible').first();
+  await expect(bar).toHaveValue(ANY);
+  const typed = await bar.inputValue();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page).toHaveURL(/\/$/);
+  await page.locator('form[data-tour="ask"]:visible').getByRole("button", { name: "Send" }).click();
+  await page.waitForURL("**/jarvis?ask=*");
+  await expect(page.locator(".lf-bubble-me").first()).toContainText(typed);
 });

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { ASK_EVENT, takeSend, type AskDetail } from "@/lib/ask-handoff";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useAppBusy } from "@/lib/app-busy";
@@ -159,12 +160,29 @@ export function JarvisChat({
 
   const autoSent = useRef(false);
   useEffect(() => {
-    if (autoSend && initialPrompt && availability.available && !autoSent.current) {
+    // sent at once only when a button in the app asked to send it (takeSend), never from a link alone
+    if (initialPrompt && availability.available && !autoSent.current && (autoSend || takeSend(initialPrompt))) {
       autoSent.current = true;
       void send(initialPrompt);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // a question from elsewhere on this page (an idea, a heads-up) goes into this chat: typed in the box, or sent
+  const sendRef = useRef(send);
+  useEffect(() => {
+    sendRef.current = send;
+  });
+  useEffect(() => {
+    const onAsk = (e: Event) => {
+      const { prompt, send: now } = (e as CustomEvent<AskDetail>).detail ?? {};
+      if (prompt && now && availability.available) void sendRef.current(prompt);
+      else if (prompt) setInput(prompt);
+      inputRef.current?.focus();
+    };
+    window.addEventListener(ASK_EVENT, onAsk);
+    return () => window.removeEventListener(ASK_EVENT, onAsk);
+  }, [availability.available]);
 
   const updateAssistant = useCallback((fn: (m: Extract<UiMessage, { role: "assistant" }>) => void) => {
     setMessages((prev) => {

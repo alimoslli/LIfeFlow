@@ -21,7 +21,7 @@ test("on a laptop the wheel sits on the left and the day's words and the ask bar
   const wheel = await page.getByRole("button", { name: /^Today\. Now / }).boundingBox();
   const words = await clock.locator("[data-dc=words]").boundingBox();
   // one ask bar, beside the wheel (the one under the sky is for phones)
-  const ask = page.getByRole("button", { name: "Message Ray…" });
+  const ask = page.getByRole("textbox", { name: "Message Ray" }).locator("xpath=ancestor::form[1]");
   await expect(ask).toHaveCount(1);
   const askBox = await ask.boundingBox();
   expect(wheel && words && askBox).toBeTruthy();

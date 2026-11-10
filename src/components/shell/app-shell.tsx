@@ -7,13 +7,13 @@ import { createContext, Suspense, useCallback, useContext, useEffect, useLayoutE
 import { setTourAction } from "@/app/(onboarding)/welcome/actions";
 import { Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ASK_EVENT, askUrl, markSend, type AskDetail } from "@/lib/ask-handoff";
 import { assistantLabel, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
-import { NAV, isActive, moduleForPath } from "./nav-items";
+import { NAV, isActive } from "./nav-items";
 import { LifeAreasContext } from "./life-areas";
 import type { LifeAreas } from "@/lib/life";
 
 const ALL_AREAS: LifeAreas = { school: true, work: true };
-import { JarvisDrawer } from "../jarvis/jarvis-drawer";
 import { SectionNav } from "./section-nav";
 import { KeyboardWatcher, MobileAppBar, PullToRefresh } from "./mobile-chrome";
 import { CommandPalette } from "./command-palette";
@@ -26,7 +26,6 @@ import { gsap, MOTION, prefersReducedMotion } from "../motion/gsap";
 import { TiltLayer } from "../motion/tilt";
 import { Tour } from "../motion/tour";
 import { NAME_KEY, TZ_KEY } from "../motion/splash";
-import type { JarvisAvailability } from "../jarvis/types";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { SkyScene } from "@/components/sky/sky-scene";
 import { CompanionGlyph } from "@/components/sky/companion-glyph";
@@ -56,11 +55,12 @@ const Ctx = createContext<ShellCtx>({
 });
 export const useShell = () => useContext(Ctx);
 
-type Drawer = { open: boolean; prompt?: string; send?: boolean; key: number };
+/** The full-screen chat (Updates, Memory, Profile and Ideas are normal pages). */
+const isChatPage = (p: string) =>
+  p.startsWith("/jarvis") && !["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"].some((x) => p.startsWith(x));
 
 export function AppShell({
   user,
-  jarvis,
   tour = false,
   assistantName = UNNAMED_ASSISTANT,
   assistantNamed = false,
@@ -83,7 +83,6 @@ export function AppShell({
   /** The user allowed Jarvis to send their data to the AI provider. */
   aiConsent?: boolean;
   user: { name: string; email: string; accountKind: "standard" | "demo"; timezone?: string };
-  jarvis: JarvisAvailability;
   /** Show the guided tour (once, after onboarding or when replayed). */
   tour?: boolean;
   children: ReactNode;
@@ -116,7 +115,6 @@ export function AppShell({
   const bar = useRef<HTMLDivElement>(null);
   useSlidingIndicator(rail, pathname, "y");
   useSlidingIndicator(bar, pathname, "x");
-  const [drawer, setDrawer] = useState<Drawer>({ open: false, key: 0 });
   const [palette, setPalette] = useState(false);
   // The ask button steps aside while you scroll down a page (so it never sits on what you're reading) and comes back
   // when you scroll up (A-to-Z audit C1).
@@ -132,9 +130,19 @@ export function AppShell({
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+  // Talking to the skyling happens in one chat (owner, 2026-11-10: no side panel). On the chat page a question goes into
+  // the open conversation; anywhere else it opens the chat page with it, sent only when the app itself asked to send.
   const openJarvis = useCallback(
-    (prompt?: string, opts?: { send?: boolean }) => setDrawer((d) => ({ open: true, prompt, send: opts?.send, key: prompt ? d.key + 1 : d.key })),
-    [setDrawer],
+    (prompt?: string, opts?: { send?: boolean }) => {
+      const text = prompt?.slice(0, 500);
+      if (isChatPage(window.location.pathname)) {
+        window.dispatchEvent(new CustomEvent<AskDetail>(ASK_EVENT, { detail: { prompt: text, send: opts?.send } }));
+        return;
+      }
+      if (text && opts?.send) markSend(text);
+      router.push(askUrl(text));
+    },
+    [router],
   );
 
   // Remembered on this device so the opening screen can greet by name, at the hour in the user's time zone.
@@ -153,16 +161,15 @@ export function AppShell({
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
         e.preventDefault();
-        setDrawer((d) => ({ ...d, open: !d.open, prompt: undefined, send: false }));
+        router.push("/jarvis");
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [router]);
 
   // The chat is full-screen; Updates, Profile and Memory are normal pages.
-  const onJarvisPage =
-    pathname.startsWith("/jarvis") && !["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"].some((p) => pathname.startsWith(p));
+  const onJarvisPage = isChatPage(pathname);
   // The skyling's other pages (Updates, Ideas, Profile) keep the chat's own header and pill row,
   // so moving between them never swaps the whole interface (UX review).
   const assistantPage = !onJarvisPage && (pathname.startsWith("/jarvis") || pathname.startsWith("/inbox"));
@@ -291,19 +298,6 @@ export function AppShell({
           </nav>
 
           {tourOpen && pathname === "/" && <Tour onDone={endTour} assistantName={assistantName} companion={skyling} />}
-
-          {!onJarvisPage && (
-            <JarvisDrawer
-              key={drawer.key}
-              open={drawer.open}
-              onClose={() => setDrawer((d) => ({ ...d, open: false }))}
-              module={moduleForPath(pathname)}
-              availability={jarvis}
-              initialPrompt={drawer.prompt}
-              autoSend={drawer.send}
-              assistantName={assistantName}
-            />
-          )}
         </div>
         <Toaster />
         <PullToRefresh />

@@ -93,7 +93,7 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   // Phone: the tab and sentences use its own name.
   const tabs = page.getByRole("navigation", { name: "Main" }).last().getByRole("link");
   expect(await tabs.allInnerTexts()).toEqual(["Today", "Ray", "Money", "School"]);
-  await expect(page.getByRole("button", { name: "Message Ray…" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Message Ray" }).first()).toBeVisible();
   // Today: the skyling stands on the chat bar with its name, so it's clear who you're talking to (owner, 2026-11-10)
   await expect(page.locator('[data-testid="ask-skyling"]:visible').first()).toHaveText("Ray");
   for (const path of PAGES) {
@@ -110,7 +110,7 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   await expect(page.locator("#as-name")).toHaveValue("");
   await expect(page.locator("#as-name")).toHaveAttribute("placeholder", "Ray");
 
-  // Desktop: the rail, the top bar's ask field and the skyling drawer.
+  // Desktop: the rail and the top bar's ask field, which opens the chat page (no side panel, owner 2026-11-10).
   await page.setViewportSize({ width: 1280, height: 860 });
   for (const path of PAGES) {
     await visit(page, path);
@@ -119,6 +119,7 @@ test("a new user who never names the skyling never sees 'Jarvis'", async ({ page
   // (Today has its own ask bar, so the top bar's ask field is on the other pages)
   await visit(page, "/settings");
   await page.getByRole("button", { name: "Ask Ray anything…" }).click();
-  await expect(page.getByRole("dialog", { name: "Ray" })).toBeVisible();
-  await expectNoJarvis(page, "desktop: assistant drawer");
+  await page.waitForURL("**/jarvis");
+  await expect(page.getByLabel(COMPOSER)).toBeVisible();
+  await expectNoJarvis(page, "desktop: the chat page");
 });

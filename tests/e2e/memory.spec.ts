@@ -57,8 +57,11 @@ test("Ideas open Jarvis ready to send, and an import from another AI saves only 
   await page.goto("/jarvis/ideas");
   await expect(page.getByRole("region", { name: "For you" })).toContainText("No savings goal yet");
   await page.getByRole("button", { name: /Quiz me before a test/ }).click();
-  await expect(page.getByRole("dialog").getByLabel(COMPOSER)).toHaveValue("Quiz me on my next exam's topics, one question at a time.");
-  await page.keyboard.press("Escape");
+  // the chat page, with the idea typed in and nothing sent (no side panel, owner 2026-11-10)
+  await page.waitForURL("**/jarvis?ask=*");
+  await expect(page.getByLabel(COMPOSER)).toHaveValue("Quiz me on my next exam's topics, one question at a time.");
+  await expect(page.locator(".lf-bubble-me")).toHaveCount(0);
+  await page.goto("/jarvis/ideas");
 
   await page.getByRole("link", { name: /Bring what your other AI knows/ }).click();
   await page
