@@ -103,16 +103,13 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         </div>
       </div>
 
-      <nav aria-label="Time range" className="-mx-1 -mt-1 mb-3 flex gap-1.5 overflow-x-auto px-1 pt-1 pb-1">
+      {/* the time range is horizon tabs, like every other switch between close views (owner, 2026-11-10) */}
+      <nav aria-label="Time range" className="lf-horizon mb-4">
         {PERIOD_KEYS.map((k) => (
           <Link
             key={k}
             href={qs({ period: k === "month" ? undefined : k, from: undefined, to: undefined, show: undefined })}
             aria-current={d.period.key === k ? "page" : undefined}
-            className={cn(
-              "flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm",
-              d.period.key === k ? "bg-accent text-accent-text" : "bg-surface text-text-2 shadow-soft hover:text-text",
-            )}
           >
             {PERIOD_NAMES[k]}
           </Link>
