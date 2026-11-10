@@ -1,0 +1,28 @@
+const { chromium } = require("playwright"); const path = require("path");
+(async () => {
+  const out = process.argv[2];
+  const browser = await chromium.launch();
+  const ctx = await browser.newContext({ viewport: { width: 430, height: 932 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  await page.goto("http://localhost:3100/login", { waitUntil: "domcontentloaded", timeout: 240000 });
+  await page.locator('input[type="email"], input[name="email"]').first().fill("demo@budgetflow.local");
+  await page.locator('input[type="password"]').first().fill("budgetflow-demo");
+  await page.locator('button[type="submit"]').first().click();
+  await page.waitForURL((u) => !/login|sign-in/.test(u.toString()), { timeout: 240000 }).catch(() => {});
+  console.log("after login", page.url());
+  await ctx.storageState({ path: path.join(out, "state.json") });
+  await page.clock.install({ time: new Date("2026-11-09T13:00:00Z") });
+  await page.goto("http://localhost:3100/?splash=0", { waitUntil: "networkidle", timeout: 240000 }).catch((e) => console.log("goto", e.message));
+  await page.waitForTimeout(3000);
+  console.log("today", page.url());
+  await page.screenshot({ path: path.join(out, "today.png") });
+  const dc = page.locator('[data-testid="day-clock"]');
+  if (await dc.count()) console.log("dc", JSON.stringify(await dc.first().boundingBox()));
+  await page.goto("http://localhost:3100/settings/jarvis", { waitUntil: "networkidle", timeout: 240000 }).catch((e) => console.log("goto", e.message));
+  await page.waitForTimeout(2000);
+  console.log("settings", page.url());
+  await page.screenshot({ path: path.join(out, "settings.png"), fullPage: true });
+  const sec = page.locator('section[aria-labelledby="companion-h"]');
+  if (await sec.count()) console.log("picker", JSON.stringify(await sec.first().boundingBox()));
+  await browser.close();
+})();
