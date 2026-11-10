@@ -6,6 +6,7 @@ import { SkylingSprite } from "@/components/skylings/sprite";
 import { IdeaClouds } from "@/components/skylings/idea-clouds";
 import type { IdeaCloud } from "@/lib/idea-clouds";
 import { useShell } from "@/components/shell/app-shell";
+import { askOnToday, TodayReplyCard } from "./today-chat";
 
 const CHIPS = [
   ["Plan my day", "Plan my day: look at my schedule, deadlines, to-dos and shifts for today and give me a simple order to do things in."],
@@ -61,7 +62,7 @@ function useFirstHint() {
  * who you're talking to: small, on the bar's edge, not over the sky.
  */
 export function AskBar({ name, chips = true, clouds = [] }: { name: string; chips?: boolean; clouds?: IdeaCloud[] }) {
-  const { openJarvis, skyling } = useShell();
+  const { skyling } = useShell();
   const router = useRouter();
   const [text, setText] = useState("");
   const box = useRef<HTMLInputElement>(null);
@@ -94,8 +95,13 @@ export function AskBar({ name, chips = true, clouds = [] }: { name: string; chip
           data-tour="skyling"
           onSubmit={(e) => {
             e.preventDefault();
-            if (typed) openJarvis(typed, { send: true });
-            else router.push("/jarvis?voice=1");
+            // the answer comes right here, under the bar, and what it saves lands on the sky (owner, 2026-11-10)
+            if (typed) {
+              setText("");
+              // a phone's keyboard goes down, so the sky and the answer can be seen
+              if (matchMedia("(pointer: coarse)").matches) box.current?.blur();
+              void askOnToday(typed, () => router.refresh());
+            } else router.push("/jarvis?voice=1");
           }}
           className="flex min-h-14 w-full items-center gap-3 rounded-[1.5rem] bg-surface py-2 pr-2 pl-5 shadow-lift ring-1 ring-border/70 focus-within:ring-2 focus-within:ring-accent"
         >
@@ -118,6 +124,7 @@ export function AskBar({ name, chips = true, clouds = [] }: { name: string; chip
           </button>
         </form>
       </div>
+      <TodayReplyCard name={name} refresh={() => router.refresh()} />
       {chips && <QuickChips />}
     </div>
   );

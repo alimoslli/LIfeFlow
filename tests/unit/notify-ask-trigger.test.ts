@@ -12,7 +12,7 @@ describe("the notifications ask's trigger", () => {
   });
 
   it("says 'reminder on' only when a created to-do has a reminder", () => {
-    expect(describeToolResult("create_tasks", created([false])).summary).toBe("Created 1 task");
-    expect(describeToolResult("create_tasks", created([false, true])).summary).toBe("Created 2 tasks · reminder on");
+    expect(describeToolResult("create_tasks", created([false])).summary).toBe("To-do added: x");
+    expect(describeToolResult("create_tasks", created([false, true])).summary).toBe("2 to-dos added: x and x · reminder on");
   });
 });

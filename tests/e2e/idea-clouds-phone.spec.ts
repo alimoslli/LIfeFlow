@@ -60,7 +60,7 @@ test("idea clouds: short, from real data, a tap fills the box and sends nothing"
     .toBe(1);
 
   // Back on Today: a tap puts it in Today's own chat bar, right there (owner, 2026-11-10: the same chat, no side panel),
-  // and sending it goes on in the chat page
+  // and the answer comes on Today, under the bar (owner, 2026-11-10: "no different page ... type it below the timeline")
   await page.goto("/");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await today.getByRole("button").first().click();
@@ -70,6 +70,7 @@ test("idea clouds: short, from real data, a tap fills the box and sends nothing"
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page).toHaveURL(/\/$/);
   await page.locator('form[data-tour="skyling"]:visible').getByRole("button", { name: "Send" }).click();
-  await page.waitForURL((u) => u.pathname === "/jarvis");
-  await expect(page.locator(".lf-bubble-me").first()).toContainText(typed);
+  const reply = page.locator('[data-testid="today-reply"]:visible');
+  await expect(reply).toContainText(`You said: ${typed}`.slice(0, 60));
+  await expect(page).toHaveURL(/\/$/);
 });

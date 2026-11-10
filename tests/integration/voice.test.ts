@@ -78,7 +78,7 @@ describe("live voice", () => {
       name: "create_tasks",
       arguments: JSON.stringify({ tasks: [{ title: "Buy stamps" }] }),
     });
-    expect(r).toMatchObject({ ok: true, summary: "Created 1 task" });
+    expect(r).toMatchObject({ ok: true, summary: "To-do added: Buy stamps" });
     expect((await run((s) => listTasks(s, { status: "open" }))).map((t) => t.title)).toEqual(["Buy stamps"]);
     await saveVoiceTranscript(session, conversationId, "assistant", "Done, I added it.");
     expect((await run((s) => listMessages(s, conversationId))).map((m) => m.role)).toEqual(["user", "tool", "assistant"]);

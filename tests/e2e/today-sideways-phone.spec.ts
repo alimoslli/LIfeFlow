@@ -19,8 +19,9 @@ test("sideways, Today's chat bar sits under the sky, not over it", async ({ page
       return sky && b ? Math.round(b.y - (sky.y + sky.height)) : null;
     })
     .toBeGreaterThanOrEqual(-1);
-  // and it can still be used: a question typed there goes on in the chat
+  // and it can still be used: the answer comes under it, on Today
   await bar.getByRole("textbox").fill("What's due this week?");
   await bar.getByRole("textbox").press("Enter");
-  await page.waitForURL((u) => u.pathname.startsWith("/jarvis"));
+  await expect(bar.getByTestId("today-reply")).toContainText("You said: What's due this week?");
+  await expect(page).toHaveURL(/\/$/);
 });

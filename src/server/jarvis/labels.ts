@@ -133,6 +133,16 @@ export function describeToolResult(name: string, r: ToolResultRecord): { summary
   const viewAt = typeof d.viewAt === "string" ? d.viewAt : undefined;
   const n = (k: string) => (Array.isArray(d[k]) ? (d[k] as unknown[]).length : 0);
   const plural = (c: number, w: string) => `${c} ${w}${c === 1 ? "" : "s"}`;
+  // what was added, by name (owner, 2026-11-10: on Today the card says what was added; "Created 1 task" didn't)
+  const named = (one: string, many: string) => {
+    const c = n("created");
+    const titles = Array.isArray(d.created)
+      ? (d.created as { title?: unknown }[]).map((t) => t.title).filter((t): t is string => typeof t === "string" && !!t)
+      : [];
+    const head = c === 1 ? `${one} added` : `${c} ${many} added`;
+    if (!titles.length) return head;
+    return `${head}: ${titles.length > 2 ? `${titles.slice(0, 2).join(", ")} and ${titles.length - 2} more` : titles.join(" and ")}`;
+  };
   switch (name) {
     case "web_search": {
       if (typeof d.unavailable === "string") return { summary: d.unavailable };
@@ -142,7 +152,7 @@ export function describeToolResult(name: string, r: ToolResultRecord): { summary
     case "create_tasks": {
       // "reminder on" also lets the chat offer notifications the first time (components/jarvis/notify-ask.tsx)
       const reminders = Array.isArray(d.created) ? (d.created as { reminder?: boolean }[]).filter((t) => t.reminder).length : 0;
-      return { summary: `Created ${plural(n("created"), "task")}${reminders ? " · reminder on" : ""}`, viewAt };
+      return { summary: `${named("To-do", "to-dos")}${reminders ? " · reminder on" : ""}`, viewAt };
     }
     case "import_assignments": {
       const parts = [`Saved ${plural(Number(d.savedCount ?? 0), "assignment")}`];
@@ -152,7 +162,7 @@ export function describeToolResult(name: string, r: ToolResultRecord): { summary
       return { summary: parts.join(" · "), viewAt };
     }
     case "create_events":
-      return { summary: `Added ${plural(n("created"), "event")}${n("conflicts") ? ` · ${plural(n("conflicts"), "conflict")}` : ""}`, viewAt };
+      return { summary: `${named("Event", "events")}${n("conflicts") ? ` · ${plural(n("conflicts"), "conflict")}` : ""}`, viewAt };
     case "add_shifts":
       return { summary: `Added ${plural(n("created"), "shift")}`, viewAt };
     case "save_memory":
