@@ -1,10 +1,8 @@
 "use client";
-import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
-import { PartyPopper } from "lucide-react";
-import { Confetti } from "@/components/motion/celebrate";
+import { useEffect, useTransition, type ReactNode } from "react";
+import { celebrate } from "@/components/motion/burst";
 import { useShell } from "@/components/shell/app-shell";
 import { celebrateMilestoneAction } from "./actions";
-import { PixelIcon } from "@/components/pixel/pixel-icon";
 
 /** Opens the skyling with a prompt already sent. */
 export function AskJarvisButton({ prompt, children }: { prompt: string; children: ReactNode }) {
@@ -25,47 +23,21 @@ const MESSAGES: Record<number, string> = {
 
 /** Celebrates a goal milestone once, then remembers it was seen. */
 export function CelebrateGoal({ goalId, name, percent }: { goalId: string; name: string; percent: number }) {
-  const [open, setOpen] = useState(true);
   const [, start] = useTransition();
-  // seen the moment it shows: leaving the page within its few seconds used to bring it back on every visit
   useEffect(() => {
+    // seen the moment it shows: leaving the page within its few seconds used to bring it back on every visit
     start(async () => {
       await celebrateMilestoneAction(goalId, percent);
     });
-  }, [goalId, percent]);
-  const close = () => setOpen(false);
-  // A celebration, not a blocker: it steps aside on its own after a few seconds.
-  const closeRef = useRef(close);
-  useEffect(() => {
-    closeRef.current = close;
-  });
-  useEffect(() => {
-    const t = setTimeout(() => closeRef.current(), 8000);
+    // the milestone sun with the goal's line (owner, 2026-11-10): it pops up over the middle and is gone in about three
+    // seconds. It used to be a card stuck over the bottom of the page, covering the goal for eight (nothing over anything).
+    const t = setTimeout(() => celebrate(null, "big", `${name}: ${percent}%`, { silent: true }), 350);
     return () => clearTimeout(t);
-  }, []);
-  if (!open) return null;
+  }, [goalId, percent, name]);
+  // the words for screen readers (the sun is a picture)
   return (
-    <>
-      <Confetti />
-      <div
-        role="status"
-        className="fixed inset-x-4 bottom-[calc(var(--tabbar-space)+12px)] z-[71] mx-auto max-w-sm animate-rise rounded-3xl bg-surface p-5 shadow-lift md:bottom-8"
-      >
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success-soft text-success">
-            <PartyPopper className="h-5 w-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="font-medium">
-              {name}: {percent}%
-            </p>
-            <p className="mt-0.5 text-sm text-text-2">{MESSAGES[percent]}</p>
-          </div>
-          <button type="button" onClick={close} aria-label="Close" className="tap -m-3 flex items-center justify-center text-muted hover:text-text">
-            <PixelIcon name="close" className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </>
+    <p role="status" className="sr-only">
+      {name}: {percent}%. {MESSAGES[percent]}
+    </p>
   );
 }
