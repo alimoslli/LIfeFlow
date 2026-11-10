@@ -35,6 +35,9 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
   for (const name of [/^Work, /, /^Class, /, /^Run with Sam, /, /^Exam 2, /]) await expect(page.getByRole("button", { name }).first()).toBeAttached();
   // Today's tiles: the shift and the class, and a deadline (today's or the next one ahead).
   await expect(page.locator(".dc-tile")).toHaveCount(3);
+  // drawn with the clock's own pixel pictures, not line icons
+  for (const icon of await page.locator(".dc-tile svg").evaluateAll((els) => els.map((e) => e.getAttribute("data-icon"))))
+    expect(["briefcase", "cap", "flag"]).toContain(icon);
 
   // A node opens one quiet card that says where it came from, and "Open" goes to the page that owns it.
   await page

@@ -100,12 +100,8 @@ export function nowMinutes(tz: string, today: string, at = new Date()): number {
   return days * 1440 + (+parts.hour % 24) * 60 + +parts.minute;
 }
 
-const TILE_ICONS = {
-  work: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="4.5" width="13" height="9.5" rx="2.2"/><path d="M5.5 4.5V3.3c0-.7.5-1.3 1.2-1.3h2.6c.7 0 1.2.6 1.2 1.3v1.2M1.5 8.6h13"/></svg>',
-  class:
-    '<svg viewBox="0 0 18 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M9 2 1.2 6 9 10l7.8-4L9 2z"/><path d="M4.6 8v3.4c1.7 1.6 7.1 1.6 8.8 0V8M16.8 6v4"/></svg>',
-  due: '<svg viewBox="0 0 15 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M2.5 15V1.8M2.5 2.4h9.2L9.6 5.8l2.1 3.4H2.5"/></svg>',
-};
+// the tiles under the open line use the clock's own pixel pictures, like everything else on it (no line icons)
+const TILE_ICONS = { work: iconHtml("💼"), class: iconHtml("🎓"), due: iconHtml("🏁") };
 
 export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayClockOptions): DayClockHandle {
   const reduce = opts.reducedMotion;

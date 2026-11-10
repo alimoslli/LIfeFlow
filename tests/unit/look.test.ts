@@ -33,7 +33,7 @@ describe("the look stays ours", () => {
   it("action and label glyphs are our pixel ones (spinners and Safari's own Share sign excepted)", () => {
     const actions = /import \{[^}]*\b(Trash2|Check|Copy|Download|ArrowRight|Search|Undo2|RefreshCw|Pencil|ExternalLink)\b[^}]*\} from "lucide-react"/;
     const generic =
-      /import \{[^}]*\b(Trash2|Check|Copy|Download|ArrowRight|Search|Undo2|RefreshCw|Pencil|ExternalLink|ArrowLeft|ArrowUp|ArrowUpRight|ArrowDownLeft|Mail|Clock|MapPin|Link2|FileText|Repeat|AlertTriangle|TriangleAlert|AlertCircle|FolderKanban|Pin|MessageCircle|Cake|Bell|BellOff|Video|Calendar|CalendarDays|CalendarArrowUp|ShieldCheck|KeyRound|RotateCcw|TrendingUp|Hourglass|ZapOff|MoreHorizontal|Wand2|SlidersHorizontal|Upload|EyeOff|Archive|Landmark|Flame|Pause|Play|Flag|Info|CloudOff|LogOut|Wallet)\b[^}]*\} from "lucide-react"/;
+      /import \{[^}]*\b(Trash2|Check|Copy|Download|ArrowRight|Search|Undo2|RefreshCw|Pencil|ExternalLink|ArrowLeft|ArrowUp|ArrowUpRight|ArrowDownLeft|Mail|Clock|MapPin|Link2|FileText|Repeat|AlertTriangle|TriangleAlert|AlertCircle|FolderKanban|Pin|MessageCircle|Cake|Bell|BellOff|Video|Calendar|CalendarDays|CalendarArrowUp|ShieldCheck|KeyRound|RotateCcw|TrendingUp|Hourglass|ZapOff|MoreHorizontal|Wand2|SlidersHorizontal|Upload|EyeOff|Archive|Landmark|Flame|Pause|Play|Flag|Info|CloudOff|LogOut|Wallet|PenLine|SquarePen|Pencil|PencilLine)\b[^}]*\} from "lucide-react"/;
     expect(SOURCES.filter((s) => actions.test(s.text) || generic.test(s.text)).map((s) => s.f)).toEqual([]);
   });
 

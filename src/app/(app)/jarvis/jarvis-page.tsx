@@ -2,7 +2,6 @@ import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { SettingsGear } from "@/components/settings/settings-sheet";
 import { AssistantName } from "@/components/assistant-name";
 import Link from "next/link";
-import { PenLine, SquarePen } from "lucide-react";
 import { MySkyling } from "@/components/skylings/sprite";
 import { SectionNav } from "@/components/shell/section-nav";
 import { QuickAddButton } from "@/components/shell/quick-add";
@@ -84,7 +83,7 @@ export function JarvisPage({
             aria-label="New chat"
             className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text lg:hidden"
           >
-            <SquarePen className="h-5 w-5" />
+            <PixelIcon name="edit" className="h-5 w-5" />
           </Link>
           <SettingsGear className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-2 hover:text-text">
             <PixelIcon name="cog" className="h-6 w-6" />
@@ -97,7 +96,7 @@ export function JarvisPage({
         </header>
         <SectionNav inline>
           <QuickAddButton className="lf-sb lf-sb-app lf-sb-sm shrink-0">
-            <PenLine className="h-4 w-4" /> Capture
+            <PixelIcon name="edit" className="h-4 w-4" /> Capture
           </QuickAddButton>
         </SectionNav>
         <div className="min-h-0 flex-1">

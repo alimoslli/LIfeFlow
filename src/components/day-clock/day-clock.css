@@ -828,8 +828,9 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
 }
 .dc-tile svg {
   flex: none;
-  width: 20px;
-  height: 20px;
+  /* a 12-pixel picture at 2 screen pixels a pixel, so it stays crisp */
+  width: 24px;
+  height: 24px;
   color: var(--sun);
 }
 .dc-tx {
@@ -879,10 +880,6 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   .dc-tile {
     padding: 0 10px;
     gap: 8px;
-  }
-  .dc-tile svg {
-    width: 18px;
-    height: 18px;
   }
 }
 
