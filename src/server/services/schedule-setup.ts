@@ -91,7 +91,7 @@ export async function setUpSchedule(scope: UserScope, tz: string, input: Schedul
   const today = localDateOf(now, tz);
 
   // ---- classes: the course (found by name, or new) and its weekly meeting on the calendar
-  const classes: { course: string; courseId: string; meets: string; newCourse: boolean; alreadyOnCalendar: boolean }[] = [];
+  const classes: { course: string; courseId: string; meets: string; newCourse: boolean; alreadyOnCalendar: boolean; daysAdded: number[] }[] = [];
   const unclear: { name: string; couldBe: string[] }[] = [];
   for (const c of d.classes) {
     const found = await resolveCourse(scope, { courseName: c.name });
@@ -112,35 +112,54 @@ export async function setUpSchedule(scope: UserScope, tz: string, input: Schedul
           isNotNull(calendarEvents.recurrence),
         ),
       );
-    // the same class at the same hour on any of these days is already there
-    const alreadyOnCalendar = weekly.some((e) => localTimeOf(e.startsAt, tz) === c.startTime && (e.recurrence?.byDay ?? []).some((x) => days.includes(x)));
+    // the days this class already meets at this hour; only the missing ones are added (MW there + "MWF" adds Friday)
+    const covered = new Set(weekly.filter((e) => localTimeOf(e.startsAt, tz) === c.startTime).flatMap((e) => e.recurrence?.byDay ?? []));
+    const missing = days.filter((x) => !covered.has(x));
+    const alreadyOnCalendar = missing.length === 0;
     if (!alreadyOnCalendar) {
       await createEvent(
         scope,
         tz,
         {
           title: course.name,
-          date: firstOn(today, days),
+          date: firstOn(today, missing),
           startTime: c.startTime,
           endTime: c.endTime,
           kind: "class",
           location: c.location ?? undefined,
           courseId: course.id,
-          recurrence: { freq: "weekly", byDay: days, ...(c.until && { until: c.until }) },
+          recurrence: { freq: "weekly", byDay: missing, ...(c.until && { until: c.until }) },
         },
         "jarvis",
       );
     }
-    classes.push({ course: course.name, courseId: course.id, meets: meets(c), newCourse: !found.course, alreadyOnCalendar });
+    classes.push({ course: course.name, courseId: course.id, meets: meets(c), newCourse: !found.course, alreadyOnCalendar, daysAdded: missing });
   }
 
   // ---- jobs: the job (found by name, or new), the shifts given, and each weekly pattern for the next three weeks
-  const jobs: { job: string; jobId: string; newJob: boolean; shiftsAdded: number; shiftsAlreadyThere: number; through: string | null }[] = [];
+  const jobs: {
+    job: string;
+    jobId: string;
+    newJob: boolean;
+    shiftsAdded: number;
+    shiftsAlreadyThere: number;
+    through: string | null;
+    /** A rate was given for a job that already has a different one: pay settings are never changed from here, so ask. */
+    rateNotChanged?: { given: number; saved: number | null };
+  }[] = [];
+  const unclearJobs: { name: string; couldBe: string[] }[] = [];
   const known = await listEmployers(scope);
   const until = addDaysStr(today, WEEKS_AHEAD * 7 - 1);
   for (const j of d.jobs) {
     const key = norm(j.name);
-    let job = known.find((e) => norm(e.name) === key) ?? known.find((e) => norm(e.name).includes(key) || key.includes(norm(e.name)));
+    // the same job by its exact name; a name that is only close to one ("Target" and "Target Optical") or says
+    // nothing is asked about, never guessed, so no shift lands at the wrong job
+    let job = key ? known.find((e) => norm(e.name) === key) : undefined;
+    const near = key ? known.filter((e) => norm(e.name) !== key && (norm(e.name).includes(key) || key.includes(norm(e.name)))) : [];
+    if (!key || (!job && near.length)) {
+      unclearJobs.push({ name: j.name, couldBe: near.map((e) => e.name) });
+      continue;
+    }
     const newJob = !job;
     if (!job) {
       job = await createEmployer(scope, { name: j.name, payType: "hourly", hourlyRateCents: j.hourlyRateCents ?? null }, "jarvis");
@@ -161,10 +180,12 @@ export async function setUpSchedule(scope: UserScope, tz: string, input: Schedul
         .from(workShifts)
         .where(and(eq(workShifts.userId, scope.userId), eq(workShifts.employerId, job.id), gte(workShifts.startsAt, first), lte(workShifts.startsAt, last)));
       const taken = new Set(have.filter((h) => h.status !== "cancelled").map((h) => h.startsAt.getTime()));
+      // a shift the person cancelled stays cancelled: a weekly pattern sent again doesn't bring it back
+      const cancelled = new Set(have.filter((h) => h.status === "cancelled").map((h) => h.startsAt.getTime()));
       for (const s of spans) {
         // a weekly shift that already started today isn't added; a dated one the person gave always is
         const fromWeekly = !j.shifts.some((x) => x.date === s.date && x.startTime === s.startTime);
-        if (fromWeekly && s.startsAt.getTime() <= now.getTime()) continue;
+        if (fromWeekly && (s.startsAt.getTime() <= now.getTime() || cancelled.has(s.startsAt.getTime()))) continue;
         if (taken.has(s.startsAt.getTime())) {
           shiftsAlreadyThere++;
           continue;
@@ -174,7 +195,19 @@ export async function setUpSchedule(scope: UserScope, tz: string, input: Schedul
         shiftsAdded++;
       }
     }
-    jobs.push({ job: job.name, jobId: job.id, newJob, shiftsAdded, shiftsAlreadyThere, through: j.weekly.length ? until : null });
+    const rateNotChanged =
+      !newJob && j.hourlyRateCents != null && j.hourlyRateCents !== job.hourlyRateCents
+        ? { given: j.hourlyRateCents, saved: job.hourlyRateCents ?? null }
+        : undefined;
+    jobs.push({
+      job: job.name,
+      jobId: job.id,
+      newJob,
+      shiftsAdded,
+      shiftsAlreadyThere,
+      through: j.weekly.length ? until : null,
+      ...(rateNotChanged && { rateNotChanged }),
+    });
   }
 
   // ---- exams and due dates, through the same import the syllabus reader uses (never guesses a course)
@@ -200,5 +233,5 @@ export async function setUpSchedule(scope: UserScope, tz: string, input: Schedul
     conflicts.push({ a: c.a.title, b: c.b.title, date, at: localTimeOf(later.startsAt, tz) });
   }
 
-  return { classes, unclear, jobs, deadlines, conflicts };
+  return { classes, unclear, unclearJobs, jobs, deadlines, conflicts };
 }

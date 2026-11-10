@@ -3,7 +3,7 @@ import { closeDb } from "@/server/db/client";
 import { getAgenda } from "@/server/services/calendar";
 import { setUpSchedule } from "@/server/services/schedule-setup";
 import { createCourse, listAssignments, listCourses } from "@/server/services/school";
-import { createEmployer, listEmployers, listShifts } from "@/server/services/work";
+import { createEmployer, listEmployers, listShifts, setShiftStatus } from "@/server/services/work";
 import { makeUser, TZ } from "../helpers";
 
 afterAll(closeDb);
@@ -122,5 +122,55 @@ describe("a whole schedule told at once is saved in one go", () => {
     expect(r.deadlines.created).toEqual([]);
     expect(r.deadlines.needsCourse).toMatchObject([{ title: "Lab report", courseName: "Chemistry" }]);
     expect(await run((s) => listCourses(s))).toHaveLength(2);
+  });
+
+  // independent review, 2026-11-10
+  it("adds only the class days that are missing: MW already there and MWF told adds Friday", async () => {
+    const { run } = await makeUser();
+    await run((s) => setUpSchedule(s, TZ, { classes: [{ name: "BIO 110", days: [1, 3], startTime: "10:00", endTime: "10:50" }] }, { now: NOW }));
+    const r = await run((s) => setUpSchedule(s, TZ, { classes: [{ name: "BIO 110", days: [1, 3, 5], startTime: "10:00", endTime: "10:50" }] }, { now: NOW }));
+    expect(r.classes).toMatchObject([{ course: "BIO 110", alreadyOnCalendar: false, daysAdded: [5] }]);
+    const week = await run((s) => getAgenda(s, TZ, "2026-11-09", "2026-11-15", { include: ["event"], now: NOW }));
+    expect(week.filter((i) => i.title === "BIO 110")).toHaveLength(3);
+  });
+
+  it("never puts shifts at a job with a look-alike name, or at any job for a name that says nothing", async () => {
+    const { run } = await makeUser();
+    await run((s) => createEmployer(s, { name: "Target Optical", payType: "hourly", hourlyRateCents: 1500 }));
+    const shift = { date: "2026-11-12", startTime: "12:00", endTime: "17:00" };
+    const r = await run((s) =>
+      setUpSchedule(
+        s,
+        TZ,
+        {
+          jobs: [
+            { name: "Target", shifts: [shift] },
+            { name: "!!!", shifts: [shift] },
+          ],
+        },
+        { now: NOW },
+      ),
+    );
+    expect(r.jobs).toEqual([]);
+    expect(r.unclearJobs).toEqual([
+      { name: "Target", couldBe: ["Target Optical"] },
+      { name: "!!!", couldBe: [] },
+    ]);
+    expect(await run((s) => listEmployers(s))).toHaveLength(1);
+    expect(await run((s) => listShifts(s, TZ, "2026-11-09", "2026-11-30"))).toHaveLength(0);
+  });
+
+  it("keeps a cancelled shift cancelled when the weekly pattern is sent again, and never changes a saved pay rate", async () => {
+    const { run } = await makeUser();
+    const job = { name: "Campus Coffee", hourlyRateCents: 1600, weekly: [{ days: [6], startTime: "09:00", endTime: "15:00" }] };
+    await run((s) => setUpSchedule(s, TZ, { jobs: [job] }, { now: NOW }));
+    const [first] = await run((s) => listShifts(s, TZ, "2026-11-09", "2026-11-15"));
+    await run((s) => setShiftStatus(s, first.id, "cancelled"));
+    const r = await run((s) => setUpSchedule(s, TZ, { jobs: [{ ...job, hourlyRateCents: 1800 }] }, { now: NOW }));
+    expect(r.jobs).toMatchObject([{ shiftsAdded: 0, rateNotChanged: { given: 1800, saved: 1600 } }]);
+    const shifts = await run((s) => listShifts(s, TZ, "2026-11-09", "2026-11-30", { includeCancelled: true }));
+    expect(shifts).toHaveLength(3);
+    expect(shifts.filter((x) => x.status === "cancelled")).toHaveLength(1);
+    expect((await run((s) => listEmployers(s)))[0].hourlyRateCents).toBe(1600);
   });
 });

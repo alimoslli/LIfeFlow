@@ -12,7 +12,8 @@ export const setupTools = [
       "Save a schedule the user tells you in one go, in ONE call: weekly classes, a job with its usual weekly shifts or dated shifts, and exams or due dates. " +
       "Classes and jobs that already exist are found by name and nothing is added twice, so do not look anything up or create courses or jobs first. " +
       "Use it whenever a message holds two or more of these; for a single item use that item's own tool. " +
-      "Returns what was saved, anything it could not place (unclear, needsCourse: ask), and the clashes in the next 7 days: always mention the clashes. Only include times and dates the user gave.",
+      "Returns what was saved (saved: how many things), anything it could not place (unclear, unclearJobs, needsCourse: ask which one), a pay rate it did not change (rateNotChanged: ask), and the clashes in the next 7 days: always mention the clashes. " +
+      'Only include times and dates the user gave; turn words like "Friday" into the date from today\'s date, and ask when a date is unclear.',
     schema: z.object({
       classes: z
         .array(
@@ -73,7 +74,10 @@ export const setupTools = [
           { now: ctx.now },
         ),
       );
-      return { ...r, viewAt: "/calendar" };
+      // a link only when something was really saved; otherwise the counts say nothing was
+      const saved =
+        r.classes.filter((c) => !c.alreadyOnCalendar).length + r.jobs.reduce((n, j) => n + j.shiftsAdded + (j.newJob ? 1 : 0), 0) + r.deadlines.created.length;
+      return { ...r, saved, ...(saved > 0 && { viewAt: "/calendar" }) };
     },
   }),
 ];
