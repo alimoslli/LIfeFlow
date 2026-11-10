@@ -15,9 +15,18 @@ export const TZ_KEY = "lf_tz";
  * session, never with reduced motion, and not under automation (tests)
  * unless forced with ?splash=1. Uses a class on <html> so there's no flash.
  * The greeting uses the hour in the user's time zone (TZ_KEY), or the device
- * clock until the app has saved it on this device.
+ * clock until the app has saved it on this device. The skyling of the moment
+ * follows the sun in that zone like Today does (SKY_MOMENT); before a zone is
+ * saved it goes by the hour.
  */
-export const SPLASH_SCRIPT = `try{var q=location.search,s=sessionStorage;if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&(/[?&]splash=1/.test(q)||(!s.getItem("${SESSION_KEY}")&&!navigator.webdriver&&!/[?&]nosplash/.test(q)))){var r=document.documentElement,h=new Date().getHours(),n="";try{n=(localStorage.getItem("${NAME_KEY}")||"").slice(0,24)}catch(e){}try{var z=localStorage.getItem("${TZ_KEY}");if(z)h=+new Intl.DateTimeFormat("en-US",{hour:"numeric",hourCycle:"h23",timeZone:z}).format(new Date())%24}catch(e){}r.style.setProperty("--lf-greet",JSON.stringify(h<5?"Up late":h<12?"Good morning":h<17?"Good afternoon":"Good evening"));r.style.setProperty("--lf-name",JSON.stringify(n||"Welcome back"));r.setAttribute("data-lf-moment",h<5||h>=21?"star":h<7?"dawn":h<11?"ray":h<16?"noon":h<19?"goldie":"dusk");r.classList.add("lf-splash");s.setItem("${SESSION_KEY}","1")}}catch(e){}`;
+/**
+ * Whose moment it is in a time zone, the same way Today decides (lib/day-clock sunTimes + lib/companions skylingAt: the
+ * sun's rise and set for the zone's meridian at 38°N), so the opening screen and Today show the same skyling. Plain
+ * ES5 for the inline script; `tests/unit/splash-greeting.test.ts` checks it against the library for many times and zones.
+ */
+const SKY_MOMENT = `function(z,t){var F=new Intl.DateTimeFormat("en-US",{timeZone:z,hourCycle:"h23",year:"numeric",month:"numeric",day:"numeric",hour:"numeric",minute:"numeric"});function P(u){var o={};F.formatToParts(u).forEach(function(x){o[x.type]=+x.value});return o}function O(u){var p=P(u);return(Date.UTC(p.year,p.month-1,p.day,p.hour%24,p.minute)-u)/6e4}var p=P(t),y=p.year,m=p.month,d=p.day,now=(p.hour%24)*60+p.minute,std=Math.min(O(Date.UTC(y,0,15,12)),O(Date.UTC(y,6,15,12))),n=Math.round((Date.UTC(y,m-1,d)-Date.UTC(y,0,0))/864e5),b=2*Math.PI*(n-81)/364,noon=720-(9.87*Math.sin(2*b)-7.53*Math.cos(b)-1.5*Math.sin(b))+(O(Date.UTC(y,m-1,d,12))-std),k=Math.PI/180,de=23.44*Math.sin(2*Math.PI*(284+n)/365)*k,la=38*k,c=(Math.sin(-.833*k)-Math.sin(la)*Math.sin(de))/(Math.cos(la)*Math.cos(de)),hf=Math.acos(Math.max(-1,Math.min(1,c)))/k*4,ri=Math.round(noon-hf),se=Math.round(noon+hf),mid=(ri+se)/2;return now>=ri-70&&now<ri+45?"dawn":now>=ri+45&&now<mid-60?"ray":now>=mid-60&&now<se-90?"noon":now>=se-90&&now<se+5?"goldie":now>=se+5&&now<se+70?"dusk":"star"}`;
+
+export const SPLASH_SCRIPT = `try{var q=location.search,s=sessionStorage;if(!matchMedia("(prefers-reduced-motion: reduce)").matches&&(/[?&]splash=1/.test(q)||(!s.getItem("${SESSION_KEY}")&&!navigator.webdriver&&!/[?&]nosplash/.test(q)))){var r=document.documentElement,h=new Date().getHours(),n="";try{n=(localStorage.getItem("${NAME_KEY}")||"").slice(0,24)}catch(e){}try{var z=localStorage.getItem("${TZ_KEY}");if(z)h=+new Intl.DateTimeFormat("en-US",{hour:"numeric",hourCycle:"h23",timeZone:z}).format(new Date())%24}catch(e){}r.style.setProperty("--lf-greet",JSON.stringify(h<5?"Up late":h<12?"Good morning":h<17?"Good afternoon":"Good evening"));r.style.setProperty("--lf-name",JSON.stringify(n||"Welcome back"));var mo="";try{if(z)mo=(${SKY_MOMENT})(z,new Date().getTime())}catch(e){}r.setAttribute("data-lf-moment",mo||(h<5||h>=21?"star":h<7?"dawn":h<11?"ray":h<16?"noon":h<19?"goldie":"dusk"));r.classList.add("lf-splash");s.setItem("${SESSION_KEY}","1")}}catch(e){}`;
 
 const MIN_VISIBLE_MS = 1500;
 /** Never longer than this, even on a very slow connection. */
