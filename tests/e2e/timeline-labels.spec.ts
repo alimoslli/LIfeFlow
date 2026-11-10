@@ -9,7 +9,9 @@ const E2E_DB = process.env.E2E_DATABASE_URL ?? "postgresql://budgetflow:budgetfl
 // line can be scrolled to, by day and at night, on a phone and in a narrow laptop window:
 //   - no words lie across the horizon line,
 //   - no words are cut off by the window,
-//   - no two things' words touch each other.
+//   - no two things' words touch each other,
+//   - nothing is cut off by the window's sides either (owner, 2026-11-10: a "B" peeked in at the right edge): words
+//     there fade out until they are in full view.
 
 async function problems(page: Page): Promise<string[]> {
   return page.evaluate(() => {
@@ -24,6 +26,8 @@ async function problems(page: Page): Promise<string[]> {
       const text = (el.textContent ?? "").trim();
       // a day name with no free place is left out of the picture; one that isn't shown can't be over anything
       if (!text || getComputedStyle(el).visibility === "hidden") return;
+      // faded out at the window's side until it's in full view (engine.ts edgeWords)
+      if (el.closest(".dc-edge")) return;
       // the words themselves, not the box they are centred in
       const range = document.createRange();
       range.selectNodeContents(el);
@@ -40,6 +44,7 @@ async function problems(page: Page): Promise<string[]> {
     for (const b of boxes) {
       if (b.t < horizon - 1 && b.b > horizon + 1) out.push(`"${b.text}" lies across the horizon`);
       if (b.b > w.bottom + 0.5 || b.t < w.top - 0.5) out.push(`"${b.text}" is cut off by the window`);
+      if (b.l < w.left - 0.5 || b.r > w.right + 0.5) out.push(`"${b.text}" is cut off by the window's side`);
     }
     for (let i = 0; i < boxes.length; i++)
       for (let j = i + 1; j < boxes.length; j++) {
@@ -60,6 +65,15 @@ async function walkTheLine(page: Page) {
   await expect(page.locator(".dc-node").first()).toBeAttached();
   await page.waitForTimeout(900); // the opening motion
   const found: string[] = [];
+  // under the line, "Pin something" keeps the same room from the day's tiles as they keep from each other (owner,
+  // 2026-11-10: "how close they are"; it was 2 px)
+  const gap = await page.evaluate(() => {
+    const tiles = [...document.querySelectorAll<HTMLElement>(".dc-tile")].filter((t) => Number(getComputedStyle(t).opacity) > 0.5);
+    const pin = document.querySelector<HTMLElement>(".dc-pinbar button")!.getBoundingClientRect();
+    return tiles.length ? Math.round(pin.top - Math.max(...tiles.map((t) => t.getBoundingClientRect().bottom))) : null;
+  });
+  expect(gap, "the busy day has tiles under the line").not.toBeNull();
+  if (gap! < 10) found.push(`"Pin something" is ${gap} px under the tiles`);
   const max = await page.evaluate(() => {
     const el = document.querySelector<HTMLElement>(".dc-trackwrap")!;
     return el.scrollWidth - el.clientWidth;

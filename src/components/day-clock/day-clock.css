@@ -769,6 +769,19 @@ html[data-sky="dark"] .lf-appbar:not(.lf-appbar-scrolled) .text-text-2 {
   top: auto;
   bottom: -9px;
 }
+/* at the window's sides the words fade out rather than being cut off by the edge (engine.ts edgeWords) */
+.dc-n-t,
+.dc-n-n,
+.dc-mid span,
+.dc-now-t {
+  transition: opacity 0.18s ease;
+}
+.dc-edge .dc-n-t,
+.dc-edge .dc-n-n,
+.dc-mid.dc-edge span,
+.dc-now.dc-edge .dc-now-t {
+  opacity: 0;
+}
 /* no clean place for the words (a very short window): the picture stays, the words wait for the card */
 .dc-nowords .dc-n-t,
 .dc-nowords .dc-n-n,

@@ -243,8 +243,23 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   // frame has changed something makes the browser lay the whole page out again mid-frame (the fold's lag, owner
   // 2026-11-09). Written through setSl, and taken from the page only when the page scrolls itself.
   let SLm = 0;
+  let edgeMarks: { el: HTMLElement; x: number; w: number }[] = [];
   function setSl(v: number) {
     trackWrap.scrollLeft = SLm = v;
+    edgeWords();
+  }
+  /**
+   * At the window's left and right sides a stop's words, a day's name and the time under the skyling fade out instead of being cut off by the edge
+   * (owner, 2026-11-10: "nothing like this can be in the app"); the picture stays, and they come back once in full view.
+   * A stop's words are centred in 92 px (day-clock.css .dc-n-t), a day's name is as wide as placeMarks measured it, and
+   * the time under the skyling takes 64 px (as placeMarks keeps it).
+   */
+  function edgeWords() {
+    const l = SLm + 2;
+    const r = SLm + VW() - 2;
+    for (const n of TM.nodes) n.el?.classList.toggle("dc-edge", n.x - 46 < l || n.x + 46 > r);
+    for (const m of edgeMarks) m.el.classList.toggle("dc-edge", m.x - m.w / 2 < l || m.x + m.w / 2 > r);
+    TM.nowEl?.classList.toggle("dc-edge", TM.nowX - 32 < l || TM.nowX + 32 > r);
   }
   /** The line's height at a moment, from the window's top. */
   function waveY(t: number) {
@@ -335,8 +350,10 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     G.H = H;
     G.winH = Math.round(clamp(H * 0.44, 236, 300));
     G.wrapHor = Math.round(G.winH * 0.54);
+    // the tiles 12 px under the window, and "Pin something" or a stop's card 12 px under the tiles (50 px tall); they
+    // nearly touched at 2 px (owner, 2026-11-10: "how close they are")
     const chipY = G.wrapTop + G.winH + 12;
-    const detailY = (G.detailY = chipY + 52);
+    const detailY = (G.detailY = chipY + 50 + 12);
     Object.assign(hit.style, { left: "0px", top: "48px", width: `${W}px`, height: `${Math.round(H * 0.6)}px` });
     trackWrap.style.top = `${G.wrapTop}px`;
     trackWrap.style.height = `${G.winH}px`;
@@ -641,6 +658,8 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     np.addEventListener("click", () => close(true));
     TM.nowEl = np;
     placeMarks(marks, np.classList.contains("dc-up"));
+    edgeMarks = marks;
+    edgeWords();
     drawStrip();
   }
 
@@ -1442,6 +1461,7 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
     "scroll",
     () => {
       SLm = trackWrap.scrollLeft;
+      edgeWords();
       if (!S.open || scrollRaf) return;
       scrollRaf = requestAnimationFrame(() => {
         scrollRaf = 0;
