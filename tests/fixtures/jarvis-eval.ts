@@ -60,7 +60,14 @@ export const EVAL: EvalCase[] = [
     skill: "purchase-advisor",
     plan: [{ tool: "check_affordability", args: { amount: 60, byDate: "2026-11-08" } }],
     budget: 1,
-    facts: ['"liquidCash":842.17', '"name":"Rent Campus Edge Apts"', '"amount":118.4', '"averageDailySpending":27.8', '"projectedCashAfterPurchase":-498'],
+    facts: [
+      '"verdict":"no"',
+      '"availableNow":842.17',
+      '"name":"Rent Campus Edge Apts"',
+      '"amount":118.4',
+      '"averageDailySpending":27.8',
+      '"availableAfter":-498',
+    ],
     answer:
       "Not this weekend. You have $842.17 in checking, but rent ($950) usually comes out around the 1st and I don't see it yet. Progressive ($118.40) is due Thursday, plus a few small subscriptions. With your usual $27.80 a day, you'd be about $498 short by Sunday, even before the $60. Check that rent went through, and wait until your next paycheck lands.",
   },

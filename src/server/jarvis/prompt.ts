@@ -5,7 +5,7 @@ import type { JarvisModule, MemoryBasis, MemoryCategory, UserPreferences } from 
 import { COACH_MODE } from "@/lib/integrity";
 
 /** Bump whenever the prompt's wording or structure changes; recorded with every run. */
-export const PROMPT_VERSION = "2026-11-10.3";
+export const PROMPT_VERSION = "2026-11-10.4";
 
 const MODULE_HINTS: Record<JarvisModule, string> = {
   home: "the Today screen",

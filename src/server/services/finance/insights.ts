@@ -74,7 +74,8 @@ export async function compareSpending(scope: UserScope, from: string, to: string
  * projection; Jarvis explains it rather than issuing a verdict blindly.
  */
 export async function affordability(scope: UserScope, amountCents: number, today: string, byDate?: string) {
-  const horizon = byDate ?? addDaysStr(today, 14);
+  // a date already gone (or none) means the next two weeks, never a window with no bills in it
+  const horizon = byDate && byDate >= today ? byDate : addDaysStr(today, 14);
   const accounts = await listAccounts(scope);
   const balances = summarizeBalances(accounts);
   const { bills, typical } = await billsAndPace(scope, today, today, horizon);
@@ -82,7 +83,6 @@ export async function affordability(scope: UserScope, amountCents: number, today
   const dailyRate = typical.dailyCents;
   const days = Math.max(0, daysBetween(today, horizon));
   const projectedDiscretionary = dailyRate * days;
-  const projectedCashAfter = balances.cashCents - upcomingBills - projectedDiscretionary - amountCents;
   // The verdict is ours, not the model's (owner, 2026-11-10: asked twice, the same question got "wait" once and "yes" once).
   // It starts from Available now, the number on Money (checking + cash; savings apart), takes off the bills and usual
   // spending to the date and the purchase, and says yes, only by moving savings, or no. Income never counts.
@@ -90,7 +90,7 @@ export async function affordability(scope: UserScope, amountCents: number, today
   const availableNowCents = accounts.filter(spendable).reduce((n, a) => n + a.currentBalanceCents, 0);
   const savingsCents = accounts.filter(isSavingsAccount).reduce((n, a) => n + a.currentBalanceCents, 0);
   const availableAfterCents = availableNowCents - upcomingBills - projectedDiscretionary - amountCents;
-  const verdict: "yes" | "only_with_savings" | "no" | "unknown" = !accounts.length
+  const verdict: "yes" | "only_with_savings" | "no" | "unknown" = !accounts.some((a) => spendable(a) || isSavingsAccount(a))
     ? "unknown"
     : availableAfterCents >= 0
       ? "yes"
@@ -104,17 +104,15 @@ export async function affordability(scope: UserScope, amountCents: number, today
     savingsCents,
     amountCents,
     horizon: { from: today, to: horizon, days },
-    liquidCashCents: balances.cashCents,
     creditCardOwedCents: balances.creditOwedCents,
     // Named `bills`, not `upcomingBills`: the dollars conversion turns upcomingBillsCents into upcomingBills and would overwrite the list.
     bills: bills.map((b) => ({ ...b, amountCents: -b.amountCents })),
     upcomingBillsCents: upcomingBills,
     averageDailySpendingCents: dailyRate,
     projectedDiscretionaryCents: projectedDiscretionary,
-    projectedCashAfterPurchaseCents: projectedCashAfter,
     hasAccounts: accounts.length > 0,
     assumptions: [
-      "Liquid cash = checking, savings and cash accounts at their last known balance.",
+      "Available now = checking and cash at their last known balance, the number on Money. Savings are apart: the verdict only counts them as only_with_savings.",
       "Upcoming bills are tracked bills plus ones found in your bank history (found: true). Income is not projected: pay counts only once it reaches your account.",
       `Day-to-day spending is projected at your average over the last ${typical.basedOnDays} days, not counting bills, for ${days} days.`,
       "Credit card balances are shown but not subtracted, since they may not be due before the date.",

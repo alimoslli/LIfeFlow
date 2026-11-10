@@ -107,9 +107,8 @@ describe("finance", () => {
     const upcoming = await run((s) => upcomingRecurring(s, "2026-10-26", "2026-11-20"));
     expect(upcoming.map((u) => `${u.name}@${u.date}`)).toEqual(["Rent@2026-11-01", "Spotify@2026-11-15"]);
     const a = await run((s) => affordability(s, 10000, "2026-10-26", "2026-11-02"));
-    expect(a.liquidCashCents).toBe(650000);
     expect(a.upcomingBillsCents).toBe(90000);
-    expect(a.projectedCashAfterPurchaseCents).toBe(650000 - 90000 - 10000 - a.projectedDiscretionaryCents);
+    expect(a).not.toHaveProperty("liquidCashCents"); // one base number only: Available now
     // the verdict starts from Available now (checking $1,500; savings apart), like the Money page
     expect(a.availableNowCents).toBe(150000);
     expect(a.savingsCents).toBe(500000);
@@ -121,13 +120,23 @@ describe("finance", () => {
     const { run } = await setup(); // checking $1,500, savings $5,000
     await run((s) => createRecurring(s, { name: "Rent", amountCents: -120000, frequency: "monthly", nextDueDate: "2026-11-01", kind: "bill" }));
     const ask = (cents: number) => run((s) => affordability(s, cents, "2026-10-30", "2026-11-02"));
-    const small = await ask(5000);
-    expect(small.verdict).toBe(small.availableAfterCents >= 0 ? "yes" : "only_with_savings");
-    expect((await ask(5000)).verdict).toBe(small.verdict); // asked again, the same answer
+    const small = await ask(5000); // $1,500 - $1,200 rent - $50, and no spending history yet
+    expect(small.projectedDiscretionaryCents).toBe(0);
+    expect(small.availableAfterCents).toBe(150000 - 120000 - 5000);
+    expect(small.verdict).toBe("yes");
+    expect((await ask(5000)).verdict).toBe("yes"); // asked again, the same answer
     const big = await ask(200000);
     expect(big.availableAfterCents).toBeLessThan(0);
     expect(big.verdict).toBe("only_with_savings");
     expect((await ask(2000000)).verdict).toBe("no");
+    // a date already gone still counts the next two weeks' bills
+    expect((await run((s) => affordability(s, 5000, "2026-10-30", "2026-10-01"))).upcomingBillsCents).toBe(120000);
+  });
+
+  it("says unknown, not no, when there's no checking, cash or savings to start from", async () => {
+    const { run } = await makeUser();
+    await run((s) => createManualAccount(s, { name: "Visa", type: "credit", currentBalanceCents: 20000 }));
+    expect((await run((s) => affordability(s, 5000, "2026-10-30"))).verdict).toBe("unknown");
   });
 });
 
