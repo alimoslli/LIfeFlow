@@ -7,7 +7,7 @@ import { ASK_EVENT, takeHandoff, type AskDetail } from "@/lib/ask-handoff";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition, type CSSProperties } from "react";
 import { useAppBusy } from "@/lib/app-busy";
-import { Plug, Brain, CircleAlert, ImageIcon, Loader2, Square, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Plug, Brain, CircleAlert, ImageIcon, Loader2, Square } from "lucide-react";
 import { rateRunAction } from "@/app/(app)/jarvis/actions";
 import { cn } from "@/lib/utils";
 import { isAppPath, viewAtName } from "@/lib/app-routes";
@@ -1029,7 +1029,7 @@ function RateAnswer({ runId, initial }: { runId: string; initial: 1 | -1 | null 
         onClick={() => rate(1)}
         className={cn("tap flex items-center justify-center rounded-full", rating === 1 && "text-accent")}
       >
-        <ThumbsUp className="h-3.5 w-3.5" />
+        <PixelIcon name="thumbup" className="h-4 w-4" />
       </button>
       <button
         type="button"
@@ -1038,7 +1038,7 @@ function RateAnswer({ runId, initial }: { runId: string; initial: 1 | -1 | null 
         onClick={() => rate(-1)}
         className={cn("tap flex items-center justify-center rounded-full", rating === -1 && "text-danger")}
       >
-        <ThumbsDown className="h-3.5 w-3.5" />
+        <PixelIcon name="thumbdown" className="h-4 w-4" />
       </button>
     </div>
   );

@@ -880,6 +880,43 @@ export const SOFT: Partial<Record<keyof typeof COLOR, readonly string[]>> = {
 };
 
 export const MONO = {
+  // a thumb, for "this helped" and "not really" (owner, 2026-11-10: no generic icons)
+  thumbup: [
+    "................",
+    "........xx......",
+    ".......xxx......",
+    ".......xx.......",
+    "......xxx.......",
+    "......xx........",
+    "xx..xxxxxxxxxx..",
+    "xx.xxxxxxxxxxxx.",
+    "xx.xxxxxxxxxxx..",
+    "xx.xxxxxxxxxxxx.",
+    "xx.xxxxxxxxxxx..",
+    "xx.xxxxxxxxxxxx.",
+    "xx..xxxxxxxxxx..",
+    "................",
+    "................",
+    "................",
+  ],
+  thumbdown: [
+    "................",
+    "................",
+    "................",
+    "xx..xxxxxxxxxx..",
+    "xx.xxxxxxxxxxxx.",
+    "xx.xxxxxxxxxxx..",
+    "xx.xxxxxxxxxxxx.",
+    "xx.xxxxxxxxxxx..",
+    "xx.xxxxxxxxxxxx.",
+    "xx..xxxxxxxxxx..",
+    "......xx........",
+    "......xxx.......",
+    ".......xx.......",
+    ".......xxx......",
+    "........xx......",
+    "................",
+  ],
   plus: [
     "................",
     "................",

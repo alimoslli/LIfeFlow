@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Loader2, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { respondAction } from "@/app/(app)/jarvis/proactive-actions";
 import { haptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
@@ -136,7 +136,7 @@ export function JarvisMessageCard({ m, name, compact }: { m: CardMessage; name: 
               onClick={() => act("up")}
               className={cn("tap flex items-center justify-center rounded-full", rating === 1 ? "text-accent" : "text-muted")}
             >
-              <ThumbsUp className="h-4 w-4" />
+              <PixelIcon name="thumbup" className="h-4 w-4" />
             </button>
             <button
               type="button"
@@ -145,7 +145,7 @@ export function JarvisMessageCard({ m, name, compact }: { m: CardMessage; name: 
               onClick={() => act("down")}
               className={cn("tap flex items-center justify-center rounded-full", rating === -1 ? "text-danger" : "text-muted")}
             >
-              <ThumbsDown className="h-4 w-4" />
+              <PixelIcon name="thumbdown" className="h-4 w-4" />
             </button>
             {m.undoable && (
               <button
