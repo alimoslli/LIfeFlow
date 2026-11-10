@@ -332,7 +332,7 @@ Last: done 2026-11-10 evening ([the walk and the numbers](audits/2026-11-10-prod
 6. Connect Instagram in Metricool as a professional account with all permissions (section 8).
 8. Pro payments: Stripe keys for the web (go-live 9c); on iPhone, Apple in-app purchase comes with the App Store.
 9. Google verification of the app, so people outside the test list can connect Gmail.
-10. **Vercel environment variables, revised together with the COO (2026-11-10).** Show the COO your list (names and which show errors, never the values); the COO checks it against [go-live checklist section 1](go-live-checklist.md), the complete list of every name the app reads, with the right format for each. To add: the six prices (`JARVIS_PRICE_INPUT_PER_MTOK` 5, `JARVIS_PRICE_CACHED_INPUT_PER_MTOK` 0.5, `JARVIS_PRICE_OUTPUT_PER_MTOK` 30, `JARVIS_PRICE_SMALL_INPUT_PER_MTOK` 0.75, `JARVIS_PRICE_SMALL_CACHED_INPUT_PER_MTOK` 0.075, `JARVIS_PRICE_SMALL_OUTPUT_PER_MTOK` 4.5; numbers only), and anything missing from groups A and B. Then redeploy.
+10. ~~Vercel environment variables~~ **Done 2026-11-10:** the six prices are in, and Admin › App › Health shows AI, banks, Google, the price cap, email, scheduled jobs and alert email all set up. Microsoft, Stripe and Twilio wait on items 2, 4 and 8. The old preview-branch database links were cleaned up. Optional, not added: the HQ desk "Start it" (item 5).
 11. **Cloud environment for the chats:** remove the `api.openai.com` and `api.groq.com` network secrets from the "LifeFlow" cloud environment (environment menu → Edit → Network secrets), so no chat can spend on the AI key.
 
 ## 11. Waiting for the owner's yes (one list; details in HQ › Work)
