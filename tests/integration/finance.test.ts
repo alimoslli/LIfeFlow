@@ -110,6 +110,24 @@ describe("finance", () => {
     expect(a.liquidCashCents).toBe(650000);
     expect(a.upcomingBillsCents).toBe(90000);
     expect(a.projectedCashAfterPurchaseCents).toBe(650000 - 90000 - 10000 - a.projectedDiscretionaryCents);
+    // the verdict starts from Available now (checking $1,500; savings apart), like the Money page
+    expect(a.availableNowCents).toBe(150000);
+    expect(a.savingsCents).toBe(500000);
+    expect(a.availableAfterCents).toBe(150000 - 90000 - 10000 - a.projectedDiscretionaryCents);
+    expect(a.verdict).toBe(a.availableAfterCents >= 0 ? "yes" : "only_with_savings");
+  });
+
+  it("decides the verdict itself, the same every time: yes, only by moving savings, or no", async () => {
+    const { run } = await setup(); // checking $1,500, savings $5,000
+    await run((s) => createRecurring(s, { name: "Rent", amountCents: -120000, frequency: "monthly", nextDueDate: "2026-11-01", kind: "bill" }));
+    const ask = (cents: number) => run((s) => affordability(s, cents, "2026-10-30", "2026-11-02"));
+    const small = await ask(5000);
+    expect(small.verdict).toBe(small.availableAfterCents >= 0 ? "yes" : "only_with_savings");
+    expect((await ask(5000)).verdict).toBe(small.verdict); // asked again, the same answer
+    const big = await ask(200000);
+    expect(big.availableAfterCents).toBeLessThan(0);
+    expect(big.verdict).toBe("only_with_savings");
+    expect((await ask(2000000)).verdict).toBe("no");
   });
 });
 

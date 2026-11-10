@@ -431,7 +431,8 @@ export const financeTools = [
   defineTool({
     name: "check_affordability",
     description:
-      "Facts for 'can I afford $X (by date)?': cash on hand, upcoming bills, typical daily spending and a projection. Future income is never counted. Explain the assumptions in your answer.",
+      "'Can I afford $X (by date)?': the verdict and the facts behind it. `verdict` is decided here from Available now (checking + cash, the number on Money) after the bills and usual spending to the date and the purchase: yes, only_with_savings (only by moving money from savings), no, or unknown (no accounts). " +
+      "Say that verdict first, in plain words, with availableAfter; never recompute it, never turn a no into a yes, and never count savings, credit or future income as spendable. Then the one bill or number that makes it tight.",
     schema: z.object({ amount: moneyArg("Purchase amount"), byDate: dateArg("Date the money is needed by").optional() }),
     mutates: false,
     async execute(a, ctx) {

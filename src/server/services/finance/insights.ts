@@ -5,6 +5,7 @@ import { listAccounts, summarizeBalances } from "./accounts";
 import { listCategories } from "./categories";
 import { rollupToParents, spendingByCategoryId, summarizeCashflow } from "./cashflow";
 import { billsAndPace } from "./forecast";
+import { isSavingsAccount } from "./overview";
 import { merchantDisplayName, merchantKey } from "./recurring-detect";
 import { queryTransactions, type TransactionQuery } from "./transactions";
 
@@ -82,7 +83,25 @@ export async function affordability(scope: UserScope, amountCents: number, today
   const days = Math.max(0, daysBetween(today, horizon));
   const projectedDiscretionary = dailyRate * days;
   const projectedCashAfter = balances.cashCents - upcomingBills - projectedDiscretionary - amountCents;
+  // The verdict is ours, not the model's (owner, 2026-11-10: asked twice, the same question got "wait" once and "yes" once).
+  // It starts from Available now, the number on Money (checking + cash; savings apart), takes off the bills and usual
+  // spending to the date and the purchase, and says yes, only by moving savings, or no. Income never counts.
+  const spendable = (a: (typeof accounts)[number]) => (a.type === "depository" || a.type === "cash") && !isSavingsAccount(a);
+  const availableNowCents = accounts.filter(spendable).reduce((n, a) => n + a.currentBalanceCents, 0);
+  const savingsCents = accounts.filter(isSavingsAccount).reduce((n, a) => n + a.currentBalanceCents, 0);
+  const availableAfterCents = availableNowCents - upcomingBills - projectedDiscretionary - amountCents;
+  const verdict: "yes" | "only_with_savings" | "no" | "unknown" = !accounts.length
+    ? "unknown"
+    : availableAfterCents >= 0
+      ? "yes"
+      : availableAfterCents + savingsCents >= 0
+        ? "only_with_savings"
+        : "no";
   return {
+    verdict,
+    availableNowCents,
+    availableAfterCents,
+    savingsCents,
     amountCents,
     horizon: { from: today, to: horizon, days },
     liquidCashCents: balances.cashCents,
