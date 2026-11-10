@@ -53,3 +53,21 @@ export const FOLLOW_UPS: Record<string, string[]> = {
 export function defaultFollowUps(module: JarvisModule, lastQuestion: string | undefined) {
   return STARTERS[module].filter((s) => !s.endsWith("…") && s !== lastQuestion).slice(0, 2);
 }
+
+/** The two taps under an answer that ends by offering to do something. "Do it" is sent as the person's reply. */
+export const OFFER_REPLIES = ["Do it", "Not now"] as const;
+
+/**
+ * True when the answer's last sentence offers to act ("Want me to move it to Wednesday?", "Should I add it?"), so
+ * yes is one tap instead of typing it. A plain question back ("Which class is it for?") is not an offer.
+ */
+export function offersToAct(text: string): boolean {
+  const last = (
+    text
+      .trim()
+      .split(/(?<=[.!?])\s+/)
+      .at(-1) ?? ""
+  ).trim();
+  if (!last.endsWith("?")) return false;
+  return /\b(want me to|do you want me to|would you like me to|should i|shall i|ok(ay)? if i|want to do that|want that)\b/i.test(last);
+}

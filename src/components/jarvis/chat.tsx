@@ -38,7 +38,7 @@ import { useShell } from "../shell/app-shell";
 import { AiConsentCard } from "./ai-consent-card";
 import { Markdown } from "./markdown";
 import { LiveVoice, VoiceButton } from "./voice-call";
-import { defaultFollowUps, FOLLOW_UPS, STARTERS } from "./suggestions";
+import { defaultFollowUps, FOLLOW_UPS, OFFER_REPLIES, offersToAct, STARTERS } from "./suggestions";
 import type { JarvisAvailability, JarvisModule, UiAttachment, UiMemorySuggestion, UiMessage, UiTool } from "./types";
 
 type ServerEvent =
@@ -555,10 +555,15 @@ export function JarvisChat({
 
   const empty = messages.length === 0;
   const lastQuestion = [...messages].reverse().find((m) => m.role === "user");
-  const followUps =
-    busy || refreshing || empty || messages.at(-1)?.role !== "assistant"
+  const lastAnswer = messages.at(-1);
+  // an answer that ends by offering to do something gets "Do it" (one tap, item 8); a pending confirm has its own buttons
+  const offer = lastAnswer?.role === "assistant" && !lastAnswer.confirmations.some((c) => c.status === "pending") && offersToAct(lastAnswer.text);
+  const followUps: readonly string[] | undefined =
+    busy || refreshing || empty || lastAnswer?.role !== "assistant"
       ? undefined
-      : ((lastTool && FOLLOW_UPS[lastTool]) ?? defaultFollowUps(module, lastQuestion?.text));
+      : offer
+        ? OFFER_REPLIES
+        : ((lastTool ? FOLLOW_UPS[lastTool] : undefined) ?? defaultFollowUps(module, lastQuestion?.text));
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -659,7 +664,10 @@ export function JarvisChat({
                 <button
                   key={f}
                   onClick={() => send(f)}
-                  className="lf-hop min-h-11 rounded-[0.9375rem] bg-surface px-4 py-2 text-[0.875rem] font-medium text-text-2 shadow-soft ring-1 ring-border/60 hover:text-text"
+                  className={cn(
+                    "lf-hop min-h-11 rounded-[0.9375rem] px-4 py-2 text-[0.875rem] font-medium shadow-soft",
+                    offer && f === OFFER_REPLIES[0] ? "bg-accent text-accent-text" : "bg-surface text-text-2 ring-1 ring-border/60 hover:text-text",
+                  )}
                 >
                   {f}
                 </button>
