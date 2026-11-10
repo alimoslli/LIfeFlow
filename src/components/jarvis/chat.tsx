@@ -1,5 +1,6 @@
 "use client";
 import { PixelIcon, pixel } from "@/components/pixel/pixel-icon";
+import { isNarration } from "@/lib/narration";
 import Link from "next/link";
 import { NotifyAsk } from "./notify-ask";
 import { ASK_EVENT, takeHandoff, type AskDetail } from "@/lib/ask-handoff";
@@ -370,13 +371,22 @@ export function JarvisChat({
               // The server had this send already (a retry): it fetches the saved answer instead of running again.
               break;
             case "text":
-              updateAssistant((a) => void (a.text += ev.delta));
+              updateAssistant((a) => {
+                // words after a kept sentence start their own paragraph
+                if (a.kept) {
+                  a.text = `${a.text.trimEnd()}\n\n`;
+                  a.kept = false;
+                }
+                a.text += ev.delta;
+              });
               break;
             case "tool_start":
               setLastTool(ev.name);
-              // Anything said before a tool is narration ("Let me check…"); only the final answer stays.
+              // Narration before a tool ("Let me check…") goes; a finished sentence stays (LF Marketing's filming, 2026-11-10:
+              // "That's a promise…" vanished and "Thinking…" came back), the same as the saved conversation shows it.
               updateAssistant((a) => {
-                a.text = "";
+                if (isNarration(a.text)) a.text = "";
+                else if (a.text.trim()) a.kept = true;
                 a.tools.push({ callId: ev.callId, name: ev.name, label: ev.label, status: "running" });
               });
               break;

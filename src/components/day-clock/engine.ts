@@ -1511,13 +1511,16 @@ export function createDayClock(root: HTMLElement, initial: ClockData, opts: DayC
   if (!S.open) setState("clock");
   root.dataset.ready = "true";
 
-  // New data while the line is open (a pin was just added): redraw it where it is, without closing or jumping.
+  // New data while the line is open (a pin was just added): redraw it where it is, without closing or jumping. The moment
+  // at the window's left edge stays put: stops may come or go before it (a Done comes back from the server as a done
+  // stop at now), and keeping the raw scroll slid everything you were looking at by their width; and when a stop in
+  // view goes (Done), what was before it stays still and what was after it closes the gap, like any list.
   function refreshOpen() {
-    const sl = trackWrap.scrollLeft;
+    const left = tAt(trackWrap.scrollLeft);
     rebuildFace();
     rebuildTrack();
     buildDays();
-    setSl(sl);
+    setSl(Math.max(0, xAt(left)));
     drawStrip();
     markDay();
     buildChips();

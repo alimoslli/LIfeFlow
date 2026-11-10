@@ -30,6 +30,8 @@ export type UiMessage =
       /** A calm status line instead of an error (the connection dropped and the answer is being fetched, or could not be). */
       notice?: { kind: "recovering" | "lost"; text: string };
       streaming?: boolean;
+      /** A finished sentence said before a tool was kept; what comes after starts a new paragraph. */
+      kept?: boolean;
       /** The jarvis_runs row for this answer, for 👍 / 👎. */
       runId?: string | null;
       rating?: 1 | -1 | null;

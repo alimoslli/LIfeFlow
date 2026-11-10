@@ -98,11 +98,26 @@ test("the day clock opens into the real week and wraps back", async ({ page }) =
 
   // Done right on the card: tap a to-do, Done; it's saved as done and leaves the line.
   await page.locator(".dc-node", { hasText: "Pay phone bill" }).click();
+  // the line doesn't jump (LF Marketing's filming, 2026-11-10): the stop just before it stays where it was, through the
+  // Done and through the server's refresh after it (which brings the to-do back as a done stop at now)
+  const before = await page.evaluate(() => {
+    const nodes = [...document.querySelectorAll<HTMLElement>(".dc-node")].map((n) => ({ text: n.textContent ?? "", x: n.getBoundingClientRect().x }));
+    const pay = nodes.find((n) => n.text.includes("Pay phone bill"))!;
+    return nodes.filter((n) => n.x < pay.x).sort((a, b) => b.x - a.x)[0];
+  });
+  const width = () => page.locator("[data-dc=track]").evaluate((t) => (t as HTMLElement).style.width);
   await page.locator("[data-dc=detail]").getByRole("button", { name: "Done" }).click();
   await expect(page.locator(".dc-node", { hasText: "Pay phone bill" })).toHaveCount(0);
   await expect
     .poll(async () => (await queryAsUser<{ status: string }>(email, "select status from tasks where title = 'Pay phone bill'"))[0]?.status)
     .toBe("done");
+  const afterDone = await width();
+  await expect.poll(width, { timeout: 5_000 }).not.toBe(afterDone); // the server's refresh has redrawn the line
+  const after = await page.evaluate(
+    (text) => [...document.querySelectorAll<HTMLElement>(".dc-node")].find((n) => n.textContent === text)!.getBoundingClientRect().x,
+    before.text,
+  );
+  expect(Math.abs(after - before.x)).toBeLessThanOrEqual(8);
 
   // Edit right on the card: a calendar event opens Plan's editor in place, and saving updates the line.
   await page.locator(".dc-node", { hasText: "Brunch with Jordan" }).click();
