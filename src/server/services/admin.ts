@@ -1,6 +1,5 @@
 import { and, count, desc, eq, ilike, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
 import { microsoftConfig } from "../integrations/microsoft";
-import type { Tx } from "../db/with-user";
 import type { Database } from "../db/client";
 import { adminActions, announcements, appAccess, errorReports, ownerInbox, passkeys, rateLimitBuckets, rememberedDevices, sessions, users } from "../db/schema";
 import { isAdminEmail, type Admin } from "../auth/admin";
@@ -318,7 +317,7 @@ export async function deleteUser(db: Database, actor: Admin, userId: string, con
     const u = await target(tx, actor, userId);
     await log(tx, actor, "user.delete", u, { createdAt: u.createdAt.toISOString() });
     await tx.delete(ownerInbox).where(eq(ownerInbox.senderUserId, u.id));
-    await fingerprintAdminLogEmail(tx as unknown as Tx, u.id, u.email);
+    await fingerprintAdminLogEmail(tx, u.id, u.email);
     await tx.delete(users).where(eq(users.id, u.id));
   });
 }

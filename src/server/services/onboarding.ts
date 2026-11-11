@@ -10,6 +10,7 @@ import { provisionalName } from "@/lib/provisional-name";
 import type { Database } from "../db/client";
 import { withUser, type UserScope } from "../db/with-user";
 import { assistantSchema } from "./accounts";
+import { lockQueue } from "./waitlist";
 import { createManualAccount } from "./finance/accounts";
 import { createMemory } from "./memory";
 import { createCourse } from "./school";
@@ -163,6 +164,7 @@ export const HANDLED_ON_LOCK = new Set(["owner_inbox", "waitlist_referrals", "em
  * so it's committed. The session layer enforces the lock (`ageLocked`, auth/current-user.ts).
  */
 async function blockUnderAge(scope: UserScope, prefs: Prefs) {
+  await lockQueue(scope.tx); // already held by the callers (taken before the user row's lock); a no-op the second time
   const at = new Date().toISOString();
   const [me] = await scope.tx
     .select({ email: users.email, stripeCustomerId: users.stripeCustomerId, kind: users.accountKind })
@@ -328,6 +330,8 @@ export async function retryLockClosing(db: Database) {
 
 export async function saveWelcomeProgress(scope: UserScope, tz: string, input: z.input<typeof welcomeProgressSchema>): Promise<{ blocked: boolean }> {
   const d = welcomeProgressSchema.parse(input);
+  // A lock changes the queue, so it takes the queue lock before any row lock (the `for update` below), like every queue change.
+  if (d.birthDate && isUnderAge(d.birthDate, todayIn(tz))) await lockQueue(scope.tx);
   const current = await prefsOf(scope);
   if (current.ageBlockedAt) return { blocked: true };
   if (d.birthDate && isUnderAge(d.birthDate, todayIn(tz))) {
@@ -362,9 +366,10 @@ export async function saveBirthday(
   birthDate: string,
   opts: { confirmed?: boolean } = {},
 ): Promise<{ blocked: boolean; confirm?: string }> {
+  const birth = z.string().trim().parse(birthDate);
+  if (isUnderAge(birth, todayIn(tz))) await lockQueue(scope.tx);
   const current = await prefsOf(scope);
   if (current.ageBlockedAt) return { blocked: true };
-  const birth = z.string().trim().parse(birthDate);
   if (isUnderAge(birth, todayIn(tz))) {
     // A finished account holds a whole life, and the lock empties it for good: nothing happens until the person has seen
     // the date read back and said yes (owner, 2026-11-10: confirm, then erase). Setup has nothing to lose and locks at once.

@@ -5,6 +5,7 @@ import { closeDb, getDb } from "@/server/db/client";
 import { withUser } from "@/server/db/with-user";
 import { calendarEvents, emailConfirmations, errorReports, integrations, ownerInbox, users, waitlistReferrals } from "@/server/db/schema";
 import { sql } from "drizzle-orm";
+import { lockQueue } from "@/server/services/waitlist";
 import { createTask } from "@/server/services/tasks";
 import { createCourse } from "@/server/services/school";
 import { createEmployer } from "@/server/services/work";
@@ -105,6 +106,34 @@ const REVIEWED_NOT_USER_ROWS: Record<string, string> = {
 const decidedForLock = (name: string) => KEEP_ON_LOCK.has(name) || HANDLED_ON_LOCK.has(name) || name in REVIEWED_NOT_USER_ROWS;
 
 describe("onboarding", () => {
+  it("an under-13 lock takes the queue lock before it touches the user's row", async () => {
+    const db = getDb();
+    const kid = await makeUser("Kai Young");
+    await db
+      .update(users)
+      .set({ preferences: { onboarding: "pending" } })
+      .where(eq(users.id, kid.user.id));
+    let release!: () => void;
+    const held = new Promise<void>((r) => (release = r));
+    let locked!: () => void;
+    const gotLock = new Promise<void>((r) => (locked = r));
+    const mover = db.transaction(async (tx) => {
+      await lockQueue(tx);
+      locked();
+      await held;
+    });
+    await gotLock;
+    let done = false;
+    const locking = kid.run((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${new Date().getFullYear() - 9}-03-03` })).then((r) => ((done = true), r));
+    await new Promise((r) => setTimeout(r, 500));
+    expect(done).toBe(false);
+    // while it waits for the queue, it holds no lock on the user's row (a row lock first is what could deadlock with a move)
+    await expect(db.transaction((tx) => tx.execute(sql`select id from users where id = ${kid.user.id} for update nowait`))).resolves.toBeDefined();
+    release();
+    await mover;
+    expect(await locking).toEqual({ blocked: true });
+  });
+
   it("every table with a foreign key to users is swept, kept, handled by name or reviewed: a new one fails until someone decides", async () => {
     const tables = await tablesPointingAtUsers(getDb());
     expect(tables.map((t) => t.name)).toEqual(expect.arrayContaining(["email_confirmations", "waitlist_referrals", "owner_inbox"]));
