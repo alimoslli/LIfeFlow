@@ -1,5 +1,7 @@
 "use server";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { CHAT_COOKIE, parseChatCookie } from "@/lib/chat-session";
 import { mutate, type ActionState } from "@/server/actions";
 import { deleteConversation } from "@/server/jarvis/conversations";
 import { rateRun } from "@/server/jarvis/metrics";
@@ -17,7 +19,12 @@ export async function deleteConversationAction(id: string): Promise<ActionState>
     },
     { revalidate: ["/jarvis"] },
   );
-  if (r?.ok) redirect("/jarvis");
+  if (r?.ok) {
+    // the chat this visit was in is gone: the next message starts a new one (lib/chat-session.ts)
+    const jar = await cookies();
+    if (parseChatCookie(jar.get(CHAT_COOKIE)?.value)?.id === id) jar.delete(CHAT_COOKIE);
+    redirect("/jarvis");
+  }
   return r;
 }
 

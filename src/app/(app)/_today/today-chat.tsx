@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLayoutEffect, useSyncExternalStore } from "react";
 import { useShell } from "@/components/shell/app-shell";
-import { currentChat, rememberChat, settleNewVisit, takeNewVisit } from "@/lib/chat-session";
+import { currentChat, forgetChat, rememberChat, settleNewVisit, takeNewVisit } from "@/lib/chat-session";
 import { setAiConsentAction } from "@/app/(app)/settings/actions";
 import { undoChatToolsAction } from "@/app/(app)/jarvis/actions";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
@@ -88,6 +88,8 @@ export async function askOnToday(message: string, refresh: () => void) {
   skylingDoes("think");
   set({ busy: true, reply: { question: text, text: "", kept: false, tools: [], confirmations: [], streaming: true } });
   let saved = false;
+  // the chat this visit was in can be gone (deleted on another device): then the message starts a new chat, once
+  let gone = false;
   try {
     const res = await fetch("/api/jarvis/chat", {
       method: "POST",
@@ -124,8 +126,9 @@ export async function askOnToday(message: string, refresh: () => void) {
           message?: string;
         };
         if (ev.type === "conversation" && ev.id) {
+          // the stamp says when this chat became the app's: a chat that carries on keeps its stamp
+          if (ev.id !== conversationId) rememberChat(ev.id);
           set({ conversationId: ev.id });
-          rememberChat(ev.id);
         } else if (ev.type === "text")
           patch((r) => {
             if (r.kept) {
@@ -153,7 +156,10 @@ export async function askOnToday(message: string, refresh: () => void) {
             r.tools = r.tools.filter((t) => t.callId !== ev.callId);
             r.confirmations.push({ actionId: ev.actionId!, summary: ev.summary ?? "", status: "pending" });
           });
-        else if (ev.type === "error") patch((r) => void (r.error = ev.message ?? "Something went wrong. Try again."));
+        else if (ev.type === "error") {
+          if (conversationId && /not found/i.test(ev.message ?? "")) gone = true;
+          else patch((r) => void (r.error = ev.message ?? "Something went wrong. Try again."));
+        }
       }
     }
   } catch {
@@ -166,6 +172,11 @@ export async function askOnToday(message: string, refresh: () => void) {
       refresh();
       cheerSkylings();
     }
+  }
+  if (gone) {
+    forgetChat();
+    set({ conversationId: null });
+    return askOnToday(text, refresh);
   }
 }
 

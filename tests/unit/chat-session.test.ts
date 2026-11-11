@@ -23,9 +23,10 @@ describe("the chat this visit is in (lib/chat-session.ts)", () => {
     expect(chatOfToday(undefined, TZ, now)).toBeNull();
   });
 
-  it("never trusts a time in the future (a clock that's out)", () => {
-    const now = new Date("2026-11-11T03:00:00Z");
-    expect(chatOfToday(`${ID}~${now.getTime() + 3_600_000}`, TZ, now)).toBeNull();
+  it("accepts a stamp a little ahead of the server's clock (a phone a few minutes fast keeps its chat)", () => {
+    const now = new Date("2026-11-11T03:00:00Z"); // Nov 10, 10 PM in New York
+    expect(chatOfToday(`${ID}~${now.getTime() + 5 * 60_000}`, TZ, now)).toBe(ID);
+    expect(chatOfToday(`${ID}~${now.getTime() + 26 * 3_600_000}`, TZ, now)).toBeNull();
   });
 
   it("marks a new visit before the first paint, with the attribute the chat reads", () => {

@@ -257,7 +257,7 @@ export function JarvisChat({
     setMessages(withChoices(snap.messages));
     if (!conversationId && snap.conversationId) {
       setConversationId(snap.conversationId);
-      rememberChat(snap.conversationId);
+      if (aliveRef.current) rememberChat(snap.conversationId);
       onConversation?.(snap.conversationId, snap.title);
       if (!compact) window.history.replaceState(null, "", `/jarvis?c=${snap.conversationId}`);
     }
@@ -395,9 +395,12 @@ export function JarvisChat({
             case "conversation":
               if (!conversationId) {
                 setConversationId(ev.id);
-                rememberChat(ev.id);
-                onConversation?.(ev.id, ev.title);
-                if (!compact) window.history.replaceState(null, "", `/jarvis?c=${ev.id}`);
+                // a chat left behind (New chat) must not take this visit or the address back
+                if (aliveRef.current) {
+                  rememberChat(ev.id);
+                  onConversation?.(ev.id, ev.title);
+                  if (!compact) window.history.replaceState(null, "", `/jarvis?c=${ev.id}`);
+                }
               }
               break;
             case "already":
@@ -705,37 +708,37 @@ export function JarvisChat({
                 <AssistantBubble key={m.id} m={m} last={i === messages.length - 1} onDecide={decide} onMemory={decideMemory} onRetry={tryAgain} />
               ),
             )}
-          </div>
-          {!aiConsent && !empty && <AiConsentCard name={assistantName} />}
-          {followUps && aiConsent && (
-            <div className="flex flex-wrap gap-2">
-              {undoable.length > 0 && conversationId && (
-                <button
-                  onClick={undoLast}
-                  disabled={undoing}
-                  className="lf-hop inline-flex min-h-11 items-center gap-1.5 rounded-[0.9375rem] bg-surface px-4 py-2 text-[0.875rem] font-medium text-text-2 shadow-soft ring-1 ring-border/60 hover:text-text disabled:opacity-60"
-                >
-                  <PixelIcon name="undo" className="h-4 w-4" /> Undo
-                </button>
-              )}
-              {followUps.map((f, i) =>
-                offer ? (
-                  <button key={f} onClick={() => send(f)} className={cn("lf-sb lf-sb-sm", f === OFFER_REPLIES[0] ? "lf-sb-sun" : "lf-sb-app")}>
-                    {f}
+            {!aiConsent && !empty && <AiConsentCard name={assistantName} />}
+            {followUps && aiConsent && (
+              <div className="flex flex-wrap gap-2">
+                {undoable.length > 0 && conversationId && (
+                  <button
+                    onClick={undoLast}
+                    disabled={undoing}
+                    className="lf-hop inline-flex min-h-11 items-center gap-1.5 rounded-[0.9375rem] bg-surface px-4 py-2 text-[0.875rem] font-medium text-text-2 shadow-soft ring-1 ring-border/60 hover:text-text disabled:opacity-60"
+                  >
+                    <PixelIcon name="undo" className="h-4 w-4" /> Undo
                   </button>
-                ) : (
-                  // what to say next, as the skyling's clouds (owner, 2026-11-10: clouds instead of suggestion boxes)
-                  <span key={f} className="lf-idea" style={{ "--i": i } as CSSProperties}>
-                    <button type="button" onClick={() => send(f)} className="lf-idea-cloud">
-                      <span className="lf-idea-body" style={cloudStyle(i) as CSSProperties}>
-                        <b>{f}</b>
-                      </span>
+                )}
+                {followUps.map((f, i) =>
+                  offer ? (
+                    <button key={f} onClick={() => send(f)} className={cn("lf-sb lf-sb-sm", f === OFFER_REPLIES[0] ? "lf-sb-sun" : "lf-sb-app")}>
+                      {f}
                     </button>
-                  </span>
-                ),
-              )}
-            </div>
-          )}
+                  ) : (
+                    // what to say next, as the skyling's clouds (owner, 2026-11-10: clouds instead of suggestion boxes)
+                    <span key={f} className="lf-idea" style={{ "--i": i } as CSSProperties}>
+                      <button type="button" onClick={() => send(f)} className="lf-idea-cloud">
+                        <span className="lf-idea-body" style={cloudStyle(i) as CSSProperties}>
+                          <b>{f}</b>
+                        </span>
+                      </button>
+                    </span>
+                  ),
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -775,7 +778,7 @@ export function JarvisChat({
               onConversation={(id) => {
                 if (conversationId) return;
                 setConversationId(id);
-                rememberChat(id);
+                if (aliveRef.current) rememberChat(id);
                 onConversation?.(id, `Talking with ${assistantName}`);
                 if (!compact) window.history.replaceState(null, "", `/jarvis?c=${id}`);
               }}

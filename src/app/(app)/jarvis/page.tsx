@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { withCurrentUser } from "@/server/auth/current-user";
 import { attachmentMeta, listConversations, listMessages, listPendingActions } from "@/server/jarvis/conversations";
-import { sessionChatId } from "@/server/jarvis/chat-session";
+import { ownedChat, sessionChatId } from "@/server/jarvis/chat-session";
 import { suggestedMemoryIds, toUiMessages } from "@/server/jarvis/ui-messages";
 import { memoryStatuses } from "@/server/services/memory";
 import type { UiMessage } from "@/components/jarvis/types";
@@ -13,26 +13,29 @@ import { JarvisPage } from "./jarvis-page";
 
 export const metadata: Metadata = { title: "Skyling" };
 
+/**
+ * A chat changes without a save (Today's bar and the chat send to the route, and the cookie moves), so this page is never
+ * reused from the router's two-minute cache: navigating back to it always shows the chat as it is now (lib/chat-session.ts).
+ */
+export const unstable_dynamicStaleTime = 0;
+
 export default async function Page({ searchParams }: { searchParams: Promise<{ ask?: string; voice?: string; c?: string }> }) {
   const { ask, voice, c } = await searchParams;
   const { conversations, tz, connect, ideas, messages, activeId, home } = await withCurrentUser(async (s, u) => {
     const conversations = await listConversations(s);
-    // The chat lasts while the app is open and for the day (lib/chat-session.ts): this visit's chat opens here, the same
-    // one Today's bar carries on. An earlier chat opens when asked for (the list of chats, ?c=). Another person's chat
-    // address finds nothing (row-level security), so it opens this visit's chat, or an empty one.
-    const asked = c ? conversations.find((x) => x.id === c) : undefined;
-    const visit = asked ? null : await sessionChatId(s, u.timezone);
-    const latest = asked ?? conversations.find((x) => x.id === visit);
+    // A link (?c=) opens that chat, however old, when it's theirs; otherwise this app's chat (lib/chat-session.ts) opens here,
+    // the same one Today's bar carries on. Another person's chat finds nothing (row-level security), so a new chat starts.
+    const activeId = c ? ((await ownedChat(s, c))?.id ?? null) : await sessionChatId(s, u.timezone);
     let messages: UiMessage[] = [];
-    if (latest) {
-      const rows = await listMessages(s, latest.id);
-      const actions = await listPendingActions(s, latest.id);
+    if (activeId) {
+      const rows = await listMessages(s, activeId);
+      const actions = await listPendingActions(s, activeId);
       const atts = await attachmentMeta(s, [...new Set(rows.flatMap((r) => r.attachmentIds))]);
       messages = toUiMessages(rows, actions, atts, await memoryStatuses(s, suggestedMemoryIds(rows)));
     }
     return {
       conversations,
-      activeId: latest?.id ?? null,
+      activeId,
       messages,
       connect: await missingConnections(s),
       // idea clouds under the skyling: what they can tell or ask it, from their own data (lib/idea-clouds)
