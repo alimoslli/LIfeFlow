@@ -108,6 +108,8 @@ export function JarvisChat({
   const [messages, setMessages] = useState<UiMessage[]>(initialMessages);
   const [input, setInput] = useState(initialPrompt ?? "");
   const [busy, setBusy] = useState(false);
+  // set once the visit's chat is settled (below), so a question sent on mount is sent into the right chat
+  const [settled, setSettled] = useState(false);
   // A new visit (the app was closed) starts without the chat from before, which stays in the list (lib/chat-session.ts).
   // This runs before the first paint, so the old messages never show. A deep link (?c=) keeps its chat.
   useLayoutEffect(() => {
@@ -118,6 +120,7 @@ export function JarvisChat({
       setMessages([]);
     } else if (deepLink && initialId) rememberChat(initialId);
     settleNewVisit();
+    setSettled(true);
   }, [initialId]);
   // the skyling thinks while it works on your answer (owner, 2026-11-11)
   useEffect(() => {
@@ -177,7 +180,7 @@ export function JarvisChat({
 
   const autoSent = useRef(false);
   useEffect(() => {
-    if (autoSent.current) return;
+    if (!settled || autoSent.current) return;
     autoSent.current = true;
     // a question a button in the app handed over (lib/ask-handoff): sent when it said so, otherwise typed in the box
     const handed = takeHandoff();
@@ -189,7 +192,7 @@ export function JarvisChat({
     // a link's ?ask= only fills the box (initialPrompt); autoSend is for callers inside the app
     if (autoSend && initialPrompt && availability.available) void send(initialPrompt);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [settled]);
 
   // a question from elsewhere on this page (an idea, a heads-up) goes into this chat: typed in the box, or sent
   const sendRef = useRef(send);

@@ -9,6 +9,7 @@ import { PixelIcon } from "@/components/pixel/pixel-icon";
 import { openSettings, SettingsSheet } from "@/components/settings/settings-sheet";
 import { EverythingSheet, openEverything } from "./everything-sheet";
 import { cn } from "@/lib/utils";
+import { isChatPage } from "@/lib/app-routes";
 import { ASK_EVENT, handOff, type AskDetail } from "@/lib/ask-handoff";
 import { assistantLabel, nameAtStart, UNNAMED_ASSISTANT } from "@/lib/assistant";
 import { isActive, tabsFor } from "./nav-items";
@@ -57,10 +58,6 @@ const Ctx = createContext<ShellCtx>({
 });
 export const useShell = () => useContext(Ctx);
 
-/** The full-screen chat (Updates, Memory, Profile and Ideas are normal pages). */
-const isChatPage = (p: string) =>
-  p.startsWith("/jarvis") && !["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"].some((x) => p.startsWith(x));
-
 export function AppShell({
   user,
   tour = false,
@@ -99,8 +96,11 @@ export function AppShell({
   const tabs = tabsFor(areas);
   const router = useRouter();
   // Keep every tab warm: after each move (and after a save clears the cache) prefetch the tabs again when idle,
-  // so switching tabs opens a ready page instead of a skeleton.
-  const tabHrefs = tabs.map((t) => t.href).join(" ");
+  // so switching tabs opens a ready page instead of a skeleton. The chat page is the one tab never prefetched (isChatPage).
+  const tabHrefs = tabs
+    .map((t) => t.href)
+    .filter((h) => !isChatPage(h))
+    .join(" ");
   useEffect(() => {
     const warm = () => whenIdle(() => tabHrefs.split(" ").forEach((h) => router.prefetch(h)));
     let cancel = warm();
@@ -195,7 +195,7 @@ export function AppShell({
                     <Link
                       key={item.href}
                       href={item.href}
-                      prefetch
+                      prefetch={!isChatPage(item.href)}
                       data-tour={item.label.toLowerCase()}
                       aria-current={active ? "page" : undefined}
                       className={cn(
@@ -279,7 +279,7 @@ export function AppShell({
                     <Link
                       key={item.href}
                       href={item.href}
-                      prefetch
+                      prefetch={!isChatPage(item.href)}
                       data-tour={item.label.toLowerCase()}
                       aria-current={active ? "page" : undefined}
                       className={cn(

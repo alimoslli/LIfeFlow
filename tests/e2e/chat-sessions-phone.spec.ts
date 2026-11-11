@@ -106,3 +106,39 @@ test("another person's Today answer never shows after a sign-out and a sign-in o
   await expect(page.getByText("Ana's private errand")).toHaveCount(0);
   await expect(page.locator('[data-testid="today-reply"]')).toHaveCount(0);
 });
+
+// Found in review (2026-11-11): New chat must work right after the first message on the same page, with no reload.
+test("New chat works right after the first message, with no reload", async ({ page }) => {
+  const email = await signUp(page, "Nia Next");
+  await page.goto("/jarvis");
+  await askJarvis(page, "first question here");
+  await expect(page.getByText("You said: first question here").first()).toBeVisible();
+  await page.getByRole("button", { name: "New chat" }).click();
+  await expect(page.getByText("You said: first question here")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Let's clear your sky." })).toBeVisible();
+  await askJarvis(page, "second question here");
+  await expect(page.getByText("You said: second question here").first()).toBeVisible();
+  expect(await queryAsUser(email, COUNT)).toEqual([{ n: 2 }]);
+});
+
+// Found in review: a link that isn't a chat id opens a new chat instead of an error.
+test("a link to something that isn't a chat opens a new one", async ({ page }) => {
+  await signUp(page, "Mo Link");
+  await page.goto("/jarvis?c=not-a-chat");
+  await expect(page.getByRole("heading", { name: "Let's clear your sky." })).toBeVisible();
+});
+
+// Found in review: the skyling page can't be a copy from before (Next's client cache): a chat started on Today shows there
+// when you go back to it.
+test("the skyling page is never a copy from before: a chat started on Today shows there when you go back", async ({ page }) => {
+  await signUp(page, "Tara Tab");
+  await page.goto("/jarvis");
+  const tabs = page.getByRole("navigation", { name: "Main" }).last();
+  await tabs.getByRole("link", { name: "Today" }).click();
+  const box = page.locator(".dc-dock").getByRole("textbox", { name: COMPOSER });
+  await box.fill("a question from today");
+  await box.press("Enter");
+  await expect(page.locator('[data-testid="today-reply"]:visible').getByText("You said: a question from today")).toBeVisible({ timeout: 15_000 });
+  await tabs.getByRole("link", { name: "Ray" }).click();
+  await expect(page.getByText("You said: a question from today").first()).toBeVisible();
+});

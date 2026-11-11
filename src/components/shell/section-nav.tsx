@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { whenIdle } from "@/lib/idle";
+import { isChatPage } from "@/lib/app-routes";
 import { useEffect, useRef } from "react";
 import { pixel, type IconLike } from "@/components/pixel/pixel-icon";
 import { cn } from "@/lib/utils";
@@ -68,7 +69,7 @@ export function SectionNav({ inline = false, children }: { inline?: boolean; chi
   // Warm this tab's other pages once the screen is idle, so the next pill opens instantly.
   useEffect(() => {
     if (!section) return;
-    return whenIdle(() => SECTIONS[section].forEach((i) => router.prefetch(i.href)));
+    return whenIdle(() => SECTIONS[section].filter((i) => !isChatPage(i.href)).forEach((i) => router.prefetch(i.href)));
   }, [section, pathname, router]);
   if (!section || pathname === "/") return null;
   return (
@@ -97,6 +98,7 @@ export function SectionNav({ inline = false, children }: { inline?: boolean; chi
                 key={item.href}
                 ref={on ? activeRef : undefined}
                 href={item.href}
+                prefetch={isChatPage(item.href) ? false : undefined}
                 aria-current={on ? "page" : undefined}
                 className={cn(
                   "flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm whitespace-nowrap transition-colors",

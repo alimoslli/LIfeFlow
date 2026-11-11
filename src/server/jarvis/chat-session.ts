@@ -1,11 +1,12 @@
 import { cookies } from "next/headers";
-import { CHAT_COOKIE, chatOfToday } from "@/lib/chat-session";
+import { CHAT_COOKIE, chatOfToday, isChatId } from "@/lib/chat-session";
 import type { UserScope } from "../db/with-user";
 import { ServiceError } from "../services/errors";
 import { getConversation } from "./conversations";
 
 /** The chat with this id when it's theirs (row-level security), or null. Any other error (a database fault) is thrown. */
 export async function ownedChat(scope: UserScope, id: string) {
+  if (!isChatId(id)) return null;
   try {
     return await getConversation(scope, id);
   } catch (e) {

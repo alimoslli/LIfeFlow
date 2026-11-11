@@ -27,6 +27,7 @@ export function HistorySheet({ items, activeId }: { items: { id: string; title: 
             <li key={c.id}>
               <Link
                 href={`/jarvis?c=${c.id}`}
+                prefetch={false}
                 onClick={() => setOpen(false)}
                 className={cn("block rounded-2xl px-3 py-3", c.id === activeId ? "bg-surface shadow-soft" : "active:bg-surface-2")}
               >

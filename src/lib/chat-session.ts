@@ -17,6 +17,9 @@ export const NEW_VISIT_ATTR = "data-lf-new-visit";
 const VISIT_KEY = "lf-visit";
 const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** Whether this is the shape of a chat id (checked before it goes anywhere near the database). */
+export const isChatId = (id: string | null | undefined): id is string => !!id && ID.test(id);
+
 /** Runs in the root layout's <head>, before the first paint: marks a document that opened a new visit. */
 export const VISIT_SCRIPT = `try{if(!sessionStorage.getItem("${VISIT_KEY}")){sessionStorage.setItem("${VISIT_KEY}","1");document.documentElement.setAttribute("${NEW_VISIT_ATTR}","")}}catch(e){}`;
 

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { isChatPage } from "@/lib/app-routes";
 import { SkylingIcon } from "@/components/skylings/sprite";
 import { useShell } from "@/components/shell/app-shell";
 import { PixelIcon } from "@/components/pixel/pixel-icon";
@@ -29,7 +30,7 @@ export function AssistantLine({ name, note }: { name: string; note: AssistantNot
   return (
     <section aria-label={note.tone === "attention" ? "Heads up" : "From your skyling"}>
       {note.href ? (
-        <Link href={note.href} className={cls} data-testid="assistant-line">
+        <Link href={note.href} prefetch={isChatPage(note.href) ? false : undefined} className={cls} data-testid="assistant-line">
           {body}
         </Link>
       ) : (

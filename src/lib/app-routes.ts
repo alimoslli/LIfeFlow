@@ -53,6 +53,14 @@ export function viewAtName(href: string): string {
 /** Only addresses inside the app are links: one slash first, never "//host" or a scheme. */
 export const isAppPath = (href: string) => /^\/(?!\/)[\w\-./?=&%#]*$/.test(href);
 
+/**
+ * The full-screen chat, by its path or a link to it (Updates, Memory, Profile and Ideas are normal pages). Its content is the
+ * live state of the chat (lib/chat-session.ts), so it is never prefetched, by a link or by the router: a prefetched copy is
+ * reused for five minutes, and a chat started after the prefetch (on Today, say) would not show when the tab was tapped.
+ */
+export const isChatPage = (path: string) =>
+  path.startsWith("/jarvis") && !["/jarvis/says", "/jarvis/memory", "/jarvis/profile", "/jarvis/ideas"].some((x) => path.startsWith(x));
+
 const PATHS = Object.keys(NAMES)
   .filter((p) => p !== "/")
   .sort((a, b) => b.length - a.length)

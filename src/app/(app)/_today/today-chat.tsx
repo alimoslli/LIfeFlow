@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLayoutEffect, useSyncExternalStore } from "react";
 import { useShell } from "@/components/shell/app-shell";
+import { useNewDay } from "@/components/jarvis/use-new-day";
 import { currentChat, forgetChat, rememberChat, settleNewVisit, takeNewVisit } from "@/lib/chat-session";
 import { setAiConsentAction } from "@/app/(app)/settings/actions";
 import { undoChatToolsAction } from "@/app/(app)/jarvis/actions";
@@ -65,9 +66,15 @@ const SERVER: State = { reply: null, conversationId: null, busy: false, owner: n
  * last person's words). Rendered once on Today, so it covers the bar on a phone and the one under the wheel on a laptop.
  */
 export function TodayOwner({ userId }: { userId: string }) {
+  const { tz } = useShell();
   useLayoutEffect(() => {
     if (state.owner !== userId) set({ owner: userId, reply: null });
   }, [userId]);
+  // a chat is one day's: when the day changes while Today is open, the next message starts another
+  useNewDay(tz, () => {
+    forgetChat();
+    set({ conversationId: null, reply: null });
+  });
   return null;
 }
 export const useTodayChat = () =>
@@ -230,7 +237,7 @@ export function TodayReplyCard({ name, refresh, fill = false }: { name: string; 
         {/* what you asked, unless it's in the middle of Today, where there's no room to say it twice */}
         {fill ? <span className="flex-1" /> : <p className="min-w-0 flex-1 truncate text-xs text-muted">You: {reply.question}</p>}
         {conversationId && (
-          <Link href="/jarvis" className="shrink-0 text-sm font-medium text-accent">
+          <Link href="/jarvis" prefetch={false} className="shrink-0 text-sm font-medium text-accent">
             Open the chat
           </Link>
         )}
