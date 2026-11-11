@@ -32,6 +32,13 @@ test("on a laptop the wheel sits on the left and the day's words and the ask bar
   // and the wheel is a laptop's, not a phone's
   expect(Number(await clock.getAttribute("data-wheel-r"))).toBeGreaterThan(200);
 
+  // The sun on top of the rail is the Today tab, named and marked as where you are, not a second unnamed way home
+  // (owner, 2026-11-11: the logo above Today looked clickable).
+  const rail = page.getByRole("navigation", { name: "Main" }).first();
+  expect(await rail.getByRole("link").allInnerTexts()).toEqual(["Today", "Ray", "Money", "School"]);
+  await expect(rail.getByRole("link", { name: "Today" })).toHaveAttribute("aria-current", "page");
+  await expect(page.locator("aside a[href='/']")).toHaveCount(1);
+
   // it still opens into the week and folds back
   await page.getByRole("button", { name: /^Today\. Now / }).click();
   await expect(clock).toHaveAttribute("data-state", "timeline");

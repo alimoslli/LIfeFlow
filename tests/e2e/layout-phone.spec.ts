@@ -52,6 +52,8 @@ test("393px: 2 taps, no duplicates, nothing clipped or covered", async ({ page }
 
   // On the other pages the skyling is its tab: one tap to the one chat.
   await page.goto("/money");
+  // no sun in the top corner: Today is in the dock, and a logo up there only looked like a button (owner, 2026-11-11)
+  await expect(page.locator("header.lf-appbar a[href='/']")).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "Main" }).last().getByRole("link", { name: "Ray" })).toHaveAttribute("href", "/jarvis");
   await expect(page.getByTestId("skyling-bar")).toHaveCount(0);
   // More: everything else as doors, each one tap away, with a line about how it stands.

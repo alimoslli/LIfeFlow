@@ -9,7 +9,6 @@ import { openSettings } from "@/components/settings/settings-sheet";
 import { cn } from "@/lib/utils";
 import { nameAtStart } from "@/lib/assistant";
 import { haptic } from "@/lib/haptics";
-import { BrandMark } from "@/components/brand/brand-mark";
 
 /** Compact titles and back targets for the phone app bar. Detail views get a back button. */
 const ROUTES: { test: RegExp; title: string; back?: string }[] = [
@@ -98,8 +97,9 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
         scrolled && "lf-appbar-scrolled",
       )}
     >
+      {/* No sun in this corner on a phone: Today is in the dock, and a logo here only looked like a button (owner, 2026-11-11). */}
       <div className="flex h-12 min-w-11 items-center">
-        {info.back ? (
+        {info.back && (
           <button
             type="button"
             onClick={() => {
@@ -113,10 +113,6 @@ export function MobileAppBar({ demo, onSearch }: { demo: boolean; onSearch: () =
             {/* our own way back: a soft round button with the pixel arrow, not a blue "< Back" (owner, 2026-11-10) */}
             <PixelIcon name="back" className="h-[1.125rem] w-[1.125rem]" />
           </button>
-        ) : (
-          <Link href="/" aria-label="LifeFlow home" className="-ml-0.5 flex min-h-11 min-w-11 items-center justify-center rounded-[10px]">
-            <BrandMark className="h-7 w-7" alt="" />
-          </Link>
         )}
       </div>
       <p
