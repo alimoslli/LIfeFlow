@@ -3,9 +3,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { History } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PixelIcon } from "@/components/pixel/pixel-icon";
+import { Sheet } from "@/components/ui/sheet";
 
-/** Bottom sheet listing past conversations (phones). */
+/**
+ * The earlier chats, from a sheet that rises from the bottom on phones. It's the shared sheet (a modal dialog in the
+ * browser's top layer), so the tab bar can never cover the last chat in the list.
+ */
 export function HistorySheet({ items, activeId }: { items: { id: string; title: string; when: string }[]; activeId: string | null }) {
   const [open, setOpen] = useState(false);
   return (
@@ -17,35 +20,23 @@ export function HistorySheet({ items, activeId }: { items: { id: string; title: 
       >
         <History className="h-5 w-5" />
       </button>
-      {open && (
-        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Past conversations">
-          <div className="animate-fade-in absolute inset-0 bg-black/25" onClick={() => setOpen(false)} />
-          <div className="animate-rise absolute inset-x-0 bottom-0 max-h-[75dvh] overflow-y-auto rounded-t-[28px] bg-bg px-4 pt-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-lift">
-            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-surface-3" />
-            <div className="mb-2 flex items-center justify-between px-2">
-              <h2 className="text-[1.0625rem] font-semibold">Conversations</h2>
-              <button onClick={() => setOpen(false)} aria-label="Close" className="rounded-full p-2 text-muted">
-                <PixelIcon name="close" className="h-4 w-4" />
-              </button>
-            </div>
-            {items.length === 0 && <p className="px-2 py-4 text-sm text-muted">No conversations yet.</p>}
-            <ul className="flex flex-col gap-1">
-              {items.map((c) => (
-                <li key={c.id}>
-                  <Link
-                    href={`/jarvis?c=${c.id}`}
-                    onClick={() => setOpen(false)}
-                    className={cn("block rounded-2xl px-3 py-3", c.id === activeId ? "bg-surface shadow-soft" : "active:bg-surface-2")}
-                  >
-                    <span className="line-clamp-2 break-words text-[0.9375rem]">{c.title}</span>
-                    <span className="block text-xs text-muted">{c.when}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
+      <Sheet open={open} onClose={() => setOpen(false)} title="Conversations" label="Past conversations">
+        {items.length === 0 && <p className="px-2 py-4 text-sm text-muted">No conversations yet.</p>}
+        <ul className="flex flex-col gap-1">
+          {items.map((c) => (
+            <li key={c.id}>
+              <Link
+                href={`/jarvis?c=${c.id}`}
+                onClick={() => setOpen(false)}
+                className={cn("block rounded-2xl px-3 py-3", c.id === activeId ? "bg-surface shadow-soft" : "active:bg-surface-2")}
+              >
+                <span className="line-clamp-2 break-words text-[0.9375rem]">{c.title}</span>
+                <span className="block text-xs text-muted">{c.when}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </Sheet>
     </>
   );
 }
