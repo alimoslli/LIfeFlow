@@ -99,8 +99,20 @@ test("after setup, someone waiting lands on their place in line; the app stays c
   await expect(page.getByTestId("wl-place")).toHaveText("#1");
   // The invite card sits at the bottom, after the line and the rules.
   const headings = await page.getByRole("heading", { level: 2 }).allTextContents();
-  expect(headings).toEqual(["The front of the line", "How the line works", "Bring a friend, move up a spot."]);
+  // The confirm card is a peer section, so its heading is an h2 too, and it comes first (it is the one thing to do here).
+  expect(headings).toEqual(["Confirm your email", "The front of the line", "How the line works", "Bring a friend, move up a spot."]);
 
+  // The confirm card: with no email service in the test run, "Send code" answers plainly; a wrong code says so.
+  const card = page.getByRole("region", { name: "Confirm your email" });
+  await card.getByRole("button", { name: "Send code" }).click();
+  await expect(card.getByRole("alert")).toContainText("aren't available yet");
+  await pool.query(
+    "insert into email_confirmations (account_id, code_hash, expires_at) select id, 'not-a-real-hash', now() + interval '10 minutes' from users where email = $1 on conflict (account_id) do nothing",
+    [email],
+  );
+  await card.getByLabel("Your code").fill("123456");
+  await card.getByRole("button", { name: "Confirm" }).click();
+  await expect(card.getByRole("alert")).toContainText("didn't match");
   // Every app page and the app's data send them back; their account, security and privacy pages stay open.
   for (const path of ["/", "/finances/accounts", "/school", "/settings"]) {
     await page.goto(path);

@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { getAccountUser, clientIp } from "@/server/auth/current-user";
 import { getDb } from "@/server/db/client";
 import { confirmEmailCode, sendConfirmCode } from "@/server/services/email-confirm";
@@ -28,10 +27,8 @@ export async function confirmEmail(_prev: ConfirmState, fd: FormData): Promise<C
   const user = await getAccountUser();
   if (!user) return { error: "Please sign in again.", at: Date.now() };
   const r = await confirmEmailCode(getDb(), user.id, String(fd.get("code") ?? "").slice(0, 20), await clientIp());
-  if (r.ok) {
-    revalidatePath("/waitlist");
-    return { confirmed: true, at: Date.now() };
-  }
+  // No page refresh here: the card keeps its own "confirmed" line so the person sees it worked (the page is read again on the next visit).
+  if (r.ok) return { confirmed: true, at: Date.now() };
   const error = {
     wrong: "That code didn't match. Check the newest email.",
     expired: "That code expired. Ask for a new one.",
