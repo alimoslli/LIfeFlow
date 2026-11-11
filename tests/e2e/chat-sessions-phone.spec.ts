@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { askJarvis, queryAsUser, signUp } from "./helpers";
+import { askJarvis, COMPOSER, queryAsUser, signUp } from "./helpers";
 
 test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
@@ -76,4 +76,33 @@ test("signing out ends the chat on this device", async ({ page, context }) => {
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await page.waitForURL("**/login");
   await expect.poll(() => hasChatCookie(context)).toBe(false);
+});
+
+// Owner's privacy rule (2026-11-11): on a shared device, the last person's answer never shows for the next one. The
+// answer lives in this app session's memory, so this checks the path that matters: sign out and sign in as someone else
+// inside the app, without a reload.
+test("another person's Today answer never shows after a sign-out and a sign-in on the same device", async ({ page, browser }) => {
+  const other = await browser.newContext();
+  const bEmail = await signUp(await other.newPage(), "Bea Next");
+  await other.close();
+
+  await signUp(page, "Ana Private");
+  await page.goto("/");
+  const box = page.locator(".dc-dock").getByRole("textbox", { name: COMPOSER });
+  await box.fill(`/tool create_tasks {"tasks":[{"title":"Ana's private errand"}]}`);
+  await box.press("Enter");
+  const reply = page.locator('[data-testid="today-reply"]:visible');
+  await expect(reply.getByRole("list", { name: "Saved" })).toContainText("Ana's private errand", { timeout: 15_000 });
+
+  // Settings opens from the gear inside the app (no reload); Sign out is in that sheet
+  await page.getByRole("link", { name: "Settings" }).first().click();
+  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await page.waitForURL("**/login");
+  await page.getByLabel("Email").fill(bEmail);
+  await page.getByLabel("Password").fill("correct horse battery");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.waitForURL((u) => u.pathname === "/");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Bea");
+  await expect(page.getByText("Ana's private errand")).toHaveCount(0);
+  await expect(page.locator('[data-testid="today-reply"]')).toHaveCount(0);
 });

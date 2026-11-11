@@ -19,7 +19,7 @@ import { integrationStatus } from "@/server/services/integrations";
 import { dayClockData } from "@/server/services/day-clock";
 import { AskBar } from "./_today/day-plan";
 import { AssistantLine, type AssistantNote } from "./_today/assistant-line";
-import { TodayMiddle } from "./_today/today-chat";
+import { TodayMiddle, TodayOwner } from "./_today/today-chat";
 import { BirthdayCard } from "./_today/birthday-card";
 import { EmptyNext } from "./_today/empty-next";
 import { ideaClouds } from "@/server/services/idea-clouds";
@@ -46,7 +46,7 @@ export default async function TodayPage() {
     await withUser(me.id, (scope) => runProactive({ scope, tz: me.timezone, prefs: me.preferences, trigger: "promise" })).catch((e) =>
       console.error("promise check failed", e instanceof Error ? e.name : e),
     );
-  const { clock, note, assistantName, setup, hello, clouds } = await withCurrentUser(async (scope, user) => {
+  const { clock, note, assistantName, setup, hello, clouds, userId } = await withCurrentUser(async (scope, user) => {
     const tz = user.timezone ?? "UTC";
     // Money (bills due, spent today) joins the clock only while the Money lock is open.
     const clock = await dayClockData(scope, tz, new Date(), { money: !locked });
@@ -76,6 +76,7 @@ export default async function TodayPage() {
       assistantName: assistantProfile(user.preferences, user.timezone).name,
       // idea clouds beside the chat bar, from their own data (lib/idea-clouds)
       clouds: await ideaClouds(scope, tz, user.preferences, assistantProfile(user.preferences, user.timezone).name),
+      userId: user.id,
       setup,
       hello: `${greetingIn(tz)}, ${user.name.split(" ")[0]}`,
     };
@@ -88,6 +89,7 @@ export default async function TodayPage() {
       <h1 className="sr-only">{hello}</h1>
       {/* what the skyling passed while they were away: a star each, claimed once (owner, 2026-11-10) */}
       <ClaimStars />
+      <TodayOwner userId={userId} />
       <section aria-label="Your day" data-tour="today-page" className="-mx-5 sm:-mx-8 md:mx-0">
         <DayClock data={clock} mode={mode} companion={me.preferences?.companion} clash={!!note?.id?.startsWith("conflict")}>
           {/* a laptop's and a tablet's sky have these under the wheel; a phone has them in the middle (TodayMiddle) */}

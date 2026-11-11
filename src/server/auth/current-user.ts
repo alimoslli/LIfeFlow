@@ -6,6 +6,7 @@ import { getDb } from "../db/client";
 import { withUser, type UserScope } from "../db/with-user";
 import { SESSION_COOKIE, SESSION_TTL_MS, createSession, deleteSession, validateSession, type SessionUser } from "./sessions";
 import { accessSettings, canUseApp } from "../services/waitlist";
+import { CHAT_COOKIE } from "@/lib/chat-session";
 
 const sessionUser = cache(async (): Promise<SessionUser | null> => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
@@ -86,6 +87,8 @@ export async function endSession() {
   const token = jar.get(SESSION_COOKIE)?.value;
   if (token) await deleteSession(getDb(), token);
   jar.delete(SESSION_COOKIE);
+  // the chat this visit was in goes with the session, so the next person on this browser never inherits it
+  jar.delete(CHAT_COOKIE);
 }
 
 /** Client IP for rate limiting (best effort; trusts the platform proxy header). */

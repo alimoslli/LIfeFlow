@@ -17,7 +17,6 @@ import { purgeOldRateLimits, rateLimit } from "@/server/rate-limit";
 import { purgeExpiredSessions } from "@/server/auth/sessions";
 import { AuthError, authenticate, registerUser, updatePreferences } from "@/server/services/accounts";
 import { checkPassword } from "@/lib/password-strength";
-import { CHAT_COOKIE } from "@/lib/chat-session";
 import { audit } from "@/server/services/audit";
 import { consumePendingAppleLink } from "@/server/auth/apple";
 import { passwordResetAvailable, requestPasswordReset, ResetError, resetPassword } from "@/server/auth/password-reset";
@@ -207,8 +206,6 @@ export async function signup(_prev: AuthState, fd: FormData): Promise<AuthState>
 
 export async function logout() {
   await endSession();
-  // the chat you were in goes with the session (owner, 2026-11-11: "or sign out"); the earlier ones stay in the list
-  (await cookies()).set(CHAT_COOKIE, "", { path: "/", maxAge: 0 });
   redirect("/login");
 }
 

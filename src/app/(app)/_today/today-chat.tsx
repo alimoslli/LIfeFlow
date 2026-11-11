@@ -39,9 +39,9 @@ export type TodayReply = {
   settled?: boolean;
   undoNote?: string;
 };
-type State = { reply: TodayReply | null; conversationId: string | null; busy: boolean };
+type State = { reply: TodayReply | null; conversationId: string | null; busy: boolean; owner: string | null };
 
-let state: State = { reply: null, conversationId: null, busy: false };
+let state: State = { reply: null, conversationId: null, busy: false, owner: null };
 const listeners = new Set<() => void>();
 const set = (next: Partial<State>) => {
   state = { ...state, ...next };
@@ -57,7 +57,19 @@ const subscribe = (l: () => void) => {
   listeners.add(l);
   return () => listeners.delete(l);
 };
-const SERVER: State = { reply: null, conversationId: null, busy: false };
+const SERVER: State = { reply: null, conversationId: null, busy: false, owner: null };
+
+/**
+ * Whoever's Today this is. The answer lives in this app session's memory, which outlasts a sign-out and a sign-in, so an
+ * answer from someone else is dropped here before anything shows it (owner's privacy rule: a shared device never shows the
+ * last person's words). Rendered once on Today, so it covers the bar on a phone and the one under the wheel on a laptop.
+ */
+export function TodayOwner({ userId }: { userId: string }) {
+  useLayoutEffect(() => {
+    if (state.owner !== userId) set({ owner: userId, reply: null });
+  }, [userId]);
+  return null;
+}
 export const useTodayChat = () =>
   useSyncExternalStore(
     subscribe,
