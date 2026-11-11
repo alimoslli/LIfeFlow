@@ -50,8 +50,9 @@ export default async function WaitlistPage({ searchParams }: { searchParams: Pro
   // Production always uses the site's own address (APP_URL), never whatever host a request names.
   const origin = process.env.APP_URL?.trim().replace(/\/$/, "") || (process.env.VERCEL_ENV === "production" ? "https://lifeflowweb.com" : `${proto}://${host}`);
   const link = `${origin}/?invite=${await inviteCodeFor(db, user.id)}`;
-  const place = w.place ?? (preview ? 12 : null);
-  const waiting = preview ? Math.max(w.waiting, 12) : w.waiting;
+  // In the owner's preview the counts are real; only the admin's own place is an example (they hold none), shown as the last place.
+  const place = w.place ?? (preview ? Math.max(w.waiting, 1) : null);
+  const waiting = w.waiting;
   const mine = companionOf(user.preferences?.companion);
   const meInFront = w.front.some((r) => r.me);
 

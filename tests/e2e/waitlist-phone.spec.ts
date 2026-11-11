@@ -82,7 +82,8 @@ test("the owner lets the next people in from HQ after confirming, and previews t
   await expect(page.getByRole("heading", { name: "You're in, Ana" })).toBeVisible();
   await op.goto("/waitlist?preview=1");
   await expect(op.getByText("Preview: this is what someone waiting sees.")).toBeVisible();
-  await expect(op.getByTestId("wl-place")).toHaveText("#12");
+  // nobody is waiting, so the preview shows the real count and the example place is the last one (#1)
+  await expect(op.getByTestId("wl-place")).toHaveText("#1");
 });
 
 test("after setup, someone waiting lands on their place in line; the app stays closed until they're let in", async ({ page }) => {

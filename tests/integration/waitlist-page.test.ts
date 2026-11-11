@@ -45,4 +45,18 @@ describe("the waitlist page", () => {
     expect(await render()).not.toContain("Confirm your email");
     expect(await waitlistPlace(db, inviter.id)).toBe(1);
   });
+
+  it("admin preview shows the real number of people waiting, with only the example place marked", async () => {
+    await db.update(users).set({ access: "in" }).where(eq(users.access, "waiting"));
+    const a = (await makeUser("A")).user;
+    await makeUser("B");
+    await makeUser("C");
+    await makeUser("D");
+    process.env.ADMIN_EMAILS = a.email;
+    h.user = asSession(a);
+    const html = await render({ preview: "1" });
+    expect(html).toContain("3 people are waiting");
+    expect(html).not.toContain("12 people are waiting");
+    expect(html).toContain("example");
+  });
 });
