@@ -15,7 +15,7 @@ import { makeUser } from "../helpers";
 
 // The route reads the signed-in user and the session cookie; everything else (database, money lock, streaming) is real.
 const h = vi.hoisted(() => ({ user: null as SessionUser | null, token: "" }));
-vi.mock("@/server/auth/current-user", () => ({ getSessionUser: async () => h.user }));
+vi.mock("@/server/auth/current-user", () => ({ getSessionUser: async () => h.user, getAccountUser: async () => h.user }));
 vi.mock("next/headers", () => ({ cookies: async () => ({ get: (name: string) => (h.token ? { name, value: h.token } : undefined) }) }));
 const { GET } = await import("@/app/api/export/route");
 

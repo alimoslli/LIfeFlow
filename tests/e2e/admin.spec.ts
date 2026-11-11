@@ -83,7 +83,8 @@ test("admin page: 404 for everyone but the owner, and the owner can manage users
     .getByRole("region", { name: "Accounts" })
     .getByRole("link", { name: /Regular Rhea/ })
     .click();
-  await expect(op.getByText(normalEmail)).toBeVisible();
+  await op.waitForURL(/\/admin\/users\/[0-9a-f-]{36}/);
+  await expect(op.getByText(normalEmail).first()).toBeVisible();
   await expect(op.getByText("private and aren't shown here")).toBeVisible();
 
   // Suspending signs them out at once.
