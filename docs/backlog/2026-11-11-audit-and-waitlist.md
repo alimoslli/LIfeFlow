@@ -51,9 +51,9 @@ Keep it intact and say what's deferred; one small step per session; concise expl
 | Waitlist 2. HQ: let people in | main | live: People › Waitlist (counts, the line, next batch with confirm, one at a time, switch, launch line, history) |
 | Waitlist 3. The gate | main | live: after setup, someone waiting reaches only /waitlist and their account, security and privacy pages; pages, APIs, actions, jobs, texts, Apple Health and forwarded email skip them |
 | Waitlist 4. The page | main | live: the night page with the line of skylings, the front of the line (anonymous), the rules, the invite card at the bottom; admin preview `?preview=1` |
-| Waitlist 5. Email code and referral boosts | `claude/waitlist-referrals` | being built |
-| Waitlist 6. Nicknames | | next (anonymous labels already live) |
-| Waitlist 7. Read-only preview | | next (picture first) |
+| Waitlist 5. Email code and referral boosts | `claude/waitlist-referrals-v2` (head `ed7b4ba4`) | built on the branch; independent review running; not on main. Held for two owner yeses: keep a scrambled fingerprint of a friend's email after their account is deleted, so the same email can't count twice (one line on the privacy page), and friends who joined through a link before this count when they confirm. The under-13 lock clears referral rows and pending codes on the branch. |
+| Waitlist 6. Nicknames | `claude/waitlist-nicknames` | in progress: an optional nickname on the page; anonymous labels stay the default; reviewed before any merge |
+| Waitlist 7. Read-only preview | `docs/design/2026-11-11-preview/` | picture ready (four pictures and three questions for the owner's yes); nothing built |
 | Waitlist 8. Notification previews and the full check | | next |
 | Engineering 1. Money totals and exports | `claude/money-totals` | reviewed twice, fixes in; screen tests running |
 | Engineering 2. Voice and texting | `claude/voice-sms-guard` | reviewed, fixes in; full suite rerunning |

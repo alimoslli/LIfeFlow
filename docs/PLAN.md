@@ -295,7 +295,7 @@ Last: done 2026-11-10 evening ([the walk and the numbers](audits/2026-11-10-prod
 **Status:**
 - **Instagram @lifeflowweb:** it is the only account. The owner has posted several of the videos himself, and their numbers will show once Instagram is properly connected in Metricool.
 - **Main project:** "The School Project" relaunch film. The teaser is Sun Nov 29 and the premiere is Mon Nov 30 at 10 AM PT. Test shoots are underway.
-- **Waiting list:** the rank rises with friends who join. Now being built in the app before launch (owner, 2026-11-11; `docs/backlog/2026-11-11-audit-and-waitlist.md`).
+- **Waiting list:** the rank rises with friends who join. The referral boosts are built on `claude/waitlist-referrals-v2` and wait for two owner yeses (keep a friend's email fingerprint after their account is deleted, with one privacy-page line; friends who joined through a link before this count when they confirm). Nicknames are in progress on `claude/waitlist-nicknames`. The read-only preview picture (`docs/design/2026-11-11-preview/`) waits for the owner's yes. Nothing from these is on main yet (owner, 2026-11-11; `docs/backlog/2026-11-11-audit-and-waitlist.md`).
 - **Posting:** one tap per post by the owner. Nothing is published by an agent.
 
 **Owner decisions (11-07 and 11-08):**
@@ -430,3 +430,4 @@ Newest first. One line per real change, by the chat that made it.
 - 2026-11-07, LF HQ: the desk, live HQ, HQ sync, the simplified Office and the building, on main.
 - 2026-11-08, LF COO: the owner's list created; marketing decisions recorded and handed to Marketing.
 - 2026-11-08, LF Marketing: the School Project dates, voice rules, the Arabic dub and the cost cuts.
+- 2026-11-11, LF COO: waitlist step 5 (referral boosts and the email code) built on `claude/waitlist-referrals-v2` and held for two owner yeses; step 6 (nicknames) in progress on `claude/waitlist-nicknames`; step 7's picture is in `docs/design/2026-11-11-preview/` for the owner's yes, nothing built. The backlog's progress table is updated.
