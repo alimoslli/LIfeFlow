@@ -11,6 +11,7 @@ import { balancesOf } from "./overview";
 import { amountsClose } from "./bill-match";
 import { bankSeries, budgetStatus, listRecurring, seriesForItem, upcomingRecurring } from "./planning";
 import { queryAllTransactions } from "./transactions";
+import { flowTotals } from "./totals";
 
 /**
  * Coaching math. Everything here is computed from the user's records and
@@ -293,7 +294,6 @@ export async function emergencyFundPlan(scope: UserScope, today: string, targetM
 /** What rounding every card/debit purchase up to the next dollar would have saved last month. Pure-ish (reads data). */
 export async function roundUps(scope: UserScope, today: string) {
   const from = monthStart(addDaysStr(monthStart(today), -1));
-  const txns = await queryAllTransactions(scope, { from, to: monthEnd(from), kinds: ["expense"] });
-  const cents = txns.reduce((s, t) => s + ((100 - (Math.abs(t.amountCents) % 100)) % 100), 0);
-  return { month: from.slice(0, 7), purchases: txns.length, roundUpCents: cents, yearlyCents: cents * 12 };
+  const t = await flowTotals(scope, { from, to: monthEnd(from), kinds: ["expense"] });
+  return { month: from.slice(0, 7), purchases: t.count, roundUpCents: t.roundUpCents, yearlyCents: t.roundUpCents * 12 };
 }

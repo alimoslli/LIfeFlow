@@ -44,7 +44,7 @@ export type CashflowForPeriod = Pick<CashflowSummary, "incomeCents" | "netSpendi
 
 /** Spending and income over a named range, with the same rules everywhere. */
 export async function cashflowFor(scope: UserScope, period: Period): Promise<CashflowForPeriod> {
-  return { period, ...(await cashflowTotals(scope, period.from, period.to)) };
+  return { period, ...(await cashflowTotals(scope, { from: period.from, to: period.to })) };
 }
 
 export async function moneyOverview(scope: UserScope, today: string) {

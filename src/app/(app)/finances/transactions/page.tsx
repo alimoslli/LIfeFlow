@@ -14,7 +14,8 @@ import { withCurrentUser } from "@/server/auth/current-user";
 import { series } from "@/server/db/series";
 import { listAccounts } from "@/server/services/finance/accounts";
 import { listCategories } from "@/server/services/finance/categories";
-import { TRANSACTION_KINDS, cashflowOverQuery, queryTransactions } from "@/server/services/finance/transactions";
+import { TRANSACTION_KINDS, queryTransactions } from "@/server/services/finance/transactions";
+import { cashflowTotals } from "@/server/services/finance/totals";
 import {
   applyRuleAction,
   createTransactionAction,
@@ -75,7 +76,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     };
     const rows = await queryTransactions(s, { ...query, phrase: true, limit: 5000 }); // the page's search box is a plain substring filter
     // Totals cover every matching row, not just the list's first 5,000.
-    const summary = await cashflowOverQuery(s, query);
+    const summary = await cashflowTotals(s, query);
     // Category rules open over this page (the Rules page was folded in, owner's page map 2026-11-10); only read when asked.
     const rules = sp.rules ? await listCategoryRules(s) : [];
     return { accounts, categories, rows, summary, today, period, rules };

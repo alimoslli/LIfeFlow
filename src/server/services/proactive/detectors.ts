@@ -25,6 +25,7 @@ import { goalsWithPlans } from "../finance/goals";
 import { budgetStatus } from "../finance/planning";
 import { planPaycheck, subscriptionReport } from "../finance/coach";
 import { firstSpendDates, queryAllTransactions } from "../finance/transactions";
+import { flowTotals } from "../finance/totals";
 import { merchantKey } from "../finance/recurring-detect";
 import { listAssignments } from "../school";
 import { listShifts } from "../work";
@@ -417,10 +418,9 @@ const savedMore: Detector = async ({ scope, today }) => {
   if (Number(today.slice(8, 10)) > 7) return [];
   const last = monthStart(addDaysStr(monthStart(today), -1));
   const prev = monthStart(addDaysStr(last, -1));
-  const txns = await queryAllTransactions(scope, { from: prev, to: addDaysStr(monthStart(today), -1), kinds: ["expense", "income"] });
-  const net = (from: string, to: string) => txns.filter((t) => t.date >= from && t.date < to).reduce((s, t) => s + t.amountCents, 0);
-  const saved = net(last, monthStart(today));
-  const before = net(prev, last);
+  const net = async (from: string, to: string) => (await flowTotals(scope, { from, to: addDaysStr(to, -1), kinds: ["expense", "income"] })).netCents;
+  const saved = await net(last, monthStart(today));
+  const before = await net(prev, last);
   const more = saved - before;
   if (saved <= 0 || more < 2500) return [];
   const goal = (await goalsWithPlans(scope, today))

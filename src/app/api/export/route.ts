@@ -4,7 +4,7 @@ import { withUser } from "@/server/db/with-user";
 import { enforceRateLimit, errorResponse, HttpError } from "@/server/http";
 import { audit } from "@/server/services/audit";
 import { exportBusy, exportStream } from "@/server/services/data-export";
-import { forEachTransactionPage, toCsv } from "@/server/services/finance/transactions";
+import { ALL_PAGE, readTransactionPage, toCsv, type PageCursor } from "@/server/services/finance/transactions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,33 +13,48 @@ const MONEY_LOCKED = "Unlock Money first, then download your data again.";
 
 const CSV_HEADER = ["date", "description", "merchant", "amount", "kind", "category", "account", "pending", "source"];
 
-/** Every transaction, newest first, one bounded page at a time inside the user's own scope (never one big string, never cut off). */
+/**
+ * Every transaction, newest first. One keyset page is read per pull(), each in its own short withUser (the user's
+ * own scope), so a slow download holds no transaction open and never keeps more than a page in memory. The cursor
+ * is (date, createdAt, id), so rows sharing a date and time neither repeat nor go missing.
+ */
 export function transactionsCsvStream(userId: string) {
   const enc = new TextEncoder();
+  let cursor: PageCursor | undefined;
+  let started = false;
+  let done = false;
   return new ReadableStream<Uint8Array>({
-    async start(controller) {
+    async pull(controller) {
       try {
-        controller.enqueue(enc.encode(toCsv(CSV_HEADER, [])));
-        await withUser(userId, (s) =>
-          forEachTransactionPage(s, {}, (rows) => {
-            const body = toCsv(
-              [],
-              rows.map((r) => [
-                r.date,
-                r.description,
-                r.merchantName,
-                (r.amountCents / 100).toFixed(2),
-                r.kind,
-                r.categoryName,
-                r.accountName,
-                r.pending,
-                r.source,
-              ]),
-            );
-            controller.enqueue(enc.encode("\n" + body.replace(/^\n/, "")));
-          }),
-        );
-        controller.close();
+        if (!started) {
+          started = true;
+          controller.enqueue(enc.encode(toCsv(CSV_HEADER, [])));
+          return;
+        }
+        if (done) return controller.close();
+        const page = await withUser(userId, (s) => readTransactionPage(s, {}, cursor));
+        if (page.rows.length) {
+          const body = toCsv(
+            [],
+            page.rows.map((r) => [
+              r.date,
+              r.description,
+              r.merchantName,
+              (r.amountCents / 100).toFixed(2),
+              r.kind,
+              r.categoryName,
+              r.accountName,
+              r.pending,
+              r.source,
+            ]),
+          );
+          controller.enqueue(enc.encode(body));
+        }
+        cursor = page.last;
+        if (page.rows.length < ALL_PAGE || !page.last) {
+          done = true;
+          controller.close();
+        }
       } catch (e) {
         controller.error(e);
       }
