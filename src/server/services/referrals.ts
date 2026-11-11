@@ -3,6 +3,7 @@ import type { Database } from "../db/client";
 import { adminActions, referralFingerprints, users, waitlistReferrals } from "../db/schema";
 import { keyedHash } from "../crypto";
 import type { Tx } from "../db/with-user";
+import { rateLimit, rateLimitCount } from "../rate-limit";
 import { lockQueue, moveUpOne } from "./waitlist";
 
 /**
@@ -82,22 +83,20 @@ export async function creditReferral(tx: Tx, inviteeId: string, now = new Date()
   const [seen] = await tx.select({ hash: referralFingerprints.hash }).from(referralFingerprints).where(eq(referralFingerprints.hash, hash));
   if (seen) return none;
   // The unique hash decides, even when two confirmations (or a deleted and re-made account) arrive together.
-  // Over the daily cap the friend is recorded without being credited (and without a move), so it can't be retried for one.
-  const [{ n: today }] = await tx
-    .select({ n: count() })
-    .from(waitlistReferrals)
-    .where(and(eq(waitlistReferrals.inviterId, inviter.id), gte(waitlistReferrals.movedAt, new Date(now.getTime() - 24 * 3600_000))));
-  const capped = today >= MAX_CREDITS_PER_DAY;
+  // The daily cap counts real moves, with the rate-limit counter for this inviter (24 hours, 10 moves), so deleting or locking
+  // a credited friend can never give the inviter an extra move. Over it the friend is recorded without a count or a move.
+  const key = `referral-moves:${inviter.id}`;
+  const capped = (await rateLimitCount(tx as unknown as Database, key, 86400)) >= MAX_CREDITS_PER_DAY;
   const inserted = await tx
     .insert(waitlistReferrals)
     .values({ inviterId: inviter.id, inviteeId, inviteeEmailHash: hash, creditedAt: capped ? null : now })
     .onConflictDoNothing({ target: waitlistReferrals.inviteeEmailHash })
     .returning({ id: waitlistReferrals.id });
   if (!inserted.length) return none;
-  // Moves only someone still waiting; an inviter already let in, or first in line, stays put.
+  // Moves only someone still waiting; an inviter already in, or first in line, stays put (and uses none of the cap).
   if (capped) return { recorded: true, moved: false };
   const moved = await moveUpOne(tx, inviter.id);
-  if (moved) await tx.update(waitlistReferrals).set({ movedAt: now }).where(eq(waitlistReferrals.id, inserted[0].id));
+  if (moved) await rateLimit(tx as unknown as Database, key, MAX_CREDITS_PER_DAY, 86400);
   return { recorded: true, moved };
 }
 

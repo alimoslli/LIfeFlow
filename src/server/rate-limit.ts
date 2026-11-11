@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { Database } from "./db/client";
 import { rateLimitBuckets } from "./db/schema";
 
@@ -19,6 +19,17 @@ export async function rateLimit(db: Database, key: string, limit: number, window
     .returning({ count: rateLimitBuckets.count });
   const retryAfterSeconds = Math.ceil((windowStart.getTime() + windowMs - Date.now()) / 1000);
   return { allowed: row.count <= limit, remaining: Math.max(0, limit - row.count), retryAfterSeconds };
+}
+
+/** The count in the current window, without adding to it (so a caller can count only what really happened). */
+export async function rateLimitCount(db: Database, key: string, windowSeconds: number): Promise<number> {
+  const windowMs = windowSeconds * 1000;
+  const windowStart = new Date(Math.floor(Date.now() / windowMs) * windowMs);
+  const [row] = await db
+    .select({ count: rateLimitBuckets.count })
+    .from(rateLimitBuckets)
+    .where(and(eq(rateLimitBuckets.key, key), eq(rateLimitBuckets.windowStart, windowStart)));
+  return row?.count ?? 0;
 }
 
 export async function purgeOldRateLimits(db: Database) {

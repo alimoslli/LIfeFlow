@@ -1,4 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
+import { withUser } from "@/server/db/with-user";
+import { rateLimitCount } from "@/server/rate-limit";
 import { eq, inArray, like } from "drizzle-orm";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import { completeAppleSignIn, parseAppleState, startAppleSignIn } from "@/server/auth/apple";
@@ -27,6 +29,11 @@ async function leave(id: string) {
   await db.update(users).set({ passwordHash: "!google" }).where(eq(users.id, id));
   await deleteAccount(db, id, "");
 }
+const makeAnyUserRun =
+  (id: string) =>
+  <T>(fn: Parameters<typeof withUser<T>>[1]) =>
+    withUser(id, fn);
+const movesToday = (inviterId: string) => rateLimitCount(db, `referral-moves:${inviterId}`, 86400);
 const made: string[] = [];
 const makeUser = async (name?: string) => {
   const m = await makeAnyUser(name);
@@ -415,7 +422,7 @@ describe("alias farming, the keyed hash and the daily cap", () => {
     expect(await verifyEmail(db, friends[MAX_CREDITS_PER_DAY])).toEqual({ verified: true, recorded: true, moved: true });
     expect(await place(inviter.id)).toBe(1);
     const rows = await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id));
-    expect(rows.filter((r) => r.movedAt)).toHaveLength(1);
+    expect(await movesToday(inviter.id)).toBe(1);
     expect(rows.filter((r) => r.creditedAt)).toHaveLength(11);
   });
 
@@ -439,9 +446,12 @@ describe("alias farming, the keyed hash and the daily cap", () => {
     await clearLine();
     for (let i = 0; i < 3; i++) await makeUser(`Filler${i}`);
     const inviter = (await makeUser("Inviter")).user;
-    const old = new Date(Date.now() - 25 * 3600_000);
-    for (let i = 0; i < MAX_CREDITS_PER_DAY; i++)
-      await db.insert(waitlistReferrals).values({ inviterId: inviter.id, inviteeEmailHash: `old-${randomUUID()}`, creditedAt: old, movedAt: old });
+    // ten moves from the previous 24-hour window: they don't count today
+    await db.insert(rateLimitBuckets).values({
+      key: `referral-moves:${inviter.id}`,
+      windowStart: new Date(Math.floor(Date.now() / 86400_000) * 86400_000 - 86400_000),
+      count: MAX_CREDITS_PER_DAY,
+    });
     const f = (await makeUser("F")).user;
     await recordInvite(db, f.id, await inviteCodeFor(db, inviter.id));
     expect(await verifyEmail(db, f.id)).toEqual({ verified: true, recorded: true, moved: true });
@@ -465,7 +475,34 @@ describe("alias farming, the keyed hash and the daily cap", () => {
     expect(results.filter((r) => r.recorded)).toHaveLength(13);
     expect(await place(inviter.id)).toBe(5);
     const rows = await db.select().from(waitlistReferrals).where(eq(waitlistReferrals.inviterId, inviter.id));
-    expect(rows.filter((r) => r.movedAt)).toHaveLength(MAX_CREDITS_PER_DAY);
+    expect(await movesToday(inviter.id)).toBe(MAX_CREDITS_PER_DAY);
+  });
+
+  it("locking or deleting a credited friend never gives the inviter an extra move", async () => {
+    await clearLine();
+    for (let i = 0; i < 14; i++) await makeUser(`Filler${i}`);
+    const inviter = (await makeUser("Inviter")).user;
+    const code = await inviteCodeFor(db, inviter.id);
+    const friends: string[] = [];
+    for (let i = 0; i < MAX_CREDITS_PER_DAY + 2; i++) {
+      const f = (await makeUser(`F${i}`)).user;
+      await recordInvite(db, f.id, code);
+      friends.push(f.id);
+    }
+    for (const id of friends.slice(0, MAX_CREDITS_PER_DAY)) expect((await verifyEmail(db, id)).moved).toBe(true);
+    const placeAfterTen = await place(inviter.id);
+    // one credited friend deletes their account, another is locked as under 13: the count of moves today doesn't go down
+    await leave(friends[0]);
+    await db
+      .update(users)
+      .set({ preferences: { onboarding: "pending" } })
+      .where(eq(users.id, friends[1]));
+    const lockedRun = (await makeAnyUserRun(friends[1]))((s) => saveWelcomeProgress(s, "UTC", { birthDate: `${new Date().getFullYear() - 9}-03-03` }));
+    expect(await lockedRun).toEqual({ blocked: true });
+    expect(await movesToday(inviter.id)).toBe(MAX_CREDITS_PER_DAY);
+    // the next friend is over the limit: recorded, no move
+    expect(await verifyEmail(db, friends[MAX_CREDITS_PER_DAY])).toEqual({ verified: true, recorded: true, moved: false });
+    expect(await place(inviter.id)).toBe(placeAfterTen);
   });
 
   it("parallel wrong guesses never exceed 5 tries", async () => {

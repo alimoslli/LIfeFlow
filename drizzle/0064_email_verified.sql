@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS "waitlist_referrals" (
 	"invitee_id" uuid,
 	"invitee_email_hash" text NOT NULL,
 	"credited_at" timestamp with time zone,
-	"moved_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
