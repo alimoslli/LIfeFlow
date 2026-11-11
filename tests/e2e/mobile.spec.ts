@@ -44,13 +44,14 @@ test("Extra large text still fits a phone screen", async ({ page, context, baseU
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow, `${path} overflows by ${overflow}px at Extra large text`).toBeLessThanOrEqual(1);
   }
-  // The skyling's Profile cards grow with the text instead of clipping their icons (audit A26), and their words stay
-  // inside the card's padding, on 360, 375 and 393 px phones.
+  // The skyling's page: its Personality tile grows with the text instead of clipping its icon (audit A26), and its words
+  // stay inside the padding, on 360, 375 and 393 px phones. What it knows is a section of the same page now (merge 4).
   for (const width of [360, 375, 393]) {
     await page.setViewportSize({ width, height: 852 });
     await page.goto("/jarvis/profile");
     await page.waitForLoadState("networkidle");
-    for (const name of [/Personality/, /Memory/]) {
+    await expect(page.getByRole("region", { name: /knows$/ })).toBeVisible();
+    for (const name of [/Personality/]) {
       const card = page.getByRole("link", { name });
       const [box, icon] = [await card.boundingBox(), await card.locator("svg").last().boundingBox()];
       expect(icon!.height, `${name} icon is squeezed at Extra large text, ${width} px`).toBeGreaterThan(20);
